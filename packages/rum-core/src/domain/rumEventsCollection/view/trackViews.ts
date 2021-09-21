@@ -11,15 +11,14 @@ import {
   timeStampNow,
   TimeStamp,
   display,
-  Configuration,
+  Observable,
 } from '@datadog/browser-core'
-import { DOMMutationObservable } from '../../../browser/domMutationObservable'
 import { ViewLoadingType, ViewCustomTimings } from '../../../rawRumEvent.types'
 
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { EventCounts } from '../../trackEventCounts'
+import { LocationChange } from '../../../browser/locationChangeObservable'
 import { Timings, trackInitialViewTimings } from './trackInitialViewTimings'
-import { trackLocationChanges, areDifferentLocation } from './trackLocationChanges'
 import { trackViewMetrics } from './trackViewMetrics'
 
 export interface ViewEvent {
@@ -57,18 +56,18 @@ export const SESSION_KEEP_ALIVE_INTERVAL = 5 * ONE_MINUTE
 export function trackViews(
   location: Location,
   lifeCycle: LifeCycle,
-  domMutationObservable: DOMMutationObservable,
+  domMutationObservable: Observable<void>,
+  locationChangeObservable: Observable<LocationChange>,
   areViewsTrackedAutomatically: boolean,
-  configuration: Configuration,
   initialViewName?: string
 ) {
   const { stop: stopInitialViewTracking, initialView } = trackInitialView(initialViewName)
   let currentView = initialView
 
   const { stop: stopViewLifeCycle } = startViewLifeCycle()
-  const { stop: stopViewCollectionMode } = areViewsTrackedAutomatically
-    ? startAutomaticViewCollection()
-    : startManualViewCollection()
+  const { unsubscribe: stopViewCollectionMode } = areViewsTrackedAutomatically
+    ? startAutomaticViewCollection(locationChangeObservable)
+    : startManualViewCollection(locationChangeObservable)
 
   function trackInitialView(name?: string) {
     const initialView = newView(
@@ -77,7 +76,6 @@ export function trackViews(
       location,
       ViewLoadingType.INITIAL_LOAD,
       document.referrer,
-      configuration,
       clocksOrigin(),
       name
     )
@@ -95,7 +93,6 @@ export function trackViews(
       location,
       ViewLoadingType.ROUTE_CHANGE,
       currentView.url,
-      configuration,
       startClocks,
       name
     )
@@ -130,23 +127,23 @@ export function trackViews(
     }
   }
 
-  function startAutomaticViewCollection() {
-    return trackLocationChanges(() => {
-      if (areDifferentLocation(currentView.getLocation(), location)) {
+  function startAutomaticViewCollection(locationChangeObservable: Observable<LocationChange>) {
+    return locationChangeObservable.subscribe(({ oldLocation, newLocation }) => {
+      if (areDifferentLocation(oldLocation, newLocation)) {
         // Renew view on location changes
         currentView.end()
         currentView.triggerUpdate()
         currentView = trackViewChange()
         return
       }
-      currentView.updateLocation(location)
+      currentView.updateLocation(newLocation)
       currentView.triggerUpdate()
     })
   }
 
-  function startManualViewCollection() {
-    return trackLocationChanges(() => {
-      currentView.updateLocation(location)
+  function startManualViewCollection(locationChangeObservable: Observable<LocationChange>) {
+    return locationChangeObservable.subscribe(({ newLocation }) => {
+      currentView.updateLocation(newLocation)
       currentView.triggerUpdate()
     })
   }
@@ -172,11 +169,10 @@ export function trackViews(
 
 function newView(
   lifeCycle: LifeCycle,
-  domMutationObservable: DOMMutationObservable,
+  domMutationObservable: Observable<void>,
   initialLocation: Location,
   loadingType: ViewLoadingType,
   referrer: string,
-  configuration: Configuration,
   startClocks: ClocksState = clocksNow(),
   name?: string
 ) {
@@ -203,8 +199,7 @@ function newView(
     lifeCycle,
     domMutationObservable,
     scheduleViewUpdate,
-    loadingType,
-    configuration
+    loadingType
   )
 
   // Initial view update
@@ -272,4 +267,22 @@ function sanitizeTiming(name: string) {
     display.warn(`Invalid timing name: ${name}, sanitized to: ${sanitized}`)
   }
   return sanitized
+}
+
+function areDifferentLocation(currentLocation: Location, otherLocation: Location) {
+  return (
+    currentLocation.pathname !== otherLocation.pathname ||
+    (!isHashAnAnchor(otherLocation.hash) &&
+      getPathFromHash(otherLocation.hash) !== getPathFromHash(currentLocation.hash))
+  )
+}
+
+function isHashAnAnchor(hash: string) {
+  const correspondingId = hash.substr(1)
+  return !!document.getElementById(correspondingId)
+}
+
+function getPathFromHash(hash: string) {
+  const index = hash.indexOf('?')
+  return index < 0 ? hash : hash.slice(0, index)
 }

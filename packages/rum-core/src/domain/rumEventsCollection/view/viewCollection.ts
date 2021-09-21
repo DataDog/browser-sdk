@@ -5,19 +5,21 @@ import {
   ServerDuration,
   toServerDuration,
   Configuration,
+  Observable,
 } from '@datadog/browser-core'
 import { RecorderApi } from '../../../boot/rumPublicApi'
 import { RawRumViewEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from '../../lifeCycle'
-import { DOMMutationObservable } from '../../../browser/domMutationObservable'
 import { ForegroundContexts } from '../../foregroundContexts'
+import { LocationChange } from '../../../browser/locationChangeObservable'
 import { trackViews, ViewEvent } from './trackViews'
 
 export function startViewCollection(
   lifeCycle: LifeCycle,
   configuration: Configuration,
   location: Location,
-  domMutationObservable: DOMMutationObservable,
+  domMutationObservable: Observable<void>,
+  locationChangeObservable: Observable<LocationChange>,
   foregroundContexts: ForegroundContexts,
   recorderApi: RecorderApi,
   initialViewName?: string
@@ -33,8 +35,8 @@ export function startViewCollection(
     location,
     lifeCycle,
     domMutationObservable,
+    locationChangeObservable,
     !configuration.trackViewsManually,
-    configuration,
     initialViewName
   )
 }

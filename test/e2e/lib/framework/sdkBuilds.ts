@@ -10,35 +10,28 @@ const RUM_SLIM_BUNDLE = path.join(ROOT, 'packages/rum-slim/bundle/datadog-rum-sl
 const LOGS_BUNDLE = path.join(ROOT, 'packages/logs/bundle/datadog-logs.js')
 const NPM_BUNDLE = path.join(ROOT, 'test/app/dist/app.js')
 
-export interface Endpoints {
-  rum: string
-  logs: string
-  internalMonitoring: string
-  sessionReplay: string
+export async function buildRum(intakeUrl: string) {
+  return replaceEndpoints(await readFile(RUM_BUNDLE), intakeUrl)
 }
 
-export async function buildRum(endpoints: Endpoints) {
-  return replaceEndpoints(await readFile(RUM_BUNDLE), endpoints)
+export async function buildRumSlim(intakeUrl: string) {
+  return replaceEndpoints(await readFile(RUM_SLIM_BUNDLE), intakeUrl)
 }
 
-export async function buildRumSlim(endpoints: Endpoints) {
-  return replaceEndpoints(await readFile(RUM_SLIM_BUNDLE), endpoints)
+export async function buildLogs(intakeUrl: string) {
+  return replaceEndpoints(await readFile(LOGS_BUNDLE), intakeUrl)
 }
 
-export async function buildLogs(endpoints: Endpoints) {
-  return replaceEndpoints(await readFile(LOGS_BUNDLE), endpoints)
+export async function buildNpm(intakeUrl: string) {
+  return replaceEndpoints(await readFile(NPM_BUNDLE), intakeUrl)
 }
 
-export async function buildNpm(endpoints: Endpoints) {
-  return replaceEndpoints(await readFile(NPM_BUNDLE), endpoints)
-}
-
-function replaceEndpoints(content: Buffer, endpoints: Endpoints) {
+function replaceEndpoints(content: Buffer, intakeUrl: string) {
   return bufferReplace(content, {
-    '<<< E2E INTERNAL MONITORING ENDPOINT >>>': endpoints.internalMonitoring,
-    '<<< E2E LOGS ENDPOINT >>>': endpoints.logs,
-    '<<< E2E RUM ENDPOINT >>>': endpoints.rum,
-    '<<< E2E SESSION REPLAY ENDPOINT >>>': endpoints.sessionReplay,
+    '<<< E2E INTERNAL MONITORING ENDPOINT >>>': `${intakeUrl}/v1/input/internalMonitoring`,
+    '<<< E2E LOGS ENDPOINT >>>': `${intakeUrl}/v1/input/logs`,
+    '<<< E2E RUM ENDPOINT >>>': `${intakeUrl}/v1/input/rum`,
+    '<<< E2E SESSION REPLAY ENDPOINT >>>': `${intakeUrl}/v1/input/sessionReplay`,
   })
 }
 

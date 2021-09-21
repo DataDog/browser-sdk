@@ -4,15 +4,15 @@ import { RumEvent } from '../../../../../rum/src'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RumEventType, ActionType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
-import { PAGE_ACTIVITY_MAX_DURATION, PAGE_ACTIVITY_VALIDATION_DELAY } from '../../trackPageActivities'
-import { AutoAction, trackActions } from './trackActions'
+import { PAGE_ACTIVITY_VALIDATION_DELAY } from '../../trackPageActivities'
+import { AutoAction, AUTO_ACTION_MAX_DURATION, trackActions } from './trackActions'
 
 // Used to wait some time after the creation of a action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
 // Used to wait some time but it doesn't matter how much.
 const SOME_ARBITRARY_DELAY = 50
 // A long delay used to wait after any action is finished.
-const EXPIRE_DELAY = PAGE_ACTIVITY_MAX_DURATION * 10
+const EXPIRE_DELAY = AUTO_ACTION_MAX_DURATION * 10
 
 function eventsCollector<T>() {
   const events: T[] = []

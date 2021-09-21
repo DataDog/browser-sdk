@@ -1,6 +1,5 @@
 import {
   assign,
-  buildUrl,
   combine,
   Configuration,
   DEFAULT_CONFIGURATION,
@@ -8,7 +7,7 @@ import {
   TimeStamp,
   noop,
 } from '@datadog/browser-core'
-import { SPEC_ENDPOINTS, mockClock, Clock } from '../../core/test/specHelper'
+import { SPEC_ENDPOINTS, mockClock, Clock, buildLocation } from '../../core/test/specHelper'
 import { RecorderApi } from '../src/boot/rumPublicApi'
 import { ForegroundContexts } from '../src/domain/foregroundContexts'
 import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from '../src/domain/lifeCycle'
@@ -16,6 +15,7 @@ import { ParentContexts } from '../src/domain/parentContexts'
 import { trackViews, ViewEvent } from '../src/domain/rumEventsCollection/view/trackViews'
 import { RumSession, RumSessionPlan } from '../src/domain/rumSession'
 import { RawRumEvent, RumContext, ViewContext } from '../src/rawRumEvent.types'
+import { LocationChange } from '../src/browser/locationChangeObservable'
 import { validateFormat } from './formatValidation'
 import { createRumSessionMock } from './mockRumSession'
 
@@ -36,6 +36,7 @@ type BeforeBuildCallback = (buildContext: BuildContext) => void | { stop: () => 
 export interface BuildContext {
   lifeCycle: LifeCycle
   domMutationObservable: Observable<void>
+  locationChangeObservable: Observable<LocationChange>
   configuration: Readonly<Configuration>
   session: RumSession
   location: Location
@@ -47,6 +48,7 @@ export interface BuildContext {
 export interface TestIO {
   lifeCycle: LifeCycle
   domMutationObservable: Observable<void>
+  changeLocation: (to: string) => void
   clock: Clock
   fakeLocation: Partial<Location>
   session: RumSession
@@ -57,6 +59,7 @@ export function setup(): TestSetupBuilder {
   let session: RumSession = createRumSessionMock().setId('1234')
   const lifeCycle = new LifeCycle()
   const domMutationObservable = new Observable<void>()
+  const locationChangeObservable = new Observable<LocationChange>()
   const cleanupTasks: Array<() => void> = []
   const beforeBuildTasks: BeforeBuildCallback[] = []
   const rawRumEvents: RawRumEventCollectedData[] = []
@@ -82,24 +85,18 @@ export function setup(): TestSetupBuilder {
     validateRumEventFormat(data.rawRumEvent)
   })
 
+  function changeLocation(to: string) {
+    const currentLocation = { ...fakeLocation }
+    assign(fakeLocation, buildLocation(to, fakeLocation.href))
+    locationChangeObservable.notify({
+      oldLocation: currentLocation as Location,
+      newLocation: fakeLocation as Location,
+    })
+  }
+
   const setupBuilder = {
     withFakeLocation(initialUrl: string) {
-      fakeLocation = buildLocation(initialUrl, location.href)
-      spyOn(history, 'pushState').and.callFake((_: any, __: string, pathname: string) => {
-        assign(fakeLocation, buildLocation(pathname, fakeLocation.href))
-      })
-
-      function hashchangeCallBack() {
-        fakeLocation.hash = window.location.hash
-      }
-
-      window.addEventListener('hashchange', hashchangeCallBack)
-
-      cleanupTasks.push(() => {
-        window.removeEventListener('hashchange', hashchangeCallBack)
-        window.location.hash = ''
-      })
-
+      fakeLocation = buildLocation(initialUrl)
       return setupBuilder
     },
     withSession(sessionStub: RumSession) {
@@ -131,6 +128,7 @@ export function setup(): TestSetupBuilder {
         const result = task({
           lifeCycle,
           domMutationObservable,
+          locationChangeObservable,
           parentContexts,
           foregroundContexts,
           session,
@@ -149,6 +147,7 @@ export function setup(): TestSetupBuilder {
         domMutationObservable,
         rawRumEvents,
         session,
+        changeLocation,
       }
     },
     cleanup() {
@@ -159,16 +158,6 @@ export function setup(): TestSetupBuilder {
     },
   }
   return setupBuilder
-}
-
-function buildLocation(url: string, base?: string) {
-  const urlObject = buildUrl(url, base)
-  return {
-    hash: urlObject.hash,
-    href: urlObject.href,
-    pathname: urlObject.pathname,
-    search: urlObject.search,
-  }
 }
 
 function validateRumEventFormat(rawRumEvent: RawRumEvent) {
@@ -201,7 +190,7 @@ function validateRumEventFormat(rawRumEvent: RawRumEvent) {
 export type ViewTest = ReturnType<typeof setupViewTest>
 
 export function setupViewTest(
-  { lifeCycle, location, domMutationObservable, configuration }: BuildContext,
+  { lifeCycle, location, domMutationObservable, configuration, locationChangeObservable }: BuildContext,
   initialViewName?: string
 ) {
   const { handler: viewUpdateHandler, getViewEvent: getViewUpdate, getHandledCount: getViewUpdateCount } = spyOnViews(
@@ -216,8 +205,8 @@ export function setupViewTest(
     location,
     lifeCycle,
     domMutationObservable,
+    locationChangeObservable,
     !configuration.trackViewsManually,
-    configuration,
     initialViewName
   )
   return {
