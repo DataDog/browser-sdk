@@ -14,8 +14,9 @@ import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from '../src/
 import { ParentContexts } from '../src/domain/parentContexts'
 import { trackViews, ViewEvent } from '../src/domain/rumEventsCollection/view/trackViews'
 import { RumSession, RumSessionPlan } from '../src/domain/rumSession'
-import { RawRumEvent, RumContext, ViewContext } from '../src/rawRumEvent.types'
+import { RawRumEvent, RumContext, ViewContext, UrlContext } from '../src/rawRumEvent.types'
 import { LocationChange } from '../src/browser/locationChangeObservable'
+import { UrlContexts } from '../src/domain/urlContexts'
 import { validateFormat } from './formatValidation'
 import { createRumSessionMock } from './mockRumSession'
 
@@ -43,6 +44,7 @@ export interface BuildContext {
   applicationId: string
   parentContexts: ParentContexts
   foregroundContexts: ForegroundContexts
+  urlContexts: UrlContexts
 }
 
 export interface TestIO {
@@ -67,6 +69,15 @@ export function setup(): TestSetupBuilder {
   let clock: Clock
   let fakeLocation: Partial<Location> = location
   let parentContexts: ParentContexts
+  const urlContexts: UrlContexts = {
+    findUrl: () => ({
+      view: {
+        url: fakeLocation.href!,
+        referrer: document.referrer,
+      },
+    }),
+    stop: noop,
+  }
   let foregroundContexts: ForegroundContexts = {
     isInForegroundAt: () => undefined,
     selectInForegroundPeriodsFor: () => undefined,
@@ -130,6 +141,7 @@ export function setup(): TestSetupBuilder {
           domMutationObservable,
           locationChangeObservable,
           parentContexts,
+          urlContexts,
           foregroundContexts,
           session,
           applicationId: FAKE_APP_ID,
@@ -162,7 +174,7 @@ export function setup(): TestSetupBuilder {
 
 function validateRumEventFormat(rawRumEvent: RawRumEvent) {
   const fakeId = '00000000-aaaa-0000-aaaa-000000000000'
-  const fakeContext: RumContext & ViewContext = {
+  const fakeContext: RumContext & ViewContext & UrlContext = {
     _dd: {
       format_version: 2,
       drift: 0,
