@@ -22,10 +22,9 @@ export interface ReplicaConfiguration {
 
 export function computeTransportConfiguration(
   initConfiguration: InitConfiguration,
-  buildEnv: BuildEnv,
-  isIntakeV2Enabled?: boolean
+  buildEnv: BuildEnv
 ): TransportConfiguration {
-  const endpointBuilder = createEndpointBuilder(initConfiguration, buildEnv, isIntakeV2Enabled)
+  const endpointBuilder = createEndpointBuilder(initConfiguration, buildEnv)
   const intakeUrls: string[] = ENDPOINTS_TYPES.map((endpointType) => endpointBuilder.buildIntakeUrl(endpointType))
 
   const configuration: TransportConfiguration = {
@@ -47,15 +46,15 @@ export function computeTransportConfiguration(
   }
 
   if (buildEnv.buildMode === BuildMode.STAGING && initConfiguration.replica !== undefined) {
-    const replicaConfiguration = {
+    const replicaConfiguration: InitConfiguration = {
       ...initConfiguration,
       site: INTAKE_SITE_US,
       applicationId: initConfiguration.replica.applicationId,
       clientToken: initConfiguration.replica.clientToken,
       useAlternateIntakeDomains: true,
-      intakeApiVersion: isIntakeV2Enabled ? 2 : (1 as 1 | 2),
+      intakeApiVersion: 2,
     }
-    const replicaEndpointBuilder = createEndpointBuilder(replicaConfiguration, buildEnv, isIntakeV2Enabled)
+    const replicaEndpointBuilder = createEndpointBuilder(replicaConfiguration, buildEnv)
 
     configuration.replica = {
       applicationId: initConfiguration.replica.applicationId,

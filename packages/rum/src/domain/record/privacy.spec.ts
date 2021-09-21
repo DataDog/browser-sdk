@@ -79,33 +79,33 @@ describe('privacy helpers', () => {
       expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW)).toBe(NodePrivacyLevel.ALLOW)
       expect(getNodePrivacyLevel(node, NodePrivacyLevel.IGNORE)).toBe(NodePrivacyLevel.IGNORE)
       expect(getNodePrivacyLevel(node, NodePrivacyLevel.MASK)).toBe(NodePrivacyLevel.MASK)
-      expect(getNodePrivacyLevel(node, NodePrivacyLevel.MASK_FORMS_ONLY)).toBe(NodePrivacyLevel.MASK_FORMS_ONLY)
+      expect(getNodePrivacyLevel(node, NodePrivacyLevel.MASK_USER_INPUT)).toBe(NodePrivacyLevel.MASK_USER_INPUT)
     })
 
-    it('considers a DOM Element with a data-dd-privacy="input-ignored" attribute to be MASK_FORMS_ONLY (alias)', () => {
+    it('considers a DOM Element with a data-dd-privacy="input-ignored" attribute to be MASK_USER_INPUT (alias)', () => {
       const node = document.createElement('input')
       node.setAttribute('data-dd-privacy', 'input-ignored')
-      expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW)).toBe(NodePrivacyLevel.MASK_FORMS_ONLY)
+      expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW)).toBe(NodePrivacyLevel.MASK_USER_INPUT)
     })
 
-    it('considers a DOM Element with a dd-privacy-input-ignored class to be MASK_FORMS_ONLY (alias)', () => {
+    it('considers a DOM Element with a dd-privacy-input-ignored class to be MASK_USER_INPUT (alias)', () => {
       const node = document.createElement('input')
       node.className = 'dd-privacy-input-ignored'
-      expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW)).toBe(NodePrivacyLevel.MASK_FORMS_ONLY)
+      expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW)).toBe(NodePrivacyLevel.MASK_USER_INPUT)
     })
 
-    it('considers a DOM HTMLInputElement with a type of "password" to be MASK_FORMS_ONLY (alias)', () => {
+    it('considers a DOM HTMLInputElement with a type of "password" to be MASK_USER_INPUT (alias)', () => {
       const node = document.createElement('input')
       node.type = 'password'
       expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW)).toBe(NodePrivacyLevel.MASK)
     })
 
     describe('input mode priority', () => {
-      it('consider a DOM Element to be MASK_FORMS_ONLY if both modes can apply', () => {
+      it('consider a DOM Element to be MASK_USER_INPUT if both modes can apply', () => {
         const node = document.createElement('input')
         node.className = 'dd-privacy-input-ignored'
-        node.setAttribute('data-dd-privacy', 'mask-forms-only')
-        expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW)).toBe(NodePrivacyLevel.MASK_FORMS_ONLY)
+        node.setAttribute('data-dd-privacy', 'mask-user-input')
+        expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW)).toBe(NodePrivacyLevel.MASK_USER_INPUT)
       })
 
       it('forces an element to be hidden if an ancestor is hidden', () => {
@@ -128,7 +128,7 @@ describe('privacy helpers', () => {
       it('consider a DOM element to be ALLOW even if an ancestor is MASK', () => {
         const node = document.createElement('input')
         node.setAttribute('data-dd-privacy', 'allow')
-        expect(getNodePrivacyLevel(node, NodePrivacyLevel.MASK_FORMS_ONLY)).toBe(NodePrivacyLevel.ALLOW)
+        expect(getNodePrivacyLevel(node, NodePrivacyLevel.MASK_USER_INPUT)).toBe(NodePrivacyLevel.ALLOW)
       })
     })
 
@@ -140,30 +140,30 @@ describe('privacy helpers', () => {
         expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW)).toBe(NodePrivacyLevel.ALLOW)
       })
 
-      it('considers DOM Element with parent node with dd-privacy="input-ignored" attr to be MASK_FORMS_ONLY', () => {
+      it('considers DOM Element with parent node with dd-privacy="input-ignored" attr to be MASK_USER_INPUT', () => {
         const node = document.createElement('input')
         const parent = document.createElement('form')
         parent.setAttribute('data-dd-privacy', 'input-ignored')
         parent.appendChild(node)
-        expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW)).toBe(NodePrivacyLevel.MASK_FORMS_ONLY)
+        expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW)).toBe(NodePrivacyLevel.MASK_USER_INPUT)
       })
 
-      it('considers DOM Element with parent node with dd-privacy-input-ignored class to be MASK_FORMS_ONLY', () => {
+      it('considers DOM Element with parent node with dd-privacy-input-ignored class to be MASK_USER_INPUT', () => {
         const node = document.createElement('input')
         const parent = document.createElement('form')
         parent.className = 'dd-privacy-input-ignored'
         parent.appendChild(node)
-        expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW)).toBe(NodePrivacyLevel.MASK_FORMS_ONLY)
+        expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW)).toBe(NodePrivacyLevel.MASK_USER_INPUT)
       })
 
       // eslint-disable-next-line max-len
-      it('considers a DOM Element with a "masked" privacy mode but within a parent with a "ignored" privacy mode to be MASK_FORMS_ONLY', () => {
+      it('considers a DOM Element with a "masked" privacy mode but within a parent with a "ignored" privacy mode to be MASK_USER_INPUT', () => {
         const node = document.createElement('input')
         const parent = document.createElement('form')
         parent.setAttribute('data-dd-privacy', 'input-ignored')
         parent.appendChild(node)
         node.setAttribute('data-dd-privacy', 'input-masked')
-        expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW)).toBe(NodePrivacyLevel.MASK_FORMS_ONLY)
+        expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW)).toBe(NodePrivacyLevel.MASK_USER_INPUT)
       })
     })
   })
@@ -195,21 +195,21 @@ describe('given privacy attributes getNodeSelfPrivacyLevel', function testOWnPri
     const el = buildFromHTML('<span class="hi dd-privacy-mask" data-test="foo" bar="baz" checked>hello</span>')
     expect(getNodeSelfPrivacyLevel(el)).toBe(NodePrivacyLevel.MASK)
   })
-  it('classifies `mask-forms-only` class', () => {
+  it('classifies `mask-user-input` class', () => {
     const el = buildFromHTML(
-      '<span class="hi dd-privacy-mask-forms-only" data-test="foo" bar="baz" checked>hello</span>'
+      '<span class="hi dd-privacy-mask-user-input" data-test="foo" bar="baz" checked>hello</span>'
     )
-    expect(getNodeSelfPrivacyLevel(el)).toBe(NodePrivacyLevel.MASK_FORMS_ONLY)
+    expect(getNodeSelfPrivacyLevel(el)).toBe(NodePrivacyLevel.MASK_USER_INPUT)
   })
-  it('classifies deprecated `dd-privacy-input-ignored` class as `mask-forms-only`', () => {
+  it('classifies deprecated `dd-privacy-input-ignored` class as `mask-user-input`', () => {
     // eslint-disable-next-line max-len
     const el = buildFromHTML('<span class="hi dd-privacy-input-ignored" data-test="foo" bar="baz" checked>hello</span>')
-    expect(getNodeSelfPrivacyLevel(el)).toBe(NodePrivacyLevel.MASK_FORMS_ONLY)
+    expect(getNodeSelfPrivacyLevel(el)).toBe(NodePrivacyLevel.MASK_USER_INPUT)
   })
-  it('classifies deprecated `dd-privacy-input-masked` class as `mask-forms-only`', () => {
+  it('classifies deprecated `dd-privacy-input-masked` class as `mask-user-input`', () => {
     // eslint-disable-next-line max-len
     const el = buildFromHTML('<span class="hi dd-privacy-input-masked" data-test="foo" bar="baz" checked>hello</span>')
-    expect(getNodeSelfPrivacyLevel(el)).toBe(NodePrivacyLevel.MASK_FORMS_ONLY)
+    expect(getNodeSelfPrivacyLevel(el)).toBe(NodePrivacyLevel.MASK_USER_INPUT)
   })
   it('classifies unknown class `dd-privacy-foo` class as undefined', () => {
     const el = buildFromHTML('<span class="hi dd-privacy-foo" data-test="foo" bar="baz" checked>hello</span>')
@@ -250,9 +250,9 @@ describe('Inherited Privacy Level  derivePrivacyLevelGivenParent() ... ', functi
       msg: 'Override allow (for hidden)',
     },
     {
-      args: [NodePrivacyLevel.ALLOW, NodePrivacyLevel.MASK_FORMS_ONLY],
+      args: [NodePrivacyLevel.ALLOW, NodePrivacyLevel.MASK_USER_INPUT],
       expect: NodePrivacyLevel.ALLOW,
-      msg: 'Override mask-forms-only',
+      msg: 'Override mask-user-input',
     },
 
     {
@@ -317,13 +317,13 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
     })
   })
 
-  describe('for privacy tag `mask-forms-only`, a DOM tree', function testMaskFormsOnlyDomTree() {
+  describe('for privacy tag `mask-user-input`, a DOM tree', function testMaskFormsOnlyDomTree() {
     it("doesn't mask text content", () => {
-      const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-forms-only')
+      const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-user-input')
       expect(JSON.stringify(serializedDoc)).not.toContain('᙮᙮')
     })
     it('keeps form fields private', () => {
-      const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-forms-only')
+      const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-user-input')
       expect(JSON.stringify(serializedDoc)).toContain('**')
     })
   })
@@ -358,30 +358,30 @@ describe('shouldMaskNode', () => {
     it('returns true if the privacy level is not ALLOW', () => {
       const element = document.createElement('input')
       expect(shouldMaskNode(element, NodePrivacyLevel.MASK)).toBeTrue()
-      expect(shouldMaskNode(element, NodePrivacyLevel.MASK_FORMS_ONLY)).toBeTrue()
+      expect(shouldMaskNode(element, NodePrivacyLevel.MASK_USER_INPUT)).toBeTrue()
       expect(shouldMaskNode(element, NodePrivacyLevel.IGNORE)).toBeTrue()
       expect(shouldMaskNode(element, NodePrivacyLevel.HIDDEN)).toBeTrue()
     })
   })
 
   describe('for text nodes contained in form elements', () => {
-    it('returns true if the privacy level is MASK or MASK_FORMS_ONLY', () => {
+    it('returns true if the privacy level is MASK or MASK_USER_INPUT', () => {
       const element = document.createElement('input')
       const text = document.createTextNode('foo')
       element.appendChild(text)
       expect(shouldMaskNode(text, NodePrivacyLevel.MASK)).toBeTrue()
-      expect(shouldMaskNode(text, NodePrivacyLevel.MASK_FORMS_ONLY)).toBeTrue()
+      expect(shouldMaskNode(text, NodePrivacyLevel.MASK_USER_INPUT)).toBeTrue()
     })
   })
 
   describe('for other elements', () => {
-    it('returns false if the privacy level is ALLOW or MASK_FORMS_ONLY', () => {
+    it('returns false if the privacy level is ALLOW or MASK_USER_INPUT', () => {
       const element = document.createElement('div')
       expect(shouldMaskNode(element, NodePrivacyLevel.ALLOW)).toBeFalse()
-      expect(shouldMaskNode(element, NodePrivacyLevel.MASK_FORMS_ONLY)).toBeFalse()
+      expect(shouldMaskNode(element, NodePrivacyLevel.MASK_USER_INPUT)).toBeFalse()
     })
 
-    it('returns true if the privacy level is not ALLOW nor MASK_FORMS_ONLY', () => {
+    it('returns true if the privacy level is not ALLOW nor MASK_USER_INPUT', () => {
       const element = document.createElement('div')
       expect(shouldMaskNode(element, NodePrivacyLevel.MASK)).toBeTrue()
       expect(shouldMaskNode(element, NodePrivacyLevel.IGNORE)).toBeTrue()
