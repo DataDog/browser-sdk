@@ -105,6 +105,15 @@ describe('makeRecorderApi', () => {
       recorderApi.start()
       expect(startRecordingSpy).not.toHaveBeenCalled()
     })
+
+    it('allows to restart recording if the start fails', () => {
+      setupBuilder.build()
+      rumInit(DEFAULT_INIT_CONFIGURATION)
+      startRecordingSpy.and.returnValue(undefined)
+      recorderApi.start()
+      recorderApi.start()
+      expect(startRecordingSpy).toHaveBeenCalledTimes(2)
+    })
   })
 
   describe('stopSessionReplayRecording()', () => {
