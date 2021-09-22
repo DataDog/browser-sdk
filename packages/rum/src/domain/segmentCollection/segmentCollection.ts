@@ -1,4 +1,12 @@
-import { addErrorToMonitoringBatch, addEventListener, DOM_EVENT, EventEmitter, monitor } from '@datadog/browser-core'
+import {
+  addErrorToMonitoringBatch,
+  addEventListener,
+  display,
+  DOM_EVENT,
+  EventEmitter,
+  includes,
+  monitor,
+} from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType, ParentContexts, RumSession } from '@datadog/browser-rum-core'
 import { SEND_BEACON_BYTE_LENGTH_LIMIT } from '../../transport/send'
 import { CreationReason, Record, SegmentContext, SegmentMeta } from '../../types'
@@ -43,7 +51,19 @@ export function startSegmentCollection(
   send: (data: Uint8Array, meta: SegmentMeta, rawSegmentSize: number, flushReason?: string) => void
 ) {
   if (!workerSingleton) {
-    workerSingleton = createDeflateWorker()
+    try {
+      workerSingleton = createDeflateWorker()
+    } catch (error) {
+      display.error('Session Replay recording failed to start: an error occurred while creating the Worker:', error)
+      if (includes(error.message, 'Content Security Policy')) {
+        display.error(
+          'Please make sure CSP is correctly configured ' +
+            'https://docs.datadoghq.com/real_user_monitoring/faq/content_security_policy'
+        )
+      }
+      addErrorToMonitoringBatch(error)
+      return
+    }
     workerSingleton.addEventListener(
       'message',
       monitor(({ data }) => {

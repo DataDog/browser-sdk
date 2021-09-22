@@ -92,16 +92,23 @@ export function makeRecorderApi(startRecordingImpl: StartRecording): RecorderApi
             return
           }
 
-          const { stop: stopRecording } = startRecordingImpl(
+          const recording = startRecordingImpl(
             lifeCycle,
             initConfiguration.applicationId,
             configuration,
             session,
             parentContexts
           )
-          state = {
-            status: RecorderStatus.Started,
-            stopRecording,
+
+          if (!recording) {
+            state = {
+              status: RecorderStatus.Stopped,
+            }
+          } else {
+            state = {
+              status: RecorderStatus.Started,
+              stopRecording: recording.stop,
+            }
           }
         })
       }

@@ -13,7 +13,7 @@ export function startRecording(
   session: RumSession,
   parentContexts: ParentContexts
 ) {
-  const { addRecord, stop: stopSegmentCollection } = startSegmentCollection(
+  const segmentCollection = startSegmentCollection(
     lifeCycle,
     applicationId,
     session,
@@ -21,9 +21,12 @@ export function startRecording(
     (data, meta, rawSegmentSize, flushReason) =>
       send(configuration.sessionReplayEndpoint, data, meta, rawSegmentSize, flushReason)
   )
+  if (!segmentCollection) {
+    return
+  }
 
   function addRawRecord(rawRecord: RawRecord) {
-    addRecord({ ...rawRecord, timestamp: Date.now() })
+    segmentCollection!.addRecord({ ...rawRecord, timestamp: Date.now() })
   }
 
   const { stop: stopRecording, takeFullSnapshot, flushMutations } = record({
@@ -44,7 +47,7 @@ export function startRecording(
       unsubscribeViewEnded()
       unsubscribeViewCreated()
       stopRecording()
-      stopSegmentCollection()
+      segmentCollection.stop()
     },
   }
 }
