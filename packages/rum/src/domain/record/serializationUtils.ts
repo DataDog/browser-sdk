@@ -3,12 +3,12 @@ import { CENSORED_STRING_MARK, NodePrivacyLevel } from '../../constants'
 import { shouldMaskNode } from './privacy'
 import { SerializedNodeWithId } from './types'
 
-export interface NodeWithSerializedNode extends Node {
-  __sn: SerializedNodeWithId
-}
+export type NodeWithSerializedNode = Node & { s: 'Node with serialized node' }
+
+const serializedNodes = new WeakMap<Node, SerializedNodeWithId>()
 
 export function hasSerializedNode(node: Node): node is NodeWithSerializedNode {
-  return '__sn' in node
+  return serializedNodes.has(node)
 }
 
 export function nodeAndAncestorsHaveSerializedNode(node: Node): node is NodeWithSerializedNode {
@@ -25,11 +25,11 @@ export function nodeAndAncestorsHaveSerializedNode(node: Node): node is NodeWith
 export function getSerializedNodeId(node: NodeWithSerializedNode): number
 export function getSerializedNodeId(node: Node): number | undefined
 export function getSerializedNodeId(node: Node) {
-  return hasSerializedNode(node) ? node.__sn.id : undefined
+  return serializedNodes.get(node)?.id
 }
 
 export function setSerializedNode(node: Node, serializeNode: SerializedNodeWithId) {
-  ;(node as Partial<NodeWithSerializedNode>).__sn = serializeNode
+  serializedNodes.set(node, serializeNode)
 }
 
 const URL_IN_CSS_REF = /url\((?:(')([^']*)'|(")([^"]*)"|([^)]*))\)/gm
