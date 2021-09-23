@@ -134,6 +134,18 @@ export function startRumAssembly(
               },
             })
           }
+          if (serverRumEvent.session.has_replay && serverRumEvent._dd.session?.plan === RumSessionPlan.LITE) {
+            addMonitoringMessage('lite session with replay', {
+              debug: {
+                eventType: serverRumEvent.type,
+                viewId: serverRumEvent.view.id,
+                sessionId: serverRumEvent.session.id,
+                replayPlan: session.hasReplayPlan(),
+                litePlan: session.hasLitePlan(),
+                docVersion: serverRumEvent._dd.document_version as number | undefined,
+              },
+            })
+          }
           lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, serverRumEvent)
         }
       }
