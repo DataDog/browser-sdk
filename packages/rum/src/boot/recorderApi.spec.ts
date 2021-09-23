@@ -9,6 +9,7 @@ import {
 import { createNewEvent } from '@datadog/browser-core/test/specHelper'
 import { createRumSessionMock, RumSessionMock } from '../../../rum-core/test/mockRumSession'
 import { setup, TestSetupBuilder } from '../../../rum-core/test/specHelper'
+import { DeflateWorker } from '../domain/segmentCollection/deflateWorker'
 import { makeRecorderApi, StartRecording } from './recorderApi'
 
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
@@ -18,6 +19,7 @@ describe('makeRecorderApi', () => {
   let recorderApi: RecorderApi
   let startRecordingSpy: jasmine.Spy<StartRecording>
   let stopRecordingSpy: jasmine.Spy<() => void>
+  let getDeflateWorkerSingletonSpy: jasmine.Spy<() => DeflateWorker | undefined>
 
   let rumInit: (initConfiguration: RumInitConfiguration) => void
 
@@ -27,7 +29,8 @@ describe('makeRecorderApi', () => {
       startRecordingSpy = jasmine.createSpy('startRecording').and.callFake(() => ({
         stop: stopRecordingSpy,
       }))
-      recorderApi = makeRecorderApi(startRecordingSpy)
+      getDeflateWorkerSingletonSpy = jasmine.createSpy('getDeflateWorkerSingleton').and.returnValue({})
+      recorderApi = makeRecorderApi(startRecordingSpy, getDeflateWorkerSingletonSpy)
       rumInit = (initConfiguration) => {
         recorderApi.onRumStart(
           lifeCycle,
@@ -106,13 +109,12 @@ describe('makeRecorderApi', () => {
       expect(startRecordingSpy).not.toHaveBeenCalled()
     })
 
-    it('allows to restart recording if the start fails', () => {
+    it('do not start recording if worker fails to be instantiated', () => {
       setupBuilder.build()
       rumInit(DEFAULT_INIT_CONFIGURATION)
-      startRecordingSpy.and.returnValue(undefined)
+      getDeflateWorkerSingletonSpy.and.returnValue(undefined)
       recorderApi.start()
-      recorderApi.start()
-      expect(startRecordingSpy).toHaveBeenCalledTimes(2)
+      expect(startRecordingSpy).not.toHaveBeenCalled()
     })
   })
 

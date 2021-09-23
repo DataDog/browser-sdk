@@ -9,6 +9,7 @@ import { collectAsyncCalls } from '../../test/utils'
 import { setMaxSegmentSize } from '../domain/segmentCollection/segmentCollection'
 
 import { Segment, RecordType } from '../types'
+import { getDeflateWorkerSingleton } from '../domain/segmentCollection/deflateWorkerSingleton'
 import { startRecording } from './startRecording'
 
 describe('startRecording', () => {
@@ -56,7 +57,14 @@ describe('startRecording', () => {
         defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
       })
       .beforeBuild(({ lifeCycle, applicationId, configuration, parentContexts, session }) => {
-        const recording = startRecording(lifeCycle, applicationId, configuration, session, parentContexts)
+        const recording = startRecording(
+          lifeCycle,
+          applicationId,
+          configuration,
+          session,
+          parentContexts,
+          getDeflateWorkerSingleton()!
+        )
         stopRecording = recording ? recording.stop : noop
         return { stop: stopRecording }
       })
