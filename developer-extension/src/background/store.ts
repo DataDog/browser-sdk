@@ -5,7 +5,7 @@ export const store: Store = {
   devServerStatus: 'checking',
   logEventsFromRequests: true,
   useDevBundles: false,
-  useRumRecorder: false,
+  useRumSlim: false,
 }
 
 export function setStore(newStore: Partial<Store>) {
