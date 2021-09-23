@@ -11,10 +11,9 @@ export function startRecording(
   applicationId: string,
   configuration: Configuration,
   session: RumSession,
-  parentContexts: ParentContexts,
-  startSegmentCollectionImpl = startSegmentCollection
+  parentContexts: ParentContexts
 ) {
-  const segmentCollection = startSegmentCollectionImpl(
+  const segmentCollection = startSegmentCollection(
     lifeCycle,
     applicationId,
     session,
