@@ -35,17 +35,23 @@ describe('rum assembly', () => {
           },
           view: {
             id: 'abcde',
-            referrer: 'url',
-            url: 'url',
           },
         }),
       })
-      .beforeBuild(({ applicationId, configuration, lifeCycle, session, parentContexts }) => {
+      .beforeBuild(({ applicationId, configuration, lifeCycle, session, parentContexts, urlContexts }) => {
         serverRumEvents = []
         lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent) =>
           serverRumEvents.push(serverRumEvent)
         )
-        startRumAssembly(applicationId, configuration, lifeCycle, session, parentContexts, () => commonContext)
+        startRumAssembly(
+          applicationId,
+          configuration,
+          lifeCycle,
+          session,
+          parentContexts,
+          urlContexts,
+          () => commonContext
+        )
       })
   })
 
@@ -431,12 +437,19 @@ describe('rum assembly', () => {
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION),
       })
-      expect(serverRumEvents[0].view).toEqual({
-        id: 'abcde',
-        referrer: 'url',
-        url: 'url',
-      })
+      expect(serverRumEvents[0].view.id).toBe('abcde')
       expect(serverRumEvents[0].session.id).toBe('1234')
+    })
+  })
+
+  describe('url context', () => {
+    it('should be merged with event attributes', () => {
+      const { lifeCycle, fakeLocation } = setupBuilder.build()
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.ACTION),
+      })
+      expect(serverRumEvents[0].view.url).toBe(fakeLocation.href!)
+      expect(serverRumEvents[0].view.referrer).toBe(document.referrer)
     })
   })
 

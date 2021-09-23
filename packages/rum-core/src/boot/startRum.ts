@@ -1,4 +1,4 @@
-import { combine, Configuration, InternalMonitoring } from '@datadog/browser-core'
+import { combine, Configuration, InternalMonitoring, Observable } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { startPerformanceCollection } from '../browser/performanceCollection'
 import { startRumAssembly } from '../domain/assembly'
@@ -15,7 +15,8 @@ import { startViewCollection } from '../domain/rumEventsCollection/view/viewColl
 import { RumSession, startRumSession } from '../domain/rumSession'
 import { CommonContext } from '../rawRumEvent.types'
 import { startRumBatch } from '../transport/batch'
-import { createLocationChangeObservable } from '../browser/locationChangeObservable'
+import { startUrlContexts } from '../domain/urlContexts'
+import { createLocationChangeObservable, LocationChange } from '../browser/locationChangeObservable'
 import { RecorderApi, RumInitConfiguration } from './rumPublicApi'
 
 export function startRum(
@@ -41,11 +42,13 @@ export function startRum(
     )
   )
 
-  const { parentContexts, foregroundContexts } = startRumEventCollection(
+  const { parentContexts, foregroundContexts, urlContexts } = startRumEventCollection(
     initConfiguration.applicationId,
     lifeCycle,
     configuration,
+    location,
     session,
+    locationChangeObservable,
     getCommonContext
   )
 
@@ -69,7 +72,7 @@ export function startRum(
   startRequestCollection(lifeCycle, configuration)
   startPerformanceCollection(lifeCycle, configuration)
 
-  const internalContext = startInternalContext(initConfiguration.applicationId, session, parentContexts)
+  const internalContext = startInternalContext(initConfiguration.applicationId, session, parentContexts, urlContexts)
 
   return {
     addAction,
@@ -87,18 +90,22 @@ export function startRumEventCollection(
   applicationId: string,
   lifeCycle: LifeCycle,
   configuration: Configuration,
+  location: Location,
   session: RumSession,
+  locationChangeObservable: Observable<LocationChange>,
   getCommonContext: () => CommonContext
 ) {
   const parentContexts = startParentContexts(lifeCycle, session)
+  const urlContexts = startUrlContexts(lifeCycle, locationChangeObservable, location)
   const foregroundContexts = startForegroundContexts()
   const batch = startRumBatch(configuration, lifeCycle)
 
-  startRumAssembly(applicationId, configuration, lifeCycle, session, parentContexts, getCommonContext)
+  startRumAssembly(applicationId, configuration, lifeCycle, session, parentContexts, urlContexts, getCommonContext)
 
   return {
     parentContexts,
     foregroundContexts,
+    urlContexts,
     stop: () => {
       // prevent batch from previous tests to keep running and send unwanted requests
       // could be replaced by stopping all the component when they will all have a stop method

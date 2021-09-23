@@ -18,10 +18,8 @@ describe('parentContexts', () => {
 
   function buildViewCreatedEvent(partialViewCreatedEvent: Partial<ViewCreatedEvent> = {}): ViewCreatedEvent {
     return {
-      location,
       startClocks,
       id: FAKE_ID,
-      referrer: 'http://foo.com',
       ...partialViewCreatedEvent,
     }
   }
@@ -111,17 +109,6 @@ describe('parentContexts', () => {
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ id: newViewId }))
 
       expect(parentContexts.findView()!.view.id).toEqual(newViewId)
-    })
-
-    it('should return the current url with the current view', () => {
-      const { lifeCycle, fakeLocation, changeLocation } = setupBuilder.build()
-
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ location: fakeLocation as Location }))
-      expect(parentContexts.findView()!.view.url).toBe('http://fake-url.com/')
-
-      changeLocation('/foo')
-
-      expect(parentContexts.findView()!.view.url).toBe('http://fake-url.com/foo')
     })
 
     it('should return the view name with the view', () => {

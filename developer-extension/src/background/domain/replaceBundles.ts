@@ -1,5 +1,5 @@
 import { listenAction } from '../actions'
-import { DEV_LOGS_URL, DEV_RUM_RECORDER_URL, DEV_RUM_URL } from '../constants'
+import { DEV_LOGS_URL, DEV_RUM_SLIM_URL, DEV_RUM_URL } from '../constants'
 import { setStore, store } from '../store'
 
 chrome.webRequest.onBeforeRequest.addListener(
@@ -11,12 +11,12 @@ chrome.webRequest.onBeforeRequest.addListener(
       }
       if (url.pathname.includes('rum')) {
         return {
-          redirectUrl: store.useRumRecorder ? DEV_RUM_RECORDER_URL : DEV_RUM_URL,
+          redirectUrl: store.useRumSlim ? DEV_RUM_SLIM_URL : DEV_RUM_URL,
         }
       }
-    } else if (store.useRumRecorder && /\/datadog-rum(?!-recorder)/.test(info.url)) {
+    } else if (store.useRumSlim && /\/datadog-rum(?!-slim)/.test(info.url)) {
       return {
-        redirectUrl: info.url.replace(/datadog-rum/, 'datadog-rum-recorder'),
+        redirectUrl: info.url.replace(/datadog-rum/, 'datadog-rum-slim'),
       }
     }
     return
@@ -26,7 +26,7 @@ chrome.webRequest.onBeforeRequest.addListener(
     urls: [
       ...getBundleUrlPatterns('logs'),
       ...getBundleUrlPatterns('rum'),
-      ...getBundleUrlPatterns('rum-recorder'),
+      ...getBundleUrlPatterns('rum-slim'),
       'https://localhost:8443/static/datadog-rum-hotdog.js',
     ],
   },
@@ -40,7 +40,7 @@ listenAction('getStore', () => {
 })
 
 listenAction('setStore', (newStore) => {
-  if ('useDevBundles' in newStore || 'useRumRecorder' in newStore) {
+  if ('useDevBundles' in newStore || 'useRumSlim' in newStore) {
     chrome.browsingData.removeCache({})
   }
 })
@@ -48,6 +48,7 @@ listenAction('setStore', (newStore) => {
 function getBundleUrlPatterns(bundleName: string) {
   return [
     `https://*/datadog-${bundleName}.js`,
+    `https://*/datadog-${bundleName}-v3.js`,
     `https://*/datadog-${bundleName}-canary.js`,
     `https://*/datadog-${bundleName}-head.js`,
   ]

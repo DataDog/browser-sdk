@@ -199,14 +199,19 @@ export interface ViewContext extends Context {
   view: {
     id: string
     name?: string
-    url: string
-    referrer: string
   }
 }
 
 export interface ActionContext extends Context {
   action: {
     id: string
+  }
+}
+
+export interface UrlContext extends Context {
+  view: {
+    url: string
+    referrer: string
   }
 }
 
