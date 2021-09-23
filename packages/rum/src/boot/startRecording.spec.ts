@@ -6,9 +6,9 @@ import { createNewEvent, isIE } from '../../../core/test/specHelper'
 
 import { setup, TestSetupBuilder } from '../../../rum-core/test/specHelper'
 import { collectAsyncCalls } from '../../test/utils'
-import { setMaxSegmentSize } from '../domain/segmentCollection/segmentCollection'
+import { setMaxSegmentSize, startSegmentCollection } from '../domain/segmentCollection/segmentCollection'
 
-import { Segment, RecordType } from '../types'
+import { Segment, RecordType, Record } from '../types'
 import { startRecording } from './startRecording'
 
 describe('startRecording', () => {
@@ -22,7 +22,8 @@ describe('startRecording', () => {
   let sandbox: HTMLElement
   let textField: HTMLInputElement
   let expectNoExtraRequestSendCalls: (done: () => void) => void
-  let stopRecording: () => void
+  let recording: ReturnType<typeof startRecording>
+  let startSegmentCollectionImpl: typeof startSegmentCollection
 
   beforeEach(() => {
     if (isIE()) {
@@ -35,6 +36,7 @@ describe('startRecording', () => {
     document.body.appendChild(sandbox)
     textField = document.createElement('input')
     sandbox.appendChild(textField)
+    startSegmentCollectionImpl = startSegmentCollection
 
     setupBuilder = setup()
       .withParentContexts({
@@ -56,9 +58,15 @@ describe('startRecording', () => {
         defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
       })
       .beforeBuild(({ lifeCycle, applicationId, configuration, parentContexts, session }) => {
-        const recording = startRecording(lifeCycle, applicationId, configuration, session, parentContexts)
-        stopRecording = recording ? recording.stop : noop
-        return { stop: stopRecording }
+        recording = startRecording(
+          lifeCycle,
+          applicationId,
+          configuration,
+          session,
+          parentContexts,
+          startSegmentCollectionImpl
+        )
+        return recording && { stop: recording.stop }
       })
 
     const requestSendSpy = spyOn(HttpRequest.prototype, 'send')
@@ -217,7 +225,7 @@ describe('startRecording', () => {
       const { lifeCycle } = setupBuilder.build()
 
       document.body.dispatchEvent(createNewEvent('click'))
-      stopRecording()
+      recording!.stop()
       document.body.dispatchEvent(createNewEvent('click'))
       flushSegment(lifeCycle)
 
@@ -230,7 +238,7 @@ describe('startRecording', () => {
     it('stops taking full snapshots on view creation', (done) => {
       const { lifeCycle } = setupBuilder.build()
 
-      stopRecording()
+      recording!.stop()
       changeView(lifeCycle)
       flushSegment(lifeCycle)
 
@@ -238,6 +246,23 @@ describe('startRecording', () => {
         expect(getRequestData(calls.first()).records_count).toBe('3')
         expectNoExtraRequestSendCalls(done)
       })
+    })
+  })
+
+  describe('when the segment collection fails to start', () => {
+    beforeEach(() => {
+      startSegmentCollectionImpl = () => undefined
+    })
+
+    it('returns undefined', () => {
+      setupBuilder.build()
+      expect(recording).toBeUndefined()
+    })
+
+    it('ignores any segment flush', (done) => {
+      const { lifeCycle } = setupBuilder.build()
+      flushSegment(lifeCycle)
+      expectNoExtraRequestSendCalls(done)
     })
   })
 
