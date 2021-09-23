@@ -10,10 +10,13 @@ const REPOSITORY = 'git@github.com:DataDog/browser-sdk.git'
 const MAIN_BRANCH = 'main'
 
 const CURRENT_STAGING_BRANCH = process.env.CURRENT_STAGING
-const NEW_STAGING_NUMBER = getIsoWeekNumber().toString().padStart(2, '0')
+const NEW_STAGING_NUMBER = getWeekNumber().toString().padStart(2, '0')
 const NEW_STAGING_BRANCH = `staging-${NEW_STAGING_NUMBER}`
 
 async function main() {
+  // used to share the new staging name to the notification jobs
+  await executeCommand(`echo "NEW_STAGING=${NEW_STAGING_BRANCH}" >> build.env`)
+
   await initGitConfig()
   await executeCommand(`git checkout ${MAIN_BRANCH} -f`)
   await executeCommand(`git pull`)
@@ -77,16 +80,13 @@ function getSecretKey(name) {
     `--name=${name}`,
   ]
 
-  return execute(`aws ${awsParameters.join(' ')}`, false)
+  return executeCommand(`aws ${awsParameters.join(' ')}`, false)
 }
 
-function getIsoWeekNumber() {
+function getWeekNumber() {
   const today = new Date()
-  const todayUtc = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()))
-  const dayNum = todayUtc.getUTCDay() || 7
-  todayUtc.setUTCDate(todayUtc.getUTCDate() + 4 - dayNum)
-  const yearStart = new Date(Date.UTC(todayUtc.getUTCFullYear(), 0, 1))
-  return Math.ceil(((todayUtc - yearStart) / 86400000 + 1) / 7)
+  const yearStart = new Date(today.getUTCFullYear(), 0, 1)
+  return Math.ceil(((today - yearStart) / 86400000 + yearStart.getUTCDay() + 1) / 7)
 }
 
 async function executeCommand(command, sshAuth = true) {

@@ -331,6 +331,9 @@ staging-reset-scheduled:
     - eval $(ssh-agent -s)
   script:
     - node --no-warnings scripts/staging-reset.js
+  artifacts:
+    reports:
+      dotenv: build.env
 
 staging-reset-scheduled-success:
   extends: .prepare_notification
@@ -338,9 +341,10 @@ staging-reset-scheduled-success:
     variables:
       - $TARGET_TASK_NAME == "staging-reset-scheduled"
   script:
-    - NEW_STAGING=`date +"staging-%U"`
     - 'MESSAGE_TEXT=":white_check_mark: [*browser-sdk*] Staging has been reset from *${CURRENT_STAGING}* to *${NEW_STAGING}*."'
     - postmessage "#rum-deploy" "$MESSAGE_TEXT"
+  dependencies:
+    - staging-reset-scheduled
 
 staging-reset-scheduled-failure:
   extends: .prepare_notification
@@ -349,6 +353,7 @@ staging-reset-scheduled-failure:
     variables:
       - $TARGET_TASK_NAME == "staging-reset-scheduled"
   script:
-    - NEW_STAGING=`date +"staging-%U"`
     - 'MESSAGE_TEXT=":x: [*browser-sdk*] Staging failed to reset from *${CURRENT_STAGING}* to *${NEW_STAGING}*."'
     - postmessage "#rum-deploy" "$MESSAGE_TEXT"
+  dependencies:
+    - staging-reset-scheduled
