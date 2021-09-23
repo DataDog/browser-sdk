@@ -60,8 +60,9 @@ export function startSegmentCollection(
           'Please make sure CSP is correctly configured ' +
             'https://docs.datadoghq.com/real_user_monitoring/faq/content_security_policy'
         )
+      } else {
+        addErrorToMonitoringBatch(error)
       }
-      addErrorToMonitoringBatch(error)
       return
     }
     workerSingleton.addEventListener(
