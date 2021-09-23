@@ -25,7 +25,7 @@ import {
 import {
   makeStylesheetUrlsAbsolute,
   getSerializedNodeId,
-  setSerializedNode,
+  setSerializedNodeId,
   getElementInputValue,
   makeSrcsetUrlsAbsolute,
   makeUrlAbsolute,
@@ -68,7 +68,7 @@ export function serializeNodeWithId(node: Node, options: SerializeOptions): Seri
   const id = getSerializedNodeId(node) || generateNextId()
   const serializedNodeWithId = serializedNode as SerializedNodeWithId
   serializedNodeWithId.id = id
-  setSerializedNode(node, serializedNodeWithId)
+  setSerializedNodeId(node, id)
   if (options.serializedNodeIds) {
     options.serializedNodeIds.add(id)
   }
