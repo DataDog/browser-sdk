@@ -8,22 +8,22 @@ interface PreviousContext<T> {
 
 export const CLEAR_OLD_CONTEXTS_INTERVAL = ONE_MINUTE
 
-export class ContextHistory<Raw, Built> {
-  private current: Raw | undefined
+export class ContextHistory<Context> {
+  private current: Context | undefined
   private currentStart: RelativeTime | undefined
-  private previousContexts: Array<PreviousContext<Built>> = []
+  private previousContexts: Array<PreviousContext<Context>> = []
   private clearOldContextsInterval: number
 
-  constructor(private buildContext: (r: Raw) => Built, private expireDelay: number) {
+  constructor(private expireDelay: number) {
     this.clearOldContextsInterval = setInterval(() => this.clearOldContexts(), CLEAR_OLD_CONTEXTS_INTERVAL)
   }
 
   find(startTime?: RelativeTime) {
-    if (startTime === undefined) {
-      return this.current ? this.buildContext(this.current) : undefined
-    }
-    if (this.current !== undefined && this.currentStart !== undefined && startTime >= this.currentStart) {
-      return this.buildContext(this.current)
+    if (
+      startTime === undefined ||
+      (this.current !== undefined && this.currentStart !== undefined && startTime >= this.currentStart)
+    ) {
+      return this.current
     }
     for (const previousContext of this.previousContexts) {
       if (startTime > previousContext.endTime) {
@@ -36,7 +36,7 @@ export class ContextHistory<Raw, Built> {
     return undefined
   }
 
-  setCurrent(current: Raw, startTime: RelativeTime) {
+  setCurrent(current: Context, startTime: RelativeTime) {
     this.current = current
     this.currentStart = startTime
   }
@@ -54,7 +54,7 @@ export class ContextHistory<Raw, Built> {
     if (this.current !== undefined && this.currentStart !== undefined) {
       this.previousContexts.unshift({
         endTime,
-        context: this.buildContext(this.current),
+        context: this.current,
         startTime: this.currentStart,
       })
       this.clearCurrent()

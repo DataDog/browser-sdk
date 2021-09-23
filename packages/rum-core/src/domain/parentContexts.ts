@@ -16,38 +16,20 @@ export interface ParentContexts {
 }
 
 export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): ParentContexts {
-  const viewContextHistory = new ContextHistory<ViewCreatedEvent & { sessionId?: string }, ViewContext>(
-    buildCurrentViewContext,
-    VIEW_CONTEXT_TIME_OUT_DELAY
-  )
+  const viewContextHistory = new ContextHistory<ViewContext>(VIEW_CONTEXT_TIME_OUT_DELAY)
 
-  const actionContextHistory = new ContextHistory<AutoActionCreatedEvent, ActionContext>(
-    buildCurrentActionContext,
-    ACTION_CONTEXT_TIME_OUT_DELAY
-  )
+  const actionContextHistory = new ContextHistory<ActionContext>(ACTION_CONTEXT_TIME_OUT_DELAY)
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
-    viewContextHistory.setCurrent(
-      {
-        sessionId: session.getId(),
-        ...view,
-      },
-      view.startClocks.relative
-    )
+    viewContextHistory.setCurrent(buildViewContext(view, session.getId()), view.startClocks.relative)
   })
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) => {
     // A view can be updated after its end.  We have to ensure that the view being updated is the
     // most recently created.
     const current = viewContextHistory.getCurrent()
-    if (current && current.id === view.id) {
-      viewContextHistory.setCurrent(
-        {
-          sessionId: current.sessionId,
-          ...view,
-        },
-        view.startClocks.relative
-      )
+    if (current && current.view.id === view.id) {
+      viewContextHistory.setCurrent(buildViewContext(view, current.session.id), view.startClocks.relative)
     }
   })
 
@@ -56,7 +38,7 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
   })
 
   lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_CREATED, (action) => {
-    actionContextHistory.setCurrent(action, action.startClocks.relative)
+    actionContextHistory.setCurrent(buildActionContext(action), action.startClocks.relative)
   })
 
   lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, (action: AutoAction) => {
@@ -76,22 +58,20 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
     actionContextHistory.reset()
   })
 
-  function buildCurrentViewContext(current: ViewCreatedEvent & { sessionId?: string }) {
+  function buildViewContext(view: ViewCreatedEvent, sessionId: string | undefined) {
     return {
       session: {
-        id: current.sessionId,
+        id: sessionId,
       },
       view: {
-        id: current.id,
-        name: current.name,
-        referrer: current.referrer,
-        url: current.location.href,
+        id: view.id,
+        name: view.name,
       },
     }
   }
 
-  function buildCurrentActionContext(current: AutoActionCreatedEvent) {
-    return { action: { id: current.id } }
+  function buildActionContext(action: AutoActionCreatedEvent) {
+    return { action: { id: action.id } }
   }
 
   return {
