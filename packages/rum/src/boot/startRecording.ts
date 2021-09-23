@@ -26,8 +26,8 @@ export function startRecording(
     return
   }
 
-  const addRawRecord = (rawRecord: RawRecord) => {
-    segmentCollection.addRecord({ ...rawRecord, timestamp: Date.now() })
+  function addRawRecord(rawRecord: RawRecord) {
+    segmentCollection!.addRecord({ ...rawRecord, timestamp: Date.now() })
   }
 
   const { stop: stopRecording, takeFullSnapshot, flushMutations } = record({
