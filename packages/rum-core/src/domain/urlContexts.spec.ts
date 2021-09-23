@@ -133,4 +133,21 @@ describe('urlContexts', () => {
       },
     })
   })
+
+  /**
+   * It could happen if there is an event happening just between view end and view creation
+   * (which seems unlikely) and this event would anyway be rejected by lack of view id
+   */
+  it('should return undefined when no current view', () => {
+    const { lifeCycle } = setupBuilder.build()
+
+    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+      startClocks: relativeToClocks(0 as RelativeTime),
+    } as ViewCreatedEvent)
+    lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {
+      endClocks: relativeToClocks(10 as RelativeTime),
+    } as ViewEndedEvent)
+
+    expect(urlContexts.findUrl()).toBeUndefined()
+  })
 })
