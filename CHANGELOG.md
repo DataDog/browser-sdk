@@ -16,6 +16,11 @@
 
 ---
 
+## v3.6.1
+
+- ⚡ [RUMF-1022] remove `__sn` property in nodes ([#1069](https://github.com/DataDog/browser-sdk/pull/1069))
+- ♻️ [RUMF-1015] use the url corresponding to the start of the event ([#1063](https://github.com/DataDog/browser-sdk/pull/1063))
+
 ## v3.6.0
 
 - ✨ [RUMF-1028] enable privacy by default ([#1049](https://github.com/DataDog/browser-sdk/pull/1049))
