@@ -341,7 +341,7 @@ staging-reset-scheduled-success:
     variables:
       - $TARGET_TASK_NAME == "staging-reset-scheduled"
   script:
-    - 'MESSAGE_TEXT=":white_check_mark: [*browser-sdk*] Staging has been reset from *${CURRENT_STAGING}* to *${NEW_STAGING}*."'
+    - 'MESSAGE_TEXT=":white_check_mark: [*$CI_PROJECT_NAME*] Staging has been reset from *${CURRENT_STAGING}* to *${NEW_STAGING}* on pipeline <$BUILD_URL|$COMMIT_MESSAGE>."'
     - postmessage "#rum-deploy" "$MESSAGE_TEXT"
   dependencies:
     - staging-reset-scheduled
@@ -353,7 +353,7 @@ staging-reset-scheduled-failure:
     variables:
       - $TARGET_TASK_NAME == "staging-reset-scheduled"
   script:
-    - 'MESSAGE_TEXT=":x: [*browser-sdk*] Staging failed to reset from *${CURRENT_STAGING}* to *${NEW_STAGING}*."'
+    - 'MESSAGE_TEXT=":x: [*$CI_PROJECT_NAME*] Staging failed to reset from *${CURRENT_STAGING}* to *${NEW_STAGING}* on pipeline <$BUILD_URL|$COMMIT_MESSAGE>."'
     - postmessage "#rum-deploy" "$MESSAGE_TEXT"
   dependencies:
     - staging-reset-scheduled
