@@ -26,7 +26,7 @@ async function main() {
       from: /CURRENT_STAGING: staging-.*/g,
       to: `CURRENT_STAGING: ${NEW_STAGING_BRANCH}`,
     })
-    await executeCommand(`git commit ${CI_FILE} -m "Change staging branch in ${CI_FILE} to ${NEW_STAGING_BRANCH}"`)
+    await executeCommand(`git commit ${CI_FILE} -m "👷 Bump staging to ${NEW_STAGING_BRANCH}"`)
     await executeCommand(`git push origin ${MAIN_BRANCH}`)
   } else {
     console.log(`Staging branch already up to date in ${CI_FILE}. Skipping.`)
@@ -82,14 +82,11 @@ function getSecretKey(name) {
 
 function getIsoWeekNumber() {
   const today = new Date()
-  const dayNr = (today.getDay() + 6) % 7
-  today.setDate(today.getDate() - dayNr + 3)
-  const firstThursday = today.valueOf()
-  today.setMonth(0, 1)
-  if (today.getDay() !== 4) {
-    today.setMonth(0, 1 + ((4 - today.getDay() + 7) % 7))
-  }
-  return 1 + Math.ceil((firstThursday - today) / 604800000)
+  const todayUtc = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()))
+  const dayNum = todayUtc.getUTCDay() || 7
+  todayUtc.setUTCDate(todayUtc.getUTCDate() + 4 - dayNum)
+  const yearStart = new Date(Date.UTC(todayUtc.getUTCFullYear(), 0, 1))
+  return Math.ceil(((todayUtc - yearStart) / 86400000 + 1) / 7)
 }
 
 async function executeCommand(command, sshAuth = true) {
