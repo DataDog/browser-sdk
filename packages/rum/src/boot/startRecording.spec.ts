@@ -1,4 +1,4 @@
-import { HttpRequest, DefaultPrivacyLevel, noop } from '@datadog/browser-core'
+import { HttpRequest, DefaultPrivacyLevel } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import { inflate } from 'pako'
 import { createRumSessionMock, RumSessionMock } from '../../../rum-core/test/mockRumSession'
@@ -8,7 +8,7 @@ import { setup, TestSetupBuilder } from '../../../rum-core/test/specHelper'
 import { collectAsyncCalls } from '../../test/utils'
 import { setMaxSegmentSize, startSegmentCollection } from '../domain/segmentCollection/segmentCollection'
 
-import { Segment, RecordType, Record } from '../types'
+import { Segment, RecordType } from '../types'
 import { startRecording } from './startRecording'
 
 describe('startRecording', () => {
