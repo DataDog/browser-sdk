@@ -83,7 +83,7 @@ function getSecretKey(name) {
     `--name=${name}`,
   ]
 
-  return executeCommand(`aws ${awsParameters.join(' ')}`, false)
+  return executeCommand(`aws ${awsParameters.join(' ')}`)
 }
 
 function getWeekNumber() {
@@ -92,15 +92,9 @@ function getWeekNumber() {
   return Math.ceil(((today - yearStart) / 86400000 + yearStart.getUTCDay() + 1) / 7)
 }
 
-async function executeCommand(command, sshAuth = true) {
+async function executeCommand(command) {
   const commandResult = await execute(command, {
     shell: '/bin/bash',
-    env: sshAuth
-      ? {
-          SSH_AUTH_SOCK: process.env.SSH_AUTH_SOCK,
-          SSH_AGENT_PID: process.env.SSH_AGENT_PID,
-        }
-      : undefined,
   })
   if (commandResult.error && commandResult.error.code !== 0) {
     throw commandResult.error
