@@ -12,6 +12,6 @@ export interface PopupActions {
 export interface Store {
   devServerStatus: 'unavailable' | 'checking' | 'available'
   useDevBundles: boolean
-  useRumRecorder: boolean
+  useRumSlim: boolean
   logEventsFromRequests: boolean
 }

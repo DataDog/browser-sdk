@@ -6,7 +6,7 @@ import {
   addEventListeners,
   addEventListener,
   includes,
-  InitialPrivacyLevel,
+  DefaultPrivacyLevel,
 } from '@datadog/browser-core'
 import { NodePrivacyLevel } from '../../constants'
 import { getNodePrivacyLevel, shouldMaskNode } from './privacy'
@@ -36,13 +36,13 @@ const MOUSE_MOVE_OBSERVER_THRESHOLD = 50
 const SCROLL_OBSERVER_THRESHOLD = 100
 
 export function initObservers(o: ObserverParam): ListenerHandler {
-  const mutationHandler = initMutationObserver(o.mutationController, o.mutationCb, o.initialPrivacyLevel)
+  const mutationHandler = initMutationObserver(o.mutationController, o.mutationCb, o.defaultPrivacyLevel)
   const mousemoveHandler = initMoveObserver(o.mousemoveCb)
-  const mouseInteractionHandler = initMouseInteractionObserver(o.mouseInteractionCb, o.initialPrivacyLevel)
-  const scrollHandler = initScrollObserver(o.scrollCb, o.initialPrivacyLevel)
+  const mouseInteractionHandler = initMouseInteractionObserver(o.mouseInteractionCb, o.defaultPrivacyLevel)
+  const scrollHandler = initScrollObserver(o.scrollCb, o.defaultPrivacyLevel)
   const viewportResizeHandler = initViewportResizeObserver(o.viewportResizeCb)
-  const inputHandler = initInputObserver(o.inputCb, o.initialPrivacyLevel)
-  const mediaInteractionHandler = initMediaInteractionObserver(o.mediaInteractionCb, o.initialPrivacyLevel)
+  const inputHandler = initInputObserver(o.inputCb, o.defaultPrivacyLevel)
+  const mediaInteractionHandler = initMediaInteractionObserver(o.mediaInteractionCb, o.defaultPrivacyLevel)
   const styleSheetObserver = initStyleSheetObserver(o.styleSheetRuleCb)
   const focusHandler = initFocusObserver(o.focusCb)
 
@@ -62,9 +62,9 @@ export function initObservers(o: ObserverParam): ListenerHandler {
 function initMutationObserver(
   mutationController: MutationController,
   cb: MutationCallBack,
-  initialPrivacyLevel: InitialPrivacyLevel
+  defaultPrivacyLevel: DefaultPrivacyLevel
 ) {
-  return startMutationObserver(mutationController, cb, initialPrivacyLevel).stop
+  return startMutationObserver(mutationController, cb, defaultPrivacyLevel).stop
 }
 
 function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {
@@ -107,11 +107,11 @@ const eventTypeToMouseInteraction = {
 }
 function initMouseInteractionObserver(
   cb: MouseInteractionCallBack,
-  initialPrivacyLevel: InitialPrivacyLevel
+  defaultPrivacyLevel: DefaultPrivacyLevel
 ): ListenerHandler {
   const handler = (event: MouseEvent | TouchEvent) => {
     const target = event.target as Node
-    if (getNodePrivacyLevel(target, initialPrivacyLevel) === NodePrivacyLevel.HIDDEN || !hasSerializedNode(target)) {
+    if (getNodePrivacyLevel(target, defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN || !hasSerializedNode(target)) {
       return
     }
     const { clientX, clientY } = isTouchEvent(event) ? event.changedTouches[0] : event
@@ -128,13 +128,13 @@ function initMouseInteractionObserver(
   }).stop
 }
 
-function initScrollObserver(cb: ScrollCallback, initialPrivacyLevel: InitialPrivacyLevel): ListenerHandler {
+function initScrollObserver(cb: ScrollCallback, defaultPrivacyLevel: DefaultPrivacyLevel): ListenerHandler {
   const { throttled: updatePosition } = throttle(
     monitor((event: UIEvent) => {
       const target = event.target as HTMLElement | Document
       if (
         !target ||
-        getNodePrivacyLevel(target, initialPrivacyLevel) === NodePrivacyLevel.HIDDEN ||
+        getNodePrivacyLevel(target, defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN ||
         !hasSerializedNode(target)
       ) {
         return
@@ -177,10 +177,10 @@ function initViewportResizeObserver(cb: ViewportResizeCallback): ListenerHandler
 
 export const INPUT_TAGS = ['INPUT', 'TEXTAREA', 'SELECT']
 const lastInputStateMap: WeakMap<EventTarget, InputState> = new WeakMap()
-export function initInputObserver(cb: InputCallback, initialPrivacyLevel: InitialPrivacyLevel): ListenerHandler {
+export function initInputObserver(cb: InputCallback, defaultPrivacyLevel: DefaultPrivacyLevel): ListenerHandler {
   function eventHandler(event: { target: EventTarget | null }) {
     const target = event.target as HTMLInputElement | HTMLTextAreaElement
-    const nodePrivacyLevel = getNodePrivacyLevel(target, initialPrivacyLevel)
+    const nodePrivacyLevel = getNodePrivacyLevel(target, defaultPrivacyLevel)
     if (
       !target ||
       !target.tagName ||
@@ -314,13 +314,13 @@ function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
 
 function initMediaInteractionObserver(
   mediaInteractionCb: MediaInteractionCallback,
-  initialPrivacyLevel: InitialPrivacyLevel
+  defaultPrivacyLevel: DefaultPrivacyLevel
 ): ListenerHandler {
   const handler = (event: Event) => {
     const target = event.target as Node
     if (
       !target ||
-      getNodePrivacyLevel(target, initialPrivacyLevel) === NodePrivacyLevel.HIDDEN ||
+      getNodePrivacyLevel(target, defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN ||
       !hasSerializedNode(target)
     ) {
       return

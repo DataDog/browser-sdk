@@ -5,12 +5,12 @@ import { CLEAR_OLD_CONTEXTS_INTERVAL, ContextHistory } from './contextHistory'
 const EXPIRE_DELAY = 10 * ONE_MINUTE
 
 describe('contextHistory', () => {
-  let contextHistory: ContextHistory<{ value: string }, { value: string }>
+  let contextHistory: ContextHistory<{ value: string }>
   let clock: Clock
 
   beforeEach(() => {
     clock = mockClock()
-    contextHistory = new ContextHistory((raw) => ({ value: raw.value }), EXPIRE_DELAY)
+    contextHistory = new ContextHistory(EXPIRE_DELAY)
   })
 
   afterEach(() => {

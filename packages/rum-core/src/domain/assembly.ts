@@ -13,6 +13,7 @@ import {
   RawError,
   createEventRateLimiter,
   EventRateLimiter,
+  getCookie,
 } from '@datadog/browser-core'
 import { RumEventDomainContext } from '../domainContext.types'
 import {
@@ -29,6 +30,7 @@ import { RumEvent } from '../rumEvent.types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { ParentContexts } from './parentContexts'
 import { RumSession, RumSessionPlan } from './rumSession'
+import { UrlContexts } from './urlContexts'
 
 export interface BrowserWindow extends Window {
   _DATADOG_SYNTHETICS_PUBLIC_ID?: string
@@ -65,6 +67,7 @@ export function startRumAssembly(
   lifeCycle: LifeCycle,
   session: RumSession,
   parentContexts: ParentContexts,
+  urlContexts: UrlContexts,
   getCommonContext: () => CommonContext
 ) {
   const reportError = (error: RawError) => {
@@ -80,7 +83,8 @@ export function startRumAssembly(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
     ({ startTime, rawRumEvent, domainContext, savedCommonContext, customerContext }) => {
       const viewContext = parentContexts.findView(startTime)
-      if (session.isTracked() && viewContext && viewContext.session.id === session.getId()) {
+      const urlContext = urlContexts.findUrl(startTime)
+      if (session.isTracked() && viewContext && urlContext && viewContext.session.id === session.getId()) {
         const actionContext = parentContexts.findAction(startTime)
         const commonContext = savedCommonContext || getCommonContext()
         const rumContext: RumContext = {
@@ -103,8 +107,8 @@ export function startRumAssembly(
           synthetics: getSyntheticsContext(),
         }
         const serverRumEvent = (needToAssembleWithAction(rawRumEvent)
-          ? combine(rumContext, viewContext, actionContext, rawRumEvent)
-          : combine(rumContext, viewContext, rawRumEvent)) as RumEvent & Context
+          ? combine(rumContext, urlContext, viewContext, actionContext, rawRumEvent)
+          : combine(rumContext, urlContext, viewContext, rawRumEvent)) as RumEvent & Context
 
         serverRumEvent.context = combine(commonContext.context, customerContext)
 
@@ -128,6 +132,17 @@ export function startRumAssembly(
                 timeStampNow: timeStampNow(),
                 relativeNow: Math.round(relativeNow()),
                 drift: currentDrift(),
+              },
+            })
+          }
+          if (serverRumEvent.session.has_replay && serverRumEvent._dd.session?.plan === RumSessionPlan.LITE) {
+            addMonitoringMessage('lite session with replay', {
+              debug: {
+                eventType: serverRumEvent.type,
+                viewId: serverRumEvent.view.id,
+                sessionId: serverRumEvent.session.id,
+                event: serverRumEvent,
+                _dd_s: getCookie('_dd_s'),
               },
             })
           }

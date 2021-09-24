@@ -25,7 +25,7 @@ import {
 import {
   makeStylesheetUrlsAbsolute,
   getSerializedNodeId,
-  setSerializedNode,
+  setSerializedNodeId,
   getElementInputValue,
   makeSrcsetUrlsAbsolute,
   makeUrlAbsolute,
@@ -38,7 +38,7 @@ import { forEach } from './utils'
 type ParentNodePrivacyLevel =
   | typeof NodePrivacyLevel.ALLOW
   | typeof NodePrivacyLevel.MASK
-  | typeof NodePrivacyLevel.MASK_FORMS_ONLY
+  | typeof NodePrivacyLevel.MASK_USER_INPUT
 
 export interface SerializeOptions {
   document: Document
@@ -49,12 +49,12 @@ export interface SerializeOptions {
 
 export function serializeDocument(
   document: Document,
-  initialPrivacyLevel: ParentNodePrivacyLevel
+  defaultPrivacyLevel: ParentNodePrivacyLevel
 ): SerializedNodeWithId {
   // We are sure that Documents are never ignored, so this function never returns null
   return serializeNodeWithId(document, {
     document,
-    parentNodePrivacyLevel: initialPrivacyLevel,
+    parentNodePrivacyLevel: defaultPrivacyLevel,
   })!
 }
 
@@ -68,7 +68,7 @@ export function serializeNodeWithId(node: Node, options: SerializeOptions): Seri
   const id = getSerializedNodeId(node) || generateNextId()
   const serializedNodeWithId = serializedNode as SerializedNodeWithId
   serializedNodeWithId.id = id
-  setSerializedNode(node, serializedNodeWithId)
+  setSerializedNodeId(node, id)
   if (options.serializedNodeIds) {
     options.serializedNodeIds.add(id)
   }

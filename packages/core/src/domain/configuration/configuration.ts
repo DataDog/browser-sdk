@@ -4,12 +4,12 @@ import { catchUserErrors } from '../../tools/catchUserErrors'
 import { includes, objectHasValue, ONE_KILO_BYTE, ONE_SECOND } from '../../tools/utils'
 import { computeTransportConfiguration, TransportConfiguration } from './transportConfiguration'
 
-export const InitialPrivacyLevel = {
+export const DefaultPrivacyLevel = {
   ALLOW: 'allow',
   MASK: 'mask',
-  MASK_FORMS_ONLY: 'mask-forms-only',
+  MASK_USER_INPUT: 'mask-user-input',
 } as const
-export type InitialPrivacyLevel = typeof InitialPrivacyLevel[keyof typeof InitialPrivacyLevel]
+export type DefaultPrivacyLevel = typeof DefaultPrivacyLevel[keyof typeof DefaultPrivacyLevel]
 
 export const DEFAULT_CONFIGURATION = {
   allowedTracingOrigins: [] as Array<string | RegExp>,
@@ -21,7 +21,7 @@ export const DEFAULT_CONFIGURATION = {
   silentMultipleInit: false,
   trackInteractions: false,
   trackViewsManually: false,
-  initialPrivacyLevel: InitialPrivacyLevel.ALLOW as InitialPrivacyLevel,
+  defaultPrivacyLevel: DefaultPrivacyLevel.MASK_USER_INPUT as DefaultPrivacyLevel,
 
   /**
    * arbitrary value, byte precision not needed
@@ -67,7 +67,7 @@ export interface InitConfiguration {
   proxyHost?: string
   proxyUrl?: string
   beforeSend?: BeforeSendCallback
-  initialPrivacyLevel?: InitialPrivacyLevel
+  defaultPrivacyLevel?: DefaultPrivacyLevel
 
   service?: string
   env?: string
@@ -115,7 +115,7 @@ export function buildConfiguration(initConfiguration: InitConfiguration, buildEn
     cookieOptions: buildCookieOptions(initConfiguration),
     isEnabled,
     service: initConfiguration.service,
-    ...computeTransportConfiguration(initConfiguration, buildEnv, isEnabled('support-intake-v2')),
+    ...computeTransportConfiguration(initConfiguration, buildEnv),
     ...DEFAULT_CONFIGURATION,
   }
 
@@ -143,11 +143,8 @@ export function buildConfiguration(initConfiguration: InitConfiguration, buildEn
     configuration.actionNameAttribute = initConfiguration.actionNameAttribute
   }
 
-  if (
-    configuration.isEnabled('initial-privacy-level-option') &&
-    objectHasValue(InitialPrivacyLevel, initConfiguration.initialPrivacyLevel)
-  ) {
-    configuration.initialPrivacyLevel = initConfiguration.initialPrivacyLevel
+  if (objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)) {
+    configuration.defaultPrivacyLevel = initConfiguration.defaultPrivacyLevel
   }
 
   return configuration

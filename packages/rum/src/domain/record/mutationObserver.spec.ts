@@ -1,4 +1,4 @@
-import { InitialPrivacyLevel } from '@datadog/browser-core'
+import { DefaultPrivacyLevel } from '@datadog/browser-core'
 import { isIE } from '../../../../core/test/specHelper'
 import { collectAsyncCalls, createMutationPayloadValidator } from '../../../test/utils'
 import {
@@ -8,7 +8,7 @@ import {
   PRIVACY_ATTR_VALUE_INPUT_IGNORED,
   PRIVACY_ATTR_VALUE_INPUT_MASKED,
   PRIVACY_ATTR_VALUE_MASK,
-  PRIVACY_ATTR_VALUE_MASK_FORMS_ONLY,
+  PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
 } from '../../constants'
 import { serializeDocument } from './serialize'
 import { sortAddedAndMovedNodes, startMutationObserver, MutationController } from './mutationObserver'
@@ -18,14 +18,14 @@ describe('startMutationCollection', () => {
   let sandbox: HTMLElement
   let stopMutationCollection: () => void
 
-  function startMutationCollection(initialPrivacyLevel: InitialPrivacyLevel = InitialPrivacyLevel.ALLOW) {
+  function startMutationCollection(defaultPrivacyLevel: DefaultPrivacyLevel = DefaultPrivacyLevel.ALLOW) {
     const mutationCallbackSpy = jasmine.createSpy<MutationCallBack>()
     const mutationController = new MutationController()
 
     ;({ stop: stopMutationCollection } = startMutationObserver(
       mutationController,
       mutationCallbackSpy,
-      initialPrivacyLevel
+      defaultPrivacyLevel
     ))
 
     return {
@@ -401,9 +401,9 @@ describe('startMutationCollection', () => {
       })
     })
 
-    it('respects the initial privacy level setting', () => {
+    it('respects the default privacy level setting', () => {
       const serializedDocument = serializeDocument(document, NodePrivacyLevel.ALLOW)
-      const { mutationController, getLatestMutationPayload } = startMutationCollection(InitialPrivacyLevel.MASK)
+      const { mutationController, getLatestMutationPayload } = startMutationCollection(DefaultPrivacyLevel.MASK)
 
       sandbox.innerText = 'foo bar'
       mutationController.flush()
@@ -462,9 +462,9 @@ describe('startMutationCollection', () => {
       expect(mutationCallbackSpy).not.toHaveBeenCalled()
     })
 
-    it('respects the initial privacy level setting', () => {
+    it('respects the default privacy level setting', () => {
       const serializedDocument = serializeDocument(document, NodePrivacyLevel.ALLOW)
-      const { mutationController, getLatestMutationPayload } = startMutationCollection(InitialPrivacyLevel.MASK)
+      const { mutationController, getLatestMutationPayload } = startMutationCollection(DefaultPrivacyLevel.MASK)
 
       textNode.data = 'foo bar'
       mutationController.flush()
@@ -491,7 +491,7 @@ describe('startMutationCollection', () => {
 
       const serializedDocument = serializeDocument(document, NodePrivacyLevel.MASK)
       const { mutationController, mutationCallbackSpy, getLatestMutationPayload } = startMutationCollection(
-        InitialPrivacyLevel.MASK
+        DefaultPrivacyLevel.MASK
       )
 
       div.firstChild!.textContent = 'bazz 7'
@@ -563,9 +563,9 @@ describe('startMutationCollection', () => {
       })
     })
 
-    it('respects the initial privacy level setting', () => {
+    it('respects the default privacy level setting', () => {
       const serializedDocument = serializeDocument(document, NodePrivacyLevel.ALLOW)
-      const { mutationController, getLatestMutationPayload } = startMutationCollection(InitialPrivacyLevel.MASK)
+      const { mutationController, getLatestMutationPayload } = startMutationCollection(DefaultPrivacyLevel.MASK)
 
       sandbox.setAttribute('data-foo', 'biz')
       mutationController.flush()
@@ -812,10 +812,10 @@ describe('startMutationCollection', () => {
         expectedAttributesMutation: { value: '***' },
       },
       {
-        privacyAttributeValue: PRIVACY_ATTR_VALUE_MASK_FORMS_ONLY,
+        privacyAttributeValue: PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
         privacyAttributeOn: 'input',
         expectedSerializedAttributes: {
-          [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_MASK_FORMS_ONLY,
+          [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
           value: '***',
         },
         expectedAttributesMutation: { value: '***' },
@@ -848,7 +848,7 @@ describe('startMutationCollection', () => {
         expectedAttributesMutation: { value: '***' },
       },
       {
-        privacyAttributeValue: PRIVACY_ATTR_VALUE_MASK_FORMS_ONLY,
+        privacyAttributeValue: PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
         privacyAttributeOn: 'ancestor',
         expectedSerializedAttributes: { value: '***' },
         expectedAttributesMutation: { value: '***' },

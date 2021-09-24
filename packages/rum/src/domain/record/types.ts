@@ -1,4 +1,4 @@
-import { InitialPrivacyLevel } from '@datadog/browser-core'
+import { DefaultPrivacyLevel } from '@datadog/browser-core'
 import { FocusRecord, RawRecord } from '../../types'
 import { MutationController } from './mutationObserver'
 
@@ -62,7 +62,7 @@ export type IncrementalData =
 
 export interface RecordOptions {
   emit?: (record: RawRecord) => void
-  initialPrivacyLevel: InitialPrivacyLevel
+  defaultPrivacyLevel: DefaultPrivacyLevel
 }
 
 export interface RecordAPI {
@@ -72,7 +72,7 @@ export interface RecordAPI {
 }
 
 export interface ObserverParam {
-  initialPrivacyLevel: InitialPrivacyLevel
+  defaultPrivacyLevel: DefaultPrivacyLevel
   mutationController: MutationController
   mutationCb: MutationCallBack
   mousemoveCb: MousemoveCallBack
