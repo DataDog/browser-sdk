@@ -13,6 +13,7 @@ import {
   RawError,
   createEventRateLimiter,
   EventRateLimiter,
+  getCookie,
 } from '@datadog/browser-core'
 import { RumEventDomainContext } from '../domainContext.types'
 import {
@@ -140,9 +141,8 @@ export function startRumAssembly(
                 eventType: serverRumEvent.type,
                 viewId: serverRumEvent.view.id,
                 sessionId: serverRumEvent.session.id,
-                replayPlan: session.hasReplayPlan(),
-                litePlan: session.hasLitePlan(),
-                docVersion: serverRumEvent._dd.document_version as number | undefined,
+                event: serverRumEvent,
+                _dd_s: getCookie('_dd_s'),
               },
             })
           }
