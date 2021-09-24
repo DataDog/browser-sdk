@@ -11,6 +11,7 @@ cache:
     - node_modules/
 
 stages:
+  - task
   - ci-image
   - test
   - browserstack
@@ -23,7 +24,10 @@ stages:
 ci-image:
   stage: ci-image
   when: manual
-  except: [tags, schedules]
+  except:
+    refs:
+      - tags
+      - schedules
   tags: ['runner:docker', 'size:large']
   image: $BUILD_STABLE_REGISTRY/docker:18.03.1
   script:
@@ -32,6 +36,9 @@ ci-image:
 
 format:
   stage: test
+  except:
+    refs:
+      - schedules
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   script:
@@ -40,6 +47,9 @@ format:
 
 woke:
   stage: test
+  except:
+    refs:
+      - schedules
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   script:
@@ -47,6 +57,9 @@ woke:
 
 typecheck:
   stage: test
+  except:
+    refs:
+      - schedules
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   script:
@@ -55,6 +68,9 @@ typecheck:
 
 build-and-lint:
   stage: test
+  except:
+    refs:
+      - schedules
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   script:
@@ -66,6 +82,9 @@ build-and-lint:
 
 build-bundle:
   stage: test
+  except:
+    refs:
+      - schedules
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   script:
@@ -74,6 +93,9 @@ build-bundle:
 
 compatibility:
   stage: test
+  except:
+    refs:
+      - schedules
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   script:
@@ -83,6 +105,9 @@ compatibility:
 
 unit:
   stage: test
+  except:
+    refs:
+      - schedules
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   artifacts:
@@ -95,6 +120,9 @@ unit:
 
 e2e:
   stage: test
+  except:
+    refs:
+      - schedules
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   artifacts:
@@ -109,17 +137,21 @@ e2e:
 
 check-licenses:
   stage: test
+  except:
+    refs:
+      - schedules
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   script:
     - node --no-warnings scripts/check-licenses.js
 
 unit-bs:
+  stage: browserstack
   except:
     refs:
       - main
       - tags
-  stage: browserstack
+      - schedules
   resource_group: browserstack
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
@@ -131,11 +163,12 @@ unit-bs:
     - ./scripts/ci-bs.sh test:unit
 
 e2e-bs:
+  stage: browserstack
   except:
     refs:
       - main
       - tags
-  stage: browserstack
+      - schedules
   resource_group: browserstack
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
@@ -202,6 +235,7 @@ notify-feature-branch-failure:
     refs:
       - main
       - tags
+      - schedules
 
 .prepare_notification:
   extends: .slack-notifier-base
@@ -281,3 +315,45 @@ notify-prod-stable-failure:
   script:
     - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME release pipeline <$BUILD_URL|$COMMIT_MESSAGE> failed."'
     - postmessage "#rum-deploy" "$MESSAGE_TEXT"
+
+########################################################################################################################
+# Scheduled tasks
+########################################################################################################################
+
+staging-reset-scheduled:
+  stage: task
+  only:
+    variables:
+      - $TARGET_TASK_NAME == "staging-reset-scheduled"
+  tags: ['runner:main', 'size:large']
+  image: $CI_IMAGE
+  before_script:
+    - eval $(ssh-agent -s)
+  script:
+    - node --no-warnings scripts/staging-reset.js
+  artifacts:
+    reports:
+      dotenv: build.env
+
+staging-reset-scheduled-success:
+  extends: .prepare_notification
+  only:
+    variables:
+      - $TARGET_TASK_NAME == "staging-reset-scheduled"
+  script:
+    - 'MESSAGE_TEXT=":white_check_mark: [*$CI_PROJECT_NAME*] Staging has been reset from *${CURRENT_STAGING}* to *${NEW_STAGING}* on pipeline <$BUILD_URL|$COMMIT_MESSAGE>."'
+    - postmessage "#rum-deploy" "$MESSAGE_TEXT"
+  dependencies:
+    - staging-reset-scheduled
+
+staging-reset-scheduled-failure:
+  extends: .prepare_notification
+  when: on_failure
+  only:
+    variables:
+      - $TARGET_TASK_NAME == "staging-reset-scheduled"
+  script:
+    - 'MESSAGE_TEXT=":x: [*$CI_PROJECT_NAME*] Staging failed to reset from *${CURRENT_STAGING}* to *${NEW_STAGING}* on pipeline <$BUILD_URL|$COMMIT_MESSAGE>."'
+    - postmessage "#rum-deploy" "$MESSAGE_TEXT"
+  dependencies:
+    - staging-reset-scheduled

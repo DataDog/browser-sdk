@@ -80,9 +80,7 @@ describe('trackActions', () => {
     expect(createSpy).toHaveBeenCalled()
 
     lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
-      location,
       id: 'fake',
-      referrer: 'http://foo.com',
       startClocks: (jasmine.any(Object) as unknown) as ClocksState,
     })
     clock.tick(EXPIRE_DELAY)

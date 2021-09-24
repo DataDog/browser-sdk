@@ -3,11 +3,11 @@ import {
   PRIVACY_ATTR_NAME,
   PRIVACY_ATTR_VALUE_ALLOW,
   PRIVACY_ATTR_VALUE_MASK,
-  PRIVACY_ATTR_VALUE_MASK_FORMS_ONLY,
+  PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
   PRIVACY_ATTR_VALUE_HIDDEN,
   PRIVACY_CLASS_ALLOW,
   PRIVACY_CLASS_MASK,
-  PRIVACY_CLASS_MASK_FORMS_ONLY,
+  PRIVACY_CLASS_MASK_USER_INPUT,
   PRIVACY_CLASS_HIDDEN,
   FORM_PRIVATE_TAG_NAMES,
   CENSORED_STRING_MARK,
@@ -32,10 +32,10 @@ const TEXT_MASKING_CHAR = 'x'
  *
  * derivePrivacyLevelGivenParent(getNodeSelfPrivacyLevel(node), parentNodePrivacyLevel)
  */
-export function getNodePrivacyLevel(node: Node, initialPrivacyLevel: NodePrivacyLevel): NodePrivacyLevel {
+export function getNodePrivacyLevel(node: Node, defaultPrivacyLevel: NodePrivacyLevel): NodePrivacyLevel {
   const parentNodePrivacyLevel = node.parentNode
-    ? getNodePrivacyLevel(node.parentNode, initialPrivacyLevel)
-    : initialPrivacyLevel
+    ? getNodePrivacyLevel(node.parentNode, defaultPrivacyLevel)
+    : defaultPrivacyLevel
   const selfNodePrivacyLevel = getNodeSelfPrivacyLevel(node)
   return reducePrivacyLevel(selfNodePrivacyLevel, parentNodePrivacyLevel)
 }
@@ -56,7 +56,7 @@ export function reducePrivacyLevel(
   switch (childPrivacyLevel) {
     case NodePrivacyLevel.ALLOW:
     case NodePrivacyLevel.MASK:
-    case NodePrivacyLevel.MASK_FORMS_ONLY:
+    case NodePrivacyLevel.MASK_USER_INPUT:
     case NodePrivacyLevel.HIDDEN:
     case NodePrivacyLevel.IGNORE:
       return childPrivacyLevel
@@ -101,10 +101,10 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefine
       return NodePrivacyLevel.ALLOW
     case PRIVACY_ATTR_VALUE_MASK:
       return NodePrivacyLevel.MASK
-    case PRIVACY_ATTR_VALUE_MASK_FORMS_ONLY:
+    case PRIVACY_ATTR_VALUE_MASK_USER_INPUT:
     case PRIVACY_ATTR_VALUE_INPUT_IGNORED: // Deprecated, now aliased
     case PRIVACY_ATTR_VALUE_INPUT_MASKED: // Deprecated, now aliased
-      return NodePrivacyLevel.MASK_FORMS_ONLY
+      return NodePrivacyLevel.MASK_USER_INPUT
     case PRIVACY_ATTR_VALUE_HIDDEN:
       return NodePrivacyLevel.HIDDEN
   }
@@ -117,11 +117,11 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefine
   } else if (node.classList.contains(PRIVACY_CLASS_HIDDEN)) {
     return NodePrivacyLevel.HIDDEN
   } else if (
-    node.classList.contains(PRIVACY_CLASS_MASK_FORMS_ONLY) ||
+    node.classList.contains(PRIVACY_CLASS_MASK_USER_INPUT) ||
     node.classList.contains(PRIVACY_CLASS_INPUT_MASKED) || // Deprecated, now aliased
     node.classList.contains(PRIVACY_CLASS_INPUT_IGNORED) // Deprecated, now aliased
   ) {
-    return NodePrivacyLevel.MASK_FORMS_ONLY
+    return NodePrivacyLevel.MASK_USER_INPUT
   } else if (shouldIgnoreElement(node)) {
     // such as for scripts
     return NodePrivacyLevel.IGNORE
@@ -129,11 +129,11 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefine
 }
 
 /**
- * Helper aiming to unify `mask` and `mask-forms-only` privacy levels:
+ * Helper aiming to unify `mask` and `mask-user-input` privacy levels:
  *
  * In the `mask` case, it is trivial: we should mask the element.
  *
- * In the `mask-forms-only` case, we should mask the element only if it is a "form" element or the
+ * In the `mask-user-input` case, we should mask the element only if it is a "form" element or the
  * direct parent is a form element for text nodes).
  *
  * Other `shouldMaskNode` cases are edge cases that should not matter too much (ex: should we mask a
@@ -145,7 +145,7 @@ export function shouldMaskNode(node: Node, privacyLevel: NodePrivacyLevel) {
     case NodePrivacyLevel.HIDDEN:
     case NodePrivacyLevel.IGNORE:
       return true
-    case NodePrivacyLevel.MASK_FORMS_ONLY:
+    case NodePrivacyLevel.MASK_USER_INPUT:
       return isTextNode(node) ? isFormElement(node.parentNode) : isFormElement(node)
     default:
       return false

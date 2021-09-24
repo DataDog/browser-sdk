@@ -1,4 +1,4 @@
-import { InitialPrivacyLevel } from '@datadog/browser-core'
+import { DefaultPrivacyLevel } from '@datadog/browser-core'
 import { createNewEvent, isIE } from '../../../../core/test/specHelper'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_MASKED } from '../../constants'
 import { initInputObserver } from './observer'
@@ -31,7 +31,7 @@ describe('initInputObserver', () => {
   })
 
   it('collects input values when an "input" event is dispatched', () => {
-    stopInputObserver = initInputObserver(inputCallbackSpy, InitialPrivacyLevel.ALLOW)
+    stopInputObserver = initInputObserver(inputCallbackSpy, DefaultPrivacyLevel.ALLOW)
     dispatchInputEvent('foo')
 
     expect(inputCallbackSpy).toHaveBeenCalledOnceWith({
@@ -41,7 +41,7 @@ describe('initInputObserver', () => {
   })
 
   it('masks input values according to the element privacy level', () => {
-    stopInputObserver = initInputObserver(inputCallbackSpy, InitialPrivacyLevel.ALLOW)
+    stopInputObserver = initInputObserver(inputCallbackSpy, DefaultPrivacyLevel.ALLOW)
     sandbox.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_MASKED)
 
     dispatchInputEvent('foo')
@@ -50,7 +50,7 @@ describe('initInputObserver', () => {
   })
 
   it('masks input values according to a parent element privacy level', () => {
-    stopInputObserver = initInputObserver(inputCallbackSpy, InitialPrivacyLevel.ALLOW)
+    stopInputObserver = initInputObserver(inputCallbackSpy, DefaultPrivacyLevel.ALLOW)
     input.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_MASKED)
 
     dispatchInputEvent('foo')
@@ -58,8 +58,8 @@ describe('initInputObserver', () => {
     expect((inputCallbackSpy.calls.first().args[0] as { text?: string }).text).toBe('***')
   })
 
-  it('masks input values according to a the initial privacy level', () => {
-    stopInputObserver = initInputObserver(inputCallbackSpy, InitialPrivacyLevel.MASK)
+  it('masks input values according to a the default privacy level', () => {
+    stopInputObserver = initInputObserver(inputCallbackSpy, DefaultPrivacyLevel.MASK)
 
     dispatchInputEvent('foo')
 

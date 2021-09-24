@@ -18,7 +18,7 @@ import {
   InternalMonitoring,
   callMonitored,
   createHandlingStack,
-  InitialPrivacyLevel,
+  DefaultPrivacyLevel,
 } from '@datadog/browser-core'
 import { LifeCycle } from '../domain/lifeCycle'
 import { ParentContexts } from '../domain/parentContexts'
@@ -32,7 +32,7 @@ import { startRum } from './startRum'
 export interface RumInitConfiguration extends InitConfiguration {
   applicationId: string
   beforeSend?: undefined | ((event: RumEvent, context: RumEventDomainContext) => void | boolean)
-  initialPrivacyLevel?: InitialPrivacyLevel | undefined
+  defaultPrivacyLevel?: DefaultPrivacyLevel | undefined
 }
 
 export type RumPublicApi = ReturnType<typeof makeRumPublicApi>

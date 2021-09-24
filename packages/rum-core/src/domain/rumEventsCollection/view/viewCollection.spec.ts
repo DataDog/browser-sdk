@@ -26,7 +26,6 @@ const VIEW: ViewEvent = {
   loadingTime: 20 as Duration,
   loadingType: ViewLoadingType.INITIAL_LOAD,
   location: {} as Location,
-  referrer: '',
   startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
   timings: {
     domComplete: 10 as Duration,
@@ -52,13 +51,23 @@ describe('viewCollection', () => {
       .withForegroundContexts({
         selectInForegroundPeriodsFor: () => [{ start: 0 as ServerDuration, duration: 10 as ServerDuration }],
       })
-      .beforeBuild(({ lifeCycle, configuration, foregroundContexts, domMutationObservable }) => {
-        getReplayStatsSpy = jasmine.createSpy()
-        startViewCollection(lifeCycle, configuration, location, domMutationObservable, foregroundContexts, {
-          ...noopRecorderApi,
-          getReplayStats: getReplayStatsSpy,
-        })
-      })
+      .beforeBuild(
+        ({ lifeCycle, configuration, foregroundContexts, domMutationObservable, locationChangeObservable }) => {
+          getReplayStatsSpy = jasmine.createSpy()
+          startViewCollection(
+            lifeCycle,
+            configuration,
+            location,
+            domMutationObservable,
+            locationChangeObservable,
+            foregroundContexts,
+            {
+              ...noopRecorderApi,
+              getReplayStats: getReplayStatsSpy,
+            }
+          )
+        }
+      )
   })
 
   afterEach(() => {

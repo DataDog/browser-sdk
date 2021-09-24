@@ -12,20 +12,20 @@ import {
   TimeStamp,
   display,
   Observable,
+  Subscription,
 } from '@datadog/browser-core'
 import { ViewLoadingType, ViewCustomTimings } from '../../../rawRumEvent.types'
 
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { EventCounts } from '../../trackEventCounts'
+import { LocationChange } from '../../../browser/locationChangeObservable'
 import { Timings, trackInitialViewTimings } from './trackInitialViewTimings'
-import { trackLocationChanges, areDifferentLocation } from './trackLocationChanges'
 import { trackViewMetrics } from './trackViewMetrics'
 
 export interface ViewEvent {
   id: string
   name?: string
   location: Readonly<Location>
-  referrer: string
   timings: Timings
   customTimings: ViewCustomTimings
   eventCounts: EventCounts
@@ -41,8 +41,6 @@ export interface ViewEvent {
 export interface ViewCreatedEvent {
   id: string
   name?: string
-  location: Location
-  referrer: string
   startClocks: ClocksState
 }
 
@@ -57,6 +55,7 @@ export function trackViews(
   location: Location,
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
+  locationChangeObservable: Observable<LocationChange>,
   areViewsTrackedAutomatically: boolean,
   initialViewName?: string
 ) {
@@ -64,9 +63,11 @@ export function trackViews(
   let currentView = initialView
 
   const { stop: stopViewLifeCycle } = startViewLifeCycle()
-  const { stop: stopViewCollectionMode } = areViewsTrackedAutomatically
-    ? startAutomaticViewCollection()
-    : startManualViewCollection()
+
+  let locationChangeSubscription: Subscription
+  if (areViewsTrackedAutomatically) {
+    locationChangeSubscription = renewViewOnLocationChange(locationChangeObservable)
+  }
 
   function trackInitialView(name?: string) {
     const initialView = newView(
@@ -74,7 +75,6 @@ export function trackViews(
       domMutationObservable,
       location,
       ViewLoadingType.INITIAL_LOAD,
-      document.referrer,
       clocksOrigin(),
       name
     )
@@ -86,15 +86,7 @@ export function trackViews(
   }
 
   function trackViewChange(startClocks?: ClocksState, name?: string) {
-    return newView(
-      lifeCycle,
-      domMutationObservable,
-      location,
-      ViewLoadingType.ROUTE_CHANGE,
-      currentView.url,
-      startClocks,
-      name
-    )
+    return newView(lifeCycle, domMutationObservable, location, ViewLoadingType.ROUTE_CHANGE, startClocks, name)
   }
 
   function startViewLifeCycle() {
@@ -126,24 +118,14 @@ export function trackViews(
     }
   }
 
-  function startAutomaticViewCollection() {
-    return trackLocationChanges(() => {
-      if (areDifferentLocation(currentView.getLocation(), location)) {
-        // Renew view on location changes
+  function renewViewOnLocationChange(locationChangeObservable: Observable<LocationChange>) {
+    return locationChangeObservable.subscribe(({ oldLocation, newLocation }) => {
+      if (areDifferentLocation(oldLocation, newLocation)) {
         currentView.end()
         currentView.triggerUpdate()
         currentView = trackViewChange()
         return
       }
-      currentView.updateLocation(location)
-      currentView.triggerUpdate()
-    })
-  }
-
-  function startManualViewCollection() {
-    return trackLocationChanges(() => {
-      currentView.updateLocation(location)
-      currentView.triggerUpdate()
     })
   }
 
@@ -158,7 +140,7 @@ export function trackViews(
       currentView = trackViewChange(startClocks, name)
     },
     stop: () => {
-      stopViewCollectionMode()
+      locationChangeSubscription?.unsubscribe()
       stopInitialViewTracking()
       stopViewLifeCycle()
       currentView.end()
@@ -171,7 +153,6 @@ function newView(
   domMutationObservable: Observable<void>,
   initialLocation: Location,
   loadingType: ViewLoadingType,
-  referrer: string,
   startClocks: ClocksState = clocksNow(),
   name?: string
 ) {
@@ -181,9 +162,9 @@ function newView(
   const customTimings: ViewCustomTimings = {}
   let documentVersion = 0
   let endClocks: ClocksState | undefined
-  let location = { ...initialLocation }
+  const location = { ...initialLocation }
 
-  lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, name, startClocks, location, referrer })
+  lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, name, startClocks })
 
   // Update the view every time the measures are changing
   const { throttled: scheduleViewUpdate, cancel: cancelScheduleViewUpdate } = throttle(
@@ -215,7 +196,6 @@ function newView(
       name,
       loadingType,
       location,
-      referrer,
       startClocks,
       timings,
       duration: elapsed(startClocks.timeStamp, currentEnd),
@@ -231,9 +211,6 @@ function newView(
       stopViewMetricsTracking()
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks })
     },
-    getLocation() {
-      return location
-    },
     triggerUpdate() {
       // cancel any pending view updates execution
       cancelScheduleViewUpdate()
@@ -248,12 +225,6 @@ function newView(
     addTiming(name: string, time: TimeStamp) {
       customTimings[sanitizeTiming(name)] = elapsed(startClocks.timeStamp, time)
     },
-    updateLocation(newLocation: Location) {
-      location = { ...newLocation }
-    },
-    get url() {
-      return location.href
-    },
   }
 }
 
@@ -266,4 +237,22 @@ function sanitizeTiming(name: string) {
     display.warn(`Invalid timing name: ${name}, sanitized to: ${sanitized}`)
   }
   return sanitized
+}
+
+function areDifferentLocation(currentLocation: Location, otherLocation: Location) {
+  return (
+    currentLocation.pathname !== otherLocation.pathname ||
+    (!isHashAnAnchor(otherLocation.hash) &&
+      getPathFromHash(otherLocation.hash) !== getPathFromHash(currentLocation.hash))
+  )
+}
+
+function isHashAnAnchor(hash: string) {
+  const correspondingId = hash.substr(1)
+  return !!document.getElementById(correspondingId)
+}
+
+function getPathFromHash(hash: string) {
+  const index = hash.indexOf('?')
+  return index < 0 ? hash : hash.slice(0, index)
 }
