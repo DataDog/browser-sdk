@@ -16,6 +16,10 @@
 
 ---
 
+## v3.6.2
+
+- 🔊 Add extra monitoring info on lite session with replay ([#1072](https://github.com/DataDog/browser-sdk/pull/1072))
+
 ## v3.6.1
 
 - ⚡ [RUMF-1022] remove `__sn` property in nodes ([#1069](https://github.com/DataDog/browser-sdk/pull/1069))
