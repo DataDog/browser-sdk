@@ -18,6 +18,7 @@ async function main() {
   await executeCommand(`echo "NEW_STAGING=${NEW_STAGING_BRANCH}" >> build.env`)
 
   await initGitConfig()
+  await executeCommand(`git fetch --no-tags origin ${MAIN_BRANCH} ${CURRENT_STAGING_BRANCH}`)
   await executeCommand(`git checkout ${MAIN_BRANCH} -f`)
   await executeCommand(`git pull`)
 
@@ -45,6 +46,8 @@ async function main() {
   }
 
   await executeCommand(`git checkout ${CURRENT_STAGING_BRANCH}`)
+  await executeCommand(`git pull`)
+
   if (isNewBranch && fs.existsSync(CI_FILE)) {
     console.log(`Disabling CI on the old branch...`)
     await executeCommand(`git rm ${CI_FILE}`)
