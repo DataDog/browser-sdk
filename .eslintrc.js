@@ -217,7 +217,7 @@ module.exports = {
       },
     },
     {
-      files: ['scripts/*.js'],
+      files: ['scripts/**/*.js'],
       rules: {
         'unicorn/filename-case': ['error', { case: 'kebabCase' }],
       },

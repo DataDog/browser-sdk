@@ -4,6 +4,8 @@ variables:
   CURRENT_CI_IMAGE: 25
   BUILD_STABLE_REGISTRY: '486234852809.dkr.ecr.us-east-1.amazonaws.com'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
+  GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
+  MAIN_BRANCH: 'main'
 
 cache:
   key: dependencies
@@ -15,6 +17,7 @@ stages:
   - ci-image
   - test
   - browserstack
+  - pre-deploy
   - pre-deploy-notify
   - deploy:canary
   - notify:canary
@@ -33,6 +36,10 @@ ci-image:
   script:
     - docker build --tag $CI_IMAGE .
     - docker push $CI_IMAGE
+
+########################################################################################################################
+# Tests
+########################################################################################################################
 
 format:
   stage: test
@@ -151,6 +158,7 @@ unit-bs:
     refs:
       - main
       - tags
+      - /^staging-[0-9]+$/
       - schedules
   resource_group: browserstack
   tags: ['runner:main', 'size:large']
@@ -168,6 +176,7 @@ e2e-bs:
     refs:
       - main
       - tags
+      - /^staging-[0-9]+$/
       - schedules
   resource_group: browserstack
   tags: ['runner:main', 'size:large']
@@ -182,10 +191,14 @@ e2e-bs:
     - yarn
     - ./scripts/ci-bs.sh test:e2e
 
-deploy-staging-head:
+########################################################################################################################
+# Deploy
+########################################################################################################################
+
+deploy-staging:
   only:
     refs:
-      - main
+      - $CURRENT_STAGING
   stage: deploy
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
@@ -244,22 +257,22 @@ notify-feature-branch-failure:
     - BUILD_URL="$CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID"
     - COMMIT_URL="$CI_PROJECT_URL/commits/$CI_COMMIT_SHA"
 
-notify-staging-head-success:
+notify-staging-success:
   extends: .prepare_notification
   only:
     refs:
-      - main
+      - $CURRENT_STAGING
   script:
     - 'MESSAGE_TEXT=":rocket: $CI_PROJECT_NAME <$COMMIT_URL|$COMMIT_MESSAGE> deployed to :datadog_staging:."'
     - postmessage "#rum-deploy" "$MESSAGE_TEXT"
     - postmessage "#rum-ops-stg" "$MESSAGE_TEXT"
 
-notify-staging-head-failure:
+notify-staging-failure:
   extends: .prepare_notification
   when: on_failure
   only:
     refs:
-      - main
+      - $CURRENT_STAGING
   script:
     - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME main pipeline for <$BUILD_URL|$COMMIT_MESSAGE> failed."'
     - postmessage "#rum-deploy" "$MESSAGE_TEXT"
@@ -317,7 +330,7 @@ notify-prod-stable-failure:
     - postmessage "#rum-deploy" "$MESSAGE_TEXT"
 
 ########################################################################################################################
-# Scheduled tasks
+# To staging CI
 ########################################################################################################################
 
 staging-reset-scheduled:
@@ -330,7 +343,7 @@ staging-reset-scheduled:
   before_script:
     - eval $(ssh-agent -s)
   script:
-    - node --no-warnings scripts/staging-reset.js
+    - node scripts/staging-ci/staging-reset.js
   artifacts:
     reports:
       dotenv: build.env
@@ -357,3 +370,18 @@ staging-reset-scheduled-failure:
     - postmessage "#rum-deploy" "$MESSAGE_TEXT"
   dependencies:
     - staging-reset-scheduled
+
+merge-into-staging:
+  stage: pre-deploy
+  tags: ['runner:main', 'size:large']
+  image: $CI_IMAGE
+  only:
+    refs:
+      - main
+  except:
+    refs:
+      - schedules
+  before_script:
+    - eval $(ssh-agent -s)
+  script:
+    - node scripts/staging-ci/merge-into-staging.js
