@@ -11,27 +11,16 @@ const MAIN_BRANCH = process.env.MAIN_BRANCH
 async function main() {
   await initGitConfig(REPOSITORY)
   await executeCommand(`git fetch --no-tags origin ${MAIN_BRANCH} ${CURRENT_STAGING_BRANCH}`)
-
-  printLog(`Check if the ${CI_COMMIT_REF_NAME} (${CI_COMMIT_SHA}) is up to date with ${MAIN_BRANCH}...`)
-  const lastMainCommitHash = (await executeCommand(`git rev-parse origin/${MAIN_BRANCH}`)).trim()
-
-  try {
-    await executeCommand(`git merge-base --is-ancestor ${lastMainCommitHash} ${CI_COMMIT_SHA}`)
-  } catch (e) {
-    printError(`${CI_COMMIT_REF_NAME} is out of date with the ${MAIN_BRANCH}! 
-Please merge (or rebase) ${MAIN_BRANCH} with ${CI_COMMIT_REF_NAME} and try again.`)
-    throw e
-  }
-
   await executeCommand(`git checkout ${CURRENT_STAGING_BRANCH} -f`)
   await executeCommand(`git pull`)
 
   printLog(`Checking if ${CI_COMMIT_REF_NAME} (${CI_COMMIT_SHA}) can be merged with ${CURRENT_STAGING_BRANCH}...`)
   try {
     await executeCommand(`git merge --no-ff "${CI_COMMIT_SHA}"`)
-  } catch {
+  } catch (e) {
     const diff = await executeCommand(`git diff`)
-    printError(`Conflicts:\n${diff}`)
+    printError(`Conflicts:\n${diff}\n
+You can resolve these conflicts by running "branches-status staging fix" in your branch and resolving the merge conflicts.`)
     throw e
   }
 
