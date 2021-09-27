@@ -33,42 +33,37 @@ export function startSessionManagement<TrackingType extends string>(
   const sessionCookie = cacheCookieAccess(SESSION_COOKIE_NAME, options)
   tryOldCookiesMigration(sessionCookie)
   const renewObservable = new Observable<void>()
-  const sessionState = retrieveActiveSession(sessionCookie)
-  let initialSessionState = { ...sessionState }
+  let inMemorySession = retrieveActiveSession(sessionCookie)
 
   const { throttled: expandOrRenewSession } = utils.throttle(
     monitor(() => {
-      const session = retrieveActiveSession(sessionCookie)
-      const retrievedSession = { ...session }
-      const { trackingType, isTracked } = computeSessionState(session[productKey])
-      session[productKey] = trackingType
-      if (isTracked && !session.id) {
-        session.id = utils.generateUUID()
-        session.created = String(Date.now())
+      const cookieSession = retrieveActiveSession(sessionCookie)
+      const retrievedSession = { ...cookieSession }
+      const { trackingType, isTracked } = computeSessionState(cookieSession[productKey])
+      cookieSession[productKey] = trackingType
+      if (isTracked && !cookieSession.id) {
+        cookieSession.id = utils.generateUUID()
+        cookieSession.created = String(Date.now())
       }
       // save changes and expand session duration
-      persistSession(session, sessionCookie)
+      persistSession(cookieSession, sessionCookie)
 
       // If the session id has changed, notify that the session has been renewed
-      if (isTracked && initialSessionState.id !== session.id) {
-        initialSessionState = { ...session }
+      if (isTracked && inMemorySession.id !== cookieSession.id) {
+        inMemorySession = { ...cookieSession }
         renewObservable.notify()
       }
-      if (
-        isTracked &&
-        initialSessionState[productKey] !== undefined &&
-        initialSessionState[productKey] !== trackingType
-      ) {
+      if (isTracked && inMemorySession[productKey] !== undefined && inMemorySession[productKey] !== trackingType) {
         addMonitoringMessage('session type changed', {
           debug: {
             product: productKey,
-            initialSession: initialSessionState,
+            inMemorySession,
             retrievedSession,
             newTrackingType: trackingType,
             _dd_s: getCookie(SESSION_COOKIE_NAME),
           },
         })
-        initialSessionState = { ...session }
+        inMemorySession = { ...cookieSession }
       }
     }),
     COOKIE_ACCESS_DELAY
