@@ -1,4 +1,4 @@
-import { Duration, RelativeTime, timeStampNow, display, relativeToClocks } from '@datadog/browser-core'
+import { Duration, RelativeTime, timeStampNow, display, relativeToClocks, relativeNow } from '@datadog/browser-core'
 import { setup, TestSetupBuilder, setupViewTest, ViewTest } from '../../../../test/specHelper'
 import {
   RumLargestContentfulPaintTiming,
@@ -447,12 +447,24 @@ describe('view custom timings', () => {
     })
   })
 
-  it('should add custom timing with a specific time', () => {
+  it('should add custom timing with a specific timestamp', () => {
     const { clock } = setupBuilder.build()
     const { getViewUpdate, addTiming } = viewTest
 
     clock.tick(1234)
     addTiming('foo', timeStampNow())
+
+    expect(getViewUpdate(1).customTimings).toEqual({
+      foo: 1234 as Duration,
+    })
+  })
+
+  it('should add custom timing with a specific relative time', () => {
+    const { clock } = setupBuilder.build()
+    const { getViewUpdate, addTiming } = viewTest
+
+    clock.tick(1234)
+    addTiming('foo', relativeNow())
 
     expect(getViewUpdate(1).customTimings).toEqual({
       foo: 1234 as Duration,

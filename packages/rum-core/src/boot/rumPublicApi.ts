@@ -19,6 +19,8 @@ import {
   callMonitored,
   createHandlingStack,
   DefaultPrivacyLevel,
+  TimeStamp,
+  RelativeTime,
 } from '@datadog/browser-core'
 import { LifeCycle } from '../domain/lifeCycle'
 import { ParentContexts } from '../domain/parentContexts'
