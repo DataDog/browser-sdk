@@ -2,28 +2,28 @@
 # yarn lockfile v1
 
 
-"@datadog/browser-core@3.6.2", "@datadog/browser-core@file:../../packages/core":
-  version "3.6.2"
+"@datadog/browser-core@3.6.3", "@datadog/browser-core@file:../../packages/core":
+  version "3.6.3"
   dependencies:
     tslib "^1.10.0"
 
 "@datadog/browser-logs@file:../../packages/logs":
-  version "3.6.2"
+  version "3.6.3"
   dependencies:
-    "@datadog/browser-core" "3.6.2"
+    "@datadog/browser-core" "3.6.3"
     tslib "^1.10.0"
 
-"@datadog/browser-rum-core@3.6.2", "@datadog/browser-rum-core@file:../../packages/rum-core":
-  version "3.6.2"
+"@datadog/browser-rum-core@3.6.3", "@datadog/browser-rum-core@file:../../packages/rum-core":
+  version "3.6.3"
   dependencies:
-    "@datadog/browser-core" "3.6.2"
+    "@datadog/browser-core" "3.6.3"
     tslib "^1.10.0"
 
 "@datadog/browser-rum@file:../../packages/rum":
-  version "3.6.2"
+  version "3.6.3"
   dependencies:
-    "@datadog/browser-core" "3.6.2"
-    "@datadog/browser-rum-core" "3.6.2"
+    "@datadog/browser-core" "3.6.3"
+    "@datadog/browser-rum-core" "3.6.3"
     tslib "^1.10.0"
 
 "@types/eslint-scope@^3.7.0":
@@ -58,9 +58,9 @@
   integrity sha512-qcUXuemtEu+E5wZSJHNxUXeCZhAfXKQ41D+duX+VYPde7xyEVZci+/oXKJL13tnRs9lR2pr4fod59GT6/X1/yQ==
 
 "@types/node@*":
-  version "16.9.6"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-16.9.6.tgz#040a64d7faf9e5d9e940357125f0963012e66f04"
-  integrity sha512-YHUZhBOMTM3mjFkXVcK+WwAcYmyhe1wL4lfqNtzI0b3qAy7yuSetnM7QJazgE5PFmgVTNGiLOgRFfJMqW7XpSQ==
+  version "16.10.1"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-16.10.1.tgz#f3647623199ca920960006b3dccf633ea905f243"
+  integrity sha512-4/Z9DMPKFexZj/Gn3LylFgamNKHm4K3QDi0gz9B26Uk0c8izYf97B5fxfpspMNkWlFupblKM/nV8+NA9Ffvr+w==
 
 "@webassemblyjs/ast@1.11.0":
   version "1.11.0"
@@ -292,9 +292,9 @@ core-util-is@~1.0.0:
   integrity sha512-ZQBvi1DcpJ4GDqanjucZ2Hj3wEO5pZDS89BWbkcrvdxksJorwUDDZamX9ldFkp9aw2lmBDLgkObEA4DWNJ9FYQ==
 
 electron-to-chromium@^1.3.846:
-  version "1.3.849"
-  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.849.tgz#45a65a392565abc5b864624b9753393336426f4b"
-  integrity sha512-RweyW60HPOqIcxoKTGr38Yvtf2aliSUqX8dB3e9geJ0Bno0YLjcOX5F7/DPVloBkJWaPZ7xOM1A0Yme2T1A34w==
+  version "1.3.850"
+  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.850.tgz#c56c72abfeab051b4b328beb894461c5912d0456"
+  integrity sha512-ZzkDcdzePeF4dhoGZQT77V2CyJOpwfTZEOg4h0x6R/jQhGt/rIRpbRyVreWLtD7B/WsVxo91URm2WxMKR9JQZA==
 
 emojis-list@^3.0.0:
   version "3.0.0"
@@ -423,9 +423,9 @@ isarray@~1.0.0:
   integrity sha1-u5NdSFgsuhaMBoNJV6VKPgcSTxE=
 
 jest-worker@^27.0.6:
-  version "27.2.0"
-  resolved "https://registry.yarnpkg.com/jest-worker/-/jest-worker-27.2.0.tgz#11eef39f1c88f41384ca235c2f48fe50bc229bc0"
-  integrity sha512-laB0ZVIBz+voh/QQy9dmUuuDsadixeerrKqyVpgPz+CCWiOYjOBabUXHIXZhsdvkWbLqSHbgkAHWl5cg24Q6RA==
+  version "27.2.2"
+  resolved "https://registry.yarnpkg.com/jest-worker/-/jest-worker-27.2.2.tgz#636deeae8068abbf2b34b4eb9505f8d4e5bd625c"
+  integrity sha512-aG1xq9KgWB2CPC8YdMIlI8uZgga2LFNcGbHJxO8ctfXAydSaThR4EewKQGg3tBOC+kS3vhPGgymsBdi9VINjPw==
   dependencies:
     "@types/node" "*"
     merge-stream "^2.0.0"
