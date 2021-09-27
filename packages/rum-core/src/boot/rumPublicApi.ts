@@ -194,8 +194,8 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
       })
     },
 
-    addTiming: monitor((name: string) => {
-      addTimingStrategy(name)
+    addTiming: monitor((name: string, time?: number) => {
+      addTimingStrategy(name, time as RelativeTime | TimeStamp | undefined)
     }),
 
     setUser: monitor((newUser: User) => {
