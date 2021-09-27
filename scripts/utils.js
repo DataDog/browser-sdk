@@ -22,8 +22,8 @@ async function initGitConfig(repository) {
   await executeCommand(`mkdir -p ~/.ssh`)
   await executeCommand(`chmod 700 ~/.ssh`)
   await executeCommand(`ssh-keyscan -H github.com >> ~/.ssh/known_hosts`)
-  await executeCommand(`git config user.email "browser-sdk-staging-reset@datadoghq.com"`)
-  await executeCommand(`git config user.name "Gitlab staging reset job"`)
+  await executeCommand(`git config user.email "ci.browser-sdk@datadoghq.com"`)
+  await executeCommand(`git config user.name "ci.browser-sdk"`)
   await executeCommand(`git remote set-url origin ${repository}`)
 }
 
