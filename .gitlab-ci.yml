@@ -158,7 +158,7 @@ unit-bs:
     refs:
       - main
       - tags
-      - /^staging-[0-9]*$/
+      - /^staging-[0-9]+$/
       - schedules
   resource_group: browserstack
   tags: ['runner:main', 'size:large']
@@ -176,7 +176,7 @@ e2e-bs:
     refs:
       - main
       - tags
-      - /^staging-[0-9]*$/
+      - /^staging-[0-9]+$/
       - schedules
   resource_group: browserstack
   tags: ['runner:main', 'size:large']
