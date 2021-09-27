@@ -4,3 +4,5 @@
 
 **This package is deprecated, you should not use it anymore. Please use the [RUM package](../rum)
 instead.**
+
+For more information, see [Session Replay documentation](https://docs.datadoghq.com/real_user_monitoring/guide/session-replay-getting-started/)
