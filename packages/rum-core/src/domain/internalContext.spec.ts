@@ -1,11 +1,14 @@
 import { createRumSessionMock } from 'packages/rum-core/test/mockRumSession'
+import { RelativeTime } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { startInternalContext } from './internalContext'
 import { ParentContexts } from './parentContexts'
+import { UrlContexts } from './urlContexts'
 
 describe('internal context', () => {
   let setupBuilder: TestSetupBuilder
   let parentContextsStub: Partial<ParentContexts>
+  let findUrlSpy: jasmine.Spy<UrlContexts['findUrl']>
   let internalContext: ReturnType<typeof startInternalContext>
 
   beforeEach(() => {
@@ -21,15 +24,14 @@ describe('internal context', () => {
         },
         view: {
           id: 'abcde',
-          referrer: 'referrer',
-          url: 'url',
         },
       }),
     }
     setupBuilder = setup()
       .withParentContexts(parentContextsStub)
-      .beforeBuild(({ applicationId, session, parentContexts }) => {
-        internalContext = startInternalContext(applicationId, session, parentContexts)
+      .beforeBuild(({ applicationId, session, parentContexts, urlContexts }) => {
+        findUrlSpy = spyOn(urlContexts, 'findUrl').and.callThrough()
+        internalContext = startInternalContext(applicationId, session, parentContexts, urlContexts)
       })
   })
 
@@ -38,7 +40,7 @@ describe('internal context', () => {
   })
 
   it('should return current internal context', () => {
-    setupBuilder.build()
+    const { fakeLocation } = setupBuilder.build()
 
     expect(internalContext.get()).toEqual({
       application_id: 'appId',
@@ -48,8 +50,8 @@ describe('internal context', () => {
       },
       view: {
         id: 'abcde',
-        referrer: 'referrer',
-        url: 'url',
+        referrer: document.referrer,
+        url: fakeLocation.href!,
       },
     })
   })
@@ -66,5 +68,6 @@ describe('internal context', () => {
 
     expect(parentContextsStub.findView).toHaveBeenCalledWith(123)
     expect(parentContextsStub.findAction).toHaveBeenCalledWith(123)
+    expect(findUrlSpy).toHaveBeenCalledWith(123 as RelativeTime)
   })
 })

@@ -46,8 +46,6 @@ describe('startRecording', () => {
             },
             view: {
               id: viewId,
-              referrer: '',
-              url: 'http://example.org',
             },
           }
         },

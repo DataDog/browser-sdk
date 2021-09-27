@@ -45,44 +45,26 @@ describe('track views automatically', () => {
   })
 
   describe('location changes', () => {
-    it('should update view location on search change', () => {
-      const { changeLocation } = setupBuilder.build()
-      const { getViewCreateCount, getViewCreate, getViewUpdate, getViewUpdateCount } = viewTest
-
-      changeLocation('/foo?bar=qux')
-
-      expect(getViewCreateCount()).toBe(1)
-      expect(getViewCreate(0).location.href).toMatch(/\/foo$/)
-
-      const lastUpdate = getViewUpdate(getViewUpdateCount() - 1)
-      expect(lastUpdate.location.href).toMatch(/\/foo\?bar=qux$/)
-      expect(lastUpdate.id).toBe(getViewCreate(0).id)
-    })
-
     it('should create new view on path change', () => {
       const { changeLocation } = setupBuilder.build()
-      const { getViewCreateCount, getViewCreate } = viewTest
+      const { getViewCreateCount } = viewTest
 
       expect(getViewCreateCount()).toBe(1)
-      expect(getViewCreate(0).location.href).toMatch(/\/foo$/)
 
       changeLocation('/bar')
 
       expect(getViewCreateCount()).toBe(2)
-      expect(getViewCreate(1).location.href).toMatch(/\/bar$/)
     })
 
     it('should create new view on hash change from history', () => {
       const { changeLocation } = setupBuilder.build()
-      const { getViewCreateCount, getViewCreate } = viewTest
+      const { getViewCreateCount } = viewTest
 
       expect(getViewCreateCount()).toBe(1)
-      expect(getViewCreate(0).location.href).toMatch(/\/foo$/)
 
       changeLocation('/foo#bar')
 
       expect(getViewCreateCount()).toBe(2)
-      expect(getViewCreate(1).location.href).toMatch(/\/foo#bar$/)
     })
 
     function mockGetElementById() {
@@ -113,124 +95,6 @@ describe('track views automatically', () => {
       changeLocation('/foo#bar')
 
       expect(getViewCreateCount()).toBe(2)
-    })
-  })
-
-  describe('view referrer', () => {
-    it('should set the document referrer as referrer for the initial view', () => {
-      setupBuilder.build()
-      const { getViewCreate } = viewTest
-
-      expect(getViewCreate(0).referrer).toEqual(document.referrer)
-    })
-
-    it('should set the previous view URL as referrer when a route change occurs', () => {
-      const { changeLocation } = setupBuilder.build()
-      const { getViewCreate } = viewTest
-
-      changeLocation('/bar')
-
-      expect(getViewCreate(1).referrer).toEqual(jasmine.stringMatching(/\/foo$/))
-    })
-
-    it('should set the previous view URL as referrer when a the session is renewed', () => {
-      const { lifeCycle } = setupBuilder.build()
-      const { getViewCreate } = viewTest
-
-      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-
-      expect(getViewCreate(1).referrer).toEqual(jasmine.stringMatching(/\/foo$/))
-    })
-
-    it('should use the most up-to-date URL of the previous view as a referrer', () => {
-      const { changeLocation } = setupBuilder.build()
-      const { getViewCreate } = viewTest
-
-      changeLocation('/foo?a=b')
-      changeLocation('/bar')
-
-      expect(getViewCreate(1).referrer).toEqual(jasmine.stringMatching(/\/foo\?a=b$/))
-    })
-  })
-})
-
-describe('track views manually', () => {
-  let setupBuilder: TestSetupBuilder
-  let viewTest: ViewTest
-
-  beforeEach(() => {
-    setupBuilder = setup()
-      .withFakeLocation('/foo')
-      .withConfiguration({ trackViewsManually: true })
-      .beforeBuild((buildContext) => {
-        viewTest = setupViewTest(buildContext)
-        return viewTest
-      })
-  })
-
-  afterEach(() => {
-    setupBuilder.cleanup()
-  })
-
-  describe('location changes', () => {
-    it('should update view location on search change', () => {
-      const { changeLocation } = setupBuilder.build()
-      const { getViewCreateCount, getViewCreate, getViewUpdate, getViewUpdateCount } = viewTest
-
-      changeLocation('/foo?bar=qux')
-
-      expect(getViewCreateCount()).toBe(1)
-      expect(getViewCreate(0).location.href).toMatch(/\/foo$/)
-
-      const lastUpdate = getViewUpdate(getViewUpdateCount() - 1)
-      expect(lastUpdate.location.href).toMatch(/\/foo\?bar=qux$/)
-      expect(lastUpdate.id).toBe(getViewCreate(0).id)
-    })
-
-    it('should update view location on path change', () => {
-      const { changeLocation } = setupBuilder.build()
-      const { getViewCreateCount, getViewCreate, getViewUpdate, getViewUpdateCount } = viewTest
-
-      changeLocation('/bar')
-
-      expect(getViewCreateCount()).toBe(1)
-      expect(getViewCreate(0).location.href).toMatch(/\/foo$/)
-
-      const lastUpdate = getViewUpdate(getViewUpdateCount() - 1)
-      expect(lastUpdate.location.href).toMatch(/\/bar$/)
-      expect(lastUpdate.id).toBe(getViewCreate(0).id)
-    })
-  })
-
-  describe('view referrer', () => {
-    it('should set the document referrer as referrer for the initial view', () => {
-      setupBuilder.build()
-      const { getViewCreate } = viewTest
-
-      expect(getViewCreate(0).referrer).toEqual(document.referrer)
-    })
-
-    it('should set the previous view URL as referrer when starting a new view', () => {
-      const { changeLocation } = setupBuilder.build()
-      const { getViewUpdate, getViewUpdateCount, startView } = viewTest
-
-      startView()
-      changeLocation('/bar')
-
-      const lastUpdate = getViewUpdate(getViewUpdateCount() - 1)
-      expect(lastUpdate.referrer).toEqual(jasmine.stringMatching(/\/foo$/))
-      expect(lastUpdate.location.href).toEqual(jasmine.stringMatching(/\/bar$/))
-    })
-
-    it('should use the most up-to-date URL of the previous view as a referrer', () => {
-      const { changeLocation } = setupBuilder.build()
-      const { getViewCreate, startView } = viewTest
-
-      changeLocation('/foo?a=b')
-      changeLocation('/bar')
-      startView()
-
-      expect(getViewCreate(1).referrer).toEqual(jasmine.stringMatching(/\/bar$/))
     })
   })
 })

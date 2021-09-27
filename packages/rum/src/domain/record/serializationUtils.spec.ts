@@ -4,7 +4,7 @@ import {
   makeStylesheetUrlsAbsolute,
   getSerializedNodeId,
   hasSerializedNode,
-  setSerializedNode,
+  setSerializedNodeId,
   makeSrcsetUrlsAbsolute,
   makeUrlAbsolute,
   getElementInputValue,
@@ -18,7 +18,7 @@ describe('serialized Node storage in DOM Nodes', () => {
 
     it('returns true for DOM Nodes that have been serialized', () => {
       const node = document.createElement('div')
-      setSerializedNode(node, {} as any)
+      setSerializedNodeId(node, 42)
 
       expect(hasSerializedNode(node)).toBe(true)
     })
@@ -31,7 +31,7 @@ describe('serialized Node storage in DOM Nodes', () => {
 
     it('returns the serialized Node id', () => {
       const node = document.createElement('div')
-      setSerializedNode(node, { id: 42 } as any)
+      setSerializedNodeId(node, 42)
 
       expect(getSerializedNodeId(node)).toBe(42)
     })

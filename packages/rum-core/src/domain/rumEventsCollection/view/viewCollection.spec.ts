@@ -26,7 +26,6 @@ const VIEW: ViewEvent = {
   loadingTime: 20 as Duration,
   loadingType: ViewLoadingType.INITIAL_LOAD,
   location: {} as Location,
-  referrer: '',
   startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
   timings: {
     domComplete: 10 as Duration,

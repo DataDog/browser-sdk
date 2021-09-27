@@ -527,6 +527,13 @@ type Combined<A, B> = A extends null ? B : B extends null ? A : Merged<A, B>
 export function combine<A, B>(a: A, b: B): Combined<A, B>
 export function combine<A, B, C>(a: A, b: B, c: C): Combined<Combined<A, B>, C>
 export function combine<A, B, C, D>(a: A, b: B, c: C, d: D): Combined<Combined<Combined<A, B>, C>, D>
+export function combine<A, B, C, D, E>(
+  a: A,
+  b: B,
+  c: C,
+  d: D,
+  e: E
+): Combined<Combined<Combined<Combined<A, B>, C>, D>, E>
 export function combine(...sources: any[]): unknown {
   let destination: any
 

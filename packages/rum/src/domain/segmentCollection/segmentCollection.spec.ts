@@ -219,7 +219,7 @@ describe('startSegmentCollection', () => {
 describe('computeSegmentContext', () => {
   const DEFAULT_VIEW_CONTEXT: ViewContext = {
     session: { id: '456' },
-    view: { id: '123', url: 'http://foo.com', referrer: 'http://bar.com' },
+    view: { id: '123' },
   }
 
   const DEFAULT_SESSION = createRumSessionMock().setId('456')
