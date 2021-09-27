@@ -16,10 +16,10 @@ async function main() {
   printLog(`Merging ${CI_COMMIT_REF_NAME} (${CI_COMMIT_SHA}) with ${CURRENT_STAGING_BRANCH}...`)
   try {
     await executeCommand(`git merge --no-ff "${CI_COMMIT_SHA}"`)
-  } catch {
+  } catch (e) {
     const diff = await executeCommand(`git diff`)
     printError(`Conflicts:\n${diff}`)
-    process.exit(1)
+    throw e
   }
 
   const commitMessage = await executeCommand(`git show -s --format=%B`)

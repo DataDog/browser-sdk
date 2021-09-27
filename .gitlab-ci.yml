@@ -343,7 +343,7 @@ staging-reset-scheduled:
   before_script:
     - eval $(ssh-agent -s)
   script:
-    - node --no-warnings scripts/staging-ci/staging-reset.js
+    - node scripts/staging-ci/staging-reset.js
   artifacts:
     reports:
       dotenv: build.env
@@ -384,4 +384,4 @@ merge-into-staging:
   before_script:
     - eval $(ssh-agent -s)
   script:
-    - node --no-warnings scripts/staging-ci/merge-into-staging.js
+    - node scripts/staging-ci/merge-into-staging.js
