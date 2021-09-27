@@ -1,7 +1,7 @@
-import { cacheCookieAccess, COOKIE_ACCESS_DELAY, CookieCache, CookieOptions } from '../browser/cookie'
+import { cacheCookieAccess, COOKIE_ACCESS_DELAY, CookieCache, CookieOptions, getCookie } from '../browser/cookie'
 import { Observable } from '../tools/observable'
 import * as utils from '../tools/utils'
-import { monitor } from './internalMonitoring'
+import { monitor, addMonitoringMessage } from './internalMonitoring'
 import { tryOldCookiesMigration } from './oldCookiesMigration'
 
 export const SESSION_COOKIE_NAME = '_dd_s'
@@ -33,11 +33,13 @@ export function startSessionManagement<TrackingType extends string>(
   const sessionCookie = cacheCookieAccess(SESSION_COOKIE_NAME, options)
   tryOldCookiesMigration(sessionCookie)
   const renewObservable = new Observable<void>()
-  let currentSessionId = retrieveActiveSession(sessionCookie).id
+  const sessionState = retrieveActiveSession(sessionCookie)
+  let initialSessionState = { ...sessionState }
 
   const { throttled: expandOrRenewSession } = utils.throttle(
     monitor(() => {
       const session = retrieveActiveSession(sessionCookie)
+      const retrievedSession = { ...session }
       const { trackingType, isTracked } = computeSessionState(session[productKey])
       session[productKey] = trackingType
       if (isTracked && !session.id) {
@@ -48,9 +50,25 @@ export function startSessionManagement<TrackingType extends string>(
       persistSession(session, sessionCookie)
 
       // If the session id has changed, notify that the session has been renewed
-      if (isTracked && currentSessionId !== session.id) {
-        currentSessionId = session.id
+      if (isTracked && initialSessionState.id !== session.id) {
+        initialSessionState = { ...session }
         renewObservable.notify()
+      }
+      if (
+        isTracked &&
+        initialSessionState[productKey] !== undefined &&
+        initialSessionState[productKey] !== trackingType
+      ) {
+        addMonitoringMessage('session type changed', {
+          debug: {
+            product: productKey,
+            initialSession: initialSessionState,
+            retrievedSession,
+            newTrackingType: trackingType,
+            _dd_s: getCookie(SESSION_COOKIE_NAME),
+          },
+        })
+        initialSessionState = { ...session }
       }
     }),
     COOKIE_ACCESS_DELAY
