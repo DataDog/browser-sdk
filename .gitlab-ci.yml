@@ -249,6 +249,7 @@ notify-feature-branch-failure:
       - main
       - tags
       - schedules
+      - /^staging-[0-9]+$/
 
 .prepare_notification:
   extends: .slack-notifier-base
@@ -385,3 +386,18 @@ merge-into-staging:
     - eval $(ssh-agent -s)
   script:
     - node scripts/staging-ci/merge-into-staging.js
+
+check-staging-merge:
+  stage: test
+  tags: ['runner:main', 'size:large']
+  image: $CI_IMAGE
+  except:
+    refs:
+      - main
+      - tags
+      - /^staging-[0-9]+$/
+      - schedules
+  before_script:
+    - eval $(ssh-agent -s)
+  script:
+    - node scripts/staging-ci/check-staging-merge.js
