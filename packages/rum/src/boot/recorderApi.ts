@@ -8,6 +8,7 @@ import {
   RecorderApi,
 } from '@datadog/browser-rum-core'
 import { getReplayStats } from '../domain/replayStats'
+import { getDeflateWorkerSingleton } from '../domain/segmentCollection/deflateWorkerSingleton'
 
 import { startRecording } from './startRecording'
 
@@ -39,7 +40,10 @@ type RecorderState =
       stopRecording: () => void
     }
 
-export function makeRecorderApi(startRecordingImpl: StartRecording): RecorderApi {
+export function makeRecorderApi(
+  startRecordingImpl: StartRecording,
+  getDeflateWorkerSingletonImpl = getDeflateWorkerSingleton
+): RecorderApi {
   let state: RecorderState = {
     status: RecorderStatus.Stopped,
   }
@@ -92,12 +96,21 @@ export function makeRecorderApi(startRecordingImpl: StartRecording): RecorderApi
             return
           }
 
+          const worker = getDeflateWorkerSingletonImpl()
+          if (!worker) {
+            state = {
+              status: RecorderStatus.Stopped,
+            }
+            return
+          }
+
           const { stop: stopRecording } = startRecordingImpl(
             lifeCycle,
             initConfiguration.applicationId,
             configuration,
             session,
-            parentContexts
+            parentContexts,
+            worker
           )
           state = {
             status: RecorderStatus.Started,
