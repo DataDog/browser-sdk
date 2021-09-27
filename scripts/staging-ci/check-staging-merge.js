@@ -19,8 +19,11 @@ async function main() {
     await executeCommand(`git merge --no-ff "${CI_COMMIT_SHA}"`)
   } catch (e) {
     const diff = await executeCommand(`git diff`)
-    printError(`Conflicts:\n${diff}\n
-You can resolve these conflicts by running "branches-status staging fix" in your branch and resolving the merge conflicts.`)
+    printError(
+      `Conflicts:\n${diff}\n` +
+        'You can resolve these conflicts by running "branches-status staging fix" in your branch' +
+        'and resolving the merge conflicts.'
+    )
     throw e
   }
 
