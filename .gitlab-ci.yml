@@ -197,8 +197,8 @@ e2e-bs:
 
 deploy-staging:
   only:
-    refs:
-      - $CURRENT_STAGING
+    variables:
+      - $CI_COMMIT_REF_NAME == $CURRENT_STAGING
   stage: deploy
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
@@ -249,6 +249,7 @@ notify-feature-branch-failure:
       - main
       - tags
       - schedules
+      - /^staging-[0-9]+$/
 
 .prepare_notification:
   extends: .slack-notifier-base
@@ -260,8 +261,8 @@ notify-feature-branch-failure:
 notify-staging-success:
   extends: .prepare_notification
   only:
-    refs:
-      - $CURRENT_STAGING
+    variables:
+      - $CI_COMMIT_REF_NAME == $CURRENT_STAGING
   script:
     - 'MESSAGE_TEXT=":rocket: $CI_PROJECT_NAME <$COMMIT_URL|$COMMIT_MESSAGE> deployed to :datadog_staging:."'
     - postmessage "#rum-deploy" "$MESSAGE_TEXT"
@@ -271,8 +272,8 @@ notify-staging-failure:
   extends: .prepare_notification
   when: on_failure
   only:
-    refs:
-      - $CURRENT_STAGING
+    variables:
+      - $CI_COMMIT_REF_NAME == $CURRENT_STAGING
   script:
     - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME main pipeline for <$BUILD_URL|$COMMIT_MESSAGE> failed."'
     - postmessage "#rum-deploy" "$MESSAGE_TEXT"
@@ -385,3 +386,18 @@ merge-into-staging:
     - eval $(ssh-agent -s)
   script:
     - node scripts/staging-ci/merge-into-staging.js
+
+check-staging-merge:
+  stage: test
+  tags: ['runner:main', 'size:large']
+  image: $CI_IMAGE
+  except:
+    refs:
+      - main
+      - tags
+      - /^staging-[0-9]+$/
+      - schedules
+  before_script:
+    - eval $(ssh-agent -s)
+  script:
+    - node scripts/staging-ci/check-staging-merge.js
