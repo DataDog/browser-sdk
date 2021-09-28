@@ -12,6 +12,7 @@ export interface CookieOptions {
 export interface CookieCache {
   get: () => string | undefined
   set: (value: string, expireDelay: number) => void
+  clearCache: () => void
 }
 
 export function cacheCookieAccess(name: string, options: CookieOptions): CookieCache {
@@ -40,6 +41,10 @@ export function cacheCookieAccess(name: string, options: CookieOptions): CookieC
       setCookie(name, value, expireDelay, options)
       cache = value
       cacheAccess()
+    },
+    clearCache: () => {
+      clearTimeout(timeout)
+      hasCache = false
     },
   }
 }
