@@ -16,6 +16,11 @@
 
 ---
 
+## v3.6.4
+
+- ✨ [RUMF-1000] add a custom time parameter to `addTiming` ([#1079](https://github.com/DataDog/browser-sdk/pull/1079))
+- 🐛 [RUMF-1021] clear cookie cache before expanding cookie ([#1080](https://github.com/DataDog/browser-sdk/pull/1080))
+
 ## v3.6.3
 
 - [REPLAY-328][rumf-1035] gracefully handle recorder Worker initialisation crash ([#1068](https://github.com/DataDog/browser-sdk/pull/1068))
