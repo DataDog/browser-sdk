@@ -475,6 +475,16 @@ describe('rum public api', () => {
       expect(addTimingSpy.calls.argsFor(0)[1]).toBeUndefined()
       expect(displaySpy).not.toHaveBeenCalled()
     })
+
+    it('adds custom timing with provided time', () => {
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+      rumPublicApi.addTiming('foo', 12)
+
+      expect(addTimingSpy.calls.argsFor(0)[0]).toEqual('foo')
+      expect(addTimingSpy.calls.argsFor(0)[1]).toBe(12 as RelativeTime)
+      expect(displaySpy).not.toHaveBeenCalled()
+    })
   })
 
   describe('trackViews mode', () => {

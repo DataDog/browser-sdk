@@ -1,4 +1,4 @@
-import { isNumber, round } from './utils'
+import { isNumber, ONE_YEAR, round } from './utils'
 
 export type Duration = number & { d: 'Duration in ms' }
 export type ServerDuration = number & { s: 'Duration in ns' }
@@ -70,6 +70,10 @@ export function getRelativeTime(timestamp: TimeStamp) {
 export function getTimeStamp(relativeTime: RelativeTime) {
   // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
   return Math.round(getNavigationStart() + relativeTime) as TimeStamp
+}
+
+export function looksLikeRelativeTime(time: RelativeTime | TimeStamp): time is RelativeTime {
+  return time < ONE_YEAR
 }
 
 /**

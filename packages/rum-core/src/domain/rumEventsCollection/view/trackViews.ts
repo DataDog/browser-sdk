@@ -13,6 +13,8 @@ import {
   display,
   Observable,
   Subscription,
+  RelativeTime,
+  looksLikeRelativeTime,
 } from '@datadog/browser-core'
 import { ViewLoadingType, ViewCustomTimings } from '../../../rawRumEvent.types'
 
@@ -130,7 +132,7 @@ export function trackViews(
   }
 
   return {
-    addTiming: (name: string, time = timeStampNow()) => {
+    addTiming: (name: string, time: RelativeTime | TimeStamp = timeStampNow()) => {
       currentView.addTiming(name, time)
       currentView.triggerUpdate()
     },
@@ -222,8 +224,9 @@ function newView(
         setLoadEvent(newTimings.loadEvent)
       }
     },
-    addTiming(name: string, time: TimeStamp) {
-      customTimings[sanitizeTiming(name)] = elapsed(startClocks.timeStamp, time)
+    addTiming(name: string, time: RelativeTime | TimeStamp) {
+      const relativeTime = looksLikeRelativeTime(time) ? time : elapsed(startClocks.timeStamp, time)
+      customTimings[sanitizeTiming(name)] = relativeTime
     },
   }
 }
