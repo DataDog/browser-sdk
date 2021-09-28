@@ -37,6 +37,7 @@ export function startSessionManagement<TrackingType extends string>(
 
   const { throttled: expandOrRenewSession } = utils.throttle(
     monitor(() => {
+      sessionCookie.clearCache()
       const cookieSession = retrieveActiveSession(sessionCookie)
       const retrievedSession = { ...cookieSession }
       const { trackingType, isTracked } = computeSessionState(cookieSession[productKey])
@@ -70,6 +71,7 @@ export function startSessionManagement<TrackingType extends string>(
   )
 
   const expandSession = () => {
+    sessionCookie.clearCache()
     const session = retrieveActiveSession(sessionCookie)
     persistSession(session, sessionCookie)
   }

@@ -6,8 +6,8 @@ import {
   getCookie,
   setCookie,
 } from '../browser/cookie'
-import { Clock, isIE, mockClock, restorePageVisibility, setPageVisibility } from '../../test/specHelper'
-import { ONE_HOUR } from '../tools/utils'
+import { Clock, isIE, mockClock, restorePageVisibility, setPageVisibility, createNewEvent } from '../../test/specHelper'
+import { ONE_HOUR, DOM_EVENT } from '../tools/utils'
 import {
   Session,
   SESSION_COOKIE_NAME,
@@ -276,6 +276,36 @@ describe('startSessionManagement', () => {
       const idB = secondSession.getId()
 
       expect(idA).toBe(idB)
+    })
+
+    it('should not erase other session type', () => {
+      startSessionManagement(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
+        isTracked: true,
+        trackingType: FakeTrackingType.TRACKED,
+      }))
+
+      // schedule an expandOrRenewSession
+      document.dispatchEvent(new CustomEvent('click'))
+
+      clock.tick(COOKIE_ACCESS_DELAY / 2)
+
+      // expand first session cookie cache
+      document.dispatchEvent(createNewEvent(DOM_EVENT.VISIBILITY_CHANGE))
+
+      startSessionManagement(COOKIE_OPTIONS, SECOND_PRODUCT_KEY, () => ({
+        isTracked: true,
+        trackingType: FakeTrackingType.TRACKED,
+      }))
+
+      // cookie correctly set
+      expect(getCookie(SESSION_COOKIE_NAME)).toContain('first')
+      expect(getCookie(SESSION_COOKIE_NAME)).toContain('second')
+
+      clock.tick(COOKIE_ACCESS_DELAY / 2)
+
+      // scheduled expandOrRenewSession should not use cached value
+      expect(getCookie(SESSION_COOKIE_NAME)).toContain('first')
+      expect(getCookie(SESSION_COOKIE_NAME)).toContain('second')
     })
 
     it('should have independent tracking types', () => {
