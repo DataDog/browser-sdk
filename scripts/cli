@@ -72,8 +72,30 @@ cmd_check_typescript_compatibility () {
   yarn build
   cd test/app
   rm -rf node_modules
-  yarn
-  yarn compat:tsc || fail 'typescript 3.0 compatibility broken'
+  check_typescript_3_compatibility || fail 'typescript@3.0 compatibility broken'
+  check_typescript_latest_compatibility || fail 'typescript@latest compatibility broken'
+}
+
+check_typescript_3_compatibility () {
+  yarn compat:tsc
+}
+
+check_typescript_latest_compatibility () {
+  # Add typescript options only supported in newer versions
+  sed -i '' '3 i\
+  "exactOptionalPropertyTypes": true,
+' tsconfig.json
+
+  yarn add typescript@latest
+  local succeeded=true
+  if ! yarn compat:tsc; then
+    succeeded=false
+  fi
+
+  # Revert all changes
+  git checkout .
+
+  $succeeded
 }
 
 cmd_check_server_side_rendering_compatibility () {
