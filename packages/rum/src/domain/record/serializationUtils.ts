@@ -56,12 +56,27 @@ export function makeSrcsetUrlsAbsolute(attributeValue: string, baseUrl: string) 
   )
 }
 
-export function makeUrlAbsolute(url: string, baseUrl: string): string {
+export function makeUrlAbsolute(url: string, docUrl: string): string {
   try {
+    const baseUrl = getBaseHref(docUrl)
     return buildUrl(url.trim(), baseUrl).href
   } catch (_) {
     return url
   }
+}
+
+let baseTagsLiveRef: NodeListOf<HTMLBaseElement> // Live NodeList reference
+const getBaseHref = (docUrl: string) => {
+  if (!baseTagsLiveRef) {
+    // OPTIMIZATION GENERALIZATION: Reduce Search scope to within <Head/>
+    baseTagsLiveRef = document.head.querySelectorAll('base[href]')
+  }
+  const baseTag = baseTagsLiveRef[0]
+  if (!baseTag) {
+    return docUrl
+  }
+  const baseUrl = baseTag.href.trim()
+  return buildUrl(baseUrl, docUrl).href
 }
 
 /**
