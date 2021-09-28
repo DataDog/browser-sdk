@@ -2,6 +2,8 @@ import { buildUrl } from '@datadog/browser-core'
 import { CENSORED_STRING_MARK, NodePrivacyLevel } from '../../constants'
 import { shouldMaskNode } from './privacy'
 
+const DISABLE_ABSOLUTE = false;
+
 export type NodeWithSerializedNode = Node & { s: 'Node with serialized node' }
 
 const serializedNodeIds = new WeakMap<Node, number>()
@@ -35,6 +37,9 @@ const URL_IN_CSS_REF = /url\((?:(')([^']*)'|(")([^"]*)"|([^)]*))\)/gm
 const ABSOLUTE_URL = /^[A-Za-z]+:|^\/\//
 const DATA_URI = /^data:.*,/i
 export function makeStylesheetUrlsAbsolute(cssText: string, baseUrl: string): string {
+  if (DISABLE_ABSOLUTE) {
+    return cssText;
+  }
   return cssText.replace(
     URL_IN_CSS_REF,
     (origin: string, quote1: string, path1: string, quote2: string, path2: string, path3: string) => {
@@ -50,6 +55,9 @@ export function makeStylesheetUrlsAbsolute(cssText: string, baseUrl: string): st
 
 const SRCSET_URLS = /(^\s*|,\s*)([^\s,]+)/g
 export function makeSrcsetUrlsAbsolute(attributeValue: string, baseUrl: string) {
+  if (DISABLE_ABSOLUTE) {
+    return attributeValue;
+  }
   return attributeValue.replace(
     SRCSET_URLS,
     (_, prefix: string, url: string) => `${prefix}${makeUrlAbsolute(url, baseUrl)}`
@@ -57,6 +65,9 @@ export function makeSrcsetUrlsAbsolute(attributeValue: string, baseUrl: string) 
 }
 
 export function makeUrlAbsolute(url: string, baseUrl: string): string {
+  if (DISABLE_ABSOLUTE) {
+    return url.trim();
+  }
   try {
     return buildUrl(url.trim(), baseUrl).href
   } catch (_) {
