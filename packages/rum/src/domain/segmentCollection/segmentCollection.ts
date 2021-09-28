@@ -1,8 +1,8 @@
-import { addErrorToMonitoringBatch, addEventListener, DOM_EVENT, EventEmitter, monitor } from '@datadog/browser-core'
+import { addEventListener, DOM_EVENT, EventEmitter, monitor } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType, ParentContexts, RumSession } from '@datadog/browser-rum-core'
 import { SEND_BEACON_BYTE_LENGTH_LIMIT } from '../../transport/send'
 import { CreationReason, Record, SegmentContext, SegmentMeta } from '../../types'
-import { createDeflateWorker, DeflateWorker } from './deflateWorker'
+import { DeflateWorker } from './deflateWorker'
 import { Segment } from './segment'
 
 export const MAX_SEGMENT_DURATION = 30_000
@@ -33,31 +33,19 @@ let MAX_SEGMENT_SIZE = SEND_BEACON_BYTE_LENGTH_LIMIT
 // To help investigate session replays issues, each segment is created with a "creation reason",
 // indicating why the session has been created.
 
-let workerSingleton: DeflateWorker
-
 export function startSegmentCollection(
   lifeCycle: LifeCycle,
   applicationId: string,
   session: RumSession,
   parentContexts: ParentContexts,
-  send: (data: Uint8Array, meta: SegmentMeta, rawSegmentSize: number, flushReason?: string) => void
+  send: (data: Uint8Array, meta: SegmentMeta, rawSegmentSize: number, flushReason?: string) => void,
+  worker: DeflateWorker
 ) {
-  if (!workerSingleton) {
-    workerSingleton = createDeflateWorker()
-    workerSingleton.addEventListener(
-      'message',
-      monitor(({ data }) => {
-        if ('error' in data) {
-          addErrorToMonitoringBatch(data.error)
-        }
-      })
-    )
-  }
   return doStartSegmentCollection(
     lifeCycle,
     () => computeSegmentContext(applicationId, session, parentContexts),
     send,
-    workerSingleton
+    worker
   )
 }
 

@@ -1,4 +1,4 @@
-import { HttpRequest, DefaultPrivacyLevel } from '@datadog/browser-core'
+import { HttpRequest, DefaultPrivacyLevel, noop } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import { inflate } from 'pako'
 import { createRumSessionMock, RumSessionMock } from '../../../rum-core/test/mockRumSession'
@@ -9,6 +9,7 @@ import { collectAsyncCalls } from '../../test/utils'
 import { setMaxSegmentSize } from '../domain/segmentCollection/segmentCollection'
 
 import { Segment, RecordType } from '../types'
+import { getDeflateWorkerSingleton } from '../domain/segmentCollection/deflateWorkerSingleton'
 import { startRecording } from './startRecording'
 
 describe('startRecording', () => {
@@ -54,7 +55,15 @@ describe('startRecording', () => {
         defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
       })
       .beforeBuild(({ lifeCycle, applicationId, configuration, parentContexts, session }) => {
-        ;({ stop: stopRecording } = startRecording(lifeCycle, applicationId, configuration, session, parentContexts))
+        const recording = startRecording(
+          lifeCycle,
+          applicationId,
+          configuration,
+          session,
+          parentContexts,
+          getDeflateWorkerSingleton()!
+        )
+        stopRecording = recording ? recording.stop : noop
         return { stop: stopRecording }
       })
 

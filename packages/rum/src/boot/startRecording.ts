@@ -3,6 +3,7 @@ import { LifeCycle, LifeCycleEventType, ParentContexts, RumSession } from '@data
 
 import { record } from '../domain/record'
 import { startSegmentCollection } from '../domain/segmentCollection'
+import { DeflateWorker } from '../domain/segmentCollection/deflateWorker'
 import { send } from '../transport/send'
 import { RawRecord, RecordType } from '../types'
 
@@ -11,7 +12,8 @@ export function startRecording(
   applicationId: string,
   configuration: Configuration,
   session: RumSession,
-  parentContexts: ParentContexts
+  parentContexts: ParentContexts,
+  worker: DeflateWorker
 ) {
   const { addRecord, stop: stopSegmentCollection } = startSegmentCollection(
     lifeCycle,
@@ -19,7 +21,8 @@ export function startRecording(
     session,
     parentContexts,
     (data, meta, rawSegmentSize, flushReason) =>
-      send(configuration.sessionReplayEndpoint, data, meta, rawSegmentSize, flushReason)
+      send(configuration.sessionReplayEndpoint, data, meta, rawSegmentSize, flushReason),
+    worker
   )
 
   function addRawRecord(rawRecord: RawRecord) {
