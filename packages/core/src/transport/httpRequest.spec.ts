@@ -80,7 +80,7 @@ describe('httpRequest intake parameters', () => {
   beforeEach(() => {
     server = sinon.fakeServer.create()
     endpointBuilder = createEndpointBuilder({ clientToken, intakeApiVersion: 2 }, buildEnv, 'logs')
-    request = new HttpRequest(endpointBuilder, BATCH_BYTES_LIMIT, true)
+    request = new HttpRequest(endpointBuilder, BATCH_BYTES_LIMIT)
   })
 
   afterEach(() => {

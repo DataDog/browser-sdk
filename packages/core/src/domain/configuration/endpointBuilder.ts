@@ -58,8 +58,8 @@ export function createEndpointBuilder(
   const host = buildHost(endpointType)
   const path = buildPath(endpointType)
 
-  function build(withBatchTime?: boolean): string {
-    const queryParameters = buildQueryParameters(endpointType, source, withBatchTime)
+  function build(): string {
+    const queryParameters = buildQueryParameters(endpointType, source)
     const endpoint = `https://${host}${path}?${queryParameters}`
     if (proxyUrl) {
       return `${proxyUrl}?ddforward=${encodeURIComponent(endpoint)}`
@@ -90,7 +90,7 @@ export function createEndpointBuilder(
     return shouldUseIntakeV2(endpointType) ? `/api/v2/${INTAKE_TRACKS[endpointType]}` : `/v1/input/${clientToken}`
   }
 
-  function buildQueryParameters(endpointType: EndpointType, source?: string, withBatchTime?: boolean) {
+  function buildQueryParameters(endpointType: EndpointType, source?: string) {
     const tags =
       `sdk_version:${sdkVersion}` +
       `${env ? `,env:${env}` : ''}` +
@@ -107,7 +107,7 @@ export function createEndpointBuilder(
         `&dd-request-id=${generateUUID()}`
     }
 
-    if (withBatchTime) {
+    if (endpointType === 'rum') {
       parameters += `&batch_time=${timeStampNow()}`
     }
 

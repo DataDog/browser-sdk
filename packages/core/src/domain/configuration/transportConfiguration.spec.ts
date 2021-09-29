@@ -55,9 +55,15 @@ describe('transportConfiguration', () => {
       )
     })
 
-    it('should add batch_time if withBatchTime sent', () => {
+    it('should add batch_time for rum endpoint', () => {
       const configuration = computeTransportConfiguration({ clientToken }, buildEnv)
-      expect(configuration.rumEndpointBuilder.build(true)).toContain(`&batch_time=`)
+      expect(configuration.rumEndpointBuilder.build()).toContain(`&batch_time=`)
+    })
+
+    it('should not add batch_time for logs and replay endpoints', () => {
+      const configuration = computeTransportConfiguration({ clientToken }, buildEnv)
+      expect(configuration.logsEndpointBuilder.build()).not.toContain(`&batch_time=`)
+      expect(configuration.sessionReplayEndpointBuilder.build()).not.toContain(`&batch_time=`)
     })
   })
 
@@ -88,7 +94,7 @@ describe('transportConfiguration', () => {
         { clientToken, intakeApiVersion: 2, proxyUrl: 'https://proxy.io/path' },
         buildEnv
       )
-      expect(configuration.rumEndpointBuilder.build(true)).toMatch(
+      expect(configuration.rumEndpointBuilder.build()).toMatch(
         `https://proxy.io/path\\?ddforward=${encodeURIComponent(
           `https://rum-http-intake.logs.datadoghq.com/api/v2/rum?ddsource=(.*)&ddtags=(.*)&dd-api-key=${clientToken}` +
             `&dd-evp-origin-version=(.*)&dd-evp-origin=browser&dd-request-id=(.*)&batch_time=(.*)`

@@ -40,7 +40,7 @@ function makeRumBatch(configuration: Configuration, lifeCycle: LifeCycle): RumBa
 
   function createRumBatch(endpointBuilder: EndpointBuilder, unloadCallback?: () => void) {
     return new Batch(
-      new HttpRequest(endpointBuilder, configuration.batchBytesLimit, true),
+      new HttpRequest(endpointBuilder, configuration.batchBytesLimit),
       configuration.maxBatchSize,
       configuration.batchBytesLimit,
       configuration.maxMessageSize,

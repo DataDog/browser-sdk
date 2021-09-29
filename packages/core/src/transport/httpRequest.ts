@@ -12,14 +12,10 @@ let hasReportedXhrError = false
  * to be parsed correctly without content type header
  */
 export class HttpRequest {
-  constructor(
-    private endpointBuilder: EndpointBuilder,
-    private bytesLimit: number,
-    private withBatchTime: boolean = false
-  ) {}
+  constructor(private endpointBuilder: EndpointBuilder, private bytesLimit: number) {}
 
   send(data: string | FormData, size: number, flushReason?: string) {
-    const url = this.endpointBuilder.build(this.withBatchTime)
+    const url = this.endpointBuilder.build()
     const tryBeacon = !!navigator.sendBeacon && size < this.bytesLimit
     if (tryBeacon) {
       try {
