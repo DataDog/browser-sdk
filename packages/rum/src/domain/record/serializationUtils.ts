@@ -1,8 +1,5 @@
-import { buildUrl } from '@datadog/browser-core'
 import { CENSORED_STRING_MARK, NodePrivacyLevel } from '../../constants'
 import { shouldMaskNode } from './privacy'
-
-const DISABLE_ABSOLUTE = false
 
 export type NodeWithSerializedNode = Node & { s: 'Node with serialized node' }
 
