@@ -7,6 +7,7 @@ import {
   addEventListener,
   includes,
   DefaultPrivacyLevel,
+  isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
 import { NodePrivacyLevel } from '../../constants'
 import { getNodePrivacyLevel, shouldMaskNode } from './privacy'
@@ -28,6 +29,7 @@ import {
   ScrollCallback,
   StyleSheetRuleCallback,
   ViewportResizeCallback,
+  VisualViewportResizeCallback,
 } from './types'
 import { forEach, getWindowHeight, getWindowWidth, hookSetter, isTouchEvent } from './utils'
 import { startMutationObserver, MutationController } from './mutationObserver'
@@ -46,6 +48,10 @@ export function initObservers(o: ObserverParam): ListenerHandler {
   const styleSheetObserver = initStyleSheetObserver(o.styleSheetRuleCb)
   const focusHandler = initFocusObserver(o.focusCb)
 
+  const visualViewportResizeHandler = isExperimentalFeatureEnabled('visualviewport')
+    ? initVisualViewportResizeObserver(o.visualViewportResizeCb)
+    : () => {}
+
   return () => {
     mutationHandler()
     mousemoveHandler()
@@ -56,6 +62,7 @@ export function initObservers(o: ObserverParam): ListenerHandler {
     mediaInteractionHandler()
     styleSheetObserver()
     focusHandler()
+    visualViewportResizeHandler()
   }
 }
 
@@ -336,5 +343,32 @@ function initMediaInteractionObserver(
 function initFocusObserver(focusCb: FocusCallback): ListenerHandler {
   return addEventListeners(window, [DOM_EVENT.FOCUS, DOM_EVENT.BLUR], () => {
     focusCb({ has_focus: document.hasFocus() })
+  }).stop
+}
+
+function initVisualViewportResizeObserver(cb: VisualViewportResizeCallback): ListenerHandler {
+  if (!visualViewport) {
+    return () => {
+      /* Stop */
+    }
+  }
+  const { throttled: updateDimension } = throttle(
+    monitor(() => {
+      const viewport = visualViewport
+      cb({
+        scale: viewport.scale,
+        offsetLeft: viewport.offsetLeft,
+        offsetTop: viewport.offsetTop,
+        pageLeft: viewport.pageLeft,
+        pageTop: viewport.pageTop,
+        height: viewport.height,
+        width: viewport.width,
+      })
+    }),
+    200
+  )
+  return addEventListeners(visualViewport, [DOM_EVENT.RESIZE, DOM_EVENT.SCROLL], updateDimension, {
+    capture: true,
+    passive: true,
   }).stop
 }
