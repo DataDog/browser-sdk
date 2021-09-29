@@ -82,6 +82,19 @@ describe('transportConfiguration', () => {
         )}`
       )
     })
+
+    it('should replace the full intake v2 endpoint by the proxyUrl and set it in the attribute ddforward', () => {
+      const configuration = computeTransportConfiguration(
+        { clientToken, intakeApiVersion: 2, proxyUrl: 'https://proxy.io/path' },
+        buildEnv
+      )
+      expect(configuration.rumEndpointBuilder.build(true)).toMatch(
+        `https://proxy.io/path\\?ddforward=${encodeURIComponent(
+          `https://rum-http-intake.logs.datadoghq.com/api/v2/rum?ddsource=(.*)&ddtags=(.*)&dd-api-key=${clientToken}` +
+            `&dd-evp-origin-version=(.*)&dd-evp-origin=browser&dd-request-id=(.*)&batch_time=(.*)`
+        )}`
+      )
+    })
   })
 
   describe('sdk_version, env, version and service', () => {
