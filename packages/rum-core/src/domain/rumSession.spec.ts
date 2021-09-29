@@ -20,7 +20,6 @@ describe('rum session', () => {
   const DURATION = 123456
   const configuration: Partial<Configuration> = {
     ...DEFAULT_CONFIGURATION,
-    isEnabled: () => true,
     sampleRate: 50,
     replaySampleRate: 50,
   }

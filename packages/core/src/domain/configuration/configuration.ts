@@ -3,6 +3,7 @@ import { CookieOptions, getCurrentSite } from '../../browser/cookie'
 import { catchUserErrors } from '../../tools/catchUserErrors'
 import { includes, objectHasValue, ONE_KILO_BYTE, ONE_SECOND } from '../../tools/utils'
 import { computeTransportConfiguration, TransportConfiguration } from './transportConfiguration'
+import { setEnabledExperimentalFeatures } from './experimentalFeatures'
 
 export const DefaultPrivacyLevel = {
   ALLOW: 'allow',
@@ -99,8 +100,6 @@ export type Configuration = typeof DEFAULT_CONFIGURATION &
     beforeSend?: BeforeSendCallback
 
     actionNameAttribute?: string
-
-    isEnabled: (feature: string) => boolean
   }
 
 export function buildConfiguration(initConfiguration: InitConfiguration, buildEnv: BuildEnv): Configuration {
@@ -108,12 +107,12 @@ export function buildConfiguration(initConfiguration: InitConfiguration, buildEn
     ? initConfiguration.enableExperimentalFeatures
     : []
 
-  const isEnabled = (feature: string) => includes(enableExperimentalFeatures, feature)
+  setEnabledExperimentalFeatures(enableExperimentalFeatures)
+
   const configuration: Configuration = {
     beforeSend:
       initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
     cookieOptions: buildCookieOptions(initConfiguration),
-    isEnabled,
     service: initConfiguration.service,
     ...computeTransportConfiguration(initConfiguration, buildEnv),
     ...DEFAULT_CONFIGURATION,

@@ -10,9 +10,6 @@ describe('error collection', () => {
 
   beforeEach(() => {
     setupBuilder = setup()
-      .withConfiguration({
-        isEnabled: () => true,
-      })
       .withForegroundContexts({
         isInForegroundAt: () => true,
       })

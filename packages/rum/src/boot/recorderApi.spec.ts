@@ -1,4 +1,4 @@
-import { Configuration, includes } from '@datadog/browser-core'
+import { Configuration } from '@datadog/browser-core'
 import {
   RecorderApi,
   ParentContexts,
@@ -32,15 +32,7 @@ describe('makeRecorderApi', () => {
       getDeflateWorkerSingletonSpy = jasmine.createSpy('getDeflateWorkerSingleton').and.returnValue({})
       recorderApi = makeRecorderApi(startRecordingSpy, getDeflateWorkerSingletonSpy)
       rumInit = (initConfiguration) => {
-        recorderApi.onRumStart(
-          lifeCycle,
-          initConfiguration,
-          {
-            isEnabled: (feature) => includes(initConfiguration.enableExperimentalFeatures || [], feature),
-          } as Configuration,
-          session,
-          {} as ParentContexts
-        )
+        recorderApi.onRumStart(lifeCycle, initConfiguration, {} as Configuration, session, {} as ParentContexts)
       }
     })
   })

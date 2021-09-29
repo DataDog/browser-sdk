@@ -86,7 +86,6 @@ export function setup(): TestSetupBuilder {
   const configuration: Partial<Configuration> = {
     ...DEFAULT_CONFIGURATION,
     ...SPEC_ENDPOINTS,
-    isEnabled: () => true,
   }
   const FAKE_APP_ID = 'appId'
 
