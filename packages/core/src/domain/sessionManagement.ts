@@ -13,6 +13,7 @@ export interface Session<T> {
   renewObservable: Observable<void>
   getId: () => string | undefined
   getTrackingType: () => T | undefined
+  getInMemoryTrackingType: () => T | undefined
 }
 
 export interface SessionState {
@@ -55,7 +56,7 @@ export function startSessionManagement<TrackingType extends string>(
         renewObservable.notify()
       }
       if (isTracked && inMemorySession[productKey] !== undefined && inMemorySession[productKey] !== trackingType) {
-        addMonitoringMessage('session type changed', {
+        addMonitoringMessage('session type changed - eors', {
           debug: {
             product: productKey,
             inMemorySession,
@@ -74,6 +75,18 @@ export function startSessionManagement<TrackingType extends string>(
     sessionCookie.clearCache()
     const session = retrieveActiveSession(sessionCookie)
     persistSession(session, sessionCookie)
+    if (session.id === inMemorySession.id && session[productKey] !== inMemorySession[productKey]) {
+      addMonitoringMessage('session type changed - es', {
+        debug: {
+          product: productKey,
+          inMemorySession,
+          retrievedSession: session,
+          newTrackingType: session[productKey],
+          _dd_s: getCookie(SESSION_COOKIE_NAME),
+        },
+      })
+      inMemorySession = { ...session }
+    }
   }
 
   expandOrRenewSession()
@@ -83,6 +96,7 @@ export function startSessionManagement<TrackingType extends string>(
   return {
     getId: () => retrieveActiveSession(sessionCookie).id,
     getTrackingType: () => retrieveActiveSession(sessionCookie)[productKey] as TrackingType | undefined,
+    getInMemoryTrackingType: () => inMemorySession[productKey] as TrackingType | undefined,
     renewObservable,
   }
 }

@@ -8,6 +8,7 @@ export interface RumSession {
   isTracked: () => boolean
   hasReplayPlan: () => boolean
   hasLitePlan: () => boolean
+  getInMemoryPlan: () => RumTrackingType | undefined
 }
 
 export enum RumSessionPlan {
@@ -39,6 +40,7 @@ export function startRumSession(configuration: Configuration, lifeCycle: LifeCyc
     isTracked: () => isSessionTracked(session),
     hasReplayPlan: () => isSessionTracked(session) && session.getTrackingType() === RumTrackingType.TRACKED_REPLAY,
     hasLitePlan: () => isSessionTracked(session) && session.getTrackingType() === RumTrackingType.TRACKED_LITE,
+    getInMemoryPlan: () => session.getInMemoryTrackingType(),
   }
 }
 
