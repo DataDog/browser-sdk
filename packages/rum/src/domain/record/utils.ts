@@ -23,6 +23,9 @@ export function hookSetter<T>(
 }
 
 export function getWindowHeight(): number {
+  if (visualViewport) {
+    return visualViewport.height * visualViewport.scale
+  }
   return (
     window.innerHeight ||
     (document.documentElement && document.documentElement.clientHeight) ||
@@ -31,6 +34,9 @@ export function getWindowHeight(): number {
 }
 
 export function getWindowWidth(): number {
+  if (visualViewport) {
+    return visualViewport.width * visualViewport.scale
+  }
   return (
     window.innerWidth ||
     (document.documentElement && document.documentElement.clientWidth) ||

@@ -131,6 +131,14 @@ export function record(options: RecordOptions): RecordAPI {
         type: RecordType.Focus,
         data,
       }),
+    visualViewportResizeCb: (d) =>
+      emit({
+        data: {
+          source: IncrementalSource.VisualViewportResize,
+          ...d,
+        },
+        type: RecordType.IncrementalSnapshot,
+      }),
   })
 
   return {
