@@ -17,20 +17,20 @@ async function main() {
   printLog(`Checking if ${CI_COMMIT_REF_NAME} (${CI_COMMIT_SHA}) can be merged with ${CURRENT_STAGING_BRANCH}...`)
   try {
     await executeCommand(`git merge --no-ff "${CI_COMMIT_SHA}"`)
-  } catch (e) {
+  } catch (error) {
     const diff = await executeCommand(`git diff`)
     printError(
       `Conflicts:\n${diff}\n` +
         'You can resolve these conflicts by running "branches-status staging fix" in your branch' +
         'and resolving the merge conflicts.'
     )
-    throw e
+    throw error
   }
 
-  printLog('Check Done.')
+  printLog('Check done.')
 }
 
-main().catch((e) => {
-  printError('\nStacktrace:\n', e)
+main().catch((error) => {
+  printError('\nStacktrace:\n', error)
   process.exit(1)
 })

@@ -16,10 +16,10 @@ async function main() {
   printLog(`Merging ${CI_COMMIT_REF_NAME} (${CI_COMMIT_SHA}) with ${CURRENT_STAGING_BRANCH}...`)
   try {
     await executeCommand(`git merge --no-ff "${CI_COMMIT_SHA}"`)
-  } catch (e) {
+  } catch (error) {
     const diff = await executeCommand(`git diff`)
     printError(`Conflicts:\n${diff}`)
-    throw e
+    throw error
   }
 
   const commitMessage = await executeCommand(`git show -s --format=%B`)
@@ -29,10 +29,10 @@ async function main() {
   await executeCommand(`git commit --amend -m "${message}"`)
   await executeCommand(`git push origin ${CURRENT_STAGING_BRANCH}`)
 
-  printLog('Merge Done.')
+  printLog('Merge done.')
 }
 
-main().catch((e) => {
-  printError('\nStacktrace:\n', e)
+main().catch((error) => {
+  printError('\nStacktrace:\n', error)
   process.exit(1)
 })

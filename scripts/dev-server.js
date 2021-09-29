@@ -6,6 +6,7 @@ const webpack = require('webpack')
 const logsConfig = require('../packages/logs/webpack.config')
 const rumSlimConfig = require('../packages/rum-slim/webpack.config')
 const rumConfig = require('../packages/rum/webpack.config')
+const { printLog } = require('./utils')
 
 const port = 8080
 const app = express()
@@ -16,7 +17,7 @@ for (const config of [rumConfig, logsConfig, rumSlimConfig]) {
 }
 app.use(redirectSuffixedFiles)
 
-app.listen(port, () => console.log(`server listening on port ${port}.`))
+app.listen(port, () => printLog(`Server listening on port ${port}.`))
 
 function redirectSuffixedFiles(req, res, next) {
   const matches = /(.*)-(canary|head|v3)\.js/.exec(req.url)

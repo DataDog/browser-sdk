@@ -1,5 +1,6 @@
 const replace = require('replace-in-file')
 const buildEnv = require('./build-env')
+const { printLog, printError } = require('./utils')
 
 /**
  * Replace BuildEnv in build files
@@ -9,8 +10,7 @@ const buildEnv = require('./build-env')
 
 const buildDirectory = process.argv[2]
 
-console.log(`Replace BuildEnv in '${buildDirectory}' with:`)
-console.log(JSON.stringify(buildEnv, null, 2))
+printLog(`Replacing BuildEnv in '${buildDirectory}' with:`, JSON.stringify(buildEnv, null, 2))
 
 try {
   const results = replace.sync({
@@ -18,12 +18,12 @@ try {
     from: Object.keys(buildEnv).map((entry) => `<<< ${entry} >>>`),
     to: Object.values(buildEnv),
   })
-  console.log(
+  printLog(
     'Changed files:',
     results.filter((entry) => entry.hasChanged).map((entry) => entry.file)
   )
   process.exit(0)
 } catch (error) {
-  console.error('Error occurred:', error)
+  printError('\nStacktrace:\n', error)
   process.exit(1)
 }
