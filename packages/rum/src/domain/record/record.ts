@@ -1,3 +1,4 @@
+import { isExperimentalFeatureEnabled } from '@datadog/browser-core'
 import { RecordType } from '../../types'
 import { serializeDocument } from './serialize'
 import { initObservers } from './observer'
@@ -55,6 +56,24 @@ export function record(options: RecordOptions): RecordAPI {
       },
       type: RecordType.FullSnapshot,
     })
+  }
+
+  if (isExperimentalFeatureEnabled('visualviewport')) {
+    if (visualViewport) {
+      const viewport = visualViewport
+      emit({
+        data: {
+          scale: viewport.scale,
+          offsetLeft: viewport.offsetLeft,
+          offsetTop: viewport.offsetTop,
+          pageLeft: viewport.pageLeft,
+          pageTop: viewport.pageTop,
+          height: viewport.height,
+          width: viewport.width,
+        },
+        type: RecordType.VisualViewport,
+      })
+    }
   }
 
   takeFullSnapshot()
@@ -130,6 +149,11 @@ export function record(options: RecordOptions): RecordAPI {
       emit({
         type: RecordType.Focus,
         data,
+      }),
+    visualViewportResizeCb: (data) =>
+      emit({
+        data,
+        type: RecordType.VisualViewport,
       }),
   })
 
