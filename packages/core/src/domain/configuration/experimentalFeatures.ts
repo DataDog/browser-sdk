@@ -4,6 +4,6 @@ export function setEnabledExperimentalFeatures(enabledFeatures: string[]): void 
   enabledExperimentalFeatures = new Set(enabledFeatures)
 }
 
-export function isEnabledExperimentalFeatures(featureName: string): boolean {
+export function isEnabledExperimentalFeature(featureName: string): boolean {
   return enabledExperimentalFeatures.has(featureName)
 }

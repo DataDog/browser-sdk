@@ -1,9 +1,8 @@
 import { BuildEnv } from '../../boot/init'
 import { CookieOptions, getCurrentSite } from '../../browser/cookie'
 import { catchUserErrors } from '../../tools/catchUserErrors'
-import { includes, objectHasValue, ONE_KILO_BYTE, ONE_SECOND } from '../../tools/utils'
+import { objectHasValue, ONE_KILO_BYTE, ONE_SECOND } from '../../tools/utils'
 import { computeTransportConfiguration, TransportConfiguration } from './transportConfiguration'
-import { setEnabledExperimentalFeatures } from './experimentalFeatures'
 
 export const DefaultPrivacyLevel = {
   ALLOW: 'allow',
@@ -103,11 +102,6 @@ export type Configuration = typeof DEFAULT_CONFIGURATION &
   }
 
 export function buildConfiguration(initConfiguration: InitConfiguration, buildEnv: BuildEnv): Configuration {
-  const enableExperimentalFeatures = Array.isArray(initConfiguration.enableExperimentalFeatures)
-    ? initConfiguration.enableExperimentalFeatures
-    : []
-
-  setEnabledExperimentalFeatures(enableExperimentalFeatures)
 
   const configuration: Configuration = {
     beforeSend:
