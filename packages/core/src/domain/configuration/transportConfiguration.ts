@@ -8,7 +8,7 @@ export interface TransportConfiguration {
   rumEndpointBuilder: EndpointBuilder
   sessionReplayEndpointBuilder: EndpointBuilder
   internalMonitoringEndpointBuilder?: EndpointBuilder
-  isIntakeEndpoint: (url: string) => boolean
+  isIntakeUrl: (url: string) => boolean
   // only on staging build mode
   replica?: ReplicaConfiguration
 }
@@ -32,7 +32,7 @@ export function computeTransportConfiguration(
   const intakeEndpoints: string[] = objectValues(endpointBuilders).map((builder) => builder.buildIntakeUrl())
 
   const configuration: TransportConfiguration = {
-    isIntakeEndpoint: (url) => intakeEndpoints.some((intakeEndpoint) => url.indexOf(intakeEndpoint) === 0),
+    isIntakeUrl: (url) => intakeEndpoints.some((intakeEndpoint) => url.indexOf(intakeEndpoint) === 0),
     ...endpointBuilders,
   }
 

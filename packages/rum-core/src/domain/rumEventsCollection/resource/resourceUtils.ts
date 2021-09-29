@@ -203,5 +203,5 @@ export function computeSize(entry: RumPerformanceResourceTiming) {
 }
 
 export function isAllowedRequestUrl(configuration: Configuration, url: string) {
-  return url && !configuration.isIntakeEndpoint(url)
+  return url && !configuration.isIntakeUrl(url)
 }

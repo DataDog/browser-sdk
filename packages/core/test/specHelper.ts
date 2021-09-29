@@ -4,9 +4,7 @@ import { resetNavigationStart } from '../src/tools/timeUtils'
 import { noop, objectEntries, assign } from '../src/tools/utils'
 
 export function stubEndpointBuilder(url: string) {
-  return {
-    build: () => url,
-  } as EndpointBuilder
+  return { build: () => url } as EndpointBuilder
 }
 
 export const SPEC_ENDPOINTS: Partial<Configuration> = {
@@ -14,7 +12,7 @@ export const SPEC_ENDPOINTS: Partial<Configuration> = {
   logsEndpointBuilder: stubEndpointBuilder('https://logs-intake.com/v1/input/abcde?foo=bar'),
   rumEndpointBuilder: stubEndpointBuilder('https://rum-intake.com/v1/input/abcde?foo=bar'),
 
-  isIntakeEndpoint: (url: string) => {
+  isIntakeUrl: (url: string) => {
     const intakeUrls = [
       'https://monitoring-intake.com/v1/input/',
       'https://logs-intake.com/v1/input/',
