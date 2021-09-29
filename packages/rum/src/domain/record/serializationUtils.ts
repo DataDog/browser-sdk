@@ -2,7 +2,7 @@ import { buildUrl } from '@datadog/browser-core'
 import { CENSORED_STRING_MARK, NodePrivacyLevel } from '../../constants'
 import { shouldMaskNode } from './privacy'
 
-const DISABLE_ABSOLUTE = false;
+const DISABLE_ABSOLUTE = false
 
 export type NodeWithSerializedNode = Node & { s: 'Node with serialized node' }
 
@@ -31,48 +31,6 @@ export function getSerializedNodeId(node: Node) {
 
 export function setSerializedNodeId(node: Node, serializeNodeId: number) {
   serializedNodeIds.set(node, serializeNodeId)
-}
-
-const URL_IN_CSS_REF = /url\((?:(')([^']*)'|(")([^"]*)"|([^)]*))\)/gm
-const ABSOLUTE_URL = /^[A-Za-z]+:|^\/\//
-const DATA_URI = /^data:.*,/i
-export function makeStylesheetUrlsAbsolute(cssText: string, baseUrl: string): string {
-  if (DISABLE_ABSOLUTE) {
-    return cssText;
-  }
-  return cssText.replace(
-    URL_IN_CSS_REF,
-    (origin: string, quote1: string, path1: string, quote2: string, path2: string, path3: string) => {
-      const filePath = path1 || path2 || path3
-      if (!filePath || ABSOLUTE_URL.test(filePath) || DATA_URI.test(filePath)) {
-        return origin
-      }
-      const maybeQuote = quote1 || quote2 || ''
-      return `url(${maybeQuote}${makeUrlAbsolute(filePath, baseUrl)}${maybeQuote})`
-    }
-  )
-}
-
-const SRCSET_URLS = /(^\s*|,\s*)([^\s,]+)/g
-export function makeSrcsetUrlsAbsolute(attributeValue: string, baseUrl: string) {
-  if (DISABLE_ABSOLUTE) {
-    return attributeValue;
-  }
-  return attributeValue.replace(
-    SRCSET_URLS,
-    (_, prefix: string, url: string) => `${prefix}${makeUrlAbsolute(url, baseUrl)}`
-  )
-}
-
-export function makeUrlAbsolute(url: string, baseUrl: string): string {
-  if (DISABLE_ABSOLUTE) {
-    return url.trim();
-  }
-  try {
-    return buildUrl(url.trim(), baseUrl).href
-  } catch (_) {
-    return url
-  }
 }
 
 /**

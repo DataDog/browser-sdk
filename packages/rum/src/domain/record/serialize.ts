@@ -22,14 +22,7 @@ import {
   TextNode,
   CDataNode,
 } from './types'
-import {
-  makeStylesheetUrlsAbsolute,
-  getSerializedNodeId,
-  setSerializedNodeId,
-  getElementInputValue,
-  makeSrcsetUrlsAbsolute,
-  makeUrlAbsolute,
-} from './serializationUtils'
+import { getSerializedNodeId, setSerializedNodeId, getElementInputValue } from './serializationUtils'
 import { forEach } from './utils'
 
 // Those values are the only one that can be used when inheriting privacy levels from parent to
@@ -337,20 +330,7 @@ export function serializeAttribute(
   if (attributeValue.length > MAX_ATTRIBUTE_VALUE_CHAR_LENGTH && attributeValue.slice(0, 5) === 'data:') {
     return 'data:truncated'
   }
-
-  // Rebuild absolute URLs from relative (without using <base> tag)
-  const doc = element.ownerDocument
-  switch (attributeName) {
-    case 'src':
-    case 'href':
-      return makeUrlAbsolute(attributeValue, doc.location?.href)
-    case 'srcset':
-      return makeSrcsetUrlsAbsolute(attributeValue, doc.location?.href)
-    case 'style':
-      return makeStylesheetUrlsAbsolute(attributeValue, doc.location?.href)
-    default:
-      return attributeValue
-  }
+  return attributeValue
 }
 
 let _nextId = 1
@@ -442,7 +422,7 @@ function getAttributesForPrivacyLevel(
     if (cssText && stylesheet) {
       delete safeAttrs.rel
       delete safeAttrs.href
-      safeAttrs._cssText = makeStylesheetUrlsAbsolute(cssText, stylesheet.href!)
+      safeAttrs._cssText = cssText
     }
   }
 
@@ -455,7 +435,7 @@ function getAttributesForPrivacyLevel(
   ) {
     const cssText = getCssRulesString((element as HTMLStyleElement).sheet as CSSStyleSheet)
     if (cssText) {
-      safeAttrs._cssText = makeStylesheetUrlsAbsolute(cssText, location.href)
+      safeAttrs._cssText = cssText
     }
   }
 
