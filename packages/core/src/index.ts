@@ -54,6 +54,7 @@ export {
   FetchProxy,
   resetFetchProxy,
 } from './browser/fetchProxy'
+export { EndpointBuilder } from './domain/configuration/endpointBuilder'
 export { BoundedBuffer } from './tools/boundedBuffer'
 export { catchUserErrors } from './tools/catchUserErrors'
 export { createContextManager } from './tools/contextManager'
