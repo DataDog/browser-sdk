@@ -92,6 +92,32 @@ export function startSessionManagement<TrackingType extends string>(
   expandOrRenewSession()
   trackActivity(expandOrRenewSession)
   trackVisibility(expandSession)
+  checkCookieConsistency()
+
+  function checkCookieConsistency() {
+    const alternateSessionCookie = cacheCookieAccess(SESSION_COOKIE_NAME, options)
+    const cookieConsistencyCheckInterval = setInterval(() => {
+      const sessionCookieCheck = retrieveActiveSession(alternateSessionCookie)
+      alternateSessionCookie.clearCache()
+      if (
+        inMemorySession.id === sessionCookieCheck.id &&
+        inMemorySession[productKey] !== undefined &&
+        inMemorySession[productKey] !== sessionCookieCheck[productKey]
+      ) {
+        addMonitoringMessage('session type changed - ccc', {
+          debug: {
+            product: productKey,
+            inMemorySession,
+            retrievedSession: sessionCookieCheck,
+            newTrackingType: sessionCookieCheck[productKey],
+            _dd_s: getCookie(SESSION_COOKIE_NAME),
+          },
+        })
+        inMemorySession = { ...sessionCookieCheck }
+      }
+    }, COOKIE_ACCESS_DELAY)
+    stopCallbacks.push(() => clearInterval(cookieConsistencyCheckInterval))
+  }
 
   return {
     getId: () => retrieveActiveSession(sessionCookie).id,
