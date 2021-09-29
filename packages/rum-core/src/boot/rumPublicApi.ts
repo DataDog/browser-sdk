@@ -19,6 +19,8 @@ import {
   callMonitored,
   createHandlingStack,
   DefaultPrivacyLevel,
+  TimeStamp,
+  RelativeTime,
 } from '@datadog/browser-core'
 import { LifeCycle } from '../domain/lifeCycle'
 import { ParentContexts } from '../domain/parentContexts'
@@ -192,8 +194,8 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
       })
     },
 
-    addTiming: monitor((name: string) => {
-      addTimingStrategy(name)
+    addTiming: monitor((name: string, time?: number) => {
+      addTimingStrategy(name, time as RelativeTime | TimeStamp | undefined)
     }),
 
     setUser: monitor((newUser: User) => {
