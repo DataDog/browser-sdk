@@ -102,7 +102,6 @@ export type Configuration = typeof DEFAULT_CONFIGURATION &
   }
 
 export function buildConfiguration(initConfiguration: InitConfiguration, buildEnv: BuildEnv): Configuration {
-
   const configuration: Configuration = {
     beforeSend:
       initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),

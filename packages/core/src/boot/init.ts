@@ -53,8 +53,8 @@ export function commonInit(initConfiguration: InitConfiguration, buildEnv: Build
   const internalMonitoring = startInternalMonitoring(configuration)
 
   const enableExperimentalFeatures = Array.isArray(initConfiguration.enableExperimentalFeatures)
-  ? initConfiguration.enableExperimentalFeatures
-  : []
+    ? initConfiguration.enableExperimentalFeatures
+    : []
 
   setEnabledExperimentalFeatures(enableExperimentalFeatures)
 

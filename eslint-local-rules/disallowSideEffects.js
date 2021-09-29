@@ -38,7 +38,7 @@ const pathsWithSideEffect = new Set([
 const packagesWithoutSideEffect = new Set([
   '@datadog/browser-core',
   '@datadog/browser-rum-core',
-  'packages/core/src/domain/configuration/experimentalFeatures'
+  'packages/core/src/domain/configuration/experimentalFeatures',
 ])
 
 /**
