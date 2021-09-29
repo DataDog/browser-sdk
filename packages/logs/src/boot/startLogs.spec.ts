@@ -11,7 +11,7 @@ import {
   TimeStamp,
 } from '@datadog/browser-core'
 import sinon from 'sinon'
-import { Clock, mockClock } from '../../../core/test/specHelper'
+import { Clock, mockClock, stubEndpointBuilder } from '../../../core/test/specHelper'
 
 import { Logger, LogsMessage, StatusType } from '../domain/logger'
 import { LogsEvent } from '../logsEvent.types'
@@ -33,7 +33,7 @@ const FAKE_DATE = 123456
 const SESSION_ID = 'session-id'
 const baseConfiguration: Partial<Configuration> = {
   ...DEFAULT_CONFIGURATION,
-  logsEndpoint: 'https://localhost/v1/input/log',
+  logsEndpointBuilder: stubEndpointBuilder('https://localhost/v1/input/log'),
   maxBatchSize: 1,
   service: 'Service',
 }
@@ -90,7 +90,7 @@ describe('logs', () => {
       )
 
       expect(server.requests.length).toEqual(1)
-      expect(server.requests[0].url).toContain(baseConfiguration.logsEndpoint!)
+      expect(server.requests[0].url).toContain(baseConfiguration.logsEndpointBuilder!.build())
       expect(getLoggedMessage(server, 0)).toEqual({
         date: FAKE_DATE,
         foo: 'bar',

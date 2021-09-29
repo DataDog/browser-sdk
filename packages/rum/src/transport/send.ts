@@ -1,10 +1,10 @@
-import { HttpRequest, objectEntries } from '@datadog/browser-core'
+import { HttpRequest, objectEntries, EndpointBuilder } from '@datadog/browser-core'
 import { SegmentMeta } from '../types'
 
 export const SEND_BEACON_BYTE_LENGTH_LIMIT = 60_000
 
 export function send(
-  endpointUrl: string,
+  endpointUrl: EndpointBuilder,
   data: Uint8Array,
   meta: SegmentMeta,
   rawSegmentSize: number,

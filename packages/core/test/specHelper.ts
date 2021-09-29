@@ -1,14 +1,20 @@
-import { buildUrl } from '@datadog/browser-core'
+import { buildUrl, EndpointBuilder } from '@datadog/browser-core'
 import { Configuration } from '../src/domain/configuration'
 import { resetNavigationStart } from '../src/tools/timeUtils'
 import { noop, objectEntries, assign } from '../src/tools/utils'
 
-export const SPEC_ENDPOINTS: Partial<Configuration> = {
-  internalMonitoringEndpoint: 'https://monitoring-intake.com/v1/input/abcde?foo=bar',
-  logsEndpoint: 'https://logs-intake.com/v1/input/abcde?foo=bar',
-  rumEndpoint: 'https://rum-intake.com/v1/input/abcde?foo=bar',
+export function stubEndpointBuilder(url: string) {
+  return {
+    build: () => url,
+  } as EndpointBuilder
+}
 
-  isIntakeUrl: (url: string) => {
+export const SPEC_ENDPOINTS: Partial<Configuration> = {
+  internalMonitoringEndpointBuilder: stubEndpointBuilder('https://monitoring-intake.com/v1/input/abcde?foo=bar'),
+  logsEndpointBuilder: stubEndpointBuilder('https://logs-intake.com/v1/input/abcde?foo=bar'),
+  rumEndpointBuilder: stubEndpointBuilder('https://rum-intake.com/v1/input/abcde?foo=bar'),
+
+  isIntakeEndpoint: (url: string) => {
     const intakeUrls = [
       'https://monitoring-intake.com/v1/input/',
       'https://logs-intake.com/v1/input/',

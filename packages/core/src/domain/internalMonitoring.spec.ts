@@ -1,5 +1,5 @@
 import sinon from 'sinon'
-import { Clock, mockClock } from '../../test/specHelper'
+import { Clock, mockClock, stubEndpointBuilder } from '../../test/specHelper'
 
 import { Configuration } from './configuration'
 import {
@@ -15,7 +15,7 @@ import {
 const configuration: Partial<Configuration> = {
   batchBytesLimit: 100,
   flushTimeout: 60 * 1000,
-  internalMonitoringEndpoint: 'http://localhot/monitoring',
+  internalMonitoringEndpointBuilder: stubEndpointBuilder('http://localhot/monitoring'),
   maxBatchSize: 1,
   maxInternalMonitoringMessagesPerPage: 7,
 }
@@ -194,7 +194,7 @@ describe('internal monitoring', () => {
       })
 
       expect(server.requests.length).toEqual(1)
-      expect(server.requests[0].url).toContain(configuration.internalMonitoringEndpoint!)
+      expect(server.requests[0].url).toContain(configuration.internalMonitoringEndpointBuilder!.build())
 
       expect(JSON.parse(server.requests[0].requestBody)).toEqual({
         date: FAKE_DATE,

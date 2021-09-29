@@ -17,7 +17,7 @@ export function trackNetworkError(configuration: Configuration, errorObservable:
   startFetchProxy().onRequestComplete((context) => handleCompleteRequest(RequestType.FETCH, context))
 
   function handleCompleteRequest(type: RequestType, request: XhrCompleteContext | FetchCompleteContext) {
-    if (!configuration.isIntakeUrl(request.url) && (isRejected(request) || isServerError(request))) {
+    if (!configuration.isIntakeEndpoint(request.url) && (isRejected(request) || isServerError(request))) {
       errorObservable.notify({
         message: `${format(type)} error ${request.method} ${request.url}`,
         resource: {

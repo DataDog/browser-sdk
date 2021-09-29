@@ -14,6 +14,7 @@ import {
   InitConfiguration,
   trackRuntimeError,
   trackConsoleError,
+  EndpointBuilder,
 } from '@datadog/browser-core'
 import { trackNetworkError } from '../domain/trackNetworkError'
 import { Logger, LogsMessage, StatusType } from '../domain/logger'
@@ -95,16 +96,16 @@ export function doStartLogs(
 }
 
 function startLoggerBatch(configuration: Configuration) {
-  const primaryBatch = createLoggerBatch(configuration.logsEndpoint)
+  const primaryBatch = createLoggerBatch(configuration.logsEndpointBuilder)
 
   let replicaBatch: Batch | undefined
   if (configuration.replica !== undefined) {
-    replicaBatch = createLoggerBatch(configuration.replica.logsEndpoint)
+    replicaBatch = createLoggerBatch(configuration.replica.logsEndpointBuilder)
   }
 
-  function createLoggerBatch(endpointUrl: string) {
+  function createLoggerBatch(endpointBuilder: EndpointBuilder) {
     return new Batch(
-      new HttpRequest(endpointUrl, configuration.batchBytesLimit),
+      new HttpRequest(endpointBuilder, configuration.batchBytesLimit),
       configuration.maxBatchSize,
       configuration.batchBytesLimit,
       configuration.maxMessageSize,

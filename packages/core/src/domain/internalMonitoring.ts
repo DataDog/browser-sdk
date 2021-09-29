@@ -4,6 +4,7 @@ import { toStackTraceString } from '../tools/error'
 import { assign, combine, jsonStringify, Parameters, ThisParameterType } from '../tools/utils'
 import { Batch, HttpRequest } from '../transport'
 import { Configuration } from './configuration'
+import { EndpointBuilder } from './configuration/endpointBuilder'
 import { computeStackTrace } from './tracekit'
 
 enum StatusType {
@@ -34,7 +35,7 @@ const monitoringConfiguration: {
 let externalContextProvider: () => Context
 
 export function startInternalMonitoring(configuration: Configuration): InternalMonitoring {
-  if (configuration.internalMonitoringEndpoint) {
+  if (configuration.internalMonitoringEndpointBuilder) {
     const batch = startMonitoringBatch(configuration)
 
     assign(monitoringConfiguration, {
@@ -51,15 +52,15 @@ export function startInternalMonitoring(configuration: Configuration): InternalM
 }
 
 function startMonitoringBatch(configuration: Configuration) {
-  const primaryBatch = createMonitoringBatch(configuration.internalMonitoringEndpoint!)
+  const primaryBatch = createMonitoringBatch(configuration.internalMonitoringEndpointBuilder!)
   let replicaBatch: Batch | undefined
   if (configuration.replica !== undefined) {
-    replicaBatch = createMonitoringBatch(configuration.replica.internalMonitoringEndpoint)
+    replicaBatch = createMonitoringBatch(configuration.replica.internalMonitoringEndpointBuilder)
   }
 
-  function createMonitoringBatch(endpointUrl: string) {
+  function createMonitoringBatch(endpointBuilder: EndpointBuilder) {
     return new Batch(
-      new HttpRequest(endpointUrl, configuration.batchBytesLimit),
+      new HttpRequest(endpointBuilder, configuration.batchBytesLimit),
       configuration.maxBatchSize,
       configuration.batchBytesLimit,
       configuration.maxMessageSize,
