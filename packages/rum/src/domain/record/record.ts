@@ -57,6 +57,21 @@ export function record(options: RecordOptions): RecordAPI {
     })
   }
 
+  const viewport = visualViewport
+  emit({
+    data: {
+      scale: viewport.scale,
+      offsetLeft: viewport.offsetLeft,
+      offsetTop: viewport.offsetTop,
+      pageLeft: viewport.pageLeft,
+      pageTop: viewport.pageTop,
+      height: viewport.height,
+      width: viewport.width,
+      source: IncrementalSource.VisualViewportResize,
+    },
+    type: RecordType.IncrementalSnapshot,
+  })
+
   takeFullSnapshot()
 
   const stopObservers = initObservers({
