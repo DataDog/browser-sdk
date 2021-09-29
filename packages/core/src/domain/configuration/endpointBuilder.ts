@@ -23,7 +23,6 @@ const INTAKE_TRACKS = {
   sessionReplay: 'replay',
 }
 
-export const ENDPOINTS_TYPES = Object.keys(ENDPOINTS['alternate']) as EndpointType[]
 export type EndpointType = keyof typeof ENDPOINTS[IntakeType]
 
 export const INTAKE_SITE_US = 'datadoghq.com'

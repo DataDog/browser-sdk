@@ -6,16 +6,15 @@ import { BuildEnv } from '..'
 import { HttpRequest } from './httpRequest'
 
 describe('httpRequest', () => {
-  const clientToken = 'some_client_token'
-  const buildEnv = {} as BuildEnv
   const BATCH_BYTES_LIMIT = 100
   let server: sinon.SinonFakeServer
   let endpointBuilder: EndpointBuilder
   let request: HttpRequest
+  const ENDPOINT_URL = 'http://my.website'
 
   beforeEach(() => {
     server = sinon.fakeServer.create()
-    endpointBuilder = stubEndpointBuilder('http://my.website')
+    endpointBuilder = stubEndpointBuilder(ENDPOINT_URL)
     request = new HttpRequest(endpointBuilder, BATCH_BYTES_LIMIT)
   })
 
@@ -27,7 +26,7 @@ describe('httpRequest', () => {
     request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
 
     expect(server.requests.length).toEqual(1)
-    expect(server.requests[0].url).toContain(endpointBuilder.build())
+    expect(server.requests[0].url).toContain(ENDPOINT_URL)
     expect(server.requests[0].requestBody).toEqual('{"foo":"bar1"}\n{"foo":"bar2"}')
   })
 
@@ -45,7 +44,7 @@ describe('httpRequest', () => {
     request.send('{"foo":"bar1"}\n{"foo":"bar2"}', BATCH_BYTES_LIMIT)
 
     expect(server.requests.length).toEqual(1)
-    expect(server.requests[0].url).toContain(endpointBuilder.build())
+    expect(server.requests[0].url).toContain(ENDPOINT_URL)
     expect(server.requests[0].requestBody).toEqual('{"foo":"bar1"}\n{"foo":"bar2"}')
   })
 
@@ -68,17 +67,33 @@ describe('httpRequest', () => {
     expect(navigator.sendBeacon).toHaveBeenCalled()
     expect(server.requests.length).toEqual(1)
   })
+})
+
+describe('httpRequest intake parameters', () => {
+  const clientToken = 'some_client_token'
+  const buildEnv = {} as BuildEnv
+  const BATCH_BYTES_LIMIT = 100
+  let server: sinon.SinonFakeServer
+  let endpointBuilder: EndpointBuilder
+  let request: HttpRequest
+
+  beforeEach(() => {
+    server = sinon.fakeServer.create()
+    endpointBuilder = createEndpointBuilder({ clientToken, intakeApiVersion: 2 }, buildEnv, 'logs')
+    request = new HttpRequest(endpointBuilder, BATCH_BYTES_LIMIT, true)
+  })
+
+  afterEach(() => {
+    server.restore()
+  })
 
   it('should have a unique request id', () => {
-    const endpointBuilder = createEndpointBuilder({ clientToken, intakeApiVersion: 2 }, buildEnv, 'logs')
-    const request = new HttpRequest(endpointBuilder, BATCH_BYTES_LIMIT, true)
-
     request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
     request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
 
     const search = /dd-request-id=([^&]*)/
-    const [, requestId1] = search.exec(server.requests[0].url) || new Array(2)
-    const [, requestId2] = search.exec(server.requests[1].url) || new Array(2)
+    const requestId1 = search.exec(server.requests[0].url)?.[1]
+    const requestId2 = search.exec(server.requests[1].url)?.[1]
 
     expect(requestId1).not.toBe(requestId2)
     expect(server.requests.length).toEqual(2)

@@ -46,7 +46,7 @@ export function computeTransportConfiguration(
   }
 
   if (buildEnv.buildMode === BuildMode.E2E_TEST) {
-    const e2eEndpointBuilder = (fake: string) => ({ build: () => fake } as EndpointBuilder)
+    const e2eEndpointBuilder = (placeholder: string) => ({ build: () => placeholder } as EndpointBuilder)
     configuration.internalMonitoringEndpointBuilder = e2eEndpointBuilder('<<< E2E INTERNAL MONITORING ENDPOINT >>>')
     configuration.logsEndpointBuilder = e2eEndpointBuilder('<<< E2E LOGS ENDPOINT >>>')
     configuration.rumEndpointBuilder = e2eEndpointBuilder('<<< E2E RUM ENDPOINT >>>')
@@ -77,7 +77,7 @@ export function computeTransportConfiguration(
     const replicaIntakeEndpoints: string[] = objectValues(replicaEndpointBuilders).map((builder) =>
       builder.buildIntakeUrl()
     )
-    replicaIntakeEndpoints.forEach((replicaIntakeEndpoint) => intakeEndpoints.push(replicaIntakeEndpoint))
+
     intakeEndpoints.push(...replicaIntakeEndpoints)
   }
 
