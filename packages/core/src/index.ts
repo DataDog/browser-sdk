@@ -6,6 +6,10 @@ export {
   BeforeSendCallback,
   DefaultPrivacyLevel,
 } from './domain/configuration'
+export {
+  isEnabledExperimentalFeature,
+  setEnabledExperimentalFeatures,
+} from './domain/configuration/experimentalFeatures'
 export { trackConsoleError } from './domain/error/trackConsoleError'
 export { trackRuntimeError } from './domain/error/trackRuntimeError'
 export { computeStackTrace, StackTrace } from './domain/tracekit'
