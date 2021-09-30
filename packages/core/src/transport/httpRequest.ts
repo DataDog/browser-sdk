@@ -1,5 +1,5 @@
+import { EndpointBuilder } from '../domain/configuration/endpointBuilder'
 import { monitor, addErrorToMonitoringBatch, addMonitoringMessage } from '../domain/internalMonitoring'
-import { generateUUID, includes } from '../tools/utils'
 
 let hasReportedXhrError = false
 
@@ -12,14 +12,10 @@ let hasReportedXhrError = false
  * to be parsed correctly without content type header
  */
 export class HttpRequest {
-  constructor(private endpointUrl: string, private bytesLimit: number, private withBatchTime: boolean = false) {}
+  constructor(private endpointBuilder: EndpointBuilder, private bytesLimit: number) {}
 
   send(data: string | FormData, size: number, flushReason?: string) {
-    let url = addQueryParameter(this.endpointUrl, 'dd-request-id', generateUUID())
-    if (this.withBatchTime) {
-      url = addQueryParameter(url, 'batch_time', new Date().getTime().toString())
-    }
-
+    const url = this.endpointBuilder.build()
     const tryBeacon = !!navigator.sendBeacon && size < this.bytesLimit
     if (tryBeacon) {
       try {
@@ -67,10 +63,6 @@ export class HttpRequest {
     request.open('POST', url, true)
     request.send(data)
   }
-}
-
-function addQueryParameter(url: string, key: string, value: string) {
-  return `${url}${includes(url, '?') ? '&' : '?'}${key}=${value}`
 }
 
 let hasReportedBeaconError = false

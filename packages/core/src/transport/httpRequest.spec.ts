@@ -1,16 +1,21 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import sinon from 'sinon'
+import { stubEndpointBuilder } from 'packages/core/test/specHelper'
+import { createEndpointBuilder, EndpointBuilder } from '../domain/configuration/endpointBuilder'
+import { BuildEnv } from '..'
 import { HttpRequest } from './httpRequest'
 
 describe('httpRequest', () => {
-  const ENDPOINT_URL = 'http://my.website'
   const BATCH_BYTES_LIMIT = 100
   let server: sinon.SinonFakeServer
+  let endpointBuilder: EndpointBuilder
   let request: HttpRequest
+  const ENDPOINT_URL = 'http://my.website'
 
   beforeEach(() => {
     server = sinon.fakeServer.create()
-    request = new HttpRequest(ENDPOINT_URL, BATCH_BYTES_LIMIT)
+    endpointBuilder = stubEndpointBuilder(ENDPOINT_URL)
+    request = new HttpRequest(endpointBuilder, BATCH_BYTES_LIMIT)
   })
 
   afterEach(() => {
@@ -64,42 +69,33 @@ describe('httpRequest', () => {
   })
 })
 
-describe('httpRequest parameters', () => {
+describe('httpRequest intake parameters', () => {
+  const clientToken = 'some_client_token'
+  const buildEnv = {} as BuildEnv
   const BATCH_BYTES_LIMIT = 100
   let server: sinon.SinonFakeServer
-  let sendBeaconSpy: jasmine.Spy<(url: string, data?: BodyInit | null) => boolean>
+  let endpointBuilder: EndpointBuilder
+  let request: HttpRequest
+
   beforeEach(() => {
     server = sinon.fakeServer.create()
-    sendBeaconSpy = jasmine.createSpy()
-    navigator.sendBeacon = sendBeaconSpy
+    endpointBuilder = createEndpointBuilder({ clientToken, intakeApiVersion: 2 }, buildEnv, 'logs')
+    request = new HttpRequest(endpointBuilder, BATCH_BYTES_LIMIT)
   })
 
   afterEach(() => {
     server.restore()
   })
 
-  it('should add batch_time', () => {
-    const request = new HttpRequest('https://my.website', BATCH_BYTES_LIMIT, true)
+  it('should have a unique request id', () => {
+    request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
+    request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
 
-    request.send('{"foo":"bar1"}', 10)
+    const search = /dd-request-id=([^&]*)/
+    const requestId1 = search.exec(server.requests[0].url)?.[1]
+    const requestId2 = search.exec(server.requests[1].url)?.[1]
 
-    expect(sendBeaconSpy.calls.argsFor(0)[0]).toContain(`&batch_time=`)
-  })
-
-  it('should not add batch_time', () => {
-    const request = new HttpRequest('https://my.website', BATCH_BYTES_LIMIT, false)
-
-    request.send('{"foo":"bar1"}', 10)
-
-    expect(sendBeaconSpy.calls.argsFor(0)[0]).not.toContain(`&batch_time=`)
-  })
-
-  it('should have dd-request-id', () => {
-    const request = new HttpRequest('https://my.website', BATCH_BYTES_LIMIT)
-
-    request.send('{"foo":"bar1"}', 10)
-
-    expect(navigator.sendBeacon).toHaveBeenCalled()
-    expect(server.requests[0].url).toContain(`?dd-request-id=`)
+    expect(requestId1).not.toBe(requestId2)
+    expect(server.requests.length).toEqual(2)
   })
 })

@@ -1,4 +1,4 @@
-import { Batch, combine, Configuration, Context, HttpRequest } from '@datadog/browser-core'
+import { Batch, combine, Configuration, Context, HttpRequest, EndpointBuilder } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { RumEventType } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
@@ -28,19 +28,19 @@ interface RumBatch {
 }
 
 function makeRumBatch(configuration: Configuration, lifeCycle: LifeCycle): RumBatch {
-  const primaryBatch = createRumBatch(configuration.rumEndpoint, () =>
+  const primaryBatch = createRumBatch(configuration.rumEndpointBuilder, () =>
     lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
   )
 
   let replicaBatch: Batch | undefined
   const replica = configuration.replica
   if (replica !== undefined) {
-    replicaBatch = createRumBatch(replica.rumEndpoint)
+    replicaBatch = createRumBatch(replica.logsEndpointBuilder)
   }
 
-  function createRumBatch(endpointUrl: string, unloadCallback?: () => void) {
+  function createRumBatch(endpointBuilder: EndpointBuilder, unloadCallback?: () => void) {
     return new Batch(
-      new HttpRequest(endpointUrl, configuration.batchBytesLimit, true),
+      new HttpRequest(endpointBuilder, configuration.batchBytesLimit),
       configuration.maxBatchSize,
       configuration.batchBytesLimit,
       configuration.maxMessageSize,
