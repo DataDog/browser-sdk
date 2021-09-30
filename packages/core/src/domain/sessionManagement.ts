@@ -65,8 +65,8 @@ export function startSessionManagement<TrackingType extends string>(
             _dd_s: getCookie(SESSION_COOKIE_NAME),
           },
         })
-        inMemorySession = { ...cookieSession }
       }
+      inMemorySession = { ...cookieSession }
     }),
     COOKIE_ACCESS_DELAY
   )
@@ -85,8 +85,8 @@ export function startSessionManagement<TrackingType extends string>(
           _dd_s: getCookie(SESSION_COOKIE_NAME),
         },
       })
-      inMemorySession = { ...session }
     }
+    inMemorySession = { ...session }
   }
 
   expandOrRenewSession()
@@ -101,7 +101,6 @@ export function startSessionManagement<TrackingType extends string>(
       alternateSessionCookie.clearCache()
       if (
         inMemorySession.id === sessionCookieCheck.id &&
-        inMemorySession[productKey] !== undefined &&
         inMemorySession[productKey] !== sessionCookieCheck[productKey]
       ) {
         addMonitoringMessage('session type changed - ccc', {
@@ -113,8 +112,8 @@ export function startSessionManagement<TrackingType extends string>(
             _dd_s: getCookie(SESSION_COOKIE_NAME),
           },
         })
-        inMemorySession = { ...sessionCookieCheck }
       }
+      inMemorySession = { ...sessionCookieCheck }
     }, COOKIE_ACCESS_DELAY)
     stopCallbacks.push(() => clearInterval(cookieConsistencyCheckInterval))
   }
