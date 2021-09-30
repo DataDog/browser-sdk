@@ -1,48 +1,56 @@
 import { BuildEnv, BuildMode } from '../../boot/init'
+import { objectValues } from '../../tools/utils'
 import { InitConfiguration } from './configuration'
-import { createEndpointBuilder, ENDPOINTS_TYPES, INTAKE_SITE_US } from './endpointBuilder'
+import { createEndpointBuilder, INTAKE_SITE_US, EndpointBuilder } from './endpointBuilder'
 
 export interface TransportConfiguration {
-  logsEndpoint: string
-  rumEndpoint: string
-  sessionReplayEndpoint: string
-  internalMonitoringEndpoint?: string
+  logsEndpointBuilder: EndpointBuilder
+  rumEndpointBuilder: EndpointBuilder
+  sessionReplayEndpointBuilder: EndpointBuilder
+  internalMonitoringEndpointBuilder?: EndpointBuilder
   isIntakeUrl: (url: string) => boolean
-
   // only on staging build mode
   replica?: ReplicaConfiguration
 }
 
 export interface ReplicaConfiguration {
   applicationId?: string
-  logsEndpoint: string
-  rumEndpoint: string
-  internalMonitoringEndpoint: string
+  logsEndpointBuilder: EndpointBuilder
+  rumEndpointBuilder: EndpointBuilder
+  internalMonitoringEndpointBuilder: EndpointBuilder
 }
 
 export function computeTransportConfiguration(
   initConfiguration: InitConfiguration,
   buildEnv: BuildEnv
 ): TransportConfiguration {
-  const endpointBuilder = createEndpointBuilder(initConfiguration, buildEnv)
-  const intakeUrls: string[] = ENDPOINTS_TYPES.map((endpointType) => endpointBuilder.buildIntakeUrl(endpointType))
+  const endpointBuilders = {
+    logsEndpointBuilder: createEndpointBuilder(initConfiguration, buildEnv, 'logs'),
+    rumEndpointBuilder: createEndpointBuilder(initConfiguration, buildEnv, 'rum'),
+    sessionReplayEndpointBuilder: createEndpointBuilder(initConfiguration, buildEnv, 'sessionReplay'),
+  }
+  const intakeEndpoints: string[] = objectValues(endpointBuilders).map((builder) => builder.buildIntakeUrl())
 
   const configuration: TransportConfiguration = {
-    isIntakeUrl: (url: string) => intakeUrls.some((intakeUrl) => url.indexOf(intakeUrl) === 0),
-    logsEndpoint: endpointBuilder.build('logs'),
-    rumEndpoint: endpointBuilder.build('rum'),
-    sessionReplayEndpoint: endpointBuilder.build('sessionReplay'),
+    isIntakeUrl: (url) => intakeEndpoints.some((intakeEndpoint) => url.indexOf(intakeEndpoint) === 0),
+    ...endpointBuilders,
   }
 
   if (initConfiguration.internalMonitoringApiKey) {
-    configuration.internalMonitoringEndpoint = endpointBuilder.build('logs', 'browser-agent-internal-monitoring')
+    configuration.internalMonitoringEndpointBuilder = createEndpointBuilder(
+      initConfiguration,
+      buildEnv,
+      'logs',
+      'browser-agent-internal-monitoring'
+    )
   }
 
   if (buildEnv.buildMode === BuildMode.E2E_TEST) {
-    configuration.internalMonitoringEndpoint = '<<< E2E INTERNAL MONITORING ENDPOINT >>>'
-    configuration.logsEndpoint = '<<< E2E LOGS ENDPOINT >>>'
-    configuration.rumEndpoint = '<<< E2E RUM ENDPOINT >>>'
-    configuration.sessionReplayEndpoint = '<<< E2E SESSION REPLAY ENDPOINT >>>'
+    const e2eEndpointBuilder = (placeholder: string) => ({ build: () => placeholder } as EndpointBuilder)
+    configuration.internalMonitoringEndpointBuilder = e2eEndpointBuilder('<<< E2E INTERNAL MONITORING ENDPOINT >>>')
+    configuration.logsEndpointBuilder = e2eEndpointBuilder('<<< E2E LOGS ENDPOINT >>>')
+    configuration.rumEndpointBuilder = e2eEndpointBuilder('<<< E2E RUM ENDPOINT >>>')
+    configuration.sessionReplayEndpointBuilder = e2eEndpointBuilder('<<< E2E SESSION REPLAY ENDPOINT >>>')
   }
 
   if (buildEnv.buildMode === BuildMode.STAGING && initConfiguration.replica !== undefined) {
@@ -54,18 +62,23 @@ export function computeTransportConfiguration(
       useAlternateIntakeDomains: true,
       intakeApiVersion: 2,
     }
-    const replicaEndpointBuilder = createEndpointBuilder(replicaConfiguration, buildEnv)
-
-    configuration.replica = {
-      applicationId: initConfiguration.replica.applicationId,
-      internalMonitoringEndpoint: replicaEndpointBuilder.build('logs', 'browser-agent-internal-monitoring'),
-      logsEndpoint: replicaEndpointBuilder.build('logs'),
-      rumEndpoint: replicaEndpointBuilder.build('rum'),
+    const replicaEndpointBuilders = {
+      logsEndpointBuilder: createEndpointBuilder(replicaConfiguration, buildEnv, 'logs'),
+      rumEndpointBuilder: createEndpointBuilder(replicaConfiguration, buildEnv, 'rum'),
+      internalMonitoringEndpointBuilder: createEndpointBuilder(
+        replicaConfiguration,
+        buildEnv,
+        'logs',
+        'browser-agent-internal-monitoring'
+      ),
     }
+    configuration.replica = { applicationId: initConfiguration.replica.applicationId, ...replicaEndpointBuilders }
 
-    const replicaIntakeUrls = ENDPOINTS_TYPES.map((endpointType) => replicaEndpointBuilder.buildIntakeUrl(endpointType))
-    replicaIntakeUrls.forEach((replicaIntakeUrl) => intakeUrls.push(replicaIntakeUrl))
-    intakeUrls.push(...replicaIntakeUrls)
+    const replicaIntakeEndpoints: string[] = objectValues(replicaEndpointBuilders).map((builder) =>
+      builder.buildIntakeUrl()
+    )
+
+    intakeEndpoints.push(...replicaIntakeEndpoints)
   }
 
   return configuration

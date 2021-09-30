@@ -1,10 +1,10 @@
-import { HttpRequest, objectEntries } from '@datadog/browser-core'
+import { HttpRequest, objectEntries, EndpointBuilder } from '@datadog/browser-core'
 import { SegmentMeta } from '../types'
 
 export const SEND_BEACON_BYTE_LENGTH_LIMIT = 60_000
 
 export function send(
-  endpointUrl: string,
+  endpointBuilder: EndpointBuilder,
   data: Uint8Array,
   meta: SegmentMeta,
   rawSegmentSize: number,
@@ -23,7 +23,7 @@ export function send(
   toFormEntries(meta, (key, value) => formData.set(key, value))
   formData.set('raw_segment_size', rawSegmentSize.toString())
 
-  const request = new HttpRequest(endpointUrl, SEND_BEACON_BYTE_LENGTH_LIMIT)
+  const request = new HttpRequest(endpointBuilder, SEND_BEACON_BYTE_LENGTH_LIMIT)
   request.send(formData, data.byteLength, flushReason)
 }
 

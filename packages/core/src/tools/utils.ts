@@ -220,7 +220,7 @@ export function isNumber(value: unknown): value is number {
   return typeof value === 'number'
 }
 
-export function objectValues(object: { [key: string]: unknown }) {
+export function objectValues<T = unknown>(object: { [key: string]: T }) {
   return Object.keys(object).map((key) => object[key])
 }
 

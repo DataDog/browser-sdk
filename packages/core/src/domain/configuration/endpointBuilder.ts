@@ -1,5 +1,6 @@
 import { BuildEnv } from '../../boot/init'
-import { includes } from '../../tools/utils'
+import { timeStampNow } from '../../tools/timeUtils'
+import { generateUUID, includes } from '../../tools/utils'
 import { InitConfiguration } from './configuration'
 
 export const ENDPOINTS = {
@@ -22,7 +23,6 @@ const INTAKE_TRACKS = {
   sessionReplay: 'replay',
 }
 
-export const ENDPOINTS_TYPES = Object.keys(ENDPOINTS['alternate']) as EndpointType[]
 export type EndpointType = keyof typeof ENDPOINTS[IntakeType]
 
 export const INTAKE_SITE_US = 'datadoghq.com'
@@ -34,8 +34,14 @@ const CLASSIC_ALLOWED_SITES = [INTAKE_SITE_US, INTAKE_SITE_EU]
 const INTAKE_V1_ALLOWED_SITES = [INTAKE_SITE_US, INTAKE_SITE_US3, INTAKE_SITE_EU, INTAKE_SITE_GOV]
 
 type IntakeType = keyof typeof ENDPOINTS
+export type EndpointBuilder = ReturnType<typeof createEndpointBuilder>
 
-export function createEndpointBuilder(initConfiguration: InitConfiguration, buildEnv: BuildEnv) {
+export function createEndpointBuilder(
+  initConfiguration: InitConfiguration,
+  buildEnv: BuildEnv,
+  endpointType: EndpointType,
+  source?: string
+) {
   const sdkVersion = buildEnv.sdkVersion
   const {
     site = INTAKE_SITE_US,
@@ -49,23 +55,22 @@ export function createEndpointBuilder(initConfiguration: InitConfiguration, buil
     useAlternateIntakeDomains,
   } = initConfiguration
 
-  function build(endpointType: EndpointType, source?: string) {
-    const host = buildHost(endpointType)
-    const path = buildPath(endpointType)
+  const host = buildHost(endpointType)
+  const path = buildPath(endpointType)
+
+  function build(): string {
     const queryParameters = buildQueryParameters(endpointType, source)
     const endpoint = `https://${host}${path}?${queryParameters}`
-
     if (proxyUrl) {
       return `${proxyUrl}?ddforward=${encodeURIComponent(endpoint)}`
     } else if (proxyHost) {
       return `https://${proxyHost}${path}?ddhost=${host}&${queryParameters}`
     }
-
     return endpoint
   }
 
-  function buildIntakeUrl(endpointType: EndpointType): string {
-    const endpoint = build(endpointType)
+  function buildIntakeUrl(): string {
+    const endpoint = build()
     return endpoint.slice(0, endpoint.indexOf('?'))
   }
 
@@ -96,10 +101,16 @@ export function createEndpointBuilder(initConfiguration: InitConfiguration, buil
 
     if (shouldUseIntakeV2(endpointType)) {
       parameters +=
-        `&dd-api-key=${clientToken}&` +
-        `dd-evp-origin-version=${encodeURIComponent(sdkVersion)}&` +
-        `dd-evp-origin=browser`
+        `&dd-api-key=${clientToken}` +
+        `&dd-evp-origin-version=${encodeURIComponent(sdkVersion)}` +
+        `&dd-evp-origin=browser` +
+        `&dd-request-id=${generateUUID()}`
     }
+
+    if (endpointType === 'rum') {
+      parameters += `&batch_time=${timeStampNow()}`
+    }
+
     return parameters
   }
 

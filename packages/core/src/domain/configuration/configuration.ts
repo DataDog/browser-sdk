@@ -49,39 +49,39 @@ export const DEFAULT_CONFIGURATION = {
 
 export interface InitConfiguration {
   clientToken: string
-  applicationId?: string
-  actionNameAttribute?: string
-  internalMonitoringApiKey?: string
-  allowedTracingOrigins?: Array<string | RegExp>
-  sampleRate?: number
-  replaySampleRate?: number
-  site?: string
-  enableExperimentalFeatures?: string[]
-  silentMultipleInit?: boolean
-  trackInteractions?: boolean
-  trackViewsManually?: boolean
+  applicationId?: string | undefined
+  actionNameAttribute?: string | undefined
+  internalMonitoringApiKey?: string | undefined
+  allowedTracingOrigins?: Array<string | RegExp> | undefined
+  sampleRate?: number | undefined
+  replaySampleRate?: number | undefined
+  site?: string | undefined
+  enableExperimentalFeatures?: string[] | undefined
+  silentMultipleInit?: boolean | undefined
+  trackInteractions?: boolean | undefined
+  trackViewsManually?: boolean | undefined
 
   /**
    * @deprecated Favor proxyUrl option
    */
-  proxyHost?: string
-  proxyUrl?: string
-  beforeSend?: BeforeSendCallback
-  defaultPrivacyLevel?: DefaultPrivacyLevel
+  proxyHost?: string | undefined
+  proxyUrl?: string | undefined
+  beforeSend?: BeforeSendCallback | undefined
+  defaultPrivacyLevel?: DefaultPrivacyLevel | undefined
 
-  service?: string
-  env?: string
-  version?: string
+  service?: string | undefined
+  env?: string | undefined
+  version?: string | undefined
 
-  useAlternateIntakeDomains?: boolean
-  intakeApiVersion?: 1 | 2
+  useAlternateIntakeDomains?: boolean | undefined
+  intakeApiVersion?: 1 | 2 | undefined
 
-  useCrossSiteSessionCookie?: boolean
-  useSecureSessionCookie?: boolean
-  trackSessionAcrossSubdomains?: boolean
+  useCrossSiteSessionCookie?: boolean | undefined
+  useSecureSessionCookie?: boolean | undefined
+  trackSessionAcrossSubdomains?: boolean | undefined
 
   // only on staging build mode
-  replica?: ReplicaUserConfiguration
+  replica?: ReplicaUserConfiguration | undefined
 }
 
 export type BeforeSendCallback = (event: any, context?: any) => unknown
