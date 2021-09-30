@@ -34,7 +34,7 @@ const pathsWithSideEffect = new Set([
   `${packagesRoot}/rum-slim/src/index.ts`,
 ])
 
-// Those packages either are known to have no side effects when evaluated
+// Those packages are known to have no side effects when evaluated
 const packagesWithoutSideEffect = new Set(['@datadog/browser-core', '@datadog/browser-rum-core'])
 
 /**

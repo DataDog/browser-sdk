@@ -49,14 +49,13 @@ export interface BuildEnv {
 }
 
 export function commonInit(initConfiguration: InitConfiguration, buildEnv: BuildEnv) {
-  const configuration = buildConfiguration(initConfiguration, buildEnv)
-  const internalMonitoring = startInternalMonitoring(configuration)
-
   const enableExperimentalFeatures = Array.isArray(initConfiguration.enableExperimentalFeatures)
     ? initConfiguration.enableExperimentalFeatures
     : []
-
   setEnabledExperimentalFeatures(enableExperimentalFeatures)
+
+  const configuration = buildConfiguration(initConfiguration, buildEnv)
+  const internalMonitoring = startInternalMonitoring(configuration)
 
   return {
     configuration,
