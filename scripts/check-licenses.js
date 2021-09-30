@@ -3,37 +3,36 @@
 const fs = require('fs')
 const path = require('path')
 const readline = require('readline')
-const util = require('util')
-const exec = util.promisify(require('child_process').exec)
+const { executeCommand, printLog, printError, logAndExit } = require('./utils')
 
 const LICENSE_FILE = 'LICENSE-3rdparty.csv'
 
 async function main() {
   const packageJsonPaths = await findPackageJsonPaths()
 
-  console.log(`Look for dependencies in:\n`, packageJsonPaths)
+  printLog(`Looking for dependencies in:\n`, packageJsonPaths, `\n`)
   const declaredDependencies = withoutDuplicates(packageJsonPaths.flatMap(retrievePackageJsonDependencies)).sort()
 
   const declaredLicenses = (await retrieveLicenses()).sort()
 
   if (JSON.stringify(declaredDependencies) !== JSON.stringify(declaredLicenses)) {
-    console.error(`\n❌ package.json dependencies and ${LICENSE_FILE} mismatch`)
-    console.error(
-      `\nIn package.json but not in ${LICENSE_FILE}:\n`,
+    printError(`Package.json dependencies and ${LICENSE_FILE} mismatch`)
+    printError(
+      `In package.json but not in ${LICENSE_FILE}:\n`,
       declaredDependencies.filter((d) => !declaredLicenses.includes(d))
     )
-    console.error(
-      `\nIn ${LICENSE_FILE} but not in package.json:\n`,
+    printError(
+      `In ${LICENSE_FILE} but not in package.json:\n`,
       declaredLicenses.filter((d) => !declaredDependencies.includes(d))
     )
-    throw new Error('dependencies mismatch')
+    throw new Error('Dependencies mismatch')
   }
-  console.log(`\n✅ All dependencies listed in ${LICENSE_FILE}`)
+  printLog('Dependencies check done.')
 }
 
 async function findPackageJsonPaths() {
-  const { stdout } = await exec('find . -path "*/node_modules/*" -prune -o -name "package.json" -print')
-  return stdout.trim().split('\n')
+  const paths = await executeCommand('find . -path "*/node_modules/*" -prune -o -name "package.json" -print')
+  return paths.trim().split('\n')
 }
 
 function retrievePackageJsonDependencies(packageJsonPath) {
@@ -63,7 +62,4 @@ async function retrieveLicenses() {
   return licenses
 }
 
-main().catch((e) => {
-  console.error('\nStacktrace:\n', e)
-  process.exit(1)
-})
+main().catch(logAndExit)

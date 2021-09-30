@@ -14,28 +14,22 @@
 // after killing it. There might be a better way of prematurely aborting the test command if we need
 // to in the future.
 
-const { spawn } = require('child_process')
 const request = require('request')
+const { spawnCommand, printLog, logAndExit } = require('./utils')
 
 const AVAILABILITY_CHECK_DELAY = 30_000
 // eslint-disable-next-line max-len
 const RUNNING_BUILDS_API = `https://${process.env.BS_USERNAME}:${process.env.BS_ACCESS_KEY}@api.browserstack.com/automate/builds.json?status=running`
 
-main()
-  .then((exitCode) => process.exit(exitCode))
-  .catch((error) => {
-    console.log(error)
-    process.exit(1)
-  })
-
 async function main() {
   await waitForAvailability()
-  return runTests()
+  const exitCode = await runTests()
+  process.exit(exitCode)
 }
 
 async function waitForAvailability() {
   while (await hasRunningBuild()) {
-    console.log('other build running, waiting...')
+    printLog('Other build running, waiting...')
     await timeout(AVAILABILITY_CHECK_DELAY)
   }
 }
@@ -52,13 +46,12 @@ function hasRunningBuild() {
 }
 
 function runTests() {
-  return new Promise((resolve) => {
-    const [command, ...args] = process.argv.slice(2)
-    const commandProcess = spawn(command, args, { stdio: 'inherit' })
-    commandProcess.on('exit', resolve)
-  })
+  const [command, ...args] = process.argv.slice(2)
+  return spawnCommand(command, args)
 }
 
 function timeout(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
+
+main().catch(logAndExit)
