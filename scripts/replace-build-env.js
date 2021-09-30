@@ -1,5 +1,6 @@
 const replace = require('replace-in-file')
 const buildEnv = require('./build-env')
+const { printLog, logAndExit } = require('./utils')
 
 /**
  * Replace BuildEnv in build files
@@ -7,23 +8,21 @@ const buildEnv = require('./build-env')
  * BUILD_MODE=zzz node replace-build-env.js /path/to/build/directory
  */
 
-const buildDirectory = process.argv[2]
+async function main() {
+  const buildDirectory = process.argv[2]
 
-console.log(`Replace BuildEnv in '${buildDirectory}' with:`)
-console.log(JSON.stringify(buildEnv, null, 2))
+  printLog(`Replacing BuildEnv in '${buildDirectory}' with:`, JSON.stringify(buildEnv, null, 2))
 
-try {
-  const results = replace.sync({
+  const results = await replace({
     files: `${buildDirectory}/**/*.js`,
     from: Object.keys(buildEnv).map((entry) => `<<< ${entry} >>>`),
     to: Object.values(buildEnv),
   })
-  console.log(
+  printLog(
     'Changed files:',
     results.filter((entry) => entry.hasChanged).map((entry) => entry.file)
   )
   process.exit(0)
-} catch (error) {
-  console.error('Error occurred:', error)
-  process.exit(1)
 }
+
+main().catch(logAndExit)

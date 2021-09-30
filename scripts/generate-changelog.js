@@ -1,21 +1,20 @@
 'use strict'
 
 const util = require('util')
-const spawn = require('child_process').spawn
 const readFile = util.promisify(require('fs').readFile)
-const exec = util.promisify(require('child_process').exec)
 const replace = require('replace-in-file')
 
 const emojiNameMap = require('emoji-name-map')
 
 const lernaConfig = require('../lerna.json')
+const { executeCommand, spawnCommand, printError, logAndExit } = require('./utils')
 
 const CHANGELOG_FILE = 'CHANGELOG.md'
 const CONTRIBUTING_FILE = 'CONTRIBUTING.md'
 
 async function main() {
   if (!process.env.EDITOR) {
-    console.error('Please configure your environment variable EDITOR')
+    printError('Please configure your environment variable EDITOR')
     process.exit(1)
   }
 
@@ -84,29 +83,9 @@ async function getChangesList() {
   return changesWithPullRequestLinks
 }
 
-async function executeCommand(command) {
-  const commandResult = await exec(command)
-  if (commandResult.stderr) {
-    throw commandResult.stderr
-  }
-  return commandResult.stdout
-}
-
-function spawnCommand(command, args) {
-  return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { stdio: 'inherit', shell: true })
-    child.on('error', () => reject())
-    child.on('close', () => resolve())
-    child.on('exit', () => resolve())
-  })
-}
-
 function emojiNameToUnicode(changes) {
   const emojiNameRegex = new RegExp(/:[^:\s]*(?:::[^:\s]*)*:/, 'gm')
   return changes.replace(emojiNameRegex, (emoji) => emojiNameMap.get(emoji) || emoji)
 }
 
-main().catch((e) => {
-  console.error('\nStacktrace:\n', e)
-  process.exit(1)
-})
+main().catch(logAndExit)

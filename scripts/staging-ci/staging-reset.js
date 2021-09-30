@@ -2,7 +2,7 @@
 
 const fs = require('fs')
 const replace = require('replace-in-file')
-const { initGitConfig, executeCommand, printLog, printError } = require('../helpers')
+const { initGitConfig, executeCommand, printLog, logAndExit } = require('../utils')
 
 const CI_FILE = '.gitlab-ci.yml'
 const REPOSITORY = process.env.GIT_REPOSITORY
@@ -56,7 +56,7 @@ async function main() {
     printLog(`CI already disabled on the old branch. Skipping.`)
   }
 
-  printLog('Reset Done.')
+  printLog('Reset done.')
 }
 
 function getWeekNumber() {
@@ -65,7 +65,4 @@ function getWeekNumber() {
   return Math.ceil(((today - yearStart) / 86400000 + yearStart.getUTCDay() + 1) / 7)
 }
 
-main().catch((e) => {
-  printError('\nStacktrace:\n', e)
-  process.exit(1)
-})
+main().catch(logAndExit)

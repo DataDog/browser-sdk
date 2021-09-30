@@ -1,5 +1,6 @@
 const util = require('util')
 const execute = util.promisify(require('child_process').exec)
+const spawn = require('child_process').spawn
 
 function getSecretKey(name) {
   const awsParameters = [
@@ -40,6 +41,20 @@ async function executeCommand(command) {
   return commandResult.stdout
 }
 
+async function spawnCommand(command, args) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, { stdio: 'inherit', shell: true })
+    child.on('error', reject)
+    child.on('close', resolve)
+    child.on('exit', resolve)
+  })
+}
+
+function logAndExit(error) {
+  printError('\nStacktrace:\n', error)
+  process.exit(1)
+}
+
 const resetColor = '\x1b[0m'
 
 function printError(...params) {
@@ -55,6 +70,8 @@ function printLog(...params) {
 module.exports = {
   initGitConfig,
   executeCommand,
+  spawnCommand,
   printError,
   printLog,
+  logAndExit,
 }
