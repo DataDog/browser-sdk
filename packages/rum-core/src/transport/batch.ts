@@ -35,7 +35,7 @@ function makeRumBatch(configuration: Configuration, lifeCycle: LifeCycle): RumBa
   let replicaBatch: Batch | undefined
   const replica = configuration.replica
   if (replica !== undefined) {
-    replicaBatch = createRumBatch(replica.logsEndpointBuilder)
+    replicaBatch = createRumBatch(replica.rumEndpointBuilder)
   }
 
   function createRumBatch(endpointBuilder: EndpointBuilder, unloadCallback?: () => void) {
