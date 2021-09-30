@@ -11,6 +11,7 @@ import {
   Configuration,
   ONE_SECOND,
   Observable,
+  addMonitoringMessage,
 } from '@datadog/browser-core'
 import { ActionType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -138,6 +139,19 @@ class PendingAutoAction {
   }
 
   complete(endTime: TimeStamp) {
+    const actionDuration = elapsed(this.startClocks.timeStamp, endTime)
+    if (actionDuration < 0) {
+      addMonitoringMessage('auto action with negative loading time', {
+        debug: {
+          actionDuration,
+          type: this.type,
+          name: this.name,
+          startClocks: this.startClocks,
+          endTime,
+        },
+      })
+    }
+
     const eventCounts = this.eventCountsSubscription.eventCounts
     this.lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
       counts: {
@@ -145,7 +159,7 @@ class PendingAutoAction {
         longTaskCount: eventCounts.longTaskCount,
         resourceCount: eventCounts.resourceCount,
       },
-      duration: elapsed(this.startClocks.timeStamp, endTime),
+      duration: actionDuration,
       id: this.id,
       name: this.name,
       startClocks: this.startClocks,
