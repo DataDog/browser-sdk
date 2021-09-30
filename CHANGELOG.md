@@ -16,6 +16,12 @@
 
 ---
 
+## v3.6.5
+
+- 🐛 [RUMF-1033] request parameters into proxy url ([#1087](https://github.com/DataDog/browser-sdk/pull/1087))
+- [RUMF-1034] allow passing `undefined` options to RUM and Logs init ([#1082](https://github.com/DataDog/browser-sdk/pull/1082))
+- 🔊 [RUMF-1021] add extra monitoring on session type change ([#1091](https://github.com/DataDog/browser-sdk/pull/1091))
+
 ## v3.6.4
 
 - ✨ [RUMF-1000] add a custom time parameter to `addTiming` ([#1079](https://github.com/DataDog/browser-sdk/pull/1079))
