@@ -13,6 +13,7 @@ export interface Session<T> {
   renewObservable: Observable<void>
   getId: () => string | undefined
   getTrackingType: () => T | undefined
+  getInMemoryTrackingType: () => T | undefined
 }
 
 export interface SessionState {
@@ -55,7 +56,7 @@ export function startSessionManagement<TrackingType extends string>(
         renewObservable.notify()
       }
       if (isTracked && inMemorySession[productKey] !== undefined && inMemorySession[productKey] !== trackingType) {
-        addMonitoringMessage('session type changed', {
+        addMonitoringMessage('session type changed - eors', {
           debug: {
             product: productKey,
             inMemorySession,
@@ -64,8 +65,8 @@ export function startSessionManagement<TrackingType extends string>(
             _dd_s: getCookie(SESSION_COOKIE_NAME),
           },
         })
-        inMemorySession = { ...cookieSession }
       }
+      inMemorySession = { ...cookieSession }
     }),
     COOKIE_ACCESS_DELAY
   )
@@ -74,15 +75,53 @@ export function startSessionManagement<TrackingType extends string>(
     sessionCookie.clearCache()
     const session = retrieveActiveSession(sessionCookie)
     persistSession(session, sessionCookie)
+    if (session.id === inMemorySession.id && session[productKey] !== inMemorySession[productKey]) {
+      addMonitoringMessage('session type changed - es', {
+        debug: {
+          product: productKey,
+          inMemorySession,
+          retrievedSession: session,
+          newTrackingType: session[productKey],
+          _dd_s: getCookie(SESSION_COOKIE_NAME),
+        },
+      })
+    }
+    inMemorySession = { ...session }
   }
 
   expandOrRenewSession()
   trackActivity(expandOrRenewSession)
   trackVisibility(expandSession)
+  checkCookieConsistency()
+
+  function checkCookieConsistency() {
+    const alternateSessionCookie = cacheCookieAccess(SESSION_COOKIE_NAME, options)
+    const cookieConsistencyCheckInterval = setInterval(() => {
+      const sessionCookieCheck = retrieveActiveSession(alternateSessionCookie)
+      alternateSessionCookie.clearCache()
+      if (
+        inMemorySession.id === sessionCookieCheck.id &&
+        inMemorySession[productKey] !== sessionCookieCheck[productKey]
+      ) {
+        addMonitoringMessage('session type changed - ccc', {
+          debug: {
+            product: productKey,
+            inMemorySession,
+            retrievedSession: sessionCookieCheck,
+            newTrackingType: sessionCookieCheck[productKey],
+            _dd_s: getCookie(SESSION_COOKIE_NAME),
+          },
+        })
+      }
+      inMemorySession = { ...sessionCookieCheck }
+    }, COOKIE_ACCESS_DELAY)
+    stopCallbacks.push(() => clearInterval(cookieConsistencyCheckInterval))
+  }
 
   return {
     getId: () => retrieveActiveSession(sessionCookie).id,
     getTrackingType: () => retrieveActiveSession(sessionCookie)[productKey] as TrackingType | undefined,
+    getInMemoryTrackingType: () => inMemorySession[productKey] as TrackingType | undefined,
     renewObservable,
   }
 }
