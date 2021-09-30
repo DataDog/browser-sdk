@@ -7,6 +7,7 @@ import {
   addEventListener,
   includes,
   DefaultPrivacyLevel,
+  isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
 import { NodePrivacyLevel } from '../../constants'
 import { getNodePrivacyLevel, shouldMaskNode } from './privacy'
@@ -46,7 +47,10 @@ export function initObservers(o: ObserverParam): ListenerHandler {
   const mediaInteractionHandler = initMediaInteractionObserver(o.mediaInteractionCb, o.defaultPrivacyLevel)
   const styleSheetObserver = initStyleSheetObserver(o.styleSheetRuleCb)
   const focusHandler = initFocusObserver(o.focusCb)
-  const visualViewportResizeHandler = initVisualViewportResizeObserver(o.visualViewportResizeCb)
+
+  const visualViewportResizeHandler = isExperimentalFeatureEnabled('visualviewport')
+    ? initVisualViewportResizeObserver(o.visualViewportResizeCb)
+    : () => {}
 
   return () => {
     mutationHandler()

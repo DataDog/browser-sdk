@@ -1,5 +1,5 @@
 import { DefaultPrivacyLevel } from '@datadog/browser-core'
-import { FocusRecord, RawRecord } from '../../types'
+import { FocusRecord, RawRecord, VisualViewportRecord } from '../../types'
 import { MutationController } from './mutationObserver'
 
 export enum IncrementalSource {
@@ -14,7 +14,6 @@ export enum IncrementalSource {
   StyleSheetRule = 8,
   // CanvasMutation = 9,
   // Font = 10,
-  VisualViewportResize = 11,
 }
 
 export type MutationData = {
@@ -38,10 +37,6 @@ export type ViewportResizeData = {
   source: IncrementalSource.ViewportResize
 } & ViewportResizeDimention
 
-export type VisualViewportResizeData = {
-  source: IncrementalSource.VisualViewportResize
-} & VisualViewportResizeDimention
-
 export type InputData = {
   source: IncrementalSource.Input
   id: number
@@ -64,7 +59,6 @@ export type IncrementalData =
   | InputData
   | MediaInteractionData
   | StyleSheetRuleData
-  | VisualViewportResizeData
 
 export interface RecordOptions {
   emit?: (record: RawRecord) => void
@@ -228,17 +222,6 @@ export interface ViewportResizeDimention {
 }
 
 export type ViewportResizeCallback = (d: ViewportResizeDimention) => void
-export interface VisualViewportResizeDimention {
-  scale: number
-  offsetLeft: number
-  offsetTop: number
-  pageLeft: number
-  pageTop: number
-  height: number
-  width: number
-}
-
-export type VisualViewportResizeCallback = (d: VisualViewportResizeDimention) => void
 
 export type InputState = { text: string } | { isChecked: boolean }
 
@@ -259,6 +242,8 @@ export interface MediaInteractionParam {
 export type MediaInteractionCallback = (p: MediaInteractionParam) => void
 
 export type FocusCallback = (data: FocusRecord['data']) => void
+
+export type VisualViewportResizeCallback = (data: VisualViewportRecord['data']) => void
 
 export type ListenerHandler = () => void
 export type HookResetter = () => void

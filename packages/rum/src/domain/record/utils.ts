@@ -1,3 +1,4 @@
+import { isExperimentalFeatureEnabled } from '@datadog/browser-core'
 import { HookResetter } from './types'
 
 export function hookSetter<T>(
@@ -23,7 +24,7 @@ export function hookSetter<T>(
 }
 
 export function getWindowHeight(): number {
-  if (visualViewport) {
+  if (isExperimentalFeatureEnabled('visualviewport') && visualViewport) {
     return visualViewport.height * visualViewport.scale
   }
   return (
@@ -34,7 +35,7 @@ export function getWindowHeight(): number {
 }
 
 export function getWindowWidth(): number {
-  if (visualViewport) {
+  if (isExperimentalFeatureEnabled('visualviewport') && visualViewport) {
     return visualViewport.width * visualViewport.scale
   }
   return (
