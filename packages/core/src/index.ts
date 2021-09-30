@@ -8,7 +8,7 @@ export {
 } from './domain/configuration'
 export {
   isEnabledExperimentalFeature,
-  setEnabledExperimentalFeatures,
+  updateEnabledExperimentalFeatures,
 } from './domain/configuration/experimentalFeatures'
 export { trackConsoleError } from './domain/error/trackConsoleError'
 export { trackRuntimeError } from './domain/error/trackRuntimeError'
