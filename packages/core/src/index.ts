@@ -7,8 +7,9 @@ export {
   DefaultPrivacyLevel,
 } from './domain/configuration'
 export {
-  isEnabledExperimentalFeature,
-  updateEnabledExperimentalFeatures,
+  isExperimentalFeatureEnabled,
+  updateExperimentalFeatures,
+  resetExperimentalFeatures,
 } from './domain/configuration/experimentalFeatures'
 export { trackConsoleError } from './domain/error/trackConsoleError'
 export { trackRuntimeError } from './domain/error/trackRuntimeError'

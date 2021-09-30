@@ -3,7 +3,7 @@ import { buildConfiguration, InitConfiguration } from '../domain/configuration'
 import { setDebugMode, startInternalMonitoring } from '../domain/internalMonitoring'
 import { catchUserErrors } from '../tools/catchUserErrors'
 import { display } from '../tools/display'
-import { updateEnabledExperimentalFeatures } from '../domain/configuration/experimentalFeatures'
+import { updateExperimentalFeatures } from '../domain/configuration/experimentalFeatures'
 
 export function makePublicApi<T>(stub: T): T & { onReady(callback: () => void): void } {
   const publicApi = {
@@ -49,11 +49,7 @@ export interface BuildEnv {
 }
 
 export function commonInit(initConfiguration: InitConfiguration, buildEnv: BuildEnv) {
-  const enableExperimentalFeatures = Array.isArray(initConfiguration.enableExperimentalFeatures)
-    ? initConfiguration.enableExperimentalFeatures
-    : []
-  updateEnabledExperimentalFeatures(enableExperimentalFeatures)
-
+  updateExperimentalFeatures(initConfiguration.enableExperimentalFeatures || [])
   const configuration = buildConfiguration(initConfiguration, buildEnv)
   const internalMonitoring = startInternalMonitoring(configuration)
 

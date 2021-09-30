@@ -1,13 +1,26 @@
 let enabledExperimentalFeatures: Set<string>
 
-export function updateEnabledExperimentalFeatures(enabledFeatures: string[]): void {
+export function updateExperimentalFeatures(enabledFeatures: string[]): void {
+  // Safely handle external data
+  if (!Array.isArray(enabledFeatures)) {
+    return
+  }
+
   if (!enabledExperimentalFeatures) {
     enabledExperimentalFeatures = new Set(enabledFeatures)
-  } else {
-    enabledFeatures.forEach((flag) => enabledExperimentalFeatures.add(flag))
   }
+
+  enabledFeatures
+    .filter((flag) => typeof flag === 'string')
+    .forEach((flag: string) => {
+      enabledExperimentalFeatures.add(flag)
+    })
 }
 
-export function isEnabledExperimentalFeature(featureName: string): boolean {
+export function isExperimentalFeatureEnabled(featureName: string): boolean {
   return enabledExperimentalFeatures && enabledExperimentalFeatures.has(featureName)
+}
+
+export function resetExperimentalFeatures(): void {
+  enabledExperimentalFeatures = new Set()
 }
