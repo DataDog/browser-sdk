@@ -141,6 +141,7 @@ export function startRumAssembly(
                 eventType: serverRumEvent.type,
                 viewId: serverRumEvent.view.id,
                 sessionId: serverRumEvent.session.id,
+                inMemoryPlan: session.getInMemoryPlan(),
                 event: serverRumEvent,
                 _dd_s: getCookie('_dd_s'),
               },
