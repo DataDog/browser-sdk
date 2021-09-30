@@ -3,7 +3,7 @@
 const fs = require('fs')
 const path = require('path')
 const readline = require('readline')
-const { executeCommand, printLog, printError } = require('./utils')
+const { executeCommand, printLog, printError, logAndExit } = require('./utils')
 
 const LICENSE_FILE = 'LICENSE-3rdparty.csv'
 
@@ -62,7 +62,4 @@ async function retrieveLicenses() {
   return licenses
 }
 
-main().catch((error) => {
-  printError('\nStacktrace:\n', error)
-  process.exit(1)
-})
+main().catch(logAndExit)

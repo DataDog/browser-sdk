@@ -2,7 +2,7 @@
 
 const fs = require('fs')
 const replace = require('replace-in-file')
-const { initGitConfig, executeCommand, printLog, printError } = require('../utils')
+const { initGitConfig, executeCommand, printLog, logAndExit } = require('../utils')
 
 const CI_FILE = '.gitlab-ci.yml'
 const REPOSITORY = process.env.GIT_REPOSITORY
@@ -65,7 +65,4 @@ function getWeekNumber() {
   return Math.ceil(((today - yearStart) / 86400000 + yearStart.getUTCDay() + 1) / 7)
 }
 
-main().catch((error) => {
-  printError('\nStacktrace:\n', error)
-  process.exit(1)
-})
+main().catch(logAndExit)

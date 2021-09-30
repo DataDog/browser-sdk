@@ -50,6 +50,11 @@ async function spawnCommand(command, args) {
   })
 }
 
+function logAndExit(error) {
+  printError('\nStacktrace:\n', error)
+  process.exit(1)
+}
+
 const resetColor = '\x1b[0m'
 
 function printError(...params) {
@@ -68,4 +73,5 @@ module.exports = {
   spawnCommand,
   printError,
   printLog,
+  logAndExit,
 }

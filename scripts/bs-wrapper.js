@@ -15,7 +15,7 @@
 // to in the future.
 
 const request = require('request')
-const { spawnCommand, printLog } = require('./utils')
+const { spawnCommand, printLog, logAndExit } = require('./utils')
 
 const AVAILABILITY_CHECK_DELAY = 30_000
 // eslint-disable-next-line max-len
@@ -54,7 +54,4 @@ function timeout(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-main().catch((error) => {
-  printError('\nStacktrace:\n', error)
-  process.exit(1)
-})
+main().catch(logAndExit)

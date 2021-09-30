@@ -7,7 +7,7 @@ const replace = require('replace-in-file')
 const emojiNameMap = require('emoji-name-map')
 
 const lernaConfig = require('../lerna.json')
-const { executeCommand, spawnCommand, printError } = require('./utils')
+const { executeCommand, spawnCommand, printError, logAndExit } = require('./utils')
 
 const CHANGELOG_FILE = 'CHANGELOG.md'
 const CONTRIBUTING_FILE = 'CONTRIBUTING.md'
@@ -88,7 +88,4 @@ function emojiNameToUnicode(changes) {
   return changes.replace(emojiNameRegex, (emoji) => emojiNameMap.get(emoji) || emoji)
 }
 
-main().catch((error) => {
-  printError('\nStacktrace:\n', error)
-  process.exit(1)
-})
+main().catch(logAndExit)

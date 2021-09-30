@@ -1,6 +1,6 @@
 'use strict'
 
-const { initGitConfig, executeCommand, printLog, printError } = require('../utils')
+const { initGitConfig, executeCommand, printLog, printError, logAndExit } = require('../utils')
 
 const REPOSITORY = process.env.GIT_REPOSITORY
 const CURRENT_STAGING_BRANCH = process.env.CURRENT_STAGING
@@ -30,7 +30,4 @@ async function main() {
   printLog('Check done.')
 }
 
-main().catch((error) => {
-  printError('\nStacktrace:\n', error)
-  process.exit(1)
-})
+main().catch(logAndExit)

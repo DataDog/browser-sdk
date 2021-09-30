@@ -2,7 +2,7 @@ const fs = require('fs')
 const path = require('path')
 const { compileFromFile } = require('json-schema-to-typescript')
 const prettier = require('prettier')
-const { printLog, printError } = require('./utils')
+const { printLog, logAndExit } = require('./utils')
 
 const workingDirectory = path.join(__dirname, '../rum-events-format')
 const schemaPath = path.join(workingDirectory, 'rum-events-format.json')
@@ -23,7 +23,4 @@ async function main() {
   printLog('Generation done.')
 }
 
-main().catch((error) => {
-  printError('\nStacktrace:\n', error)
-  process.exit(1)
-})
+main().catch(logAndExit)
