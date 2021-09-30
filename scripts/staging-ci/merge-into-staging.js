@@ -13,7 +13,7 @@ async function main() {
   await executeCommand(`git checkout ${CURRENT_STAGING_BRANCH} -f`)
   await executeCommand(`git pull origin ${CURRENT_STAGING_BRANCH}`)
 
-  printLog(`Merging ${CI_COMMIT_REF_NAME} (${CI_COMMIT_SHA}) with ${CURRENT_STAGING_BRANCH}...`)
+  printLog(`Merging branch '${CI_COMMIT_REF_NAME}' (${CI_COMMIT_SHA}) into ${CURRENT_STAGING_BRANCH}...`)
   try {
     await executeCommand(`git merge --no-ff "${CI_COMMIT_SHA}"`)
   } catch (error) {
@@ -23,7 +23,7 @@ async function main() {
   }
 
   const commitMessage = await executeCommand(`git show -s --format=%B`)
-  const newSummary = `Gitlab merged ${CI_COMMIT_REF_NAME} (${CI_COMMIT_SHA}) with ${CURRENT_STAGING_BRANCH}`
+  const newSummary = `Merge branch '${CI_COMMIT_REF_NAME}' (${CI_COMMIT_SHA}) with ${CURRENT_STAGING_BRANCH}`
   const message = `${newSummary}\n\n${commitMessage}`
 
   await executeCommand(`git commit --amend -m "${message}"`)

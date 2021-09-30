@@ -14,7 +14,9 @@ async function main() {
   await executeCommand(`git checkout ${CURRENT_STAGING_BRANCH} -f`)
   await executeCommand(`git pull`)
 
-  printLog(`Checking if ${CI_COMMIT_REF_NAME} (${CI_COMMIT_SHA}) can be merged with ${CURRENT_STAGING_BRANCH}...`)
+  printLog(
+    `Checking if branch '${CI_COMMIT_REF_NAME}' (${CI_COMMIT_SHA}) can be merged into ${CURRENT_STAGING_BRANCH}...`
+  )
   try {
     await executeCommand(`git merge --no-ff "${CI_COMMIT_SHA}"`)
   } catch (error) {
