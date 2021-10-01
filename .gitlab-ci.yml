@@ -16,6 +16,7 @@ stages:
   - task
   - ci-image
   - test
+  - after-tests
   - browserstack
   - pre-deploy
   - pre-deploy-notify
@@ -401,3 +402,18 @@ check-staging-merge:
     - eval $(ssh-agent -s)
   script:
     - node scripts/staging-ci/check-staging-merge.js
+
+# A noop job that's used to signal to `to-staging` that it can merge to the
+# staging branch, even though the pipeline is still running
+tests-passed:
+  stage: after-tests
+  tags: ['runner:main', 'size:large']
+  image: $CI_IMAGE
+  except:
+    refs:
+      - main
+      - tags
+      - /^staging-[0-9]+$/
+      - schedules
+  script:
+    - 'true'
