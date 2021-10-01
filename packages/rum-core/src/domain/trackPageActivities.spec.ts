@@ -177,8 +177,11 @@ describe('waitPageActivitiesCompletion', () => {
 
     expect(completionCallbackSpy).toHaveBeenCalledOnceWith({
       hadActivity: true,
-      // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-      endTime: (startTime + BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY) as TimeStamp,
+      endClocks: {
+        // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+        timeStamp: (startTime + BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY) as TimeStamp,
+        relative: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY,
+      },
     })
   })
 
@@ -186,7 +189,6 @@ describe('waitPageActivitiesCompletion', () => {
     it('is extended while there is page activities', () => {
       const activityObservable = new Observable<PageActivityEvent>()
       const startTime = timeStampNow()
-
       // Extend the action 10 times
       const extendCount = 10
 
@@ -199,10 +201,14 @@ describe('waitPageActivitiesCompletion', () => {
 
       clock.tick(EXPIRE_DELAY)
 
+      const relative = extendCount * BEFORE_PAGE_ACTIVITY_END_DELAY
       expect(completionCallbackSpy).toHaveBeenCalledOnceWith({
         hadActivity: true,
-        // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-        endTime: (startTime + extendCount * BEFORE_PAGE_ACTIVITY_END_DELAY) as TimeStamp,
+        endClocks: {
+          // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+          timeStamp: (startTime + relative) as TimeStamp,
+          relative,
+        },
       })
     })
 
@@ -228,8 +234,11 @@ describe('waitPageActivitiesCompletion', () => {
 
       expect(completionCallbackSpy).toHaveBeenCalledOnceWith({
         hadActivity: true,
-        // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-        endTime: (startTime + MAX_DURATION) as TimeStamp,
+        endClocks: {
+          // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+          timeStamp: (startTime + MAX_DURATION) as TimeStamp,
+          relative: MAX_DURATION,
+        },
       })
     })
   })
@@ -248,10 +257,14 @@ describe('waitPageActivitiesCompletion', () => {
 
       clock.tick(EXPIRE_DELAY)
 
+      const relative = BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY + PAGE_ACTIVITY_END_DELAY * 2
       expect(completionCallbackSpy).toHaveBeenCalledOnceWith({
         hadActivity: true,
-        // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-        endTime: (startTime + BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY + PAGE_ACTIVITY_END_DELAY * 2) as TimeStamp,
+        endClocks: {
+          // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+          timeStamp: (startTime + relative) as TimeStamp,
+          relative,
+        },
       })
     })
 
@@ -267,8 +280,11 @@ describe('waitPageActivitiesCompletion', () => {
 
       expect(completionCallbackSpy).toHaveBeenCalledOnceWith({
         hadActivity: true,
-        // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-        endTime: (startTime + MAX_DURATION) as TimeStamp,
+        endClocks: {
+          // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+          timeStamp: (startTime + MAX_DURATION) as TimeStamp,
+          relative: MAX_DURATION,
+        },
       })
     })
   })
