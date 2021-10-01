@@ -18,7 +18,7 @@ export function updateExperimentalFeatures(enabledFeatures: string[]): void {
 }
 
 export function isExperimentalFeatureEnabled(featureName: string): boolean {
-  return enabledExperimentalFeatures && enabledExperimentalFeatures.has(featureName)
+  return !!enabledExperimentalFeatures && enabledExperimentalFeatures.has(featureName)
 }
 
 export function resetExperimentalFeatures(): void {
