@@ -1,4 +1,4 @@
-import { ClocksState, noop, Observable, ONE_SECOND, TimeStamp, timeStampNow } from '@datadog/browser-core'
+import { noop, Observable, ONE_SECOND, TimeStamp, timeStampNow } from '@datadog/browser-core'
 import { Clock, mockClock } from '../../../core/test/specHelper'
 import { RumPerformanceNavigationTiming, RumPerformanceResourceTiming } from '../browser/performanceCollection'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'

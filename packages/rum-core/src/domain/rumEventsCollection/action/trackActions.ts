@@ -7,7 +7,6 @@ import {
   generateUUID,
   ClocksState,
   clocksNow,
-  TimeStamp,
   Configuration,
   ONE_SECOND,
   Observable,
