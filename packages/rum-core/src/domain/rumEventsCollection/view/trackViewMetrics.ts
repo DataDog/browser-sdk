@@ -110,7 +110,7 @@ function trackActivityLoadingTime(
   const startTime = timeStampNow()
   const { stop: stopWaitIdlePageActivity } = waitIdlePageActivity(lifeCycle, domMutationObservable, (params) => {
     if (params.hadActivity) {
-      callback(elapsed(startTime, params.endTime))
+      callback(elapsed(startTime, params.endClocks.timeStamp))
     } else {
       callback(undefined)
     }

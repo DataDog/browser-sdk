@@ -107,7 +107,7 @@ function startActionManagement(lifeCycle: LifeCycle, domMutationObservable: Obse
         domMutationObservable,
         (params) => {
           if (params.hadActivity) {
-            pendingAutoAction.complete(params.endTime)
+            pendingAutoAction.complete(params.endClocks)
           } else {
             pendingAutoAction.discard()
           }
@@ -138,8 +138,8 @@ class PendingAutoAction {
     this.lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { id: this.id, startClocks: this.startClocks })
   }
 
-  complete(endTime: TimeStamp) {
-    const actionDuration = elapsed(this.startClocks.timeStamp, endTime)
+  complete(endClocks: ClocksState) {
+    const actionDuration = elapsed(this.startClocks.timeStamp, endClocks.timeStamp)
     if (actionDuration < 0) {
       addMonitoringMessage('auto action with negative loading time', {
         debug: {
@@ -147,7 +147,7 @@ class PendingAutoAction {
           type: this.type,
           name: this.name,
           startClocks: this.startClocks,
-          endTime,
+          endClocks,
         },
       })
     }
