@@ -26,7 +26,7 @@ describe('experimentalFeatures', () => {
     updateExperimentalFeatures(undefined)
     updateExperimentalFeatures(undefined)
     expect(isExperimentalFeatureEnabled('foo')).toBeFalse()
-    
+
     updateExperimentalFeatures(['foo'])
     updateExperimentalFeatures([11 as any, [] as any, {} as any, null as any, undefined as any])
     expect(isExperimentalFeatureEnabled('foo')).toBeTrue()
