@@ -28,9 +28,9 @@ describe('experimentalFeatures', () => {
   it("functions won't throw", () => {
     resetExperimentalFeatures()
     resetExperimentalFeatures()
-    updateExperimentalFeatures(undefined as any)
-    updateExperimentalFeatures(undefined as any)
-
+    expect(isExperimentalFeatureEnabled('foo')).toBeFalse()
+    updateExperimentalFeatures(undefined)
+    updateExperimentalFeatures(undefined)
     expect(isExperimentalFeatureEnabled('foo')).toBeFalse()
     updateExperimentalFeatures(['foo'])
     updateExperimentalFeatures(['foo'])

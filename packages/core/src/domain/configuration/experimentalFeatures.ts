@@ -1,6 +1,6 @@
 let enabledExperimentalFeatures: Set<string>
 
-export function updateExperimentalFeatures(enabledFeatures: string[]): void {
+export function updateExperimentalFeatures(enabledFeatures: string[] | undefined): void {
   // Safely handle external data
   if (!Array.isArray(enabledFeatures)) {
     return

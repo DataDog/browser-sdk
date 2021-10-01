@@ -49,7 +49,7 @@ export interface BuildEnv {
 }
 
 export function commonInit(initConfiguration: InitConfiguration, buildEnv: BuildEnv) {
-  updateExperimentalFeatures(initConfiguration.enableExperimentalFeatures || [])
+  updateExperimentalFeatures(initConfiguration.enableExperimentalFeatures)
   const configuration = buildConfiguration(initConfiguration, buildEnv)
   const internalMonitoring = startInternalMonitoring(configuration)
 
