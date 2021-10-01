@@ -16,6 +16,10 @@
 
 ---
 
+## v3.6.6
+
+- 🐛 [RUMF-1021] fix regression on renew session ([#1096](https://github.com/DataDog/browser-sdk/pull/1096))
+
 ## v3.6.5
 
 - 🐛 [RUMF-1033] request parameters into proxy url ([#1087](https://github.com/DataDog/browser-sdk/pull/1087))
