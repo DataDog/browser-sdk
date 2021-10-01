@@ -1,5 +1,5 @@
-import { noop, Observable, ONE_SECOND, TimeStamp, timeStampNow } from '@datadog/browser-core'
-import { Clock, mockClock } from '../../../core/test/specHelper'
+import { Observable, ONE_SECOND, TimeStamp, timeStampNow } from '@datadog/browser-core'
+import { Clock, mockClock } from '@datadog/browser-core/test/specHelper'
 import { RumPerformanceNavigationTiming, RumPerformanceResourceTiming } from '../browser/performanceCollection'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { RequestCompleteEvent } from './requestCollection'
@@ -7,10 +7,10 @@ import {
   PAGE_ACTIVITY_END_DELAY,
   PAGE_ACTIVITY_VALIDATION_DELAY,
   PageActivityEvent,
-  trackPageActivities,
+  createPageActivityObservable,
   waitPageActivitiesCompletion,
-  CompletionCallbackParameters,
-} from './trackPageActivities'
+  PageActivityCompletionEvent,
+} from './pageActivityObservable'
 
 // Used to wait some time after the creation of an action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
@@ -34,25 +34,27 @@ function eventsCollector<T>() {
   }
 }
 
-describe('trackPagePageActivities', () => {
+describe('pageActivityObservable', () => {
   const { events, pushEvent } = eventsCollector<PageActivityEvent>()
 
   let lifeCycle: LifeCycle
   let domMutationObservable: Observable<void>
+  let pageActivityObservable: Observable<PageActivityEvent>
 
   beforeEach(() => {
     lifeCycle = new LifeCycle()
     domMutationObservable = new Observable()
+    pageActivityObservable = createPageActivityObservable(lifeCycle, domMutationObservable)
   })
 
   it('emits an activity event on dom mutation', () => {
-    trackPageActivities(lifeCycle, domMutationObservable).observable.subscribe(pushEvent)
+    pageActivityObservable.subscribe(pushEvent)
     domMutationObservable.notify()
     expect(events).toEqual([{ isBusy: false }])
   })
 
   it('emits an activity event on resource collected', () => {
-    trackPageActivities(lifeCycle, domMutationObservable).observable.subscribe(pushEvent)
+    pageActivityObservable.subscribe(pushEvent)
     const performanceTiming = {
       entryType: 'resource',
     }
@@ -61,7 +63,7 @@ describe('trackPagePageActivities', () => {
   })
 
   it('does not emit an activity event when a navigation occurs', () => {
-    trackPageActivities(lifeCycle, domMutationObservable).observable.subscribe(pushEvent)
+    pageActivityObservable.subscribe(pushEvent)
     const performanceTiming = {
       entryType: 'navigation',
     }
@@ -73,13 +75,13 @@ describe('trackPagePageActivities', () => {
   })
 
   it('stops emitting activities after calling stop()', () => {
-    const { stop, observable } = trackPageActivities(lifeCycle, domMutationObservable)
-    observable.subscribe(pushEvent)
+    const observable = createPageActivityObservable(lifeCycle, domMutationObservable)
+    const subscription = observable.subscribe(pushEvent)
 
     domMutationObservable.notify()
     expect(events).toEqual([{ isBusy: false }])
 
-    stop()
+    subscription.unsubscribe()
 
     domMutationObservable.notify()
     domMutationObservable.notify()
@@ -93,14 +95,16 @@ describe('trackPagePageActivities', () => {
     }
     let lifeCycle: LifeCycle
     let domMutationObservable: Observable<void>
+    let pageActivityObservable: Observable<PageActivityEvent>
 
     beforeEach(() => {
       lifeCycle = new LifeCycle()
       domMutationObservable = new Observable()
+      pageActivityObservable = createPageActivityObservable(lifeCycle, domMutationObservable)
     })
 
     it('emits an activity event when a request starts', () => {
-      trackPageActivities(lifeCycle, domMutationObservable).observable.subscribe(pushEvent)
+      pageActivityObservable.subscribe(pushEvent)
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
         requestIndex: 10,
       })
@@ -108,8 +112,7 @@ describe('trackPagePageActivities', () => {
     })
 
     it('emits an activity event when a request completes', () => {
-      const lifeCycle = new LifeCycle()
-      trackPageActivities(lifeCycle, domMutationObservable).observable.subscribe(pushEvent)
+      pageActivityObservable.subscribe(pushEvent)
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
         requestIndex: 10,
       })
@@ -118,15 +121,13 @@ describe('trackPagePageActivities', () => {
     })
 
     it('ignores requests that has started before', () => {
-      const lifeCycle = new LifeCycle()
-      trackPageActivities(lifeCycle, domMutationObservable).observable.subscribe(pushEvent)
+      pageActivityObservable.subscribe(pushEvent)
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(10))
       expect(events).toEqual([])
     })
 
     it('keeps emitting busy events while all requests are not completed', () => {
-      const lifeCycle = new LifeCycle()
-      trackPageActivities(lifeCycle, domMutationObservable).observable.subscribe(pushEvent)
+      pageActivityObservable.subscribe(pushEvent)
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
         requestIndex: 10,
       })
@@ -143,7 +144,7 @@ describe('trackPagePageActivities', () => {
 
 describe('waitPageActivitiesCompletion', () => {
   let clock: Clock
-  let completionCallbackSpy: jasmine.Spy<(params: CompletionCallbackParameters) => void>
+  let completionCallbackSpy: jasmine.Spy<(params: PageActivityCompletionEvent) => void>
 
   beforeEach(() => {
     completionCallbackSpy = jasmine.createSpy()
@@ -155,7 +156,7 @@ describe('waitPageActivitiesCompletion', () => {
   })
 
   it('should not collect an event that is not followed by page activity', () => {
-    waitPageActivitiesCompletion(new Observable(), noop, completionCallbackSpy)
+    waitPageActivitiesCompletion(new Observable(), completionCallbackSpy)
 
     clock.tick(EXPIRE_DELAY)
 
@@ -168,7 +169,7 @@ describe('waitPageActivitiesCompletion', () => {
     const activityObservable = new Observable<PageActivityEvent>()
 
     const startTime = timeStampNow()
-    waitPageActivitiesCompletion(activityObservable, noop, completionCallbackSpy)
+    waitPageActivitiesCompletion(activityObservable, completionCallbackSpy)
 
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
     activityObservable.notify({ isBusy: false })
@@ -190,7 +191,7 @@ describe('waitPageActivitiesCompletion', () => {
       // Extend the action 10 times
       const extendCount = 10
 
-      waitPageActivitiesCompletion(activityObservable, noop, completionCallbackSpy)
+      waitPageActivitiesCompletion(activityObservable, completionCallbackSpy)
 
       for (let i = 0; i < extendCount; i += 1) {
         clock.tick(BEFORE_PAGE_ACTIVITY_END_DELAY)
@@ -217,7 +218,7 @@ describe('waitPageActivitiesCompletion', () => {
       completionCallbackSpy.and.callFake(() => {
         stop = true
       })
-      waitPageActivitiesCompletion(activityObservable, noop, completionCallbackSpy, MAX_DURATION)
+      waitPageActivitiesCompletion(activityObservable, completionCallbackSpy, MAX_DURATION)
 
       for (let i = 0; i < extendCount && !stop; i += 1) {
         clock.tick(BEFORE_PAGE_ACTIVITY_END_DELAY)
@@ -238,7 +239,7 @@ describe('waitPageActivitiesCompletion', () => {
     it('is extended while the page is busy', () => {
       const activityObservable = new Observable<PageActivityEvent>()
       const startTime = timeStampNow()
-      waitPageActivitiesCompletion(activityObservable, noop, completionCallbackSpy)
+      waitPageActivitiesCompletion(activityObservable, completionCallbackSpy)
 
       clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
       activityObservable.notify({ isBusy: true })
@@ -258,7 +259,7 @@ describe('waitPageActivitiesCompletion', () => {
     it('expires is the page is busy for too long', () => {
       const activityObservable = new Observable<PageActivityEvent>()
       const startTime = timeStampNow()
-      waitPageActivitiesCompletion(activityObservable, noop, completionCallbackSpy, MAX_DURATION)
+      waitPageActivitiesCompletion(activityObservable, completionCallbackSpy, MAX_DURATION)
 
       clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
       activityObservable.notify({ isBusy: true })

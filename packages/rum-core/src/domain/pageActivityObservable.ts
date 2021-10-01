@@ -10,32 +10,20 @@ export interface PageActivityEvent {
   isBusy: boolean
 }
 
-export type CompletionCallbackParameters = { hadActivity: true; endTime: TimeStamp } | { hadActivity: false }
+export type PageActivityCompletionEvent = { hadActivity: true; endTime: TimeStamp } | { hadActivity: false }
 
-export function waitIdlePageActivity(
+export function createIdlePageActivityObservable(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
-  completionCallback: (params: CompletionCallbackParameters) => void,
   maxDuration?: number
 ) {
-  const { observable: pageActivitiesObservable, stop: stopPageActivitiesTracking } = trackPageActivities(
-    lifeCycle,
-    domMutationObservable
-  )
+  const pageActivityObservable = createPageActivityObservable(lifeCycle, domMutationObservable)
+  const observable = new Observable<PageActivityCompletionEvent>(() => {
+    const { stop } = waitPageActivitiesCompletion(pageActivityObservable, (e) => observable.notify(e), maxDuration)
+    return () => stop()
+  })
 
-  const { stop: stopWaitPageActivitiesCompletion } = waitPageActivitiesCompletion(
-    pageActivitiesObservable,
-    stopPageActivitiesTracking,
-    completionCallback,
-    maxDuration
-  )
-
-  const stop = () => {
-    stopWaitPageActivitiesCompletion()
-    stopPageActivitiesTracking()
-  }
-
-  return { stop }
+  return observable
 }
 
 // Automatic action collection lifecycle overview:
@@ -62,65 +50,55 @@ export function waitIdlePageActivity(
 //
 // Note: by assuming that maxDuration is greater than VALIDATION_DELAY, we are sure that if the
 // process is still alive after maxDuration, it has been validated.
-export function trackPageActivities(
+
+export function createPageActivityObservable(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>
-): { observable: Observable<PageActivityEvent>; stop: () => void } {
-  const observable = new Observable<PageActivityEvent>()
+): Observable<PageActivityEvent> {
   const subscriptions: Subscription[] = []
   let firstRequestIndex: undefined | number
   let pendingRequestsCount = 0
 
-  subscriptions.push(domMutationObservable.subscribe(() => notifyPageActivity()))
+  const observable = new Observable<PageActivityEvent>(() => {
+    subscriptions.push(
+      domMutationObservable.subscribe(() => notifyPageActivity()),
+      lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
+        if (entry.entryType !== 'resource') {
+          return
+        }
 
-  subscriptions.push(
-    lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
-      if (entry.entryType !== 'resource') {
-        return
-      }
+        notifyPageActivity()
+      }),
+      lifeCycle.subscribe(LifeCycleEventType.REQUEST_STARTED, (startEvent) => {
+        if (firstRequestIndex === undefined) {
+          firstRequestIndex = startEvent.requestIndex
+        }
 
-      notifyPageActivity()
-    })
-  )
-
-  subscriptions.push(
-    lifeCycle.subscribe(LifeCycleEventType.REQUEST_STARTED, (startEvent) => {
-      if (firstRequestIndex === undefined) {
-        firstRequestIndex = startEvent.requestIndex
-      }
-
-      pendingRequestsCount += 1
-      notifyPageActivity()
-    })
-  )
-
-  subscriptions.push(
-    lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request) => {
-      // If the request started before the tracking start, ignore it
-      if (firstRequestIndex === undefined || request.requestIndex < firstRequestIndex) {
-        return
-      }
-      pendingRequestsCount -= 1
-      notifyPageActivity()
-    })
-  )
+        pendingRequestsCount += 1
+        notifyPageActivity()
+      }),
+      lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request) => {
+        // If the request started before the tracking start, ignore it
+        if (firstRequestIndex === undefined || request.requestIndex < firstRequestIndex) {
+          return
+        }
+        pendingRequestsCount -= 1
+        notifyPageActivity()
+      })
+    )
+    return () => subscriptions.forEach((s) => s.unsubscribe())
+  })
 
   function notifyPageActivity() {
     observable.notify({ isBusy: pendingRequestsCount > 0 })
   }
 
-  return {
-    observable,
-    stop: () => {
-      subscriptions.forEach((s) => s.unsubscribe())
-    },
-  }
+  return observable
 }
 
 export function waitPageActivitiesCompletion(
-  pageActivitiesObservable: Observable<PageActivityEvent>,
-  stopPageActivitiesTracking: () => void,
-  completionCallback: (params: CompletionCallbackParameters) => void,
+  pageActivityObservable: Observable<PageActivityEvent>,
+  completionCallback: (params: PageActivityCompletionEvent) => void,
   maxDuration?: number
 ): { stop: () => void } {
   let idleTimeoutId: number
@@ -137,7 +115,7 @@ export function waitPageActivitiesCompletion(
       maxDuration
     )
 
-  pageActivitiesObservable.subscribe(({ isBusy }) => {
+  const pageActivitySubscription = pageActivityObservable.subscribe(({ isBusy }) => {
     clearTimeout(validationTimeoutId)
     clearTimeout(idleTimeoutId)
     const lastChangeTime = timeStampNow()
@@ -154,10 +132,10 @@ export function waitPageActivitiesCompletion(
     clearTimeout(validationTimeoutId)
     clearTimeout(idleTimeoutId)
     clearTimeout(maxDurationTimeoutId)
-    stopPageActivitiesTracking()
+    pageActivitySubscription.unsubscribe()
   }
 
-  function complete(params: CompletionCallbackParameters) {
+  function complete(params: PageActivityCompletionEvent) {
     if (hasCompleted) {
       return
     }
