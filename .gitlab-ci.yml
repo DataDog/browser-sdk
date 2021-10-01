@@ -258,16 +258,6 @@ notify-feature-branch-failure:
     - BUILD_URL="$CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID"
     - COMMIT_URL="$CI_PROJECT_URL/commits/$CI_COMMIT_SHA"
 
-notify-staging-success:
-  extends: .prepare_notification
-  only:
-    variables:
-      - $CI_COMMIT_REF_NAME == $CURRENT_STAGING
-  script:
-    - 'MESSAGE_TEXT=":rocket: $CI_PROJECT_NAME <$COMMIT_URL|$COMMIT_MESSAGE> deployed to :datadog_staging:."'
-    - postmessage "#rum-deploy" "$MESSAGE_TEXT"
-    - postmessage "#rum-ops-stg" "$MESSAGE_TEXT"
-
 notify-staging-failure:
   extends: .prepare_notification
   when: on_failure
@@ -276,7 +266,7 @@ notify-staging-failure:
       - $CI_COMMIT_REF_NAME == $CURRENT_STAGING
   script:
     - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME main pipeline for <$BUILD_URL|$COMMIT_MESSAGE> failed."'
-    - postmessage "#rum-deploy" "$MESSAGE_TEXT"
+    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
 
 notify-release-ready:
   extends: .prepare_notification
@@ -286,7 +276,7 @@ notify-release-ready:
       - tags
   script:
     - 'MESSAGE_TEXT=":i: $CI_PROJECT_NAME <$BUILD_URL|$COMMIT_MESSAGE> ready to be deployed to :datadog:"'
-    - postmessage "#rum-deploy" "$MESSAGE_TEXT"
+    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
 
 notify-prod-canary-success:
   extends: .prepare_notification
@@ -296,7 +286,7 @@ notify-prod-canary-success:
       - tags
   script:
     - 'MESSAGE_TEXT=":rocket: $CI_PROJECT_NAME <$COMMIT_URL|$COMMIT_MESSAGE> deployed to :datadog:."'
-    - postmessage "#rum-deploy" "$MESSAGE_TEXT"
+    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
     - postmessage "#rum-ops" "$MESSAGE_TEXT"
 
 notify-prod-canary-failure:
@@ -308,7 +298,7 @@ notify-prod-canary-failure:
       - tags
   script:
     - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME release pipeline <$BUILD_URL|$COMMIT_MESSAGE> failed."'
-    - postmessage "#rum-deploy" "$MESSAGE_TEXT"
+    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
 
 notify-prod-stable-success:
   extends: .prepare_notification
@@ -317,7 +307,7 @@ notify-prod-stable-success:
       - tags
   script:
     - 'MESSAGE_TEXT=":rocket: $CI_PROJECT_NAME <$COMMIT_URL|$COMMIT_MESSAGE> deployed to :earth_americas:."'
-    - postmessage "#rum-deploy" "$MESSAGE_TEXT"
+    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
     - postmessage "#rum-ops" "$MESSAGE_TEXT"
 
 notify-prod-stable-failure:
@@ -328,7 +318,7 @@ notify-prod-stable-failure:
       - tags
   script:
     - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME release pipeline <$BUILD_URL|$COMMIT_MESSAGE> failed."'
-    - postmessage "#rum-deploy" "$MESSAGE_TEXT"
+    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
 
 ########################################################################################################################
 # To staging CI
@@ -356,7 +346,7 @@ staging-reset-scheduled-success:
       - $TARGET_TASK_NAME == "staging-reset-scheduled"
   script:
     - 'MESSAGE_TEXT=":white_check_mark: [*$CI_PROJECT_NAME*] Staging has been reset from *${CURRENT_STAGING}* to *${NEW_STAGING}* on pipeline <$BUILD_URL|$COMMIT_MESSAGE>."'
-    - postmessage "#rum-deploy" "$MESSAGE_TEXT"
+    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
   dependencies:
     - staging-reset-scheduled
 
@@ -368,7 +358,7 @@ staging-reset-scheduled-failure:
       - $TARGET_TASK_NAME == "staging-reset-scheduled"
   script:
     - 'MESSAGE_TEXT=":x: [*$CI_PROJECT_NAME*] Staging failed to reset from *${CURRENT_STAGING}* to *${NEW_STAGING}* on pipeline <$BUILD_URL|$COMMIT_MESSAGE>."'
-    - postmessage "#rum-deploy" "$MESSAGE_TEXT"
+    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
   dependencies:
     - staging-reset-scheduled
 
