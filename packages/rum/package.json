@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-rum",
-  "version": "3.6.5",
+  "version": "3.6.6",
   "license": "Apache-2.0",
   "main": "cjs/index.js",
   "module": "esm/index.js",
@@ -12,8 +12,8 @@
     "build:esm": "rm -rf esm && tsc -p tsconfig.esm.json"
   },
   "dependencies": {
-    "@datadog/browser-core": "3.6.5",
-    "@datadog/browser-rum-core": "3.6.5",
+    "@datadog/browser-core": "3.6.6",
+    "@datadog/browser-rum-core": "3.6.6",
     "tslib": "^1.10.0"
   },
   "repository": {
