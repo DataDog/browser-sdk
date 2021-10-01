@@ -55,41 +55,40 @@ export function createPageActivityObservable(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>
 ): Observable<PageActivityEvent> {
-  const subscriptions: Subscription[] = []
-  let firstRequestIndex: undefined | number
-  let pendingRequestsCount = 0
-
   const observable = new Observable<PageActivityEvent>(() => {
+    const subscriptions: Subscription[] = []
+    let firstRequestIndex: undefined | number
+    let pendingRequestsCount = 0
+
     subscriptions.push(
-      domMutationObservable.subscribe(() => notifyPageActivity()),
+      domMutationObservable.subscribe(() => notifyPageActivity(pendingRequestsCount)),
       lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
         if (entry.entryType !== 'resource') {
           return
         }
 
-        notifyPageActivity()
+        notifyPageActivity(pendingRequestsCount)
       }),
       lifeCycle.subscribe(LifeCycleEventType.REQUEST_STARTED, (startEvent) => {
         if (firstRequestIndex === undefined) {
           firstRequestIndex = startEvent.requestIndex
         }
 
-        pendingRequestsCount += 1
-        notifyPageActivity()
+        notifyPageActivity(++pendingRequestsCount)
       }),
       lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request) => {
         // If the request started before the tracking start, ignore it
         if (firstRequestIndex === undefined || request.requestIndex < firstRequestIndex) {
           return
         }
-        pendingRequestsCount -= 1
-        notifyPageActivity()
+        notifyPageActivity(--pendingRequestsCount)
       })
     )
+
     return () => subscriptions.forEach((s) => s.unsubscribe())
   })
 
-  function notifyPageActivity() {
+  function notifyPageActivity(pendingRequestsCount: number) {
     observable.notify({ isBusy: pendingRequestsCount > 0 })
   }
 

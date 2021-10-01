@@ -75,9 +75,7 @@ describe('pageActivityObservable', () => {
   })
 
   it('stops emitting activities after calling stop()', () => {
-    const observable = createPageActivityObservable(lifeCycle, domMutationObservable)
-    const subscription = observable.subscribe(pushEvent)
-
+    const subscription = pageActivityObservable.subscribe(pushEvent)
     domMutationObservable.notify()
     expect(events).toEqual([{ isBusy: false }])
 
