@@ -1,7 +1,7 @@
 import { BuildEnv } from '../../boot/init'
 import { CookieOptions, getCurrentSite } from '../../browser/cookie'
 import { catchUserErrors } from '../../tools/catchUserErrors'
-import { includes, objectHasValue, ONE_KILO_BYTE, ONE_SECOND } from '../../tools/utils'
+import { objectHasValue, ONE_KILO_BYTE, ONE_SECOND } from '../../tools/utils'
 import { computeTransportConfiguration, TransportConfiguration } from './transportConfiguration'
 
 export const DefaultPrivacyLevel = {
@@ -99,21 +99,13 @@ export type Configuration = typeof DEFAULT_CONFIGURATION &
     beforeSend?: BeforeSendCallback
 
     actionNameAttribute?: string
-
-    isEnabled: (feature: string) => boolean
   }
 
 export function buildConfiguration(initConfiguration: InitConfiguration, buildEnv: BuildEnv): Configuration {
-  const enableExperimentalFeatures = Array.isArray(initConfiguration.enableExperimentalFeatures)
-    ? initConfiguration.enableExperimentalFeatures
-    : []
-
-  const isEnabled = (feature: string) => includes(enableExperimentalFeatures, feature)
   const configuration: Configuration = {
     beforeSend:
       initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
     cookieOptions: buildCookieOptions(initConfiguration),
-    isEnabled,
     service: initConfiguration.service,
     ...computeTransportConfiguration(initConfiguration, buildEnv),
     ...DEFAULT_CONFIGURATION,

@@ -11,9 +11,6 @@ describe('actionCollection', () => {
 
   beforeEach(() => {
     setupBuilder = setup()
-      .withConfiguration({
-        isEnabled: () => true,
-      })
       .withForegroundContexts({
         isInForegroundAt: () => true,
       })
