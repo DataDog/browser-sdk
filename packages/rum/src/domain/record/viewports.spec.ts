@@ -3,8 +3,10 @@ import { getLayoutViewportDimensions } from './viewports'
 describe('getLayoutViewportDimensions', () => {
   it('initially normalizes width and scroll dimention', () => {
     const SCROLL_DOWN_PX = 100
-    const layoutDimensions = getLayoutViewportDimensions()
 
+    document.body.style.setProperty('margin-bottom', '2000px')
+
+    const layoutDimensions = getLayoutViewportDimensions()
     const initialInnerWidth = window.innerWidth
     const initialInnerHeight = window.innerHeight
 
@@ -15,7 +17,6 @@ describe('getLayoutViewportDimensions', () => {
       innerHeight: window.innerHeight,
     })
 
-    document.body.style.setProperty('margin-bottom', '2000px')
     window.scrollTo(0, SCROLL_DOWN_PX)
 
     expect(getLayoutViewportDimensions()).toEqual({
