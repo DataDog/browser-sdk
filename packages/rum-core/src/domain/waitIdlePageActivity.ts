@@ -10,20 +10,66 @@ export interface PageActivityEvent {
   isBusy: boolean
 }
 
-export type PageActivityCompletionEvent = { hadActivity: true; endClocks: ClocksState } | { hadActivity: false }
+export type IdlePageActivityEvent = { hadActivity: true; endClocks: ClocksState } | { hadActivity: false }
 
-export function createIdlePageActivityObservable(
+export function waitIdlePageActivity(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
+  idlePageActivityCallback: (event: IdlePageActivityEvent) => void,
   maxDuration?: number
 ) {
   const pageActivityObservable = createPageActivityObservable(lifeCycle, domMutationObservable)
-  const observable = new Observable<PageActivityCompletionEvent>(() => {
-    const { stop } = waitPageActivitiesCompletion(pageActivityObservable, (e) => observable.notify(e), maxDuration)
-    return () => stop()
+  const { stop } = doWaitIdlePageActivity(pageActivityObservable, idlePageActivityCallback, maxDuration)
+  return { stop }
+}
+
+export function doWaitIdlePageActivity(
+  pageActivityObservable: Observable<PageActivityEvent>,
+  idlePageActivityCallback: (event: IdlePageActivityEvent) => void,
+  maxDuration?: number
+) {
+  let idleTimeoutId: number
+  let hasCompleted = false
+
+  const validationTimeoutId = setTimeout(
+    monitor(() => complete({ hadActivity: false })),
+    PAGE_ACTIVITY_VALIDATION_DELAY
+  )
+  const maxDurationTimeoutId =
+    maxDuration &&
+    setTimeout(
+      monitor(() => complete({ hadActivity: true, endClocks: clocksNow() })),
+      maxDuration
+    )
+
+  const pageActivitySubscription = pageActivityObservable.subscribe(({ isBusy }) => {
+    clearTimeout(validationTimeoutId)
+    clearTimeout(idleTimeoutId)
+    const lastChangeTime = clocksNow()
+    if (!isBusy) {
+      idleTimeoutId = setTimeout(
+        monitor(() => complete({ hadActivity: true, endClocks: lastChangeTime })),
+        PAGE_ACTIVITY_END_DELAY
+      )
+    }
   })
 
-  return observable
+  const stop = () => {
+    hasCompleted = true
+    clearTimeout(validationTimeoutId)
+    clearTimeout(idleTimeoutId)
+    clearTimeout(maxDurationTimeoutId)
+    pageActivitySubscription.unsubscribe()
+  }
+
+  function complete(event: IdlePageActivityEvent) {
+    if (hasCompleted) {
+      return
+    }
+    stop()
+    idlePageActivityCallback(event)
+  }
+  return { stop }
 }
 
 // Automatic action collection lifecycle overview:
@@ -93,54 +139,4 @@ export function createPageActivityObservable(
   }
 
   return observable
-}
-
-export function waitPageActivitiesCompletion(
-  pageActivityObservable: Observable<PageActivityEvent>,
-  completionCallback: (params: PageActivityCompletionEvent) => void,
-  maxDuration?: number
-): { stop: () => void } {
-  let idleTimeoutId: number
-  let hasCompleted = false
-
-  const validationTimeoutId = setTimeout(
-    monitor(() => complete({ hadActivity: false })),
-    PAGE_ACTIVITY_VALIDATION_DELAY
-  )
-  const maxDurationTimeoutId =
-    maxDuration &&
-    setTimeout(
-      monitor(() => complete({ hadActivity: true, endClocks: clocksNow() })),
-      maxDuration
-    )
-
-  const pageActivitySubscription = pageActivityObservable.subscribe(({ isBusy }) => {
-    clearTimeout(validationTimeoutId)
-    clearTimeout(idleTimeoutId)
-    const lastChangeTime = clocksNow()
-    if (!isBusy) {
-      idleTimeoutId = setTimeout(
-        monitor(() => complete({ hadActivity: true, endClocks: lastChangeTime })),
-        PAGE_ACTIVITY_END_DELAY
-      )
-    }
-  })
-
-  const stop = () => {
-    hasCompleted = true
-    clearTimeout(validationTimeoutId)
-    clearTimeout(idleTimeoutId)
-    clearTimeout(maxDurationTimeoutId)
-    pageActivitySubscription.unsubscribe()
-  }
-
-  function complete(params: PageActivityCompletionEvent) {
-    if (hasCompleted) {
-      return
-    }
-    stop()
-    completionCallback(params)
-  }
-
-  return { stop }
 }

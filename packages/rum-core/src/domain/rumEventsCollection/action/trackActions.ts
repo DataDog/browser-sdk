@@ -10,13 +10,12 @@ import {
   Configuration,
   ONE_SECOND,
   Observable,
-  Subscription,
   addMonitoringMessage,
 } from '@datadog/browser-core'
 import { ActionType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { EventCounts, trackEventCounts } from '../../trackEventCounts'
-import { createIdlePageActivityObservable } from '../../pageActivityObservable'
+import { waitIdlePageActivity } from '../../waitIdlePageActivity'
 import { getActionNameFromElement } from './getActionNameFromElement'
 
 type AutoActionType = ActionType.CLICK
@@ -91,7 +90,7 @@ export function trackActions(
 
 function startActionManagement(lifeCycle: LifeCycle, domMutationObservable: Observable<void>) {
   let currentAction: PendingAutoAction | undefined
-  let currentIdlePageActivitySubscription: Subscription
+  let stopWaitingIdlePageActivity: () => void
 
   return {
     create: (type: AutoActionType, name: string, event: Event) => {
@@ -101,24 +100,23 @@ function startActionManagement(lifeCycle: LifeCycle, domMutationObservable: Obse
       }
       const pendingAutoAction = new PendingAutoAction(lifeCycle, type, name, event)
       currentAction = pendingAutoAction
-      const idlePageActivityObservable = createIdlePageActivityObservable(
+      ;({ stop: stopWaitingIdlePageActivity } = waitIdlePageActivity(
         lifeCycle,
         domMutationObservable,
+        (event) => {
+          if (event.hadActivity) {
+            pendingAutoAction.complete(event.endClocks)
+          } else {
+            pendingAutoAction.discard()
+          }
+          currentAction = undefined
+        },
         AUTO_ACTION_MAX_DURATION
-      )
-
-      currentIdlePageActivitySubscription = idlePageActivityObservable.subscribe((params) => {
-        if (params.hadActivity) {
-          pendingAutoAction.complete(params.endClocks)
-        } else {
-          pendingAutoAction.discard()
-        }
-        currentAction = undefined
-      })
+      ))
     },
     discardCurrent: () => {
       if (currentAction) {
-        currentIdlePageActivitySubscription.unsubscribe()
+        stopWaitingIdlePageActivity()
         currentAction.discard()
         currentAction = undefined
       }
