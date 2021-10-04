@@ -182,7 +182,7 @@ export const MouseInteractions = {
 
 export type MouseInteractions = typeof MouseInteractions[keyof typeof MouseInteractions]
 
-interface MouseInteractionParam {
+export interface MouseInteractionParam {
   type: MouseInteractions
   id: number
   x: number
