@@ -5,6 +5,7 @@ const { initGitConfig, executeCommand, printLog, printError, logAndExit } = requ
 const REPOSITORY = process.env.GIT_REPOSITORY
 const CURRENT_STAGING_BRANCH = process.env.CURRENT_STAGING
 const CI_COMMIT_SHA = process.env.CI_COMMIT_SHA
+const CI_COMMIT_SHORT_SHA = process.env.CI_COMMIT_SHORT_SHA
 const CI_COMMIT_REF_NAME = process.env.CI_COMMIT_REF_NAME
 const MAIN_BRANCH = process.env.MAIN_BRANCH
 
@@ -15,7 +16,8 @@ async function main() {
   await executeCommand(`git pull`)
 
   printLog(
-    `Checking if branch '${CI_COMMIT_REF_NAME}' (${CI_COMMIT_SHA}) can be merged into ${CURRENT_STAGING_BRANCH}...`
+    `Checking if branch '${CI_COMMIT_REF_NAME}' (${CI_COMMIT_SHORT_SHA})` +
+      ` can be merged into ${CURRENT_STAGING_BRANCH}...`
   )
   try {
     await executeCommand(`git merge --no-ff "${CI_COMMIT_SHA}"`)
