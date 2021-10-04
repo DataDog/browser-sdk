@@ -18,12 +18,28 @@ const isVisualViewportFactoredIn = () =>
 
 export const getLayoutViewportDimensions = () => {
   if (!window.visualViewport || !isVisualViewportFactoredIn()) {
-    return {
-      innerWidth,
-      innerHeight,
-      scrollX,
-      scrollY,
+    const dimensions = {
+      innerWidth: window.innerWidth,
+      innerHeight: window.innerHeight,
+      scrollX: window.scrollX,
+      scrollY: window.scrollY,
     }
+    // scrollX/Y is subpixel precise, but has less support so needs a fallback
+    if (window.scrollX === undefined || window.scrollY === undefined) {
+      const scrollXFallback =
+        window.pageXOffset !== undefined
+          ? window.pageXOffset
+          : (document.documentElement || document.body.parentNode || document.body).scrollLeft
+
+      const scrollYFallback =
+        window.pageYOffset !== undefined
+          ? window.pageYOffset
+          : (document.documentElement || document.body.parentNode || document.body).scrollTop
+
+      dimensions.scrollX = scrollXFallback
+      dimensions.scrollY = scrollYFallback
+    }
+    return dimensions
   }
   return {
     innerWidth: visualViewport.width * visualViewport.scale,
