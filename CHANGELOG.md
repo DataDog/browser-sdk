@@ -16,6 +16,10 @@
 
 ---
 
+## v3.6.7
+
+- 🔊 [RUMF-1036] Add negative loading time internal monitoring ([#1095](https://github.com/DataDog/browser-sdk/pull/1095))
+
 ## v3.6.6
 
 - 🐛 [RUMF-1021] fix regression on renew session ([#1096](https://github.com/DataDog/browser-sdk/pull/1096))
