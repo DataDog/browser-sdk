@@ -45,9 +45,6 @@ describe('viewCollection', () => {
 
   beforeEach(() => {
     setupBuilder = setup()
-      .withConfiguration({
-        isEnabled: () => true,
-      })
       .withForegroundContexts({
         selectInForegroundPeriodsFor: () => [{ start: 0 as ServerDuration, duration: 10 as ServerDuration }],
       })

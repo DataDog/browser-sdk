@@ -12,7 +12,7 @@ import { LOGGER_SESSION_KEY, LoggerTrackingType, startLoggerSession } from './lo
 
 describe('logger session', () => {
   const DURATION = 123456
-  const configuration: Partial<Configuration> = { isEnabled: () => true, sampleRate: 0.5 }
+  const configuration: Partial<Configuration> = { sampleRate: 0.5 }
   let tracked = true
   let clock: Clock
 
