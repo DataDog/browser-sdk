@@ -15,7 +15,7 @@ import {
 import { ActionType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { EventCounts, trackEventCounts } from '../../trackEventCounts'
-import { waitIdlePageActivity } from '../../waitIdlePageActivity'
+import { waitIdlePage } from '../../waitIdlePage'
 import { getActionNameFromElement } from './getActionNameFromElement'
 
 type AutoActionType = ActionType.CLICK
@@ -90,7 +90,7 @@ export function trackActions(
 
 function startActionManagement(lifeCycle: LifeCycle, domMutationObservable: Observable<void>) {
   let currentAction: PendingAutoAction | undefined
-  let stopWaitingIdlePageActivity: () => void
+  let stopWaitingIdlePage: () => void
 
   return {
     create: (type: AutoActionType, name: string, event: Event) => {
@@ -100,7 +100,7 @@ function startActionManagement(lifeCycle: LifeCycle, domMutationObservable: Obse
       }
       const pendingAutoAction = new PendingAutoAction(lifeCycle, type, name, event)
       currentAction = pendingAutoAction
-      ;({ stop: stopWaitingIdlePageActivity } = waitIdlePageActivity(
+      ;({ stop: stopWaitingIdlePage } = waitIdlePage(
         lifeCycle,
         domMutationObservable,
         (event) => {
@@ -116,7 +116,7 @@ function startActionManagement(lifeCycle: LifeCycle, domMutationObservable: Obse
     },
     discardCurrent: () => {
       if (currentAction) {
-        stopWaitingIdlePageActivity()
+        stopWaitingIdlePage()
         currentAction.discard()
         currentAction = undefined
       }

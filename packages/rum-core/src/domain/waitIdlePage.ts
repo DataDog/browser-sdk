@@ -10,22 +10,51 @@ export interface PageActivityEvent {
   isBusy: boolean
 }
 
-export type IdlePageActivityEvent = { hadActivity: true; endClocks: ClocksState } | { hadActivity: false }
+export type IdlePageEvent = { hadActivity: true; endClocks: ClocksState } | { hadActivity: false }
 
-export function waitIdlePageActivity(
+/**
+ * Wait for the next idle page time
+ *
+ * Detection lifecycle:
+ * ```
+ *                           Wait idle page
+ *              .-------------------'--------------------.
+ *              v                                        v
+ *     [Wait for a page activity ]          [Wait for a maximum duration]
+ *     [timeout: VALIDATION_DELAY]          [  timeout: maxDuration     ]
+ *          /                  \                           |
+ *         v                    v                          |
+ *  [No page activity]   [Page activity]                   |
+ *         |                   |,----------------------.   |
+ *         v                   v                       |   |
+ *     (Discard)     [Wait for a page activity]        |   |
+ *                   [   timeout: END_DELAY   ]        |   |
+ *                       /                \            |   |
+ *                      v                  v           |   |
+ *             [No page activity]    [Page activity]   |   |
+ *                      |                 |            |   |
+ *                      |                 '------------'   |
+ *                      '-----------. ,--------------------'
+ *                                   v
+ *                                 (End)
+ * ```
+ *
+ * Note: by assuming that maxDuration is greater than VALIDATION_DELAY, we are sure that if the
+ * process is still alive after maxDuration, it has been validated.
+ */
+export function waitIdlePage(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
-  idlePageActivityCallback: (event: IdlePageActivityEvent) => void,
+  idlePageCallback: (event: IdlePageEvent) => void,
   maxDuration?: number
 ) {
   const pageActivityObservable = createPageActivityObservable(lifeCycle, domMutationObservable)
-  const { stop } = doWaitIdlePageActivity(pageActivityObservable, idlePageActivityCallback, maxDuration)
-  return { stop }
+  return doWaitIdlePage(pageActivityObservable, idlePageCallback, maxDuration)
 }
 
-export function doWaitIdlePageActivity(
+export function doWaitIdlePage(
   pageActivityObservable: Observable<PageActivityEvent>,
-  idlePageActivityCallback: (event: IdlePageActivityEvent) => void,
+  idlePageCallback: (event: IdlePageEvent) => void,
   maxDuration?: number
 ) {
   let idleTimeoutId: number
@@ -62,40 +91,15 @@ export function doWaitIdlePageActivity(
     pageActivitySubscription.unsubscribe()
   }
 
-  function complete(event: IdlePageActivityEvent) {
+  function complete(event: IdlePageEvent) {
     if (hasCompleted) {
       return
     }
     stop()
-    idlePageActivityCallback(event)
+    idlePageCallback(event)
   }
   return { stop }
 }
-
-// Automatic action collection lifecycle overview:
-//                      (Start new trackPageActivities)
-//              .-------------------'--------------------.
-//              v                                        v
-//     [Wait for a page activity ]          [Wait for a maximum duration]
-//     [timeout: VALIDATION_DELAY]          [  timeout: maxDuration     ]
-//          /                  \                           |
-//         v                    v                          |
-//  [No page activity]   [Page activity]                   |
-//         |                   |,----------------------.   |
-//         v                   v                       |   |
-//     (Discard)     [Wait for a page activity]        |   |
-//                   [   timeout: END_DELAY   ]        |   |
-//                       /                \            |   |
-//                      v                  v           |   |
-//             [No page activity]    [Page activity]   |   |
-//                      |                 |            |   |
-//                      |                 '------------'   |
-//                      '-----------. ,--------------------'
-//                                   v
-//                                 (End)
-//
-// Note: by assuming that maxDuration is greater than VALIDATION_DELAY, we are sure that if the
-// process is still alive after maxDuration, it has been validated.
 
 export function createPageActivityObservable(
   lifeCycle: LifeCycle,

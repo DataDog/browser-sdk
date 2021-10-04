@@ -7,10 +7,10 @@ import {
   PAGE_ACTIVITY_END_DELAY,
   PAGE_ACTIVITY_VALIDATION_DELAY,
   PageActivityEvent,
-  IdlePageActivityEvent,
-  doWaitIdlePageActivity,
+  IdlePageEvent,
+  doWaitIdlePage,
   createPageActivityObservable,
-} from './waitIdlePageActivity'
+} from './waitIdlePage'
 
 // Used to wait some time after the creation of an action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
@@ -34,7 +34,7 @@ function eventsCollector<T>() {
   }
 }
 
-describe('pageActivityObservable', () => {
+describe('createPageActivityObservable', () => {
   const { events, pushEvent } = eventsCollector<PageActivityEvent>()
 
   let lifeCycle: LifeCycle
@@ -140,9 +140,9 @@ describe('pageActivityObservable', () => {
   })
 })
 
-describe('doWaitIdlePageActivity', () => {
+describe('doWaitIdlePage', () => {
   let clock: Clock
-  let idlPageActivityCallbackSpy: jasmine.Spy<(event: IdlePageActivityEvent) => void>
+  let idlPageActivityCallbackSpy: jasmine.Spy<(event: IdlePageEvent) => void>
 
   beforeEach(() => {
     idlPageActivityCallbackSpy = jasmine.createSpy()
@@ -154,7 +154,7 @@ describe('doWaitIdlePageActivity', () => {
   })
 
   it('should not collect an event that is not followed by page activity', () => {
-    doWaitIdlePageActivity(new Observable(), idlPageActivityCallbackSpy)
+    doWaitIdlePage(new Observable(), idlPageActivityCallbackSpy)
 
     clock.tick(EXPIRE_DELAY)
 
@@ -167,7 +167,7 @@ describe('doWaitIdlePageActivity', () => {
     const activityObservable = new Observable<PageActivityEvent>()
 
     const startTime = timeStampNow()
-    doWaitIdlePageActivity(activityObservable, idlPageActivityCallbackSpy)
+    doWaitIdlePage(activityObservable, idlPageActivityCallbackSpy)
 
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
     activityObservable.notify({ isBusy: false })
@@ -191,7 +191,7 @@ describe('doWaitIdlePageActivity', () => {
       // Extend the action 10 times
       const extendCount = 10
 
-      doWaitIdlePageActivity(activityObservable, idlPageActivityCallbackSpy)
+      doWaitIdlePage(activityObservable, idlPageActivityCallbackSpy)
 
       for (let i = 0; i < extendCount; i += 1) {
         clock.tick(BEFORE_PAGE_ACTIVITY_END_DELAY)
@@ -222,7 +222,7 @@ describe('doWaitIdlePageActivity', () => {
       idlPageActivityCallbackSpy.and.callFake(() => {
         stop = true
       })
-      doWaitIdlePageActivity(activityObservable, idlPageActivityCallbackSpy, MAX_DURATION)
+      doWaitIdlePage(activityObservable, idlPageActivityCallbackSpy, MAX_DURATION)
 
       for (let i = 0; i < extendCount && !stop; i += 1) {
         clock.tick(BEFORE_PAGE_ACTIVITY_END_DELAY)
@@ -246,7 +246,7 @@ describe('doWaitIdlePageActivity', () => {
     it('is extended while the page is busy', () => {
       const activityObservable = new Observable<PageActivityEvent>()
       const startTime = timeStampNow()
-      doWaitIdlePageActivity(activityObservable, idlPageActivityCallbackSpy)
+      doWaitIdlePage(activityObservable, idlPageActivityCallbackSpy)
 
       clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
       activityObservable.notify({ isBusy: true })
@@ -270,7 +270,7 @@ describe('doWaitIdlePageActivity', () => {
     it('expires is the page is busy for too long', () => {
       const activityObservable = new Observable<PageActivityEvent>()
       const startTime = timeStampNow()
-      doWaitIdlePageActivity(activityObservable, idlPageActivityCallbackSpy, MAX_DURATION)
+      doWaitIdlePage(activityObservable, idlPageActivityCallbackSpy, MAX_DURATION)
 
       clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
       activityObservable.notify({ isBusy: true })
