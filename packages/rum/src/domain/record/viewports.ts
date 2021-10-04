@@ -17,7 +17,7 @@ const isVisualViewportFactoredIn = () =>
   Math.abs(visualViewport.pageLeft - visualViewport.offsetLeft - window.scrollX) > TOLERANCE
 
 export const getLayoutViewportDimensions = () => {
-  if (!visualViewport || !isVisualViewportFactoredIn()) {
+  if (!window.visualViewport || !isVisualViewportFactoredIn()) {
     return {
       innerWidth,
       innerHeight,
@@ -33,19 +33,31 @@ export const getLayoutViewportDimensions = () => {
   }
 }
 
-export const convertMouseEventToLayoutCoordinates = (mouseEvent: MouseEvent) => {
-  if (isVisualViewportFactoredIn()) {
-    return {
-      layoutViewportX: mouseEvent.clientX + visualViewport.offsetLeft,
-      layoutViewportY: mouseEvent.clientY + visualViewport.offsetTop,
-      visualViewportX: mouseEvent.clientX,
-      visualViewportY: mouseEvent.clientY,
-    }
-  }
-  return {
+interface LayoutCoordinates {
+  layoutViewportX: number
+  layoutViewportY: number
+  visualViewportX: number | null
+  visualViewportY: number | null
+}
+
+export const convertMouseEventToLayoutCoordinates = (mouseEvent: MouseEvent): LayoutCoordinates => {
+  const normalised: LayoutCoordinates = {
     layoutViewportX: mouseEvent.clientX,
     layoutViewportY: mouseEvent.clientY,
-    visualViewportX: mouseEvent.clientX - visualViewport.offsetLeft,
-    visualViewportY: mouseEvent.clientY - visualViewport.offsetTop,
+    visualViewportX: mouseEvent.clientX,
+    visualViewportY: mouseEvent.clientY,
   }
+
+  if (!window.visualViewport) {
+    // Unable to normalise
+    normalised.visualViewportX = null
+    normalised.visualViewportY = null
+  } else if (isVisualViewportFactoredIn()) {
+    normalised.layoutViewportX + visualViewport.offsetLeft
+    normalised.layoutViewportY + visualViewport.offsetTop
+  } else {
+    normalised.visualViewportX! - visualViewport.offsetLeft
+    normalised.visualViewportY! - visualViewport.offsetTop
+  }
+  return normalised
 }
