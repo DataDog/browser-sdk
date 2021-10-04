@@ -8,6 +8,7 @@ import {
   includes,
   DefaultPrivacyLevel,
   isExperimentalFeatureEnabled,
+  noop,
 } from '@datadog/browser-core'
 import { NodePrivacyLevel } from '../../constants'
 import { getNodePrivacyLevel, shouldMaskNode } from './privacy'
@@ -30,9 +31,20 @@ import {
   StyleSheetRuleCallback,
   ViewportResizeCallback,
   VisualViewportResizeCallback,
+  MousePosition,
+  MouseInteractionParam,
 } from './types'
-import { forEach, getWindowHeight, getWindowWidth, hookSetter, isTouchEvent } from './utils'
+import { forEach, hookSetter, isTouchEvent } from './utils'
 import { startMutationObserver, MutationController } from './mutationObserver'
+
+import {
+  getVisualViewport,
+  getWindowHeight,
+  getWindowWidth,
+  getScrollX,
+  getScrollY,
+  convertMouseEventToLayoutCoordinates,
+} from './viewports'
 
 const MOUSE_MOVE_OBSERVER_THRESHOLD = 50
 const SCROLL_OBSERVER_THRESHOLD = 100
@@ -50,8 +62,7 @@ export function initObservers(o: ObserverParam): ListenerHandler {
 
   const visualViewportResizeHandler = isExperimentalFeatureEnabled('visualviewport')
     ? initVisualViewportResizeObserver(o.visualViewportResizeCb)
-    : // eslint-disable-next-line @typescript-eslint/no-empty-function
-      () => {}
+    : noop
 
   return () => {
     mutationHandler()
@@ -81,11 +92,16 @@ function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {
       const target = event.target as Node
       if (hasSerializedNode(target)) {
         const { clientX, clientY } = isTouchEvent(event) ? event.changedTouches[0] : event
-        const position = {
+        const position: MousePosition = {
           id: getSerializedNodeId(target),
           timeOffset: 0,
           x: clientX,
           y: clientY,
+        }
+        if (isExperimentalFeatureEnabled('visualviewport')) {
+          const { visualViewportX, visualViewportY } = convertMouseEventToLayoutCoordinates(clientX, clientY)
+          position.x = visualViewportX ?? clientX
+          position.y = visualViewportY ?? clientY
         }
         cb([position], isTouchEvent(event) ? IncrementalSource.TouchMove : IncrementalSource.MouseMove)
       }
@@ -123,12 +139,18 @@ function initMouseInteractionObserver(
       return
     }
     const { clientX, clientY } = isTouchEvent(event) ? event.changedTouches[0] : event
-    cb({
+    const position: MouseInteractionParam = {
       id: getSerializedNodeId(target),
       type: eventTypeToMouseInteraction[event.type as keyof typeof eventTypeToMouseInteraction],
       x: clientX,
       y: clientY,
-    })
+    }
+    if (isExperimentalFeatureEnabled('visualviewport')) {
+      const { visualViewportX, visualViewportY } = convertMouseEventToLayoutCoordinates(clientX, clientY)
+      position.x = visualViewportX ?? clientX
+      position.y = visualViewportY ?? clientY
+    }
+    cb(position)
   }
   return addEventListeners(document, Object.keys(eventTypeToMouseInteraction) as DOM_EVENT[], handler, {
     capture: true,
@@ -149,12 +171,20 @@ function initScrollObserver(cb: ScrollCallback, defaultPrivacyLevel: DefaultPriv
       }
       const id = getSerializedNodeId(target)
       if (target === document) {
-        const scrollEl = (document.scrollingElement || document.documentElement)!
-        cb({
-          id,
-          x: scrollEl.scrollLeft,
-          y: scrollEl.scrollTop,
-        })
+        if (isExperimentalFeatureEnabled('visualviewport')) {
+          cb({
+            id,
+            x: getScrollX(),
+            y: getScrollY(),
+          })
+        } else {
+          const scrollEl = (document.scrollingElement || document.documentElement)!
+          cb({
+            id,
+            x: scrollEl.scrollLeft,
+            y: scrollEl.scrollTop,
+          })
+        }
       } else {
         cb({
           id,
@@ -349,22 +379,11 @@ function initFocusObserver(focusCb: FocusCallback): ListenerHandler {
 
 function initVisualViewportResizeObserver(cb: VisualViewportResizeCallback): ListenerHandler {
   if (!visualViewport) {
-    return () => {
-      /* Stop */
-    }
+    return noop
   }
   const { throttled: updateDimension } = throttle(
     monitor(() => {
-      const viewport = visualViewport
-      cb({
-        scale: viewport.scale,
-        offsetLeft: viewport.offsetLeft,
-        offsetTop: viewport.offsetTop,
-        pageLeft: viewport.pageLeft,
-        pageTop: viewport.pageTop,
-        height: viewport.height,
-        width: viewport.width,
-      })
+      cb(getVisualViewport())
     }),
     200
   )

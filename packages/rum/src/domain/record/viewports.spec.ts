@@ -1,36 +1,48 @@
-import { getLayoutViewportDimensions } from './viewports'
+import { isSafari } from 'packages/core/test/specHelper'
+import { getScrollX, getScrollY, getWindowWidth, getWindowHeight } from './viewports'
 
-describe('getLayoutViewportDimensions', () => {
-  it('initially normalizes width and scroll dimention', (done) => {
-    const SCROLL_DOWN_PX = 100
-
+describe('layout viewport', () => {
+  beforeEach(() => {
     document.body.style.setProperty('margin-bottom', '2000px')
-    requestAnimationFrame(() => {
-      const layoutDimensions = getLayoutViewportDimensions()
-      const initialInnerWidth = window.innerWidth
-      const initialInnerHeight = window.innerHeight
+  })
 
-      expect(layoutDimensions).toEqual({
-        scrollX: 0,
-        scrollY: 0,
-        innerWidth: window.innerWidth,
-        innerHeight: window.innerHeight,
-      })
+  afterEach(() => {
+    document.body.style.removeProperty('margin-bottom')
+  })
 
-      window.scrollTo(0, SCROLL_DOWN_PX)
+  describe('get window width and height', () => {
+    it('normalized scroll matches native behaviour', () => {
+      const initialInnerWidth = getWindowWidth()
+      const initialInnerHeight = getWindowHeight()
+      expect(initialInnerWidth).toBe(window.innerWidth)
+      expect(initialInnerHeight).toBe(window.innerHeight)
+    })
+  })
 
-      requestAnimationFrame(() => {
-        // eslint-disable-next-line no-console
-        console.log('Debug scrollX:', window.visualViewport, scrollY, getLayoutViewportDimensions())
-        expect(getLayoutViewportDimensions()).toEqual({
-          scrollX: 0,
-          scrollY: SCROLL_DOWN_PX,
-          innerWidth: initialInnerWidth,
-          innerHeight: initialInnerHeight,
-        })
-        document.body.style.removeProperty('margin-bottom')
-        done()
-      })
+  describe('getScrollX/Y', () => {
+    it('normalized scroll matches native behaviour', () => {
+      const SCROLL_DOWN_PX = 100
+      expect(getScrollX()).toBe(window.scrollX || window.pageXOffset)
+      expect(getScrollY()).toBe(window.scrollY || window.pageYOffset)
+
+      if (!isSafari) {
+        // Mobile Safari 12.0 (iOS 12.1) not responding to native scroll
+        window.scrollTo(0, SCROLL_DOWN_PX)
+        expect(getScrollX()).toBe(window.scrollX || window.pageXOffset)
+        expect(getScrollY()).toBe(window.scrollY || window.pageYOffset)
+      }
+    })
+    it('normalized scroll updates when scrolled', () => {
+      const SCROLL_DOWN_PX = 100
+      expect(getScrollX()).toBe(0)
+      expect(getScrollY()).toBe(0)
+
+      if (!isSafari) {
+        // Mobile Safari 12.0 (iOS 12.1) not responding to native scroll
+        window.scrollTo(0, SCROLL_DOWN_PX)
+        expect(getScrollX()).toBe(0)
+        expect(getScrollY()).toBe(100)
+      }
     })
   })
 })
