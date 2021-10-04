@@ -4,7 +4,7 @@ import { RumEvent } from '../../../../../rum/src'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RumEventType, ActionType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
-import { PAGE_ACTIVITY_VALIDATION_DELAY } from '../../trackPageActivities'
+import { PAGE_ACTIVITY_VALIDATION_DELAY } from '../../waitIdlePage'
 import { AutoAction, AUTO_ACTION_MAX_DURATION, trackActions } from './trackActions'
 
 // Used to wait some time after the creation of a action

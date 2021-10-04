@@ -4,7 +4,7 @@ import { TestSetupBuilder, setup, setupViewTest, ViewTest } from '../../../../te
 import { RumPerformanceNavigationTiming } from '../../../browser/performanceCollection'
 import { RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle } from '../../lifeCycle'
-import { PAGE_ACTIVITY_END_DELAY, PAGE_ACTIVITY_VALIDATION_DELAY } from '../../trackPageActivities'
+import { PAGE_ACTIVITY_END_DELAY, PAGE_ACTIVITY_VALIDATION_DELAY } from '../../waitIdlePage'
 import { THROTTLE_VIEW_UPDATE_PERIOD } from './trackViews'
 
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = (PAGE_ACTIVITY_VALIDATION_DELAY * 0.8) as Duration
