@@ -20,15 +20,20 @@ describe('experimentalFeatures', () => {
     expect(isExperimentalFeatureEnabled('bar')).toBeFalse()
   })
 
-  it("functions won't throw an error", () => {
-    resetExperimentalFeatures()
-    resetExperimentalFeatures()
-    updateExperimentalFeatures(undefined)
-    updateExperimentalFeatures(undefined)
-    expect(isExperimentalFeatureEnabled('foo')).toBeFalse()
-
+  it('should allow to be shared between products', () => {
     updateExperimentalFeatures(['foo'])
-    updateExperimentalFeatures([11 as any, [] as any, {} as any, null as any, undefined as any])
+    updateExperimentalFeatures(['bar'])
+
+    expect(isExperimentalFeatureEnabled('foo')).toBeTrue()
+    expect(isExperimentalFeatureEnabled('bar')).toBeTrue()
+  })
+
+  it('should support some edge cases', () => {
+    updateExperimentalFeatures(['foo'])
+    updateExperimentalFeatures(undefined)
+    updateExperimentalFeatures([])
+    updateExperimentalFeatures([11 as any])
+
     expect(isExperimentalFeatureEnabled('foo')).toBeTrue()
   })
 })
