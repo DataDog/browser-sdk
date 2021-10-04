@@ -36,7 +36,7 @@ const ABSOLUTE_URL = /^[A-Za-z]+:|^\/\//
 const DATA_URI = /^data:.*,/i
 export function makeStylesheetUrlsAbsolute(cssText: string, baseUrl: string): string {
   if (isExperimentalFeatureEnabled('base-tag')) {
-    return cssText;
+    return cssText
   }
   return cssText.replace(
     URL_IN_CSS_REF,
@@ -54,7 +54,7 @@ export function makeStylesheetUrlsAbsolute(cssText: string, baseUrl: string): st
 const SRCSET_URLS = /(^\s*|,\s*)([^\s,]+)/g
 export function makeSrcsetUrlsAbsolute(attributeValue: string, baseUrl: string) {
   if (isExperimentalFeatureEnabled('base-tag')) {
-    return attributeValue;
+    return attributeValue
   }
   return attributeValue.replace(
     SRCSET_URLS,
@@ -65,7 +65,7 @@ export function makeSrcsetUrlsAbsolute(attributeValue: string, baseUrl: string) 
 export function makeUrlAbsolute(url: string, baseUrl: string): string {
   try {
     if (isExperimentalFeatureEnabled('base-tag')) {
-      return url.trim();
+      return url.trim()
     }
     return buildUrl(url.trim(), baseUrl).href
   } catch (_) {
