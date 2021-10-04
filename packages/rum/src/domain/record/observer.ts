@@ -50,7 +50,8 @@ export function initObservers(o: ObserverParam): ListenerHandler {
 
   const visualViewportResizeHandler = isExperimentalFeatureEnabled('visualviewport')
     ? initVisualViewportResizeObserver(o.visualViewportResizeCb)
-    : () => {}
+    : // eslint-disable-next-line @typescript-eslint/no-empty-function
+      () => {}
 
   return () => {
     mutationHandler()
