@@ -40,7 +40,7 @@ stages:
       - main
       - tags
       - /^staging-[0-9]+$/
-      - /^release\/v[0-9.]+$/
+      - /^release\//
       - schedules
 
 .test-configuration:
@@ -48,7 +48,7 @@ stages:
   extends: .base-configuration
   except:
     refs:
-      - /^release\/v[0-9.]+$/
+      - /^release\//
       - schedules
 
 ########################################################################################################################
