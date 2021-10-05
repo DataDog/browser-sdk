@@ -65,7 +65,7 @@ export function makeSrcsetUrlsAbsolute(attributeValue: string, baseUrl: string) 
 export function makeUrlAbsolute(url: string, baseUrl: string): string {
   try {
     if (isExperimentalFeatureEnabled('base-tag')) {
-      return url.trim()
+      return url
     }
     return buildUrl(url.trim(), baseUrl).href
   } catch (_) {
