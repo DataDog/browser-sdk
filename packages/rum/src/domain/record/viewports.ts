@@ -14,7 +14,6 @@ import type { VisualViewportRecord } from '../../types'
 
 // Scrollbar widths vary across properties on different devices and browsers
 const TOLERANCE = 25
-const visual = window.visualViewport
 
 const isVisualViewportFactoredIn = () =>
   Math.abs(visual.pageTop - visual.offsetTop - window.scrollY) > TOLERANCE ||
@@ -28,6 +27,7 @@ interface LayoutCoordinates {
 }
 
 export const convertMouseEventToLayoutCoordinates = (clientX: number, clientY: number): LayoutCoordinates => {
+  const visual = window.visualViewport
   const normalised: LayoutCoordinates = {
     layoutViewportX: clientX,
     layoutViewportY: clientY,
@@ -51,17 +51,21 @@ export const convertMouseEventToLayoutCoordinates = (clientX: number, clientY: n
   return normalised
 }
 
-export const getVisualViewport = (): VisualViewportRecord['data'] => ({
-  scale: visual.scale,
-  offsetLeft: visual.offsetLeft,
-  offsetTop: visual.offsetTop,
-  pageLeft: visual.pageLeft,
-  pageTop: visual.pageTop,
-  height: visual.height,
-  width: visual.width,
-})
+export const getVisualViewport = (): VisualViewportRecord['data'] => {
+  const visual = window.visualViewport
+  return {
+    scale: visual.scale,
+    offsetLeft: visual.offsetLeft,
+    offsetTop: visual.offsetTop,
+    pageLeft: visual.pageLeft,
+    pageTop: visual.pageTop,
+    height: visual.height,
+    width: visual.width,
+  }
+}
 
 export function getWindowWidth(): number {
+  const visual = window.visualViewport
   if (isExperimentalFeatureEnabled('visualviewport') && visual) {
     return visual.width * visual.scale
   }
@@ -73,6 +77,7 @@ export function getWindowWidth(): number {
 }
 
 export function getWindowHeight(): number {
+  const visual = window.visualViewport
   if (isExperimentalFeatureEnabled('visualviewport') && visual) {
     return visual.height * visual.scale
   }
@@ -84,6 +89,7 @@ export function getWindowHeight(): number {
 }
 
 export function getScrollX() {
+  const visual = window.visualViewport
   if (visual) {
     return visual.pageLeft
   }
@@ -96,6 +102,7 @@ export function getScrollX() {
 }
 
 export function getScrollY() {
+  const visual = window.visualViewport
   if (visual) {
     return visual.pageTop
   }
