@@ -57,13 +57,8 @@ stages:
 
 ci-image:
   stage: ci-image
+  extends: .feature-branch-configuration
   when: manual
-  except:
-    refs:
-      - tags
-      - /^staging-[0-9]+$/
-      - /^release\/v[0-9.]+$/
-      - schedules
   tags: ['runner:docker', 'size:large']
   image: $BUILD_STABLE_REGISTRY/docker:18.03.1
   script:
