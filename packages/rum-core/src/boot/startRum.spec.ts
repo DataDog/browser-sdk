@@ -1,5 +1,4 @@
 import { RelativeTime, Configuration, Observable, noop, relativeNow } from '@datadog/browser-core'
-import { RumSession } from '@datadog/browser-rum-core'
 import { createRumSessionMock, RumSessionMock } from '../../test/mockRumSession'
 import { isIE } from '../../../core/test/specHelper'
 import { noopRecorderApi, setup, TestSetupBuilder } from '../../test/specHelper'
@@ -11,6 +10,7 @@ import { startViewCollection } from '../domain/rumEventsCollection/view/viewColl
 import { RumEvent } from '../rumEvent.types'
 import { LocationChange } from '../browser/locationChangeObservable'
 import { startLongTaskCollection } from '../domain/rumEventsCollection/longTask/longTaskCollection'
+import { RumSession } from '..'
 import { startRumEventCollection } from './startRum'
 
 function collectServerEvents(lifeCycle: LifeCycle) {
@@ -52,7 +52,7 @@ function startRum(
     noopRecorderApi
   )
 
-  startLongTaskCollection(lifeCycle)
+  startLongTaskCollection(lifeCycle, session)
   return {
     stop: () => {
       rumEventCollectionStop()
