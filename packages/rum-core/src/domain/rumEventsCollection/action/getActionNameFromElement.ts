@@ -1,4 +1,4 @@
-import { safeTruncate } from '@datadog/browser-core'
+import { safeTruncate, isIE } from '@datadog/browser-core'
 
 /**
  * Get the action name from the attribute 'data-dd-action-name' on the element or any of its parent.
@@ -182,22 +182,24 @@ function getTextualContent(element: Element | HTMLElement) {
 }
 
 /**
- * Returns true if element.innerText excludes the text from inline SCRIPT and STYLE element.  This
- * should be the case everywhere except on some version of Internet Explorer.
- * See http://perfectionkills.com/the-poor-misunderstood-innerText/#diff-with-textContent
+ * Returns true if element.innerText excludes the text from inline SCRIPT and STYLE element. This
+ * should be the case everywhere except on Internet Explorer 10 and 11 (see [1])
+ *
+ * The innerText property relies on what is actually rendered to compute its output, so to check if
+ * it actually excludes SCRIPT and STYLE content, a solution would be to create a style element, set
+ * its content to '*', inject it in the document body, and check if the style element innerText
+ * property returns '*'. Using a new `document` instance won't work as it is not rendered.
+ *
+ * This solution requires specific CSP rules (see [2]) to be set by the customer. We want to avoid
+ * this, so instead we rely on browser detection. In case of false negative, the impact should be
+ * low, since we rely on this result to remove the SCRIPT and STYLE innerText (which will be empty)
+ * from a parent element innerText.
+ *
+ * [1]: https://web.archive.org/web/20210602165716/http://perfectionkills.com/the-poor-misunderstood-innerText/#diff-with-textContent
+ * [2]: https://github.com/DataDog/browser-sdk/issues/1084
  */
-let supportsInnerTextScriptAndStyleRemovalResult: boolean | undefined
 function supportsInnerTextScriptAndStyleRemoval() {
-  if (supportsInnerTextScriptAndStyleRemovalResult === undefined) {
-    const style = document.createElement('style')
-    style.textContent = '*'
-    const div = document.createElement('div')
-    div.appendChild(style)
-    document.body.appendChild(div)
-    supportsInnerTextScriptAndStyleRemovalResult = div.innerText === ''
-    document.body.removeChild(div)
-  }
-  return supportsInnerTextScriptAndStyleRemovalResult
+  return !isIE()
 }
 
 /**
