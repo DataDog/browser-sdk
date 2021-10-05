@@ -15,7 +15,7 @@ import {
 import { ActionType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { EventCounts, trackEventCounts } from '../../trackEventCounts'
-import { waitIdlePageActivity } from '../../trackPageActivities'
+import { waitIdlePage } from '../../waitIdlePage'
 import { getActionNameFromElement } from './getActionNameFromElement'
 
 type AutoActionType = ActionType.CLICK
@@ -90,7 +90,7 @@ export function trackActions(
 
 function startActionManagement(lifeCycle: LifeCycle, domMutationObservable: Observable<void>) {
   let currentAction: PendingAutoAction | undefined
-  let currentIdlePageActivitySubscription: { stop: () => void }
+  let stopWaitingIdlePage: () => void
 
   return {
     create: (type: AutoActionType, name: string, event: Event) => {
@@ -99,25 +99,24 @@ function startActionManagement(lifeCycle: LifeCycle, domMutationObservable: Obse
         return
       }
       const pendingAutoAction = new PendingAutoAction(lifeCycle, type, name, event)
-
       currentAction = pendingAutoAction
-      currentIdlePageActivitySubscription = waitIdlePageActivity(
+      ;({ stop: stopWaitingIdlePage } = waitIdlePage(
         lifeCycle,
         domMutationObservable,
-        (params) => {
-          if (params.hadActivity) {
-            pendingAutoAction.complete(params.endClocks)
+        (event) => {
+          if (event.hadActivity) {
+            pendingAutoAction.complete(event.endClocks)
           } else {
             pendingAutoAction.discard()
           }
           currentAction = undefined
         },
         AUTO_ACTION_MAX_DURATION
-      )
+      ))
     },
     discardCurrent: () => {
       if (currentAction) {
-        currentIdlePageActivitySubscription.stop()
+        stopWaitingIdlePage()
         currentAction.discard()
         currentAction = undefined
       }

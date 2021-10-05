@@ -12,7 +12,7 @@ import { RumLayoutShiftTiming, supportPerformanceTimingEvent } from '../../../br
 import { ViewLoadingType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { EventCounts, trackEventCounts } from '../../trackEventCounts'
-import { waitIdlePageActivity } from '../../trackPageActivities'
+import { waitIdlePage } from '../../waitIdlePage'
 
 export interface ViewMetrics {
   eventCounts: EventCounts
@@ -108,15 +108,13 @@ function trackActivityLoadingTime(
   callback: (loadingTimeValue: Duration | undefined) => void
 ) {
   const startTime = timeStampNow()
-  const { stop: stopWaitIdlePageActivity } = waitIdlePageActivity(lifeCycle, domMutationObservable, (params) => {
+  return waitIdlePage(lifeCycle, domMutationObservable, (params) => {
     if (params.hadActivity) {
       callback(elapsed(startTime, params.endClocks.timeStamp))
     } else {
       callback(undefined)
     }
   })
-
-  return { stop: stopWaitIdlePageActivity }
 }
 
 /**
