@@ -1,4 +1,5 @@
 import { Duration, RelativeTime, ServerDuration } from '@datadog/browser-core'
+import { createRumSessionMock, RumSessionMock } from '../../../../test/mockRumSession'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RumPerformanceEntry, RumPerformanceLongTaskTiming } from '../../../browser/performanceCollection'
 import { RumEventType } from '../../../rawRumEvent.types'
@@ -16,11 +17,14 @@ const LONG_TASK: RumPerformanceLongTaskTiming = {
 
 describe('long task collection', () => {
   let setupBuilder: TestSetupBuilder
-
+  let session: RumSessionMock
   beforeEach(() => {
-    setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
-      startLongTaskCollection(lifeCycle)
-    })
+    session = createRumSessionMock()
+    setupBuilder = setup()
+      .withSession(session)
+      .beforeBuild(({ lifeCycle, session }) => {
+        startLongTaskCollection(lifeCycle, session)
+      })
   })
 
   afterEach(() => {
@@ -37,6 +41,18 @@ describe('long task collection', () => {
     ].forEach((entry) => {
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, entry as RumPerformanceEntry)
     })
+    expect(rawRumEvents.length).toBe(1)
+  })
+
+  it('should only collect when session has a replay plan', () => {
+    const { lifeCycle, rawRumEvents } = setupBuilder.build()
+
+    session.setReplayPlan()
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, LONG_TASK)
+    expect(rawRumEvents.length).toBe(1)
+
+    session.setLitePlan()
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, LONG_TASK)
     expect(rawRumEvents.length).toBe(1)
   })
 
