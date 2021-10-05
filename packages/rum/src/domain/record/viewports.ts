@@ -15,9 +15,13 @@ import type { VisualViewportRecord } from '../../types'
 // Scrollbar widths vary across properties on different devices and browsers
 const TOLERANCE = 25
 
-const isVisualViewportFactoredIn = () =>
-  Math.abs(visual.pageTop - visual.offsetTop - window.scrollY) > TOLERANCE ||
-  Math.abs(visual.pageLeft - visual.offsetLeft - window.scrollX) > TOLERANCE
+const isVisualViewportFactoredIn = () => {
+  const visual = window.visualViewport
+  return (
+    Math.abs(visual.pageTop - visual.offsetTop - window.scrollY) > TOLERANCE ||
+    Math.abs(visual.pageLeft - visual.offsetLeft - window.scrollX) > TOLERANCE
+  )
+}
 
 interface LayoutCoordinates {
   layoutViewportX: number
