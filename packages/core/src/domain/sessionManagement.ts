@@ -111,10 +111,12 @@ export function startSessionManagement<TrackingType extends string>(
           debug: {
             initTime,
             checkDelay,
-            updateDelay: Number(sessionCookieCheck.created!) - Number(inMemorySession.created!),
+            createdDelay: Number(sessionCookieCheck.created!) - Number(inMemorySession.created!),
+            expireDelay: Number(sessionCookieCheck.expire!) - Number(inMemorySession.expire!),
             productKey,
             sessionCookieCheck,
             inMemorySession,
+            _dd_s: getCookie(SESSION_COOKIE_NAME),
           },
         })
       }
