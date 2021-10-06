@@ -25,13 +25,57 @@ stages:
   - deploy
   - notify
 
-ci-image:
-  stage: ci-image
-  when: manual
+.base-configuration:
+  tags: ['runner:main', 'size:large']
+  image: $CI_IMAGE
+
+########################################################################################################################
+# Branch selection helpers
+########################################################################################################################
+
+.feature-branches:
   except:
     refs:
+      - main
       - tags
+      - /^staging-[0-9]+$/
+      - /^release\//
       - schedules
+
+.staging:
+  only:
+    variables:
+      - $CI_COMMIT_REF_NAME == $CURRENT_STAGING
+
+.main:
+  only:
+    refs:
+      - main
+  except:
+    refs:
+      - schedules
+
+.tags:
+  only:
+    refs:
+      - tags
+
+.test-allowed-branches:
+  except:
+    refs:
+      - /^release\//
+      - schedules
+
+########################################################################################################################
+# CI image
+########################################################################################################################
+
+ci-image:
+  stage: ci-image
+  extends:
+    - .base-configuration
+    - .feature-branches
+  when: manual
   tags: ['runner:docker', 'size:large']
   image: $BUILD_STABLE_REGISTRY/docker:18.03.1
   script:
@@ -43,44 +87,32 @@ ci-image:
 ########################################################################################################################
 
 format:
-  stage: test
-  except:
-    refs:
-      - schedules
-  tags: ['runner:main', 'size:large']
-  image: $CI_IMAGE
+  extends:
+    - .base-configuration
+    - .test-allowed-branches
   script:
     - yarn
     - yarn format
 
 woke:
-  stage: test
-  except:
-    refs:
-      - schedules
-  tags: ['runner:main', 'size:large']
-  image: $CI_IMAGE
+  extends:
+    - .base-configuration
+    - .test-allowed-branches
   script:
     - yarn woke
 
 typecheck:
-  stage: test
-  except:
-    refs:
-      - schedules
-  tags: ['runner:main', 'size:large']
-  image: $CI_IMAGE
+  extends:
+    - .base-configuration
+    - .test-allowed-branches
   script:
     - yarn
     - yarn typecheck
 
 build-and-lint:
-  stage: test
-  except:
-    refs:
-      - schedules
-  tags: ['runner:main', 'size:large']
-  image: $CI_IMAGE
+  extends:
+    - .base-configuration
+    - .test-allowed-branches
   script:
     - yarn
     - yarn build
@@ -89,35 +121,26 @@ build-and-lint:
     - scripts/cli typecheck test/e2e
 
 build-bundle:
-  stage: test
-  except:
-    refs:
-      - schedules
-  tags: ['runner:main', 'size:large']
-  image: $CI_IMAGE
+  extends:
+    - .base-configuration
+    - .test-allowed-branches
   script:
     - yarn
     - yarn build:bundle
 
 compatibility:
-  stage: test
-  except:
-    refs:
-      - schedules
-  tags: ['runner:main', 'size:large']
-  image: $CI_IMAGE
+  extends:
+    - .base-configuration
+    - .test-allowed-branches
   script:
     - yarn
     - yarn test:compat:tsc
     - yarn test:compat:ssr
 
 unit:
-  stage: test
-  except:
-    refs:
-      - schedules
-  tags: ['runner:main', 'size:large']
-  image: $CI_IMAGE
+  extends:
+    - .base-configuration
+    - .test-allowed-branches
   artifacts:
     reports:
       junit: test-report/unit/*.xml
@@ -127,12 +150,9 @@ unit:
     - ./scripts/codecov.sh
 
 e2e:
-  stage: test
-  except:
-    refs:
-      - schedules
-  tags: ['runner:main', 'size:large']
-  image: $CI_IMAGE
+  extends:
+    - .base-configuration
+    - .test-allowed-branches
   artifacts:
     when: always
     paths:
@@ -144,26 +164,18 @@ e2e:
     - yarn test:e2e
 
 check-licenses:
-  stage: test
-  except:
-    refs:
-      - schedules
-  tags: ['runner:main', 'size:large']
-  image: $CI_IMAGE
+  extends:
+    - .base-configuration
+    - .test-allowed-branches
   script:
     - node --no-warnings scripts/check-licenses.js
 
 unit-bs:
   stage: browserstack
-  except:
-    refs:
-      - main
-      - tags
-      - /^staging-[0-9]+$/
-      - schedules
+  extends:
+    - .base-configuration
+    - .feature-branches
   resource_group: browserstack
-  tags: ['runner:main', 'size:large']
-  image: $CI_IMAGE
   artifacts:
     reports:
       junit: test-report/unit-bs/*.xml
@@ -173,15 +185,10 @@ unit-bs:
 
 e2e-bs:
   stage: browserstack
-  except:
-    refs:
-      - main
-      - tags
-      - /^staging-[0-9]+$/
-      - schedules
+  extends:
+    - .base-configuration
+    - .feature-branches
   resource_group: browserstack
-  tags: ['runner:main', 'size:large']
-  image: $CI_IMAGE
   artifacts:
     when: always
     reports:
@@ -197,40 +204,34 @@ e2e-bs:
 ########################################################################################################################
 
 deploy-staging:
-  only:
-    variables:
-      - $CI_COMMIT_REF_NAME == $CURRENT_STAGING
   stage: deploy
-  tags: ['runner:main', 'size:large']
-  image: $CI_IMAGE
+  extends:
+    - .base-configuration
+    - .staging
   script:
     - yarn
     - BUILD_MODE=staging yarn build:bundle
     - ./scripts/deploy.sh staging head
 
 deploy-prod-canary:
-  only:
-    refs:
-      - tags
   stage: deploy:canary
+  extends:
+    - .base-configuration
+    - .tags
   when: manual
   allow_failure: false
-  tags: ['runner:main', 'size:large']
-  image: $CI_IMAGE
   script:
     - yarn
     - BUILD_MODE=release yarn build:bundle
     - ./scripts/deploy.sh prod canary
 
 deploy-prod-stable:
-  only:
-    refs:
-      - tags
   stage: deploy
+  extends:
+    - .base-configuration
+    - .tags
   when: manual
   allow_failure: false
-  tags: ['runner:main', 'size:large']
-  image: $CI_IMAGE
   script:
     - yarn
     - BUILD_MODE=release yarn build:bundle
@@ -244,13 +245,9 @@ deploy-prod-stable:
 include: 'https://gitlab-templates.ddbuild.io/slack-notifier/v1/template.yml'
 
 notify-feature-branch-failure:
-  extends: .slack-notifier.on-failure
-  except:
-    refs:
-      - main
-      - tags
-      - schedules
-      - /^staging-[0-9]+$/
+  extends:
+    - .slack-notifier.on-failure
+    - .feature-branches
 
 .prepare_notification:
   extends: .slack-notifier-base
@@ -260,63 +257,57 @@ notify-feature-branch-failure:
     - COMMIT_URL="$CI_PROJECT_URL/commits/$CI_COMMIT_SHA"
 
 notify-staging-failure:
-  extends: .prepare_notification
+  extends:
+    - .prepare_notification
+    - .staging
   when: on_failure
-  only:
-    variables:
-      - $CI_COMMIT_REF_NAME == $CURRENT_STAGING
   script:
     - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME main pipeline for <$BUILD_URL|$COMMIT_MESSAGE> failed."'
     - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
 
 notify-release-ready:
-  extends: .prepare_notification
   stage: pre-deploy-notify
-  only:
-    refs:
-      - tags
+  extends:
+    - .prepare_notification
+    - .tags
   script:
     - 'MESSAGE_TEXT=":i: $CI_PROJECT_NAME <$BUILD_URL|$COMMIT_MESSAGE> ready to be deployed to :datadog:"'
     - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
 
 notify-prod-canary-success:
-  extends: .prepare_notification
   stage: notify:canary
-  only:
-    refs:
-      - tags
+  extends:
+    - .prepare_notification
+    - .tags
   script:
     - 'MESSAGE_TEXT=":rocket: $CI_PROJECT_NAME <$COMMIT_URL|$COMMIT_MESSAGE> deployed to :datadog:."'
     - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
     - postmessage "#rum-ops" "$MESSAGE_TEXT"
 
 notify-prod-canary-failure:
-  extends: .prepare_notification
   stage: notify:canary
+  extends:
+    - .prepare_notification
+    - .tags
   when: on_failure
-  only:
-    refs:
-      - tags
   script:
     - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME release pipeline <$BUILD_URL|$COMMIT_MESSAGE> failed."'
     - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
 
 notify-prod-stable-success:
-  extends: .prepare_notification
-  only:
-    refs:
-      - tags
+  extends:
+    - .prepare_notification
+    - .tags
   script:
     - 'MESSAGE_TEXT=":rocket: $CI_PROJECT_NAME <$COMMIT_URL|$COMMIT_MESSAGE> deployed to :earth_americas:."'
     - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
     - postmessage "#rum-ops" "$MESSAGE_TEXT"
 
 notify-prod-stable-failure:
-  extends: .prepare_notification
+  extends:
+    - .prepare_notification
+    - .tags
   when: on_failure
-  only:
-    refs:
-      - tags
   script:
     - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME release pipeline <$BUILD_URL|$COMMIT_MESSAGE> failed."'
     - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
@@ -327,11 +318,10 @@ notify-prod-stable-failure:
 
 staging-reset-scheduled:
   stage: task
+  extends: .base-configuration
   only:
     variables:
       - $TARGET_TASK_NAME == "staging-reset-scheduled"
-  tags: ['runner:main', 'size:large']
-  image: $CI_IMAGE
   before_script:
     - eval $(ssh-agent -s)
   script:
@@ -353,10 +343,10 @@ staging-reset-scheduled-success:
 
 staging-reset-scheduled-failure:
   extends: .prepare_notification
-  when: on_failure
   only:
     variables:
       - $TARGET_TASK_NAME == "staging-reset-scheduled"
+  when: on_failure
   script:
     - 'MESSAGE_TEXT=":x: [*$CI_PROJECT_NAME*] Staging failed to reset from *${CURRENT_STAGING}* to *${NEW_STAGING}* on pipeline <$BUILD_URL|$COMMIT_MESSAGE>."'
     - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
@@ -365,14 +355,9 @@ staging-reset-scheduled-failure:
 
 merge-into-staging:
   stage: pre-deploy
-  tags: ['runner:main', 'size:large']
-  image: $CI_IMAGE
-  only:
-    refs:
-      - main
-  except:
-    refs:
-      - schedules
+  extends:
+    - .base-configuration
+    - .main
   before_script:
     - eval $(ssh-agent -s)
   script:
@@ -380,14 +365,9 @@ merge-into-staging:
 
 check-staging-merge:
   stage: test
-  tags: ['runner:main', 'size:large']
-  image: $CI_IMAGE
-  except:
-    refs:
-      - main
-      - tags
-      - /^staging-[0-9]+$/
-      - schedules
+  extends:
+    - .base-configuration
+    - .feature-branches
   before_script:
     - eval $(ssh-agent -s)
   script:
@@ -397,13 +377,8 @@ check-staging-merge:
 # staging branch, even though the pipeline is still running
 tests-passed:
   stage: after-tests
-  tags: ['runner:main', 'size:large']
-  image: $CI_IMAGE
-  except:
-    refs:
-      - main
-      - tags
-      - /^staging-[0-9]+$/
-      - schedules
+  extends:
+    - .base-configuration
+    - .feature-branches
   script:
     - 'true'
