@@ -7,8 +7,6 @@ import {
   addEventListener,
   includes,
   DefaultPrivacyLevel,
-  isExperimentalFeatureEnabled,
-  noop,
 } from '@datadog/browser-core'
 import { NodePrivacyLevel } from '../../constants'
 import { getNodePrivacyLevel, shouldMaskNode } from './privacy'
@@ -30,21 +28,9 @@ import {
   ScrollCallback,
   StyleSheetRuleCallback,
   ViewportResizeCallback,
-  VisualViewportResizeCallback,
-  MousePosition,
-  MouseInteractionParam,
 } from './types'
-import { forEach, hookSetter, isTouchEvent } from './utils'
+import { forEach, getWindowHeight, getWindowWidth, hookSetter, isTouchEvent } from './utils'
 import { startMutationObserver, MutationController } from './mutationObserver'
-
-import {
-  getVisualViewport,
-  getWindowHeight,
-  getWindowWidth,
-  getScrollX,
-  getScrollY,
-  convertMouseEventToLayoutCoordinates,
-} from './viewports'
 
 const MOUSE_MOVE_OBSERVER_THRESHOLD = 50
 const SCROLL_OBSERVER_THRESHOLD = 100
@@ -60,10 +46,6 @@ export function initObservers(o: ObserverParam): ListenerHandler {
   const styleSheetObserver = initStyleSheetObserver(o.styleSheetRuleCb)
   const focusHandler = initFocusObserver(o.focusCb)
 
-  const visualViewportResizeHandler = isExperimentalFeatureEnabled('visualviewport')
-    ? initVisualViewportResizeObserver(o.visualViewportResizeCb)
-    : noop
-
   return () => {
     mutationHandler()
     mousemoveHandler()
@@ -74,7 +56,6 @@ export function initObservers(o: ObserverParam): ListenerHandler {
     mediaInteractionHandler()
     styleSheetObserver()
     focusHandler()
-    visualViewportResizeHandler()
   }
 }
 
@@ -92,16 +73,11 @@ function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {
       const target = event.target as Node
       if (hasSerializedNode(target)) {
         const { clientX, clientY } = isTouchEvent(event) ? event.changedTouches[0] : event
-        const position: MousePosition = {
+        const position = {
           id: getSerializedNodeId(target),
           timeOffset: 0,
           x: clientX,
           y: clientY,
-        }
-        if (isExperimentalFeatureEnabled('visualviewport')) {
-          const { visualViewportX, visualViewportY } = convertMouseEventToLayoutCoordinates(clientX, clientY)
-          position.x = visualViewportX ?? clientX
-          position.y = visualViewportY ?? clientY
         }
         cb([position], isTouchEvent(event) ? IncrementalSource.TouchMove : IncrementalSource.MouseMove)
       }
@@ -139,18 +115,12 @@ function initMouseInteractionObserver(
       return
     }
     const { clientX, clientY } = isTouchEvent(event) ? event.changedTouches[0] : event
-    const position: MouseInteractionParam = {
+    cb({
       id: getSerializedNodeId(target),
       type: eventTypeToMouseInteraction[event.type as keyof typeof eventTypeToMouseInteraction],
       x: clientX,
       y: clientY,
-    }
-    if (isExperimentalFeatureEnabled('visualviewport')) {
-      const { visualViewportX, visualViewportY } = convertMouseEventToLayoutCoordinates(clientX, clientY)
-      position.x = visualViewportX ?? clientX
-      position.y = visualViewportY ?? clientY
-    }
-    cb(position)
+    })
   }
   return addEventListeners(document, Object.keys(eventTypeToMouseInteraction) as DOM_EVENT[], handler, {
     capture: true,
@@ -171,20 +141,12 @@ function initScrollObserver(cb: ScrollCallback, defaultPrivacyLevel: DefaultPriv
       }
       const id = getSerializedNodeId(target)
       if (target === document) {
-        if (isExperimentalFeatureEnabled('visualviewport')) {
-          cb({
-            id,
-            x: getScrollX(),
-            y: getScrollY(),
-          })
-        } else {
-          const scrollEl = (document.scrollingElement || document.documentElement)!
-          cb({
-            id,
-            x: scrollEl.scrollLeft,
-            y: scrollEl.scrollTop,
-          })
-        }
+        const scrollEl = (document.scrollingElement || document.documentElement)!
+        cb({
+          id,
+          x: scrollEl.scrollLeft,
+          y: scrollEl.scrollTop,
+        })
       } else {
         cb({
           id,
@@ -374,21 +336,5 @@ function initMediaInteractionObserver(
 function initFocusObserver(focusCb: FocusCallback): ListenerHandler {
   return addEventListeners(window, [DOM_EVENT.FOCUS, DOM_EVENT.BLUR], () => {
     focusCb({ has_focus: document.hasFocus() })
-  }).stop
-}
-
-function initVisualViewportResizeObserver(cb: VisualViewportResizeCallback): ListenerHandler {
-  if (!visualViewport) {
-    return noop
-  }
-  const { throttled: updateDimension } = throttle(
-    monitor(() => {
-      cb(getVisualViewport())
-    }),
-    200
-  )
-  return addEventListeners(visualViewport, [DOM_EVENT.RESIZE, DOM_EVENT.SCROLL], updateDimension, {
-    capture: true,
-    passive: true,
   }).stop
 }

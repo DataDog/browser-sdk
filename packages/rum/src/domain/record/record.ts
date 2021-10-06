@@ -1,11 +1,9 @@
-import { isExperimentalFeatureEnabled } from '@datadog/browser-core'
 import { RecordType } from '../../types'
 import { serializeDocument } from './serialize'
 import { initObservers } from './observer'
 import { IncrementalSource, RecordAPI, RecordOptions } from './types'
-
+import { getWindowHeight, getWindowWidth } from './utils'
 import { MutationController } from './mutationObserver'
-import { getVisualViewport, getScrollX, getScrollY, getWindowHeight, getWindowWidth } from './viewports'
 
 export function record(options: RecordOptions): RecordAPI {
   const { emit } = options
@@ -39,18 +37,23 @@ export function record(options: RecordOptions): RecordAPI {
       data: {
         node: serializeDocument(document, options.defaultPrivacyLevel),
         initialOffset: {
-          left: getScrollX(),
-          top: getScrollY(),
+          left:
+            window.pageXOffset !== undefined
+              ? window.pageXOffset
+              : document?.documentElement.scrollLeft ||
+                document?.body?.parentElement?.scrollLeft ||
+                document?.body.scrollLeft ||
+                0,
+          top:
+            window.pageYOffset !== undefined
+              ? window.pageYOffset
+              : document?.documentElement.scrollTop ||
+                document?.body?.parentElement?.scrollTop ||
+                document?.body.scrollTop ||
+                0,
         },
       },
       type: RecordType.FullSnapshot,
-    })
-  }
-
-  if (isExperimentalFeatureEnabled('visualviewport') && window.visualViewport) {
-    emit({
-      data: getVisualViewport(),
-      type: RecordType.VisualViewport,
     })
   }
 
@@ -127,11 +130,6 @@ export function record(options: RecordOptions): RecordAPI {
       emit({
         type: RecordType.Focus,
         data,
-      }),
-    visualViewportResizeCb: (data) =>
-      emit({
-        data,
-        type: RecordType.VisualViewport,
       }),
   })
 
