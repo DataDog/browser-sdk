@@ -1,4 +1,4 @@
-import { isIE } from '../../../../core/test/specHelper'
+import { isIE } from '@datadog/browser-core'
 import { NodePrivacyLevel } from '../../constants'
 import {
   makeStylesheetUrlsAbsolute,

@@ -1,19 +1,12 @@
 import {
   Configuration,
   DEFAULT_CONFIGURATION,
+  isIE,
   RequestType,
   resetFetchProxy,
   resetXhrProxy,
 } from '@datadog/browser-core'
-import {
-  FetchStub,
-  FetchStubManager,
-  isIE,
-  SPEC_ENDPOINTS,
-  stubFetch,
-  stubXhr,
-  withXhr,
-} from '../../../core/test/specHelper'
+import { FetchStub, FetchStubManager, SPEC_ENDPOINTS, stubFetch, stubXhr, withXhr } from '../../../core/test/specHelper'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { RequestCompleteEvent, RequestStartEvent, trackFetch, trackXhr } from './requestCollection'
 import { clearTracingIfNeeded, TraceIdentifier, Tracer } from './tracing/tracer'

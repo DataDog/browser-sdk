@@ -3,11 +3,12 @@ import {
   COOKIE_ACCESS_DELAY,
   DEFAULT_CONFIGURATION,
   getCookie,
+  isIE,
   SESSION_COOKIE_NAME,
   setCookie,
   stopSessionManagement,
 } from '@datadog/browser-core'
-import { Clock, isIE, mockClock } from '../../../core/test/specHelper'
+import { Clock, mockClock } from '../../../core/test/specHelper'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { RUM_SESSION_KEY, RumTrackingType, startRumSession } from './rumSession'

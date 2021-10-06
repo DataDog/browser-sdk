@@ -1,9 +1,8 @@
-import { DOM_EVENT } from '@datadog/browser-core'
+import { DOM_EVENT, isIE } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType, ParentContexts, ViewContext } from '@datadog/browser-rum-core'
 import {
   Clock,
   createNewEvent,
-  isIE,
   mockClock,
   restorePageVisibility,
   setPageVisibility,

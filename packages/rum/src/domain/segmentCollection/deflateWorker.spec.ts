@@ -1,4 +1,4 @@
-import { isIE } from '../../../../core/test/specHelper'
+import { isIE } from '@datadog/browser-core'
 import { createDeflateWorker, DeflateWorker, DeflateWorkerResponse } from './deflateWorker'
 
 describe('deflateWorker', () => {

@@ -1,8 +1,8 @@
-import { HttpRequest, DefaultPrivacyLevel, noop } from '@datadog/browser-core'
+import { HttpRequest, DefaultPrivacyLevel, noop, isIE } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import { inflate } from 'pako'
 import { createRumSessionMock, RumSessionMock } from '../../../rum-core/test/mockRumSession'
-import { createNewEvent, isIE } from '../../../core/test/specHelper'
+import { createNewEvent } from '../../../core/test/specHelper'
 
 import { setup, TestSetupBuilder } from '../../../rum-core/test/specHelper'
 import { collectAsyncCalls } from '../../test/utils'

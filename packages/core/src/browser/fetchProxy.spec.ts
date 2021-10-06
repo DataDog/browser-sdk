@@ -1,4 +1,5 @@
-import { FetchStub, FetchStubManager, FetchStubPromise, isIE, stubFetch } from '../../test/specHelper'
+import { FetchStub, FetchStubManager, FetchStubPromise, stubFetch } from '../../test/specHelper'
+import { isIE } from '../tools/browserDetection'
 import { FetchCompleteContext, FetchProxy, resetFetchProxy, startFetchProxy } from './fetchProxy'
 
 describe('fetch proxy', () => {

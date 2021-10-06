@@ -1,5 +1,5 @@
-import { DefaultPrivacyLevel } from '@datadog/browser-core'
-import { createNewEvent, isIE } from '../../../../core/test/specHelper'
+import { DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
+import { createNewEvent } from '../../../../core/test/specHelper'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_MASKED } from '../../constants'
 import { initInputObserver } from './observer'
 import { serializeDocument } from './serialize'
