@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-rum-core",
-  "version": "3.6.8",
+  "version": "3.6.9",
   "license": "Apache-2.0",
   "main": "cjs/index.js",
   "module": "esm/index.js",
@@ -12,7 +12,7 @@
     "replace-build-env": "node ../../scripts/replace-build-env.js"
   },
   "dependencies": {
-    "@datadog/browser-core": "3.6.8",
+    "@datadog/browser-core": "3.6.9",
     "tslib": "^1.10.0"
   },
   "devDependencies": {
