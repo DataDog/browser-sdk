@@ -16,6 +16,11 @@
 
 ---
 
+## v3.6.9
+
+- [RUMF-1045] rely on browser detection to check for innerText support ([#1110](https://github.com/DataDog/browser-sdk/pull/1110))
+- ⚗[REPLAY-341] Add VisualViewport tracking (Pinch Zoom) ([#1089](https://github.com/DataDog/browser-sdk/pull/1089))
+
 ## v3.6.8
 
 - 🐛 [RUMF-1040] Remove long task for lite plan ([#1103](https://github.com/DataDog/browser-sdk/pull/1103))
