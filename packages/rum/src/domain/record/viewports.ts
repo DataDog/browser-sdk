@@ -15,7 +15,12 @@ import type { VisualViewportRecord } from '../../types'
 // Scrollbar widths vary across properties on different devices and browsers
 const TOLERANCE = 25
 
-const isVisualViewportFactoredIn = () => {
+/**
+ * Use the Visual Viewport API's properties to measure scrollX/Y in reference to the layout viewport
+ * in order to determine if window.scrollX/Y is measuring the layout or visual viewport.
+ * This finding corresponds to which viewport mouseEvent.clientX/Y and window.innerWidth/Height measures.
+ */
+function isVisualViewportFactoredIn() {
   const visual = window.visualViewport
   return (
     Math.abs(visual.pageTop - visual.offsetTop - window.scrollY) > TOLERANCE ||
@@ -26,8 +31,8 @@ const isVisualViewportFactoredIn = () => {
 interface LayoutCoordinates {
   layoutViewportX: number
   layoutViewportY: number
-  visualViewportX: number | null
-  visualViewportY: number | null
+  visualViewportX: number
+  visualViewportY: number
 }
 
 export const convertMouseEventToLayoutCoordinates = (clientX: number, clientY: number): LayoutCoordinates => {
@@ -40,9 +45,8 @@ export const convertMouseEventToLayoutCoordinates = (clientX: number, clientY: n
   }
 
   if (!visual) {
-    // Old browsers: Unable to normalise
-    normalised.visualViewportX = null
-    normalised.visualViewportY = null
+    // On old browsers, we cannot normalise, so fallback to clientX/Y
+    return normalised
   } else if (isVisualViewportFactoredIn()) {
     // Typically Mobile Devices
     normalised.layoutViewportX = Math.round(clientX + visual.offsetLeft)
@@ -73,11 +77,7 @@ export function getWindowWidth(): number {
   if (isExperimentalFeatureEnabled('visualviewport') && visual) {
     return visual.width * visual.scale
   }
-  return (
-    window.innerWidth ||
-    (document.documentElement && document.documentElement.clientWidth) ||
-    (document.body && document.body.clientWidth)
-  )
+  return window.innerWidth || 0
 }
 
 export function getWindowHeight(): number {
@@ -85,35 +85,27 @@ export function getWindowHeight(): number {
   if (isExperimentalFeatureEnabled('visualviewport') && visual) {
     return visual.height * visual.scale
   }
-  return (
-    window.innerHeight ||
-    (document.documentElement && document.documentElement.clientHeight) ||
-    (document.body && document.body.clientHeight)
-  )
+  return window.innerHeight || 0
 }
 
 export function getScrollX() {
   const visual = window.visualViewport
-  if (visual) {
+  if (isExperimentalFeatureEnabled('visualviewport') && visual) {
     return visual.pageLeft
   }
   if (window.scrollX !== undefined) {
     return window.scrollX
   }
-  return window.pageXOffset !== undefined
-    ? window.pageXOffset
-    : (document?.documentElement || (document?.body?.parentNode as Element) || document?.body).scrollLeft || 0
+  return window.pageXOffset || 0
 }
 
 export function getScrollY() {
   const visual = window.visualViewport
-  if (visual) {
+  if (isExperimentalFeatureEnabled('visualviewport') && visual) {
     return visual.pageTop
   }
   if (window.scrollY !== undefined) {
     return window.scrollY
   }
-  return window.pageYOffset !== undefined
-    ? window.pageYOffset
-    : (document?.documentElement || (document?.body?.parentNode as Element) || document?.body).scrollTop || 0
+  return window.pageYOffset || 0
 }

@@ -48,6 +48,7 @@ import {
 
 const MOUSE_MOVE_OBSERVER_THRESHOLD = 50
 const SCROLL_OBSERVER_THRESHOLD = 100
+const VISUAL_VIEWPORT_OBSERVER_THRESHOLD = 200
 
 export function initObservers(o: ObserverParam): ListenerHandler {
   const mutationHandler = initMutationObserver(o.mutationController, o.mutationCb, o.defaultPrivacyLevel)
@@ -100,8 +101,8 @@ function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {
         }
         if (isExperimentalFeatureEnabled('visualviewport')) {
           const { visualViewportX, visualViewportY } = convertMouseEventToLayoutCoordinates(clientX, clientY)
-          position.x = visualViewportX ?? clientX
-          position.y = visualViewportY ?? clientY
+          position.x = visualViewportX
+          position.y = visualViewportY
         }
         cb([position], isTouchEvent(event) ? IncrementalSource.TouchMove : IncrementalSource.MouseMove)
       }
@@ -147,8 +148,8 @@ function initMouseInteractionObserver(
     }
     if (isExperimentalFeatureEnabled('visualviewport')) {
       const { visualViewportX, visualViewportY } = convertMouseEventToLayoutCoordinates(clientX, clientY)
-      position.x = visualViewportX ?? clientX
-      position.y = visualViewportY ?? clientY
+      position.x = visualViewportX
+      position.y = visualViewportY
     }
     cb(position)
   }
@@ -385,7 +386,10 @@ function initVisualViewportResizeObserver(cb: VisualViewportResizeCallback): Lis
     monitor(() => {
       cb(getVisualViewport())
     }),
-    200
+    VISUAL_VIEWPORT_OBSERVER_THRESHOLD,
+    {
+      trailing: false,
+    }
   )
   return addEventListeners(visualViewport, [DOM_EVENT.RESIZE, DOM_EVENT.SCROLL], updateDimension, {
     capture: true,
