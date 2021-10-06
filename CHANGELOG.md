@@ -16,6 +16,11 @@
 
 ---
 
+## v3.6.8
+
+- 🐛 [RUMF-1040] Remove long task for lite plan ([#1103](https://github.com/DataDog/browser-sdk/pull/1103))
+- ⚗ [REPLAY-465] Base tag support (feature flagged): Remove URL transformation from relative to absolute ([#1106](https://github.com/DataDog/browser-sdk/pull/1106))
+
 ## v3.6.7
 
 - 🔊 [RUMF-1036] Add negative loading time internal monitoring ([#1095](https://github.com/DataDog/browser-sdk/pull/1095))
