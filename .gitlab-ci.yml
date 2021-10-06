@@ -33,13 +33,12 @@ stages:
 # Branch selection helpers
 ########################################################################################################################
 
-.feature-branches:
+.bs-allowed-branches:
   except:
     refs:
       - main
       - tags
       - /^staging-[0-9]+$/
-      - /^release\//
       - schedules
 
 .staging:
@@ -74,7 +73,7 @@ ci-image:
   stage: ci-image
   extends:
     - .base-configuration
-    - .feature-branches
+    - .bs-allowed-branches
   when: manual
   tags: ['runner:docker', 'size:large']
   image: $BUILD_STABLE_REGISTRY/docker:18.03.1
@@ -174,7 +173,7 @@ unit-bs:
   stage: browserstack
   extends:
     - .base-configuration
-    - .feature-branches
+    - .bs-allowed-branches
   resource_group: browserstack
   artifacts:
     reports:
@@ -187,7 +186,7 @@ e2e-bs:
   stage: browserstack
   extends:
     - .base-configuration
-    - .feature-branches
+    - .bs-allowed-branches
   resource_group: browserstack
   artifacts:
     when: always
@@ -244,10 +243,10 @@ deploy-prod-stable:
 
 include: 'https://gitlab-templates.ddbuild.io/slack-notifier/v1/template.yml'
 
-notify-feature-branch-failure:
+notify-bs-allowed-branch-failure:
   extends:
     - .slack-notifier.on-failure
-    - .feature-branches
+    - .bs-allowed-branches
 
 .prepare_notification:
   extends: .slack-notifier-base
@@ -367,7 +366,7 @@ check-staging-merge:
   stage: test
   extends:
     - .base-configuration
-    - .feature-branches
+    - .bs-allowed-branches
   before_script:
     - eval $(ssh-agent -s)
   script:
@@ -379,6 +378,6 @@ tests-passed:
   stage: after-tests
   extends:
     - .base-configuration
-    - .feature-branches
+    - .bs-allowed-branches
   script:
     - 'true'
