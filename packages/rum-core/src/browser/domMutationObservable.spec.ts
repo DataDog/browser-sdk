@@ -1,4 +1,4 @@
-import { isIE } from '@datadog/browser-core/test/specHelper'
+import { isIE } from '@datadog/browser-core'
 import { createDOMMutationObservable } from './domMutationObservable'
 
 // The MutationObserver invokes its callback in an event loop microtask, making this asynchronous.

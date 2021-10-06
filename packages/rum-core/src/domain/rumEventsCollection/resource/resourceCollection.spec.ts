@@ -1,5 +1,12 @@
-import { Duration, RelativeTime, RequestType, ResourceType, ServerDuration, TimeStamp } from '@datadog/browser-core'
-import { isIE } from '../../../../../core/test/specHelper'
+import {
+  Duration,
+  isIE,
+  RelativeTime,
+  RequestType,
+  ResourceType,
+  ServerDuration,
+  TimeStamp,
+} from '@datadog/browser-core'
 import { createResourceEntry } from '../../../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RawRumResourceEvent, RumEventType } from '../../../rawRumEvent.types'

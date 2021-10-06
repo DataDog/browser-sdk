@@ -1,5 +1,4 @@
-import { Configuration, DEFAULT_CONFIGURATION, objectEntries } from '@datadog/browser-core'
-import { isIE } from '../../../../core/test/specHelper'
+import { Configuration, DEFAULT_CONFIGURATION, isIE, objectEntries } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../test/specHelper'
 import {
   RumFetchCompleteContext,

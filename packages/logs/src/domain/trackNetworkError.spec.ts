@@ -1,5 +1,5 @@
-import { Configuration, Observable, RawError } from '@datadog/browser-core'
-import { FetchStub, FetchStubManager, isIE, SPEC_ENDPOINTS, stubFetch } from '../../../core/test/specHelper'
+import { Configuration, isIE, Observable, RawError } from '@datadog/browser-core'
+import { FetchStub, FetchStubManager, SPEC_ENDPOINTS, stubFetch } from '../../../core/test/specHelper'
 
 import { trackNetworkError } from './trackNetworkError'
 

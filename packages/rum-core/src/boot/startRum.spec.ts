@@ -1,6 +1,5 @@
-import { RelativeTime, Configuration, Observable, noop, relativeNow } from '@datadog/browser-core'
+import { RelativeTime, Configuration, Observable, noop, relativeNow, isIE } from '@datadog/browser-core'
 import { createRumSessionMock, RumSessionMock } from '../../test/mockRumSession'
-import { isIE } from '../../../core/test/specHelper'
 import { noopRecorderApi, setup, TestSetupBuilder } from '../../test/specHelper'
 import { RumPerformanceNavigationTiming, RumPerformanceEntry } from '../browser/performanceCollection'
 

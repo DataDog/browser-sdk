@@ -1,4 +1,4 @@
-import { isIE } from '../../../test/specHelper'
+import { isIE } from '../../tools/browserDetection'
 import { ErrorHandling, ErrorSource, RawError } from '../../tools/error'
 import { Observable } from '../../tools/observable'
 import { trackConsoleError, resetConsoleErrorProxy } from './trackConsoleError'

@@ -30,11 +30,6 @@ export function isFirefox() {
   return navigator.userAgent.toLowerCase().indexOf('firefox') > -1
 }
 
-export function isIE() {
-  const hasIEAgent = /Trident.*rv\:11\./.test(navigator.userAgent)
-  return navigator.userAgent.indexOf('MSIE ') > 0 || hasIEAgent
-}
-
 export function clearAllCookies() {
   document.cookie.split(';').forEach((c) => {
     document.cookie = c.replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/;samesite=strict`)

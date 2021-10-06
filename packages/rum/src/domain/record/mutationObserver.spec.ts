@@ -1,5 +1,4 @@
-import { DefaultPrivacyLevel } from '@datadog/browser-core'
-import { isIE } from '../../../../core/test/specHelper'
+import { DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
 import { collectAsyncCalls, createMutationPayloadValidator } from '../../../test/utils'
 import {
   NodePrivacyLevel,
