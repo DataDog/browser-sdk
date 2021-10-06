@@ -1,4 +1,4 @@
-import { monitor, addEventListener, DOM_EVENT, Observable } from '@datadog/browser-core'
+import { addEventListener, DOM_EVENT, Observable, callMonitored, instrumentMethod } from '@datadog/browser-core'
 
 export interface LocationChange {
   oldLocation: Readonly<Location>
@@ -32,25 +32,35 @@ export function createLocationChangeObservable(location: Location) {
 }
 
 function trackHistory(onHistoryChange: () => void) {
-  // eslint-disable-next-line @typescript-eslint/unbound-method
-  const originalPushState = history.pushState
-  history.pushState = monitor(function (this: History['pushState']) {
-    originalPushState.apply(this, arguments as any)
-    onHistoryChange()
-  })
-  // eslint-disable-next-line @typescript-eslint/unbound-method
-  const originalReplaceState = history.replaceState
-  history.replaceState = monitor(function (this: History['replaceState']) {
-    originalReplaceState.apply(this, arguments as any)
-    onHistoryChange()
-  })
+  const { stop: stopInstrumentingPushState } = instrumentMethod(
+    history,
+    'pushState',
+    (original) =>
+      function () {
+        original.apply(this, arguments as any)
+        callMonitored(onHistoryChange)
+      }
+  )
+
+  const { stop: stopInstrumentingReplaceState } = instrumentMethod(
+    history,
+    'replaceState',
+    (original) =>
+      function () {
+        original.apply(this, arguments as any)
+        callMonitored(onHistoryChange)
+      }
+  )
+
   const { stop: removeListener } = addEventListener(window, DOM_EVENT.POP_STATE, onHistoryChange)
-  const stop = () => {
-    removeListener()
-    history.pushState = originalPushState
-    history.replaceState = originalReplaceState
+
+  return {
+    stop: () => {
+      stopInstrumentingPushState()
+      stopInstrumentingReplaceState()
+      removeListener()
+    },
   }
-  return { stop }
 }
 
 function trackHash(onHashChange: () => void) {
