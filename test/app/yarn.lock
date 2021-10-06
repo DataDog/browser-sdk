@@ -2,28 +2,28 @@
 # yarn lockfile v1
 
 
-"@datadog/browser-core@3.6.9", "@datadog/browser-core@file:../../packages/core":
-  version "3.6.9"
+"@datadog/browser-core@3.6.10", "@datadog/browser-core@file:../../packages/core":
+  version "3.6.10"
   dependencies:
     tslib "^1.10.0"
 
 "@datadog/browser-logs@file:../../packages/logs":
-  version "3.6.9"
+  version "3.6.10"
   dependencies:
-    "@datadog/browser-core" "3.6.9"
+    "@datadog/browser-core" "3.6.10"
     tslib "^1.10.0"
 
-"@datadog/browser-rum-core@3.6.9", "@datadog/browser-rum-core@file:../../packages/rum-core":
-  version "3.6.9"
+"@datadog/browser-rum-core@3.6.10", "@datadog/browser-rum-core@file:../../packages/rum-core":
+  version "3.6.10"
   dependencies:
-    "@datadog/browser-core" "3.6.9"
+    "@datadog/browser-core" "3.6.10"
     tslib "^1.10.0"
 
 "@datadog/browser-rum@file:../../packages/rum":
-  version "3.6.9"
+  version "3.6.10"
   dependencies:
-    "@datadog/browser-core" "3.6.9"
-    "@datadog/browser-rum-core" "3.6.9"
+    "@datadog/browser-core" "3.6.10"
+    "@datadog/browser-rum-core" "3.6.10"
     tslib "^1.10.0"
 
 "@types/eslint-scope@^3.7.0":
