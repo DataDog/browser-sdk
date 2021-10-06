@@ -1,6 +1,7 @@
 import { cacheCookieAccess, COOKIE_ACCESS_DELAY, CookieCache, CookieOptions, getCookie } from '../browser/cookie'
 import { Observable } from '../tools/observable'
 import * as utils from '../tools/utils'
+import { timeStampNow } from '../tools/timeUtils'
 import { monitor, addMonitoringMessage } from './internalMonitoring'
 import { tryOldCookiesMigration } from './oldCookiesMigration'
 
@@ -96,6 +97,28 @@ export function startSessionManagement<TrackingType extends string>(
 
   function checkCookieConsistency() {
     const alternateSessionCookie = cacheCookieAccess(SESSION_COOKIE_NAME, options)
+    const initTime = timeStampNow()
+    setTimeout(() => {
+      const sessionCookieCheck = retrieveActiveSession(alternateSessionCookie)
+      alternateSessionCookie.clearCache()
+      const checkDelay = timeStampNow() - initTime
+      if (
+        (sessionCookieCheck.id !== inMemorySession.id ||
+          sessionCookieCheck[productKey] !== inMemorySession[productKey]) &&
+        checkDelay < COOKIE_ACCESS_DELAY
+      ) {
+        addMonitoringMessage('cookie corrupted', {
+          debug: {
+            initTime,
+            checkDelay,
+            updateDelay: Number(sessionCookieCheck.created!) - Number(inMemorySession.created!),
+            productKey,
+            sessionCookieCheck,
+            inMemorySession,
+          },
+        })
+      }
+    })
     const cookieConsistencyCheckInterval = setInterval(() => {
       const sessionCookieCheck = retrieveActiveSession(alternateSessionCookie)
       alternateSessionCookie.clearCache()
