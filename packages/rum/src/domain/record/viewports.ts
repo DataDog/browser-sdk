@@ -94,7 +94,7 @@ export function getWindowHeight(): number {
 
 export function getScrollX() {
   const visual = window.visualViewport
-  if (visual) {
+  if (isExperimentalFeatureEnabled('visualviewport') && visual) {
     return visual.pageLeft
   }
   if (window.scrollX !== undefined) {
@@ -107,7 +107,7 @@ export function getScrollX() {
 
 export function getScrollY() {
   const visual = window.visualViewport
-  if (visual) {
+  if (isExperimentalFeatureEnabled('visualviewport') && visual) {
     return visual.pageTop
   }
   if (window.scrollY !== undefined) {
