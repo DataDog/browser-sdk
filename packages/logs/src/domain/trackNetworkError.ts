@@ -5,7 +5,6 @@ import {
   Observable,
   RawError,
   RequestType,
-  resetFetchProxy,
   resetXhrProxy,
   startFetchProxy,
   startXhrProxy,
@@ -14,7 +13,11 @@ import {
 
 export function trackNetworkError(configuration: Configuration, errorObservable: Observable<RawError>) {
   startXhrProxy().onRequestComplete((context) => handleCompleteRequest(RequestType.XHR, context))
-  startFetchProxy().onRequestComplete((context) => handleCompleteRequest(RequestType.FETCH, context))
+  const fetchProxySubscription = startFetchProxy().subscribe((context) => {
+    if (context.state === 'complete') {
+      handleCompleteRequest(RequestType.FETCH, context)
+    }
+  })
 
   function handleCompleteRequest(type: RequestType, request: XhrCompleteContext | FetchCompleteContext) {
     if (!configuration.isIntakeUrl(request.url) && (isRejected(request) || isServerError(request))) {
@@ -35,7 +38,7 @@ export function trackNetworkError(configuration: Configuration, errorObservable:
   return {
     stop: () => {
       resetXhrProxy()
-      resetFetchProxy()
+      fetchProxySubscription.unsubscribe()
     },
   }
 }

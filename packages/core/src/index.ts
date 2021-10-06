@@ -55,11 +55,10 @@ export { Context, ContextArray, ContextValue } from './tools/context'
 export { areCookiesAuthorized, getCookie, setCookie, COOKIE_ACCESS_DELAY } from './browser/cookie'
 export { startXhrProxy, XhrCompleteContext, XhrStartContext, XhrProxy, resetXhrProxy } from './browser/xhrProxy'
 export {
-  startFetchProxy,
+  getFetchProxyObservable as startFetchProxy,
   FetchCompleteContext,
   FetchStartContext,
-  FetchProxy,
-  resetFetchProxy,
+  FetchContext,
 } from './browser/fetchProxy'
 export { EndpointBuilder } from './domain/configuration/endpointBuilder'
 export { BoundedBuffer } from './tools/boundedBuffer'
