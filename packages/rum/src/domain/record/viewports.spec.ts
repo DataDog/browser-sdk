@@ -1,4 +1,3 @@
-import { isSafari } from 'packages/core/test/specHelper'
 import { getScrollX, getScrollY, getWindowWidth, getWindowHeight } from './viewports'
 
 describe('layout viewport', () => {
@@ -20,29 +19,19 @@ describe('layout viewport', () => {
   })
 
   describe('getScrollX/Y', () => {
-    it('normalized scroll matches native behaviour', () => {
-      const SCROLL_DOWN_PX = 100
+    it('normalized scroll matches initial behaviour', () => {
+      expect(getScrollX()).toBe(0)
+      expect(getScrollY()).toBe(0)
       expect(getScrollX()).toBe(window.scrollX || window.pageXOffset)
       expect(getScrollY()).toBe(window.scrollY || window.pageYOffset)
-
-      if (!isSafari) {
-        // Mobile Safari 12.0 (iOS 12.1) not responding to native scroll
-        window.scrollTo(0, SCROLL_DOWN_PX)
-        expect(getScrollX()).toBe(window.scrollX || window.pageXOffset)
-        expect(getScrollY()).toBe(window.scrollY || window.pageYOffset)
-      }
     })
     it('normalized scroll updates when scrolled', () => {
       const SCROLL_DOWN_PX = 100
+      window.scrollTo(0, SCROLL_DOWN_PX)
       expect(getScrollX()).toBe(0)
-      expect(getScrollY()).toBe(0)
-
-      if (!isSafari) {
-        // Mobile Safari 12.0 (iOS 12.1) not responding to native scroll
-        window.scrollTo(0, SCROLL_DOWN_PX)
-        expect(getScrollX()).toBe(0)
-        expect(getScrollY()).toBe(100)
-      }
+      expect(getScrollY()).toBe(100)
+      expect(getScrollX()).toBe(window.scrollX || window.pageXOffset)
+      expect(getScrollY()).toBe(window.scrollY || window.pageYOffset)
     })
   })
 })
