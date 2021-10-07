@@ -52,14 +52,24 @@ describe('instrumentMethod', () => {
   })
 
   describe('stop()', () => {
-    it('restores the original method', () => {
-      const original = () => 1
-      const object = { method: original }
+    it('restores the original behavior', () => {
+      const object = { method: () => 1 }
       const { stop } = instrumentMethod(object, 'method', () => () => 2)
 
       stop()
 
-      expect(object.method).toBe(original)
+      expect(object.method()).toBe(1)
+    })
+
+    it('does not call the instrumentation anymore', () => {
+      const object = { method: () => 1 }
+      const instrumentationSpy = jasmine.createSpy()
+      const { stop } = instrumentMethod(object, 'method', () => instrumentationSpy)
+
+      stop()
+
+      object.method()
+      expect(instrumentationSpy).not.toHaveBeenCalled()
     })
 
     describe('when the method has been instrumented by a third party', () => {
