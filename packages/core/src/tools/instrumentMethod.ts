@@ -1,24 +1,26 @@
-export function instrumentMethod<S extends { [key: string]: any }, N extends keyof S>(
-  source: S,
-  name: N,
-  replacementFactory: (original: S[N]) => (this: S, ...args: Parameters<S[N]>) => ReturnType<S[N]>
+export function instrumentMethod<OBJECT extends { [key: string]: any }, METHOD extends keyof OBJECT>(
+  object: OBJECT,
+  method: METHOD,
+  instrumentationFactory: (
+    original: OBJECT[METHOD]
+  ) => (this: OBJECT, ...args: Parameters<OBJECT[METHOD]>) => ReturnType<OBJECT[METHOD]>
 ) {
-  const original = source[name]
+  const original = object[method]
 
-  let replacement = replacementFactory(original)
+  let instrumentation = instrumentationFactory(original)
 
-  const replacementWrapper = function (this: S): ReturnType<S[N]> {
+  const instrumentationWrapper = function (this: OBJECT): ReturnType<OBJECT[METHOD]> {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return replacement.apply(this, (arguments as unknown) as Parameters<S[N]>)
+    return instrumentation.apply(this, (arguments as unknown) as Parameters<OBJECT[METHOD]>)
   }
-  source[name] = replacementWrapper as S[N]
+  object[method] = instrumentationWrapper as OBJECT[METHOD]
 
   return {
     stop: () => {
-      if (source[name] === replacementWrapper) {
-        source[name] = original
+      if (object[method] === instrumentationWrapper) {
+        object[method] = original
       } else {
-        replacement = original
+        instrumentation = original
       }
     },
   }
