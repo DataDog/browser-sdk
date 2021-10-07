@@ -33,10 +33,25 @@ stages:
 # Branch selection helpers
 ########################################################################################################################
 
+.test-allowed-branches:
+  except:
+    refs:
+      - /^release\//
+      - schedules
+
+.bs-allowed-branches:
+  except:
+    refs:
+      - main
+      - /^staging-[0-9]+$/
+      - /^release\//
+      - schedules
+
 .feature-branches:
   except:
     refs:
       - main
+      - tags
       - /^staging-[0-9]+$/
       - /^release\//
       - schedules
@@ -58,12 +73,6 @@ stages:
   only:
     refs:
       - tags
-
-.test-allowed-branches:
-  except:
-    refs:
-      - /^release\//
-      - schedules
 
 ########################################################################################################################
 # CI image
@@ -173,7 +182,7 @@ unit-bs:
   stage: browserstack
   extends:
     - .base-configuration
-    - .feature-branches
+    - .bs-allowed-branches
   resource_group: browserstack
   artifacts:
     reports:
@@ -186,7 +195,7 @@ e2e-bs:
   stage: browserstack
   extends:
     - .base-configuration
-    - .feature-branches
+    - .bs-allowed-branches
   resource_group: browserstack
   artifacts:
     when: always
