@@ -15,13 +15,18 @@
 // to in the future.
 
 const request = require('request')
-const { spawnCommand, printLog, logAndExit } = require('./utils')
+const { spawnCommand, printLog, logAndExit, executeCommand } = require('./utils')
 
 const AVAILABILITY_CHECK_DELAY = 30_000
 // eslint-disable-next-line max-len
 const RUNNING_BUILDS_API = `https://${process.env.BS_USERNAME}:${process.env.BS_ACCESS_KEY}@api.browserstack.com/automate/builds.json?status=running`
 
 async function main() {
+  if (await executeCommand('git tag --points-at HEAD')) {
+    printLog('Skip bs execution on tags')
+    process.exit(0)
+    return
+  }
   await waitForAvailability()
   const exitCode = await runTests()
   process.exit(exitCode)
