@@ -1,4 +1,11 @@
-import { cacheCookieAccess, COOKIE_ACCESS_DELAY, CookieCache, CookieOptions, getCookie } from '../browser/cookie'
+import {
+  cacheCookieAccess,
+  COOKIE_ACCESS_DELAY,
+  CookieCache,
+  CookieOptions,
+  getCookie,
+  areCookiesAuthorized,
+} from '../browser/cookie'
 import { Observable } from '../tools/observable'
 import * as utils from '../tools/utils'
 import { timeStampNow } from '../tools/timeUtils'
@@ -99,14 +106,16 @@ export function startSessionManagement<TrackingType extends string>(
     const alternateSessionCookie = cacheCookieAccess(SESSION_COOKIE_NAME, options)
     const initTime = timeStampNow()
     setTimeout(() => {
-      const sessionCookieCheck = retrieveActiveSession(alternateSessionCookie)
+      const sessionCookieCheck = retrieveSession(alternateSessionCookie)
       alternateSessionCookie.clearCache()
       const checkDelay = timeStampNow() - initTime
       if (
+        isActiveSession(inMemorySession) &&
         (sessionCookieCheck.id !== inMemorySession.id ||
           sessionCookieCheck[productKey] !== inMemorySession[productKey]) &&
         checkDelay < COOKIE_ACCESS_DELAY
       ) {
+        const rawCookie = getCookie(SESSION_COOKIE_NAME)
         addMonitoringMessage('cookie corrupted', {
           debug: {
             initTime,
@@ -116,7 +125,9 @@ export function startSessionManagement<TrackingType extends string>(
             productKey,
             sessionCookieCheck,
             inMemorySession,
-            _dd_s: getCookie(SESSION_COOKIE_NAME),
+            areCookiesAuthorized:
+              !utils.isEmptyObject(sessionCookieCheck) || !!rawCookie || areCookiesAuthorized(options),
+            _dd_s: rawCookie,
           },
         })
       }
