@@ -10,9 +10,12 @@ export function startActionCollection(
   configuration: Configuration,
   foregroundContexts: ForegroundContexts
 ) {
-  lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, (action) =>
+  lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, (action) => {
+    if (action.duration < 0) {
+      return
+    }
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action, foregroundContexts))
-  )
+  })
 
   if (configuration.trackInteractions) {
     trackActions(lifeCycle, domMutationObservable, configuration)
