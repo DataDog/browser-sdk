@@ -37,7 +37,6 @@ stages:
   except:
     refs:
       - main
-      - tags
       - /^staging-[0-9]+$/
       - /^release\//
       - schedules
