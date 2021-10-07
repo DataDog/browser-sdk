@@ -1,7 +1,7 @@
 import { instrumentMethod } from './instrumentMethod'
 
 describe('instrumentMethod', () => {
-  it('replaces a method', () => {
+  it('replaces the original method', () => {
     const original = () => 1
     const source = { foo: original }
 
@@ -11,7 +11,7 @@ describe('instrumentMethod', () => {
     expect(source.foo()).toBe(2)
   })
 
-  it('sets a method with originally undefined', () => {
+  it('sets a method originally undefined', () => {
     const source: { foo?: () => number } = {}
 
     instrumentMethod(source, 'foo', () => () => 2)
@@ -40,7 +40,7 @@ describe('instrumentMethod', () => {
     expect(replacementSpy).toHaveBeenCalledOnceWith(2, 3)
   })
 
-  it('allows other overrides from third parties', () => {
+  it('allows other instrumentations from third parties', () => {
     const source = { foo: () => 1 }
     const replacementSpy = jasmine.createSpy().and.returnValue(2)
     instrumentMethod(source, 'foo', () => replacementSpy)
@@ -63,7 +63,7 @@ describe('instrumentMethod', () => {
     })
 
     describe('when the method has been overridden by a third party', () => {
-      it('does not replace the method', () => {
+      it('should not break the third party instrumentation', () => {
         const source = { foo: () => 1 }
         const { stop } = instrumentMethod(source, 'foo', () => () => 2)
 
