@@ -382,7 +382,7 @@ function initVisualViewportResizeObserver(cb: VisualViewportResizeCallback): Lis
   if (!visualViewport) {
     return noop
   }
-  const { throttled: updateDimension } = throttle(
+  const { throttled: updateDimension, cancel: cancelThrottle } = throttle(
     monitor(() => {
       cb(getVisualViewport())
     }),
@@ -391,8 +391,13 @@ function initVisualViewportResizeObserver(cb: VisualViewportResizeCallback): Lis
       trailing: false,
     }
   )
-  return addEventListeners(visualViewport, [DOM_EVENT.RESIZE, DOM_EVENT.SCROLL], updateDimension, {
+  const removeListener = addEventListeners(visualViewport, [DOM_EVENT.RESIZE, DOM_EVENT.SCROLL], updateDimension, {
     capture: true,
     passive: true,
   }).stop
+
+  return function stop() {
+    removeListener()
+    cancelThrottle()
+  }
 }

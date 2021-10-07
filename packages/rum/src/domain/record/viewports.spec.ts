@@ -1,5 +1,9 @@
 import { getScrollX, getScrollY, getWindowWidth, getWindowHeight } from './viewports'
 
+function isMobileSafari12() {
+  return /iPhone; CPU iPhone OS 12_\d like Mac OS X.* Version\/12\.\d\.\d Mobile.*Safari/.test(navigator.userAgent)
+}
+
 describe('layout viewport', () => {
   beforeEach(() => {
     document.body.style.setProperty('margin-bottom', '2000px')
@@ -7,6 +11,7 @@ describe('layout viewport', () => {
 
   afterEach(() => {
     document.body.style.removeProperty('margin-bottom')
+    window.scrollTo(0, 0)
   })
 
   describe('get window width and height', () => {
@@ -26,6 +31,12 @@ describe('layout viewport', () => {
       expect(getScrollY()).toBe(window.scrollY || window.pageYOffset)
     })
     it('normalized scroll updates when scrolled', () => {
+      if (isMobileSafari12()) {
+        // Mobile Safari 12 doesn't support scrollTo() within an iframe
+        // Karma is evaluating some tests in an iframe
+        // https://coderwall.com/p/c-aqqw/scrollable-iframe-on-mobile-safari
+        pending('Mobile Safari 12 not supported')
+      }
       const SCROLL_DOWN_PX = 100
       window.scrollTo(0, SCROLL_DOWN_PX)
       expect(getScrollX()).toBe(0)
