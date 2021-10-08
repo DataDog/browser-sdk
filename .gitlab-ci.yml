@@ -295,7 +295,7 @@ notify-prod-canary-failure:
   stage: notify:canary
   extends:
     - .prepare_notification
-    - .tags
+    - .main
   when: on_failure
   script:
     - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME release pipeline <$BUILD_URL|$COMMIT_MESSAGE> failed."'
