@@ -68,6 +68,8 @@ stages:
   except:
     refs:
       - schedules
+    variables:
+      - $CI_COMMIT_TITLE =~ /^v[0-9.]+$/
 
 .tags:
   only:
@@ -226,10 +228,9 @@ deploy-prod-canary:
   extends:
     - .base-configuration
     - .main
-  allow_failure: false
   script:
     - yarn
-    - BUILD_MODE=release yarn build:bundle
+    - BUILD_MODE=canary yarn build:bundle
     - ./scripts/deploy.sh prod canary
 
 deploy-prod-stable:
