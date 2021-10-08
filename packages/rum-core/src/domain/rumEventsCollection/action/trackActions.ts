@@ -14,7 +14,7 @@ import {
 import { ActionType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { EventCounts, trackEventCounts } from '../../trackEventCounts'
-import { waitIdlePage } from '../../waitIdlePage'
+import { IdlePageEvent, waitIdlePage } from '../../waitIdlePage'
 import { getActionNameFromElement } from './getActionNameFromElement'
 
 type AutoActionType = ActionType.CLICK
@@ -103,11 +103,7 @@ function startActionManagement(lifeCycle: LifeCycle, domMutationObservable: Obse
         lifeCycle,
         domMutationObservable,
         (event) => {
-          if (event.hadActivity) {
-            pendingAutoAction.complete(event.endClocks)
-          } else {
-            pendingAutoAction.discard()
-          }
+          pendingAutoAction.complete(event)
           currentAction = undefined
         },
         AUTO_ACTION_MAX_DURATION
@@ -135,7 +131,18 @@ class PendingAutoAction {
     this.lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { id: this.id, startClocks: this.startClocks })
   }
 
-  complete(endClocks: ClocksState) {
+  complete(event: IdlePageEvent) {
+    if (!event.hadActivity) {
+      this.discard()
+      return
+    }
+
+    const duration = elapsed(this.startClocks.timeStamp, event.endClocks.timeStamp)
+    if (duration < 0) {
+      this.discard()
+      return
+    }
+
     const eventCounts = this.eventCountsSubscription.eventCounts
     this.lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
       counts: {
@@ -143,7 +150,7 @@ class PendingAutoAction {
         longTaskCount: eventCounts.longTaskCount,
         resourceCount: eventCounts.resourceCount,
       },
-      duration: elapsed(this.startClocks.timeStamp, endClocks.timeStamp),
+      duration,
       id: this.id,
       name: this.name,
       startClocks: this.startClocks,

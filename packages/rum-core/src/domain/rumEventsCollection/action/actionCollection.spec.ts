@@ -94,24 +94,4 @@ describe('actionCollection', () => {
     })
     expect(rawRumEvents[0].domainContext).toEqual({})
   })
-
-  it('should discard actions with negative loading time', () => {
-    const { lifeCycle, rawRumEvents } = setupBuilder.build()
-    const event = createNewEvent('click')
-    lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
-      counts: {
-        errorCount: 10,
-        longTaskCount: 10,
-        resourceCount: 10,
-      },
-      duration: -100 as Duration,
-      id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
-      name: 'foo',
-      startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
-      type: ActionType.CLICK,
-      event,
-    })
-
-    expect(rawRumEvents.length).toEqual(0)
-  })
 })
