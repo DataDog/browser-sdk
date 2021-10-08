@@ -16,6 +16,11 @@
 
 ---
 
+## v3.6.11
+
+- ♻️ [RUMF-1046] instrument method implementation ([#1117](https://github.com/DataDog/browser-sdk/pull/1117))
+- 🔊 [RUMF-1021] improve cookie monitoring ([#1120](https://github.com/DataDog/browser-sdk/pull/1120))
+
 ## v3.6.10
 
 - Revert "⚗[REPLAY-341] Add VisualViewport tracking (Pinch Zoom) ([#1089](https://github.com/DataDog/browser-sdk/pull/1089))" ([#1115](https://github.com/DataDog/browser-sdk/pull/1115))
