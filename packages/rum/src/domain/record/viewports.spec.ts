@@ -1,7 +1,7 @@
 import { getScrollX, getScrollY, getWindowWidth, getWindowHeight } from './viewports'
 
 function isMobileSafari12() {
-  return /iPhone; CPU iPhone OS 12_\d like Mac OS X.* Version\/12\.\d\.\d Mobile.*Safari/.test(navigator.userAgent)
+  return /iPhone OS 12.* like Mac OS.* Version\/12.* Mobile.*Safari/.test(navigator.userAgent)
 }
 
 describe('layout viewport', () => {
