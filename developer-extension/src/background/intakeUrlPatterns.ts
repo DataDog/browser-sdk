@@ -4,6 +4,7 @@ export const intakeUrlPatterns = [
   'https://*.browser-intake-datadoghq.eu/*',
   'https://*.browser-intake-ddog-gov.com/*',
   'https://*.browser-intake-us3-datadoghq.com/*',
+  'https://*.browser-intake-us5-datadoghq.com/*',
   ...classicIntakesUrlsForSite('datadoghq.com'),
   ...classicIntakesUrlsForSite('datadoghq.eu'),
 ]
