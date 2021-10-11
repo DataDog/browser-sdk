@@ -161,9 +161,7 @@ export function findFullSnapshot(segment: Segment): FullSnapshotRecord | null {
 
 // Returns all the VisualViewportRecord in a Segment, if any.
 export function findAllVisualViewport(segment: Segment): VisualViewportRecord[] {
-  return segment.records.filter(
-    (record) => record.type === RecordType.VisualViewport
-  ) as VisualViewportRecord[]
+  return segment.records.filter((record) => record.type === RecordType.VisualViewport) as VisualViewportRecord[]
 }
 
 // Returns the first IncrementalSnapshotRecord of a given source in a Segment, if any.

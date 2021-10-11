@@ -663,12 +663,15 @@ describe('recorder', () => {
       .withSetup(bundleSetup)
       .withBody(html``)
       .run(async ({ events }) => {
-        const initialInnerWidth = window.innerWidth
-        const initialInnerHeight = window.innerHeight
+        const { initialInnerWidth, initialInnerHeight, visualViewportScale } = (await browserExecute(() => ({
+          initialInnerWidth: window.innerWidth,
+          initialInnerHeight: window.innerHeight,
+          visualViewportScale: (window.visualViewport || {}).scale,
+        }))) as any
         console.log({
           initialInnerWidth,
           initialInnerHeight,
-          visualViewportScale: window.visualViewport?.scale,
+          visualViewportScale,
         })
         await pinchZoom()
 
@@ -676,10 +679,17 @@ describe('recorder', () => {
 
         const segment = getFirstSegment(events)
         const visualViewportRecords = findAllVisualViewport(segment)
+
+        const visualViewportStatus = (await browserExecute(() => ({
+          initialInnerWidth: window.innerWidth,
+          initialInnerHeight: window.innerHeight,
+          visualViewportScale: (window.visualViewport || {}).scale,
+        }))) as any
+
         console.log(
           'JSON visualViewportRecords:',
           JSON.stringify(visualViewportRecords, null, 2),
-          window.visualViewport?.scale
+          JSON.stringify(visualViewportStatus, null, 2)
         )
 
         expect(visualViewportRecords.length).toBeGreaterThan(0)
