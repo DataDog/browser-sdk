@@ -12,6 +12,7 @@ import {
   findFullSnapshot,
   findIncrementalSnapshot,
   findAllIncrementalSnapshots,
+  findAllVisualViewport,
   findMeta,
   findTextContent,
   createMutationPayloadValidatorFromSegment,
@@ -654,6 +655,36 @@ describe('recorder', () => {
         expect(segment.records.slice(3).every((record) => record.type !== RecordType.FullSnapshot)).toBe(true)
       })
   })
+
+  describe('visual viewport pinch zoom tests', () => {
+    createTest('record dynamic CSS changes')
+      .withRum()
+      .withRumInit(initRumAndStartRecording)
+      .withSetup(bundleSetup)
+      .withBody(html``)
+      .run(async ({ events }) => {
+        const initialInnerWidth = window.innerWidth
+        const initialInnerHeight = window.innerHeight
+        console.log({
+          initialInnerWidth,
+          initialInnerHeight,
+          visualViewportScale: window.visualViewport?.scale,
+        })
+        await pinchZoom()
+
+        await flushEvents()
+
+        const segment = getFirstSegment(events)
+        const visualViewportRecords = findAllVisualViewport(segment)
+        console.log(
+          'JSON visualViewportRecords:',
+          JSON.stringify(visualViewportRecords, null, 2),
+          window.visualViewport?.scale
+        )
+
+        expect(visualViewportRecords.length).toBeGreaterThan(0)
+      })
+  })
 })
 
 function getFirstSegment(events: EventRegistry) {
@@ -667,4 +698,37 @@ function getLastSegment(events: EventRegistry) {
 function initRumAndStartRecording(initConfiguration: RumInitConfiguration) {
   window.DD_RUM!.init(initConfiguration)
   window.DD_RUM!.startSessionReplayRecording()
+}
+
+async function pinchZoom(xChange = 50, durationMS = 500) {
+  const xBase = 100
+  const yBase = 200
+  const xOffsetFingerTwo = 50
+
+  await driver.performActions([
+    {
+      type: 'pointer',
+      id: 'finger1',
+      parameters: { pointerType: 'touch' },
+      actions: [
+        { type: 'pointerMove', duration: 0, x: xBase, y: yBase },
+        { type: 'pointerDown', button: 0 },
+        { type: 'pause', duration: 100 },
+        { type: 'pointerMove', duration: durationMS, origin: 'pointer', x: -xChange, y: 0 },
+        { type: 'pointerUp', button: 0 },
+      ],
+    },
+    {
+      type: 'pointer',
+      id: 'finger2',
+      parameters: { pointerType: 'touch' },
+      actions: [
+        { type: 'pointerMove', duration: 0, x: xBase + xOffsetFingerTwo, y: yBase },
+        { type: 'pointerDown', button: 0 },
+        { type: 'pause', duration: 100 },
+        { type: 'pointerMove', duration: durationMS, origin: 'pointer', x: +xChange, y: 0 },
+        { type: 'pointerUp', button: 0 },
+      ],
+    },
+  ])
 }
