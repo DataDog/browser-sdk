@@ -31,16 +31,16 @@ export interface FetchCompleteContext extends FetchContextBase {
 
 export type FetchContext = FetchStartContext | FetchCompleteContext
 
-let fetchProxyObservable: Observable<FetchContext> | undefined
+let fetchObservable: Observable<FetchContext> | undefined
 
-export function getFetchProxyObservable() {
-  if (!fetchProxyObservable) {
-    fetchProxyObservable = createFetchProxyObservable()
+export function getFetchObservable() {
+  if (!fetchObservable) {
+    fetchObservable = createFetchObservable()
   }
-  return fetchProxyObservable
+  return fetchObservable
 }
 
-function createFetchProxyObservable() {
+function createFetchObservable() {
   const observable = new Observable<FetchContext>(() => {
     if (!window.fetch) {
       return

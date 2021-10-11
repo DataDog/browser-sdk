@@ -54,12 +54,7 @@ export { ErrorSource, ErrorHandling, formatUnknownError, createHandlingStack, Ra
 export { Context, ContextArray, ContextValue } from './tools/context'
 export { areCookiesAuthorized, getCookie, setCookie, COOKIE_ACCESS_DELAY } from './browser/cookie'
 export { startXhrProxy, XhrCompleteContext, XhrStartContext, XhrProxy, resetXhrProxy } from './browser/xhrProxy'
-export {
-  getFetchProxyObservable as startFetchProxy,
-  FetchCompleteContext,
-  FetchStartContext,
-  FetchContext,
-} from './browser/fetchProxy'
+export { getFetchObservable, FetchCompleteContext, FetchStartContext, FetchContext } from './browser/fetchObservable'
 export { EndpointBuilder } from './domain/configuration/endpointBuilder'
 export { BoundedBuffer } from './tools/boundedBuffer'
 export { catchUserErrors } from './tools/catchUserErrors'

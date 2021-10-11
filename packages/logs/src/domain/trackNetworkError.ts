@@ -6,14 +6,14 @@ import {
   RawError,
   RequestType,
   resetXhrProxy,
-  startFetchProxy,
+  getFetchObservable,
   startXhrProxy,
   XhrCompleteContext,
 } from '@datadog/browser-core'
 
 export function trackNetworkError(configuration: Configuration, errorObservable: Observable<RawError>) {
   startXhrProxy().onRequestComplete((context) => handleCompleteRequest(RequestType.XHR, context))
-  const fetchProxySubscription = startFetchProxy().subscribe((context) => {
+  const fetchSubscription = getFetchObservable().subscribe((context) => {
     if (context.state === 'complete') {
       handleCompleteRequest(RequestType.FETCH, context)
     }
@@ -38,7 +38,7 @@ export function trackNetworkError(configuration: Configuration, errorObservable:
   return {
     stop: () => {
       resetXhrProxy()
-      fetchProxySubscription.unsubscribe()
+      fetchSubscription.unsubscribe()
     },
   }
 }

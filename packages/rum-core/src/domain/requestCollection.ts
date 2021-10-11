@@ -2,7 +2,7 @@ import {
   Configuration,
   Duration,
   RequestType,
-  startFetchProxy,
+  getFetchObservable,
   startXhrProxy,
   XhrCompleteContext,
   XhrStartContext,
@@ -89,7 +89,7 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: Configuration, tra
 }
 
 export function trackFetch(lifeCycle: LifeCycle, configuration: Configuration, tracer: Tracer) {
-  const subscription = startFetchProxy().subscribe((rawContext) => {
+  const subscription = getFetchObservable().subscribe((rawContext) => {
     const context = rawContext as RumFetchCompleteContext | RumFetchStartContext
     if (!isAllowedRequestUrl(configuration, context.url)) {
       return

@@ -1,7 +1,7 @@
 import { FetchStub, FetchStubManager, FetchStubPromise, stubFetch } from '../../test/specHelper'
 import { isIE } from '../tools/browserDetection'
 import { Subscription } from '../tools/observable'
-import { FetchCompleteContext, FetchContext, getFetchProxyObservable } from './fetchProxy'
+import { FetchCompleteContext, FetchContext, getFetchObservable } from './fetchObservable'
 
 describe('fetch proxy', () => {
   const FAKE_URL = 'http://fake-url/'
@@ -20,7 +20,7 @@ describe('fetch proxy', () => {
     originalFetchStub = window.fetch
 
     requests = []
-    requestsTrackingSubscription = getFetchProxyObservable().subscribe((context) => {
+    requestsTrackingSubscription = getFetchObservable().subscribe((context) => {
       if (context.state === 'complete') {
         requests.push(context)
       }
@@ -180,7 +180,7 @@ describe('fetch proxy', () => {
 
   it('should allow to enhance the context', (done) => {
     type CustomContext = FetchContext & { foo: string }
-    contextEditionSubscription = getFetchProxyObservable().subscribe((rawContext) => {
+    contextEditionSubscription = getFetchObservable().subscribe((rawContext) => {
       const context = rawContext as CustomContext
       if (context.state === 'start') {
         context.foo = 'bar'
