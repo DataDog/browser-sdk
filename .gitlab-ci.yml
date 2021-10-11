@@ -69,7 +69,7 @@ stages:
     refs:
       - schedules
     variables:
-      - $CI_COMMIT_TITLE =~ /^v[0-9.]+ .+$/
+      - $CI_COMMIT_TITLE =~ /^v[0-9.]+/
 
 .tags:
   only:
