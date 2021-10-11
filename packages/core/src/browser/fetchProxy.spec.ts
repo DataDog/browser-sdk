@@ -10,12 +10,15 @@ describe('fetch proxy', () => {
   let requestsTrackingSubscription: Subscription
   let contextEditionSubscription: Subscription | undefined
   let requests: FetchCompleteContext[]
+  let originalFetchStub: typeof fetch
 
   beforeEach(() => {
     if (isIE()) {
       pending('no fetch support')
     }
     fetchStubManager = stubFetch()
+    originalFetchStub = window.fetch
+
     requests = []
     requestsTrackingSubscription = getFetchProxyObservable().subscribe((context) => {
       if (context.state === 'complete') {
@@ -188,6 +191,25 @@ describe('fetch proxy', () => {
     fetchStubManager.whenAllComplete(() => {
       expect((requests[0] as CustomContext).foo).toBe('bar')
       done()
+    })
+  })
+
+  describe('when unsubscribing', () => {
+    it('should stop tracking requests', (done) => {
+      requestsTrackingSubscription.unsubscribe()
+
+      fetchStub(FAKE_URL).resolveWith({ status: 200, responseText: 'ok' })
+
+      fetchStubManager.whenAllComplete(() => {
+        expect(requests).toEqual([])
+        done()
+      })
+    })
+
+    it('should restore original window.fetch', () => {
+      requestsTrackingSubscription.unsubscribe()
+
+      expect(window.fetch).toBe(originalFetchStub)
     })
   })
 })
