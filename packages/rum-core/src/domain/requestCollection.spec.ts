@@ -1,4 +1,4 @@
-import { Configuration, DEFAULT_CONFIGURATION, isIE, RequestType, resetXhrProxy } from '@datadog/browser-core'
+import { Configuration, DEFAULT_CONFIGURATION, isIE, RequestType } from '@datadog/browser-core'
 import { FetchStub, FetchStubManager, SPEC_ENDPOINTS, stubFetch, stubXhr, withXhr } from '../../../core/test/specHelper'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { RequestCompleteEvent, RequestStartEvent, trackFetch, trackXhr } from './requestCollection'
@@ -137,6 +137,7 @@ describe('collect xhr', () => {
   let startSpy: jasmine.Spy<(requestStartEvent: RequestStartEvent) => void>
   let completeSpy: jasmine.Spy<(requestCompleteEvent: RequestCompleteEvent) => void>
   let stubXhrManager: { reset(): void }
+  let stopXhrTracking: () => void
 
   beforeEach(() => {
     if (isIE()) {
@@ -155,11 +156,11 @@ describe('collect xhr', () => {
         context.spanId = new TraceIdentifier()
       },
     }
-    trackXhr(lifeCycle, configuration as Configuration, tracerStub as Tracer)
+    ;({ stop: stopXhrTracking } = trackXhr(lifeCycle, configuration as Configuration, tracerStub as Tracer))
   })
 
   afterEach(() => {
-    resetXhrProxy()
+    stopXhrTracking()
     stubXhrManager.reset()
   })
 
