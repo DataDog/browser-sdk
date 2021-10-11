@@ -1,6 +1,6 @@
 import { stubXhr, withXhr } from '../../test/specHelper'
 import { Subscription } from '../tools/observable'
-import { initXhrObservable, XhrCompleteContext, XhrContext } from './xhrProxy'
+import { initXhrObservable, XhrCompleteContext, XhrContext } from './xhrObservable'
 
 describe('xhr proxy', () => {
   let requestsTrackingSubscription: Subscription
