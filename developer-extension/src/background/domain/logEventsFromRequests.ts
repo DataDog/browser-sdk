@@ -1,3 +1,4 @@
+import { intakeUrlPatterns } from '../intakeUrlPatterns'
 import { store } from '../store'
 
 const decoder = new TextDecoder('utf-8')
@@ -34,26 +35,10 @@ chrome.webRequest.onBeforeRequest.addListener(
     }
   },
   {
-    urls: [
-      // TODO: implement a configuration page to add more URLs in this list.
-      'https://*.browser-intake-datadoghq.com/*',
-      'https://*.browser-intake-datadoghq.eu/*',
-      'https://*.browser-intake-ddog-gov.com/*',
-      'https://*.browser-intake-us3-datadoghq.com/*',
-      ...classicIntakesUrlsForSite('datadoghq.com'),
-      ...classicIntakesUrlsForSite('datadoghq.eu'),
-    ],
+    urls: intakeUrlPatterns,
   },
   ['requestBody']
 )
-
-function classicIntakesUrlsForSite(site: string) {
-  return [
-    `https://public-trace-http-intake.logs.${site}/*`,
-    `https://rum-http-intake.logs.${site}/*`,
-    `https://browser-http-intake.logs.${site}/*`,
-  ]
-}
 
 function sortProperties<T extends unknown>(event: T): T {
   if (Array.isArray(event)) {

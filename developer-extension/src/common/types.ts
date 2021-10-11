@@ -14,4 +14,5 @@ export interface Store {
   useDevBundles: boolean
   useRumSlim: boolean
   logEventsFromRequests: boolean
+  blockIntakeRequests: boolean
 }
