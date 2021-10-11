@@ -237,7 +237,8 @@ deploy-prod-canary:
   stage: deploy:canary
   extends:
     - .base-configuration
-    - .main
+    - .tags
+  when: manual
   allow_failure: false
   script:
     - yarn
@@ -297,7 +298,7 @@ notify-prod-canary-success:
   stage: notify:canary
   extends:
     - .prepare_notification
-    - .main
+    - .tags
   script:
     - 'MESSAGE_TEXT=":rocket: $CI_PROJECT_NAME <$COMMIT_URL|$COMMIT_MESSAGE> deployed to :datadog:."'
     - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"

@@ -8,10 +8,10 @@ async function main() {
 }
 
 async function exportTestResult(type, folders) {
-  const ddCiApiKey = (await getSecretKey('ci.browser-sdk.datadog_ci_api_key')).trim()
+  const ddCiApiKey = await getSecretKey('ci.browser-sdk.datadog_ci_api_key')
 
   await executeCommand(
-    `npx @datadog/datadog-ci junit upload --service browser-sdk --env ci --tags type:${type} ${folders.join(' ')}`,
+    `yarn datadog-ci junit upload --service browser-sdk --env ci --tags type:${type} ${folders.join(' ')}`,
     { DATADOG_API_KEY: ddCiApiKey }
   )
 

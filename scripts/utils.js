@@ -2,7 +2,7 @@ const util = require('util')
 const execute = util.promisify(require('child_process').exec)
 const spawn = require('child_process').spawn
 
-function getSecretKey(name) {
+async function getSecretKey(name) {
   const awsParameters = [
     'ssm',
     'get-parameter',
@@ -13,7 +13,7 @@ function getSecretKey(name) {
     `--name=${name}`,
   ]
 
-  return executeCommand(`aws ${awsParameters.join(' ')}`)
+  return (await executeCommand(`aws ${awsParameters.join(' ')}`)).trim()
 }
 
 async function initGitConfig(repository) {
