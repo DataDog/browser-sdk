@@ -40,6 +40,7 @@ export function defineGlobal<Global, Name extends keyof Global>(global: Global, 
 export enum BuildMode {
   RELEASE = 'release',
   STAGING = 'staging',
+  CANARY = 'canary',
   E2E_TEST = 'e2e-test',
 }
 
