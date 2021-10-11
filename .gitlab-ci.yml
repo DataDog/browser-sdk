@@ -150,6 +150,8 @@ unit:
     - .base-configuration
     - .test-allowed-branches
   artifacts:
+    paths:
+      - test-report/unit/
     reports:
       junit: test-report/unit/*.xml
   script:
@@ -164,7 +166,7 @@ e2e:
   artifacts:
     when: always
     paths:
-      - test-report/e2e/specs.log
+      - test-report/e2e/
     reports:
       junit: test-report/e2e/*.xml
   script:
@@ -199,13 +201,23 @@ e2e-bs:
   resource_group: browserstack
   artifacts:
     when: always
+    paths:
+      - test-report/e2e-bs/
     reports:
       junit: test-report/e2e-bs/*.xml
-    paths:
-      - test-report/e2e-bs/specs.log
+
   script:
     - yarn
     - ./scripts/ci-bs.sh test:e2e
+
+export-test-result:
+  stage: notify
+  extends:
+    - .base-configuration
+    - .test-allowed-branches
+  when: always
+  script:
+    - node ./scripts/export-test-result.js
 
 ########################################################################################################################
 # Deploy
@@ -225,8 +237,7 @@ deploy-prod-canary:
   stage: deploy:canary
   extends:
     - .base-configuration
-    - .tags
-  when: manual
+    - .main
   allow_failure: false
   script:
     - yarn
@@ -286,7 +297,7 @@ notify-prod-canary-success:
   stage: notify:canary
   extends:
     - .prepare_notification
-    - .tags
+    - .main
   script:
     - 'MESSAGE_TEXT=":rocket: $CI_PROJECT_NAME <$COMMIT_URL|$COMMIT_MESSAGE> deployed to :datadog:."'
     - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
