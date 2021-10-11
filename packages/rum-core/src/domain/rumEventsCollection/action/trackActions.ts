@@ -14,7 +14,7 @@ import {
 import { ActionType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { EventCounts, trackEventCounts } from '../../trackEventCounts'
-import { IdlePageEvent, waitIdlePage } from '../../waitIdlePage'
+import { waitIdlePage } from '../../waitIdlePage'
 import { getActionNameFromElement } from './getActionNameFromElement'
 
 type AutoActionType = ActionType.CLICK
@@ -103,7 +103,14 @@ function startActionManagement(lifeCycle: LifeCycle, domMutationObservable: Obse
         lifeCycle,
         domMutationObservable,
         (event) => {
-          pendingAutoAction.complete(event)
+          const startTime = pendingAutoAction.startClocks.timeStamp
+          const duration = event.hadActivity ? elapsed(startTime, event.endClocks.timeStamp) : null
+
+          if (duration && duration > 0) {
+            pendingAutoAction.complete(duration)
+          } else {
+            pendingAutoAction.discard()
+          }
           currentAction = undefined
         },
         AUTO_ACTION_MAX_DURATION
@@ -120,8 +127,8 @@ function startActionManagement(lifeCycle: LifeCycle, domMutationObservable: Obse
 }
 
 class PendingAutoAction {
+  startClocks: ClocksState
   private id: string
-  private startClocks: ClocksState
   private eventCountsSubscription: { eventCounts: EventCounts; stop(): void }
 
   constructor(private lifeCycle: LifeCycle, private type: AutoActionType, private name: string, private event: Event) {
@@ -131,18 +138,7 @@ class PendingAutoAction {
     this.lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { id: this.id, startClocks: this.startClocks })
   }
 
-  complete(event: IdlePageEvent) {
-    if (!event.hadActivity) {
-      this.discard()
-      return
-    }
-
-    const duration = elapsed(this.startClocks.timeStamp, event.endClocks.timeStamp)
-    if (duration < 0) {
-      this.discard()
-      return
-    }
-
+  complete(duration: Duration) {
     const eventCounts = this.eventCountsSubscription.eventCounts
     this.lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
       counts: {

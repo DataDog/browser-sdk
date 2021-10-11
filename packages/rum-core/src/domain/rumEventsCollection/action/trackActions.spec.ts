@@ -128,7 +128,7 @@ describe('trackActions', () => {
 
   it('discards a pending action with a negative duration', () => {
     const { domMutationObservable, clock } = setupBuilder.build()
-    mockValidatedClickAction(domMutationObservable, clock, button, -BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+    mockValidatedClickAction(domMutationObservable, clock, button, -1)
     expect(createSpy).toHaveBeenCalled()
     clock.tick(EXPIRE_DELAY)
 
