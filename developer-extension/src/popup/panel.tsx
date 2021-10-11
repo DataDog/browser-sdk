@@ -4,7 +4,10 @@ import { sendAction } from './actions'
 import { useStore } from './useStore'
 
 export function Panel() {
-  const [{ useDevBundles, useRumSlim, logEventsFromRequests, devServerStatus }, setStore] = useStore()
+  const [
+    { useDevBundles, useRumSlim, logEventsFromRequests, devServerStatus, blockIntakeRequests },
+    setStore,
+  ] = useStore()
   return (
     <Stack alignY="top" padding="major-2" spacing="major-2">
       <Stack orientation="horizontal" verticalBelow="0" spacing="major-2" alignX="left" alignY="center">
@@ -28,6 +31,12 @@ export function Panel() {
         label="Log events"
         checked={logEventsFromRequests}
         onChange={(e) => setStore({ logEventsFromRequests: isChecked(e.target) })}
+      />
+
+      <Checkbox
+        label="Block intake requests"
+        checked={blockIntakeRequests}
+        onChange={(e) => setStore({ blockIntakeRequests: isChecked(e.target) })}
       />
 
       <Button onClick={() => sendAction('flushEvents', undefined)}>Flush buffered events</Button>

@@ -12,7 +12,7 @@
     "@types/react-dom": "16",
     "copy-webpack-plugin": "8.1.0",
     "html-webpack-plugin": "5.3.1",
-    "webpack-webextension-plugin": "0.3.0"
+    "webpack-webextension-plugin": "0.4.1"
   },
   "dependencies": {
     "bumbag": "1.6.12",
