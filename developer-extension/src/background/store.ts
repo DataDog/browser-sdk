@@ -6,6 +6,7 @@ export const store: Store = {
   logEventsFromRequests: true,
   useDevBundles: false,
   useRumSlim: false,
+  blockIntakeRequests: false,
 }
 
 export function setStore(newStore: Partial<Store>) {
