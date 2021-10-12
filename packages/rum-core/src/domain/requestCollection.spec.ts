@@ -1,11 +1,4 @@
-import {
-  Configuration,
-  DEFAULT_CONFIGURATION,
-  isIE,
-  RequestType,
-  resetFetchProxy,
-  resetXhrProxy,
-} from '@datadog/browser-core'
+import { Configuration, DEFAULT_CONFIGURATION, isIE, RequestType, resetXhrProxy } from '@datadog/browser-core'
 import { FetchStub, FetchStubManager, SPEC_ENDPOINTS, stubFetch, stubXhr, withXhr } from '../../../core/test/specHelper'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { RequestCompleteEvent, RequestStartEvent, trackFetch, trackXhr } from './requestCollection'
@@ -23,6 +16,7 @@ describe('collect fetch', () => {
   let fetchStubManager: FetchStubManager
   let startSpy: jasmine.Spy<(requestStartEvent: RequestStartEvent) => void>
   let completeSpy: jasmine.Spy<(requestCompleteEvent: RequestCompleteEvent) => void>
+  let stopFetchTracking: () => void
 
   beforeEach(() => {
     if (isIE()) {
@@ -42,7 +36,7 @@ describe('collect fetch', () => {
         context.spanId = new TraceIdentifier()
       },
     }
-    trackFetch(lifeCycle, configuration as Configuration, tracerStub as Tracer)
+    ;({ stop: stopFetchTracking } = trackFetch(lifeCycle, configuration as Configuration, tracerStub as Tracer))
 
     fetchStub = window.fetch as FetchStub
     window.onunhandledrejection = (ev: PromiseRejectionEvent) => {
@@ -51,8 +45,8 @@ describe('collect fetch', () => {
   })
 
   afterEach(() => {
+    stopFetchTracking()
     fetchStubManager.reset()
-    resetFetchProxy()
     window.onunhandledrejection = null
   })
 

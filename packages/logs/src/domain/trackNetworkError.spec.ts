@@ -37,8 +37,8 @@ describe('network error tracker', () => {
   })
 
   afterEach(() => {
-    fetchStubManager.reset()
     stopNetworkErrorTracking()
+    fetchStubManager.reset()
   })
 
   it('should track server error', (done) => {
