@@ -6,6 +6,7 @@ import {
   toServerDuration,
   Configuration,
   Observable,
+  isNumber,
   isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
 import { RecorderApi } from '../../../boot/rumPublicApi'
@@ -74,7 +75,7 @@ function processViewUpdate(
       name: view.name,
       largest_contentful_paint: toServerDuration(view.timings.largestContentfulPaint),
       load_event: toServerDuration(view.timings.loadEvent),
-      loading_time: toServerDuration(view.loadingTime),
+      loading_time: discardNegativeDuration(toServerDuration(view.loadingTime)),
       loading_type: view.loadingType,
       long_task: {
         count: view.eventCounts.longTaskCount,
@@ -111,4 +112,8 @@ function processViewUpdate(
           }
         : undefined,
   }
+}
+
+function discardNegativeDuration(duration: ServerDuration | undefined): ServerDuration | undefined {
+  return isNumber(duration) && duration < 0 ? undefined : duration
 }

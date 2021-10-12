@@ -1,14 +1,14 @@
 import {
   Configuration,
   Duration,
-  FetchCompleteContext,
-  FetchStartContext,
   RequestType,
-  startFetchProxy,
+  initFetchObservable,
   startXhrProxy,
   XhrCompleteContext,
   XhrStartContext,
   ClocksState,
+  FetchStartContext,
+  FetchCompleteContext,
 } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { isAllowedRequestUrl } from './rumEventsCollection/resource/resourceUtils'
@@ -89,39 +89,44 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: Configuration, tra
 }
 
 export function trackFetch(lifeCycle: LifeCycle, configuration: Configuration, tracer: Tracer) {
-  const fetchProxy = startFetchProxy<RumFetchStartContext, RumFetchCompleteContext>()
-  fetchProxy.beforeSend((context) => {
-    if (isAllowedRequestUrl(configuration, context.url)) {
-      tracer.traceFetch(context)
-      context.requestIndex = getNextRequestIndex()
+  const subscription = initFetchObservable().subscribe((rawContext) => {
+    const context = rawContext as RumFetchCompleteContext | RumFetchStartContext
+    if (!isAllowedRequestUrl(configuration, context.url)) {
+      return
+    }
 
-      lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
-        requestIndex: context.requestIndex,
-      })
+    switch (context.state) {
+      case 'start':
+        tracer.traceFetch(context)
+        context.requestIndex = getNextRequestIndex()
+
+        lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
+          requestIndex: context.requestIndex,
+        })
+        break
+      case 'complete':
+        tracer.clearTracingIfNeeded(context)
+
+        lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
+          duration: context.duration,
+          method: context.method,
+          requestIndex: context.requestIndex,
+          responseText: context.responseText,
+          responseType: context.responseType,
+          spanId: context.spanId,
+          startClocks: context.startClocks,
+          status: context.status,
+          traceId: context.traceId,
+          type: RequestType.FETCH,
+          url: context.url,
+          response: context.response,
+          init: context.init,
+          input: context.input,
+        })
+        break
     }
   })
-  fetchProxy.onRequestComplete((context) => {
-    if (isAllowedRequestUrl(configuration, context.url)) {
-      tracer.clearTracingIfNeeded(context)
-      lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
-        duration: context.duration,
-        method: context.method,
-        requestIndex: context.requestIndex,
-        responseText: context.responseText,
-        responseType: context.responseType,
-        spanId: context.spanId,
-        startClocks: context.startClocks,
-        status: context.status,
-        traceId: context.traceId,
-        type: RequestType.FETCH,
-        url: context.url,
-        response: context.response,
-        init: context.init,
-        input: context.input,
-      })
-    }
-  })
-  return fetchProxy
+  return { stop: () => subscription.unsubscribe() }
 }
 
 function getNextRequestIndex() {

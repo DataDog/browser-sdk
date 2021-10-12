@@ -3,14 +3,12 @@ import {
   Context,
   DOM_EVENT,
   Duration,
-  elapsed,
   generateUUID,
   ClocksState,
   clocksNow,
   Configuration,
   ONE_SECOND,
   Observable,
-  addMonitoringMessage,
 } from '@datadog/browser-core'
 import { ActionType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -104,8 +102,8 @@ function startActionManagement(lifeCycle: LifeCycle, domMutationObservable: Obse
         lifeCycle,
         domMutationObservable,
         (event) => {
-          if (event.hadActivity) {
-            pendingAutoAction.complete(event.endClocks)
+          if (event.hadActivity && event.duration >= 0) {
+            pendingAutoAction.complete(event.duration)
           } else {
             pendingAutoAction.discard()
           }
@@ -125,8 +123,8 @@ function startActionManagement(lifeCycle: LifeCycle, domMutationObservable: Obse
 }
 
 class PendingAutoAction {
+  startClocks: ClocksState
   private id: string
-  private startClocks: ClocksState
   private eventCountsSubscription: { eventCounts: EventCounts; stop(): void }
 
   constructor(private lifeCycle: LifeCycle, private type: AutoActionType, private name: string, private event: Event) {
@@ -136,20 +134,7 @@ class PendingAutoAction {
     this.lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { id: this.id, startClocks: this.startClocks })
   }
 
-  complete(endClocks: ClocksState) {
-    const actionDuration = elapsed(this.startClocks.timeStamp, endClocks.timeStamp)
-    if (actionDuration < 0) {
-      addMonitoringMessage('auto action with negative loading time', {
-        debug: {
-          actionDuration,
-          type: this.type,
-          name: this.name,
-          startClocks: this.startClocks,
-          endClocks,
-        },
-      })
-    }
-
+  complete(duration: Duration) {
     const eventCounts = this.eventCountsSubscription.eventCounts
     this.lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
       counts: {
@@ -157,7 +142,7 @@ class PendingAutoAction {
         longTaskCount: eventCounts.longTaskCount,
         resourceCount: eventCounts.resourceCount,
       },
-      duration: actionDuration,
+      duration,
       id: this.id,
       name: this.name,
       startClocks: this.startClocks,

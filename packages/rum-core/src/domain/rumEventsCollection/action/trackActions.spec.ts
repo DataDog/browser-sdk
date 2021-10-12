@@ -35,9 +35,14 @@ describe('trackActions', () => {
   let createSpy: jasmine.Spy
   let discardSpy: jasmine.Spy
 
-  function mockValidatedClickAction(domMutationObservable: Observable<void>, clock: Clock, target: HTMLElement) {
+  function mockValidatedClickAction(
+    domMutationObservable: Observable<void>,
+    clock: Clock,
+    target: HTMLElement,
+    actionDuration: number = BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY
+  ) {
     target.addEventListener(DOM_EVENT.CLICK, () => {
-      clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+      clock.tick(actionDuration)
       // Since we don't collect dom mutations for this test, manually dispatch one
       domMutationObservable.notify()
     })
@@ -117,6 +122,16 @@ describe('trackActions', () => {
     button.click()
 
     clock.tick(EXPIRE_DELAY)
+    expect(events).toEqual([])
+    expect(discardSpy).toHaveBeenCalled()
+  })
+
+  it('discards a pending action with a negative duration', () => {
+    const { domMutationObservable, clock } = setupBuilder.build()
+    mockValidatedClickAction(domMutationObservable, clock, button, -1)
+    expect(createSpy).toHaveBeenCalled()
+    clock.tick(EXPIRE_DELAY)
+
     expect(events).toEqual([])
     expect(discardSpy).toHaveBeenCalled()
   })

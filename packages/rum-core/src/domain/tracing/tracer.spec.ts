@@ -13,10 +13,10 @@ describe('tracer', () => {
     ...DEFAULT_CONFIGURATION,
     allowedTracingOrigins: [window.location.origin],
   }
-  const ALLOWED_DOMAIN_CONTEXT: Partial<RumXhrCompleteContext | RumFetchCompleteContext> = {
+  const ALLOWED_DOMAIN_CONTEXT: Partial<RumXhrCompleteContext | RumFetchStartContext> = {
     url: window.location.origin,
   }
-  const DISALLOWED_DOMAIN_CONTEXT: Partial<RumXhrCompleteContext | RumFetchCompleteContext> = {
+  const DISALLOWED_DOMAIN_CONTEXT: Partial<RumXhrCompleteContext | RumFetchStartContext> = {
     url: 'http://foo.com',
   }
   let setupBuilder: TestSetupBuilder
@@ -93,7 +93,7 @@ describe('tracer', () => {
     })
 
     it('should add traceId and spanId to context, and add tracing headers', () => {
-      const context: Partial<RumFetchCompleteContext> = { ...ALLOWED_DOMAIN_CONTEXT }
+      const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
       const tracer = startTracer(configuration as Configuration)
       tracer.traceFetch(context)
 
@@ -104,7 +104,7 @@ describe('tracer', () => {
 
     it('should preserve original request init', () => {
       const init = { method: 'POST' }
-      const context: Partial<RumFetchCompleteContext> = {
+      const context: Partial<RumFetchStartContext> = {
         ...ALLOWED_DOMAIN_CONTEXT,
         init,
       }
@@ -121,7 +121,7 @@ describe('tracer', () => {
       const headers = new Headers()
       headers.set('foo', 'bar')
 
-      const context: Partial<RumFetchCompleteContext> = {
+      const context: Partial<RumFetchStartContext> = {
         ...ALLOWED_DOMAIN_CONTEXT,
         init: { headers, method: 'POST' },
       }
@@ -167,7 +167,7 @@ describe('tracer', () => {
         ['foo', 'baz'],
       ]
 
-      const context: Partial<RumFetchCompleteContext> = {
+      const context: Partial<RumFetchStartContext> = {
         ...ALLOWED_DOMAIN_CONTEXT,
         init: { headers, method: 'POST' },
       }
@@ -195,7 +195,7 @@ describe('tracer', () => {
         },
       })
 
-      const context: Partial<RumFetchCompleteContext> = {
+      const context: Partial<RumFetchStartContext> = {
         ...ALLOWED_DOMAIN_CONTEXT,
         input: request,
       }
@@ -213,7 +213,7 @@ describe('tracer', () => {
     })
 
     it('should ignore headers from a Request instance if other headers are set', () => {
-      const context: Partial<RumFetchCompleteContext> = {
+      const context: Partial<RumFetchStartContext> = {
         ...ALLOWED_DOMAIN_CONTEXT,
         init: { headers: { 'x-init-header': 'baz' } },
         input: new Request(document.location.origin, {
@@ -231,7 +231,7 @@ describe('tracer', () => {
     })
 
     it('should not trace request on disallowed domain', () => {
-      const context: Partial<RumFetchCompleteContext> = { ...DISALLOWED_DOMAIN_CONTEXT }
+      const context: Partial<RumFetchStartContext> = { ...DISALLOWED_DOMAIN_CONTEXT }
 
       const tracer = startTracer(configuration as Configuration)
       tracer.traceFetch(context)
@@ -246,8 +246,8 @@ describe('tracer', () => {
         ...configuration,
         allowedTracingOrigins: [/^https?:\/\/qux\.com.*/, 'http://bar.com'],
       }
-      const quxDomainContext: Partial<RumFetchCompleteContext> = { url: 'http://qux.com' }
-      const barDomainContext: Partial<RumFetchCompleteContext> = { url: 'http://bar.com' }
+      const quxDomainContext: Partial<RumFetchStartContext> = { url: 'http://qux.com' }
+      const barDomainContext: Partial<RumFetchStartContext> = { url: 'http://bar.com' }
 
       const tracer = startTracer(configurationWithTracingUrls as Configuration)
 
