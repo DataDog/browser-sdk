@@ -1,7 +1,7 @@
 variables:
-  CURRENT_STAGING: staging-41
+  CURRENT_STAGING: staging-42
   APP: 'browser-sdk'
-  CURRENT_CI_IMAGE: 25
+  CURRENT_CI_IMAGE: 26
   BUILD_STABLE_REGISTRY: '486234852809.dkr.ecr.us-east-1.amazonaws.com'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
@@ -33,6 +33,20 @@ stages:
 # Branch selection helpers
 ########################################################################################################################
 
+.test-allowed-branches:
+  except:
+    refs:
+      - /^release\//
+      - schedules
+
+.bs-allowed-branches:
+  except:
+    refs:
+      - main
+      - /^staging-[0-9]+$/
+      - /^release\//
+      - schedules
+
 .feature-branches:
   except:
     refs:
@@ -54,17 +68,13 @@ stages:
   except:
     refs:
       - schedules
+    variables:
+      - $CI_COMMIT_TITLE =~ /^v[0-9.]+/
 
 .tags:
   only:
     refs:
       - tags
-
-.test-allowed-branches:
-  except:
-    refs:
-      - /^release\//
-      - schedules
 
 ########################################################################################################################
 # CI image
@@ -142,6 +152,8 @@ unit:
     - .base-configuration
     - .test-allowed-branches
   artifacts:
+    paths:
+      - test-report/unit/
     reports:
       junit: test-report/unit/*.xml
   script:
@@ -156,7 +168,7 @@ e2e:
   artifacts:
     when: always
     paths:
-      - test-report/e2e/specs.log
+      - test-report/e2e/
     reports:
       junit: test-report/e2e/*.xml
   script:
@@ -174,7 +186,7 @@ unit-bs:
   stage: browserstack
   extends:
     - .base-configuration
-    - .feature-branches
+    - .bs-allowed-branches
   resource_group: browserstack
   artifacts:
     reports:
@@ -187,17 +199,27 @@ e2e-bs:
   stage: browserstack
   extends:
     - .base-configuration
-    - .feature-branches
+    - .bs-allowed-branches
   resource_group: browserstack
   artifacts:
     when: always
+    paths:
+      - test-report/e2e-bs/
     reports:
       junit: test-report/e2e-bs/*.xml
-    paths:
-      - test-report/e2e-bs/specs.log
+
   script:
     - yarn
     - ./scripts/ci-bs.sh test:e2e
+
+export-test-result:
+  stage: notify
+  extends:
+    - .base-configuration
+    - .test-allowed-branches
+  when: always
+  script:
+    - node ./scripts/export-test-result.js
 
 ########################################################################################################################
 # Deploy
@@ -217,12 +239,10 @@ deploy-prod-canary:
   stage: deploy:canary
   extends:
     - .base-configuration
-    - .tags
-  when: manual
-  allow_failure: false
+    - .main
   script:
     - yarn
-    - BUILD_MODE=release yarn build:bundle
+    - BUILD_MODE=canary yarn build:bundle
     - ./scripts/deploy.sh prod canary
 
 deploy-prod-stable:
@@ -278,7 +298,7 @@ notify-prod-canary-success:
   stage: notify:canary
   extends:
     - .prepare_notification
-    - .tags
+    - .main
   script:
     - 'MESSAGE_TEXT=":rocket: $CI_PROJECT_NAME <$COMMIT_URL|$COMMIT_MESSAGE> deployed to :datadog:."'
     - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
@@ -288,7 +308,7 @@ notify-prod-canary-failure:
   stage: notify:canary
   extends:
     - .prepare_notification
-    - .tags
+    - .main
   when: on_failure
   script:
     - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME release pipeline <$BUILD_URL|$COMMIT_MESSAGE> failed."'
