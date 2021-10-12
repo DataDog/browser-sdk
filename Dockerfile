@@ -41,6 +41,9 @@ RUN apt-get install -y -q --no-install-recommends jq
 # Node fsevents deps
 RUN apt-get install -y -q --no-install-recommends g++ build-essential
 
+# Datadog CI cli
+RUN yarn global add @datadog/datadog-ci
+
 # Webdriverio deps
 RUN mkdir -p /usr/share/man/man1
 

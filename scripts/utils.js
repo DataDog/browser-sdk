@@ -2,7 +2,7 @@ const util = require('util')
 const execute = util.promisify(require('child_process').exec)
 const spawn = require('child_process').spawn
 
-function getSecretKey(name) {
+async function getSecretKey(name) {
   const awsParameters = [
     'ssm',
     'get-parameter',
@@ -13,7 +13,7 @@ function getSecretKey(name) {
     `--name=${name}`,
   ]
 
-  return executeCommand(`aws ${awsParameters.join(' ')}`)
+  return (await executeCommand(`aws ${awsParameters.join(' ')}`)).trim()
 }
 
 async function initGitConfig(repository) {
@@ -28,9 +28,10 @@ async function initGitConfig(repository) {
   await executeCommand(`git remote set-url origin ${repository}`)
 }
 
-async function executeCommand(command) {
+async function executeCommand(command, envVariables) {
   const commandResult = await execute(command, {
     shell: '/bin/bash',
+    env: { ...process.env, ...envVariables },
   })
   if (commandResult.error && commandResult.error.code !== 0) {
     throw commandResult.error
@@ -68,6 +69,7 @@ function printLog(...params) {
 }
 
 module.exports = {
+  getSecretKey,
   initGitConfig,
   executeCommand,
   spawnCommand,
