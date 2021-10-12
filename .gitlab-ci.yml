@@ -68,6 +68,8 @@ stages:
   except:
     refs:
       - schedules
+    variables:
+      - $CI_COMMIT_TITLE =~ /^v[0-9.]+/
 
 .tags:
   only:
@@ -225,12 +227,10 @@ deploy-prod-canary:
   stage: deploy:canary
   extends:
     - .base-configuration
-    - .tags
-  when: manual
-  allow_failure: false
+    - .main
   script:
     - yarn
-    - BUILD_MODE=release yarn build:bundle
+    - BUILD_MODE=canary yarn build:bundle
     - ./scripts/deploy.sh prod canary
 
 deploy-prod-stable:
@@ -286,7 +286,7 @@ notify-prod-canary-success:
   stage: notify:canary
   extends:
     - .prepare_notification
-    - .tags
+    - .main
   script:
     - 'MESSAGE_TEXT=":rocket: $CI_PROJECT_NAME <$COMMIT_URL|$COMMIT_MESSAGE> deployed to :datadog:."'
     - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
@@ -296,7 +296,7 @@ notify-prod-canary-failure:
   stage: notify:canary
   extends:
     - .prepare_notification
-    - .tags
+    - .main
   when: on_failure
   script:
     - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME release pipeline <$BUILD_URL|$COMMIT_MESSAGE> failed."'
