@@ -102,7 +102,7 @@ function startActionManagement(lifeCycle: LifeCycle, domMutationObservable: Obse
         lifeCycle,
         domMutationObservable,
         (event) => {
-          if (event.hadActivity && event.duration > 0) {
+          if (event.hadActivity && event.duration >= 0) {
             pendingAutoAction.complete(event.duration)
           } else {
             pendingAutoAction.discard()
