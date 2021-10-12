@@ -1,4 +1,4 @@
-import { Observable, ONE_SECOND, TimeStamp, timeStampNow } from '@datadog/browser-core'
+import { Observable, ONE_SECOND } from '@datadog/browser-core'
 import { Clock, mockClock } from '@datadog/browser-core/test/specHelper'
 import { RumPerformanceNavigationTiming, RumPerformanceResourceTiming } from '../browser/performanceCollection'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
@@ -166,7 +166,6 @@ describe('doWaitIdlePage', () => {
   it('should collect an event that is followed by page activity', () => {
     const activityObservable = new Observable<PageActivityEvent>()
 
-    const startTime = timeStampNow()
     doWaitIdlePage(activityObservable, idlPageActivityCallbackSpy)
 
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
@@ -176,18 +175,13 @@ describe('doWaitIdlePage', () => {
 
     expect(idlPageActivityCallbackSpy).toHaveBeenCalledOnceWith({
       hadActivity: true,
-      endClocks: {
-        // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-        timeStamp: (startTime + BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY) as TimeStamp,
-        relative: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY,
-      },
+      duration: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY,
     })
   })
 
   describe('extend with activities', () => {
     it('is extended while there is page activities', () => {
       const activityObservable = new Observable<PageActivityEvent>()
-      const startTime = timeStampNow()
       // Extend the action 10 times
       const extendCount = 10
 
@@ -200,21 +194,15 @@ describe('doWaitIdlePage', () => {
 
       clock.tick(EXPIRE_DELAY)
 
-      const relative = extendCount * BEFORE_PAGE_ACTIVITY_END_DELAY
       expect(idlPageActivityCallbackSpy).toHaveBeenCalledOnceWith({
         hadActivity: true,
-        endClocks: {
-          // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-          timeStamp: (startTime + relative) as TimeStamp,
-          relative,
-        },
+        duration: extendCount * BEFORE_PAGE_ACTIVITY_END_DELAY,
       })
     })
 
     it('expires after a maximum duration', () => {
       const activityObservable = new Observable<PageActivityEvent>()
       let stop = false
-      const startTime = timeStampNow()
 
       // Extend the action until it's more than MAX_DURATION
       const extendCount = Math.ceil(MAX_DURATION / BEFORE_PAGE_ACTIVITY_END_DELAY + 1)
@@ -233,11 +221,7 @@ describe('doWaitIdlePage', () => {
 
       expect(idlPageActivityCallbackSpy).toHaveBeenCalledOnceWith({
         hadActivity: true,
-        endClocks: {
-          // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-          timeStamp: (startTime + MAX_DURATION) as TimeStamp,
-          relative: MAX_DURATION,
-        },
+        duration: MAX_DURATION,
       })
     })
   })
@@ -245,7 +229,6 @@ describe('doWaitIdlePage', () => {
   describe('busy activities', () => {
     it('is extended while the page is busy', () => {
       const activityObservable = new Observable<PageActivityEvent>()
-      const startTime = timeStampNow()
       doWaitIdlePage(activityObservable, idlPageActivityCallbackSpy)
 
       clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
@@ -256,20 +239,14 @@ describe('doWaitIdlePage', () => {
 
       clock.tick(EXPIRE_DELAY)
 
-      const relative = BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY + PAGE_ACTIVITY_END_DELAY * 2
       expect(idlPageActivityCallbackSpy).toHaveBeenCalledOnceWith({
         hadActivity: true,
-        endClocks: {
-          // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-          timeStamp: (startTime + relative) as TimeStamp,
-          relative,
-        },
+        duration: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY + PAGE_ACTIVITY_END_DELAY * 2,
       })
     })
 
     it('expires is the page is busy for too long', () => {
       const activityObservable = new Observable<PageActivityEvent>()
-      const startTime = timeStampNow()
       doWaitIdlePage(activityObservable, idlPageActivityCallbackSpy, MAX_DURATION)
 
       clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
@@ -279,11 +256,7 @@ describe('doWaitIdlePage', () => {
 
       expect(idlPageActivityCallbackSpy).toHaveBeenCalledOnceWith({
         hadActivity: true,
-        endClocks: {
-          // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-          timeStamp: (startTime + MAX_DURATION) as TimeStamp,
-          relative: MAX_DURATION,
-        },
+        duration: MAX_DURATION,
       })
     })
   })

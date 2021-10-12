@@ -1,4 +1,4 @@
-import { clocksNow, ClocksState, monitor, Observable, Subscription } from '@datadog/browser-core'
+import { Duration, elapsed, monitor, Observable, Subscription, timeStampNow } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
 // Delay to wait for a page activity to validate the tracking process
@@ -10,7 +10,7 @@ export interface PageActivityEvent {
   isBusy: boolean
 }
 
-export type IdlePageEvent = { hadActivity: true; endClocks: ClocksState } | { hadActivity: false }
+export type IdlePageEvent = { hadActivity: true; duration: Duration } | { hadActivity: false }
 
 /**
  * Wait for the next idle page time
@@ -59,6 +59,7 @@ export function doWaitIdlePage(
 ) {
   let idleTimeoutId: number
   let hasCompleted = false
+  const startTime = timeStampNow()
 
   const validationTimeoutId = setTimeout(
     monitor(() => complete({ hadActivity: false })),
@@ -67,17 +68,17 @@ export function doWaitIdlePage(
   const maxDurationTimeoutId =
     maxDuration &&
     setTimeout(
-      monitor(() => complete({ hadActivity: true, endClocks: clocksNow() })),
+      monitor(() => complete({ hadActivity: true, duration: elapsed(startTime, timeStampNow()) })),
       maxDuration
     )
 
   const pageActivitySubscription = pageActivityObservable.subscribe(({ isBusy }) => {
     clearTimeout(validationTimeoutId)
     clearTimeout(idleTimeoutId)
-    const lastChangeTime = clocksNow()
+    const lastChangeTime = timeStampNow()
     if (!isBusy) {
       idleTimeoutId = setTimeout(
-        monitor(() => complete({ hadActivity: true, endClocks: lastChangeTime })),
+        monitor(() => complete({ hadActivity: true, duration: elapsed(startTime, lastChangeTime) })),
         PAGE_ACTIVITY_END_DELAY
       )
     }
