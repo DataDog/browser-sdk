@@ -3,7 +3,6 @@ import {
   Context,
   DOM_EVENT,
   Duration,
-  elapsed,
   generateUUID,
   ClocksState,
   clocksNow,
@@ -103,11 +102,8 @@ function startActionManagement(lifeCycle: LifeCycle, domMutationObservable: Obse
         lifeCycle,
         domMutationObservable,
         (event) => {
-          const startTime = pendingAutoAction.startClocks.timeStamp
-          const duration = event.hadActivity ? elapsed(startTime, event.endClocks.timeStamp) : null
-
-          if (duration && duration > 0) {
-            pendingAutoAction.complete(duration)
+          if (event.hadActivity && event.duration > 0) {
+            pendingAutoAction.complete(event.duration)
           } else {
             pendingAutoAction.discard()
           }
