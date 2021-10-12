@@ -33,7 +33,7 @@ export type FetchContext = FetchStartContext | FetchCompleteContext
 
 let fetchObservable: Observable<FetchContext> | undefined
 
-export function getFetchObservable() {
+export function initFetchObservable() {
   if (!fetchObservable) {
     fetchObservable = createFetchObservable()
   }
