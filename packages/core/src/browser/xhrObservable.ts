@@ -1,5 +1,5 @@
-import { callMonitored, monitor } from '../domain/internalMonitoring'
-import { instrumentMethod } from '../tools/instrumentMethod'
+import { monitor } from '../domain/internalMonitoring'
+import { instrumentMethodAndCallOriginal } from '../tools/instrumentMethod'
 import { Observable } from '../tools/observable'
 import { Duration, elapsed, relativeNow, RelativeTime, ClocksState, clocksNow, timeStampNow } from '../tools/timeUtils'
 import { normalizeUrl } from '../tools/urlPolyfill'
@@ -50,35 +50,19 @@ export function initXhrObservable() {
 
 function createXhrObservable() {
   const observable = new Observable<XhrContext>(() => {
-    const { stop: stopInstrumentingStart } = instrumentMethod(
-      XMLHttpRequest.prototype,
-      'open',
-      (original) =>
-        function (method, url) {
-          callMonitored(openXhr, this, [method, url])
-          return original.apply(this, arguments as any)
-        }
-    )
+    const { stop: stopInstrumentingStart } = instrumentMethodAndCallOriginal(XMLHttpRequest.prototype, 'open', {
+      before: openXhr,
+    })
 
-    const { stop: stopInstrumentingSend } = instrumentMethod(
-      XMLHttpRequest.prototype,
-      'send',
-      (original) =>
-        function () {
-          callMonitored(sendXhr, this, [observable])
-          return original.apply(this, arguments as any)
-        }
-    )
+    const { stop: stopInstrumentingSend } = instrumentMethodAndCallOriginal(XMLHttpRequest.prototype, 'send', {
+      before() {
+        sendXhr.call(this, observable)
+      },
+    })
 
-    const { stop: stopInstrumentingAbort } = instrumentMethod(
-      XMLHttpRequest.prototype,
-      'abort',
-      (original) =>
-        function () {
-          callMonitored(abortXhr, this, [])
-          return original.apply(this, arguments as any)
-        }
-    )
+    const { stop: stopInstrumentingAbort } = instrumentMethodAndCallOriginal(XMLHttpRequest.prototype, 'abort', {
+      before: abortXhr,
+    })
 
     return () => {
       stopInstrumentingStart()
