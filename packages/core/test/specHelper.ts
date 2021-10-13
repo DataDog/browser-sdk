@@ -189,7 +189,7 @@ class StubEventEmitter {
   }
 }
 
-export class StubXhr extends StubEventEmitter {
+class StubXhr extends StubEventEmitter {
   public response: string | undefined = undefined
   public status: number | undefined = undefined
   public readyState: number = XMLHttpRequest.UNSENT
