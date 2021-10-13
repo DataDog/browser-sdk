@@ -1,11 +1,11 @@
 import { Configuration, getOrigin, objectEntries } from '@datadog/browser-core'
-import { RumSession } from '@datadog/browser-rum-core'
 import {
   RumFetchCompleteContext,
   RumFetchStartContext,
   RumXhrCompleteContext,
   RumXhrStartContext,
 } from '../requestCollection'
+import { RumSession } from '../rumSession'
 
 export interface Tracer {
   traceFetch: (context: Partial<RumFetchStartContext>) => void
