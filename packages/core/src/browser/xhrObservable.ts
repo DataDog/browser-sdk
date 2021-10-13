@@ -97,27 +97,22 @@ function sendXhr(this: BrowserXHR<XhrStartContext>, observable: Observable<XhrCo
   startContext.xhr = this
 
   let hasBeenReported = false
-  const originalOnreadystatechange = this.onreadystatechange
-  const onreadystatechange = function (this: BrowserXHR<XhrStartContext>) {
-    if (this.readyState === XMLHttpRequest.DONE) {
-      // Try to report the XHR as soon as possible, because the XHR may be mutated by the
-      // application during a future event. For example, Angular is calling .abort() on
-      // completed requests during a onreadystatechange event, so the status becomes '0'
-      // before the request is collected.
-      onEnd()
-    }
 
-    if (originalOnreadystatechange) {
-      originalOnreadystatechange.apply(this, arguments as any)
-    }
-  }
+  const { stop: stopInstrumentingOnReadyStateChange } = instrumentMethodAndCallOriginal(this, 'onreadystatechange', {
+    before() {
+      if (this.readyState === XMLHttpRequest.DONE) {
+        // Try to report the XHR as soon as possible, because the XHR may be mutated by the
+        // application during a future event. For example, Angular is calling .abort() on
+        // completed requests during a onreadystatechange event, so the status becomes '0'
+        // before the request is collected.
+        onEnd()
+      }
+    },
+  })
 
   const onEnd = monitor(() => {
     this.removeEventListener('loadend', onEnd)
-    // if the onreadystatechange hasn't been overridden by the user after the send()
-    if (this.onreadystatechange === onreadystatechange) {
-      this.onreadystatechange = originalOnreadystatechange
-    }
+    stopInstrumentingOnReadyStateChange()
     if (hasBeenReported) {
       return
     }
@@ -130,7 +125,6 @@ function sendXhr(this: BrowserXHR<XhrStartContext>, observable: Observable<XhrCo
     completeContext.status = this.status
     observable.notify({ ...completeContext })
   })
-  this.onreadystatechange = onreadystatechange
   this.addEventListener('loadend', onEnd)
   observable.notify(startContext)
 }
