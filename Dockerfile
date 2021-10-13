@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y -q --no-install-recommends \
 
 # Download and install Chrome
 # Debian taken from https://www.ubuntuupdates.org/package/google_chrome/stable/main/base/google-chrome-stable
-RUN curl --silent --show-error --fail http://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_92.0.4515.107-1_amd64.deb --output google-chrome.deb \
+RUN curl --silent --show-error --fail http://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_94.0.4606.81-1_amd64.deb --output google-chrome.deb \
     && dpkg -i google-chrome.deb \
     && rm google-chrome.deb
 
@@ -40,6 +40,9 @@ RUN apt-get install -y -q --no-install-recommends jq
 
 # Node fsevents deps
 RUN apt-get install -y -q --no-install-recommends g++ build-essential
+
+# Datadog CI cli
+RUN yarn global add @datadog/datadog-ci
 
 # Webdriverio deps
 RUN mkdir -p /usr/share/man/man1
