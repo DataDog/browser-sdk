@@ -312,3 +312,18 @@ export function setUserAgent(ua: string) {
 export function restoreUserAgent() {
   delete (navigator as any).userAgent
 }
+
+/**
+ * Opt out of jasmine uncaught error interception during test. This is useful for tests that are
+ * instrumenting `window.onerror`. See https://github.com/jasmine/jasmine/pull/1860 for more
+ * information.
+ */
+export function disableJasmineUncaughtErrorHandler() {
+  const originalErrorHandler = window.onerror
+  window.onerror = null
+  return {
+    reset: () => {
+      window.onerror = originalErrorHandler
+    },
+  }
+}

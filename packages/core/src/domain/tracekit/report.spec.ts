@@ -1,15 +1,19 @@
-import { report, subscribe, unsubscribe, traceKitWindowOnError } from './report'
+import { disableJasmineUncaughtErrorHandler } from '../../../test/specHelper'
+import { subscribe, unsubscribe, traceKitWindowOnError } from './report'
 import { Handler } from './types'
 
-describe('report', () => {
-  const testMessage = '__mocha_ignore__'
+describe('traceKitWindowOnError', () => {
   const testLineNo = 1337
 
   let subscriptionHandler: Handler | undefined
+  let resetJasmineUncaughtErrorHandler: () => void
 
   beforeEach(() => {
-    // do not fail specs due to error being rethrown
-    window.onerror = jasmine.createSpy()
+    ;({ reset: resetJasmineUncaughtErrorHandler } = disableJasmineUncaughtErrorHandler())
+  })
+
+  afterEach(() => {
+    resetJasmineUncaughtErrorHandler()
   })
 
   describe('with undefined arguments', () => {
@@ -98,57 +102,6 @@ describe('report', () => {
       }
       subscribe(subscriptionHandler)
       traceKitWindowOnError({ foo: 'bar' } as any)
-    })
-  })
-
-  function testErrorNotification(callOnError: boolean, numReports: number, done: DoneFn) {
-    let numDone = 0
-
-    subscriptionHandler = () => {
-      numDone += 1
-      if (numDone === numReports) {
-        unsubscribe(subscriptionHandler!)
-        done()
-      }
-    }
-    subscribe(subscriptionHandler)
-
-    // report always throws an exception in order to trigger
-    // window.onerror so it can gather more stack data. Mocha treats
-    // uncaught exceptions as errors, so we catch it via assert.throws
-    // here (and manually call window.onerror later if appropriate).
-    //
-    // We test multiple reports because TraceKit has special logic for when
-    // report() is called a second time before either a timeout elapses or
-    // window.onerror is called (which is why we always call window.onerror
-    // only once below, after all calls to report()).
-    for (let i = 0; i < numReports; i += 1) {
-      const e = new Error('testing')
-      expect(() => {
-        report(e)
-      }).toThrow(e)
-    }
-    // The call to report should work whether or not window.onerror is
-    // triggered, so we parameterize it for the tests. We only call it
-    // once, regardless of numReports, because the case we want to test for
-    // multiple reports is when window.onerror is *not* called between them.
-    if (callOnError) {
-      traceKitWindowOnError(testMessage)
-    }
-  }
-
-  ;[false, true].forEach((callOnError) => {
-    ;[1, 2].forEach((numReports) => {
-      let title = 'it should receive arguments from report() when'
-      title += ` callOnError is ${String(callOnError)}`
-      title += ` and numReports is ${numReports}`
-      it(
-        title,
-        (done) => {
-          testErrorNotification(callOnError, numReports, done)
-        },
-        5000
-      )
     })
   })
 })

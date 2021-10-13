@@ -1,7 +1,18 @@
-import { report, subscribe, unsubscribe } from './report'
+import { disableJasmineUncaughtErrorHandler } from '../../../test/specHelper'
+import { subscribe, unsubscribe } from './report'
 import { StackFrame } from './types'
 
 describe('Handler', () => {
+  let resetJasmineUncaughtErrorHandler: () => void
+
+  beforeEach(() => {
+    ;({ reset: resetJasmineUncaughtErrorHandler } = disableJasmineUncaughtErrorHandler())
+  })
+
+  afterEach(() => {
+    resetJasmineUncaughtErrorHandler()
+  })
+
   it('it should not go into an infinite loop', (done) => {
     const stacks = []
 
@@ -9,12 +20,11 @@ describe('Handler', () => {
       stacks.push(stackInfo)
     }
 
-    function throwException() {
-      throw new Error('Boom!')
-    }
-
     subscribe(handler)
-    expect(() => wrap(throwException)()).toThrowError()
+
+    setTimeout(() => {
+      throw new Error('expected error')
+    })
 
     setTimeout(() => {
       unsubscribe(handler)
@@ -26,14 +36,13 @@ describe('Handler', () => {
   it('should get extra arguments (isWindowError and exception)', (done) => {
     const handler = jasmine.createSpy()
 
-    const exception = new Error('Boom!')
-
-    function throwException() {
-      throw exception
-    }
+    const exception = new Error('expected error')
 
     subscribe(handler)
-    expect(() => wrap(throwException)()).toThrowError()
+
+    setTimeout(() => {
+      throw exception
+    })
 
     setTimeout(() => {
       unsubscribe(handler)
@@ -41,7 +50,7 @@ describe('Handler', () => {
       expect(handler).toHaveBeenCalledTimes(1)
 
       const isWindowError = handler.calls.mostRecent().args[1]
-      expect(isWindowError).toEqual(false)
+      expect(isWindowError).toEqual(true)
 
       const e = handler.calls.mostRecent().args[2]
       expect(e).toEqual(exception)
@@ -50,15 +59,3 @@ describe('Handler', () => {
     }, 1000)
   })
 })
-
-function wrap<Args extends any[], R>(func: (...args: Args) => R) {
-  function wrapped(this: unknown, ...args: Args) {
-    try {
-      return func.apply(this, args)
-    } catch (e) {
-      report(e)
-      throw e
-    }
-  }
-  return wrapped
-}
