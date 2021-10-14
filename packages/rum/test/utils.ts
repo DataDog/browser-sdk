@@ -44,7 +44,7 @@ export class MockWorker implements DeflateWorker {
   }
 
   get pendingData() {
-    return this.pendingMessages.map((message) => message.data || '').join('')
+    return this.pendingMessages.map((message) => ('data' in message ? message.data : '')).join('')
   }
 
   get listenersCount() {
@@ -74,9 +74,9 @@ export class MockWorker implements DeflateWorker {
           this.listeners.forEach((listener) =>
             listener({
               data: {
+                type: 'wrote',
                 id: message.id,
                 compressedSize: uint8ArraysSize(this.deflatedData),
-                rawSize: this.rawSize,
                 additionalRawSize: encodedData.length,
               },
             })
@@ -86,6 +86,7 @@ export class MockWorker implements DeflateWorker {
           this.listeners.forEach((listener) =>
             listener({
               data: {
+                type: 'flushed',
                 id: message.id,
                 result: mergeUint8Arrays(this.deflatedData),
                 rawSize: this.rawSize,

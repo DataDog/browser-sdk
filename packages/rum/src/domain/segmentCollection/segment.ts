@@ -33,13 +33,13 @@ export class Segment {
     replayStats.addRecord(viewId)
 
     const listener: DeflateWorkerListener = monitor(({ data }) => {
-      if ('error' in data) {
+      if (data.type === 'error') {
         return
       }
 
       if (data.id === this.id) {
         replayStats.addWroteData(viewId, data.additionalRawSize)
-        if ('result' in data) {
+        if (data.type === 'flushed') {
           onFlushed(data.result, data.rawSize)
           worker.removeEventListener('message', listener)
         } else {

@@ -22,7 +22,7 @@ export function getDeflateWorkerSingleton() {
     workerSingleton.addEventListener(
       'message',
       monitor(({ data }) => {
-        if ('error' in data) {
+        if (data.type === 'error') {
           addErrorToMonitoringBatch(data.error)
         }
       })

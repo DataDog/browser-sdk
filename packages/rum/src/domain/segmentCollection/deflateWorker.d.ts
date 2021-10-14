@@ -23,14 +23,19 @@ export type DeflateWorkerAction =
 
 export type DeflateWorkerResponse =
   | {
+      type: 'wrote'
       id: number
       compressedSize: number
       additionalRawSize: number
     }
   | {
+      type: 'flushed'
       id: number
       result: Uint8Array
       additionalRawSize: number
       rawSize: number
     }
-  | { error: Error | string }
+  | {
+      type: 'error'
+      error: Error | string
+    }
