@@ -20,6 +20,11 @@ function workerCodeFn() {
       monitor((event) => {
         const data = event.data
         switch (data.action) {
+          case 'init':
+            self.postMessage({
+              type: 'ready',
+            })
+            break
           case 'write':
             const additionalRawSize = pushData(data.data)
             self.postMessage({

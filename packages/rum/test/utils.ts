@@ -71,38 +71,57 @@ export class MockWorker implements DeflateWorker {
   processNextMessage(): void {
     const message = this.pendingMessages.shift()
     if (message) {
-      const encodedData = new TextEncoder().encode(message.data)
-      this.rawSize += encodedData.length
-      // In the mock worker, for simplicity, we'll just use the UTF-8 encoded string instead of deflating it.
-      this.deflatedData.push(encodedData)
+      const pushData = (data?: string) => {
+        const encodedData = new TextEncoder().encode(data)
+        this.rawSize += encodedData.length
+        // In the mock worker, for simplicity, we'll just use the UTF-8 encoded string instead of deflating it.
+        this.deflatedData.push(encodedData)
+        return encodedData.length
+      }
 
       switch (message.action) {
-        case 'write':
+        case 'init':
           this.listeners.message.forEach((listener) =>
             listener({
               data: {
-                type: 'wrote',
-                id: message.id,
-                compressedSize: uint8ArraysSize(this.deflatedData),
-                additionalRawSize: encodedData.length,
+                type: 'ready',
               },
             })
           )
           break
+        case 'write':
+          {
+            const additionalRawSize = pushData(message.data)
+            this.listeners.message.forEach((listener) =>
+              listener({
+                data: {
+                  type: 'wrote',
+                  id: message.id,
+                  compressedSize: uint8ArraysSize(this.deflatedData),
+                  additionalRawSize,
+                },
+              })
+            )
+          }
+          break
         case 'flush':
-          this.listeners.message.forEach((listener) =>
-            listener({
-              data: {
-                type: 'flushed',
-                id: message.id,
-                result: mergeUint8Arrays(this.deflatedData),
-                rawSize: this.rawSize,
-                additionalRawSize: encodedData.length,
-              },
-            })
-          )
-          this.deflatedData.length = 0
-          this.rawSize = 0
+          {
+            const additionalRawSize = pushData(message.data)
+            this.listeners.message.forEach((listener) =>
+              listener({
+                data: {
+                  type: 'flushed',
+                  id: message.id,
+                  result: mergeUint8Arrays(this.deflatedData),
+                  rawSize: this.rawSize,
+                  additionalRawSize,
+                },
+              })
+            )
+            this.deflatedData.length = 0
+            this.rawSize = 0
+          }
+          break
       }
     }
   }
