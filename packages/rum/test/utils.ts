@@ -19,19 +19,26 @@ export class MockWorker implements DeflateWorker {
   readonly pendingMessages: DeflateWorkerAction[] = []
   private rawSize = 0
   private deflatedData: Uint8Array[] = []
-  private listeners: DeflateWorkerListener[] = []
+  private listeners: {
+    message: DeflateWorkerListener[]
+    error: Array<(error: unknown) => void>
+  } = { message: [], error: [] }
 
-  addEventListener(_: 'message', listener: DeflateWorkerListener): void {
-    const index = this.listeners.indexOf(listener)
+  addEventListener(eventName: 'message', listener: DeflateWorkerListener): void
+  addEventListener(eventName: 'error', listener: (error: ErrorEvent) => void): void
+  addEventListener(eventName: 'message' | 'error', listener: any): void {
+    const index = this.listeners[eventName].indexOf(listener)
     if (index < 0) {
-      this.listeners.push(listener)
+      this.listeners[eventName].push(listener)
     }
   }
 
-  removeEventListener(_: 'message', listener: DeflateWorkerListener): void {
-    const index = this.listeners.indexOf(listener)
+  removeEventListener(eventName: 'message', listener: DeflateWorkerListener): void
+  removeEventListener(eventName: 'error', listener: (error: ErrorEvent) => void): void
+  removeEventListener(eventName: 'message' | 'error', listener: any): void {
+    const index = this.listeners[eventName].indexOf(listener)
     if (index >= 0) {
-      this.listeners.splice(index, 1)
+      this.listeners[eventName].splice(index, 1)
     }
   }
 
@@ -47,8 +54,8 @@ export class MockWorker implements DeflateWorker {
     return this.pendingMessages.map((message) => ('data' in message ? message.data : '')).join('')
   }
 
-  get listenersCount() {
-    return this.listeners.length
+  get messageListenersCount() {
+    return this.listeners.message.length
   }
 
   processAllMessages(): void {
@@ -71,7 +78,7 @@ export class MockWorker implements DeflateWorker {
 
       switch (message.action) {
         case 'write':
-          this.listeners.forEach((listener) =>
+          this.listeners.message.forEach((listener) =>
             listener({
               data: {
                 type: 'wrote',
@@ -83,7 +90,7 @@ export class MockWorker implements DeflateWorker {
           )
           break
         case 'flush':
-          this.listeners.forEach((listener) =>
+          this.listeners.message.forEach((listener) =>
             listener({
               data: {
                 type: 'flushed',
