@@ -9,7 +9,7 @@ import { collectAsyncCalls } from '../../test/utils'
 import { setMaxSegmentSize } from '../domain/segmentCollection/segmentCollection'
 
 import { Segment, RecordType } from '../types'
-import { getDeflateWorkerSingleton } from '../domain/segmentCollection/deflateWorkerSingleton'
+import { loadDeflateWorkerSingleton } from '../domain/segmentCollection/deflateWorkerSingleton'
 import { startRecording } from './startRecording'
 
 describe('startRecording', () => {
@@ -25,7 +25,7 @@ describe('startRecording', () => {
   let expectNoExtraRequestSendCalls: (done: () => void) => void
   let stopRecording: () => void
 
-  beforeEach(() => {
+  beforeEach((done) => {
     if (isIE()) {
       pending('IE not supported')
     }
@@ -37,47 +37,50 @@ describe('startRecording', () => {
     textField = document.createElement('input')
     sandbox.appendChild(textField)
 
-    setupBuilder = setup()
-      .withParentContexts({
-        findView() {
-          return {
-            session: {
-              id: session.getId(),
-            },
-            view: {
-              id: viewId,
-            },
-          }
-        },
-      })
-      .withSession(session)
-      .withConfiguration({
-        defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
-      })
-      .beforeBuild(({ lifeCycle, applicationId, configuration, parentContexts, session }) => {
-        const recording = startRecording(
-          lifeCycle,
-          applicationId,
-          configuration,
-          session,
-          parentContexts,
-          getDeflateWorkerSingleton()!
-        )
-        stopRecording = recording ? recording.stop : noop
-        return { stop: stopRecording }
-      })
-
     const requestSendSpy = spyOn(HttpRequest.prototype, 'send')
     ;({
       waitAsyncCalls: waitRequestSendCalls,
       expectNoExtraAsyncCall: expectNoExtraRequestSendCalls,
     } = collectAsyncCalls(requestSendSpy))
+
+    loadDeflateWorkerSingleton((deflateWorker) => {
+      setupBuilder = setup()
+        .withParentContexts({
+          findView() {
+            return {
+              session: {
+                id: session.getId(),
+              },
+              view: {
+                id: viewId,
+              },
+            }
+          },
+        })
+        .withSession(session)
+        .withConfiguration({
+          defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
+        })
+        .beforeBuild(({ lifeCycle, applicationId, configuration, parentContexts, session }) => {
+          const recording = startRecording(
+            lifeCycle,
+            applicationId,
+            configuration,
+            session,
+            parentContexts,
+            deflateWorker!
+          )
+          stopRecording = recording ? recording.stop : noop
+          return { stop: stopRecording }
+        })
+      done()
+    })
   })
 
   afterEach(() => {
     sandbox.remove()
     setMaxSegmentSize()
-    setupBuilder.cleanup()
+    setupBuilder?.cleanup()
   })
 
   it('sends recorded segments with valid context', (done) => {

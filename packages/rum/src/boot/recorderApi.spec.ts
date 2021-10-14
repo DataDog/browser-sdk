@@ -10,6 +10,7 @@ import { createNewEvent } from '@datadog/browser-core/test/specHelper'
 import { createRumSessionMock, RumSessionMock } from '../../../rum-core/test/mockRumSession'
 import { setup, TestSetupBuilder } from '../../../rum-core/test/specHelper'
 import { DeflateWorker } from '../domain/segmentCollection/deflateWorker'
+import { loadDeflateWorkerSingleton } from '../domain/segmentCollection/deflateWorkerSingleton'
 import { makeRecorderApi, StartRecording } from './recorderApi'
 
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
@@ -19,7 +20,7 @@ describe('makeRecorderApi', () => {
   let recorderApi: RecorderApi
   let startRecordingSpy: jasmine.Spy<StartRecording>
   let stopRecordingSpy: jasmine.Spy<() => void>
-  let getDeflateWorkerSingletonSpy: jasmine.Spy<() => DeflateWorker | undefined>
+  let loadDeflateWorkerSingletonSpy: jasmine.Spy<typeof loadDeflateWorkerSingleton>
 
   let rumInit: (initConfiguration: RumInitConfiguration) => void
 
@@ -29,8 +30,10 @@ describe('makeRecorderApi', () => {
       startRecordingSpy = jasmine.createSpy('startRecording').and.callFake(() => ({
         stop: stopRecordingSpy,
       }))
-      getDeflateWorkerSingletonSpy = jasmine.createSpy('getDeflateWorkerSingleton').and.returnValue({})
-      recorderApi = makeRecorderApi(startRecordingSpy, getDeflateWorkerSingletonSpy)
+      loadDeflateWorkerSingletonSpy = jasmine
+        .createSpy<typeof loadDeflateWorkerSingleton>('loadDeflateWorkerSingleton')
+        .and.callFake((callback) => callback({} as DeflateWorker))
+      recorderApi = makeRecorderApi(startRecordingSpy, loadDeflateWorkerSingletonSpy)
       rumInit = (initConfiguration) => {
         recorderApi.onRumStart(lifeCycle, initConfiguration, {} as Configuration, session, {} as ParentContexts)
       }
@@ -104,7 +107,7 @@ describe('makeRecorderApi', () => {
     it('do not start recording if worker fails to be instantiated', () => {
       setupBuilder.build()
       rumInit(DEFAULT_INIT_CONFIGURATION)
-      getDeflateWorkerSingletonSpy.and.returnValue(undefined)
+      loadDeflateWorkerSingletonSpy.and.callFake((callback) => callback(undefined))
       recorderApi.start()
       expect(startRecordingSpy).not.toHaveBeenCalled()
     })
