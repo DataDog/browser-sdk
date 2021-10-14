@@ -1,7 +1,7 @@
 const baseConf = require('./wdio.base.conf')
 
-// https://sites.google.com/a/chromium.org/chromedriver/downloads
-const CHROME_DRIVER_VERSION = '92.0.4515.107'
+// https://sites.google.com/chromium.org/driver
+const CHROME_DRIVER_VERSION = '94.0.4606.41'
 
 exports.config = {
   ...baseConf,

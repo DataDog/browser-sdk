@@ -138,4 +138,13 @@ describe('viewCollection', () => {
     })
     expect(rawRumViewEvent.session.has_replay).toBe(true)
   })
+
+  it('should discard negative loading time', () => {
+    const { lifeCycle, rawRumEvents } = setupBuilder.build()
+    const view = { ...VIEW, loadingTime: -20 as Duration }
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, view)
+    const rawRumViewEvent = rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent
+
+    expect(rawRumViewEvent.view.loading_time).toBeUndefined()
+  })
 })

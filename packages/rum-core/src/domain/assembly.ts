@@ -7,13 +7,10 @@ import {
   timeStampNow,
   currentDrift,
   display,
-  addMonitoringMessage,
-  relativeNow,
   BeforeSendCallback,
   RawError,
   createEventRateLimiter,
   EventRateLimiter,
-  getCookie,
 } from '@datadog/browser-core'
 import { RumEventDomainContext } from '../domainContext.types'
 import {
@@ -122,30 +119,6 @@ export function startRumAssembly(
         if (shouldSend(serverRumEvent, configuration.beforeSend, domainContext, eventRateLimiters)) {
           if (isEmptyObject(serverRumEvent.context)) {
             delete serverRumEvent.context
-          }
-          if (typeof serverRumEvent.date !== 'number') {
-            addMonitoringMessage('invalid date', {
-              debug: {
-                eventType: serverRumEvent.type,
-                eventTimeStamp: serverRumEvent.date,
-                eventRelativeTime: Math.round(startTime),
-                timeStampNow: timeStampNow(),
-                relativeNow: Math.round(relativeNow()),
-                drift: currentDrift(),
-              },
-            })
-          }
-          if (serverRumEvent.session.has_replay && serverRumEvent._dd.session?.plan === RumSessionPlan.LITE) {
-            addMonitoringMessage('lite session with replay', {
-              debug: {
-                eventType: serverRumEvent.type,
-                viewId: serverRumEvent.view.id,
-                sessionId: serverRumEvent.session.id,
-                inMemoryPlan: session.getInMemoryPlan(),
-                event: serverRumEvent,
-                _dd_s: getCookie('_dd_s'),
-              },
-            })
           }
           lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, serverRumEvent)
         }

@@ -1,13 +1,4 @@
-import {
-  Duration,
-  noop,
-  elapsed,
-  round,
-  timeStampNow,
-  RelativeTime,
-  ONE_SECOND,
-  Observable,
-} from '@datadog/browser-core'
+import { Duration, noop, round, RelativeTime, ONE_SECOND, Observable } from '@datadog/browser-core'
 import { RumLayoutShiftTiming, supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -107,10 +98,9 @@ function trackActivityLoadingTime(
   domMutationObservable: Observable<void>,
   callback: (loadingTimeValue: Duration | undefined) => void
 ) {
-  const startTime = timeStampNow()
-  return waitIdlePage(lifeCycle, domMutationObservable, (params) => {
-    if (params.hadActivity) {
-      callback(elapsed(startTime, params.endClocks.timeStamp))
+  return waitIdlePage(lifeCycle, domMutationObservable, (event) => {
+    if (event.hadActivity) {
+      callback(event.duration)
     } else {
       callback(undefined)
     }
