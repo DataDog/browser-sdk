@@ -5,6 +5,7 @@ import {
   RumXhrCompleteContext,
   RumXhrStartContext,
 } from '../requestCollection'
+import { RumSession } from '../rumSession'
 
 export interface Tracer {
   traceFetch: (context: Partial<RumFetchStartContext>) => void
@@ -40,11 +41,11 @@ export function clearTracingIfNeeded(context: RumFetchCompleteContext | RumXhrCo
   }
 }
 
-export function startTracer(configuration: Configuration): Tracer {
+export function startTracer(configuration: Configuration, session: RumSession): Tracer {
   return {
     clearTracingIfNeeded,
     traceFetch: (context) =>
-      injectHeadersIfTracingAllowed(configuration, context, (tracingHeaders: TracingHeaders) => {
+      injectHeadersIfTracingAllowed(configuration, context, session, (tracingHeaders: TracingHeaders) => {
         if (context.input instanceof Request && !context.init?.headers) {
           context.input = new Request(context.input)
           Object.keys(tracingHeaders).forEach((key) => {
@@ -70,7 +71,7 @@ export function startTracer(configuration: Configuration): Tracer {
         }
       }),
     traceXhr: (context, xhr) =>
-      injectHeadersIfTracingAllowed(configuration, context, (tracingHeaders: TracingHeaders) => {
+      injectHeadersIfTracingAllowed(configuration, context, session, (tracingHeaders: TracingHeaders) => {
         Object.keys(tracingHeaders).forEach((name) => {
           xhr.setRequestHeader(name, tracingHeaders[name])
         })
@@ -81,9 +82,10 @@ export function startTracer(configuration: Configuration): Tracer {
 function injectHeadersIfTracingAllowed(
   configuration: Configuration,
   context: Partial<RumFetchStartContext | RumXhrStartContext>,
+  session: RumSession,
   inject: (tracingHeaders: TracingHeaders) => void
 ) {
-  if (!isTracingSupported() || !isAllowedUrl(configuration, context.url!)) {
+  if (!isTracingSupported() || !isAllowedUrl(configuration, context.url!) || !session.isTracked()) {
     return
   }
 
