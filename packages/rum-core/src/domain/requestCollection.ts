@@ -10,6 +10,7 @@ import {
   FetchStartContext,
   FetchCompleteContext,
 } from '@datadog/browser-core'
+import { RumSession } from '..'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { isAllowedRequestUrl } from './rumEventsCollection/resource/resourceUtils'
 import { startTracer, TraceIdentifier, Tracer } from './tracing/tracer'
@@ -49,8 +50,8 @@ export interface RequestCompleteEvent {
 
 let nextRequestIndex = 1
 
-export function startRequestCollection(lifeCycle: LifeCycle, configuration: Configuration) {
-  const tracer = startTracer(configuration)
+export function startRequestCollection(lifeCycle: LifeCycle, configuration: Configuration, session: RumSession) {
+  const tracer = startTracer(configuration, session)
   trackXhr(lifeCycle, configuration, tracer)
   trackFetch(lifeCycle, configuration, tracer)
 }
