@@ -38,7 +38,6 @@ export interface RawRumResourceEvent {
   _dd?: {
     trace_id?: string
     span_id?: string // not available for initial document tracing
-    sleep_duration?: number
   }
 }
 
