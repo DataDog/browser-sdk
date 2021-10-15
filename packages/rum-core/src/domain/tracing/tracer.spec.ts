@@ -1,13 +1,7 @@
 import { Configuration, DEFAULT_CONFIGURATION, isIE, objectEntries } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../test/specHelper'
 import { createRumSessionMock, RumSessionMock } from '../../../test/mockRumSession'
-
-import {
-  RumFetchCompleteContext,
-  RumFetchStartContext,
-  RumXhrCompleteContext,
-  RumXhrStartContext,
-} from '../requestCollection'
+import { RumFetchCompleteContext, RumFetchStartContext, RumXhrStartContext } from '../requestCollection'
 import { startTracer, TraceIdentifier } from './tracer'
 
 describe('tracer', () => {
@@ -15,10 +9,10 @@ describe('tracer', () => {
     ...DEFAULT_CONFIGURATION,
     allowedTracingOrigins: [window.location.origin],
   }
-  const ALLOWED_DOMAIN_CONTEXT: Partial<RumXhrCompleteContext | RumFetchStartContext> = {
+  const ALLOWED_DOMAIN_CONTEXT: Partial<RumXhrStartContext | RumFetchStartContext> = {
     url: window.location.origin,
   }
-  const DISALLOWED_DOMAIN_CONTEXT: Partial<RumXhrCompleteContext | RumFetchStartContext> = {
+  const DISALLOWED_DOMAIN_CONTEXT: Partial<RumXhrStartContext | RumFetchStartContext> = {
     url: 'http://foo.com',
   }
   let setupBuilder: TestSetupBuilder
