@@ -14,6 +14,13 @@ async function main() {
   await executeCommand(`git checkout ${CURRENT_STAGING_BRANCH} -f`)
   await executeCommand(`git pull origin ${CURRENT_STAGING_BRANCH}`)
 
+  // Commit can already be merged if someone merge main into his branch and
+  // run to-staging before the end of this scripts
+  if (await isCommitAlreadyMerged()) {
+    printLog('Already merged.')
+    return
+  }
+
   printLog(`Merging branch '${CI_COMMIT_REF_NAME}' (${CI_COMMIT_SHORT_SHA}) into ${CURRENT_STAGING_BRANCH}...`)
   try {
     await executeCommand(`git merge --no-ff "${CI_COMMIT_SHA}"`)
@@ -31,6 +38,15 @@ async function main() {
   await executeCommand(`git push origin ${CURRENT_STAGING_BRANCH}`)
 
   printLog('Merge done.')
+}
+
+async function isCommitAlreadyMerged() {
+  try {
+    await executeCommand(`git merge-base --is-ancestor ${CI_COMMIT_SHA} ${CURRENT_STAGING_BRANCH}`)
+    return true
+  } catch {
+    return false
+  }
 }
 
 main().catch(logAndExit)
