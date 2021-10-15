@@ -1,4 +1,4 @@
-import { Configuration } from '@datadog/browser-core'
+import { Configuration, noop } from '@datadog/browser-core'
 import {
   RecorderApi,
   ParentContexts,
@@ -110,6 +110,18 @@ describe('makeRecorderApi', () => {
       loadDeflateWorkerSingletonSpy.and.callFake((callback) => callback(undefined))
       recorderApi.start()
       expect(startRecordingSpy).not.toHaveBeenCalled()
+    })
+
+    it('does not start recording multiple times if restarted before worker is ready', () => {
+      setupBuilder.build()
+      rumInit(DEFAULT_INIT_CONFIGURATION)
+      loadDeflateWorkerSingletonSpy.and.callFake(noop)
+      recorderApi.start()
+      recorderApi.stop()
+      loadDeflateWorkerSingletonSpy.calls.mostRecent().args[0]({} as DeflateWorker)
+      recorderApi.start()
+      loadDeflateWorkerSingletonSpy.calls.mostRecent().args[0]({} as DeflateWorker)
+      expect(startRecordingSpy).toHaveBeenCalledTimes(1)
     })
   })
 
