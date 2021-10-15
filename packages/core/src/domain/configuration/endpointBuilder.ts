@@ -49,7 +49,6 @@ export function createEndpointBuilder(
     env,
     proxyHost,
     proxyUrl,
-    service,
     version,
     intakeApiVersion,
     useAlternateIntakeDomains,
@@ -59,7 +58,8 @@ export function createEndpointBuilder(
   const path = buildPath(endpointType)
 
   function build(): string {
-    const queryParameters = buildQueryParameters(endpointType, source)
+    const { service } = initConfiguration
+    const queryParameters = buildQueryParameters(endpointType, service, source)
     const endpoint = `https://${host}${path}?${queryParameters}`
     if (proxyUrl) {
       return `${proxyUrl}?ddforward=${encodeURIComponent(endpoint)}`
@@ -90,7 +90,7 @@ export function createEndpointBuilder(
     return shouldUseIntakeV2(endpointType) ? `/api/v2/${INTAKE_TRACKS[endpointType]}` : `/v1/input/${clientToken}`
   }
 
-  function buildQueryParameters(endpointType: EndpointType, source?: string) {
+  function buildQueryParameters(endpointType: EndpointType, service?: string, source?: string) {
     const tags =
       `sdk_version:${sdkVersion}` +
       `${env ? `,env:${env}` : ''}` +

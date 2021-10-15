@@ -68,12 +68,18 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
   let isAlreadyInitialized = false
 
   const globalContextManager = createContextManager()
+
   let user: User = {}
 
   let getInternalContextStrategy: StartRumResult['getInternalContext'] = () => undefined
   let getInitConfigurationStrategy = (): InitConfiguration | undefined => undefined
 
   let bufferApiCalls = new BoundedBuffer()
+
+  let setServiceStrategy: (newService: string) => void = (newService: string) => {
+    bufferApiCalls.add(() => setServiceStrategy(newService))
+  }
+
   let addTimingStrategy: StartRumResult['addTiming'] = (name, time = timeStampNow()) => {
     bufferApiCalls.add(() => addTimingStrategy(name, time))
   }
@@ -119,6 +125,8 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
       beforeInitCalls.drain()
     }
     getInitConfigurationStrategy = () => deepClone<InitConfiguration>(initConfiguration)
+
+    setServiceStrategy = (newService: string) => (initConfiguration.service = newService)
 
     isAlreadyInitialized = true
   }
@@ -211,6 +219,10 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
       user = {}
     }),
 
+    setService: monitor((service: string) => {
+      setServiceStrategy(service)
+    }),
+
     startView: monitor((name?: string) => {
       startViewStrategy(name)
     }),
@@ -218,6 +230,7 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
     startSessionReplayRecording: monitor(recorderApi.start),
     stopSessionReplayRecording: monitor(recorderApi.stop),
   })
+
   return rumPublicApi
 
   function sanitizeUser(newUser: unknown) {
