@@ -125,6 +125,15 @@ export class MockWorker implements DeflateWorker {
       }
     }
   }
+
+  dispatchErrorEvent() {
+    const error = new ErrorEvent('worker')
+    this.listeners.error.forEach((listener) => listener(error))
+  }
+
+  dispatchErrorMessage(error: Error | string) {
+    this.listeners.message.forEach((listener) => listener({ data: { type: 'error', error } }))
+  }
 }
 
 function uint8ArraysSize(arrays: Uint8Array[]) {

@@ -24,13 +24,16 @@ type DeflateWorkerSingletonState =
       worker: DeflateWorker
     }
 
-let state: DeflateWorkerSingletonState = { status: DeflateWorkerSingletonStatus.Nil }
+export let state: DeflateWorkerSingletonState = { status: DeflateWorkerSingletonStatus.Nil }
 
-export function loadDeflateWorkerSingleton(callback: (worker?: DeflateWorker) => void) {
+export function loadDeflateWorkerSingleton(
+  callback: (worker?: DeflateWorker) => void,
+  createDeflateWorkerImpl = createDeflateWorker
+) {
   switch (state.status) {
     case DeflateWorkerSingletonStatus.Nil:
       state = { status: DeflateWorkerSingletonStatus.Loading, callbacks: [callback] }
-      startDeflateWorkerSingleton()
+      startDeflateWorkerSingleton(createDeflateWorkerImpl)
       break
     case DeflateWorkerSingletonStatus.Loading:
       state.callbacks.push(callback)
@@ -44,9 +47,13 @@ export function loadDeflateWorkerSingleton(callback: (worker?: DeflateWorker) =>
   }
 }
 
-function startDeflateWorkerSingleton() {
+export function resetDeflateWorkerSingletonState() {
+  state = { status: DeflateWorkerSingletonStatus.Nil }
+}
+
+function startDeflateWorkerSingleton(createDeflateWorkerImpl: typeof createDeflateWorker) {
   try {
-    const worker = createDeflateWorker()
+    const worker = createDeflateWorkerImpl()
     worker.addEventListener('error', monitor(onError))
     worker.addEventListener(
       'message',
