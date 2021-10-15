@@ -1,5 +1,5 @@
 import { disableJasmineUncaughtErrorHandler } from '../../../test/specHelper'
-import { subscribe, unsubscribe, traceKitWindowOnError } from './report'
+import { subscribe, unsubscribe, traceKitWindowOnError } from './tracekit'
 import { Handler, StackFrame } from './types'
 
 describe('traceKitWindowOnError', () => {
