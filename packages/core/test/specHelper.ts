@@ -1,4 +1,4 @@
-import { buildUrl, EndpointBuilder } from '@datadog/browser-core'
+import { buildUrl, EndpointBuilder, instrumentMethod } from '@datadog/browser-core'
 import { Configuration } from '../src/domain/configuration'
 import { resetNavigationStart } from '../src/tools/timeUtils'
 import { noop, objectEntries, assign } from '../src/tools/utils'
@@ -319,11 +319,8 @@ export function restoreUserAgent() {
  * information.
  */
 export function disableJasmineUncaughtErrorHandler() {
-  const originalErrorHandler = window.onerror
-  window.onerror = null
+  const { stop } = instrumentMethod(window, 'onerror', () => noop)
   return {
-    reset: () => {
-      window.onerror = originalErrorHandler
-    },
+    reset: stop,
   }
 }
