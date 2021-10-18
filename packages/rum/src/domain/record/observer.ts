@@ -99,7 +99,7 @@ function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {
           x: clientX,
           y: clientY,
         }
-        if (isExperimentalFeatureEnabled('visualviewport')) {
+        if (isExperimentalFeatureEnabled('visualviewport') && window.visualViewport) {
           const { visualViewportX, visualViewportY } = convertMouseEventToLayoutCoordinates(clientX, clientY)
           position.x = visualViewportX
           position.y = visualViewportY
@@ -146,7 +146,7 @@ function initMouseInteractionObserver(
       x: clientX,
       y: clientY,
     }
-    if (isExperimentalFeatureEnabled('visualviewport')) {
+    if (isExperimentalFeatureEnabled('visualviewport') && window.visualViewport) {
       const { visualViewportX, visualViewportY } = convertMouseEventToLayoutCoordinates(clientX, clientY)
       position.x = visualViewportX
       position.y = visualViewportY
@@ -379,7 +379,7 @@ function initFocusObserver(focusCb: FocusCallback): ListenerHandler {
 }
 
 function initVisualViewportResizeObserver(cb: VisualViewportResizeCallback): ListenerHandler {
-  if (!visualViewport) {
+  if (!window.visualViewport) {
     return noop
   }
   const { throttled: updateDimension, cancel: cancelThrottle } = throttle(
@@ -391,10 +391,15 @@ function initVisualViewportResizeObserver(cb: VisualViewportResizeCallback): Lis
       trailing: false,
     }
   )
-  const removeListener = addEventListeners(visualViewport, [DOM_EVENT.RESIZE, DOM_EVENT.SCROLL], updateDimension, {
-    capture: true,
-    passive: true,
-  }).stop
+  const removeListener = addEventListeners(
+    window.visualViewport,
+    [DOM_EVENT.RESIZE, DOM_EVENT.SCROLL],
+    updateDimension,
+    {
+      capture: true,
+      passive: true,
+    }
+  ).stop
 
   return function stop() {
     removeListener()

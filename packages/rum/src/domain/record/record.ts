@@ -128,11 +128,12 @@ export function record(options: RecordOptions): RecordAPI {
         type: RecordType.Focus,
         data,
       }),
-    visualViewportResizeCb: (data) =>
+    visualViewportResizeCb: (data) => {
       emit({
         data,
         type: RecordType.VisualViewport,
-      }),
+      })
+    },
   })
 
   return {
