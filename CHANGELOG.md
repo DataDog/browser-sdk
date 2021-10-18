@@ -16,6 +16,13 @@
 
 ---
 
+## v3.6.12
+
+- 🐛 Do not trace requests when the session is not tracked ([#1131](https://github.com/DataDog/browser-sdk/pull/1131))
+- 🔊 [RUMF-1041] add lcp info on view events ([#1129](https://github.com/DataDog/browser-sdk/pull/1129))
+- 🔇 [RUMF-1021] remove monitoring on cookie ([#1132](https://github.com/DataDog/browser-sdk/pull/1132))
+- 🐛 Discard views and actions with negative loading time ([#1122](https://github.com/DataDog/browser-sdk/pull/1122))
+
 ## v3.6.11
 
 - ♻️ [RUMF-1046] instrument method implementation ([#1117](https://github.com/DataDog/browser-sdk/pull/1117))
