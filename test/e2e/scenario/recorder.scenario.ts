@@ -41,12 +41,12 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 const isGestureUnsupported = () => {
   const { capabilities } = browser
-  console.log('Test for:', capabilities.browserName, capabilities.platformName, JSON.stringify(capabilities, null, 2))
   return !!(
     capabilities.browserName === 'firefox' ||
     capabilities.browserName === 'Safari' ||
     capabilities.browserName === 'msedge' ||
-    capabilities.platformName === 'windows'
+    capabilities.platformName === 'windows' ||
+    capabilities.platformName === 'linux'
   )
 }
 
