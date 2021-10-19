@@ -37,6 +37,8 @@ const VIEWPORT_META_TAGS = `
 >
 `
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
 const isGestureUnsupported = () => {
   const { capabilities } = browser
   return !!(
@@ -718,12 +720,14 @@ describe('recorder', () => {
 
         await pinchZoom(170)
         await pinchZoom(170)
+        await sleep(210)
 
         const nextVisualViewport = await getVisualViewport()
 
         await browserExecute(() => {
           window.dispatchEvent(new Event('resize'))
         })
+        await sleep(210)
 
         await flushEvents()
 
@@ -732,6 +736,11 @@ describe('recorder', () => {
 
         const lastViewportResizeRecord = ViewportResizeRecords.slice(-1)[0].data as ViewportResizeData
 
+        console.log({
+          '\nlastViewportResizeRecord': JSON.stringify(lastViewportResizeRecord, null, 2),
+          '\nnextVisualViewport': JSON.stringify(nextVisualViewport, null, 2),
+          '\ninitialVisualViewport': JSON.stringify(initialVisualViewport, null, 2),
+        })
         // Test the test: ensure the pinch zoom worked
         expect(initialVisualViewport.scale < nextVisualViewport.scale).toBeTruthy()
         expect(Math.round(lastViewportResizeRecord.width)).toBe(innerWidth)
@@ -760,9 +769,11 @@ describe('recorder', () => {
           window.scrollTo(-500, -500)
         })
 
+        await sleep(210)
         await pinchZoom(170)
         await pinchZoom(170)
         await pinchZoom(170)
+        await sleep(210)
 
         await browserExecute(() => {
           window.scrollTo(-500, -500)
@@ -775,6 +786,7 @@ describe('recorder', () => {
         // NOTE: Due to scrolling down, the hight of the page changed.
         // Given time constraints, this should be a follow up once more experience is gained via data collection
         await pinchScrollVerticallyDown(SCROLL_DOWN_PX) // Scroll Down on Android
+        await sleep(210)
 
         const { scrollX: nextScrollX, scrollY: nextScrollY } = await getWindowScroll()
 
@@ -783,6 +795,7 @@ describe('recorder', () => {
         await browserExecute(() => {
           document.dispatchEvent(new Event('scroll'))
         })
+        await sleep(210)
 
         await flushEvents()
         const segment = getLastSegment(events)
@@ -826,14 +839,13 @@ describe('recorder', () => {
         }
 
         await resetViewport()
-
-        const initialVisualViewportDimension = await getVisualViewport()
-
         await pinchZoom(125)
         await pinchZoom(125)
+        await sleep(210)
 
         const middleVisualViewportDimension = await getVisualViewport()
         await pinchScrollVerticallyDown(SCROLL_DOWN_PX) // Trigger a resize event
+        await sleep(210)
 
         const nextVisualViewportDimension = await getVisualViewport()
         await flushEvents()
@@ -847,7 +859,7 @@ describe('recorder', () => {
         expect(heightChange).toBeLessThanOrEqual(30)
 
         // Stay the same
-        expectToBeNearby(lastVisualViewportRecord.data.scale, initialVisualViewportDimension.scale)
+        expectToBeNearby(lastVisualViewportRecord.data.scale, nextVisualViewportDimension.scale)
         expectToBeNearby(lastVisualViewportRecord.data.width, nextVisualViewportDimension.width)
         expectToBeNearby(lastVisualViewportRecord.data.height, nextVisualViewportDimension.height)
 
@@ -882,12 +894,19 @@ describe('recorder', () => {
 
         const initialVisualViewportDimension = await getVisualViewport()
         await pinchZoom(170)
+        await sleep(210)
         const nextVisualViewportDimension = await getVisualViewport()
 
         await flushEvents()
         const segment = getLastSegment(events)
         const visualViewportRecords = findAllVisualViewport(segment)
         const lastVisualViewportRecord = visualViewportRecords.slice(-1)[0]
+
+        console.log({
+          '\nlastViewportResizeRecord': JSON.stringify(lastVisualViewportRecord, null, 2),
+          '\nnextVisualViewport': JSON.stringify(nextVisualViewportDimension, null, 2),
+          '\ninitialVisualViewport': JSON.stringify(initialVisualViewportDimension, null, 2),
+        })
 
         // SDK returns Visual Viewport object
         expectToBeNearby(lastVisualViewportRecord.data.scale, nextVisualViewportDimension.scale)

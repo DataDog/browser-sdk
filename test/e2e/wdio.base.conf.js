@@ -23,7 +23,7 @@ if (testReportDirectory) {
 
 module.exports = {
   runner: 'local',
-  specs: ['./test/e2e/scenario/**/*.scenario.ts'],
+  specs: ['./test/e2e/scenario/**/recorder.scenario.ts'],
   maxInstances: 5,
   logLevel: 'warn',
   waitforTimeout: 10000,
