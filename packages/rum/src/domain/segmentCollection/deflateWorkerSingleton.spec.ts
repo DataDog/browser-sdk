@@ -8,37 +8,37 @@ import {
 } from '@datadog/browser-core'
 import { MockWorker } from '../../../test/utils'
 import { createDeflateWorker } from './deflateWorker'
-import { loadDeflateWorkerSingleton, resetDeflateWorkerSingletonState } from './deflateWorkerSingleton'
+import { startDeflateWorker, resetDeflateWorkerState } from './deflateWorkerSingleton'
 
-describe('loadDeflateWorkerSingleton', () => {
+describe('startDeflateWorker', () => {
   let deflateWorker: MockWorker
   let createDeflateWorkerSpy: jasmine.Spy<typeof createDeflateWorker>
 
   beforeEach(() => {
-    resetDeflateWorkerSingletonState()
+    resetDeflateWorkerState()
     deflateWorker = new MockWorker()
     createDeflateWorkerSpy = jasmine.createSpy().and.callFake(() => deflateWorker)
     setDebugMode(true)
   })
 
   afterEach(() => {
-    resetDeflateWorkerSingletonState()
+    resetDeflateWorkerState()
   })
 
   it('creates a deflate worker', () => {
     const callbackSpy = jasmine.createSpy()
-    loadDeflateWorkerSingleton(callbackSpy, createDeflateWorkerSpy)
+    startDeflateWorker(callbackSpy, createDeflateWorkerSpy)
     expect(createDeflateWorkerSpy).toHaveBeenCalledTimes(1)
     deflateWorker.processAllMessages()
     expect(callbackSpy).toHaveBeenCalledOnceWith(deflateWorker)
   })
 
   it('returns the previously created worker', () => {
-    loadDeflateWorkerSingleton(noop, createDeflateWorkerSpy)
+    startDeflateWorker(noop, createDeflateWorkerSpy)
     deflateWorker.processAllMessages()
 
     const callbackSpy = jasmine.createSpy()
-    loadDeflateWorkerSingleton(callbackSpy, createDeflateWorkerSpy)
+    startDeflateWorker(callbackSpy, createDeflateWorkerSpy)
     expect(createDeflateWorkerSpy).toHaveBeenCalledTimes(1)
     deflateWorker.processAllMessages()
     expect(callbackSpy).toHaveBeenCalledOnceWith(deflateWorker)
@@ -46,16 +46,16 @@ describe('loadDeflateWorkerSingleton', () => {
 
   describe('loading state', () => {
     it('does not create multiple workers when called multiple times while the worker is loading', () => {
-      loadDeflateWorkerSingleton(noop, createDeflateWorkerSpy)
-      loadDeflateWorkerSingleton(noop, createDeflateWorkerSpy)
+      startDeflateWorker(noop, createDeflateWorkerSpy)
+      startDeflateWorker(noop, createDeflateWorkerSpy)
       expect(createDeflateWorkerSpy).toHaveBeenCalledTimes(1)
     })
 
     it('calls all registered callbacks when the worker is loaded', () => {
       const callbackSpy1 = jasmine.createSpy()
       const callbackSpy2 = jasmine.createSpy()
-      loadDeflateWorkerSingleton(callbackSpy1, createDeflateWorkerSpy)
-      loadDeflateWorkerSingleton(callbackSpy2, createDeflateWorkerSpy)
+      startDeflateWorker(callbackSpy1, createDeflateWorkerSpy)
+      startDeflateWorker(callbackSpy2, createDeflateWorkerSpy)
       deflateWorker.processAllMessages()
       expect(callbackSpy1).toHaveBeenCalledOnceWith(deflateWorker)
       expect(callbackSpy2).toHaveBeenCalledOnceWith(deflateWorker)
@@ -85,7 +85,7 @@ describe('loadDeflateWorkerSingleton', () => {
     })
 
     it('displays an error message when the worker creation throws an unknown error', () => {
-      loadDeflateWorkerSingleton(noop, () => {
+      startDeflateWorker(noop, () => {
         throw UNKNOWN_ERROR
       })
       expect(displaySpy).toHaveBeenCalledOnceWith(
@@ -95,7 +95,7 @@ describe('loadDeflateWorkerSingleton', () => {
     })
 
     it('reports unknown errors to internal monitoring', () => {
-      loadDeflateWorkerSingleton(noop, () => {
+      startDeflateWorker(noop, () => {
         throw UNKNOWN_ERROR
       })
       expect(internalMonitoringMessages).toEqual([
@@ -104,7 +104,7 @@ describe('loadDeflateWorkerSingleton', () => {
     })
 
     it('displays CSP instructions when the worker creation throws a CSP error', () => {
-      loadDeflateWorkerSingleton(noop, () => {
+      startDeflateWorker(noop, () => {
         throw CSP_ERROR
       })
       expect(displaySpy).toHaveBeenCalledWith(
@@ -113,14 +113,14 @@ describe('loadDeflateWorkerSingleton', () => {
     })
 
     it('does not report CSP errors to internal monitoring', () => {
-      loadDeflateWorkerSingleton(noop, () => {
+      startDeflateWorker(noop, () => {
         throw CSP_ERROR
       })
       expect(internalMonitoringMessages).toEqual([])
     })
 
     it('displays ErrorEvent as CSP error', () => {
-      loadDeflateWorkerSingleton(noop, createDeflateWorkerSpy)
+      startDeflateWorker(noop, createDeflateWorkerSpy)
       deflateWorker.dispatchErrorEvent()
       expect(displaySpy).toHaveBeenCalledWith(
         'Please make sure CSP is correctly configured https://docs.datadoghq.com/real_user_monitoring/faq/content_security_policy'
@@ -128,7 +128,7 @@ describe('loadDeflateWorkerSingleton', () => {
     })
 
     it('does not display error messages as CSP error', () => {
-      loadDeflateWorkerSingleton(noop, createDeflateWorkerSpy)
+      startDeflateWorker(noop, createDeflateWorkerSpy)
       deflateWorker.dispatchErrorMessage('foo')
       expect(displaySpy).not.toHaveBeenCalledWith(
         'Please make sure CSP is correctly configured https://docs.datadoghq.com/real_user_monitoring/faq/content_security_policy'
@@ -137,22 +137,22 @@ describe('loadDeflateWorkerSingleton', () => {
 
     it('calls the callback without argument in case of an error occurs during loading', () => {
       const callbackSpy = jasmine.createSpy()
-      loadDeflateWorkerSingleton(callbackSpy, createDeflateWorkerSpy)
+      startDeflateWorker(callbackSpy, createDeflateWorkerSpy)
       deflateWorker.dispatchErrorEvent()
       expect(callbackSpy).toHaveBeenCalledOnceWith()
     })
 
     it('calls the callback without argument in case of an error occurred in a previous loading', () => {
-      loadDeflateWorkerSingleton(noop, createDeflateWorkerSpy)
+      startDeflateWorker(noop, createDeflateWorkerSpy)
       deflateWorker.dispatchErrorEvent()
 
       const callbackSpy = jasmine.createSpy()
-      loadDeflateWorkerSingleton(callbackSpy, createDeflateWorkerSpy)
+      startDeflateWorker(callbackSpy, createDeflateWorkerSpy)
       expect(callbackSpy).toHaveBeenCalledOnceWith()
     })
 
     it('reports errors occurring after loading to internal monitoring', () => {
-      loadDeflateWorkerSingleton(noop, createDeflateWorkerSpy)
+      startDeflateWorker(noop, createDeflateWorkerSpy)
       deflateWorker.processAllMessages()
 
       deflateWorker.dispatchErrorMessage('boom')

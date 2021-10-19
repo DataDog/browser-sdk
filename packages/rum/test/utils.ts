@@ -71,14 +71,6 @@ export class MockWorker implements DeflateWorker {
   processNextMessage(): void {
     const message = this.pendingMessages.shift()
     if (message) {
-      const pushData = (data?: string) => {
-        const encodedData = new TextEncoder().encode(data)
-        this.rawSize += encodedData.length
-        // In the mock worker, for simplicity, we'll just use the UTF-8 encoded string instead of deflating it.
-        this.deflatedData.push(encodedData)
-        return encodedData.length
-      }
-
       switch (message.action) {
         case 'init':
           this.listeners.message.forEach((listener) =>
@@ -91,7 +83,7 @@ export class MockWorker implements DeflateWorker {
           break
         case 'write':
           {
-            const additionalRawSize = pushData(message.data)
+            const additionalRawSize = this.pushData(message.data)
             this.listeners.message.forEach((listener) =>
               listener({
                 data: {
@@ -106,7 +98,7 @@ export class MockWorker implements DeflateWorker {
           break
         case 'flush':
           {
-            const additionalRawSize = pushData(message.data)
+            const additionalRawSize = this.pushData(message.data)
             this.listeners.message.forEach((listener) =>
               listener({
                 data: {
@@ -133,6 +125,14 @@ export class MockWorker implements DeflateWorker {
 
   dispatchErrorMessage(error: Error | string) {
     this.listeners.message.forEach((listener) => listener({ data: { type: 'error', error } }))
+  }
+
+  private pushData(data?: string) {
+    const encodedData = new TextEncoder().encode(data)
+    this.rawSize += encodedData.length
+    // In the mock worker, for simplicity, we'll just use the UTF-8 encoded string instead of deflating it.
+    this.deflatedData.push(encodedData)
+    return encodedData.length
   }
 }
 

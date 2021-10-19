@@ -9,7 +9,7 @@ import { collectAsyncCalls } from '../../test/utils'
 import { setMaxSegmentSize } from '../domain/segmentCollection/segmentCollection'
 
 import { Segment, RecordType } from '../types'
-import { loadDeflateWorkerSingleton } from '../domain/segmentCollection/deflateWorkerSingleton'
+import { startDeflateWorker } from '../domain/segmentCollection/deflateWorkerSingleton'
 import { startRecording } from './startRecording'
 
 describe('startRecording', () => {
@@ -43,7 +43,7 @@ describe('startRecording', () => {
       expectNoExtraAsyncCall: expectNoExtraRequestSendCalls,
     } = collectAsyncCalls(requestSendSpy))
 
-    loadDeflateWorkerSingleton((deflateWorker) => {
+    startDeflateWorker((deflateWorker) => {
       setupBuilder = setup()
         .withParentContexts({
           findView() {

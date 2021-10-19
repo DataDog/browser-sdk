@@ -10,7 +10,7 @@ import { createNewEvent } from '@datadog/browser-core/test/specHelper'
 import { createRumSessionMock, RumSessionMock } from '../../../rum-core/test/mockRumSession'
 import { setup, TestSetupBuilder } from '../../../rum-core/test/specHelper'
 import { DeflateWorker } from '../domain/segmentCollection/deflateWorker'
-import { loadDeflateWorkerSingleton } from '../domain/segmentCollection/deflateWorkerSingleton'
+import { startDeflateWorker } from '../domain/segmentCollection/deflateWorkerSingleton'
 import { makeRecorderApi, StartRecording } from './recorderApi'
 
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
@@ -20,7 +20,7 @@ describe('makeRecorderApi', () => {
   let recorderApi: RecorderApi
   let startRecordingSpy: jasmine.Spy<StartRecording>
   let stopRecordingSpy: jasmine.Spy<() => void>
-  let loadDeflateWorkerSingletonSpy: jasmine.Spy<typeof loadDeflateWorkerSingleton>
+  let startDeflateWorkerSpy: jasmine.Spy<typeof startDeflateWorker>
 
   let rumInit: (initConfiguration: RumInitConfiguration) => void
 
@@ -30,10 +30,10 @@ describe('makeRecorderApi', () => {
       startRecordingSpy = jasmine.createSpy('startRecording').and.callFake(() => ({
         stop: stopRecordingSpy,
       }))
-      loadDeflateWorkerSingletonSpy = jasmine
-        .createSpy<typeof loadDeflateWorkerSingleton>('loadDeflateWorkerSingleton')
+      startDeflateWorkerSpy = jasmine
+        .createSpy<typeof startDeflateWorker>('loadDeflateWorker')
         .and.callFake((callback) => callback({} as DeflateWorker))
-      recorderApi = makeRecorderApi(startRecordingSpy, loadDeflateWorkerSingletonSpy)
+      recorderApi = makeRecorderApi(startRecordingSpy, startDeflateWorkerSpy)
       rumInit = (initConfiguration) => {
         recorderApi.onRumStart(lifeCycle, initConfiguration, {} as Configuration, session, {} as ParentContexts)
       }
@@ -107,7 +107,7 @@ describe('makeRecorderApi', () => {
     it('do not start recording if worker fails to be instantiated', () => {
       setupBuilder.build()
       rumInit(DEFAULT_INIT_CONFIGURATION)
-      loadDeflateWorkerSingletonSpy.and.callFake((callback) => callback(undefined))
+      startDeflateWorkerSpy.and.callFake((callback) => callback(undefined))
       recorderApi.start()
       expect(startRecordingSpy).not.toHaveBeenCalled()
     })
@@ -115,12 +115,12 @@ describe('makeRecorderApi', () => {
     it('does not start recording multiple times if restarted before worker is ready', () => {
       setupBuilder.build()
       rumInit(DEFAULT_INIT_CONFIGURATION)
-      loadDeflateWorkerSingletonSpy.and.callFake(noop)
+      startDeflateWorkerSpy.and.callFake(noop)
       recorderApi.start()
       recorderApi.stop()
-      loadDeflateWorkerSingletonSpy.calls.mostRecent().args[0]({} as DeflateWorker)
+      startDeflateWorkerSpy.calls.mostRecent().args[0]({} as DeflateWorker)
       recorderApi.start()
-      loadDeflateWorkerSingletonSpy.calls.mostRecent().args[0]({} as DeflateWorker)
+      startDeflateWorkerSpy.calls.mostRecent().args[0]({} as DeflateWorker)
       expect(startRecordingSpy).toHaveBeenCalledTimes(1)
     })
   })

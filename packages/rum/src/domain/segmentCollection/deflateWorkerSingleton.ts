@@ -1,54 +1,54 @@
 import { addErrorToMonitoringBatch, display, includes, monitor } from '@datadog/browser-core'
 import { createDeflateWorker, DeflateWorker } from './deflateWorker'
 
-const enum DeflateWorkerSingletonStatus {
+const enum DeflateWorkerStatus {
   Nil,
   Loading,
   Error,
   Initialized,
 }
 
-type DeflateWorkerSingletonState =
+type DeflateWorkerState =
   | {
-      status: DeflateWorkerSingletonStatus.Nil
+      status: DeflateWorkerStatus.Nil
     }
   | {
-      status: DeflateWorkerSingletonStatus.Loading
+      status: DeflateWorkerStatus.Loading
       callbacks: Array<(worker?: DeflateWorker) => void>
     }
   | {
-      status: DeflateWorkerSingletonStatus.Error
+      status: DeflateWorkerStatus.Error
     }
   | {
-      status: DeflateWorkerSingletonStatus.Initialized
+      status: DeflateWorkerStatus.Initialized
       worker: DeflateWorker
     }
 
-export let state: DeflateWorkerSingletonState = { status: DeflateWorkerSingletonStatus.Nil }
+export let state: DeflateWorkerState = { status: DeflateWorkerStatus.Nil }
 
-export function loadDeflateWorkerSingleton(
+export function startDeflateWorker(
   callback: (worker?: DeflateWorker) => void,
   createDeflateWorkerImpl = createDeflateWorker
 ) {
   switch (state.status) {
-    case DeflateWorkerSingletonStatus.Nil:
-      state = { status: DeflateWorkerSingletonStatus.Loading, callbacks: [callback] }
-      startDeflateWorkerSingleton(createDeflateWorkerImpl)
+    case DeflateWorkerStatus.Nil:
+      state = { status: DeflateWorkerStatus.Loading, callbacks: [callback] }
+      doStartDeflateWorker(createDeflateWorkerImpl)
       break
-    case DeflateWorkerSingletonStatus.Loading:
+    case DeflateWorkerStatus.Loading:
       state.callbacks.push(callback)
       break
-    case DeflateWorkerSingletonStatus.Error:
+    case DeflateWorkerStatus.Error:
       callback()
       break
-    case DeflateWorkerSingletonStatus.Initialized:
+    case DeflateWorkerStatus.Initialized:
       callback(state.worker)
       break
   }
 }
 
-export function resetDeflateWorkerSingletonState() {
-  state = { status: DeflateWorkerSingletonStatus.Nil }
+export function resetDeflateWorkerState() {
+  state = { status: DeflateWorkerStatus.Nil }
 }
 
 /**
@@ -58,7 +58,7 @@ export function resetDeflateWorkerSingletonState() {
  * - Chromium throws an exception
  * - Firefox fires an error event
  */
-function startDeflateWorkerSingleton(createDeflateWorkerImpl: typeof createDeflateWorker) {
+function doStartDeflateWorker(createDeflateWorkerImpl: typeof createDeflateWorker) {
   try {
     const worker = createDeflateWorkerImpl()
     worker.addEventListener('error', monitor(onError))
@@ -79,14 +79,14 @@ function startDeflateWorkerSingleton(createDeflateWorkerImpl: typeof createDefla
 }
 
 function onInitialized(worker: DeflateWorker) {
-  if (state.status === DeflateWorkerSingletonStatus.Loading) {
+  if (state.status === DeflateWorkerStatus.Loading) {
     state.callbacks.forEach((callback) => callback(worker))
-    state = { status: DeflateWorkerSingletonStatus.Initialized, worker }
+    state = { status: DeflateWorkerStatus.Initialized, worker }
   }
 }
 
 function onError(error: ErrorEvent | Error | string) {
-  if (state.status === DeflateWorkerSingletonStatus.Loading) {
+  if (state.status === DeflateWorkerStatus.Loading) {
     display.error('Session Replay recording failed to start: an error occurred while creating the Worker:', error)
     if (error instanceof Event || (error instanceof Error && includes(error.message, 'Content Security Policy'))) {
       display.error(
@@ -97,7 +97,7 @@ function onError(error: ErrorEvent | Error | string) {
       addErrorToMonitoringBatch(error)
     }
     state.callbacks.forEach((callback) => callback())
-    state = { status: DeflateWorkerSingletonStatus.Error }
+    state = { status: DeflateWorkerStatus.Error }
   } else {
     addErrorToMonitoringBatch(error)
   }
