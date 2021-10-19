@@ -50,6 +50,7 @@ const isGestureUnsupported = () => {
   )
 }
 
+// Flakiness: Working with viewport sizes has variations per device of a few pixels
 function expectToBeNearby(numA: number, numB: number) {
   const test = Math.abs(numA - numB) < 5
   if (test) {
@@ -702,14 +703,12 @@ describe('recorder', () => {
       .withBody(html`${VIEWPORT_META_TAGS}`)
       .run(async ({ events }) => {
         /**
-         * InnerWidth/Height on some devices/browsers is changed by pinch zoom
+         * InnerWidth/Height on some devices/browsers are changed by pinch zoom
          * We need to ensure that our measurements are not affected by pinch zoom
          */
-
         if (isGestureUnsupported()) {
           return // No Fallback test
         }
-
         await resetViewport()
 
         const { innerWidth, innerHeight } = (await browserExecute(() => ({
@@ -718,11 +717,9 @@ describe('recorder', () => {
         }))) as { innerWidth: number; innerHeight: number }
 
         const initialVisualViewport = await getVisualViewport()
-
         await pinchZoom(150)
         await pinchZoom(150)
         await sleep(210)
-
         const nextVisualViewport = await getVisualViewport()
 
         await browserExecute(() => {
@@ -731,7 +728,6 @@ describe('recorder', () => {
         await sleep(210)
 
         await flushEvents()
-
         const segment = getLastSegment(events)
         const ViewportResizeRecords = findAllIncrementalSnapshots(segment, IncrementalSource.ViewportResize)
 
@@ -750,7 +746,7 @@ describe('recorder', () => {
       .withBody(html`${VIEWPORT_META_TAGS}`)
       .run(async ({ events }) => {
         /**
-         * ScrollX/Y on some devices/browsers is changed by pinch zoom
+         * ScrollX/Y on some devices/browsers are changed by pinch zoom
          * We need to ensure that our measurements are not affected by pinch zoom
          */
         const SCROLL_DOWN_PX = 60
@@ -758,7 +754,6 @@ describe('recorder', () => {
         if (isGestureUnsupported()) {
           return // No Fallback test
         }
-
         await resetViewport()
 
         await browserExecute(() => {
@@ -784,7 +779,6 @@ describe('recorder', () => {
         await sleep(210)
 
         const { scrollX: nextScrollX, scrollY: nextScrollY } = await getWindowScroll()
-
         const nextVisualViewport = await getVisualViewport()
 
         await browserExecute(() => {

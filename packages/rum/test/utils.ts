@@ -159,7 +159,7 @@ export function findFullSnapshot(segment: Segment): FullSnapshotRecord | null {
   return segment.records.find((record) => record.type === RecordType.FullSnapshot) as FullSnapshotRecord
 }
 
-// Returns all the VisualViewportRecord in a Segment, if any.
+// Returns all the VisualViewportRecords in a Segment, if any.
 export function findAllVisualViewport(segment: Segment): VisualViewportRecord[] {
   return segment.records.filter((record) => record.type === RecordType.VisualViewport) as VisualViewportRecord[]
 }
