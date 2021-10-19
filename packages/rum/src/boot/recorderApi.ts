@@ -8,7 +8,7 @@ import {
   RecorderApi,
 } from '@datadog/browser-rum-core'
 import { getReplayStats } from '../domain/replayStats'
-import { startDeflateWorker } from '../domain/segmentCollection/deflateWorkerSingleton'
+import { startDeflateWorker } from '../domain/segmentCollection/startDeflateWorker'
 
 import { startRecording } from './startRecording'
 

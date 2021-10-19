@@ -9,7 +9,7 @@ import { collectAsyncCalls } from '../../test/utils'
 import { setMaxSegmentSize } from '../domain/segmentCollection/segmentCollection'
 
 import { Segment, RecordType } from '../types'
-import { startDeflateWorker } from '../domain/segmentCollection/deflateWorkerSingleton'
+import { startDeflateWorker } from '../domain/segmentCollection/startDeflateWorker'
 import { startRecording } from './startRecording'
 
 describe('startRecording', () => {

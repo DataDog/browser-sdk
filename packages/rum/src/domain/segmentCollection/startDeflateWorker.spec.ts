@@ -8,7 +8,7 @@ import {
 } from '@datadog/browser-core'
 import { MockWorker } from '../../../test/utils'
 import { createDeflateWorker } from './deflateWorker'
-import { startDeflateWorker, resetDeflateWorkerState } from './deflateWorkerSingleton'
+import { startDeflateWorker, resetDeflateWorkerState } from './startDeflateWorker'
 
 describe('startDeflateWorker', () => {
   let deflateWorker: MockWorker
