@@ -5,7 +5,7 @@ const enum DeflateWorkerSingletonStatus {
   Nil,
   Loading,
   Error,
-  Ready,
+  Initialized,
 }
 
 type DeflateWorkerSingletonState =
@@ -20,7 +20,7 @@ type DeflateWorkerSingletonState =
       status: DeflateWorkerSingletonStatus.Error
     }
   | {
-      status: DeflateWorkerSingletonStatus.Ready
+      status: DeflateWorkerSingletonStatus.Initialized
       worker: DeflateWorker
     }
 
@@ -41,7 +41,7 @@ export function loadDeflateWorkerSingleton(
     case DeflateWorkerSingletonStatus.Error:
       callback()
       break
-    case DeflateWorkerSingletonStatus.Ready:
+    case DeflateWorkerSingletonStatus.Initialized:
       callback(state.worker)
       break
   }
@@ -51,6 +51,13 @@ export function resetDeflateWorkerSingletonState() {
   state = { status: DeflateWorkerSingletonStatus.Nil }
 }
 
+/**
+ * Starts the deflate worker and handle messages and errors
+ *
+ * Browsers have discrepancies on how to handle worker errors:
+ * - Chromium throws an exception
+ * - Firefox fires an error event
+ */
 function startDeflateWorkerSingleton(createDeflateWorkerImpl: typeof createDeflateWorker) {
   try {
     const worker = createDeflateWorkerImpl()
@@ -60,8 +67,8 @@ function startDeflateWorkerSingleton(createDeflateWorkerImpl: typeof createDefla
       monitor(({ data }) => {
         if (data.type === 'error') {
           onError(data.error)
-        } else if (data.type === 'ready') {
-          onReady(worker)
+        } else if (data.type === 'initialized') {
+          onInitialized(worker)
         }
       })
     )
@@ -71,10 +78,10 @@ function startDeflateWorkerSingleton(createDeflateWorkerImpl: typeof createDefla
   }
 }
 
-function onReady(worker: DeflateWorker) {
+function onInitialized(worker: DeflateWorker) {
   if (state.status === DeflateWorkerSingletonStatus.Loading) {
     state.callbacks.forEach((callback) => callback(worker))
-    state = { status: DeflateWorkerSingletonStatus.Ready, worker }
+    state = { status: DeflateWorkerSingletonStatus.Initialized, worker }
   }
 }
 

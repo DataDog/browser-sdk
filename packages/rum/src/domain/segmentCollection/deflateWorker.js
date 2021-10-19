@@ -22,7 +22,7 @@ function workerCodeFn() {
         switch (data.action) {
           case 'init':
             self.postMessage({
-              type: 'ready',
+              type: 'initialized',
             })
             break
           case 'write':

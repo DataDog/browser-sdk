@@ -33,7 +33,7 @@ export class Segment {
     replayStats.addRecord(viewId)
 
     const listener: DeflateWorkerListener = monitor(({ data }) => {
-      if (data.type === 'error' || data.type === 'ready') {
+      if (data.type === 'error' || data.type === 'initialized') {
         return
       }
 

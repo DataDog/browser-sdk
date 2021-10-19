@@ -14,7 +14,7 @@ export type DeflateWorkerListener = (event: { data: DeflateWorkerResponse }) => 
 
 export type DeflateWorkerAction =
   // Action to send when creating the worker to check if the communication is working correctly.
-  // The worker should respond with a 'ready' response.
+  // The worker should respond with a 'initialized' response.
   | {
       action: 'init'
     }
@@ -37,7 +37,7 @@ export type DeflateWorkerAction =
 export type DeflateWorkerResponse =
   // Response to 'init' action
   | {
-      type: 'ready'
+      type: 'initialized'
     }
   // Response to 'write' action
   | {

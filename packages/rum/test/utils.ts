@@ -84,7 +84,7 @@ export class MockWorker implements DeflateWorker {
           this.listeners.message.forEach((listener) =>
             listener({
               data: {
-                type: 'ready',
+                type: 'initialized',
               },
             })
           )
