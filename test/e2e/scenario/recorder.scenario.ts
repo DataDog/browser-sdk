@@ -737,13 +737,6 @@ describe('recorder', () => {
 
         const lastViewportResizeRecord = ViewportResizeRecords.slice(-1)[0].data as ViewportResizeData
 
-        console.log({
-          test: 'getWindowWidth/Height reports using layout viewport dimensions',
-          '\nlastViewportResizeRecord': JSON.stringify(lastViewportResizeRecord, null, 2),
-          '\nnextVisualViewport': JSON.stringify(nextVisualViewport, null, 2),
-          '\ninitialVisualViewport': JSON.stringify(initialVisualViewport, null, 2),
-          'innerWidth/Height': JSON.stringify({ innerWidth, innerHeight }, null, 2),
-        })
         expectToBeNearby(Math.round(lastViewportResizeRecord.width), innerWidth)
         expectToBeNearby(Math.round(lastViewportResizeRecord.height), innerHeight)
         // Test the test: ensure the pinch zoom worked
@@ -903,13 +896,6 @@ describe('recorder', () => {
         const segment = getLastSegment(events)
         const visualViewportRecords = findAllVisualViewport(segment)
         const lastVisualViewportRecord = visualViewportRecords.slice(-1)[0]
-
-        console.log({
-          test: 'pinch zoom event tracked reports visual viewport scale and dimension',
-          '\nlastViewportResizeRecord': JSON.stringify(lastVisualViewportRecord, null, 2),
-          '\nnextVisualViewport': JSON.stringify(nextVisualViewportDimension, null, 2),
-          '\ninitialVisualViewport': JSON.stringify(initialVisualViewportDimension, null, 2),
-        })
 
         // SDK returns Visual Viewport object
         expectToBeNearby(lastVisualViewportRecord.data.scale, nextVisualViewportDimension.scale)
