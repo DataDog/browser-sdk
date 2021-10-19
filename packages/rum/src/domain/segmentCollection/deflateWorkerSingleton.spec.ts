@@ -66,9 +66,13 @@ describe('loadDeflateWorkerSingleton', () => {
     let internalMonitoringMessages: MonitoringMessage[]
     const UNKNOWN_ERROR = new Error('boom')
     // mimic Chrome behavior
-    const CSP_ERROR = new DOMException(
-      "Failed to construct 'Worker': Access to the script at 'blob:https://example.org/9aadbb61-effe-41ee-aa76-fc607053d642' is denied by the document's Content Security Policy."
-    )
+    const CSP_ERROR = Object.create(DOMException.prototype, {
+      name: { value: '' },
+      message: {
+        value:
+          "Failed to construct 'Worker': Access to the script at 'blob:https://example.org/9aadbb61-effe-41ee-aa76-fc607053d642' is denied by the document's Content Security Policy.",
+      },
+    })
     let displaySpy: jasmine.Spy
 
     beforeEach(() => {
