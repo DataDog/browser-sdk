@@ -41,6 +41,7 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 const isGestureUnsupported = () => {
   const { capabilities } = browser
+  console.log('Test for:', capabilities.browserName, capabilities.platformName, JSON.stringify(capabilities, null, 2))
   return !!(
     capabilities.browserName === 'firefox' ||
     capabilities.browserName === 'Safari' ||
@@ -718,8 +719,8 @@ describe('recorder', () => {
 
         const initialVisualViewport = await getVisualViewport()
 
-        await pinchZoom(170)
-        await pinchZoom(170)
+        await pinchZoom(150)
+        await pinchZoom(150)
         await sleep(210)
 
         const nextVisualViewport = await getVisualViewport()
@@ -737,14 +738,16 @@ describe('recorder', () => {
         const lastViewportResizeRecord = ViewportResizeRecords.slice(-1)[0].data as ViewportResizeData
 
         console.log({
+          test: 'getWindowWidth/Height reports using layout viewport dimensions',
           '\nlastViewportResizeRecord': JSON.stringify(lastViewportResizeRecord, null, 2),
           '\nnextVisualViewport': JSON.stringify(nextVisualViewport, null, 2),
           '\ninitialVisualViewport': JSON.stringify(initialVisualViewport, null, 2),
+          'innerWidth/Height': JSON.stringify({ innerWidth, innerHeight }, null, 2),
         })
+        expectToBeNearby(Math.round(lastViewportResizeRecord.width), innerWidth)
+        expectToBeNearby(Math.round(lastViewportResizeRecord.height), innerHeight)
         // Test the test: ensure the pinch zoom worked
         expect(initialVisualViewport.scale < nextVisualViewport.scale).toBeTruthy()
-        expect(Math.round(lastViewportResizeRecord.width)).toBe(innerWidth)
-        expect(Math.round(lastViewportResizeRecord.height)).toBe(innerHeight)
       })
 
     createTest('scrollX/Y reports using layout viewport dimensions')
@@ -770,9 +773,8 @@ describe('recorder', () => {
         })
 
         await sleep(210)
-        await pinchZoom(170)
-        await pinchZoom(170)
-        await pinchZoom(170)
+        await pinchZoom(150)
+        await pinchZoom(150)
         await sleep(210)
 
         await browserExecute(() => {
@@ -839,8 +841,8 @@ describe('recorder', () => {
         }
 
         await resetViewport()
-        await pinchZoom(125)
-        await pinchZoom(125)
+        await pinchZoom(150)
+        await pinchZoom(150)
         await sleep(210)
 
         const middleVisualViewportDimension = await getVisualViewport()
@@ -903,6 +905,7 @@ describe('recorder', () => {
         const lastVisualViewportRecord = visualViewportRecords.slice(-1)[0]
 
         console.log({
+          test: 'pinch zoom event tracked reports visual viewport scale and dimension',
           '\nlastViewportResizeRecord': JSON.stringify(lastVisualViewportRecord, null, 2),
           '\nnextVisualViewport': JSON.stringify(nextVisualViewportDimension, null, 2),
           '\ninitialVisualViewport': JSON.stringify(initialVisualViewportDimension, null, 2),
