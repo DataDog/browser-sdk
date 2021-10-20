@@ -6,6 +6,7 @@ switch (process.env.BUILD_MODE) {
   case 'release':
     sdkVersion = lernaJson.version
     break
+  case 'canary':
   case 'staging':
     const commitSha1 = execSync('git rev-parse HEAD').toString().trim()
     sdkVersion = `${lernaJson.version}+${commitSha1}`

@@ -152,13 +152,15 @@ describe('trackFirstContentfulPaintTiming', () => {
 describe('largestContentfulPaintTiming', () => {
   let setupBuilder: TestSetupBuilder
   let lcpCallback: jasmine.Spy<(value: RelativeTime) => void>
+  let discardCallback: jasmine.Spy<(discardReason: string) => void>
   let emitter: Element
 
   beforeEach(() => {
     lcpCallback = jasmine.createSpy()
+    discardCallback = jasmine.createSpy()
     emitter = document.createElement('div')
     setupBuilder = setup().beforeBuild(({ lifeCycle }) =>
-      trackLargestContentfulPaintTiming(lifeCycle, emitter, lcpCallback)
+      trackLargestContentfulPaintTiming(lifeCycle, emitter, lcpCallback, discardCallback)
     )
     resetFirstHidden()
   })
@@ -184,6 +186,7 @@ describe('largestContentfulPaintTiming', () => {
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY)
     expect(lcpCallback).not.toHaveBeenCalled()
+    expect(discardCallback).toHaveBeenCalledOnceWith('interaction')
   })
 
   it('should be discarded if the page is hidden', () => {
@@ -193,6 +196,7 @@ describe('largestContentfulPaintTiming', () => {
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY)
 
     expect(lcpCallback).not.toHaveBeenCalled()
+    expect(discardCallback).toHaveBeenCalledOnceWith('hidden')
   })
 
   it('should be discarded if it is reported after a long time', () => {
@@ -203,6 +207,7 @@ describe('largestContentfulPaintTiming', () => {
       startTime: TIMING_MAXIMUM_DELAY as RelativeTime,
     })
     expect(lcpCallback).not.toHaveBeenCalled()
+    expect(discardCallback).toHaveBeenCalledOnceWith('maximum delay')
   })
 })
 

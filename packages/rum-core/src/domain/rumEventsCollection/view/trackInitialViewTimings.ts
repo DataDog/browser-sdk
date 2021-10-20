@@ -6,8 +6,6 @@ import {
   EventEmitter,
   RelativeTime,
   ONE_MINUTE,
-  addMonitoringMessage,
-  isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { trackFirstHidden } from './trackFirstHidden'
@@ -25,6 +23,7 @@ export interface Timings {
   largestContentfulPaint?: Duration
   firstInputDelay?: Duration
   firstInputTime?: Duration
+  lcpDiscardReason?: string
 }
 
 export function trackInitialViewTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void) {
@@ -38,11 +37,20 @@ export function trackInitialViewTimings(lifeCycle: LifeCycle, callback: (timings
   const { stop: stopFCPTracking } = trackFirstContentfulPaintTiming(lifeCycle, (firstContentfulPaint) =>
     setTimings({ firstContentfulPaint })
   )
-  const { stop: stopLCPTracking } = trackLargestContentfulPaintTiming(lifeCycle, window, (largestContentfulPaint) => {
-    setTimings({
-      largestContentfulPaint,
-    })
-  })
+  const { stop: stopLCPTracking } = trackLargestContentfulPaintTiming(
+    lifeCycle,
+    window,
+    (largestContentfulPaint) => {
+      setTimings({
+        largestContentfulPaint,
+      })
+    },
+    (lcpDiscardReason) => {
+      setTimings({
+        lcpDiscardReason,
+      })
+    }
+  )
   const { stop: stopFIDTracking } = trackFirstInputTimings(lifeCycle, ({ firstInputDelay, firstInputTime }) => {
     setTimings({
       firstInputDelay,
@@ -99,7 +107,8 @@ export function trackFirstContentfulPaintTiming(lifeCycle: LifeCycle, callback: 
 export function trackLargestContentfulPaintTiming(
   lifeCycle: LifeCycle,
   emitter: EventEmitter,
-  callback: (lcpTiming: RelativeTime) => void
+  callback: (lcpTiming: RelativeTime) => void,
+  discardCallback: (discardReason: string) => void
 ) {
   const firstHidden = trackFirstHidden()
 
@@ -130,23 +139,17 @@ export function trackLargestContentfulPaintTiming(
         entry.startTime < TIMING_MAXIMUM_DELAY
       ) {
         callback(entry.startTime)
-      } else if (isFirstLCP && isExperimentalFeatureEnabled('monitor-dropped-lcp')) {
+      } else if (isFirstLCP) {
         const reason =
           entry.startTime >= firstInteractionTimestamp
-            ? 'after interaction'
+            ? 'interaction'
             : entry.startTime >= firstHidden.timeStamp
-            ? 'after hidden'
+            ? 'hidden'
             : entry.startTime >= TIMING_MAXIMUM_DELAY
-            ? 'after maximum delay'
+            ? 'maximum delay'
             : 'N/A'
 
-        addMonitoringMessage(`LCP dropped ${reason}`, {
-          debug: {
-            startTime: entry.startTime,
-            firstInteractionTimestamp,
-            firstHiddenTimestamp: firstHidden.timeStamp,
-          },
-        })
+        discardCallback(reason)
       }
       isFirstLCP = false
     }
