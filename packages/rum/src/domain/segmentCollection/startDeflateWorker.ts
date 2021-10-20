@@ -1,6 +1,11 @@
 import { addErrorToMonitoringBatch, display, includes, monitor } from '@datadog/browser-core'
 import { createDeflateWorker, DeflateWorker } from './deflateWorker'
 
+/**
+ * For some browser like Firefox, "new Worker()" can fail and fire an 'error' event instead of an exception,
+ * making the creation asynchronous. To handle it, we need a round trip of initialization messages to be sure
+ * the creation is correct. These worker lifecycle states handle this case.
+ */
 const enum DeflateWorkerStatus {
   Nil,
   Loading,
