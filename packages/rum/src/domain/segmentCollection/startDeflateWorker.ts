@@ -63,7 +63,7 @@ export function resetDeflateWorkerState() {
  * - Chromium throws an exception
  * - Firefox fires an error event
  */
-function doStartDeflateWorker(createDeflateWorkerImpl: typeof createDeflateWorker) {
+export function doStartDeflateWorker(createDeflateWorkerImpl = createDeflateWorker) {
   try {
     const worker = createDeflateWorkerImpl()
     worker.addEventListener('error', monitor(onError))
@@ -78,6 +78,7 @@ function doStartDeflateWorker(createDeflateWorkerImpl: typeof createDeflateWorke
       })
     )
     worker.postMessage({ action: 'init' })
+    return worker
   } catch (error) {
     onError(error)
   }
