@@ -74,35 +74,3 @@ export async function sendXhr(url: string, headers: string[][] = []): Promise<st
   }
   return result.response
 }
-
-interface VisualViewportData {
-  scale: number
-  width: number
-  height: number
-  offsetLeft: number
-  offsetTop: number
-  pageLeft: number
-  pageTop: number
-}
-
-export function getVisualViewport(): Promise<VisualViewportData> {
-  return browserExecute(() => {
-    const visual = window.visualViewport || {}
-    return {
-      scale: visual.scale,
-      width: visual.width,
-      height: visual.height,
-      offsetLeft: visual.offsetLeft,
-      offsetTop: visual.offsetTop,
-      pageLeft: visual.pageLeft,
-      pageTop: visual.pageTop,
-    }
-  }) as Promise<VisualViewportData>
-}
-
-export function getWindowScroll() {
-  return browserExecute(() => ({
-    scrollX: window.scrollX,
-    scrollY: window.scrollY,
-  })) as Promise<{ scrollX: number; scrollY: number }>
-}

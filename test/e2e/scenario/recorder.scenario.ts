@@ -11,7 +11,7 @@ import { RumInitConfiguration } from '@datadog/browser-rum-core'
 import { DefaultPrivacyLevel } from '@datadog/browser-rum'
 
 import { createTest, bundleSetup, html, EventRegistry } from '../lib/framework'
-import { browserExecute, getVisualViewport, getWindowScroll } from '../lib/helpers/browser'
+import { browserExecute } from '../lib/helpers/browser'
 import { flushEvents, renewSession } from '../lib/helpers/sdk'
 import {
   findElement,
@@ -19,7 +19,7 @@ import {
   findFullSnapshot,
   findIncrementalSnapshot,
   findAllIncrementalSnapshots,
-  findAllVisualViewport,
+  findAllVisualViewports,
   findMeta,
   findTextContent,
   createMutationPayloadValidatorFromSegment,
@@ -36,30 +36,6 @@ const VIEWPORT_META_TAGS = `
   content="width=device-width, initial-scale=1.0, maximum-scale=2.75, minimum-scale=1.0, user-scalable=yes"
 >
 `
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
-
-const isGestureUnsupported = () => {
-  const { capabilities } = browser
-  return !!(
-    capabilities.browserName === 'firefox' ||
-    capabilities.browserName === 'Safari' ||
-    capabilities.browserName === 'msedge' ||
-    capabilities.platformName === 'windows' ||
-    capabilities.platformName === 'linux'
-  )
-}
-
-// Flakiness: Working with viewport sizes has variations per device of a few pixels
-function expectToBeNearby(numA: number, numB: number) {
-  const test = Math.abs(numA - numB) < 5
-  if (test) {
-    expect(test).toBeTruthy()
-  } else {
-    // Prints a clear error message
-    expect(numB).toBe(numA)
-  }
-}
 
 describe('recorder', () => {
   createTest('record mouse move')
@@ -703,8 +679,12 @@ describe('recorder', () => {
       .withBody(html`${VIEWPORT_META_TAGS}`)
       .run(async ({ events }) => {
         /**
-         * InnerWidth/Height on some devices/browsers are changed by pinch zoom
-         * We need to ensure that our measurements are not affected by pinch zoom
+         * The purpose of this test is to check that browser dimensions are measuring the
+         * layout viewport (not visual viewport), and so they do not change when pinch zoom is applied.
+         *
+         * InnerWidth/Height on some devices/browsers are changed by pinch zoom.
+         * Read vendor discussions around the challenges of standardization:
+         * - https://bugs.chromium.org/p/chromium/issues/detail?id=489206
          */
         if (isGestureUnsupported()) {
           return // No Fallback test
@@ -719,13 +699,13 @@ describe('recorder', () => {
         const initialVisualViewport = await getVisualViewport()
         await pinchZoom(150)
         await pinchZoom(150)
-        await sleep(210)
+        await browser.pause(210)
         const nextVisualViewport = await getVisualViewport()
 
         await browserExecute(() => {
           window.dispatchEvent(new Event('resize'))
         })
-        await sleep(210)
+        await browser.pause(210)
 
         await flushEvents()
         const segment = getLastSegment(events)
@@ -760,10 +740,10 @@ describe('recorder', () => {
           window.scrollTo(-500, -500)
         })
 
-        await sleep(210)
+        await browser.pause(210)
         await pinchZoom(150)
         await pinchZoom(150)
-        await sleep(210)
+        await browser.pause(210)
 
         await browserExecute(() => {
           window.scrollTo(-500, -500)
@@ -776,7 +756,7 @@ describe('recorder', () => {
         // NOTE: Due to scrolling down, the hight of the page changed.
         // Given time constraints, this should be a follow up once more experience is gained via data collection
         await pinchScrollVerticallyDown(SCROLL_DOWN_PX) // Scroll Down on Android
-        await sleep(210)
+        await browser.pause(210)
 
         const { scrollX: nextScrollX, scrollY: nextScrollY } = await getWindowScroll()
         const nextVisualViewport = await getVisualViewport()
@@ -784,7 +764,7 @@ describe('recorder', () => {
         await browserExecute(() => {
           document.dispatchEvent(new Event('scroll'))
         })
-        await sleep(210)
+        await browser.pause(210)
 
         await flushEvents()
         const segment = getLastSegment(events)
@@ -830,17 +810,17 @@ describe('recorder', () => {
         await resetViewport()
         await pinchZoom(150)
         await pinchZoom(150)
-        await sleep(210)
+        await browser.pause(210)
 
         const middleVisualViewportDimension = await getVisualViewport()
         await pinchScrollVerticallyDown(SCROLL_DOWN_PX) // Trigger a resize event
-        await sleep(210)
+        await browser.pause(210)
 
         const nextVisualViewportDimension = await getVisualViewport()
         await flushEvents()
 
         const segment = getLastSegment(events)
-        const visualViewportRecords = findAllVisualViewport(segment)
+        const visualViewportRecords = findAllVisualViewports(segment)
         const lastVisualViewportRecord = visualViewportRecords.slice(-1)[0]
 
         // NOTE: Height changes because URL address bar changes
@@ -883,12 +863,12 @@ describe('recorder', () => {
 
         const initialVisualViewportDimension = await getVisualViewport()
         await pinchZoom(170)
-        await sleep(210)
+        await browser.pause(210)
         const nextVisualViewportDimension = await getVisualViewport()
 
         await flushEvents()
         const segment = getLastSegment(events)
-        const visualViewportRecords = findAllVisualViewport(segment)
+        const visualViewportRecords = findAllVisualViewports(segment)
         const lastVisualViewportRecord = visualViewportRecords.slice(-1)[0]
 
         // SDK returns Visual Viewport object
@@ -914,11 +894,11 @@ describe('recorder', () => {
   })
 })
 
-export function getFirstSegment(events: EventRegistry) {
+function getFirstSegment(events: EventRegistry) {
   return events.sessionReplay[0].segment.data
 }
 
-export function getLastSegment(events: EventRegistry) {
+function getLastSegment(events: EventRegistry) {
   return events.sessionReplay[events.sessionReplay.length - 1].segment.data
 }
 
@@ -927,10 +907,37 @@ export function initRumAndStartRecording(initConfiguration: RumInitConfiguration
   window.DD_RUM!.startSessionReplayRecording()
 }
 
-export async function pinchZoom(xChange = 50, durationMS = 400) {
+const isGestureUnsupported = () => {
+  const { capabilities } = browser
+  return (
+    capabilities.browserName === 'firefox' ||
+    capabilities.browserName === 'Safari' ||
+    capabilities.browserName === 'msedge' ||
+    capabilities.platformName === 'windows' ||
+    capabilities.platformName === 'linux'
+  )
+}
+
+// Flakiness: Working with viewport sizes has variations per device of a few pixels
+function expectToBeNearby(numA: number, numB: number) {
+  const test = Math.abs(numA - numB) < 5
+  if (test) {
+    expect(test).toBeTruthy()
+  } else {
+    // Prints a clear error message
+    expect(numB).toBe(numA)
+  }
+}
+
+async function pinchZoom(xChange: number) {
+  // Cannot exceed the bounds of a device's screen, at start or end positions.
+  // So pick a midpoint on small devices, roughly 180px.
   const xBase = 180
   const yBase = 180
   const xOffsetFingerTwo = 25
+  // Scrolling too fast can show or hide the address bar on some device browsers.
+  const moveDurationMs = 400
+  const pauseDurationMs = 150
   const actions = [
     {
       type: 'pointer',
@@ -939,8 +946,8 @@ export async function pinchZoom(xChange = 50, durationMS = 400) {
       actions: [
         { type: 'pointerMove', duration: 0, x: xBase, y: yBase },
         { type: 'pointerDown', button: 0 },
-        { type: 'pause', duration: 150 },
-        { type: 'pointerMove', duration: durationMS, origin: 'pointer', x: -xChange, y: 0 },
+        { type: 'pause', duration: pauseDurationMs },
+        { type: 'pointerMove', duration: moveDurationMs, origin: 'pointer', x: -xChange, y: 0 },
         { type: 'pointerUp', button: 0 },
       ],
     },
@@ -951,8 +958,8 @@ export async function pinchZoom(xChange = 50, durationMS = 400) {
       actions: [
         { type: 'pointerMove', duration: 0, x: xBase + xOffsetFingerTwo, y: yBase },
         { type: 'pointerDown', button: 0 },
-        { type: 'pause', duration: 150 },
-        { type: 'pointerMove', duration: durationMS, origin: 'pointer', x: +xChange, y: 0 },
+        { type: 'pause', duration: pauseDurationMs },
+        { type: 'pointerMove', duration: moveDurationMs, origin: 'pointer', x: +xChange, y: 0 },
         { type: 'pointerUp', button: 0 },
       ],
     },
@@ -961,11 +968,15 @@ export async function pinchZoom(xChange = 50, durationMS = 400) {
 }
 
 // Providing a negative offset value will scroll up.
-export async function pinchScrollVerticallyDown(yChange = 50) {
-  // NOTE: Some devices may invert scroll direction
-  const durationMS = 1000
+// NOTE: Some devices may invert scroll direction
+async function pinchScrollVerticallyDown(yChange: number) {
+  // Cannot exceed the bounds of a device's screen, at start or end positions.
+  // So pick a midpoint on small devices, roughly 180px.
   const xBase = 180
   const yBase = 180
+  // Scrolling too fast can show or hide the address bar on some device browsers.
+  const moveDurationMs = 800
+  const pauseDurationMs = 150
 
   const actions = [
     {
@@ -975,8 +986,8 @@ export async function pinchScrollVerticallyDown(yChange = 50) {
       actions: [
         { type: 'pointerMove', duration: 0, x: xBase, y: yBase },
         { type: 'pointerDown', button: 0 },
-        { type: 'pause', duration: 150 },
-        { type: 'pointerMove', duration: durationMS, origin: 'pointer', x: 0, y: -yChange },
+        { type: 'pause', duration: pauseDurationMs },
+        { type: 'pointerMove', duration: moveDurationMs, origin: 'pointer', x: 0, y: -yChange },
         { type: 'pointerUp', button: 0 },
       ],
     },
@@ -984,7 +995,7 @@ export async function pinchScrollVerticallyDown(yChange = 50) {
   return driver.performActions(actions)
 }
 
-export async function resetViewport() {
+async function resetViewport() {
   await browserExecute(() => {
     document.documentElement.style.setProperty('width', '5000px')
     document.documentElement.style.setProperty('height', '5000px')
@@ -995,4 +1006,36 @@ export async function resetViewport() {
     document.body.style.setProperty('width', '5000px')
     document.body.style.setProperty('height', '5000px')
   })
+}
+
+interface VisualViewportData {
+  scale: number
+  width: number
+  height: number
+  offsetLeft: number
+  offsetTop: number
+  pageLeft: number
+  pageTop: number
+}
+
+function getVisualViewport(): Promise<VisualViewportData> {
+  return browserExecute(() => {
+    const visual = window.visualViewport || {}
+    return {
+      scale: visual.scale,
+      width: visual.width,
+      height: visual.height,
+      offsetLeft: visual.offsetLeft,
+      offsetTop: visual.offsetTop,
+      pageLeft: visual.pageLeft,
+      pageTop: visual.pageTop,
+    }
+  }) as Promise<VisualViewportData>
+}
+
+function getWindowScroll() {
+  return browserExecute(() => ({
+    scrollX: window.scrollX,
+    scrollY: window.scrollY,
+  })) as Promise<{ scrollX: number; scrollY: number }>
 }
