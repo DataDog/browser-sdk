@@ -70,7 +70,7 @@ export function doStartDeflateWorker(createDeflateWorkerImpl = createDeflateWork
     worker.addEventListener(
       'message',
       monitor(({ data }) => {
-        if (data.type === 'error') {
+        if (data.type === 'errored') {
           onError(data.error)
         } else if (data.type === 'initialized') {
           onInitialized(worker)

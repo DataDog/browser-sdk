@@ -66,13 +66,13 @@ function workerCodeFn() {
       } catch (e) {
         try {
           self.postMessage({
-            type: 'error',
+            type: 'errored',
             error: e,
           })
         } catch (_) {
           // DATA_CLONE_ERR, cf https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm
           self.postMessage({
-            type: 'error',
+            type: 'errored',
             error: '' + e,
           })
         }

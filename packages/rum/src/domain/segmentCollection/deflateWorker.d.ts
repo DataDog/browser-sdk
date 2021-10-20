@@ -56,6 +56,6 @@ export type DeflateWorkerResponse =
     }
   // Could happen at any time when something goes wrong in the worker
   | {
-      type: 'error'
+      type: 'errored'
       error: Error | string
     }
