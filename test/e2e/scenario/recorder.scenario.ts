@@ -710,11 +710,17 @@ describe('recorder', () => {
         await flushEvents()
         const segment = getLastSegment(events)
         const ViewportResizeRecords = findAllIncrementalSnapshots(segment, IncrementalSource.ViewportResize)
-
         const lastViewportResizeRecord = ViewportResizeRecords.slice(-1)[0].data as ViewportResizeData
 
-        expectToBeNearby(Math.round(lastViewportResizeRecord.width), innerWidth)
-        expectToBeNearby(Math.round(lastViewportResizeRecord.height), innerHeight)
+        // Mac OS X Chrome scrollbars are included here (~15px) which seems to be against spec
+        // Scrollbar edge-case handling not considered right now, further investigation needed
+        let scrollbarWidth = 0
+        if (browser.capabilities.browserName === 'chrome' && browser.capabilities.platformName === 'mac os x') {
+          scrollbarWidth = await getScrollbarWidth()
+        }
+        expectToBeNearby(lastViewportResizeRecord.width, innerWidth - scrollbarWidth)
+        expectToBeNearby(lastViewportResizeRecord.height, innerHeight - scrollbarWidth)
+
         // Test the test: ensure the pinch zoom worked
         expect(initialVisualViewport.scale < nextVisualViewport.scale).toBeTruthy()
       })
@@ -795,7 +801,7 @@ describe('recorder', () => {
   })
 
   describe('visual viewport properties - ', () => {
-    createTest('pinch scroll event tracked reports visual viewport page offset')
+    createTest('pinch "scroll" event tracked reports visual viewport page offset')
       .withRum({ enableExperimentalFeatures: ['visualviewport'] })
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
@@ -849,7 +855,7 @@ describe('recorder', () => {
         )
       })
 
-    createTest('pinch zoom event tracked reports visual viewport scale and dimension')
+    createTest('pinch zoom "resize" event tracked reports visual viewport scale and dimension')
       .withRum({ enableExperimentalFeatures: ['visualviewport'] })
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
@@ -861,8 +867,10 @@ describe('recorder', () => {
 
         await resetViewport()
 
+        await browser.pause(210)
         const initialVisualViewportDimension = await getVisualViewport()
-        await pinchZoom(170)
+        await pinchZoom(150)
+        await pinchZoom(150)
         await browser.pause(210)
         const nextVisualViewportDimension = await getVisualViewport()
 
@@ -920,12 +928,14 @@ const isGestureUnsupported = () => {
 
 // Flakiness: Working with viewport sizes has variations per device of a few pixels
 function expectToBeNearby(numA: number, numB: number) {
-  const test = Math.abs(numA - numB) < 5
+  const roundedA = Math.round(numA)
+  const roundedB = Math.round(numB)
+  const test = Math.abs(roundedA - roundedB) <= 5
   if (test) {
     expect(test).toBeTruthy()
   } else {
-    // Prints a clear error message
-    expect(numB).toBe(numA)
+    // Prints a clear error message when different
+    expect(roundedB).toBe(roundedA)
   }
 }
 
@@ -1038,4 +1048,27 @@ function getWindowScroll() {
     scrollX: window.scrollX,
     scrollY: window.scrollY,
   })) as Promise<{ scrollX: number; scrollY: number }>
+}
+
+async function getScrollbarWidth(): Promise<number> {
+  return browserExecute(() => {
+    // Creating invisible container
+    const outer = document.createElement('div')
+    outer.style.visibility = 'hidden'
+    outer.style.overflow = 'scroll' // forcing scrollbar to appear
+    ;(outer.style as any).msOverflowStyle = 'scrollbar' // needed for WinJS apps
+    document.body.appendChild(outer)
+
+    // Creating inner element and placing it in the container
+    const inner = document.createElement('div')
+    outer.appendChild(inner)
+
+    // Calculating difference between container's full width and the child width
+    const scrollbarWidth = outer.offsetWidth - inner.offsetWidth
+
+    // Removing temporary elements from the DOM
+    document.body.removeChild(outer)
+
+    return scrollbarWidth
+  }) as Promise<number>
 }
