@@ -22,6 +22,21 @@ describe('makeRecorderApi', () => {
   let stopRecordingSpy: jasmine.Spy<() => void>
   let startDeflateWorkerSpy: jasmine.Spy<typeof startDeflateWorker>
 
+  function startDeflateWorkerWith(worker?: DeflateWorker) {
+    if (!startDeflateWorkerSpy) {
+      startDeflateWorkerSpy = jasmine.createSpy<typeof startDeflateWorker>('startDeflateWorker')
+    }
+    startDeflateWorkerSpy.and.callFake((callback) => callback(worker))
+  }
+
+  function callDeflateCallbackWith(worker?: DeflateWorker) {
+    startDeflateWorkerSpy.calls.mostRecent().args[0](worker)
+  }
+
+  function stopDeflateWorker() {
+    startDeflateWorkerSpy.and.callFake(noop)
+  }
+
   let rumInit: (initConfiguration: RumInitConfiguration) => void
 
   beforeEach(() => {
@@ -30,9 +45,8 @@ describe('makeRecorderApi', () => {
       startRecordingSpy = jasmine.createSpy('startRecording').and.callFake(() => ({
         stop: stopRecordingSpy,
       }))
-      startDeflateWorkerSpy = jasmine
-        .createSpy<typeof startDeflateWorker>('startDeflateWorker')
-        .and.callFake((callback) => callback({} as DeflateWorker))
+
+      startDeflateWorkerWith({} as DeflateWorker)
       recorderApi = makeRecorderApi(startRecordingSpy, startDeflateWorkerSpy)
       rumInit = (initConfiguration) => {
         recorderApi.onRumStart(lifeCycle, initConfiguration, {} as Configuration, session, {} as ParentContexts)
@@ -107,20 +121,21 @@ describe('makeRecorderApi', () => {
     it('do not start recording if worker fails to be instantiated', () => {
       setupBuilder.build()
       rumInit(DEFAULT_INIT_CONFIGURATION)
-      startDeflateWorkerSpy.and.callFake((callback) => callback(undefined))
+      startDeflateWorkerWith(undefined)
       recorderApi.start()
       expect(startRecordingSpy).not.toHaveBeenCalled()
     })
 
-    it('does not start recording multiple times if restarted before worker is ready', () => {
+    it('does not start recording multiple times if restarted before worker is initialized', () => {
       setupBuilder.build()
       rumInit(DEFAULT_INIT_CONFIGURATION)
-      startDeflateWorkerSpy.and.callFake(noop)
+      stopDeflateWorker()
       recorderApi.start()
       recorderApi.stop()
-      startDeflateWorkerSpy.calls.mostRecent().args[0]({} as DeflateWorker)
+
+      callDeflateCallbackWith({} as DeflateWorker)
       recorderApi.start()
-      startDeflateWorkerSpy.calls.mostRecent().args[0]({} as DeflateWorker)
+      callDeflateCallbackWith({} as DeflateWorker)
       expect(startRecordingSpy).toHaveBeenCalledTimes(1)
     })
   })

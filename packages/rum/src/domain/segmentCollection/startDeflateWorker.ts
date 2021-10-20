@@ -29,7 +29,7 @@ type DeflateWorkerState =
       worker: DeflateWorker
     }
 
-export let state: DeflateWorkerState = { status: DeflateWorkerStatus.Nil }
+let state: DeflateWorkerState = { status: DeflateWorkerStatus.Nil }
 
 export function startDeflateWorker(
   callback: (worker?: DeflateWorker) => void,
