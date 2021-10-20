@@ -1,5 +1,6 @@
 import {
   display,
+  isIE,
   MonitoringMessage,
   noop,
   resetInternalMonitoring,
@@ -62,17 +63,70 @@ describe('startDeflateWorker', () => {
     })
   })
 
-  describe('error state', () => {
+  describe('worker CSP error', () => {
+    let internalMonitoringMessages: MonitoringMessage[]
+    // mimic Chrome behavior
+    let CSP_ERROR: DOMException
+    let displaySpy: jasmine.Spy
+
+    beforeEach(() => {
+      if (isIE()) {
+        pending('IE does not support CSP blocking worker creation')
+      }
+      displaySpy = spyOn(display, 'error')
+      internalMonitoringMessages = startFakeInternalMonitoring()
+      CSP_ERROR = new DOMException(
+        "Failed to construct 'Worker': Access to the script at 'blob:https://example.org/9aadbb61-effe-41ee-aa76-fc607053d642' is denied by the document's Content Security Policy."
+      )
+    })
+
+    afterEach(() => {
+      resetInternalMonitoring()
+    })
+
+    it('displays CSP instructions when the worker creation throws a CSP error', () => {
+      startDeflateWorker(noop, () => {
+        throw CSP_ERROR
+      })
+      expect(displaySpy).toHaveBeenCalledWith(
+        'Please make sure CSP is correctly configured https://docs.datadoghq.com/real_user_monitoring/faq/content_security_policy'
+      )
+    })
+
+    it('does not report CSP errors to internal monitoring', () => {
+      startDeflateWorker(noop, () => {
+        throw CSP_ERROR
+      })
+      expect(internalMonitoringMessages).toEqual([])
+    })
+
+    it('displays ErrorEvent as CSP error', () => {
+      startDeflateWorker(noop, createDeflateWorkerSpy)
+      deflateWorker.dispatchErrorEvent()
+      expect(displaySpy).toHaveBeenCalledWith(
+        'Please make sure CSP is correctly configured https://docs.datadoghq.com/real_user_monitoring/faq/content_security_policy'
+      )
+    })
+    it('calls the callback without argument in case of an error occurs during loading', () => {
+      const callbackSpy = jasmine.createSpy()
+      startDeflateWorker(callbackSpy, createDeflateWorkerSpy)
+      deflateWorker.dispatchErrorEvent()
+      expect(callbackSpy).toHaveBeenCalledOnceWith()
+    })
+
+    it('calls the callback without argument in case of an error occurred in a previous loading', () => {
+      startDeflateWorker(noop, createDeflateWorkerSpy)
+      deflateWorker.dispatchErrorEvent()
+
+      const callbackSpy = jasmine.createSpy()
+      startDeflateWorker(callbackSpy, createDeflateWorkerSpy)
+      expect(callbackSpy).toHaveBeenCalledOnceWith()
+    })
+  })
+
+  describe('worker unknown error', () => {
     let internalMonitoringMessages: MonitoringMessage[]
     const UNKNOWN_ERROR = new Error('boom')
-    // mimic Chrome behavior
-    const CSP_ERROR = Object.create(DOMException.prototype, {
-      name: { value: '' },
-      message: {
-        value:
-          "Failed to construct 'Worker': Access to the script at 'blob:https://example.org/9aadbb61-effe-41ee-aa76-fc607053d642' is denied by the document's Content Security Policy.",
-      },
-    })
     let displaySpy: jasmine.Spy
 
     beforeEach(() => {
@@ -103,52 +157,12 @@ describe('startDeflateWorker', () => {
       ])
     })
 
-    it('displays CSP instructions when the worker creation throws a CSP error', () => {
-      startDeflateWorker(noop, () => {
-        throw CSP_ERROR
-      })
-      expect(displaySpy).toHaveBeenCalledWith(
-        'Please make sure CSP is correctly configured https://docs.datadoghq.com/real_user_monitoring/faq/content_security_policy'
-      )
-    })
-
-    it('does not report CSP errors to internal monitoring', () => {
-      startDeflateWorker(noop, () => {
-        throw CSP_ERROR
-      })
-      expect(internalMonitoringMessages).toEqual([])
-    })
-
-    it('displays ErrorEvent as CSP error', () => {
-      startDeflateWorker(noop, createDeflateWorkerSpy)
-      deflateWorker.dispatchErrorEvent()
-      expect(displaySpy).toHaveBeenCalledWith(
-        'Please make sure CSP is correctly configured https://docs.datadoghq.com/real_user_monitoring/faq/content_security_policy'
-      )
-    })
-
     it('does not display error messages as CSP error', () => {
       startDeflateWorker(noop, createDeflateWorkerSpy)
       deflateWorker.dispatchErrorMessage('foo')
       expect(displaySpy).not.toHaveBeenCalledWith(
         'Please make sure CSP is correctly configured https://docs.datadoghq.com/real_user_monitoring/faq/content_security_policy'
       )
-    })
-
-    it('calls the callback without argument in case of an error occurs during loading', () => {
-      const callbackSpy = jasmine.createSpy()
-      startDeflateWorker(callbackSpy, createDeflateWorkerSpy)
-      deflateWorker.dispatchErrorEvent()
-      expect(callbackSpy).toHaveBeenCalledOnceWith()
-    })
-
-    it('calls the callback without argument in case of an error occurred in a previous loading', () => {
-      startDeflateWorker(noop, createDeflateWorkerSpy)
-      deflateWorker.dispatchErrorEvent()
-
-      const callbackSpy = jasmine.createSpy()
-      startDeflateWorker(callbackSpy, createDeflateWorkerSpy)
-      expect(callbackSpy).toHaveBeenCalledOnceWith()
     })
 
     it('reports errors occurring after loading to internal monitoring', () => {

@@ -119,7 +119,7 @@ export class MockWorker implements DeflateWorker {
   }
 
   dispatchErrorEvent() {
-    const error = Object.create(ErrorEvent.prototype)
+    const error = new ErrorEvent('worker')
     this.listeners.error.forEach((listener) => listener(error))
   }
 

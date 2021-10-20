@@ -31,7 +31,7 @@ describe('makeRecorderApi', () => {
         stop: stopRecordingSpy,
       }))
       startDeflateWorkerSpy = jasmine
-        .createSpy<typeof startDeflateWorker>('loadDeflateWorker')
+        .createSpy<typeof startDeflateWorker>('startDeflateWorker')
         .and.callFake((callback) => callback({} as DeflateWorker))
       recorderApi = makeRecorderApi(startRecordingSpy, startDeflateWorkerSpy)
       rumInit = (initConfiguration) => {
