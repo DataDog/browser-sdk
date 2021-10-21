@@ -2,9 +2,9 @@ import { addErrorToMonitoringBatch, display, includes, monitor } from '@datadog/
 import { createDeflateWorker, DeflateWorker } from './deflateWorker'
 
 /**
- * For some browser like Firefox, "new Worker()" can fail and fire an 'error' event instead of an exception,
- * making the creation asynchronous. To handle it, we need a round trip of initialization messages to be sure
- * the creation is correct. These worker lifecycle states handle this case.
+ * In order to be sure that the worker is correctly working, we need a round trip of
+ * initialization messages, making the creation asynchronous.
+ * These worker lifecycle states handle this case.
  */
 const enum DeflateWorkerStatus {
   Nil,
@@ -59,12 +59,11 @@ export function resetDeflateWorkerState() {
 /**
  * Starts the deflate worker and handle messages and errors
  *
- * Browsers have discrepancies on how to handle worker errors:
+ * The spec allow browsers to handle worker errors differently:
  * - Chromium throws an exception
  * - Firefox fires an error event
  *
- * The spec is not very clear on how to handle worker CSP error.
- * Here is the answer of Firefox about it: https://bugzilla.mozilla.org/show_bug.cgi?id=1736865#c2
+ * more details: https://bugzilla.mozilla.org/show_bug.cgi?id=1736865#c2
  */
 export function doStartDeflateWorker(createDeflateWorkerImpl = createDeflateWorker) {
   try {
