@@ -62,6 +62,9 @@ export function resetDeflateWorkerState() {
  * Browsers have discrepancies on how to handle worker errors:
  * - Chromium throws an exception
  * - Firefox fires an error event
+ *
+ * The spec is not very clear on how to handle worker CSP error.
+ * Here is the answer of Firefox about it: https://bugzilla.mozilla.org/show_bug.cgi?id=1736865#c2
  */
 export function doStartDeflateWorker(createDeflateWorkerImpl = createDeflateWorker) {
   try {
