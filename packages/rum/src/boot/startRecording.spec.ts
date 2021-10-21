@@ -77,7 +77,7 @@ describe('startRecording', () => {
   afterEach(() => {
     sandbox.remove()
     setMaxSegmentSize()
-    setupBuilder?.cleanup()
+    setupBuilder.cleanup()
   })
 
   it('sends recorded segments with valid context', (done) => {

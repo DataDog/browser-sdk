@@ -21,6 +21,7 @@ describe('makeRecorderApi', () => {
   let startRecordingSpy: jasmine.Spy<StartRecording>
   let stopRecordingSpy: jasmine.Spy<() => void>
   let startDeflateWorkerSpy: jasmine.Spy<typeof startDeflateWorker>
+  const FAKE_WORKER = {} as DeflateWorker
 
   function startDeflateWorkerWith(worker?: DeflateWorker) {
     if (!startDeflateWorkerSpy) {
@@ -29,8 +30,8 @@ describe('makeRecorderApi', () => {
     startDeflateWorkerSpy.and.callFake((callback) => callback(worker))
   }
 
-  function callDeflateCallbackWith(worker?: DeflateWorker) {
-    startDeflateWorkerSpy.calls.mostRecent().args[0](worker)
+  function callLastRegisteredInitialisationCallback() {
+    startDeflateWorkerSpy.calls.mostRecent().args[0](FAKE_WORKER)
   }
 
   function stopDeflateWorker() {
@@ -46,7 +47,7 @@ describe('makeRecorderApi', () => {
         stop: stopRecordingSpy,
       }))
 
-      startDeflateWorkerWith({} as DeflateWorker)
+      startDeflateWorkerWith(FAKE_WORKER)
       recorderApi = makeRecorderApi(startRecordingSpy, startDeflateWorkerSpy)
       rumInit = (initConfiguration) => {
         recorderApi.onRumStart(lifeCycle, initConfiguration, {} as Configuration, session, {} as ParentContexts)
@@ -133,9 +134,9 @@ describe('makeRecorderApi', () => {
       recorderApi.start()
       recorderApi.stop()
 
-      callDeflateCallbackWith({} as DeflateWorker)
+      callLastRegisteredInitialisationCallback()
       recorderApi.start()
-      callDeflateCallbackWith({} as DeflateWorker)
+      callLastRegisteredInitialisationCallback()
       expect(startRecordingSpy).toHaveBeenCalledTimes(1)
     })
   })

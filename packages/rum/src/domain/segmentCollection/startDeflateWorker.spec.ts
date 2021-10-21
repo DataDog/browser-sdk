@@ -4,7 +4,6 @@ import {
   MonitoringMessage,
   noop,
   resetInternalMonitoring,
-  setDebugMode,
   startFakeInternalMonitoring,
 } from '@datadog/browser-core'
 import { MockWorker } from '../../../test/utils'
@@ -14,31 +13,29 @@ import { startDeflateWorker, resetDeflateWorkerState } from './startDeflateWorke
 describe('startDeflateWorker', () => {
   let deflateWorker: MockWorker
   let createDeflateWorkerSpy: jasmine.Spy<typeof createDeflateWorker>
+  let callbackSpy: jasmine.Spy
 
   beforeEach(() => {
-    resetDeflateWorkerState()
     deflateWorker = new MockWorker()
-    createDeflateWorkerSpy = jasmine.createSpy().and.callFake(() => deflateWorker)
-    setDebugMode(true)
+    callbackSpy = jasmine.createSpy()
+    createDeflateWorkerSpy = jasmine.createSpy('createDeflateWorkerSpy').and.callFake(() => deflateWorker)
   })
 
   afterEach(() => {
     resetDeflateWorkerState()
   })
 
-  it('creates a deflate worker', () => {
-    const callbackSpy = jasmine.createSpy()
+  it('creates a deflate worker and call callback when initialized', () => {
     startDeflateWorker(callbackSpy, createDeflateWorkerSpy)
     expect(createDeflateWorkerSpy).toHaveBeenCalledTimes(1)
     deflateWorker.processAllMessages()
     expect(callbackSpy).toHaveBeenCalledOnceWith(deflateWorker)
   })
 
-  it('returns the previously created worker', () => {
+  it('uses the previously created worker', () => {
     startDeflateWorker(noop, createDeflateWorkerSpy)
     deflateWorker.processAllMessages()
 
-    const callbackSpy = jasmine.createSpy()
     startDeflateWorker(callbackSpy, createDeflateWorkerSpy)
     expect(createDeflateWorkerSpy).toHaveBeenCalledTimes(1)
     deflateWorker.processAllMessages()
@@ -52,7 +49,7 @@ describe('startDeflateWorker', () => {
       expect(createDeflateWorkerSpy).toHaveBeenCalledTimes(1)
     })
 
-    it('calls all registered callbacks when the worker is loaded', () => {
+    it('calls all registered callbacks when the worker is initialized', () => {
       const callbackSpy1 = jasmine.createSpy()
       const callbackSpy2 = jasmine.createSpy()
       startDeflateWorker(callbackSpy1, createDeflateWorkerSpy)
@@ -108,7 +105,6 @@ describe('startDeflateWorker', () => {
       )
     })
     it('calls the callback without argument in case of an error occurs during loading', () => {
-      const callbackSpy = jasmine.createSpy()
       startDeflateWorker(callbackSpy, createDeflateWorkerSpy)
       deflateWorker.dispatchErrorEvent()
       expect(callbackSpy).toHaveBeenCalledOnceWith()
@@ -118,7 +114,6 @@ describe('startDeflateWorker', () => {
       startDeflateWorker(noop, createDeflateWorkerSpy)
       deflateWorker.dispatchErrorEvent()
 
-      const callbackSpy = jasmine.createSpy()
       startDeflateWorker(callbackSpy, createDeflateWorkerSpy)
       expect(callbackSpy).toHaveBeenCalledOnceWith()
     })
