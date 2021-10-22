@@ -22,7 +22,6 @@ import {
   TimeStamp,
   RelativeTime,
   isEventBridgeDetected,
-  overrideInitConfigurationForBridge,
 } from '@datadog/browser-core'
 import { LifeCycle } from '../domain/lifeCycle'
 import { ParentContexts } from '../domain/parentContexts'
@@ -30,6 +29,7 @@ import { RumSession } from '../domain/rumSession'
 import { RumEventDomainContext } from '../domainContext.types'
 import { CommonContext, User, ActionType, ReplayStats } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
+import { overrideInitConfigurationForBridge } from '../transport/startRumEventBridge'
 import { buildEnv } from './buildEnv'
 import { startRum } from './startRum'
 
@@ -91,6 +91,9 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
     bufferApiCalls.add(() => addErrorStrategy(providedError, commonContext))
   }
 
+  let startSessionReplayRecordingStrategy: RecorderApi['start'] = () => undefined
+  let stopSessionReplayRecordingStrategy: RecorderApi['stop'] = () => undefined
+
   function clonedCommonContext(): CommonContext {
     return deepClone({
       context: globalContextManager.get(),
@@ -100,9 +103,12 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
 
   function initRum(initConfiguration: C | BridgeInitConfiguration) {
     let initConfig = initConfiguration as C
-
-    if (isEventBridgeDetected()) {
+    const isBridgeDetect = isEventBridgeDetected()
+    if (isBridgeDetect) {
       initConfig = overrideInitConfigurationForBridge(initConfig)
+    } else {
+      startSessionReplayRecordingStrategy = recorderApi.start
+      stopSessionReplayRecordingStrategy = recorderApi.stop
     }
 
     if (!checkCookiesAuthorized(buildCookieOptions(initConfig)) || !checkIsNotLocalFile() || !canInitRum(initConfig)) {
@@ -221,8 +227,8 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
       startViewStrategy(name)
     }),
 
-    startSessionReplayRecording: monitor(recorderApi.start),
-    stopSessionReplayRecording: monitor(recorderApi.stop),
+    startSessionReplayRecording: monitor(startSessionReplayRecordingStrategy),
+    stopSessionReplayRecording: monitor(stopSessionReplayRecordingStrategy),
   })
   return rumPublicApi
 
