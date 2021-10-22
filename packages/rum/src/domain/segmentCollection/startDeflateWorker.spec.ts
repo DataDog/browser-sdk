@@ -17,7 +17,7 @@ describe('startDeflateWorker', () => {
 
   beforeEach(() => {
     deflateWorker = new MockWorker()
-    callbackSpy = jasmine.createSpy()
+    callbackSpy = jasmine.createSpy('callbackSpy')
     createDeflateWorkerSpy = jasmine.createSpy('createDeflateWorkerSpy').and.callFake(() => deflateWorker)
   })
 
