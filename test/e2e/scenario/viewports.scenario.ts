@@ -45,9 +45,11 @@ describe('recorder', () => {
         })
         await browser.pause(210)
 
-        const lastViewportResizeRecord = ((await getLastRecord(events, (segment) =>
-          findAllIncrementalSnapshots(segment, IncrementalSource.ViewportResize)
-        )) as unknown) as ViewportResizeData
+        const lastViewportResizeRecord = (
+          await getLastRecord(events, (segment) =>
+            findAllIncrementalSnapshots(segment, IncrementalSource.ViewportResize)
+          )
+        ).data as ViewportResizeData
 
         // Mac OS X Chrome scrollbars are included here (~15px) which seems to be against spec
         // Scrollbar edge-case handling not considered right now, further investigation needed
@@ -101,10 +103,9 @@ describe('recorder', () => {
         })
         await browser.pause(210)
 
-        const lastScrollRecord = await getLastRecord(
-          events,
-          (segment) => (findAllIncrementalSnapshots(segment, IncrementalSource.Scroll) as unknown) as ScrollData[]
-        )
+        const lastScrollRecord = (
+          await getLastRecord(events, (segment) => findAllIncrementalSnapshots(segment, IncrementalSource.Scroll))
+        ).data as ScrollData
 
         // Layout Viewport should not change
         expect(baseScrollX).toBe(0)
