@@ -1,11 +1,10 @@
-import { InitConfiguration } from '../domain/configuration'
 import { Context } from '../tools/context'
 
 export interface BrowserWindow extends Window {
   DatadogEventBridge?: DatadogEventBridge
 }
 
-interface DatadogEventBridge {
+export interface DatadogEventBridge {
   send(msg: string): void
 }
 
@@ -21,10 +20,6 @@ export function getEventBridge() {
 
 export function isEventBridgeDetected(): boolean {
   return !!getDatadogEventBridge()
-}
-
-export function overrideInitConfigurationForBridge<C extends InitConfiguration>(initConfiguration: C): C {
-  return { ...initConfiguration, applicationId: 'empty', clientToken: 'empty', sampleRate: 100 }
 }
 
 function getDatadogEventBridge() {
