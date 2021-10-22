@@ -315,7 +315,9 @@ export function restoreUserAgent() {
 }
 
 export function initDatadogEventBridgeStub() {
-  ;(window as BrowserWindow).DatadogEventBridge = { send: () => undefined }
+  const bridgeStub = { send: () => undefined }
+  ;(window as BrowserWindow).DatadogEventBridge = bridgeStub
+  return bridgeStub
 }
 
 export function deleteDatadogEventBridgeStub() {
