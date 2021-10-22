@@ -12,7 +12,7 @@ import { startErrorCollection } from '../domain/rumEventsCollection/error/errorC
 import { startLongTaskCollection } from '../domain/rumEventsCollection/longTask/longTaskCollection'
 import { startResourceCollection } from '../domain/rumEventsCollection/resource/resourceCollection'
 import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
-import { RumSession, startRumSession } from '../domain/rumSession'
+import { RumSession, startRumSession, startRumSessionStub } from '../domain/rumSession'
 import { CommonContext } from '../rawRumEvent.types'
 import { startRumBatch } from '../transport/batch'
 import { startRumEventBridge } from '../transport/startRumEventBridge'
@@ -29,7 +29,7 @@ export function startRum(
   initialViewName?: string
 ) {
   const lifeCycle = new LifeCycle()
-  const session = startRumSession(configuration, lifeCycle)
+  const session = isEventBridgeDetected() ? startRumSession(configuration, lifeCycle) : startRumSessionStub()
   const domMutationObservable = createDOMMutationObservable()
   const locationChangeObservable = createLocationChangeObservable(location)
 
