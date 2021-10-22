@@ -2,6 +2,7 @@ import { buildUrl, EndpointBuilder } from '@datadog/browser-core'
 import { Configuration } from '../src/domain/configuration'
 import { resetNavigationStart } from '../src/tools/timeUtils'
 import { noop, objectEntries, assign } from '../src/tools/utils'
+import { BrowserWindow } from '../src/transport/eventBridge'
 
 export function stubEndpointBuilder(url: string) {
   return { build: () => url } as EndpointBuilder
@@ -311,4 +312,12 @@ export function setUserAgent(ua: string) {
 
 export function restoreUserAgent() {
   delete (navigator as any).userAgent
+}
+
+export function initDatadogEventBridgeStub() {
+  ;(window as BrowserWindow).DatadogEventBridge = { send: () => undefined }
+}
+
+export function deleteDatadogEventBridgeStub() {
+  delete (window as BrowserWindow).DatadogEventBridge
 }

@@ -21,6 +21,8 @@ import {
   DefaultPrivacyLevel,
   TimeStamp,
   RelativeTime,
+  isEventBridgeDetected,
+  overrideInitConfigurationForBridge,
 } from '@datadog/browser-core'
 import { LifeCycle } from '../domain/lifeCycle'
 import { ParentContexts } from '../domain/parentContexts'
@@ -36,6 +38,8 @@ export interface RumInitConfiguration extends InitConfiguration {
   beforeSend?: ((event: RumEvent, context: RumEventDomainContext) => void | boolean) | undefined
   defaultPrivacyLevel?: DefaultPrivacyLevel | undefined
 }
+
+export type BridgeInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
 
 export type RumPublicApi = ReturnType<typeof makeRumPublicApi>
 
@@ -94,18 +98,20 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
     })
   }
 
-  function initRum(initConfiguration: C) {
-    if (
-      !checkCookiesAuthorized(buildCookieOptions(initConfiguration)) ||
-      !checkIsNotLocalFile() ||
-      !canInitRum(initConfiguration)
-    ) {
+  function initRum(initConfiguration: C | BridgeInitConfiguration) {
+    let initConfig = initConfiguration as C
+
+    if (isEventBridgeDetected()) {
+      initConfig = overrideInitConfigurationForBridge(initConfig)
+    }
+
+    if (!checkCookiesAuthorized(buildCookieOptions(initConfig)) || !checkIsNotLocalFile() || !canInitRum(initConfig)) {
       return
     }
 
-    const { configuration, internalMonitoring } = commonInit(initConfiguration, buildEnv)
+    const { configuration, internalMonitoring } = commonInit(initConfig, buildEnv)
     if (!configuration.trackViewsManually) {
-      doStartRum(initConfiguration, configuration, internalMonitoring)
+      doStartRum(initConfig, configuration, internalMonitoring)
     } else {
       // drain beforeInitCalls by buffering them until we start RUM
       // if we get a startView, drain re-buffered calls before continuing to drain beforeInitCalls
@@ -114,11 +120,11 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
       bufferApiCalls = new BoundedBuffer()
 
       startViewStrategy = (name) => {
-        doStartRum(initConfiguration, configuration, internalMonitoring, name)
+        doStartRum(initConfig, configuration, internalMonitoring, name)
       }
       beforeInitCalls.drain()
     }
-    getInitConfigurationStrategy = () => deepClone<InitConfiguration>(initConfiguration)
+    getInitConfigurationStrategy = () => deepClone<InitConfiguration>(initConfig)
 
     isAlreadyInitialized = true
   }
