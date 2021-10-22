@@ -1,4 +1,4 @@
-import { addEventListener, DOM_EVENT, Observable, callMonitored, instrumentMethod } from '@datadog/browser-core'
+import { addEventListener, DOM_EVENT, instrumentMethodAndCallOriginal, Observable } from '@datadog/browser-core'
 
 export interface LocationChange {
   oldLocation: Readonly<Location>
@@ -32,26 +32,12 @@ export function createLocationChangeObservable(location: Location) {
 }
 
 function trackHistory(onHistoryChange: () => void) {
-  const { stop: stopInstrumentingPushState } = instrumentMethod(
-    history,
-    'pushState',
-    (original) =>
-      function () {
-        original.apply(this, arguments as any)
-        callMonitored(onHistoryChange)
-      }
-  )
-
-  const { stop: stopInstrumentingReplaceState } = instrumentMethod(
-    history,
-    'replaceState',
-    (original) =>
-      function () {
-        original.apply(this, arguments as any)
-        callMonitored(onHistoryChange)
-      }
-  )
-
+  const { stop: stopInstrumentingPushState } = instrumentMethodAndCallOriginal(history, 'pushState', {
+    after: onHistoryChange,
+  })
+  const { stop: stopInstrumentingReplaceState } = instrumentMethodAndCallOriginal(history, 'replaceState', {
+    after: onHistoryChange,
+  })
   const { stop: removeListener } = addEventListener(window, DOM_EVENT.POP_STATE, onHistoryChange)
 
   return {
