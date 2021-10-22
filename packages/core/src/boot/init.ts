@@ -59,23 +59,3 @@ export function commonInit(initConfiguration: InitConfiguration, buildEnv: Build
     internalMonitoring,
   }
 }
-
-export function checkCookiesAuthorized(options: CookieOptions) {
-  if (!areCookiesAuthorized(options)) {
-    display.warn('Cookies are not authorized, we will not send any data.')
-    return false
-  }
-  return true
-}
-
-export function checkIsNotLocalFile() {
-  if (isLocalFile()) {
-    display.error('Execution is not allowed in the current context.')
-    return false
-  }
-  return true
-}
-
-function isLocalFile() {
-  return window.location.protocol === 'file:'
-}

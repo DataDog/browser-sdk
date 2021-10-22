@@ -1,8 +1,5 @@
 import {
   BoundedBuffer,
-  buildCookieOptions,
-  checkCookiesAuthorized,
-  checkIsNotLocalFile,
   Context,
   createContextManager,
   deepClone,
@@ -22,6 +19,8 @@ import {
   TimeStamp,
   RelativeTime,
   isEventBridgeDetected,
+  areCookiesAuthorized,
+  buildCookieOptions,
 } from '@datadog/browser-core'
 import { LifeCycle } from '../domain/lifeCycle'
 import { ParentContexts } from '../domain/parentContexts'
@@ -109,9 +108,13 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
     } else {
       startSessionReplayRecordingStrategy = recorderApi.start
       stopSessionReplayRecordingStrategy = recorderApi.stop
+
+      if (!canHandleSession(initConfig)) {
+        return
+      }
     }
 
-    if (!checkCookiesAuthorized(buildCookieOptions(initConfig)) || !checkIsNotLocalFile() || !canInitRum(initConfig)) {
+    if (!isValidInitConfiguration(initConfig)) {
       return
     }
 
@@ -249,7 +252,20 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
     return result
   }
 
-  function canInitRum(initConfiguration: RumInitConfiguration) {
+  function canHandleSession(initConfiguration: RumInitConfiguration): boolean {
+    if (!areCookiesAuthorized(buildCookieOptions(initConfiguration))) {
+      display.warn('Cookies are not authorized, we will not send any data.')
+      return false
+    }
+
+    if (isLocalFile()) {
+      display.error('Execution is not allowed in the current context.')
+      return false
+    }
+    return true
+  }
+
+  function isValidInitConfiguration(initConfiguration: RumInitConfiguration) {
     if (isAlreadyInitialized) {
       if (!initConfiguration.silentMultipleInit) {
         display.error('DD_RUM is already initialized.')
@@ -281,5 +297,9 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
       return false
     }
     return true
+  }
+
+  function isLocalFile() {
+    return window.location.protocol === 'file:'
   }
 }
