@@ -722,5 +722,20 @@ describe('rum public api', () => {
       })
       expect(recorderApiOnRumStartSpy.calls.mostRecent().args[2].defaultPrivacyLevel).toBe(DefaultPrivacyLevel.MASK)
     })
+
+    describe('if event bridge detected', () => {
+      beforeEach(() => {
+        initDatadogEventBridgeStub()
+      })
+
+      afterEach(() => {
+        deleteDatadogEventBridgeStub()
+      })
+
+      it('recorder should not start', () => {
+        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+        expect(recorderApiOnRumStartSpy).not.toHaveBeenCalled()
+      })
+    })
   })
 })

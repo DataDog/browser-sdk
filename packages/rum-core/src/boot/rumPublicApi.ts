@@ -21,6 +21,7 @@ import {
   RelativeTime,
   isEventBridgeDetected,
   areCookiesAuthorized,
+  noop,
 } from '@datadog/browser-core'
 import { LifeCycle } from '../domain/lifeCycle'
 import { ParentContexts } from '../domain/parentContexts'
@@ -99,8 +100,10 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
   function initRum(initConfiguration: C | BridgeInitConfiguration) {
     let initConfig = initConfiguration as C
     const isBridgeDetect = isEventBridgeDetected()
+
     if (isBridgeDetect) {
       initConfig = overrideInitConfigurationForBridge(initConfig)
+      recorderApi.onRumStart = noop
     } else if (!canHandleSession(initConfig)) {
       return
     }
