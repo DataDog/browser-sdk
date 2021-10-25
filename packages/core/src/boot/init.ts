@@ -1,8 +1,6 @@
-import { areCookiesAuthorized, CookieOptions } from '../browser/cookie'
 import { buildConfiguration, InitConfiguration } from '../domain/configuration'
 import { setDebugMode, startInternalMonitoring } from '../domain/internalMonitoring'
 import { catchUserErrors } from '../tools/catchUserErrors'
-import { display } from '../tools/display'
 import { updateExperimentalFeatures } from '../domain/configuration/experimentalFeatures'
 
 export function makePublicApi<T>(stub: T): T & { onReady(callback: () => void): void } {
@@ -58,24 +56,4 @@ export function commonInit(initConfiguration: InitConfiguration, buildEnv: Build
     configuration,
     internalMonitoring,
   }
-}
-
-export function checkCookiesAuthorized(options: CookieOptions) {
-  if (!areCookiesAuthorized(options)) {
-    display.warn('Cookies are not authorized, we will not send any data.')
-    return false
-  }
-  return true
-}
-
-export function checkIsNotLocalFile() {
-  if (isLocalFile()) {
-    display.error('Execution is not allowed in the current context.')
-    return false
-  }
-  return true
-}
-
-function isLocalFile() {
-  return window.location.protocol === 'file:'
 }

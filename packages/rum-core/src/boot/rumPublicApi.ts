@@ -1,8 +1,6 @@
 import {
   BoundedBuffer,
   buildCookieOptions,
-  checkCookiesAuthorized,
-  checkIsNotLocalFile,
   Context,
   createContextManager,
   deepClone,
@@ -21,6 +19,8 @@ import {
   DefaultPrivacyLevel,
   TimeStamp,
   RelativeTime,
+  isEventBridgeDetected,
+  areCookiesAuthorized,
 } from '@datadog/browser-core'
 import { LifeCycle } from '../domain/lifeCycle'
 import { ParentContexts } from '../domain/parentContexts'
@@ -36,6 +36,8 @@ export interface RumInitConfiguration extends InitConfiguration {
   beforeSend?: ((event: RumEvent, context: RumEventDomainContext) => void | boolean) | undefined
   defaultPrivacyLevel?: DefaultPrivacyLevel | undefined
 }
+
+export type BridgeInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
 
 export type RumPublicApi = ReturnType<typeof makeRumPublicApi>
 
@@ -94,18 +96,22 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
     })
   }
 
-  function initRum(initConfiguration: C) {
-    if (
-      !checkCookiesAuthorized(buildCookieOptions(initConfiguration)) ||
-      !checkIsNotLocalFile() ||
-      !canInitRum(initConfiguration)
-    ) {
+  function initRum(initConfiguration: C | BridgeInitConfiguration) {
+    let initConfig = initConfiguration as C
+    const isBridgeDetect = isEventBridgeDetected()
+    if (isBridgeDetect) {
+      initConfig = overrideInitConfigurationForBridge(initConfig)
+    } else if (!canHandleSession(initConfig)) {
       return
     }
 
-    const { configuration, internalMonitoring } = commonInit(initConfiguration, buildEnv)
+    if (!isValidInitConfiguration(initConfig)) {
+      return
+    }
+
+    const { configuration, internalMonitoring } = commonInit(initConfig, buildEnv)
     if (!configuration.trackViewsManually) {
-      doStartRum(initConfiguration, configuration, internalMonitoring)
+      doStartRum(initConfig, configuration, internalMonitoring)
     } else {
       // drain beforeInitCalls by buffering them until we start RUM
       // if we get a startView, drain re-buffered calls before continuing to drain beforeInitCalls
@@ -114,11 +120,11 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
       bufferApiCalls = new BoundedBuffer()
 
       startViewStrategy = (name) => {
-        doStartRum(initConfiguration, configuration, internalMonitoring, name)
+        doStartRum(initConfig, configuration, internalMonitoring, name)
       }
       beforeInitCalls.drain()
     }
-    getInitConfigurationStrategy = () => deepClone<InitConfiguration>(initConfiguration)
+    getInitConfigurationStrategy = () => deepClone<InitConfiguration>(initConfig)
 
     isAlreadyInitialized = true
   }
@@ -237,7 +243,20 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
     return result
   }
 
-  function canInitRum(initConfiguration: RumInitConfiguration) {
+  function canHandleSession(initConfiguration: RumInitConfiguration): boolean {
+    if (!areCookiesAuthorized(buildCookieOptions(initConfiguration))) {
+      display.warn('Cookies are not authorized, we will not send any data.')
+      return false
+    }
+
+    if (isLocalFile()) {
+      display.error('Execution is not allowed in the current context.')
+      return false
+    }
+    return true
+  }
+
+  function isValidInitConfiguration(initConfiguration: RumInitConfiguration) {
     if (isAlreadyInitialized) {
       if (!initConfiguration.silentMultipleInit) {
         display.error('DD_RUM is already initialized.')
@@ -269,5 +288,13 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
       return false
     }
     return true
+  }
+
+  function overrideInitConfigurationForBridge<C extends InitConfiguration>(initConfiguration: C): C {
+    return { ...initConfiguration, applicationId: 'empty', clientToken: 'empty', sampleRate: 100 }
+  }
+
+  function isLocalFile() {
+    return window.location.protocol === 'file:'
   }
 }

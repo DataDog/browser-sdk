@@ -1,7 +1,15 @@
 import { ONE_SECOND, RelativeTime, getTimeStamp, display, TimeStamp, DefaultPrivacyLevel } from '@datadog/browser-core'
+import { initDatadogEventBridgeStub, deleteDatadogEventBridgeStub } from '../../../core/test/specHelper'
 import { noopRecorderApi, setup, TestSetupBuilder } from '../../test/specHelper'
 import { ActionType } from '../rawRumEvent.types'
-import { makeRumPublicApi, RumPublicApi, RumInitConfiguration, StartRum, RecorderApi } from './rumPublicApi'
+import {
+  makeRumPublicApi,
+  RumPublicApi,
+  RumInitConfiguration,
+  StartRum,
+  RecorderApi,
+  BridgeInitConfiguration,
+} from './rumPublicApi'
 
 const noopStartRum = (): ReturnType<StartRum> => ({
   addAction: () => undefined,
@@ -99,6 +107,28 @@ describe('rum public api', () => {
     it("shouldn't trigger any console.error if the configuration is correct", () => {
       rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1 })
       expect(displaySpy).toHaveBeenCalledTimes(0)
+    })
+
+    describe('if event bridge detected', () => {
+      beforeEach(() => {
+        initDatadogEventBridgeStub()
+      })
+
+      afterEach(() => {
+        deleteDatadogEventBridgeStub()
+      })
+
+      it('init should accept empty application id and client token', () => {
+        const bridgeConfiguration: BridgeInitConfiguration = {}
+        rumPublicApi.init(bridgeConfiguration)
+        expect(display.error).not.toHaveBeenCalled()
+      })
+
+      it('init should force sample rate to 100', () => {
+        const invalidConfiguration: BridgeInitConfiguration = { sampleRate: 50 }
+        rumPublicApi.init(invalidConfiguration)
+        expect(rumPublicApi.getInitConfiguration()?.sampleRate).toEqual(100)
+      })
     })
   })
 

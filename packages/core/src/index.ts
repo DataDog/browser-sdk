@@ -14,15 +14,7 @@ export {
 export { trackConsoleError } from './domain/error/trackConsoleError'
 export { trackRuntimeError } from './domain/error/trackRuntimeError'
 export { computeStackTrace, StackTrace } from './domain/tracekit'
-export {
-  BuildEnv,
-  BuildMode,
-  defineGlobal,
-  makePublicApi,
-  commonInit,
-  checkCookiesAuthorized,
-  checkIsNotLocalFile,
-} from './boot/init'
+export { BuildEnv, BuildMode, defineGlobal, makePublicApi, commonInit } from './boot/init'
 export {
   InternalMonitoring,
   MonitoringMessage,
