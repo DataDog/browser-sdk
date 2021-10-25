@@ -1,4 +1,13 @@
-import { ONE_SECOND, RelativeTime, getTimeStamp, display, TimeStamp, DefaultPrivacyLevel } from '@datadog/browser-core'
+import {
+  ONE_SECOND,
+  RelativeTime,
+  getTimeStamp,
+  display,
+  TimeStamp,
+  DefaultPrivacyLevel,
+  updateExperimentalFeatures,
+  resetExperimentalFeatures,
+} from '@datadog/browser-core'
 import { initDatadogEventBridgeStub, deleteDatadogEventBridgeStub } from '../../../core/test/specHelper'
 import { noopRecorderApi, setup, TestSetupBuilder } from '../../test/specHelper'
 import { ActionType } from '../rawRumEvent.types'
@@ -111,10 +120,12 @@ describe('rum public api', () => {
 
     describe('if event bridge detected', () => {
       beforeEach(() => {
+        updateExperimentalFeatures(['event-bridge'])
         initDatadogEventBridgeStub()
       })
 
       afterEach(() => {
+        resetExperimentalFeatures()
         deleteDatadogEventBridgeStub()
       })
 
@@ -725,10 +736,12 @@ describe('rum public api', () => {
 
     describe('if event bridge detected', () => {
       beforeEach(() => {
+        updateExperimentalFeatures(['event-bridge'])
         initDatadogEventBridgeStub()
       })
 
       afterEach(() => {
+        resetExperimentalFeatures()
         deleteDatadogEventBridgeStub()
       })
 
