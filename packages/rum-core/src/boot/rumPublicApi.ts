@@ -100,7 +100,6 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
   function initRum(initConfiguration: C) {
     if (isEventBridgeDetected()) {
       initConfiguration = overrideInitConfigurationForBridge(initConfiguration)
-      recorderApi.onRumStart = noop
     } else if (!canHandleSession(initConfiguration)) {
       return
     }

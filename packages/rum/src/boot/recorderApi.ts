@@ -1,4 +1,4 @@
-import { Configuration, runOnReadyState } from '@datadog/browser-core'
+import { Configuration, isEventBridgeDetected, noop, runOnReadyState } from '@datadog/browser-core'
 import {
   LifeCycleEventType,
   RumInitConfiguration,
@@ -44,6 +44,16 @@ export function makeRecorderApi(
   startRecordingImpl: StartRecording,
   getDeflateWorkerSingletonImpl = getDeflateWorkerSingleton
 ): RecorderApi {
+  if (isEventBridgeDetected()) {
+    return {
+      start: noop,
+      stop: noop,
+      getReplayStats: () => undefined,
+      onRumStart: noop,
+      isRecording: () => false,
+    }
+  }
+
   let state: RecorderState = {
     status: RecorderStatus.Stopped,
   }
