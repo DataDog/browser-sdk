@@ -17,7 +17,7 @@ import {
   RumInitConfiguration,
   StartRum,
   RecorderApi,
-  BridgeInitConfiguration,
+  HybridInitConfiguration,
 } from './rumPublicApi'
 
 const noopStartRum = (): ReturnType<StartRum> => ({
@@ -130,14 +130,14 @@ describe('rum public api', () => {
       })
 
       it('init should accept empty application id and client token', () => {
-        const bridgeConfiguration: BridgeInitConfiguration = {}
-        rumPublicApi.init(bridgeConfiguration)
+        const hybridInitConfiguration: HybridInitConfiguration = {}
+        rumPublicApi.init(hybridInitConfiguration as RumInitConfiguration)
         expect(display.error).not.toHaveBeenCalled()
       })
 
       it('init should force sample rate to 100', () => {
-        const invalidConfiguration: BridgeInitConfiguration = { sampleRate: 50 }
-        rumPublicApi.init(invalidConfiguration)
+        const invalidConfiguration: HybridInitConfiguration = { sampleRate: 50 }
+        rumPublicApi.init(invalidConfiguration as RumInitConfiguration)
         expect(rumPublicApi.getInitConfiguration()?.sampleRate).toEqual(100)
       })
     })

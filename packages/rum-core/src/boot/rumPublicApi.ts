@@ -38,7 +38,7 @@ export interface RumInitConfiguration extends InitConfiguration {
   defaultPrivacyLevel?: DefaultPrivacyLevel | undefined
 }
 
-export type BridgeInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
+export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
 
 export type RumPublicApi = ReturnType<typeof makeRumPublicApi>
 
@@ -97,24 +97,21 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
     })
   }
 
-  function initRum(initConfiguration: C | BridgeInitConfiguration) {
-    let initConfig = initConfiguration as C
-    const isBridgeDetect = isEventBridgeDetected()
-
-    if (isBridgeDetect) {
-      initConfig = overrideInitConfigurationForBridge(initConfig)
+  function initRum(initConfiguration: C) {
+    if (isEventBridgeDetected()) {
+      initConfiguration = overrideInitConfigurationForBridge(initConfiguration)
       recorderApi.onRumStart = noop
-    } else if (!canHandleSession(initConfig)) {
+    } else if (!canHandleSession(initConfiguration)) {
       return
     }
 
-    if (!isValidInitConfiguration(initConfig)) {
+    if (!isValidInitConfiguration(initConfiguration)) {
       return
     }
 
-    const { configuration, internalMonitoring } = commonInit(initConfig, buildEnv)
+    const { configuration, internalMonitoring } = commonInit(initConfiguration, buildEnv)
     if (!configuration.trackViewsManually) {
-      doStartRum(initConfig, configuration, internalMonitoring)
+      doStartRum(initConfiguration, configuration, internalMonitoring)
     } else {
       // drain beforeInitCalls by buffering them until we start RUM
       // if we get a startView, drain re-buffered calls before continuing to drain beforeInitCalls
@@ -123,11 +120,11 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
       bufferApiCalls = new BoundedBuffer()
 
       startViewStrategy = (name) => {
-        doStartRum(initConfig, configuration, internalMonitoring, name)
+        doStartRum(initConfiguration, configuration, internalMonitoring, name)
       }
       beforeInitCalls.drain()
     }
-    getInitConfigurationStrategy = () => deepClone<InitConfiguration>(initConfig)
+    getInitConfigurationStrategy = () => deepClone<InitConfiguration>(initConfiguration)
 
     isAlreadyInitialized = true
   }
