@@ -1,22 +1,35 @@
 import { resetExperimentalFeatures, updateExperimentalFeatures } from '..'
 import { deleteDatadogEventBridgeStub, initDatadogEventBridgeStub } from '../../test/specHelper'
 import { isEventBridgeDetected } from './eventBridge'
-describe('eventBridge', () => {
-  beforeEach(() => {
-    initDatadogEventBridgeStub()
-  })
 
+describe('isEventBridgeDetected', () => {
   afterEach(() => {
     resetExperimentalFeatures()
     deleteDatadogEventBridgeStub()
   })
 
-  it('should detect event bridge if ff enabled', () => {
-    updateExperimentalFeatures(['event-bridge'])
-    expect(isEventBridgeDetected()).toBeTrue()
+  describe('when ff enabled', () => {
+    beforeEach(() => {
+      updateExperimentalFeatures(['event-bridge'])
+    })
+
+    it('should detect when the bridge is present', () => {
+      initDatadogEventBridgeStub()
+      expect(isEventBridgeDetected()).toBeTrue()
+    })
+
+    it('should not detect when the bridge is absent', () => {
+      expect(isEventBridgeDetected()).toBeFalse()
+    })
   })
 
-  it('should not detect event bridge if ff disabled', () => {
-    expect(isEventBridgeDetected()).toBeFalse()
+  describe('when ff disabled', () => {
+    it('should not detect when the bridge is present', () => {
+      initDatadogEventBridgeStub()
+      expect(isEventBridgeDetected()).toBeFalse()
+    })
+    it('should not detect when the bridge is absent', () => {
+      expect(isEventBridgeDetected()).toBeFalse()
+    })
   })
 })
