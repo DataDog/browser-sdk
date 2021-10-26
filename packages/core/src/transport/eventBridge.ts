@@ -9,9 +9,9 @@ export interface DatadogEventBridge {
 }
 
 export function isEventBridgeDetected(): boolean {
-  return !!getDatadogEventBridge()
+  return !!getEventBridge()
 }
 
-function getDatadogEventBridge() {
+function getEventBridge() {
   return isExperimentalFeatureEnabled('event-bridge') ? (window as BrowserWindow).DatadogEventBridge : null
 }
