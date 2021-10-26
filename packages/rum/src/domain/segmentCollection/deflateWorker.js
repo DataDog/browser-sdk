@@ -20,9 +20,15 @@ function workerCodeFn() {
       monitor((event) => {
         const data = event.data
         switch (data.action) {
+          case 'init':
+            self.postMessage({
+              type: 'initialized',
+            })
+            break
           case 'write':
             const additionalRawSize = pushData(data.data)
             self.postMessage({
+              type: 'wrote',
               id: data.id,
               compressedSize: deflate.chunks.reduce((total, chunk) => total + chunk.length, 0),
               additionalRawSize,
@@ -32,6 +38,7 @@ function workerCodeFn() {
             const additionalRawSize = data.data ? pushData(data.data) : 0
             deflate.push('', constants.Z_FINISH)
             self.postMessage({
+              type: 'flushed',
               id: data.id,
               result: deflate.result,
               additionalRawSize,
@@ -58,10 +65,16 @@ function workerCodeFn() {
         return fn.apply(this, arguments)
       } catch (e) {
         try {
-          self.postMessage({ error: e })
+          self.postMessage({
+            type: 'errored',
+            error: e,
+          })
         } catch (_) {
           // DATA_CLONE_ERR, cf https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm
-          self.postMessage({ error: '' + e })
+          self.postMessage({
+            type: 'errored',
+            error: '' + e,
+          })
         }
       }
     }
