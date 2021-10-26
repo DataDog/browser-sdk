@@ -1,4 +1,4 @@
-import { Configuration, performDraw, Session, startSessionManagement } from '@datadog/browser-core'
+import { Configuration, generateUUID, performDraw, Session, startSessionManagement } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
 export const RUM_SESSION_KEY = 'rum'
@@ -42,9 +42,13 @@ export function startRumSession(configuration: Configuration, lifeCycle: LifeCyc
   }
 }
 
+/**
+ * Start a tracked replay session stub
+ * It needs to be a replay plan in order to get long tasks
+ */
 export function startRumSessionStub(): RumSession {
   return {
-    getId: () => undefined,
+    getId: () => generateUUID(),
     isTracked: () => true,
     hasReplayPlan: () => true,
     hasLitePlan: () => false,
