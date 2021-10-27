@@ -43,7 +43,6 @@ describe('recorder', () => {
         await browserExecute(() => {
           window.dispatchEvent(new Event('resize'))
         })
-        await browser.pause(210)
 
         const lastViewportResizeRecord = (
           await getLastRecord(events, (segment) =>
@@ -77,7 +76,6 @@ describe('recorder', () => {
         if (isGestureUnsupported()) {
           return // No Fallback test
         }
-        await resetViewport()
 
         await browserExecute(() => {
           window.scrollTo(-500, -500)
@@ -93,7 +91,6 @@ describe('recorder', () => {
         // NOTE: Due to scrolling down, the hight of the page changed.
         // Given time constraints, this should be a follow up once more experience is gained via data collection
         await pinchScrollVerticallyDown(SCROLL_DOWN_PX) // Scroll Down on Android
-        await browser.pause(210)
 
         const { scrollX: nextScrollX, scrollY: nextScrollY } = await getWindowScroll()
         const nextVisualViewport = await getVisualViewport()
@@ -101,7 +98,6 @@ describe('recorder', () => {
         await browserExecute(() => {
           document.dispatchEvent(new Event('scroll'))
         })
-        await browser.pause(210)
 
         const lastScrollRecord = (
           await getLastRecord(events, (segment) => findAllIncrementalSnapshots(segment, IncrementalSource.Scroll))
@@ -142,7 +138,6 @@ describe('recorder', () => {
         if (isGestureUnsupported()) {
           return // No Fallback test possible
         }
-        await resetViewport()
 
         await performSignificantZoom()
         const middleVisualViewportDimension = await getVisualViewport()
@@ -185,7 +180,6 @@ describe('recorder', () => {
           return // No Fallback test possible
         }
 
-        await resetViewport()
         const initialVisualViewportDimension = await getVisualViewport()
         await performSignificantZoom()
         const nextVisualViewportDimension = await getVisualViewport()
@@ -284,14 +278,11 @@ async function pinchZoom(xChange: number) {
     },
   ]
   await driver.performActions(actions)
-  await browser.pause(50)
 }
 
 async function performSignificantZoom() {
-  await browser.pause(50)
   await pinchZoom(150)
   await pinchZoom(150)
-  await browser.pause(210)
 }
 
 // Providing a negative offset value will scroll up.
@@ -320,7 +311,6 @@ async function pinchScrollVerticallyDown(yChange: number) {
     },
   ]
   await driver.performActions(actions)
-  await browser.pause(210)
 }
 
 async function resetViewport() {
@@ -334,7 +324,6 @@ async function resetViewport() {
     document.body.style.setProperty('width', '5000px')
     document.body.style.setProperty('height', '5000px')
   })
-  await browser.pause(50)
 }
 
 interface VisualViewportData {
