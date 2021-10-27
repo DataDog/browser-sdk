@@ -21,7 +21,6 @@ import {
   RelativeTime,
   isEventBridgeDetected,
   areCookiesAuthorized,
-  noop,
 } from '@datadog/browser-core'
 import { LifeCycle } from '../domain/lifeCycle'
 import { ParentContexts } from '../domain/parentContexts'
