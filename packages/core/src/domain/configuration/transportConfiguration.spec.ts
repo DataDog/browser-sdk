@@ -3,6 +3,7 @@ import { computeTransportConfiguration } from './transportConfiguration'
 
 describe('transportConfiguration', () => {
   const clientToken = 'some_client_token'
+  const otherClientToken = 'some_other_client_token'
   const v1IntakePath = `/v1/input/${clientToken}`
   const buildEnv: BuildEnv = {
     buildMode: BuildMode.RELEASE,
@@ -14,8 +15,11 @@ describe('transportConfiguration', () => {
       let configuration = computeTransportConfiguration({ clientToken }, buildEnv)
       expect(configuration.internalMonitoringEndpointBuilder).toBeUndefined()
 
-      configuration = computeTransportConfiguration({ clientToken, internalMonitoringApiKey: clientToken }, buildEnv)
-      expect(configuration.internalMonitoringEndpointBuilder?.build()).toContain(clientToken)
+      configuration = computeTransportConfiguration(
+        { clientToken, internalMonitoringApiKey: otherClientToken },
+        buildEnv
+      )
+      expect(configuration.internalMonitoringEndpointBuilder?.build()).toContain(otherClientToken)
     })
   })
 
