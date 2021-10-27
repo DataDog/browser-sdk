@@ -93,6 +93,20 @@ function startMonitoringBatch(configuration: Configuration) {
   }
 }
 
+export function startFakeInternalMonitoring() {
+  const messages: MonitoringMessage[] = []
+  assign(monitoringConfiguration, {
+    batch: {
+      add(message: MonitoringMessage) {
+        messages.push(message)
+      },
+    },
+    maxMessagesPerPage: Infinity,
+    sentMessageCount: 0,
+  })
+  return messages
+}
+
 export function resetInternalMonitoring() {
   monitoringConfiguration.batch = undefined
 }

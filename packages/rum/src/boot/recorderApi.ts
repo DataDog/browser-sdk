@@ -8,7 +8,7 @@ import {
   RecorderApi,
 } from '@datadog/browser-rum-core'
 import { getReplayStats } from '../domain/replayStats'
-import { getDeflateWorkerSingleton } from '../domain/segmentCollection/deflateWorkerSingleton'
+import { startDeflateWorker } from '../domain/segmentCollection/startDeflateWorker'
 
 import { startRecording } from './startRecording'
 
@@ -42,7 +42,7 @@ type RecorderState =
 
 export function makeRecorderApi(
   startRecordingImpl: StartRecording,
-  getDeflateWorkerSingletonImpl = getDeflateWorkerSingleton
+  startDeflateWorkerImpl = startDeflateWorker
 ): RecorderApi {
   if (isEventBridgeDetected()) {
     return {
@@ -106,26 +106,31 @@ export function makeRecorderApi(
             return
           }
 
-          const worker = getDeflateWorkerSingletonImpl()
-          if (!worker) {
-            state = {
-              status: RecorderStatus.Stopped,
+          startDeflateWorkerImpl((worker) => {
+            if (state.status !== RecorderStatus.Starting) {
+              return
             }
-            return
-          }
 
-          const { stop: stopRecording } = startRecordingImpl(
-            lifeCycle,
-            initConfiguration.applicationId,
-            configuration,
-            session,
-            parentContexts,
-            worker
-          )
-          state = {
-            status: RecorderStatus.Started,
-            stopRecording,
-          }
+            if (!worker) {
+              state = {
+                status: RecorderStatus.Stopped,
+              }
+              return
+            }
+
+            const { stop: stopRecording } = startRecordingImpl(
+              lifeCycle,
+              initConfiguration.applicationId,
+              configuration,
+              session,
+              parentContexts,
+              worker
+            )
+            state = {
+              status: RecorderStatus.Started,
+              stopRecording,
+            }
+          })
         })
       }
 

@@ -23,6 +23,8 @@ export {
   callMonitored,
   addMonitoringMessage,
   addErrorToMonitoringBatch,
+  startFakeInternalMonitoring,
+  resetInternalMonitoring,
   setDebugMode,
 } from './domain/internalMonitoring'
 export { Observable, Subscription } from './tools/observable'
