@@ -13,11 +13,7 @@ describe('logs entry', () => {
       currentContext: Context & { view: { referrer: string; url: string } }
     ) => void
   >
-  let startLogsGetGlobalContext: (() => Context) | undefined
-  const startLogs: StartLogs = (_configuration, _logger, getGlobalContext) => {
-    startLogsGetGlobalContext = getGlobalContext
-    return (sendLogsSpy as any) as ReturnType<StartLogs>
-  }
+  const startLogs: StartLogs = () => (sendLogsSpy as any) as ReturnType<StartLogs>
 
   function getLoggedMessage(index: number) {
     const [message, context] = sendLogsSpy.calls.argsFor(index)
@@ -26,7 +22,6 @@ describe('logs entry', () => {
 
   beforeEach(() => {
     sendLogsSpy = jasmine.createSpy()
-    startLogsGetGlobalContext = undefined
   })
 
   it('should define the public API with init', () => {
@@ -153,7 +148,7 @@ describe('logs entry', () => {
       expect(LOGS.getInitConfiguration()).toBeUndefined()
     })
 
-    describe('save context when submiting a log', () => {
+    describe('save context when submitting a log', () => {
       it('saves the date', () => {
         LOGS.logger.log('message')
         clock.tick(ONE_SECOND)
@@ -242,11 +237,6 @@ describe('logs entry', () => {
 
         expect(getLoggedMessage(0).context.foo).toEqual('bar')
         expect(getLoggedMessage(1).context.foo).toEqual('bar')
-      })
-
-      it('should expose global context to startLogs', () => {
-        LOGS.setLoggerGlobalContext({ foo: 'bar' })
-        expect(startLogsGetGlobalContext!()).toEqual({ foo: 'bar' })
       })
     })
 

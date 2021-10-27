@@ -72,10 +72,6 @@ function startMonitoringBatch(configuration: Configuration) {
     return combine(
       {
         date: new Date().getTime(),
-        view: {
-          referrer: document.referrer,
-          url: window.location.href,
-        },
       },
       externalContextProvider !== undefined ? externalContextProvider() : {},
       message

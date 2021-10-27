@@ -201,10 +201,6 @@ describe('internal monitoring', () => {
         error: jasmine.anything(),
         message: 'message',
         status: 'error',
-        view: {
-          referrer: document.referrer,
-          url: window.location.href,
-        },
       })
     })
 
