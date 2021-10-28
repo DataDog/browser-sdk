@@ -36,7 +36,7 @@ export {
   SESSION_COOKIE_NAME,
   stopSessionManagement,
 } from './domain/sessionManagement'
-export { HttpRequest, Batch, isEventBridgeDetected } from './transport'
+export { HttpRequest, Batch, isEventBridgePresent } from './transport'
 export * from './tools/display'
 export * from './tools/urlPolyfill'
 export * from './tools/timeUtils'

@@ -1,3 +1,3 @@
 export { HttpRequest } from './httpRequest'
 export { Batch } from './batch'
-export { isEventBridgeDetected } from './eventBridge'
+export { isEventBridgePresent } from './eventBridge'

@@ -1,4 +1,4 @@
-import { combine, Configuration, InternalMonitoring, isEventBridgeDetected, Observable } from '@datadog/browser-core'
+import { combine, Configuration, InternalMonitoring, isEventBridgePresent, Observable } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { startPerformanceCollection } from '../browser/performanceCollection'
 import { startRumAssembly } from '../domain/assembly'
@@ -28,7 +28,7 @@ export function startRum(
   initialViewName?: string
 ) {
   const lifeCycle = new LifeCycle()
-  const session = !isEventBridgeDetected() ? startRumSession(configuration, lifeCycle) : startRumSessionStub()
+  const session = !isEventBridgePresent() ? startRumSession(configuration, lifeCycle) : startRumSessionStub()
   const domMutationObservable = createDOMMutationObservable()
   const locationChangeObservable = createLocationChangeObservable(location)
 

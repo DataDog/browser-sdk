@@ -8,7 +8,7 @@ export interface DatadogEventBridge {
   send(msg: string): void
 }
 
-export function isEventBridgeDetected(): boolean {
+export function isEventBridgePresent(): boolean {
   return !!getEventBridge()
 }
 

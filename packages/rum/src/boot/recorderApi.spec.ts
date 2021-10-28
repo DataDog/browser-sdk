@@ -140,7 +140,7 @@ describe('makeRecorderApi', () => {
       expect(startRecordingSpy).toHaveBeenCalledTimes(1)
     })
 
-    describe('if event bridge detected', () => {
+    describe('if event bridge present', () => {
       beforeEach(() => {
         updateExperimentalFeatures(['event-bridge'])
         initDatadogEventBridgeStub()

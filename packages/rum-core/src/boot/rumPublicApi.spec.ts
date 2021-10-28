@@ -118,7 +118,7 @@ describe('rum public api', () => {
       expect(displaySpy).toHaveBeenCalledTimes(0)
     })
 
-    describe('if event bridge detected', () => {
+    describe('if event bridge present', () => {
       beforeEach(() => {
         updateExperimentalFeatures(['event-bridge'])
         initDatadogEventBridgeStub()
