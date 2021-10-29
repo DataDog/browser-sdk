@@ -1,4 +1,4 @@
-import { Configuration, noop } from '@datadog/browser-core'
+import { Configuration, noop, resetExperimentalFeatures, updateExperimentalFeatures } from '@datadog/browser-core'
 import {
   RecorderApi,
   ParentContexts,
@@ -6,7 +6,7 @@ import {
   RumInitConfiguration,
   LifeCycle,
 } from '@datadog/browser-rum-core'
-import { createNewEvent } from '@datadog/browser-core/test/specHelper'
+import { createNewEvent, deleteDatadogEventBridgeStub, initDatadogEventBridgeStub } from '../../../core/test/specHelper'
 import { createRumSessionMock, RumSessionMock } from '../../../rum-core/test/mockRumSession'
 import { setup, TestSetupBuilder } from '../../../rum-core/test/specHelper'
 import { DeflateWorker } from '../domain/segmentCollection/deflateWorker'
@@ -138,6 +138,25 @@ describe('makeRecorderApi', () => {
       recorderApi.start()
       callLastRegisteredInitialisationCallback()
       expect(startRecordingSpy).toHaveBeenCalledTimes(1)
+    })
+
+    describe('if event bridge present', () => {
+      beforeEach(() => {
+        updateExperimentalFeatures(['event-bridge'])
+        initDatadogEventBridgeStub()
+      })
+
+      afterEach(() => {
+        resetExperimentalFeatures()
+        deleteDatadogEventBridgeStub()
+      })
+
+      it('does not start recording', () => {
+        setupBuilder.build()
+        recorderApi.start()
+        rumInit(DEFAULT_INIT_CONFIGURATION)
+        expect(startRecordingSpy).not.toHaveBeenCalled()
+      })
     })
   })
 

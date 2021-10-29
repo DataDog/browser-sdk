@@ -14,15 +14,7 @@ export {
 export { trackConsoleError } from './domain/error/trackConsoleError'
 export { trackRuntimeError } from './domain/error/trackRuntimeError'
 export { computeStackTrace, StackTrace } from './domain/tracekit'
-export {
-  BuildEnv,
-  BuildMode,
-  defineGlobal,
-  makePublicApi,
-  commonInit,
-  checkCookiesAuthorized,
-  checkIsNotLocalFile,
-} from './boot/init'
+export { BuildEnv, BuildMode, defineGlobal, makePublicApi, commonInit } from './boot/init'
 export {
   InternalMonitoring,
   MonitoringMessage,
@@ -44,7 +36,7 @@ export {
   SESSION_COOKIE_NAME,
   stopSessionManagement,
 } from './domain/sessionManagement'
-export { HttpRequest, Batch } from './transport'
+export { HttpRequest, Batch, isEventBridgePresent } from './transport'
 export * from './tools/display'
 export * from './tools/urlPolyfill'
 export * from './tools/timeUtils'
