@@ -15,9 +15,7 @@ export function startRumBatch(configuration: Configuration, lifeCycle: LifeCycle
   })
 
   return {
-    stop() {
-      batch.stop()
-    },
+    stop: () => batch.stop(),
   }
 }
 
