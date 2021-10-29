@@ -28,6 +28,7 @@ interface TestContext {
   baseUrl: string
   crossOriginUrl: string
   events: EventRegistry
+  bridgeEvents: EventRegistry
 }
 
 type TestRunner = (testContext: TestContext) => Promise<void>
@@ -38,6 +39,7 @@ class TestBuilder {
   private logsConfiguration: LogsInitConfiguration | undefined = undefined
   private head = ''
   private body = ''
+  private bridge = false
   private setups: Array<{ factory: SetupFactory; name?: string }> = []
 
   constructor(private title: string) {}
@@ -72,6 +74,11 @@ class TestBuilder {
     return this
   }
 
+  withBridge() {
+    this.bridge = true
+    return this
+  }
+
   withSetup(factory: SetupFactory, name?: string) {
     this.setups.push({ factory, name })
     if (this.setups.length > 1 && this.setups.some((item) => !item.name)) {
@@ -90,6 +97,7 @@ class TestBuilder {
       rum: this.rumConfiguration,
       rumInit: this.rumInit,
       useRumSlim: false,
+      bridge: this.bridge,
     }
 
     if (this.alsoRunWithRumSlim) {
@@ -166,6 +174,7 @@ function createTestContext(servers: Servers): TestContext {
     baseUrl: servers.base.url,
     crossOriginUrl: servers.crossOrigin.url,
     events: new EventRegistry(),
+    bridgeEvents: new EventRegistry(),
   }
 }
 
@@ -174,10 +183,11 @@ async function setUpTest({ baseUrl }: TestContext) {
   await waitForServersIdle()
 }
 
-async function tearDownTest({ events }: TestContext) {
+async function tearDownTest({ events, bridgeEvents }: TestContext) {
   await flushEvents()
   expect(events.internalMonitoring).toEqual([])
   validateFormat(events.rum)
+  validateFormat(bridgeEvents.rum)
   await withBrowserLogs((logs) => {
     logs.forEach((browserLog) => {
       log(`Browser ${browserLog.source}: ${browserLog.level} ${browserLog.message}`)

@@ -1,7 +1,8 @@
-import { getTestServers, waitForServersIdle } from '../framework'
-import { browserExecuteAsync, deleteAllCookies } from './browser'
+import { RumEvent } from '@datadog/browser-rum'
+import { EventRegistry, getTestServers, waitForServersIdle } from '../framework'
+import { browserExecute, browserExecuteAsync, deleteAllCookies } from './browser'
 
-export async function flushEvents() {
+export async function flushEvents(bridgeEvents?: EventRegistry) {
   // wait to process actions + event loop before switching page
   await browserExecuteAsync((done) =>
     setTimeout(() => {
@@ -10,6 +11,18 @@ export async function flushEvents() {
   )
   await waitForServersIdle()
   const servers = await getTestServers()
+
+  // Flush bridge events
+  if (bridgeEvents) {
+    const events = (await browserExecute(() => {
+      const eventBridge = (window as any).DatadogEventBridge
+      if (!eventBridge) {
+        return []
+      }
+      return eventBridge.events as RumEvent[]
+    })) as Array<{ eventType: string; event: RumEvent }>
+    events.forEach(({ eventType, event }) => bridgeEvents.push(eventType === 'log' ? 'logs' : 'rum', event))
+  }
 
   // TODO: use /empty instead of /ok
   //

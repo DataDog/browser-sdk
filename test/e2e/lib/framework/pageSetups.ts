@@ -6,6 +6,7 @@ export interface SetupOptions {
   useRumSlim: boolean
   logs?: LogsInitConfiguration
   rumInit: (initConfiguration: RumInitConfiguration) => void
+  bridge: boolean
   head?: string
   body?: string
 }
@@ -26,6 +27,11 @@ export const DEFAULT_SETUPS = isBrowserStack
 
 export function asyncSetup(options: SetupOptions) {
   let body = options.body || ''
+  let header = options.head || ''
+
+  if (options.bridge) {
+    header += setupBridge()
+  }
 
   function formatSnippet(url: string, globalName: string) {
     return `(function(h,o,u,n,d) {
@@ -59,12 +65,16 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
 
   return basePage({
     body,
-    header: options.head,
+    header,
   })
 }
 
 export function bundleSetup(options: SetupOptions) {
   let header = options.head || ''
+
+  if (options.bridge) {
+    header += setupBridge()
+  }
 
   if (options.logs) {
     header += html`
@@ -95,6 +105,10 @@ export function bundleSetup(options: SetupOptions) {
 
 export function npmSetup(options: SetupOptions) {
   let header = options.head || ''
+
+  if (options.bridge) {
+    header += setupBridge()
+  }
 
   if (options.logs) {
     header += html`
@@ -139,6 +153,19 @@ export function basePage({ header, body }: { header?: string; body?: string }) {
 // html is a simple template string tag to allow prettier to format various setups as HTML
 export function html(parts: readonly string[], ...vars: string[]) {
   return parts.reduce((full, part, index) => full + vars[index - 1] + part)
+}
+
+function setupBridge() {
+  return html`
+    <script type="text/javascript">
+      window.DatadogEventBridge = {
+        events: [],
+        send(e) {
+          window.DatadogEventBridge.events.push(JSON.parse(e))
+        },
+      }
+    </script>
+  `
 }
 
 function formatLogsConfiguration(initConfiguration: LogsInitConfiguration) {
