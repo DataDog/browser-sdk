@@ -3,9 +3,6 @@ import { InputData, StyleSheetRuleData, NodeType } from '@datadog/browser-rum/cj
 import { RumInitConfiguration } from '@datadog/browser-rum-core'
 import { DefaultPrivacyLevel } from '@datadog/browser-rum'
 
-import { createTest, bundleSetup, html, EventRegistry } from '../lib/framework'
-import { browserExecute } from '../lib/helpers/browser'
-import { flushEvents, renewSession } from '../lib/helpers/sdk'
 import {
   findElement,
   findElementWithIdAttribute,
@@ -15,7 +12,10 @@ import {
   findMeta,
   findTextContent,
   createMutationPayloadValidatorFromSegment,
-} from '../../../packages/rum/test/utils'
+} from '@datadog/browser-rum/test/utils'
+import { createTest, bundleSetup, html, EventRegistry } from '../../lib/framework'
+import { browserExecute } from '../../lib/helpers/browser'
+import { flushEvents, renewSession } from '../../lib/helpers/sdk'
 
 const INTEGER_RE = /^\d+$/
 const TIMESTAMP_RE = /^\d{13}$/
@@ -664,7 +664,7 @@ function getLastSegment(events: EventRegistry) {
   return events.sessionReplay[events.sessionReplay.length - 1].segment.data
 }
 
-export function initRumAndStartRecording(initConfiguration: RumInitConfiguration) {
+function initRumAndStartRecording(initConfiguration: RumInitConfiguration) {
   window.DD_RUM!.init(initConfiguration)
   window.DD_RUM!.startSessionReplayRecording()
 }

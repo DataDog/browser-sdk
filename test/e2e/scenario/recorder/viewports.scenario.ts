@@ -1,10 +1,10 @@
 import { IncrementalSource, ViewportResizeData, ScrollData } from '@datadog/browser-rum/cjs/types'
 import { RumInitConfiguration } from '@datadog/browser-rum-core'
 
-import { findAllIncrementalSnapshots, findAllVisualViewports } from '../../../packages/rum/test/utils'
-import { createTest, bundleSetup, html, EventRegistry } from '../lib/framework'
-import { browserExecute } from '../lib/helpers/browser'
-import { flushEvents } from '../lib/helpers/sdk'
+import { findAllIncrementalSnapshots, findAllVisualViewports } from '@datadog/browser-rum/test/utils'
+import { createTest, bundleSetup, html, EventRegistry } from '../../lib/framework'
+import { browserExecute } from '../../lib/helpers/browser'
+import { flushEvents } from '../../lib/helpers/sdk'
 
 const VIEWPORT_META_TAGS = `
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -15,171 +15,111 @@ const VIEWPORT_META_TAGS = `
 `
 
 describe('recorder', () => {
+  beforeEach(() => {
+    if (isGestureUnsupported()) {
+      pending('no touch gesture support')
+    }
+  })
+
   describe('layout viewport properties', () => {
-    /**
-     * InnerWidth/Height on some devices/browsers are changed by pinch zoom.
-     * Read vendor discussions around the challenges of standardization:
-     * - https://bugs.chromium.org/p/chromium/issues/detail?id=489206
-     *
-     * The purpose of this test is to check that browser dimensions are measuring the
-     * layout viewport (not visual viewport), and so they do not change when pinch zoom is applied.
-     */
     createTest('getWindowWidth/Height should not be affected by pinch zoom')
       .withRum({ enableExperimentalFeatures: ['visualviewport'] })
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
       .run(async ({ events }) => {
-        if (isGestureUnsupported()) {
-          return // No Fallback test
-        }
-        await resetViewport()
+        await buildScrollablePage()
 
-        const { innerWidth, innerHeight } = await getInnerDimentions()
-        const initialVisualViewport = await getVisualViewport()
+        const { innerWidth, innerHeight } = await getWindowInnerDimensions()
         await performSignificantZoom()
-        const nextVisualViewport = await getVisualViewport()
 
         await browserExecute(() => {
           window.dispatchEvent(new Event('resize'))
         })
 
-        const lastViewportResizeRecord = (
+        const lastViewportResizeData = (
           await getLastRecord(events, (segment) =>
             findAllIncrementalSnapshots(segment, IncrementalSource.ViewportResize)
           )
         ).data as ViewportResizeData
 
-        // Mac OS X Chrome scrollbars are included here (~15px) which seems to be against spec
-        // Scrollbar edge-case handling not considered right now, further investigation needed
         const scrollbarWidth = await getScrollbarCorrection()
 
-        expectToBeNearby(lastViewportResizeRecord.width, innerWidth - scrollbarWidth)
-        expectToBeNearby(lastViewportResizeRecord.height, innerHeight - scrollbarWidth)
-
-        // Test the test: ensure the pinch zoom worked
-        expect(initialVisualViewport.scale < nextVisualViewport.scale).toBeTruthy()
+        expectToBeNearby(lastViewportResizeData.width, innerWidth - scrollbarWidth)
+        expectToBeNearby(lastViewportResizeData.height, innerHeight - scrollbarWidth)
       })
 
     /**
      * window.ScrollX/Y on some devices/browsers are changed by pinch zoom
      * We need to ensure that our measurements are not affected by pinch zoom
      */
-    createTest('scrollX/Y should not be affected by pinch scroll')
+    createTest('getScrollX/Y should not be affected by pinch scroll')
       .withRum({ enableExperimentalFeatures: ['visualviewport'] })
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
       .run(async ({ events }) => {
-        const SCROLL_DOWN_PX = 60
+        const VISUAL_SCROLL_DOWN_PX = 60
+        const LAYOUT_SCROLL_AMOUNT = 20
 
-        if (isGestureUnsupported()) {
-          return // No Fallback test
-        }
-
-        await browserExecute(() => {
-          window.scrollTo(-500, -500)
-        })
+        await buildScrollablePage()
         await performSignificantZoom()
-        await browserExecute(() => {
-          window.scrollTo(-500, -500)
-        })
+        await resetLayoutScroll()
 
-        const { scrollX: baseScrollX, scrollY: baseScrollY } = await getWindowScroll()
-        const preVisualViewport = await getVisualViewport()
+        const initialVisualViewport = await getVisualViewport()
+        const { scrollX: initialScrollX, scrollY: initialScrollY } = await getWindowScroll()
 
-        // NOTE: Due to scrolling down, the hight of the page changed.
-        // Given time constraints, this should be a follow up once more experience is gained via data collection
-        await pinchScrollVerticallyDown(SCROLL_DOWN_PX) // Scroll Down on Android
+        // Add Visual Viewport Scroll
+        await pinchScrollVerticallyDown(VISUAL_SCROLL_DOWN_PX)
 
-        const { scrollX: nextScrollX, scrollY: nextScrollY } = await getWindowScroll()
+        // Add Layout Viewport Scroll
+        await layoutScrollTo(LAYOUT_SCROLL_AMOUNT, LAYOUT_SCROLL_AMOUNT)
+
         const nextVisualViewport = await getVisualViewport()
+        const { scrollX: nextScrollX, scrollY: nextScrollY } = await getWindowScroll()
 
         await browserExecute(() => {
           document.dispatchEvent(new Event('scroll'))
         })
 
-        const lastScrollRecord = (
+        const lastScrollData = (
           await getLastRecord(events, (segment) => findAllIncrementalSnapshots(segment, IncrementalSource.Scroll))
         ).data as ScrollData
 
-        // Layout Viewport should not change
-        expect(baseScrollX).toBe(0)
-        expect(baseScrollY).toBe(0)
-        expect(nextScrollX).toBe(0)
-        expect(nextScrollY).toBe(0)
-
         // Height changes because URL address bar changes due to scrolling
-        const heightChange = nextVisualViewport.height - preVisualViewport.height
-        expect(heightChange).toBeLessThanOrEqual(30)
+        const navBarHeightChange = nextVisualViewport.height - initialVisualViewport.height
+        expect(navBarHeightChange).toBeLessThanOrEqual(30)
 
-        // Test the test: Visual Viewport (pinch scroll) should change
-        expectToBeNearby(nextVisualViewport.pageLeft, preVisualViewport.pageLeft)
-        expectToBeNearby(nextVisualViewport.offsetLeft, preVisualViewport.offsetLeft)
+        // Visual Viewport Scroll should change without visual viewport affect
+        expectToBeNearby(lastScrollData.x, initialScrollX + LAYOUT_SCROLL_AMOUNT)
+        expectToBeNearby(lastScrollData.y, initialScrollY + LAYOUT_SCROLL_AMOUNT)
+        expectToBeNearby(lastScrollData.x, nextScrollX)
+        expectToBeNearby(lastScrollData.y, nextScrollY)
 
-        // REMINDER: Isolating address bar height via `heightChange` param
-        expectToBeNearby(nextVisualViewport.pageTop, preVisualViewport.pageTop + SCROLL_DOWN_PX - heightChange)
-        expectToBeNearby(nextVisualViewport.offsetTop, preVisualViewport.offsetTop + SCROLL_DOWN_PX - heightChange)
+        // Test the Tests - Check that the math works out
+        expect(initialScrollX).toBe(0)
+        expect(initialScrollY).toBe(0)
 
-        expectToBeNearby(lastScrollRecord.x, nextVisualViewport.pageLeft)
-        expectToBeNearby(lastScrollRecord.y, nextVisualViewport.pageTop)
+        // ScrollX/Y must be defined as (page - offset)
+        expectToBeNearby(lastScrollData.x, nextVisualViewport.pageLeft - nextVisualViewport.offsetLeft)
+        expectToBeNearby(lastScrollData.y, nextVisualViewport.pageTop - nextVisualViewport.offsetTop)
+
+        // Both Layout + Visual scroll should affect "page" dimensions
+        expectToBeNearby(
+          nextVisualViewport.pageTop,
+          LAYOUT_SCROLL_AMOUNT + VISUAL_SCROLL_DOWN_PX - navBarHeightChange + initialVisualViewport.pageTop
+        )
+        expectToBeNearby(nextVisualViewport.pageLeft, LAYOUT_SCROLL_AMOUNT + initialVisualViewport.pageLeft)
       })
   })
 
   describe('visual viewport properties', () => {
-    createTest('pinch "scroll" event reports visual viewport page offsets')
-      .withRum({ enableExperimentalFeatures: ['visualviewport'] })
-      .withRumInit(initRumAndStartRecording)
-      .withSetup(bundleSetup)
-      .withBody(html`${VIEWPORT_META_TAGS}`)
-      .run(async ({ events }) => {
-        const SCROLL_DOWN_PX = 100
-
-        if (isGestureUnsupported()) {
-          return // No Fallback test possible
-        }
-
-        await performSignificantZoom()
-        const middleVisualViewportDimension = await getVisualViewport()
-        await pinchScrollVerticallyDown(SCROLL_DOWN_PX) // Trigger a resize event
-        const nextVisualViewportDimension = await getVisualViewport()
-
-        const lastVisualViewportRecord = await getLastRecord(events, findAllVisualViewports)
-
-        // Height changes because URL address bar changes due to scrolling
-        const heightChange = nextVisualViewportDimension.height - middleVisualViewportDimension.height
-        expect(heightChange).toBeLessThanOrEqual(30)
-
-        expectToBeNearby(lastVisualViewportRecord.data.scale, nextVisualViewportDimension.scale)
-        expectToBeNearby(lastVisualViewportRecord.data.width, nextVisualViewportDimension.width)
-        expectToBeNearby(lastVisualViewportRecord.data.height, nextVisualViewportDimension.height)
-
-        expect(lastVisualViewportRecord.data.offsetLeft).toBeGreaterThanOrEqual(0)
-        expect(lastVisualViewportRecord.data.offsetTop).toBeGreaterThanOrEqual(0)
-        expect(lastVisualViewportRecord.data.pageLeft).toBeGreaterThanOrEqual(0)
-        expect(lastVisualViewportRecord.data.pageTop).toBeGreaterThanOrEqual(0)
-
-        // Increase by scroll amount, excluding any height change due to address bar appearing or disappearing.
-        expectToBeNearby(
-          lastVisualViewportRecord.data.pageTop,
-          middleVisualViewportDimension.offsetTop + SCROLL_DOWN_PX - heightChange
-        )
-        expectToBeNearby(
-          lastVisualViewportRecord.data.offsetTop,
-          middleVisualViewportDimension.offsetTop + SCROLL_DOWN_PX - heightChange
-        )
-      })
-
     createTest('pinch zoom "resize" event reports visual viewport scale and dimension')
       .withRum({ enableExperimentalFeatures: ['visualviewport'] })
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
       .run(async ({ events }) => {
-        if (isGestureUnsupported()) {
-          return // No Fallback test possible
-        }
-
         const initialVisualViewportDimension = await getVisualViewport()
         await performSignificantZoom()
         const nextVisualViewportDimension = await getVisualViewport()
@@ -197,7 +137,7 @@ describe('recorder', () => {
 
         // With correct transformation
         const finalScaleAmount = nextVisualViewportDimension.scale
-        expectToBeNearby(lastVisualViewportRecord.data.scale, finalScaleAmount)
+        expect(3).toBe(Math.round(finalScaleAmount))
         expectToBeNearby(lastVisualViewportRecord.data.width, initialVisualViewportDimension.width / finalScaleAmount)
         expectToBeNearby(lastVisualViewportRecord.data.height, initialVisualViewportDimension.height / finalScaleAmount)
 
@@ -213,7 +153,7 @@ function getLastSegment(events: EventRegistry) {
   return events.sessionReplay[events.sessionReplay.length - 1].segment.data
 }
 
-export function initRumAndStartRecording(initConfiguration: RumInitConfiguration) {
+function initRumAndStartRecording(initConfiguration: RumInitConfiguration) {
   window.DD_RUM!.init(initConfiguration)
   window.DD_RUM!.startSessionReplayRecording()
 }
@@ -281,13 +221,17 @@ async function pinchZoom(xChange: number) {
 }
 
 async function performSignificantZoom() {
+  const initialVisualViewport = await getVisualViewport()
   await pinchZoom(150)
   await pinchZoom(150)
+  const nextVisualViewport = await getVisualViewport()
+  // Test the test: ensure pinch zoom was applied
+  expect(initialVisualViewport.scale < nextVisualViewport.scale).toBeTruthy()
 }
 
-// Providing a negative offset value will scroll up.
-// NOTE: Some devices may invert scroll direction
 async function pinchScrollVerticallyDown(yChange: number) {
+  // Providing a negative offset value will scroll up.
+  // NOTE: Some devices may invert scroll direction
   // Cannot exceed the bounds of a device's screen, at start or end positions.
   // So pick a midpoint on small devices, roughly 180px.
   const xBase = 180
@@ -313,7 +257,7 @@ async function pinchScrollVerticallyDown(yChange: number) {
   await driver.performActions(actions)
 }
 
-async function resetViewport() {
+async function buildScrollablePage() {
   await browserExecute(() => {
     document.documentElement.style.setProperty('width', '5000px')
     document.documentElement.style.setProperty('height', '5000px')
@@ -358,7 +302,7 @@ function getWindowScroll() {
   })) as Promise<{ scrollX: number; scrollY: number }>
 }
 
-async function getScrollbarWidth(): Promise<number> {
+function getScrollbarWidth(): Promise<number> {
   // https://stackoverflow.com/questions/13382516/getting-scroll-bar-width-using-javascript#answer-13382873
   return browserExecute(() => {
     // Creating invisible container
@@ -367,17 +311,13 @@ async function getScrollbarWidth(): Promise<number> {
     outer.style.overflow = 'scroll' // forcing scrollbar to appear
     ;(outer.style as any).msOverflowStyle = 'scrollbar' // needed for WinJS apps
     document.body.appendChild(outer)
-
     // Creating inner element and placing it in the container
     const inner = document.createElement('div')
     outer.appendChild(inner)
-
     // Calculating difference between container's full width and the child width
     const scrollbarWidth = outer.offsetWidth - inner.offsetWidth
-
     // Removing temporary elements from the DOM
     document.body.removeChild(outer)
-
     return scrollbarWidth
   }) as Promise<number>
 }
@@ -396,13 +336,36 @@ async function getLastRecord<T>(events: EventRegistry, filterMethod: (segment: a
   await flushEvents()
   const segment = getLastSegment(events)
   const foundRecords = filterMethod(segment)
-  const lastRecord = foundRecords[foundRecords.length - 1]
-  return lastRecord
+  return foundRecords[foundRecords.length - 1]
 }
 
-async function getInnerDimentions() {
+function getWindowInnerDimensions() {
   return browserExecute(() => ({
     innerWidth: window.innerWidth,
     innerHeight: window.innerHeight,
   })) as Promise<{ innerWidth: number; innerHeight: number }>
+}
+
+async function resetLayoutScroll() {
+  await browserExecute(() => {
+    window.scrollTo(-500, -500)
+  })
+  const { scrollX: nextScrollX, scrollY: nextScrollY } = await getWindowScroll()
+  // Ensure our methods are applied correctly
+  expect(nextScrollX).toBe(0)
+  expect(nextScrollY).toBe(0)
+}
+
+async function layoutScrollTo(scrollX: number, scrollY: number) {
+  await browser.execute(
+    (x, y) => {
+      window.scrollTo(x, y)
+    },
+    scrollX,
+    scrollY
+  )
+  const { scrollX: nextScrollX, scrollY: nextScrollY } = await getWindowScroll()
+  // Ensure our methods are applied correctly
+  expect(scrollX).toBe(nextScrollX)
+  expect(scrollY).toBe(nextScrollY)
 }

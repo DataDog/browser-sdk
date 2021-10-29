@@ -72,6 +72,7 @@ export const getVisualViewport = (): VisualViewportRecord['data'] => {
   }
 }
 
+// excludes the width of any rendered classic scrollbar that is fixed to the visual viewport
 export function getWindowWidth(): number {
   const visual = window.visualViewport
   if (isExperimentalFeatureEnabled('visualviewport') && visual) {
@@ -80,6 +81,7 @@ export function getWindowWidth(): number {
   return window.innerWidth || 0
 }
 
+// excludes the height of any rendered classic scrollbar that is fixed to the visual viewport
 export function getWindowHeight(): number {
   const visual = window.visualViewport
   if (isExperimentalFeatureEnabled('visualviewport') && visual) {
@@ -91,7 +93,7 @@ export function getWindowHeight(): number {
 export function getScrollX() {
   const visual = window.visualViewport
   if (isExperimentalFeatureEnabled('visualviewport') && visual) {
-    return visual.pageLeft
+    return visual.pageLeft - visual.offsetLeft
   }
   if (window.scrollX !== undefined) {
     return window.scrollX
@@ -102,7 +104,7 @@ export function getScrollX() {
 export function getScrollY() {
   const visual = window.visualViewport
   if (isExperimentalFeatureEnabled('visualviewport') && visual) {
-    return visual.pageTop
+    return visual.pageTop - visual.offsetTop
   }
   if (window.scrollY !== undefined) {
     return window.scrollY
