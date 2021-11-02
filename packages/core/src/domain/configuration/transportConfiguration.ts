@@ -38,7 +38,7 @@ export function computeTransportConfiguration(
 
   if (initConfiguration.internalMonitoringApiKey) {
     configuration.internalMonitoringEndpointBuilder = createEndpointBuilder(
-      initConfiguration,
+      { ...initConfiguration, clientToken: initConfiguration.internalMonitoringApiKey },
       buildEnv,
       'logs',
       'browser-agent-internal-monitoring'
