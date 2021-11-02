@@ -16,6 +16,10 @@
 
 ---
 
+## v3.6.13
+
+- 🐛 [RUMF-1060] fix failing worker detection in Firefox ([#1139](https://github.com/DataDog/browser-sdk/pull/1139))
+
 ## v3.6.12
 
 - 🐛 Do not trace requests when the session is not tracked ([#1131](https://github.com/DataDog/browser-sdk/pull/1131))
