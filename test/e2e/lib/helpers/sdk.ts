@@ -21,7 +21,7 @@ export async function flushEvents(bridgeEvents?: EventRegistry) {
       }
       return eventBridge.events as RumEvent[]
     })) as Array<{ eventType: string; event: RumEvent }>
-    events.forEach(({ eventType, event }) => bridgeEvents.push(eventType === 'log' ? 'logs' : 'rum', event))
+    events.forEach(({ event }) => bridgeEvents.push('rum', event))
   }
 
   // TODO: use /empty instead of /ok
