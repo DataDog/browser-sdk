@@ -11,7 +11,7 @@ export interface DatadogEventBridge {
 export type BridgeEventType = 'log' | 'view' | 'error' | 'action' | 'resource' | 'long_task'
 
 export function getEventBridge() {
-  const datadogEventBridge = getDatadogEventBridge()
+  const datadogEventBridge = getEventBridgeGlobal()
 
   return {
     send(eventType: BridgeEventType, event: Context) {
@@ -21,9 +21,9 @@ export function getEventBridge() {
 }
 
 export function isEventBridgePresent(): boolean {
-  return !!getDatadogEventBridge()
+  return !!getEventBridgeGlobal()
 }
 
-function getDatadogEventBridge() {
+function getEventBridgeGlobal() {
   return isExperimentalFeatureEnabled('event-bridge') ? (window as BrowserWindow).DatadogEventBridge : null
 }
