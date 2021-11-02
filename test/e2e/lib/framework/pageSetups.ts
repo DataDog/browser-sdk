@@ -6,7 +6,7 @@ export interface SetupOptions {
   useRumSlim: boolean
   logs?: LogsInitConfiguration
   rumInit: (initConfiguration: RumInitConfiguration) => void
-  bridge: boolean
+  eventBridge: boolean
   head?: string
   body?: string
 }
@@ -29,8 +29,8 @@ export function asyncSetup(options: SetupOptions) {
   let body = options.body || ''
   let header = options.head || ''
 
-  if (options.bridge) {
-    header += setupBridge()
+  if (options.eventBridge) {
+    header += setupEventBridge()
   }
 
   function formatSnippet(url: string, globalName: string) {
@@ -72,8 +72,8 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
 export function bundleSetup(options: SetupOptions) {
   let header = options.head || ''
 
-  if (options.bridge) {
-    header += setupBridge()
+  if (options.eventBridge) {
+    header += setupEventBridge()
   }
 
   if (options.logs) {
@@ -106,8 +106,8 @@ export function bundleSetup(options: SetupOptions) {
 export function npmSetup(options: SetupOptions) {
   let header = options.head || ''
 
-  if (options.bridge) {
-    header += setupBridge()
+  if (options.eventBridge) {
+    header += setupEventBridge()
   }
 
   if (options.logs) {
@@ -155,7 +155,7 @@ export function html(parts: readonly string[], ...vars: string[]) {
   return parts.reduce((full, part, index) => full + vars[index - 1] + part)
 }
 
-function setupBridge() {
+function setupEventBridge() {
   return html`
     <script type="text/javascript">
       window.DatadogEventBridge = {

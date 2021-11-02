@@ -8,7 +8,7 @@ import {
   updateExperimentalFeatures,
   resetExperimentalFeatures,
 } from '@datadog/browser-core'
-import { initDatadogEventBridgeStub, deleteDatadogEventBridgeStub } from '../../../core/test/specHelper'
+import { initEventBridgeStub, deleteEventBridgeStub } from '../../../core/test/specHelper'
 import { noopRecorderApi, setup, TestSetupBuilder } from '../../test/specHelper'
 import { ActionType } from '../rawRumEvent.types'
 import {
@@ -121,12 +121,12 @@ describe('rum public api', () => {
     describe('if event bridge present', () => {
       beforeEach(() => {
         updateExperimentalFeatures(['event-bridge'])
-        initDatadogEventBridgeStub()
+        initEventBridgeStub()
       })
 
       afterEach(() => {
         resetExperimentalFeatures()
-        deleteDatadogEventBridgeStub()
+        deleteEventBridgeStub()
       })
 
       it('init should accept empty application id and client token', () => {

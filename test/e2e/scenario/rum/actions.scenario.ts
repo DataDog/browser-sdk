@@ -15,11 +15,11 @@ describe('action collection', () => {
         </script>
       `
     )
-    .run(async ({ events }) => {
+    .run(async ({ serverEvents }) => {
       const button = await $('button')
       await button.click()
       await flushEvents()
-      const actionEvents = events.rumActions
+      const actionEvents = serverEvents.rumActions
 
       expect(actionEvents.length).toBe(1)
       expect(actionEvents[0].action).toEqual({
@@ -54,13 +54,13 @@ describe('action collection', () => {
         </script>
       `
     )
-    .run(async ({ events }) => {
+    .run(async ({ serverEvents }) => {
       const button = await $('button')
       await button.click()
       await waitForServersIdle()
       await flushEvents()
-      const actionEvents = events.rumActions
-      const resourceEvents = events.rumResources.filter((event) => event.resource.type === 'fetch')
+      const actionEvents = serverEvents.rumActions
+      const resourceEvents = serverEvents.rumResources.filter((event) => event.resource.type === 'fetch')
 
       expect(actionEvents.length).toBe(1)
       expect(actionEvents[0].action).toEqual({

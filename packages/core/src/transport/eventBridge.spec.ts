@@ -1,11 +1,11 @@
 import { resetExperimentalFeatures, updateExperimentalFeatures } from '..'
-import { deleteDatadogEventBridgeStub, initDatadogEventBridgeStub } from '../../test/specHelper'
+import { deleteEventBridgeStub, initEventBridgeStub } from '../../test/specHelper'
 import { DatadogEventBridge, getEventBridge, isEventBridgePresent } from './eventBridge'
 
 describe('isEventBridgePresent', () => {
   afterEach(() => {
     resetExperimentalFeatures()
-    deleteDatadogEventBridgeStub()
+    deleteEventBridgeStub()
   })
 
   describe('when ff enabled', () => {
@@ -14,7 +14,7 @@ describe('isEventBridgePresent', () => {
     })
 
     it('should detect when the bridge is present', () => {
-      initDatadogEventBridgeStub()
+      initEventBridgeStub()
       expect(isEventBridgePresent()).toBeTrue()
     })
 
@@ -25,7 +25,7 @@ describe('isEventBridgePresent', () => {
 
   describe('when ff disabled', () => {
     it('should not detect when the bridge is present', () => {
-      initDatadogEventBridgeStub()
+      initEventBridgeStub()
       expect(isEventBridgePresent()).toBeFalse()
     })
     it('should not detect when the bridge is absent', () => {
@@ -35,26 +35,24 @@ describe('isEventBridgePresent', () => {
 })
 
 describe('getEventBridge', () => {
-  let eventBridgeStub: DatadogEventBridge
+  let sendSpy: jasmine.Spy<(msg: string) => void>
 
   beforeEach(() => {
     updateExperimentalFeatures(['event-bridge'])
-    eventBridgeStub = initDatadogEventBridgeStub()
+    let eventBridgeStub = initEventBridgeStub()
+    sendSpy = spyOn(eventBridgeStub, 'send')
   })
 
   afterEach(() => {
     resetExperimentalFeatures()
-    deleteDatadogEventBridgeStub()
+    deleteEventBridgeStub()
   })
 
-  it('should serialize the event for the datadog bridge', () => {
-    const sendSpy = spyOn(eventBridgeStub, 'send')
-    const bridge = getEventBridge()
-    const event = { foo: 'bar' }
-    const eventType = 'view'
+  it('event bridge should serialize sent events', () => {
+    const eventBridge = getEventBridge()
 
-    bridge.send(eventType, event)
+    eventBridge.send('view', { foo: 'bar' })
 
-    expect(sendSpy).toHaveBeenCalledOnceWith(JSON.stringify({ eventType, event }))
+    expect(sendSpy).toHaveBeenCalledOnceWith('{"eventType":"view","event":{"foo":"bar"}}')
   })
 })

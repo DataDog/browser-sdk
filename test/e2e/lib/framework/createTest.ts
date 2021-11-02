@@ -27,7 +27,7 @@ export function createTest(title: string) {
 interface TestContext {
   baseUrl: string
   crossOriginUrl: string
-  events: EventRegistry
+  serverEvents: EventRegistry
   bridgeEvents: EventRegistry
 }
 
@@ -39,7 +39,7 @@ class TestBuilder {
   private logsConfiguration: LogsInitConfiguration | undefined = undefined
   private head = ''
   private body = ''
-  private bridge = false
+  private eventBridge = false
   private setups: Array<{ factory: SetupFactory; name?: string }> = []
 
   constructor(private title: string) {}
@@ -74,8 +74,8 @@ class TestBuilder {
     return this
   }
 
-  withBridge() {
-    this.bridge = true
+  withEventBridge() {
+    this.eventBridge = true
     return this
   }
 
@@ -97,7 +97,7 @@ class TestBuilder {
       rum: this.rumConfiguration,
       rumInit: this.rumInit,
       useRumSlim: false,
-      bridge: this.bridge,
+      eventBridge: this.eventBridge,
     }
 
     if (this.alsoRunWithRumSlim) {
@@ -151,7 +151,7 @@ function declareTest(title: string, setup: string, runner: TestRunner) {
 
     servers.base.bindServerApp(createMockServerApp(servers, setup))
     servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
-    servers.intake.bindServerApp(createIntakeServerApp(testContext.events))
+    servers.intake.bindServerApp(createIntakeServerApp(testContext.serverEvents))
 
     await setUpTest(testContext)
 
@@ -173,7 +173,7 @@ function createTestContext(servers: Servers): TestContext {
   return {
     baseUrl: servers.base.url,
     crossOriginUrl: servers.crossOrigin.url,
-    events: new EventRegistry(),
+    serverEvents: new EventRegistry(),
     bridgeEvents: new EventRegistry(),
   }
 }
@@ -183,10 +183,10 @@ async function setUpTest({ baseUrl }: TestContext) {
   await waitForServersIdle()
 }
 
-async function tearDownTest({ events, bridgeEvents }: TestContext) {
+async function tearDownTest({ serverEvents, bridgeEvents }: TestContext) {
   await flushEvents()
-  expect(events.internalMonitoring).toEqual([])
-  validateFormat(events.rum)
+  expect(serverEvents.internalMonitoring).toEqual([])
+  validateFormat(serverEvents.rum)
   validateFormat(bridgeEvents.rum)
   await withBrowserLogs((logs) => {
     logs.forEach((browserLog) => {

@@ -3,9 +3,9 @@ import { createTest, html } from '../../lib/framework'
 import { flushEvents } from '../../lib/helpers/sdk'
 
 describe('bridge present', () => {
-  createTest('forward action to the bridge')
+  createTest('send action')
     .withRum({ trackInteractions: true, enableExperimentalFeatures: ['event-bridge'] })
-    .withBridge()
+    .withEventBridge()
     .withBody(
       html`
         <button>click me</button>
@@ -17,19 +17,19 @@ describe('bridge present', () => {
         </script>
       `
     )
-    .run(async ({ events, bridgeEvents }) => {
+    .run(async ({ serverEvents, bridgeEvents }) => {
       const button = await $('button')
       await button.click()
       await flushEvents(bridgeEvents)
 
-      expect(events.rumActions.length).toBe(0)
+      expect(serverEvents.rumActions.length).toBe(0)
       expect(bridgeEvents.rumActions.length).toBe(1)
     })
 
-  createTest('forward error to the bridge')
+  createTest('send error')
     .withRum({ enableExperimentalFeatures: ['event-bridge'] })
-    .withBridge()
-    .run(async ({ events, bridgeEvents }) => {
+    .withEventBridge()
+    .run(async ({ serverEvents, bridgeEvents }) => {
       await browserExecute(() => {
         console.error('oh snap')
       })
@@ -37,27 +37,27 @@ describe('bridge present', () => {
       await flushBrowserLogs()
       await flushEvents(bridgeEvents)
 
-      expect(events.rumErrors.length).toBe(0)
+      expect(serverEvents.rumErrors.length).toBe(0)
       expect(bridgeEvents.rumErrors.length).toBeGreaterThan(0)
     })
 
-  createTest('forward resources to the bridge')
+  createTest('send resource')
     .withRum({ enableExperimentalFeatures: ['event-bridge'] })
-    .withBridge()
-    .run(async ({ events, bridgeEvents }) => {
+    .withEventBridge()
+    .run(async ({ serverEvents, bridgeEvents }) => {
       await flushEvents(bridgeEvents)
 
-      expect(events.rumResources.length).toEqual(0)
+      expect(serverEvents.rumResources.length).toEqual(0)
       expect(bridgeEvents.rumResources.length).toBeGreaterThan(0)
     })
 
-  createTest('forward view to the bridge')
+  createTest('send view')
     .withRum({ enableExperimentalFeatures: ['event-bridge'] })
-    .withBridge()
-    .run(async ({ events, bridgeEvents }) => {
+    .withEventBridge()
+    .run(async ({ serverEvents, bridgeEvents }) => {
       await flushEvents(bridgeEvents)
 
-      expect(events.rumViews.length).toEqual(0)
+      expect(serverEvents.rumViews.length).toEqual(0)
       expect(bridgeEvents.rumViews.length).toBeGreaterThan(0)
     })
 })

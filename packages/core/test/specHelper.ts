@@ -314,12 +314,12 @@ export function restoreUserAgent() {
   delete (navigator as any).userAgent
 }
 
-export function initDatadogEventBridgeStub() {
-  const bridgeStub = { send: () => undefined }
-  ;(window as BrowserWindow).DatadogEventBridge = bridgeStub
-  return bridgeStub
+export function initEventBridgeStub() {
+  const eventBridgeStub = { send: () => undefined }
+  ;(window as BrowserWindow).DatadogEventBridge = eventBridgeStub
+  return eventBridgeStub
 }
 
-export function deleteDatadogEventBridgeStub() {
+export function deleteEventBridgeStub() {
   delete (window as BrowserWindow).DatadogEventBridge
 }
