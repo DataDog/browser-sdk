@@ -129,7 +129,7 @@ describe('Segment', () => {
     worker.processNextMessage() // process the segment1 initial record
     worker.dropNextMessage() // drop the segment1 flush
     worker.processAllMessages()
-    expect(worker.listenersCount).toBe(1)
+    expect(worker.messageListenersCount).toBe(1)
     expect(displaySpy).toHaveBeenCalledWith(
       '[MONITORING MESSAGE]',
       "Segment did not receive a 'flush' response before being replaced.",

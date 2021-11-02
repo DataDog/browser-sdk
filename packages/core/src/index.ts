@@ -14,15 +14,7 @@ export {
 export { trackConsoleError } from './domain/error/trackConsoleError'
 export { trackRuntimeError } from './domain/error/trackRuntimeError'
 export { computeStackTrace, StackTrace } from './domain/tracekit'
-export {
-  BuildEnv,
-  BuildMode,
-  defineGlobal,
-  makePublicApi,
-  commonInit,
-  checkCookiesAuthorized,
-  checkIsNotLocalFile,
-} from './boot/init'
+export { BuildEnv, BuildMode, defineGlobal, makePublicApi, commonInit } from './boot/init'
 export {
   InternalMonitoring,
   MonitoringMessage,
@@ -31,6 +23,8 @@ export {
   callMonitored,
   addMonitoringMessage,
   addErrorToMonitoringBatch,
+  startFakeInternalMonitoring,
+  resetInternalMonitoring,
   setDebugMode,
 } from './domain/internalMonitoring'
 export { Observable, Subscription } from './tools/observable'
@@ -42,18 +36,18 @@ export {
   SESSION_COOKIE_NAME,
   stopSessionManagement,
 } from './domain/sessionManagement'
-export { HttpRequest, Batch } from './transport'
+export { HttpRequest, Batch, isEventBridgePresent } from './transport'
 export * from './tools/display'
 export * from './tools/urlPolyfill'
 export * from './tools/timeUtils'
 export * from './tools/utils'
 export * from './tools/createEventRateLimiter'
 export * from './tools/browserDetection'
-export { instrumentMethod } from './tools/instrumentMethod'
+export { instrumentMethod, instrumentMethodAndCallOriginal } from './tools/instrumentMethod'
 export { ErrorSource, ErrorHandling, formatUnknownError, createHandlingStack, RawError } from './tools/error'
 export { Context, ContextArray, ContextValue } from './tools/context'
 export { areCookiesAuthorized, getCookie, setCookie, COOKIE_ACCESS_DELAY } from './browser/cookie'
-export { startXhrProxy, XhrCompleteContext, XhrStartContext, XhrProxy, resetXhrProxy } from './browser/xhrProxy'
+export { initXhrObservable, XhrCompleteContext, XhrStartContext } from './browser/xhrObservable'
 export { initFetchObservable, FetchCompleteContext, FetchStartContext, FetchContext } from './browser/fetchObservable'
 export { EndpointBuilder } from './domain/configuration/endpointBuilder'
 export { BoundedBuffer } from './tools/boundedBuffer'

@@ -9,7 +9,7 @@ import { collectAsyncCalls } from '../../test/utils'
 import { setMaxSegmentSize } from '../domain/segmentCollection/segmentCollection'
 
 import { Segment, RecordType } from '../types'
-import { getDeflateWorkerSingleton } from '../domain/segmentCollection/deflateWorkerSingleton'
+import { doStartDeflateWorker } from '../domain/segmentCollection/startDeflateWorker'
 import { startRecording } from './startRecording'
 
 describe('startRecording', () => {
@@ -37,6 +37,12 @@ describe('startRecording', () => {
     textField = document.createElement('input')
     sandbox.appendChild(textField)
 
+    const requestSendSpy = spyOn(HttpRequest.prototype, 'send')
+    ;({
+      waitAsyncCalls: waitRequestSendCalls,
+      expectNoExtraAsyncCall: expectNoExtraRequestSendCalls,
+    } = collectAsyncCalls(requestSendSpy))
+
     setupBuilder = setup()
       .withParentContexts({
         findView() {
@@ -61,17 +67,11 @@ describe('startRecording', () => {
           configuration,
           session,
           parentContexts,
-          getDeflateWorkerSingleton()!
+          doStartDeflateWorker()!
         )
         stopRecording = recording ? recording.stop : noop
         return { stop: stopRecording }
       })
-
-    const requestSendSpy = spyOn(HttpRequest.prototype, 'send')
-    ;({
-      waitAsyncCalls: waitRequestSendCalls,
-      expectNoExtraAsyncCall: expectNoExtraRequestSendCalls,
-    } = collectAsyncCalls(requestSendSpy))
   })
 
   afterEach(() => {

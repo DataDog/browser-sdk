@@ -1,4 +1,4 @@
-import { combine, Configuration, InternalMonitoring, Observable } from '@datadog/browser-core'
+import { combine, Configuration, InternalMonitoring, isEventBridgePresent, Observable } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { startPerformanceCollection } from '../browser/performanceCollection'
 import { startRumAssembly } from '../domain/assembly'
@@ -12,7 +12,7 @@ import { startErrorCollection } from '../domain/rumEventsCollection/error/errorC
 import { startLongTaskCollection } from '../domain/rumEventsCollection/longTask/longTaskCollection'
 import { startResourceCollection } from '../domain/rumEventsCollection/resource/resourceCollection'
 import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
-import { RumSession, startRumSession } from '../domain/rumSession'
+import { RumSession, startRumSession, startRumSessionStub } from '../domain/rumSession'
 import { CommonContext } from '../rawRumEvent.types'
 import { startRumBatch } from '../transport/batch'
 import { startUrlContexts } from '../domain/urlContexts'
@@ -28,7 +28,7 @@ export function startRum(
   initialViewName?: string
 ) {
   const lifeCycle = new LifeCycle()
-  const session = startRumSession(configuration, lifeCycle)
+  const session = !isEventBridgePresent() ? startRumSession(configuration, lifeCycle) : startRumSessionStub()
   const domMutationObservable = createDOMMutationObservable()
   const locationChangeObservable = createLocationChangeObservable(location)
 
@@ -67,7 +67,7 @@ export function startRum(
   const { addError } = startErrorCollection(lifeCycle, foregroundContexts)
   const { addAction } = startActionCollection(lifeCycle, domMutationObservable, configuration, foregroundContexts)
 
-  startRequestCollection(lifeCycle, configuration)
+  startRequestCollection(lifeCycle, configuration, session)
   startPerformanceCollection(lifeCycle, configuration)
 
   const internalContext = startInternalContext(initConfiguration.applicationId, session, parentContexts, urlContexts)

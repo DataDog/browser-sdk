@@ -1,8 +1,6 @@
 import {
   BoundedBuffer,
   buildCookieOptions,
-  checkCookiesAuthorized,
-  checkIsNotLocalFile,
   Context,
   createContextManager,
   deepClone,
@@ -21,6 +19,8 @@ import {
   DefaultPrivacyLevel,
   TimeStamp,
   RelativeTime,
+  isEventBridgePresent,
+  areCookiesAuthorized,
 } from '@datadog/browser-core'
 import { LifeCycle } from '../domain/lifeCycle'
 import { ParentContexts } from '../domain/parentContexts'
@@ -36,6 +36,8 @@ export interface RumInitConfiguration extends InitConfiguration {
   beforeSend?: ((event: RumEvent, context: RumEventDomainContext) => void | boolean) | undefined
   defaultPrivacyLevel?: DefaultPrivacyLevel | undefined
 }
+
+export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
 
 export type RumPublicApi = ReturnType<typeof makeRumPublicApi>
 
@@ -95,11 +97,13 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
   }
 
   function initRum(initConfiguration: C) {
-    if (
-      !checkCookiesAuthorized(buildCookieOptions(initConfiguration)) ||
-      !checkIsNotLocalFile() ||
-      !canInitRum(initConfiguration)
-    ) {
+    if (isEventBridgePresent()) {
+      initConfiguration = overrideInitConfigurationForBridge(initConfiguration)
+    } else if (!canHandleSession(initConfiguration)) {
+      return
+    }
+
+    if (!isValidInitConfiguration(initConfiguration)) {
       return
     }
 
@@ -237,7 +241,20 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
     return result
   }
 
-  function canInitRum(initConfiguration: RumInitConfiguration) {
+  function canHandleSession(initConfiguration: RumInitConfiguration): boolean {
+    if (!areCookiesAuthorized(buildCookieOptions(initConfiguration))) {
+      display.warn('Cookies are not authorized, we will not send any data.')
+      return false
+    }
+
+    if (isLocalFile()) {
+      display.error('Execution is not allowed in the current context.')
+      return false
+    }
+    return true
+  }
+
+  function isValidInitConfiguration(initConfiguration: RumInitConfiguration) {
     if (isAlreadyInitialized) {
       if (!initConfiguration.silentMultipleInit) {
         display.error('DD_RUM is already initialized.')
@@ -269,5 +286,13 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
       return false
     }
     return true
+  }
+
+  function overrideInitConfigurationForBridge<C extends InitConfiguration>(initConfiguration: C): C {
+    return { ...initConfiguration, applicationId: 'empty', clientToken: 'empty', sampleRate: 100 }
+  }
+
+  function isLocalFile() {
+    return window.location.protocol === 'file:'
   }
 }
