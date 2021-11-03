@@ -1,3 +1,3 @@
-export { Handler, StackTrace, BrowserError } from './types'
+export { StackTrace, BrowserError } from './types'
 export { computeStackTrace } from './computeStackTrace'
-export { subscribe, unsubscribe } from './tracekit'
+export { startUnhandledErrorCollection } from './tracekit'

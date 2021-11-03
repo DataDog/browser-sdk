@@ -1,21 +1,22 @@
 import { disableJasmineUncaughtErrorHandler } from '../../../test/specHelper'
-import { subscribe, unsubscribe, traceKitWindowOnError } from './tracekit'
-import { Handler } from './types'
+import { startUnhandledErrorCollection } from './tracekit'
+import { Callback } from './types'
 
-describe('traceKitWindowOnError', () => {
+describe('startUnhandledErrorCollection', () => {
   const testLineNo = 1337
 
-  let subscriptionHandler: jasmine.Spy<Handler>
+  let callbackSpy: jasmine.Spy<Callback>
+  let stopCollectingUnhandledError: () => void
   let resetJasmineUncaughtErrorHandler: () => void
 
   beforeEach(() => {
     ;({ reset: resetJasmineUncaughtErrorHandler } = disableJasmineUncaughtErrorHandler())
-    subscriptionHandler = jasmine.createSpy()
-    subscribe(subscriptionHandler)
+    callbackSpy = jasmine.createSpy()
+    ;({ stop: stopCollectingUnhandledError } = startUnhandledErrorCollection(callbackSpy))
   })
 
   afterEach(() => {
-    unsubscribe(subscriptionHandler)
+    stopCollectingUnhandledError()
     resetJasmineUncaughtErrorHandler()
   })
 
@@ -23,8 +24,8 @@ describe('traceKitWindowOnError', () => {
     it('should pass undefined:undefined', () => {
       // this is probably not good behavior;  just writing this test to verify
       // that it doesn't change unintentionally
-      traceKitWindowOnError(undefined!, undefined, testLineNo)
-      const [stack] = subscriptionHandler.calls.mostRecent().args
+      window.onerror!(undefined!, undefined, testLineNo)
+      const [stack] = callbackSpy.calls.mostRecent().args
       expect(stack.name).toBeUndefined()
       expect(stack.message).toBeUndefined()
     })
@@ -32,49 +33,45 @@ describe('traceKitWindowOnError', () => {
 
   describe('when no 5th argument (error object)', () => {
     it('should separate name, message for default error types (e.g. ReferenceError)', () => {
-      traceKitWindowOnError('ReferenceError: foo is undefined', 'http://example.com', testLineNo)
-      const [stack, ,] = subscriptionHandler.calls.mostRecent().args
+      window.onerror!('ReferenceError: foo is undefined', 'http://example.com', testLineNo)
+      const [stack, ,] = callbackSpy.calls.mostRecent().args
       expect(stack.name).toEqual('ReferenceError')
       expect(stack.message).toEqual('foo is undefined')
     })
 
     it('should separate name, message for default error types (e.g. Uncaught ReferenceError)', () => {
       // should work with/without 'Uncaught'
-      traceKitWindowOnError('Uncaught ReferenceError: foo is undefined', 'http://example.com', testLineNo)
-      const [stack, ,] = subscriptionHandler.calls.mostRecent().args
+      window.onerror!('Uncaught ReferenceError: foo is undefined', 'http://example.com', testLineNo)
+      const [stack, ,] = callbackSpy.calls.mostRecent().args
       expect(stack.name).toEqual('ReferenceError')
       expect(stack.message).toEqual('foo is undefined')
     })
 
     it('should separate name, message for default error types on Opera Mini', () => {
-      traceKitWindowOnError(
-        'Uncaught exception: ReferenceError: Undefined variable: foo',
-        'http://example.com',
-        testLineNo
-      )
-      const [stack, ,] = subscriptionHandler.calls.mostRecent().args
+      window.onerror!('Uncaught exception: ReferenceError: Undefined variable: foo', 'http://example.com', testLineNo)
+      const [stack, ,] = callbackSpy.calls.mostRecent().args
       expect(stack.name).toEqual('ReferenceError')
       expect(stack.message).toEqual('Undefined variable: foo')
     })
 
     it('should ignore unknown error types', () => {
-      traceKitWindowOnError('CustomError: woo scary', 'http://example.com', testLineNo)
+      window.onerror!('CustomError: woo scary', 'http://example.com', testLineNo)
       // TODO: should we attempt to parse this?
-      const [stack, ,] = subscriptionHandler.calls.mostRecent().args
+      const [stack, ,] = callbackSpy.calls.mostRecent().args
       expect(stack.name).toEqual(undefined)
       expect(stack.message).toEqual('CustomError: woo scary')
     })
 
     it('should ignore arbitrary messages passed through onerror', () => {
-      traceKitWindowOnError('all work and no play makes homer: something something', 'http://example.com', testLineNo)
-      const [stack, ,] = subscriptionHandler.calls.mostRecent().args
+      window.onerror!('all work and no play makes homer: something something', 'http://example.com', testLineNo)
+      const [stack, ,] = callbackSpy.calls.mostRecent().args
       expect(stack.name).toEqual(undefined)
       expect(stack.message).toEqual('all work and no play makes homer: something something')
     })
 
     it('should handle object message passed through onerror', () => {
-      traceKitWindowOnError({ foo: 'bar' } as any)
-      const [stack, , error] = subscriptionHandler.calls.mostRecent().args
+      window.onerror!({ foo: 'bar' } as any)
+      const [stack, , error] = callbackSpy.calls.mostRecent().args
       expect(stack.message).toBeUndefined()
       expect(error).toEqual({ foo: 'bar' }) // consider the message as initial error
     })
@@ -87,7 +84,7 @@ describe('traceKitWindowOnError', () => {
       })
 
       setTimeout(() => {
-        expect(subscriptionHandler).toHaveBeenCalledTimes(1)
+        expect(callbackSpy).toHaveBeenCalledTimes(1)
         done()
       }, 1000)
     })
@@ -100,9 +97,9 @@ describe('traceKitWindowOnError', () => {
       })
 
       setTimeout(() => {
-        expect(subscriptionHandler).toHaveBeenCalledTimes(1)
+        expect(callbackSpy).toHaveBeenCalledTimes(1)
 
-        const [, isWindowError, reportedError] = subscriptionHandler.calls.mostRecent().args
+        const [, isWindowError, reportedError] = callbackSpy.calls.mostRecent().args
         expect(isWindowError).toEqual(true)
         expect(reportedError).toEqual(exception)
 
