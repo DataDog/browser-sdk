@@ -1,5 +1,5 @@
 import { createTest, EventRegistry } from '../../lib/framework'
-import { flushEvents } from '../../lib/helpers/sdk'
+import { flushEvents } from '../../lib/helpers/flushEvents'
 
 describe('API calls and events around init', () => {
   createTest('should be associated to corresponding views when views are automatically tracked')

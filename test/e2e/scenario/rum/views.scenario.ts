@@ -1,6 +1,7 @@
+import { flushEvents } from '../../lib/helpers/flushEvents'
 import { createTest, html } from '../../lib/framework'
 import { browserExecute, sendXhr } from '../../lib/helpers/browser'
-import { expireSession, flushEvents, renewSession } from '../../lib/helpers/sdk'
+import { expireSession, renewSession } from '../../lib/helpers/session'
 
 describe('rum views', () => {
   createTest('send performance timings along the view events')

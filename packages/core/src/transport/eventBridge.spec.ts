@@ -1,6 +1,6 @@
 import { resetExperimentalFeatures, updateExperimentalFeatures } from '..'
 import { deleteEventBridgeStub, initEventBridgeStub } from '../../test/specHelper'
-import { DatadogEventBridge, getEventBridge, isEventBridgePresent } from './eventBridge'
+import { getEventBridge, isEventBridgePresent } from './eventBridge'
 
 describe('isEventBridgePresent', () => {
   afterEach(() => {
@@ -39,7 +39,7 @@ describe('getEventBridge', () => {
 
   beforeEach(() => {
     updateExperimentalFeatures(['event-bridge'])
-    let eventBridgeStub = initEventBridgeStub()
+    const eventBridgeStub = initEventBridgeStub()
     sendSpy = spyOn(eventBridgeStub, 'send')
   })
 

@@ -1,6 +1,6 @@
 import { RumEvent } from '@datadog/browser-rum'
 import { EventRegistry, getTestServers, waitForServersIdle } from '../framework'
-import { browserExecute, browserExecuteAsync, deleteAllCookies } from './browser'
+import { browserExecute, browserExecuteAsync } from './browser'
 
 export async function flushEvents(bridgeEvents?: EventRegistry) {
   // wait to process actions + event loop before switching page
@@ -10,19 +10,14 @@ export async function flushEvents(bridgeEvents?: EventRegistry) {
     }, 200)
   )
   await waitForServersIdle()
-  const servers = await getTestServers()
 
   // Flush bridge events
   if (bridgeEvents) {
-    const events = (await browserExecute(() => {
-      const eventBridge = (window as any).DatadogEventBridge
-      if (!eventBridge) {
-        return []
-      }
-      return eventBridge.events as RumEvent[]
-    })) as Array<{ eventType: string; event: RumEvent }>
+    const events = await getBridgeEvents()
     events.forEach(({ event }) => bridgeEvents.push('rum', event))
   }
+
+  const servers = await getTestServers()
 
   // TODO: use /empty instead of /ok
   //
@@ -42,21 +37,12 @@ export async function flushEvents(bridgeEvents?: EventRegistry) {
   await waitForServersIdle()
 }
 
-export async function renewSession() {
-  await expireSession()
-  const documentElement = await $('html')
-  await documentElement.click()
-  expect(await findSessionCookie()).toBeDefined()
-}
-
-export async function expireSession() {
-  await deleteAllCookies()
-  expect(await findSessionCookie()).not.toBeDefined()
-  // Cookies are cached for 1s, wait until the cache expires
-  await browser.pause(1100)
-}
-
-async function findSessionCookie() {
-  const cookies = (await browser.getCookies()) || []
-  return cookies.find((cookie: any) => cookie.name === '_dd_s')
+export async function getBridgeEvents() {
+  return (await browserExecute(() => {
+    const eventBridge = (window as any).DatadogEventBridge
+    if (!eventBridge) {
+      return []
+    }
+    return eventBridge.events as RumEvent[]
+  })) as Array<{ eventType: string; event: RumEvent }>
 }

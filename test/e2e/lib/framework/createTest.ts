@@ -1,7 +1,7 @@
 import { LogsInitConfiguration } from '@datadog/browser-logs'
 import { RumInitConfiguration } from '@datadog/browser-rum-core'
 import { deleteAllCookies, withBrowserLogs } from '../helpers/browser'
-import { flushEvents } from '../helpers/sdk'
+import { flushEvents } from '../helpers/flushEvents'
 import { validateFormat } from '../helpers/validation'
 import { EventRegistry } from './eventsRegistry'
 import { getTestServers, Servers, waitForServersIdle } from './httpServers'

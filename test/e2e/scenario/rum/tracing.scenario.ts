@@ -1,6 +1,6 @@
 import { createTest, EventRegistry } from '../../lib/framework'
 import { browserExecuteAsync, sendXhr } from '../../lib/helpers/browser'
-import { flushEvents } from '../../lib/helpers/sdk'
+import { flushEvents } from '../../lib/helpers/flushEvents'
 
 describe('tracing', () => {
   createTest('trace xhr')

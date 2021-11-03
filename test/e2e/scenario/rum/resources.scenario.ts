@@ -1,7 +1,7 @@
 import { RumResourceEvent } from '@datadog/browser-rum'
 import { bundleSetup, createTest, EventRegistry, html } from '../../lib/framework'
 import { browserExecuteAsync, sendXhr } from '../../lib/helpers/browser'
-import { flushEvents } from '../../lib/helpers/sdk'
+import { flushEvents } from '../../lib/helpers/flushEvents'
 
 const REQUEST_DURATION = 200
 

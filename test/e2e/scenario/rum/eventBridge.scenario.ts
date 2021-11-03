@@ -1,6 +1,6 @@
 import { browserExecute, flushBrowserLogs } from '../../lib/helpers/browser'
 import { createTest, html } from '../../lib/framework'
-import { flushEvents } from '../../lib/helpers/sdk'
+import { flushEvents } from '../../lib/helpers/flushEvents'
 
 describe('bridge present', () => {
   createTest('send action')

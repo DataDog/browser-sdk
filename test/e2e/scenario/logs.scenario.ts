@@ -1,7 +1,7 @@
 import { createTest } from '../lib/framework'
 import { UNREACHABLE_URL } from '../lib/helpers/constants'
 import { browserExecute, browserExecuteAsync, flushBrowserLogs, withBrowserLogs } from '../lib/helpers/browser'
-import { flushEvents } from '../lib/helpers/sdk'
+import { flushEvents } from '../lib/helpers/flushEvents'
 
 describe('logs', () => {
   createTest('send logs')

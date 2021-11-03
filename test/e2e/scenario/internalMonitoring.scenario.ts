@@ -1,6 +1,6 @@
 import { bundleSetup, createTest } from '../lib/framework'
 import { browserExecute } from '../lib/helpers/browser'
-import { flushEvents } from '../lib/helpers/sdk'
+import { flushEvents } from '../lib/helpers/flushEvents'
 
 describe('internal monitoring', () => {
   createTest('send errors')

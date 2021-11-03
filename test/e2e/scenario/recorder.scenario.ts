@@ -2,10 +2,10 @@ import { CreationReason, IncrementalSource, RecordType, Segment } from '@datadog
 import { InputData, StyleSheetRuleData, NodeType } from '@datadog/browser-rum/cjs/domain/record/types'
 import { RumInitConfiguration } from '@datadog/browser-rum-core'
 import { DefaultPrivacyLevel } from '@datadog/browser-rum'
-
+import { renewSession } from '../lib/helpers/session'
 import { createTest, bundleSetup, html, EventRegistry } from '../lib/framework'
 import { browserExecute } from '../lib/helpers/browser'
-import { flushEvents, renewSession } from '../lib/helpers/sdk'
+import { flushEvents } from '../lib/helpers/flushEvents'
 import {
   findElement,
   findElementWithIdAttribute,
