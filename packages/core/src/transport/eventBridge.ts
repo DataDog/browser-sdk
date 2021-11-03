@@ -1,4 +1,4 @@
-import { Context, isExperimentalFeatureEnabled } from '..'
+import { isExperimentalFeatureEnabled } from '..'
 
 export interface BrowserWindow extends Window {
   DatadogEventBridge?: DatadogEventBridge
@@ -8,13 +8,11 @@ export interface DatadogEventBridge {
   send(msg: string): void
 }
 
-export type BridgeEventType = 'log' | 'view' | 'error' | 'action' | 'resource' | 'long_task'
-
-export function getEventBridge() {
+export function getEventBridge<T, E>() {
   const datadogEventBridge = getEventBridgeGlobal()
 
   return {
-    send(eventType: BridgeEventType, event: Context) {
+    send(eventType: T, event: E) {
       datadogEventBridge?.send(JSON.stringify({ eventType, event }))
     },
   }
