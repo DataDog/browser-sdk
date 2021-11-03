@@ -95,21 +95,6 @@ describe('recorder', () => {
         expectToBeNearby(lastScrollData.y, initialScrollY + LAYOUT_SCROLL_AMOUNT)
         expectToBeNearby(lastScrollData.x, nextScrollX)
         expectToBeNearby(lastScrollData.y, nextScrollY)
-
-        // Test the Tests - Check that the math works out
-        expect(initialScrollX).toBe(0)
-        expect(initialScrollY).toBe(0)
-
-        // ScrollX/Y must be defined as (page - offset)
-        expectToBeNearby(lastScrollData.x, nextVisualViewport.pageLeft - nextVisualViewport.offsetLeft)
-        expectToBeNearby(lastScrollData.y, nextVisualViewport.pageTop - nextVisualViewport.offsetTop)
-
-        // Both Layout + Visual scroll should affect "page" dimensions
-        expectToBeNearby(
-          nextVisualViewport.pageTop,
-          LAYOUT_SCROLL_AMOUNT + VISUAL_SCROLL_DOWN_PX - navBarHeightChange + initialVisualViewport.pageTop
-        )
-        expectToBeNearby(nextVisualViewport.pageLeft, LAYOUT_SCROLL_AMOUNT + initialVisualViewport.pageLeft)
       })
   })
 
