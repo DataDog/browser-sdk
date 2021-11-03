@@ -1,5 +1,5 @@
 import { monitor } from '../internalMonitoring'
-import { computeStackTrace, augmentStackTraceWithInitialElement } from './computeStackTrace'
+import { computeStackTrace } from './computeStackTrace'
 import { Handler, StackTrace } from './types'
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error#Error_types
@@ -13,8 +13,6 @@ const ERROR_TYPES_RE = /^(?:[Uu]ncaught (?:exception: )?)?(?:((?:Eval|Internal|R
  * ```js
  *   subscribe(function(stackInfo) { ... })
  *   unsubscribe(function(stackInfo) { ... })
- *   report(exception)
- *   try { ...code... } catch(ex) { report(ex); }
  * ```
  *
  * Supports:
@@ -39,10 +37,7 @@ const ERROR_TYPES_RE = /^(?:[Uu]ncaught (?:exception: )?)?(?:((?:Eval|Internal|R
  * Requires computeStackTrace.
  *
  * Tries to catch all unhandled exceptions and report them to the
- * subscribed handlers. Please note that report will rethrow the
- * exception. This is REQUIRED in order to get a useful stack trace in IE.
- * If the exception does not reach the top of the browser, you will only
- * get a stack trace from the point where report was called.
+ * subscribed handlers.
  *
  * Handlers receive a StackTrace object as described in the
  * computeStackTrace docs.
@@ -51,43 +46,7 @@ const ERROR_TYPES_RE = /^(?:[Uu]ncaught (?:exception: )?)?(?:((?:Eval|Internal|R
  * @namespace
  */
 
-/**
- * Reports an unhandled Error.
- * @param {Error} ex
- * @memberof report
- * @throws An exception if an incomplete stack trace is detected (old IE browsers).
- */
-export function report(ex: Error) {
-  if (lastExceptionStack) {
-    if (lastException === ex) {
-      return // already caught by an inner catch block, ignore
-    }
-    processLastException()
-  }
-
-  const stack = computeStackTrace(ex)
-  lastExceptionStack = stack
-  lastException = ex
-
-  // If the stack trace is incomplete, wait for 2 seconds for
-  // slow slow IE to see if onerror occurs or not before reporting
-  // this exception; otherwise, we will end up with an incomplete
-  // stack trace
-  setTimeout(
-    monitor(() => {
-      if (lastException === ex) {
-        processLastException()
-      }
-    }),
-    stack.incomplete ? 2000 : 0
-  )
-
-  throw ex // re-throw to propagate to the top level (and cause window.onerror)
-}
-
 const handlers: Handler[] = []
-let lastException: Error | undefined
-let lastExceptionStack: StackTrace | undefined
 
 /**
  * Add a crash handler.
@@ -165,10 +124,7 @@ export function traceKitWindowOnError(
 ) {
   let stack: StackTrace
 
-  if (lastExceptionStack) {
-    augmentStackTraceWithInitialElement(lastExceptionStack, url, lineNo)
-    processLastException()
-  } else if (errorObj) {
+  if (errorObj) {
     stack = computeStackTrace(errorObj)
     notifyHandlers(stack, true, errorObj)
   } else {
@@ -266,16 +222,4 @@ function uninstallGlobalUnhandledRejectionHandler() {
     window.onunhandledrejection = oldOnunhandledrejectionHandler!
     onUnhandledRejectionHandlerInstalled = false
   }
-}
-
-/**
- * Process the most recent exception
- * @memberof report
- */
-function processLastException() {
-  const currentLastExceptionStack = lastExceptionStack!
-  const currentLastException = lastException!
-  lastExceptionStack = undefined
-  lastException = undefined
-  notifyHandlers(currentLastExceptionStack, false, currentLastException)
 }
