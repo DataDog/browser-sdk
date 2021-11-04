@@ -203,7 +203,7 @@ Optional proxy URL (ex: https://www.proxy.com/path), see the full [proxy setup g
 `allowedTracingOrigins`
 : Optional<br/>
 **Type**: List<br/>
-A list of request origins used to inject tracing headers.
+A list of request origins used to inject tracing headers. See [Connect RUM and Traces][12].
 
 Options that must have matching configuration when also using `logs` SDK:
 
@@ -258,3 +258,4 @@ init(configuration: {
 [9]: https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions#declaring-a-name-for-click-actions
 [10]: https://docs.datadoghq.com/real_user_monitoring/browser/modifying_data_and_context/?tab=npm#override-default-rum-view-names
 [11]: https://www.datadoghq.com/pricing/?product=real-user-monitoring#real-user-monitoring
+[12]: https://docs.datadoghq.com/real_user_monitoring/connect_rum_and_traces?tab=browserrum
