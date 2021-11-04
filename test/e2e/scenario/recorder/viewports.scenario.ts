@@ -6,6 +6,7 @@ import { createTest, bundleSetup, html, EventRegistry } from '../../lib/framewor
 import { browserExecute } from '../../lib/helpers/browser'
 import { flushEvents } from '../../lib/helpers/sdk'
 
+const NAVBAR_HEIGHT_CHANGE_UPPER_BOUND = 30
 const VIEWPORT_META_TAGS = `
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -43,10 +44,10 @@ describe('recorder', () => {
           )
         ).data as ViewportResizeData
 
-        const scrollbarWidth = await getScrollbarCorrection()
+        const scrollbarThicknessCorrection = await getScrollbarThicknessCorrection()
 
-        expectToBeNearby(lastViewportResizeData.width, innerWidth - scrollbarWidth)
-        expectToBeNearby(lastViewportResizeData.height, innerHeight - scrollbarWidth)
+        expectToBeNearby(lastViewportResizeData.width, innerWidth - scrollbarThicknessCorrection)
+        expectToBeNearby(lastViewportResizeData.height, innerHeight - scrollbarThicknessCorrection)
       })
 
     /**
@@ -64,7 +65,7 @@ describe('recorder', () => {
 
         await buildScrollablePage()
         await performSignificantZoom()
-        await resetLayoutScroll()
+        await resetWindowScroll()
 
         const initialVisualViewport = await getVisualViewport()
         const { scrollX: initialScrollX, scrollY: initialScrollY } = await getWindowScroll()
@@ -88,7 +89,7 @@ describe('recorder', () => {
 
         // Height changes because URL address bar changes due to scrolling
         const navBarHeightChange = nextVisualViewport.height - initialVisualViewport.height
-        expect(navBarHeightChange).toBeLessThanOrEqual(30)
+        expect(navBarHeightChange).toBeLessThanOrEqual(NAVBAR_HEIGHT_CHANGE_UPPER_BOUND)
 
         // Visual Viewport Scroll should change without visual viewport affect
         expectToBeNearby(lastScrollData.x, initialScrollX + LAYOUT_SCROLL_AMOUNT)
@@ -287,7 +288,7 @@ function getWindowScroll() {
   })) as Promise<{ scrollX: number; scrollY: number }>
 }
 
-function getScrollbarWidth(): Promise<number> {
+function getScrollbarThickness(): Promise<number> {
   // https://stackoverflow.com/questions/13382516/getting-scroll-bar-width-using-javascript#answer-13382873
   return browserExecute(() => {
     // Creating invisible container
@@ -300,21 +301,21 @@ function getScrollbarWidth(): Promise<number> {
     const inner = document.createElement('div')
     outer.appendChild(inner)
     // Calculating difference between container's full width and the child width
-    const scrollbarWidth = outer.offsetWidth - inner.offsetWidth
+    const scrollbarThickness = outer.offsetWidth - inner.offsetWidth
     // Removing temporary elements from the DOM
     document.body.removeChild(outer)
-    return scrollbarWidth
+    return scrollbarThickness
   }) as Promise<number>
 }
 
 // Mac OS X Chrome scrollbars are included here (~15px) which seems to be against spec
 // Scrollbar edge-case handling not considered right now, further investigation needed
-async function getScrollbarCorrection(): Promise<number> {
-  let scrollbarWidth = 0
+async function getScrollbarThicknessCorrection(): Promise<number> {
+  let scrollbarThickness = 0
   if (browser.capabilities.browserName === 'chrome' && browser.capabilities.platformName === 'mac os x') {
-    scrollbarWidth = await getScrollbarWidth()
+    scrollbarThickness = await getScrollbarThickness()
   }
-  return scrollbarWidth
+  return scrollbarThickness
 }
 
 async function getLastRecord<T>(events: EventRegistry, filterMethod: (segment: any) => T[]): Promise<T> {
@@ -331,7 +332,7 @@ function getWindowInnerDimensions() {
   })) as Promise<{ innerWidth: number; innerHeight: number }>
 }
 
-async function resetLayoutScroll() {
+async function resetWindowScroll() {
   await browserExecute(() => {
     window.scrollTo(-500, -500)
   })
