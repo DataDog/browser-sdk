@@ -45,7 +45,7 @@ export function startUnhandledErrorCollection(callback: Callback) {
   return {
     stop: () => {
       stopInstrumentingOnError()
-      stopInstrumentingOnUnhandledRejection
+      stopInstrumentingOnUnhandledRejection()
     },
   }
 }
