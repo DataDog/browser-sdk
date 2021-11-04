@@ -20,7 +20,7 @@ describe('bridge present', () => {
     .run(async ({ serverEvents, bridgeEvents }) => {
       const button = await $('button')
       await button.click()
-      await flushEvents(bridgeEvents)
+      await flushEvents()
 
       expect(serverEvents.rumActions.length).toBe(0)
       expect(bridgeEvents.rumActions.length).toBe(1)
@@ -35,7 +35,7 @@ describe('bridge present', () => {
       })
 
       await flushBrowserLogs()
-      await flushEvents(bridgeEvents)
+      await flushEvents()
 
       expect(serverEvents.rumErrors.length).toBe(0)
       expect(bridgeEvents.rumErrors.length).toBeGreaterThan(0)
@@ -45,7 +45,7 @@ describe('bridge present', () => {
     .withRum({ enableExperimentalFeatures: ['event-bridge'] })
     .withEventBridge()
     .run(async ({ serverEvents, bridgeEvents }) => {
-      await flushEvents(bridgeEvents)
+      await flushEvents()
 
       expect(serverEvents.rumResources.length).toEqual(0)
       expect(bridgeEvents.rumResources.length).toBeGreaterThan(0)
@@ -55,7 +55,7 @@ describe('bridge present', () => {
     .withRum({ enableExperimentalFeatures: ['event-bridge'] })
     .withEventBridge()
     .run(async ({ serverEvents, bridgeEvents }) => {
-      await flushEvents(bridgeEvents)
+      await flushEvents()
 
       expect(serverEvents.rumViews.length).toEqual(0)
       expect(bridgeEvents.rumViews.length).toBeGreaterThan(0)

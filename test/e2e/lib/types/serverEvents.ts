@@ -32,7 +32,7 @@ export interface SegmentFile {
   data: Segment
 }
 
-export interface SerssionReplayCall {
+export interface SessionReplayCall {
   segment: SegmentFile
   meta: { [key: string]: string }
 }

@@ -1,8 +1,7 @@
-import { RumEvent } from '@datadog/browser-rum'
-import { EventRegistry, getTestServers, waitForServersIdle } from '../framework'
-import { browserExecute, browserExecuteAsync } from './browser'
+import { getTestServers, waitForServersIdle } from '../framework'
+import { browserExecuteAsync } from './browser'
 
-export async function flushEvents(bridgeEvents?: EventRegistry) {
+export async function flushEvents() {
   // wait to process actions + event loop before switching page
   await browserExecuteAsync((done) =>
     setTimeout(() => {
@@ -10,12 +9,6 @@ export async function flushEvents(bridgeEvents?: EventRegistry) {
     }, 200)
   )
   await waitForServersIdle()
-
-  // Flush bridge events
-  if (bridgeEvents) {
-    const events = await getBridgeEvents()
-    events.forEach(({ event }) => bridgeEvents.push('rum', event))
-  }
 
   const servers = await getTestServers()
 
@@ -35,14 +28,4 @@ export async function flushEvents(bridgeEvents?: EventRegistry) {
   // issue is mitigated, because requests will likely take a few milliseconds to reach the server.
   await browser.url(`${servers.base.url}/ok?duration=200`)
   await waitForServersIdle()
-}
-
-export async function getBridgeEvents() {
-  return (await browserExecute(() => {
-    const eventBridge = (window as any).DatadogEventBridge
-    if (!eventBridge) {
-      return []
-    }
-    return eventBridge.events as RumEvent[]
-  })) as Array<{ eventType: string; event: RumEvent }>
 }

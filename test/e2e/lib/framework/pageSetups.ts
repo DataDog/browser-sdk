@@ -1,7 +1,7 @@
 import { LogsInitConfiguration } from '@datadog/browser-logs'
 import { RumInitConfiguration } from '@datadog/browser-rum-core'
 
-export interface SetupOptions {
+export interface PageSetupOptions {
   rum?: RumInitConfiguration
   useRumSlim: boolean
   logs?: LogsInitConfiguration
@@ -11,26 +11,26 @@ export interface SetupOptions {
   body?: string
 }
 
-export type SetupFactory = (options: SetupOptions) => string
+export type PageFactory = (options: PageSetupOptions, intakeUrl: string) => string
 
 const isBrowserStack =
   browser.config.services &&
   browser.config.services.some((service) => (Array.isArray(service) ? service[0] : service) === 'browserstack')
 
-export const DEFAULT_SETUPS = isBrowserStack
-  ? [{ name: 'bundle', factory: bundleSetup }]
+export const DEFAULT_PAGE_SETUPS = isBrowserStack
+  ? [{ name: 'bundle', pageFactory: bundleSetup }]
   : [
-      { name: 'async', factory: asyncSetup },
-      { name: 'npm', factory: npmSetup },
-      { name: 'bundle', factory: bundleSetup },
+      { name: 'async', pageFactory: asyncSetup },
+      { name: 'npm', pageFactory: npmSetup },
+      { name: 'bundle', pageFactory: bundleSetup },
     ]
 
-export function asyncSetup(options: SetupOptions) {
+export function asyncSetup(options: PageSetupOptions, intakeUrl: string) {
   let body = options.body || ''
   let header = options.head || ''
 
   if (options.eventBridge) {
-    header += setupEventBridge()
+    header += setupEventBridge(intakeUrl)
   }
 
   function formatSnippet(url: string, globalName: string) {
@@ -69,11 +69,11 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
   })
 }
 
-export function bundleSetup(options: SetupOptions) {
+export function bundleSetup(options: PageSetupOptions, intakeUrl: string) {
   let header = options.head || ''
 
   if (options.eventBridge) {
-    header += setupEventBridge()
+    header += setupEventBridge(intakeUrl)
   }
 
   if (options.logs) {
@@ -103,11 +103,11 @@ export function bundleSetup(options: SetupOptions) {
   })
 }
 
-export function npmSetup(options: SetupOptions) {
+export function npmSetup(options: PageSetupOptions, intakeUrl: string) {
   let header = options.head || ''
 
   if (options.eventBridge) {
-    header += setupEventBridge()
+    header += setupEventBridge(intakeUrl)
   }
 
   if (options.logs) {
@@ -155,13 +155,15 @@ export function html(parts: readonly string[], ...vars: string[]) {
   return parts.reduce((full, part, index) => full + vars[index - 1] + part)
 }
 
-function setupEventBridge() {
+function setupEventBridge(intakeUrl: string) {
   return html`
     <script type="text/javascript">
       window.DatadogEventBridge = {
-        events: [],
         send(e) {
-          window.DatadogEventBridge.events.push(JSON.parse(e))
+          const { event } = JSON.parse(e)
+          const request = new XMLHttpRequest()
+          request.open('POST', '${intakeUrl}/v1/input/rum?bridge=1', true)
+          request.send(JSON.stringify(event))
         },
       }
     </script>

@@ -228,8 +228,8 @@ export function objectHasValue<T extends { [key: string]: unknown }>(object: T, 
   return Object.keys(object).some((key) => object[key] === value)
 }
 
-export function objectEntries(object: { [key: string]: unknown }): Array<[string, unknown]> {
-  return Object.keys(object).map((key) => [key, object[key]])
+export function objectEntries<T = unknown>(object: T): Array<[keyof T, T[keyof T]]> {
+  return (Object.keys(object) as Array<keyof T>).map((key) => [key, object[key]])
 }
 
 export function isEmptyObject(object: object) {
