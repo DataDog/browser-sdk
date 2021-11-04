@@ -172,6 +172,12 @@ Allows you to control RUM views creation. See [override default RUM view names][
 **Default**: `false` <br/>
 Enables [automatic collection of users actions][6].
 
+`defaultPrivacyLevel`
+: Optional<br/>
+**Type**: String<br/>
+**Default**: `mask-user-input` <br/>
+See [Session Replay Privacy Options][13].
+
 `actionNameAttribute`
 : Optional<br/>
 **Type**: String<br/>
@@ -259,3 +265,4 @@ init(configuration: {
 [10]: https://docs.datadoghq.com/real_user_monitoring/browser/modifying_data_and_context/?tab=npm#override-default-rum-view-names
 [11]: https://www.datadoghq.com/pricing/?product=real-user-monitoring#real-user-monitoring
 [12]: https://docs.datadoghq.com/real_user_monitoring/connect_rum_and_traces?tab=browserrum
+[13]: https://docs.datadoghq.com/real_user_monitoring/session_replay/privacy_options?tab=maskuserinput
