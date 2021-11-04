@@ -1,5 +1,5 @@
 import { BuildEnv, BuildMode } from '../../boot/init'
-import { objectValues } from '../../tools/utils'
+import { objectEntries, objectValues } from '../../tools/utils'
 import { InitConfiguration } from './configuration'
 import { createEndpointBuilder, INTAKE_SITE_US, EndpointBuilder } from './endpointBuilder'
 
@@ -29,7 +29,7 @@ export function computeTransportConfiguration(
     rumEndpointBuilder: createEndpointBuilder(initConfiguration, buildEnv, 'rum'),
     sessionReplayEndpointBuilder: createEndpointBuilder(initConfiguration, buildEnv, 'sessionReplay'),
   }
-  const intakeEndpoints: string[] = objectValues(endpointBuilders).map((builder) => builder.buildIntakeUrl())
+  let intakeEndpoints: string[] = objectValues(endpointBuilders).map((builder) => builder.buildIntakeUrl())
 
   const configuration: TransportConfiguration = {
     isIntakeUrl: (url) => intakeEndpoints.some((intakeEndpoint) => url.indexOf(intakeEndpoint) === 0),
@@ -47,10 +47,16 @@ export function computeTransportConfiguration(
 
   if (buildEnv.buildMode === BuildMode.E2E_TEST) {
     const e2eEndpointBuilder = (placeholder: string) => ({ build: () => placeholder } as EndpointBuilder)
-    configuration.internalMonitoringEndpointBuilder = e2eEndpointBuilder('<<< E2E INTERNAL MONITORING ENDPOINT >>>')
-    configuration.logsEndpointBuilder = e2eEndpointBuilder('<<< E2E LOGS ENDPOINT >>>')
-    configuration.rumEndpointBuilder = e2eEndpointBuilder('<<< E2E RUM ENDPOINT >>>')
-    configuration.sessionReplayEndpointBuilder = e2eEndpointBuilder('<<< E2E SESSION REPLAY ENDPOINT >>>')
+
+    const e2eEndpointBuilders = {
+      logsEndpointBuilder: e2eEndpointBuilder('<<< E2E LOGS ENDPOINT >>>'),
+      rumEndpointBuilder: e2eEndpointBuilder('<<< E2E RUM ENDPOINT >>>'),
+      sessionReplayEndpointBuilder: e2eEndpointBuilder('<<< E2E SESSION REPLAY ENDPOINT >>>'),
+      internalMonitoringEndpointBuilder: e2eEndpointBuilder('<<< E2E INTERNAL MONITORING ENDPOINT >>>'),
+    }
+
+    intakeEndpoints = objectValues(e2eEndpointBuilders).map((builder) => builder.build())
+    objectEntries(e2eEndpointBuilders).forEach(([key, builder]) => (configuration[key] = builder))
   }
 
   if (buildEnv.buildMode === BuildMode.STAGING && initConfiguration.replica !== undefined) {
