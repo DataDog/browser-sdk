@@ -183,6 +183,12 @@ Specify your own attribute to be used to [name actions][9].
 **Default**: `100`<br/>
 The percentage of sessions to track: `100` for all, `0` for none. Only tracked sessions send rum events.
 
+`replaySampleRate`
+: Optional<br/>
+**Type**: Number<br/>
+**Default**: `100`<br/>
+The percentage of tracked sessions with session replay pricing features: `100` for all, `0` for none. See [rum pricing][11] for more information.
+
 `silentMultipleInit`
 : Optional<br/>
 **Type**: Boolean <br/>
@@ -251,3 +257,4 @@ init(configuration: {
 [8]: https://github.com/DataDog/browser-sdk/blob/main/packages/rum/BROWSER_SUPPORT.md
 [9]: https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions#declaring-a-name-for-click-actions
 [10]: https://docs.datadoghq.com/real_user_monitoring/browser/modifying_data_and_context/?tab=npm#override-default-rum-view-names
+[11]: https://www.datadoghq.com/pricing/?product=real-user-monitoring#real-user-monitoring
