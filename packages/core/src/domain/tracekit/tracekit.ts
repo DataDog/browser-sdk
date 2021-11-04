@@ -1,6 +1,6 @@
 import { instrumentMethodAndCallOriginal } from '../../tools/instrumentMethod'
 import { computeStackTrace } from './computeStackTrace'
-import { Callback, StackTrace } from './types'
+import { UnhandledErrorCallback, StackTrace } from './types'
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error#Error_types
 // eslint-disable-next-line  max-len
@@ -38,7 +38,7 @@ const ERROR_TYPES_RE = /^(?:[Uu]ncaught (?:exception: )?)?(?:((?:Eval|Internal|R
  * @namespace
  */
 
-export function startUnhandledErrorCollection(callback: Callback) {
+export function startUnhandledErrorCollection(callback: UnhandledErrorCallback) {
   const { stop: stopInstrumentingOnError } = instrumentOnError(callback)
   const { stop: stopInstrumentingOnUnhandledRejection } = instrumentUnhandledRejection(callback)
 
@@ -53,14 +53,14 @@ export function startUnhandledErrorCollection(callback: Callback) {
 /**
  * Install a global onerror handler
  */
-function instrumentOnError(callback: Callback) {
+function instrumentOnError(callback: UnhandledErrorCallback) {
   return instrumentMethodAndCallOriginal(window, 'onerror', {
     before(this: any, message: Event | string, url?: string, lineNo?: number, columnNo?: number, errorObj?: Error) {
       let stack: StackTrace
 
       if (errorObj) {
         stack = computeStackTrace(errorObj)
-        callback(stack, true, errorObj)
+        callback(stack, errorObj)
       } else {
         const location = {
           url,
@@ -84,7 +84,7 @@ function instrumentOnError(callback: Callback) {
           stack: [location],
         }
 
-        callback(stack, true, message)
+        callback(stack, message)
       }
     },
   })
@@ -93,12 +93,12 @@ function instrumentOnError(callback: Callback) {
 /**
  * Install a global onunhandledrejection handler
  */
-function instrumentUnhandledRejection(callback: Callback) {
+function instrumentUnhandledRejection(callback: UnhandledErrorCallback) {
   return instrumentMethodAndCallOriginal(window, 'onunhandledrejection', {
     before(e: PromiseRejectionEvent) {
       const reason = e.reason || 'Empty reason'
       const stack = computeStackTrace(reason)
-      callback(stack, true, reason)
+      callback(stack, reason)
     },
   })
 }
