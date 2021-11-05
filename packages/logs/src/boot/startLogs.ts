@@ -27,11 +27,7 @@ export interface LogsInitConfiguration extends InitConfiguration {
   beforeSend?: ((event: LogsEvent) => void | boolean) | undefined
 }
 
-export function startLogs(
-  initConfiguration: LogsInitConfiguration,
-  errorLogger: Logger,
-  getGlobalContext: () => Context
-) {
+export function startLogs(initConfiguration: LogsInitConfiguration, errorLogger: Logger) {
   const { configuration, internalMonitoring } = commonInit(initConfiguration, buildEnv)
   const errorObservable = new Observable<RawError>()
 
@@ -42,7 +38,7 @@ export function startLogs(
   }
 
   const session = startLoggerSession(configuration, areCookiesAuthorized(configuration.cookieOptions))
-  return doStartLogs(configuration, errorObservable, internalMonitoring, session, errorLogger, getGlobalContext)
+  return doStartLogs(configuration, errorObservable, internalMonitoring, session, errorLogger)
 }
 
 export function doStartLogs(
@@ -50,11 +46,12 @@ export function doStartLogs(
   errorObservable: Observable<RawError>,
   internalMonitoring: InternalMonitoring,
   session: LoggerSession,
-  errorLogger: Logger,
-  getGlobalContext: () => Context
+  errorLogger: Logger
 ) {
   internalMonitoring.setExternalContextProvider(() =>
-    combine({ session_id: session.getId() }, getGlobalContext(), getRUMInternalContext())
+    combine({ session_id: session.getId() }, getRUMInternalContext(), {
+      view: { name: null, url: null, referrer: null },
+    })
   )
 
   const assemble = buildAssemble(session, configuration, reportError)
