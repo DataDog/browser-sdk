@@ -4,7 +4,7 @@ import express from 'express'
 import { buildLogs, buildNpm, buildRum, buildRumSlim } from '../sdkBuilds'
 import { Servers } from '../httpServers'
 
-export function createMockServerApp(servers: Servers, page: string) {
+export function createMockServerApp(servers: Servers, setup: string) {
   const app = express()
 
   app.use(cors())
@@ -56,7 +56,7 @@ export function createMockServerApp(servers: Servers, page: string) {
         'worker-src blob:',
       ].join(';')
     )
-    res.send(page)
+    res.send(setup)
     res.end()
   })
 

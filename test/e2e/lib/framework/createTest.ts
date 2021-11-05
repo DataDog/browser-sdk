@@ -6,7 +6,7 @@ import { validateFormat } from '../helpers/validation'
 import { EventRegistry } from './eventsRegistry'
 import { getTestServers, Servers, waitForServersIdle } from './httpServers'
 import { log } from './logger'
-import { DEFAULT_PAGE_SETUPS, npmSetup, PageFactory, PageSetupOptions } from './pageSetups'
+import { DEFAULT_SETUPS, npmSetup, SetupFactory, SetupOptions } from './pageSetups'
 import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
 
@@ -40,7 +40,7 @@ class TestBuilder {
   private head = ''
   private body = ''
   private eventBridge = false
-  private pageSetups: Array<{ pageFactory: PageFactory; name?: string }> = []
+  private setups: Array<{ factory: SetupFactory; name?: string }> = []
 
   constructor(private title: string) {}
 
@@ -79,18 +79,18 @@ class TestBuilder {
     return this
   }
 
-  withSetup(pageFactory: PageFactory, name?: string) {
-    this.pageSetups.push({ pageFactory, name })
-    if (this.pageSetups.length > 1 && this.pageSetups.some((item) => !item.name)) {
+  withSetup(factory: SetupFactory, name?: string) {
+    this.setups.push({ factory, name })
+    if (this.setups.length > 1 && this.setups.some((item) => !item.name)) {
       throw new Error('Tests with multiple setups need to give a name to each setups')
     }
     return this
   }
 
   run(runner: TestRunner) {
-    const pageSetups = this.pageSetups.length ? this.pageSetups : DEFAULT_PAGE_SETUPS
+    const setups = this.setups.length ? this.setups : DEFAULT_SETUPS
 
-    const pageSetupOptions: PageSetupOptions = {
+    const setupOptions: SetupOptions = {
       body: this.body,
       head: this.head,
       logs: this.logsConfiguration,
@@ -102,16 +102,16 @@ class TestBuilder {
 
     if (this.alsoRunWithRumSlim) {
       describe(this.title, () => {
-        declareTestsForSetups('rum', pageSetups, pageSetupOptions, runner)
+        declareTestsForSetups('rum', setups, setupOptions, runner)
         declareTestsForSetups(
           'rum-slim',
-          pageSetups.filter((pageSetup) => pageSetup.pageFactory !== npmSetup),
-          { ...pageSetupOptions, useRumSlim: true },
+          setups.filter((setup) => setup.factory !== npmSetup),
+          { ...setupOptions, useRumSlim: true },
           runner
         )
       })
     } else {
-      declareTestsForSetups(this.title, pageSetups, pageSetupOptions, runner)
+      declareTestsForSetups(this.title, setups, setupOptions, runner)
     }
   }
 
@@ -127,23 +127,22 @@ declare function it(expectation: string, assertion?: jasmine.ImplementationCallb
 
 function declareTestsForSetups(
   title: string,
-  pageSetups: Array<{ pageFactory: PageFactory; name?: string }>,
-  pageSetupOptions: PageSetupOptions,
+  setups: Array<{ factory: SetupFactory; name?: string }>,
+  setupOptions: SetupOptions,
   runner: TestRunner
 ) {
-  if (pageSetups.length > 1) {
+  if (setups.length > 1) {
     describe(title, () => {
-      for (const { name, pageFactory } of pageSetups) {
-        declareTest(name!, pageSetupOptions, pageFactory, runner)
+      for (const { name, factory } of setups) {
+        declareTest(name!, setupOptions, factory, runner)
       }
     })
   } else {
-    const { pageFactory } = pageSetups[0]
-    declareTest(title, pageSetupOptions, pageFactory, runner)
+    declareTest(title, setupOptions, setups[0].factory, runner)
   }
 }
 
-function declareTest(title: string, pageSetupOptions: PageSetupOptions, pageFactory: PageFactory, runner: TestRunner) {
+function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFactory, runner: TestRunner) {
   const spec = it(title, async () => {
     log(`Start '${spec.getFullName()}' in ${getBrowserName()!}`)
     const servers = await getTestServers()
@@ -151,9 +150,9 @@ function declareTest(title: string, pageSetupOptions: PageSetupOptions, pageFact
     const testContext = createTestContext(servers)
     servers.intake.bindServerApp(createIntakeServerApp(testContext.serverEvents, testContext.bridgeEvents))
 
-    const page = pageFactory(pageSetupOptions, servers.intake.url)
-    servers.base.bindServerApp(createMockServerApp(servers, page))
-    servers.crossOrigin.bindServerApp(createMockServerApp(servers, page))
+    const setup = factory(setupOptions, servers.intake.url)
+    servers.base.bindServerApp(createMockServerApp(servers, setup))
+    servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
 
     await setUpTest(testContext)
 

@@ -1,7 +1,7 @@
 import { LogsInitConfiguration } from '@datadog/browser-logs'
 import { RumInitConfiguration } from '@datadog/browser-rum-core'
 
-export interface PageSetupOptions {
+export interface SetupOptions {
   rum?: RumInitConfiguration
   useRumSlim: boolean
   logs?: LogsInitConfiguration
@@ -11,21 +11,21 @@ export interface PageSetupOptions {
   body?: string
 }
 
-export type PageFactory = (options: PageSetupOptions, intakeUrl: string) => string
+export type SetupFactory = (options: SetupOptions, intakeUrl: string) => string
 
 const isBrowserStack =
   browser.config.services &&
   browser.config.services.some((service) => (Array.isArray(service) ? service[0] : service) === 'browserstack')
 
-export const DEFAULT_PAGE_SETUPS = isBrowserStack
-  ? [{ name: 'bundle', pageFactory: bundleSetup }]
+export const DEFAULT_SETUPS = isBrowserStack
+  ? [{ name: 'bundle', factory: bundleSetup }]
   : [
-      { name: 'async', pageFactory: asyncSetup },
-      { name: 'npm', pageFactory: npmSetup },
-      { name: 'bundle', pageFactory: bundleSetup },
+      { name: 'async', factory: asyncSetup },
+      { name: 'npm', factory: npmSetup },
+      { name: 'bundle', factory: bundleSetup },
     ]
 
-export function asyncSetup(options: PageSetupOptions, intakeUrl: string) {
+export function asyncSetup(options: SetupOptions, intakeUrl: string) {
   let body = options.body || ''
   let header = options.head || ''
 
@@ -69,7 +69,7 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
   })
 }
 
-export function bundleSetup(options: PageSetupOptions, intakeUrl: string) {
+export function bundleSetup(options: SetupOptions, intakeUrl: string) {
   let header = options.head || ''
 
   if (options.eventBridge) {
@@ -103,7 +103,7 @@ export function bundleSetup(options: PageSetupOptions, intakeUrl: string) {
   })
 }
 
-export function npmSetup(options: PageSetupOptions, intakeUrl: string) {
+export function npmSetup(options: SetupOptions, intakeUrl: string) {
   let header = options.head || ''
 
   if (options.eventBridge) {
