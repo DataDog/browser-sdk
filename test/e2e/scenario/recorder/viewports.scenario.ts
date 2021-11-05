@@ -71,7 +71,7 @@ describe('recorder', () => {
         const { scrollX: initialScrollX, scrollY: initialScrollY } = await getWindowScroll()
 
         // Add Visual Viewport Scroll
-        await pinchScrollVerticallyDown(VISUAL_SCROLL_DOWN_PX)
+        await visualScrollVerticallyDown(VISUAL_SCROLL_DOWN_PX)
 
         // Add Layout Viewport Scroll
         await layoutScrollTo(LAYOUT_SCROLL_AMOUNT, LAYOUT_SCROLL_AMOUNT)
@@ -100,37 +100,31 @@ describe('recorder', () => {
   })
 
   describe('visual viewport properties', () => {
-    createTest('pinch zoom "resize" event reports visual viewport scale and dimension')
+    createTest('pinch zoom "scroll" event reports visual viewport position')
       .withRum({ enableExperimentalFeatures: ['visualviewport'] })
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
       .run(async ({ events }) => {
-        const initialVisualViewportDimension = await getVisualViewport()
+        const VISUAL_SCROLL_DOWN_PX = 100
+        await buildScrollablePage()
+        await performSignificantZoom()
+        await visualScrollVerticallyDown(VISUAL_SCROLL_DOWN_PX)
+        const nextVisualViewportDimension = await getVisualViewport()
+        const lastVisualViewportRecord = await getLastRecord(events, findAllVisualViewports)
+        expectToBeNearby(lastVisualViewportRecord.data.pageTop, nextVisualViewportDimension.pageTop)
+      })
+
+    createTest('pinch zoom "resize" event reports visual viewport scale')
+      .withRum({ enableExperimentalFeatures: ['visualviewport'] })
+      .withRumInit(initRumAndStartRecording)
+      .withSetup(bundleSetup)
+      .withBody(html`${VIEWPORT_META_TAGS}`)
+      .run(async ({ events }) => {
         await performSignificantZoom()
         const nextVisualViewportDimension = await getVisualViewport()
-
         const lastVisualViewportRecord = await getLastRecord(events, findAllVisualViewports)
-
-        // SDK returns Visual Viewport object
         expectToBeNearby(lastVisualViewportRecord.data.scale, nextVisualViewportDimension.scale)
-        expectToBeNearby(lastVisualViewportRecord.data.width, nextVisualViewportDimension.width)
-        expectToBeNearby(lastVisualViewportRecord.data.height, nextVisualViewportDimension.height)
-        expectToBeNearby(lastVisualViewportRecord.data.offsetLeft, nextVisualViewportDimension.offsetLeft)
-        expectToBeNearby(lastVisualViewportRecord.data.offsetTop, nextVisualViewportDimension.offsetTop)
-        expectToBeNearby(lastVisualViewportRecord.data.pageLeft, nextVisualViewportDimension.pageLeft)
-        expectToBeNearby(lastVisualViewportRecord.data.pageTop, nextVisualViewportDimension.pageTop)
-
-        // With correct transformation
-        const finalScaleAmount = nextVisualViewportDimension.scale
-        expect(3).toBe(Math.round(finalScaleAmount))
-        expectToBeNearby(lastVisualViewportRecord.data.width, initialVisualViewportDimension.width / finalScaleAmount)
-        expectToBeNearby(lastVisualViewportRecord.data.height, initialVisualViewportDimension.height / finalScaleAmount)
-
-        expect(lastVisualViewportRecord.data.offsetLeft).toBeGreaterThan(0)
-        expect(lastVisualViewportRecord.data.offsetTop).toBeGreaterThan(0)
-        expect(lastVisualViewportRecord.data.pageLeft).toBeGreaterThan(0)
-        expect(lastVisualViewportRecord.data.pageTop).toBeGreaterThan(0)
       })
   })
 })
@@ -215,7 +209,7 @@ async function performSignificantZoom() {
   expect(initialVisualViewport.scale < nextVisualViewport.scale).toBeTruthy()
 }
 
-async function pinchScrollVerticallyDown(yChange: number) {
+async function visualScrollVerticallyDown(yChange: number) {
   // Providing a negative offset value will scroll up.
   // NOTE: Some devices may invert scroll direction
   // Cannot exceed the bounds of a device's screen, at start or end positions.
