@@ -1,5 +1,5 @@
 import { BuildEnv, BuildMode } from '../../boot/init'
-import { objectEntries, objectValues } from '../../tools/utils'
+import { notEmpty, objectValues } from '../../tools/utils'
 import { InitConfiguration } from './configuration'
 import { createEndpointBuilder, INTAKE_SITE_US, EndpointBuilder } from './endpointBuilder'
 
@@ -24,68 +24,75 @@ export function computeTransportConfiguration(
   initConfiguration: InitConfiguration,
   buildEnv: BuildEnv
 ): TransportConfiguration {
-  const endpointBuilders = {
-    logsEndpointBuilder: createEndpointBuilder(initConfiguration, buildEnv, 'logs'),
-    rumEndpointBuilder: createEndpointBuilder(initConfiguration, buildEnv, 'rum'),
-    sessionReplayEndpointBuilder: createEndpointBuilder(initConfiguration, buildEnv, 'sessionReplay'),
-  }
-  let intakeEndpoints: string[] = objectValues(endpointBuilders).map((builder) => builder.buildIntakeUrl())
+  const endpointBuilders = computeEndpointBuilders(initConfiguration, buildEnv)
+  const intakeEndpoints = objectValues(endpointBuilders)
+    .filter(notEmpty)
+    .map((builder) => builder.buildIntakeUrl())
 
-  const configuration: TransportConfiguration = {
+  const replicaConfiguration = computeReplicaConfiguration(initConfiguration, buildEnv, intakeEndpoints)
+
+  return {
     isIntakeUrl: (url) => intakeEndpoints.some((intakeEndpoint) => url.indexOf(intakeEndpoint) === 0),
     ...endpointBuilders,
+    replica: replicaConfiguration,
   }
+}
 
-  if (initConfiguration.internalMonitoringApiKey) {
-    configuration.internalMonitoringEndpointBuilder = createEndpointBuilder(
-      initConfiguration,
-      buildEnv,
-      'logs',
-      'browser-agent-internal-monitoring'
-    )
-  }
-
+function computeEndpointBuilders(initConfiguration: InitConfiguration, buildEnv: BuildEnv) {
   if (buildEnv.buildMode === BuildMode.E2E_TEST) {
-    const e2eEndpointBuilder = (placeholder: string) => ({ build: () => placeholder } as EndpointBuilder)
+    const e2eEndpointBuilder = (placeholder: string) => ({
+      build: () => placeholder,
+      buildIntakeUrl: () => placeholder,
+    })
 
-    const e2eEndpointBuilders = {
+    return {
       logsEndpointBuilder: e2eEndpointBuilder('<<< E2E LOGS ENDPOINT >>>'),
       rumEndpointBuilder: e2eEndpointBuilder('<<< E2E RUM ENDPOINT >>>'),
       sessionReplayEndpointBuilder: e2eEndpointBuilder('<<< E2E SESSION REPLAY ENDPOINT >>>'),
       internalMonitoringEndpointBuilder: e2eEndpointBuilder('<<< E2E INTERNAL MONITORING ENDPOINT >>>'),
     }
-
-    intakeEndpoints = objectValues(e2eEndpointBuilders).map((builder) => builder.build())
-    objectEntries(e2eEndpointBuilders).forEach(([key, builder]) => (configuration[key] = builder))
   }
 
-  if (buildEnv.buildMode === BuildMode.STAGING && initConfiguration.replica !== undefined) {
-    const replicaConfiguration: InitConfiguration = {
-      ...initConfiguration,
-      site: INTAKE_SITE_US,
-      applicationId: initConfiguration.replica.applicationId,
-      clientToken: initConfiguration.replica.clientToken,
-      useAlternateIntakeDomains: true,
-      intakeApiVersion: 2,
-    }
-    const replicaEndpointBuilders = {
-      logsEndpointBuilder: createEndpointBuilder(replicaConfiguration, buildEnv, 'logs'),
-      rumEndpointBuilder: createEndpointBuilder(replicaConfiguration, buildEnv, 'rum'),
-      internalMonitoringEndpointBuilder: createEndpointBuilder(
-        replicaConfiguration,
-        buildEnv,
-        'logs',
-        'browser-agent-internal-monitoring'
-      ),
-    }
-    configuration.replica = { applicationId: initConfiguration.replica.applicationId, ...replicaEndpointBuilders }
+  return {
+    logsEndpointBuilder: createEndpointBuilder(initConfiguration, buildEnv, 'logs'),
+    rumEndpointBuilder: createEndpointBuilder(initConfiguration, buildEnv, 'rum'),
+    sessionReplayEndpointBuilder: createEndpointBuilder(initConfiguration, buildEnv, 'sessionReplay'),
+    internalMonitoringEndpointBuilder: initConfiguration.internalMonitoringApiKey
+      ? createEndpointBuilder(initConfiguration, buildEnv, 'logs', 'browser-agent-internal-monitoring')
+      : undefined,
+  }
+}
 
-    const replicaIntakeEndpoints: string[] = objectValues(replicaEndpointBuilders).map((builder) =>
-      builder.buildIntakeUrl()
-    )
-
-    intakeEndpoints.push(...replicaIntakeEndpoints)
+function computeReplicaConfiguration(
+  initConfiguration: InitConfiguration,
+  buildEnv: BuildEnv,
+  intakeEndpoints: string[]
+): ReplicaConfiguration | undefined {
+  if (buildEnv.buildMode !== BuildMode.STAGING || initConfiguration.replica === undefined) {
+    return
   }
 
-  return configuration
+  const replicaConfiguration: InitConfiguration = {
+    ...initConfiguration,
+    site: INTAKE_SITE_US,
+    applicationId: initConfiguration.replica.applicationId,
+    clientToken: initConfiguration.replica.clientToken,
+    useAlternateIntakeDomains: true,
+    intakeApiVersion: 2,
+  }
+
+  const replicaEndpointBuilders = {
+    logsEndpointBuilder: createEndpointBuilder(replicaConfiguration, buildEnv, 'logs'),
+    rumEndpointBuilder: createEndpointBuilder(replicaConfiguration, buildEnv, 'rum'),
+    internalMonitoringEndpointBuilder: createEndpointBuilder(
+      replicaConfiguration,
+      buildEnv,
+      'logs',
+      'browser-agent-internal-monitoring'
+    ),
+  }
+
+  intakeEndpoints.push(...objectValues(replicaEndpointBuilders).map((builder) => builder.buildIntakeUrl()))
+
+  return { applicationId: initConfiguration.replica.applicationId, ...replicaEndpointBuilders }
 }

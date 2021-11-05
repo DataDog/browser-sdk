@@ -244,6 +244,10 @@ export function mapValues<A, B>(object: { [key: string]: A }, fn: (arg: A) => B)
   return newObject
 }
 
+export function notEmpty<T>(value: T | null | undefined): value is T {
+  return value !== null && value !== undefined
+}
+
 /**
  * inspired by https://mathiasbynens.be/notes/globalthis
  */
