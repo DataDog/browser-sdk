@@ -39,7 +39,7 @@ export function startRum(
         application_id: initConfiguration.applicationId,
       },
       parentContexts.findView(),
-      getCommonContext().context
+      { view: { name: null } }
     )
   )
 

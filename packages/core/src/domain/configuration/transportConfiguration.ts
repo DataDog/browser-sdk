@@ -58,7 +58,12 @@ function computeEndpointBuilders(initConfiguration: InitConfiguration, buildEnv:
     rumEndpointBuilder: createEndpointBuilder(initConfiguration, buildEnv, 'rum'),
     sessionReplayEndpointBuilder: createEndpointBuilder(initConfiguration, buildEnv, 'sessionReplay'),
     internalMonitoringEndpointBuilder: initConfiguration.internalMonitoringApiKey
-      ? createEndpointBuilder(initConfiguration, buildEnv, 'logs', 'browser-agent-internal-monitoring')
+      ? createEndpointBuilder(
+          { ...initConfiguration, clientToken: initConfiguration.internalMonitoringApiKey },
+          buildEnv,
+          'logs',
+          'browser-agent-internal-monitoring'
+        )
       : undefined,
   }
 }
