@@ -12,7 +12,7 @@ export function send(
 ): void {
   const formData = new FormData()
 
-  formData.set(
+  formData.append(
     'segment',
     new Blob([data], {
       type: 'application/octet-stream',
@@ -20,8 +20,8 @@ export function send(
     `${meta.session.id}-${meta.start}`
   )
 
-  toFormEntries(meta, (key, value) => formData.set(key, value))
-  formData.set('raw_segment_size', rawSegmentSize.toString())
+  toFormEntries(meta, (key, value) => formData.append(key, value))
+  formData.append('raw_segment_size', rawSegmentSize.toString())
 
   const request = new HttpRequest(endpointBuilder, SEND_BEACON_BYTE_LENGTH_LIMIT)
   request.send(formData, data.byteLength, flushReason)
