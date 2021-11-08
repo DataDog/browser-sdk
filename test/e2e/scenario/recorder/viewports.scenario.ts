@@ -79,10 +79,6 @@ describe('recorder', () => {
         const nextVisualViewport = await getVisualViewport()
         const { scrollX: nextScrollX, scrollY: nextScrollY } = await getWindowScroll()
 
-        await browserExecute(() => {
-          document.dispatchEvent(new Event('scroll'))
-        })
-
         const lastScrollData = (
           await getLastRecord(events, (segment) => findAllIncrementalSnapshots(segment, IncrementalSource.Scroll))
         ).data as ScrollData
@@ -151,14 +147,10 @@ const isGestureUnsupported = () => {
 
 // Flakiness: Working with viewport sizes has variations per device of a few pixels
 function expectToBeNearby(numA: number, numB: number) {
-  const roundedA = Math.round(numA)
-  const roundedB = Math.round(numB)
-  const test = Math.abs(roundedA - roundedB) <= 5
-  if (test) {
-    expect(test).toBeTruthy()
-  } else {
+  const test = Math.abs(numA - numB) <= 5
+  if (!test) {
     // Prints a clear error message when different
-    expect(roundedB).toBe(roundedA)
+    expect(numA).toBe(numB)
   }
 }
 

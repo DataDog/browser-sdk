@@ -45,13 +45,13 @@ export function record(options: RecordOptions): RecordAPI {
       },
       type: RecordType.FullSnapshot,
     })
-  }
 
-  if (isExperimentalFeatureEnabled('visualviewport') && window.visualViewport) {
-    emit({
-      data: getVisualViewport(),
-      type: RecordType.VisualViewport,
-    })
+    if (isExperimentalFeatureEnabled('visualviewport') && window.visualViewport) {
+      emit({
+        data: getVisualViewport(),
+        type: RecordType.VisualViewport,
+      })
+    }
   }
 
   takeFullSnapshot()
