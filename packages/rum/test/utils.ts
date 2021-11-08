@@ -26,19 +26,26 @@ export class MockWorker implements DeflateWorker {
   readonly pendingMessages: DeflateWorkerAction[] = []
   private rawSize = 0
   private deflatedData: Uint8Array[] = []
-  private listeners: DeflateWorkerListener[] = []
+  private listeners: {
+    message: DeflateWorkerListener[]
+    error: Array<(error: unknown) => void>
+  } = { message: [], error: [] }
 
-  addEventListener(_: 'message', listener: DeflateWorkerListener): void {
-    const index = this.listeners.indexOf(listener)
+  addEventListener(eventName: 'message', listener: DeflateWorkerListener): void
+  addEventListener(eventName: 'error', listener: (error: ErrorEvent) => void): void
+  addEventListener(eventName: 'message' | 'error', listener: any): void {
+    const index = this.listeners[eventName].indexOf(listener)
     if (index < 0) {
-      this.listeners.push(listener)
+      this.listeners[eventName].push(listener)
     }
   }
 
-  removeEventListener(_: 'message', listener: DeflateWorkerListener): void {
-    const index = this.listeners.indexOf(listener)
+  removeEventListener(eventName: 'message', listener: DeflateWorkerListener): void
+  removeEventListener(eventName: 'error', listener: (error: ErrorEvent) => void): void
+  removeEventListener(eventName: 'message' | 'error', listener: any): void {
+    const index = this.listeners[eventName].indexOf(listener)
     if (index >= 0) {
-      this.listeners.splice(index, 1)
+      this.listeners[eventName].splice(index, 1)
     }
   }
 
@@ -51,11 +58,11 @@ export class MockWorker implements DeflateWorker {
   }
 
   get pendingData() {
-    return this.pendingMessages.map((message) => message.data || '').join('')
+    return this.pendingMessages.map((message) => ('data' in message ? message.data : '')).join('')
   }
 
-  get listenersCount() {
-    return this.listeners.length
+  get messageListenersCount() {
+    return this.listeners.message.length
   }
 
   processAllMessages(): void {
@@ -71,39 +78,68 @@ export class MockWorker implements DeflateWorker {
   processNextMessage(): void {
     const message = this.pendingMessages.shift()
     if (message) {
-      const encodedData = new TextEncoder().encode(message.data)
-      this.rawSize += encodedData.length
-      // In the mock worker, for simplicity, we'll just use the UTF-8 encoded string instead of deflating it.
-      this.deflatedData.push(encodedData)
-
       switch (message.action) {
-        case 'write':
-          this.listeners.forEach((listener) =>
+        case 'init':
+          this.listeners.message.forEach((listener) =>
             listener({
               data: {
-                id: message.id,
-                compressedSize: uint8ArraysSize(this.deflatedData),
-                rawSize: this.rawSize,
-                additionalRawSize: encodedData.length,
+                type: 'initialized',
               },
             })
           )
           break
+        case 'write':
+          {
+            const additionalRawSize = this.pushData(message.data)
+            this.listeners.message.forEach((listener) =>
+              listener({
+                data: {
+                  type: 'wrote',
+                  id: message.id,
+                  compressedSize: uint8ArraysSize(this.deflatedData),
+                  additionalRawSize,
+                },
+              })
+            )
+          }
+          break
         case 'flush':
-          this.listeners.forEach((listener) =>
-            listener({
-              data: {
-                id: message.id,
-                result: mergeUint8Arrays(this.deflatedData),
-                rawSize: this.rawSize,
-                additionalRawSize: encodedData.length,
-              },
-            })
-          )
-          this.deflatedData.length = 0
-          this.rawSize = 0
+          {
+            const additionalRawSize = this.pushData(message.data)
+            this.listeners.message.forEach((listener) =>
+              listener({
+                data: {
+                  type: 'flushed',
+                  id: message.id,
+                  result: mergeUint8Arrays(this.deflatedData),
+                  rawSize: this.rawSize,
+                  additionalRawSize,
+                },
+              })
+            )
+            this.deflatedData.length = 0
+            this.rawSize = 0
+          }
+          break
       }
     }
+  }
+
+  dispatchErrorEvent() {
+    const error = new ErrorEvent('worker')
+    this.listeners.error.forEach((listener) => listener(error))
+  }
+
+  dispatchErrorMessage(error: Error | string) {
+    this.listeners.message.forEach((listener) => listener({ data: { type: 'errored', error } }))
+  }
+
+  private pushData(data?: string) {
+    const encodedData = new TextEncoder().encode(data)
+    this.rawSize += encodedData.length
+    // In the mock worker, for simplicity, we'll just use the UTF-8 encoded string instead of deflating it.
+    this.deflatedData.push(encodedData)
+    return encodedData.length
   }
 }
 

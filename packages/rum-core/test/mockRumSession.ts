@@ -25,7 +25,6 @@ export function createRumSessionMock(): RumSessionMock {
     getId() {
       return trackingType === RumTrackingType.NOT_TRACKED ? undefined : id
     },
-    getInMemoryPlan: () => trackingType,
     setId(newId) {
       id = newId
       return this

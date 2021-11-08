@@ -38,7 +38,6 @@ const baseConfiguration: Partial<Configuration> = {
   service: 'Service',
 }
 const internalMonitoring = { setExternalContextProvider: () => undefined }
-const getGlobalContext = () => ({})
 
 interface Rum {
   getInternalContext(startTime?: number): any | undefined
@@ -64,7 +63,7 @@ describe('logs', () => {
     configuration: configurationOverrides,
   }: { errorLogger?: Logger; configuration?: Partial<Configuration> } = {}) => {
     const configuration = { ...(baseConfiguration as Configuration), ...configurationOverrides }
-    return doStartLogs(configuration, errorObservable, internalMonitoring, session, errorLogger, getGlobalContext)
+    return doStartLogs(configuration, errorObservable, internalMonitoring, session, errorLogger)
   }
 
   beforeEach(() => {

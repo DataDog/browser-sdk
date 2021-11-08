@@ -1,5 +1,4 @@
 import { StackFrame, StackTrace } from './types'
-import { report } from './report'
 
 const UNKNOWN_FUNCTION = '?'
 
@@ -9,7 +8,7 @@ const UNKNOWN_FUNCTION = '?'
  * Syntax:
  * ```js
  * s = computeStackTraceOfCaller([depth])
- * s = computeStackTrace(exception) // consider using report instead (see below)
+ * s = computeStackTrace(exception)
  * ```
  *
  * Supports:
@@ -30,10 +29,6 @@ const UNKNOWN_FUNCTION = '?'
  * duplicate functions may be mismatched.
  *
  * computeStackTrace should only be used for tracing purposes.
- * Logging of unhandled exceptions should be done with report,
- * which builds on top of computeStackTrace and provides better
- * IE support by utilizing the window.onerror event to retrieve information
- * about the top of the stack.
  *
  * Note: In IE and Safari, no stack trace is recorded on the Error object,
  * so computeStackTrace instead walks its *own* chain of callers.
@@ -455,7 +450,7 @@ function computeStackTraceFromOperaMultiLineMessage(ex: unknown): StackTrace | u
  * augmented.
  * @memberof computeStackTrace
  */
-export function augmentStackTraceWithInitialElement(stackInfo: StackTrace, url?: string, lineNo?: string | number) {
+function augmentStackTraceWithInitialElement(stackInfo: StackTrace, url?: string, lineNo?: string | number) {
   const initial: StackFrame = {
     url,
     line: lineNo ? +lineNo : undefined,
@@ -507,7 +502,7 @@ function computeStackTraceByWalkingCallerChain(ex: unknown, depth: number) {
   let item: StackFrame
 
   for (let curr = computeStackTraceByWalkingCallerChain.caller; curr && !recursion; curr = curr.caller) {
-    if (curr === computeStackTrace || curr === report) {
+    if (curr === computeStackTrace) {
       continue
     }
 

@@ -1,4 +1,4 @@
-import { Configuration } from '@datadog/browser-core'
+import { Configuration, noop, resetExperimentalFeatures, updateExperimentalFeatures } from '@datadog/browser-core'
 import {
   RecorderApi,
   ParentContexts,
@@ -6,10 +6,11 @@ import {
   RumInitConfiguration,
   LifeCycle,
 } from '@datadog/browser-rum-core'
-import { createNewEvent } from '@datadog/browser-core/test/specHelper'
+import { createNewEvent, deleteEventBridgeStub, initEventBridgeStub } from '../../../core/test/specHelper'
 import { createRumSessionMock, RumSessionMock } from '../../../rum-core/test/mockRumSession'
 import { setup, TestSetupBuilder } from '../../../rum-core/test/specHelper'
 import { DeflateWorker } from '../domain/segmentCollection/deflateWorker'
+import { startDeflateWorker } from '../domain/segmentCollection/startDeflateWorker'
 import { makeRecorderApi, StartRecording } from './recorderApi'
 
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
@@ -19,7 +20,23 @@ describe('makeRecorderApi', () => {
   let recorderApi: RecorderApi
   let startRecordingSpy: jasmine.Spy<StartRecording>
   let stopRecordingSpy: jasmine.Spy<() => void>
-  let getDeflateWorkerSingletonSpy: jasmine.Spy<() => DeflateWorker | undefined>
+  let startDeflateWorkerSpy: jasmine.Spy<typeof startDeflateWorker>
+  const FAKE_WORKER = {} as DeflateWorker
+
+  function startDeflateWorkerWith(worker?: DeflateWorker) {
+    if (!startDeflateWorkerSpy) {
+      startDeflateWorkerSpy = jasmine.createSpy<typeof startDeflateWorker>('startDeflateWorker')
+    }
+    startDeflateWorkerSpy.and.callFake((callback) => callback(worker))
+  }
+
+  function callLastRegisteredInitialisationCallback() {
+    startDeflateWorkerSpy.calls.mostRecent().args[0](FAKE_WORKER)
+  }
+
+  function stopDeflateWorker() {
+    startDeflateWorkerSpy.and.callFake(noop)
+  }
 
   let rumInit: (initConfiguration: RumInitConfiguration) => void
 
@@ -29,8 +46,9 @@ describe('makeRecorderApi', () => {
       startRecordingSpy = jasmine.createSpy('startRecording').and.callFake(() => ({
         stop: stopRecordingSpy,
       }))
-      getDeflateWorkerSingletonSpy = jasmine.createSpy('getDeflateWorkerSingleton').and.returnValue({})
-      recorderApi = makeRecorderApi(startRecordingSpy, getDeflateWorkerSingletonSpy)
+
+      startDeflateWorkerWith(FAKE_WORKER)
+      recorderApi = makeRecorderApi(startRecordingSpy, startDeflateWorkerSpy)
       rumInit = (initConfiguration) => {
         recorderApi.onRumStart(lifeCycle, initConfiguration, {} as Configuration, session, {} as ParentContexts)
       }
@@ -104,9 +122,41 @@ describe('makeRecorderApi', () => {
     it('do not start recording if worker fails to be instantiated', () => {
       setupBuilder.build()
       rumInit(DEFAULT_INIT_CONFIGURATION)
-      getDeflateWorkerSingletonSpy.and.returnValue(undefined)
+      startDeflateWorkerWith(undefined)
       recorderApi.start()
       expect(startRecordingSpy).not.toHaveBeenCalled()
+    })
+
+    it('does not start recording multiple times if restarted before worker is initialized', () => {
+      setupBuilder.build()
+      rumInit(DEFAULT_INIT_CONFIGURATION)
+      stopDeflateWorker()
+      recorderApi.start()
+      recorderApi.stop()
+
+      callLastRegisteredInitialisationCallback()
+      recorderApi.start()
+      callLastRegisteredInitialisationCallback()
+      expect(startRecordingSpy).toHaveBeenCalledTimes(1)
+    })
+
+    describe('if event bridge present', () => {
+      beforeEach(() => {
+        updateExperimentalFeatures(['event-bridge'])
+        initEventBridgeStub()
+      })
+
+      afterEach(() => {
+        resetExperimentalFeatures()
+        deleteEventBridgeStub()
+      })
+
+      it('does not start recording', () => {
+        setupBuilder.build()
+        recorderApi.start()
+        rumInit(DEFAULT_INIT_CONFIGURATION)
+        expect(startRecordingSpy).not.toHaveBeenCalled()
+      })
     })
   })
 

@@ -1,6 +1,6 @@
 import { bundleSetup, createTest } from '../lib/framework'
 import { browserExecute } from '../lib/helpers/browser'
-import { flushEvents } from '../lib/helpers/sdk'
+import { flushEvents } from '../lib/helpers/flushEvents'
 
 describe('internal monitoring', () => {
   createTest('send errors')
@@ -8,7 +8,7 @@ describe('internal monitoring', () => {
     .withLogs({
       internalMonitoringApiKey: 'xxx',
     })
-    .run(async ({ events }) => {
+    .run(async ({ serverEvents }) => {
       await browserExecute(() => {
         const context = {
           get foo() {
@@ -19,11 +19,11 @@ describe('internal monitoring', () => {
         window.DD_LOGS!.logger.log('hop', context as any)
       })
       await flushEvents()
-      expect(events.internalMonitoring.length).toBe(1)
-      const event = events.internalMonitoring[0]
+      expect(serverEvents.internalMonitoring.length).toBe(1)
+      const event = serverEvents.internalMonitoring[0]
       expect(event.message).toBe('bar')
       expect(event.error.kind).toBe('Error')
       expect(event.status).toBe('error')
-      events.empty()
+      serverEvents.empty()
     })
 })

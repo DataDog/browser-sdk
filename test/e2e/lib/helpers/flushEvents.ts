@@ -1,5 +1,5 @@
 import { getTestServers, waitForServersIdle } from '../framework'
-import { browserExecuteAsync, deleteAllCookies } from './browser'
+import { browserExecuteAsync } from './browser'
 
 export async function flushEvents() {
   // wait to process actions + event loop before switching page
@@ -9,6 +9,7 @@ export async function flushEvents() {
     }, 200)
   )
   await waitForServersIdle()
+
   const servers = await getTestServers()
 
   // TODO: use /empty instead of /ok
@@ -27,23 +28,4 @@ export async function flushEvents() {
   // issue is mitigated, because requests will likely take a few milliseconds to reach the server.
   await browser.url(`${servers.base.url}/ok?duration=200`)
   await waitForServersIdle()
-}
-
-export async function renewSession() {
-  await expireSession()
-  const documentElement = await $('html')
-  await documentElement.click()
-  expect(await findSessionCookie()).toBeDefined()
-}
-
-export async function expireSession() {
-  await deleteAllCookies()
-  expect(await findSessionCookie()).not.toBeDefined()
-  // Cookies are cached for 1s, wait until the cache expires
-  await browser.pause(1100)
-}
-
-async function findSessionCookie() {
-  const cookies = (await browser.getCookies()) || []
-  return cookies.find((cookie: any) => cookie.name === '_dd_s')
 }

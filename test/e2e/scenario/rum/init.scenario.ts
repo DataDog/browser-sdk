@@ -1,5 +1,5 @@
 import { createTest, EventRegistry } from '../../lib/framework'
-import { flushEvents } from '../../lib/helpers/sdk'
+import { flushEvents } from '../../lib/helpers/flushEvents'
 
 describe('API calls and events around init', () => {
   createTest('should be associated to corresponding views when views are automatically tracked')
@@ -20,32 +20,32 @@ describe('API calls and events around init', () => {
 
       setTimeout(() => window.DD_RUM!.init(configuration), 30)
     })
-    .run(async ({ events }) => {
+    .run(async ({ serverEvents }) => {
       await flushEvents()
 
-      const initialView = events.rumViews[0]
+      const initialView = serverEvents.rumViews[0]
       expect(initialView.view.name).toBeUndefined()
       expect(initialView.view.custom_timings).toEqual({
         before_manual_view: jasmine.any(Number),
       })
 
-      const manualView = events.rumViews[1]
+      const manualView = serverEvents.rumViews[1]
       expect(manualView.view.name).toBe('manual view')
       expect(manualView.view.custom_timings).toEqual({
         after_manual_view: jasmine.any(Number),
       })
 
-      const documentEvent = events.rumResources.find((event) => event.resource.type === 'document')!
+      const documentEvent = serverEvents.rumResources.find((event) => event.resource.type === 'document')!
       expect(documentEvent.view.id).toBe(initialView.view.id)
 
       expectToHaveErrors(
-        events,
+        serverEvents,
         { message: 'Provided "before manual view"', viewId: initialView.view.id },
         { message: 'Provided "after manual view"', viewId: manualView.view.id }
       )
 
       expectToHaveActions(
-        events,
+        serverEvents,
         { name: 'before manual view', viewId: initialView.view.id },
         { name: 'after manual view', viewId: manualView.view.id }
       )
@@ -75,10 +75,10 @@ describe('API calls and events around init', () => {
         window.DD_RUM!.addTiming('after manual view')
       }, 40)
     })
-    .run(async ({ events }) => {
+    .run(async ({ serverEvents }) => {
       await flushEvents()
 
-      const initialView = events.rumViews[0]
+      const initialView = serverEvents.rumViews[0]
       expect(initialView.view.name).toBe('manual view')
       expect(initialView.view.custom_timings).toEqual({
         before_init: jasmine.any(Number),
@@ -86,18 +86,18 @@ describe('API calls and events around init', () => {
         after_manual_view: jasmine.any(Number),
       })
 
-      const documentEvent = events.rumResources.find((event) => event.resource.type === 'document')!
+      const documentEvent = serverEvents.rumResources.find((event) => event.resource.type === 'document')!
       expect(documentEvent.view.id).toBe(initialView.view.id)
 
       expectToHaveErrors(
-        events,
+        serverEvents,
         { message: 'Provided "before init"', viewId: initialView.view.id },
         { message: 'Provided "before manual view"', viewId: initialView.view.id },
         { message: 'Provided "after manual view"', viewId: initialView.view.id }
       )
 
       expectToHaveActions(
-        events,
+        serverEvents,
         { name: 'before init', viewId: initialView.view.id },
         { name: 'before manual view', viewId: initialView.view.id },
         { name: 'after manual view', viewId: initialView.view.id }
@@ -113,12 +113,12 @@ describe('beforeSend', () => {
       },
     })
     .withRumSlim()
-    .run(async ({ events }) => {
+    .run(async ({ serverEvents }) => {
       await flushEvents()
 
-      const initialView = events.rumViews[0]
+      const initialView = serverEvents.rumViews[0]
       expect(initialView.context).toBeUndefined()
-      const initialDocument = events.rumResources[0]
+      const initialDocument = serverEvents.rumResources[0]
       expect(initialDocument.context).toEqual({ foo: 'bar' })
     })
 
@@ -134,12 +134,12 @@ describe('beforeSend', () => {
       window.DD_RUM!.addRumGlobalContext('foo', 'baz')
       window.DD_RUM!.addRumGlobalContext('zig', 'zag')
     })
-    .run(async ({ events }) => {
+    .run(async ({ serverEvents }) => {
       await flushEvents()
 
-      const initialView = events.rumViews[0]
+      const initialView = serverEvents.rumViews[0]
       expect(initialView.context).toEqual({ foo: 'baz', zig: 'zag' })
-      const initialDocument = events.rumResources[0]
+      const initialDocument = serverEvents.rumResources[0]
       expect(initialDocument.context).toEqual({ foo: 'bar' })
     })
 })

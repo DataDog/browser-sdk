@@ -1,4 +1,4 @@
-import { combine, Configuration, InternalMonitoring, Observable } from '@datadog/browser-core'
+import { combine, Configuration, InternalMonitoring, isEventBridgePresent, Observable } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { startPerformanceCollection } from '../browser/performanceCollection'
 import { startRumAssembly } from '../domain/assembly'
@@ -12,9 +12,10 @@ import { startErrorCollection } from '../domain/rumEventsCollection/error/errorC
 import { startLongTaskCollection } from '../domain/rumEventsCollection/longTask/longTaskCollection'
 import { startResourceCollection } from '../domain/rumEventsCollection/resource/resourceCollection'
 import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
-import { RumSession, startRumSession } from '../domain/rumSession'
+import { RumSession, startRumSession, startRumSessionStub } from '../domain/rumSession'
 import { CommonContext } from '../rawRumEvent.types'
 import { startRumBatch } from '../transport/batch'
+import { startRumEventBridge } from '../transport/startRumEventBridge'
 import { startUrlContexts } from '../domain/urlContexts'
 import { createLocationChangeObservable, LocationChange } from '../browser/locationChangeObservable'
 import { RecorderApi, RumInitConfiguration } from './rumPublicApi'
@@ -28,7 +29,7 @@ export function startRum(
   initialViewName?: string
 ) {
   const lifeCycle = new LifeCycle()
-  const session = startRumSession(configuration, lifeCycle)
+  const session = !isEventBridgePresent() ? startRumSession(configuration, lifeCycle) : startRumSessionStub()
   const domMutationObservable = createDOMMutationObservable()
   const locationChangeObservable = createLocationChangeObservable(location)
 
@@ -38,7 +39,7 @@ export function startRum(
         application_id: initConfiguration.applicationId,
       },
       parentContexts.findView(),
-      getCommonContext().context
+      { view: { name: null } }
     )
   )
 
@@ -96,7 +97,14 @@ export function startRumEventCollection(
   const parentContexts = startParentContexts(lifeCycle, session)
   const urlContexts = startUrlContexts(lifeCycle, locationChangeObservable, location)
   const foregroundContexts = startForegroundContexts()
-  const batch = startRumBatch(configuration, lifeCycle)
+
+  let stopBatch: () => void
+
+  if (isEventBridgePresent()) {
+    startRumEventBridge(lifeCycle)
+  } else {
+    ;({ stop: stopBatch } = startRumBatch(configuration, lifeCycle))
+  }
 
   startRumAssembly(applicationId, configuration, lifeCycle, session, parentContexts, urlContexts, getCommonContext)
 
@@ -107,7 +115,7 @@ export function startRumEventCollection(
     stop: () => {
       // prevent batch from previous tests to keep running and send unwanted requests
       // could be replaced by stopping all the component when they will all have a stop method
-      batch.stop()
+      stopBatch?.()
       parentContexts.stop()
       foregroundContexts.stop()
     },

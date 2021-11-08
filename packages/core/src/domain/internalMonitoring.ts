@@ -72,10 +72,6 @@ function startMonitoringBatch(configuration: Configuration) {
     return combine(
       {
         date: new Date().getTime(),
-        view: {
-          referrer: document.referrer,
-          url: window.location.href,
-        },
       },
       externalContextProvider !== undefined ? externalContextProvider() : {},
       message
@@ -91,6 +87,20 @@ function startMonitoringBatch(configuration: Configuration) {
       }
     },
   }
+}
+
+export function startFakeInternalMonitoring() {
+  const messages: MonitoringMessage[] = []
+  assign(monitoringConfiguration, {
+    batch: {
+      add(message: MonitoringMessage) {
+        messages.push(message)
+      },
+    },
+    maxMessagesPerPage: Infinity,
+    sentMessageCount: 0,
+  })
+  return messages
 }
 
 export function resetInternalMonitoring() {

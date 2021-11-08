@@ -6,11 +6,12 @@ export interface SetupOptions {
   useRumSlim: boolean
   logs?: LogsInitConfiguration
   rumInit: (initConfiguration: RumInitConfiguration) => void
+  eventBridge: boolean
   head?: string
   body?: string
 }
 
-export type SetupFactory = (options: SetupOptions) => string
+export type SetupFactory = (options: SetupOptions, intakeUrl: string) => string
 
 const isBrowserStack =
   browser.config.services &&
@@ -24,8 +25,13 @@ export const DEFAULT_SETUPS = isBrowserStack
       { name: 'bundle', factory: bundleSetup },
     ]
 
-export function asyncSetup(options: SetupOptions) {
+export function asyncSetup(options: SetupOptions, intakeUrl: string) {
   let body = options.body || ''
+  let header = options.head || ''
+
+  if (options.eventBridge) {
+    header += setupEventBridge(intakeUrl)
+  }
 
   function formatSnippet(url: string, globalName: string) {
     return `(function(h,o,u,n,d) {
@@ -59,12 +65,16 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
 
   return basePage({
     body,
-    header: options.head,
+    header,
   })
 }
 
-export function bundleSetup(options: SetupOptions) {
+export function bundleSetup(options: SetupOptions, intakeUrl: string) {
   let header = options.head || ''
+
+  if (options.eventBridge) {
+    header += setupEventBridge(intakeUrl)
+  }
 
   if (options.logs) {
     header += html`
@@ -93,8 +103,12 @@ export function bundleSetup(options: SetupOptions) {
   })
 }
 
-export function npmSetup(options: SetupOptions) {
+export function npmSetup(options: SetupOptions, intakeUrl: string) {
   let header = options.head || ''
+
+  if (options.eventBridge) {
+    header += setupEventBridge(intakeUrl)
+  }
 
   if (options.logs) {
     header += html`
@@ -139,6 +153,21 @@ export function basePage({ header, body }: { header?: string; body?: string }) {
 // html is a simple template string tag to allow prettier to format various setups as HTML
 export function html(parts: readonly string[], ...vars: string[]) {
   return parts.reduce((full, part, index) => full + vars[index - 1] + part)
+}
+
+function setupEventBridge(intakeUrl: string) {
+  return html`
+    <script type="text/javascript">
+      window.DatadogEventBridge = {
+        send(e) {
+          const { event } = JSON.parse(e)
+          const request = new XMLHttpRequest()
+          request.open('POST', '${intakeUrl}/v1/input/rum?bridge=1', true)
+          request.send(JSON.stringify(event))
+        },
+      }
+    </script>
+  `
 }
 
 function formatLogsConfiguration(initConfiguration: LogsInitConfiguration) {

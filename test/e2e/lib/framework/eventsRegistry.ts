@@ -5,7 +5,7 @@ import {
   isRumResourceEvent,
   isRumUserActionEvent,
   isRumViewEvent,
-  SerssionReplayCall,
+  SessionReplayCall,
   ServerInternalMonitoringMessage,
 } from '../types/serverEvents'
 
@@ -14,7 +14,7 @@ type IntakeType = 'logs' | 'rum' | 'internalMonitoring' | 'sessionReplay'
 export class EventRegistry {
   readonly rum: RumEvent[] = []
   readonly logs: LogsEvent[] = []
-  readonly sessionReplay: SerssionReplayCall[] = []
+  readonly sessionReplay: SessionReplayCall[] = []
   readonly internalMonitoring: ServerInternalMonitoringMessage[] = []
 
   push(type: IntakeType, event: any) {

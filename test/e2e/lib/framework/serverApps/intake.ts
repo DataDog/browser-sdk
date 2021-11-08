@@ -2,17 +2,22 @@ import { createInflate } from 'zlib'
 import connectBusboy from 'connect-busboy'
 import express from 'express'
 
-import { SegmentFile, SerssionReplayCall } from '../../types/serverEvents'
+import cors from 'cors'
+import { SegmentFile, SessionReplayCall } from '../../types/serverEvents'
 import { EventRegistry } from '../eventsRegistry'
 
-export function createIntakeServerApp(events: EventRegistry) {
+export function createIntakeServerApp(serverEvents: EventRegistry, bridgeEvents: EventRegistry) {
   const app = express()
 
+  app.use(cors())
   app.use(express.text())
   app.use(connectBusboy({ immediate: true }))
 
   app.post('/v1/input/:endpoint', async (req, res) => {
     const endpoint = req.params.endpoint
+    const isBridge = req.query.bridge
+    const events = isBridge ? bridgeEvents : serverEvents
+
     if (endpoint === 'rum' || endpoint === 'logs' || endpoint === 'internalMonitoring') {
       ;(req.body as string).split('\n').map((rawEvent) => events.push(endpoint, JSON.parse(rawEvent)))
     }
@@ -27,7 +32,7 @@ export function createIntakeServerApp(events: EventRegistry) {
   return app
 }
 
-async function readSessionReplay(req: express.Request): Promise<SerssionReplayCall> {
+async function readSessionReplay(req: express.Request): Promise<SessionReplayCall> {
   return new Promise((resolve, reject) => {
     const meta: {
       [field: string]: string
