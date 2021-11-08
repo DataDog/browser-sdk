@@ -4,15 +4,24 @@ import { trackRuntimeError } from './trackRuntimeError'
 
 describe('runtime error tracker', () => {
   const ERROR_MESSAGE = 'foo'
-  let originalHandler: OnErrorEventHandler
+
+  let originalOnErrorHandler: OnErrorEventHandler
+  let onErrorSpy: jasmine.Spy
+
+  let originalOnUnhandledRejectionHandler: Window['onunhandledrejection']
+  let onUnhandledrejectionSpy: jasmine.Spy
+
   let notifyError: jasmine.Spy
-  let onerrorSpy: jasmine.Spy
   let stopRuntimeErrorTracking: () => void
 
   beforeEach(() => {
-    originalHandler = window.onerror
-    onerrorSpy = jasmine.createSpy()
-    window.onerror = onerrorSpy
+    originalOnErrorHandler = window.onerror
+    onErrorSpy = jasmine.createSpy()
+    window.onerror = onErrorSpy
+
+    originalOnUnhandledRejectionHandler = window.onunhandledrejection
+    onUnhandledrejectionSpy = jasmine.createSpy()
+    window.onunhandledrejection = onUnhandledrejectionSpy
 
     notifyError = jasmine.createSpy()
     const errorObservable = new Observable<RawError>()
@@ -22,7 +31,8 @@ describe('runtime error tracker', () => {
 
   afterEach(() => {
     stopRuntimeErrorTracking()
-    window.onerror = originalHandler
+    window.onerror = originalOnErrorHandler
+    window.onunhandledrejection = originalOnUnhandledRejectionHandler
   })
 
   it('should call original error handler', (done) => {
@@ -31,9 +41,17 @@ describe('runtime error tracker', () => {
     }, 10)
 
     setTimeout(() => {
-      expect(onerrorSpy.calls.mostRecent().args[0]).toMatch(ERROR_MESSAGE)
+      expect(onErrorSpy.calls.mostRecent().args[0]).toMatch(ERROR_MESSAGE)
       done()
     }, 100)
+  })
+
+  it('should call original unhandled rejection handler', () => {
+    window.onunhandledrejection!({
+      reason: new Error(ERROR_MESSAGE),
+    } as PromiseRejectionEvent)
+
+    expect(onUnhandledrejectionSpy.calls.mostRecent().args[0].reason).toMatch(ERROR_MESSAGE)
   })
 
   it('should notify error', (done) => {
