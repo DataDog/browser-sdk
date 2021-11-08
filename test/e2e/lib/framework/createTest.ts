@@ -1,7 +1,7 @@
 import { LogsInitConfiguration } from '@datadog/browser-logs'
 import { RumInitConfiguration } from '@datadog/browser-rum-core'
 import { deleteAllCookies, withBrowserLogs } from '../helpers/browser'
-import { flushEvents } from '../helpers/sdk'
+import { flushEvents } from '../helpers/flushEvents'
 import { validateFormat } from '../helpers/validation'
 import { EventRegistry } from './eventsRegistry'
 import { getTestServers, Servers, waitForServersIdle } from './httpServers'
@@ -27,7 +27,8 @@ export function createTest(title: string) {
 interface TestContext {
   baseUrl: string
   crossOriginUrl: string
-  events: EventRegistry
+  serverEvents: EventRegistry
+  bridgeEvents: EventRegistry
 }
 
 type TestRunner = (testContext: TestContext) => Promise<void>
@@ -38,6 +39,7 @@ class TestBuilder {
   private logsConfiguration: LogsInitConfiguration | undefined = undefined
   private head = ''
   private body = ''
+  private eventBridge = false
   private setups: Array<{ factory: SetupFactory; name?: string }> = []
 
   constructor(private title: string) {}
@@ -72,6 +74,11 @@ class TestBuilder {
     return this
   }
 
+  withEventBridge() {
+    this.eventBridge = true
+    return this
+  }
+
   withSetup(factory: SetupFactory, name?: string) {
     this.setups.push({ factory, name })
     if (this.setups.length > 1 && this.setups.some((item) => !item.name)) {
@@ -90,6 +97,7 @@ class TestBuilder {
       rum: this.rumConfiguration,
       rumInit: this.rumInit,
       useRumSlim: false,
+      eventBridge: this.eventBridge,
     }
 
     if (this.alsoRunWithRumSlim) {
@@ -126,24 +134,25 @@ function declareTestsForSetups(
   if (setups.length > 1) {
     describe(title, () => {
       for (const { name, factory } of setups) {
-        declareTest(name!, factory(setupOptions), runner)
+        declareTest(name!, setupOptions, factory, runner)
       }
     })
   } else {
-    declareTest(title, setups[0].factory(setupOptions), runner)
+    declareTest(title, setupOptions, setups[0].factory, runner)
   }
 }
 
-function declareTest(title: string, setup: string, runner: TestRunner) {
+function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFactory, runner: TestRunner) {
   const spec = it(title, async () => {
     log(`Start '${spec.getFullName()}' in ${getBrowserName()!}`)
     const servers = await getTestServers()
 
     const testContext = createTestContext(servers)
+    servers.intake.bindServerApp(createIntakeServerApp(testContext.serverEvents, testContext.bridgeEvents))
 
+    const setup = factory(setupOptions, servers.intake.url)
     servers.base.bindServerApp(createMockServerApp(servers, setup))
     servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
-    servers.intake.bindServerApp(createIntakeServerApp(testContext.events))
 
     await setUpTest(testContext)
 
@@ -165,7 +174,8 @@ function createTestContext(servers: Servers): TestContext {
   return {
     baseUrl: servers.base.url,
     crossOriginUrl: servers.crossOrigin.url,
-    events: new EventRegistry(),
+    serverEvents: new EventRegistry(),
+    bridgeEvents: new EventRegistry(),
   }
 }
 
@@ -174,10 +184,11 @@ async function setUpTest({ baseUrl }: TestContext) {
   await waitForServersIdle()
 }
 
-async function tearDownTest({ events }: TestContext) {
+async function tearDownTest({ serverEvents, bridgeEvents }: TestContext) {
   await flushEvents()
-  expect(events.internalMonitoring).toEqual([])
-  validateFormat(events.rum)
+  expect(serverEvents.internalMonitoring).toEqual([])
+  validateFormat(serverEvents.rum)
+  validateFormat(bridgeEvents.rum)
   await withBrowserLogs((logs) => {
     logs.forEach((browserLog) => {
       log(`Browser ${browserLog.source}: ${browserLog.level} ${browserLog.message}`)

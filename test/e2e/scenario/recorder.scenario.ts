@@ -2,10 +2,10 @@ import { CreationReason, IncrementalSource, RecordType, Segment } from '@datadog
 import { InputData, StyleSheetRuleData, NodeType } from '@datadog/browser-rum/cjs/domain/record/types'
 import { RumInitConfiguration } from '@datadog/browser-rum-core'
 import { DefaultPrivacyLevel } from '@datadog/browser-rum'
-
+import { renewSession } from '../lib/helpers/session'
 import { createTest, bundleSetup, html, EventRegistry } from '../lib/framework'
 import { browserExecute } from '../lib/helpers/browser'
-import { flushEvents, renewSession } from '../lib/helpers/sdk'
+import { flushEvents } from '../lib/helpers/flushEvents'
 import {
   findElement,
   findElementWithIdAttribute,
@@ -25,14 +25,14 @@ describe('recorder', () => {
   createTest('record mouse move')
     .withRum()
     .withRumInit(initRumAndStartRecording)
-    .run(async ({ events }) => {
+    .run(async ({ serverEvents }) => {
       await browserExecute(() => document.documentElement.outerHTML)
       const html = await $('html')
       await html.click()
       await flushEvents()
 
-      expect(events.sessionReplay.length).toBe(1)
-      const { segment, meta } = events.sessionReplay[0]
+      expect(serverEvents.sessionReplay.length).toBe(1)
+      const { segment, meta } = serverEvents.sessionReplay[0]
       expect(meta).toEqual({
         'application.id': jasmine.stringMatching(UUID_RE),
         creation_reason: 'init',
@@ -81,12 +81,12 @@ describe('recorder', () => {
           <input id="input-masked" data-dd-privacy="input-masked" value="toto" />
         `
       )
-      .run(async ({ events }) => {
+      .run(async ({ serverEvents }) => {
         await flushEvents()
 
-        expect(events.sessionReplay.length).toBe(1)
+        expect(serverEvents.sessionReplay.length).toBe(1)
 
-        const fullSnapshot = findFullSnapshot(getFirstSegment(events))!
+        const fullSnapshot = findFullSnapshot(getFirstSegment(serverEvents))!
 
         const node = findElementWithIdAttribute(fullSnapshot.data.node, 'not-obfuscated')
         expect(node).toBeTruthy()
@@ -127,7 +127,7 @@ describe('recorder', () => {
           </ul>
         `
       )
-      .run(async ({ events }) => {
+      .run(async ({ serverEvents }) => {
         await browserExecute(() => {
           const li = document.createElement('li')
           const ul = document.querySelector('ul') as HTMLUListElement
@@ -143,7 +143,7 @@ describe('recorder', () => {
         await flushEvents()
 
         const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidatorFromSegment(
-          getFirstSegment(events)
+          getFirstSegment(serverEvents)
         )
 
         validate({
@@ -174,7 +174,7 @@ describe('recorder', () => {
           </ul>
         `
       )
-      .run(async ({ events }) => {
+      .run(async ({ serverEvents }) => {
         await browserExecute(() => {
           const li = document.createElement('li')
           const ul = document.querySelector('ul') as HTMLUListElement
@@ -192,7 +192,7 @@ describe('recorder', () => {
         await flushEvents()
 
         const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidatorFromSegment(
-          getFirstSegment(events)
+          getFirstSegment(serverEvents)
         )
 
         validate({
@@ -227,7 +227,7 @@ describe('recorder', () => {
           </ul>
         `
       )
-      .run(async ({ events }) => {
+      .run(async ({ serverEvents }) => {
         await browserExecute(() => {
           const li = document.createElement('li')
           const ul = document.querySelector('ul') as HTMLUListElement
@@ -242,7 +242,7 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        const { validate, expectInitialNode } = createMutationPayloadValidatorFromSegment(getFirstSegment(events))
+        const { validate, expectInitialNode } = createMutationPayloadValidatorFromSegment(getFirstSegment(serverEvents))
 
         validate({
           attributes: [
@@ -273,7 +273,7 @@ describe('recorder', () => {
           </div>
         `
       )
-      .run(async ({ events }) => {
+      .run(async ({ serverEvents }) => {
         await browserExecute(() => {
           document.querySelector('div')!.setAttribute('foo', 'bar')
           document.querySelector('li')!.textContent = 'hop'
@@ -282,8 +282,8 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        expect(events.sessionReplay.length).toBe(1)
-        const segment = getFirstSegment(events)
+        expect(serverEvents.sessionReplay.length).toBe(1)
+        const segment = getFirstSegment(serverEvents)
 
         expect(findAllIncrementalSnapshots(segment, IncrementalSource.Mutation)).toEqual([])
       })
@@ -299,7 +299,7 @@ describe('recorder', () => {
           <span>c<i>d<b>e</b>f</i>g</span>
         `
       )
-      .run(async ({ events }) => {
+      .run(async ({ serverEvents }) => {
         await browserExecute(() => {
           const div = document.querySelector('div')!
           const p = document.querySelector('p')!
@@ -312,7 +312,7 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        const { validate, expectInitialNode } = createMutationPayloadValidatorFromSegment(getFirstSegment(events))
+        const { validate, expectInitialNode } = createMutationPayloadValidatorFromSegment(getFirstSegment(serverEvents))
         validate({
           adds: [
             {
@@ -347,7 +347,7 @@ describe('recorder', () => {
           <span>c<i>d<b>e</b>f</i>g</span>
         `
       )
-      .run(async ({ events }) => {
+      .run(async ({ serverEvents }) => {
         await browserExecute(() => {
           const div = document.createElement('div')
           const span = document.querySelector('span')!
@@ -358,7 +358,7 @@ describe('recorder', () => {
         await flushEvents()
 
         const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidatorFromSegment(
-          getFirstSegment(events)
+          getFirstSegment(serverEvents)
         )
 
         const div = expectNewNode({ type: NodeType.Element, tagName: 'div' })
@@ -399,7 +399,7 @@ describe('recorder', () => {
           <ul><li></li></ul>
         `
       )
-      .run(async ({ events }) => {
+      .run(async ({ serverEvents }) => {
         await browserExecute(() => {
           const ul = document.querySelector('ul') as HTMLUListElement
           let count = 3
@@ -413,7 +413,7 @@ describe('recorder', () => {
         await flushEvents()
 
         const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidatorFromSegment(
-          getFirstSegment(events)
+          getFirstSegment(serverEvents)
         )
 
         const ul = expectInitialNode({ tag: 'ul' })
@@ -473,7 +473,7 @@ describe('recorder', () => {
           </form>
         `
       )
-      .run(async ({ events }) => {
+      .run(async ({ serverEvents }) => {
         const textInput = await $('#text-input')
         await textInput.setValue('test')
 
@@ -491,9 +491,9 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        expect(events.sessionReplay.length).toBe(1)
+        expect(serverEvents.sessionReplay.length).toBe(1)
 
-        const segment = getFirstSegment(events)
+        const segment = getFirstSegment(serverEvents)
 
         const textInputRecords = filterRecordsByIdAttribute(segment, 'text-input')
         expect(textInputRecords.length).toBeGreaterThanOrEqual(4)
@@ -539,7 +539,7 @@ describe('recorder', () => {
           <input type="password" id="fourth" name="fourth" />
         `
       )
-      .run(async ({ events }) => {
+      .run(async ({ serverEvents }) => {
         const firstInput = await $('#first')
         await firstInput.setValue('foo')
 
@@ -554,9 +554,9 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        expect(events.sessionReplay.length).toBe(1)
+        expect(serverEvents.sessionReplay.length).toBe(1)
 
-        const segment = getFirstSegment(events)
+        const segment = getFirstSegment(serverEvents)
 
         const inputRecords = findAllIncrementalSnapshots(segment, IncrementalSource.Input)
 
@@ -574,7 +574,7 @@ describe('recorder', () => {
           <input type="text" id="by-classname" class="dd-privacy-input-masked" />
         `
       )
-      .run(async ({ events }) => {
+      .run(async ({ serverEvents }) => {
         const firstInput = await $('#by-data-attribute')
         await firstInput.setValue('foo')
 
@@ -583,9 +583,9 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        expect(events.sessionReplay.length).toBe(1)
+        expect(serverEvents.sessionReplay.length).toBe(1)
 
-        const segment = getFirstSegment(events)
+        const segment = getFirstSegment(serverEvents)
 
         const inputRecords = findAllIncrementalSnapshots(segment, IncrementalSource.Input)
 
@@ -612,7 +612,7 @@ describe('recorder', () => {
           </style>
         `
       )
-      .run(async ({ events }) => {
+      .run(async ({ serverEvents }) => {
         await browserExecute(() => {
           document.styleSheets[0].deleteRule(0)
           document.styleSheets[0].insertRule('.added {}', 0)
@@ -620,9 +620,9 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        expect(events.sessionReplay.length).toBe(1)
+        expect(serverEvents.sessionReplay.length).toBe(1)
 
-        const segment = getFirstSegment(events)
+        const segment = getFirstSegment(serverEvents)
 
         const styleSheetRules = findAllIncrementalSnapshots(segment, IncrementalSource.StyleSheetRule) as Array<{
           data: StyleSheetRuleData
@@ -639,14 +639,14 @@ describe('recorder', () => {
       .withRum()
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
-      .run(async ({ events }) => {
+      .run(async ({ serverEvents }) => {
         await renewSession()
 
         await flushEvents()
 
-        expect(events.sessionReplay.length).toBe(2)
+        expect(serverEvents.sessionReplay.length).toBe(2)
 
-        const segment = getLastSegment(events)
+        const segment = getLastSegment(serverEvents)
         expect(segment.creation_reason).toBe('init')
         expect(segment.records[0].type).toBe(RecordType.Meta)
         expect(segment.records[1].type).toBe(RecordType.Focus)

@@ -1,4 +1,4 @@
-import { Configuration, generateUUID, performDraw, Session, startSessionManagement } from '@datadog/browser-core'
+import { Configuration, performDraw, Session, startSessionManagement } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
 export const RUM_SESSION_KEY = 'rum'
@@ -48,7 +48,7 @@ export function startRumSession(configuration: Configuration, lifeCycle: LifeCyc
  */
 export function startRumSessionStub(): RumSession {
   return {
-    getId: () => generateUUID(),
+    getId: () => '00000000-aaaa-0000-aaaa-000000000000',
     isTracked: () => true,
     hasReplayPlan: () => true,
     hasLitePlan: () => false,

@@ -15,6 +15,7 @@ import { startViewCollection } from '../domain/rumEventsCollection/view/viewColl
 import { RumSession, startRumSession, startRumSessionStub } from '../domain/rumSession'
 import { CommonContext } from '../rawRumEvent.types'
 import { startRumBatch } from '../transport/batch'
+import { startRumEventBridge } from '../transport/startRumEventBridge'
 import { startUrlContexts } from '../domain/urlContexts'
 import { createLocationChangeObservable, LocationChange } from '../browser/locationChangeObservable'
 import { RecorderApi, RumInitConfiguration } from './rumPublicApi'
@@ -96,7 +97,14 @@ export function startRumEventCollection(
   const parentContexts = startParentContexts(lifeCycle, session)
   const urlContexts = startUrlContexts(lifeCycle, locationChangeObservable, location)
   const foregroundContexts = startForegroundContexts()
-  const batch = startRumBatch(configuration, lifeCycle)
+
+  let stopBatch: () => void
+
+  if (isEventBridgePresent()) {
+    startRumEventBridge(lifeCycle)
+  } else {
+    ;({ stop: stopBatch } = startRumBatch(configuration, lifeCycle))
+  }
 
   startRumAssembly(applicationId, configuration, lifeCycle, session, parentContexts, urlContexts, getCommonContext)
 
@@ -107,7 +115,7 @@ export function startRumEventCollection(
     stop: () => {
       // prevent batch from previous tests to keep running and send unwanted requests
       // could be replaced by stopping all the component when they will all have a stop method
-      batch.stop()
+      stopBatch?.()
       parentContexts.stop()
       foregroundContexts.stop()
     },

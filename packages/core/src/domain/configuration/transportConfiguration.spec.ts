@@ -36,6 +36,11 @@ describe('transportConfiguration', () => {
         '<<< E2E INTERNAL MONITORING ENDPOINT >>>'
       )
       expect(configuration.sessionReplayEndpointBuilder.build()).toEqual('<<< E2E SESSION REPLAY ENDPOINT >>>')
+
+      expect(configuration.isIntakeUrl('<<< E2E RUM ENDPOINT >>>')).toBe(true)
+      expect(configuration.isIntakeUrl('<<< E2E LOGS ENDPOINT >>>')).toBe(true)
+      expect(configuration.isIntakeUrl('<<< E2E SESSION REPLAY ENDPOINT >>>')).toBe(true)
+      expect(configuration.isIntakeUrl('<<< E2E INTERNAL MONITORING ENDPOINT >>>')).toBe(true)
     })
   })
 

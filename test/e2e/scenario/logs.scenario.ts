@@ -1,30 +1,30 @@
 import { createTest } from '../lib/framework'
 import { UNREACHABLE_URL } from '../lib/helpers/constants'
 import { browserExecute, browserExecuteAsync, flushBrowserLogs, withBrowserLogs } from '../lib/helpers/browser'
-import { flushEvents } from '../lib/helpers/sdk'
+import { flushEvents } from '../lib/helpers/flushEvents'
 
 describe('logs', () => {
   createTest('send logs')
     .withLogs()
-    .run(async ({ events }) => {
+    .run(async ({ serverEvents }) => {
       await browserExecute(() => {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         window.DD_LOGS!.logger.log('hello')
       })
       await flushEvents()
-      expect(events.logs.length).toBe(1)
-      expect(events.logs[0].message).toBe('hello')
+      expect(serverEvents.logs.length).toBe(1)
+      expect(serverEvents.logs[0].message).toBe('hello')
     })
 
   createTest('send console errors')
     .withLogs({ forwardErrorsToLogs: true })
-    .run(async ({ events }) => {
+    .run(async ({ serverEvents }) => {
       await browserExecute(() => {
         console.error('oh snap')
       })
       await flushEvents()
-      expect(events.logs.length).toBe(1)
-      expect(events.logs[0].message).toBe('console error: oh snap')
+      expect(serverEvents.logs.length).toBe(1)
+      expect(serverEvents.logs[0].message).toBe('console error: oh snap')
       await withBrowserLogs((browserLogs) => {
         expect(browserLogs.length).toEqual(1)
       })
@@ -32,7 +32,7 @@ describe('logs', () => {
 
   createTest('send XHR network errors')
     .withLogs({ forwardErrorsToLogs: true })
-    .run(async ({ events }) => {
+    .run(async ({ serverEvents }) => {
       await browserExecuteAsync((unreachableUrl, done) => {
         const xhr = new XMLHttpRequest()
         xhr.addEventListener('error', () => done(undefined))
@@ -41,9 +41,9 @@ describe('logs', () => {
       }, UNREACHABLE_URL)
 
       await flushEvents()
-      expect(events.logs.length).toBe(1)
-      expect(events.logs[0].message).toBe(`XHR error GET ${UNREACHABLE_URL}`)
-      expect(events.logs[0].error?.origin).toBe('network')
+      expect(serverEvents.logs.length).toBe(1)
+      expect(serverEvents.logs[0].message).toBe(`XHR error GET ${UNREACHABLE_URL}`)
+      expect(serverEvents.logs[0].error?.origin).toBe('network')
 
       await withBrowserLogs((browserLogs) => {
         // Some browser report two errors:
@@ -55,7 +55,7 @@ describe('logs', () => {
 
   createTest('send fetch network errors')
     .withLogs({ forwardErrorsToLogs: true })
-    .run(async ({ events }) => {
+    .run(async ({ serverEvents }) => {
       await browserExecuteAsync((unreachableUrl, done) => {
         fetch(unreachableUrl).catch(() => {
           done(undefined)
@@ -63,9 +63,9 @@ describe('logs', () => {
       }, UNREACHABLE_URL)
 
       await flushEvents()
-      expect(events.logs.length).toBe(1)
-      expect(events.logs[0].message).toBe(`Fetch error GET ${UNREACHABLE_URL}`)
-      expect(events.logs[0].error?.origin).toBe('network')
+      expect(serverEvents.logs.length).toBe(1)
+      expect(serverEvents.logs[0].message).toBe(`Fetch error GET ${UNREACHABLE_URL}`)
+      expect(serverEvents.logs[0].error?.origin).toBe('network')
 
       await withBrowserLogs((browserLogs) => {
         // Some browser report two errors:
@@ -77,7 +77,7 @@ describe('logs', () => {
 
   createTest('track fetch error')
     .withLogs({ forwardErrorsToLogs: true })
-    .run(async ({ events, baseUrl }) => {
+    .run(async ({ serverEvents, baseUrl }) => {
       await browserExecuteAsync((unreachableUrl, done) => {
         let count = 0
         fetch(`/throw`)
@@ -102,10 +102,10 @@ describe('logs', () => {
       await flushBrowserLogs()
       await flushEvents()
 
-      expect(events.logs.length).toEqual(2)
+      expect(serverEvents.logs.length).toEqual(2)
 
-      const unreachableRequest = events.logs.find((log) => log.http.url.includes('/unreachable'))!
-      const throwRequest = events.logs.find((log) => log.http.url.includes('/throw'))!
+      const unreachableRequest = serverEvents.logs.find((log) => log.http.url.includes('/unreachable'))!
+      const throwRequest = serverEvents.logs.find((log) => log.http.url.includes('/throw'))!
 
       expect(throwRequest.message).toEqual(`Fetch error GET ${baseUrl}/throw`)
       expect(throwRequest.http.status_code).toEqual(500)
@@ -119,15 +119,15 @@ describe('logs', () => {
   createTest('add RUM internal context to logs')
     .withRum()
     .withLogs()
-    .run(async ({ events }) => {
+    .run(async ({ serverEvents }) => {
       await browserExecute(() => {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         window.DD_LOGS!.logger.log('hello')
       })
       await flushEvents()
-      expect(events.logs.length).toBe(1)
-      expect(events.logs[0].view.id).toBeDefined()
-      expect(events.logs[0].application_id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
+      expect(serverEvents.logs.length).toBe(1)
+      expect(serverEvents.logs[0].view.id).toBeDefined()
+      expect(serverEvents.logs[0].application_id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
     })
 
   createTest('allow to modify events')
@@ -136,13 +136,13 @@ describe('logs', () => {
         event.foo = 'bar'
       },
     })
-    .run(async ({ events }) => {
+    .run(async ({ serverEvents }) => {
       await browserExecute(() => {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         window.DD_LOGS!.logger.log('hello', {})
       })
       await flushEvents()
-      expect(events.logs.length).toBe(1)
-      expect(events.logs[0].foo).toBe('bar')
+      expect(serverEvents.logs.length).toBe(1)
+      expect(serverEvents.logs[0].foo).toBe('bar')
     })
 })

@@ -1,13 +1,14 @@
+import { flushEvents } from '../../lib/helpers/flushEvents'
 import { createTest, html } from '../../lib/framework'
 import { browserExecute, sendXhr } from '../../lib/helpers/browser'
-import { expireSession, flushEvents, renewSession } from '../../lib/helpers/sdk'
+import { expireSession, renewSession } from '../../lib/helpers/session'
 
 describe('rum views', () => {
   createTest('send performance timings along the view events')
     .withRum()
-    .run(async ({ events }) => {
+    .run(async ({ serverEvents }) => {
       await flushEvents()
-      const viewEvent = events.rumViews[0]
+      const viewEvent = serverEvents.rumViews[0]
       expect(viewEvent).toBeDefined()
       expect(viewEvent.view.dom_complete).toBeGreaterThan(0)
       expect(viewEvent.view.dom_content_loaded).toBeGreaterThan(0)
@@ -22,10 +23,10 @@ describe('rum views', () => {
     createTest('send performance first input delay')
       .withRum()
       .withBody(html` <button>Hop</button> `)
-      .run(async ({ events }) => {
+      .run(async ({ serverEvents }) => {
         await (await $('button')).click()
         await flushEvents()
-        const viewEvent = events.rumViews[0]
+        const viewEvent = serverEvents.rumViews[0]
         expect(viewEvent).toBeDefined()
         expect(viewEvent.view.first_input_delay).toBeGreaterThanOrEqual(0)
       })
@@ -33,10 +34,10 @@ describe('rum views', () => {
 
   createTest('create a new View when the session is renewed')
     .withRum()
-    .run(async ({ events }) => {
+    .run(async ({ serverEvents }) => {
       await renewSession()
       await flushEvents()
-      const viewEvents = events.rumViews
+      const viewEvents = serverEvents.rumViews
       const firstViewEvent = viewEvents[0]
       const lastViewEvent = viewEvents[viewEvents.length - 1]
       expect(firstViewEvent.session.id).not.toBe(lastViewEvent.session.id)
@@ -48,11 +49,11 @@ describe('rum views', () => {
 
   createTest("don't send events when session is expired")
     .withRum()
-    .run(async ({ events }) => {
+    .run(async ({ serverEvents }) => {
       await expireSession()
-      events.empty()
+      serverEvents.empty()
       await sendXhr(`/ok`)
-      expect(events.count).toBe(0)
+      expect(serverEvents.count).toBe(0)
     })
 
   describe('anchor navigation', () => {
@@ -64,11 +65,11 @@ describe('rum views', () => {
           <div id="test-anchor"></div>
         `
       )
-      .run(async ({ events }) => {
+      .run(async ({ serverEvents }) => {
         await (await $('a')).click()
 
         await flushEvents()
-        const viewEvents = events.rumViews
+        const viewEvents = serverEvents.rumViews
 
         expect(viewEvents.length).toBe(1)
         expect(viewEvents[0].view.loading_type).toBe('initial_load')
@@ -76,13 +77,13 @@ describe('rum views', () => {
 
     createTest('create a new view on hash change')
       .withRum()
-      .run(async ({ events }) => {
+      .run(async ({ serverEvents }) => {
         await browserExecute(() => {
           window.location.hash = '#bar'
         })
 
         await flushEvents()
-        const viewEvents = events.rumViews
+        const viewEvents = serverEvents.rumViews
 
         expect(viewEvents.length).toBe(2)
         expect(viewEvents[0].view.loading_type).toBe('initial_load')

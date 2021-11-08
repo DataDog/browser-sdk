@@ -1,8 +1,17 @@
-import { RelativeTime, Configuration, Observable, noop, relativeNow, isIE } from '@datadog/browser-core'
+import {
+  RelativeTime,
+  Configuration,
+  Observable,
+  noop,
+  relativeNow,
+  isIE,
+  resetExperimentalFeatures,
+  updateExperimentalFeatures,
+  Context,
+} from '@datadog/browser-core'
 import { createRumSessionMock, RumSessionMock } from '../../test/mockRumSession'
 import { noopRecorderApi, setup, TestSetupBuilder } from '../../test/specHelper'
 import { RumPerformanceNavigationTiming, RumPerformanceEntry } from '../browser/performanceCollection'
-
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from '../domain/rumEventsCollection/view/trackViews'
 import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
@@ -10,6 +19,7 @@ import { RumEvent } from '../rumEvent.types'
 import { LocationChange } from '../browser/locationChangeObservable'
 import { startLongTaskCollection } from '../domain/rumEventsCollection/longTask/longTaskCollection'
 import { RumSession } from '..'
+import { initEventBridgeStub, deleteEventBridgeStub } from '../../../core/test/specHelper'
 import { startRumEventCollection } from './startRum'
 
 function collectServerEvents(lifeCycle: LifeCycle) {
@@ -293,5 +303,46 @@ describe('rum events url', () => {
 
     expect(serverRumEvents.length).toEqual(1)
     expect(serverRumEvents[0].view.url).toEqual('http://foo.com/')
+  })
+})
+
+describe('startRumEventCollection', () => {
+  let setupBuilder: TestSetupBuilder
+  let sendSpy: jasmine.Spy<(msg: string) => void>
+
+  beforeEach(() => {
+    updateExperimentalFeatures(['event-bridge'])
+    const eventBridgeStub = initEventBridgeStub()
+    sendSpy = spyOn(eventBridgeStub, 'send')
+    setupBuilder = setupBuilder = setup().beforeBuild(
+      ({ applicationId, location, lifeCycle, configuration, session, locationChangeObservable }) =>
+        startRumEventCollection(
+          applicationId,
+          lifeCycle,
+          configuration,
+          location,
+          session,
+          locationChangeObservable,
+          () => ({
+            context: {},
+            user: {},
+          })
+        )
+    )
+  })
+
+  afterEach(() => {
+    resetExperimentalFeatures()
+    deleteEventBridgeStub()
+    setupBuilder.cleanup()
+  })
+
+  it('should send bridge event when bridge is present', () => {
+    const { lifeCycle } = setupBuilder.build()
+
+    const collectedRumEvent = {} as RumEvent & Context
+    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, collectedRumEvent)
+
+    expect(sendSpy).toHaveBeenCalled()
   })
 })
