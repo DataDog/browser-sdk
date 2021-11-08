@@ -1,8 +1,16 @@
-import { Context, monitor, ONE_SECOND, display } from '@datadog/browser-core'
-import { Clock, mockClock } from '../../../core/test/specHelper'
+import {
+  Context,
+  monitor,
+  ONE_SECOND,
+  display,
+  updateExperimentalFeatures,
+  resetExperimentalFeatures,
+} from '@datadog/browser-core'
+import { LogsInitConfiguration } from '..'
+import { Clock, deleteEventBridgeStub, initEventBridgeStub, mockClock } from '../../../core/test/specHelper'
 
 import { HandlerType, LogsMessage, StatusType } from '../domain/logger'
-import { LogsPublicApi, makeLogsPublicApi, StartLogs } from './logs.entry'
+import { HybridInitConfiguration, LogsPublicApi, makeLogsPublicApi, StartLogs } from './logs.entry'
 
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx' }
 
@@ -32,19 +40,19 @@ describe('logs entry', () => {
 
   describe('configuration validation', () => {
     let LOGS: LogsPublicApi
+    let displaySpy: jasmine.Spy
 
     beforeEach(() => {
+      displaySpy = spyOn(display, 'error')
       LOGS = makeLogsPublicApi(startLogs)
     })
 
     it('init should log an error with no public api key', () => {
-      const displaySpy = spyOn(display, 'error')
-
       LOGS.init(undefined as any)
-      expect(display.error).toHaveBeenCalledTimes(1)
+      expect(displaySpy).toHaveBeenCalledTimes(1)
 
       LOGS.init({ stillNoApiKey: true } as any)
-      expect(display.error).toHaveBeenCalledTimes(2)
+      expect(displaySpy).toHaveBeenCalledTimes(2)
 
       LOGS.init({ clientToken: 'yeah' })
       expect(displaySpy).toHaveBeenCalledTimes(2)
@@ -54,23 +62,21 @@ describe('logs entry', () => {
       const setDebug: (debug: boolean) => void = (LOGS as any)._setDebug
       expect(!!setDebug).toEqual(true)
 
-      spyOn(display, 'error')
       monitor(() => {
         throw new Error()
       })()
-      expect(display.error).toHaveBeenCalledTimes(0)
+      expect(displaySpy).toHaveBeenCalledTimes(0)
 
       setDebug(true)
       monitor(() => {
         throw new Error()
       })()
-      expect(display.error).toHaveBeenCalledTimes(1)
+      expect(displaySpy).toHaveBeenCalledTimes(1)
 
       setDebug(false)
     })
 
     it('init should log an error if sampleRate is invalid', () => {
-      const displaySpy = spyOn(display, 'error')
       LOGS.init({ clientToken: 'yes', sampleRate: 'foo' as any })
       expect(displaySpy).toHaveBeenCalledTimes(1)
 
@@ -79,7 +85,6 @@ describe('logs entry', () => {
     })
 
     it('should log an error if init is called several times', () => {
-      const displaySpy = spyOn(display, 'error')
       LOGS.init({ clientToken: 'yes', sampleRate: 1 })
       expect(displaySpy).toHaveBeenCalledTimes(0)
 
@@ -88,7 +93,6 @@ describe('logs entry', () => {
     })
 
     it('should not log an error if init is called several times and silentMultipleInit is true', () => {
-      const displaySpy = spyOn(display, 'error')
       LOGS.init({
         clientToken: 'yes',
         sampleRate: 1,
@@ -105,9 +109,33 @@ describe('logs entry', () => {
     })
 
     it("shouldn't trigger any console.error if the configuration is correct", () => {
-      const displaySpy = spyOn(display, 'error')
       LOGS.init({ clientToken: 'yes', sampleRate: 1 })
       expect(displaySpy).toHaveBeenCalledTimes(0)
+    })
+
+    describe('if event bridge present', () => {
+      beforeEach(() => {
+        updateExperimentalFeatures(['event-bridge'])
+        initEventBridgeStub()
+      })
+
+      afterEach(() => {
+        resetExperimentalFeatures()
+        deleteEventBridgeStub()
+      })
+
+      it('init should accept empty client token', () => {
+        const hybridInitConfiguration: HybridInitConfiguration = {}
+        LOGS.init(hybridInitConfiguration as LogsInitConfiguration)
+
+        expect(displaySpy).not.toHaveBeenCalled()
+      })
+
+      it('init should force sample rate to 100', () => {
+        const invalidConfiguration: HybridInitConfiguration = { sampleRate: 50 }
+        LOGS.init(invalidConfiguration as LogsInitConfiguration)
+        expect(LOGS.getInitConfiguration()?.sampleRate).toEqual(100)
+      })
     })
   })
 
