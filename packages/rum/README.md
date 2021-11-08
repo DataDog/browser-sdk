@@ -172,6 +172,12 @@ Allows you to control RUM views creation. See [override default RUM view names][
 **Default**: `false` <br/>
 Enables [automatic collection of users actions][6].
 
+`defaultPrivacyLevel`
+: Optional<br/>
+**Type**: String<br/>
+**Default**: `mask-user-input` <br/>
+See [Session Replay Privacy Options][13].
+
 `actionNameAttribute`
 : Optional<br/>
 **Type**: String<br/>
@@ -182,6 +188,12 @@ Specify your own attribute to be used to [name actions][9].
 **Type**: Number<br/>
 **Default**: `100`<br/>
 The percentage of sessions to track: `100` for all, `0` for none. Only tracked sessions send rum events.
+
+`replaySampleRate`
+: Optional<br/>
+**Type**: Number<br/>
+**Default**: `100`<br/>
+The percentage of tracked sessions with session replay pricing features: `100` for all, `0` for none. See [rum pricing][11] for more information.
 
 `silentMultipleInit`
 : Optional<br/>
@@ -197,7 +209,7 @@ Optional proxy URL (ex: https://www.proxy.com/path), see the full [proxy setup g
 `allowedTracingOrigins`
 : Optional<br/>
 **Type**: List<br/>
-A list of request origins used to inject tracing headers.
+A list of request origins used to inject tracing headers. See [Connect RUM and Traces][12].
 
 Options that must have matching configuration when also using `logs` SDK:
 
@@ -251,3 +263,6 @@ init(configuration: {
 [8]: https://github.com/DataDog/browser-sdk/blob/main/packages/rum/BROWSER_SUPPORT.md
 [9]: https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions#declaring-a-name-for-click-actions
 [10]: https://docs.datadoghq.com/real_user_monitoring/browser/modifying_data_and_context/?tab=npm#override-default-rum-view-names
+[11]: https://www.datadoghq.com/pricing/?product=real-user-monitoring#real-user-monitoring
+[12]: https://docs.datadoghq.com/real_user_monitoring/connect_rum_and_traces?tab=browserrum
+[13]: https://docs.datadoghq.com/real_user_monitoring/session_replay/privacy_options?tab=maskuserinput
