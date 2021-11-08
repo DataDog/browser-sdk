@@ -1,5 +1,5 @@
 import { BuildEnv, BuildMode } from '../../boot/init'
-import { notEmpty, objectValues } from '../../tools/utils'
+import { objectValues } from '../../tools/utils'
 import { InitConfiguration } from './configuration'
 import { createEndpointBuilder, INTAKE_SITE_US, EndpointBuilder } from './endpointBuilder'
 
@@ -25,9 +25,7 @@ export function computeTransportConfiguration(
   buildEnv: BuildEnv
 ): TransportConfiguration {
   const endpointBuilders = computeEndpointBuilders(initConfiguration, buildEnv)
-  const intakeEndpoints = objectValues(endpointBuilders)
-    .filter(notEmpty)
-    .map((builder) => builder.buildIntakeUrl())
+  const intakeEndpoints = objectValues(endpointBuilders).map((builder) => builder.buildIntakeUrl())
 
   const replicaConfiguration = computeReplicaConfiguration(initConfiguration, buildEnv, intakeEndpoints)
 
@@ -53,19 +51,25 @@ function computeEndpointBuilders(initConfiguration: InitConfiguration, buildEnv:
     }
   }
 
-  return {
+  const endpointBuilders = {
     logsEndpointBuilder: createEndpointBuilder(initConfiguration, buildEnv, 'logs'),
     rumEndpointBuilder: createEndpointBuilder(initConfiguration, buildEnv, 'rum'),
     sessionReplayEndpointBuilder: createEndpointBuilder(initConfiguration, buildEnv, 'sessionReplay'),
-    internalMonitoringEndpointBuilder: initConfiguration.internalMonitoringApiKey
-      ? createEndpointBuilder(
-          { ...initConfiguration, clientToken: initConfiguration.internalMonitoringApiKey },
-          buildEnv,
-          'logs',
-          'browser-agent-internal-monitoring'
-        )
-      : undefined,
   }
+
+  if (initConfiguration.internalMonitoringApiKey) {
+    return {
+      ...endpointBuilders,
+      internalMonitoringEndpointBuilder: createEndpointBuilder(
+        { ...initConfiguration, clientToken: initConfiguration.internalMonitoringApiKey },
+        buildEnv,
+        'logs',
+        'browser-agent-internal-monitoring'
+      ),
+    }
+  }
+
+  return endpointBuilders
 }
 
 function computeReplicaConfiguration(
