@@ -160,9 +160,10 @@ function setupEventBridge(intakeUrl: string) {
     <script type="text/javascript">
       window.DatadogEventBridge = {
         send(e) {
-          const { event } = JSON.parse(e)
+          const { eventType, event } = JSON.parse(e)
           const request = new XMLHttpRequest()
-          request.open('POST', '${intakeUrl}/v1/input/rum?bridge=1', true)
+          const endpoint = eventType === 'log' ? 'logs' : 'rum'
+          request.open('POST', \`${intakeUrl}/v1/input/\${endpoint}?bridge=1\`, true)
           request.send(JSON.stringify(event))
         },
       }
