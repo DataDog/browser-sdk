@@ -1,12 +1,10 @@
 import {
   areCookiesAuthorized,
-  Batch,
   combine,
   commonInit,
   Configuration,
   Context,
   createEventRateLimiter,
-  HttpRequest,
   InternalMonitoring,
   Observable,
   RawError,
@@ -14,12 +12,14 @@ import {
   InitConfiguration,
   trackRuntimeError,
   trackConsoleError,
-  EndpointBuilder,
+  isEventBridgePresent,
 } from '@datadog/browser-core'
 import { trackNetworkError } from '../domain/trackNetworkError'
 import { Logger, LogsMessage, StatusType } from '../domain/logger'
-import { LoggerSession, startLoggerSession } from '../domain/loggerSession'
+import { LoggerSession, startLoggerSession, startStubLoggerSession } from '../domain/loggerSession'
 import { LogsEvent } from '../logsEvent.types'
+import { startLoggerEventBridge } from '../transport/startLoggerEventBridge'
+import { startLoggerBatch } from '../transport/startLoggerBatch'
 import { buildEnv } from './buildEnv'
 
 export interface LogsInitConfiguration extends InitConfiguration {
@@ -37,7 +37,10 @@ export function startLogs(initConfiguration: LogsInitConfiguration, errorLogger:
     trackNetworkError(configuration, errorObservable)
   }
 
-  const session = startLoggerSession(configuration, areCookiesAuthorized(configuration.cookieOptions))
+  const session = isEventBridgePresent()
+    ? startStubLoggerSession()
+    : startLoggerSession(configuration, areCookiesAuthorized(configuration.cookieOptions))
+
   return doStartLogs(configuration, errorObservable, internalMonitoring, session, errorLogger)
 }
 
@@ -55,7 +58,7 @@ export function doStartLogs(
   )
 
   const assemble = buildAssemble(session, configuration, reportError)
-  const batch = startLoggerBatch(configuration)
+  const transport = isEventBridgePresent() ? startLoggerEventBridge() : startLoggerBatch(configuration)
 
   function reportError(error: RawError) {
     errorLogger.error(
@@ -87,36 +90,8 @@ export function doStartLogs(
   return (message: LogsMessage, currentContext: Context) => {
     const contextualizedMessage = assemble(message, currentContext)
     if (contextualizedMessage) {
-      batch.add(contextualizedMessage)
+      transport(contextualizedMessage)
     }
-  }
-}
-
-function startLoggerBatch(configuration: Configuration) {
-  const primaryBatch = createLoggerBatch(configuration.logsEndpointBuilder)
-
-  let replicaBatch: Batch | undefined
-  if (configuration.replica !== undefined) {
-    replicaBatch = createLoggerBatch(configuration.replica.logsEndpointBuilder)
-  }
-
-  function createLoggerBatch(endpointBuilder: EndpointBuilder) {
-    return new Batch(
-      new HttpRequest(endpointBuilder, configuration.batchBytesLimit),
-      configuration.maxBatchSize,
-      configuration.batchBytesLimit,
-      configuration.maxMessageSize,
-      configuration.flushTimeout
-    )
-  }
-
-  return {
-    add(message: Context) {
-      primaryBatch.add(message)
-      if (replicaBatch) {
-        replicaBatch.add(message)
-      }
-    },
   }
 }
 

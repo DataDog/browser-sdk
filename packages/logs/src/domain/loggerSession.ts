@@ -29,6 +29,16 @@ export function startLoggerSession(configuration: Configuration, areCookieAuthor
   }
 }
 
+/**
+ * Start a tracked session stub
+ */
+export function startStubLoggerSession(): LoggerSession {
+  return {
+    getId: () => '00000000-aaaa-0000-aaaa-000000000000',
+    isTracked: () => true,
+  }
+}
+
 function computeTrackingType(configuration: Configuration) {
   if (!performDraw(configuration.sampleRate)) {
     return LoggerTrackingType.NOT_TRACKED
