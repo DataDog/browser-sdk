@@ -16,6 +16,13 @@
 
 ---
 
+## v3.7.0
+
+- ✨ [RUMF-1067] forward rum event to bridge ([#1148](https://github.com/DataDog/browser-sdk/pull/1148))
+- 🐛 [RUMF-1062] fix support for Safari 11.0 ([#1154](https://github.com/DataDog/browser-sdk/pull/1154))
+- 📄 [RUMF-1075] add missing initialization parameters ([#1152](https://github.com/DataDog/browser-sdk/pull/1152))
+- 🐛 [Internal monitoring] use monitoring api key for monitoring requests ([#1147](https://github.com/DataDog/browser-sdk/pull/1147))
+
 ## v3.6.13
 
 - 🐛 [RUMF-1060] fix failing worker detection in Firefox ([#1139](https://github.com/DataDog/browser-sdk/pull/1139))
