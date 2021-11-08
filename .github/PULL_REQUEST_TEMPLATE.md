@@ -10,6 +10,11 @@
 
 <!-- How can the reviewer confirm these changes do what you say they do? Are there automated tests? -->
 
+- [ ] Local
+- [ ] Staging
+- [ ] Unit
+- [ ] End to end
+
 ---
 
 I have gone over the [contributing](https://github.com/DataDog/browser-sdk/blob/main/CONTRIBUTING.md) documentation.
