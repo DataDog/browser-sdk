@@ -3,7 +3,7 @@ import { deleteEventBridgeStub, initEventBridgeStub } from '../../test/specHelpe
 import { getEventBridge, isEventBridgePresent } from './eventBridge'
 
 describe('isEventBridgePresent', () => {
-  const notAllowedWebViewHosts = ['foo.bar']
+  const allowedWebViewHosts = ['foo.bar']
 
   afterEach(() => {
     resetExperimentalFeatures()
@@ -25,7 +25,7 @@ describe('isEventBridgePresent', () => {
     })
 
     it('should not detect when the bridge is present and the webView host is not allowed', () => {
-      initEventBridgeStub(notAllowedWebViewHosts)
+      initEventBridgeStub(allowedWebViewHosts)
       expect(isEventBridgePresent()).toBeFalse()
     })
   })
@@ -37,7 +37,7 @@ describe('isEventBridgePresent', () => {
     })
 
     it('should not detect when the bridge is present and the webView host is not allowed', () => {
-      initEventBridgeStub(notAllowedWebViewHosts)
+      initEventBridgeStub(allowedWebViewHosts)
       expect(isEventBridgePresent()).toBeFalse()
     })
 
