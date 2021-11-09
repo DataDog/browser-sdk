@@ -62,7 +62,7 @@ describe('getEventBridge', () => {
   })
 
   it('event bridge should serialize sent events', () => {
-    const eventBridge = getEventBridge()
+    const eventBridge = getEventBridge()!
 
     eventBridge.send('view', { foo: 'bar' })
 
