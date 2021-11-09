@@ -1,4 +1,4 @@
-import { includes, isExperimentalFeatureEnabled } from '..'
+import { isExperimentalFeatureEnabled } from '..'
 
 export interface BrowserWindow extends Window {
   DatadogEventBridge?: DatadogEventBridge
@@ -29,7 +29,7 @@ export function getEventBridge<T, E>() {
 export function isEventBridgePresent(): boolean {
   return getEventBridge()
     .getAllowedWebViewHosts()
-    .some((host) => includes(host, window.location.hostname))
+    .some((host) => host === window.location.hostname)
 }
 
 function getEventBridgeGlobal() {

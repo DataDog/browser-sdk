@@ -157,11 +157,13 @@ export function html(parts: readonly string[], ...vars: string[]) {
 }
 
 function setupEventBridge(servers: Servers) {
+  const baseHostname = new URL(servers.base.url).hostname
+
   return html`
     <script type="text/javascript">
       window.DatadogEventBridge = {
         getAllowedWebViewHosts() {
-          return '["${servers.base.url}"]'
+          return '["${baseHostname}"]'
         },
         send(e) {
           const { event } = JSON.parse(e)

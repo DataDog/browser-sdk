@@ -314,7 +314,7 @@ export function restoreUserAgent() {
   delete (navigator as any).userAgent
 }
 
-export function initEventBridgeStub(allowedWebViewHosts: string[] = [window.location.host]) {
+export function initEventBridgeStub(allowedWebViewHosts: string[] = [window.location.hostname]) {
   const eventBridgeStub = {
     send: () => undefined,
     getAllowedWebViewHosts: () => JSON.stringify(allowedWebViewHosts),
