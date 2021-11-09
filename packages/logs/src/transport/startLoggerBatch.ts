@@ -18,10 +18,12 @@ export function startLoggerBatch(configuration: Configuration) {
     )
   }
 
-  return (message: Context) => {
-    primaryBatch.add(message)
-    if (replicaBatch) {
-      replicaBatch.add(message)
-    }
+  return {
+    add(message: Context) {
+      primaryBatch.add(message)
+      if (replicaBatch) {
+        replicaBatch.add(message)
+      }
+    },
   }
 }

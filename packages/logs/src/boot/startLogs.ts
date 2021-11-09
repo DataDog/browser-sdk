@@ -13,12 +13,12 @@ import {
   trackRuntimeError,
   trackConsoleError,
   isEventBridgePresent,
+  getEventBridge,
 } from '@datadog/browser-core'
 import { trackNetworkError } from '../domain/trackNetworkError'
 import { Logger, LogsMessage, StatusType } from '../domain/logger'
 import { LoggerSession, startLoggerSession, startStubLoggerSession } from '../domain/loggerSession'
 import { LogsEvent } from '../logsEvent.types'
-import { startLoggerEventBridge } from '../transport/startLoggerEventBridge'
 import { startLoggerBatch } from '../transport/startLoggerBatch'
 import { buildEnv } from './buildEnv'
 
@@ -58,7 +58,15 @@ export function doStartLogs(
   )
 
   const assemble = buildAssemble(session, configuration, reportError)
-  const transport = isEventBridgePresent() ? startLoggerEventBridge() : startLoggerBatch(configuration)
+
+  let onLogEventCollected: (message: Context) => void
+  if (isEventBridgePresent()) {
+    const bridge = getEventBridge()
+    onLogEventCollected = (message) => bridge.send('log', message)
+  } else {
+    const batch = startLoggerBatch(configuration)
+    onLogEventCollected = (message) => batch.add(message)
+  }
 
   function reportError(error: RawError) {
     errorLogger.error(
@@ -90,7 +98,7 @@ export function doStartLogs(
   return (message: LogsMessage, currentContext: Context) => {
     const contextualizedMessage = assemble(message, currentContext)
     if (contextualizedMessage) {
-      transport(contextualizedMessage)
+      onLogEventCollected(contextualizedMessage)
     }
   }
 }
