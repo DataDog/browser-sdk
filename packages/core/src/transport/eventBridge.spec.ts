@@ -3,6 +3,8 @@ import { deleteEventBridgeStub, initEventBridgeStub } from '../../test/specHelpe
 import { getEventBridge, isEventBridgePresent } from './eventBridge'
 
 describe('isEventBridgePresent', () => {
+  const notAllowedWebViewHosts = ['foo.bar']
+
   afterEach(() => {
     resetExperimentalFeatures()
     deleteEventBridgeStub()
@@ -13,7 +15,7 @@ describe('isEventBridgePresent', () => {
       updateExperimentalFeatures(['event-bridge'])
     })
 
-    it('should detect when the bridge is present', () => {
+    it('should detect when the bridge is present and the webView host is allowed', () => {
       initEventBridgeStub()
       expect(isEventBridgePresent()).toBeTrue()
     })
@@ -21,13 +23,24 @@ describe('isEventBridgePresent', () => {
     it('should not detect when the bridge is absent', () => {
       expect(isEventBridgePresent()).toBeFalse()
     })
+
+    it('should not detect when the bridge is present and the webView host is not allowed', () => {
+      initEventBridgeStub(notAllowedWebViewHosts)
+      expect(isEventBridgePresent()).toBeFalse()
+    })
   })
 
   describe('when ff disabled', () => {
-    it('should not detect when the bridge is present', () => {
+    it('should not detect when the bridge is present and the webView host is allowed', () => {
       initEventBridgeStub()
       expect(isEventBridgePresent()).toBeFalse()
     })
+
+    it('should not detect when the bridge is present and the webView host is not allowed', () => {
+      initEventBridgeStub(notAllowedWebViewHosts)
+      expect(isEventBridgePresent()).toBeFalse()
+    })
+
     it('should not detect when the bridge is absent', () => {
       expect(isEventBridgePresent()).toBeFalse()
     })

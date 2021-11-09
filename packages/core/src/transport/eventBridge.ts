@@ -5,21 +5,31 @@ export interface BrowserWindow extends Window {
 }
 
 export interface DatadogEventBridge {
+  getAllowedWebViewHosts(): string
   send(msg: string): void
 }
 
 export function getEventBridge<T, E>() {
-  const datadogEventBridge = getEventBridgeGlobal()
+  const eventBridgeGlobal = getEventBridgeGlobal()
+
+  if (!eventBridgeGlobal) {
+    return { getAllowedWebViewHosts: () => [], send: () => undefined }
+  }
 
   return {
+    getAllowedWebViewHosts() {
+      return JSON.parse(eventBridgeGlobal.getAllowedWebViewHosts()) as string[]
+    },
     send(eventType: T, event: E) {
-      datadogEventBridge?.send(JSON.stringify({ eventType, event }))
+      eventBridgeGlobal.send(JSON.stringify({ eventType, event }))
     },
   }
 }
 
 export function isEventBridgePresent(): boolean {
-  return !!getEventBridgeGlobal()
+  return getEventBridge()
+    .getAllowedWebViewHosts()
+    .some((o) => o.includes(window.location.hostname))
 }
 
 function getEventBridgeGlobal() {
