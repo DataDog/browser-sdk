@@ -29,7 +29,7 @@ export function getEventBridge<T, E>() {
 export function isEventBridgePresent(): boolean {
   return getEventBridge()
     .getAllowedWebViewHosts()
-    .some((o) => includes(o, window.location.hostname))
+    .some((host) => includes(host, window.location.hostname))
 }
 
 function getEventBridgeGlobal() {
