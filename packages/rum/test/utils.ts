@@ -13,7 +13,14 @@ import {
   SerializedNodeWithId,
   TextNode,
 } from '../src/domain/record/types'
-import { FullSnapshotRecord, IncrementalSnapshotRecord, MetaRecord, RecordType, Segment } from '../src/types'
+import {
+  FullSnapshotRecord,
+  IncrementalSnapshotRecord,
+  MetaRecord,
+  VisualViewportRecord,
+  RecordType,
+  Segment,
+} from '../src/types'
 
 export class MockWorker implements DeflateWorker {
   readonly pendingMessages: DeflateWorkerAction[] = []
@@ -186,6 +193,11 @@ export function findMeta(segment: Segment): MetaRecord | null {
 // Returns the first FullSnapshotRecord in a Segment, if any.
 export function findFullSnapshot(segment: Segment): FullSnapshotRecord | null {
   return segment.records.find((record) => record.type === RecordType.FullSnapshot) as FullSnapshotRecord
+}
+
+// Returns all the VisualViewportRecords in a Segment, if any.
+export function findAllVisualViewports(segment: Segment): VisualViewportRecord[] {
+  return segment.records.filter((record) => record.type === RecordType.VisualViewport) as VisualViewportRecord[]
 }
 
 // Returns the first IncrementalSnapshotRecord of a given source in a Segment, if any.
