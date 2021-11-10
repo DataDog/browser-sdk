@@ -158,9 +158,7 @@ function needToAssembleWithAction(
 }
 
 function getSessionType() {
-  return navigator.userAgent.indexOf('DatadogSynthetics') === -1 && !getSyntheticsContext()
-    ? SessionType.USER
-    : SessionType.SYNTHETICS
+  return !getSyntheticsContext() ? SessionType.USER : SessionType.SYNTHETICS
 }
 
 function getSyntheticsContext() {

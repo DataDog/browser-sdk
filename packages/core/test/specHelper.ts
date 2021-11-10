@@ -301,19 +301,6 @@ export function restorePageVisibility() {
   delete (document as any).visibilityState
 }
 
-export function setUserAgent(ua: string) {
-  Object.defineProperty(navigator, 'userAgent', {
-    get() {
-      return ua
-    },
-    configurable: true,
-  })
-}
-
-export function restoreUserAgent() {
-  delete (navigator as any).userAgent
-}
-
 export function initEventBridgeStub() {
   const eventBridgeStub = { send: () => undefined }
   ;(window as BrowserWindow).DatadogEventBridge = eventBridgeStub
