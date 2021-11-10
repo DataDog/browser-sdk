@@ -1,6 +1,6 @@
 import { IncrementalData, SerializedNodeWithId } from './domain/record/types'
 
-export { IncrementalSource, MutationData } from './domain/record/types'
+export { IncrementalSource, MutationData, ViewportResizeData, ScrollData } from './domain/record/types'
 
 export interface Segment extends SegmentMeta {
   records: Record[]
@@ -28,7 +28,13 @@ export type CreationReason =
   | 'before_unload'
   | 'visibility_hidden'
 
-export type RawRecord = FullSnapshotRecord | IncrementalSnapshotRecord | MetaRecord | FocusRecord | ViewEndRecord
+export type RawRecord =
+  | FullSnapshotRecord
+  | IncrementalSnapshotRecord
+  | MetaRecord
+  | FocusRecord
+  | ViewEndRecord
+  | VisualViewportRecord
 
 export type Record = RawRecord & {
   timestamp: number
@@ -41,6 +47,7 @@ export const RecordType = {
   Meta: 4,
   Focus: 6,
   ViewEnd: 7,
+  VisualViewport: 8,
 } as const
 
 export type RecordType = typeof RecordType[keyof typeof RecordType]
@@ -79,4 +86,17 @@ export interface FocusRecord {
 
 export interface ViewEndRecord {
   type: typeof RecordType.ViewEnd
+}
+
+export interface VisualViewportRecord {
+  type: typeof RecordType.VisualViewport
+  data: {
+    scale: number
+    offsetLeft: number
+    offsetTop: number
+    pageLeft: number
+    pageTop: number
+    height: number
+    width: number
+  }
 }

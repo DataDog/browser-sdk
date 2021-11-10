@@ -301,8 +301,11 @@ export function restorePageVisibility() {
   delete (document as any).visibilityState
 }
 
-export function initEventBridgeStub() {
-  const eventBridgeStub = { send: () => undefined }
+export function initEventBridgeStub(allowedWebViewHosts: string[] = [window.location.hostname]) {
+  const eventBridgeStub = {
+    send: () => undefined,
+    getAllowedWebViewHosts: () => JSON.stringify(allowedWebViewHosts),
+  }
   ;(window as BrowserWindow).DatadogEventBridge = eventBridgeStub
   return eventBridgeStub
 }
