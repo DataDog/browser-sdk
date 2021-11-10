@@ -27,10 +27,11 @@ export function startViewCollection(
   recorderApi: RecorderApi,
   initialViewName?: string
 ) {
+  const initialVisibilityState = document.visibilityState
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) =>
     lifeCycle.notify(
       LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-      processViewUpdate(view, foregroundContexts, recorderApi)
+      processViewUpdate(view, foregroundContexts, recorderApi, initialVisibilityState)
     )
   )
 
@@ -47,7 +48,8 @@ export function startViewCollection(
 function processViewUpdate(
   view: ViewEvent,
   foregroundContexts: ForegroundContexts,
-  recorderApi: RecorderApi
+  recorderApi: RecorderApi,
+  initialVisibilityState: string
 ): RawRumEventCollectedData<RawRumViewEvent> {
   const replayStats = recorderApi.getReplayStats(view.id)
   const viewEvent: RawRumViewEvent = {
@@ -108,6 +110,7 @@ function processViewUpdate(
             lcp: {
               support: supportPerformanceTimingEvent('largest-contentful-paint'),
               discard_reason: view.timings.lcpDiscardReason,
+              initial_visibility_state: initialVisibilityState,
             },
           }
         : undefined,
