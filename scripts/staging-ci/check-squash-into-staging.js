@@ -23,6 +23,16 @@ async function main() {
     await executeCommand(`git checkout ${MAIN_BRANCH} -f`)
     await executeCommand(`git pull`)
     await executeCommand(`git merge --squash "${CI_COMMIT_SHA}"`)
+  } catch (error) {
+    const diff = await executeCommand(`git diff`)
+    printError(
+      `Conflicts:\n${diff}\n` +
+        `You can resolve these conflicts by updating your branch with latest ${MAIN_BRANCH} changes.`
+    )
+    throw error
+  }
+
+  try {
     await executeCommand('git commit -am "squash test"')
 
     await executeCommand(`git checkout ${currentStaging} -f`)
