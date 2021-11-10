@@ -12,6 +12,7 @@ export interface SegmentMeta extends SegmentContext {
   has_full_snapshot: boolean
   records_count: number
   creation_reason: CreationReason
+  [key: string]: any
 }
 
 export interface SegmentContext {

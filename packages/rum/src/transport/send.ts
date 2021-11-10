@@ -1,4 +1,4 @@
-import { HttpRequest, objectEntries, EndpointBuilder } from '@datadog/browser-core'
+import { HttpRequest, objectEntries, EndpointBuilder, isNumber, addMonitoringMessage } from '@datadog/browser-core'
 import { SegmentMeta } from '../types'
 
 export const SEND_BEACON_BYTE_LENGTH_LIMIT = 60_000
@@ -10,6 +10,15 @@ export function send(
   rawSegmentSize: number,
   flushReason?: string
 ): void {
+  if (!isNumber(meta.start)) {
+    addMonitoringMessage(`invalid segment start value`, {
+      debug: {
+        start: meta.start,
+        flushReason,
+        meta,
+      },
+    })
+  }
   const formData = new FormData()
 
   formData.append(
