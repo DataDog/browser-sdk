@@ -26,7 +26,7 @@ export function getEventBridge<T, E>() {
   }
 }
 
-export function isEventBridgePresent(): boolean {
+export function canUseEventBridge(): boolean {
   const bridge = getEventBridge()
   return !!bridge && includes(bridge.getAllowedWebViewHosts(), window.location.hostname)
 }
