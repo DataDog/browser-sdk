@@ -393,6 +393,16 @@ check-staging-merge:
   script:
     - node scripts/staging-ci/check-staging-merge.js
 
+check-squash-into-staging:
+  stage: test
+  extends:
+    - .base-configuration
+    - .feature-branches
+  before_script:
+    - eval $(ssh-agent -s)
+  script:
+    - node scripts/staging-ci/check-squash-into-staging.js
+
 # A noop job that's used to signal to `to-staging` that it can merge to the
 # staging branch, even though the pipeline is still running
 tests-passed:
