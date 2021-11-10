@@ -18,7 +18,7 @@ export function send(
   flushReason?: string
 ): void {
   if (!isNumber(meta.start)) {
-    addMonitoringMessage(`invalid segment start value`, {
+    addMonitoringMessage('invalid segment start value', {
       debug: {
         start: meta.start,
         flushReason,
