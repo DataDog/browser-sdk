@@ -1,5 +1,6 @@
 import { LogsInitConfiguration } from '@datadog/browser-logs'
 import { RumInitConfiguration } from '@datadog/browser-rum-core'
+import { Servers } from './httpServers'
 
 export interface SetupOptions {
   rum?: RumInitConfiguration
@@ -11,7 +12,7 @@ export interface SetupOptions {
   body?: string
 }
 
-export type SetupFactory = (options: SetupOptions, intakeUrl: string) => string
+export type SetupFactory = (options: SetupOptions, servers: Servers) => string
 
 const isBrowserStack =
   browser.config.services &&
@@ -25,12 +26,12 @@ export const DEFAULT_SETUPS = isBrowserStack
       { name: 'bundle', factory: bundleSetup },
     ]
 
-export function asyncSetup(options: SetupOptions, intakeUrl: string) {
+export function asyncSetup(options: SetupOptions, servers: Servers) {
   let body = options.body || ''
   let header = options.head || ''
 
   if (options.eventBridge) {
-    header += setupEventBridge(intakeUrl)
+    header += setupEventBridge(servers)
   }
 
   function formatSnippet(url: string, globalName: string) {
@@ -69,11 +70,11 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
   })
 }
 
-export function bundleSetup(options: SetupOptions, intakeUrl: string) {
+export function bundleSetup(options: SetupOptions, servers: Servers) {
   let header = options.head || ''
 
   if (options.eventBridge) {
-    header += setupEventBridge(intakeUrl)
+    header += setupEventBridge(servers)
   }
 
   if (options.logs) {
@@ -103,11 +104,11 @@ export function bundleSetup(options: SetupOptions, intakeUrl: string) {
   })
 }
 
-export function npmSetup(options: SetupOptions, intakeUrl: string) {
+export function npmSetup(options: SetupOptions, servers: Servers) {
   let header = options.head || ''
 
   if (options.eventBridge) {
-    header += setupEventBridge(intakeUrl)
+    header += setupEventBridge(servers)
   }
 
   if (options.logs) {
@@ -155,14 +156,19 @@ export function html(parts: readonly string[], ...vars: string[]) {
   return parts.reduce((full, part, index) => full + vars[index - 1] + part)
 }
 
-function setupEventBridge(intakeUrl: string) {
+function setupEventBridge(servers: Servers) {
+  const baseHostname = new URL(servers.base.url).hostname
+
   return html`
     <script type="text/javascript">
       window.DatadogEventBridge = {
+        getAllowedWebViewHosts() {
+          return '["${baseHostname}"]'
+        },
         send(e) {
           const { event } = JSON.parse(e)
           const request = new XMLHttpRequest()
-          request.open('POST', '${intakeUrl}/v1/input/rum?bridge=1', true)
+          request.open('POST', '${servers.intake.url}/v1/input/rum?bridge=1', true)
           request.send(JSON.stringify(event))
         },
       }
