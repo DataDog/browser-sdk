@@ -150,7 +150,7 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     const testContext = createTestContext(servers)
     servers.intake.bindServerApp(createIntakeServerApp(testContext.serverEvents, testContext.bridgeEvents))
 
-    const setup = factory(setupOptions, servers.intake.url)
+    const setup = factory(setupOptions, servers)
     servers.base.bindServerApp(createMockServerApp(servers, setup))
     servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
 

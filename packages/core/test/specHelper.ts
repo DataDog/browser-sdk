@@ -314,8 +314,11 @@ export function restoreUserAgent() {
   delete (navigator as any).userAgent
 }
 
-export function initEventBridgeStub() {
-  const eventBridgeStub = { send: () => undefined }
+export function initEventBridgeStub(allowedWebViewHosts: string[] = [window.location.hostname]) {
+  const eventBridgeStub = {
+    send: () => undefined,
+    getAllowedWebViewHosts: () => JSON.stringify(allowedWebViewHosts),
+  }
   ;(window as BrowserWindow).DatadogEventBridge = eventBridgeStub
   return eventBridgeStub
 }

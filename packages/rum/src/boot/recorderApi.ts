@@ -1,4 +1,4 @@
-import { Configuration, isEventBridgePresent, noop, runOnReadyState } from '@datadog/browser-core'
+import { Configuration, canUseEventBridge, noop, runOnReadyState } from '@datadog/browser-core'
 import {
   LifeCycleEventType,
   RumInitConfiguration,
@@ -44,7 +44,7 @@ export function makeRecorderApi(
   startRecordingImpl: StartRecording,
   startDeflateWorkerImpl = startDeflateWorker
 ): RecorderApi {
-  if (isEventBridgePresent()) {
+  if (canUseEventBridge()) {
     return {
       start: noop,
       stop: noop,
