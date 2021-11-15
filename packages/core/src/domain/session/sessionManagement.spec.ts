@@ -5,10 +5,10 @@ import {
   CookieOptions,
   getCookie,
   setCookie,
-} from '../browser/cookie'
-import { Clock, mockClock, restorePageVisibility, setPageVisibility, createNewEvent } from '../../test/specHelper'
-import { ONE_HOUR, DOM_EVENT } from '../tools/utils'
-import { isIE } from '../tools/browserDetection'
+} from '../../browser/cookie'
+import { Clock, mockClock, restorePageVisibility, setPageVisibility, createNewEvent } from '../../../test/specHelper'
+import { ONE_HOUR, DOM_EVENT } from '../../tools/utils'
+import { isIE } from '../../tools/browserDetection'
 import {
   Session,
   SESSION_COOKIE_NAME,

@@ -1,4 +1,4 @@
-import { CookieCache, getCookie } from '../browser/cookie'
+import { CookieCache, getCookie } from '../../browser/cookie'
 import { persistSession, SessionState } from './sessionManagement'
 
 export const OLD_SESSION_COOKIE_NAME = '_dd'

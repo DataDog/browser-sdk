@@ -35,7 +35,7 @@ export {
   // Exposed for tests
   SESSION_COOKIE_NAME,
   stopSessionManagement,
-} from './domain/sessionManagement'
+} from './domain/session/sessionManagement'
 export { HttpRequest, Batch, canUseEventBridge, getEventBridge } from './transport'
 export * from './tools/display'
 export * from './tools/urlPolyfill'

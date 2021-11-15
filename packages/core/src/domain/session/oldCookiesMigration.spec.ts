@@ -1,4 +1,4 @@
-import { cacheCookieAccess, CookieOptions, getCookie, setCookie } from '../browser/cookie'
+import { cacheCookieAccess, CookieOptions, getCookie, setCookie } from '../../browser/cookie'
 import {
   OLD_LOGS_COOKIE_NAME,
   OLD_RUM_COOKIE_NAME,
