@@ -402,3 +402,14 @@ tests-passed:
     - .feature-branches
   script:
     - 'true'
+
+# in after-tests to not block `to-staging` merge
+check-squash-into-staging:
+  stage: after-tests
+  extends:
+    - .base-configuration
+    - .feature-branches
+  before_script:
+    - eval $(ssh-agent -s)
+  script:
+    - node scripts/staging-ci/check-squash-into-staging.js
