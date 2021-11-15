@@ -5,7 +5,7 @@ import {
   OLD_SESSION_COOKIE_NAME,
   tryOldCookiesMigration,
 } from './oldCookiesMigration'
-import { SESSION_COOKIE_NAME, SESSION_EXPIRATION_DELAY } from './sessionManagement'
+import { SESSION_COOKIE_NAME, SESSION_EXPIRATION_DELAY } from './sessionStore'
 
 describe('old cookies migration', () => {
   const options: CookieOptions = {}

@@ -1,5 +1,5 @@
 import { getCookie, CookieOptions, cacheCookieAccess } from '../../browser/cookie'
-import { persistSession, SessionState, SESSION_COOKIE_NAME } from './sessionManagement'
+import { persistSession, SessionState, SESSION_COOKIE_NAME } from './sessionStore'
 
 export const OLD_SESSION_COOKIE_NAME = '_dd'
 export const OLD_RUM_COOKIE_NAME = '_dd_r'

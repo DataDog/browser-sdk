@@ -9,15 +9,8 @@ import {
 import { Clock, mockClock, restorePageVisibility, setPageVisibility, createNewEvent } from '../../../test/specHelper'
 import { ONE_HOUR, DOM_EVENT } from '../../tools/utils'
 import { isIE } from '../../tools/browserDetection'
-import {
-  Session,
-  SESSION_COOKIE_NAME,
-  SESSION_EXPIRATION_DELAY,
-  SESSION_TIME_OUT_DELAY,
-  startSessionManagement,
-  stopSessionManagement,
-  VISIBILITY_CHECK_DELAY,
-} from './sessionManagement'
+import { Session, startSessionManagement, stopSessionManagement, VISIBILITY_CHECK_DELAY } from './sessionManagement'
+import { SESSION_COOKIE_NAME, SESSION_TIME_OUT_DELAY, SESSION_EXPIRATION_DELAY } from './sessionStore'
 
 describe('cacheCookieAccess', () => {
   const TEST_COOKIE = 'test'
