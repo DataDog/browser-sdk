@@ -13,7 +13,6 @@ export interface Session<T> {
   renewObservable: Observable<void>
   getId: () => string | undefined
   getTrackingType: () => T | undefined
-  getInMemoryTrackingType: () => T | undefined
 }
 
 export interface SessionState {
@@ -72,7 +71,6 @@ export function startSessionManagement<TrackingType extends string>(
   return {
     getId: () => retrieveActiveSession(sessionCookie).id,
     getTrackingType: () => retrieveActiveSession(sessionCookie)[productKey] as TrackingType | undefined,
-    getInMemoryTrackingType: () => inMemorySession[productKey] as TrackingType | undefined,
     renewObservable,
   }
 }
