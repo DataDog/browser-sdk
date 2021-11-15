@@ -92,9 +92,9 @@ interface ReplicaUserConfiguration {
 }
 
 export type Configuration = typeof DEFAULT_CONFIGURATION &
-  TransportConfiguration &
-  BuildEnv & {
+  TransportConfiguration & {
     cookieOptions: CookieOptions
+    sdkVersion: string
 
     service?: string
     beforeSend?: BeforeSendCallback
@@ -108,7 +108,7 @@ export function buildConfiguration(initConfiguration: InitConfiguration, buildEn
       initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
     cookieOptions: buildCookieOptions(initConfiguration),
     service: initConfiguration.service,
-    ...buildEnv,
+    sdkVersion: buildEnv.sdkVersion,
     ...computeTransportConfiguration(initConfiguration, buildEnv),
     ...DEFAULT_CONFIGURATION,
   }
