@@ -11,7 +11,6 @@ import {
   RawError,
   createEventRateLimiter,
   EventRateLimiter,
-  getCookie,
 } from '@datadog/browser-core'
 import { RumEventDomainContext } from '../domainContext.types'
 import {
@@ -25,15 +24,11 @@ import {
   User,
 } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
+import { getSyntheticsContext } from '../tools/syntheticsContext'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { ParentContexts } from './parentContexts'
 import { RumSession, RumSessionPlan } from './rumSession'
 import { UrlContexts } from './urlContexts'
-
-export interface BrowserWindow extends Window {
-  _DATADOG_SYNTHETICS_PUBLIC_ID?: string
-  _DATADOG_SYNTHETICS_RESULT_ID?: string
-}
 
 enum SessionType {
   SYNTHETICS = 'synthetics',
@@ -157,20 +152,4 @@ function needToAssembleWithAction(
   event: RawRumEvent
 ): event is RawRumErrorEvent | RawRumResourceEvent | RawRumLongTaskEvent {
   return [RumEventType.ERROR, RumEventType.RESOURCE, RumEventType.LONG_TASK].indexOf(event.type) !== -1
-}
-
-export const SYNTHETICS_TEST_ID_COOKIE_NAME = 'datadog-synthetics-public-id'
-export const SYNTHETICS_RESULT_ID_COOKIE_NAME = 'datadog-synthetics-result-id'
-
-function getSyntheticsContext() {
-  const testId = (window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID || getCookie(SYNTHETICS_TEST_ID_COOKIE_NAME)
-  const resultId =
-    (window as BrowserWindow)._DATADOG_SYNTHETICS_RESULT_ID || getCookie(SYNTHETICS_RESULT_ID_COOKIE_NAME)
-
-  if (typeof testId === 'string' && typeof resultId === 'string') {
-    return {
-      test_id: testId,
-      result_id: resultId,
-    }
-  }
 }

@@ -8,10 +8,10 @@ import { CommonContext, RawRumActionEvent, RawRumErrorEvent, RawRumEvent, RumEve
 import { RumActionEvent, RumErrorEvent, RumEvent } from '../rumEvent.types'
 import {
   BrowserWindow,
-  startRumAssembly,
   SYNTHETICS_RESULT_ID_COOKIE_NAME,
   SYNTHETICS_TEST_ID_COOKIE_NAME,
-} from './assembly'
+} from '../tools/syntheticsContext'
+import { startRumAssembly } from './assembly'
 import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from './lifeCycle'
 import { RumSessionPlan } from './rumSession'
 
