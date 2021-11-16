@@ -1,22 +1,18 @@
-import { ErrorSource, ONE_MINUTE, RawError, RelativeTime, display, setCookie } from '@datadog/browser-core'
-import { deleteCookie } from 'packages/core/src/browser/cookie'
-import { createRumSessionMock } from 'packages/rum-core/test/mockRumSession'
+import { ErrorSource, ONE_MINUTE, RawError, RelativeTime, display } from '@datadog/browser-core'
+import { createRumSessionMock } from '../../test/mockRumSession'
 import { createRawRumEvent } from '../../test/fixtures'
-import { setup, TestSetupBuilder } from '../../test/specHelper'
+import {
+  cleanupSyntheticsWorkerValues,
+  mockSyntheticsWorkerValues,
+  setup,
+  TestSetupBuilder,
+} from '../../test/specHelper'
 import { RumEventDomainContext } from '../domainContext.types'
 import { CommonContext, RawRumActionEvent, RawRumErrorEvent, RawRumEvent, RumEventType } from '../rawRumEvent.types'
 import { RumActionEvent, RumErrorEvent, RumEvent } from '../rumEvent.types'
-import {
-  BrowserWindow,
-  SYNTHETICS_RESULT_ID_COOKIE_NAME,
-  SYNTHETICS_TEST_ID_COOKIE_NAME,
-} from '../tools/syntheticsContext'
 import { startRumAssembly } from './assembly'
 import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from './lifeCycle'
 import { RumSessionPlan } from './rumSession'
-
-// Duration to create a cookie lasting at least until the end of the test
-const COOKIE_DURATION = 1000
 
 describe('rum assembly', () => {
   let setupBuilder: TestSetupBuilder
@@ -65,9 +61,7 @@ describe('rum assembly', () => {
 
   afterEach(() => {
     setupBuilder.cleanup()
-    cleanupSyntheticsGlobals()
-    deleteCookie(SYNTHETICS_TEST_ID_COOKIE_NAME)
-    deleteCookie(SYNTHETICS_RESULT_ID_COOKIE_NAME)
+    cleanupSyntheticsWorkerValues()
   })
 
   describe('beforeSend', () => {
@@ -527,20 +521,8 @@ describe('rum assembly', () => {
       })
     })
 
-    it('should detect synthetics sessions from global', () => {
-      setSyntheticsGlobals('foo', 'bar')
-
-      const { lifeCycle } = setupBuilder.build()
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-
-      expect(serverRumEvents[0].session.type).toEqual('synthetics')
-    })
-
-    it('should detect synthetics sessions from cookies', () => {
-      setCookie(SYNTHETICS_TEST_ID_COOKIE_NAME, 'foo', COOKIE_DURATION)
-      setCookie(SYNTHETICS_RESULT_ID_COOKIE_NAME, 'bar', COOKIE_DURATION)
+    it('should detect synthetics sessions based on synthetics worker values', () => {
+      mockSyntheticsWorkerValues()
 
       const { lifeCycle } = setupBuilder.build()
       notifyRawRumEvent(lifeCycle, {
@@ -572,66 +554,15 @@ describe('rum assembly', () => {
   })
 
   describe('synthetics context', () => {
-    it('sets the synthetics context defined by global variables', () => {
-      setSyntheticsGlobals('foo', 'bar')
+    it('includes the synthetics context', () => {
+      mockSyntheticsWorkerValues()
 
       const { lifeCycle } = setupBuilder.build()
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
       })
 
-      expect(serverRumEvents[0].synthetics).toEqual({
-        test_id: 'foo',
-        result_id: 'bar',
-      })
-    })
-
-    it('sets the synthetics context defined by global cookie', () => {
-      setCookie(SYNTHETICS_TEST_ID_COOKIE_NAME, 'foo', COOKIE_DURATION)
-      setCookie(SYNTHETICS_RESULT_ID_COOKIE_NAME, 'bar', COOKIE_DURATION)
-
-      const { lifeCycle } = setupBuilder.build()
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-
-      expect(serverRumEvents[0].synthetics).toEqual({
-        test_id: 'foo',
-        result_id: 'bar',
-      })
-    })
-
-    it('does not set synthetics context if one global variable is undefined', () => {
-      setSyntheticsGlobals('foo')
-
-      const { lifeCycle } = setupBuilder.build()
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-
-      expect(serverRumEvents[0].synthetics).toBeUndefined()
-    })
-
-    it('does not set synthetics context if global variables are not strings', () => {
-      setSyntheticsGlobals(1, 2)
-
-      const { lifeCycle } = setupBuilder.build()
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-
-      expect(serverRumEvents[0].synthetics).toBeUndefined()
-    })
-
-    it('does not set synthetics context if one cookie is undefined', () => {
-      setCookie(SYNTHETICS_TEST_ID_COOKIE_NAME, 'foo', COOKIE_DURATION)
-
-      const { lifeCycle } = setupBuilder.build()
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-
-      expect(serverRumEvents[0].synthetics).toBeUndefined()
+      expect(serverRumEvents[0].synthetics).toBeTruthy()
     })
   })
 
@@ -782,14 +713,4 @@ function notifyRawRumEvent<E extends RawRumEvent>(
     ...partialData,
   }
   lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, fullData)
-}
-
-function setSyntheticsGlobals(publicId: any, resultId?: any) {
-  ;(window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID = publicId
-  ;(window as BrowserWindow)._DATADOG_SYNTHETICS_RESULT_ID = resultId
-}
-
-function cleanupSyntheticsGlobals() {
-  delete (window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID
-  delete (window as BrowserWindow)._DATADOG_SYNTHETICS_RESULT_ID
 }
