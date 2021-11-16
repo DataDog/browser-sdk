@@ -1,51 +1,9 @@
-import {
-  cacheCookieAccess,
-  COOKIE_ACCESS_DELAY,
-  CookieCache,
-  CookieOptions,
-  getCookie,
-  setCookie,
-} from '../../browser/cookie'
+import { COOKIE_ACCESS_DELAY, CookieOptions, getCookie, setCookie } from '../../browser/cookie'
 import { Clock, mockClock, restorePageVisibility, setPageVisibility, createNewEvent } from '../../../test/specHelper'
 import { ONE_HOUR, DOM_EVENT } from '../../tools/utils'
 import { isIE } from '../../tools/browserDetection'
 import { Session, startSessionManagement, stopSessionManagement, VISIBILITY_CHECK_DELAY } from './sessionManagement'
 import { SESSION_COOKIE_NAME, SESSION_TIME_OUT_DELAY, SESSION_EXPIRATION_DELAY } from './sessionStore'
-
-describe('cacheCookieAccess', () => {
-  const TEST_COOKIE = 'test'
-  const TEST_DELAY = 1000
-  const options: CookieOptions = {}
-  const DURATION = 123456
-  let cookieCache: CookieCache
-  let clock: Clock
-
-  beforeEach(() => {
-    clock = mockClock()
-    cookieCache = cacheCookieAccess(TEST_COOKIE, options)
-  })
-
-  afterEach(() => clock.cleanup())
-
-  it('should keep cookie value in cache', () => {
-    setCookie(TEST_COOKIE, 'foo', DURATION)
-    expect(cookieCache.get()).toEqual('foo')
-
-    setCookie(TEST_COOKIE, '', DURATION)
-    expect(cookieCache.get()).toEqual('foo')
-
-    clock.tick(TEST_DELAY)
-    expect(cookieCache.get()).toBeUndefined()
-  })
-
-  it('should invalidate cache when updating the cookie', () => {
-    setCookie(TEST_COOKIE, 'foo', DURATION)
-    expect(cookieCache.get()).toEqual('foo')
-
-    cookieCache.set('bar', DURATION)
-    expect(cookieCache.get()).toEqual('bar')
-  })
-})
 
 enum FakeTrackingType {
   NOT_TRACKED = 'not-tracked',

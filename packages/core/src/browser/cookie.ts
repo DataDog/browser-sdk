@@ -9,46 +9,6 @@ export interface CookieOptions {
   domain?: string
 }
 
-export interface CookieCache {
-  get: () => string | undefined
-  set: (value: string, expireDelay: number) => void
-  clearCache: () => void
-}
-
-export function cacheCookieAccess(name: string, options: CookieOptions): CookieCache {
-  let timeout: number
-  let cache: string | undefined
-  let hasCache = false
-
-  const cacheAccess = () => {
-    hasCache = true
-    clearTimeout(timeout)
-    timeout = setTimeout(() => {
-      hasCache = false
-    }, COOKIE_ACCESS_DELAY)
-  }
-
-  return {
-    get: () => {
-      if (hasCache) {
-        return cache
-      }
-      cache = getCookie(name)
-      cacheAccess()
-      return cache
-    },
-    set: (value: string, expireDelay: number) => {
-      setCookie(name, value, expireDelay, options)
-      cache = value
-      cacheAccess()
-    },
-    clearCache: () => {
-      clearTimeout(timeout)
-      hasCache = false
-    },
-  }
-}
-
 export function setCookie(name: string, value: string, expireDelay: number, options?: CookieOptions) {
   const date = new Date()
   date.setTime(date.getTime() + expireDelay)
