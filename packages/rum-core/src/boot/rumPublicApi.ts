@@ -28,6 +28,7 @@ import { RumSession } from '../domain/rumSession'
 import { RumEventDomainContext } from '../domainContext.types'
 import { CommonContext, User, ActionType, ReplayStats } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
+import { willSyntheticsInjectRum } from '../tools/syntheticsContext'
 import { buildEnv } from './buildEnv'
 import { startRum } from './startRum'
 
@@ -103,7 +104,7 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
       return
     }
 
-    if (!isValidInitConfiguration(initConfiguration)) {
+    if (willSyntheticsInjectRum() || !isValidInitConfiguration(initConfiguration)) {
       return
     }
 
