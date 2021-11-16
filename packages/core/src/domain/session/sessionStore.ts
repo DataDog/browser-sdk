@@ -1,4 +1,4 @@
-import { CookieCache, CookieOptions, cacheCookieAccess, COOKIE_ACCESS_DELAY } from '../../browser/cookie'
+import { CookieCache, CookieOptions, cacheCookieAccess, COOKIE_ACCESS_DELAY, setCookie } from '../../browser/cookie'
 import { Observable } from '../../tools/observable'
 import * as utils from '../../tools/utils'
 import { monitor } from '../internalMonitoring'
@@ -45,7 +45,7 @@ export function startSessionStore<TrackingType extends string>(
         cookieSession.created = String(Date.now())
       }
       // save changes and expand session duration
-      persistSession(cookieSession, sessionCookie)
+      persistSessionFromCache(cookieSession, sessionCookie)
 
       // If the session id has changed, notify that the session has been renewed
       if (isTracked && inMemorySession.id !== cookieSession.id) {
@@ -60,7 +60,7 @@ export function startSessionStore<TrackingType extends string>(
   function expandSession() {
     sessionCookie.clearCache()
     const session = retrieveActiveSession(sessionCookie)
-    persistSession(session, sessionCookie)
+    persistSessionFromCache(session, sessionCookie)
   }
 
   function retrieveSession() {
@@ -87,7 +87,7 @@ function retrieveActiveSession(sessionCookie: CookieCache): SessionState {
   if (isActiveSession(session)) {
     return session
   }
-  clearSession(sessionCookie)
+  clearSessionFromCache(sessionCookie)
   return {}
 }
 
@@ -115,9 +115,9 @@ function retrieveSession(sessionCookie: CookieCache): SessionState {
   return session
 }
 
-export function persistSession(session: SessionState, cookie: CookieCache) {
+export function persistSessionFromCache(session: SessionState, cookie: CookieCache) {
   if (utils.isEmptyObject(session)) {
-    clearSession(cookie)
+    clearSessionFromCache(cookie)
     return
   }
   session.expire = String(Date.now() + SESSION_EXPIRATION_DELAY)
@@ -128,6 +128,23 @@ export function persistSession(session: SessionState, cookie: CookieCache) {
   cookie.set(cookieString, SESSION_EXPIRATION_DELAY)
 }
 
-function clearSession(cookie: CookieCache) {
+export function persistSession(session: SessionState, options: CookieOptions) {
+  if (utils.isEmptyObject(session)) {
+    clearSession(options)
+    return
+  }
+  session.expire = String(Date.now() + SESSION_EXPIRATION_DELAY)
+  const cookieString = utils
+    .objectEntries(session)
+    .map(([key, value]) => `${key}=${value as string}`)
+    .join(SESSION_ENTRY_SEPARATOR)
+  setCookie(SESSION_COOKIE_NAME, cookieString, SESSION_EXPIRATION_DELAY, options)
+}
+
+function clearSessionFromCache(cookie: CookieCache) {
   cookie.set('', 0)
+}
+
+function clearSession(options: CookieOptions) {
+  setCookie(SESSION_COOKIE_NAME, '', 0, options)
 }
