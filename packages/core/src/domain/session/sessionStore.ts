@@ -1,39 +1,37 @@
-import { cacheCookieAccess, COOKIE_ACCESS_DELAY, CookieCache, CookieOptions } from '../browser/cookie'
-import { Observable } from '../tools/observable'
-import * as utils from '../tools/utils'
-import { monitor } from './internalMonitoring'
-import { tryOldCookiesMigration } from './oldCookiesMigration'
+import { CookieCache, CookieOptions, cacheCookieAccess, COOKIE_ACCESS_DELAY } from '../../browser/cookie'
+import { Observable } from '../../tools/observable'
+import * as utils from '../../tools/utils'
+import { monitor } from '../internalMonitoring'
 
-export const SESSION_COOKIE_NAME = '_dd_s'
-export const SESSION_EXPIRATION_DELAY = 15 * utils.ONE_MINUTE
-export const SESSION_TIME_OUT_DELAY = 4 * utils.ONE_HOUR
-export const VISIBILITY_CHECK_DELAY = utils.ONE_MINUTE
-
-export interface Session<T> {
+export interface SessionStore {
+  expandOrRenewSession: () => void
+  expandSession: () => void
+  retrieveSession: () => SessionState
   renewObservable: Observable<void>
-  getId: () => string | undefined
-  getTrackingType: () => T | undefined
-  getInMemoryTrackingType: () => T | undefined
 }
 
 export interface SessionState {
   id?: string
   created?: string
   expire?: string
+
   [key: string]: string | undefined
 }
 
-/**
- * Limit access to cookie to avoid performance issues
- */
-export function startSessionManagement<TrackingType extends string>(
+export const SESSION_COOKIE_NAME = '_dd_s'
+export const SESSION_EXPIRATION_DELAY = 15 * utils.ONE_MINUTE
+export const SESSION_TIME_OUT_DELAY = 4 * utils.ONE_HOUR
+
+const SESSION_ENTRY_REGEXP = /^([a-z]+)=([a-z0-9-]+)$/
+const SESSION_ENTRY_SEPARATOR = '&'
+
+export function startSessionStore<TrackingType extends string>(
   options: CookieOptions,
   productKey: string,
   computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean }
-): Session<TrackingType> {
-  const sessionCookie = cacheCookieAccess(SESSION_COOKIE_NAME, options)
-  tryOldCookiesMigration(sessionCookie)
+): SessionStore {
   const renewObservable = new Observable<void>()
+  const sessionCookie = cacheCookieAccess(SESSION_COOKIE_NAME, options)
   let inMemorySession = retrieveActiveSession(sessionCookie)
 
   const { throttled: expandOrRenewSession } = utils.throttle(
@@ -59,29 +57,25 @@ export function startSessionManagement<TrackingType extends string>(
     COOKIE_ACCESS_DELAY
   )
 
-  const expandSession = () => {
+  function expandSession() {
     sessionCookie.clearCache()
     const session = retrieveActiveSession(sessionCookie)
     persistSession(session, sessionCookie)
   }
 
-  expandOrRenewSession()
-  trackActivity(expandOrRenewSession)
-  trackVisibility(expandSession)
+  function retrieveSession() {
+    return retrieveActiveSession(sessionCookie)
+  }
 
   return {
-    getId: () => retrieveActiveSession(sessionCookie).id,
-    getTrackingType: () => retrieveActiveSession(sessionCookie)[productKey] as TrackingType | undefined,
-    getInMemoryTrackingType: () => inMemorySession[productKey] as TrackingType | undefined,
+    expandOrRenewSession,
+    expandSession,
+    retrieveSession,
     renewObservable,
   }
 }
 
-const SESSION_ENTRY_REGEXP = /^([a-z]+)=([a-z0-9-]+)$/
-
-const SESSION_ENTRY_SEPARATOR = '&'
-
-export function isValidSessionString(sessionString: string | undefined): sessionString is string {
+function isValidSessionString(sessionString: string | undefined): sessionString is string {
   return (
     sessionString !== undefined &&
     (sessionString.indexOf(SESSION_ENTRY_SEPARATOR) !== -1 || SESSION_ENTRY_REGEXP.test(sessionString))
@@ -136,37 +130,4 @@ export function persistSession(session: SessionState, cookie: CookieCache) {
 
 function clearSession(cookie: CookieCache) {
   cookie.set('', 0)
-}
-
-export function stopSessionManagement() {
-  stopCallbacks.forEach((e) => e())
-  stopCallbacks = []
-}
-
-let stopCallbacks: Array<() => void> = []
-
-export function trackActivity(expandOrRenewSession: () => void) {
-  const { stop } = utils.addEventListeners(
-    window,
-    [utils.DOM_EVENT.CLICK, utils.DOM_EVENT.TOUCH_START, utils.DOM_EVENT.KEY_DOWN, utils.DOM_EVENT.SCROLL],
-    expandOrRenewSession,
-    { capture: true, passive: true }
-  )
-  stopCallbacks.push(stop)
-}
-
-function trackVisibility(expandSession: () => void) {
-  const expandSessionWhenVisible = monitor(() => {
-    if (document.visibilityState === 'visible') {
-      expandSession()
-    }
-  })
-
-  const { stop } = utils.addEventListener(document, utils.DOM_EVENT.VISIBILITY_CHANGE, expandSessionWhenVisible)
-  stopCallbacks.push(stop)
-
-  const visibilityCheckInterval = setInterval(expandSessionWhenVisible, VISIBILITY_CHECK_DELAY)
-  stopCallbacks.push(() => {
-    clearInterval(visibilityCheckInterval)
-  })
 }
