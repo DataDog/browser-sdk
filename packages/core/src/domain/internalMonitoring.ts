@@ -1,11 +1,11 @@
 import { Context } from '../tools/context'
 import { display } from '../tools/display'
 import { toStackTraceString } from '../tools/error'
-import { assign, combine, jsonStringify, Parameters, ThisParameterType } from '../tools/utils'
-import { Batch, HttpRequest } from '../transport'
+import { assign, jsonStringify, Parameters, ThisParameterType } from '../tools/utils'
+import { Batch } from '../transport'
 import { Configuration } from './configuration'
-import { EndpointBuilder } from './configuration/endpointBuilder'
 import { computeStackTrace } from './tracekit'
+import { startMonitoringBatch } from './internalMonitoring/startMonitoringBatch'
 
 enum StatusType {
   info = 'info',
@@ -32,7 +32,7 @@ const monitoringConfiguration: {
   sentMessageCount: number
 } = { maxMessagesPerPage: 0, sentMessageCount: 0 }
 
-let externalContextProvider: () => Context
+export let externalContextProvider: () => Context
 
 export function startInternalMonitoring(configuration: Configuration): InternalMonitoring {
   if (configuration.internalMonitoringEndpointBuilder) {
@@ -47,44 +47,6 @@ export function startInternalMonitoring(configuration: Configuration): InternalM
   return {
     setExternalContextProvider: (provider: () => Context) => {
       externalContextProvider = provider
-    },
-  }
-}
-
-function startMonitoringBatch(configuration: Configuration) {
-  const primaryBatch = createMonitoringBatch(configuration.internalMonitoringEndpointBuilder!)
-  let replicaBatch: Batch | undefined
-  if (configuration.replica !== undefined) {
-    replicaBatch = createMonitoringBatch(configuration.replica.internalMonitoringEndpointBuilder)
-  }
-
-  function createMonitoringBatch(endpointBuilder: EndpointBuilder) {
-    return new Batch(
-      new HttpRequest(endpointBuilder, configuration.batchBytesLimit),
-      configuration.maxBatchSize,
-      configuration.batchBytesLimit,
-      configuration.maxMessageSize,
-      configuration.flushTimeout
-    )
-  }
-
-  function withContext(message: MonitoringMessage) {
-    return combine(
-      {
-        date: new Date().getTime(),
-      },
-      externalContextProvider !== undefined ? externalContextProvider() : {},
-      message
-    )
-  }
-
-  return {
-    add(message: MonitoringMessage) {
-      const contextualizedMessage = withContext(message)
-      primaryBatch.add(contextualizedMessage)
-      if (replicaBatch) {
-        replicaBatch.add(contextualizedMessage)
-      }
     },
   }
 }
