@@ -1,6 +1,7 @@
 import { RelativeTime, relativeToClocks } from '@datadog/browser-core'
 import { createRumSessionMock, RumSessionMock } from '../../test/mockRumSession'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
+import { CLEAR_OLD_CONTEXTS_INTERVAL } from '../tools/contextHistory'
 import { LifeCycleEventType } from './lifeCycle'
 import {
   ACTION_CONTEXT_TIME_OUT_DELAY,
@@ -10,7 +11,6 @@ import {
 } from './parentContexts'
 import { AutoAction } from './rumEventsCollection/action/trackActions'
 import { ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
-import { CLEAR_OLD_CONTEXTS_INTERVAL } from './contextHistory'
 
 describe('parentContexts', () => {
   const FAKE_ID = 'fake'
