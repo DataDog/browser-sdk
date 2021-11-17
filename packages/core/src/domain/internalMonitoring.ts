@@ -2,7 +2,7 @@ import { Context } from '../tools/context'
 import { display } from '../tools/display'
 import { toStackTraceString } from '../tools/error'
 import { assign, jsonStringify, Parameters, ThisParameterType } from '../tools/utils'
-import { Batch } from '../transport'
+import { canUseEventBridge, getEventBridge } from '../transport'
 import { Configuration } from './configuration'
 import { computeStackTrace } from './tracekit'
 import { startMonitoringBatch } from './internalMonitoring/startMonitoringBatch'
@@ -26,7 +26,6 @@ export interface MonitoringMessage extends Context {
 }
 
 const monitoringConfiguration: {
-  batch?: Batch
   debugMode?: boolean
   maxMessagesPerPage: number
   sentMessageCount: number
@@ -34,16 +33,22 @@ const monitoringConfiguration: {
 
 export let externalContextProvider: () => Context
 
-export function startInternalMonitoring(configuration: Configuration): InternalMonitoring {
-  if (configuration.internalMonitoringEndpointBuilder) {
-    const batch = startMonitoringBatch(configuration)
+let onInternalMonitoringEventCollected: ((message: MonitoringMessage) => void) | undefined
 
-    assign(monitoringConfiguration, {
-      batch,
-      maxMessagesPerPage: configuration.maxInternalMonitoringMessagesPerPage,
-      sentMessageCount: 0,
-    })
+export function startInternalMonitoring(configuration: Configuration): InternalMonitoring {
+  if (canUseEventBridge()) {
+    const bridge = getEventBridge()!
+    onInternalMonitoringEventCollected = (message: MonitoringMessage) => bridge.send('internalMonitoring', message)
+  } else if (configuration.internalMonitoringEndpointBuilder) {
+    const batch = startMonitoringBatch(configuration)
+    onInternalMonitoringEventCollected = (message: MonitoringMessage) => batch.add(message)
   }
+
+  assign(monitoringConfiguration, {
+    maxMessagesPerPage: configuration.maxInternalMonitoringMessagesPerPage,
+    sentMessageCount: 0,
+  })
+
   return {
     setExternalContextProvider: (provider: () => Context) => {
       externalContextProvider = provider
@@ -54,19 +59,19 @@ export function startInternalMonitoring(configuration: Configuration): InternalM
 export function startFakeInternalMonitoring() {
   const messages: MonitoringMessage[] = []
   assign(monitoringConfiguration, {
-    batch: {
-      add(message: MonitoringMessage) {
-        messages.push(message)
-      },
-    },
     maxMessagesPerPage: Infinity,
     sentMessageCount: 0,
   })
+
+  onInternalMonitoringEventCollected = (message: MonitoringMessage) => {
+    messages.push(message)
+  }
+
   return messages
 }
 
 export function resetInternalMonitoring() {
-  monitoringConfiguration.batch = undefined
+  onInternalMonitoringEventCollected = undefined
 }
 
 export function monitored<T extends (...params: any[]) => unknown>(
@@ -76,7 +81,7 @@ export function monitored<T extends (...params: any[]) => unknown>(
 ) {
   const originalMethod = descriptor.value!
   descriptor.value = function (this: any, ...args: Parameters<T>) {
-    const decorated = monitoringConfiguration.batch ? monitor(originalMethod) : originalMethod
+    const decorated = onInternalMonitoringEventCollected ? monitor(originalMethod) : originalMethod
     return decorated.apply(this, args) as ReturnType<T>
   } as T
 }
@@ -105,7 +110,7 @@ export function callMonitored<T extends (...args: any[]) => any>(
   } catch (e) {
     logErrorIfDebug(e)
     try {
-      addErrorToMonitoringBatch(e)
+      addErrorToMonitoring(e)
     } catch (e) {
       logErrorIfDebug(e)
     }
@@ -114,28 +119,27 @@ export function callMonitored<T extends (...args: any[]) => any>(
 
 export function addMonitoringMessage(message: string, context?: Context) {
   logMessageIfDebug(message, context)
-  addToMonitoringBatch({
+  addToMonitoring({
     message,
     ...context,
     status: StatusType.info,
   })
 }
 
-export function addErrorToMonitoringBatch(e: unknown) {
-  addToMonitoringBatch({
+export function addErrorToMonitoring(e: unknown) {
+  addToMonitoring({
     ...formatError(e),
     status: StatusType.error,
   })
 }
 
-function addToMonitoringBatch(message: MonitoringMessage) {
+function addToMonitoring(message: MonitoringMessage) {
   if (
-    monitoringConfiguration.batch &&
+    onInternalMonitoringEventCollected &&
     monitoringConfiguration.sentMessageCount < monitoringConfiguration.maxMessagesPerPage
   ) {
     monitoringConfiguration.sentMessageCount += 1
-
-    monitoringConfiguration.batch.add(message)
+    onInternalMonitoringEventCollected(message)
   }
 }
 

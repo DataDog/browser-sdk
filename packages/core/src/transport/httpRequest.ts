@@ -1,5 +1,5 @@
 import { EndpointBuilder } from '../domain/configuration/endpointBuilder'
-import { monitor, addErrorToMonitoringBatch, addMonitoringMessage } from '../domain/internalMonitoring'
+import { monitor, addErrorToMonitoring, addMonitoringMessage } from '../domain/internalMonitoring'
 
 let hasReportedXhrError = false
 
@@ -69,6 +69,6 @@ let hasReportedBeaconError = false
 function reportBeaconError(e: unknown) {
   if (!hasReportedBeaconError) {
     hasReportedBeaconError = true
-    addErrorToMonitoringBatch(e)
+    addErrorToMonitoring(e)
   }
 }

@@ -1,5 +1,12 @@
 import sinon from 'sinon'
-import { Clock, mockClock, stubEndpointBuilder } from '../../test/specHelper'
+import { resetExperimentalFeatures, updateExperimentalFeatures } from '..'
+import {
+  Clock,
+  deleteEventBridgeStub,
+  initEventBridgeStub,
+  mockClock,
+  stubEndpointBuilder,
+} from '../../test/specHelper'
 
 import { Configuration } from './configuration'
 import {
@@ -171,13 +178,12 @@ describe('internal monitoring', () => {
     })
   })
 
-  describe('request', () => {
+  describe('transport', () => {
     const FAKE_DATE = 123456
     let server: sinon.SinonFakeServer
     let clock: Clock
 
     beforeEach(() => {
-      startInternalMonitoring(configuration as Configuration)
       server = sinon.fakeServer.create()
       clock = mockClock(new Date(FAKE_DATE))
     })
@@ -186,9 +192,13 @@ describe('internal monitoring', () => {
       resetInternalMonitoring()
       server.restore()
       clock.cleanup()
+      resetExperimentalFeatures()
+      deleteEventBridgeStub()
     })
 
     it('should send the needed data', () => {
+      startInternalMonitoring(configuration as Configuration)
+
       callMonitored(() => {
         throw new Error('message')
       })
@@ -205,6 +215,8 @@ describe('internal monitoring', () => {
     })
 
     it('should cap the data sent', () => {
+      startInternalMonitoring(configuration as Configuration)
+
       const max = configuration.maxInternalMonitoringMessagesPerPage!
       for (let i = 0; i < max + 3; i += 1) {
         callMonitored(() => {
@@ -213,6 +225,19 @@ describe('internal monitoring', () => {
       }
 
       expect(server.requests.length).toEqual(max)
+    })
+
+    it('should send bridge event when bridge is present', () => {
+      updateExperimentalFeatures(['event-bridge'])
+      const sendSpy = spyOn(initEventBridgeStub(), 'send')
+      startInternalMonitoring(configuration as Configuration)
+
+      callMonitored(() => {
+        throw new Error('message')
+      })
+
+      expect(server.requests.length).toEqual(0)
+      expect(sendSpy).toHaveBeenCalled()
     })
   })
 

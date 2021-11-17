@@ -1,4 +1,4 @@
-import { addErrorToMonitoringBatch, display, includes, monitor } from '@datadog/browser-core'
+import { addErrorToMonitoring, display, includes, monitor } from '@datadog/browser-core'
 import { createDeflateWorker, DeflateWorker } from './deflateWorker'
 
 /**
@@ -102,11 +102,11 @@ function onError(error: ErrorEvent | Error | string) {
           'https://docs.datadoghq.com/real_user_monitoring/faq/content_security_policy'
       )
     } else {
-      addErrorToMonitoringBatch(error)
+      addErrorToMonitoring(error)
     }
     state.callbacks.forEach((callback) => callback())
     state = { status: DeflateWorkerStatus.Error }
   } else {
-    addErrorToMonitoringBatch(error)
+    addErrorToMonitoring(error)
   }
 }
