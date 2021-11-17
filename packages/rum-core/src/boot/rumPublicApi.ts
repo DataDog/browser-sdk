@@ -98,13 +98,17 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
   }
 
   function initRum(initConfiguration: C) {
+    if (willSyntheticsInjectRum()) {
+      return
+    }
+
     if (canUseEventBridge()) {
       initConfiguration = overrideInitConfigurationForBridge(initConfiguration)
     } else if (!canHandleSession(initConfiguration)) {
       return
     }
 
-    if (willSyntheticsInjectRum() || !isValidInitConfiguration(initConfiguration)) {
+    if (!isValidInitConfiguration(initConfiguration)) {
       return
     }
 
