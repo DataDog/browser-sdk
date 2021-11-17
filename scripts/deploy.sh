@@ -39,6 +39,7 @@ esac
 
 declare -A BUNDLES=(
   ["datadog-rum-${suffix}.js"]="packages/rum/bundle/datadog-rum.js"
+  ["datadog-rum-synthetics-${suffix}.js"]="packages/rum/bundle/datadog-rum-synthetics.js"
   ["datadog-rum-slim-${suffix}.js"]="packages/rum-slim/bundle/datadog-rum-slim.js"
   ["datadog-logs-${suffix}.js"]="packages/logs/bundle/datadog-logs.js"
 )
