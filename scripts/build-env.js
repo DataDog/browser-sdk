@@ -55,4 +55,8 @@ switch (buildMode) {
 module.exports = {
   BUILD_MODE: buildMode,
   SDK_VERSION: sdkVersion,
+
+  // This will be injected by webpack when building the RUM synthetics bundle. When set to 'true',
+  // the bundle will skip the check to ignore init() calls during synthetics tests.
+  SYNTHETICS_BUNDLE: '',
 }

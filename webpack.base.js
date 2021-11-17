@@ -5,7 +5,7 @@ const buildEnv = require('./scripts/build-env')
 
 const tsconfigPath = path.join(__dirname, 'tsconfig.webpack.json')
 
-module.exports = ({ entry, mode, filename, types }) => ({
+module.exports = ({ entry, mode, filename, types, extraBuildEnv }) => ({
   entry,
   mode,
   output: {
@@ -20,10 +20,10 @@ module.exports = ({ entry, mode, filename, types }) => ({
         test: /\.ts$/,
         loader: 'string-replace-loader',
         options: {
-          multiple: [
-            { search: '<<< SDK_VERSION >>>', replace: buildEnv.SDK_VERSION },
-            { search: '<<< BUILD_MODE >>>', replace: buildEnv.BUILD_MODE },
-          ],
+          multiple: Object.entries({ ...buildEnv, ...extraBuildEnv }).map(([entry, value]) => ({
+            search: `<<< ${entry} >>>`,
+            replace: value,
+          })),
         },
       },
 

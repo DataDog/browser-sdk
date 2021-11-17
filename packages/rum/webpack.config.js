@@ -14,5 +14,8 @@ module.exports = (_env, argv) => [
     mode: argv.mode,
     entry,
     filename: 'datadog-rum-synthetics.js',
+    extraBuildEnv: {
+      SYNTHETICS_BUNDLE: 'true',
+    },
   }),
 ]
