@@ -20,7 +20,7 @@ app.use(redirectSuffixedFiles)
 app.listen(port, () => printLog(`Server listening on port ${port}.`))
 
 function redirectSuffixedFiles(req, res, next) {
-  const matches = /(.*)-(canary|head|v3)\.js/.exec(req.url)
+  const matches = /(.*)-(canary|staging|v3)\.js/.exec(req.url)
   if (matches) {
     res.redirect(`${matches[1]}.js`)
   } else {

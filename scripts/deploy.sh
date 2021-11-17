@@ -5,7 +5,7 @@ set -ex
 env=$1
 suffix=$2
 
-USAGE="Usage: ./deploy.sh staging|prod head|canary|vXXX"
+USAGE="Usage: ./deploy.sh staging|prod staging|canary|vXXX"
 
 case "${env}" in
 "prod")
@@ -28,7 +28,7 @@ case "${suffix}" in
 v[0-9]*)
     CACHE_CONTROL='max-age=14400, s-maxage=60'
   ;;
-"canary" | "head")
+"canary" | "staging")
     CACHE_CONTROL='max-age=900, s-maxage=60'
   ;;
 * )
