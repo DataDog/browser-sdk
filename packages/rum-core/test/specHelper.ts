@@ -24,7 +24,7 @@ import {
   SYNTHETICS_INJECTS_RUM_COOKIE_NAME,
   SYNTHETICS_RESULT_ID_COOKIE_NAME,
   SYNTHETICS_TEST_ID_COOKIE_NAME,
-} from '../src/tools/syntheticsContext'
+} from '../src/domain/syntheticsContext'
 import { validateFormat } from './formatValidation'
 import { createRumSessionMock } from './mockRumSession'
 
