@@ -39,7 +39,7 @@ export function stopSessionManagement() {
 
 let stopCallbacks: Array<() => void> = []
 
-export function trackActivity(expandOrRenewSession: () => void) {
+function trackActivity(expandOrRenewSession: () => void) {
   const { stop } = utils.addEventListeners(
     window,
     [utils.DOM_EVENT.CLICK, utils.DOM_EVENT.TOUCH_START, utils.DOM_EVENT.KEY_DOWN, utils.DOM_EVENT.SCROLL],

@@ -22,6 +22,9 @@ export const SESSION_COOKIE_NAME = '_dd_s'
 export const SESSION_EXPIRATION_DELAY = 15 * utils.ONE_MINUTE
 export const SESSION_TIME_OUT_DELAY = 4 * utils.ONE_HOUR
 
+const SESSION_ENTRY_REGEXP = /^([a-z]+)=([a-z0-9-]+)$/
+const SESSION_ENTRY_SEPARATOR = '&'
+
 export function startSessionStore<TrackingType extends string>(
   options: CookieOptions,
   productKey: string,
@@ -72,11 +75,7 @@ export function startSessionStore<TrackingType extends string>(
   }
 }
 
-const SESSION_ENTRY_REGEXP = /^([a-z]+)=([a-z0-9-]+)$/
-
-const SESSION_ENTRY_SEPARATOR = '&'
-
-export function isValidSessionString(sessionString: string | undefined): sessionString is string {
+function isValidSessionString(sessionString: string | undefined): sessionString is string {
   return (
     sessionString !== undefined &&
     (sessionString.indexOf(SESSION_ENTRY_SEPARATOR) !== -1 || SESSION_ENTRY_REGEXP.test(sessionString))
