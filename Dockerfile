@@ -1,5 +1,7 @@
 FROM node:16.3.0-buster-slim
 
+ARG CHROME_PACKAGE_VERSION=95.0.4638.69-1
+
 # Install Chrome deps
 RUN apt-get update && apt-get install -y -q --no-install-recommends \
         libgtk-3-dev \
@@ -17,7 +19,7 @@ RUN apt-get update && apt-get install -y -q --no-install-recommends \
 
 # Download and install Chrome
 # Debian taken from https://www.ubuntuupdates.org/package/google_chrome/stable/main/base/google-chrome-stable
-RUN curl --silent --show-error --fail http://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_94.0.4606.81-1_amd64.deb --output google-chrome.deb \
+RUN curl --silent --show-error --fail http://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_${CHROME_PACKAGE_VERSION}_amd64.deb --output google-chrome.deb \
     && dpkg -i google-chrome.deb \
     && rm google-chrome.deb
 
@@ -43,6 +45,11 @@ RUN apt-get install -y -q --no-install-recommends g++ build-essential
 
 # Datadog CI cli
 RUN yarn global add @datadog/datadog-ci
+
+# Gihub cli
+RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+  && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+  && apt-get update && apt-get install -y -q gh
 
 # Webdriverio deps
 RUN mkdir -p /usr/share/man/man1
