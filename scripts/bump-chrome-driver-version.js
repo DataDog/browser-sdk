@@ -2,7 +2,15 @@
 
 const request = require('request')
 
-const { printLog, printError, logAndExit, executeCommand, replaceCiVariable, initGitConfig } = require('./utils')
+const {
+  printLog,
+  printError,
+  logAndExit,
+  executeCommand,
+  replaceCiVariable,
+  initGitConfig,
+  getSecretKey,
+} = require('./utils')
 
 const CI_FILE = '.gitlab-ci.yml'
 const REPOSITORY = process.env.GIT_REPOSITORY
@@ -45,7 +53,7 @@ async function main() {
   await executeCommand(`git push origin ${chromeVersionBranch}`)
 
   printLog(`Create PR...`)
-  await executeCommand(`gh pr create --fill --base ${MAIN_BRANCH}`)
+  await createPullRequest()
 
   printLog(`Chrome version bump PR created (from ${CURRENT_PACKAGE_VERSION} to ${packageVersion}).`)
 }
@@ -70,6 +78,12 @@ function getMajor(version) {
   const major = majorMatches ? majorMatches[1] : null
 
   return major
+}
+
+async function createPullRequest() {
+  const githubAccessToken = await getSecretKey('ci.browser-sdk.github_access_token')
+  await executeCommand(`echo "${githubAccessToken}" | gh auth login --with-token`)
+  await executeCommand(`gh pr create --fill --base ${MAIN_BRANCH}`)
 }
 
 function fetch(url) {
