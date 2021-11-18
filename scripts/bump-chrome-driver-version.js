@@ -1,6 +1,8 @@
 'use strict'
 
 const https = require('https')
+const request = require('request')
+
 const { printLog, printError, logAndExit, replaceCiVariable, initGitConfig, executeCommand } = require('./utils')
 
 const CI_FILE = '.gitlab-ci.yml'
@@ -31,14 +33,18 @@ async function main() {
     process.exit(1)
   }
 
+  const chromeVersionBranch = `bump-chrome-version-to-${driverVersion}`
+  await executeCommand(`git checkout -b ${chromeVersionBranch}`)
+
   await replaceCiVariable('CHROME_DRIVER_VERSION', driverVersion)
   await replaceCiVariable('CHROME_PACKAGE_VERSION', packageVersion)
 
   await executeCommand(`git add ${CI_FILE}`)
   await executeCommand(`git commit -m "👷 Bump chrome to ${packageVersion}"`)
-  await executeCommand(`git push origin ${MAIN_BRANCH}`)
+  await executeCommand(`git push origin ${chromeVersionBranch}`)
+  await createPullRequest(chromeVersionBranch)
 
-  printLog(`Chrome version bumped from ${CURRENT_PACKAGE_VERSION} to ${packageVersion}.`)
+  printLog(`Chrome version bump PR created (from ${CURRENT_PACKAGE_VERSION} to ${packageVersion}).`)
 }
 
 async function getPackageVersion() {
@@ -72,6 +78,25 @@ function request(url) {
     })
     req.on('error', reject)
     req.end()
+  })
+}
+
+function createPullRequest(branch) {
+  return new Promise((resolve, reject) => {
+    request.post(
+      `https://api.github.com/repos/DataDog/browser-sdk/pulls`,
+      {
+        head: branch,
+        base: MAIN_BRANCH,
+        body: 'coucou test',
+      },
+      (error, { result }) => {
+        if (error) {
+          reject(error)
+        }
+        resolve(result)
+      }
+    )
   })
 }
 
