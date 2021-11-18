@@ -48,14 +48,14 @@ async function main() {
 }
 
 async function getPackageVersion() {
-  const packagePage = await request(CHROME_PACKAGE_URL)
+  const packagePage = await doRequest(CHROME_PACKAGE_URL)
   const packageMatches = /<td>([0-9.-]+)<\/td>/.exec(packagePage)
 
   return packageMatches ? packageMatches[1] : null
 }
 
 async function getDriverVersion(packageVersion) {
-  const driverPage = await request(`${CHROME_DRIVER_URL}${getMajor(packageVersion)}`)
+  const driverPage = await doRequest(`${CHROME_DRIVER_URL}${getMajor(packageVersion)}`)
   const driverMatchGroups = [...driverPage.toString().matchAll(/<Prefix>([0-9.-]+)\/<\/Prefix>/g)]
 
   return driverMatchGroups.length ? driverMatchGroups[driverMatchGroups.length - 1][1] : null
@@ -69,7 +69,7 @@ function getMajor(version) {
   return major
 }
 
-function request(url) {
+function doRequest(url) {
   return new Promise((resolve, reject) => {
     const req = https.request(url, (res) => {
       console.log(`statusCode: ${res.statusCode}`)
