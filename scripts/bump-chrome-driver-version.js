@@ -6,7 +6,7 @@ const { printLog, printError, logAndExit, executeCommand, replaceCiVariable, ini
 
 const CI_FILE = '.gitlab-ci.yml'
 const REPOSITORY = process.env.GIT_REPOSITORY
-const MAIN_BRANCH = process.env.MAIN_BRANCH
+const MAIN_BRANCH = 'aymeric/auto-chrome-version-bump' //process.env.MAIN_BRANCH
 
 const CURRENT_PACKAGE_VERSION = process.env.CHROME_PACKAGE_VERSION
 const CHROME_PACKAGE_URL = 'https://www.ubuntuupdates.org/package/google_chrome/stable/main/base/google-chrome-stable'
