@@ -6,8 +6,8 @@ variables:
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
   MAIN_BRANCH: 'main'
-  CHROME_PACKAGE_VERSION: 95.0.4638.69-1
-  CHROME_DRIVER_VERSION: 95.0.4638.54
+  CHROME_PACKAGE_VERSION: 96.0.4664.45-1
+  CHROME_DRIVER_VERSION: 96.0.4664.45
 
 cache:
   key: dependencies
@@ -92,7 +92,7 @@ ci-image:
   tags: ['runner:docker', 'size:large']
   image: $BUILD_STABLE_REGISTRY/docker:18.03.1
   script:
-    - docker build --build-arg CHROME_PACKAGE_VERSION=$CHROME_PACKAGE_VERSION chrome--tag $CI_IMAGE .
+    - docker build --build-arg CHROME_PACKAGE_VERSION=$CHROME_PACKAGE_VERSION --tag $CI_IMAGE .
     - docker push $CI_IMAGE
 
 # ########################################################################################################################
@@ -446,5 +446,5 @@ bump-chrome-version-ci-image:
   tags: ['runner:docker', 'size:large']
   image: $BUILD_STABLE_REGISTRY/docker:18.03.1
   script:
-    - docker build --build-arg CHROME_PACKAGE_VERSION=$CHROME_PACKAGE_VERSION chrome--tag $CI_IMAGE .
+    - docker build --build-arg CHROME_PACKAGE_VERSION=$CHROME_PACKAGE_VERSION --tag $CI_IMAGE .
 #    - docker push $CI_IMAGE  
