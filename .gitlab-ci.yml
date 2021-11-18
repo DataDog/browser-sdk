@@ -6,6 +6,8 @@ variables:
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
   MAIN_BRANCH: 'main'
+  CHROME_PACKAGE_VERSION: 95.0.4638.69-1
+  CHROME_DRIVER_VERSION: 95.0.4638.54
 
 cache:
   key: dependencies
@@ -33,19 +35,19 @@ stages:
 # Branch selection helpers
 ########################################################################################################################
 
-.test-allowed-branches:
-  except:
-    refs:
-      - /^release\//
-      - schedules
+# .test-allowed-branches:
+#   except:
+#     refs:
+#       - /^release\//
+#       - schedules
 
-.bs-allowed-branches:
-  except:
-    refs:
-      - main
-      - /^staging-[0-9]+$/
-      - /^release\//
-      - schedules
+# .bs-allowed-branches:
+#   except:
+#     refs:
+#       - main
+#       - /^staging-[0-9]+$/
+#       - /^release\//
+#       - schedules
 
 .feature-branches:
   except:
@@ -56,29 +58,30 @@ stages:
       - /^release\//
       - schedules
 
-.staging:
-  only:
-    variables:
-      - $CI_COMMIT_REF_NAME == $CURRENT_STAGING
+# .staging:
+#   only:
+#     variables:
+#       - $CI_COMMIT_REF_NAME == $CURRENT_STAGING
 
-.main:
-  only:
-    refs:
-      - main
-  except:
-    refs:
-      - schedules
-    variables:
-      - $CI_COMMIT_TITLE =~ /^v[0-9.]+/
+# .main:
+#   only:
+#     refs:
+#       - main
+#   except:
+#     refs:
+#       - schedules
+#     variables:
+#       - $CI_COMMIT_TITLE =~ /^v[0-9.]+/
+#       - $CI_COMMIT_TITLE =~ /^👷 Bump chrome to [0-9.]+/
 
-.tags:
-  only:
-    refs:
-      - tags
+# .tags:
+#   only:
+#     refs:
+#       - tags
 
-########################################################################################################################
-# CI image
-########################################################################################################################
+# ########################################################################################################################
+# # CI image
+# ########################################################################################################################
 
 ci-image:
   stage: ci-image
@@ -89,327 +92,359 @@ ci-image:
   tags: ['runner:docker', 'size:large']
   image: $BUILD_STABLE_REGISTRY/docker:18.03.1
   script:
-    - docker build --tag $CI_IMAGE .
+    - docker build --build-arg CHROME_PACKAGE_VERSION=$CHROME_PACKAGE_VERSION chrome--tag $CI_IMAGE .
     - docker push $CI_IMAGE
 
+# ########################################################################################################################
+# # Tests
+# ########################################################################################################################
+
+# format:
+#   extends:
+#     - .base-configuration
+#     - .test-allowed-branches
+#   script:
+#     - yarn
+#     - yarn format
+
+# woke:
+#   extends:
+#     - .base-configuration
+#     - .test-allowed-branches
+#   script:
+#     - yarn woke
+
+# typecheck:
+#   extends:
+#     - .base-configuration
+#     - .test-allowed-branches
+#   script:
+#     - yarn
+#     - yarn typecheck
+
+# build-and-lint:
+#   extends:
+#     - .base-configuration
+#     - .test-allowed-branches
+#   script:
+#     - yarn
+#     - yarn build
+#     - yarn lint
+#     - scripts/cli typecheck test/app
+#     - scripts/cli typecheck test/e2e
+
+# build-bundle:
+#   extends:
+#     - .base-configuration
+#     - .test-allowed-branches
+#   script:
+#     - yarn
+#     - yarn build:bundle
+
+# compatibility:
+#   extends:
+#     - .base-configuration
+#     - .test-allowed-branches
+#   script:
+#     - yarn
+#     - yarn test:compat:tsc
+#     - yarn test:compat:ssr
+
+# unit:
+#   extends:
+#     - .base-configuration
+#     - .test-allowed-branches
+#   artifacts:
+#     paths:
+#       - test-report/unit/
+#     reports:
+#       junit: test-report/unit/*.xml
+#   script:
+#     - yarn
+#     - yarn test:unit
+#     - ./scripts/codecov.sh
+
+# e2e:
+#   extends:
+#     - .base-configuration
+#     - .test-allowed-branches
+#   artifacts:
+#     when: always
+#     paths:
+#       - test-report/e2e/
+#     reports:
+#       junit: test-report/e2e/*.xml
+#   script:
+#     - yarn
+#     - yarn test:e2e
+
+# check-licenses:
+#   extends:
+#     - .base-configuration
+#     - .test-allowed-branches
+#   script:
+#     - node --no-warnings scripts/check-licenses.js
+
+# unit-bs:
+#   stage: browserstack
+#   extends:
+#     - .base-configuration
+#     - .bs-allowed-branches
+#   resource_group: browserstack
+#   artifacts:
+#     reports:
+#       junit: test-report/unit-bs/*.xml
+#   script:
+#     - yarn
+#     - ./scripts/ci-bs.sh test:unit
+
+# e2e-bs:
+#   stage: browserstack
+#   extends:
+#     - .base-configuration
+#     - .bs-allowed-branches
+#   resource_group: browserstack
+#   artifacts:
+#     when: always
+#     paths:
+#       - test-report/e2e-bs/
+#     reports:
+#       junit: test-report/e2e-bs/*.xml
+
+#   script:
+#     - yarn
+#     - ./scripts/ci-bs.sh test:e2e
+
+# export-test-result:
+#   stage: notify
+#   extends:
+#     - .base-configuration
+#     - .test-allowed-branches
+#   when: always
+#   script:
+#     - node ./scripts/export-test-result.js
+
+# ########################################################################################################################
+# # Deploy
+# ########################################################################################################################
+
+# deploy-staging:
+#   stage: deploy
+#   extends:
+#     - .base-configuration
+#     - .staging
+#   script:
+#     - yarn
+#     - BUILD_MODE=staging yarn build:bundle
+#     - ./scripts/deploy.sh staging head
+
+# deploy-prod-canary:
+#   stage: deploy:canary
+#   extends:
+#     - .base-configuration
+#     - .main
+#   script:
+#     - yarn
+#     - BUILD_MODE=canary yarn build:bundle
+#     - ./scripts/deploy.sh prod canary
+
+# deploy-prod-stable:
+#   stage: deploy
+#   extends:
+#     - .base-configuration
+#     - .tags
+#   when: manual
+#   allow_failure: false
+#   script:
+#     - yarn
+#     - BUILD_MODE=release yarn build:bundle
+#     - VERSION=$(node -p -e "require('./lerna.json').version")
+#     - ./scripts/deploy.sh prod v${VERSION%%.*}
+
+# ########################################################################################################################
+# # Notify
+# ########################################################################################################################
+
+# include: 'https://gitlab-templates.ddbuild.io/slack-notifier/v1/template.yml'
+
+# notify-feature-branch-failure:
+#   extends:
+#     - .slack-notifier.on-failure
+#     - .feature-branches
+
+# .prepare_notification:
+#   extends: .slack-notifier-base
+#   before_script:
+#     - COMMIT_MESSAGE=`git show-branch --no-name HEAD`
+#     - BUILD_URL="$CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID"
+#     - COMMIT_URL="$CI_PROJECT_URL/commits/$CI_COMMIT_SHA"
+
+# notify-staging-failure:
+#   extends:
+#     - .prepare_notification
+#     - .staging
+#   when: on_failure
+#   script:
+#     - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME main pipeline for <$BUILD_URL|$COMMIT_MESSAGE> failed."'
+#     - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
+
+# notify-release-ready:
+#   stage: pre-deploy-notify
+#   extends:
+#     - .prepare_notification
+#     - .tags
+#   script:
+#     - 'MESSAGE_TEXT=":i: $CI_PROJECT_NAME <$BUILD_URL|$COMMIT_MESSAGE> ready to be deployed to :datadog:"'
+#     - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
+
+# notify-prod-canary-success:
+#   stage: notify:canary
+#   extends:
+#     - .prepare_notification
+#     - .main
+#   script:
+#     - 'MESSAGE_TEXT=":rocket: $CI_PROJECT_NAME <$COMMIT_URL|$COMMIT_MESSAGE> deployed to :datadog:."'
+#     - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
+#     - postmessage "#rum-ops" "$MESSAGE_TEXT"
+
+# notify-prod-canary-failure:
+#   stage: notify:canary
+#   extends:
+#     - .prepare_notification
+#     - .main
+#   when: on_failure
+#   script:
+#     - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME release pipeline <$BUILD_URL|$COMMIT_MESSAGE> failed."'
+#     - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
+
+# notify-prod-stable-success:
+#   extends:
+#     - .prepare_notification
+#     - .tags
+#   script:
+#     - 'MESSAGE_TEXT=":rocket: $CI_PROJECT_NAME <$COMMIT_URL|$COMMIT_MESSAGE> deployed to :earth_americas:."'
+#     - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
+#     - postmessage "#rum-ops" "$MESSAGE_TEXT"
+
+# notify-prod-stable-failure:
+#   extends:
+#     - .prepare_notification
+#     - .tags
+#   when: on_failure
+#   script:
+#     - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME release pipeline <$BUILD_URL|$COMMIT_MESSAGE> failed."'
+#     - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
+
+# ########################################################################################################################
+# # To staging CI
+# ########################################################################################################################
+
+# staging-reset-scheduled:
+#   stage: task
+#   extends: .base-configuration
+#   only:
+#     variables:
+#       - $TARGET_TASK_NAME == "staging-reset-scheduled"
+#   before_script:
+#     - eval $(ssh-agent -s)
+#   script:
+#     - node scripts/staging-ci/staging-reset.js
+#   artifacts:
+#     reports:
+#       dotenv: build.env
+
+# staging-reset-scheduled-success:
+#   extends: .prepare_notification
+#   only:
+#     variables:
+#       - $TARGET_TASK_NAME == "staging-reset-scheduled"
+#   script:
+#     - 'MESSAGE_TEXT=":white_check_mark: [*$CI_PROJECT_NAME*] Staging has been reset from *${CURRENT_STAGING}* to *${NEW_STAGING}* on pipeline <$BUILD_URL|$COMMIT_MESSAGE>."'
+#     - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
+#   dependencies:
+#     - staging-reset-scheduled
+
+# staging-reset-scheduled-failure:
+#   extends: .prepare_notification
+#   only:
+#     variables:
+#       - $TARGET_TASK_NAME == "staging-reset-scheduled"
+#   when: on_failure
+#   script:
+#     - 'MESSAGE_TEXT=":x: [*$CI_PROJECT_NAME*] Staging failed to reset from *${CURRENT_STAGING}* to *${NEW_STAGING}* on pipeline <$BUILD_URL|$COMMIT_MESSAGE>."'
+#     - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
+#   dependencies:
+#     - staging-reset-scheduled
+
+# merge-into-staging:
+#   stage: pre-deploy
+#   extends:
+#     - .base-configuration
+#     - .main
+#   before_script:
+#     - eval $(ssh-agent -s)
+#   script:
+#     - node scripts/staging-ci/merge-into-staging.js
+
+# check-staging-merge:
+#   stage: test
+#   extends:
+#     - .base-configuration
+#     - .feature-branches
+#   before_script:
+#     - eval $(ssh-agent -s)
+#   script:
+#     - node scripts/staging-ci/check-staging-merge.js
+
+# # A noop job that's used to signal to `to-staging` that it can merge to the
+# # staging branch, even though the pipeline is still running
+# tests-passed:
+#   stage: after-tests
+#   extends:
+#     - .base-configuration
+#     - .feature-branches
+#   script:
+#     - 'true'
+
+# # in after-tests to not block `to-staging` merge
+# check-squash-into-staging:
+#   stage: after-tests
+#   extends:
+#     - .base-configuration
+#     - .feature-branches
+#   before_script:
+#     - eval $(ssh-agent -s)
+#   script:
+#     - node scripts/staging-ci/check-squash-into-staging.js
+
 ########################################################################################################################
-# Tests
+# Bump e2e chrome version
 ########################################################################################################################
 
-format:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-  script:
-    - yarn
-    - yarn format
 
-woke:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-  script:
-    - yarn woke
-
-typecheck:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-  script:
-    - yarn
-    - yarn typecheck
-
-build-and-lint:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-  script:
-    - yarn
-    - yarn build
-    - yarn lint
-    - scripts/cli typecheck test/app
-    - scripts/cli typecheck test/e2e
-
-build-bundle:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-  script:
-    - yarn
-    - yarn build:bundle
-
-compatibility:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-  script:
-    - yarn
-    - yarn test:compat:tsc
-    - yarn test:compat:ssr
-
-unit:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-  artifacts:
-    paths:
-      - test-report/unit/
-    reports:
-      junit: test-report/unit/*.xml
-  script:
-    - yarn
-    - yarn test:unit
-    - ./scripts/codecov.sh
-
-e2e:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-  artifacts:
-    when: always
-    paths:
-      - test-report/e2e/
-    reports:
-      junit: test-report/e2e/*.xml
-  script:
-    - yarn
-    - yarn test:e2e
-
-check-licenses:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-  script:
-    - node --no-warnings scripts/check-licenses.js
-
-unit-bs:
-  stage: browserstack
-  extends:
-    - .base-configuration
-    - .bs-allowed-branches
-  resource_group: browserstack
-  artifacts:
-    reports:
-      junit: test-report/unit-bs/*.xml
-  script:
-    - yarn
-    - ./scripts/ci-bs.sh test:unit
-
-e2e-bs:
-  stage: browserstack
-  extends:
-    - .base-configuration
-    - .bs-allowed-branches
-  resource_group: browserstack
-  artifacts:
-    when: always
-    paths:
-      - test-report/e2e-bs/
-    reports:
-      junit: test-report/e2e-bs/*.xml
-
-  script:
-    - yarn
-    - ./scripts/ci-bs.sh test:e2e
-
-export-test-result:
-  stage: notify
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-  when: always
-  script:
-    - node ./scripts/export-test-result.js
-
-########################################################################################################################
-# Deploy
-########################################################################################################################
-
-deploy-staging:
-  stage: deploy
-  extends:
-    - .base-configuration
-    - .staging
-  script:
-    - yarn
-    - BUILD_MODE=staging yarn build:bundle
-    - ./scripts/deploy.sh staging head
-
-deploy-prod-canary:
-  stage: deploy:canary
-  extends:
-    - .base-configuration
-    - .main
-  script:
-    - yarn
-    - BUILD_MODE=canary yarn build:bundle
-    - ./scripts/deploy.sh prod canary
-
-deploy-prod-stable:
-  stage: deploy
-  extends:
-    - .base-configuration
-    - .tags
-  when: manual
-  allow_failure: false
-  script:
-    - yarn
-    - BUILD_MODE=release yarn build:bundle
-    - VERSION=$(node -p -e "require('./lerna.json').version")
-    - ./scripts/deploy.sh prod v${VERSION%%.*}
-
-########################################################################################################################
-# Notify
-########################################################################################################################
-
-include: 'https://gitlab-templates.ddbuild.io/slack-notifier/v1/template.yml'
-
-notify-feature-branch-failure:
-  extends:
-    - .slack-notifier.on-failure
-    - .feature-branches
-
-.prepare_notification:
-  extends: .slack-notifier-base
-  before_script:
-    - COMMIT_MESSAGE=`git show-branch --no-name HEAD`
-    - BUILD_URL="$CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID"
-    - COMMIT_URL="$CI_PROJECT_URL/commits/$CI_COMMIT_SHA"
-
-notify-staging-failure:
-  extends:
-    - .prepare_notification
-    - .staging
-  when: on_failure
-  script:
-    - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME main pipeline for <$BUILD_URL|$COMMIT_MESSAGE> failed."'
-    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
-
-notify-release-ready:
-  stage: pre-deploy-notify
-  extends:
-    - .prepare_notification
-    - .tags
-  script:
-    - 'MESSAGE_TEXT=":i: $CI_PROJECT_NAME <$BUILD_URL|$COMMIT_MESSAGE> ready to be deployed to :datadog:"'
-    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
-
-notify-prod-canary-success:
-  stage: notify:canary
-  extends:
-    - .prepare_notification
-    - .main
-  script:
-    - 'MESSAGE_TEXT=":rocket: $CI_PROJECT_NAME <$COMMIT_URL|$COMMIT_MESSAGE> deployed to :datadog:."'
-    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
-    - postmessage "#rum-ops" "$MESSAGE_TEXT"
-
-notify-prod-canary-failure:
-  stage: notify:canary
-  extends:
-    - .prepare_notification
-    - .main
-  when: on_failure
-  script:
-    - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME release pipeline <$BUILD_URL|$COMMIT_MESSAGE> failed."'
-    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
-
-notify-prod-stable-success:
-  extends:
-    - .prepare_notification
-    - .tags
-  script:
-    - 'MESSAGE_TEXT=":rocket: $CI_PROJECT_NAME <$COMMIT_URL|$COMMIT_MESSAGE> deployed to :earth_americas:."'
-    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
-    - postmessage "#rum-ops" "$MESSAGE_TEXT"
-
-notify-prod-stable-failure:
-  extends:
-    - .prepare_notification
-    - .tags
-  when: on_failure
-  script:
-    - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME release pipeline <$BUILD_URL|$COMMIT_MESSAGE> failed."'
-    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
-
-########################################################################################################################
-# To staging CI
-########################################################################################################################
-
-staging-reset-scheduled:
+bump-chrome-version-scheduled:
   stage: task
   extends: .base-configuration
   only:
     variables:
-      - $TARGET_TASK_NAME == "staging-reset-scheduled"
+      - $TARGET_TASK_NAME == "bump-chrome-version-scheduled"
   before_script:
     - eval $(ssh-agent -s)
   script:
-    - node scripts/staging-ci/staging-reset.js
-  artifacts:
-    reports:
-      dotenv: build.env
+    - node scripts/bump-chrome-driver-version.js
 
-staging-reset-scheduled-success:
-  extends: .prepare_notification
+bump-chrome-version-ci-image:
+  stage: ci-image
+  extends:
+    - .base-configuration
   only:
+    refs:
+      - aymeric/auto-chrome-version-bump
     variables:
-      - $TARGET_TASK_NAME == "staging-reset-scheduled"
+      - $CI_COMMIT_TITLE =~ /^👷 Bump chrome to [0-9.]+/
+  when: on_success
+  tags: ['runner:docker', 'size:large']
+  image: $BUILD_STABLE_REGISTRY/docker:18.03.1
   script:
-    - 'MESSAGE_TEXT=":white_check_mark: [*$CI_PROJECT_NAME*] Staging has been reset from *${CURRENT_STAGING}* to *${NEW_STAGING}* on pipeline <$BUILD_URL|$COMMIT_MESSAGE>."'
-    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
-  dependencies:
-    - staging-reset-scheduled
-
-staging-reset-scheduled-failure:
-  extends: .prepare_notification
-  only:
-    variables:
-      - $TARGET_TASK_NAME == "staging-reset-scheduled"
-  when: on_failure
-  script:
-    - 'MESSAGE_TEXT=":x: [*$CI_PROJECT_NAME*] Staging failed to reset from *${CURRENT_STAGING}* to *${NEW_STAGING}* on pipeline <$BUILD_URL|$COMMIT_MESSAGE>."'
-    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
-  dependencies:
-    - staging-reset-scheduled
-
-merge-into-staging:
-  stage: pre-deploy
-  extends:
-    - .base-configuration
-    - .main
-  before_script:
-    - eval $(ssh-agent -s)
-  script:
-    - node scripts/staging-ci/merge-into-staging.js
-
-check-staging-merge:
-  stage: test
-  extends:
-    - .base-configuration
-    - .feature-branches
-  before_script:
-    - eval $(ssh-agent -s)
-  script:
-    - node scripts/staging-ci/check-staging-merge.js
-
-# A noop job that's used to signal to `to-staging` that it can merge to the
-# staging branch, even though the pipeline is still running
-tests-passed:
-  stage: after-tests
-  extends:
-    - .base-configuration
-    - .feature-branches
-  script:
-    - 'true'
-
-# in after-tests to not block `to-staging` merge
-check-squash-into-staging:
-  stage: after-tests
-  extends:
-    - .base-configuration
-    - .feature-branches
-  before_script:
-    - eval $(ssh-agent -s)
-  script:
-    - node scripts/staging-ci/check-squash-into-staging.js
+    - docker build --build-arg CHROME_PACKAGE_VERSION=$CHROME_PACKAGE_VERSION chrome--tag $CI_IMAGE .
+#    - docker push $CI_IMAGE  
