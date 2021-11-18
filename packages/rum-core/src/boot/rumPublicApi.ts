@@ -19,7 +19,7 @@ import {
   DefaultPrivacyLevel,
   TimeStamp,
   RelativeTime,
-  isEventBridgePresent,
+  canUseEventBridge,
   areCookiesAuthorized,
 } from '@datadog/browser-core'
 import { LifeCycle } from '../domain/lifeCycle'
@@ -97,7 +97,7 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
   }
 
   function initRum(initConfiguration: C) {
-    if (isEventBridgePresent()) {
+    if (canUseEventBridge()) {
       initConfiguration = overrideInitConfigurationForBridge(initConfiguration)
     } else if (!canHandleSession(initConfiguration)) {
       return

@@ -1,8 +1,10 @@
 import { resetExperimentalFeatures, updateExperimentalFeatures } from '..'
 import { deleteEventBridgeStub, initEventBridgeStub } from '../../test/specHelper'
-import { getEventBridge, isEventBridgePresent } from './eventBridge'
+import { getEventBridge, canUseEventBridge } from './eventBridge'
 
-describe('isEventBridgePresent', () => {
+describe('canUseEventBridge', () => {
+  const allowedWebViewHosts = ['foo.bar']
+
   afterEach(() => {
     resetExperimentalFeatures()
     deleteEventBridgeStub()
@@ -13,23 +15,34 @@ describe('isEventBridgePresent', () => {
       updateExperimentalFeatures(['event-bridge'])
     })
 
-    it('should detect when the bridge is present', () => {
+    it('should detect when the bridge is present and the webView host is allowed', () => {
       initEventBridgeStub()
-      expect(isEventBridgePresent()).toBeTrue()
+      expect(canUseEventBridge()).toBeTrue()
     })
 
     it('should not detect when the bridge is absent', () => {
-      expect(isEventBridgePresent()).toBeFalse()
+      expect(canUseEventBridge()).toBeFalse()
+    })
+
+    it('should not detect when the bridge is present and the webView host is not allowed', () => {
+      initEventBridgeStub(allowedWebViewHosts)
+      expect(canUseEventBridge()).toBeFalse()
     })
   })
 
   describe('when ff disabled', () => {
-    it('should not detect when the bridge is present', () => {
+    it('should not detect when the bridge is present and the webView host is allowed', () => {
       initEventBridgeStub()
-      expect(isEventBridgePresent()).toBeFalse()
+      expect(canUseEventBridge()).toBeFalse()
     })
+
+    it('should not detect when the bridge is present and the webView host is not allowed', () => {
+      initEventBridgeStub(allowedWebViewHosts)
+      expect(canUseEventBridge()).toBeFalse()
+    })
+
     it('should not detect when the bridge is absent', () => {
-      expect(isEventBridgePresent()).toBeFalse()
+      expect(canUseEventBridge()).toBeFalse()
     })
   })
 })
@@ -49,7 +62,7 @@ describe('getEventBridge', () => {
   })
 
   it('event bridge should serialize sent events', () => {
-    const eventBridge = getEventBridge()
+    const eventBridge = getEventBridge()!
 
     eventBridge.send('view', { foo: 'bar' })
 

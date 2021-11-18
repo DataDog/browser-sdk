@@ -22,22 +22,6 @@ export function hookSetter<T>(
   }
 }
 
-export function getWindowHeight(): number {
-  return (
-    window.innerHeight ||
-    (document.documentElement && document.documentElement.clientHeight) ||
-    (document.body && document.body.clientHeight)
-  )
-}
-
-export function getWindowWidth(): number {
-  return (
-    window.innerWidth ||
-    (document.documentElement && document.documentElement.clientWidth) ||
-    (document.body && document.body.clientWidth)
-  )
-}
-
 export function isTouchEvent(event: MouseEvent | TouchEvent): event is TouchEvent {
   return Boolean((event as TouchEvent).changedTouches)
 }

@@ -1,5 +1,5 @@
 import { DefaultPrivacyLevel } from '@datadog/browser-core'
-import { FocusRecord, RawRecord } from '../../types'
+import { FocusRecord, RawRecord, VisualViewportRecord } from '../../types'
 import { MutationController } from './mutationObserver'
 
 export enum IncrementalSource {
@@ -79,6 +79,7 @@ export interface ObserverParam {
   mouseInteractionCb: MouseInteractionCallBack
   scrollCb: ScrollCallback
   viewportResizeCb: ViewportResizeCallback
+  visualViewportResizeCb: VisualViewportResizeCallback
   inputCb: InputCallback
   mediaInteractionCb: MediaInteractionCallback
   styleSheetRuleCb: StyleSheetRuleCallback
@@ -181,7 +182,7 @@ export const MouseInteractions = {
 
 export type MouseInteractions = typeof MouseInteractions[keyof typeof MouseInteractions]
 
-interface MouseInteractionParam {
+export interface MouseInteractionParam {
   type: MouseInteractions
   id: number
   x: number
@@ -241,6 +242,8 @@ export interface MediaInteractionParam {
 export type MediaInteractionCallback = (p: MediaInteractionParam) => void
 
 export type FocusCallback = (data: FocusRecord['data']) => void
+
+export type VisualViewportResizeCallback = (data: VisualViewportRecord['data']) => void
 
 export type ListenerHandler = () => void
 export type HookResetter = () => void

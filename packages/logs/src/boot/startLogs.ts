@@ -12,7 +12,7 @@ import {
   InitConfiguration,
   trackRuntimeError,
   trackConsoleError,
-  isEventBridgePresent,
+  canUseEventBridge,
   getEventBridge,
 } from '@datadog/browser-core'
 import { trackNetworkError } from '../domain/trackNetworkError'
@@ -37,7 +37,7 @@ export function startLogs(initConfiguration: LogsInitConfiguration, errorLogger:
     trackNetworkError(configuration, errorObservable)
   }
 
-  const session = isEventBridgePresent()
+  const session = canUseEventBridge()
     ? startStubLoggerSession()
     : startLoggerSession(configuration, areCookiesAuthorized(configuration.cookieOptions))
 
@@ -60,8 +60,8 @@ export function doStartLogs(
   const assemble = buildAssemble(session, configuration, reportError)
 
   let onLogEventCollected: (message: Context) => void
-  if (isEventBridgePresent()) {
-    const bridge = getEventBridge()
+  if (canUseEventBridge()) {
+    const bridge = getEventBridge()!
     onLogEventCollected = (message) => bridge.send('log', message)
   } else {
     const batch = startLoggerBatch(configuration)

@@ -31,12 +31,15 @@ export { Observable, Subscription } from './tools/observable'
 export {
   startSessionManagement,
   Session,
+  // Exposed for tests
+  stopSessionManagement,
+} from './domain/session/sessionManagement'
+export {
   SESSION_TIME_OUT_DELAY,
   // Exposed for tests
   SESSION_COOKIE_NAME,
-  stopSessionManagement,
-} from './domain/sessionManagement'
-export { HttpRequest, Batch, isEventBridgePresent, getEventBridge } from './transport'
+} from './domain/session/sessionStore'
+export { HttpRequest, Batch, canUseEventBridge, getEventBridge } from './transport'
 export * from './tools/display'
 export * from './tools/urlPolyfill'
 export * from './tools/timeUtils'

@@ -11,7 +11,7 @@ import {
   display,
   deepClone,
   InitConfiguration,
-  isEventBridgePresent,
+  canUseEventBridge,
 } from '@datadog/browser-core'
 import { HandlerType, Logger, LogsMessage, StatusType } from '../domain/logger'
 import { startLogs, LogsInitConfiguration } from './startLogs'
@@ -52,7 +52,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
     logger,
 
     init: monitor((initConfiguration: LogsInitConfiguration) => {
-      if (isEventBridgePresent()) {
+      if (canUseEventBridge()) {
         initConfiguration = overrideInitConfigurationForBridge(initConfiguration)
       }
 

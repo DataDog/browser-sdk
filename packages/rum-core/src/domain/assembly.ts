@@ -11,6 +11,7 @@ import {
   RawError,
   createEventRateLimiter,
   EventRateLimiter,
+  getCookie,
 } from '@datadog/browser-core'
 import { RumEventDomainContext } from '../domainContext.types'
 import {
@@ -76,6 +77,8 @@ export function startRumAssembly(
     [RumEventType.ACTION]: createEventRateLimiter(RumEventType.ACTION, configuration.maxActionsPerMinute, reportError),
   }
 
+  const syntheticsContext = getSyntheticsContext()
+
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
     ({ startTime, rawRumEvent, domainContext, savedCommonContext, customerContext }) => {
@@ -98,10 +101,9 @@ export function startRumAssembly(
           date: timeStampNow(),
           service: configuration.service,
           session: {
-            // must be computed on each event because synthetics instrumentation can be done after sdk execution
-            type: getSessionType(),
+            type: syntheticsContext ? SessionType.SYNTHETICS : SessionType.USER,
           },
-          synthetics: getSyntheticsContext(),
+          synthetics: syntheticsContext,
         }
         const serverRumEvent = (needToAssembleWithAction(rawRumEvent)
           ? combine(rumContext, urlContext, viewContext, actionContext, rawRumEvent)
@@ -157,15 +159,13 @@ function needToAssembleWithAction(
   return [RumEventType.ERROR, RumEventType.RESOURCE, RumEventType.LONG_TASK].indexOf(event.type) !== -1
 }
 
-function getSessionType() {
-  return navigator.userAgent.indexOf('DatadogSynthetics') === -1 && !getSyntheticsContext()
-    ? SessionType.USER
-    : SessionType.SYNTHETICS
-}
+export const SYNTHETICS_TEST_ID_COOKIE_NAME = 'datadog-synthetics-public-id'
+export const SYNTHETICS_RESULT_ID_COOKIE_NAME = 'datadog-synthetics-result-id'
 
 function getSyntheticsContext() {
-  const testId = (window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID
-  const resultId = (window as BrowserWindow)._DATADOG_SYNTHETICS_RESULT_ID
+  const testId = (window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID || getCookie(SYNTHETICS_TEST_ID_COOKIE_NAME)
+  const resultId =
+    (window as BrowserWindow)._DATADOG_SYNTHETICS_RESULT_ID || getCookie(SYNTHETICS_RESULT_ID_COOKIE_NAME)
 
   if (typeof testId === 'string' && typeof resultId === 'string') {
     return {

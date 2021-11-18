@@ -1,4 +1,10 @@
-import { Configuration, isEventBridgePresent, noop, runOnReadyState } from '@datadog/browser-core'
+import {
+  Configuration,
+  canUseEventBridge,
+  noop,
+  runOnReadyState,
+  isExperimentalFeatureEnabled,
+} from '@datadog/browser-core'
 import {
   LifeCycleEventType,
   RumInitConfiguration,
@@ -44,7 +50,7 @@ export function makeRecorderApi(
   startRecordingImpl: StartRecording,
   startDeflateWorkerImpl = startDeflateWorker
 ): RecorderApi {
-  if (isEventBridgePresent()) {
+  if (canUseEventBridge()) {
     return {
       start: noop,
       stop: noop,
@@ -101,7 +107,7 @@ export function makeRecorderApi(
 
         state = { status: RecorderStatus.Starting }
 
-        runOnReadyState('complete', () => {
+        runOnReadyState(isExperimentalFeatureEnabled('record-at-dom-loaded') ? 'interactive' : 'complete', () => {
           if (state.status !== RecorderStatus.Starting) {
             return
           }

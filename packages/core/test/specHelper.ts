@@ -301,21 +301,11 @@ export function restorePageVisibility() {
   delete (document as any).visibilityState
 }
 
-export function setUserAgent(ua: string) {
-  Object.defineProperty(navigator, 'userAgent', {
-    get() {
-      return ua
-    },
-    configurable: true,
-  })
-}
-
-export function restoreUserAgent() {
-  delete (navigator as any).userAgent
-}
-
-export function initEventBridgeStub() {
-  const eventBridgeStub = { send: () => undefined }
+export function initEventBridgeStub(allowedWebViewHosts: string[] = [window.location.hostname]) {
+  const eventBridgeStub = {
+    send: () => undefined,
+    getAllowedWebViewHosts: () => JSON.stringify(allowedWebViewHosts),
+  }
   ;(window as BrowserWindow).DatadogEventBridge = eventBridgeStub
   return eventBridgeStub
 }
