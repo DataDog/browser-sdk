@@ -13,7 +13,7 @@ function evaluateCodeInline(tabId: number, code: (arg?: string) => void, arg?: s
     code: `{
       const script = document.createElement('script')
       script.setAttribute("type", "module")
-      script.textContent = ${JSON.stringify(`(${String(code)})('${arg}')`)}
+      script.textContent = ${JSON.stringify(`(${String(code)})(${JSON.stringify(arg)})`)}
       document.body.appendChild(script)
       script.remove()
     }`,
