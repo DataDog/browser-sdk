@@ -27,15 +27,16 @@ async function main() {
   await executeCommand(`git pull origin ${MAIN_BRANCH}`)
 
   const packageVersion = await getPackageVersion()
+  const majorPackageVersion = getMajor(packageVersion)
 
-  if (packageVersion <= CURRENT_PACKAGE_VERSION) {
+  if (majorPackageVersion <= getMajor(CURRENT_PACKAGE_VERSION)) {
     printLog(`Chrome driver is up to date.`)
     process.exit()
   }
 
-  const driverVersion = await getDriverVersion(packageVersion)
+  const driverVersion = await getDriverVersion(majorPackageVersion)
 
-  if (getMajor(packageVersion) !== getMajor(driverVersion)) {
+  if (majorPackageVersion !== getMajor(driverVersion)) {
     printError(`No driver available for chrome ${packageVersion}.`)
     process.exit(1)
   }
@@ -66,8 +67,8 @@ async function getPackageVersion() {
   return packageMatches ? packageMatches[1] : null
 }
 
-async function getDriverVersion(packageVersion) {
-  const driverPage = await http(`${CHROME_DRIVER_URL}${getMajor(packageVersion)}`)
+async function getDriverVersion(majorPackageVersion) {
+  const driverPage = await http(`${CHROME_DRIVER_URL}${majorPackageVersion}`)
   const driverMatchGroups = [...driverPage.toString().matchAll(/<Prefix>([0-9.-]+)\/<\/Prefix>/g)]
 
   return driverMatchGroups.length ? driverMatchGroups[driverMatchGroups.length - 1][1] : null
@@ -78,7 +79,7 @@ function getMajor(version) {
   const majorMatches = majorRegex.exec(version)
   const major = majorMatches ? majorMatches[1] : null
 
-  return major
+  return Number(major)
 }
 
 async function createPullRequest() {
