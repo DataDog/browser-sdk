@@ -1,4 +1,4 @@
-import { Provider as BumbagProvider, Box } from 'bumbag'
+import { Provider as BumbagProvider, Box, css } from 'bumbag'
 import React, { Suspense } from 'react'
 
 import { Panel } from './panel'
@@ -6,6 +6,13 @@ import { Panel } from './panel'
 const theme = {
   global: {
     fontSize: 14,
+    styles: {
+      base: css`
+        body {
+          min-height: 100vh;
+        }
+      `,
+    },
   },
   modes: {
     enableLocalStorage: false,
