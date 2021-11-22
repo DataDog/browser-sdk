@@ -23,7 +23,7 @@ import {
 
 import { Logger, LogsMessage, StatusType } from '../domain/logger'
 import { LogsEvent } from '../logsEvent.types'
-import { buildAssemble, doStartLogs } from './startLogs'
+import { buildAssemble, doStartLogs, LogsInitConfiguration, startLogs as originalStartLogs } from './startLogs'
 
 interface SentMessage extends LogsMessage {
   logger?: { name: string }
@@ -146,6 +146,25 @@ describe('logs', () => {
       sendLog(DEFAULT_MESSAGE, {})
 
       expect(server.requests.length).toEqual(0)
+      expect(sendSpy).toHaveBeenCalled()
+    })
+  })
+
+  describe('sampling', () => {
+    it('should be sampled when event bridge is present', () => {
+      updateExperimentalFeatures(['event-bridge'])
+      const sendSpy = spyOn(initEventBridgeStub(), 'send')
+
+      let configuration = { ...baseConfiguration, ...{ sampleRate: 0 } } as LogsInitConfiguration
+      let sendLog = originalStartLogs(configuration, new Logger(noop))
+      sendLog(DEFAULT_MESSAGE, {})
+
+      expect(sendSpy).not.toHaveBeenCalled()
+
+      configuration = { ...baseConfiguration, ...{ sampleRate: 100 } } as LogsInitConfiguration
+      sendLog = originalStartLogs(configuration, new Logger(noop))
+      sendLog(DEFAULT_MESSAGE, {})
+
       expect(sendSpy).toHaveBeenCalled()
     })
   })

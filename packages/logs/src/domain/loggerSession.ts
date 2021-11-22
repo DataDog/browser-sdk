@@ -12,8 +12,8 @@ export enum LoggerTrackingType {
   TRACKED = '1',
 }
 
-export function startLoggerSession(configuration: Configuration, areCookieAuthorized: boolean): LoggerSession {
-  if (!areCookieAuthorized) {
+export function startLoggerSession(configuration: Configuration, canUseCookies: boolean): LoggerSession {
+  if (!canUseCookies) {
     const isTracked = computeTrackingType(configuration) === LoggerTrackingType.TRACKED
     return {
       getId: () => undefined,
@@ -26,16 +26,6 @@ export function startLoggerSession(configuration: Configuration, areCookieAuthor
   return {
     getId: session.getId,
     isTracked: () => session.getTrackingType() === LoggerTrackingType.TRACKED,
-  }
-}
-
-/**
- * Start a tracked session stub
- */
-export function startStubLoggerSession(): LoggerSession {
-  return {
-    getId: () => '00000000-aaaa-0000-aaaa-000000000000',
-    isTracked: () => true,
   }
 }
 
