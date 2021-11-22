@@ -11,6 +11,7 @@ import {
   RawError,
   createEventRateLimiter,
   EventRateLimiter,
+  canUseEventBridge,
 } from '@datadog/browser-core'
 import { RumEventDomainContext } from '../domainContext.types'
 import {
@@ -91,7 +92,7 @@ export function startRumAssembly(
             session: {
               plan: session.hasReplayPlan() ? RumSessionPlan.REPLAY : RumSessionPlan.LITE,
             },
-            browser_sdk_version: configuration.sdkVersion,
+            browser_sdk_version: canUseEventBridge() ? configuration.sdkVersion : undefined,
           },
           application: {
             id: applicationId,

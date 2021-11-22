@@ -188,7 +188,7 @@ export interface RumContext {
     session: {
       plan: RumSessionPlan
     }
-    browser_sdk_version: string
+    browser_sdk_version?: string
   }
 }
 
