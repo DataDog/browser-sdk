@@ -1,4 +1,6 @@
+import { BuildMode } from '@datadog/browser-core'
 import { mockSyntheticsWorkerValues, cleanupSyntheticsWorkerValues } from '../../test/specHelper'
+import { RumBuildEnv } from '../boot/buildEnv'
 import { getSyntheticsContext, willSyntheticsInjectRum } from './syntheticsContext'
 
 describe('getSyntheticsContext', () => {
@@ -44,6 +46,12 @@ describe('getSyntheticsContext', () => {
 })
 
 describe('willSyntheticsInjectRum', () => {
+  const buildEnv: RumBuildEnv = {
+    buildMode: BuildMode.RELEASE,
+    sdkVersion: 'dev',
+    syntheticsBundle: false,
+  }
+
   afterEach(() => {
     cleanupSyntheticsWorkerValues()
   })
@@ -51,24 +59,28 @@ describe('willSyntheticsInjectRum', () => {
   it('returns false if nothing is defined', () => {
     mockSyntheticsWorkerValues({}, 'globals')
 
-    expect(willSyntheticsInjectRum()).toBeFalse()
+    expect(willSyntheticsInjectRum(buildEnv)).toBeFalse()
   })
 
   it('returns false if the INJECTS_RUM global variable is false', () => {
     mockSyntheticsWorkerValues({ injectsRum: false }, 'globals')
 
-    expect(willSyntheticsInjectRum()).toBeFalse()
+    expect(willSyntheticsInjectRum(buildEnv)).toBeFalse()
   })
 
   it('returns true if the INJECTS_RUM global variable is truthy', () => {
     mockSyntheticsWorkerValues({ injectsRum: true }, 'globals')
 
-    expect(willSyntheticsInjectRum()).toBeTrue()
+    expect(willSyntheticsInjectRum(buildEnv)).toBeTrue()
   })
 
   it('returns true if the INJECTS_RUM cookie is truthy', () => {
     mockSyntheticsWorkerValues({ injectsRum: true }, 'cookies')
 
-    expect(willSyntheticsInjectRum()).toBeTrue()
+    expect(willSyntheticsInjectRum(buildEnv)).toBeTrue()
+  })
+
+  it('returns false for the Synthetics bundle', () => {
+    expect(willSyntheticsInjectRum({ ...buildEnv, syntheticsBundle: true })).toBeFalse()
   })
 })

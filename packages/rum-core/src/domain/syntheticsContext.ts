@@ -1,4 +1,5 @@
 import { getCookie } from '@datadog/browser-core'
+import { RumBuildEnv } from '../boot/buildEnv'
 
 export const SYNTHETICS_TEST_ID_COOKIE_NAME = 'datadog-synthetics-public-id'
 export const SYNTHETICS_RESULT_ID_COOKIE_NAME = 'datadog-synthetics-result-id'
@@ -23,7 +24,11 @@ export function getSyntheticsContext() {
   }
 }
 
-export function willSyntheticsInjectRum() {
+export function willSyntheticsInjectRum(buildEnv: RumBuildEnv) {
+  if (buildEnv.syntheticsBundle) {
+    // We are in the synthetics bundle, so no other bundle will be injected
+    return false
+  }
   return Boolean(
     (window as BrowserWindow)._DATADOG_SYNTHETICS_INJECTS_RUM || getCookie(SYNTHETICS_INJECTS_RUM_COOKIE_NAME)
   )

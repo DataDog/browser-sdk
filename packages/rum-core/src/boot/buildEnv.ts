@@ -1,6 +1,6 @@
 import { BuildEnv, BuildMode } from '@datadog/browser-core'
 
-interface RumBuildEnv extends BuildEnv {
+export interface RumBuildEnv extends BuildEnv {
   syntheticsBundle: boolean
 }
 

@@ -98,7 +98,7 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
   }
 
   function initRum(initConfiguration: C) {
-    if (willSyntheticsInjectRum()) {
+    if (willSyntheticsInjectRum(buildEnv)) {
       return
     }
 
