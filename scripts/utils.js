@@ -2,6 +2,7 @@ const util = require('util')
 const execute = util.promisify(require('child_process').exec)
 const spawn = require('child_process').spawn
 const replace = require('replace-in-file')
+const fetch = require('node-fetch')
 
 const CI_FILE = '.gitlab-ci.yml'
 
@@ -79,6 +80,15 @@ function printLog(...params) {
   console.log(greenColor, ...params, resetColor)
 }
 
+async function http(url) {
+  const response = await fetch(url)
+  if (!response.ok) {
+    throw new Error(`HTTP Error Response: ${response.status} ${response.statusText}`)
+  }
+
+  return response.text()
+}
+
 module.exports = {
   getSecretKey,
   initGitConfig,
@@ -88,4 +98,5 @@ module.exports = {
   printLog,
   logAndExit,
   replaceCiVariable,
+  http,
 }

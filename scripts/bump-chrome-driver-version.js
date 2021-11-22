@@ -1,7 +1,5 @@
 'use strict'
 
-const request = require('request')
-
 const {
   printLog,
   printError,
@@ -10,6 +8,7 @@ const {
   replaceCiVariable,
   initGitConfig,
   getSecretKey,
+  http,
 } = require('./utils')
 
 const CI_FILE = '.gitlab-ci.yml'
@@ -61,14 +60,14 @@ async function main() {
 }
 
 async function getPackageVersion() {
-  const packagePage = await fetch(CHROME_PACKAGE_URL)
+  const packagePage = await http(CHROME_PACKAGE_URL)
   const packageMatches = /<td>([0-9.-]+)<\/td>/.exec(packagePage)
 
   return packageMatches ? packageMatches[1] : null
 }
 
 async function getDriverVersion(packageVersion) {
-  const driverPage = await fetch(`${CHROME_DRIVER_URL}${getMajor(packageVersion)}`)
+  const driverPage = await http(`${CHROME_DRIVER_URL}${getMajor(packageVersion)}`)
   const driverMatchGroups = [...driverPage.toString().matchAll(/<Prefix>([0-9.-]+)\/<\/Prefix>/g)]
 
   return driverMatchGroups.length ? driverMatchGroups[driverMatchGroups.length - 1][1] : null
@@ -86,20 +85,6 @@ async function createPullRequest() {
   const githubAccessToken = await getSecretKey('ci.browser-sdk.github_access_token')
   await executeCommand(`echo "${githubAccessToken}" | gh auth login --with-token`)
   await executeCommand(`gh pr create --fill --base ${MAIN_BRANCH}`)
-}
-
-function fetch(url) {
-  return new Promise((resolve, reject) => {
-    request.get(url, (error, httpResponse, body) => {
-      if (error) {
-        reject(error)
-      }
-      if (httpResponse.statusCode >= 400 && httpResponse.statusCode < 500) {
-        reject(httpResponse.body)
-      }
-      resolve(body)
-    })
-  })
 }
 
 main().catch(logAndExit)
