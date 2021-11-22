@@ -1,5 +1,5 @@
-import { CookieCache, getCookie } from '../browser/cookie'
-import { persistSession, SessionState } from './sessionManagement'
+import { getCookie, CookieOptions, cacheCookieAccess } from '../../browser/cookie'
+import { persistSession, SessionState, SESSION_COOKIE_NAME } from './sessionStore'
 
 export const OLD_SESSION_COOKIE_NAME = '_dd'
 export const OLD_RUM_COOKIE_NAME = '_dd_r'
@@ -13,7 +13,8 @@ export const LOGS_SESSION_KEY = 'logs'
  * This migration should remain in the codebase as long as older versions are available/live
  * to allow older sdk versions to be upgraded to newer versions without compatibility issues.
  */
-export function tryOldCookiesMigration(sessionCookie: CookieCache) {
+export function tryOldCookiesMigration(options: CookieOptions) {
+  const sessionCookie = cacheCookieAccess(SESSION_COOKIE_NAME, options)
   const sessionString = sessionCookie.get()
   const oldSessionId = getCookie(OLD_SESSION_COOKIE_NAME)
   const oldRumType = getCookie(OLD_RUM_COOKIE_NAME)

@@ -23,7 +23,6 @@ export interface Timings {
   largestContentfulPaint?: Duration
   firstInputDelay?: Duration
   firstInputTime?: Duration
-  lcpDiscardReason?: string
 }
 
 export function trackInitialViewTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void) {
@@ -37,20 +36,11 @@ export function trackInitialViewTimings(lifeCycle: LifeCycle, callback: (timings
   const { stop: stopFCPTracking } = trackFirstContentfulPaintTiming(lifeCycle, (firstContentfulPaint) =>
     setTimings({ firstContentfulPaint })
   )
-  const { stop: stopLCPTracking } = trackLargestContentfulPaintTiming(
-    lifeCycle,
-    window,
-    (largestContentfulPaint) => {
-      setTimings({
-        largestContentfulPaint,
-      })
-    },
-    (lcpDiscardReason) => {
-      setTimings({
-        lcpDiscardReason,
-      })
-    }
-  )
+  const { stop: stopLCPTracking } = trackLargestContentfulPaintTiming(lifeCycle, window, (largestContentfulPaint) => {
+    setTimings({
+      largestContentfulPaint,
+    })
+  })
   const { stop: stopFIDTracking } = trackFirstInputTimings(lifeCycle, ({ firstInputDelay, firstInputTime }) => {
     setTimings({
       firstInputDelay,
@@ -107,8 +97,7 @@ export function trackFirstContentfulPaintTiming(lifeCycle: LifeCycle, callback: 
 export function trackLargestContentfulPaintTiming(
   lifeCycle: LifeCycle,
   emitter: EventEmitter,
-  callback: (lcpTiming: RelativeTime) => void,
-  discardCallback: (discardReason: string) => void
+  callback: (lcpTiming: RelativeTime) => void
 ) {
   const firstHidden = trackFirstHidden()
 
@@ -125,33 +114,17 @@ export function trackLargestContentfulPaintTiming(
     { capture: true, once: true }
   )
 
-  let isFirstLCP = true
-
   const { unsubscribe: unsubscribeLifeCycle } = lifeCycle.subscribe(
     LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
     (entry) => {
-      if (entry.entryType !== 'largest-contentful-paint') {
-        return
-      }
       if (
+        entry.entryType === 'largest-contentful-paint' &&
         entry.startTime < firstInteractionTimestamp &&
         entry.startTime < firstHidden.timeStamp &&
         entry.startTime < TIMING_MAXIMUM_DELAY
       ) {
         callback(entry.startTime)
-      } else if (isFirstLCP) {
-        const reason =
-          entry.startTime >= firstInteractionTimestamp
-            ? 'interaction'
-            : entry.startTime >= firstHidden.timeStamp
-            ? 'hidden'
-            : entry.startTime >= TIMING_MAXIMUM_DELAY
-            ? 'maximum delay'
-            : 'N/A'
-
-        discardCallback(reason)
       }
-      isFirstLCP = false
     }
   )
 

@@ -25,15 +25,11 @@ import {
   User,
 } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
+import { getSyntheticsContext } from './syntheticsContext'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { ParentContexts } from './parentContexts'
 import { RumSession, RumSessionPlan } from './rumSession'
 import { UrlContexts } from './urlContexts'
-
-export interface BrowserWindow extends Window {
-  _DATADOG_SYNTHETICS_PUBLIC_ID?: string
-  _DATADOG_SYNTHETICS_RESULT_ID?: string
-}
 
 enum SessionType {
   SYNTHETICS = 'synthetics',
@@ -77,6 +73,8 @@ export function startRumAssembly(
     [RumEventType.ACTION]: createEventRateLimiter(RumEventType.ACTION, configuration.maxActionsPerMinute, reportError),
   }
 
+  const syntheticsContext = getSyntheticsContext()
+
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
     ({ startTime, rawRumEvent, domainContext, savedCommonContext, customerContext }) => {
@@ -100,10 +98,9 @@ export function startRumAssembly(
           date: timeStampNow(),
           service: configuration.service,
           session: {
-            // must be computed on each event because synthetics instrumentation can be done after sdk execution
-            type: getSessionType(),
+            type: syntheticsContext ? SessionType.SYNTHETICS : SessionType.USER,
           },
-          synthetics: getSyntheticsContext(),
+          synthetics: syntheticsContext,
         }
         const serverRumEvent = (needToAssembleWithAction(rawRumEvent)
           ? combine(rumContext, urlContext, viewContext, actionContext, rawRumEvent)
@@ -158,22 +155,4 @@ function needToAssembleWithAction(
   event: RawRumEvent
 ): event is RawRumErrorEvent | RawRumResourceEvent | RawRumLongTaskEvent {
   return [RumEventType.ERROR, RumEventType.RESOURCE, RumEventType.LONG_TASK].indexOf(event.type) !== -1
-}
-
-function getSessionType() {
-  return navigator.userAgent.indexOf('DatadogSynthetics') === -1 && !getSyntheticsContext()
-    ? SessionType.USER
-    : SessionType.SYNTHETICS
-}
-
-function getSyntheticsContext() {
-  const testId = (window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID
-  const resultId = (window as BrowserWindow)._DATADOG_SYNTHETICS_RESULT_ID
-
-  if (typeof testId === 'string' && typeof resultId === 'string') {
-    return {
-      test_id: testId,
-      result_id: resultId,
-    }
-  }
 }

@@ -16,6 +16,13 @@
 
 ---
 
+## v3.8.0
+
+- ⚗ [RUMF-1082] start recording when the DOM is ready ([#1164](https://github.com/DataDog/browser-sdk/pull/1164))
+- 🐛 [RUMF-1077] use cookies to get Synthetics context ([#1161](https://github.com/DataDog/browser-sdk/pull/1161))
+- ✨ [RUMF-1074] bridge host checking ([#1157](https://github.com/DataDog/browser-sdk/pull/1157))
+- ⚗[REPLAY-341] Add VisualViewport tracking (Pinch Zoom) ([#1118](https://github.com/DataDog/browser-sdk/pull/1118))
+
 ## v3.7.0
 
 - ✨ [RUMF-1067] forward rum event to bridge ([#1148](https://github.com/DataDog/browser-sdk/pull/1148))

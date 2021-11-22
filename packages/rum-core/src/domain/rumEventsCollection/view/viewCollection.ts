@@ -7,14 +7,12 @@ import {
   Configuration,
   Observable,
   isNumber,
-  isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
 import { RecorderApi } from '../../../boot/rumPublicApi'
 import { RawRumViewEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from '../../lifeCycle'
 import { ForegroundContexts } from '../../foregroundContexts'
 import { LocationChange } from '../../../browser/locationChangeObservable'
-import { supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
 import { trackViews, ViewEvent } from './trackViews'
 
 export function startViewCollection(
@@ -27,11 +25,10 @@ export function startViewCollection(
   recorderApi: RecorderApi,
   initialViewName?: string
 ) {
-  const initialVisibilityState = document.visibilityState
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) =>
     lifeCycle.notify(
       LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-      processViewUpdate(view, foregroundContexts, recorderApi, initialVisibilityState)
+      processViewUpdate(view, foregroundContexts, recorderApi)
     )
   )
 
@@ -48,8 +45,7 @@ export function startViewCollection(
 function processViewUpdate(
   view: ViewEvent,
   foregroundContexts: ForegroundContexts,
-  recorderApi: RecorderApi,
-  initialVisibilityState: string
+  recorderApi: RecorderApi
 ): RawRumEventCollectedData<RawRumViewEvent> {
   const replayStats = recorderApi.getReplayStats(view.id)
   const viewEvent: RawRumViewEvent = {
@@ -104,16 +100,6 @@ function processViewUpdate(
     domainContext: {
       location: view.location,
     },
-    customerContext:
-      isExperimentalFeatureEnabled('monitor-dropped-lcp') && view.loadingType === 'initial_load'
-        ? {
-            lcp: {
-              support: supportPerformanceTimingEvent('largest-contentful-paint'),
-              discard_reason: view.timings.lcpDiscardReason,
-              initial_visibility_state: initialVisibilityState,
-            },
-          }
-        : undefined,
   }
 }
 

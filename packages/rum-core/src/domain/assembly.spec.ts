@@ -1,12 +1,16 @@
 import { ErrorSource, ONE_MINUTE, RawError, RelativeTime, display } from '@datadog/browser-core'
-import { setUserAgent, restoreUserAgent } from '@datadog/browser-core/test/specHelper'
-import { createRumSessionMock } from 'packages/rum-core/test/mockRumSession'
+import { createRumSessionMock } from '../../test/mockRumSession'
 import { createRawRumEvent } from '../../test/fixtures'
-import { setup, TestSetupBuilder } from '../../test/specHelper'
+import {
+  cleanupSyntheticsWorkerValues,
+  mockSyntheticsWorkerValues,
+  setup,
+  TestSetupBuilder,
+} from '../../test/specHelper'
 import { RumEventDomainContext } from '../domainContext.types'
 import { CommonContext, RawRumActionEvent, RawRumErrorEvent, RawRumEvent, RumEventType } from '../rawRumEvent.types'
 import { RumActionEvent, RumErrorEvent, RumEvent } from '../rumEvent.types'
-import { BrowserWindow, startRumAssembly } from './assembly'
+import { startRumAssembly } from './assembly'
 import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from './lifeCycle'
 import { RumSessionPlan } from './rumSession'
 
@@ -57,7 +61,7 @@ describe('rum assembly', () => {
 
   afterEach(() => {
     setupBuilder.cleanup()
-    cleanupSyntheticsGlobals()
+    cleanupSyntheticsWorkerValues()
   })
 
   describe('beforeSend', () => {
@@ -517,20 +521,8 @@ describe('rum assembly', () => {
       })
     })
 
-    it('should detect synthetics sessions from UA', () => {
-      setUserAgent('foo DatadogSynthetics bar')
-
-      const { lifeCycle } = setupBuilder.build()
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-
-      expect(serverRumEvents[0].session.type).toEqual('synthetics')
-      restoreUserAgent()
-    })
-
-    it('should detect synthetics sessions from global', () => {
-      setSyntheticsGlobals('foo', 'bar')
+    it('should detect synthetics sessions based on synthetics worker values', () => {
+      mockSyntheticsWorkerValues()
 
       const { lifeCycle } = setupBuilder.build()
       notifyRawRumEvent(lifeCycle, {
@@ -562,40 +554,15 @@ describe('rum assembly', () => {
   })
 
   describe('synthetics context', () => {
-    it('sets the synthetics context defined by global variables', () => {
-      setSyntheticsGlobals('foo', 'bar')
+    it('includes the synthetics context', () => {
+      mockSyntheticsWorkerValues()
 
       const { lifeCycle } = setupBuilder.build()
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
       })
 
-      expect(serverRumEvents[0].synthetics).toEqual({
-        test_id: 'foo',
-        result_id: 'bar',
-      })
-    })
-
-    it('does not set synthetics context if one global variable is undefined', () => {
-      setSyntheticsGlobals('foo')
-
-      const { lifeCycle } = setupBuilder.build()
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-
-      expect(serverRumEvents[0].synthetics).toBeUndefined()
-    })
-
-    it('does not set synthetics context if global variables are not strings', () => {
-      setSyntheticsGlobals(1, 2)
-
-      const { lifeCycle } = setupBuilder.build()
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-
-      expect(serverRumEvents[0].synthetics).toBeUndefined()
+      expect(serverRumEvents[0].synthetics).toBeTruthy()
     })
   })
 
@@ -746,14 +713,4 @@ function notifyRawRumEvent<E extends RawRumEvent>(
     ...partialData,
   }
   lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, fullData)
-}
-
-function setSyntheticsGlobals(publicId: any, resultId?: any) {
-  ;(window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID = publicId
-  ;(window as BrowserWindow)._DATADOG_SYNTHETICS_RESULT_ID = resultId
-}
-
-function cleanupSyntheticsGlobals() {
-  delete (window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID
-  delete (window as BrowserWindow)._DATADOG_SYNTHETICS_RESULT_ID
 }
