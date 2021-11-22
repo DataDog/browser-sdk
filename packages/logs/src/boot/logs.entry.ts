@@ -88,7 +88,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
   })
 
   function overrideInitConfigurationForBridge<C extends InitConfiguration>(initConfiguration: C): C {
-    return { ...initConfiguration, clientToken: 'empty', sampleRate: 100 }
+    return { ...initConfiguration, clientToken: 'empty' }
   }
 
   function canInitLogs(initConfiguration: LogsInitConfiguration) {

@@ -130,12 +130,6 @@ describe('logs entry', () => {
 
         expect(displaySpy).not.toHaveBeenCalled()
       })
-
-      it('init should force sample rate to 100', () => {
-        const invalidConfiguration: HybridInitConfiguration = { sampleRate: 50 }
-        LOGS.init(invalidConfiguration as LogsInitConfiguration)
-        expect(LOGS.getInitConfiguration()?.sampleRate).toEqual(100)
-      })
     })
   })
 
