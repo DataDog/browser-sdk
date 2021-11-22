@@ -430,3 +430,22 @@ bump-chrome-version-scheduled:
     - eval $(ssh-agent -s)
   script:
     - node scripts/bump-chrome-driver-version.js
+
+bump-chrome-version-scheduled-success:
+  extends: .prepare_notification
+  only:
+    variables:
+      - $TARGET_TASK_NAME == "staging-reset-scheduled"
+  script:
+    - 'MESSAGE_TEXT=":chrome: [*$CI_PROJECT_NAME*] New Chrome version available."'
+    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
+
+bump-chrome-version-scheduled-failure:
+  extends: .prepare_notification
+  only:
+    variables:
+      - $TARGET_TASK_NAME == "staging-reset-scheduled"
+  when: on_failure
+  script:
+    - 'MESSAGE_TEXT=":x: [*$CI_PROJECT_NAME*] Chrome version bumped failed."'
+    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
