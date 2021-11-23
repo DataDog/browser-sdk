@@ -25,6 +25,7 @@ import {
   User,
 } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
+import { buildEnv } from '../boot/buildEnv'
 import { getSyntheticsContext } from './syntheticsContext'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { ParentContexts } from './parentContexts'
@@ -90,7 +91,7 @@ export function startRumAssembly(
             session: {
               plan: session.hasReplayPlan() ? RumSessionPlan.REPLAY : RumSessionPlan.LITE,
             },
-            browser_sdk_version: canUseEventBridge() ? configuration.sdkVersion : undefined,
+            browser_sdk_version: canUseEventBridge() ? buildEnv.sdkVersion : undefined,
           },
           application: {
             id: applicationId,

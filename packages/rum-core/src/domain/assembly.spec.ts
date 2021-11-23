@@ -36,7 +36,6 @@ describe('rum assembly', () => {
       user: {},
     }
     setupBuilder = setup()
-      .withConfiguration({ sdkVersion: 'dev' })
       .withParentContexts({
         findAction: () => ({
           action: {
