@@ -188,7 +188,6 @@ function validateRumEventFormat(rawRumEvent: RawRumEvent) {
       session: {
         plan: RumSessionPlan.REPLAY,
       },
-      browser_sdk_version: 'dev',
     },
     application: {
       id: fakeId,
