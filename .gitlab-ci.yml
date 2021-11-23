@@ -437,7 +437,7 @@ bump-chrome-version-scheduled-success:
     variables:
       - $TARGET_TASK_NAME == "staging-reset-scheduled"
   script:
-    - 'MESSAGE_TEXT=":chrome: [*$CI_PROJECT_NAME*] New Chrome version available on <https://github.com/DataDog/browser-sdk/pulls|PR>."'
+    - 'MESSAGE_TEXT=":chrome: [*$CI_PROJECT_NAME*] New Chrome version available on <https://github.com/DataDog/browser-sdk/pulls|PRs>."'
     - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
 
 bump-chrome-version-scheduled-failure:
