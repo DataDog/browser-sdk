@@ -8,6 +8,7 @@ export interface SessionStore {
   expandSession: () => void
   retrieveSession: () => SessionState
   renewObservable: Observable<void>
+  stop: () => void
 }
 
 export interface SessionState {
@@ -31,7 +32,7 @@ export function startSessionStore<TrackingType extends string>(
   computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean }
 ): SessionStore {
   const renewObservable = new Observable<void>()
-  let inMemorySession = retrieveActiveSession(options)
+  let sessionCache: SessionState = retrieveActiveSession(options)
 
   const { throttled: expandOrRenewSession } = utils.throttle(
     monitor(() => {
@@ -45,23 +46,41 @@ export function startSessionStore<TrackingType extends string>(
       // save changes and expand session duration
       persistSession(cookieSession, options)
 
-      // If the session id has changed, notify that the session has been renewed
-      if (isTracked && inMemorySession.id !== cookieSession.id) {
-        inMemorySession = { ...cookieSession }
+      if (isTracked && sessionCacheOutdated(cookieSession)) {
+        sessionCache = { ...cookieSession }
         renewObservable.notify()
       }
-      inMemorySession = { ...cookieSession }
+      sessionCache = { ...cookieSession }
     }),
     COOKIE_ACCESS_DELAY
   )
 
+  const cookieWatch = setInterval(() => {
+    const cookieSession = retrieveActiveSession(options)
+    if (sessionCacheOutdated(cookieSession)) {
+      clearSessionCache()
+    }
+  }, COOKIE_ACCESS_DELAY)
+
   function expandSession() {
-    const session = retrieveActiveSession(options)
-    persistSession(session, options)
+    const cookieSession = retrieveActiveSession(options)
+    if (sessionCacheOutdated(cookieSession)) {
+      clearSessionCache()
+    } else {
+      persistSession(cookieSession, options)
+    }
+  }
+
+  function sessionCacheOutdated(cookieSession: SessionState) {
+    return sessionCache.id !== cookieSession.id
+  }
+
+  function clearSessionCache() {
+    sessionCache = {}
   }
 
   function retrieveSession() {
-    return retrieveActiveSession(options)
+    return sessionCache
   }
 
   return {
@@ -69,6 +88,9 @@ export function startSessionStore<TrackingType extends string>(
     expandSession,
     retrieveSession,
     renewObservable,
+    stop: () => {
+      clearInterval(cookieWatch)
+    },
   }
 }
 

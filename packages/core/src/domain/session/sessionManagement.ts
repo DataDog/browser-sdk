@@ -20,6 +20,7 @@ export function startSessionManagement<TrackingType extends string>(
 ): Session<TrackingType> {
   tryOldCookiesMigration(options)
   const sessionStore = startSessionStore(options, productKey, computeSessionState)
+  stopCallbacks.push(() => sessionStore.stop())
 
   sessionStore.expandOrRenewSession()
   trackActivity(() => sessionStore.expandOrRenewSession())
