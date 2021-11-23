@@ -22,7 +22,7 @@ listenAction('getConfig', (type) => {
     })
 
     function sendActionAsDomEvent(action: string, payload: any) {
-      document.querySelector('html').dispatchEvent(
+      document.documentElement.dispatchEvent(
         new CustomEvent('extension', {
           detail: { action, payload },
         } as any)
