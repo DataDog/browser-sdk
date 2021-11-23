@@ -1,14 +1,14 @@
 import sinon from 'sinon'
-import { resetExperimentalFeatures, updateExperimentalFeatures } from '..'
+import { resetExperimentalFeatures, updateExperimentalFeatures } from '../..'
 import {
   Clock,
   deleteEventBridgeStub,
   initEventBridgeStub,
   mockClock,
   stubEndpointBuilder,
-} from '../../test/specHelper'
+} from '../../../test/specHelper'
 
-import { Configuration } from './configuration'
+import { Configuration } from '../configuration'
 import {
   InternalMonitoring,
   monitor,

@@ -1,11 +1,11 @@
-import { Context } from '../tools/context'
-import { display } from '../tools/display'
-import { toStackTraceString } from '../tools/error'
-import { assign, jsonStringify, Parameters, ThisParameterType } from '../tools/utils'
-import { canUseEventBridge, getEventBridge } from '../transport'
-import { Configuration } from './configuration'
-import { computeStackTrace } from './tracekit'
-import { startMonitoringBatch } from './internalMonitoring/startMonitoringBatch'
+import { Context } from '../../tools/context'
+import { display } from '../../tools/display'
+import { toStackTraceString } from '../../tools/error'
+import { assign, jsonStringify, Parameters, ThisParameterType } from '../../tools/utils'
+import { canUseEventBridge, getEventBridge } from '../../transport'
+import { Configuration } from '../configuration'
+import { computeStackTrace } from '../tracekit'
+import { startMonitoringBatch } from '../internalMonitoring/startMonitoringBatch'
 
 enum StatusType {
   info = 'info',
@@ -38,7 +38,7 @@ let onInternalMonitoringEventCollected: ((message: MonitoringMessage) => void) |
 export function startInternalMonitoring(configuration: Configuration): InternalMonitoring {
   if (canUseEventBridge()) {
     const bridge = getEventBridge()!
-    onInternalMonitoringEventCollected = (message: MonitoringMessage) => bridge.send('internalMonitoring', message)
+    onInternalMonitoringEventCollected = (message: MonitoringMessage) => bridge.send('internal_log', message)
   } else if (configuration.internalMonitoringEndpointBuilder) {
     const batch = startMonitoringBatch(configuration)
     onInternalMonitoringEventCollected = (message: MonitoringMessage) => batch.add(message)
