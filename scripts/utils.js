@@ -80,7 +80,7 @@ function printLog(...params) {
   console.log(greenColor, ...params, resetColor)
 }
 
-async function http(url) {
+async function fetchWrapper(url) {
   const response = await fetch(url)
   if (!response.ok) {
     throw new Error(`HTTP Error Response: ${response.status} ${response.statusText}`)
@@ -98,5 +98,5 @@ module.exports = {
   printLog,
   logAndExit,
   replaceCiVariable,
-  http,
+  fetch: fetchWrapper,
 }

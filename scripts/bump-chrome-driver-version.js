@@ -8,7 +8,7 @@ const {
   replaceCiVariable,
   initGitConfig,
   getSecretKey,
-  http,
+  fetch,
 } = require('./utils')
 
 const CI_FILE = '.gitlab-ci.yml'
@@ -61,14 +61,14 @@ async function main() {
 }
 
 async function getPackageVersion() {
-  const packagePage = await http(CHROME_PACKAGE_URL)
+  const packagePage = await fetch(CHROME_PACKAGE_URL)
   const packageMatches = /<td>([0-9.-]+)<\/td>/.exec(packagePage)
 
   return packageMatches ? packageMatches[1] : null
 }
 
 async function getDriverVersion(majorPackageVersion) {
-  const driverPage = await http(`${CHROME_DRIVER_URL}${majorPackageVersion}`)
+  const driverPage = await fetch(`${CHROME_DRIVER_URL}${majorPackageVersion}`)
   const driverMatchGroups = [...driverPage.toString().matchAll(/<Prefix>([0-9.-]+)\/<\/Prefix>/g)]
 
   return driverMatchGroups.length ? driverMatchGroups[driverMatchGroups.length - 1][1] : null

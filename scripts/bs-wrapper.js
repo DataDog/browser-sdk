@@ -14,7 +14,7 @@
 // after killing it. There might be a better way of prematurely aborting the test command if we need
 // to in the future.
 
-const { spawnCommand, printLog, logAndExit, executeCommand, http } = require('./utils')
+const { spawnCommand, printLog, logAndExit, executeCommand, fetch } = require('./utils')
 
 const AVAILABILITY_CHECK_DELAY = 30_000
 // eslint-disable-next-line max-len
@@ -39,7 +39,7 @@ async function waitForAvailability() {
 }
 
 async function hasRunningBuild() {
-  return (await http(RUNNING_BUILDS_API)) !== '[]'
+  return (await fetch(RUNNING_BUILDS_API)) !== '[]'
 }
 
 function runTests() {
