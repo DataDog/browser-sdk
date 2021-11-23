@@ -1,6 +1,8 @@
 FROM node:16.3.0-buster-slim
 
-ARG CHROME_PACKAGE_VERSION=95.0.4638.69-1
+ARG CHROME_PACKAGE_VERSION
+
+RUN test -n "$CHROME_PACKAGE_VERSION" || (echo "\nCHROME_PACKAGE_VERSION not set, you need to run:\ndocker build --build-arg CHROME_PACKAGE_VERSION=xxx\n" && false)
 
 # Install Chrome deps
 RUN apt-get update && apt-get install -y -q --no-install-recommends \
