@@ -21,6 +21,7 @@ Then, in Google Chrome:
 - Enable _Developer Mode_ by clicking the toggle switch next to _Developer mode_.
 - Click the _LOAD UNPACKED_ button and select the `browser-sdk/developer-extension/dist`
   directory.
+- Open devtools and the extension features are located on the `Browser SDK` panel.
 
 ## Features
 
@@ -29,6 +30,7 @@ Then, in Google Chrome:
 - End current session
 - Load the SDK development bundles instead of production ones
 - Switch between `datadog-rum-v3.js` and `datadog-rum-slim-v3.js` bundles
+- Retrieve Logs/RUM configuration
 
 ## Browser compatibility
 
