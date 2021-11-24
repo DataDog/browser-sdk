@@ -151,7 +151,7 @@ describe('logs', () => {
   })
 
   describe('sampling', () => {
-    it('should be sampled when event bridge is present', () => {
+    it('should be applied when event bridge is present', () => {
       updateExperimentalFeatures(['event-bridge'])
       const sendSpy = spyOn(initEventBridgeStub(), 'send')
 
