@@ -9,7 +9,13 @@ import {
   resetExperimentalFeatures,
 } from '@datadog/browser-core'
 import { initEventBridgeStub, deleteEventBridgeStub } from '../../../core/test/specHelper'
-import { noopRecorderApi, setup, TestSetupBuilder } from '../../test/specHelper'
+import {
+  cleanupSyntheticsWorkerValues,
+  mockSyntheticsWorkerValues,
+  noopRecorderApi,
+  setup,
+  TestSetupBuilder,
+} from '../../test/specHelper'
 import { ActionType } from '../rawRumEvent.types'
 import {
   makeRumPublicApi,
@@ -140,6 +146,26 @@ describe('rum public api', () => {
         rumPublicApi.init(invalidConfiguration as RumInitConfiguration)
         expect(rumPublicApi.getInitConfiguration()?.sampleRate).toEqual(100)
       })
+    })
+  })
+
+  describe('init', () => {
+    let rumPublicApi: RumPublicApi
+    let startRumSpy: jasmine.Spy<StartRum>
+
+    beforeEach(() => {
+      startRumSpy = jasmine.createSpy()
+      rumPublicApi = makeRumPublicApi(startRumSpy, noopRecorderApi)
+    })
+
+    afterEach(() => {
+      cleanupSyntheticsWorkerValues()
+    })
+
+    it('does not call startRum if Synthetics will inject its own instance of RUM', () => {
+      mockSyntheticsWorkerValues({ injectsRum: true })
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      expect(startRumSpy).not.toHaveBeenCalled()
     })
   })
 
