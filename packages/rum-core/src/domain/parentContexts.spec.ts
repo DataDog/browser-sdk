@@ -1,7 +1,6 @@
-import { RelativeTime, relativeToClocks } from '@datadog/browser-core'
+import { RelativeTime, relativeToClocks, CLEAR_OLD_CONTEXTS_INTERVAL } from '@datadog/browser-core'
 import { createRumSessionMock, RumSessionMock } from '../../test/mockRumSession'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
-import { CLEAR_OLD_CONTEXTS_INTERVAL } from '../tools/contextHistory'
 import { LifeCycleEventType } from './lifeCycle'
 import {
   ACTION_CONTEXT_TIME_OUT_DELAY,

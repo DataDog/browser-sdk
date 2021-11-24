@@ -1,6 +1,5 @@
-import { ONE_MINUTE, RelativeTime, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
+import { ONE_MINUTE, RelativeTime, SESSION_TIME_OUT_DELAY, ContextHistory } from '@datadog/browser-core'
 import { ActionContext, ViewContext } from '../rawRumEvent.types'
-import { ContextHistory } from '../tools/contextHistory'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { AutoAction, AutoActionCreatedEvent } from './rumEventsCollection/action/trackActions'
 import { ViewCreatedEvent } from './rumEventsCollection/view/trackViews'

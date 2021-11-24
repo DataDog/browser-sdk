@@ -1,7 +1,6 @@
-import { RelativeTime, Observable, SESSION_TIME_OUT_DELAY, relativeNow } from '@datadog/browser-core'
+import { RelativeTime, Observable, SESSION_TIME_OUT_DELAY, relativeNow, ContextHistory } from '@datadog/browser-core'
 import { UrlContext } from '../rawRumEvent.types'
 import { LocationChange } from '../browser/locationChangeObservable'
-import { ContextHistory } from '../tools/contextHistory'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
 /**
