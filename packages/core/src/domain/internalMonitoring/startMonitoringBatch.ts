@@ -1,6 +1,5 @@
 import { Batch, HttpRequest } from '../../transport'
-import { combine, Configuration, EndpointBuilder, MonitoringMessage } from '../..'
-import { externalContextProvider } from '../internalMonitoring'
+import { Configuration, EndpointBuilder, MonitoringMessage } from '../..'
 
 export function startMonitoringBatch(configuration: Configuration) {
   const primaryBatch = createMonitoringBatch(configuration.internalMonitoringEndpointBuilder!)
@@ -19,22 +18,11 @@ export function startMonitoringBatch(configuration: Configuration) {
     )
   }
 
-  function withContext(message: MonitoringMessage) {
-    return combine(
-      {
-        date: new Date().getTime(),
-      },
-      externalContextProvider !== undefined ? externalContextProvider() : {},
-      message
-    )
-  }
-
   return {
     add(message: MonitoringMessage) {
-      const contextualizedMessage = withContext(message)
-      primaryBatch.add(contextualizedMessage)
+      primaryBatch.add(message)
       if (replicaBatch) {
-        replicaBatch.add(contextualizedMessage)
+        replicaBatch.add(message)
       }
     },
   }

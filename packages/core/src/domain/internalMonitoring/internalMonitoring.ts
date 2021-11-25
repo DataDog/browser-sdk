@@ -1,7 +1,7 @@
 import { Context } from '../../tools/context'
 import { display } from '../../tools/display'
 import { toStackTraceString } from '../../tools/error'
-import { assign, jsonStringify, Parameters, ThisParameterType } from '../../tools/utils'
+import { assign, combine, jsonStringify, Parameters, ThisParameterType } from '../../tools/utils'
 import { canUseEventBridge, getEventBridge } from '../../transport'
 import { Configuration } from '../configuration'
 import { computeStackTrace } from '../tracekit'
@@ -31,23 +31,32 @@ const monitoringConfiguration: {
   sentMessageCount: number
 } = { maxMessagesPerPage: 0, sentMessageCount: 0 }
 
-export let externalContextProvider: () => Context
-
 let onInternalMonitoringEventCollected: ((message: MonitoringMessage) => void) | undefined
 
 export function startInternalMonitoring(configuration: Configuration): InternalMonitoring {
+  let externalContextProvider: () => Context
+
   if (canUseEventBridge()) {
     const bridge = getEventBridge()!
-    onInternalMonitoringEventCollected = (message: MonitoringMessage) => bridge.send('internal_log', message)
+    onInternalMonitoringEventCollected = (message: MonitoringMessage) =>
+      bridge.send('internal_log', withContext(message))
   } else if (configuration.internalMonitoringEndpointBuilder) {
     const batch = startMonitoringBatch(configuration)
-    onInternalMonitoringEventCollected = (message: MonitoringMessage) => batch.add(message)
+    onInternalMonitoringEventCollected = (message: MonitoringMessage) => batch.add(withContext(message))
   }
 
   assign(monitoringConfiguration, {
     maxMessagesPerPage: configuration.maxInternalMonitoringMessagesPerPage,
     sentMessageCount: 0,
   })
+
+  function withContext(message: MonitoringMessage) {
+    return combine(
+      { date: new Date().getTime() },
+      externalContextProvider !== undefined ? externalContextProvider() : {},
+      message
+    )
+  }
 
   return {
     setExternalContextProvider: (provider: () => Context) => {
