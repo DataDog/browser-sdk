@@ -110,7 +110,7 @@ export function callMonitored<T extends (...args: any[]) => any>(
   } catch (e) {
     logErrorIfDebug(e)
     try {
-      addErrorToMonitoring(e)
+      addMonitoringError(e)
     } catch (e) {
       logErrorIfDebug(e)
     }
@@ -126,7 +126,7 @@ export function addMonitoringMessage(message: string, context?: Context) {
   })
 }
 
-export function addErrorToMonitoring(e: unknown) {
+export function addMonitoringError(e: unknown) {
   addToMonitoring({
     ...formatError(e),
     status: StatusType.error,

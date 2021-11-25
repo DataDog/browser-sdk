@@ -5,7 +5,7 @@ export {
   monitor,
   callMonitored,
   addMonitoringMessage,
-  addErrorToMonitoring,
+  addMonitoringError,
   startFakeInternalMonitoring,
   resetInternalMonitoring,
   setDebugMode,
