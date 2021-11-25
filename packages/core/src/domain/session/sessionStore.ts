@@ -6,7 +6,7 @@ import { monitor } from '../internalMonitoring'
 export interface SessionStore {
   expandOrRenewSession: () => void
   expandSession: () => void
-  retrieveSession: () => SessionState
+  getSession: () => SessionState
   renewObservable: Observable<void>
   stop: () => void
 }
@@ -79,14 +79,10 @@ export function startSessionStore<TrackingType extends string>(
     sessionCache = {}
   }
 
-  function retrieveSession() {
-    return sessionCache
-  }
-
   return {
     expandOrRenewSession,
     expandSession,
-    retrieveSession,
+    getSession: () => sessionCache,
     renewObservable,
     stop: () => {
       clearInterval(cookieWatch)

@@ -27,8 +27,8 @@ export function startSessionManagement<TrackingType extends string>(
   trackVisibility(() => sessionStore.expandSession())
 
   return {
-    getId: () => sessionStore.retrieveSession().id,
-    getTrackingType: () => sessionStore.retrieveSession()[productKey] as TrackingType | undefined,
+    getId: () => sessionStore.getSession().id,
+    getTrackingType: () => sessionStore.getSession()[productKey] as TrackingType | undefined,
     renewObservable: sessionStore.renewObservable,
   }
 }

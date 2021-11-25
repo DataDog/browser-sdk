@@ -65,7 +65,7 @@ describe('session store', () => {
 
         sessionStore.expandOrRenewSession()
 
-        expect(sessionStore.retrieveSession().id).toBeDefined()
+        expect(sessionStore.getSession().id).toBeDefined()
         expectSessionToBeInStore()
         expect(renewSpy).toHaveBeenCalled()
       }
@@ -79,7 +79,7 @@ describe('session store', () => {
 
         sessionStore.expandOrRenewSession()
 
-        expect(sessionStore.retrieveSession().id).toBeUndefined()
+        expect(sessionStore.getSession().id).toBeUndefined()
         expectNotTrackedSessionToBeInStore()
         expect(renewSpy).not.toHaveBeenCalled()
       }
@@ -91,7 +91,7 @@ describe('session store', () => {
 
       sessionStore.expandOrRenewSession()
 
-      expect(sessionStore.retrieveSession().id).toBe(FIRST_ID)
+      expect(sessionStore.getSession().id).toBe(FIRST_ID)
       expectSessionToBeInStore(FIRST_ID)
       expect(renewSpy).toHaveBeenCalled()
     })
@@ -106,7 +106,7 @@ describe('session store', () => {
 
         sessionStore.expandOrRenewSession()
 
-        const sessionId = sessionStore.retrieveSession().id
+        const sessionId = sessionStore.getSession().id
         expect(sessionId).toBeDefined()
         expect(sessionId).not.toBe(FIRST_ID)
         expectSessionToBeInStore(sessionId)
@@ -123,7 +123,7 @@ describe('session store', () => {
 
         sessionStore.expandOrRenewSession()
 
-        expect(sessionStore.retrieveSession().id).toBeUndefined()
+        expect(sessionStore.getSession().id).toBeUndefined()
         expectNotTrackedSessionToBeInStore()
         expect(renewSpy).not.toHaveBeenCalled()
       }
@@ -135,7 +135,7 @@ describe('session store', () => {
 
       sessionStore.expandOrRenewSession()
 
-      expect(sessionStore.retrieveSession().id).toBe(FIRST_ID)
+      expect(sessionStore.getSession().id).toBe(FIRST_ID)
       expectSessionToBeInStore(FIRST_ID)
       expect(renewSpy).not.toHaveBeenCalled()
     })
@@ -150,7 +150,7 @@ describe('session store', () => {
 
         sessionStore.expandOrRenewSession()
 
-        expect(sessionStore.retrieveSession().id).toBe(SECOND_ID)
+        expect(sessionStore.getSession().id).toBe(SECOND_ID)
         expectSessionToBeInStore(SECOND_ID)
         expect(renewSpy).toHaveBeenCalled()
       }
@@ -169,7 +169,7 @@ describe('session store', () => {
 
         sessionStore.expandOrRenewSession()
 
-        expect(sessionStore.retrieveSession().id).toBeUndefined()
+        expect(sessionStore.getSession().id).toBeUndefined()
         expectNotTrackedSessionToBeInStore()
         expect(renewSpy).not.toHaveBeenCalled()
       }
@@ -182,7 +182,7 @@ describe('session store', () => {
 
       sessionStore.expandSession()
 
-      expect(sessionStore.retrieveSession().id).toBeUndefined()
+      expect(sessionStore.getSession().id).toBeUndefined()
     })
 
     it('when session not in cache and session in store, should do nothing', () => {
@@ -191,7 +191,7 @@ describe('session store', () => {
 
       sessionStore.expandSession()
 
-      expect(sessionStore.retrieveSession().id).toBeUndefined()
+      expect(sessionStore.getSession().id).toBeUndefined()
     })
 
     it('when session in cache and session not in store, should clear session cache', () => {
@@ -201,7 +201,7 @@ describe('session store', () => {
 
       sessionStore.expandSession()
 
-      expect(sessionStore.retrieveSession().id).toBeUndefined()
+      expect(sessionStore.getSession().id).toBeUndefined()
     })
 
     it('when session in cache is same session than in store, should expand session', () => {
@@ -210,7 +210,7 @@ describe('session store', () => {
 
       sessionStore.expandSession()
 
-      expect(sessionStore.retrieveSession().id).toBe(FIRST_ID)
+      expect(sessionStore.getSession().id).toBe(FIRST_ID)
     })
 
     it('when session in cache is different session than in store, should clear session cache', () => {
@@ -220,7 +220,7 @@ describe('session store', () => {
 
       sessionStore.expandSession()
 
-      expect(sessionStore.retrieveSession().id).toBeUndefined()
+      expect(sessionStore.getSession().id).toBeUndefined()
       expectSessionToBeInStore(SECOND_ID)
     })
   })
@@ -231,7 +231,7 @@ describe('session store', () => {
 
       clock.tick(COOKIE_ACCESS_DELAY)
 
-      expect(sessionStore.retrieveSession().id).toBeUndefined()
+      expect(sessionStore.getSession().id).toBeUndefined()
     })
 
     it('when session not in cache and session in store, should do nothing', () => {
@@ -240,7 +240,7 @@ describe('session store', () => {
 
       clock.tick(COOKIE_ACCESS_DELAY)
 
-      expect(sessionStore.retrieveSession().id).toBeUndefined()
+      expect(sessionStore.getSession().id).toBeUndefined()
     })
 
     it('when session in cache and session not in store, should clear session cache', () => {
@@ -250,7 +250,7 @@ describe('session store', () => {
 
       clock.tick(COOKIE_ACCESS_DELAY)
 
-      expect(sessionStore.retrieveSession().id).toBeUndefined()
+      expect(sessionStore.getSession().id).toBeUndefined()
     })
 
     it('when session in cache is same session than in store, should do nothing', () => {
@@ -259,7 +259,7 @@ describe('session store', () => {
 
       clock.tick(COOKIE_ACCESS_DELAY)
 
-      expect(sessionStore.retrieveSession().id).toBe(FIRST_ID)
+      expect(sessionStore.getSession().id).toBe(FIRST_ID)
     })
 
     it('when session in cache is different session than in store, should clear session cache', () => {
@@ -269,7 +269,7 @@ describe('session store', () => {
 
       clock.tick(COOKIE_ACCESS_DELAY)
 
-      expect(sessionStore.retrieveSession().id).toBeUndefined()
+      expect(sessionStore.getSession().id).toBeUndefined()
     })
   })
 })
