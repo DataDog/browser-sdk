@@ -29,8 +29,11 @@ export function startRumSession(configuration: Configuration, lifeCycle: LifeCyc
     computeSessionState(configuration, rawTrackingType)
   )
 
-  session.renewObservable.subscribe(() => {
+  session.expireObservable.subscribe(() => {
     lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+  })
+
+  session.renewObservable.subscribe(() => {
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
   })
 

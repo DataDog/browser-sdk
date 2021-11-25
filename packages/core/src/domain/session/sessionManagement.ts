@@ -8,9 +8,10 @@ import { startSessionStore } from './sessionStore'
 export const VISIBILITY_CHECK_DELAY = utils.ONE_MINUTE
 
 export interface Session<T> {
-  renewObservable: Observable<void>
   getId: () => string | undefined
   getTrackingType: () => T | undefined
+  renewObservable: Observable<void>
+  expireObservable: Observable<void>
 }
 
 let stopCallbacks: Array<() => void> = []
@@ -32,6 +33,7 @@ export function startSessionManagement<TrackingType extends string>(
     getId: () => sessionStore.getSession().id,
     getTrackingType: () => sessionStore.getSession()[productKey] as TrackingType | undefined,
     renewObservable: sessionStore.renewObservable,
+    expireObservable: sessionStore.expireObservable,
   }
 }
 

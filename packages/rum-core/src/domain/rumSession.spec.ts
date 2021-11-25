@@ -105,6 +105,7 @@ describe('rum session', () => {
     })
 
     it('should renew on activity after expiration', () => {
+      setCookie(SESSION_COOKIE_NAME, 'id=abcdef&rum=1', DURATION)
       startRumSession(configuration as Configuration, lifeCycle)
 
       setCookie(SESSION_COOKIE_NAME, '', DURATION)
