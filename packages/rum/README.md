@@ -276,7 +276,8 @@ datadogRum.init({
 });
 ```
 
-**Example**: If you wanted to collect 25% of your sessions using Browser and 25% sessions using the Session Replay RUM option
+**Example**: If you wanted to collect 25% of your sessions using Browser and 25% sessions using the Session Replay RUM option:
+
 ```
 datadogRum.init({
     ....
