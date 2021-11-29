@@ -253,6 +253,35 @@ init(configuration: {
 })
 ```
 
+### Browser and Session Replay sampling and configuration
+The option `sampleRate:` controls the overall sample rate of RUM data collection and `replaySampleRate:` controls the % of Session Replay data collection of the overall rate (meaning the collection of **Resources**, **Long Tasks**, and **Replay** recordings) . 
+
+**Example**: If you wanted to collect 100% of your sessions using only the Browser RUM option
+```
+datadogRum.init({
+    ....
+    sampleRate: 100,
+    replaySampleRate: 0
+});
+```
+
+**Example**: If you wanted to collect 100% of your sessions using only the Session Replay RUM option without recording a replay
+```
+datadogRum.init({
+    ....
+    sampleRate: 100,
+    replaySampleRate: 100 // Note: if this is not included it will default to 100%
+});
+```
+
+**Example**: If you wanted to collect 25% of your sessions using Browser and 25% sessions using the Session Replay RUM option
+```
+datadogRum.init({
+    ....
+    sampleRate: 50,
+    replaySampleRate: 50
+});
+
 [1]: https://app.datadoghq.com/rum/list
 [2]: https://docs.datadoghq.com/real_user_monitoring/data_collected/
 [3]: https://docs.datadoghq.com/real_user_monitoring/dashboards/
