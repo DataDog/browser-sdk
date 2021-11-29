@@ -11,4 +11,3 @@ export {
   setDebugMode,
   startInternalMonitoring,
 } from './internalMonitoring'
-export { startMonitoringBatch } from './startMonitoringBatch'
