@@ -254,7 +254,7 @@ init(configuration: {
 ```
 
 ### Browser and Session Replay sampling and configuration
-The option `sampleRate:` controls the overall sample rate of RUM data collection and `replaySampleRate:` controls the % of Session Replay data collection of the overall rate (meaning the collection of **Resources**, **Long Tasks**, and **Replay** recordings) . 
+The option `sampleRate` controls the overall sample rate of RUM data collection and `replaySampleRate` controls the percent of Session Replay data collection of the overall rate (meaning the collection of **Resources**, **Long Tasks**, and **Replay** recordings) . 
 
 **Example**: If you wanted to collect 100% of your sessions using only the Browser RUM option
 ```
