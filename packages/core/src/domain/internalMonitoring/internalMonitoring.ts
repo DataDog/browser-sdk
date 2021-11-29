@@ -5,7 +5,7 @@ import { assign, combine, jsonStringify, Parameters, ThisParameterType } from '.
 import { canUseEventBridge, getEventBridge } from '../../transport'
 import { Configuration } from '../configuration'
 import { computeStackTrace } from '../tracekit'
-import { startMonitoringBatch } from '../internalMonitoring/startMonitoringBatch'
+import { startMonitoringBatch } from './startMonitoringBatch'
 
 enum StatusType {
   info = 'info',
@@ -31,18 +31,18 @@ const monitoringConfiguration: {
   sentMessageCount: number
 } = { maxMessagesPerPage: 0, sentMessageCount: 0 }
 
-let onInternalMonitoringEventCollected: ((message: MonitoringMessage) => void) | undefined
+let onInternalMonitoringMessageCollected: ((message: MonitoringMessage) => void) | undefined
 
 export function startInternalMonitoring(configuration: Configuration): InternalMonitoring {
   let externalContextProvider: () => Context
 
   if (canUseEventBridge()) {
     const bridge = getEventBridge()!
-    onInternalMonitoringEventCollected = (message: MonitoringMessage) =>
+    onInternalMonitoringMessageCollected = (message: MonitoringMessage) =>
       bridge.send('internal_log', withContext(message))
   } else if (configuration.internalMonitoringEndpointBuilder) {
     const batch = startMonitoringBatch(configuration)
-    onInternalMonitoringEventCollected = (message: MonitoringMessage) => batch.add(withContext(message))
+    onInternalMonitoringMessageCollected = (message: MonitoringMessage) => batch.add(withContext(message))
   }
 
   assign(monitoringConfiguration, {
@@ -72,7 +72,7 @@ export function startFakeInternalMonitoring() {
     sentMessageCount: 0,
   })
 
-  onInternalMonitoringEventCollected = (message: MonitoringMessage) => {
+  onInternalMonitoringMessageCollected = (message: MonitoringMessage) => {
     messages.push(message)
   }
 
@@ -80,7 +80,7 @@ export function startFakeInternalMonitoring() {
 }
 
 export function resetInternalMonitoring() {
-  onInternalMonitoringEventCollected = undefined
+  onInternalMonitoringMessageCollected = undefined
 }
 
 export function monitored<T extends (...params: any[]) => unknown>(
@@ -90,7 +90,7 @@ export function monitored<T extends (...params: any[]) => unknown>(
 ) {
   const originalMethod = descriptor.value!
   descriptor.value = function (this: any, ...args: Parameters<T>) {
-    const decorated = onInternalMonitoringEventCollected ? monitor(originalMethod) : originalMethod
+    const decorated = onInternalMonitoringMessageCollected ? monitor(originalMethod) : originalMethod
     return decorated.apply(this, args) as ReturnType<T>
   } as T
 }
@@ -144,11 +144,11 @@ export function addMonitoringError(e: unknown) {
 
 function addToMonitoring(message: MonitoringMessage) {
   if (
-    onInternalMonitoringEventCollected &&
+    onInternalMonitoringMessageCollected &&
     monitoringConfiguration.sentMessageCount < monitoringConfiguration.maxMessagesPerPage
   ) {
     monitoringConfiguration.sentMessageCount += 1
-    onInternalMonitoringEventCollected(message)
+    onInternalMonitoringMessageCollected(message)
   }
 }
 
