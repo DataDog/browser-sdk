@@ -266,7 +266,8 @@ datadogRum.init({
 });
 ```
 
-**Example**: If you wanted to collect 100% of your sessions using only the Session Replay RUM option without recording a replay
+**Example**: If you wanted to collect 100% of your sessions using only the Session Replay RUM option without recording a replay:
+
 ```
 datadogRum.init({
     ....
