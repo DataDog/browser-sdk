@@ -2,18 +2,26 @@ import { CookieOptions } from '../../browser/cookie'
 import { Observable } from '../../tools/observable'
 import * as utils from '../../tools/utils'
 import { monitor } from '../internalMonitoring'
+import { Context } from '../../tools/context'
+import { ContextHistory } from '../../tools/contextHistory'
+import { relativeNow, RelativeTime, clocksOrigin } from '../../tools/timeUtils'
 import { tryOldCookiesMigration } from './oldCookiesMigration'
-import { startSessionStore } from './sessionStore'
+import { startSessionStore, SESSION_TIME_OUT_DELAY } from './sessionStore'
 
-export const VISIBILITY_CHECK_DELAY = utils.ONE_MINUTE
-
-export interface Session<T> {
-  getId: () => string | undefined
-  getTrackingType: () => T | undefined
+export interface Session<TrackingType extends string> {
+  getId: (startTime?: RelativeTime) => string | undefined
+  getTrackingType: (startTime?: RelativeTime) => TrackingType | undefined
   renewObservable: Observable<void>
   expireObservable: Observable<void>
 }
 
+interface SessionContext<TrackingType extends string> extends Context {
+  id: string
+  trackingType: TrackingType
+}
+
+export const VISIBILITY_CHECK_DELAY = utils.ONE_MINUTE
+const SESSION_CONTEXT_TIMEOUT_DELAY = SESSION_TIME_OUT_DELAY
 let stopCallbacks: Array<() => void> = []
 
 export function startSessionManagement<TrackingType extends string>(
@@ -25,13 +33,32 @@ export function startSessionManagement<TrackingType extends string>(
   const sessionStore = startSessionStore(options, productKey, computeSessionState)
   stopCallbacks.push(() => sessionStore.stop())
 
+  const sessionContextHistory = new ContextHistory<SessionContext<TrackingType>>(SESSION_CONTEXT_TIMEOUT_DELAY)
+  stopCallbacks.push(() => sessionContextHistory.stop())
+
+  sessionStore.renewObservable.subscribe(() => {
+    sessionContextHistory.setCurrent(buildSessionContext(), relativeNow())
+  })
+  sessionStore.expireObservable.subscribe(() => {
+    sessionContextHistory.closeCurrent(relativeNow())
+  })
+
   sessionStore.expandOrRenewSession()
+  sessionContextHistory.setCurrent(buildSessionContext(), clocksOrigin().relative)
+
   trackActivity(() => sessionStore.expandOrRenewSession())
   trackVisibility(() => sessionStore.expandSession())
 
+  function buildSessionContext() {
+    return {
+      id: sessionStore.getSession().id!,
+      trackingType: sessionStore.getSession()[productKey] as TrackingType,
+    }
+  }
+
   return {
-    getId: () => sessionStore.getSession().id,
-    getTrackingType: () => sessionStore.getSession()[productKey] as TrackingType | undefined,
+    getId: (startTime) => sessionContextHistory.find(startTime)?.id,
+    getTrackingType: (startTime) => sessionContextHistory.find(startTime)?.trackingType,
     renewObservable: sessionStore.renewObservable,
     expireObservable: sessionStore.expireObservable,
   }
