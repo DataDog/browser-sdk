@@ -284,6 +284,8 @@ datadogRum.init({
     sampleRate: 50,
     replaySampleRate: 50
 });
+```
+In this case, it means that we are taking 50% of all sessions, and half of those sessions are being tracked as the Session Replay RUM option, meaning left over sessions are being tracked as Browser RUM.
 
 [1]: https://app.datadoghq.com/rum/list
 [2]: https://docs.datadoghq.com/real_user_monitoring/data_collected/
