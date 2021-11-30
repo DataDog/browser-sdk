@@ -254,9 +254,9 @@ init(configuration: {
 ```
 
 ### Browser and Session Replay sampling and configuration
-The option `sampleRate` controls the overall sample rate of RUM data collection and `replaySampleRate` controls the percent of Session Replay data collection of the overall rate (meaning the collection of **Resources**, **Long Tasks**, and **Replay** recordings) . 
+The `sampleRate` option controls the overall sample rate of RUM data collection. The `replaySampleRate` option controls the percentage of Session Replay data collection of the overall rate (the collection of **Resources**, **Long Tasks**, and **Replay** recordings). 
 
-**Example**: If you wanted to collect 100% of your sessions using only the Browser RUM option:
+For example, to collect 100% of your sessions using only the Browser RUM option:
 
 ```
 datadogRum.init({
@@ -266,7 +266,7 @@ datadogRum.init({
 });
 ```
 
-**Example**: If you wanted to collect 100% of your sessions using only the Session Replay RUM option without recording a replay:
+For example, to collect 100% of your sessions using only the Session Replay RUM option without recording a replay:
 
 ```
 datadogRum.init({
@@ -276,7 +276,7 @@ datadogRum.init({
 });
 ```
 
-**Example**: If you wanted to collect 25% of your sessions using Browser and 25% sessions using the Session Replay RUM option:
+For example, to collect 25% of your sessions using the Browser RUM option and 25% of your sessions using the Session Replay RUM option:
 
 ```
 datadogRum.init({
@@ -285,7 +285,13 @@ datadogRum.init({
     replaySampleRate: 50
 });
 ```
-In this case, it means that we are taking 50% of all sessions, and half of those sessions are being tracked as the Session Replay RUM option, meaning left over sessions are being tracked as Browser RUM.
+
+In the example above, 50% of all sessions are collected. The Session Replay RUM option tracks half of these sessions while the Browser RUM option tracks the remaining half of these sessions. 
+
+## Further Reading
+
+{{< partial name="whats-next/whats-next.html" >}}
+
 
 [1]: https://app.datadoghq.com/rum/list
 [2]: https://docs.datadoghq.com/real_user_monitoring/data_collected/
