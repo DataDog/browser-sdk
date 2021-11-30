@@ -177,7 +177,7 @@ export function computeSegmentContext(applicationId: string, session: RumSession
     return undefined
   }
   const viewContext = parentContexts.findView()
-  if (!viewContext?.session.id || viewContext.session.id !== session.getId()) {
+  if (!viewContext) {
     return undefined
   }
   return {
@@ -185,7 +185,7 @@ export function computeSegmentContext(applicationId: string, session: RumSession
       id: applicationId,
     },
     session: {
-      id: viewContext.session.id,
+      id: session.getId()!,
     },
     view: {
       id: viewContext.view.id,

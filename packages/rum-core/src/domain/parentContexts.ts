@@ -3,7 +3,6 @@ import { ActionContext, ViewContext } from '../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { AutoAction, AutoActionCreatedEvent } from './rumEventsCollection/action/trackActions'
 import { ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
-import { RumSession } from './rumSession'
 
 export const VIEW_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
 export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
@@ -14,13 +13,13 @@ export interface ParentContexts {
   stop: () => void
 }
 
-export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): ParentContexts {
+export function startParentContexts(lifeCycle: LifeCycle): ParentContexts {
   const viewContextHistory = new ContextHistory<ViewContext>(VIEW_CONTEXT_TIME_OUT_DELAY)
 
   const actionContextHistory = new ContextHistory<ActionContext>(ACTION_CONTEXT_TIME_OUT_DELAY)
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
-    viewContextHistory.setCurrent(buildViewContext(view, session.getId()), view.startClocks.relative)
+    viewContextHistory.setCurrent(buildViewContext(view), view.startClocks.relative)
   })
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) => {
@@ -28,7 +27,7 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
     // most recently created.
     const current = viewContextHistory.getCurrent()
     if (current && current.view.id === view.id) {
-      viewContextHistory.setCurrent(buildViewContext(view, current.session.id), view.startClocks.relative)
+      viewContextHistory.setCurrent(buildViewContext(view), view.startClocks.relative)
     }
   })
 
@@ -57,11 +56,8 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
     actionContextHistory.reset()
   })
 
-  function buildViewContext(view: ViewCreatedEvent, sessionId: string | undefined) {
+  function buildViewContext(view: ViewCreatedEvent) {
     return {
-      session: {
-        id: sessionId,
-      },
       view: {
         id: view.id,
         name: view.name,

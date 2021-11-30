@@ -94,7 +94,7 @@ export function startRumEventCollection(
   locationChangeObservable: Observable<LocationChange>,
   getCommonContext: () => CommonContext
 ) {
-  const parentContexts = startParentContexts(lifeCycle, session)
+  const parentContexts = startParentContexts(lifeCycle)
   const urlContexts = startUrlContexts(lifeCycle, locationChangeObservable, location)
   const foregroundContexts = startForegroundContexts()
 

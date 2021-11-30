@@ -4,11 +4,13 @@ import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { startInternalContext } from './internalContext'
 import { ParentContexts } from './parentContexts'
 import { UrlContexts } from './urlContexts'
+import { RumSession } from './rumSession'
 
 describe('internal context', () => {
   let setupBuilder: TestSetupBuilder
   let parentContextsStub: Partial<ParentContexts>
   let findUrlSpy: jasmine.Spy<UrlContexts['findUrl']>
+  let sessionIdSpy: jasmine.Spy<RumSession['getId']>
   let internalContext: ReturnType<typeof startInternalContext>
 
   beforeEach(() => {
@@ -19,18 +21,17 @@ describe('internal context', () => {
         },
       }),
       findView: jasmine.createSpy('findView').and.returnValue({
-        session: {
-          id: '1234',
-        },
         view: {
           id: 'abcde',
         },
       }),
     }
     setupBuilder = setup()
+      .withSession(createRumSessionMock().setId('456'))
       .withParentContexts(parentContextsStub)
       .beforeBuild(({ applicationId, session, parentContexts, urlContexts }) => {
         findUrlSpy = spyOn(urlContexts, 'findUrl').and.callThrough()
+        sessionIdSpy = spyOn(session, 'getId').and.callThrough()
         internalContext = startInternalContext(applicationId, session, parentContexts, urlContexts)
       })
   })
@@ -44,7 +45,7 @@ describe('internal context', () => {
 
     expect(internalContext.get()).toEqual({
       application_id: 'appId',
-      session_id: '1234',
+      session_id: '456',
       user_action: {
         id: '7890',
       },
@@ -69,5 +70,6 @@ describe('internal context', () => {
     expect(parentContextsStub.findView).toHaveBeenCalledWith(123)
     expect(parentContextsStub.findAction).toHaveBeenCalledWith(123)
     expect(findUrlSpy).toHaveBeenCalledWith(123 as RelativeTime)
+    expect(sessionIdSpy).toHaveBeenCalledWith(123 as RelativeTime)
   })
 })
