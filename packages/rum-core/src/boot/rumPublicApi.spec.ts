@@ -150,22 +150,38 @@ describe('rum public api', () => {
   })
 
   describe('init', () => {
-    let rumPublicApi: RumPublicApi
     let startRumSpy: jasmine.Spy<StartRum>
 
     beforeEach(() => {
       startRumSpy = jasmine.createSpy()
-      rumPublicApi = makeRumPublicApi(startRumSpy, noopRecorderApi)
     })
 
     afterEach(() => {
       cleanupSyntheticsWorkerValues()
     })
 
-    it('does not call startRum if Synthetics will inject its own instance of RUM', () => {
-      mockSyntheticsWorkerValues({ injectsRum: true })
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      expect(startRumSpy).not.toHaveBeenCalled()
+    describe('skipInitIfSyntheticsWillInjectRum option', () => {
+      it('when true, ignores init() call if Synthetics will inject its own instance of RUM', () => {
+        mockSyntheticsWorkerValues({ injectsRum: true })
+
+        const rumPublicApi = makeRumPublicApi(startRumSpy, noopRecorderApi, {
+          ignoreInitIfSyntheticsWillInjectRum: true,
+        })
+        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+        expect(startRumSpy).not.toHaveBeenCalled()
+      })
+
+      it('when true, does not ignore init() call even if Synthetics will inject its own instance of RUM', () => {
+        mockSyntheticsWorkerValues({ injectsRum: true })
+
+        const rumPublicApi = makeRumPublicApi(startRumSpy, noopRecorderApi, {
+          ignoreInitIfSyntheticsWillInjectRum: false,
+        })
+        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+        expect(startRumSpy).toHaveBeenCalled()
+      })
     })
   })
 

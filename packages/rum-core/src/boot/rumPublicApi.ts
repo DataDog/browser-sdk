@@ -66,8 +66,15 @@ export interface RecorderApi {
   isRecording: () => boolean
   getReplayStats: (viewId: string) => ReplayStats | undefined
 }
+interface RumPublicApiOptions {
+  ignoreInitIfSyntheticsWillInjectRum?: boolean
+}
 
-export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: StartRum<C>, recorderApi: RecorderApi) {
+export function makeRumPublicApi<C extends RumInitConfiguration>(
+  startRumImpl: StartRum<C>,
+  recorderApi: RecorderApi,
+  { ignoreInitIfSyntheticsWillInjectRum = true }: RumPublicApiOptions = {}
+) {
   let isAlreadyInitialized = false
 
   const globalContextManager = createContextManager()
@@ -98,7 +105,7 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
   }
 
   function initRum(initConfiguration: C) {
-    if (willSyntheticsInjectRum()) {
+    if (ignoreInitIfSyntheticsWillInjectRum && willSyntheticsInjectRum()) {
       return
     }
 

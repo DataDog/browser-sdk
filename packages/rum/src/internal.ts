@@ -1,3 +1,10 @@
+/**
+ * Entry point consumed by the Datadog Web app to mutualize some types, constant and logic for
+ * tests.
+ *
+ * WARNING: this module is not intended for public usages, and won't follow semver for breaking
+ * changes.
+ */
 export {
   MutationData,
   MousemoveData,
