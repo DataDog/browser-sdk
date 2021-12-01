@@ -44,7 +44,7 @@ export function startSessionStore<TrackingType extends string>(
     if (isTracked && !hasSessionCache()) {
       renewSession(cookieSession)
     }
-    sessionCache = { ...cookieSession }
+    sessionCache = cookieSession
   }
 
   function expandSession() {
@@ -88,7 +88,7 @@ export function startSessionStore<TrackingType extends string>(
   }
 
   function renewSession(cookieSession: SessionState) {
-    sessionCache = { ...cookieSession }
+    sessionCache = cookieSession
     renewObservable.notify()
   }
 
