@@ -27,6 +27,7 @@ import {
 import { RumEvent } from '../rumEvent.types'
 import { buildEnv } from '../boot/buildEnv'
 import { getSyntheticsContext } from './syntheticsContext'
+import { getCITestContext } from './ciTestContext'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { ParentContexts } from './parentContexts'
 import { RumSession, RumSessionPlan } from './rumSession'
@@ -35,6 +36,7 @@ import { UrlContexts } from './urlContexts'
 enum SessionType {
   SYNTHETICS = 'synthetics',
   USER = 'user',
+  CITEST = 'ci-test',
 }
 
 const VIEW_EVENTS_MODIFIABLE_FIELD_PATHS = [
@@ -75,6 +77,7 @@ export function startRumAssembly(
   }
 
   const syntheticsContext = getSyntheticsContext()
+  const ciContext = getCITestContext()
 
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
@@ -100,9 +103,10 @@ export function startRumAssembly(
           service: configuration.service,
           session: {
             id: session.getId(startTime)!,
-            type: syntheticsContext ? SessionType.SYNTHETICS : SessionType.USER,
+            type: syntheticsContext ? SessionType.SYNTHETICS : ciContext ? SessionType.CITEST : SessionType.USER,
           },
           synthetics: syntheticsContext,
+          civisibility: ciContext,
         }
         const serverRumEvent = (needToAssembleWithAction(rawRumEvent)
           ? combine(rumContext, urlContext, viewContext, actionContext, rawRumEvent)
