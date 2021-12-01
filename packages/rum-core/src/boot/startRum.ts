@@ -37,6 +37,9 @@ export function startRum(
     combine(
       {
         application_id: initConfiguration.applicationId,
+        session: {
+          id: session.getId(),
+        },
       },
       parentContexts.findView(),
       { view: { name: null } }
