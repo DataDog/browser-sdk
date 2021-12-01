@@ -457,16 +457,16 @@ describe('startSessionManagement', () => {
         trackingType: FakeTrackingType.TRACKED,
       }))
 
-      // 0 - 10s first session
+      // 0s to 10s: first session
       clock.tick(10 * ONE_SECOND - COOKIE_ACCESS_DELAY)
       const firstSessionId = session.getId()
       const firstSessionTrackingType = session.getTrackingType()
       expireSession()
 
-      // 10 - 20s no session
+      // 10s to 20s: no session
       clock.tick(10 * ONE_SECOND)
 
-      // 20s - end second session
+      // 20s to end: second session
       document.dispatchEvent(new CustomEvent('click'))
       clock.tick(10 * ONE_SECOND)
       const secondSessionId = session.getId()
