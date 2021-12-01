@@ -187,13 +187,13 @@ Specify your own attribute to be used to [name actions][9].
 : Optional<br/>
 **Type**: Number<br/>
 **Default**: `100`<br/>
-The percentage of sessions to track: `100` for all, `0` for none. Only tracked sessions send rum events. For more details about `sampleRate`, see [the sampling configuration](#browser-and-session-replay-sampling-configuration).
+The percentage of sessions to track: `100` for all, `0` for none. Only tracked sessions send RUM events. For more details about `sampleRate`, see the [sampling configuration](#browser-and-session-replay-sampling-configuration).
 
 `replaySampleRate`
 : Optional<br/>
 **Type**: Number<br/>
 **Default**: `100`<br/>
-The percentage of tracked sessions with [session replay pricing][11] features: `100` for all, `0` for none. For more details about `replaySampleRate`, see [the sampling configuration](#browser-and-session-replay-sampling-configuration).
+The percentage of tracked sessions with [Session Replay pricing][11] features: `100` for all, `0` for none. For more details about `replaySampleRate`, see the [sampling configuration](#browser-and-session-replay-sampling-configuration).
 
 `silentMultipleInit`
 : Optional<br/>
