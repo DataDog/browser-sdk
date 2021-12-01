@@ -7,6 +7,8 @@ import {
   SESSION_COOKIE_NAME,
   setCookie,
   stopSessionManagement,
+  ONE_SECOND,
+  RelativeTime,
 } from '@datadog/browser-core'
 import { Clock, mockClock } from '../../../core/test/specHelper'
 
@@ -137,6 +139,28 @@ describe('rum session', () => {
       clock.tick(COOKIE_ACCESS_DELAY)
       expect(rumSession.getId()).toBe(undefined)
     })
+
+    it('should return session id corresponding to start time', () => {
+      setCookie(SESSION_COOKIE_NAME, 'id=abcdef&rum=1', DURATION)
+      const rumSession = startRumSession(configuration as Configuration, lifeCycle)
+      clock.tick(10 * ONE_SECOND)
+      setCookie(SESSION_COOKIE_NAME, '', DURATION)
+      clock.tick(COOKIE_ACCESS_DELAY)
+      expect(rumSession.getId()).toBeUndefined()
+      expect(rumSession.getId(0 as RelativeTime)).toBe('abcdef')
+    })
+  })
+
+  describe('isTracked', () => {
+    it('should return value corresponding to start time', () => {
+      setCookie(SESSION_COOKIE_NAME, 'id=abcdef&rum=1', DURATION)
+      const rumSession = startRumSession(configuration as Configuration, lifeCycle)
+      clock.tick(10 * ONE_SECOND)
+      setCookie(SESSION_COOKIE_NAME, '', DURATION)
+      clock.tick(COOKIE_ACCESS_DELAY)
+      expect(rumSession.isTracked()).toBeFalse()
+      expect(rumSession.isTracked(ONE_SECOND as RelativeTime)).toBeTrue()
+    })
   })
 
   describe('hasReplayPlan', () => {
@@ -158,6 +182,16 @@ describe('rum session', () => {
       const rumSession = startRumSession(configuration as Configuration, lifeCycle)
       expect(rumSession.hasReplayPlan()).toBeFalse()
     })
+
+    it('should return plan corresponding to start time', () => {
+      setCookie(SESSION_COOKIE_NAME, 'id=abcdef&rum=1', DURATION)
+      const rumSession = startRumSession(configuration as Configuration, lifeCycle)
+      clock.tick(10 * ONE_SECOND)
+      setCookie(SESSION_COOKIE_NAME, '', DURATION)
+      clock.tick(COOKIE_ACCESS_DELAY)
+      expect(rumSession.hasReplayPlan()).toBeFalse()
+      expect(rumSession.hasReplayPlan(ONE_SECOND as RelativeTime)).toBeTrue()
+    })
   })
 
   describe('hasLitePlan', () => {
@@ -178,6 +212,16 @@ describe('rum session', () => {
       setCookie(SESSION_COOKIE_NAME, 'id=abcdef&rum=0', DURATION)
       const rumSession = startRumSession(configuration as Configuration, lifeCycle)
       expect(rumSession.hasLitePlan()).toBeFalse()
+    })
+
+    it('should return plan corresponding to start time', () => {
+      setCookie(SESSION_COOKIE_NAME, 'id=abcdef&rum=2', DURATION)
+      const rumSession = startRumSession(configuration as Configuration, lifeCycle)
+      clock.tick(10 * ONE_SECOND)
+      setCookie(SESSION_COOKIE_NAME, '', DURATION)
+      clock.tick(COOKIE_ACCESS_DELAY)
+      expect(rumSession.hasLitePlan()).toBeFalse()
+      expect(rumSession.hasLitePlan(ONE_SECOND as RelativeTime)).toBeTrue()
     })
   })
 })

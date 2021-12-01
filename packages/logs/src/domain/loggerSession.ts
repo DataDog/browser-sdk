@@ -18,7 +18,7 @@ export function startLoggerSession(configuration: Configuration): LoggerSession 
   )
   return {
     getId: session.getId,
-    isTracked: () => session.getTrackingType() === LoggerTrackingType.TRACKED,
+    isTracked: (startTime) => session.getTrackingType(startTime) === LoggerTrackingType.TRACKED,
   }
 }
 
