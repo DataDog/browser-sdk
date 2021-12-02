@@ -1,11 +1,11 @@
-interface CITestWindow extends Window {
+export interface CiTestWindow extends Window {
   Cypress?: {
     env: (key: string) => string | undefined
   }
 }
 
-export function getCITestContext() {
-  const testExecutionId = (window as CITestWindow).Cypress?.env('traceId')
+export function getCiTestContext() {
+  const testExecutionId = (window as CiTestWindow).Cypress?.env('traceId')
 
   if (typeof testExecutionId === 'string') {
     return {
