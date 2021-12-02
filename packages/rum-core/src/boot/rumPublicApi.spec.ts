@@ -172,7 +172,7 @@ describe('rum public api', () => {
         expect(startRumSpy).not.toHaveBeenCalled()
       })
 
-      it('when true, does not ignore init() call even if Synthetics will inject its own instance of RUM', () => {
+      it('when false, does not ignore init() call even if Synthetics will inject its own instance of RUM', () => {
         mockSyntheticsWorkerValues({ injectsRum: true })
 
         const rumPublicApi = makeRumPublicApi(startRumSpy, noopRecorderApi, {

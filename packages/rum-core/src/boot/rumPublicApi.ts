@@ -105,6 +105,10 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(
   }
 
   function initRum(initConfiguration: C) {
+    // If we are in a Synthetics test configured to automatically inject a RUM instance, we want to
+    // completely discard the customer application RUM instance by ignoring their init() call.  But,
+    // we should not ignore the init() call from the Synthetics-injected RUM instance, so the
+    // internal `ignoreInitIfSyntheticsWillInjectRum` option is here to bypass this condition.
     if (ignoreInitIfSyntheticsWillInjectRum && willSyntheticsInjectRum()) {
       return
     }
