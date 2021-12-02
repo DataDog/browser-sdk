@@ -5,10 +5,9 @@ interface CITestWindow extends Window {
 }
 
 export function getCITestContext() {
-  const isCypress = (window as CITestWindow).Cypress
   const testExecutionId = (window as CITestWindow).Cypress?.env('traceId')
 
-  if (isCypress && typeof testExecutionId === 'string') {
+  if (typeof testExecutionId === 'string') {
     return {
       test_execution_id: testExecutionId,
     }
