@@ -41,7 +41,7 @@ export function startSessionStore<TrackingType extends string>(
     const cookieSession = retrieveAndSynchronizeSession()
     const isTracked = expandOrRenewCookie(cookieSession)
 
-    if (isTracked && !hasSessionCache()) {
+    if (isTracked && !hasSessionInCache()) {
       renewSession(cookieSession)
     }
     sessionCache = cookieSession
@@ -49,14 +49,14 @@ export function startSessionStore<TrackingType extends string>(
 
   function expandSession() {
     const cookieSession = retrieveAndSynchronizeSession()
-    if (hasSessionCache()) {
+    if (hasSessionInCache()) {
       persistSession(cookieSession, options)
     }
   }
 
   function retrieveAndSynchronizeSession() {
     const cookieSession = retrieveActiveSession(options)
-    if (hasSessionCache() && isSessionCacheOutdated(cookieSession)) {
+    if (hasSessionInCache() && isSessionInCacheOutdated(cookieSession)) {
       expireSession()
     }
     return cookieSession
@@ -74,12 +74,12 @@ export function startSessionStore<TrackingType extends string>(
     return isTracked
   }
 
-  function hasSessionCache() {
-    return sessionCache.id !== undefined
+  function hasSessionInCache() {
+    return sessionCache[productKey] !== undefined
   }
 
-  function isSessionCacheOutdated(cookieSession: SessionState) {
-    return sessionCache.id !== cookieSession.id
+  function isSessionInCacheOutdated(cookieSession: SessionState) {
+    return sessionCache.id !== cookieSession.id || sessionCache[productKey] !== cookieSession[productKey]
   }
 
   function expireSession() {

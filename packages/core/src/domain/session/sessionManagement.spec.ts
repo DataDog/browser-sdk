@@ -404,6 +404,28 @@ describe('startSessionManagement', () => {
       expect(expireSessionSpy).toHaveBeenCalled()
     })
 
+    it('should expand not tracked session duration on activity', () => {
+      const session = startSessionManagement(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
+        isTracked: false,
+        trackingType: FakeTrackingType.NOT_TRACKED,
+      }))
+      const expireSessionSpy = jasmine.createSpy()
+      session.expireObservable.subscribe(expireSessionSpy)
+
+      expectTrackingTypeToBe(session, FIRST_PRODUCT_KEY, FakeTrackingType.NOT_TRACKED)
+
+      clock.tick(SESSION_EXPIRATION_DELAY - 10)
+      document.dispatchEvent(new CustomEvent('click'))
+
+      clock.tick(10)
+      expectTrackingTypeToBe(session, FIRST_PRODUCT_KEY, FakeTrackingType.NOT_TRACKED)
+      expect(expireSessionSpy).not.toHaveBeenCalled()
+
+      clock.tick(SESSION_EXPIRATION_DELAY)
+      expectTrackingTypeToNotBeDefined(session, FIRST_PRODUCT_KEY)
+      expect(expireSessionSpy).toHaveBeenCalled()
+    })
+
     it('should expand session on visibility', () => {
       setPageVisibility('visible')
 
@@ -425,6 +447,30 @@ describe('startSessionManagement', () => {
 
       clock.tick(10)
       expectSessionIdToNotBeDefined(session)
+      expect(expireSessionSpy).toHaveBeenCalled()
+    })
+
+    it('should expand not tracked session on visibility', () => {
+      setPageVisibility('visible')
+
+      const session = startSessionManagement(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
+        isTracked: false,
+        trackingType: FakeTrackingType.NOT_TRACKED,
+      }))
+      const expireSessionSpy = jasmine.createSpy()
+      session.expireObservable.subscribe(expireSessionSpy)
+
+      clock.tick(3 * VISIBILITY_CHECK_DELAY)
+      setPageVisibility('hidden')
+      expectTrackingTypeToBe(session, FIRST_PRODUCT_KEY, FakeTrackingType.NOT_TRACKED)
+      expect(expireSessionSpy).not.toHaveBeenCalled()
+
+      clock.tick(SESSION_EXPIRATION_DELAY - 10)
+      expectTrackingTypeToBe(session, FIRST_PRODUCT_KEY, FakeTrackingType.NOT_TRACKED)
+      expect(expireSessionSpy).not.toHaveBeenCalled()
+
+      clock.tick(10)
+      expectTrackingTypeToNotBeDefined(session, FIRST_PRODUCT_KEY)
       expect(expireSessionSpy).toHaveBeenCalled()
     })
   })
