@@ -28,8 +28,7 @@ const packagesRoot = path.resolve(__dirname, '..', 'packages')
 const pathsWithSideEffect = new Set([
   `${packagesRoot}/logs/src/entries/main.ts`,
   `${packagesRoot}/rum/src/entries/main.ts`,
-  `${packagesRoot}/rum-slim/src/boot/rumSlim.entry.ts`,
-  `${packagesRoot}/rum-slim/src/index.ts`,
+  `${packagesRoot}/rum-slim/src/entries/main.ts`,
 ])
 
 // Those packages are known to have no side effects when evaluated
