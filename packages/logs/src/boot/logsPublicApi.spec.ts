@@ -2,7 +2,7 @@ import { Context, monitor, ONE_SECOND, display } from '@datadog/browser-core'
 import { Clock, mockClock } from '../../../core/test/specHelper'
 
 import { HandlerType, LogsMessage, StatusType } from '../domain/logger'
-import { LogsPublicApi, makeLogsPublicApi, StartLogs } from './logs.entry'
+import { LogsPublicApi, makeLogsPublicApi, StartLogs } from './logsPublicApi'
 
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx' }
 

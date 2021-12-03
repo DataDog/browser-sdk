@@ -3,8 +3,6 @@ import {
   combine,
   Context,
   createContextManager,
-  defineGlobal,
-  getGlobalObject,
   isPercentage,
   makePublicApi,
   monitor,
@@ -22,13 +20,6 @@ export interface LoggerConfiguration {
 }
 
 export type LogsPublicApi = ReturnType<typeof makeLogsPublicApi>
-
-export const datadogLogs = makeLogsPublicApi(startLogs)
-
-interface BrowserWindow extends Window {
-  DD_LOGS?: LogsPublicApi
-}
-defineGlobal(getGlobalObject<BrowserWindow>(), 'DD_LOGS', datadogLogs)
 
 export type StartLogs = typeof startLogs
 

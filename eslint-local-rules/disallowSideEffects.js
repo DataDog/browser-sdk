@@ -26,8 +26,7 @@ const packagesRoot = path.resolve(__dirname, '..', 'packages')
 
 // Those modules are known to have side effects when evaluated
 const pathsWithSideEffect = new Set([
-  `${packagesRoot}/logs/src/boot/logs.entry.ts`,
-  `${packagesRoot}/logs/src/index.ts`,
+  `${packagesRoot}/logs/src/entries/main.ts`,
   `${packagesRoot}/rum/src/entries/main.ts`,
   `${packagesRoot}/rum-slim/src/boot/rumSlim.entry.ts`,
   `${packagesRoot}/rum-slim/src/index.ts`,
