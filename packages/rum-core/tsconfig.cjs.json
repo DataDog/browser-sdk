@@ -4,6 +4,7 @@
     "baseUrl": ".",
     "declaration": true,
     "module": "commonjs",
+    "rootDir": "./src/",
     "outDir": "./cjs/"
   },
   "include": ["./src/**/*.ts"],
