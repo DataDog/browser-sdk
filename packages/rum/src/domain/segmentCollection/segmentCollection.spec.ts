@@ -238,10 +238,7 @@ describe('computeSegmentContext', () => {
     expect(
       computeSegmentContext(
         'appid',
-        {
-          ...DEFAULT_SESSION,
-          isTracked: () => false,
-        },
+        createRumSessionManagerMock().setNotTracked(),
         mockParentContexts(DEFAULT_VIEW_CONTEXT)
       )
     ).toBeUndefined()

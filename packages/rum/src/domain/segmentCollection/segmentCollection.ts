@@ -174,14 +174,12 @@ export function doStartSegmentCollection(
 
 export function computeSegmentContext(
   applicationId: string,
-  session: RumSessionManager,
+  sessionManager: RumSessionManager,
   parentContexts: ParentContexts
 ) {
-  if (!session.isTracked()) {
-    return undefined
-  }
+  const session = sessionManager.findSession()
   const viewContext = parentContexts.findView()
-  if (!viewContext) {
+  if (!session || !viewContext) {
     return undefined
   }
   return {
@@ -189,7 +187,7 @@ export function computeSegmentContext(
       id: applicationId,
     },
     session: {
-      id: session.getId()!,
+      id: session.id,
     },
     view: {
       id: viewContext.view.id,

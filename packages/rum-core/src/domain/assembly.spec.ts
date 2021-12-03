@@ -481,18 +481,16 @@ describe('rum assembly', () => {
     })
 
     it('should get session state from event start', () => {
-      const rumSession = createRumSessionManagerMock()
-      spyOn(rumSession, 'isTracked').and.callThrough()
-      spyOn(rumSession, 'getId').and.callThrough()
+      const rumSessionManager = createRumSessionManagerMock()
+      spyOn(rumSessionManager, 'findSession').and.callThrough()
 
-      const { lifeCycle } = setupBuilder.withSessionManager(rumSession).build()
+      const { lifeCycle } = setupBuilder.withSessionManager(rumSessionManager).build()
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION),
         startTime: 123 as RelativeTime,
       })
 
-      expect(rumSession.isTracked).toHaveBeenCalledWith(123 as RelativeTime)
-      expect(rumSession.getId).toHaveBeenCalledWith(123 as RelativeTime)
+      expect(rumSessionManager.findSession).toHaveBeenCalledWith(123 as RelativeTime)
     })
   })
 

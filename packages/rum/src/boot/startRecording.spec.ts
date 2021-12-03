@@ -47,9 +47,6 @@ describe('startRecording', () => {
       .withParentContexts({
         findView() {
           return {
-            session: {
-              id: sessionManager.getId(),
-            },
             view: {
               id: viewId,
             },

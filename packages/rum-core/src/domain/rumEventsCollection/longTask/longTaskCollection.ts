@@ -5,7 +5,11 @@ import { RumSessionManager } from '../../rumSessionManager'
 
 export function startLongTaskCollection(lifeCycle: LifeCycle, sessionManager: RumSessionManager) {
   lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
-    if (entry.entryType !== 'longtask' || sessionManager.hasLitePlan(entry.startTime)) {
+    if (entry.entryType !== 'longtask') {
+      return
+    }
+    const session = sessionManager.findSession(entry.startTime)
+    if (!session || session.hasLitePlan) {
       return
     }
     const startClocks = relativeToClocks(entry.startTime)

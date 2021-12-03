@@ -126,102 +126,48 @@ describe('rum session', () => {
     })
   })
 
-  describe('getId', () => {
-    it('should return the session id', () => {
+  describe('findSession', () => {
+    it('should return the current session', () => {
       setCookie(SESSION_COOKIE_NAME, 'id=abcdef&rum=1', DURATION)
-      const rumSession = startRumSessionManagement(configuration as Configuration, lifeCycle)
-      expect(rumSession.getId()).toBe('abcdef')
+      const rumSessionManager = startRumSessionManagement(configuration as Configuration, lifeCycle)
+      expect(rumSessionManager.findSession()!.id).toBe('abcdef')
+    })
+
+    it('should return undefined if the session is not tracked', () => {
+      setCookie(SESSION_COOKIE_NAME, 'id=abcdef&rum=0', DURATION)
+      const rumSessionManager = startRumSessionManagement(configuration as Configuration, lifeCycle)
+      expect(rumSessionManager.findSession()).toBe(undefined)
     })
 
     it('should return undefined if the session has expired', () => {
-      const rumSession = startRumSessionManagement(configuration as Configuration, lifeCycle)
+      const rumSessionManager = startRumSessionManagement(configuration as Configuration, lifeCycle)
       setCookie(SESSION_COOKIE_NAME, '', DURATION)
       clock.tick(COOKIE_ACCESS_DELAY)
-      expect(rumSession.getId()).toBe(undefined)
+      expect(rumSessionManager.findSession()).toBe(undefined)
     })
 
-    it('should return session id corresponding to start time', () => {
+    it('should return session corresponding to start time', () => {
       setCookie(SESSION_COOKIE_NAME, 'id=abcdef&rum=1', DURATION)
-      const rumSession = startRumSessionManagement(configuration as Configuration, lifeCycle)
+      const rumSessionManager = startRumSessionManagement(configuration as Configuration, lifeCycle)
       clock.tick(10 * ONE_SECOND)
       setCookie(SESSION_COOKIE_NAME, '', DURATION)
       clock.tick(COOKIE_ACCESS_DELAY)
-      expect(rumSession.getId()).toBeUndefined()
-      expect(rumSession.getId(0 as RelativeTime)).toBe('abcdef')
+      expect(rumSessionManager.findSession()).toBeUndefined()
+      expect(rumSessionManager.findSession(0 as RelativeTime)!.id).toBe('abcdef')
     })
-  })
 
-  describe('isTracked', () => {
-    it('should return value corresponding to start time', () => {
+    it('should return session with replay plan', () => {
       setCookie(SESSION_COOKIE_NAME, 'id=abcdef&rum=1', DURATION)
-      const rumSession = startRumSessionManagement(configuration as Configuration, lifeCycle)
-      clock.tick(10 * ONE_SECOND)
-      setCookie(SESSION_COOKIE_NAME, '', DURATION)
-      clock.tick(COOKIE_ACCESS_DELAY)
-      expect(rumSession.isTracked()).toBeFalse()
-      expect(rumSession.isTracked(ONE_SECOND as RelativeTime)).toBeTrue()
-    })
-  })
-
-  describe('hasReplayPlan', () => {
-    it('should return true if the session has the replay plan', () => {
-      setCookie(SESSION_COOKIE_NAME, 'id=abcdef&rum=1', DURATION)
-      const rumSession = startRumSessionManagement(configuration as Configuration, lifeCycle)
-      expect(rumSession.hasReplayPlan()).toBeTrue()
+      const rumSessionManager = startRumSessionManagement(configuration as Configuration, lifeCycle)
+      expect(rumSessionManager.findSession()!.hasReplayPlan).toBeTrue()
+      expect(rumSessionManager.findSession()!.hasLitePlan).toBeFalse()
     })
 
-    it('should return false if the session has expired', () => {
-      const rumSession = startRumSessionManagement(configuration as Configuration, lifeCycle)
-      setCookie(SESSION_COOKIE_NAME, '', DURATION)
-      clock.tick(COOKIE_ACCESS_DELAY)
-      expect(rumSession.hasReplayPlan()).toBeFalse()
-    })
-
-    it('should return false if the session is not tracked', () => {
-      setCookie(SESSION_COOKIE_NAME, 'id=abcdef&rum=0', DURATION)
-      const rumSession = startRumSessionManagement(configuration as Configuration, lifeCycle)
-      expect(rumSession.hasReplayPlan()).toBeFalse()
-    })
-
-    it('should return plan corresponding to start time', () => {
-      setCookie(SESSION_COOKIE_NAME, 'id=abcdef&rum=1', DURATION)
-      const rumSession = startRumSessionManagement(configuration as Configuration, lifeCycle)
-      clock.tick(10 * ONE_SECOND)
-      setCookie(SESSION_COOKIE_NAME, '', DURATION)
-      clock.tick(COOKIE_ACCESS_DELAY)
-      expect(rumSession.hasReplayPlan()).toBeFalse()
-      expect(rumSession.hasReplayPlan(ONE_SECOND as RelativeTime)).toBeTrue()
-    })
-  })
-
-  describe('hasLitePlan', () => {
-    it('should return true if the session has the lite plan', () => {
+    it('should return session with lite plan', () => {
       setCookie(SESSION_COOKIE_NAME, 'id=abcdef&rum=2', DURATION)
-      const rumSession = startRumSessionManagement(configuration as Configuration, lifeCycle)
-      expect(rumSession.hasLitePlan()).toBeTrue()
-    })
-
-    it('should return false if the session has expired', () => {
-      const rumSession = startRumSessionManagement(configuration as Configuration, lifeCycle)
-      setCookie(SESSION_COOKIE_NAME, '', DURATION)
-      clock.tick(COOKIE_ACCESS_DELAY)
-      expect(rumSession.hasLitePlan()).toBeFalse()
-    })
-
-    it('should return false if the session is not tracked', () => {
-      setCookie(SESSION_COOKIE_NAME, 'id=abcdef&rum=0', DURATION)
-      const rumSession = startRumSessionManagement(configuration as Configuration, lifeCycle)
-      expect(rumSession.hasLitePlan()).toBeFalse()
-    })
-
-    it('should return plan corresponding to start time', () => {
-      setCookie(SESSION_COOKIE_NAME, 'id=abcdef&rum=2', DURATION)
-      const rumSession = startRumSessionManagement(configuration as Configuration, lifeCycle)
-      clock.tick(10 * ONE_SECOND)
-      setCookie(SESSION_COOKIE_NAME, '', DURATION)
-      clock.tick(COOKIE_ACCESS_DELAY)
-      expect(rumSession.hasLitePlan()).toBeFalse()
-      expect(rumSession.hasLitePlan(ONE_SECOND as RelativeTime)).toBeTrue()
+      const rumSessionManager = startRumSessionManagement(configuration as Configuration, lifeCycle)
+      expect(rumSessionManager.findSession()!.hasReplayPlan).toBeFalse()
+      expect(rumSessionManager.findSession()!.hasLitePlan).toBeTrue()
     })
   })
 })

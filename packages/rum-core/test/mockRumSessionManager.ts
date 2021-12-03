@@ -13,17 +13,14 @@ export function createRumSessionManagerMock(): RumSessionManagerMock {
   let id = DEFAULT_ID
   let trackingType = RumTrackingType.TRACKED_REPLAY
   return {
-    isTracked() {
+    findSession() {
       return trackingType !== RumTrackingType.NOT_TRACKED
-    },
-    hasLitePlan() {
-      return trackingType === RumTrackingType.TRACKED_LITE
-    },
-    hasReplayPlan() {
-      return trackingType === RumTrackingType.TRACKED_REPLAY
-    },
-    getId() {
-      return trackingType === RumTrackingType.NOT_TRACKED ? undefined : id
+        ? {
+            id,
+            hasLitePlan: trackingType === RumTrackingType.TRACKED_LITE,
+            hasReplayPlan: trackingType === RumTrackingType.TRACKED_REPLAY,
+          }
+        : undefined
     },
     setId(newId) {
       id = newId

@@ -38,7 +38,7 @@ export function startRum(
       {
         application_id: initConfiguration.applicationId,
         session: {
-          id: session.getId(),
+          id: session.findSession()?.id,
         },
       },
       parentContexts.findView(),

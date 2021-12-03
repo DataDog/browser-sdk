@@ -1,14 +1,16 @@
 import { Configuration, performDraw, startSessionManagement, RelativeTime } from '@datadog/browser-core'
-import { SessionContext } from '../../../core/src/domain/session/sessionManagement'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
 export const RUM_SESSION_KEY = 'rum'
 
 export interface RumSessionManager {
-  getId: (startTime?: RelativeTime) => string | undefined
-  isTracked: (startTime?: RelativeTime) => boolean
-  hasReplayPlan: (startTime?: RelativeTime) => boolean
-  hasLitePlan: (startTime?: RelativeTime) => boolean
+  findSession: (startTime?: RelativeTime) => RumSession | undefined
+}
+
+export type RumSession = {
+  id: string
+  hasReplayPlan: boolean
+  hasLitePlan: boolean
 }
 
 export enum RumSessionPlan {
@@ -39,15 +41,16 @@ export function startRumSessionManagement(configuration: Configuration, lifeCycl
   })
 
   return {
-    getId: (startTime) => sessionManager.findSession(startTime)?.id,
-    isTracked: (startTime) => isSessionTracked(sessionManager.findSession(startTime)),
-    hasReplayPlan: (startTime) => {
+    findSession: (startTime) => {
       const session = sessionManager.findSession(startTime)
-      return isSessionTracked(session) && session.trackingType === RumTrackingType.TRACKED_REPLAY
-    },
-    hasLitePlan: (startTime) => {
-      const session = sessionManager.findSession(startTime)
-      return isSessionTracked(session) && session.trackingType === RumTrackingType.TRACKED_LITE
+      if (!session || !isTypeTracked(session.trackingType)) {
+        return
+      }
+      return {
+        id: session.id,
+        hasReplayPlan: session.trackingType === RumTrackingType.TRACKED_REPLAY,
+        hasLitePlan: session.trackingType === RumTrackingType.TRACKED_LITE,
+      }
     },
   }
 }
@@ -57,18 +60,14 @@ export function startRumSessionManagement(configuration: Configuration, lifeCycl
  * It needs to be a replay plan in order to get long tasks
  */
 export function startRumSessionStub(): RumSessionManager {
-  return {
-    getId: () => '00000000-aaaa-0000-aaaa-000000000000',
-    isTracked: () => true,
-    hasReplayPlan: () => true,
-    hasLitePlan: () => false,
+  const session = {
+    id: '00000000-aaaa-0000-aaaa-000000000000',
+    hasReplayPlan: true,
+    hasLitePlan: false,
   }
-}
-
-function isSessionTracked(
-  sessionContext: SessionContext<RumTrackingType> | undefined
-): sessionContext is SessionContext<RumTrackingType> {
-  return sessionContext !== undefined && isTypeTracked(sessionContext.trackingType)
+  return {
+    findSession: () => session,
+  }
 }
 
 function computeSessionState(configuration: Configuration, rawTrackingType?: string) {

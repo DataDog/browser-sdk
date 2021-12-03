@@ -81,7 +81,8 @@ export function startRumAssembly(
     ({ startTime, rawRumEvent, domainContext, savedCommonContext, customerContext }) => {
       const viewContext = parentContexts.findView(startTime)
       const urlContext = urlContexts.findUrl(startTime)
-      if (sessionManager.isTracked(startTime) && viewContext && urlContext) {
+      const session = sessionManager.findSession(startTime)
+      if (session && viewContext && urlContext) {
         const actionContext = parentContexts.findAction(startTime)
         const commonContext = savedCommonContext || getCommonContext()
         const rumContext: RumContext = {
@@ -89,7 +90,7 @@ export function startRumAssembly(
             format_version: 2,
             drift: currentDrift(),
             session: {
-              plan: sessionManager.hasReplayPlan(startTime) ? RumSessionPlan.REPLAY : RumSessionPlan.LITE,
+              plan: session.hasReplayPlan ? RumSessionPlan.REPLAY : RumSessionPlan.LITE,
             },
             browser_sdk_version: canUseEventBridge() ? buildEnv.sdkVersion : undefined,
           },
@@ -99,7 +100,7 @@ export function startRumAssembly(
           date: timeStampNow(),
           service: configuration.service,
           session: {
-            id: sessionManager.getId(startTime)!,
+            id: session.id,
             type: syntheticsContext ? SessionType.SYNTHETICS : SessionType.USER,
           },
           synthetics: syntheticsContext,
