@@ -1,5 +1,10 @@
 // Keep the following in sync with packages/rum-slim/src/index.ts
-export { datadogRum } from './boot/rum.entry'
+import { defineGlobal, getGlobalObject } from '@datadog/browser-core'
+import { makeRumPublicApi, RumPublicApi, startRum } from '@datadog/browser-rum-core'
+
+import { startRecording } from '../boot/startRecording'
+import { makeRecorderApi } from '../boot/recorderApi'
+
 export {
   CommonProperties,
   RumPublicApi as RumGlobal,
@@ -22,3 +27,11 @@ export {
   RumLongTaskEventDomainContext,
 } from '@datadog/browser-rum-core'
 export { DefaultPrivacyLevel } from '@datadog/browser-core'
+
+const recorderApi = makeRecorderApi(startRecording)
+export const datadogRum = makeRumPublicApi(startRum, recorderApi)
+
+interface BrowserWindow extends Window {
+  DD_RUM?: RumPublicApi
+}
+defineGlobal(getGlobalObject<BrowserWindow>(), 'DD_RUM', datadogRum)

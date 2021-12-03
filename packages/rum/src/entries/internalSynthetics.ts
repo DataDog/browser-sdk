@@ -7,8 +7,8 @@
  */
 import { makeRumPublicApi, startRum } from '@datadog/browser-rum-core'
 
-import { startRecording } from './boot/startRecording'
-import { makeRecorderApi } from './boot/recorderApi'
+import { startRecording } from '../boot/startRecording'
+import { makeRecorderApi } from '../boot/recorderApi'
 
 export { DefaultPrivacyLevel } from '@datadog/browser-core'
 

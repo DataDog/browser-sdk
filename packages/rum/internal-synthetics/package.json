@@ -1,6 +1,6 @@
 {
   "private": true,
-  "main": "../cjs/internalSynthetics.js",
-  "module": "../esm/internalSynthetics.js",
-  "types": "../cjs/internalSynthetics.d.ts"
+  "main": "../cjs/entries/internalSynthetics.js",
+  "module": "../esm/entries/internalSynthetics.js",
+  "types": "../cjs/entries/internalSynthetics.d.ts"
 }
