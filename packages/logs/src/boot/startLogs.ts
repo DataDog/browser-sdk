@@ -58,7 +58,7 @@ export function doStartLogs(
   errorLogger: Logger
 ) {
   internalMonitoring.setExternalContextProvider(() =>
-    combine({ session_id: sessionManager.getId() }, getRUMInternalContext(), {
+    combine({ session_id: sessionManager.findSession()?.id }, getRUMInternalContext(), {
       view: { name: null, url: null, referrer: null },
     })
   )
@@ -116,11 +116,12 @@ export function buildAssemble(
   const errorRateLimiter = createEventRateLimiter(StatusType.error, configuration.maxErrorsPerMinute, reportError)
   return (message: LogsMessage, currentContext: Context) => {
     const startTime = message.date ? getRelativeTime(message.date) : undefined
-    if (!sessionManager.isTracked(startTime)) {
+    const session = sessionManager.findSession(startTime)
+    if (!session) {
       return undefined
     }
     const contextualizedMessage = combine(
-      { service: configuration.service, session_id: sessionManager.getId() },
+      { service: configuration.service, session_id: session.id },
       currentContext,
       getRUMInternalContext(startTime),
       message

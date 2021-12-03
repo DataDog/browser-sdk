@@ -64,8 +64,7 @@ describe('logs', () => {
   let server: sinon.SinonFakeServer
   let errorObservable: Observable<RawError>
   const sessionManager = {
-    getId: () => (sessionIsTracked ? SESSION_ID : undefined),
-    isTracked: () => sessionIsTracked,
+    findSession: () => (sessionIsTracked ? { id: SESSION_ID } : undefined),
   }
   const startLogs = ({
     errorLogger = new Logger(noop),
