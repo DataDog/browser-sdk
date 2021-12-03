@@ -29,7 +29,7 @@ describe('getSyntheticsContext', () => {
   it('sets the `injected` field to true if the Synthetics test is configured to automatically inject RUM', () => {
     mockSyntheticsWorkerValues({ publicId: 'foo', resultId: 'bar', injectsRum: true }, 'globals')
 
-    expect(getSyntheticsContext()?.injected).toBeTrue()
+    expect(getSyntheticsContext()!.injected).toBeTrue()
   })
 
   it('does not set synthetics context if one global variable is undefined', () => {
