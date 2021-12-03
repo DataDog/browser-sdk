@@ -17,8 +17,8 @@ export function startLogsSessionManagement(configuration: Configuration): LogsSe
     computeSessionState(configuration, rawTrackingType)
   )
   return {
-    getId: sessionManager.getId,
-    isTracked: (startTime) => sessionManager.getTrackingType(startTime) === LoggerTrackingType.TRACKED,
+    getId: (startTime) => sessionManager.findSession(startTime)?.id,
+    isTracked: (startTime) => sessionManager.findSession(startTime)?.trackingType === LoggerTrackingType.TRACKED,
   }
 }
 

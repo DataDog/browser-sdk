@@ -1,4 +1,5 @@
-import { Configuration, performDraw, SessionManager, startSessionManagement, RelativeTime } from '@datadog/browser-core'
+import { Configuration, performDraw, startSessionManagement, RelativeTime } from '@datadog/browser-core'
+import { SessionContext } from '../../../core/src/domain/session/sessionManagement'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
 export const RUM_SESSION_KEY = 'rum'
@@ -38,14 +39,16 @@ export function startRumSessionManagement(configuration: Configuration, lifeCycl
   })
 
   return {
-    getId: sessionManager.getId,
-    isTracked: (startTime) => isSessionTracked(sessionManager, startTime),
-    hasReplayPlan: (startTime) =>
-      isSessionTracked(sessionManager, startTime) &&
-      sessionManager.getTrackingType(startTime) === RumTrackingType.TRACKED_REPLAY,
-    hasLitePlan: (startTime) =>
-      isSessionTracked(sessionManager, startTime) &&
-      sessionManager.getTrackingType(startTime) === RumTrackingType.TRACKED_LITE,
+    getId: (startTime) => sessionManager.findSession(startTime)?.id,
+    isTracked: (startTime) => isSessionTracked(sessionManager.findSession(startTime)),
+    hasReplayPlan: (startTime) => {
+      const session = sessionManager.findSession(startTime)
+      return isSessionTracked(session) && session.trackingType === RumTrackingType.TRACKED_REPLAY
+    },
+    hasLitePlan: (startTime) => {
+      const session = sessionManager.findSession(startTime)
+      return isSessionTracked(session) && session.trackingType === RumTrackingType.TRACKED_LITE
+    },
   }
 }
 
@@ -62,8 +65,10 @@ export function startRumSessionStub(): RumSessionManager {
   }
 }
 
-function isSessionTracked(sessionManager: SessionManager<RumTrackingType>, startTime?: RelativeTime) {
-  return sessionManager.getId(startTime) !== undefined && isTypeTracked(sessionManager.getTrackingType(startTime))
+function isSessionTracked(
+  sessionContext: SessionContext<RumTrackingType> | undefined
+): sessionContext is SessionContext<RumTrackingType> {
+  return sessionContext !== undefined && isTypeTracked(sessionContext.trackingType)
 }
 
 function computeSessionState(configuration: Configuration, rawTrackingType?: string) {

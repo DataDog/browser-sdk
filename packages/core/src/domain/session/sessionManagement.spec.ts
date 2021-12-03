@@ -28,17 +28,17 @@ describe('startSessionManagement', () => {
   }
 
   function expectSessionIdToBe(sessionManager: SessionManager<FakeTrackingType>, sessionId: string) {
-    expect(sessionManager.getId()).toBe(sessionId)
+    expect(sessionManager.findSession()!.id).toBe(sessionId)
     expect(getCookie(SESSION_COOKIE_NAME)).toContain(`id=${sessionId}`)
   }
 
   function expectSessionIdToBeDefined(sessionManager: SessionManager<FakeTrackingType>) {
-    expect(sessionManager.getId()).toMatch(/^[a-f0-9-]+$/)
+    expect(sessionManager.findSession()!.id).toMatch(/^[a-f0-9-]+$/)
     expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/id=[a-f0-9-]+/)
   }
 
   function expectSessionIdToNotBeDefined(sessionManager: SessionManager<FakeTrackingType>) {
-    expect(sessionManager.getId()).toBeUndefined()
+    expect(sessionManager.findSession()?.id).toBeUndefined()
     expect(getCookie(SESSION_COOKIE_NAME)).not.toContain('id=')
   }
 
@@ -47,12 +47,12 @@ describe('startSessionManagement', () => {
     productKey: string,
     trackingType: FakeTrackingType
   ) {
-    expect(sessionManager.getTrackingType()).toEqual(trackingType)
+    expect(sessionManager.findSession()!.trackingType).toEqual(trackingType)
     expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${productKey}=${trackingType}`)
   }
 
   function expectTrackingTypeToNotBeDefined(sessionManager: SessionManager<FakeTrackingType>, productKey: string) {
-    expect(sessionManager.getTrackingType()).toBeUndefined()
+    expect(sessionManager.findSession()?.trackingType).toBeUndefined()
     expect(getCookie(SESSION_COOKIE_NAME)).not.toContain(`${productKey}=`)
   }
 
@@ -229,13 +229,13 @@ describe('startSessionManagement', () => {
         isTracked: true,
         trackingType: FakeTrackingType.TRACKED,
       }))
-      const idA = firstSessionManager.getId()
+      const idA = firstSessionManager.findSession()!.id
 
       const secondSessionManager = startSessionManagement(COOKIE_OPTIONS, SECOND_PRODUCT_KEY, () => ({
         isTracked: true,
         trackingType: FakeTrackingType.TRACKED,
       }))
-      const idB = secondSessionManager.getId()
+      const idB = secondSessionManager.findSession()!.id
 
       expect(idA).toBe(idB)
     })
@@ -280,8 +280,8 @@ describe('startSessionManagement', () => {
         trackingType: FakeTrackingType.NOT_TRACKED,
       }))
 
-      expect(firstSessionManager.getTrackingType()).toEqual(FakeTrackingType.TRACKED)
-      expect(secondSessionManager.getTrackingType()).toEqual(FakeTrackingType.NOT_TRACKED)
+      expect(firstSessionManager.findSession()!.trackingType).toEqual(FakeTrackingType.TRACKED)
+      expect(secondSessionManager.findSession()!.trackingType).toEqual(FakeTrackingType.NOT_TRACKED)
     })
 
     it('should notify each expire and renew observables', () => {
@@ -326,11 +326,11 @@ describe('startSessionManagement', () => {
       const expireSessionSpy = jasmine.createSpy()
       sessionManager.expireObservable.subscribe(expireSessionSpy)
 
-      expect(sessionManager.getId()).toBeDefined()
+      expect(sessionManager.findSession()).toBeDefined()
       expect(getCookie(SESSION_COOKIE_NAME)).toBeDefined()
 
       clock.tick(SESSION_TIME_OUT_DELAY)
-      expect(sessionManager.getId()).toBeUndefined()
+      expect(sessionManager.findSession()).toBeUndefined()
       expect(getCookie(SESSION_COOKIE_NAME)).toBeUndefined()
       expect(expireSessionSpy).toHaveBeenCalled()
     })
@@ -345,7 +345,7 @@ describe('startSessionManagement', () => {
       const expireSessionSpy = jasmine.createSpy()
       sessionManager.expireObservable.subscribe(expireSessionSpy)
 
-      expect(sessionManager.getId()).not.toBe('abcde')
+      expect(sessionManager.findSession()!.id).not.toBe('abcde')
       expect(getCookie(SESSION_COOKIE_NAME)).toContain(`created=${Date.now()}`)
       expect(expireSessionSpy).not.toHaveBeenCalled() // the session has not been active from the start
     })
@@ -358,7 +358,7 @@ describe('startSessionManagement', () => {
         trackingType: FakeTrackingType.TRACKED,
       }))
 
-      expect(sessionManager.getId()).toBe('abcde')
+      expect(sessionManager.findSession()!.id).toBe('abcde')
       expect(getCookie(SESSION_COOKIE_NAME)).not.toContain('created=')
     })
   })
@@ -488,8 +488,7 @@ describe('startSessionManagement', () => {
       }))
       expireSession()
 
-      expect(sessionManager.getId()).toBeUndefined()
-      expect(sessionManager.getTrackingType()).toBeUndefined()
+      expect(sessionManager.findSession()).toBeUndefined()
     })
 
     it('should return the current session context when there is no start time', () => {
@@ -498,8 +497,8 @@ describe('startSessionManagement', () => {
         trackingType: FakeTrackingType.TRACKED,
       }))
 
-      expect(sessionManager.getId()).toBeDefined()
-      expect(sessionManager.getTrackingType()).toBeDefined()
+      expect(sessionManager.findSession()!.id).toBeDefined()
+      expect(sessionManager.findSession()!.trackingType).toBeDefined()
     })
 
     it('should return the session context corresponding to startTime', () => {
@@ -510,8 +509,8 @@ describe('startSessionManagement', () => {
 
       // 0s to 10s: first session
       clock.tick(10 * ONE_SECOND - COOKIE_ACCESS_DELAY)
-      const firstSessionId = sessionManager.getId()
-      const firstSessionTrackingType = sessionManager.getTrackingType()
+      const firstSessionId = sessionManager.findSession()!.id
+      const firstSessionTrackingType = sessionManager.findSession()!.trackingType
       expireSession()
 
       // 10s to 20s: no session
@@ -520,15 +519,16 @@ describe('startSessionManagement', () => {
       // 20s to end: second session
       document.dispatchEvent(new CustomEvent('click'))
       clock.tick(10 * ONE_SECOND)
-      const secondSessionId = sessionManager.getId()
-      const secondSessionTrackingType = sessionManager.getTrackingType()
+      const secondSessionId = sessionManager.findSession()!.id
+      const secondSessionTrackingType = sessionManager.findSession()!.trackingType
 
-      expect(sessionManager.getId((5 * ONE_SECOND) as RelativeTime)).toBe(firstSessionId)
-      expect(sessionManager.getTrackingType((5 * ONE_SECOND) as RelativeTime)).toBe(firstSessionTrackingType)
-      expect(sessionManager.getId((15 * ONE_SECOND) as RelativeTime)).toBeUndefined()
-      expect(sessionManager.getTrackingType((15 * ONE_SECOND) as RelativeTime)).toBeUndefined()
-      expect(sessionManager.getId((25 * ONE_SECOND) as RelativeTime)).toBe(secondSessionId)
-      expect(sessionManager.getTrackingType((25 * ONE_SECOND) as RelativeTime)).toBe(secondSessionTrackingType)
+      expect(sessionManager.findSession((5 * ONE_SECOND) as RelativeTime)!.id).toBe(firstSessionId)
+      expect(sessionManager.findSession((5 * ONE_SECOND) as RelativeTime)!.trackingType).toBe(firstSessionTrackingType)
+      expect(sessionManager.findSession((15 * ONE_SECOND) as RelativeTime)).toBeUndefined()
+      expect(sessionManager.findSession((25 * ONE_SECOND) as RelativeTime)!.id).toBe(secondSessionId)
+      expect(sessionManager.findSession((25 * ONE_SECOND) as RelativeTime)!.trackingType).toBe(
+        secondSessionTrackingType
+      )
     })
   })
 })
