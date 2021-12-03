@@ -7,7 +7,7 @@ import {
   restorePageVisibility,
   setPageVisibility,
 } from '@datadog/browser-core/test/specHelper'
-import { createRumSessionMock } from '../../../../rum-core/test/mockRumSession'
+import { createRumSessionManagerMock } from '../../../../rum-core/test/mockRumSessionManager'
 import { Record, RecordType, SegmentContext, SegmentMeta } from '../../types'
 import { MockWorker } from '../../../test/utils'
 import { SEND_BEACON_BYTE_LENGTH_LIMIT } from '../../transport/send'
@@ -220,7 +220,7 @@ describe('computeSegmentContext', () => {
     view: { id: '123' },
   }
 
-  const DEFAULT_SESSION = createRumSessionMock().setId('456')
+  const DEFAULT_SESSION = createRumSessionManagerMock().setId('456')
 
   it('returns a segment context', () => {
     expect(computeSegmentContext('appid', DEFAULT_SESSION, mockParentContexts(DEFAULT_VIEW_CONTEXT))).toEqual({

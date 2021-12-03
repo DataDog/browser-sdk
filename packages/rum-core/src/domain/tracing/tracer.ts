@@ -5,7 +5,7 @@ import {
   RumXhrCompleteContext,
   RumXhrStartContext,
 } from '../requestCollection'
-import { RumSession } from '../rumSession'
+import { RumSessionManager } from '../rumSessionManager'
 
 export interface Tracer {
   traceFetch: (context: Partial<RumFetchStartContext>) => void
@@ -41,11 +41,11 @@ export function clearTracingIfNeeded(context: RumFetchCompleteContext | RumXhrCo
   }
 }
 
-export function startTracer(configuration: Configuration, session: RumSession): Tracer {
+export function startTracer(configuration: Configuration, sessionManager: RumSessionManager): Tracer {
   return {
     clearTracingIfNeeded,
     traceFetch: (context) =>
-      injectHeadersIfTracingAllowed(configuration, context, session, (tracingHeaders: TracingHeaders) => {
+      injectHeadersIfTracingAllowed(configuration, context, sessionManager, (tracingHeaders: TracingHeaders) => {
         if (context.input instanceof Request && !context.init?.headers) {
           context.input = new Request(context.input)
           Object.keys(tracingHeaders).forEach((key) => {
@@ -71,7 +71,7 @@ export function startTracer(configuration: Configuration, session: RumSession): 
         }
       }),
     traceXhr: (context, xhr) =>
-      injectHeadersIfTracingAllowed(configuration, context, session, (tracingHeaders: TracingHeaders) => {
+      injectHeadersIfTracingAllowed(configuration, context, sessionManager, (tracingHeaders: TracingHeaders) => {
         Object.keys(tracingHeaders).forEach((name) => {
           xhr.setRequestHeader(name, tracingHeaders[name])
         })
@@ -82,10 +82,10 @@ export function startTracer(configuration: Configuration, session: RumSession): 
 function injectHeadersIfTracingAllowed(
   configuration: Configuration,
   context: Partial<RumFetchStartContext | RumXhrStartContext>,
-  session: RumSession,
+  sessionManager: RumSessionManager,
   inject: (tracingHeaders: TracingHeaders) => void
 ) {
-  if (!isTracingSupported() || !isAllowedUrl(configuration, context.url!) || !session.isTracked()) {
+  if (!isTracingSupported() || !isAllowedUrl(configuration, context.url!) || !sessionManager.isTracked()) {
     return
   }
 

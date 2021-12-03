@@ -1,11 +1,11 @@
 import { toServerDuration, relativeToClocks, generateUUID } from '@datadog/browser-core'
 import { RawRumLongTaskEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
-import { RumSession } from '../../rumSession'
+import { RumSessionManager } from '../../rumSessionManager'
 
-export function startLongTaskCollection(lifeCycle: LifeCycle, session: RumSession) {
+export function startLongTaskCollection(lifeCycle: LifeCycle, sessionManager: RumSessionManager) {
   lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
-    if (entry.entryType !== 'longtask' || session.hasLitePlan(entry.startTime)) {
+    if (entry.entryType !== 'longtask' || sessionManager.hasLitePlan(entry.startTime)) {
       return
     }
     const startClocks = relativeToClocks(entry.startTime)

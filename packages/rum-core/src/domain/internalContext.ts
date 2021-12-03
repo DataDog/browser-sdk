@@ -1,7 +1,7 @@
 import { RelativeTime } from '@datadog/browser-core'
 import { InternalContext } from '../rawRumEvent.types'
 import { ParentContexts } from './parentContexts'
-import { RumSession } from './rumSession'
+import { RumSessionManager } from './rumSessionManager'
 import { UrlContexts } from './urlContexts'
 
 /**
@@ -10,7 +10,7 @@ import { UrlContexts } from './urlContexts'
  */
 export function startInternalContext(
   applicationId: string,
-  session: RumSession,
+  sessionManager: RumSessionManager,
   parentContexts: ParentContexts,
   urlContexts: UrlContexts
 ) {
@@ -18,11 +18,11 @@ export function startInternalContext(
     get: (startTime?: number): InternalContext | undefined => {
       const viewContext = parentContexts.findView(startTime as RelativeTime)
       const urlContext = urlContexts.findUrl(startTime as RelativeTime)
-      if (session.isTracked(startTime as RelativeTime) && viewContext && urlContext) {
+      if (sessionManager.isTracked(startTime as RelativeTime) && viewContext && urlContext) {
         const actionContext = parentContexts.findAction(startTime as RelativeTime)
         return {
           application_id: applicationId,
-          session_id: session.getId(startTime as RelativeTime),
+          session_id: sessionManager.getId(startTime as RelativeTime),
           user_action: actionContext
             ? {
                 id: actionContext.action.id,

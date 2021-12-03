@@ -29,7 +29,7 @@ import { buildEnv } from '../boot/buildEnv'
 import { getSyntheticsContext } from './syntheticsContext'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { ParentContexts } from './parentContexts'
-import { RumSession, RumSessionPlan } from './rumSession'
+import { RumSessionManager, RumSessionPlan } from './rumSessionManager'
 import { UrlContexts } from './urlContexts'
 
 enum SessionType {
@@ -60,7 +60,7 @@ export function startRumAssembly(
   applicationId: string,
   configuration: Configuration,
   lifeCycle: LifeCycle,
-  session: RumSession,
+  sessionManager: RumSessionManager,
   parentContexts: ParentContexts,
   urlContexts: UrlContexts,
   getCommonContext: () => CommonContext
@@ -81,7 +81,7 @@ export function startRumAssembly(
     ({ startTime, rawRumEvent, domainContext, savedCommonContext, customerContext }) => {
       const viewContext = parentContexts.findView(startTime)
       const urlContext = urlContexts.findUrl(startTime)
-      if (session.isTracked(startTime) && viewContext && urlContext) {
+      if (sessionManager.isTracked(startTime) && viewContext && urlContext) {
         const actionContext = parentContexts.findAction(startTime)
         const commonContext = savedCommonContext || getCommonContext()
         const rumContext: RumContext = {
@@ -89,7 +89,7 @@ export function startRumAssembly(
             format_version: 2,
             drift: currentDrift(),
             session: {
-              plan: session.hasReplayPlan(startTime) ? RumSessionPlan.REPLAY : RumSessionPlan.LITE,
+              plan: sessionManager.hasReplayPlan(startTime) ? RumSessionPlan.REPLAY : RumSessionPlan.LITE,
             },
             browser_sdk_version: canUseEventBridge() ? buildEnv.sdkVersion : undefined,
           },
@@ -99,7 +99,7 @@ export function startRumAssembly(
           date: timeStampNow(),
           service: configuration.service,
           session: {
-            id: session.getId(startTime)!,
+            id: sessionManager.getId(startTime)!,
             type: syntheticsContext ? SessionType.SYNTHETICS : SessionType.USER,
           },
           synthetics: syntheticsContext,

@@ -1,5 +1,5 @@
 import { addEventListener, DOM_EVENT, EventEmitter, monitor } from '@datadog/browser-core'
-import { LifeCycle, LifeCycleEventType, ParentContexts, RumSession } from '@datadog/browser-rum-core'
+import { LifeCycle, LifeCycleEventType, ParentContexts, RumSessionManager } from '@datadog/browser-rum-core'
 import { SEND_BEACON_BYTE_LENGTH_LIMIT } from '../../transport/send'
 import { CreationReason, Record, SegmentContext, SegmentMeta } from '../../types'
 import { DeflateWorker } from './deflateWorker'
@@ -36,14 +36,14 @@ let MAX_SEGMENT_SIZE = SEND_BEACON_BYTE_LENGTH_LIMIT
 export function startSegmentCollection(
   lifeCycle: LifeCycle,
   applicationId: string,
-  session: RumSession,
+  sessionManager: RumSessionManager,
   parentContexts: ParentContexts,
   send: (data: Uint8Array, meta: SegmentMeta, rawSegmentSize: number, flushReason?: string) => void,
   worker: DeflateWorker
 ) {
   return doStartSegmentCollection(
     lifeCycle,
-    () => computeSegmentContext(applicationId, session, parentContexts),
+    () => computeSegmentContext(applicationId, sessionManager, parentContexts),
     send,
     worker
   )
@@ -172,7 +172,11 @@ export function doStartSegmentCollection(
   }
 }
 
-export function computeSegmentContext(applicationId: string, session: RumSession, parentContexts: ParentContexts) {
+export function computeSegmentContext(
+  applicationId: string,
+  session: RumSessionManager,
+  parentContexts: ParentContexts
+) {
   if (!session.isTracked()) {
     return undefined
   }

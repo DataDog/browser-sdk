@@ -1,15 +1,15 @@
-import { RumSession, RumTrackingType } from '../src/domain/rumSession'
+import { RumSessionManager, RumTrackingType } from '../src/domain/rumSessionManager'
 
-export interface RumSessionMock extends RumSession {
-  setId(id: string): RumSessionMock
-  setNotTracked(): RumSessionMock
-  setReplayPlan(): RumSessionMock
-  setLitePlan(): RumSessionMock
+export interface RumSessionManagerMock extends RumSessionManager {
+  setId(id: string): RumSessionManagerMock
+  setNotTracked(): RumSessionManagerMock
+  setReplayPlan(): RumSessionManagerMock
+  setLitePlan(): RumSessionManagerMock
 }
 
 const DEFAULT_ID = 'session-id'
 
-export function createRumSessionMock(): RumSessionMock {
+export function createRumSessionManagerMock(): RumSessionManagerMock {
   let id = DEFAULT_ID
   let trackingType = RumTrackingType.TRACKED_REPLAY
   return {

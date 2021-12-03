@@ -3,7 +3,7 @@ import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
 export const RUM_SESSION_KEY = 'rum'
 
-export interface RumSession {
+export interface RumSessionManager {
   getId: (startTime?: RelativeTime) => string | undefined
   isTracked: (startTime?: RelativeTime) => boolean
   hasReplayPlan: (startTime?: RelativeTime) => boolean
@@ -24,7 +24,7 @@ export enum RumTrackingType {
   TRACKED_LITE = '2',
 }
 
-export function startRumSession(configuration: Configuration, lifeCycle: LifeCycle): RumSession {
+export function startRumSessionManagement(configuration: Configuration, lifeCycle: LifeCycle): RumSessionManager {
   const session = startSessionManagement(configuration.cookieOptions, RUM_SESSION_KEY, (rawTrackingType) =>
     computeSessionState(configuration, rawTrackingType)
   )
@@ -51,7 +51,7 @@ export function startRumSession(configuration: Configuration, lifeCycle: LifeCyc
  * Start a tracked replay session stub
  * It needs to be a replay plan in order to get long tasks
  */
-export function startRumSessionStub(): RumSession {
+export function startRumSessionStub(): RumSessionManager {
   return {
     getId: () => '00000000-aaaa-0000-aaaa-000000000000',
     isTracked: () => true,

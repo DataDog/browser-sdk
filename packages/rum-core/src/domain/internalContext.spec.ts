@@ -1,16 +1,16 @@
-import { createRumSessionMock } from 'packages/rum-core/test/mockRumSession'
+import { createRumSessionManagerMock } from 'packages/rum-core/test/mockRumSessionManager'
 import { RelativeTime } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { startInternalContext } from './internalContext'
 import { ParentContexts } from './parentContexts'
 import { UrlContexts } from './urlContexts'
-import { RumSession } from './rumSession'
+import { RumSessionManager } from './rumSessionManager'
 
 describe('internal context', () => {
   let setupBuilder: TestSetupBuilder
   let parentContextsStub: Partial<ParentContexts>
   let findUrlSpy: jasmine.Spy<UrlContexts['findUrl']>
-  let sessionIdSpy: jasmine.Spy<RumSession['getId']>
+  let sessionIdSpy: jasmine.Spy<RumSessionManager['getId']>
   let internalContext: ReturnType<typeof startInternalContext>
 
   beforeEach(() => {
@@ -27,12 +27,12 @@ describe('internal context', () => {
       }),
     }
     setupBuilder = setup()
-      .withSession(createRumSessionMock().setId('456'))
+      .withSessionManager(createRumSessionManagerMock().setId('456'))
       .withParentContexts(parentContextsStub)
-      .beforeBuild(({ applicationId, session, parentContexts, urlContexts }) => {
+      .beforeBuild(({ applicationId, sessionManager, parentContexts, urlContexts }) => {
         findUrlSpy = spyOn(urlContexts, 'findUrl').and.callThrough()
-        sessionIdSpy = spyOn(session, 'getId').and.callThrough()
-        internalContext = startInternalContext(applicationId, session, parentContexts, urlContexts)
+        sessionIdSpy = spyOn(sessionManager, 'getId').and.callThrough()
+        internalContext = startInternalContext(applicationId, sessionManager, parentContexts, urlContexts)
       })
   })
 
@@ -58,7 +58,7 @@ describe('internal context', () => {
   })
 
   it("should return undefined if the session isn't tracked", () => {
-    setupBuilder.withSession(createRumSessionMock().setNotTracked()).build()
+    setupBuilder.withSessionManager(createRumSessionManagerMock().setNotTracked()).build()
     expect(internalContext.get()).toEqual(undefined)
   })
 
