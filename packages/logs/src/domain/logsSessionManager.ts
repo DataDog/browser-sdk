@@ -13,12 +13,12 @@ export enum LoggerTrackingType {
 }
 
 export function startLogsSessionManagement(configuration: Configuration): LogsSessionManager {
-  const session = startSessionManagement(configuration.cookieOptions, LOGS_SESSION_KEY, (rawTrackingType) =>
+  const sessionManager = startSessionManagement(configuration.cookieOptions, LOGS_SESSION_KEY, (rawTrackingType) =>
     computeSessionState(configuration, rawTrackingType)
   )
   return {
-    getId: session.getId,
-    isTracked: (startTime) => session.getTrackingType(startTime) === LoggerTrackingType.TRACKED,
+    getId: sessionManager.getId,
+    isTracked: (startTime) => sessionManager.getTrackingType(startTime) === LoggerTrackingType.TRACKED,
   }
 }
 

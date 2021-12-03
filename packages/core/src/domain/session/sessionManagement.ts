@@ -8,7 +8,7 @@ import { relativeNow, RelativeTime, clocksOrigin } from '../../tools/timeUtils'
 import { tryOldCookiesMigration } from './oldCookiesMigration'
 import { startSessionStore, SESSION_TIME_OUT_DELAY } from './sessionStore'
 
-export interface Session<TrackingType extends string> {
+export interface SessionManager<TrackingType extends string> {
   getId: (startTime?: RelativeTime) => string | undefined
   getTrackingType: (startTime?: RelativeTime) => TrackingType | undefined
   renewObservable: Observable<void>
@@ -28,7 +28,7 @@ export function startSessionManagement<TrackingType extends string>(
   options: CookieOptions,
   productKey: string,
   computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean }
-): Session<TrackingType> {
+): SessionManager<TrackingType> {
   tryOldCookiesMigration(options)
   const sessionStore = startSessionStore(options, productKey, computeSessionState)
   stopCallbacks.push(() => sessionStore.stop())

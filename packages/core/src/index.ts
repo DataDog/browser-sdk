@@ -30,7 +30,7 @@ export {
 export { Observable, Subscription } from './tools/observable'
 export {
   startSessionManagement,
-  Session,
+  SessionManager,
   // Exposed for tests
   stopSessionManagement,
 } from './domain/session/sessionManagement'
