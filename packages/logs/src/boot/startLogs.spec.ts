@@ -63,7 +63,7 @@ describe('logs', () => {
   let sessionIsTracked: boolean
   let server: sinon.SinonFakeServer
   let errorObservable: Observable<RawError>
-  const session = {
+  const sessionManager = {
     getId: () => (sessionIsTracked ? SESSION_ID : undefined),
     isTracked: () => sessionIsTracked,
   }
@@ -72,7 +72,7 @@ describe('logs', () => {
     configuration: configurationOverrides,
   }: { errorLogger?: Logger; configuration?: Partial<Configuration> } = {}) => {
     const configuration = { ...(baseConfiguration as Configuration), ...configurationOverrides }
-    return doStartLogs(configuration, errorObservable, internalMonitoring, session, errorLogger)
+    return doStartLogs(configuration, errorObservable, internalMonitoring, sessionManager, errorLogger)
   }
 
   beforeEach(() => {
@@ -201,7 +201,7 @@ describe('logs', () => {
     beforeEach(() => {
       beforeSend = noop
       assemble = buildAssemble(
-        session,
+        sessionManager,
         {
           ...(baseConfiguration as Configuration),
           beforeSend: (x: LogsEvent) => beforeSend(x),
@@ -213,7 +213,7 @@ describe('logs', () => {
       }
     })
 
-    it('should not assemble when session is not tracked', () => {
+    it('should not assemble when sessionManager is not tracked', () => {
       sessionIsTracked = false
 
       expect(assemble(DEFAULT_MESSAGE, { foo: 'from-current-context' })).toBeUndefined()
@@ -286,7 +286,7 @@ describe('logs', () => {
     })
   })
 
-  describe('logger session', () => {
+  describe('logger sessionManager', () => {
     let sendLog: (message: LogsMessage, context: Context) => void
 
     beforeEach(() => {
