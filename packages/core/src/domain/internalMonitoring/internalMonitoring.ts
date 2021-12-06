@@ -1,11 +1,11 @@
-import { Context } from '../tools/context'
-import { display } from '../tools/display'
-import { toStackTraceString } from '../tools/error'
-import { assign, combine, jsonStringify, Parameters, ThisParameterType } from '../tools/utils'
-import { Batch, HttpRequest } from '../transport'
-import { Configuration } from './configuration'
-import { EndpointBuilder } from './configuration/endpointBuilder'
-import { computeStackTrace } from './tracekit'
+import { Context } from '../../tools/context'
+import { display } from '../../tools/display'
+import { toStackTraceString } from '../../tools/error'
+import { assign, combine, jsonStringify, Parameters, ThisParameterType } from '../../tools/utils'
+import { canUseEventBridge, getEventBridge } from '../../transport'
+import { Configuration } from '../configuration'
+import { computeStackTrace } from '../tracekit'
+import { startMonitoringBatch } from './startMonitoringBatch'
 
 enum StatusType {
   info = 'info',
@@ -26,24 +26,38 @@ export interface MonitoringMessage extends Context {
 }
 
 const monitoringConfiguration: {
-  batch?: Batch
   debugMode?: boolean
   maxMessagesPerPage: number
   sentMessageCount: number
 } = { maxMessagesPerPage: 0, sentMessageCount: 0 }
 
-let externalContextProvider: () => Context
+let onInternalMonitoringMessageCollected: ((message: MonitoringMessage) => void) | undefined
 
 export function startInternalMonitoring(configuration: Configuration): InternalMonitoring {
-  if (configuration.internalMonitoringEndpointBuilder) {
-    const batch = startMonitoringBatch(configuration)
+  let externalContextProvider: () => Context
 
-    assign(monitoringConfiguration, {
-      batch,
-      maxMessagesPerPage: configuration.maxInternalMonitoringMessagesPerPage,
-      sentMessageCount: 0,
-    })
+  if (canUseEventBridge()) {
+    const bridge = getEventBridge()!
+    onInternalMonitoringMessageCollected = (message: MonitoringMessage) =>
+      bridge.send('internal_log', withContext(message))
+  } else if (configuration.internalMonitoringEndpointBuilder) {
+    const batch = startMonitoringBatch(configuration)
+    onInternalMonitoringMessageCollected = (message: MonitoringMessage) => batch.add(withContext(message))
   }
+
+  assign(monitoringConfiguration, {
+    maxMessagesPerPage: configuration.maxInternalMonitoringMessagesPerPage,
+    sentMessageCount: 0,
+  })
+
+  function withContext(message: MonitoringMessage) {
+    return combine(
+      { date: new Date().getTime() },
+      externalContextProvider !== undefined ? externalContextProvider() : {},
+      message
+    )
+  }
+
   return {
     setExternalContextProvider: (provider: () => Context) => {
       externalContextProvider = provider
@@ -51,60 +65,22 @@ export function startInternalMonitoring(configuration: Configuration): InternalM
   }
 }
 
-function startMonitoringBatch(configuration: Configuration) {
-  const primaryBatch = createMonitoringBatch(configuration.internalMonitoringEndpointBuilder!)
-  let replicaBatch: Batch | undefined
-  if (configuration.replica !== undefined) {
-    replicaBatch = createMonitoringBatch(configuration.replica.internalMonitoringEndpointBuilder)
-  }
-
-  function createMonitoringBatch(endpointBuilder: EndpointBuilder) {
-    return new Batch(
-      new HttpRequest(endpointBuilder, configuration.batchBytesLimit),
-      configuration.maxBatchSize,
-      configuration.batchBytesLimit,
-      configuration.maxMessageSize,
-      configuration.flushTimeout
-    )
-  }
-
-  function withContext(message: MonitoringMessage) {
-    return combine(
-      {
-        date: new Date().getTime(),
-      },
-      externalContextProvider !== undefined ? externalContextProvider() : {},
-      message
-    )
-  }
-
-  return {
-    add(message: MonitoringMessage) {
-      const contextualizedMessage = withContext(message)
-      primaryBatch.add(contextualizedMessage)
-      if (replicaBatch) {
-        replicaBatch.add(contextualizedMessage)
-      }
-    },
-  }
-}
-
 export function startFakeInternalMonitoring() {
   const messages: MonitoringMessage[] = []
   assign(monitoringConfiguration, {
-    batch: {
-      add(message: MonitoringMessage) {
-        messages.push(message)
-      },
-    },
     maxMessagesPerPage: Infinity,
     sentMessageCount: 0,
   })
+
+  onInternalMonitoringMessageCollected = (message: MonitoringMessage) => {
+    messages.push(message)
+  }
+
   return messages
 }
 
 export function resetInternalMonitoring() {
-  monitoringConfiguration.batch = undefined
+  onInternalMonitoringMessageCollected = undefined
 }
 
 export function monitored<T extends (...params: any[]) => unknown>(
@@ -114,7 +90,7 @@ export function monitored<T extends (...params: any[]) => unknown>(
 ) {
   const originalMethod = descriptor.value!
   descriptor.value = function (this: any, ...args: Parameters<T>) {
-    const decorated = monitoringConfiguration.batch ? monitor(originalMethod) : originalMethod
+    const decorated = onInternalMonitoringMessageCollected ? monitor(originalMethod) : originalMethod
     return decorated.apply(this, args) as ReturnType<T>
   } as T
 }
@@ -143,7 +119,7 @@ export function callMonitored<T extends (...args: any[]) => any>(
   } catch (e) {
     logErrorIfDebug(e)
     try {
-      addErrorToMonitoringBatch(e)
+      addMonitoringError(e)
     } catch (e) {
       logErrorIfDebug(e)
     }
@@ -152,28 +128,27 @@ export function callMonitored<T extends (...args: any[]) => any>(
 
 export function addMonitoringMessage(message: string, context?: Context) {
   logMessageIfDebug(message, context)
-  addToMonitoringBatch({
+  addToMonitoring({
     message,
     ...context,
     status: StatusType.info,
   })
 }
 
-export function addErrorToMonitoringBatch(e: unknown) {
-  addToMonitoringBatch({
+export function addMonitoringError(e: unknown) {
+  addToMonitoring({
     ...formatError(e),
     status: StatusType.error,
   })
 }
 
-function addToMonitoringBatch(message: MonitoringMessage) {
+function addToMonitoring(message: MonitoringMessage) {
   if (
-    monitoringConfiguration.batch &&
+    onInternalMonitoringMessageCollected &&
     monitoringConfiguration.sentMessageCount < monitoringConfiguration.maxMessagesPerPage
   ) {
     monitoringConfiguration.sentMessageCount += 1
-
-    monitoringConfiguration.batch.add(message)
+    onInternalMonitoringMessageCollected(message)
   }
 }
 

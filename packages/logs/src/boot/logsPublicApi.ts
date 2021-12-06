@@ -9,6 +9,7 @@ import {
   display,
   deepClone,
   InitConfiguration,
+  canUseEventBridge,
 } from '@datadog/browser-core'
 import { HandlerType, Logger, LogsMessage, StatusType } from '../domain/logger'
 import { startLogs, LogsInitConfiguration } from './startLogs'
@@ -18,6 +19,8 @@ export interface LoggerConfiguration {
   handler?: HandlerType | HandlerType[]
   context?: object
 }
+
+export type HybridInitConfiguration = Omit<LogsInitConfiguration, 'clientToken'>
 
 export type LogsPublicApi = ReturnType<typeof makeLogsPublicApi>
 
@@ -40,6 +43,10 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
     logger,
 
     init: monitor((initConfiguration: LogsInitConfiguration) => {
+      if (canUseEventBridge()) {
+        initConfiguration = overrideInitConfigurationForBridge(initConfiguration)
+      }
+
       if (!canInitLogs(initConfiguration)) {
         return
       }
@@ -70,6 +77,10 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
 
     getInitConfiguration: monitor(() => getInitConfigurationStrategy()),
   })
+
+  function overrideInitConfigurationForBridge<C extends InitConfiguration>(initConfiguration: C): C {
+    return { ...initConfiguration, clientToken: 'empty' }
+  }
 
   function canInitLogs(initConfiguration: LogsInitConfiguration) {
     if (isAlreadyInitialized) {

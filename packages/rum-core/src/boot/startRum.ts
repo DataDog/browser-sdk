@@ -14,7 +14,7 @@ import { startResourceCollection } from '../domain/rumEventsCollection/resource/
 import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
 import { RumSession, startRumSession, startRumSessionStub } from '../domain/rumSession'
 import { CommonContext } from '../rawRumEvent.types'
-import { startRumBatch } from '../transport/batch'
+import { startRumBatch } from '../transport/startRumBatch'
 import { startRumEventBridge } from '../transport/startRumEventBridge'
 import { startUrlContexts } from '../domain/urlContexts'
 import { createLocationChangeObservable, LocationChange } from '../browser/locationChangeObservable'
