@@ -1,12 +1,10 @@
 import {
   areCookiesAuthorized,
-  Batch,
   combine,
   commonInit,
   Configuration,
   Context,
   createEventRateLimiter,
-  HttpRequest,
   InternalMonitoring,
   Observable,
   RawError,
@@ -14,12 +12,14 @@ import {
   InitConfiguration,
   trackRuntimeError,
   trackConsoleError,
-  EndpointBuilder,
+  canUseEventBridge,
+  getEventBridge,
 } from '@datadog/browser-core'
 import { trackNetworkError } from '../domain/trackNetworkError'
 import { Logger, LogsMessage, StatusType } from '../domain/logger'
-import { LoggerSession, startLoggerSession } from '../domain/loggerSession'
+import { LoggerSession, startLoggerSession, startLoggerSessionStub } from '../domain/loggerSession'
 import { LogsEvent } from '../logsEvent.types'
+import { startLoggerBatch } from '../transport/startLoggerBatch'
 import { buildEnv } from './buildEnv'
 
 export interface LogsInitConfiguration extends InitConfiguration {
@@ -37,7 +37,11 @@ export function startLogs(initConfiguration: LogsInitConfiguration, errorLogger:
     trackNetworkError(configuration, errorObservable)
   }
 
-  const session = startLoggerSession(configuration, areCookiesAuthorized(configuration.cookieOptions))
+  const session =
+    areCookiesAuthorized(configuration.cookieOptions) && !canUseEventBridge()
+      ? startLoggerSession(configuration)
+      : startLoggerSessionStub(configuration)
+
   return doStartLogs(configuration, errorObservable, internalMonitoring, session, errorLogger)
 }
 
@@ -55,7 +59,15 @@ export function doStartLogs(
   )
 
   const assemble = buildAssemble(session, configuration, reportError)
-  const batch = startLoggerBatch(configuration)
+
+  let onLogEventCollected: (message: Context) => void
+  if (canUseEventBridge()) {
+    const bridge = getEventBridge()!
+    onLogEventCollected = (message) => bridge.send('log', message)
+  } else {
+    const batch = startLoggerBatch(configuration)
+    onLogEventCollected = (message) => batch.add(message)
+  }
 
   function reportError(error: RawError) {
     errorLogger.error(
@@ -87,36 +99,8 @@ export function doStartLogs(
   return (message: LogsMessage, currentContext: Context) => {
     const contextualizedMessage = assemble(message, currentContext)
     if (contextualizedMessage) {
-      batch.add(contextualizedMessage)
+      onLogEventCollected(contextualizedMessage)
     }
-  }
-}
-
-function startLoggerBatch(configuration: Configuration) {
-  const primaryBatch = createLoggerBatch(configuration.logsEndpointBuilder)
-
-  let replicaBatch: Batch | undefined
-  if (configuration.replica !== undefined) {
-    replicaBatch = createLoggerBatch(configuration.replica.logsEndpointBuilder)
-  }
-
-  function createLoggerBatch(endpointBuilder: EndpointBuilder) {
-    return new Batch(
-      new HttpRequest(endpointBuilder, configuration.batchBytesLimit),
-      configuration.maxBatchSize,
-      configuration.batchBytesLimit,
-      configuration.maxMessageSize,
-      configuration.flushTimeout
-    )
-  }
-
-  return {
-    add(message: Context) {
-      primaryBatch.add(message)
-      if (replicaBatch) {
-        replicaBatch.add(message)
-      }
-    },
   }
 }
 

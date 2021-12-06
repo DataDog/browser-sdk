@@ -1,7 +1,10 @@
-*             @Datadog/rum-browser
+# Order is important, the last matching pattern takes the most precedence.
 
-# Docs
-*README.md    @Datadog/rum-browser @DataDog/documentation
+# Global
+*             @Datadog/rum-browser
 
 # Replay
 packages/rum  @Datadog/rum-browser @DataDog/rum-session-replay
+
+# Docs
+*README.md    @Datadog/rum-browser @DataDog/documentation
