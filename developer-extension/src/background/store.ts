@@ -1,4 +1,4 @@
-import { Store } from '../common/types'
+import { Store, LocalStore } from '../common/types'
 import { listenAction, sendAction } from './actions'
 
 export const store: Store = {
@@ -7,11 +7,27 @@ export const store: Store = {
   useDevBundles: false,
   useRumSlim: false,
   blockIntakeRequests: false,
+  local: {},
 }
 
 export function setStore(newStore: Partial<Store>) {
-  if (wouldModifyStore(newStore)) {
+  if (wouldModifyStore(newStore, store)) {
     Object.assign(store, newStore)
+    sendAction('newStore', store)
+    chrome.storage.local.set({ store })
+  }
+}
+
+export function setLocalStore(newStore: Partial<LocalStore>, tabId: number) {
+  if (!store.local[tabId]) {
+    store.local[tabId] = {
+      rumConfig: {},
+      logsConfig: {},
+    }
+  }
+  const localStore = store.local[tabId]
+  if (wouldModifyStore(newStore, localStore)) {
+    Object.assign(localStore, newStore)
     sendAction('newStore', store)
     chrome.storage.local.set({ store })
   }
@@ -26,6 +42,6 @@ chrome.storage.local.get((storage) => {
   }
 })
 
-function wouldModifyStore(newStore: Partial<Store>) {
-  return (Object.entries(newStore) as Array<[keyof Store, unknown]>).some(([key, value]) => store[key] !== value)
+function wouldModifyStore<S>(newStore: Partial<S>, targetStore: S) {
+  return (Object.entries(newStore) as Array<[keyof S, unknown]>).some(([key, value]) => targetStore[key] !== value)
 }

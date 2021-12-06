@@ -1,9 +1,9 @@
-import { Checkbox, Stack, Button, Badge } from 'bumbag'
+import { Stack, Checkbox, Badge, Button } from 'bumbag'
 import React from 'react'
-import { sendAction } from './actions'
-import { useStore } from './useStore'
+import { sendAction } from '../actions'
+import { useStore } from '../useStore'
 
-export function Panel() {
+export function ActionsTab() {
   const [
     { useDevBundles, useRumSlim, logEventsFromRequests, devServerStatus, blockIntakeRequests },
     setStore,
