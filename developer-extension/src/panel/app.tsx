@@ -1,4 +1,4 @@
-import { Provider as BumbagProvider, css, Box } from 'bumbag'
+import { Provider as BumbagProvider, Box, css } from 'bumbag'
 import React, { Suspense } from 'react'
 
 import { Panel } from './panel'
@@ -9,7 +9,7 @@ const theme = {
     styles: {
       base: css`
         body {
-          width: 300px;
+          min-height: 100vh;
         }
       `,
     },

@@ -79,4 +79,18 @@ describe('bridge present', () => {
       expect(serverEvents.internalMonitoring.length).toBe(0)
       expect(bridgeEvents.internalMonitoring.length).toBe(1)
     })
+
+  createTest('forward logs to the bridge')
+    .withLogs({ enableExperimentalFeatures: ['event-bridge'] })
+    .withEventBridge()
+    .run(async ({ serverEvents, bridgeEvents }) => {
+      await browserExecute(() => {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        window.DD_LOGS!.logger.log('hello')
+      })
+      await flushEvents()
+
+      expect(serverEvents.logs.length).toBe(0)
+      expect(bridgeEvents.logs.length).toBe(1)
+    })
 })

@@ -187,13 +187,13 @@ Specify your own attribute to be used to [name actions][9].
 : Optional<br/>
 **Type**: Number<br/>
 **Default**: `100`<br/>
-The percentage of sessions to track: `100` for all, `0` for none. Only tracked sessions send rum events.
+The percentage of sessions to track: `100` for all, `0` for none. Only tracked sessions send RUM events. For more details about `sampleRate`, see the [sampling configuration](#browser-and-session-replay-sampling-configuration).
 
 `replaySampleRate`
 : Optional<br/>
 **Type**: Number<br/>
 **Default**: `100`<br/>
-The percentage of tracked sessions with session replay pricing features: `100` for all, `0` for none. See [rum pricing][11] for more information.
+The percentage of tracked sessions with [Session Replay pricing][11] features: `100` for all, `0` for none. For more details about `replaySampleRate`, see the [sampling configuration](#browser-and-session-replay-sampling-configuration).
 
 `silentMultipleInit`
 : Optional<br/>
@@ -252,6 +252,46 @@ init(configuration: {
     useCrossSiteSessionCookie?: boolean,
 })
 ```
+
+### Browser and Session Replay sampling configuration
+
+The `sampleRate` option controls the overall sample rate of RUM data collection. The `replaySampleRate` option controls the percentage of Session Replay data collection of the overall rate (the collection of **Resources**, **Long Tasks**, and **Replay** recordings).
+
+For example, to collect 100% of your sessions using only the Browser RUM option:
+
+```
+datadogRum.init({
+    ....
+    sampleRate: 100,
+    replaySampleRate: 0
+});
+```
+
+For example, to collect 100% of your sessions using only the Session Replay RUM option without recording a replay:
+
+```
+datadogRum.init({
+    ....
+    sampleRate: 100,
+    replaySampleRate: 100 // Note: if this is not included it will default to 100%
+});
+```
+
+For example, to collect 25% of your sessions using the Browser RUM option and 25% of your sessions using the Session Replay RUM option:
+
+```
+datadogRum.init({
+    ....
+    sampleRate: 50,
+    replaySampleRate: 50
+});
+```
+
+In the example above, 50% of all sessions are collected. The Session Replay RUM option tracks half of these sessions while the Browser RUM option tracks the remaining half of these sessions.
+
+## Further Reading
+
+{{< partial name="whats-next/whats-next.html" >}}
 
 [1]: https://app.datadoghq.com/rum/list
 [2]: https://docs.datadoghq.com/real_user_monitoring/data_collected/
