@@ -6,20 +6,20 @@ import {
   isIE,
   SESSION_COOKIE_NAME,
   setCookie,
-  stopSessionManagement,
+  stopSessionManager,
   ONE_SECOND,
   RelativeTime,
 } from '@datadog/browser-core'
 import { Clock, mockClock } from '../../../core/test/specHelper'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-import { RUM_SESSION_KEY, RumTrackingType, startRumSessionManagement } from './rumSessionManager'
+import { RUM_SESSION_KEY, RumTrackingType, startRumSessionManager } from './rumSessionManager'
 
 function setupDraws({ tracked, trackedWithReplay }: { tracked?: boolean; trackedWithReplay?: boolean }) {
   spyOn(Math, 'random').and.returnValues(tracked ? 0 : 1, trackedWithReplay ? 0 : 1)
 }
 
-describe('rum session', () => {
+describe('rum session manager', () => {
   const DURATION = 123456
   const configuration: Partial<Configuration> = {
     ...DEFAULT_CONFIGURATION,
@@ -45,7 +45,7 @@ describe('rum session', () => {
 
   afterEach(() => {
     // remove intervals first
-    stopSessionManagement()
+    stopSessionManager()
     // flush pending callbacks to avoid random failures
     clock.tick(new Date().getTime())
     clock.cleanup()
@@ -55,7 +55,7 @@ describe('rum session', () => {
     it('when tracked with replay plan should store session type and id', () => {
       setupDraws({ tracked: true, trackedWithReplay: true })
 
-      startRumSessionManagement(configuration as Configuration, lifeCycle)
+      startRumSessionManager(configuration as Configuration, lifeCycle)
 
       expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
@@ -66,7 +66,7 @@ describe('rum session', () => {
     it('when tracked with lite plan should store session type and id', () => {
       setupDraws({ tracked: true, trackedWithReplay: false })
 
-      startRumSessionManagement(configuration as Configuration, lifeCycle)
+      startRumSessionManager(configuration as Configuration, lifeCycle)
 
       expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
@@ -77,7 +77,7 @@ describe('rum session', () => {
     it('when not tracked should store session type', () => {
       setupDraws({ tracked: false })
 
-      startRumSessionManagement(configuration as Configuration, lifeCycle)
+      startRumSessionManager(configuration as Configuration, lifeCycle)
 
       expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
@@ -88,7 +88,7 @@ describe('rum session', () => {
     it('when tracked should keep existing session type and id', () => {
       setCookie(SESSION_COOKIE_NAME, 'id=abcdef&rum=1', DURATION)
 
-      startRumSessionManagement(configuration as Configuration, lifeCycle)
+      startRumSessionManager(configuration as Configuration, lifeCycle)
 
       expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
@@ -99,7 +99,7 @@ describe('rum session', () => {
     it('when not tracked should keep existing session type', () => {
       setCookie(SESSION_COOKIE_NAME, 'rum=0', DURATION)
 
-      startRumSessionManagement(configuration as Configuration, lifeCycle)
+      startRumSessionManager(configuration as Configuration, lifeCycle)
 
       expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
@@ -108,7 +108,7 @@ describe('rum session', () => {
 
     it('should renew on activity after expiration', () => {
       setCookie(SESSION_COOKIE_NAME, 'id=abcdef&rum=1', DURATION)
-      startRumSessionManagement(configuration as Configuration, lifeCycle)
+      startRumSessionManager(configuration as Configuration, lifeCycle)
 
       setCookie(SESSION_COOKIE_NAME, '', DURATION)
       expect(getCookie(SESSION_COOKIE_NAME)).toBeUndefined()
@@ -129,18 +129,18 @@ describe('rum session', () => {
   describe('findSession', () => {
     it('should return the current session', () => {
       setCookie(SESSION_COOKIE_NAME, 'id=abcdef&rum=1', DURATION)
-      const rumSessionManager = startRumSessionManagement(configuration as Configuration, lifeCycle)
+      const rumSessionManager = startRumSessionManager(configuration as Configuration, lifeCycle)
       expect(rumSessionManager.findSession()!.id).toBe('abcdef')
     })
 
     it('should return undefined if the session is not tracked', () => {
       setCookie(SESSION_COOKIE_NAME, 'id=abcdef&rum=0', DURATION)
-      const rumSessionManager = startRumSessionManagement(configuration as Configuration, lifeCycle)
+      const rumSessionManager = startRumSessionManager(configuration as Configuration, lifeCycle)
       expect(rumSessionManager.findSession()).toBe(undefined)
     })
 
     it('should return undefined if the session has expired', () => {
-      const rumSessionManager = startRumSessionManagement(configuration as Configuration, lifeCycle)
+      const rumSessionManager = startRumSessionManager(configuration as Configuration, lifeCycle)
       setCookie(SESSION_COOKIE_NAME, '', DURATION)
       clock.tick(COOKIE_ACCESS_DELAY)
       expect(rumSessionManager.findSession()).toBe(undefined)
@@ -148,7 +148,7 @@ describe('rum session', () => {
 
     it('should return session corresponding to start time', () => {
       setCookie(SESSION_COOKIE_NAME, 'id=abcdef&rum=1', DURATION)
-      const rumSessionManager = startRumSessionManagement(configuration as Configuration, lifeCycle)
+      const rumSessionManager = startRumSessionManager(configuration as Configuration, lifeCycle)
       clock.tick(10 * ONE_SECOND)
       setCookie(SESSION_COOKIE_NAME, '', DURATION)
       clock.tick(COOKIE_ACCESS_DELAY)
@@ -158,14 +158,14 @@ describe('rum session', () => {
 
     it('should return session with replay plan', () => {
       setCookie(SESSION_COOKIE_NAME, 'id=abcdef&rum=1', DURATION)
-      const rumSessionManager = startRumSessionManagement(configuration as Configuration, lifeCycle)
+      const rumSessionManager = startRumSessionManager(configuration as Configuration, lifeCycle)
       expect(rumSessionManager.findSession()!.hasReplayPlan).toBeTrue()
       expect(rumSessionManager.findSession()!.hasLitePlan).toBeFalse()
     })
 
     it('should return session with lite plan', () => {
       setCookie(SESSION_COOKIE_NAME, 'id=abcdef&rum=2', DURATION)
-      const rumSessionManager = startRumSessionManagement(configuration as Configuration, lifeCycle)
+      const rumSessionManager = startRumSessionManager(configuration as Configuration, lifeCycle)
       expect(rumSessionManager.findSession()!.hasReplayPlan).toBeFalse()
       expect(rumSessionManager.findSession()!.hasLitePlan).toBeTrue()
     })

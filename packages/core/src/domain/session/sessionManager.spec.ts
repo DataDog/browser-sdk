@@ -3,19 +3,14 @@ import { Clock, mockClock, restorePageVisibility, setPageVisibility, createNewEv
 import { ONE_HOUR, DOM_EVENT, ONE_SECOND } from '../../tools/utils'
 import { RelativeTime } from '../../tools/timeUtils'
 import { isIE } from '../../tools/browserDetection'
-import {
-  SessionManager,
-  startSessionManagement,
-  stopSessionManagement,
-  VISIBILITY_CHECK_DELAY,
-} from './sessionManagement'
+import { SessionManager, startSessionManager, stopSessionManager, VISIBILITY_CHECK_DELAY } from './sessionManager'
 import { SESSION_COOKIE_NAME, SESSION_TIME_OUT_DELAY, SESSION_EXPIRATION_DELAY } from './sessionStore'
 
 enum FakeTrackingType {
   NOT_TRACKED = 'not-tracked',
   TRACKED = 'tracked',
 }
-describe('startSessionManagement', () => {
+describe('startSessionManager', () => {
   const DURATION = 123456
   const FIRST_PRODUCT_KEY = 'first'
   const SECOND_PRODUCT_KEY = 'second'
@@ -65,7 +60,7 @@ describe('startSessionManagement', () => {
 
   afterEach(() => {
     // remove intervals first
-    stopSessionManagement()
+    stopSessionManager()
     // flush pending callbacks to avoid random failures
     clock.tick(ONE_HOUR)
     clock.cleanup()
@@ -73,7 +68,7 @@ describe('startSessionManagement', () => {
 
   describe('cookie management', () => {
     it('when tracked, should store tracking type and session id', () => {
-      const sessionManager = startSessionManagement(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
+      const sessionManager = startSessionManager(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
         isTracked: true,
         trackingType: FakeTrackingType.TRACKED,
       }))
@@ -83,7 +78,7 @@ describe('startSessionManagement', () => {
     })
 
     it('when not tracked should store tracking type', () => {
-      const sessionManager = startSessionManagement(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
+      const sessionManager = startSessionManager(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
         isTracked: false,
         trackingType: FakeTrackingType.NOT_TRACKED,
       }))
@@ -95,7 +90,7 @@ describe('startSessionManagement', () => {
     it('when tracked should keep existing tracking type and session id', () => {
       setCookie(SESSION_COOKIE_NAME, 'id=abcdef&first=tracked', DURATION)
 
-      const sessionManager = startSessionManagement(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
+      const sessionManager = startSessionManager(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
         isTracked: true,
         trackingType: FakeTrackingType.TRACKED,
       }))
@@ -107,7 +102,7 @@ describe('startSessionManagement', () => {
     it('when not tracked should keep existing tracking type', () => {
       setCookie(SESSION_COOKIE_NAME, 'first=not-tracked', DURATION)
 
-      const sessionManager = startSessionManagement(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
+      const sessionManager = startSessionManager(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
         isTracked: false,
         trackingType: FakeTrackingType.NOT_TRACKED,
       }))
@@ -143,7 +138,7 @@ describe('startSessionManagement', () => {
       it(description, () => {
         const cookieSetSpy = spyOnProperty(document, 'cookie', 'set')
 
-        startSessionManagement(cookieOptions, FIRST_PRODUCT_KEY, () => ({
+        startSessionManager(cookieOptions, FIRST_PRODUCT_KEY, () => ({
           isTracked: true,
           trackingType: FakeTrackingType.TRACKED,
         }))
@@ -161,32 +156,32 @@ describe('startSessionManagement', () => {
     })
 
     it('should be called with an empty value if the cookie is not defined', () => {
-      startSessionManagement(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, spy)
+      startSessionManager(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, spy)
       expect(spy).toHaveBeenCalledWith(undefined)
     })
 
     it('should be called with an invalid value if the cookie has an invalid value', () => {
       setCookie(SESSION_COOKIE_NAME, 'first=invalid', DURATION)
-      startSessionManagement(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, spy)
+      startSessionManager(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, spy)
       expect(spy).toHaveBeenCalledWith('invalid')
     })
 
     it('should be called with TRACKED', () => {
       setCookie(SESSION_COOKIE_NAME, 'first=tracked', DURATION)
-      startSessionManagement(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, spy)
+      startSessionManager(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, spy)
       expect(spy).toHaveBeenCalledWith(FakeTrackingType.TRACKED)
     })
 
     it('should be called with NOT_TRACKED', () => {
       setCookie(SESSION_COOKIE_NAME, 'first=not-tracked', DURATION)
-      startSessionManagement(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, spy)
+      startSessionManager(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, spy)
       expect(spy).toHaveBeenCalledWith(FakeTrackingType.NOT_TRACKED)
     })
   })
 
   describe('session renewal', () => {
     it('should renew on activity after expiration', () => {
-      const sessionManager = startSessionManagement(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
+      const sessionManager = startSessionManager(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
         isTracked: true,
         trackingType: FakeTrackingType.TRACKED,
       }))
@@ -207,7 +202,7 @@ describe('startSessionManagement', () => {
     })
 
     it('should not renew on visibility after expiration', () => {
-      const sessionManager = startSessionManagement(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
+      const sessionManager = startSessionManager(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
         isTracked: true,
         trackingType: FakeTrackingType.TRACKED,
       }))
@@ -223,15 +218,15 @@ describe('startSessionManagement', () => {
     })
   })
 
-  describe('multiple startSessionManagement calls', () => {
+  describe('multiple startSessionManager calls', () => {
     it('should re-use the same session id', () => {
-      const firstSessionManager = startSessionManagement(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
+      const firstSessionManager = startSessionManager(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
         isTracked: true,
         trackingType: FakeTrackingType.TRACKED,
       }))
       const idA = firstSessionManager.findSession()!.id
 
-      const secondSessionManager = startSessionManagement(COOKIE_OPTIONS, SECOND_PRODUCT_KEY, () => ({
+      const secondSessionManager = startSessionManager(COOKIE_OPTIONS, SECOND_PRODUCT_KEY, () => ({
         isTracked: true,
         trackingType: FakeTrackingType.TRACKED,
       }))
@@ -241,7 +236,7 @@ describe('startSessionManagement', () => {
     })
 
     it('should not erase other session type', () => {
-      startSessionManagement(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
+      startSessionManager(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
         isTracked: true,
         trackingType: FakeTrackingType.TRACKED,
       }))
@@ -254,7 +249,7 @@ describe('startSessionManagement', () => {
       // expand first session cookie cache
       document.dispatchEvent(createNewEvent(DOM_EVENT.VISIBILITY_CHANGE))
 
-      startSessionManagement(COOKIE_OPTIONS, SECOND_PRODUCT_KEY, () => ({
+      startSessionManager(COOKIE_OPTIONS, SECOND_PRODUCT_KEY, () => ({
         isTracked: true,
         trackingType: FakeTrackingType.TRACKED,
       }))
@@ -271,11 +266,11 @@ describe('startSessionManagement', () => {
     })
 
     it('should have independent tracking types', () => {
-      const firstSessionManager = startSessionManagement(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
+      const firstSessionManager = startSessionManager(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
         isTracked: true,
         trackingType: FakeTrackingType.TRACKED,
       }))
-      const secondSessionManager = startSessionManagement(COOKIE_OPTIONS, SECOND_PRODUCT_KEY, () => ({
+      const secondSessionManager = startSessionManager(COOKIE_OPTIONS, SECOND_PRODUCT_KEY, () => ({
         isTracked: false,
         trackingType: FakeTrackingType.NOT_TRACKED,
       }))
@@ -285,7 +280,7 @@ describe('startSessionManagement', () => {
     })
 
     it('should notify each expire and renew observables', () => {
-      const firstSessionManager = startSessionManagement(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
+      const firstSessionManager = startSessionManager(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
         isTracked: true,
         trackingType: FakeTrackingType.TRACKED,
       }))
@@ -294,7 +289,7 @@ describe('startSessionManagement', () => {
       const renewSessionASpy = jasmine.createSpy()
       firstSessionManager.renewObservable.subscribe(renewSessionASpy)
 
-      const secondSessionManager = startSessionManagement(COOKIE_OPTIONS, SECOND_PRODUCT_KEY, () => ({
+      const secondSessionManager = startSessionManager(COOKIE_OPTIONS, SECOND_PRODUCT_KEY, () => ({
         isTracked: true,
         trackingType: FakeTrackingType.TRACKED,
       }))
@@ -319,7 +314,7 @@ describe('startSessionManagement', () => {
 
   describe('session timeout', () => {
     it('should expire the session when the time out delay is reached', () => {
-      const sessionManager = startSessionManagement(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
+      const sessionManager = startSessionManager(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
         isTracked: true,
         trackingType: FakeTrackingType.TRACKED,
       }))
@@ -338,7 +333,7 @@ describe('startSessionManagement', () => {
     it('should renew an existing timed out session', () => {
       setCookie(SESSION_COOKIE_NAME, `id=abcde&first=tracked&created=${Date.now() - SESSION_TIME_OUT_DELAY}`, DURATION)
 
-      const sessionManager = startSessionManagement(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
+      const sessionManager = startSessionManager(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
         isTracked: true,
         trackingType: FakeTrackingType.TRACKED,
       }))
@@ -353,7 +348,7 @@ describe('startSessionManagement', () => {
     it('should not add created date to an existing session from an older versions', () => {
       setCookie(SESSION_COOKIE_NAME, `id=abcde&first=tracked`, DURATION)
 
-      const sessionManager = startSessionManagement(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
+      const sessionManager = startSessionManager(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
         isTracked: true,
         trackingType: FakeTrackingType.TRACKED,
       }))
@@ -373,7 +368,7 @@ describe('startSessionManagement', () => {
     })
 
     it('should expire the session after expiration delay', () => {
-      const sessionManager = startSessionManagement(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
+      const sessionManager = startSessionManager(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
         isTracked: true,
         trackingType: FakeTrackingType.TRACKED,
       }))
@@ -388,7 +383,7 @@ describe('startSessionManagement', () => {
     })
 
     it('should expand duration on activity', () => {
-      const sessionManager = startSessionManagement(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
+      const sessionManager = startSessionManager(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
         isTracked: true,
         trackingType: FakeTrackingType.TRACKED,
       }))
@@ -410,7 +405,7 @@ describe('startSessionManagement', () => {
     })
 
     it('should expand not tracked session duration on activity', () => {
-      const sessionManager = startSessionManagement(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
+      const sessionManager = startSessionManager(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
         isTracked: false,
         trackingType: FakeTrackingType.NOT_TRACKED,
       }))
@@ -434,7 +429,7 @@ describe('startSessionManagement', () => {
     it('should expand session on visibility', () => {
       setPageVisibility('visible')
 
-      const sessionManager = startSessionManagement(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
+      const sessionManager = startSessionManager(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
         isTracked: true,
         trackingType: FakeTrackingType.TRACKED,
       }))
@@ -458,7 +453,7 @@ describe('startSessionManagement', () => {
     it('should expand not tracked session on visibility', () => {
       setPageVisibility('visible')
 
-      const sessionManager = startSessionManagement(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
+      const sessionManager = startSessionManager(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
         isTracked: false,
         trackingType: FakeTrackingType.NOT_TRACKED,
       }))
@@ -482,7 +477,7 @@ describe('startSessionManagement', () => {
 
   describe('session history', () => {
     it('should return undefined when there is no current session and no startTime', () => {
-      const sessionManager = startSessionManagement(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
+      const sessionManager = startSessionManager(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
         isTracked: true,
         trackingType: FakeTrackingType.TRACKED,
       }))
@@ -492,7 +487,7 @@ describe('startSessionManagement', () => {
     })
 
     it('should return the current session context when there is no start time', () => {
-      const sessionManager = startSessionManagement(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
+      const sessionManager = startSessionManager(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
         isTracked: true,
         trackingType: FakeTrackingType.TRACKED,
       }))
@@ -502,7 +497,7 @@ describe('startSessionManagement', () => {
     })
 
     it('should return the session context corresponding to startTime', () => {
-      const sessionManager = startSessionManagement(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
+      const sessionManager = startSessionManager(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
         isTracked: true,
         trackingType: FakeTrackingType.TRACKED,
       }))

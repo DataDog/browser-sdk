@@ -1,4 +1,4 @@
-import { Configuration, performDraw, startSessionManagement, RelativeTime } from '@datadog/browser-core'
+import { Configuration, performDraw, startSessionManager, RelativeTime } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
 export const RUM_SESSION_KEY = 'rum'
@@ -27,8 +27,8 @@ export enum RumTrackingType {
   TRACKED_LITE = '2',
 }
 
-export function startRumSessionManagement(configuration: Configuration, lifeCycle: LifeCycle): RumSessionManager {
-  const sessionManager = startSessionManagement(configuration.cookieOptions, RUM_SESSION_KEY, (rawTrackingType) =>
+export function startRumSessionManager(configuration: Configuration, lifeCycle: LifeCycle): RumSessionManager {
+  const sessionManager = startSessionManager(configuration.cookieOptions, RUM_SESSION_KEY, (rawTrackingType) =>
     computeSessionState(configuration, rawTrackingType)
   )
 

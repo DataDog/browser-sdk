@@ -18,11 +18,7 @@ import {
 } from '@datadog/browser-core'
 import { trackNetworkError } from '../domain/trackNetworkError'
 import { Logger, LogsMessage, StatusType } from '../domain/logger'
-import {
-  LogsSessionManager,
-  startLogsSessionManagement,
-  startLogsSessionManagementStub,
-} from '../domain/logsSessionManager'
+import { LogsSessionManager, startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import { LogsEvent } from '../logsEvent.types'
 import { startLoggerBatch } from '../transport/startLoggerBatch'
 import { buildEnv } from './buildEnv'
@@ -44,8 +40,8 @@ export function startLogs(initConfiguration: LogsInitConfiguration, errorLogger:
 
   const session =
     areCookiesAuthorized(configuration.cookieOptions) && !canUseEventBridge()
-      ? startLogsSessionManagement(configuration)
-      : startLogsSessionManagementStub(configuration)
+      ? startLogsSessionManager(configuration)
+      : startLogsSessionManagerStub(configuration)
 
   return doStartLogs(configuration, errorObservable, internalMonitoring, session, errorLogger)
 }

@@ -23,7 +23,7 @@ export const VISIBILITY_CHECK_DELAY = utils.ONE_MINUTE
 const SESSION_CONTEXT_TIMEOUT_DELAY = SESSION_TIME_OUT_DELAY
 let stopCallbacks: Array<() => void> = []
 
-export function startSessionManagement<TrackingType extends string>(
+export function startSessionManager<TrackingType extends string>(
   options: CookieOptions,
   productKey: string,
   computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean }
@@ -62,7 +62,7 @@ export function startSessionManagement<TrackingType extends string>(
   }
 }
 
-export function stopSessionManagement() {
+export function stopSessionManager() {
   stopCallbacks.forEach((e) => e())
   stopCallbacks = []
 }
