@@ -81,6 +81,7 @@ export function startSessionStore<TrackingType extends string>(
   function isSessionInCacheOutdated(cookieSession: SessionState) {
     if (sessionCache.id !== cookieSession.id) {
       if (cookieSession.id) {
+        // cookie id undefined could be due to cookie expiration
         addSessionInconsistenciesMessage(cookieSession, 'different id')
       }
       return true
