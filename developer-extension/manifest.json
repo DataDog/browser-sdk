@@ -9,8 +9,11 @@
     "scripts": ["background.js"],
     "persistent": true
   },
-  "browser_action": {
-    "default_title": "Browser SDK extension",
-    "default_popup": "popup.html"
-  }
+  "content_scripts": [
+    {
+      "js": ["contentscript.js"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "devtools_page": "devtools.html"
 }
