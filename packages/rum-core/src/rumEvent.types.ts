@@ -140,6 +140,10 @@ export type RumErrorEvent = CommonProperties & {
      */
     readonly handling_stack?: string
     /**
+     * Source type of the error (the language or platform impacting the error stacktrace format)
+     */
+    readonly source_type?: 'android' | 'browser' | 'ios' | 'react-native'
+    /**
      * Resource properties of the error
      */
     readonly resource?: {
@@ -270,7 +274,18 @@ export type RumResourceEvent = CommonProperties & {
     /**
      * Resource type
      */
-    readonly type: 'document' | 'xhr' | 'beacon' | 'fetch' | 'css' | 'js' | 'image' | 'font' | 'media' | 'other'
+    readonly type:
+      | 'document'
+      | 'xhr'
+      | 'beacon'
+      | 'fetch'
+      | 'css'
+      | 'js'
+      | 'image'
+      | 'font'
+      | 'media'
+      | 'other'
+      | 'native'
     /**
      * HTTP method of the resource
      */
@@ -760,6 +775,10 @@ export interface CommonProperties {
      * The identifier of the current Synthetics test results
      */
     readonly result_id: string
+    /**
+     * Whether the event comes from a SDK instance injected by Synthetics
+     */
+    readonly injected?: boolean
     [k: string]: unknown
   }
   /**
@@ -780,6 +799,10 @@ export interface CommonProperties {
       plan: 1 | 2
       [k: string]: unknown
     }
+    /**
+     * Browser SDK version
+     */
+    readonly browser_sdk_version?: string
     [k: string]: unknown
   }
   /**

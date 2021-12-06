@@ -6,6 +6,8 @@ import {
   Observable,
   TimeStamp,
   noop,
+  setCookie,
+  deleteCookie,
 } from '@datadog/browser-core'
 import { SPEC_ENDPOINTS, mockClock, Clock, buildLocation } from '../../core/test/specHelper'
 import { RecorderApi } from '../src/boot/rumPublicApi'
@@ -17,6 +19,12 @@ import { RumSession, RumSessionPlan } from '../src/domain/rumSession'
 import { RawRumEvent, RumContext, ViewContext, UrlContext } from '../src/rawRumEvent.types'
 import { LocationChange } from '../src/browser/locationChangeObservable'
 import { UrlContexts } from '../src/domain/urlContexts'
+import {
+  BrowserWindow,
+  SYNTHETICS_INJECTS_RUM_COOKIE_NAME,
+  SYNTHETICS_RESULT_ID_COOKIE_NAME,
+  SYNTHETICS_TEST_ID_COOKIE_NAME,
+} from '../src/domain/syntheticsContext'
 import { validateFormat } from './formatValidation'
 import { createRumSessionMock } from './mockRumSession'
 
@@ -251,4 +259,44 @@ export const noopRecorderApi: RecorderApi = {
   isRecording: () => false,
   onRumStart: noop,
   getReplayStats: () => undefined,
+}
+
+// Duration to create a cookie lasting at least until the end of the test
+const COOKIE_DURATION = 1000
+
+export function mockSyntheticsWorkerValues(
+  { publicId, resultId, injectsRum }: { publicId?: any; resultId?: any; injectsRum?: any } = {
+    publicId: 'synthetics_public_id',
+    resultId: 'synthetics_result_id',
+    injectsRum: false,
+  },
+  method: 'globals' | 'cookies' = 'globals'
+) {
+  switch (method) {
+    case 'globals':
+      ;(window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID = publicId
+      ;(window as BrowserWindow)._DATADOG_SYNTHETICS_RESULT_ID = resultId
+      ;(window as BrowserWindow)._DATADOG_SYNTHETICS_INJECTS_RUM = injectsRum
+      break
+    case 'cookies':
+      if (publicId !== undefined) {
+        setCookie(SYNTHETICS_TEST_ID_COOKIE_NAME, publicId, COOKIE_DURATION)
+      }
+      if (resultId !== undefined) {
+        setCookie(SYNTHETICS_RESULT_ID_COOKIE_NAME, resultId, COOKIE_DURATION)
+      }
+      if (injectsRum !== undefined) {
+        setCookie(SYNTHETICS_INJECTS_RUM_COOKIE_NAME, injectsRum, COOKIE_DURATION)
+      }
+      break
+  }
+}
+
+export function cleanupSyntheticsWorkerValues() {
+  delete (window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID
+  delete (window as BrowserWindow)._DATADOG_SYNTHETICS_RESULT_ID
+  delete (window as BrowserWindow)._DATADOG_SYNTHETICS_INJECTS_RUM
+  deleteCookie(SYNTHETICS_TEST_ID_COOKIE_NAME)
+  deleteCookie(SYNTHETICS_RESULT_ID_COOKIE_NAME)
+  deleteCookie(SYNTHETICS_INJECTS_RUM_COOKIE_NAME)
 }
