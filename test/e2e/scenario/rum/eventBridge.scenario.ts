@@ -60,4 +60,18 @@ describe('bridge present', () => {
       expect(serverEvents.rumViews.length).toEqual(0)
       expect(bridgeEvents.rumViews.length).toBeGreaterThan(0)
     })
+
+  createTest('forward logs to the bridge')
+    .withLogs({ enableExperimentalFeatures: ['event-bridge'] })
+    .withEventBridge()
+    .run(async ({ serverEvents, bridgeEvents }) => {
+      await browserExecute(() => {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        window.DD_LOGS!.logger.log('hello')
+      })
+      await flushEvents()
+
+      expect(serverEvents.logs.length).toBe(0)
+      expect(bridgeEvents.logs.length).toBe(1)
+    })
 })
