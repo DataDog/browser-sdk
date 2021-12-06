@@ -1,6 +1,6 @@
-import { browserExecute, flushBrowserLogs } from '../../lib/helpers/browser'
-import { createTest, html } from '../../lib/framework'
-import { flushEvents } from '../../lib/helpers/flushEvents'
+import { browserExecute, flushBrowserLogs } from '../lib/helpers/browser'
+import { createTest, html } from '../lib/framework'
+import { flushEvents } from '../lib/helpers/flushEvents'
 
 describe('bridge present', () => {
   createTest('send action')
@@ -59,6 +59,25 @@ describe('bridge present', () => {
 
       expect(serverEvents.rumViews.length).toEqual(0)
       expect(bridgeEvents.rumViews.length).toBeGreaterThan(0)
+    })
+
+  createTest('forward internal monitoring to the bridge')
+    .withLogs({ enableExperimentalFeatures: ['event-bridge'], internalMonitoringApiKey: 'xxx' })
+    .withEventBridge()
+    .run(async ({ serverEvents, bridgeEvents }) => {
+      await browserExecute(() => {
+        const context = {
+          get foo() {
+            throw new window.Error('bar')
+          },
+        }
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        window.DD_LOGS!.logger.log('hop', context as any)
+      })
+
+      await flushEvents()
+      expect(serverEvents.internalMonitoring.length).toBe(0)
+      expect(bridgeEvents.internalMonitoring.length).toBe(1)
     })
 
   createTest('forward logs to the bridge')

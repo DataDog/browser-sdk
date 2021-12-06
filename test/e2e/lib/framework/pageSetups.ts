@@ -168,7 +168,17 @@ function setupEventBridge(servers: Servers) {
         send(e) {
           const { eventType, event } = JSON.parse(e)
           const request = new XMLHttpRequest()
-          const endpoint = eventType === 'log' ? 'logs' : 'rum'
+          let endpoint
+          switch (eventType) {
+            case 'internal_log':
+              endpoint = 'internalMonitoring'
+              break
+            case 'log':
+              endpoint = 'logs'
+              break
+            default:
+              endpoint = 'rum'
+          }
           request.open('POST', \`${servers.intake.url}/v1/input/\${endpoint}?bridge=1\`, true)
           request.send(JSON.stringify(event))
         },
