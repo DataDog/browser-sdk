@@ -1,10 +1,4 @@
-import {
-  Configuration,
-  canUseEventBridge,
-  noop,
-  runOnReadyState,
-  isExperimentalFeatureEnabled,
-} from '@datadog/browser-core'
+import { Configuration, canUseEventBridge, noop, runOnReadyState } from '@datadog/browser-core'
 import {
   LifeCycleEventType,
   RumInitConfiguration,
@@ -107,7 +101,7 @@ export function makeRecorderApi(
 
         state = { status: RecorderStatus.Starting }
 
-        runOnReadyState(isExperimentalFeatureEnabled('record-at-dom-loaded') ? 'interactive' : 'complete', () => {
+        runOnReadyState('interactive', () => {
           if (state.status !== RecorderStatus.Starting) {
             return
           }
