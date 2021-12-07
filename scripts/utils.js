@@ -1,6 +1,10 @@
 const util = require('util')
 const execute = util.promisify(require('child_process').exec)
 const spawn = require('child_process').spawn
+const replace = require('replace-in-file')
+const fetch = require('node-fetch')
+
+const CI_FILE = '.gitlab-ci.yml'
 
 async function getSecretKey(name) {
   const awsParameters = [
@@ -26,6 +30,14 @@ async function initGitConfig(repository) {
   await executeCommand(`git config user.email "ci.browser-sdk@datadoghq.com"`)
   await executeCommand(`git config user.name "ci.browser-sdk"`)
   await executeCommand(`git remote set-url origin ${repository}`)
+}
+
+async function replaceCiVariable(variableName, value) {
+  await replace({
+    files: CI_FILE,
+    from: new RegExp(`${variableName}: .*`),
+    to: `${variableName}: ${value}`,
+  })
 }
 
 async function executeCommand(command, envVariables) {
@@ -68,6 +80,15 @@ function printLog(...params) {
   console.log(greenColor, ...params, resetColor)
 }
 
+async function fetchWrapper(url) {
+  const response = await fetch(url)
+  if (!response.ok) {
+    throw new Error(`HTTP Error Response: ${response.status} ${response.statusText}`)
+  }
+
+  return response.text()
+}
+
 module.exports = {
   getSecretKey,
   initGitConfig,
@@ -76,4 +97,6 @@ module.exports = {
   printError,
   printLog,
   logAndExit,
+  replaceCiVariable,
+  fetch: fetchWrapper,
 }

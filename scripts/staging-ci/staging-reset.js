@@ -1,10 +1,8 @@
 'use strict'
 
 const fs = require('fs')
-const replace = require('replace-in-file')
-const { initGitConfig, executeCommand, printLog, logAndExit } = require('../utils')
+const { initGitConfig, executeCommand, printLog, logAndExit, replaceCiVariable } = require('../utils')
 
-const CI_FILE = '.gitlab-ci.yml'
 const REPOSITORY = process.env.GIT_REPOSITORY
 const MAIN_BRANCH = process.env.MAIN_BRANCH
 
@@ -24,11 +22,8 @@ async function main() {
   const isNewBranch = CURRENT_STAGING_BRANCH !== NEW_STAGING_BRANCH
   if (isNewBranch) {
     printLog(`Changing staging branch in ${CI_FILE}...`)
-    await replace({
-      files: CI_FILE,
-      from: /CURRENT_STAGING: staging-.*/g,
-      to: `CURRENT_STAGING: ${NEW_STAGING_BRANCH}`,
-    })
+
+    await replaceCiVariable('CURRENT_STAGING', NEW_STAGING_BRANCH)
     await executeCommand(`git commit ${CI_FILE} -m "👷 Bump staging to ${NEW_STAGING_BRANCH}"`)
     await executeCommand(`git push origin ${MAIN_BRANCH}`)
   } else {

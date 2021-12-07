@@ -1,11 +1,13 @@
 variables:
   CURRENT_STAGING: staging-50
   APP: 'browser-sdk'
-  CURRENT_CI_IMAGE: 27
+  CURRENT_CI_IMAGE: 28
   BUILD_STABLE_REGISTRY: '486234852809.dkr.ecr.us-east-1.amazonaws.com'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
   MAIN_BRANCH: 'main'
+  CHROME_PACKAGE_VERSION: 94.0.4606.81-1
+  CHROME_DRIVER_VERSION: 94.0.4606.41
 
 cache:
   key: dependencies
@@ -89,7 +91,7 @@ ci-image:
   tags: ['runner:docker', 'size:large']
   image: $BUILD_STABLE_REGISTRY/docker:18.03.1
   script:
-    - docker build --tag $CI_IMAGE .
+    - docker build --build-arg CHROME_PACKAGE_VERSION=$CHROME_PACKAGE_VERSION --tag $CI_IMAGE .
     - docker push $CI_IMAGE
 
 ########################################################################################################################
@@ -413,3 +415,37 @@ check-squash-into-staging:
     - eval $(ssh-agent -s)
   script:
     - node scripts/staging-ci/check-squash-into-staging.js
+
+########################################################################################################################
+# Bump e2e chrome version
+########################################################################################################################
+
+bump-chrome-version-scheduled:
+  stage: task
+  extends: .base-configuration
+  only:
+    variables:
+      - $TARGET_TASK_NAME == "bump-chrome-version-scheduled"
+  before_script:
+    - eval $(ssh-agent -s)
+  script:
+    - node scripts/bump-chrome-driver-version.js
+
+bump-chrome-version-scheduled-success:
+  extends: .prepare_notification
+  only:
+    variables:
+      - $TARGET_TASK_NAME == "staging-reset-scheduled"
+  script:
+    - 'MESSAGE_TEXT=":chrome: [*$CI_PROJECT_NAME*] New Chrome version available on <https://github.com/DataDog/browser-sdk/pulls|PRs>."'
+    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
+
+bump-chrome-version-scheduled-failure:
+  extends: .prepare_notification
+  only:
+    variables:
+      - $TARGET_TASK_NAME == "staging-reset-scheduled"
+  when: on_failure
+  script:
+    - 'MESSAGE_TEXT=":x: [*$CI_PROJECT_NAME*] Chrome version bumped failed on pipeline <$BUILD_URL|$COMMIT_MESSAGE>."'
+    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
