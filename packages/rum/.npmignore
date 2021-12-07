@@ -4,3 +4,4 @@
 !/esm/**/*
 !/src/**/*
 !/internal/*
+!/internal-synthetics/*

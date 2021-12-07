@@ -1,5 +1,7 @@
-// Keep the following in sync with packages/rum-slim/src/index.ts
-export { datadogRum } from './boot/rum.entry'
+// Keep the following in sync with packages/rum/src/entries/main.ts
+import { defineGlobal, getGlobalObject, noop } from '@datadog/browser-core'
+import { makeRumPublicApi, RumPublicApi, startRum } from '@datadog/browser-rum-core'
+
 export {
   CommonProperties,
   RumPublicApi as RumGlobal,
@@ -22,3 +24,16 @@ export {
   RumLongTaskEventDomainContext,
 } from '@datadog/browser-rum-core'
 export { DefaultPrivacyLevel } from '@datadog/browser-core'
+
+export const datadogRum = makeRumPublicApi(startRum, {
+  start: noop,
+  stop: noop,
+  onRumStart: noop,
+  isRecording: () => false,
+  getReplayStats: () => undefined,
+})
+
+interface BrowserWindow extends Window {
+  DD_RUM?: RumPublicApi
+}
+defineGlobal(getGlobalObject<BrowserWindow>(), 'DD_RUM', datadogRum)
