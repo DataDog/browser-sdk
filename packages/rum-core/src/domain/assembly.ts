@@ -11,6 +11,7 @@ import {
   RawError,
   createEventRateLimiter,
   EventRateLimiter,
+  canUseEventBridge,
 } from '@datadog/browser-core'
 import { RumEventDomainContext } from '../domainContext.types'
 import {
@@ -24,6 +25,7 @@ import {
   User,
 } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
+import { buildEnv } from '../boot/buildEnv'
 import { getSyntheticsContext } from './syntheticsContext'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { ParentContexts } from './parentContexts'
@@ -89,6 +91,7 @@ export function startRumAssembly(
             session: {
               plan: session.hasReplayPlan() ? RumSessionPlan.REPLAY : RumSessionPlan.LITE,
             },
+            browser_sdk_version: canUseEventBridge() ? buildEnv.sdkVersion : undefined,
           },
           application: {
             id: applicationId,
@@ -113,6 +116,7 @@ export function startRumAssembly(
         if (!isEmptyObject(commonContext.user)) {
           ;(serverRumEvent.usr as Mutable<RumEvent['usr']>) = commonContext.user as User & Context
         }
+
         if (shouldSend(serverRumEvent, configuration.beforeSend, domainContext, eventRateLimiters)) {
           if (isEmptyObject(serverRumEvent.context)) {
             delete serverRumEvent.context

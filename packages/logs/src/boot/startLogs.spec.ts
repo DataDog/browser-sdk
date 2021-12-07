@@ -8,14 +8,22 @@ import {
   ONE_MINUTE,
   RawError,
   RelativeTime,
+  resetExperimentalFeatures,
   TimeStamp,
+  updateExperimentalFeatures,
 } from '@datadog/browser-core'
 import sinon from 'sinon'
-import { Clock, mockClock, stubEndpointBuilder } from '../../../core/test/specHelper'
+import {
+  Clock,
+  deleteEventBridgeStub,
+  initEventBridgeStub,
+  mockClock,
+  stubEndpointBuilder,
+} from '../../../core/test/specHelper'
 
 import { Logger, LogsMessage, StatusType } from '../domain/logger'
 import { LogsEvent } from '../logsEvent.types'
-import { buildAssemble, doStartLogs } from './startLogs'
+import { buildAssemble, doStartLogs, LogsInitConfiguration, startLogs as originalStartLogs } from './startLogs'
 
 interface SentMessage extends LogsMessage {
   logger?: { name: string }
@@ -75,6 +83,8 @@ describe('logs', () => {
   afterEach(() => {
     server.restore()
     delete window.DD_RUM
+    resetExperimentalFeatures()
+    deleteEventBridgeStub()
   })
 
   describe('request', () => {
@@ -126,6 +136,36 @@ describe('logs', () => {
       sendLog(DEFAULT_MESSAGE, {})
 
       expect(server.requests.length).toEqual(1)
+    })
+
+    it('should send bridge event when bridge is present', () => {
+      updateExperimentalFeatures(['event-bridge'])
+      const sendSpy = spyOn(initEventBridgeStub(), 'send')
+
+      const sendLog = startLogs()
+      sendLog(DEFAULT_MESSAGE, {})
+
+      expect(server.requests.length).toEqual(0)
+      expect(sendSpy).toHaveBeenCalled()
+    })
+  })
+
+  describe('sampling', () => {
+    it('should be applied when event bridge is present', () => {
+      updateExperimentalFeatures(['event-bridge'])
+      const sendSpy = spyOn(initEventBridgeStub(), 'send')
+
+      let configuration = { ...baseConfiguration, ...{ sampleRate: 0 } } as LogsInitConfiguration
+      let sendLog = originalStartLogs(configuration, new Logger(noop))
+      sendLog(DEFAULT_MESSAGE, {})
+
+      expect(sendSpy).not.toHaveBeenCalled()
+
+      configuration = { ...baseConfiguration, ...{ sampleRate: 100 } } as LogsInitConfiguration
+      sendLog = originalStartLogs(configuration, new Logger(noop))
+      sendLog(DEFAULT_MESSAGE, {})
+
+      expect(sendSpy).toHaveBeenCalled()
     })
   })
 
