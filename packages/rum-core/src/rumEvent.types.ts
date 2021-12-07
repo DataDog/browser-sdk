@@ -678,7 +678,7 @@ export interface CommonProperties {
     /**
      * Type of the session
      */
-    readonly type: 'user' | 'synthetics' | 'ci-test'
+    readonly type: 'user' | 'synthetics' | 'ci_test'
     /**
      * Whether this session has a replay
      */

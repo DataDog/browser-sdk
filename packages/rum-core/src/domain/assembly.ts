@@ -36,7 +36,7 @@ import { UrlContexts } from './urlContexts'
 enum SessionType {
   SYNTHETICS = 'synthetics',
   USER = 'user',
-  CI_TEST = 'ci-test',
+  CI_TEST = 'ci_test',
 }
 
 const VIEW_EVENTS_MODIFIABLE_FIELD_PATHS = [

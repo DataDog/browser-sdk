@@ -534,7 +534,7 @@ describe('rum assembly', () => {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
       })
 
-      expect(serverRumEvents[0].session.type).toEqual('ci-test')
+      expect(serverRumEvents[0].session.type).toEqual('ci_test')
     })
 
     it('should set the session.has_replay attribute if it is defined in the common context', () => {
