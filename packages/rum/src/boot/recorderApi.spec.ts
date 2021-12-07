@@ -57,7 +57,6 @@ describe('makeRecorderApi', () => {
 
   afterEach(() => {
     setupBuilder.cleanup()
-    resetExperimentalFeatures()
   })
 
   describe('boot', () => {
@@ -68,17 +67,7 @@ describe('makeRecorderApi', () => {
       expect(startRecordingSpy).not.toHaveBeenCalled()
     })
 
-    it('without "record-at-dom-loaded", does not start recording after the page "load"', () => {
-      setupBuilder.build()
-      const { triggerOnLoad } = mockDocumentReadyState()
-      rumInit(DEFAULT_INIT_CONFIGURATION)
-      expect(startRecordingSpy).not.toHaveBeenCalled()
-      triggerOnLoad()
-      expect(startRecordingSpy).not.toHaveBeenCalled()
-    })
-
-    it('with "record-at-dom-loaded", does not start recording after the DOM is loaded', () => {
-      updateExperimentalFeatures(['record-at-dom-loaded'])
+    it('does not start recording after the DOM is loaded', () => {
       setupBuilder.build()
       const { triggerOnDomLoaded } = mockDocumentReadyState()
       rumInit(DEFAULT_INIT_CONFIGURATION)
@@ -105,20 +94,7 @@ describe('makeRecorderApi', () => {
       expect(startRecordingSpy).toHaveBeenCalled()
     })
 
-    it('without "record-at-dom-loaded", does not start recording multiple times if restarted before onload', () => {
-      setupBuilder.build()
-      const { triggerOnLoad } = mockDocumentReadyState()
-      rumInit(DEFAULT_INIT_CONFIGURATION)
-      recorderApi.start()
-      recorderApi.stop()
-      recorderApi.start()
-      triggerOnLoad()
-      expect(startRecordingSpy).toHaveBeenCalledTimes(1)
-    })
-
-    // eslint-disable-next-line max-len
-    it('with "record-at-dom-loaded", does not start recording multiple times if restarted before the DOM is loaded', () => {
-      updateExperimentalFeatures(['record-at-dom-loaded'])
+    it('does not start recording multiple times if restarted before the DOM is loaded', () => {
       setupBuilder.build()
       const { triggerOnDomLoaded } = mockDocumentReadyState()
       rumInit(DEFAULT_INIT_CONFIGURATION)
@@ -203,18 +179,7 @@ describe('makeRecorderApi', () => {
       expect(startRecordingSpy).not.toHaveBeenCalled()
     })
 
-    it('without "record-at-dom-loaded", prevents recording to start at page "load"', () => {
-      setupBuilder.build()
-      const { triggerOnLoad } = mockDocumentReadyState()
-      rumInit(DEFAULT_INIT_CONFIGURATION)
-      recorderApi.start()
-      recorderApi.stop()
-      triggerOnLoad()
-      expect(startRecordingSpy).not.toHaveBeenCalled()
-    })
-
-    it('with "record-at-dom-loaded", prevents recording to start when the DOM is loaded', () => {
-      updateExperimentalFeatures(['record-at-dom-loaded'])
+    it('prevents recording to start when the DOM is loaded', () => {
       setupBuilder.build()
       const { triggerOnDomLoaded } = mockDocumentReadyState()
       rumInit(DEFAULT_INIT_CONFIGURATION)
@@ -304,22 +269,7 @@ describe('makeRecorderApi', () => {
         expect(startRecordingSpy).toHaveBeenCalledTimes(1)
       })
 
-      // eslint-disable-next-line max-len
-      it('without "record-at-dom-loaded", prevents session recording to start if the session is renewed before onload', () => {
-        setupBuilder.build()
-        const { triggerOnLoad } = mockDocumentReadyState()
-        rumInit(DEFAULT_INIT_CONFIGURATION)
-        recorderApi.start()
-        session.setLitePlan()
-        lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
-        lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-        triggerOnLoad()
-        expect(startRecordingSpy).not.toHaveBeenCalled()
-      })
-
-      // eslint-disable-next-line max-len
-      it('with "record-at-dom-loaded", prevents session recording to start if the session is renewed before the DOM is loaded', () => {
-        updateExperimentalFeatures(['record-at-dom-loaded'])
+      it('prevents session recording to start if the session is renewed before the DOM is loaded', () => {
         setupBuilder.build()
         const { triggerOnDomLoaded } = mockDocumentReadyState()
         rumInit(DEFAULT_INIT_CONFIGURATION)
@@ -440,19 +390,7 @@ describe('makeRecorderApi', () => {
       expect(recorderApi.isRecording()).toBeFalse()
     })
 
-    it('without "record-at-dom-loaded", is false before page "load"', () => {
-      setupBuilder.build()
-      const { triggerOnLoad } = mockDocumentReadyState()
-      rumInit(DEFAULT_INIT_CONFIGURATION)
-      expect(recorderApi.isRecording()).toBeFalse()
-      recorderApi.start()
-      expect(recorderApi.isRecording()).toBeFalse()
-      triggerOnLoad()
-      expect(recorderApi.isRecording()).toBeTrue()
-    })
-
-    it('with "record-at-dom-loaded", is false before the DOM is loaded', () => {
-      updateExperimentalFeatures(['record-at-dom-loaded'])
+    it('is false before the DOM is loaded', () => {
       setupBuilder.build()
       const { triggerOnDomLoaded } = mockDocumentReadyState()
       rumInit(DEFAULT_INIT_CONFIGURATION)
@@ -472,10 +410,6 @@ function mockDocumentReadyState() {
     triggerOnDomLoaded: () => {
       readyState = 'interactive'
       window.dispatchEvent(createNewEvent('DOMContentLoaded'))
-    },
-    triggerOnLoad: () => {
-      readyState = 'complete'
-      window.dispatchEvent(createNewEvent('load'))
     },
   }
 }

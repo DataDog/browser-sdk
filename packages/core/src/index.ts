@@ -22,7 +22,7 @@ export {
   monitor,
   callMonitored,
   addMonitoringMessage,
-  addErrorToMonitoringBatch,
+  addMonitoringError,
   startFakeInternalMonitoring,
   resetInternalMonitoring,
   setDebugMode,
