@@ -10,7 +10,7 @@ export interface LogsEvent {
   /**
    * The log status
    */
-  readonly status: 'debug' | 'info' | 'warn' | 'error'
+  status: 'debug' | 'info' | 'warn' | 'error'
   /**
    * UUID of the application
    */
@@ -64,7 +64,7 @@ export interface LogsEvent {
     /**
      * Origin of the error
      */
-    readonly origin: 'network' | 'source' | 'console' | 'logger' | 'agent' | 'custom'
+    origin: 'network' | 'source' | 'console' | 'logger' | 'agent' | 'custom'
     /**
      * Stacktrace of the error
      */
