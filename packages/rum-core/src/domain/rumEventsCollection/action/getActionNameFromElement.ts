@@ -175,9 +175,21 @@ function getTextualContent(element: Element | HTMLElement) {
         }
       }
     }
+
+    const elementsTextToScrub: NodeListOf<HTMLElement> = element.querySelectorAll(`[${DEFAULT_PROGRAMMATIC_ATTRIBUTE}]`)
+
+    // replace the innertext of the elements with programmatic attribute value
+    for (let i = 0; i < elementsTextToScrub.length; i += 1) {
+      const innerText = elementsTextToScrub[i].innerText
+      // eslint-disable-next-line @typescript-eslint/prefer-for-of
+      if (innerText.trim().length > 0) {
+        text = text.replace(innerText, elementsTextToScrub[i].getAttribute(`${DEFAULT_PROGRAMMATIC_ATTRIBUTE}`) || '')
+      }
+    }
+
     return text
   }
-
+  
   return element.textContent
 }
 

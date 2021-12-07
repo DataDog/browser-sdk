@@ -27,6 +27,18 @@ describe('getActionNameFromElement', () => {
     expect(getActionNameFromElement(element`<div>Foo <div>bar</div></div>`)).toBe('Foo bar')
   })
 
+  it('extracts the textual content of an element by considering the custom action attribute values', () => {
+    expect(getActionNameFromElement(element`<div data-dd-action-name="custom action">Foo <div>bar</div></div>`)).toBe(
+      'custom action'
+    )
+  })
+
+  it('extracts the textual content of an element by considering the custom action attribute values', () => {
+    expect(getActionNameFromElement(element`<div>Foo <div data-dd-action-name="custom action">bar</div></div>`)).toBe(
+      'Foo custom action'
+    )
+  })
+
   it('extracts the text of an input button', () => {
     expect(getActionNameFromElement(element`<input type="button" value="Click" />`)).toBe('Click')
   })
