@@ -4,6 +4,7 @@
     "baseUrl": ".",
     "declaration": true,
     "module": "es6",
+    "rootDir": "./src/",
     "outDir": "./esm/"
   },
   "include": ["./src/**/*.ts"],

@@ -5,6 +5,6 @@ const webpackBase = require('../../webpack.base')
 module.exports = (_env, argv) =>
   webpackBase({
     mode: argv.mode,
-    entry: path.resolve(__dirname, 'src/boot/rumSlim.entry.ts'),
+    entry: path.resolve(__dirname, 'src/entries/main.ts'),
     filename: 'datadog-rum-slim.js',
   })

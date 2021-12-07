@@ -143,7 +143,7 @@ A [Datadog client token][5].
 : Required<br/>
 **Type**: String<br/>
 **Default**: `datadoghq.com`<br/>
-The Datadog site of your organization. US: `datadoghq.com`, EU: `datadoghq.eu`
+The Datadog site of your organization, same value as [agent site configuration][14].
 
 `service`
 : Optional<br/>
@@ -306,3 +306,4 @@ In the example above, 50% of all sessions are collected. The Session Replay RUM 
 [11]: https://www.datadoghq.com/pricing/?product=real-user-monitoring#real-user-monitoring
 [12]: https://docs.datadoghq.com/real_user_monitoring/connect_rum_and_traces?tab=browserrum
 [13]: https://docs.datadoghq.com/real_user_monitoring/session_replay/privacy_options?tab=maskuserinput
+[14]: https://docs.datadoghq.com/agent/basic_agent_usage#datadog-site
