@@ -2,7 +2,7 @@ export interface LogsEvent {
   /**
    * Start of the log in ms from epoch
    */
-  readonly date: number
+  date: number
   /**
    * The log message
    */
@@ -10,23 +10,23 @@ export interface LogsEvent {
   /**
    * The log status
    */
-  readonly status: 'debug' | 'info' | 'warn' | 'error'
+  status: 'debug' | 'info' | 'warn' | 'error'
   /**
    * UUID of the application
    */
-  readonly application_id?: string
+  application_id?: string
   /**
    * The service name
    */
-  readonly service?: string
+  service?: string
   /**
    * UUID of the session
    */
-  readonly session_id?: string
+  session_id?: string
   /**
    * View properties
    */
-  readonly view: {
+  view: {
     /**
      * URL that linked to the initial view of the page
      */
@@ -38,33 +38,33 @@ export interface LogsEvent {
     /**
      * UUID of the view
      */
-    readonly id?: string
+    id?: string
 
     [k: string]: unknown
   }
   /**
    * Logger properties
    */
-  readonly logger?: {
+  logger?: {
     /**
      * Name of the logger
      */
-    readonly name: string
+    name: string
 
     [k: string]: unknown
   }
   /**
    * Error properties
    */
-  readonly error?: {
+  error?: {
     /**
      * Kind of the error
      */
-    readonly kind?: string
+    kind?: string
     /**
      * Origin of the error
      */
-    readonly origin: 'network' | 'source' | 'console' | 'logger' | 'agent' | 'custom'
+    origin: 'network' | 'source' | 'console' | 'logger' | 'agent' | 'custom'
     /**
      * Stacktrace of the error
      */
@@ -75,15 +75,15 @@ export interface LogsEvent {
   /**
    * Resource properties of the error
    */
-  readonly http: {
+  http: {
     /**
      * HTTP method of the resource
      */
-    readonly method: 'POST' | 'GET' | 'HEAD' | 'PUT' | 'DELETE' | 'PATCH'
+    method: 'POST' | 'GET' | 'HEAD' | 'PUT' | 'DELETE' | 'PATCH'
     /**
      * HTTP Status code of the resource
      */
-    readonly status_code: number
+    status_code: number
     /**
      * URL of the resource
      */
