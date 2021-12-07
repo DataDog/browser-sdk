@@ -106,7 +106,7 @@ export function startRumAssembly(
             type: syntheticsContext ? SessionType.SYNTHETICS : ciContext ? SessionType.CI_TEST : SessionType.USER,
           },
           synthetics: syntheticsContext,
-          ci_visibility: ciContext,
+          ci_test: ciContext,
         }
         const serverRumEvent = (needToAssembleWithAction(rawRumEvent)
           ? combine(rumContext, urlContext, viewContext, actionContext, rawRumEvent)

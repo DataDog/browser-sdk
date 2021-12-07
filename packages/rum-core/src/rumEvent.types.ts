@@ -784,7 +784,7 @@ export interface CommonProperties {
   /**
    * CI Visibility properties
    */
-  readonly ci_visibility?: {
+  readonly ci_test?: {
     /**
      * The identifier of the current CI Visibility test execution
      */

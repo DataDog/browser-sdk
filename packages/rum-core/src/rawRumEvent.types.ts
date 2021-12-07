@@ -191,7 +191,7 @@ export interface RumContext {
     }
     browser_sdk_version?: string
   }
-  ci_visibility?: {
+  ci_test?: {
     test_execution_id: string
   }
 }
