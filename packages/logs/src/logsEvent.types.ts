@@ -2,7 +2,7 @@ export interface LogsEvent {
   /**
    * Start of the log in ms from epoch
    */
-  readonly date: number
+  date: number
   /**
    * The log message
    */
@@ -14,19 +14,19 @@ export interface LogsEvent {
   /**
    * UUID of the application
    */
-  readonly application_id?: string
+  application_id?: string
   /**
    * The service name
    */
-  readonly service?: string
+  service?: string
   /**
    * UUID of the session
    */
-  readonly session_id?: string
+  session_id?: string
   /**
    * View properties
    */
-  readonly view: {
+  view: {
     /**
      * URL that linked to the initial view of the page
      */
@@ -38,7 +38,7 @@ export interface LogsEvent {
     /**
      * UUID of the view
      */
-    readonly id?: string
+    id?: string
 
     [k: string]: unknown
   }
