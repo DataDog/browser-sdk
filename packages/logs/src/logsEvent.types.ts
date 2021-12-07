@@ -45,22 +45,22 @@ export interface LogsEvent {
   /**
    * Logger properties
    */
-  readonly logger?: {
+  logger?: {
     /**
      * Name of the logger
      */
-    readonly name: string
+    name: string
 
     [k: string]: unknown
   }
   /**
    * Error properties
    */
-  readonly error?: {
+  error?: {
     /**
      * Kind of the error
      */
-    readonly kind?: string
+    kind?: string
     /**
      * Origin of the error
      */
@@ -75,15 +75,15 @@ export interface LogsEvent {
   /**
    * Resource properties of the error
    */
-  readonly http: {
+  http: {
     /**
      * HTTP method of the resource
      */
-    readonly method: 'POST' | 'GET' | 'HEAD' | 'PUT' | 'DELETE' | 'PATCH'
+    method: 'POST' | 'GET' | 'HEAD' | 'PUT' | 'DELETE' | 'PATCH'
     /**
      * HTTP Status code of the resource
      */
-    readonly status_code: number
+    status_code: number
     /**
      * URL of the resource
      */
