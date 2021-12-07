@@ -59,7 +59,7 @@ export function startRumSessionManager(configuration: Configuration, lifeCycle: 
  * Start a tracked replay session stub
  * It needs to be a replay plan in order to get long tasks
  */
-export function startRumSessionStub(): RumSessionManager {
+export function startRumSessionManagerStub(): RumSessionManager {
   const session = {
     id: '00000000-aaaa-0000-aaaa-000000000000',
     hasReplayPlan: true,
