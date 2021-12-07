@@ -8,6 +8,7 @@ import {
   noop,
   setCookie,
   deleteCookie,
+  ONE_MINUTE,
 } from '@datadog/browser-core'
 import { SPEC_ENDPOINTS, mockClock, Clock, buildLocation } from '../../core/test/specHelper'
 import { RecorderApi } from '../src/boot/rumPublicApi'
@@ -262,7 +263,7 @@ export const noopRecorderApi: RecorderApi = {
 }
 
 // Duration to create a cookie lasting at least until the end of the test
-const COOKIE_DURATION = 1000
+const COOKIE_DURATION = ONE_MINUTE
 
 export function mockSyntheticsWorkerValues(
   { publicId, resultId, injectsRum }: { publicId?: any; resultId?: any; injectsRum?: any } = {
