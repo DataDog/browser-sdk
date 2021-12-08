@@ -5,6 +5,7 @@
     "declaration": true,
     "allowJs": true,
     "module": "commonjs",
+    "rootDir": "./src/",
     "outDir": "./cjs/"
   },
   "include": ["./src"],

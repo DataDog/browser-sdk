@@ -22,16 +22,33 @@ module.exports = (_env, argv) => {
       ],
     }),
     baseConfig({
-      entry: './src/popup',
+      entry: './src/panel',
       output: {
-        filename: 'popup.js',
+        filename: 'panel.js',
       },
       plugins: [
         new HtmlWebpackPlugin({
-          filename: 'popup.html',
+          filename: 'panel.html',
         }),
         new DefinePlugin({
           'process.env.BUMBAG_ENV': JSON.stringify('production'),
+        }),
+      ],
+    }),
+    baseConfig({
+      entry: './src/contentscript',
+      output: {
+        filename: 'contentscript.js',
+      },
+    }),
+    baseConfig({
+      entry: './src/devtools',
+      output: {
+        filename: 'devtools.js',
+      },
+      plugins: [
+        new HtmlWebpackPlugin({
+          filename: 'devtools.html',
         }),
       ],
     }),

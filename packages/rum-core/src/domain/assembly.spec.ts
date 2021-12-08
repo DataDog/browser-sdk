@@ -1,4 +1,12 @@
-import { ErrorSource, ONE_MINUTE, RawError, RelativeTime, display } from '@datadog/browser-core'
+import {
+  ErrorSource,
+  ONE_MINUTE,
+  RawError,
+  RelativeTime,
+  display,
+  updateExperimentalFeatures,
+  resetExperimentalFeatures,
+} from '@datadog/browser-core'
 import { createRumSessionMock } from '../../test/mockRumSession'
 import { createRawRumEvent } from '../../test/fixtures'
 import {
@@ -10,6 +18,7 @@ import {
 import { RumEventDomainContext } from '../domainContext.types'
 import { CommonContext, RawRumActionEvent, RawRumErrorEvent, RawRumEvent, RumEventType } from '../rawRumEvent.types'
 import { RumActionEvent, RumErrorEvent, RumEvent } from '../rumEvent.types'
+import { initEventBridgeStub, deleteEventBridgeStub } from '../../../core/test/specHelper'
 import { startRumAssembly } from './assembly'
 import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from './lifeCycle'
 import { RumSessionPlan } from './rumSession'
@@ -60,6 +69,8 @@ describe('rum assembly', () => {
   })
 
   afterEach(() => {
+    resetExperimentalFeatures()
+    deleteEventBridgeStub()
     setupBuilder.cleanup()
     cleanupSyntheticsWorkerValues()
   })
@@ -563,6 +574,21 @@ describe('rum assembly', () => {
       })
 
       expect(serverRumEvents[0].synthetics).toBeTruthy()
+    })
+  })
+
+  describe('if event bridge detected', () => {
+    it('includes the browser sdk version', () => {
+      const { lifeCycle } = setupBuilder.build()
+      notifyRawRumEvent(lifeCycle, { rawRumEvent: createRawRumEvent(RumEventType.VIEW) })
+
+      updateExperimentalFeatures(['event-bridge'])
+      initEventBridgeStub()
+
+      notifyRawRumEvent(lifeCycle, { rawRumEvent: createRawRumEvent(RumEventType.VIEW) })
+
+      expect(serverRumEvents[0]._dd.browser_sdk_version).not.toBeDefined()
+      expect(serverRumEvents[1]._dd.browser_sdk_version).toBeDefined()
     })
   })
 

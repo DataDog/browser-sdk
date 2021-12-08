@@ -19,6 +19,7 @@ export function getSyntheticsContext() {
     return {
       test_id: testId,
       result_id: resultId,
+      injected: willSyntheticsInjectRum(),
     }
   }
 }

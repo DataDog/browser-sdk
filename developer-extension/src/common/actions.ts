@@ -10,10 +10,10 @@ type Message<Actions extends { [key: string]: any }> = ValueOf<
 >
 
 export function createListenAction<Actions>() {
-  function listenAction<K extends keyof Actions>(action: K, callback: (payload: Actions[K]) => void) {
-    const listener = (message: Message<Actions>) => {
+  function listenAction<K extends keyof Actions>(action: K, callback: (payload: Actions[K], tabId: number) => void) {
+    const listener = (message: Message<Actions>, sender: chrome.runtime.MessageSender) => {
       if (message.action === action) {
-        callback((message as Message<Pick<Actions, K>>).payload)
+        callback((message as Message<Pick<Actions, K>>).payload, sender?.tab?.id)
       }
     }
     chrome.runtime.onMessage.addListener(listener)
