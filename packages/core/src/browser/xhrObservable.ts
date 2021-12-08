@@ -94,7 +94,6 @@ function sendXhr(this: BrowserXHR<XhrStartContext>, observable: Observable<XhrCo
   startContext.startTime = relativeNow()
   startContext.startClocks = clocksNow()
   startContext.isAborted = false
-  startContext.xhr = this
 
   let hasBeenReported = false
 

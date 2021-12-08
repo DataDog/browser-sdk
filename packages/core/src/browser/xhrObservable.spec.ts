@@ -90,6 +90,7 @@ describe('xhr proxy', () => {
         expect(request.isAborted).toBe(false)
         expect(request.startTime).toEqual(jasmine.any(Number))
         expect(request.duration).toEqual(jasmine.any(Number))
+        expect(request.xhr).not.toBeDefined()
         done()
       },
     })
