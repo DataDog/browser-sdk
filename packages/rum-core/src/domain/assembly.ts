@@ -81,7 +81,7 @@ export function startRumAssembly(
     ({ startTime, rawRumEvent, domainContext, savedCommonContext, customerContext }) => {
       const viewContext = parentContexts.findView(startTime)
       const urlContext = urlContexts.findUrl(startTime)
-      const session = sessionManager.findSession(startTime)
+      const session = sessionManager.findTrackedSession(startTime)
       if (session && viewContext && urlContext) {
         const actionContext = parentContexts.findAction(startTime)
         const commonContext = savedCommonContext || getCommonContext()

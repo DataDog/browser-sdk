@@ -177,7 +177,7 @@ export function computeSegmentContext(
   sessionManager: RumSessionManager,
   parentContexts: ParentContexts
 ) {
-  const session = sessionManager.findSession()
+  const session = sessionManager.findTrackedSession()
   const viewContext = parentContexts.findView()
   if (!session || !viewContext) {
     return undefined

@@ -3,7 +3,7 @@ import { Configuration, performDraw, startSessionManager, RelativeTime } from '@
 export const LOGS_SESSION_KEY = 'logs'
 
 export interface LogsSessionManager {
-  findSession: (startTime?: RelativeTime) => LogsSession | undefined
+  findTrackedSession: (startTime?: RelativeTime) => LogsSession | undefined
 }
 
 export type LogsSession = {
@@ -20,8 +20,8 @@ export function startLogsSessionManager(configuration: Configuration): LogsSessi
     computeSessionState(configuration, rawTrackingType)
   )
   return {
-    findSession: (startTime) => {
-      const session = sessionManager.findSession(startTime)
+    findTrackedSession: (startTime) => {
+      const session = sessionManager.findActiveSession(startTime)
       return session && session.trackingType === LoggerTrackingType.TRACKED
         ? {
             id: session.id,
@@ -35,7 +35,7 @@ export function startLogsSessionManagerStub(configuration: Configuration): LogsS
   const isTracked = computeTrackingType(configuration) === LoggerTrackingType.TRACKED
   const session = isTracked ? {} : undefined
   return {
-    findSession: () => session,
+    findTrackedSession: () => session,
   }
 }
 

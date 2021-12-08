@@ -18,7 +18,7 @@ export function startInternalContext(
     get: (startTime?: number): InternalContext | undefined => {
       const viewContext = parentContexts.findView(startTime as RelativeTime)
       const urlContext = urlContexts.findUrl(startTime as RelativeTime)
-      const session = sessionManager.findSession(startTime as RelativeTime)
+      const session = sessionManager.findTrackedSession(startTime as RelativeTime)
       if (session && viewContext && urlContext) {
         const actionContext = parentContexts.findAction(startTime as RelativeTime)
         return {

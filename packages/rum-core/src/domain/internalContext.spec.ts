@@ -10,7 +10,7 @@ describe('internal context', () => {
   let setupBuilder: TestSetupBuilder
   let parentContextsStub: Partial<ParentContexts>
   let findUrlSpy: jasmine.Spy<UrlContexts['findUrl']>
-  let findSessionSpy: jasmine.Spy<RumSessionManager['findSession']>
+  let findSessionSpy: jasmine.Spy<RumSessionManager['findTrackedSession']>
   let internalContext: ReturnType<typeof startInternalContext>
 
   beforeEach(() => {
@@ -31,7 +31,7 @@ describe('internal context', () => {
       .withParentContexts(parentContextsStub)
       .beforeBuild(({ applicationId, sessionManager, parentContexts, urlContexts }) => {
         findUrlSpy = spyOn(urlContexts, 'findUrl').and.callThrough()
-        findSessionSpy = spyOn(sessionManager, 'findSession').and.callThrough()
+        findSessionSpy = spyOn(sessionManager, 'findTrackedSession').and.callThrough()
         internalContext = startInternalContext(applicationId, sessionManager, parentContexts, urlContexts)
       })
   })

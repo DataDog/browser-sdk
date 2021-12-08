@@ -23,6 +23,7 @@ import {
 } from '../../../core/test/specHelper'
 
 import { Logger, LogsMessage, StatusType } from '../domain/logger'
+import { LogsSessionManager } from '../domain/logsSessionManager'
 import { LogsEvent } from '../logsEvent.types'
 import { buildAssemble, doStartLogs, LogsInitConfiguration, startLogs as originalStartLogs } from './startLogs'
 
@@ -63,8 +64,8 @@ describe('logs', () => {
   let sessionIsTracked: boolean
   let server: sinon.SinonFakeServer
   let errorObservable: Observable<RawError>
-  const sessionManager = {
-    findSession: () => (sessionIsTracked ? { id: SESSION_ID } : undefined),
+  const sessionManager: LogsSessionManager = {
+    findTrackedSession: () => (sessionIsTracked ? { id: SESSION_ID } : undefined),
   }
   const startLogs = ({
     errorLogger = new Logger(noop),

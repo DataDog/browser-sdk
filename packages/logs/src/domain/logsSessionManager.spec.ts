@@ -90,20 +90,20 @@ describe('logs session manager', () => {
     it('should return the current session', () => {
       setCookie(SESSION_COOKIE_NAME, 'id=abcdef&logs=1', DURATION)
       const logsSessionManager = startLogsSessionManager(configuration as Configuration)
-      expect(logsSessionManager.findSession()!.id).toBe('abcdef')
+      expect(logsSessionManager.findTrackedSession()!.id).toBe('abcdef')
     })
 
     it('should return undefined if the session is not tracked', () => {
       setCookie(SESSION_COOKIE_NAME, 'id=abcdef&logs=0', DURATION)
       const logsSessionManager = startLogsSessionManager(configuration as Configuration)
-      expect(logsSessionManager.findSession()).toBe(undefined)
+      expect(logsSessionManager.findTrackedSession()).toBe(undefined)
     })
 
     it('should return undefined if the session has expired', () => {
       const logsSessionManager = startLogsSessionManager(configuration as Configuration)
       setCookie(SESSION_COOKIE_NAME, '', DURATION)
       clock.tick(COOKIE_ACCESS_DELAY)
-      expect(logsSessionManager.findSession()).toBe(undefined)
+      expect(logsSessionManager.findTrackedSession()).toBe(undefined)
     })
 
     it('should return session corresponding to start time', () => {
@@ -112,8 +112,8 @@ describe('logs session manager', () => {
       clock.tick(10 * ONE_SECOND)
       setCookie(SESSION_COOKIE_NAME, '', DURATION)
       clock.tick(COOKIE_ACCESS_DELAY)
-      expect(logsSessionManager.findSession()).toBeUndefined()
-      expect(logsSessionManager.findSession(0 as RelativeTime)!.id).toBe('abcdef')
+      expect(logsSessionManager.findTrackedSession()).toBeUndefined()
+      expect(logsSessionManager.findTrackedSession(0 as RelativeTime)!.id).toBe('abcdef')
     })
   })
 })
@@ -121,10 +121,10 @@ describe('logs session manager', () => {
 describe('logger session stub', () => {
   it('isTracked is computed at each init and getId is always undefined', () => {
     const firstLogsSessionManager = startLogsSessionManagerStub({ sampleRate: 100 } as Configuration)
-    expect(firstLogsSessionManager.findSession()).toBeDefined()
-    expect(firstLogsSessionManager.findSession()!.id).toBeUndefined()
+    expect(firstLogsSessionManager.findTrackedSession()).toBeDefined()
+    expect(firstLogsSessionManager.findTrackedSession()!.id).toBeUndefined()
 
     const secondLogsSessionManager = startLogsSessionManagerStub({ sampleRate: 0 } as Configuration)
-    expect(secondLogsSessionManager.findSession()).toBeUndefined()
+    expect(secondLogsSessionManager.findTrackedSession()).toBeUndefined()
   })
 })

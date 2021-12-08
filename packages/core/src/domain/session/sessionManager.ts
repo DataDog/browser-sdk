@@ -9,7 +9,7 @@ import { tryOldCookiesMigration } from './oldCookiesMigration'
 import { startSessionStore, SESSION_TIME_OUT_DELAY } from './sessionStore'
 
 export interface SessionManager<TrackingType extends string> {
-  findSession: (startTime?: RelativeTime) => SessionContext<TrackingType> | undefined
+  findActiveSession: (startTime?: RelativeTime) => SessionContext<TrackingType> | undefined
   renewObservable: Observable<void>
   expireObservable: Observable<void>
 }
@@ -56,7 +56,7 @@ export function startSessionManager<TrackingType extends string>(
   }
 
   return {
-    findSession: (startTime) => sessionContextHistory.find(startTime),
+    findActiveSession: (startTime) => sessionContextHistory.find(startTime),
     renewObservable: sessionStore.renewObservable,
     expireObservable: sessionStore.expireObservable,
   }

@@ -85,7 +85,7 @@ function injectHeadersIfTracingAllowed(
   sessionManager: RumSessionManager,
   inject: (tracingHeaders: TracingHeaders) => void
 ) {
-  if (!isTracingSupported() || !isAllowedUrl(configuration, context.url!) || !sessionManager.findSession()) {
+  if (!isTracingSupported() || !isAllowedUrl(configuration, context.url!) || !sessionManager.findTrackedSession()) {
     return
   }
 

@@ -54,7 +54,7 @@ export function doStartLogs(
   errorLogger: Logger
 ) {
   internalMonitoring.setExternalContextProvider(() =>
-    combine({ session_id: sessionManager.findSession()?.id }, getRUMInternalContext(), {
+    combine({ session_id: sessionManager.findTrackedSession()?.id }, getRUMInternalContext(), {
       view: { name: null, url: null, referrer: null },
     })
   )
@@ -112,7 +112,7 @@ export function buildAssemble(
   const errorRateLimiter = createEventRateLimiter(StatusType.error, configuration.maxErrorsPerMinute, reportError)
   return (message: LogsMessage, currentContext: Context) => {
     const startTime = message.date ? getRelativeTime(message.date) : undefined
-    const session = sessionManager.findSession(startTime)
+    const session = sessionManager.findTrackedSession(startTime)
     if (!session) {
       return undefined
     }

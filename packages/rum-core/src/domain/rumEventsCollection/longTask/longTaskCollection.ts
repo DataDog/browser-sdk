@@ -8,7 +8,7 @@ export function startLongTaskCollection(lifeCycle: LifeCycle, sessionManager: Ru
     if (entry.entryType !== 'longtask') {
       return
     }
-    const session = sessionManager.findSession(entry.startTime)
+    const session = sessionManager.findTrackedSession(entry.startTime)
     if (!session || session.hasLitePlan) {
       return
     }

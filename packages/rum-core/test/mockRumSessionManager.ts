@@ -13,7 +13,7 @@ export function createRumSessionManagerMock(): RumSessionManagerMock {
   let id = DEFAULT_ID
   let trackingType = RumTrackingType.TRACKED_REPLAY
   return {
-    findSession() {
+    findTrackedSession() {
       return trackingType !== RumTrackingType.NOT_TRACKED
         ? {
             id,

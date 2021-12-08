@@ -4,7 +4,7 @@ import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 export const RUM_SESSION_KEY = 'rum'
 
 export interface RumSessionManager {
-  findSession: (startTime?: RelativeTime) => RumSession | undefined
+  findTrackedSession: (startTime?: RelativeTime) => RumSession | undefined
 }
 
 export type RumSession = {
@@ -41,8 +41,8 @@ export function startRumSessionManager(configuration: Configuration, lifeCycle: 
   })
 
   return {
-    findSession: (startTime) => {
-      const session = sessionManager.findSession(startTime)
+    findTrackedSession: (startTime) => {
+      const session = sessionManager.findActiveSession(startTime)
       if (!session || !isTypeTracked(session.trackingType)) {
         return
       }
@@ -66,7 +66,7 @@ export function startRumSessionManagerStub(): RumSessionManager {
     hasLitePlan: false,
   }
   return {
-    findSession: () => session,
+    findTrackedSession: () => session,
   }
 }
 
