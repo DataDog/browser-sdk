@@ -3,6 +3,7 @@ export {
   Configuration,
   InitConfiguration,
   buildCookieOptions,
+  validateAndBuildConfiguration,
   BeforeSendCallback,
   DefaultPrivacyLevel,
 } from './domain/configuration'
