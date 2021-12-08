@@ -16,6 +16,19 @@
 
 ---
 
+## v3.9.0
+
+- 🐛 remove readonly from all LogsEvent properties ([#1198](https://github.com/DataDog/browser-sdk/pull/1198))
+- ⚗✨ [RUMF-1085] implement the `synthetics.injected` field ([#1194](https://github.com/DataDog/browser-sdk/pull/1194))
+- ⚗✨ [RUMF-1047] implement a RUM synthetics entry point ([#1188](https://github.com/DataDog/browser-sdk/pull/1188))
+- ✨ [RUMF-1082] enable record-at-dom-loaded ([#1182](https://github.com/DataDog/browser-sdk/pull/1182))
+- 📝 improve site parameter doc ([#1189](https://github.com/DataDog/browser-sdk/pull/1189))
+- ⚗✨ [RUMF-1071] forward internal monitoring to bridge ([#1177](https://github.com/DataDog/browser-sdk/pull/1177))
+- ⚗✨ [RUMF-1070] forward logs event to bridge ([#1155](https://github.com/DataDog/browser-sdk/pull/1155))
+- ⚗ [RUMF-1068] Forward browser_sdk_version to mobile ([#1162](https://github.com/DataDog/browser-sdk/pull/1162))
+- 📝 add details about sampling configuration ([#1186](https://github.com/DataDog/browser-sdk/pull/1186))
+- ⚗✨ [RUMF-1084] ignore init if a RUM instance is or will be injected by synthetics ([#1170](https://github.com/DataDog/browser-sdk/pull/1170))
+
 ## v3.8.0
 
 - ⚗ [RUMF-1082] start recording when the DOM is ready ([#1164](https://github.com/DataDog/browser-sdk/pull/1164))
