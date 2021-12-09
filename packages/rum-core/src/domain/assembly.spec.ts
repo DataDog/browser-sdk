@@ -27,10 +27,8 @@ describe('rum assembly', () => {
   let setupBuilder: TestSetupBuilder
   let commonContext: CommonContext
   let serverRumEvents: RumEvent[]
-  let viewSessionId: string | undefined
 
   beforeEach(() => {
-    viewSessionId = '1234'
     commonContext = {
       context: {},
       user: {},
@@ -43,9 +41,6 @@ describe('rum assembly', () => {
           },
         }),
         findView: () => ({
-          session: {
-            id: viewSessionId,
-          },
           view: {
             id: 'abcde',
           },
@@ -306,6 +301,7 @@ describe('rum assembly', () => {
 
       expect(serverRumEvents[0].view.id).toBeDefined()
       expect(serverRumEvents[0].date).toBeDefined()
+      expect(serverRumEvents[0].session.id).toBeDefined()
     })
 
     it('should be overwritten by event attributes', () => {
@@ -453,7 +449,6 @@ describe('rum assembly', () => {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION),
       })
       expect(serverRumEvents[0].view.id).toBe('abcde')
-      expect(serverRumEvents[0].session.id).toBe('1234')
     })
   })
 
@@ -485,34 +480,19 @@ describe('rum assembly', () => {
       expect(serverRumEvents.length).toBe(0)
     })
 
-    it('when view context has current session id, it should generate event', () => {
-      const { lifeCycle } = setupBuilder.build()
-      viewSessionId = '1234'
+    it('should get session state from event start', () => {
+      const rumSession = createRumSessionMock()
+      spyOn(rumSession, 'isTracked').and.callThrough()
+      spyOn(rumSession, 'getId').and.callThrough()
 
+      const { lifeCycle } = setupBuilder.withSession(rumSession).build()
       notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+        rawRumEvent: createRawRumEvent(RumEventType.ACTION),
+        startTime: 123 as RelativeTime,
       })
-      expect(serverRumEvents.length).toBe(1)
-    })
 
-    it('when view context has not the current session id, it should not generate event', () => {
-      const { lifeCycle } = setupBuilder.build()
-      viewSessionId = '6789'
-
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-      expect(serverRumEvents.length).toBe(0)
-    })
-
-    it('when view context has no session id, it should not generate event', () => {
-      const { lifeCycle } = setupBuilder.build()
-      viewSessionId = undefined
-
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-      expect(serverRumEvents.length).toBe(0)
+      expect(rumSession.isTracked).toHaveBeenCalledWith(123 as RelativeTime)
+      expect(rumSession.getId).toHaveBeenCalledWith(123 as RelativeTime)
     })
   })
 

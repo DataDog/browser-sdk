@@ -217,7 +217,6 @@ describe('startSegmentCollection', () => {
 
 describe('computeSegmentContext', () => {
   const DEFAULT_VIEW_CONTEXT: ViewContext = {
-    session: { id: '456' },
     view: { id: '123' },
   }
 
@@ -233,32 +232,6 @@ describe('computeSegmentContext', () => {
 
   it('returns undefined if there is no current view', () => {
     expect(computeSegmentContext('appid', DEFAULT_SESSION, mockParentContexts(undefined))).toBeUndefined()
-  })
-
-  it('returns undefined if there is no session id', () => {
-    expect(
-      computeSegmentContext(
-        'appid',
-        DEFAULT_SESSION,
-        mockParentContexts({
-          ...DEFAULT_VIEW_CONTEXT,
-          session: { id: undefined },
-        })
-      )
-    ).toBeUndefined()
-  })
-
-  it('returns undefined if the session id is not the one of the current session', () => {
-    expect(
-      computeSegmentContext(
-        'appid',
-        DEFAULT_SESSION,
-        mockParentContexts({
-          ...DEFAULT_VIEW_CONTEXT,
-          session: { id: 'expired-session' },
-        })
-      )
-    ).toBeUndefined()
   })
 
   it('returns undefined if the session is not tracked', () => {

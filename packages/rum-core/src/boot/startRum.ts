@@ -37,6 +37,9 @@ export function startRum(
     combine(
       {
         application_id: initConfiguration.applicationId,
+        session: {
+          id: session.getId(),
+        },
       },
       parentContexts.findView(),
       { view: { name: null } }
@@ -94,7 +97,7 @@ export function startRumEventCollection(
   locationChangeObservable: Observable<LocationChange>,
   getCommonContext: () => CommonContext
 ) {
-  const parentContexts = startParentContexts(lifeCycle, session)
+  const parentContexts = startParentContexts(lifeCycle)
   const urlContexts = startUrlContexts(lifeCycle, locationChangeObservable, location)
   const foregroundContexts = startForegroundContexts()
 

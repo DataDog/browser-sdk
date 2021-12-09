@@ -1,10 +1,10 @@
-import { Configuration, performDraw, startSessionManagement } from '@datadog/browser-core'
+import { Configuration, performDraw, startSessionManagement, RelativeTime } from '@datadog/browser-core'
 
 export const LOGGER_SESSION_KEY = 'logs'
 
 export interface LoggerSession {
-  getId: () => string | undefined
-  isTracked: () => boolean
+  getId: (startTime?: RelativeTime) => string | undefined
+  isTracked: (startTime?: RelativeTime) => boolean
 }
 
 export enum LoggerTrackingType {
@@ -18,7 +18,7 @@ export function startLoggerSession(configuration: Configuration): LoggerSession 
   )
   return {
     getId: session.getId,
-    isTracked: () => session.getTrackingType() === LoggerTrackingType.TRACKED,
+    isTracked: (startTime) => session.getTrackingType(startTime) === LoggerTrackingType.TRACKED,
   }
 }
 

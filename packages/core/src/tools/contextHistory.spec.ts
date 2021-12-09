@@ -1,5 +1,6 @@
-import { RelativeTime, ONE_MINUTE } from '@datadog/browser-core'
-import { mockClock, Clock } from '../../../core/test/specHelper'
+import { mockClock, Clock } from '../../test/specHelper'
+import { RelativeTime } from './timeUtils'
+import { ONE_MINUTE } from './utils'
 import { CLEAR_OLD_CONTEXTS_INTERVAL, ContextHistory } from './contextHistory'
 
 const EXPIRE_DELAY = 10 * ONE_MINUTE
