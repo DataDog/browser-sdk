@@ -527,7 +527,7 @@ describe('rum assembly', () => {
     })
 
     it('should detect ci visibility tests based on ci visibility global window values', () => {
-      mockCiVisibilityWindowValues()
+      mockCiVisibilityWindowValues('traceId')
 
       const { lifeCycle } = setupBuilder.build()
       notifyRawRumEvent(lifeCycle, {
@@ -588,7 +588,7 @@ describe('rum assembly', () => {
 
   describe('ci visibility context', () => {
     it('includes the ci visibility context', () => {
-      mockCiVisibilityWindowValues()
+      mockCiVisibilityWindowValues('traceId')
 
       const { lifeCycle } = setupBuilder.build()
       notifyRawRumEvent(lifeCycle, {
