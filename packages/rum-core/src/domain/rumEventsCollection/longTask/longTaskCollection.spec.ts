@@ -1,5 +1,5 @@
 import { Duration, RelativeTime, ServerDuration } from '@datadog/browser-core'
-import { createRumSessionMock, RumSessionMock } from '../../../../test/mockRumSession'
+import { createRumSessionManagerMock, RumSessionManagerMock } from '../../../../test/mockRumSessionManager'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RumPerformanceEntry, RumPerformanceLongTaskTiming } from '../../../browser/performanceCollection'
 import { RumEventType } from '../../../rawRumEvent.types'
@@ -17,13 +17,13 @@ const LONG_TASK: RumPerformanceLongTaskTiming = {
 
 describe('long task collection', () => {
   let setupBuilder: TestSetupBuilder
-  let session: RumSessionMock
+  let sessionManager: RumSessionManagerMock
   beforeEach(() => {
-    session = createRumSessionMock()
+    sessionManager = createRumSessionManagerMock()
     setupBuilder = setup()
-      .withSession(session)
-      .beforeBuild(({ lifeCycle, session }) => {
-        startLongTaskCollection(lifeCycle, session)
+      .withSessionManager(sessionManager)
+      .beforeBuild(({ lifeCycle, sessionManager }) => {
+        startLongTaskCollection(lifeCycle, sessionManager)
       })
   })
 
@@ -47,11 +47,11 @@ describe('long task collection', () => {
   it('should only collect when session has a replay plan', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
 
-    session.setReplayPlan()
+    sessionManager.setReplayPlan()
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, LONG_TASK)
     expect(rawRumEvents.length).toBe(1)
 
-    session.setLitePlan()
+    sessionManager.setLitePlan()
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, LONG_TASK)
     expect(rawRumEvents.length).toBe(1)
   })

@@ -7,7 +7,7 @@ import {
   updateExperimentalFeatures,
   resetExperimentalFeatures,
 } from '@datadog/browser-core'
-import { createRumSessionMock } from '../../test/mockRumSession'
+import { createRumSessionManagerMock } from '../../test/mockRumSessionManager'
 import { createRawRumEvent } from '../../test/fixtures'
 import {
   cleanupSyntheticsWorkerValues,
@@ -21,7 +21,7 @@ import { RumActionEvent, RumErrorEvent, RumEvent } from '../rumEvent.types'
 import { initEventBridgeStub, deleteEventBridgeStub } from '../../../core/test/specHelper'
 import { startRumAssembly } from './assembly'
 import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from './lifeCycle'
-import { RumSessionPlan } from './rumSession'
+import { RumSessionPlan } from './rumSessionManager'
 
 describe('rum assembly', () => {
   let setupBuilder: TestSetupBuilder
@@ -46,7 +46,7 @@ describe('rum assembly', () => {
           },
         }),
       })
-      .beforeBuild(({ applicationId, configuration, lifeCycle, session, parentContexts, urlContexts }) => {
+      .beforeBuild(({ applicationId, configuration, lifeCycle, sessionManager, parentContexts, urlContexts }) => {
         serverRumEvents = []
         lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent) =>
           serverRumEvents.push(serverRumEvent)
@@ -55,7 +55,7 @@ describe('rum assembly', () => {
           applicationId,
           configuration,
           lifeCycle,
-          session,
+          sessionManager,
           parentContexts,
           urlContexts,
           () => commonContext
@@ -473,7 +473,7 @@ describe('rum assembly', () => {
     })
 
     it('when not tracked, it should not generate event', () => {
-      const { lifeCycle } = setupBuilder.withSession(createRumSessionMock().setNotTracked()).build()
+      const { lifeCycle } = setupBuilder.withSessionManager(createRumSessionManagerMock().setNotTracked()).build()
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
       })
@@ -481,18 +481,16 @@ describe('rum assembly', () => {
     })
 
     it('should get session state from event start', () => {
-      const rumSession = createRumSessionMock()
-      spyOn(rumSession, 'isTracked').and.callThrough()
-      spyOn(rumSession, 'getId').and.callThrough()
+      const rumSessionManager = createRumSessionManagerMock()
+      spyOn(rumSessionManager, 'findTrackedSession').and.callThrough()
 
-      const { lifeCycle } = setupBuilder.withSession(rumSession).build()
+      const { lifeCycle } = setupBuilder.withSessionManager(rumSessionManager).build()
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION),
         startTime: 123 as RelativeTime,
       })
 
-      expect(rumSession.isTracked).toHaveBeenCalledWith(123 as RelativeTime)
-      expect(rumSession.getId).toHaveBeenCalledWith(123 as RelativeTime)
+      expect(rumSessionManager.findTrackedSession).toHaveBeenCalledWith(123 as RelativeTime)
     })
   })
 

@@ -12,7 +12,7 @@ import { startErrorCollection } from '../domain/rumEventsCollection/error/errorC
 import { startLongTaskCollection } from '../domain/rumEventsCollection/longTask/longTaskCollection'
 import { startResourceCollection } from '../domain/rumEventsCollection/resource/resourceCollection'
 import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
-import { RumSession, startRumSession, startRumSessionStub } from '../domain/rumSession'
+import { RumSessionManager, startRumSessionManager, startRumSessionManagerStub } from '../domain/rumSessionManager'
 import { CommonContext } from '../rawRumEvent.types'
 import { startRumBatch } from '../transport/startRumBatch'
 import { startRumEventBridge } from '../transport/startRumEventBridge'
@@ -29,7 +29,7 @@ export function startRum(
   initialViewName?: string
 ) {
   const lifeCycle = new LifeCycle()
-  const session = !canUseEventBridge() ? startRumSession(configuration, lifeCycle) : startRumSessionStub()
+  const session = !canUseEventBridge() ? startRumSessionManager(configuration, lifeCycle) : startRumSessionManagerStub()
   const domMutationObservable = createDOMMutationObservable()
   const locationChangeObservable = createLocationChangeObservable(location)
 
@@ -38,7 +38,7 @@ export function startRum(
       {
         application_id: initConfiguration.applicationId,
         session: {
-          id: session.getId(),
+          id: session.findTrackedSession()?.id,
         },
       },
       parentContexts.findView(),
@@ -93,7 +93,7 @@ export function startRumEventCollection(
   lifeCycle: LifeCycle,
   configuration: Configuration,
   location: Location,
-  session: RumSession,
+  sessionManager: RumSessionManager,
   locationChangeObservable: Observable<LocationChange>,
   getCommonContext: () => CommonContext
 ) {
@@ -109,7 +109,15 @@ export function startRumEventCollection(
     ;({ stop: stopBatch } = startRumBatch(configuration, lifeCycle))
   }
 
-  startRumAssembly(applicationId, configuration, lifeCycle, session, parentContexts, urlContexts, getCommonContext)
+  startRumAssembly(
+    applicationId,
+    configuration,
+    lifeCycle,
+    sessionManager,
+    parentContexts,
+    urlContexts,
+    getCommonContext
+  )
 
   return {
     parentContexts,
