@@ -7,7 +7,7 @@ import {
   updateExperimentalFeatures,
   resetExperimentalFeatures,
 } from '@datadog/browser-core'
-import { createRumSessionMock } from '../../test/mockRumSession'
+import { createRumSessionManagerMock } from '../../test/mockRumSessionManager'
 import { createRawRumEvent } from '../../test/fixtures'
 import {
   cleanupSyntheticsWorkerValues,
@@ -21,16 +21,14 @@ import { RumActionEvent, RumErrorEvent, RumEvent } from '../rumEvent.types'
 import { initEventBridgeStub, deleteEventBridgeStub } from '../../../core/test/specHelper'
 import { startRumAssembly } from './assembly'
 import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from './lifeCycle'
-import { RumSessionPlan } from './rumSession'
+import { RumSessionPlan } from './rumSessionManager'
 
 describe('rum assembly', () => {
   let setupBuilder: TestSetupBuilder
   let commonContext: CommonContext
   let serverRumEvents: RumEvent[]
-  let viewSessionId: string | undefined
 
   beforeEach(() => {
-    viewSessionId = '1234'
     commonContext = {
       context: {},
       user: {},
@@ -43,15 +41,12 @@ describe('rum assembly', () => {
           },
         }),
         findView: () => ({
-          session: {
-            id: viewSessionId,
-          },
           view: {
             id: 'abcde',
           },
         }),
       })
-      .beforeBuild(({ applicationId, configuration, lifeCycle, session, parentContexts, urlContexts }) => {
+      .beforeBuild(({ applicationId, configuration, lifeCycle, sessionManager, parentContexts, urlContexts }) => {
         serverRumEvents = []
         lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent) =>
           serverRumEvents.push(serverRumEvent)
@@ -60,7 +55,7 @@ describe('rum assembly', () => {
           applicationId,
           configuration,
           lifeCycle,
-          session,
+          sessionManager,
           parentContexts,
           urlContexts,
           () => commonContext
@@ -306,6 +301,7 @@ describe('rum assembly', () => {
 
       expect(serverRumEvents[0].view.id).toBeDefined()
       expect(serverRumEvents[0].date).toBeDefined()
+      expect(serverRumEvents[0].session.id).toBeDefined()
     })
 
     it('should be overwritten by event attributes', () => {
@@ -453,7 +449,6 @@ describe('rum assembly', () => {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION),
       })
       expect(serverRumEvents[0].view.id).toBe('abcde')
-      expect(serverRumEvents[0].session.id).toBe('1234')
     })
   })
 
@@ -478,41 +473,24 @@ describe('rum assembly', () => {
     })
 
     it('when not tracked, it should not generate event', () => {
-      const { lifeCycle } = setupBuilder.withSession(createRumSessionMock().setNotTracked()).build()
+      const { lifeCycle } = setupBuilder.withSessionManager(createRumSessionManagerMock().setNotTracked()).build()
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
       })
       expect(serverRumEvents.length).toBe(0)
     })
 
-    it('when view context has current session id, it should generate event', () => {
-      const { lifeCycle } = setupBuilder.build()
-      viewSessionId = '1234'
+    it('should get session state from event start', () => {
+      const rumSessionManager = createRumSessionManagerMock()
+      spyOn(rumSessionManager, 'findTrackedSession').and.callThrough()
 
+      const { lifeCycle } = setupBuilder.withSessionManager(rumSessionManager).build()
       notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+        rawRumEvent: createRawRumEvent(RumEventType.ACTION),
+        startTime: 123 as RelativeTime,
       })
-      expect(serverRumEvents.length).toBe(1)
-    })
 
-    it('when view context has not the current session id, it should not generate event', () => {
-      const { lifeCycle } = setupBuilder.build()
-      viewSessionId = '6789'
-
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-      expect(serverRumEvents.length).toBe(0)
-    })
-
-    it('when view context has no session id, it should not generate event', () => {
-      const { lifeCycle } = setupBuilder.build()
-      viewSessionId = undefined
-
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-      expect(serverRumEvents.length).toBe(0)
+      expect(rumSessionManager.findTrackedSession).toHaveBeenCalledWith(123 as RelativeTime)
     })
   })
 

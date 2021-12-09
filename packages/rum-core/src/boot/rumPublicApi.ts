@@ -24,7 +24,7 @@ import {
 } from '@datadog/browser-core'
 import { LifeCycle } from '../domain/lifeCycle'
 import { ParentContexts } from '../domain/parentContexts'
-import { RumSession } from '../domain/rumSession'
+import { RumSessionManager } from '../domain/rumSessionManager'
 import { RumEventDomainContext } from '../domainContext.types'
 import { CommonContext, User, ActionType, ReplayStats } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
@@ -60,7 +60,7 @@ export interface RecorderApi {
     lifeCycle: LifeCycle,
     initConfiguration: RumInitConfiguration,
     configuration: Configuration,
-    session: RumSession,
+    sessionManager: RumSessionManager,
     parentContexts: ParentContexts
   ) => void
   isRecording: () => boolean

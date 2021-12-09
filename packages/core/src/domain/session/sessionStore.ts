@@ -1,13 +1,14 @@
 import { CookieOptions, COOKIE_ACCESS_DELAY, setCookie, getCookie } from '../../browser/cookie'
 import { Observable } from '../../tools/observable'
 import * as utils from '../../tools/utils'
-import { monitor } from '../internalMonitoring'
+import { monitor, addMonitoringMessage } from '../internalMonitoring'
 
 export interface SessionStore {
   expandOrRenewSession: () => void
   expandSession: () => void
   getSession: () => SessionState
   renewObservable: Observable<void>
+  expireObservable: Observable<void>
   stop: () => void
 }
 
@@ -26,64 +27,105 @@ export const SESSION_TIME_OUT_DELAY = 4 * utils.ONE_HOUR
 const SESSION_ENTRY_REGEXP = /^([a-z]+)=([a-z0-9-]+)$/
 const SESSION_ENTRY_SEPARATOR = '&'
 
+/**
+ * Different session concepts:
+ * - tracked, the session has an id and is updated along the user navigation
+ * - not tracked, the session does not have an id but it is updated along the user navigation
+ * - inactive, no session in store or session expired, waiting for a renew session
+ */
 export function startSessionStore<TrackingType extends string>(
   options: CookieOptions,
   productKey: string,
   computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean }
 ): SessionStore {
   const renewObservable = new Observable<void>()
+  const expireObservable = new Observable<void>()
+  const cookieWatch = setInterval(monitor(retrieveAndSynchronizeSession), COOKIE_ACCESS_DELAY)
   let sessionCache: SessionState = retrieveActiveSession(options)
 
-  const { throttled: expandOrRenewSession } = utils.throttle(
-    monitor(() => {
-      const cookieSession = retrieveActiveSession(options)
-      const { trackingType, isTracked } = computeSessionState(cookieSession[productKey])
-      cookieSession[productKey] = trackingType
-      if (isTracked && !cookieSession.id) {
-        cookieSession.id = utils.generateUUID()
-        cookieSession.created = String(Date.now())
-      }
-      // save changes and expand session duration
-      persistSession(cookieSession, options)
+  function expandOrRenewSession() {
+    const cookieSession = retrieveAndSynchronizeSession()
+    const isTracked = expandOrRenewCookie(cookieSession)
 
-      if (isTracked && isSessionCacheOutdated(cookieSession)) {
-        sessionCache = { ...cookieSession }
-        renewObservable.notify()
-      }
-      sessionCache = { ...cookieSession }
-    }),
-    COOKIE_ACCESS_DELAY
-  )
-
-  const cookieWatch = setInterval(() => {
-    const cookieSession = retrieveActiveSession(options)
-    if (isSessionCacheOutdated(cookieSession)) {
-      clearSessionCache()
+    if (isTracked && !hasSessionInCache()) {
+      renewSession(cookieSession)
     }
-  }, COOKIE_ACCESS_DELAY)
+    sessionCache = cookieSession
+  }
 
   function expandSession() {
-    const cookieSession = retrieveActiveSession(options)
-    if (isSessionCacheOutdated(cookieSession)) {
-      clearSessionCache()
-    } else {
+    const cookieSession = retrieveAndSynchronizeSession()
+    if (hasSessionInCache()) {
       persistSession(cookieSession, options)
     }
   }
 
-  function isSessionCacheOutdated(cookieSession: SessionState) {
-    return sessionCache.id !== cookieSession.id
+  function retrieveAndSynchronizeSession() {
+    const cookieSession = retrieveActiveSession(options)
+    if (hasSessionInCache() && isSessionInCacheOutdated(cookieSession)) {
+      expireSession()
+    }
+    return cookieSession
   }
 
-  function clearSessionCache() {
+  function expandOrRenewCookie(cookieSession: SessionState) {
+    const { trackingType, isTracked } = computeSessionState(cookieSession[productKey])
+    cookieSession[productKey] = trackingType
+    if (isTracked && !cookieSession.id) {
+      cookieSession.id = utils.generateUUID()
+      cookieSession.created = String(Date.now())
+    }
+    // save changes and expand session duration
+    persistSession(cookieSession, options)
+    return isTracked
+  }
+
+  function hasSessionInCache() {
+    return sessionCache[productKey] !== undefined
+  }
+
+  function isSessionInCacheOutdated(cookieSession: SessionState) {
+    if (sessionCache.id !== cookieSession.id) {
+      if (cookieSession.id) {
+        // cookie id undefined could be due to cookie expiration
+        addSessionInconsistenciesMessage(cookieSession, 'different id')
+      }
+      return true
+    }
+    if (sessionCache[productKey] !== cookieSession[productKey]) {
+      addSessionInconsistenciesMessage(cookieSession, 'different tracking type')
+      return true
+    }
+    return false
+  }
+
+  function addSessionInconsistenciesMessage(cookieSession: SessionState, cause: string) {
+    addMonitoringMessage('Session inconsistencies detected', {
+      debug: {
+        productKey,
+        sessionCache,
+        cookieSession,
+        cause,
+      },
+    })
+  }
+
+  function expireSession() {
     sessionCache = {}
+    expireObservable.notify()
+  }
+
+  function renewSession(cookieSession: SessionState) {
+    sessionCache = cookieSession
+    renewObservable.notify()
   }
 
   return {
-    expandOrRenewSession,
+    expandOrRenewSession: utils.throttle(monitor(expandOrRenewSession), COOKIE_ACCESS_DELAY).throttled,
     expandSession,
     getSession: () => sessionCache,
     renewObservable,
+    expireObservable,
     stop: () => {
       clearInterval(cookieWatch)
     },

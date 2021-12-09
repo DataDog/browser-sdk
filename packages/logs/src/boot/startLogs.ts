@@ -14,10 +14,11 @@ import {
   trackConsoleError,
   canUseEventBridge,
   getEventBridge,
+  getRelativeTime,
 } from '@datadog/browser-core'
 import { trackNetworkError } from '../domain/trackNetworkError'
 import { Logger, LogsMessage, StatusType } from '../domain/logger'
-import { LoggerSession, startLoggerSession, startLoggerSessionStub } from '../domain/loggerSession'
+import { LogsSessionManager, startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import { LogsEvent } from '../logsEvent.types'
 import { startLoggerBatch } from '../transport/startLoggerBatch'
 import { buildEnv } from './buildEnv'
@@ -39,8 +40,8 @@ export function startLogs(initConfiguration: LogsInitConfiguration, errorLogger:
 
   const session =
     areCookiesAuthorized(configuration.cookieOptions) && !canUseEventBridge()
-      ? startLoggerSession(configuration)
-      : startLoggerSessionStub(configuration)
+      ? startLogsSessionManager(configuration)
+      : startLogsSessionManagerStub(configuration)
 
   return doStartLogs(configuration, errorObservable, internalMonitoring, session, errorLogger)
 }
@@ -49,16 +50,16 @@ export function doStartLogs(
   configuration: Configuration,
   errorObservable: Observable<RawError>,
   internalMonitoring: InternalMonitoring,
-  session: LoggerSession,
+  sessionManager: LogsSessionManager,
   errorLogger: Logger
 ) {
   internalMonitoring.setExternalContextProvider(() =>
-    combine({ session_id: session.getId() }, getRUMInternalContext(), {
+    combine({ session_id: sessionManager.findTrackedSession()?.id }, getRUMInternalContext(), {
       view: { name: null, url: null, referrer: null },
     })
   )
 
-  const assemble = buildAssemble(session, configuration, reportError)
+  const assemble = buildAssemble(sessionManager, configuration, reportError)
 
   let onLogEventCollected: (message: Context) => void
   if (canUseEventBridge()) {
@@ -89,8 +90,7 @@ export function doStartLogs(
                 url: error.resource.url,
               },
             }
-          : undefined,
-        getRUMInternalContext(error.startClocks.relative)
+          : undefined
       )
     )
   }
@@ -105,19 +105,21 @@ export function doStartLogs(
 }
 
 export function buildAssemble(
-  session: LoggerSession,
+  sessionManager: LogsSessionManager,
   configuration: Configuration,
   reportError: (error: RawError) => void
 ) {
   const errorRateLimiter = createEventRateLimiter(StatusType.error, configuration.maxErrorsPerMinute, reportError)
   return (message: LogsMessage, currentContext: Context) => {
-    if (!session.isTracked()) {
+    const startTime = message.date ? getRelativeTime(message.date) : undefined
+    const session = sessionManager.findTrackedSession(startTime)
+    if (!session) {
       return undefined
     }
     const contextualizedMessage = combine(
-      { service: configuration.service, session_id: session.getId() },
+      { service: configuration.service, session_id: session.id },
       currentContext,
-      getRUMInternalContext(),
+      getRUMInternalContext(startTime),
       message
     )
     if (configuration.beforeSend && configuration.beforeSend(contextualizedMessage) === false) {

@@ -29,11 +29,11 @@ export {
 } from './domain/internalMonitoring'
 export { Observable, Subscription } from './tools/observable'
 export {
-  startSessionManagement,
-  Session,
+  startSessionManager,
+  SessionManager,
   // Exposed for tests
-  stopSessionManagement,
-} from './domain/session/sessionManagement'
+  stopSessionManager,
+} from './domain/session/sessionManager'
 export {
   SESSION_TIME_OUT_DELAY,
   // Exposed for tests
@@ -57,3 +57,4 @@ export { BoundedBuffer } from './tools/boundedBuffer'
 export { catchUserErrors } from './tools/catchUserErrors'
 export { createContextManager } from './tools/contextManager'
 export { limitModification } from './tools/limitModification'
+export { ContextHistory, CLEAR_OLD_CONTEXTS_INTERVAL } from './tools/contextHistory'
