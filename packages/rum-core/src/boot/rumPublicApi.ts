@@ -4,7 +4,6 @@ import {
   Context,
   createContextManager,
   deepClone,
-  isPercentage,
   makePublicApi,
   monitor,
   InitConfiguration,
@@ -18,8 +17,6 @@ import {
   RelativeTime,
   canUseEventBridge,
   areCookiesAuthorized,
-  updateExperimentalFeatures,
-  buildConfiguration,
   startInternalMonitoring,
 } from '@datadog/browser-core'
 import { LifeCycle } from '../domain/lifeCycle'
@@ -27,8 +24,7 @@ import { ParentContexts } from '../domain/parentContexts'
 import { RumSessionManager } from '../domain/rumSessionManager'
 import { CommonContext, User, ActionType, ReplayStats } from '../rawRumEvent.types'
 import { willSyntheticsInjectRum } from '../domain/syntheticsContext'
-import { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
-import { buildEnv } from './buildEnv'
+import { RumConfiguration, RumInitConfiguration, validateAndBuildRumConfiguration } from '../domain/configuration'
 import { startRum } from './startRum'
 
 export type RumPublicApi = ReturnType<typeof makeRumPublicApi>
@@ -110,12 +106,15 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(
       return
     }
 
-    if (!isValidInitConfiguration(initConfiguration)) {
+    if (!canInitRum(initConfiguration)) {
       return
     }
 
-    updateExperimentalFeatures(initConfiguration.enableExperimentalFeatures)
-    const configuration = buildConfiguration(initConfiguration, buildEnv)
+    const configuration = validateAndBuildRumConfiguration(initConfiguration)
+    if (!configuration) {
+      return
+    }
+
     const internalMonitoring = startInternalMonitoring(configuration)
 
     if (!configuration.trackViewsManually) {
@@ -264,35 +263,11 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(
     return true
   }
 
-  function isValidInitConfiguration(initConfiguration: RumInitConfiguration) {
+  function canInitRum(initConfiguration: RumInitConfiguration) {
     if (isAlreadyInitialized) {
       if (!initConfiguration.silentMultipleInit) {
         display.error('DD_RUM is already initialized.')
       }
-      return false
-    }
-    if (!initConfiguration || !initConfiguration.clientToken) {
-      display.error('Client Token is not configured, we will not send any data.')
-      return false
-    }
-    if (!initConfiguration.applicationId) {
-      display.error('Application ID is not configured, no RUM data will be collected.')
-      return false
-    }
-    if (initConfiguration.sampleRate !== undefined && !isPercentage(initConfiguration.sampleRate)) {
-      display.error('Sample Rate should be a number between 0 and 100')
-      return false
-    }
-    if (initConfiguration.replaySampleRate !== undefined && !isPercentage(initConfiguration.replaySampleRate)) {
-      display.error('Replay Sample Rate should be a number between 0 and 100')
-      return false
-    }
-    if (
-      Array.isArray(initConfiguration.allowedTracingOrigins) &&
-      initConfiguration.allowedTracingOrigins.length !== 0 &&
-      initConfiguration.service === undefined
-    ) {
-      display.error('Service need to be configured when tracing is enabled')
       return false
     }
     return true

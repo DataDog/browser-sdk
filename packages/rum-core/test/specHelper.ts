@@ -25,7 +25,7 @@ import {
   SYNTHETICS_RESULT_ID_COOKIE_NAME,
   SYNTHETICS_TEST_ID_COOKIE_NAME,
 } from '../src/domain/syntheticsContext'
-import { RumConfiguration } from '../src/domain/configuration'
+import { DEFAULT_RUM_CONFIGURATION, RumConfiguration } from '../src/domain/configuration'
 import { validateFormat } from './formatValidation'
 import { createRumSessionManagerMock } from './mockRumSessionManager'
 
@@ -94,6 +94,7 @@ export function setup(): TestSetupBuilder {
   }
   const configuration: Partial<RumConfiguration> = {
     ...DEFAULT_CONFIGURATION,
+    ...DEFAULT_RUM_CONFIGURATION,
     ...SPEC_ENDPOINTS,
   }
   const FAKE_APP_ID = 'appId'

@@ -31,91 +31,54 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   session: {} as any,
 })
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
+const INVALID_INIT_CONFIGURATION = { clientToken: 'yes' } as RumInitConfiguration
 
 describe('rum public api', () => {
   describe('configuration validation', () => {
     let rumPublicApi: RumPublicApi
     let displaySpy: jasmine.Spy
+    let startRumSpy: jasmine.Spy<StartRum>
 
     beforeEach(() => {
       displaySpy = spyOn(display, 'error')
-      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
+      startRumSpy = jasmine.createSpy().and.callFake(noopStartRum)
+      rumPublicApi = makeRumPublicApi(startRumSpy, noopRecorderApi)
     })
 
-    it('init should log an error with no application id', () => {
-      const invalidConfiguration = { clientToken: 'yes' }
-      rumPublicApi.init(invalidConfiguration as RumInitConfiguration)
-      expect(display.error).toHaveBeenCalledTimes(1)
-
-      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes' })
-      expect(displaySpy).toHaveBeenCalledTimes(1)
+    it('should start when the configuration is valid', () => {
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      expect(displaySpy).not.toHaveBeenCalled()
+      expect(startRumSpy).toHaveBeenCalled()
     })
 
-    it('init should log an error if sampleRate is invalid', () => {
-      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 'foo' as any })
-      expect(displaySpy).toHaveBeenCalledTimes(1)
-
-      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 200 })
-      expect(displaySpy).toHaveBeenCalledTimes(2)
+    it('should not start when the configuration is invalid', () => {
+      rumPublicApi.init(INVALID_INIT_CONFIGURATION)
+      expect(displaySpy).toHaveBeenCalled()
+      expect(startRumSpy).not.toHaveBeenCalled()
     })
 
-    it('init should log an error if replaySampleRate is invalid', () => {
-      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', replaySampleRate: 'foo' as any })
-      expect(displaySpy).toHaveBeenCalledTimes(1)
+    describe('multiple init', () => {
+      it('should log an error if init is called several times', () => {
+        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+        expect(displaySpy).toHaveBeenCalledTimes(0)
 
-      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', replaySampleRate: 200 })
-      expect(displaySpy).toHaveBeenCalledTimes(2)
-    })
-
-    it('should log an error if init is called several times', () => {
-      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1, replaySampleRate: 1 })
-      expect(displaySpy).toHaveBeenCalledTimes(0)
-
-      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1, replaySampleRate: 1 })
-      expect(displaySpy).toHaveBeenCalledTimes(1)
-    })
-
-    it('should log an error if tracing is enabled without a service configured', () => {
-      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', allowedTracingOrigins: [] })
-      expect(displaySpy).toHaveBeenCalledTimes(0)
-
-      makeRumPublicApi(noopStartRum, noopRecorderApi).init({
-        allowedTracingOrigins: ['foo.bar'],
-        applicationId: 'yes',
-        clientToken: 'yes',
-        service: 'foo',
+        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+        expect(displaySpy).toHaveBeenCalledTimes(1)
       })
-      expect(displaySpy).toHaveBeenCalledTimes(0)
 
-      makeRumPublicApi(noopStartRum, noopRecorderApi).init({
-        allowedTracingOrigins: ['foo.bar'],
-        applicationId: 'yes',
-        clientToken: 'yes',
+      it('should not log an error if init is called several times and silentMultipleInit is true', () => {
+        rumPublicApi.init({
+          ...DEFAULT_INIT_CONFIGURATION,
+          silentMultipleInit: true,
+        })
+        expect(displaySpy).toHaveBeenCalledTimes(0)
+
+        rumPublicApi.init({
+          ...DEFAULT_INIT_CONFIGURATION,
+          silentMultipleInit: true,
+        })
+        expect(displaySpy).toHaveBeenCalledTimes(0)
       })
-      expect(displaySpy).toHaveBeenCalledTimes(1)
-    })
-
-    it('should not log an error if init is called several times and silentMultipleInit is true', () => {
-      rumPublicApi.init({
-        applicationId: 'yes',
-        clientToken: 'yes',
-        sampleRate: 1,
-        silentMultipleInit: true,
-      })
-      expect(displaySpy).toHaveBeenCalledTimes(0)
-
-      rumPublicApi.init({
-        applicationId: 'yes',
-        clientToken: 'yes',
-        sampleRate: 1,
-        silentMultipleInit: true,
-      })
-      expect(displaySpy).toHaveBeenCalledTimes(0)
-    })
-
-    it("shouldn't trigger any console.error if the configuration is correct", () => {
-      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1 })
-      expect(displaySpy).toHaveBeenCalledTimes(0)
     })
 
     describe('if event bridge present', () => {
