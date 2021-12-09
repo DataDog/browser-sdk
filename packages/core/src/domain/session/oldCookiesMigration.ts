@@ -1,5 +1,5 @@
-import { getCookie, CookieOptions, cacheCookieAccess } from '../../browser/cookie'
-import { persistSession, SessionState, SESSION_COOKIE_NAME } from './sessionStore'
+import { getCookie, CookieOptions } from '../../browser/cookie'
+import { SessionState, SESSION_COOKIE_NAME, persistSession } from './sessionStore'
 
 export const OLD_SESSION_COOKIE_NAME = '_dd'
 export const OLD_RUM_COOKIE_NAME = '_dd_r'
@@ -14,8 +14,7 @@ export const LOGS_SESSION_KEY = 'logs'
  * to allow older sdk versions to be upgraded to newer versions without compatibility issues.
  */
 export function tryOldCookiesMigration(options: CookieOptions) {
-  const sessionCookie = cacheCookieAccess(SESSION_COOKIE_NAME, options)
-  const sessionString = sessionCookie.get()
+  const sessionString = getCookie(SESSION_COOKIE_NAME)
   const oldSessionId = getCookie(OLD_SESSION_COOKIE_NAME)
   const oldRumType = getCookie(OLD_RUM_COOKIE_NAME)
   const oldLogsType = getCookie(OLD_LOGS_COOKIE_NAME)
@@ -30,6 +29,6 @@ export function tryOldCookiesMigration(options: CookieOptions) {
     if (oldRumType && /^[012]$/.test(oldRumType)) {
       session[RUM_SESSION_KEY] = oldRumType
     }
-    persistSession(session, sessionCookie)
+    persistSession(session, options)
   }
 }
