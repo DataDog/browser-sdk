@@ -1,6 +1,7 @@
 import { COOKIE_ACCESS_DELAY, CookieOptions, getCookie, setCookie } from '../../browser/cookie'
 import { Clock, mockClock, restorePageVisibility, setPageVisibility, createNewEvent } from '../../../test/specHelper'
-import { ONE_HOUR, DOM_EVENT } from '../../tools/utils'
+import { ONE_HOUR, DOM_EVENT, ONE_SECOND } from '../../tools/utils'
+import { RelativeTime } from '../../tools/timeUtils'
 import { isIE } from '../../tools/browserDetection'
 import { Session, startSessionManagement, stopSessionManagement, VISIBILITY_CHECK_DELAY } from './sessionManagement'
 import { SESSION_COOKIE_NAME, SESSION_TIME_OUT_DELAY, SESSION_EXPIRATION_DELAY } from './sessionStore'
@@ -21,27 +22,31 @@ describe('startSessionManagement', () => {
     clock.tick(COOKIE_ACCESS_DELAY)
   }
 
-  function expectSessionIdToBe(session: Session<unknown>, sessionId: string) {
+  function expectSessionIdToBe(session: Session<FakeTrackingType>, sessionId: string) {
     expect(session.getId()).toBe(sessionId)
     expect(getCookie(SESSION_COOKIE_NAME)).toContain(`id=${sessionId}`)
   }
 
-  function expectSessionIdToBeDefined(session: Session<unknown>) {
+  function expectSessionIdToBeDefined(session: Session<FakeTrackingType>) {
     expect(session.getId()).toMatch(/^[a-f0-9-]+$/)
     expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/id=[a-f0-9-]+/)
   }
 
-  function expectSessionIdToNotBeDefined(session: Session<unknown>) {
+  function expectSessionIdToNotBeDefined(session: Session<FakeTrackingType>) {
     expect(session.getId()).toBeUndefined()
     expect(getCookie(SESSION_COOKIE_NAME)).not.toContain('id=')
   }
 
-  function expectTrackingTypeToBe(session: Session<unknown>, productKey: string, trackingType: string) {
+  function expectTrackingTypeToBe(
+    session: Session<FakeTrackingType>,
+    productKey: string,
+    trackingType: FakeTrackingType
+  ) {
     expect(session.getTrackingType()).toEqual(trackingType)
     expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${productKey}=${trackingType}`)
   }
 
-  function expectTrackingTypeToNotBeDefined(session: Session<unknown>, productKey: string) {
+  function expectTrackingTypeToNotBeDefined(session: Session<FakeTrackingType>, productKey: string) {
     expect(session.getTrackingType()).toBeUndefined()
     expect(getCookie(SESSION_COOKIE_NAME)).not.toContain(`${productKey}=`)
   }
@@ -274,11 +279,13 @@ describe('startSessionManagement', () => {
       expect(secondSession.getTrackingType()).toEqual(FakeTrackingType.NOT_TRACKED)
     })
 
-    it('should notify each renew observables', () => {
+    it('should notify each expire and renew observables', () => {
       const firstSession = startSessionManagement(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
         isTracked: true,
         trackingType: FakeTrackingType.TRACKED,
       }))
+      const expireSessionASpy = jasmine.createSpy()
+      firstSession.expireObservable.subscribe(expireSessionASpy)
       const renewSessionASpy = jasmine.createSpy()
       firstSession.renewObservable.subscribe(renewSessionASpy)
 
@@ -286,11 +293,15 @@ describe('startSessionManagement', () => {
         isTracked: true,
         trackingType: FakeTrackingType.TRACKED,
       }))
+      const expireSessionBSpy = jasmine.createSpy()
+      secondSession.expireObservable.subscribe(expireSessionBSpy)
       const renewSessionBSpy = jasmine.createSpy()
       secondSession.renewObservable.subscribe(renewSessionBSpy)
 
       expireSession()
 
+      expect(expireSessionASpy).toHaveBeenCalled()
+      expect(expireSessionBSpy).toHaveBeenCalled()
       expect(renewSessionASpy).not.toHaveBeenCalled()
       expect(renewSessionBSpy).not.toHaveBeenCalled()
 
@@ -307,12 +318,16 @@ describe('startSessionManagement', () => {
         isTracked: true,
         trackingType: FakeTrackingType.TRACKED,
       }))
+      const expireSessionSpy = jasmine.createSpy()
+      session.expireObservable.subscribe(expireSessionSpy)
+
       expect(session.getId()).toBeDefined()
       expect(getCookie(SESSION_COOKIE_NAME)).toBeDefined()
 
       clock.tick(SESSION_TIME_OUT_DELAY)
       expect(session.getId()).toBeUndefined()
       expect(getCookie(SESSION_COOKIE_NAME)).toBeUndefined()
+      expect(expireSessionSpy).toHaveBeenCalled()
     })
 
     it('should renew an existing timed out session', () => {
@@ -322,9 +337,12 @@ describe('startSessionManagement', () => {
         isTracked: true,
         trackingType: FakeTrackingType.TRACKED,
       }))
+      const expireSessionSpy = jasmine.createSpy()
+      session.expireObservable.subscribe(expireSessionSpy)
 
       expect(session.getId()).not.toBe('abcde')
       expect(getCookie(SESSION_COOKIE_NAME)).toContain(`created=${Date.now()}`)
+      expect(expireSessionSpy).not.toHaveBeenCalled() // the session has not been active from the start
     })
 
     it('should not add created date to an existing session from an older versions', () => {
@@ -354,10 +372,14 @@ describe('startSessionManagement', () => {
         isTracked: true,
         trackingType: FakeTrackingType.TRACKED,
       }))
+      const expireSessionSpy = jasmine.createSpy()
+      session.expireObservable.subscribe(expireSessionSpy)
+
       expectSessionIdToBeDefined(session)
 
       clock.tick(SESSION_EXPIRATION_DELAY)
       expectSessionIdToNotBeDefined(session)
+      expect(expireSessionSpy).toHaveBeenCalled()
     })
 
     it('should expand duration on activity', () => {
@@ -365,6 +387,9 @@ describe('startSessionManagement', () => {
         isTracked: true,
         trackingType: FakeTrackingType.TRACKED,
       }))
+      const expireSessionSpy = jasmine.createSpy()
+      session.expireObservable.subscribe(expireSessionSpy)
+
       expectSessionIdToBeDefined(session)
 
       clock.tick(SESSION_EXPIRATION_DELAY - 10)
@@ -372,9 +397,33 @@ describe('startSessionManagement', () => {
 
       clock.tick(10)
       expectSessionIdToBeDefined(session)
+      expect(expireSessionSpy).not.toHaveBeenCalled()
 
       clock.tick(SESSION_EXPIRATION_DELAY)
       expectSessionIdToNotBeDefined(session)
+      expect(expireSessionSpy).toHaveBeenCalled()
+    })
+
+    it('should expand not tracked session duration on activity', () => {
+      const session = startSessionManagement(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
+        isTracked: false,
+        trackingType: FakeTrackingType.NOT_TRACKED,
+      }))
+      const expireSessionSpy = jasmine.createSpy()
+      session.expireObservable.subscribe(expireSessionSpy)
+
+      expectTrackingTypeToBe(session, FIRST_PRODUCT_KEY, FakeTrackingType.NOT_TRACKED)
+
+      clock.tick(SESSION_EXPIRATION_DELAY - 10)
+      document.dispatchEvent(new CustomEvent('click'))
+
+      clock.tick(10)
+      expectTrackingTypeToBe(session, FIRST_PRODUCT_KEY, FakeTrackingType.NOT_TRACKED)
+      expect(expireSessionSpy).not.toHaveBeenCalled()
+
+      clock.tick(SESSION_EXPIRATION_DELAY)
+      expectTrackingTypeToNotBeDefined(session, FIRST_PRODUCT_KEY)
+      expect(expireSessionSpy).toHaveBeenCalled()
     })
 
     it('should expand session on visibility', () => {
@@ -384,16 +433,97 @@ describe('startSessionManagement', () => {
         isTracked: true,
         trackingType: FakeTrackingType.TRACKED,
       }))
+      const expireSessionSpy = jasmine.createSpy()
+      session.expireObservable.subscribe(expireSessionSpy)
 
       clock.tick(3 * VISIBILITY_CHECK_DELAY)
       setPageVisibility('hidden')
       expectSessionIdToBeDefined(session)
+      expect(expireSessionSpy).not.toHaveBeenCalled()
 
       clock.tick(SESSION_EXPIRATION_DELAY - 10)
       expectSessionIdToBeDefined(session)
+      expect(expireSessionSpy).not.toHaveBeenCalled()
 
       clock.tick(10)
       expectSessionIdToNotBeDefined(session)
+      expect(expireSessionSpy).toHaveBeenCalled()
+    })
+
+    it('should expand not tracked session on visibility', () => {
+      setPageVisibility('visible')
+
+      const session = startSessionManagement(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
+        isTracked: false,
+        trackingType: FakeTrackingType.NOT_TRACKED,
+      }))
+      const expireSessionSpy = jasmine.createSpy()
+      session.expireObservable.subscribe(expireSessionSpy)
+
+      clock.tick(3 * VISIBILITY_CHECK_DELAY)
+      setPageVisibility('hidden')
+      expectTrackingTypeToBe(session, FIRST_PRODUCT_KEY, FakeTrackingType.NOT_TRACKED)
+      expect(expireSessionSpy).not.toHaveBeenCalled()
+
+      clock.tick(SESSION_EXPIRATION_DELAY - 10)
+      expectTrackingTypeToBe(session, FIRST_PRODUCT_KEY, FakeTrackingType.NOT_TRACKED)
+      expect(expireSessionSpy).not.toHaveBeenCalled()
+
+      clock.tick(10)
+      expectTrackingTypeToNotBeDefined(session, FIRST_PRODUCT_KEY)
+      expect(expireSessionSpy).toHaveBeenCalled()
+    })
+  })
+
+  describe('session history', () => {
+    it('should return undefined when there is no current session and no startTime', () => {
+      const session = startSessionManagement(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
+        isTracked: true,
+        trackingType: FakeTrackingType.TRACKED,
+      }))
+      expireSession()
+
+      expect(session.getId()).toBeUndefined()
+      expect(session.getTrackingType()).toBeUndefined()
+    })
+
+    it('should return the current session context when there is no start time', () => {
+      const session = startSessionManagement(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
+        isTracked: true,
+        trackingType: FakeTrackingType.TRACKED,
+      }))
+
+      expect(session.getId()).toBeDefined()
+      expect(session.getTrackingType()).toBeDefined()
+    })
+
+    it('should return the session context corresponding to startTime', () => {
+      const session = startSessionManagement(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
+        isTracked: true,
+        trackingType: FakeTrackingType.TRACKED,
+      }))
+
+      // 0s to 10s: first session
+      clock.tick(10 * ONE_SECOND - COOKIE_ACCESS_DELAY)
+      const firstSessionId = session.getId()
+      const firstSessionTrackingType = session.getTrackingType()
+      expireSession()
+
+      // 10s to 20s: no session
+      clock.tick(10 * ONE_SECOND)
+
+      // 20s to end: second session
+      document.dispatchEvent(new CustomEvent('click'))
+      clock.tick(10 * ONE_SECOND)
+      const secondSessionId = session.getId()
+      const secondSessionTrackingType = session.getTrackingType()
+
+      expect(session.getId((5 * ONE_SECOND) as RelativeTime)).toBe(firstSessionId)
+      expect(session.getTrackingType((5 * ONE_SECOND) as RelativeTime)).toBe(firstSessionTrackingType)
+      expect(session.getId((15 * ONE_SECOND) as RelativeTime)).toBeUndefined()
+      expect(session.getTrackingType((15 * ONE_SECOND) as RelativeTime)).toBeUndefined()
+      expect(session.getId((25 * ONE_SECOND) as RelativeTime)).toBe(secondSessionId)
+      expect(session.getTrackingType((25 * ONE_SECOND) as RelativeTime)).toBe(secondSessionTrackingType)
     })
   })
 })

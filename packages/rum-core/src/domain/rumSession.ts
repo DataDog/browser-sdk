@@ -1,13 +1,13 @@
-import { Configuration, performDraw, Session, startSessionManagement } from '@datadog/browser-core'
+import { Configuration, performDraw, Session, startSessionManagement, RelativeTime } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
 export const RUM_SESSION_KEY = 'rum'
 
 export interface RumSession {
-  getId: () => string | undefined
-  isTracked: () => boolean
-  hasReplayPlan: () => boolean
-  hasLitePlan: () => boolean
+  getId: (startTime?: RelativeTime) => string | undefined
+  isTracked: (startTime?: RelativeTime) => boolean
+  hasReplayPlan: (startTime?: RelativeTime) => boolean
+  hasLitePlan: (startTime?: RelativeTime) => boolean
 }
 
 export enum RumSessionPlan {
@@ -29,16 +29,21 @@ export function startRumSession(configuration: Configuration, lifeCycle: LifeCyc
     computeSessionState(configuration, rawTrackingType)
   )
 
-  session.renewObservable.subscribe(() => {
+  session.expireObservable.subscribe(() => {
     lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+  })
+
+  session.renewObservable.subscribe(() => {
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
   })
 
   return {
     getId: session.getId,
-    isTracked: () => isSessionTracked(session),
-    hasReplayPlan: () => isSessionTracked(session) && session.getTrackingType() === RumTrackingType.TRACKED_REPLAY,
-    hasLitePlan: () => isSessionTracked(session) && session.getTrackingType() === RumTrackingType.TRACKED_LITE,
+    isTracked: (startTime) => isSessionTracked(session, startTime),
+    hasReplayPlan: (startTime) =>
+      isSessionTracked(session, startTime) && session.getTrackingType(startTime) === RumTrackingType.TRACKED_REPLAY,
+    hasLitePlan: (startTime) =>
+      isSessionTracked(session, startTime) && session.getTrackingType(startTime) === RumTrackingType.TRACKED_LITE,
   }
 }
 
@@ -55,8 +60,8 @@ export function startRumSessionStub(): RumSession {
   }
 }
 
-function isSessionTracked(session: Session<RumTrackingType>) {
-  return session.getId() !== undefined && isTypeTracked(session.getTrackingType())
+function isSessionTracked(session: Session<RumTrackingType>, startTime?: RelativeTime) {
+  return session.getId(startTime) !== undefined && isTypeTracked(session.getTrackingType(startTime))
 }
 
 function computeSessionState(configuration: Configuration, rawTrackingType?: string) {

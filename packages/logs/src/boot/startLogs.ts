@@ -14,6 +14,7 @@ import {
   trackConsoleError,
   canUseEventBridge,
   getEventBridge,
+  getRelativeTime,
 } from '@datadog/browser-core'
 import { trackNetworkError } from '../domain/trackNetworkError'
 import { Logger, LogsMessage, StatusType } from '../domain/logger'
@@ -89,8 +90,7 @@ export function doStartLogs(
                 url: error.resource.url,
               },
             }
-          : undefined,
-        getRUMInternalContext(error.startClocks.relative)
+          : undefined
       )
     )
   }
@@ -111,13 +111,14 @@ export function buildAssemble(
 ) {
   const errorRateLimiter = createEventRateLimiter(StatusType.error, configuration.maxErrorsPerMinute, reportError)
   return (message: LogsMessage, currentContext: Context) => {
-    if (!session.isTracked()) {
+    const startTime = message.date ? getRelativeTime(message.date) : undefined
+    if (!session.isTracked(startTime)) {
       return undefined
     }
     const contextualizedMessage = combine(
       { service: configuration.service, session_id: session.getId() },
       currentContext,
-      getRUMInternalContext(),
+      getRUMInternalContext(startTime),
       message
     )
     if (configuration.beforeSend && configuration.beforeSend(contextualizedMessage) === false) {

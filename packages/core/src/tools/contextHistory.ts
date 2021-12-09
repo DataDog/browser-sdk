@@ -1,4 +1,5 @@
-import { ONE_MINUTE, RelativeTime, relativeNow } from '@datadog/browser-core'
+import { relativeNow, RelativeTime } from './timeUtils'
+import { ONE_MINUTE } from './utils'
 
 interface PreviousContext<T> {
   startTime: RelativeTime
