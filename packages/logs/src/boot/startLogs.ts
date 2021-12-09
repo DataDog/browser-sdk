@@ -23,7 +23,7 @@ import { startLoggerBatch } from '../transport/startLoggerBatch'
 import { buildEnv } from './buildEnv'
 
 export interface LogsInitConfiguration extends InitConfiguration {
-  forwardErrorsToLogs?: boolean | undefined
+  forwardErrorsToLogs?: boolean | Array<'network' | 'source' | 'console'> | undefined
   beforeSend?: ((event: LogsEvent) => void | boolean) | undefined
 }
 
@@ -32,9 +32,13 @@ export function startLogs(initConfiguration: LogsInitConfiguration, errorLogger:
   const errorObservable = new Observable<RawError>()
 
   if (initConfiguration.forwardErrorsToLogs !== false) {
-    trackConsoleError(errorObservable)
-    trackRuntimeError(errorObservable)
-    trackNetworkError(configuration, errorObservable)
+    const forwardErrorsToLogs =
+      Array.isArray(initConfiguration.forwardErrorsToLogs)
+        ? initConfiguration.forwardErrorsToLogs
+        : ["console", "source", "network"] as const;
+    forwardErrorsToLogs.includes("console") && trackConsoleError(errorObservable)
+    forwardErrorsToLogs.includes("source") && trackRuntimeError(errorObservable)
+    forwardErrorsToLogs.includes("network") && trackNetworkError(configuration, errorObservable)
   }
 
   const session =
