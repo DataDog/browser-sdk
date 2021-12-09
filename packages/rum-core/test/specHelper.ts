@@ -16,7 +16,7 @@ import { ForegroundContexts } from '../src/domain/foregroundContexts'
 import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from '../src/domain/lifeCycle'
 import { ParentContexts } from '../src/domain/parentContexts'
 import { trackViews, ViewEvent } from '../src/domain/rumEventsCollection/view/trackViews'
-import { RumSession, RumSessionPlan } from '../src/domain/rumSession'
+import { RumSessionManager, RumSessionPlan } from '../src/domain/rumSessionManager'
 import { RawRumEvent, RumContext, ViewContext, UrlContext } from '../src/rawRumEvent.types'
 import { LocationChange } from '../src/browser/locationChangeObservable'
 import { UrlContexts } from '../src/domain/urlContexts'
@@ -28,11 +28,11 @@ import {
 } from '../src/domain/syntheticsContext'
 import type { CiTestWindow } from '../src/domain/ciTestContext'
 import { validateFormat } from './formatValidation'
-import { createRumSessionMock } from './mockRumSession'
+import { createRumSessionManagerMock } from './mockRumSessionManager'
 
 export interface TestSetupBuilder {
   withFakeLocation: (initialUrl: string) => TestSetupBuilder
-  withSession: (session: RumSession) => TestSetupBuilder
+  withSessionManager: (sessionManager: RumSessionManager) => TestSetupBuilder
   withConfiguration: (overrides: Partial<Configuration>) => TestSetupBuilder
   withParentContexts: (stub: Partial<ParentContexts>) => TestSetupBuilder
   withForegroundContexts: (stub: Partial<ForegroundContexts>) => TestSetupBuilder
@@ -49,7 +49,7 @@ export interface BuildContext {
   domMutationObservable: Observable<void>
   locationChangeObservable: Observable<LocationChange>
   configuration: Readonly<Configuration>
-  session: RumSession
+  sessionManager: RumSessionManager
   location: Location
   applicationId: string
   parentContexts: ParentContexts
@@ -63,12 +63,12 @@ export interface TestIO {
   changeLocation: (to: string) => void
   clock: Clock
   fakeLocation: Partial<Location>
-  session: RumSession
+  sessionManager: RumSessionManager
   rawRumEvents: RawRumEventCollectedData[]
 }
 
 export function setup(): TestSetupBuilder {
-  let session: RumSession = createRumSessionMock().setId('1234')
+  let sessionManager: RumSessionManager = createRumSessionManagerMock().setId('1234')
   const lifeCycle = new LifeCycle()
   const domMutationObservable = new Observable<void>()
   const locationChangeObservable = new Observable<LocationChange>()
@@ -119,8 +119,8 @@ export function setup(): TestSetupBuilder {
       fakeLocation = buildLocation(initialUrl)
       return setupBuilder
     },
-    withSession(sessionStub: RumSession) {
-      session = sessionStub
+    withSessionManager(sessionManagerStub: RumSessionManager) {
+      sessionManager = sessionManagerStub
       return setupBuilder
     },
     withConfiguration(overrides: Partial<Configuration>) {
@@ -152,7 +152,7 @@ export function setup(): TestSetupBuilder {
           parentContexts,
           urlContexts,
           foregroundContexts,
-          session,
+          sessionManager,
           applicationId: FAKE_APP_ID,
           configuration: configuration as Configuration,
           location: fakeLocation as Location,
@@ -167,7 +167,7 @@ export function setup(): TestSetupBuilder {
         lifeCycle,
         domMutationObservable,
         rawRumEvents,
-        session,
+        sessionManager,
         changeLocation,
       }
     },

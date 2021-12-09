@@ -30,7 +30,7 @@ import { getSyntheticsContext } from './syntheticsContext'
 import { getCiTestContext } from './ciTestContext'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { ParentContexts } from './parentContexts'
-import { RumSession, RumSessionPlan } from './rumSession'
+import { RumSessionManager, RumSessionPlan } from './rumSessionManager'
 import { UrlContexts } from './urlContexts'
 
 enum SessionType {
@@ -62,7 +62,7 @@ export function startRumAssembly(
   applicationId: string,
   configuration: Configuration,
   lifeCycle: LifeCycle,
-  session: RumSession,
+  sessionManager: RumSessionManager,
   parentContexts: ParentContexts,
   urlContexts: UrlContexts,
   getCommonContext: () => CommonContext
@@ -84,7 +84,8 @@ export function startRumAssembly(
     ({ startTime, rawRumEvent, domainContext, savedCommonContext, customerContext }) => {
       const viewContext = parentContexts.findView(startTime)
       const urlContext = urlContexts.findUrl(startTime)
-      if (session.isTracked(startTime) && viewContext && urlContext) {
+      const session = sessionManager.findTrackedSession(startTime)
+      if (session && viewContext && urlContext) {
         const actionContext = parentContexts.findAction(startTime)
         const commonContext = savedCommonContext || getCommonContext()
         const rumContext: RumContext = {
@@ -92,7 +93,7 @@ export function startRumAssembly(
             format_version: 2,
             drift: currentDrift(),
             session: {
-              plan: session.hasReplayPlan(startTime) ? RumSessionPlan.REPLAY : RumSessionPlan.LITE,
+              plan: session.hasReplayPlan ? RumSessionPlan.REPLAY : RumSessionPlan.LITE,
             },
             browser_sdk_version: canUseEventBridge() ? buildEnv.sdkVersion : undefined,
           },
@@ -102,7 +103,7 @@ export function startRumAssembly(
           date: timeStampNow(),
           service: configuration.service,
           session: {
-            id: session.getId(startTime)!,
+            id: session.id,
             type: syntheticsContext ? SessionType.SYNTHETICS : ciContext ? SessionType.CI_TEST : SessionType.USER,
           },
           synthetics: syntheticsContext,

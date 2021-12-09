@@ -8,14 +8,13 @@ import { relativeNow, RelativeTime, clocksOrigin } from '../../tools/timeUtils'
 import { tryOldCookiesMigration } from './oldCookiesMigration'
 import { startSessionStore, SESSION_TIME_OUT_DELAY } from './sessionStore'
 
-export interface Session<TrackingType extends string> {
-  getId: (startTime?: RelativeTime) => string | undefined
-  getTrackingType: (startTime?: RelativeTime) => TrackingType | undefined
+export interface SessionManager<TrackingType extends string> {
+  findActiveSession: (startTime?: RelativeTime) => SessionContext<TrackingType> | undefined
   renewObservable: Observable<void>
   expireObservable: Observable<void>
 }
 
-interface SessionContext<TrackingType extends string> extends Context {
+export interface SessionContext<TrackingType extends string> extends Context {
   id: string
   trackingType: TrackingType
 }
@@ -24,11 +23,11 @@ export const VISIBILITY_CHECK_DELAY = utils.ONE_MINUTE
 const SESSION_CONTEXT_TIMEOUT_DELAY = SESSION_TIME_OUT_DELAY
 let stopCallbacks: Array<() => void> = []
 
-export function startSessionManagement<TrackingType extends string>(
+export function startSessionManager<TrackingType extends string>(
   options: CookieOptions,
   productKey: string,
   computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean }
-): Session<TrackingType> {
+): SessionManager<TrackingType> {
   tryOldCookiesMigration(options)
   const sessionStore = startSessionStore(options, productKey, computeSessionState)
   stopCallbacks.push(() => sessionStore.stop())
@@ -57,14 +56,13 @@ export function startSessionManagement<TrackingType extends string>(
   }
 
   return {
-    getId: (startTime) => sessionContextHistory.find(startTime)?.id,
-    getTrackingType: (startTime) => sessionContextHistory.find(startTime)?.trackingType,
+    findActiveSession: (startTime) => sessionContextHistory.find(startTime),
     renewObservable: sessionStore.renewObservable,
     expireObservable: sessionStore.expireObservable,
   }
 }
 
-export function stopSessionManagement() {
+export function stopSessionManager() {
   stopCallbacks.forEach((e) => e())
   stopCallbacks = []
 }

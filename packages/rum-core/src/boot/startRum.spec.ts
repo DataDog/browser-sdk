@@ -9,7 +9,7 @@ import {
   updateExperimentalFeatures,
   Context,
 } from '@datadog/browser-core'
-import { createRumSessionMock, RumSessionMock } from '../../test/mockRumSession'
+import { createRumSessionManagerMock, RumSessionManagerMock } from '../../test/mockRumSessionManager'
 import { noopRecorderApi, setup, TestSetupBuilder } from '../../test/specHelper'
 import { RumPerformanceNavigationTiming, RumPerformanceEntry } from '../browser/performanceCollection'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
@@ -18,7 +18,7 @@ import { startViewCollection } from '../domain/rumEventsCollection/view/viewColl
 import { RumEvent } from '../rumEvent.types'
 import { LocationChange } from '../browser/locationChangeObservable'
 import { startLongTaskCollection } from '../domain/rumEventsCollection/longTask/longTaskCollection'
-import { RumSession } from '..'
+import { RumSessionManager } from '..'
 import { initEventBridgeStub, deleteEventBridgeStub } from '../../../core/test/specHelper'
 import { startRumEventCollection } from './startRum'
 
@@ -34,7 +34,7 @@ function startRum(
   applicationId: string,
   lifeCycle: LifeCycle,
   configuration: Configuration,
-  session: RumSession,
+  sessionManager: RumSessionManager,
   location: Location,
   domMutationObservable: Observable<void>,
   locationChangeObservable: Observable<LocationChange>
@@ -44,7 +44,7 @@ function startRum(
     lifeCycle,
     configuration,
     location,
-    session,
+    sessionManager,
     locationChangeObservable,
     () => ({
       context: {},
@@ -61,7 +61,7 @@ function startRum(
     noopRecorderApi
   )
 
-  startLongTaskCollection(lifeCycle, session)
+  startLongTaskCollection(lifeCycle, sessionManager)
   return {
     stop: () => {
       rumEventCollectionStop()
@@ -85,7 +85,7 @@ describe('rum session', () => {
         location,
         lifeCycle,
         configuration,
-        session,
+        sessionManager,
         domMutationObservable,
         locationChangeObservable,
       }) => {
@@ -94,7 +94,7 @@ describe('rum session', () => {
           applicationId,
           lifeCycle,
           configuration,
-          session,
+          sessionManager,
           location,
           domMutationObservable,
           locationChangeObservable
@@ -108,8 +108,8 @@ describe('rum session', () => {
   })
 
   it('when the session is renewed, a new view event should be sent', () => {
-    const session = createRumSessionMock().setId('42')
-    const { lifeCycle } = setupBuilder.withSession(session).build()
+    const session = createRumSessionManagerMock().setId('42')
+    const { lifeCycle } = setupBuilder.withSessionManager(session).build()
 
     expect(serverRumEvents.length).toEqual(1)
     expect(serverRumEvents[0].type).toEqual('view')
@@ -128,7 +128,7 @@ describe('rum session', () => {
 })
 
 describe('rum session keep alive', () => {
-  let session: RumSessionMock
+  let sessionManager: RumSessionManagerMock
   let setupBuilder: TestSetupBuilder
   let serverRumEvents: RumEvent[]
 
@@ -136,17 +136,17 @@ describe('rum session keep alive', () => {
     if (isIE()) {
       pending('no full rum support')
     }
-    session = createRumSessionMock().setId('1234')
+    sessionManager = createRumSessionManagerMock().setId('1234')
     setupBuilder = setup()
       .withFakeClock()
-      .withSession(session)
+      .withSessionManager(sessionManager)
       .beforeBuild(
         ({
           applicationId,
           location,
           lifeCycle,
           configuration,
-          session,
+          sessionManager,
           domMutationObservable,
           locationChangeObservable,
         }) => {
@@ -155,7 +155,7 @@ describe('rum session keep alive', () => {
             applicationId,
             lifeCycle,
             configuration,
-            session,
+            sessionManager,
             location,
             domMutationObservable,
             locationChangeObservable
@@ -188,7 +188,7 @@ describe('rum session keep alive', () => {
     expect(serverRumEvents[1].type).toEqual('view')
   })
 
-  it('should not send view update when session is expired', () => {
+  it('should not send view update when sessionManager is expired', () => {
     const { clock } = setupBuilder.build()
 
     // clear initial events
@@ -196,7 +196,7 @@ describe('rum session keep alive', () => {
     serverRumEvents.length = 0
 
     // expire session
-    session.setNotTracked()
+    sessionManager.setNotTracked()
 
     clock.tick(SESSION_KEEP_ALIVE_INTERVAL * 0.1)
 
@@ -224,7 +224,7 @@ describe('rum events url', () => {
         location,
         lifeCycle,
         configuration,
-        session,
+        sessionManager,
         domMutationObservable,
         locationChangeObservable,
       }) => {
@@ -233,7 +233,7 @@ describe('rum events url', () => {
           applicationId,
           lifeCycle,
           configuration,
-          session,
+          sessionManager,
           location,
           domMutationObservable,
           locationChangeObservable
@@ -315,13 +315,13 @@ describe('startRumEventCollection', () => {
     const eventBridgeStub = initEventBridgeStub()
     sendSpy = spyOn(eventBridgeStub, 'send')
     setupBuilder = setupBuilder = setup().beforeBuild(
-      ({ applicationId, location, lifeCycle, configuration, session, locationChangeObservable }) =>
+      ({ applicationId, location, lifeCycle, configuration, sessionManager, locationChangeObservable }) =>
         startRumEventCollection(
           applicationId,
           lifeCycle,
           configuration,
           location,
-          session,
+          sessionManager,
           locationChangeObservable,
           () => ({
             context: {},
