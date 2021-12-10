@@ -1,21 +1,13 @@
 import { BuildEnv } from '../../boot/init'
 import { timeStampNow } from '../../tools/timeUtils'
-import { generateUUID, includes } from '../../tools/utils'
+import { generateUUID } from '../../tools/utils'
 import { InitConfiguration } from './configuration'
 
 export const ENDPOINTS = {
-  alternate: {
-    logs: 'logs',
-    rum: 'rum',
-    sessionReplay: 'session-replay',
-  },
-  classic: {
-    logs: 'browser',
-    rum: 'rum',
-    // session-replay has no classic endpoint
-    sessionReplay: undefined,
-  },
-}
+  logs: 'logs',
+  rum: 'rum',
+  sessionReplay: 'session-replay',
+} as const
 
 const INTAKE_TRACKS = {
   logs: 'logs',
@@ -23,17 +15,10 @@ const INTAKE_TRACKS = {
   sessionReplay: 'replay',
 }
 
-export type EndpointType = keyof typeof ENDPOINTS[IntakeType]
+type EndpointType = keyof typeof ENDPOINTS
 
 export const INTAKE_SITE_US = 'datadoghq.com'
-const INTAKE_SITE_US3 = 'us3.datadoghq.com'
-const INTAKE_SITE_GOV = 'ddog-gov.com'
-const INTAKE_SITE_EU = 'datadoghq.eu'
 
-const CLASSIC_ALLOWED_SITES = [INTAKE_SITE_US, INTAKE_SITE_EU]
-const INTAKE_V1_ALLOWED_SITES = [INTAKE_SITE_US, INTAKE_SITE_US3, INTAKE_SITE_EU, INTAKE_SITE_GOV]
-
-type IntakeType = keyof typeof ENDPOINTS
 export type EndpointBuilder = ReturnType<typeof createEndpointBuilder>
 
 export function createEndpointBuilder(
@@ -43,17 +28,7 @@ export function createEndpointBuilder(
   source?: string
 ) {
   const sdkVersion = buildEnv.sdkVersion
-  const {
-    site = INTAKE_SITE_US,
-    clientToken,
-    env,
-    proxyHost,
-    proxyUrl,
-    service,
-    version,
-    intakeApiVersion,
-    useAlternateIntakeDomains,
-  } = initConfiguration
+  const { site = INTAKE_SITE_US, clientToken, env, proxyHost, proxyUrl, service, version } = initConfiguration
 
   const host = buildHost(endpointType)
   const path = buildPath(endpointType)
@@ -75,19 +50,15 @@ export function createEndpointBuilder(
   }
 
   function buildHost(endpointType: EndpointType) {
-    if (shouldUseAlternateDomain(endpointType)) {
-      const endpoint = ENDPOINTS.alternate[endpointType]
-      const domainParts = site.split('.')
-      const extension = domainParts.pop()
-      const suffix = `${domainParts.join('-')}.${extension!}`
-      return `${endpoint}.browser-intake-${suffix}`
-    }
-    const endpoint = ENDPOINTS.classic[endpointType]!
-    return `${endpoint}-http-intake.logs.${site}`
+    const endpoint = ENDPOINTS[endpointType]
+    const domainParts = site.split('.')
+    const extension = domainParts.pop()
+    const suffix = `${domainParts.join('-')}.${extension!}`
+    return `${endpoint}.browser-intake-${suffix}`
   }
 
   function buildPath(endpointType: EndpointType) {
-    return shouldUseIntakeV2(endpointType) ? `/api/v2/${INTAKE_TRACKS[endpointType]}` : `/v1/input/${clientToken}`
+    return `/api/v2/${INTAKE_TRACKS[endpointType]}`
   }
 
   function buildQueryParameters(endpointType: EndpointType, source?: string) {
@@ -97,29 +68,19 @@ export function createEndpointBuilder(
       `${service ? `,service:${service}` : ''}` +
       `${version ? `,version:${version}` : ''}`
 
-    let parameters = `ddsource=${source || 'browser'}&ddtags=${encodeURIComponent(tags)}`
-
-    if (shouldUseIntakeV2(endpointType)) {
-      parameters +=
-        `&dd-api-key=${clientToken}` +
-        `&dd-evp-origin-version=${encodeURIComponent(sdkVersion)}` +
-        `&dd-evp-origin=browser` +
-        `&dd-request-id=${generateUUID()}`
-    }
+    let parameters =
+      `ddsource=${source || 'browser'}` +
+      `&ddtags=${encodeURIComponent(tags)}` +
+      `&dd-api-key=${clientToken}` +
+      `&dd-evp-origin-version=${encodeURIComponent(sdkVersion)}` +
+      `&dd-evp-origin=browser` +
+      `&dd-request-id=${generateUUID()}`
 
     if (endpointType === 'rum') {
       parameters += `&batch_time=${timeStampNow()}`
     }
 
     return parameters
-  }
-
-  function shouldUseIntakeV2(endpointType?: EndpointType): boolean {
-    return intakeApiVersion === 2 || !includes(INTAKE_V1_ALLOWED_SITES, site) || endpointType === 'sessionReplay'
-  }
-
-  function shouldUseAlternateDomain(endpointType?: EndpointType): boolean {
-    return useAlternateIntakeDomains || !includes(CLASSIC_ALLOWED_SITES, site) || endpointType === 'sessionReplay'
   }
 
   return {

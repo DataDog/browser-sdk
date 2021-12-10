@@ -86,8 +86,6 @@ function computeReplicaConfiguration(
     site: INTAKE_SITE_US,
     applicationId: initConfiguration.replica.applicationId,
     clientToken: initConfiguration.replica.clientToken,
-    useAlternateIntakeDomains: true,
-    intakeApiVersion: 2,
   }
 
   const replicaEndpointBuilders = {
