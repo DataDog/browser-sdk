@@ -10,9 +10,12 @@ import {
   deepClone,
   InitConfiguration,
   canUseEventBridge,
+  updateExperimentalFeatures,
+  buildConfiguration,
 } from '@datadog/browser-core'
 import { LogsInitConfiguration } from '../domain/configuration'
 import { HandlerType, Logger, LogsMessage, StatusType } from '../domain/logger'
+import { buildEnv } from './buildEnv'
 import { startLogs } from './startLogs'
 
 export interface LoggerConfiguration {
@@ -50,7 +53,10 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
         return
       }
 
-      sendLogStrategy = startLogsImpl(initConfiguration, logger)
+      updateExperimentalFeatures(initConfiguration.enableExperimentalFeatures)
+      const configuration = buildConfiguration(initConfiguration, buildEnv)
+
+      sendLogStrategy = startLogsImpl(initConfiguration, configuration, logger)
       getInitConfigurationStrategy = () => deepClone(initConfiguration)
       beforeInitSendLog.drain()
 

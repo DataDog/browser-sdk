@@ -180,14 +180,14 @@ describe('logs', () => {
       updateExperimentalFeatures(['event-bridge'])
       const sendSpy = spyOn(initEventBridgeStub(), 'send')
 
-      let configuration = { ...baseConfiguration, sampleRate: 0 } as LogsInitConfiguration
-      let sendLog = originalStartLogs(configuration, new Logger(noop))
+      let configuration = { ...baseConfiguration, sampleRate: 0 } as LogsConfiguration
+      let sendLog = originalStartLogs({} as LogsInitConfiguration, configuration, new Logger(noop))
       sendLog(DEFAULT_MESSAGE, {})
 
       expect(sendSpy).not.toHaveBeenCalled()
 
-      configuration = { ...baseConfiguration, sampleRate: 100 } as LogsInitConfiguration
-      sendLog = originalStartLogs(configuration, new Logger(noop))
+      configuration = { ...baseConfiguration, sampleRate: 100 } as LogsConfiguration
+      sendLog = originalStartLogs({} as LogsInitConfiguration, configuration, new Logger(noop))
       sendLog(DEFAULT_MESSAGE, {})
 
       expect(sendSpy).toHaveBeenCalled()

@@ -13,8 +13,6 @@ import {
   canUseEventBridge,
   getEventBridge,
   getRelativeTime,
-  updateExperimentalFeatures,
-  buildConfiguration,
   startInternalMonitoring,
 } from '@datadog/browser-core'
 import { trackNetworkError } from '../domain/trackNetworkError'
@@ -23,16 +21,17 @@ import { LogsSessionManager, startLogsSessionManager, startLogsSessionManagerStu
 import { LogsEvent } from '../logsEvent.types'
 import { startLoggerBatch } from '../transport/startLoggerBatch'
 import { LogsConfiguration } from '../domain/configuration'
-import { buildEnv } from './buildEnv'
 
 export interface LogsInitConfiguration extends InitConfiguration {
   forwardErrorsToLogs?: boolean | undefined
   beforeSend?: ((event: LogsEvent) => void | boolean) | undefined
 }
 
-export function startLogs(initConfiguration: LogsInitConfiguration, errorLogger: Logger) {
-  updateExperimentalFeatures(initConfiguration.enableExperimentalFeatures)
-  const configuration = buildConfiguration(initConfiguration, buildEnv)
+export function startLogs(
+  initConfiguration: LogsInitConfiguration,
+  configuration: LogsConfiguration,
+  errorLogger: Logger
+) {
   const internalMonitoring = startInternalMonitoring(configuration)
 
   const errorObservable = new Observable<RawError>()
