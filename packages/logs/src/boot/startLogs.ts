@@ -1,7 +1,6 @@
 import {
   areCookiesAuthorized,
   combine,
-  Configuration,
   Context,
   createEventRateLimiter,
   InternalMonitoring,
@@ -23,6 +22,7 @@ import { Logger, LogsMessage, StatusType } from '../domain/logger'
 import { LogsSessionManager, startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import { LogsEvent } from '../logsEvent.types'
 import { startLoggerBatch } from '../transport/startLoggerBatch'
+import { LogsConfiguration } from '../domain/configuration'
 import { buildEnv } from './buildEnv'
 
 export interface LogsInitConfiguration extends InitConfiguration {
@@ -52,7 +52,7 @@ export function startLogs(initConfiguration: LogsInitConfiguration, errorLogger:
 }
 
 export function doStartLogs(
-  configuration: Configuration,
+  configuration: LogsConfiguration,
   errorObservable: Observable<RawError>,
   internalMonitoring: InternalMonitoring,
   sessionManager: LogsSessionManager,
@@ -111,7 +111,7 @@ export function doStartLogs(
 
 export function buildAssemble(
   sessionManager: LogsSessionManager,
-  configuration: Configuration,
+  configuration: LogsConfiguration,
   reportError: (error: RawError) => void
 ) {
   const errorRateLimiter = createEventRateLimiter(StatusType.error, configuration.maxErrorsPerMinute, reportError)

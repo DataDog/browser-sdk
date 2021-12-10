@@ -1,4 +1,4 @@
-import { InitConfiguration } from '@datadog/browser-core'
+import { Configuration, InitConfiguration } from '@datadog/browser-core'
 import { LogsEvent } from '../logsEvent.types'
 
 export interface LogsInitConfiguration extends InitConfiguration {
@@ -7,3 +7,5 @@ export interface LogsInitConfiguration extends InitConfiguration {
 }
 
 export type HybridInitConfiguration = Omit<LogsInitConfiguration, 'clientToken'>
+
+export type LogsConfiguration = Configuration
