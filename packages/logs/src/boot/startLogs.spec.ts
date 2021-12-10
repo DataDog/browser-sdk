@@ -20,7 +20,7 @@ import {
   mockClock,
   stubEndpointBuilder,
 } from '../../../core/test/specHelper'
-import { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
+import { LogsConfiguration } from '../domain/configuration'
 
 import { Logger, LogsMessage, StatusType } from '../domain/logger'
 import { LogsSessionManager } from '../domain/logsSessionManager'
@@ -181,13 +181,13 @@ describe('logs', () => {
       const sendSpy = spyOn(initEventBridgeStub(), 'send')
 
       let configuration = { ...baseConfiguration, sampleRate: 0 } as LogsConfiguration
-      let sendLog = originalStartLogs({} as LogsInitConfiguration, configuration, new Logger(noop))
+      let sendLog = originalStartLogs(configuration, new Logger(noop))
       sendLog(DEFAULT_MESSAGE, {})
 
       expect(sendSpy).not.toHaveBeenCalled()
 
       configuration = { ...baseConfiguration, sampleRate: 100 } as LogsConfiguration
-      sendLog = originalStartLogs({} as LogsInitConfiguration, configuration, new Logger(noop))
+      sendLog = originalStartLogs(configuration, new Logger(noop))
       sendLog(DEFAULT_MESSAGE, {})
 
       expect(sendSpy).toHaveBeenCalled()

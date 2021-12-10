@@ -18,18 +18,14 @@ import { trackNetworkError } from '../domain/trackNetworkError'
 import { Logger, LogsMessage, StatusType } from '../domain/logger'
 import { LogsSessionManager, startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import { startLoggerBatch } from '../transport/startLoggerBatch'
-import { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
+import { LogsConfiguration } from '../domain/configuration'
 
-export function startLogs(
-  initConfiguration: LogsInitConfiguration,
-  configuration: LogsConfiguration,
-  errorLogger: Logger
-) {
+export function startLogs(configuration: LogsConfiguration, errorLogger: Logger) {
   const internalMonitoring = startInternalMonitoring(configuration)
 
   const errorObservable = new Observable<RawError>()
 
-  if (initConfiguration.forwardErrorsToLogs !== false) {
+  if (configuration.forwardErrorsToLogs) {
     trackConsoleError(errorObservable)
     trackRuntimeError(errorObservable)
     trackNetworkError(configuration, errorObservable)

@@ -9,14 +9,27 @@ export interface LogsInitConfiguration extends InitConfiguration {
 
 export type HybridInitConfiguration = Omit<LogsInitConfiguration, 'clientToken'>
 
-export type LogsConfiguration = Configuration
+const DEFAULT_LOGS_CONFIGURATION = {
+  forwardErrorsToLogs: false,
+}
+
+export type LogsConfiguration = Configuration & typeof DEFAULT_LOGS_CONFIGURATION
 
 export function validateAndBuildLogsConfiguration(
   initConfiguration: LogsInitConfiguration
 ): LogsConfiguration | undefined {
-  const configuration = validateAndBuildConfiguration(initConfiguration, buildEnv)
-  if (!configuration) {
+  const baseConfiguration = validateAndBuildConfiguration(initConfiguration, buildEnv)
+  if (!baseConfiguration) {
     return
+  }
+
+  const configuration: LogsConfiguration = {
+    ...baseConfiguration,
+    ...DEFAULT_LOGS_CONFIGURATION,
+  }
+
+  if (initConfiguration.forwardErrorsToLogs !== undefined) {
+    configuration.forwardErrorsToLogs = !!initConfiguration.forwardErrorsToLogs
   }
 
   return configuration
