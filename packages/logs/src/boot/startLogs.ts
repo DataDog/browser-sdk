@@ -7,7 +7,6 @@ import {
   Observable,
   RawError,
   RelativeTime,
-  InitConfiguration,
   trackRuntimeError,
   trackConsoleError,
   canUseEventBridge,
@@ -18,14 +17,8 @@ import {
 import { trackNetworkError } from '../domain/trackNetworkError'
 import { Logger, LogsMessage, StatusType } from '../domain/logger'
 import { LogsSessionManager, startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
-import { LogsEvent } from '../logsEvent.types'
 import { startLoggerBatch } from '../transport/startLoggerBatch'
-import { LogsConfiguration } from '../domain/configuration'
-
-export interface LogsInitConfiguration extends InitConfiguration {
-  forwardErrorsToLogs?: boolean | undefined
-  beforeSend?: ((event: LogsEvent) => void | boolean) | undefined
-}
+import { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
 
 export function startLogs(
   initConfiguration: LogsInitConfiguration,

@@ -102,6 +102,11 @@ describe('validateAndBuildConfiguration', () => {
       ).toBeUndefined()
       expect(displaySpy).toHaveBeenCalledOnceWith('Sample Rate should be a number between 0 and 100')
     })
+
+    it("shouldn't display any error if the configuration is correct", () => {
+      validateAndBuildConfiguration({ clientToken: 'yes', sampleRate: 1 }, buildEnv)
+      expect(displaySpy).not.toHaveBeenCalled()
+    })
   })
 
   describe('cookie options', () => {
