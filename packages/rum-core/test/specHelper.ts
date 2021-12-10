@@ -92,12 +92,13 @@ export function setup(): TestSetupBuilder {
     selectInForegroundPeriodsFor: () => undefined,
     stop: noop,
   }
+  const FAKE_APP_ID = 'appId'
   const configuration: Partial<RumConfiguration> = {
     ...DEFAULT_CONFIGURATION,
     ...DEFAULT_RUM_CONFIGURATION,
     ...SPEC_ENDPOINTS,
+    applicationId: FAKE_APP_ID,
   }
-  const FAKE_APP_ID = 'appId'
 
   // ensure that events generated before build are collected
   const rawRumEventsCollected = lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {

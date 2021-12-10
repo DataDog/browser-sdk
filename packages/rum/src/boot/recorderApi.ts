@@ -1,7 +1,6 @@
 import { canUseEventBridge, noop, runOnReadyState } from '@datadog/browser-core'
 import {
   LifeCycleEventType,
-  RumInitConfiguration,
   LifeCycle,
   ParentContexts,
   RumSessionManager,
@@ -72,7 +71,6 @@ export function makeRecorderApi(
 
     onRumStart: (
       lifeCycle: LifeCycle,
-      initConfiguration: RumInitConfiguration,
       configuration: RumConfiguration,
       sessionManager: RumSessionManager,
       parentContexts: ParentContexts
@@ -122,7 +120,6 @@ export function makeRecorderApi(
 
             const { stop: stopRecording } = startRecordingImpl(
               lifeCycle,
-              initConfiguration.applicationId,
               configuration,
               sessionManager,
               parentContexts,

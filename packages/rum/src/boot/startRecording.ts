@@ -14,7 +14,6 @@ import { RawRecord, RecordType } from '../types'
 
 export function startRecording(
   lifeCycle: LifeCycle,
-  applicationId: string,
   configuration: RumConfiguration,
   sessionManager: RumSessionManager,
   parentContexts: ParentContexts,
@@ -22,7 +21,7 @@ export function startRecording(
 ) {
   const { addRecord, stop: stopSegmentCollection } = startSegmentCollection(
     lifeCycle,
-    applicationId,
+    configuration.applicationId,
     sessionManager,
     parentContexts,
     (data, meta, rawSegmentSize, flushReason) =>

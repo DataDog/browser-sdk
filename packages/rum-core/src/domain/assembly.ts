@@ -57,7 +57,6 @@ const OTHER_EVENTS_MODIFIABLE_FIELD_PATHS = [
 type Mutable<T> = { -readonly [P in keyof T]: T[P] }
 
 export function startRumAssembly(
-  applicationId: string,
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   sessionManager: RumSessionManager,
@@ -95,7 +94,7 @@ export function startRumAssembly(
             browser_sdk_version: canUseEventBridge() ? buildEnv.sdkVersion : undefined,
           },
           application: {
-            id: applicationId,
+            id: configuration.applicationId,
           },
           date: timeStampNow(),
           service: configuration.service,

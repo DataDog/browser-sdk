@@ -31,6 +31,8 @@ export const DEFAULT_RUM_CONFIGURATION = {
 
 export type RumConfiguration = Configuration &
   typeof DEFAULT_RUM_CONFIGURATION & {
+    applicationId: string
+
     actionNameAttribute: string | undefined
   }
 
@@ -50,6 +52,7 @@ export function validateAndBuildRumConfiguration(
   const configuration: RumConfiguration = {
     ...baseConfiguration,
     ...DEFAULT_RUM_CONFIGURATION,
+    applicationId: initConfiguration.applicationId,
     actionNameAttribute: initConfiguration.actionNameAttribute,
   }
 

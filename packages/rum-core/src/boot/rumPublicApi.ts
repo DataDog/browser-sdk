@@ -29,8 +29,7 @@ import { startRum } from './startRum'
 
 export type RumPublicApi = ReturnType<typeof makeRumPublicApi>
 
-export type StartRum<C extends RumInitConfiguration = RumInitConfiguration> = (
-  initConfiguration: C,
+export type StartRum = (
   configuration: RumConfiguration,
   internalMonitoring: InternalMonitoring,
   getCommonContext: () => CommonContext,
@@ -45,7 +44,6 @@ export interface RecorderApi {
   stop: () => void
   onRumStart: (
     lifeCycle: LifeCycle,
-    initConfiguration: RumInitConfiguration,
     configuration: RumConfiguration,
     sessionManager: RumSessionManager,
     parentContexts: ParentContexts
@@ -57,8 +55,8 @@ interface RumPublicApiOptions {
   ignoreInitIfSyntheticsWillInjectRum?: boolean
 }
 
-export function makeRumPublicApi<C extends RumInitConfiguration>(
-  startRumImpl: StartRum<C>,
+export function makeRumPublicApi(
+  startRumImpl: StartRum,
   recorderApi: RecorderApi,
   { ignoreInitIfSyntheticsWillInjectRum = true }: RumPublicApiOptions = {}
 ) {
@@ -91,7 +89,7 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(
     })
   }
 
-  function initRum(initConfiguration: C) {
+  function initRum(initConfiguration: RumInitConfiguration) {
     // If we are in a Synthetics test configured to automatically inject a RUM instance, we want to
     // completely discard the customer application RUM instance by ignoring their init() call.  But,
     // we should not ignore the init() call from the Synthetics-injected RUM instance, so the
@@ -118,7 +116,7 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(
     const internalMonitoring = startInternalMonitoring(configuration)
 
     if (!configuration.trackViewsManually) {
-      doStartRum(initConfiguration, configuration, internalMonitoring)
+      doStartRum(configuration, internalMonitoring)
     } else {
       // drain beforeInitCalls by buffering them until we start RUM
       // if we get a startView, drain re-buffered calls before continuing to drain beforeInitCalls
@@ -127,7 +125,7 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(
       bufferApiCalls = new BoundedBuffer()
 
       startViewStrategy = (name) => {
-        doStartRum(initConfiguration, configuration, internalMonitoring, name)
+        doStartRum(configuration, internalMonitoring, name)
       }
       beforeInitCalls.drain()
     }
@@ -137,13 +135,11 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(
   }
 
   function doStartRum(
-    initConfiguration: C,
     configuration: RumConfiguration,
     internalMonitoring: InternalMonitoring,
     initialViewName?: string
   ) {
     const startRumResults = startRumImpl(
-      initConfiguration,
       configuration,
       internalMonitoring,
       () => ({
@@ -166,7 +162,6 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(
 
     recorderApi.onRumStart(
       startRumResults.lifeCycle,
-      initConfiguration,
       configuration,
       startRumResults.session,
       startRumResults.parentContexts
