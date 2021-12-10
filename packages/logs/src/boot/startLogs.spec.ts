@@ -21,11 +21,12 @@ import {
   mockClock,
   stubEndpointBuilder,
 } from '../../../core/test/specHelper'
+import { LogsInitConfiguration } from '../domain/configuration'
 
 import { Logger, LogsMessage, StatusType } from '../domain/logger'
 import { LogsSessionManager } from '../domain/logsSessionManager'
 import { LogsEvent } from '../logsEvent.types'
-import { buildAssemble, doStartLogs, LogsInitConfiguration, startLogs as originalStartLogs } from './startLogs'
+import { buildAssemble, doStartLogs, startLogs as originalStartLogs } from './startLogs'
 
 interface SentMessage extends LogsMessage {
   logger?: { name: string }

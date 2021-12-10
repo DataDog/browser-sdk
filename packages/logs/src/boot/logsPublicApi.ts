@@ -11,16 +11,15 @@ import {
   InitConfiguration,
   canUseEventBridge,
 } from '@datadog/browser-core'
+import { LogsInitConfiguration } from '../domain/configuration'
 import { HandlerType, Logger, LogsMessage, StatusType } from '../domain/logger'
-import { startLogs, LogsInitConfiguration } from './startLogs'
+import { startLogs } from './startLogs'
 
 export interface LoggerConfiguration {
   level?: StatusType
   handler?: HandlerType | HandlerType[]
   context?: object
 }
-
-export type HybridInitConfiguration = Omit<LogsInitConfiguration, 'clientToken'>
 
 export type LogsPublicApi = ReturnType<typeof makeLogsPublicApi>
 

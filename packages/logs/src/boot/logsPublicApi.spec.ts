@@ -7,10 +7,10 @@ import {
   resetExperimentalFeatures,
 } from '@datadog/browser-core'
 import { Clock, deleteEventBridgeStub, initEventBridgeStub, mockClock } from '../../../core/test/specHelper'
+import { HybridInitConfiguration, LogsInitConfiguration } from '../domain/configuration'
 
 import { HandlerType, LogsMessage, StatusType } from '../domain/logger'
-import { HybridInitConfiguration, LogsPublicApi, makeLogsPublicApi, StartLogs } from './logsPublicApi'
-import { LogsInitConfiguration } from './startLogs'
+import { LogsPublicApi, makeLogsPublicApi, StartLogs } from './logsPublicApi'
 
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx' }
 
