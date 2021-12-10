@@ -5,6 +5,5 @@ export {
   buildCookieOptions,
   BeforeSendCallback,
   DefaultPrivacyLevel,
-  buildConfiguration,
   validateAndBuildConfiguration,
 } from './configuration'

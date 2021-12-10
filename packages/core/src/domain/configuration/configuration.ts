@@ -127,23 +127,6 @@ export function validateAndBuildConfiguration(
   return configuration
 }
 
-export function buildConfiguration(initConfiguration: InitConfiguration, buildEnv: BuildEnv): Configuration {
-  const configuration: Configuration = {
-    beforeSend:
-      initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
-    cookieOptions: buildCookieOptions(initConfiguration),
-    service: initConfiguration.service,
-    ...computeTransportConfiguration(initConfiguration, buildEnv),
-    ...DEFAULT_CONFIGURATION,
-  }
-
-  if ('sampleRate' in initConfiguration) {
-    configuration.sampleRate = initConfiguration.sampleRate!
-  }
-
-  return configuration
-}
-
 export function buildCookieOptions(initConfiguration: InitConfiguration) {
   const cookieOptions: CookieOptions = {}
 
