@@ -15,7 +15,6 @@ import {
   InternalMonitoring,
   callMonitored,
   createHandlingStack,
-  DefaultPrivacyLevel,
   TimeStamp,
   RelativeTime,
   canUseEventBridge,
@@ -27,20 +26,11 @@ import {
 import { LifeCycle } from '../domain/lifeCycle'
 import { ParentContexts } from '../domain/parentContexts'
 import { RumSessionManager } from '../domain/rumSessionManager'
-import { RumEventDomainContext } from '../domainContext.types'
 import { CommonContext, User, ActionType, ReplayStats } from '../rawRumEvent.types'
-import { RumEvent } from '../rumEvent.types'
 import { willSyntheticsInjectRum } from '../domain/syntheticsContext'
+import { RumInitConfiguration } from '../domain/configuration'
 import { buildEnv } from './buildEnv'
 import { startRum } from './startRum'
-
-export interface RumInitConfiguration extends InitConfiguration {
-  applicationId: string
-  beforeSend?: ((event: RumEvent, context: RumEventDomainContext) => void | boolean) | undefined
-  defaultPrivacyLevel?: DefaultPrivacyLevel | undefined
-}
-
-export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
 
 export type RumPublicApi = ReturnType<typeof makeRumPublicApi>
 

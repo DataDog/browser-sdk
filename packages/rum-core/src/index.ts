@@ -1,4 +1,4 @@
-export { RumInitConfiguration, RumPublicApi, makeRumPublicApi, RecorderApi, StartRum } from './boot/rumPublicApi'
+export { RumPublicApi, makeRumPublicApi, RecorderApi, StartRum } from './boot/rumPublicApi'
 export {
   RumEvent,
   RumActionEvent,
@@ -24,3 +24,4 @@ export { LifeCycle, LifeCycleEventType } from './domain/lifeCycle'
 export { ParentContexts } from './domain/parentContexts'
 export { RumSessionManager, RumSessionPlan } from './domain/rumSessionManager'
 export { getMutationObserverConstructor } from './browser/domMutationObservable'
+export { RumInitConfiguration } from './domain/configuration'

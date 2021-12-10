@@ -16,15 +16,9 @@ import {
   setup,
   TestSetupBuilder,
 } from '../../test/specHelper'
+import { HybridInitConfiguration, RumInitConfiguration } from '../domain/configuration'
 import { ActionType } from '../rawRumEvent.types'
-import {
-  makeRumPublicApi,
-  RumPublicApi,
-  RumInitConfiguration,
-  StartRum,
-  RecorderApi,
-  HybridInitConfiguration,
-} from './rumPublicApi'
+import { makeRumPublicApi, RumPublicApi, StartRum, RecorderApi } from './rumPublicApi'
 
 const noopStartRum = (): ReturnType<StartRum> => ({
   addAction: () => undefined,

@@ -18,7 +18,8 @@ import { startRumBatch } from '../transport/startRumBatch'
 import { startRumEventBridge } from '../transport/startRumEventBridge'
 import { startUrlContexts } from '../domain/urlContexts'
 import { createLocationChangeObservable, LocationChange } from '../browser/locationChangeObservable'
-import { RecorderApi, RumInitConfiguration } from './rumPublicApi'
+import { RumInitConfiguration } from '../domain/configuration'
+import { RecorderApi } from './rumPublicApi'
 
 export function startRum(
   initConfiguration: RumInitConfiguration,
