@@ -1,10 +1,11 @@
-import { Configuration, noop, resetExperimentalFeatures, updateExperimentalFeatures } from '@datadog/browser-core'
+import { noop, resetExperimentalFeatures, updateExperimentalFeatures } from '@datadog/browser-core'
 import {
   RecorderApi,
   ParentContexts,
   LifeCycleEventType,
   RumInitConfiguration,
   LifeCycle,
+  RumConfiguration,
 } from '@datadog/browser-rum-core'
 import { createNewEvent, deleteEventBridgeStub, initEventBridgeStub } from '../../../core/test/specHelper'
 import { createRumSessionManagerMock, RumSessionManagerMock } from '../../../rum-core/test/mockRumSessionManager'
@@ -50,7 +51,13 @@ describe('makeRecorderApi', () => {
       startDeflateWorkerWith(FAKE_WORKER)
       recorderApi = makeRecorderApi(startRecordingSpy, startDeflateWorkerSpy)
       rumInit = (initConfiguration) => {
-        recorderApi.onRumStart(lifeCycle, initConfiguration, {} as Configuration, sessionManager, {} as ParentContexts)
+        recorderApi.onRumStart(
+          lifeCycle,
+          initConfiguration,
+          {} as RumConfiguration,
+          sessionManager,
+          {} as ParentContexts
+        )
       }
     })
   })

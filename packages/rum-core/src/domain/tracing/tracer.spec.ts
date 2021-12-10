@@ -1,11 +1,12 @@
-import { Configuration, DEFAULT_CONFIGURATION, isIE, objectEntries } from '@datadog/browser-core'
+import { DEFAULT_CONFIGURATION, isIE, objectEntries } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../test/specHelper'
 import { createRumSessionManagerMock, RumSessionManagerMock } from '../../../test/mockRumSessionManager'
 import { RumFetchCompleteContext, RumFetchStartContext, RumXhrStartContext } from '../requestCollection'
+import { RumConfiguration } from '../configuration'
 import { startTracer, TraceIdentifier } from './tracer'
 
 describe('tracer', () => {
-  const configuration: Partial<Configuration> = {
+  const configuration: Partial<RumConfiguration> = {
     ...DEFAULT_CONFIGURATION,
     allowedTracingOrigins: [window.location.origin],
   }
@@ -44,7 +45,7 @@ describe('tracer', () => {
     })
 
     it('should add traceId and spanId to context and add tracing headers', () => {
-      const tracer = startTracer(configuration as Configuration, sessionManager)
+      const tracer = startTracer(configuration as RumConfiguration, sessionManager)
       const context = { ...ALLOWED_DOMAIN_CONTEXT }
       tracer.traceXhr(context, (xhrStub as unknown) as XMLHttpRequest)
 
@@ -54,7 +55,7 @@ describe('tracer', () => {
     })
 
     it('should not trace request on disallowed domain', () => {
-      const tracer = startTracer(configuration as Configuration, sessionManager)
+      const tracer = startTracer(configuration as RumConfiguration, sessionManager)
       const context = { ...DISALLOWED_DOMAIN_CONTEXT }
       tracer.traceXhr(context, (xhrStub as unknown) as XMLHttpRequest)
 
@@ -64,7 +65,7 @@ describe('tracer', () => {
     })
 
     it('should not trace request during untracked session', () => {
-      const tracer = startTracer(configuration as Configuration, sessionManager.setNotTracked())
+      const tracer = startTracer(configuration as RumConfiguration, sessionManager.setNotTracked())
       const context = { ...ALLOWED_DOMAIN_CONTEXT }
       tracer.traceXhr(context, (xhrStub as unknown) as XMLHttpRequest)
 
@@ -74,13 +75,13 @@ describe('tracer', () => {
     })
 
     it('should trace requests on configured origins', () => {
-      const configurationWithTracingUrls: Partial<Configuration> = {
+      const configurationWithTracingUrls: Partial<RumConfiguration> = {
         ...configuration,
         allowedTracingOrigins: [/^https?:\/\/qux\.com/, 'http://bar.com'],
       }
       const stub = (xhrStub as unknown) as XMLHttpRequest
 
-      const tracer = startTracer(configurationWithTracingUrls as Configuration, sessionManager)
+      const tracer = startTracer(configurationWithTracingUrls as RumConfiguration, sessionManager)
 
       let context: Partial<RumXhrStartContext> = { url: 'http://qux.com' }
       tracer.traceXhr(context, stub)
@@ -102,7 +103,7 @@ describe('tracer', () => {
 
     it('should add traceId and spanId to context, and add tracing headers', () => {
       const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
-      const tracer = startTracer(configuration as Configuration, sessionManager)
+      const tracer = startTracer(configuration as RumConfiguration, sessionManager)
       tracer.traceFetch(context)
 
       expect(context.traceId).toBeDefined()
@@ -117,7 +118,7 @@ describe('tracer', () => {
         init,
       }
 
-      const tracer = startTracer(configuration as Configuration, sessionManager)
+      const tracer = startTracer(configuration as RumConfiguration, sessionManager)
       tracer.traceFetch(context)
 
       expect(context.init).not.toBe(init)
@@ -134,7 +135,7 @@ describe('tracer', () => {
         init: { headers, method: 'POST' },
       }
 
-      const tracer = startTracer(configuration as Configuration, sessionManager)
+      const tracer = startTracer(configuration as RumConfiguration, sessionManager)
       tracer.traceFetch(context)
 
       expect(context.init!.headers).not.toBe(headers)
@@ -155,7 +156,7 @@ describe('tracer', () => {
         init: { headers, method: 'POST' },
       }
 
-      const tracer = startTracer(configuration as Configuration, sessionManager)
+      const tracer = startTracer(configuration as RumConfiguration, sessionManager)
       tracer.traceFetch(context)
 
       expect(context.init!.headers).not.toBe(headers)
@@ -180,7 +181,7 @@ describe('tracer', () => {
         init: { headers, method: 'POST' },
       }
 
-      const tracer = startTracer(configuration as Configuration, sessionManager)
+      const tracer = startTracer(configuration as RumConfiguration, sessionManager)
       tracer.traceFetch(context)
 
       expect(context.init!.headers).not.toBe(headers)
@@ -208,7 +209,7 @@ describe('tracer', () => {
         input: request,
       }
 
-      const tracer = startTracer(configuration as Configuration, sessionManager)
+      const tracer = startTracer(configuration as RumConfiguration, sessionManager)
       tracer.traceFetch(context)
 
       expect(context.init).toBe(undefined)
@@ -229,7 +230,7 @@ describe('tracer', () => {
         }),
       }
 
-      const tracer = startTracer(configuration as Configuration, sessionManager)
+      const tracer = startTracer(configuration as RumConfiguration, sessionManager)
       tracer.traceFetch(context)
 
       expect(context.init!.headers).toEqual([
@@ -241,7 +242,7 @@ describe('tracer', () => {
     it('should not trace request on disallowed domain', () => {
       const context: Partial<RumFetchStartContext> = { ...DISALLOWED_DOMAIN_CONTEXT }
 
-      const tracer = startTracer(configuration as Configuration, sessionManager)
+      const tracer = startTracer(configuration as RumConfiguration, sessionManager)
       tracer.traceFetch(context)
 
       expect(context.traceId).toBeUndefined()
@@ -250,14 +251,14 @@ describe('tracer', () => {
     })
 
     it('should trace requests on configured urls', () => {
-      const configurationWithTracingUrls: Partial<Configuration> = {
+      const configurationWithTracingUrls: Partial<RumConfiguration> = {
         ...configuration,
         allowedTracingOrigins: [/^https?:\/\/qux\.com.*/, 'http://bar.com'],
       }
       const quxDomainContext: Partial<RumFetchStartContext> = { url: 'http://qux.com' }
       const barDomainContext: Partial<RumFetchStartContext> = { url: 'http://bar.com' }
 
-      const tracer = startTracer(configurationWithTracingUrls as Configuration, sessionManager)
+      const tracer = startTracer(configurationWithTracingUrls as RumConfiguration, sessionManager)
 
       tracer.traceFetch(quxDomainContext)
       tracer.traceFetch(barDomainContext)
@@ -270,7 +271,7 @@ describe('tracer', () => {
 
   describe('clearTracingIfCancelled', () => {
     it('should clear tracing if status is 0', () => {
-      const tracer = startTracer(configuration as Configuration, sessionManager)
+      const tracer = startTracer(configuration as RumConfiguration, sessionManager)
       const context: RumFetchCompleteContext = {
         status: 0,
 
@@ -284,7 +285,7 @@ describe('tracer', () => {
     })
 
     it('should not clear tracing if status is not 0', () => {
-      const tracer = startTracer(configuration as Configuration, sessionManager)
+      const tracer = startTracer(configuration as RumConfiguration, sessionManager)
       const context: RumFetchCompleteContext = {
         status: 200,
 

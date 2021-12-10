@@ -1,5 +1,10 @@
-import { Configuration } from '@datadog/browser-core'
-import { LifeCycle, LifeCycleEventType, ParentContexts, RumSessionManager } from '@datadog/browser-rum-core'
+import {
+  LifeCycle,
+  LifeCycleEventType,
+  ParentContexts,
+  RumConfiguration,
+  RumSessionManager,
+} from '@datadog/browser-rum-core'
 
 import { record } from '../domain/record'
 import { startSegmentCollection } from '../domain/segmentCollection'
@@ -10,7 +15,7 @@ import { RawRecord, RecordType } from '../types'
 export function startRecording(
   lifeCycle: LifeCycle,
   applicationId: string,
-  configuration: Configuration,
+  configuration: RumConfiguration,
   sessionManager: RumSessionManager,
   parentContexts: ParentContexts,
   worker: DeflateWorker

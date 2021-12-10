@@ -1,6 +1,5 @@
 import {
   RelativeTime,
-  Configuration,
   Observable,
   noop,
   relativeNow,
@@ -20,6 +19,7 @@ import { LocationChange } from '../browser/locationChangeObservable'
 import { startLongTaskCollection } from '../domain/rumEventsCollection/longTask/longTaskCollection'
 import { RumSessionManager } from '..'
 import { initEventBridgeStub, deleteEventBridgeStub } from '../../../core/test/specHelper'
+import { RumConfiguration } from '../domain/configuration'
 import { startRumEventCollection } from './startRum'
 
 function collectServerEvents(lifeCycle: LifeCycle) {
@@ -33,7 +33,7 @@ function collectServerEvents(lifeCycle: LifeCycle) {
 function startRum(
   applicationId: string,
   lifeCycle: LifeCycle,
-  configuration: Configuration,
+  configuration: RumConfiguration,
   sessionManager: RumSessionManager,
   location: Location,
   domMutationObservable: Observable<void>,

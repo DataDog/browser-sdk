@@ -1,5 +1,6 @@
-import { Configuration, DEFAULT_CONFIGURATION, isIE, RequestType } from '@datadog/browser-core'
+import { DEFAULT_CONFIGURATION, isIE, RequestType } from '@datadog/browser-core'
 import { FetchStub, FetchStubManager, SPEC_ENDPOINTS, stubFetch, stubXhr, withXhr } from '../../../core/test/specHelper'
+import { RumConfiguration } from './configuration'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { RequestCompleteEvent, RequestStartEvent, trackFetch, trackXhr } from './requestCollection'
 import { clearTracingIfNeeded, TraceIdentifier, Tracer } from './tracing/tracer'
@@ -36,7 +37,7 @@ describe('collect fetch', () => {
         context.spanId = new TraceIdentifier()
       },
     }
-    ;({ stop: stopFetchTracking } = trackFetch(lifeCycle, configuration as Configuration, tracerStub as Tracer))
+    ;({ stop: stopFetchTracking } = trackFetch(lifeCycle, configuration as RumConfiguration, tracerStub as Tracer))
 
     fetchStub = window.fetch as FetchStub
     window.onunhandledrejection = (ev: PromiseRejectionEvent) => {
@@ -156,7 +157,7 @@ describe('collect xhr', () => {
         context.spanId = new TraceIdentifier()
       },
     }
-    ;({ stop: stopXhrTracking } = trackXhr(lifeCycle, configuration as Configuration, tracerStub as Tracer))
+    ;({ stop: stopXhrTracking } = trackXhr(lifeCycle, configuration as RumConfiguration, tracerStub as Tracer))
   })
 
   afterEach(() => {

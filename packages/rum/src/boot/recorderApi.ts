@@ -1,4 +1,4 @@
-import { Configuration, canUseEventBridge, noop, runOnReadyState } from '@datadog/browser-core'
+import { canUseEventBridge, noop, runOnReadyState } from '@datadog/browser-core'
 import {
   LifeCycleEventType,
   RumInitConfiguration,
@@ -6,6 +6,7 @@ import {
   ParentContexts,
   RumSessionManager,
   RecorderApi,
+  RumConfiguration,
 } from '@datadog/browser-rum-core'
 import { getReplayStats } from '../domain/replayStats'
 import { startDeflateWorker } from '../domain/segmentCollection/startDeflateWorker'
@@ -72,7 +73,7 @@ export function makeRecorderApi(
     onRumStart: (
       lifeCycle: LifeCycle,
       initConfiguration: RumInitConfiguration,
-      configuration: Configuration,
+      configuration: RumConfiguration,
       sessionManager: RumSessionManager,
       parentContexts: ParentContexts
     ) => {

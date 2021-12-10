@@ -1,4 +1,4 @@
-import { DefaultPrivacyLevel, InitConfiguration } from '@datadog/browser-core'
+import { Configuration, DefaultPrivacyLevel, InitConfiguration } from '@datadog/browser-core'
 import { RumEventDomainContext } from '../domainContext.types'
 import { RumEvent } from '../rumEvent.types'
 
@@ -9,3 +9,5 @@ export interface RumInitConfiguration extends InitConfiguration {
 }
 
 export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
+
+export type RumConfiguration = Configuration

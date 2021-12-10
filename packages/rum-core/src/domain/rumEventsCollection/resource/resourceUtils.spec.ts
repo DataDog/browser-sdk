@@ -1,6 +1,7 @@
-import { Configuration, DEFAULT_CONFIGURATION, Duration, RelativeTime, ServerDuration } from '@datadog/browser-core'
+import { DEFAULT_CONFIGURATION, Duration, RelativeTime, ServerDuration } from '@datadog/browser-core'
 import { SPEC_ENDPOINTS } from '../../../../../core/test/specHelper'
 import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
+import { RumConfiguration } from '../../configuration'
 import {
   computePerformanceResourceDetails,
   computePerformanceResourceDuration,
@@ -290,24 +291,24 @@ describe('computePerformanceResourceDuration', () => {
 })
 
 describe('shouldTrackResource', () => {
-  const configuration: Partial<Configuration> = {
+  const configuration: Partial<RumConfiguration> = {
     ...DEFAULT_CONFIGURATION,
     ...SPEC_ENDPOINTS,
   }
 
   it('should exclude requests on intakes endpoints', () => {
-    expect(isAllowedRequestUrl(configuration as Configuration, 'https://rum-intake.com/v1/input/abcde?foo=bar')).toBe(
-      false
-    )
+    expect(
+      isAllowedRequestUrl(configuration as RumConfiguration, 'https://rum-intake.com/v1/input/abcde?foo=bar')
+    ).toBe(false)
   })
 
   it('should exclude requests on intakes endpoints with different client parameters', () => {
-    expect(isAllowedRequestUrl(configuration as Configuration, 'https://rum-intake.com/v1/input/wxyz?foo=qux')).toBe(
+    expect(isAllowedRequestUrl(configuration as RumConfiguration, 'https://rum-intake.com/v1/input/wxyz?foo=qux')).toBe(
       false
     )
   })
 
   it('should allow requests on non intake domains', () => {
-    expect(isAllowedRequestUrl(configuration as Configuration, 'https://my-domain.com/hello?a=b')).toBe(true)
+    expect(isAllowedRequestUrl(configuration as RumConfiguration, 'https://my-domain.com/hello?a=b')).toBe(true)
   })
 })

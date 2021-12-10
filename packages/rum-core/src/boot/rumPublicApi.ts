@@ -11,7 +11,6 @@ import {
   clocksNow,
   timeStampNow,
   display,
-  Configuration,
   InternalMonitoring,
   callMonitored,
   createHandlingStack,
@@ -28,7 +27,7 @@ import { ParentContexts } from '../domain/parentContexts'
 import { RumSessionManager } from '../domain/rumSessionManager'
 import { CommonContext, User, ActionType, ReplayStats } from '../rawRumEvent.types'
 import { willSyntheticsInjectRum } from '../domain/syntheticsContext'
-import { RumInitConfiguration } from '../domain/configuration'
+import { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import { buildEnv } from './buildEnv'
 import { startRum } from './startRum'
 
@@ -36,7 +35,7 @@ export type RumPublicApi = ReturnType<typeof makeRumPublicApi>
 
 export type StartRum<C extends RumInitConfiguration = RumInitConfiguration> = (
   initConfiguration: C,
-  configuration: Configuration,
+  configuration: RumConfiguration,
   internalMonitoring: InternalMonitoring,
   getCommonContext: () => CommonContext,
   recorderApi: RecorderApi,
@@ -51,7 +50,7 @@ export interface RecorderApi {
   onRumStart: (
     lifeCycle: LifeCycle,
     initConfiguration: RumInitConfiguration,
-    configuration: Configuration,
+    configuration: RumConfiguration,
     sessionManager: RumSessionManager,
     parentContexts: ParentContexts
   ) => void
@@ -140,7 +139,7 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(
 
   function doStartRum(
     initConfiguration: C,
-    configuration: Configuration,
+    configuration: RumConfiguration,
     internalMonitoring: InternalMonitoring,
     initialViewName?: string
   ) {
