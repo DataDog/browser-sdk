@@ -77,7 +77,7 @@ export function startRumAssembly(
   }
 
   const syntheticsContext = getSyntheticsContext()
-  const ciContext = getCiTestContext()
+  const ciTestContext = getCiTestContext()
 
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
@@ -104,10 +104,10 @@ export function startRumAssembly(
           service: configuration.service,
           session: {
             id: session.id,
-            type: syntheticsContext ? SessionType.SYNTHETICS : ciContext ? SessionType.CI_TEST : SessionType.USER,
+            type: syntheticsContext ? SessionType.SYNTHETICS : ciTestContext ? SessionType.CI_TEST : SessionType.USER,
           },
           synthetics: syntheticsContext,
-          ci_test: ciContext,
+          ci_test: ciTestContext,
         }
         const serverRumEvent = (needToAssembleWithAction(rawRumEvent)
           ? combine(rumContext, urlContext, viewContext, actionContext, rawRumEvent)

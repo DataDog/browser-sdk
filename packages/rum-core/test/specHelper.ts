@@ -303,7 +303,7 @@ export function cleanupSyntheticsWorkerValues() {
   deleteCookie(SYNTHETICS_INJECTS_RUM_COOKIE_NAME)
 }
 
-export function mockCiVisibilityWindowValues(traceId?: string | { [key: string]: string }) {
+export function mockCiVisibilityWindowValues(traceId?: unknown) {
   if (traceId) {
     ;(window as CiTestWindow).Cypress = {
       env: (key: string) => {
