@@ -261,11 +261,11 @@ export function createNewEvent(eventName: string, properties: { [name: string]: 
 export function stubXhr() {
   const originalXhr = XMLHttpRequest
 
-  XMLHttpRequest = StubXhr as any
+  window.XMLHttpRequest = StubXhr as any
 
   return {
     reset() {
-      XMLHttpRequest = originalXhr
+      window.XMLHttpRequest = originalXhr
     },
   }
 }
