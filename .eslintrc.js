@@ -4,6 +4,7 @@ module.exports = {
     jasmine: true,
   },
   extends: [
+    'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
     'plugin:@typescript-eslint/recommended-requiring-type-checking',
     'prettier',
@@ -255,6 +256,12 @@ module.exports = {
       files: ['packages/{rum,logs,rum-slim}/src/entries/*.ts'],
       rules: {
         'local-rules/disallow-enum-exports': 'error',
+      },
+    },
+    {
+      files: ['**/webpack.*.js', 'scripts/**/*.js', 'test/**/*.js', 'eslint-local-rules/**/*.js', '.eslintrc.js'],
+      env: {
+        node: true,
       },
     },
   ],
