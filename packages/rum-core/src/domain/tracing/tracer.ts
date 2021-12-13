@@ -136,17 +136,12 @@ export class TraceIdentifier {
     let low = this.readInt32(4)
     let str = ''
 
-    while (1) {
+    do {
       const mod = (high % radix) * 4294967296 + low
-
       high = Math.floor(high / radix)
       low = Math.floor(mod / radix)
       str = (mod % radix).toString(radix) + str
-
-      if (!high && !low) {
-        break
-      }
-    }
+    } while (high || low)
 
     return str
   }

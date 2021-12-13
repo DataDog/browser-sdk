@@ -127,10 +127,12 @@ function reportPotentialSideEffect(context, node) {
       if (isAllowedCallExpression(node)) {
         return
       }
+      break
     case 'NewExpression':
       if (isAllowedNewExpression(node)) {
         return
       }
+      break
   }
 
   // If the node doesn't match any of the condition above, report it
