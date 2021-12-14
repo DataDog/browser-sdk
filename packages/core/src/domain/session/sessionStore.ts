@@ -40,28 +40,58 @@ export function startSessionStore<TrackingType extends string>(
 ): SessionStore {
   const renewObservable = new Observable<void>()
   const expireObservable = new Observable<void>()
-  const cookieWatch = setInterval(monitor(retrieveAndSynchronizeSession), COOKIE_ACCESS_DELAY)
-  let sessionCache: SessionState = retrieveActiveSession(options)
+  const cookieWatch = setInterval(monitor(watchSession), COOKIE_ACCESS_DELAY)
+  let sessionCache: SessionState = retrieveActiveSession()
 
   function expandOrRenewSession() {
-    const cookieSession = retrieveAndSynchronizeSession()
-    const isTracked = expandOrRenewCookie(cookieSession)
-
-    if (isTracked && !hasSessionInCache()) {
-      renewSession(cookieSession)
-    }
-    sessionCache = cookieSession
+    let isTracked: boolean
+    withCookieLockAccess({
+      process: (cookieSession) => {
+        const synchronizedSession = synchronizeSession(cookieSession)
+        isTracked = expandOrRenewCookie(synchronizedSession)
+        return synchronizedSession
+      },
+      after: (cookieSession) => {
+        if (isTracked && !hasSessionInCache()) {
+          renewSession(cookieSession)
+        }
+        sessionCache = cookieSession
+      },
+    })
   }
 
   function expandSession() {
-    const cookieSession = retrieveAndSynchronizeSession()
-    if (hasSessionInCache()) {
-      persistSession(cookieSession, options)
-    }
+    withCookieLockAccess({
+      process: (cookieSession) => (hasSessionInCache() ? synchronizeSession(cookieSession) : undefined),
+    })
   }
 
-  function retrieveAndSynchronizeSession() {
-    const cookieSession = retrieveActiveSession(options)
+  function watchSession() {
+    withCookieLockAccess({
+      process: (cookieSession) => (!isActiveSession(cookieSession) ? {} : undefined),
+      after: synchronizeSession,
+    })
+  }
+
+  function withCookieLockAccess({
+    process,
+    after,
+  }: {
+    process: (cookieSession: SessionState) => SessionState | undefined
+    after?: (cookieSession: SessionState) => void
+  }) {
+    const initialSession = retrieveSession()
+    const processedSession = process(initialSession)
+    if (processedSession) {
+      persistSession(processedSession, options)
+    }
+    after?.(processedSession || initialSession)
+  }
+
+  function synchronizeSession(cookieSession: SessionState) {
+    if (!isActiveSession(cookieSession)) {
+      cookieSession = {}
+    }
     if (hasSessionInCache()) {
       if (isSessionInCacheOutdated(cookieSession)) {
         expireSession()
@@ -79,8 +109,6 @@ export function startSessionStore<TrackingType extends string>(
       cookieSession.id = utils.generateUUID()
       cookieSession.created = String(Date.now())
     }
-    // save changes and expand session duration
-    persistSession(cookieSession, options)
     return isTracked
   }
 
@@ -144,12 +172,11 @@ function isValidSessionString(sessionString: string | undefined): sessionString 
   )
 }
 
-function retrieveActiveSession(options: CookieOptions): SessionState {
+function retrieveActiveSession(): SessionState {
   const session = retrieveSession()
   if (isActiveSession(session)) {
     return session
   }
-  clearSession(options)
   return {}
 }
 
