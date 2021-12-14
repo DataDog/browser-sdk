@@ -1,7 +1,13 @@
 import { Clock, mockClock } from '../../../test/specHelper'
 import { CookieOptions, getCookie, setCookie, COOKIE_ACCESS_DELAY } from '../../browser/cookie'
 import { MonitoringMessage, startFakeInternalMonitoring, resetInternalMonitoring } from '../internalMonitoring'
-import { startSessionStore, SESSION_COOKIE_NAME, SessionStore } from './sessionStore'
+import {
+  startSessionStore,
+  SESSION_COOKIE_NAME,
+  SessionStore,
+  SESSION_EXPIRATION_DELAY,
+  SESSION_TIME_OUT_DELAY,
+} from './sessionStore'
 
 enum FakeTrackingType {
   TRACKED = 'tracked',
@@ -14,8 +20,14 @@ const FIRST_ID = 'first'
 const SECOND_ID = 'second'
 const COOKIE_OPTIONS: CookieOptions = {}
 
-function setSessionInStore(trackingType: FakeTrackingType = FakeTrackingType.TRACKED, id?: string) {
-  setCookie(SESSION_COOKIE_NAME, `${id ? `id=${id}&` : ''}${PRODUCT_KEY}=${trackingType}`, DURATION)
+function setSessionInStore(trackingType: FakeTrackingType = FakeTrackingType.TRACKED, id?: string, expire?: number) {
+  setCookie(
+    SESSION_COOKIE_NAME,
+    `${id ? `id=${id}&` : ''}${PRODUCT_KEY}=${trackingType}&created=${Date.now()}&expire=${
+      expire || Date.now() + SESSION_EXPIRATION_DELAY
+    }`,
+    DURATION
+  )
 }
 
 function expectTrackedSessionToBeInStore(id?: string) {
@@ -26,6 +38,10 @@ function expectTrackedSessionToBeInStore(id?: string) {
 function expectNotTrackedSessionToBeInStore() {
   expect(getCookie(SESSION_COOKIE_NAME)).not.toContain(`id=`)
   expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${PRODUCT_KEY}=${FakeTrackingType.NOT_TRACKED}`)
+}
+
+function getStoreExpiration() {
+  return /expire=(\d+)/.exec(getCookie(SESSION_COOKIE_NAME)!)?.[1]
 }
 
 function resetSessionInStore() {
@@ -163,9 +179,11 @@ describe('session store', () => {
       setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
       setupSessionStore()
 
+      clock.tick(10)
       sessionStore.expandOrRenewSession()
 
       expect(sessionStore.getSession().id).toBe(FIRST_ID)
+      expect(sessionStore.getSession().expire).toBe(getStoreExpiration())
       expectTrackedSessionToBeInStore(FIRST_ID)
       expect(expireSpy).not.toHaveBeenCalled()
       expect(renewSpy).not.toHaveBeenCalled()
@@ -244,9 +262,11 @@ describe('session store', () => {
       setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
       setupSessionStore()
 
+      clock.tick(10)
       sessionStore.expandSession()
 
       expect(sessionStore.getSession().id).toBe(FIRST_ID)
+      expect(sessionStore.getSession().expire).toBe(getStoreExpiration())
       expect(expireSpy).not.toHaveBeenCalled()
     })
 
@@ -307,13 +327,15 @@ describe('session store', () => {
       expect(monitoringMessages.length).toBe(0)
     })
 
-    it('when session in cache is same session than in store, should do nothing', () => {
+    it('when session in cache is same session than in store, should synchronize session', () => {
       setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
       setupSessionStore()
+      setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID, Date.now() + SESSION_TIME_OUT_DELAY + 10)
 
       clock.tick(COOKIE_ACCESS_DELAY)
 
       expect(sessionStore.getSession().id).toBe(FIRST_ID)
+      expect(sessionStore.getSession().expire).toBe(getStoreExpiration())
       expect(expireSpy).not.toHaveBeenCalled()
       expect(monitoringMessages.length).toBe(0)
     })
