@@ -56,7 +56,7 @@ describe('transportConfiguration', () => {
   })
 
   describe('query parameters', () => {
-    it('should add  intake query parameters', () => {
+    it('should add intake query parameters', () => {
       const configuration = computeTransportConfiguration({ clientToken }, buildEnv)
       expect(configuration.rumEndpointBuilder.build()).toMatch(
         `&dd-api-key=${clientToken}&dd-evp-origin-version=(.*)&dd-evp-origin=browser&dd-request-id=(.*)`
@@ -139,54 +139,24 @@ describe('transportConfiguration', () => {
   })
 
   describe('isIntakeUrl', () => {
+    ;[
+      { site: 'datadoghq.eu', intakeDomain: 'browser-intake-datadoghq.eu' },
+      { site: 'datadoghq.com', intakeDomain: 'browser-intake-datadoghq.com' },
+      { site: 'us3.datadoghq.com', intakeDomain: 'browser-intake-us3-datadoghq.com' },
+      { site: 'us5.datadoghq.com', intakeDomain: 'browser-intake-us5-datadoghq.com' },
+      { site: 'ddog-gov.com', intakeDomain: 'browser-intake-ddog-gov.com' },
+    ].forEach(({ site, intakeDomain }) => {
+      it(`should detect intake request for ${site} site`, () => {
+        const configuration = computeTransportConfiguration({ clientToken, site }, buildEnv)
+        expect(configuration.isIntakeUrl(`https://rum.${intakeDomain}/api/v2/rum?xxx`)).toBe(true)
+        expect(configuration.isIntakeUrl(`https://logs.${intakeDomain}/api/v2/logs?xxx`)).toBe(true)
+        expect(configuration.isIntakeUrl(`https://session-replay.${intakeDomain}/api/v2/replay?xxx`)).toBe(true)
+      })
+    })
+
     it('should not detect non intake request', () => {
       const configuration = computeTransportConfiguration({ clientToken }, buildEnv)
       expect(configuration.isIntakeUrl('https://www.foo.com')).toBe(false)
-    })
-
-    it('should detect intake request EU site', () => {
-      const configuration = computeTransportConfiguration({ clientToken, site: 'datadoghq.eu' }, buildEnv)
-      expect(configuration.isIntakeUrl('https://rum.browser-intake-datadoghq.eu/api/v2/rum?xxx')).toBe(true)
-      expect(configuration.isIntakeUrl('https://logs.browser-intake-datadoghq.eu/api/v2/logs?xxx')).toBe(true)
-      expect(configuration.isIntakeUrl(`https://session-replay.browser-intake-datadoghq.eu/api/v2/replay?xxx`)).toBe(
-        true
-      )
-    })
-
-    it('should detect intake request US site', () => {
-      const configuration = computeTransportConfiguration({ clientToken }, buildEnv)
-      expect(configuration.isIntakeUrl('https://rum.browser-intake-datadoghq.com/api/v2/rum?xxx')).toBe(true)
-      expect(configuration.isIntakeUrl('https://logs.browser-intake-datadoghq.com/api/v2/logs?xxx')).toBe(true)
-      expect(configuration.isIntakeUrl(`https://session-replay.browser-intake-datadoghq.com/api/v2/replay?xxx`)).toBe(
-        true
-      )
-    })
-
-    it('should detect intake request US3 site', () => {
-      const configuration = computeTransportConfiguration({ clientToken, site: 'us3.datadoghq.com' }, buildEnv)
-      expect(configuration.isIntakeUrl('https://rum.browser-intake-us3-datadoghq.com/api/v2/rum?xxx')).toBe(true)
-      expect(configuration.isIntakeUrl('https://logs.browser-intake-us3-datadoghq.com/api/v2/logs?xxx')).toBe(true)
-      expect(
-        configuration.isIntakeUrl(`https://session-replay.browser-intake-us3-datadoghq.com/api/v2/replay?xxx`)
-      ).toBe(true)
-    })
-
-    it('should detect intake request US5 site', () => {
-      const configuration = computeTransportConfiguration({ clientToken, site: 'us5.datadoghq.com' }, buildEnv)
-      expect(configuration.isIntakeUrl('https://rum.browser-intake-us5-datadoghq.com/api/v2/rum?xxx')).toBe(true)
-      expect(configuration.isIntakeUrl('https://logs.browser-intake-us5-datadoghq.com/api/v2/logs?xxx')).toBe(true)
-      expect(
-        configuration.isIntakeUrl(`https://session-replay.browser-intake-us5-datadoghq.com/api/v2/replay?xxx`)
-      ).toBe(true)
-    })
-
-    it('should detect intake request gov-cloud site', () => {
-      const configuration = computeTransportConfiguration({ clientToken, site: 'ddog-gov.com' }, buildEnv)
-      expect(configuration.isIntakeUrl('https://rum.browser-intake-ddog-gov.com/api/v2/rum?xxx')).toBe(true)
-      expect(configuration.isIntakeUrl('https://logs.browser-intake-ddog-gov.com/api/v2/logs?xxx')).toBe(true)
-      expect(configuration.isIntakeUrl('https://session-replay.browser-intake-ddog-gov.com/api/v2/replay?xxx')).toBe(
-        true
-      )
     })
 
     it('should handle sites with subdomains', () => {
