@@ -27,6 +27,12 @@ export const SESSION_TIME_OUT_DELAY = 4 * utils.ONE_HOUR
 const SESSION_ENTRY_REGEXP = /^([a-z]+)=([a-z0-9-]+)$/
 const SESSION_ENTRY_SEPARATOR = '&'
 
+/**
+ * Different session concepts:
+ * - tracked, the session has an id and is updated along the user navigation
+ * - not tracked, the session does not have an id but it is updated along the user navigation
+ * - inactive, no session in store or session expired, waiting for a renew session
+ */
 export function startSessionStore<TrackingType extends string>(
   options: CookieOptions,
   productKey: string,

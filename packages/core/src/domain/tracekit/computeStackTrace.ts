@@ -285,7 +285,7 @@ function computeStackTraceFromStacktraceProp(ex: unknown) {
 
   const opera10Regex = / line (\d+).*script (?:in )?(\S+)(?:: in function (\S+))?$/i
   // eslint-disable-next-line  max-len
-  const opera11Regex = / line (\d+), column (\d+)\s*(?:in (?:<anonymous function: ([^>]+)>|([^\)]+))\((.*)\))? in (.*):\s*$/i
+  const opera11Regex = / line (\d+), column (\d+)\s*(?:in (?:<anonymous function: ([^>]+)>|([^)]+))\((.*)\))? in (.*):\s*$/i
   const lines = stacktrace.split('\n')
   const stack = []
   let parts
