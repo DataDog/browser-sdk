@@ -62,8 +62,12 @@ export function startSessionStore<TrackingType extends string>(
 
   function retrieveAndSynchronizeSession() {
     const cookieSession = retrieveActiveSession(options)
-    if (hasSessionInCache() && isSessionInCacheOutdated(cookieSession)) {
-      expireSession()
+    if (hasSessionInCache()) {
+      if (isSessionInCacheOutdated(cookieSession)) {
+        expireSession()
+      } else {
+        sessionCache = cookieSession
+      }
     }
     return cookieSession
   }
@@ -86,8 +90,9 @@ export function startSessionStore<TrackingType extends string>(
 
   function isSessionInCacheOutdated(cookieSession: SessionState) {
     if (sessionCache.id !== cookieSession.id) {
-      if (cookieSession.id) {
+      if (cookieSession.id && isActiveSession(sessionCache)) {
         // cookie id undefined could be due to cookie expiration
+        // inactive session in cache could happen if renew session in another tab and cache not yet cleared
         addSessionInconsistenciesMessage(cookieSession, 'different id')
       }
       return true
