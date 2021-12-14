@@ -1,7 +1,6 @@
 import {
   areCookiesAuthorized,
   combine,
-  commonInit,
   Configuration,
   Context,
   createEventRateLimiter,
@@ -15,6 +14,9 @@ import {
   canUseEventBridge,
   getEventBridge,
   getRelativeTime,
+  updateExperimentalFeatures,
+  buildConfiguration,
+  startInternalMonitoring,
 } from '@datadog/browser-core'
 import { trackNetworkError } from '../domain/trackNetworkError'
 import { Logger, LogsMessage, StatusType } from '../domain/logger'
@@ -29,7 +31,10 @@ export interface LogsInitConfiguration extends InitConfiguration {
 }
 
 export function startLogs(initConfiguration: LogsInitConfiguration, errorLogger: Logger) {
-  const { configuration, internalMonitoring } = commonInit(initConfiguration, buildEnv)
+  updateExperimentalFeatures(initConfiguration.enableExperimentalFeatures)
+  const configuration = buildConfiguration(initConfiguration, buildEnv)
+  const internalMonitoring = startInternalMonitoring(configuration)
+
   const errorObservable = new Observable<RawError>()
 
   if (initConfiguration.forwardErrorsToLogs !== false) {

@@ -11,7 +11,6 @@ import {
   clocksNow,
   timeStampNow,
   display,
-  commonInit,
   Configuration,
   InternalMonitoring,
   callMonitored,
@@ -21,6 +20,9 @@ import {
   RelativeTime,
   canUseEventBridge,
   areCookiesAuthorized,
+  updateExperimentalFeatures,
+  buildConfiguration,
+  startInternalMonitoring,
 } from '@datadog/browser-core'
 import { LifeCycle } from '../domain/lifeCycle'
 import { ParentContexts } from '../domain/parentContexts'
@@ -123,7 +125,10 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(
       return
     }
 
-    const { configuration, internalMonitoring } = commonInit(initConfiguration, buildEnv)
+    updateExperimentalFeatures(initConfiguration.enableExperimentalFeatures)
+    const configuration = buildConfiguration(initConfiguration, buildEnv)
+    const internalMonitoring = startInternalMonitoring(configuration)
+
     if (!configuration.trackViewsManually) {
       doStartRum(initConfiguration, configuration, internalMonitoring)
     } else {
