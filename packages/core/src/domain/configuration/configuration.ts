@@ -148,7 +148,7 @@ export function buildCookieOptions(initConfiguration: InitConfiguration) {
   cookieOptions.secure = mustUseSecureCookie(initConfiguration)
   cookieOptions.crossSite = !!initConfiguration.useCrossSiteSessionCookie
 
-  if (!!initConfiguration.trackSessionAcrossSubdomains) {
+  if (initConfiguration.trackSessionAcrossSubdomains) {
     cookieOptions.domain = getCurrentSite()
   }
 

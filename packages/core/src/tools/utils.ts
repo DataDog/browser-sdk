@@ -190,7 +190,7 @@ export function jsonStringify(
 }
 
 function hasToJSON(value: unknown): value is ObjectWithToJSON {
-  return typeof value === 'object' && value !== null && value.hasOwnProperty('toJSON')
+  return typeof value === 'object' && value !== null && Object.prototype.hasOwnProperty.call(value, 'toJSON')
 }
 
 export function includes(candidate: string, search: string): boolean

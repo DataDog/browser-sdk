@@ -5,6 +5,7 @@ import { monitor } from '../domain/internalMonitoring'
 import { HttpRequest } from './httpRequest'
 
 // https://en.wikipedia.org/wiki/UTF-8
+// eslint-disable-next-line no-control-regex
 const HAS_MULTI_BYTES_CHARACTERS = /[^\u0000-\u007F]/
 
 export class Batch {
