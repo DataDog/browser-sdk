@@ -40,17 +40,15 @@ export function createEndpointBuilder(
   initConfiguration: InitConfiguration,
   buildEnv: BuildEnv,
   endpointType: EndpointType,
+  tags: string[],
   source?: string
 ) {
   const sdkVersion = buildEnv.sdkVersion
   const {
     site = INTAKE_SITE_US,
     clientToken,
-    env,
     proxyHost,
     proxyUrl,
-    service,
-    version,
     intakeApiVersion,
     useAlternateIntakeDomains,
   } = initConfiguration
@@ -91,13 +89,9 @@ export function createEndpointBuilder(
   }
 
   function buildQueryParameters(endpointType: EndpointType, source?: string) {
-    const tags =
-      `sdk_version:${sdkVersion}` +
-      `${env ? `,env:${env}` : ''}` +
-      `${service ? `,service:${service}` : ''}` +
-      `${version ? `,version:${version}` : ''}`
-
-    let parameters = `ddsource=${source || 'browser'}&ddtags=${encodeURIComponent(tags)}`
+    let parameters = `ddsource=${source || 'browser'}&ddtags=${encodeURIComponent(
+      [`sdk_version:${sdkVersion}`].concat(tags).join(',')
+    )}`
 
     if (shouldUseIntakeV2(endpointType)) {
       parameters +=
