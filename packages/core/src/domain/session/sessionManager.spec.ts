@@ -4,7 +4,8 @@ import { ONE_HOUR, DOM_EVENT, ONE_SECOND } from '../../tools/utils'
 import { RelativeTime } from '../../tools/timeUtils'
 import { isIE } from '../../tools/browserDetection'
 import { SessionManager, startSessionManager, stopSessionManager, VISIBILITY_CHECK_DELAY } from './sessionManager'
-import { SESSION_COOKIE_NAME, SESSION_TIME_OUT_DELAY, SESSION_EXPIRATION_DELAY } from './sessionStore'
+import { SESSION_TIME_OUT_DELAY, SESSION_EXPIRATION_DELAY } from './sessionStore'
+import { SESSION_COOKIE_NAME } from './sessionCookieStore'
 
 enum FakeTrackingType {
   NOT_TRACKED = 'not-tracked',

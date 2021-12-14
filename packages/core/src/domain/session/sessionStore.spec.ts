@@ -1,13 +1,8 @@
 import { Clock, mockClock } from '../../../test/specHelper'
 import { CookieOptions, getCookie, setCookie, COOKIE_ACCESS_DELAY } from '../../browser/cookie'
 import { MonitoringMessage, startFakeInternalMonitoring, resetInternalMonitoring } from '../internalMonitoring'
-import {
-  startSessionStore,
-  SESSION_COOKIE_NAME,
-  SessionStore,
-  SESSION_EXPIRATION_DELAY,
-  SESSION_TIME_OUT_DELAY,
-} from './sessionStore'
+import { startSessionStore, SessionStore, SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionStore'
+import { SESSION_COOKIE_NAME } from './sessionCookieStore'
 
 enum FakeTrackingType {
   TRACKED = 'tracked',
