@@ -45,7 +45,7 @@ const baseConfiguration: Partial<Configuration> = {
   ...DEFAULT_CONFIGURATION,
   logsEndpointBuilder: stubEndpointBuilder('https://localhost/v1/input/log'),
   maxBatchSize: 1,
-  service: 'Service',
+  service: 'service',
 }
 const internalMonitoring = { setExternalContextProvider: () => undefined }
 
@@ -105,7 +105,7 @@ describe('logs', () => {
         date: FAKE_DATE as TimeStamp,
         foo: 'bar',
         message: 'message',
-        service: 'Service',
+        service: 'service',
         session_id: SESSION_ID,
         status: StatusType.warn,
         view: {
@@ -234,7 +234,7 @@ describe('logs', () => {
       expect(assembledMessage).toEqual({
         foo: 'from-current-context',
         message: DEFAULT_MESSAGE.message,
-        service: 'Service',
+        service: 'service',
         session_id: SESSION_ID,
         status: DEFAULT_MESSAGE.status,
         view: { url: 'http://from-rum-context.com', id: 'view-id' },

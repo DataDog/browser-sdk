@@ -16,6 +16,13 @@
 
 ---
 
+## v3.10.0
+
+- ♻ [RUMF-1097] revamp internal configuration - core ([#1216](https://github.com/DataDog/browser-sdk/pull/1216))
+- ♻️ [RUMF-1083] rework session management API ([#1197](https://github.com/DataDog/browser-sdk/pull/1197))
+- ♻️ [RUMF-1083] introduce session context history ([#1187](https://github.com/DataDog/browser-sdk/pull/1187))
+- ♻️ [RUMF-1083] rework session cookie cache ([#1180](https://github.com/DataDog/browser-sdk/pull/1180))
+
 ## v3.9.0
 
 - 🐛 remove readonly from all LogsEvent properties ([#1198](https://github.com/DataDog/browser-sdk/pull/1198))
