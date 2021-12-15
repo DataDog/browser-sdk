@@ -131,9 +131,9 @@ describe('transportConfiguration', () => {
 
   describe('tags', () => {
     it('should be encoded', () => {
-      const configuration = computeTransportConfiguration({ clientToken, service: 'bar+foo' }, buildEnv)
+      const configuration = computeTransportConfiguration({ clientToken, service: 'bar:foo' }, buildEnv)
       expect(configuration.rumEndpointBuilder.build()).toContain(
-        `ddtags=sdk_version%3Asome_version%2Cservice%3Abar%2Bfoo`
+        `ddtags=sdk_version%3Asome_version%2Cservice%3Abar%3Afoo`
       )
     })
   })

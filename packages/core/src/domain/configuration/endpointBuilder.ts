@@ -25,10 +25,11 @@ export function createEndpointBuilder(
   initConfiguration: InitConfiguration,
   buildEnv: BuildEnv,
   endpointType: EndpointType,
+  tags: string[],
   source?: string
 ) {
   const sdkVersion = buildEnv.sdkVersion
-  const { site = INTAKE_SITE_US, clientToken, env, proxyHost, proxyUrl, service, version } = initConfiguration
+  const { site = INTAKE_SITE_US, clientToken, proxyHost, proxyUrl } = initConfiguration
 
   const host = buildHost(endpointType)
   const path = buildPath(endpointType)
@@ -62,15 +63,9 @@ export function createEndpointBuilder(
   }
 
   function buildQueryParameters(endpointType: EndpointType, source?: string) {
-    const tags =
-      `sdk_version:${sdkVersion}` +
-      `${env ? `,env:${env}` : ''}` +
-      `${service ? `,service:${service}` : ''}` +
-      `${version ? `,version:${version}` : ''}`
-
     let parameters =
       `ddsource=${source || 'browser'}` +
-      `&ddtags=${encodeURIComponent(tags)}` +
+      `&ddtags=${encodeURIComponent([`sdk_version:${sdkVersion}`].concat(tags).join(','))}` +
       `&dd-api-key=${clientToken}` +
       `&dd-evp-origin-version=${encodeURIComponent(sdkVersion)}` +
       `&dd-evp-origin=browser` +
