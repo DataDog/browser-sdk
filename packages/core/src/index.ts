@@ -2,7 +2,9 @@ export {
   DEFAULT_CONFIGURATION,
   Configuration,
   InitConfiguration,
+  buildConfiguration,
   buildCookieOptions,
+  validateAndBuildConfiguration,
   BeforeSendCallback,
   DefaultPrivacyLevel,
 } from './domain/configuration'
@@ -14,8 +16,9 @@ export {
 export { trackConsoleError } from './domain/error/trackConsoleError'
 export { trackRuntimeError } from './domain/error/trackRuntimeError'
 export { computeStackTrace, StackTrace } from './domain/tracekit'
-export { BuildEnv, BuildMode, defineGlobal, makePublicApi, commonInit } from './boot/init'
+export { BuildEnv, BuildMode, defineGlobal, makePublicApi } from './boot/init'
 export {
+  startInternalMonitoring,
   InternalMonitoring,
   MonitoringMessage,
   monitored,
