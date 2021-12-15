@@ -4,18 +4,6 @@ import { Observable } from '../tools/observable'
 import { Duration, elapsed, relativeNow, RelativeTime, ClocksState, clocksNow, timeStampNow } from '../tools/timeUtils'
 import { normalizeUrl } from '../tools/urlPolyfill'
 
-interface BrowserXHR<T> extends XMLHttpRequest {
-  /**
-   * @deprecated this property is shared by both logs and rum and can be used by different code
-   * versions depending on customer setup. To improve reliability and make SDKs independent, this
-   * property should be removed in the future, but this would be a breaking change since some
-   * customers are using it.
-   *
-   * TODO(v4): replace this property with a weakmap index
-   */
-  _datadog_xhr?: T
-}
-
 export interface XhrOpenContext {
   state: 'open'
   method: string
@@ -40,6 +28,7 @@ export interface XhrCompleteContext extends Omit<XhrStartContext, 'state'> {
 export type XhrContext = XhrOpenContext | XhrStartContext | XhrCompleteContext
 
 let xhrObservable: Observable<XhrContext> | undefined
+const xhrContexts: WeakMap<XMLHttpRequest, XhrContext> = new WeakMap()
 
 export function initXhrObservable() {
   if (!xhrObservable) {
@@ -73,23 +62,21 @@ function createXhrObservable() {
   return observable
 }
 
-function openXhr(this: BrowserXHR<XhrOpenContext>, method: string, url: string) {
-  // WARN: since this data structure is tied to the instance, it is shared by both logs and rum
-  // and can be used by different code versions depending on customer setup
-  // so it should stay compatible with older versions
-  this._datadog_xhr = {
+function openXhr(this: XMLHttpRequest, method: string, url: string) {
+  xhrContexts.set(this, {
     state: 'open',
     method,
     url: normalizeUrl(url),
-  }
+  })
 }
 
-function sendXhr(this: BrowserXHR<XhrStartContext>, observable: Observable<XhrContext>) {
-  if (!this._datadog_xhr) {
+function sendXhr(this: XMLHttpRequest, observable: Observable<XhrContext>) {
+  const context = xhrContexts.get(this)
+  if (!context) {
     return
   }
 
-  const startContext = this._datadog_xhr
+  const startContext = context as XhrStartContext
   startContext.state = 'start'
   startContext.startTime = relativeNow()
   startContext.startClocks = clocksNow()
@@ -118,7 +105,7 @@ function sendXhr(this: BrowserXHR<XhrStartContext>, observable: Observable<XhrCo
     }
     hasBeenReported = true
 
-    const completeContext = (this._datadog_xhr! as unknown) as XhrCompleteContext
+    const completeContext = context as XhrCompleteContext
     completeContext.state = 'complete'
     completeContext.duration = elapsed(startContext.startClocks.timeStamp, timeStampNow())
     completeContext.responseText = this.response as string | undefined
@@ -129,8 +116,9 @@ function sendXhr(this: BrowserXHR<XhrStartContext>, observable: Observable<XhrCo
   observable.notify(startContext)
 }
 
-function abortXhr(this: BrowserXHR<XhrStartContext>) {
-  if (this._datadog_xhr) {
-    this._datadog_xhr.isAborted = true
+function abortXhr(this: XMLHttpRequest) {
+  const context = xhrContexts.get(this) as XhrStartContext | undefined
+  if (context) {
+    context.isAborted = true
   }
 }
