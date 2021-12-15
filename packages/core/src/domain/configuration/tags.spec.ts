@@ -24,24 +24,22 @@ describe('buildTag', () => {
 
   it('lowercases tags', () => {
     expect(buildTag('env', 'BaR')).toBe('env:bar')
+    expectWarning()
   })
 
   it('trims large tags', () => {
     const tag = buildTag('env', LARGE_VALUE)
     expect(tag.length).toBe(TAG_SIZE_LIMIT)
     expect(tag).toBe(`env:${LARGE_VALUE.slice(0, TAG_SIZE_LIMIT - 4)}`)
-    expect(displaySpy).toHaveBeenCalledOnceWith(
-      `env value is too big and has been trimmed to ${LARGE_VALUE.slice(0, TAG_SIZE_LIMIT - 4)}`
-    )
+    expectWarning()
   })
 
   it('replaces forbidden characters with slashes', () => {
     expect(buildTag('env', 'b#r')).toBe('env:b_r')
-    expect(displaySpy).toHaveBeenCalledOnceWith('env value contains forbidden characters and has been sanitized to b_r')
+    expectWarning()
   })
 
-  it('removes ending semicolons', () => {
-    expect(buildTag('env', 'bar:::')).toBe('env:bar')
-    expect(displaySpy).toHaveBeenCalledOnceWith('env value ends with invalid characters and has been sanitized to bar')
-  })
+  function expectWarning() {
+    expect(displaySpy).toHaveBeenCalledOnceWith("env value doesn't meet tag requirements and will be sanitized")
+  }
 })

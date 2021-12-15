@@ -20,27 +20,17 @@ export function buildTags(configuration: InitConfiguration): string[] {
   return tags
 }
 
-export function buildTag(name: string, value: string) {
-  value = value.toLowerCase()
-
+export function buildTag(key: string, rawValue: string) {
   // See https://docs.datadoghq.com/getting_started/tagging/#defining-tags for tags syntax.
-  const valueSizeLimit = TAG_SIZE_LIMIT - name.length - 1
-  if (value.length > TAG_SIZE_LIMIT) {
-    value = value.slice(0, valueSizeLimit)
-    display.warn(`${name} value is too big and has been trimmed to ${value}`)
+  const valueSizeLimit = TAG_SIZE_LIMIT - key.length - 1
+  const sanitizedValue = rawValue
+    .toLowerCase()
+    .slice(0, valueSizeLimit)
+    .replace(/[^a-z0-9_:./-]/g, '_')
+
+  if (sanitizedValue !== rawValue) {
+    display.warn(`${key} value doesn't meet tag requirements and will be sanitized`)
   }
 
-  const valueWithoutForbiddenCharacters = value.replace(/[^a-z0-9_:./-]/g, '_')
-  if (valueWithoutForbiddenCharacters !== value) {
-    value = valueWithoutForbiddenCharacters
-    display.warn(`${name} value contains forbidden characters and has been sanitized to ${value}`)
-  }
-
-  const valueWithoutEndingColon = value.replace(/:+$/, '')
-  if (valueWithoutEndingColon !== value) {
-    value = valueWithoutEndingColon
-    display.warn(`${name} value ends with invalid characters and has been sanitized to ${value}`)
-  }
-
-  return `${name}:${value}`
+  return `${key}:${sanitizedValue}`
 }
