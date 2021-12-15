@@ -75,9 +75,6 @@ export interface InitConfiguration {
   env?: string | undefined
   version?: string | undefined
 
-  useAlternateIntakeDomains?: boolean | undefined
-  intakeApiVersion?: 1 | 2 | undefined
-
   useCrossSiteSessionCookie?: boolean | undefined
   useSecureSessionCookie?: boolean | undefined
   trackSessionAcrossSubdomains?: boolean | undefined
