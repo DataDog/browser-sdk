@@ -110,7 +110,7 @@ Add the generated code snippet to the head tag (in front of any other script tag
 
 ### TypeScript
 
-Types are compatible with TypeScript >= 3.0. For earlier versions, import JS sources and use global variables to avoid any compilation issues:
+Types are compatible with TypeScript >= 3.8.2. For earlier versions, import JS sources and use global variables to avoid any compilation issues:
 
 ```javascript
 import '@datadog/browser-rum/bundle/datadog-rum'
