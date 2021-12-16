@@ -4,8 +4,7 @@ import {
   PRIVACY_ATTR_NAME,
   PRIVACY_ATTR_VALUE_ALLOW,
   PRIVACY_ATTR_VALUE_HIDDEN,
-  PRIVACY_ATTR_VALUE_INPUT_IGNORED,
-  PRIVACY_ATTR_VALUE_INPUT_MASKED,
+  PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
 } from '../../constants'
 import {
   HTML,
@@ -257,16 +256,16 @@ describe('serializeNodeWithId', () => {
       )
     })
 
-    describe('input privacy mode', () => {
-      it('replaces <input> values with asterisks for masked mode', () => {
+    describe('input privacy mode mask-user-input', () => {
+      it('replaces <input> values with asterisks', () => {
         const input = document.createElement('input')
         input.value = 'toto'
-        input.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_MASKED)
+        input.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT)
 
         expect(serializeNodeWithId(input, DEFAULT_OPTIONS)! as ElementNode).toEqual(
           jasmine.objectContaining({
             attributes: {
-              [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_INPUT_MASKED,
+              [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
               value: '***',
             },
           })
@@ -278,7 +277,7 @@ describe('serializeNodeWithId', () => {
         const input = document.createElement('input')
         input.value = 'toto'
         parent.appendChild(input)
-        parent.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_MASKED)
+        parent.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT)
 
         expect((serializeNodeWithId(parent, DEFAULT_OPTIONS)! as ElementNode).childNodes[0]).toEqual(
           jasmine.objectContaining({
@@ -286,39 +285,24 @@ describe('serializeNodeWithId', () => {
           })
         )
       })
-    })
 
-    it('does serialize <input> values for ignored mode', () => {
-      const input = document.createElement('input')
-      input.value = 'toto'
-      input.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_IGNORED)
+      it('does not apply mask for <input type="button">', () => {
+        const button = document.createElement('input')
+        button.type = 'button'
+        button.value = 'toto'
+        button.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT)
 
-      expect(serializeNodeWithId(input, DEFAULT_OPTIONS)! as ElementNode).toEqual(
-        jasmine.objectContaining({
-          attributes: {
-            [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_INPUT_IGNORED,
-            value: '***',
-          },
-        })
-      )
-    })
+        expect((serializeNodeWithId(button, DEFAULT_OPTIONS)! as ElementNode).attributes.value).toEqual('toto')
+      })
 
-    it('ignores the privacy mode for <input type="button">', () => {
-      const button = document.createElement('input')
-      button.type = 'button'
-      button.value = 'toto'
-      button.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_IGNORED)
+      it('does not apply mask for <input type="submit"> contained in a masked ancestor', () => {
+        const button = document.createElement('input')
+        button.type = 'submit'
+        button.value = 'toto'
+        button.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT)
 
-      expect((serializeNodeWithId(button, DEFAULT_OPTIONS)! as ElementNode).attributes.value).toEqual('toto')
-    })
-
-    it('ignores the privacy mode for <input type="submit">', () => {
-      const button = document.createElement('input')
-      button.type = 'submit'
-      button.value = 'toto'
-      button.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_IGNORED)
-
-      expect((serializeNodeWithId(button, DEFAULT_OPTIONS)! as ElementNode).attributes.value).toEqual('toto')
+        expect((serializeNodeWithId(button, DEFAULT_OPTIONS)! as ElementNode).attributes.value).toEqual('toto')
+      })
     })
   })
 
