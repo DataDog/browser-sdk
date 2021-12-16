@@ -23,7 +23,7 @@ export const DEFAULT_RUM_CONFIGURATION = {
   maxActionsPerMinute: 3000,
 
   replaySampleRate: 100,
-  allowedTracingOrigins: [] as ReadonlyArray<RegExp | string>,
+  allowedTracingOrigins: [] as Array<RegExp | string>,
   trackInteractions: false,
   trackViewsManually: false,
   defaultPrivacyLevel: DefaultPrivacyLevel.MASK_USER_INPUT as DefaultPrivacyLevel,
