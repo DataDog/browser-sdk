@@ -237,7 +237,7 @@ describe('transportConfiguration', () => {
 
     it('should detect proxy intake request with proxyUrl', () => {
       let configuration = computeTransportConfiguration({ clientToken, proxyUrl: 'https://www.proxy.com' }, buildEnv)
-      expect(configuration.isIntakeUrl(`https://www.proxy.com?ddforward=xxx`)).toBe(true)
+      expect(configuration.isIntakeUrl(`https://www.proxy.com/?ddforward=xxx`)).toBe(true)
 
       configuration = computeTransportConfiguration(
         { clientToken, proxyUrl: 'https://www.proxy.com/custom/path' },

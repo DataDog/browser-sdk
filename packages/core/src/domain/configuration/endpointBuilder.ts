@@ -1,5 +1,6 @@
 import { BuildEnv } from '../../boot/init'
 import { timeStampNow } from '../../tools/timeUtils'
+import { normalizeUrl } from '../../tools/urlPolyfill'
 import { generateUUID, includes } from '../../tools/utils'
 import { InitConfiguration } from './configuration'
 
@@ -43,12 +44,12 @@ export function createEndpointBuilder(
   source?: string
 ) {
   const sdkVersion = buildEnv.sdkVersion
+  const proxyUrl = initConfiguration.proxyUrl && normalizeUrl(initConfiguration.proxyUrl)
   const {
     site = INTAKE_SITE_US,
     clientToken,
     env,
     proxyHost,
-    proxyUrl,
     service,
     version,
     intakeApiVersion,
