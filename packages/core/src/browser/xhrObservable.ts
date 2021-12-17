@@ -28,7 +28,7 @@ export interface XhrCompleteContext extends Omit<XhrStartContext, 'state'> {
 export type XhrContext = XhrOpenContext | XhrStartContext | XhrCompleteContext
 
 let xhrObservable: Observable<XhrContext> | undefined
-const xhrContexts: WeakMap<XMLHttpRequest, XhrContext> = new WeakMap()
+const xhrContexts = new WeakMap<XMLHttpRequest, XhrContext>()
 
 export function initXhrObservable() {
   if (!xhrObservable) {
