@@ -168,7 +168,7 @@ describe('transportConfiguration', () => {
       ).toBe(true)
     })
 
-    it('should detect proxy intake request', () => {
+    it('should detect proxy intake request with proxyHost', () => {
       let configuration = computeTransportConfiguration({ clientToken, proxyHost: 'www.proxy.com' }, buildEnv)
       expect(configuration.isIntakeUrl(`https://www.proxy.com/api/v2/rum?xxx`)).toBe(true)
 
@@ -176,8 +176,24 @@ describe('transportConfiguration', () => {
       expect(configuration.isIntakeUrl(`https://www.proxy.com/custom/path/api/v2/rum?xxx`)).toBe(true)
     })
 
-    it('should not detect request done on the same host as the proxy', () => {
+    it('should not detect request done on the same host as the proxy with proxyHost', () => {
       const configuration = computeTransportConfiguration({ clientToken, proxyHost: 'www.proxy.com' }, buildEnv)
+      expect(configuration.isIntakeUrl('https://www.proxy.com/foo')).toBe(false)
+    })
+
+    it('should detect proxy intake request with proxyUrl', () => {
+      let configuration = computeTransportConfiguration({ clientToken, proxyUrl: 'https://www.proxy.com' }, buildEnv)
+      expect(configuration.isIntakeUrl(`https://www.proxy.com/?ddforward=xxx`)).toBe(true)
+
+      configuration = computeTransportConfiguration(
+        { clientToken, proxyUrl: 'https://www.proxy.com/custom/path' },
+        buildEnv
+      )
+      expect(configuration.isIntakeUrl(`https://www.proxy.com/custom/path?ddforward=xxx`)).toBe(true)
+    })
+
+    it('should not detect request done on the same host as the proxy with proxyUrl', () => {
+      const configuration = computeTransportConfiguration({ clientToken, proxyUrl: 'https://www.proxy.com' }, buildEnv)
       expect(configuration.isIntakeUrl('https://www.proxy.com/foo')).toBe(false)
     })
 

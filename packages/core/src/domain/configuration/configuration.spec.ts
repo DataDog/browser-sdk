@@ -101,6 +101,17 @@ describe('validateAndBuildConfiguration', () => {
         validateAndBuildConfiguration(({ clientToken, sampleRate: 'foo' } as unknown) as InitConfiguration, buildEnv)
       ).toBeUndefined()
       expect(displaySpy).toHaveBeenCalledOnceWith('Sample Rate should be a number between 0 and 100')
+
+      displaySpy.calls.reset()
+      expect(
+        validateAndBuildConfiguration(({ clientToken, sampleRate: 200 } as unknown) as InitConfiguration, buildEnv)
+      ).toBeUndefined()
+      expect(displaySpy).toHaveBeenCalledOnceWith('Sample Rate should be a number between 0 and 100')
+    })
+
+    it("shouldn't display any error if the configuration is correct", () => {
+      validateAndBuildConfiguration({ clientToken: 'yes', sampleRate: 1 }, buildEnv)
+      expect(displaySpy).not.toHaveBeenCalled()
     })
   })
 

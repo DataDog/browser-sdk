@@ -1,5 +1,4 @@
 import {
-  Configuration,
   ErrorSource,
   FetchCompleteContext,
   initXhrObservable,
@@ -9,8 +8,9 @@ import {
   initFetchObservable,
   XhrCompleteContext,
 } from '@datadog/browser-core'
+import { LogsConfiguration } from './configuration'
 
-export function trackNetworkError(configuration: Configuration, errorObservable: Observable<RawError>) {
+export function trackNetworkError(configuration: LogsConfiguration, errorObservable: Observable<RawError>) {
   const xhrSubscription = initXhrObservable().subscribe((context) => {
     if (context.state === 'complete') {
       handleCompleteRequest(RequestType.XHR, context)
@@ -54,7 +54,7 @@ function isServerError(request: { status: number }) {
   return request.status >= 500
 }
 
-function truncateResponseText(responseText: string | undefined, configuration: Configuration) {
+function truncateResponseText(responseText: string | undefined, configuration: LogsConfiguration) {
   if (responseText && responseText.length > configuration.requestErrorResponseLengthLimit) {
     return `${responseText.substring(0, configuration.requestErrorResponseLengthLimit)}...`
   }

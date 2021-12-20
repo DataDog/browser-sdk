@@ -1,5 +1,4 @@
 import {
-  Configuration,
   Context,
   DEFAULT_CONFIGURATION,
   ErrorSource,
@@ -21,11 +20,12 @@ import {
   mockClock,
   stubEndpointBuilder,
 } from '../../../core/test/specHelper'
+import { LogsConfiguration } from '../domain/configuration'
 
 import { Logger, LogsMessage, StatusType } from '../domain/logger'
 import { LogsSessionManager } from '../domain/logsSessionManager'
 import { LogsEvent } from '../logsEvent.types'
-import { buildAssemble, doStartLogs, LogsInitConfiguration, startLogs as originalStartLogs } from './startLogs'
+import { buildAssemble, doStartLogs, startLogs as originalStartLogs } from './startLogs'
 
 interface SentMessage extends LogsMessage {
   logger?: { name: string }
@@ -41,7 +41,7 @@ function getLoggedMessage(server: sinon.SinonFakeServer, index: number) {
 }
 const FAKE_DATE = 123456
 const SESSION_ID = 'session-id'
-const baseConfiguration: Partial<Configuration> = {
+const baseConfiguration: Partial<LogsConfiguration> = {
   ...DEFAULT_CONFIGURATION,
   logsEndpointBuilder: stubEndpointBuilder('https://localhost/v1/input/log'),
   maxBatchSize: 1,
@@ -70,8 +70,8 @@ describe('logs', () => {
   const startLogs = ({
     errorLogger = new Logger(noop),
     configuration: configurationOverrides,
-  }: { errorLogger?: Logger; configuration?: Partial<Configuration> } = {}) => {
-    const configuration = { ...(baseConfiguration as Configuration), ...configurationOverrides }
+  }: { errorLogger?: Logger; configuration?: Partial<LogsConfiguration> } = {}) => {
+    const configuration = { ...(baseConfiguration as LogsConfiguration), ...configurationOverrides }
     return doStartLogs(configuration, errorObservable, internalMonitoring, sessionManager, errorLogger)
   }
 
@@ -180,13 +180,13 @@ describe('logs', () => {
       updateExperimentalFeatures(['event-bridge'])
       const sendSpy = spyOn(initEventBridgeStub(), 'send')
 
-      let configuration = { ...baseConfiguration, ...{ sampleRate: 0 } } as LogsInitConfiguration
+      let configuration = { ...baseConfiguration, sampleRate: 0 } as LogsConfiguration
       let sendLog = originalStartLogs(configuration, new Logger(noop))
       sendLog(DEFAULT_MESSAGE, {})
 
       expect(sendSpy).not.toHaveBeenCalled()
 
-      configuration = { ...baseConfiguration, ...{ sampleRate: 100 } } as LogsInitConfiguration
+      configuration = { ...baseConfiguration, sampleRate: 100 } as LogsConfiguration
       sendLog = originalStartLogs(configuration, new Logger(noop))
       sendLog(DEFAULT_MESSAGE, {})
 
@@ -203,7 +203,7 @@ describe('logs', () => {
       assemble = buildAssemble(
         sessionManager,
         {
-          ...(baseConfiguration as Configuration),
+          ...(baseConfiguration as LogsConfiguration),
           beforeSend: (x: LogsEvent) => beforeSend(x),
         },
         noop
