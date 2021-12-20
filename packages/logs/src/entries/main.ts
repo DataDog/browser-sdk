@@ -4,7 +4,7 @@ import { startLogs } from '../boot/startLogs'
 
 export { Logger, LogsMessage, StatusType, HandlerType } from '../domain/logger'
 export { LoggerConfiguration, LogsPublicApi as LogsGlobal } from '../boot/logsPublicApi'
-export { LogsInitConfiguration } from '../boot/startLogs'
+export { LogsInitConfiguration } from '../domain/configuration'
 export { LogsEvent } from '../logsEvent.types'
 
 export const datadogLogs = makeLogsPublicApi(startLogs)

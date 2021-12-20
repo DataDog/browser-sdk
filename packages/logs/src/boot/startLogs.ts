@@ -1,38 +1,31 @@
 import {
   areCookiesAuthorized,
   combine,
-  commonInit,
-  Configuration,
   Context,
   createEventRateLimiter,
   InternalMonitoring,
   Observable,
   RawError,
   RelativeTime,
-  InitConfiguration,
   trackRuntimeError,
   trackConsoleError,
   canUseEventBridge,
   getEventBridge,
   getRelativeTime,
+  startInternalMonitoring,
 } from '@datadog/browser-core'
 import { trackNetworkError } from '../domain/trackNetworkError'
 import { Logger, LogsMessage, StatusType } from '../domain/logger'
 import { LogsSessionManager, startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
-import { LogsEvent } from '../logsEvent.types'
 import { startLoggerBatch } from '../transport/startLoggerBatch'
-import { buildEnv } from './buildEnv'
+import { LogsConfiguration } from '../domain/configuration'
 
-export interface LogsInitConfiguration extends InitConfiguration {
-  forwardErrorsToLogs?: boolean | undefined
-  beforeSend?: ((event: LogsEvent) => void | boolean) | undefined
-}
+export function startLogs(configuration: LogsConfiguration, errorLogger: Logger) {
+  const internalMonitoring = startInternalMonitoring(configuration)
 
-export function startLogs(initConfiguration: LogsInitConfiguration, errorLogger: Logger) {
-  const { configuration, internalMonitoring } = commonInit(initConfiguration, buildEnv)
   const errorObservable = new Observable<RawError>()
 
-  if (initConfiguration.forwardErrorsToLogs !== false) {
+  if (configuration.forwardErrorsToLogs) {
     trackConsoleError(errorObservable)
     trackRuntimeError(errorObservable)
     trackNetworkError(configuration, errorObservable)
@@ -47,7 +40,7 @@ export function startLogs(initConfiguration: LogsInitConfiguration, errorLogger:
 }
 
 export function doStartLogs(
-  configuration: Configuration,
+  configuration: LogsConfiguration,
   errorObservable: Observable<RawError>,
   internalMonitoring: InternalMonitoring,
   sessionManager: LogsSessionManager,
@@ -106,7 +99,7 @@ export function doStartLogs(
 
 export function buildAssemble(
   sessionManager: LogsSessionManager,
-  configuration: Configuration,
+  configuration: LogsConfiguration,
   reportError: (error: RawError) => void
 ) {
   const errorRateLimiter = createEventRateLimiter(StatusType.error, configuration.maxErrorsPerMinute, reportError)

@@ -6,4 +6,5 @@ export {
   BeforeSendCallback,
   DefaultPrivacyLevel,
   buildConfiguration,
+  validateAndBuildConfiguration,
 } from './configuration'
