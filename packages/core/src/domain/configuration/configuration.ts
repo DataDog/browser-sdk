@@ -13,36 +13,6 @@ export const DefaultPrivacyLevel = {
 } as const
 export type DefaultPrivacyLevel = typeof DefaultPrivacyLevel[keyof typeof DefaultPrivacyLevel]
 
-export const DEFAULT_CONFIGURATION = {
-  maxErrorsPerMinute: 3000,
-  maxInternalMonitoringMessagesPerPage: 15,
-  sampleRate: 100,
-  silentMultipleInit: false,
-
-  /**
-   * arbitrary value, byte precision not needed
-   */
-  requestErrorResponseLengthLimit: 32 * ONE_KILO_BYTE,
-
-  /**
-   * flush automatically, aim to be lower than ALB connection timeout
-   * to maximize connection reuse.
-   */
-  flushTimeout: 30 * ONE_SECOND,
-
-  /**
-   * Logs intake limit
-   */
-  maxBatchSize: 50,
-  maxMessageSize: 256 * ONE_KILO_BYTE,
-
-  /**
-   * beacon payload max queue size implementation is 64kb
-   * ensure that we leave room for logs, rum and potential other users
-   */
-  batchBytesLimit: 16 * ONE_KILO_BYTE,
-}
-
 export interface InitConfiguration {
   clientToken: string
   applicationId?: string | undefined
@@ -87,13 +57,25 @@ interface ReplicaUserConfiguration {
   clientToken: string
 }
 
-export type Configuration = typeof DEFAULT_CONFIGURATION &
-  TransportConfiguration & {
-    cookieOptions: CookieOptions
+export interface Configuration extends TransportConfiguration {
+  // Built from init configuration
+  beforeSend: BeforeSendCallback | undefined
+  cookieOptions: CookieOptions
+  sampleRate: number
+  service: string | undefined
+  silentMultipleInit: boolean
 
-    service: string | undefined
-    beforeSend: BeforeSendCallback | undefined
-  }
+  // Event limits
+  maxErrorsPerMinute: number
+  maxInternalMonitoringMessagesPerPage: number
+  requestErrorResponseLengthLimit: number
+
+  // Batch configuration
+  batchBytesLimit: number
+  flushTimeout: number
+  maxBatchSize: number
+  maxMessageSize: number
+}
 
 export function validateAndBuildConfiguration(
   initConfiguration: InitConfiguration,
@@ -104,27 +86,50 @@ export function validateAndBuildConfiguration(
     return
   }
 
+  if (initConfiguration.sampleRate !== undefined && !isPercentage(initConfiguration.sampleRate)) {
+    display.error('Sample Rate should be a number between 0 and 100')
+    return
+  }
+
   // Set the experimental feature flags as early as possible so we can use them in most places
   updateExperimentalFeatures(initConfiguration.enableExperimentalFeatures)
 
-  const configuration: Configuration = {
+  return {
+    ...computeTransportConfiguration(initConfiguration, buildEnv),
+
     beforeSend:
       initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
     cookieOptions: buildCookieOptions(initConfiguration),
+    sampleRate: initConfiguration.sampleRate ?? 100,
     service: initConfiguration.service,
-    ...computeTransportConfiguration(initConfiguration, buildEnv),
-    ...DEFAULT_CONFIGURATION,
-  }
+    silentMultipleInit: !!initConfiguration.silentMultipleInit,
 
-  if (initConfiguration.sampleRate !== undefined) {
-    if (!isPercentage(initConfiguration.sampleRate)) {
-      display.error('Sample Rate should be a number between 0 and 100')
-      return
-    }
-    configuration.sampleRate = initConfiguration.sampleRate
-  }
+    /**
+     * beacon payload max queue size implementation is 64kb
+     * ensure that we leave room for logs, rum and potential other users
+     */
+    batchBytesLimit: 16 * ONE_KILO_BYTE,
 
-  return configuration
+    maxErrorsPerMinute: 3000,
+    maxInternalMonitoringMessagesPerPage: 15,
+
+    /**
+     * arbitrary value, byte precision not needed
+     */
+    requestErrorResponseLengthLimit: 32 * ONE_KILO_BYTE,
+
+    /**
+     * flush automatically, aim to be lower than ALB connection timeout
+     * to maximize connection reuse.
+     */
+    flushTimeout: 30 * ONE_SECOND,
+
+    /**
+     * Logs intake limit
+     */
+    maxBatchSize: 50,
+    maxMessageSize: 256 * ONE_KILO_BYTE,
+  }
 }
 
 export function buildCookieOptions(initConfiguration: InitConfiguration) {

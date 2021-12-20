@@ -1,7 +1,6 @@
 import {
   assign,
   combine,
-  DEFAULT_CONFIGURATION,
   Observable,
   TimeStamp,
   noop,
@@ -25,7 +24,7 @@ import {
   SYNTHETICS_RESULT_ID_COOKIE_NAME,
   SYNTHETICS_TEST_ID_COOKIE_NAME,
 } from '../src/domain/syntheticsContext'
-import { DEFAULT_RUM_CONFIGURATION, RumConfiguration } from '../src/domain/configuration'
+import { RumConfiguration, validateAndBuildRumConfiguration } from '../src/domain/configuration'
 import { validateFormat } from './formatValidation'
 import { createRumSessionManagerMock } from './mockRumSessionManager'
 
@@ -93,11 +92,9 @@ export function setup(): TestSetupBuilder {
     stop: noop,
   }
   const FAKE_APP_ID = 'appId'
-  const configuration: Partial<RumConfiguration> = {
-    ...DEFAULT_CONFIGURATION,
-    ...DEFAULT_RUM_CONFIGURATION,
+  const configuration: RumConfiguration = {
+    ...validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: FAKE_APP_ID })!,
     ...SPEC_ENDPOINTS,
-    applicationId: FAKE_APP_ID,
   }
 
   // ensure that events generated before build are collected
@@ -155,7 +152,7 @@ export function setup(): TestSetupBuilder {
           foregroundContexts,
           sessionManager,
           applicationId: FAKE_APP_ID,
-          configuration: configuration as RumConfiguration,
+          configuration,
           location: fakeLocation as Location,
         })
         if (result && result.stop) {

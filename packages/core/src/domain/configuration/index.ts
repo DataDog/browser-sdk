@@ -1,5 +1,4 @@
 export {
-  DEFAULT_CONFIGURATION,
   Configuration,
   InitConfiguration,
   buildCookieOptions,
