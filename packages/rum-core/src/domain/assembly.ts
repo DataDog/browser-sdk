@@ -81,6 +81,9 @@ export function startRumAssembly(
     ({ startTime, rawRumEvent, domainContext, savedCommonContext, customerContext }) => {
       const viewContext = parentContexts.findView(startTime)
       const urlContext = urlContexts.findUrl(startTime)
+      // allow to send events if the session was tracked when they start
+      // except for views which are continuously updated
+      // TODO: stop sending view updates when session is expired
       const session = sessionManager.findTrackedSession(rawRumEvent.type !== RumEventType.VIEW ? startTime : undefined)
       if (session && viewContext && urlContext) {
         const actionContext = parentContexts.findAction(startTime)
