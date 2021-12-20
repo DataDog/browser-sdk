@@ -1,5 +1,4 @@
 import {
-  Configuration,
   Context,
   DEFAULT_CONFIGURATION,
   ErrorSource,
@@ -11,6 +10,7 @@ import {
   resetExperimentalFeatures,
   TimeStamp,
   updateExperimentalFeatures,
+  getTimeStamp,
 } from '@datadog/browser-core'
 import sinon from 'sinon'
 import {
@@ -20,10 +20,12 @@ import {
   mockClock,
   stubEndpointBuilder,
 } from '../../../core/test/specHelper'
+import { LogsConfiguration } from '../domain/configuration'
 
 import { Logger, LogsMessage, StatusType } from '../domain/logger'
+import { LogsSessionManager } from '../domain/logsSessionManager'
 import { LogsEvent } from '../logsEvent.types'
-import { buildAssemble, doStartLogs, LogsInitConfiguration, startLogs as originalStartLogs } from './startLogs'
+import { buildAssemble, doStartLogs, startLogs as originalStartLogs } from './startLogs'
 
 interface SentMessage extends LogsMessage {
   logger?: { name: string }
@@ -39,11 +41,11 @@ function getLoggedMessage(server: sinon.SinonFakeServer, index: number) {
 }
 const FAKE_DATE = 123456
 const SESSION_ID = 'session-id'
-const baseConfiguration: Partial<Configuration> = {
+const baseConfiguration: Partial<LogsConfiguration> = {
   ...DEFAULT_CONFIGURATION,
   logsEndpointBuilder: stubEndpointBuilder('https://localhost/v1/input/log'),
   maxBatchSize: 1,
-  service: 'Service',
+  service: 'service',
 }
 const internalMonitoring = { setExternalContextProvider: () => undefined }
 
@@ -62,16 +64,15 @@ describe('logs', () => {
   let sessionIsTracked: boolean
   let server: sinon.SinonFakeServer
   let errorObservable: Observable<RawError>
-  const session = {
-    getId: () => (sessionIsTracked ? SESSION_ID : undefined),
-    isTracked: () => sessionIsTracked,
+  const sessionManager: LogsSessionManager = {
+    findTrackedSession: () => (sessionIsTracked ? { id: SESSION_ID } : undefined),
   }
   const startLogs = ({
     errorLogger = new Logger(noop),
     configuration: configurationOverrides,
-  }: { errorLogger?: Logger; configuration?: Partial<Configuration> } = {}) => {
-    const configuration = { ...(baseConfiguration as Configuration), ...configurationOverrides }
-    return doStartLogs(configuration, errorObservable, internalMonitoring, session, errorLogger)
+  }: { errorLogger?: Logger; configuration?: Partial<LogsConfiguration> } = {}) => {
+    const configuration = { ...(baseConfiguration as LogsConfiguration), ...configurationOverrides }
+    return doStartLogs(configuration, errorObservable, internalMonitoring, sessionManager, errorLogger)
   }
 
   beforeEach(() => {
@@ -101,10 +102,10 @@ describe('logs', () => {
       expect(server.requests.length).toEqual(1)
       expect(server.requests[0].url).toContain(baseConfiguration.logsEndpointBuilder!.build())
       expect(getLoggedMessage(server, 0)).toEqual({
-        date: FAKE_DATE,
+        date: FAKE_DATE as TimeStamp,
         foo: 'bar',
         message: 'message',
-        service: 'Service',
+        service: 'service',
         session_id: SESSION_ID,
         status: StatusType.warn,
         view: {
@@ -127,6 +128,30 @@ describe('logs', () => {
         id: 'view-id',
         url: 'http://from-rum-context.com',
       })
+    })
+
+    it('should use the rum internal context related to the error time', () => {
+      window.DD_RUM = {
+        getInternalContext(startTime) {
+          return {
+            foo: startTime === 1234 ? 'b' : 'a',
+          }
+        },
+      }
+      let sendLogStrategy: (message: LogsMessage, currentContext: Context) => void = noop
+      const sendLog = (message: LogsMessage) => {
+        sendLogStrategy(message, {})
+      }
+      sendLogStrategy = startLogs({ errorLogger: new Logger(sendLog) })
+
+      errorObservable.notify({
+        message: 'error!',
+        source: ErrorSource.SOURCE,
+        startClocks: { relative: 1234 as RelativeTime, timeStamp: getTimeStamp(1234 as RelativeTime) },
+        type: 'Error',
+      })
+
+      expect(getLoggedMessage(server, 0).foo).toBe('b')
     })
 
     it('should all use the same batch', () => {
@@ -155,13 +180,13 @@ describe('logs', () => {
       updateExperimentalFeatures(['event-bridge'])
       const sendSpy = spyOn(initEventBridgeStub(), 'send')
 
-      let configuration = { ...baseConfiguration, ...{ sampleRate: 0 } } as LogsInitConfiguration
+      let configuration = { ...baseConfiguration, sampleRate: 0 } as LogsConfiguration
       let sendLog = originalStartLogs(configuration, new Logger(noop))
       sendLog(DEFAULT_MESSAGE, {})
 
       expect(sendSpy).not.toHaveBeenCalled()
 
-      configuration = { ...baseConfiguration, ...{ sampleRate: 100 } } as LogsInitConfiguration
+      configuration = { ...baseConfiguration, sampleRate: 100 } as LogsConfiguration
       sendLog = originalStartLogs(configuration, new Logger(noop))
       sendLog(DEFAULT_MESSAGE, {})
 
@@ -176,9 +201,9 @@ describe('logs', () => {
     beforeEach(() => {
       beforeSend = noop
       assemble = buildAssemble(
-        session,
+        sessionManager,
         {
-          ...(baseConfiguration as Configuration),
+          ...(baseConfiguration as LogsConfiguration),
           beforeSend: (x: LogsEvent) => beforeSend(x),
         },
         noop
@@ -188,7 +213,7 @@ describe('logs', () => {
       }
     })
 
-    it('should not assemble when session is not tracked', () => {
+    it('should not assemble when sessionManager is not tracked', () => {
       sessionIsTracked = false
 
       expect(assemble(DEFAULT_MESSAGE, { foo: 'from-current-context' })).toBeUndefined()
@@ -209,7 +234,7 @@ describe('logs', () => {
       expect(assembledMessage).toEqual({
         foo: 'from-current-context',
         message: DEFAULT_MESSAGE.message,
-        service: 'Service',
+        service: 'service',
         session_id: SESSION_ID,
         status: DEFAULT_MESSAGE.status,
         view: { url: 'http://from-rum-context.com', id: 'view-id' },
@@ -261,7 +286,7 @@ describe('logs', () => {
     })
   })
 
-  describe('logger session', () => {
+  describe('logger sessionManager', () => {
     let sendLog: (message: LogsMessage, context: Context) => void
 
     beforeEach(() => {
@@ -314,28 +339,6 @@ describe('logs', () => {
           status: StatusType.error,
         },
       ])
-    })
-
-    it('should use the rum internal context related to the error time', () => {
-      window.DD_RUM = {
-        getInternalContext(startTime) {
-          return {
-            foo: startTime === 1234 ? 'b' : 'a',
-          }
-        },
-      }
-      const sendLogSpy = jasmine.createSpy<(message: LogsMessage & { foo?: string }) => void>()
-      startLogs({ errorLogger: new Logger(sendLogSpy) })
-
-      errorObservable.notify({
-        message: 'error!',
-        source: ErrorSource.SOURCE,
-        startClocks: { relative: 1234 as RelativeTime, timeStamp: -1 as TimeStamp },
-        type: 'Error',
-      })
-
-      expect(sendLogSpy).toHaveBeenCalled()
-      expect(sendLogSpy.calls.argsFor(0)[0].foo).toBe('b')
     })
   })
 

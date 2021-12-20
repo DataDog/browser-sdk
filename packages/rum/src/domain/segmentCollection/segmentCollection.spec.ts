@@ -7,7 +7,7 @@ import {
   restorePageVisibility,
   setPageVisibility,
 } from '@datadog/browser-core/test/specHelper'
-import { createRumSessionMock } from '../../../../rum-core/test/mockRumSession'
+import { createRumSessionManagerMock } from '../../../../rum-core/test/mockRumSessionManager'
 import { Record, RecordType, SegmentContext, SegmentMeta } from '../../types'
 import { MockWorker } from '../../../test/utils'
 import { SEND_BEACON_BYTE_LENGTH_LIMIT } from '../../transport/send'
@@ -217,11 +217,10 @@ describe('startSegmentCollection', () => {
 
 describe('computeSegmentContext', () => {
   const DEFAULT_VIEW_CONTEXT: ViewContext = {
-    session: { id: '456' },
     view: { id: '123' },
   }
 
-  const DEFAULT_SESSION = createRumSessionMock().setId('456')
+  const DEFAULT_SESSION = createRumSessionManagerMock().setId('456')
 
   it('returns a segment context', () => {
     expect(computeSegmentContext('appid', DEFAULT_SESSION, mockParentContexts(DEFAULT_VIEW_CONTEXT))).toEqual({
@@ -235,40 +234,11 @@ describe('computeSegmentContext', () => {
     expect(computeSegmentContext('appid', DEFAULT_SESSION, mockParentContexts(undefined))).toBeUndefined()
   })
 
-  it('returns undefined if there is no session id', () => {
-    expect(
-      computeSegmentContext(
-        'appid',
-        DEFAULT_SESSION,
-        mockParentContexts({
-          ...DEFAULT_VIEW_CONTEXT,
-          session: { id: undefined },
-        })
-      )
-    ).toBeUndefined()
-  })
-
-  it('returns undefined if the session id is not the one of the current session', () => {
-    expect(
-      computeSegmentContext(
-        'appid',
-        DEFAULT_SESSION,
-        mockParentContexts({
-          ...DEFAULT_VIEW_CONTEXT,
-          session: { id: 'expired-session' },
-        })
-      )
-    ).toBeUndefined()
-  })
-
   it('returns undefined if the session is not tracked', () => {
     expect(
       computeSegmentContext(
         'appid',
-        {
-          ...DEFAULT_SESSION,
-          isTracked: () => false,
-        },
+        createRumSessionManagerMock().setNotTracked(),
         mockParentContexts(DEFAULT_VIEW_CONTEXT)
       )
     ).toBeUndefined()

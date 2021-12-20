@@ -7,12 +7,13 @@ import {
   resetExperimentalFeatures,
 } from '@datadog/browser-core'
 import { Clock, deleteEventBridgeStub, initEventBridgeStub, mockClock } from '../../../core/test/specHelper'
+import { HybridInitConfiguration, LogsInitConfiguration } from '../domain/configuration'
 
 import { HandlerType, LogsMessage, StatusType } from '../domain/logger'
-import { HybridInitConfiguration, LogsPublicApi, makeLogsPublicApi, StartLogs } from './logsPublicApi'
-import { LogsInitConfiguration } from './startLogs'
+import { LogsPublicApi, makeLogsPublicApi, StartLogs } from './logsPublicApi'
 
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx' }
+const INVALID_INIT_CONFIGURATION = {} as LogsInitConfiguration
 
 describe('logs entry', () => {
   let sendLogsSpy: jasmine.Spy<
@@ -21,7 +22,7 @@ describe('logs entry', () => {
       currentContext: Context & { view: { referrer: string; url: string } }
     ) => void
   >
-  const startLogs: StartLogs = () => (sendLogsSpy as any) as ReturnType<StartLogs>
+  let startLogs: jasmine.Spy<StartLogs>
 
   function getLoggedMessage(index: number) {
     const [message, context] = sendLogsSpy.calls.argsFor(index)
@@ -30,6 +31,7 @@ describe('logs entry', () => {
 
   beforeEach(() => {
     sendLogsSpy = jasmine.createSpy()
+    startLogs = jasmine.createSpy().and.callFake(() => sendLogsSpy)
   })
 
   it('should define the public API with init', () => {
@@ -47,15 +49,16 @@ describe('logs entry', () => {
       LOGS = makeLogsPublicApi(startLogs)
     })
 
-    it('init should log an error with no public api key', () => {
-      LOGS.init(undefined as any)
-      expect(displaySpy).toHaveBeenCalledTimes(1)
+    it('should start when the configuration is valid', () => {
+      LOGS.init(DEFAULT_INIT_CONFIGURATION)
+      expect(displaySpy).not.toHaveBeenCalled()
+      expect(startLogs).toHaveBeenCalled()
+    })
 
-      LOGS.init({ stillNoApiKey: true } as any)
-      expect(displaySpy).toHaveBeenCalledTimes(2)
-
-      LOGS.init({ clientToken: 'yeah' })
-      expect(displaySpy).toHaveBeenCalledTimes(2)
+    it('should not start when the configuration is invalid', () => {
+      LOGS.init(INVALID_INIT_CONFIGURATION)
+      expect(displaySpy).toHaveBeenCalled()
+      expect(startLogs).not.toHaveBeenCalled()
     })
 
     it('should add a `_setDebug` that works', () => {
@@ -76,41 +79,28 @@ describe('logs entry', () => {
       setDebug(false)
     })
 
-    it('init should log an error if sampleRate is invalid', () => {
-      LOGS.init({ clientToken: 'yes', sampleRate: 'foo' as any })
-      expect(displaySpy).toHaveBeenCalledTimes(1)
+    describe('multiple init', () => {
+      it('should log an error if init is called several times', () => {
+        LOGS.init(DEFAULT_INIT_CONFIGURATION)
+        expect(displaySpy).toHaveBeenCalledTimes(0)
 
-      LOGS.init({ clientToken: 'yes', sampleRate: 200 })
-      expect(displaySpy).toHaveBeenCalledTimes(2)
-    })
-
-    it('should log an error if init is called several times', () => {
-      LOGS.init({ clientToken: 'yes', sampleRate: 1 })
-      expect(displaySpy).toHaveBeenCalledTimes(0)
-
-      LOGS.init({ clientToken: 'yes', sampleRate: 1 })
-      expect(displaySpy).toHaveBeenCalledTimes(1)
-    })
-
-    it('should not log an error if init is called several times and silentMultipleInit is true', () => {
-      LOGS.init({
-        clientToken: 'yes',
-        sampleRate: 1,
-        silentMultipleInit: true,
+        LOGS.init(DEFAULT_INIT_CONFIGURATION)
+        expect(displaySpy).toHaveBeenCalledTimes(1)
       })
-      expect(displaySpy).toHaveBeenCalledTimes(0)
 
-      LOGS.init({
-        clientToken: 'yes',
-        sampleRate: 1,
-        silentMultipleInit: true,
+      it('should not log an error if init is called several times and silentMultipleInit is true', () => {
+        LOGS.init({
+          ...DEFAULT_INIT_CONFIGURATION,
+          silentMultipleInit: true,
+        })
+        expect(displaySpy).toHaveBeenCalledTimes(0)
+
+        LOGS.init({
+          ...DEFAULT_INIT_CONFIGURATION,
+          silentMultipleInit: true,
+        })
+        expect(displaySpy).toHaveBeenCalledTimes(0)
       })
-      expect(displaySpy).toHaveBeenCalledTimes(0)
-    })
-
-    it("shouldn't trigger any console.error if the configuration is correct", () => {
-      LOGS.init({ clientToken: 'yes', sampleRate: 1 })
-      expect(displaySpy).toHaveBeenCalledTimes(0)
     })
 
     describe('if event bridge present', () => {
@@ -129,6 +119,7 @@ describe('logs entry', () => {
         LOGS.init(hybridInitConfiguration as LogsInitConfiguration)
 
         expect(displaySpy).not.toHaveBeenCalled()
+        expect(startLogs).toHaveBeenCalled()
       })
     })
   })

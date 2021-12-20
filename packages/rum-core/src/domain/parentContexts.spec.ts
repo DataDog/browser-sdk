@@ -1,7 +1,5 @@
-import { RelativeTime, relativeToClocks } from '@datadog/browser-core'
-import { createRumSessionMock, RumSessionMock } from '../../test/mockRumSession'
+import { RelativeTime, relativeToClocks, CLEAR_OLD_CONTEXTS_INTERVAL } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
-import { CLEAR_OLD_CONTEXTS_INTERVAL } from '../tools/contextHistory'
 import { LifeCycleEventType } from './lifeCycle'
 import {
   ACTION_CONTEXT_TIME_OUT_DELAY,
@@ -24,17 +22,14 @@ describe('parentContexts', () => {
     }
   }
 
-  let session: RumSessionMock
   let setupBuilder: TestSetupBuilder
   let parentContexts: ParentContexts
 
   beforeEach(() => {
-    session = createRumSessionMock().setId('fake-session')
     setupBuilder = setup()
       .withFakeLocation('http://fake-url.com')
-      .withSession(session)
-      .beforeBuild(({ lifeCycle, session }) => {
-        parentContexts = startParentContexts(lifeCycle, session)
+      .beforeBuild(({ lifeCycle }) => {
+        parentContexts = startParentContexts(lifeCycle)
         return parentContexts
       })
   })
@@ -116,19 +111,6 @@ describe('parentContexts', () => {
 
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ name: 'Fake name' }))
       expect(parentContexts.findView()!.view.name).toBe('Fake name')
-    })
-
-    it('should update session id only on VIEW_CREATED', () => {
-      const { lifeCycle } = setupBuilder.build()
-
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent())
-      expect(parentContexts.findView()!.session.id).toBe('fake-session')
-
-      session.setId('other-session')
-      expect(parentContexts.findView()!.session.id).toBe('fake-session')
-
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ id: 'fake 2' }))
-      expect(parentContexts.findView()!.session.id).toBe('other-session')
     })
   })
 

@@ -90,6 +90,7 @@ async function fetchWrapper(url) {
 }
 
 module.exports = {
+  CI_FILE,
   getSecretKey,
   initGitConfig,
   executeCommand,

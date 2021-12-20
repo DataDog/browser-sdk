@@ -7,6 +7,7 @@ import {
   includes,
   monitored,
   display,
+  TimeStamp,
 } from '@datadog/browser-core'
 
 export const StatusType = {
@@ -30,6 +31,7 @@ export const STATUSES = Object.keys(StatusType) as StatusType[]
 export interface LogsMessage {
   message: string
   status: StatusType
+  date?: TimeStamp
   [key: string]: ContextValue
 }
 

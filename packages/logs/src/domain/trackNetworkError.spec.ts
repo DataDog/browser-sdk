@@ -1,5 +1,6 @@
-import { Configuration, isIE, Observable, RawError } from '@datadog/browser-core'
+import { isIE, Observable, RawError } from '@datadog/browser-core'
 import { FetchStub, FetchStubManager, SPEC_ENDPOINTS, stubFetch } from '../../../core/test/specHelper'
+import { LogsConfiguration } from './configuration'
 
 import { trackNetworkError } from './trackNetworkError'
 
@@ -8,7 +9,7 @@ describe('network error tracker', () => {
   let fetchStub: FetchStub
   let fetchStubManager: FetchStubManager
   let stopNetworkErrorTracking: () => void
-  let configuration: Configuration
+  let configuration: LogsConfiguration
   let errorObservable: Observable<RawError>
   const FAKE_URL = 'http://fake.com/'
   const DEFAULT_REQUEST = {
@@ -29,7 +30,7 @@ describe('network error tracker', () => {
     configuration = {
       requestErrorResponseLengthLimit: 32,
       ...SPEC_ENDPOINTS,
-    } as Configuration
+    } as LogsConfiguration
 
     fetchStubManager = stubFetch()
     ;({ stop: stopNetworkErrorTracking } = trackNetworkError(configuration, errorObservable))

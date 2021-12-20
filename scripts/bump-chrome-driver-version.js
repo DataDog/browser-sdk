@@ -9,9 +9,9 @@ const {
   initGitConfig,
   getSecretKey,
   fetch,
+  CI_FILE,
 } = require('./utils')
 
-const CI_FILE = '.gitlab-ci.yml'
 const REPOSITORY = process.env.GIT_REPOSITORY
 const MAIN_BRANCH = process.env.MAIN_BRANCH
 const CURRENT_CI_IMAGE = process.env.CURRENT_CI_IMAGE

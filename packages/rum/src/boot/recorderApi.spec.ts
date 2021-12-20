@@ -7,7 +7,7 @@ import {
   LifeCycle,
 } from '@datadog/browser-rum-core'
 import { createNewEvent, deleteEventBridgeStub, initEventBridgeStub } from '../../../core/test/specHelper'
-import { createRumSessionMock, RumSessionMock } from '../../../rum-core/test/mockRumSession'
+import { createRumSessionManagerMock, RumSessionManagerMock } from '../../../rum-core/test/mockRumSessionManager'
 import { setup, TestSetupBuilder } from '../../../rum-core/test/specHelper'
 import { DeflateWorker } from '../domain/segmentCollection/deflateWorker'
 import { startDeflateWorker } from '../domain/segmentCollection/startDeflateWorker'
@@ -41,7 +41,7 @@ describe('makeRecorderApi', () => {
   let rumInit: (initConfiguration: RumInitConfiguration) => void
 
   beforeEach(() => {
-    setupBuilder = setup().beforeBuild(({ lifeCycle, session }) => {
+    setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager }) => {
       stopRecordingSpy = jasmine.createSpy('stopRecording')
       startRecordingSpy = jasmine.createSpy('startRecording').and.callFake(() => ({
         stop: stopRecordingSpy,
@@ -50,7 +50,7 @@ describe('makeRecorderApi', () => {
       startDeflateWorkerWith(FAKE_WORKER)
       recorderApi = makeRecorderApi(startRecordingSpy, startDeflateWorkerSpy)
       rumInit = (initConfiguration) => {
-        recorderApi.onRumStart(lifeCycle, initConfiguration, {} as Configuration, session, {} as ParentContexts)
+        recorderApi.onRumStart(lifeCycle, initConfiguration, {} as Configuration, sessionManager, {} as ParentContexts)
       }
     })
   })
@@ -106,14 +106,14 @@ describe('makeRecorderApi', () => {
     })
 
     it('ignores calls if the session is not tracked', () => {
-      setupBuilder.withSession(createRumSessionMock().setNotTracked()).build()
+      setupBuilder.withSessionManager(createRumSessionManagerMock().setNotTracked()).build()
       rumInit(DEFAULT_INIT_CONFIGURATION)
       recorderApi.start()
       expect(startRecordingSpy).not.toHaveBeenCalled()
     })
 
     it('ignores calls if the session plan is LITE', () => {
-      setupBuilder.withSession(createRumSessionMock().setLitePlan()).build()
+      setupBuilder.withSessionManager(createRumSessionManagerMock().setLitePlan()).build()
       rumInit(DEFAULT_INIT_CONFIGURATION)
       recorderApi.start()
       expect(startRecordingSpy).not.toHaveBeenCalled()
@@ -191,23 +191,23 @@ describe('makeRecorderApi', () => {
   })
 
   describe('when session renewal change the session plan', () => {
-    let session: RumSessionMock
+    let sessionManager: RumSessionManagerMock
     let lifeCycle: LifeCycle
     beforeEach(() => {
-      session = createRumSessionMock()
-      setupBuilder.withSession(session)
+      sessionManager = createRumSessionManagerMock()
+      setupBuilder.withSessionManager(sessionManager)
       ;({ lifeCycle } = setupBuilder.build())
       rumInit(DEFAULT_INIT_CONFIGURATION)
     })
 
     describe('from LITE to REPLAY', () => {
       beforeEach(() => {
-        session.setLitePlan()
+        sessionManager.setLitePlan()
       })
 
       it('starts recording if startSessionReplayRecording was called', () => {
         recorderApi.start()
-        session.setReplayPlan()
+        sessionManager.setReplayPlan()
         lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
         expect(startRecordingSpy).not.toHaveBeenCalled()
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
@@ -218,7 +218,7 @@ describe('makeRecorderApi', () => {
       it('does not starts recording if stopSessionReplayRecording was called', () => {
         recorderApi.start()
         recorderApi.stop()
-        session.setReplayPlan()
+        sessionManager.setReplayPlan()
         lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
         expect(startRecordingSpy).not.toHaveBeenCalled()
@@ -227,12 +227,12 @@ describe('makeRecorderApi', () => {
 
     describe('from LITE to untracked', () => {
       beforeEach(() => {
-        session.setLitePlan()
+        sessionManager.setLitePlan()
       })
 
       it('keeps not recording if startSessionReplayRecording was called', () => {
         recorderApi.start()
-        session.setNotTracked()
+        sessionManager.setNotTracked()
         lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
         expect(startRecordingSpy).not.toHaveBeenCalled()
@@ -242,7 +242,7 @@ describe('makeRecorderApi', () => {
 
     describe('from LITE to LITE', () => {
       beforeEach(() => {
-        session.setLitePlan()
+        sessionManager.setLitePlan()
       })
 
       it('keeps not recording if startSessionReplayRecording was called', () => {
@@ -256,13 +256,13 @@ describe('makeRecorderApi', () => {
 
     describe('from REPLAY to LITE', () => {
       beforeEach(() => {
-        session.setReplayPlan()
+        sessionManager.setReplayPlan()
       })
 
       it('stops recording if startSessionReplayRecording was called', () => {
         recorderApi.start()
         expect(startRecordingSpy).toHaveBeenCalledTimes(1)
-        session.setLitePlan()
+        sessionManager.setLitePlan()
         lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
         expect(stopRecordingSpy).toHaveBeenCalled()
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
@@ -274,7 +274,7 @@ describe('makeRecorderApi', () => {
         const { triggerOnDomLoaded } = mockDocumentReadyState()
         rumInit(DEFAULT_INIT_CONFIGURATION)
         recorderApi.start()
-        session.setLitePlan()
+        sessionManager.setLitePlan()
         lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
         triggerOnDomLoaded()
@@ -284,13 +284,13 @@ describe('makeRecorderApi', () => {
 
     describe('from REPLAY to untracked', () => {
       beforeEach(() => {
-        session.setReplayPlan()
+        sessionManager.setReplayPlan()
       })
 
       it('stops recording if startSessionReplayRecording was called', () => {
         recorderApi.start()
         expect(startRecordingSpy).toHaveBeenCalledTimes(1)
-        session.setNotTracked()
+        sessionManager.setNotTracked()
         lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
         expect(stopRecordingSpy).toHaveBeenCalled()
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
@@ -300,7 +300,7 @@ describe('makeRecorderApi', () => {
 
     describe('from REPLAY to REPLAY', () => {
       beforeEach(() => {
-        session.setReplayPlan()
+        sessionManager.setReplayPlan()
       })
 
       it('keeps recording if startSessionReplayRecording was called', () => {
@@ -326,12 +326,12 @@ describe('makeRecorderApi', () => {
 
     describe('from untracked to REPLAY', () => {
       beforeEach(() => {
-        session.setNotTracked()
+        sessionManager.setNotTracked()
       })
 
       it('starts recording if startSessionReplayRecording was called', () => {
         recorderApi.start()
-        session.setReplayPlan()
+        sessionManager.setReplayPlan()
         lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
         expect(startRecordingSpy).toHaveBeenCalled()
@@ -341,7 +341,7 @@ describe('makeRecorderApi', () => {
       it('does not starts recording if stopSessionReplayRecording was called', () => {
         recorderApi.start()
         recorderApi.stop()
-        session.setReplayPlan()
+        sessionManager.setReplayPlan()
         lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
         expect(startRecordingSpy).not.toHaveBeenCalled()
@@ -351,12 +351,12 @@ describe('makeRecorderApi', () => {
 
     describe('from untracked to LITE', () => {
       beforeEach(() => {
-        session.setNotTracked()
+        sessionManager.setNotTracked()
       })
 
       it('keeps not recording if startSessionReplayRecording was called', () => {
         recorderApi.start()
-        session.setLitePlan()
+        sessionManager.setLitePlan()
         lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
         expect(startRecordingSpy).not.toHaveBeenCalled()
@@ -366,7 +366,7 @@ describe('makeRecorderApi', () => {
 
     describe('from untracked to untracked', () => {
       beforeEach(() => {
-        session.setNotTracked()
+        sessionManager.setNotTracked()
       })
 
       it('keeps not recording if startSessionReplayRecording was called', () => {

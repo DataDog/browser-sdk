@@ -2,7 +2,9 @@ export {
   DEFAULT_CONFIGURATION,
   Configuration,
   InitConfiguration,
+  buildConfiguration,
   buildCookieOptions,
+  validateAndBuildConfiguration,
   BeforeSendCallback,
   DefaultPrivacyLevel,
 } from './domain/configuration'
@@ -14,8 +16,9 @@ export {
 export { trackConsoleError } from './domain/error/trackConsoleError'
 export { trackRuntimeError } from './domain/error/trackRuntimeError'
 export { computeStackTrace, StackTrace } from './domain/tracekit'
-export { BuildEnv, BuildMode, defineGlobal, makePublicApi, commonInit } from './boot/init'
+export { BuildEnv, BuildMode, defineGlobal, makePublicApi } from './boot/init'
 export {
+  startInternalMonitoring,
   InternalMonitoring,
   MonitoringMessage,
   monitored,
@@ -29,11 +32,11 @@ export {
 } from './domain/internalMonitoring'
 export { Observable, Subscription } from './tools/observable'
 export {
-  startSessionManagement,
-  Session,
+  startSessionManager,
+  SessionManager,
   // Exposed for tests
-  stopSessionManagement,
-} from './domain/session/sessionManagement'
+  stopSessionManager,
+} from './domain/session/sessionManager'
 export {
   SESSION_TIME_OUT_DELAY,
   // Exposed for tests
@@ -57,3 +60,4 @@ export { BoundedBuffer } from './tools/boundedBuffer'
 export { catchUserErrors } from './tools/catchUserErrors'
 export { createContextManager } from './tools/contextManager'
 export { limitModification } from './tools/limitModification'
+export { ContextHistory, CLEAR_OLD_CONTEXTS_INTERVAL } from './tools/contextHistory'

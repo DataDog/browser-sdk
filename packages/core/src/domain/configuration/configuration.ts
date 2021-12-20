@@ -1,7 +1,9 @@
 import { BuildEnv } from '../../boot/init'
 import { CookieOptions, getCurrentSite } from '../../browser/cookie'
 import { catchUserErrors } from '../../tools/catchUserErrors'
-import { objectHasValue, ONE_KILO_BYTE, ONE_SECOND } from '../../tools/utils'
+import { display } from '../../tools/display'
+import { isPercentage, objectHasValue, ONE_KILO_BYTE, ONE_SECOND } from '../../tools/utils'
+import { updateExperimentalFeatures } from './experimentalFeatures'
 import { computeTransportConfiguration, TransportConfiguration } from './transportConfiguration'
 
 export const DefaultPrivacyLevel = {
@@ -73,9 +75,6 @@ export interface InitConfiguration {
   env?: string | undefined
   version?: string | undefined
 
-  useAlternateIntakeDomains?: boolean | undefined
-  intakeApiVersion?: 1 | 2 | undefined
-
   useCrossSiteSessionCookie?: boolean | undefined
   useSecureSessionCookie?: boolean | undefined
   trackSessionAcrossSubdomains?: boolean | undefined
@@ -95,11 +94,43 @@ export type Configuration = typeof DEFAULT_CONFIGURATION &
   TransportConfiguration & {
     cookieOptions: CookieOptions
 
-    service?: string
-    beforeSend?: BeforeSendCallback
+    service: string | undefined
+    beforeSend: BeforeSendCallback | undefined
 
     actionNameAttribute?: string
   }
+
+export function validateAndBuildConfiguration(
+  initConfiguration: InitConfiguration,
+  buildEnv: BuildEnv
+): Configuration | undefined {
+  if (!initConfiguration || !initConfiguration.clientToken) {
+    display.error('Client Token is not configured, we will not send any data.')
+    return
+  }
+
+  // Set the experimental feature flags as early as possible so we can use them in most places
+  updateExperimentalFeatures(initConfiguration.enableExperimentalFeatures)
+
+  const configuration: Configuration = {
+    beforeSend:
+      initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
+    cookieOptions: buildCookieOptions(initConfiguration),
+    service: initConfiguration.service,
+    ...computeTransportConfiguration(initConfiguration, buildEnv),
+    ...DEFAULT_CONFIGURATION,
+  }
+
+  if (initConfiguration.sampleRate !== undefined) {
+    if (!isPercentage(initConfiguration.sampleRate)) {
+      display.error('Sample Rate should be a number between 0 and 100')
+      return
+    }
+    configuration.sampleRate = initConfiguration.sampleRate
+  }
+
+  return configuration
+}
 
 export function buildConfiguration(initConfiguration: InitConfiguration, buildEnv: BuildEnv): Configuration {
   const configuration: Configuration = {
@@ -148,7 +179,7 @@ export function buildCookieOptions(initConfiguration: InitConfiguration) {
   cookieOptions.secure = mustUseSecureCookie(initConfiguration)
   cookieOptions.crossSite = !!initConfiguration.useCrossSiteSessionCookie
 
-  if (!!initConfiguration.trackSessionAcrossSubdomains) {
+  if (initConfiguration.trackSessionAcrossSubdomains) {
     cookieOptions.domain = getCurrentSite()
   }
 
