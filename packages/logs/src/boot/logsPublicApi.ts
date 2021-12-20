@@ -3,7 +3,6 @@ import {
   combine,
   Context,
   createContextManager,
-  isPercentage,
   makePublicApi,
   monitor,
   display,
@@ -11,16 +10,15 @@ import {
   InitConfiguration,
   canUseEventBridge,
 } from '@datadog/browser-core'
+import { LogsInitConfiguration, validateAndBuildLogsConfiguration } from '../domain/configuration'
 import { HandlerType, Logger, LogsMessage, StatusType } from '../domain/logger'
-import { startLogs, LogsInitConfiguration } from './startLogs'
+import { startLogs } from './startLogs'
 
 export interface LoggerConfiguration {
   level?: StatusType
   handler?: HandlerType | HandlerType[]
   context?: object
 }
-
-export type HybridInitConfiguration = Omit<LogsInitConfiguration, 'clientToken'>
 
 export type LogsPublicApi = ReturnType<typeof makeLogsPublicApi>
 
@@ -51,7 +49,12 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
         return
       }
 
-      sendLogStrategy = startLogsImpl(initConfiguration, logger)
+      const configuration = validateAndBuildLogsConfiguration(initConfiguration)
+      if (!configuration) {
+        return
+      }
+
+      sendLogStrategy = startLogsImpl(configuration, logger)
       getInitConfigurationStrategy = () => deepClone(initConfiguration)
       beforeInitSendLog.drain()
 
@@ -87,14 +90,6 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
       if (!initConfiguration.silentMultipleInit) {
         display.error('DD_LOGS is already initialized.')
       }
-      return false
-    }
-    if (!initConfiguration || !initConfiguration.clientToken) {
-      display.error('Client Token is not configured, we will not send any data.')
-      return false
-    }
-    if (initConfiguration.sampleRate !== undefined && !isPercentage(initConfiguration.sampleRate)) {
-      display.error('Sample Rate should be a number between 0 and 100')
       return false
     }
     return true
