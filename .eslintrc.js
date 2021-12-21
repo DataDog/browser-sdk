@@ -7,6 +7,7 @@ module.exports = {
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
     'plugin:@typescript-eslint/recommended-requiring-type-checking',
+    'plugin:import/typescript',
     'prettier',
     'prettier/@typescript-eslint',
   ],
@@ -156,6 +157,7 @@ module.exports = {
 
     'import/no-default-export': 'error',
     'import/no-extraneous-dependencies': 'error',
+    'import/no-unresolved': 'error',
     'import/order': 'error',
 
     'jasmine/no-focused-tests': 'error',

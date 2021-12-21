@@ -1,5 +1,5 @@
 import { CDPSession, Protocol } from 'puppeteer'
-import { ProfilingOptions } from 'src/types'
+import { ProfilingOptions } from '../types'
 import { isSdkBundleUrl } from './startProfiling'
 
 export async function startNetworkProfiling(options: ProfilingOptions, client: CDPSession) {
