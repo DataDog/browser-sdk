@@ -1,11 +1,12 @@
-import { Configuration, DEFAULT_CONFIGURATION, isIE, RequestType } from '@datadog/browser-core'
+import { isIE, RequestType } from '@datadog/browser-core'
 import { FetchStub, FetchStubManager, SPEC_ENDPOINTS, stubFetch, stubXhr, withXhr } from '../../../core/test/specHelper'
+import { RumConfiguration, validateAndBuildRumConfiguration } from './configuration'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { RequestCompleteEvent, RequestStartEvent, trackFetch, trackXhr } from './requestCollection'
 import { clearTracingIfNeeded, TraceIdentifier, Tracer } from './tracing/tracer'
 
-const configuration = {
-  ...DEFAULT_CONFIGURATION,
+const configuration: RumConfiguration = {
+  ...validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!,
   ...SPEC_ENDPOINTS,
   maxBatchSize: 1,
 }
@@ -36,7 +37,7 @@ describe('collect fetch', () => {
         context.spanId = new TraceIdentifier()
       },
     }
-    ;({ stop: stopFetchTracking } = trackFetch(lifeCycle, configuration as Configuration, tracerStub as Tracer))
+    ;({ stop: stopFetchTracking } = trackFetch(lifeCycle, configuration, tracerStub as Tracer))
 
     fetchStub = window.fetch as FetchStub
     window.onunhandledrejection = (ev: PromiseRejectionEvent) => {
@@ -87,7 +88,7 @@ describe('collect fetch', () => {
   })
 
   it('should ignore intake requests', (done) => {
-    fetchStub(SPEC_ENDPOINTS.rumEndpointBuilder!.build()).resolveWith({ status: 200, responseText: 'foo' })
+    fetchStub(SPEC_ENDPOINTS.rumEndpointBuilder.build()).resolveWith({ status: 200, responseText: 'foo' })
 
     fetchStubManager.whenAllComplete(() => {
       expect(startSpy).not.toHaveBeenCalled()
@@ -156,7 +157,7 @@ describe('collect xhr', () => {
         context.spanId = new TraceIdentifier()
       },
     }
-    ;({ stop: stopXhrTracking } = trackXhr(lifeCycle, configuration as Configuration, tracerStub as Tracer))
+    ;({ stop: stopXhrTracking } = trackXhr(lifeCycle, configuration, tracerStub as Tracer))
   })
 
   afterEach(() => {
@@ -218,7 +219,7 @@ describe('collect xhr', () => {
   it('should ignore intake requests', (done) => {
     withXhr({
       setup(xhr) {
-        xhr.open('GET', SPEC_ENDPOINTS.rumEndpointBuilder!.build())
+        xhr.open('GET', SPEC_ENDPOINTS.rumEndpointBuilder.build())
         xhr.send()
         xhr.complete(200)
       },

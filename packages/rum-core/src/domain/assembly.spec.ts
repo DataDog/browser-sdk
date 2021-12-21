@@ -46,20 +46,12 @@ describe('rum assembly', () => {
           },
         }),
       })
-      .beforeBuild(({ applicationId, configuration, lifeCycle, sessionManager, parentContexts, urlContexts }) => {
+      .beforeBuild(({ configuration, lifeCycle, sessionManager, parentContexts, urlContexts }) => {
         serverRumEvents = []
         lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent) =>
           serverRumEvents.push(serverRumEvent)
         )
-        startRumAssembly(
-          applicationId,
-          configuration,
-          lifeCycle,
-          sessionManager,
-          parentContexts,
-          urlContexts,
-          () => commonContext
-        )
+        startRumAssembly(configuration, lifeCycle, sessionManager, parentContexts, urlContexts, () => commonContext)
       })
   })
 

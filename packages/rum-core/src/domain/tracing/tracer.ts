@@ -1,4 +1,5 @@
-import { Configuration, getOrigin, objectEntries } from '@datadog/browser-core'
+import { getOrigin, objectEntries } from '@datadog/browser-core'
+import { RumConfiguration } from '../configuration'
 import {
   RumFetchCompleteContext,
   RumFetchStartContext,
@@ -41,7 +42,7 @@ export function clearTracingIfNeeded(context: RumFetchCompleteContext | RumXhrCo
   }
 }
 
-export function startTracer(configuration: Configuration, sessionManager: RumSessionManager): Tracer {
+export function startTracer(configuration: RumConfiguration, sessionManager: RumSessionManager): Tracer {
   return {
     clearTracingIfNeeded,
     traceFetch: (context) =>
@@ -80,7 +81,7 @@ export function startTracer(configuration: Configuration, sessionManager: RumSes
 }
 
 function injectHeadersIfTracingAllowed(
-  configuration: Configuration,
+  configuration: RumConfiguration,
   context: Partial<RumFetchStartContext | RumXhrStartContext>,
   sessionManager: RumSessionManager,
   inject: (tracingHeaders: TracingHeaders) => void
@@ -94,7 +95,7 @@ function injectHeadersIfTracingAllowed(
   inject(makeTracingHeaders(context.traceId, context.spanId))
 }
 
-function isAllowedUrl(configuration: Configuration, requestUrl: string) {
+function isAllowedUrl(configuration: RumConfiguration, requestUrl: string) {
   const requestOrigin = getOrigin(requestUrl)
   for (const allowedOrigin of configuration.allowedTracingOrigins) {
     if (requestOrigin === allowedOrigin || (allowedOrigin instanceof RegExp && allowedOrigin.test(requestOrigin))) {

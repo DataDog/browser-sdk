@@ -6,11 +6,11 @@ import {
   generateUUID,
   ClocksState,
   clocksNow,
-  Configuration,
   ONE_SECOND,
   Observable,
 } from '@datadog/browser-core'
 import { ActionType } from '../../../rawRumEvent.types'
+import { RumConfiguration } from '../../configuration'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { EventCounts, trackEventCounts } from '../../trackEventCounts'
 import { waitIdlePage } from '../../waitIdlePage'
@@ -52,7 +52,7 @@ export const AUTO_ACTION_MAX_DURATION = 10 * ONE_SECOND
 export function trackActions(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
-  { actionNameAttribute }: Configuration
+  { actionNameAttribute }: RumConfiguration
 ) {
   const action = startActionManagement(lifeCycle, domMutationObservable)
 

@@ -1,13 +1,14 @@
-import { combine, Configuration, toServerDuration, generateUUID, Observable } from '@datadog/browser-core'
+import { combine, toServerDuration, generateUUID, Observable } from '@datadog/browser-core'
 import { ActionType, CommonContext, RumEventType, RawRumActionEvent } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from '../../lifeCycle'
 import { ForegroundContexts } from '../../foregroundContexts'
+import { RumConfiguration } from '../../configuration'
 import { AutoAction, CustomAction, trackActions } from './trackActions'
 
 export function startActionCollection(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
-  configuration: Configuration,
+  configuration: RumConfiguration,
   foregroundContexts: ForegroundContexts
 ) {
   lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, (action) =>
