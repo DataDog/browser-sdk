@@ -1,5 +1,6 @@
 import { BuildEnv } from '../../boot/init'
 import { timeStampNow } from '../../tools/timeUtils'
+import { normalizeUrl } from '../../tools/urlPolyfill'
 import { generateUUID } from '../../tools/utils'
 import { InitConfiguration } from './configuration'
 
@@ -29,7 +30,9 @@ export function createEndpointBuilder(
   source?: string
 ) {
   const sdkVersion = buildEnv.sdkVersion
-  const { site = INTAKE_SITE_US, clientToken, proxyHost, proxyUrl } = initConfiguration
+
+  const proxyUrl = initConfiguration.proxyUrl && normalizeUrl(initConfiguration.proxyUrl)
+  const { site = INTAKE_SITE_US, clientToken, proxyHost } = initConfiguration
 
   const host = buildHost(endpointType)
   const path = buildPath(endpointType)
@@ -46,6 +49,10 @@ export function createEndpointBuilder(
   }
 
   function buildIntakeUrl(): string {
+    if (proxyUrl) {
+      return `${proxyUrl}?ddforward`
+    }
+
     const endpoint = build()
     return endpoint.slice(0, endpoint.indexOf('?'))
   }

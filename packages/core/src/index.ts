@@ -1,8 +1,6 @@
 export {
-  DEFAULT_CONFIGURATION,
   Configuration,
   InitConfiguration,
-  buildConfiguration,
   buildCookieOptions,
   validateAndBuildConfiguration,
   BeforeSendCallback,

@@ -1,4 +1,5 @@
-import { Configuration, performDraw, startSessionManager, RelativeTime } from '@datadog/browser-core'
+import { performDraw, startSessionManager, RelativeTime } from '@datadog/browser-core'
+import { LogsConfiguration } from './configuration'
 
 export const LOGS_SESSION_KEY = 'logs'
 
@@ -15,7 +16,7 @@ export enum LoggerTrackingType {
   TRACKED = '1',
 }
 
-export function startLogsSessionManager(configuration: Configuration): LogsSessionManager {
+export function startLogsSessionManager(configuration: LogsConfiguration): LogsSessionManager {
   const sessionManager = startSessionManager(configuration.cookieOptions, LOGS_SESSION_KEY, (rawTrackingType) =>
     computeSessionState(configuration, rawTrackingType)
   )
@@ -31,7 +32,7 @@ export function startLogsSessionManager(configuration: Configuration): LogsSessi
   }
 }
 
-export function startLogsSessionManagerStub(configuration: Configuration): LogsSessionManager {
+export function startLogsSessionManagerStub(configuration: LogsConfiguration): LogsSessionManager {
   const isTracked = computeTrackingType(configuration) === LoggerTrackingType.TRACKED
   const session = isTracked ? {} : undefined
   return {
@@ -39,14 +40,14 @@ export function startLogsSessionManagerStub(configuration: Configuration): LogsS
   }
 }
 
-function computeTrackingType(configuration: Configuration) {
+function computeTrackingType(configuration: LogsConfiguration) {
   if (!performDraw(configuration.sampleRate)) {
     return LoggerTrackingType.NOT_TRACKED
   }
   return LoggerTrackingType.TRACKED
 }
 
-function computeSessionState(configuration: Configuration, rawSessionType?: string) {
+function computeSessionState(configuration: LogsConfiguration, rawSessionType?: string) {
   const trackingType = hasValidLoggerSession(rawSessionType) ? rawSessionType : computeTrackingType(configuration)
   return {
     trackingType,

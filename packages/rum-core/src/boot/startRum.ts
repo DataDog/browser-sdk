@@ -1,4 +1,4 @@
-import { combine, Configuration, InternalMonitoring, canUseEventBridge, Observable } from '@datadog/browser-core'
+import { combine, InternalMonitoring, canUseEventBridge, Observable } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { startPerformanceCollection } from '../browser/performanceCollection'
 import { startRumAssembly } from '../domain/assembly'
@@ -18,11 +18,11 @@ import { startRumBatch } from '../transport/startRumBatch'
 import { startRumEventBridge } from '../transport/startRumEventBridge'
 import { startUrlContexts } from '../domain/urlContexts'
 import { createLocationChangeObservable, LocationChange } from '../browser/locationChangeObservable'
-import { RecorderApi, RumInitConfiguration } from './rumPublicApi'
+import { RumConfiguration } from '../domain/configuration'
+import { RecorderApi } from './rumPublicApi'
 
 export function startRum(
-  initConfiguration: RumInitConfiguration,
-  configuration: Configuration,
+  configuration: RumConfiguration,
   internalMonitoring: InternalMonitoring,
   getCommonContext: () => CommonContext,
   recorderApi: RecorderApi,
@@ -36,7 +36,7 @@ export function startRum(
   internalMonitoring.setExternalContextProvider(() =>
     combine(
       {
-        application_id: initConfiguration.applicationId,
+        application_id: configuration.applicationId,
         session: {
           id: session.findTrackedSession()?.id,
         },
@@ -47,7 +47,6 @@ export function startRum(
   )
 
   const { parentContexts, foregroundContexts, urlContexts } = startRumEventCollection(
-    initConfiguration.applicationId,
     lifeCycle,
     configuration,
     location,
@@ -74,7 +73,7 @@ export function startRum(
   startRequestCollection(lifeCycle, configuration, session)
   startPerformanceCollection(lifeCycle, configuration)
 
-  const internalContext = startInternalContext(initConfiguration.applicationId, session, parentContexts, urlContexts)
+  const internalContext = startInternalContext(configuration.applicationId, session, parentContexts, urlContexts)
 
   return {
     addAction,
@@ -89,9 +88,8 @@ export function startRum(
 }
 
 export function startRumEventCollection(
-  applicationId: string,
   lifeCycle: LifeCycle,
-  configuration: Configuration,
+  configuration: RumConfiguration,
   location: Location,
   sessionManager: RumSessionManager,
   locationChangeObservable: Observable<LocationChange>,
@@ -109,15 +107,7 @@ export function startRumEventCollection(
     ;({ stop: stopBatch } = startRumBatch(configuration, lifeCycle))
   }
 
-  startRumAssembly(
-    applicationId,
-    configuration,
-    lifeCycle,
-    sessionManager,
-    parentContexts,
-    urlContexts,
-    getCommonContext
-  )
+  startRumAssembly(configuration, lifeCycle, sessionManager, parentContexts, urlContexts, getCommonContext)
 
   return {
     parentContexts,
