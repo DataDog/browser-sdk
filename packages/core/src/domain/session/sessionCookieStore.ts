@@ -1,14 +1,17 @@
 import { CookieOptions, getCookie, setCookie } from '../../browser/cookie'
 import * as utils from '../../tools/utils'
 import { isExperimentalFeatureEnabled } from '../configuration/experimentalFeatures'
-import { monitor } from '../internalMonitoring/internalMonitoring'
+import { monitor, addMonitoringMessage } from '../internalMonitoring/internalMonitoring'
 import { SessionState, SESSION_EXPIRATION_DELAY } from './sessionStore'
 
 const SESSION_ENTRY_REGEXP = /^([a-z]+)=([a-z0-9-]+)$/
 const SESSION_ENTRY_SEPARATOR = '&'
 
 export const SESSION_COOKIE_NAME = '_dd_s'
-const RETRY_DELAY = 1
+
+// arbitrary values
+export const LOCK_RETRY_DELAY = 10
+export const MAX_NUMBER_OF_LOCK_RETRIES = 50
 
 type Operations = {
   options: CookieOptions
@@ -16,13 +19,17 @@ type Operations = {
   after?: (cookieSession: SessionState) => void
 }
 
-export function withCookieLockAccess(operations: Operations) {
+export function withCookieLockAccess(operations: Operations, numberOfRetries = 0) {
+  if (numberOfRetries >= MAX_NUMBER_OF_LOCK_RETRIES) {
+    addMonitoringMessage('Reach max lock retry')
+    return
+  }
   let currentLock: string
   let currentSession = retrieveSession()
   if (isExperimentalFeatureEnabled('cookie-lock')) {
     // if someone has lock, postpone
     if (currentSession.lock) {
-      postpone(operations)
+      postpone(operations, numberOfRetries)
       return
     }
     // acquire lock
@@ -32,7 +39,7 @@ export function withCookieLockAccess(operations: Operations) {
     // if lock is not acquired, postpone
     currentSession = retrieveSession()
     if (currentSession.lock !== currentLock) {
-      postpone(operations)
+      postpone(operations, numberOfRetries)
       return
     }
   }
@@ -41,7 +48,7 @@ export function withCookieLockAccess(operations: Operations) {
     // if lock corrupted after process, postpone
     currentSession = retrieveSession()
     if (currentSession.lock !== currentLock!) {
-      postpone(operations)
+      postpone(operations, numberOfRetries)
       return
     }
   }
@@ -53,7 +60,7 @@ export function withCookieLockAccess(operations: Operations) {
       // if lock corrupted after persist, postpone
       currentSession = retrieveSession()
       if (currentSession.lock !== currentLock!) {
-        postpone(operations)
+        postpone(operations, numberOfRetries)
         return
       }
       delete currentSession.lock
@@ -64,12 +71,12 @@ export function withCookieLockAccess(operations: Operations) {
   operations.after?.(processedSession || currentSession)
 }
 
-function postpone(operations: Operations) {
+function postpone(operations: Operations, currentNumberOfRetries: number) {
   setTimeout(
     monitor(() => {
-      withCookieLockAccess(operations)
+      withCookieLockAccess(operations, currentNumberOfRetries + 1)
     }),
-    RETRY_DELAY
+    LOCK_RETRY_DELAY
   )
 }
 

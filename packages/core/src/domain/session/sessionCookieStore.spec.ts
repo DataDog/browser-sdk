@@ -1,10 +1,17 @@
-import { updateExperimentalFeatures, resetExperimentalFeatures } from '@datadog/browser-core'
+import {
+  updateExperimentalFeatures,
+  resetExperimentalFeatures,
+  startFakeInternalMonitoring,
+  resetInternalMonitoring,
+} from '@datadog/browser-core'
 import { stubCookie } from '../../../test/specHelper'
 import {
   SESSION_COOKIE_NAME,
   toSessionString,
   retrieveSession,
   persistSession,
+  MAX_NUMBER_OF_LOCK_RETRIES,
+  LOCK_RETRY_DELAY,
   withCookieLockAccess,
 } from './sessionCookieStore'
 import { SessionState } from './sessionStore'
@@ -45,8 +52,12 @@ describe('session cookie store', () => {
       cookie.setSpy.and.callThrough()
       const { currentState, retryState } = currentOnLockCheck()
       persistSession(retryState, COOKIE_OPTIONS)
-      return `${SESSION_COOKIE_NAME}=${toSessionString(currentState)}`
+      return buildSessionString(currentState)
     })
+  }
+
+  function buildSessionString(currentState: SessionState) {
+    return `${SESSION_COOKIE_NAME}=${toSessionString(currentState)}`
   }
 
   beforeEach(() => {
@@ -194,6 +205,25 @@ describe('session cookie store', () => {
           },
         })
       })
+    })
+
+    it('should abort after a max number of retry', (done) => {
+      const maxNumberOfRetriesShouldBeReached = MAX_NUMBER_OF_LOCK_RETRIES * LOCK_RETRY_DELAY * 2
+      const monitoringMessages = startFakeInternalMonitoring()
+      persistSession(initialSession, COOKIE_OPTIONS)
+      cookie.setSpy.calls.reset()
+
+      cookie.getSpy.and.returnValue(buildSessionString({ ...initialSession, lock: 'locked' }))
+      withCookieLockAccess({ options: COOKIE_OPTIONS, process: processSpy, after: afterSpy })
+
+      setTimeout(() => {
+        expect(processSpy).not.toHaveBeenCalled()
+        expect(afterSpy).not.toHaveBeenCalled()
+        expect(cookie.setSpy).not.toHaveBeenCalled()
+        expect(monitoringMessages.length).toBe(1)
+        resetInternalMonitoring()
+        done()
+      }, maxNumberOfRetriesShouldBeReached)
     })
   })
 })
