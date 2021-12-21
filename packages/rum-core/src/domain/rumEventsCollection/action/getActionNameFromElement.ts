@@ -173,11 +173,15 @@ function getTextualContent(element: Element | HTMLElement, userProgrammaticAttri
   if ('innerText' in element) {
     let text = element.innerText
 
-    const replaceTextFromElement = (element: Element | HTMLElement, replacement: string) => {
-      if ('innerText' in element) {
-        const textToReplace = element.innerText
-        if (textToReplace && textToReplace.trim().length > 0) {
-          text = text.replace(textToReplace, replacement)
+    const replaceTextFromElements = (query: string, replacer: (element: Element) => string) => {
+      const list = element.querySelectorAll<Element | HTMLElement>(query)
+      for (let index = 0; index < list.length; index += 1) {
+        const element = list[index]
+        if ('innerText' in element) {
+          const textToReplace = element.innerText
+          if (textToReplace && textToReplace.trim().length > 0) {
+            text = text.replace(textToReplace, replacer(element))
+          }
         }
       }
     }
@@ -185,18 +189,20 @@ function getTextualContent(element: Element | HTMLElement, userProgrammaticAttri
     if (!supportsInnerTextScriptAndStyleRemoval()) {
       // remove the inner text of SCRIPT and STYLES from the result. This is a bit dirty, but should
       // be relatively fast and work in most cases.
-      element.querySelectorAll('script, style').forEach((element) => replaceTextFromElement(element, ''))
+      replaceTextFromElements('script, style', () => '')
     }
 
     // replace the text of elements with their programmatic attribute value
-    element.querySelectorAll(`[${DEFAULT_PROGRAMMATIC_ATTRIBUTE}]`).forEach((element) => {
-      replaceTextFromElement(element, element.getAttribute(DEFAULT_PROGRAMMATIC_ATTRIBUTE)!)
-    })
+    replaceTextFromElements(
+      `[${DEFAULT_PROGRAMMATIC_ATTRIBUTE}]`,
+      (element) => element.getAttribute(DEFAULT_PROGRAMMATIC_ATTRIBUTE)!
+    )
 
     if (userProgrammaticAttribute) {
-      element.querySelectorAll(`[${userProgrammaticAttribute}]`).forEach((element) => {
-        replaceTextFromElement(element, element.getAttribute(userProgrammaticAttribute)!)
-      })
+      replaceTextFromElements(
+        `[${userProgrammaticAttribute}]`,
+        (element) => element.getAttribute(userProgrammaticAttribute)!
+      )
     }
 
     return text
