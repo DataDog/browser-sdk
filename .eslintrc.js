@@ -158,6 +158,7 @@ module.exports = {
     'import/no-default-export': 'error',
     'import/no-extraneous-dependencies': 'error',
     'import/no-unresolved': 'error',
+    'import/no-useless-path-segments': 'error',
     'import/order': 'error',
 
     'jasmine/no-focused-tests': 'error',
