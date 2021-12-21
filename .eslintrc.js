@@ -155,6 +155,7 @@ module.exports = {
     '@typescript-eslint/triple-slash-reference': ['error', { path: 'always', types: 'prefer-import', lib: 'always' }],
 
     'import/no-default-export': 'error',
+    'import/no-extraneous-dependencies': 'error',
     'import/order': 'error',
 
     'jasmine/no-focused-tests': 'error',
@@ -219,6 +220,13 @@ module.exports = {
       },
       rules: {
         '@typescript-eslint/no-var-requires': 'off',
+      },
+    },
+    {
+      files: ['test/e2e/**/*.ts'],
+      rules: {
+        // E2E codebase is importing @datadog/browser-* packages referenced by tsconfig.
+        'import/no-extraneous-dependencies': 'off',
       },
     },
   ],
