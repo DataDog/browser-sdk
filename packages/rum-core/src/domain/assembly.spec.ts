@@ -46,20 +46,12 @@ describe('rum assembly', () => {
           },
         }),
       })
-      .beforeBuild(({ applicationId, configuration, lifeCycle, sessionManager, parentContexts, urlContexts }) => {
+      .beforeBuild(({ configuration, lifeCycle, sessionManager, parentContexts, urlContexts }) => {
         serverRumEvents = []
         lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent) =>
           serverRumEvents.push(serverRumEvent)
         )
-        startRumAssembly(
-          applicationId,
-          configuration,
-          lifeCycle,
-          sessionManager,
-          parentContexts,
-          urlContexts,
-          () => commonContext
-        )
+        startRumAssembly(configuration, lifeCycle, sessionManager, parentContexts, urlContexts, () => commonContext)
       })
   })
 
@@ -491,6 +483,19 @@ describe('rum assembly', () => {
       })
 
       expect(rumSessionManager.findTrackedSession).toHaveBeenCalledWith(123 as RelativeTime)
+    })
+
+    it('should get current session state for view event', () => {
+      const rumSessionManager = createRumSessionManagerMock()
+      spyOn(rumSessionManager, 'findTrackedSession').and.callThrough()
+
+      const { lifeCycle } = setupBuilder.withSessionManager(rumSessionManager).build()
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+        startTime: 123 as RelativeTime,
+      })
+
+      expect(rumSessionManager.findTrackedSession).toHaveBeenCalledWith(undefined)
     })
   })
 

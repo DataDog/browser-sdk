@@ -1,6 +1,5 @@
 import {
   Context,
-  DEFAULT_CONFIGURATION,
   ErrorSource,
   noop,
   Observable,
@@ -20,7 +19,7 @@ import {
   mockClock,
   stubEndpointBuilder,
 } from '../../../core/test/specHelper'
-import { LogsConfiguration } from '../domain/configuration'
+import { LogsConfiguration, validateAndBuildLogsConfiguration } from '../domain/configuration'
 
 import { Logger, LogsMessage, StatusType } from '../domain/logger'
 import { LogsSessionManager } from '../domain/logsSessionManager'
@@ -41,11 +40,10 @@ function getLoggedMessage(server: sinon.SinonFakeServer, index: number) {
 }
 const FAKE_DATE = 123456
 const SESSION_ID = 'session-id'
-const baseConfiguration: Partial<LogsConfiguration> = {
-  ...DEFAULT_CONFIGURATION,
+const baseConfiguration: LogsConfiguration = {
+  ...validateAndBuildLogsConfiguration({ clientToken: 'xxx', service: 'service' })!,
   logsEndpointBuilder: stubEndpointBuilder('https://localhost/v1/input/log'),
   maxBatchSize: 1,
-  service: 'service',
 }
 const internalMonitoring = { setExternalContextProvider: () => undefined }
 
@@ -71,7 +69,7 @@ describe('logs', () => {
     errorLogger = new Logger(noop),
     configuration: configurationOverrides,
   }: { errorLogger?: Logger; configuration?: Partial<LogsConfiguration> } = {}) => {
-    const configuration = { ...(baseConfiguration as LogsConfiguration), ...configurationOverrides }
+    const configuration = { ...baseConfiguration, ...configurationOverrides }
     return doStartLogs(configuration, errorObservable, internalMonitoring, sessionManager, errorLogger)
   }
 
@@ -100,7 +98,7 @@ describe('logs', () => {
       )
 
       expect(server.requests.length).toEqual(1)
-      expect(server.requests[0].url).toContain(baseConfiguration.logsEndpointBuilder!.build())
+      expect(server.requests[0].url).toContain(baseConfiguration.logsEndpointBuilder.build())
       expect(getLoggedMessage(server, 0)).toEqual({
         date: FAKE_DATE as TimeStamp,
         foo: 'bar',
@@ -180,13 +178,13 @@ describe('logs', () => {
       updateExperimentalFeatures(['event-bridge'])
       const sendSpy = spyOn(initEventBridgeStub(), 'send')
 
-      let configuration = { ...baseConfiguration, sampleRate: 0 } as LogsConfiguration
+      let configuration = { ...baseConfiguration, sampleRate: 0 }
       let sendLog = originalStartLogs(configuration, new Logger(noop))
       sendLog(DEFAULT_MESSAGE, {})
 
       expect(sendSpy).not.toHaveBeenCalled()
 
-      configuration = { ...baseConfiguration, sampleRate: 100 } as LogsConfiguration
+      configuration = { ...baseConfiguration, sampleRate: 100 }
       sendLog = originalStartLogs(configuration, new Logger(noop))
       sendLog(DEFAULT_MESSAGE, {})
 
@@ -203,7 +201,7 @@ describe('logs', () => {
       assemble = buildAssemble(
         sessionManager,
         {
-          ...(baseConfiguration as LogsConfiguration),
+          ...baseConfiguration,
           beforeSend: (x: LogsEvent) => beforeSend(x),
         },
         noop

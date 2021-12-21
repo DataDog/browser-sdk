@@ -2,7 +2,7 @@ import { BuildEnv } from '../../boot/init'
 import { CookieOptions, getCurrentSite } from '../../browser/cookie'
 import { catchUserErrors } from '../../tools/catchUserErrors'
 import { display } from '../../tools/display'
-import { isPercentage, objectHasValue, ONE_KILO_BYTE, ONE_SECOND } from '../../tools/utils'
+import { isPercentage, ONE_KILO_BYTE, ONE_SECOND } from '../../tools/utils'
 import { updateExperimentalFeatures } from './experimentalFeatures'
 import { computeTransportConfiguration, TransportConfiguration } from './transportConfiguration'
 
@@ -12,42 +12,6 @@ export const DefaultPrivacyLevel = {
   MASK_USER_INPUT: 'mask-user-input',
 } as const
 export type DefaultPrivacyLevel = typeof DefaultPrivacyLevel[keyof typeof DefaultPrivacyLevel]
-
-export const DEFAULT_CONFIGURATION = {
-  allowedTracingOrigins: [] as Array<string | RegExp>,
-  maxErrorsPerMinute: 3000,
-  maxActionsPerMinute: 3000,
-  maxInternalMonitoringMessagesPerPage: 15,
-  sampleRate: 100,
-  replaySampleRate: 100,
-  silentMultipleInit: false,
-  trackInteractions: false,
-  trackViewsManually: false,
-  defaultPrivacyLevel: DefaultPrivacyLevel.MASK_USER_INPUT as DefaultPrivacyLevel,
-
-  /**
-   * arbitrary value, byte precision not needed
-   */
-  requestErrorResponseLengthLimit: 32 * ONE_KILO_BYTE,
-
-  /**
-   * flush automatically, aim to be lower than ALB connection timeout
-   * to maximize connection reuse.
-   */
-  flushTimeout: 30 * ONE_SECOND,
-
-  /**
-   * Logs intake limit
-   */
-  maxBatchSize: 50,
-  maxMessageSize: 256 * ONE_KILO_BYTE,
-
-  /**
-   * beacon payload max queue size implementation is 64kb
-   * ensure that we leave room for logs, rum and potential other users
-   */
-  batchBytesLimit: 16 * ONE_KILO_BYTE,
-}
 
 export interface InitConfiguration {
   clientToken: string
@@ -90,15 +54,25 @@ interface ReplicaUserConfiguration {
   clientToken: string
 }
 
-export type Configuration = typeof DEFAULT_CONFIGURATION &
-  TransportConfiguration & {
-    cookieOptions: CookieOptions
+export interface Configuration extends TransportConfiguration {
+  // Built from init configuration
+  beforeSend: BeforeSendCallback | undefined
+  cookieOptions: CookieOptions
+  sampleRate: number
+  service: string | undefined
+  silentMultipleInit: boolean
 
-    service: string | undefined
-    beforeSend: BeforeSendCallback | undefined
+  // Event limits
+  maxErrorsPerMinute: number
+  maxInternalMonitoringMessagesPerPage: number
+  requestErrorResponseLengthLimit: number
 
-    actionNameAttribute?: string
-  }
+  // Batch configuration
+  batchBytesLimit: number
+  flushTimeout: number
+  maxBatchSize: number
+  maxMessageSize: number
+}
 
 export function validateAndBuildConfiguration(
   initConfiguration: InitConfiguration,
@@ -109,68 +83,50 @@ export function validateAndBuildConfiguration(
     return
   }
 
+  if (initConfiguration.sampleRate !== undefined && !isPercentage(initConfiguration.sampleRate)) {
+    display.error('Sample Rate should be a number between 0 and 100')
+    return
+  }
+
   // Set the experimental feature flags as early as possible so we can use them in most places
   updateExperimentalFeatures(initConfiguration.enableExperimentalFeatures)
 
-  const configuration: Configuration = {
+  return {
+    ...computeTransportConfiguration(initConfiguration, buildEnv),
+
     beforeSend:
       initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
     cookieOptions: buildCookieOptions(initConfiguration),
+    sampleRate: initConfiguration.sampleRate ?? 100,
     service: initConfiguration.service,
-    ...computeTransportConfiguration(initConfiguration, buildEnv),
-    ...DEFAULT_CONFIGURATION,
+    silentMultipleInit: !!initConfiguration.silentMultipleInit,
+
+    /**
+     * beacon payload max queue size implementation is 64kb
+     * ensure that we leave room for logs, rum and potential other users
+     */
+    batchBytesLimit: 16 * ONE_KILO_BYTE,
+
+    maxErrorsPerMinute: 3000,
+    maxInternalMonitoringMessagesPerPage: 15,
+
+    /**
+     * arbitrary value, byte precision not needed
+     */
+    requestErrorResponseLengthLimit: 32 * ONE_KILO_BYTE,
+
+    /**
+     * flush automatically, aim to be lower than ALB connection timeout
+     * to maximize connection reuse.
+     */
+    flushTimeout: 30 * ONE_SECOND,
+
+    /**
+     * Logs intake limit
+     */
+    maxBatchSize: 50,
+    maxMessageSize: 256 * ONE_KILO_BYTE,
   }
-
-  if (initConfiguration.sampleRate !== undefined) {
-    if (!isPercentage(initConfiguration.sampleRate)) {
-      display.error('Sample Rate should be a number between 0 and 100')
-      return
-    }
-    configuration.sampleRate = initConfiguration.sampleRate
-  }
-
-  return configuration
-}
-
-export function buildConfiguration(initConfiguration: InitConfiguration, buildEnv: BuildEnv): Configuration {
-  const configuration: Configuration = {
-    beforeSend:
-      initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
-    cookieOptions: buildCookieOptions(initConfiguration),
-    service: initConfiguration.service,
-    ...computeTransportConfiguration(initConfiguration, buildEnv),
-    ...DEFAULT_CONFIGURATION,
-  }
-
-  if ('allowedTracingOrigins' in initConfiguration) {
-    configuration.allowedTracingOrigins = initConfiguration.allowedTracingOrigins!
-  }
-
-  if ('sampleRate' in initConfiguration) {
-    configuration.sampleRate = initConfiguration.sampleRate!
-  }
-
-  if ('replaySampleRate' in initConfiguration) {
-    configuration.replaySampleRate = initConfiguration.replaySampleRate!
-  }
-
-  if ('trackInteractions' in initConfiguration) {
-    configuration.trackInteractions = !!initConfiguration.trackInteractions
-  }
-
-  if ('trackViewsManually' in initConfiguration) {
-    configuration.trackViewsManually = !!initConfiguration.trackViewsManually
-  }
-
-  if ('actionNameAttribute' in initConfiguration) {
-    configuration.actionNameAttribute = initConfiguration.actionNameAttribute
-  }
-
-  if (objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)) {
-    configuration.defaultPrivacyLevel = initConfiguration.defaultPrivacyLevel
-  }
-
-  return configuration
 }
 
 export function buildCookieOptions(initConfiguration: InitConfiguration) {
