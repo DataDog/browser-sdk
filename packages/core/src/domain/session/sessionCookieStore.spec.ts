@@ -225,5 +225,31 @@ describe('session cookie store', () => {
         done()
       }, maxNumberOfRetriesShouldBeReached)
     })
+
+    it('should execute cookie accesses in order', (done) => {
+      lockScenario({
+        onInitialLockCheck: () => ({
+          currentState: { ...initialSession, lock: 'locked' }, // force to postpone first access
+          retryState: initialSession,
+        }),
+      })
+      persistSession(initialSession, COOKIE_OPTIONS)
+
+      withCookieLockAccess({
+        options: COOKIE_OPTIONS,
+        process: (session) => ({ ...session, first: 'added' }),
+        after: afterSpy,
+      })
+      withCookieLockAccess({
+        options: COOKIE_OPTIONS,
+        process: (session) => ({ ...session, second: 'added' }),
+        after: (session) => {
+          expect(session.first).toBe('added')
+          expect(session.second).toBe('added')
+          expect(afterSpy).toHaveBeenCalled()
+          done()
+        },
+      })
+    })
   })
 })

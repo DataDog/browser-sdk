@@ -19,9 +19,20 @@ type Operations = {
   after?: (cookieSession: SessionState) => void
 }
 
+const bufferedOperations: Operations[] = []
+let onGoingOperations: Operations | undefined
+
 export function withCookieLockAccess(operations: Operations, numberOfRetries = 0) {
+  if (!onGoingOperations) {
+    onGoingOperations = operations
+  }
+  if (operations !== onGoingOperations) {
+    bufferedOperations.push(operations)
+    return
+  }
   if (numberOfRetries >= MAX_NUMBER_OF_LOCK_RETRIES) {
     addMonitoringMessage('Reach max lock retry')
+    next()
     return
   }
   let currentLock: string
@@ -69,6 +80,7 @@ export function withCookieLockAccess(operations: Operations, numberOfRetries = 0
     }
   }
   operations.after?.(processedSession || currentSession)
+  next()
 }
 
 function postpone(operations: Operations, currentNumberOfRetries: number) {
@@ -78,6 +90,13 @@ function postpone(operations: Operations, currentNumberOfRetries: number) {
     }),
     LOCK_RETRY_DELAY
   )
+}
+
+function next() {
+  onGoingOperations = bufferedOperations.shift()
+  if (onGoingOperations) {
+    withCookieLockAccess(onGoingOperations)
+  }
 }
 
 export function persistSession(session: SessionState, options: CookieOptions) {
