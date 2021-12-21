@@ -1,6 +1,5 @@
 import {
   addEventListeners,
-  Configuration,
   DOM_EVENT,
   Duration,
   getRelativeTime,
@@ -11,6 +10,7 @@ import {
   runOnReadyState,
   TimeStamp,
 } from '@datadog/browser-core'
+import { RumConfiguration } from '../domain/configuration'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { FAKE_INITIAL_DOCUMENT, isAllowedRequestUrl } from '../domain/rumEventsCollection/resource/resourceUtils'
 
@@ -104,7 +104,7 @@ export function supportPerformanceEntry() {
   return typeof PerformanceEntry === 'function'
 }
 
-export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: Configuration) {
+export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: RumConfiguration) {
   retrieveInitialDocumentResourceTiming((timing) => {
     handleRumPerformanceEntry(lifeCycle, configuration, timing)
   })
@@ -284,7 +284,7 @@ function computeRelativePerformanceTiming() {
   return result as RelativePerformanceTiming
 }
 
-function handlePerformanceEntries(lifeCycle: LifeCycle, configuration: Configuration, entries: PerformanceEntry[]) {
+function handlePerformanceEntries(lifeCycle: LifeCycle, configuration: RumConfiguration, entries: PerformanceEntry[]) {
   entries.forEach((entry) => {
     if (
       entry.entryType === 'resource' ||
@@ -300,7 +300,7 @@ function handlePerformanceEntries(lifeCycle: LifeCycle, configuration: Configura
   })
 }
 
-function handleRumPerformanceEntry(lifeCycle: LifeCycle, configuration: Configuration, entry: RumPerformanceEntry) {
+function handleRumPerformanceEntry(lifeCycle: LifeCycle, configuration: RumConfiguration, entry: RumPerformanceEntry) {
   if (isIncompleteNavigation(entry) || isForbiddenResource(configuration, entry)) {
     return
   }
@@ -312,6 +312,6 @@ function isIncompleteNavigation(entry: RumPerformanceEntry) {
   return entry.entryType === 'navigation' && entry.loadEventEnd <= 0
 }
 
-function isForbiddenResource(configuration: Configuration, entry: RumPerformanceEntry) {
+function isForbiddenResource(configuration: RumConfiguration, entry: RumPerformanceEntry) {
   return entry.entryType === 'resource' && !isAllowedRequestUrl(configuration, entry.name)
 }

@@ -11,11 +11,6 @@ import {
   PRIVACY_CLASS_HIDDEN,
   FORM_PRIVATE_TAG_NAMES,
   CENSORED_STRING_MARK,
-  // Deprecated (now aliased) below
-  PRIVACY_CLASS_INPUT_IGNORED,
-  PRIVACY_CLASS_INPUT_MASKED,
-  PRIVACY_ATTR_VALUE_INPUT_IGNORED,
-  PRIVACY_ATTR_VALUE_INPUT_MASKED,
 } from '../../constants'
 
 export const MAX_ATTRIBUTE_VALUE_CHAR_LENGTH = 100_000
@@ -102,8 +97,6 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefine
     case PRIVACY_ATTR_VALUE_MASK:
       return NodePrivacyLevel.MASK
     case PRIVACY_ATTR_VALUE_MASK_USER_INPUT:
-    case PRIVACY_ATTR_VALUE_INPUT_IGNORED: // Deprecated, now aliased
-    case PRIVACY_ATTR_VALUE_INPUT_MASKED: // Deprecated, now aliased
       return NodePrivacyLevel.MASK_USER_INPUT
     case PRIVACY_ATTR_VALUE_HIDDEN:
       return NodePrivacyLevel.HIDDEN
@@ -116,11 +109,7 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefine
     return NodePrivacyLevel.MASK
   } else if (node.classList.contains(PRIVACY_CLASS_HIDDEN)) {
     return NodePrivacyLevel.HIDDEN
-  } else if (
-    node.classList.contains(PRIVACY_CLASS_MASK_USER_INPUT) ||
-    node.classList.contains(PRIVACY_CLASS_INPUT_MASKED) || // Deprecated, now aliased
-    node.classList.contains(PRIVACY_CLASS_INPUT_IGNORED) // Deprecated, now aliased
-  ) {
+  } else if (node.classList.contains(PRIVACY_CLASS_MASK_USER_INPUT)) {
     return NodePrivacyLevel.MASK_USER_INPUT
   } else if (shouldIgnoreElement(node)) {
     // such as for scripts

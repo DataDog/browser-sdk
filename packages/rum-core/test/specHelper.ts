@@ -1,8 +1,6 @@
 import {
   assign,
   combine,
-  Configuration,
-  DEFAULT_CONFIGURATION,
   Observable,
   TimeStamp,
   noop,
@@ -26,13 +24,14 @@ import {
   SYNTHETICS_RESULT_ID_COOKIE_NAME,
   SYNTHETICS_TEST_ID_COOKIE_NAME,
 } from '../src/domain/syntheticsContext'
+import { RumConfiguration, validateAndBuildRumConfiguration } from '../src/domain/configuration'
 import { validateFormat } from './formatValidation'
 import { createRumSessionManagerMock } from './mockRumSessionManager'
 
 export interface TestSetupBuilder {
   withFakeLocation: (initialUrl: string) => TestSetupBuilder
   withSessionManager: (sessionManager: RumSessionManager) => TestSetupBuilder
-  withConfiguration: (overrides: Partial<Configuration>) => TestSetupBuilder
+  withConfiguration: (overrides: Partial<RumConfiguration>) => TestSetupBuilder
   withParentContexts: (stub: Partial<ParentContexts>) => TestSetupBuilder
   withForegroundContexts: (stub: Partial<ForegroundContexts>) => TestSetupBuilder
   withFakeClock: () => TestSetupBuilder
@@ -47,7 +46,7 @@ export interface BuildContext {
   lifeCycle: LifeCycle
   domMutationObservable: Observable<void>
   locationChangeObservable: Observable<LocationChange>
-  configuration: Readonly<Configuration>
+  configuration: Readonly<RumConfiguration>
   sessionManager: RumSessionManager
   location: Location
   applicationId: string
@@ -92,11 +91,11 @@ export function setup(): TestSetupBuilder {
     selectInForegroundPeriodsFor: () => undefined,
     stop: noop,
   }
-  const configuration: Partial<Configuration> = {
-    ...DEFAULT_CONFIGURATION,
+  const FAKE_APP_ID = 'appId'
+  const configuration: RumConfiguration = {
+    ...validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: FAKE_APP_ID })!,
     ...SPEC_ENDPOINTS,
   }
-  const FAKE_APP_ID = 'appId'
 
   // ensure that events generated before build are collected
   const rawRumEventsCollected = lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {
@@ -122,7 +121,7 @@ export function setup(): TestSetupBuilder {
       sessionManager = sessionManagerStub
       return setupBuilder
     },
-    withConfiguration(overrides: Partial<Configuration>) {
+    withConfiguration(overrides: Partial<RumConfiguration>) {
       assign(configuration, overrides)
       return setupBuilder
     },
@@ -153,7 +152,7 @@ export function setup(): TestSetupBuilder {
           foregroundContexts,
           sessionManager,
           applicationId: FAKE_APP_ID,
-          configuration: configuration as Configuration,
+          configuration,
           location: fakeLocation as Location,
         })
         if (result && result.stop) {

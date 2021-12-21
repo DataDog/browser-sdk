@@ -1,6 +1,5 @@
 import {
   RelativeTime,
-  Configuration,
   Observable,
   noop,
   relativeNow,
@@ -20,6 +19,7 @@ import { LocationChange } from '../browser/locationChangeObservable'
 import { startLongTaskCollection } from '../domain/rumEventsCollection/longTask/longTaskCollection'
 import { RumSessionManager } from '..'
 import { initEventBridgeStub, deleteEventBridgeStub } from '../../../core/test/specHelper'
+import { RumConfiguration } from '../domain/configuration'
 import { startRumEventCollection } from './startRum'
 
 function collectServerEvents(lifeCycle: LifeCycle) {
@@ -31,16 +31,14 @@ function collectServerEvents(lifeCycle: LifeCycle) {
 }
 
 function startRum(
-  applicationId: string,
   lifeCycle: LifeCycle,
-  configuration: Configuration,
+  configuration: RumConfiguration,
   sessionManager: RumSessionManager,
   location: Location,
   domMutationObservable: Observable<void>,
   locationChangeObservable: Observable<LocationChange>
 ) {
   const { stop: rumEventCollectionStop, foregroundContexts } = startRumEventCollection(
-    applicationId,
     lifeCycle,
     configuration,
     location,
@@ -80,18 +78,9 @@ describe('rum session', () => {
     }
 
     setupBuilder = setup().beforeBuild(
-      ({
-        applicationId,
-        location,
-        lifeCycle,
-        configuration,
-        sessionManager,
-        domMutationObservable,
-        locationChangeObservable,
-      }) => {
+      ({ location, lifeCycle, configuration, sessionManager, domMutationObservable, locationChangeObservable }) => {
         serverRumEvents = collectServerEvents(lifeCycle)
         return startRum(
-          applicationId,
           lifeCycle,
           configuration,
           sessionManager,
@@ -141,18 +130,9 @@ describe('rum session keep alive', () => {
       .withFakeClock()
       .withSessionManager(sessionManager)
       .beforeBuild(
-        ({
-          applicationId,
-          location,
-          lifeCycle,
-          configuration,
-          sessionManager,
-          domMutationObservable,
-          locationChangeObservable,
-        }) => {
+        ({ location, lifeCycle, configuration, sessionManager, domMutationObservable, locationChangeObservable }) => {
           serverRumEvents = collectServerEvents(lifeCycle)
           return startRum(
-            applicationId,
             lifeCycle,
             configuration,
             sessionManager,
@@ -219,18 +199,9 @@ describe('rum events url', () => {
 
   beforeEach(() => {
     setupBuilder = setup().beforeBuild(
-      ({
-        applicationId,
-        location,
-        lifeCycle,
-        configuration,
-        sessionManager,
-        domMutationObservable,
-        locationChangeObservable,
-      }) => {
+      ({ location, lifeCycle, configuration, sessionManager, domMutationObservable, locationChangeObservable }) => {
         serverRumEvents = collectServerEvents(lifeCycle)
         return startRum(
-          applicationId,
           lifeCycle,
           configuration,
           sessionManager,
@@ -315,19 +286,11 @@ describe('startRumEventCollection', () => {
     const eventBridgeStub = initEventBridgeStub()
     sendSpy = spyOn(eventBridgeStub, 'send')
     setupBuilder = setupBuilder = setup().beforeBuild(
-      ({ applicationId, location, lifeCycle, configuration, sessionManager, locationChangeObservable }) =>
-        startRumEventCollection(
-          applicationId,
-          lifeCycle,
-          configuration,
-          location,
-          sessionManager,
-          locationChangeObservable,
-          () => ({
-            context: {},
-            user: {},
-          })
-        )
+      ({ location, lifeCycle, configuration, sessionManager, locationChangeObservable }) =>
+        startRumEventCollection(lifeCycle, configuration, location, sessionManager, locationChangeObservable, () => ({
+          context: {},
+          user: {},
+        }))
     )
   })
 

@@ -408,6 +408,7 @@ tests-passed:
 # in after-tests to not block `to-staging` merge
 check-squash-into-staging:
   stage: after-tests
+  allow_failure: true
   extends:
     - .base-configuration
     - .feature-branches

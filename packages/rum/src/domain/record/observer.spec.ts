@@ -1,6 +1,6 @@
 import { DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
 import { createNewEvent } from '../../../../core/test/specHelper'
-import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_MASKED } from '../../constants'
+import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT } from '../../constants'
 import { initInputObserver } from './observer'
 import { serializeDocument } from './serialize'
 import { InputCallback } from './types'
@@ -42,7 +42,7 @@ describe('initInputObserver', () => {
 
   it('masks input values according to the element privacy level', () => {
     stopInputObserver = initInputObserver(inputCallbackSpy, DefaultPrivacyLevel.ALLOW)
-    sandbox.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_MASKED)
+    sandbox.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT)
 
     dispatchInputEvent('foo')
 
@@ -51,7 +51,7 @@ describe('initInputObserver', () => {
 
   it('masks input values according to a parent element privacy level', () => {
     stopInputObserver = initInputObserver(inputCallbackSpy, DefaultPrivacyLevel.ALLOW)
-    input.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_MASKED)
+    input.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT)
 
     dispatchInputEvent('foo')
 
