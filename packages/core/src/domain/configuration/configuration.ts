@@ -14,30 +14,29 @@ export const DefaultPrivacyLevel = {
 export type DefaultPrivacyLevel = typeof DefaultPrivacyLevel[keyof typeof DefaultPrivacyLevel]
 
 export interface InitConfiguration {
+  // global options
   clientToken: string
-  applicationId?: string | undefined
-  actionNameAttribute?: string | undefined
-  internalMonitoringApiKey?: string | undefined
-  allowedTracingOrigins?: Array<string | RegExp> | undefined
-  sampleRate?: number | undefined
-  replaySampleRate?: number | undefined
-  site?: string | undefined
-  enableExperimentalFeatures?: string[] | undefined
-  silentMultipleInit?: boolean | undefined
-  trackInteractions?: boolean | undefined
-  trackViewsManually?: boolean | undefined
-  proxyUrl?: string | undefined
   beforeSend?: BeforeSendCallback | undefined
-  defaultPrivacyLevel?: DefaultPrivacyLevel | undefined
+  sampleRate?: number | undefined
+  silentMultipleInit?: boolean | undefined
 
+  // transport options
+  proxyUrl?: string | undefined
+  site?: string | undefined
+
+  // tag and context options
   service?: string | undefined
   env?: string | undefined
   version?: string | undefined
 
+  // cookie options
   useCrossSiteSessionCookie?: boolean | undefined
   useSecureSessionCookie?: boolean | undefined
   trackSessionAcrossSubdomains?: boolean | undefined
 
+  // internal options
+  enableExperimentalFeatures?: string[] | undefined
+  internalMonitoringApiKey?: string | undefined
   // only on staging build mode
   replica?: ReplicaUserConfiguration | undefined
 }

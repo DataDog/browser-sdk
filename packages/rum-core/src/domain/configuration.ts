@@ -12,9 +12,23 @@ import { RumEventDomainContext } from '../domainContext.types'
 import { RumEvent } from '../rumEvent.types'
 
 export interface RumInitConfiguration extends InitConfiguration {
+  // global options
   applicationId: string
   beforeSend?: ((event: RumEvent, context: RumEventDomainContext) => void | boolean) | undefined
+
+  // tracing options
+  allowedTracingOrigins?: Array<string | RegExp> | undefined
+
+  // replay options
   defaultPrivacyLevel?: DefaultPrivacyLevel | undefined
+  replaySampleRate?: number | undefined
+
+  // action options
+  trackInteractions?: boolean | undefined
+  actionNameAttribute?: string | undefined
+
+  // view options
+  trackViewsManually?: boolean | undefined
 }
 
 export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
