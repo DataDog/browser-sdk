@@ -27,18 +27,6 @@ describe('getActionNameFromElement', () => {
     expect(getActionNameFromElement(element`<div>Foo <div>bar</div></div>`)).toBe('Foo bar')
   })
 
-  it('replaces the programmatic action name in textual content', () => {
-    expect(getActionNameFromElement(element`<div>Foo <div data-dd-action-name="custom action">bar<div></div>`)).toBe(
-      'Foo custom action'
-    )
-  })
-
-  it('replaces the programmatic action name in textual content based on the user-defined attribute', () => {
-    expect(
-      getActionNameFromElement(element`<div>Foo <div data-test-id="custom action">bar<div></div>`, 'data-test-id')
-    ).toBe('Foo custom action')
-  })
-
   it('extracts the text of an input button', () => {
     expect(getActionNameFromElement(element`<input type="button" value="Click" />`)).toBe('Click')
   })
@@ -319,6 +307,18 @@ describe('getActionNameFromElement', () => {
           'data-test-id'
         )
       ).toBe('bar')
+    })
+
+    it('replaces the programmatic action name in textual content', () => {
+      expect(getActionNameFromElement(element`<div>Foo <div data-dd-action-name="custom action">bar<div></div>`)).toBe(
+        'Foo custom action'
+      )
+    })
+
+    it('replaces the programmatic action name in textual content based on the user-configured attribute', () => {
+      expect(
+        getActionNameFromElement(element`<div>Foo <div data-test-id="custom action">bar<div></div>`, 'data-test-id')
+      ).toBe('Foo custom action')
     })
   })
 })
