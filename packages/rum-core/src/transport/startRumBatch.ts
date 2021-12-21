@@ -1,9 +1,10 @@
-import { Batch, combine, Configuration, Context, HttpRequest, EndpointBuilder } from '@datadog/browser-core'
+import { Batch, combine, Context, HttpRequest, EndpointBuilder } from '@datadog/browser-core'
+import { RumConfiguration } from '../domain/configuration'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { RumEventType } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
 
-export function startRumBatch(configuration: Configuration, lifeCycle: LifeCycle) {
+export function startRumBatch(configuration: RumConfiguration, lifeCycle: LifeCycle) {
   const batch = makeRumBatch(configuration, lifeCycle)
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent: RumEvent & Context) => {
@@ -25,7 +26,7 @@ interface RumBatch {
   upsert: (message: Context, key: string) => void
 }
 
-function makeRumBatch(configuration: Configuration, lifeCycle: LifeCycle): RumBatch {
+function makeRumBatch(configuration: RumConfiguration, lifeCycle: LifeCycle): RumBatch {
   const primaryBatch = createRumBatch(configuration.rumEndpointBuilder, () =>
     lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
   )

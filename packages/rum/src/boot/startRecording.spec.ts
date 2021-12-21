@@ -57,10 +57,9 @@ describe('startRecording', () => {
       .withConfiguration({
         defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
       })
-      .beforeBuild(({ lifeCycle, applicationId, configuration, parentContexts, sessionManager }) => {
+      .beforeBuild(({ lifeCycle, configuration, parentContexts, sessionManager }) => {
         const recording = startRecording(
           lifeCycle,
-          applicationId,
           configuration,
           sessionManager,
           parentContexts,
