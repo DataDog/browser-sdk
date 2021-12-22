@@ -1,10 +1,6 @@
-import {
-  updateExperimentalFeatures,
-  resetExperimentalFeatures,
-  startFakeInternalMonitoring,
-  resetInternalMonitoring,
-} from '@datadog/browser-core'
 import { stubCookie } from '../../../test/specHelper'
+import { resetExperimentalFeatures, updateExperimentalFeatures } from '../configuration/experimentalFeatures'
+import { startFakeInternalMonitoring, resetInternalMonitoring } from '../internalMonitoring'
 import {
   SESSION_COOKIE_NAME,
   toSessionString,
