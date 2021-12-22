@@ -197,19 +197,24 @@ describe('getNodeSelfPrivacyLevel', () => {
 
     // Precedence
     {
-      msg: 'has an ALLOW privacy class and a MASK privacy attribute (attribute takes precedence)',
+      msg: 'has an ALLOW privacy class and a MASK privacy attribute (MASK takes precedence)',
       html: '<span data-dd-privacy="mask" class="dd-privacy-allow">',
       expected: NodePrivacyLevel.MASK,
     },
     {
-      msg: 'has ALLOW and MASK privacy classes (ALLOW takes precedence)',
-      html: '<span class="dd-privacy-allow dd-privacy-mask">',
-      expected: NodePrivacyLevel.ALLOW,
+      msg: 'has ALLOW and MASK_USER_INPUT privacy classes (MASK_USER_INPUT takes precedence)',
+      html: '<span class="dd-privacy-allow dd-privacy-mask-user-input">',
+      expected: NodePrivacyLevel.MASK_USER_INPUT,
     },
     {
-      msg: 'has ALLOW and HIDDEN privacy classes (ALLOW takes precedence)',
-      html: '<span class="dd-privacy-allow dd-privacy-hidden">',
-      expected: NodePrivacyLevel.ALLOW,
+      msg: 'has MASK_USER_INPUT and MASK privacy classes (MASK takes precedence)',
+      html: '<span class="dd-privacy-mask-user-input dd-privacy-mask">',
+      expected: NodePrivacyLevel.MASK,
+    },
+    {
+      msg: 'has MASK and HIDDEN privacy classes (HIDDEN takes precedence)',
+      html: '<span class="dd-privacy-mask dd-privacy-hidden">',
+      expected: NodePrivacyLevel.HIDDEN,
     },
   ].forEach(({ msg, html, expected }) => {
     it(`returns ${String(expected)} when the node ${msg}`, () => {

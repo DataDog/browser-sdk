@@ -64,17 +64,19 @@ export function reducePrivacyLevel(
  * Determines the node's own privacy level without checking for ancestors.
  */
 export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefined {
-  // Only Element types can be have a privacy level set
+  // Only Element types can have a privacy level set
   if (!isElement(node)) {
     return
   }
 
   const privAttr = node.getAttribute(PRIVACY_ATTR_NAME)
 
-  // Overrules to enforce end-user protection
+  // Overrules for replay purpose
   if (node.tagName === 'BASE') {
     return NodePrivacyLevel.ALLOW
   }
+
+  // Overrules to enforce end-user protection
   if (node.tagName === 'INPUT') {
     const inputElement = node as HTMLInputElement
     if (inputElement.type === 'password' || inputElement.type === 'email' || inputElement.type === 'tel') {
@@ -90,29 +92,24 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefine
     }
   }
 
-  // Check HTML privacy attributes
-  switch (privAttr) {
-    case PRIVACY_ATTR_VALUE_ALLOW:
-      return NodePrivacyLevel.ALLOW
-    case PRIVACY_ATTR_VALUE_MASK:
-      return NodePrivacyLevel.MASK
-    case PRIVACY_ATTR_VALUE_MASK_USER_INPUT:
-      return NodePrivacyLevel.MASK_USER_INPUT
-    case PRIVACY_ATTR_VALUE_HIDDEN:
-      return NodePrivacyLevel.HIDDEN
+  // Check HTML privacy attributes and classes
+  if (privAttr === PRIVACY_ATTR_VALUE_HIDDEN || node.classList.contains(PRIVACY_CLASS_HIDDEN)) {
+    return NodePrivacyLevel.HIDDEN
   }
 
-  // Check HTML privacy classes
-  if (node.classList.contains(PRIVACY_CLASS_ALLOW)) {
-    return NodePrivacyLevel.ALLOW
-  } else if (node.classList.contains(PRIVACY_CLASS_MASK)) {
+  if (privAttr === PRIVACY_ATTR_VALUE_MASK || node.classList.contains(PRIVACY_CLASS_MASK)) {
     return NodePrivacyLevel.MASK
-  } else if (node.classList.contains(PRIVACY_CLASS_HIDDEN)) {
-    return NodePrivacyLevel.HIDDEN
-  } else if (node.classList.contains(PRIVACY_CLASS_MASK_USER_INPUT)) {
+  }
+
+  if (privAttr === PRIVACY_ATTR_VALUE_MASK_USER_INPUT || node.classList.contains(PRIVACY_CLASS_MASK_USER_INPUT)) {
     return NodePrivacyLevel.MASK_USER_INPUT
-  } else if (shouldIgnoreElement(node)) {
-    // such as for scripts
+  }
+
+  if (privAttr === PRIVACY_ATTR_VALUE_ALLOW || node.classList.contains(PRIVACY_CLASS_ALLOW)) {
+    return NodePrivacyLevel.ALLOW
+  }
+
+  if (shouldIgnoreElement(node)) {
     return NodePrivacyLevel.IGNORE
   }
 }
