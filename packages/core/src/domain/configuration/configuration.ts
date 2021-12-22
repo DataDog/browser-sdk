@@ -16,7 +16,7 @@ export type DefaultPrivacyLevel = typeof DefaultPrivacyLevel[keyof typeof Defaul
 export interface InitConfiguration {
   // global options
   clientToken: string
-  beforeSend?: BeforeSendCallback | undefined
+  beforeSend?: GenericBeforeSendCallback | undefined
   sampleRate?: number | undefined
   silentMultipleInit?: boolean | undefined
 
@@ -41,7 +41,9 @@ export interface InitConfiguration {
   replica?: ReplicaUserConfiguration | undefined
 }
 
-export type BeforeSendCallback = (event: any, context?: any) => unknown
+// This type is only used to build the core configuration. Logs and RUM SDKs are using a proper type
+// for this option.
+type GenericBeforeSendCallback = (event: any, context?: any) => unknown
 
 interface ReplicaUserConfiguration {
   applicationId?: string
@@ -50,7 +52,7 @@ interface ReplicaUserConfiguration {
 
 export interface Configuration extends TransportConfiguration {
   // Built from init configuration
-  beforeSend: BeforeSendCallback | undefined
+  beforeSend: GenericBeforeSendCallback | undefined
   cookieOptions: CookieOptions
   sampleRate: number
   service: string | undefined
