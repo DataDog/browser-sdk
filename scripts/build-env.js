@@ -18,12 +18,8 @@ const BUILD_MODES = [
   // * Allows intake endpoints overrides when served from the E2E test framework.
   'e2e-test',
 
-  // Used on the production Datadog web app.
+  // Used on staging and production Datadog web app.
   'canary',
-
-  // Used on the staging Datadog web app.
-  // * Enables the support of the "replica" options.
-  'staging',
 ]
 
 let buildMode
@@ -43,8 +39,7 @@ switch (buildMode) {
   case 'release':
     sdkVersion = lernaJson.version
     break
-  case 'canary':
-  case 'staging': {
+  case 'canary': {
     const commitSha1 = execSync('git rev-parse HEAD').toString().trim()
     sdkVersion = `${lernaJson.version}+${commitSha1}`
     break

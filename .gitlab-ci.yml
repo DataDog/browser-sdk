@@ -234,7 +234,7 @@ deploy-staging:
     - .staging
   script:
     - yarn
-    - BUILD_MODE=staging yarn build:bundle
+    - BUILD_MODE=canary yarn build:bundle
     - ./scripts/deploy.sh staging staging
 
 deploy-prod-canary:
