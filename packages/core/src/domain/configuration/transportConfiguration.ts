@@ -89,7 +89,6 @@ function computeReplicaConfiguration(
   const replicaConfiguration: InitConfiguration = {
     ...initConfiguration,
     site: INTAKE_SITE_US,
-    applicationId: initConfiguration.replica.applicationId,
     clientToken: initConfiguration.replica.clientToken,
   }
 
