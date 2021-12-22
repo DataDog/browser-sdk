@@ -77,7 +77,7 @@ function computeReplicaConfiguration(
   buildEnv: BuildEnv,
   intakeEndpoints: string[]
 ): ReplicaConfiguration | undefined {
-  if (buildEnv.buildMode !== BuildMode.STAGING || initConfiguration.replica === undefined) {
+  if (!initConfiguration.replica) {
     return
   }
 
@@ -91,12 +91,13 @@ function computeReplicaConfiguration(
   }
 
   const replicaEndpointBuilders = {
-    logsEndpointBuilder: createEndpointBuilder(replicaConfiguration, buildEnv, 'logs'),
-    rumEndpointBuilder: createEndpointBuilder(replicaConfiguration, buildEnv, 'rum'),
+    logsEndpointBuilder: createEndpointBuilder(replicaConfiguration, buildEnv, 'logs', initConfiguration.site),
+    rumEndpointBuilder: createEndpointBuilder(replicaConfiguration, buildEnv, 'rum', initConfiguration.site),
     internalMonitoringEndpointBuilder: createEndpointBuilder(
       replicaConfiguration,
       buildEnv,
       'logs',
+      initConfiguration.site,
       'browser-agent-internal-monitoring'
     ),
   }

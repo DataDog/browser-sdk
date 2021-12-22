@@ -26,6 +26,13 @@ const INTAKE_TRACKS = {
 
 export type EndpointType = keyof typeof ENDPOINTS[IntakeType]
 
+const INTAKE_DATACENTERS: { [site: string]: string } = {
+  'datadoghq.eu': 'eu1.prod.dog',
+  'datadoghq.com': 'us1.prod.dog',
+  'us3.datadoghq.com': 'us3.prod.dog',
+  'us5.datadoghq.com': 'us5.prod.dog',
+}
+
 export const INTAKE_SITE_US = 'datadoghq.com'
 const INTAKE_SITE_US3 = 'us3.datadoghq.com'
 const INTAKE_SITE_GOV = 'ddog-gov.com'
@@ -41,6 +48,7 @@ export function createEndpointBuilder(
   initConfiguration: InitConfiguration,
   buildEnv: BuildEnv,
   endpointType: EndpointType,
+  sourceSite?: string,
   source?: string
 ) {
   const sdkVersion = buildEnv.sdkVersion
@@ -96,11 +104,13 @@ export function createEndpointBuilder(
   }
 
   function buildQueryParameters(endpointType: EndpointType, source?: string) {
+    const datacenter = INTAKE_DATACENTERS[sourceSite ?? site]
     const tags =
       `sdk_version:${sdkVersion}` +
       `${env ? `,env:${env}` : ''}` +
       `${service ? `,service:${service}` : ''}` +
-      `${version ? `,version:${version}` : ''}`
+      `${version ? `,version:${version}` : ''}` +
+      `${datacenter ? `,datacenter:${datacenter}` : ''}`
 
     let parameters = `ddsource=${source || 'browser'}&ddtags=${encodeURIComponent(tags)}`
 

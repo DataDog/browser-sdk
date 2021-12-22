@@ -141,11 +141,46 @@ describe('transportConfiguration', () => {
     })
   })
 
+  describe('datacenter', () => {
+    ;[
+      { site: 'datadoghq.eu', datacenter: 'eu1.prod.dog' },
+      { site: 'datadoghq.com', datacenter: 'us1.prod.dog' },
+      { site: 'us3.datadoghq.com', datacenter: 'us3.prod.dog' },
+      { site: 'us5.datadoghq.com', datacenter: 'us5.prod.dog' },
+    ].forEach(({ site, datacenter }) => {
+      it(`should be set as tag for site ${site} in the logs and rum endpoints`, () => {
+        const configuration = computeTransportConfiguration({ clientToken, site }, buildEnv)
+        expect(decodeURIComponent(configuration.rumEndpointBuilder.build())).toMatch(
+          `&ddtags=(.*),datacenter:${datacenter}`
+        )
+        expect(decodeURIComponent(configuration.logsEndpointBuilder.build())).toMatch(
+          `&ddtags=(.*),datacenter:${datacenter}`
+        )
+      })
+
+      it(`should be set as tag for site ${site} in the logs and rum endpoints replicas`, () => {
+        const configuration = computeTransportConfiguration({ clientToken, site, replica: { clientToken } }, buildEnv)
+
+        expect(decodeURIComponent(configuration.replica!.rumEndpointBuilder.build())).toMatch(
+          `&ddtags=(.*),datacenter:${datacenter}`
+        )
+        expect(decodeURIComponent(configuration.replica!.logsEndpointBuilder.build())).toMatch(
+          `&ddtags=(.*),datacenter:${datacenter}`
+        )
+      })
+    })
+
+    it('should not be set as tag for other datacenters in the logs and rum endpoints', () => {
+      const configuration = computeTransportConfiguration({ clientToken, site: 'ddog-gov.com' }, buildEnv)
+      expect(decodeURIComponent(configuration.rumEndpointBuilder.build())).not.toContain(`datacenter:`)
+    })
+  })
+
   describe('tags', () => {
     it('should be encoded', () => {
       const configuration = computeTransportConfiguration({ clientToken, service: 'bar+foo' }, buildEnv)
       expect(configuration.rumEndpointBuilder.build()).toContain(
-        `ddtags=sdk_version%3Asome_version%2Cservice%3Abar%2Bfoo`
+        `ddtags=sdk_version%3Asome_version%2Cservice%3Abar%2Bfoo%2Cdatacenter%3Aus1.prod.dog`
       )
     })
   })
@@ -250,20 +285,25 @@ describe('transportConfiguration', () => {
       const configuration = computeTransportConfiguration({ clientToken, proxyUrl: 'https://www.proxy.com' }, buildEnv)
       expect(configuration.isIntakeUrl('https://www.proxy.com/foo')).toBe(false)
     })
+    ;[
+      { site: 'datadoghq.eu', intakeDomain: 'browser-intake-datadoghq.eu' },
+      { site: 'datadoghq.com', intakeDomain: 'browser-intake-datadoghq.com' },
+      { site: 'us3.datadoghq.com', intakeDomain: 'browser-intake-us3-datadoghq.com' },
+      { site: 'us5.datadoghq.com', intakeDomain: 'browser-intake-us5-datadoghq.com' },
+    ].forEach(({ site, intakeDomain }) => {
+      it(`should detect replica intake request for site ${site} with alternate intake domains and intake v2`, () => {
+        const configuration = computeTransportConfiguration(
+          { clientToken, useAlternateIntakeDomains: true, intakeApiVersion: 2, site, replica: { clientToken } },
+          buildEnv
+        )
 
-    it('should detect replica intake request with alternate intake domains and intake v2', () => {
-      const configuration = computeTransportConfiguration(
-        { clientToken, site: 'datadoghq.eu', replica: { clientToken } },
-        { ...buildEnv, buildMode: BuildMode.STAGING }
-      )
-      expect(configuration.isIntakeUrl(`https://rum-http-intake.logs.datadoghq.eu${v1IntakePath}?xxx`)).toBe(true)
-      expect(configuration.isIntakeUrl(`https://browser-http-intake.logs.datadoghq.eu${v1IntakePath}?xxx`)).toBe(true)
-      expect(configuration.isIntakeUrl(`https://session-replay.browser-intake-datadoghq.eu/api/v2/replay?xxx`)).toBe(
-        true
-      )
+        expect(configuration.isIntakeUrl(`https://rum.${intakeDomain}/api/v2/rum?xxx`)).toBe(true)
+        expect(configuration.isIntakeUrl(`https://logs.${intakeDomain}/api/v2/logs?xxx`)).toBe(true)
+        expect(configuration.isIntakeUrl(`https://session-replay.${intakeDomain}/api/v2/replay?xxx`)).toBe(true)
 
-      expect(configuration.isIntakeUrl(`https://rum.browser-intake-datadoghq.com/api/v2/rum?xxx`)).toBe(true)
-      expect(configuration.isIntakeUrl(`https://logs.browser-intake-datadoghq.com/api/v2/logs?xxx`)).toBe(true)
+        expect(configuration.isIntakeUrl(`https://rum.browser-intake-datadoghq.com/api/v2/rum?xxx`)).toBe(true)
+        expect(configuration.isIntakeUrl(`https://logs.browser-intake-datadoghq.com/api/v2/logs?xxx`)).toBe(true)
+      })
     })
 
     describe('on us5', () => {
