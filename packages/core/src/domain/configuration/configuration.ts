@@ -26,11 +26,6 @@ export interface InitConfiguration {
   silentMultipleInit?: boolean | undefined
   trackInteractions?: boolean | undefined
   trackViewsManually?: boolean | undefined
-
-  /**
-   * @deprecated Favor proxyUrl option
-   */
-  proxyHost?: string | undefined
   proxyUrl?: string | undefined
   beforeSend?: BeforeSendCallback | undefined
   defaultPrivacyLevel?: DefaultPrivacyLevel | undefined
