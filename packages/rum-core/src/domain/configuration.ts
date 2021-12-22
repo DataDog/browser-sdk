@@ -17,7 +17,7 @@ export interface RumInitConfiguration extends InitConfiguration {
   beforeSend?: ((event: RumEvent, context: RumEventDomainContext) => void | boolean) | undefined
 
   // tracing options
-  allowedTracingOrigins?: Array<string | RegExp> | undefined
+  allowedTracingOrigins?: ReadonlyArray<string | RegExp> | undefined
 
   // replay options
   defaultPrivacyLevel?: DefaultPrivacyLevel | undefined
