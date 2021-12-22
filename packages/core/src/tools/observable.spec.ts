@@ -1,4 +1,4 @@
-import { Observable } from '@datadog/browser-core'
+import { Observable } from './observable'
 
 describe('observable', () => {
   let observable: Observable<void>

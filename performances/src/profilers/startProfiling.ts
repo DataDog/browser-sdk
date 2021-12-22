@@ -1,5 +1,5 @@
 import { Page } from 'puppeteer'
-import { ProfilingOptions, ProfilingResults } from 'src/types'
+import { ProfilingOptions, ProfilingResults } from '../types'
 import { startNetworkProfiling } from './startNetworkProfiling'
 import { startCPUProfiling } from './startCpuProfiling'
 import { startMemoryProfiling } from './startMemoryProfiling'
