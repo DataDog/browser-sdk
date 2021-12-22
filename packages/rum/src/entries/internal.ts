@@ -19,7 +19,7 @@ export {
   AddedNodeMutation,
   MousePosition,
   RemovedNodeMutation,
-} from '../domain/record/types'
+} from '../domain/record'
 
 export {
   PRIVACY_ATTR_NAME,
@@ -32,4 +32,4 @@ export {
 
 export * from '../types'
 
-export { serializeNodeWithId } from '../domain/record/serialize'
+export { serializeNodeWithId } from '../domain/record'
