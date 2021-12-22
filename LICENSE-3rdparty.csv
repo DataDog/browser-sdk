@@ -37,6 +37,7 @@ dev,cors,MIT,Copyright 2013 Troy Goode
 dev,emoji-name-map,MIT,Copyright 2016-19 Ionică Bizău <bizauionica@gmail.com> (https://ionicabizau.net)
 dev,eslint,MIT,Copyright JS Foundation and other contributors
 dev,eslint-config-prettier,MIT,Copyright (c) 2017, 2018, 2019, 2020 Simon Lydell and contributors
+dev,eslint-module-utils,MIT,Copyright (c) 2015 Ben Mosher
 dev,eslint-plugin-import,MIT,Copyright (c) 2015 Ben Mosher
 dev,eslint-plugin-jasmine,MIT,Copyright (c) 2021 Tom Vincent
 dev,eslint-plugin-jsdoc,BSD-3-Clause,Copyright (c) 2018, Gajus Kuizinas (http://gajus.com/)

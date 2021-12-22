@@ -10,6 +10,7 @@ module.exports = {
     'plugin:import/typescript',
     'prettier',
     'prettier/@typescript-eslint',
+    'plugin:import/typescript',
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
@@ -187,6 +188,7 @@ module.exports = {
       rules: {
         '@typescript-eslint/no-unsafe-call': 'off',
         '@typescript-eslint/no-unsafe-return': 'off',
+        '@typescript-eslint/restrict-plus-operands': 'off',
         '@typescript-eslint/restrict-template-expressions': 'off',
       },
     },
@@ -230,6 +232,13 @@ module.exports = {
       rules: {
         // E2E codebase is importing @datadog/browser-* packages referenced by tsconfig.
         'import/no-extraneous-dependencies': 'off',
+      },
+    },
+    {
+      files: ['**/*'],
+      excludedFiles: ['packages/*/test/**', '**/*.spec.ts'],
+      rules: {
+        'local-rules/disallow-protected-directory-import': 'error',
       },
     },
   ],
