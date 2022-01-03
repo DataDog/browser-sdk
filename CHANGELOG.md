@@ -16,6 +16,63 @@
 
 ---
 
+## v4.0.0
+
+Here is the list of all the breaking changes introduced by v4 of the RUM and Logs SDKs.
+
+### [RUM and Logs] Intake URLs change
+
+We changed URLs of where the Browser SDK data is sent. Please make sure that your [Content Security Policy is up to date](https://docs.datadoghq.com/real_user_monitoring/faq/content_security_policy/?tab=us).
+
+### [RUM and Logs] Drop support for TypeScript below v3.8.2
+
+The Browser SDK is now incompatible with TypeScript v3.8.2. If you are using TypeScript, please make
+sure that the version you are using is greater or equal to v3.8.2.
+
+### [RUM and Logs] Tags syntax sanitization
+
+`version`, `env` and `service` [initialization parameters](https://docs.datadoghq.com/real_user_monitoring/browser/#initialization-parameters) are sent as tags to Datadog. The Browser SDK will now sanitize and print a warning if those values don't meet [tag requirements syntax](https://docs.datadoghq.com/getting_started/tagging/#defining-tags).
+
+### [RUM and Logs] Configuration typings cleanup
+
+Some TypeScript types have been cleaned up to better represent accepted initialization parameters
+for each SDKs.
+
+### [RUM and Logs] Remove deprecated XHR `_datadog_xhr` field
+
+The Browser SDK previously used a `_datadog_xhr` property on `XMLHttpRequest` objects representing
+its internal state. This property have been removed without replacement as it wasn't intended to be
+used externally.
+
+### [RUM and Logs] Remove deprecated `proxyHost` initialization parameter
+
+The `proxyHost` initialization parameter have been removed. Make sure to use the simpler [`proxyUrl` initialization parameter](https://docs.datadoghq.com/real_user_monitoring/faq/proxy_rum_data/?tab=npm) instead.
+
+### [RUM Session Replay] Remove deprecated privacy options support
+
+`input-ignored` and `input-masked` are no longer valid privacy options and should be replaced with
+the [`mask-user-input` privacy option](https://docs.datadoghq.com/real_user_monitoring/session_replay/privacy_options?tab=maskuserinput#privacy-options). Specifically, you should replace:
+
+- `dd-privacy-input-ignored` and `dd-privacy-input-masked` class names with `dd-privacy-mask-user-input`
+
+- `dd-privacy="input-masked"` and `dd-privacy="input-ignored"` attribute values with `dd-privacy="mask-user-input"`
+
+### [RUM Session Replay] Clarify same node privacy precedence
+
+When multiple privacy options are specified on the same element, we now apply the most restrictive
+one to avoid unexpectedly leaking privacy (ex: if both `dd-privacy-allow` and `dd-privacy-hidden`
+classes are specified on the same element, we now consider it `hidden` instead of `allow`).
+
+### [RUM] Use declared action names inside broader action names
+
+When computing automatic [actions target name](https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions/?tab=npm#action-attributes) on elements without `data-dd-action-name` attribute, we are using the "inner text" of this element. If it contains some elements that specify `data-dd-action-name`, their text is replaced by their declared action name inside the ancestor inner text.
+
+This might slightly change automatic action names shown in the Datadog App.
+
+### Changes
+
+// TODO
+
 ## v3.10.1
 
 - ♻️ [RUMF-1097] revamp configuration - rum ([#1221](https://github.com/DataDog/browser-sdk/pull/1221))
