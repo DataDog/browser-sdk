@@ -1,6 +1,7 @@
-import { buildUrl, EndpointBuilder, instrumentMethod } from '@datadog/browser-core'
-import { Configuration } from '../src/domain/configuration'
+import { EndpointBuilder } from '../src/domain/configuration/endpointBuilder'
+import { instrumentMethod } from '../src/tools/instrumentMethod'
 import { resetNavigationStart } from '../src/tools/timeUtils'
+import { buildUrl } from '../src/tools/urlPolyfill'
 import { noop, objectEntries, assign } from '../src/tools/utils'
 import { BrowserWindow } from '../src/transport/eventBridge'
 
@@ -8,7 +9,7 @@ export function stubEndpointBuilder(url: string) {
   return { build: () => url } as EndpointBuilder
 }
 
-export const SPEC_ENDPOINTS: Partial<Configuration> = {
+export const SPEC_ENDPOINTS = {
   internalMonitoringEndpointBuilder: stubEndpointBuilder('https://monitoring-intake.com/v1/input/abcde?foo=bar'),
   logsEndpointBuilder: stubEndpointBuilder('https://logs-intake.com/v1/input/abcde?foo=bar'),
   rumEndpointBuilder: stubEndpointBuilder('https://rum-intake.com/v1/input/abcde?foo=bar'),

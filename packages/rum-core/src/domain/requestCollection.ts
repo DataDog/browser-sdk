@@ -1,5 +1,4 @@
 import {
-  Configuration,
   Duration,
   RequestType,
   initFetchObservable,
@@ -11,6 +10,7 @@ import {
   FetchCompleteContext,
 } from '@datadog/browser-core'
 import { RumSessionManager } from '..'
+import { RumConfiguration } from './configuration'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { isAllowedRequestUrl } from './rumEventsCollection/resource/resourceUtils'
 import { startTracer, TraceIdentifier, Tracer } from './tracing/tracer'
@@ -52,7 +52,7 @@ let nextRequestIndex = 1
 
 export function startRequestCollection(
   lifeCycle: LifeCycle,
-  configuration: Configuration,
+  configuration: RumConfiguration,
   sessionManager: RumSessionManager
 ) {
   const tracer = startTracer(configuration, sessionManager)
@@ -60,7 +60,7 @@ export function startRequestCollection(
   trackFetch(lifeCycle, configuration, tracer)
 }
 
-export function trackXhr(lifeCycle: LifeCycle, configuration: Configuration, tracer: Tracer) {
+export function trackXhr(lifeCycle: LifeCycle, configuration: RumConfiguration, tracer: Tracer) {
   const subscription = initXhrObservable().subscribe((rawContext) => {
     const context = rawContext as RumXhrStartContext | RumXhrCompleteContext
     if (!isAllowedRequestUrl(configuration, context.url)) {
@@ -98,7 +98,7 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: Configuration, tra
   return { stop: () => subscription.unsubscribe() }
 }
 
-export function trackFetch(lifeCycle: LifeCycle, configuration: Configuration, tracer: Tracer) {
+export function trackFetch(lifeCycle: LifeCycle, configuration: RumConfiguration, tracer: Tracer) {
   const subscription = initFetchObservable().subscribe((rawContext) => {
     const context = rawContext as RumFetchCompleteContext | RumFetchStartContext
     if (!isAllowedRequestUrl(configuration, context.url)) {

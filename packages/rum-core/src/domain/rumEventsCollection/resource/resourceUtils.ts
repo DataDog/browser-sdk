@@ -1,6 +1,5 @@
 import {
   addMonitoringMessage,
-  Configuration,
   elapsed,
   getPathName,
   includes,
@@ -13,6 +12,7 @@ import {
 import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 
 import { PerformanceResourceDetailsElement } from '../../../rawRumEvent.types'
+import { RumConfiguration } from '../../configuration'
 
 export interface PerformanceResourceDetails {
   redirect?: PerformanceResourceDetailsElement
@@ -202,6 +202,6 @@ export function computeSize(entry: RumPerformanceResourceTiming) {
   return undefined
 }
 
-export function isAllowedRequestUrl(configuration: Configuration, url: string) {
+export function isAllowedRequestUrl(configuration: RumConfiguration, url: string) {
   return url && !configuration.isIntakeUrl(url)
 }

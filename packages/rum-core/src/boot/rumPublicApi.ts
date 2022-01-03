@@ -4,49 +4,33 @@ import {
   Context,
   createContextManager,
   deepClone,
-  isPercentage,
   makePublicApi,
   monitor,
   InitConfiguration,
   clocksNow,
   timeStampNow,
   display,
-  Configuration,
   InternalMonitoring,
   callMonitored,
   createHandlingStack,
-  DefaultPrivacyLevel,
   TimeStamp,
   RelativeTime,
   canUseEventBridge,
   areCookiesAuthorized,
-  updateExperimentalFeatures,
-  buildConfiguration,
   startInternalMonitoring,
 } from '@datadog/browser-core'
 import { LifeCycle } from '../domain/lifeCycle'
 import { ParentContexts } from '../domain/parentContexts'
 import { RumSessionManager } from '../domain/rumSessionManager'
-import { RumEventDomainContext } from '../domainContext.types'
 import { CommonContext, User, ActionType, ReplayStats } from '../rawRumEvent.types'
-import { RumEvent } from '../rumEvent.types'
 import { willSyntheticsInjectRum } from '../domain/syntheticsContext'
-import { buildEnv } from './buildEnv'
+import { RumConfiguration, RumInitConfiguration, validateAndBuildRumConfiguration } from '../domain/configuration'
 import { startRum } from './startRum'
-
-export interface RumInitConfiguration extends InitConfiguration {
-  applicationId: string
-  beforeSend?: ((event: RumEvent, context: RumEventDomainContext) => void | boolean) | undefined
-  defaultPrivacyLevel?: DefaultPrivacyLevel | undefined
-}
-
-export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
 
 export type RumPublicApi = ReturnType<typeof makeRumPublicApi>
 
-export type StartRum<C extends RumInitConfiguration = RumInitConfiguration> = (
-  initConfiguration: C,
-  configuration: Configuration,
+export type StartRum = (
+  configuration: RumConfiguration,
   internalMonitoring: InternalMonitoring,
   getCommonContext: () => CommonContext,
   recorderApi: RecorderApi,
@@ -60,8 +44,7 @@ export interface RecorderApi {
   stop: () => void
   onRumStart: (
     lifeCycle: LifeCycle,
-    initConfiguration: RumInitConfiguration,
-    configuration: Configuration,
+    configuration: RumConfiguration,
     sessionManager: RumSessionManager,
     parentContexts: ParentContexts
   ) => void
@@ -72,8 +55,8 @@ interface RumPublicApiOptions {
   ignoreInitIfSyntheticsWillInjectRum?: boolean
 }
 
-export function makeRumPublicApi<C extends RumInitConfiguration>(
-  startRumImpl: StartRum<C>,
+export function makeRumPublicApi(
+  startRumImpl: StartRum,
   recorderApi: RecorderApi,
   { ignoreInitIfSyntheticsWillInjectRum = true }: RumPublicApiOptions = {}
 ) {
@@ -106,7 +89,7 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(
     })
   }
 
-  function initRum(initConfiguration: C) {
+  function initRum(initConfiguration: RumInitConfiguration) {
     // If we are in a Synthetics test configured to automatically inject a RUM instance, we want to
     // completely discard the customer application RUM instance by ignoring their init() call.  But,
     // we should not ignore the init() call from the Synthetics-injected RUM instance, so the
@@ -121,16 +104,19 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(
       return
     }
 
-    if (!isValidInitConfiguration(initConfiguration)) {
+    if (!canInitRum(initConfiguration)) {
       return
     }
 
-    updateExperimentalFeatures(initConfiguration.enableExperimentalFeatures)
-    const configuration = buildConfiguration(initConfiguration, buildEnv)
+    const configuration = validateAndBuildRumConfiguration(initConfiguration)
+    if (!configuration) {
+      return
+    }
+
     const internalMonitoring = startInternalMonitoring(configuration)
 
     if (!configuration.trackViewsManually) {
-      doStartRum(initConfiguration, configuration, internalMonitoring)
+      doStartRum(configuration, internalMonitoring)
     } else {
       // drain beforeInitCalls by buffering them until we start RUM
       // if we get a startView, drain re-buffered calls before continuing to drain beforeInitCalls
@@ -139,7 +125,7 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(
       bufferApiCalls = new BoundedBuffer()
 
       startViewStrategy = (name) => {
-        doStartRum(initConfiguration, configuration, internalMonitoring, name)
+        doStartRum(configuration, internalMonitoring, name)
       }
       beforeInitCalls.drain()
     }
@@ -149,13 +135,11 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(
   }
 
   function doStartRum(
-    initConfiguration: C,
-    configuration: Configuration,
+    configuration: RumConfiguration,
     internalMonitoring: InternalMonitoring,
     initialViewName?: string
   ) {
     const startRumResults = startRumImpl(
-      initConfiguration,
       configuration,
       internalMonitoring,
       () => ({
@@ -178,7 +162,6 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(
 
     recorderApi.onRumStart(
       startRumResults.lifeCycle,
-      initConfiguration,
       configuration,
       startRumResults.session,
       startRumResults.parentContexts
@@ -275,35 +258,11 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(
     return true
   }
 
-  function isValidInitConfiguration(initConfiguration: RumInitConfiguration) {
+  function canInitRum(initConfiguration: RumInitConfiguration) {
     if (isAlreadyInitialized) {
       if (!initConfiguration.silentMultipleInit) {
         display.error('DD_RUM is already initialized.')
       }
-      return false
-    }
-    if (!initConfiguration || !initConfiguration.clientToken) {
-      display.error('Client Token is not configured, we will not send any data.')
-      return false
-    }
-    if (!initConfiguration.applicationId) {
-      display.error('Application ID is not configured, no RUM data will be collected.')
-      return false
-    }
-    if (initConfiguration.sampleRate !== undefined && !isPercentage(initConfiguration.sampleRate)) {
-      display.error('Sample Rate should be a number between 0 and 100')
-      return false
-    }
-    if (initConfiguration.replaySampleRate !== undefined && !isPercentage(initConfiguration.replaySampleRate)) {
-      display.error('Replay Sample Rate should be a number between 0 and 100')
-      return false
-    }
-    if (
-      Array.isArray(initConfiguration.allowedTracingOrigins) &&
-      initConfiguration.allowedTracingOrigins.length !== 0 &&
-      initConfiguration.service === undefined
-    ) {
-      display.error('Service need to be configured when tracing is enabled')
       return false
     }
     return true

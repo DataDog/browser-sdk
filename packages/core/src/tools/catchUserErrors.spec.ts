@@ -1,5 +1,5 @@
-import { display } from '@datadog/browser-core'
 import { catchUserErrors } from './catchUserErrors'
+import { display } from './display'
 
 describe('catchUserErrors', () => {
   it('returns the same result as the original function', () => {

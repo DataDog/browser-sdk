@@ -1,5 +1,5 @@
-import { createRumSessionManagerMock } from 'packages/rum-core/test/mockRumSessionManager'
 import { RelativeTime } from '@datadog/browser-core'
+import { createRumSessionManagerMock } from '../../test/mockRumSessionManager'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { startInternalContext } from './internalContext'
 import { ParentContexts } from './parentContexts'

@@ -4,7 +4,6 @@ import {
   mapValues,
   ServerDuration,
   toServerDuration,
-  Configuration,
   Observable,
   isNumber,
 } from '@datadog/browser-core'
@@ -13,11 +12,12 @@ import { RawRumViewEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from '../../lifeCycle'
 import { ForegroundContexts } from '../../foregroundContexts'
 import { LocationChange } from '../../../browser/locationChangeObservable'
+import { RumConfiguration } from '../../configuration'
 import { trackViews, ViewEvent } from './trackViews'
 
 export function startViewCollection(
   lifeCycle: LifeCycle,
-  configuration: Configuration,
+  configuration: RumConfiguration,
   location: Location,
   domMutationObservable: Observable<void>,
   locationChangeObservable: Observable<LocationChange>,

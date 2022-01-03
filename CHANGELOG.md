@@ -16,6 +16,13 @@
 
 ---
 
+## v3.10.1
+
+- ♻️ [RUMF-1097] revamp configuration - rum ([#1221](https://github.com/DataDog/browser-sdk/pull/1221))
+- 🐛 [RUMF-1122] fix view updates while session is expired ([#1228](https://github.com/DataDog/browser-sdk/pull/1228))
+- 🐛 Fix proxy url intake detection ([#1223](https://github.com/DataDog/browser-sdk/pull/1223))
+- ♻️ [RUMF-1097] revamp configuration - logs ([#1217](https://github.com/DataDog/browser-sdk/pull/1217))
+
 ## v3.10.0
 
 - ♻ [RUMF-1097] revamp internal configuration - core ([#1216](https://github.com/DataDog/browser-sdk/pull/1216))

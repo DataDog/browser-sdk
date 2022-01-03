@@ -1,5 +1,5 @@
 variables:
-  CURRENT_STAGING: staging-52
+  CURRENT_STAGING: staging-02
   APP: 'browser-sdk'
   CURRENT_CI_IMAGE: 29
   BUILD_STABLE_REGISTRY: '486234852809.dkr.ecr.us-east-1.amazonaws.com'
@@ -408,6 +408,7 @@ tests-passed:
 # in after-tests to not block `to-staging` merge
 check-squash-into-staging:
   stage: after-tests
+  allow_failure: true
   extends:
     - .base-configuration
     - .feature-branches
