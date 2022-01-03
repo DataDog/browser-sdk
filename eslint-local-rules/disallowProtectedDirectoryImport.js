@@ -1,3 +1,5 @@
+const path = require('path')
+const minimatch = require('minimatch')
 const resolve = require('eslint-module-utils/resolve').default
 const moduleVisitor = require('eslint-module-utils/moduleVisitor').default
 const importType = require('eslint-plugin-import/lib/core/importType').default
@@ -8,7 +10,20 @@ module.exports = {
       description:
         'Consider directories containing an "index" file as protected, and disallow importing modules from them.',
     },
-    schema: [],
+    schema: [
+      {
+        type: 'object',
+        properties: {
+          ignore: {
+            type: 'array',
+            items: {
+              type: 'string',
+            },
+          },
+        },
+        additionalProperties: false,
+      },
+    ],
   },
   create(context) {
     return moduleVisitor((source) => {
@@ -39,17 +54,26 @@ function getFirstProtectedDirectory(importedModule, context) {
       return
     }
 
-    // look for a directory higher in the hierarchy first
+    // Look for a directory higher in the hierarchy first
     const parentProtectedDirectory = findProtectedDirectory(parentPotentialProtectedDirectory)
     if (parentProtectedDirectory) {
       return parentProtectedDirectory
     }
 
-    // If we can import directly from the directory, it means that it contains an 'index' file.
-    // Consider it protected.
-    if (resolve(potentialProtectedDirectory, context)) {
-      return potentialProtectedDirectory
+    // If we can import an index file within the directory, consider it protected.
+    const resolvedPath = resolve(`${potentialProtectedDirectory}/index`, context)
+    if (!resolvedPath) {
+      return
     }
+
+    // Make sure we shouldn't ignore it
+    const resolvedPathRelativeToCwd = path.relative(context.getCwd(), resolvedPath)
+    const shouldIgnore = context.options[0]?.ignore?.some((glob) => minimatch(resolvedPathRelativeToCwd, glob))
+    if (shouldIgnore) {
+      return
+    }
+
+    return potentialProtectedDirectory
   }
 }
 

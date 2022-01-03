@@ -1,3 +1,3 @@
-export { startSegmentCollection } from './segmentCollection'
-export { DeflateWorker } from './deflateWorker'
+export { startSegmentCollection, setMaxSegmentSize } from './segmentCollection'
+export { DeflateWorker, DeflateWorkerAction, DeflateWorkerListener } from './deflateWorker'
 export { startDeflateWorker } from './startDeflateWorker'

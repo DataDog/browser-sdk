@@ -1,6 +1,5 @@
-import * as utils from '../../core/src/tools/utils'
-import { SerializedNodeWithId } from '../src/domain/record/types'
-import { serializeDocument } from '../src/domain/record/serialize'
+import { objectValues } from '../../core/src'
+import { SerializedNodeWithId, serializeNodeWithId } from '../src/domain/record'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME } from '../src/constants'
 
 export const makeHtmlDoc = (htmlContent: string, privacyTag: string) => {
@@ -20,7 +19,7 @@ export const removeIdFieldsRecursivelyClone = (thing: Record<string, unknown>): 
   if (thing && typeof thing === 'object') {
     const object = thing
     delete object.id
-    utils.objectValues(object).forEach((value) => removeIdFieldsRecursivelyClone(value as Record<string, unknown>))
+    objectValues(object).forEach((value) => removeIdFieldsRecursivelyClone(value as Record<string, unknown>))
     return object
   }
   return thing
@@ -29,7 +28,10 @@ export const removeIdFieldsRecursivelyClone = (thing: Record<string, unknown>): 
 export const generateLeanSerializedDoc = (htmlContent: string, privacyTag: string) => {
   const newDoc = makeHtmlDoc(htmlContent, privacyTag)
   const serializedDoc = removeIdFieldsRecursivelyClone(
-    serializeDocument(newDoc, NodePrivacyLevel.ALLOW)
+    serializeNodeWithId(newDoc, {
+      document: newDoc,
+      parentNodePrivacyLevel: NodePrivacyLevel.ALLOW,
+    })!
   ) as SerializedNodeWithId
   return serializedDoc
 }

@@ -1,3 +1,3 @@
 export { record } from './record'
-export { serializeNodeWithId } from './serialize'
+export { serializeNodeWithId, serializeDocument } from './serialize'
 export * from './types'

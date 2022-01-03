@@ -6,7 +6,7 @@ export {
   DefaultPrivacyLevel,
   validateAndBuildConfiguration,
 } from './configuration'
-export { EndpointBuilder } from './endpointBuilder'
+export { createEndpointBuilder, EndpointBuilder } from './endpointBuilder'
 export {
   isExperimentalFeatureEnabled,
   updateExperimentalFeatures,

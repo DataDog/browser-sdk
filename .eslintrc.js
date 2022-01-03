@@ -167,6 +167,16 @@ module.exports = {
     'jsdoc/check-alignment': 'error',
     'jsdoc/check-indentation': 'error',
 
+    'local-rules/disallow-protected-directory-import': [
+      'error',
+      {
+        ignore: [
+          // ignore packages index files so `[...]/test/*` can import from the `[...]/src/*`
+          'packages/*/src/index.ts',
+        ],
+      },
+    ],
+
     'unicorn/filename-case': ['error', { case: 'camelCase' }],
   },
   overrides: [
@@ -232,13 +242,6 @@ module.exports = {
       rules: {
         // E2E codebase is importing @datadog/browser-* packages referenced by tsconfig.
         'import/no-extraneous-dependencies': 'off',
-      },
-    },
-    {
-      files: ['**/*'],
-      excludedFiles: ['packages/*/test/**', '**/*.spec.ts'],
-      rules: {
-        'local-rules/disallow-protected-directory-import': 'error',
       },
     },
   ],

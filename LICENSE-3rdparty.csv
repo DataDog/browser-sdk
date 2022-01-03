@@ -60,6 +60,7 @@ dev,karma-sourcemap-loader,MIT,Copyright 2013 Sergey Todyshev
 dev,karma-spec-reporter,MIT,Copyright 2015 Michael Lex
 dev,karma-webpack,MIT,Copyright JS Foundation and other contributors
 dev,lerna,MIT,Copyright 2015-present Lerna Contributors
+dev,minimatch,ISC,Copyright (c) Isaac Z. Schlueter and Contributors
 dev,npm-run-all,MIT,Copyright 2015 Toru Nagashima
 dev,pako,MIT,(C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
 dev,prettier,MIT,Copyright James Long and contributors
