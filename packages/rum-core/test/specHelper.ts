@@ -24,6 +24,7 @@ import {
   SYNTHETICS_RESULT_ID_COOKIE_NAME,
   SYNTHETICS_TEST_ID_COOKIE_NAME,
 } from '../src/domain/syntheticsContext'
+import type { CiTestWindow } from '../src/domain/ciTestContext'
 import { RumConfiguration, validateAndBuildRumConfiguration } from '../src/domain/configuration'
 import { validateFormat } from './formatValidation'
 import { createRumSessionManagerMock } from './mockRumSessionManager'
@@ -299,4 +300,20 @@ export function cleanupSyntheticsWorkerValues() {
   deleteCookie(SYNTHETICS_TEST_ID_COOKIE_NAME)
   deleteCookie(SYNTHETICS_RESULT_ID_COOKIE_NAME)
   deleteCookie(SYNTHETICS_INJECTS_RUM_COOKIE_NAME)
+}
+
+export function mockCiVisibilityWindowValues(traceId?: unknown) {
+  if (traceId) {
+    ;(window as CiTestWindow).Cypress = {
+      env: (key: string) => {
+        if (typeof traceId === 'string' && key === 'traceId') {
+          return traceId
+        }
+      },
+    }
+  }
+}
+
+export function cleanupCiVisibilityWindowValues() {
+  delete (window as CiTestWindow).Cypress
 }
