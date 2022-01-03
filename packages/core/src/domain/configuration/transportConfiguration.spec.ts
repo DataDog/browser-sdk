@@ -148,18 +148,11 @@ describe('transportConfiguration', () => {
       { site: 'us3.datadoghq.com', datacenter: 'us3.prod.dog' },
       { site: 'us5.datadoghq.com', datacenter: 'us5.prod.dog' },
     ].forEach(({ site, datacenter }) => {
-      it(`should be set as tag for site ${site} in the logs and rum endpoints`, () => {
-        const configuration = computeTransportConfiguration({ clientToken, site }, buildEnv)
-        expect(decodeURIComponent(configuration.rumEndpointBuilder.build())).toMatch(
-          `&ddtags=(.*),datacenter:${datacenter}`
-        )
-        expect(decodeURIComponent(configuration.logsEndpointBuilder.build())).toMatch(
-          `&ddtags=(.*),datacenter:${datacenter}`
-        )
-      })
-
       it(`should be set as tag for site ${site} in the logs and rum endpoints replicas`, () => {
-        const configuration = computeTransportConfiguration({ clientToken, site, replica: { clientToken } }, buildEnv)
+        const configuration = computeTransportConfiguration(
+          { clientToken, site, replica: { clientToken, datacenter } },
+          buildEnv
+        )
 
         expect(decodeURIComponent(configuration.replica!.rumEndpointBuilder.build())).toMatch(
           `&ddtags=(.*),datacenter:${datacenter}`
@@ -168,6 +161,16 @@ describe('transportConfiguration', () => {
           `&ddtags=(.*),datacenter:${datacenter}`
         )
       })
+    })
+
+    it(`should be set as tag for US1 site in the logs and rum endpoints`, () => {
+      const configuration = computeTransportConfiguration({ clientToken }, buildEnv)
+      expect(decodeURIComponent(configuration.rumEndpointBuilder.build())).toMatch(
+        `&ddtags=(.*),datacenter:us1.prod.dog`
+      )
+      expect(decodeURIComponent(configuration.logsEndpointBuilder.build())).toMatch(
+        `&ddtags=(.*),datacenter:us1.prod.dog`
+      )
     })
 
     it('should not be set as tag for other datacenters in the logs and rum endpoints', () => {
@@ -293,7 +296,13 @@ describe('transportConfiguration', () => {
     ].forEach(({ site, intakeDomain }) => {
       it(`should detect replica intake request for site ${site} with alternate intake domains and intake v2`, () => {
         const configuration = computeTransportConfiguration(
-          { clientToken, useAlternateIntakeDomains: true, intakeApiVersion: 2, site, replica: { clientToken } },
+          {
+            clientToken,
+            useAlternateIntakeDomains: true,
+            intakeApiVersion: 2,
+            site,
+            replica: { clientToken, datacenter: '' },
+          },
           buildEnv
         )
 

@@ -9,7 +9,6 @@ export interface TransportConfiguration {
   sessionReplayEndpointBuilder: EndpointBuilder
   internalMonitoringEndpointBuilder?: EndpointBuilder
   isIntakeUrl: (url: string) => boolean
-  // only on staging build mode
   replica?: ReplicaConfiguration
 }
 
@@ -64,6 +63,7 @@ function computeEndpointBuilders(initConfiguration: InitConfiguration, buildEnv:
         { ...initConfiguration, clientToken: initConfiguration.internalMonitoringApiKey },
         buildEnv,
         'logs',
+        undefined,
         'browser-agent-internal-monitoring'
       ),
     }
@@ -81,23 +81,25 @@ function computeReplicaConfiguration(
     return
   }
 
+  const { applicationId, clientToken, datacenter } = initConfiguration.replica
+
   const replicaConfiguration: InitConfiguration = {
     ...initConfiguration,
     site: INTAKE_SITE_US,
-    applicationId: initConfiguration.replica.applicationId,
-    clientToken: initConfiguration.replica.clientToken,
+    applicationId,
+    clientToken,
     useAlternateIntakeDomains: true,
     intakeApiVersion: 2,
   }
 
   const replicaEndpointBuilders = {
-    logsEndpointBuilder: createEndpointBuilder(replicaConfiguration, buildEnv, 'logs', initConfiguration.site),
-    rumEndpointBuilder: createEndpointBuilder(replicaConfiguration, buildEnv, 'rum', initConfiguration.site),
+    logsEndpointBuilder: createEndpointBuilder(replicaConfiguration, buildEnv, 'logs', datacenter),
+    rumEndpointBuilder: createEndpointBuilder(replicaConfiguration, buildEnv, 'rum', datacenter),
     internalMonitoringEndpointBuilder: createEndpointBuilder(
       replicaConfiguration,
       buildEnv,
       'logs',
-      initConfiguration.site,
+      datacenter,
       'browser-agent-internal-monitoring'
     ),
   }

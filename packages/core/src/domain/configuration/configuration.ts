@@ -46,7 +46,6 @@ export interface InitConfiguration {
   useSecureSessionCookie?: boolean | undefined
   trackSessionAcrossSubdomains?: boolean | undefined
 
-  // only on staging build mode
   replica?: ReplicaUserConfiguration | undefined
 }
 
@@ -55,6 +54,7 @@ export type BeforeSendCallback = (event: any, context?: any) => unknown
 interface ReplicaUserConfiguration {
   applicationId?: string
   clientToken: string
+  datacenter: string
 }
 
 export interface Configuration extends TransportConfiguration {
