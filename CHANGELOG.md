@@ -26,17 +26,15 @@ We changed URLs of where the Browser SDK data is sent. Please make sure that you
 
 ### [RUM and Logs] Drop support for TypeScript below v3.8.2
 
-The Browser SDK is now incompatible with TypeScript v3.8.2. If you are using TypeScript, please make
-sure that the version you are using is greater or equal to v3.8.2.
+The Browser SDK is now incompatible with TypeScript below v3.8.2. If you are using TypeScript, please make sure that the version you are using is greater or equal to v3.8.2.
 
 ### [RUM and Logs] Tags syntax sanitization
 
-`version`, `env` and `service` [initialization parameters](https://docs.datadoghq.com/real_user_monitoring/browser/#initialization-parameters) are sent as tags to Datadog. The Browser SDK will now sanitize and print a warning if those values don't meet [tag requirements syntax](https://docs.datadoghq.com/getting_started/tagging/#defining-tags).
+`version`, `env` and `service` [initialization parameters](https://docs.datadoghq.com/real_user_monitoring/browser/#initialization-parameters) are sent as tags to Datadog. The Browser SDK is now sanitizing and printing a warning if those values don't meet [tag requirements syntax](https://docs.datadoghq.com/getting_started/tagging/#defining-tags).
 
 ### [RUM and Logs] Configuration typings cleanup
 
-Some TypeScript types have been cleaned up to better represent accepted initialization parameters
-for each SDKs.
+TypeScript types representing initialization parameters are now stricter and may reject previously accepted unsupported parameters. If you get typechecking issues, please make sure you are only providing supported initialization parameters.
 
 ### [RUM and Logs] Remove deprecated XHR `_datadog_xhr` field
 
