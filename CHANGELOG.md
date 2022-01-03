@@ -16,6 +16,10 @@
 
 ---
 
+## v3.11.0
+
+- ✨ [ci-visibility] Link CI Visibility and RUM ([#1192](https://github.com/DataDog/browser-sdk/pull/1192))
+
 ## v3.10.1
 
 - ♻️ [RUMF-1097] revamp configuration - rum ([#1221](https://github.com/DataDog/browser-sdk/pull/1221))
