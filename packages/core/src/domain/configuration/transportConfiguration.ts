@@ -2,6 +2,7 @@ import { BuildEnv, BuildMode } from '../../boot/init'
 import { objectValues } from '../../tools/utils'
 import { InitConfiguration } from './configuration'
 import { createEndpointBuilder, INTAKE_SITE_US, EndpointBuilder } from './endpointBuilder'
+import { buildTags } from './tags'
 
 export interface TransportConfiguration {
   logsEndpointBuilder: EndpointBuilder
@@ -24,10 +25,12 @@ export function computeTransportConfiguration(
   initConfiguration: InitConfiguration,
   buildEnv: BuildEnv
 ): TransportConfiguration {
-  const endpointBuilders = computeEndpointBuilders(initConfiguration, buildEnv)
+  const tags = buildTags(initConfiguration)
+
+  const endpointBuilders = computeEndpointBuilders(initConfiguration, buildEnv, tags)
   const intakeEndpoints = objectValues(endpointBuilders).map((builder) => builder.buildIntakeUrl())
 
-  const replicaConfiguration = computeReplicaConfiguration(initConfiguration, buildEnv, intakeEndpoints)
+  const replicaConfiguration = computeReplicaConfiguration(initConfiguration, buildEnv, intakeEndpoints, tags)
 
   return {
     isIntakeUrl: (url) => intakeEndpoints.some((intakeEndpoint) => url.indexOf(intakeEndpoint) === 0),
@@ -36,7 +39,7 @@ export function computeTransportConfiguration(
   }
 }
 
-function computeEndpointBuilders(initConfiguration: InitConfiguration, buildEnv: BuildEnv) {
+function computeEndpointBuilders(initConfiguration: InitConfiguration, buildEnv: BuildEnv, tags: string[]) {
   if (buildEnv.buildMode === BuildMode.E2E_TEST) {
     const e2eEndpointBuilder = (placeholder: string) => ({
       build: () => placeholder,
@@ -52,9 +55,9 @@ function computeEndpointBuilders(initConfiguration: InitConfiguration, buildEnv:
   }
 
   const endpointBuilders = {
-    logsEndpointBuilder: createEndpointBuilder(initConfiguration, buildEnv, 'logs'),
-    rumEndpointBuilder: createEndpointBuilder(initConfiguration, buildEnv, 'rum'),
-    sessionReplayEndpointBuilder: createEndpointBuilder(initConfiguration, buildEnv, 'sessionReplay'),
+    logsEndpointBuilder: createEndpointBuilder(initConfiguration, buildEnv, 'logs', tags),
+    rumEndpointBuilder: createEndpointBuilder(initConfiguration, buildEnv, 'rum', tags),
+    sessionReplayEndpointBuilder: createEndpointBuilder(initConfiguration, buildEnv, 'sessionReplay', tags),
   }
 
   if (initConfiguration.internalMonitoringApiKey) {
@@ -64,6 +67,7 @@ function computeEndpointBuilders(initConfiguration: InitConfiguration, buildEnv:
         { ...initConfiguration, clientToken: initConfiguration.internalMonitoringApiKey },
         buildEnv,
         'logs',
+        tags,
         'browser-agent-internal-monitoring'
       ),
     }
@@ -75,7 +79,8 @@ function computeEndpointBuilders(initConfiguration: InitConfiguration, buildEnv:
 function computeReplicaConfiguration(
   initConfiguration: InitConfiguration,
   buildEnv: BuildEnv,
-  intakeEndpoints: string[]
+  intakeEndpoints: string[],
+  tags: string[]
 ): ReplicaConfiguration | undefined {
   if (buildEnv.buildMode !== BuildMode.STAGING || initConfiguration.replica === undefined) {
     return
@@ -84,19 +89,17 @@ function computeReplicaConfiguration(
   const replicaConfiguration: InitConfiguration = {
     ...initConfiguration,
     site: INTAKE_SITE_US,
-    applicationId: initConfiguration.replica.applicationId,
     clientToken: initConfiguration.replica.clientToken,
-    useAlternateIntakeDomains: true,
-    intakeApiVersion: 2,
   }
 
   const replicaEndpointBuilders = {
-    logsEndpointBuilder: createEndpointBuilder(replicaConfiguration, buildEnv, 'logs'),
-    rumEndpointBuilder: createEndpointBuilder(replicaConfiguration, buildEnv, 'rum'),
+    logsEndpointBuilder: createEndpointBuilder(replicaConfiguration, buildEnv, 'logs', tags),
+    rumEndpointBuilder: createEndpointBuilder(replicaConfiguration, buildEnv, 'rum', tags),
     internalMonitoringEndpointBuilder: createEndpointBuilder(
       replicaConfiguration,
       buildEnv,
       'logs',
+      tags,
       'browser-agent-internal-monitoring'
     ),
   }

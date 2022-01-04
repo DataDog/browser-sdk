@@ -6,7 +6,7 @@ import { pki, md } from 'node-forge'
 import { RequestStatsForHost } from './types'
 
 export interface Proxy {
-  host: string
+  origin: string
   spkiFingerprint: string
   stop: () => void
   stats: ProxyStats
@@ -17,11 +17,12 @@ class ProxyStats {
 
   addRequest(request: IncomingMessage, size: number) {
     const url = new URL(request.url!, 'http://foo')
-    const host = url.searchParams.get('ddhost')!
-    let hostStats = this.statsByHost.get(host)
+    const intakeUrl = new URL(url.searchParams.get('ddforward')!)
+
+    let hostStats = this.statsByHost.get(intakeUrl.hostname)
     if (!hostStats) {
       hostStats = { requestsSize: 0, requestsCount: 0 }
-      this.statsByHost.set(host, hostStats)
+      this.statsByHost.set(intakeUrl.hostname, hostStats)
     }
 
     hostStats.requestsCount += 1
@@ -60,7 +61,7 @@ export function startProxy() {
     })
     server.on('listening', () => {
       resolve({
-        host: `localhost:${(server.address() as AddressInfo).port}`,
+        origin: `https://localhost:${(server.address() as AddressInfo).port}`,
         spkiFingerprint,
         stop: () => server.close(),
         stats,

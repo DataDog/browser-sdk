@@ -6,7 +6,6 @@ import {
   timeStampNow,
   currentDrift,
   display,
-  BeforeSendCallback,
   RawError,
   createEventRateLimiter,
   EventRateLimiter,
@@ -138,7 +137,7 @@ export function startRumAssembly(
 
 function shouldSend(
   event: RumEvent & Context,
-  beforeSend: BeforeSendCallback | undefined,
+  beforeSend: RumConfiguration['beforeSend'],
   domainContext: RumEventDomainContext,
   eventRateLimiters: { [key in RumEventType]?: EventRateLimiter }
 ) {

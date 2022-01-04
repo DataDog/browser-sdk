@@ -2,7 +2,6 @@
  * Keep these types in a separate file in order to reference it from the official doc
  */
 
-import { Omit } from '@datadog/browser-core'
 import { RumEventType } from './rawRumEvent.types'
 
 export type RumEventDomainContext<T extends RumEventType = any> = T extends RumEventType.VIEW
