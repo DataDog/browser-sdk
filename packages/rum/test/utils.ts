@@ -1,13 +1,4 @@
-import {
-  DeflateWorker,
-  DeflateWorkerAction,
-  DeflateWorkerListener,
-  // To avoid importing too much code in E2E tests, import from deflateWorker directly. This solves
-  // the "Timeout" typing conflict between DOM and @types/node for now. We might find a better
-  // solution in the future.
-  // (cf https://github.com/Microsoft/TypeScript/issues/30128)
-  // eslint-disable-next-line local-rules/disallow-protected-directory-import
-} from '../src/domain/segmentCollection/deflateWorker'
+import { DeflateWorker, DeflateWorkerAction, DeflateWorkerListener } from '../src/domain/segmentCollection'
 import {
   IncrementalSource,
   MutationPayload,
