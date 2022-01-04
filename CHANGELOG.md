@@ -30,7 +30,7 @@ The Browser SDK is now incompatible with TypeScript below v3.8.2. If you are usi
 
 ### [RUM and Logs] Tags syntax sanitization
 
-`version`, `env` and `service` [initialization parameters](https://docs.datadoghq.com/real_user_monitoring/browser/#initialization-parameters) are sent as tags to Datadog. The Browser SDK is now sanitizing and printing a warning if those values don't meet [tag requirements syntax](https://docs.datadoghq.com/getting_started/tagging/#defining-tags).
+`version`, `env` and `service` [initialization parameters](https://docs.datadoghq.com/real_user_monitoring/browser/#initialization-parameters) are sent as tags to Datadog. The Browser SDK is now sanitizing and printing a warning if those values don't meet the [tag requirements syntax](https://docs.datadoghq.com/getting_started/tagging/#defining-tags).
 
 ### [RUM and Logs] Stricter initialization parameters typings
 
