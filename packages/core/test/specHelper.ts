@@ -1,5 +1,7 @@
-import { buildUrl, EndpointBuilder, instrumentMethod } from '@datadog/browser-core'
+import { EndpointBuilder } from '../src/domain/configuration/endpointBuilder'
+import { instrumentMethod } from '../src/tools/instrumentMethod'
 import { resetNavigationStart } from '../src/tools/timeUtils'
+import { buildUrl } from '../src/tools/urlPolyfill'
 import { noop, objectEntries, assign } from '../src/tools/utils'
 import { BrowserWindow } from '../src/transport/eventBridge'
 

@@ -12,6 +12,8 @@ import { createRawRumEvent } from '../../test/fixtures'
 import {
   cleanupSyntheticsWorkerValues,
   mockSyntheticsWorkerValues,
+  mockCiVisibilityWindowValues,
+  cleanupCiVisibilityWindowValues,
   setup,
   TestSetupBuilder,
 } from '../../test/specHelper'
@@ -60,6 +62,7 @@ describe('rum assembly', () => {
     deleteEventBridgeStub()
     setupBuilder.cleanup()
     cleanupSyntheticsWorkerValues()
+    cleanupCiVisibilityWindowValues()
   })
 
   describe('beforeSend', () => {
@@ -526,6 +529,17 @@ describe('rum assembly', () => {
       expect(serverRumEvents[0].session.type).toEqual('synthetics')
     })
 
+    it('should detect ci visibility tests based on ci visibility global window values', () => {
+      mockCiVisibilityWindowValues('traceId')
+
+      const { lifeCycle } = setupBuilder.build()
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+      })
+
+      expect(serverRumEvents[0].session.type).toEqual('ci_test')
+    })
+
     it('should set the session.has_replay attribute if it is defined in the common context', () => {
       const { lifeCycle } = setupBuilder.build()
       commonContext.hasReplay = true
@@ -572,6 +586,19 @@ describe('rum assembly', () => {
 
       expect(serverRumEvents[0]._dd.browser_sdk_version).not.toBeDefined()
       expect(serverRumEvents[1]._dd.browser_sdk_version).toBeDefined()
+    })
+  })
+
+  describe('ci visibility context', () => {
+    it('includes the ci visibility context', () => {
+      mockCiVisibilityWindowValues('traceId')
+
+      const { lifeCycle } = setupBuilder.build()
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+      })
+
+      expect(serverRumEvents[0].ci_test).toBeTruthy()
     })
   })
 

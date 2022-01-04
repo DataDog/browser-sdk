@@ -1,9 +1,9 @@
 import { Context, RelativeTime, Duration, relativeNow } from '@datadog/browser-core'
-import { LifeCycleEventType, RumEvent } from '@datadog/browser-rum-core'
+import { RumEvent } from '../../../rumEvent.types'
 import { TestSetupBuilder, setup, setupViewTest, ViewTest } from '../../../../test/specHelper'
 import { RumPerformanceNavigationTiming } from '../../../browser/performanceCollection'
 import { RumEventType } from '../../../rawRumEvent.types'
-import { LifeCycle } from '../../lifeCycle'
+import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { PAGE_ACTIVITY_END_DELAY, PAGE_ACTIVITY_VALIDATION_DELAY } from '../../waitIdlePage'
 import { THROTTLE_VIEW_UPDATE_PERIOD } from './trackViews'
 

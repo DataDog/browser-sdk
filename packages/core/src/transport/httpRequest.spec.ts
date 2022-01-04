@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import sinon from 'sinon'
-import { stubEndpointBuilder } from 'packages/core/test/specHelper'
+import { stubEndpointBuilder } from '../../test/specHelper'
 import { createEndpointBuilder, EndpointBuilder } from '../domain/configuration/endpointBuilder'
 import { BuildEnv } from '..'
 import { HttpRequest } from './httpRequest'

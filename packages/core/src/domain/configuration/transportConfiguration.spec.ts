@@ -1,4 +1,4 @@
-import { BuildEnv, BuildMode } from '@datadog/browser-core'
+import { BuildEnv, BuildMode } from '../../boot/init'
 import { computeTransportConfiguration } from './transportConfiguration'
 
 describe('transportConfiguration', () => {
