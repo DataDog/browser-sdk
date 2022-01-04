@@ -1,4 +1,4 @@
-const DEFAULT_LIMIT = 10_000
+const DEFAULT_LIMIT = 500
 
 export class BoundedBuffer {
   private buffer: Array<() => void> = []
