@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "ts-loader": "6.2.1",
-    "typescript": "3.0.1",
+    "typescript": "3.8.2",
     "webpack": "5.28.0"
   }
 }

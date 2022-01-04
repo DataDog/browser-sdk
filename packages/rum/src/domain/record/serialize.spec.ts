@@ -4,8 +4,7 @@ import {
   PRIVACY_ATTR_NAME,
   PRIVACY_ATTR_VALUE_ALLOW,
   PRIVACY_ATTR_VALUE_HIDDEN,
-  PRIVACY_ATTR_VALUE_INPUT_IGNORED,
-  PRIVACY_ATTR_VALUE_INPUT_MASKED,
+  PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
 } from '../../constants'
 import {
   HTML,
@@ -25,7 +24,7 @@ import {
   serializeAttribute,
 } from './serialize'
 import { MAX_ATTRIBUTE_VALUE_CHAR_LENGTH } from './privacy'
-import { ElementNode, NodeType } from './types'
+import { ElementNode, NodeType, SerializedNodeWithId, TextNode } from './types'
 
 const DEFAULT_OPTIONS: SerializeOptions = {
   document,
@@ -257,16 +256,16 @@ describe('serializeNodeWithId', () => {
       )
     })
 
-    describe('input privacy mode', () => {
-      it('replaces <input> values with asterisks for masked mode', () => {
+    describe('input privacy mode mask-user-input', () => {
+      it('replaces <input> values with asterisks', () => {
         const input = document.createElement('input')
         input.value = 'toto'
-        input.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_MASKED)
+        input.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT)
 
         expect(serializeNodeWithId(input, DEFAULT_OPTIONS)! as ElementNode).toEqual(
           jasmine.objectContaining({
             attributes: {
-              [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_INPUT_MASKED,
+              [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
               value: '***',
             },
           })
@@ -278,7 +277,7 @@ describe('serializeNodeWithId', () => {
         const input = document.createElement('input')
         input.value = 'toto'
         parent.appendChild(input)
-        parent.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_MASKED)
+        parent.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT)
 
         expect((serializeNodeWithId(parent, DEFAULT_OPTIONS)! as ElementNode).childNodes[0]).toEqual(
           jasmine.objectContaining({
@@ -286,39 +285,24 @@ describe('serializeNodeWithId', () => {
           })
         )
       })
-    })
 
-    it('does serialize <input> values for ignored mode', () => {
-      const input = document.createElement('input')
-      input.value = 'toto'
-      input.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_IGNORED)
+      it('does not apply mask for <input type="button">', () => {
+        const button = document.createElement('input')
+        button.type = 'button'
+        button.value = 'toto'
+        button.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT)
 
-      expect(serializeNodeWithId(input, DEFAULT_OPTIONS)! as ElementNode).toEqual(
-        jasmine.objectContaining({
-          attributes: {
-            [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_INPUT_IGNORED,
-            value: '***',
-          },
-        })
-      )
-    })
+        expect((serializeNodeWithId(button, DEFAULT_OPTIONS)! as ElementNode).attributes.value).toEqual('toto')
+      })
 
-    it('ignores the privacy mode for <input type="button">', () => {
-      const button = document.createElement('input')
-      button.type = 'button'
-      button.value = 'toto'
-      button.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_IGNORED)
+      it('does not apply mask for <input type="submit"> contained in a masked ancestor', () => {
+        const button = document.createElement('input')
+        button.type = 'submit'
+        button.value = 'toto'
+        button.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT)
 
-      expect((serializeNodeWithId(button, DEFAULT_OPTIONS)! as ElementNode).attributes.value).toEqual('toto')
-    })
-
-    it('ignores the privacy mode for <input type="submit">', () => {
-      const button = document.createElement('input')
-      button.type = 'submit'
-      button.value = 'toto'
-      button.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_IGNORED)
-
-      expect((serializeNodeWithId(button, DEFAULT_OPTIONS)! as ElementNode).attributes.value).toEqual('toto')
+        expect((serializeNodeWithId(button, DEFAULT_OPTIONS)! as ElementNode).attributes.value).toEqual('toto')
+      })
     })
   })
 
@@ -410,6 +394,78 @@ describe('serializeNodeWithId', () => {
       metaElement.setAttribute('name', 'KeYwOrDs')
       expect(serializeNodeWithId(metaElement, DEFAULT_OPTIONS)).toEqual(null)
     })
+  })
+
+  describe('handles privacy', () => {
+    describe('for privacy tag `hidden`, a DOM tree', () => {
+      it('keeps private info private', () => {
+        const serializedDoc = generateLeanSerializedDoc(HTML, 'hidden')
+        expect(JSON.stringify(serializedDoc)).not.toContain('private')
+      })
+    })
+
+    describe('for privacy tag `mask`, a DOM tree', () => {
+      it("doesn't have innerText alpha numeric", () => {
+        const serializedDoc = generateLeanSerializedDoc(HTML, 'mask')
+        expect({ text: getTextNodesFromSerialized(serializedDoc) }).not.toBe({
+          text: jasmine.stringMatching(/^[*x\s]+\.example {content: "anything";}[*x\s]+$/),
+        })
+      })
+
+      it('keeps private info private', () => {
+        const serializedDoc = generateLeanSerializedDoc(HTML, 'mask')
+        expect(JSON.stringify(serializedDoc)).not.toContain('private')
+      })
+    })
+
+    describe('for privacy tag `mask-user-input`, a DOM tree', () => {
+      it("doesn't mask text content", () => {
+        const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-user-input')
+        expect(JSON.stringify(serializedDoc)).not.toContain('᙮᙮')
+      })
+      it('keeps form fields private', () => {
+        const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-user-input')
+        expect(JSON.stringify(serializedDoc)).toContain('**')
+      })
+    })
+
+    describe('for privacy tag `allow`, a DOM tree', () => {
+      it("doesn't have innerText alpha numeric", () => {
+        const serializedDoc = generateLeanSerializedDoc(HTML, 'allow')
+        const innerText = getTextNodesFromSerialized(serializedDoc)
+        const privateWordMatchCount = innerText.match(/private/g)?.length
+        expect(privateWordMatchCount).toBe(10)
+        expect(innerText).toBe(
+          // eslint-disable-next-line max-len
+          '  \n      .example {content: "anything";}\n       private title \n \n     hello private world \n     Loreum ipsum private text \n     hello private world \n     \n      Click https://private.com/path/nested?query=param#hash\n     \n      \n     \n       private option A \n       private option B \n       private option C \n     \n      \n      \n      \n     inputFoo label \n\n      \n\n           Loreum Ipsum private ...\n     \n\n     editable private div \n'
+        )
+      })
+
+      it('keeps innerText public', () => {
+        const serializedDoc = generateLeanSerializedDoc(HTML, 'allow')
+        expect(JSON.stringify(serializedDoc)).not.toContain('*')
+        expect(JSON.stringify(serializedDoc)).not.toContain('xx')
+      })
+    })
+
+    const getTextNodesFromSerialized = (serializedNode: SerializedNodeWithId | null): string => {
+      try {
+        if (serializedNode === null) {
+          return ''
+        } else if (serializedNode.type === NodeType.Text) {
+          const textNode = serializedNode as TextNode
+          return textNode.textContent
+        } else if (serializedNode.type === NodeType.Element || serializedNode.type === NodeType.Document) {
+          const textNode = serializedNode as ElementNode
+          return textNode.childNodes.map((node: SerializedNodeWithId) => getTextNodesFromSerialized(node)).join(' ')
+        }
+        return ''
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error('caught getTextNodesFromSerialized error:', e, serializedNode)
+        return ''
+      }
+    }
   })
 })
 
