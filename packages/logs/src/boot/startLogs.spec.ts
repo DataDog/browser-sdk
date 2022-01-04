@@ -339,71 +339,77 @@ describe('logs', () => {
       ])
     })
   })
+  ;[
+    { status: StatusType.error, configuration: { maxErrorsPerMinute: 1 } },
+    { status: StatusType.warn, configuration: { maxWarningsPerMinute: 1 } },
+    { status: StatusType.info, configuration: { maxInfosPerMinute: 1 } },
+    { status: StatusType.debug, configuration: { maxDebugsPerMinute: 1 } },
+  ].forEach(({ status, configuration }) => {
+    describe(`${status} logs limitation`, () => {
+      let clock: Clock
 
-  describe('error logs limitation', () => {
-    let clock: Clock
-
-    beforeEach(() => {
-      clock = mockClock()
-    })
-
-    afterEach(() => {
-      clock.cleanup()
-    })
-
-    it('stops sending error logs when reaching the limit', () => {
-      const sendLogSpy = jasmine.createSpy<(message: LogsMessage & { foo?: string }) => void>()
-      const sendLog = startLogs({ errorLogger: new Logger(sendLogSpy), configuration: { maxErrorsPerMinute: 1 } })
-      sendLog({ message: 'foo', status: StatusType.error }, {})
-      sendLog({ message: 'bar', status: StatusType.error }, {})
-
-      expect(server.requests.length).toEqual(1)
-      expect(getLoggedMessage(server, 0).message).toBe('foo')
-      expect(sendLogSpy).toHaveBeenCalledOnceWith({
-        message: 'Reached max number of errors by minute: 1',
-        status: StatusType.error,
-        error: {
-          origin: ErrorSource.AGENT,
-          kind: undefined,
-          stack: undefined,
-        },
-        date: Date.now(),
+      beforeEach(() => {
+        clock = mockClock()
       })
-    })
 
-    it('does not take discarded errors into account', () => {
-      const sendLogSpy = jasmine.createSpy<(message: LogsMessage & { foo?: string }) => void>()
-      const sendLog = startLogs({
-        errorLogger: new Logger(sendLogSpy),
-        configuration: {
-          maxErrorsPerMinute: 1,
-          beforeSend(event) {
-            if (event.message === 'discard me') {
-              return false
-            }
+      afterEach(() => {
+        clock.cleanup()
+      })
+
+      it(`stops sending ${status} logs when reaching the limit`, () => {
+        const sendLogSpy = jasmine.createSpy<(message: LogsMessage & { foo?: string }) => void>()
+        const sendLog = startLogs({ errorLogger: new Logger(sendLogSpy), configuration })
+        sendLog({ message: 'foo', status }, {})
+        sendLog({ message: 'bar', status }, {})
+
+        expect(server.requests.length).toEqual(1)
+        expect(getLoggedMessage(server, 0).message).toBe('foo')
+        expect(sendLogSpy).toHaveBeenCalledOnceWith({
+          message: `Reached max number of ${status}s by minute: 1`,
+          status: StatusType.error,
+          error: {
+            origin: ErrorSource.AGENT,
+            kind: undefined,
+            stack: undefined,
           },
-        },
+          date: Date.now(),
+        })
       })
-      sendLog({ message: 'discard me', status: StatusType.error }, {})
-      sendLog({ message: 'discard me', status: StatusType.error }, {})
-      sendLog({ message: 'discard me', status: StatusType.error }, {})
-      sendLog({ message: 'foo', status: StatusType.error }, {})
 
-      expect(server.requests.length).toEqual(1)
-      expect(getLoggedMessage(server, 0).message).toBe('foo')
-      expect(sendLogSpy).not.toHaveBeenCalled()
-    })
+      it(`does not take discarded ${status}s into account`, () => {
+        const sendLogSpy = jasmine.createSpy<(message: LogsMessage & { foo?: string }) => void>()
+        const sendLog = startLogs({
+          errorLogger: new Logger(sendLogSpy),
+          configuration: {
+            ...configuration,
+            beforeSend(event) {
+              if (event.message === 'discard me') {
+                return false
+              }
+            },
+          },
+        })
+        sendLog({ message: 'discard me', status }, {})
+        sendLog({ message: 'discard me', status }, {})
+        sendLog({ message: 'discard me', status }, {})
+        sendLog({ message: 'foo', status }, {})
 
-    it('allows to send new errors after a minute', () => {
-      const sendLog = startLogs({ configuration: { maxErrorsPerMinute: 1 } })
-      sendLog({ message: 'foo', status: StatusType.error }, {})
-      sendLog({ message: 'bar', status: StatusType.error }, {})
-      clock.tick(ONE_MINUTE)
-      sendLog({ message: 'baz', status: StatusType.error }, {})
+        expect(server.requests.length).toEqual(1)
+        expect(getLoggedMessage(server, 0).message).toBe('foo')
+        expect(sendLogSpy).not.toHaveBeenCalled()
+      })
 
-      expect(server.requests.length).toEqual(2)
-      expect(getLoggedMessage(server, 0).message).toBe('foo')
-      expect(getLoggedMessage(server, 1).message).toBe('baz')
+      it(`allows to send new ${status}s after a minute`, () => {
+        const sendLog = startLogs({ configuration })
+        sendLog({ message: 'foo', status }, {})
+        sendLog({ message: 'bar', status }, {})
+        clock.tick(ONE_MINUTE)
+        sendLog({ message: 'baz', status }, {})
+
+        expect(server.requests.length).toEqual(2)
+        expect(getLoggedMessage(server, 0).message).toBe('foo')
+        expect(getLoggedMessage(server, 1).message).toBe('baz')
+      })
     })
   })
 })

@@ -102,25 +102,35 @@ export function buildAssemble(
   configuration: LogsConfiguration,
   reportError: (error: RawError) => void
 ) {
-  const errorRateLimiter = createEventRateLimiter(StatusType.error, configuration.maxErrorsPerMinute, reportError)
+  const logRateLimiters = {
+    [StatusType.error]: createEventRateLimiter(StatusType.error, configuration.maxErrorsPerMinute, reportError),
+    [StatusType.warn]: createEventRateLimiter(StatusType.warn, configuration.maxWarningsPerMinute, reportError),
+    [StatusType.info]: createEventRateLimiter(StatusType.info, configuration.maxInfosPerMinute, reportError),
+    [StatusType.debug]: createEventRateLimiter(StatusType.debug, configuration.maxDebugsPerMinute, reportError),
+  }
+
   return (message: LogsMessage, currentContext: Context) => {
     const startTime = message.date ? getRelativeTime(message.date) : undefined
     const session = sessionManager.findTrackedSession(startTime)
+
     if (!session) {
       return undefined
     }
+
     const contextualizedMessage = combine(
       { service: configuration.service, session_id: session.id },
       currentContext,
       getRUMInternalContext(startTime),
       message
     )
-    if (configuration.beforeSend && configuration.beforeSend(contextualizedMessage) === false) {
+
+    if (
+      configuration.beforeSend?.(contextualizedMessage) === false ||
+      logRateLimiters[contextualizedMessage.status]?.isLimitReached()
+    ) {
       return undefined
     }
-    if (contextualizedMessage.status === StatusType.error && errorRateLimiter.isLimitReached()) {
-      return undefined
-    }
+
     return contextualizedMessage as Context
   }
 }
