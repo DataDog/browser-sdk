@@ -1,4 +1,4 @@
-import { stubCookie } from '../../../test/specHelper'
+import { stubCookie, mockClock } from '../../../test/specHelper'
 import { resetExperimentalFeatures, updateExperimentalFeatures } from '../configuration/experimentalFeatures'
 import { startFakeInternalMonitoring, resetInternalMonitoring } from '../internalMonitoring'
 import {
@@ -19,35 +19,6 @@ describe('session cookie store', () => {
   let processSpy: jasmine.Spy<jasmine.Func>
   let afterSpy: jasmine.Spy<jasmine.Func>
   let cookie: ReturnType<typeof stubCookie>
-
-  type OnLockCheck = () => { currentState: SessionState; retryState: SessionState }
-
-  function lockScenario({
-    onInitialLockCheck,
-    onAcquiredLockCheck,
-    onPostProcessLockCheck,
-    onPostPersistLockCheck,
-  }: {
-    onInitialLockCheck?: OnLockCheck
-    onAcquiredLockCheck?: OnLockCheck
-    onPostProcessLockCheck?: OnLockCheck
-    onPostPersistLockCheck?: OnLockCheck
-  }) {
-    const onLockChecks = [onInitialLockCheck, onAcquiredLockCheck, onPostProcessLockCheck, onPostPersistLockCheck]
-    cookie.getSpy.and.callFake(() => {
-      const currentOnLockCheck = onLockChecks.shift()
-      if (!currentOnLockCheck) {
-        return cookie.currentValue()
-      }
-      const { currentState, retryState } = currentOnLockCheck()
-      cookie.setCurrentValue(buildSessionString(retryState))
-      return buildSessionString(currentState)
-    })
-  }
-
-  function buildSessionString(currentState: SessionState) {
-    return `${SESSION_COOKIE_NAME}=${toSessionString(currentState)}`
-  }
 
   beforeEach(() => {
     initialSession = { id: '123', created: '0' }
@@ -137,6 +108,36 @@ describe('session cookie store', () => {
       expect(retrieveSession()).toEqual(initialSession)
       expect(afterSpy).toHaveBeenCalledWith(initialSession)
     })
+
+    type OnLockCheck = () => { currentState: SessionState; retryState: SessionState }
+
+    function lockScenario({
+      onInitialLockCheck,
+      onAcquiredLockCheck,
+      onPostProcessLockCheck,
+      onPostPersistLockCheck,
+    }: {
+      onInitialLockCheck?: OnLockCheck
+      onAcquiredLockCheck?: OnLockCheck
+      onPostProcessLockCheck?: OnLockCheck
+      onPostPersistLockCheck?: OnLockCheck
+    }) {
+      const onLockChecks = [onInitialLockCheck, onAcquiredLockCheck, onPostProcessLockCheck, onPostPersistLockCheck]
+      cookie.getSpy.and.callFake(() => {
+        const currentOnLockCheck = onLockChecks.shift()
+        if (!currentOnLockCheck) {
+          return cookie.currentValue()
+        }
+        const { currentState, retryState } = currentOnLockCheck()
+        cookie.setCurrentValue(buildSessionString(retryState))
+        return buildSessionString(currentState)
+      })
+    }
+
+    function buildSessionString(currentState: SessionState) {
+      return `${SESSION_COOKIE_NAME}=${toSessionString(currentState)}`
+    }
+
     ;[
       {
         description: 'should wait for lock to be free',
@@ -192,23 +193,24 @@ describe('session cookie store', () => {
       })
     })
 
-    it('should abort after a max number of retry', (done) => {
-      const maxNumberOfRetriesShouldBeReached = MAX_NUMBER_OF_LOCK_RETRIES * LOCK_RETRY_DELAY * 2
+    it('should abort after a max number of retry', () => {
+      const clock = mockClock()
       const monitoringMessages = startFakeInternalMonitoring()
+
       persistSession(initialSession, COOKIE_OPTIONS)
       cookie.setSpy.calls.reset()
 
       cookie.getSpy.and.returnValue(buildSessionString({ ...initialSession, lock: 'locked' }))
       withCookieLockAccess({ options: COOKIE_OPTIONS, process: processSpy, after: afterSpy })
 
-      setTimeout(() => {
-        expect(processSpy).not.toHaveBeenCalled()
-        expect(afterSpy).not.toHaveBeenCalled()
-        expect(cookie.setSpy).not.toHaveBeenCalled()
-        expect(monitoringMessages.length).toBe(1)
-        resetInternalMonitoring()
-        done()
-      }, maxNumberOfRetriesShouldBeReached)
+      clock.tick(MAX_NUMBER_OF_LOCK_RETRIES * LOCK_RETRY_DELAY)
+      expect(processSpy).not.toHaveBeenCalled()
+      expect(afterSpy).not.toHaveBeenCalled()
+      expect(cookie.setSpy).not.toHaveBeenCalled()
+      expect(monitoringMessages.length).toBe(1)
+
+      resetInternalMonitoring()
+      clock.cleanup()
     })
 
     it('should execute cookie accesses in order', (done) => {
@@ -222,15 +224,14 @@ describe('session cookie store', () => {
 
       withCookieLockAccess({
         options: COOKIE_OPTIONS,
-        process: (session) => ({ ...session, first: 'added' }),
+        process: (session) => ({ ...session, value: 'foo' }),
         after: afterSpy,
       })
       withCookieLockAccess({
         options: COOKIE_OPTIONS,
-        process: (session) => ({ ...session, second: 'added' }),
+        process: (session) => ({ ...session, value: `${session.value || ''}bar` }),
         after: (session) => {
-          expect(session.first).toBe('added')
-          expect(session.second).toBe('added')
+          expect(session.value).toBe('foobar')
           expect(afterSpy).toHaveBeenCalled()
           done()
         },
