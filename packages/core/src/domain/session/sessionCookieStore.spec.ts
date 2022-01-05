@@ -64,10 +64,6 @@ describe('session cookie store', () => {
     cookie = stubCookie()
   })
 
-  afterEach(() => {
-    cookie.stop()
-  })
-
   describe('with cookie-lock disabled', () => {
     it('should persist session when process return a value', () => {
       persistSession(initialSession, COOKIE_OPTIONS)

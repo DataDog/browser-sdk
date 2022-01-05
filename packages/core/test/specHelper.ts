@@ -329,24 +329,10 @@ export function disableJasmineUncaughtErrorHandler() {
 
 export function stubCookie() {
   let cookie = ''
-  const doc = {
-    getCookie: () => cookie,
-    setCookie: (newCookie: string) => {
-      cookie = newCookie
-    },
-  }
-  const setSpy = spyOn(doc, 'setCookie').and.callThrough()
-  const getSpy = spyOn(doc, 'getCookie').and.callThrough()
-  Object.defineProperty(document, 'cookie', {
-    configurable: true,
-    get: () => doc.getCookie(),
-    set: (cookie) => doc.setCookie(cookie),
-  })
   return {
-    stop: () => {
-      delete (document as any).cookie
-    },
-    setSpy,
-    getSpy,
+    getSpy: spyOnProperty(Document.prototype, 'cookie', 'get').and.callFake(() => cookie),
+    setSpy: spyOnProperty(Document.prototype, 'cookie', 'set').and.callFake((newCookie) => {
+      cookie = newCookie
+    }),
   }
 }
