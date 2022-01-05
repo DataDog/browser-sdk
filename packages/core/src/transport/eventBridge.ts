@@ -1,6 +1,6 @@
 import { includes, isExperimentalFeatureEnabled } from '..'
 
-export interface BrowserWindow extends Window {
+export interface BrowserWindowWithEventBridge extends Window {
   DatadogEventBridge?: DatadogEventBridge
 }
 
@@ -33,5 +33,7 @@ export function canUseEventBridge(): boolean {
 }
 
 function getEventBridgeGlobal() {
-  return isExperimentalFeatureEnabled('event-bridge') ? (window as BrowserWindow).DatadogEventBridge : null
+  return isExperimentalFeatureEnabled('event-bridge')
+    ? (window as BrowserWindowWithEventBridge).DatadogEventBridge
+    : null
 }

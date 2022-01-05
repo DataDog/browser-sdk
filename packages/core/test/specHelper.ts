@@ -1,9 +1,9 @@
-import { EndpointBuilder } from '../src/domain/configuration/endpointBuilder'
+import { EndpointBuilder } from '../src/domain/configuration'
 import { instrumentMethod } from '../src/tools/instrumentMethod'
 import { resetNavigationStart } from '../src/tools/timeUtils'
 import { buildUrl } from '../src/tools/urlPolyfill'
 import { noop, objectEntries, assign } from '../src/tools/utils'
-import { BrowserWindow } from '../src/transport/eventBridge'
+import { BrowserWindowWithEventBridge } from '../src/transport'
 
 export function stubEndpointBuilder(url: string) {
   return { build: () => url } as EndpointBuilder
@@ -307,12 +307,12 @@ export function initEventBridgeStub(allowedWebViewHosts: string[] = [window.loca
     send: () => undefined,
     getAllowedWebViewHosts: () => JSON.stringify(allowedWebViewHosts),
   }
-  ;(window as BrowserWindow).DatadogEventBridge = eventBridgeStub
+  ;(window as BrowserWindowWithEventBridge).DatadogEventBridge = eventBridgeStub
   return eventBridgeStub
 }
 
 export function deleteEventBridgeStub() {
-  delete (window as BrowserWindow).DatadogEventBridge
+  delete (window as BrowserWindowWithEventBridge).DatadogEventBridge
 }
 
 /**

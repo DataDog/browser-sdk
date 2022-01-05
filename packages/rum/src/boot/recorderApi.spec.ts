@@ -3,8 +3,7 @@ import { RecorderApi, ParentContexts, LifeCycleEventType, LifeCycle, RumConfigur
 import { createNewEvent, deleteEventBridgeStub, initEventBridgeStub } from '../../../core/test/specHelper'
 import { createRumSessionManagerMock, RumSessionManagerMock } from '../../../rum-core/test/mockRumSessionManager'
 import { setup, TestSetupBuilder } from '../../../rum-core/test/specHelper'
-import { DeflateWorker } from '../domain/segmentCollection/deflateWorker'
-import { startDeflateWorker } from '../domain/segmentCollection/startDeflateWorker'
+import { DeflateWorker, startDeflateWorker } from '../domain/segmentCollection'
 import { makeRecorderApi, StartRecording } from './recorderApi'
 
 describe('makeRecorderApi', () => {

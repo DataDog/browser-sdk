@@ -66,7 +66,7 @@ export function throttle<T extends (...args: any[]) => void>(
   const needTrailingExecution = options && options.trailing !== undefined ? options.trailing : true
   let inWaitPeriod = false
   let pendingExecutionWithParameters: Parameters<T> | undefined
-  let pendingTimeoutId: number
+  let pendingTimeoutId: TimeoutId
 
   return {
     throttled: (...parameters: Parameters<T>) => {
@@ -549,3 +549,5 @@ export function combine(...sources: any[]): unknown {
 
   return destination as unknown
 }
+
+export type TimeoutId = ReturnType<typeof setTimeout>
