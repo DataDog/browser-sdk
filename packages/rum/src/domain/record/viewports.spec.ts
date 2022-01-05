@@ -4,6 +4,10 @@ function isMobileSafari12() {
   return /iPhone OS 12.* like Mac OS.* Version\/12.* Mobile.*Safari/.test(navigator.userAgent)
 }
 
+function getChromeHeadlessCorrection() {
+  return /Macintosh.* HeadlessChrome\//.test(navigator.userAgent) ? 15 : 0
+}
+
 describe('layout viewport', () => {
   beforeEach(() => {
     document.body.style.setProperty('margin-bottom', '2000px')
@@ -18,7 +22,8 @@ describe('layout viewport', () => {
     it('normalized scroll matches native behaviour', () => {
       const initialInnerWidth = getWindowWidth()
       const initialInnerHeight = getWindowHeight()
-      expect(initialInnerWidth).toBe(window.innerWidth)
+      const correction = getChromeHeadlessCorrection()
+      expect(initialInnerWidth).toBe(window.innerWidth - correction)
       expect(initialInnerHeight).toBe(window.innerHeight)
     })
   })

@@ -49,54 +49,56 @@ describe('record', () => {
       styleSheet.insertRule('body { color: #ccc; }')
     }, 10)
 
-    waitEmitCalls(9, () => {
+    waitEmitCalls(10, () => {
       const records = getEmittedRecords()
 
       expect(records[0].type).toEqual(RecordType.Meta)
       expect(records[1].type).toEqual(RecordType.Focus)
       expect(records[2].type).toEqual(RecordType.FullSnapshot)
-      expect(records[3].type).toEqual(RecordType.IncrementalSnapshot)
-      expect((records[3] as IncrementalSnapshotRecord).data).toEqual(
-        jasmine.objectContaining({
-          source: IncrementalSource.StyleSheetRule,
-          adds: [{ rule: 'body { background: #000; }', index: undefined }],
-        })
-      )
+      expect(records[3].type).toEqual(RecordType.VisualViewport)
       expect(records[4].type).toEqual(RecordType.IncrementalSnapshot)
       expect((records[4] as IncrementalSnapshotRecord).data).toEqual(
         jasmine.objectContaining({
           source: IncrementalSource.StyleSheetRule,
-          adds: [{ rule: 'body { background: #111; }', index: undefined }],
+          adds: [{ rule: 'body { background: #000; }', index: undefined }],
         })
       )
       expect(records[5].type).toEqual(RecordType.IncrementalSnapshot)
       expect((records[5] as IncrementalSnapshotRecord).data).toEqual(
         jasmine.objectContaining({
           source: IncrementalSource.StyleSheetRule,
-          removes: [{ index: 0 }],
+          adds: [{ rule: 'body { background: #111; }', index: undefined }],
         })
       )
       expect(records[6].type).toEqual(RecordType.IncrementalSnapshot)
       expect((records[6] as IncrementalSnapshotRecord).data).toEqual(
         jasmine.objectContaining({
           source: IncrementalSource.StyleSheetRule,
-          adds: [{ rule: 'body { color: #fff; }', index: undefined }],
+          removes: [{ index: 0 }],
         })
       )
       expect(records[7].type).toEqual(RecordType.IncrementalSnapshot)
       expect((records[7] as IncrementalSnapshotRecord).data).toEqual(
         jasmine.objectContaining({
           source: IncrementalSource.StyleSheetRule,
-          removes: [{ index: 0 }],
+          adds: [{ rule: 'body { color: #fff; }', index: undefined }],
         })
       )
       expect(records[8].type).toEqual(RecordType.IncrementalSnapshot)
       expect((records[8] as IncrementalSnapshotRecord).data).toEqual(
         jasmine.objectContaining({
           source: IncrementalSource.StyleSheetRule,
+          removes: [{ index: 0 }],
+        })
+      )
+      expect(records[9].type).toEqual(RecordType.IncrementalSnapshot)
+      expect((records[9] as IncrementalSnapshotRecord).data).toEqual(
+        jasmine.objectContaining({
+          source: IncrementalSource.StyleSheetRule,
           adds: [{ rule: 'body { color: #ccc; }', index: undefined }],
         })
       )
+      expect(records[10].type).toEqual(RecordType.VisualViewport)
 
       expectNoExtraEmitCalls(done)
     })
@@ -109,17 +111,19 @@ describe('record', () => {
 
     recordApi.takeFullSnapshot()
 
-    waitEmitCalls(7, () => {
+    waitEmitCalls(9, () => {
       const records = getEmittedRecords()
 
       expect(records[0].type).toEqual(RecordType.Meta)
       expect(records[1].type).toEqual(RecordType.Focus)
       expect(records[2].type).toEqual(RecordType.FullSnapshot)
-      expect(records[3].type).toEqual(RecordType.IncrementalSnapshot)
-      expect((records[3] as IncrementalSnapshotRecord).data.source).toEqual(IncrementalSource.Mutation)
-      expect(records[4].type).toEqual(RecordType.Meta)
-      expect(records[5].type).toEqual(RecordType.Focus)
-      expect(records[6].type).toEqual(RecordType.FullSnapshot)
+      expect(records[3].type).toEqual(RecordType.VisualViewport)
+      expect(records[4].type).toEqual(RecordType.IncrementalSnapshot)
+      expect((records[4] as IncrementalSnapshotRecord).data.source).toEqual(IncrementalSource.Mutation)
+      expect(records[5].type).toEqual(RecordType.Meta)
+      expect(records[6].type).toEqual(RecordType.Focus)
+      expect(records[7].type).toEqual(RecordType.FullSnapshot)
+      expect(records[8].type).toEqual(RecordType.VisualViewport)
 
       expectNoExtraEmitCalls(done)
     })

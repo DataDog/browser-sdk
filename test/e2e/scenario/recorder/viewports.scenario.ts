@@ -24,7 +24,7 @@ describe('recorder', () => {
 
   describe('layout viewport properties', () => {
     createTest('getWindowWidth/Height should not be affected by pinch zoom')
-      .withRum({ enableExperimentalFeatures: ['visualviewport'] })
+      .withRum()
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
@@ -55,7 +55,7 @@ describe('recorder', () => {
      * We need to ensure that our measurements are not affected by pinch zoom
      */
     createTest('getScrollX/Y should not be affected by pinch scroll')
-      .withRum({ enableExperimentalFeatures: ['visualviewport'] })
+      .withRum()
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
@@ -97,7 +97,7 @@ describe('recorder', () => {
 
   describe('visual viewport properties', () => {
     createTest('pinch zoom "scroll" event reports visual viewport position')
-      .withRum({ enableExperimentalFeatures: ['visualviewport'] })
+      .withRum()
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
@@ -112,7 +112,7 @@ describe('recorder', () => {
       })
 
     createTest('pinch zoom "resize" event reports visual viewport scale')
-      .withRum({ enableExperimentalFeatures: ['visualviewport'] })
+      .withRum()
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
@@ -130,8 +130,8 @@ function getLastSegment(serverEvents: EventRegistry) {
 }
 
 function initRumAndStartRecording(initConfiguration: RumInitConfiguration) {
-  window.DD_RUM!.init(initConfiguration)
-  window.DD_RUM!.startSessionReplayRecording()
+  window.DD_RUM.init(initConfiguration)
+  window.DD_RUM.startSessionReplayRecording()
 }
 
 const isGestureUnsupported = () => {

@@ -83,7 +83,7 @@ describe('startRecording', () => {
         creation_reason: 'init',
         end: jasmine.stringMatching(/^\d{13}$/),
         has_full_snapshot: 'true',
-        records_count: '3',
+        records_count: '4',
         segment: jasmine.any(File),
         'session.id': 'session-id',
         start: jasmine.stringMatching(/^\d{13}$/),
@@ -106,7 +106,7 @@ describe('startRecording', () => {
     }
 
     waitRequestSendCalls(1, (calls) => {
-      expect(getRequestData(calls.first()).records_count).toBe(String(inputCount + 3))
+      expect(getRequestData(calls.first()).records_count).toBe(String(inputCount + 4))
       expectNoExtraRequestSendCalls(done)
     })
   })
@@ -123,7 +123,7 @@ describe('startRecording', () => {
     flushSegment(lifeCycle)
 
     waitRequestSendCalls(1, (calls) => {
-      expect(getRequestData(calls.first()).records_count).toBe('4')
+      expect(getRequestData(calls.first()).records_count).toBe('5')
       expectNoExtraRequestSendCalls(done)
     })
   })
@@ -220,7 +220,7 @@ describe('startRecording', () => {
       flushSegment(lifeCycle)
 
       waitRequestSendCalls(1, (calls) => {
-        expect(getRequestData(calls.first()).records_count).toBe('4')
+        expect(getRequestData(calls.first()).records_count).toBe('5')
         expectNoExtraRequestSendCalls(done)
       })
     })
@@ -233,7 +233,7 @@ describe('startRecording', () => {
       flushSegment(lifeCycle)
 
       waitRequestSendCalls(1, (calls) => {
-        expect(getRequestData(calls.first()).records_count).toBe('3')
+        expect(getRequestData(calls.first()).records_count).toBe('4')
         expectNoExtraRequestSendCalls(done)
       })
     })

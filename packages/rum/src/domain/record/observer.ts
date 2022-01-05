@@ -7,7 +7,6 @@ import {
   addEventListener,
   includes,
   DefaultPrivacyLevel,
-  isExperimentalFeatureEnabled,
   noop,
 } from '@datadog/browser-core'
 import { NodePrivacyLevel } from '../../constants'
@@ -60,10 +59,7 @@ export function initObservers(o: ObserverParam): ListenerHandler {
   const mediaInteractionHandler = initMediaInteractionObserver(o.mediaInteractionCb, o.defaultPrivacyLevel)
   const styleSheetObserver = initStyleSheetObserver(o.styleSheetRuleCb)
   const focusHandler = initFocusObserver(o.focusCb)
-
-  const visualViewportResizeHandler = isExperimentalFeatureEnabled('visualviewport')
-    ? initVisualViewportResizeObserver(o.visualViewportResizeCb)
-    : noop
+  const visualViewportResizeHandler = initVisualViewportResizeObserver(o.visualViewportResizeCb)
 
   return () => {
     mutationHandler()
@@ -99,7 +95,7 @@ function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {
           x: clientX,
           y: clientY,
         }
-        if (isExperimentalFeatureEnabled('visualviewport') && window.visualViewport) {
+        if (window.visualViewport) {
           const { visualViewportX, visualViewportY } = convertMouseEventToLayoutCoordinates(clientX, clientY)
           position.x = visualViewportX
           position.y = visualViewportY
@@ -146,7 +142,7 @@ function initMouseInteractionObserver(
       x: clientX,
       y: clientY,
     }
-    if (isExperimentalFeatureEnabled('visualviewport') && window.visualViewport) {
+    if (window.visualViewport) {
       const { visualViewportX, visualViewportY } = convertMouseEventToLayoutCoordinates(clientX, clientY)
       position.x = visualViewportX
       position.y = visualViewportY
@@ -172,7 +168,7 @@ function initScrollObserver(cb: ScrollCallback, defaultPrivacyLevel: DefaultPriv
       }
       const id = getSerializedNodeId(target)
       if (target === document) {
-        if (isExperimentalFeatureEnabled('visualviewport')) {
+        if (window.visualViewport) {
           cb({
             id,
             x: getScrollX(),
