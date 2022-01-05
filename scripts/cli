@@ -72,7 +72,7 @@ cmd_check_typescript_compatibility () {
   yarn build
   cd test/app
   rm -rf node_modules
-  check_typescript_3_compatibility || fail 'typescript@3.0 compatibility broken'
+  check_typescript_3_compatibility || fail 'typescript@3.8.2 compatibility broken'
   check_typescript_latest_compatibility || fail 'typescript@latest compatibility broken'
 }
 

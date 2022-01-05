@@ -98,7 +98,7 @@ To receive all logs and errors, load and configure the SDK at the beginning of t
 
 ### TypeScript
 
-Types are compatible with TypeScript >= 3.0. For earlier versions, import JS sources and use global variables to avoid any compilation issues:
+Types are compatible with TypeScript >= 3.8.2. For earlier versions, import JS sources and use global variables to avoid any compilation issues:
 
 ```typescript
 import '@datadog/browser-logs/bundle/datadog-logs'

@@ -34,7 +34,7 @@ module.exports = {
   ],
   rules: {
     'arrow-body-style': 'error',
-    camelcase: ['error', { properties: 'never', allow: ['_datadog_xhr', '_dd_temp_'] }],
+    camelcase: ['error', { properties: 'never', allow: ['_dd_temp_'] }],
     eqeqeq: ['error', 'smart'],
     'guard-for-in': 'error',
     'id-denylist': [

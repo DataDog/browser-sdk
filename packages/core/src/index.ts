@@ -3,7 +3,6 @@ export {
   InitConfiguration,
   buildCookieOptions,
   validateAndBuildConfiguration,
-  BeforeSendCallback,
   DefaultPrivacyLevel,
   EndpointBuilder,
   isExperimentalFeatureEnabled,
