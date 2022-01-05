@@ -41,7 +41,7 @@ function getLoggedMessage(server: sinon.SinonFakeServer, index: number) {
 const FAKE_DATE = 123456
 const SESSION_ID = 'session-id'
 const baseConfiguration: LogsConfiguration = {
-  ...validateAndBuildLogsConfiguration({ clientToken: 'xxx', service: 'Service' })!,
+  ...validateAndBuildLogsConfiguration({ clientToken: 'xxx', service: 'service' })!,
   logsEndpointBuilder: stubEndpointBuilder('https://localhost/v1/input/log'),
   maxBatchSize: 1,
 }
@@ -103,7 +103,7 @@ describe('logs', () => {
         date: FAKE_DATE as TimeStamp,
         foo: 'bar',
         message: 'message',
-        service: 'Service',
+        service: 'service',
         session_id: SESSION_ID,
         status: StatusType.warn,
         view: {
@@ -232,7 +232,7 @@ describe('logs', () => {
       expect(assembledMessage).toEqual({
         foo: 'from-current-context',
         message: DEFAULT_MESSAGE.message,
-        service: 'Service',
+        service: 'service',
         session_id: SESSION_ID,
         status: DEFAULT_MESSAGE.status,
         view: { url: 'http://from-rum-context.com', id: 'view-id' },

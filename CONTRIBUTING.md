@@ -26,6 +26,12 @@ pull request:
 Our CI is not (yet) public, so it may be difficult to understand why your pull request status is
 failing. Make sure that all tests pass locally, and we'll try to sort it out in our CI.
 
+## Modules usage convention
+
+Use index.ts files to expose a single, minimal API in directories where modules are used together.
+Do not use index.ts when a directory contains independent modules.
+An index.ts file should not have exports only used for spec files.
+
 ## Commit messages and Pull Request titles
 
 Messages should be concise but explanatory. We are using a convention inspired by [gitmoji][2], to

@@ -10,6 +10,7 @@ module.exports = {
     'plugin:import/typescript',
     'prettier',
     'prettier/@typescript-eslint',
+    'plugin:import/typescript',
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
@@ -33,7 +34,7 @@ module.exports = {
   ],
   rules: {
     'arrow-body-style': 'error',
-    camelcase: ['error', { properties: 'never', allow: ['_datadog_xhr', '_dd_temp_'] }],
+    camelcase: ['error', { properties: 'never', allow: ['_dd_temp_'] }],
     eqeqeq: ['error', 'smart'],
     'guard-for-in': 'error',
     'id-denylist': [
@@ -166,6 +167,16 @@ module.exports = {
     'jsdoc/check-alignment': 'error',
     'jsdoc/check-indentation': 'error',
 
+    'local-rules/disallow-protected-directory-import': [
+      'error',
+      {
+        ignore: [
+          // ignore packages index files so `[...]/test/*` can import from the `[...]/src/*`
+          'packages/*/src/index.ts',
+        ],
+      },
+    ],
+
     'unicorn/filename-case': ['error', { case: 'camelCase' }],
   },
   overrides: [
@@ -187,6 +198,7 @@ module.exports = {
       rules: {
         '@typescript-eslint/no-unsafe-call': 'off',
         '@typescript-eslint/no-unsafe-return': 'off',
+        '@typescript-eslint/restrict-plus-operands': 'off',
         '@typescript-eslint/restrict-template-expressions': 'off',
       },
     },

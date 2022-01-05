@@ -5,7 +5,6 @@ import {
   getRelativeTime,
   isNumber,
   monitor,
-  Omit,
   relativeNow,
   RelativeTime,
   runOnReadyState,
