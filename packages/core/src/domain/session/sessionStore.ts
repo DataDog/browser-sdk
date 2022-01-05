@@ -39,7 +39,7 @@ export function startSessionStore<TrackingType extends string>(
   const renewObservable = new Observable<void>()
   const expireObservable = new Observable<void>()
 
-  const cookieWatch = setInterval(monitor(watchSession), COOKIE_ACCESS_DELAY)
+  const watchSessionTimeoutId = setInterval(monitor(watchSession), COOKIE_ACCESS_DELAY)
   let sessionCache: SessionState = retrieveActiveSession()
 
   function expandOrRenewSession() {
@@ -164,7 +164,7 @@ export function startSessionStore<TrackingType extends string>(
     renewObservable,
     expireObservable,
     stop: () => {
-      clearInterval(cookieWatch)
+      clearInterval(watchSessionTimeoutId)
     },
   }
 }

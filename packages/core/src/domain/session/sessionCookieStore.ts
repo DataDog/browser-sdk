@@ -20,13 +20,13 @@ type Operations = {
 }
 
 const bufferedOperations: Operations[] = []
-let onGoingOperations: Operations | undefined
+let ongoingOperations: Operations | undefined
 
 export function withCookieLockAccess(operations: Operations, numberOfRetries = 0) {
-  if (!onGoingOperations) {
-    onGoingOperations = operations
+  if (!ongoingOperations) {
+    ongoingOperations = operations
   }
-  if (operations !== onGoingOperations) {
+  if (operations !== ongoingOperations) {
     bufferedOperations.push(operations)
     return
   }
@@ -93,9 +93,9 @@ function postpone(operations: Operations, currentNumberOfRetries: number) {
 }
 
 function next() {
-  onGoingOperations = bufferedOperations.shift()
-  if (onGoingOperations) {
-    withCookieLockAccess(onGoingOperations)
+  ongoingOperations = bufferedOperations.shift()
+  if (ongoingOperations) {
+    withCookieLockAccess(ongoingOperations)
   }
 }
 
