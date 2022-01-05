@@ -1,13 +1,11 @@
-const DEFAULT_LIMIT = 10_000
+const BUFFER_LIMIT = 500
 
 export class BoundedBuffer {
   private buffer: Array<() => void> = []
 
-  constructor(private limit: number = DEFAULT_LIMIT) {}
-
   add(callback: () => void) {
     const length = this.buffer.push(callback)
-    if (length > this.limit) {
+    if (length > BUFFER_LIMIT) {
       this.buffer.splice(0, 1)
     }
   }

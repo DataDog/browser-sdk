@@ -15,15 +15,16 @@ describe('BoundedBuffer', () => {
     expect(spy.calls.count()).toBe(1)
   })
 
-  it('store only the N last callbacks', () => {
+  it('store at most 500 callbacks', () => {
     const spy = jasmine.createSpy<() => void>()
-    const buffered = new BoundedBuffer(5)
+    const buffered = new BoundedBuffer()
+    const limit = 500
 
-    for (let i = 0; i < 10; i += 1) {
+    for (let i = 0; i < limit + 1; i += 1) {
       buffered.add(spy)
     }
 
     buffered.drain()
-    expect(spy.calls.count()).toEqual(5)
+    expect(spy.calls.count()).toEqual(limit)
   })
 })
