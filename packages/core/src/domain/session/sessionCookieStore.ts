@@ -1,7 +1,7 @@
 import { CookieOptions, getCookie, setCookie } from '../../browser/cookie'
 import * as utils from '../../tools/utils'
-import { isExperimentalFeatureEnabled } from '../configuration/experimentalFeatures'
-import { monitor, addMonitoringMessage } from '../internalMonitoring/internalMonitoring'
+import { isExperimentalFeatureEnabled } from '../configuration'
+import { monitor, addMonitoringMessage } from '../internalMonitoring'
 import { SessionState, SESSION_EXPIRATION_DELAY } from './sessionStore'
 
 const SESSION_ENTRY_REGEXP = /^([a-z]+)=([a-z0-9-]+)$/
