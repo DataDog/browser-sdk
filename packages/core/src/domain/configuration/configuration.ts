@@ -39,6 +39,7 @@ export interface InitConfiguration {
   internalMonitoringApiKey?: string | undefined
   // only on staging build mode
   replica?: ReplicaUserConfiguration | undefined
+  datacenter?: string
 }
 
 // This type is only used to build the core configuration. Logs and RUM SDKs are using a proper type

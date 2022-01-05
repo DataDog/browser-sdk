@@ -82,7 +82,7 @@ function computeReplicaConfiguration(
   intakeEndpoints: string[],
   tags: string[]
 ): ReplicaConfiguration | undefined {
-  if (buildEnv.buildMode !== BuildMode.STAGING || initConfiguration.replica === undefined) {
+  if (buildEnv.buildMode !== BuildMode.STAGING || !initConfiguration.replica) {
     return
   }
 
