@@ -69,7 +69,15 @@ This might slightly change automatic action names shown in the Datadog App.
 
 ### Changes
 
-// TODO
+- 💥 improve privacy computation on a single node ([#1226](https://github.com/DataDog/browser-sdk/pull/1226))
+- 💥 [RUMF-1098] move init options into their related interfaces ([#1232](https://github.com/DataDog/browser-sdk/pull/1232))
+- 💥 [RUMF-1093] deprecated proxyhost option ([#1227](https://github.com/DataDog/browser-sdk/pull/1227))
+- 💥 [RUMF-1124] Use the programmatic action attribute instead of innertext ([#1200](https://github.com/DataDog/browser-sdk/pull/1200))
+- 💥 [RUMF-1094] remove deprecated privacy attributes ([#1224](https://github.com/DataDog/browser-sdk/pull/1224))
+- 💥 [RUMF-1092] use a WeakMap to store XHR context ([#1222](https://github.com/DataDog/browser-sdk/pull/1222))
+- 💥 [RUMF-1090] update minimal version to 3.8.2 ([#1219](https://github.com/DataDog/browser-sdk/pull/1219))
+- 💥 [RUMF-827] sanitize tags ([#1218](https://github.com/DataDog/browser-sdk/pull/1218))
+- 💥 [RUMF-1089] Cleanup legacy intake URLs ([#1214](https://github.com/DataDog/browser-sdk/pull/1214))
 
 ## v3.11.0
 
