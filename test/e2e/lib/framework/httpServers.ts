@@ -110,7 +110,7 @@ function createIdleWaiter() {
   let idlePromise = Promise.resolve()
 
   const pendingActivities = new Set<Promise<void>>()
-  let waitTimeoutId: ReturnType<typeof setTimeout>
+  let waitTimeoutId: NodeJS.Timeout
   let resolveIdlePromise: undefined | (() => void)
 
   return {

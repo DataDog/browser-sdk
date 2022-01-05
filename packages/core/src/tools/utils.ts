@@ -66,7 +66,7 @@ export function throttle<T extends (...args: any[]) => void>(
   const needTrailingExecution = options && options.trailing !== undefined ? options.trailing : true
   let inWaitPeriod = false
   let pendingExecutionWithParameters: Parameters<T> | undefined
-  let pendingTimeoutId: number
+  let pendingTimeoutId: TimeoutId
 
   return {
     throttled: (...parameters: Parameters<T>) => {
@@ -550,10 +550,4 @@ export function combine(...sources: any[]): unknown {
   return destination as unknown
 }
 
-// Define those utilities for TS 3.0 compatibility
-// https://www.typescriptlang.org/docs/handbook/utility-types.html#thisparametertypetype
-export type ThisParameterType<T> = T extends (this: infer U, ...args: any[]) => any ? U : unknown
-// https://www.typescriptlang.org/docs/handbook/utility-types.html#parameterstype
-export type Parameters<T extends (...args: any[]) => any> = T extends (...args: infer P) => any ? P : never
-// https://www.typescriptlang.org/docs/handbook/utility-types.html#omittype-keys
-export type Omit<T, K extends keyof any> = Pick<T, Exclude<keyof T, K>>
+export type TimeoutId = ReturnType<typeof setTimeout>

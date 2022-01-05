@@ -3,8 +3,8 @@ import { buildEnv } from '../boot/buildEnv'
 import { LogsEvent } from '../logsEvent.types'
 
 export interface LogsInitConfiguration extends InitConfiguration {
-  forwardErrorsToLogs?: boolean | undefined
   beforeSend?: ((event: LogsEvent) => void | boolean) | undefined
+  forwardErrorsToLogs?: boolean | undefined
 }
 
 export type HybridInitConfiguration = Omit<LogsInitConfiguration, 'clientToken'>

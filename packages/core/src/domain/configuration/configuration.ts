@@ -14,43 +14,36 @@ export const DefaultPrivacyLevel = {
 export type DefaultPrivacyLevel = typeof DefaultPrivacyLevel[keyof typeof DefaultPrivacyLevel]
 
 export interface InitConfiguration {
+  // global options
   clientToken: string
-  applicationId?: string | undefined
-  actionNameAttribute?: string | undefined
-  internalMonitoringApiKey?: string | undefined
-  allowedTracingOrigins?: Array<string | RegExp> | undefined
+  beforeSend?: GenericBeforeSendCallback | undefined
   sampleRate?: number | undefined
-  replaySampleRate?: number | undefined
-  site?: string | undefined
-  enableExperimentalFeatures?: string[] | undefined
   silentMultipleInit?: boolean | undefined
-  trackInteractions?: boolean | undefined
-  trackViewsManually?: boolean | undefined
 
-  /**
-   * @deprecated Favor proxyUrl option
-   */
-  proxyHost?: string | undefined
+  // transport options
   proxyUrl?: string | undefined
-  beforeSend?: BeforeSendCallback | undefined
-  defaultPrivacyLevel?: DefaultPrivacyLevel | undefined
+  site?: string | undefined
 
+  // tag and context options
   service?: string | undefined
   env?: string | undefined
   version?: string | undefined
 
-  useAlternateIntakeDomains?: boolean | undefined
-  intakeApiVersion?: 1 | 2 | undefined
-
+  // cookie options
   useCrossSiteSessionCookie?: boolean | undefined
   useSecureSessionCookie?: boolean | undefined
   trackSessionAcrossSubdomains?: boolean | undefined
 
+  // internal options
+  enableExperimentalFeatures?: string[] | undefined
+  internalMonitoringApiKey?: string | undefined
   // only on staging build mode
   replica?: ReplicaUserConfiguration | undefined
 }
 
-export type BeforeSendCallback = (event: any, context?: any) => unknown
+// This type is only used to build the core configuration. Logs and RUM SDKs are using a proper type
+// for this option.
+type GenericBeforeSendCallback = (event: any, context?: any) => unknown
 
 interface ReplicaUserConfiguration {
   applicationId?: string
@@ -59,7 +52,7 @@ interface ReplicaUserConfiguration {
 
 export interface Configuration extends TransportConfiguration {
   // Built from init configuration
-  beforeSend: BeforeSendCallback | undefined
+  beforeSend: GenericBeforeSendCallback | undefined
   cookieOptions: CookieOptions
   sampleRate: number
   service: string | undefined

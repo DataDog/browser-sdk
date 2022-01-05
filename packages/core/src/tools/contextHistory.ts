@@ -1,5 +1,5 @@
 import { relativeNow, RelativeTime } from './timeUtils'
-import { ONE_MINUTE } from './utils'
+import { ONE_MINUTE, TimeoutId } from './utils'
 
 interface PreviousContext<T> {
   startTime: RelativeTime
@@ -13,7 +13,7 @@ export class ContextHistory<Context> {
   private current: Context | undefined
   private currentStart: RelativeTime | undefined
   private previousContexts: Array<PreviousContext<Context>> = []
-  private clearOldContextsInterval: number
+  private clearOldContextsInterval: TimeoutId
 
   constructor(private expireDelay: number) {
     this.clearOldContextsInterval = setInterval(() => this.clearOldContexts(), CLEAR_OLD_CONTEXTS_INTERVAL)

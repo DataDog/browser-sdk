@@ -16,8 +16,8 @@ export function getActionNameFromElement(element: Element, userProgrammaticAttri
   return (
     getActionNameFromElementProgrammatically(element, DEFAULT_PROGRAMMATIC_ATTRIBUTE) ||
     (userProgrammaticAttribute && getActionNameFromElementProgrammatically(element, userProgrammaticAttribute)) ||
-    getActionNameFromElementForStrategies(element, priorityStrategies) ||
-    getActionNameFromElementForStrategies(element, fallbackStrategies) ||
+    getActionNameFromElementForStrategies(element, userProgrammaticAttribute, priorityStrategies) ||
+    getActionNameFromElementForStrategies(element, userProgrammaticAttribute, fallbackStrategies) ||
     ''
   )
 }
@@ -48,21 +48,24 @@ function getActionNameFromElementProgrammatically(targetElement: Element, progra
   return truncate(normalizeWhitespace(name.trim()))
 }
 
-type NameStrategy = (element: Element | HTMLElement | HTMLInputElement | HTMLSelectElement) => string | undefined | null
+type NameStrategy = (
+  element: Element | HTMLElement | HTMLInputElement | HTMLSelectElement,
+  userProgrammaticAttribute: string | undefined
+) => string | undefined | null
 
 const priorityStrategies: NameStrategy[] = [
   // associated LABEL text
-  (element) => {
+  (element, userProgrammaticAttribute) => {
     // IE does not support element.labels, so we fallback to a CSS selector based on the element id
     // instead
     if (supportsLabelProperty()) {
       if ('labels' in element && element.labels && element.labels.length > 0) {
-        return getTextualContent(element.labels[0])
+        return getTextualContent(element.labels[0], userProgrammaticAttribute)
       }
     } else if (element.id) {
       const label =
         element.ownerDocument && element.ownerDocument.querySelector(`label[for="${element.id.replace('"', '\\"')}"]`)
-      return label && getTextualContent(label)
+      return label && getTextualContent(label, userProgrammaticAttribute)
     }
   },
   // INPUT button (and associated) value
@@ -76,21 +79,21 @@ const priorityStrategies: NameStrategy[] = [
     }
   },
   // BUTTON, LABEL or button-like element text
-  (element) => {
+  (element, userProgrammaticAttribute) => {
     if (element.nodeName === 'BUTTON' || element.nodeName === 'LABEL' || element.getAttribute('role') === 'button') {
-      return getTextualContent(element)
+      return getTextualContent(element, userProgrammaticAttribute)
     }
   },
   (element) => element.getAttribute('aria-label'),
   // associated element text designated by the aria-labelledby attribute
-  (element) => {
+  (element, userProgrammaticAttribute) => {
     const labelledByAttribute = element.getAttribute('aria-labelledby')
     if (labelledByAttribute) {
       return labelledByAttribute
         .split(/\s+/)
         .map((id) => getElementById(element, id))
         .filter((label): label is HTMLElement => Boolean(label))
-        .map(getTextualContent)
+        .map((element) => getTextualContent(element, userProgrammaticAttribute))
         .join(' ')
     }
   },
@@ -99,21 +102,27 @@ const priorityStrategies: NameStrategy[] = [
   (element) => element.getAttribute('title'),
   (element) => element.getAttribute('placeholder'),
   // SELECT first OPTION text
-  (element) => {
+  (element, userProgrammaticAttribute) => {
     if ('options' in element && element.options.length > 0) {
-      return getTextualContent(element.options[0])
+      return getTextualContent(element.options[0], userProgrammaticAttribute)
     }
   },
 ]
 
-const fallbackStrategies: NameStrategy[] = [(element) => getTextualContent(element)]
+const fallbackStrategies: NameStrategy[] = [
+  (element, userProgrammaticAttribute) => getTextualContent(element, userProgrammaticAttribute),
+]
 
 /**
  * Iterates over the target element and its parent, using the strategies list to get an action name.
  * Each strategies are applied on each element, stopping as soon as a non-empty value is returned.
  */
 const MAX_PARENTS_TO_CONSIDER = 10
-function getActionNameFromElementForStrategies(targetElement: Element, strategies: NameStrategy[]) {
+function getActionNameFromElementForStrategies(
+  targetElement: Element,
+  userProgrammaticAttribute: string | undefined,
+  strategies: NameStrategy[]
+) {
   let element: Element | null = targetElement
   let recursionCounter = 0
   while (
@@ -124,7 +133,7 @@ function getActionNameFromElementForStrategies(targetElement: Element, strategie
     element.nodeName !== 'HEAD'
   ) {
     for (const strategy of strategies) {
-      const name = strategy(element)
+      const name = strategy(element, userProgrammaticAttribute)
       if (typeof name === 'string') {
         const trimmedName = name.trim()
         if (trimmedName) {
@@ -156,25 +165,46 @@ function getElementById(refElement: Element, id: string) {
   return refElement.ownerDocument ? refElement.ownerDocument.getElementById(id) : null
 }
 
-function getTextualContent(element: Element | HTMLElement) {
+function getTextualContent(element: Element | HTMLElement, userProgrammaticAttribute: string | undefined) {
   if ((element as HTMLElement).isContentEditable) {
     return
   }
 
   if ('innerText' in element) {
     let text = element.innerText
-    if (!supportsInnerTextScriptAndStyleRemoval()) {
-      // remove the inner text of SCRIPT and STYLES from the result. This is a bit dirty, but should
-      // be relatively fast and work in most cases.
-      const elementsTextToRemove: NodeListOf<HTMLElement> = element.querySelectorAll('script, style')
-      // eslint-disable-next-line @typescript-eslint/prefer-for-of
-      for (let i = 0; i < elementsTextToRemove.length; i += 1) {
-        const innerText = elementsTextToRemove[i].innerText
-        if (innerText.trim().length > 0) {
-          text = text.replace(innerText, '')
+
+    const replaceTextFromElements = (query: string, replacer: (element: Element) => string) => {
+      const list = element.querySelectorAll<Element | HTMLElement>(query)
+      for (let index = 0; index < list.length; index += 1) {
+        const element = list[index]
+        if ('innerText' in element) {
+          const textToReplace = element.innerText
+          if (textToReplace && textToReplace.trim().length > 0) {
+            text = text.replace(textToReplace, replacer(element))
+          }
         }
       }
     }
+
+    if (!supportsInnerTextScriptAndStyleRemoval()) {
+      // remove the inner text of SCRIPT and STYLES from the result. This is a bit dirty, but should
+      // be relatively fast and work in most cases.
+      replaceTextFromElements('script, style', () => '')
+    }
+
+    // replace the text of elements with their programmatic attribute value
+    replaceTextFromElements(
+      `[${DEFAULT_PROGRAMMATIC_ATTRIBUTE}]`,
+      (element) => element.getAttribute(DEFAULT_PROGRAMMATIC_ATTRIBUTE)!
+    )
+
+    if (userProgrammaticAttribute) {
+      replaceTextFromElements(
+        `[${userProgrammaticAttribute}]`,
+        (element) => element.getAttribute(userProgrammaticAttribute)!
+      )
+    }
+
     return text
   }
 

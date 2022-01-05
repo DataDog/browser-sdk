@@ -1,4 +1,4 @@
-import { Duration, elapsed, monitor, Observable, Subscription, timeStampNow } from '@datadog/browser-core'
+import { Duration, elapsed, monitor, Observable, Subscription, TimeoutId, timeStampNow } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
 // Delay to wait for a page activity to validate the tracking process
@@ -57,7 +57,7 @@ export function doWaitIdlePage(
   idlePageCallback: (event: IdlePageEvent) => void,
   maxDuration?: number
 ) {
-  let idleTimeoutId: number
+  let idleTimeoutId: TimeoutId
   let hasCompleted = false
   const startTime = timeStampNow()
 

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import sinon from 'sinon'
 import { stubEndpointBuilder } from '../../test/specHelper'
-import { createEndpointBuilder, EndpointBuilder } from '../domain/configuration/endpointBuilder'
+import { createEndpointBuilder, EndpointBuilder } from '../domain/configuration'
 import { BuildEnv } from '..'
 import { HttpRequest } from './httpRequest'
 
@@ -79,7 +79,7 @@ describe('httpRequest intake parameters', () => {
 
   beforeEach(() => {
     server = sinon.fakeServer.create()
-    endpointBuilder = createEndpointBuilder({ clientToken, intakeApiVersion: 2 }, buildEnv, 'logs')
+    endpointBuilder = createEndpointBuilder({ clientToken }, buildEnv, 'logs', [])
     request = new HttpRequest(endpointBuilder, BATCH_BYTES_LIMIT)
   })
 

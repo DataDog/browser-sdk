@@ -4,7 +4,7 @@ import { flushEvents } from '../../lib/helpers/flushEvents'
 
 describe('tracing', () => {
   createTest('trace xhr')
-    .withRum({ service: 'Service', allowedTracingOrigins: ['LOCATION_ORIGIN'] })
+    .withRum({ service: 'service', allowedTracingOrigins: ['LOCATION_ORIGIN'] })
     .run(async ({ serverEvents }) => {
       const rawHeaders = await sendXhr(`/headers`, [
         ['x-foo', 'bar'],
@@ -16,7 +16,7 @@ describe('tracing', () => {
     })
 
   createTest('trace fetch')
-    .withRum({ service: 'Service', allowedTracingOrigins: ['LOCATION_ORIGIN'] })
+    .withRum({ service: 'service', allowedTracingOrigins: ['LOCATION_ORIGIN'] })
     .run(async ({ serverEvents }) => {
       const rawHeaders = await browserExecuteAsync<string | Error>((done) => {
         window
@@ -39,7 +39,7 @@ describe('tracing', () => {
     })
 
   createTest('trace fetch with Request argument')
-    .withRum({ service: 'Service', allowedTracingOrigins: ['LOCATION_ORIGIN'] })
+    .withRum({ service: 'service', allowedTracingOrigins: ['LOCATION_ORIGIN'] })
     .run(async ({ serverEvents }) => {
       const rawHeaders = await browserExecuteAsync<string | Error>((done) => {
         window
