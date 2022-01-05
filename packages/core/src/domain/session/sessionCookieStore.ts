@@ -79,6 +79,8 @@ export function withCookieLockAccess(operations: Operations, numberOfRetries = 0
       processedSession = currentSession
     }
   }
+  // call after even if session is not persisted in order to perform operations on
+  // up to date cookie value, the value could have been modified by another tab
   operations.after?.(processedSession || currentSession)
   next()
 }

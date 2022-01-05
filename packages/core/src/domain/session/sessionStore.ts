@@ -67,6 +67,11 @@ export function startSessionStore<TrackingType extends string>(
     })
   }
 
+  /**
+   * allows two behaviors:
+   * - if the session is active, synchronize the session cache without updating the session cookie
+   * - if the session is not active, clear the session cookie and expire the session cache
+   */
   function watchSession() {
     withCookieLockAccess({
       options,
