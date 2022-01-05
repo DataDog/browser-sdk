@@ -15,8 +15,6 @@ import {
 
 export const MAX_ATTRIBUTE_VALUE_CHAR_LENGTH = 100_000
 
-import { makeStylesheetUrlsAbsolute } from './serializationUtils'
-
 import { shouldIgnoreElement } from './serialize'
 
 const TEXT_MASKING_CHAR = 'x'
@@ -197,7 +195,6 @@ export function getTextContent(
   } else if (shouldMaskNode(textNode, nodePrivacyLevel)) {
     if (isStyle) {
       // Style tags are `overruled` (Use `hide` to enforce privacy)
-      textContent = makeStylesheetUrlsAbsolute(textContent, location.href)
     } else if (
       // Scrambling the child list breaks text nodes for DATALIST/SELECT/OPTGROUP
       parentTagName === 'DATALIST' ||
