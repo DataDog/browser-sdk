@@ -38,28 +38,28 @@ export function withCookieLockAccess(operations: Operations, numberOfRetries = 0
   let currentLock: string
   let currentSession = retrieveSession()
   if (isExperimentalFeatureEnabled('cookie-lock')) {
-    // if someone has lock, postpone
+    // if someone has lock, retry later
     if (currentSession.lock) {
-      postpone(operations, numberOfRetries)
+      retryLater(operations, numberOfRetries)
       return
     }
     // acquire lock
     currentLock = utils.generateUUID()
     currentSession.lock = currentLock
     setSession(currentSession, operations.options)
-    // if lock is not acquired, postpone
+    // if lock is not acquired, retry later
     currentSession = retrieveSession()
     if (currentSession.lock !== currentLock) {
-      postpone(operations, numberOfRetries)
+      retryLater(operations, numberOfRetries)
       return
     }
   }
   let processedSession = operations.process(currentSession)
   if (isExperimentalFeatureEnabled('cookie-lock')) {
-    // if lock corrupted after process, postpone
+    // if lock corrupted after process, retry later
     currentSession = retrieveSession()
     if (currentSession.lock !== currentLock!) {
-      postpone(operations, numberOfRetries)
+      retryLater(operations, numberOfRetries)
       return
     }
   }
@@ -68,10 +68,10 @@ export function withCookieLockAccess(operations: Operations, numberOfRetries = 0
   }
   if (isExperimentalFeatureEnabled('cookie-lock')) {
     if (!processedSession || !utils.isEmptyObject(processedSession)) {
-      // if lock corrupted after persist, postpone
+      // if lock corrupted after persist, retry later
       currentSession = retrieveSession()
       if (currentSession.lock !== currentLock!) {
-        postpone(operations, numberOfRetries)
+        retryLater(operations, numberOfRetries)
         return
       }
       delete currentSession.lock
@@ -85,7 +85,7 @@ export function withCookieLockAccess(operations: Operations, numberOfRetries = 0
   next()
 }
 
-function postpone(operations: Operations, currentNumberOfRetries: number) {
+function retryLater(operations: Operations, currentNumberOfRetries: number) {
   setTimeout(
     monitor(() => {
       withCookieLockAccess(operations, currentNumberOfRetries + 1)

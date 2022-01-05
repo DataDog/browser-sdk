@@ -216,7 +216,7 @@ describe('session cookie store', () => {
     it('should execute cookie accesses in order', (done) => {
       lockScenario({
         onInitialLockCheck: () => ({
-          currentState: { ...initialSession, lock: 'locked' }, // force to postpone first access
+          currentState: { ...initialSession, lock: 'locked' }, // force to retry the first access later
           retryState: initialSession,
         }),
       })
