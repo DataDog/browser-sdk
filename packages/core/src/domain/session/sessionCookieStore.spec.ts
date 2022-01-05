@@ -34,20 +34,13 @@ describe('session cookie store', () => {
     onPostPersistLockCheck?: OnLockCheck
   }) {
     const onLockChecks = [onInitialLockCheck, onAcquiredLockCheck, onPostProcessLockCheck, onPostPersistLockCheck]
-    let currentSession: string
-    cookie.setSpy.and.callFake((session) => {
-      currentSession = session
-    })
-
     cookie.getSpy.and.callFake(() => {
       const currentOnLockCheck = onLockChecks.shift()
       if (!currentOnLockCheck) {
-        return currentSession
+        return cookie.currentValue()
       }
-      cookie.getSpy.and.callThrough()
-      cookie.setSpy.and.callThrough()
       const { currentState, retryState } = currentOnLockCheck()
-      persistSession(retryState, COOKIE_OPTIONS)
+      cookie.setCurrentValue(buildSessionString(retryState))
       return buildSessionString(currentState)
     })
   }

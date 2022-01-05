@@ -334,5 +334,9 @@ export function stubCookie() {
     setSpy: spyOnProperty(Document.prototype, 'cookie', 'set').and.callFake((newCookie) => {
       cookie = newCookie
     }),
+    currentValue: () => cookie,
+    setCurrentValue: (newCookie: string) => {
+      cookie = newCookie
+    },
   }
 }
