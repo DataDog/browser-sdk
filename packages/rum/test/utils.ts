@@ -212,7 +212,7 @@ export function findAllIncrementalSnapshots(segment: Segment, source: Incrementa
 
 // Returns the textContent of a ElementNode, if any.
 export function findTextContent(elem: ElementNode): string | null {
-  const text = elem.childNodes.find((child) => child.type === NodeType.Text) as TextNode
+  const text = elem.childNodes.find((child) => child.type === NodeType.Text)
   return text ? text.textContent : null
 }
 
@@ -228,14 +228,12 @@ export function findElementWithTagName(root: SerializedNodeWithId, tagName: stri
 
 // Returns the first TextNode with the given content contained in a node, if any.
 export function findTextNode(root: SerializedNodeWithId, textContent: string) {
-  return findNode(root, (node) => isTextNode(node) && node.textContent === textContent) as
-    | (TextNode & { id: number })
-    | null
+  return findNode(root, (node) => isTextNode(node) && node.textContent === textContent)
 }
 
 // Returns the first ElementNode matching the predicate
 export function findElement(root: SerializedNodeWithId, predicate: (node: ElementNode) => boolean) {
-  return findNode(root, (node) => isElementNode(node) && predicate(node)) as (ElementNode & { id: number }) | null
+  return findNode(root, (node) => isElementNode(node) && predicate(node))
 }
 
 // Returns the first SerializedNodeWithId matching the predicate
@@ -367,7 +365,7 @@ export function createMutationPayloadValidator(initialDocument: SerializedNodeWi
     return new ExpectedNode({
       ...node,
       id: maxNodeId,
-    } as any)
+    })
   }
 
   return {
@@ -468,4 +466,13 @@ export function createMutationPayloadValidatorFromSegment(segment: Segment) {
     ...mutationPayloadValidator,
     validate: (expected: ExpectedMutationsPayload) => mutationPayloadValidator.validate(mutations[0].data, expected),
   }
+}
+
+/**
+ * Simplify asserting record lengths across multiple devices when not all record types are supported
+ */
+export const addRecordsPerFullSnapshot = (otherRecordsCount: number) => {
+  // Meta, Focus, FullSnapshot, VisualViewport (support limited)
+  const recordsPerFullsnapshot = window.visualViewport ? 4 : 3
+  return recordsPerFullsnapshot + otherRecordsCount
 }

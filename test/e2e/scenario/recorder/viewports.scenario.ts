@@ -130,8 +130,8 @@ function getLastSegment(serverEvents: EventRegistry) {
 }
 
 function initRumAndStartRecording(initConfiguration: RumInitConfiguration) {
-  window.DD_RUM.init(initConfiguration)
-  window.DD_RUM.startSessionReplayRecording()
+  window.DD_RUM!.init(initConfiguration)
+  window.DD_RUM!.startSessionReplayRecording()
 }
 
 const isGestureUnsupported = () => {

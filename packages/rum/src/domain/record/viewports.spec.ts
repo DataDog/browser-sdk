@@ -1,11 +1,7 @@
-import { getScrollX, getScrollY, getWindowWidth, getWindowHeight } from './viewports'
+import { getScrollX, getScrollY, getWindowHeight } from './viewports'
 
 function isMobileSafari12() {
   return /iPhone OS 12.* like Mac OS.* Version\/12.* Mobile.*Safari/.test(navigator.userAgent)
-}
-
-function getChromeHeadlessCorrection() {
-  return /Macintosh.* HeadlessChrome\//.test(navigator.userAgent) ? 15 : 0
 }
 
 describe('layout viewport', () => {
@@ -18,12 +14,9 @@ describe('layout viewport', () => {
     window.scrollTo(0, 0)
   })
 
-  describe('get window width and height', () => {
+  describe('get window height', () => {
     it('normalized scroll matches native behaviour', () => {
-      const initialInnerWidth = getWindowWidth()
       const initialInnerHeight = getWindowHeight()
-      const correction = getChromeHeadlessCorrection()
-      expect(initialInnerWidth).toBe(window.innerWidth - correction)
       expect(initialInnerHeight).toBe(window.innerHeight)
     })
   })
