@@ -67,7 +67,9 @@ export function withCookieLockAccess(operations: Operations, numberOfRetries = 0
     persistSession(processedSession, operations.options)
   }
   if (isExperimentalFeatureEnabled('cookie-lock')) {
-    if (!processedSession || !utils.isEmptyObject(processedSession)) {
+    // correctly handle lock around expiration would require to handle this case properly at several levels
+    // since we don't have evidence of lock issues around expiration, let's just not do the corruption check for it
+    if (!(processedSession && isExpiredState(processedSession))) {
       // if lock corrupted after persist, retry later
       currentSession = retrieveSession()
       if (currentSession.lock !== currentLock!) {
@@ -95,14 +97,15 @@ function retryLater(operations: Operations, currentNumberOfRetries: number) {
 }
 
 function next() {
-  ongoingOperations = bufferedOperations.shift()
-  if (ongoingOperations) {
-    withCookieLockAccess(ongoingOperations)
+  ongoingOperations = undefined
+  const nextOperations = bufferedOperations.shift()
+  if (nextOperations) {
+    withCookieLockAccess(nextOperations)
   }
 }
 
 export function persistSession(session: SessionState, options: CookieOptions) {
-  if (utils.isEmptyObject(session)) {
+  if (isExpiredState(session)) {
     clearSession(options)
     return
   }
@@ -141,6 +144,10 @@ function isValidSessionString(sessionString: string | undefined): sessionString 
     sessionString !== undefined &&
     (sessionString.indexOf(SESSION_ENTRY_SEPARATOR) !== -1 || SESSION_ENTRY_REGEXP.test(sessionString))
   )
+}
+
+function isExpiredState(session: SessionState) {
+  return utils.isEmptyObject(session)
 }
 
 function clearSession(options: CookieOptions) {
