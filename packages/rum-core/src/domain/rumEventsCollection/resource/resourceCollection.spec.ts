@@ -1,17 +1,12 @@
-import {
-  Duration,
-  isIE,
-  RelativeTime,
-  RequestType,
-  ResourceType,
-  ServerDuration,
-  TimeStamp,
-} from '@datadog/browser-core'
+import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
+import { isIE, RequestType, ResourceType } from '@datadog/browser-core'
 import { createResourceEntry } from '../../../../test/fixtures'
-import { setup, TestSetupBuilder } from '../../../../test/specHelper'
-import { RawRumResourceEvent, RumEventType } from '../../../rawRumEvent.types'
+import type { TestSetupBuilder } from '../../../../test/specHelper'
+import { setup } from '../../../../test/specHelper'
+import type { RawRumResourceEvent } from '../../../rawRumEvent.types'
+import { RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
-import { RequestCompleteEvent } from '../../requestCollection'
+import type { RequestCompleteEvent } from '../../requestCollection'
 import { TraceIdentifier } from '../../tracing/tracer'
 import { startResourceCollection } from './resourceCollection'
 

@@ -3,7 +3,8 @@ import { computeStackTrace } from '../domain/tracekit'
 import { toStackTraceString } from '../tools/error'
 import { instrumentMethod } from '../tools/instrumentMethod'
 import { Observable } from '../tools/observable'
-import { Duration, elapsed, ClocksState, clocksNow, timeStampNow } from '../tools/timeUtils'
+import type { Duration, ClocksState } from '../tools/timeUtils'
+import { elapsed, clocksNow, timeStampNow } from '../tools/timeUtils'
 import { normalizeUrl } from '../tools/urlPolyfill'
 
 interface FetchContextBase {

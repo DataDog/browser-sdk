@@ -1,36 +1,36 @@
+import type { Context, RawError, EventRateLimiter } from '@datadog/browser-core'
 import {
   combine,
-  Context,
   isEmptyObject,
   limitModification,
   timeStampNow,
   currentDrift,
   display,
-  RawError,
   createEventRateLimiter,
-  EventRateLimiter,
   canUseEventBridge,
 } from '@datadog/browser-core'
-import { RumEventDomainContext } from '../domainContext.types'
-import {
+import type { RumEventDomainContext } from '../domainContext.types'
+import type {
   CommonContext,
   RawRumErrorEvent,
   RawRumEvent,
   RawRumLongTaskEvent,
   RawRumResourceEvent,
   RumContext,
-  RumEventType,
   User,
 } from '../rawRumEvent.types'
+import { RumEventType } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
 import { buildEnv } from '../boot/buildEnv'
 import { getSyntheticsContext } from './syntheticsContext'
 import { getCiTestContext } from './ciTestContext'
-import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-import { ParentContexts } from './parentContexts'
-import { RumSessionManager, RumSessionPlan } from './rumSessionManager'
-import { UrlContexts } from './urlContexts'
-import { RumConfiguration } from './configuration'
+import type { LifeCycle } from './lifeCycle'
+import { LifeCycleEventType } from './lifeCycle'
+import type { ParentContexts } from './parentContexts'
+import type { RumSessionManager } from './rumSessionManager'
+import { RumSessionPlan } from './rumSessionManager'
+import type { UrlContexts } from './urlContexts'
+import type { RumConfiguration } from './configuration'
 
 enum SessionType {
   SYNTHETICS = 'synthetics',

@@ -1,5 +1,5 @@
 import * as http from 'http'
-import { AddressInfo } from 'net'
+import type { AddressInfo } from 'net'
 import { getIp } from '../../../utils'
 import { log } from './logger'
 

@@ -1,7 +1,9 @@
-import { FetchStub, FetchStubManager, FetchStubPromise, stubFetch } from '../../test/specHelper'
+import type { FetchStub, FetchStubManager, FetchStubPromise } from '../../test/specHelper'
+import { stubFetch } from '../../test/specHelper'
 import { isIE } from '../tools/browserDetection'
-import { Subscription } from '../tools/observable'
-import { FetchCompleteContext, FetchContext, initFetchObservable } from './fetchObservable'
+import type { Subscription } from '../tools/observable'
+import type { FetchCompleteContext, FetchContext } from './fetchObservable'
+import { initFetchObservable } from './fetchObservable'
 
 describe('fetch proxy', () => {
   const FAKE_URL = 'http://fake-url/'

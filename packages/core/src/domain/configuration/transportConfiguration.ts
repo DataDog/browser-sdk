@@ -1,7 +1,9 @@
-import { BuildEnv, BuildMode } from '../../boot/init'
+import type { BuildEnv } from '../../boot/init'
+import { BuildMode } from '../../boot/init'
 import { objectValues } from '../../tools/utils'
-import { InitConfiguration } from './configuration'
-import { createEndpointBuilder, INTAKE_SITE_US, EndpointBuilder } from './endpointBuilder'
+import type { InitConfiguration } from './configuration'
+import type { EndpointBuilder } from './endpointBuilder'
+import { createEndpointBuilder, INTAKE_SITE_US } from './endpointBuilder'
 import { buildTags } from './tags'
 
 export interface TransportConfiguration {

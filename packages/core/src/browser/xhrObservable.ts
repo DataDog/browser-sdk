@@ -1,7 +1,8 @@
 import { monitor } from '../domain/internalMonitoring'
 import { instrumentMethodAndCallOriginal } from '../tools/instrumentMethod'
 import { Observable } from '../tools/observable'
-import { Duration, elapsed, relativeNow, RelativeTime, ClocksState, clocksNow, timeStampNow } from '../tools/timeUtils'
+import type { Duration, RelativeTime, ClocksState } from '../tools/timeUtils'
+import { elapsed, relativeNow, clocksNow, timeStampNow } from '../tools/timeUtils'
 import { normalizeUrl } from '../tools/urlPolyfill'
 
 export interface XhrOpenContext {

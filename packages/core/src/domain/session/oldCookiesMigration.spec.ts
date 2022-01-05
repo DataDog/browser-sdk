@@ -1,4 +1,5 @@
-import { CookieOptions, getCookie, setCookie } from '../../browser/cookie'
+import type { CookieOptions } from '../../browser/cookie'
+import { getCookie, setCookie } from '../../browser/cookie'
 import {
   OLD_LOGS_COOKIE_NAME,
   OLD_RUM_COOKIE_NAME,

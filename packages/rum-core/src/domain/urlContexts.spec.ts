@@ -1,7 +1,10 @@
-import { relativeToClocks, RelativeTime } from '@datadog/browser-core'
-import { setup, TestSetupBuilder } from '../../test/specHelper'
-import { startUrlContexts, UrlContexts } from './urlContexts'
-import { ViewCreatedEvent, ViewEndedEvent } from './rumEventsCollection/view/trackViews'
+import type { RelativeTime } from '@datadog/browser-core'
+import { relativeToClocks } from '@datadog/browser-core'
+import type { TestSetupBuilder } from '../../test/specHelper'
+import { setup } from '../../test/specHelper'
+import type { UrlContexts } from './urlContexts'
+import { startUrlContexts } from './urlContexts'
+import type { ViewCreatedEvent, ViewEndedEvent } from './rumEventsCollection/view/trackViews'
 import { LifeCycleEventType } from './lifeCycle'
 
 describe('urlContexts', () => {

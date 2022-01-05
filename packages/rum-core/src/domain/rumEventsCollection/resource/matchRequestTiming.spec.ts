@@ -1,7 +1,8 @@
-import { Duration, isIE, RelativeTime, relativeToClocks } from '@datadog/browser-core'
+import type { Duration, RelativeTime } from '@datadog/browser-core'
+import { isIE, relativeToClocks } from '@datadog/browser-core'
 import { createResourceEntry } from '../../../../test/fixtures'
-import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
-import { RequestCompleteEvent } from '../../requestCollection'
+import type { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
+import type { RequestCompleteEvent } from '../../requestCollection'
 
 import { matchRequestTiming } from './matchRequestTiming'
 

@@ -1,27 +1,25 @@
+import type { Duration, ClocksState, TimeStamp, Observable, Subscription, RelativeTime } from '@datadog/browser-core'
 import {
-  Duration,
   elapsed,
   generateUUID,
   monitor,
   ONE_MINUTE,
   throttle,
-  ClocksState,
   clocksNow,
   clocksOrigin,
   timeStampNow,
-  TimeStamp,
   display,
-  Observable,
-  Subscription,
-  RelativeTime,
   looksLikeRelativeTime,
 } from '@datadog/browser-core'
-import { ViewLoadingType, ViewCustomTimings } from '../../../rawRumEvent.types'
+import type { ViewCustomTimings } from '../../../rawRumEvent.types'
+import { ViewLoadingType } from '../../../rawRumEvent.types'
 
-import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
-import { EventCounts } from '../../trackEventCounts'
-import { LocationChange } from '../../../browser/locationChangeObservable'
-import { Timings, trackInitialViewTimings } from './trackInitialViewTimings'
+import type { LifeCycle } from '../../lifeCycle'
+import { LifeCycleEventType } from '../../lifeCycle'
+import type { EventCounts } from '../../trackEventCounts'
+import type { LocationChange } from '../../../browser/locationChangeObservable'
+import type { Timings } from './trackInitialViewTimings'
+import { trackInitialViewTimings } from './trackInitialViewTimings'
 import { trackViewMetrics } from './trackViewMetrics'
 
 export interface ViewEvent {

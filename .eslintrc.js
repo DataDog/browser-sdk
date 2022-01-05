@@ -109,6 +109,7 @@ module.exports = {
         },
       },
     ],
+    '@typescript-eslint/consistent-type-imports': ['error'],
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     '@typescript-eslint/member-ordering': [
       'error',

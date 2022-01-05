@@ -1,15 +1,14 @@
+import type { Configuration, InitConfiguration } from '@datadog/browser-core'
 import {
-  Configuration,
   DefaultPrivacyLevel,
   display,
-  InitConfiguration,
   isPercentage,
   objectHasValue,
   validateAndBuildConfiguration,
 } from '@datadog/browser-core'
 import { buildEnv } from '../boot/buildEnv'
-import { RumEventDomainContext } from '../domainContext.types'
-import { RumEvent } from '../rumEvent.types'
+import type { RumEventDomainContext } from '../domainContext.types'
+import type { RumEvent } from '../rumEvent.types'
 
 export interface RumInitConfiguration extends InitConfiguration {
   // global options

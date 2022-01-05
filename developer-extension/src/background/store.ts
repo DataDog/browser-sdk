@@ -1,4 +1,4 @@
-import { Store, LocalStore } from '../common/types'
+import type { Store, LocalStore } from '../common/types'
 import { listenAction, sendAction } from './actions'
 
 export const store: Store = {

@@ -1,4 +1,5 @@
-import { createTest, EventRegistry } from '../../lib/framework'
+import type { EventRegistry } from '../../lib/framework'
+import { createTest } from '../../lib/framework'
 import { browserExecuteAsync, sendXhr } from '../../lib/helpers/browser'
 import { flushEvents } from '../../lib/helpers/flushEvents'
 

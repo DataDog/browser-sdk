@@ -1,4 +1,5 @@
-import { RumSessionManager, RumTrackingType } from '../src/domain/rumSessionManager'
+import type { RumSessionManager } from '../src/domain/rumSessionManager'
+import { RumTrackingType } from '../src/domain/rumSessionManager'
 
 export interface RumSessionManagerMock extends RumSessionManager {
   setId(id: string): RumSessionManagerMock

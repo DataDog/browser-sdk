@@ -1,19 +1,19 @@
-import {
+import type {
   Duration,
-  RequestType,
-  initFetchObservable,
-  initXhrObservable,
   XhrCompleteContext,
   XhrStartContext,
   ClocksState,
   FetchStartContext,
   FetchCompleteContext,
 } from '@datadog/browser-core'
-import { RumSessionManager } from '..'
-import { RumConfiguration } from './configuration'
-import { LifeCycle, LifeCycleEventType } from './lifeCycle'
+import { RequestType, initFetchObservable, initXhrObservable } from '@datadog/browser-core'
+import type { RumSessionManager } from '..'
+import type { RumConfiguration } from './configuration'
+import type { LifeCycle } from './lifeCycle'
+import { LifeCycleEventType } from './lifeCycle'
 import { isAllowedRequestUrl } from './rumEventsCollection/resource/resourceUtils'
-import { startTracer, TraceIdentifier, Tracer } from './tracing/tracer'
+import type { TraceIdentifier, Tracer } from './tracing/tracer'
+import { startTracer } from './tracing/tracer'
 
 export interface CustomContext {
   requestIndex: number

@@ -1,7 +1,8 @@
 import { addMonitoringMessage, monitor } from '@datadog/browser-core'
-import { CreationReason, Record, RecordType, SegmentContext, SegmentMeta } from '../../types'
+import type { CreationReason, Record, SegmentContext, SegmentMeta } from '../../types'
+import { RecordType } from '../../types'
 import * as replayStats from '../replayStats'
-import { DeflateWorker, DeflateWorkerListener } from './deflateWorker'
+import type { DeflateWorker, DeflateWorkerListener } from './deflateWorker'
 
 let nextId = 0
 

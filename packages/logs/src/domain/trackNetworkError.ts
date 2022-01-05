@@ -1,14 +1,6 @@
-import {
-  ErrorSource,
-  FetchCompleteContext,
-  initXhrObservable,
-  Observable,
-  RawError,
-  RequestType,
-  initFetchObservable,
-  XhrCompleteContext,
-} from '@datadog/browser-core'
-import { LogsConfiguration } from './configuration'
+import type { FetchCompleteContext, Observable, RawError, XhrCompleteContext } from '@datadog/browser-core'
+import { ErrorSource, initXhrObservable, RequestType, initFetchObservable } from '@datadog/browser-core'
+import type { LogsConfiguration } from './configuration'
 
 export function trackNetworkError(configuration: LogsConfiguration, errorObservable: Observable<RawError>) {
   const xhrSubscription = initXhrObservable().subscribe((context) => {

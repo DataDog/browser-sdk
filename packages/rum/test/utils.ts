@@ -1,22 +1,21 @@
-import { DeflateWorker, DeflateWorkerAction, DeflateWorkerListener } from '../src/domain/segmentCollection'
-import {
-  IncrementalSource,
+import type { DeflateWorker, DeflateWorkerAction, DeflateWorkerListener } from '../src/domain/segmentCollection'
+import type {
   MutationPayload,
   MutationData,
   ElementNode,
-  NodeType,
   SerializedNode,
   SerializedNodeWithId,
   TextNode,
 } from '../src/domain/record'
-import {
+import { IncrementalSource, NodeType } from '../src/domain/record'
+import type {
   FullSnapshotRecord,
   IncrementalSnapshotRecord,
   MetaRecord,
   VisualViewportRecord,
-  RecordType,
   Segment,
 } from '../src/types'
+import { RecordType } from '../src/types'
 
 export class MockWorker implements DeflateWorker {
   readonly pendingMessages: DeflateWorkerAction[] = []

@@ -1,10 +1,12 @@
-import { BuildEnv } from '../../boot/init'
-import { CookieOptions, getCurrentSite } from '../../browser/cookie'
+import type { BuildEnv } from '../../boot/init'
+import type { CookieOptions } from '../../browser/cookie'
+import { getCurrentSite } from '../../browser/cookie'
 import { catchUserErrors } from '../../tools/catchUserErrors'
 import { display } from '../../tools/display'
 import { isPercentage, ONE_KILO_BYTE, ONE_SECOND } from '../../tools/utils'
 import { updateExperimentalFeatures } from './experimentalFeatures'
-import { computeTransportConfiguration, TransportConfiguration } from './transportConfiguration'
+import type { TransportConfiguration } from './transportConfiguration'
+import { computeTransportConfiguration } from './transportConfiguration'
 
 export const DefaultPrivacyLevel = {
   ALLOW: 'allow',

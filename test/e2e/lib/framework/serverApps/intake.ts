@@ -3,8 +3,8 @@ import connectBusboy from 'connect-busboy'
 import express from 'express'
 
 import cors from 'cors'
-import { SegmentFile, SessionReplayCall } from '../../types/serverEvents'
-import { EventRegistry } from '../eventsRegistry'
+import type { SegmentFile, SessionReplayCall } from '../../types/serverEvents'
+import type { EventRegistry } from '../eventsRegistry'
 
 export function createIntakeServerApp(serverEvents: EventRegistry, bridgeEvents: EventRegistry) {
   const app = express()

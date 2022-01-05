@@ -1,8 +1,10 @@
-import { addEventListener, DOM_EVENT, EventEmitter, monitor, TimeoutId } from '@datadog/browser-core'
-import { LifeCycle, LifeCycleEventType, ParentContexts, RumSessionManager } from '@datadog/browser-rum-core'
+import type { EventEmitter, TimeoutId } from '@datadog/browser-core'
+import { addEventListener, DOM_EVENT, monitor } from '@datadog/browser-core'
+import type { LifeCycle, ParentContexts, RumSessionManager } from '@datadog/browser-rum-core'
+import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { SEND_BEACON_BYTE_LENGTH_LIMIT } from '../../transport/send'
-import { CreationReason, Record, SegmentContext, SegmentMeta } from '../../types'
-import { DeflateWorker } from './deflateWorker'
+import type { CreationReason, Record, SegmentContext, SegmentMeta } from '../../types'
+import type { DeflateWorker } from './deflateWorker'
 import { Segment } from './segment'
 
 export const MAX_SEGMENT_DURATION = 30_000

@@ -1,7 +1,9 @@
 import { isIE, objectEntries } from '@datadog/browser-core'
-import { setup, TestSetupBuilder } from '../../../test/specHelper'
-import { createRumSessionManagerMock, RumSessionManagerMock } from '../../../test/mockRumSessionManager'
-import { RumFetchCompleteContext, RumFetchStartContext, RumXhrStartContext } from '../requestCollection'
+import type { TestSetupBuilder } from '../../../test/specHelper'
+import { setup } from '../../../test/specHelper'
+import type { RumSessionManagerMock } from '../../../test/mockRumSessionManager'
+import { createRumSessionManagerMock } from '../../../test/mockRumSessionManager'
+import type { RumFetchCompleteContext, RumFetchStartContext, RumXhrStartContext } from '../requestCollection'
 import { validateAndBuildRumConfiguration } from '../configuration'
 import { startTracer, TraceIdentifier } from './tracer'
 
