@@ -37,7 +37,6 @@ export interface InitConfiguration {
   // internal options
   enableExperimentalFeatures?: string[] | undefined
   internalMonitoringApiKey?: string | undefined
-  // only on staging build mode
   replica?: ReplicaUserConfiguration | undefined
   datacenter?: string
 }

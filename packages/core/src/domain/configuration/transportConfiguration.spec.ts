@@ -188,7 +188,7 @@ describe('transportConfiguration', () => {
             site,
             replica: { clientToken },
           },
-          { ...buildEnv, buildMode: BuildMode.STAGING }
+          buildEnv
         )
 
         expect(configuration.isIntakeUrl(`https://rum.${intakeDomain}/api/v2/rum?xxx`)).toBe(true)
