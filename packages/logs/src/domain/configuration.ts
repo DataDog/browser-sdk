@@ -11,11 +11,6 @@ export type HybridInitConfiguration = Omit<LogsInitConfiguration, 'clientToken'>
 
 export interface LogsConfiguration extends Configuration {
   forwardErrorsToLogs: boolean
-
-  // Event limits
-  maxWarningsPerMinute: number
-  maxInfosPerMinute: number
-  maxDebugsPerMinute: number
 }
 
 export function validateAndBuildLogsConfiguration(
@@ -30,8 +25,5 @@ export function validateAndBuildLogsConfiguration(
     ...baseConfiguration,
 
     forwardErrorsToLogs: !!initConfiguration.forwardErrorsToLogs,
-    maxWarningsPerMinute: 3000,
-    maxInfosPerMinute: 3000,
-    maxDebugsPerMinute: 3000,
   }
 }

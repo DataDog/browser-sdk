@@ -103,10 +103,11 @@ export function buildAssemble(
   reportError: (error: RawError) => void
 ) {
   const logRateLimiters = {
-    [StatusType.error]: createEventRateLimiter(StatusType.error, configuration.maxErrorsPerMinute, reportError),
-    [StatusType.warn]: createEventRateLimiter(StatusType.warn, configuration.maxWarningsPerMinute, reportError),
-    [StatusType.info]: createEventRateLimiter(StatusType.info, configuration.maxInfosPerMinute, reportError),
-    [StatusType.debug]: createEventRateLimiter(StatusType.debug, configuration.maxDebugsPerMinute, reportError),
+    [StatusType.error]: createEventRateLimiter(StatusType.error, configuration.eventRateLimiterThreshold, reportError),
+    [StatusType.warn]: createEventRateLimiter(StatusType.warn, configuration.eventRateLimiterThreshold, reportError),
+    [StatusType.info]: createEventRateLimiter(StatusType.info, configuration.eventRateLimiterThreshold, reportError),
+    [StatusType.debug]: createEventRateLimiter(StatusType.debug, configuration.eventRateLimiterThreshold, reportError),
+    ['custom']: createEventRateLimiter('custom', configuration.eventRateLimiterThreshold, reportError),
   }
 
   return (message: LogsMessage, currentContext: Context) => {
@@ -126,7 +127,7 @@ export function buildAssemble(
 
     if (
       configuration.beforeSend?.(contextualizedMessage) === false ||
-      logRateLimiters[contextualizedMessage.status]?.isLimitReached()
+      (logRateLimiters[contextualizedMessage.status] ?? logRateLimiters['custom']).isLimitReached()
     ) {
       return undefined
     }

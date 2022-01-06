@@ -340,14 +340,15 @@ describe('logs', () => {
     })
   })
   ;[
-    { status: StatusType.error, configuration: { maxErrorsPerMinute: 1 } },
-    { status: StatusType.warn, configuration: { maxWarningsPerMinute: 1 } },
-    { status: StatusType.info, configuration: { maxInfosPerMinute: 1 } },
-    { status: StatusType.debug, configuration: { maxDebugsPerMinute: 1 } },
-  ].forEach(({ status, configuration }) => {
+    { status: StatusType.error, message: 'Reached max number of errors by minute: 1' },
+    { status: StatusType.warn, message: 'Reached max number of warns by minute: 1' },
+    { status: StatusType.info, message: 'Reached max number of infos by minute: 1' },
+    { status: StatusType.debug, message: 'Reached max number of debugs by minute: 1' },
+    { status: 'unknown' as StatusType, message: 'Reached max number of customs by minute: 1' },
+  ].forEach(({ status, message }) => {
     describe(`${status} logs limitation`, () => {
       let clock: Clock
-
+      const configuration = { eventRateLimiterThreshold: 1 }
       beforeEach(() => {
         clock = mockClock()
       })
@@ -365,7 +366,7 @@ describe('logs', () => {
         expect(server.requests.length).toEqual(1)
         expect(getLoggedMessage(server, 0).message).toBe('foo')
         expect(sendLogSpy).toHaveBeenCalledOnceWith({
-          message: `Reached max number of ${status}s by minute: 1`,
+          message,
           status: StatusType.error,
           error: {
             origin: ErrorSource.AGENT,
@@ -376,7 +377,7 @@ describe('logs', () => {
         })
       })
 
-      it(`does not take discarded ${status}s into account`, () => {
+      it(`does not take discarded ${status} logs into account`, () => {
         const sendLogSpy = jasmine.createSpy<(message: LogsMessage & { foo?: string }) => void>()
         const sendLog = startLogs({
           errorLogger: new Logger(sendLogSpy),
