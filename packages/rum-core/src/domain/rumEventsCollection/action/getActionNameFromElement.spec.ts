@@ -309,16 +309,17 @@ describe('getActionNameFromElement', () => {
       ).toBe('bar')
     })
 
-    it('replaces the programmatic action name in textual content', () => {
+    it('remove children with programmatic action name in textual content', () => {
       expect(getActionNameFromElement(element`<div>Foo <div data-dd-action-name="custom action">bar<div></div>`)).toBe(
-        'Foo custom action'
+        'Foo'
       )
     })
 
-    it('replaces the programmatic action name in textual content based on the user-configured attribute', () => {
+    // eslint-disable-next-line max-len
+    it('remove children with programmatic action name in textual content based on the user-configured attribute', () => {
       expect(
         getActionNameFromElement(element`<div>Foo <div data-test-id="custom action">bar<div></div>`, 'data-test-id')
-      ).toBe('Foo custom action')
+      ).toBe('Foo')
     })
   })
 })
