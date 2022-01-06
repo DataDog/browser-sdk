@@ -22,20 +22,23 @@ describe('buildTag', () => {
     displaySpy = spyOn(display, 'warn')
   })
 
-  it('lowercases tags', () => {
-    expect(buildTag('env', 'BaR')).toBe('env:bar')
+  it('shows a warning when the tag contains uppercase letters', () => {
+    buildTag('env', 'BaR')
     expectWarning()
   })
 
-  it('trims large tags', () => {
-    const tag = buildTag('env', LARGE_VALUE)
-    expect(tag.length).toBe(TAG_SIZE_LIMIT)
-    expect(tag).toBe(`env:${LARGE_VALUE.slice(0, TAG_SIZE_LIMIT - 4)}`)
+  it('shows a warning when the tag is too large', () => {
+    buildTag('env', LARGE_VALUE)
     expectWarning()
   })
 
-  it('replaces forbidden characters with slashes', () => {
-    expect(buildTag('env', 'b#r')).toBe('env:b_r')
+  it('shows a warning when the tag contains forbidden characters', () => {
+    buildTag('env', 'b#r')
+    expectWarning()
+  })
+
+  it('forbids to craft multiple tags by passing a value with a comma', () => {
+    expect(buildTag('env', 'foo,bar')).toBe('env:foo_bar')
     expectWarning()
   })
 
