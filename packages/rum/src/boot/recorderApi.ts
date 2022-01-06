@@ -8,7 +8,7 @@ import {
   RumConfiguration,
 } from '@datadog/browser-rum-core'
 import { getReplayStats } from '../domain/replayStats'
-import { startDeflateWorker } from '../domain/segmentCollection/startDeflateWorker'
+import { startDeflateWorker } from '../domain/segmentCollection'
 
 import { startRecording } from './startRecording'
 

@@ -1,4 +1,4 @@
-import { RumEvent } from '../../../../rum-core/src/rumEvent.types'
+import { RumEvent } from '../../../../rum-core/src'
 import { BuildEnv, BuildMode } from '../../boot/init'
 import { display } from '../../tools/display'
 import { InitConfiguration, validateAndBuildConfiguration } from './configuration'
