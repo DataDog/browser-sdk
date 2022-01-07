@@ -340,7 +340,7 @@ describe('logs', () => {
     })
   })
 
-  describe(`logs limitation`, () => {
+  describe('logs limitation', () => {
     let clock: Clock
     const configuration = { eventRateLimiterThreshold: 1 }
     beforeEach(() => {
@@ -412,7 +412,7 @@ describe('logs', () => {
         expect(getLoggedMessage(server, 1).message).toBe('baz')
       })
 
-      it(`allows to send logs with a different status when reaching the limit`, () => {
+      it('allows to send logs with a different status when reaching the limit', () => {
         const otherLogStatus = status === StatusType.error ? 'other' : StatusType.error
         const sendLog = startLogs({ configuration })
         sendLog({ message: 'foo', status }, {})
@@ -425,7 +425,7 @@ describe('logs', () => {
       })
     })
 
-    it(`two different custom statuses are accounted by the same limit`, () => {
+    it('two different custom statuses are accounted by the same limit', () => {
       const sendLog = startLogs({ configuration })
       sendLog({ message: 'foo', status: 'foo' as StatusType }, {})
       sendLog({ message: 'bar', status: 'bar' as StatusType }, {})
