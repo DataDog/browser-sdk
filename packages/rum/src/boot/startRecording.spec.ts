@@ -6,10 +6,9 @@ import { createNewEvent } from '../../../core/test/specHelper'
 
 import { setup, TestSetupBuilder } from '../../../rum-core/test/specHelper'
 import { collectAsyncCalls } from '../../test/utils'
-import { setMaxSegmentSize } from '../domain/segmentCollection/segmentCollection'
+import { setMaxSegmentSize, startDeflateWorker } from '../domain/segmentCollection'
 
 import { Segment, RecordType } from '../types'
-import { doStartDeflateWorker } from '../domain/segmentCollection/startDeflateWorker'
 import { startRecording } from './startRecording'
 
 describe('startRecording', () => {
@@ -25,7 +24,7 @@ describe('startRecording', () => {
   let expectNoExtraRequestSendCalls: (done: () => void) => void
   let stopRecording: () => void
 
-  beforeEach(() => {
+  beforeEach((done) => {
     if (isIE()) {
       pending('IE not supported')
     }
@@ -43,31 +42,28 @@ describe('startRecording', () => {
       expectNoExtraAsyncCall: expectNoExtraRequestSendCalls,
     } = collectAsyncCalls(requestSendSpy))
 
-    setupBuilder = setup()
-      .withParentContexts({
-        findView() {
-          return {
-            view: {
-              id: viewId,
-            },
-          }
-        },
-      })
-      .withSessionManager(sessionManager)
-      .withConfiguration({
-        defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
-      })
-      .beforeBuild(({ lifeCycle, configuration, parentContexts, sessionManager }) => {
-        const recording = startRecording(
-          lifeCycle,
-          configuration,
-          sessionManager,
-          parentContexts,
-          doStartDeflateWorker()!
-        )
-        stopRecording = recording ? recording.stop : noop
-        return { stop: stopRecording }
-      })
+    startDeflateWorker((worker) => {
+      setupBuilder = setup()
+        .withParentContexts({
+          findView() {
+            return {
+              view: {
+                id: viewId,
+              },
+            }
+          },
+        })
+        .withSessionManager(sessionManager)
+        .withConfiguration({
+          defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
+        })
+        .beforeBuild(({ lifeCycle, configuration, parentContexts, sessionManager }) => {
+          const recording = startRecording(lifeCycle, configuration, sessionManager, parentContexts, worker!)
+          stopRecording = recording ? recording.stop : noop
+          return { stop: stopRecording }
+        })
+      done()
+    })
   })
 
   afterEach(() => {

@@ -1,8 +1,4 @@
-import {
-  DeflateWorker,
-  DeflateWorkerAction,
-  DeflateWorkerListener,
-} from '../src/domain/segmentCollection/deflateWorker'
+import { DeflateWorker, DeflateWorkerAction, DeflateWorkerListener } from '../src/domain/segmentCollection'
 import {
   IncrementalSource,
   MutationPayload,
@@ -12,7 +8,7 @@ import {
   SerializedNode,
   SerializedNodeWithId,
   TextNode,
-} from '../src/domain/record/types'
+} from '../src/domain/record'
 import {
   FullSnapshotRecord,
   IncrementalSnapshotRecord,

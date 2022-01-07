@@ -16,6 +16,13 @@
 
 ---
 
+## v4.0.1
+
+- 🐛 let the backend to most of the tags sanitization ([#1252](https://github.com/DataDog/browser-sdk/pull/1252))
+- 🐛 remove child with action-names innerText instead of replacing them ([#1251](https://github.com/DataDog/browser-sdk/pull/1251))
+- 📝 Add module convention to contributing ([#1240](https://github.com/DataDog/browser-sdk/pull/1240))
+- ⚡️ [RUMF-1030] Decrease BoundedBuffer limitation to 500 ([#1242](https://github.com/DataDog/browser-sdk/pull/1242))
+
 ## v4.0.0
 
 Here is the list of all the breaking changes introduced by v4 of the RUM and Logs SDKs.
@@ -30,7 +37,7 @@ The Browser SDK is now incompatible with TypeScript below v3.8.2. If you are usi
 
 ### [RUM and Logs] Tags syntax sanitization
 
-`version`, `env` and `service` [initialization parameters](https://docs.datadoghq.com/real_user_monitoring/browser/#initialization-parameters) are sent as tags to Datadog. The Browser SDK is now sanitizing and printing a warning if those values don't meet the [tag requirements syntax](https://docs.datadoghq.com/getting_started/tagging/#defining-tags).
+`version`, `env` and `service` [initialization parameters](https://docs.datadoghq.com/real_user_monitoring/browser/#initialization-parameters) are sent as tags to Datadog. The Browser SDK is now slightly sanitizes them (to ensure that they don't unexpectedly generate multiple tags) and prints a warning if those values don't meet the [tag requirements syntax](https://docs.datadoghq.com/getting_started/tagging/#defining-tags).
 
 ### [RUM and Logs] Stricter initialization parameters typings
 
@@ -61,15 +68,23 @@ When multiple privacy options are specified on the same element, we now apply th
 one to avoid unexpectedly leaking privacy (ex: if both `dd-privacy-allow` and `dd-privacy-hidden`
 classes are specified on the same element, we now consider it `hidden` instead of `allow`).
 
-### [RUM] Use declared action names inside broader action names
+### [RUM] Remove text from elements with programmatic action names when computing a parent action names
 
-When computing automatic [actions target name](https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions/?tab=npm#action-attributes) on elements without `data-dd-action-name` attribute, we are using the "inner text" of this element. If it contains some elements that specify `data-dd-action-name`, their text is replaced by their declared action name inside the ancestor inner text.
+When computing automatic [actions target name](https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions/?tab=npm#action-attributes) on elements without `data-dd-action-name` attribute, we are using the "inner text" of this element. If it contains some elements that specify `data-dd-action-name`, their text is now removed inside the ancestor inner text.
 
 This might slightly change automatic action names shown in the Datadog App.
 
 ### Changes
 
-// TODO
+- 💥 improve privacy computation on a single node ([#1226](https://github.com/DataDog/browser-sdk/pull/1226))
+- 💥 [RUMF-1098] move init options into their related interfaces ([#1232](https://github.com/DataDog/browser-sdk/pull/1232))
+- 💥 [RUMF-1093] deprecated proxyhost option ([#1227](https://github.com/DataDog/browser-sdk/pull/1227))
+- 💥 [RUMF-1124] Use the programmatic action attribute instead of innertext ([#1200](https://github.com/DataDog/browser-sdk/pull/1200))
+- 💥 [RUMF-1094] remove deprecated privacy attributes ([#1224](https://github.com/DataDog/browser-sdk/pull/1224))
+- 💥 [RUMF-1092] use a WeakMap to store XHR context ([#1222](https://github.com/DataDog/browser-sdk/pull/1222))
+- 💥 [RUMF-1090] update minimal version to 3.8.2 ([#1219](https://github.com/DataDog/browser-sdk/pull/1219))
+- 💥 [RUMF-827] sanitize tags ([#1218](https://github.com/DataDog/browser-sdk/pull/1218))
+- 💥 [RUMF-1089] Cleanup legacy intake URLs ([#1214](https://github.com/DataDog/browser-sdk/pull/1214))
 
 ## v3.11.0
 
