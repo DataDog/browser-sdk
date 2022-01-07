@@ -339,24 +339,24 @@ describe('logs', () => {
       ])
     })
   })
-  ;[
-    { status: StatusType.error, message: 'Reached max number of errors by minute: 1' },
-    { status: StatusType.warn, message: 'Reached max number of warns by minute: 1' },
-    { status: StatusType.info, message: 'Reached max number of infos by minute: 1' },
-    { status: StatusType.debug, message: 'Reached max number of debugs by minute: 1' },
-    { status: 'unknown' as StatusType, message: 'Reached max number of customs by minute: 1' },
-  ].forEach(({ status, message }) => {
-    describe(`${status} logs limitation`, () => {
-      let clock: Clock
-      const configuration = { eventRateLimiterThreshold: 1 }
-      beforeEach(() => {
-        clock = mockClock()
-      })
 
-      afterEach(() => {
-        clock.cleanup()
-      })
+  describe(`logs limitation`, () => {
+    let clock: Clock
+    const configuration = { eventRateLimiterThreshold: 1 }
+    beforeEach(() => {
+      clock = mockClock()
+    })
 
+    afterEach(() => {
+      clock.cleanup()
+    })
+    ;[
+      { status: StatusType.error, message: 'Reached max number of errors by minute: 1' },
+      { status: StatusType.warn, message: 'Reached max number of warns by minute: 1' },
+      { status: StatusType.info, message: 'Reached max number of infos by minute: 1' },
+      { status: StatusType.debug, message: 'Reached max number of debugs by minute: 1' },
+      { status: 'unknown' as StatusType, message: 'Reached max number of customs by minute: 1' },
+    ].forEach(({ status, message }) => {
       it(`stops sending ${status} logs when reaching the limit`, () => {
         const sendLogSpy = jasmine.createSpy<(message: LogsMessage & { foo?: string }) => void>()
         const sendLog = startLogs({ errorLogger: new Logger(sendLogSpy), configuration })
@@ -411,6 +411,27 @@ describe('logs', () => {
         expect(getLoggedMessage(server, 0).message).toBe('foo')
         expect(getLoggedMessage(server, 1).message).toBe('baz')
       })
+
+      it(`allows to send logs with a different status when reaching the limit`, () => {
+        const otherLogStatus = status === StatusType.error ? 'other' : StatusType.error
+        const sendLog = startLogs({ configuration })
+        sendLog({ message: 'foo', status }, {})
+        sendLog({ message: 'bar', status }, {})
+        sendLog({ message: 'baz', status: otherLogStatus as StatusType }, {})
+
+        expect(server.requests.length).toEqual(2)
+        expect(getLoggedMessage(server, 0).message).toBe('foo')
+        expect(getLoggedMessage(server, 1).message).toBe('baz')
+      })
+    })
+
+    it(`two different custom statuses are accounted by the same limit`, () => {
+      const sendLog = startLogs({ configuration })
+      sendLog({ message: 'foo', status: 'foo' as StatusType }, {})
+      sendLog({ message: 'bar', status: 'bar' as StatusType }, {})
+
+      expect(server.requests.length).toEqual(1)
+      expect(getLoggedMessage(server, 0).message).toBe('foo')
     })
   })
 })
