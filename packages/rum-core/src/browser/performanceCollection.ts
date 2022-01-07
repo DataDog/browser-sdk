@@ -106,15 +106,15 @@ export function supportPerformanceEntry() {
 
 export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: RumConfiguration) {
   retrieveInitialDocumentResourceTiming((timing) => {
-    handleRumPerformanceEntry(lifeCycle, configuration, timing)
+    handleRumPerformanceEntries(lifeCycle, configuration, [timing])
   })
 
   if (supportPerformanceObject()) {
-    handlePerformanceEntries(lifeCycle, configuration, performance.getEntries())
+    handleRumPerformanceEntries(lifeCycle, configuration, filterRumPerformanceEntries(performance.getEntries()))
   }
   if (window.PerformanceObserver) {
     const handlePerformanceEntryList = monitor((entries: PerformanceObserverEntryList) =>
-      handlePerformanceEntries(lifeCycle, configuration, entries.getEntries())
+      handleRumPerformanceEntries(lifeCycle, configuration, filterRumPerformanceEntries(entries.getEntries()))
     )
     const mainEntries = ['resource', 'navigation', 'longtask', 'paint']
     const experimentalEntries = ['largest-contentful-paint', 'first-input', 'layout-shift']
@@ -144,12 +144,12 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
   }
   if (!supportPerformanceTimingEvent('navigation')) {
     retrieveNavigationTiming((timing) => {
-      handleRumPerformanceEntry(lifeCycle, configuration, timing)
+      handleRumPerformanceEntries(lifeCycle, configuration, [timing])
     })
   }
   if (!supportPerformanceTimingEvent('first-input')) {
     retrieveFirstInputTiming((timing) => {
-      handleRumPerformanceEntry(lifeCycle, configuration, timing)
+      handleRumPerformanceEntries(lifeCycle, configuration, [timing])
     })
   }
 }
@@ -284,28 +284,31 @@ function computeRelativePerformanceTiming() {
   return result as RelativePerformanceTiming
 }
 
-function handlePerformanceEntries(lifeCycle: LifeCycle, configuration: RumConfiguration, entries: PerformanceEntry[]) {
-  entries.forEach((entry) => {
-    if (
-      entry.entryType === 'resource' ||
-      entry.entryType === 'navigation' ||
-      entry.entryType === 'paint' ||
-      entry.entryType === 'longtask' ||
-      entry.entryType === 'largest-contentful-paint' ||
-      entry.entryType === 'first-input' ||
-      entry.entryType === 'layout-shift'
-    ) {
-      handleRumPerformanceEntry(lifeCycle, configuration, (entry as unknown) as RumPerformanceEntry)
-    }
-  })
+function handleRumPerformanceEntries(
+  lifeCycle: LifeCycle,
+  configuration: RumConfiguration,
+  entries: RumPerformanceEntry[]
+) {
+  const filteredEvents = entries.filter(
+    (entry) => !isIncompleteNavigation(entry) && !isForbiddenResource(configuration, entry)
+  )
+
+  if (filteredEvents.length) {
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, filteredEvents)
+  }
 }
 
-function handleRumPerformanceEntry(lifeCycle: LifeCycle, configuration: RumConfiguration, entry: RumPerformanceEntry) {
-  if (isIncompleteNavigation(entry) || isForbiddenResource(configuration, entry)) {
-    return
-  }
-
-  lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, entry)
+function filterRumPerformanceEntries(entries: PerformanceEntry[]) {
+  return (entries.filter(
+    ({ entryType }) =>
+      entryType === 'resource' ||
+      entryType === 'navigation' ||
+      entryType === 'paint' ||
+      entryType === 'longtask' ||
+      entryType === 'largest-contentful-paint' ||
+      entryType === 'first-input' ||
+      entryType === 'layout-shift'
+  ) as unknown) as RumPerformanceEntry[]
 }
 
 function isIncompleteNavigation(entry: RumPerformanceEntry) {

@@ -8,7 +8,7 @@ import { AutoAction, AutoActionCreatedEvent } from './rumEventsCollection/action
 import { ViewEvent, ViewCreatedEvent, ViewEndedEvent } from './rumEventsCollection/view/trackViews'
 
 export enum LifeCycleEventType {
-  PERFORMANCE_ENTRY_COLLECTED,
+  PERFORMANCE_ENTRIES_COLLECTED,
   AUTO_ACTION_CREATED,
   AUTO_ACTION_COMPLETED,
   AUTO_ACTION_DISCARDED,
@@ -40,7 +40,7 @@ export enum LifeCycleEventType {
 export class LifeCycle {
   private callbacks: { [key in LifeCycleEventType]?: Array<(data: any) => void> } = {}
 
-  notify(eventType: LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, data: RumPerformanceEntry): void
+  notify(eventType: LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, data: RumPerformanceEntry[]): void
   notify(eventType: LifeCycleEventType.REQUEST_STARTED, data: RequestStartEvent): void
   notify(eventType: LifeCycleEventType.REQUEST_COMPLETED, data: RequestCompleteEvent): void
   notify(eventType: LifeCycleEventType.AUTO_ACTION_COMPLETED, data: AutoAction): void
@@ -69,8 +69,8 @@ export class LifeCycle {
   }
 
   subscribe(
-    eventType: LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
-    callback: (data: RumPerformanceEntry) => void
+    eventType: LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED,
+    callback: (data: RumPerformanceEntry[]) => void
   ): Subscription
   subscribe(eventType: LifeCycleEventType.REQUEST_STARTED, callback: (data: RequestStartEvent) => void): Subscription
   subscribe(
