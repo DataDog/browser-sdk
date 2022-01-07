@@ -340,9 +340,9 @@ describe('logs', () => {
     })
   })
 
-  describe('error logs limitation', () => {
+  describe('logs limitation', () => {
     let clock: Clock
-
+    const configuration = { eventRateLimiterThreshold: 1 }
     beforeEach(() => {
       clock = mockClock()
     })
@@ -350,60 +350,88 @@ describe('logs', () => {
     afterEach(() => {
       clock.cleanup()
     })
+    ;[
+      { status: StatusType.error, message: 'Reached max number of errors by minute: 1' },
+      { status: StatusType.warn, message: 'Reached max number of warns by minute: 1' },
+      { status: StatusType.info, message: 'Reached max number of infos by minute: 1' },
+      { status: StatusType.debug, message: 'Reached max number of debugs by minute: 1' },
+      { status: 'unknown' as StatusType, message: 'Reached max number of customs by minute: 1' },
+    ].forEach(({ status, message }) => {
+      it(`stops sending ${status} logs when reaching the limit`, () => {
+        const sendLogSpy = jasmine.createSpy<(message: LogsMessage & { foo?: string }) => void>()
+        const sendLog = startLogs({ errorLogger: new Logger(sendLogSpy), configuration })
+        sendLog({ message: 'foo', status }, {})
+        sendLog({ message: 'bar', status }, {})
 
-    it('stops sending error logs when reaching the limit', () => {
-      const sendLogSpy = jasmine.createSpy<(message: LogsMessage & { foo?: string }) => void>()
-      const sendLog = startLogs({ errorLogger: new Logger(sendLogSpy), configuration: { maxErrorsPerMinute: 1 } })
-      sendLog({ message: 'foo', status: StatusType.error }, {})
-      sendLog({ message: 'bar', status: StatusType.error }, {})
-
-      expect(server.requests.length).toEqual(1)
-      expect(getLoggedMessage(server, 0).message).toBe('foo')
-      expect(sendLogSpy).toHaveBeenCalledOnceWith({
-        message: 'Reached max number of errors by minute: 1',
-        status: StatusType.error,
-        error: {
-          origin: ErrorSource.AGENT,
-          kind: undefined,
-          stack: undefined,
-        },
-        date: Date.now(),
-      })
-    })
-
-    it('does not take discarded errors into account', () => {
-      const sendLogSpy = jasmine.createSpy<(message: LogsMessage & { foo?: string }) => void>()
-      const sendLog = startLogs({
-        errorLogger: new Logger(sendLogSpy),
-        configuration: {
-          maxErrorsPerMinute: 1,
-          beforeSend(event) {
-            if (event.message === 'discard me') {
-              return false
-            }
+        expect(server.requests.length).toEqual(1)
+        expect(getLoggedMessage(server, 0).message).toBe('foo')
+        expect(sendLogSpy).toHaveBeenCalledOnceWith({
+          message,
+          status: StatusType.error,
+          error: {
+            origin: ErrorSource.AGENT,
+            kind: undefined,
+            stack: undefined,
           },
-        },
+          date: Date.now(),
+        })
       })
-      sendLog({ message: 'discard me', status: StatusType.error }, {})
-      sendLog({ message: 'discard me', status: StatusType.error }, {})
-      sendLog({ message: 'discard me', status: StatusType.error }, {})
-      sendLog({ message: 'foo', status: StatusType.error }, {})
+
+      it(`does not take discarded ${status} logs into account`, () => {
+        const sendLogSpy = jasmine.createSpy<(message: LogsMessage & { foo?: string }) => void>()
+        const sendLog = startLogs({
+          errorLogger: new Logger(sendLogSpy),
+          configuration: {
+            ...configuration,
+            beforeSend(event) {
+              if (event.message === 'discard me') {
+                return false
+              }
+            },
+          },
+        })
+        sendLog({ message: 'discard me', status }, {})
+        sendLog({ message: 'discard me', status }, {})
+        sendLog({ message: 'discard me', status }, {})
+        sendLog({ message: 'foo', status }, {})
+
+        expect(server.requests.length).toEqual(1)
+        expect(getLoggedMessage(server, 0).message).toBe('foo')
+        expect(sendLogSpy).not.toHaveBeenCalled()
+      })
+
+      it(`allows to send new ${status}s after a minute`, () => {
+        const sendLog = startLogs({ configuration })
+        sendLog({ message: 'foo', status }, {})
+        sendLog({ message: 'bar', status }, {})
+        clock.tick(ONE_MINUTE)
+        sendLog({ message: 'baz', status }, {})
+
+        expect(server.requests.length).toEqual(2)
+        expect(getLoggedMessage(server, 0).message).toBe('foo')
+        expect(getLoggedMessage(server, 1).message).toBe('baz')
+      })
+
+      it('allows to send logs with a different status when reaching the limit', () => {
+        const otherLogStatus = status === StatusType.error ? 'other' : StatusType.error
+        const sendLog = startLogs({ configuration })
+        sendLog({ message: 'foo', status }, {})
+        sendLog({ message: 'bar', status }, {})
+        sendLog({ message: 'baz', status: otherLogStatus as StatusType }, {})
+
+        expect(server.requests.length).toEqual(2)
+        expect(getLoggedMessage(server, 0).message).toBe('foo')
+        expect(getLoggedMessage(server, 1).message).toBe('baz')
+      })
+    })
+
+    it('two different custom statuses are accounted by the same limit', () => {
+      const sendLog = startLogs({ configuration })
+      sendLog({ message: 'foo', status: 'foo' as StatusType }, {})
+      sendLog({ message: 'bar', status: 'bar' as StatusType }, {})
 
       expect(server.requests.length).toEqual(1)
       expect(getLoggedMessage(server, 0).message).toBe('foo')
-      expect(sendLogSpy).not.toHaveBeenCalled()
-    })
-
-    it('allows to send new errors after a minute', () => {
-      const sendLog = startLogs({ configuration: { maxErrorsPerMinute: 1 } })
-      sendLog({ message: 'foo', status: StatusType.error }, {})
-      sendLog({ message: 'bar', status: StatusType.error }, {})
-      clock.tick(ONE_MINUTE)
-      sendLog({ message: 'baz', status: StatusType.error }, {})
-
-      expect(server.requests.length).toEqual(2)
-      expect(getLoggedMessage(server, 0).message).toBe('foo')
-      expect(getLoggedMessage(server, 1).message).toBe('baz')
     })
   })
 })
