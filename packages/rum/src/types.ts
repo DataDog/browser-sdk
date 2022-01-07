@@ -1,6 +1,6 @@
-import { IncrementalData, SerializedNodeWithId } from './domain/record/types'
+import { IncrementalData, SerializedNodeWithId } from './domain/record'
 
-export { IncrementalSource, MutationData, ViewportResizeData, ScrollData } from './domain/record/types'
+export { IncrementalSource, MutationData, ViewportResizeData, ScrollData } from './domain/record'
 
 export interface Segment extends SegmentMeta {
   records: Record[]
