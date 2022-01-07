@@ -59,7 +59,7 @@ export interface Configuration extends TransportConfiguration {
   silentMultipleInit: boolean
 
   // Event limits
-  maxErrorsPerMinute: number
+  eventRateLimiterThreshold: number // Limit the maximum number of actions, errors and logs per minutes
   maxInternalMonitoringMessagesPerPage: number
   requestErrorResponseLengthLimit: number
 
@@ -103,7 +103,7 @@ export function validateAndBuildConfiguration(
      */
     batchBytesLimit: 16 * ONE_KILO_BYTE,
 
-    maxErrorsPerMinute: 3000,
+    eventRateLimiterThreshold: 3000,
     maxInternalMonitoringMessagesPerPage: 15,
 
     /**
