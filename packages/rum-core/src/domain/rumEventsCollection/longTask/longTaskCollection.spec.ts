@@ -33,14 +33,13 @@ describe('long task collection', () => {
 
   it('should only listen to long task performance entry', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
-    ;[
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       LONG_TASK,
       { duration: 100 as Duration, entryType: 'navigation', startTime: 1234 },
       { duration: 100 as Duration, entryType: 'resource', startTime: 1234 },
       { duration: 100 as Duration, entryType: 'paint', startTime: 1234 },
-    ].forEach((entry) => {
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, entry as RumPerformanceEntry)
-    })
+    ] as RumPerformanceEntry[])
+
     expect(rawRumEvents.length).toBe(1)
   })
 
@@ -48,17 +47,17 @@ describe('long task collection', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
 
     sessionManager.setReplayPlan()
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, LONG_TASK)
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [LONG_TASK])
     expect(rawRumEvents.length).toBe(1)
 
     sessionManager.setLitePlan()
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, LONG_TASK)
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [LONG_TASK])
     expect(rawRumEvents.length).toBe(1)
   })
 
   it('should create raw rum event from performance entry', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, LONG_TASK)
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [LONG_TASK])
 
     expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({

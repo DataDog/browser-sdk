@@ -33,9 +33,11 @@ export function startResourceCollection(lifeCycle: LifeCycle) {
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processRequest(request))
   })
 
-  lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
-    if (entry.entryType === 'resource' && !isRequestKind(entry)) {
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processResourceEntry(entry))
+  lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
+    for (const entry of entries) {
+      if (entry.entryType === 'resource' && !isRequestKind(entry)) {
+        lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processResourceEntry(entry))
+      }
     }
   })
 }

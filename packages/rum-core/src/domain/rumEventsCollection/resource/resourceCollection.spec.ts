@@ -35,7 +35,7 @@ describe('resourceCollection', () => {
       name: 'https://resource.com/valid',
       startTime: 1234 as RelativeTime,
     })
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, performanceEntry)
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [performanceEntry])
 
     expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
@@ -152,12 +152,11 @@ describe('resourceCollection', () => {
   describe('tracing info', () => {
     it('should be processed from traced initial document', () => {
       const { lifeCycle, rawRumEvents } = setupBuilder.build()
-      lifeCycle.notify(
-        LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
         createResourceEntry({
           traceId: '1234',
-        })
-      )
+        }),
+      ])
       const traceInfo = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd!
       expect(traceInfo).toBeDefined()
       expect(traceInfo.trace_id).toBe('1234')

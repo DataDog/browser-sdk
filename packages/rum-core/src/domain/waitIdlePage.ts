@@ -113,12 +113,10 @@ export function createPageActivityObservable(
 
     subscriptions.push(
       domMutationObservable.subscribe(() => notifyPageActivity(pendingRequestsCount)),
-      lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
-        if (entry.entryType !== 'resource') {
-          return
+      lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
+        if (entries.some(({ entryType }) => entryType === 'resource')) {
+          notifyPageActivity(pendingRequestsCount)
         }
-
-        notifyPageActivity(pendingRequestsCount)
       }),
       lifeCycle.subscribe(LifeCycleEventType.REQUEST_STARTED, (startEvent) => {
         if (firstRequestIndex === undefined) {

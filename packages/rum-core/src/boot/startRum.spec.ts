@@ -227,12 +227,14 @@ describe('rum events url', () => {
     clock.tick(10)
     changeLocation('http://foo.com/?bar=qux')
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
-      entryType: 'longtask',
-      startTime: relativeNow() - 5,
-      toJSON: noop,
-      duration: 5,
-    } as RumPerformanceEntry)
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      {
+        entryType: 'longtask',
+        startTime: relativeNow() - 5,
+        toJSON: noop,
+        duration: 5,
+      } as RumPerformanceEntry,
+    ])
 
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
@@ -269,7 +271,7 @@ describe('rum events url', () => {
 
     serverRumEvents.length = 0
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_NAVIGATION_ENTRY)
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [FAKE_NAVIGATION_ENTRY])
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(serverRumEvents.length).toEqual(1)

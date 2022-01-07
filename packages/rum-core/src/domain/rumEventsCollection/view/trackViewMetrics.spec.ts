@@ -87,7 +87,7 @@ describe('rum track view metrics', () => {
 
       expect(getViewUpdateCount()).toEqual(1)
 
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_NAVIGATION_ENTRY)
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [FAKE_NAVIGATION_ENTRY])
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
       expect(getViewUpdateCount()).toEqual(2)
@@ -102,10 +102,9 @@ describe('rum track view metrics', () => {
 
       clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
 
-      lifeCycle.notify(
-        LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
-        FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING
-      )
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+        FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING,
+      ])
 
       domMutationObservable.notify()
       clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
@@ -126,10 +125,9 @@ describe('rum track view metrics', () => {
       expect(getViewUpdateCount()).toEqual(1)
 
       clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-      lifeCycle.notify(
-        LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
-        FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_BEFORE_ACTIVITY_TIMING
-      )
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+        FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_BEFORE_ACTIVITY_TIMING,
+      ])
       domMutationObservable.notify()
       clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
@@ -276,12 +274,14 @@ describe('rum track view metrics', () => {
   describe('cumulativeLayoutShift', () => {
     let isLayoutShiftSupported: boolean
     function newLayoutShift(lifeCycle: LifeCycle, { value = 0.1, hadRecentInput = false }) {
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
-        entryType: 'layout-shift',
-        startTime: relativeNow(),
-        hadRecentInput,
-        value,
-      })
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+        {
+          entryType: 'layout-shift',
+          startTime: relativeNow(),
+          hadRecentInput,
+          value,
+        },
+      ])
     }
 
     beforeEach(() => {

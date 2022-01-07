@@ -130,7 +130,7 @@ describe('initial view', () => {
       expect(getViewUpdateCount()).toEqual(1)
       expect(getViewUpdate(0).timings).toEqual({})
 
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_NAVIGATION_ENTRY)
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [FAKE_NAVIGATION_ENTRY])
 
       expect(getViewUpdateCount()).toEqual(1)
 
@@ -152,9 +152,11 @@ describe('initial view', () => {
       expect(getViewUpdateCount()).toEqual(1)
       expect(getViewUpdate(0).timings).toEqual({})
 
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_PAINT_ENTRY)
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY)
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_NAVIGATION_ENTRY)
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+        FAKE_PAINT_ENTRY,
+        FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY,
+        FAKE_NAVIGATION_ENTRY,
+      ])
       expect(getViewUpdateCount()).toEqual(1)
 
       startView()
@@ -190,9 +192,11 @@ describe('initial view', () => {
 
         expect(getViewUpdateCount()).toEqual(3)
 
-        lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_PAINT_ENTRY)
-        lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY)
-        lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_NAVIGATION_ENTRY)
+        lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+          FAKE_PAINT_ENTRY,
+          FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY,
+          FAKE_NAVIGATION_ENTRY,
+        ])
 
         clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 

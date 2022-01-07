@@ -57,8 +57,8 @@ describe('createPageActivityObservable', () => {
     pageActivityObservable.subscribe(pushEvent)
     const performanceTiming = {
       entryType: 'resource',
-    }
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, performanceTiming as RumPerformanceResourceTiming)
+    } as RumPerformanceResourceTiming
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [performanceTiming])
     expect(events).toEqual([{ isBusy: false }])
   })
 
@@ -66,11 +66,8 @@ describe('createPageActivityObservable', () => {
     pageActivityObservable.subscribe(pushEvent)
     const performanceTiming = {
       entryType: 'navigation',
-    }
-    lifeCycle.notify(
-      LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
-      performanceTiming as RumPerformanceNavigationTiming
-    )
+    } as RumPerformanceNavigationTiming
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [performanceTiming])
     expect(events).toEqual([])
   })
 

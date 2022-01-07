@@ -127,12 +127,14 @@ function trackActivityLoadingTime(
 function trackCumulativeLayoutShift(lifeCycle: LifeCycle, callback: (layoutShift: number) => void) {
   let maxClsValue = 0
   const window = slidingSessionWindow()
-  const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
-    if (entry.entryType === 'layout-shift' && !entry.hadRecentInput) {
-      window.update(entry)
-      if (window.value() > maxClsValue) {
-        maxClsValue = window.value()
-        callback(round(maxClsValue, 4))
+  const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
+    for (const entry of entries) {
+      if (entry.entryType === 'layout-shift' && !entry.hadRecentInput) {
+        window.update(entry)
+        if (window.value() > maxClsValue) {
+          maxClsValue = window.value()
+          callback(round(maxClsValue, 4))
+        }
       }
     }
   })
