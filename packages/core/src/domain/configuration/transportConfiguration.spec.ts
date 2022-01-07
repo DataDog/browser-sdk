@@ -97,9 +97,12 @@ describe('transportConfiguration', () => {
       expect(decodeURIComponent(configuration.rumEndpointBuilder.build())).not.toContain(',env:')
       expect(decodeURIComponent(configuration.rumEndpointBuilder.build())).not.toContain(',service:')
       expect(decodeURIComponent(configuration.rumEndpointBuilder.build())).not.toContain(',version:')
+      expect(decodeURIComponent(configuration.rumEndpointBuilder.build())).not.toContain(',datacenter:')
+
       expect(decodeURIComponent(configuration.logsEndpointBuilder.build())).not.toContain(',env:')
       expect(decodeURIComponent(configuration.logsEndpointBuilder.build())).not.toContain(',service:')
       expect(decodeURIComponent(configuration.logsEndpointBuilder.build())).not.toContain(',version:')
+      expect(decodeURIComponent(configuration.logsEndpointBuilder.build())).not.toContain(',datacenter:')
     })
 
     it('should be set as tags in the logs and rum endpoints', () => {
@@ -118,9 +121,12 @@ describe('transportConfiguration', () => {
 
   describe('tags', () => {
     it('should be encoded', () => {
-      const configuration = computeTransportConfiguration({ clientToken, service: 'bar:foo' }, buildEnv)
+      const configuration = computeTransportConfiguration(
+        { clientToken, service: 'bar:foo', datacenter: 'us1.prod.dog' },
+        buildEnv
+      )
       expect(configuration.rumEndpointBuilder.build()).toContain(
-        `ddtags=sdk_version%3Asome_version%2Cservice%3Abar%3Afoo`
+        `ddtags=sdk_version%3Asome_version%2Cservice%3Abar%3Afoo%2Cdatacenter%3Aus1.prod.dog`
       )
     })
   })
@@ -170,23 +176,31 @@ describe('transportConfiguration', () => {
       const configuration = computeTransportConfiguration({ clientToken, proxyUrl: 'https://www.proxy.com' }, buildEnv)
       expect(configuration.isIntakeUrl('https://www.proxy.com/foo')).toBe(false)
     })
+    ;[
+      { site: 'datadoghq.eu', intakeDomain: 'browser-intake-datadoghq.eu' },
+      { site: 'us3.datadoghq.com', intakeDomain: 'browser-intake-us3-datadoghq.com' },
+      { site: 'us5.datadoghq.com', intakeDomain: 'browser-intake-us5-datadoghq.com' },
+    ].forEach(({ site, intakeDomain }) => {
+      it(`should detect replica intake request for site ${site}`, () => {
+        const configuration = computeTransportConfiguration(
+          {
+            clientToken,
+            site,
+            replica: { clientToken },
+          },
+          buildEnv
+        )
 
-    it('should detect replica intake request', () => {
-      const configuration = computeTransportConfiguration(
-        { clientToken, site: 'datadoghq.eu', replica: { clientToken } },
-        { ...buildEnv, buildMode: BuildMode.STAGING }
-      )
-      expect(configuration.isIntakeUrl(`https://rum.browser-intake-datadoghq.eu/api/v2/rum?xxx`)).toBe(true)
-      expect(configuration.isIntakeUrl(`https://logs.browser-intake-datadoghq.eu/api/v2/logs?xxx`)).toBe(true)
-      expect(configuration.isIntakeUrl(`https://session-replay.browser-intake-datadoghq.eu/api/v2/replay?xxx`)).toBe(
-        true
-      )
+        expect(configuration.isIntakeUrl(`https://rum.${intakeDomain}/api/v2/rum?xxx`)).toBe(true)
+        expect(configuration.isIntakeUrl(`https://logs.${intakeDomain}/api/v2/logs?xxx`)).toBe(true)
+        expect(configuration.isIntakeUrl(`https://session-replay.${intakeDomain}/api/v2/replay?xxx`)).toBe(true)
 
-      expect(configuration.isIntakeUrl(`https://rum.browser-intake-datadoghq.com/api/v2/rum?xxx`)).toBe(true)
-      expect(configuration.isIntakeUrl(`https://logs.browser-intake-datadoghq.com/api/v2/logs?xxx`)).toBe(true)
-      expect(configuration.isIntakeUrl(`https://session-replay.browser-intake-datadoghq.com/api/v2/replay?xxx`)).toBe(
-        false
-      )
+        expect(configuration.isIntakeUrl(`https://rum.browser-intake-datadoghq.com/api/v2/rum?xxx`)).toBe(true)
+        expect(configuration.isIntakeUrl(`https://logs.browser-intake-datadoghq.com/api/v2/logs?xxx`)).toBe(true)
+        expect(configuration.isIntakeUrl(`https://session-replay.browser-intake-datadoghq.com/api/v2/replay?xxx`)).toBe(
+          false
+        )
+      })
     })
   })
 })
