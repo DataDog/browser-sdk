@@ -11,8 +11,9 @@ describe('buildTags', () => {
         service: 'foo',
         env: 'bar',
         version: 'baz',
+        datacenter: 'us1.prod.dog',
       } as InitConfiguration)
-    ).toEqual(['env:bar', 'service:foo', 'version:baz'])
+    ).toEqual(['env:bar', 'service:foo', 'version:baz', 'datacenter:us1.prod.dog'])
   })
 })
 

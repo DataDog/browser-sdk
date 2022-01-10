@@ -10,7 +10,6 @@ export interface TransportConfiguration {
   sessionReplayEndpointBuilder: EndpointBuilder
   internalMonitoringEndpointBuilder?: EndpointBuilder
   isIntakeUrl: (url: string) => boolean
-  // only on staging build mode
   replica?: ReplicaConfiguration
 }
 
@@ -82,7 +81,7 @@ function computeReplicaConfiguration(
   intakeEndpoints: string[],
   tags: string[]
 ): ReplicaConfiguration | undefined {
-  if (buildEnv.buildMode !== BuildMode.STAGING || initConfiguration.replica === undefined) {
+  if (!initConfiguration.replica) {
     return
   }
 
