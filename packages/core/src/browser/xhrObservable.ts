@@ -22,7 +22,6 @@ export interface XhrCompleteContext extends Omit<XhrStartContext, 'state'> {
   state: 'complete'
   duration: Duration
   status: number
-  responseText: string | undefined
 }
 
 export type XhrContext = XhrOpenContext | XhrStartContext | XhrCompleteContext
@@ -108,7 +107,6 @@ function sendXhr(this: XMLHttpRequest, observable: Observable<XhrContext>) {
     const completeContext = context as XhrCompleteContext
     completeContext.state = 'complete'
     completeContext.duration = elapsed(startContext.startClocks.timeStamp, timeStampNow())
-    completeContext.responseText = this.response as string | undefined
     completeContext.status = this.status
     observable.notify({ ...completeContext })
   })
