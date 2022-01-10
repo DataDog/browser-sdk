@@ -10,9 +10,9 @@ describe('bridge present', () => {
       html`
         <button>click me</button>
         <script>
-          const btn = document.querySelector('button')
-          btn.addEventListener('click', () => {
-            btn.setAttribute('data-clicked', 'true')
+          const button = document.querySelector('button')
+          button.addEventListener('click', () => {
+            button.setAttribute('data-clicked', 'true')
           })
         </script>
       `
