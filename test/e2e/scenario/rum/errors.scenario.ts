@@ -9,8 +9,8 @@ function createBody(errorGenerator: string) {
   return html`
     <button>click me</button>
     <script>
-      const btn = document.querySelector('button')
-      btn.addEventListener('click', function handler() {
+      const button = document.querySelector('button')
+      button.addEventListener('click', function handler() {
         ${errorGenerator}
       })
       function foo() {
