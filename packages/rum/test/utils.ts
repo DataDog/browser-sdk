@@ -212,7 +212,7 @@ export function findAllIncrementalSnapshots(segment: Segment, source: Incrementa
 
 // Returns the textContent of a ElementNode, if any.
 export function findTextContent(elem: ElementNode): string | null {
-  const text = elem.childNodes.find((child) => child.type === NodeType.Text)
+  const text = elem.childNodes.find((child) => child.type === NodeType.Text) as TextNode
   return text ? text.textContent : null
 }
 
@@ -228,12 +228,14 @@ export function findElementWithTagName(root: SerializedNodeWithId, tagName: stri
 
 // Returns the first TextNode with the given content contained in a node, if any.
 export function findTextNode(root: SerializedNodeWithId, textContent: string) {
-  return findNode(root, (node) => isTextNode(node) && node.textContent === textContent)
+  return findNode(root, (node) => isTextNode(node) && node.textContent === textContent) as
+    | (TextNode & { id: number })
+    | null
 }
 
 // Returns the first ElementNode matching the predicate
 export function findElement(root: SerializedNodeWithId, predicate: (node: ElementNode) => boolean) {
-  return findNode(root, (node) => isElementNode(node) && predicate(node))
+  return findNode(root, (node) => isElementNode(node) && predicate(node)) as (ElementNode & { id: number }) | null
 }
 
 // Returns the first SerializedNodeWithId matching the predicate
@@ -365,7 +367,7 @@ export function createMutationPayloadValidator(initialDocument: SerializedNodeWi
     return new ExpectedNode({
       ...node,
       id: maxNodeId,
-    })
+    } as any)
   }
 
   return {

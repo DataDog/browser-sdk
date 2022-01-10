@@ -58,7 +58,7 @@ describe('startRecording', () => {
           defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
         })
         .beforeBuild(({ lifeCycle, configuration, parentContexts, sessionManager }) => {
-          const recording = startRecording(lifeCycle, configuration, sessionManager, parentContexts, worker)
+          const recording = startRecording(lifeCycle, configuration, sessionManager, parentContexts, worker!)
           stopRecording = recording ? recording.stop : noop
           return { stop: stopRecording }
         })
