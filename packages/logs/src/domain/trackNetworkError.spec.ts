@@ -183,12 +183,47 @@ describe('computeFetchResponseText', () => {
     })
   })
 
-  it('truncates fetch response text', (done) => {
+  it('reads a limited amount of bytes from the response', (done) => {
+    // Creates a response that stream "f" indefinitely, one byte at a time
+    const cancelSpy = jasmine.createSpy()
+    const pullSpy = jasmine.createSpy().and.callFake((controller: ReadableStreamDefaultController<Uint8Array>) => {
+      controller.enqueue(new TextEncoder().encode('f'))
+    })
+    const response = new ResponseStub({
+      body: new ReadableStream({
+        pull: pullSpy,
+        cancel: cancelSpy,
+      }),
+    })
+
+    computeFetchResponseText(response, CONFIGURATION, () => {
+      expect(pullSpy).toHaveBeenCalledTimes(
+        CONFIGURATION.requestErrorResponseLengthLimit + 1 // computeFetchResponseText reads one more byte than necessary
+      )
+      expect(cancelSpy).toHaveBeenCalledTimes(1)
+      done()
+    })
+  })
+
+  it('truncates the response if its size is greater than the limit', (done) => {
+    const text = 'foobar'
     computeFetchResponseText(
-      new ResponseStub({ responseText: 'Lorem ipsum dolor sit amet orci aliquam.' }),
-      { ...CONFIGURATION, requestErrorResponseLengthLimit: 32 },
-      (responseText) => {
-        expect(responseText).toBe('Lorem ipsum dolor sit amet orci ...')
+      new ResponseStub({ responseText: text }),
+      { ...CONFIGURATION, requestErrorResponseLengthLimit: text.length - 1 },
+      (responseData) => {
+        expect(responseData).toBe('fooba...')
+        done()
+      }
+    )
+  })
+
+  it('does not truncate the response if its size is equal to the limit', (done) => {
+    const text = 'foo'
+    computeFetchResponseText(
+      new ResponseStub({ responseText: text }),
+      { ...CONFIGURATION, requestErrorResponseLengthLimit: text.length },
+      (responseData) => {
+        expect(responseData).toBe(text)
         done()
       }
     )

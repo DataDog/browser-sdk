@@ -144,15 +144,33 @@ export interface ResponseStubOptions {
   type?: ResponseType
   responseText?: string
   responseTextError?: Error
+  body?: ReadableStream<Uint8Array>
 }
 function notYetImplemented(): never {
   throw new Error('not yet implemented')
 }
 
 export class ResponseStub implements Response {
-  private _bodyUsed = false
+  private _body: ReadableStream<Uint8Array> | undefined
 
-  constructor(private options: Readonly<ResponseStubOptions>) {}
+  constructor(private options: Readonly<ResponseStubOptions>) {
+    if (this.options.body) {
+      this._body = this.options.body
+    } else if (this.options.responseTextError !== undefined) {
+      this._body = new ReadableStream({
+        start: (controller) => {
+          controller.error(this.options.responseTextError)
+        },
+      })
+    } else if (this.options.responseText !== undefined) {
+      this._body = new ReadableStream({
+        start: (controller) => {
+          controller.enqueue(new TextEncoder().encode(this.options.responseText))
+          controller.close()
+        },
+      })
+    }
+  }
 
   get status() {
     return this.options.status ?? 200
@@ -167,19 +185,11 @@ export class ResponseStub implements Response {
   }
 
   get bodyUsed() {
-    return this._bodyUsed
+    return this._body ? this._body.locked : false
   }
 
-  text() {
-    if (this.bodyUsed) {
-      return Promise.reject(new TypeError("Failed to execute 'text' on 'Response': body stream already read"))
-    }
-    this._bodyUsed = true
-    if (this.options.responseTextError !== undefined) {
-      return Promise.reject(this.options.responseTextError)
-    }
-
-    return Promise.resolve(this.options.responseText ?? '')
+  get body() {
+    return this._body || null
   }
 
   clone() {
@@ -192,6 +202,7 @@ export class ResponseStub implements Response {
   // Partial implementation, feel free to implement
   /* eslint-disable @typescript-eslint/member-ordering */
   arrayBuffer = notYetImplemented
+  text = notYetImplemented
   blob = notYetImplemented
   formData = notYetImplemented
   json = notYetImplemented
@@ -212,9 +223,6 @@ export class ResponseStub implements Response {
     return notYetImplemented()
   }
   get url() {
-    return notYetImplemented()
-  }
-  get body() {
     return notYetImplemented()
   }
 }
