@@ -14,25 +14,27 @@ import { RumConfiguration, validateAndBuildRumConfiguration } from './configurat
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { RUM_SESSION_KEY, RumTrackingType, startRumSessionManager } from './rumSessionManager'
 
-function setupDraws({ tracked, trackedWithReplay }: { tracked?: boolean; trackedWithReplay?: boolean }) {
-  spyOn(Math, 'random').and.returnValues(tracked ? 0 : 1, trackedWithReplay ? 0 : 1)
-}
-
 describe('rum session manager', () => {
   const DURATION = 123456
-  const configuration: RumConfiguration = {
-    ...validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!,
-    sampleRate: 50,
-    replaySampleRate: 50,
-  }
+  let configuration: RumConfiguration
   let lifeCycle: LifeCycle
   let expireSessionSpy: jasmine.Spy
   let renewSessionSpy: jasmine.Spy
   let clock: Clock
 
+  function setupDraws({ tracked, trackedWithReplay }: { tracked?: boolean; trackedWithReplay?: boolean }) {
+    configuration.sampleRate = tracked ? 100 : 0
+    configuration.replaySampleRate = trackedWithReplay ? 100 : 0
+  }
+
   beforeEach(() => {
     if (isIE()) {
       pending('no full rum support')
+    }
+    configuration = {
+      ...validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!,
+      sampleRate: 50,
+      replaySampleRate: 50,
     }
     clock = mockClock()
     expireSessionSpy = jasmine.createSpy('expireSessionSpy')
