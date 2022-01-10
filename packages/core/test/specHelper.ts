@@ -106,27 +106,14 @@ export function stubFetch(): FetchStubManager {
 
   window.fetch = (() => {
     pendingRequests += 1
-    let resolve: (response: ResponseStub) => unknown
+    let resolve: (response: Response) => unknown
     let reject: (error: Error) => unknown
     const promise = (new Promise((res, rej) => {
       resolve = res
       reject = rej
     }) as unknown) as FetchStubPromise
-    promise.resolveWith = (response: ResponseStub) => {
-      resolve({
-        ...response,
-        clone: () => {
-          const cloned = {
-            text: () => {
-              if (response.responseTextError) {
-                return Promise.reject(response.responseTextError)
-              }
-              return Promise.resolve(response.responseText)
-            },
-          }
-          return cloned as Response
-        },
-      })
+    promise.resolveWith = (responseOptions: ResponseStubOptions) => {
+      resolve(new ResponseStub(responseOptions))
       onRequestEnd()
     }
     promise.rejectWith = (error: Error) => {
@@ -151,15 +138,81 @@ export function stubFetch(): FetchStubManager {
   }
 }
 
-export interface ResponseStub extends Partial<Response> {
+export interface ResponseStubOptions {
+  status?: number
+  method?: string
+  type?: ResponseType
   responseText?: string
   responseTextError?: Error
+}
+function todo(): never {
+  throw new Error('not yet implemented')
+}
+
+class ResponseStub implements Response {
+  constructor(private options: Readonly<ResponseStubOptions>) {}
+
+  get status() {
+    return this.options.status ?? 200
+  }
+
+  get method() {
+    return this.options.method ?? 'GET'
+  }
+
+  get type() {
+    return this.options.type ?? 'basic'
+  }
+
+  text() {
+    if (this.options.responseTextError !== undefined) {
+      return Promise.reject(this.options.responseTextError)
+    }
+
+    return Promise.resolve(this.options.responseText ?? '')
+  }
+
+  clone() {
+    return new ResponseStub(this.options)
+  }
+
+  // Partial implementation, feel free to implement
+  /* eslint-disable @typescript-eslint/member-ordering */
+  arrayBuffer = todo
+  blob = todo
+  formData = todo
+  json = todo
+  /* eslint-enable @typescript-eslint/member-ordering */
+  get ok() {
+    return todo()
+  }
+  get headers() {
+    return todo()
+  }
+  get redirected() {
+    return todo()
+  }
+  get statusText() {
+    return todo()
+  }
+  get trailer() {
+    return todo()
+  }
+  get url() {
+    return todo()
+  }
+  get body() {
+    return todo()
+  }
+  get bodyUsed() {
+    return todo()
+  }
 }
 
 export type FetchStub = (input: RequestInfo, init?: RequestInit) => FetchStubPromise
 
 export interface FetchStubPromise extends Promise<Response> {
-  resolveWith: (response: ResponseStub) => void
+  resolveWith: (response: ResponseStubOptions) => void
   rejectWith: (error: Error) => void
   abort: () => void
 }
