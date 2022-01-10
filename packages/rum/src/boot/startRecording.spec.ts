@@ -5,7 +5,7 @@ import { createRumSessionManagerMock, RumSessionManagerMock } from '../../../rum
 import { createNewEvent } from '../../../core/test/specHelper'
 
 import { setup, TestSetupBuilder } from '../../../rum-core/test/specHelper'
-import { collectAsyncCalls, addRecordsPerFullSnapshot } from '../../test/utils'
+import { collectAsyncCalls, recordsPerFullSnapshotPlus } from '../../test/utils'
 import { setMaxSegmentSize, startDeflateWorker } from '../domain/segmentCollection'
 
 import { Segment, RecordType } from '../types'
@@ -83,7 +83,7 @@ describe('startRecording', () => {
         creation_reason: 'init',
         end: jasmine.stringMatching(/^\d{13}$/),
         has_full_snapshot: 'true',
-        records_count: addRecordsPerFullSnapshot(0).toString(),
+        records_count: recordsPerFullSnapshotPlus(0).toString(),
         segment: jasmine.any(File),
         'session.id': 'session-id',
         start: jasmine.stringMatching(/^\d{13}$/),
@@ -106,7 +106,7 @@ describe('startRecording', () => {
     }
 
     waitRequestSendCalls(1, (calls) => {
-      expect(getRequestData(calls.first()).records_count).toBe(addRecordsPerFullSnapshot(inputCount).toString())
+      expect(getRequestData(calls.first()).records_count).toBe(recordsPerFullSnapshotPlus(inputCount).toString())
       expectNoExtraRequestSendCalls(done)
     })
   })
@@ -123,7 +123,7 @@ describe('startRecording', () => {
     flushSegment(lifeCycle)
 
     waitRequestSendCalls(1, (calls) => {
-      expect(getRequestData(calls.first()).records_count).toBe(addRecordsPerFullSnapshot(1).toString())
+      expect(getRequestData(calls.first()).records_count).toBe(recordsPerFullSnapshotPlus(1).toString())
       expectNoExtraRequestSendCalls(done)
     })
   })
@@ -220,7 +220,7 @@ describe('startRecording', () => {
       flushSegment(lifeCycle)
 
       waitRequestSendCalls(1, (calls) => {
-        expect(getRequestData(calls.first()).records_count).toBe(addRecordsPerFullSnapshot(1).toString())
+        expect(getRequestData(calls.first()).records_count).toBe(recordsPerFullSnapshotPlus(1).toString())
         expectNoExtraRequestSendCalls(done)
       })
     })
@@ -233,7 +233,7 @@ describe('startRecording', () => {
       flushSegment(lifeCycle)
 
       waitRequestSendCalls(1, (calls) => {
-        expect(getRequestData(calls.first()).records_count).toBe(addRecordsPerFullSnapshot(0).toString())
+        expect(getRequestData(calls.first()).records_count).toBe(recordsPerFullSnapshotPlus(0).toString())
         expectNoExtraRequestSendCalls(done)
       })
     })

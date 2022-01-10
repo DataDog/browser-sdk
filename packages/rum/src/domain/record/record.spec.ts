@@ -1,6 +1,6 @@
 import { DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
 import { Clock, createNewEvent } from '../../../../core/test/specHelper'
-import { collectAsyncCalls, addRecordsPerFullSnapshot } from '../../../test/utils'
+import { collectAsyncCalls, recordsPerFullSnapshotPlus } from '../../../test/utils'
 import { RecordType, IncrementalSource, RawRecord, IncrementalSnapshotRecord, FocusRecord } from '../../types'
 import { record } from './record'
 import { RecordAPI } from './types'
@@ -49,7 +49,7 @@ describe('record', () => {
       styleSheet.insertRule('body { color: #ccc; }')
     }, 10)
 
-    waitEmitCalls(addRecordsPerFullSnapshot(6), () => {
+    waitEmitCalls(recordsPerFullSnapshotPlus(6), () => {
       const records = getEmittedRecords()
       let i = 0
 
@@ -115,7 +115,7 @@ describe('record', () => {
 
     recordApi.takeFullSnapshot()
 
-    waitEmitCalls(addRecordsPerFullSnapshot(5), () => {
+    waitEmitCalls(recordsPerFullSnapshotPlus(1) + recordsPerFullSnapshotPlus(0), () => {
       const records = getEmittedRecords()
       let i = 0
 
@@ -131,10 +131,6 @@ describe('record', () => {
       expect(records[i++].type).toEqual(RecordType.Meta)
       expect(records[i++].type).toEqual(RecordType.Focus)
       expect(records[i++].type).toEqual(RecordType.FullSnapshot)
-
-      if (window.visualViewport) {
-        expect(records[i++].type).toEqual(RecordType.VisualViewport)
-      }
 
       expectNoExtraEmitCalls(done)
     })
