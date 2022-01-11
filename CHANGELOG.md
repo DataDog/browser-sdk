@@ -16,6 +16,14 @@
 
 ---
 
+## v4.1.0
+
+- 🐛 [RUMF-1143] make sure to drop LCP timings if the page was previously hidden ([#1259](https://github.com/DataDog/browser-sdk/pull/1259))
+- ⚗🐛 [RUMF-1079] add lock mechanism for session cookie writes ([#1230](https://github.com/DataDog/browser-sdk/pull/1230))
+- ✨ [RUMF-1119] Implement dual ship for other orgs ([#1248](https://github.com/DataDog/browser-sdk/pull/1248))
+- ✨ [RUMF-1109] Add event rate limiters for loggers ([#1243](https://github.com/DataDog/browser-sdk/pull/1243))
+- ⚡️ [REPLAY-565] ♻️ Remove URL "relative to absolute" transformation ([#1244](https://github.com/DataDog/browser-sdk/pull/1244))
+
 ## v4.0.1
 
 - 🐛 let the backend to most of the tags sanitization ([#1252](https://github.com/DataDog/browser-sdk/pull/1252))
