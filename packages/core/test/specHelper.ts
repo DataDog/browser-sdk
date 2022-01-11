@@ -145,7 +145,7 @@ export interface ResponseStubOptions {
   responseText?: string
   responseTextError?: Error
 }
-function todo(): never {
+function notYetImplemented(): never {
   throw new Error('not yet implemented')
 }
 
@@ -191,31 +191,31 @@ export class ResponseStub implements Response {
 
   // Partial implementation, feel free to implement
   /* eslint-disable @typescript-eslint/member-ordering */
-  arrayBuffer = todo
-  blob = todo
-  formData = todo
-  json = todo
+  arrayBuffer = notYetImplemented
+  blob = notYetImplemented
+  formData = notYetImplemented
+  json = notYetImplemented
   /* eslint-enable @typescript-eslint/member-ordering */
   get ok() {
-    return todo()
+    return notYetImplemented()
   }
   get headers() {
-    return todo()
+    return notYetImplemented()
   }
   get redirected() {
-    return todo()
+    return notYetImplemented()
   }
   get statusText() {
-    return todo()
+    return notYetImplemented()
   }
   get trailer() {
-    return todo()
+    return notYetImplemented()
   }
   get url() {
-    return todo()
+    return notYetImplemented()
   }
   get body() {
-    return todo()
+    return notYetImplemented()
   }
 }
 
