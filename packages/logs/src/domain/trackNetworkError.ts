@@ -9,6 +9,7 @@ import {
   XhrCompleteContext,
   computeStackTrace,
   toStackTraceString,
+  monitor,
 } from '@datadog/browser-core'
 import { LogsConfiguration } from './configuration'
 
@@ -71,8 +72,8 @@ export function computeResponseData(
       .clone()
       .text()
       .then(
-        (text) => callback(text),
-        (error) => callback(`Unable to retrieve response: ${error as string}`)
+        monitor((text) => callback(text)),
+        monitor((error) => callback(`Unable to retrieve response: ${error as string}`))
       )
   } else if (error) {
     callback(truncateResponseText(toStackTraceString(computeStackTrace(error)), configuration))
