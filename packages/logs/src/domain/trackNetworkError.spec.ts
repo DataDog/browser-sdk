@@ -162,6 +162,14 @@ describe('computeResponseData', () => {
         }
       )
     })
+
+    it('does not consume the response body', (done) => {
+      const response = new ResponseStub({ responseText: 'foo' })
+      computeResponseData({ response }, CONFIGURATION, () => {
+        expect(response.bodyUsed).toBe(false)
+        done()
+      })
+    })
   })
 
   describe('from requests ending with an error', () => {

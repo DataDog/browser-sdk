@@ -150,6 +150,8 @@ function todo(): never {
 }
 
 export class ResponseStub implements Response {
+  private _bodyUsed = false
+
   constructor(private options: Readonly<ResponseStubOptions>) {}
 
   get status() {
@@ -164,7 +166,15 @@ export class ResponseStub implements Response {
     return this.options.type ?? 'basic'
   }
 
+  get bodyUsed() {
+    return this._bodyUsed
+  }
+
   text() {
+    if (this.bodyUsed) {
+      return Promise.reject(new TypeError("Failed to execute 'text' on 'Response': body stream already read"))
+    }
+    this._bodyUsed = true
     if (this.options.responseTextError !== undefined) {
       return Promise.reject(this.options.responseTextError)
     }
@@ -173,6 +183,9 @@ export class ResponseStub implements Response {
   }
 
   clone() {
+    if (this.bodyUsed) {
+      throw new TypeError("Failed to execute 'clone' on 'Response': Response body is already used")
+    }
     return new ResponseStub(this.options)
   }
 
@@ -202,9 +215,6 @@ export class ResponseStub implements Response {
     return todo()
   }
   get body() {
-    return todo()
-  }
-  get bodyUsed() {
     return todo()
   }
 }
