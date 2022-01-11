@@ -149,7 +149,7 @@ function todo(): never {
   throw new Error('not yet implemented')
 }
 
-class ResponseStub implements Response {
+export class ResponseStub implements Response {
   constructor(private options: Readonly<ResponseStubOptions>) {}
 
   get status() {
