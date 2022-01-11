@@ -11,7 +11,7 @@ export const SESSION_COOKIE_NAME = '_dd_s'
 
 // arbitrary values
 export const LOCK_RETRY_DELAY = 10
-export const MAX_NUMBER_OF_LOCK_RETRIES = 50
+export const MAX_NUMBER_OF_LOCK_RETRIES = 100
 
 type Operations = {
   options: CookieOptions
