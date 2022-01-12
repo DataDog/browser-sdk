@@ -1,6 +1,6 @@
 import { DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
 import { Clock, createNewEvent } from '../../../../core/test/specHelper'
-import { collectAsyncCalls, recordsPerFullSnapshotPlus } from '../../../test/utils'
+import { collectAsyncCalls, recordsPerFullSnapshot } from '../../../test/utils'
 import { RecordType, IncrementalSource, RawRecord, IncrementalSnapshotRecord, FocusRecord } from '../../types'
 import { record } from './record'
 import { RecordAPI } from './types'
@@ -49,7 +49,7 @@ describe('record', () => {
       styleSheet.insertRule('body { color: #ccc; }')
     }, 10)
 
-    waitEmitCalls(recordsPerFullSnapshotPlus(6), () => {
+    waitEmitCalls(recordsPerFullSnapshot() + 6, () => {
       const records = getEmittedRecords()
       let i = 0
 
@@ -115,7 +115,7 @@ describe('record', () => {
 
     recordApi.takeFullSnapshot()
 
-    waitEmitCalls(recordsPerFullSnapshotPlus(1) + recordsPerFullSnapshotPlus(0), () => {
+    waitEmitCalls(1 + 2 * recordsPerFullSnapshot(), () => {
       const records = getEmittedRecords()
       let i = 0
 

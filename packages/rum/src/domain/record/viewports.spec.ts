@@ -6,10 +6,10 @@ function isMobileSafari12() {
 
 describe('layout viewport', () => {
   const addVerticalScrollBar = () => {
-    document.body.style.setProperty('margin-bottom', '2000px')
+    document.body.style.setProperty('margin-bottom', '5000px')
   }
   const addHorizontalScrollBar = () => {
-    document.body.style.setProperty('margin-bottom', '2000px')
+    document.body.style.setProperty('margin-right', '5000px')
   }
 
   afterEach(() => {

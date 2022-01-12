@@ -473,8 +473,6 @@ export function createMutationPayloadValidatorFromSegment(segment: Segment) {
 /**
  * Simplify asserting record lengths across multiple devices when not all record types are supported
  */
-export const recordsPerFullSnapshotPlus = (otherRecordsCount: number) => {
+export const recordsPerFullSnapshot = () =>
   // Meta, Focus, FullSnapshot, VisualViewport (support limited)
-  const recordsPerFullSnapshot = window.visualViewport ? 4 : 3
-  return recordsPerFullSnapshot + otherRecordsCount
-}
+  window.visualViewport ? 4 : 3

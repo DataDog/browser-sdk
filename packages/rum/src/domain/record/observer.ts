@@ -168,20 +168,11 @@ function initScrollObserver(cb: ScrollCallback, defaultPrivacyLevel: DefaultPriv
       }
       const id = getSerializedNodeId(target)
       if (target === document) {
-        if (window.visualViewport) {
-          cb({
-            id,
-            x: getScrollX(),
-            y: getScrollY(),
-          })
-        } else {
-          const scrollEl = (document.scrollingElement || document.documentElement)!
-          cb({
-            id,
-            x: scrollEl.scrollLeft,
-            y: scrollEl.scrollTop,
-          })
-        }
+        cb({
+          id,
+          x: getScrollX(),
+          y: getScrollY(),
+        })
       } else {
         cb({
           id,
