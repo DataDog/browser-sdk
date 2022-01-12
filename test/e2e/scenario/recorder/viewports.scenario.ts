@@ -138,7 +138,7 @@ const isGestureUnsupported = () => {
   const { capabilities } = browser
   return (
     capabilities.browserName === 'firefox' ||
-    capabilities.browserName === 'Safari' ||
+    capabilities.browserName === 'Safari 12.0' ||
     capabilities.browserName === 'msedge' ||
     capabilities.platformName === 'windows' ||
     capabilities.platformName === 'linux'
