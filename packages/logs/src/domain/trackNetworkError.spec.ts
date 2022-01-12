@@ -2,7 +2,12 @@ import { isIE, Observable, RawError } from '@datadog/browser-core'
 import { FetchStub, FetchStubManager, ResponseStub, SPEC_ENDPOINTS, stubFetch } from '../../../core/test/specHelper'
 import { LogsConfiguration } from './configuration'
 
-import { computeResponseData, trackNetworkError } from './trackNetworkError'
+import {
+  computeFetchErrorText,
+  computeFetchResponseText,
+  computeXhrResponseData,
+  trackNetworkError,
+} from './trackNetworkError'
 
 const CONFIGURATION = {
   requestErrorResponseLengthLimit: 64,
@@ -118,91 +123,73 @@ describe('network error tracker', () => {
   })
 })
 
-describe('computeResponseData', () => {
-  describe('from XHR', () => {
-    it('computes response text from XHR', (done) => {
-      const xhr = { response: 'foo' } as XMLHttpRequest
-      computeResponseData({ xhr }, CONFIGURATION, (responseData) => {
-        expect(responseData).toBe('foo')
-        done()
-      })
-    })
+describe('computeXhrResponseData', () => {
+  it('computes response text from XHR', () => {
+    const xhr = { response: 'foo' } as XMLHttpRequest
+    expect(computeXhrResponseData(xhr, CONFIGURATION)).toBe('foo')
+  })
 
-    it('return the response value directly if it is not a string', (done) => {
-      const xhr = { response: { foo: 'bar' } } as XMLHttpRequest
-      computeResponseData({ xhr }, CONFIGURATION, (responseData) => {
-        expect(responseData).toEqual({ foo: 'bar' })
-        done()
-      })
+  it('return the response value directly if it is not a string', () => {
+    const xhr = { response: { foo: 'bar' } } as XMLHttpRequest
+    expect(computeXhrResponseData(xhr, CONFIGURATION)).toEqual({ foo: 'bar' })
+  })
+
+  it('truncates xhr response text', () => {
+    const xhr = { response: 'Lorem ipsum dolor sit amet orci aliquam.' } as XMLHttpRequest
+    expect(computeXhrResponseData(xhr, { ...CONFIGURATION, requestErrorResponseLengthLimit: 32 })).toBe(
+      'Lorem ipsum dolor sit amet orci ...'
+    )
+  })
+})
+
+describe('computeFetchResponseText', () => {
+  beforeEach(() => {
+    if (isIE()) {
+      pending('IE does not support the fetch API')
+    }
+  })
+
+  it('computes response text from Response objects', (done) => {
+    computeFetchResponseText(new ResponseStub({ responseText: 'foo' }), CONFIGURATION, (responseText) => {
+      expect(responseText).toBe('foo')
+      done()
     })
   })
 
-  describe('from Response objects', () => {
-    beforeEach(() => {
-      if (isIE()) {
-        pending('IE does not support the fetch API')
+  // https://fetch.spec.whatwg.org/#concept-body-consume-body
+  it('computes response text from Response objects failing to retrieve text', (done) => {
+    computeFetchResponseText(
+      new ResponseStub({ responseTextError: new Error('locked') }),
+      CONFIGURATION,
+      (responseText) => {
+        expect(responseText).toBe('Unable to retrieve response: Error: locked')
+        done()
       }
-    })
+    )
+  })
 
-    it('computes response text from Response objects', (done) => {
-      computeResponseData({ response: new ResponseStub({ responseText: 'foo' }) }, CONFIGURATION, (responseData) => {
-        expect(responseData).toBe('foo')
-        done()
-      })
-    })
-
-    // https://fetch.spec.whatwg.org/#concept-body-consume-body
-    it('computes response text from Response objects failing to retrieve text', (done) => {
-      computeResponseData(
-        { response: new ResponseStub({ responseTextError: new Error('locked') }) },
-        CONFIGURATION,
-        (responseData) => {
-          expect(responseData).toBe('Unable to retrieve response: Error: locked')
-          done()
-        }
-      )
-    })
-
-    it('does not consume the response body', (done) => {
-      const response = new ResponseStub({ responseText: 'foo' })
-      computeResponseData({ response }, CONFIGURATION, () => {
-        expect(response.bodyUsed).toBe(false)
-        done()
-      })
+  it('does not consume the response body', (done) => {
+    const response = new ResponseStub({ responseText: 'foo' })
+    computeFetchResponseText(response, CONFIGURATION, () => {
+      expect(response.bodyUsed).toBe(false)
+      done()
     })
   })
 
-  describe('from requests ending with an error', () => {
-    it('computes response text from requests ending as an error', (done) => {
-      computeResponseData({ error: new Error('fetch error') }, CONFIGURATION, (responseData) => {
-        expect(responseData).toContain('Error: fetch error')
+  it('truncates fetch response text', (done) => {
+    computeFetchResponseText(
+      new ResponseStub({ responseText: 'Lorem ipsum dolor sit amet orci aliquam.' }),
+      { ...CONFIGURATION, requestErrorResponseLengthLimit: 32 },
+      (responseText) => {
+        expect(responseText).toBe('Lorem ipsum dolor sit amet orci ...')
         done()
-      })
-    })
+      }
+    )
   })
+})
 
-  describe('fallback and formatting', () => {
-    it("calls the callback even if it can't compute a response data from anything", (done) => {
-      computeResponseData({}, CONFIGURATION, (responseData) => {
-        expect(responseData).toBeUndefined()
-        done()
-      })
-    })
-
-    it('calls the callback even if the response is empty', (done) => {
-      const xhr = { response: '' } as XMLHttpRequest
-      computeResponseData({ xhr }, CONFIGURATION, (responseData) => {
-        expect(responseData).toBe('')
-        done()
-      })
-    })
-
-    it('truncates error response text', (done) => {
-      const xhr = { response: 'Lorem ipsum dolor sit amet orci aliquam.' } as XMLHttpRequest
-      computeResponseData({ xhr }, { ...CONFIGURATION, requestErrorResponseLengthLimit: 32 }, (responseData) => {
-        expect(responseData).toBe('Lorem ipsum dolor sit amet orci ...')
-        done()
-      })
-    })
+describe('computeFetchErrorText', () => {
+  it('computes response text from requests ending as an error', () => {
+    expect(computeFetchErrorText(new Error('fetch error'), CONFIGURATION)).toContain('Error: fetch error')
   })
 })

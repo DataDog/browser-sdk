@@ -27,18 +27,26 @@ export function trackNetworkError(configuration: LogsConfiguration, errorObserva
 
   function handleCompleteRequest(type: RequestType, request: XhrCompleteContext | FetchCompleteContext) {
     if (!configuration.isIntakeUrl(request.url) && (isRejected(request) || isServerError(request))) {
-      computeResponseData(request, configuration, (responseData) => {
-        errorObservable.notify({
-          message: `${format(type)} error ${request.method} ${request.url}`,
-          resource: {
-            method: request.method,
-            statusCode: request.status,
-            url: request.url,
-          },
-          source: ErrorSource.NETWORK,
-          stack: responseData || 'Failed to load',
-          startClocks: request.startClocks,
-        })
+      if ('xhr' in request) {
+        onResponseDataAvailable(computeXhrResponseData(request.xhr, configuration))
+      } else if (request.response) {
+        computeFetchResponseText(request.response, configuration, onResponseDataAvailable)
+      } else if (request.error) {
+        onResponseDataAvailable(computeFetchErrorText(request.error, configuration))
+      }
+    }
+
+    function onResponseDataAvailable(responseData: any) {
+      errorObservable.notify({
+        message: `${format(type)} error ${request.method} ${request.url}`,
+        resource: {
+          method: request.method,
+          statusCode: request.status,
+          url: request.url,
+        },
+        source: ErrorSource.NETWORK,
+        stack: responseData || 'Failed to load',
+        startClocks: request.startClocks,
       })
     }
   }
@@ -51,36 +59,35 @@ export function trackNetworkError(configuration: LogsConfiguration, errorObserva
   }
 }
 
-// TODO: ideally, computeResponseData should always call the `callback` with a string instead of
-// `any`. But to keep retrocompatibility, in the case of XHR with a `responseType` different than
-// "text", the response data should be whatever `xhr.response` is. This is a bit confusing as Logs
-// event 'stack' is expected to be a string. This should be changed in a future major version as it
-// could be a breaking change.
-export function computeResponseData(
-  { xhr, response, error }: { xhr?: XMLHttpRequest; response?: Response; error?: unknown },
-  configuration: LogsConfiguration,
-  callback: (responseData?: any) => void
-) {
-  if (xhr) {
-    if (typeof xhr.response === 'string') {
-      callback(truncateResponseText(xhr.response, configuration))
-    } else {
-      callback(xhr.response)
-    }
-  } else if (response) {
-    response
-      .clone()
-      .text()
-      .then(
-        monitor((text) => callback(text)),
-        monitor((error) => callback(`Unable to retrieve response: ${error as string}`))
-      )
-  } else if (error) {
-    callback(truncateResponseText(toStackTraceString(computeStackTrace(error)), configuration))
-  } else {
-    // This case should not happen in practice, but better safe than sorry.
-    callback()
+// TODO: ideally, computeXhrResponseData should always return a string instead of `any`. But to keep
+// backward compatibility, in the case of XHR with a `responseType` different than "text", the
+// response data should be whatever `xhr.response` is. This is a bit confusing as Logs event 'stack'
+// is expected to be a string. This should be changed in a future major version as it could be a
+// breaking change.
+export function computeXhrResponseData(xhr: XMLHttpRequest, configuration: LogsConfiguration): any {
+  if (typeof xhr.response === 'string') {
+    return truncateResponseText(xhr.response, configuration)
   }
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  return xhr.response
+}
+
+export function computeFetchErrorText(error: Error, configuration: LogsConfiguration) {
+  return truncateResponseText(toStackTraceString(computeStackTrace(error)), configuration)
+}
+
+export function computeFetchResponseText(
+  response: Response,
+  configuration: LogsConfiguration,
+  callback: (responseText?: string) => void
+) {
+  response
+    .clone()
+    .text()
+    .then(
+      monitor((text) => callback(truncateResponseText(text, configuration))),
+      monitor((error) => callback(`Unable to retrieve response: ${error as string}`))
+    )
 }
 
 function isRejected(request: { status: number; responseType?: string }) {
