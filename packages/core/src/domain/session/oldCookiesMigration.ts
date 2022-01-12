@@ -1,7 +1,7 @@
 import type { CookieOptions } from '../../browser/cookie'
 import { getCookie } from '../../browser/cookie'
 import type { SessionState } from './sessionStore'
-import { SESSION_COOKIE_NAME, persistSession } from './sessionStore'
+import { SESSION_COOKIE_NAME, persistSession } from './sessionCookieStore'
 
 export const OLD_SESSION_COOKIE_NAME = '_dd'
 export const OLD_RUM_COOKIE_NAME = '_dd_r'

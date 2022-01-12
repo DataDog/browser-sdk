@@ -5,12 +5,8 @@ import { getCookie, setCookie, COOKIE_ACCESS_DELAY } from '../../browser/cookie'
 import type { MonitoringMessage } from '../internalMonitoring'
 import { startFakeInternalMonitoring, resetInternalMonitoring } from '../internalMonitoring'
 import type { SessionStore } from './sessionStore'
-import {
-  startSessionStore,
-  SESSION_COOKIE_NAME,
-  SESSION_EXPIRATION_DELAY,
-  SESSION_TIME_OUT_DELAY,
-} from './sessionStore'
+import { startSessionStore, SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionStore'
+import { SESSION_COOKIE_NAME } from './sessionCookieStore'
 
 enum FakeTrackingType {
   TRACKED = 'tracked',

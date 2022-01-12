@@ -41,9 +41,6 @@ export interface RumConfiguration extends Configuration {
   replaySampleRate: number
   trackInteractions: boolean
   trackViewsManually: boolean
-
-  // Event limits
-  maxActionsPerMinute: number
 }
 
 export function validateAndBuildRumConfiguration(
@@ -87,7 +84,5 @@ export function validateAndBuildRumConfiguration(
     defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
       ? initConfiguration.defaultPrivacyLevel
       : DefaultPrivacyLevel.MASK_USER_INPUT,
-
-    maxActionsPerMinute: 3000,
   }
 }

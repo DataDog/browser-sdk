@@ -16,6 +16,21 @@
 
 ---
 
+## v4.1.0
+
+- 🐛 [RUMF-1143] make sure to drop LCP timings if the page was previously hidden ([#1259](https://github.com/DataDog/browser-sdk/pull/1259))
+- ⚗🐛 [RUMF-1079] add lock mechanism for session cookie writes ([#1230](https://github.com/DataDog/browser-sdk/pull/1230))
+- ✨ [RUMF-1119] Implement dual ship for other orgs ([#1248](https://github.com/DataDog/browser-sdk/pull/1248))
+- ✨ [RUMF-1109] Add event rate limiters for loggers ([#1243](https://github.com/DataDog/browser-sdk/pull/1243))
+- ⚡️ [REPLAY-565] ♻️ Remove URL "relative to absolute" transformation ([#1244](https://github.com/DataDog/browser-sdk/pull/1244))
+
+## v4.0.1
+
+- 🐛 let the backend to most of the tags sanitization ([#1252](https://github.com/DataDog/browser-sdk/pull/1252))
+- 🐛 remove child with action-names innerText instead of replacing them ([#1251](https://github.com/DataDog/browser-sdk/pull/1251))
+- 📝 Add module convention to contributing ([#1240](https://github.com/DataDog/browser-sdk/pull/1240))
+- ⚡️ [RUMF-1030] Decrease BoundedBuffer limitation to 500 ([#1242](https://github.com/DataDog/browser-sdk/pull/1242))
+
 ## v4.0.0
 
 Here is the list of all the breaking changes introduced by v4 of the RUM and Logs SDKs.
@@ -30,7 +45,7 @@ The Browser SDK is now incompatible with TypeScript below v3.8.2. If you are usi
 
 ### [RUM and Logs] Tags syntax sanitization
 
-`version`, `env` and `service` [initialization parameters](https://docs.datadoghq.com/real_user_monitoring/browser/#initialization-parameters) are sent as tags to Datadog. The Browser SDK is now sanitizing and printing a warning if those values don't meet the [tag requirements syntax](https://docs.datadoghq.com/getting_started/tagging/#defining-tags).
+`version`, `env` and `service` [initialization parameters](https://docs.datadoghq.com/real_user_monitoring/browser/#initialization-parameters) are sent as tags to Datadog. The Browser SDK is now slightly sanitizes them (to ensure that they don't unexpectedly generate multiple tags) and prints a warning if those values don't meet the [tag requirements syntax](https://docs.datadoghq.com/getting_started/tagging/#defining-tags).
 
 ### [RUM and Logs] Stricter initialization parameters typings
 
@@ -61,9 +76,9 @@ When multiple privacy options are specified on the same element, we now apply th
 one to avoid unexpectedly leaking privacy (ex: if both `dd-privacy-allow` and `dd-privacy-hidden`
 classes are specified on the same element, we now consider it `hidden` instead of `allow`).
 
-### [RUM] Use declared action names inside broader action names
+### [RUM] Remove text from elements with programmatic action names when computing a parent action names
 
-When computing automatic [actions target name](https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions/?tab=npm#action-attributes) on elements without `data-dd-action-name` attribute, we are using the "inner text" of this element. If it contains some elements that specify `data-dd-action-name`, their text is replaced by their declared action name inside the ancestor inner text.
+When computing automatic [actions target name](https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions/?tab=npm#action-attributes) on elements without `data-dd-action-name` attribute, we are using the "inner text" of this element. If it contains some elements that specify `data-dd-action-name`, their text is now removed inside the ancestor inner text.
 
 This might slightly change automatic action names shown in the Datadog App.
 
