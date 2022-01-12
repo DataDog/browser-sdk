@@ -4,24 +4,6 @@ function isMobileSafari12() {
   return /iPhone OS 12.* like Mac OS.* Version\/12.* Mobile.*Safari/.test(navigator.userAgent)
 }
 
-function getCurrentScrollbarWidth() {
-  const thickness = window.innerWidth - document.documentElement.clientWidth
-  // eslint-disable-next-line no-console
-  console.log('getCurrentScrollbarWidth:', thickness, window.innerWidth, document.documentElement.clientWidth)
-  expect(thickness).toBeLessThanOrEqual(20)
-  expect(thickness).toBeGreaterThanOrEqual(0)
-  return thickness
-}
-
-function getCurrentScrollbarHeight() {
-  const thickness = window.innerHeight - document.documentElement.clientHeight
-  // eslint-disable-next-line no-console
-  console.log('getCurrentScrollbarHeight:', thickness, window.innerHeight, document.documentElement.clientHeight)
-  expect(thickness).toBeLessThanOrEqual(20)
-  expect(thickness).toBeGreaterThanOrEqual(0)
-  return thickness
-}
-
 describe('layout viewport', () => {
   const addVerticalScrollBar = () => {
     document.body.style.setProperty('margin-bottom', '2000px')
@@ -37,29 +19,33 @@ describe('layout viewport', () => {
   })
 
   describe('get window width has similar native behaviour', () => {
-    // innerWidth includes the thickness of the sidebar while `visualViewport.width` excludes it
+    // innerWidth includes the thickness of the sidebar while `visualViewport.width` and clientWidth exclude it
     it('without scrollbars', () => {
-      const initialInnerWidth = getWindowWidth()
-      expect(initialInnerWidth).toBe(window.innerWidth)
+      expect(getWindowWidth()).toBe(window.innerWidth)
     })
 
     it('with scrollbars', () => {
       addHorizontalScrollBar()
-      const initialInnerWidth = getWindowWidth()
-      expect(initialInnerWidth).toBe(window.innerWidth - getCurrentScrollbarWidth())
+      expect([
+        // Some devices don't follow specification of including scrollbars
+        window.innerWidth,
+        document.documentElement.clientWidth,
+      ]).toContain(getWindowWidth())
     })
   })
 
   describe('get window height has similar native behaviour', () => {
-    // innerHeight includes the thickness of the sidebar while `visualViewport.height` excludes it
+    // innerHeight includes the thickness of the sidebar while `visualViewport.height` and clientHeight exclude it
     it('without scrollbars', () => {
-      const initialInnerHeight = getWindowHeight()
-      expect(initialInnerHeight).toBe(window.innerHeight)
+      expect(getWindowHeight()).toBe(window.innerHeight)
     })
     it('with scrollbars', () => {
       addVerticalScrollBar()
-      const initialInnerHeight = getWindowHeight()
-      expect(initialInnerHeight).toBe(window.innerHeight - getCurrentScrollbarHeight())
+      expect([
+        // Some devices don't follow specification of including scrollbars
+        window.innerHeight,
+        document.documentElement.clientHeight,
+      ]).toContain(getWindowHeight())
     })
   })
 
