@@ -169,32 +169,28 @@ function truncateResponseStream(
   limit: number,
   callback: (error?: Error, responseText?: string) => void
 ) {
-  readBytes(
-    stream,
-    // Read one more byte than the limit, so we can check if more bytes would be available and
-    // show an ellipsis in this case
-    limit + 1,
-    (error, bytes) => {
-      if (error) {
-        callback(error)
-      } else {
-        let responseText = new TextDecoder().decode(bytes!.slice(0, limit))
-        if (bytes!.length > limit) {
-          responseText += '...'
-        }
-        callback(undefined, responseText)
+  readLimitedAmountOfBytes(stream, limit, (error, bytes, limitExceeded) => {
+    if (error) {
+      callback(error)
+    } else {
+      let responseText = new TextDecoder().decode(bytes)
+      if (limitExceeded) {
+        responseText += '...'
       }
+      callback(undefined, responseText)
     }
-  )
+  })
 }
 
 /**
- * Read bytes from a ReadableStream until `limit` bytes have been read.
+ * Read bytes from a ReadableStream until at least `limit` bytes have been read (or until the end of
+ * the stream). The callback is invoked with the at most `limit` bytes, and indicates that the limit
+ * has been exceeded if more byte would have been available.
  */
-function readBytes(
+function readLimitedAmountOfBytes(
   stream: ReadableStream<Uint8Array>,
   limit: number,
-  callback: (error?: Error, bytes?: Uint8Array) => void
+  callback: (error?: Error, bytes?: Uint8Array, limitExceeded?: boolean) => void
 ) {
   const reader = stream.getReader()
   const chunks: Uint8Array[] = []
@@ -213,7 +209,7 @@ function readBytes(
         chunks.push(result.value)
         readBytesCount += result.value.length
 
-        if (readBytesCount >= limit) {
+        if (readBytesCount > limit) {
           onDone()
         } else {
           readMore()
@@ -230,20 +226,21 @@ function readBytes(
       noop
     )
 
+    let completeBuffer: Uint8Array
     if (chunks.length === 1) {
       // if the response is small enough to fit in a single buffer (provided by the browser), just
       // use it directly.
-      callback(undefined, chunks[0])
+      completeBuffer = chunks[0]
     } else {
       // else, we need to copy buffers into a larger buffer to concatenate them.
-      const completeBuffer = new Uint8Array(readBytesCount)
+      completeBuffer = new Uint8Array(readBytesCount)
       let offset = 0
       chunks.forEach((chunk) => {
         completeBuffer.set(chunk, offset)
         offset += chunk.length
       })
-
-      callback(undefined, completeBuffer)
     }
+
+    callback(undefined, completeBuffer.slice(0, limit), completeBuffer.length > limit)
   }
 }
