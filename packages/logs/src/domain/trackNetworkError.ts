@@ -128,19 +128,13 @@ export function computeFetchResponseText(
   } else if (!response.body) {
     callback()
   } else {
-    readBytes(
+    truncateResponseStream(
       response.clone().body!,
-      // Read one more byte than the limit, so we can check if more bytes would be available and
-      // show an ellipsis in this case
-      configuration.requestErrorResponseLengthLimit + 1,
-      (error, bytes) => {
+      configuration.requestErrorResponseLengthLimit,
+      (error, responseText) => {
         if (error) {
           callback(`Unable to retrieve response: ${(error as unknown) as string}`)
         } else {
-          let responseText = new TextDecoder().decode(bytes!.slice(0, configuration.requestErrorResponseLengthLimit))
-          if (bytes!.length > configuration.requestErrorResponseLengthLimit) {
-            responseText += '...'
-          }
           callback(responseText)
         }
       }
@@ -168,6 +162,30 @@ function format(type: RequestType) {
     return 'XHR'
   }
   return 'Fetch'
+}
+
+function truncateResponseStream(
+  stream: ReadableStream<Uint8Array>,
+  limit: number,
+  callback: (error?: Error, responseText?: string) => void
+) {
+  readBytes(
+    stream,
+    // Read one more byte than the limit, so we can check if more bytes would be available and
+    // show an ellipsis in this case
+    limit + 1,
+    (error, bytes) => {
+      if (error) {
+        callback(error)
+      } else {
+        let responseText = new TextDecoder().decode(bytes!.slice(0, limit))
+        if (bytes!.length > limit) {
+          responseText += '...'
+        }
+        callback(undefined, responseText)
+      }
+    }
+  )
 }
 
 /**
