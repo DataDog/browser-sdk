@@ -239,11 +239,7 @@ function readBytes(
       const completeBuffer = new Uint8Array(readBytesCount)
       let offset = 0
       chunks.forEach((chunk) => {
-        completeBuffer.set(
-          // make sure it does not overflow the buffer
-          chunk.slice(0, limit - offset),
-          offset
-        )
+        completeBuffer.set(chunk, offset)
         offset += chunk.length
       })
 
