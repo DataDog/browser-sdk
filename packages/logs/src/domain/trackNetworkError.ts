@@ -90,7 +90,42 @@ export function computeFetchResponseText(
   configuration: LogsConfiguration,
   callback: (responseText?: string) => void
 ) {
-  if (!response.body) {
+  if (!window.TextDecoder) {
+    // If the browser doesn't support TextDecoder, let's read the whole response then truncate it.
+    //
+    // This should only be the case on early versions of Edge (before they migrated to Chromium).
+    // Even if it could be possible to implement a workaround for the missing TextDecoder API (using
+    // a Blob and FileReader), we found another issue preventing us from reading only the first
+    // bytes from the response: contrary to other browsers, when reading from the cloned response,
+    // if the original response gets canceled, the cloned response is also canceled and we can't
+    // know about it.  In the following illustration, the promise returned by `reader.read()` may
+    // never be fulfilled:
+    //
+    // fetch('/').then((response) => {
+    //   const reader = response.clone().body.getReader()
+    //   readMore()
+    //   function readMore() {
+    //     reader.read().then(
+    //       (result) => {
+    //         if (result.done) {
+    //           console.log('done')
+    //         } else {
+    //           readMore()
+    //         }
+    //       },
+    //       () => console.log('error')
+    //     )
+    //   }
+    //   response.body.getReader().cancel()
+    // })
+    response
+      .clone()
+      .text()
+      .then(
+        monitor((text) => callback(truncateResponseText(text, configuration))),
+        monitor((error) => callback(`Unable to retrieve response: ${error as string}`))
+      )
+  } else if (!response.body) {
     callback()
   } else {
     readBytes(
