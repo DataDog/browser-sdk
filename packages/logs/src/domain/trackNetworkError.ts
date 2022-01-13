@@ -197,7 +197,7 @@ function readBytes(
   callback: (error?: Error, bytes?: Uint8Array) => void
 ) {
   const reader = stream.getReader()
-  const partialBuffers: Uint8Array[] = []
+  const chunks: Uint8Array[] = []
   let readBytesCount = 0
 
   readMore()
@@ -210,7 +210,7 @@ function readBytes(
           return
         }
 
-        partialBuffers.push(result.value)
+        chunks.push(result.value)
         readBytesCount += result.value.length
 
         if (readBytesCount >= limit) {
@@ -230,21 +230,21 @@ function readBytes(
       noop
     )
 
-    if (partialBuffers.length === 1) {
+    if (chunks.length === 1) {
       // if the response is small enough to fit in a single buffer (provided by the browser), just
       // use it directly.
-      callback(undefined, partialBuffers[0])
+      callback(undefined, chunks[0])
     } else {
       // else, we need to copy buffers into a larger buffer to concatenate them.
       const completeBuffer = new Uint8Array(readBytesCount)
       let offset = 0
-      partialBuffers.forEach((partialBuffer) => {
+      chunks.forEach((chunk) => {
         completeBuffer.set(
           // make sure it does not overflow the buffer
-          partialBuffer.slice(0, limit - offset),
+          chunk.slice(0, limit - offset),
           offset
         )
-        offset += partialBuffer.length
+        offset += chunk.length
       })
 
       callback(undefined, completeBuffer)
