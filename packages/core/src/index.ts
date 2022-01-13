@@ -44,7 +44,14 @@ export * from './tools/utils'
 export * from './tools/createEventRateLimiter'
 export * from './tools/browserDetection'
 export { instrumentMethod, instrumentMethodAndCallOriginal } from './tools/instrumentMethod'
-export { ErrorSource, ErrorHandling, formatUnknownError, createHandlingStack, RawError } from './tools/error'
+export {
+  ErrorSource,
+  ErrorHandling,
+  formatUnknownError,
+  createHandlingStack,
+  RawError,
+  toStackTraceString,
+} from './tools/error'
 export { Context, ContextArray, ContextValue } from './tools/context'
 export { areCookiesAuthorized, getCookie, setCookie, deleteCookie, COOKIE_ACCESS_DELAY } from './browser/cookie'
 export { initXhrObservable, XhrCompleteContext, XhrStartContext } from './browser/xhrObservable'

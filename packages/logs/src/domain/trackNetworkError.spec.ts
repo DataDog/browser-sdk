@@ -1,15 +1,24 @@
 import { isIE, Observable, RawError } from '@datadog/browser-core'
-import { FetchStub, FetchStubManager, SPEC_ENDPOINTS, stubFetch } from '../../../core/test/specHelper'
+import { FetchStub, FetchStubManager, ResponseStub, SPEC_ENDPOINTS, stubFetch } from '../../../core/test/specHelper'
 import { LogsConfiguration } from './configuration'
 
-import { trackNetworkError } from './trackNetworkError'
+import {
+  computeFetchErrorText,
+  computeFetchResponseText,
+  computeXhrResponseData,
+  trackNetworkError,
+} from './trackNetworkError'
+
+const CONFIGURATION = {
+  requestErrorResponseLengthLimit: 64,
+  ...SPEC_ENDPOINTS,
+} as LogsConfiguration
 
 describe('network error tracker', () => {
   let errorObservableSpy: jasmine.Spy
   let fetchStub: FetchStub
   let fetchStubManager: FetchStubManager
   let stopNetworkErrorTracking: () => void
-  let configuration: LogsConfiguration
   let errorObservable: Observable<RawError>
   const FAKE_URL = 'http://fake.com/'
   const DEFAULT_REQUEST = {
@@ -27,13 +36,9 @@ describe('network error tracker', () => {
     }
     errorObservable = new Observable<RawError>()
     errorObservableSpy = spyOn(errorObservable, 'notify')
-    configuration = {
-      requestErrorResponseLengthLimit: 32,
-      ...SPEC_ENDPOINTS,
-    } as LogsConfiguration
 
     fetchStubManager = stubFetch()
-    ;({ stop: stopNetworkErrorTracking } = trackNetworkError(configuration, errorObservable))
+    ;({ stop: stopNetworkErrorTracking } = trackNetworkError(CONFIGURATION, errorObservable))
     fetchStub = window.fetch as FetchStub
   })
 
@@ -106,8 +111,8 @@ describe('network error tracker', () => {
     })
   })
 
-  it('should add a default error response text', (done) => {
-    fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, responseText: undefined })
+  it('uses a fallback when the response text is empty', (done) => {
+    fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, responseText: '' })
 
     fetchStubManager.whenAllComplete(() => {
       expect(errorObservableSpy).toHaveBeenCalled()
@@ -116,16 +121,84 @@ describe('network error tracker', () => {
       done()
     })
   })
+})
 
-  it('should truncate error response text', (done) => {
-    fetchStub(FAKE_URL).resolveWith({
-      ...DEFAULT_REQUEST,
-      responseText: 'Lorem ipsum dolor sit amet orci aliquam.',
+describe('computeXhrResponseData', () => {
+  it('computes response text from XHR', (done) => {
+    const xhr = { response: 'foo' } as XMLHttpRequest
+    computeXhrResponseData(xhr, CONFIGURATION, (responseData) => {
+      expect(responseData).toBe('foo')
+      done()
     })
+  })
 
-    fetchStubManager.whenAllComplete(() => {
-      const stack = (errorObservableSpy.calls.mostRecent().args[0] as RawError).stack
-      expect(stack).toEqual('Lorem ipsum dolor sit amet orci ...')
+  it('return the response value directly if it is not a string', (done) => {
+    const xhr = { response: { foo: 'bar' } } as XMLHttpRequest
+    computeXhrResponseData(xhr, CONFIGURATION, (responseData) => {
+      expect(responseData).toEqual({ foo: 'bar' })
+      done()
+    })
+  })
+
+  it('truncates xhr response text', (done) => {
+    const xhr = { response: 'Lorem ipsum dolor sit amet orci aliquam.' } as XMLHttpRequest
+    computeXhrResponseData(xhr, { ...CONFIGURATION, requestErrorResponseLengthLimit: 32 }, (responseData) => {
+      expect(responseData).toBe('Lorem ipsum dolor sit amet orci ...')
+      done()
+    })
+  })
+})
+
+describe('computeFetchResponseText', () => {
+  beforeEach(() => {
+    if (isIE()) {
+      pending('IE does not support the fetch API')
+    }
+  })
+
+  it('computes response text from Response objects', (done) => {
+    computeFetchResponseText(new ResponseStub({ responseText: 'foo' }), CONFIGURATION, (responseText) => {
+      expect(responseText).toBe('foo')
+      done()
+    })
+  })
+
+  // https://fetch.spec.whatwg.org/#concept-body-consume-body
+  it('computes response text from Response objects failing to retrieve text', (done) => {
+    computeFetchResponseText(
+      new ResponseStub({ responseTextError: new Error('locked') }),
+      CONFIGURATION,
+      (responseText) => {
+        expect(responseText).toBe('Unable to retrieve response: Error: locked')
+        done()
+      }
+    )
+  })
+
+  it('does not consume the response body', (done) => {
+    const response = new ResponseStub({ responseText: 'foo' })
+    computeFetchResponseText(response, CONFIGURATION, () => {
+      expect(response.bodyUsed).toBe(false)
+      done()
+    })
+  })
+
+  it('truncates fetch response text', (done) => {
+    computeFetchResponseText(
+      new ResponseStub({ responseText: 'Lorem ipsum dolor sit amet orci aliquam.' }),
+      { ...CONFIGURATION, requestErrorResponseLengthLimit: 32 },
+      (responseText) => {
+        expect(responseText).toBe('Lorem ipsum dolor sit amet orci ...')
+        done()
+      }
+    )
+  })
+})
+
+describe('computeFetchErrorText', () => {
+  it('computes response text from requests ending as an error', (done) => {
+    computeFetchErrorText(new Error('fetch error'), CONFIGURATION, (errorText) => {
+      expect(errorText).toContain('Error: fetch error')
       done()
     })
   })

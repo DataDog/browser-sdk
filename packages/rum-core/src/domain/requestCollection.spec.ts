@@ -70,7 +70,6 @@ describe('collect fetch', () => {
       expect(request.method).toEqual('GET')
       expect(request.url).toEqual(FAKE_URL)
       expect(request.status).toEqual(500)
-      expect(request.responseText).toEqual('fetch error')
       done()
     })
   })
@@ -193,7 +192,6 @@ describe('collect xhr', () => {
         expect(request.method).toEqual('GET')
         expect(request.url).toContain('/ok')
         expect(request.status).toEqual(200)
-        expect(request.responseText).toEqual('ok')
         done()
       },
     })
