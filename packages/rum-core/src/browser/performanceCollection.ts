@@ -128,7 +128,8 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
         observer.observe({ type, buffered: true })
       })
     } catch (e) {
-      // Some old browser versions don't support PerformanceObserver without entryTypes option
+      // Some old browser versions (ex: chrome 67) don't support the PerformanceObserver type and buffered options
+      // In these cases, fallback to PerformanceObserver with entryTypes
       mainEntries.push(...experimentalEntries)
     }
 
