@@ -6,7 +6,9 @@ import {
   EventEmitter,
   RelativeTime,
   ONE_MINUTE,
+  find,
 } from '@datadog/browser-core'
+import { RumLargestContentfulPaintTiming, RumPerformancePaintTiming } from '../../../browser/performanceCollection'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { trackFirstHidden } from './trackFirstHidden'
 
@@ -78,15 +80,16 @@ export function trackNavigationTimings(lifeCycle: LifeCycle, callback: (timings:
 export function trackFirstContentfulPaintTiming(lifeCycle: LifeCycle, callback: (fcpTiming: RelativeTime) => void) {
   const firstHidden = trackFirstHidden()
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
-    for (const entry of entries) {
-      if (
+    const fcpEntry = find(
+      entries,
+      (entry): entry is RumPerformancePaintTiming =>
         entry.entryType === 'paint' &&
         entry.name === 'first-contentful-paint' &&
         entry.startTime < firstHidden.timeStamp &&
         entry.startTime < TIMING_MAXIMUM_DELAY
-      ) {
-        callback(entry.startTime)
-      }
+    )
+    if (fcpEntry) {
+      callback(fcpEntry.startTime)
     }
   })
   return { stop }
@@ -121,15 +124,16 @@ export function trackLargestContentfulPaintTiming(
   const { unsubscribe: unsubscribeLifeCycle } = lifeCycle.subscribe(
     LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED,
     (entries) => {
-      for (const entry of entries) {
-        if (
+      const lcpEntry = find(
+        entries,
+        (entry): entry is RumLargestContentfulPaintTiming =>
           entry.entryType === 'largest-contentful-paint' &&
           entry.startTime < firstInteractionTimestamp &&
           entry.startTime < firstHidden.timeStamp &&
           entry.startTime < TIMING_MAXIMUM_DELAY
-        ) {
-          callback(entry.startTime)
-        }
+      )
+      if (lcpEntry) {
+        callback(lcpEntry.startTime)
       }
     }
   )
