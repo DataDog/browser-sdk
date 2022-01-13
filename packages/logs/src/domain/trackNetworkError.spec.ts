@@ -111,8 +111,8 @@ describe('network error tracker', () => {
     })
   })
 
-  it('should add a default error response text', (done) => {
-    fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, responseText: undefined })
+  it('uses a fallback when the response text is empty', (done) => {
+    fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, responseText: '' })
 
     fetchStubManager.whenAllComplete(() => {
       expect(errorObservableSpy).toHaveBeenCalled()
@@ -124,21 +124,28 @@ describe('network error tracker', () => {
 })
 
 describe('computeXhrResponseData', () => {
-  it('computes response text from XHR', () => {
+  it('computes response text from XHR', (done) => {
     const xhr = { response: 'foo' } as XMLHttpRequest
-    expect(computeXhrResponseData(xhr, CONFIGURATION)).toBe('foo')
+    computeXhrResponseData(xhr, CONFIGURATION, (responseData) => {
+      expect(responseData).toBe('foo')
+      done()
+    })
   })
 
-  it('return the response value directly if it is not a string', () => {
+  it('return the response value directly if it is not a string', (done) => {
     const xhr = { response: { foo: 'bar' } } as XMLHttpRequest
-    expect(computeXhrResponseData(xhr, CONFIGURATION)).toEqual({ foo: 'bar' })
+    computeXhrResponseData(xhr, CONFIGURATION, (responseData) => {
+      expect(responseData).toEqual({ foo: 'bar' })
+      done()
+    })
   })
 
-  it('truncates xhr response text', () => {
+  it('truncates xhr response text', (done) => {
     const xhr = { response: 'Lorem ipsum dolor sit amet orci aliquam.' } as XMLHttpRequest
-    expect(computeXhrResponseData(xhr, { ...CONFIGURATION, requestErrorResponseLengthLimit: 32 })).toBe(
-      'Lorem ipsum dolor sit amet orci ...'
-    )
+    computeXhrResponseData(xhr, { ...CONFIGURATION, requestErrorResponseLengthLimit: 32 }, (responseData) => {
+      expect(responseData).toBe('Lorem ipsum dolor sit amet orci ...')
+      done()
+    })
   })
 })
 
@@ -189,7 +196,10 @@ describe('computeFetchResponseText', () => {
 })
 
 describe('computeFetchErrorText', () => {
-  it('computes response text from requests ending as an error', () => {
-    expect(computeFetchErrorText(new Error('fetch error'), CONFIGURATION)).toContain('Error: fetch error')
+  it('computes response text from requests ending as an error', (done) => {
+    computeFetchErrorText(new Error('fetch error'), CONFIGURATION, (errorText) => {
+      expect(errorText).toContain('Error: fetch error')
+      done()
+    })
   })
 })
