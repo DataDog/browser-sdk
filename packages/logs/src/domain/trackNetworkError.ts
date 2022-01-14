@@ -185,7 +185,7 @@ function truncateResponseStream(
 /**
  * Read bytes from a ReadableStream until at least `limit` bytes have been read (or until the end of
  * the stream). The callback is invoked with the at most `limit` bytes, and indicates that the limit
- * has been exceeded if more byte would have been available.
+ * has been exceeded if more bytes were available.
  */
 function readLimitedAmountOfBytes(
   stream: ReadableStream<Uint8Array>,
