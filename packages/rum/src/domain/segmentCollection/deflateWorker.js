@@ -52,8 +52,8 @@ function workerCodeFn() {
     )
 
     function pushData(data) {
-      // TextEncoder is not supported on old browser version like Edge 18, therefore we fallback to string2buf
-      const binaryData = typeof TextEncoder ? new TextEncoder().encode(data) : string2buf(data)
+      // TextEncoder is not supported on old browser version like Edge 18, therefore we use string2buf
+      const binaryData = string2buf(data)
       deflate.push(binaryData, constants.Z_SYNC_FLUSH)
       rawSize += binaryData.length
       return binaryData.length
@@ -4443,6 +4443,7 @@ function workerCodeFn() {
       return deflate$1(input, options)
     }
 
+    // https://github.com/nodeca/pako/blob/master/lib/utils/strings.js#L26
     function string2buf(str) {
       if (typeof TextEncoder === 'function' && TextEncoder.prototype.encode) {
         return new TextEncoder().encode(str)
