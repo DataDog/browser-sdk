@@ -136,7 +136,7 @@ function initRumAndStartRecording(initConfiguration: RumInitConfiguration) {
 
 const isGestureUnsupported = () => {
   const { browserName, platformName } = browser.capabilities
-  return /firefox|safari|msedge/i.exec(browserName ?? '') || /windows|linux/i.exec(platformName ?? '')
+  return /firefox|safari|msedge/i.test(browserName ?? '') || /windows|linux/i.test(platformName ?? '')
 }
 
 // Flakiness: Working with viewport sizes has variations per device of a few pixels
