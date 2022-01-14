@@ -174,6 +174,7 @@ export interface RumContext {
     id: string
   }
   service?: string
+  source: 'browser'
   session: {
     id: string
     type: string
