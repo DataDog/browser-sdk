@@ -142,7 +142,7 @@ export type RumErrorEvent = CommonProperties & {
     /**
      * Source type of the error (the language or platform impacting the error stacktrace format)
      */
-    readonly source_type?: 'android' | 'browser' | 'ios' | 'react-native'
+    readonly source_type?: 'android' | 'browser' | 'ios' | 'react-native' | 'flutter'
     /**
      * Resource properties of the error
      */
@@ -686,6 +686,10 @@ export interface CommonProperties {
     [k: string]: unknown
   }
   /**
+   * The source of this event
+   */
+  readonly source?: 'android' | 'ios' | 'browser' | 'flutter' | 'react-native'
+  /**
    * View properties
    */
   readonly view: {
@@ -789,6 +793,7 @@ export interface CommonProperties {
      * The identifier of the current CI Visibility test execution
      */
     readonly test_execution_id: string
+    [k: string]: unknown
   }
   /**
    * Internal properties
