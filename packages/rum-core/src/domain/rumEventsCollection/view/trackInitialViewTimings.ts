@@ -7,8 +7,13 @@ import {
   RelativeTime,
   ONE_MINUTE,
   find,
+  findLast,
 } from '@datadog/browser-core'
-import { RumLargestContentfulPaintTiming, RumPerformancePaintTiming } from '../../../browser/performanceCollection'
+import {
+  RumFirstInputTiming,
+  RumLargestContentfulPaintTiming,
+  RumPerformancePaintTiming,
+} from '../../../browser/performanceCollection'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { trackFirstHidden } from './trackFirstHidden'
 
@@ -124,7 +129,7 @@ export function trackLargestContentfulPaintTiming(
   const { unsubscribe: unsubscribeLifeCycle } = lifeCycle.subscribe(
     LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED,
     (entries) => {
-      const lcpEntry = find(
+      const lcpEntry = findLast(
         entries,
         (entry): entry is RumLargestContentfulPaintTiming =>
           entry.entryType === 'largest-contentful-paint' &&
@@ -161,16 +166,19 @@ export function trackFirstInputTimings(
   const firstHidden = trackFirstHidden()
 
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
-    for (const entry of entries) {
-      if (entry.entryType === 'first-input' && entry.startTime < firstHidden.timeStamp) {
-        const firstInputDelay = elapsed(entry.startTime, entry.processingStart)
-        callback({
-          // Ensure firstInputDelay to be positive, see
-          // https://bugs.chromium.org/p/chromium/issues/detail?id=1185815
-          firstInputDelay: firstInputDelay >= 0 ? firstInputDelay : (0 as Duration),
-          firstInputTime: entry.startTime as Duration,
-        })
-      }
+    const firstInputEntry = find(
+      entries,
+      (entry): entry is RumFirstInputTiming =>
+        entry.entryType === 'first-input' && entry.startTime < firstHidden.timeStamp
+    )
+    if (firstInputEntry) {
+      const firstInputDelay = elapsed(firstInputEntry.startTime, firstInputEntry.processingStart)
+      callback({
+        // Ensure firstInputDelay to be positive, see
+        // https://bugs.chromium.org/p/chromium/issues/detail?id=1185815
+        firstInputDelay: firstInputDelay >= 0 ? firstInputDelay : (0 as Duration),
+        firstInputTime: firstInputEntry.startTime as Duration,
+      })
     }
   })
 
