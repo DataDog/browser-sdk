@@ -1,4 +1,4 @@
-import { createTest } from '../lib/framework'
+import { createTest, LARGE_RESPONSE_MIN_BYTE_SIZE } from '../lib/framework'
 import { UNREACHABLE_URL } from '../lib/helpers/constants'
 import { browserExecute, browserExecuteAsync, flushBrowserLogs, withBrowserLogs } from '../lib/helpers/browser'
 import { flushEvents } from '../lib/helpers/flushEvents'
@@ -71,6 +71,39 @@ describe('logs', () => {
         // Some browser report two errors:
         // * failed to load resource
         // * blocked by CORS policy
+        expect(browserLogs.length).toBeGreaterThanOrEqual(1)
+      })
+    })
+
+  createTest('read only the first bytes of the response')
+    .withLogs({ forwardErrorsToLogs: true })
+    .run(async ({ serverEvents, baseUrl, servers }) => {
+      await browserExecuteAsync((done) => {
+        fetch('/throw-large-response').then(
+          (response) => {
+            // The body stream needs to be cancelled, else the browser will still download the whole
+            // response even if it is unused.
+            response
+              .body!.getReader()
+              .cancel()
+              .catch((error) => console.log(error))
+            done(undefined)
+          },
+          (error) => console.log(error)
+        )
+      })
+
+      await flushEvents()
+      expect(serverEvents.logs.length).toBe(1)
+      expect(serverEvents.logs[0].message).toBe(`Fetch error GET ${baseUrl}/throw-large-response`)
+      expect(serverEvents.logs[0].error?.origin).toBe('network')
+      expect(serverEvents.logs[0].error?.stack?.length).toBeLessThan(LARGE_RESPONSE_MIN_BYTE_SIZE)
+      expect(servers.base.app.getLargeResponseWroteSize()).toBeLessThan(LARGE_RESPONSE_MIN_BYTE_SIZE)
+
+      await withBrowserLogs((browserLogs) => {
+        // Some browser report two errors:
+        // * the server responded with a status of 500
+        // * canceling the body stream is reported as a network error (net::ERR_FAILED)
         expect(browserLogs.length).toBeGreaterThanOrEqual(1)
       })
     })

@@ -29,6 +29,7 @@ interface TestContext {
   crossOriginUrl: string
   serverEvents: EventRegistry
   bridgeEvents: EventRegistry
+  servers: Servers
 }
 
 type TestRunner = (testContext: TestContext) => Promise<void>
@@ -176,6 +177,7 @@ function createTestContext(servers: Servers): TestContext {
     crossOriginUrl: servers.crossOrigin.url,
     serverEvents: new EventRegistry(),
     bridgeEvents: new EventRegistry(),
+    servers,
   }
 }
 
