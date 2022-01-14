@@ -228,7 +228,7 @@ function readLimitedAmountOfBytes(
 
     let completeBuffer: Uint8Array
     if (chunks.length === 1) {
-      // if the response is small enough to fit in a single buffer (provided by the browser), just
+      // optim: if the response is small enough to fit in a single buffer (provided by the browser), just
       // use it directly.
       completeBuffer = chunks[0]
     } else {
