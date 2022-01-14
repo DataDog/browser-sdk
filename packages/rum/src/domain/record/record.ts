@@ -1,4 +1,3 @@
-import { isExperimentalFeatureEnabled } from '@datadog/browser-core'
 import { RecordType } from '../../types'
 import { serializeDocument } from './serialize'
 import { initObservers } from './observer'
@@ -47,7 +46,7 @@ export function record(options: RecordOptions): RecordAPI {
       type: RecordType.FullSnapshot,
     })
 
-    if (isExperimentalFeatureEnabled('visualviewport') && window.visualViewport) {
+    if (window.visualViewport) {
       emit({
         data: getVisualViewport(),
         type: RecordType.VisualViewport,

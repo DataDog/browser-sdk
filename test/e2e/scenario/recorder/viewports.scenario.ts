@@ -26,7 +26,7 @@ describe('recorder', () => {
 
   describe('layout viewport properties', () => {
     createTest('getWindowWidth/Height should not be affected by pinch zoom')
-      .withRum({ enableExperimentalFeatures: ['visualviewport'] })
+      .withRum()
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
@@ -57,7 +57,7 @@ describe('recorder', () => {
      * We need to ensure that our measurements are not affected by pinch zoom
      */
     createTest('getScrollX/Y should not be affected by pinch scroll')
-      .withRum({ enableExperimentalFeatures: ['visualviewport'] })
+      .withRum()
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
@@ -99,7 +99,7 @@ describe('recorder', () => {
 
   describe('visual viewport properties', () => {
     createTest('pinch zoom "scroll" event reports visual viewport position')
-      .withRum({ enableExperimentalFeatures: ['visualviewport'] })
+      .withRum()
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
@@ -114,7 +114,7 @@ describe('recorder', () => {
       })
 
     createTest('pinch zoom "resize" event reports visual viewport scale')
-      .withRum({ enableExperimentalFeatures: ['visualviewport'] })
+      .withRum()
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
@@ -137,14 +137,8 @@ function initRumAndStartRecording(initConfiguration: RumInitConfiguration) {
 }
 
 const isGestureUnsupported = () => {
-  const { capabilities } = browser
-  return (
-    capabilities.browserName === 'firefox' ||
-    capabilities.browserName === 'Safari' ||
-    capabilities.browserName === 'msedge' ||
-    capabilities.platformName === 'windows' ||
-    capabilities.platformName === 'linux'
-  )
+  const { browserName, platformName } = browser.capabilities
+  return /firefox|safari|msedge/i.test(browserName ?? '') || /windows|linux/i.test(platformName ?? '')
 }
 
 // Flakiness: Working with viewport sizes has variations per device of a few pixels
