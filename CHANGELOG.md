@@ -33,54 +33,7 @@
 
 ## v4.0.0
 
-Here is the list of all the breaking changes introduced by v4 of the RUM and Logs SDKs.
-
-### [RUM and Logs] Intake URLs change
-
-We changed URLs of where the Browser SDK data is sent. Please make sure that your [Content Security Policy is up to date](https://docs.datadoghq.com/real_user_monitoring/faq/content_security_policy/?tab=us).
-
-### [RUM and Logs] Drop support for TypeScript below v3.8.2
-
-The Browser SDK is now incompatible with TypeScript below v3.8.2. If you are using TypeScript, please make sure that the version you are using is greater or equal to v3.8.2.
-
-### [RUM and Logs] Tags syntax sanitization
-
-`version`, `env` and `service` [initialization parameters](https://docs.datadoghq.com/real_user_monitoring/browser/#initialization-parameters) are sent as tags to Datadog. The Browser SDK is now slightly sanitizes them (to ensure that they don't unexpectedly generate multiple tags) and prints a warning if those values don't meet the [tag requirements syntax](https://docs.datadoghq.com/getting_started/tagging/#defining-tags).
-
-### [RUM and Logs] Stricter initialization parameters typings
-
-TypeScript types representing initialization parameters are now stricter and may reject previously accepted unsupported parameters. If you get typechecking issues, please make sure you are only providing supported initialization parameters.
-
-### [RUM and Logs] Remove deprecated XHR `_datadog_xhr` field
-
-The Browser SDK previously used a `_datadog_xhr` property on `XMLHttpRequest` objects representing
-its internal state. This property have been removed without replacement as it wasn't intended to be
-used externally.
-
-### [RUM and Logs] Remove deprecated `proxyHost` initialization parameter
-
-The `proxyHost` initialization parameter have been removed. Make sure to use the simpler [`proxyUrl` initialization parameter](https://docs.datadoghq.com/real_user_monitoring/faq/proxy_rum_data/?tab=npm) instead.
-
-### [RUM Session Replay] Remove deprecated privacy options support
-
-`input-ignored` and `input-masked` are no longer valid privacy options and should be replaced with
-the [`mask-user-input` privacy option](https://docs.datadoghq.com/real_user_monitoring/session_replay/privacy_options?tab=maskuserinput#privacy-options). Specifically, you should replace:
-
-- `dd-privacy-input-ignored` and `dd-privacy-input-masked` class names with `dd-privacy-mask-user-input`
-
-- `dd-privacy="input-masked"` and `dd-privacy="input-ignored"` attribute values with `dd-privacy="mask-user-input"`
-
-### [RUM Session Replay] Clarify same node privacy precedence
-
-When multiple privacy options are specified on the same element, we now apply the most restrictive
-one to avoid unexpectedly leaking privacy (ex: if both `dd-privacy-allow` and `dd-privacy-hidden`
-classes are specified on the same element, we now consider it `hidden` instead of `allow`).
-
-### [RUM] Remove text from elements with programmatic action names when computing a parent action names
-
-When computing automatic [actions target name](https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions/?tab=npm#action-attributes) on elements without `data-dd-action-name` attribute, we are using the "inner text" of this element. If it contains some elements that specify `data-dd-action-name`, their text is now removed inside the ancestor inner text.
-
-This might slightly change automatic action names shown in the Datadog App.
+See our [upgrade guide](https://docs.datadoghq.com/real_user_monitoring/guide/browser-sdk-upgrade/#from-v3-to-v4) for a comprehensive list of breaking changes introduced by this major version.
 
 ### Changes
 
@@ -286,43 +239,7 @@ Note: this is the first 3.x release for the Logs SDK. See migration notes in [v3
 
 ## v3.0.0
 
-Here is the list of all the breaking changes between version 2 and 3 of the RUM and Logs SDKs.
-
-For each change, we show the new way to handle your use case.
-
-### [RUM] Network errors no longer monitored
-
-RUM browser SDK no longer automatically monitors network errors.
-
-**New option**: You can use the option beforeSend to get the resource, check the `status` and send it with the `addError()` API.
-
-### [RUM] Source attribute of addError() has been removed
-
-You can no longer change the source of error sent with `addError()`. All these errors have a `custom` source.
-
-**New option**: If you used this feature to identify `network` and `source` errors, you can add context attributes with `addError()` instead.
-
-### [RUM and Logs] Removed typescript types
-
-| Old types                    | New types                    |
-| ---------------------------- | ---------------------------- |
-| RumUserConfiguration         | RumInitConfiguration         |
-| RumRecorderUserConfiguration | RumRecorderInitConfiguration |
-| LogsUserConfiguration        | LogsInitConfiguration        |
-
-### [RUM and Logs] Removed init options
-
-| Old options        | New options |
-| ------------------ | ----------- |
-| publicApiKey       | clientToken |
-| datacenter         | site        |
-| resourceSampleRate | NONE        |
-
-### [RUM] Removed API
-
-| Old API       | New API   |
-| ------------- | --------- |
-| addUserAction | addAction |
+See our [upgrade guide](https://docs.datadoghq.com/real_user_monitoring/guide/browser-sdk-upgrade/#from-v2-to-v3) for a comprehensive list of breaking changes introduced by this major version.
 
 ### Changes
 

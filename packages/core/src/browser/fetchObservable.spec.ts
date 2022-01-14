@@ -42,7 +42,6 @@ describe('fetch proxy', () => {
       expect(request.method).toEqual('GET')
       expect(request.url).toEqual(FAKE_URL)
       expect(request.status).toEqual(500)
-      expect(request.responseText).toEqual('fetch error')
       expect(request.isAborted).toBe(false)
       done()
     })
@@ -56,7 +55,6 @@ describe('fetch proxy', () => {
       expect(request.method).toEqual('GET')
       expect(request.url).toEqual(FAKE_URL)
       expect(request.status).toEqual(0)
-      expect(request.responseText).toMatch(/Error: fetch error/)
       expect(request.isAborted).toBe(false)
       expect(request.error).toEqual(new Error('fetch error'))
       done()
@@ -71,25 +69,8 @@ describe('fetch proxy', () => {
       expect(request.method).toEqual('GET')
       expect(request.url).toEqual(FAKE_URL)
       expect(request.status).toEqual(0)
-      expect(request.responseText).toContain('AbortError: The user aborted a request')
       expect(request.isAborted).toBe(true)
       expect(request.error).toEqual(new DOMException('The user aborted a request', 'AbortError'))
-      done()
-    })
-  })
-
-  // https://fetch.spec.whatwg.org/#concept-body-consume-body
-  it('should track fetch with response text error', (done) => {
-    fetchStub(FAKE_URL).resolveWith({ status: 200, responseTextError: new Error('locked') })
-
-    fetchStubManager.whenAllComplete(() => {
-      const request = requests[0]
-      expect(request.method).toEqual('GET')
-      expect(request.url).toEqual(FAKE_URL)
-      expect(request.status).toEqual(200)
-      expect(request.responseText).toMatch(/Error: locked/)
-      expect(request.isAborted).toBe(false)
-      expect(request.error).toBeUndefined()
       done()
     })
   })
@@ -116,7 +97,6 @@ describe('fetch proxy', () => {
       expect(request.method).toEqual('GET')
       expect(request.url).toEqual(FAKE_URL)
       expect(request.status).toEqual(400)
-      expect(request.responseText).toEqual('Not found')
       expect(request.isAborted).toBe(false)
       done()
     })
