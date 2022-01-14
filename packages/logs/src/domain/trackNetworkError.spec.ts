@@ -150,10 +150,19 @@ describe('computeXhrResponseData', () => {
 })
 
 describe('computeFetchResponseText', () => {
+  let onunhandledrejectionSpy: jasmine.Spy
+
   beforeEach(() => {
     if (isIE()) {
       pending('IE does not support the fetch API')
     }
+
+    onunhandledrejectionSpy = jasmine.createSpy()
+    window.onunhandledrejection = onunhandledrejectionSpy
+  })
+
+  afterEach(() => {
+    window.onunhandledrejection = null
   })
 
   it('computes response text from Response objects', (done) => {
@@ -228,6 +237,23 @@ describe('computeFetchResponseText', () => {
         done()
       }
     )
+  })
+
+  it('does not yield an unhandled rejection error if the cancel promise is rejected', (done) => {
+    // Creates a response that stream "f" indefinitely and fails to be canceled
+    const response = new ResponseStub({
+      body: new ReadableStream({
+        pull: (controller) => controller.enqueue(new TextEncoder().encode('f')),
+        cancel: () => Promise.reject(new Error('foo')),
+      }),
+    })
+
+    computeFetchResponseText(response, CONFIGURATION, () => {
+      setTimeout(() => {
+        expect(onunhandledrejectionSpy).not.toHaveBeenCalled()
+        done()
+      })
+    })
   })
 })
 
