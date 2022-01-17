@@ -298,6 +298,7 @@ describe('rum assembly', () => {
       expect(serverRumEvents[0].view.id).toBeDefined()
       expect(serverRumEvents[0].date).toBeDefined()
       expect(serverRumEvents[0].session.id).toBeDefined()
+      expect(serverRumEvents[0].source).toBe('browser')
     })
 
     it('should be overwritten by event attributes', () => {

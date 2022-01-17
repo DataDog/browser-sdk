@@ -191,6 +191,7 @@ function validateRumEventFormat(rawRumEvent: RawRumEvent) {
       id: fakeId,
     },
     date: 0 as TimeStamp,
+    source: 'browser',
     session: {
       id: fakeId,
       type: 'user',
