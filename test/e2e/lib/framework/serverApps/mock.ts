@@ -2,10 +2,13 @@ import * as url from 'url'
 import cors from 'cors'
 import express from 'express'
 import { buildLogs, buildNpm, buildRum, buildRumSlim } from '../sdkBuilds'
-import type { Servers } from '../httpServers'
+import type { MockServerApp, Servers } from '../httpServers'
 
-export function createMockServerApp(servers: Servers, setup: string) {
+const LARGE_RESPONSE_MIN_BYTE_SIZE = 100_000
+
+export function createMockServerApp(servers: Servers, setup: string): MockServerApp {
   const app = express()
+  let largeResponseBytesWritten = 0
 
   app.use(cors())
   app.disable('etag') // disable automatic resource caching
@@ -20,6 +23,36 @@ export function createMockServerApp(servers: Servers, setup: string) {
 
   app.get('/throw', (_req, res) => {
     res.status(500).send('Server error')
+  })
+
+  app.get('/throw-large-response', (_req, res) => {
+    res.status(500)
+
+    const chunkText = 'Server error\n'.repeat(50)
+    let bytesWritten = 0
+    let timeoutId: NodeJS.Timeout
+
+    res.on('close', () => {
+      largeResponseBytesWritten = bytesWritten
+      clearTimeout(timeoutId)
+    })
+
+    function writeMore() {
+      res.write(chunkText, (error) => {
+        if (error) {
+          console.log('Write error', error)
+        } else {
+          bytesWritten += chunkText.length
+          if (bytesWritten < LARGE_RESPONSE_MIN_BYTE_SIZE) {
+            timeoutId = setTimeout(writeMore, 10)
+          } else {
+            res.end()
+          }
+        }
+      })
+    }
+
+    writeMore()
   })
 
   app.get('/unknown', (_req, res) => {
@@ -76,5 +109,9 @@ export function createMockServerApp(servers: Servers, setup: string) {
     res.header('content-type', 'application/javascript').send(await buildNpm(servers.intake.url))
   })
 
-  return app
+  return Object.assign(app, {
+    getLargeResponseWroteSize() {
+      return largeResponseBytesWritten
+    },
+  })
 }

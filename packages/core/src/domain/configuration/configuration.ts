@@ -63,7 +63,6 @@ export interface Configuration extends TransportConfiguration {
   // Event limits
   eventRateLimiterThreshold: number // Limit the maximum number of actions, errors and logs per minutes
   maxInternalMonitoringMessagesPerPage: number
-  requestErrorResponseLengthLimit: number
 
   // Batch configuration
   batchBytesLimit: number
@@ -107,11 +106,6 @@ export function validateAndBuildConfiguration(
 
     eventRateLimiterThreshold: 3000,
     maxInternalMonitoringMessagesPerPage: 15,
-
-    /**
-     * arbitrary value, byte precision not needed
-     */
-    requestErrorResponseLengthLimit: 32 * ONE_KILO_BYTE,
 
     /**
      * flush automatically, aim to be lower than ALB connection timeout
