@@ -4,7 +4,7 @@ import express from 'express'
 import { buildLogs, buildNpm, buildRum, buildRumSlim } from '../sdkBuilds'
 import type { MockServerApp, Servers } from '../httpServers'
 
-export const LARGE_RESPONSE_MIN_BYTE_SIZE = 100_000
+const LARGE_RESPONSE_MIN_BYTE_SIZE = 100_000
 
 export function createMockServerApp(servers: Servers, setup: string): MockServerApp {
   const app = express()

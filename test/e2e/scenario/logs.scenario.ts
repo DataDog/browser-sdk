@@ -1,5 +1,5 @@
 import { DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT } from '@datadog/browser-logs/cjs/domain/configuration'
-import { createTest, LARGE_RESPONSE_MIN_BYTE_SIZE } from '../lib/framework'
+import { createTest } from '../lib/framework'
 import { UNREACHABLE_URL } from '../lib/helpers/constants'
 import { browserExecute, browserExecuteAsync, flushBrowserLogs, withBrowserLogs } from '../lib/helpers/browser'
 import { flushEvents } from '../lib/helpers/flushEvents'
@@ -102,7 +102,6 @@ describe('logs', () => {
       const ellipsisSize = 3
       expect(serverEvents.logs[0].error?.stack?.length).toBe(DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT + ellipsisSize)
 
-      expect(servers.base.app.getLargeResponseWroteSize()).toBeLessThan(LARGE_RESPONSE_MIN_BYTE_SIZE)
       expect(servers.base.app.getLargeResponseWroteSize()).toBeLessThan(
         // When reading the request, chunks length are probably not aligning perfectly with the
         // response length limit, so it sends few more bytes than necessary. Add a 10% margin of
