@@ -1,29 +1,28 @@
+import type { Context, RawError, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import {
-  Context,
   ErrorSource,
   noop,
   Observable,
   ONE_MINUTE,
-  RawError,
-  RelativeTime,
   resetExperimentalFeatures,
-  TimeStamp,
   updateExperimentalFeatures,
   getTimeStamp,
 } from '@datadog/browser-core'
 import sinon from 'sinon'
+import type { Clock } from '../../../core/test/specHelper'
 import {
-  Clock,
   deleteEventBridgeStub,
   initEventBridgeStub,
   mockClock,
   stubEndpointBuilder,
 } from '../../../core/test/specHelper'
-import { LogsConfiguration, validateAndBuildLogsConfiguration } from '../domain/configuration'
+import type { LogsConfiguration } from '../domain/configuration'
+import { validateAndBuildLogsConfiguration } from '../domain/configuration'
 
-import { Logger, LogsMessage, StatusType } from '../domain/logger'
-import { LogsSessionManager } from '../domain/logsSessionManager'
-import { LogsEvent } from '../logsEvent.types'
+import type { LogsMessage } from '../domain/logger'
+import { Logger, StatusType } from '../domain/logger'
+import type { LogsSessionManager } from '../domain/logsSessionManager'
+import type { LogsEvent } from '../logsEvent.types'
 import { buildAssemble, doStartLogs, startLogs as originalStartLogs } from './startLogs'
 
 interface SentMessage extends LogsMessage {

@@ -1,7 +1,10 @@
-import { Clock, mockClock } from '../../test/specHelper'
-import { RawError } from './error'
-import { createEventRateLimiter, EventRateLimiter } from './createEventRateLimiter'
-import { RelativeTime, relativeToClocks, resetNavigationStart } from './timeUtils'
+import type { Clock } from '../../test/specHelper'
+import { mockClock } from '../../test/specHelper'
+import type { RawError } from './error'
+import type { EventRateLimiter } from './createEventRateLimiter'
+import { createEventRateLimiter } from './createEventRateLimiter'
+import type { RelativeTime } from './timeUtils'
+import { relativeToClocks, resetNavigationStart } from './timeUtils'
 import { noop, ONE_MINUTE } from './utils'
 
 describe('createEventRateLimiter', () => {

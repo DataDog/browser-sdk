@@ -1,18 +1,11 @@
-import {
-  addEventListener,
-  Context,
-  DOM_EVENT,
-  Duration,
-  generateUUID,
-  ClocksState,
-  clocksNow,
-  ONE_SECOND,
-  Observable,
-} from '@datadog/browser-core'
+import type { Context, Duration, ClocksState, Observable } from '@datadog/browser-core'
+import { addEventListener, DOM_EVENT, generateUUID, clocksNow, ONE_SECOND } from '@datadog/browser-core'
 import { ActionType } from '../../../rawRumEvent.types'
-import { RumConfiguration } from '../../configuration'
-import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
-import { EventCounts, trackEventCounts } from '../../trackEventCounts'
+import type { RumConfiguration } from '../../configuration'
+import type { LifeCycle } from '../../lifeCycle'
+import { LifeCycleEventType } from '../../lifeCycle'
+import type { EventCounts } from '../../trackEventCounts'
+import { trackEventCounts } from '../../trackEventCounts'
 import { waitIdlePage } from '../../waitIdlePage'
 import { getActionNameFromElement } from './getActionNameFromElement'
 

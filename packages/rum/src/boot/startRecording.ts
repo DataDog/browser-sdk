@@ -1,15 +1,12 @@
-import {
-  LifeCycle,
-  LifeCycleEventType,
-  ParentContexts,
-  RumConfiguration,
-  RumSessionManager,
-} from '@datadog/browser-rum-core'
+import type { LifeCycle, ParentContexts, RumConfiguration, RumSessionManager } from '@datadog/browser-rum-core'
+import { LifeCycleEventType } from '@datadog/browser-rum-core'
 
 import { record } from '../domain/record'
-import { startSegmentCollection, DeflateWorker } from '../domain/segmentCollection'
+import type { DeflateWorker } from '../domain/segmentCollection'
+import { startSegmentCollection } from '../domain/segmentCollection'
 import { send } from '../transport/send'
-import { RawRecord, RecordType } from '../types'
+import type { RawRecord } from '../types'
+import { RecordType } from '../types'
 
 export function startRecording(
   lifeCycle: LifeCycle,

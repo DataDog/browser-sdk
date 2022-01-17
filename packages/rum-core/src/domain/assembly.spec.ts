@@ -1,28 +1,29 @@
+import type { RawError, RelativeTime } from '@datadog/browser-core'
 import {
   ErrorSource,
   ONE_MINUTE,
-  RawError,
-  RelativeTime,
   display,
   updateExperimentalFeatures,
   resetExperimentalFeatures,
 } from '@datadog/browser-core'
 import { createRumSessionManagerMock } from '../../test/mockRumSessionManager'
 import { createRawRumEvent } from '../../test/fixtures'
+import type { TestSetupBuilder } from '../../test/specHelper'
 import {
   cleanupSyntheticsWorkerValues,
   mockSyntheticsWorkerValues,
   mockCiVisibilityWindowValues,
   cleanupCiVisibilityWindowValues,
   setup,
-  TestSetupBuilder,
 } from '../../test/specHelper'
-import { RumEventDomainContext } from '../domainContext.types'
-import { CommonContext, RawRumActionEvent, RawRumErrorEvent, RawRumEvent, RumEventType } from '../rawRumEvent.types'
-import { RumActionEvent, RumErrorEvent, RumEvent } from '../rumEvent.types'
+import type { RumEventDomainContext } from '../domainContext.types'
+import type { CommonContext, RawRumActionEvent, RawRumErrorEvent, RawRumEvent } from '../rawRumEvent.types'
+import { RumEventType } from '../rawRumEvent.types'
+import type { RumActionEvent, RumErrorEvent, RumEvent } from '../rumEvent.types'
 import { initEventBridgeStub, deleteEventBridgeStub } from '../../../core/test/specHelper'
 import { startRumAssembly } from './assembly'
-import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from './lifeCycle'
+import type { LifeCycle, RawRumEventCollectedData } from './lifeCycle'
+import { LifeCycleEventType } from './lifeCycle'
 import { RumSessionPlan } from './rumSessionManager'
 
 describe('rum assembly', () => {

@@ -1,6 +1,7 @@
-import { Observable, Subscription } from '@datadog/browser-core'
+import type { Observable, Subscription } from '@datadog/browser-core'
 import { mockLocation } from '../../../core/test/specHelper'
-import { createLocationChangeObservable, LocationChange } from './locationChangeObservable'
+import type { LocationChange } from './locationChangeObservable'
+import { createLocationChangeObservable } from './locationChangeObservable'
 
 describe('locationChangeObservable', () => {
   let observable: Observable<LocationChange>

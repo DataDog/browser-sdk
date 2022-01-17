@@ -1,14 +1,16 @@
 import { DOM_EVENT, isIE } from '@datadog/browser-core'
-import { LifeCycle, LifeCycleEventType, ParentContexts, ViewContext } from '@datadog/browser-rum-core'
+import type { ParentContexts, ViewContext } from '@datadog/browser-rum-core'
+import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
+import type { Clock } from '@datadog/browser-core/test/specHelper'
 import {
-  Clock,
   createNewEvent,
   mockClock,
   restorePageVisibility,
   setPageVisibility,
 } from '@datadog/browser-core/test/specHelper'
 import { createRumSessionManagerMock } from '../../../../rum-core/test/mockRumSessionManager'
-import { Record, RecordType, SegmentContext, SegmentMeta } from '../../types'
+import type { Record, SegmentContext, SegmentMeta } from '../../types'
+import { RecordType } from '../../types'
 import { MockWorker } from '../../../test/utils'
 import { SEND_BEACON_BYTE_LENGTH_LIMIT } from '../../transport/send'
 import { computeSegmentContext, doStartSegmentCollection, MAX_SEGMENT_DURATION } from './segmentCollection'

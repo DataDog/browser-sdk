@@ -53,7 +53,6 @@ module.exports = {
     'max-len': ['error', { code: 120, ignoreUrls: true }],
     'no-bitwise': 'error',
     'no-caller': 'error',
-    'no-duplicate-imports': 'error',
     'no-else-return': 'error',
     'no-eq-null': 'error',
     'no-eval': 'error',
@@ -110,6 +109,7 @@ module.exports = {
         },
       },
     ],
+    '@typescript-eslint/consistent-type-imports': ['error'],
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     '@typescript-eslint/member-ordering': [
       'error',
@@ -157,6 +157,7 @@ module.exports = {
     '@typescript-eslint/triple-slash-reference': ['error', { path: 'always', types: 'prefer-import', lib: 'always' }],
 
     'import/no-default-export': 'error',
+    'import/no-duplicates': 'error',
     'import/no-extraneous-dependencies': 'error',
     'import/no-unresolved': 'error',
     'import/no-useless-path-segments': 'error',

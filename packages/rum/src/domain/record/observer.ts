@@ -1,3 +1,4 @@
+import type { DefaultPrivacyLevel } from '@datadog/browser-core'
 import {
   monitor,
   callMonitored,
@@ -6,23 +7,19 @@ import {
   addEventListeners,
   addEventListener,
   includes,
-  DefaultPrivacyLevel,
   noop,
 } from '@datadog/browser-core'
 import { NodePrivacyLevel } from '../../constants'
 import { getNodePrivacyLevel, shouldMaskNode } from './privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from './serializationUtils'
-import {
+import type {
   FocusCallback,
   HookResetter,
-  IncrementalSource,
   InputCallback,
   InputState,
   ListenerHandler,
   MediaInteractionCallback,
-  MediaInteractions,
   MouseInteractionCallBack,
-  MouseInteractions,
   MousemoveCallBack,
   MutationCallBack,
   ObserverParam,
@@ -33,8 +30,10 @@ import {
   MousePosition,
   MouseInteractionParam,
 } from './types'
+import { IncrementalSource, MediaInteractions, MouseInteractions } from './types'
 import { forEach, hookSetter, isTouchEvent } from './utils'
-import { startMutationObserver, MutationController } from './mutationObserver'
+import type { MutationController } from './mutationObserver'
+import { startMutationObserver } from './mutationObserver'
 
 import {
   getVisualViewport,

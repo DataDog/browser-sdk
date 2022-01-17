@@ -1,21 +1,20 @@
+import type { Duration, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import {
   addEventListeners,
   DOM_EVENT,
-  Duration,
   getRelativeTime,
   isNumber,
   monitor,
   relativeNow,
-  RelativeTime,
   runOnReadyState,
-  TimeStamp,
 } from '@datadog/browser-core'
-import { RumConfiguration } from '../domain/configuration'
-import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
+import type { RumConfiguration } from '../domain/configuration'
+import type { LifeCycle } from '../domain/lifeCycle'
+import { LifeCycleEventType } from '../domain/lifeCycle'
 import { FAKE_INITIAL_DOCUMENT, isAllowedRequestUrl } from '../domain/rumEventsCollection/resource/resourceUtils'
 
 import { getDocumentTraceId } from '../domain/tracing/getDocumentTraceId'
-import { PerformanceEntryRepresentation } from '../domainContext.types'
+import type { PerformanceEntryRepresentation } from '../domainContext.types'
 
 export interface RumPerformanceResourceTiming {
   entryType: 'resource'

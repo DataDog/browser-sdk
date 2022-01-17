@@ -1,5 +1,6 @@
-import { RumResourceEvent } from '@datadog/browser-rum'
-import { bundleSetup, createTest, EventRegistry, html } from '../../lib/framework'
+import type { RumResourceEvent } from '@datadog/browser-rum'
+import type { EventRegistry } from '../../lib/framework'
+import { bundleSetup, createTest, html } from '../../lib/framework'
 import { browserExecuteAsync, sendXhr } from '../../lib/helpers/browser'
 import { flushEvents } from '../../lib/helpers/flushEvents'
 

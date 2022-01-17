@@ -1,6 +1,6 @@
-import { LogsInitConfiguration } from '@datadog/browser-logs'
-import { RumInitConfiguration } from '@datadog/browser-rum-core'
-import { Servers } from './httpServers'
+import type { LogsInitConfiguration } from '@datadog/browser-logs'
+import type { RumInitConfiguration } from '@datadog/browser-rum-core'
+import type { Servers } from './httpServers'
 
 export interface SetupOptions {
   rum?: RumInitConfiguration

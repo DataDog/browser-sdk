@@ -9,7 +9,8 @@ import {
 } from '../../constants'
 import { serializeDocument } from './serialize'
 import { sortAddedAndMovedNodes, startMutationObserver, MutationController } from './mutationObserver'
-import { AttributeMutation, Attributes, MutationCallBack, NodeType } from './types'
+import type { AttributeMutation, Attributes, MutationCallBack } from './types'
+import { NodeType } from './types'
 
 describe('startMutationCollection', () => {
   let sandbox: HTMLElement

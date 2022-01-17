@@ -1,16 +1,16 @@
 import { canUseEventBridge, noop, runOnReadyState } from '@datadog/browser-core'
-import {
-  LifeCycleEventType,
+import type {
   LifeCycle,
   ParentContexts,
   RumSessionManager,
   RecorderApi,
   RumConfiguration,
 } from '@datadog/browser-rum-core'
+import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { getReplayStats } from '../domain/replayStats'
 import { startDeflateWorker } from '../domain/segmentCollection'
 
-import { startRecording } from './startRecording'
+import type { startRecording } from './startRecording'
 
 export type StartRecording = typeof startRecording
 

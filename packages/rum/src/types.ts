@@ -1,4 +1,4 @@
-import { IncrementalData, SerializedNodeWithId } from './domain/record'
+import type { IncrementalData, SerializedNodeWithId } from './domain/record'
 
 export { IncrementalSource, MutationData, ViewportResizeData, ScrollData } from './domain/record'
 

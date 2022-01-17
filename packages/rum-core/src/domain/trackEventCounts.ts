@@ -1,6 +1,7 @@
 import { noop } from '@datadog/browser-core'
 import { RumEventType } from '../rawRumEvent.types'
-import { LifeCycle, LifeCycleEventType } from './lifeCycle'
+import type { LifeCycle } from './lifeCycle'
+import { LifeCycleEventType } from './lifeCycle'
 
 export interface EventCounts {
   errorCount: number

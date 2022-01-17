@@ -1,19 +1,15 @@
-import {
-  Duration,
-  isEmptyObject,
-  mapValues,
-  ServerDuration,
-  toServerDuration,
-  Observable,
-  isNumber,
-} from '@datadog/browser-core'
-import { RecorderApi } from '../../../boot/rumPublicApi'
-import { RawRumViewEvent, RumEventType } from '../../../rawRumEvent.types'
-import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from '../../lifeCycle'
-import { ForegroundContexts } from '../../foregroundContexts'
-import { LocationChange } from '../../../browser/locationChangeObservable'
-import { RumConfiguration } from '../../configuration'
-import { trackViews, ViewEvent } from './trackViews'
+import type { Duration, ServerDuration, Observable } from '@datadog/browser-core'
+import { isEmptyObject, mapValues, toServerDuration, isNumber } from '@datadog/browser-core'
+import type { RecorderApi } from '../../../boot/rumPublicApi'
+import type { RawRumViewEvent } from '../../../rawRumEvent.types'
+import { RumEventType } from '../../../rawRumEvent.types'
+import type { LifeCycle, RawRumEventCollectedData } from '../../lifeCycle'
+import { LifeCycleEventType } from '../../lifeCycle'
+import type { ForegroundContexts } from '../../foregroundContexts'
+import type { LocationChange } from '../../../browser/locationChangeObservable'
+import type { RumConfiguration } from '../../configuration'
+import type { ViewEvent } from './trackViews'
+import { trackViews } from './trackViews'
 
 export function startViewCollection(
   lifeCycle: LifeCycle,

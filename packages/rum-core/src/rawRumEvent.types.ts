@@ -1,4 +1,4 @@
-import {
+import type {
   Context,
   Duration,
   ErrorSource,
@@ -7,7 +7,7 @@ import {
   ServerDuration,
   TimeStamp,
 } from '@datadog/browser-core'
-import { RumSessionPlan } from './domain/rumSessionManager'
+import type { RumSessionPlan } from './domain/rumSessionManager'
 
 export enum RumEventType {
   ACTION = 'action',

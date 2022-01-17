@@ -1,13 +1,6 @@
-import {
-  addEventListener,
-  DOM_EVENT,
-  RelativeTime,
-  elapsed,
-  relativeNow,
-  Duration,
-  toServerDuration,
-} from '@datadog/browser-core'
-import { InForegroundPeriod } from '../rawRumEvent.types'
+import type { RelativeTime, Duration } from '@datadog/browser-core'
+import { addEventListener, DOM_EVENT, elapsed, relativeNow, toServerDuration } from '@datadog/browser-core'
+import type { InForegroundPeriod } from '../rawRumEvent.types'
 
 // Arbitrary value to cap number of element mostly for backend & to save bandwidth
 export const MAX_NUMBER_OF_SELECTABLE_FOREGROUND_PERIODS = 500
