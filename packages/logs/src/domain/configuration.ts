@@ -15,6 +15,9 @@ export interface LogsConfiguration extends Configuration {
   requestErrorResponseLengthLimit: number
 }
 
+/**
+ * arbitrary value, byte precision not needed
+ */
 export const DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT = 32 * ONE_KILO_BYTE
 
 export function validateAndBuildLogsConfiguration(
@@ -30,9 +33,6 @@ export function validateAndBuildLogsConfiguration(
 
     forwardErrorsToLogs: !!initConfiguration.forwardErrorsToLogs,
 
-    /**
-     * arbitrary value, byte precision not needed
-     */
     requestErrorResponseLengthLimit: DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT,
   }
 }
