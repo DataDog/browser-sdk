@@ -1,5 +1,6 @@
 import { isIE } from '../../tools/browserDetection'
-import { ErrorHandling, ErrorSource, RawError } from '../../tools/error'
+import type { RawError } from '../../tools/error'
+import { ErrorHandling, ErrorSource } from '../../tools/error'
 import { Observable } from '../../tools/observable'
 import { trackConsoleError, resetConsoleErrorProxy } from './trackConsoleError'
 

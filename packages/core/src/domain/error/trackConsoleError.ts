@@ -1,10 +1,10 @@
+import type { RawError } from '../../tools/error'
 import {
   ErrorSource,
   toStackTraceString,
   ErrorHandling,
   createHandlingStack,
   formatErrorMessage,
-  RawError,
 } from '../../tools/error'
 import { Observable } from '../../tools/observable'
 import { clocksNow } from '../../tools/timeUtils'

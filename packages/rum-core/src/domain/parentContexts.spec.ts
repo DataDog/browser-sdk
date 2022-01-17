@@ -1,14 +1,12 @@
-import { RelativeTime, relativeToClocks, CLEAR_OLD_CONTEXTS_INTERVAL } from '@datadog/browser-core'
-import { setup, TestSetupBuilder } from '../../test/specHelper'
+import type { RelativeTime } from '@datadog/browser-core'
+import { relativeToClocks, CLEAR_OLD_CONTEXTS_INTERVAL } from '@datadog/browser-core'
+import type { TestSetupBuilder } from '../../test/specHelper'
+import { setup } from '../../test/specHelper'
 import { LifeCycleEventType } from './lifeCycle'
-import {
-  ACTION_CONTEXT_TIME_OUT_DELAY,
-  ParentContexts,
-  startParentContexts,
-  VIEW_CONTEXT_TIME_OUT_DELAY,
-} from './parentContexts'
-import { AutoAction } from './rumEventsCollection/action/trackActions'
-import { ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
+import type { ParentContexts } from './parentContexts'
+import { ACTION_CONTEXT_TIME_OUT_DELAY, startParentContexts, VIEW_CONTEXT_TIME_OUT_DELAY } from './parentContexts'
+import type { AutoAction } from './rumEventsCollection/action/trackActions'
+import type { ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
 
 describe('parentContexts', () => {
   const FAKE_ID = 'fake'

@@ -1,5 +1,6 @@
-import { Batch, Context, HttpRequest, EndpointBuilder } from '@datadog/browser-core'
-import { LogsConfiguration } from '../domain/configuration'
+import type { Context, EndpointBuilder } from '@datadog/browser-core'
+import { Batch, HttpRequest } from '@datadog/browser-core'
+import type { LogsConfiguration } from '../domain/configuration'
 
 export function startLoggerBatch(configuration: LogsConfiguration) {
   const primaryBatch = createLoggerBatch(configuration.logsEndpointBuilder)

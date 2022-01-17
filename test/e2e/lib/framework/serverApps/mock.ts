@@ -2,7 +2,7 @@ import * as url from 'url'
 import cors from 'cors'
 import express from 'express'
 import { buildLogs, buildNpm, buildRum, buildRumSlim } from '../sdkBuilds'
-import { Servers } from '../httpServers'
+import type { Servers } from '../httpServers'
 
 export function createMockServerApp(servers: Servers, setup: string) {
   const app = express()

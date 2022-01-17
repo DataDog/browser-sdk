@@ -1,31 +1,29 @@
+import type { Context, InitConfiguration, InternalMonitoring, TimeStamp, RelativeTime } from '@datadog/browser-core'
 import {
   BoundedBuffer,
   buildCookieOptions,
-  Context,
   createContextManager,
   deepClone,
   makePublicApi,
   monitor,
-  InitConfiguration,
   clocksNow,
   timeStampNow,
   display,
-  InternalMonitoring,
   callMonitored,
   createHandlingStack,
-  TimeStamp,
-  RelativeTime,
   canUseEventBridge,
   areCookiesAuthorized,
   startInternalMonitoring,
 } from '@datadog/browser-core'
-import { LifeCycle } from '../domain/lifeCycle'
-import { ParentContexts } from '../domain/parentContexts'
-import { RumSessionManager } from '../domain/rumSessionManager'
-import { CommonContext, User, ActionType, ReplayStats } from '../rawRumEvent.types'
+import type { LifeCycle } from '../domain/lifeCycle'
+import type { ParentContexts } from '../domain/parentContexts'
+import type { RumSessionManager } from '../domain/rumSessionManager'
+import type { CommonContext, User, ReplayStats } from '../rawRumEvent.types'
+import { ActionType } from '../rawRumEvent.types'
 import { willSyntheticsInjectRum } from '../domain/syntheticsContext'
-import { RumConfiguration, RumInitConfiguration, validateAndBuildRumConfiguration } from '../domain/configuration'
-import { startRum } from './startRum'
+import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
+import { validateAndBuildRumConfiguration } from '../domain/configuration'
+import type { startRum } from './startRum'
 
 export type RumPublicApi = ReturnType<typeof makeRumPublicApi>
 

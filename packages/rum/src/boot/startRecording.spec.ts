@@ -1,14 +1,18 @@
 import { HttpRequest, DefaultPrivacyLevel, noop, isIE } from '@datadog/browser-core'
-import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
+import type { LifeCycle } from '@datadog/browser-rum-core'
+import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { inflate } from 'pako'
-import { createRumSessionManagerMock, RumSessionManagerMock } from '../../../rum-core/test/mockRumSessionManager'
+import type { RumSessionManagerMock } from '../../../rum-core/test/mockRumSessionManager'
+import { createRumSessionManagerMock } from '../../../rum-core/test/mockRumSessionManager'
 import { createNewEvent } from '../../../core/test/specHelper'
 
-import { setup, TestSetupBuilder } from '../../../rum-core/test/specHelper'
+import type { TestSetupBuilder } from '../../../rum-core/test/specHelper'
+import { setup } from '../../../rum-core/test/specHelper'
 import { collectAsyncCalls, recordsPerFullSnapshot } from '../../test/utils'
 import { setMaxSegmentSize, startDeflateWorker } from '../domain/segmentCollection'
 
-import { Segment, RecordType } from '../types'
+import type { Segment } from '../types'
+import { RecordType } from '../types'
 import { startRecording } from './startRecording'
 
 describe('startRecording', () => {

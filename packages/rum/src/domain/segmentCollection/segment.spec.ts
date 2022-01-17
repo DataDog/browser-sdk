@@ -1,6 +1,7 @@
 import { noop, setDebugMode, display, isIE } from '@datadog/browser-core'
 import { MockWorker, parseSegment } from '../../../test/utils'
-import { Record, RecordType, SegmentContext } from '../../types'
+import type { Record, SegmentContext } from '../../types'
+import { RecordType } from '../../types'
 import { getReplayStats, resetReplayStats } from '../replayStats'
 import { Segment } from './segment'
 

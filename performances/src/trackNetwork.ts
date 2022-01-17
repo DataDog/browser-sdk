@@ -1,4 +1,4 @@
-import { HTTPRequest, Page } from 'puppeteer'
+import type { HTTPRequest, Page } from 'puppeteer'
 
 export function trackNetwork(page: Page) {
   const pendingRequests = new Set<HTTPRequest>()

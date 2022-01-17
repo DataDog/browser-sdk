@@ -1,5 +1,6 @@
 import { objectValues } from '../../core/src'
-import { SerializedNodeWithId, serializeNodeWithId } from '../src/domain/record'
+import type { SerializedNodeWithId } from '../src/domain/record'
+import { serializeNodeWithId } from '../src/domain/record'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME } from '../src/constants'
 
 export const makeHtmlDoc = (htmlContent: string, privacyTag: string) => {

@@ -1,9 +1,11 @@
 import { DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
-import { Clock, createNewEvent } from '../../../../core/test/specHelper'
+import type { Clock } from '../../../../core/test/specHelper'
+import { createNewEvent } from '../../../../core/test/specHelper'
 import { collectAsyncCalls, recordsPerFullSnapshot } from '../../../test/utils'
-import { RecordType, IncrementalSource, RawRecord, IncrementalSnapshotRecord, FocusRecord } from '../../types'
+import type { RawRecord, IncrementalSnapshotRecord, FocusRecord } from '../../types'
+import { RecordType, IncrementalSource } from '../../types'
 import { record } from './record'
-import { RecordAPI } from './types'
+import type { RecordAPI } from './types'
 
 describe('record', () => {
   let sandbox: HTMLElement

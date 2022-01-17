@@ -1,8 +1,10 @@
-import { Context, objectValues } from '@datadog/browser-core'
-import { RumEvent } from '../rumEvent.types'
+import type { Context } from '@datadog/browser-core'
+import { objectValues } from '@datadog/browser-core'
+import type { RumEvent } from '../rumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-import { EventCounts, trackEventCounts } from './trackEventCounts'
+import type { EventCounts } from './trackEventCounts'
+import { trackEventCounts } from './trackEventCounts'
 
 describe('trackEventCounts', () => {
   let lifeCycle: LifeCycle

@@ -1,4 +1,5 @@
-import { BuildEnv, BuildMode } from '../../boot/init'
+import type { BuildEnv } from '../../boot/init'
+import { BuildMode } from '../../boot/init'
 import { computeTransportConfiguration } from './transportConfiguration'
 
 describe('transportConfiguration', () => {

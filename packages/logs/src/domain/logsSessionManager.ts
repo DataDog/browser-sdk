@@ -1,5 +1,6 @@
-import { performDraw, startSessionManager, RelativeTime } from '@datadog/browser-core'
-import { LogsConfiguration } from './configuration'
+import type { RelativeTime } from '@datadog/browser-core'
+import { performDraw, startSessionManager } from '@datadog/browser-core'
+import type { LogsConfiguration } from './configuration'
 
 export const LOGS_SESSION_KEY = 'logs'
 

@@ -1,5 +1,6 @@
 import { isIE } from '@datadog/browser-core'
-import { createDeflateWorker, DeflateWorker, DeflateWorkerResponse } from './deflateWorker'
+import type { DeflateWorker, DeflateWorkerResponse } from './deflateWorker'
+import { createDeflateWorker } from './deflateWorker'
 
 describe('deflateWorker', () => {
   beforeEach(() => {

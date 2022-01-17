@@ -1,5 +1,5 @@
 import { Batch, HttpRequest } from '../../transport'
-import { Configuration, EndpointBuilder, MonitoringMessage } from '../..'
+import type { Configuration, EndpointBuilder, MonitoringMessage } from '../..'
 
 export function startMonitoringBatch(configuration: Configuration) {
   const primaryBatch = createMonitoringBatch(configuration.internalMonitoringEndpointBuilder!)

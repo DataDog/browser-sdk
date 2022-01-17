@@ -1,9 +1,9 @@
-import { EndpointBuilder } from '../src/domain/configuration'
+import type { EndpointBuilder } from '../src/domain/configuration'
 import { instrumentMethod } from '../src/tools/instrumentMethod'
 import { resetNavigationStart } from '../src/tools/timeUtils'
 import { buildUrl } from '../src/tools/urlPolyfill'
 import { noop, objectEntries, assign } from '../src/tools/utils'
-import { BrowserWindowWithEventBridge } from '../src/transport'
+import type { BrowserWindowWithEventBridge } from '../src/transport'
 
 export function stubEndpointBuilder(url: string) {
   return { build: () => url } as EndpointBuilder

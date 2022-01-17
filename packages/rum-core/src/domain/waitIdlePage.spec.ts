@@ -1,13 +1,13 @@
 import { Observable, ONE_SECOND } from '@datadog/browser-core'
-import { Clock, mockClock } from '@datadog/browser-core/test/specHelper'
-import { RumPerformanceNavigationTiming, RumPerformanceResourceTiming } from '../browser/performanceCollection'
+import type { Clock } from '@datadog/browser-core/test/specHelper'
+import { mockClock } from '@datadog/browser-core/test/specHelper'
+import type { RumPerformanceNavigationTiming, RumPerformanceResourceTiming } from '../browser/performanceCollection'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-import { RequestCompleteEvent } from './requestCollection'
+import type { RequestCompleteEvent } from './requestCollection'
+import type { PageActivityEvent, IdlePageEvent } from './waitIdlePage'
 import {
   PAGE_ACTIVITY_END_DELAY,
   PAGE_ACTIVITY_VALIDATION_DELAY,
-  PageActivityEvent,
-  IdlePageEvent,
   doWaitIdlePage,
   createPageActivityObservable,
 } from './waitIdlePage'

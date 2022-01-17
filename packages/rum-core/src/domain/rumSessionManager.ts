@@ -1,6 +1,8 @@
-import { performDraw, startSessionManager, RelativeTime } from '@datadog/browser-core'
-import { RumConfiguration } from './configuration'
-import { LifeCycle, LifeCycleEventType } from './lifeCycle'
+import type { RelativeTime } from '@datadog/browser-core'
+import { performDraw, startSessionManager } from '@datadog/browser-core'
+import type { RumConfiguration } from './configuration'
+import type { LifeCycle } from './lifeCycle'
+import { LifeCycleEventType } from './lifeCycle'
 
 export const RUM_SESSION_KEY = 'rum'
 
