@@ -1,6 +1,7 @@
 // Keep the following in sync with packages/rum-slim/src/entries/main.ts
 import { defineGlobal, getGlobalObject } from '@datadog/browser-core'
-import { makeRumPublicApi, RumPublicApi, startRum } from '@datadog/browser-rum-core'
+import type { RumPublicApi } from '@datadog/browser-rum-core'
+import { makeRumPublicApi, startRum } from '@datadog/browser-rum-core'
 
 import { startRecording } from '../boot/startRecording'
 import { makeRecorderApi } from '../boot/recorderApi'

@@ -1,5 +1,6 @@
-import { mockClock, Clock } from '../../test/specHelper'
-import { RelativeTime } from './timeUtils'
+import type { Clock } from '../../test/specHelper'
+import { mockClock } from '../../test/specHelper'
+import type { RelativeTime } from './timeUtils'
 import { ONE_MINUTE } from './utils'
 import { CLEAR_OLD_CONTEXTS_INTERVAL, ContextHistory } from './contextHistory'
 

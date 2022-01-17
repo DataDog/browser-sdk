@@ -1,14 +1,18 @@
 import { HttpRequest, DefaultPrivacyLevel, noop, isIE } from '@datadog/browser-core'
-import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
+import type { LifeCycle } from '@datadog/browser-rum-core'
+import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { inflate } from 'pako'
-import { createRumSessionManagerMock, RumSessionManagerMock } from '../../../rum-core/test/mockRumSessionManager'
+import type { RumSessionManagerMock } from '../../../rum-core/test/mockRumSessionManager'
+import { createRumSessionManagerMock } from '../../../rum-core/test/mockRumSessionManager'
 import { createNewEvent } from '../../../core/test/specHelper'
 
-import { setup, TestSetupBuilder } from '../../../rum-core/test/specHelper'
-import { collectAsyncCalls } from '../../test/utils'
+import type { TestSetupBuilder } from '../../../rum-core/test/specHelper'
+import { setup } from '../../../rum-core/test/specHelper'
+import { collectAsyncCalls, recordsPerFullSnapshot } from '../../test/utils'
 import { setMaxSegmentSize, startDeflateWorker } from '../domain/segmentCollection'
 
-import { Segment, RecordType } from '../types'
+import type { Segment } from '../types'
+import { RecordType } from '../types'
 import { startRecording } from './startRecording'
 
 describe('startRecording', () => {
@@ -83,7 +87,7 @@ describe('startRecording', () => {
         creation_reason: 'init',
         end: jasmine.stringMatching(/^\d{13}$/),
         has_full_snapshot: 'true',
-        records_count: '3',
+        records_count: String(recordsPerFullSnapshot()),
         segment: jasmine.any(File),
         'session.id': 'session-id',
         start: jasmine.stringMatching(/^\d{13}$/),
@@ -106,7 +110,7 @@ describe('startRecording', () => {
     }
 
     waitRequestSendCalls(1, (calls) => {
-      expect(getRequestData(calls.first()).records_count).toBe(String(inputCount + 3))
+      expect(getRequestData(calls.first()).records_count).toBe(String(inputCount + recordsPerFullSnapshot()))
       expectNoExtraRequestSendCalls(done)
     })
   })
@@ -123,7 +127,7 @@ describe('startRecording', () => {
     flushSegment(lifeCycle)
 
     waitRequestSendCalls(1, (calls) => {
-      expect(getRequestData(calls.first()).records_count).toBe('4')
+      expect(getRequestData(calls.first()).records_count).toBe(String(1 + recordsPerFullSnapshot()))
       expectNoExtraRequestSendCalls(done)
     })
   })
@@ -220,7 +224,7 @@ describe('startRecording', () => {
       flushSegment(lifeCycle)
 
       waitRequestSendCalls(1, (calls) => {
-        expect(getRequestData(calls.first()).records_count).toBe('4')
+        expect(getRequestData(calls.first()).records_count).toBe(String(1 + recordsPerFullSnapshot()))
         expectNoExtraRequestSendCalls(done)
       })
     })
@@ -233,7 +237,7 @@ describe('startRecording', () => {
       flushSegment(lifeCycle)
 
       waitRequestSendCalls(1, (calls) => {
-        expect(getRequestData(calls.first()).records_count).toBe('3')
+        expect(getRequestData(calls.first()).records_count).toBe(String(recordsPerFullSnapshot()))
         expectNoExtraRequestSendCalls(done)
       })
     })

@@ -1,4 +1,4 @@
-import { BuildEnv, BuildMode } from '@datadog/browser-core'
+import type { BuildEnv, BuildMode } from '@datadog/browser-core'
 
 export const buildEnv: BuildEnv = {
   buildMode: '<<< BUILD_MODE >>>' as BuildMode,

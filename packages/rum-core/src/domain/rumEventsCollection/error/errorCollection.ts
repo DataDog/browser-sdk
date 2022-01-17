@@ -1,19 +1,19 @@
+import type { Context, RawError, ClocksState } from '@datadog/browser-core'
 import {
   computeStackTrace,
-  Context,
   formatUnknownError,
-  RawError,
   ErrorSource,
-  ClocksState,
   generateUUID,
   ErrorHandling,
   Observable,
   trackConsoleError,
   trackRuntimeError,
 } from '@datadog/browser-core'
-import { CommonContext, RawRumErrorEvent, RumEventType } from '../../../rawRumEvent.types'
-import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from '../../lifeCycle'
-import { ForegroundContexts } from '../../foregroundContexts'
+import type { CommonContext, RawRumErrorEvent } from '../../../rawRumEvent.types'
+import { RumEventType } from '../../../rawRumEvent.types'
+import type { LifeCycle, RawRumEventCollectedData } from '../../lifeCycle'
+import { LifeCycleEventType } from '../../lifeCycle'
+import type { ForegroundContexts } from '../../foregroundContexts'
 
 export interface ProvidedError {
   startClocks: ClocksState

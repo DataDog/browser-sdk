@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import sinon from 'sinon'
 import { stubEndpointBuilder } from '../../test/specHelper'
-import { createEndpointBuilder, EndpointBuilder } from '../domain/configuration'
-import { BuildEnv } from '..'
+import type { EndpointBuilder } from '../domain/configuration'
+import { createEndpointBuilder } from '../domain/configuration'
+import type { BuildEnv } from '..'
 import { HttpRequest } from './httpRequest'
 
 describe('httpRequest', () => {

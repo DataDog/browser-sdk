@@ -1,4 +1,5 @@
-import { combine, InternalMonitoring, canUseEventBridge, Observable } from '@datadog/browser-core'
+import type { InternalMonitoring, Observable } from '@datadog/browser-core'
+import { combine, canUseEventBridge } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { startPerformanceCollection } from '../browser/performanceCollection'
 import { startRumAssembly } from '../domain/assembly'
@@ -12,14 +13,16 @@ import { startErrorCollection } from '../domain/rumEventsCollection/error/errorC
 import { startLongTaskCollection } from '../domain/rumEventsCollection/longTask/longTaskCollection'
 import { startResourceCollection } from '../domain/rumEventsCollection/resource/resourceCollection'
 import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
-import { RumSessionManager, startRumSessionManager, startRumSessionManagerStub } from '../domain/rumSessionManager'
-import { CommonContext } from '../rawRumEvent.types'
+import type { RumSessionManager } from '../domain/rumSessionManager'
+import { startRumSessionManager, startRumSessionManagerStub } from '../domain/rumSessionManager'
+import type { CommonContext } from '../rawRumEvent.types'
 import { startRumBatch } from '../transport/startRumBatch'
 import { startRumEventBridge } from '../transport/startRumEventBridge'
 import { startUrlContexts } from '../domain/urlContexts'
-import { createLocationChangeObservable, LocationChange } from '../browser/locationChangeObservable'
-import { RumConfiguration } from '../domain/configuration'
-import { RecorderApi } from './rumPublicApi'
+import type { LocationChange } from '../browser/locationChangeObservable'
+import { createLocationChangeObservable } from '../browser/locationChangeObservable'
+import type { RumConfiguration } from '../domain/configuration'
+import type { RecorderApi } from './rumPublicApi'
 
 export function startRum(
   configuration: RumConfiguration,

@@ -1,5 +1,6 @@
 import { addMonitoringError, display, includes, monitor } from '@datadog/browser-core'
-import { createDeflateWorker, DeflateWorker } from './deflateWorker'
+import type { DeflateWorker } from './deflateWorker'
+import { createDeflateWorker } from './deflateWorker'
 
 /**
  * In order to be sure that the worker is correctly working, we need a round trip of

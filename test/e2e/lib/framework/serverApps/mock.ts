@@ -2,7 +2,7 @@ import * as url from 'url'
 import cors from 'cors'
 import express from 'express'
 import { buildLogs, buildNpm, buildRum, buildRumSlim } from '../sdkBuilds'
-import { MockServerApp, Servers } from '../httpServers'
+import type { MockServerApp, Servers } from '../httpServers'
 
 export const LARGE_RESPONSE_MIN_BYTE_SIZE = 100_000
 

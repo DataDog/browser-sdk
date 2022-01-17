@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Store } from '../common/types'
+import type { Store } from '../common/types'
 import { listenAction, sendAction } from './actions'
 
 let store: Store | undefined

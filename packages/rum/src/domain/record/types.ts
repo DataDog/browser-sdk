@@ -1,6 +1,6 @@
-import { DefaultPrivacyLevel } from '@datadog/browser-core'
-import { FocusRecord, RawRecord, VisualViewportRecord } from '../../types'
-import { MutationController } from './mutationObserver'
+import type { DefaultPrivacyLevel } from '@datadog/browser-core'
+import type { FocusRecord, RawRecord, VisualViewportRecord } from '../../types'
+import type { MutationController } from './mutationObserver'
 
 export enum IncrementalSource {
   Mutation = 0,

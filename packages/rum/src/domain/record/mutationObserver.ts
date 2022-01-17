@@ -1,16 +1,17 @@
-import { DefaultPrivacyLevel, monitor, noop } from '@datadog/browser-core'
+import type { DefaultPrivacyLevel } from '@datadog/browser-core'
+import { monitor, noop } from '@datadog/browser-core'
 import { getMutationObserverConstructor } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel } from '../../constants'
 import { getNodePrivacyLevel, getTextContent } from './privacy'
+import type { NodeWithSerializedNode } from './serializationUtils'
 import {
   getElementInputValue,
   getSerializedNodeId,
   hasSerializedNode,
   nodeAndAncestorsHaveSerializedNode,
-  NodeWithSerializedNode,
 } from './serializationUtils'
 import { serializeNodeWithId, serializeAttribute } from './serialize'
-import {
+import type {
   AddedNodeMutation,
   AttributeMutation,
   RumAttributesMutationRecord,

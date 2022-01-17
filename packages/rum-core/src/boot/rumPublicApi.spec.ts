@@ -1,24 +1,24 @@
+import type { RelativeTime, TimeStamp } from '@datadog/browser-core'
 import {
   ONE_SECOND,
-  RelativeTime,
   getTimeStamp,
   display,
-  TimeStamp,
   DefaultPrivacyLevel,
   updateExperimentalFeatures,
   resetExperimentalFeatures,
 } from '@datadog/browser-core'
 import { initEventBridgeStub, deleteEventBridgeStub } from '../../../core/test/specHelper'
+import type { TestSetupBuilder } from '../../test/specHelper'
 import {
   cleanupSyntheticsWorkerValues,
   mockSyntheticsWorkerValues,
   noopRecorderApi,
   setup,
-  TestSetupBuilder,
 } from '../../test/specHelper'
-import { HybridInitConfiguration, RumInitConfiguration } from '../domain/configuration'
+import type { HybridInitConfiguration, RumInitConfiguration } from '../domain/configuration'
 import { ActionType } from '../rawRumEvent.types'
-import { makeRumPublicApi, RumPublicApi, StartRum, RecorderApi } from './rumPublicApi'
+import type { RumPublicApi, StartRum, RecorderApi } from './rumPublicApi'
+import { makeRumPublicApi } from './rumPublicApi'
 
 const noopStartRum = (): ReturnType<StartRum> => ({
   addAction: () => undefined,

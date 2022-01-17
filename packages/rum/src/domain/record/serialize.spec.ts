@@ -15,16 +15,17 @@ import {
   generateLeanSerializedDoc,
 } from '../../../test/htmlAst'
 import { hasSerializedNode } from './serializationUtils'
+import type { SerializeOptions } from './serialize'
 import {
   serializeDocument,
   serializeNodeWithId,
-  SerializeOptions,
   serializeDocumentNode,
   serializeChildNodes,
   serializeAttribute,
 } from './serialize'
 import { MAX_ATTRIBUTE_VALUE_CHAR_LENGTH } from './privacy'
-import { ElementNode, NodeType, SerializedNodeWithId, TextNode } from './types'
+import type { ElementNode, SerializedNodeWithId, TextNode } from './types'
+import { NodeType } from './types'
 
 const DEFAULT_OPTIONS: SerializeOptions = {
   document,

@@ -1,3 +1,4 @@
+import type { RelativeTime } from '@datadog/browser-core'
 import {
   COOKIE_ACCESS_DELAY,
   getCookie,
@@ -5,11 +6,11 @@ import {
   setCookie,
   stopSessionManager,
   ONE_SECOND,
-  RelativeTime,
 } from '@datadog/browser-core'
-import { Clock, mockClock } from '../../../core/test/specHelper'
+import type { Clock } from '../../../core/test/specHelper'
+import { mockClock } from '../../../core/test/specHelper'
 
-import { LogsConfiguration } from './configuration'
+import type { LogsConfiguration } from './configuration'
 import {
   LOGS_SESSION_KEY,
   LoggerTrackingType,

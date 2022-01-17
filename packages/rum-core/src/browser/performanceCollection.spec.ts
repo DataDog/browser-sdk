@@ -1,4 +1,5 @@
-import { setup, TestSetupBuilder } from '../../test/specHelper'
+import type { TestSetupBuilder } from '../../test/specHelper'
+import { setup } from '../../test/specHelper'
 import { retrieveInitialDocumentResourceTiming, startPerformanceCollection } from './performanceCollection'
 
 describe('rum initial document resource', () => {

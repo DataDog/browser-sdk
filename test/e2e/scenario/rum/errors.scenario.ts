@@ -1,4 +1,4 @@
-import { RumErrorEvent } from '@datadog/browser-rum-core'
+import type { RumErrorEvent } from '@datadog/browser-rum-core'
 import { createTest, html } from '../../lib/framework'
 import { withBrowserLogs } from '../../lib/helpers/browser'
 import { flushEvents } from '../../lib/helpers/flushEvents'

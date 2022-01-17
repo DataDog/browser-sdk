@@ -1,13 +1,7 @@
-import { LogsEvent } from '@datadog/browser-logs'
-import { RumEvent } from '@datadog/browser-rum'
-import {
-  isRumErrorEvent,
-  isRumResourceEvent,
-  isRumUserActionEvent,
-  isRumViewEvent,
-  SessionReplayCall,
-  ServerInternalMonitoringMessage,
-} from '../types/serverEvents'
+import type { LogsEvent } from '@datadog/browser-logs'
+import type { RumEvent } from '@datadog/browser-rum'
+import type { SessionReplayCall, ServerInternalMonitoringMessage } from '../types/serverEvents'
+import { isRumErrorEvent, isRumResourceEvent, isRumUserActionEvent, isRumViewEvent } from '../types/serverEvents'
 
 type IntakeType = 'logs' | 'rum' | 'internalMonitoring' | 'sessionReplay'
 

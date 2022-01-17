@@ -1,31 +1,28 @@
+import type { TimeStamp } from '@datadog/browser-core'
+import { assign, combine, Observable, noop, setCookie, deleteCookie, ONE_MINUTE } from '@datadog/browser-core'
+import type { Clock } from '../../core/test/specHelper'
+import { SPEC_ENDPOINTS, mockClock, buildLocation } from '../../core/test/specHelper'
+import type { RecorderApi } from '../src/boot/rumPublicApi'
+import type { ForegroundContexts } from '../src/domain/foregroundContexts'
+import type { RawRumEventCollectedData } from '../src/domain/lifeCycle'
+import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
+import type { ParentContexts } from '../src/domain/parentContexts'
+import type { ViewEvent } from '../src/domain/rumEventsCollection/view/trackViews'
+import { trackViews } from '../src/domain/rumEventsCollection/view/trackViews'
+import type { RumSessionManager } from '../src/domain/rumSessionManager'
+import { RumSessionPlan } from '../src/domain/rumSessionManager'
+import type { RawRumEvent, RumContext, ViewContext, UrlContext } from '../src/rawRumEvent.types'
+import type { LocationChange } from '../src/browser/locationChangeObservable'
+import type { UrlContexts } from '../src/domain/urlContexts'
+import type { BrowserWindow } from '../src/domain/syntheticsContext'
 import {
-  assign,
-  combine,
-  Observable,
-  TimeStamp,
-  noop,
-  setCookie,
-  deleteCookie,
-  ONE_MINUTE,
-} from '@datadog/browser-core'
-import { SPEC_ENDPOINTS, mockClock, Clock, buildLocation } from '../../core/test/specHelper'
-import { RecorderApi } from '../src/boot/rumPublicApi'
-import { ForegroundContexts } from '../src/domain/foregroundContexts'
-import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from '../src/domain/lifeCycle'
-import { ParentContexts } from '../src/domain/parentContexts'
-import { trackViews, ViewEvent } from '../src/domain/rumEventsCollection/view/trackViews'
-import { RumSessionManager, RumSessionPlan } from '../src/domain/rumSessionManager'
-import { RawRumEvent, RumContext, ViewContext, UrlContext } from '../src/rawRumEvent.types'
-import { LocationChange } from '../src/browser/locationChangeObservable'
-import { UrlContexts } from '../src/domain/urlContexts'
-import {
-  BrowserWindow,
   SYNTHETICS_INJECTS_RUM_COOKIE_NAME,
   SYNTHETICS_RESULT_ID_COOKIE_NAME,
   SYNTHETICS_TEST_ID_COOKIE_NAME,
 } from '../src/domain/syntheticsContext'
 import type { CiTestWindow } from '../src/domain/ciTestContext'
-import { RumConfiguration, validateAndBuildRumConfiguration } from '../src/domain/configuration'
+import type { RumConfiguration } from '../src/domain/configuration'
+import { validateAndBuildRumConfiguration } from '../src/domain/configuration'
 import { validateFormat } from './formatValidation'
 import { createRumSessionManagerMock } from './mockRumSessionManager'
 

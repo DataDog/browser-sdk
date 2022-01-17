@@ -1,4 +1,4 @@
-import { ProfilingResult, ProfilingResults } from './types'
+import type { ProfilingResult, ProfilingResults } from './types'
 
 const DURATION_UNITS = ['μs', 'ms', 's']
 

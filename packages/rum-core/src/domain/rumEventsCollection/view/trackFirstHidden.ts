@@ -1,4 +1,5 @@
-import { addEventListeners, DOM_EVENT, EventEmitter, RelativeTime } from '@datadog/browser-core'
+import type { EventEmitter, RelativeTime } from '@datadog/browser-core'
+import { addEventListeners, DOM_EVENT } from '@datadog/browser-core'
 
 let trackFirstHiddenSingleton: { timeStamp: RelativeTime } | undefined
 let stopListeners: (() => void) | undefined
