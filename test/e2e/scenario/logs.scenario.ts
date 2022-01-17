@@ -1,3 +1,4 @@
+import { DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT } from '@datadog/browser-logs/cjs/domain/configuration'
 import { createTest, LARGE_RESPONSE_MIN_BYTE_SIZE } from '../lib/framework'
 import { UNREACHABLE_URL } from '../lib/helpers/constants'
 import { browserExecute, browserExecuteAsync, flushBrowserLogs, withBrowserLogs } from '../lib/helpers/browser'
@@ -97,8 +98,20 @@ describe('logs', () => {
       expect(serverEvents.logs.length).toBe(1)
       expect(serverEvents.logs[0].message).toBe(`Fetch error GET ${baseUrl}/throw-large-response`)
       expect(serverEvents.logs[0].error?.origin).toBe('network')
-      expect(serverEvents.logs[0].error?.stack?.length).toBeLessThan(LARGE_RESPONSE_MIN_BYTE_SIZE)
+
+      const ellipsisSize = 3
+      expect(serverEvents.logs[0].error?.stack?.length).toBe(DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT + ellipsisSize)
+
       expect(servers.base.app.getLargeResponseWroteSize()).toBeLessThan(LARGE_RESPONSE_MIN_BYTE_SIZE)
+      expect(servers.base.app.getLargeResponseWroteSize()).toBeLessThan(
+        // When reading the request, chunks length are probably not aligning perfectly with the
+        // response length limit, so it sends few more bytes than necessary. Add a 10% margin of
+        // error to verify that it's still close to the expected limit.
+        DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT * 1.1
+      )
+      expect(servers.base.app.getLargeResponseWroteSize()).toBeGreaterThanOrEqual(
+        DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT
+      )
 
       await withBrowserLogs((browserLogs) => {
         // Some browser report two errors:
