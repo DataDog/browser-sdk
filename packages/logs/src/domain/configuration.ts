@@ -1,4 +1,4 @@
-import { Configuration, InitConfiguration, validateAndBuildConfiguration } from '@datadog/browser-core'
+import { Configuration, InitConfiguration, ONE_KILO_BYTE, validateAndBuildConfiguration } from '@datadog/browser-core'
 import { buildEnv } from '../boot/buildEnv'
 import { LogsEvent } from '../logsEvent.types'
 
@@ -11,6 +11,7 @@ export type HybridInitConfiguration = Omit<LogsInitConfiguration, 'clientToken'>
 
 export interface LogsConfiguration extends Configuration {
   forwardErrorsToLogs: boolean
+  requestErrorResponseLengthLimit: number
 }
 
 export function validateAndBuildLogsConfiguration(
@@ -25,5 +26,10 @@ export function validateAndBuildLogsConfiguration(
     ...baseConfiguration,
 
     forwardErrorsToLogs: !!initConfiguration.forwardErrorsToLogs,
+
+    /**
+     * arbitrary value, byte precision not needed
+     */
+    requestErrorResponseLengthLimit: 32 * ONE_KILO_BYTE,
   }
 }
