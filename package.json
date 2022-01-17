@@ -93,7 +93,6 @@
   },
   "resolutions": {
     "**/bumbag/lodash": "4.17.21",
-    "**/conventional-changelog-core/get-pkg-repo": "4.1.2",
     "ansi-regex": "5.0.1"
   }
 }
