@@ -1,3 +1,4 @@
+import type { RelativeTime } from '@datadog/browser-core'
 import {
   COOKIE_ACCESS_DELAY,
   getCookie,
@@ -6,10 +7,11 @@ import {
   setCookie,
   stopSessionManager,
   ONE_SECOND,
-  RelativeTime,
 } from '@datadog/browser-core'
-import { Clock, mockClock } from '../../../core/test/specHelper'
-import { RumConfiguration, validateAndBuildRumConfiguration } from './configuration'
+import type { Clock } from '../../../core/test/specHelper'
+import { mockClock } from '../../../core/test/specHelper'
+import type { RumConfiguration } from './configuration'
+import { validateAndBuildRumConfiguration } from './configuration'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { RUM_SESSION_KEY, RumTrackingType, startRumSessionManager } from './rumSessionManager'

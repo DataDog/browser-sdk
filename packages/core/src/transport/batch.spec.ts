@@ -2,7 +2,7 @@
 import sinon from 'sinon'
 import { noop } from '../tools/utils'
 import { Batch } from './batch'
-import { HttpRequest } from './httpRequest'
+import type { HttpRequest } from './httpRequest'
 
 describe('batch', () => {
   const MAX_SIZE = 3

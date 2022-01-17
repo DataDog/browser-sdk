@@ -1,13 +1,7 @@
-import {
-  display,
-  isIE,
-  MonitoringMessage,
-  noop,
-  resetInternalMonitoring,
-  startFakeInternalMonitoring,
-} from '@datadog/browser-core'
+import type { MonitoringMessage } from '@datadog/browser-core'
+import { display, isIE, noop, resetInternalMonitoring, startFakeInternalMonitoring } from '@datadog/browser-core'
 import { MockWorker } from '../../../test/utils'
-import { createDeflateWorker } from './deflateWorker'
+import type { createDeflateWorker } from './deflateWorker'
 import { startDeflateWorker, resetDeflateWorkerState } from './startDeflateWorker'
 
 describe('startDeflateWorker', () => {

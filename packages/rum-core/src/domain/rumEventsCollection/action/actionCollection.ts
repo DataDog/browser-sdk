@@ -1,9 +1,13 @@
-import { combine, toServerDuration, generateUUID, Observable } from '@datadog/browser-core'
-import { ActionType, CommonContext, RumEventType, RawRumActionEvent } from '../../../rawRumEvent.types'
-import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from '../../lifeCycle'
-import { ForegroundContexts } from '../../foregroundContexts'
-import { RumConfiguration } from '../../configuration'
-import { AutoAction, CustomAction, trackActions } from './trackActions'
+import type { Observable } from '@datadog/browser-core'
+import { combine, toServerDuration, generateUUID } from '@datadog/browser-core'
+import type { CommonContext, RawRumActionEvent } from '../../../rawRumEvent.types'
+import { ActionType, RumEventType } from '../../../rawRumEvent.types'
+import type { LifeCycle, RawRumEventCollectedData } from '../../lifeCycle'
+import { LifeCycleEventType } from '../../lifeCycle'
+import type { ForegroundContexts } from '../../foregroundContexts'
+import type { RumConfiguration } from '../../configuration'
+import type { AutoAction, CustomAction } from './trackActions'
+import { trackActions } from './trackActions'
 
 export function startActionCollection(
   lifeCycle: LifeCycle,

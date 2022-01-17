@@ -1,3 +1,4 @@
+import type { DefaultPrivacyLevel } from '@datadog/browser-core'
 import {
   monitor,
   callMonitored,
@@ -6,24 +7,19 @@ import {
   addEventListeners,
   addEventListener,
   includes,
-  DefaultPrivacyLevel,
-  isExperimentalFeatureEnabled,
   noop,
 } from '@datadog/browser-core'
 import { NodePrivacyLevel } from '../../constants'
 import { getNodePrivacyLevel, shouldMaskNode } from './privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from './serializationUtils'
-import {
+import type {
   FocusCallback,
   HookResetter,
-  IncrementalSource,
   InputCallback,
   InputState,
   ListenerHandler,
   MediaInteractionCallback,
-  MediaInteractions,
   MouseInteractionCallBack,
-  MouseInteractions,
   MousemoveCallBack,
   MutationCallBack,
   ObserverParam,
@@ -34,8 +30,10 @@ import {
   MousePosition,
   MouseInteractionParam,
 } from './types'
+import { IncrementalSource, MediaInteractions, MouseInteractions } from './types'
 import { forEach, hookSetter, isTouchEvent } from './utils'
-import { startMutationObserver, MutationController } from './mutationObserver'
+import type { MutationController } from './mutationObserver'
+import { startMutationObserver } from './mutationObserver'
 
 import {
   getVisualViewport,
@@ -60,10 +58,7 @@ export function initObservers(o: ObserverParam): ListenerHandler {
   const mediaInteractionHandler = initMediaInteractionObserver(o.mediaInteractionCb, o.defaultPrivacyLevel)
   const styleSheetObserver = initStyleSheetObserver(o.styleSheetRuleCb)
   const focusHandler = initFocusObserver(o.focusCb)
-
-  const visualViewportResizeHandler = isExperimentalFeatureEnabled('visualviewport')
-    ? initVisualViewportResizeObserver(o.visualViewportResizeCb)
-    : noop
+  const visualViewportResizeHandler = initVisualViewportResizeObserver(o.visualViewportResizeCb)
 
   return () => {
     mutationHandler()
@@ -99,7 +94,7 @@ function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {
           x: clientX,
           y: clientY,
         }
-        if (isExperimentalFeatureEnabled('visualviewport') && window.visualViewport) {
+        if (window.visualViewport) {
           const { visualViewportX, visualViewportY } = convertMouseEventToLayoutCoordinates(clientX, clientY)
           position.x = visualViewportX
           position.y = visualViewportY
@@ -146,7 +141,7 @@ function initMouseInteractionObserver(
       x: clientX,
       y: clientY,
     }
-    if (isExperimentalFeatureEnabled('visualviewport') && window.visualViewport) {
+    if (window.visualViewport) {
       const { visualViewportX, visualViewportY } = convertMouseEventToLayoutCoordinates(clientX, clientY)
       position.x = visualViewportX
       position.y = visualViewportY
@@ -172,20 +167,11 @@ function initScrollObserver(cb: ScrollCallback, defaultPrivacyLevel: DefaultPriv
       }
       const id = getSerializedNodeId(target)
       if (target === document) {
-        if (isExperimentalFeatureEnabled('visualviewport')) {
-          cb({
-            id,
-            x: getScrollX(),
-            y: getScrollY(),
-          })
-        } else {
-          const scrollEl = (document.scrollingElement || document.documentElement)!
-          cb({
-            id,
-            x: scrollEl.scrollLeft,
-            y: scrollEl.scrollTop,
-          })
-        }
+        cb({
+          id,
+          x: getScrollX(),
+          y: getScrollY(),
+        })
       } else {
         cb({
           id,

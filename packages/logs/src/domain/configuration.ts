@@ -1,6 +1,7 @@
-import { Configuration, InitConfiguration, validateAndBuildConfiguration } from '@datadog/browser-core'
+import type { Configuration, InitConfiguration } from '@datadog/browser-core'
+import { validateAndBuildConfiguration } from '@datadog/browser-core'
 import { buildEnv } from '../boot/buildEnv'
-import { LogsEvent } from '../logsEvent.types'
+import type { LogsEvent } from '../logsEvent.types'
 
 export interface LogsInitConfiguration extends InitConfiguration {
   beforeSend?: ((event: LogsEvent) => void | boolean) | undefined

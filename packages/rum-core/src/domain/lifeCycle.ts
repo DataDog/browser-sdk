@@ -1,11 +1,11 @@
-import { Context, RawError, RelativeTime, Subscription } from '@datadog/browser-core'
-import { RumPerformanceEntry } from '../browser/performanceCollection'
-import { RumEventDomainContext } from '../domainContext.types'
-import { CommonContext, RawRumEvent } from '../rawRumEvent.types'
-import { RumEvent } from '../rumEvent.types'
-import { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
-import { AutoAction, AutoActionCreatedEvent } from './rumEventsCollection/action/trackActions'
-import { ViewEvent, ViewCreatedEvent, ViewEndedEvent } from './rumEventsCollection/view/trackViews'
+import type { Context, RawError, RelativeTime, Subscription } from '@datadog/browser-core'
+import type { RumPerformanceEntry } from '../browser/performanceCollection'
+import type { RumEventDomainContext } from '../domainContext.types'
+import type { CommonContext, RawRumEvent } from '../rawRumEvent.types'
+import type { RumEvent } from '../rumEvent.types'
+import type { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
+import type { AutoAction, AutoActionCreatedEvent } from './rumEventsCollection/action/trackActions'
+import type { ViewEvent, ViewCreatedEvent, ViewEndedEvent } from './rumEventsCollection/view/trackViews'
 
 export enum LifeCycleEventType {
   PERFORMANCE_ENTRY_COLLECTED,

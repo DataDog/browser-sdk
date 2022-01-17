@@ -1,5 +1,6 @@
 import { display } from '@datadog/browser-core'
-import { HandlerType, Logger, LogsMessage, STATUSES, StatusType } from './logger'
+import type { LogsMessage } from './logger'
+import { HandlerType, Logger, STATUSES, StatusType } from './logger'
 
 describe('Logger', () => {
   let logger: Logger

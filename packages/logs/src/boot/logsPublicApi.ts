@@ -1,18 +1,19 @@
+import type { Context, InitConfiguration } from '@datadog/browser-core'
 import {
   BoundedBuffer,
   combine,
-  Context,
   createContextManager,
   makePublicApi,
   monitor,
   display,
   deepClone,
-  InitConfiguration,
   canUseEventBridge,
 } from '@datadog/browser-core'
-import { LogsInitConfiguration, validateAndBuildLogsConfiguration } from '../domain/configuration'
-import { HandlerType, Logger, LogsMessage, StatusType } from '../domain/logger'
-import { startLogs } from './startLogs'
+import type { LogsInitConfiguration } from '../domain/configuration'
+import { validateAndBuildLogsConfiguration } from '../domain/configuration'
+import type { HandlerType, LogsMessage, StatusType } from '../domain/logger'
+import { Logger } from '../domain/logger'
+import type { startLogs } from './startLogs'
 
 export interface LoggerConfiguration {
   level?: StatusType

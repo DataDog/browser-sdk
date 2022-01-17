@@ -1,10 +1,14 @@
 import { noop, resetExperimentalFeatures, updateExperimentalFeatures } from '@datadog/browser-core'
-import { RecorderApi, ParentContexts, LifeCycleEventType, LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
+import type { RecorderApi, ParentContexts, LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
+import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { createNewEvent, deleteEventBridgeStub, initEventBridgeStub } from '../../../core/test/specHelper'
-import { createRumSessionManagerMock, RumSessionManagerMock } from '../../../rum-core/test/mockRumSessionManager'
-import { setup, TestSetupBuilder } from '../../../rum-core/test/specHelper'
-import { DeflateWorker, startDeflateWorker } from '../domain/segmentCollection'
-import { makeRecorderApi, StartRecording } from './recorderApi'
+import type { RumSessionManagerMock } from '../../../rum-core/test/mockRumSessionManager'
+import { createRumSessionManagerMock } from '../../../rum-core/test/mockRumSessionManager'
+import type { TestSetupBuilder } from '../../../rum-core/test/specHelper'
+import { setup } from '../../../rum-core/test/specHelper'
+import type { DeflateWorker, startDeflateWorker } from '../domain/segmentCollection'
+import type { StartRecording } from './recorderApi'
+import { makeRecorderApi } from './recorderApi'
 
 describe('makeRecorderApi', () => {
   let setupBuilder: TestSetupBuilder

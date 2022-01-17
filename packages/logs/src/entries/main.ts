@@ -1,5 +1,6 @@
 import { defineGlobal, getGlobalObject } from '@datadog/browser-core'
-import { LogsPublicApi, makeLogsPublicApi } from '../boot/logsPublicApi'
+import type { LogsPublicApi } from '../boot/logsPublicApi'
+import { makeLogsPublicApi } from '../boot/logsPublicApi'
 import { startLogs } from '../boot/startLogs'
 
 export { Logger, LogsMessage, StatusType, HandlerType } from '../domain/logger'

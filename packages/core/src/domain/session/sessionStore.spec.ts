@@ -1,7 +1,11 @@
-import { Clock, mockClock } from '../../../test/specHelper'
-import { CookieOptions, getCookie, setCookie, COOKIE_ACCESS_DELAY } from '../../browser/cookie'
-import { MonitoringMessage, startFakeInternalMonitoring, resetInternalMonitoring } from '../internalMonitoring'
-import { startSessionStore, SessionStore, SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionStore'
+import type { Clock } from '../../../test/specHelper'
+import { mockClock } from '../../../test/specHelper'
+import type { CookieOptions } from '../../browser/cookie'
+import { getCookie, setCookie, COOKIE_ACCESS_DELAY } from '../../browser/cookie'
+import type { MonitoringMessage } from '../internalMonitoring'
+import { startFakeInternalMonitoring, resetInternalMonitoring } from '../internalMonitoring'
+import type { SessionStore } from './sessionStore'
+import { startSessionStore, SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionStore'
 import { SESSION_COOKIE_NAME } from './sessionCookieStore'
 
 enum FakeTrackingType {

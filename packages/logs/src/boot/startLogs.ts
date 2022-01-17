@@ -1,12 +1,9 @@
+import type { Context, InternalMonitoring, RawError, RelativeTime } from '@datadog/browser-core'
 import {
   areCookiesAuthorized,
   combine,
-  Context,
   createEventRateLimiter,
-  InternalMonitoring,
   Observable,
-  RawError,
-  RelativeTime,
   trackRuntimeError,
   trackConsoleError,
   canUseEventBridge,
@@ -15,10 +12,12 @@ import {
   startInternalMonitoring,
 } from '@datadog/browser-core'
 import { trackNetworkError } from '../domain/trackNetworkError'
-import { Logger, LogsMessage, StatusType } from '../domain/logger'
-import { LogsSessionManager, startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
+import type { Logger, LogsMessage } from '../domain/logger'
+import { StatusType } from '../domain/logger'
+import type { LogsSessionManager } from '../domain/logsSessionManager'
+import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import { startLoggerBatch } from '../transport/startLoggerBatch'
-import { LogsConfiguration } from '../domain/configuration'
+import type { LogsConfiguration } from '../domain/configuration'
 
 export function startLogs(configuration: LogsConfiguration, errorLogger: Logger) {
   const internalMonitoring = startInternalMonitoring(configuration)

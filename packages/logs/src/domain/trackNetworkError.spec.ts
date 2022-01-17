@@ -1,6 +1,8 @@
-import { isIE, Observable, RawError } from '@datadog/browser-core'
-import { FetchStub, FetchStubManager, ResponseStub, SPEC_ENDPOINTS, stubFetch } from '../../../core/test/specHelper'
-import { LogsConfiguration } from './configuration'
+import type { RawError } from '@datadog/browser-core'
+import { isIE, Observable } from '@datadog/browser-core'
+import type { FetchStub, FetchStubManager } from '../../../core/test/specHelper'
+import { SPEC_ENDPOINTS, ResponseStub, stubFetch } from '../../../core/test/specHelper'
+import type { LogsConfiguration } from './configuration'
 
 import {
   computeFetchErrorText,

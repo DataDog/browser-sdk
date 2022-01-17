@@ -1,13 +1,7 @@
-import {
-  addEventListeners,
-  DOM_EVENT,
-  Duration,
-  elapsed,
-  EventEmitter,
-  RelativeTime,
-  ONE_MINUTE,
-} from '@datadog/browser-core'
-import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
+import type { Duration, EventEmitter, RelativeTime } from '@datadog/browser-core'
+import { addEventListeners, DOM_EVENT, elapsed, ONE_MINUTE } from '@datadog/browser-core'
+import type { LifeCycle } from '../../lifeCycle'
+import { LifeCycleEventType } from '../../lifeCycle'
 import { trackFirstHidden } from './trackFirstHidden'
 
 // Discard LCP and FCP timings above a certain delay to avoid incorrect data

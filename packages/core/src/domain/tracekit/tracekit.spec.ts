@@ -1,6 +1,6 @@
 import { disableJasmineUncaughtErrorHandler } from '../../../test/specHelper'
 import { startUnhandledErrorCollection } from './tracekit'
-import { UnhandledErrorCallback } from './types'
+import type { UnhandledErrorCallback } from './types'
 
 describe('startUnhandledErrorCollection', () => {
   const testLineNo = 1337

@@ -1,6 +1,7 @@
 import { callMonitored } from '../domain/internalMonitoring'
-import { computeStackTrace, StackTrace } from '../domain/tracekit'
-import { ClocksState } from './timeUtils'
+import type { StackTrace } from '../domain/tracekit'
+import { computeStackTrace } from '../domain/tracekit'
+import type { ClocksState } from './timeUtils'
 import { jsonStringify, noop } from './utils'
 
 export interface RawError {

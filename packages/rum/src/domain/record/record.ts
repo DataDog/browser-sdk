@@ -1,8 +1,8 @@
-import { isExperimentalFeatureEnabled } from '@datadog/browser-core'
 import { RecordType } from '../../types'
 import { serializeDocument } from './serialize'
 import { initObservers } from './observer'
-import { IncrementalSource, RecordAPI, RecordOptions } from './types'
+import type { RecordAPI, RecordOptions } from './types'
+import { IncrementalSource } from './types'
 
 import { MutationController } from './mutationObserver'
 import { getVisualViewport, getScrollX, getScrollY, getWindowHeight, getWindowWidth } from './viewports'
@@ -46,7 +46,7 @@ export function record(options: RecordOptions): RecordAPI {
       type: RecordType.FullSnapshot,
     })
 
-    if (isExperimentalFeatureEnabled('visualviewport') && window.visualViewport) {
+    if (window.visualViewport) {
       emit({
         data: getVisualViewport(),
         type: RecordType.VisualViewport,

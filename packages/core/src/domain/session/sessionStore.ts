@@ -1,4 +1,5 @@
-import { CookieOptions, COOKIE_ACCESS_DELAY } from '../../browser/cookie'
+import type { CookieOptions } from '../../browser/cookie'
+import { COOKIE_ACCESS_DELAY } from '../../browser/cookie'
 import { Observable } from '../../tools/observable'
 import * as utils from '../../tools/utils'
 import { monitor, addMonitoringMessage } from '../internalMonitoring'

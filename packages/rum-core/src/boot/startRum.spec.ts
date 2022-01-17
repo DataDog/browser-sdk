@@ -1,25 +1,20 @@
-import {
-  RelativeTime,
-  Observable,
-  noop,
-  relativeNow,
-  isIE,
-  resetExperimentalFeatures,
-  updateExperimentalFeatures,
-  Context,
-} from '@datadog/browser-core'
-import { createRumSessionManagerMock, RumSessionManagerMock } from '../../test/mockRumSessionManager'
-import { noopRecorderApi, setup, TestSetupBuilder } from '../../test/specHelper'
-import { RumPerformanceNavigationTiming, RumPerformanceEntry } from '../browser/performanceCollection'
-import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
+import type { RelativeTime, Observable, Context } from '@datadog/browser-core'
+import { noop, relativeNow, isIE, resetExperimentalFeatures, updateExperimentalFeatures } from '@datadog/browser-core'
+import type { RumSessionManagerMock } from '../../test/mockRumSessionManager'
+import { createRumSessionManagerMock } from '../../test/mockRumSessionManager'
+import type { TestSetupBuilder } from '../../test/specHelper'
+import { noopRecorderApi, setup } from '../../test/specHelper'
+import type { RumPerformanceNavigationTiming, RumPerformanceEntry } from '../browser/performanceCollection'
+import type { LifeCycle } from '../domain/lifeCycle'
+import { LifeCycleEventType } from '../domain/lifeCycle'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from '../domain/rumEventsCollection/view/trackViews'
 import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
-import { RumEvent } from '../rumEvent.types'
-import { LocationChange } from '../browser/locationChangeObservable'
+import type { RumEvent } from '../rumEvent.types'
+import type { LocationChange } from '../browser/locationChangeObservable'
 import { startLongTaskCollection } from '../domain/rumEventsCollection/longTask/longTaskCollection'
-import { RumSessionManager } from '..'
+import type { RumSessionManager } from '..'
 import { initEventBridgeStub, deleteEventBridgeStub } from '../../../core/test/specHelper'
-import { RumConfiguration } from '../domain/configuration'
+import type { RumConfiguration } from '../domain/configuration'
 import { startRumEventCollection } from './startRum'
 
 function collectServerEvents(lifeCycle: LifeCycle) {

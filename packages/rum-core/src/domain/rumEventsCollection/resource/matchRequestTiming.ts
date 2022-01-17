@@ -1,6 +1,6 @@
-import { Duration, RelativeTime } from '@datadog/browser-core'
-import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
-import { RequestCompleteEvent } from '../../requestCollection'
+import type { Duration, RelativeTime } from '@datadog/browser-core'
+import type { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
+import type { RequestCompleteEvent } from '../../requestCollection'
 import { toValidEntry } from './resourceUtils'
 
 interface Timing {

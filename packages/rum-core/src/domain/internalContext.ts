@@ -1,8 +1,8 @@
-import { RelativeTime } from '@datadog/browser-core'
-import { InternalContext } from '../rawRumEvent.types'
-import { ParentContexts } from './parentContexts'
-import { RumSessionManager } from './rumSessionManager'
-import { UrlContexts } from './urlContexts'
+import type { RelativeTime } from '@datadog/browser-core'
+import type { InternalContext } from '../rawRumEvent.types'
+import type { ParentContexts } from './parentContexts'
+import type { RumSessionManager } from './rumSessionManager'
+import type { UrlContexts } from './urlContexts'
 
 /**
  * Internal context keep returning v1 format

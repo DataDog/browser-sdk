@@ -1,14 +1,5 @@
-import {
-  combine,
-  Context,
-  ContextValue,
-  createContextManager,
-  ErrorSource,
-  includes,
-  monitored,
-  display,
-  TimeStamp,
-} from '@datadog/browser-core'
+import type { Context, ContextValue, TimeStamp } from '@datadog/browser-core'
+import { combine, createContextManager, ErrorSource, includes, monitored, display } from '@datadog/browser-core'
 
 export const StatusType = {
   debug: 'debug',
