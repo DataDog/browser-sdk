@@ -9,18 +9,23 @@ const MAX_SERVER_CREATION_RETRY = 5
 const PORT_MIN = 9200
 const PORT_MAX = 9400
 
-type ServerApp = (req: http.IncomingMessage, res: http.ServerResponse) => void
+export type ServerApp = (req: http.IncomingMessage, res: http.ServerResponse) => void
 
-export interface Server {
+export type MockServerApp = ServerApp & {
+  getLargeResponseWroteSize(): number
+}
+
+export interface Server<App extends ServerApp> {
   url: string
-  bindServerApp(serverApp: ServerApp): void
+  app: App
+  bindServerApp(serverApp: App): void
   waitForIdle(): Promise<void>
 }
 
 export interface Servers {
-  base: Server
-  intake: Server
-  crossOrigin: Server
+  base: Server<MockServerApp>
+  intake: Server<ServerApp>
+  crossOrigin: Server<MockServerApp>
 }
 
 let serversSingleton: undefined | Servers
@@ -41,10 +46,10 @@ export async function waitForServersIdle() {
   return Promise.all([servers.base.waitForIdle(), servers.crossOrigin.waitForIdle(), servers.intake.waitForIdle()])
 }
 
-async function createServer(): Promise<Server> {
+async function createServer<App extends ServerApp>(): Promise<Server<App>> {
   const server = await instantiateServer()
   const { address, port } = server.address() as AddressInfo
-  let serverApp: ServerApp | undefined
+  let serverApp: App | undefined
 
   server.on('request', (req: http.IncomingMessage, res: http.ServerResponse) => {
     if (serverApp) {
@@ -60,8 +65,14 @@ async function createServer(): Promise<Server> {
   })
 
   return {
-    bindServerApp(newServerApp: ServerApp) {
+    bindServerApp(newServerApp: App) {
       serverApp = newServerApp
+    },
+    get app() {
+      if (!serverApp) {
+        throw new Error('no server app bound')
+      }
+      return serverApp
     },
     url: `http://${address}:${port}`,
     waitForIdle: createServerIdleWaiter(server),
