@@ -63,9 +63,11 @@ describe('trackTimings', () => {
   it('should merge timings from various sources', () => {
     const { lifeCycle } = setupBuilder.build()
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_NAVIGATION_ENTRY)
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_PAINT_ENTRY)
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_FIRST_INPUT_ENTRY)
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      FAKE_NAVIGATION_ENTRY,
+      FAKE_PAINT_ENTRY,
+      FAKE_FIRST_INPUT_ENTRY,
+    ])
 
     expect(timingsCallback).toHaveBeenCalledTimes(3)
     expect(timingsCallback.calls.mostRecent().args[0]).toEqual({
@@ -96,7 +98,7 @@ describe('trackNavigationTimings', () => {
   it('should provide the first contentful paint timing', () => {
     const { lifeCycle } = setupBuilder.build()
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_NAVIGATION_ENTRY)
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [FAKE_NAVIGATION_ENTRY])
 
     expect(navigationTimingsCallback).toHaveBeenCalledTimes(1)
     expect(navigationTimingsCallback).toHaveBeenCalledWith({
@@ -127,7 +129,7 @@ describe('trackFirstContentfulPaintTiming', () => {
   it('should provide the first contentful paint timing', () => {
     const { lifeCycle } = setupBuilder.build()
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_PAINT_ENTRY)
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [FAKE_PAINT_ENTRY])
 
     expect(fcpCallback).toHaveBeenCalledTimes(1 as RelativeTime)
     expect(fcpCallback).toHaveBeenCalledWith(123 as RelativeTime)
@@ -136,17 +138,19 @@ describe('trackFirstContentfulPaintTiming', () => {
   it('should be discarded if the page is hidden', () => {
     setPageVisibility('hidden')
     const { lifeCycle } = setupBuilder.build()
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_PAINT_ENTRY)
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [FAKE_PAINT_ENTRY])
     expect(fcpCallback).not.toHaveBeenCalled()
   })
 
   it('should be discarded if it is reported after a long time', () => {
     const { lifeCycle } = setupBuilder.build()
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
-      ...FAKE_PAINT_ENTRY,
-      startTime: TIMING_MAXIMUM_DELAY as RelativeTime,
-    })
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      {
+        ...FAKE_PAINT_ENTRY,
+        startTime: TIMING_MAXIMUM_DELAY as RelativeTime,
+      },
+    ])
     expect(fcpCallback).not.toHaveBeenCalled()
   })
 })
@@ -174,7 +178,7 @@ describe('largestContentfulPaintTiming', () => {
   it('should provide the largest contentful paint timing', () => {
     const { lifeCycle } = setupBuilder.build()
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY)
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY])
     expect(lcpCallback).toHaveBeenCalledTimes(1 as RelativeTime)
     expect(lcpCallback).toHaveBeenCalledWith(789 as RelativeTime)
   })
@@ -184,7 +188,7 @@ describe('largestContentfulPaintTiming', () => {
 
     emitter.dispatchEvent(createNewEvent(DOM_EVENT.KEY_DOWN, { timeStamp: 1 }))
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY)
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY])
     expect(lcpCallback).not.toHaveBeenCalled()
   })
 
@@ -192,7 +196,7 @@ describe('largestContentfulPaintTiming', () => {
     setPageVisibility('hidden')
     const { lifeCycle } = setupBuilder.build()
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY)
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY])
 
     expect(lcpCallback).not.toHaveBeenCalled()
   })
@@ -200,10 +204,12 @@ describe('largestContentfulPaintTiming', () => {
   it('should be discarded if it is reported after a long time', () => {
     const { lifeCycle } = setupBuilder.build()
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
-      ...FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY,
-      startTime: TIMING_MAXIMUM_DELAY as RelativeTime,
-    })
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      {
+        ...FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY,
+        startTime: TIMING_MAXIMUM_DELAY as RelativeTime,
+      },
+    ])
     expect(lcpCallback).not.toHaveBeenCalled()
   })
 })
@@ -229,7 +235,7 @@ describe('firstInputTimings', () => {
   it('should provide the first input timings', () => {
     const { lifeCycle } = setupBuilder.build()
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_FIRST_INPUT_ENTRY)
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [FAKE_FIRST_INPUT_ENTRY])
     expect(fitCallback).toHaveBeenCalledTimes(1)
     expect(fitCallback).toHaveBeenCalledWith({ firstInputDelay: 100, firstInputTime: 1000 })
   })
@@ -238,7 +244,7 @@ describe('firstInputTimings', () => {
     setPageVisibility('hidden')
     const { lifeCycle } = setupBuilder.build()
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_FIRST_INPUT_ENTRY)
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [FAKE_FIRST_INPUT_ENTRY])
 
     expect(fitCallback).not.toHaveBeenCalled()
   })
@@ -246,11 +252,13 @@ describe('firstInputTimings', () => {
   it('should be adjusted to 0 if the computed value would be negative due to browser timings imprecisions', () => {
     const { lifeCycle } = setupBuilder.build()
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
-      entryType: 'first-input' as const,
-      processingStart: 900 as RelativeTime,
-      startTime: 1000 as RelativeTime,
-    })
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      {
+        entryType: 'first-input' as const,
+        processingStart: 900 as RelativeTime,
+        startTime: 1000 as RelativeTime,
+      },
+    ])
 
     expect(fitCallback).toHaveBeenCalledTimes(1)
     expect(fitCallback).toHaveBeenCalledWith({ firstInputDelay: 0, firstInputTime: 1000 })

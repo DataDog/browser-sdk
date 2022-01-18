@@ -105,15 +105,15 @@ export function supportPerformanceEntry() {
 
 export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: RumConfiguration) {
   retrieveInitialDocumentResourceTiming((timing) => {
-    handleRumPerformanceEntry(lifeCycle, configuration, timing)
+    handleRumPerformanceEntries(lifeCycle, configuration, [timing])
   })
 
   if (supportPerformanceObject()) {
-    handlePerformanceEntries(lifeCycle, configuration, performance.getEntries())
+    handleRumPerformanceEntries(lifeCycle, configuration, performance.getEntries())
   }
   if (window.PerformanceObserver) {
     const handlePerformanceEntryList = monitor((entries: PerformanceObserverEntryList) =>
-      handlePerformanceEntries(lifeCycle, configuration, entries.getEntries())
+      handleRumPerformanceEntries(lifeCycle, configuration, entries.getEntries())
     )
     const mainEntries = ['resource', 'navigation', 'longtask', 'paint']
     const experimentalEntries = ['largest-contentful-paint', 'first-input', 'layout-shift']
@@ -127,7 +127,8 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
         observer.observe({ type, buffered: true })
       })
     } catch (e) {
-      // Some old browser versions don't support PerformanceObserver without entryTypes option
+      // Some old browser versions (ex: chrome 67) don't support the PerformanceObserver type and buffered options
+      // In these cases, fallback to PerformanceObserver with entryTypes
       mainEntries.push(...experimentalEntries)
     }
 
@@ -143,12 +144,12 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
   }
   if (!supportPerformanceTimingEvent('navigation')) {
     retrieveNavigationTiming((timing) => {
-      handleRumPerformanceEntry(lifeCycle, configuration, timing)
+      handleRumPerformanceEntries(lifeCycle, configuration, [timing])
     })
   }
   if (!supportPerformanceTimingEvent('first-input')) {
     retrieveFirstInputTiming((timing) => {
-      handleRumPerformanceEntry(lifeCycle, configuration, timing)
+      handleRumPerformanceEntries(lifeCycle, configuration, [timing])
     })
   }
 }
@@ -283,9 +284,13 @@ function computeRelativePerformanceTiming() {
   return result as RelativePerformanceTiming
 }
 
-function handlePerformanceEntries(lifeCycle: LifeCycle, configuration: RumConfiguration, entries: PerformanceEntry[]) {
-  entries.forEach((entry) => {
-    if (
+function handleRumPerformanceEntries(
+  lifeCycle: LifeCycle,
+  configuration: RumConfiguration,
+  entries: Array<PerformanceEntry | RumPerformanceEntry>
+) {
+  const rumPerformanceEntries = entries.filter(
+    (entry) =>
       entry.entryType === 'resource' ||
       entry.entryType === 'navigation' ||
       entry.entryType === 'paint' ||
@@ -293,18 +298,15 @@ function handlePerformanceEntries(lifeCycle: LifeCycle, configuration: RumConfig
       entry.entryType === 'largest-contentful-paint' ||
       entry.entryType === 'first-input' ||
       entry.entryType === 'layout-shift'
-    ) {
-      handleRumPerformanceEntry(lifeCycle, configuration, (entry as unknown) as RumPerformanceEntry)
-    }
-  })
-}
+  ) as RumPerformanceEntry[]
 
-function handleRumPerformanceEntry(lifeCycle: LifeCycle, configuration: RumConfiguration, entry: RumPerformanceEntry) {
-  if (isIncompleteNavigation(entry) || isForbiddenResource(configuration, entry)) {
-    return
+  const rumAllowedPerformanceEntries = rumPerformanceEntries.filter(
+    (entry) => !isIncompleteNavigation(entry) && !isForbiddenResource(configuration, entry)
+  )
+
+  if (rumAllowedPerformanceEntries.length) {
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, rumAllowedPerformanceEntries)
   }
-
-  lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, entry)
 }
 
 function isIncompleteNavigation(entry: RumPerformanceEntry) {
