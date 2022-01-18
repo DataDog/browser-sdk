@@ -301,7 +301,7 @@ function handleRumPerformanceEntries(
   ) as RumPerformanceEntry[]
 
   const rumAllowedPerformanceEntries = rumPerformanceEntries.filter(
-    (entry) => isIncompleteNavigation(entry) && isForbiddenResource(configuration, entry)
+    (entry) => !isIncompleteNavigation(entry) && !isForbiddenResource(configuration, entry)
   )
 
   if (rumAllowedPerformanceEntries.length) {
