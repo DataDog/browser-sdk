@@ -11,7 +11,7 @@ export function createDeflateWorker() {
 
 function workerCodeFn() {
   monitor(function () {
-    const { Deflate, constants } = makePakoDeflate()
+    const { Deflate, constants, string2buf } = makePakoDeflate()
 
     let deflate = new Deflate()
     let rawSize = 0
@@ -52,7 +52,8 @@ function workerCodeFn() {
     )
 
     function pushData(data) {
-      const binaryData = new TextEncoder().encode(data)
+      // TextEncoder is not supported on old browser version like Edge 18, therefore we use string2buf
+      const binaryData = string2buf(data)
       deflate.push(binaryData, constants.Z_SYNC_FLUSH)
       rawSize += binaryData.length
       return binaryData.length
@@ -4442,6 +4443,70 @@ function workerCodeFn() {
       return deflate$1(input, options)
     }
 
-    return { Deflate, constants }
+    // https://github.com/nodeca/pako/blob/26dff4fb3472c5532b3bd8856421146d35ab7592/lib/utils/strings.js#L26
+    function string2buf(str) {
+      if (typeof TextEncoder === 'function' && TextEncoder.prototype.encode) {
+        return new TextEncoder().encode(str)
+      }
+
+      let buf,
+        c,
+        c2,
+        m_pos,
+        i,
+        str_len = str.length,
+        buf_len = 0
+
+      // count binary size
+      for (m_pos = 0; m_pos < str_len; m_pos++) {
+        c = str.charCodeAt(m_pos)
+        if ((c & 0xfc00) === 0xd800 && m_pos + 1 < str_len) {
+          c2 = str.charCodeAt(m_pos + 1)
+          if ((c2 & 0xfc00) === 0xdc00) {
+            c = 0x10000 + ((c - 0xd800) << 10) + (c2 - 0xdc00)
+            m_pos++
+          }
+        }
+        buf_len += c < 0x80 ? 1 : c < 0x800 ? 2 : c < 0x10000 ? 3 : 4
+      }
+
+      // allocate buffer
+      buf = new Uint8Array(buf_len)
+
+      // convert
+      for (i = 0, m_pos = 0; i < buf_len; m_pos++) {
+        c = str.charCodeAt(m_pos)
+        if ((c & 0xfc00) === 0xd800 && m_pos + 1 < str_len) {
+          c2 = str.charCodeAt(m_pos + 1)
+          if ((c2 & 0xfc00) === 0xdc00) {
+            c = 0x10000 + ((c - 0xd800) << 10) + (c2 - 0xdc00)
+            m_pos++
+          }
+        }
+        if (c < 0x80) {
+          /* one byte */
+          buf[i++] = c
+        } else if (c < 0x800) {
+          /* two bytes */
+          buf[i++] = 0xc0 | (c >>> 6)
+          buf[i++] = 0x80 | (c & 0x3f)
+        } else if (c < 0x10000) {
+          /* three bytes */
+          buf[i++] = 0xe0 | (c >>> 12)
+          buf[i++] = 0x80 | ((c >>> 6) & 0x3f)
+          buf[i++] = 0x80 | (c & 0x3f)
+        } else {
+          /* four bytes */
+          buf[i++] = 0xf0 | (c >>> 18)
+          buf[i++] = 0x80 | ((c >>> 12) & 0x3f)
+          buf[i++] = 0x80 | ((c >>> 6) & 0x3f)
+          buf[i++] = 0x80 | (c & 0x3f)
+        }
+      }
+
+      return buf
+    }
+
+    return { Deflate, constants, string2buf }
   }
 }
