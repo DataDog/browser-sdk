@@ -110,11 +110,11 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
   })
 
   if (supportPerformanceObject()) {
-    handleRumPerformanceEntries(lifeCycle, configuration, filterRumPerformanceEntries(performance.getEntries()))
+    handleRumPerformanceEntries(lifeCycle, configuration, performance.getEntries())
   }
   if (window.PerformanceObserver) {
     const handlePerformanceEntryList = monitor((entries: PerformanceObserverEntryList) =>
-      handleRumPerformanceEntries(lifeCycle, configuration, filterRumPerformanceEntries(entries.getEntries()))
+      handleRumPerformanceEntries(lifeCycle, configuration, entries.getEntries())
     )
     const mainEntries = ['resource', 'navigation', 'longtask', 'paint']
     const experimentalEntries = ['largest-contentful-paint', 'first-input', 'layout-shift']
@@ -288,28 +288,26 @@ function computeRelativePerformanceTiming() {
 function handleRumPerformanceEntries(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
-  entries: RumPerformanceEntry[]
+  entries: Array<PerformanceEntry | RumPerformanceEntry>
 ) {
-  const filteredEvents = entries.filter(
-    (entry) => !isIncompleteNavigation(entry) && !isForbiddenResource(configuration, entry)
+  const rumPerformanceEntries = entries.filter(
+    (entry) =>
+      entry.entryType === 'resource' ||
+      entry.entryType === 'navigation' ||
+      entry.entryType === 'paint' ||
+      entry.entryType === 'longtask' ||
+      entry.entryType === 'largest-contentful-paint' ||
+      entry.entryType === 'first-input' ||
+      entry.entryType === 'layout-shift'
+  ) as RumPerformanceEntry[]
+
+  const rumAllowedPerformanceEntries = rumPerformanceEntries.filter(
+    (entry) => isIncompleteNavigation(entry) && isForbiddenResource(configuration, entry)
   )
 
-  if (filteredEvents.length) {
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, filteredEvents)
+  if (rumAllowedPerformanceEntries.length) {
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, rumAllowedPerformanceEntries)
   }
-}
-
-function filterRumPerformanceEntries(entries: PerformanceEntry[]) {
-  return (entries.filter(
-    ({ entryType }) =>
-      entryType === 'resource' ||
-      entryType === 'navigation' ||
-      entryType === 'paint' ||
-      entryType === 'longtask' ||
-      entryType === 'largest-contentful-paint' ||
-      entryType === 'first-input' ||
-      entryType === 'layout-shift'
-  ) as unknown) as RumPerformanceEntry[]
 }
 
 function isIncompleteNavigation(entry: RumPerformanceEntry) {
