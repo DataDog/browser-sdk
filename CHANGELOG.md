@@ -16,6 +16,18 @@
 
 ---
 
+## v4.2.0
+
+- ⚡️ [RUMF-1113] Notify performance entries by batch ([#1255](https://github.com/DataDog/browser-sdk/pull/1255))
+- 🐛 [RUMF-1147] Implement TextEncoder().encode fallback for replay encorder ([#1269](https://github.com/DataDog/browser-sdk/pull/1269))
+- ✨ [RUMF-1146] add 'source:browser' to all RUM events ([#1271](https://github.com/DataDog/browser-sdk/pull/1271))
+- ⚡️ [RUMF-1111] limit the number of bytes read from the response ([#1264](https://github.com/DataDog/browser-sdk/pull/1264))
+- ✨ [REPLAY-564] enable visual viewport recording ([#1247](https://github.com/DataDog/browser-sdk/pull/1247))
+- 📝 add clarification to config example ([#1268](https://github.com/DataDog/browser-sdk/pull/1268))
+- ⚡️ [RUMF-1111] compute response text in trackNetworkError ([#1263](https://github.com/DataDog/browser-sdk/pull/1263))
+- 📝 [RUMF-1137] replace major changes description by links to the upgrade guide ([#1265](https://github.com/DataDog/browser-sdk/pull/1265))
+- ⚗ [RUMF-1079] tweak max number of lock retries ([#1262](https://github.com/DataDog/browser-sdk/pull/1262))
+
 ## v4.1.0
 
 - 🐛 [RUMF-1143] make sure to drop LCP timings if the page was previously hidden ([#1259](https://github.com/DataDog/browser-sdk/pull/1259))
