@@ -1,7 +1,9 @@
-import { BuildEnv, BuildMode } from '../../boot/init'
+import type { BuildEnv } from '../../boot/init'
+import { BuildMode } from '../../boot/init'
 import { objectValues } from '../../tools/utils'
-import { InitConfiguration } from './configuration'
-import { createEndpointBuilder, INTAKE_SITE_US, EndpointBuilder } from './endpointBuilder'
+import type { InitConfiguration } from './configuration'
+import type { EndpointBuilder } from './endpointBuilder'
+import { createEndpointBuilder, INTAKE_SITE_US } from './endpointBuilder'
 import { buildTags } from './tags'
 
 export interface TransportConfiguration {
@@ -10,7 +12,6 @@ export interface TransportConfiguration {
   sessionReplayEndpointBuilder: EndpointBuilder
   internalMonitoringEndpointBuilder?: EndpointBuilder
   isIntakeUrl: (url: string) => boolean
-  // only on staging build mode
   replica?: ReplicaConfiguration
 }
 
@@ -82,7 +83,7 @@ function computeReplicaConfiguration(
   intakeEndpoints: string[],
   tags: string[]
 ): ReplicaConfiguration | undefined {
-  if (buildEnv.buildMode !== BuildMode.STAGING || initConfiguration.replica === undefined) {
+  if (!initConfiguration.replica) {
     return
   }
 

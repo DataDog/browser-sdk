@@ -1,6 +1,8 @@
-import { CreationReason, IncrementalSource, RecordType, Segment } from '@datadog/browser-rum/cjs/types'
-import { InputData, StyleSheetRuleData, NodeType } from '@datadog/browser-rum/cjs/domain/record/types'
-import { RumInitConfiguration } from '@datadog/browser-rum-core'
+import type { CreationReason, Segment } from '@datadog/browser-rum/cjs/types'
+import { IncrementalSource, RecordType } from '@datadog/browser-rum/cjs/types'
+import type { InputData, StyleSheetRuleData } from '@datadog/browser-rum/cjs/domain/record/types'
+import { NodeType } from '@datadog/browser-rum/cjs/domain/record/types'
+import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import { DefaultPrivacyLevel } from '@datadog/browser-rum'
 
 import {
@@ -14,7 +16,8 @@ import {
   createMutationPayloadValidatorFromSegment,
 } from '@datadog/browser-rum/test/utils'
 import { renewSession } from '../../lib/helpers/session'
-import { createTest, bundleSetup, html, EventRegistry } from '../../lib/framework'
+import type { EventRegistry } from '../../lib/framework'
+import { createTest, bundleSetup, html } from '../../lib/framework'
 import { browserExecute } from '../../lib/helpers/browser'
 import { flushEvents } from '../../lib/helpers/flushEvents'
 

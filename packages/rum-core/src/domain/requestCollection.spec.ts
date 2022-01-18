@@ -1,9 +1,13 @@
 import { isIE, RequestType } from '@datadog/browser-core'
-import { FetchStub, FetchStubManager, SPEC_ENDPOINTS, stubFetch, stubXhr, withXhr } from '../../../core/test/specHelper'
-import { RumConfiguration, validateAndBuildRumConfiguration } from './configuration'
+import type { FetchStub, FetchStubManager } from '../../../core/test/specHelper'
+import { SPEC_ENDPOINTS, stubFetch, stubXhr, withXhr } from '../../../core/test/specHelper'
+import type { RumConfiguration } from './configuration'
+import { validateAndBuildRumConfiguration } from './configuration'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-import { RequestCompleteEvent, RequestStartEvent, trackFetch, trackXhr } from './requestCollection'
-import { clearTracingIfNeeded, TraceIdentifier, Tracer } from './tracing/tracer'
+import type { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
+import { trackFetch, trackXhr } from './requestCollection'
+import type { Tracer } from './tracing/tracer'
+import { clearTracingIfNeeded, TraceIdentifier } from './tracing/tracer'
 
 const configuration: RumConfiguration = {
   ...validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!,
@@ -70,7 +74,6 @@ describe('collect fetch', () => {
       expect(request.method).toEqual('GET')
       expect(request.url).toEqual(FAKE_URL)
       expect(request.status).toEqual(500)
-      expect(request.responseText).toEqual('fetch error')
       done()
     })
   })
@@ -193,7 +196,6 @@ describe('collect xhr', () => {
         expect(request.method).toEqual('GET')
         expect(request.url).toContain('/ok')
         expect(request.status).toEqual(200)
-        expect(request.responseText).toEqual('ok')
         done()
       },
     })

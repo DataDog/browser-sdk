@@ -1,5 +1,7 @@
-import { relativeNow, RelativeTime } from './timeUtils'
-import { ONE_MINUTE, TimeoutId } from './utils'
+import type { RelativeTime } from './timeUtils'
+import { relativeNow } from './timeUtils'
+import type { TimeoutId } from './utils'
+import { ONE_MINUTE } from './utils'
 
 interface PreviousContext<T> {
   startTime: RelativeTime

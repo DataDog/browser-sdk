@@ -1,9 +1,9 @@
-import { EndpointBuilder } from '../src/domain/configuration'
+import type { EndpointBuilder } from '../src/domain/configuration'
 import { instrumentMethod } from '../src/tools/instrumentMethod'
 import { resetNavigationStart } from '../src/tools/timeUtils'
 import { buildUrl } from '../src/tools/urlPolyfill'
 import { noop, objectEntries, assign } from '../src/tools/utils'
-import { BrowserWindowWithEventBridge } from '../src/transport'
+import type { BrowserWindowWithEventBridge } from '../src/transport'
 
 export function stubEndpointBuilder(url: string) {
   return { build: () => url } as EndpointBuilder
@@ -106,27 +106,14 @@ export function stubFetch(): FetchStubManager {
 
   window.fetch = (() => {
     pendingRequests += 1
-    let resolve: (response: ResponseStub) => unknown
+    let resolve: (response: Response) => unknown
     let reject: (error: Error) => unknown
     const promise = (new Promise((res, rej) => {
       resolve = res
       reject = rej
     }) as unknown) as FetchStubPromise
-    promise.resolveWith = (response: ResponseStub) => {
-      resolve({
-        ...response,
-        clone: () => {
-          const cloned = {
-            text: () => {
-              if (response.responseTextError) {
-                return Promise.reject(response.responseTextError)
-              }
-              return Promise.resolve(response.responseText)
-            },
-          }
-          return cloned as Response
-        },
-      })
+    promise.resolveWith = (responseOptions: ResponseStubOptions) => {
+      resolve(new ResponseStub(responseOptions))
       onRequestEnd()
     }
     promise.rejectWith = (error: Error) => {
@@ -151,15 +138,99 @@ export function stubFetch(): FetchStubManager {
   }
 }
 
-export interface ResponseStub extends Partial<Response> {
+export interface ResponseStubOptions {
+  status?: number
+  method?: string
+  type?: ResponseType
   responseText?: string
   responseTextError?: Error
+  body?: ReadableStream<Uint8Array>
+}
+function notYetImplemented(): never {
+  throw new Error('not yet implemented')
+}
+
+export class ResponseStub implements Response {
+  private _body: ReadableStream<Uint8Array> | undefined
+
+  constructor(private options: Readonly<ResponseStubOptions>) {
+    if (this.options.body) {
+      this._body = this.options.body
+    } else if (this.options.responseTextError !== undefined) {
+      this._body = new ReadableStream({
+        start: (controller) => {
+          controller.error(this.options.responseTextError)
+        },
+      })
+    } else if (this.options.responseText !== undefined) {
+      this._body = new ReadableStream({
+        start: (controller) => {
+          controller.enqueue(new TextEncoder().encode(this.options.responseText))
+          controller.close()
+        },
+      })
+    }
+  }
+
+  get status() {
+    return this.options.status ?? 200
+  }
+
+  get method() {
+    return this.options.method ?? 'GET'
+  }
+
+  get type() {
+    return this.options.type ?? 'basic'
+  }
+
+  get bodyUsed() {
+    return this._body ? this._body.locked : false
+  }
+
+  get body() {
+    return this._body || null
+  }
+
+  clone() {
+    if (this.bodyUsed) {
+      throw new TypeError("Failed to execute 'clone' on 'Response': Response body is already used")
+    }
+    return new ResponseStub(this.options)
+  }
+
+  // Partial implementation, feel free to implement
+  /* eslint-disable @typescript-eslint/member-ordering */
+  arrayBuffer = notYetImplemented
+  text = notYetImplemented
+  blob = notYetImplemented
+  formData = notYetImplemented
+  json = notYetImplemented
+  /* eslint-enable @typescript-eslint/member-ordering */
+  get ok() {
+    return notYetImplemented()
+  }
+  get headers() {
+    return notYetImplemented()
+  }
+  get redirected() {
+    return notYetImplemented()
+  }
+  get statusText() {
+    return notYetImplemented()
+  }
+  get trailer() {
+    return notYetImplemented()
+  }
+  get url() {
+    return notYetImplemented()
+  }
 }
 
 export type FetchStub = (input: RequestInfo, init?: RequestInit) => FetchStubPromise
 
 export interface FetchStubPromise extends Promise<Response> {
-  resolveWith: (response: ResponseStub) => void
+  resolveWith: (response: ResponseStubOptions) => void
   rejectWith: (error: Error) => void
   abort: () => void
 }
@@ -324,5 +395,19 @@ export function disableJasmineUncaughtErrorHandler() {
   const { stop } = instrumentMethod(window, 'onerror', () => noop)
   return {
     reset: stop,
+  }
+}
+
+export function stubCookie() {
+  let cookie = ''
+  return {
+    getSpy: spyOnProperty(Document.prototype, 'cookie', 'get').and.callFake(() => cookie),
+    setSpy: spyOnProperty(Document.prototype, 'cookie', 'set').and.callFake((newCookie) => {
+      cookie = newCookie
+    }),
+    currentValue: () => cookie,
+    setCurrentValue: (newCookie: string) => {
+      cookie = newCookie
+    },
   }
 }

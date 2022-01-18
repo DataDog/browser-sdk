@@ -1,8 +1,10 @@
-import { ONE_MINUTE, RelativeTime, SESSION_TIME_OUT_DELAY, ContextHistory } from '@datadog/browser-core'
-import { ActionContext, ViewContext } from '../rawRumEvent.types'
-import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-import { AutoAction, AutoActionCreatedEvent } from './rumEventsCollection/action/trackActions'
-import { ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
+import type { RelativeTime } from '@datadog/browser-core'
+import { ONE_MINUTE, SESSION_TIME_OUT_DELAY, ContextHistory } from '@datadog/browser-core'
+import type { ActionContext, ViewContext } from '../rawRumEvent.types'
+import type { LifeCycle } from './lifeCycle'
+import { LifeCycleEventType } from './lifeCycle'
+import type { AutoAction, AutoActionCreatedEvent } from './rumEventsCollection/action/trackActions'
+import type { ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
 
 export const VIEW_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
 export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary

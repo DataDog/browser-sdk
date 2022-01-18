@@ -1,6 +1,6 @@
 import { instrumentMethodAndCallOriginal } from '../../tools/instrumentMethod'
 import { computeStackTrace } from './computeStackTrace'
-import { UnhandledErrorCallback, StackTrace } from './types'
+import type { UnhandledErrorCallback, StackTrace } from './types'
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error#Error_types
 // eslint-disable-next-line  max-len

@@ -1,19 +1,19 @@
-import {
+import type {
   Duration,
-  RequestType,
-  initFetchObservable,
-  initXhrObservable,
   XhrCompleteContext,
   XhrStartContext,
   ClocksState,
   FetchStartContext,
   FetchCompleteContext,
 } from '@datadog/browser-core'
-import { RumSessionManager } from '..'
-import { RumConfiguration } from './configuration'
-import { LifeCycle, LifeCycleEventType } from './lifeCycle'
+import { RequestType, initFetchObservable, initXhrObservable } from '@datadog/browser-core'
+import type { RumSessionManager } from '..'
+import type { RumConfiguration } from './configuration'
+import type { LifeCycle } from './lifeCycle'
+import { LifeCycleEventType } from './lifeCycle'
 import { isAllowedRequestUrl } from './rumEventsCollection/resource/resourceUtils'
-import { startTracer, TraceIdentifier, Tracer } from './tracing/tracer'
+import type { TraceIdentifier, Tracer } from './tracing/tracer'
+import { startTracer } from './tracing/tracer'
 
 export interface CustomContext {
   requestIndex: number
@@ -35,7 +35,6 @@ export interface RequestCompleteEvent {
   method: string
   url: string
   status: number
-  responseText?: string
   responseType?: string
   startClocks: ClocksState
   duration: Duration
@@ -82,7 +81,6 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: RumConfiguration, 
           duration: context.duration,
           method: context.method,
           requestIndex: context.requestIndex,
-          responseText: context.responseText,
           spanId: context.spanId,
           startClocks: context.startClocks,
           status: context.status,
@@ -121,7 +119,6 @@ export function trackFetch(lifeCycle: LifeCycle, configuration: RumConfiguration
           duration: context.duration,
           method: context.method,
           requestIndex: context.requestIndex,
-          responseText: context.responseText,
           responseType: context.responseType,
           spanId: context.spanId,
           startClocks: context.startClocks,

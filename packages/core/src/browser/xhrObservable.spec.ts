@@ -1,6 +1,7 @@
 import { stubXhr, withXhr } from '../../test/specHelper'
-import { Subscription } from '../tools/observable'
-import { initXhrObservable, XhrCompleteContext, XhrContext } from './xhrObservable'
+import type { Subscription } from '../tools/observable'
+import type { XhrCompleteContext, XhrContext } from './xhrObservable'
+import { initXhrObservable } from './xhrObservable'
 
 describe('xhr proxy', () => {
   let requestsTrackingSubscription: Subscription
@@ -43,7 +44,6 @@ describe('xhr proxy', () => {
         const request = requests[0]
         expect(request.method).toBe('GET')
         expect(request.url).toContain('/ok')
-        expect(request.responseText).toBe('ok')
         expect(request.status).toBe(200)
         expect(request.isAborted).toBe(false)
         expect(request.startTime).toEqual(jasmine.any(Number))
@@ -64,7 +64,6 @@ describe('xhr proxy', () => {
         const request = requests[0]
         expect(request.method).toBe('GET')
         expect(request.url).toContain('/expected-404')
-        expect(request.responseText).toBe('NOT FOUND')
         expect(request.status).toBe(404)
         expect(request.isAborted).toBe(false)
         expect(request.startTime).toEqual(jasmine.any(Number))
@@ -85,7 +84,6 @@ describe('xhr proxy', () => {
         const request = requests[0]
         expect(request.method).toBe('GET')
         expect(request.url).toContain('/throw')
-        expect(request.responseText).toEqual('expected server error')
         expect(request.status).toBe(500)
         expect(request.isAborted).toBe(false)
         expect(request.startTime).toEqual(jasmine.any(Number))
@@ -106,7 +104,6 @@ describe('xhr proxy', () => {
         const request = requests[0]
         expect(request.method).toBe('GET')
         expect(request.url).toBe('http://foo.bar/qux')
-        expect(request.responseText).toBe('')
         expect(request.status).toBe(0)
         expect(request.isAborted).toBe(false)
         expect(request.startTime).toEqual(jasmine.any(Number))
@@ -134,7 +131,6 @@ describe('xhr proxy', () => {
         expect(requests.length).toBe(1)
         expect(request.method).toBe('GET')
         expect(request.url).toContain('/ok')
-        expect(request.responseText).toBe('ok')
         expect(request.status).toBe(200)
         expect(request.startTime).toEqual(jasmine.any(Number))
         expect(request.duration).toEqual(jasmine.any(Number))
@@ -157,7 +153,6 @@ describe('xhr proxy', () => {
         const request = requests[0]
         expect(request.method).toBe('GET')
         expect(request.url).toContain('/ok')
-        expect(request.responseText).toBeUndefined()
         expect(request.status).toBe(0)
         expect(request.startTime).toEqual(jasmine.any(Number))
         expect(request.duration).toEqual(jasmine.any(Number))
@@ -180,7 +175,6 @@ describe('xhr proxy', () => {
         const request = requests[0]
         expect(request.method).toBe('GET')
         expect(request.url).toContain('/ok')
-        expect(request.responseText).toBe('ok')
         expect(request.status).toBe(200)
         expect(request.isAborted).toBe(false)
         expect(request.startTime).toEqual(jasmine.any(Number))
@@ -203,7 +197,6 @@ describe('xhr proxy', () => {
         const request = requests[0]
         expect(request.method).toBe('GET')
         expect(request.url).toContain('/ok')
-        expect(request.responseText).toBe('ok')
         expect(request.status).toBe(200)
         expect(request.isAborted).toBe(false)
         expect(request.startTime).toEqual(jasmine.any(Number))

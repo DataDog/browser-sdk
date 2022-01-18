@@ -2,7 +2,7 @@
  * Keep these types in a separate file in order to reference it from the official doc
  */
 
-import { RumEventType } from './rawRumEvent.types'
+import type { RumEventType } from './rawRumEvent.types'
 
 export type RumEventDomainContext<T extends RumEventType = any> = T extends RumEventType.VIEW
   ? RumViewEventDomainContext

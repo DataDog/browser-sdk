@@ -1,11 +1,15 @@
-import { Context, DOM_EVENT, ClocksState, Observable } from '@datadog/browser-core'
-import { Clock, createNewEvent } from '../../../../../core/test/specHelper'
-import { setup, TestSetupBuilder } from '../../../../test/specHelper'
+import type { Context, ClocksState, Observable } from '@datadog/browser-core'
+import { DOM_EVENT } from '@datadog/browser-core'
+import type { Clock } from '../../../../../core/test/specHelper'
+import { createNewEvent } from '../../../../../core/test/specHelper'
+import type { TestSetupBuilder } from '../../../../test/specHelper'
+import { setup } from '../../../../test/specHelper'
 import { RumEventType, ActionType } from '../../../rawRumEvent.types'
-import { RumEvent } from '../../../rumEvent.types'
+import type { RumEvent } from '../../../rumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { PAGE_ACTIVITY_VALIDATION_DELAY } from '../../waitIdlePage'
-import { AutoAction, AUTO_ACTION_MAX_DURATION, trackActions } from './trackActions'
+import type { AutoAction } from './trackActions'
+import { AUTO_ACTION_MAX_DURATION, trackActions } from './trackActions'
 
 // Used to wait some time after the creation of a action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8

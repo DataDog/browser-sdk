@@ -1,13 +1,16 @@
-import { Duration, RelativeTime, timeStampNow, display, relativeToClocks, relativeNow } from '@datadog/browser-core'
-import { setup, TestSetupBuilder, setupViewTest, ViewTest } from '../../../../test/specHelper'
-import {
+import type { Duration, RelativeTime } from '@datadog/browser-core'
+import { timeStampNow, display, relativeToClocks, relativeNow } from '@datadog/browser-core'
+import type { TestSetupBuilder, ViewTest } from '../../../../test/specHelper'
+import { setup, setupViewTest } from '../../../../test/specHelper'
+import type {
   RumLargestContentfulPaintTiming,
   RumPerformanceNavigationTiming,
   RumPerformancePaintTiming,
 } from '../../../browser/performanceCollection'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
-import { THROTTLE_VIEW_UPDATE_PERIOD, ViewEvent } from './trackViews'
+import type { ViewEvent } from './trackViews'
+import { THROTTLE_VIEW_UPDATE_PERIOD } from './trackViews'
 
 const FAKE_PAINT_ENTRY: RumPerformancePaintTiming = {
   entryType: 'paint',

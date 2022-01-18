@@ -1,8 +1,10 @@
-import { RelativeTime, relativeNow, Duration, ServerDuration } from '@datadog/browser-core'
-import { setup, TestSetupBuilder } from '../../test/specHelper'
+import type { RelativeTime, Duration, ServerDuration } from '@datadog/browser-core'
+import { relativeNow } from '@datadog/browser-core'
+import type { TestSetupBuilder } from '../../test/specHelper'
+import { setup } from '../../test/specHelper'
+import type { ForegroundContexts } from './foregroundContexts'
 import {
   startForegroundContexts,
-  ForegroundContexts,
   MAX_NUMBER_OF_SELECTABLE_FOREGROUND_PERIODS,
   MAX_NUMBER_OF_STORED_FOREGROUND_PERIODS,
   closeForegroundPeriod,

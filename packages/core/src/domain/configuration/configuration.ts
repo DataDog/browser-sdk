@@ -1,10 +1,12 @@
-import { BuildEnv } from '../../boot/init'
-import { CookieOptions, getCurrentSite } from '../../browser/cookie'
+import type { BuildEnv } from '../../boot/init'
+import type { CookieOptions } from '../../browser/cookie'
+import { getCurrentSite } from '../../browser/cookie'
 import { catchUserErrors } from '../../tools/catchUserErrors'
 import { display } from '../../tools/display'
 import { isPercentage, ONE_KILO_BYTE, ONE_SECOND } from '../../tools/utils'
 import { updateExperimentalFeatures } from './experimentalFeatures'
-import { computeTransportConfiguration, TransportConfiguration } from './transportConfiguration'
+import type { TransportConfiguration } from './transportConfiguration'
+import { computeTransportConfiguration } from './transportConfiguration'
 
 export const DefaultPrivacyLevel = {
   ALLOW: 'allow',
@@ -37,8 +39,8 @@ export interface InitConfiguration {
   // internal options
   enableExperimentalFeatures?: string[] | undefined
   internalMonitoringApiKey?: string | undefined
-  // only on staging build mode
   replica?: ReplicaUserConfiguration | undefined
+  datacenter?: string
 }
 
 // This type is only used to build the core configuration. Logs and RUM SDKs are using a proper type
@@ -59,9 +61,8 @@ export interface Configuration extends TransportConfiguration {
   silentMultipleInit: boolean
 
   // Event limits
-  maxErrorsPerMinute: number
+  eventRateLimiterThreshold: number // Limit the maximum number of actions, errors and logs per minutes
   maxInternalMonitoringMessagesPerPage: number
-  requestErrorResponseLengthLimit: number
 
   // Batch configuration
   batchBytesLimit: number
@@ -103,13 +104,8 @@ export function validateAndBuildConfiguration(
      */
     batchBytesLimit: 16 * ONE_KILO_BYTE,
 
-    maxErrorsPerMinute: 3000,
+    eventRateLimiterThreshold: 3000,
     maxInternalMonitoringMessagesPerPage: 15,
-
-    /**
-     * arbitrary value, byte precision not needed
-     */
-    requestErrorResponseLengthLimit: 32 * ONE_KILO_BYTE,
 
     /**
      * flush automatically, aim to be lower than ALB connection timeout

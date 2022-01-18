@@ -1,9 +1,9 @@
 import { URL } from 'url'
-import { IncomingMessage, ServerResponse } from 'http'
+import type { IncomingMessage, ServerResponse } from 'http'
 import { createServer } from 'https'
-import { AddressInfo } from 'net'
+import type { AddressInfo } from 'net'
 import { pki, md } from 'node-forge'
-import { RequestStatsForHost } from './types'
+import type { RequestStatsForHost } from './types'
 
 export interface Proxy {
   origin: string

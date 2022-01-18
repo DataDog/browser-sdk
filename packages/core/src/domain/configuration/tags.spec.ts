@@ -1,5 +1,5 @@
 import { display } from '../../tools/display'
-import { InitConfiguration } from './configuration'
+import type { InitConfiguration } from './configuration'
 import { buildTag, buildTags, TAG_SIZE_LIMIT } from './tags'
 
 const LARGE_VALUE = Array(TAG_SIZE_LIMIT + 10).join('a')
@@ -11,8 +11,9 @@ describe('buildTags', () => {
         service: 'foo',
         env: 'bar',
         version: 'baz',
+        datacenter: 'us1.prod.dog',
       } as InitConfiguration)
-    ).toEqual(['env:bar', 'service:foo', 'version:baz'])
+    ).toEqual(['env:bar', 'service:foo', 'version:baz', 'datacenter:us1.prod.dog'])
   })
 })
 

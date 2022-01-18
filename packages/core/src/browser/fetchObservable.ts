@@ -1,9 +1,8 @@
 import { monitor, callMonitored } from '../domain/internalMonitoring'
-import { computeStackTrace } from '../domain/tracekit'
-import { toStackTraceString } from '../tools/error'
 import { instrumentMethod } from '../tools/instrumentMethod'
 import { Observable } from '../tools/observable'
-import { Duration, elapsed, ClocksState, clocksNow, timeStampNow } from '../tools/timeUtils'
+import type { Duration, ClocksState } from '../tools/timeUtils'
+import { elapsed, clocksNow, timeStampNow } from '../tools/timeUtils'
 import { normalizeUrl } from '../tools/urlPolyfill'
 
 interface FetchContextBase {
@@ -23,7 +22,6 @@ export interface FetchCompleteContext extends FetchContextBase {
   duration: Duration
   status: number
   response?: Response
-  responseText: string
   responseType?: string
   isAborted: boolean
   error?: Error
@@ -95,27 +93,19 @@ function afterSend(
   responsePromise: Promise<Response>,
   startContext: FetchStartContext
 ) {
-  const reportFetch = async (response: Response | Error) => {
+  const reportFetch = (response: Response | Error) => {
     const context = (startContext as unknown) as FetchCompleteContext
     context.state = 'complete'
     context.duration = elapsed(context.startClocks.timeStamp, timeStampNow())
 
     if ('stack' in response || response instanceof Error) {
       context.status = 0
-      context.responseText = toStackTraceString(computeStackTrace(response))
       context.isAborted = response instanceof DOMException && response.code === DOMException.ABORT_ERR
       context.error = response
 
       observable.notify(context)
     } else if ('status' in response) {
-      let text: string
-      try {
-        text = await response.clone().text()
-      } catch (e) {
-        text = `Unable to retrieve response: ${e as string}`
-      }
       context.response = response
-      context.responseText = text
       context.responseType = response.type
       context.status = response.status
       context.isAborted = false

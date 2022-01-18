@@ -6,19 +6,18 @@ import {
   toServerDuration,
   relativeToClocks,
 } from '@datadog/browser-core'
-import {
-  RumPerformanceEntry,
-  RumPerformanceResourceTiming,
-  supportPerformanceEntry,
-} from '../../../browser/performanceCollection'
-import {
+import type { RumPerformanceEntry, RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
+import { supportPerformanceEntry } from '../../../browser/performanceCollection'
+import type {
   PerformanceEntryRepresentation,
   RumXhrResourceEventDomainContext,
   RumFetchResourceEventDomainContext,
 } from '../../../domainContext.types'
-import { RawRumResourceEvent, RumEventType } from '../../../rawRumEvent.types'
-import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from '../../lifeCycle'
-import { RequestCompleteEvent } from '../../requestCollection'
+import type { RawRumResourceEvent } from '../../../rawRumEvent.types'
+import { RumEventType } from '../../../rawRumEvent.types'
+import type { LifeCycle, RawRumEventCollectedData } from '../../lifeCycle'
+import { LifeCycleEventType } from '../../lifeCycle'
+import type { RequestCompleteEvent } from '../../requestCollection'
 import { matchRequestTiming } from './matchRequestTiming'
 import {
   computePerformanceResourceDetails,

@@ -1,9 +1,9 @@
-import { Context } from '../../tools/context'
+import type { Context } from '../../tools/context'
 import { display } from '../../tools/display'
 import { toStackTraceString } from '../../tools/error'
 import { assign, combine, jsonStringify } from '../../tools/utils'
 import { canUseEventBridge, getEventBridge } from '../../transport'
-import { Configuration } from '../configuration'
+import type { Configuration } from '../configuration'
 import { computeStackTrace } from '../tracekit'
 import { startMonitoringBatch } from './startMonitoringBatch'
 

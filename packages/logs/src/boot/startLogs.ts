@@ -1,12 +1,9 @@
+import type { Context, InternalMonitoring, RawError, RelativeTime } from '@datadog/browser-core'
 import {
   areCookiesAuthorized,
   combine,
-  Context,
   createEventRateLimiter,
-  InternalMonitoring,
   Observable,
-  RawError,
-  RelativeTime,
   trackRuntimeError,
   trackConsoleError,
   canUseEventBridge,
@@ -15,10 +12,12 @@ import {
   startInternalMonitoring,
 } from '@datadog/browser-core'
 import { trackNetworkError } from '../domain/trackNetworkError'
-import { Logger, LogsMessage, StatusType } from '../domain/logger'
-import { LogsSessionManager, startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
+import type { Logger, LogsMessage } from '../domain/logger'
+import { StatusType } from '../domain/logger'
+import type { LogsSessionManager } from '../domain/logsSessionManager'
+import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import { startLoggerBatch } from '../transport/startLoggerBatch'
-import { LogsConfiguration } from '../domain/configuration'
+import type { LogsConfiguration } from '../domain/configuration'
 
 export function startLogs(configuration: LogsConfiguration, errorLogger: Logger) {
   const internalMonitoring = startInternalMonitoring(configuration)
@@ -102,25 +101,36 @@ export function buildAssemble(
   configuration: LogsConfiguration,
   reportError: (error: RawError) => void
 ) {
-  const errorRateLimiter = createEventRateLimiter(StatusType.error, configuration.maxErrorsPerMinute, reportError)
+  const logRateLimiters = {
+    [StatusType.error]: createEventRateLimiter(StatusType.error, configuration.eventRateLimiterThreshold, reportError),
+    [StatusType.warn]: createEventRateLimiter(StatusType.warn, configuration.eventRateLimiterThreshold, reportError),
+    [StatusType.info]: createEventRateLimiter(StatusType.info, configuration.eventRateLimiterThreshold, reportError),
+    [StatusType.debug]: createEventRateLimiter(StatusType.debug, configuration.eventRateLimiterThreshold, reportError),
+    ['custom']: createEventRateLimiter('custom', configuration.eventRateLimiterThreshold, reportError),
+  }
+
   return (message: LogsMessage, currentContext: Context) => {
     const startTime = message.date ? getRelativeTime(message.date) : undefined
     const session = sessionManager.findTrackedSession(startTime)
+
     if (!session) {
       return undefined
     }
+
     const contextualizedMessage = combine(
       { service: configuration.service, session_id: session.id },
       currentContext,
       getRUMInternalContext(startTime),
       message
     )
-    if (configuration.beforeSend && configuration.beforeSend(contextualizedMessage) === false) {
+
+    if (
+      configuration.beforeSend?.(contextualizedMessage) === false ||
+      (logRateLimiters[contextualizedMessage.status] ?? logRateLimiters['custom']).isLimitReached()
+    ) {
       return undefined
     }
-    if (contextualizedMessage.status === StatusType.error && errorRateLimiter.isLimitReached()) {
-      return undefined
-    }
+
     return contextualizedMessage as Context
   }
 }

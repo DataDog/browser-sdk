@@ -1,7 +1,9 @@
-import { DOM_EVENT, Duration, RelativeTime } from '@datadog/browser-core'
+import type { Duration, RelativeTime } from '@datadog/browser-core'
+import { DOM_EVENT } from '@datadog/browser-core'
 import { createNewEvent, restorePageVisibility, setPageVisibility } from '../../../../../core/test/specHelper'
-import { setup, TestSetupBuilder } from '../../../../test/specHelper'
-import {
+import type { TestSetupBuilder } from '../../../../test/specHelper'
+import { setup } from '../../../../test/specHelper'
+import type {
   RumFirstInputTiming,
   RumLargestContentfulPaintTiming,
   RumPerformanceNavigationTiming,
@@ -9,8 +11,8 @@ import {
 } from '../../../browser/performanceCollection'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { resetFirstHidden } from './trackFirstHidden'
+import type { Timings } from './trackInitialViewTimings'
 import {
-  Timings,
   trackFirstContentfulPaintTiming,
   trackFirstInputTimings,
   trackLargestContentfulPaintTiming,

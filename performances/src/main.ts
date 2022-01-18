@@ -1,7 +1,8 @@
-import puppeteer, { Page } from 'puppeteer'
+import type { Page } from 'puppeteer'
+import puppeteer from 'puppeteer'
 import { formatProfilingResults } from './format'
 import { startProfiling } from './profilers/startProfiling'
-import { ProfilingResults, ProfilingOptions } from './types'
+import type { ProfilingResults, ProfilingOptions } from './types'
 import { startProxy } from './proxy'
 import { wikipediaScenario } from './scenarios/wikipediaScenario'
 import { twitterScenario } from './scenarios/twitterScenario'
@@ -30,7 +31,7 @@ Options:
   const proxy = await startProxy()
 
   const options: ProfilingOptions = {
-    bundleUrl: 'https://www.datadoghq-browser-agent.com/datadog-rum-v3.js',
+    bundleUrl: 'https://www.datadoghq-browser-agent.com/datadog-rum-v4.js',
     proxy,
     startRecording,
   }

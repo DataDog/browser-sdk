@@ -1,16 +1,19 @@
+import type { Context } from '@datadog/browser-core'
 import {
-  Context,
   monitor,
   ONE_SECOND,
   display,
   updateExperimentalFeatures,
   resetExperimentalFeatures,
 } from '@datadog/browser-core'
-import { Clock, deleteEventBridgeStub, initEventBridgeStub, mockClock } from '../../../core/test/specHelper'
-import { HybridInitConfiguration, LogsInitConfiguration } from '../domain/configuration'
+import type { Clock } from '../../../core/test/specHelper'
+import { deleteEventBridgeStub, initEventBridgeStub, mockClock } from '../../../core/test/specHelper'
+import type { HybridInitConfiguration, LogsInitConfiguration } from '../domain/configuration'
 
-import { HandlerType, LogsMessage, StatusType } from '../domain/logger'
-import { LogsPublicApi, makeLogsPublicApi, StartLogs } from './logsPublicApi'
+import type { LogsMessage } from '../domain/logger'
+import { HandlerType, StatusType } from '../domain/logger'
+import type { LogsPublicApi, StartLogs } from './logsPublicApi'
+import { makeLogsPublicApi } from './logsPublicApi'
 
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx' }
 const INVALID_INIT_CONFIGURATION = {} as LogsInitConfiguration

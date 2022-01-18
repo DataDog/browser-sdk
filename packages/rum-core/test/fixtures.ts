@@ -1,17 +1,8 @@
-import {
-  combine,
-  Context,
-  Duration,
-  ErrorHandling,
-  ErrorSource,
-  generateUUID,
-  RelativeTime,
-  ResourceType,
-  ServerDuration,
-  TimeStamp,
-} from '@datadog/browser-core'
-import { RumPerformanceResourceTiming } from '../src/browser/performanceCollection'
-import { ActionType, RawRumEvent, RumEventType, ViewLoadingType } from '../src/rawRumEvent.types'
+import type { Context, Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
+import { combine, ErrorHandling, ErrorSource, generateUUID, ResourceType } from '@datadog/browser-core'
+import type { RumPerformanceResourceTiming } from '../src/browser/performanceCollection'
+import type { RawRumEvent } from '../src/rawRumEvent.types'
+import { ActionType, RumEventType, ViewLoadingType } from '../src/rawRumEvent.types'
 
 export function createRawRumEvent(type: RumEventType, overrides?: Context): RawRumEvent {
   switch (type) {

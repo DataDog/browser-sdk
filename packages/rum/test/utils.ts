@@ -1,22 +1,21 @@
-import { DeflateWorker, DeflateWorkerAction, DeflateWorkerListener } from '../src/domain/segmentCollection'
-import {
-  IncrementalSource,
+import type { DeflateWorker, DeflateWorkerAction, DeflateWorkerListener } from '../src/domain/segmentCollection'
+import type {
   MutationPayload,
   MutationData,
   ElementNode,
-  NodeType,
   SerializedNode,
   SerializedNodeWithId,
   TextNode,
 } from '../src/domain/record'
-import {
+import { IncrementalSource, NodeType } from '../src/domain/record'
+import type {
   FullSnapshotRecord,
   IncrementalSnapshotRecord,
   MetaRecord,
   VisualViewportRecord,
-  RecordType,
   Segment,
 } from '../src/types'
+import { RecordType } from '../src/types'
 
 export class MockWorker implements DeflateWorker {
   readonly pendingMessages: DeflateWorkerAction[] = []
@@ -469,3 +468,10 @@ export function createMutationPayloadValidatorFromSegment(segment: Segment) {
     validate: (expected: ExpectedMutationsPayload) => mutationPayloadValidator.validate(mutations[0].data, expected),
   }
 }
+
+/**
+ * Simplify asserting record lengths across multiple devices when not all record types are supported
+ */
+export const recordsPerFullSnapshot = () =>
+  // Meta, Focus, FullSnapshot, VisualViewport (support limited)
+  window.visualViewport ? 4 : 3

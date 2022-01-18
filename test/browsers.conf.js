@@ -11,7 +11,7 @@ module.exports = {
   FIREFOX: {
     base: 'BrowserStack',
     browser: 'Firefox',
-    browser_version: '67.0',
+    browser_version: '78.0',
     os: 'Windows',
     os_version: '10',
   },

@@ -1,8 +1,12 @@
-import { Duration, noop, round, RelativeTime, ONE_SECOND, Observable } from '@datadog/browser-core'
-import { RumLayoutShiftTiming, supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
+import type { Duration, RelativeTime, Observable } from '@datadog/browser-core'
+import { noop, round, ONE_SECOND } from '@datadog/browser-core'
+import type { RumLayoutShiftTiming } from '../../../browser/performanceCollection'
+import { supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
-import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
-import { EventCounts, trackEventCounts } from '../../trackEventCounts'
+import type { LifeCycle } from '../../lifeCycle'
+import { LifeCycleEventType } from '../../lifeCycle'
+import type { EventCounts } from '../../trackEventCounts'
+import { trackEventCounts } from '../../trackEventCounts'
 import { waitIdlePage } from '../../waitIdlePage'
 
 export interface ViewMetrics {

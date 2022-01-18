@@ -12,16 +12,16 @@ import {
   getNodeSelfPrivacyLevel,
   MAX_ATTRIBUTE_VALUE_CHAR_LENGTH,
 } from './privacy'
-import {
+import type {
   SerializedNode,
   SerializedNodeWithId,
-  NodeType,
   DocumentNode,
   DocumentTypeNode,
   ElementNode,
   TextNode,
   CDataNode,
 } from './types'
+import { NodeType } from './types'
 import { getSerializedNodeId, setSerializedNodeId, getElementInputValue } from './serializationUtils'
 import { forEach } from './utils'
 

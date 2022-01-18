@@ -1,5 +1,6 @@
-import { HttpRequest, objectEntries, EndpointBuilder } from '@datadog/browser-core'
-import { SegmentMeta } from '../types'
+import type { EndpointBuilder } from '@datadog/browser-core'
+import { HttpRequest, objectEntries } from '@datadog/browser-core'
+import type { SegmentMeta } from '../types'
 
 export const SEND_BEACON_BYTE_LENGTH_LIMIT = 60_000
 

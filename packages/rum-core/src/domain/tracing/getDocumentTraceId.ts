@@ -1,4 +1,5 @@
-import { findCommaSeparatedValue, ONE_MINUTE, TimeStamp } from '@datadog/browser-core'
+import type { TimeStamp } from '@datadog/browser-core'
+import { findCommaSeparatedValue, ONE_MINUTE } from '@datadog/browser-core'
 
 interface DocumentTraceData {
   traceId: string

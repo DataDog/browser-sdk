@@ -1,5 +1,7 @@
-import { Duration, elapsed, monitor, Observable, Subscription, TimeoutId, timeStampNow } from '@datadog/browser-core'
-import { LifeCycle, LifeCycleEventType } from './lifeCycle'
+import type { Duration, Subscription, TimeoutId } from '@datadog/browser-core'
+import { elapsed, monitor, Observable, timeStampNow } from '@datadog/browser-core'
+import type { LifeCycle } from './lifeCycle'
+import { LifeCycleEventType } from './lifeCycle'
 
 // Delay to wait for a page activity to validate the tracking process
 export const PAGE_ACTIVITY_VALIDATION_DELAY = 100

@@ -1,8 +1,8 @@
-import { BuildEnv } from '../../boot/init'
+import type { BuildEnv } from '../../boot/init'
 import { timeStampNow } from '../../tools/timeUtils'
 import { normalizeUrl } from '../../tools/urlPolyfill'
 import { generateUUID } from '../../tools/utils'
-import { InitConfiguration } from './configuration'
+import type { InitConfiguration } from './configuration'
 
 export const ENDPOINTS = {
   logs: 'logs',

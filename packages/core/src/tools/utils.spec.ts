@@ -1,4 +1,5 @@
-import { Clock, mockClock } from '../../test/specHelper'
+import type { Clock } from '../../test/specHelper'
+import { mockClock } from '../../test/specHelper'
 import {
   combine,
   deepClone,

@@ -1,4 +1,4 @@
-import { EndpointBuilder } from '../domain/configuration'
+import type { EndpointBuilder } from '../domain/configuration'
 import { monitor, addMonitoringError, addMonitoringMessage } from '../domain/internalMonitoring'
 
 let hasReportedXhrError = false

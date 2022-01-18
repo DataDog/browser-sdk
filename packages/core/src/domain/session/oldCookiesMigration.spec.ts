@@ -1,11 +1,13 @@
-import { CookieOptions, getCookie, setCookie } from '../../browser/cookie'
+import type { CookieOptions } from '../../browser/cookie'
+import { getCookie, setCookie } from '../../browser/cookie'
 import {
   OLD_LOGS_COOKIE_NAME,
   OLD_RUM_COOKIE_NAME,
   OLD_SESSION_COOKIE_NAME,
   tryOldCookiesMigration,
 } from './oldCookiesMigration'
-import { SESSION_COOKIE_NAME, SESSION_EXPIRATION_DELAY } from './sessionStore'
+import { SESSION_EXPIRATION_DELAY } from './sessionStore'
+import { SESSION_COOKIE_NAME } from './sessionCookieStore'
 
 describe('old cookies migration', () => {
   const options: CookieOptions = {}

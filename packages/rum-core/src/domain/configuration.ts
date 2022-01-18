@@ -1,15 +1,14 @@
+import type { Configuration, InitConfiguration } from '@datadog/browser-core'
 import {
-  Configuration,
   DefaultPrivacyLevel,
   display,
-  InitConfiguration,
   isPercentage,
   objectHasValue,
   validateAndBuildConfiguration,
 } from '@datadog/browser-core'
 import { buildEnv } from '../boot/buildEnv'
-import { RumEventDomainContext } from '../domainContext.types'
-import { RumEvent } from '../rumEvent.types'
+import type { RumEventDomainContext } from '../domainContext.types'
+import type { RumEvent } from '../rumEvent.types'
 
 export interface RumInitConfiguration extends InitConfiguration {
   // global options
@@ -42,9 +41,6 @@ export interface RumConfiguration extends Configuration {
   replaySampleRate: number
   trackInteractions: boolean
   trackViewsManually: boolean
-
-  // Event limits
-  maxActionsPerMinute: number
 }
 
 export function validateAndBuildRumConfiguration(
@@ -88,7 +84,5 @@ export function validateAndBuildRumConfiguration(
     defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
       ? initConfiguration.defaultPrivacyLevel
       : DefaultPrivacyLevel.MASK_USER_INPUT,
-
-    maxActionsPerMinute: 3000,
   }
 }

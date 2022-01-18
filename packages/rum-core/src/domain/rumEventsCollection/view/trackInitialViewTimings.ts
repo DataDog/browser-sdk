@@ -1,20 +1,12 @@
-import {
-  addEventListeners,
-  DOM_EVENT,
-  Duration,
-  elapsed,
-  EventEmitter,
-  RelativeTime,
-  ONE_MINUTE,
-  find,
-  findLast,
-} from '@datadog/browser-core'
-import {
+import type { Duration, EventEmitter, RelativeTime } from '@datadog/browser-core'
+import { addEventListeners, DOM_EVENT, elapsed, ONE_MINUTE, find, findLast } from '@datadog/browser-core'
+import type { LifeCycle } from '../../lifeCycle'
+import { LifeCycleEventType } from '../../lifeCycle'
+import type {
   RumFirstInputTiming,
   RumLargestContentfulPaintTiming,
   RumPerformancePaintTiming,
 } from '../../../browser/performanceCollection'
-import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { trackFirstHidden } from './trackFirstHidden'
 
 // Discard LCP and FCP timings above a certain delay to avoid incorrect data

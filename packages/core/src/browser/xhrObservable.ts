@@ -1,7 +1,8 @@
 import { monitor } from '../domain/internalMonitoring'
 import { instrumentMethodAndCallOriginal } from '../tools/instrumentMethod'
 import { Observable } from '../tools/observable'
-import { Duration, elapsed, relativeNow, RelativeTime, ClocksState, clocksNow, timeStampNow } from '../tools/timeUtils'
+import type { Duration, RelativeTime, ClocksState } from '../tools/timeUtils'
+import { elapsed, relativeNow, clocksNow, timeStampNow } from '../tools/timeUtils'
 import { normalizeUrl } from '../tools/urlPolyfill'
 
 export interface XhrOpenContext {
@@ -22,7 +23,6 @@ export interface XhrCompleteContext extends Omit<XhrStartContext, 'state'> {
   state: 'complete'
   duration: Duration
   status: number
-  responseText: string | undefined
 }
 
 export type XhrContext = XhrOpenContext | XhrStartContext | XhrCompleteContext
@@ -108,7 +108,6 @@ function sendXhr(this: XMLHttpRequest, observable: Observable<XhrContext>) {
     const completeContext = context as XhrCompleteContext
     completeContext.state = 'complete'
     completeContext.duration = elapsed(startContext.startClocks.timeStamp, timeStampNow())
-    completeContext.responseText = this.response as string | undefined
     completeContext.status = this.status
     observable.notify({ ...completeContext })
   })

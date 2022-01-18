@@ -1,14 +1,14 @@
 {
   "private": true,
   "name": "performances",
-  "version": "4.0.1",
+  "version": "4.1.0",
   "scripts": {
     "start": "ts-node ./src/main.ts"
   },
   "dependencies": {
     "@types/node": "15.0.1",
-    "@types/node-forge": "0.9.7",
-    "node-forge": "0.10.0",
+    "@types/node-forge": "1.0.0",
+    "node-forge": "1.2.1",
     "puppeteer": "8.0.0"
   }
 }

@@ -1,7 +1,9 @@
-import { RumEvent } from '../../../../rum-core/src'
-import { BuildEnv, BuildMode } from '../../boot/init'
+import type { RumEvent } from '../../../../rum-core/src'
+import type { BuildEnv } from '../../boot/init'
+import { BuildMode } from '../../boot/init'
 import { display } from '../../tools/display'
-import { InitConfiguration, validateAndBuildConfiguration } from './configuration'
+import type { InitConfiguration } from './configuration'
+import { validateAndBuildConfiguration } from './configuration'
 import { isExperimentalFeatureEnabled, updateExperimentalFeatures } from './experimentalFeatures'
 
 describe('validateAndBuildConfiguration', () => {

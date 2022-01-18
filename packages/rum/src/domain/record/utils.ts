@@ -1,4 +1,4 @@
-import { HookResetter } from './types'
+import type { HookResetter } from './types'
 
 export function hookSetter<T>(
   target: T,

@@ -1,4 +1,4 @@
-import { StackFrame, StackTrace } from './types'
+import type { StackFrame, StackTrace } from './types'
 
 const UNKNOWN_FUNCTION = '?'
 

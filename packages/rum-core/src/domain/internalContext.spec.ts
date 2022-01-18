@@ -1,10 +1,11 @@
-import { RelativeTime } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/browser-core'
 import { createRumSessionManagerMock } from '../../test/mockRumSessionManager'
-import { setup, TestSetupBuilder } from '../../test/specHelper'
+import type { TestSetupBuilder } from '../../test/specHelper'
+import { setup } from '../../test/specHelper'
 import { startInternalContext } from './internalContext'
-import { ParentContexts } from './parentContexts'
-import { UrlContexts } from './urlContexts'
-import { RumSessionManager } from './rumSessionManager'
+import type { ParentContexts } from './parentContexts'
+import type { UrlContexts } from './urlContexts'
+import type { RumSessionManager } from './rumSessionManager'
 
 describe('internal context', () => {
   let setupBuilder: TestSetupBuilder

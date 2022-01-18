@@ -1,4 +1,4 @@
-import { StackTrace } from '../domain/tracekit'
+import type { StackTrace } from '../domain/tracekit'
 import { createHandlingStack, formatUnknownError } from './error'
 
 describe('formatUnknownError', () => {
