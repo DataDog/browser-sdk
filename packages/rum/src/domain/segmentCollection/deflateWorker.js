@@ -4443,7 +4443,7 @@ function workerCodeFn() {
       return deflate$1(input, options)
     }
 
-    // https://github.com/nodeca/pako/blob/master/lib/utils/strings.js#L26
+    // https://github.com/nodeca/pako/blob/26dff4fb3472c5532b3bd8856421146d35ab7592/lib/utils/strings.js#L26
     function string2buf(str) {
       if (typeof TextEncoder === 'function' && TextEncoder.prototype.encode) {
         return new TextEncoder().encode(str)
