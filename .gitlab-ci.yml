@@ -304,7 +304,7 @@ notify-prod-canary-success:
   script:
     - 'MESSAGE_TEXT=":rocket: $CI_PROJECT_NAME <$COMMIT_URL|$COMMIT_MESSAGE> deployed to :datadog:."'
     - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
-    - postmessage "#rum-ops" "$MESSAGE_TEXT"
+    - postmessage "#rum-browser-sdk-ops" "$MESSAGE_TEXT"
 
 notify-prod-canary-failure:
   stage: notify:canary
@@ -323,7 +323,7 @@ notify-prod-stable-success:
   script:
     - 'MESSAGE_TEXT=":rocket: $CI_PROJECT_NAME <$COMMIT_URL|$COMMIT_MESSAGE> deployed to :earth_americas:."'
     - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
-    - postmessage "#rum-ops" "$MESSAGE_TEXT"
+    - postmessage "#rum-browser-sdk-ops" "$MESSAGE_TEXT"
 
 notify-prod-stable-failure:
   extends:
