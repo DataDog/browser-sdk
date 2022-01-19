@@ -119,7 +119,10 @@ export function startSessionStore<TrackingType extends string>(
       return true
     }
     if (sessionCache[productKey] !== cookieSession[productKey]) {
-      addSessionInconsistenciesMessage(cookieSession, 'different tracking type')
+      addSessionInconsistenciesMessage(
+        cookieSession,
+        cookieSession[productKey] === undefined ? 'tracking type missing' : 'different tracking type'
+      )
       return true
     }
     return false
