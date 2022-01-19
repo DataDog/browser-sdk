@@ -3,7 +3,7 @@ import { COOKIE_ACCESS_DELAY } from '../../browser/cookie'
 import { Observable } from '../../tools/observable'
 import * as utils from '../../tools/utils'
 import { monitor, addMonitoringMessage } from '../internalMonitoring'
-import { retrieveSession, withCookieLockAccess } from './sessionCookieStore'
+import { Audit, retrieveSession, withCookieLockAccess } from './sessionCookieStore'
 
 export interface SessionStore {
   expandOrRenewSession: () => void
@@ -27,6 +27,13 @@ export const SESSION_EXPIRATION_DELAY = 15 * utils.ONE_MINUTE
 export const SESSION_TIME_OUT_DELAY = 4 * utils.ONE_HOUR
 
 /**
+ * Expose audit logs to share them between rum and logs
+ */
+interface BrowserWindow extends Window {
+  DD_SDK_AUDIT?: string[]
+}
+
+/**
  * Different session concepts:
  * - tracked, the session has an id and is updated along the user navigation
  * - not tracked, the session does not have an id but it is updated along the user navigation
@@ -40,13 +47,20 @@ export function startSessionStore<TrackingType extends string>(
   const renewObservable = new Observable<void>()
   const expireObservable = new Observable<void>()
 
+  ;(window as BrowserWindow).DD_SDK_AUDIT = (window as BrowserWindow).DD_SDK_AUDIT || []
+  const auditEntries = (window as BrowserWindow).DD_SDK_AUDIT!
+  const audit = new Audit(productKey, auditEntries)
+
   const watchSessionTimeoutId = setInterval(monitor(watchSession), COOKIE_ACCESS_DELAY)
   let sessionCache: SessionState = retrieveActiveSession()
+  audit.addRead('start', sessionCache)
 
   function expandOrRenewSession() {
     let isTracked: boolean
     withCookieLockAccess({
       options,
+      audit,
+      phase: 'expandOrRenew',
       process: (cookieSession) => {
         const synchronizedSession = synchronizeSession(cookieSession)
         isTracked = expandOrRenewCookie(synchronizedSession)
@@ -64,6 +78,8 @@ export function startSessionStore<TrackingType extends string>(
   function expandSession() {
     withCookieLockAccess({
       options,
+      audit,
+      phase: 'expand',
       process: (cookieSession) => (hasSessionInCache() ? synchronizeSession(cookieSession) : undefined),
     })
   }
@@ -76,6 +92,8 @@ export function startSessionStore<TrackingType extends string>(
   function watchSession() {
     withCookieLockAccess({
       options,
+      audit,
+      phase: 'watch',
       process: (cookieSession) => (!isActiveSession(cookieSession) ? {} : undefined),
       after: synchronizeSession,
     })
@@ -135,6 +153,7 @@ export function startSessionStore<TrackingType extends string>(
         sessionCache,
         cookieSession,
         cause,
+        auditEntries: auditEntries.join('\n'),
       },
     })
   }

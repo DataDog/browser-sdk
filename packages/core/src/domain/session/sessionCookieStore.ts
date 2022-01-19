@@ -3,6 +3,7 @@ import { getCookie, setCookie } from '../../browser/cookie'
 import * as utils from '../../tools/utils'
 import { isExperimentalFeatureEnabled } from '../configuration'
 import { monitor, addMonitoringMessage } from '../internalMonitoring'
+import { timeStampNow } from '../../tools/timeUtils'
 import type { SessionState } from './sessionStore'
 import { SESSION_EXPIRATION_DELAY } from './sessionStore'
 
@@ -17,6 +18,8 @@ export const MAX_NUMBER_OF_LOCK_RETRIES = 100
 
 type Operations = {
   options: CookieOptions
+  audit?: Audit
+  phase?: string
   process: (cookieSession: SessionState) => SessionState | undefined
   after?: (cookieSession: SessionState) => void
 }
@@ -39,6 +42,7 @@ export function withCookieLockAccess(operations: Operations, numberOfRetries = 0
   }
   let currentLock: string
   let currentSession = retrieveSession()
+  operations.audit?.addRead(operations.phase || '', currentSession)
   if (isExperimentalFeatureEnabled('cookie-lock')) {
     // if someone has lock, retry later
     if (currentSession.lock) {
@@ -84,7 +88,10 @@ export function withCookieLockAccess(operations: Operations, numberOfRetries = 0
     }
   }
   // call after even if session is not persisted in order to perform operations on
-  // up to date cookie value, the value could have been modified by another tab
+  // up-to-date cookie value, the value could have been modified by another tab
+  if (processedSession) {
+    operations.audit?.addWrite(operations.phase || '', processedSession)
+  }
   operations.after?.(processedSession || currentSession)
   next()
 }
@@ -154,4 +161,29 @@ function isExpiredState(session: SessionState) {
 
 function clearSession(options: CookieOptions) {
   setCookie(SESSION_COOKIE_NAME, '', 0, options)
+}
+
+const MAX_AUDIT_ENTRIES = 50
+
+export class Audit {
+  constructor(private productKey: string, private entries: string[]) {}
+
+  addWrite(phase: string, session: SessionState) {
+    this.addEntry(phase, 'write', session)
+  }
+
+  addRead(phase: string, session: SessionState) {
+    this.addEntry(phase, 'read', session)
+  }
+
+  private addEntry(phase: string, operation: string, session: SessionState) {
+    if (this.entries.length < MAX_AUDIT_ENTRIES) {
+      const currentDate = new Date(timeStampNow())
+      this.entries.push(
+        `${currentDate.toLocaleTimeString()}.${currentDate.getMilliseconds()} - ${
+          this.productKey
+        } ${phase} ${operation} ${toSessionString(session)}`
+      )
+    }
+  }
 }
