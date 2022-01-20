@@ -3,7 +3,6 @@ import { getCookie, setCookie } from '../../browser/cookie'
 import * as utils from '../../tools/utils'
 import { isExperimentalFeatureEnabled } from '../configuration'
 import { monitor, addMonitoringMessage } from '../internalMonitoring'
-import { timeStampNow } from '../../tools/timeUtils'
 import type { SessionState } from './sessionStore'
 import { SESSION_EXPIRATION_DELAY } from './sessionStore'
 
@@ -178,7 +177,7 @@ export class Audit {
 
   private addEntry(phase: string, operation: string, session: SessionState) {
     if (this.entries.length < MAX_AUDIT_ENTRIES) {
-      const currentDate = new Date(timeStampNow())
+      const currentDate = new Date()
       this.entries.push(
         `${currentDate.toLocaleTimeString()}.${currentDate.getMilliseconds()} - ${
           this.productKey
