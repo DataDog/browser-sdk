@@ -24,6 +24,7 @@ import { willSyntheticsInjectRum } from '../domain/syntheticsContext'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import { validateAndBuildRumConfiguration } from '../domain/configuration'
 import type { startRum } from './startRum'
+import { buildEnv } from './buildEnv'
 
 export type RumPublicApi = ReturnType<typeof makeRumPublicApi>
 
@@ -166,7 +167,7 @@ export function makeRumPublicApi(
     )
   }
 
-  const rumPublicApi = makePublicApi({
+  const rumPublicApi = makePublicApi(buildEnv, {
     init: monitor(initRum),
 
     addRumGlobalContext: monitor(globalContextManager.add),

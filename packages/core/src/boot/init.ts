@@ -1,9 +1,14 @@
 import { setDebugMode } from '../domain/internalMonitoring'
 import { catchUserErrors } from '../tools/catchUserErrors'
 
-export function makePublicApi<T>(stub: T): T & { onReady(callback: () => void): void } {
+export function makePublicApi<T>(
+  buildEnv: BuildEnv,
+  stub: T
+): T & { onReady(callback: () => void): void; version: string } {
   const publicApi = {
     ...stub,
+
+    version: buildEnv.sdkVersion,
 
     // This API method is intentionally not monitored, since the only thing executed is the
     // user-provided 'callback'.  All SDK usages executed in the callback should be monitored, and
@@ -13,7 +18,7 @@ export function makePublicApi<T>(stub: T): T & { onReady(callback: () => void): 
     },
   }
 
-  // Add an "hidden" property to set debug mode. We define it that way to hide it
+  // Add a "hidden" property to set debug mode. We define it that way to hide it
   // as much as possible but of course it's not a real protection.
   Object.defineProperty(publicApi, '_setDebug', {
     get() {
