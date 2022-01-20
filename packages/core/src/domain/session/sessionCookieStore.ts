@@ -182,9 +182,9 @@ export class Audit {
 
   private addEntry(phase: string, operation: string, session: SessionState) {
     if (this.entries.length < MAX_AUDIT_ENTRIES) {
-      const currentDate = new Date()
+      const now = new Date()
       // hh:mm:ss.xxx in the browser timezone
-      const formattedTime = `${currentDate.toTimeString().substr(0, 8)}.${currentDate.getMilliseconds()}`
+      const formattedTime = `${now.toTimeString().substr(0, 8)}.${`00${now.getMilliseconds()}`.slice(-3)}`
       this.entries.push(`${formattedTime} - ${this.productKey} ${phase} ${operation} ${toSessionString(session)}`)
     }
   }
