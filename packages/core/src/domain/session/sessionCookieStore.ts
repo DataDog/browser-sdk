@@ -41,7 +41,7 @@ export function withCookieLockAccess(operations: Operations, numberOfRetries = 0
   }
   let currentLock: string
   let currentSession = retrieveSession()
-  operations.audit?.addRead(operations.phase || '', currentSession)
+  operations.audit?.addRead(`${operations.phase || ''} (1)`, currentSession)
   if (isExperimentalFeatureEnabled('cookie-lock')) {
     // if someone has lock, retry later
     if (currentSession.lock) {
@@ -52,8 +52,10 @@ export function withCookieLockAccess(operations: Operations, numberOfRetries = 0
     currentLock = utils.generateUUID()
     currentSession.lock = currentLock
     setSession(currentSession, operations.options)
+    operations.audit?.addWrite(`${operations.phase || ''} (2)`, currentSession)
     // if lock is not acquired, retry later
     currentSession = retrieveSession()
+    operations.audit?.addRead(`${operations.phase || ''} (3)`, currentSession)
     if (currentSession.lock !== currentLock) {
       retryLater(operations, numberOfRetries)
       return
@@ -63,6 +65,7 @@ export function withCookieLockAccess(operations: Operations, numberOfRetries = 0
   if (isExperimentalFeatureEnabled('cookie-lock')) {
     // if lock corrupted after process, retry later
     currentSession = retrieveSession()
+    operations.audit?.addRead(`${operations.phase || ''} (4)`, currentSession)
     if (currentSession.lock !== currentLock!) {
       retryLater(operations, numberOfRetries)
       return
@@ -70,6 +73,7 @@ export function withCookieLockAccess(operations: Operations, numberOfRetries = 0
   }
   if (processedSession) {
     persistSession(processedSession, operations.options)
+    operations.audit?.addWrite(`${operations.phase || ''} (5)`, processedSession)
   }
   if (isExperimentalFeatureEnabled('cookie-lock')) {
     // correctly handle lock around expiration would require to handle this case properly at several levels
@@ -77,20 +81,19 @@ export function withCookieLockAccess(operations: Operations, numberOfRetries = 0
     if (!(processedSession && isExpiredState(processedSession))) {
       // if lock corrupted after persist, retry later
       currentSession = retrieveSession()
+      operations.audit?.addRead(`${operations.phase || ''} (6)`, currentSession)
       if (currentSession.lock !== currentLock!) {
         retryLater(operations, numberOfRetries)
         return
       }
       delete currentSession.lock
       setSession(currentSession, operations.options)
+      operations.audit?.addWrite(`${operations.phase || ''} (7)`, currentSession)
       processedSession = currentSession
     }
   }
   // call after even if session is not persisted in order to perform operations on
   // up-to-date cookie value, the value could have been modified by another tab
-  if (processedSession) {
-    operations.audit?.addWrite(operations.phase || '', processedSession)
-  }
   operations.after?.(processedSession || currentSession)
   next()
 }
