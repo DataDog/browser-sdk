@@ -733,4 +733,9 @@ describe('rum public api', () => {
       expect(recorderApiOnRumStartSpy.calls.mostRecent().args[1].defaultPrivacyLevel).toBe(DefaultPrivacyLevel.MASK)
     })
   })
+
+  it('should provide sdk version', () => {
+    const rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
+    expect(rumPublicApi.version).toBe('dev')
+  })
 })

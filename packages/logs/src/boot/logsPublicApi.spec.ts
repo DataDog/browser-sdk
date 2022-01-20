@@ -43,6 +43,11 @@ describe('logs entry', () => {
     expect(!!LOGS.init).toEqual(true)
   })
 
+  it('should provide sdk version', () => {
+    const LOGS = makeLogsPublicApi(startLogs)
+    expect(LOGS.version).toBe('dev')
+  })
+
   describe('configuration validation', () => {
     let LOGS: LogsPublicApi
     let displaySpy: jasmine.Spy
