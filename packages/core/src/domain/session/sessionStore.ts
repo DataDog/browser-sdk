@@ -2,7 +2,10 @@ import type { CookieOptions } from '../../browser/cookie'
 import { COOKIE_ACCESS_DELAY } from '../../browser/cookie'
 import { Observable } from '../../tools/observable'
 import * as utils from '../../tools/utils'
+import { noop } from '../../tools/utils'
 import { monitor, addMonitoringMessage } from '../internalMonitoring'
+import { isExperimentalFeatureEnabled } from '../configuration'
+import type { AuditBehavior } from './sessionCookieStore'
 import { Audit, retrieveSession, withCookieLockAccess } from './sessionCookieStore'
 
 export interface SessionStore {
@@ -33,6 +36,23 @@ interface BrowserWindow extends Window {
   DD_SDK_AUDIT?: string[]
 }
 
+function initAudit(productKey: string): { audit: AuditBehavior; auditEntries: string[] } {
+  if (!isExperimentalFeatureEnabled('cookie-lock')) {
+    return {
+      audit: {
+        addRead: noop,
+        addWrite: noop,
+      },
+      auditEntries: [],
+    }
+  }
+  ;(window as BrowserWindow).DD_SDK_AUDIT = (window as BrowserWindow).DD_SDK_AUDIT || []
+  return {
+    audit: new Audit(productKey, (window as BrowserWindow).DD_SDK_AUDIT!),
+    auditEntries: (window as BrowserWindow).DD_SDK_AUDIT!,
+  }
+}
+
 /**
  * Different session concepts:
  * - tracked, the session has an id and is updated along the user navigation
@@ -47,9 +67,7 @@ export function startSessionStore<TrackingType extends string>(
   const renewObservable = new Observable<void>()
   const expireObservable = new Observable<void>()
 
-  ;(window as BrowserWindow).DD_SDK_AUDIT = (window as BrowserWindow).DD_SDK_AUDIT || []
-  const auditEntries = (window as BrowserWindow).DD_SDK_AUDIT!
-  const audit = new Audit(productKey, auditEntries)
+  const { audit, auditEntries } = initAudit(productKey)
 
   const watchSessionTimeoutId = setInterval(monitor(watchSession), COOKIE_ACCESS_DELAY)
   let sessionCache: SessionState = retrieveActiveSession()

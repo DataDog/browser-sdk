@@ -17,7 +17,7 @@ export const MAX_NUMBER_OF_LOCK_RETRIES = 100
 
 type Operations = {
   options: CookieOptions
-  audit?: Audit
+  audit?: AuditBehavior
   phase?: string
   process: (cookieSession: SessionState) => SessionState | undefined
   after?: (cookieSession: SessionState) => void
@@ -163,6 +163,11 @@ function clearSession(options: CookieOptions) {
 }
 
 const MAX_AUDIT_ENTRIES = 50
+
+export interface AuditBehavior {
+  addRead: Audit['addRead']
+  addWrite: Audit['addWrite']
+}
 
 export class Audit {
   constructor(private productKey: string, private entries: string[]) {}
