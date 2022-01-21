@@ -74,39 +74,54 @@ describe('session cookie store', () => {
       resetExperimentalFeatures()
     })
 
-    it('should persist session when process return a value', () => {
+    it('should persist session when process return a value', (done) => {
       persistSession(initialSession, COOKIE_OPTIONS)
       processSpy.and.callFake((session) => ({ ...otherSession, lock: session.lock }))
 
-      withCookieLockAccess({ options: COOKIE_OPTIONS, process: processSpy, after: afterSpy })
-
-      expect(processSpy).toHaveBeenCalledWith({ ...initialSession, lock: jasmine.any(String) })
-      const expectedSession = { ...otherSession, expire: jasmine.any(String) }
-      expect(retrieveSession()).toEqual(expectedSession)
-      expect(afterSpy).toHaveBeenCalledWith(expectedSession)
+      withCookieLockAccess({
+        options: COOKIE_OPTIONS,
+        process: processSpy,
+        after: (afterSession) => {
+          expect(processSpy).toHaveBeenCalledWith({ ...initialSession, lock: jasmine.any(String) })
+          const expectedSession = { ...otherSession, expire: jasmine.any(String) }
+          expect(retrieveSession()).toEqual(expectedSession)
+          expect(afterSession).toEqual(expectedSession)
+          done()
+        },
+      })
     })
 
-    it('should clear session when process return an empty value', () => {
+    it('should clear session when process return an empty value', (done) => {
       persistSession(initialSession, COOKIE_OPTIONS)
       processSpy.and.returnValue({})
 
-      withCookieLockAccess({ options: COOKIE_OPTIONS, process: processSpy, after: afterSpy })
-
-      expect(processSpy).toHaveBeenCalledWith({ ...initialSession, lock: jasmine.any(String) })
-      const expectedSession = {}
-      expect(retrieveSession()).toEqual(expectedSession)
-      expect(afterSpy).toHaveBeenCalledWith(expectedSession)
+      withCookieLockAccess({
+        options: COOKIE_OPTIONS,
+        process: processSpy,
+        after: (afterSession) => {
+          expect(processSpy).toHaveBeenCalledWith({ ...initialSession, lock: jasmine.any(String) })
+          const expectedSession = {}
+          expect(retrieveSession()).toEqual(expectedSession)
+          expect(afterSession).toEqual(expectedSession)
+          done()
+        },
+      })
     })
 
-    it('should not persist session when process return undefined', () => {
+    it('should not persist session when process return undefined', (done) => {
       persistSession(initialSession, COOKIE_OPTIONS)
       processSpy.and.returnValue(undefined)
 
-      withCookieLockAccess({ options: COOKIE_OPTIONS, process: processSpy, after: afterSpy })
-
-      expect(processSpy).toHaveBeenCalledWith({ ...initialSession, lock: jasmine.any(String) })
-      expect(retrieveSession()).toEqual(initialSession)
-      expect(afterSpy).toHaveBeenCalledWith(initialSession)
+      withCookieLockAccess({
+        options: COOKIE_OPTIONS,
+        process: processSpy,
+        after: (afterSession) => {
+          expect(processSpy).toHaveBeenCalledWith({ ...initialSession, lock: jasmine.any(String) })
+          expect(retrieveSession()).toEqual(initialSession)
+          expect(afterSession).toEqual(initialSession)
+          done()
+        },
+      })
     })
 
     type OnLockCheck = () => { currentState: SessionState; retryState: SessionState }

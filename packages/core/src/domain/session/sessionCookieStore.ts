@@ -76,25 +76,35 @@ export function withCookieLockAccess(operations: Operations, numberOfRetries = 0
     operations.audit?.addWrite(`${operations.phase || ''} (5)`, processedSession)
   }
   if (isExperimentalFeatureEnabled('cookie-lock')) {
-    // correctly handle lock around expiration would require to handle this case properly at several levels
-    // since we don't have evidence of lock issues around expiration, let's just not do the corruption check for it
-    if (!(processedSession && isExpiredState(processedSession))) {
-      // if lock corrupted after persist, retry later
-      currentSession = retrieveSession()
-      operations.audit?.addRead(`${operations.phase || ''} (6)`, currentSession)
-      if (currentSession.lock !== currentLock!) {
-        retryLater(operations, numberOfRetries)
-        return
-      }
-      delete currentSession.lock
-      setSession(currentSession, operations.options)
-      operations.audit?.addWrite(`${operations.phase || ''} (7)`, currentSession)
-      processedSession = currentSession
-    }
+    setTimeout(
+      monitor(() => {
+        // correctly handle lock around expiration would require to handle this case properly at several levels
+        // since we don't have evidence of lock issues around expiration, let's just not do the corruption check for it
+        if (!(processedSession && isExpiredState(processedSession))) {
+          // if lock corrupted after persist, retry later
+          currentSession = retrieveSession()
+          operations.audit?.addRead(`${operations.phase || ''} (6)`, currentSession)
+          if (currentSession.lock !== currentLock!) {
+            retryLater(operations, numberOfRetries)
+            return
+          }
+          delete currentSession.lock
+          setSession(currentSession, operations.options)
+          operations.audit?.addWrite(`${operations.phase || ''} (7)`, currentSession)
+          processedSession = currentSession
+        }
+        after(operations, processedSession || currentSession)
+      })
+    )
+  } else {
+    after(operations, processedSession || currentSession)
   }
+}
+
+function after(operations: Operations, session: SessionState) {
   // call after even if session is not persisted in order to perform operations on
   // up-to-date cookie value, the value could have been modified by another tab
-  operations.after?.(processedSession || currentSession)
+  operations.after?.(session)
   next()
 }
 
