@@ -1,4 +1,5 @@
 import { stubCookie, mockClock } from '../../../test/specHelper'
+import { isChromium } from '../../tools/browserDetection'
 import { resetExperimentalFeatures, updateExperimentalFeatures } from '../configuration'
 import { startFakeInternalMonitoring, resetInternalMonitoring } from '../internalMonitoring'
 import {
@@ -67,6 +68,7 @@ describe('session cookie store', () => {
 
   describe('with cookie-lock enabled', () => {
     beforeEach(() => {
+      !isChromium() && pending('cookie-lock only enabled on chromium browsers')
       updateExperimentalFeatures(['cookie-lock'])
     })
 
