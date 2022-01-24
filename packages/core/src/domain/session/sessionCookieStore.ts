@@ -99,6 +99,10 @@ export function withCookieLockAccess(operations: Operations, numberOfRetries = 0
   next()
 }
 
+/**
+ * Cookie lock strategy allows mitigating issues due to concurrent access to cookie.
+ * This issue concerns only chromium browsers and enabling this on firefox increase cookie write failures.
+ */
 function isCookieLockEnabled() {
   return isExperimentalFeatureEnabled('cookie-lock') && isChromium()
 }
