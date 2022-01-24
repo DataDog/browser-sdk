@@ -1,5 +1,6 @@
 import type { CookieOptions } from '../../browser/cookie'
 import { getCookie, setCookie } from '../../browser/cookie'
+import { isChromium } from '../../tools/browserDetection'
 import * as utils from '../../tools/utils'
 import { isExperimentalFeatureEnabled } from '../configuration'
 import { monitor, addMonitoringMessage } from '../internalMonitoring'
@@ -42,7 +43,7 @@ export function withCookieLockAccess(operations: Operations, numberOfRetries = 0
   let currentLock: string
   let currentSession = retrieveSession()
   operations.audit?.addRead(`${operations.phase || ''} (1)`, currentSession)
-  if (isExperimentalFeatureEnabled('cookie-lock')) {
+  if (isCookieLockEnabled()) {
     // if someone has lock, retry later
     if (currentSession.lock) {
       retryLater(operations, numberOfRetries)
@@ -62,7 +63,7 @@ export function withCookieLockAccess(operations: Operations, numberOfRetries = 0
     }
   }
   let processedSession = operations.process(currentSession)
-  if (isExperimentalFeatureEnabled('cookie-lock')) {
+  if (isCookieLockEnabled()) {
     // if lock corrupted after process, retry later
     currentSession = retrieveSession()
     operations.audit?.addRead(`${operations.phase || ''} (4)`, currentSession)
@@ -75,7 +76,7 @@ export function withCookieLockAccess(operations: Operations, numberOfRetries = 0
     persistSession(processedSession, operations.options)
     operations.audit?.addWrite(`${operations.phase || ''} (5)`, processedSession)
   }
-  if (isExperimentalFeatureEnabled('cookie-lock')) {
+  if (isCookieLockEnabled()) {
     // correctly handle lock around expiration would require to handle this case properly at several levels
     // since we don't have evidence of lock issues around expiration, let's just not do the corruption check for it
     if (!(processedSession && isExpiredState(processedSession))) {
@@ -96,6 +97,14 @@ export function withCookieLockAccess(operations: Operations, numberOfRetries = 0
   // up-to-date cookie value, the value could have been modified by another tab
   operations.after?.(processedSession || currentSession)
   next()
+}
+
+/**
+ * Cookie lock strategy allows mitigating issues due to concurrent access to cookie.
+ * This issue concerns only chromium browsers and enabling this on firefox increase cookie write failures.
+ */
+function isCookieLockEnabled() {
+  return isExperimentalFeatureEnabled('cookie-lock') && isChromium()
 }
 
 function retryLater(operations: Operations, currentNumberOfRetries: number) {
