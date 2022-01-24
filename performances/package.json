@@ -9,6 +9,6 @@
     "@types/node": "15.0.1",
     "@types/node-forge": "1.0.0",
     "node-forge": "1.2.1",
-    "puppeteer": "8.0.0"
+    "puppeteer": "13.1.1"
   }
 }
