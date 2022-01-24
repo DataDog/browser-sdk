@@ -27,7 +27,7 @@ chrome.webRequest.onBeforeRequest.addListener(
         const decodedBody = decoder.decode(rawBody.bytes)
         for (const rawEvent of decodedBody.split('\n')) {
           const event = sortProperties(JSON.parse(rawEvent))
-          chrome.tabs.executeScript(info.tabId, {
+          void chrome.tabs.executeScript(info.tabId, {
             code: `console.info("Browser-SDK:", ${JSON.stringify(intake)}, ${JSON.stringify(event)});`,
           })
         }

@@ -14,7 +14,7 @@ export function setStore(newStore: Partial<Store>) {
   if (wouldModifyStore(newStore, store)) {
     Object.assign(store, newStore)
     sendAction('newStore', store)
-    chrome.storage.local.set({ store })
+    void chrome.storage.local.set({ store })
   }
 }
 
@@ -29,7 +29,7 @@ export function setLocalStore(newStore: Partial<LocalStore>, tabId: number) {
   if (wouldModifyStore(newStore, localStore)) {
     Object.assign(localStore, newStore)
     sendAction('newStore', store)
-    chrome.storage.local.set({ store })
+    void chrome.storage.local.set({ store })
   }
 }
 
