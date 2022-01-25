@@ -49,7 +49,6 @@
     "@wdio/spec-reporter": "6.0.16",
     "ajv": "6.12.6",
     "browserstack-local": "1.4.8",
-    "codecov": "3.8.1",
     "connect-busboy": "0.0.2",
     "cors": "2.8.5",
     "emoji-name-map": "1.2.9",
