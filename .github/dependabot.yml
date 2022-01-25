@@ -6,3 +6,42 @@ updates:
       interval: daily
     commit-message:
       prefix: '👷'
+    ignore:
+      # next webdriverio major: RUMF-1156
+      - dependency-name: 'webdriverio'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@wdio/*'
+        update-types: ['version-update:semver-major']
+      # update puppeteer: RUMF-1157
+      - dependency-name: 'puppeteer'
+        update-types: ['version-update:semver-major']
+      # update node & express types: RUMF-1158
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@types/express'
+      # update busboy: RUMF-1159
+      - dependency-name: '*busboy'
+        update-types: ['version-update:semver-major']
+      # update jasmine: RUMF-1161
+      - dependency-name: '*jasmine*'
+      - dependency-name: '*sinon*'
+      # update extension: RUMF-1162
+      - dependency-name: '*react*'
+      - dependency-name: 'bumbag'
+      # update eslint: RUMF-1163
+      - dependency-name: '*eslint*'
+      # update ajv: RUMF-1164
+      - dependency-name: 'ajv'
+        update-types: ['version-update:semver-major']
+      # update ansi-regex: RUMF-1165
+      - dependency-name: 'ansi-regex'
+      # update webpack: RUMF-1166
+      - dependency-name: '*webpack*'
+      # update node-fetch: RUMF-1167
+      - dependency-name: 'node-fetch'
+        update-types: ['version-update:semver-major']
+      # typescript: RUMF-1168
+      - dependency-name: 'ts-loader'
+      - dependency-name: 'ts-node'
+      - dependency-name: 'tslib'
+      - dependency-name: 'typescript'
