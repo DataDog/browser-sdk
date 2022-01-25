@@ -9,7 +9,7 @@ export function evaluateCodeInActiveTab(code: (arg?: string) => void, arg?: stri
 }
 
 function evaluateCodeInline(tabId: number, code: (arg?: string) => void, arg?: string) {
-  chrome.tabs.executeScript(tabId, {
+  void chrome.tabs.executeScript(tabId, {
     code: `{
       const script = document.createElement('script')
       script.setAttribute("type", "module")
