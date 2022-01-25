@@ -57,7 +57,7 @@ describe('serializeNodeWithId', () => {
           jasmine.objectContaining({ type: NodeType.DocumentType, name: 'html', publicId: '', systemId: '' }),
           jasmine.objectContaining({ type: NodeType.Element, tagName: 'html' }),
         ],
-        id: (jasmine.any(Number) as unknown) as number,
+        id: jasmine.any(Number) as unknown as number,
       })
     })
   })
@@ -70,7 +70,7 @@ describe('serializeNodeWithId', () => {
         attributes: {},
         isSVG: undefined,
         childNodes: [],
-        id: (jasmine.any(Number) as unknown) as number,
+        id: jasmine.any(Number) as unknown as number,
       })
     })
 
@@ -88,7 +88,7 @@ describe('serializeNodeWithId', () => {
         },
         isSVG: undefined,
         childNodes: [],
-        id: (jasmine.any(Number) as unknown) as number,
+        id: jasmine.any(Number) as unknown as number,
       })
     })
 
@@ -315,7 +315,7 @@ describe('serializeNodeWithId', () => {
       parentEl.appendChild(textNode)
       expect(serializeNodeWithId(textNode, DEFAULT_OPTIONS)).toEqual({
         type: NodeType.Text,
-        id: (jasmine.any(Number) as unknown) as number,
+        id: jasmine.any(Number) as unknown as number,
         isStyle: undefined,
         textContent: 'foo',
       })
@@ -345,7 +345,7 @@ describe('serializeNodeWithId', () => {
       const xmlDocument = new DOMParser().parseFromString('<root></root>', 'text/xml')
       expect(serializeNodeWithId(xmlDocument.createCDATASection('foo'), DEFAULT_OPTIONS)).toEqual({
         type: NodeType.CDATA,
-        id: (jasmine.any(Number) as unknown) as number,
+        id: jasmine.any(Number) as unknown as number,
         textContent: '',
       })
     })

@@ -29,7 +29,11 @@ export function startRecording(
     addRecord({ ...rawRecord, timestamp: Date.now() })
   }
 
-  const { stop: stopRecording, takeFullSnapshot, flushMutations } = record({
+  const {
+    stop: stopRecording,
+    takeFullSnapshot,
+    flushMutations,
+  } = record({
     emit: addRawRecord,
     defaultPrivacyLevel: configuration.defaultPrivacyLevel,
   })

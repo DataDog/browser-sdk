@@ -130,7 +130,7 @@ export function computeFetchResponseText(
       configuration.requestErrorResponseLengthLimit,
       (error, responseText) => {
         if (error) {
-          callback(`Unable to retrieve response: ${(error as unknown) as string}`)
+          callback(`Unable to retrieve response: ${error as unknown as string}`)
         } else {
           callback(responseText)
         }

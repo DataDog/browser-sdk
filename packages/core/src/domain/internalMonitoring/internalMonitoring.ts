@@ -96,10 +96,10 @@ export function monitored<T extends (...params: any[]) => unknown>(
 }
 
 export function monitor<T extends (...args: any[]) => any>(fn: T): T {
-  return (function (this: any) {
+  return function (this: any) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return callMonitored(fn, this, (arguments as unknown) as Parameters<T>)
-  } as unknown) as T // consider output type has input type
+    return callMonitored(fn, this, arguments as unknown as Parameters<T>)
+  } as unknown as T // consider output type has input type
 }
 
 export function callMonitored<T extends (...args: any[]) => any>(

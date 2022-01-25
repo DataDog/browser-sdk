@@ -51,7 +51,7 @@ describe('tracer', () => {
     it('should add traceId and spanId to context and add tracing headers', () => {
       const tracer = startTracer(configuration, sessionManager)
       const context = { ...ALLOWED_DOMAIN_CONTEXT }
-      tracer.traceXhr(context, (xhrStub as unknown) as XMLHttpRequest)
+      tracer.traceXhr(context, xhrStub as unknown as XMLHttpRequest)
 
       expect(context.traceId).toBeDefined()
       expect(context.spanId).toBeDefined()
@@ -61,7 +61,7 @@ describe('tracer', () => {
     it('should not trace request on disallowed domain', () => {
       const tracer = startTracer(configuration, sessionManager)
       const context = { ...DISALLOWED_DOMAIN_CONTEXT }
-      tracer.traceXhr(context, (xhrStub as unknown) as XMLHttpRequest)
+      tracer.traceXhr(context, xhrStub as unknown as XMLHttpRequest)
 
       expect(context.traceId).toBeUndefined()
       expect(context.spanId).toBeUndefined()
@@ -71,7 +71,7 @@ describe('tracer', () => {
     it('should not trace request during untracked session', () => {
       const tracer = startTracer(configuration, sessionManager.setNotTracked())
       const context = { ...ALLOWED_DOMAIN_CONTEXT }
-      tracer.traceXhr(context, (xhrStub as unknown) as XMLHttpRequest)
+      tracer.traceXhr(context, xhrStub as unknown as XMLHttpRequest)
 
       expect(context.traceId).toBeUndefined()
       expect(context.spanId).toBeUndefined()
@@ -83,7 +83,7 @@ describe('tracer', () => {
         ...configuration,
         allowedTracingOrigins: [/^https?:\/\/qux\.com/, 'http://bar.com'],
       }
-      const stub = (xhrStub as unknown) as XMLHttpRequest
+      const stub = xhrStub as unknown as XMLHttpRequest
 
       const tracer = startTracer(configurationWithTracingUrls, sessionManager)
 

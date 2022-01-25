@@ -1,13 +1,11 @@
 type ValueOf<T> = T[keyof T]
 
-type Message<Actions extends { [key: string]: any }> = ValueOf<
-  {
-    [K in keyof Actions]: {
-      action: K
-      payload: Actions[K]
-    }
+type Message<Actions extends { [key: string]: any }> = ValueOf<{
+  [K in keyof Actions]: {
+    action: K
+    payload: Actions[K]
   }
->
+}>
 
 export function createListenAction<Actions>() {
   function listenAction<K extends keyof Actions>(action: K, callback: (payload: Actions[K], tabId: number) => void) {

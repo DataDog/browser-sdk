@@ -34,7 +34,7 @@ describe('resourceCollection', () => {
 
     expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
-      date: (jasmine.any(Number) as unknown) as TimeStamp,
+      date: jasmine.any(Number) as unknown as TimeStamp,
       resource: {
         id: jasmine.any(String),
         duration: (100 * 1e6) as ServerDuration,

@@ -4,10 +4,8 @@ import { sendAction } from '../actions'
 import { useStore } from '../useStore'
 
 export function ActionsTab() {
-  const [
-    { useDevBundles, useRumSlim, logEventsFromRequests, devServerStatus, blockIntakeRequests },
-    setStore,
-  ] = useStore()
+  const [{ useDevBundles, useRumSlim, logEventsFromRequests, devServerStatus, blockIntakeRequests }, setStore] =
+    useStore()
   return (
     <Stack alignY="top" padding="major-2" spacing="major-2">
       <Stack orientation="horizontal" verticalBelow="0" spacing="major-2" alignX="left" alignY="center">

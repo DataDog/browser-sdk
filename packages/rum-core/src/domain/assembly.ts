@@ -119,9 +119,11 @@ export function startRumAssembly(
           synthetics: syntheticsContext,
           ci_test: ciTestContext,
         }
-        const serverRumEvent = (needToAssembleWithAction(rawRumEvent)
-          ? combine(rumContext, urlContext, viewContext, actionContext, rawRumEvent)
-          : combine(rumContext, urlContext, viewContext, rawRumEvent)) as RumEvent & Context
+        const serverRumEvent = (
+          needToAssembleWithAction(rawRumEvent)
+            ? combine(rumContext, urlContext, viewContext, actionContext, rawRumEvent)
+            : combine(rumContext, urlContext, viewContext, rawRumEvent)
+        ) as RumEvent & Context
 
         serverRumEvent.context = combine(commonContext.context, customerContext)
 

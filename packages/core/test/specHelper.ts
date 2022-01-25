@@ -108,10 +108,10 @@ export function stubFetch(): FetchStubManager {
     pendingRequests += 1
     let resolve: (response: Response) => unknown
     let reject: (error: Error) => unknown
-    const promise = (new Promise((res, rej) => {
+    const promise = new Promise((res, rej) => {
       resolve = res
       reject = rej
-    }) as unknown) as FetchStubPromise
+    }) as unknown as FetchStubPromise
     promise.resolveWith = (responseOptions: ResponseStubOptions) => {
       resolve(new ResponseStub(responseOptions))
       onRequestEnd()
@@ -357,7 +357,7 @@ export function withXhr({
     })
   }
   xhr.addEventListener('loadend', loadend)
-  setup((xhr as unknown) as StubXhr)
+  setup(xhr as unknown as StubXhr)
 }
 
 export function setPageVisibility(visibility: 'visible' | 'hidden') {

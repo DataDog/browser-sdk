@@ -36,7 +36,7 @@ describe('initInputObserver', () => {
 
     expect(inputCallbackSpy).toHaveBeenCalledOnceWith({
       text: 'foo',
-      id: (jasmine.any(Number) as unknown) as number,
+      id: jasmine.any(Number) as unknown as number,
     })
   })
 

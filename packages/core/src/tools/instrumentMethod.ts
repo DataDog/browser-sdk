@@ -13,7 +13,7 @@ export function instrumentMethod<OBJECT extends { [key: string]: any }, METHOD e
 
   const instrumentationWrapper = function (this: OBJECT): ReturnType<OBJECT[METHOD]> {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return instrumentation.apply(this, (arguments as unknown) as Parameters<OBJECT[METHOD]>)
+    return instrumentation.apply(this, arguments as unknown as Parameters<OBJECT[METHOD]>)
   }
   object[method] = instrumentationWrapper as OBJECT[METHOD]
 
@@ -44,7 +44,7 @@ export function instrumentMethodAndCallOriginal<OBJECT extends { [key: string]: 
     method,
     (original) =>
       function () {
-        const args = (arguments as unknown) as Parameters<OBJECT[METHOD]>
+        const args = arguments as unknown as Parameters<OBJECT[METHOD]>
         let result
 
         if (before) {
