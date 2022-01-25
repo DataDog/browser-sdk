@@ -65,3 +65,16 @@ RUN apt-get -y install procps
 # Woke
 RUN curl -sSfL https://git.io/getwoke | \
   bash -s -- -b /usr/local/bin
+
+# Codecov https://docs.codecov.com/docs/codecov-uploader
+RUN apt-get -y install gnupg coreutils
+RUN curl https://keybase.io/codecovsecurity/pgp_keys.asc | gpg --no-default-keyring --keyring trustedkeys.gpg --import
+RUN CODECOV_UPLOADER_VERSION=v0.1.15 \
+  && curl -Os https://uploader.codecov.io/${CODECOV_UPLOADER_VERSION}/linux/codecov \
+  && curl -Os https://uploader.codecov.io/${CODECOV_UPLOADER_VERSION}/linux/codecov.SHA256SUM \
+  && curl -Os https://uploader.codecov.io/${CODECOV_UPLOADER_VERSION}/linux/codecov.SHA256SUM.sig
+RUN gpgv codecov.SHA256SUM.sig codecov.SHA256SUM
+RUN shasum -a 256 -c codecov.SHA256SUM
+RUN chmod +x codecov
+RUN mv codecov /usr/local/bin
+RUN rm codecov.*
