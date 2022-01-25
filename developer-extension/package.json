@@ -8,7 +8,7 @@
   },
   "devDependencies": {
     "@types/chrome": "0.0.125",
-    "@types/react": "16",
+    "@types/react": "17",
     "@types/react-dom": "16",
     "copy-webpack-plugin": "8.1.0",
     "html-webpack-plugin": "5.3.1",
