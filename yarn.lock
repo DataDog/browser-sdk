@@ -1526,6 +1526,11 @@
   resolved "https://registry.yarnpkg.com/@types/cors/-/cors-2.8.12.tgz#6b2c510a7ad7039e98e7b8d3d6598f4359e5c080"
   integrity sha512-vt+kDhq/M2ayberEtJcIN/hxXy1Pk+59g2FV/ZQceeaTyCtCucjL2Q7FXlFjtWn4n15KCr1NE2lNNFhp0lEThw==
 
+"@types/cucumber@^6.0.1":
+  version "6.0.1"
+  resolved "https://registry.yarnpkg.com/@types/cucumber/-/cucumber-6.0.1.tgz#0fe9673d34568d35ff21957af049883635472fcd"
+  integrity sha512-+GZV6xfN0MeN9shDCdny8GbC8N0+U6uca8cjyaJndcwmrUhwS6qOU2vmYn0d71EOwJF568/v3SxJ8VKxuZNYRw==
+
 "@types/eslint-scope@^3.7.0":
   version "3.7.0"
   resolved "https://registry.yarnpkg.com/@types/eslint-scope/-/eslint-scope-3.7.0.tgz#4792816e31119ebd506902a482caec4951fabd86"
@@ -1923,14 +1928,14 @@
     "@wdio/utils" "6.1.0"
     jasmine "^3.5.0"
 
-"@wdio/junit-reporter@6.1.9":
-  version "6.1.9"
-  resolved "https://registry.yarnpkg.com/@wdio/junit-reporter/-/junit-reporter-6.1.9.tgz#9fcc14c0e469da13d03c672315456467244cf504"
-  integrity sha512-ml6m1SwRjScDsU/5Iarm+mbp3l9lg+QMR5KGsvi5gt/xylsMl3aIxRdMxFEcgcpoXQP+QUEktPkp1SURfOXG1g==
+"@wdio/junit-reporter@6.11.0":
+  version "6.11.0"
+  resolved "https://registry.yarnpkg.com/@wdio/junit-reporter/-/junit-reporter-6.11.0.tgz#d5b8837a0fa526c3f629b6844317ef3a7bb9272d"
+  integrity sha512-wOc1SYEHdGaLdO3zdcJ0U55p/LxMZL4erHSeqHMSJZLtuNPJYvj3RgRrhnVYMcnR6OjzIMC/acQ/hU2QwrzXNQ==
   dependencies:
-    "@wdio/reporter" "6.1.9"
+    "@wdio/reporter" "6.11.0"
     json-stringify-safe "^5.0.1"
-    junit-report-builder "^2.0.0"
+    junit-report-builder "^2.1.0"
     validator "^13.0.0"
 
 "@wdio/local-runner@6.1.3":
@@ -1973,11 +1978,12 @@
   dependencies:
     fs-extra "^9.0.0"
 
-"@wdio/reporter@6.1.9":
-  version "6.1.9"
-  resolved "https://registry.yarnpkg.com/@wdio/reporter/-/reporter-6.1.9.tgz#a5f21cc393be3ab71b031b2bdf4fbdaef276adff"
-  integrity sha512-3eQ8VcloL27Ev27EQIGS/BlmRrAeSu/e7ZHbQ3SN6E8eDpbJ7UZauO5mh+XqAq7a2LF8Sd5PMLnJ3RKlGtw+kA==
+"@wdio/reporter@6.11.0":
+  version "6.11.0"
+  resolved "https://registry.yarnpkg.com/@wdio/reporter/-/reporter-6.11.0.tgz#edeb255df708509ea8428029273d4d65426ea2d5"
+  integrity sha512-SStNZZUI0bXI+omyIU6ql4Rh+Dews1dz1GlowHDrBxwKMPyAwytgYokXLn3zr+E3tkHDiRyJjQxfDetBWBGmtg==
   dependencies:
+    "@types/cucumber" "^6.0.1"
     fs-extra "^9.0.0"
 
 "@wdio/runner@6.1.3":
@@ -5890,10 +5896,10 @@ jsprim@^1.2.2:
     json-schema "0.4.0"
     verror "1.10.0"
 
-junit-report-builder@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/junit-report-builder/-/junit-report-builder-2.0.0.tgz#aaf9c8c6848cd9bb9dfb6da8e2f411d72ddf47aa"
-  integrity sha512-/CkUScz5G7U1Fehna9swd8YfA+o5tV07NZz+3pea27okD0+ZEgyXQ5E0etyxMaqzXOjBvN8HGmNpVO/79yj5TA==
+junit-report-builder@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/junit-report-builder/-/junit-report-builder-2.1.0.tgz#7089dd8ae547657509b9a5eb7b5082bde22bcc7e"
+  integrity sha512-Ioj5I4w18ZcHFaaisqCKdh1z+ipzN7sA2JB+h+WOlGcOMWm0FFN1dfxkgc2I4EXfhSP/mOfM3W43uFzEdz4sTw==
   dependencies:
     date-format "0.0.2"
     lodash "^4.17.15"
