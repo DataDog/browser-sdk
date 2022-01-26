@@ -262,7 +262,7 @@ export function mapValues<A, B>(object: { [key: string]: A }, fn: (arg: A) => B)
  */
 export function getGlobalObject<T>(): T {
   if (typeof globalThis === 'object') {
-    return (globalThis as unknown) as T
+    return globalThis as unknown as T
   }
   Object.defineProperty(Object.prototype, '_dd_temp_', {
     get() {
@@ -483,7 +483,7 @@ export function mergeInto<D, S>(
     // primitive values - just return source
     return source as Merged<D, S>
   } else if (source instanceof Date) {
-    return (new Date(source.getTime()) as unknown) as Merged<D, S>
+    return new Date(source.getTime()) as unknown as Merged<D, S>
   } else if (source instanceof RegExp) {
     const flags =
       source.flags ||
@@ -495,18 +495,18 @@ export function mergeInto<D, S>(
         source.sticky ? 'y' : '',
         source.unicode ? 'u' : '',
       ].join('')
-    return (new RegExp(source.source, flags) as unknown) as Merged<D, S>
+    return new RegExp(source.source, flags) as unknown as Merged<D, S>
   }
 
   if (circularReferenceChecker.hasAlreadyBeenSeen(source)) {
     // remove circular references
-    return (undefined as unknown) as Merged<D, S>
+    return undefined as unknown as Merged<D, S>
   } else if (Array.isArray(source)) {
     const merged: any[] = Array.isArray(destination) ? destination : []
     for (let i = 0; i < source.length; ++i) {
       merged[i] = mergeInto(merged[i], source[i], circularReferenceChecker)
     }
-    return (merged as unknown) as Merged<D, S>
+    return merged as unknown as Merged<D, S>
   }
 
   const merged: Record<any, any> = getType(destination) === 'object' ? destination : {}
@@ -515,7 +515,7 @@ export function mergeInto<D, S>(
       merged[key] = mergeInto(merged[key], source[key], circularReferenceChecker)
     }
   }
-  return (merged as unknown) as Merged<D, S>
+  return merged as unknown as Merged<D, S>
 }
 
 /**

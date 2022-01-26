@@ -18,7 +18,7 @@ describe('matchRequestTiming', () => {
       pending('no full rum support')
     }
     entries = []
-    spyOn(performance, 'getEntriesByName').and.returnValues((entries as unknown) as PerformanceResourceTiming[])
+    spyOn(performance, 'getEntriesByName').and.returnValues(entries as unknown as PerformanceResourceTiming[])
   })
 
   it('should match single timing nested in the request ', () => {

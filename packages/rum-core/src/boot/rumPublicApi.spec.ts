@@ -580,7 +580,7 @@ describe('rum public api', () => {
         expect(startViewSpy.calls.argsFor(0)[0]).toEqual('foo')
         expect(startViewSpy.calls.argsFor(0)[1]).toEqual({
           relative: 10 as RelativeTime,
-          timeStamp: (jasmine.any(Number) as unknown) as TimeStamp,
+          timeStamp: jasmine.any(Number) as unknown as TimeStamp,
         })
       })
 

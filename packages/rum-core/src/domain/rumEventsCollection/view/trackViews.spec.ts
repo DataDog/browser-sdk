@@ -71,7 +71,7 @@ describe('track views automatically', () => {
     })
 
     function mockGetElementById() {
-      const fakeGetElementById = (elementId: string) => ((elementId === 'testHashValue') as any) as HTMLElement
+      const fakeGetElementById = (elementId: string) => (elementId === 'testHashValue') as any as HTMLElement
       return spyOn(document, 'getElementById').and.callFake(fakeGetElementById)
     }
 

@@ -26,10 +26,10 @@ describe('action collection', () => {
         error: {
           count: 0,
         },
-        id: (jasmine.any(String) as unknown) as string,
-        loading_time: (jasmine.any(Number) as unknown) as number,
+        id: jasmine.any(String) as unknown as string,
+        loading_time: jasmine.any(Number) as unknown as number,
         long_task: {
-          count: (jasmine.any(Number) as unknown) as number,
+          count: jasmine.any(Number) as unknown as number,
         },
         resource: {
           count: 0,
@@ -67,10 +67,10 @@ describe('action collection', () => {
         error: {
           count: 0,
         },
-        id: (jasmine.any(String) as unknown) as string,
-        loading_time: (jasmine.any(Number) as unknown) as number,
+        id: jasmine.any(String) as unknown as string,
+        loading_time: jasmine.any(Number) as unknown as number,
         long_task: {
-          count: (jasmine.any(Number) as unknown) as number,
+          count: jasmine.any(Number) as unknown as number,
         },
         resource: {
           count: 1,

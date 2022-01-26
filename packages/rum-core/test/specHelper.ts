@@ -211,13 +211,17 @@ export function setupViewTest(
   { lifeCycle, location, domMutationObservable, configuration, locationChangeObservable }: BuildContext,
   initialViewName?: string
 ) {
-  const { handler: viewUpdateHandler, getViewEvent: getViewUpdate, getHandledCount: getViewUpdateCount } = spyOnViews(
-    'view update'
-  )
+  const {
+    handler: viewUpdateHandler,
+    getViewEvent: getViewUpdate,
+    getHandledCount: getViewUpdateCount,
+  } = spyOnViews('view update')
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, viewUpdateHandler)
-  const { handler: viewCreateHandler, getViewEvent: getViewCreate, getHandledCount: getViewCreateCount } = spyOnViews(
-    'view create'
-  )
+  const {
+    handler: viewCreateHandler,
+    getViewEvent: getViewCreate,
+    getHandledCount: getViewCreateCount,
+  } = spyOnViews('view create')
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, viewCreateHandler)
   const { stop, startView, addTiming } = trackViews(
     location,

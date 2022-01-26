@@ -94,7 +94,7 @@ function afterSend(
   startContext: FetchStartContext
 ) {
   const reportFetch = (response: Response | Error) => {
-    const context = (startContext as unknown) as FetchCompleteContext
+    const context = startContext as unknown as FetchCompleteContext
     context.state = 'complete'
     context.duration = elapsed(context.startClocks.timeStamp, timeStampNow())
 

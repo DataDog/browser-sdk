@@ -13,7 +13,7 @@ describe('batch', () => {
   let transport: HttpRequest
 
   beforeEach(() => {
-    transport = ({ send: noop } as unknown) as HttpRequest
+    transport = { send: noop } as unknown as HttpRequest
     spyOn(transport, 'send')
     batch = new Batch(transport, MAX_SIZE, BATCH_BYTES_LIMIT, MESSAGE_BYTES_LIMIT, FLUSH_TIMEOUT)
   })

@@ -90,7 +90,7 @@ describe('trackActions', () => {
 
     lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
       id: 'fake',
-      startClocks: (jasmine.any(Object) as unknown) as ClocksState,
+      startClocks: jasmine.any(Object) as unknown as ClocksState,
     })
     clock.tick(EXPIRE_DELAY)
 

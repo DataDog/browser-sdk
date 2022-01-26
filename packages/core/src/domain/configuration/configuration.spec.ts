@@ -30,24 +30,24 @@ describe('validateAndBuildConfiguration', () => {
     })
 
     it('requires the InitConfiguration to be defined', () => {
-      expect(validateAndBuildConfiguration((undefined as unknown) as InitConfiguration, buildEnv)).toBeUndefined()
+      expect(validateAndBuildConfiguration(undefined as unknown as InitConfiguration, buildEnv)).toBeUndefined()
       expect(displaySpy).toHaveBeenCalledOnceWith('Client Token is not configured, we will not send any data.')
     })
 
     it('requires clientToken to be defined', () => {
-      expect(validateAndBuildConfiguration(({} as unknown) as InitConfiguration, buildEnv)).toBeUndefined()
+      expect(validateAndBuildConfiguration({} as unknown as InitConfiguration, buildEnv)).toBeUndefined()
       expect(displaySpy).toHaveBeenCalledOnceWith('Client Token is not configured, we will not send any data.')
     })
 
     it('requires sampleRate to be a percentage', () => {
       expect(
-        validateAndBuildConfiguration(({ clientToken, sampleRate: 'foo' } as unknown) as InitConfiguration, buildEnv)
+        validateAndBuildConfiguration({ clientToken, sampleRate: 'foo' } as unknown as InitConfiguration, buildEnv)
       ).toBeUndefined()
       expect(displaySpy).toHaveBeenCalledOnceWith('Sample Rate should be a number between 0 and 100')
 
       displaySpy.calls.reset()
       expect(
-        validateAndBuildConfiguration(({ clientToken, sampleRate: 200 } as unknown) as InitConfiguration, buildEnv)
+        validateAndBuildConfiguration({ clientToken, sampleRate: 200 } as unknown as InitConfiguration, buildEnv)
       ).toBeUndefined()
       expect(displaySpy).toHaveBeenCalledOnceWith('Sample Rate should be a number between 0 and 100')
     })

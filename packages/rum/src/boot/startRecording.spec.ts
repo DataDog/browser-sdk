@@ -41,10 +41,8 @@ describe('startRecording', () => {
     sandbox.appendChild(textField)
 
     const requestSendSpy = spyOn(HttpRequest.prototype, 'send')
-    ;({
-      waitAsyncCalls: waitRequestSendCalls,
-      expectNoExtraAsyncCall: expectNoExtraRequestSendCalls,
-    } = collectAsyncCalls(requestSendSpy))
+    ;({ waitAsyncCalls: waitRequestSendCalls, expectNoExtraAsyncCall: expectNoExtraRequestSendCalls } =
+      collectAsyncCalls(requestSendSpy))
 
     startDeflateWorker((worker) => {
       setupBuilder = setup()

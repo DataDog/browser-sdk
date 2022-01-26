@@ -72,10 +72,8 @@ describe('startMutationCollection', () => {
     it('processes mutations asynchronously', (done) => {
       serializeDocument(document, NodePrivacyLevel.ALLOW)
       const { mutationCallbackSpy } = startMutationCollection()
-      const {
-        waitAsyncCalls: waitMutationCallbackCalls,
-        expectNoExtraAsyncCall: expectNoExtraMutationCallbackCalls,
-      } = collectAsyncCalls(mutationCallbackSpy)
+      const { waitAsyncCalls: waitMutationCallbackCalls, expectNoExtraAsyncCall: expectNoExtraMutationCallbackCalls } =
+        collectAsyncCalls(mutationCallbackSpy)
 
       sandbox.appendChild(document.createElement('div'))
 
