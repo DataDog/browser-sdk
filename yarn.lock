@@ -2764,7 +2764,7 @@ bumbag@1.6.12:
     styled-tools "1.7.2"
     tinycolor2 "1.4.2"
 
-busboy@*:
+busboy@~0.3.1:
   version "0.3.1"
   resolved "https://registry.yarnpkg.com/busboy/-/busboy-0.3.1.tgz#170899274c5bf38aae27d5c62b71268cd585fd1b"
   integrity sha512-y7tTxhGKXcyBxRKAni+awqx8uqaJKrSFSNFSeRG5CsWNdmy2BIK+6VGWEW7TZnIO/533mtMEA4rOevQV815YJw==
@@ -3277,12 +3277,12 @@ config-chain@^1.1.12:
     ini "^1.3.4"
     proto-list "~1.2.1"
 
-connect-busboy@0.0.2:
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/connect-busboy/-/connect-busboy-0.0.2.tgz#ac5c9c96672171885e576c66b2bfd95d3bb11097"
-  integrity sha1-rFyclmchcYheV2xmsr/ZXTuxEJc=
+connect-busboy@0.0.3:
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/connect-busboy/-/connect-busboy-0.0.3.tgz#b8c23dcc24415b6e0d299f793057b583b201ce51"
+  integrity sha512-a4o+Jp3e+sh9qYGaqIHb9dodQRHNnV3xVgZkcb5mRmeL3qyS+JxyUVGpZJoVEd9daInfW1wpJ8ndw7wo/cv+gA==
   dependencies:
-    busboy "*"
+    busboy "~0.3.1"
 
 connect@^3.7.0:
   version "3.7.0"
