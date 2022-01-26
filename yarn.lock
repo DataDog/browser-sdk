@@ -1501,13 +1501,14 @@
   resolved "https://registry.yarnpkg.com/@types/component-emitter/-/component-emitter-1.2.10.tgz#ef5b1589b9f16544642e473db5ea5639107ef3ea"
   integrity sha512-bsjleuRKWmGqajMerkzox19aGbscQX5rmmvvXl3wlIp5gMG1HgkiwPxsN5p070fBDKTNSPgojVbuY1+HWMbFhg==
 
-"@types/connect-busboy@0.0.2":
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/@types/connect-busboy/-/connect-busboy-0.0.2.tgz#2a17ab167984e8430d1def368c25f402ffa292aa"
-  integrity sha512-d0tPVq7z2knefTgdJ2IuWAavWSz3NUaToIq/DMWyUzG3wSK2lCpqfmHV/1J79BHjaz4xKvOi+JTK7JB+1LxQig==
+"@types/connect-busboy@0.0.4":
+  version "0.0.4"
+  resolved "https://registry.yarnpkg.com/@types/connect-busboy/-/connect-busboy-0.0.4.tgz#71bd35608902b2580930c6f14c5005274591f344"
+  integrity sha512-b4QnMtU159sZdBwOzdCXjbgMGcixPnF1UQqnvbfEsSeBrqELiaH5KvCNnwnpXo7X6HevsgN0L8LKjK+Iux32xA==
   dependencies:
     "@types/busboy" "*"
     "@types/express" "*"
+    "@types/node" "*"
 
 "@types/connect@*":
   version "3.4.33"
@@ -1680,15 +1681,15 @@
   dependencies:
     "@types/node" "*"
 
-"@types/node@*", "@types/node@15.0.1":
-  version "15.0.1"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-15.0.1.tgz#ef34dea0881028d11398be5bf4e856743e3dc35a"
-  integrity sha512-TMkXt0Ck1y0KKsGr9gJtWGjttxlZnnvDtphxUOSd0bfaR6Q1jle+sPvrzNR1urqYTWMinoKvjKfXUGsumaO1PA==
-
-"@types/node@>=10.0.0":
+"@types/node@*", "@types/node@>=10.0.0":
   version "17.0.12"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-17.0.12.tgz#f7aa331b27f08244888c47b7df126184bc2339c5"
   integrity sha512-4YpbAsnJXWYK/fpTVFlMIcUIho2AYCi4wg5aNPrG1ng7fn/1/RZfCIpRCiBX+12RVa34RluilnvCqD+g3KiSiA==
+
+"@types/node@15.0.1":
+  version "15.0.1"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-15.0.1.tgz#ef34dea0881028d11398be5bf4e856743e3dc35a"
+  integrity sha512-TMkXt0Ck1y0KKsGr9gJtWGjttxlZnnvDtphxUOSd0bfaR6Q1jle+sPvrzNR1urqYTWMinoKvjKfXUGsumaO1PA==
 
 "@types/normalize-package-data@^2.4.0":
   version "2.4.0"
