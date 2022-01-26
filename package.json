@@ -48,7 +48,7 @@
     "@wdio/spec-reporter": "6.0.16",
     "ajv": "6.12.6",
     "browserstack-local": "1.4.8",
-    "connect-busboy": "0.0.2",
+    "connect-busboy": "0.0.3",
     "cors": "2.8.5",
     "emoji-name-map": "1.2.9",
     "eslint": "7.20.0",
