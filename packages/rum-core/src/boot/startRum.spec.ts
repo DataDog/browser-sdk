@@ -303,6 +303,8 @@ describe('startRumEventCollection', () => {
     const collectedRumEvent = { type: 'action' } as RumEvent & Context
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, collectedRumEvent)
 
-    expect(sendSpy).toHaveBeenCalledOnceWith('{"eventType":"rum","event":{"type":"action"}}')
+    const [msg] = sendSpy.calls.mostRecent().args
+    expect(msg).toContain('"eventType":"rum"')
+    expect(msg).toContain('"type":"action"')
   })
 })

@@ -168,10 +168,9 @@ describe('logs', () => {
       sendLog(DEFAULT_MESSAGE, {})
 
       expect(server.requests.length).toEqual(0)
-      expect(sendSpy).toHaveBeenCalledOnceWith(
-        '{"eventType":"log",' +
-          '"event":{"service":"service","session_id":"session-id","status":"info","message":"message"}}'
-      )
+      const [msg] = sendSpy.calls.mostRecent().args
+      expect(msg).toContain('"eventType":"log"')
+      expect(msg).toContain('"message":"message"')
     })
   })
 

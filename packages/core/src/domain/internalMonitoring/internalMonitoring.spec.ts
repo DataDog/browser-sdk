@@ -231,8 +231,10 @@ describe('internal monitoring', () => {
       })
 
       expect(server.requests.length).toEqual(0)
+
       const [msg] = sendSpy.calls.mostRecent().args
-      expect(msg).toContain('{"eventType":"internal_log","event":')
+      expect(msg).toContain('"eventType":"internal_log"')
+      expect(msg).toContain('"message":"message"')
     })
   })
 
