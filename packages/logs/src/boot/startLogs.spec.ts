@@ -7,6 +7,7 @@ import {
   resetExperimentalFeatures,
   updateExperimentalFeatures,
   getTimeStamp,
+  isChromium,
 } from '@datadog/browser-core'
 import sinon from 'sinon'
 import type { Clock } from '../../../core/test/specHelper'
@@ -23,6 +24,7 @@ import type { LogsMessage } from '../domain/logger'
 import { Logger, StatusType } from '../domain/logger'
 import type { LogsSessionManager } from '../domain/logsSessionManager'
 import type { LogsEvent } from '../logsEvent.types'
+import { stubReportingObserver } from '../test/stubReportingObserver'
 import { buildAssemble, doStartLogs, startLogs as originalStartLogs } from './startLogs'
 
 interface SentMessage extends LogsMessage {
@@ -161,6 +163,10 @@ describe('logs', () => {
     })
 
     it('should send bridge event when bridge is present', () => {
+      if (!isChromium()) {
+        pending('no ReportingObserver support')
+      }
+
       updateExperimentalFeatures(['event-bridge'])
       const sendSpy = spyOn(initEventBridgeStub(), 'send')
 
@@ -169,6 +175,37 @@ describe('logs', () => {
 
       expect(server.requests.length).toEqual(0)
       expect(sendSpy).toHaveBeenCalled()
+    })
+
+    it('should log reports if ff "forward-reports" enabled', () => {
+      if (!isChromium()) {
+        pending('no ReportingObserver support')
+      }
+      const errorLogger = new Logger(noop)
+      const logErrorSpy = spyOn(errorLogger, 'error')
+      const reportingObserverStub = stubReportingObserver()
+      updateExperimentalFeatures(['forward-reports'])
+      startLogs({ errorLogger })
+
+      reportingObserverStub.raiseReport()
+
+      expect(logErrorSpy).toHaveBeenCalled()
+
+      resetExperimentalFeatures()
+      reportingObserverStub.reset()
+    })
+
+    it('should not log reports if ff "forward-reports" disabled', () => {
+      const errorLogger = new Logger(noop)
+      const logErrorSpy = spyOn(errorLogger, 'error')
+      const reportingObserverStub = stubReportingObserver()
+      startLogs({ errorLogger })
+
+      reportingObserverStub.raiseReport()
+
+      expect(logErrorSpy).not.toHaveBeenCalled()
+
+      reportingObserverStub.reset()
     })
   })
 
