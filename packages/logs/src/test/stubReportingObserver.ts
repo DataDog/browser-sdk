@@ -3,11 +3,7 @@ import type { BrowserWindow, Report, ReportingObserver } from '../domain/trackRe
 
 export function stubReportingObserver() {
   const originalReportingObserver = (window as BrowserWindow).ReportingObserver
-
   let callbacks: Array<(reports: Report[]) => void> = []
-  function raiseReport() {
-    callbacks.forEach((callback) => callback([FAKE_REPORT]))
-  }
 
   ;(window as BrowserWindow).ReportingObserver = function (callback: (reports: Report[]) => void) {
     callbacks.push(callback)
@@ -25,7 +21,9 @@ export function stubReportingObserver() {
   } as unknown as ReportingObserver
 
   return {
-    raiseReport,
+    raiseReport() {
+      callbacks.forEach((callback) => callback([FAKE_REPORT]))
+    },
     reset() {
       ;(window as BrowserWindow).ReportingObserver = originalReportingObserver
       callbacks = []
