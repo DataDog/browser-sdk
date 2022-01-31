@@ -101,7 +101,7 @@ export function doStartLogs(
         report: {
           blockedURI: event.blockedURI,
           columnNumber: event.columnNumber,
-          documentURI: event.blockedURI,
+          documentURI: event.documentURI,
           effectiveDirective: event.effectiveDirective,
           lineNumber: event.lineNumber,
           originalPolicy: event.originalPolicy,
