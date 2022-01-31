@@ -1,9 +1,11 @@
 import { isChromium } from '@datadog/browser-core'
 import { FAKE_REPORT, stubReportingObserver } from '../test/stubReportingObserver'
-import { trackReports } from './trackReports'
+import { FAKE_CSP_VIOLATION_EVENT, stubCspEventListener } from '../test/stubCspEventListener'
+import { trackCspViolation, trackReports } from './trackReports'
 
 describe('track reports', () => {
   let reportingObserverStub: { reset(): void; raiseReport(): void }
+  let cspEventListenerStub: { reset(): void; dispatchEvent(): void }
 
   beforeEach(() => {
     if (!isChromium()) {
@@ -11,6 +13,7 @@ describe('track reports', () => {
     }
 
     reportingObserverStub = stubReportingObserver()
+    cspEventListenerStub = stubCspEventListener()
   })
 
   it('should track reports', () => {
@@ -24,7 +27,19 @@ describe('track reports', () => {
     expect(report).toEqual(FAKE_REPORT)
   })
 
+  it('should track csp violation', () => {
+    const callbackSpy = jasmine.createSpy()
+    trackCspViolation(callbackSpy)
+    cspEventListenerStub.dispatchEvent()
+
+    expect(callbackSpy).toHaveBeenCalled()
+    const [message, report] = callbackSpy.calls.mostRecent().args
+    expect(message).toContain('csp violation')
+    expect(report).toEqual(FAKE_CSP_VIOLATION_EVENT)
+  })
+
   afterEach(() => {
     reportingObserverStub.reset()
+    cspEventListenerStub.reset()
   })
 })
