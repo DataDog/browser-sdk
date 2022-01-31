@@ -163,10 +163,6 @@ describe('logs', () => {
     })
 
     it('should send bridge event when bridge is present', () => {
-      if (!isChromium()) {
-        pending('no ReportingObserver support')
-      }
-
       updateExperimentalFeatures(['event-bridge'])
       const sendSpy = spyOn(initEventBridgeStub(), 'send')
 
@@ -196,6 +192,9 @@ describe('logs', () => {
     })
 
     it('should not log reports if ff "forward-reports" disabled', () => {
+      if (!isChromium()) {
+        pending('no ReportingObserver support')
+      }
       const errorLogger = new Logger(noop)
       const logErrorSpy = spyOn(errorLogger, 'error')
       const reportingObserverStub = stubReportingObserver()
