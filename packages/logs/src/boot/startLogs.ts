@@ -19,7 +19,7 @@ import type { LogsSessionManager } from '../domain/logsSessionManager'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import { startLoggerBatch } from '../transport/startLoggerBatch'
 import type { LogsConfiguration } from '../domain/configuration'
-import type { Report } from '../domain/trackReports'
+import type { CspViolationReport, Report } from '../domain/trackReports'
 import { trackCspViolation, trackReports } from '../domain/trackReports'
 
 export function startLogs(configuration: LogsConfiguration, errorLogger: Logger) {
@@ -94,23 +94,10 @@ export function doStartLogs(
   if (isExperimentalFeatureEnabled('forward-reports')) {
     trackReports(['deprecation', 'intervention'], (message: string, report: Report) => {
       const loggerMethod = report.type === 'deprecation' ? 'warn' : 'error'
-      errorLogger[loggerMethod](message, { report: JSON.parse(JSON.stringify(report)) })
+      errorLogger[loggerMethod](message, { report })
     })
-    trackCspViolation((message: string, event: SecurityPolicyViolationEvent) => {
-      errorLogger.error(message, {
-        report: {
-          blockedURI: event.blockedURI,
-          columnNumber: event.columnNumber,
-          documentURI: event.documentURI,
-          effectiveDirective: event.effectiveDirective,
-          lineNumber: event.lineNumber,
-          originalPolicy: event.originalPolicy,
-          referrer: event.referrer,
-          sourceFile: event.sourceFile,
-          statusCode: event.statusCode,
-          violatedDirective: event.violatedDirective,
-        },
-      })
+    trackCspViolation((message: string, report: CspViolationReport) => {
+      errorLogger.error(message, { report })
     })
   }
 

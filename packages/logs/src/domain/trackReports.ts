@@ -48,13 +48,26 @@ interface InterventionReportBody {
   sourceFile: string
 }
 
+export interface CspViolationReport {
+  blockedURI: string
+  columnNumber: number
+  documentURI: string
+  effectiveDirective: string
+  lineNumber: number
+  originalPolicy: string
+  referrer: string
+  sourceFile: string
+  statusCode: number
+  violatedDirective: string
+}
+
 type ReportType = 'intervention' | 'deprecation'
 
 export function trackReports(reportTypes: ReportType[], callback: (message: string, report: Report) => void) {
   if ((window as BrowserWindow).ReportingObserver) {
     const handleReports = monitor((reports: Report[]) =>
       reports.forEach((report) => {
-        callback(`${report.type}: ${report.body.message}`, report)
+        callback(`${report.type}: ${report.body.message}`, JSON.parse(JSON.stringify(report)))
       })
     )
 
@@ -73,9 +86,20 @@ export function trackReports(reportTypes: ReportType[], callback: (message: stri
   }
 }
 
-export function trackCspViolation(callback: (message: string, event: SecurityPolicyViolationEvent) => void) {
+export function trackCspViolation(callback: (message: string, report: CspViolationReport) => void) {
   const handleCspEvent = (event: SecurityPolicyViolationEvent) => {
-    callback(`csp violation: ‘${event.blockedURI}’ blocked by ‘${event.effectiveDirective}’ directive`, event)
+    callback(`csp violation: ‘${event.blockedURI}’ blocked by ‘${event.effectiveDirective}’ directive`, {
+      blockedURI: event.blockedURI,
+      columnNumber: event.columnNumber,
+      documentURI: event.documentURI,
+      effectiveDirective: event.effectiveDirective,
+      lineNumber: event.lineNumber,
+      originalPolicy: event.originalPolicy,
+      referrer: event.referrer,
+      sourceFile: event.sourceFile,
+      statusCode: event.statusCode,
+      violatedDirective: event.violatedDirective,
+    })
   }
   return addEventListener(document, DOM_EVENT.SECURITY_POLICY_VIOLATION, handleCspEvent).stop
 }
