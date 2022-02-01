@@ -1,14 +1,8 @@
 import type { RawError } from '../../tools/error'
-import {
-  ErrorSource,
-  toStackTraceString,
-  ErrorHandling,
-  createHandlingStack,
-  formatErrorMessage,
-} from '../../tools/error'
+import { ErrorSource, toStackTraceString, ErrorHandling, createHandlingStack } from '../../tools/error'
 import { Observable } from '../../tools/observable'
 import { clocksNow } from '../../tools/timeUtils'
-import { find, jsonStringify } from '../../tools/utils'
+import { find, formatConsoleParameters } from '../../tools/utils'
 import { callMonitored } from '../internalMonitoring'
 import { computeStackTrace } from '../tracekit'
 
@@ -57,14 +51,4 @@ function buildErrorFromParams(params: unknown[], handlingStack: string) {
     stack: firstErrorParam ? toStackTraceString(computeStackTrace(firstErrorParam)) : undefined,
     handlingStack,
   }
-}
-
-function formatConsoleParameters(param: unknown) {
-  if (typeof param === 'string') {
-    return param
-  }
-  if (param instanceof Error) {
-    return formatErrorMessage(computeStackTrace(param))
-  }
-  return jsonStringify(param, undefined, 2)
 }

@@ -1,4 +1,6 @@
 import { monitor } from '../domain/internalMonitoring'
+import { computeStackTrace } from '../domain/tracekit'
+import { formatErrorMessage } from './error'
 
 export const ONE_SECOND = 1000
 export const ONE_MINUTE = 60 * ONE_SECOND
@@ -564,3 +566,13 @@ export function combine(...sources: any[]): unknown {
 }
 
 export type TimeoutId = ReturnType<typeof setTimeout>
+
+export function formatConsoleParameters(param: unknown) {
+  if (typeof param === 'string') {
+    return param
+  }
+  if (param instanceof Error) {
+    return formatErrorMessage(computeStackTrace(param))
+  }
+  return jsonStringify(param, undefined, 2)
+}
