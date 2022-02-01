@@ -170,6 +170,31 @@ describe('logs', () => {
       expect(server.requests.length).toEqual(0)
       expect(sendSpy).toHaveBeenCalled()
     })
+
+    it('should send console logs if ff "forward-logs" enabled', () => {
+      const errorLogger = new Logger(noop)
+      const logErrorSpy = spyOn(errorLogger, 'log')
+
+      updateExperimentalFeatures(['forward-logs'])
+      startLogs({ errorLogger })
+
+      /* eslint-disable no-console */
+      console.log('foo', 'bar')
+      expect(logErrorSpy).toHaveBeenCalled()
+
+      resetExperimentalFeatures()
+    })
+
+    it('should not send console logs if ff "forward-logs" disabled', () => {
+      const errorLogger = new Logger(noop)
+      const logErrorSpy = spyOn(errorLogger, 'log')
+
+      startLogs({ errorLogger })
+
+      /* eslint-disable no-console */
+      console.log('foo', 'bar')
+      expect(logErrorSpy).not.toHaveBeenCalled()
+    })
   })
 
   describe('sampling', () => {

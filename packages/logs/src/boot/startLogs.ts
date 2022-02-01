@@ -1,5 +1,6 @@
 import type { Context, InternalMonitoring, RawError, RelativeTime } from '@datadog/browser-core'
 import {
+  isExperimentalFeatureEnabled,
   areCookiesAuthorized,
   combine,
   createEventRateLimiter,
@@ -18,6 +19,8 @@ import type { LogsSessionManager } from '../domain/logsSessionManager'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import { startLoggerBatch } from '../transport/startLoggerBatch'
 import type { LogsConfiguration } from '../domain/configuration'
+import type { ConsoleLog } from '../domain/trackConsoleLogs'
+import { trackConsoleLogs } from '../domain/trackConsoleLogs'
 
 export function startLogs(configuration: LogsConfiguration, errorLogger: Logger) {
   const internalMonitoring = startInternalMonitoring(configuration)
@@ -87,6 +90,11 @@ export function doStartLogs(
     )
   }
   errorObservable.subscribe(reportError)
+  if (isExperimentalFeatureEnabled('forward-logs')) {
+    trackConsoleLogs(['log', 'info', 'debug', 'warn'], (log: ConsoleLog) => {
+      errorLogger[log.status](log.message, { date: log.startClocks.timeStamp })
+    })
+  }
 
   return (message: LogsMessage, currentContext: Context) => {
     const contextualizedMessage = assemble(message, currentContext)
