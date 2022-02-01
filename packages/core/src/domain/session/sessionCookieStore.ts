@@ -3,7 +3,7 @@ import { getCookie, setCookie } from '../../browser/cookie'
 import { isChromium } from '../../tools/browserDetection'
 import * as utils from '../../tools/utils'
 import { isExperimentalFeatureEnabled } from '../configuration'
-import { monitor, addMonitoringMessage } from '../internalMonitoring'
+import { monitor } from '../internalMonitoring'
 import type { SessionState } from './sessionStore'
 import { SESSION_EXPIRATION_DELAY } from './sessionStore'
 
@@ -34,7 +34,6 @@ export function withCookieLockAccess(operations: Operations, numberOfRetries = 0
     return
   }
   if (numberOfRetries >= MAX_NUMBER_OF_LOCK_RETRIES) {
-    addMonitoringMessage('Reach max lock retry')
     next()
     return
   }
