@@ -67,7 +67,7 @@ export function trackReports(reportTypes: ReportType[], callback: (message: stri
   if ((window as BrowserWindow).ReportingObserver) {
     const handleReports = monitor((reports: Report[]) =>
       reports.forEach((report) => {
-        callback(`${report.type}: ${report.body.message}`, JSON.parse(JSON.stringify(report)))
+        callback(`${report.type}: ${report.body.message}`, report)
       })
     )
 
