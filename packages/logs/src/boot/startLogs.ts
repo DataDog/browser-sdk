@@ -32,6 +32,12 @@ export function startLogs(configuration: LogsConfiguration, logger: Logger) {
     trackNetworkError(configuration, errorObservable)
   }
 
+  if (isExperimentalFeatureEnabled('forward-logs')) {
+    trackConsoleLogs(['log', 'info', 'debug', 'warn'], (log) => {
+      logger[log.status](log.message, { date: log.startClocks.timeStamp })
+    })
+  }
+
   const session =
     areCookiesAuthorized(configuration.cookieOptions) && !canUseEventBridge()
       ? startLogsSessionManager(configuration)
@@ -89,11 +95,6 @@ export function doStartLogs(
     )
   }
   errorObservable.subscribe(reportError)
-  if (isExperimentalFeatureEnabled('forward-logs')) {
-    trackConsoleLogs(['log', 'info', 'debug', 'warn'], (log) => {
-      logger[log.status](log.message, { date: log.startClocks.timeStamp })
-    })
-  }
 
   return (message: LogsMessage, currentContext: Context) => {
     const contextualizedMessage = assemble(message, currentContext)

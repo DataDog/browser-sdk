@@ -176,7 +176,8 @@ describe('logs', () => {
       const logErrorSpy = spyOn(logger, 'log')
 
       updateExperimentalFeatures(['forward-logs'])
-      startLogs({ logger })
+      originalStartLogs(baseConfiguration, logger)
+
       /* eslint-disable-next-line no-console */
       console.log('foo', 'bar')
       expect(logErrorSpy).toHaveBeenCalled()
@@ -188,7 +189,7 @@ describe('logs', () => {
       const logger = new Logger(noop)
       const logErrorSpy = spyOn(logger, 'log')
 
-      startLogs({ logger })
+      originalStartLogs(baseConfiguration, logger)
 
       /* eslint-disable-next-line no-console */
       console.log('foo', 'bar')
