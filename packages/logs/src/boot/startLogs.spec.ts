@@ -65,11 +65,11 @@ describe('logs', () => {
     findTrackedSession: () => (sessionIsTracked ? { id: SESSION_ID } : undefined),
   }
   const startLogs = ({
-    errorLogger = new Logger(noop),
+    logger = new Logger(noop),
     configuration: configurationOverrides,
-  }: { errorLogger?: Logger; configuration?: Partial<LogsConfiguration> } = {}) => {
+  }: { logger?: Logger; configuration?: Partial<LogsConfiguration> } = {}) => {
     const configuration = { ...baseConfiguration, ...configurationOverrides }
-    return doStartLogs(configuration, errorObservable, internalMonitoring, sessionManager, errorLogger)
+    return doStartLogs(configuration, errorObservable, internalMonitoring, sessionManager, logger)
   }
 
   beforeEach(() => {
@@ -139,7 +139,7 @@ describe('logs', () => {
       const sendLog = (message: LogsMessage) => {
         sendLogStrategy(message, {})
       }
-      sendLogStrategy = startLogs({ errorLogger: new Logger(sendLog) })
+      sendLogStrategy = startLogs({ logger: new Logger(sendLog) })
 
       errorObservable.notify({
         message: 'error!',
@@ -172,13 +172,12 @@ describe('logs', () => {
     })
 
     it('should send console logs if ff "forward-logs" enabled', () => {
-      const errorLogger = new Logger(noop)
-      const logErrorSpy = spyOn(errorLogger, 'log')
+      const logger = new Logger(noop)
+      const logErrorSpy = spyOn(logger, 'log')
 
       updateExperimentalFeatures(['forward-logs'])
-      startLogs({ errorLogger })
-
-      /* eslint-disable no-console */
+      startLogs({ logger })
+      /* eslint-disable-next-line no-console */
       console.log('foo', 'bar')
       expect(logErrorSpy).toHaveBeenCalled()
 
@@ -186,12 +185,12 @@ describe('logs', () => {
     })
 
     it('should not send console logs if ff "forward-logs" disabled', () => {
-      const errorLogger = new Logger(noop)
-      const logErrorSpy = spyOn(errorLogger, 'log')
+      const logger = new Logger(noop)
+      const logErrorSpy = spyOn(logger, 'log')
 
-      startLogs({ errorLogger })
+      startLogs({ logger })
 
-      /* eslint-disable no-console */
+      /* eslint-disable-next-line no-console */
       console.log('foo', 'bar')
       expect(logErrorSpy).not.toHaveBeenCalled()
     })
@@ -343,7 +342,7 @@ describe('logs', () => {
   describe('error collection', () => {
     it('should send log errors', () => {
       const sendLogSpy = jasmine.createSpy()
-      startLogs({ errorLogger: new Logger(sendLogSpy) })
+      startLogs({ logger: new Logger(sendLogSpy) })
 
       errorObservable.notify({
         message: 'error!',
@@ -383,7 +382,7 @@ describe('logs', () => {
     ].forEach(({ status, message }) => {
       it(`stops sending ${status} logs when reaching the limit`, () => {
         const sendLogSpy = jasmine.createSpy<(message: LogsMessage & { foo?: string }) => void>()
-        const sendLog = startLogs({ errorLogger: new Logger(sendLogSpy), configuration })
+        const sendLog = startLogs({ logger: new Logger(sendLogSpy), configuration })
         sendLog({ message: 'foo', status }, {})
         sendLog({ message: 'bar', status }, {})
 
@@ -404,7 +403,7 @@ describe('logs', () => {
       it(`does not take discarded ${status} logs into account`, () => {
         const sendLogSpy = jasmine.createSpy<(message: LogsMessage & { foo?: string }) => void>()
         const sendLog = startLogs({
-          errorLogger: new Logger(sendLogSpy),
+          logger: new Logger(sendLogSpy),
           configuration: {
             ...configuration,
             beforeSend(event) {

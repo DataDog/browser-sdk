@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
-
 import { trackConsoleLogs } from './trackConsoleLogs'
+
 ;(['log', 'info', 'warn', 'debug'] as const).forEach((status) => {
   describe(`console ${status} tracker`, () => {
     let consoleLogStub: jasmine.Spy

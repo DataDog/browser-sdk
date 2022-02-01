@@ -19,10 +19,9 @@ import type { LogsSessionManager } from '../domain/logsSessionManager'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import { startLoggerBatch } from '../transport/startLoggerBatch'
 import type { LogsConfiguration } from '../domain/configuration'
-import type { ConsoleLog } from '../domain/trackConsoleLogs'
 import { trackConsoleLogs } from '../domain/trackConsoleLogs'
 
-export function startLogs(configuration: LogsConfiguration, errorLogger: Logger) {
+export function startLogs(configuration: LogsConfiguration, logger: Logger) {
   const internalMonitoring = startInternalMonitoring(configuration)
 
   const errorObservable = new Observable<RawError>()
@@ -38,7 +37,7 @@ export function startLogs(configuration: LogsConfiguration, errorLogger: Logger)
       ? startLogsSessionManager(configuration)
       : startLogsSessionManagerStub(configuration)
 
-  return doStartLogs(configuration, errorObservable, internalMonitoring, session, errorLogger)
+  return doStartLogs(configuration, errorObservable, internalMonitoring, session, logger)
 }
 
 export function doStartLogs(
@@ -46,7 +45,7 @@ export function doStartLogs(
   errorObservable: Observable<RawError>,
   internalMonitoring: InternalMonitoring,
   sessionManager: LogsSessionManager,
-  errorLogger: Logger
+  logger: Logger
 ) {
   internalMonitoring.setExternalContextProvider(() =>
     combine({ session_id: sessionManager.findTrackedSession()?.id }, getRUMInternalContext(), {
@@ -66,7 +65,7 @@ export function doStartLogs(
   }
 
   function reportError(error: RawError) {
-    errorLogger.error(
+    logger.error(
       error.message,
       combine(
         {
@@ -91,8 +90,8 @@ export function doStartLogs(
   }
   errorObservable.subscribe(reportError)
   if (isExperimentalFeatureEnabled('forward-logs')) {
-    trackConsoleLogs(['log', 'info', 'debug', 'warn'], (log: ConsoleLog) => {
-      errorLogger[log.status](log.message, { date: log.startClocks.timeStamp })
+    trackConsoleLogs(['log', 'info', 'debug', 'warn'], (log) => {
+      logger[log.status](log.message, { date: log.startClocks.timeStamp })
     })
   }
 
