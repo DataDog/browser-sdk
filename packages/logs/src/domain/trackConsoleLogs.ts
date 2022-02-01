@@ -1,5 +1,5 @@
 import type { ClocksState } from '@datadog/browser-core'
-import { callMonitored, clocksNow, formatConsoleParameters } from '@datadog/browser-core'
+import { instrumentMethodAndCallOriginal, clocksNow, formatConsoleParameters } from '@datadog/browser-core'
 import type { StatusType } from './logger'
 
 export const ApiName = {
@@ -35,20 +35,9 @@ export function trackConsoleLogs(apis: ApiNameType[], callback: (consoleLog: Con
 
 /* eslint-disable no-console */
 function startConsoleProxy(api: ApiNameType, callback: (consoleLog: ConsoleLog) => void) {
-  const originalConsoleLog = console[api]
-
-  console[api] = (...params: unknown[]) => {
-    callMonitored(() => {
-      originalConsoleLog.apply(console, params)
-      callback(buildLogFromParams(params, api))
-    })
-  }
-
-  return {
-    stop: () => {
-      console[api] = originalConsoleLog
-    },
-  }
+  return instrumentMethodAndCallOriginal(console, api, {
+    after: (...params: unknown[]) => callback(buildLogFromParams(params, api)),
+  })
 }
 
 function buildLogFromParams(params: unknown[], api: ApiNameType): ConsoleLog {
