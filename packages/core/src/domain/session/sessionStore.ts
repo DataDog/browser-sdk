@@ -2,7 +2,7 @@ import type { CookieOptions } from '../../browser/cookie'
 import { COOKIE_ACCESS_DELAY } from '../../browser/cookie'
 import { Observable } from '../../tools/observable'
 import * as utils from '../../tools/utils'
-import { monitor, addMonitoringMessage } from '../internalMonitoring'
+import { monitor } from '../internalMonitoring'
 import { retrieveSession, withCookieLockAccess } from './sessionCookieStore'
 
 export interface SessionStore {
@@ -110,33 +110,7 @@ export function startSessionStore<TrackingType extends string>(
   }
 
   function isSessionInCacheOutdated(cookieSession: SessionState) {
-    if (sessionCache.id !== cookieSession.id) {
-      if (cookieSession.id && isActiveSession(sessionCache)) {
-        // cookie id undefined could be due to cookie expiration
-        // inactive session in cache could happen if renew session in another tab and cache not yet cleared
-        addSessionInconsistenciesMessage(cookieSession, 'different id')
-      }
-      return true
-    }
-    if (sessionCache[productKey] !== cookieSession[productKey]) {
-      addSessionInconsistenciesMessage(
-        cookieSession,
-        cookieSession[productKey] === undefined ? 'tracking type missing' : 'different tracking type'
-      )
-      return true
-    }
-    return false
-  }
-
-  function addSessionInconsistenciesMessage(cookieSession: SessionState, cause: string) {
-    addMonitoringMessage('Session inconsistencies detected', {
-      debug: {
-        productKey,
-        sessionCache,
-        cookieSession,
-        cause,
-      },
-    })
+    return sessionCache.id !== cookieSession.id || sessionCache[productKey] !== cookieSession[productKey]
   }
 
   function expireSession() {
