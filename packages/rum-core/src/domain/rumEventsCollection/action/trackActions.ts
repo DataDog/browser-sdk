@@ -61,6 +61,7 @@ export function trackActions(
       if (!(event.target instanceof Element)) {
         return
       }
+
       const name = getActionNameFromElement(event.target, actionNameAttribute)
       if (!name) {
         return
