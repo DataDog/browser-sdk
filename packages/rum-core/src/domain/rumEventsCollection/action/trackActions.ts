@@ -102,6 +102,7 @@ function startActionManagement(lifeCycle: LifeCycle, domMutationObservable: Obse
           }
           currentAction = undefined
         },
+        pendingAutoAction.startClocks,
         AUTO_ACTION_MAX_DURATION
       ))
     },
