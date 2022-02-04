@@ -3,5 +3,5 @@ export function isIE() {
 }
 
 export function isChromium() {
-  return !!(window as any).chrome
+  return !!(window as any).chrome || /HeadlessChrome/.test(window.navigator.userAgent)
 }
