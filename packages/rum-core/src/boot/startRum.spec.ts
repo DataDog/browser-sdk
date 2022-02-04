@@ -303,8 +303,12 @@ describe('startRumEventCollection', () => {
     const collectedRumEvent = { type: 'action' } as RumEvent & Context
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, collectedRumEvent)
 
-    const [msg] = sendSpy.calls.mostRecent().args
-    expect(msg).toContain('"eventType":"rum"')
-    expect(msg).toContain('"type":"action"')
+    const [message] = sendSpy.calls.mostRecent().args
+    const parsedMessage = JSON.parse(message)
+
+    expect(parsedMessage).toEqual({
+      eventType: 'rum',
+      event: jasmine.objectContaining({ type: 'action' }),
+    })
   })
 })
