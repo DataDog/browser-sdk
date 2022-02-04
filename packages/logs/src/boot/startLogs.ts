@@ -1,15 +1,15 @@
-import type { Context, InternalMonitoring, RawError, RelativeTime } from '@datadog/browser-core'
+import type { ConsoleLog, Context, InternalMonitoring, RawError, RelativeTime } from '@datadog/browser-core'
 import {
   areCookiesAuthorized,
   combine,
   createEventRateLimiter,
   Observable,
   trackRuntimeError,
-  trackConsoleError,
   canUseEventBridge,
   getEventBridge,
   getRelativeTime,
   startInternalMonitoring,
+  initConsoleObservable,
 } from '@datadog/browser-core'
 import { trackNetworkError } from '../domain/trackNetworkError'
 import type { Logger, LogsMessage } from '../domain/logger'
@@ -18,14 +18,14 @@ import type { LogsSessionManager } from '../domain/logsSessionManager'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import { startLoggerBatch } from '../transport/startLoggerBatch'
 import type { LogsConfiguration } from '../domain/configuration'
+import type { LogsEvent } from '../logsEvent.types'
 
-export function startLogs(configuration: LogsConfiguration, errorLogger: Logger) {
+export function startLogs(configuration: LogsConfiguration, logger: Logger) {
   const internalMonitoring = startInternalMonitoring(configuration)
 
   const errorObservable = new Observable<RawError>()
-
+  const consoleObservable = initConsoleObservable(['log', 'debug', 'info', 'warn', 'error'])
   if (configuration.forwardErrorsToLogs) {
-    trackConsoleError(errorObservable)
     trackRuntimeError(errorObservable)
     trackNetworkError(configuration, errorObservable)
   }
@@ -35,15 +35,16 @@ export function startLogs(configuration: LogsConfiguration, errorLogger: Logger)
       ? startLogsSessionManager(configuration)
       : startLogsSessionManagerStub(configuration)
 
-  return doStartLogs(configuration, errorObservable, internalMonitoring, session, errorLogger)
+  return doStartLogs(configuration, errorObservable, consoleObservable, internalMonitoring, session, logger)
 }
 
 export function doStartLogs(
   configuration: LogsConfiguration,
   errorObservable: Observable<RawError>,
+  consoleObservable: Observable<ConsoleLog>,
   internalMonitoring: InternalMonitoring,
   sessionManager: LogsSessionManager,
-  errorLogger: Logger
+  logger: Logger
 ) {
   internalMonitoring.setExternalContextProvider(() =>
     combine({ session_id: sessionManager.findTrackedSession()?.id }, getRUMInternalContext(), {
@@ -63,30 +64,37 @@ export function doStartLogs(
   }
 
   function reportError(error: RawError) {
-    errorLogger.error(
-      error.message,
-      combine(
-        {
-          date: error.startClocks.timeStamp,
-          error: {
-            kind: error.type,
-            origin: error.source,
-            stack: error.stack,
-          },
-        },
-        error.resource
-          ? {
-              http: {
-                method: error.resource.method,
-                status_code: error.resource.statusCode,
-                url: error.resource.url,
-              },
-            }
-          : undefined
-      )
-    )
+    const messageContext: Partial<LogsEvent> = {
+      date: error.startClocks.timeStamp,
+      error: {
+        kind: error.type,
+        origin: error.source,
+        stack: error.stack,
+      },
+    }
+    if (error.resource) {
+      messageContext.http = {
+        method: error.resource.method as any, // TODO: Set method to upper case (it's a breaking change),
+        status_code: error.resource.statusCode,
+        url: error.resource.url,
+      }
+    }
+    logger.error(error.message, messageContext)
   }
+
+  function reportConsoleLog(log: ConsoleLog) {
+    const messageContext: Partial<LogsEvent> = {}
+    if (log.status === StatusType.error) {
+      messageContext.error = {
+        origin: log.source,
+        stack: log.stack,
+      }
+    }
+    logger.log(log.message, messageContext, log.status)
+  }
+
   errorObservable.subscribe(reportError)
+  consoleObservable.subscribe(reportConsoleLog)
 
   return (message: LogsMessage, currentContext: Context) => {
     const contextualizedMessage = assemble(message, currentContext)
