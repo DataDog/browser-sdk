@@ -168,9 +168,12 @@ describe('logs', () => {
       sendLog(DEFAULT_MESSAGE, {})
 
       expect(server.requests.length).toEqual(0)
-      const [msg] = sendSpy.calls.mostRecent().args
-      expect(msg).toContain('"eventType":"log"')
-      expect(msg).toContain('"message":"message"')
+      const [message] = sendSpy.calls.mostRecent().args
+      const parsedMessage = JSON.parse(message)
+      expect(parsedMessage).toEqual({
+        eventType: 'log',
+        event: jasmine.objectContaining({ message: 'message' }),
+      })
     })
   })
 
