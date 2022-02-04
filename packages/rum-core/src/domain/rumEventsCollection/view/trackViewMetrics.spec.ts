@@ -138,6 +138,44 @@ describe('rum track view metrics', () => {
       expect(getViewUpdateCount()).toEqual(2)
       expect(getViewUpdate(1).loadingTime).toEqual(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
     })
+
+    it('should use computed loading time from time origin for initial view', () => {
+      // introduce a gap between time origin and tracking start
+      // ensure that `load event > activity delay` and `load event < activity delay + clock gap`
+      // to make the test fail if the clock gap is not correctly taken into account
+      const CLOCK_GAP =
+        FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING.loadEventEnd -
+        BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY +
+        1
+
+      setupBuilder.beforeBuild((buildContext) => {
+        // need to restart the view test to introducing a clock gap before the tracking start
+        viewTest.stop()
+        buildContext.clock.tick(CLOCK_GAP)
+        viewTest = setupViewTest(buildContext)
+        return viewTest
+      })
+
+      const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
+      const { getViewUpdate, getViewUpdateCount } = viewTest
+
+      expect(getViewUpdateCount()).toEqual(1)
+
+      clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+        FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING,
+      ])
+
+      domMutationObservable.notify()
+      clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
+
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+      expect(getViewUpdateCount()).toEqual(2)
+      // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+      expect(getViewUpdate(1).loadingTime).toEqual((BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY + CLOCK_GAP) as Duration)
+    })
   })
 
   describe('event counts', () => {

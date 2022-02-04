@@ -51,6 +51,7 @@ export interface BuildContext {
   parentContexts: ParentContexts
   foregroundContexts: ForegroundContexts
   urlContexts: UrlContexts
+  clock: Clock
 }
 
 export interface TestIO {
@@ -152,6 +153,7 @@ export function setup(): TestSetupBuilder {
           applicationId: FAKE_APP_ID,
           configuration,
           location: fakeLocation as Location,
+          clock,
         })
         if (result && result.stop) {
           cleanupTasks.push(result.stop)
