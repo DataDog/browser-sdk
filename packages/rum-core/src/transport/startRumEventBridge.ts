@@ -5,9 +5,9 @@ import { LifeCycleEventType } from '../domain/lifeCycle'
 import type { RumEvent } from '../rumEvent.types'
 
 export function startRumEventBridge(lifeCycle: LifeCycle) {
-  const bridge = getEventBridge<RumEvent['type'], RumEvent>()!
+  const bridge = getEventBridge<'rum', RumEvent>()!
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent: RumEvent & Context) => {
-    bridge.send(serverRumEvent.type, serverRumEvent)
+    bridge.send('rum', serverRumEvent)
   })
 }

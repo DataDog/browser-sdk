@@ -375,7 +375,7 @@ export function restorePageVisibility() {
 
 export function initEventBridgeStub(allowedWebViewHosts: string[] = [window.location.hostname]) {
   const eventBridgeStub = {
-    send: () => undefined,
+    send: (msg: string) => undefined,
     getAllowedWebViewHosts: () => JSON.stringify(allowedWebViewHosts),
   }
   ;(window as BrowserWindowWithEventBridge).DatadogEventBridge = eventBridgeStub
