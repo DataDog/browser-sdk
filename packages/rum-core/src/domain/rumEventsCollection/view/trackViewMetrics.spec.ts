@@ -148,13 +148,7 @@ describe('rum track view metrics', () => {
         BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY +
         1
 
-      setupBuilder.beforeBuild((buildContext) => {
-        // need to restart the view test to introducing a clock gap before the tracking start
-        viewTest.stop()
-        buildContext.clock.tick(CLOCK_GAP)
-        viewTest = setupViewTest(buildContext)
-        return viewTest
-      })
+      setupBuilder.clock!.tick(CLOCK_GAP)
 
       const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
       const { getViewUpdate, getViewUpdateCount } = viewTest

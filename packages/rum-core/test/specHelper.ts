@@ -35,6 +35,8 @@ export interface TestSetupBuilder {
   withFakeClock: () => TestSetupBuilder
   beforeBuild: (callback: BeforeBuildCallback) => TestSetupBuilder
 
+  clock?: Clock
+
   cleanup: () => void
   build: () => TestIO
 }
@@ -51,7 +53,6 @@ export interface BuildContext {
   parentContexts: ParentContexts
   foregroundContexts: ForegroundContexts
   urlContexts: UrlContexts
-  clock: Clock
 }
 
 export interface TestIO {
@@ -111,7 +112,7 @@ export function setup(): TestSetupBuilder {
     })
   }
 
-  const setupBuilder = {
+  const setupBuilder: TestSetupBuilder = {
     withFakeLocation(initialUrl: string) {
       fakeLocation = buildLocation(initialUrl)
       return setupBuilder
@@ -134,6 +135,7 @@ export function setup(): TestSetupBuilder {
     },
     withFakeClock() {
       clock = mockClock()
+      setupBuilder.clock = clock
       return setupBuilder
     },
     beforeBuild(callback: BeforeBuildCallback) {
@@ -153,7 +155,6 @@ export function setup(): TestSetupBuilder {
           applicationId: FAKE_APP_ID,
           configuration,
           location: fakeLocation as Location,
-          clock,
         })
         if (result && result.stop) {
           cleanupTasks.push(result.stop)
