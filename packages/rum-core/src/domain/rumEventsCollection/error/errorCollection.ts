@@ -1,6 +1,5 @@
 import type { Context, RawError, ClocksState } from '@datadog/browser-core'
 import {
-  initConsoleObservable,
   computeStackTrace,
   formatUnknownError,
   ErrorSource,
@@ -14,6 +13,7 @@ import { RumEventType } from '../../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { ForegroundContexts } from '../../foregroundContexts'
+import { trackConsoleError } from './trackConsoleError'
 
 export interface ProvidedError {
   startClocks: ClocksState
@@ -24,24 +24,9 @@ export interface ProvidedError {
 
 export function startErrorCollection(lifeCycle: LifeCycle, foregroundContexts: ForegroundContexts) {
   const errorObservable = new Observable<RawError>()
-  const consoleErrorObservable = initConsoleObservable(['error'])
 
+  trackConsoleError(errorObservable)
   trackRuntimeError(errorObservable)
-
-  errorObservable.subscribe((error) => lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error }))
-
-  consoleErrorObservable.subscribe((consoleError) =>
-    lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, {
-      error: {
-        startClocks: consoleError.startClocks,
-        message: consoleError.message,
-        stack: consoleError.stack,
-        source: consoleError.source,
-        handling: ErrorHandling.HANDLED,
-        handlingStack: consoleError.handlingStack,
-      },
-    })
-  )
 
   return doStartErrorCollection(lifeCycle, foregroundContexts)
 }
