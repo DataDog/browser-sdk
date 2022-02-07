@@ -255,7 +255,12 @@ init(configuration: {
 
 ### Browser and Session Replay sampling configuration
 
-The `sampleRate` option controls the overall sample rate of RUM data collection. The `replaySampleRate` option controls the percentage of Session Replay data collection of the overall rate (the collection of **Resources**, **Long Tasks**, and **Replay** recordings).
+For the following RUM options;
+
+* **Browser RUM** (reminder this means the collection of ONLY *Sessions*, *Views*, *Actions*, and *Errors*)
+* **Session Replay RUM** (reminder this means the collection of everything from Browser RUM +plus *Resources*, *Long Tasks*, and *Replay* recordings)
+
+The `sampleRate` option controls the overall sample rate of RUM data collection. The `replaySampleRate` option is applied AFTER the overall sample rate, and controls the percentage of Session Replay data collection.
 
 For example, to collect 100% of your sessions using only the Browser RUM option:
 
@@ -277,7 +282,7 @@ datadogRum.init({
 });
 ```
 
-For example, to collect 25% of your sessions using the Browser RUM option and 25% of your sessions using the Session Replay RUM option, set the `sampleRate` and the `replaySampleRate` to 50:
+For example, to collect only 50% of your overall sessions and the other 25% of your sessions using the Browser RUM option and 25% of your sessions using the Session Replay RUM option, set the `sampleRate` and the `replaySampleRate` to 50.:
 
 ```
 datadogRum.init({
