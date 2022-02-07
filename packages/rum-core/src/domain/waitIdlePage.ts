@@ -1,5 +1,5 @@
-import type { Duration, Subscription, TimeoutId, ClocksState } from '@datadog/browser-core'
-import { elapsed, monitor, Observable, timeStampNow } from '@datadog/browser-core'
+import type { Subscription, TimeoutId, TimeStamp } from '@datadog/browser-core'
+import { monitor, Observable, timeStampNow } from '@datadog/browser-core'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 
@@ -12,7 +12,7 @@ export interface PageActivityEvent {
   isBusy: boolean
 }
 
-export type IdlePageEvent = { hadActivity: true; duration: Duration } | { hadActivity: false }
+export type IdlePageEvent = { hadActivity: true; end: TimeStamp } | { hadActivity: false }
 
 /**
  * Wait for the next idle page time
@@ -48,17 +48,15 @@ export function waitIdlePage(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
   idlePageCallback: (event: IdlePageEvent) => void,
-  startClocks: ClocksState,
   maxDuration?: number
 ) {
   const pageActivityObservable = createPageActivityObservable(lifeCycle, domMutationObservable)
-  return doWaitIdlePage(pageActivityObservable, idlePageCallback, startClocks, maxDuration)
+  return doWaitIdlePage(pageActivityObservable, idlePageCallback, maxDuration)
 }
 
 export function doWaitIdlePage(
   pageActivityObservable: Observable<PageActivityEvent>,
   idlePageCallback: (event: IdlePageEvent) => void,
-  startClocks: ClocksState,
   maxDuration?: number
 ) {
   let idleTimeoutId: TimeoutId
@@ -71,7 +69,7 @@ export function doWaitIdlePage(
   const maxDurationTimeoutId =
     maxDuration &&
     setTimeout(
-      monitor(() => complete({ hadActivity: true, duration: elapsed(startClocks.timeStamp, timeStampNow()) })),
+      monitor(() => complete({ hadActivity: true, end: timeStampNow() })),
       maxDuration
     )
 
@@ -81,7 +79,7 @@ export function doWaitIdlePage(
     const lastChangeTime = timeStampNow()
     if (!isBusy) {
       idleTimeoutId = setTimeout(
-        monitor(() => complete({ hadActivity: true, duration: elapsed(startClocks.timeStamp, lastChangeTime) })),
+        monitor(() => complete({ hadActivity: true, end: lastChangeTime })),
         PAGE_ACTIVITY_END_DELAY
       )
     }

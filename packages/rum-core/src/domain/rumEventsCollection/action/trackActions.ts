@@ -1,5 +1,5 @@
 import type { Context, Duration, ClocksState, Observable } from '@datadog/browser-core'
-import { addEventListener, DOM_EVENT, generateUUID, clocksNow, ONE_SECOND } from '@datadog/browser-core'
+import { addEventListener, DOM_EVENT, generateUUID, clocksNow, ONE_SECOND, elapsed } from '@datadog/browser-core'
 import { ActionType } from '../../../rawRumEvent.types'
 import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
@@ -95,14 +95,18 @@ function startActionManagement(lifeCycle: LifeCycle, domMutationObservable: Obse
         lifeCycle,
         domMutationObservable,
         (event) => {
-          if (event.hadActivity && event.duration >= 0) {
-            pendingAutoAction.complete(event.duration)
+          if (event.hadActivity) {
+            const duration = elapsed(pendingAutoAction.startClocks.timeStamp, event.end)
+            if (duration >= 0) {
+              pendingAutoAction.complete(duration)
+            } else {
+              pendingAutoAction.discard()
+            }
           } else {
             pendingAutoAction.discard()
           }
           currentAction = undefined
         },
-        pendingAutoAction.startClocks,
         AUTO_ACTION_MAX_DURATION
       ))
     },

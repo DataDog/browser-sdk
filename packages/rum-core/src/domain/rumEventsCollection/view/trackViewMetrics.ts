@@ -1,5 +1,5 @@
 import type { Duration, RelativeTime, Observable, ClocksState } from '@datadog/browser-core'
-import { noop, round, ONE_SECOND } from '@datadog/browser-core'
+import { noop, round, ONE_SECOND, elapsed } from '@datadog/browser-core'
 import type { RumLayoutShiftTiming } from '../../../browser/performanceCollection'
 import { supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
@@ -105,18 +105,13 @@ function trackActivityLoadingTime(
   callback: (loadingTimeValue: Duration | undefined) => void,
   viewStart: ClocksState
 ) {
-  return waitIdlePage(
-    lifeCycle,
-    domMutationObservable,
-    (event) => {
-      if (event.hadActivity) {
-        callback(event.duration)
-      } else {
-        callback(undefined)
-      }
-    },
-    viewStart
-  )
+  return waitIdlePage(lifeCycle, domMutationObservable, (event) => {
+    if (event.hadActivity) {
+      callback(elapsed(viewStart.timeStamp, event.end))
+    } else {
+      callback(undefined)
+    }
+  })
 }
 
 /**
