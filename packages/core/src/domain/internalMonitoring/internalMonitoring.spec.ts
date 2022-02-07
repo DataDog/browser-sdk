@@ -231,7 +231,14 @@ describe('internal monitoring', () => {
       })
 
       expect(server.requests.length).toEqual(0)
-      expect(sendSpy).toHaveBeenCalled()
+
+      const [message] = sendSpy.calls.mostRecent().args
+      const parsedMessage = JSON.parse(message)
+
+      expect(parsedMessage).toEqual({
+        eventType: 'internal_log',
+        event: jasmine.objectContaining({ message: 'message' }),
+      })
     })
   })
 
