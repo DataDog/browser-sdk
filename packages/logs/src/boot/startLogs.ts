@@ -55,7 +55,7 @@ export function doStartLogs(
 
   let onLogEventCollected: (message: Context) => void
   if (canUseEventBridge()) {
-    const bridge = getEventBridge()!
+    const bridge = getEventBridge<'log', Context>()!
     onLogEventCollected = (message) => bridge.send('log', message)
   } else {
     const batch = startLoggerBatch(configuration)

@@ -300,9 +300,15 @@ describe('startRumEventCollection', () => {
   it('should send bridge event when bridge is present', () => {
     const { lifeCycle } = setupBuilder.build()
 
-    const collectedRumEvent = {} as RumEvent & Context
+    const collectedRumEvent = { type: 'action' } as RumEvent & Context
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, collectedRumEvent)
 
-    expect(sendSpy).toHaveBeenCalled()
+    const [message] = sendSpy.calls.mostRecent().args
+    const parsedMessage = JSON.parse(message)
+
+    expect(parsedMessage).toEqual({
+      eventType: 'rum',
+      event: jasmine.objectContaining({ type: 'action' }),
+    })
   })
 })
