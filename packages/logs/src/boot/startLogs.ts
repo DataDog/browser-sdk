@@ -10,6 +10,7 @@ import {
   getRelativeTime,
   startInternalMonitoring,
   initConsoleObservable,
+  ConsoleApiName,
 } from '@datadog/browser-core'
 import { trackNetworkError } from '../domain/trackNetworkError'
 import type { Logger, LogsMessage } from '../domain/logger'
@@ -82,15 +83,25 @@ export function doStartLogs(
     logger.error(error.message, messageContext)
   }
 
+  const LogStatusForApi = {
+    [ConsoleApiName.log]: StatusType.info,
+    [ConsoleApiName.debug]: StatusType.debug,
+    [ConsoleApiName.info]: StatusType.info,
+    [ConsoleApiName.warn]: StatusType.warn,
+    [ConsoleApiName.error]: StatusType.error,
+  }
+
   function reportConsoleLog(log: ConsoleLog) {
-    const messageContext: Partial<LogsEvent> = {}
-    if (log.status === StatusType.error) {
-      messageContext.error = {
-        origin: log.source,
-        stack: log.stack,
+    let messageContext: Partial<LogsEvent> | undefined
+    if (log.apiName === ConsoleApiName.error) {
+      messageContext = {
+        error: {
+          origin: log.source,
+          stack: log.stack,
+        },
       }
     }
-    logger.log(log.message, messageContext, log.status)
+    logger.log(log.message, messageContext, LogStatusForApi[log.apiName])
   }
 
   errorObservable.subscribe(reportError)
