@@ -1,6 +1,6 @@
 import { callMonitored } from '../domain/internalMonitoring'
 import { computeStackTrace } from '../domain/tracekit'
-import { createHandlingStack, ErrorSource, formatErrorMessage, toStackTraceString } from '../tools/error'
+import { createHandlingStack, formatErrorMessage, toStackTraceString } from '../tools/error'
 import { mergeObservables, Observable } from '../tools/observable'
 import { find, jsonStringify } from '../tools/utils'
 
@@ -17,7 +17,6 @@ type ConsoleApiNameType = typeof ConsoleApiName[keyof typeof ConsoleApiName]
 export interface ConsoleLog {
   message: string
   apiName: ConsoleApiNameType
-  source: 'console'
   stack?: string
   handlingStack?: string
 }
@@ -61,7 +60,6 @@ function buildConsoleLog(params: unknown[], apiName: ConsoleApiNameType, handlin
   const log: ConsoleLog = {
     message: [`console ${apiName}:`, ...params].map((param) => formatConsoleParameters(param)).join(' '),
     apiName,
-    source: ErrorSource.CONSOLE,
   }
 
   if (apiName === ConsoleApiName.error) {

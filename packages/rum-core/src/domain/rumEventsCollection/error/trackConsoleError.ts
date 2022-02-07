@@ -1,5 +1,5 @@
 import type { Observable, RawError } from '@datadog/browser-core'
-import { clocksNow, ErrorHandling, initConsoleObservable } from '@datadog/browser-core'
+import { clocksNow, ErrorHandling, initConsoleObservable, ErrorSource } from '@datadog/browser-core'
 
 export function trackConsoleError(errorObservable: Observable<RawError>) {
   const subscription = initConsoleObservable(['error']).subscribe((consoleError) =>
@@ -7,7 +7,7 @@ export function trackConsoleError(errorObservable: Observable<RawError>) {
       startClocks: clocksNow(),
       message: consoleError.message,
       stack: consoleError.stack,
-      source: consoleError.source,
+      source: ErrorSource.CONSOLE,
       handling: ErrorHandling.HANDLED,
       handlingStack: consoleError.handlingStack,
     })

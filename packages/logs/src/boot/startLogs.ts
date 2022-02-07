@@ -11,6 +11,7 @@ import {
   startInternalMonitoring,
   initConsoleObservable,
   ConsoleApiName,
+  ErrorSource,
 } from '@datadog/browser-core'
 import { trackNetworkError } from '../domain/trackNetworkError'
 import type { Logger, LogsMessage } from '../domain/logger'
@@ -96,7 +97,7 @@ export function doStartLogs(
     if (log.apiName === ConsoleApiName.error) {
       messageContext = {
         error: {
-          origin: log.source,
+          origin: ErrorSource.CONSOLE,
           stack: log.stack,
         },
       }
