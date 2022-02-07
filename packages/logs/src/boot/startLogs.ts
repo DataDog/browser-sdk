@@ -26,11 +26,13 @@ export function startLogs(configuration: LogsConfiguration, logger: Logger) {
   const internalMonitoring = startInternalMonitoring(configuration)
 
   const errorObservable = new Observable<RawError>()
-  const consoleObservable = initConsoleObservable(['log', 'debug', 'info', 'warn', 'error'])
+  const logApisToCollect = [ConsoleApiName.log, ConsoleApiName.debug, ConsoleApiName.info, ConsoleApiName.warn]
   if (configuration.forwardErrorsToLogs) {
     trackRuntimeError(errorObservable)
     trackNetworkError(configuration, errorObservable)
+    logApisToCollect.push(ConsoleApiName.error)
   }
+  const consoleObservable = initConsoleObservable(logApisToCollect)
 
   const session =
     areCookiesAuthorized(configuration.cookieOptions) && !canUseEventBridge()

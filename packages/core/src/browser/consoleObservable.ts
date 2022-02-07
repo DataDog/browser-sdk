@@ -4,26 +4,24 @@ import { createHandlingStack, formatErrorMessage, toStackTraceString } from '../
 import { mergeObservables, Observable } from '../tools/observable'
 import { find, jsonStringify } from '../tools/utils'
 
-export const ConsoleApiName = {
-  log: 'log',
-  debug: 'debug',
-  info: 'info',
-  warn: 'warn',
-  error: 'error',
-} as const
-
-type ConsoleApiNameType = typeof ConsoleApiName[keyof typeof ConsoleApiName]
+export enum ConsoleApiName {
+  log = 'log',
+  debug = 'debug',
+  info = 'info',
+  warn = 'warn',
+  error = 'error',
+}
 
 export interface ConsoleLog {
   message: string
-  apiName: ConsoleApiNameType
+  apiName: ConsoleApiName
   stack?: string
   handlingStack?: string
 }
 
-const consoleObservables: { [k in ConsoleApiNameType]?: Observable<ConsoleLog> } = {}
+const consoleObservables: { [k in ConsoleApiName]?: Observable<ConsoleLog> } = {}
 
-export function initConsoleObservable(apis: ConsoleApiNameType[]) {
+export function initConsoleObservable(apis: ConsoleApiName[]) {
   const observables = apis.map((api) => {
     if (!consoleObservables[api]) {
       consoleObservables[api] = createConsoleObservable(api)
@@ -35,7 +33,7 @@ export function initConsoleObservable(apis: ConsoleApiNameType[]) {
 }
 
 /* eslint-disable no-console */
-function createConsoleObservable(api: ConsoleApiNameType) {
+function createConsoleObservable(api: ConsoleApiName) {
   const observable = new Observable<ConsoleLog>(() => {
     const originalConsoleApi = console[api]
 
@@ -56,7 +54,7 @@ function createConsoleObservable(api: ConsoleApiNameType) {
   return observable
 }
 
-function buildConsoleLog(params: unknown[], apiName: ConsoleApiNameType, handlingStack: string): ConsoleLog {
+function buildConsoleLog(params: unknown[], apiName: ConsoleApiName, handlingStack: string): ConsoleLog {
   const log: ConsoleLog = {
     message: [`console ${apiName}:`, ...params].map((param) => formatConsoleParameters(param)).join(' '),
     apiName,
