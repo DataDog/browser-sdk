@@ -282,7 +282,7 @@ datadogRum.init({
 });
 ```
 
-For example, to collect only 50% of your overall sessions with 25% using the Browser RUM option and the other 25% using the Session Replay RUM option, set the `sampleRate` and the `replaySampleRate` to 50.:
+For example, to collect only 50% of your overall sessions, with 25% using the Browser RUM option and the other 25% using the Session Replay RUM option, set the `sampleRate` and the `replaySampleRate` to 50.:
 
 ```
 datadogRum.init({
