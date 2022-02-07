@@ -255,7 +255,7 @@ init(configuration: {
 
 ### Browser and Session Replay sampling configuration
 
-For the following RUM options;
+For the following RUM options:
 
 * **Browser RUM** (**Only** *Sessions*, *Views*, *Actions*, and *Errors* are collected)
 * **Session Replay RUM** (Everything from Browser RUM plus *Resources*, *Long Tasks*, and *Replay* recordings are collected)
