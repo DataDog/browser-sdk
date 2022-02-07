@@ -12,6 +12,7 @@ import {
   initConsoleObservable,
   ConsoleApiName,
   ErrorSource,
+  isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
 import { trackNetworkError } from '../domain/trackNetworkError'
 import type { Logger, LogsMessage } from '../domain/logger'
@@ -26,7 +27,11 @@ export function startLogs(configuration: LogsConfiguration, logger: Logger) {
   const internalMonitoring = startInternalMonitoring(configuration)
 
   const errorObservable = new Observable<RawError>()
-  const logApisToCollect = [ConsoleApiName.log, ConsoleApiName.debug, ConsoleApiName.info, ConsoleApiName.warn]
+  const logApisToCollect = []
+  if (isExperimentalFeatureEnabled('forward-logs')) {
+    logApisToCollect.push(ConsoleApiName.log, ConsoleApiName.debug, ConsoleApiName.info, ConsoleApiName.warn)
+  }
+
   if (configuration.forwardErrorsToLogs) {
     trackRuntimeError(errorObservable)
     trackNetworkError(configuration, errorObservable)
