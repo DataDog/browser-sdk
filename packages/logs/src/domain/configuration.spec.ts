@@ -1,4 +1,4 @@
-import { display, resetExperimentalFeatures, updateExperimentalFeatures } from '@datadog/browser-core'
+import { CONSOLE_APIS, display, resetExperimentalFeatures, updateExperimentalFeatures } from '@datadog/browser-core'
 import { validateAndBuildLogsConfiguration } from './configuration'
 
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx' }
@@ -24,7 +24,7 @@ describe('validateAndBuildLogsConfiguration', () => {
     })
   })
 
-  describe('forwardConsoleLogs  if ff forward-logs enabled', () => {
+  describe('forwardConsoleLogs if ff forward-logs enabled', () => {
     let displaySpy: jasmine.Spy<typeof display.error>
 
     beforeEach(() => {
@@ -53,11 +53,18 @@ describe('validateAndBuildLogsConfiguration', () => {
       ).toEqual(['log'])
     })
 
-    it('add error console when forwardErrorsToLogs is enabled', () => {
+    it('contains "error" when forwardErrorsToLogs is enabled', () => {
       expect(
         validateAndBuildLogsConfiguration({ ...DEFAULT_INIT_CONFIGURATION, forwardErrorsToLogs: true })!
           .forwardConsoleLogs
       ).toEqual(['error'])
+    })
+
+    it('contains all apis when forwardConsoleLogs is set to "all"', () => {
+      expect(
+        validateAndBuildLogsConfiguration({ ...DEFAULT_INIT_CONFIGURATION, forwardConsoleLogs: 'all' })!
+          .forwardConsoleLogs
+      ).toEqual(CONSOLE_APIS)
     })
   })
 
@@ -69,7 +76,7 @@ describe('validateAndBuildLogsConfiguration', () => {
       ).toEqual([])
     })
 
-    it('add error console when forwardErrorsToLogs is enabled', () => {
+    it('contains "error" when forwardErrorsToLogs is enabled', () => {
       expect(
         validateAndBuildLogsConfiguration({ ...DEFAULT_INIT_CONFIGURATION, forwardErrorsToLogs: true })!
           .forwardConsoleLogs
