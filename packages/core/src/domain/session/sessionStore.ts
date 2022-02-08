@@ -2,11 +2,8 @@ import type { CookieOptions } from '../../browser/cookie'
 import { COOKIE_ACCESS_DELAY } from '../../browser/cookie'
 import { Observable } from '../../tools/observable'
 import * as utils from '../../tools/utils'
-import { noop } from '../../tools/utils'
-import { monitor, addMonitoringMessage } from '../internalMonitoring'
-import { isExperimentalFeatureEnabled } from '../configuration'
-import type { AuditBehavior } from './sessionCookieStore'
-import { Audit, retrieveSession, withCookieLockAccess } from './sessionCookieStore'
+import { monitor } from '../internalMonitoring'
+import { retrieveSession, withCookieLockAccess } from './sessionCookieStore'
 
 export interface SessionStore {
   expandOrRenewSession: () => void
@@ -30,30 +27,6 @@ export const SESSION_EXPIRATION_DELAY = 15 * utils.ONE_MINUTE
 export const SESSION_TIME_OUT_DELAY = 4 * utils.ONE_HOUR
 
 /**
- * Expose audit logs to share them between rum and logs
- */
-interface BrowserWindow extends Window {
-  DD_SDK_AUDIT?: string[]
-}
-
-function initAudit(productKey: string): { audit: AuditBehavior; auditEntries: string[] } {
-  if (!isExperimentalFeatureEnabled('cookie-lock')) {
-    return {
-      audit: {
-        addRead: noop,
-        addWrite: noop,
-      },
-      auditEntries: [],
-    }
-  }
-  ;(window as BrowserWindow).DD_SDK_AUDIT = (window as BrowserWindow).DD_SDK_AUDIT || []
-  return {
-    audit: new Audit(productKey, (window as BrowserWindow).DD_SDK_AUDIT!),
-    auditEntries: (window as BrowserWindow).DD_SDK_AUDIT!,
-  }
-}
-
-/**
  * Different session concepts:
  * - tracked, the session has an id and is updated along the user navigation
  * - not tracked, the session does not have an id but it is updated along the user navigation
@@ -67,18 +40,13 @@ export function startSessionStore<TrackingType extends string>(
   const renewObservable = new Observable<void>()
   const expireObservable = new Observable<void>()
 
-  const { audit, auditEntries } = initAudit(productKey)
-
   const watchSessionTimeoutId = setInterval(monitor(watchSession), COOKIE_ACCESS_DELAY)
   let sessionCache: SessionState = retrieveActiveSession()
-  audit.addRead('start', sessionCache)
 
   function expandOrRenewSession() {
     let isTracked: boolean
     withCookieLockAccess({
       options,
-      audit,
-      phase: 'expandOrRenew',
       process: (cookieSession) => {
         const synchronizedSession = synchronizeSession(cookieSession)
         isTracked = expandOrRenewCookie(synchronizedSession)
@@ -96,8 +64,6 @@ export function startSessionStore<TrackingType extends string>(
   function expandSession() {
     withCookieLockAccess({
       options,
-      audit,
-      phase: 'expand',
       process: (cookieSession) => (hasSessionInCache() ? synchronizeSession(cookieSession) : undefined),
     })
   }
@@ -110,8 +76,6 @@ export function startSessionStore<TrackingType extends string>(
   function watchSession() {
     withCookieLockAccess({
       options,
-      audit,
-      phase: 'watch',
       process: (cookieSession) => (!isActiveSession(cookieSession) ? {} : undefined),
       after: synchronizeSession,
     })
@@ -146,34 +110,7 @@ export function startSessionStore<TrackingType extends string>(
   }
 
   function isSessionInCacheOutdated(cookieSession: SessionState) {
-    if (sessionCache.id !== cookieSession.id) {
-      if (cookieSession.id && isActiveSession(sessionCache)) {
-        // cookie id undefined could be due to cookie expiration
-        // inactive session in cache could happen if renew session in another tab and cache not yet cleared
-        addSessionInconsistenciesMessage(cookieSession, 'different id')
-      }
-      return true
-    }
-    if (sessionCache[productKey] !== cookieSession[productKey]) {
-      addSessionInconsistenciesMessage(
-        cookieSession,
-        cookieSession[productKey] === undefined ? 'tracking type missing' : 'different tracking type'
-      )
-      return true
-    }
-    return false
-  }
-
-  function addSessionInconsistenciesMessage(cookieSession: SessionState, cause: string) {
-    addMonitoringMessage('Session inconsistencies detected', {
-      debug: {
-        productKey,
-        sessionCache,
-        cookieSession,
-        cause,
-        auditEntries: auditEntries.join('\n'),
-      },
-    })
+    return sessionCache.id !== cookieSession.id || sessionCache[productKey] !== cookieSession[productKey]
   }
 
   function expireSession() {
