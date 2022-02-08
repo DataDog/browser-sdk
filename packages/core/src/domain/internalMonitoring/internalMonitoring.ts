@@ -37,7 +37,7 @@ export function startInternalMonitoring(configuration: Configuration): InternalM
   let externalContextProvider: () => Context
 
   if (canUseEventBridge()) {
-    const bridge = getEventBridge()!
+    const bridge = getEventBridge<'internal_log', MonitoringMessage>()!
     onInternalMonitoringMessageCollected = (message: MonitoringMessage) =>
       bridge.send('internal_log', withContext(message))
   } else if (configuration.internalMonitoringEndpointBuilder) {
