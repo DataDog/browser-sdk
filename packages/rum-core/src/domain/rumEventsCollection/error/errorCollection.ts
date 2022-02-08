@@ -88,6 +88,7 @@ function processError(
       handling_stack: error.handlingStack,
       type: error.type,
       handling: error.handling,
+      source_type: 'browser',
     },
     type: RumEventType.ERROR as const,
   }
