@@ -28,6 +28,8 @@ export function startErrorCollection(lifeCycle: LifeCycle, foregroundContexts: F
   trackConsoleError(errorObservable)
   trackRuntimeError(errorObservable)
 
+  errorObservable.subscribe((error) => lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error }))
+
   return doStartErrorCollection(lifeCycle, foregroundContexts)
 }
 
