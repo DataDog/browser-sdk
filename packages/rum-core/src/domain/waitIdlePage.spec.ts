@@ -1,4 +1,5 @@
-import { Observable, ONE_SECOND } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/browser-core'
+import { Observable, ONE_SECOND, getTimeStamp } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test/specHelper'
 import { mockClock } from '@datadog/browser-core/test/specHelper'
 import type { RumPerformanceNavigationTiming, RumPerformanceResourceTiming } from '../browser/performanceCollection'
@@ -150,7 +151,7 @@ describe('doWaitIdlePage', () => {
     clock.cleanup()
   })
 
-  it('should not collect an event that is not followed by page activity', () => {
+  it('should notify the callback after `EXPIRE_DELAY` when there is no activity', () => {
     doWaitIdlePage(new Observable(), idlPageActivityCallbackSpy)
 
     clock.tick(EXPIRE_DELAY)
@@ -160,7 +161,7 @@ describe('doWaitIdlePage', () => {
     })
   })
 
-  it('should collect an event that is followed by page activity', () => {
+  it('should notify the callback with the last activity timestamp', () => {
     const activityObservable = new Observable<PageActivityEvent>()
 
     doWaitIdlePage(activityObservable, idlPageActivityCallbackSpy)
@@ -172,7 +173,7 @@ describe('doWaitIdlePage', () => {
 
     expect(idlPageActivityCallbackSpy).toHaveBeenCalledOnceWith({
       hadActivity: true,
-      duration: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY,
+      end: getTimeStamp(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY as RelativeTime),
     })
   })
 
@@ -193,7 +194,7 @@ describe('doWaitIdlePage', () => {
 
       expect(idlPageActivityCallbackSpy).toHaveBeenCalledOnceWith({
         hadActivity: true,
-        duration: extendCount * BEFORE_PAGE_ACTIVITY_END_DELAY,
+        end: getTimeStamp((extendCount * BEFORE_PAGE_ACTIVITY_END_DELAY) as RelativeTime),
       })
     })
 
@@ -218,7 +219,7 @@ describe('doWaitIdlePage', () => {
 
       expect(idlPageActivityCallbackSpy).toHaveBeenCalledOnceWith({
         hadActivity: true,
-        duration: MAX_DURATION,
+        end: getTimeStamp(MAX_DURATION as RelativeTime),
       })
     })
   })
@@ -238,7 +239,7 @@ describe('doWaitIdlePage', () => {
 
       expect(idlPageActivityCallbackSpy).toHaveBeenCalledOnceWith({
         hadActivity: true,
-        duration: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY + PAGE_ACTIVITY_END_DELAY * 2,
+        end: getTimeStamp((BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY + PAGE_ACTIVITY_END_DELAY * 2) as RelativeTime),
       })
     })
 
@@ -253,7 +254,7 @@ describe('doWaitIdlePage', () => {
 
       expect(idlPageActivityCallbackSpy).toHaveBeenCalledOnceWith({
         hadActivity: true,
-        duration: MAX_DURATION,
+        end: getTimeStamp(MAX_DURATION as RelativeTime),
       })
     })
   })

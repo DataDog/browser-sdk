@@ -1,7 +1,6 @@
 import { stubCookie, mockClock } from '../../../test/specHelper'
 import { isChromium } from '../../tools/browserDetection'
 import { resetExperimentalFeatures, updateExperimentalFeatures } from '../configuration'
-import { startFakeInternalMonitoring, resetInternalMonitoring } from '../internalMonitoring'
 import {
   SESSION_COOKIE_NAME,
   toSessionString,
@@ -197,7 +196,6 @@ describe('session cookie store', () => {
 
     it('should abort after a max number of retry', () => {
       const clock = mockClock()
-      const monitoringMessages = startFakeInternalMonitoring()
 
       persistSession(initialSession, COOKIE_OPTIONS)
       cookie.setSpy.calls.reset()
@@ -209,9 +207,7 @@ describe('session cookie store', () => {
       expect(processSpy).not.toHaveBeenCalled()
       expect(afterSpy).not.toHaveBeenCalled()
       expect(cookie.setSpy).not.toHaveBeenCalled()
-      expect(monitoringMessages.length).toBe(1)
 
-      resetInternalMonitoring()
       clock.cleanup()
     })
 
