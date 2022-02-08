@@ -1470,18 +1470,10 @@
     "@types/node" "*"
     "@types/responselike" "*"
 
-"@types/chrome@0.0.176":
-  version "0.0.176"
-  resolved "https://registry.yarnpkg.com/@types/chrome/-/chrome-0.0.176.tgz#617fcbe41ea1d9c5d50c9e7fb8ebfe2d9aef853a"
-  integrity sha512-LOveFOMIUhMJjvRzZv5whGBpncP/gdJ4hcxeAqg94wGi6CyKaCmLgFSofgItf85GuLTl/0BQ6J/Y1e8BqZWfEg==
-  dependencies:
-    "@types/filesystem" "*"
-    "@types/har-format" "*"
-
-"@types/chrome@0.0.177":
-  version "0.0.177"
-  resolved "https://registry.yarnpkg.com/@types/chrome/-/chrome-0.0.177.tgz#b9098a9b0f3714d6604289d176b2a042ddd88ee7"
-  integrity sha512-bZIZyNAJMMqIgbRsBM+nGNDPezaWZMr3p+CKz1JGj4Jn8c7SpvdUqaconpxUG5WEL1WoisBeA3sumo+WXaC9CA==
+"@types/chrome@0.0.178":
+  version "0.0.178"
+  resolved "https://registry.yarnpkg.com/@types/chrome/-/chrome-0.0.178.tgz#fba7969208cef79ae752dc1138ff05de39f5ffde"
+  integrity sha512-U+G5YG2pH0qvLrYVJ9aT5VbPXYR3fAFyCuRBRAA14Pv7GrkFzDJuXPspgdeLYaKzGEp4rymUkuqUOuFz18LI1g==
   dependencies:
     "@types/filesystem" "*"
     "@types/har-format" "*"
