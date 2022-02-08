@@ -180,13 +180,13 @@ describe('logs', () => {
       expect(sendSpy).toHaveBeenCalled()
     })
 
-    it('should send console logs if ff "forward-logs" enabled', () => {
+    it('should send console logs', () => {
       const logger = new Logger(noop)
       const logErrorSpy = spyOn(logger, 'log')
       const consoleLogSpy = spyOn(console, 'log').and.callFake(() => true)
 
       updateExperimentalFeatures(['forward-logs'])
-      originalStartLogs(baseConfiguration, logger)
+      originalStartLogs({ ...baseConfiguration, forwardConsoleLogs: ['log'] }, logger)
 
       /* eslint-disable-next-line no-console */
       console.log('foo', 'bar')
@@ -195,19 +195,6 @@ describe('logs', () => {
       expect(consoleLogSpy).toHaveBeenCalled()
 
       resetExperimentalFeatures()
-    })
-
-    it('should not send console logs if ff "forward-logs" disabled', () => {
-      const logger = new Logger(noop)
-      const logErrorSpy = spyOn(logger, 'log')
-      const consoleLogSpy = spyOn(console, 'log').and.callFake(() => true)
-
-      originalStartLogs(baseConfiguration, logger)
-
-      /* eslint-disable-next-line no-console */
-      console.log('foo', 'bar')
-      expect(logErrorSpy).not.toHaveBeenCalled()
-      expect(consoleLogSpy).toHaveBeenCalled()
     })
   })
 

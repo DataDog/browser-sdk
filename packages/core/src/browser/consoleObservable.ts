@@ -4,13 +4,17 @@ import { createHandlingStack, formatErrorMessage, toStackTraceString } from '../
 import { mergeObservables, Observable } from '../tools/observable'
 import { find, jsonStringify } from '../tools/utils'
 
-export enum ConsoleApiName {
-  log = 'log',
-  debug = 'debug',
-  info = 'info',
-  warn = 'warn',
-  error = 'error',
-}
+export const ConsoleApiName = {
+  log: 'log',
+  debug: 'debug',
+  info: 'info',
+  warn: 'warn',
+  error: 'error',
+} as const
+
+export type ConsoleApiName = typeof ConsoleApiName[keyof typeof ConsoleApiName]
+
+export const CONSOLE_APIS = Object.keys(ConsoleApiName) as ConsoleApiName[]
 
 export interface ConsoleLog {
   message: string
