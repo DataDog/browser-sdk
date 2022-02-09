@@ -567,6 +567,8 @@ export type TimeoutId = ReturnType<typeof setTimeout>
 
 export function removeDuplicates<T>(array: T[]) {
   const deduplicated: T[] = []
-  new Set(array).forEach((item) => deduplicated.push(item))
+  const set = new Set<T>()
+  array.forEach((item) => set.add(item))
+  set.forEach((item) => deduplicated.push(item))
   return deduplicated
 }
