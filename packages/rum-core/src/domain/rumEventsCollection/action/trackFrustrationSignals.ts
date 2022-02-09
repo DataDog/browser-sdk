@@ -49,7 +49,6 @@ export function trackFrustrationSignals(lifeCycle: LifeCycle, domMutationObserva
 
     function notifySignals() {
       collectSignals(clicks).forEach((signal) => {
-        debug(`🚩 Collect ${signal.type} on ${signal.event.target.nodeName} (duration: ${signal.duration}ms)`)
         observable.notify(signal)
       })
     }
@@ -151,86 +150,131 @@ function hasSelection() {
 function collectSignals(clicks: Click[]): FrustrationSignal[] {
   const signals: FrustrationSignal[] = []
 
-  while (clicks.length !== 0) {
-    const rageClickCount = getRageClickCount(clicks)
-    const firstClick = clicks[0]!
-    const lastRageClick = clicks[rageClickCount - 1]!
-
-    if (
-      rageClickCount === clicks.length &&
-      timeStampNow() - lastRageClick.startClocks.timeStamp < RAGE_DURATION_WINDOW
-    ) {
-      // More rage clicks can happen afterward
+  while (clicks.length > 0) {
+    const action = inspectFirstClicks(clicks)
+    if (action.type === FirstClicksType.WaitForMore) {
       break
     }
 
-    if (
-      // Selection can happen with one, two or three clicks
-      rageClickCount <= 3 &&
-      clicks.slice(0, rageClickCount).some((click) => click.selectionChange)
-    ) {
-      clicks.splice(0, rageClickCount)
-      debug('🙅 Clicks ignored (selection)')
-    } else if (rageClickCount >= RAGE_CLICK_MIN_COUNT) {
-      clicks.splice(0, rageClickCount)
-
-      signals.push({
-        type: 'rage click',
+    if (action.type === FirstClicksType.CreateSignal) {
+      const firstClick = clicks[0]
+      const lastClick = clicks[action.length - 1]
+      const signal: FrustrationSignal = {
+        type: action.signalType,
         startClocks: firstClick.startClocks,
-        duration: ((lastRageClick.startClocks.timeStamp as number) +
-          (lastRageClick.duration as number) -
-          firstClick.startClocks.timeStamp) as Duration,
         event: firstClick.event,
-      })
-    } else {
-      // Remove the first click
-      clicks.shift()!
-
-      if (firstClick.hadError) {
-        signals.push({
-          type: 'error click',
-          startClocks: firstClick.startClocks,
-          duration: firstClick.duration,
-          event: firstClick.event,
-        })
-      } else if (firstClick.hadActivity) {
-        debug('🙅 Click ignored (no frustration)')
-      } else if (firstClick.focusChange) {
-        debug('🙅 Click ignored (focus change)')
-      } else {
-        signals.push({
-          type: 'dead click',
-          startClocks: firstClick.startClocks,
-          duration: firstClick.duration,
-          event: firstClick.event,
-        })
+        // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+        duration: (lastClick.startClocks.timeStamp - firstClick.startClocks.timeStamp + lastClick.duration) as Duration,
       }
+      signals.push(signal)
+      debug(`🚩 ${signal.type} on ${signal.event.target.nodeName} (duration: ${signal.duration}ms)`)
+    } else {
+      debug(`🙅 ${action.length} click${action.length > 1 ? 's' : ''} ignored (${action.reason})`)
     }
+
+    clicks.splice(0, action.length)
   }
 
   return signals
 }
+enum FirstClicksType {
+  WaitForMore,
+  Ignore,
+  CreateSignal,
+}
+type FirstClicksAction =
+  | { type: FirstClicksType.WaitForMore }
+  | { type: FirstClicksType.Ignore; length: number; reason: string }
+  | { type: FirstClicksType.CreateSignal; length: number; signalType: FrustrationSignal['type'] }
 
-function getRageClickCount(clicks: Click[]) {
-  let count = 1
+function inspectFirstClicks(clicks: readonly Click[]): FirstClicksAction {
+  const clickChain = getClickChain(clicks)
 
-  for (let i = 1; i < clicks.length; i += 1) {
-    if (
-      // Same target element
-      clicks[0].event.target === clicks[i].event.target &&
-      // Similar position
-      clickDistance(clicks[0].event, clicks[i].event) < RAGE_MAX_DISTANCE &&
-      // Similar time
-      clicks[i].startClocks.timeStamp - clicks[Math.max(0, i - RAGE_CLICK_MIN_COUNT)].startClocks.timeStamp <=
-        RAGE_DURATION_WINDOW
-    ) {
-      count += 1
-    } else {
+  if (!clickChain.isComplete) {
+    return {
+      type: FirstClicksType.WaitForMore,
+    }
+  }
+
+  if (clickChain.clicks.length <= 3 && clickChain.clicks.some((click) => click.selectionChange)) {
+    return {
+      type: FirstClicksType.Ignore,
+      length: clickChain.clicks.length,
+      reason: 'selection',
+    }
+  }
+
+  if (clickChain.clicks.length >= RAGE_CLICK_MIN_COUNT) {
+    return {
+      type: FirstClicksType.CreateSignal,
+      signalType: 'rage click',
+      length: clickChain.clicks.length,
+    }
+  }
+
+  const firstClick = clicks[0]
+
+  if (firstClick.hadError) {
+    return {
+      type: FirstClicksType.CreateSignal,
+      length: 1,
+      signalType: 'error click',
+    }
+  }
+
+  if (firstClick.hadActivity) {
+    return {
+      type: FirstClicksType.Ignore,
+      length: 1,
+      reason: 'no frustration',
+    }
+  }
+
+  if (firstClick.focusChange) {
+    return {
+      type: FirstClicksType.Ignore,
+      length: 1,
+      reason: 'focus change',
+    }
+  }
+
+  return {
+    type: FirstClicksType.CreateSignal,
+    signalType: 'dead click',
+    length: 1,
+  }
+}
+
+type ClickChain = { isComplete: false } | { isComplete: true; clicks: Click[] }
+
+function getClickChain(clicks: readonly Click[]): ClickChain {
+  let index = 0
+  for (; index < clicks.length; index += 1) {
+    if (!areClicksSimilar(clicks[Math.max(0, index - RAGE_CLICK_MIN_COUNT)], clicks[index])) {
       break
     }
   }
 
-  return count
+  if (
+    index === clicks.length &&
+    timeStampNow() - clicks[clicks.length - 1].startClocks.timeStamp <= RAGE_DURATION_WINDOW
+  ) {
+    return { isComplete: false }
+  }
+
+  return { isComplete: true, clicks: clicks.slice(0, index) }
+}
+
+function areClicksSimilar(first: Click, second: Click) {
+  return (
+    first === second ||
+    // Same target
+    (first.event.target === first.event.target &&
+      // Similar position
+      clickDistance(first.event, second.event) < RAGE_MAX_DISTANCE &&
+      // Similar time
+      first.startClocks.timeStamp - second.startClocks.timeStamp <= RAGE_DURATION_WINDOW)
+  )
 }
 
 function clickDistance(origin: MouseEvent, other: MouseEvent) {
