@@ -180,22 +180,37 @@ The results are the same when using NPM, CDN async or CDN sync:
 ```json
 {
   "status": "info",
-  "session_id": "1234",
+  "session_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
   "name": "buttonName",
   "id": 123,
   "message": "Button clicked",
+  "date": 1234567890000,
   "http": {
-    "url": "...",
-    "useragent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.130 Safari/537.36"
+    "useragent": "Mozilla/5.0 ...",
   },
-  "network": { "client": { "ip": "109.30.xx.xxx" } }
+  "view": {
+    "url": "https://...",
+    "referrer": "https://...",
+  },
+  "network": {
+    "client": {
+      "geoip": {...}
+      "ip": "xxx.xxx.xxx.xxx"
+    }
+  }
 }
 ```
 
-The logger adds the following information by default:
+The Logs SDK adds the following information by default (more fields can be added if the RUM SDK is
+present):
 
+- `date`
 - `view.url`
-- `session_id`
+- `view.referrer`
+- `session_id` (only if a session is used)
+
+The Datadog backend adds more fields, like:
+
 - `http.useragent`
 - `network.client.ip`
 
