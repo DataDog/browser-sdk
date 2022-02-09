@@ -60,7 +60,7 @@ const DEFAULT_MESSAGE = { status: StatusType.info, message: 'message' }
 describe('logs', () => {
   let sessionIsTracked: boolean
   let server: sinon.SinonFakeServer
-  let errorObservable: Observable<RawError>
+  let rawErrorObservable: Observable<RawError>
   let consoleObservable: Observable<ConsoleLog>
   const sessionManager: LogsSessionManager = {
     findTrackedSession: () => (sessionIsTracked ? { id: SESSION_ID } : undefined),
@@ -72,7 +72,7 @@ describe('logs', () => {
     const configuration = { ...baseConfiguration, ...configurationOverrides }
     return doStartLogs(
       configuration,
-      errorObservable,
+      rawErrorObservable,
       consoleObservable,
       internalMonitoring,
       sessionManager,
@@ -82,7 +82,7 @@ describe('logs', () => {
 
   beforeEach(() => {
     sessionIsTracked = true
-    errorObservable = new Observable<RawError>()
+    rawErrorObservable = new Observable<RawError>()
     consoleObservable = new Observable<ConsoleLog>()
     server = sinon.fakeServer.create()
   })
@@ -150,7 +150,7 @@ describe('logs', () => {
       }
       sendLogStrategy = startLogs({ errorLogger: new Logger(sendLog) })
 
-      errorObservable.notify({
+      rawErrorObservable.notify({
         message: 'error!',
         source: ErrorSource.SOURCE,
         startClocks: { relative: 1234 as RelativeTime, timeStamp: getTimeStamp(1234 as RelativeTime) },
@@ -351,7 +351,7 @@ describe('logs', () => {
       const sendLogSpy = jasmine.createSpy()
       startLogs({ errorLogger: new Logger(sendLogSpy) })
 
-      errorObservable.notify({
+      rawErrorObservable.notify({
         message: 'error!',
         source: ErrorSource.SOURCE,
         startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },

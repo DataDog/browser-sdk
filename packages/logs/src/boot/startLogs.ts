@@ -25,11 +25,11 @@ import type { LogsEvent } from '../logsEvent.types'
 export function startLogs(configuration: LogsConfiguration, logger: Logger) {
   const internalMonitoring = startInternalMonitoring(configuration)
 
-  const errorObservable = new Observable<RawError>()
+  const rawErrorObservable = new Observable<RawError>()
 
   if (configuration.forwardErrorsToLogs) {
-    trackRuntimeError(errorObservable)
-    trackNetworkError(configuration, errorObservable)
+    trackRuntimeError(rawErrorObservable)
+    trackNetworkError(configuration, rawErrorObservable)
   }
   const consoleObservable = initConsoleObservable(configuration.forwardConsoleLogs)
 
@@ -38,12 +38,12 @@ export function startLogs(configuration: LogsConfiguration, logger: Logger) {
       ? startLogsSessionManager(configuration)
       : startLogsSessionManagerStub(configuration)
 
-  return doStartLogs(configuration, errorObservable, consoleObservable, internalMonitoring, session, logger)
+  return doStartLogs(configuration, rawErrorObservable, consoleObservable, internalMonitoring, session, logger)
 }
 
 export function doStartLogs(
   configuration: LogsConfiguration,
-  errorObservable: Observable<RawError>,
+  rawErrorObservable: Observable<RawError>,
   consoleObservable: Observable<ConsoleLog>,
   internalMonitoring: InternalMonitoring,
   sessionManager: LogsSessionManager,
@@ -55,7 +55,7 @@ export function doStartLogs(
     })
   )
 
-  const assemble = buildAssemble(sessionManager, configuration, reportError)
+  const assemble = buildAssemble(sessionManager, configuration, reportRawError)
 
   let onLogEventCollected: (message: Context) => void
   if (canUseEventBridge()) {
@@ -66,7 +66,7 @@ export function doStartLogs(
     onLogEventCollected = (message) => batch.add(message)
   }
 
-  function reportError(error: RawError) {
+  function reportRawError(error: RawError) {
     const messageContext: Partial<LogsEvent> = {
       date: error.startClocks.timeStamp,
       error: {
@@ -106,7 +106,7 @@ export function doStartLogs(
     logger.log(log.message, messageContext, LogStatusForApi[log.api])
   }
 
-  errorObservable.subscribe(reportError)
+  rawErrorObservable.subscribe(reportRawError)
   consoleObservable.subscribe(reportConsoleLog)
 
   return (message: LogsMessage, currentContext: Context) => {
@@ -120,14 +120,22 @@ export function doStartLogs(
 export function buildAssemble(
   sessionManager: LogsSessionManager,
   configuration: LogsConfiguration,
-  reportError: (error: RawError) => void
+  reportRawError: (error: RawError) => void
 ) {
   const logRateLimiters = {
-    [StatusType.error]: createEventRateLimiter(StatusType.error, configuration.eventRateLimiterThreshold, reportError),
-    [StatusType.warn]: createEventRateLimiter(StatusType.warn, configuration.eventRateLimiterThreshold, reportError),
-    [StatusType.info]: createEventRateLimiter(StatusType.info, configuration.eventRateLimiterThreshold, reportError),
-    [StatusType.debug]: createEventRateLimiter(StatusType.debug, configuration.eventRateLimiterThreshold, reportError),
-    ['custom']: createEventRateLimiter('custom', configuration.eventRateLimiterThreshold, reportError),
+    [StatusType.error]: createEventRateLimiter(
+      StatusType.error,
+      configuration.eventRateLimiterThreshold,
+      reportRawError
+    ),
+    [StatusType.warn]: createEventRateLimiter(StatusType.warn, configuration.eventRateLimiterThreshold, reportRawError),
+    [StatusType.info]: createEventRateLimiter(StatusType.info, configuration.eventRateLimiterThreshold, reportRawError),
+    [StatusType.debug]: createEventRateLimiter(
+      StatusType.debug,
+      configuration.eventRateLimiterThreshold,
+      reportRawError
+    ),
+    ['custom']: createEventRateLimiter('custom', configuration.eventRateLimiterThreshold, reportRawError),
   }
 
   return (message: LogsMessage, currentContext: Context) => {
