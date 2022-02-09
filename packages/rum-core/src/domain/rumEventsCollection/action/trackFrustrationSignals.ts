@@ -250,7 +250,7 @@ type ClickChain = { isComplete: false } | { isComplete: true; clicks: Click[] }
 function getClickChain(clicks: readonly Click[]): ClickChain {
   let index = 0
   for (; index < clicks.length; index += 1) {
-    if (!areClicksSimilar(clicks[Math.max(0, index - RAGE_CLICK_MIN_COUNT)], clicks[index])) {
+    if (clicks[index].hadError || !areClicksSimilar(clicks[Math.max(0, index - RAGE_CLICK_MIN_COUNT)], clicks[index])) {
       break
     }
   }
