@@ -1,8 +1,8 @@
-import { callMonitored } from '../domain/internalMonitoring'
-import { computeStackTrace } from '../domain/tracekit'
-import { createHandlingStack, formatErrorMessage, toStackTraceString } from '../tools/error'
-import { mergeObservables, Observable } from '../tools/observable'
-import { find, jsonStringify } from '../tools/utils'
+import { callMonitored } from '../internalMonitoring'
+import { computeStackTrace } from '../tracekit'
+import { createHandlingStack, formatErrorMessage, toStackTraceString } from '../../tools/error'
+import { mergeObservables, Observable } from '../../tools/observable'
+import { find, jsonStringify } from '../../tools/utils'
 
 export const ConsoleApiName = {
   log: 'log',
