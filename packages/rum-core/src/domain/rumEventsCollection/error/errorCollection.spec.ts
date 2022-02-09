@@ -49,6 +49,7 @@ describe('error collection', () => {
             handling_stack: 'Error: handling foo',
             type: 'Error',
             handling: ErrorHandling.HANDLED,
+            source_type: 'browser',
           },
           type: RumEventType.ERROR,
           view: {
@@ -153,6 +154,7 @@ describe('error collection', () => {
           handling_stack: undefined,
           type: 'foo',
           handling: undefined,
+          source_type: 'browser',
         },
         view: {
           in_foreground: true,
