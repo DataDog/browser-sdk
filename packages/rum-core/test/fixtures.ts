@@ -43,6 +43,7 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
             message: 'oh snap',
             source: ErrorSource.SOURCE,
             handling: ErrorHandling.HANDLED,
+            source_type: 'browser',
           },
         },
         overrides
