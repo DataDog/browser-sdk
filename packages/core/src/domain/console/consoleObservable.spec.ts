@@ -57,10 +57,12 @@ import { ConsoleApiName, initConsoleObservable } from './consoleObservable'
 
       it('should allow multiple callers', () => {
         const notifyOtherCaller = jasmine.createSpy('notifyOtherCaller')
+        const instrumentedConsoleApi = console[api]
         const otherConsoleSubscription = initConsoleObservable([api]).subscribe(notifyOtherCaller)
 
         console[api]('foo', 'bar')
 
+        expect(instrumentedConsoleApi).toEqual(console[api])
         expect(notifyLog).toHaveBeenCalledTimes(1)
         expect(notifyOtherCaller).toHaveBeenCalledTimes(1)
 
