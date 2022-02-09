@@ -77,7 +77,7 @@ export function doStartLogs(
     }
     if (error.resource) {
       messageContext.http = {
-        method: error.resource.method as any, // TODO: Set method to upper case (it's a breaking change),
+        method: error.resource.method as any, // Cast resource method because of case mismatch cf issue RUMF-1152
         status_code: error.resource.statusCode,
         url: error.resource.url,
       }
