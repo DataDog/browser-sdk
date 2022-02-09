@@ -7,59 +7,59 @@ import { ConsoleApiName, initConsoleObservable } from './consoleObservable'
 // prettier: avoid formatting issue
 // cf https://github.com/prettier/prettier/issues/12211
 ;[ConsoleApiName.log, ConsoleApiName.info, ConsoleApiName.warn, ConsoleApiName.debug, ConsoleApiName.error].forEach(
-  (apiName) => {
-    describe(`console ${apiName} observable`, () => {
+  (api) => {
+    describe(`console ${api} observable`, () => {
       let consoleStub: jasmine.Spy
       let consoleSubscription: Subscription
       let notifyLog: jasmine.Spy
 
       beforeEach(() => {
-        consoleStub = spyOn(console, apiName)
+        consoleStub = spyOn(console, api)
         notifyLog = jasmine.createSpy('notifyLog')
 
-        consoleSubscription = initConsoleObservable([apiName]).subscribe(notifyLog)
+        consoleSubscription = initConsoleObservable([api]).subscribe(notifyLog)
       })
 
       afterEach(() => {
         consoleSubscription.unsubscribe()
       })
 
-      it(`should notify ${apiName}`, () => {
-        console[apiName]('foo', 'bar')
+      it(`should notify ${api}`, () => {
+        console[api]('foo', 'bar')
 
         const consoleLog = notifyLog.calls.mostRecent().args[0]
 
         expect(consoleLog).toEqual(
           jasmine.objectContaining({
-            message: `console ${apiName}: foo bar`,
-            apiName,
+            message: `console ${api}: foo bar`,
+            api,
           })
         )
       })
 
       it('should keep original behavior', () => {
-        console[apiName]('foo', 'bar')
+        console[api]('foo', 'bar')
 
         expect(consoleStub).toHaveBeenCalledWith('foo', 'bar')
       })
 
       it('should format error instance', () => {
-        console[apiName](new TypeError('hello'))
+        console[api](new TypeError('hello'))
         const consoleLog = notifyLog.calls.mostRecent().args[0]
-        expect(consoleLog.message).toBe(`console ${apiName}: TypeError: hello`)
+        expect(consoleLog.message).toBe(`console ${api}: TypeError: hello`)
       })
 
       it('should stringify object parameters', () => {
-        console[apiName]('Hello', { foo: 'bar' })
+        console[api]('Hello', { foo: 'bar' })
         const consoleLog = notifyLog.calls.mostRecent().args[0]
-        expect(consoleLog.message).toBe(`console ${apiName}: Hello {\n  "foo": "bar"\n}`)
+        expect(consoleLog.message).toBe(`console ${api}: Hello {\n  "foo": "bar"\n}`)
       })
 
       it('should allow multiple callers', () => {
         const notifyOtherCaller = jasmine.createSpy('notifyOtherCaller')
-        const otherConsoleSubscription = initConsoleObservable([apiName]).subscribe(notifyOtherCaller)
+        const otherConsoleSubscription = initConsoleObservable([api]).subscribe(notifyOtherCaller)
 
-        console[apiName]('foo', 'bar')
+        console[api]('foo', 'bar')
 
         expect(notifyLog).toHaveBeenCalledTimes(1)
         expect(notifyOtherCaller).toHaveBeenCalledTimes(1)

@@ -18,22 +18,22 @@ export const CONSOLE_APIS = Object.keys(ConsoleApiName) as ConsoleApiName[]
 
 export interface ConsoleLog {
   message: string
-  apiName: ConsoleApiName
+  api: ConsoleApiName
   stack?: string
   handlingStack?: string
 }
 
-const consoleObservables: { [k in ConsoleApiName]?: Observable<ConsoleLog> } = {}
+const consoleObservablesByApi: { [k in ConsoleApiName]?: Observable<ConsoleLog> } = {}
 
 export function initConsoleObservable(apis: ConsoleApiName[]) {
-  const observables = apis.map((api) => {
-    if (!consoleObservables[api]) {
-      consoleObservables[api] = createConsoleObservable(api)
+  const consoleObservables = apis.map((api) => {
+    if (!consoleObservablesByApi[api]) {
+      consoleObservablesByApi[api] = createConsoleObservable(api)
     }
-    return consoleObservables[api]!
+    return consoleObservablesByApi[api]!
   })
 
-  return mergeObservables<ConsoleLog>(...observables)
+  return mergeObservables<ConsoleLog>(...consoleObservables)
 }
 
 /* eslint-disable no-console */
@@ -58,13 +58,13 @@ function createConsoleObservable(api: ConsoleApiName) {
   return observable
 }
 
-function buildConsoleLog(params: unknown[], apiName: ConsoleApiName, handlingStack: string): ConsoleLog {
+function buildConsoleLog(params: unknown[], api: ConsoleApiName, handlingStack: string): ConsoleLog {
   const log: ConsoleLog = {
-    message: [`console ${apiName}:`, ...params].map((param) => formatConsoleParameters(param)).join(' '),
-    apiName,
+    message: [`console ${api}:`, ...params].map((param) => formatConsoleParameters(param)).join(' '),
+    api,
   }
 
-  if (apiName === ConsoleApiName.error) {
+  if (api === ConsoleApiName.error) {
     const firstErrorParam = find(params, (param: unknown): param is Error => param instanceof Error)
     log.stack = firstErrorParam ? toStackTraceString(computeStackTrace(firstErrorParam)) : undefined
     log.handlingStack = handlingStack

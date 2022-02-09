@@ -95,7 +95,7 @@ export function doStartLogs(
 
   function reportConsoleLog(log: ConsoleLog) {
     let messageContext: Partial<LogsEvent> | undefined
-    if (log.apiName === ConsoleApiName.error) {
+    if (log.api === ConsoleApiName.error) {
       messageContext = {
         error: {
           origin: ErrorSource.CONSOLE,
@@ -103,7 +103,7 @@ export function doStartLogs(
         },
       }
     }
-    logger.log(log.message, messageContext, LogStatusForApi[log.apiName])
+    logger.log(log.message, messageContext, LogStatusForApi[log.api])
   }
 
   errorObservable.subscribe(reportError)
