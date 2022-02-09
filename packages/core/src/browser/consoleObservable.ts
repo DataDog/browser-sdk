@@ -14,8 +14,6 @@ export const ConsoleApiName = {
 
 export type ConsoleApiName = typeof ConsoleApiName[keyof typeof ConsoleApiName]
 
-export const CONSOLE_APIS = Object.keys(ConsoleApiName) as ConsoleApiName[]
-
 export interface ConsoleLog {
   message: string
   api: ConsoleApiName

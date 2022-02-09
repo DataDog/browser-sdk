@@ -1,4 +1,4 @@
-import { CONSOLE_APIS, display, resetExperimentalFeatures, updateExperimentalFeatures } from '@datadog/browser-core'
+import { ConsoleApiName, display, resetExperimentalFeatures, updateExperimentalFeatures } from '@datadog/browser-core'
 import { validateAndBuildLogsConfiguration } from './configuration'
 
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx' }
@@ -28,6 +28,7 @@ describe('validateAndBuildLogsConfiguration', () => {
     let displaySpy: jasmine.Spy<typeof display.error>
     const errorMessage =
       'Forward Console Logs should be "all" or an array with allowed values "log", "debug", "info", "warn", "error"'
+
     beforeEach(() => {
       displaySpy = spyOn(display, 'error')
       updateExperimentalFeatures(['forward-logs'])
@@ -71,7 +72,7 @@ describe('validateAndBuildLogsConfiguration', () => {
       expect(
         validateAndBuildLogsConfiguration({ ...DEFAULT_INIT_CONFIGURATION, forwardConsoleLogs: 'all' })!
           .forwardConsoleLogs
-      ).toEqual(CONSOLE_APIS)
+      ).toEqual(Object.keys(ConsoleApiName) as ConsoleApiName[])
     })
   })
 
