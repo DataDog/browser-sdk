@@ -26,7 +26,8 @@ describe('validateAndBuildLogsConfiguration', () => {
 
   describe('forwardConsoleLogs if ff forward-logs enabled', () => {
     let displaySpy: jasmine.Spy<typeof display.error>
-
+    const errorMessage =
+      'Forward Console Logs should be "all" or an array with allowed values "log", "debug", "info", "warn", "error"'
     beforeEach(() => {
       displaySpy = spyOn(display, 'error')
       updateExperimentalFeatures(['forward-logs'])
@@ -36,10 +37,16 @@ describe('validateAndBuildLogsConfiguration', () => {
       resetExperimentalFeatures()
     })
 
-    it('does not validate the configuration if an incorrect value is provided', () => {
+    it('does not validate the configuration if an incorrect string is provided', () => {
       validateAndBuildLogsConfiguration({ ...DEFAULT_INIT_CONFIGURATION, forwardConsoleLogs: 'foo' as any })
 
-      expect(displaySpy).toHaveBeenCalledOnceWith('Forward Console Logs should be an array')
+      expect(displaySpy).toHaveBeenCalledOnceWith(errorMessage)
+    })
+
+    it('does not validate the configuration if an incorrect api is provided', () => {
+      validateAndBuildLogsConfiguration({ ...DEFAULT_INIT_CONFIGURATION, forwardConsoleLogs: ['dir'] as any })
+
+      expect(displaySpy).toHaveBeenCalledOnceWith(errorMessage)
     })
 
     it('defaults to an empty array', () => {

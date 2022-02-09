@@ -7,6 +7,7 @@ import {
   removeDuplicates,
   ConsoleApiName,
   CONSOLE_APIS,
+  includes,
 } from '@datadog/browser-core'
 import { buildEnv } from '../boot/buildEnv'
 import type { LogsEvent } from '../logsEvent.types'
@@ -40,18 +41,22 @@ export function validateAndBuildLogsConfiguration(
   }
 
   let forwardConsoleLogs: StatusType[] = []
-  if (isExperimentalFeatureEnabled('forward-logs')) {
+  if (isExperimentalFeatureEnabled('forward-logs') && initConfiguration.forwardConsoleLogs !== undefined) {
     if (
-      initConfiguration.forwardConsoleLogs !== undefined &&
-      initConfiguration.forwardConsoleLogs !== 'all' &&
-      !Array.isArray(initConfiguration.forwardConsoleLogs)
+      (initConfiguration.forwardConsoleLogs !== 'all' && !Array.isArray(initConfiguration.forwardConsoleLogs)) ||
+      (Array.isArray(initConfiguration.forwardConsoleLogs) &&
+        initConfiguration.forwardConsoleLogs.some((api) => !includes(CONSOLE_APIS, api)))
     ) {
-      display.error('Forward Console Logs should be an array')
+      display.error(
+        `Forward Console Logs should be "all" or an array with allowed values ${CONSOLE_APIS.map(
+          (api) => `"${api}"`
+        ).join(', ')}`
+      )
       return
     }
 
     forwardConsoleLogs =
-      initConfiguration.forwardConsoleLogs === 'all' ? CONSOLE_APIS : initConfiguration.forwardConsoleLogs || []
+      initConfiguration.forwardConsoleLogs === 'all' ? CONSOLE_APIS : initConfiguration.forwardConsoleLogs
   }
 
   if (initConfiguration.forwardErrorsToLogs) {
