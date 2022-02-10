@@ -25,13 +25,13 @@ export function startActionCollection(
     trackActions(lifeCycle, domMutationObservable, configuration)
 
     if (isExperimentalFeatureEnabled('frustration-signals')) {
-      trackFrustrationSignals(lifeCycle, domMutationObservable).subscribe((signal) => {
+      trackFrustrationSignals(lifeCycle, domMutationObservable, configuration).subscribe((signal) => {
         const rawRumEvent: RawRumActionEvent = {
           date: signal.startClocks.timeStamp,
           type: RumEventType.ACTION,
           action: {
             id: generateUUID(),
-            target: { name: signal.event.target.tagName },
+            target: { name: signal.name },
             type: signal.type as ActionType,
             loading_time: toServerDuration(signal.duration),
           },

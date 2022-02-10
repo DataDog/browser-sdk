@@ -10,10 +10,12 @@ import {
   Observable,
   elapsed,
 } from '@datadog/browser-core'
+import type { RumConfiguration } from '../../configuration'
 
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { waitIdlePage } from '../../waitIdlePage'
+import { getActionNameFromElement } from './getActionNameFromElement'
 import { AUTO_ACTION_MAX_DURATION } from './trackActions'
 
 export interface FrustrationSignal {
@@ -21,6 +23,7 @@ export interface FrustrationSignal {
   startClocks: ClocksState
   duration: Duration
   event: MouseEvent & { target: Element }
+  name: string
 }
 
 interface Click {
@@ -31,17 +34,22 @@ interface Click {
   selectionChange: boolean
   duration: Duration
   focusChange: boolean
+  name: string
 }
 
 const RAGE_DURATION_WINDOW = ONE_SECOND
 const RAGE_CLICK_MIN_COUNT = 3
 const RAGE_MAX_DISTANCE = 100
 
-export function trackFrustrationSignals(lifeCycle: LifeCycle, domMutationObservable: Observable<void>) {
+export function trackFrustrationSignals(
+  lifeCycle: LifeCycle,
+  domMutationObservable: Observable<void>,
+  configuration: RumConfiguration
+) {
   const observable = new Observable<FrustrationSignal>(() => {
     const clicks: Click[] = []
 
-    const subscription = observeClicks(lifeCycle, domMutationObservable).subscribe((click) => {
+    const subscription = observeClicks(lifeCycle, domMutationObservable, configuration).subscribe((click) => {
       clicks.push(click)
       notifySignals()
       setTimeout(notifySignals, RAGE_DURATION_WINDOW)
@@ -60,7 +68,7 @@ export function trackFrustrationSignals(lifeCycle: LifeCycle, domMutationObserva
   return observable
 }
 
-function observeClicks(lifeCycle: LifeCycle, domMutationObservable: Observable<void>) {
+function observeClicks(lifeCycle: LifeCycle, domMutationObservable: Observable<void>, configuration: RumConfiguration) {
   const observable = new Observable<Click>(() => {
     let activeElement: Element | null = null
     let selectionBefore: boolean
@@ -103,6 +111,7 @@ function observeClicks(lifeCycle: LifeCycle, domMutationObservable: Observable<v
         })
         const startClocks = clocksNow()
         const focusChange = activeElement !== document.activeElement
+        const name = getActionNameFromElement(clickEvent.target, configuration.actionNameAttribute)
 
         waitIdlePage(
           lifeCycle,
@@ -117,6 +126,7 @@ function observeClicks(lifeCycle: LifeCycle, domMutationObservable: Observable<v
               duration: event.hadActivity ? elapsed(startClocks.timeStamp, event.end) : (0 as Duration),
               focusChange,
               selectionChange,
+              name,
             })
           },
           AUTO_ACTION_MAX_DURATION
@@ -165,9 +175,10 @@ function collectSignals(clicks: Click[]): FrustrationSignal[] {
         event: firstClick.event,
         // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
         duration: (lastClick.startClocks.timeStamp - firstClick.startClocks.timeStamp + lastClick.duration) as Duration,
+        name: firstClick.name,
       }
       signals.push(signal)
-      debug(`🚩 ${signal.type} on ${signal.event.target.nodeName} (duration: ${signal.duration}ms)`)
+      debug(`🚩 ${signal.type} on "${signal.name}" (duration: ${signal.duration}ms)`)
     } else {
       debug(`🙅 ${action.length} click${action.length > 1 ? 's' : ''} ignored (${action.reason})`)
     }
