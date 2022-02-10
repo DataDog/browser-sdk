@@ -27,6 +27,7 @@ export interface RumXhrCompleteContext extends XhrCompleteContext, CustomContext
 
 export interface RequestStartEvent {
   requestIndex: number
+  url: string
 }
 
 export interface RequestCompleteEvent {
@@ -73,6 +74,7 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: RumConfiguration, 
 
         lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
           requestIndex: context.requestIndex,
+          url: context.url,
         })
         break
       case 'complete':
@@ -110,6 +112,7 @@ export function trackFetch(lifeCycle: LifeCycle, configuration: RumConfiguration
 
         lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
           requestIndex: context.requestIndex,
+          url: context.url,
         })
         break
       case 'complete':

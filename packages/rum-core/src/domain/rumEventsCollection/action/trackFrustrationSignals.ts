@@ -129,7 +129,8 @@ function observeClicks(lifeCycle: LifeCycle, domMutationObservable: Observable<v
               name,
             })
           },
-          AUTO_ACTION_MAX_DURATION
+          AUTO_ACTION_MAX_DURATION,
+          (resourceUrl) => resourceUrl !== 'https://streaming-collector.datadoghq.com/customdd/tp2'
         )
       },
       { capture: true }

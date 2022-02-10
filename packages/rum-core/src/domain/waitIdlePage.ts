@@ -48,9 +48,10 @@ export function waitIdlePage(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
   idlePageCallback: (event: IdlePageEvent) => void,
-  maxDuration?: number
+  maxDuration?: number,
+  resourceFilter?: (resourceUrl: string) => boolean
 ) {
-  const pageActivityObservable = createPageActivityObservable(lifeCycle, domMutationObservable)
+  const pageActivityObservable = createPageActivityObservable(lifeCycle, domMutationObservable, resourceFilter)
   return doWaitIdlePage(pageActivityObservable, idlePageCallback, maxDuration)
 }
 
@@ -105,7 +106,8 @@ export function doWaitIdlePage(
 
 export function createPageActivityObservable(
   lifeCycle: LifeCycle,
-  domMutationObservable: Observable<void>
+  domMutationObservable: Observable<void>,
+  resourceFilter?: (resourceUrl: string) => boolean
 ): Observable<PageActivityEvent> {
   const observable = new Observable<PageActivityEvent>(() => {
     const subscriptions: Subscription[] = []
@@ -120,6 +122,10 @@ export function createPageActivityObservable(
         }
       }),
       lifeCycle.subscribe(LifeCycleEventType.REQUEST_STARTED, (startEvent) => {
+        if (shouldIgnoreResource(startEvent.url)) {
+          return
+        }
+
         if (firstRequestIndex === undefined) {
           firstRequestIndex = startEvent.requestIndex
         }
@@ -127,6 +133,10 @@ export function createPageActivityObservable(
         notifyPageActivity(++pendingRequestsCount)
       }),
       lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request) => {
+        if (shouldIgnoreResource(request.url)) {
+          return
+        }
+
         // If the request started before the tracking start, ignore it
         if (firstRequestIndex === undefined || request.requestIndex < firstRequestIndex) {
           return
@@ -140,6 +150,10 @@ export function createPageActivityObservable(
 
   function notifyPageActivity(pendingRequestsCount: number) {
     observable.notify({ isBusy: pendingRequestsCount > 0 })
+  }
+
+  function shouldIgnoreResource(resourceUrl: string) {
+    return resourceFilter && !resourceFilter(resourceUrl)
   }
 
   return observable

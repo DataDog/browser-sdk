@@ -103,6 +103,7 @@ describe('createPageActivityObservable', () => {
       pageActivityObservable.subscribe(pushEvent)
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
         requestIndex: 10,
+        url: '',
       })
       expect(events).toEqual([{ isBusy: true }])
     })
@@ -111,6 +112,7 @@ describe('createPageActivityObservable', () => {
       pageActivityObservable.subscribe(pushEvent)
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
         requestIndex: 10,
+        url: '',
       })
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(10))
       expect(events).toEqual([{ isBusy: true }, { isBusy: false }])
@@ -126,9 +128,11 @@ describe('createPageActivityObservable', () => {
       pageActivityObservable.subscribe(pushEvent)
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
         requestIndex: 10,
+        url: '',
       })
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
         requestIndex: 11,
+        url: '',
       })
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(9))
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(11))
