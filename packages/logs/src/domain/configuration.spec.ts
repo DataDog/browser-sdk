@@ -74,6 +74,16 @@ describe('validateAndBuildLogsConfiguration', () => {
           .forwardConsoleLogs
       ).toEqual(Object.keys(ConsoleApiName) as ConsoleApiName[])
     })
+
+    it('contains "error" once when both forwardErrorsToLogs and forwardConsoleLogs are enabled', () => {
+      expect(
+        validateAndBuildLogsConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          forwardConsoleLogs: ['error'],
+          forwardErrorsToLogs: true,
+        })!.forwardConsoleLogs
+      ).toEqual(['error'])
+    })
   })
 
   describe('forwardConsoleLogs if ff forward-logs disabled', () => {
