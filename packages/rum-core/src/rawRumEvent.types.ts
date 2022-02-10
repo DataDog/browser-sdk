@@ -62,6 +62,7 @@ export interface RawRumErrorEvent {
     source: ErrorSource
     message: string
     handling?: ErrorHandling
+    source_type: 'browser'
   }
   view?: {
     in_foreground: boolean
