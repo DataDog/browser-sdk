@@ -48,9 +48,7 @@ export function validateAndBuildLogsConfiguration(
         initConfiguration.forwardConsoleLogs.some((api) => !includes(allowedConsoleApis, api)))
     ) {
       display.error(
-        `Forward Console Logs should be "all" or an array with allowed values ${allowedConsoleApis
-          .map((api) => `"${api}"`)
-          .join(', ')}`
+        `Forward Console Logs should be "all" or an array with allowed values "${allowedConsoleApis.join('", "')}"`
       )
       return
     }

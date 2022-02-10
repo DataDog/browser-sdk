@@ -85,7 +85,7 @@ describe('mergeObservables', () => {
   it('should notify when one of the merged observable notifies', () => {
     mergedObservable.subscribe(subscriber)
     observableOne.notify()
-    observableOne.notify()
+    observableTwo.notify()
 
     expect(subscriber).toHaveBeenCalledTimes(2)
   })

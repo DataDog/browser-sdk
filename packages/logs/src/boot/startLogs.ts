@@ -22,6 +22,14 @@ import { startLoggerBatch } from '../transport/startLoggerBatch'
 import type { LogsConfiguration } from '../domain/configuration'
 import type { LogsEvent } from '../logsEvent.types'
 
+const LogStatusForApi = {
+  [ConsoleApiName.log]: StatusType.info,
+  [ConsoleApiName.debug]: StatusType.debug,
+  [ConsoleApiName.info]: StatusType.info,
+  [ConsoleApiName.warn]: StatusType.warn,
+  [ConsoleApiName.error]: StatusType.error,
+}
+
 export function startLogs(configuration: LogsConfiguration, logger: Logger) {
   const internalMonitoring = startInternalMonitoring(configuration)
 
@@ -83,14 +91,6 @@ export function doStartLogs(
       }
     }
     logger.error(error.message, messageContext)
-  }
-
-  const LogStatusForApi = {
-    [ConsoleApiName.log]: StatusType.info,
-    [ConsoleApiName.debug]: StatusType.debug,
-    [ConsoleApiName.info]: StatusType.info,
-    [ConsoleApiName.warn]: StatusType.warn,
-    [ConsoleApiName.error]: StatusType.error,
   }
 
   function reportConsoleLog(log: ConsoleLog) {
