@@ -1,4 +1,4 @@
-import type { Duration, RelativeTime, TimeStamp } from '@datadog/browser-core'
+import type { Duration, Observable, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import {
   addEventListeners,
   DOM_EVENT,
@@ -14,6 +14,7 @@ import { LifeCycleEventType } from '../domain/lifeCycle'
 import { FAKE_INITIAL_DOCUMENT, isAllowedRequestUrl } from '../domain/rumEventsCollection/resource/resourceUtils'
 
 import { getDocumentTraceId } from '../domain/tracing/getDocumentTraceId'
+import { waitIdlePage } from '../domain/waitIdlePage'
 import type { PerformanceEntryRepresentation } from '../domainContext.types'
 
 export interface RumPerformanceResourceTiming {
@@ -103,14 +104,25 @@ export function supportPerformanceEntry() {
   return typeof PerformanceEntry === 'function'
 }
 
-export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: RumConfiguration) {
+export function startPerformanceCollection(
+  lifeCycle: LifeCycle,
+  domMutationObservable: Observable<void>,
+  configuration: RumConfiguration
+) {
   retrieveInitialDocumentResourceTiming((timing) => {
     handleRumPerformanceEntries(lifeCycle, configuration, [timing])
   })
 
   if (supportPerformanceObject()) {
-    handleRumPerformanceEntries(lifeCycle, configuration, performance.getEntries())
+    let performanceEntries = performance.getEntries()
+    // Because the performance entry list can be quite large
+    // delay the computation to prevent the SDK from blocking the main thread on page load
+    waitForPageIdleOrUnload(lifeCycle, domMutationObservable, () => {
+      handleRumPerformanceEntries(lifeCycle, configuration, performanceEntries)
+      performanceEntries = []
+    })
   }
+
   if (window.PerformanceObserver) {
     const handlePerformanceEntryList = monitor((entries: PerformanceObserverEntryList) =>
       handleRumPerformanceEntries(lifeCycle, configuration, entries.getEntries())
@@ -152,6 +164,11 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
       handleRumPerformanceEntries(lifeCycle, configuration, [timing])
     })
   }
+}
+
+function waitForPageIdleOrUnload(lifeCycle: LifeCycle, domMutationObservable: Observable<void>, callback: () => void) {
+  waitIdlePage(lifeCycle, domMutationObservable, callback)
+  lifeCycle.subscribe(LifeCycleEventType.BEFORE_UNLOAD, callback)
 }
 
 export function retrieveInitialDocumentResourceTiming(callback: (timing: RumPerformanceResourceTiming) => void) {

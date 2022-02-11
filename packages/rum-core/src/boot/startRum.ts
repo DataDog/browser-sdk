@@ -74,7 +74,7 @@ export function startRum(
   const { addAction } = startActionCollection(lifeCycle, domMutationObservable, configuration, foregroundContexts)
 
   startRequestCollection(lifeCycle, configuration, session)
-  startPerformanceCollection(lifeCycle, configuration)
+  startPerformanceCollection(lifeCycle, domMutationObservable, configuration)
 
   const internalContext = startInternalContext(configuration.applicationId, session, parentContexts, urlContexts)
 
