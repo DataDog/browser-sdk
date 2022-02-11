@@ -7,6 +7,7 @@ import {
   resetExperimentalFeatures,
   updateExperimentalFeatures,
   getTimeStamp,
+  stopSessionManager,
 } from '@datadog/browser-core'
 import sinon from 'sinon'
 import type { Clock } from '../../../core/test/specHelper'
@@ -92,6 +93,7 @@ describe('logs', () => {
     delete window.DD_RUM
     resetExperimentalFeatures()
     deleteEventBridgeStub()
+    stopSessionManager()
   })
 
   describe('request', () => {
