@@ -1,4 +1,4 @@
-import { noop, resetExperimentalFeatures, updateExperimentalFeatures } from '@datadog/browser-core'
+import { noop } from '@datadog/browser-core'
 import type { RecorderApi, ParentContexts, LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { createNewEvent, deleteEventBridgeStub, initEventBridgeStub } from '../../../core/test/specHelper'
@@ -137,12 +137,10 @@ describe('makeRecorderApi', () => {
 
     describe('if event bridge present', () => {
       beforeEach(() => {
-        updateExperimentalFeatures(['event-bridge'])
         initEventBridgeStub()
       })
 
       afterEach(() => {
-        resetExperimentalFeatures()
         deleteEventBridgeStub()
       })
 

@@ -4,7 +4,7 @@ import { flushEvents } from '../lib/helpers/flushEvents'
 
 describe('bridge present', () => {
   createTest('send action')
-    .withRum({ trackInteractions: true, enableExperimentalFeatures: ['event-bridge'] })
+    .withRum({ trackInteractions: true })
     .withEventBridge()
     .withBody(
       html`
@@ -27,7 +27,7 @@ describe('bridge present', () => {
     })
 
   createTest('send error')
-    .withRum({ enableExperimentalFeatures: ['event-bridge'] })
+    .withRum()
     .withEventBridge()
     .run(async ({ serverEvents, bridgeEvents }) => {
       await browserExecute(() => {
@@ -42,7 +42,7 @@ describe('bridge present', () => {
     })
 
   createTest('send resource')
-    .withRum({ enableExperimentalFeatures: ['event-bridge'] })
+    .withRum()
     .withEventBridge()
     .run(async ({ serverEvents, bridgeEvents }) => {
       await flushEvents()
@@ -52,7 +52,7 @@ describe('bridge present', () => {
     })
 
   createTest('send view')
-    .withRum({ enableExperimentalFeatures: ['event-bridge'] })
+    .withRum()
     .withEventBridge()
     .run(async ({ serverEvents, bridgeEvents }) => {
       await flushEvents()
@@ -62,7 +62,7 @@ describe('bridge present', () => {
     })
 
   createTest('forward internal monitoring to the bridge')
-    .withLogs({ enableExperimentalFeatures: ['event-bridge'], internalMonitoringApiKey: 'xxx' })
+    .withLogs({ internalMonitoringApiKey: 'xxx' })
     .withEventBridge()
     .run(async ({ serverEvents, bridgeEvents }) => {
       await browserExecute(() => {
@@ -81,7 +81,7 @@ describe('bridge present', () => {
     })
 
   createTest('forward logs to the bridge')
-    .withLogs({ enableExperimentalFeatures: ['event-bridge'] })
+    .withLogs()
     .withEventBridge()
     .run(async ({ serverEvents, bridgeEvents }) => {
       await browserExecute(() => {

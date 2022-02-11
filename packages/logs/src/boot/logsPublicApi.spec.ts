@@ -1,11 +1,5 @@
 import type { Context } from '@datadog/browser-core'
-import {
-  monitor,
-  ONE_SECOND,
-  display,
-  updateExperimentalFeatures,
-  resetExperimentalFeatures,
-} from '@datadog/browser-core'
+import { monitor, ONE_SECOND, display } from '@datadog/browser-core'
 import type { Clock } from '../../../core/test/specHelper'
 import { deleteEventBridgeStub, initEventBridgeStub, mockClock } from '../../../core/test/specHelper'
 import type { HybridInitConfiguration, LogsInitConfiguration } from '../domain/configuration'
@@ -113,12 +107,10 @@ describe('logs entry', () => {
 
     describe('if event bridge present', () => {
       beforeEach(() => {
-        updateExperimentalFeatures(['event-bridge'])
         initEventBridgeStub()
       })
 
       afterEach(() => {
-        resetExperimentalFeatures()
         deleteEventBridgeStub()
       })
 

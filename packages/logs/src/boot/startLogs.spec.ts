@@ -1,13 +1,5 @@
 import type { Context, RawError, RelativeTime, TimeStamp } from '@datadog/browser-core'
-import {
-  ErrorSource,
-  noop,
-  Observable,
-  ONE_MINUTE,
-  resetExperimentalFeatures,
-  updateExperimentalFeatures,
-  getTimeStamp,
-} from '@datadog/browser-core'
+import { ErrorSource, noop, Observable, ONE_MINUTE, getTimeStamp } from '@datadog/browser-core'
 import sinon from 'sinon'
 import type { Clock } from '../../../core/test/specHelper'
 import {
@@ -81,7 +73,6 @@ describe('logs', () => {
   afterEach(() => {
     server.restore()
     delete window.DD_RUM
-    resetExperimentalFeatures()
     deleteEventBridgeStub()
   })
 
@@ -161,7 +152,6 @@ describe('logs', () => {
     })
 
     it('should send bridge event when bridge is present', () => {
-      updateExperimentalFeatures(['event-bridge'])
       const sendSpy = spyOn(initEventBridgeStub(), 'send')
 
       const sendLog = startLogs()
@@ -179,7 +169,6 @@ describe('logs', () => {
 
   describe('sampling', () => {
     it('should be applied when event bridge is present', () => {
-      updateExperimentalFeatures(['event-bridge'])
       const sendSpy = spyOn(initEventBridgeStub(), 'send')
 
       let configuration = { ...baseConfiguration, sampleRate: 0 }
