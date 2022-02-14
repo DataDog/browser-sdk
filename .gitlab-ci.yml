@@ -1,5 +1,5 @@
 variables:
-  CURRENT_STAGING: staging-07
+  CURRENT_STAGING: staging-08
   APP: 'browser-sdk'
   CURRENT_CI_IMAGE: 30
   BUILD_STABLE_REGISTRY: '486234852809.dkr.ecr.us-east-1.amazonaws.com'
@@ -154,14 +154,14 @@ unit:
     - .base-configuration
     - .test-allowed-branches
   artifacts:
-    paths:
-      - test-report/unit/
     reports:
       junit: test-report/unit/*.xml
   script:
     - yarn
     - yarn test:unit
     - ./scripts/codecov.sh
+  after_script:
+    - node ./scripts/export-test-result.js unit
 
 e2e:
   extends:
@@ -169,13 +169,13 @@ e2e:
     - .test-allowed-branches
   artifacts:
     when: always
-    paths:
-      - test-report/e2e/
     reports:
       junit: test-report/e2e/*.xml
   script:
     - yarn
     - yarn test:e2e
+  after_script:
+    - node ./scripts/export-test-result.js e2e
 
 check-licenses:
   extends:
@@ -196,6 +196,8 @@ unit-bs:
   script:
     - yarn
     - ./scripts/ci-bs.sh test:unit
+  after_script:
+    - node ./scripts/export-test-result.js unit-bs
 
 e2e-bs:
   stage: browserstack
@@ -205,23 +207,13 @@ e2e-bs:
   resource_group: browserstack
   artifacts:
     when: always
-    paths:
-      - test-report/e2e-bs/
     reports:
       junit: test-report/e2e-bs/*.xml
-
   script:
     - yarn
     - ./scripts/ci-bs.sh test:e2e
-
-export-test-result:
-  stage: notify
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-  when: always
-  script:
-    - node ./scripts/export-test-result.js
+  after_script:
+    - node ./scripts/export-test-result.js e2e-bs
 
 ########################################################################################################################
 # Deploy
