@@ -35,7 +35,7 @@ export function trackViewMetrics(
     scheduleViewUpdate()
   })
 
-  const { stopWaitIdlePage, setLoadEvent } = trackLoadingTime(
+  const { stop: stopLoadingTimeTracking, setLoadEvent } = trackLoadingTime(
     lifeCycle,
     domMutationObservable,
     loadingType,
@@ -59,7 +59,7 @@ export function trackViewMetrics(
   return {
     stop: () => {
       stopEventCountsTracking()
-      stopWaitIdlePage()
+      stopLoadingTimeTracking()
       stopCLSTracking()
     },
     setLoadEvent,
@@ -84,7 +84,7 @@ function trackLoadingTime(
     }
   }
 
-  const { stop: stopWaitIdlePage } = waitIdlePage(lifeCycle, domMutationObservable, (event) => {
+  const { stop } = waitIdlePage(lifeCycle, domMutationObservable, (event) => {
     if (isWaitingForActivityLoadingTime) {
       isWaitingForActivityLoadingTime = false
       if (event.hadActivity) {
@@ -95,7 +95,7 @@ function trackLoadingTime(
   })
 
   return {
-    stopWaitIdlePage,
+    stop,
     setLoadEvent: (loadEvent: Duration) => {
       if (isWaitingForLoadEvent) {
         isWaitingForLoadEvent = false
