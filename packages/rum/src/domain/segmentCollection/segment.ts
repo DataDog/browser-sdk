@@ -21,16 +21,18 @@ export class Segment {
     onWrote: (compressedSize: number) => void,
     onFlushed: (data: Uint8Array, rawSize: number) => void
   ) {
+    const viewId = context.view.id
+
     this.meta = {
       start: initialRecord.timestamp,
       end: initialRecord.timestamp,
       creation_reason: creationReason,
       records_count: 1,
       has_full_snapshot: initialRecord.type === RecordType.FullSnapshot,
+      sequence_number: replayStats.getSegmentCount(viewId),
       ...context,
     }
 
-    const viewId = context.view.id
     replayStats.addSegment(viewId)
     replayStats.addRecord(viewId)
 

@@ -13,7 +13,7 @@ const ENCODED_SEGMENT_HEADER_SIZE = 12 // {"records":[
 const ENCODED_RECORD_SIZE = 25
 const ENCODED_FULL_SNAPSHOT_RECORD_SIZE = 35
 const ENCODED_SEPARATOR_SIZE = 1 // ,
-const ENCODED_META_SIZE = 155 // this should stay accurate as long as less than 10 records are added
+const ENCODED_META_SIZE = 175 // this should stay accurate as long as less than 10 records are added
 
 describe('Segment', () => {
   let worker: MockWorker
@@ -25,6 +25,7 @@ describe('Segment', () => {
 
     worker = new MockWorker()
     setDebugMode(true)
+    resetReplayStats()
   })
 
   afterEach(() => {
@@ -58,6 +59,7 @@ describe('Segment', () => {
       ],
       records_count: 1,
       start: 10,
+      sequence_number: 0,
       ...CONTEXT,
     })
   })
@@ -146,6 +148,19 @@ describe('Segment', () => {
         segment.addRecord(FULL_SNAPSHOT_RECORD)
         segment.addRecord(RECORD)
         expect(segment.meta.has_full_snapshot).toEqual(true)
+      })
+    })
+
+    describe('sequence_number', () => {
+      it('increments sequence_number every time a segment is created for the same view', () => {
+        expect(createSegment().meta.sequence_number).toBe(0)
+        expect(createSegment().meta.sequence_number).toBe(1)
+        expect(createSegment().meta.sequence_number).toBe(2)
+      })
+
+      it('resets segments_count when creating a segment for a new view', () => {
+        expect(createSegment().meta.sequence_number).toBe(0)
+        expect(createSegment({ context: { ...CONTEXT, view: { id: 'view-2' } } }).meta.sequence_number).toBe(0)
       })
     })
   })
