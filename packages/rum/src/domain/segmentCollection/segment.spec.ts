@@ -62,37 +62,11 @@ describe('Segment', () => {
     })
   })
 
-  it('adjusts meta when adding a record', () => {
-    const segment = new Segment(worker, CONTEXT, 'init', RECORD, noop, noop)
-    segment.addRecord({ type: RecordType.ViewEnd, timestamp: 15 })
-    expect(segment.meta).toEqual({
-      creation_reason: 'init',
-      end: 15,
-      has_full_snapshot: false,
-      records_count: 2,
-      start: 10,
-      ...CONTEXT,
-    })
-  })
-
   it('is marked as flushed when flush() is called', () => {
     const segment = new Segment(worker, CONTEXT, 'init', RECORD, noop, noop)
     expect(segment.isFlushed).toBe(false)
     segment.flush()
     expect(segment.isFlushed).toBe(true)
-  })
-
-  it('sets has_full_snapshot to true if a segment has a FullSnapshot', () => {
-    const segment = new Segment(worker, CONTEXT, 'init', RECORD, noop, noop)
-    segment.addRecord(FULL_SNAPSHOT_RECORD)
-    expect(segment.meta.has_full_snapshot).toEqual(true)
-  })
-
-  it("doesn't overrides has_full_snapshot to false once it has been set to true", () => {
-    const segment = new Segment(worker, CONTEXT, 'init', RECORD, noop, noop)
-    segment.addRecord(FULL_SNAPSHOT_RECORD)
-    segment.addRecord(RECORD)
-    expect(segment.meta.has_full_snapshot).toEqual(true)
   })
 
   it('calls the onWrote callback when data is written', () => {
@@ -136,6 +110,40 @@ describe('Segment', () => {
       "Segment did not receive a 'flush' response before being replaced.",
       undefined
     )
+  })
+
+  describe('meta', () => {
+    describe('when adding a record', () => {
+      let segment: Segment
+      beforeEach(() => {
+        segment = new Segment(worker, CONTEXT, 'init', RECORD, noop, noop)
+        segment.addRecord({ type: RecordType.ViewEnd, timestamp: 15 })
+      })
+      it('increments records_count', () => {
+        expect(segment.meta.records_count).toBe(2)
+      })
+      it('increases end timestamp', () => {
+        expect(segment.meta.end).toBe(15)
+      })
+      it('does not change start timestamp', () => {
+        expect(segment.meta.start).toBe(10)
+      })
+    })
+
+    describe('has_full_snapshot', () => {
+      it('sets has_full_snapshot to true if a segment has a FullSnapshot', () => {
+        const segment = new Segment(worker, CONTEXT, 'init', RECORD, noop, noop)
+        segment.addRecord(FULL_SNAPSHOT_RECORD)
+        expect(segment.meta.has_full_snapshot).toEqual(true)
+      })
+
+      it("doesn't overrides has_full_snapshot to false once it has been set to true", () => {
+        const segment = new Segment(worker, CONTEXT, 'init', RECORD, noop, noop)
+        segment.addRecord(FULL_SNAPSHOT_RECORD)
+        segment.addRecord(RECORD)
+        expect(segment.meta.has_full_snapshot).toEqual(true)
+      })
+    })
   })
 
   describe('updates replay stats', () => {
