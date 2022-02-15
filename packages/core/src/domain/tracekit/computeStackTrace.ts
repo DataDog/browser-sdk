@@ -33,18 +33,6 @@ export function computeStackTrace(ex: unknown): StackTrace {
   }
 }
 
-/**
- * Logs a stacktrace starting from the previous call and working down.
- */
-export function computeStackTraceOfCaller(): StackTrace {
-  try {
-    // Throw error for IE
-    throw new Error()
-  } catch (ex) {
-    return computeStackTrace(ex)
-  }
-}
-
 const CHROME_LINE_RE =
   // eslint-disable-next-line max-len
   /^\s*at (.*?) ?\(((?:file|https?|blob|chrome-extension|native|eval|webpack|<anonymous>|\/).*?)(?::(\d+))?(?::(\d+))?\)?\s*$/i
