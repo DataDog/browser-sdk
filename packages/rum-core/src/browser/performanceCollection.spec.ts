@@ -1,4 +1,3 @@
-import { Observable } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../test/specHelper'
 import { setup } from '../../test/specHelper'
 import { retrieveInitialDocumentResourceTiming, startPerformanceCollection } from './performanceCollection'
@@ -7,7 +6,7 @@ describe('rum initial document resource', () => {
   let setupBuilder: TestSetupBuilder
   beforeEach(() => {
     setupBuilder = setup().beforeBuild(({ lifeCycle, configuration }) => {
-      startPerformanceCollection(lifeCycle, new Observable(), configuration)
+      startPerformanceCollection(lifeCycle, configuration)
     })
   })
 
