@@ -9,27 +9,28 @@ let nextId = 0
 export class Segment {
   public isFlushed = false
   public flushReason?: string
+  public readonly meta: SegmentMeta
 
   private id = nextId++
-  private start: number
-  private end: number
-  private recordsCount: number
-  private hasFullSnapshot: boolean
 
   constructor(
     private worker: DeflateWorker,
-    readonly context: SegmentContext,
-    private creationReason: CreationReason,
+    context: SegmentContext,
+    creationReason: CreationReason,
     initialRecord: Record,
     onWrote: (compressedSize: number) => void,
     onFlushed: (data: Uint8Array, rawSize: number) => void
   ) {
-    this.start = initialRecord.timestamp
-    this.end = initialRecord.timestamp
-    this.recordsCount = 1
-    this.hasFullSnapshot = initialRecord.type === RecordType.FullSnapshot
+    this.meta = {
+      start: initialRecord.timestamp,
+      end: initialRecord.timestamp,
+      creation_reason: creationReason,
+      records_count: 1,
+      has_full_snapshot: initialRecord.type === RecordType.FullSnapshot,
+      ...context,
+    }
 
-    const viewId = this.context.view.id
+    const viewId = context.view.id
     replayStats.addSegment(viewId)
     replayStats.addRecord(viewId)
 
@@ -64,10 +65,10 @@ export class Segment {
   }
 
   addRecord(record: Record): void {
-    this.end = record.timestamp
-    this.recordsCount += 1
-    replayStats.addRecord(this.context.view.id)
-    this.hasFullSnapshot ||= record.type === RecordType.FullSnapshot
+    this.meta.end = record.timestamp
+    this.meta.records_count += 1
+    replayStats.addRecord(this.meta.view.id)
+    this.meta.has_full_snapshot ||= record.type === RecordType.FullSnapshot
     this.worker.postMessage({ data: `,${JSON.stringify(record)}`, id: this.id, action: 'write' })
   }
 
@@ -79,16 +80,5 @@ export class Segment {
     })
     this.isFlushed = true
     this.flushReason = reason
-  }
-
-  get meta(): SegmentMeta {
-    return {
-      creation_reason: this.creationReason,
-      end: this.end,
-      has_full_snapshot: this.hasFullSnapshot,
-      records_count: this.recordsCount,
-      start: this.start,
-      ...this.context,
-    }
   }
 }
