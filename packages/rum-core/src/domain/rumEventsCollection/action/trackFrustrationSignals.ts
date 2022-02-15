@@ -11,7 +11,6 @@ import {
   elapsed,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
-
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { waitIdlePage } from '../../waitIdlePage'
@@ -35,6 +34,7 @@ interface Click {
   selectionChange: boolean
   duration: Duration
   focusChange: boolean
+  inputChange: boolean
   name: string
 }
 
@@ -76,6 +76,7 @@ function observeClicks(lifeCycle: LifeCycle, domMutationObservable: Observable<v
     let selectionBefore: boolean
     let selectionChange = false
     let mousedownEvent: MouseEvent
+    let inputChange = false
 
     const { stop: stopMouseDownListener } = addEventListener(
       window,
@@ -83,6 +84,7 @@ function observeClicks(lifeCycle: LifeCycle, domMutationObservable: Observable<v
       (event: MouseEvent) => {
         mousedownEvent = event
         selectionChange = false
+        inputChange = false
         selectionBefore = hasSelection()
         activeElement = document.activeElement
       },
@@ -97,6 +99,15 @@ function observeClicks(lifeCycle: LifeCycle, domMutationObservable: Observable<v
         if (selectionBefore || hasSelection()) {
           selectionChange = true
         }
+      },
+      { capture: true }
+    )
+
+    const { stop: stopInputListener } = addEventListener(
+      window,
+      DOM_EVENT.INPUT,
+      () => {
+        inputChange = true
       },
       { capture: true }
     )
@@ -132,6 +143,7 @@ function observeClicks(lifeCycle: LifeCycle, domMutationObservable: Observable<v
               focusChange,
               selectionChange,
               name,
+              inputChange,
             })
           },
           AUTO_ACTION_MAX_DURATION,
@@ -142,6 +154,7 @@ function observeClicks(lifeCycle: LifeCycle, domMutationObservable: Observable<v
     )
 
     return () => {
+      stopInputListener()
       stopMouseDownListener()
       stopSelectionChangeListener()
       stopClickListener()
@@ -246,6 +259,14 @@ function inspectFirstClicks(clicks: readonly Click[]): FirstClicksAction {
       type: FirstClicksType.Ignore,
       length: 1,
       reason: 'no frustration',
+    }
+  }
+
+  if (firstClick.inputChange) {
+    return {
+      type: FirstClicksType.Ignore,
+      length: 1,
+      reason: 'input change',
     }
   }
 
