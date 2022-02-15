@@ -112,7 +112,7 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
   if (supportPerformanceObject()) {
     const performanceEntries = performance.getEntries()
     // Because the performance entry list can be quite large
-    // delay the computation to prevent the SDK from blocking the main thread on page load
+    // delay the computation to prevent the SDK from blocking the main thread on init
     waitForRequestIdleOrUnload(lifeCycle, () => {
       handleRumPerformanceEntries(lifeCycle, configuration, performanceEntries)
     })
