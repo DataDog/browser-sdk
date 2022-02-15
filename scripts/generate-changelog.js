@@ -75,12 +75,26 @@ async function getChangesList() {
 
   const changesWithEmojis = emojiNameToUnicode(commits)
 
-  const changesWithPullRequestLinks = changesWithEmojis.replace(
+  const allowedChanges = changesWithEmojis
+    .split('\n')
+    .filter(isNotVersionEntry)
+    .filter(isNotMaintenanceEntry)
+    .join('\n')
+
+  const changesWithPullRequestLinks = allowedChanges.replace(
     /\(#(\d+)\)/gm,
     (_, id) => `([#${id}](https://github.com/DataDog/browser-sdk/pull/${id}))`
   )
 
   return changesWithPullRequestLinks
+}
+
+function isNotVersionEntry(line) {
+  return !/^- v\d+\.\d+\.\d+/.test(line)
+}
+
+function isNotMaintenanceEntry(line) {
+  return !/^- 👷/.test(line)
 }
 
 function emojiNameToUnicode(changes) {

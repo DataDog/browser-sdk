@@ -35,16 +35,15 @@ export function trackViewMetrics(
     scheduleViewUpdate()
   })
 
-  const { setActivityLoadingTime, setLoadEvent } = trackLoadingTime(loadingType, (newLoadingTime) => {
-    viewMetrics.loadingTime = newLoadingTime
-    scheduleViewUpdate()
-  })
-
-  const { stop: stopActivityLoadingTimeTracking } = trackActivityLoadingTime(
+  const { stop: stopLoadingTimeTracking, setLoadEvent } = trackLoadingTime(
     lifeCycle,
     domMutationObservable,
-    setActivityLoadingTime,
-    viewStart
+    loadingType,
+    viewStart,
+    (newLoadingTime) => {
+      viewMetrics.loadingTime = newLoadingTime
+      scheduleViewUpdate()
+    }
   )
 
   let stopCLSTracking: () => void
@@ -60,7 +59,7 @@ export function trackViewMetrics(
   return {
     stop: () => {
       stopEventCountsTracking()
-      stopActivityLoadingTimeTracking()
+      stopLoadingTimeTracking()
       stopCLSTracking()
     },
     setLoadEvent,
@@ -68,7 +67,13 @@ export function trackViewMetrics(
   }
 }
 
-function trackLoadingTime(loadType: ViewLoadingType, callback: (loadingTime: Duration) => void) {
+function trackLoadingTime(
+  lifeCycle: LifeCycle,
+  domMutationObservable: Observable<void>,
+  loadType: ViewLoadingType,
+  viewStart: ClocksState,
+  callback: (loadingTime: Duration) => void
+) {
   let isWaitingForLoadEvent = loadType === ViewLoadingType.INITIAL_LOAD
   let isWaitingForActivityLoadingTime = true
   const loadingTimeCandidates: Duration[] = []
@@ -79,7 +84,18 @@ function trackLoadingTime(loadType: ViewLoadingType, callback: (loadingTime: Dur
     }
   }
 
+  const { stop } = waitIdlePage(lifeCycle, domMutationObservable, (event) => {
+    if (isWaitingForActivityLoadingTime) {
+      isWaitingForActivityLoadingTime = false
+      if (event.hadActivity) {
+        loadingTimeCandidates.push(elapsed(viewStart.timeStamp, event.end))
+      }
+      invokeCallbackIfAllCandidatesAreReceived()
+    }
+  })
+
   return {
+    stop,
     setLoadEvent: (loadEvent: Duration) => {
       if (isWaitingForLoadEvent) {
         isWaitingForLoadEvent = false
@@ -87,31 +103,7 @@ function trackLoadingTime(loadType: ViewLoadingType, callback: (loadingTime: Dur
         invokeCallbackIfAllCandidatesAreReceived()
       }
     },
-    setActivityLoadingTime: (activityLoadingTime: Duration | undefined) => {
-      if (isWaitingForActivityLoadingTime) {
-        isWaitingForActivityLoadingTime = false
-        if (activityLoadingTime !== undefined) {
-          loadingTimeCandidates.push(activityLoadingTime)
-        }
-        invokeCallbackIfAllCandidatesAreReceived()
-      }
-    },
   }
-}
-
-function trackActivityLoadingTime(
-  lifeCycle: LifeCycle,
-  domMutationObservable: Observable<void>,
-  callback: (loadingTimeValue: Duration | undefined) => void,
-  viewStart: ClocksState
-) {
-  return waitIdlePage(lifeCycle, domMutationObservable, (event) => {
-    if (event.hadActivity) {
-      callback(elapsed(viewStart.timeStamp, event.end))
-    } else {
-      callback(undefined)
-    }
-  })
 }
 
 /**
