@@ -1,4 +1,4 @@
-import { includes } from '..'
+import { getGlobalObject, includes } from '..'
 
 export interface BrowserWindowWithEventBridge extends Window {
   DatadogEventBridge?: DatadogEventBridge
@@ -33,5 +33,5 @@ export function canUseEventBridge(): boolean {
 }
 
 function getEventBridgeGlobal() {
-  return (window as BrowserWindowWithEventBridge).DatadogEventBridge
+  return getGlobalObject<BrowserWindowWithEventBridge>().DatadogEventBridge
 }
