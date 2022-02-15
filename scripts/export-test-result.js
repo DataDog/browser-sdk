@@ -2,20 +2,26 @@
 
 const { getSecretKey, executeCommand, printLog, logAndExit } = require('./utils')
 
-async function main() {
-  await exportTestResult('unit', ['test-report/unit/', 'test-report/unit-bs/'])
-  await exportTestResult('e2e', ['test-report/e2e/', 'test-report/e2e-bs/'])
-}
+/**
+ * Upload test result to datadog
+ * Usage:
+ * node export-test-result.js testType
+ */
 
-async function exportTestResult(type, folders) {
+const testType = process.argv[2]
+const resultFolder = `test-report/${testType}/`
+
+async function main() {
   const DATADOG_API_KEY = await getSecretKey('ci.browser-sdk.datadog_ci_api_key')
 
   await executeCommand(
-    `datadog-ci junit upload --service browser-sdk --env ci --tags type:${type} ${folders.join(' ')}`,
-    { DATADOG_API_KEY }
+    `datadog-ci junit upload --service browser-sdk --env ci --tags test.type:${testType} ${resultFolder}`,
+    {
+      DATADOG_API_KEY,
+    }
   )
 
-  printLog(`Export ${type} tests done.`)
+  printLog(`Export ${testType} tests done.`)
 }
 
 main().catch(logAndExit)
