@@ -148,9 +148,11 @@ function observeClicks(lifeCycle: LifeCycle, domMutationObservable: Observable<v
 function hasSelection() {
   const activeElement = document.activeElement
   if (
-    (activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement) &&
-    activeElement.selectionStart !== activeElement.selectionEnd
+    (activeElement instanceof HTMLInputElement && activeElement.selectionStart !== null) ||
+    activeElement instanceof HTMLTextAreaElement
   ) {
+    // Return true even if the selection is collapsed, because clicking to move the cursor of a text
+    // input is a valid behavior.
     return true
   }
 
