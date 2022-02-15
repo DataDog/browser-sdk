@@ -31,6 +31,7 @@ interface Click {
   startClocks: ClocksState
   hadActivity: boolean
   hadError: boolean
+  isDrag: boolean
   selectionChange: boolean
   duration: Duration
   focusChange: boolean
@@ -40,6 +41,7 @@ interface Click {
 const RAGE_DURATION_WINDOW = ONE_SECOND
 const RAGE_CLICK_MIN_COUNT = 3
 const RAGE_MAX_DISTANCE = 100
+const DRAG_MIN_DISTANCE = 15
 
 export function trackFrustrationSignals(
   lifeCycle: LifeCycle,
@@ -73,11 +75,13 @@ function observeClicks(lifeCycle: LifeCycle, domMutationObservable: Observable<v
     let activeElement: Element | null = null
     let selectionBefore: boolean
     let selectionChange = false
+    let mousedownEvent: MouseEvent
 
     const { stop: stopMouseDownListener } = addEventListener(
       window,
       DOM_EVENT.MOUSE_DOWN,
-      () => {
+      (event: MouseEvent) => {
+        mousedownEvent = event
         selectionChange = false
         selectionBefore = hasSelection()
         activeElement = document.activeElement
@@ -124,6 +128,7 @@ function observeClicks(lifeCycle: LifeCycle, domMutationObservable: Observable<v
               hadActivity: event.hadActivity,
               hadError,
               duration: event.hadActivity ? elapsed(startClocks.timeStamp, event.end) : (0 as Duration),
+              isDrag: mouseEventDistance(mousedownEvent, clickEvent) > DRAG_MIN_DISTANCE,
               focusChange,
               selectionChange,
               name,
@@ -252,6 +257,14 @@ function inspectFirstClicks(clicks: readonly Click[]): FirstClicksAction {
     }
   }
 
+  if (firstClick.isDrag) {
+    return {
+      type: FirstClicksType.Ignore,
+      length: 1,
+      reason: 'drag and drop',
+    }
+  }
+
   return {
     type: FirstClicksType.CreateSignal,
     signalType: 'dead click',
@@ -285,13 +298,13 @@ function areClicksSimilar(first: Click, second: Click) {
     // Same target
     (first.event.target === first.event.target &&
       // Similar position
-      clickDistance(first.event, second.event) < RAGE_MAX_DISTANCE &&
+      mouseEventDistance(first.event, second.event) < RAGE_MAX_DISTANCE &&
       // Similar time
       first.startClocks.timeStamp - second.startClocks.timeStamp <= RAGE_DURATION_WINDOW)
   )
 }
 
-function clickDistance(origin: MouseEvent, other: MouseEvent) {
+function mouseEventDistance(origin: MouseEvent, other: MouseEvent) {
   return Math.sqrt(Math.pow(origin.clientX - other.clientX, 2) + Math.pow(origin.clientY - other.clientY, 2))
 }
 
