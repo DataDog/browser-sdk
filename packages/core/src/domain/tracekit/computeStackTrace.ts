@@ -3,10 +3,6 @@ import type { StackTrace, StackFrame } from './types'
 const UNKNOWN_FUNCTION = '?'
 
 /**
- * computeStackTrace: cross-browser stack traces in JavaScript
- */
-
-/**
  * Computes a stack trace for an exception.
  */
 export function computeStackTrace(ex: unknown): StackTrace {
