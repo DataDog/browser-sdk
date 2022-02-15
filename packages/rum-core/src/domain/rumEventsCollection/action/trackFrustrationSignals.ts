@@ -1,4 +1,4 @@
-import type { ClocksState, Duration } from '@datadog/browser-core'
+import type { ClocksState, Context, Duration } from '@datadog/browser-core'
 import {
   isExperimentalFeatureEnabled,
   clocksNow,
@@ -23,6 +23,7 @@ export interface FrustrationSignal {
   duration: Duration
   event: MouseEvent & { target: Element }
   name: string
+  context?: Context
 }
 
 interface Click {
@@ -197,6 +198,7 @@ function collectSignals(clicks: Click[]): FrustrationSignal[] {
         // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
         duration: (lastClick.startClocks.timeStamp - firstClick.startClocks.timeStamp + lastClick.duration) as Duration,
         name: firstClick.name,
+        context: action.context,
       }
       signals.push(signal)
       debug(`🚩 ${signal.type} on "${signal.name}" (duration: ${signal.duration}ms)`)
@@ -217,7 +219,7 @@ enum FirstClicksType {
 type FirstClicksAction =
   | { type: FirstClicksType.WaitForMore }
   | { type: FirstClicksType.Ignore; length: number; reason: string }
-  | { type: FirstClicksType.CreateSignal; length: number; signalType: FrustrationSignal['type'] }
+  | { type: FirstClicksType.CreateSignal; length: number; signalType: FrustrationSignal['type']; context?: Context }
 
 function inspectFirstClicks(clicks: readonly Click[]): FirstClicksAction {
   const clickChain = getClickChain(clicks)
@@ -241,6 +243,10 @@ function inspectFirstClicks(clicks: readonly Click[]): FirstClicksAction {
       type: FirstClicksType.CreateSignal,
       signalType: 'rage click',
       length: clickChain.clicks.length,
+      context: {
+        same_target: clickChain.clicks.every((click) => clickChain.clicks[0].event.target === click.event.target),
+        count: clickChain.clicks.length,
+      },
     }
   }
 
@@ -316,10 +322,8 @@ function getClickChain(clicks: readonly Click[]): ClickChain {
 function areClicksSimilar(first: Click, second: Click) {
   return (
     first === second ||
-    // Same target
-    (first.event.target === first.event.target &&
-      // Similar position
-      mouseEventDistance(first.event, second.event) < RAGE_MAX_DISTANCE &&
+    // Similar position
+    (mouseEventDistance(first.event, second.event) < RAGE_MAX_DISTANCE &&
       // Similar time
       first.startClocks.timeStamp - second.startClocks.timeStamp <= RAGE_DURATION_WINDOW)
   )

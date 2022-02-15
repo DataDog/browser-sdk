@@ -40,6 +40,7 @@ export function startActionCollection(
           rawRumEvent,
           startTime: signal.startClocks.relative,
           domainContext: { event: signal.event },
+          customerContext: signal.context,
         })
       })
     }
