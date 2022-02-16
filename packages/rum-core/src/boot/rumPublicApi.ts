@@ -268,7 +268,12 @@ export function makeRumPublicApi(
   }
 
   function overrideInitConfigurationForBridge<C extends InitConfiguration>(initConfiguration: C): C {
-    return { ...initConfiguration, applicationId: 'empty', clientToken: 'empty', sampleRate: 100 }
+    return {
+      ...initConfiguration,
+      applicationId: '00000000-aaaa-0000-aaaa-000000000000',
+      clientToken: 'empty',
+      sampleRate: 100,
+    }
   }
 
   function isLocalFile() {

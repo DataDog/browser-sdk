@@ -1,11 +1,5 @@
 import type { RawError, RelativeTime } from '@datadog/browser-core'
-import {
-  ErrorSource,
-  ONE_MINUTE,
-  display,
-  updateExperimentalFeatures,
-  resetExperimentalFeatures,
-} from '@datadog/browser-core'
+import { ErrorSource, ONE_MINUTE, display } from '@datadog/browser-core'
 import { createRumSessionManagerMock } from '../../test/mockRumSessionManager'
 import { createRawRumEvent } from '../../test/fixtures'
 import type { TestSetupBuilder } from '../../test/specHelper'
@@ -59,7 +53,6 @@ describe('rum assembly', () => {
   })
 
   afterEach(() => {
-    resetExperimentalFeatures()
     deleteEventBridgeStub()
     setupBuilder.cleanup()
     cleanupSyntheticsWorkerValues()
@@ -581,7 +574,6 @@ describe('rum assembly', () => {
       const { lifeCycle } = setupBuilder.build()
       notifyRawRumEvent(lifeCycle, { rawRumEvent: createRawRumEvent(RumEventType.VIEW) })
 
-      updateExperimentalFeatures(['event-bridge'])
       initEventBridgeStub()
 
       notifyRawRumEvent(lifeCycle, { rawRumEvent: createRawRumEvent(RumEventType.VIEW) })
