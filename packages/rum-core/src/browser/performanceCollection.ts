@@ -7,7 +7,6 @@ import {
   monitor,
   relativeNow,
   runOnReadyState,
-  requestIdleCallback,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
@@ -113,9 +112,7 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
     const performanceEntries = performance.getEntries()
     // Because the performance entry list can be quite large
     // delay the computation to prevent the SDK from blocking the main thread on init
-    waitForRequestIdleOrUnload(lifeCycle, () => {
-      handleRumPerformanceEntries(lifeCycle, configuration, performanceEntries)
-    })
+    setTimeout(() => handleRumPerformanceEntries(lifeCycle, configuration, performanceEntries))
   }
 
   if (window.PerformanceObserver) {
@@ -159,17 +156,6 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
       handleRumPerformanceEntries(lifeCycle, configuration, [timing])
     })
   }
-}
-
-function waitForRequestIdleOrUnload(lifeCycle: LifeCycle, callback: () => void) {
-  let hasBeenCalled = false
-  const callOnce = () => {
-    if (hasBeenCalled) return
-    hasBeenCalled = true
-    callback()
-  }
-  requestIdleCallback(callOnce)
-  lifeCycle.subscribe(LifeCycleEventType.BEFORE_UNLOAD, callOnce)
 }
 
 export function retrieveInitialDocumentResourceTiming(callback: (timing: RumPerformanceResourceTiming) => void) {
