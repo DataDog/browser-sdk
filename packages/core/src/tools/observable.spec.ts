@@ -1,4 +1,4 @@
-import { Observable } from './observable'
+import { mergeObservables, Observable } from './observable'
 
 describe('observable', () => {
   let observable: Observable<void>
@@ -66,5 +66,37 @@ describe('observable', () => {
 
     otherSubscription.unsubscribe()
     expect(onLastUnsubscribe).toHaveBeenCalled()
+  })
+})
+
+describe('mergeObservables', () => {
+  let observableOne: Observable<void>
+  let observableTwo: Observable<void>
+  let mergedObservable: Observable<void>
+  let subscriber: jasmine.Spy<jasmine.Func>
+
+  beforeEach(() => {
+    observableOne = new Observable<void>()
+    observableTwo = new Observable<void>()
+    mergedObservable = mergeObservables(observableOne, observableTwo)
+    subscriber = jasmine.createSpy('subscriber')
+  })
+
+  it('should notify when one of the merged observable notifies', () => {
+    mergedObservable.subscribe(subscriber)
+    observableOne.notify()
+    observableTwo.notify()
+
+    expect(subscriber).toHaveBeenCalledTimes(2)
+  })
+
+  it('should allow to unsubscribe to all merged observables', () => {
+    const subscription = mergedObservable.subscribe(subscriber)
+
+    subscription.unsubscribe()
+    observableOne.notify()
+    observableTwo.notify()
+
+    expect(subscriber).not.toHaveBeenCalled()
   })
 })

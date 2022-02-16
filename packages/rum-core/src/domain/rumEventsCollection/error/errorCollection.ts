@@ -6,7 +6,6 @@ import {
   generateUUID,
   ErrorHandling,
   Observable,
-  trackConsoleError,
   trackRuntimeError,
 } from '@datadog/browser-core'
 import type { CommonContext, RawRumErrorEvent } from '../../../rawRumEvent.types'
@@ -14,6 +13,7 @@ import { RumEventType } from '../../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { ForegroundContexts } from '../../foregroundContexts'
+import { trackConsoleError } from './trackConsoleError'
 
 export interface ProvidedError {
   startClocks: ClocksState
@@ -24,6 +24,7 @@ export interface ProvidedError {
 
 export function startErrorCollection(lifeCycle: LifeCycle, foregroundContexts: ForegroundContexts) {
   const errorObservable = new Observable<RawError>()
+
   trackConsoleError(errorObservable)
   trackRuntimeError(errorObservable)
 
