@@ -1,5 +1,5 @@
 import type { RelativeTime, Observable, Context } from '@datadog/browser-core'
-import { noop, relativeNow, isIE, resetExperimentalFeatures, updateExperimentalFeatures } from '@datadog/browser-core'
+import { noop, relativeNow, isIE } from '@datadog/browser-core'
 import type { RumSessionManagerMock } from '../../test/mockRumSessionManager'
 import { createRumSessionManagerMock } from '../../test/mockRumSessionManager'
 import type { TestSetupBuilder } from '../../test/specHelper'
@@ -279,7 +279,6 @@ describe('startRumEventCollection', () => {
   let sendSpy: jasmine.Spy<(msg: string) => void>
 
   beforeEach(() => {
-    updateExperimentalFeatures(['event-bridge'])
     const eventBridgeStub = initEventBridgeStub()
     sendSpy = spyOn(eventBridgeStub, 'send')
     setupBuilder = setupBuilder = setup().beforeBuild(
@@ -292,7 +291,6 @@ describe('startRumEventCollection', () => {
   })
 
   afterEach(() => {
-    resetExperimentalFeatures()
     deleteEventBridgeStub()
     setupBuilder.cleanup()
   })

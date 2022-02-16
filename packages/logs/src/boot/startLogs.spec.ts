@@ -91,7 +91,6 @@ describe('logs', () => {
   afterEach(() => {
     server.restore()
     delete window.DD_RUM
-    resetExperimentalFeatures()
     deleteEventBridgeStub()
     stopSessionManager()
   })
@@ -172,7 +171,6 @@ describe('logs', () => {
     })
 
     it('should send bridge event when bridge is present', () => {
-      updateExperimentalFeatures(['event-bridge'])
       const sendSpy = spyOn(initEventBridgeStub(), 'send')
 
       const sendLog = startLogs()
@@ -207,7 +205,6 @@ describe('logs', () => {
 
   describe('sampling', () => {
     it('should be applied when event bridge is present', () => {
-      updateExperimentalFeatures(['event-bridge'])
       const sendSpy = spyOn(initEventBridgeStub(), 'send')
 
       let configuration = { ...baseConfiguration, sampleRate: 0 }
