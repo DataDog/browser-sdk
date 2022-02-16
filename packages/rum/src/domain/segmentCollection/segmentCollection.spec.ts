@@ -9,7 +9,7 @@ import {
   setPageVisibility,
 } from '@datadog/browser-core/test/specHelper'
 import { createRumSessionManagerMock } from '../../../../rum-core/test/mockRumSessionManager'
-import type { Record, SegmentContext, SegmentMeta } from '../../types'
+import type { Record, SegmentContext, SegmentMetadata } from '../../types'
 import { RecordType } from '../../types'
 import { MockWorker } from '../../../test/utils'
 import { SEND_BEACON_BYTE_LENGTH_LIMIT } from '../../transport/send'
@@ -35,7 +35,7 @@ describe('startSegmentCollection', () => {
     const lifeCycle = new LifeCycle()
     const worker = new MockWorker()
     const eventEmitter = document.createElement('div')
-    const sendSpy = jasmine.createSpy<(data: Uint8Array, meta: SegmentMeta) => void>()
+    const sendSpy = jasmine.createSpy<(data: Uint8Array, metadata: SegmentMetadata) => void>()
 
     const { stop, addRecord } = doStartSegmentCollection(lifeCycle, () => context, sendSpy, worker, eventEmitter)
     stopSegmentCollection = stop
