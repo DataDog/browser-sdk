@@ -2,28 +2,28 @@
 # yarn lockfile v1
 
 
-"@datadog/browser-core@4.3.0", "@datadog/browser-core@file:../../packages/core":
-  version "4.3.0"
+"@datadog/browser-core@4.4.0", "@datadog/browser-core@file:../../packages/core":
+  version "4.4.0"
   dependencies:
     tslib "^1.10.0"
 
 "@datadog/browser-logs@file:../../packages/logs":
-  version "4.3.0"
+  version "4.4.0"
   dependencies:
-    "@datadog/browser-core" "4.3.0"
+    "@datadog/browser-core" "4.4.0"
     tslib "^1.10.0"
 
-"@datadog/browser-rum-core@4.3.0", "@datadog/browser-rum-core@file:../../packages/rum-core":
-  version "4.3.0"
+"@datadog/browser-rum-core@4.4.0", "@datadog/browser-rum-core@file:../../packages/rum-core":
+  version "4.4.0"
   dependencies:
-    "@datadog/browser-core" "4.3.0"
+    "@datadog/browser-core" "4.4.0"
     tslib "^1.10.0"
 
 "@datadog/browser-rum@file:../../packages/rum":
-  version "4.3.0"
+  version "4.4.0"
   dependencies:
-    "@datadog/browser-core" "4.3.0"
-    "@datadog/browser-rum-core" "4.3.0"
+    "@datadog/browser-core" "4.4.0"
+    "@datadog/browser-rum-core" "4.4.0"
     tslib "^1.10.0"
 
 "@types/eslint-scope@^3.7.0":
@@ -58,9 +58,9 @@
   integrity sha512-qcUXuemtEu+E5wZSJHNxUXeCZhAfXKQ41D+duX+VYPde7xyEVZci+/oXKJL13tnRs9lR2pr4fod59GT6/X1/yQ==
 
 "@types/node@*":
-  version "17.0.16"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-17.0.16.tgz#e3733f46797b9df9e853ca9f719c8a6f7b84cd26"
-  integrity sha512-ydLaGVfQOQ6hI1xK2A5nVh8bl0OGoIfYMxPWHqqYe9bTkWCfqiVvZoh2I/QF2sNSkZzZyROBoTefIEI+PB6iIA==
+  version "17.0.18"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-17.0.18.tgz#3b4fed5cfb58010e3a2be4b6e74615e4847f1074"
+  integrity sha512-eKj4f/BsN/qcculZiRSujogjvp5O/k4lOW5m35NopjZM/QwLOR075a8pJW5hD+Rtdm2DaCVPENS6KtSQnUD6BA==
 
 "@webassemblyjs/ast@1.11.0":
   version "1.11.0"
@@ -249,9 +249,9 @@ buffer-from@^1.0.0:
   integrity sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==
 
 caniuse-lite@^1.0.30001286:
-  version "1.0.30001309"
-  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001309.tgz#e0ee78b9bec0704f67304b00ff3c5c0c768a9f62"
-  integrity sha512-Pl8vfigmBXXq+/yUz1jUwULeq9xhMJznzdc/xwl4WclDAuebcTHVefpz8lE/bMI+UN7TOkSSe7B7RnZd6+dzjA==
+  version "1.0.30001312"
+  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001312.tgz#e11eba4b87e24d22697dae05455d5aea28550d5f"
+  integrity sha512-Wiz1Psk2MEK0pX3rUzWaunLTZzqS2JYZFzNKqAiJGiuxIjRPLgV6+VDPOg6lQOUxmDwhTlh198JsTTi8Hzw6aQ==
 
 chalk@^2.3.0:
   version "2.4.2"
@@ -290,9 +290,9 @@ core-util-is@~1.0.0:
   integrity sha512-ZQBvi1DcpJ4GDqanjucZ2Hj3wEO5pZDS89BWbkcrvdxksJorwUDDZamX9ldFkp9aw2lmBDLgkObEA4DWNJ9FYQ==
 
 electron-to-chromium@^1.4.17:
-  version "1.4.66"
-  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.4.66.tgz#d7453d363dcd7b06ed1757adcde34d724e27b367"
-  integrity sha512-f1RXFMsvwufWLwYUxTiP7HmjprKXrqEWHiQkjAYa9DJeVIlZk5v8gBGcaV+FhtXLly6C1OTVzQY+2UQrACiLlg==
+  version "1.4.71"
+  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.4.71.tgz#17056914465da0890ce00351a3b946fd4cd51ff6"
+  integrity sha512-Hk61vXXKRb2cd3znPE9F+2pLWdIOmP7GjiTj45y6L3W/lO+hSnUSUhq+6lEaERWBdZOHbk2s3YV5c9xVl3boVw==
 
 emojis-list@^3.0.0:
   version "3.0.0"
@@ -421,9 +421,9 @@ isarray@~1.0.0:
   integrity sha1-u5NdSFgsuhaMBoNJV6VKPgcSTxE=
 
 jest-worker@^27.4.5:
-  version "27.5.0"
-  resolved "https://registry.yarnpkg.com/jest-worker/-/jest-worker-27.5.0.tgz#99ee77e4d06168107c27328bd7f54e74c3a48d59"
-  integrity sha512-8OEHiPNOPTfaWnJ2SUHM8fmgeGq37uuGsQBvGKQJl1f+6WIy6g7G3fE2ruI5294bUKUI9FaCWt5hDvO8HSwsSg==
+  version "27.5.1"
+  resolved "https://registry.yarnpkg.com/jest-worker/-/jest-worker-27.5.1.tgz#8d146f0900e8973b106b6f73cc1e9a8cb86f8db0"
+  integrity sha512-7vuh85V5cdDofPyxn58nrPjBktZo0u9x1g8WtjQol+jZDaE+fhN+cIvTj11GndBnMnyfrUOG1sZQxCdjKh+DKg==
   dependencies:
     "@types/node" "*"
     merge-stream "^2.0.0"
@@ -504,9 +504,9 @@ neo-async@^2.6.2:
   integrity sha512-Yd3UES5mWCSqR+qNT93S3UoYUkqAZ9lLg8a7g9rimsWmYGK8cVToA4/sF3RrshdyV3sAGMXVUmpMYOw+dLpOuw==
 
 node-releases@^2.0.1:
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/node-releases/-/node-releases-2.0.1.tgz#3d1d395f204f1f2f29a54358b9fb678765ad2fc5"
-  integrity sha512-CqyzN6z7Q6aMeF/ktcMVTzhAHCEpf8SOarwpzpf8pNBY2k5/oM34UHldUwp8VKI7uxct2HxSRdJjBaZeESzcxA==
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/node-releases/-/node-releases-2.0.2.tgz#7139fe71e2f4f11b47d4d2986aaf8c48699e0c01"
+  integrity sha512-XxYDdcQ6eKqp/YjI+tb2C5WM2LgjnZrfYg4vgQt49EK268b6gYCHsBLrK2qvJo4FmCtqmKezb0WZFK4fkrZNsg==
 
 picocolors@^1.0.0:
   version "1.0.0"

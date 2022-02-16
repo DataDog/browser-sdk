@@ -584,3 +584,11 @@ export function requestIdleCallback(callback: () => void, opts?: { timeout?: num
   const id = browserWindow.requestAnimationFrame(monitor(callback))
   return () => browserWindow.cancelAnimationFrame(id)
 }
+
+export function removeDuplicates<T>(array: T[]) {
+  const deduplicated: T[] = []
+  const set = new Set<T>()
+  array.forEach((item) => set.add(item))
+  set.forEach((item) => deduplicated.push(item))
+  return deduplicated
+}

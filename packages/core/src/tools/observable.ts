@@ -27,3 +27,14 @@ export class Observable<T> {
     this.observers.forEach((observer) => observer(data))
   }
 }
+
+export function mergeObservables<T>(...observables: Array<Observable<T>>) {
+  const globalObservable = new Observable<T>(() => {
+    const subscriptions: Subscription[] = observables.map((observable) =>
+      observable.subscribe((data) => globalObservable.notify(data))
+    )
+    return () => subscriptions.forEach((subscription) => subscription.unsubscribe())
+  })
+
+  return globalObservable
+}

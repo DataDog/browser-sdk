@@ -1,5 +1,5 @@
 import { addMonitoringMessage, monitor } from '@datadog/browser-core'
-import type { CreationReason, Record, SegmentContext, SegmentMeta } from '../../types'
+import type { CreationReason, Record, SegmentContext, SegmentMetadata } from '../../types'
 import { RecordType } from '../../types'
 import * as replayStats from '../replayStats'
 import type { DeflateWorker, DeflateWorkerListener } from './deflateWorker'
@@ -9,27 +9,30 @@ let nextId = 0
 export class Segment {
   public isFlushed = false
   public flushReason?: string
+  public readonly metadata: SegmentMetadata
 
   private id = nextId++
-  private start: number
-  private end: number
-  private recordsCount: number
-  private hasFullSnapshot: boolean
 
   constructor(
     private worker: DeflateWorker,
-    readonly context: SegmentContext,
-    private creationReason: CreationReason,
+    context: SegmentContext,
+    creationReason: CreationReason,
     initialRecord: Record,
     onWrote: (compressedSize: number) => void,
     onFlushed: (data: Uint8Array, rawSize: number) => void
   ) {
-    this.start = initialRecord.timestamp
-    this.end = initialRecord.timestamp
-    this.recordsCount = 1
-    this.hasFullSnapshot = initialRecord.type === RecordType.FullSnapshot
+    const viewId = context.view.id
 
-    const viewId = this.context.view.id
+    this.metadata = {
+      start: initialRecord.timestamp,
+      end: initialRecord.timestamp,
+      creation_reason: creationReason,
+      records_count: 1,
+      has_full_snapshot: initialRecord.type === RecordType.FullSnapshot,
+      index_in_view: replayStats.getSegmentsCount(viewId),
+      ...context,
+    }
+
     replayStats.addSegment(viewId)
     replayStats.addRecord(viewId)
 
@@ -64,31 +67,20 @@ export class Segment {
   }
 
   addRecord(record: Record): void {
-    this.end = record.timestamp
-    this.recordsCount += 1
-    replayStats.addRecord(this.context.view.id)
-    this.hasFullSnapshot ||= record.type === RecordType.FullSnapshot
+    this.metadata.end = record.timestamp
+    this.metadata.records_count += 1
+    replayStats.addRecord(this.metadata.view.id)
+    this.metadata.has_full_snapshot ||= record.type === RecordType.FullSnapshot
     this.worker.postMessage({ data: `,${JSON.stringify(record)}`, id: this.id, action: 'write' })
   }
 
   flush(reason?: string) {
     this.worker.postMessage({
-      data: `],${JSON.stringify(this.meta).slice(1)}\n`,
+      data: `],${JSON.stringify(this.metadata).slice(1)}\n`,
       id: this.id,
       action: 'flush',
     })
     this.isFlushed = true
     this.flushReason = reason
-  }
-
-  get meta(): SegmentMeta {
-    return {
-      creation_reason: this.creationReason,
-      end: this.end,
-      has_full_snapshot: this.hasFullSnapshot,
-      records_count: this.recordsCount,
-      start: this.start,
-      ...this.context,
-    }
   }
 }

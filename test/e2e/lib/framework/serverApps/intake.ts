@@ -34,7 +34,7 @@ export function createIntakeServerApp(serverEvents: EventRegistry, bridgeEvents:
 
 async function readSessionReplay(req: express.Request): Promise<SessionReplayCall> {
   return new Promise((resolve, reject) => {
-    const meta: {
+    const metadata: {
       [field: string]: string
     } = {}
     let segmentPromise: Promise<SegmentFile>
@@ -51,11 +51,11 @@ async function readSessionReplay(req: express.Request): Promise<SessionReplayCal
     })
 
     req.busboy.on('field', (key: string, value: string) => {
-      meta[key] = value
+      metadata[key] = value
     })
 
     req.busboy.on('finish', () => {
-      segmentPromise.then((segment) => resolve({ meta, segment })).catch((e) => reject(e))
+      segmentPromise.then((segment) => resolve({ metadata, segment })).catch((e) => reject(e))
     })
   })
 }

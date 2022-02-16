@@ -1,13 +1,13 @@
 import type { EndpointBuilder } from '@datadog/browser-core'
 import { HttpRequest, objectEntries } from '@datadog/browser-core'
-import type { SegmentMeta } from '../types'
+import type { SegmentMetadata } from '../types'
 
 export const SEND_BEACON_BYTE_LENGTH_LIMIT = 60_000
 
 export function send(
   endpointBuilder: EndpointBuilder,
   data: Uint8Array,
-  meta: SegmentMeta,
+  metadata: SegmentMetadata,
   rawSegmentSize: number,
   flushReason?: string
 ): void {
@@ -18,10 +18,10 @@ export function send(
     new Blob([data], {
       type: 'application/octet-stream',
     }),
-    `${meta.session.id}-${meta.start}`
+    `${metadata.session.id}-${metadata.start}`
   )
 
-  toFormEntries(meta, (key, value) => formData.append(key, value))
+  toFormEntries(metadata, (key, value) => formData.append(key, value))
   formData.append('raw_segment_size', rawSegmentSize.toString())
 
   const request = new HttpRequest(endpointBuilder, SEND_BEACON_BYTE_LENGTH_LIMIT)

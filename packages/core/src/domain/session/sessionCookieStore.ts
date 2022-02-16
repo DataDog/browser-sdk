@@ -2,7 +2,6 @@ import type { CookieOptions } from '../../browser/cookie'
 import { getCookie, setCookie } from '../../browser/cookie'
 import { isChromium } from '../../tools/browserDetection'
 import * as utils from '../../tools/utils'
-import { isExperimentalFeatureEnabled } from '../configuration'
 import { monitor } from '../internalMonitoring'
 import type { SessionState } from './sessionStore'
 import { SESSION_EXPIRATION_DELAY } from './sessionStore'
@@ -94,7 +93,7 @@ export function withCookieLockAccess(operations: Operations, numberOfRetries = 0
  * This issue concerns only chromium browsers and enabling this on firefox increase cookie write failures.
  */
 function isCookieLockEnabled() {
-  return isExperimentalFeatureEnabled('cookie-lock') && isChromium()
+  return isChromium()
 }
 
 function retryLater(operations: Operations, currentNumberOfRetries: number) {

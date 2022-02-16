@@ -1,6 +1,5 @@
 import { stubCookie, mockClock } from '../../../test/specHelper'
 import { isChromium } from '../../tools/browserDetection'
-import { resetExperimentalFeatures, updateExperimentalFeatures } from '../configuration'
 import {
   SESSION_COOKIE_NAME,
   toSessionString,
@@ -29,6 +28,10 @@ describe('session cookie store', () => {
   })
 
   describe('with cookie-lock disabled', () => {
+    beforeEach(() => {
+      isChromium() && pending('cookie-lock only disabled on non chromium browsers')
+    })
+
     it('should persist session when process return a value', () => {
       persistSession(initialSession, COOKIE_OPTIONS)
       processSpy.and.returnValue({ ...otherSession })
@@ -68,11 +71,6 @@ describe('session cookie store', () => {
   describe('with cookie-lock enabled', () => {
     beforeEach(() => {
       !isChromium() && pending('cookie-lock only enabled on chromium browsers')
-      updateExperimentalFeatures(['cookie-lock'])
-    })
-
-    afterEach(() => {
-      resetExperimentalFeatures()
     })
 
     it('should persist session when process return a value', () => {
