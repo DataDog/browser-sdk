@@ -1,5 +1,5 @@
 import { addMonitoringMessage, monitor } from '@datadog/browser-core'
-import type { CreationReason, Record, SegmentContext, SegmentMeta } from '../../types'
+import type { CreationReason, Record, SegmentContext, SegmentMetadata } from '../../types'
 import { RecordType } from '../../types'
 import * as replayStats from '../replayStats'
 import type { DeflateWorker, DeflateWorkerListener } from './deflateWorker'
@@ -9,7 +9,7 @@ let nextId = 0
 export class Segment {
   public isFlushed = false
   public flushReason?: string
-  public readonly meta: SegmentMeta
+  public readonly metadata: SegmentMetadata
 
   private id = nextId++
 
@@ -23,7 +23,7 @@ export class Segment {
   ) {
     const viewId = context.view.id
 
-    this.meta = {
+    this.metadata = {
       start: initialRecord.timestamp,
       end: initialRecord.timestamp,
       creation_reason: creationReason,
@@ -67,16 +67,16 @@ export class Segment {
   }
 
   addRecord(record: Record): void {
-    this.meta.end = record.timestamp
-    this.meta.records_count += 1
-    replayStats.addRecord(this.meta.view.id)
-    this.meta.has_full_snapshot ||= record.type === RecordType.FullSnapshot
+    this.metadata.end = record.timestamp
+    this.metadata.records_count += 1
+    replayStats.addRecord(this.metadata.view.id)
+    this.metadata.has_full_snapshot ||= record.type === RecordType.FullSnapshot
     this.worker.postMessage({ data: `,${JSON.stringify(record)}`, id: this.id, action: 'write' })
   }
 
   flush(reason?: string) {
     this.worker.postMessage({
-      data: `],${JSON.stringify(this.meta).slice(1)}\n`,
+      data: `],${JSON.stringify(this.metadata).slice(1)}\n`,
       id: this.id,
       action: 'flush',
     })

@@ -118,7 +118,7 @@ describe('Segment', () => {
     )
   })
 
-  describe('meta', () => {
+  describe('metadata', () => {
     describe('when adding a record', () => {
       let segment: Segment
       beforeEach(() => {
@@ -126,13 +126,13 @@ describe('Segment', () => {
         segment.addRecord({ type: RecordType.ViewEnd, timestamp: 15 })
       })
       it('increments records_count', () => {
-        expect(segment.meta.records_count).toBe(2)
+        expect(segment.metadata.records_count).toBe(2)
       })
       it('increases end timestamp', () => {
-        expect(segment.meta.end).toBe(15)
+        expect(segment.metadata.end).toBe(15)
       })
       it('does not change start timestamp', () => {
-        expect(segment.meta.start).toBe(10)
+        expect(segment.metadata.start).toBe(10)
       })
     })
 
@@ -140,27 +140,27 @@ describe('Segment', () => {
       it('sets has_full_snapshot to true if a segment has a FullSnapshot', () => {
         const segment = createSegment()
         segment.addRecord(FULL_SNAPSHOT_RECORD)
-        expect(segment.meta.has_full_snapshot).toEqual(true)
+        expect(segment.metadata.has_full_snapshot).toEqual(true)
       })
 
       it("doesn't overrides has_full_snapshot to false once it has been set to true", () => {
         const segment = createSegment()
         segment.addRecord(FULL_SNAPSHOT_RECORD)
         segment.addRecord(RECORD)
-        expect(segment.meta.has_full_snapshot).toEqual(true)
+        expect(segment.metadata.has_full_snapshot).toEqual(true)
       })
     })
 
     describe('sequence_number', () => {
       it('increments sequence_number every time a segment is created for the same view', () => {
-        expect(createSegment().meta.sequence_number).toBe(0)
-        expect(createSegment().meta.sequence_number).toBe(1)
-        expect(createSegment().meta.sequence_number).toBe(2)
+        expect(createSegment().metadata.sequence_number).toBe(0)
+        expect(createSegment().metadata.sequence_number).toBe(1)
+        expect(createSegment().metadata.sequence_number).toBe(2)
       })
 
       it('resets segments_count when creating a segment for a new view', () => {
-        expect(createSegment().meta.sequence_number).toBe(0)
-        expect(createSegment({ context: { ...CONTEXT, view: { id: 'view-2' } } }).meta.sequence_number).toBe(0)
+        expect(createSegment().metadata.sequence_number).toBe(0)
+        expect(createSegment({ context: { ...CONTEXT, view: { id: 'view-2' } } }).metadata.sequence_number).toBe(0)
       })
     })
   })

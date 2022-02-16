@@ -2,11 +2,11 @@ import type { IncrementalData, SerializedNodeWithId } from './domain/record'
 
 export { IncrementalSource, MutationData, ViewportResizeData, ScrollData } from './domain/record'
 
-export interface Segment extends SegmentMeta {
+export interface Segment extends SegmentMetadata {
   records: Record[]
 }
 
-export interface SegmentMeta extends SegmentContext {
+export interface SegmentMetadata extends SegmentContext {
   start: number
   end: number
   has_full_snapshot: boolean
