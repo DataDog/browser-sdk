@@ -1,5 +1,14 @@
-import type { Context, RawError, RelativeTime, TimeStamp } from '@datadog/browser-core'
-import { ErrorSource, noop, Observable, ONE_MINUTE, getTimeStamp } from '@datadog/browser-core'
+import type { ConsoleLog, Context, RawError, RelativeTime, TimeStamp } from '@datadog/browser-core'
+import {
+  ErrorSource,
+  noop,
+  Observable,
+  ONE_MINUTE,
+  resetExperimentalFeatures,
+  updateExperimentalFeatures,
+  getTimeStamp,
+  stopSessionManager,
+} from '@datadog/browser-core'
 import sinon from 'sinon'
 import type { Clock } from '../../../core/test/specHelper'
 import {
@@ -52,7 +61,8 @@ const DEFAULT_MESSAGE = { status: StatusType.info, message: 'message' }
 describe('logs', () => {
   let sessionIsTracked: boolean
   let server: sinon.SinonFakeServer
-  let errorObservable: Observable<RawError>
+  let rawErrorObservable: Observable<RawError>
+  let consoleObservable: Observable<ConsoleLog>
   const sessionManager: LogsSessionManager = {
     findTrackedSession: () => (sessionIsTracked ? { id: SESSION_ID } : undefined),
   }
@@ -61,12 +71,20 @@ describe('logs', () => {
     configuration: configurationOverrides,
   }: { errorLogger?: Logger; configuration?: Partial<LogsConfiguration> } = {}) => {
     const configuration = { ...baseConfiguration, ...configurationOverrides }
-    return doStartLogs(configuration, errorObservable, internalMonitoring, sessionManager, errorLogger)
+    return doStartLogs(
+      configuration,
+      rawErrorObservable,
+      consoleObservable,
+      internalMonitoring,
+      sessionManager,
+      errorLogger
+    )
   }
 
   beforeEach(() => {
     sessionIsTracked = true
-    errorObservable = new Observable<RawError>()
+    rawErrorObservable = new Observable<RawError>()
+    consoleObservable = new Observable<ConsoleLog>()
     server = sinon.fakeServer.create()
   })
 
@@ -74,6 +92,7 @@ describe('logs', () => {
     server.restore()
     delete window.DD_RUM
     deleteEventBridgeStub()
+    stopSessionManager()
   })
 
   describe('request', () => {
@@ -132,7 +151,7 @@ describe('logs', () => {
       }
       sendLogStrategy = startLogs({ errorLogger: new Logger(sendLog) })
 
-      errorObservable.notify({
+      rawErrorObservable.notify({
         message: 'error!',
         source: ErrorSource.SOURCE,
         startClocks: { relative: 1234 as RelativeTime, timeStamp: getTimeStamp(1234 as RelativeTime) },
@@ -164,6 +183,23 @@ describe('logs', () => {
         eventType: 'log',
         event: jasmine.objectContaining({ message: 'message' }),
       })
+    })
+
+    it('should send console logs', () => {
+      const logger = new Logger(noop)
+      const logErrorSpy = spyOn(logger, 'log')
+      const consoleLogSpy = spyOn(console, 'log').and.callFake(() => true)
+
+      updateExperimentalFeatures(['forward-logs'])
+      originalStartLogs({ ...baseConfiguration, forwardConsoleLogs: ['log'] }, logger)
+
+      /* eslint-disable-next-line no-console */
+      console.log('foo', 'bar')
+
+      expect(logErrorSpy).toHaveBeenCalled()
+      expect(consoleLogSpy).toHaveBeenCalled()
+
+      resetExperimentalFeatures()
     })
   })
 
@@ -314,7 +350,7 @@ describe('logs', () => {
       const sendLogSpy = jasmine.createSpy()
       startLogs({ errorLogger: new Logger(sendLogSpy) })
 
-      errorObservable.notify({
+      rawErrorObservable.notify({
         message: 'error!',
         source: ErrorSource.SOURCE,
         startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
