@@ -13,7 +13,7 @@ const ENCODED_SEGMENT_HEADER_SIZE = 12 // {"records":[
 const ENCODED_RECORD_SIZE = 25
 const ENCODED_FULL_SNAPSHOT_RECORD_SIZE = 35
 const ENCODED_SEPARATOR_SIZE = 1 // ,
-const ENCODED_META_SIZE = 175 // this should stay accurate as long as less than 10 records are added
+const ENCODED_META_SIZE = 173 // this should stay accurate as long as less than 10 records are added
 
 describe('Segment', () => {
   let worker: MockWorker
@@ -59,7 +59,7 @@ describe('Segment', () => {
       ],
       records_count: 1,
       start: 10,
-      sequence_number: 0,
+      index_in_view: 0,
       ...CONTEXT,
     })
   })
@@ -151,16 +151,16 @@ describe('Segment', () => {
       })
     })
 
-    describe('sequence_number', () => {
-      it('increments sequence_number every time a segment is created for the same view', () => {
-        expect(createSegment().metadata.sequence_number).toBe(0)
-        expect(createSegment().metadata.sequence_number).toBe(1)
-        expect(createSegment().metadata.sequence_number).toBe(2)
+    describe('index_in_view', () => {
+      it('increments index_in_view every time a segment is created for the same view', () => {
+        expect(createSegment().metadata.index_in_view).toBe(0)
+        expect(createSegment().metadata.index_in_view).toBe(1)
+        expect(createSegment().metadata.index_in_view).toBe(2)
       })
 
       it('resets segments_count when creating a segment for a new view', () => {
-        expect(createSegment().metadata.sequence_number).toBe(0)
-        expect(createSegment({ context: { ...CONTEXT, view: { id: 'view-2' } } }).metadata.sequence_number).toBe(0)
+        expect(createSegment().metadata.index_in_view).toBe(0)
+        expect(createSegment({ context: { ...CONTEXT, view: { id: 'view-2' } } }).metadata.index_in_view).toBe(0)
       })
     })
   })

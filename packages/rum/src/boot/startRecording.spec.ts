@@ -93,7 +93,7 @@ describe('startRecording', () => {
         start: jasmine.stringMatching(/^\d{13}$/),
         raw_segment_size: jasmine.stringMatching(/^\d+$/),
         'view.id': 'view-id',
-        sequence_number: '0',
+        index_in_view: '0',
       })
       expectNoExtraRequestSendCalls(done)
     })

@@ -12,7 +12,7 @@ export interface SegmentMetadata extends SegmentContext {
   has_full_snapshot: boolean
   records_count: number
   creation_reason: CreationReason
-  sequence_number: number
+  index_in_view: number
 }
 
 export interface SegmentContext {

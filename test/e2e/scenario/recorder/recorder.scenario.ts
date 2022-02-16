@@ -47,7 +47,7 @@ describe('recorder', () => {
         start: jasmine.stringMatching(TIMESTAMP_RE),
         'view.id': jasmine.stringMatching(UUID_RE),
         raw_segment_size: jasmine.stringMatching(INTEGER_RE),
-        sequence_number: '0',
+        index_in_view: '0',
       })
       expect(segment).toEqual({
         data: {
@@ -60,7 +60,7 @@ describe('recorder', () => {
           session: { id: metadata['session.id'] },
           start: Number(metadata.start),
           view: { id: metadata['view.id'] },
-          sequence_number: 0,
+          index_in_view: 0,
         },
         encoding: jasmine.any(String),
         filename: `${metadata['session.id']}-${metadata.start}`,

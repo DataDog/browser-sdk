@@ -29,7 +29,7 @@ export class Segment {
       creation_reason: creationReason,
       records_count: 1,
       has_full_snapshot: initialRecord.type === RecordType.FullSnapshot,
-      sequence_number: replayStats.getSegmentsCount(viewId),
+      index_in_view: replayStats.getSegmentsCount(viewId),
       ...context,
     }
 
