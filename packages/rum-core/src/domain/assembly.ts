@@ -49,11 +49,10 @@ const VIEW_EVENTS_MODIFIABLE_FIELD_PATHS = [
   'resource.url',
 ]
 
-const OTHER_EVENTS_MODIFIABLE_FIELD_PATHS = [
-  ...VIEW_EVENTS_MODIFIABLE_FIELD_PATHS,
+const OTHER_EVENTS_MODIFIABLE_FIELD_PATHS = VIEW_EVENTS_MODIFIABLE_FIELD_PATHS.concat([
   // User-customizable field
   'context',
-]
+])
 
 type Mutable<T> = { -readonly [P in keyof T]: T[P] }
 
