@@ -86,7 +86,7 @@ async function instantiateServer(): Promise<http.Server> {
     try {
       return await instantiateServerOnPort(port)
     } catch (error) {
-      if (error.code === 'EADDRINUSE') {
+      if (error instanceof Error && (error as NodeJS.ErrnoException).code === 'EADDRINUSE') {
         continue
       }
       throw error

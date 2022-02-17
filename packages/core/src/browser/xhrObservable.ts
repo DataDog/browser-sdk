@@ -63,11 +63,11 @@ function createXhrObservable() {
   return observable
 }
 
-function openXhr(this: XMLHttpRequest, method: string, url: string) {
+function openXhr(this: XMLHttpRequest, method: string, url: string | URL) {
   xhrContexts.set(this, {
     state: 'open',
     method,
-    url: normalizeUrl(url),
+    url: normalizeUrl(url.toString()),
   })
 }
 

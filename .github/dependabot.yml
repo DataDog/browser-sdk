@@ -41,4 +41,3 @@ updates:
       # typescript: RUMF-1168
       - dependency-name: 'ts-loader'
       - dependency-name: 'ts-node'
-      - dependency-name: 'typescript'
