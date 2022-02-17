@@ -1,5 +1,6 @@
 import type { Context, InitConfiguration } from '@datadog/browser-core'
 import {
+  assign,
   BoundedBuffer,
   combine,
   createContextManager,
@@ -71,10 +72,14 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
     removeLoggerGlobalContext: monitor(globalContextManager.remove),
 
     createLogger: monitor((name: string, conf: LoggerConfiguration = {}) => {
-      customLoggers[name] = new Logger(sendLog, conf.handler, conf.level, {
-        ...conf.context,
-        logger: { name },
-      })
+      customLoggers[name] = new Logger(
+        sendLog,
+        conf.handler,
+        conf.level,
+        assign({}, conf.context, {
+          logger: { name },
+        })
+      )
       return customLoggers[name]!
     }),
 
@@ -84,7 +89,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
   })
 
   function overrideInitConfigurationForBridge<C extends InitConfiguration>(initConfiguration: C): C {
-    return { ...initConfiguration, clientToken: 'empty' }
+    return assign({}, initConfiguration, { clientToken: 'empty' })
   }
 
   function canInitLogs(initConfiguration: LogsInitConfiguration) {

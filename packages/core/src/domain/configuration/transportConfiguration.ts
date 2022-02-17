@@ -1,6 +1,6 @@
 import type { BuildEnv } from '../../boot/init'
 import { BuildMode } from '../../boot/init'
-import { objectValues } from '../../tools/utils'
+import { assign, objectValues } from '../../tools/utils'
 import type { InitConfiguration } from './configuration'
 import type { EndpointBuilder } from './endpointBuilder'
 import { createEndpointBuilder, INTAKE_SITE_US } from './endpointBuilder'
@@ -33,11 +33,13 @@ export function computeTransportConfiguration(
 
   const replicaConfiguration = computeReplicaConfiguration(initConfiguration, buildEnv, intakeEndpoints, tags)
 
-  return {
-    isIntakeUrl: (url) => intakeEndpoints.some((intakeEndpoint) => url.indexOf(intakeEndpoint) === 0),
-    ...endpointBuilders,
-    replica: replicaConfiguration,
-  }
+  return assign(
+    {
+      isIntakeUrl: (url: string) => intakeEndpoints.some((intakeEndpoint) => url.indexOf(intakeEndpoint) === 0),
+      replica: replicaConfiguration,
+    },
+    endpointBuilders
+  )
 }
 
 function computeEndpointBuilders(initConfiguration: InitConfiguration, buildEnv: BuildEnv, tags: string[]) {
@@ -62,16 +64,15 @@ function computeEndpointBuilders(initConfiguration: InitConfiguration, buildEnv:
   }
 
   if (initConfiguration.internalMonitoringApiKey) {
-    return {
-      ...endpointBuilders,
+    return assign(endpointBuilders, {
       internalMonitoringEndpointBuilder: createEndpointBuilder(
-        { ...initConfiguration, clientToken: initConfiguration.internalMonitoringApiKey },
+        assign({}, initConfiguration, { clientToken: initConfiguration.internalMonitoringApiKey }),
         buildEnv,
         'logs',
         tags,
         'browser-agent-internal-monitoring'
       ),
-    }
+    })
   }
 
   return endpointBuilders
@@ -87,11 +88,10 @@ function computeReplicaConfiguration(
     return
   }
 
-  const replicaConfiguration: InitConfiguration = {
-    ...initConfiguration,
+  const replicaConfiguration: InitConfiguration = assign({}, initConfiguration, {
     site: INTAKE_SITE_US,
     clientToken: initConfiguration.replica.clientToken,
-  }
+  })
 
   const replicaEndpointBuilders = {
     logsEndpointBuilder: createEndpointBuilder(replicaConfiguration, buildEnv, 'logs', tags),
@@ -107,5 +107,5 @@ function computeReplicaConfiguration(
 
   intakeEndpoints.push(...objectValues(replicaEndpointBuilders).map((builder) => builder.buildIntakeUrl()))
 
-  return { applicationId: initConfiguration.replica.applicationId, ...replicaEndpointBuilders }
+  return assign({ applicationId: initConfiguration.replica.applicationId }, replicaEndpointBuilders)
 }

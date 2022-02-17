@@ -52,7 +52,7 @@ export class Logger {
       const handlers = Array.isArray(this.handlerType) ? this.handlerType : [this.handlerType]
 
       if (includes(handlers, HandlerType.http)) {
-        this.sendLog({ message, status, ...combine(this.contextManager.get(), messageContext) })
+        this.sendLog(combine({ message, status }, this.contextManager.get(), messageContext))
       }
 
       if (includes(handlers, HandlerType.console)) {

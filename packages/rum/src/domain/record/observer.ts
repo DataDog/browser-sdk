@@ -1,5 +1,6 @@
 import type { DefaultPrivacyLevel } from '@datadog/browser-core'
 import {
+  assign,
   monitor,
   callMonitored,
   throttle,
@@ -260,10 +261,14 @@ export function initInputObserver(cb: InputCallback, defaultPrivacyLevel: Defaul
       (lastInputState as { isChecked?: boolean }).isChecked !== (inputState as { isChecked?: boolean }).isChecked
     ) {
       lastInputStateMap.set(target, inputState)
-      cb({
-        ...inputState,
-        id: getSerializedNodeId(target),
-      })
+      cb(
+        assign(
+          {
+            id: getSerializedNodeId(target),
+          },
+          inputState
+        )
+      )
     }
   }
 

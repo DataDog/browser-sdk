@@ -1,11 +1,13 @@
 import type { Configuration, InitConfiguration } from '@datadog/browser-core'
 import {
+  assign,
   DefaultPrivacyLevel,
   display,
   isPercentage,
   objectHasValue,
   validateAndBuildConfiguration,
 } from '@datadog/browser-core'
+
 import { buildEnv } from '../boot/buildEnv'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RumEvent } from '../rumEvent.types'
@@ -72,17 +74,18 @@ export function validateAndBuildRumConfiguration(
     return
   }
 
-  return {
-    ...baseConfiguration,
-
-    applicationId: initConfiguration.applicationId,
-    actionNameAttribute: initConfiguration.actionNameAttribute,
-    replaySampleRate: initConfiguration.replaySampleRate ?? 100,
-    allowedTracingOrigins: initConfiguration.allowedTracingOrigins ?? [],
-    trackInteractions: !!initConfiguration.trackInteractions,
-    trackViewsManually: !!initConfiguration.trackViewsManually,
-    defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
-      ? initConfiguration.defaultPrivacyLevel
-      : DefaultPrivacyLevel.MASK_USER_INPUT,
-  }
+  return assign(
+    {
+      applicationId: initConfiguration.applicationId,
+      actionNameAttribute: initConfiguration.actionNameAttribute,
+      replaySampleRate: initConfiguration.replaySampleRate ?? 100,
+      allowedTracingOrigins: initConfiguration.allowedTracingOrigins ?? [],
+      trackInteractions: !!initConfiguration.trackInteractions,
+      trackViewsManually: !!initConfiguration.trackViewsManually,
+      defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
+        ? initConfiguration.defaultPrivacyLevel
+        : DefaultPrivacyLevel.MASK_USER_INPUT,
+    },
+    baseConfiguration
+  )
 }

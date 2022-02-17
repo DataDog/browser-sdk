@@ -1,5 +1,6 @@
 import type { Duration, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import {
+  assign,
   addEventListeners,
   DOM_EVENT,
   getRelativeTime,
@@ -8,6 +9,7 @@ import {
   relativeNow,
   runOnReadyState,
 } from '@datadog/browser-core'
+
 import type { RumConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
@@ -165,17 +167,19 @@ export function retrieveInitialDocumentResourceTiming(callback: (timing: RumPerf
     }
     if (supportPerformanceTimingEvent('navigation') && performance.getEntriesByType('navigation').length > 0) {
       const navigationEntry = performance.getEntriesByType('navigation')[0]
-      timing = { ...navigationEntry.toJSON(), ...forcedAttributes }
+      timing = assign(navigationEntry.toJSON(), forcedAttributes)
     } else {
       const relativePerformanceTiming = computeRelativePerformanceTiming()
-      timing = {
-        ...relativePerformanceTiming,
-        decodedBodySize: 0,
-        duration: relativePerformanceTiming.responseEnd,
-        name: window.location.href,
-        startTime: 0 as RelativeTime,
-        ...forcedAttributes,
-      }
+      timing = assign(
+        relativePerformanceTiming,
+        {
+          decodedBodySize: 0,
+          duration: relativePerformanceTiming.responseEnd,
+          name: window.location.href,
+          startTime: 0 as RelativeTime,
+        },
+        forcedAttributes
+      )
     }
     callback(timing)
   })
@@ -183,10 +187,11 @@ export function retrieveInitialDocumentResourceTiming(callback: (timing: RumPerf
 
 function retrieveNavigationTiming(callback: (timing: RumPerformanceNavigationTiming) => void) {
   function sendFakeTiming() {
-    callback({
-      ...computeRelativePerformanceTiming(),
-      entryType: 'navigation',
-    })
+    callback(
+      assign(computeRelativePerformanceTiming(), {
+        entryType: 'navigation' as const,
+      })
+    )
   }
 
   runOnReadyState('complete', () => {

@@ -1,5 +1,6 @@
 import type { Duration, ClocksState, TimeStamp, Observable, Subscription, RelativeTime } from '@datadog/browser-core'
 import {
+  assign,
   elapsed,
   generateUUID,
   monitor,
@@ -11,6 +12,7 @@ import {
   display,
   looksLikeRelativeTime,
 } from '@datadog/browser-core'
+
 import type { ViewCustomTimings } from '../../../rawRumEvent.types'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
 
@@ -162,7 +164,7 @@ function newView(
   const customTimings: ViewCustomTimings = {}
   let documentVersion = 0
   let endClocks: ClocksState | undefined
-  const location = { ...initialLocation }
+  const location = assign({}, initialLocation)
 
   lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, name, startClocks })
 
@@ -187,19 +189,24 @@ function newView(
   function triggerViewUpdate() {
     documentVersion += 1
     const currentEnd = endClocks === undefined ? timeStampNow() : endClocks.timeStamp
-    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
-      ...viewMetrics,
-      customTimings,
-      documentVersion,
-      id,
-      name,
-      loadingType,
-      location,
-      startClocks,
-      timings,
-      duration: elapsed(startClocks.timeStamp, currentEnd),
-      isActive: endClocks === undefined,
-    })
+    lifeCycle.notify(
+      LifeCycleEventType.VIEW_UPDATED,
+      assign(
+        {
+          customTimings,
+          documentVersion,
+          id,
+          name,
+          loadingType,
+          location,
+          startClocks,
+          timings,
+          duration: elapsed(startClocks.timeStamp, currentEnd),
+          isActive: endClocks === undefined,
+        },
+        viewMetrics
+      )
+    )
   }
 
   return {
