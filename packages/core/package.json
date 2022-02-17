@@ -11,9 +11,6 @@
     "build:cjs": "rm -rf cjs && tsc -p tsconfig.cjs.json",
     "build:esm": "rm -rf esm && tsc -p tsconfig.esm.json"
   },
-  "dependencies": {
-    "tslib": "^1.10.0"
-  },
   "devDependencies": {
     "@types/sinon": "9.0.10",
     "sinon": "9.2.4"
