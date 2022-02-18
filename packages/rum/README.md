@@ -268,7 +268,7 @@ For example, to collect 100% of your sessions using only the Browser RUM option:
 datadogRum.init({
     ....
     sampleRate: 100,
-    replaySampleRate: 0
+    replaySampleRate: 100 // Note: if this is not included it will default to 100%
 });
 ```
 
@@ -278,7 +278,7 @@ For example, to collect 100% of your sessions using only the Session Replay RUM 
 datadogRum.init({
     ....
     sampleRate: 100,
-    replaySampleRate: 100 // Note: if this is not included it will default to 100%
+    replaySampleRate: 0
 });
 ```
 
