@@ -257,8 +257,8 @@ init(configuration: {
 
 For the following RUM options:
 
-* **Browser RUM** (**Only** *Sessions*, *Views*, *Actions*, and *Errors* are collected)
-* **Session Replay RUM** (Everything from Browser RUM plus *Resources*, *Long Tasks*, and *Replay* recordings are collected)
+- **Browser RUM** (**Only** _Sessions_, _Views_, _Actions_, and _Errors_ are collected)
+- **Session Replay RUM** (Everything from Browser RUM plus _Resources_, _Long Tasks_, and _Replay_ recordings are collected)
 
 The `sampleRate` option controls the overall sample rate of RUM data collection. The `replaySampleRate` option is applied **after** the overall sample rate, and controls the percentage of Session Replay data collection.
 
