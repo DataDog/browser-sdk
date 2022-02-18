@@ -114,6 +114,10 @@ export function assign(target: Assignable, ...toAssign: Assignable[]) {
   return target
 }
 
+export function shallowClone<T>(object: T): T & Record<string, never> {
+  return assign({}, object)
+}
+
 /**
  * UUID v4
  * from https://gist.github.com/jed/982883

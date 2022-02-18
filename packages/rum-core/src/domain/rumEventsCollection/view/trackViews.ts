@@ -1,5 +1,6 @@
 import type { Duration, ClocksState, TimeStamp, Observable, Subscription, RelativeTime } from '@datadog/browser-core'
 import {
+  shallowClone,
   assign,
   elapsed,
   generateUUID,
@@ -164,7 +165,7 @@ function newView(
   const customTimings: ViewCustomTimings = {}
   let documentVersion = 0
   let endClocks: ClocksState | undefined
-  const location = assign({}, initialLocation)
+  const location = shallowClone(initialLocation)
 
   lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, name, startClocks })
 
