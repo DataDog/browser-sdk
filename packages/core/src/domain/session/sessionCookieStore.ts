@@ -2,8 +2,7 @@ import type { CookieOptions } from '../../browser/cookie'
 import { getCookie, setCookie } from '../../browser/cookie'
 import { isChromium } from '../../tools/browserDetection'
 import * as utils from '../../tools/utils'
-import { isExperimentalFeatureEnabled } from '../configuration'
-import { monitor, addMonitoringMessage } from '../internalMonitoring'
+import { monitor } from '../internalMonitoring'
 import type { SessionState } from './sessionStore'
 import { SESSION_EXPIRATION_DELAY } from './sessionStore'
 
@@ -18,8 +17,6 @@ export const MAX_NUMBER_OF_LOCK_RETRIES = 100
 
 type Operations = {
   options: CookieOptions
-  audit?: AuditBehavior
-  phase?: string
   process: (cookieSession: SessionState) => SessionState | undefined
   after?: (cookieSession: SessionState) => void
 }
@@ -36,13 +33,11 @@ export function withCookieLockAccess(operations: Operations, numberOfRetries = 0
     return
   }
   if (numberOfRetries >= MAX_NUMBER_OF_LOCK_RETRIES) {
-    addMonitoringMessage('Reach max lock retry')
     next()
     return
   }
   let currentLock: string
   let currentSession = retrieveSession()
-  operations.audit?.addRead(`${operations.phase || ''} (1)`, currentSession)
   if (isCookieLockEnabled()) {
     // if someone has lock, retry later
     if (currentSession.lock) {
@@ -53,10 +48,8 @@ export function withCookieLockAccess(operations: Operations, numberOfRetries = 0
     currentLock = utils.generateUUID()
     currentSession.lock = currentLock
     setSession(currentSession, operations.options)
-    operations.audit?.addWrite(`${operations.phase || ''} (2)`, currentSession)
     // if lock is not acquired, retry later
     currentSession = retrieveSession()
-    operations.audit?.addRead(`${operations.phase || ''} (3)`, currentSession)
     if (currentSession.lock !== currentLock) {
       retryLater(operations, numberOfRetries)
       return
@@ -66,7 +59,6 @@ export function withCookieLockAccess(operations: Operations, numberOfRetries = 0
   if (isCookieLockEnabled()) {
     // if lock corrupted after process, retry later
     currentSession = retrieveSession()
-    operations.audit?.addRead(`${operations.phase || ''} (4)`, currentSession)
     if (currentSession.lock !== currentLock!) {
       retryLater(operations, numberOfRetries)
       return
@@ -74,7 +66,6 @@ export function withCookieLockAccess(operations: Operations, numberOfRetries = 0
   }
   if (processedSession) {
     persistSession(processedSession, operations.options)
-    operations.audit?.addWrite(`${operations.phase || ''} (5)`, processedSession)
   }
   if (isCookieLockEnabled()) {
     // correctly handle lock around expiration would require to handle this case properly at several levels
@@ -82,14 +73,12 @@ export function withCookieLockAccess(operations: Operations, numberOfRetries = 0
     if (!(processedSession && isExpiredState(processedSession))) {
       // if lock corrupted after persist, retry later
       currentSession = retrieveSession()
-      operations.audit?.addRead(`${operations.phase || ''} (6)`, currentSession)
       if (currentSession.lock !== currentLock!) {
         retryLater(operations, numberOfRetries)
         return
       }
       delete currentSession.lock
       setSession(currentSession, operations.options)
-      operations.audit?.addWrite(`${operations.phase || ''} (7)`, currentSession)
       processedSession = currentSession
     }
   }
@@ -104,7 +93,7 @@ export function withCookieLockAccess(operations: Operations, numberOfRetries = 0
  * This issue concerns only chromium browsers and enabling this on firefox increase cookie write failures.
  */
 function isCookieLockEnabled() {
-  return isExperimentalFeatureEnabled('cookie-lock') && isChromium()
+  return isChromium()
 }
 
 function retryLater(operations: Operations, currentNumberOfRetries: number) {
@@ -172,32 +161,4 @@ function isExpiredState(session: SessionState) {
 
 function clearSession(options: CookieOptions) {
   setCookie(SESSION_COOKIE_NAME, '', 0, options)
-}
-
-const MAX_AUDIT_ENTRIES = 50
-
-export interface AuditBehavior {
-  addRead: Audit['addRead']
-  addWrite: Audit['addWrite']
-}
-
-export class Audit {
-  constructor(private productKey: string, private entries: string[]) {}
-
-  addWrite(phase: string, session: SessionState) {
-    this.addEntry(phase, 'write', session)
-  }
-
-  addRead(phase: string, session: SessionState) {
-    this.addEntry(phase, 'read', session)
-  }
-
-  private addEntry(phase: string, operation: string, session: SessionState) {
-    if (this.entries.length < MAX_AUDIT_ENTRIES) {
-      const now = new Date()
-      // hh:mm:ss.xxx in the browser timezone
-      const formattedTime = `${now.toTimeString().substr(0, 8)}.${`00${now.getMilliseconds()}`.slice(-3)}`
-      this.entries.push(`${formattedTime} - ${this.productKey} ${phase} ${operation} ${toSessionString(session)}`)
-    }
-  }
 }

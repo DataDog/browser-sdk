@@ -16,6 +16,19 @@
 
 ---
 
+## v4.4.0
+
+- ✨ [RUMF-1180] add `error.source_type` attribute ([#1328](https://github.com/DataDog/browser-sdk/pull/1328))
+- ⚡️ [RUMF-1169] cleanup compute stack trace ([#1335](https://github.com/DataDog/browser-sdk/pull/1335))
+- 🐛 [RUMF-1079] limit session inconsistencies issue on chromium browsers ([#1327](https://github.com/DataDog/browser-sdk/pull/1327))
+
+## v4.3.0
+
+- ✨ [RUMF-1135] expose SDK version through global variable ([#1278](https://github.com/DataDog/browser-sdk/pull/1278))
+- ✨ [RUMF-1174] forward event to bridge with rum type ([#1309](https://github.com/DataDog/browser-sdk/pull/1309))
+- 🐛 [RUMF-1153] fix initial view loading time computation ([#1315](https://github.com/DataDog/browser-sdk/pull/1315))
+- ⚗ [RUMF-1079] restrict cookie-lock to chromium browsers ([#1283](https://github.com/DataDog/browser-sdk/pull/1283))
+
 ## v4.2.0
 
 - ⚡️ [RUMF-1113] Notify performance entries by batch ([#1255](https://github.com/DataDog/browser-sdk/pull/1255))

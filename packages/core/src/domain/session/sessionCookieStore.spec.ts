@@ -1,7 +1,5 @@
 import { stubCookie, mockClock } from '../../../test/specHelper'
 import { isChromium } from '../../tools/browserDetection'
-import { resetExperimentalFeatures, updateExperimentalFeatures } from '../configuration'
-import { startFakeInternalMonitoring, resetInternalMonitoring } from '../internalMonitoring'
 import {
   SESSION_COOKIE_NAME,
   toSessionString,
@@ -30,6 +28,10 @@ describe('session cookie store', () => {
   })
 
   describe('with cookie-lock disabled', () => {
+    beforeEach(() => {
+      isChromium() && pending('cookie-lock only disabled on non chromium browsers')
+    })
+
     it('should persist session when process return a value', () => {
       persistSession(initialSession, COOKIE_OPTIONS)
       processSpy.and.returnValue({ ...otherSession })
@@ -69,11 +71,6 @@ describe('session cookie store', () => {
   describe('with cookie-lock enabled', () => {
     beforeEach(() => {
       !isChromium() && pending('cookie-lock only enabled on chromium browsers')
-      updateExperimentalFeatures(['cookie-lock'])
-    })
-
-    afterEach(() => {
-      resetExperimentalFeatures()
     })
 
     it('should persist session when process return a value', () => {
@@ -197,7 +194,6 @@ describe('session cookie store', () => {
 
     it('should abort after a max number of retry', () => {
       const clock = mockClock()
-      const monitoringMessages = startFakeInternalMonitoring()
 
       persistSession(initialSession, COOKIE_OPTIONS)
       cookie.setSpy.calls.reset()
@@ -209,9 +205,7 @@ describe('session cookie store', () => {
       expect(processSpy).not.toHaveBeenCalled()
       expect(afterSpy).not.toHaveBeenCalled()
       expect(cookie.setSpy).not.toHaveBeenCalled()
-      expect(monitoringMessages.length).toBe(1)
 
-      resetInternalMonitoring()
       clock.cleanup()
     })
 

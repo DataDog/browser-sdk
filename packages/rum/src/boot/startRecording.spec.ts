@@ -13,6 +13,7 @@ import { setMaxSegmentSize, startDeflateWorker } from '../domain/segmentCollecti
 
 import type { Segment } from '../types'
 import { RecordType } from '../types'
+import { resetReplayStats } from '../domain/replayStats'
 import { startRecording } from './startRecording'
 
 describe('startRecording', () => {
@@ -32,6 +33,7 @@ describe('startRecording', () => {
     if (isIE()) {
       pending('IE not supported')
     }
+    resetReplayStats()
     sessionManager = createRumSessionManagerMock()
     viewId = 'view-id'
 
@@ -91,6 +93,7 @@ describe('startRecording', () => {
         start: jasmine.stringMatching(/^\d{13}$/),
         raw_segment_size: jasmine.stringMatching(/^\d+$/),
         'view.id': 'view-id',
+        index_in_view: '0',
       })
       expectNoExtraRequestSendCalls(done)
     })
