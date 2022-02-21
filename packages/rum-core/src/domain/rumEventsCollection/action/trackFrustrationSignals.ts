@@ -30,7 +30,7 @@ interface Click {
   event: MouseEvent & { target: Element }
   startClocks: ClocksState
   legitimateUserAction: 'selection change' | 'activity' | 'drag' | 'focus change' | 'input change' | false
-  hadError: boolean
+  firstErrorTime: Duration | undefined
   duration: Duration
   name: string
 }
@@ -132,9 +132,9 @@ function observeClicks(lifeCycle: LifeCycle, domMutationObservable: Observable<v
         const name = getActionNameFromElement(clickEvent.target, configuration.actionNameAttribute)
 
         // Track whether an error occurs while the page has activity, to produce error clicks.
-        let hadError = false
+        let firstErrorTime: Duration | undefined
         const hadErrorSubscription = lifeCycle.subscribe(LifeCycleEventType.RAW_ERROR_COLLECTED, () => {
-          hadError = true
+          firstErrorTime = elapsed(startClocks.timeStamp, timeStampNow())
         })
 
         // Track whether the focus changed (legitimate user action)
@@ -182,7 +182,7 @@ function observeClicks(lifeCycle: LifeCycle, domMutationObservable: Observable<v
                 : inputChange
                 ? 'input change'
                 : false,
-              hadError,
+              firstErrorTime,
               duration: idlePageEvent.hadActivity ? elapsed(startClocks.timeStamp, idlePageEvent.end) : (0 as Duration),
               name,
             })
@@ -309,11 +309,14 @@ function inspectFirstClicks(clicksBuffer: readonly Click[]): FirstClicksAction {
   const firstClick = clicksBuffer[0]
 
   // If it had an error, let's report it as a dead click
-  if (firstClick.hadError) {
+  if (firstClick.firstErrorTime !== undefined) {
     return {
       type: FirstClicksType.CreateSignal,
       length: 1,
       signalType: 'error click',
+      context: {
+        first_error_time: firstClick.firstErrorTime,
+      },
     }
   }
 
@@ -346,7 +349,7 @@ function getClickChain(clicksBuffer: readonly Click[]): ClickChain {
     if (
       // Clicks with error should not be part of the chain, because they should be used individually
       // to produce error clicks.
-      clicksBuffer[index].hadError ||
+      clicksBuffer[index].firstErrorTime !== undefined ||
       // Iterate while we find similar clicks using a sliding window.
       !areClicksSimilar(clicksBuffer[Math.max(0, index - RAGE_CLICK_MIN_COUNT)], clicksBuffer[index])
     ) {
