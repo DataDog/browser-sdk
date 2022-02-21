@@ -34,5 +34,5 @@ export interface SegmentFile {
 
 export interface SessionReplayCall {
   segment: SegmentFile
-  meta: { [key: string]: string }
+  metadata: { [key: string]: string }
 }

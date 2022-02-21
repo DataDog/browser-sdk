@@ -36,8 +36,8 @@ describe('recorder', () => {
       await flushEvents()
 
       expect(serverEvents.sessionReplay.length).toBe(1)
-      const { segment, meta } = serverEvents.sessionReplay[0]
-      expect(meta).toEqual({
+      const { segment, metadata } = serverEvents.sessionReplay[0]
+      expect(metadata).toEqual({
         'application.id': jasmine.stringMatching(UUID_RE),
         creation_reason: 'init',
         end: jasmine.stringMatching(TIMESTAMP_RE),
@@ -47,21 +47,23 @@ describe('recorder', () => {
         start: jasmine.stringMatching(TIMESTAMP_RE),
         'view.id': jasmine.stringMatching(UUID_RE),
         raw_segment_size: jasmine.stringMatching(INTEGER_RE),
+        index_in_view: '0',
       })
       expect(segment).toEqual({
         data: {
-          application: { id: meta['application.id'] },
-          creation_reason: meta.creation_reason as CreationReason,
-          end: Number(meta.end),
+          application: { id: metadata['application.id'] },
+          creation_reason: metadata.creation_reason as CreationReason,
+          end: Number(metadata.end),
           has_full_snapshot: true,
           records: jasmine.any(Array),
-          records_count: Number(meta.records_count),
-          session: { id: meta['session.id'] },
-          start: Number(meta.start),
-          view: { id: meta['view.id'] },
+          records_count: Number(metadata.records_count),
+          session: { id: metadata['session.id'] },
+          start: Number(metadata.start),
+          view: { id: metadata['view.id'] },
+          index_in_view: 0,
         },
         encoding: jasmine.any(String),
-        filename: `${meta['session.id']}-${meta.start}`,
+        filename: `${metadata['session.id']}-${metadata.start}`,
         mimetype: 'application/octet-stream',
       })
       expect(findMeta(segment.data)).toBeTruthy('have a Meta record')

@@ -565,3 +565,11 @@ export function combine(...sources: any[]): unknown {
 }
 
 export type TimeoutId = ReturnType<typeof setTimeout>
+
+export function removeDuplicates<T>(array: T[]) {
+  const deduplicated: T[] = []
+  const set = new Set<T>()
+  array.forEach((item) => set.add(item))
+  set.forEach((item) => deduplicated.push(item))
+  return deduplicated
+}

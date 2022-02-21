@@ -3,7 +3,7 @@ import { addEventListener, DOM_EVENT, monitor } from '@datadog/browser-core'
 import type { LifeCycle, ParentContexts, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { SEND_BEACON_BYTE_LENGTH_LIMIT } from '../../transport/send'
-import type { CreationReason, Record, SegmentContext, SegmentMeta } from '../../types'
+import type { CreationReason, Record, SegmentContext, SegmentMetadata } from '../../types'
 import type { DeflateWorker } from './deflateWorker'
 import { Segment } from './segment'
 
@@ -14,7 +14,7 @@ let MAX_SEGMENT_SIZE = SEND_BEACON_BYTE_LENGTH_LIMIT
 // for indexing or UI needs, and a list of records (RRWeb 'events', renamed to avoid confusing
 // namings). They are stored without any processing from the intake, and fetched one after the
 // other while a session is being replayed. Their encoding (deflate) are carefully crafted to allow
-// concatenating multiple segments together. Segments have a size overhead (meta), so our goal is to
+// concatenating multiple segments together. Segments have a size overhead (metadata), so our goal is to
 // build segments containing as much records as possible while complying with the various flush
 // strategies to guarantee a good replay quality.
 //
@@ -40,7 +40,7 @@ export function startSegmentCollection(
   applicationId: string,
   sessionManager: RumSessionManager,
   parentContexts: ParentContexts,
-  send: (data: Uint8Array, meta: SegmentMeta, rawSegmentSize: number, flushReason?: string) => void,
+  send: (data: Uint8Array, metadata: SegmentMetadata, rawSegmentSize: number, flushReason?: string) => void,
   worker: DeflateWorker
 ) {
   return doStartSegmentCollection(
@@ -73,7 +73,7 @@ type SegmentCollectionState =
 export function doStartSegmentCollection(
   lifeCycle: LifeCycle,
   getSegmentContext: () => SegmentContext | undefined,
-  send: (data: Uint8Array, meta: SegmentMeta, rawSegmentSize: number, flushReason?: string) => void,
+  send: (data: Uint8Array, metadata: SegmentMetadata, rawSegmentSize: number, flushReason?: string) => void,
   worker: DeflateWorker,
   emitter: EventEmitter = window
 ) {
@@ -136,7 +136,7 @@ export function doStartSegmentCollection(
         }
       },
       (data, rawSegmentSize) => {
-        send(data, segment.meta, rawSegmentSize, segment.flushReason)
+        send(data, segment.metadata, rawSegmentSize, segment.flushReason)
       }
     )
 

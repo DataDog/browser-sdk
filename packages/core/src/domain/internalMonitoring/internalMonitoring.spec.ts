@@ -1,5 +1,4 @@
 import sinon from 'sinon'
-import { resetExperimentalFeatures, updateExperimentalFeatures } from '../..'
 import type { Clock } from '../../../test/specHelper'
 import { deleteEventBridgeStub, initEventBridgeStub, mockClock, stubEndpointBuilder } from '../../../test/specHelper'
 
@@ -186,7 +185,6 @@ describe('internal monitoring', () => {
       resetInternalMonitoring()
       server.restore()
       clock.cleanup()
-      resetExperimentalFeatures()
       deleteEventBridgeStub()
     })
 
@@ -222,7 +220,6 @@ describe('internal monitoring', () => {
     })
 
     it('should send bridge event when bridge is present', () => {
-      updateExperimentalFeatures(['event-bridge'])
       const sendSpy = spyOn(initEventBridgeStub(), 'send')
       startInternalMonitoring(configuration as Configuration)
 

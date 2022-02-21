@@ -1,12 +1,5 @@
 import type { RelativeTime, TimeStamp } from '@datadog/browser-core'
-import {
-  ONE_SECOND,
-  getTimeStamp,
-  display,
-  DefaultPrivacyLevel,
-  updateExperimentalFeatures,
-  resetExperimentalFeatures,
-} from '@datadog/browser-core'
+import { ONE_SECOND, getTimeStamp, display, DefaultPrivacyLevel } from '@datadog/browser-core'
 import { initEventBridgeStub, deleteEventBridgeStub } from '../../../core/test/specHelper'
 import type { TestSetupBuilder } from '../../test/specHelper'
 import {
@@ -83,12 +76,10 @@ describe('rum public api', () => {
 
     describe('if event bridge present', () => {
       beforeEach(() => {
-        updateExperimentalFeatures(['event-bridge'])
         initEventBridgeStub()
       })
 
       afterEach(() => {
-        resetExperimentalFeatures()
         deleteEventBridgeStub()
       })
 
