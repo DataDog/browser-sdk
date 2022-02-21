@@ -1,4 +1,4 @@
-import type { ConsoleLog, Context, RawError, RelativeTime, TimeStamp } from '@datadog/browser-core'
+import type { ConsoleLog, Context, RawError, RelativeTime, TimeStamp, InternalMonitoring } from '@datadog/browser-core'
 import {
   ErrorSource,
   noop,
@@ -40,7 +40,11 @@ function getLoggedMessage(server: sinon.SinonFakeServer, index: number) {
 }
 const FAKE_DATE = 123456
 const SESSION_ID = 'session-id'
-const internalMonitoring = { setExternalContextProvider: () => undefined }
+const internalMonitoringStub: InternalMonitoring = {
+  setExternalContextProvider: () => undefined,
+  setTelemetryContextProvider: () => undefined,
+  telemetryEventObservable: new Observable(),
+}
 
 interface Rum {
   getInternalContext(startTime?: number): any | undefined
@@ -71,7 +75,7 @@ describe('logs', () => {
       configuration,
       rawErrorObservable,
       consoleObservable,
-      internalMonitoring,
+      internalMonitoringStub,
       sessionManager,
       errorLogger
     )

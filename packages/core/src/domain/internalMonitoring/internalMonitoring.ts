@@ -5,15 +5,23 @@ import { assign, combine, jsonStringify } from '../../tools/utils'
 import { canUseEventBridge, getEventBridge } from '../../transport'
 import type { Configuration } from '../configuration'
 import { computeStackTrace } from '../tracekit'
+import { isExperimentalFeatureEnabled } from '../configuration'
+import { Observable } from '../../tools/observable'
 import { startMonitoringBatch } from './startMonitoringBatch'
+import type { TelemetryEvent } from './telemetryEvent.types'
+
+// replaced at build time
+declare const __BUILD_ENV__SDK_VERSION__: string
 
 enum StatusType {
-  info = 'info',
+  debug = 'debug',
   error = 'error',
 }
 
 export interface InternalMonitoring {
   setExternalContextProvider: (provider: () => Context) => void
+  setTelemetryContextProvider: (provider: () => Context) => void
+  telemetryEventObservable: Observable<TelemetryEvent>
 }
 
 export interface MonitoringMessage extends Context {
@@ -31,18 +39,34 @@ const monitoringConfiguration: {
   sentMessageCount: number
 } = { maxMessagesPerPage: 0, sentMessageCount: 0 }
 
-let onInternalMonitoringMessageCollected: ((message: MonitoringMessage) => void) | undefined
+let monitoringMessageObservable: Observable<MonitoringMessage> | undefined
 
 export function startInternalMonitoring(configuration: Configuration): InternalMonitoring {
   let externalContextProvider: () => Context
+  let telemetryContextProvider: () => Context
+  monitoringMessageObservable = new Observable<MonitoringMessage>()
+  const telemetryEventObservable = new Observable<TelemetryEvent>()
 
   if (canUseEventBridge()) {
     const bridge = getEventBridge<'internal_log', MonitoringMessage>()!
-    onInternalMonitoringMessageCollected = (message: MonitoringMessage) =>
+    monitoringMessageObservable.subscribe((message: MonitoringMessage) =>
       bridge.send('internal_log', withContext(message))
+    )
   } else if (configuration.internalMonitoringEndpointBuilder) {
     const batch = startMonitoringBatch(configuration)
-    onInternalMonitoringMessageCollected = (message: MonitoringMessage) => batch.add(withContext(message))
+    monitoringMessageObservable.subscribe((message: MonitoringMessage) => batch.add(withContext(message)))
+  }
+  if (isExperimentalFeatureEnabled('telemetry')) {
+    if (canUseEventBridge()) {
+      const bridge = getEventBridge<'internal_telemetry', TelemetryEvent>()!
+      monitoringMessageObservable.subscribe((message: MonitoringMessage) =>
+        bridge.send('internal_telemetry', toTelemetryEvent(message))
+      )
+    } else if (configuration.internalMonitoringEndpointBuilder) {
+      monitoringMessageObservable.subscribe((message: MonitoringMessage) =>
+        telemetryEventObservable.notify(toTelemetryEvent(message))
+      )
+    }
   }
 
   assign(monitoringConfiguration, {
@@ -58,29 +82,48 @@ export function startInternalMonitoring(configuration: Configuration): InternalM
     )
   }
 
+  function toTelemetryEvent(message: MonitoringMessage): TelemetryEvent {
+    return combine(
+      {
+        date: new Date().getTime(),
+        service: 'browser-sdk',
+        version: __BUILD_ENV__SDK_VERSION__,
+        _dd: {
+          event_type: 'internal_telemetry' as const,
+        },
+      },
+      telemetryContextProvider !== undefined ? telemetryContextProvider() : {},
+      message
+    )
+  }
+
   return {
     setExternalContextProvider: (provider: () => Context) => {
       externalContextProvider = provider
     },
+    setTelemetryContextProvider: (provider: () => Context) => {
+      telemetryContextProvider = provider
+    },
+    telemetryEventObservable,
   }
 }
 
 export function startFakeInternalMonitoring() {
+  monitoringMessageObservable = new Observable<MonitoringMessage>()
   const messages: MonitoringMessage[] = []
   assign(monitoringConfiguration, {
     maxMessagesPerPage: Infinity,
     sentMessageCount: 0,
   })
-
-  onInternalMonitoringMessageCollected = (message: MonitoringMessage) => {
+  monitoringMessageObservable.subscribe((message: MonitoringMessage) => {
     messages.push(message)
-  }
+  })
 
   return messages
 }
 
 export function resetInternalMonitoring() {
-  onInternalMonitoringMessageCollected = undefined
+  monitoringMessageObservable = undefined
 }
 
 export function monitored<T extends (...params: any[]) => unknown>(
@@ -90,7 +133,7 @@ export function monitored<T extends (...params: any[]) => unknown>(
 ) {
   const originalMethod = descriptor.value!
   descriptor.value = function (this: any, ...args: Parameters<T>) {
-    const decorated = onInternalMonitoringMessageCollected ? monitor(originalMethod) : originalMethod
+    const decorated = monitoringMessageObservable ? monitor(originalMethod) : originalMethod
     return decorated.apply(this, args) as ReturnType<T>
   } as T
 }
@@ -131,7 +174,7 @@ export function addMonitoringMessage(message: string, context?: Context) {
   addToMonitoring({
     message,
     ...context,
-    status: StatusType.info,
+    status: StatusType.debug,
   })
 }
 
@@ -144,11 +187,11 @@ export function addMonitoringError(e: unknown) {
 
 function addToMonitoring(message: MonitoringMessage) {
   if (
-    onInternalMonitoringMessageCollected &&
+    monitoringMessageObservable &&
     monitoringConfiguration.sentMessageCount < monitoringConfiguration.maxMessagesPerPage
   ) {
     monitoringConfiguration.sentMessageCount += 1
-    onInternalMonitoringMessageCollected(message)
+    monitoringMessageObservable?.notify(message)
   }
 }
 

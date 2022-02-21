@@ -16,6 +16,7 @@ export {
   startInternalMonitoring,
   InternalMonitoring,
   MonitoringMessage,
+  TelemetryEvent,
   monitored,
   monitor,
   callMonitored,

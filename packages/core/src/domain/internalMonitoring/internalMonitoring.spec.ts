@@ -1,8 +1,10 @@
 import sinon from 'sinon'
+import type { TelemetryEvent, Context } from '@datadog/browser-core'
 import type { Clock } from '../../../test/specHelper'
 import { deleteEventBridgeStub, initEventBridgeStub, mockClock, stubEndpointBuilder } from '../../../test/specHelper'
 
 import type { Configuration } from '../configuration'
+import { updateExperimentalFeatures, resetExperimentalFeatures } from '../configuration'
 import type { InternalMonitoring, MonitoringMessage } from './internalMonitoring'
 import {
   monitor,
@@ -267,6 +269,63 @@ describe('internal monitoring', () => {
         throw new Error('message')
       })
       expect(JSON.parse(server.requests[1].requestBody).foo).not.toBeDefined()
+    })
+  })
+
+  describe('when new telemetry is enabled', () => {
+    let server: sinon.SinonFakeServer
+    let internalMonitoring: InternalMonitoring
+
+    beforeEach(() => {
+      updateExperimentalFeatures(['telemetry'])
+      internalMonitoring = startInternalMonitoring(configuration as Configuration)
+      server = sinon.fakeServer.create()
+    })
+
+    afterEach(() => {
+      resetExperimentalFeatures()
+      resetInternalMonitoring()
+      server.restore()
+    })
+
+    it('should notify observable', () => {
+      const notifySpy = jasmine.createSpy('notified')
+      internalMonitoring.telemetryEventObservable.subscribe(notifySpy)
+
+      callMonitored(() => {
+        throw new Error('message')
+      })
+
+      expect(notifySpy).toHaveBeenCalled()
+      const telemetryEvent = notifySpy.calls.mostRecent().args[0] as TelemetryEvent & Context
+      expect(telemetryEvent.message).toEqual('message')
+      expect(telemetryEvent._dd.event_type).toEqual('internal_telemetry')
+    })
+
+    it('should add telemetry context', () => {
+      const notifySpy = jasmine.createSpy('notified')
+      internalMonitoring.telemetryEventObservable.subscribe(notifySpy)
+      internalMonitoring.setTelemetryContextProvider(() => ({ foo: 'bar' }))
+
+      callMonitored(() => {
+        throw new Error('message')
+      })
+
+      expect(notifySpy).toHaveBeenCalled()
+      const telemetryEvent = notifySpy.calls.mostRecent().args[0] as TelemetryEvent & Context
+      expect(telemetryEvent.foo).toEqual('bar')
+    })
+
+    it('should still use existing system', () => {
+      internalMonitoring.setExternalContextProvider(() => ({
+        foo: 'bar',
+      }))
+
+      callMonitored(() => {
+        throw new Error('message')
+      })
+
+      expect(JSON.parse(server.requests[0].requestBody).foo).toEqual('bar')
     })
   })
 })
