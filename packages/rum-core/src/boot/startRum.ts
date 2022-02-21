@@ -5,7 +5,7 @@ import { startPerformanceCollection } from '../browser/performanceCollection'
 import { startRumAssembly } from '../domain/assembly'
 import { startForegroundContexts } from '../domain/foregroundContexts'
 import { startInternalContext } from '../domain/internalContext'
-import { LifeCycle } from '../domain/lifeCycle'
+import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { startParentContexts } from '../domain/parentContexts'
 import { startRequestCollection } from '../domain/requestCollection'
 import { startActionCollection } from '../domain/rumEventsCollection/action/actionCollection'
@@ -48,6 +48,23 @@ export function startRum(
       { view: { name: null } }
     )
   )
+  internalMonitoring.setTelemetryContextProvider(() => ({
+    application: {
+      id: configuration.applicationId,
+    },
+    session: {
+      id: session.findTrackedSession()?.id,
+    },
+    view: {
+      id: parentContexts.findView()?.id,
+    },
+    action: {
+      id: parentContexts.findAction()?.id,
+    },
+  }))
+  internalMonitoring.telemetryEventObservable.subscribe((event) => {
+    lifeCycle.notify(LifeCycleEventType.TELEMETRY_EVENT_COLLECTED, event)
+  })
 
   const { parentContexts, foregroundContexts, urlContexts } = startRumEventCollection(
     lifeCycle,

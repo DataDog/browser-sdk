@@ -21,7 +21,7 @@ enum StatusType {
 export interface InternalMonitoring {
   setExternalContextProvider: (provider: () => Context) => void
   setTelemetryContextProvider: (provider: () => Context) => void
-  telemetryEventObservable: Observable<TelemetryEvent>
+  telemetryEventObservable: Observable<TelemetryEvent & Context>
 }
 
 export interface MonitoringMessage extends Context {
@@ -45,7 +45,7 @@ export function startInternalMonitoring(configuration: Configuration): InternalM
   let externalContextProvider: () => Context
   let telemetryContextProvider: () => Context
   monitoringMessageObservable = new Observable<MonitoringMessage>()
-  const telemetryEventObservable = new Observable<TelemetryEvent>()
+  const telemetryEventObservable = new Observable<TelemetryEvent & Context>()
 
   if (canUseEventBridge()) {
     const bridge = getEventBridge<'internal_log', MonitoringMessage>()!
@@ -82,7 +82,7 @@ export function startInternalMonitoring(configuration: Configuration): InternalM
     )
   }
 
-  function toTelemetryEvent(message: MonitoringMessage): TelemetryEvent {
+  function toTelemetryEvent(message: MonitoringMessage): TelemetryEvent & Context {
     return combine(
       {
         date: new Date().getTime(),

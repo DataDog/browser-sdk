@@ -1,4 +1,4 @@
-import type { Context, RawError, RelativeTime, Subscription } from '@datadog/browser-core'
+import type { Context, RawError, RelativeTime, Subscription, TelemetryEvent } from '@datadog/browser-core'
 import type { RumPerformanceEntry } from '../browser/performanceCollection'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { CommonContext, RawRumEvent } from '../rawRumEvent.types'
@@ -35,6 +35,7 @@ export enum LifeCycleEventType {
   RAW_RUM_EVENT_COLLECTED,
   RUM_EVENT_COLLECTED,
   RAW_ERROR_COLLECTED,
+  TELEMETRY_EVENT_COLLECTED,
 }
 
 export class LifeCycle {
@@ -61,6 +62,7 @@ export class LifeCycle {
   ): void
   notify(eventType: LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, data: RawRumEventCollectedData): void
   notify(eventType: LifeCycleEventType.RUM_EVENT_COLLECTED, data: RumEvent & Context): void
+  notify(eventType: LifeCycleEventType.TELEMETRY_EVENT_COLLECTED, data: TelemetryEvent & Context): void
   notify(eventType: LifeCycleEventType, data?: any) {
     const eventCallbacks = this.callbacks[eventType]
     if (eventCallbacks) {
@@ -104,6 +106,10 @@ export class LifeCycle {
   subscribe(
     eventType: LifeCycleEventType.RUM_EVENT_COLLECTED,
     callback: (data: RumEvent & Context) => void
+  ): Subscription
+  subscribe(
+    eventType: LifeCycleEventType.TELEMETRY_EVENT_COLLECTED,
+    callback: (data: TelemetryEvent & Context) => void
   ): Subscription
   subscribe(eventType: LifeCycleEventType, callback: (data?: any) => void) {
     if (!this.callbacks[eventType]) {

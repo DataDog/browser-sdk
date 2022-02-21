@@ -17,6 +17,8 @@ export function startRumBatch(configuration: RumConfiguration, lifeCycle: LifeCy
     }
   })
 
+  lifeCycle.subscribe(LifeCycleEventType.TELEMETRY_EVENT_COLLECTED, (event) => batch.add(event))
+
   return {
     stop: () => batch.stop(),
   }
