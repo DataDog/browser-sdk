@@ -12,6 +12,7 @@ export {
 export { trackRuntimeError } from './domain/error/trackRuntimeError'
 export { computeStackTrace, StackTrace } from './domain/tracekit'
 export { defineGlobal, makePublicApi } from './boot/init'
+export { initReportObservable, CustomReport, CustomReportType } from './domain/report/reportObservable'
 export {
   startInternalMonitoring,
   InternalMonitoring,

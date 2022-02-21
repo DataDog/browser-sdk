@@ -36,6 +36,7 @@ export const enum DOM_EVENT {
   INPUT = 'input',
   PLAY = 'play',
   PAUSE = 'pause',
+  SECURITY_POLICY_VIOLATION = 'securitypolicyviolation',
 }
 
 export enum ResourceType {
