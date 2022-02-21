@@ -27,6 +27,7 @@ export const ErrorSource = {
   LOGGER: 'logger',
   NETWORK: 'network',
   SOURCE: 'source',
+  REPORT: 'report',
 } as const
 
 export enum ErrorHandling {

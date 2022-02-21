@@ -1,4 +1,4 @@
-import type { ConsoleLog, Context, RawError, RelativeTime, TimeStamp } from '@datadog/browser-core'
+import type { ConsoleLog, Context, RawError, RelativeTime, CustomReport, TimeStamp } from '@datadog/browser-core'
 import {
   ErrorSource,
   noop,
@@ -8,6 +8,7 @@ import {
   updateExperimentalFeatures,
   getTimeStamp,
   stopSessionManager,
+  isChromium,
 } from '@datadog/browser-core'
 import sinon from 'sinon'
 import type { Clock } from '../../../core/test/specHelper'
@@ -16,6 +17,7 @@ import {
   initEventBridgeStub,
   mockClock,
   stubEndpointBuilder,
+  stubReportingObserver,
 } from '../../../core/test/specHelper'
 import type { LogsConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
@@ -58,7 +60,9 @@ describe('logs', () => {
   let sessionIsTracked: boolean
   let server: sinon.SinonFakeServer
   let rawErrorObservable: Observable<RawError>
+  let reportObservable: Observable<CustomReport>
   let consoleObservable: Observable<ConsoleLog>
+
   const sessionManager: LogsSessionManager = {
     findTrackedSession: () => (sessionIsTracked ? { id: SESSION_ID } : undefined),
   }
@@ -71,6 +75,7 @@ describe('logs', () => {
       configuration,
       rawErrorObservable,
       consoleObservable,
+      reportObservable,
       internalMonitoring,
       sessionManager,
       errorLogger
@@ -86,6 +91,7 @@ describe('logs', () => {
     sessionIsTracked = true
     rawErrorObservable = new Observable<RawError>()
     consoleObservable = new Observable<ConsoleLog>()
+    reportObservable = new Observable<CustomReport>()
     server = sinon.fakeServer.create()
   })
 
@@ -201,6 +207,24 @@ describe('logs', () => {
       expect(consoleLogSpy).toHaveBeenCalled()
 
       resetExperimentalFeatures()
+    })
+
+    it('should send reports', () => {
+      if (!isChromium()) {
+        pending('no ReportingObserver support')
+      }
+      const logger = new Logger(noop)
+      const logErrorSpy = spyOn(logger, 'log')
+      const reportingObserverStub = stubReportingObserver()
+      updateExperimentalFeatures(['forward-reports'])
+      originalStartLogs({ ...baseConfiguration }, logger)
+
+      reportingObserverStub.raiseReport('intervention')
+
+      expect(logErrorSpy).toHaveBeenCalled()
+
+      resetExperimentalFeatures()
+      reportingObserverStub.reset()
     })
   })
 

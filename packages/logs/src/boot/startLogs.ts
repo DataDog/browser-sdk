@@ -1,4 +1,12 @@
-import type { ConsoleLog, Context, InternalMonitoring, RawError, RelativeTime } from '@datadog/browser-core'
+import type {
+  ConsoleLog,
+  Context,
+  InternalMonitoring,
+  RawError,
+  RelativeTime,
+  CustomReport,
+} from '@datadog/browser-core'
+
 import {
   areCookiesAuthorized,
   combine,
@@ -9,6 +17,8 @@ import {
   getEventBridge,
   getRelativeTime,
   startInternalMonitoring,
+  CustomReportType,
+  initReportObservable,
   initConsoleObservable,
   ConsoleApiName,
   ErrorSource,
@@ -30,6 +40,12 @@ const LogStatusForApi = {
   [ConsoleApiName.error]: StatusType.error,
 }
 
+const LogStatusForReport = {
+  [CustomReportType.csp_violation]: StatusType.error,
+  [CustomReportType.intervention]: StatusType.error,
+  [CustomReportType.deprecation]: StatusType.warn,
+}
+
 export function startLogs(configuration: LogsConfiguration, logger: Logger) {
   const internalMonitoring = startInternalMonitoring(configuration)
 
@@ -40,19 +56,29 @@ export function startLogs(configuration: LogsConfiguration, logger: Logger) {
     trackNetworkError(configuration, rawErrorObservable)
   }
   const consoleObservable = initConsoleObservable(configuration.forwardConsoleLogs)
+  const reportObservable = initReportObservable(['intervention', 'deprecation', 'csp_violation'])
 
   const session =
     areCookiesAuthorized(configuration.cookieOptions) && !canUseEventBridge()
       ? startLogsSessionManager(configuration)
       : startLogsSessionManagerStub(configuration)
 
-  return doStartLogs(configuration, rawErrorObservable, consoleObservable, internalMonitoring, session, logger)
+  return doStartLogs(
+    configuration,
+    rawErrorObservable,
+    consoleObservable,
+    reportObservable,
+    internalMonitoring,
+    session,
+    logger
+  )
 }
 
 export function doStartLogs(
   configuration: LogsConfiguration,
   rawErrorObservable: Observable<RawError>,
   consoleObservable: Observable<ConsoleLog>,
+  reportObservable: Observable<CustomReport>,
   internalMonitoring: InternalMonitoring,
   sessionManager: LogsSessionManager,
   logger: Logger
@@ -106,8 +132,25 @@ export function doStartLogs(
     logger.log(log.message, messageContext, LogStatusForApi[log.api])
   }
 
+  function logReport(report: CustomReport) {
+    let messageContext: Partial<LogsEvent> | undefined
+    const logStatus = LogStatusForReport[report.type]
+    if (logStatus === StatusType.error) {
+      messageContext = {
+        error: {
+          kind: report.type,
+          origin: ErrorSource.REPORT,
+          stack: report.stack,
+        },
+      }
+    }
+
+    logger.log(report.message, messageContext, logStatus)
+  }
+
   rawErrorObservable.subscribe(reportRawError)
   consoleObservable.subscribe(reportConsoleLog)
+  reportObservable.subscribe(logReport)
 
   return (message: LogsMessage, currentContext: Context) => {
     const contextualizedMessage = assemble(message, currentContext)
