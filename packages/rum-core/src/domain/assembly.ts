@@ -21,7 +21,6 @@ import type {
 } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
-import { buildEnv } from '../boot/buildEnv'
 import { getSyntheticsContext } from './syntheticsContext'
 import { getCiTestContext } from './ciTestContext'
 import type { LifeCycle } from './lifeCycle'
@@ -97,6 +96,8 @@ export function startRumAssembly(
       if (session && viewContext && urlContext) {
         const actionContext = parentContexts.findAction(startTime)
         const commonContext = savedCommonContext || getCommonContext()
+        // @ts-ignore replaced at build time
+        const sdkVersion = __BUILD_ENV__SDK_VERSION__
         const rumContext: RumContext = {
           _dd: {
             format_version: 2,
@@ -104,7 +105,7 @@ export function startRumAssembly(
             session: {
               plan: session.hasReplayPlan ? RumSessionPlan.REPLAY : RumSessionPlan.LITE,
             },
-            browser_sdk_version: canUseEventBridge() ? buildEnv.sdkVersion : undefined,
+            browser_sdk_version: canUseEventBridge() ? sdkVersion : undefined,
           },
           application: {
             id: configuration.applicationId,

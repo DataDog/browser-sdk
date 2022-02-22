@@ -1,14 +1,12 @@
 import { setDebugMode } from '../domain/internalMonitoring'
 import { catchUserErrors } from '../tools/catchUserErrors'
 
-export function makePublicApi<T>(
-  buildEnv: BuildEnv,
-  stub: T
-): T & { onReady(callback: () => void): void; version: string } {
+export function makePublicApi<T>(stub: T): T & { onReady(callback: () => void): void; version: string } {
   const publicApi = {
     ...stub,
 
-    version: buildEnv.sdkVersion,
+    // @ts-ignore replaced at build time
+    version: __BUILD_ENV__SDK_VERSION__,
 
     // This API method is intentionally not monitored, since the only thing executed is the
     // user-provided 'callback'.  All SDK usages executed in the callback should be monitored, and
@@ -36,15 +34,4 @@ export function defineGlobal<Global, Name extends keyof Global>(global: Global, 
   if (existingGlobalVariable && existingGlobalVariable.q) {
     existingGlobalVariable.q.forEach((fn) => catchUserErrors(fn, 'onReady callback threw an error:')())
   }
-}
-
-export enum BuildMode {
-  RELEASE = 'release',
-  CANARY = 'canary',
-  E2E_TEST = 'e2e-test',
-}
-
-export interface BuildEnv {
-  buildMode: BuildMode
-  sdkVersion: string
 }

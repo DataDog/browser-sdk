@@ -1,4 +1,3 @@
-import type { BuildEnv } from '../../boot/init'
 import { timeStampNow } from '../../tools/timeUtils'
 import { normalizeUrl } from '../../tools/urlPolyfill'
 import { generateUUID } from '../../tools/utils'
@@ -24,7 +23,6 @@ export type EndpointBuilder = ReturnType<typeof createEndpointBuilder>
 
 export function createEndpointBuilder(
   initConfiguration: InitConfiguration,
-  buildEnv: BuildEnv,
   endpointType: EndpointType,
   tags: string[],
   source?: string
@@ -39,11 +37,13 @@ export function createEndpointBuilder(
 
   return {
     build() {
+      // @ts-ignore replaced at build time
+      const sdkVersion: string = __BUILD_ENV__SDK_VERSION__
       let parameters =
         `ddsource=${source || 'browser'}` +
-        `&ddtags=${encodeURIComponent([`sdk_version:${buildEnv.sdkVersion}`].concat(tags).join(','))}` +
+        `&ddtags=${encodeURIComponent([`sdk_version:${sdkVersion}`].concat(tags).join(','))}` +
         `&dd-api-key=${clientToken}` +
-        `&dd-evp-origin-version=${encodeURIComponent(buildEnv.sdkVersion)}` +
+        `&dd-evp-origin-version=${encodeURIComponent(sdkVersion)}` +
         `&dd-evp-origin=browser` +
         `&dd-request-id=${generateUUID()}`
 
