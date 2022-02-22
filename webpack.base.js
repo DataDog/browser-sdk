@@ -20,10 +20,14 @@ module.exports = ({ entry, mode, filename, types }) => ({
         test: /\.ts$/,
         loader: 'string-replace-loader',
         options: {
-          multiple: [
-            { search: '<<< SDK_VERSION >>>', replace: buildEnv.SDK_VERSION },
-            { search: '<<< BUILD_MODE >>>', replace: buildEnv.BUILD_MODE },
-          ],
+          multiple:
+            // do not replace in unit test in order to test behaviors related to build env variables
+            mode !== 'development'
+              ? [
+                  { search: '__BUILD_ENV__BUILD_MODE__', replace: `"${buildEnv.BUILD_MODE}"` },
+                  { search: '__BUILD_ENV__SDK_VERSION__', replace: `"${buildEnv.SDK_VERSION}"` },
+                ]
+              : [],
         },
       },
 

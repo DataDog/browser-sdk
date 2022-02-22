@@ -1,6 +1,10 @@
 import { clearAllCookies } from './specHelper'
 
 beforeEach(() => {
+  // @ts-ignore avoid reference error
+  window.__BUILD_ENV__BUILD_MODE__ = 'dev'
+  // @ts-ignore avoid reference error
+  window.__BUILD_ENV__SDK_VERSION__ = 'dev'
   ;(navigator.sendBeacon as any) = false
   // reset globals
   ;(window as any).DD_LOGS = {}
