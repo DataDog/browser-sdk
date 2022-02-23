@@ -1,3 +1,4 @@
+import type { BuildEnvWindow } from '../../../test/specHelper'
 import { computeTransportConfiguration } from './transportConfiguration'
 
 describe('transportConfiguration', () => {
@@ -5,8 +6,7 @@ describe('transportConfiguration', () => {
   const otherClientToken = 'some_other_client_token'
 
   beforeEach(() => {
-    // @ts-ignore simulate a specific sdk version
-    window.__BUILD_ENV__SDK_VERSION__ = 'some_version'
+    ;(window as unknown as BuildEnvWindow).__BUILD_ENV__SDK_VERSION__ = 'some_version'
   })
 
   describe('internal monitoring endpoint', () => {
@@ -21,8 +21,7 @@ describe('transportConfiguration', () => {
 
   describe('endpoint overload', () => {
     it('should be available for e2e-test build mode', () => {
-      // @ts-ignore simulate e2e-test build
-      window.__BUILD_ENV__BUILD_MODE__ = 'e2e-test'
+      ;(window as unknown as BuildEnvWindow).__BUILD_ENV__BUILD_MODE__ = 'e2e-test'
 
       const configuration = computeTransportConfiguration({ clientToken })
       expect(configuration.rumEndpointBuilder.build()).toEqual('<<< E2E RUM ENDPOINT >>>')

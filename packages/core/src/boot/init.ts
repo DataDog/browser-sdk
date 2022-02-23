@@ -1,11 +1,13 @@
 import { setDebugMode } from '../domain/internalMonitoring'
 import { catchUserErrors } from '../tools/catchUserErrors'
 
+// replaced at build time
+declare const __BUILD_ENV__SDK_VERSION__: string
+
 export function makePublicApi<T>(stub: T): T & { onReady(callback: () => void): void; version: string } {
   const publicApi = {
     ...stub,
 
-    // @ts-ignore replaced at build time
     version: __BUILD_ENV__SDK_VERSION__,
 
     // This API method is intentionally not monitored, since the only thing executed is the

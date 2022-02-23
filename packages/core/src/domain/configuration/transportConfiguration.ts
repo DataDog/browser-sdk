@@ -4,6 +4,9 @@ import type { EndpointBuilder } from './endpointBuilder'
 import { createEndpointBuilder, INTAKE_SITE_US } from './endpointBuilder'
 import { buildTags } from './tags'
 
+// replaced at build time
+declare const __BUILD_ENV__BUILD_MODE__: string
+
 export interface TransportConfiguration {
   logsEndpointBuilder: EndpointBuilder
   rumEndpointBuilder: EndpointBuilder
@@ -36,7 +39,6 @@ export function computeTransportConfiguration(initConfiguration: InitConfigurati
 }
 
 function computeEndpointBuilders(initConfiguration: InitConfiguration, tags: string[]) {
-  // @ts-ignore replaced at build time
   if (__BUILD_ENV__BUILD_MODE__ === 'e2e-test') {
     const e2eEndpointBuilder = (placeholder: string) => ({
       build: () => placeholder,

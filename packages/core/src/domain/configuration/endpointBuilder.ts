@@ -3,6 +3,9 @@ import { normalizeUrl } from '../../tools/urlPolyfill'
 import { generateUUID } from '../../tools/utils'
 import type { InitConfiguration } from './configuration'
 
+// replaced at build time
+declare const __BUILD_ENV__SDK_VERSION__: string
+
 export const ENDPOINTS = {
   logs: 'logs',
   rum: 'rum',
@@ -37,13 +40,11 @@ export function createEndpointBuilder(
 
   return {
     build() {
-      // @ts-ignore replaced at build time
-      const sdkVersion: string = __BUILD_ENV__SDK_VERSION__
       let parameters =
         `ddsource=${source || 'browser'}` +
-        `&ddtags=${encodeURIComponent([`sdk_version:${sdkVersion}`].concat(tags).join(','))}` +
+        `&ddtags=${encodeURIComponent([`sdk_version:${__BUILD_ENV__SDK_VERSION__}`].concat(tags).join(','))}` +
         `&dd-api-key=${clientToken}` +
-        `&dd-evp-origin-version=${encodeURIComponent(sdkVersion)}` +
+        `&dd-evp-origin-version=${encodeURIComponent(__BUILD_ENV__SDK_VERSION__)}` +
         `&dd-evp-origin=browser` +
         `&dd-request-id=${generateUUID()}`
 
