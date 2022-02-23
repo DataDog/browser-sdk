@@ -68,8 +68,7 @@ function computeEndpointBuilders(initConfiguration: InitConfiguration, buildEnv:
         { ...initConfiguration, clientToken: initConfiguration.internalMonitoringApiKey },
         buildEnv,
         'logs',
-        tags,
-        'browser-agent-internal-monitoring'
+        [`service:browser-sdk`, `version:${buildEnv.sdkVersion}`]
       ),
     }
   }
