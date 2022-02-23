@@ -406,6 +406,8 @@ describe('view custom timings', () => {
     clock.tick(20)
     addTiming('foo')
 
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
     const view = getViewUpdate(3)
     expect(view.id).toEqual(currentViewId)
     expect(view.customTimings).toEqual({ foo: 20 as Duration })
@@ -421,7 +423,9 @@ describe('view custom timings', () => {
     clock.tick(10)
     addTiming('bar')
 
-    const view = getViewUpdate(2)
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    const view = getViewUpdate(1)
     expect(view.customTimings).toEqual({
       bar: 30 as Duration,
       foo: 20 as Duration,
@@ -438,7 +442,9 @@ describe('view custom timings', () => {
     clock.tick(10)
     addTiming('bar')
 
-    let view = getViewUpdate(2)
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    let view = getViewUpdate(1)
     expect(view.customTimings).toEqual({
       bar: 30 as Duration,
       foo: 20 as Duration,
@@ -447,10 +453,12 @@ describe('view custom timings', () => {
     clock.tick(20)
     addTiming('foo')
 
-    view = getViewUpdate(3)
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    view = getViewUpdate(2)
     expect(view.customTimings).toEqual({
       bar: 30 as Duration,
-      foo: 50 as Duration,
+      foo: (THROTTLE_VIEW_UPDATE_PERIOD + 50) as Duration,
     })
   })
 
@@ -460,6 +468,8 @@ describe('view custom timings', () => {
 
     clock.tick(1234)
     addTiming('foo', timeStampNow())
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getViewUpdate(1).customTimings).toEqual({
       foo: 1234 as Duration,
@@ -472,6 +482,8 @@ describe('view custom timings', () => {
 
     clock.tick(1234)
     addTiming('foo', relativeNow())
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getViewUpdate(1).customTimings).toEqual({
       foo: 1234 as Duration,
@@ -486,6 +498,8 @@ describe('view custom timings', () => {
 
     clock.tick(1234)
     addTiming('foo bar-qux.@zip_21%$*€👋', timeStampNow())
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getViewUpdate(1).customTimings).toEqual({
       'foo_bar-qux.@zip_21_$____': 1234 as Duration,
