@@ -2,10 +2,9 @@ import type { Context } from '../../tools/context'
 import { display } from '../../tools/display'
 import { toStackTraceString } from '../../tools/error'
 import { assign, combine, jsonStringify } from '../../tools/utils'
-import { canUseEventBridge, getEventBridge } from '../../transport'
+import { canUseEventBridge, getEventBridge, startBatchWithReplica } from '../../transport'
 import type { Configuration } from '../configuration'
 import { computeStackTrace } from '../tracekit'
-import { startMonitoringBatch } from './startMonitoringBatch'
 
 enum StatusType {
   info = 'info',
@@ -41,7 +40,11 @@ export function startInternalMonitoring(configuration: Configuration): InternalM
     onInternalMonitoringMessageCollected = (message: MonitoringMessage) =>
       bridge.send('internal_log', withContext(message))
   } else if (configuration.internalMonitoringEndpointBuilder) {
-    const batch = startMonitoringBatch(configuration)
+    const batch = startBatchWithReplica(
+      configuration,
+      configuration.internalMonitoringEndpointBuilder,
+      configuration.replica?.internalMonitoringEndpointBuilder
+    )
     onInternalMonitoringMessageCollected = (message: MonitoringMessage) => batch.add(withContext(message))
   }
 

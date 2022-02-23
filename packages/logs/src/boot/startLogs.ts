@@ -12,13 +12,13 @@ import {
   initConsoleObservable,
   ConsoleApiName,
   ErrorSource,
+  startBatchWithReplica,
 } from '@datadog/browser-core'
 import { trackNetworkError } from '../domain/trackNetworkError'
 import type { Logger, LogsMessage } from '../domain/logger'
 import { StatusType } from '../domain/logger'
 import type { LogsSessionManager } from '../domain/logsSessionManager'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
-import { startLoggerBatch } from '../transport/startLoggerBatch'
 import type { LogsConfiguration } from '../domain/configuration'
 import type { LogsEvent } from '../logsEvent.types'
 
@@ -70,7 +70,11 @@ export function doStartLogs(
     const bridge = getEventBridge<'log', Context>()!
     onLogEventCollected = (message) => bridge.send('log', message)
   } else {
-    const batch = startLoggerBatch(configuration)
+    const batch = startBatchWithReplica(
+      configuration,
+      configuration.logsEndpointBuilder,
+      configuration.replica?.logsEndpointBuilder
+    )
     onLogEventCollected = (message) => batch.add(message)
   }
 
