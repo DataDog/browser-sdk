@@ -12,3 +12,4 @@ export {
   startInternalMonitoring,
 } from './internalMonitoring'
 export { TelemetryEvent } from './telemetryEvent.types'
+export { startMonitoringBatch } from './startMonitoringBatch'

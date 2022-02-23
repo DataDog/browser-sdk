@@ -1,11 +1,15 @@
 import { Batch, HttpRequest } from '../../transport'
-import type { Configuration, EndpointBuilder, MonitoringMessage } from '../..'
+import type { Configuration, EndpointBuilder, Context } from '../..'
 
-export function startMonitoringBatch(configuration: Configuration) {
-  const primaryBatch = createMonitoringBatch(configuration.internalMonitoringEndpointBuilder!)
+export function startMonitoringBatch<T extends Context>(
+  configuration: Configuration,
+  endpoint: EndpointBuilder,
+  replicaEndpoint?: EndpointBuilder
+) {
+  const primaryBatch = createMonitoringBatch(endpoint)
   let replicaBatch: Batch | undefined
-  if (configuration.replica !== undefined) {
-    replicaBatch = createMonitoringBatch(configuration.replica.internalMonitoringEndpointBuilder)
+  if (replicaEndpoint) {
+    replicaBatch = createMonitoringBatch(replicaEndpoint)
   }
 
   function createMonitoringBatch(endpointBuilder: EndpointBuilder) {
@@ -19,7 +23,7 @@ export function startMonitoringBatch(configuration: Configuration) {
   }
 
   return {
-    add(message: MonitoringMessage) {
+    add(message: T) {
       primaryBatch.add(message)
       if (replicaBatch) {
         replicaBatch.add(message)

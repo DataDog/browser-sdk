@@ -53,7 +53,11 @@ export function startInternalMonitoring(configuration: Configuration): InternalM
       bridge.send('internal_log', withContext(message))
     )
   } else if (configuration.internalMonitoringEndpointBuilder) {
-    const batch = startMonitoringBatch(configuration)
+    const batch = startMonitoringBatch(
+      configuration,
+      configuration.internalMonitoringEndpointBuilder,
+      configuration.replica?.internalMonitoringEndpointBuilder
+    )
     monitoringMessageObservable.subscribe((message: MonitoringMessage) => batch.add(withContext(message)))
   }
   if (isExperimentalFeatureEnabled('telemetry')) {
