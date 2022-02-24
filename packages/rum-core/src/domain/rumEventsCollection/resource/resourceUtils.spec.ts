@@ -292,10 +292,14 @@ describe('computePerformanceResourceDuration', () => {
 })
 
 describe('shouldTrackResource', () => {
-  const configuration: RumConfiguration = {
-    ...validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!,
-    ...SPEC_ENDPOINTS,
-  }
+  let configuration: RumConfiguration
+
+  beforeEach(() => {
+    configuration = {
+      ...validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!,
+      ...SPEC_ENDPOINTS,
+    }
+  })
 
   it('should exclude requests on intakes endpoints', () => {
     expect(isAllowedRequestUrl(configuration, 'https://rum-intake.com/v1/input/abcde?foo=bar')).toBe(false)

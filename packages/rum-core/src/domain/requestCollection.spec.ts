@@ -9,13 +9,8 @@ import { trackFetch, trackXhr } from './requestCollection'
 import type { Tracer } from './tracing/tracer'
 import { clearTracingIfNeeded, TraceIdentifier } from './tracing/tracer'
 
-const configuration: RumConfiguration = {
-  ...validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!,
-  ...SPEC_ENDPOINTS,
-  maxBatchSize: 1,
-}
-
 describe('collect fetch', () => {
+  let configuration: RumConfiguration
   const FAKE_URL = 'http://fake-url/'
   let fetchStub: FetchStub
   let fetchStubManager: FetchStubManager
@@ -26,6 +21,11 @@ describe('collect fetch', () => {
   beforeEach(() => {
     if (isIE()) {
       pending('no fetch support')
+    }
+    configuration = {
+      ...validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!,
+      ...SPEC_ENDPOINTS,
+      maxBatchSize: 1,
     }
     fetchStubManager = stubFetch()
 
@@ -138,6 +138,7 @@ describe('collect fetch', () => {
 })
 
 describe('collect xhr', () => {
+  let configuration: RumConfiguration
   let startSpy: jasmine.Spy<(requestStartEvent: RequestStartEvent) => void>
   let completeSpy: jasmine.Spy<(requestCompleteEvent: RequestCompleteEvent) => void>
   let stubXhrManager: { reset(): void }
@@ -146,6 +147,11 @@ describe('collect xhr', () => {
   beforeEach(() => {
     if (isIE()) {
       pending('no fetch support')
+    }
+    configuration = {
+      ...validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!,
+      ...SPEC_ENDPOINTS,
+      maxBatchSize: 1,
     }
     stubXhrManager = stubXhr()
     startSpy = jasmine.createSpy('requestStart')
