@@ -15,8 +15,8 @@ async function main() {
 
   const results = await replace({
     files: `${buildDirectory}/**/*.js`,
-    from: Object.keys(buildEnv).map((entry) => `<<< ${entry} >>>`),
-    to: Object.values(buildEnv),
+    from: Object.keys(buildEnv).map((entry) => `__BUILD_ENV__${entry}__`),
+    to: Object.values(buildEnv).map((value) => `"${value}"`),
   })
   printLog(
     'Changed files:',

@@ -4,16 +4,12 @@ import { setup } from '../../../test/specHelper'
 import type { RumSessionManagerMock } from '../../../test/mockRumSessionManager'
 import { createRumSessionManagerMock } from '../../../test/mockRumSessionManager'
 import type { RumFetchCompleteContext, RumFetchStartContext, RumXhrStartContext } from '../requestCollection'
+import type { RumConfiguration } from '../configuration'
 import { validateAndBuildRumConfiguration } from '../configuration'
 import { startTracer, TraceIdentifier } from './tracer'
 
 describe('tracer', () => {
-  const configuration = validateAndBuildRumConfiguration({
-    clientToken: 'xxx',
-    applicationId: 'xxx',
-    allowedTracingOrigins: [window.location.origin],
-    service: 'service',
-  })!
+  let configuration: RumConfiguration
   const ALLOWED_DOMAIN_CONTEXT: Partial<RumXhrStartContext | RumFetchStartContext> = {
     url: window.location.origin,
   }
@@ -24,6 +20,12 @@ describe('tracer', () => {
   let sessionManager: RumSessionManagerMock
 
   beforeEach(() => {
+    configuration = validateAndBuildRumConfiguration({
+      clientToken: 'xxx',
+      applicationId: 'xxx',
+      allowedTracingOrigins: [window.location.origin],
+      service: 'service',
+    })!
     setupBuilder = setup()
     sessionManager = createRumSessionManagerMock()
   })
