@@ -134,7 +134,9 @@ function observeClicks(lifeCycle: LifeCycle, domMutationObservable: Observable<v
         // Track whether an error occurs while the page has activity, to produce error clicks.
         let firstErrorTime: Duration | undefined
         const hadErrorSubscription = lifeCycle.subscribe(LifeCycleEventType.RAW_ERROR_COLLECTED, () => {
-          firstErrorTime = elapsed(startClocks.timeStamp, timeStampNow())
+          if (firstErrorTime === undefined) {
+            firstErrorTime = elapsed(startClocks.timeStamp, timeStampNow())
+          }
         })
 
         // Track whether the focus changed (legitimate user action)
