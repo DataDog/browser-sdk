@@ -1,5 +1,10 @@
 const webpack = require('webpack')
-const webpackConfig = require('../../webpack.base')({ mode: 'development', types: ['jasmine'] })
+const webpackConfig = require('../../webpack.base')({
+  mode: 'development',
+  types: ['jasmine'],
+  // do not replace build env variables in unit test in order to test different build behaviors
+  keepBuildEnvVariables: true,
+})
 const getTestReportDirectory = require('../getTestReportDirectory')
 const jasmineSeedReporterPlugin = require('./jasmineSeedReporterPlugin')
 

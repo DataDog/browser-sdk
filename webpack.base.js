@@ -6,7 +6,7 @@ const buildEnv = require('./scripts/build-env')
 
 const tsconfigPath = path.join(__dirname, 'tsconfig.webpack.json')
 
-module.exports = ({ entry, mode, filename, types }) => ({
+module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables }) => ({
   entry,
   mode,
   output: {
@@ -55,14 +55,12 @@ module.exports = ({ entry, mode, filename, types }) => ({
     ],
   },
 
-  plugins:
-    // do not replace in unit test in order to test behaviors related to build env variables
-    mode !== 'development'
-      ? [
-          new webpack.DefinePlugin({
-            __BUILD_ENV__BUILD_MODE__: JSON.stringify(buildEnv.BUILD_MODE),
-            __BUILD_ENV__SDK_VERSION__: JSON.stringify(buildEnv.SDK_VERSION),
-          }),
-        ]
-      : [],
+  plugins: !keepBuildEnvVariables
+    ? [
+        new webpack.DefinePlugin({
+          __BUILD_ENV__BUILD_MODE__: JSON.stringify(buildEnv.BUILD_MODE),
+          __BUILD_ENV__SDK_VERSION__: JSON.stringify(buildEnv.SDK_VERSION),
+        }),
+      ]
+    : [],
 })
