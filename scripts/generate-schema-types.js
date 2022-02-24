@@ -8,16 +8,18 @@ const schemasDirectoryPath = path.join(__dirname, '../rum-events-format/schemas'
 const prettierConfigPath = path.join(__dirname, '../.prettierrc.yml')
 
 async function main() {
-  await generateTypesFromSchema('../packages/rum-core/src/rumEvent.types.ts', 'rum-events-schema.json')
   await generateTypesFromSchema(
-    '../packages/core/src/domain/internalMonitoring/telemetryEvent.types.ts',
+    path.join(__dirname, '../packages/rum-core/src/rumEvent.types.ts'),
+    'rum-events-schema.json'
+  )
+  await generateTypesFromSchema(
+    path.join(__dirname, '../packages/core/src/domain/internalMonitoring/telemetryEvent.types.ts'),
     'telemetry-events-schema.json'
   )
 }
 
 async function generateTypesFromSchema(typesPath, schema) {
   const schemaPath = path.join(schemasDirectoryPath, schema)
-  const compiledTypesPath = path.join(__dirname, typesPath)
   const prettierConfig = await prettier.resolveConfig(prettierConfigPath)
   printLog(`Compiling ${schemaPath}...`)
   const compiledTypes = await compileFromFile(schemaPath, {
@@ -26,8 +28,8 @@ async function generateTypesFromSchema(typesPath, schema) {
       '/* eslint-disable */\n/**\n * DO NOT MODIFY IT BY HAND. Run `yarn rum-events-format:sync` instead.\n*/',
     style: prettierConfig,
   })
-  printLog(`Writing ${compiledTypesPath}...`)
-  fs.writeFileSync(compiledTypesPath, compiledTypes)
+  printLog(`Writing ${typesPath}...`)
+  fs.writeFileSync(typesPath, compiledTypes)
   printLog('Generation done.')
 }
 
