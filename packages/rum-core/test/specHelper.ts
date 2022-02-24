@@ -23,7 +23,7 @@ import {
 import type { CiTestWindow } from '../src/domain/ciTestContext'
 import type { RumConfiguration } from '../src/domain/configuration'
 import { validateAndBuildRumConfiguration } from '../src/domain/configuration'
-import { validateFormat } from './formatValidation'
+import { validateRumFormat } from './formatValidation'
 import { createRumSessionManagerMock } from './mockRumSessionManager'
 
 export interface TestSetupBuilder {
@@ -205,7 +205,7 @@ function validateRumEventFormat(rawRumEvent: RawRumEvent) {
       url: 'fake url',
     },
   }
-  validateFormat(combine(fakeContext, rawRumEvent))
+  validateRumFormat(combine(fakeContext, rawRumEvent))
 }
 
 export type ViewTest = ReturnType<typeof setupViewTest>

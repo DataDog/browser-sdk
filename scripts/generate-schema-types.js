@@ -4,16 +4,24 @@ const { compileFromFile } = require('json-schema-to-typescript')
 const prettier = require('prettier')
 const { printLog, logAndExit } = require('./utils')
 
-const workingDirectory = path.join(__dirname, '../rum-events-format')
-const schemaPath = path.join(workingDirectory, 'rum-events-format.json')
-const compiledTypesPath = path.join(__dirname, '../packages/rum-core/src/rumEvent.types.ts')
+const schemasDirectoryPath = path.join(__dirname, '../rum-events-format/schemas')
 const prettierConfigPath = path.join(__dirname, '../.prettierrc.yml')
 
 async function main() {
+  await generateTypesFromSchema('../packages/rum-core/src/rumEvent.types.ts', 'rum-events-schema.json')
+  await generateTypesFromSchema(
+    '../packages/core/src/domain/internalMonitoring/telemetryEvent.types.ts',
+    'telemetry-events-schema.json'
+  )
+}
+
+async function generateTypesFromSchema(typesPath, schema) {
+  const schemaPath = path.join(schemasDirectoryPath, schema)
+  const compiledTypesPath = path.join(__dirname, typesPath)
   const prettierConfig = await prettier.resolveConfig(prettierConfigPath)
   printLog(`Compiling ${schemaPath}...`)
   const compiledTypes = await compileFromFile(schemaPath, {
-    cwd: workingDirectory,
+    cwd: schemasDirectoryPath,
     bannerComment:
       '/* eslint-disable */\n/**\n * DO NOT MODIFY IT BY HAND. Run `yarn rum-events-format:sync` instead.\n*/',
     style: prettierConfig,
