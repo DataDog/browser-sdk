@@ -21,7 +21,7 @@
 - ⚡️ [RUMF-1115] throttle view updates by addTiming ([#1355](https://github.com/DataDog/browser-sdk/pull/1355))
 - 📝 Update the configuration of the Browser Sessions ([#1322](https://github.com/DataDog/browser-sdk/pull/1322))
 - ✨ [RUMF-1177] add index_in_view to segment meta ([#1342](https://github.com/DataDog/browser-sdk/pull/1342))
-- ⚗ [RUMF-1103] Remove event bridge FF ([#1333](https://github.com/DataDog/browser-sdk/pull/1333))
+- ✨ [RUMF-1103] enable RUM tracking inside mobile webviews ([#1333](https://github.com/DataDog/browser-sdk/pull/1333))
 - ⚗ [RUMF-1176] collect other console logs new ([#1316](https://github.com/DataDog/browser-sdk/pull/1316))
 
 ## v4.4.0
