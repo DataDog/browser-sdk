@@ -12,6 +12,7 @@ import {
   initConsoleObservable,
   ConsoleApiName,
   ErrorSource,
+  startMonitoringBatch,
 } from '@datadog/browser-core'
 import { trackNetworkError } from '../domain/trackNetworkError'
 import type { Logger, LogsMessage } from '../domain/logger'
@@ -32,6 +33,12 @@ const LogStatusForApi = {
 
 export function startLogs(configuration: LogsConfiguration, logger: Logger) {
   const internalMonitoring = startInternalMonitoring(configuration)
+  const monitoringBatch = startMonitoringBatch(
+    configuration,
+    configuration.rumEndpointBuilder,
+    configuration.replica?.rumEndpointBuilder
+  )
+  internalMonitoring.telemetryEventObservable.subscribe((event) => monitoringBatch.add(event))
 
   const rawErrorObservable = new Observable<RawError>()
 
@@ -62,6 +69,20 @@ export function doStartLogs(
       view: { name: null, url: null, referrer: null },
     })
   )
+  internalMonitoring.setTelemetryContextProvider(() => ({
+    application: {
+      id: getRUMInternalContext()?.application_id,
+    },
+    session: {
+      id: sessionManager.findTrackedSession()?.id,
+    },
+    view: {
+      id: (getRUMInternalContext()?.view as Context)?.id,
+    },
+    action: {
+      id: (getRUMInternalContext()?.user_action as Context)?.id,
+    },
+  }))
 
   const assemble = buildAssemble(sessionManager, configuration, reportRawError)
 
