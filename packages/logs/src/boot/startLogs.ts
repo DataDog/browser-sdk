@@ -56,7 +56,7 @@ export function startLogs(configuration: LogsConfiguration, logger: Logger) {
     trackNetworkError(configuration, rawErrorObservable)
   }
   const consoleObservable = initConsoleObservable(configuration.forwardConsoleLogs)
-  const reportObservable = initReportObservable(['intervention', 'deprecation', 'csp_violation'])
+  const reportObservable = initReportObservable(configuration.forwardReports)
 
   const session =
     areCookiesAuthorized(configuration.cookieOptions) && !canUseEventBridge()

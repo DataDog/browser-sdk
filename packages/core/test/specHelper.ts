@@ -1,5 +1,11 @@
 import type { EndpointBuilder } from '../src/domain/configuration'
-import type { ReportType, BrowserWindow, Report, ReportingObserver } from '../src/domain/report/browser.types'
+import type {
+  ReportType,
+  BrowserWindow,
+  Report,
+  ReportingObserver,
+  ReportingObserverOption,
+} from '../src/domain/report/browser.types'
 import { instrumentMethod } from '../src/tools/instrumentMethod'
 import { resetNavigationStart } from '../src/tools/timeUtils'
 import { buildUrl } from '../src/tools/urlPolyfill'
@@ -421,10 +427,18 @@ export function stubCookie() {
 
 export function stubReportingObserver() {
   const originalReportingObserver = (window as BrowserWindow).ReportingObserver
-  let callbacks: Array<(reports: Report[]) => void> = []
+  let callbacks: { [k in ReportType]?: Array<(reports: Report[]) => void> } = {}
 
-  ;(window as BrowserWindow).ReportingObserver = function (callback: (reports: Report[]) => void) {
-    callbacks.push(callback)
+  ;(window as BrowserWindow).ReportingObserver = function (
+    callback: (reports: Report[]) => void,
+    { types }: ReportingObserverOption
+  ) {
+    types.forEach((type) => {
+      if (!callbacks[type]) callbacks[type] = []
+
+      callbacks[type]?.push(callback)
+    })
+
     return {
       disconnect() {
         noop()
@@ -440,11 +454,11 @@ export function stubReportingObserver() {
 
   return {
     raiseReport(type: ReportType) {
-      callbacks.forEach((callback) => callback([{ ...FAKE_REPORT, type }]))
+      if (callbacks[type]) callbacks[type]!.forEach((callback) => callback([{ ...FAKE_REPORT, type }]))
     },
     reset() {
       ;(window as BrowserWindow).ReportingObserver = originalReportingObserver
-      callbacks = []
+      callbacks = {}
     },
   }
 }

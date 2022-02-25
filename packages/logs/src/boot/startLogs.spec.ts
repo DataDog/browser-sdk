@@ -217,7 +217,7 @@ describe('logs', () => {
       const logErrorSpy = spyOn(logger, 'log')
       const reportingObserverStub = stubReportingObserver()
       updateExperimentalFeatures(['forward-reports'])
-      originalStartLogs({ ...baseConfiguration }, logger)
+      originalStartLogs({ ...baseConfiguration, forwardReports: ['intervention'] }, logger)
 
       reportingObserverStub.raiseReport('intervention')
 
