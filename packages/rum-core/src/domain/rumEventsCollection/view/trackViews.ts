@@ -135,7 +135,7 @@ export function trackViews(
   return {
     addTiming: (name: string, time: RelativeTime | TimeStamp = timeStampNow()) => {
       currentView.addTiming(name, time)
-      currentView.triggerUpdate()
+      currentView.scheduleUpdate()
     },
     startView: (name?: string, startClocks?: ClocksState) => {
       currentView.end(startClocks)

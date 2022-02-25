@@ -21,7 +21,6 @@ import type {
 } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
-import { buildEnv } from '../boot/buildEnv'
 import { getSyntheticsContext } from './syntheticsContext'
 import { getCiTestContext } from './ciTestContext'
 import type { LifeCycle } from './lifeCycle'
@@ -31,6 +30,9 @@ import type { RumSessionManager } from './rumSessionManager'
 import { RumSessionPlan } from './rumSessionManager'
 import type { UrlContexts } from './urlContexts'
 import type { RumConfiguration } from './configuration'
+
+// replaced at build time
+declare const __BUILD_ENV__SDK_VERSION__: string
 
 enum SessionType {
   SYNTHETICS = 'synthetics',
@@ -103,7 +105,7 @@ export function startRumAssembly(
             session: {
               plan: session.hasReplayPlan ? RumSessionPlan.REPLAY : RumSessionPlan.LITE,
             },
-            browser_sdk_version: canUseEventBridge() ? buildEnv.sdkVersion : undefined,
+            browser_sdk_version: canUseEventBridge() ? __BUILD_ENV__SDK_VERSION__ : undefined,
           },
           application: {
             id: configuration.applicationId,

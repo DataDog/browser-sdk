@@ -40,11 +40,6 @@ function getLoggedMessage(server: sinon.SinonFakeServer, index: number) {
 }
 const FAKE_DATE = 123456
 const SESSION_ID = 'session-id'
-const baseConfiguration: LogsConfiguration = {
-  ...validateAndBuildLogsConfiguration({ clientToken: 'xxx', service: 'service' })!,
-  logsEndpointBuilder: stubEndpointBuilder('https://localhost/v1/input/log'),
-  maxBatchSize: 1,
-}
 const internalMonitoring = { setExternalContextProvider: () => undefined }
 
 interface Rum {
@@ -59,6 +54,7 @@ declare global {
 const DEFAULT_MESSAGE = { status: StatusType.info, message: 'message' }
 
 describe('logs', () => {
+  let baseConfiguration: LogsConfiguration
   let sessionIsTracked: boolean
   let server: sinon.SinonFakeServer
   let rawErrorObservable: Observable<RawError>
@@ -82,6 +78,11 @@ describe('logs', () => {
   }
 
   beforeEach(() => {
+    baseConfiguration = {
+      ...validateAndBuildLogsConfiguration({ clientToken: 'xxx', service: 'service' })!,
+      logsEndpointBuilder: stubEndpointBuilder('https://localhost/v1/input/log'),
+      maxBatchSize: 1,
+    }
     sessionIsTracked = true
     rawErrorObservable = new Observable<RawError>()
     consoleObservable = new Observable<ConsoleLog>()

@@ -65,7 +65,6 @@ dev,prettier,MIT,Copyright James Long and contributors
 dev,puppeteer,Apache-2.0,Copyright 2017 Google Inc.
 dev,replace-in-file,MIT,Copyright 2015-2019 Adam Reis
 dev,sinon,BSD-3-Clause,Copyright 2010-2017 Christian Johansen
-dev,string-replace-loader,MIT,Copyright 2015 Valentyn Barmashyn
 dev,terser-webpack-plugin,MIT,Copyright JS Foundation and other contributors
 dev,ts-loader,MIT,Copyright 2015 TypeStrong
 dev,ts-node,MIT,Copyright 2014 Blake Embrey

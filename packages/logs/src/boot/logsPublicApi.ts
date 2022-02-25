@@ -15,7 +15,6 @@ import { validateAndBuildLogsConfiguration } from '../domain/configuration'
 import type { HandlerType, LogsMessage, StatusType } from '../domain/logger'
 import { Logger } from '../domain/logger'
 import type { startLogs } from './startLogs'
-import { buildEnv } from './buildEnv'
 
 export interface LoggerConfiguration {
   level?: StatusType
@@ -40,7 +39,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
   let getInitConfigurationStrategy = (): InitConfiguration | undefined => undefined
   const logger = new Logger(sendLog)
 
-  return makePublicApi(buildEnv, {
+  return makePublicApi({
     logger,
 
     init: monitor((initConfiguration: LogsInitConfiguration) => {

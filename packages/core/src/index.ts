@@ -11,7 +11,7 @@ export {
 } from './domain/configuration'
 export { trackRuntimeError } from './domain/error/trackRuntimeError'
 export { computeStackTrace, StackTrace } from './domain/tracekit'
-export { BuildEnv, BuildMode, defineGlobal, makePublicApi } from './boot/init'
+export { defineGlobal, makePublicApi } from './boot/init'
 export {
   startInternalMonitoring,
   InternalMonitoring,

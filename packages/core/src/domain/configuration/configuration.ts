@@ -1,4 +1,3 @@
-import type { BuildEnv } from '../../boot/init'
 import type { CookieOptions } from '../../browser/cookie'
 import { getCurrentSite } from '../../browser/cookie'
 import { catchUserErrors } from '../../tools/catchUserErrors'
@@ -71,10 +70,7 @@ export interface Configuration extends TransportConfiguration {
   maxMessageSize: number
 }
 
-export function validateAndBuildConfiguration(
-  initConfiguration: InitConfiguration,
-  buildEnv: BuildEnv
-): Configuration | undefined {
+export function validateAndBuildConfiguration(initConfiguration: InitConfiguration): Configuration | undefined {
   if (!initConfiguration || !initConfiguration.clientToken) {
     display.error('Client Token is not configured, we will not send any data.')
     return
@@ -85,7 +81,7 @@ export function validateAndBuildConfiguration(
     return
   }
 
-  // Set the experimental feature flags as early as possible so we can use them in most places
+  // Set the experimental feature flags as early as possible, so we can use them in most places
   updateExperimentalFeatures(initConfiguration.enableExperimentalFeatures)
 
   return assign(
@@ -118,7 +114,7 @@ export function validateAndBuildConfiguration(
       maxBatchSize: 50,
       maxMessageSize: 256 * ONE_KILO_BYTE,
     },
-    computeTransportConfiguration(initConfiguration, buildEnv)
+    computeTransportConfiguration(initConfiguration)
   )
 }
 

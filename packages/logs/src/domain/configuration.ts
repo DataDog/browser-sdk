@@ -9,7 +9,6 @@ import {
   ConsoleApiName,
   objectHasValue,
 } from '@datadog/browser-core'
-import { buildEnv } from '../boot/buildEnv'
 import type { LogsEvent } from '../logsEvent.types'
 import type { StatusType } from './logger'
 
@@ -35,7 +34,7 @@ export const DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT = 32 * ONE_KILO_BYTE
 export function validateAndBuildLogsConfiguration(
   initConfiguration: LogsInitConfiguration
 ): LogsConfiguration | undefined {
-  const baseConfiguration = validateAndBuildConfiguration(initConfiguration, buildEnv)
+  const baseConfiguration = validateAndBuildConfiguration(initConfiguration)
   if (!baseConfiguration) {
     return
   }

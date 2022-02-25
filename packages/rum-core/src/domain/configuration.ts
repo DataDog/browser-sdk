@@ -7,8 +7,6 @@ import {
   objectHasValue,
   validateAndBuildConfiguration,
 } from '@datadog/browser-core'
-
-import { buildEnv } from '../boot/buildEnv'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RumEvent } from '../rumEvent.types'
 
@@ -69,7 +67,7 @@ export function validateAndBuildRumConfiguration(
     }
   }
 
-  const baseConfiguration = validateAndBuildConfiguration(initConfiguration, buildEnv)
+  const baseConfiguration = validateAndBuildConfiguration(initConfiguration)
   if (!baseConfiguration) {
     return
   }

@@ -1,28 +1,27 @@
 import type { RumEvent } from '@datadog/browser-rum'
 import ajv from 'ajv'
-import rumEventsFormatJson from '../../../../rum-events-format/rum-events-format.json'
-import _commonSchemaJson from '../../../../rum-events-format/schemas/_common-schema.json'
-import actionSchemaJson from '../../../../rum-events-format/schemas/action-schema.json'
-import errorSchemaJson from '../../../../rum-events-format/schemas/error-schema.json'
-import longTaskSchemaJson from '../../../../rum-events-format/schemas/long_task-schema.json'
-import resourceSchemaJson from '../../../../rum-events-format/schemas/resource-schema.json'
-import viewSchemaJson from '../../../../rum-events-format/schemas/view-schema.json'
+import rumEventsSchemaJson from '../../../../rum-events-format/schemas/rum-events-schema.json'
+import _commonSchemaJson from '../../../../rum-events-format/schemas/rum/_common-schema.json'
+import actionSchemaJson from '../../../../rum-events-format/schemas/rum/action-schema.json'
+import errorSchemaJson from '../../../../rum-events-format/schemas/rum/error-schema.json'
+import longTaskSchemaJson from '../../../../rum-events-format/schemas/rum/long_task-schema.json'
+import resourceSchemaJson from '../../../../rum-events-format/schemas/rum/resource-schema.json'
+import viewSchemaJson from '../../../../rum-events-format/schemas/rum/view-schema.json'
 
-export function validateFormat(events: RumEvent[]) {
-  events.forEach((event) => {
+export function validateRumFormat(events: RumEvent[]) {
+  events.forEach((rumEvent) => {
     const instance = new ajv({
       allErrors: true,
     })
     void instance
-      .addSchema(_commonSchemaJson, 'schemas/_common-schema.json')
-      .addSchema(viewSchemaJson, 'schemas/view-schema.json')
-      .addSchema(actionSchemaJson, 'schemas/action-schema.json')
-      .addSchema(resourceSchemaJson, 'schemas/resource-schema.json')
-      .addSchema(longTaskSchemaJson, 'schemas/long_task-schema.json')
-      .addSchema(errorSchemaJson, 'schemas/error-schema.json')
-      .addSchema(rumEventsFormatJson, 'rum-events-format.json')
-      .validate('rum-events-format.json', event)
-
+      .addSchema(_commonSchemaJson, 'rum/_common-schema.json')
+      .addSchema(viewSchemaJson, 'rum/view-schema.json')
+      .addSchema(actionSchemaJson, 'rum/action-schema.json')
+      .addSchema(resourceSchemaJson, 'rum/resource-schema.json')
+      .addSchema(longTaskSchemaJson, 'rum/long_task-schema.json')
+      .addSchema(errorSchemaJson, 'rum/error-schema.json')
+      .addSchema(rumEventsSchemaJson, 'rum-events-schema.json')
+      .validate('rum-events-schema.json', rumEvent)
     if (instance.errors) {
       instance.errors.map((error) => fail(`${error.dataPath || 'event'} ${error.message!}`))
     }

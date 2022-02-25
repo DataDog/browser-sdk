@@ -3,7 +3,6 @@ import sinon from 'sinon'
 import { stubEndpointBuilder } from '../../test/specHelper'
 import type { EndpointBuilder } from '../domain/configuration'
 import { createEndpointBuilder } from '../domain/configuration'
-import type { BuildEnv } from '..'
 import { HttpRequest } from './httpRequest'
 
 describe('httpRequest', () => {
@@ -72,7 +71,6 @@ describe('httpRequest', () => {
 
 describe('httpRequest intake parameters', () => {
   const clientToken = 'some_client_token'
-  const buildEnv = {} as BuildEnv
   const BATCH_BYTES_LIMIT = 100
   let server: sinon.SinonFakeServer
   let endpointBuilder: EndpointBuilder
@@ -80,7 +78,7 @@ describe('httpRequest intake parameters', () => {
 
   beforeEach(() => {
     server = sinon.fakeServer.create()
-    endpointBuilder = createEndpointBuilder({ clientToken }, buildEnv, 'logs', [])
+    endpointBuilder = createEndpointBuilder({ clientToken }, 'logs', [])
     request = new HttpRequest(endpointBuilder, BATCH_BYTES_LIMIT)
   })
 
