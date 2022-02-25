@@ -255,14 +255,17 @@ init(configuration: {
 
 ### Browser and Session Replay sampling configuration
 
-For the following RUM options:
+When a RUM session is created, it can either collect:
 
-- **Browser RUM** (**Only** _Sessions_, _Views_, _Actions_, and _Errors_ are collected)
-- **Session Replay RUM** (Everything from Browser RUM plus _Resources_, _Long Tasks_, and _Replay_ recordings are collected)
+- **Nothing** (no data is collected, the session is ignored)
+- **Browser RUM** data (**Only** _Sessions_, _Views_, _Actions_, and _Errors_ are collected). Calls to `startSessionReplayRecording()` are ignored.
+- **Session Replay RUM** data (Everything from Browser RUM plus _Resources_, _Long Tasks_, and _Replay_ recordings are collected). A call to `startSessionReplayRecording()` is needed to collect _Replay_ recordings.
 
-The `sampleRate` option controls the overall sample rate of RUM data collection. The `replaySampleRate` option is applied **after** the overall sample rate, and controls the percentage of Session Replay data collection.
+The `sampleRate` option controls the percentage of overall sessions collecting data. It defaults to `100%`, so every sessions will be collected by default.
 
-For example, to collect 100% of your sessions using only the Browser RUM option:
+The `replaySampleRate` option is applied **after** the overall sample rate, and controls the percentage of sessions collecting Session Replay RUM data. It defaults to `100%`, so Session Replay RUM data will be collected by default.
+
+For example, to collect 100% of your sessions with only Browser RUM data:
 
 ```
 datadogRum.init({
@@ -272,17 +275,17 @@ datadogRum.init({
 });
 ```
 
-For example, to collect 100% of your sessions using only the Session Replay RUM option without recording a replay:
+For example, to collect 100% of your sessions with Session Replay RUM data:
 
 ```
 datadogRum.init({
     ....
     sampleRate: 100,
-    replaySampleRate: 100 // Note: if this is not included it will default to 100%
+    replaySampleRate: 100
 });
 ```
 
-For example, to collect only 50% of your overall sessions, with 25% using the Browser RUM option and the other 25% using the Session Replay RUM option, set the `sampleRate` and the `replaySampleRate` to 50.:
+For example, to collect only 50% of your overall sessions, with half collecting Browser RUM data and the other half collecting Session Replay RUM data, set the `sampleRate` and the `replaySampleRate` to 50.:
 
 ```
 datadogRum.init({
@@ -291,8 +294,6 @@ datadogRum.init({
     replaySampleRate: 50
 });
 ```
-
-In the example above, 50% of all sessions are collected. The Session Replay RUM option tracks half of these sessions while the Browser RUM option tracks the remaining half of these sessions.
 
 ## Further Reading
 
