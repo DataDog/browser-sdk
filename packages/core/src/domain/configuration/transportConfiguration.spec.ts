@@ -1,35 +1,29 @@
-import type { BuildEnv } from '../../boot/init'
-import { BuildMode } from '../../boot/init'
+import type { BuildEnvWindow } from '../../../test/specHelper'
 import { computeTransportConfiguration } from './transportConfiguration'
 
 describe('transportConfiguration', () => {
   const clientToken = 'some_client_token'
   const otherClientToken = 'some_other_client_token'
-  const buildEnv: BuildEnv = {
-    buildMode: BuildMode.RELEASE,
-    sdkVersion: 'some_version',
-  }
+
+  beforeEach(() => {
+    ;(window as unknown as BuildEnvWindow).__BUILD_ENV__SDK_VERSION__ = 'some_version'
+  })
 
   describe('internal monitoring endpoint', () => {
     it('should only be defined when api key is provided', () => {
-      let configuration = computeTransportConfiguration({ clientToken }, buildEnv)
+      let configuration = computeTransportConfiguration({ clientToken })
       expect(configuration.internalMonitoringEndpointBuilder).toBeUndefined()
 
-      configuration = computeTransportConfiguration(
-        { clientToken, internalMonitoringApiKey: otherClientToken },
-        buildEnv
-      )
+      configuration = computeTransportConfiguration({ clientToken, internalMonitoringApiKey: otherClientToken })
       expect(configuration.internalMonitoringEndpointBuilder?.build()).toContain(otherClientToken)
     })
   })
 
   describe('endpoint overload', () => {
     it('should be available for e2e-test build mode', () => {
-      const e2eEnv = {
-        buildMode: BuildMode.E2E_TEST,
-        sdkVersion: 'some_version',
-      }
-      const configuration = computeTransportConfiguration({ clientToken }, e2eEnv)
+      ;(window as unknown as BuildEnvWindow).__BUILD_ENV__BUILD_MODE__ = 'e2e-test'
+
+      const configuration = computeTransportConfiguration({ clientToken })
       expect(configuration.rumEndpointBuilder.build()).toEqual('<<< E2E RUM ENDPOINT >>>')
       expect(configuration.logsEndpointBuilder.build()).toEqual('<<< E2E LOGS ENDPOINT >>>')
       expect(configuration.internalMonitoringEndpointBuilder?.build()).toEqual(
@@ -46,31 +40,31 @@ describe('transportConfiguration', () => {
 
   describe('site', () => {
     it('should use US site by default', () => {
-      const configuration = computeTransportConfiguration({ clientToken }, buildEnv)
+      const configuration = computeTransportConfiguration({ clientToken })
       expect(configuration.rumEndpointBuilder.build()).toContain('datadoghq.com')
     })
 
     it('should use site value when set', () => {
-      const configuration = computeTransportConfiguration({ clientToken, site: 'foo.com' }, buildEnv)
+      const configuration = computeTransportConfiguration({ clientToken, site: 'foo.com' })
       expect(configuration.rumEndpointBuilder.build()).toContain('foo.com')
     })
   })
 
   describe('query parameters', () => {
     it('should add intake query parameters', () => {
-      const configuration = computeTransportConfiguration({ clientToken }, buildEnv)
+      const configuration = computeTransportConfiguration({ clientToken })
       expect(configuration.rumEndpointBuilder.build()).toMatch(
         `&dd-api-key=${clientToken}&dd-evp-origin-version=(.*)&dd-evp-origin=browser&dd-request-id=(.*)`
       )
     })
 
     it('should add batch_time for rum endpoint', () => {
-      const configuration = computeTransportConfiguration({ clientToken }, buildEnv)
+      const configuration = computeTransportConfiguration({ clientToken })
       expect(configuration.rumEndpointBuilder.build()).toContain(`&batch_time=`)
     })
 
     it('should not add batch_time for logs and replay endpoints', () => {
-      const configuration = computeTransportConfiguration({ clientToken }, buildEnv)
+      const configuration = computeTransportConfiguration({ clientToken })
       expect(configuration.logsEndpointBuilder.build()).not.toContain(`&batch_time=`)
       expect(configuration.sessionReplayEndpointBuilder.build()).not.toContain(`&batch_time=`)
     })
@@ -78,7 +72,7 @@ describe('transportConfiguration', () => {
 
   describe('proxyUrl', () => {
     it('should replace the full intake endpoint by the proxyUrl and set it in the attribute ddforward', () => {
-      const configuration = computeTransportConfiguration({ clientToken, proxyUrl: 'https://proxy.io/path' }, buildEnv)
+      const configuration = computeTransportConfiguration({ clientToken, proxyUrl: 'https://proxy.io/path' })
       expect(configuration.rumEndpointBuilder.build()).toMatch(
         `https://proxy.io/path\\?ddforward=${encodeURIComponent(
           `https://rum.browser-intake-datadoghq.com/api/v2/rum?ddsource=(.*)&ddtags=(.*)&dd-api-key=${clientToken}` +
@@ -90,10 +84,8 @@ describe('transportConfiguration', () => {
 
   describe('sdk_version, env, version and service', () => {
     it('should not modify the logs and rum endpoints tags when not defined', () => {
-      const configuration = computeTransportConfiguration({ clientToken }, buildEnv)
-      expect(decodeURIComponent(configuration.rumEndpointBuilder.build())).toContain(
-        `&ddtags=sdk_version:${buildEnv.sdkVersion}`
-      )
+      const configuration = computeTransportConfiguration({ clientToken })
+      expect(decodeURIComponent(configuration.rumEndpointBuilder.build())).toContain('&ddtags=sdk_version:some_version')
 
       expect(decodeURIComponent(configuration.rumEndpointBuilder.build())).not.toContain(',env:')
       expect(decodeURIComponent(configuration.rumEndpointBuilder.build())).not.toContain(',service:')
@@ -107,25 +99,23 @@ describe('transportConfiguration', () => {
     })
 
     it('should be set as tags in the logs and rum endpoints', () => {
-      const configuration = computeTransportConfiguration(
-        { clientToken, env: 'foo', service: 'bar', version: 'baz' },
-        buildEnv
-      )
+      const configuration = computeTransportConfiguration({ clientToken, env: 'foo', service: 'bar', version: 'baz' })
       expect(decodeURIComponent(configuration.rumEndpointBuilder.build())).toContain(
-        `&ddtags=sdk_version:${buildEnv.sdkVersion},env:foo,service:bar,version:baz`
+        `&ddtags=sdk_version:some_version,env:foo,service:bar,version:baz`
       )
       expect(decodeURIComponent(configuration.logsEndpointBuilder.build())).toContain(
-        `&ddtags=sdk_version:${buildEnv.sdkVersion},env:foo,service:bar,version:baz`
+        `&ddtags=sdk_version:some_version,env:foo,service:bar,version:baz`
       )
     })
   })
 
   describe('tags', () => {
     it('should be encoded', () => {
-      const configuration = computeTransportConfiguration(
-        { clientToken, service: 'bar:foo', datacenter: 'us1.prod.dog' },
-        buildEnv
-      )
+      const configuration = computeTransportConfiguration({
+        clientToken,
+        service: 'bar:foo',
+        datacenter: 'us1.prod.dog',
+      })
       expect(configuration.rumEndpointBuilder.build()).toContain(
         `ddtags=sdk_version%3Asome_version%2Cservice%3Abar%3Afoo%2Cdatacenter%3Aus1.prod.dog`
       )
@@ -141,7 +131,7 @@ describe('transportConfiguration', () => {
       { site: 'ddog-gov.com', intakeDomain: 'browser-intake-ddog-gov.com' },
     ].forEach(({ site, intakeDomain }) => {
       it(`should detect intake request for ${site} site`, () => {
-        const configuration = computeTransportConfiguration({ clientToken, site }, buildEnv)
+        const configuration = computeTransportConfiguration({ clientToken, site })
         expect(configuration.isIntakeUrl(`https://rum.${intakeDomain}/api/v2/rum?xxx`)).toBe(true)
         expect(configuration.isIntakeUrl(`https://logs.${intakeDomain}/api/v2/logs?xxx`)).toBe(true)
         expect(configuration.isIntakeUrl(`https://session-replay.${intakeDomain}/api/v2/replay?xxx`)).toBe(true)
@@ -149,12 +139,12 @@ describe('transportConfiguration', () => {
     })
 
     it('should not detect non intake request', () => {
-      const configuration = computeTransportConfiguration({ clientToken }, buildEnv)
+      const configuration = computeTransportConfiguration({ clientToken })
       expect(configuration.isIntakeUrl('https://www.foo.com')).toBe(false)
     })
 
     it('should handle sites with subdomains', () => {
-      const configuration = computeTransportConfiguration({ clientToken, site: 'foo.datadoghq.com' }, buildEnv)
+      const configuration = computeTransportConfiguration({ clientToken, site: 'foo.datadoghq.com' })
       expect(configuration.isIntakeUrl(`https://rum.browser-intake-foo-datadoghq.com/api/v2/rum?xxx`)).toBe(true)
       expect(configuration.isIntakeUrl(`https://logs.browser-intake-foo-datadoghq.com/api/v2/logs?xxx`)).toBe(true)
       expect(
@@ -163,18 +153,15 @@ describe('transportConfiguration', () => {
     })
 
     it('should detect proxy intake request', () => {
-      let configuration = computeTransportConfiguration({ clientToken, proxyUrl: 'https://www.proxy.com' }, buildEnv)
+      let configuration = computeTransportConfiguration({ clientToken, proxyUrl: 'https://www.proxy.com' })
       expect(configuration.isIntakeUrl(`https://www.proxy.com/?ddforward=xxx`)).toBe(true)
 
-      configuration = computeTransportConfiguration(
-        { clientToken, proxyUrl: 'https://www.proxy.com/custom/path' },
-        buildEnv
-      )
+      configuration = computeTransportConfiguration({ clientToken, proxyUrl: 'https://www.proxy.com/custom/path' })
       expect(configuration.isIntakeUrl(`https://www.proxy.com/custom/path?ddforward=xxx`)).toBe(true)
     })
 
     it('should not detect request done on the same host as the proxy', () => {
-      const configuration = computeTransportConfiguration({ clientToken, proxyUrl: 'https://www.proxy.com' }, buildEnv)
+      const configuration = computeTransportConfiguration({ clientToken, proxyUrl: 'https://www.proxy.com' })
       expect(configuration.isIntakeUrl('https://www.proxy.com/foo')).toBe(false)
     })
     ;[
@@ -183,14 +170,11 @@ describe('transportConfiguration', () => {
       { site: 'us5.datadoghq.com', intakeDomain: 'browser-intake-us5-datadoghq.com' },
     ].forEach(({ site, intakeDomain }) => {
       it(`should detect replica intake request for site ${site}`, () => {
-        const configuration = computeTransportConfiguration(
-          {
-            clientToken,
-            site,
-            replica: { clientToken },
-          },
-          buildEnv
-        )
+        const configuration = computeTransportConfiguration({
+          clientToken,
+          site,
+          replica: { clientToken },
+        })
 
         expect(configuration.isIntakeUrl(`https://rum.${intakeDomain}/api/v2/rum?xxx`)).toBe(true)
         expect(configuration.isIntakeUrl(`https://logs.${intakeDomain}/api/v2/logs?xxx`)).toBe(true)

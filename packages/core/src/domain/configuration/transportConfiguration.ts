@@ -1,10 +1,11 @@
-import type { BuildEnv } from '../../boot/init'
-import { BuildMode } from '../../boot/init'
 import { objectValues } from '../../tools/utils'
 import type { InitConfiguration } from './configuration'
 import type { EndpointBuilder } from './endpointBuilder'
 import { createEndpointBuilder, INTAKE_SITE_US } from './endpointBuilder'
 import { buildTags } from './tags'
+
+// replaced at build time
+declare const __BUILD_ENV__BUILD_MODE__: string
 
 export interface TransportConfiguration {
   logsEndpointBuilder: EndpointBuilder
@@ -22,16 +23,13 @@ export interface ReplicaConfiguration {
   internalMonitoringEndpointBuilder: EndpointBuilder
 }
 
-export function computeTransportConfiguration(
-  initConfiguration: InitConfiguration,
-  buildEnv: BuildEnv
-): TransportConfiguration {
+export function computeTransportConfiguration(initConfiguration: InitConfiguration): TransportConfiguration {
   const tags = buildTags(initConfiguration)
 
-  const endpointBuilders = computeEndpointBuilders(initConfiguration, buildEnv, tags)
+  const endpointBuilders = computeEndpointBuilders(initConfiguration, tags)
   const intakeEndpoints = objectValues(endpointBuilders).map((builder) => builder.buildIntakeUrl())
 
-  const replicaConfiguration = computeReplicaConfiguration(initConfiguration, buildEnv, intakeEndpoints, tags)
+  const replicaConfiguration = computeReplicaConfiguration(initConfiguration, intakeEndpoints, tags)
 
   return {
     isIntakeUrl: (url) => intakeEndpoints.some((intakeEndpoint) => url.indexOf(intakeEndpoint) === 0),
@@ -40,8 +38,8 @@ export function computeTransportConfiguration(
   }
 }
 
-function computeEndpointBuilders(initConfiguration: InitConfiguration, buildEnv: BuildEnv, tags: string[]) {
-  if (buildEnv.buildMode === BuildMode.E2E_TEST) {
+function computeEndpointBuilders(initConfiguration: InitConfiguration, tags: string[]) {
+  if (__BUILD_ENV__BUILD_MODE__ === 'e2e-test') {
     const e2eEndpointBuilder = (placeholder: string) => ({
       build: () => placeholder,
       buildIntakeUrl: () => placeholder,
@@ -56,9 +54,9 @@ function computeEndpointBuilders(initConfiguration: InitConfiguration, buildEnv:
   }
 
   const endpointBuilders = {
-    logsEndpointBuilder: createEndpointBuilder(initConfiguration, buildEnv, 'logs', tags),
-    rumEndpointBuilder: createEndpointBuilder(initConfiguration, buildEnv, 'rum', tags),
-    sessionReplayEndpointBuilder: createEndpointBuilder(initConfiguration, buildEnv, 'sessionReplay', tags),
+    logsEndpointBuilder: createEndpointBuilder(initConfiguration, 'logs', tags),
+    rumEndpointBuilder: createEndpointBuilder(initConfiguration, 'rum', tags),
+    sessionReplayEndpointBuilder: createEndpointBuilder(initConfiguration, 'sessionReplay', tags),
   }
 
   if (initConfiguration.internalMonitoringApiKey) {
@@ -66,7 +64,6 @@ function computeEndpointBuilders(initConfiguration: InitConfiguration, buildEnv:
       ...endpointBuilders,
       internalMonitoringEndpointBuilder: createEndpointBuilder(
         { ...initConfiguration, clientToken: initConfiguration.internalMonitoringApiKey },
-        buildEnv,
         'logs',
         tags,
         'browser-agent-internal-monitoring'
@@ -79,7 +76,6 @@ function computeEndpointBuilders(initConfiguration: InitConfiguration, buildEnv:
 
 function computeReplicaConfiguration(
   initConfiguration: InitConfiguration,
-  buildEnv: BuildEnv,
   intakeEndpoints: string[],
   tags: string[]
 ): ReplicaConfiguration | undefined {
@@ -94,11 +90,10 @@ function computeReplicaConfiguration(
   }
 
   const replicaEndpointBuilders = {
-    logsEndpointBuilder: createEndpointBuilder(replicaConfiguration, buildEnv, 'logs', tags),
-    rumEndpointBuilder: createEndpointBuilder(replicaConfiguration, buildEnv, 'rum', tags),
+    logsEndpointBuilder: createEndpointBuilder(replicaConfiguration, 'logs', tags),
+    rumEndpointBuilder: createEndpointBuilder(replicaConfiguration, 'rum', tags),
     internalMonitoringEndpointBuilder: createEndpointBuilder(
       replicaConfiguration,
-      buildEnv,
       'logs',
       tags,
       'browser-agent-internal-monitoring'

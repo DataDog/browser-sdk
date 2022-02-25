@@ -1,6 +1,9 @@
+import type { BuildEnvWindow } from './specHelper'
 import { clearAllCookies } from './specHelper'
 
 beforeEach(() => {
+  ;(window as unknown as BuildEnvWindow).__BUILD_ENV__BUILD_MODE__ = 'dev'
+  ;(window as unknown as BuildEnvWindow).__BUILD_ENV__SDK_VERSION__ = 'dev'
   ;(navigator.sendBeacon as any) = false
   // reset globals
   ;(window as any).DD_LOGS = {}
