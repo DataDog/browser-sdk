@@ -7,7 +7,7 @@ import type { Configuration } from '../configuration'
 import { computeStackTrace } from '../tracekit'
 import { startMonitoringBatch } from './startMonitoringBatch'
 
-enum StatusType {
+const enum StatusType {
   info = 'info',
   error = 'error',
 }

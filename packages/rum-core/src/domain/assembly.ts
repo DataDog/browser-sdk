@@ -34,7 +34,7 @@ import type { RumConfiguration } from './configuration'
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
 
-enum SessionType {
+const enum SessionType {
   SYNTHETICS = 'synthetics',
   USER = 'user',
   CI_TEST = 'ci_test',

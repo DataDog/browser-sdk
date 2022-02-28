@@ -10,7 +10,7 @@ import { startSessionManager, stopSessionManager, VISIBILITY_CHECK_DELAY } from 
 import { SESSION_TIME_OUT_DELAY, SESSION_EXPIRATION_DELAY } from './sessionStore'
 import { SESSION_COOKIE_NAME } from './sessionCookieStore'
 
-enum FakeTrackingType {
+const enum FakeTrackingType {
   NOT_TRACKED = 'not-tracked',
   TRACKED = 'tracked',
 }
