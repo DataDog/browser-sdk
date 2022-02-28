@@ -1,5 +1,6 @@
 import type { Configuration, InitConfiguration } from '@datadog/browser-core'
 import {
+  assign,
   DefaultPrivacyLevel,
   display,
   isPercentage,
@@ -71,17 +72,18 @@ export function validateAndBuildRumConfiguration(
     return
   }
 
-  return {
-    ...baseConfiguration,
-
-    applicationId: initConfiguration.applicationId,
-    actionNameAttribute: initConfiguration.actionNameAttribute,
-    replaySampleRate: initConfiguration.replaySampleRate ?? 100,
-    allowedTracingOrigins: initConfiguration.allowedTracingOrigins ?? [],
-    trackInteractions: !!initConfiguration.trackInteractions,
-    trackViewsManually: !!initConfiguration.trackViewsManually,
-    defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
-      ? initConfiguration.defaultPrivacyLevel
-      : DefaultPrivacyLevel.MASK_USER_INPUT,
-  }
+  return assign(
+    {
+      applicationId: initConfiguration.applicationId,
+      actionNameAttribute: initConfiguration.actionNameAttribute,
+      replaySampleRate: initConfiguration.replaySampleRate ?? 100,
+      allowedTracingOrigins: initConfiguration.allowedTracingOrigins ?? [],
+      trackInteractions: !!initConfiguration.trackInteractions,
+      trackViewsManually: !!initConfiguration.trackViewsManually,
+      defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
+        ? initConfiguration.defaultPrivacyLevel
+        : DefaultPrivacyLevel.MASK_USER_INPUT,
+    },
+    baseConfiguration
+  )
 }

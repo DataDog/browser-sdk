@@ -1,3 +1,4 @@
+import { assign } from '@datadog/browser-core'
 import type { LifeCycle, ParentContexts, RumConfiguration, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 
@@ -26,7 +27,7 @@ export function startRecording(
   )
 
   function addRawRecord(rawRecord: RawRecord) {
-    addRecord({ ...rawRecord, timestamp: Date.now() })
+    addRecord(assign({ timestamp: Date.now() }, rawRecord))
   }
 
   const {
