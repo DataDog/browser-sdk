@@ -1,7 +1,8 @@
-import type { CreationReason, Segment } from '@datadog/browser-rum/cjs/types'
-import { IncrementalSource, RecordType } from '@datadog/browser-rum/cjs/types'
-import type { InputData, StyleSheetRuleData } from '@datadog/browser-rum/cjs/domain/record/types'
-import { NodeType } from '@datadog/browser-rum/cjs/domain/record/types'
+import type { CreationReason, Segment } from '@datadog/browser-rum/src/types'
+import { IncrementalSource, RecordType } from '@datadog/browser-rum/src/types'
+import type { InputData, StyleSheetRuleData } from '@datadog/browser-rum/src/domain/record/types'
+import { NodeType } from '@datadog/browser-rum/src/domain/record/types'
+
 import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import { DefaultPrivacyLevel } from '@datadog/browser-rum'
 

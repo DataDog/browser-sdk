@@ -1,5 +1,5 @@
 import type { RumActionEvent, RumErrorEvent, RumEvent, RumResourceEvent, RumViewEvent } from '@datadog/browser-rum'
-import type { Segment } from '@datadog/browser-rum/cjs/types'
+import type { Segment } from '@datadog/browser-rum/src/types'
 
 export interface ServerInternalMonitoringMessage {
   message: string
