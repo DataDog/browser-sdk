@@ -121,9 +121,9 @@ The following parameters are available to configure the Datadog browser logs SDK
 | --------------------- | ------- | -------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | `clientToken`         | String  | Yes      |                 | A [Datadog client token][2].                                                                                                          |
 | `site`                | String  | Yes      | `datadoghq.com` | The Datadog site of your organization. US: `datadoghq.com`, EU: `datadoghq.eu`                                                        |
-| `service`             | String  | No       |                 | The service name for your application. It should follow the [tag syntax requirements][tag_syntax].                                    |
-| `env`                 | String  | No       |                 | The application’s environment, for example: prod, pre-prod, staging, etc. It should follow the [tag syntax requirements][tag_syntax]. |
-| `version`             | String  | No       |                 | The application’s version, for example: 1.2.3, 6c44da20, 2020.02.13, etc. It should follow the [tag syntax requirements][tag_syntax]. |
+| `service`             | String  | No       |                 | The service name for your application. It should follow the [tag syntax requirements][7].                                    |
+| `env`                 | String  | No       |                 | The application’s environment, for example: prod, pre-prod, staging, etc. It should follow the [tag syntax requirements][7]. |
+| `version`             | String  | No       |                 | The application’s version, for example: 1.2.3, 6c44da20, 2020.02.13, etc. It should follow the [tag syntax requirements][7]. |
 | `forwardErrorsToLogs` | Boolean | No       | `true`          | Set to `false` to stop forwarding console.error logs, uncaught exceptions and network errors to Datadog.                              |
 | `sampleRate`          | Number  | No       | `100`           | The percentage of sessions to track: `100` for all, `0` for none. Only tracked sessions send logs.                                    |
 | `silentMultipleInit`  | Boolean | No       |                 | Prevent logging errors while having multiple init.                                                                                    |
@@ -669,4 +669,4 @@ window.DD_LOGS && DD_LOGS.logger.setHandler(['<HANDLER1>', '<HANDLER2>'])
 [4]: https://github.com/DataDog/browser-sdk/blob/main/packages/logs/BROWSER_SUPPORT.md
 [5]: /real_user_monitoring/guide/enrich-and-control-rum-data/
 [6]: https://docs.datadoghq.com/real_user_monitoring/faq/proxy_rum_data/
-[tag_syntax]: https://docs.datadoghq.com/getting_started/tagging/#defining-tags
+[7]: https://docs.datadoghq.com/getting_started/tagging/#defining-tags

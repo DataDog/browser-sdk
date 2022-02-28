@@ -148,17 +148,17 @@ The Datadog site of your organization, same value as [agent site configuration][
 `service`
 : Optional<br/>
 **Type**: String<br/>
-The service name for your application. It should follow the [tag syntax requirements][tag_syntax].
+The service name for your application. It should follow the [tag syntax requirements][15].
 
 `env`
 : Optional<br/>
 **Type**: String<br/>
-The application’s environment, for example: prod, pre-prod, staging, etc. It should follow the [tag syntax requirements][tag_syntax].
+The application’s environment, for example: prod, pre-prod, staging, etc. It should follow the [tag syntax requirements][15].
 
 `version`
 : Optional<br/>
 **Type**: String<br/>
-The application’s version, for example: 1.2.3, 6c44da20, 2020.02.13, etc. It should follow the [tag syntax requirements][tag_syntax].
+The application’s version, for example: 1.2.3, 6c44da20, 2020.02.13, etc. It should follow the [tag syntax requirements][15].
 
 `trackViewsManually`
 : Optional<br/>
@@ -257,7 +257,7 @@ init(configuration: {
 
 When a RUM session is created, it can either collect:
 
-- **Nothing** (no data is collected, the session is ignored)
+- **Nothing** (No data is collected, the session is ignored)
 - **Browser RUM** data (**Only** _Sessions_, _Views_, _Actions_, and _Errors_ are collected). Calls to `startSessionReplayRecording()` are ignored.
 - **Session Replay RUM** data (Everything from Browser RUM plus _Resources_, _Long Tasks_, and _Replay_ recordings are collected). A call to `startSessionReplayRecording()` is needed to collect _Replay_ recordings.
 
@@ -275,7 +275,7 @@ datadogRum.init({
 });
 ```
 
-For example, to collect 100% of your sessions with Session Replay RUM data:
+For example, to collect 100% of your sessions with only Session Replay RUM data:
 
 ```
 datadogRum.init({
@@ -285,7 +285,7 @@ datadogRum.init({
 });
 ```
 
-For example, to collect only 50% of your overall sessions, with half collecting Browser RUM data and the other half collecting Session Replay RUM data, set the `sampleRate` and the `replaySampleRate` to 50.:
+For example, to collect only 50% of your overall sessions, with half collecting Browser RUM data and the other half collecting Session Replay RUM data, set the `sampleRate` and the `replaySampleRate` to 50:
 
 ```
 datadogRum.init({
@@ -313,4 +313,4 @@ datadogRum.init({
 [12]: https://docs.datadoghq.com/real_user_monitoring/connect_rum_and_traces?tab=browserrum
 [13]: https://docs.datadoghq.com/real_user_monitoring/session_replay/privacy_options?tab=maskuserinput
 [14]: https://docs.datadoghq.com/agent/basic_agent_usage#datadog-site
-[tag_syntax]: https://docs.datadoghq.com/getting_started/tagging/#defining-tags
+[15]: https://docs.datadoghq.com/getting_started/tagging/#defining-tags
