@@ -59,6 +59,13 @@ module.exports = {
     'no-extra-bind': 'error',
     'no-new-func': 'error',
     'no-new-wrappers': 'error',
+    'no-restricted-syntax': [
+      'error',
+      {
+        selector: 'TSEnumDeclaration:not([const=true])',
+        message: 'When possible, use `const enum` as it produces less code when transpiled.',
+      },
+    ],
     'no-return-await': 'error',
     'no-sequences': 'error',
     'no-template-curly-in-string': 'error',
