@@ -13,8 +13,7 @@
     "replace-build-env": "node ../../scripts/replace-build-env.js"
   },
   "dependencies": {
-    "@datadog/browser-core": "4.5.0",
-    "tslib": "^1.10.0"
+    "@datadog/browser-core": "4.5.0"
   },
   "devDependencies": {
     "@types/sinon": "9.0.10",

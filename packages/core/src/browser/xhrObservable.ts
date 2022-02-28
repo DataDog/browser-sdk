@@ -4,6 +4,7 @@ import { Observable } from '../tools/observable'
 import type { Duration, RelativeTime, ClocksState } from '../tools/timeUtils'
 import { elapsed, relativeNow, clocksNow, timeStampNow } from '../tools/timeUtils'
 import { normalizeUrl } from '../tools/urlPolyfill'
+import { shallowClone } from '../tools/utils'
 
 export interface XhrOpenContext {
   state: 'open'
@@ -109,7 +110,7 @@ function sendXhr(this: XMLHttpRequest, observable: Observable<XhrContext>) {
     completeContext.state = 'complete'
     completeContext.duration = elapsed(startContext.startClocks.timeStamp, timeStampNow())
     completeContext.status = this.status
-    observable.notify({ ...completeContext })
+    observable.notify(shallowClone(completeContext))
   })
   this.addEventListener('loadend', onEnd)
   observable.notify(startContext)

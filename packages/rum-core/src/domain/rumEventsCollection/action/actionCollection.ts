@@ -1,5 +1,6 @@
 import type { Observable } from '@datadog/browser-core'
-import { combine, toServerDuration, generateUUID } from '@datadog/browser-core'
+import { assign, combine, toServerDuration, generateUUID } from '@datadog/browser-core'
+
 import type { CommonContext, RawRumActionEvent } from '../../../rawRumEvent.types'
 import { ActionType, RumEventType } from '../../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../../lifeCycle'
@@ -25,10 +26,15 @@ export function startActionCollection(
 
   return {
     addAction: (action: CustomAction, savedCommonContext?: CommonContext) => {
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-        savedCommonContext,
-        ...processAction(action, foregroundContexts),
-      })
+      lifeCycle.notify(
+        LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
+        assign(
+          {
+            savedCommonContext,
+          },
+          processAction(action, foregroundContexts)
+        )
+      )
     },
   }
 }

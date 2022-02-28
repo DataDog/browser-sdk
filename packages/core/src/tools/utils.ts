@@ -100,6 +100,9 @@ interface Assignable {
   [key: string]: any
 }
 
+export function assign<T, U>(target: T, source: U): T & U
+export function assign<T, U, V>(target: T, source1: U, source2: V): T & U & V
+export function assign<T, U, V, W>(target: T, source1: U, source2: V, source3: W): T & U & V & W
 export function assign(target: Assignable, ...toAssign: Assignable[]) {
   toAssign.forEach((source: Assignable) => {
     for (const key in source) {
@@ -108,6 +111,11 @@ export function assign(target: Assignable, ...toAssign: Assignable[]) {
       }
     }
   })
+  return target
+}
+
+export function shallowClone<T>(object: T): T & Record<string, never> {
+  return assign({}, object)
 }
 
 /**

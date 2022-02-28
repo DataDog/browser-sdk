@@ -1,4 +1,4 @@
-import { addMonitoringMessage, monitor } from '@datadog/browser-core'
+import { addMonitoringMessage, assign, monitor } from '@datadog/browser-core'
 import type { CreationReason, Record, SegmentContext, SegmentMetadata } from '../../types'
 import { RecordType } from '../../types'
 import * as replayStats from '../replayStats'
@@ -23,15 +23,17 @@ export class Segment {
   ) {
     const viewId = context.view.id
 
-    this.metadata = {
-      start: initialRecord.timestamp,
-      end: initialRecord.timestamp,
-      creation_reason: creationReason,
-      records_count: 1,
-      has_full_snapshot: initialRecord.type === RecordType.FullSnapshot,
-      index_in_view: replayStats.getSegmentsCount(viewId),
-      ...context,
-    }
+    this.metadata = assign(
+      {
+        start: initialRecord.timestamp,
+        end: initialRecord.timestamp,
+        creation_reason: creationReason,
+        records_count: 1,
+        has_full_snapshot: initialRecord.type === RecordType.FullSnapshot,
+        index_in_view: replayStats.getSegmentsCount(viewId),
+      },
+      context
+    )
 
     replayStats.addSegment(viewId)
     replayStats.addRecord(viewId)

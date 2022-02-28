@@ -1,5 +1,6 @@
 import type { RelativeTime, ServerDuration } from '@datadog/browser-core'
 import {
+  assign,
   addMonitoringMessage,
   elapsed,
   getPathName,
@@ -8,6 +9,7 @@ import {
   ResourceType,
   toServerDuration,
 } from '@datadog/browser-core'
+
 import type { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 
 import type { PerformanceResourceDetailsElement } from '../../../rawRumEvent.types'
@@ -174,11 +176,10 @@ export function toValidEntry(entry: RumPerformanceResourceTiming) {
     return undefined
   }
 
-  return {
-    ...entry,
+  return assign({}, entry, {
     redirectEnd,
     redirectStart,
-  }
+  })
 }
 
 function hasRedirection(entry: RumPerformanceResourceTiming) {

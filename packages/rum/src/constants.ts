@@ -1,9 +1,11 @@
 import { DefaultPrivacyLevel } from '@datadog/browser-core'
 
 export const NodePrivacyLevel = {
-  ...DefaultPrivacyLevel,
   IGNORE: 'ignore',
   HIDDEN: 'hidden',
+  ALLOW: DefaultPrivacyLevel.ALLOW,
+  MASK: DefaultPrivacyLevel.MASK,
+  MASK_USER_INPUT: DefaultPrivacyLevel.MASK_USER_INPUT,
 } as const
 export type NodePrivacyLevel = typeof NodePrivacyLevel[keyof typeof NodePrivacyLevel]
 
