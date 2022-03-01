@@ -1,4 +1,10 @@
-import { addEventListener, DOM_EVENT, instrumentMethodAndCallOriginal, Observable } from '@datadog/browser-core'
+import {
+  addEventListener,
+  DOM_EVENT,
+  instrumentMethodAndCallOriginal,
+  Observable,
+  shallowClone,
+} from '@datadog/browser-core'
 
 export interface LocationChange {
   oldLocation: Readonly<Location>
@@ -6,7 +12,7 @@ export interface LocationChange {
 }
 
 export function createLocationChangeObservable(location: Location) {
-  let currentLocation = { ...location }
+  let currentLocation = shallowClone(location)
   const observable = new Observable<LocationChange>(() => {
     const { stop: stopHistoryTracking } = trackHistory(onLocationChange)
     const { stop: stopHashTracking } = trackHash(onLocationChange)
@@ -20,7 +26,7 @@ export function createLocationChangeObservable(location: Location) {
     if (currentLocation.href === location.href) {
       return
     }
-    const newLocation = { ...location }
+    const newLocation = shallowClone(location)
     observable.notify({
       newLocation,
       oldLocation: currentLocation,

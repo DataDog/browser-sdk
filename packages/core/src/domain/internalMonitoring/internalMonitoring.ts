@@ -175,18 +175,26 @@ export function callMonitored<T extends (...args: any[]) => any>(
 
 export function addMonitoringMessage(message: string, context?: Context) {
   logMessageIfDebug(message, context)
-  addToMonitoring({
-    message,
-    ...context,
-    status: StatusType.debug,
-  })
+  addToMonitoring(
+    assign(
+      {
+        message,
+        status: StatusType.debug,
+      },
+      context
+    )
+  )
 }
 
 export function addMonitoringError(e: unknown) {
-  addToMonitoring({
-    ...formatError(e),
-    status: StatusType.error,
-  })
+  addToMonitoring(
+    assign(
+      {
+        status: StatusType.error,
+      },
+      formatError(e)
+    )
+  )
 }
 
 function addToMonitoring(message: MonitoringMessage) {

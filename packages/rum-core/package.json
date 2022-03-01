@@ -12,8 +12,7 @@
     "replace-build-env": "node ../../scripts/replace-build-env.js"
   },
   "dependencies": {
-    "@datadog/browser-core": "4.5.0",
-    "tslib": "^1.10.0"
+    "@datadog/browser-core": "4.5.0"
   },
   "devDependencies": {
     "ajv": "6.12.6"

@@ -13,8 +13,7 @@
   },
   "dependencies": {
     "@datadog/browser-core": "4.5.0",
-    "@datadog/browser-rum-core": "4.5.0",
-    "tslib": "^1.10.0"
+    "@datadog/browser-rum-core": "4.5.0"
   },
   "repository": {
     "type": "git",

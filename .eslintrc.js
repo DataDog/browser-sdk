@@ -214,6 +214,17 @@ module.exports = {
       excludedFiles: '*.spec.ts',
       rules: {
         'local-rules/disallow-side-effects': 'error',
+        'no-restricted-syntax': [
+          'error',
+          {
+            selector: 'ObjectExpression > SpreadElement',
+            message: 'Object spread is not authorized. Please use "assign" from the core package utils instead.',
+          },
+          {
+            selector: 'ArrayExpression > SpreadElement',
+            message: 'Array spread is not authorized. Please use .concat instead.',
+          },
+        ],
       },
     },
     {
