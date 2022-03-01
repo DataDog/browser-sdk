@@ -111,8 +111,12 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
   })
 
   if (supportPerformanceObject()) {
-    handleRumPerformanceEntries(lifeCycle, configuration, performance.getEntries())
+    const performanceEntries = performance.getEntries()
+    // Because the performance entry list can be quite large
+    // delay the computation to prevent the SDK from blocking the main thread on init
+    setTimeout(monitor(() => handleRumPerformanceEntries(lifeCycle, configuration, performanceEntries)))
   }
+
   if (window.PerformanceObserver) {
     const handlePerformanceEntryList = monitor((entries: PerformanceObserverEntryList) =>
       handleRumPerformanceEntries(lifeCycle, configuration, entries.getEntries())

@@ -573,6 +573,26 @@ export function combine(...sources: any[]): unknown {
 
 export type TimeoutId = ReturnType<typeof setTimeout>
 
+export function requestIdleCallback(callback: () => void, opts?: { timeout?: number }) {
+  interface BrowserWindow extends Window {
+    requestIdleCallback: (callback: () => void, opts?: { timeout?: number }) => number
+    cancelIdleCallback: (handle?: number) => void
+  }
+  const browserWindow = window as unknown as BrowserWindow
+
+  // Use 'requestIdleCallback' when available: it will throttle the mutation processing if the
+  // browser is busy rendering frames (ex: when frames are below 60fps). When not available, the
+  // fallback on 'requestAnimationFrame' will still ensure the mutations are processed after any
+  // browser rendering process (Layout, Recalculate Style, etc.), so we can serialize DOM nodes
+  // efficiently.
+  if (browserWindow.requestIdleCallback) {
+    const id = browserWindow.requestIdleCallback(monitor(callback), opts)
+    return () => browserWindow.cancelIdleCallback(id)
+  }
+  const id = browserWindow.requestAnimationFrame(monitor(callback))
+  return () => browserWindow.cancelAnimationFrame(id)
+}
+
 export function removeDuplicates<T>(array: T[]) {
   const deduplicated: T[] = []
   const set = new Set<T>()
