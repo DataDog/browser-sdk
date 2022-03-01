@@ -17,8 +17,8 @@ import {
   initEventBridgeStub,
   mockClock,
   stubEndpointBuilder,
-  stubReportingObserver,
 } from '../../../core/test/specHelper'
+import { stubReportingObserver } from '../../../core/test/stubReportApis'
 import type { LogsConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
 

@@ -1,6 +1,5 @@
-import { isChromium } from '../../tools/browserDetection'
 import type { Subscription } from '../../tools/observable'
-import { stubReportingObserver, stubCspEventListener } from '../../../test/specHelper'
+import { stubReportingObserver, stubCspEventListener } from '../../../test/stubReportApis'
 import { initReportObservable, CustomReportType } from './reportObservable'
 
 describe(`report observable`, () => {
@@ -10,10 +9,6 @@ describe(`report observable`, () => {
   let notifyReport: jasmine.Spy
 
   beforeEach(() => {
-    if (!isChromium()) {
-      pending('no ReportingObserver support')
-    }
-
     reportingObserverStub = stubReportingObserver()
     cspEventListenerStub = stubCspEventListener()
     notifyReport = jasmine.createSpy('notifyReport')
@@ -23,7 +18,7 @@ describe(`report observable`, () => {
     reportingObserverStub.reset()
     consoleSubscription.unsubscribe()
   })
-  ;[CustomReportType.deprecation, CustomReportType.deprecation].forEach((type) => {
+  ;[CustomReportType.deprecation, CustomReportType.intervention].forEach((type) => {
     it(`should notify ${type} reports`, () => {
       consoleSubscription = initReportObservable([type]).subscribe(notifyReport)
       reportingObserverStub.raiseReport(type)
@@ -49,8 +44,8 @@ describe(`report observable`, () => {
 at <anonymous> @ http://foo.bar/index.js:20:10`)
   })
 
-  it(`should notify ${CustomReportType.csp_violation}`, () => {
-    consoleSubscription = initReportObservable([CustomReportType.csp_violation]).subscribe(notifyReport)
+  it(`should notify ${CustomReportType.cspViolation}`, () => {
+    consoleSubscription = initReportObservable([CustomReportType.cspViolation]).subscribe(notifyReport)
     cspEventListenerStub.dispatchEvent()
 
     expect(notifyReport).toHaveBeenCalledOnceWith({

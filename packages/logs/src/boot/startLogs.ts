@@ -41,7 +41,7 @@ const LogStatusForApi = {
 }
 
 const LogStatusForReport = {
-  [CustomReportType.csp_violation]: StatusType.error,
+  [CustomReportType.cspViolation]: StatusType.error,
   [CustomReportType.intervention]: StatusType.error,
   [CustomReportType.deprecation]: StatusType.warn,
 }

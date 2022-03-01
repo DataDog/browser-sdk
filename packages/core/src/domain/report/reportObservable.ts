@@ -17,7 +17,7 @@ declare const ReportingObserver: {
 export const CustomReportType = {
   intervention: 'intervention',
   deprecation: 'deprecation',
-  csp_violation: 'csp_violation',
+  cspViolation: 'csp_violation',
 } as const
 
 export type CustomReportType = typeof CustomReportType[keyof typeof CustomReportType]
@@ -31,11 +31,11 @@ export interface CustomReport {
 export function initReportObservable(apis: CustomReportType[]) {
   const observables: Array<Observable<CustomReport>> = []
 
-  if (includes(apis, CustomReportType.csp_violation)) {
+  if (includes(apis, CustomReportType.cspViolation)) {
     observables.push(createCspViolationReportObservable())
   }
 
-  const reportTypes = apis.filter((api: CustomReportType): api is ReportType => api !== CustomReportType.csp_violation)
+  const reportTypes = apis.filter((api: CustomReportType): api is ReportType => api !== CustomReportType.cspViolation)
   if (reportTypes.length) {
     observables.push(createReportObservable(reportTypes))
   }
