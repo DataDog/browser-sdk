@@ -204,7 +204,7 @@ function addToMonitoring(message: MonitoringMessage) {
     monitoringConfiguration.sentMessageCount < monitoringConfiguration.maxMessagesPerPage
   ) {
     monitoringConfiguration.sentMessageCount += 1
-    monitoringMessageObservable?.notify(message)
+    monitoringMessageObservable.notify(message)
   }
 }
 
