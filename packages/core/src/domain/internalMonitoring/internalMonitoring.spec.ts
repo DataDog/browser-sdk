@@ -289,7 +289,7 @@ describe('internal monitoring', () => {
     })
 
     it('should notify observable', () => {
-      const notifySpy = jasmine.createSpy('notified')
+      const notifySpy = jasmine.createSpy<(event: TelemetryEvent & Context) => void>('notified')
       internalMonitoring.telemetryEventObservable.subscribe(notifySpy)
 
       callMonitored(() => {
@@ -297,13 +297,13 @@ describe('internal monitoring', () => {
       })
 
       expect(notifySpy).toHaveBeenCalled()
-      const telemetryEvent = notifySpy.calls.mostRecent().args[0] as TelemetryEvent & Context
+      const telemetryEvent = notifySpy.calls.mostRecent().args[0]
       expect(telemetryEvent.message).toEqual('message')
       expect(telemetryEvent._dd.event_type).toEqual('internal_telemetry')
     })
 
     it('should add telemetry context', () => {
-      const notifySpy = jasmine.createSpy('notified')
+      const notifySpy = jasmine.createSpy<(event: TelemetryEvent & Context) => void>('notified')
       internalMonitoring.telemetryEventObservable.subscribe(notifySpy)
       internalMonitoring.setTelemetryContextProvider(() => ({ foo: 'bar' }))
 
@@ -312,7 +312,7 @@ describe('internal monitoring', () => {
       })
 
       expect(notifySpy).toHaveBeenCalled()
-      const telemetryEvent = notifySpy.calls.mostRecent().args[0] as TelemetryEvent & Context
+      const telemetryEvent = notifySpy.calls.mostRecent().args[0]
       expect(telemetryEvent.foo).toEqual('bar')
     })
 
