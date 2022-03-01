@@ -1,5 +1,12 @@
 import type { RawError, Subscription } from '@datadog/browser-core'
-import { ErrorHandling, ErrorSource, Observable, clocksNow, isChromium } from '@datadog/browser-core'
+import {
+  ErrorHandling,
+  ErrorSource,
+  Observable,
+  clocksNow,
+  updateExperimentalFeatures,
+  resetExperimentalFeatures,
+} from '@datadog/browser-core'
 import type { Clock } from '../../../../../core/test/specHelper'
 import { mockClock } from '../../../../../core/test/specHelper'
 import { stubReportingObserver } from '../../../../../core/test/stubReportApis'
@@ -16,7 +23,6 @@ describe('trackReportError', () => {
     errorObservable = new Observable()
     notifyLog = jasmine.createSpy('notifyLog')
     reportingObserverStub = stubReportingObserver()
-    trackReportError(errorObservable)
     subscription = errorObservable.subscribe(notifyLog)
     clock = mockClock()
   })
@@ -25,13 +31,13 @@ describe('trackReportError', () => {
     subscription.unsubscribe()
     clock.cleanup()
     reportingObserverStub.reset()
+    resetExperimentalFeatures()
   })
 
-  it('should error report', () => {
-    if (!isChromium()) {
-      pending('no ReportingObserver support')
-    }
+  it('should error report when ff forward-reports enabled', () => {
+    updateExperimentalFeatures(['forward-reports'])
 
+    trackReportError(errorObservable)
     reportingObserverStub.raiseReport('intervention')
 
     expect(notifyLog).toHaveBeenCalledWith({
@@ -42,5 +48,13 @@ describe('trackReportError', () => {
       handling: ErrorHandling.HANDLED,
       type: 'intervention',
     })
+  })
+
+  it('should not report when ff forward-reports disabled', () => {
+    trackReportError(errorObservable)
+
+    reportingObserverStub.raiseReport('intervention')
+
+    expect(notifyLog).not.toHaveBeenCalled()
   })
 })

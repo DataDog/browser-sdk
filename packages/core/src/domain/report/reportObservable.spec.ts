@@ -2,7 +2,7 @@ import type { Subscription } from '../../tools/observable'
 import { stubReportingObserver, stubCspEventListener } from '../../../test/stubReportApis'
 import { initReportObservable, CustomReportType } from './reportObservable'
 
-describe(`report observable`, () => {
+describe('report observable', () => {
   let reportingObserverStub: { reset(): void; raiseReport(type: string): void }
   let cspEventListenerStub: { dispatchEvent(): void }
   let consoleSubscription: Subscription

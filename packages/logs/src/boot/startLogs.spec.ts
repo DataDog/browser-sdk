@@ -8,7 +8,6 @@ import {
   updateExperimentalFeatures,
   getTimeStamp,
   stopSessionManager,
-  isChromium,
 } from '@datadog/browser-core'
 import sinon from 'sinon'
 import type { Clock } from '../../../core/test/specHelper'
@@ -56,6 +55,7 @@ declare global {
 const DEFAULT_MESSAGE = { status: StatusType.info, message: 'message' }
 
 describe('logs', () => {
+  const initConfiguration = { clientToken: 'xxx', service: 'service' }
   let baseConfiguration: LogsConfiguration
   let sessionIsTracked: boolean
   let server: sinon.SinonFakeServer
@@ -84,7 +84,7 @@ describe('logs', () => {
 
   beforeEach(() => {
     baseConfiguration = {
-      ...validateAndBuildLogsConfiguration({ clientToken: 'xxx', service: 'service' })!,
+      ...validateAndBuildLogsConfiguration(initConfiguration)!,
       logsEndpointBuilder: stubEndpointBuilder('https://localhost/v1/input/log'),
       maxBatchSize: 1,
     }
@@ -192,13 +192,16 @@ describe('logs', () => {
       })
     })
 
-    it('should send console logs', () => {
+    it('should send console logs when ff forward-logs is enabled', () => {
       const logger = new Logger(noop)
       const logErrorSpy = spyOn(logger, 'log')
       const consoleLogSpy = spyOn(console, 'log').and.callFake(() => true)
 
       updateExperimentalFeatures(['forward-logs'])
-      originalStartLogs({ ...baseConfiguration, forwardConsoleLogs: ['log'] }, logger)
+      originalStartLogs(
+        validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['log'] })!,
+        logger
+      )
 
       /* eslint-disable-next-line no-console */
       console.log('foo', 'bar')
@@ -209,21 +212,53 @@ describe('logs', () => {
       resetExperimentalFeatures()
     })
 
-    it('should send reports', () => {
-      if (!isChromium()) {
-        pending('no ReportingObserver support')
-      }
+    it('should not send console logs when ff forward-logs is disabled', () => {
+      const logger = new Logger(noop)
+      const logErrorSpy = spyOn(logger, 'log')
+      const consoleLogSpy = spyOn(console, 'log').and.callFake(() => true)
+
+      originalStartLogs(
+        validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['log'] })!,
+        logger
+      )
+
+      /* eslint-disable-next-line no-console */
+      console.log('foo', 'bar')
+
+      expect(logErrorSpy).not.toHaveBeenCalled()
+      expect(consoleLogSpy).toHaveBeenCalled()
+    })
+
+    it('should send reports when ff forward-reports is enabled', () => {
       const logger = new Logger(noop)
       const logErrorSpy = spyOn(logger, 'log')
       const reportingObserverStub = stubReportingObserver()
       updateExperimentalFeatures(['forward-reports'])
-      originalStartLogs({ ...baseConfiguration, forwardReports: ['intervention'] }, logger)
+      originalStartLogs(
+        validateAndBuildLogsConfiguration({ ...initConfiguration, forwardReports: ['intervention'] })!,
+        logger
+      )
 
       reportingObserverStub.raiseReport('intervention')
 
       expect(logErrorSpy).toHaveBeenCalled()
 
       resetExperimentalFeatures()
+      reportingObserverStub.reset()
+    })
+
+    it('should not send reports when ff forward-reports is disabled', () => {
+      const logger = new Logger(noop)
+      const logErrorSpy = spyOn(logger, 'log')
+      const reportingObserverStub = stubReportingObserver()
+      originalStartLogs(
+        validateAndBuildLogsConfiguration({ ...initConfiguration, forwardReports: ['intervention'] })!,
+        logger
+      )
+      reportingObserverStub.raiseReport('intervention')
+
+      expect(logErrorSpy).not.toHaveBeenCalled()
+
       reportingObserverStub.reset()
     })
   })
