@@ -7,6 +7,7 @@ import type { Configuration } from '../configuration'
 import { computeStackTrace } from '../tracekit'
 import { isExperimentalFeatureEnabled } from '../configuration'
 import { Observable } from '../../tools/observable'
+import { timeStampNow } from '../../tools/timeUtils'
 import { startMonitoringBatch } from './startMonitoringBatch'
 import type { TelemetryEvent } from './telemetryEvent.types'
 
@@ -80,7 +81,7 @@ export function startInternalMonitoring(configuration: Configuration): InternalM
 
   function withContext(message: MonitoringMessage) {
     return combine(
-      { date: new Date().getTime() },
+      { date: timeStampNow() },
       externalContextProvider !== undefined ? externalContextProvider() : {},
       message
     )
@@ -89,7 +90,7 @@ export function startInternalMonitoring(configuration: Configuration): InternalM
   function toTelemetryEvent(message: MonitoringMessage): TelemetryEvent & Context {
     return combine(
       {
-        date: new Date().getTime(),
+        date: timeStampNow(),
         service: 'browser-sdk',
         version: __BUILD_ENV__SDK_VERSION__,
         _dd: {
