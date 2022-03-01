@@ -47,7 +47,7 @@
     "@wdio/selenium-standalone-service": "6.0.16",
     "@wdio/spec-reporter": "6.0.16",
     "ajv": "6.12.6",
-    "browserstack-local": "1.4.8",
+    "browserstack-local": "1.4.9",
     "connect-busboy": "0.0.3",
     "cors": "2.8.5",
     "emoji-name-map": "1.2.9",
