@@ -6,7 +6,6 @@ import {
   isExperimentalFeatureEnabled,
   removeDuplicates,
   ConsoleApiName,
-  objectHasValue,
   CustomReportType,
   includes,
 } from '@datadog/browser-core'
@@ -79,7 +78,7 @@ export function validateAndBuildForwardOption<T>(
     return []
   }
 
-  if (!(option === 'all' || (Array.isArray(option) && option.every((api) => objectHasValue(ConsoleApiName, api))))) {
+  if (!(option === 'all' || (Array.isArray(option) && option.every((api) => allowedValues.includes(api))))) {
     display.error(`${label} should be "all" or an array with allowed values "${allowedValues.join('", "')}"`)
     return
   }

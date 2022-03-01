@@ -78,7 +78,7 @@ describe('validateAndBuildForwardOption', () => {
     })
 
     it('is set to provided value', () => {
-      expect(validateAndBuildForwardOption(['log'], allowedValues, label, ff)).toEqual(['log'])
+      expect(validateAndBuildForwardOption(['foo'], allowedValues, label, ff)).toEqual(['foo'])
     })
 
     it('contains all options when "all" is provided', () => {
