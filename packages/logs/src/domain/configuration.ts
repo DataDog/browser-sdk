@@ -8,6 +8,7 @@ import {
   ConsoleApiName,
   CustomReportType,
   includes,
+  objectValues,
 } from '@datadog/browser-core'
 import type { LogsEvent } from '../logsEvent.types'
 
@@ -39,14 +40,14 @@ export function validateAndBuildLogsConfiguration(
 
   const forwardConsoleLogs = validateAndBuildForwardOption<ConsoleApiName>(
     initConfiguration.forwardConsoleLogs,
-    Object.keys(ConsoleApiName) as ConsoleApiName[],
+    objectValues(ConsoleApiName),
     'Forward Console Logs',
     'forward-logs'
   )
 
   const forwardReports = validateAndBuildForwardOption<CustomReportType>(
     initConfiguration.forwardReports,
-    Object.keys(CustomReportType) as CustomReportType[],
+    objectValues(CustomReportType),
     'Forward Reports',
     'forward-reports'
   )
