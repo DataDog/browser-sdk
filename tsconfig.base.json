@@ -3,7 +3,7 @@
     "baseUrl": ".",
     "experimentalDecorators": true,
     "esModuleInterop": true,
-    "importHelpers": true,
+    "importHelpers": false,
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "strict": true,

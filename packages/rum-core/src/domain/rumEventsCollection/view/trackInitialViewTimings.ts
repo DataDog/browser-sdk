@@ -1,5 +1,6 @@
 import type { Duration, EventEmitter, RelativeTime } from '@datadog/browser-core'
-import { addEventListeners, DOM_EVENT, elapsed, ONE_MINUTE, find, findLast } from '@datadog/browser-core'
+import { assign, addEventListeners, DOM_EVENT, elapsed, ONE_MINUTE, find, findLast } from '@datadog/browser-core'
+
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type {
@@ -25,9 +26,9 @@ export interface Timings {
 }
 
 export function trackInitialViewTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void) {
-  let timings: Timings | undefined
+  const timings: Timings = {}
   function setTimings(newTimings: Partial<Timings>) {
-    timings = { ...timings, ...newTimings }
+    assign(timings, newTimings)
     callback(timings)
   }
 

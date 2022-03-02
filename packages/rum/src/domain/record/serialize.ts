@@ -1,3 +1,4 @@
+import { assign } from '@datadog/browser-core'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
@@ -155,11 +156,10 @@ export function serializeElementNode(element: Element, options: SerializeOptions
     if (options.parentNodePrivacyLevel === nodePrivacyLevel && options.ignoreWhiteSpace === (tagName === 'head')) {
       childNodesSerializationOptions = options
     } else {
-      childNodesSerializationOptions = {
-        ...options,
+      childNodesSerializationOptions = assign({}, options, {
         parentNodePrivacyLevel: nodePrivacyLevel,
         ignoreWhiteSpace: tagName === 'head',
-      }
+      })
     }
     childNodes = serializeChildNodes(element, childNodesSerializationOptions)
   }

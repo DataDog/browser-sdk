@@ -1,4 +1,4 @@
-import { getOrigin, objectEntries } from '@datadog/browser-core'
+import { getOrigin, objectEntries, shallowClone } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type {
   RumFetchCompleteContext,
@@ -53,7 +53,7 @@ export function startTracer(configuration: RumConfiguration, sessionManager: Rum
             ;(context.input as Request).headers.append(key, tracingHeaders[key])
           })
         } else {
-          context.init = { ...context.init }
+          context.init = shallowClone(context.init)
           const headers: string[][] = []
           if (context.init.headers instanceof Headers) {
             context.init.headers.forEach((value, key) => {

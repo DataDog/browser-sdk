@@ -1,5 +1,6 @@
 import type { Configuration, InitConfiguration } from '@datadog/browser-core'
 import {
+  assign,
   ONE_KILO_BYTE,
   validateAndBuildConfiguration,
   display,
@@ -60,13 +61,15 @@ export function validateAndBuildLogsConfiguration(
     forwardConsoleLogs.push(ConsoleApiName.error)
   }
 
-  return {
-    ...baseConfiguration,
-    forwardErrorsToLogs: !!initConfiguration.forwardErrorsToLogs,
-    forwardConsoleLogs,
-    forwardReports,
-    requestErrorResponseLengthLimit: DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT,
-  }
+  return assign(
+    {
+      forwardErrorsToLogs: !!initConfiguration.forwardErrorsToLogs,
+      forwardConsoleLogs,
+      forwardReports,
+      requestErrorResponseLengthLimit: DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT,
+    },
+    baseConfiguration
+  )
 }
 
 export function validateAndBuildForwardOption<T>(

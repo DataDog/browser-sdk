@@ -2,7 +2,7 @@ import type { CookieOptions } from '../../browser/cookie'
 import { getCurrentSite } from '../../browser/cookie'
 import { catchUserErrors } from '../../tools/catchUserErrors'
 import { display } from '../../tools/display'
-import { isPercentage, ONE_KILO_BYTE, ONE_SECOND } from '../../tools/utils'
+import { assign, isPercentage, ONE_KILO_BYTE, ONE_SECOND } from '../../tools/utils'
 import { updateExperimentalFeatures } from './experimentalFeatures'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
@@ -84,37 +84,38 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
   // Set the experimental feature flags as early as possible, so we can use them in most places
   updateExperimentalFeatures(initConfiguration.enableExperimentalFeatures)
 
-  return {
-    ...computeTransportConfiguration(initConfiguration),
+  return assign(
+    {
+      beforeSend:
+        initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
+      cookieOptions: buildCookieOptions(initConfiguration),
+      sampleRate: initConfiguration.sampleRate ?? 100,
+      service: initConfiguration.service,
+      silentMultipleInit: !!initConfiguration.silentMultipleInit,
 
-    beforeSend:
-      initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
-    cookieOptions: buildCookieOptions(initConfiguration),
-    sampleRate: initConfiguration.sampleRate ?? 100,
-    service: initConfiguration.service,
-    silentMultipleInit: !!initConfiguration.silentMultipleInit,
+      /**
+       * beacon payload max queue size implementation is 64kb
+       * ensure that we leave room for logs, rum and potential other users
+       */
+      batchBytesLimit: 16 * ONE_KILO_BYTE,
 
-    /**
-     * beacon payload max queue size implementation is 64kb
-     * ensure that we leave room for logs, rum and potential other users
-     */
-    batchBytesLimit: 16 * ONE_KILO_BYTE,
+      eventRateLimiterThreshold: 3000,
+      maxInternalMonitoringMessagesPerPage: 15,
 
-    eventRateLimiterThreshold: 3000,
-    maxInternalMonitoringMessagesPerPage: 15,
+      /**
+       * flush automatically, aim to be lower than ALB connection timeout
+       * to maximize connection reuse.
+       */
+      flushTimeout: 30 * ONE_SECOND,
 
-    /**
-     * flush automatically, aim to be lower than ALB connection timeout
-     * to maximize connection reuse.
-     */
-    flushTimeout: 30 * ONE_SECOND,
-
-    /**
-     * Logs intake limit
-     */
-    maxBatchSize: 50,
-    maxMessageSize: 256 * ONE_KILO_BYTE,
-  }
+      /**
+       * Logs intake limit
+       */
+      maxBatchSize: 50,
+      maxMessageSize: 256 * ONE_KILO_BYTE,
+    },
+    computeTransportConfiguration(initConfiguration)
+  )
 }
 
 export function buildCookieOptions(initConfiguration: InitConfiguration) {

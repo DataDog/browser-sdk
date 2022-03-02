@@ -173,6 +173,11 @@ function isAllowedCallExpression({ callee }) {
     return true
   }
 
+  // Allow ".concat()"
+  if (callee.type === 'MemberExpression' && callee.property.name === 'concat') {
+    return true
+  }
+
   return false
 }
 
