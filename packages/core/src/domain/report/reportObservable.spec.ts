@@ -1,6 +1,6 @@
 import type { Subscription } from '../../tools/observable'
 import { stubReportingObserver, stubCspEventListener } from '../../../test/stubReportApis'
-import { initReportObservable, CustomReportType } from './reportObservable'
+import { initReportObservable, RawReportType } from './reportObservable'
 
 describe('report observable', () => {
   let reportingObserverStub: { reset(): void; raiseReport(type: string): void }
@@ -18,7 +18,7 @@ describe('report observable', () => {
     reportingObserverStub.reset()
     consoleSubscription.unsubscribe()
   })
-  ;[CustomReportType.deprecation, CustomReportType.intervention].forEach((type) => {
+  ;[RawReportType.deprecation, RawReportType.intervention].forEach((type) => {
     it(`should notify ${type} reports`, () => {
       consoleSubscription = initReportObservable([type]).subscribe(notifyReport)
       reportingObserverStub.raiseReport(type)
@@ -35,9 +35,9 @@ describe('report observable', () => {
     })
   })
 
-  it(`should compute stack for ${CustomReportType.intervention}`, () => {
-    consoleSubscription = initReportObservable([CustomReportType.intervention]).subscribe(notifyReport)
-    reportingObserverStub.raiseReport(CustomReportType.intervention)
+  it(`should compute stack for ${RawReportType.intervention}`, () => {
+    consoleSubscription = initReportObservable([RawReportType.intervention]).subscribe(notifyReport)
+    reportingObserverStub.raiseReport(RawReportType.intervention)
 
     const [report] = notifyReport.calls.mostRecent().args
 
@@ -45,8 +45,8 @@ describe('report observable', () => {
   at <anonymous> @ http://foo.bar/index.js:20:10`)
   })
 
-  it(`should notify ${CustomReportType.cspViolation}`, () => {
-    consoleSubscription = initReportObservable([CustomReportType.cspViolation]).subscribe(notifyReport)
+  it(`should notify ${RawReportType.cspViolation}`, () => {
+    consoleSubscription = initReportObservable([RawReportType.cspViolation]).subscribe(notifyReport)
     cspEventListenerStub.dispatchEvent()
 
     expect(notifyReport).toHaveBeenCalledOnceWith({

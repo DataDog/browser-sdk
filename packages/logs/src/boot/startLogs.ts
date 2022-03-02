@@ -1,11 +1,4 @@
-import type {
-  ConsoleLog,
-  Context,
-  InternalMonitoring,
-  RawError,
-  RelativeTime,
-  CustomReport,
-} from '@datadog/browser-core'
+import type { ConsoleLog, Context, InternalMonitoring, RawError, RelativeTime, RawReport } from '@datadog/browser-core'
 
 import {
   areCookiesAuthorized,
@@ -17,7 +10,7 @@ import {
   getEventBridge,
   getRelativeTime,
   startInternalMonitoring,
-  CustomReportType,
+  RawReportType,
   initReportObservable,
   initConsoleObservable,
   ConsoleApiName,
@@ -42,9 +35,9 @@ const LogStatusForApi = {
 }
 
 const LogStatusForReport = {
-  [CustomReportType.cspViolation]: StatusType.error,
-  [CustomReportType.intervention]: StatusType.error,
-  [CustomReportType.deprecation]: StatusType.warn,
+  [RawReportType.cspViolation]: StatusType.error,
+  [RawReportType.intervention]: StatusType.error,
+  [RawReportType.deprecation]: StatusType.warn,
 }
 
 export function startLogs(configuration: LogsConfiguration, logger: Logger) {
@@ -79,7 +72,7 @@ export function doStartLogs(
   configuration: LogsConfiguration,
   rawErrorObservable: Observable<RawError>,
   consoleObservable: Observable<ConsoleLog>,
-  reportObservable: Observable<CustomReport>,
+  reportObservable: Observable<RawReport>,
   internalMonitoring: InternalMonitoring,
   sessionManager: LogsSessionManager,
   logger: Logger
@@ -133,7 +126,7 @@ export function doStartLogs(
     logger.log(log.message, messageContext, LogStatusForApi[log.api])
   }
 
-  function logReport(report: CustomReport) {
+  function logReport(report: RawReport) {
     let message = report.message
     let messageContext: Partial<LogsEvent> | undefined
     const logStatus = LogStatusForReport[report.type]

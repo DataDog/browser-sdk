@@ -4,45 +4,45 @@ import { DOM_EVENT, includes, addEventListener } from '../../tools/utils'
 import { monitor } from '../internalMonitoring'
 import type { Report, BrowserWindow, ReportType } from './browser.types'
 
-export const CustomReportType = {
+export const RawReportType = {
   intervention: 'intervention',
   deprecation: 'deprecation',
   cspViolation: 'csp_violation',
 } as const
 
-export type CustomReportType = typeof CustomReportType[keyof typeof CustomReportType]
+export type RawReportType = typeof RawReportType[keyof typeof RawReportType]
 
-export interface CustomReport {
-  type: CustomReportType
+export interface RawReport {
+  type: RawReportType
   id: string
   message: string
   stack?: string
 }
 
-export function initReportObservable(apis: CustomReportType[]) {
-  const observables: Array<Observable<CustomReport>> = []
+export function initReportObservable(apis: RawReportType[]) {
+  const observables: Array<Observable<RawReport>> = []
 
-  if (includes(apis, CustomReportType.cspViolation)) {
+  if (includes(apis, RawReportType.cspViolation)) {
     observables.push(createCspViolationReportObservable())
   }
 
-  const reportTypes = apis.filter((api: CustomReportType): api is ReportType => api !== CustomReportType.cspViolation)
+  const reportTypes = apis.filter((api: RawReportType): api is ReportType => api !== RawReportType.cspViolation)
   if (reportTypes.length) {
     observables.push(createReportObservable(reportTypes))
   }
 
-  return mergeObservables<CustomReport>(...observables)
+  return mergeObservables<RawReport>(...observables)
 }
 
 function createReportObservable(reportTypes: ReportType[]) {
-  const observable = new Observable<CustomReport>(() => {
+  const observable = new Observable<RawReport>(() => {
     if (!(window as BrowserWindow).ReportingObserver) {
       return
     }
 
     const handleReports = monitor((reports: Report[]) =>
       reports.forEach((report) => {
-        observable.notify(buildCustomReportFromReport(report))
+        observable.notify(buildRawReportFromReport(report))
       })
     )
 
@@ -61,9 +61,9 @@ function createReportObservable(reportTypes: ReportType[]) {
 }
 
 function createCspViolationReportObservable() {
-  const observable = new Observable<CustomReport>(() => {
+  const observable = new Observable<RawReport>(() => {
     const handleCspViolation = monitor((event: SecurityPolicyViolationEvent) => {
-      observable.notify(buildCustomReportFromCspViolation(event))
+      observable.notify(buildRawReportFromCspViolation(event))
     })
 
     const { stop } = addEventListener(document, DOM_EVENT.SECURITY_POLICY_VIOLATION, handleCspViolation)
@@ -73,7 +73,7 @@ function createCspViolationReportObservable() {
   return observable
 }
 
-function buildCustomReportFromReport({ type, body }: Report): CustomReport {
+function buildRawReportFromReport({ type, body }: Report): RawReport {
   return {
     type,
     id: body.id,
@@ -82,8 +82,8 @@ function buildCustomReportFromReport({ type, body }: Report): CustomReport {
   }
 }
 
-function buildCustomReportFromCspViolation(event: SecurityPolicyViolationEvent): CustomReport {
-  const type = CustomReportType.cspViolation
+function buildRawReportFromCspViolation(event: SecurityPolicyViolationEvent): RawReport {
+  const type = RawReportType.cspViolation
   const message = `'${event.blockedURI}' blocked by '${event.effectiveDirective}' directive`
   return {
     type,

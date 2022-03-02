@@ -6,7 +6,7 @@ import {
   isExperimentalFeatureEnabled,
   removeDuplicates,
   ConsoleApiName,
-  CustomReportType,
+  RawReportType,
   includes,
   objectValues,
 } from '@datadog/browser-core'
@@ -16,7 +16,7 @@ export interface LogsInitConfiguration extends InitConfiguration {
   beforeSend?: ((event: LogsEvent) => void | boolean) | undefined
   forwardErrorsToLogs?: boolean | undefined
   forwardConsoleLogs?: readonly ConsoleApiName[] | 'all' | undefined
-  forwardReports?: readonly CustomReportType[] | 'all' | undefined
+  forwardReports?: readonly RawReportType[] | 'all' | undefined
 }
 
 export type HybridInitConfiguration = Omit<LogsInitConfiguration, 'clientToken'>
@@ -24,7 +24,7 @@ export type HybridInitConfiguration = Omit<LogsInitConfiguration, 'clientToken'>
 export interface LogsConfiguration extends Configuration {
   forwardErrorsToLogs: boolean
   forwardConsoleLogs: ConsoleApiName[]
-  forwardReports: CustomReportType[]
+  forwardReports: RawReportType[]
   requestErrorResponseLengthLimit: number
 }
 
@@ -45,9 +45,9 @@ export function validateAndBuildLogsConfiguration(
     'forward-logs'
   )
 
-  const forwardReports = validateAndBuildForwardOption<CustomReportType>(
+  const forwardReports = validateAndBuildForwardOption<RawReportType>(
     initConfiguration.forwardReports,
-    objectValues(CustomReportType),
+    objectValues(RawReportType),
     'Forward Reports',
     'forward-reports'
   )

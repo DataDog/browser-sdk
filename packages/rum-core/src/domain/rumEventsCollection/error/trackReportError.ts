@@ -4,7 +4,7 @@ import {
   ErrorHandling,
   ErrorSource,
   initReportObservable,
-  CustomReportType,
+  RawReportType,
   isExperimentalFeatureEnabled,
   noop,
 } from '@datadog/browser-core'
@@ -16,7 +16,7 @@ export function trackReportError(errorObservable: Observable<RawError>) {
     }
   }
 
-  const subscription = initReportObservable([CustomReportType.cspViolation, CustomReportType.intervention]).subscribe(
+  const subscription = initReportObservable([RawReportType.cspViolation, RawReportType.intervention]).subscribe(
     (reportError) =>
       errorObservable.notify({
         startClocks: clocksNow(),
