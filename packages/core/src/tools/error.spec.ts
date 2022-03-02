@@ -81,6 +81,10 @@ describe('getFileFromStackTraceString', () => {
   at <anonymous>(baz) @ http://path/to/file.js`)
     ).toEqual('http://path/to/file.js:52:15')
   })
+
+  it('should get undefined if no source file is in the stack', () => {
+    expect(getFileFromStackTraceString(`TypeError: oh snap!`)).not.toBeDefined()
+  })
 })
 
 describe('createHandlingStack', () => {
