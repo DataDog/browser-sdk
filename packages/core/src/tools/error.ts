@@ -73,6 +73,10 @@ export function toStackTraceString(stack: StackTrace) {
   return result
 }
 
+export function getFileFromStackTraceString(stack: string) {
+  return /@ (.+)/.exec(stack)?.[1]
+}
+
 export function formatErrorMessage(stack: StackTrace) {
   return `${stack.name || 'Error'}: ${stack.message!}`
 }

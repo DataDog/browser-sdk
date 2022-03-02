@@ -261,6 +261,28 @@ describe('logs', () => {
 
       reportingObserverStub.reset()
     })
+
+    it('should add the source file information to the message for non error reports', () => {
+      const logger = new Logger(noop)
+      const logErrorSpy = spyOn(logger, 'log')
+      const reportingObserverStub = stubReportingObserver()
+      updateExperimentalFeatures(['forward-reports'])
+      originalStartLogs(
+        validateAndBuildLogsConfiguration({ ...initConfiguration, forwardReports: ['deprecation'] })!,
+        logger
+      )
+
+      reportingObserverStub.raiseReport('deprecation')
+
+      expect(logErrorSpy).toHaveBeenCalledOnceWith(
+        'deprecation: foo bar Found in http://foo.bar/index.js:20:10',
+        undefined,
+        'warn'
+      )
+
+      resetExperimentalFeatures()
+      reportingObserverStub.reset()
+    })
   })
 
   describe('sampling', () => {

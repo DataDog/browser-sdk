@@ -22,7 +22,7 @@ export function trackReportError(errorObservable: Observable<RawError>) {
         startClocks: clocksNow(),
         message: reportError.message,
         stack: reportError.stack,
-        type: reportError.type,
+        type: reportError.id,
         source: ErrorSource.REPORT,
         handling: ErrorHandling.HANDLED,
       })

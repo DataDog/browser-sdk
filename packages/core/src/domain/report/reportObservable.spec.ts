@@ -28,6 +28,7 @@ describe('report observable', () => {
       expect(report).toEqual(
         jasmine.objectContaining({
           message: `${type}: foo bar`,
+          id: 'NavigatorVibrate',
           type,
         })
       )
@@ -51,6 +52,7 @@ describe('report observable', () => {
     expect(notifyReport).toHaveBeenCalledOnceWith({
       message: `csp_violation: 'blob' blocked by 'worker-src' directive`,
       type: 'csp_violation',
+      id: 'csp_violation',
       stack: `csp_violation: 'blob' blocked by 'worker-src' directive
   at <anonymous> @ http://foo.bar/index.js:17:8`,
     })

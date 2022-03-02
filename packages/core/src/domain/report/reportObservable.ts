@@ -25,6 +25,7 @@ export type CustomReportType = typeof CustomReportType[keyof typeof CustomReport
 
 export interface CustomReport {
   type: CustomReportType
+  id: string
   message: string
   stack?: string
 }
@@ -82,23 +83,21 @@ function createCspViolationReportObservable() {
   return observable
 }
 
-function buildCustomReportFromReport({
-  type,
-  body: { id, message, sourceFile, lineNumber, columnNumber },
-}: Report): CustomReport {
-  const report: CustomReport = { type, message: `${type}: ${message}` }
-  if (type === CustomReportType.intervention) {
-    report.stack = buildStack(id, message, sourceFile, lineNumber, columnNumber)
+function buildCustomReportFromReport({ type, body }: Report): CustomReport {
+  return {
+    type,
+    id: body.id,
+    message: `${type}: ${body.message}`,
+    stack: buildStack(body.id, body.message, body.sourceFile, body.lineNumber, body.columnNumber),
   }
-  return report
 }
 
 function buildCustomReportFromCspViolation(event: SecurityPolicyViolationEvent): CustomReport {
-  const type = 'csp_violation'
+  const type = CustomReportType.cspViolation
   const message = `'${event.blockedURI}' blocked by '${event.effectiveDirective}' directive`
-
   return {
     type,
+    id: type,
     message: `${type}: ${message}`,
     stack: buildStack(type, message, event.sourceFile, event.lineNumber, event.columnNumber),
   }
@@ -111,20 +110,19 @@ function buildStack(
   lineNumber: number | undefined,
   columnNumber: number | undefined
 ): string | undefined {
-  if (!sourceFile) {
-    return undefined
-  }
-
-  return toStackTraceString({
-    name,
-    message,
-    stack: [
-      {
-        func: '?',
-        url: sourceFile,
-        line: lineNumber,
-        column: columnNumber,
-      },
-    ],
-  })
+  return (
+    sourceFile &&
+    toStackTraceString({
+      name,
+      message,
+      stack: [
+        {
+          func: '?',
+          url: sourceFile,
+          line: lineNumber,
+          column: columnNumber,
+        },
+      ],
+    })
+  )
 }

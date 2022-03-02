@@ -46,7 +46,7 @@ describe('trackReportError', () => {
       stack: jasmine.any(String),
       source: ErrorSource.REPORT,
       handling: ErrorHandling.HANDLED,
-      type: 'intervention',
+      type: 'NavigatorVibrate',
     })
   })
 

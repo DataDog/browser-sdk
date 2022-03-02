@@ -22,6 +22,7 @@ import {
   initConsoleObservable,
   ConsoleApiName,
   ErrorSource,
+  getFileFromStackTraceString,
 } from '@datadog/browser-core'
 import { trackNetworkError } from '../domain/trackNetworkError'
 import type { Logger, LogsMessage } from '../domain/logger'
@@ -133,19 +134,22 @@ export function doStartLogs(
   }
 
   function logReport(report: CustomReport) {
+    let message = report.message
     let messageContext: Partial<LogsEvent> | undefined
     const logStatus = LogStatusForReport[report.type]
     if (logStatus === StatusType.error) {
       messageContext = {
         error: {
-          kind: report.type,
+          kind: report.id,
           origin: ErrorSource.REPORT,
           stack: report.stack,
         },
       }
+    } else if (report.stack) {
+      message += ` Found in ${getFileFromStackTraceString(report.stack)!}`
     }
 
-    logger.log(report.message, messageContext, logStatus)
+    logger.log(message, messageContext, logStatus)
   }
 
   rawErrorObservable.subscribe(reportRawError)
