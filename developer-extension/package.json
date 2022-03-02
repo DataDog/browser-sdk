@@ -16,7 +16,8 @@
     "webpack-webextension-plugin": "0.4.1"
   },
   "dependencies": {
-    "bumbag": "1.6.12",
+    "@mantine/core": "3.6.14",
+    "@mantine/hooks": "3.6.14",
     "react": "16.14.0",
     "react-dom": "16.14.0"
   }
