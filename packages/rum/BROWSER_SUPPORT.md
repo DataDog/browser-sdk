@@ -9,7 +9,7 @@
 | console error     | ✅     | ✅      | ✅     | ✅   | ✅             | ✅         | ✅    | ❌     | ✅    |
 | runtime error     | ✅     | ✅      | ✅     | ✅   | ✅             | ✅         | ✅    | ❌     | ✅    |
 | CSP violation     | ✅     | ✅      | ✅     | ✅   | ✅             | ✅         | ❌    | ❌     | ✅    |
-| reports           | ✅     | ❌      | ❌     | ✅   | ✅             | ❌         | ❌    | ❌     | ✅    |
+| intervention      | ✅     | ❌      | ❌     | ✅   | ✅             | ❌         | ❌    | ❌     | ✅    |
 | auto action       | ✅     | ✅      | ✅     | ✅   | ✅             | ✅         | ✅    | ❌     | ✅    |
 | custom action     | ✅     | ✅      | ✅     | ✅   | ✅             | ✅         | ✅    | ❌     | ✅    |
 | long task         | ✅     | ❌      | ❌     | ✅   | ✅             | ❌         | ❌    | ❌     | ✅    |
