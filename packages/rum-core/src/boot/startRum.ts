@@ -1,5 +1,11 @@
-import type { Observable } from '@datadog/browser-core'
-import { startInternalMonitoring, combine, canUseEventBridge } from '@datadog/browser-core'
+import type { Observable, MonitoringMessage } from '@datadog/browser-core'
+import {
+  startInternalMonitoring,
+  combine,
+  canUseEventBridge,
+  startBatchWithReplica,
+  getEventBridge,
+} from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { startPerformanceCollection } from '../browser/performanceCollection'
 import { startRumAssembly } from '../domain/assembly'
@@ -37,7 +43,7 @@ export function startRum(
     startRumEventBridge(lifeCycle)
   }
 
-  startInternalMonitoring(configuration).setExternalContextProvider(() =>
+  startRumInternalMonitoring(configuration).setExternalContextProvider(() =>
     combine(
       {
         application_id: configuration.applicationId,
@@ -93,6 +99,22 @@ export function startRum(
     session,
     getInternalContext: internalContext.get,
   }
+}
+
+function startRumInternalMonitoring(configuration: RumConfiguration) {
+  const internalMonitoring = startInternalMonitoring(configuration)
+  if (canUseEventBridge()) {
+    const bridge = getEventBridge<'internal_log', MonitoringMessage>()!
+    internalMonitoring.monitoringMessageObservable.subscribe((message) => bridge.send('internal_log', message))
+  } else if (configuration.internalMonitoringEndpointBuilder) {
+    const batch = startBatchWithReplica(
+      configuration,
+      configuration.internalMonitoringEndpointBuilder,
+      configuration.replica?.internalMonitoringEndpointBuilder
+    )
+    internalMonitoring.monitoringMessageObservable.subscribe((message) => batch.add(message))
+  }
+  return internalMonitoring
 }
 
 export function startRumEventCollection(
