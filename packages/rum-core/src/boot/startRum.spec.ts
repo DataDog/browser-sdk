@@ -1,4 +1,4 @@
-import type { RelativeTime, Observable, Context } from '@datadog/browser-core'
+import type { RelativeTime, Observable } from '@datadog/browser-core'
 import { noop, relativeNow, isIE } from '@datadog/browser-core'
 import type { RumSessionManagerMock } from '../../test/mockRumSessionManager'
 import { createRumSessionManagerMock } from '../../test/mockRumSessionManager'
@@ -13,7 +13,6 @@ import type { RumEvent } from '../rumEvent.types'
 import type { LocationChange } from '../browser/locationChangeObservable'
 import { startLongTaskCollection } from '../domain/rumEventsCollection/longTask/longTaskCollection'
 import type { RumSessionManager } from '..'
-import { initEventBridgeStub, deleteEventBridgeStub } from '../../../core/test/specHelper'
 import type { RumConfiguration } from '../domain/configuration'
 import { startRumEventCollection } from './startRum'
 

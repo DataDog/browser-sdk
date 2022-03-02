@@ -1,4 +1,4 @@
-import type { ConsoleLog, Context, InternalMonitoring, RawError, RelativeTime } from '@datadog/browser-core'
+import type { ConsoleLog, Context, RawError, RelativeTime } from '@datadog/browser-core'
 import {
   areCookiesAuthorized,
   combine,
@@ -31,7 +31,11 @@ const LogStatusForApi = {
 }
 
 export function startLogs(configuration: LogsConfiguration, logger: Logger) {
-  const internalMonitoring = startInternalMonitoring(configuration)
+  startInternalMonitoring(configuration).setExternalContextProvider(() =>
+    combine({ session_id: session.findTrackedSession()?.id }, getRUMInternalContext(), {
+      view: { name: null, url: null, referrer: null },
+    })
+  )
 
   const rawErrorObservable = new Observable<RawError>()
 
@@ -46,23 +50,16 @@ export function startLogs(configuration: LogsConfiguration, logger: Logger) {
       ? startLogsSessionManager(configuration)
       : startLogsSessionManagerStub(configuration)
 
-  return doStartLogs(configuration, rawErrorObservable, consoleObservable, internalMonitoring, session, logger)
+  return doStartLogs(configuration, rawErrorObservable, consoleObservable, session, logger)
 }
 
 export function doStartLogs(
   configuration: LogsConfiguration,
   rawErrorObservable: Observable<RawError>,
   consoleObservable: Observable<ConsoleLog>,
-  internalMonitoring: InternalMonitoring,
   sessionManager: LogsSessionManager,
   logger: Logger
 ) {
-  internalMonitoring.setExternalContextProvider(() =>
-    combine({ session_id: sessionManager.findTrackedSession()?.id }, getRUMInternalContext(), {
-      view: { name: null, url: null, referrer: null },
-    })
-  )
-
   const assemble = buildAssemble(sessionManager, configuration, reportRawError)
 
   let onLogEventCollected: (message: Context) => void

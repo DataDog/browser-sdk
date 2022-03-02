@@ -1,5 +1,5 @@
-import type { InternalMonitoring, Observable } from '@datadog/browser-core'
-import { combine, canUseEventBridge } from '@datadog/browser-core'
+import type { Observable } from '@datadog/browser-core'
+import { startInternalMonitoring, combine, canUseEventBridge } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { startPerformanceCollection } from '../browser/performanceCollection'
 import { startRumAssembly } from '../domain/assembly'
@@ -26,7 +26,6 @@ import type { RecorderApi } from './rumPublicApi'
 
 export function startRum(
   configuration: RumConfiguration,
-  internalMonitoring: InternalMonitoring,
   getCommonContext: () => CommonContext,
   recorderApi: RecorderApi,
   initialViewName?: string
@@ -37,11 +36,8 @@ export function startRum(
   } else {
     startRumEventBridge(lifeCycle)
   }
-  const session = !canUseEventBridge() ? startRumSessionManager(configuration, lifeCycle) : startRumSessionManagerStub()
-  const domMutationObservable = createDOMMutationObservable()
-  const locationChangeObservable = createLocationChangeObservable(location)
 
-  internalMonitoring.setExternalContextProvider(() =>
+  startInternalMonitoring(configuration).setExternalContextProvider(() =>
     combine(
       {
         application_id: configuration.applicationId,
@@ -53,6 +49,10 @@ export function startRum(
       { view: { name: null } }
     )
   )
+
+  const session = !canUseEventBridge() ? startRumSessionManager(configuration, lifeCycle) : startRumSessionManagerStub()
+  const domMutationObservable = createDOMMutationObservable()
+  const locationChangeObservable = createLocationChangeObservable(location)
 
   const { parentContexts, foregroundContexts, urlContexts } = startRumEventCollection(
     lifeCycle,
