@@ -255,7 +255,7 @@ init(configuration: {
 
 ### Browser and Session Replay sampling configuration
 
-When a user first access your application and a new session is created, it can be either tracked as:
+When new session is created, it can be either tracked as:
 
 - [**Browser RUM**][11]: **Only** _Sessions_, _Views_, _Actions_, and _Errors_ are collected. Calls to `startSessionReplayRecording()` are ignored.
 - [**Session Replay RUM**][11]: Everything from Browser RUM plus _Resources_, _Long Tasks_, and _Replay_ recordings are collected. A call to `startSessionReplayRecording()` is needed to collect _Replay_ recordings.
