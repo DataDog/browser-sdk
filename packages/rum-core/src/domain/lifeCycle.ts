@@ -7,7 +7,7 @@ import type { RequestCompleteEvent, RequestStartEvent } from './requestCollectio
 import type { AutoAction, AutoActionCreatedEvent } from './rumEventsCollection/action/trackActions'
 import type { ViewEvent, ViewCreatedEvent, ViewEndedEvent } from './rumEventsCollection/view/trackViews'
 
-export enum LifeCycleEventType {
+export const enum LifeCycleEventType {
   PERFORMANCE_ENTRIES_COLLECTED,
   AUTO_ACTION_CREATED,
   AUTO_ACTION_COMPLETED,
