@@ -1,3 +1,4 @@
+import { toStackTraceString } from '../../tools/error'
 import { mergeObservables, Observable } from '../../tools/observable'
 import { DOM_EVENT, includes, addEventListener } from '../../tools/utils'
 import { monitor } from '../internalMonitoring'
@@ -104,16 +105,26 @@ function buildCustomReportFromCspViolation(event: SecurityPolicyViolationEvent):
 }
 
 function buildStack(
-  type: string,
+  name: string,
   message: string,
-  sourceFile: string | null,
-  lineNumber: number | null,
-  columnNumber: number | null
+  sourceFile: string | undefined,
+  lineNumber: number | undefined,
+  columnNumber: number | undefined
 ): string | undefined {
   if (!sourceFile) {
     return undefined
   }
 
-  return `${type}: ${message}
-at <anonymous> @ ${[sourceFile, lineNumber, columnNumber].filter((e) => e).join(':')}`
+  return toStackTraceString({
+    name,
+    message,
+    stack: [
+      {
+        func: '?',
+        url: sourceFile,
+        line: lineNumber,
+        column: columnNumber,
+      },
+    ],
+  })
 }

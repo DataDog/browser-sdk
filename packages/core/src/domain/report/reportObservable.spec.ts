@@ -41,7 +41,7 @@ describe('report observable', () => {
     const [report] = notifyReport.calls.mostRecent().args
 
     expect(report.stack).toEqual(`NavigatorVibrate: foo bar
-at <anonymous> @ http://foo.bar/index.js:20:10`)
+  at <anonymous> @ http://foo.bar/index.js:20:10`)
   })
 
   it(`should notify ${CustomReportType.cspViolation}`, () => {
@@ -52,7 +52,7 @@ at <anonymous> @ http://foo.bar/index.js:20:10`)
       message: `csp_violation: 'blob' blocked by 'worker-src' directive`,
       type: 'csp_violation',
       stack: `csp_violation: 'blob' blocked by 'worker-src' directive
-at <anonymous> @ http://foo.bar/index.js:17:8`,
+  at <anonymous> @ http://foo.bar/index.js:17:8`,
     })
   })
 })
