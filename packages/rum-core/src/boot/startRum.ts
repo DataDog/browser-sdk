@@ -32,6 +32,11 @@ export function startRum(
   initialViewName?: string
 ) {
   const lifeCycle = new LifeCycle()
+  if (!canUseEventBridge()) {
+    startRumBatch(configuration, lifeCycle)
+  } else {
+    startRumEventBridge(lifeCycle)
+  }
   const session = !canUseEventBridge() ? startRumSessionManager(configuration, lifeCycle) : startRumSessionManagerStub()
   const domMutationObservable = createDOMMutationObservable()
   const locationChangeObservable = createLocationChangeObservable(location)
@@ -102,14 +107,6 @@ export function startRumEventCollection(
   const urlContexts = startUrlContexts(lifeCycle, locationChangeObservable, location)
   const foregroundContexts = startForegroundContexts()
 
-  let stopBatch: () => void
-
-  if (canUseEventBridge()) {
-    startRumEventBridge(lifeCycle)
-  } else {
-    ;({ stop: stopBatch } = startRumBatch(configuration, lifeCycle))
-  }
-
   startRumAssembly(configuration, lifeCycle, sessionManager, parentContexts, urlContexts, getCommonContext)
 
   return {
@@ -117,9 +114,6 @@ export function startRumEventCollection(
     foregroundContexts,
     urlContexts,
     stop: () => {
-      // prevent batch from previous tests to keep running and send unwanted requests
-      // could be replaced by stopping all the component when they will all have a stop method
-      stopBatch?.()
       parentContexts.stop()
       foregroundContexts.stop()
     },
