@@ -133,7 +133,7 @@ export function doStartLogs(
     if (logStatus === StatusType.error) {
       messageContext = {
         error: {
-          kind: report.id,
+          kind: report.subtype,
           origin: ErrorSource.REPORT,
           stack: report.stack,
         },

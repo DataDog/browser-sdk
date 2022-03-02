@@ -14,7 +14,7 @@ export type RawReportType = typeof RawReportType[keyof typeof RawReportType]
 
 export interface RawReport {
   type: RawReportType
-  id: string
+  subtype: string
   message: string
   stack?: string
 }
@@ -76,7 +76,7 @@ function createCspViolationReportObservable() {
 function buildRawReportFromReport({ type, body }: Report): RawReport {
   return {
     type,
-    id: body.id,
+    subtype: body.id,
     message: `${type}: ${body.message}`,
     stack: buildStack(body.id, body.message, body.sourceFile, body.lineNumber, body.columnNumber),
   }
@@ -86,10 +86,10 @@ function buildRawReportFromCspViolation(event: SecurityPolicyViolationEvent): Ra
   const type = RawReportType.cspViolation
   const message = `'${event.blockedURI}' blocked by '${event.effectiveDirective}' directive`
   return {
-    type,
-    id: type,
+    type: RawReportType.cspViolation,
+    subtype: event.effectiveDirective,
     message: `${type}: ${message}`,
-    stack: buildStack(type, message, event.sourceFile, event.lineNumber, event.columnNumber),
+    stack: buildStack(event.effectiveDirective, message, event.sourceFile, event.lineNumber, event.columnNumber),
   }
 }
 
