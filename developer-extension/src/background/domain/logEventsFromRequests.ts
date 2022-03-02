@@ -18,11 +18,11 @@ chrome.webRequest.onBeforeRequest.addListener(
     if (!intake) {
       return
     }
-    if (!info.requestBody.raw) {
+    if (!info.requestBody!.raw) {
       return
     }
 
-    for (const rawBody of info.requestBody.raw) {
+    for (const rawBody of info.requestBody!.raw) {
       if (rawBody.bytes) {
         const decodedBody = decoder.decode(rawBody.bytes)
         for (const rawEvent of decodedBody.split('\n')) {
