@@ -38,7 +38,7 @@ export const enum DOM_EVENT {
   PAUSE = 'pause',
 }
 
-export enum ResourceType {
+export const enum ResourceType {
   DOCUMENT = 'document',
   XHR = 'xhr',
   BEACON = 'beacon',
@@ -51,7 +51,7 @@ export enum ResourceType {
   OTHER = 'other',
 }
 
-export enum RequestType {
+export const enum RequestType {
   FETCH = ResourceType.FETCH,
   XHR = ResourceType.XHR,
 }

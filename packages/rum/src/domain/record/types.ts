@@ -2,52 +2,54 @@ import type { DefaultPrivacyLevel } from '@datadog/browser-core'
 import type { FocusRecord, RawRecord, VisualViewportRecord } from '../../types'
 import type { MutationController } from './mutationObserver'
 
-export enum IncrementalSource {
-  Mutation = 0,
-  MouseMove = 1,
-  MouseInteraction = 2,
-  Scroll = 3,
-  ViewportResize = 4,
-  Input = 5,
-  TouchMove = 6,
-  MediaInteraction = 7,
-  StyleSheetRule = 8,
-  // CanvasMutation = 9,
-  // Font = 10,
-}
+export const IncrementalSource = {
+  Mutation: 0,
+  MouseMove: 1,
+  MouseInteraction: 2,
+  Scroll: 3,
+  ViewportResize: 4,
+  Input: 5,
+  TouchMove: 6,
+  MediaInteraction: 7,
+  StyleSheetRule: 8,
+  // CanvasMutation : 9,
+  // Font : 10,
+} as const
+
+export type IncrementalSource = typeof IncrementalSource[keyof typeof IncrementalSource]
 
 export type MutationData = {
-  source: IncrementalSource.Mutation
+  source: typeof IncrementalSource.Mutation
 } & MutationPayload
 
 export interface MousemoveData {
-  source: IncrementalSource.MouseMove | IncrementalSource.TouchMove
+  source: typeof IncrementalSource.MouseMove | typeof IncrementalSource.TouchMove
   positions: MousePosition[]
 }
 
 export type MouseInteractionData = {
-  source: IncrementalSource.MouseInteraction
+  source: typeof IncrementalSource.MouseInteraction
 } & MouseInteractionParam
 
 export type ScrollData = {
-  source: IncrementalSource.Scroll
+  source: typeof IncrementalSource.Scroll
 } & ScrollPosition
 
 export type ViewportResizeData = {
-  source: IncrementalSource.ViewportResize
+  source: typeof IncrementalSource.ViewportResize
 } & ViewportResizeDimention
 
 export type InputData = {
-  source: IncrementalSource.Input
+  source: typeof IncrementalSource.Input
   id: number
 } & InputState
 
 export type MediaInteractionData = {
-  source: IncrementalSource.MediaInteraction
+  source: typeof IncrementalSource.MediaInteraction
 } & MediaInteractionParam
 
 export type StyleSheetRuleData = {
-  source: IncrementalSource.StyleSheetRule
+  source: typeof IncrementalSource.StyleSheetRule
 } & StyleSheetRuleParam
 
 export type IncrementalData =
@@ -158,7 +160,7 @@ export type MutationCallBack = (m: MutationPayload) => void
 
 export type MousemoveCallBack = (
   p: MousePosition[],
-  source: IncrementalSource.MouseMove | IncrementalSource.TouchMove
+  source: typeof IncrementalSource.MouseMove | typeof IncrementalSource.TouchMove
 ) => void
 
 export interface MousePosition {
@@ -248,7 +250,7 @@ export type VisualViewportResizeCallback = (data: VisualViewportRecord['data']) 
 export type ListenerHandler = () => void
 export type HookResetter = () => void
 
-export enum NodeType {
+export const enum NodeType {
   Document,
   DocumentType,
   Element,
