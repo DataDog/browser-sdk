@@ -85,13 +85,6 @@ function processError(
     error: {
       id: generateUUID(),
       message: error.message,
-      resource: error.resource
-        ? {
-            method: error.resource.method,
-            status_code: error.resource.statusCode,
-            url: error.resource.url,
-          }
-        : undefined,
       source: error.source,
       stack: error.stack,
       handling_stack: error.handlingStack,
