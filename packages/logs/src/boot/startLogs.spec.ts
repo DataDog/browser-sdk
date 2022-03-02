@@ -228,11 +228,24 @@ describe('logs', () => {
       expect(logErrorSpy).not.toHaveBeenCalled()
       expect(consoleLogSpy).toHaveBeenCalled()
     })
+  })
+
+  describe('reports', () => {
+    let logger: Logger
+    let logErrorSpy: jasmine.Spy
+    let reportingObserverStub: ReturnType<typeof stubReportingObserver>
+
+    beforeEach(() => {
+      logger = new Logger(noop)
+      logErrorSpy = spyOn(logger, 'log')
+      reportingObserverStub = stubReportingObserver()
+    })
+
+    afterEach(() => {
+      reportingObserverStub.reset()
+    })
 
     it('should send reports when ff forward-reports is enabled', () => {
-      const logger = new Logger(noop)
-      const logErrorSpy = spyOn(logger, 'log')
-      const reportingObserverStub = stubReportingObserver()
       updateExperimentalFeatures(['forward-reports'])
       originalStartLogs(
         validateAndBuildLogsConfiguration({ ...initConfiguration, forwardReports: ['intervention'] })!,
@@ -244,13 +257,9 @@ describe('logs', () => {
       expect(logErrorSpy).toHaveBeenCalled()
 
       resetExperimentalFeatures()
-      reportingObserverStub.reset()
     })
 
     it('should not send reports when ff forward-reports is disabled', () => {
-      const logger = new Logger(noop)
-      const logErrorSpy = spyOn(logger, 'log')
-      const reportingObserverStub = stubReportingObserver()
       originalStartLogs(
         validateAndBuildLogsConfiguration({ ...initConfiguration, forwardReports: ['intervention'] })!,
         logger
@@ -258,14 +267,16 @@ describe('logs', () => {
       reportingObserverStub.raiseReport('intervention')
 
       expect(logErrorSpy).not.toHaveBeenCalled()
+    })
 
-      reportingObserverStub.reset()
+    it('should not send reports when forwardReports init option not specified', () => {
+      originalStartLogs(validateAndBuildLogsConfiguration({ ...initConfiguration })!, logger)
+      reportingObserverStub.raiseReport('intervention')
+
+      expect(logErrorSpy).not.toHaveBeenCalled()
     })
 
     it('should add the source file information to the message for non error reports', () => {
-      const logger = new Logger(noop)
-      const logErrorSpy = spyOn(logger, 'log')
-      const reportingObserverStub = stubReportingObserver()
       updateExperimentalFeatures(['forward-reports'])
       originalStartLogs(
         validateAndBuildLogsConfiguration({ ...initConfiguration, forwardReports: ['deprecation'] })!,
@@ -281,7 +292,6 @@ describe('logs', () => {
       )
 
       resetExperimentalFeatures()
-      reportingObserverStub.reset()
     })
   })
 
