@@ -33,7 +33,7 @@ function expectTrackedSessionToBeInStore(id?: string) {
 }
 
 function expectNotTrackedSessionToBeInStore() {
-  expect(getCookie(SESSION_COOKIE_NAME)).not.toContain(`id=`)
+  expect(getCookie(SESSION_COOKIE_NAME)).not.toContain('id=')
   expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${PRODUCT_KEY}=${FakeTrackingType.NOT_TRACKED}`)
 }
 

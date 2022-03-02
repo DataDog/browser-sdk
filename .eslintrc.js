@@ -71,11 +71,13 @@ module.exports = {
     'no-template-curly-in-string': 'error',
     'no-throw-literal': 'error',
     'no-undef-init': 'error',
+    'no-useless-concat': 'error',
     'object-shorthand': 'error',
     'one-var': ['error', 'never'],
     'prefer-rest-params': 'off',
     'prefer-object-spread': 'error',
     'prefer-template': 'error',
+    quotes: ['error', 'single', { avoidEscape: true }],
     radix: 'error',
     'spaced-comment': [
       'error',

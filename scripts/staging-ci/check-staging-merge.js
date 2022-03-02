@@ -15,7 +15,7 @@ async function main() {
   const currentStaging = /CURRENT_STAGING: (staging-.*)/g.exec(ciConfigurationFromMain)?.[1]
   await executeCommand(`git fetch --no-tags origin ${currentStaging}`)
   await executeCommand(`git checkout ${currentStaging} -f`)
-  await executeCommand(`git pull`)
+  await executeCommand('git pull')
 
   printLog(
     `Checking if branch '${CI_COMMIT_REF_NAME}' (${CI_COMMIT_SHORT_SHA}) can be merged into ${currentStaging}...`
@@ -23,7 +23,7 @@ async function main() {
   try {
     await executeCommand(`git merge --no-ff "${CI_COMMIT_SHA}"`)
   } catch (error) {
-    const diff = await executeCommand(`git diff`)
+    const diff = await executeCommand('git diff')
     printError(
       `Conflicts:\n${diff}\n` +
         'You can resolve these conflicts by running "branches-status staging fix" in your branch' +

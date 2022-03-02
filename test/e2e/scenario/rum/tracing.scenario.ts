@@ -7,7 +7,7 @@ describe('tracing', () => {
   createTest('trace xhr')
     .withRum({ service: 'service', allowedTracingOrigins: ['LOCATION_ORIGIN'] })
     .run(async ({ serverEvents }) => {
-      const rawHeaders = await sendXhr(`/headers`, [
+      const rawHeaders = await sendXhr('/headers', [
         ['x-foo', 'bar'],
         ['x-foo', 'baz'],
       ])
