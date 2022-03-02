@@ -50,11 +50,6 @@ export interface RawRumErrorEvent {
   date: TimeStamp
   type: RumEventType.ERROR
   error: {
-    resource?: {
-      url: string
-      status_code: number
-      method: string
-    }
     id: string
     type?: string
     stack?: string
