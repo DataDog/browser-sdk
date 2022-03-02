@@ -2,7 +2,7 @@ import type {
   ReportType,
   BrowserWindow,
   Report,
-  ReportingObserver,
+  ReportingObserverConstructor,
   ReportingObserverOption,
 } from '../src/domain/report/browser.types'
 import { noop } from '../src/tools/utils'
@@ -32,7 +32,7 @@ export function stubReportingObserver() {
         return []
       },
     }
-  } as unknown as ReportingObserver
+  } as unknown as ReportingObserverConstructor
 
   return {
     raiseReport(type: ReportType) {

@@ -2,18 +2,7 @@ import { toStackTraceString } from '../../tools/error'
 import { mergeObservables, Observable } from '../../tools/observable'
 import { DOM_EVENT, includes, addEventListener } from '../../tools/utils'
 import { monitor } from '../internalMonitoring'
-import type {
-  Report,
-  BrowserWindow,
-  ReportType,
-  ReportingObserverCallback,
-  ReportingObserverOption,
-  ReportingObserver as ReportingObserverInterface,
-} from './browser.types'
-
-declare const ReportingObserver: {
-  new (callback: ReportingObserverCallback, option: ReportingObserverOption): ReportingObserverInterface
-}
+import type { Report, BrowserWindow, ReportType } from './browser.types'
 
 export const CustomReportType = {
   intervention: 'intervention',
@@ -50,13 +39,14 @@ function createReportObservable(reportTypes: ReportType[]) {
     if (!(window as BrowserWindow).ReportingObserver) {
       return
     }
+
     const handleReports = monitor((reports: Report[]) =>
       reports.forEach((report) => {
         observable.notify(buildCustomReportFromReport(report))
       })
     )
 
-    const observer = new ReportingObserver(handleReports, {
+    const observer = new (window as BrowserWindow).ReportingObserver!(handleReports, {
       types: reportTypes,
       buffered: true,
     })

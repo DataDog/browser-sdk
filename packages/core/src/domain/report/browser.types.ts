@@ -1,11 +1,15 @@
 export interface BrowserWindow {
-  ReportingObserver?: ReportingObserver
+  ReportingObserver?: ReportingObserverConstructor
 }
 
 export interface ReportingObserver {
   disconnect(): void
   observe(): void
   takeRecords(): Report[]
+}
+
+export interface ReportingObserverConstructor {
+  new (callback: ReportingObserverCallback, option: ReportingObserverOption): ReportingObserver
 }
 
 export type ReportType = 'intervention' | 'deprecation'
