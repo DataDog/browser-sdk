@@ -34,7 +34,7 @@ describe('trackReportError', () => {
     resetExperimentalFeatures()
   })
 
-  it('should error report when ff forward-reports enabled', () => {
+  it('should report when ff forward-reports enabled', () => {
     updateExperimentalFeatures(['forward-reports'])
 
     trackReportError(errorObservable)
@@ -45,7 +45,7 @@ describe('trackReportError', () => {
       message: jasmine.any(String),
       stack: jasmine.any(String),
       source: ErrorSource.REPORT,
-      handling: ErrorHandling.HANDLED,
+      handling: ErrorHandling.UNHANDLED,
       type: 'NavigatorVibrate',
     })
   })

@@ -24,7 +24,7 @@ export function trackReportError(errorObservable: Observable<RawError>) {
         stack: reportError.stack,
         type: reportError.id,
         source: ErrorSource.REPORT,
-        handling: ErrorHandling.HANDLED,
+        handling: ErrorHandling.UNHANDLED,
       })
   )
 
