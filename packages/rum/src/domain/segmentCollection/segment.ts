@@ -61,7 +61,7 @@ export class Segment {
         // "flush" response, remove the listener to avoid any leak, and send a monitor message to
         // help investigate the issue.
         worker.removeEventListener('message', listener)
-        addMonitoringMessage(`Segment did not receive a 'flush' response before being replaced.`)
+        addMonitoringMessage("Segment did not receive a 'flush' response before being replaced.")
       }
     })
     worker.addEventListener('message', listener)
