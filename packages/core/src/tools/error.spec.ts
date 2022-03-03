@@ -83,7 +83,7 @@ describe('getFileFromStackTraceString', () => {
   })
 
   it('should get undefined if no source file is in the stack', () => {
-    expect(getFileFromStackTraceString(`TypeError: oh snap!`)).not.toBeDefined()
+    expect(getFileFromStackTraceString('TypeError: oh snap!')).not.toBeDefined()
   })
 })
 

@@ -50,7 +50,7 @@ describe('report observable', () => {
     cspEventListenerStub.dispatchEvent()
 
     expect(notifyReport).toHaveBeenCalledOnceWith({
-      message: `csp_violation: 'blob' blocked by 'worker-src' directive`,
+      message: "csp_violation: 'blob' blocked by 'worker-src' directive",
       type: 'csp_violation',
       subtype: 'worker-src',
       stack: `worker-src: 'blob' blocked by 'worker-src' directive of the policy "worker-src 'none'"

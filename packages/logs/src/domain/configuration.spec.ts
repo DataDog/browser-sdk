@@ -51,7 +51,7 @@ describe('validateAndBuildForwardOption', () => {
   const ff = 'flag'
   const errorMessage = 'Label should be "all" or an array with allowed values "foo", "bar"'
 
-  describe(`if ff enabled`, () => {
+  describe('if ff enabled', () => {
     beforeEach(() => {
       displaySpy = spyOn(display, 'error')
       updateExperimentalFeatures([ff])
