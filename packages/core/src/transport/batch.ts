@@ -36,7 +36,7 @@ export class Batch {
 
   flush(reason?: string) {
     if (this.bufferMessageCount !== 0) {
-      const messages = [...this.pushOnlyBuffer, ...objectValues(this.upsertBuffer)]
+      const messages = this.pushOnlyBuffer.concat(objectValues(this.upsertBuffer))
       this.request.send(messages.join('\n'), this.bufferBytesSize, reason)
       this.pushOnlyBuffer = []
       this.upsertBuffer = {}

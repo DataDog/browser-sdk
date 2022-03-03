@@ -34,7 +34,7 @@ import type { RumConfiguration } from './configuration'
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
 
-enum SessionType {
+const enum SessionType {
   SYNTHETICS = 'synthetics',
   USER = 'user',
   CI_TEST = 'ci_test',
@@ -51,11 +51,10 @@ const VIEW_EVENTS_MODIFIABLE_FIELD_PATHS = [
   'resource.url',
 ]
 
-const OTHER_EVENTS_MODIFIABLE_FIELD_PATHS = [
-  ...VIEW_EVENTS_MODIFIABLE_FIELD_PATHS,
+const OTHER_EVENTS_MODIFIABLE_FIELD_PATHS = VIEW_EVENTS_MODIFIABLE_FIELD_PATHS.concat([
   // User-customizable field
   'context',
-]
+])
 
 type Mutable<T> = { -readonly [P in keyof T]: T[P] }
 

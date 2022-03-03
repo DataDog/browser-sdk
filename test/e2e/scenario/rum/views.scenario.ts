@@ -52,7 +52,7 @@ describe('rum views', () => {
     .run(async ({ serverEvents }) => {
       await expireSession()
       serverEvents.empty()
-      await sendXhr(`/ok`)
+      await sendXhr('/ok')
       expect(serverEvents.count).toBe(0)
     })
 

@@ -1,4 +1,4 @@
-import type { ConsoleLog, Context, InternalMonitoring, RawError, RelativeTime } from '@datadog/browser-core'
+import type { ConsoleLog, Context, RawError, RelativeTime, MonitoringMessage } from '@datadog/browser-core'
 import {
   areCookiesAuthorized,
   combine,
@@ -12,13 +12,13 @@ import {
   initConsoleObservable,
   ConsoleApiName,
   ErrorSource,
+  startBatchWithReplica,
 } from '@datadog/browser-core'
 import { trackNetworkError } from '../domain/trackNetworkError'
 import type { Logger, LogsMessage } from '../domain/logger'
 import { StatusType } from '../domain/logger'
 import type { LogsSessionManager } from '../domain/logsSessionManager'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
-import { startLoggerBatch } from '../transport/startLoggerBatch'
 import type { LogsConfiguration } from '../domain/configuration'
 import type { LogsEvent } from '../logsEvent.types'
 
@@ -31,7 +31,11 @@ const LogStatusForApi = {
 }
 
 export function startLogs(configuration: LogsConfiguration, logger: Logger) {
-  const internalMonitoring = startInternalMonitoring(configuration)
+  startLogsInternalMonitoring(configuration).setExternalContextProvider(() =>
+    combine({ session_id: session.findTrackedSession()?.id }, getRUMInternalContext(), {
+      view: { name: null, url: null, referrer: null },
+    })
+  )
 
   const rawErrorObservable = new Observable<RawError>()
 
@@ -46,23 +50,32 @@ export function startLogs(configuration: LogsConfiguration, logger: Logger) {
       ? startLogsSessionManager(configuration)
       : startLogsSessionManagerStub(configuration)
 
-  return doStartLogs(configuration, rawErrorObservable, consoleObservable, internalMonitoring, session, logger)
+  return doStartLogs(configuration, rawErrorObservable, consoleObservable, session, logger)
+}
+
+function startLogsInternalMonitoring(configuration: LogsConfiguration) {
+  const internalMonitoring = startInternalMonitoring(configuration)
+  if (canUseEventBridge()) {
+    const bridge = getEventBridge<'internal_log', MonitoringMessage>()!
+    internalMonitoring.monitoringMessageObservable.subscribe((message) => bridge.send('internal_log', message))
+  } else if (configuration.internalMonitoringEndpointBuilder) {
+    const batch = startBatchWithReplica(
+      configuration,
+      configuration.internalMonitoringEndpointBuilder,
+      configuration.replica?.internalMonitoringEndpointBuilder
+    )
+    internalMonitoring.monitoringMessageObservable.subscribe((message) => batch.add(message))
+  }
+  return internalMonitoring
 }
 
 export function doStartLogs(
   configuration: LogsConfiguration,
   rawErrorObservable: Observable<RawError>,
   consoleObservable: Observable<ConsoleLog>,
-  internalMonitoring: InternalMonitoring,
   sessionManager: LogsSessionManager,
   logger: Logger
 ) {
-  internalMonitoring.setExternalContextProvider(() =>
-    combine({ session_id: sessionManager.findTrackedSession()?.id }, getRUMInternalContext(), {
-      view: { name: null, url: null, referrer: null },
-    })
-  )
-
   const assemble = buildAssemble(sessionManager, configuration, reportRawError)
 
   let onLogEventCollected: (message: Context) => void
@@ -70,7 +83,11 @@ export function doStartLogs(
     const bridge = getEventBridge<'log', Context>()!
     onLogEventCollected = (message) => bridge.send('log', message)
   } else {
-    const batch = startLoggerBatch(configuration)
+    const batch = startBatchWithReplica(
+      configuration,
+      configuration.logsEndpointBuilder,
+      configuration.replica?.logsEndpointBuilder
+    )
     onLogEventCollected = (message) => batch.add(message)
   }
 

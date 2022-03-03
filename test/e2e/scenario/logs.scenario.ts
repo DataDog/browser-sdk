@@ -125,14 +125,14 @@ describe('logs', () => {
     .run(async ({ serverEvents, baseUrl }) => {
       await browserExecuteAsync((unreachableUrl, done) => {
         let count = 0
-        fetch(`/throw`)
+        fetch('/throw')
           .then(() => (count += 1))
           .catch((err) => console.error(err))
-        fetch(`/unknown`)
+        fetch('/unknown')
           .then(() => (count += 1))
           .catch((err) => console.error(err))
         fetch(unreachableUrl).catch(() => (count += 1))
-        fetch(`/ok`)
+        fetch('/ok')
           .then(() => (count += 1))
           .catch((err) => console.error(err))
 

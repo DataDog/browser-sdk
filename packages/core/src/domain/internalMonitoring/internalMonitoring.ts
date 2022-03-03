@@ -2,18 +2,18 @@ import type { Context } from '../../tools/context'
 import { display } from '../../tools/display'
 import { toStackTraceString } from '../../tools/error'
 import { assign, combine, jsonStringify } from '../../tools/utils'
-import { canUseEventBridge, getEventBridge } from '../../transport'
 import type { Configuration } from '../configuration'
 import { computeStackTrace } from '../tracekit'
-import { startMonitoringBatch } from './startMonitoringBatch'
+import { Observable } from '../../tools/observable'
 
-enum StatusType {
+const enum StatusType {
   info = 'info',
   error = 'error',
 }
 
 export interface InternalMonitoring {
   setExternalContextProvider: (provider: () => Context) => void
+  monitoringMessageObservable: Observable<MonitoringMessage>
 }
 
 export interface MonitoringMessage extends Context {
@@ -35,15 +35,10 @@ let onInternalMonitoringMessageCollected: ((message: MonitoringMessage) => void)
 
 export function startInternalMonitoring(configuration: Configuration): InternalMonitoring {
   let externalContextProvider: () => Context
+  const monitoringMessageObservable = new Observable<MonitoringMessage>()
 
-  if (canUseEventBridge()) {
-    const bridge = getEventBridge<'internal_log', MonitoringMessage>()!
-    onInternalMonitoringMessageCollected = (message: MonitoringMessage) =>
-      bridge.send('internal_log', withContext(message))
-  } else if (configuration.internalMonitoringEndpointBuilder) {
-    const batch = startMonitoringBatch(configuration)
-    onInternalMonitoringMessageCollected = (message: MonitoringMessage) => batch.add(withContext(message))
-  }
+  onInternalMonitoringMessageCollected = (message: MonitoringMessage) =>
+    monitoringMessageObservable.notify(withContext(message))
 
   assign(monitoringConfiguration, {
     maxMessagesPerPage: configuration.maxInternalMonitoringMessagesPerPage,
@@ -62,6 +57,7 @@ export function startInternalMonitoring(configuration: Configuration): InternalM
     setExternalContextProvider: (provider: () => Context) => {
       externalContextProvider = provider
     },
+    monitoringMessageObservable,
   }
 }
 
@@ -128,18 +124,26 @@ export function callMonitored<T extends (...args: any[]) => any>(
 
 export function addMonitoringMessage(message: string, context?: Context) {
   logMessageIfDebug(message, context)
-  addToMonitoring({
-    message,
-    ...context,
-    status: StatusType.info,
-  })
+  addToMonitoring(
+    assign(
+      {
+        message,
+        status: StatusType.info,
+      },
+      context
+    )
+  )
 }
 
 export function addMonitoringError(e: unknown) {
-  addToMonitoring({
-    ...formatError(e),
-    status: StatusType.error,
-  })
+  addToMonitoring(
+    assign(
+      {
+        status: StatusType.error,
+      },
+      formatError(e)
+    )
+  )
 }
 
 function addToMonitoring(message: MonitoringMessage) {

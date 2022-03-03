@@ -5,6 +5,7 @@ import {
   ResourceType,
   toServerDuration,
   relativeToClocks,
+  assign,
 } from '@datadog/browser-core'
 import type { RumPerformanceEntry, RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 import { supportPerformanceEntry } from '../../../browser/performanceCollection'
@@ -110,11 +111,13 @@ function processResourceEntry(entry: RumPerformanceResourceTiming): RawRumEventC
 
 function computePerformanceEntryMetrics(timing: RumPerformanceResourceTiming) {
   return {
-    resource: {
-      duration: computePerformanceResourceDuration(timing),
-      size: computeSize(timing),
-      ...computePerformanceResourceDetails(timing),
-    },
+    resource: assign(
+      {
+        duration: computePerformanceResourceDuration(timing),
+        size: computeSize(timing),
+      },
+      computePerformanceResourceDetails(timing)
+    ),
   }
 }
 

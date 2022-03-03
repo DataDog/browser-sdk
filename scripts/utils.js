@@ -10,7 +10,7 @@ async function getSecretKey(name) {
   const awsParameters = [
     'ssm',
     'get-parameter',
-    `--region=us-east-1`,
+    '--region=us-east-1',
     '--with-decryption',
     '--query=Parameter.Value',
     '--out=text',
@@ -24,11 +24,11 @@ async function initGitConfig(repository) {
   const githubDeployKey = await getSecretKey('ci.browser-sdk.github_deploy_key')
 
   await executeCommand(`ssh-add - <<< "${githubDeployKey}"`)
-  await executeCommand(`mkdir -p ~/.ssh`)
-  await executeCommand(`chmod 700 ~/.ssh`)
-  await executeCommand(`ssh-keyscan -H github.com >> ~/.ssh/known_hosts`)
-  await executeCommand(`git config user.email "ci.browser-sdk@datadoghq.com"`)
-  await executeCommand(`git config user.name "ci.browser-sdk"`)
+  await executeCommand('mkdir -p ~/.ssh')
+  await executeCommand('chmod 700 ~/.ssh')
+  await executeCommand('ssh-keyscan -H github.com >> ~/.ssh/known_hosts')
+  await executeCommand('git config user.email "ci.browser-sdk@datadoghq.com"')
+  await executeCommand('git config user.name "ci.browser-sdk"')
   await executeCommand(`git remote set-url origin ${repository}`)
 }
 

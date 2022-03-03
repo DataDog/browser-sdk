@@ -25,7 +25,7 @@ function workerCodeFn() {
               type: 'initialized',
             })
             break
-          case 'write':
+          case 'write': {
             const additionalRawSize = pushData(data.data)
             self.postMessage({
               type: 'wrote',
@@ -34,7 +34,8 @@ function workerCodeFn() {
               additionalRawSize,
             })
             break
-          case 'flush':
+          }
+          case 'flush': {
             const additionalRawSize = data.data ? pushData(data.data) : 0
             deflate.push('', constants.Z_FINISH)
             self.postMessage({
@@ -47,6 +48,7 @@ function workerCodeFn() {
             deflate = new Deflate()
             rawSize = 0
             break
+          }
         }
       })
     )

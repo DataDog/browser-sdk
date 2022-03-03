@@ -59,16 +59,25 @@ module.exports = {
     'no-extra-bind': 'error',
     'no-new-func': 'error',
     'no-new-wrappers': 'error',
+    'no-restricted-syntax': [
+      'error',
+      {
+        selector: 'TSEnumDeclaration:not([const=true])',
+        message: 'When possible, use `const enum` as it produces less code when transpiled.',
+      },
+    ],
     'no-return-await': 'error',
     'no-sequences': 'error',
     'no-template-curly-in-string': 'error',
     'no-throw-literal': 'error',
     'no-undef-init': 'error',
+    'no-useless-concat': 'error',
     'object-shorthand': 'error',
     'one-var': ['error', 'never'],
     'prefer-rest-params': 'off',
     'prefer-object-spread': 'error',
     'prefer-template': 'error',
+    quotes: ['error', 'single', { avoidEscape: true }],
     radix: 'error',
     'spaced-comment': [
       'error',
@@ -214,6 +223,17 @@ module.exports = {
       excludedFiles: '*.spec.ts',
       rules: {
         'local-rules/disallow-side-effects': 'error',
+        'no-restricted-syntax': [
+          'error',
+          {
+            selector: 'ObjectExpression > SpreadElement',
+            message: 'Object spread is not authorized. Please use "assign" from the core package utils instead.',
+          },
+          {
+            selector: 'ArrayExpression > SpreadElement',
+            message: 'Array spread is not authorized. Please use .concat instead.',
+          },
+        ],
       },
     },
     {

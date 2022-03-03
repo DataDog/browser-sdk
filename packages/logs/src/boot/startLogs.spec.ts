@@ -40,7 +40,6 @@ function getLoggedMessage(server: sinon.SinonFakeServer, index: number) {
 }
 const FAKE_DATE = 123456
 const SESSION_ID = 'session-id'
-const internalMonitoring = { setExternalContextProvider: () => undefined }
 
 interface Rum {
   getInternalContext(startTime?: number): any | undefined
@@ -67,14 +66,7 @@ describe('logs', () => {
     configuration: configurationOverrides,
   }: { errorLogger?: Logger; configuration?: Partial<LogsConfiguration> } = {}) => {
     const configuration = { ...baseConfiguration, ...configurationOverrides }
-    return doStartLogs(
-      configuration,
-      rawErrorObservable,
-      consoleObservable,
-      internalMonitoring,
-      sessionManager,
-      errorLogger
-    )
+    return doStartLogs(configuration, rawErrorObservable, consoleObservable, sessionManager, errorLogger)
   }
 
   beforeEach(() => {

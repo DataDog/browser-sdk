@@ -21,10 +21,10 @@ async function main() {
 
   try {
     await executeCommand(`git checkout ${MAIN_BRANCH} -f`)
-    await executeCommand(`git pull`)
+    await executeCommand('git pull')
     await executeCommand(`git merge --squash "${CI_COMMIT_SHA}"`)
   } catch (error) {
-    const diff = await executeCommand(`git diff`)
+    const diff = await executeCommand('git diff')
     printError(
       `Conflicts:\n${diff}\n` +
         `You can resolve these conflicts by updating your branch with latest ${MAIN_BRANCH} changes.`
@@ -36,10 +36,10 @@ async function main() {
     await executeCommand('git commit -am "squash test"')
 
     await executeCommand(`git checkout ${currentStaging} -f`)
-    await executeCommand(`git pull`)
+    await executeCommand('git pull')
     await executeCommand(`git merge "${MAIN_BRANCH}"`)
   } catch (error) {
-    const diff = await executeCommand(`git diff`)
+    const diff = await executeCommand('git diff')
     printError(
       `Conflicts:\n${diff}\n` +
         'You can resolve these conflicts by re-running "to-staging" on your branch to propagate latest changes.'

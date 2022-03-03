@@ -1,4 +1,4 @@
-import { monitor, noop } from '@datadog/browser-core'
+import { noop, requestIdleCallback } from '@datadog/browser-core'
 import type { RumMutationRecord } from './types'
 
 /**
@@ -22,7 +22,7 @@ export function createMutationBatch(processMutationBatch: (mutations: RumMutatio
   return {
     addMutations: (mutations: RumMutationRecord[]) => {
       if (pendingMutations.length === 0) {
-        cancelScheduledFlush = scheduleMutationFlush(flush)
+        cancelScheduledFlush = requestIdleCallback(flush, { timeout: MUTATION_PROCESS_MAX_DELAY })
       }
       pendingMutations.push(...mutations)
     },
@@ -33,24 +33,4 @@ export function createMutationBatch(processMutationBatch: (mutations: RumMutatio
       cancelScheduledFlush()
     },
   }
-}
-
-function scheduleMutationFlush(flush: () => void) {
-  interface BrowserWindow extends Window {
-    requestIdleCallback: (callback: () => void, opts?: { timeout?: number }) => number
-    cancelIdleCallback: (handle?: number) => void
-  }
-  const browserWindow = window as unknown as BrowserWindow
-
-  // Use 'requestIdleCallback' when available: it will throttle the mutation processing if the
-  // browser is busy rendering frames (ex: when frames are below 60fps). When not available, the
-  // fallback on 'requestAnimationFrame' will still ensure the mutations are processed after any
-  // browser rendering process (Layout, Recalculate Style, etc.), so we can serialize DOM nodes
-  // efficiently.
-  if (browserWindow.requestIdleCallback) {
-    const id = browserWindow.requestIdleCallback(monitor(flush), { timeout: MUTATION_PROCESS_MAX_DELAY })
-    return () => browserWindow.cancelIdleCallback(id)
-  }
-  const id = browserWindow.requestAnimationFrame(monitor(flush))
-  return () => browserWindow.cancelAnimationFrame(id)
 }

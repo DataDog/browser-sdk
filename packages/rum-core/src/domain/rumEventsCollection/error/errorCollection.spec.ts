@@ -43,7 +43,6 @@ describe('error collection', () => {
           error: {
             id: jasmine.any(String),
             message: 'foo',
-            resource: undefined,
             source: ErrorSource.CUSTOM,
             stack: jasmine.stringMatching('Error: foo'),
             handling_stack: 'Error: handling foo',
@@ -125,12 +124,7 @@ describe('error collection', () => {
       lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, {
         error: {
           message: 'hello',
-          resource: {
-            method: 'GET',
-            statusCode: 500,
-            url: 'url',
-          },
-          source: ErrorSource.NETWORK,
+          source: ErrorSource.CUSTOM,
           stack: 'bar',
           startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
           type: 'foo',
@@ -144,12 +138,7 @@ describe('error collection', () => {
         error: {
           id: jasmine.any(String),
           message: 'hello',
-          resource: {
-            method: 'GET',
-            status_code: 500,
-            url: 'url',
-          },
-          source: ErrorSource.NETWORK,
+          source: ErrorSource.CUSTOM,
           stack: 'bar',
           handling_stack: undefined,
           type: 'foo',
