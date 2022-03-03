@@ -10,7 +10,7 @@ const LICENSE_FILE = 'LICENSE-3rdparty.csv'
 async function main() {
   const packageJsonPaths = await findPackageJsonPaths()
 
-  printLog(`Looking for dependencies in:\n`, packageJsonPaths, `\n`)
+  printLog('Looking for dependencies in:\n', packageJsonPaths, '\n')
   const declaredDependencies = withoutDuplicates(packageJsonPaths.flatMap(retrievePackageJsonDependencies)).sort()
 
   const declaredLicenses = (await retrieveLicenses()).sort()

@@ -62,16 +62,27 @@ module.exports = {
         const moduleExports = checker.getExportsOfModule(moduleSymbol)
 
         for (const symbol of moduleExports) {
-          if (isEnum(symbol)) {
+          if (isEnum(symbol, checker)) {
             context.report(node, `Cannot export enum ${symbol.getName()}`)
           }
         }
       },
     }
-  },
-}
 
-function isEnum(symbol) {
-  // eslint-disable-next-line no-bitwise
-  return symbol.getFlags() & SymbolFlags.Enum
+    function isEnum(symbol) {
+      const flags = symbol.getFlags()
+
+      // eslint-disable-next-line no-bitwise
+      if (flags & SymbolFlags.Enum) {
+        return true
+      }
+
+      // eslint-disable-next-line no-bitwise
+      if (flags & SymbolFlags.Alias) {
+        return isEnum(checker.getAliasedSymbol(symbol))
+      }
+
+      return false
+    }
+  },
 }

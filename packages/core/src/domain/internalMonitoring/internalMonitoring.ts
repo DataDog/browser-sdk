@@ -6,7 +6,7 @@ import type { Configuration } from '../configuration'
 import { computeStackTrace } from '../tracekit'
 import { Observable } from '../../tools/observable'
 
-enum StatusType {
+const enum StatusType {
   info = 'info',
   error = 'error',
 }

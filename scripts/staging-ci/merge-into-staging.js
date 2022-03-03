@@ -25,12 +25,12 @@ async function main() {
   try {
     await executeCommand(`git merge --no-ff "${CI_COMMIT_SHA}"`)
   } catch (error) {
-    const diff = await executeCommand(`git diff`)
+    const diff = await executeCommand('git diff')
     printError(`Conflicts:\n${diff}`)
     throw error
   }
 
-  const commitMessage = await executeCommand(`git show -s --format=%B`)
+  const commitMessage = await executeCommand('git show -s --format=%B')
   const newSummary = `Merge branch '${CI_COMMIT_REF_NAME}' (${CI_COMMIT_SHORT_SHA}) with ${CURRENT_STAGING_BRANCH}`
   const message = `${newSummary}\n\n${commitMessage}`
 

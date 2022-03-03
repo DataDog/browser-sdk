@@ -94,7 +94,7 @@ function onInitialized(worker: DeflateWorker) {
   }
 }
 
-function onError(error: ErrorEvent | Error | string) {
+function onError(error: unknown) {
   if (state.status === DeflateWorkerStatus.Loading) {
     display.error('Session Replay recording failed to start: an error occurred while creating the Worker:', error)
     if (error instanceof Event || (error instanceof Error && includes(error.message, 'Content Security Policy'))) {
