@@ -16,15 +16,10 @@ export function startRumBatch(configuration: RumConfiguration, lifeCycle: LifeCy
       batch.add(serverRumEvent)
     }
   })
-
-  return {
-    stop: () => batch.stop(),
-  }
 }
 
 interface RumBatch {
   add: (message: Context) => void
-  stop: () => void
   upsert: (message: Context, key: string) => void
 }
 
@@ -54,24 +49,14 @@ function makeRumBatch(configuration: RumConfiguration, lifeCycle: LifeCycle): Ru
     return combine(message, { application: { id: replica!.applicationId } })
   }
 
-  let stopped = false
   return {
     add: (message: Context) => {
-      if (stopped) {
-        return
-      }
       primaryBatch.add(message)
       if (replicaBatch) {
         replicaBatch.add(withReplicaApplicationId(message))
       }
     },
-    stop: () => {
-      stopped = true
-    },
     upsert: (message: Context, key: string) => {
-      if (stopped) {
-        return
-      }
       primaryBatch.upsert(message, key)
       if (replicaBatch) {
         replicaBatch.upsert(withReplicaApplicationId(message), key)
