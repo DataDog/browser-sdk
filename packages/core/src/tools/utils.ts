@@ -39,7 +39,7 @@ export const enum DOM_EVENT {
   SECURITY_POLICY_VIOLATION = 'securitypolicyviolation',
 }
 
-export enum ResourceType {
+export const enum ResourceType {
   DOCUMENT = 'document',
   XHR = 'xhr',
   BEACON = 'beacon',
@@ -52,7 +52,7 @@ export enum ResourceType {
   OTHER = 'other',
 }
 
-export enum RequestType {
+export const enum RequestType {
   FETCH = ResourceType.FETCH,
   XHR = ResourceType.XHR,
 }
@@ -576,23 +576,17 @@ export function combine(...sources: any[]): unknown {
 export type TimeoutId = ReturnType<typeof setTimeout>
 
 export function requestIdleCallback(callback: () => void, opts?: { timeout?: number }) {
-  interface BrowserWindow extends Window {
-    requestIdleCallback: (callback: () => void, opts?: { timeout?: number }) => number
-    cancelIdleCallback: (handle?: number) => void
-  }
-  const browserWindow = window as unknown as BrowserWindow
-
   // Use 'requestIdleCallback' when available: it will throttle the mutation processing if the
   // browser is busy rendering frames (ex: when frames are below 60fps). When not available, the
   // fallback on 'requestAnimationFrame' will still ensure the mutations are processed after any
   // browser rendering process (Layout, Recalculate Style, etc.), so we can serialize DOM nodes
   // efficiently.
-  if (browserWindow.requestIdleCallback) {
-    const id = browserWindow.requestIdleCallback(monitor(callback), opts)
-    return () => browserWindow.cancelIdleCallback(id)
+  if (window.requestIdleCallback) {
+    const id = window.requestIdleCallback(monitor(callback), opts)
+    return () => window.cancelIdleCallback(id)
   }
-  const id = browserWindow.requestAnimationFrame(monitor(callback))
-  return () => browserWindow.cancelAnimationFrame(id)
+  const id = window.requestAnimationFrame(monitor(callback))
+  return () => window.cancelAnimationFrame(id)
 }
 
 export function removeDuplicates<T>(array: T[]) {

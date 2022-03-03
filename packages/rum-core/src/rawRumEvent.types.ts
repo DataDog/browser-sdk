@@ -9,7 +9,7 @@ import type {
 } from '@datadog/browser-core'
 import type { RumSessionPlan } from './domain/rumSessionManager'
 
-export enum RumEventType {
+export const enum RumEventType {
   ACTION = 'action',
   ERROR = 'error',
   LONG_TASK = 'long_task',
@@ -105,7 +105,7 @@ export interface InForegroundPeriod {
   duration: ServerDuration
 }
 
-export enum ViewLoadingType {
+export const enum ViewLoadingType {
   INITIAL_LOAD = 'initial_load',
   ROUTE_CHANGE = 'route_change',
 }
@@ -152,7 +152,7 @@ export interface RawRumActionEvent {
   }
 }
 
-export enum ActionType {
+export const enum ActionType {
   CLICK = 'click',
   CUSTOM = 'custom',
 }

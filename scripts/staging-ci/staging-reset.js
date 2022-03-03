@@ -17,7 +17,7 @@ async function main() {
   await initGitConfig(REPOSITORY)
   await executeCommand(`git fetch --no-tags origin ${MAIN_BRANCH} ${CURRENT_STAGING_BRANCH}`)
   await executeCommand(`git checkout ${MAIN_BRANCH} -f`)
-  await executeCommand(`git pull`)
+  await executeCommand('git pull')
 
   const isNewBranch = CURRENT_STAGING_BRANCH !== NEW_STAGING_BRANCH
   if (isNewBranch) {
@@ -32,23 +32,23 @@ async function main() {
 
   const isStagingAlreadyCreated = await executeCommand(`git ls-remote --heads ${REPOSITORY} ${NEW_STAGING_BRANCH}`)
   if (!isStagingAlreadyCreated) {
-    printLog(`Creating the new staging branch...`)
+    printLog('Creating the new staging branch...')
     await executeCommand(`git checkout -b ${NEW_STAGING_BRANCH}`)
     await executeCommand(`git push origin ${NEW_STAGING_BRANCH}`)
   } else {
-    printLog(`New staging branch already created. Skipping.`)
+    printLog('New staging branch already created. Skipping.')
   }
 
   await executeCommand(`git checkout ${CURRENT_STAGING_BRANCH}`)
-  await executeCommand(`git pull`)
+  await executeCommand('git pull')
 
   if (isNewBranch && fs.existsSync(CI_FILE)) {
-    printLog(`Disabling CI on the old branch...`)
+    printLog('Disabling CI on the old branch...')
     await executeCommand(`git rm ${CI_FILE}`)
     await executeCommand(`git commit ${CI_FILE} -m "Remove ${CI_FILE} on old branch so pushes are noop"`)
     await executeCommand(`git push origin ${CURRENT_STAGING_BRANCH}`)
   } else {
-    printLog(`CI already disabled on the old branch. Skipping.`)
+    printLog('CI already disabled on the old branch. Skipping.')
   }
 
   printLog('Reset done.')

@@ -16,12 +16,12 @@ export type RumSession = {
   hasLitePlan: boolean
 }
 
-export enum RumSessionPlan {
+export const enum RumSessionPlan {
   LITE = 1,
   REPLAY = 2,
 }
 
-export enum RumTrackingType {
+export const enum RumTrackingType {
   NOT_TRACKED = '0',
   // Note: the "tracking type" value (stored in the session cookie) does not match the "session
   // plan" value (sent in RUM events). This is expected, and was done to keep retrocompatibility

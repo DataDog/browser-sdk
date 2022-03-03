@@ -50,7 +50,7 @@ describe('serializeNodeWithId', () => {
 
   describe('document serialization', () => {
     it('serializes a document', () => {
-      const document = new DOMParser().parseFromString(`<!doctype html><html>foo</html>`, 'text/html')
+      const document = new DOMParser().parseFromString('<!doctype html><html>foo</html>', 'text/html')
       expect(serializeDocument(document, NodePrivacyLevel.ALLOW)).toEqual({
         type: NodeType.Document,
         childNodes: [
@@ -133,7 +133,7 @@ describe('serializeNodeWithId', () => {
 
     it('ignores white space in <head>', () => {
       const head = document.createElement('head')
-      head.innerHTML = `  <title>  foo </title>  `
+      head.innerHTML = '  <title>  foo </title>  '
 
       expect((serializeNodeWithId(head, DEFAULT_OPTIONS)! as ElementNode).childNodes).toEqual([
         jasmine.objectContaining({

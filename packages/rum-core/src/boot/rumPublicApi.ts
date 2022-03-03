@@ -1,4 +1,4 @@
-import type { Context, InitConfiguration, InternalMonitoring, TimeStamp, RelativeTime } from '@datadog/browser-core'
+import type { Context, InitConfiguration, TimeStamp, RelativeTime } from '@datadog/browser-core'
 import {
   assign,
   BoundedBuffer,
@@ -14,7 +14,6 @@ import {
   createHandlingStack,
   canUseEventBridge,
   areCookiesAuthorized,
-  startInternalMonitoring,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ParentContexts } from '../domain/parentContexts'
@@ -30,7 +29,6 @@ export type RumPublicApi = ReturnType<typeof makeRumPublicApi>
 
 export type StartRum = (
   configuration: RumConfiguration,
-  internalMonitoring: InternalMonitoring,
   getCommonContext: () => CommonContext,
   recorderApi: RecorderApi,
   initialViewName?: string
@@ -112,10 +110,8 @@ export function makeRumPublicApi(
       return
     }
 
-    const internalMonitoring = startInternalMonitoring(configuration)
-
     if (!configuration.trackViewsManually) {
-      doStartRum(configuration, internalMonitoring)
+      doStartRum(configuration)
     } else {
       // drain beforeInitCalls by buffering them until we start RUM
       // if we get a startView, drain re-buffered calls before continuing to drain beforeInitCalls
@@ -124,7 +120,7 @@ export function makeRumPublicApi(
       bufferApiCalls = new BoundedBuffer()
 
       startViewStrategy = (name) => {
-        doStartRum(configuration, internalMonitoring, name)
+        doStartRum(configuration, name)
       }
       beforeInitCalls.drain()
     }
@@ -133,14 +129,9 @@ export function makeRumPublicApi(
     isAlreadyInitialized = true
   }
 
-  function doStartRum(
-    configuration: RumConfiguration,
-    internalMonitoring: InternalMonitoring,
-    initialViewName?: string
-  ) {
+  function doStartRum(configuration: RumConfiguration, initialViewName?: string) {
     const startRumResults = startRumImpl(
       configuration,
-      internalMonitoring,
       () => ({
         user,
         context: globalContextManager.get(),

@@ -12,7 +12,7 @@ export type LogsSession = {
   id?: string // session can be tracked without id
 }
 
-export enum LoggerTrackingType {
+export const enum LoggerTrackingType {
   NOT_TRACKED = '0',
   TRACKED = '1',
 }

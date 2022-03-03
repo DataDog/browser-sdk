@@ -197,7 +197,7 @@ function readLimitedAmountOfBytes(
 
   function readMore() {
     reader.read().then(
-      monitor((result: ReadableStreamReadResult<Uint8Array>) => {
+      monitor((result: ReadableStreamDefaultReadResult<Uint8Array>) => {
         if (result.done) {
           onDone()
           return

@@ -30,7 +30,7 @@ async function main() {
   const majorPackageVersion = getMajor(packageVersion)
 
   if (majorPackageVersion <= getMajor(CURRENT_PACKAGE_VERSION)) {
-    printLog(`Chrome driver is up to date.`)
+    printLog('Chrome driver is up to date.')
     process.exit()
   }
 
@@ -45,7 +45,7 @@ async function main() {
   const commitMessage = `👷 Bump chrome to ${packageVersion}`
   await executeCommand(`git checkout -b ${chromeVersionBranch}`)
 
-  printLog(`Update versions...`)
+  printLog('Update versions...')
   await replaceCiVariable('CHROME_DRIVER_VERSION', driverVersion)
   await replaceCiVariable('CHROME_PACKAGE_VERSION', packageVersion)
   await replaceCiVariable('CURRENT_CI_IMAGE', Number(CURRENT_CI_IMAGE) + 1)
@@ -54,7 +54,7 @@ async function main() {
   await executeCommand(`git commit -m "${commitMessage}"`)
   await executeCommand(`git push origin ${chromeVersionBranch}`)
 
-  printLog(`Create PR...`)
+  printLog('Create PR...')
   await createPullRequest()
 
   printLog(`Chrome version bump PR created (from ${CURRENT_PACKAGE_VERSION} to ${packageVersion}).`)

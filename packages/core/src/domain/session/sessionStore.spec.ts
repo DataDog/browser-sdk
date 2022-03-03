@@ -6,7 +6,7 @@ import type { SessionStore } from './sessionStore'
 import { startSessionStore, SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionStore'
 import { SESSION_COOKIE_NAME } from './sessionCookieStore'
 
-enum FakeTrackingType {
+const enum FakeTrackingType {
   TRACKED = 'tracked',
   NOT_TRACKED = 'not-tracked',
 }
@@ -33,7 +33,7 @@ function expectTrackedSessionToBeInStore(id?: string) {
 }
 
 function expectNotTrackedSessionToBeInStore() {
-  expect(getCookie(SESSION_COOKIE_NAME)).not.toContain(`id=`)
+  expect(getCookie(SESSION_COOKIE_NAME)).not.toContain('id=')
   expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${PRODUCT_KEY}=${FakeTrackingType.NOT_TRACKED}`)
 }
 

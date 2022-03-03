@@ -38,7 +38,7 @@ Illustrates a SPA scenario.
     await takeMeasurements()
 
     // Scroll to the bottom of the page, because some checkboxes may be hidden below fixed banners
-    await page.evaluate(`scrollTo(0, 100000)`)
+    await page.evaluate('scrollTo(0, 100000)')
 
     // Click on all checkboxes except the first one
     const checkboxes = await page.$$('input[type="checkbox"]')

@@ -1,4 +1,4 @@
-import type { RelativeTime, Observable, Context } from '@datadog/browser-core'
+import type { RelativeTime, Observable } from '@datadog/browser-core'
 import { noop, relativeNow, isIE } from '@datadog/browser-core'
 import type { RumSessionManagerMock } from '../../test/mockRumSessionManager'
 import { createRumSessionManagerMock } from '../../test/mockRumSessionManager'
@@ -13,7 +13,6 @@ import type { RumEvent } from '../rumEvent.types'
 import type { LocationChange } from '../browser/locationChangeObservable'
 import { startLongTaskCollection } from '../domain/rumEventsCollection/longTask/longTaskCollection'
 import type { RumSessionManager } from '..'
-import { initEventBridgeStub, deleteEventBridgeStub } from '../../../core/test/specHelper'
 import type { RumConfiguration } from '../domain/configuration'
 import { startRumEventCollection } from './startRum'
 
@@ -271,42 +270,5 @@ describe('rum events url', () => {
 
     expect(serverRumEvents.length).toEqual(1)
     expect(serverRumEvents[0].view.url).toEqual('http://foo.com/')
-  })
-})
-
-describe('startRumEventCollection', () => {
-  let setupBuilder: TestSetupBuilder
-  let sendSpy: jasmine.Spy<(msg: string) => void>
-
-  beforeEach(() => {
-    const eventBridgeStub = initEventBridgeStub()
-    sendSpy = spyOn(eventBridgeStub, 'send')
-    setupBuilder = setupBuilder = setup().beforeBuild(
-      ({ location, lifeCycle, configuration, sessionManager, locationChangeObservable }) =>
-        startRumEventCollection(lifeCycle, configuration, location, sessionManager, locationChangeObservable, () => ({
-          context: {},
-          user: {},
-        }))
-    )
-  })
-
-  afterEach(() => {
-    deleteEventBridgeStub()
-    setupBuilder.cleanup()
-  })
-
-  it('should send bridge event when bridge is present', () => {
-    const { lifeCycle } = setupBuilder.build()
-
-    const collectedRumEvent = { type: 'action' } as RumEvent & Context
-    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, collectedRumEvent)
-
-    const [message] = sendSpy.calls.mostRecent().args
-    const parsedMessage = JSON.parse(message)
-
-    expect(parsedMessage).toEqual({
-      eventType: 'rum',
-      event: jasmine.objectContaining({ type: 'action' }),
-    })
   })
 })
