@@ -18,8 +18,19 @@ export function createIntakeServerApp(serverEvents: EventRegistry, bridgeEvents:
     const isBridge = req.query.bridge
     const events = isBridge ? bridgeEvents : serverEvents
 
-    if (endpoint === 'rum' || endpoint === 'logs' || endpoint === 'internalMonitoring') {
+    if (endpoint === 'logs' || endpoint === 'internalMonitoring') {
       ;(req.body as string).split('\n').map((rawEvent) => events.push(endpoint, JSON.parse(rawEvent)))
+    }
+
+    if (endpoint === 'rum') {
+      ;(req.body as string).split('\n').map((rawEvent) => {
+        const event = JSON.parse(rawEvent)
+        if (event._dd?.event_type === 'internal_telemetry') {
+          events.push('telemetry', event)
+        } else {
+          events.push('rum', event)
+        }
+      })
     }
 
     if (endpoint === 'sessionReplay' && req.busboy) {

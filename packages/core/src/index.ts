@@ -24,6 +24,7 @@ export {
   startFakeInternalMonitoring,
   resetInternalMonitoring,
   setDebugMode,
+  TelemetryEvent,
 } from './domain/internalMonitoring'
 export { Observable, Subscription } from './tools/observable'
 export {
