@@ -1,6 +1,6 @@
 import { toStackTraceString } from '../../tools/error'
 import { mergeObservables, Observable } from '../../tools/observable'
-import { DOM_EVENT, includes, addEventListener } from '../../tools/utils'
+import { DOM_EVENT, includes, addEventListener, safeTruncate } from '../../tools/utils'
 import { monitor } from '../internalMonitoring'
 import type { Report, BrowserWindow, ReportType } from './browser.types'
 
@@ -89,7 +89,13 @@ function buildRawReportFromCspViolation(event: SecurityPolicyViolationEvent): Ra
     type: RawReportType.cspViolation,
     subtype: event.effectiveDirective,
     message: `${type}: ${message}`,
-    stack: buildStack(event.effectiveDirective, message, event.sourceFile, event.lineNumber, event.columnNumber),
+    stack: buildStack(
+      event.effectiveDirective,
+      `${message} of the policy "${safeTruncate(event.originalPolicy, 100, '...')}"`,
+      event.sourceFile,
+      event.lineNumber,
+      event.columnNumber
+    ),
   }
 }
 

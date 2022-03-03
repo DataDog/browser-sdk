@@ -53,7 +53,7 @@ describe('report observable', () => {
       message: `csp_violation: 'blob' blocked by 'worker-src' directive`,
       type: 'csp_violation',
       subtype: 'worker-src',
-      stack: `worker-src: 'blob' blocked by 'worker-src' directive
+      stack: `worker-src: 'blob' blocked by 'worker-src' directive of the policy "worker-src 'none'"
   at <anonymous> @ http://foo.bar/index.js:17:8`,
     })
   })
