@@ -1,6 +1,6 @@
 import { display } from '@datadog/browser-core'
 import type { LogsMessage } from './logger'
-import { HandlerType, Logger, STATUSES, StatusType } from './logger'
+import { HandlerType, Logger, STATUSES, StatusType, logWithoutConsoleHandler } from './logger'
 
 describe('Logger', () => {
   let logger: Logger
@@ -124,5 +124,26 @@ describe('Logger', () => {
       expect(sendLogSpy).not.toHaveBeenCalled()
       expect(display.log).toHaveBeenCalled()
     })
+  })
+})
+
+describe('logWithoutConsoleHandler', () => {
+  let logger: Logger
+  let sendLogSpy: jasmine.Spy<(message: LogsMessage) => void>
+
+  beforeEach(() => {
+    sendLogSpy = jasmine.createSpy()
+    logger = new Logger(sendLogSpy)
+    spyOn(display, 'log')
+  })
+
+  it('should log without console handler', () => {
+    const handlers = [HandlerType.console, HandlerType.http]
+    logger.setHandler(handlers)
+    logWithoutConsoleHandler(logger, () => logger.log('message'))
+
+    expect(sendLogSpy).toHaveBeenCalled()
+    expect(display.log).not.toHaveBeenCalledWith()
+    expect(logger['handlerType']).toEqual(handlers)
   })
 })

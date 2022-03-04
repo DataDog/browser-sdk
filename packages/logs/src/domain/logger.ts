@@ -102,3 +102,12 @@ export class Logger {
     this.level = level
   }
 }
+
+export function logWithoutConsoleHandler(logger: Logger, log: () => void) {
+  const handlers = Array.isArray(logger['handlerType']) ? logger['handlerType'] : [logger['handlerType']]
+  if (includes(handlers, 'console')) {
+    logger.setHandler(handlers.filter((t) => t !== 'console'))
+  }
+  log()
+  logger.setHandler(handlers)
+}

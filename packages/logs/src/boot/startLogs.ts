@@ -27,7 +27,7 @@ import {
 } from '@datadog/browser-core'
 import { trackNetworkError } from '../domain/trackNetworkError'
 import type { Logger, LogsMessage } from '../domain/logger'
-import { StatusType } from '../domain/logger'
+import { StatusType, logWithoutConsoleHandler } from '../domain/logger'
 import type { LogsSessionManager } from '../domain/logsSessionManager'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { LogsConfiguration } from '../domain/configuration'
@@ -150,7 +150,7 @@ export function doStartLogs(
         url: error.resource.url,
       }
     }
-    logger.error(error.message, messageContext)
+    logWithoutConsoleHandler(logger, () => logger.error(error.message, messageContext))
   }
 
   function reportConsoleLog(log: ConsoleLog) {
@@ -163,7 +163,7 @@ export function doStartLogs(
         },
       }
     }
-    logger.log(log.message, messageContext, LogStatusForApi[log.api])
+    logWithoutConsoleHandler(logger, () => logger.log(log.message, messageContext, LogStatusForApi[log.api]))
   }
 
   function logReport(report: RawReport) {
@@ -182,7 +182,7 @@ export function doStartLogs(
       message += ` Found in ${getFileFromStackTraceString(report.stack)!}`
     }
 
-    logger.log(message, messageContext, logStatus)
+    logWithoutConsoleHandler(logger, () => logger.log(message, messageContext, logStatus))
   }
 
   rawErrorObservable.subscribe(reportRawError)
