@@ -52,7 +52,7 @@
     "cors": "2.8.5",
     "emoji-name-map": "1.2.9",
     "eslint": "8.10.0",
-    "eslint-config-prettier": "7.2.0",
+    "eslint-config-prettier": "8.5.0",
     "eslint-module-utils": "2.7.3",
     "eslint-plugin-import": "2.25.4",
     "eslint-plugin-jasmine": "4.1.3",
