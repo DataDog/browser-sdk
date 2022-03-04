@@ -20,7 +20,7 @@ import type {
   User,
 } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
-import { RumEvent } from '../rumEvent.types'
+import type { RumEvent } from '../rumEvent.types'
 import { getSyntheticsContext } from './syntheticsContext'
 import { getCiTestContext } from './ciTestContext'
 import type { LifeCycle } from './lifeCycle'
