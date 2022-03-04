@@ -82,7 +82,7 @@ export function validateAndBuildForwardOption<T>(
     return []
   }
 
-  if (!(option === 'all' || (Array.isArray(option) && option.every((api) => allowedValues.includes(api))))) {
+  if (!(option === 'all' || (Array.isArray(option) && option.every((api) => includes(allowedValues, api))))) {
     display.error(`${label} should be "all" or an array with allowed values "${allowedValues.join('", "')}"`)
     return
   }
