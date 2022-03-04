@@ -3961,56 +3961,8 @@ function workerCodeFn() {
       deflateInfo,
     }
 
-    function _typeof(obj) {
-      '@babel/helpers - typeof'
-
-      if (typeof Symbol === 'function' && typeof Symbol.iterator === 'symbol') {
-        _typeof = function (obj) {
-          return typeof obj
-        }
-      } else {
-        _typeof = function (obj) {
-          return obj && typeof Symbol === 'function' && obj.constructor === Symbol && obj !== Symbol.prototype
-            ? 'symbol'
-            : typeof obj
-        }
-      }
-
-      return _typeof(obj)
-    }
-
-    var _has = function _has(obj, key) {
-      return Object.prototype.hasOwnProperty.call(obj, key)
-    }
-
-    var assign = function assign(
-      obj
-      /* from1, from2, from3, ... */
-    ) {
-      var sources = Array.prototype.slice.call(arguments, 1)
-
-      while (sources.length) {
-        var source = sources.shift()
-
-        if (!source) {
-          continue
-        }
-
-        if (_typeof(source) !== 'object') {
-          throw new TypeError(`${source}must be non-object`)
-        }
-
-        for (var p in source) {
-          if (_has(source, p)) {
-            obj[p] = source[p]
-          }
-        }
-      }
-
-      return obj
-    } // Join array of chunks to single array.
-
-    var flattenChunks = function flattenChunks(chunks) {
+    // Join array of chunks to single array.
+    function flattenChunks(chunks) {
       // calculate data length
       var len = 0
 
@@ -4027,11 +3979,6 @@ function workerCodeFn() {
       }
 
       return result
-    }
-
-    var common = {
-      assign,
-      flattenChunks,
     }
 
     // String encode/decode helpers
@@ -4213,18 +4160,15 @@ function workerCodeFn() {
      * ```
      * */
 
-    function Deflate(options) {
-      this.options = common.assign(
-        {
-          level: Z_DEFAULT_COMPRESSION$1,
-          method: Z_DEFLATED$1,
-          chunkSize: 16384,
-          windowBits: 15,
-          memLevel: 8,
-          strategy: Z_DEFAULT_STRATEGY$1,
-        },
-        options || {}
-      )
+    function Deflate() {
+      this.options = {
+        level: Z_DEFAULT_COMPRESSION$1,
+        method: Z_DEFLATED$1,
+        chunkSize: 16384,
+        windowBits: 15,
+        memLevel: 8,
+        strategy: Z_DEFAULT_STRATEGY$1,
+      }
       var opt = this.options
 
       if (opt.raw && opt.windowBits > 0) {
@@ -4388,7 +4332,7 @@ function workerCodeFn() {
     Deflate.prototype.onEnd = function (status) {
       // On success - join
       if (status === Z_OK$1) {
-        this.result = common.flattenChunks(this.chunks)
+        this.result = flattenChunks(this.chunks)
       }
 
       this.chunks = []
