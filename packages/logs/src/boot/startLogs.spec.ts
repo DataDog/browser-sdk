@@ -8,6 +8,7 @@ import {
   updateExperimentalFeatures,
   getTimeStamp,
   stopSessionManager,
+  display,
 } from '@datadog/browser-core'
 import sinon from 'sinon'
 import type { Clock } from '../../../core/test/specHelper'
@@ -22,7 +23,7 @@ import type { LogsConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
 
 import type { LogsMessage } from '../domain/logger'
-import { Logger, StatusType } from '../domain/logger'
+import { Logger, StatusType, HandlerType } from '../domain/logger'
 import type { LogsSessionManager } from '../domain/logsSessionManager'
 import type { LogsEvent } from '../logsEvent.types'
 import { buildAssemble, doStartLogs, startLogs as originalStartLogs } from './startLogs'
@@ -77,7 +78,7 @@ describe('logs', () => {
       reportObservable,
       sessionManager,
       errorLogger
-    )
+    ).sendLog
   }
 
   beforeEach(() => {
@@ -196,7 +197,7 @@ describe('logs', () => {
       const consoleLogSpy = spyOn(console, 'log').and.callFake(() => true)
 
       updateExperimentalFeatures(['forward-logs'])
-      originalStartLogs(
+      const { stop } = originalStartLogs(
         validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['log'] })!,
         logger
       )
@@ -208,6 +209,30 @@ describe('logs', () => {
       expect(consoleLogSpy).toHaveBeenCalled()
 
       resetExperimentalFeatures()
+      stop()
+    })
+
+    it('should not print the log twice when console handler is enabled', () => {
+      const logger = new Logger(noop)
+      const logErrorSpy = spyOn(logger, 'log')
+      const displaySpy = spyOn(display, 'log')
+      const consoleLogSpy = spyOn(console, 'log').and.callFake(() => true)
+
+      updateExperimentalFeatures(['forward-logs'])
+      const { stop } = originalStartLogs(
+        validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['log'] })!,
+        logger
+      )
+      logger.setHandler([HandlerType.console])
+      /* eslint-disable-next-line no-console */
+      console.log('foo', 'bar')
+
+      expect(logErrorSpy).toHaveBeenCalled()
+      expect(consoleLogSpy).toHaveBeenCalledTimes(1)
+      expect(displaySpy).not.toHaveBeenCalled()
+
+      resetExperimentalFeatures()
+      stop()
     })
 
     it('should not send console logs when ff forward-logs is disabled', () => {
@@ -298,13 +323,13 @@ describe('logs', () => {
       const sendSpy = spyOn(initEventBridgeStub(), 'send')
 
       let configuration = { ...baseConfiguration, sampleRate: 0 }
-      let sendLog = originalStartLogs(configuration, new Logger(noop))
+      let sendLog = originalStartLogs(configuration, new Logger(noop)).sendLog
       sendLog(DEFAULT_MESSAGE, {})
 
       expect(sendSpy).not.toHaveBeenCalled()
 
       configuration = { ...baseConfiguration, sampleRate: 100 }
-      sendLog = originalStartLogs(configuration, new Logger(noop))
+      sendLog = originalStartLogs(configuration, new Logger(noop)).sendLog
       sendLog(DEFAULT_MESSAGE, {})
 
       expect(sendSpy).toHaveBeenCalled()

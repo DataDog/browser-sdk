@@ -185,15 +185,22 @@ export function doStartLogs(
     logWithoutConsoleHandler(logger, () => logger.log(message, messageContext, logStatus))
   }
 
-  rawErrorObservable.subscribe(reportRawError)
-  consoleObservable.subscribe(reportConsoleLog)
-  reportObservable.subscribe(logReport)
+  const rawErrorSubscription = rawErrorObservable.subscribe(reportRawError)
+  const consoleSubscription = consoleObservable.subscribe(reportConsoleLog)
+  const reportSubscription = reportObservable.subscribe(logReport)
 
-  return (message: LogsMessage, currentContext: Context) => {
-    const contextualizedMessage = assemble(message, currentContext)
-    if (contextualizedMessage) {
-      onLogEventCollected(contextualizedMessage)
-    }
+  return {
+    stop: () => {
+      rawErrorSubscription.unsubscribe()
+      consoleSubscription.unsubscribe()
+      reportSubscription.unsubscribe()
+    },
+    sendLog: (message: LogsMessage, currentContext: Context) => {
+      const contextualizedMessage = assemble(message, currentContext)
+      if (contextualizedMessage) {
+        onLogEventCollected(contextualizedMessage)
+      }
+    },
   }
 }
 

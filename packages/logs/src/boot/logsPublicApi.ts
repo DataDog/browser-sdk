@@ -55,8 +55,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
       if (!configuration) {
         return
       }
-
-      sendLogStrategy = startLogsImpl(configuration, logger)
+      sendLogStrategy = startLogsImpl(configuration, logger).sendLog
       getInitConfigurationStrategy = () => deepClone(initConfiguration)
       beforeInitSendLog.drain()
 
