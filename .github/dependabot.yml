@@ -27,8 +27,6 @@ updates:
       - dependency-name: '*react*'
       - dependency-name: 'bumbag'
       # update eslint: RUMF-1163
-      - dependency-name: 'eslint'
-        update-types: ['version-update:semver-major']
       - dependency-name: 'eslint-config-prettier'
         update-types: ['version-update:semver-major']
       # update ajv: RUMF-1164
