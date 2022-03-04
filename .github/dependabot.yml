@@ -26,8 +26,6 @@ updates:
       # update extension: RUMF-1162
       - dependency-name: '*react*'
       - dependency-name: 'bumbag'
-      # update eslint: RUMF-1163
-      - dependency-name: '*eslint*'
       # update ajv: RUMF-1164
       - dependency-name: 'ajv'
         update-types: ['version-update:semver-major']
