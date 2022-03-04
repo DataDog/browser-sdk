@@ -5,6 +5,7 @@ import type {
   RelativeTime,
   MonitoringMessage,
   TelemetryEvent,
+  RawReport,
 } from '@datadog/browser-core'
 import {
   areCookiesAuthorized,
@@ -16,9 +17,12 @@ import {
   getEventBridge,
   getRelativeTime,
   startInternalMonitoring,
+  RawReportType,
+  initReportObservable,
   initConsoleObservable,
   ConsoleApiName,
   ErrorSource,
+  getFileFromStackTraceString,
   startBatchWithReplica,
 } from '@datadog/browser-core'
 import { trackNetworkError } from '../domain/trackNetworkError'
@@ -35,6 +39,12 @@ const LogStatusForApi = {
   [ConsoleApiName.info]: StatusType.info,
   [ConsoleApiName.warn]: StatusType.warn,
   [ConsoleApiName.error]: StatusType.error,
+}
+
+const LogStatusForReport = {
+  [RawReportType.cspViolation]: StatusType.error,
+  [RawReportType.intervention]: StatusType.error,
+  [RawReportType.deprecation]: StatusType.warn,
 }
 
 export function startLogs(configuration: LogsConfiguration, logger: Logger) {
@@ -66,13 +76,14 @@ export function startLogs(configuration: LogsConfiguration, logger: Logger) {
     trackNetworkError(configuration, rawErrorObservable)
   }
   const consoleObservable = initConsoleObservable(configuration.forwardConsoleLogs)
+  const reportObservable = initReportObservable(configuration.forwardReports)
 
   const session =
     areCookiesAuthorized(configuration.cookieOptions) && !canUseEventBridge()
       ? startLogsSessionManager(configuration)
       : startLogsSessionManagerStub(configuration)
 
-  return doStartLogs(configuration, rawErrorObservable, consoleObservable, session, logger)
+  return doStartLogs(configuration, rawErrorObservable, consoleObservable, reportObservable, session, logger)
 }
 
 function startLogsInternalMonitoring(configuration: LogsConfiguration) {
@@ -104,6 +115,7 @@ export function doStartLogs(
   configuration: LogsConfiguration,
   rawErrorObservable: Observable<RawError>,
   consoleObservable: Observable<ConsoleLog>,
+  reportObservable: Observable<RawReport>,
   sessionManager: LogsSessionManager,
   logger: Logger
 ) {
@@ -154,8 +166,28 @@ export function doStartLogs(
     logger.log(log.message, messageContext, LogStatusForApi[log.api])
   }
 
+  function logReport(report: RawReport) {
+    let message = report.message
+    let messageContext: Partial<LogsEvent> | undefined
+    const logStatus = LogStatusForReport[report.type]
+    if (logStatus === StatusType.error) {
+      messageContext = {
+        error: {
+          kind: report.subtype,
+          origin: ErrorSource.REPORT,
+          stack: report.stack,
+        },
+      }
+    } else if (report.stack) {
+      message += ` Found in ${getFileFromStackTraceString(report.stack)!}`
+    }
+
+    logger.log(message, messageContext, logStatus)
+  }
+
   rawErrorObservable.subscribe(reportRawError)
   consoleObservable.subscribe(reportConsoleLog)
+  reportObservable.subscribe(logReport)
 
   return (message: LogsMessage, currentContext: Context) => {
     const contextualizedMessage = assemble(message, currentContext)

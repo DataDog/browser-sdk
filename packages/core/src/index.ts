@@ -12,6 +12,7 @@ export {
 export { trackRuntimeError } from './domain/error/trackRuntimeError'
 export { computeStackTrace, StackTrace } from './domain/tracekit'
 export { defineGlobal, makePublicApi } from './boot/init'
+export { initReportObservable, RawReport, RawReportType } from './domain/report/reportObservable'
 export {
   startInternalMonitoring,
   InternalMonitoring,
@@ -51,6 +52,7 @@ export {
   createHandlingStack,
   RawError,
   toStackTraceString,
+  getFileFromStackTraceString,
 } from './tools/error'
 export { Context, ContextArray, ContextValue } from './tools/context'
 export { areCookiesAuthorized, getCookie, setCookie, deleteCookie, COOKIE_ACCESS_DELAY } from './browser/cookie'

@@ -36,6 +36,7 @@ export const enum DOM_EVENT {
   INPUT = 'input',
   PLAY = 'play',
   PAUSE = 'pause',
+  SECURITY_POLICY_VIOLATION = 'securitypolicyviolation',
 }
 
 export const enum ResourceType {
@@ -318,13 +319,14 @@ export function findCommaSeparatedValue(rawString: string, name: string) {
   return matches ? matches[1] : undefined
 }
 
-export function safeTruncate(candidate: string, length: number) {
+export function safeTruncate(candidate: string, length: number, suffix = '') {
   const lastChar = candidate.charCodeAt(length - 1)
-  // check if it is the high part of a surrogate pair
-  if (lastChar >= 0xd800 && lastChar <= 0xdbff) {
-    return candidate.slice(0, length + 1)
-  }
-  return candidate.slice(0, length)
+  const isLastCharSurrogatePair = lastChar >= 0xd800 && lastChar <= 0xdbff
+  const correctedLength = isLastCharSurrogatePair ? length + 1 : length
+
+  if (candidate.length <= correctedLength) return candidate
+
+  return `${candidate.slice(0, correctedLength)}${suffix}`
 }
 
 export interface EventEmitter {

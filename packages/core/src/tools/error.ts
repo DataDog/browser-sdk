@@ -27,6 +27,7 @@ export const ErrorSource = {
   LOGGER: 'logger',
   NETWORK: 'network',
   SOURCE: 'source',
+  REPORT: 'report',
 } as const
 
 export const enum ErrorHandling {
@@ -70,6 +71,10 @@ export function toStackTraceString(stack: StackTrace) {
     result += `\n  at ${func!}${args} @ ${frame.url!}${line}${column}`
   })
   return result
+}
+
+export function getFileFromStackTraceString(stack: string) {
+  return /@ (.+)/.exec(stack)?.[1]
 }
 
 export function formatErrorMessage(stack: StackTrace) {

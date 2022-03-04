@@ -64,7 +64,7 @@ export interface LogsEvent {
     /**
      * Origin of the error
      */
-    origin: 'network' | 'source' | 'console' | 'logger' | 'agent' | 'custom'
+    origin: 'network' | 'source' | 'console' | 'logger' | 'agent' | 'report' | 'custom'
     /**
      * Stacktrace of the error
      */

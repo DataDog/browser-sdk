@@ -1,4 +1,4 @@
-import type { ConsoleLog, Context, RawError, RelativeTime, TimeStamp } from '@datadog/browser-core'
+import type { ConsoleLog, Context, RawError, RelativeTime, RawReport, TimeStamp } from '@datadog/browser-core'
 import {
   ErrorSource,
   noop,
@@ -17,6 +17,7 @@ import {
   mockClock,
   stubEndpointBuilder,
 } from '../../../core/test/specHelper'
+import { stubReportingObserver } from '../../../core/test/stubReportApis'
 import type { LogsConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
 
@@ -53,11 +54,14 @@ declare global {
 const DEFAULT_MESSAGE = { status: StatusType.info, message: 'message' }
 
 describe('logs', () => {
+  const initConfiguration = { clientToken: 'xxx', service: 'service' }
   let baseConfiguration: LogsConfiguration
   let sessionIsTracked: boolean
   let server: sinon.SinonFakeServer
   let rawErrorObservable: Observable<RawError>
+  let reportObservable: Observable<RawReport>
   let consoleObservable: Observable<ConsoleLog>
+
   const sessionManager: LogsSessionManager = {
     findTrackedSession: () => (sessionIsTracked ? { id: SESSION_ID } : undefined),
   }
@@ -66,18 +70,26 @@ describe('logs', () => {
     configuration: configurationOverrides,
   }: { errorLogger?: Logger; configuration?: Partial<LogsConfiguration> } = {}) => {
     const configuration = { ...baseConfiguration, ...configurationOverrides }
-    return doStartLogs(configuration, rawErrorObservable, consoleObservable, sessionManager, errorLogger)
+    return doStartLogs(
+      configuration,
+      rawErrorObservable,
+      consoleObservable,
+      reportObservable,
+      sessionManager,
+      errorLogger
+    )
   }
 
   beforeEach(() => {
     baseConfiguration = {
-      ...validateAndBuildLogsConfiguration({ clientToken: 'xxx', service: 'service' })!,
+      ...validateAndBuildLogsConfiguration(initConfiguration)!,
       logsEndpointBuilder: stubEndpointBuilder('https://localhost/v1/input/log'),
       maxBatchSize: 1,
     }
     sessionIsTracked = true
     rawErrorObservable = new Observable<RawError>()
     consoleObservable = new Observable<ConsoleLog>()
+    reportObservable = new Observable<RawReport>()
     server = sinon.fakeServer.create()
   })
 
@@ -178,19 +190,104 @@ describe('logs', () => {
       })
     })
 
-    it('should send console logs', () => {
+    it('should send console logs when ff forward-logs is enabled', () => {
       const logger = new Logger(noop)
       const logErrorSpy = spyOn(logger, 'log')
       const consoleLogSpy = spyOn(console, 'log').and.callFake(() => true)
 
       updateExperimentalFeatures(['forward-logs'])
-      originalStartLogs({ ...baseConfiguration, forwardConsoleLogs: ['log'] }, logger)
+      originalStartLogs(
+        validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['log'] })!,
+        logger
+      )
 
       /* eslint-disable-next-line no-console */
       console.log('foo', 'bar')
 
       expect(logErrorSpy).toHaveBeenCalled()
       expect(consoleLogSpy).toHaveBeenCalled()
+
+      resetExperimentalFeatures()
+    })
+
+    it('should not send console logs when ff forward-logs is disabled', () => {
+      const logger = new Logger(noop)
+      const logErrorSpy = spyOn(logger, 'log')
+      const consoleLogSpy = spyOn(console, 'log').and.callFake(() => true)
+
+      originalStartLogs(
+        validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['log'] })!,
+        logger
+      )
+
+      /* eslint-disable-next-line no-console */
+      console.log('foo', 'bar')
+
+      expect(logErrorSpy).not.toHaveBeenCalled()
+      expect(consoleLogSpy).toHaveBeenCalled()
+    })
+  })
+
+  describe('reports', () => {
+    let logger: Logger
+    let logErrorSpy: jasmine.Spy
+    let reportingObserverStub: ReturnType<typeof stubReportingObserver>
+
+    beforeEach(() => {
+      logger = new Logger(noop)
+      logErrorSpy = spyOn(logger, 'log')
+      reportingObserverStub = stubReportingObserver()
+    })
+
+    afterEach(() => {
+      reportingObserverStub.reset()
+    })
+
+    it('should send reports when ff forward-reports is enabled', () => {
+      updateExperimentalFeatures(['forward-reports'])
+      originalStartLogs(
+        validateAndBuildLogsConfiguration({ ...initConfiguration, forwardReports: ['intervention'] })!,
+        logger
+      )
+
+      reportingObserverStub.raiseReport('intervention')
+
+      expect(logErrorSpy).toHaveBeenCalled()
+
+      resetExperimentalFeatures()
+    })
+
+    it('should not send reports when ff forward-reports is disabled', () => {
+      originalStartLogs(
+        validateAndBuildLogsConfiguration({ ...initConfiguration, forwardReports: ['intervention'] })!,
+        logger
+      )
+      reportingObserverStub.raiseReport('intervention')
+
+      expect(logErrorSpy).not.toHaveBeenCalled()
+    })
+
+    it('should not send reports when forwardReports init option not specified', () => {
+      originalStartLogs(validateAndBuildLogsConfiguration({ ...initConfiguration })!, logger)
+      reportingObserverStub.raiseReport('intervention')
+
+      expect(logErrorSpy).not.toHaveBeenCalled()
+    })
+
+    it('should add the source file information to the message for non error reports', () => {
+      updateExperimentalFeatures(['forward-reports'])
+      originalStartLogs(
+        validateAndBuildLogsConfiguration({ ...initConfiguration, forwardReports: ['deprecation'] })!,
+        logger
+      )
+
+      reportingObserverStub.raiseReport('deprecation')
+
+      expect(logErrorSpy).toHaveBeenCalledOnceWith(
+        'deprecation: foo bar Found in http://foo.bar/index.js:20:10',
+        undefined,
+        'warn'
+      )
 
       resetExperimentalFeatures()
     })

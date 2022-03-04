@@ -7,15 +7,17 @@ import {
   isExperimentalFeatureEnabled,
   removeDuplicates,
   ConsoleApiName,
-  objectHasValue,
+  RawReportType,
+  includes,
+  objectValues,
 } from '@datadog/browser-core'
 import type { LogsEvent } from '../logsEvent.types'
-import type { StatusType } from './logger'
 
 export interface LogsInitConfiguration extends InitConfiguration {
   beforeSend?: ((event: LogsEvent) => void | boolean) | undefined
   forwardErrorsToLogs?: boolean | undefined
   forwardConsoleLogs?: readonly ConsoleApiName[] | 'all' | undefined
+  forwardReports?: readonly RawReportType[] | 'all' | undefined
 }
 
 export type HybridInitConfiguration = Omit<LogsInitConfiguration, 'clientToken'>
@@ -23,6 +25,7 @@ export type HybridInitConfiguration = Omit<LogsInitConfiguration, 'clientToken'>
 export interface LogsConfiguration extends Configuration {
   forwardErrorsToLogs: boolean
   forwardConsoleLogs: ConsoleApiName[]
+  forwardReports: RawReportType[]
   requestErrorResponseLengthLimit: number
 }
 
@@ -35,41 +38,54 @@ export function validateAndBuildLogsConfiguration(
   initConfiguration: LogsInitConfiguration
 ): LogsConfiguration | undefined {
   const baseConfiguration = validateAndBuildConfiguration(initConfiguration)
-  if (!baseConfiguration) {
+
+  const forwardConsoleLogs = validateAndBuildForwardOption<ConsoleApiName>(
+    initConfiguration.forwardConsoleLogs,
+    objectValues(ConsoleApiName),
+    'Forward Console Logs',
+    'forward-logs'
+  )
+
+  const forwardReports = validateAndBuildForwardOption<RawReportType>(
+    initConfiguration.forwardReports,
+    objectValues(RawReportType),
+    'Forward Reports',
+    'forward-reports'
+  )
+
+  if (!baseConfiguration || !forwardConsoleLogs || !forwardReports) {
     return
   }
 
-  let forwardConsoleLogs: StatusType[] = []
-  if (isExperimentalFeatureEnabled('forward-logs') && initConfiguration.forwardConsoleLogs !== undefined) {
-    const allowedConsoleApis = Object.keys(ConsoleApiName) as ConsoleApiName[]
-
-    if (
-      !(
-        initConfiguration.forwardConsoleLogs === 'all' ||
-        (Array.isArray(initConfiguration.forwardConsoleLogs) &&
-          initConfiguration.forwardConsoleLogs.every((api) => objectHasValue(ConsoleApiName, api)))
-      )
-    ) {
-      display.error(
-        `Forward Console Logs should be "all" or an array with allowed values "${allowedConsoleApis.join('", "')}"`
-      )
-      return
-    }
-
-    forwardConsoleLogs =
-      initConfiguration.forwardConsoleLogs === 'all' ? allowedConsoleApis : initConfiguration.forwardConsoleLogs
-  }
-
-  if (initConfiguration.forwardErrorsToLogs) {
+  if (initConfiguration.forwardErrorsToLogs && !includes(forwardConsoleLogs, ConsoleApiName.error)) {
     forwardConsoleLogs.push(ConsoleApiName.error)
   }
 
   return assign(
     {
       forwardErrorsToLogs: !!initConfiguration.forwardErrorsToLogs,
-      forwardConsoleLogs: removeDuplicates(forwardConsoleLogs),
+      forwardConsoleLogs,
+      forwardReports,
       requestErrorResponseLengthLimit: DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT,
     },
     baseConfiguration
   )
+}
+
+export function validateAndBuildForwardOption<T>(
+  option: readonly T[] | 'all' | undefined,
+  allowedValues: T[],
+  label: string,
+  featureFlag: string
+): T[] | undefined {
+  if (!isExperimentalFeatureEnabled(featureFlag) || option === undefined) {
+    return []
+  }
+
+  if (!(option === 'all' || (Array.isArray(option) && option.every((api) => includes(allowedValues, api))))) {
+    display.error(`${label} should be "all" or an array with allowed values "${allowedValues.join('", "')}"`)
+    return
+  }
+
+  return option === 'all' ? allowedValues : removeDuplicates<T>(option)
 }
