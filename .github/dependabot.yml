@@ -31,8 +31,6 @@ updates:
         update-types: ['version-update:semver-major']
       - dependency-name: 'eslint-config-prettier'
         update-types: ['version-update:semver-major']
-      - dependency-name: '@typescript-eslint/*'
-        update-types: ['version-update:semver-major']
       # update ajv: RUMF-1164
       - dependency-name: 'ajv'
         update-types: ['version-update:semver-major']
