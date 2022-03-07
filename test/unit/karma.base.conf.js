@@ -1,11 +1,6 @@
-const webpack = require('webpack')
-const webpackConfig = require('../../webpack.base')({
-  mode: 'development',
-  types: ['jasmine'],
-  // do not replace build env variables in unit test in order to test different build behaviors
-  keepBuildEnvVariables: true,
-})
+const alias = require('esbuild-plugin-alias')
 const getTestReportDirectory = require('../getTestReportDirectory')
+const esbuildPluginTransformToEs5 = require('../../scripts/build/esbuildPluginTransformToEs5.js')
 const jasmineSeedReporterPlugin = require('./jasmineSeedReporterPlugin')
 
 const reporters = ['spec', 'jasmine-seed']
@@ -17,8 +12,13 @@ if (testReportDirectory) {
 
 module.exports = {
   basePath: '../..',
-  files: ['packages/*/+(src|test)/**/*.spec.ts'],
-  frameworks: ['jasmine', 'webpack'],
+  files: [
+    {
+      pattern: 'packages/*/+(src|test)/**/*.spec.ts',
+      type: 'js',
+    },
+  ],
+  frameworks: ['jasmine'],
   client: {
     jasmine: {
       random: true,
@@ -26,7 +26,7 @@ module.exports = {
     },
   },
   preprocessors: {
-    'packages/*/+(src|test)/**/*.ts': ['webpack', 'sourcemap'],
+    'packages/*/+(src|test)/**/*.ts': ['esbuild'],
   },
   reporters,
   specReporter: {
@@ -38,29 +38,30 @@ module.exports = {
     outputDir: testReportDirectory,
   },
   singleRun: true,
-  webpack: {
-    stats: 'minimal',
-    module: webpackConfig.module,
-    resolve: webpackConfig.resolve,
-    target: webpackConfig.target,
-    devtool: false,
-    mode: 'development',
+  plugins: [
+    'karma-esbuild',
+    'karma-spec-reporter',
+    'karma-junit-reporter',
+    'karma-jasmine',
+    'karma-chrome-launcher',
+    jasmineSeedReporterPlugin,
+  ],
+
+  esbuild: {
     plugins: [
-      new webpack.SourceMapDevToolPlugin({
-        test: /\.(ts|js)($|\?)/i,
+      alias({
+        // By default, a non-bundled version of sinon is pulled in, which require the nodejs 'util'
+        // module. We don't have a polyfill for node modules. Use a bundled version of sinon which
+        // have its own 'util' module polyfill.
+        sinon: require.resolve('sinon/pkg/sinon.js'),
       }),
+      esbuildPluginTransformToEs5,
     ],
-    optimization: {
-      // By default, karma-webpack creates a bundle with one entry point for each spec file, but
-      // with all dependencies shared.  Our test suite does not support sharing dependencies, each
-      // spec bundle should include its own copy of dependencies.
-      runtimeChunk: false,
-      splitChunks: false,
-    },
+    // This tells esbuild to ignore the `sideEffects: false` field in package.json, else it will
+    // skip all spec files.
+    ignoreAnnotations: true,
+
+    // Karma-esbuild specific options
+    singleBundle: false,
   },
-  webpackMiddleware: {
-    stats: 'errors-only',
-    logLevel: 'warn',
-  },
-  plugins: ['karma-*', jasmineSeedReporterPlugin],
 }
