@@ -1,5 +1,5 @@
 import type { Context } from '@datadog/browser-core'
-import { deepClone, assign, combine, createContextManager, ErrorSource, monitored } from '@datadog/browser-core'
+import { callMonitored, deepClone, assign, combine, createContextManager, ErrorSource } from '@datadog/browser-core'
 
 export interface LogsMessage {
   message: string
@@ -38,9 +38,10 @@ export class Logger {
     this.contextManager.set(assign({}, loggerContext, name ? { logger: { name } } : undefined))
   }
 
-  @monitored
   log(message: string, messageContext?: object, status: StatusType = StatusType.info) {
-    this.handleLogStrategy({ message, context: deepClone(messageContext) as Context, status }, this)
+    callMonitored(() => {
+      this.handleLogStrategy({ message, context: deepClone(messageContext) as Context, status }, this)
+    })
   }
 
   debug(message: string, messageContext?: object) {

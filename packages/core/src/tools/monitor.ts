@@ -16,18 +16,6 @@ export function resetMonitor() {
   debugMode = false
 }
 
-export function monitored<T extends (...params: any[]) => unknown>(
-  _: any,
-  __: string,
-  descriptor: TypedPropertyDescriptor<T>
-) {
-  const originalMethod = descriptor.value!
-  descriptor.value = function (this: any, ...args: Parameters<T>) {
-    const decorated = onMonitorErrorCollected ? monitor(originalMethod) : originalMethod
-    return decorated.apply(this, args) as ReturnType<T>
-  } as T
-}
-
 export function monitor<T extends (...args: any[]) => any>(fn: T): T {
   return function (this: any) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return

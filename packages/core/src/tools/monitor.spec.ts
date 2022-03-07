@@ -1,5 +1,5 @@
 import { display } from './display'
-import { callMonitored, monitor, monitored, startMonitorErrorCollection, resetMonitor, setDebugMode } from './monitor'
+import { callMonitored, monitor, startMonitorErrorCollection, resetMonitor, setDebugMode } from './monitor'
 
 describe('monitor', () => {
   let onMonitorErrorCollectedSpy: jasmine.Spy<(error: unknown) => void>
@@ -9,82 +9,6 @@ describe('monitor', () => {
   })
   afterEach(() => {
     resetMonitor()
-  })
-
-  describe('decorator', () => {
-    class Candidate {
-      @monitored
-      monitoredThrowing() {
-        throw new Error('monitored')
-      }
-
-      @monitored
-      monitoredStringErrorThrowing() {
-        // eslint-disable-next-line no-throw-literal
-        throw 'string error'
-      }
-
-      @monitored
-      monitoredObjectErrorThrowing() {
-        // eslint-disable-next-line no-throw-literal
-        throw { foo: 'bar' }
-      }
-
-      @monitored
-      monitoredNotThrowing() {
-        return 1
-      }
-
-      notMonitoredThrowing() {
-        throw new Error('not monitored')
-      }
-    }
-
-    let candidate: Candidate
-    beforeEach(() => {
-      candidate = new Candidate()
-    })
-
-    describe('before initialization', () => {
-      it('should not monitor', () => {
-        expect(() => candidate.notMonitoredThrowing()).toThrowError('not monitored')
-        expect(() => candidate.monitoredThrowing()).toThrowError('monitored')
-        expect(candidate.monitoredNotThrowing()).toEqual(1)
-      })
-    })
-
-    describe('after initialization', () => {
-      beforeEach(() => {
-        startMonitorErrorCollection(onMonitorErrorCollectedSpy)
-      })
-
-      it('should preserve original behavior', () => {
-        expect(candidate.monitoredNotThrowing()).toEqual(1)
-      })
-
-      it('should catch error', () => {
-        expect(() => candidate.notMonitoredThrowing()).toThrowError()
-        expect(() => candidate.monitoredThrowing()).not.toThrowError()
-      })
-
-      it('should report error', () => {
-        candidate.monitoredThrowing()
-
-        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith(new Error('monitored'))
-      })
-
-      it('should report string error', () => {
-        candidate.monitoredStringErrorThrowing()
-
-        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith('string error')
-      })
-
-      it('should report object error', () => {
-        candidate.monitoredObjectErrorThrowing()
-
-        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith({ foo: 'bar' })
-      })
-    })
   })
 
   describe('function', () => {

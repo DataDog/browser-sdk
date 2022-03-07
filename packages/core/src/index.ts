@@ -31,7 +31,7 @@ export {
   isTelemetryReplicationAllowed,
   addTelemetryConfiguration,
 } from './domain/telemetry'
-export { monitored, monitor, callMonitored, setDebugMode } from './tools/monitor'
+export { monitor, callMonitored, setDebugMode } from './tools/monitor'
 export { Observable, Subscription } from './tools/observable'
 export {
   startSessionManager,
