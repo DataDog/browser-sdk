@@ -250,7 +250,14 @@ module.exports = {
     },
     {
       // Files executed by nodejs
-      files: ['**/webpack.*.js', 'scripts/**/*.js', 'test/**/*.js', 'eslint-local-rules/**/*.js', '.eslintrc.js'],
+      files: [
+        '**/webpack.*.js',
+        'scripts/**/*.js',
+        'test/**/*.js',
+        'eslint-local-rules/**/*.js',
+        '.eslintrc.js',
+        '**/*.mjs',
+      ],
       env: {
         node: true,
       },

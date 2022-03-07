@@ -29,6 +29,8 @@
     "woke": "scripts/cli woke"
   },
   "devDependencies": {
+    "@babel/core": "7.17.5",
+    "@babel/preset-env": "7.16.11",
     "@jsdevtools/coverage-istanbul-loader": "3.0.5",
     "@types/chrome": "0.0.180",
     "@types/connect-busboy": "1.0.0",
@@ -50,6 +52,7 @@
     "connect-busboy": "1.0.0",
     "cors": "2.8.5",
     "emoji-name-map": "1.2.9",
+    "esbuild": "0.14.25",
     "eslint": "8.12.0",
     "eslint-config-prettier": "8.5.0",
     "eslint-module-utils": "2.7.3",
