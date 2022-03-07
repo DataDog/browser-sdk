@@ -2,18 +2,27 @@ import type { Context } from '../../tools/context'
 import { display } from '../../tools/display'
 import { toStackTraceString } from '../../tools/error'
 import { assign, combine, jsonStringify } from '../../tools/utils'
-import { canUseEventBridge, getEventBridge } from '../../transport'
 import type { Configuration } from '../configuration'
 import { computeStackTrace } from '../tracekit'
-import { startMonitoringBatch } from './startMonitoringBatch'
+import { Observable } from '../../tools/observable'
+import { timeStampNow } from '../../tools/timeUtils'
+import { isExperimentalFeatureEnabled } from '../configuration'
+import type { TelemetryEvent } from './telemetryEvent.types'
 
-enum StatusType {
-  info = 'info',
+// replaced at build time
+declare const __BUILD_ENV__SDK_VERSION__: string
+
+const enum StatusType {
+  debug = 'debug',
   error = 'error',
 }
 
 export interface InternalMonitoring {
   setExternalContextProvider: (provider: () => Context) => void
+  monitoringMessageObservable: Observable<MonitoringMessage>
+
+  setTelemetryContextProvider: (provider: () => Context) => void
+  telemetryEventObservable: Observable<TelemetryEvent & Context>
 }
 
 export interface MonitoringMessage extends Context {
@@ -35,14 +44,15 @@ let onInternalMonitoringMessageCollected: ((message: MonitoringMessage) => void)
 
 export function startInternalMonitoring(configuration: Configuration): InternalMonitoring {
   let externalContextProvider: () => Context
+  let telemetryContextProvider: () => Context
+  const monitoringMessageObservable = new Observable<MonitoringMessage>()
+  const telemetryEventObservable = new Observable<TelemetryEvent & Context>()
 
-  if (canUseEventBridge()) {
-    const bridge = getEventBridge<'internal_log', MonitoringMessage>()!
-    onInternalMonitoringMessageCollected = (message: MonitoringMessage) =>
-      bridge.send('internal_log', withContext(message))
-  } else if (configuration.internalMonitoringEndpointBuilder) {
-    const batch = startMonitoringBatch(configuration)
-    onInternalMonitoringMessageCollected = (message: MonitoringMessage) => batch.add(withContext(message))
+  onInternalMonitoringMessageCollected = (message: MonitoringMessage) => {
+    monitoringMessageObservable.notify(withContext(message))
+    if (isExperimentalFeatureEnabled('telemetry')) {
+      telemetryEventObservable.notify(toTelemetryEvent(message))
+    }
   }
 
   assign(monitoringConfiguration, {
@@ -52,8 +62,23 @@ export function startInternalMonitoring(configuration: Configuration): InternalM
 
   function withContext(message: MonitoringMessage) {
     return combine(
-      { date: new Date().getTime() },
+      { date: timeStampNow() },
       externalContextProvider !== undefined ? externalContextProvider() : {},
+      message
+    )
+  }
+
+  function toTelemetryEvent(message: MonitoringMessage): TelemetryEvent & Context {
+    return combine(
+      {
+        date: timeStampNow(),
+        service: 'browser-sdk',
+        version: __BUILD_ENV__SDK_VERSION__,
+        _dd: {
+          event_type: 'internal_telemetry' as const,
+        },
+      },
+      telemetryContextProvider !== undefined ? telemetryContextProvider() : {},
       message
     )
   }
@@ -62,6 +87,11 @@ export function startInternalMonitoring(configuration: Configuration): InternalM
     setExternalContextProvider: (provider: () => Context) => {
       externalContextProvider = provider
     },
+    monitoringMessageObservable,
+    setTelemetryContextProvider: (provider: () => Context) => {
+      telemetryContextProvider = provider
+    },
+    telemetryEventObservable,
   }
 }
 
@@ -128,18 +158,26 @@ export function callMonitored<T extends (...args: any[]) => any>(
 
 export function addMonitoringMessage(message: string, context?: Context) {
   logMessageIfDebug(message, context)
-  addToMonitoring({
-    message,
-    ...context,
-    status: StatusType.info,
-  })
+  addToMonitoring(
+    assign(
+      {
+        message,
+        status: StatusType.debug,
+      },
+      context
+    )
+  )
 }
 
 export function addMonitoringError(e: unknown) {
-  addToMonitoring({
-    ...formatError(e),
-    status: StatusType.error,
-  })
+  addToMonitoring(
+    assign(
+      {
+        status: StatusType.error,
+      },
+      formatError(e)
+    )
+  )
 }
 
 function addToMonitoring(message: MonitoringMessage) {

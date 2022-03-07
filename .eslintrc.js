@@ -9,8 +9,6 @@ module.exports = {
     'plugin:@typescript-eslint/recommended-requiring-type-checking',
     'plugin:import/typescript',
     'prettier',
-    'prettier/@typescript-eslint',
-    'plugin:import/typescript',
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
@@ -59,16 +57,25 @@ module.exports = {
     'no-extra-bind': 'error',
     'no-new-func': 'error',
     'no-new-wrappers': 'error',
+    'no-restricted-syntax': [
+      'error',
+      {
+        selector: 'TSEnumDeclaration:not([const=true])',
+        message: 'When possible, use `const enum` as it produces less code when transpiled.',
+      },
+    ],
     'no-return-await': 'error',
     'no-sequences': 'error',
     'no-template-curly-in-string': 'error',
     'no-throw-literal': 'error',
     'no-undef-init': 'error',
+    'no-useless-concat': 'error',
     'object-shorthand': 'error',
     'one-var': ['error', 'never'],
     'prefer-rest-params': 'off',
     'prefer-object-spread': 'error',
     'prefer-template': 'error',
+    quotes: ['error', 'single', { avoidEscape: true }],
     radix: 'error',
     'spaced-comment': [
       'error',
@@ -152,6 +159,7 @@ module.exports = {
     '@typescript-eslint/no-explicit-any': 'off',
     '@typescript-eslint/no-non-null-assertion': 'off',
     '@typescript-eslint/no-unsafe-assignment': 'off',
+    '@typescript-eslint/no-unsafe-argument': 'off',
     '@typescript-eslint/no-unsafe-member-access': 'off',
     '@typescript-eslint/no-unused-vars': ['error', { args: 'all', argsIgnorePattern: '^_', vars: 'all' }],
     '@typescript-eslint/triple-slash-reference': ['error', { path: 'always', types: 'prefer-import', lib: 'always' }],
@@ -214,6 +222,17 @@ module.exports = {
       excludedFiles: '*.spec.ts',
       rules: {
         'local-rules/disallow-side-effects': 'error',
+        'no-restricted-syntax': [
+          'error',
+          {
+            selector: 'ObjectExpression > SpreadElement',
+            message: 'Object spread is not authorized. Please use "assign" from the core package utils instead.',
+          },
+          {
+            selector: 'ArrayExpression > SpreadElement',
+            message: 'Array spread is not authorized. Please use .concat instead.',
+          },
+        ],
       },
     },
     {

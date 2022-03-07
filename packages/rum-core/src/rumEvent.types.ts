@@ -118,7 +118,7 @@ export type RumErrorEvent = CommonProperties & {
     /**
      * Source of the error
      */
-    readonly source: 'network' | 'source' | 'console' | 'logger' | 'agent' | 'webview' | 'custom'
+    readonly source: 'network' | 'source' | 'console' | 'logger' | 'agent' | 'webview' | 'custom' | 'report'
     /**
      * Stacktrace of the error
      */

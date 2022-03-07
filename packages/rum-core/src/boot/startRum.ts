@@ -1,5 +1,11 @@
-import type { InternalMonitoring, Observable } from '@datadog/browser-core'
-import { combine, canUseEventBridge } from '@datadog/browser-core'
+import type { Observable, MonitoringMessage, TelemetryEvent } from '@datadog/browser-core'
+import {
+  startInternalMonitoring,
+  combine,
+  canUseEventBridge,
+  startBatchWithReplica,
+  getEventBridge,
+} from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { startPerformanceCollection } from '../browser/performanceCollection'
 import { startRumAssembly } from '../domain/assembly'
@@ -26,16 +32,13 @@ import type { RecorderApi } from './rumPublicApi'
 
 export function startRum(
   configuration: RumConfiguration,
-  internalMonitoring: InternalMonitoring,
   getCommonContext: () => CommonContext,
   recorderApi: RecorderApi,
   initialViewName?: string
 ) {
   const lifeCycle = new LifeCycle()
-  const session = !canUseEventBridge() ? startRumSessionManager(configuration, lifeCycle) : startRumSessionManagerStub()
-  const domMutationObservable = createDOMMutationObservable()
-  const locationChangeObservable = createLocationChangeObservable(location)
 
+  const internalMonitoring = startRumInternalMonitoring(configuration)
   internalMonitoring.setExternalContextProvider(() =>
     combine(
       {
@@ -48,6 +51,30 @@ export function startRum(
       { view: { name: null } }
     )
   )
+  internalMonitoring.setTelemetryContextProvider(() => ({
+    application: {
+      id: configuration.applicationId,
+    },
+    session: {
+      id: session.findTrackedSession()?.id,
+    },
+    view: {
+      id: parentContexts.findView()?.view.id,
+    },
+    action: {
+      id: parentContexts.findAction()?.action.id,
+    },
+  }))
+
+  if (!canUseEventBridge()) {
+    startRumBatch(configuration, lifeCycle, internalMonitoring.telemetryEventObservable)
+  } else {
+    startRumEventBridge(lifeCycle)
+  }
+
+  const session = !canUseEventBridge() ? startRumSessionManager(configuration, lifeCycle) : startRumSessionManagerStub()
+  const domMutationObservable = createDOMMutationObservable()
+  const locationChangeObservable = createLocationChangeObservable(location)
 
   const { parentContexts, foregroundContexts, urlContexts } = startRumEventCollection(
     lifeCycle,
@@ -90,6 +117,23 @@ export function startRum(
   }
 }
 
+function startRumInternalMonitoring(configuration: RumConfiguration) {
+  const internalMonitoring = startInternalMonitoring(configuration)
+  if (canUseEventBridge()) {
+    const bridge = getEventBridge<'internal_log' | 'internal_telemetry', MonitoringMessage | TelemetryEvent>()!
+    internalMonitoring.monitoringMessageObservable.subscribe((message) => bridge.send('internal_log', message))
+    internalMonitoring.telemetryEventObservable.subscribe((message) => bridge.send('internal_telemetry', message))
+  } else if (configuration.internalMonitoringEndpointBuilder) {
+    const batch = startBatchWithReplica(
+      configuration,
+      configuration.internalMonitoringEndpointBuilder,
+      configuration.replica?.internalMonitoringEndpointBuilder
+    )
+    internalMonitoring.monitoringMessageObservable.subscribe((message) => batch.add(message))
+  }
+  return internalMonitoring
+}
+
 export function startRumEventCollection(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
@@ -102,14 +146,6 @@ export function startRumEventCollection(
   const urlContexts = startUrlContexts(lifeCycle, locationChangeObservable, location)
   const foregroundContexts = startForegroundContexts()
 
-  let stopBatch: () => void
-
-  if (canUseEventBridge()) {
-    startRumEventBridge(lifeCycle)
-  } else {
-    ;({ stop: stopBatch } = startRumBatch(configuration, lifeCycle))
-  }
-
   startRumAssembly(configuration, lifeCycle, sessionManager, parentContexts, urlContexts, getCommonContext)
 
   return {
@@ -117,9 +153,6 @@ export function startRumEventCollection(
     foregroundContexts,
     urlContexts,
     stop: () => {
-      // prevent batch from previous tests to keep running and send unwanted requests
-      // could be replaced by stopping all the component when they will all have a stop method
-      stopBatch?.()
       parentContexts.stop()
       foregroundContexts.stop()
     },

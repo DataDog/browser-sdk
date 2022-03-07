@@ -7,8 +7,9 @@
 | rum request       | ✅     | ✅      | ✅     | ✅   | ✅             | ✅         | ✅    | ❌     | ✅    |
 | flush on hide     | ✅     | ✅      | ✅     | ✅   | ✅             | ❌         | ❌    | ❌     | ✅    |
 | console error     | ✅     | ✅      | ✅     | ✅   | ✅             | ✅         | ✅    | ❌     | ✅    |
-| network error     | ✅     | ✅      | ✅     | ✅   | ✅             | ✅         | ✅    | ❌     | ✅    |
 | runtime error     | ✅     | ✅      | ✅     | ✅   | ✅             | ✅         | ✅    | ❌     | ✅    |
+| CSP violation     | ✅     | ✅      | ✅     | ✅   | ✅             | ✅         | ❌    | ❌     | ✅    |
+| intervention      | ✅     | ❌      | ❌     | ✅   | ✅             | ❌         | ❌    | ❌     | ✅    |
 | auto action       | ✅     | ✅      | ✅     | ✅   | ✅             | ✅         | ✅    | ❌     | ✅    |
 | custom action     | ✅     | ✅      | ✅     | ✅   | ✅             | ✅         | ✅    | ❌     | ✅    |
 | long task         | ✅     | ❌      | ❌     | ✅   | ✅             | ❌         | ❌    | ❌     | ✅    |

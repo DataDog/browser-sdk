@@ -292,6 +292,16 @@ describe('utils', () => {
       expect(truncated.length).toBe(7)
       expect(truncated).toBe('12345😎')
     })
+
+    it('should add the suffix when the string is truncated', () => {
+      const truncated = safeTruncate('12345😎890', 6, '...')
+      expect(truncated).toBe('12345😎...')
+    })
+
+    it('should not add the suffix when the string is not truncated', () => {
+      const truncated = safeTruncate('1234😎', 5, '...')
+      expect(truncated).toBe('1234😎')
+    })
   })
 
   it('should perform a draw', () => {

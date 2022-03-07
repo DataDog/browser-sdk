@@ -1,4 +1,4 @@
-import type { Context, EndpointBuilder } from '@datadog/browser-core'
+import type { Context, EndpointBuilder, TelemetryEvent, Observable } from '@datadog/browser-core'
 import { Batch, combine, HttpRequest } from '@datadog/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
@@ -6,7 +6,11 @@ import { LifeCycleEventType } from '../domain/lifeCycle'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'
 
-export function startRumBatch(configuration: RumConfiguration, lifeCycle: LifeCycle) {
+export function startRumBatch(
+  configuration: RumConfiguration,
+  lifeCycle: LifeCycle,
+  telemetryEventObservable: Observable<TelemetryEvent & Context>
+) {
   const batch = makeRumBatch(configuration, lifeCycle)
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent: RumEvent & Context) => {
@@ -17,14 +21,11 @@ export function startRumBatch(configuration: RumConfiguration, lifeCycle: LifeCy
     }
   })
 
-  return {
-    stop: () => batch.stop(),
-  }
+  telemetryEventObservable.subscribe((event) => batch.add(event))
 }
 
 interface RumBatch {
   add: (message: Context) => void
-  stop: () => void
   upsert: (message: Context, key: string) => void
 }
 
@@ -54,24 +55,14 @@ function makeRumBatch(configuration: RumConfiguration, lifeCycle: LifeCycle): Ru
     return combine(message, { application: { id: replica!.applicationId } })
   }
 
-  let stopped = false
   return {
     add: (message: Context) => {
-      if (stopped) {
-        return
-      }
       primaryBatch.add(message)
       if (replicaBatch) {
         replicaBatch.add(withReplicaApplicationId(message))
       }
     },
-    stop: () => {
-      stopped = true
-    },
     upsert: (message: Context, key: string) => {
-      if (stopped) {
-        return
-      }
       primaryBatch.upsert(message, key)
       if (replicaBatch) {
         replicaBatch.upsert(withReplicaApplicationId(message), key)

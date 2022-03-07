@@ -10,7 +10,7 @@ import { startSessionManager, stopSessionManager, VISIBILITY_CHECK_DELAY } from 
 import { SESSION_TIME_OUT_DELAY, SESSION_EXPIRATION_DELAY } from './sessionStore'
 import { SESSION_COOKIE_NAME } from './sessionCookieStore'
 
-enum FakeTrackingType {
+const enum FakeTrackingType {
   NOT_TRACKED = 'not-tracked',
   TRACKED = 'tracked',
 }
@@ -350,7 +350,7 @@ describe('startSessionManager', () => {
     })
 
     it('should not add created date to an existing session from an older versions', () => {
-      setCookie(SESSION_COOKIE_NAME, `id=abcde&first=tracked`, DURATION)
+      setCookie(SESSION_COOKIE_NAME, 'id=abcde&first=tracked', DURATION)
 
       const sessionManager = startSessionManager(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => ({
         isTracked: true,

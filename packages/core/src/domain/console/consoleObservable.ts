@@ -58,7 +58,10 @@ function createConsoleObservable(api: ConsoleApiName) {
 
 function buildConsoleLog(params: unknown[], api: ConsoleApiName, handlingStack: string): ConsoleLog {
   const log: ConsoleLog = {
-    message: [`console ${api}:`, ...params].map((param) => formatConsoleParameters(param)).join(' '),
+    message: [`console ${api}:` as unknown]
+      .concat(params)
+      .map((param) => formatConsoleParameters(param))
+      .join(' '),
     api,
   }
 

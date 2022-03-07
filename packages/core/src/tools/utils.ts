@@ -37,9 +37,10 @@ export const enum DOM_EVENT {
   PLAY = 'play',
   PAUSE = 'pause',
   SELECTION_CHANGE = 'selectionchange',
+  SECURITY_POLICY_VIOLATION = 'securitypolicyviolation',
 }
 
-export enum ResourceType {
+export const enum ResourceType {
   DOCUMENT = 'document',
   XHR = 'xhr',
   BEACON = 'beacon',
@@ -52,7 +53,7 @@ export enum ResourceType {
   OTHER = 'other',
 }
 
-export enum RequestType {
+export const enum RequestType {
   FETCH = ResourceType.FETCH,
   XHR = ResourceType.XHR,
 }
@@ -101,6 +102,9 @@ interface Assignable {
   [key: string]: any
 }
 
+export function assign<T, U>(target: T, source: U): T & U
+export function assign<T, U, V>(target: T, source1: U, source2: V): T & U & V
+export function assign<T, U, V, W>(target: T, source1: U, source2: V, source3: W): T & U & V & W
 export function assign(target: Assignable, ...toAssign: Assignable[]) {
   toAssign.forEach((source: Assignable) => {
     for (const key in source) {
@@ -109,6 +113,11 @@ export function assign(target: Assignable, ...toAssign: Assignable[]) {
       }
     }
   })
+  return target
+}
+
+export function shallowClone<T>(object: T): T & Record<string, never> {
+  return assign({}, object)
 }
 
 /**
@@ -311,13 +320,14 @@ export function findCommaSeparatedValue(rawString: string, name: string) {
   return matches ? matches[1] : undefined
 }
 
-export function safeTruncate(candidate: string, length: number) {
+export function safeTruncate(candidate: string, length: number, suffix = '') {
   const lastChar = candidate.charCodeAt(length - 1)
-  // check if it is the high part of a surrogate pair
-  if (lastChar >= 0xd800 && lastChar <= 0xdbff) {
-    return candidate.slice(0, length + 1)
-  }
-  return candidate.slice(0, length)
+  const isLastCharSurrogatePair = lastChar >= 0xd800 && lastChar <= 0xdbff
+  const correctedLength = isLastCharSurrogatePair ? length + 1 : length
+
+  if (candidate.length <= correctedLength) return candidate
+
+  return `${candidate.slice(0, correctedLength)}${suffix}`
 }
 
 export interface EventEmitter {
@@ -565,6 +575,20 @@ export function combine(...sources: any[]): unknown {
 }
 
 export type TimeoutId = ReturnType<typeof setTimeout>
+
+export function requestIdleCallback(callback: () => void, opts?: { timeout?: number }) {
+  // Use 'requestIdleCallback' when available: it will throttle the mutation processing if the
+  // browser is busy rendering frames (ex: when frames are below 60fps). When not available, the
+  // fallback on 'requestAnimationFrame' will still ensure the mutations are processed after any
+  // browser rendering process (Layout, Recalculate Style, etc.), so we can serialize DOM nodes
+  // efficiently.
+  if (window.requestIdleCallback) {
+    const id = window.requestIdleCallback(monitor(callback), opts)
+    return () => window.cancelIdleCallback(id)
+  }
+  const id = window.requestAnimationFrame(monitor(callback))
+  return () => window.cancelAnimationFrame(id)
+}
 
 export function removeDuplicates<T>(array: T[]) {
   const deduplicated: T[] = []

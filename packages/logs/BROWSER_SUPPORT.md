@@ -10,5 +10,7 @@
 | console error  | ✅     | ✅      | ✅     | ✅   | ✅             | ✅         | ✅   | ❌     | ✅    |
 | network error  | ✅     | ✅      | ✅     | ✅   | ✅             | ✅         | ✅   | ❌     | ✅    |
 | runtime error  | ✅     | ✅      | ✅     | ✅   | ✅             | ✅         | ✅   | ❌     | ✅    |
+| CSP violation  | ✅     | ✅      | ✅     | ✅   | ✅             | ✅         | ❌   | ❌     | ✅    |
+| reports        | ✅     | ❌      | ❌     | ✅   | ✅             | ❌         | ❌   | ❌     | ✅    |
 | custom logger  | ✅     | ✅      | ✅     | ✅   | ✅             | ✅         | ✅   | ❌     | ✅    |
 | handler        | ✅     | ✅      | ✅     | ✅   | ✅             | ✅         | ✅   | ❌     | ✅    |

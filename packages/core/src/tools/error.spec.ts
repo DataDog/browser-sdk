@@ -1,5 +1,5 @@
 import type { StackTrace } from '../domain/tracekit'
-import { createHandlingStack, formatUnknownError } from './error'
+import { createHandlingStack, formatUnknownError, getFileFromStackTraceString } from './error'
 
 describe('formatUnknownError', () => {
   const NOT_COMPUTED_STACK_TRACE: StackTrace = { name: undefined, message: undefined, stack: [] } as any
@@ -69,6 +69,21 @@ describe('formatUnknownError', () => {
     const formatted = formatUnknownError(NOT_COMPUTED_STACK_TRACE, errorObject, 'Uncaught')
 
     expect(formatted.message).toEqual('Uncaught {"foo":"bar"}')
+  })
+})
+
+describe('getFileFromStackTraceString', () => {
+  it('should get the first source file of the stack', () => {
+    expect(
+      getFileFromStackTraceString(`TypeError: oh snap!
+  at foo(1, bar) @ http://path/to/file.js:52:15
+  at <anonymous> @ http://path/to/file.js:12
+  at <anonymous>(baz) @ http://path/to/file.js`)
+    ).toEqual('http://path/to/file.js:52:15')
+  })
+
+  it('should get undefined if no source file is in the stack', () => {
+    expect(getFileFromStackTraceString('TypeError: oh snap!')).not.toBeDefined()
   })
 })
 

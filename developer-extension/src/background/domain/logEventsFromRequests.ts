@@ -40,9 +40,9 @@ chrome.webRequest.onBeforeRequest.addListener(
   ['requestBody']
 )
 
-function sortProperties<T extends unknown>(event: T): T {
+function sortProperties(event: unknown): unknown {
   if (Array.isArray(event)) {
-    return event.map(sortProperties) as T
+    return event.map(sortProperties)
   }
 
   if (typeof event === 'object' && event !== null) {
@@ -52,7 +52,7 @@ function sortProperties<T extends unknown>(event: T): T {
     names.forEach((name) => {
       result[name] = sortProperties((event as { [key: string]: unknown })[name])
     })
-    return result as T
+    return result
   }
 
   return event
