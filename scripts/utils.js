@@ -80,13 +80,37 @@ function printLog(...params) {
   console.log(greenColor, ...params, resetColor)
 }
 
-async function fetchWrapper(url) {
-  const response = await fetch(url)
+async function fetchWrapper(url, options) {
+  const response = await fetch(url, options)
   if (!response.ok) {
     throw new Error(`HTTP Error Response: ${response.status} ${response.statusText}`)
   }
 
   return response.text()
+}
+
+async function sendSlackMessage(channelOrEmail, message) {
+  const isMail = /^(.+)@(.+)$/.exec(channelOrEmail)
+  const channel = isMail ? await getSlackUserId(channelOrEmail) : channelOrEmail
+  const token = await getSecretKey('ci.browser-sdk.slack_bot_token')
+
+  return fetchWrapper('https://slack.com/api/chat.postMessage', {
+    method: 'post',
+    body: JSON.stringify({
+      channel,
+      text: message,
+    }),
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+  })
+}
+
+async function getSlackUserId(email) {
+  const token = await getSecretKey('ci.browser-sdk.slack_bot_token')
+  const response = fetchWrapper(`https://slack.com/api/users.lookupByEmail?email=${email}`, {
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+  })
+
+  return response.user.id
 }
 
 module.exports = {
@@ -100,4 +124,6 @@ module.exports = {
   logAndExit,
   replaceCiVariable,
   fetch: fetchWrapper,
+  sendSlackMessage,
+  getSlackUserId,
 }
