@@ -267,6 +267,14 @@ deploy-prod-stable:
     # If the pipeline was launched by a user, send pings to them (eg, creating a pipe on master without commiting)
     - if [[ $GITLAB_USER_LOGIN = "gitsync" ]]; then AUTHOR_EMAIL=$(git show -s --format="%ae" HEAD); else AUTHOR_EMAIL=$GITLAB_USER_EMAIL; fi
 
+notify-feature-branch-success:
+  extends:
+    - .prepare_notification
+    - .feature-branches
+  script:
+    - 'MESSAGE_TEXT=":white_check_mark: $CI_PROJECT_NAME $CI_COMMIT_REF_NAME pipeline <$BUILD_URL|$COMMIT_MESSAGE> succeed."'
+    - ./scripts/notify.sh "$AUTHOR_EMAIL" "$MESSAGE_TEXT"
+
 notify-feature-branch-failure:
   extends:
     - .prepare_notification
