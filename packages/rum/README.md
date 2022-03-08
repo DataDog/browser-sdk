@@ -254,7 +254,8 @@ init(configuration: {
 ```
 
 ### Browser and Session Replay sampling configuration
-Note: requires SDK version > 3.6.0
+
+**Note**: This feature requires SDK v3.6.0+.
 
 When new session is created, it can be either tracked as:
 
