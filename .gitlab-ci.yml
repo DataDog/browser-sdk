@@ -344,29 +344,6 @@ staging-reset-scheduled:
     reports:
       dotenv: build.env
 
-staging-reset-scheduled-success:
-  extends: .prepare_notification
-  only:
-    variables:
-      - $TARGET_TASK_NAME == "staging-reset-scheduled"
-  script:
-    - 'MESSAGE_TEXT=":white_check_mark: [*$CI_PROJECT_NAME*] Staging has been reset from *${CURRENT_STAGING}* to *${NEW_STAGING}* on pipeline <$BUILD_URL|$COMMIT_MESSAGE>."'
-    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
-  dependencies:
-    - staging-reset-scheduled
-
-staging-reset-scheduled-failure:
-  extends: .prepare_notification
-  only:
-    variables:
-      - $TARGET_TASK_NAME == "staging-reset-scheduled"
-  when: on_failure
-  script:
-    - 'MESSAGE_TEXT=":x: [*$CI_PROJECT_NAME*] Staging failed to reset from *${CURRENT_STAGING}* to *${NEW_STAGING}* on pipeline <$BUILD_URL|$COMMIT_MESSAGE>."'
-    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
-  dependencies:
-    - staging-reset-scheduled
-
 merge-into-staging:
   stage: pre-deploy
   extends:
