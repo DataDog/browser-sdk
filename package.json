@@ -91,8 +91,6 @@
     "webpack-dev-middleware": "4.1.0"
   },
   "resolutions": {
-    "**/bumbag/lodash": "4.17.21",
-    "**/bumbag/reakit": "1.3.11",
     "ansi-regex": "5.0.1"
   }
 }

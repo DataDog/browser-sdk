@@ -1,8 +1,14 @@
-import { Tabs } from 'bumbag'
-import React from 'react'
+import { Tabs } from '@mantine/core'
+import React, { useState } from 'react'
 import { ActionsTab } from './tabs/actionsTab'
 import { ConfigTab } from './tabs/configTab'
 import { sendAction } from './actions'
+
+const enum PanelTabs {
+  Actions,
+  RumConfig,
+  LogsConfig,
+}
 
 export function Panel() {
   setInterval(() => {
@@ -14,22 +20,19 @@ export function Panel() {
     sendAction('getConfig', 'rum')
     sendAction('getConfig', 'logs')
   })
+  const [activeTab, setActiveTab] = useState(PanelTabs.Actions)
+
   return (
-    <Tabs>
-      <Tabs.List>
-        <Tabs.Tab tabId="tab1">Actions</Tabs.Tab>
-        <Tabs.Tab tabId="tab2">RUM Config</Tabs.Tab>
-        <Tabs.Tab tabId="tab3">Logs Config</Tabs.Tab>
-      </Tabs.List>
-      <Tabs.Panel tabId="tab1" padding="major-2">
+    <Tabs active={activeTab} onTabChange={setActiveTab}>
+      <Tabs.Tab label="Actions">
         <ActionsTab />
-      </Tabs.Panel>
-      <Tabs.Panel tabId="tab2" padding="major-2">
+      </Tabs.Tab>
+      <Tabs.Tab label="RUM Config">
         <ConfigTab product={'rum'} />
-      </Tabs.Panel>
-      <Tabs.Panel tabId="tab3" padding="major-2">
+      </Tabs.Tab>
+      <Tabs.Tab label="Logs Config">
         <ConfigTab product={'logs'} />
-      </Tabs.Panel>
+      </Tabs.Tab>
     </Tabs>
   )
 }

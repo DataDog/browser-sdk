@@ -8,7 +8,7 @@ const storeLoadingPromise = new Promise((resolve) => {
   sendAction('getStore', undefined)
   listenAction('newStore', (newStore) => {
     store = newStore
-    storeListeners.forEach((listener) => listener(store))
+    storeListeners.forEach((listener) => listener(store!))
     resolve(undefined)
   })
 })

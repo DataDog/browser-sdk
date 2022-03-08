@@ -1,4 +1,4 @@
-import { Stack, Checkbox, Badge, Button } from 'bumbag'
+import { Group, Checkbox, Badge, Button } from '@mantine/core'
 import React from 'react'
 import { sendAction } from '../actions'
 import { useStore } from '../useStore'
@@ -7,17 +7,21 @@ export function ActionsTab() {
   const [{ useDevBundles, useRumSlim, logEventsFromRequests, devServerStatus, blockIntakeRequests }, setStore] =
     useStore()
   return (
-    <Stack alignY="top" padding="major-2" spacing="major-2">
-      <Stack orientation="horizontal" verticalBelow="0" spacing="major-2" alignX="left" alignY="center">
+    <Group direction="column" spacing="md" align="flex-start">
+      <Group spacing="md" align="center">
         <Checkbox
           label="Use dev bundles"
           checked={useDevBundles}
           onChange={(e) => setStore({ useDevBundles: isChecked(e.target) })}
         />
-        <Badge
-          palette={devServerStatus === 'available' ? 'success' : devServerStatus === 'checking' ? 'warning' : 'danger'}
-        />
-      </Stack>
+        {devServerStatus === 'available' ? (
+          <Badge color="green">Available</Badge>
+        ) : devServerStatus === 'checking' ? (
+          <Badge color="yellow">Checking...</Badge>
+        ) : (
+          <Badge color="red">Unavailable</Badge>
+        )}
+      </Group>
 
       <Checkbox
         label="Use RUM Slim"
@@ -40,7 +44,7 @@ export function ActionsTab() {
       <Button onClick={() => sendAction('flushEvents', undefined)}>Flush buffered events</Button>
 
       <Button onClick={() => sendAction('endSession', undefined)}>End current session</Button>
-    </Stack>
+    </Group>
   )
 }
 
