@@ -4,7 +4,7 @@ import { ActionsTab } from './tabs/actionsTab'
 import { ConfigTab } from './tabs/configTab'
 import { sendAction } from './actions'
 
-enum PanelTabs {
+const enum PanelTabs {
   Actions,
   RumConfig,
   LogsConfig,
