@@ -2,6 +2,7 @@ import { Tabs } from '@mantine/core'
 import React, { useState } from 'react'
 import { ActionsTab } from './tabs/actionsTab'
 import { ConfigTab } from './tabs/configTab'
+import { EventTab } from './tabs/eventsTab'
 import { sendAction } from './actions'
 
 const enum PanelTabs {
@@ -32,6 +33,9 @@ export function Panel() {
       </Tabs.Tab>
       <Tabs.Tab label="Logs Config">
         <ConfigTab product={'logs'} />
+      </Tabs.Tab>
+      <Tabs.Tab label="Events">
+        <EventTab />
       </Tabs.Tab>
     </Tabs>
   )
