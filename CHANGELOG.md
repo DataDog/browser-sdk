@@ -16,6 +16,10 @@
 
 ---
 
+## v4.6.1
+
+- 🐛 fix build-env replacement in npm packages ([#1389](https://github.com/DataDog/browser-sdk/pull/1389))
+
 ## v4.6.0
 
 - 📦 [RUMF-1162] update developer-extension ([#1379](https://github.com/DataDog/browser-sdk/pull/1379))
