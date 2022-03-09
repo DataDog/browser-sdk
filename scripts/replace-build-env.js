@@ -15,7 +15,7 @@ async function main() {
 
   const results = await replace({
     files: `${buildDirectory}/**/*.js`,
-    from: Object.keys(buildEnv).map((entry) => `__BUILD_ENV__${entry}__`),
+    from: Object.keys(buildEnv).map((entry) => new RegExp(`__BUILD_ENV__${entry}__`, 'g')),
     to: Object.values(buildEnv).map((value) => `"${value}"`),
   })
   printLog(
