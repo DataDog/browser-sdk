@@ -28,13 +28,14 @@ export default async function build({ entryPoint, outputFilePath }) {
  * @param entryPoint {string}
  * @param outputFilePath {string}
  */
-export function bundle({ entryPoints, outfile, watch, outdir, format }) {
+export function bundle({ entryPoints, outfile, watch, outdir, format, sourcemap }) {
   return esbuild.build({
     entryPoints,
     outfile,
     watch,
     outdir,
     format,
+    sourcemap,
     bundle: true,
     target: ['es6'],
     write: false,

@@ -14,7 +14,7 @@
     "format": "prettier --check .",
     "lint": "scripts/cli lint .",
     "typecheck": "scripts/cli typecheck . && scripts/cli typecheck developer-extension",
-    "dev": "node scripts/dev-server.js",
+    "dev": "node scripts/dev-server.mjs",
     "release": "scripts/cli release",
     "version": "scripts/cli version",
     "test": "yarn test:unit:watch",
