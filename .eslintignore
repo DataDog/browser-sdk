@@ -5,3 +5,4 @@ dist
 test/app/dist
 sandbox
 coverage
+gitpkg.config.js

@@ -6,7 +6,7 @@ const buildEnv = require('./scripts/build-env')
 
 const tsconfigPath = path.join(__dirname, 'tsconfig.webpack.json')
 
-module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables }) => ({
+module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, externals }) => ({
   entry,
   mode,
   output: {
@@ -15,6 +15,7 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables }) => ({
   },
   target: ['web', 'es5'],
   devtool: mode === 'development' ? 'inline-source-map' : false,
+  externals,
   module: {
     rules: [
       {
