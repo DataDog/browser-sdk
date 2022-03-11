@@ -7,7 +7,6 @@ import {
   DOM_EVENT,
   addEventListeners,
   addEventListener,
-  includes,
   noop,
 } from '@datadog/browser-core'
 import { NodePrivacyLevel } from '../../constants'
@@ -201,18 +200,12 @@ function initViewportResizeObserver(cb: ViewportResizeCallback): ListenerHandler
   return addEventListener(window, DOM_EVENT.RESIZE, updateDimension, { capture: true, passive: true }).stop
 }
 
-export const INPUT_TAGS = ['INPUT', 'TEXTAREA', 'SELECT']
-const lastInputStateMap: WeakMap<EventTarget, InputState> = new WeakMap()
 export function initInputObserver(cb: InputCallback, defaultPrivacyLevel: DefaultPrivacyLevel): ListenerHandler {
-  function eventHandler(event: { target: EventTarget | null }) {
-    const target = event.target as HTMLInputElement | HTMLTextAreaElement
+  const lastInputStateMap: WeakMap<Node, InputState> = new WeakMap()
+
+  function onElementChange(target: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement) {
     const nodePrivacyLevel = getNodePrivacyLevel(target, defaultPrivacyLevel)
-    if (
-      !target ||
-      !target.tagName ||
-      !includes(INPUT_TAGS, target.tagName) ||
-      nodePrivacyLevel === NodePrivacyLevel.HIDDEN
-    ) {
+    if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
       return
     }
 
@@ -272,29 +265,41 @@ export function initInputObserver(cb: InputCallback, defaultPrivacyLevel: Defaul
     }
   }
 
-  const { stop: stopEventListeners } = addEventListeners(document, [DOM_EVENT.INPUT, DOM_EVENT.CHANGE], eventHandler, {
-    capture: true,
-    passive: true,
-  })
+  const { stop: stopEventListeners } = addEventListeners(
+    document,
+    [DOM_EVENT.INPUT, DOM_EVENT.CHANGE],
+    (event) => {
+      if (
+        event.target instanceof HTMLInputElement ||
+        event.target instanceof HTMLTextAreaElement ||
+        event.target instanceof HTMLSelectElement
+      ) {
+        onElementChange(event.target)
+      }
+    },
+    {
+      capture: true,
+      passive: true,
+    }
+  )
 
   const propertyDescriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')
-  const hookProperties: Array<[HTMLElement, string]> = [
+  const hookProperties = [
     [HTMLInputElement.prototype, 'value'],
     [HTMLInputElement.prototype, 'checked'],
     [HTMLSelectElement.prototype, 'value'],
     [HTMLTextAreaElement.prototype, 'value'],
     // Some UI library use selectedIndex to set select value
     [HTMLSelectElement.prototype, 'selectedIndex'],
-  ]
+  ] as const
 
   const hookResetters: HookResetter[] = []
   if (propertyDescriptor && propertyDescriptor.set) {
     hookResetters.push(
       ...hookProperties.map((p) =>
-        hookSetter<HTMLElement>(p[0], p[1], {
+        hookSetter(p[0], p[1], {
           set: monitor(function () {
-            // mock to a normal event
-            eventHandler({ target: this })
+            onElementChange(this)
           }),
         })
       )
