@@ -1152,10 +1152,10 @@
     react-popper "^2.2.5"
     react-textarea-autosize "^8.3.2"
 
-"@mantine/hooks@3.6.14":
-  version "3.6.14"
-  resolved "https://registry.yarnpkg.com/@mantine/hooks/-/hooks-3.6.14.tgz#31f4d937384acbdae34ca0ca84056fc191eae85e"
-  integrity sha512-ob6FdjG7/plSpp2VOUvfEQb8a02hlLFo8Qp/EFU8OHn3lfp8PEKGxWQznPPQ9Zay53ZFm05ixrFq9z7+M5jEdQ==
+"@mantine/hooks@4.0.0":
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/@mantine/hooks/-/hooks-4.0.0.tgz#8fc00aae0ffb8a817c3dc63fa2d9879440618633"
+  integrity sha512-wYOv28mJdzLNK4Q112o18XglkNN0WkMioSh5lEE+V2nBrxhTu/vlfFkiC21HZXKBJ1lyy22nIvSUA2jz82W3lg==
 
 "@mantine/styles@4.0.0":
   version "4.0.0"
