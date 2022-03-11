@@ -1,8 +1,8 @@
 import type { DefaultPrivacyLevel } from '@datadog/browser-core'
 import {
+  instrumentMethodAndCallOriginal,
   assign,
   monitor,
-  callMonitored,
   throttle,
   DOM_EVENT,
   addEventListeners,
@@ -308,37 +308,31 @@ export function initInputObserver(cb: InputCallback, defaultPrivacyLevel: Defaul
 }
 
 function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
-  // eslint-disable-next-line @typescript-eslint/unbound-method
-  const insertRule = CSSStyleSheet.prototype.insertRule
-  CSSStyleSheet.prototype.insertRule = function (this: CSSStyleSheet, rule: string, index?: number) {
-    callMonitored(() => {
+  const { stop: restoreInsertRule } = instrumentMethodAndCallOriginal(CSSStyleSheet.prototype, 'insertRule', {
+    before(rule, index) {
       if (hasSerializedNode(this.ownerNode!)) {
         cb({
           id: getSerializedNodeId(this.ownerNode),
           adds: [{ rule, index }],
         })
       }
-    })
-    return insertRule.call(this, rule, index)
-  }
+    },
+  })
 
-  // eslint-disable-next-line @typescript-eslint/unbound-method
-  const deleteRule = CSSStyleSheet.prototype.deleteRule
-  CSSStyleSheet.prototype.deleteRule = function (this: CSSStyleSheet, index: number) {
-    callMonitored(() => {
+  const { stop: restoreDeleteRule } = instrumentMethodAndCallOriginal(CSSStyleSheet.prototype, 'deleteRule', {
+    before(index) {
       if (hasSerializedNode(this.ownerNode!)) {
         cb({
           id: getSerializedNodeId(this.ownerNode),
           removes: [{ index }],
         })
       }
-    })
-    return deleteRule.call(this, index)
-  }
+    },
+  })
 
   return () => {
-    CSSStyleSheet.prototype.insertRule = insertRule
-    CSSStyleSheet.prototype.deleteRule = deleteRule
+    restoreInsertRule()
+    restoreDeleteRule()
   }
 }
 

@@ -35,8 +35,8 @@ export function instrumentMethodAndCallOriginal<OBJECT extends { [key: string]: 
     before,
     after,
   }: {
-    before?: (this: OBJECT, ...args: Parameters<OBJECT[METHOD]>) => ReturnType<OBJECT[METHOD]>
-    after?: (this: OBJECT, ...args: Parameters<OBJECT[METHOD]>) => ReturnType<OBJECT[METHOD]>
+    before?: (this: OBJECT, ...args: Parameters<OBJECT[METHOD]>) => void
+    after?: (this: OBJECT, ...args: Parameters<OBJECT[METHOD]>) => void
   }
 ) {
   return instrumentMethod(
