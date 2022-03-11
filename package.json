@@ -66,7 +66,7 @@
     "json-schema-to-typescript": "bcaudan/json-schema-to-typescript#bcaudan/add-readonly-support",
     "karma": "6.3.17",
     "karma-browserstack-launcher": "1.6.0",
-    "karma-chrome-launcher": "3.1.0",
+    "karma-chrome-launcher": "3.1.1",
     "karma-coverage-istanbul-reporter": "3.0.3",
     "karma-jasmine": "4.0.1",
     "karma-junit-reporter": "2.0.1",
