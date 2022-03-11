@@ -12,8 +12,8 @@
     "build:esm": "rm -rf esm && tsc -p tsconfig.esm.json"
   },
   "dependencies": {
-    "@datadog/browser-core": "DataDog/browser-sdk#@datadog/browser-core-v0.0.1-electron-poc-gitpkg",
-    "@datadog/browser-rum-core": "DataDog/browser-sdk#@datadog/browser-rum-core-v0.0.1-electron-poc-gitpkg"
+    "@datadog/browser-core": "4.6.1",
+    "@datadog/browser-rum-core": "4.6.1"
   },
   "repository": {
     "type": "git",

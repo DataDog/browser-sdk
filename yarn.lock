@@ -294,16 +294,6 @@
   dependencies:
     "@cspotcode/source-map-consumer" "0.8.0"
 
-"@datadog/browser-core@DataDog/browser-sdk#@datadog/browser-core-v0.0.1-electron-poc-gitpkg":
-  version "4.6.1"
-  resolved "https://codeload.github.com/DataDog/browser-sdk/tar.gz/b9c39f6614c5ef868338a0588dc2abc1db2aee7a"
-
-"@datadog/browser-rum-core@DataDog/browser-sdk#@datadog/browser-rum-core-v0.0.1-electron-poc-gitpkg":
-  version "4.6.1"
-  resolved "https://codeload.github.com/DataDog/browser-sdk/tar.gz/190cb72d794d33e97723922a1f1a80a6a11981f9"
-  dependencies:
-    "@datadog/browser-core" "4.6.1"
-
 "@discoveryjs/json-ext@^0.5.0":
   version "0.5.2"
   resolved "https://registry.yarnpkg.com/@discoveryjs/json-ext/-/json-ext-0.5.2.tgz#8f03a22a04de437254e8ce8cc84ba39689288752"
