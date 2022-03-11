@@ -7,9 +7,6 @@ updates:
     commit-message:
       prefix: '👷'
     ignore:
-      # next webdriverio major: RUMF-1156
-      - dependency-name: 'webdriverio'
-      - dependency-name: '@wdio/*'
       # update puppeteer: RUMF-1157
       - dependency-name: 'puppeteer'
         update-types: ['version-update:semver-major']
