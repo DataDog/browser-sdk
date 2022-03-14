@@ -4,9 +4,6 @@ import type { EndpointBuilder } from './endpointBuilder'
 import { createEndpointBuilder, INTAKE_SITE_US } from './endpointBuilder'
 import { buildTags } from './tags'
 
-// replaced at build time
-declare const __BUILD_ENV__BUILD_MODE__: string
-
 export interface TransportConfiguration {
   logsEndpointBuilder: EndpointBuilder
   rumEndpointBuilder: EndpointBuilder
