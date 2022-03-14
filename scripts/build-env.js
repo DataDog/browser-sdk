@@ -14,10 +14,6 @@ const BUILD_MODES = [
   // Used for public releases.
   'release',
 
-  // Used by E2E tests.
-  // * Allows intake endpoints overrides when served from the E2E test framework.
-  'e2e-test',
-
   // Used on staging and production Datadog web app.
   'canary',
 ]
