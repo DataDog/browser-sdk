@@ -1,6 +1,6 @@
-const replace = require('replace-in-file')
+const glob = require('glob')
 const buildEnv = require('./build-env')
-const { printLog, logAndExit } = require('./utils')
+const { printLog, logAndExit, modifyFile } = require('./utils')
 
 /**
  * Replace BuildEnv in build files
@@ -13,16 +13,20 @@ async function main() {
 
   printLog(`Replacing BuildEnv in '${buildDirectory}' with:`, JSON.stringify(buildEnv, null, 2))
 
-  const results = await replace({
-    files: `${buildDirectory}/**/*.js`,
-    from: Object.keys(buildEnv).map((entry) => new RegExp(`__BUILD_ENV__${entry}__`, 'g')),
-    to: Object.values(buildEnv).map((value) => `"${value}"`),
-  })
-  printLog(
-    'Changed files:',
-    results.filter((entry) => entry.hasChanged).map((entry) => entry.file)
-  )
+  for (const path of glob.sync('**/*.js', { cwd: buildDirectory, absolute: true })) {
+    if (await modifyFile(path, replaceBuildEnv)) {
+      printLog(`Replaced BuildEnv in ${path}`)
+    }
+  }
+
   process.exit(0)
+}
+
+function replaceBuildEnv(content) {
+  return Object.keys(buildEnv).reduce(
+    (content, key) => content.replaceAll(`__BUILD_ENV__${key}__`, JSON.stringify(buildEnv[key])),
+    content
+  )
 }
 
 main().catch(logAndExit)
