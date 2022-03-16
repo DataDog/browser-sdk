@@ -1,4 +1,4 @@
-import type { RelativeTime } from '@datadog/browser-core'
+import type { ContextHistoryEntry, RelativeTime } from '@datadog/browser-core'
 import { ONE_MINUTE, SESSION_TIME_OUT_DELAY, ContextHistory } from '@datadog/browser-core'
 import type { ActionContext, ViewContext } from '../rawRumEvent.types'
 import type { LifeCycle } from './lifeCycle'
@@ -32,21 +32,22 @@ export function startParentContexts(lifeCycle: LifeCycle): ParentContexts {
 function startViewHistory(lifeCycle: LifeCycle) {
   const viewContextHistory = new ContextHistory<ViewContext>(VIEW_CONTEXT_TIME_OUT_DELAY)
 
+  let currentHistoryEntry: ContextHistoryEntry<ViewContext>
+
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
-    viewContextHistory.setCurrent(buildViewContext(view), view.startClocks.relative)
+    currentHistoryEntry = viewContextHistory.add(buildViewContext(view), view.startClocks.relative)
   })
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) => {
     // A view can be updated after its end.  We have to ensure that the view being updated is the
     // most recently created.
-    const current = viewContextHistory.getCurrent()
-    if (current && current.view.id === view.id) {
-      viewContextHistory.setCurrent(buildViewContext(view), view.startClocks.relative)
+    if (currentHistoryEntry.context.view.id === view.id) {
+      currentHistoryEntry.context = buildViewContext(view)
     }
   })
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, ({ endClocks }) => {
-    viewContextHistory.closeCurrent(endClocks.relative)
+    currentHistoryEntry.close(endClocks.relative)
   })
 
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
@@ -67,20 +68,20 @@ function startViewHistory(lifeCycle: LifeCycle) {
 
 function startActionHistory(lifeCycle: LifeCycle) {
   const actionContextHistory = new ContextHistory<ActionContext>(ACTION_CONTEXT_TIME_OUT_DELAY)
+  let currentHistoryEntry: ContextHistoryEntry<ActionContext>
+
   lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_CREATED, (action) => {
-    actionContextHistory.setCurrent(buildActionContext(action), action.startClocks.relative)
+    currentHistoryEntry = actionContextHistory.add(buildActionContext(action), action.startClocks.relative)
   })
 
   lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, (action: AutoAction) => {
-    if (actionContextHistory.getCurrent()) {
-      // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-      const actionEndTime = (action.startClocks.relative + action.duration) as RelativeTime
-      actionContextHistory.closeCurrent(actionEndTime)
-    }
+    // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+    const actionEndTime = (action.startClocks.relative + action.duration) as RelativeTime
+    currentHistoryEntry.close(actionEndTime)
   })
 
   lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_DISCARDED, () => {
-    actionContextHistory.clearCurrent()
+    currentHistoryEntry.remove()
   })
 
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {

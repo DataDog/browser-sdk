@@ -36,15 +36,15 @@ export function startSessionManager<TrackingType extends string>(
   const sessionContextHistory = new ContextHistory<SessionContext<TrackingType>>(SESSION_CONTEXT_TIMEOUT_DELAY)
   stopCallbacks.push(() => sessionContextHistory.stop())
 
+  sessionStore.expandOrRenewSession()
+
+  let currentHistoryEntry = sessionContextHistory.add(buildSessionContext(), clocksOrigin().relative)
   sessionStore.renewObservable.subscribe(() => {
-    sessionContextHistory.setCurrent(buildSessionContext(), relativeNow())
+    currentHistoryEntry = sessionContextHistory.add(buildSessionContext(), relativeNow())
   })
   sessionStore.expireObservable.subscribe(() => {
-    sessionContextHistory.closeCurrent(relativeNow())
+    currentHistoryEntry.close(relativeNow())
   })
-
-  sessionStore.expandOrRenewSession()
-  sessionContextHistory.setCurrent(buildSessionContext(), clocksOrigin().relative)
 
   trackActivity(() => sessionStore.expandOrRenewSession())
   trackVisibility(() => sessionStore.expandSession())

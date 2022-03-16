@@ -1,4 +1,4 @@
-import type { RelativeTime, Observable } from '@datadog/browser-core'
+import type { RelativeTime, Observable, ContextHistoryEntry } from '@datadog/browser-core'
 import { SESSION_TIME_OUT_DELAY, relativeNow, ContextHistory } from '@datadog/browser-core'
 import type { UrlContext } from '../rawRumEvent.types'
 import type { LocationChange } from '../browser/locationChangeObservable'
@@ -27,13 +27,17 @@ export function startUrlContexts(
 
   let previousViewUrl: string | undefined
 
+  let currentHistoryEntry: ContextHistoryEntry<UrlContext> | undefined
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, ({ endClocks }) => {
-    urlContextHistory.closeCurrent(endClocks.relative)
+    if (currentHistoryEntry) {
+      currentHistoryEntry.close(endClocks.relative)
+      currentHistoryEntry = undefined
+    }
   })
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, ({ startClocks }) => {
     const viewUrl = location.href
-    urlContextHistory.setCurrent(
+    currentHistoryEntry = urlContextHistory.add(
       buildUrlContext({
         url: viewUrl,
         referrer: !previousViewUrl ? document.referrer : previousViewUrl,
@@ -44,14 +48,13 @@ export function startUrlContexts(
   })
 
   const locationChangeSubscription = locationChangeObservable.subscribe(({ newLocation }) => {
-    const current = urlContextHistory.getCurrent()
-    if (current) {
+    if (currentHistoryEntry) {
       const changeTime = relativeNow()
-      urlContextHistory.closeCurrent(changeTime)
-      urlContextHistory.setCurrent(
+      currentHistoryEntry.close(changeTime)
+      currentHistoryEntry = urlContextHistory.add(
         buildUrlContext({
           url: newLocation.href,
-          referrer: current.view.referrer,
+          referrer: currentHistoryEntry.context.view.referrer,
         }),
         changeTime
       )
