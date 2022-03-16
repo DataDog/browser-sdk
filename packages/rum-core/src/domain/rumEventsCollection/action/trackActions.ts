@@ -49,7 +49,7 @@ export interface AutoActionCreatedEvent {
 }
 
 export interface ActionContexts {
-  findActionId: (startTime?: RelativeTime) => string | undefined
+  findActionId: (startTime?: RelativeTime) => string | string[] | undefined
 }
 
 // Maximum duration for automatic actions
