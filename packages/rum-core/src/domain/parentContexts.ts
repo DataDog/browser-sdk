@@ -16,9 +16,21 @@ export interface ParentContexts {
 }
 
 export function startParentContexts(lifeCycle: LifeCycle): ParentContexts {
-  const viewContextHistory = new ContextHistory<ViewContext>(VIEW_CONTEXT_TIME_OUT_DELAY)
+  const viewContextHistory = startViewHistory(lifeCycle)
+  const actionContextHistory = startActionHistory(lifeCycle)
 
-  const actionContextHistory = new ContextHistory<ActionContext>(ACTION_CONTEXT_TIME_OUT_DELAY)
+  return {
+    findAction: (startTime) => actionContextHistory.find(startTime),
+    findView: (startTime) => viewContextHistory.find(startTime),
+    stop: () => {
+      viewContextHistory.stop()
+      actionContextHistory.stop()
+    },
+  }
+}
+
+function startViewHistory(lifeCycle: LifeCycle) {
+  const viewContextHistory = new ContextHistory<ViewContext>(VIEW_CONTEXT_TIME_OUT_DELAY)
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
     viewContextHistory.setCurrent(buildViewContext(view), view.startClocks.relative)
@@ -37,6 +49,24 @@ export function startParentContexts(lifeCycle: LifeCycle): ParentContexts {
     viewContextHistory.closeCurrent(endClocks.relative)
   })
 
+  lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
+    viewContextHistory.reset()
+  })
+
+  function buildViewContext(view: ViewCreatedEvent) {
+    return {
+      view: {
+        id: view.id,
+        name: view.name,
+      },
+    }
+  }
+
+  return viewContextHistory
+}
+
+function startActionHistory(lifeCycle: LifeCycle) {
+  const actionContextHistory = new ContextHistory<ActionContext>(ACTION_CONTEXT_TIME_OUT_DELAY)
   lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_CREATED, (action) => {
     actionContextHistory.setCurrent(buildActionContext(action), action.startClocks.relative)
   })
@@ -54,29 +84,12 @@ export function startParentContexts(lifeCycle: LifeCycle): ParentContexts {
   })
 
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-    viewContextHistory.reset()
     actionContextHistory.reset()
   })
-
-  function buildViewContext(view: ViewCreatedEvent) {
-    return {
-      view: {
-        id: view.id,
-        name: view.name,
-      },
-    }
-  }
 
   function buildActionContext(action: AutoActionCreatedEvent) {
     return { action: { id: action.id } }
   }
 
-  return {
-    findAction: (startTime) => actionContextHistory.find(startTime),
-    findView: (startTime) => viewContextHistory.find(startTime),
-    stop: () => {
-      viewContextHistory.stop()
-      actionContextHistory.stop()
-    },
-  }
+  return actionContextHistory
 }
