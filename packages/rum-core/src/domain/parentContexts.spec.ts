@@ -1,5 +1,10 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { relativeToClocks, CLEAR_OLD_CONTEXTS_INTERVAL } from '@datadog/browser-core'
+import {
+  resetExperimentalFeatures,
+  updateExperimentalFeatures,
+  relativeToClocks,
+  CLEAR_OLD_CONTEXTS_INTERVAL,
+} from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../test/specHelper'
 import { setup } from '../../test/specHelper'
 import { LifeCycleEventType } from './lifeCycle'
@@ -119,47 +124,102 @@ describe('parentContexts', () => {
       expect(parentContexts.findAction()).toBeUndefined()
     })
 
-    it('should return the current action context when no startTime', () => {
-      const { lifeCycle } = setupBuilder.build()
+    describe('without frustration-signals flag', () => {
+      it('should return the current action context when no startTime', () => {
+        const { lifeCycle } = setupBuilder.build()
 
-      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startClocks, id: FAKE_ID })
+        lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startClocks, id: FAKE_ID })
 
-      expect(parentContexts.findAction()).toBeDefined()
-      expect(parentContexts.findAction()!.action.id).toBe(FAKE_ID)
+        expect(parentContexts.findAction()).toBeDefined()
+        expect(parentContexts.findAction()!.action.id).toBe(FAKE_ID)
+      })
+
+      it('should return the action context corresponding to startTime', () => {
+        const { lifeCycle } = setupBuilder.build()
+
+        lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, {
+          startClocks: relativeToClocks(10 as RelativeTime),
+          id: 'action 1',
+        })
+        lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
+          startClocks: relativeToClocks(10 as RelativeTime),
+          id: 'action 1',
+          duration: 10,
+        } as AutoAction)
+
+        lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, {
+          startClocks: relativeToClocks(30 as RelativeTime),
+          id: 'action 2',
+        })
+        lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
+          startClocks: relativeToClocks(30 as RelativeTime),
+          id: 'action 2',
+          duration: 10,
+        } as AutoAction)
+
+        lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, {
+          startClocks: relativeToClocks(50 as RelativeTime),
+          id: 'action 3',
+        })
+
+        expect(parentContexts.findAction(15 as RelativeTime)!.action.id).toBe('action 1')
+        expect(parentContexts.findAction(20 as RelativeTime)!.action.id).toBe('action 1')
+        expect(parentContexts.findAction(30 as RelativeTime)!.action.id).toBe('action 2')
+        expect(parentContexts.findAction(55 as RelativeTime)!.action.id).toBe('action 3')
+      })
     })
 
-    it('should return the action context corresponding to startTime', () => {
-      const { lifeCycle } = setupBuilder.build()
-
-      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, {
-        startClocks: relativeToClocks(10 as RelativeTime),
-        id: 'action 1',
-      })
-      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
-        startClocks: relativeToClocks(10 as RelativeTime),
-        id: 'action 1',
-        duration: 10,
-      } as AutoAction)
-
-      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, {
-        startClocks: relativeToClocks(30 as RelativeTime),
-        id: 'action 2',
-      })
-      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
-        startClocks: relativeToClocks(30 as RelativeTime),
-        id: 'action 2',
-        duration: 10,
-      } as AutoAction)
-
-      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, {
-        startClocks: relativeToClocks(50 as RelativeTime),
-        id: 'action 3',
+    describe('with frustration-signals flag', () => {
+      beforeEach(() => {
+        updateExperimentalFeatures(['frustration-signals'])
       })
 
-      expect(parentContexts.findAction(15 as RelativeTime)!.action.id).toBe('action 1')
-      expect(parentContexts.findAction(20 as RelativeTime)!.action.id).toBe('action 1')
-      expect(parentContexts.findAction(30 as RelativeTime)!.action.id).toBe('action 2')
-      expect(parentContexts.findAction(55 as RelativeTime)!.action.id).toBe('action 3')
+      afterEach(() => {
+        resetExperimentalFeatures()
+      })
+
+      it('should return the current action context when no startTime', () => {
+        const { lifeCycle } = setupBuilder.build()
+
+        lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startClocks, id: FAKE_ID })
+
+        expect(parentContexts.findAction()).toBeDefined()
+        expect(parentContexts.findAction()!.action.id).toEqual([FAKE_ID])
+      })
+
+      it('should return the action context corresponding to startTime', () => {
+        const { lifeCycle } = setupBuilder.build()
+
+        lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, {
+          startClocks: relativeToClocks(10 as RelativeTime),
+          id: 'action 1',
+        })
+        lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
+          startClocks: relativeToClocks(10 as RelativeTime),
+          id: 'action 1',
+          duration: 10,
+        } as AutoAction)
+
+        lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, {
+          startClocks: relativeToClocks(30 as RelativeTime),
+          id: 'action 2',
+        })
+        lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
+          startClocks: relativeToClocks(30 as RelativeTime),
+          id: 'action 2',
+          duration: 10,
+        } as AutoAction)
+
+        lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, {
+          startClocks: relativeToClocks(50 as RelativeTime),
+          id: 'action 3',
+        })
+
+        expect(parentContexts.findAction(15 as RelativeTime)!.action.id).toEqual(['action 1'])
+        expect(parentContexts.findAction(20 as RelativeTime)!.action.id).toEqual(['action 1'])
+        expect(parentContexts.findAction(30 as RelativeTime)!.action.id).toEqual(['action 2'])
+        expect(parentContexts.findAction(55 as RelativeTime)!.action.id).toEqual(['action 3'])
+      })
     })
 
     it('should return undefined if no action context corresponding to startTime', () => {

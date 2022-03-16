@@ -18,7 +18,7 @@ describe('internal context', () => {
     parentContextsStub = {
       findAction: jasmine.createSpy('findAction').and.returnValue({
         action: {
-          id: '7890',
+          id: ['7890'],
         },
       }),
       findView: jasmine.createSpy('findView').and.returnValue({
@@ -48,7 +48,7 @@ describe('internal context', () => {
       application_id: 'appId',
       session_id: '456',
       user_action: {
-        id: '7890',
+        id: ['7890'],
       },
       view: {
         id: 'abcde',

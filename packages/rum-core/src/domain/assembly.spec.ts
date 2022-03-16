@@ -34,7 +34,7 @@ describe('rum assembly', () => {
       .withParentContexts({
         findAction: () => ({
           action: {
-            id: '7890',
+            id: ['7890'],
           },
         }),
         findView: () => ({
@@ -414,7 +414,7 @@ describe('rum assembly', () => {
         notifyRawRumEvent(lifeCycle, {
           rawRumEvent: createRawRumEvent(category),
         })
-        expect(serverRumEvents[0].action).toEqual({ id: '7890' })
+        expect(serverRumEvents[0].action).toEqual({ id: ['7890'] })
         serverRumEvents = []
       })
 
@@ -424,10 +424,11 @@ describe('rum assembly', () => {
       expect(serverRumEvents[0].action).not.toBeDefined()
       serverRumEvents = []
 
+      const generatedRawRumActionEvent = createRawRumEvent(RumEventType.ACTION) as RawRumActionEvent
       notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.ACTION),
+        rawRumEvent: generatedRawRumActionEvent,
       })
-      expect((serverRumEvents[0] as RumActionEvent).action.id).not.toEqual('7890')
+      expect((serverRumEvents[0] as RumActionEvent).action.id).toEqual(generatedRawRumActionEvent.action.id)
       serverRumEvents = []
     })
   })

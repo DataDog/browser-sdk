@@ -1,5 +1,5 @@
 import type { ContextHistoryEntry, RelativeTime } from '@datadog/browser-core'
-import { ONE_MINUTE, SESSION_TIME_OUT_DELAY, ContextHistory } from '@datadog/browser-core'
+import { isExperimentalFeatureEnabled, ONE_MINUTE, SESSION_TIME_OUT_DELAY, ContextHistory } from '@datadog/browser-core'
 import type { ActionContext, ViewContext } from '../rawRumEvent.types'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
@@ -88,7 +88,10 @@ function startActionHistory(lifeCycle: LifeCycle) {
     actionContextHistory.reset()
   })
 
-  function buildActionContext(action: AutoActionCreatedEvent) {
+  function buildActionContext(action: AutoActionCreatedEvent): ActionContext {
+    if (isExperimentalFeatureEnabled('frustration-signals')) {
+      return { action: { id: [action.id] } }
+    }
     return { action: { id: action.id } }
   }
 
