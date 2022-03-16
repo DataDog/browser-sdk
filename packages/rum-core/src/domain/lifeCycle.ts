@@ -4,7 +4,11 @@ import type { RumEventDomainContext } from '../domainContext.types'
 import type { CommonContext, RawRumEvent } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'
 import type { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
-import type { AutoAction, AutoActionCreatedEvent } from './rumEventsCollection/action/trackActions'
+import type {
+  AutoAction,
+  AutoActionCreatedEvent,
+  AutoActionDiscardedEvent,
+} from './rumEventsCollection/action/trackActions'
 import type { ViewEvent, ViewCreatedEvent, ViewEndedEvent } from './rumEventsCollection/view/trackViews'
 
 export const enum LifeCycleEventType {
@@ -45,6 +49,7 @@ export class LifeCycle {
   notify(eventType: LifeCycleEventType.REQUEST_COMPLETED, data: RequestCompleteEvent): void
   notify(eventType: LifeCycleEventType.AUTO_ACTION_COMPLETED, data: AutoAction): void
   notify(eventType: LifeCycleEventType.AUTO_ACTION_CREATED, data: AutoActionCreatedEvent): void
+  notify(eventType: LifeCycleEventType.AUTO_ACTION_DISCARDED, data: AutoActionDiscardedEvent): void
   notify(eventType: LifeCycleEventType.VIEW_CREATED, data: ViewCreatedEvent): void
   notify(eventType: LifeCycleEventType.VIEW_UPDATED, data: ViewEvent): void
   notify(eventType: LifeCycleEventType.VIEW_ENDED, data: ViewEndedEvent): void
@@ -57,7 +62,6 @@ export class LifeCycle {
       | LifeCycleEventType.SESSION_EXPIRED
       | LifeCycleEventType.SESSION_RENEWED
       | LifeCycleEventType.BEFORE_UNLOAD
-      | LifeCycleEventType.AUTO_ACTION_DISCARDED
   ): void
   notify(eventType: LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, data: RawRumEventCollectedData): void
   notify(eventType: LifeCycleEventType.RUM_EVENT_COLLECTED, data: RumEvent & Context): void
@@ -79,6 +83,10 @@ export class LifeCycle {
   ): Subscription
   subscribe(eventType: LifeCycleEventType.AUTO_ACTION_COMPLETED, callback: (data: AutoAction) => void): Subscription
   subscribe(
+    eventType: LifeCycleEventType.AUTO_ACTION_DISCARDED,
+    callback: (data: AutoActionDiscardedEvent) => void
+  ): Subscription
+  subscribe(
     eventType: LifeCycleEventType.AUTO_ACTION_CREATED,
     callback: (data: AutoActionCreatedEvent) => void
   ): Subscription
@@ -93,8 +101,7 @@ export class LifeCycle {
     eventType:
       | LifeCycleEventType.SESSION_EXPIRED
       | LifeCycleEventType.SESSION_RENEWED
-      | LifeCycleEventType.BEFORE_UNLOAD
-      | LifeCycleEventType.AUTO_ACTION_DISCARDED,
+      | LifeCycleEventType.BEFORE_UNLOAD,
     callback: () => void
   ): Subscription
   subscribe(

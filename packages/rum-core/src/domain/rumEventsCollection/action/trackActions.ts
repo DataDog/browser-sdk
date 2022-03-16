@@ -39,6 +39,10 @@ export interface AutoActionCreatedEvent {
   startClocks: ClocksState
 }
 
+export interface AutoActionDiscardedEvent {
+  id: string
+}
+
 // Maximum duration for automatic actions
 export const AUTO_ACTION_MAX_DURATION = 10 * ONE_SECOND
 
@@ -151,7 +155,7 @@ class PendingAutoAction {
   }
 
   discard() {
-    this.lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_DISCARDED)
+    this.lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_DISCARDED, { id: this.id })
     this.eventCountsSubscription.stop()
   }
 }

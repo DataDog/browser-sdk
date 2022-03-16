@@ -220,6 +220,29 @@ describe('parentContexts', () => {
         expect(parentContexts.findAction(30 as RelativeTime)!.action.id).toEqual(['action 2'])
         expect(parentContexts.findAction(55 as RelativeTime)!.action.id).toEqual(['action 3'])
       })
+
+      it('should return the latest action when multiple actions are active at the same time', () => {
+        const { lifeCycle } = setupBuilder.build()
+
+        lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, {
+          startClocks: relativeToClocks(10 as RelativeTime),
+          id: 'action 1',
+        })
+        lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
+          startClocks: relativeToClocks(10 as RelativeTime),
+          id: 'action 1',
+          duration: 10,
+        } as AutoAction)
+
+        lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, {
+          startClocks: relativeToClocks(15 as RelativeTime),
+          id: 'action 2',
+        })
+
+        expect(parentContexts.findAction(10 as RelativeTime)!.action.id).toEqual(['action 1'])
+        expect(parentContexts.findAction(15 as RelativeTime)!.action.id).toEqual(['action 2', 'action 1'])
+        expect(parentContexts.findAction(21 as RelativeTime)!.action.id).toEqual(['action 2'])
+      })
     })
 
     it('should return undefined if no action context corresponding to startTime', () => {
@@ -229,7 +252,7 @@ describe('parentContexts', () => {
         startClocks: relativeToClocks(10 as RelativeTime),
         id: 'action 1',
       })
-      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_DISCARDED)
+      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_DISCARDED, { id: 'action 1' })
 
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, {
         startClocks: relativeToClocks(20 as RelativeTime),
@@ -243,7 +266,7 @@ describe('parentContexts', () => {
       const { lifeCycle } = setupBuilder.build()
 
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startClocks, id: FAKE_ID })
-      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_DISCARDED)
+      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_DISCARDED, { id: FAKE_ID })
 
       expect(parentContexts.findAction()).toBeUndefined()
     })
