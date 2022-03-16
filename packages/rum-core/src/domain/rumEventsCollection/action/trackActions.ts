@@ -74,7 +74,7 @@ export function trackActions(
   })
 
   const { stop: stopListener } = listenEvents((event) => {
-    if (history.getCurrent()) {
+    if (history.find()) {
       // Ignore any new action if another one is already occurring.
       return
     }
@@ -89,13 +89,13 @@ export function trackActions(
       name,
       event,
       (endTime) => {
-        history.closeCurrent(getRelativeTime(endTime))
+        historyEntry.close(getRelativeTime(endTime))
       },
       () => {
-        history.clearCurrent()
+        historyEntry.remove()
       }
     )
-    history.setCurrent(actionController, actionController.startClocks.relative)
+    const historyEntry = history.add(actionController, actionController.startClocks.relative)
   })
 
   const actionContexts: ActionContexts = {
@@ -104,10 +104,7 @@ export function trackActions(
 
   return {
     stop: () => {
-      const currentAction = history.getCurrent()
-      if (currentAction) {
-        currentAction.discard()
-      }
+      history.findAll().forEach((actionController) => actionController.discard())
       stopListener()
     },
     actionContexts,
