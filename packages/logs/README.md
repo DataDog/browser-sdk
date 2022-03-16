@@ -124,7 +124,7 @@ The following parameters are available to configure the Datadog browser logs SDK
 | `service`             | String  | No       |                 | The service name for your application. It should follow the [tag syntax requirements][7].                                    |
 | `env`                 | String  | No       |                 | The application’s environment, for example: prod, pre-prod, staging, etc. It should follow the [tag syntax requirements][7]. |
 | `version`             | String  | No       |                 | The application’s version, for example: 1.2.3, 6c44da20, 2020.02.13, etc. It should follow the [tag syntax requirements][7]. |
-| `forwardErrorsToLogs` | Boolean | No       | `true`          | Set to `false` to stop forwarding console.error logs, uncaught exceptions and network errors to Datadog.                     |
+| `forwardErrorsToLogs` | Boolean | No       | `false`         | Set to `false` to stop forwarding console.error logs, uncaught exceptions and network errors to Datadog.                     |
 | `sampleRate`          | Number  | No       | `100`           | The percentage of sessions to track: `100` for all, `0` for none. Only tracked sessions send logs.                           |
 | `silentMultipleInit`  | Boolean | No       |                 | Prevent logging errors while having multiple init.                                                                           |
 | `proxyUrl`            | Boolean | No       |                 | Optional proxy URL (ex: https://www.proxy.com/path), see the full [proxy setup guide][6] for more information.               |
