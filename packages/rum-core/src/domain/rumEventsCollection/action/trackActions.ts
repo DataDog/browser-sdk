@@ -1,10 +1,17 @@
 import type { Context, Duration, ClocksState, Observable } from '@datadog/browser-core'
-import { addEventListener, DOM_EVENT, generateUUID, clocksNow, ONE_SECOND, elapsed } from '@datadog/browser-core'
+import {
+  assign,
+  addEventListener,
+  DOM_EVENT,
+  generateUUID,
+  clocksNow,
+  ONE_SECOND,
+  elapsed,
+} from '@datadog/browser-core'
 import { ActionType } from '../../../rawRumEvent.types'
 import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
-import type { EventCounts } from '../../trackEventCounts'
 import { trackEventCounts } from '../../trackEventCounts'
 import { waitIdlePage } from '../../waitIdlePage'
 import { getActionNameFromElement } from './getActionNameFromElement'
@@ -84,8 +91,7 @@ export function trackActions(
 }
 
 function startActionManagement(lifeCycle: LifeCycle, domMutationObservable: Observable<void>) {
-  let currentAction: PendingAutoAction | undefined
-  let stopWaitingIdlePage: () => void
+  let currentAction: { discard(): void } | undefined
 
   return {
     create: (type: AutoActionType, name: string, event: Event) => {
@@ -93,69 +99,77 @@ function startActionManagement(lifeCycle: LifeCycle, domMutationObservable: Obse
         // Ignore any new action if another one is already occurring.
         return
       }
-      const pendingAutoAction = new PendingAutoAction(lifeCycle, type, name, event)
-      currentAction = pendingAutoAction
-      ;({ stop: stopWaitingIdlePage } = waitIdlePage(
-        lifeCycle,
-        domMutationObservable,
-        (event) => {
-          if (event.hadActivity) {
-            const duration = elapsed(pendingAutoAction.startClocks.timeStamp, event.end)
-            if (duration >= 0) {
-              pendingAutoAction.complete(duration)
-            } else {
-              pendingAutoAction.discard()
-            }
-          } else {
-            pendingAutoAction.discard()
-          }
-          currentAction = undefined
-        },
-        AUTO_ACTION_MAX_DURATION
-      ))
+      currentAction = createAutoAction(lifeCycle, domMutationObservable, { type, name, event }, () => {
+        currentAction = undefined
+      })
     },
     discardCurrent: () => {
       if (currentAction) {
-        stopWaitingIdlePage()
         currentAction.discard()
-        currentAction = undefined
       }
     },
   }
 }
 
-class PendingAutoAction {
-  startClocks: ClocksState
-  private id: string
-  private eventCountsSubscription: { eventCounts: EventCounts; stop(): void }
+function createAutoAction(
+  lifeCycle: LifeCycle,
+  domMutationObservable: Observable<void>,
+  base: Pick<AutoAction, 'type' | 'name' | 'event'>,
+  onFinishCallback: () => void
+) {
+  const id = generateUUID()
+  const startClocks = clocksNow()
+  const eventCountsSubscription = trackEventCounts(lifeCycle)
+  const { stop: stopWaitingIdlePage } = waitIdlePage(
+    lifeCycle,
+    domMutationObservable,
+    (event) => {
+      if (event.hadActivity) {
+        const duration = elapsed(startClocks.timeStamp, event.end)
+        if (duration >= 0) {
+          complete(duration)
+        } else {
+          discard()
+        }
+      } else {
+        discard()
+      }
+    },
+    AUTO_ACTION_MAX_DURATION
+  )
+  lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { id, startClocks })
 
-  constructor(private lifeCycle: LifeCycle, private type: AutoActionType, private name: string, private event: Event) {
-    this.id = generateUUID()
-    this.startClocks = clocksNow()
-    this.eventCountsSubscription = trackEventCounts(lifeCycle)
-    this.lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { id: this.id, startClocks: this.startClocks })
+  function complete(duration: Duration) {
+    const eventCounts = eventCountsSubscription.eventCounts
+    lifeCycle.notify(
+      LifeCycleEventType.AUTO_ACTION_COMPLETED,
+      assign(
+        {
+          counts: {
+            errorCount: eventCounts.errorCount,
+            longTaskCount: eventCounts.longTaskCount,
+            resourceCount: eventCounts.resourceCount,
+          },
+          duration,
+          id,
+          startClocks,
+        },
+        base
+      )
+    )
+    finish()
   }
 
-  complete(duration: Duration) {
-    const eventCounts = this.eventCountsSubscription.eventCounts
-    this.lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
-      counts: {
-        errorCount: eventCounts.errorCount,
-        longTaskCount: eventCounts.longTaskCount,
-        resourceCount: eventCounts.resourceCount,
-      },
-      duration,
-      id: this.id,
-      name: this.name,
-      startClocks: this.startClocks,
-      type: this.type,
-      event: this.event,
-    })
-    this.eventCountsSubscription.stop()
+  function discard() {
+    lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_DISCARDED, { id })
+    finish()
   }
 
-  discard() {
-    this.lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_DISCARDED, { id: this.id })
-    this.eventCountsSubscription.stop()
+  function finish() {
+    stopWaitingIdlePage()
+    eventCountsSubscription.stop()
+    onFinishCallback()
   }
+
+  return { discard }
 }
