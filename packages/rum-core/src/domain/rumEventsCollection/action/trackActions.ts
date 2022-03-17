@@ -1,5 +1,6 @@
 import type { Context, Duration, ClocksState, Observable } from '@datadog/browser-core'
 import {
+  isExperimentalFeatureEnabled,
   assign,
   addEventListener,
   DOM_EVENT,
@@ -91,22 +92,21 @@ export function trackActions(
 }
 
 function startActionManagement(lifeCycle: LifeCycle, domMutationObservable: Observable<void>) {
-  let currentAction: { discard(): void } | undefined
+  const currentActions = new Set<{ discard(): void }>()
 
   return {
     create: (type: AutoActionType, name: string, event: Event) => {
-      if (currentAction) {
+      if (!isExperimentalFeatureEnabled('frustration-signals') && currentActions.size > 0) {
         // Ignore any new action if another one is already occurring.
         return
       }
-      currentAction = createAutoAction(lifeCycle, domMutationObservable, { type, name, event }, () => {
-        currentAction = undefined
+      const pendingAutoAction = createAutoAction(lifeCycle, domMutationObservable, { type, name, event }, () => {
+        currentActions.delete(pendingAutoAction)
       })
+      currentActions.add(pendingAutoAction)
     },
     discardCurrent: () => {
-      if (currentAction) {
-        currentAction.discard()
-      }
+      currentActions.forEach((currentAction) => currentAction.discard())
     },
   }
 }
