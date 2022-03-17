@@ -24,8 +24,7 @@ import { validateAndBuildLogsConfiguration } from '../domain/configuration'
 import type { LogsMessage } from '../domain/logger'
 import { Logger, StatusType } from '../domain/logger'
 import type { LogsSessionManager } from '../domain/logsSessionManager'
-import type { LogsEvent } from '../logsEvent.types'
-import { buildAssemble, doStartLogs, startLogs as originalStartLogs } from './startLogs'
+import { doStartLogs, startLogs as originalStartLogs } from './startLogs'
 
 interface SentMessage extends LogsMessage {
   logger?: { name: string }
@@ -308,98 +307,6 @@ describe('logs', () => {
       sendLog(DEFAULT_MESSAGE, {})
 
       expect(sendSpy).toHaveBeenCalled()
-    })
-  })
-
-  describe('assemble', () => {
-    let assemble: (message: LogsMessage, currentContext: Context) => Context | undefined
-    let beforeSend: (event: LogsEvent) => void | boolean
-
-    beforeEach(() => {
-      beforeSend = noop
-      assemble = buildAssemble(
-        sessionManager,
-        {
-          ...baseConfiguration,
-          beforeSend: (x: LogsEvent) => beforeSend(x),
-        },
-        noop
-      )
-      window.DD_RUM = {
-        getInternalContext: noop,
-      }
-    })
-
-    it('should not assemble when sessionManager is not tracked', () => {
-      sessionIsTracked = false
-
-      expect(assemble(DEFAULT_MESSAGE, { foo: 'from-current-context' })).toBeUndefined()
-    })
-
-    it('should not assemble if beforeSend returned false', () => {
-      beforeSend = () => false
-      expect(assemble(DEFAULT_MESSAGE, { foo: 'from-current-context' })).toBeUndefined()
-    })
-
-    it('add default, current and RUM context to message', () => {
-      spyOn(window.DD_RUM!, 'getInternalContext').and.returnValue({
-        view: { url: 'http://from-rum-context.com', id: 'view-id' },
-      })
-
-      const assembledMessage = assemble(DEFAULT_MESSAGE, { foo: 'from-current-context' })
-
-      expect(assembledMessage).toEqual({
-        foo: 'from-current-context',
-        message: DEFAULT_MESSAGE.message,
-        service: 'service',
-        session_id: SESSION_ID,
-        status: DEFAULT_MESSAGE.status,
-        view: { url: 'http://from-rum-context.com', id: 'view-id' },
-      })
-    })
-
-    it('message context should take precedence over RUM context', () => {
-      spyOn(window.DD_RUM!, 'getInternalContext').and.returnValue({ session_id: 'from-rum-context' })
-
-      const assembledMessage = assemble({ ...DEFAULT_MESSAGE, session_id: 'from-message-context' }, {})
-
-      expect(assembledMessage!.session_id).toBe('from-message-context')
-    })
-
-    it('RUM context should take precedence over current context', () => {
-      spyOn(window.DD_RUM!, 'getInternalContext').and.returnValue({ session_id: 'from-rum-context' })
-
-      const assembledMessage = assemble(DEFAULT_MESSAGE, { session_id: 'from-current-context' })
-
-      expect(assembledMessage!.session_id).toBe('from-rum-context')
-    })
-
-    it('current context should take precedence over default context', () => {
-      const assembledMessage = assemble(DEFAULT_MESSAGE, { service: 'from-current-context' })
-
-      expect(assembledMessage!.service).toBe('from-current-context')
-    })
-
-    it('should allow modification of existing fields', () => {
-      beforeSend = (event: LogsEvent) => {
-        event.message = 'modified message'
-        ;(event.service as any) = 'modified service'
-      }
-
-      const assembledMessage = assemble(DEFAULT_MESSAGE, {})
-
-      expect(assembledMessage!.message).toBe('modified message')
-      expect(assembledMessage!.service).toBe('modified service')
-    })
-
-    it('should allow adding new fields', () => {
-      beforeSend = (event: LogsEvent) => {
-        event.foo = 'bar'
-      }
-
-      const assembledMessage = assemble(DEFAULT_MESSAGE, {})
-
-      expect(assembledMessage!.foo).toBe('bar')
     })
   })
 
