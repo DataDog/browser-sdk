@@ -1,5 +1,6 @@
 import type { Context, Duration, ClocksState, Observable, TimeStamp, RelativeTime } from '@datadog/browser-core'
 import {
+  isExperimentalFeatureEnabled,
   getRelativeTime,
   ONE_MINUTE,
   ContextHistory,
@@ -74,7 +75,7 @@ export function trackActions(
   })
 
   const { stop: stopListener } = listenEvents((event) => {
-    if (history.find()) {
+    if (!isExperimentalFeatureEnabled('frustration-signals') && history.find()) {
       // Ignore any new action if another one is already occurring.
       return
     }
@@ -99,7 +100,10 @@ export function trackActions(
   })
 
   const actionContexts: ActionContexts = {
-    findActionId: (startTime?: RelativeTime) => history.find(startTime)?.id,
+    findActionId: (startTime?: RelativeTime) =>
+      isExperimentalFeatureEnabled('frustration-signals')
+        ? history.findAll(startTime).map((controller) => controller.id)
+        : history.find(startTime)?.id,
   }
 
   return {
