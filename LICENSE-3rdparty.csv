@@ -44,6 +44,7 @@ dev,eslint-plugin-local-rules,MIT,Copyright (c) 2017 Clayton Watts
 dev,eslint-plugin-prefer-arrow,MIT,Copyright (c) 2018 Triston Jones
 dev,eslint-plugin-unicorn,MIT,Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 dev,express,MIT,Copyright 2009-2014 TJ Holowaychuk 2013-2014 Roman Shtylman 2014-2015 Douglas Christopher Wilson
+dev,glob,ISC,Copyright (c) 2009-2022 Isaac Z. Schlueter and Contributors
 dev,html-webpack-plugin,MIT,Copyright JS Foundation and other contributors
 dev,jasmine-core,MIT,Copyright 2008-2017 Pivotal Labs
 dev,js-polyfills,Unlicense,
@@ -64,7 +65,6 @@ dev,npm-run-all,MIT,Copyright 2015 Toru Nagashima
 dev,pako,MIT,(C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
 dev,prettier,MIT,Copyright James Long and contributors
 dev,puppeteer,Apache-2.0,Copyright 2017 Google Inc.
-dev,replace-in-file,MIT,Copyright 2015-2019 Adam Reis
 dev,sinon,BSD-3-Clause,Copyright 2010-2017 Christian Johansen
 dev,terser-webpack-plugin,MIT,Copyright JS Foundation and other contributors
 dev,ts-loader,MIT,Copyright 2015 TypeStrong
