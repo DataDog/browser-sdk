@@ -7,7 +7,7 @@
     "dev": "webpack --mode development --watch"
   },
   "devDependencies": {
-    "@types/chrome": "0.0.179",
+    "@types/chrome": "0.0.180",
     "@types/react": "17.0.40",
     "@types/react-dom": "17.0.13",
     "copy-webpack-plugin": "8.1.0",
