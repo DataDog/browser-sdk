@@ -24,6 +24,8 @@ const validBrowserNames = ['edge', 'safari', 'chrome', 'firefox', 'ie'] as const
 export function getBrowserName(): typeof validBrowserNames[number] {
   const capabilities = browser.capabilities
 
+  // Look for the browser name in capabilities. It should always be there as long as we don't change
+  // the browser capabilities format.
   if (!('browserName' in capabilities) || typeof capabilities.browserName !== 'string') {
     throw new Error("Can't get browser name (no browser name)")
   }
@@ -41,14 +43,13 @@ export function getBrowserName(): typeof validBrowserNames[number] {
 export function getPlatformName(): typeof validPlatformNames[number] {
   const capabilities = browser.capabilities
 
-  let platformName: string | undefined
+  let platformName: string
   if ('bstack:options' in capabilities && capabilities['bstack:options']) {
+    // Look for the platform name in browserstack options. It might not be always there, for example
+    // when we run the test locally. This should be adjusted when we are changing the browser
+    // capabilities format.
     platformName = (capabilities['bstack:options'] as any).os
-  }
-  if (platformName === undefined && 'platformName' in capabilities && typeof capabilities.platformName === 'string') {
-    platformName = capabilities.platformName
-  }
-  if (platformName === undefined) {
+  } else {
     // The test is run locally, use the local os name
     platformName = os.type()
   }
