@@ -23,6 +23,7 @@ import {
 import type { CiTestWindow } from '../src/domain/ciTestContext'
 import type { RumConfiguration } from '../src/domain/configuration'
 import { validateAndBuildRumConfiguration } from '../src/domain/configuration'
+import type { ActionContexts } from '../src/domain/rumEventsCollection/action/actionCollection'
 import { validateRumFormat } from './formatValidation'
 import { createRumSessionManagerMock } from './mockRumSessionManager'
 
@@ -31,6 +32,7 @@ export interface TestSetupBuilder {
   withSessionManager: (sessionManager: RumSessionManager) => TestSetupBuilder
   withConfiguration: (overrides: Partial<RumConfiguration>) => TestSetupBuilder
   withParentContexts: (stub: Partial<ParentContexts>) => TestSetupBuilder
+  withActionContexts: (stub: ActionContexts) => TestSetupBuilder
   withForegroundContexts: (stub: Partial<ForegroundContexts>) => TestSetupBuilder
   withFakeClock: () => TestSetupBuilder
   beforeBuild: (callback: BeforeBuildCallback) => TestSetupBuilder
@@ -51,6 +53,7 @@ export interface BuildContext {
   location: Location
   applicationId: string
   parentContexts: ParentContexts
+  actionContexts: ActionContexts
   foregroundContexts: ForegroundContexts
   urlContexts: UrlContexts
 }
@@ -85,6 +88,9 @@ export function setup(): TestSetupBuilder {
       },
     }),
     stop: noop,
+  }
+  let actionContexts: ActionContexts = {
+    findActionId: noop as () => undefined,
   }
   let foregroundContexts: ForegroundContexts = {
     isInForegroundAt: () => undefined,
@@ -129,6 +135,10 @@ export function setup(): TestSetupBuilder {
       parentContexts = stub as ParentContexts
       return setupBuilder
     },
+    withActionContexts(stub: ActionContexts) {
+      actionContexts = stub
+      return setupBuilder
+    },
     withForegroundContexts(stub: Partial<ForegroundContexts>) {
       foregroundContexts = { ...foregroundContexts, ...stub }
       return setupBuilder
@@ -150,6 +160,7 @@ export function setup(): TestSetupBuilder {
           locationChangeObservable,
           parentContexts,
           urlContexts,
+          actionContexts,
           foregroundContexts,
           sessionManager,
           applicationId: FAKE_APP_ID,

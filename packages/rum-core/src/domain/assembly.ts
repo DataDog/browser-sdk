@@ -30,6 +30,7 @@ import type { RumSessionManager } from './rumSessionManager'
 import { RumSessionPlan } from './rumSessionManager'
 import type { UrlContexts } from './urlContexts'
 import type { RumConfiguration } from './configuration'
+import type { ActionContexts } from './rumEventsCollection/action/actionCollection'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
@@ -64,6 +65,7 @@ export function startRumAssembly(
   sessionManager: RumSessionManager,
   parentContexts: ParentContexts,
   urlContexts: UrlContexts,
+  actionContexts: ActionContexts,
   getCommonContext: () => CommonContext
 ) {
   const reportError = (error: RawError) => {
@@ -96,7 +98,6 @@ export function startRumAssembly(
       // TODO: stop sending view updates when session is expired
       const session = sessionManager.findTrackedSession(rawRumEvent.type !== RumEventType.VIEW ? startTime : undefined)
       if (session && viewContext && urlContext) {
-        const actionContext = parentContexts.findAction(startTime)
         const commonContext = savedCommonContext || getCommonContext()
         const rumContext: RumContext = {
           _dd: {
@@ -120,9 +121,10 @@ export function startRumAssembly(
           synthetics: syntheticsContext,
           ci_test: ciTestContext,
         }
+        const actionId = actionContexts.findActionId(startTime)
         const serverRumEvent = (
-          needToAssembleWithAction(rawRumEvent)
-            ? combine(rumContext, urlContext, viewContext, actionContext, rawRumEvent)
+          needToAssembleWithAction(rawRumEvent) && actionId
+            ? combine(rumContext, urlContext, viewContext, { action: { id: actionId } }, rawRumEvent)
             : combine(rumContext, urlContext, viewContext, rawRumEvent)
         ) as RumEvent & Context
 

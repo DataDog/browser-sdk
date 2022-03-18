@@ -1,4 +1,4 @@
-import type { Context, Duration, ClocksState, Observable, TimeStamp } from '@datadog/browser-core'
+import type { Context, Duration, ClocksState, Observable, TimeStamp, RelativeTime } from '@datadog/browser-core'
 import {
   getRelativeTime,
   ONE_MINUTE,
@@ -102,6 +102,7 @@ export function trackActions(
       }
       stopListener()
     },
+    findActionId: (startTime?: RelativeTime) => history.find(startTime)?.id,
   }
 }
 

@@ -62,7 +62,7 @@ export function startRum(
       id: parentContexts.findView()?.view.id,
     },
     action: {
-      id: parentContexts.findAction()?.action.id,
+      id: actionContexts.findActionId(),
     },
   }))
 
@@ -76,12 +76,13 @@ export function startRum(
   const domMutationObservable = createDOMMutationObservable()
   const locationChangeObservable = createLocationChangeObservable(location)
 
-  const { parentContexts, foregroundContexts, urlContexts } = startRumEventCollection(
+  const { parentContexts, foregroundContexts, urlContexts, actionContexts, addAction } = startRumEventCollection(
     lifeCycle,
     configuration,
     location,
     session,
     locationChangeObservable,
+    domMutationObservable,
     getCommonContext
   )
 
@@ -98,12 +99,17 @@ export function startRum(
     initialViewName
   )
   const { addError } = startErrorCollection(lifeCycle, foregroundContexts)
-  const { addAction } = startActionCollection(lifeCycle, domMutationObservable, configuration, foregroundContexts)
 
   startRequestCollection(lifeCycle, configuration, session)
   startPerformanceCollection(lifeCycle, configuration)
 
-  const internalContext = startInternalContext(configuration.applicationId, session, parentContexts, urlContexts)
+  const internalContext = startInternalContext(
+    configuration.applicationId,
+    session,
+    parentContexts,
+    actionContexts,
+    urlContexts
+  )
 
   return {
     addAction,
@@ -140,18 +146,35 @@ export function startRumEventCollection(
   location: Location,
   sessionManager: RumSessionManager,
   locationChangeObservable: Observable<LocationChange>,
+  domMutationObservable: Observable<void>,
   getCommonContext: () => CommonContext
 ) {
   const parentContexts = startParentContexts(lifeCycle)
   const urlContexts = startUrlContexts(lifeCycle, locationChangeObservable, location)
   const foregroundContexts = startForegroundContexts()
+  const { addAction, actionContexts } = startActionCollection(
+    lifeCycle,
+    domMutationObservable,
+    configuration,
+    foregroundContexts
+  )
 
-  startRumAssembly(configuration, lifeCycle, sessionManager, parentContexts, urlContexts, getCommonContext)
+  startRumAssembly(
+    configuration,
+    lifeCycle,
+    sessionManager,
+    parentContexts,
+    urlContexts,
+    actionContexts,
+    getCommonContext
+  )
 
   return {
     parentContexts,
     foregroundContexts,
     urlContexts,
+    addAction,
+    actionContexts,
     stop: () => {
       parentContexts.stop()
       foregroundContexts.stop()
