@@ -95,7 +95,7 @@ export function trackActions(
   })
 
   return {
-    stop() {
+    stop: () => {
       const currentAction = history.getCurrent()
       if (currentAction) {
         currentAction.discard()
@@ -146,8 +146,6 @@ function createAction(
   // New views trigger the discard of the current pending Action
   const viewCreatedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, discard)
 
-  lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { id, startClocks })
-
   function complete(endTime: TimeStamp) {
     cleanup()
     const eventCounts = eventCountsSubscription.eventCounts
@@ -169,7 +167,6 @@ function createAction(
 
   function discard() {
     cleanup()
-    lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_DISCARDED)
     onDiscardCallback()
   }
 

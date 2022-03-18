@@ -1,5 +1,5 @@
 import type { Context, ClocksState, Observable } from '@datadog/browser-core'
-import { DOM_EVENT } from '@datadog/browser-core'
+import { relativeNow, DOM_EVENT } from '@datadog/browser-core'
 import type { Clock } from '../../../../../core/test/specHelper'
 import { createNewEvent } from '../../../../../core/test/specHelper'
 import type { TestSetupBuilder } from '../../../../test/specHelper'
@@ -8,6 +8,7 @@ import { RumEventType, ActionType } from '../../../rawRumEvent.types'
 import type { RumEvent } from '../../../rumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { PAGE_ACTIVITY_VALIDATION_DELAY } from '../../waitIdlePage'
+import type { ActionContexts } from './actionCollection'
 import type { AutoAction } from './trackActions'
 import { AUTO_ACTION_MAX_DURATION, trackActions } from './trackActions'
 
@@ -36,8 +37,7 @@ describe('trackActions', () => {
   let button: HTMLButtonElement
   let emptyElement: HTMLHRElement
   let setupBuilder: TestSetupBuilder
-  let createSpy: jasmine.Spy
-  let discardSpy: jasmine.Spy
+  let findActionId: ActionContexts['findActionId']
 
   function mockValidatedClickAction(
     domMutationObservable: Observable<void>,
@@ -64,16 +64,13 @@ describe('trackActions', () => {
     emptyElement = document.createElement('hr')
     document.body.appendChild(emptyElement)
 
-    createSpy = jasmine.createSpy('create')
-    discardSpy = jasmine.createSpy('discard')
-
     setupBuilder = setup()
       .withFakeClock()
       .beforeBuild(({ lifeCycle, domMutationObservable, configuration }) => {
-        lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_CREATED, createSpy)
         lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
-        lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_DISCARDED, discardSpy)
-        return trackActions(lifeCycle, domMutationObservable, configuration)
+        const trackActionsResult = trackActions(lifeCycle, domMutationObservable, configuration)
+        findActionId = trackActionsResult.findActionId
+        return { stop: trackActionsResult.stop }
       })
   })
 
@@ -86,7 +83,7 @@ describe('trackActions', () => {
   it('discards pending action on view created', () => {
     const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
     mockValidatedClickAction(domMutationObservable, clock, button)
-    expect(createSpy).toHaveBeenCalled()
+    expect(findActionId()).not.toBeUndefined()
 
     lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
       id: 'fake',
@@ -95,13 +92,13 @@ describe('trackActions', () => {
     clock.tick(EXPIRE_DELAY)
 
     expect(events).toEqual([])
-    expect(discardSpy).toHaveBeenCalled()
+    expect(findActionId()).toBeUndefined()
   })
 
   it('starts a action when clicking on an element', () => {
     const { domMutationObservable, clock } = setupBuilder.build()
     mockValidatedClickAction(domMutationObservable, clock, button)
-    expect(createSpy).toHaveBeenCalled()
+    expect(findActionId()).not.toBeUndefined()
     clock.tick(EXPIRE_DELAY)
     expect(events).toEqual([
       {
@@ -127,26 +124,35 @@ describe('trackActions', () => {
 
     clock.tick(EXPIRE_DELAY)
     expect(events).toEqual([])
-    expect(discardSpy).toHaveBeenCalled()
+    expect(findActionId()).toBeUndefined()
   })
 
   it('discards a pending action with a negative duration', () => {
     const { domMutationObservable, clock } = setupBuilder.build()
     mockValidatedClickAction(domMutationObservable, clock, button, -1)
-    expect(createSpy).toHaveBeenCalled()
+    expect(findActionId()).not.toBeUndefined()
     clock.tick(EXPIRE_DELAY)
 
     expect(events).toEqual([])
-    expect(discardSpy).toHaveBeenCalled()
+    expect(findActionId()).toBeUndefined()
   })
 
   it('ignores a actions if it fails to find a name', () => {
     const { domMutationObservable, clock } = setupBuilder.build()
     mockValidatedClickAction(domMutationObservable, clock, emptyElement)
-    expect(createSpy).not.toHaveBeenCalled()
+    expect(findActionId()).toBeUndefined()
     clock.tick(EXPIRE_DELAY)
 
     expect(events).toEqual([])
+  })
+
+  it('should keep track of previously validated actions', () => {
+    const { domMutationObservable, clock } = setupBuilder.build()
+    mockValidatedClickAction(domMutationObservable, clock, button)
+    const actionStartTime = relativeNow()
+    clock.tick(EXPIRE_DELAY)
+
+    expect(findActionId(actionStartTime)).not.toBeUndefined()
   })
 })
 
