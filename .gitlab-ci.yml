@@ -182,6 +182,7 @@ check-licenses:
     - .base-configuration
     - .test-allowed-branches
   script:
+    - yarn
     - node --no-warnings scripts/check-licenses.js
 
 unit-bs:
@@ -339,6 +340,7 @@ staging-reset-scheduled:
   before_script:
     - eval $(ssh-agent -s)
   script:
+    - yarn
     - node scripts/staging-ci/staging-reset.js
   artifacts:
     reports:
@@ -375,6 +377,7 @@ merge-into-staging:
   before_script:
     - eval $(ssh-agent -s)
   script:
+    - yarn
     - node scripts/staging-ci/merge-into-staging.js
 
 check-staging-merge:
@@ -385,6 +388,7 @@ check-staging-merge:
   before_script:
     - eval $(ssh-agent -s)
   script:
+    - yarn
     - node scripts/staging-ci/check-staging-merge.js
 
 # A noop job that's used to signal to `to-staging` that it can merge to the
@@ -407,6 +411,7 @@ check-squash-into-staging:
   before_script:
     - eval $(ssh-agent -s)
   script:
+    - yarn
     - node scripts/staging-ci/check-squash-into-staging.js
 
 ########################################################################################################################
