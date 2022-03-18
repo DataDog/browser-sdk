@@ -1,21 +1,11 @@
-import type {
-  ConsoleLog,
-  Context,
-  RawError,
-  RelativeTime,
-  MonitoringMessage,
-  TelemetryEvent,
-  RawReport,
-} from '@datadog/browser-core'
+import type { ConsoleLog, Context, RawError, MonitoringMessage, TelemetryEvent, RawReport } from '@datadog/browser-core'
 import {
   areCookiesAuthorized,
   combine,
-  createEventRateLimiter,
   Observable,
   trackRuntimeError,
   canUseEventBridge,
   getEventBridge,
-  getRelativeTime,
   startInternalMonitoring,
   RawReportType,
   initReportObservable,
@@ -26,13 +16,14 @@ import {
   startBatchWithReplica,
 } from '@datadog/browser-core'
 import { trackNetworkError } from '../domain/trackNetworkError'
-import type { Logger, LogsMessage } from '../domain/logger'
+import type { LogsMessage } from '../domain/logger'
 import { StatusType } from '../domain/logger'
 import type { LogsSessionManager } from '../domain/logsSessionManager'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { LogsConfiguration } from '../domain/configuration'
 import type { LogsEvent } from '../logsEvent.types'
 import { buildAssemble, getRUMInternalContext } from '../domain/assemble'
+import type { Sender } from '../domain/sender'
 
 const LogStatusForApi = {
   [ConsoleApiName.log]: StatusType.info,
@@ -48,7 +39,7 @@ const LogStatusForReport = {
   [RawReportType.deprecation]: StatusType.warn,
 }
 
-export function startLogs(configuration: LogsConfiguration, logger: Logger) {
+export function startLogs(configuration: LogsConfiguration, sender: Sender) {
   const internalMonitoring = startLogsInternalMonitoring(configuration)
   internalMonitoring.setExternalContextProvider(() =>
     combine({ session_id: session.findTrackedSession()?.id }, getRUMInternalContext(), {
@@ -84,7 +75,7 @@ export function startLogs(configuration: LogsConfiguration, logger: Logger) {
       ? startLogsSessionManager(configuration)
       : startLogsSessionManagerStub(configuration)
 
-  return doStartLogs(configuration, rawErrorObservable, consoleObservable, reportObservable, session, logger)
+  return doStartLogs(configuration, rawErrorObservable, consoleObservable, reportObservable, session, sender)
 }
 
 function startLogsInternalMonitoring(configuration: LogsConfiguration) {
@@ -118,7 +109,7 @@ export function doStartLogs(
   consoleObservable: Observable<ConsoleLog>,
   reportObservable: Observable<RawReport>,
   sessionManager: LogsSessionManager,
-  logger: Logger
+  sender: Sender
 ) {
   const assemble = buildAssemble(sessionManager, configuration, reportRawError)
 
@@ -151,7 +142,7 @@ export function doStartLogs(
         url: error.resource.url,
       }
     }
-    logger.error(error.message, messageContext)
+    sender.sendHttpRequest(error.message, messageContext, StatusType.error)
   }
 
   function reportConsoleLog(log: ConsoleLog) {
@@ -164,7 +155,7 @@ export function doStartLogs(
         },
       }
     }
-    logger.log(log.message, messageContext, LogStatusForApi[log.api])
+    sender.sendHttpRequest(log.message, messageContext, LogStatusForApi[log.api])
   }
 
   function logReport(report: RawReport) {
@@ -183,17 +174,24 @@ export function doStartLogs(
       message += ` Found in ${getFileFromStackTraceString(report.stack)!}`
     }
 
-    logger.log(message, messageContext, logStatus)
+    sender.sendHttpRequest(message, messageContext, logStatus)
   }
 
-  rawErrorObservable.subscribe(reportRawError)
-  consoleObservable.subscribe(reportConsoleLog)
-  reportObservable.subscribe(logReport)
+  const rawErrorSubscription = rawErrorObservable.subscribe(reportRawError)
+  const consoleSubscription = consoleObservable.subscribe(reportConsoleLog)
+  const reportSubscription = reportObservable.subscribe(logReport)
 
-  return (message: LogsMessage, currentContext: Context) => {
-    const contextualizedMessage = assemble(message, currentContext)
-    if (contextualizedMessage) {
-      onLogEventCollected(contextualizedMessage)
-    }
+  return {
+    stop: () => {
+      rawErrorSubscription.unsubscribe()
+      consoleSubscription.unsubscribe()
+      reportSubscription.unsubscribe()
+    },
+    send: (message: LogsMessage, currentContext: Context) => {
+      const contextualizedMessage = assemble(message, currentContext)
+      if (contextualizedMessage) {
+        onLogEventCollected(contextualizedMessage)
+      }
+    },
   }
 }

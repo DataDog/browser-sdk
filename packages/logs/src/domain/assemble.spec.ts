@@ -31,10 +31,18 @@ describe('assemble', () => {
       maxBatchSize: 1,
     }
     beforeSend = noop
-    assemble = buildAssemble(sessionManager, { ...baseConfiguration, beforeSend }, noop)
+    assemble = buildAssemble(
+      sessionManager,
+      { ...baseConfiguration, beforeSend: (x: LogsEvent) => beforeSend(x) },
+      noop
+    )
     window.DD_RUM = {
       getInternalContext: noop,
     }
+  })
+
+  afterEach(() => {
+    delete window.DD_RUM
   })
 
   it('should not assemble when sessionManager is not tracked', () => {

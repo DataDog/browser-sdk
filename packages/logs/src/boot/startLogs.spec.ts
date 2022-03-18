@@ -8,6 +8,8 @@ import {
   updateExperimentalFeatures,
   getTimeStamp,
   stopSessionManager,
+  display,
+  initConsoleObservable,
 } from '@datadog/browser-core'
 import sinon from 'sinon'
 import type { Clock } from '../../../core/test/specHelper'
@@ -22,8 +24,10 @@ import type { LogsConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
 
 import type { LogsMessage } from '../domain/logger'
-import { Logger, StatusType } from '../domain/logger'
+import { StatusType, HandlerType } from '../domain/logger'
 import type { LogsSessionManager } from '../domain/logsSessionManager'
+import type { Sender } from '../domain/sender'
+import { buildSender } from '../domain/sender'
 import { doStartLogs, startLogs as originalStartLogs } from './startLogs'
 
 interface SentMessage extends LogsMessage {
@@ -64,19 +68,22 @@ describe('logs', () => {
   const sessionManager: LogsSessionManager = {
     findTrackedSession: () => (sessionIsTracked ? { id: SESSION_ID } : undefined),
   }
+  let stopLogs = noop
   const startLogs = ({
-    errorLogger = new Logger(noop),
+    sender = buildSender(noop),
     configuration: configurationOverrides,
-  }: { errorLogger?: Logger; configuration?: Partial<LogsConfiguration> } = {}) => {
+  }: { sender?: Sender; configuration?: Partial<LogsConfiguration> } = {}) => {
     const configuration = { ...baseConfiguration, ...configurationOverrides }
-    return doStartLogs(
+    const startLogs = doStartLogs(
       configuration,
       rawErrorObservable,
       consoleObservable,
       reportObservable,
       sessionManager,
-      errorLogger
+      sender
     )
+    stopLogs = startLogs.stop
+    return startLogs.send
   }
 
   beforeEach(() => {
@@ -97,6 +104,7 @@ describe('logs', () => {
     delete window.DD_RUM
     deleteEventBridgeStub()
     stopSessionManager()
+    stopLogs()
   })
 
   describe('request', () => {
@@ -153,7 +161,7 @@ describe('logs', () => {
       const sendLog = (message: LogsMessage) => {
         sendLogStrategy(message, {})
       }
-      sendLogStrategy = startLogs({ errorLogger: new Logger(sendLog) })
+      sendLogStrategy = startLogs({ sender: buildSender(sendLog) })
 
       rawErrorObservable.notify({
         message: 'error!',
@@ -189,15 +197,34 @@ describe('logs', () => {
       })
     })
 
+    it('should not print the log twice when console handler is enabled', () => {
+      const sender = buildSender(noop)
+      const logErrorSpy = spyOn(sender, 'sendHttpRequest')
+      const displaySpy = spyOn(display, 'log')
+      const consoleLogSpy = spyOn(console, 'log').and.callFake(() => true)
+
+      consoleObservable = initConsoleObservable(['log'])
+      startLogs({ sender })
+      sender.setHandler([HandlerType.console])
+      /* eslint-disable-next-line no-console */
+      console.log('foo', 'bar')
+
+      expect(logErrorSpy).toHaveBeenCalled()
+      expect(consoleLogSpy).toHaveBeenCalledTimes(1)
+      expect(displaySpy).not.toHaveBeenCalled()
+
+      resetExperimentalFeatures()
+    })
+
     it('should send console logs when ff forward-logs is enabled', () => {
-      const logger = new Logger(noop)
-      const logErrorSpy = spyOn(logger, 'log')
+      const sender = buildSender(noop)
+      const logErrorSpy = spyOn(sender, 'sendHttpRequest')
       const consoleLogSpy = spyOn(console, 'log').and.callFake(() => true)
 
       updateExperimentalFeatures(['forward-logs'])
-      originalStartLogs(
+      const { stop } = originalStartLogs(
         validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['log'] })!,
-        logger
+        sender
       )
 
       /* eslint-disable-next-line no-console */
@@ -207,16 +234,17 @@ describe('logs', () => {
       expect(consoleLogSpy).toHaveBeenCalled()
 
       resetExperimentalFeatures()
+      stop()
     })
 
     it('should not send console logs when ff forward-logs is disabled', () => {
-      const logger = new Logger(noop)
-      const logErrorSpy = spyOn(logger, 'log')
+      const sender = buildSender(noop)
+      const logErrorSpy = spyOn(sender, 'sendHttpRequest')
       const consoleLogSpy = spyOn(console, 'log').and.callFake(() => true)
 
-      originalStartLogs(
+      const { stop } = originalStartLogs(
         validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['log'] })!,
-        logger
+        sender
       )
 
       /* eslint-disable-next-line no-console */
@@ -224,17 +252,18 @@ describe('logs', () => {
 
       expect(logErrorSpy).not.toHaveBeenCalled()
       expect(consoleLogSpy).toHaveBeenCalled()
+      stop()
     })
   })
 
   describe('reports', () => {
-    let logger: Logger
+    let sender: Sender
     let logErrorSpy: jasmine.Spy
     let reportingObserverStub: ReturnType<typeof stubReportingObserver>
 
     beforeEach(() => {
-      logger = new Logger(noop)
-      logErrorSpy = spyOn(logger, 'log')
+      sender = buildSender(noop)
+      logErrorSpy = spyOn(sender, 'sendHttpRequest')
       reportingObserverStub = stubReportingObserver()
     })
 
@@ -244,9 +273,9 @@ describe('logs', () => {
 
     it('should send reports when ff forward-reports is enabled', () => {
       updateExperimentalFeatures(['forward-reports'])
-      originalStartLogs(
+      const { stop } = originalStartLogs(
         validateAndBuildLogsConfiguration({ ...initConfiguration, forwardReports: ['intervention'] })!,
-        logger
+        sender
       )
 
       reportingObserverStub.raiseReport('intervention')
@@ -254,30 +283,33 @@ describe('logs', () => {
       expect(logErrorSpy).toHaveBeenCalled()
 
       resetExperimentalFeatures()
+      stop()
     })
 
     it('should not send reports when ff forward-reports is disabled', () => {
-      originalStartLogs(
+      const { stop } = originalStartLogs(
         validateAndBuildLogsConfiguration({ ...initConfiguration, forwardReports: ['intervention'] })!,
-        logger
+        sender
       )
       reportingObserverStub.raiseReport('intervention')
 
       expect(logErrorSpy).not.toHaveBeenCalled()
+      stop()
     })
 
     it('should not send reports when forwardReports init option not specified', () => {
-      originalStartLogs(validateAndBuildLogsConfiguration({ ...initConfiguration })!, logger)
+      const { stop } = originalStartLogs(validateAndBuildLogsConfiguration({ ...initConfiguration })!, sender)
       reportingObserverStub.raiseReport('intervention')
 
       expect(logErrorSpy).not.toHaveBeenCalled()
+      stop()
     })
 
     it('should add the source file information to the message for non error reports', () => {
       updateExperimentalFeatures(['forward-reports'])
-      originalStartLogs(
+      const { stop } = originalStartLogs(
         validateAndBuildLogsConfiguration({ ...initConfiguration, forwardReports: ['deprecation'] })!,
-        logger
+        sender
       )
 
       reportingObserverStub.raiseReport('deprecation')
@@ -289,6 +321,7 @@ describe('logs', () => {
       )
 
       resetExperimentalFeatures()
+      stop()
     })
   })
 
@@ -297,16 +330,18 @@ describe('logs', () => {
       const sendSpy = spyOn(initEventBridgeStub(), 'send')
 
       let configuration = { ...baseConfiguration, sampleRate: 0 }
-      let sendLog = originalStartLogs(configuration, new Logger(noop))
-      sendLog(DEFAULT_MESSAGE, {})
+      let { send, stop } = originalStartLogs(configuration, buildSender(noop))
+      send(DEFAULT_MESSAGE, {})
 
       expect(sendSpy).not.toHaveBeenCalled()
+      stop()
 
       configuration = { ...baseConfiguration, sampleRate: 100 }
-      sendLog = originalStartLogs(configuration, new Logger(noop))
-      sendLog(DEFAULT_MESSAGE, {})
+      ;({ send, stop } = originalStartLogs(configuration, buildSender(noop)))
+      send(DEFAULT_MESSAGE, {})
 
       expect(sendSpy).toHaveBeenCalled()
+      stop()
     })
   })
 
@@ -345,7 +380,7 @@ describe('logs', () => {
   describe('error collection', () => {
     it('should send log errors', () => {
       const sendLogSpy = jasmine.createSpy()
-      startLogs({ errorLogger: new Logger(sendLogSpy) })
+      startLogs({ sender: buildSender(sendLogSpy) })
 
       rawErrorObservable.notify({
         message: 'error!',
@@ -385,7 +420,7 @@ describe('logs', () => {
     ].forEach(({ status, message }) => {
       it(`stops sending ${status} logs when reaching the limit`, () => {
         const sendLogSpy = jasmine.createSpy<(message: LogsMessage & { foo?: string }) => void>()
-        const sendLog = startLogs({ errorLogger: new Logger(sendLogSpy), configuration })
+        const sendLog = startLogs({ sender: buildSender(sendLogSpy), configuration })
         sendLog({ message: 'foo', status }, {})
         sendLog({ message: 'bar', status }, {})
 
@@ -406,7 +441,7 @@ describe('logs', () => {
       it(`does not take discarded ${status} logs into account`, () => {
         const sendLogSpy = jasmine.createSpy<(message: LogsMessage & { foo?: string }) => void>()
         const sendLog = startLogs({
-          errorLogger: new Logger(sendLogSpy),
+          sender: buildSender(sendLogSpy),
           configuration: {
             ...configuration,
             beforeSend(event) {
