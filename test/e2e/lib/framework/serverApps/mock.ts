@@ -1,7 +1,7 @@
 import * as url from 'url'
 import cors from 'cors'
 import express from 'express'
-import { buildLogs, buildNpm, buildRum, buildRumSlim } from '../sdkBuilds'
+import * as sdkBuilds from '../sdkBuilds'
 import type { MockServerApp, Servers } from '../httpServers'
 
 const LARGE_RESPONSE_MIN_BYTE_SIZE = 100_000
@@ -93,20 +93,20 @@ export function createMockServerApp(servers: Servers, setup: string): MockServer
     res.end()
   })
 
-  app.get('/datadog-logs.js', async (_req, res) => {
-    res.header('content-type', 'application/javascript').send(await buildLogs(servers.intake.url))
+  app.get('/datadog-logs.js', (_req, res) => {
+    res.sendFile(sdkBuilds.LOGS_BUNDLE)
   })
 
-  app.get('/datadog-rum.js', async (_req, res) => {
-    res.header('content-type', 'application/javascript').send(await buildRum(servers.intake.url))
+  app.get('/datadog-rum.js', (_req, res) => {
+    res.sendFile(sdkBuilds.RUM_BUNDLE)
   })
 
-  app.get('/datadog-rum-slim.js', async (_req, res) => {
-    res.header('content-type', 'application/javascript').send(await buildRumSlim(servers.intake.url))
+  app.get('/datadog-rum-slim.js', (_req, res) => {
+    res.sendFile(sdkBuilds.RUM_SLIM_BUNDLE)
   })
 
-  app.get('/app.js', async (_req, res) => {
-    res.header('content-type', 'application/javascript').send(await buildNpm(servers.intake.url))
+  app.get('/app.js', (_req, res) => {
+    res.sendFile(sdkBuilds.NPM_BUNDLE)
   })
 
   return Object.assign(app, {
