@@ -32,11 +32,6 @@ describe('rum assembly', () => {
     }
     setupBuilder = setup()
       .withParentContexts({
-        findAction: () => ({
-          action: {
-            id: '7890',
-          },
-        }),
         findView: () => ({
           view: {
             id: 'abcde',

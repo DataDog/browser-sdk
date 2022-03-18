@@ -1,24 +1,19 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { ONE_MINUTE, SESSION_TIME_OUT_DELAY, ContextHistory } from '@datadog/browser-core'
-import type { ActionContext, ViewContext } from '../rawRumEvent.types'
+import { SESSION_TIME_OUT_DELAY, ContextHistory } from '@datadog/browser-core'
+import type { ViewContext } from '../rawRumEvent.types'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
-import type { AutoAction, AutoActionCreatedEvent } from './rumEventsCollection/action/trackActions'
 import type { ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
 
 export const VIEW_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
-export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
 
 export interface ParentContexts {
-  findAction: (startTime?: RelativeTime) => ActionContext | undefined
   findView: (startTime?: RelativeTime) => ViewContext | undefined
   stop: () => void
 }
 
 export function startParentContexts(lifeCycle: LifeCycle): ParentContexts {
   const viewContextHistory = new ContextHistory<ViewContext>(VIEW_CONTEXT_TIME_OUT_DELAY)
-
-  const actionContextHistory = new ContextHistory<ActionContext>(ACTION_CONTEXT_TIME_OUT_DELAY)
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
     viewContextHistory.setCurrent(buildViewContext(view), view.startClocks.relative)
@@ -28,25 +23,8 @@ export function startParentContexts(lifeCycle: LifeCycle): ParentContexts {
     viewContextHistory.closeCurrent(endClocks.relative)
   })
 
-  lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_CREATED, (action) => {
-    actionContextHistory.setCurrent(buildActionContext(action), action.startClocks.relative)
-  })
-
-  lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, (action: AutoAction) => {
-    if (actionContextHistory.getCurrent()) {
-      // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-      const actionEndTime = (action.startClocks.relative + action.duration) as RelativeTime
-      actionContextHistory.closeCurrent(actionEndTime)
-    }
-  })
-
-  lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_DISCARDED, () => {
-    actionContextHistory.clearCurrent()
-  })
-
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
     viewContextHistory.reset()
-    actionContextHistory.reset()
   })
 
   function buildViewContext(view: ViewCreatedEvent) {
@@ -58,16 +36,10 @@ export function startParentContexts(lifeCycle: LifeCycle): ParentContexts {
     }
   }
 
-  function buildActionContext(action: AutoActionCreatedEvent) {
-    return { action: { id: action.id } }
-  }
-
   return {
-    findAction: (startTime) => actionContextHistory.find(startTime),
     findView: (startTime) => viewContextHistory.find(startTime),
     stop: () => {
       viewContextHistory.stop()
-      actionContextHistory.stop()
     },
   }
 }

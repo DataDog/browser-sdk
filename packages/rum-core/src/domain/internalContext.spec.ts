@@ -18,11 +18,6 @@ describe('internal context', () => {
 
   beforeEach(() => {
     parentContextsStub = {
-      findAction: jasmine.createSpy('findAction').and.returnValue({
-        action: {
-          id: '7890',
-        },
-      }),
       findView: jasmine.createSpy('findView').and.returnValue({
         view: {
           id: 'abcde',
