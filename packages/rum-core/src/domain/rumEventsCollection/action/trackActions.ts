@@ -1,5 +1,15 @@
 import type { Context, Duration, ClocksState, Observable, TimeStamp } from '@datadog/browser-core'
-import { addEventListener, DOM_EVENT, generateUUID, clocksNow, ONE_SECOND, elapsed } from '@datadog/browser-core'
+import {
+  getRelativeTime,
+  ONE_MINUTE,
+  ContextHistory,
+  addEventListener,
+  DOM_EVENT,
+  generateUUID,
+  clocksNow,
+  ONE_SECOND,
+  elapsed,
+} from '@datadog/browser-core'
 import { ActionType } from '../../../rawRumEvent.types'
 import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
@@ -40,16 +50,27 @@ export interface AutoActionCreatedEvent {
 
 // Maximum duration for automatic actions
 export const AUTO_ACTION_MAX_DURATION = 10 * ONE_SECOND
+export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
+
+interface ActionController {
+  id: string
+  startClocks: ClocksState
+  discard(): void
+}
 
 export function trackActions(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
   { actionNameAttribute }: RumConfiguration
 ) {
-  let currentAction: { discard(): void } | undefined
+  const history = new ContextHistory<ActionController>(ACTION_CONTEXT_TIME_OUT_DELAY)
+
+  lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
+    history.reset()
+  })
 
   const { stop: stopListener } = listenEvents((event) => {
-    if (currentAction) {
+    if (history.getCurrent()) {
       // Ignore any new action if another one is already occurring.
       return
     }
@@ -57,23 +78,25 @@ export function trackActions(
     if (!name) {
       return
     }
-    currentAction = createAction(
+    const actionController = createAction(
       lifeCycle,
       domMutationObservable,
       ActionType.CLICK,
       name,
       event,
-      () => {
-        currentAction = undefined
+      (endTime) => {
+        history.closeCurrent(getRelativeTime(endTime))
       },
       () => {
-        currentAction = undefined
+        history.clearCurrent()
       }
     )
+    history.setCurrent(actionController, actionController.startClocks.relative)
   })
 
   return {
     stop() {
+      const currentAction = history.getCurrent()
       if (currentAction) {
         currentAction.discard()
       }
@@ -101,9 +124,9 @@ function createAction(
   type: AutoActionType,
   name: string,
   event: Event,
-  onCompleteCallback: () => void,
+  onCompleteCallback: (endTime: TimeStamp) => void,
   onDiscardCallback: () => void
-) {
+): ActionController {
   const id = generateUUID()
   const startClocks = clocksNow()
   const eventCountsSubscription = trackEventCounts(lifeCycle)
@@ -140,7 +163,7 @@ function createAction(
       type,
       event,
     })
-    onCompleteCallback()
+    onCompleteCallback(endTime)
   }
 
   function discard() {
@@ -157,5 +180,7 @@ function createAction(
 
   return {
     discard,
+    id,
+    startClocks,
   }
 }
