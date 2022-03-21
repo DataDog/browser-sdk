@@ -257,19 +257,33 @@ deploy-prod-stable:
 # Notify
 ########################################################################################################################
 
-include: 'https://gitlab-templates.ddbuild.io/slack-notifier/v1/template.yml'
-
-notify-feature-branch-failure:
-  extends:
-    - .slack-notifier.on-failure
-    - .feature-branches
-
 .prepare_notification:
-  extends: .slack-notifier-base
+  stage: notify
+  extends:
+    - .base-configuration
   before_script:
     - COMMIT_MESSAGE=`git show-branch --no-name HEAD`
     - BUILD_URL="$CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID"
     - COMMIT_URL="$CI_PROJECT_URL/commits/$CI_COMMIT_SHA"
+    # If the pipeline was launched by a user, send pings to them (eg, creating a pipe on master without commiting)
+    - if [[ $GITLAB_USER_LOGIN = "gitsync" ]]; then AUTHOR_EMAIL=$(git show -s --format="%ae" HEAD); else AUTHOR_EMAIL=$GITLAB_USER_EMAIL; fi
+
+notify-feature-branch-success:
+  extends:
+    - .prepare_notification
+    - .feature-branches
+  script:
+    - 'MESSAGE_TEXT=":white_check_mark: $CI_PROJECT_NAME $CI_COMMIT_REF_NAME pipeline <$BUILD_URL|$COMMIT_MESSAGE> succeed."'
+    - ./scripts/notify.sh "$AUTHOR_EMAIL" "$MESSAGE_TEXT"
+
+notify-feature-branch-failure:
+  extends:
+    - .prepare_notification
+    - .feature-branches
+  when: on_failure
+  script:
+    - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME $CI_COMMIT_REF_NAME pipeline <$BUILD_URL|$CI_PIPELINE_ID> failed."'
+    - ./scripts/notify.sh "$AUTHOR_EMAIL" "$MESSAGE_TEXT"
 
 notify-staging-failure:
   extends:
@@ -278,7 +292,7 @@ notify-staging-failure:
   when: on_failure
   script:
     - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME main pipeline for <$BUILD_URL|$COMMIT_MESSAGE> failed."'
-    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
+    - ./scripts/notify.sh "#browser-sdk-deploy" "$MESSAGE_TEXT"
 
 notify-release-ready:
   stage: pre-deploy-notify
@@ -287,7 +301,7 @@ notify-release-ready:
     - .tags
   script:
     - 'MESSAGE_TEXT=":i: $CI_PROJECT_NAME <$BUILD_URL|$COMMIT_MESSAGE> ready to be deployed to :datadog:"'
-    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
+    - ./scripts/notify.sh "#browser-sdk-deploy" "$MESSAGE_TEXT"
 
 notify-prod-canary-success:
   stage: notify:canary
@@ -296,8 +310,8 @@ notify-prod-canary-success:
     - .main
   script:
     - 'MESSAGE_TEXT=":rocket: $CI_PROJECT_NAME <$COMMIT_URL|$COMMIT_MESSAGE> deployed to :datadog:."'
-    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
-    - postmessage "#rum-browser-sdk-ops" "$MESSAGE_TEXT"
+    - ./scripts/notify.sh "#browser-sdk-deploy" "$MESSAGE_TEXT"
+    - ./scripts/notify.sh "#rum-browser-sdk-ops" "$MESSAGE_TEXT"
 
 notify-prod-canary-failure:
   stage: notify:canary
@@ -307,7 +321,7 @@ notify-prod-canary-failure:
   when: on_failure
   script:
     - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME release pipeline <$BUILD_URL|$COMMIT_MESSAGE> failed."'
-    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
+    - ./scripts/notify.sh "#browser-sdk-deploy" "$MESSAGE_TEXT"
 
 notify-prod-stable-success:
   extends:
@@ -315,8 +329,8 @@ notify-prod-stable-success:
     - .tags
   script:
     - 'MESSAGE_TEXT=":rocket: $CI_PROJECT_NAME <$COMMIT_URL|$COMMIT_MESSAGE> deployed to :earth_americas:."'
-    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
-    - postmessage "#rum-browser-sdk-ops" "$MESSAGE_TEXT"
+    - ./scripts/notify.sh "#browser-sdk-deploy" "$MESSAGE_TEXT"
+    - ./scripts/notify.sh "#rum-browser-sdk-ops" "$MESSAGE_TEXT"
 
 notify-prod-stable-failure:
   extends:
@@ -325,7 +339,7 @@ notify-prod-stable-failure:
   when: on_failure
   script:
     - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME release pipeline <$BUILD_URL|$COMMIT_MESSAGE> failed."'
-    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
+    - ./scripts/notify.sh "#browser-sdk-deploy" "$MESSAGE_TEXT"
 
 ########################################################################################################################
 # To staging CI
@@ -342,32 +356,6 @@ staging-reset-scheduled:
   script:
     - yarn
     - node scripts/staging-ci/staging-reset.js
-  artifacts:
-    reports:
-      dotenv: build.env
-
-staging-reset-scheduled-success:
-  extends: .prepare_notification
-  only:
-    variables:
-      - $TARGET_TASK_NAME == "staging-reset-scheduled"
-  script:
-    - 'MESSAGE_TEXT=":white_check_mark: [*$CI_PROJECT_NAME*] Staging has been reset from *${CURRENT_STAGING}* to *${NEW_STAGING}* on pipeline <$BUILD_URL|$COMMIT_MESSAGE>."'
-    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
-  dependencies:
-    - staging-reset-scheduled
-
-staging-reset-scheduled-failure:
-  extends: .prepare_notification
-  only:
-    variables:
-      - $TARGET_TASK_NAME == "staging-reset-scheduled"
-  when: on_failure
-  script:
-    - 'MESSAGE_TEXT=":x: [*$CI_PROJECT_NAME*] Staging failed to reset from *${CURRENT_STAGING}* to *${NEW_STAGING}* on pipeline <$BUILD_URL|$COMMIT_MESSAGE>."'
-    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
-  dependencies:
-    - staging-reset-scheduled
 
 merge-into-staging:
   stage: pre-deploy
@@ -428,22 +416,3 @@ bump-chrome-version-scheduled:
     - eval $(ssh-agent -s)
   script:
     - node scripts/bump-chrome-driver-version.js
-
-bump-chrome-version-scheduled-success:
-  extends: .prepare_notification
-  only:
-    variables:
-      - $TARGET_TASK_NAME == "bump-chrome-version-scheduled"
-  script:
-    - 'MESSAGE_TEXT=":chrome: [*$CI_PROJECT_NAME*] New Chrome version available on <https://github.com/DataDog/browser-sdk/pulls|PRs>."'
-    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
-
-bump-chrome-version-scheduled-failure:
-  extends: .prepare_notification
-  only:
-    variables:
-      - $TARGET_TASK_NAME == "bump-chrome-version-scheduled"
-  when: on_failure
-  script:
-    - 'MESSAGE_TEXT=":x: [*$CI_PROJECT_NAME*] Chrome version bumped failed on pipeline <$BUILD_URL|$COMMIT_MESSAGE>."'
-    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
