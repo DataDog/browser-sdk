@@ -4,7 +4,7 @@ import type { TelemetryEvent } from '@datadog/browser-core'
 import type { SessionReplayCall, ServerInternalMonitoringMessage } from '../types/serverEvents'
 import { isRumErrorEvent, isRumResourceEvent, isRumUserActionEvent, isRumViewEvent } from '../types/serverEvents'
 
-type IntakeType = 'logs' | 'rum' | 'internalMonitoring' | 'sessionReplay' | 'telemetry'
+export type IntakeType = 'logs' | 'rum' | 'internalMonitoring' | 'sessionReplay' | 'telemetry'
 
 export class EventRegistry {
   readonly rum: RumEvent[] = []

@@ -32,5 +32,7 @@ listenAction('getConfig', (type) => {
 })
 
 listenAction('configReceived', ({ type, config }, tabId) => {
-  setLocalStore(type === 'rum' ? { rumConfig: config } : { logsConfig: config }, tabId)
+  if (tabId) {
+    setLocalStore(type === 'rum' ? { rumConfig: config } : { logsConfig: config }, tabId)
+  }
 })

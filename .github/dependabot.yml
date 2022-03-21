@@ -3,7 +3,9 @@ updates:
   - package-ecosystem: npm
     directory: /
     schedule:
-      interval: daily
+      interval: weekly
+      day: monday
+      time: '09:00'
     commit-message:
       prefix: '👷'
     ignore:
@@ -23,9 +25,6 @@ updates:
       # update jasmine: RUMF-1161
       - dependency-name: '*jasmine*'
       - dependency-name: '*sinon*'
-      # update extension: RUMF-1162
-      - dependency-name: '*react*'
-      - dependency-name: 'bumbag'
       # update ajv: RUMF-1164
       - dependency-name: 'ajv'
         update-types: ['version-update:semver-major']

@@ -4,7 +4,7 @@ import express from 'express'
 
 import cors from 'cors'
 import type { SegmentFile, SessionReplayCall } from '../../types/serverEvents'
-import type { EventRegistry } from '../eventsRegistry'
+import type { EventRegistry, IntakeType } from '../eventsRegistry'
 
 export function createIntakeServerApp(serverEvents: EventRegistry, bridgeEvents: EventRegistry) {
   const app = express()
@@ -13,34 +13,59 @@ export function createIntakeServerApp(serverEvents: EventRegistry, bridgeEvents:
   app.use(express.text())
   app.use(connectBusboy({ immediate: true }))
 
-  app.post('/v1/input/:endpoint', async (req, res) => {
-    const endpoint = req.params.endpoint
-    const isBridge = req.query.bridge
+  app.post('/', async (req, res) => {
+    const { isBridge, intakeType } = computeIntakeType(req)
     const events = isBridge ? bridgeEvents : serverEvents
 
-    if (endpoint === 'logs' || endpoint === 'internalMonitoring') {
-      ;(req.body as string).split('\n').map((rawEvent) => events.push(endpoint, JSON.parse(rawEvent)))
-    }
-
-    if (endpoint === 'rum') {
+    if (intakeType === 'sessionReplay') {
+      events.push('sessionReplay', await readSessionReplay(req))
+    } else {
       ;(req.body as string).split('\n').map((rawEvent) => {
         const event = JSON.parse(rawEvent)
-        if (event._dd?.event_type === 'internal_telemetry') {
+        if (intakeType === 'rum' && event._dd?.event_type === 'internal_telemetry') {
           events.push('telemetry', event)
         } else {
-          events.push('rum', event)
+          events.push(intakeType, event)
         }
       })
-    }
-
-    if (endpoint === 'sessionReplay' && req.busboy) {
-      events.push('sessionReplay', await readSessionReplay(req))
     }
 
     res.end()
   })
 
   return app
+}
+
+function computeIntakeType(req: express.Request): { isBridge: boolean; intakeType: IntakeType } {
+  const ddforward = req.query.ddforward as string | undefined
+  if (!ddforward) {
+    throw new Error('ddforward is missing')
+  }
+
+  if (ddforward === 'bridge') {
+    const eventType = req.query.event_type
+    return {
+      isBridge: true,
+      intakeType: eventType === 'log' ? 'logs' : eventType === 'rum' ? 'rum' : 'internalMonitoring',
+    }
+  }
+
+  let intakeType: IntakeType
+  const forwardUrl = new URL(ddforward)
+  const endpoint = forwardUrl.pathname.split('/').pop()
+  if (endpoint === 'logs' && forwardUrl.searchParams.get('ddsource') === 'browser-agent-internal-monitoring') {
+    intakeType = 'internalMonitoring'
+  } else if (endpoint === 'logs' || endpoint === 'rum') {
+    intakeType = endpoint
+  } else if (endpoint === 'replay' && req.busboy) {
+    intakeType = 'sessionReplay'
+  } else {
+    throw new Error("Can't find intake type")
+  }
+  return {
+    isBridge: false,
+    intakeType,
+  }
 }
 
 async function readSessionReplay(req: express.Request): Promise<SessionReplayCall> {

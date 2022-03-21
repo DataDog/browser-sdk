@@ -8,10 +8,13 @@ type Message<Actions extends { [key: string]: any }> = ValueOf<{
 }>
 
 export function createListenAction<Actions>() {
-  function listenAction<K extends keyof Actions>(action: K, callback: (payload: Actions[K], tabId: number) => void) {
+  function listenAction<K extends keyof Actions>(
+    action: K,
+    callback: (payload: Actions[K], tabId: number | undefined) => void
+  ) {
     const listener = (message: Message<Actions>, sender: chrome.runtime.MessageSender) => {
       if (message.action === action) {
-        callback((message as Message<Pick<Actions, K>>).payload, sender?.tab?.id)
+        callback((message as Message<Pick<Actions, K>>).payload, sender.tab?.id)
       }
     }
     chrome.runtime.onMessage.addListener(listener)
@@ -32,7 +35,7 @@ export function createSendAction<Actions>() {
         error.message !== 'Could not establish connection. Receiving end does not exist.' &&
         error.message !== 'The message port closed before a response was received.'
       ) {
-        console.error(`sendAction error: ${error.message}`)
+        console.error(`sendAction error: ${String(error.message)}`)
       }
     })
   }
