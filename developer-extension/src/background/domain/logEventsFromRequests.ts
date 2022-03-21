@@ -1,7 +1,7 @@
-import type { StoredEvent } from 'src/common/types'
+import type { StoredEvent } from '../../common/types'
+import { generateUUID } from '../../../../packages/core/src/tools/utils'
 import { intakeUrlPatterns } from '../intakeUrlPatterns'
 import { setLocalStore, store } from '../store'
-import { generateUUID } from '../utils'
 
 const MAXIMUM_LOGGED_EVENTS = 50
 
