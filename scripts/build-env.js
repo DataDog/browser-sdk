@@ -2,10 +2,7 @@ const execSync = require('child_process').execSync
 const lernaJson = require('../lerna.json')
 
 /**
- * Allows to produce slightly custom builds of bundles and packages to be used in various
- * environment. In particular, it allows:
- * - some internal uses cases
- * - different strategies for sdk_version sent to the intake (see below)
+ * Allows to define which sdk_version to send to the intake.
  */
 const BUILD_MODES = [
   // Used while developing. This is the default if the BUILD_MODE environment variable is empty.
@@ -13,10 +10,6 @@ const BUILD_MODES = [
 
   // Used for public releases.
   'release',
-
-  // Used by E2E tests.
-  // * Allows intake endpoints overrides when served from the E2E test framework.
-  'e2e-test',
 
   // Used on staging and production Datadog web app.
   'canary',
@@ -50,6 +43,5 @@ switch (buildMode) {
 }
 
 module.exports = {
-  BUILD_MODE: buildMode,
   SDK_VERSION: sdkVersion,
 }

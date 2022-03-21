@@ -58,7 +58,6 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables }) => ({
   plugins: !keepBuildEnvVariables
     ? [
         new webpack.DefinePlugin({
-          __BUILD_ENV__BUILD_MODE__: JSON.stringify(buildEnv.BUILD_MODE),
           __BUILD_ENV__SDK_VERSION__: JSON.stringify(buildEnv.SDK_VERSION),
         }),
       ]

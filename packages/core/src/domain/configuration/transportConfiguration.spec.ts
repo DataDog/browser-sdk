@@ -19,25 +19,6 @@ describe('transportConfiguration', () => {
     })
   })
 
-  describe('endpoint overload', () => {
-    it('should be available for e2e-test build mode', () => {
-      ;(window as unknown as BuildEnvWindow).__BUILD_ENV__BUILD_MODE__ = 'e2e-test'
-
-      const configuration = computeTransportConfiguration({ clientToken })
-      expect(configuration.rumEndpointBuilder.build()).toEqual('<<< E2E RUM ENDPOINT >>>')
-      expect(configuration.logsEndpointBuilder.build()).toEqual('<<< E2E LOGS ENDPOINT >>>')
-      expect(configuration.internalMonitoringEndpointBuilder?.build()).toEqual(
-        '<<< E2E INTERNAL MONITORING ENDPOINT >>>'
-      )
-      expect(configuration.sessionReplayEndpointBuilder.build()).toEqual('<<< E2E SESSION REPLAY ENDPOINT >>>')
-
-      expect(configuration.isIntakeUrl('<<< E2E RUM ENDPOINT >>>')).toBe(true)
-      expect(configuration.isIntakeUrl('<<< E2E LOGS ENDPOINT >>>')).toBe(true)
-      expect(configuration.isIntakeUrl('<<< E2E SESSION REPLAY ENDPOINT >>>')).toBe(true)
-      expect(configuration.isIntakeUrl('<<< E2E INTERNAL MONITORING ENDPOINT >>>')).toBe(true)
-    })
-  })
-
   describe('site', () => {
     it('should use US site by default', () => {
       const configuration = computeTransportConfiguration({ clientToken })

@@ -1,7 +1,7 @@
 const util = require('util')
+const fs = require('fs/promises')
 const execute = util.promisify(require('child_process').exec)
 const spawn = require('child_process').spawn
-const replace = require('replace-in-file')
 const fetch = require('node-fetch')
 
 const CI_FILE = '.gitlab-ci.yml'
@@ -33,11 +33,23 @@ async function initGitConfig(repository) {
 }
 
 async function replaceCiVariable(variableName, value) {
-  await replace({
-    files: CI_FILE,
-    from: new RegExp(`${variableName}: .*`),
-    to: `${variableName}: ${value}`,
-  })
+  await modifyFile(CI_FILE, (content) =>
+    content.replace(new RegExp(`${variableName}: .*`), `${variableName}: ${value}`)
+  )
+}
+
+/**
+ * @param filePath {string}
+ * @param modifier {(content: string) => string}
+ */
+async function modifyFile(filePath, modifier) {
+  const content = await fs.readFile(filePath, { encoding: 'utf-8' })
+  const modifiedContent = modifier(content)
+  if (content !== modifiedContent) {
+    await fs.writeFile(filePath, modifiedContent)
+    return true
+  }
+  return false
 }
 
 async function executeCommand(command, envVariables) {
@@ -100,4 +112,5 @@ module.exports = {
   logAndExit,
   replaceCiVariable,
   fetch: fetchWrapper,
+  modifyFile,
 }

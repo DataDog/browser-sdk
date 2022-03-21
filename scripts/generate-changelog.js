@@ -2,12 +2,11 @@
 
 const util = require('util')
 const readFile = util.promisify(require('fs').readFile)
-const replace = require('replace-in-file')
 
 const emojiNameMap = require('emoji-name-map')
 
 const lernaConfig = require('../lerna.json')
-const { executeCommand, spawnCommand, printError, logAndExit } = require('./utils')
+const { executeCommand, spawnCommand, printError, logAndExit, modifyFile } = require('./utils')
 
 const CHANGELOG_FILE = 'CHANGELOG.md'
 const CONTRIBUTING_FILE = 'CONTRIBUTING.md'
@@ -21,10 +20,9 @@ async function main() {
   const emojisLegend = await getEmojisLegend()
   const changesList = await getChangesList()
 
-  await replace({
-    files: CHANGELOG_FILE,
-    from: /.*?^(?=##)/ms, // Replace the start of the file until the first ## title.
-    to: `\
+  await modifyFile(
+    CHANGELOG_FILE,
+    (content) => `\
 # Changelog
 
 ${emojisLegend}
@@ -34,9 +32,8 @@ ${emojisLegend}
 ## v${lernaConfig.version}
 
 ${changesList}
-
-`,
-  })
+${content.slice(content.indexOf('\n##'))}`
+  )
 
   await spawnCommand(process.env.EDITOR, [CHANGELOG_FILE])
 
