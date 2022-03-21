@@ -17,7 +17,8 @@ const MAIN_BRANCH = process.env.MAIN_BRANCH
 const CURRENT_CI_IMAGE = process.env.CURRENT_CI_IMAGE
 const CI_PROJECT_NAME = process.env.CI_PROJECT_NAME
 const CURRENT_PACKAGE_VERSION = process.env.CHROME_PACKAGE_VERSION
-const BUILD_URL = `${process.env.CI_PROJECT_URL}/pipelines/${process.env.CI_PIPELINE_ID}`
+const CI_PIPELINE_ID = process.env.CI_PIPELINE_ID
+const BUILD_URL = `${process.env.CI_PROJECT_URL}/pipelines/${CI_PIPELINE_ID}`
 
 const CHROME_PACKAGE_URL = 'https://www.ubuntuupdates.org/package/google_chrome/stable/main/base/google-chrome-stable'
 const CHROME_DRIVER_URL = 'https://chromedriver.storage.googleapis.com/?delimiter=/&prefix='
@@ -96,10 +97,9 @@ async function createPullRequest() {
 }
 
 main().catch(async (error) => {
-  const commitMessage = await executeCommand('git show-branch --no-name HEAD')
   await sendSlackMessage(
     '##browser-sdk-deploy',
-    `:x: [*${CI_PROJECT_NAME}*] Chrome version bumped failed on pipeline <${BUILD_URL}|${commitMessage}>.`
+    `:x: [*${CI_PROJECT_NAME}*] Chrome version bumped failed on pipeline <${BUILD_URL}|${CI_PIPELINE_ID}>.`
   )
   logAndExit(error)
 })

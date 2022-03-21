@@ -14,7 +14,8 @@ const {
 const REPOSITORY = process.env.GIT_REPOSITORY
 const MAIN_BRANCH = process.env.MAIN_BRANCH
 const CI_PROJECT_NAME = process.env.CI_PROJECT_NAME
-const BUILD_URL = `${process.env.CI_PROJECT_URL}/pipelines/${process.env.CI_PIPELINE_ID}`
+const CI_PIPELINE_ID = process.env.CI_PIPELINE_ID
+const BUILD_URL = `${process.env.CI_PROJECT_URL}/pipelines/${CI_PIPELINE_ID}`
 
 const CURRENT_STAGING_BRANCH = process.env.CURRENT_STAGING
 const NEW_STAGING_NUMBER = getWeekNumber().toString().padStart(2, '0')
@@ -60,11 +61,10 @@ async function main() {
 
   printLog('Reset done.')
 
-  const commitMessage = await executeCommand('git show-branch --no-name HEAD')
   await sendSlackMessage(
     '#browser-sdk-deploy',
     `:white_check_mark: [*${CI_PROJECT_NAME}*] Staging has been reset from *${CURRENT_STAGING_BRANCH}* ` +
-      `to *${NEW_STAGING_BRANCH}* on pipeline <${BUILD_URL}|${commitMessage}>.`
+      `to *${NEW_STAGING_BRANCH}* on pipeline <${BUILD_URL}|${CI_PIPELINE_ID}>.`
   )
 }
 
@@ -75,11 +75,10 @@ function getWeekNumber() {
 }
 
 main().catch(async (error) => {
-  const commitMessage = await executeCommand('git show-branch --no-name HEAD')
   await sendSlackMessage(
     '#browser-sdk-deploy',
     `:x: [*${CI_PROJECT_NAME}*] Staging failed to reset from *${CURRENT_STAGING_BRANCH}* ` +
-      `to *${NEW_STAGING_BRANCH}* on pipeline <${BUILD_URL}|${commitMessage}>.`
+      `to *${NEW_STAGING_BRANCH}* on pipeline <${BUILD_URL}|${CI_PIPELINE_ID}>.`
   )
   logAndExit(error)
 })
