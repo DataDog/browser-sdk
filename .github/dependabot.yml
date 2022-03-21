@@ -35,6 +35,3 @@ updates:
       # update node-fetch: RUMF-1167
       - dependency-name: 'node-fetch'
         update-types: ['version-update:semver-major']
-      # typescript: RUMF-1168
-      - dependency-name: 'ts-loader'
-      - dependency-name: 'ts-node'
