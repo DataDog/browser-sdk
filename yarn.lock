@@ -1157,12 +1157,12 @@
     npmlog "^4.1.2"
     write-file-atomic "^3.0.3"
 
-"@mantine/core@4.0.5":
-  version "4.0.5"
-  resolved "https://registry.yarnpkg.com/@mantine/core/-/core-4.0.5.tgz#4829e51e3344ac30b908c88657c7b8996c457934"
-  integrity sha512-nOifWPpJpkqLJ0jS7iQmZl5Ij6wpX48P0g9O/wqkC1uh20G3MnD3tbtOOXhOOCTP8mBJrsrflUWnqXd42MWThw==
+"@mantine/core@4.0.7":
+  version "4.0.7"
+  resolved "https://registry.yarnpkg.com/@mantine/core/-/core-4.0.7.tgz#225b6be81a4bdede204eb24aa30a5029a110920b"
+  integrity sha512-HBUlPR7T5C0phuaKuY5SfyMB9hSMatXrqfbf8XE+a/3mRYacqa2wvp2YRGFtLxbLD49bZqybRXc8OR1VtsrZ6A==
   dependencies:
-    "@mantine/styles" "4.0.5"
+    "@mantine/styles" "4.0.7"
     "@popperjs/core" "^2.9.3"
     "@radix-ui/react-scroll-area" "^0.1.1"
     clsx "^1.1.1"
@@ -1174,10 +1174,10 @@
   resolved "https://registry.yarnpkg.com/@mantine/hooks/-/hooks-4.0.5.tgz#593b954cea5ffcac8fed193f46bc10e957abd64b"
   integrity sha512-MavTo79XP7g4nj5pziXJx5wL2jUfETU6LNepliCAdNcZV4m7m+RKdBLUMbvRfwlMnbLBJFNAZfQ9anPh2ypjgw==
 
-"@mantine/styles@4.0.5":
-  version "4.0.5"
-  resolved "https://registry.yarnpkg.com/@mantine/styles/-/styles-4.0.5.tgz#22225ea9ddb9aed9869b1bb3fd7010fd0ab92f07"
-  integrity sha512-LirUKG+Sv83pTT+9fUGy1QQD2ib4XOz7gDshxZcTNxled92fwwHsvZ/7+ZHLbi54jw2l5QGgXUjPeMZcjqmzBg==
+"@mantine/styles@4.0.7":
+  version "4.0.7"
+  resolved "https://registry.yarnpkg.com/@mantine/styles/-/styles-4.0.7.tgz#bb2e3cde15004b9d9a0f72ed359da8c24bd8fd6a"
+  integrity sha512-8QOHAigeTZwS90XwL/MjokmMu9vZDnIJetQRUrRnprovNaLm96aklPVQeXmgxmDlWGuleDq9zhLhjyBJSMPN0A==
   dependencies:
     "@emotion/cache" "^11.7.1"
     "@emotion/react" "^11.7.1"
@@ -1916,10 +1916,10 @@
   dependencies:
     "@types/react" "*"
 
-"@types/react@*", "@types/react@17.0.40":
-  version "17.0.40"
-  resolved "https://registry.yarnpkg.com/@types/react/-/react-17.0.40.tgz#dc010cee6254d5239a138083f3799a16638e6bad"
-  integrity sha512-UrXhD/JyLH+W70nNSufXqMZNuUD2cXHu6UjCllC6pmOQgBX4SGXOH8fjRka0O0Ee0HrFxapDD8Bwn81Kmiz6jQ==
+"@types/react@*", "@types/react@17.0.41":
+  version "17.0.41"
+  resolved "https://registry.yarnpkg.com/@types/react/-/react-17.0.41.tgz#6e179590d276394de1e357b3f89d05d7d3da8b85"
+  integrity sha512-chYZ9ogWUodyC7VUTRBfblysKLjnohhFY9bGLwvnUFFy48+vB9DikmB3lW0qTFmBcKSzmdglcvkHK71IioOlDA==
   dependencies:
     "@types/prop-types" "*"
     "@types/scheduler" "*"

@@ -255,6 +255,8 @@ init(configuration: {
 
 ### Browser and Session Replay sampling configuration
 
+**Note**: This feature requires SDK v3.6.0+.
+
 When new session is created, it can be either tracked as:
 
 - [**Browser RUM**][11]: **Only** _Sessions_, _Views_, _Actions_, and _Errors_ are collected. Calls to `startSessionReplayRecording()` are ignored.
