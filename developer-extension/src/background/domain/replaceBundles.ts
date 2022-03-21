@@ -41,7 +41,7 @@ listenAction('getStore', () => {
 
 listenAction('setStore', (newStore) => {
   if ('useDevBundles' in newStore || 'useRumSlim' in newStore) {
-    chrome.browsingData.removeCache({})
+    void chrome.browsingData.removeCache({})
   }
 })
 
