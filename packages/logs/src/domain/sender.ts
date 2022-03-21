@@ -3,7 +3,7 @@ import { combine, createContextManager, display, includes } from '@datadog/brows
 import type { LogsMessage } from './logger'
 import { HandlerType, StatusType } from './logger'
 
-export type Sender = ReturnType<typeof buildSender>
+export type Sender = ReturnType<typeof createSender>
 
 export const STATUS_PRIORITIES: { [key in StatusType]: number } = {
   [StatusType.debug]: 0,
@@ -12,8 +12,8 @@ export const STATUS_PRIORITIES: { [key in StatusType]: number } = {
   [StatusType.error]: 3,
 }
 
-export function buildSender(
-  sendLog: (message: LogsMessage) => void,
+export function createSender(
+  sendToHttpImpl: (message: LogsMessage) => void,
   handlerType: HandlerType | HandlerType[] = HandlerType.http,
   level: StatusType = StatusType.debug,
   loggerContext: Context = {}
@@ -30,13 +30,13 @@ export function buildSender(
     return STATUS_PRIORITIES[status] >= STATUS_PRIORITIES[conf.level] && includes(sanitizedHandlerType, handlerType)
   }
 
-  function sendHttpRequest(message: string, messageContext: object | undefined, status: StatusType) {
+  function sendToHttp(message: string, messageContext: object | undefined, status: StatusType) {
     if (isAuthorized(status, HandlerType.http)) {
-      sendLog(combine({ message, status }, contextManager.get(), messageContext))
+      sendToHttpImpl(combine({ message, status }, contextManager.get(), messageContext))
     }
   }
 
-  function displayLog(message: string, messageContext: object | undefined, status: StatusType) {
+  function sendToConsole(message: string, messageContext: object | undefined, status: StatusType) {
     if (isAuthorized(status, HandlerType.console)) {
       display.log(`${status}: ${message}`, combine(contextManager.get(), messageContext))
     }
@@ -55,10 +55,10 @@ export function buildSender(
       conf.handlerType = handlerType
     },
 
-    sendHttpRequest,
+    sendToHttp,
     sendLog(message: string, messageContext?: object, status: StatusType = StatusType.info) {
-      sendHttpRequest(message, messageContext, status)
-      displayLog(message, messageContext, status)
+      sendToHttp(message, messageContext, status)
+      sendToConsole(message, messageContext, status)
     },
   }
 }

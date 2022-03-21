@@ -142,7 +142,7 @@ export function doStartLogs(
         url: error.resource.url,
       }
     }
-    sender.sendHttpRequest(error.message, messageContext, StatusType.error)
+    sender.sendToHttp(error.message, messageContext, StatusType.error)
   }
 
   function reportConsoleLog(log: ConsoleLog) {
@@ -155,7 +155,7 @@ export function doStartLogs(
         },
       }
     }
-    sender.sendHttpRequest(log.message, messageContext, LogStatusForApi[log.api])
+    sender.sendToHttp(log.message, messageContext, LogStatusForApi[log.api])
   }
 
   function logReport(report: RawReport) {
@@ -174,7 +174,7 @@ export function doStartLogs(
       message += ` Found in ${getFileFromStackTraceString(report.stack)!}`
     }
 
-    sender.sendHttpRequest(message, messageContext, logStatus)
+    sender.sendToHttp(message, messageContext, logStatus)
   }
 
   const rawErrorSubscription = rawErrorObservable.subscribe(reportRawError)

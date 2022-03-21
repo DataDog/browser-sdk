@@ -27,7 +27,7 @@ import type { LogsMessage } from '../domain/logger'
 import { StatusType, HandlerType } from '../domain/logger'
 import type { LogsSessionManager } from '../domain/logsSessionManager'
 import type { Sender } from '../domain/sender'
-import { buildSender } from '../domain/sender'
+import { createSender } from '../domain/sender'
 import { doStartLogs, startLogs as originalStartLogs } from './startLogs'
 
 interface SentMessage extends LogsMessage {
@@ -70,7 +70,7 @@ describe('logs', () => {
   }
   let stopLogs = noop
   const startLogs = ({
-    sender = buildSender(noop),
+    sender = createSender(noop),
     configuration: configurationOverrides,
   }: { sender?: Sender; configuration?: Partial<LogsConfiguration> } = {}) => {
     const configuration = { ...baseConfiguration, ...configurationOverrides }
@@ -161,7 +161,7 @@ describe('logs', () => {
       const sendLog = (message: LogsMessage) => {
         sendLogStrategy(message, {})
       }
-      sendLogStrategy = startLogs({ sender: buildSender(sendLog) })
+      sendLogStrategy = startLogs({ sender: createSender(sendLog) })
 
       rawErrorObservable.notify({
         message: 'error!',
@@ -198,8 +198,8 @@ describe('logs', () => {
     })
 
     it('should not print the log twice when console handler is enabled', () => {
-      const sender = buildSender(noop)
-      const logErrorSpy = spyOn(sender, 'sendHttpRequest')
+      const sender = createSender(noop)
+      const logErrorSpy = spyOn(sender, 'sendToHttp')
       const displaySpy = spyOn(display, 'log')
       const consoleLogSpy = spyOn(console, 'log').and.callFake(() => true)
 
@@ -217,8 +217,8 @@ describe('logs', () => {
     })
 
     it('should send console logs when ff forward-logs is enabled', () => {
-      const sender = buildSender(noop)
-      const logErrorSpy = spyOn(sender, 'sendHttpRequest')
+      const sender = createSender(noop)
+      const logErrorSpy = spyOn(sender, 'sendToHttp')
       const consoleLogSpy = spyOn(console, 'log').and.callFake(() => true)
 
       updateExperimentalFeatures(['forward-logs'])
@@ -238,8 +238,8 @@ describe('logs', () => {
     })
 
     it('should not send console logs when ff forward-logs is disabled', () => {
-      const sender = buildSender(noop)
-      const logErrorSpy = spyOn(sender, 'sendHttpRequest')
+      const sender = createSender(noop)
+      const logErrorSpy = spyOn(sender, 'sendToHttp')
       const consoleLogSpy = spyOn(console, 'log').and.callFake(() => true)
 
       const { stop } = originalStartLogs(
@@ -262,8 +262,8 @@ describe('logs', () => {
     let reportingObserverStub: ReturnType<typeof stubReportingObserver>
 
     beforeEach(() => {
-      sender = buildSender(noop)
-      logErrorSpy = spyOn(sender, 'sendHttpRequest')
+      sender = createSender(noop)
+      logErrorSpy = spyOn(sender, 'sendToHttp')
       reportingObserverStub = stubReportingObserver()
     })
 
@@ -330,14 +330,14 @@ describe('logs', () => {
       const sendSpy = spyOn(initEventBridgeStub(), 'send')
 
       let configuration = { ...baseConfiguration, sampleRate: 0 }
-      let { send, stop } = originalStartLogs(configuration, buildSender(noop))
+      let { send, stop } = originalStartLogs(configuration, createSender(noop))
       send(DEFAULT_MESSAGE, {})
 
       expect(sendSpy).not.toHaveBeenCalled()
       stop()
 
       configuration = { ...baseConfiguration, sampleRate: 100 }
-      ;({ send, stop } = originalStartLogs(configuration, buildSender(noop)))
+      ;({ send, stop } = originalStartLogs(configuration, createSender(noop)))
       send(DEFAULT_MESSAGE, {})
 
       expect(sendSpy).toHaveBeenCalled()
@@ -380,7 +380,7 @@ describe('logs', () => {
   describe('error collection', () => {
     it('should send log errors', () => {
       const sendLogSpy = jasmine.createSpy()
-      startLogs({ sender: buildSender(sendLogSpy) })
+      startLogs({ sender: createSender(sendLogSpy) })
 
       rawErrorObservable.notify({
         message: 'error!',
@@ -420,7 +420,7 @@ describe('logs', () => {
     ].forEach(({ status, message }) => {
       it(`stops sending ${status} logs when reaching the limit`, () => {
         const sendLogSpy = jasmine.createSpy<(message: LogsMessage & { foo?: string }) => void>()
-        const sendLog = startLogs({ sender: buildSender(sendLogSpy), configuration })
+        const sendLog = startLogs({ sender: createSender(sendLogSpy), configuration })
         sendLog({ message: 'foo', status }, {})
         sendLog({ message: 'bar', status }, {})
 
@@ -441,7 +441,7 @@ describe('logs', () => {
       it(`does not take discarded ${status} logs into account`, () => {
         const sendLogSpy = jasmine.createSpy<(message: LogsMessage & { foo?: string }) => void>()
         const sendLog = startLogs({
-          sender: buildSender(sendLogSpy),
+          sender: createSender(sendLogSpy),
           configuration: {
             ...configuration,
             beforeSend(event) {

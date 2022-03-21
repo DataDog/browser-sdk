@@ -2,7 +2,7 @@ import { display } from '@datadog/browser-core'
 import type { LogsMessage } from './logger'
 import { HandlerType, StatusType } from './logger'
 import type { Sender } from './sender'
-import { buildSender } from './sender'
+import { createSender } from './sender'
 
 describe('Sender', () => {
   let sender: Sender
@@ -10,7 +10,7 @@ describe('Sender', () => {
 
   beforeEach(() => {
     sendLogSpy = jasmine.createSpy()
-    sender = buildSender(sendLogSpy)
+    sender = createSender(sendLogSpy)
     spyOn(display, 'log')
   })
 
@@ -34,7 +34,7 @@ describe('Sender', () => {
   describe('sendHttpRequest', () => {
     it('should only send to http', () => {
       sender.setHandler([HandlerType.http, HandlerType.console])
-      sender.sendHttpRequest('message', {}, StatusType.info)
+      sender.sendToHttp('message', {}, StatusType.info)
 
       expect(sendLogSpy).toHaveBeenCalled()
       expect(display.log).not.toHaveBeenCalled()
@@ -42,7 +42,7 @@ describe('Sender', () => {
 
     it('should not send to http when the handler is disabled', () => {
       sender.setHandler([HandlerType.console])
-      sender.sendHttpRequest('message', {}, StatusType.info)
+      sender.sendToHttp('message', {}, StatusType.info)
 
       expect(sendLogSpy).not.toHaveBeenCalled()
       expect(display.log).not.toHaveBeenCalled()
