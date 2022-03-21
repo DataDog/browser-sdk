@@ -9,7 +9,7 @@
   "devDependencies": {
     "@types/chrome": "0.0.180",
     "@types/react": "17.0.41",
-    "@types/react-dom": "17.0.13",
+    "@types/react-dom": "17.0.14",
     "copy-webpack-plugin": "8.1.0",
     "html-webpack-plugin": "5.3.1",
     "webpack": "5.28.0",
