@@ -24,15 +24,6 @@ export function startParentContexts(lifeCycle: LifeCycle): ParentContexts {
     viewContextHistory.setCurrent(buildViewContext(view), view.startClocks.relative)
   })
 
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) => {
-    // A view can be updated after its end.  We have to ensure that the view being updated is the
-    // most recently created.
-    const current = viewContextHistory.getCurrent()
-    if (current && current.view.id === view.id) {
-      viewContextHistory.setCurrent(buildViewContext(view), view.startClocks.relative)
-    }
-  })
-
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, ({ endClocks }) => {
     viewContextHistory.closeCurrent(endClocks.relative)
   })
