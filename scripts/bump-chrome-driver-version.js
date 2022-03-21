@@ -2,6 +2,7 @@
 
 const {
   printLog,
+  printError,
   logAndExit,
   executeCommand,
   replaceCiVariable,
@@ -9,15 +10,11 @@ const {
   getSecretKey,
   fetch,
   CI_FILE,
-  sendSlackMessage,
 } = require('./utils')
 
 const REPOSITORY = process.env.GIT_REPOSITORY
 const MAIN_BRANCH = process.env.MAIN_BRANCH
 const CURRENT_CI_IMAGE = process.env.CURRENT_CI_IMAGE
-const CI_PROJECT_NAME = process.env.CI_PROJECT_NAME
-const CI_PIPELINE_ID = process.env.CI_PIPELINE_ID
-const BUILD_URL = `${process.env.CI_PROJECT_URL}/pipelines/${CI_PIPELINE_ID}`
 
 const CURRENT_PACKAGE_VERSION = process.env.CHROME_PACKAGE_VERSION
 const CHROME_PACKAGE_URL = 'https://www.ubuntuupdates.org/package/google_chrome/stable/main/base/google-chrome-stable'
@@ -40,8 +37,8 @@ async function main() {
   const driverVersion = await getDriverVersion(majorPackageVersion)
 
   if (majorPackageVersion !== getMajor(driverVersion)) {
-    printLog(`No driver available for chrome ${packageVersion}.`)
-    process.exit()
+    printError(`No driver available for chrome ${packageVersion}.`)
+    process.exit(1)
   }
 
   const chromeVersionBranch = `bump-chrome-version-to-${driverVersion}`
@@ -58,13 +55,9 @@ async function main() {
   await executeCommand(`git push origin ${chromeVersionBranch}`)
 
   printLog('Create PR...')
-  const pullRequestUrl = await createPullRequest()
+  await createPullRequest()
 
   printLog(`Chrome version bump PR created (from ${CURRENT_PACKAGE_VERSION} to ${packageVersion}).`)
-  await sendSlackMessage(
-    '#browser-sdk-deploy',
-    `:chrome: [*${CI_PROJECT_NAME}*] New Chrome version available on <${pullRequestUrl}|PR>.`
-  )
 }
 
 async function getPackageVersion() {
@@ -92,14 +85,7 @@ function getMajor(version) {
 async function createPullRequest() {
   const githubAccessToken = await getSecretKey('ci.browser-sdk.github_access_token')
   await executeCommand(`echo "${githubAccessToken}" | gh auth login --with-token`)
-  const pullRequestUrl = await executeCommand(`gh pr create --fill --base ${MAIN_BRANCH}`)
-  return pullRequestUrl.trim()
+  await executeCommand(`gh pr create --fill --base ${MAIN_BRANCH}`)
 }
 
-main().catch(async (error) => {
-  await sendSlackMessage(
-    '#browser-sdk-deploy',
-    `:x: [*${CI_PROJECT_NAME}*] Chrome version bumped failed on pipeline <${BUILD_URL}|${CI_PIPELINE_ID}>.`
-  )
-  logAndExit(error)
-})
+main().catch(logAndExit)
