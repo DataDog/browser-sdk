@@ -31,9 +31,15 @@ module.exports = {
   connectionRetryCount: 0,
   framework: 'jasmine',
   reporters,
-  jasmineNodeOpts: {
+  jasmineOpts: {
     defaultTimeoutInterval: 60000,
-    requires: [path.resolve(__dirname, './tsNode')],
+  },
+  autoCompileOpts: {
+    tsNodeOpts: {
+      transpileOnly: false,
+      files: true,
+      project: 'test/e2e/tsconfig.json',
+    },
   },
   onPrepare() {
     if (testReportDirectory) {

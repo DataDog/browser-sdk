@@ -6,6 +6,6 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "target": "es5",
-    "types": ["node", "webdriverio", "jasmine", "ajv"]
+    "types": ["node", "webdriverio/async", "jasmine", "ajv"]
   }
 }

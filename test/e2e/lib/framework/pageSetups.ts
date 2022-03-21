@@ -15,6 +15,7 @@ export interface SetupOptions {
 export type SetupFactory = (options: SetupOptions, servers: Servers) => string
 
 const isBrowserStack =
+  'services' in browser.config &&
   browser.config.services &&
   browser.config.services.some((service) => (Array.isArray(service) ? service[0] : service) === 'browserstack')
 
