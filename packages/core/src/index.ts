@@ -44,7 +44,7 @@ export * from './tools/timeUtils'
 export * from './tools/utils'
 export * from './tools/createEventRateLimiter'
 export * from './tools/browserDetection'
-export { instrumentMethod, instrumentMethodAndCallOriginal } from './tools/instrumentMethod'
+export { instrumentMethod, instrumentMethodAndCallOriginal, instrumentSetter } from './tools/instrumentMethod'
 export {
   ErrorSource,
   ErrorHandling,
