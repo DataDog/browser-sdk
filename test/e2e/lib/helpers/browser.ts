@@ -1,3 +1,5 @@
+import * as os from 'os'
+
 // typing issue for execute https://github.com/webdriverio/webdriverio/issues/3796
 export async function browserExecute(fn: any) {
   return browser.execute(fn)
@@ -13,6 +15,60 @@ export async function browserExecuteAsync<R>(fn: (done: (result: R) => void) => 
 export async function browserExecuteAsync<A extends any[]>(fn: (...params: A) => any, ...args: A) {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return browser.executeAsync(fn as any, ...args)
+}
+
+// To keep tests sane, ensure we got a fixed list of possible platforms and browser names.
+const validPlatformNames = ['windows', 'macos', 'linux', 'ios', 'android'] as const
+const validBrowserNames = ['edge', 'safari', 'chrome', 'firefox', 'ie'] as const
+
+export function getBrowserName(): typeof validBrowserNames[number] {
+  const capabilities = browser.capabilities
+
+  // Look for the browser name in capabilities. It should always be there as long as we don't change
+  // the browser capabilities format.
+  if (!('browserName' in capabilities) || typeof capabilities.browserName !== 'string') {
+    throw new Error("Can't get browser name (no browser name)")
+  }
+  let browserName = capabilities.browserName.toLowerCase()
+  if (browserName === 'msedge') {
+    browserName = 'edge'
+  }
+  if (!includes(validBrowserNames, browserName)) {
+    throw new Error(`Can't get browser name (invalid browser name ${browserName})`)
+  }
+
+  return browserName
+}
+
+export function getPlatformName(): typeof validPlatformNames[number] {
+  const capabilities = browser.capabilities
+
+  let platformName: string
+  if ('bstack:options' in capabilities && capabilities['bstack:options']) {
+    // Look for the platform name in browserstack options. It might not be always there, for example
+    // when we run the test locally. This should be adjusted when we are changing the browser
+    // capabilities format.
+    platformName = (capabilities['bstack:options'] as any).os
+  } else {
+    // The test is run locally, use the local os name
+    platformName = os.type()
+  }
+
+  platformName = platformName.toLowerCase()
+  if (/^(mac ?os|os ?x|mac ?os ?x|darwin)$/.test(platformName)) {
+    platformName = 'macos'
+  } else if (platformName === 'windows_nt') {
+    platformName = 'windows'
+  }
+  if (!includes(validPlatformNames, platformName)) {
+    throw new Error(`Can't get platform name (invalid platform name ${platformName})`)
+  }
+
+  return platformName
+}
+
+function includes<T>(list: readonly T[], item: unknown): item is T {
+  return list.includes(item as any)
 }
 
 interface BrowserLog {

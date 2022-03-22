@@ -7,7 +7,7 @@ module.exports = function (config) {
     ...karmaBaseConf,
     plugins: [...karmaBaseConf.plugins, 'karma-browserstack-launcher'],
     reporters: [...karmaBaseConf.reporters, 'BrowserStack'],
-    browsers: Object.keys(browsers),
+    browsers: browsers.map((browser) => browser.sessionName),
     concurrency: 5,
     browserDisconnectTolerance: 3,
     hostname: getIp(),
@@ -19,7 +19,19 @@ module.exports = function (config) {
       video: false,
     },
     customLaunchers: Object.fromEntries(
-      Object.entries(browsers).map(([key, browser]) => [key, { ...browser, name: key.toLowerCase() }])
+      browsers.map((browser) => [
+        browser.sessionName,
+        // See https://github.com/karma-runner/karma-browserstack-launcher#per-browser-options
+        {
+          base: 'BrowserStack',
+          os: browser.os,
+          os_version: browser.osVersion,
+          browser: browser.name,
+          browser_version: browser.version,
+          device: browser.device,
+          name: browser.sessionName,
+        },
+      ])
     ),
   })
 }
