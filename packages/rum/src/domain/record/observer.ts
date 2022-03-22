@@ -1,5 +1,6 @@
 import type { DefaultPrivacyLevel } from '@datadog/browser-core'
 import {
+  instrumentSetter,
   instrumentMethodAndCallOriginal,
   assign,
   monitor,
@@ -14,7 +15,6 @@ import { getNodePrivacyLevel, shouldMaskNode } from './privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from './serializationUtils'
 import type {
   FocusCallback,
-  HookResetter,
   InputCallback,
   InputState,
   ListenerHandler,
@@ -31,7 +31,7 @@ import type {
   MouseInteractionParam,
 } from './types'
 import { IncrementalSource, MediaInteractions, MouseInteractions } from './types'
-import { forEach, hookSetter, isTouchEvent } from './utils'
+import { forEach, isTouchEvent } from './utils'
 import type { MutationController } from './mutationObserver'
 import { startMutationObserver } from './mutationObserver'
 
@@ -283,31 +283,16 @@ export function initInputObserver(cb: InputCallback, defaultPrivacyLevel: Defaul
     }
   )
 
-  const propertyDescriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')
-  const hookProperties = [
-    [HTMLInputElement.prototype, 'value'],
-    [HTMLInputElement.prototype, 'checked'],
-    [HTMLSelectElement.prototype, 'value'],
-    [HTMLTextAreaElement.prototype, 'value'],
-    // Some UI library use selectedIndex to set select value
-    [HTMLSelectElement.prototype, 'selectedIndex'],
-  ] as const
-
-  const hookResetters: HookResetter[] = []
-  if (propertyDescriptor && propertyDescriptor.set) {
-    hookResetters.push(
-      ...hookProperties.map((p) =>
-        hookSetter(p[0], p[1], {
-          set: monitor(function () {
-            onElementChange(this)
-          }),
-        })
-      )
-    )
-  }
+  const instrumentationStoppers = [
+    instrumentSetter(HTMLInputElement.prototype, 'value', onElementChange),
+    instrumentSetter(HTMLInputElement.prototype, 'checked', onElementChange),
+    instrumentSetter(HTMLSelectElement.prototype, 'value', onElementChange),
+    instrumentSetter(HTMLTextAreaElement.prototype, 'value', onElementChange),
+    instrumentSetter(HTMLSelectElement.prototype, 'selectedIndex', onElementChange),
+  ]
 
   return () => {
-    hookResetters.forEach((h) => h())
+    instrumentationStoppers.forEach((stopper) => stopper.stop())
     stopEventListeners()
   }
 }
