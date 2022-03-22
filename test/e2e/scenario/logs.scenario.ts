@@ -104,9 +104,9 @@ describe('logs', () => {
 
       expect(servers.base.app.getLargeResponseWroteSize()).toBeLessThan(
         // When reading the request, chunks length are probably not aligning perfectly with the
-        // response length limit, so it sends few more bytes than necessary. Add a 50% margin of
-        // error to verify that it's still close to the expected limit.
-        DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT * 1.5
+        // response length limit, so it sends few more bytes than necessary. Add a margin of error
+        // to verify that it's still close to the expected limit.
+        DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT * 2
       )
       expect(servers.base.app.getLargeResponseWroteSize()).toBeGreaterThanOrEqual(
         DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT

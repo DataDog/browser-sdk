@@ -3,13 +3,12 @@ updates:
   - package-ecosystem: npm
     directory: /
     schedule:
-      interval: daily
+      interval: weekly
+      day: monday
+      time: '09:00'
     commit-message:
       prefix: '👷'
     ignore:
-      # next webdriverio major: RUMF-1156
-      - dependency-name: 'webdriverio'
-      - dependency-name: '@wdio/*'
       # update puppeteer: RUMF-1157
       - dependency-name: 'puppeteer'
         update-types: ['version-update:semver-major']
@@ -33,6 +32,3 @@ updates:
       # update node-fetch: RUMF-1167
       - dependency-name: 'node-fetch'
         update-types: ['version-update:semver-major']
-      # typescript: RUMF-1168
-      - dependency-name: 'ts-loader'
-      - dependency-name: 'ts-node'
