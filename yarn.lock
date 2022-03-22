@@ -1844,20 +1844,15 @@
   dependencies:
     "@types/node" "*"
 
-"@types/node@*", "@types/node@15.0.1":
-  version "15.0.1"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-15.0.1.tgz#ef34dea0881028d11398be5bf4e856743e3dc35a"
-  integrity sha512-TMkXt0Ck1y0KKsGr9gJtWGjttxlZnnvDtphxUOSd0bfaR6Q1jle+sPvrzNR1urqYTWMinoKvjKfXUGsumaO1PA==
-
-"@types/node@>=10.0.0":
-  version "17.0.12"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-17.0.12.tgz#f7aa331b27f08244888c47b7df126184bc2339c5"
-  integrity sha512-4YpbAsnJXWYK/fpTVFlMIcUIho2AYCi4wg5aNPrG1ng7fn/1/RZfCIpRCiBX+12RVa34RluilnvCqD+g3KiSiA==
-
-"@types/node@^17.0.4":
+"@types/node@*", "@types/node@>=10.0.0", "@types/node@^17.0.4":
   version "17.0.21"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-17.0.21.tgz#864b987c0c68d07b4345845c3e63b75edd143644"
   integrity sha512-DBZCJbhII3r90XbQxI8Y9IjjiiOGlZ0Hr32omXIZvwwZ7p4DMMXGrKXVyPfuoBOri9XNtL0UK69jYIBIsRX3QQ==
+
+"@types/node@15.0.1":
+  version "15.0.1"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-15.0.1.tgz#ef34dea0881028d11398be5bf4e856743e3dc35a"
+  integrity sha512-TMkXt0Ck1y0KKsGr9gJtWGjttxlZnnvDtphxUOSd0bfaR6Q1jle+sPvrzNR1urqYTWMinoKvjKfXUGsumaO1PA==
 
 "@types/normalize-package-data@^2.4.0":
   version "2.4.0"
@@ -2193,6 +2188,16 @@
     deepmerge "^4.0.0"
     glob "^7.1.2"
 
+"@wdio/config@7.19.0":
+  version "7.19.0"
+  resolved "https://registry.yarnpkg.com/@wdio/config/-/config-7.19.0.tgz#006af062fb989868c9edea659948e61c22573661"
+  integrity sha512-thK38auJkjBeqMMBNtzvlp35nvMmSXxXz9nbsgkAdNkTSeaM/ZkC+wKt7OhL4WDLkexClXuJqjT54hLz29bl3Q==
+  dependencies:
+    "@wdio/logger" "7.19.0"
+    "@wdio/types" "7.19.0"
+    deepmerge "^4.0.0"
+    glob "^7.1.2"
+
 "@wdio/jasmine-framework@7.18.0":
   version "7.18.0"
   resolved "https://registry.yarnpkg.com/@wdio/jasmine-framework/-/jasmine-framework-7.18.0.tgz#c96b565cef6d095fcd878dd53e5a0534901dcd69"
@@ -2243,6 +2248,16 @@
     loglevel-plugin-prefix "^0.8.4"
     strip-ansi "^6.0.0"
 
+"@wdio/logger@7.19.0":
+  version "7.19.0"
+  resolved "https://registry.yarnpkg.com/@wdio/logger/-/logger-7.19.0.tgz#23697a4b4aaea56c3bd477a0393af2a5c175fc85"
+  integrity sha512-xR7SN/kGei1QJD1aagzxs3KMuzNxdT/7LYYx+lt6BII49+fqL/SO+5X0FDCZD0Ds93AuQvvz9eGyzrBI2FFXmQ==
+  dependencies:
+    chalk "^4.0.0"
+    loglevel "^1.6.0"
+    loglevel-plugin-prefix "^0.8.4"
+    strip-ansi "^6.0.0"
+
 "@wdio/protocols@7.17.3":
   version "7.17.3"
   resolved "https://registry.yarnpkg.com/@wdio/protocols/-/protocols-7.17.3.tgz#a140bba3bdcfd108bee94a99c02e34752dfa8187"
@@ -2285,17 +2300,17 @@
     webdriver "7.18.0"
     webdriverio "7.18.0"
 
-"@wdio/selenium-standalone-service@7.18.0":
-  version "7.18.0"
-  resolved "https://registry.yarnpkg.com/@wdio/selenium-standalone-service/-/selenium-standalone-service-7.18.0.tgz#497f8226a8a65d3d9a0c28bb7b9c14b7ce9e9ae5"
-  integrity sha512-Tl+GB45oYsnL5zP5xQU245Uhcm3IFL7XP3x7nIsUj7VHzWPSvMB4Hib90CnNiTd2pY1AUC8q+2rlS1M1jZq3VQ==
+"@wdio/selenium-standalone-service@7.19.0":
+  version "7.19.0"
+  resolved "https://registry.yarnpkg.com/@wdio/selenium-standalone-service/-/selenium-standalone-service-7.19.0.tgz#506e0282ea9f7326aee63dda073960714cf2b518"
+  integrity sha512-ch3fQzsgT+ldFOm2HIa6gPPKkPsePokGMvktYmxNZCT9CJz7oTRVuMMYo3LIuoL2Ev3sdPyWbAIo0ht/oD5lXw==
   dependencies:
     "@types/fs-extra" "^9.0.1"
     "@types/node" "^17.0.4"
     "@types/selenium-standalone" "^7.0.0"
-    "@wdio/config" "7.18.0"
-    "@wdio/logger" "7.17.3"
-    "@wdio/types" "7.18.0"
+    "@wdio/config" "7.19.0"
+    "@wdio/logger" "7.19.0"
+    "@wdio/types" "7.19.0"
     fs-extra "^10.0.0"
     selenium-standalone "^8.0.3"
 
@@ -2315,6 +2330,14 @@
   version "7.18.0"
   resolved "https://registry.yarnpkg.com/@wdio/types/-/types-7.18.0.tgz#0f3eebc68f16ef565ead871a2ca38b3d775e1544"
   integrity sha512-GZO5gmobbAOGln4+edAsyPbeLes4I6ZCa0iBn/KVM72y8cvHH+L2ojLsDvzd6Pn/g79zDjEUpBH7BgkDplj8lg==
+  dependencies:
+    "@types/node" "^17.0.4"
+    got "^11.8.1"
+
+"@wdio/types@7.19.0":
+  version "7.19.0"
+  resolved "https://registry.yarnpkg.com/@wdio/types/-/types-7.19.0.tgz#17bae5684886b2a4516841284e565d123cde4174"
+  integrity sha512-Zo98/Il0pDQRnV2n22L2qxzK9EyO2AQNArxnLsCyzL6G0st/fq9lUigZccK+mZLDO567bvCAhttKz6ldQe3eHg==
   dependencies:
     "@types/node" "^17.0.4"
     got "^11.8.1"
