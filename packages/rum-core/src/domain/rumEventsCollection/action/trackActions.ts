@@ -48,6 +48,10 @@ export interface AutoActionCreatedEvent {
   startClocks: ClocksState
 }
 
+export interface ActionContexts {
+  findActionId: (startTime?: RelativeTime) => string | undefined
+}
+
 // Maximum duration for automatic actions
 export const AUTO_ACTION_MAX_DURATION = 10 * ONE_SECOND
 export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
@@ -94,6 +98,10 @@ export function trackActions(
     history.setCurrent(actionController, actionController.startClocks.relative)
   })
 
+  const actionContexts: ActionContexts = {
+    findActionId: (startTime?: RelativeTime) => history.find(startTime)?.id,
+  }
+
   return {
     stop: () => {
       const currentAction = history.getCurrent()
@@ -102,7 +110,7 @@ export function trackActions(
       }
       stopListener()
     },
-    findActionId: (startTime?: RelativeTime) => history.find(startTime)?.id,
+    actionContexts,
   }
 }
 

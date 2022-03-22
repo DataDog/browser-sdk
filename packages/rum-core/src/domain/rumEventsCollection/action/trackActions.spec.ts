@@ -69,7 +69,7 @@ describe('trackActions', () => {
       .beforeBuild(({ lifeCycle, domMutationObservable, configuration }) => {
         lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
         const trackActionsResult = trackActions(lifeCycle, domMutationObservable, configuration)
-        findActionId = trackActionsResult.findActionId
+        findActionId = trackActionsResult.actionContexts.findActionId
         return { stop: trackActionsResult.stop }
       })
   })
