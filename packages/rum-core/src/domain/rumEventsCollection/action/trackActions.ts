@@ -78,7 +78,7 @@ export function trackActions(
     if (!name) {
       return
     }
-    const actionController = createAction(
+    const actionController = newAction(
       lifeCycle,
       domMutationObservable,
       ActionType.CLICK,
@@ -119,7 +119,7 @@ function listenEvents(callback: (event: Event & { target: Element }) => void) {
   )
 }
 
-function createAction(
+function newAction(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
   type: AutoActionType,
