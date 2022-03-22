@@ -12,7 +12,7 @@ import { startRumAssembly } from '../domain/assembly'
 import { startForegroundContexts } from '../domain/foregroundContexts'
 import { startInternalContext } from '../domain/internalContext'
 import { LifeCycle } from '../domain/lifeCycle'
-import { startParentContexts } from '../domain/parentContexts'
+import { startViewContexts } from '../domain/viewContexts'
 import { startRequestCollection } from '../domain/requestCollection'
 import { startActionCollection } from '../domain/rumEventsCollection/action/actionCollection'
 import { startErrorCollection } from '../domain/rumEventsCollection/error/errorCollection'
@@ -47,7 +47,7 @@ export function startRum(
           id: session.findTrackedSession()?.id,
         },
       },
-      parentContexts.findView(),
+      viewContexts.findView(),
       { view: { name: null } }
     )
   )
@@ -59,7 +59,7 @@ export function startRum(
       id: session.findTrackedSession()?.id,
     },
     view: {
-      id: parentContexts.findView()?.view.id,
+      id: viewContexts.findView()?.view.id,
     },
     action: {
       id: actionContexts.findActionId(),
@@ -76,7 +76,7 @@ export function startRum(
   const domMutationObservable = createDOMMutationObservable()
   const locationChangeObservable = createLocationChangeObservable(location)
 
-  const { parentContexts, foregroundContexts, urlContexts, actionContexts, addAction } = startRumEventCollection(
+  const { viewContexts, foregroundContexts, urlContexts, actionContexts, addAction } = startRumEventCollection(
     lifeCycle,
     configuration,
     location,
@@ -106,7 +106,7 @@ export function startRum(
   const internalContext = startInternalContext(
     configuration.applicationId,
     session,
-    parentContexts,
+    viewContexts,
     actionContexts,
     urlContexts
   )
@@ -117,7 +117,7 @@ export function startRum(
     addTiming,
     startView,
     lifeCycle,
-    parentContexts,
+    viewContexts,
     session,
     getInternalContext: internalContext.get,
   }
@@ -149,7 +149,7 @@ export function startRumEventCollection(
   domMutationObservable: Observable<void>,
   getCommonContext: () => CommonContext
 ) {
-  const parentContexts = startParentContexts(lifeCycle)
+  const viewContexts = startViewContexts(lifeCycle)
   const urlContexts = startUrlContexts(lifeCycle, locationChangeObservable, location)
   const foregroundContexts = startForegroundContexts()
   const { addAction, actionContexts } = startActionCollection(
@@ -163,20 +163,20 @@ export function startRumEventCollection(
     configuration,
     lifeCycle,
     sessionManager,
-    parentContexts,
+    viewContexts,
     urlContexts,
     actionContexts,
     getCommonContext
   )
 
   return {
-    parentContexts,
+    viewContexts,
     foregroundContexts,
     urlContexts,
     addAction,
     actionContexts,
     stop: () => {
-      parentContexts.stop()
+      viewContexts.stop()
       foregroundContexts.stop()
     },
   }

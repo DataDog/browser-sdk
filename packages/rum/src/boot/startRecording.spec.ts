@@ -48,7 +48,7 @@ describe('startRecording', () => {
 
     startDeflateWorker((worker) => {
       setupBuilder = setup()
-        .withParentContexts({
+        .withViewContexts({
           findView() {
             return {
               view: {
@@ -61,8 +61,8 @@ describe('startRecording', () => {
         .withConfiguration({
           defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
         })
-        .beforeBuild(({ lifeCycle, configuration, parentContexts, sessionManager }) => {
-          const recording = startRecording(lifeCycle, configuration, sessionManager, parentContexts, worker!)
+        .beforeBuild(({ lifeCycle, configuration, viewContexts, sessionManager }) => {
+          const recording = startRecording(lifeCycle, configuration, sessionManager, viewContexts, worker!)
           stopRecording = recording ? recording.stop : noop
           return { stop: stopRecording }
         })

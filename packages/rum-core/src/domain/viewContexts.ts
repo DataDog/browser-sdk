@@ -7,12 +7,12 @@ import type { ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
 
 export const VIEW_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
 
-export interface ParentContexts {
+export interface ViewContexts {
   findView: (startTime?: RelativeTime) => ViewContext | undefined
   stop: () => void
 }
 
-export function startParentContexts(lifeCycle: LifeCycle): ParentContexts {
+export function startViewContexts(lifeCycle: LifeCycle): ViewContexts {
   const viewContextHistory = new ContextHistory<ViewContext>(VIEW_CONTEXT_TIME_OUT_DELAY)
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {

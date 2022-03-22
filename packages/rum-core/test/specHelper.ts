@@ -6,7 +6,7 @@ import type { RecorderApi } from '../src/boot/rumPublicApi'
 import type { ForegroundContexts } from '../src/domain/foregroundContexts'
 import type { RawRumEventCollectedData } from '../src/domain/lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
-import type { ParentContexts } from '../src/domain/parentContexts'
+import type { ViewContexts } from '../src/domain/viewContexts'
 import type { ViewEvent } from '../src/domain/rumEventsCollection/view/trackViews'
 import { trackViews } from '../src/domain/rumEventsCollection/view/trackViews'
 import type { RumSessionManager } from '../src/domain/rumSessionManager'
@@ -31,7 +31,7 @@ export interface TestSetupBuilder {
   withFakeLocation: (initialUrl: string) => TestSetupBuilder
   withSessionManager: (sessionManager: RumSessionManager) => TestSetupBuilder
   withConfiguration: (overrides: Partial<RumConfiguration>) => TestSetupBuilder
-  withParentContexts: (stub: Partial<ParentContexts>) => TestSetupBuilder
+  withViewContexts: (stub: Partial<ViewContexts>) => TestSetupBuilder
   withActionContexts: (stub: ActionContexts) => TestSetupBuilder
   withForegroundContexts: (stub: Partial<ForegroundContexts>) => TestSetupBuilder
   withFakeClock: () => TestSetupBuilder
@@ -52,7 +52,7 @@ export interface BuildContext {
   sessionManager: RumSessionManager
   location: Location
   applicationId: string
-  parentContexts: ParentContexts
+  viewContexts: ViewContexts
   actionContexts: ActionContexts
   foregroundContexts: ForegroundContexts
   urlContexts: UrlContexts
@@ -79,7 +79,7 @@ export function setup(): TestSetupBuilder {
 
   let clock: Clock
   let fakeLocation: Partial<Location> = location
-  let parentContexts: ParentContexts
+  let viewContexts: ViewContexts
   const urlContexts: UrlContexts = {
     findUrl: () => ({
       view: {
@@ -131,8 +131,8 @@ export function setup(): TestSetupBuilder {
       assign(configuration, overrides)
       return setupBuilder
     },
-    withParentContexts(stub: Partial<ParentContexts>) {
-      parentContexts = stub as ParentContexts
+    withViewContexts(stub: Partial<ViewContexts>) {
+      viewContexts = stub as ViewContexts
       return setupBuilder
     },
     withActionContexts(stub: ActionContexts) {
@@ -158,7 +158,7 @@ export function setup(): TestSetupBuilder {
           lifeCycle,
           domMutationObservable,
           locationChangeObservable,
-          parentContexts,
+          viewContexts,
           urlContexts,
           actionContexts,
           foregroundContexts,

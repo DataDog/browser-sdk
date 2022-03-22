@@ -1,5 +1,5 @@
 import { assign } from '@datadog/browser-core'
-import type { LifeCycle, ParentContexts, RumConfiguration, RumSessionManager } from '@datadog/browser-rum-core'
+import type { LifeCycle, ViewContexts, RumConfiguration, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 
 import { record } from '../domain/record'
@@ -13,14 +13,14 @@ export function startRecording(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
   sessionManager: RumSessionManager,
-  parentContexts: ParentContexts,
+  viewContexts: ViewContexts,
   worker: DeflateWorker
 ) {
   const { addRecord, stop: stopSegmentCollection } = startSegmentCollection(
     lifeCycle,
     configuration.applicationId,
     sessionManager,
-    parentContexts,
+    viewContexts,
     (data, metadata, rawSegmentSize, flushReason) =>
       send(configuration.sessionReplayEndpointBuilder, data, metadata, rawSegmentSize, flushReason),
     worker

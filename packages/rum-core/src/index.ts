@@ -21,7 +21,7 @@ export {
 export { ViewContext, CommonContext, ReplayStats } from './rawRumEvent.types'
 export { startRum } from './boot/startRum'
 export { LifeCycle, LifeCycleEventType } from './domain/lifeCycle'
-export { ParentContexts } from './domain/parentContexts'
+export { ViewContexts } from './domain/viewContexts'
 export { RumSessionManager, RumSessionPlan } from './domain/rumSessionManager'
 export { getMutationObserverConstructor } from './browser/domMutationObservable'
 export { RumInitConfiguration, RumConfiguration } from './domain/configuration'

@@ -31,7 +31,7 @@ describe('rum assembly', () => {
       user: {},
     }
     setupBuilder = setup()
-      .withParentContexts({
+      .withViewContexts({
         findView: () => ({
           view: {
             id: 'abcde',
@@ -41,7 +41,7 @@ describe('rum assembly', () => {
       .withActionContexts({
         findActionId: () => '7890',
       })
-      .beforeBuild(({ configuration, lifeCycle, sessionManager, parentContexts, urlContexts, actionContexts }) => {
+      .beforeBuild(({ configuration, lifeCycle, sessionManager, viewContexts, urlContexts, actionContexts }) => {
         serverRumEvents = []
         lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent) =>
           serverRumEvents.push(serverRumEvent)
@@ -50,7 +50,7 @@ describe('rum assembly', () => {
           configuration,
           lifeCycle,
           sessionManager,
-          parentContexts,
+          viewContexts,
           urlContexts,
           actionContexts,
           () => commonContext

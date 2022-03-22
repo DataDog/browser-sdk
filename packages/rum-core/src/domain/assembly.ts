@@ -25,7 +25,7 @@ import { getSyntheticsContext } from './syntheticsContext'
 import { getCiTestContext } from './ciTestContext'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
-import type { ParentContexts } from './parentContexts'
+import type { ViewContexts } from './viewContexts'
 import type { RumSessionManager } from './rumSessionManager'
 import { RumSessionPlan } from './rumSessionManager'
 import type { UrlContexts } from './urlContexts'
@@ -63,7 +63,7 @@ export function startRumAssembly(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   sessionManager: RumSessionManager,
-  parentContexts: ParentContexts,
+  viewContexts: ViewContexts,
   urlContexts: UrlContexts,
   actionContexts: ActionContexts,
   getCommonContext: () => CommonContext
@@ -91,7 +91,7 @@ export function startRumAssembly(
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
     ({ startTime, rawRumEvent, domainContext, savedCommonContext, customerContext }) => {
-      const viewContext = parentContexts.findView(startTime)
+      const viewContext = viewContexts.findView(startTime)
       const urlContext = urlContexts.findUrl(startTime)
       // allow to send events if the session was tracked when they start
       // except for views which are continuously updated

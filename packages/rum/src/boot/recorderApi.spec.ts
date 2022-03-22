@@ -1,5 +1,5 @@
 import { noop } from '@datadog/browser-core'
-import type { RecorderApi, ParentContexts, LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
+import type { RecorderApi, ViewContexts, LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { createNewEvent, deleteEventBridgeStub, initEventBridgeStub } from '../../../core/test/specHelper'
 import type { RumSessionManagerMock } from '../../../rum-core/test/mockRumSessionManager'
@@ -45,7 +45,7 @@ describe('makeRecorderApi', () => {
       startDeflateWorkerWith(FAKE_WORKER)
       recorderApi = makeRecorderApi(startRecordingSpy, startDeflateWorkerSpy)
       rumInit = () => {
-        recorderApi.onRumStart(lifeCycle, {} as RumConfiguration, sessionManager, {} as ParentContexts)
+        recorderApi.onRumStart(lifeCycle, {} as RumConfiguration, sessionManager, {} as ViewContexts)
       }
     })
   })

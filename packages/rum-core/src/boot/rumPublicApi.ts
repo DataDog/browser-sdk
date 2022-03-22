@@ -16,7 +16,7 @@ import {
   areCookiesAuthorized,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
-import type { ParentContexts } from '../domain/parentContexts'
+import type { ViewContexts } from '../domain/viewContexts'
 import type { RumSessionManager } from '../domain/rumSessionManager'
 import type { CommonContext, User, ReplayStats } from '../rawRumEvent.types'
 import { ActionType } from '../rawRumEvent.types'
@@ -43,7 +43,7 @@ export interface RecorderApi {
     lifeCycle: LifeCycle,
     configuration: RumConfiguration,
     sessionManager: RumSessionManager,
-    parentContexts: ParentContexts
+    viewContexts: ViewContexts
   ) => void
   isRecording: () => boolean
   getReplayStats: (viewId: string) => ReplayStats | undefined
@@ -154,7 +154,7 @@ export function makeRumPublicApi(
       startRumResults.lifeCycle,
       configuration,
       startRumResults.session,
-      startRumResults.parentContexts
+      startRumResults.viewContexts
     )
   }
 

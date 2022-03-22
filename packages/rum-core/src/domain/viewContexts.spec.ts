@@ -3,11 +3,11 @@ import { relativeToClocks, CLEAR_OLD_CONTEXTS_INTERVAL } from '@datadog/browser-
 import type { TestSetupBuilder } from '../../test/specHelper'
 import { setup } from '../../test/specHelper'
 import { LifeCycleEventType } from './lifeCycle'
-import type { ParentContexts } from './parentContexts'
-import { startParentContexts, VIEW_CONTEXT_TIME_OUT_DELAY } from './parentContexts'
+import type { ViewContexts } from './viewContexts'
+import { startViewContexts, VIEW_CONTEXT_TIME_OUT_DELAY } from './viewContexts'
 import type { ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
 
-describe('parentContexts', () => {
+describe('viewContexts', () => {
   const FAKE_ID = 'fake'
   const startClocks = relativeToClocks(10 as RelativeTime)
 
@@ -20,14 +20,14 @@ describe('parentContexts', () => {
   }
 
   let setupBuilder: TestSetupBuilder
-  let parentContexts: ParentContexts
+  let viewContexts: ViewContexts
 
   beforeEach(() => {
     setupBuilder = setup()
       .withFakeLocation('http://fake-url.com')
       .beforeBuild(({ lifeCycle }) => {
-        parentContexts = startParentContexts(lifeCycle)
-        return parentContexts
+        viewContexts = startViewContexts(lifeCycle)
+        return viewContexts
       })
   })
 
@@ -39,7 +39,7 @@ describe('parentContexts', () => {
     it('should return undefined when there is no current view and no startTime', () => {
       setupBuilder.build()
 
-      expect(parentContexts.findView()).toBeUndefined()
+      expect(viewContexts.findView()).toBeUndefined()
     })
 
     it('should return the current view context when there is no start time', () => {
@@ -47,8 +47,8 @@ describe('parentContexts', () => {
 
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent())
 
-      expect(parentContexts.findView()).toBeDefined()
-      expect(parentContexts.findView()!.view.id).toEqual(FAKE_ID)
+      expect(viewContexts.findView()).toBeDefined()
+      expect(viewContexts.findView()!.view.id).toEqual(FAKE_ID)
     })
 
     it('should return the view context corresponding to startTime', () => {
@@ -71,9 +71,9 @@ describe('parentContexts', () => {
         buildViewCreatedEvent({ startClocks: relativeToClocks(30 as RelativeTime), id: 'view 3' })
       )
 
-      expect(parentContexts.findView(15 as RelativeTime)!.view.id).toEqual('view 1')
-      expect(parentContexts.findView(20 as RelativeTime)!.view.id).toEqual('view 2')
-      expect(parentContexts.findView(40 as RelativeTime)!.view.id).toEqual('view 3')
+      expect(viewContexts.findView(15 as RelativeTime)!.view.id).toEqual('view 1')
+      expect(viewContexts.findView(20 as RelativeTime)!.view.id).toEqual('view 2')
+      expect(viewContexts.findView(40 as RelativeTime)!.view.id).toEqual('view 3')
     })
 
     it('should return undefined when no view context corresponding to startTime', () => {
@@ -90,7 +90,7 @@ describe('parentContexts', () => {
       )
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks: relativeToClocks(20 as RelativeTime) })
 
-      expect(parentContexts.findView(5 as RelativeTime)).not.toBeDefined()
+      expect(viewContexts.findView(5 as RelativeTime)).not.toBeDefined()
     })
 
     it('should set the current view context on VIEW_CREATED', () => {
@@ -100,14 +100,14 @@ describe('parentContexts', () => {
       const newViewId = 'fake 2'
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ id: newViewId }))
 
-      expect(parentContexts.findView()!.view.id).toEqual(newViewId)
+      expect(viewContexts.findView()!.view.id).toEqual(newViewId)
     })
 
     it('should return the view name with the view', () => {
       const { lifeCycle } = setupBuilder.build()
 
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ name: 'Fake name' }))
-      expect(parentContexts.findView()!.view.name).toBe('Fake name')
+      expect(viewContexts.findView()!.view.name).toBe('Fake name')
     })
   })
 
@@ -131,13 +131,13 @@ describe('parentContexts', () => {
         })
       )
 
-      expect(parentContexts.findView(15 as RelativeTime)).toBeDefined()
-      expect(parentContexts.findView(25 as RelativeTime)).toBeDefined()
+      expect(viewContexts.findView(15 as RelativeTime)).toBeDefined()
+      expect(viewContexts.findView(25 as RelativeTime)).toBeDefined()
 
       lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
-      expect(parentContexts.findView(15 as RelativeTime)).toBeUndefined()
-      expect(parentContexts.findView(25 as RelativeTime)).toBeUndefined()
+      expect(viewContexts.findView(15 as RelativeTime)).toBeUndefined()
+      expect(viewContexts.findView(25 as RelativeTime)).toBeUndefined()
     })
 
     it('should be cleared when too old', () => {
@@ -163,10 +163,10 @@ describe('parentContexts', () => {
       )
 
       clock.tick(10)
-      expect(parentContexts.findView(targetTime)).toBeDefined()
+      expect(viewContexts.findView(targetTime)).toBeDefined()
 
       clock.tick(VIEW_CONTEXT_TIME_OUT_DELAY + CLEAR_OLD_CONTEXTS_INTERVAL)
-      expect(parentContexts.findView(targetTime)).toBeUndefined()
+      expect(viewContexts.findView(targetTime)).toBeUndefined()
     })
   })
 })

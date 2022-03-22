@@ -3,21 +3,21 @@ import { createRumSessionManagerMock } from '../../test/mockRumSessionManager'
 import type { TestSetupBuilder } from '../../test/specHelper'
 import { setup } from '../../test/specHelper'
 import { startInternalContext } from './internalContext'
-import type { ParentContexts } from './parentContexts'
+import type { ViewContexts } from './viewContexts'
 import type { UrlContexts } from './urlContexts'
 import type { RumSessionManager } from './rumSessionManager'
 import type { ActionContexts } from './rumEventsCollection/action/actionCollection'
 
 describe('internal context', () => {
   let setupBuilder: TestSetupBuilder
-  let parentContextsStub: Partial<ParentContexts>
+  let viewContextsStub: Partial<ViewContexts>
   let actionContextsStub: ActionContexts
   let findUrlSpy: jasmine.Spy<UrlContexts['findUrl']>
   let findSessionSpy: jasmine.Spy<RumSessionManager['findTrackedSession']>
   let internalContext: ReturnType<typeof startInternalContext>
 
   beforeEach(() => {
-    parentContextsStub = {
+    viewContextsStub = {
       findView: jasmine.createSpy('findView').and.returnValue({
         view: {
           id: 'abcde',
@@ -29,18 +29,12 @@ describe('internal context', () => {
     }
     setupBuilder = setup()
       .withSessionManager(createRumSessionManagerMock().setId('456'))
-      .withParentContexts(parentContextsStub)
+      .withViewContexts(viewContextsStub)
       .withActionContexts(actionContextsStub)
-      .beforeBuild(({ applicationId, sessionManager, parentContexts, urlContexts, actionContexts }) => {
+      .beforeBuild(({ applicationId, sessionManager, viewContexts, urlContexts, actionContexts }) => {
         findUrlSpy = spyOn(urlContexts, 'findUrl').and.callThrough()
         findSessionSpy = spyOn(sessionManager, 'findTrackedSession').and.callThrough()
-        internalContext = startInternalContext(
-          applicationId,
-          sessionManager,
-          parentContexts,
-          actionContexts,
-          urlContexts
-        )
+        internalContext = startInternalContext(applicationId, sessionManager, viewContexts, actionContexts, urlContexts)
       })
   })
 
@@ -75,7 +69,7 @@ describe('internal context', () => {
 
     internalContext.get(123)
 
-    expect(parentContextsStub.findView).toHaveBeenCalledWith(123)
+    expect(viewContextsStub.findView).toHaveBeenCalledWith(123)
     expect(actionContextsStub.findActionId).toHaveBeenCalledWith(123 as RelativeTime)
     expect(findUrlSpy).toHaveBeenCalledWith(123 as RelativeTime)
     expect(findSessionSpy).toHaveBeenCalledWith(123 as RelativeTime)
