@@ -1,13 +1,13 @@
 import type { DefaultPrivacyLevel } from '@datadog/browser-core'
 import {
+  instrumentSetter,
+  instrumentMethodAndCallOriginal,
   assign,
   monitor,
-  callMonitored,
   throttle,
   DOM_EVENT,
   addEventListeners,
   addEventListener,
-  includes,
   noop,
 } from '@datadog/browser-core'
 import { NodePrivacyLevel } from '../../constants'
@@ -15,7 +15,6 @@ import { getNodePrivacyLevel, shouldMaskNode } from './privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from './serializationUtils'
 import type {
   FocusCallback,
-  HookResetter,
   InputCallback,
   InputState,
   ListenerHandler,
@@ -32,7 +31,7 @@ import type {
   MouseInteractionParam,
 } from './types'
 import { IncrementalSource, MediaInteractions, MouseInteractions } from './types'
-import { forEach, hookSetter, isTouchEvent } from './utils'
+import { forEach, isTouchEvent } from './utils'
 import type { MutationController } from './mutationObserver'
 import { startMutationObserver } from './mutationObserver'
 
@@ -201,18 +200,12 @@ function initViewportResizeObserver(cb: ViewportResizeCallback): ListenerHandler
   return addEventListener(window, DOM_EVENT.RESIZE, updateDimension, { capture: true, passive: true }).stop
 }
 
-export const INPUT_TAGS = ['INPUT', 'TEXTAREA', 'SELECT']
-const lastInputStateMap: WeakMap<EventTarget, InputState> = new WeakMap()
 export function initInputObserver(cb: InputCallback, defaultPrivacyLevel: DefaultPrivacyLevel): ListenerHandler {
-  function eventHandler(event: { target: EventTarget | null }) {
-    const target = event.target as HTMLInputElement | HTMLTextAreaElement
+  const lastInputStateMap: WeakMap<Node, InputState> = new WeakMap()
+
+  function onElementChange(target: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement) {
     const nodePrivacyLevel = getNodePrivacyLevel(target, defaultPrivacyLevel)
-    if (
-      !target ||
-      !target.tagName ||
-      !includes(INPUT_TAGS, target.tagName) ||
-      nodePrivacyLevel === NodePrivacyLevel.HIDDEN
-    ) {
+    if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
       return
     }
 
@@ -272,73 +265,64 @@ export function initInputObserver(cb: InputCallback, defaultPrivacyLevel: Defaul
     }
   }
 
-  const { stop: stopEventListeners } = addEventListeners(document, [DOM_EVENT.INPUT, DOM_EVENT.CHANGE], eventHandler, {
-    capture: true,
-    passive: true,
-  })
+  const { stop: stopEventListeners } = addEventListeners(
+    document,
+    [DOM_EVENT.INPUT, DOM_EVENT.CHANGE],
+    (event) => {
+      if (
+        event.target instanceof HTMLInputElement ||
+        event.target instanceof HTMLTextAreaElement ||
+        event.target instanceof HTMLSelectElement
+      ) {
+        onElementChange(event.target)
+      }
+    },
+    {
+      capture: true,
+      passive: true,
+    }
+  )
 
-  const propertyDescriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')
-  const hookProperties: Array<[HTMLElement, string]> = [
-    [HTMLInputElement.prototype, 'value'],
-    [HTMLInputElement.prototype, 'checked'],
-    [HTMLSelectElement.prototype, 'value'],
-    [HTMLTextAreaElement.prototype, 'value'],
-    // Some UI library use selectedIndex to set select value
-    [HTMLSelectElement.prototype, 'selectedIndex'],
+  const instrumentationStoppers = [
+    instrumentSetter(HTMLInputElement.prototype, 'value', onElementChange),
+    instrumentSetter(HTMLInputElement.prototype, 'checked', onElementChange),
+    instrumentSetter(HTMLSelectElement.prototype, 'value', onElementChange),
+    instrumentSetter(HTMLTextAreaElement.prototype, 'value', onElementChange),
+    instrumentSetter(HTMLSelectElement.prototype, 'selectedIndex', onElementChange),
   ]
 
-  const hookResetters: HookResetter[] = []
-  if (propertyDescriptor && propertyDescriptor.set) {
-    hookResetters.push(
-      ...hookProperties.map((p) =>
-        hookSetter<HTMLElement>(p[0], p[1], {
-          set: monitor(function () {
-            // mock to a normal event
-            eventHandler({ target: this })
-          }),
-        })
-      )
-    )
-  }
-
   return () => {
-    hookResetters.forEach((h) => h())
+    instrumentationStoppers.forEach((stopper) => stopper.stop())
     stopEventListeners()
   }
 }
 
 function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
-  // eslint-disable-next-line @typescript-eslint/unbound-method
-  const insertRule = CSSStyleSheet.prototype.insertRule
-  CSSStyleSheet.prototype.insertRule = function (this: CSSStyleSheet, rule: string, index?: number) {
-    callMonitored(() => {
+  const { stop: restoreInsertRule } = instrumentMethodAndCallOriginal(CSSStyleSheet.prototype, 'insertRule', {
+    before(rule, index) {
       if (hasSerializedNode(this.ownerNode!)) {
         cb({
           id: getSerializedNodeId(this.ownerNode),
           adds: [{ rule, index }],
         })
       }
-    })
-    return insertRule.call(this, rule, index)
-  }
+    },
+  })
 
-  // eslint-disable-next-line @typescript-eslint/unbound-method
-  const deleteRule = CSSStyleSheet.prototype.deleteRule
-  CSSStyleSheet.prototype.deleteRule = function (this: CSSStyleSheet, index: number) {
-    callMonitored(() => {
+  const { stop: restoreDeleteRule } = instrumentMethodAndCallOriginal(CSSStyleSheet.prototype, 'deleteRule', {
+    before(index) {
       if (hasSerializedNode(this.ownerNode!)) {
         cb({
           id: getSerializedNodeId(this.ownerNode),
           removes: [{ index }],
         })
       }
-    })
-    return deleteRule.call(this, index)
-  }
+    },
+  })
 
   return () => {
-    CSSStyleSheet.prototype.insertRule = insertRule
-    CSSStyleSheet.prototype.deleteRule = deleteRule
+    restoreInsertRule()
+    restoreDeleteRule()
   }
 }
 

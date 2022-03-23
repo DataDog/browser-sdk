@@ -14,6 +14,7 @@ import type { LogsInitConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
 import type { HandlerType, LogsMessage, StatusType } from '../domain/logger'
 import { Logger } from '../domain/logger'
+import { createSender } from '../domain/sender'
 import type { startLogs } from './startLogs'
 
 export interface LoggerConfiguration {
@@ -37,7 +38,8 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
     beforeInitSendLog.add(() => sendLogStrategy(message, currentContext))
   }
   let getInitConfigurationStrategy = (): InitConfiguration | undefined => undefined
-  const logger = new Logger(sendLog)
+  const sender = createSender(sendLog)
+  const logger = new Logger(sender)
 
   return makePublicApi({
     logger,
@@ -56,7 +58,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
         return
       }
 
-      sendLogStrategy = startLogsImpl(configuration, logger)
+      sendLogStrategy = startLogsImpl(configuration, sender).send
       getInitConfigurationStrategy = () => deepClone(initConfiguration)
       beforeInitSendLog.drain()
 
@@ -71,7 +73,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
     removeLoggerGlobalContext: monitor(globalContextManager.remove),
 
     createLogger: monitor((name: string, conf: LoggerConfiguration = {}) => {
-      customLoggers[name] = new Logger(
+      const sender = createSender(
         sendLog,
         conf.handler,
         conf.level,
@@ -79,6 +81,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
           logger: { name },
         })
       )
+      customLoggers[name] = new Logger(sender)
       return customLoggers[name]!
     }),
 

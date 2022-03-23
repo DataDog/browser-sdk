@@ -8,6 +8,8 @@ import {
   updateExperimentalFeatures,
   getTimeStamp,
   stopSessionManager,
+  display,
+  initConsoleObservable,
 } from '@datadog/browser-core'
 import sinon from 'sinon'
 import type { Clock } from '../../../core/test/specHelper'
@@ -22,10 +24,11 @@ import type { LogsConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
 
 import type { LogsMessage } from '../domain/logger'
-import { Logger, StatusType } from '../domain/logger'
+import { StatusType, HandlerType } from '../domain/logger'
 import type { LogsSessionManager } from '../domain/logsSessionManager'
-import type { LogsEvent } from '../logsEvent.types'
-import { buildAssemble, doStartLogs, startLogs as originalStartLogs } from './startLogs'
+import type { Sender } from '../domain/sender'
+import { createSender } from '../domain/sender'
+import { doStartLogs, startLogs as originalStartLogs } from './startLogs'
 
 interface SentMessage extends LogsMessage {
   logger?: { name: string }
@@ -65,19 +68,22 @@ describe('logs', () => {
   const sessionManager: LogsSessionManager = {
     findTrackedSession: () => (sessionIsTracked ? { id: SESSION_ID } : undefined),
   }
+  let stopLogs = noop
   const startLogs = ({
-    errorLogger = new Logger(noop),
+    sender = createSender(noop),
     configuration: configurationOverrides,
-  }: { errorLogger?: Logger; configuration?: Partial<LogsConfiguration> } = {}) => {
+  }: { sender?: Sender; configuration?: Partial<LogsConfiguration> } = {}) => {
     const configuration = { ...baseConfiguration, ...configurationOverrides }
-    return doStartLogs(
+    const startLogs = doStartLogs(
       configuration,
       rawErrorObservable,
       consoleObservable,
       reportObservable,
       sessionManager,
-      errorLogger
+      sender
     )
+    stopLogs = startLogs.stop
+    return startLogs.send
   }
 
   beforeEach(() => {
@@ -98,6 +104,7 @@ describe('logs', () => {
     delete window.DD_RUM
     deleteEventBridgeStub()
     stopSessionManager()
+    stopLogs()
   })
 
   describe('request', () => {
@@ -154,7 +161,7 @@ describe('logs', () => {
       const sendLog = (message: LogsMessage) => {
         sendLogStrategy(message, {})
       }
-      sendLogStrategy = startLogs({ errorLogger: new Logger(sendLog) })
+      sendLogStrategy = startLogs({ sender: createSender(sendLog) })
 
       rawErrorObservable.notify({
         message: 'error!',
@@ -190,15 +197,34 @@ describe('logs', () => {
       })
     })
 
+    it('should not print the log twice when console handler is enabled', () => {
+      const sender = createSender(noop)
+      const logErrorSpy = spyOn(sender, 'sendToHttp')
+      const displaySpy = spyOn(display, 'log')
+      const consoleLogSpy = spyOn(console, 'log').and.callFake(() => true)
+
+      consoleObservable = initConsoleObservable(['log'])
+      startLogs({ sender })
+      sender.setHandler([HandlerType.console])
+      /* eslint-disable-next-line no-console */
+      console.log('foo', 'bar')
+
+      expect(logErrorSpy).toHaveBeenCalled()
+      expect(consoleLogSpy).toHaveBeenCalledTimes(1)
+      expect(displaySpy).not.toHaveBeenCalled()
+
+      resetExperimentalFeatures()
+    })
+
     it('should send console logs when ff forward-logs is enabled', () => {
-      const logger = new Logger(noop)
-      const logErrorSpy = spyOn(logger, 'log')
+      const sender = createSender(noop)
+      const logErrorSpy = spyOn(sender, 'sendToHttp')
       const consoleLogSpy = spyOn(console, 'log').and.callFake(() => true)
 
       updateExperimentalFeatures(['forward-logs'])
-      originalStartLogs(
+      const { stop } = originalStartLogs(
         validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['log'] })!,
-        logger
+        sender
       )
 
       /* eslint-disable-next-line no-console */
@@ -208,16 +234,17 @@ describe('logs', () => {
       expect(consoleLogSpy).toHaveBeenCalled()
 
       resetExperimentalFeatures()
+      stop()
     })
 
     it('should not send console logs when ff forward-logs is disabled', () => {
-      const logger = new Logger(noop)
-      const logErrorSpy = spyOn(logger, 'log')
+      const sender = createSender(noop)
+      const logErrorSpy = spyOn(sender, 'sendToHttp')
       const consoleLogSpy = spyOn(console, 'log').and.callFake(() => true)
 
-      originalStartLogs(
+      const { stop } = originalStartLogs(
         validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['log'] })!,
-        logger
+        sender
       )
 
       /* eslint-disable-next-line no-console */
@@ -225,17 +252,18 @@ describe('logs', () => {
 
       expect(logErrorSpy).not.toHaveBeenCalled()
       expect(consoleLogSpy).toHaveBeenCalled()
+      stop()
     })
   })
 
   describe('reports', () => {
-    let logger: Logger
+    let sender: Sender
     let logErrorSpy: jasmine.Spy
     let reportingObserverStub: ReturnType<typeof stubReportingObserver>
 
     beforeEach(() => {
-      logger = new Logger(noop)
-      logErrorSpy = spyOn(logger, 'log')
+      sender = createSender(noop)
+      logErrorSpy = spyOn(sender, 'sendToHttp')
       reportingObserverStub = stubReportingObserver()
     })
 
@@ -245,9 +273,9 @@ describe('logs', () => {
 
     it('should send reports when ff forward-reports is enabled', () => {
       updateExperimentalFeatures(['forward-reports'])
-      originalStartLogs(
+      const { stop } = originalStartLogs(
         validateAndBuildLogsConfiguration({ ...initConfiguration, forwardReports: ['intervention'] })!,
-        logger
+        sender
       )
 
       reportingObserverStub.raiseReport('intervention')
@@ -255,30 +283,33 @@ describe('logs', () => {
       expect(logErrorSpy).toHaveBeenCalled()
 
       resetExperimentalFeatures()
+      stop()
     })
 
     it('should not send reports when ff forward-reports is disabled', () => {
-      originalStartLogs(
+      const { stop } = originalStartLogs(
         validateAndBuildLogsConfiguration({ ...initConfiguration, forwardReports: ['intervention'] })!,
-        logger
+        sender
       )
       reportingObserverStub.raiseReport('intervention')
 
       expect(logErrorSpy).not.toHaveBeenCalled()
+      stop()
     })
 
     it('should not send reports when forwardReports init option not specified', () => {
-      originalStartLogs(validateAndBuildLogsConfiguration({ ...initConfiguration })!, logger)
+      const { stop } = originalStartLogs(validateAndBuildLogsConfiguration({ ...initConfiguration })!, sender)
       reportingObserverStub.raiseReport('intervention')
 
       expect(logErrorSpy).not.toHaveBeenCalled()
+      stop()
     })
 
     it('should add the source file information to the message for non error reports', () => {
       updateExperimentalFeatures(['forward-reports'])
-      originalStartLogs(
+      const { stop } = originalStartLogs(
         validateAndBuildLogsConfiguration({ ...initConfiguration, forwardReports: ['deprecation'] })!,
-        logger
+        sender
       )
 
       reportingObserverStub.raiseReport('deprecation')
@@ -290,6 +321,7 @@ describe('logs', () => {
       )
 
       resetExperimentalFeatures()
+      stop()
     })
   })
 
@@ -298,108 +330,18 @@ describe('logs', () => {
       const sendSpy = spyOn(initEventBridgeStub(), 'send')
 
       let configuration = { ...baseConfiguration, sampleRate: 0 }
-      let sendLog = originalStartLogs(configuration, new Logger(noop))
-      sendLog(DEFAULT_MESSAGE, {})
+      let { send, stop } = originalStartLogs(configuration, createSender(noop))
+      send(DEFAULT_MESSAGE, {})
 
       expect(sendSpy).not.toHaveBeenCalled()
+      stop()
 
       configuration = { ...baseConfiguration, sampleRate: 100 }
-      sendLog = originalStartLogs(configuration, new Logger(noop))
-      sendLog(DEFAULT_MESSAGE, {})
+      ;({ send, stop } = originalStartLogs(configuration, createSender(noop)))
+      send(DEFAULT_MESSAGE, {})
 
       expect(sendSpy).toHaveBeenCalled()
-    })
-  })
-
-  describe('assemble', () => {
-    let assemble: (message: LogsMessage, currentContext: Context) => Context | undefined
-    let beforeSend: (event: LogsEvent) => void | boolean
-
-    beforeEach(() => {
-      beforeSend = noop
-      assemble = buildAssemble(
-        sessionManager,
-        {
-          ...baseConfiguration,
-          beforeSend: (x: LogsEvent) => beforeSend(x),
-        },
-        noop
-      )
-      window.DD_RUM = {
-        getInternalContext: noop,
-      }
-    })
-
-    it('should not assemble when sessionManager is not tracked', () => {
-      sessionIsTracked = false
-
-      expect(assemble(DEFAULT_MESSAGE, { foo: 'from-current-context' })).toBeUndefined()
-    })
-
-    it('should not assemble if beforeSend returned false', () => {
-      beforeSend = () => false
-      expect(assemble(DEFAULT_MESSAGE, { foo: 'from-current-context' })).toBeUndefined()
-    })
-
-    it('add default, current and RUM context to message', () => {
-      spyOn(window.DD_RUM!, 'getInternalContext').and.returnValue({
-        view: { url: 'http://from-rum-context.com', id: 'view-id' },
-      })
-
-      const assembledMessage = assemble(DEFAULT_MESSAGE, { foo: 'from-current-context' })
-
-      expect(assembledMessage).toEqual({
-        foo: 'from-current-context',
-        message: DEFAULT_MESSAGE.message,
-        service: 'service',
-        session_id: SESSION_ID,
-        status: DEFAULT_MESSAGE.status,
-        view: { url: 'http://from-rum-context.com', id: 'view-id' },
-      })
-    })
-
-    it('message context should take precedence over RUM context', () => {
-      spyOn(window.DD_RUM!, 'getInternalContext').and.returnValue({ session_id: 'from-rum-context' })
-
-      const assembledMessage = assemble({ ...DEFAULT_MESSAGE, session_id: 'from-message-context' }, {})
-
-      expect(assembledMessage!.session_id).toBe('from-message-context')
-    })
-
-    it('RUM context should take precedence over current context', () => {
-      spyOn(window.DD_RUM!, 'getInternalContext').and.returnValue({ session_id: 'from-rum-context' })
-
-      const assembledMessage = assemble(DEFAULT_MESSAGE, { session_id: 'from-current-context' })
-
-      expect(assembledMessage!.session_id).toBe('from-rum-context')
-    })
-
-    it('current context should take precedence over default context', () => {
-      const assembledMessage = assemble(DEFAULT_MESSAGE, { service: 'from-current-context' })
-
-      expect(assembledMessage!.service).toBe('from-current-context')
-    })
-
-    it('should allow modification of existing fields', () => {
-      beforeSend = (event: LogsEvent) => {
-        event.message = 'modified message'
-        ;(event.service as any) = 'modified service'
-      }
-
-      const assembledMessage = assemble(DEFAULT_MESSAGE, {})
-
-      expect(assembledMessage!.message).toBe('modified message')
-      expect(assembledMessage!.service).toBe('modified service')
-    })
-
-    it('should allow adding new fields', () => {
-      beforeSend = (event: LogsEvent) => {
-        event.foo = 'bar'
-      }
-
-      const assembledMessage = assemble(DEFAULT_MESSAGE, {})
-
-      expect(assembledMessage!.foo).toBe('bar')
+      stop()
     })
   })
 
@@ -438,7 +380,7 @@ describe('logs', () => {
   describe('error collection', () => {
     it('should send log errors', () => {
       const sendLogSpy = jasmine.createSpy()
-      startLogs({ errorLogger: new Logger(sendLogSpy) })
+      startLogs({ sender: createSender(sendLogSpy) })
 
       rawErrorObservable.notify({
         message: 'error!',
@@ -478,7 +420,7 @@ describe('logs', () => {
     ].forEach(({ status, message }) => {
       it(`stops sending ${status} logs when reaching the limit`, () => {
         const sendLogSpy = jasmine.createSpy<(message: LogsMessage & { foo?: string }) => void>()
-        const sendLog = startLogs({ errorLogger: new Logger(sendLogSpy), configuration })
+        const sendLog = startLogs({ sender: createSender(sendLogSpy), configuration })
         sendLog({ message: 'foo', status }, {})
         sendLog({ message: 'bar', status }, {})
 
@@ -499,7 +441,7 @@ describe('logs', () => {
       it(`does not take discarded ${status} logs into account`, () => {
         const sendLogSpy = jasmine.createSpy<(message: LogsMessage & { foo?: string }) => void>()
         const sendLog = startLogs({
-          errorLogger: new Logger(sendLogSpy),
+          sender: createSender(sendLogSpy),
           configuration: {
             ...configuration,
             beforeSend(event) {

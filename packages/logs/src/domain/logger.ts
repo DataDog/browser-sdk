@@ -1,5 +1,6 @@
-import type { Context, ContextValue, TimeStamp } from '@datadog/browser-core'
-import { combine, createContextManager, ErrorSource, includes, monitored, display } from '@datadog/browser-core'
+import type { ContextValue, TimeStamp } from '@datadog/browser-core'
+import { combine, ErrorSource, monitored } from '@datadog/browser-core'
+import type { Sender } from './sender'
 
 export const StatusType = {
   debug: 'debug',
@@ -10,13 +11,13 @@ export const StatusType = {
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export type StatusType = typeof StatusType[keyof typeof StatusType]
 
-const STATUS_PRIORITIES: { [key in StatusType]: number } = {
-  [StatusType.debug]: 0,
-  [StatusType.info]: 1,
-  [StatusType.warn]: 2,
-  [StatusType.error]: 3,
-}
-
+export const HandlerType = {
+  console: 'console',
+  http: 'http',
+  silent: 'silent',
+} as const
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export type HandlerType = typeof HandlerType[keyof typeof HandlerType]
 export const STATUSES = Object.keys(StatusType) as StatusType[]
 
 export interface LogsMessage {
@@ -26,39 +27,12 @@ export interface LogsMessage {
   [key: string]: ContextValue
 }
 
-export const HandlerType = {
-  console: 'console',
-  http: 'http',
-  silent: 'silent',
-} as const
-// eslint-disable-next-line @typescript-eslint/no-redeclare
-export type HandlerType = typeof HandlerType[keyof typeof HandlerType]
-
 export class Logger {
-  private contextManager = createContextManager()
-
-  constructor(
-    private sendLog: (message: LogsMessage) => void,
-    private handlerType: HandlerType | HandlerType[] = HandlerType.http,
-    private level: StatusType = StatusType.debug,
-    loggerContext: Context = {}
-  ) {
-    this.contextManager.set(loggerContext)
-  }
+  constructor(private sender: Sender) {}
 
   @monitored
   log(message: string, messageContext?: object, status: StatusType = StatusType.info) {
-    if (STATUS_PRIORITIES[status] >= STATUS_PRIORITIES[this.level]) {
-      const handlers = Array.isArray(this.handlerType) ? this.handlerType : [this.handlerType]
-
-      if (includes(handlers, HandlerType.http)) {
-        this.sendLog(combine({ message, status }, this.contextManager.get(), messageContext))
-      }
-
-      if (includes(handlers, HandlerType.console)) {
-        display.log(`${status}: ${message}`, combine(this.contextManager.get(), messageContext))
-      }
-    }
+    this.sender.sendLog(message, messageContext, status)
   }
 
   debug(message: string, messageContext?: object) {
@@ -83,22 +57,22 @@ export class Logger {
   }
 
   setContext(context: object) {
-    this.contextManager.set(context)
+    this.sender.getContextManager().set(context)
   }
 
   addContext(key: string, value: any) {
-    this.contextManager.add(key, value)
+    this.sender.getContextManager().add(key, value)
   }
 
   removeContext(key: string) {
-    this.contextManager.remove(key)
+    this.sender.getContextManager().remove(key)
   }
 
   setHandler(handler: HandlerType | HandlerType[]) {
-    this.handlerType = handler
+    this.sender.setHandler(handler)
   }
 
   setLevel(level: StatusType) {
-    this.level = level
+    this.sender.setLevel(level)
   }
 }
