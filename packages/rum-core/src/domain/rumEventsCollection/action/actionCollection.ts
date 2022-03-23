@@ -22,11 +22,9 @@ export function startActionCollection(
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action, foregroundContexts))
   )
 
-  let actionContexts: ActionContexts
+  let actionContexts: ActionContexts = { findActionId: noop as () => undefined }
   if (configuration.trackInteractions) {
     actionContexts = trackActions(lifeCycle, domMutationObservable, configuration).actionContexts
-  } else {
-    actionContexts = { findActionId: noop as () => undefined }
   }
 
   return {
