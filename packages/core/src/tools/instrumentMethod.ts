@@ -1,4 +1,5 @@
-import { callMonitored } from '../domain/internalMonitoring'
+import { callMonitored, monitor } from '../domain/internalMonitoring'
+import { noop } from './utils'
 
 export function instrumentMethod<OBJECT extends { [key: string]: any }, METHOD extends keyof OBJECT>(
   object: OBJECT,
@@ -35,8 +36,8 @@ export function instrumentMethodAndCallOriginal<OBJECT extends { [key: string]: 
     before,
     after,
   }: {
-    before?: (this: OBJECT, ...args: Parameters<OBJECT[METHOD]>) => ReturnType<OBJECT[METHOD]>
-    after?: (this: OBJECT, ...args: Parameters<OBJECT[METHOD]>) => ReturnType<OBJECT[METHOD]>
+    before?: (this: OBJECT, ...args: Parameters<OBJECT[METHOD]>) => void
+    after?: (this: OBJECT, ...args: Parameters<OBJECT[METHOD]>) => void
   }
 ) {
   return instrumentMethod(
@@ -64,4 +65,44 @@ export function instrumentMethodAndCallOriginal<OBJECT extends { [key: string]: 
         return result
       }
   )
+}
+
+export function instrumentSetter<OBJECT extends { [key: string]: any }, PROPERTY extends keyof OBJECT>(
+  object: OBJECT,
+  property: PROPERTY,
+  after: (thisObject: OBJECT, value: OBJECT[PROPERTY]) => void
+) {
+  const originalDescriptor = Object.getOwnPropertyDescriptor(object, property)
+  if (!originalDescriptor || !originalDescriptor.set || !originalDescriptor.configurable) {
+    return { stop: noop }
+  }
+
+  let instrumentation = (thisObject: OBJECT, value: OBJECT[PROPERTY]) => {
+    // put hooked setter into event loop to avoid of set latency
+    setTimeout(
+      monitor(() => {
+        after(thisObject, value)
+      }),
+      0
+    )
+  }
+
+  const instrumentationWrapper = function (this: OBJECT, value: OBJECT[PROPERTY]) {
+    originalDescriptor.set!.call(this, value)
+    instrumentation(this, value)
+  }
+
+  Object.defineProperty(object, property, {
+    set: instrumentationWrapper,
+  })
+
+  return {
+    stop: () => {
+      if (Object.getOwnPropertyDescriptor(object, property)?.set === instrumentationWrapper) {
+        Object.defineProperty(object, property, originalDescriptor)
+      } else {
+        instrumentation = noop
+      }
+    },
+  }
 }
