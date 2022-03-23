@@ -16,6 +16,15 @@
 
 ---
 
+## v4.7.0
+
+Note: The Logs Browser SDK 3.10.1 (released on December 21th, 2021) unexpectedly changed the initialization parameter `forwardErrorsToLogs` default value from `true` to `false`. This release restores the default value to `true`, so Logs Browser SDK users who don't specify this parameter will have errors forwarded as logs.
+
+- 🐛 [RUMF-1217] restore forwardErrorsToLogs default value to `true` ([#1433](https://github.com/DataDog/browser-sdk/pull/1433))
+- 🐛 [RUMF-1203] fix `stopSessionReplayRecording` instrumentation cleanup ([#1442](https://github.com/DataDog/browser-sdk/pull/1442))
+- ♻️ 🐛 [RUMF-1178] fix logs displayed twice in the console ([#1425](https://github.com/DataDog/browser-sdk/pull/1425))
+- 📝 Update browser config to include SDK version ([#1380](https://github.com/DataDog/browser-sdk/pull/1380))
+
 ## v4.6.1
 
 - 🐛 fix build-env replacement in npm packages ([#1389](https://github.com/DataDog/browser-sdk/pull/1389))
