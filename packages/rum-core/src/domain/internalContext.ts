@@ -1,7 +1,8 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { assign } from '@datadog/browser-core'
 import type { InternalContext } from '../rawRumEvent.types'
-import type { ParentContexts } from './parentContexts'
+import type { ViewContexts } from './viewContexts'
+import type { ActionContexts } from './rumEventsCollection/action/actionCollection'
 import type { RumSessionManager } from './rumSessionManager'
 import type { UrlContexts } from './urlContexts'
 
@@ -12,24 +13,21 @@ import type { UrlContexts } from './urlContexts'
 export function startInternalContext(
   applicationId: string,
   sessionManager: RumSessionManager,
-  parentContexts: ParentContexts,
+  viewContexts: ViewContexts,
+  actionContexts: ActionContexts,
   urlContexts: UrlContexts
 ) {
   return {
     get: (startTime?: number): InternalContext | undefined => {
-      const viewContext = parentContexts.findView(startTime as RelativeTime)
+      const viewContext = viewContexts.findView(startTime as RelativeTime)
       const urlContext = urlContexts.findUrl(startTime as RelativeTime)
       const session = sessionManager.findTrackedSession(startTime as RelativeTime)
       if (session && viewContext && urlContext) {
-        const actionContext = parentContexts.findAction(startTime as RelativeTime)
+        const actionId = actionContexts.findActionId(startTime as RelativeTime)
         return {
           application_id: applicationId,
           session_id: session.id,
-          user_action: actionContext
-            ? {
-                id: actionContext.action.id,
-              }
-            : undefined,
+          user_action: actionId ? { id: actionId } : undefined,
           view: assign({}, viewContext.view, urlContext.view),
         }
       }

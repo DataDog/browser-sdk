@@ -1,5 +1,5 @@
 import type { Observable } from '@datadog/browser-core'
-import { assign, combine, toServerDuration, generateUUID } from '@datadog/browser-core'
+import { noop, assign, combine, toServerDuration, generateUUID } from '@datadog/browser-core'
 
 import type { CommonContext, RawRumActionEvent } from '../../../rawRumEvent.types'
 import { ActionType, RumEventType } from '../../../rawRumEvent.types'
@@ -7,8 +7,10 @@ import type { LifeCycle, RawRumEventCollectedData } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { ForegroundContexts } from '../../foregroundContexts'
 import type { RumConfiguration } from '../../configuration'
-import type { AutoAction, CustomAction } from './trackActions'
+import type { ActionContexts, AutoAction, CustomAction } from './trackActions'
 import { trackActions } from './trackActions'
+
+export type { ActionContexts }
 
 export function startActionCollection(
   lifeCycle: LifeCycle,
@@ -20,8 +22,9 @@ export function startActionCollection(
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action, foregroundContexts))
   )
 
+  let actionContexts: ActionContexts = { findActionId: noop as () => undefined }
   if (configuration.trackInteractions) {
-    trackActions(lifeCycle, domMutationObservable, configuration)
+    actionContexts = trackActions(lifeCycle, domMutationObservable, configuration).actionContexts
   }
 
   return {
@@ -36,6 +39,7 @@ export function startActionCollection(
         )
       )
     },
+    actionContexts,
   }
 }
 

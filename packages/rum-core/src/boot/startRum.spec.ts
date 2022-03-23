@@ -38,6 +38,7 @@ function startRum(
     location,
     sessionManager,
     locationChangeObservable,
+    domMutationObservable,
     () => ({
       context: {},
       user: {},
