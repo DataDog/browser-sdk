@@ -1,4 +1,4 @@
-import type { Observable, RelativeTime } from '@datadog/browser-core'
+import type { Observable } from '@datadog/browser-core'
 import { noop, assign, combine, toServerDuration, generateUUID } from '@datadog/browser-core'
 
 import type { CommonContext, RawRumActionEvent } from '../../../rawRumEvent.types'
@@ -7,12 +7,10 @@ import type { LifeCycle, RawRumEventCollectedData } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { ForegroundContexts } from '../../foregroundContexts'
 import type { RumConfiguration } from '../../configuration'
-import type { AutoAction, CustomAction } from './trackActions'
+import type { ActionContexts, AutoAction, CustomAction } from './trackActions'
 import { trackActions } from './trackActions'
 
-export interface ActionContexts {
-  findActionId: (startTime?: RelativeTime) => string | undefined
-}
+export type { ActionContexts }
 
 export function startActionCollection(
   lifeCycle: LifeCycle,
