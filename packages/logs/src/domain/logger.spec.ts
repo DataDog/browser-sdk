@@ -1,9 +1,12 @@
 import { display } from '@datadog/browser-core'
 import type { LogsMessage } from './logger'
 import { HandlerType, Logger, STATUSES, StatusType } from './logger'
+import type { Sender } from './sender'
+import { createSender } from './sender'
 
 describe('Logger', () => {
   let logger: Logger
+  let sender: Sender
   let sendLogSpy: jasmine.Spy<(message: LogsMessage) => void>
 
   function getLoggedMessage(index: number) {
@@ -12,7 +15,8 @@ describe('Logger', () => {
 
   beforeEach(() => {
     sendLogSpy = jasmine.createSpy()
-    logger = new Logger(sendLogSpy)
+    sender = createSender(sendLogSpy)
+    logger = new Logger(sender)
   })
 
   describe('log methods', () => {
