@@ -5,8 +5,8 @@ const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx' }
 
 describe('validateAndBuildLogsConfiguration', () => {
   describe('forwardErrorsToLogs', () => {
-    it('defaults to false if the option is not provided', () => {
-      expect(validateAndBuildLogsConfiguration(DEFAULT_INIT_CONFIGURATION)!.forwardErrorsToLogs).toBeFalse()
+    it('defaults to true if the option is not provided', () => {
+      expect(validateAndBuildLogsConfiguration(DEFAULT_INIT_CONFIGURATION)!.forwardErrorsToLogs).toBeTrue()
     })
 
     it('is set to provided value', () => {
@@ -14,11 +14,30 @@ describe('validateAndBuildLogsConfiguration', () => {
         validateAndBuildLogsConfiguration({ ...DEFAULT_INIT_CONFIGURATION, forwardErrorsToLogs: true })!
           .forwardErrorsToLogs
       ).toBeTrue()
+      expect(
+        validateAndBuildLogsConfiguration({ ...DEFAULT_INIT_CONFIGURATION, forwardErrorsToLogs: false })!
+          .forwardErrorsToLogs
+      ).toBeFalse()
     })
 
     it('the provided value is cast to boolean', () => {
       expect(
         validateAndBuildLogsConfiguration({ ...DEFAULT_INIT_CONFIGURATION, forwardErrorsToLogs: 'foo' as any })!
+          .forwardErrorsToLogs
+      ).toBeTrue()
+    })
+
+    it('is set to true for falsy values other than `false`', () => {
+      expect(
+        validateAndBuildLogsConfiguration({ ...DEFAULT_INIT_CONFIGURATION, forwardErrorsToLogs: null as any })!
+          .forwardErrorsToLogs
+      ).toBeTrue()
+      expect(
+        validateAndBuildLogsConfiguration({ ...DEFAULT_INIT_CONFIGURATION, forwardErrorsToLogs: '' as any })!
+          .forwardErrorsToLogs
+      ).toBeTrue()
+      expect(
+        validateAndBuildLogsConfiguration({ ...DEFAULT_INIT_CONFIGURATION, forwardErrorsToLogs: 0 as any })!
           .forwardErrorsToLogs
       ).toBeTrue()
     })

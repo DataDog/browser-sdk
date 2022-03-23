@@ -28,7 +28,7 @@ describe('logs entry', () => {
 
   beforeEach(() => {
     sendLogsSpy = jasmine.createSpy()
-    startLogs = jasmine.createSpy().and.callFake(() => sendLogsSpy)
+    startLogs = jasmine.createSpy().and.callFake(() => ({ send: sendLogsSpy }))
   })
 
   it('should define the public API with init', () => {

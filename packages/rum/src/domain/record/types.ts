@@ -248,7 +248,6 @@ export type FocusCallback = (data: FocusRecord['data']) => void
 export type VisualViewportResizeCallback = (data: VisualViewportRecord['data']) => void
 
 export type ListenerHandler = () => void
-export type HookResetter = () => void
 
 export const enum NodeType {
   Document,

@@ -1,6 +1,6 @@
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { RumInitConfiguration } from '@datadog/browser-rum-core'
-import { deleteAllCookies, withBrowserLogs } from '../helpers/browser'
+import { deleteAllCookies, getBrowserName, withBrowserLogs } from '../helpers/browser'
 import { flushEvents } from '../helpers/flushEvents'
 import { validateRumFormat } from '../helpers/validation'
 import { EventRegistry } from './eventsRegistry'
@@ -147,7 +147,7 @@ function declareTestsForSetups(
 
 function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFactory, runner: TestRunner) {
   const spec = it(title, async () => {
-    log(`Start '${spec.getFullName()}' in ${getBrowserName()!}`)
+    log(`Start '${spec.getFullName()}' in ${getBrowserName()}`)
     const servers = await getTestServers()
 
     const testContext = createTestContext(servers)
@@ -166,11 +166,6 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
       log(`End '${spec.getFullName()}'`)
     }
   })
-}
-
-function getBrowserName() {
-  const capabilities = browser.options.capabilities
-  return capabilities && ((capabilities.browserName || (capabilities as any).browser) as string)
 }
 
 function createTestContext(servers: Servers): TestContext {
