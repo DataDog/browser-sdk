@@ -63,7 +63,7 @@ export function validateAndBuildLogsConfiguration(
 
   return assign(
     {
-      forwardErrorsToLogs: !!initConfiguration.forwardErrorsToLogs,
+      forwardErrorsToLogs: initConfiguration.forwardErrorsToLogs !== false,
       forwardConsoleLogs,
       forwardReports,
       requestErrorResponseLengthLimit: DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT,
