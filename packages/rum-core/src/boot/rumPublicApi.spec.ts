@@ -568,7 +568,7 @@ describe('rum public api', () => {
         rumPublicApi.init(AUTO_CONFIGURATION)
 
         expect(startViewSpy).toHaveBeenCalled()
-        expect(startViewSpy.calls.argsFor(0)[0]).toEqual('foo')
+        expect(startViewSpy.calls.argsFor(0)[0]).toEqual({ name: 'foo' })
         expect(startViewSpy.calls.argsFor(0)[1]).toEqual({
           relative: 10 as RelativeTime,
           timeStamp: jasmine.any(Number) as unknown as TimeStamp,
@@ -581,7 +581,7 @@ describe('rum public api', () => {
         rumPublicApi.startView('foo')
 
         expect(startViewSpy).toHaveBeenCalled()
-        expect(startViewSpy.calls.argsFor(0)[0]).toEqual('foo')
+        expect(startViewSpy.calls.argsFor(0)[0]).toEqual({ name: 'foo' })
         expect(startViewSpy.calls.argsFor(0)[1]).toBeUndefined()
         expect(displaySpy).not.toHaveBeenCalled()
       })
@@ -602,7 +602,7 @@ describe('rum public api', () => {
 
         rumPublicApi.init(MANUAL_CONFIGURATION)
         expect(startRumSpy).toHaveBeenCalled()
-        expect(startRumSpy.calls.argsFor(0)[3]).toEqual('foo')
+        expect(startRumSpy.calls.argsFor(0)[3]).toEqual({ name: 'foo' })
         expect(recorderApiOnRumStartSpy).toHaveBeenCalled()
         expect(startViewSpy).not.toHaveBeenCalled()
       })
@@ -614,7 +614,7 @@ describe('rum public api', () => {
 
         rumPublicApi.startView('foo')
         expect(startRumSpy).toHaveBeenCalled()
-        expect(startRumSpy.calls.argsFor(0)[3]).toEqual('foo')
+        expect(startRumSpy.calls.argsFor(0)[3]).toEqual({ name: 'foo' })
         expect(recorderApiOnRumStartSpy).toHaveBeenCalled()
         expect(startViewSpy).not.toHaveBeenCalled()
       })
@@ -625,10 +625,10 @@ describe('rum public api', () => {
         rumPublicApi.startView('bar')
 
         expect(startRumSpy).toHaveBeenCalled()
-        expect(startRumSpy.calls.argsFor(0)[3]).toEqual('foo')
+        expect(startRumSpy.calls.argsFor(0)[3]).toEqual({ name: 'foo' })
         expect(recorderApiOnRumStartSpy).toHaveBeenCalled()
         expect(startViewSpy).toHaveBeenCalled()
-        expect(startViewSpy.calls.argsFor(0)[0]).toEqual('bar')
+        expect(startViewSpy.calls.argsFor(0)[0]).toEqual({ name: 'bar' })
         expect(startViewSpy.calls.argsFor(0)[1]).toBeUndefined()
       })
 

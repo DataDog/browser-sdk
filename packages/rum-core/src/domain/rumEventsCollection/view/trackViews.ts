@@ -28,6 +28,8 @@ import { trackViewMetrics } from './trackViewMetrics'
 export interface ViewEvent {
   id: string
   name?: string
+  service?: string
+  version?: string
   location: Readonly<Location>
   timings: Timings
   customTimings: ViewCustomTimings
@@ -44,6 +46,8 @@ export interface ViewEvent {
 export interface ViewCreatedEvent {
   id: string
   name?: string
+  service?: string
+  version?: string
   startClocks: ClocksState
 }
 
@@ -54,15 +58,21 @@ export interface ViewEndedEvent {
 export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 export const SESSION_KEEP_ALIVE_INTERVAL = 5 * ONE_MINUTE
 
+export interface ViewOptions {
+  name?: string
+  service?: string
+  version?: string
+}
+
 export function trackViews(
   location: Location,
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
   locationChangeObservable: Observable<LocationChange>,
   areViewsTrackedAutomatically: boolean,
-  initialViewName?: string
+  initialViewOptions?: ViewOptions
 ) {
-  const { stop: stopInitialViewTracking, initialView } = trackInitialView(initialViewName)
+  const { stop: stopInitialViewTracking, initialView } = trackInitialView(initialViewOptions)
   let currentView = initialView
 
   const { stop: stopViewLifeCycle } = startViewLifeCycle()
@@ -72,14 +82,14 @@ export function trackViews(
     locationChangeSubscription = renewViewOnLocationChange(locationChangeObservable)
   }
 
-  function trackInitialView(name?: string) {
+  function trackInitialView(options?: ViewOptions) {
     const initialView = newView(
       lifeCycle,
       domMutationObservable,
       location,
       ViewLoadingType.INITIAL_LOAD,
       clocksOrigin(),
-      name
+      options
     )
     const { stop } = trackInitialViewTimings(lifeCycle, (timings) => {
       initialView.updateTimings(timings)
@@ -88,8 +98,8 @@ export function trackViews(
     return { initialView, stop }
   }
 
-  function trackViewChange(startClocks?: ClocksState, name?: string) {
-    return newView(lifeCycle, domMutationObservable, location, ViewLoadingType.ROUTE_CHANGE, startClocks, name)
+  function trackViewChange(startClocks?: ClocksState, viewOptions?: ViewOptions) {
+    return newView(lifeCycle, domMutationObservable, location, ViewLoadingType.ROUTE_CHANGE, startClocks, viewOptions)
   }
 
   function startViewLifeCycle() {
@@ -97,7 +107,11 @@ export function trackViews(
       // do not trigger view update to avoid wrong data
       currentView.end()
       // Renew view on session renewal
-      currentView = trackViewChange(undefined, currentView.name)
+      currentView = trackViewChange(undefined, {
+        name: currentView.name,
+        service: currentView.service,
+        version: currentView.version,
+      })
     })
 
     // End the current view on page unload
@@ -137,10 +151,10 @@ export function trackViews(
       currentView.addTiming(name, time)
       currentView.scheduleUpdate()
     },
-    startView: (name?: string, startClocks?: ClocksState) => {
+    startView: (options?: ViewOptions, startClocks?: ClocksState) => {
       currentView.end(startClocks)
       currentView.triggerUpdate()
-      currentView = trackViewChange(startClocks, name)
+      currentView = trackViewChange(startClocks, options)
     },
     stop: () => {
       locationChangeSubscription?.unsubscribe()
@@ -157,7 +171,7 @@ function newView(
   initialLocation: Location,
   loadingType: ViewLoadingType,
   startClocks: ClocksState = clocksNow(),
-  name?: string
+  viewOptions?: ViewOptions
 ) {
   // Setup initial values
   const id = generateUUID()
@@ -167,7 +181,16 @@ function newView(
   let endClocks: ClocksState | undefined
   const location = shallowClone(initialLocation)
 
-  lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, name, startClocks })
+  let name: string | undefined
+  let service: string | undefined
+  let version: string | undefined
+  if (viewOptions) {
+    name = viewOptions.name
+    service = viewOptions.service
+    version = viewOptions.version
+  }
+
+  lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, name, startClocks, service, version })
 
   // Update the view every time the measures are changing
   const { throttled: scheduleViewUpdate, cancel: cancelScheduleViewUpdate } = throttle(
@@ -198,6 +221,8 @@ function newView(
           documentVersion,
           id,
           name,
+          service,
+          version,
           loadingType,
           location,
           startClocks,
@@ -212,6 +237,8 @@ function newView(
 
   return {
     name,
+    service,
+    version,
     scheduleUpdate: scheduleViewUpdate,
     end(clocks = clocksNow()) {
       endClocks = clocks
