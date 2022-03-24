@@ -194,6 +194,8 @@ export interface RumContext {
 }
 
 export interface ViewContext extends Context {
+  service?: string
+  version?: string
   view: {
     id: string
     name?: string

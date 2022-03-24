@@ -1,5 +1,12 @@
 import type { RawError, RelativeTime } from '@datadog/browser-core'
-import { ErrorSource, ONE_MINUTE, display } from '@datadog/browser-core'
+import {
+  ErrorSource,
+  ONE_MINUTE,
+  display,
+  combine,
+  resetExperimentalFeatures,
+  updateExperimentalFeatures,
+} from '@datadog/browser-core'
 import { createRumSessionManagerMock } from '../../test/mockRumSessionManager'
 import { createRawRumEvent } from '../../test/fixtures'
 import type { TestSetupBuilder } from '../../test/specHelper'
@@ -11,7 +18,7 @@ import {
   setup,
 } from '../../test/specHelper'
 import type { RumEventDomainContext } from '../domainContext.types'
-import type { CommonContext, RawRumActionEvent, RawRumErrorEvent, RawRumEvent } from '../rawRumEvent.types'
+import type { CommonContext, RawRumActionEvent, RawRumErrorEvent, RawRumEvent, ViewContext } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumActionEvent, RumErrorEvent, RumEvent } from '../rumEvent.types'
 import { initEventBridgeStub, deleteEventBridgeStub } from '../../../core/test/specHelper'
@@ -24,19 +31,22 @@ describe('rum assembly', () => {
   let setupBuilder: TestSetupBuilder
   let commonContext: CommonContext
   let serverRumEvents: RumEvent[]
-
+  let extraConfigurationOptions: object = {}
+  let findView: () => ViewContext
   beforeEach(() => {
+    findView = () => ({
+      view: {
+        id: '7890',
+        name: 'view name',
+      },
+    })
     commonContext = {
       context: {},
       user: {},
     }
     setupBuilder = setup()
       .withViewContexts({
-        findView: () => ({
-          view: {
-            id: 'abcde',
-          },
-        }),
+        findView: () => findView(),
       })
       .withActionContexts({
         findActionId: () => '7890',
@@ -47,7 +57,7 @@ describe('rum assembly', () => {
           serverRumEvents.push(serverRumEvent)
         )
         startRumAssembly(
-          configuration,
+          combine(configuration, extraConfigurationOptions),
           lifeCycle,
           sessionManager,
           viewContexts,
@@ -444,7 +454,53 @@ describe('rum assembly', () => {
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION),
       })
-      expect(serverRumEvents[0].view.id).toBe('abcde')
+      expect(serverRumEvents[0].view).toEqual(
+        jasmine.objectContaining({
+          id: '7890',
+          name: 'view name',
+        })
+      )
+    })
+  })
+
+  describe('service and version', () => {
+    beforeEach(() => {
+      extraConfigurationOptions = { service: 'default service' }
+    })
+
+    it('should come from the init configuration by default', () => {
+      const { lifeCycle } = setupBuilder.build()
+
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.ACTION),
+      })
+      expect(serverRumEvents[0].service).toEqual('default service')
+    })
+
+    describe('when sub-apps ff enabled', () => {
+      it('should be overridden by the view context', () => {
+        updateExperimentalFeatures(['sub-apps'])
+
+        const { lifeCycle } = setupBuilder.build()
+        findView = () => ({ service: 'new service', version: 'new version', view: { id: '1234' } })
+        notifyRawRumEvent(lifeCycle, {
+          rawRumEvent: createRawRumEvent(RumEventType.ACTION),
+        })
+        expect(serverRumEvents[0].service).toEqual('new service')
+
+        resetExperimentalFeatures()
+      })
+    })
+
+    describe('when sub-apps ff disabled', () => {
+      it('should not be overridden by the view context', () => {
+        const { lifeCycle } = setupBuilder.build()
+        findView = () => ({ service: 'new service', version: 'new version', view: { id: '1234' } })
+        notifyRawRumEvent(lifeCycle, {
+          rawRumEvent: createRawRumEvent(RumEventType.ACTION),
+        })
+        expect(serverRumEvents[0].service).toEqual('default service')
+      })
     })
   })
 

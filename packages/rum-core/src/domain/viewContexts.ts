@@ -29,6 +29,8 @@ export function startViewContexts(lifeCycle: LifeCycle): ViewContexts {
 
   function buildViewContext(view: ViewCreatedEvent) {
     return {
+      service: view.service,
+      version: view.version,
       view: {
         id: view.id,
         name: view.name,
