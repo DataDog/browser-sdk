@@ -1,5 +1,6 @@
 import { display } from '../../tools/display'
 import type { InitConfiguration } from './configuration'
+import { isExperimentalFeatureEnabled } from './experimentalFeatures'
 
 export const TAG_SIZE_LIMIT = 200
 
@@ -10,11 +11,13 @@ export function buildTags(configuration: InitConfiguration): string[] {
   if (env) {
     tags.push(buildTag('env', env))
   }
-  if (service) {
-    tags.push(buildTag('service', service))
-  }
-  if (version) {
-    tags.push(buildTag('version', version))
+  if (!isExperimentalFeatureEnabled('sub-apps')) {
+    if (service) {
+      tags.push(buildTag('service', service))
+    }
+    if (version) {
+      tags.push(buildTag('version', version))
+    }
   }
   if (datacenter) {
     tags.push(buildTag('datacenter', datacenter))
