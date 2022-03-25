@@ -43,7 +43,7 @@
     "@wdio/cli": "7.18.0",
     "@wdio/jasmine-framework": "7.18.0",
     "@wdio/junit-reporter": "7.18.0",
-    "@wdio/local-runner": "7.18.0",
+    "@wdio/local-runner": "7.19.1",
     "@wdio/selenium-standalone-service": "7.18.0",
     "@wdio/spec-reporter": "7.18.0",
     "ajv": "6.12.6",
