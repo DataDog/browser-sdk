@@ -1,24 +1,15 @@
-import type { ConsoleLog, Context, RawError, RelativeTime, RawReport, TimeStamp } from '@datadog/browser-core'
+import type { ConsoleLog, Context, RawReport, TimeStamp } from '@datadog/browser-core'
 import {
-  ErrorSource,
   noop,
   Observable,
-  ONE_MINUTE,
   resetExperimentalFeatures,
   updateExperimentalFeatures,
-  getTimeStamp,
   stopSessionManager,
   display,
   initConsoleObservable,
 } from '@datadog/browser-core'
 import sinon from 'sinon'
-import type { Clock } from '../../../core/test/specHelper'
-import {
-  deleteEventBridgeStub,
-  initEventBridgeStub,
-  mockClock,
-  stubEndpointBuilder,
-} from '../../../core/test/specHelper'
+import { deleteEventBridgeStub, initEventBridgeStub, stubEndpointBuilder } from '../../../core/test/specHelper'
 import { stubReportingObserver } from '../../../core/test/stubReportApis'
 import type { LogsConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
@@ -61,7 +52,6 @@ describe('logs', () => {
   let baseConfiguration: LogsConfiguration
   let sessionIsTracked: boolean
   let server: sinon.SinonFakeServer
-  let rawErrorObservable: Observable<RawError>
   let reportObservable: Observable<RawReport>
   let consoleObservable: Observable<ConsoleLog>
   let consoleLogSpy: jasmine.Spy
@@ -76,7 +66,7 @@ describe('logs', () => {
     const configuration = { ...baseConfiguration, ...configurationOverrides }
     const startLogs = doStartLogs(
       configuration,
-      rawErrorObservable,
+      () => undefined,
       consoleObservable,
       reportObservable,
       sessionManager,
@@ -93,7 +83,6 @@ describe('logs', () => {
       maxBatchSize: 1,
     }
     sessionIsTracked = true
-    rawErrorObservable = new Observable<RawError>()
     consoleObservable = new Observable<ConsoleLog>()
     reportObservable = new Observable<RawReport>()
     server = sinon.fakeServer.create()
@@ -148,30 +137,6 @@ describe('logs', () => {
         id: 'view-id',
         url: 'http://from-rum-context.com',
       })
-    })
-
-    it('should use the rum internal context related to the error time', () => {
-      window.DD_RUM = {
-        getInternalContext(startTime) {
-          return {
-            foo: startTime === 1234 ? 'b' : 'a',
-          }
-        },
-      }
-      let sendLogStrategy: (message: LogsMessage, currentContext: Context) => void = noop
-      const sendLog = (message: LogsMessage) => {
-        sendLogStrategy(message, {})
-      }
-      sendLogStrategy = startLogs({ sender: createSender(sendLog) })
-
-      rawErrorObservable.notify({
-        message: 'error!',
-        source: ErrorSource.SOURCE,
-        startClocks: { relative: 1234 as RelativeTime, timeStamp: getTimeStamp(1234 as RelativeTime) },
-        type: 'Error',
-      })
-
-      expect(getLoggedMessage(server, 0).foo).toBe('b')
     })
 
     it('should all use the same batch', () => {
@@ -372,125 +337,6 @@ describe('logs', () => {
       sessionIsTracked = true
       sendLog(DEFAULT_MESSAGE, {})
       expect(server.requests.length).toEqual(2)
-    })
-  })
-
-  describe('error collection', () => {
-    it('should send log errors', () => {
-      const sendLogSpy = jasmine.createSpy()
-      startLogs({ sender: createSender(sendLogSpy) })
-
-      rawErrorObservable.notify({
-        message: 'error!',
-        source: ErrorSource.SOURCE,
-        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
-        type: 'Error',
-      })
-
-      expect(sendLogSpy).toHaveBeenCalled()
-      expect(sendLogSpy.calls.first().args).toEqual([
-        {
-          date: 123456789 as TimeStamp,
-          error: { origin: ErrorSource.SOURCE, kind: 'Error', stack: undefined },
-          message: 'error!',
-          status: StatusType.error,
-        },
-      ])
-    })
-  })
-
-  describe('logs limitation', () => {
-    let clock: Clock
-    const configuration = { eventRateLimiterThreshold: 1 }
-    beforeEach(() => {
-      clock = mockClock()
-    })
-
-    afterEach(() => {
-      clock.cleanup()
-    })
-    ;[
-      { status: StatusType.error, message: 'Reached max number of errors by minute: 1' },
-      { status: StatusType.warn, message: 'Reached max number of warns by minute: 1' },
-      { status: StatusType.info, message: 'Reached max number of infos by minute: 1' },
-      { status: StatusType.debug, message: 'Reached max number of debugs by minute: 1' },
-      { status: 'unknown' as StatusType, message: 'Reached max number of customs by minute: 1' },
-    ].forEach(({ status, message }) => {
-      it(`stops sending ${status} logs when reaching the limit`, () => {
-        const sendLogSpy = jasmine.createSpy<(message: LogsMessage & { foo?: string }) => void>()
-        const sendLog = startLogs({ sender: createSender(sendLogSpy), configuration })
-        sendLog({ message: 'foo', status }, {})
-        sendLog({ message: 'bar', status }, {})
-
-        expect(server.requests.length).toEqual(1)
-        expect(getLoggedMessage(server, 0).message).toBe('foo')
-        expect(sendLogSpy).toHaveBeenCalledOnceWith({
-          message,
-          status: StatusType.error,
-          error: {
-            origin: ErrorSource.AGENT,
-            kind: undefined,
-            stack: undefined,
-          },
-          date: Date.now(),
-        })
-      })
-
-      it(`does not take discarded ${status} logs into account`, () => {
-        const sendLogSpy = jasmine.createSpy<(message: LogsMessage & { foo?: string }) => void>()
-        const sendLog = startLogs({
-          sender: createSender(sendLogSpy),
-          configuration: {
-            ...configuration,
-            beforeSend(event) {
-              if (event.message === 'discard me') {
-                return false
-              }
-            },
-          },
-        })
-        sendLog({ message: 'discard me', status }, {})
-        sendLog({ message: 'discard me', status }, {})
-        sendLog({ message: 'discard me', status }, {})
-        sendLog({ message: 'foo', status }, {})
-
-        expect(server.requests.length).toEqual(1)
-        expect(getLoggedMessage(server, 0).message).toBe('foo')
-        expect(sendLogSpy).not.toHaveBeenCalled()
-      })
-
-      it(`allows to send new ${status}s after a minute`, () => {
-        const sendLog = startLogs({ configuration })
-        sendLog({ message: 'foo', status }, {})
-        sendLog({ message: 'bar', status }, {})
-        clock.tick(ONE_MINUTE)
-        sendLog({ message: 'baz', status }, {})
-
-        expect(server.requests.length).toEqual(2)
-        expect(getLoggedMessage(server, 0).message).toBe('foo')
-        expect(getLoggedMessage(server, 1).message).toBe('baz')
-      })
-
-      it('allows to send logs with a different status when reaching the limit', () => {
-        const otherLogStatus = status === StatusType.error ? 'other' : StatusType.error
-        const sendLog = startLogs({ configuration })
-        sendLog({ message: 'foo', status }, {})
-        sendLog({ message: 'bar', status }, {})
-        sendLog({ message: 'baz', status: otherLogStatus as StatusType }, {})
-
-        expect(server.requests.length).toEqual(2)
-        expect(getLoggedMessage(server, 0).message).toBe('foo')
-        expect(getLoggedMessage(server, 1).message).toBe('baz')
-      })
-    })
-
-    it('two different custom statuses are accounted by the same limit', () => {
-      const sendLog = startLogs({ configuration })
-      sendLog({ message: 'foo', status: 'foo' as StatusType }, {})
-      sendLog({ message: 'bar', status: 'bar' as StatusType }, {})
-
-      expect(server.requests.length).toEqual(1)
-      expect(getLoggedMessage(server, 0).message).toBe('foo')
     })
   })
 })
