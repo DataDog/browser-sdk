@@ -37,14 +37,14 @@ export function startSessionManager<TrackingType extends string>(
   stopCallbacks.push(() => sessionContextHistory.stop())
 
   sessionStore.renewObservable.subscribe(() => {
-    sessionContextHistory.setCurrent(buildSessionContext(), relativeNow())
+    sessionContextHistory.add(buildSessionContext(), relativeNow())
   })
   sessionStore.expireObservable.subscribe(() => {
-    sessionContextHistory.closeCurrent(relativeNow())
+    sessionContextHistory.closeActive(relativeNow())
   })
 
   sessionStore.expandOrRenewSession()
-  sessionContextHistory.setCurrent(buildSessionContext(), clocksOrigin().relative)
+  sessionContextHistory.add(buildSessionContext(), clocksOrigin().relative)
 
   trackActivity(() => sessionStore.expandOrRenewSession())
   trackVisibility(() => sessionStore.expandSession())

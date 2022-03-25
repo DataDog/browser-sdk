@@ -202,7 +202,7 @@ export interface ViewContext extends Context {
 
 export interface ActionContext extends Context {
   action: {
-    id: string
+    id: string | string[]
   }
 }
 
@@ -223,7 +223,7 @@ export interface InternalContext {
     name?: string
   }
   user_action?: {
-    id: string
+    id: string | string[]
   }
 }
 
