@@ -1,9 +1,15 @@
-import type { ConsoleLog, Context, RawError, MonitoringMessage, TelemetryEvent, RawReport } from '@datadog/browser-core'
+import type {
+  ConsoleLog,
+  Context,
+  RawError,
+  MonitoringMessage,
+  TelemetryEvent,
+  RawReport,
+  Observable,
+} from '@datadog/browser-core'
 import {
   areCookiesAuthorized,
   combine,
-  Observable,
-  trackRuntimeError,
   canUseEventBridge,
   getEventBridge,
   startInternalMonitoring,
@@ -15,7 +21,6 @@ import {
   getFileFromStackTraceString,
   startBatchWithReplica,
 } from '@datadog/browser-core'
-import { trackNetworkError } from '../domain/trackNetworkError'
 import type { LogsMessage } from '../domain/logger'
 import { StatusType } from '../domain/logger'
 import type { LogsSessionManager } from '../domain/logsSessionManager'
@@ -24,6 +29,7 @@ import type { LogsConfiguration } from '../domain/configuration'
 import type { LogsEvent } from '../logsEvent.types'
 import { buildAssemble, getRUMInternalContext } from '../domain/assemble'
 import type { Sender } from '../domain/sender'
+import { startRawErrorCollection } from '../domain/logsCollection/rawErrorCollection'
 
 const LogStatusForApi = {
   [ConsoleApiName.log]: StatusType.info,
@@ -61,12 +67,7 @@ export function startLogs(configuration: LogsConfiguration, sender: Sender) {
     },
   }))
 
-  const rawErrorObservable = new Observable<RawError>()
-
-  if (configuration.forwardErrorsToLogs) {
-    trackRuntimeError(rawErrorObservable)
-    trackNetworkError(configuration, rawErrorObservable)
-  }
+  const { reportRawError } = startRawErrorCollection(configuration, sender)
   const consoleObservable = initConsoleObservable(configuration.forwardConsoleLogs)
   const reportObservable = initReportObservable(configuration.forwardReports)
 
@@ -75,7 +76,7 @@ export function startLogs(configuration: LogsConfiguration, sender: Sender) {
       ? startLogsSessionManager(configuration)
       : startLogsSessionManagerStub(configuration)
 
-  return doStartLogs(configuration, rawErrorObservable, consoleObservable, reportObservable, session, sender)
+  return doStartLogs(configuration, reportRawError, consoleObservable, reportObservable, session, sender)
 }
 
 function startLogsInternalMonitoring(configuration: LogsConfiguration) {
@@ -105,7 +106,7 @@ function startLogsInternalMonitoring(configuration: LogsConfiguration) {
 
 export function doStartLogs(
   configuration: LogsConfiguration,
-  rawErrorObservable: Observable<RawError>,
+  reportRawError: (error: RawError) => void,
   consoleObservable: Observable<ConsoleLog>,
   reportObservable: Observable<RawReport>,
   sessionManager: LogsSessionManager,
@@ -124,25 +125,6 @@ export function doStartLogs(
       configuration.replica?.logsEndpointBuilder
     )
     onLogEventCollected = (message) => batch.add(message)
-  }
-
-  function reportRawError(error: RawError) {
-    const messageContext: Partial<LogsEvent> = {
-      date: error.startClocks.timeStamp,
-      error: {
-        kind: error.type,
-        origin: error.source,
-        stack: error.stack,
-      },
-    }
-    if (error.resource) {
-      messageContext.http = {
-        method: error.resource.method as any, // Cast resource method because of case mismatch cf issue RUMF-1152
-        status_code: error.resource.statusCode,
-        url: error.resource.url,
-      }
-    }
-    sender.sendToHttp(error.message, messageContext, StatusType.error)
   }
 
   function reportConsoleLog(log: ConsoleLog) {
@@ -177,13 +159,11 @@ export function doStartLogs(
     sender.sendToHttp(message, messageContext, logStatus)
   }
 
-  const rawErrorSubscription = rawErrorObservable.subscribe(reportRawError)
   const consoleSubscription = consoleObservable.subscribe(reportConsoleLog)
   const reportSubscription = reportObservable.subscribe(logReport)
 
   return {
     stop: () => {
-      rawErrorSubscription.unsubscribe()
       consoleSubscription.unsubscribe()
       reportSubscription.unsubscribe()
     },
