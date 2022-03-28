@@ -1,32 +1,20 @@
-import type { Context, RawError, MonitoringMessage, TelemetryEvent, RawReport, Observable } from '@datadog/browser-core'
+import type { Context, RawError, MonitoringMessage, TelemetryEvent } from '@datadog/browser-core'
 import {
   areCookiesAuthorized,
   combine,
   canUseEventBridge,
   getEventBridge,
   startInternalMonitoring,
-  RawReportType,
-  initReportObservable,
-  ErrorSource,
-  getFileFromStackTraceString,
   startBatchWithReplica,
 } from '@datadog/browser-core'
 import type { LogsMessage } from '../domain/logger'
-import { StatusType } from '../domain/logger'
 import type { LogsSessionManager } from '../domain/logsSessionManager'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { LogsConfiguration } from '../domain/configuration'
-import type { LogsEvent } from '../logsEvent.types'
 import { buildAssemble, getRUMInternalContext } from '../domain/assemble'
 import type { Sender } from '../domain/sender'
 import { startRawErrorCollection } from '../domain/logsCollection/rawErrorCollection'
 import { startConsoleCollection } from '../domain/logsCollection/consoleCollection'
-
-const LogStatusForReport = {
-  [RawReportType.cspViolation]: StatusType.error,
-  [RawReportType.intervention]: StatusType.error,
-  [RawReportType.deprecation]: StatusType.warn,
-}
 
 export function startLogs(configuration: LogsConfiguration, sender: Sender) {
   const internalMonitoring = startLogsInternalMonitoring(configuration)
@@ -53,14 +41,12 @@ export function startLogs(configuration: LogsConfiguration, sender: Sender) {
   const { reportRawError } = startRawErrorCollection(configuration, sender)
   startConsoleCollection(configuration, sender)
 
-  const reportObservable = initReportObservable(configuration.forwardReports)
-
   const session =
     areCookiesAuthorized(configuration.cookieOptions) && !canUseEventBridge()
       ? startLogsSessionManager(configuration)
       : startLogsSessionManagerStub(configuration)
 
-  return doStartLogs(configuration, reportRawError, reportObservable, session, sender)
+  return doStartLogs(configuration, reportRawError, session)
 }
 
 function startLogsInternalMonitoring(configuration: LogsConfiguration) {
@@ -91,9 +77,7 @@ function startLogsInternalMonitoring(configuration: LogsConfiguration) {
 export function doStartLogs(
   configuration: LogsConfiguration,
   reportRawError: (error: RawError) => void,
-  reportObservable: Observable<RawReport>,
-  sessionManager: LogsSessionManager,
-  sender: Sender
+  sessionManager: LogsSessionManager
 ) {
   const assemble = buildAssemble(sessionManager, configuration, reportRawError)
 
@@ -110,31 +94,7 @@ export function doStartLogs(
     onLogEventCollected = (message) => batch.add(message)
   }
 
-  function logReport(report: RawReport) {
-    let message = report.message
-    let messageContext: Partial<LogsEvent> | undefined
-    const logStatus = LogStatusForReport[report.type]
-    if (logStatus === StatusType.error) {
-      messageContext = {
-        error: {
-          kind: report.subtype,
-          origin: ErrorSource.REPORT,
-          stack: report.stack,
-        },
-      }
-    } else if (report.stack) {
-      message += ` Found in ${getFileFromStackTraceString(report.stack)!}`
-    }
-
-    sender.sendToHttp(message, messageContext, logStatus)
-  }
-
-  const reportSubscription = reportObservable.subscribe(logReport)
-
   return {
-    stop: () => {
-      reportSubscription.unsubscribe()
-    },
     send: (message: LogsMessage, currentContext: Context) => {
       const contextualizedMessage = assemble(message, currentContext)
       if (contextualizedMessage) {
