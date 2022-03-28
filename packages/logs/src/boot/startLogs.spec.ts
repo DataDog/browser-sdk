@@ -1,12 +1,10 @@
-import type { ConsoleLog, Context, RawReport, TimeStamp } from '@datadog/browser-core'
+import type { Context, RawReport, TimeStamp } from '@datadog/browser-core'
 import {
   noop,
   Observable,
   resetExperimentalFeatures,
   updateExperimentalFeatures,
   stopSessionManager,
-  display,
-  initConsoleObservable,
 } from '@datadog/browser-core'
 import sinon from 'sinon'
 import { deleteEventBridgeStub, initEventBridgeStub, stubEndpointBuilder } from '../../../core/test/specHelper'
@@ -15,7 +13,7 @@ import type { LogsConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
 
 import type { LogsMessage } from '../domain/logger'
-import { StatusType, HandlerType } from '../domain/logger'
+import { StatusType } from '../domain/logger'
 import type { LogsSessionManager } from '../domain/logsSessionManager'
 import type { Sender } from '../domain/sender'
 import { createSender } from '../domain/sender'
@@ -53,8 +51,7 @@ describe('logs', () => {
   let sessionIsTracked: boolean
   let server: sinon.SinonFakeServer
   let reportObservable: Observable<RawReport>
-  let consoleObservable: Observable<ConsoleLog>
-  let consoleLogSpy: jasmine.Spy
+
   const sessionManager: LogsSessionManager = {
     findTrackedSession: () => (sessionIsTracked ? { id: SESSION_ID } : undefined),
   }
@@ -64,14 +61,7 @@ describe('logs', () => {
     configuration: configurationOverrides,
   }: { sender?: Sender; configuration?: Partial<LogsConfiguration> } = {}) => {
     const configuration = { ...baseConfiguration, ...configurationOverrides }
-    const startLogs = doStartLogs(
-      configuration,
-      () => undefined,
-      consoleObservable,
-      reportObservable,
-      sessionManager,
-      sender
-    )
+    const startLogs = doStartLogs(configuration, () => undefined, reportObservable, sessionManager, sender)
     stopLogs = startLogs.stop
     return startLogs.send
   }
@@ -83,10 +73,8 @@ describe('logs', () => {
       maxBatchSize: 1,
     }
     sessionIsTracked = true
-    consoleObservable = new Observable<ConsoleLog>()
     reportObservable = new Observable<RawReport>()
     server = sinon.fakeServer.create()
-    consoleLogSpy = spyOn(console, 'log').and.callFake(() => true)
   })
 
   afterEach(() => {
@@ -161,61 +149,6 @@ describe('logs', () => {
         eventType: 'log',
         event: jasmine.objectContaining({ message: 'message' }),
       })
-    })
-
-    it('should not print the log twice when console handler is enabled', () => {
-      const sender = createSender(noop)
-      const logErrorSpy = spyOn(sender, 'sendToHttp')
-      const displaySpy = spyOn(display, 'log')
-
-      consoleObservable = initConsoleObservable(['log'])
-      startLogs({ sender })
-      sender.setHandler([HandlerType.console])
-      /* eslint-disable-next-line no-console */
-      console.log('foo', 'bar')
-
-      expect(logErrorSpy).toHaveBeenCalled()
-      expect(consoleLogSpy).toHaveBeenCalledTimes(1)
-      expect(displaySpy).not.toHaveBeenCalled()
-
-      resetExperimentalFeatures()
-    })
-
-    it('should send console logs when ff forward-logs is enabled', () => {
-      const sender = createSender(noop)
-      const logErrorSpy = spyOn(sender, 'sendToHttp')
-
-      updateExperimentalFeatures(['forward-logs'])
-      const { stop } = originalStartLogs(
-        validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['log'] })!,
-        sender
-      )
-
-      /* eslint-disable-next-line no-console */
-      console.log('foo', 'bar')
-
-      expect(logErrorSpy).toHaveBeenCalled()
-      expect(consoleLogSpy).toHaveBeenCalled()
-
-      resetExperimentalFeatures()
-      stop()
-    })
-
-    it('should not send console logs when ff forward-logs is disabled', () => {
-      const sender = createSender(noop)
-      const logErrorSpy = spyOn(sender, 'sendToHttp')
-
-      const { stop } = originalStartLogs(
-        validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['log'] })!,
-        sender
-      )
-
-      /* eslint-disable-next-line no-console */
-      console.log('foo', 'bar')
-
-      expect(logErrorSpy).not.toHaveBeenCalled()
-      expect(consoleLogSpy).toHaveBeenCalled()
-      stop()
     })
   })
 
