@@ -2282,17 +2282,17 @@
     webdriver "7.18.0"
     webdriverio "7.18.0"
 
-"@wdio/selenium-standalone-service@7.18.0":
-  version "7.18.0"
-  resolved "https://registry.yarnpkg.com/@wdio/selenium-standalone-service/-/selenium-standalone-service-7.18.0.tgz#497f8226a8a65d3d9a0c28bb7b9c14b7ce9e9ae5"
-  integrity sha512-Tl+GB45oYsnL5zP5xQU245Uhcm3IFL7XP3x7nIsUj7VHzWPSvMB4Hib90CnNiTd2pY1AUC8q+2rlS1M1jZq3VQ==
+"@wdio/selenium-standalone-service@7.19.1":
+  version "7.19.1"
+  resolved "https://registry.yarnpkg.com/@wdio/selenium-standalone-service/-/selenium-standalone-service-7.19.1.tgz#9107abd34e082360691f2415f20c91eddc732c63"
+  integrity sha512-/+C/287HZhNHW+G9vw1bZoICg8X5DewbTdArR8jbgEd6oa2VwUXi4DwtjgNOUAW8DiyJXeuC49F9IGHvC3qCJQ==
   dependencies:
     "@types/fs-extra" "^9.0.1"
     "@types/node" "^17.0.4"
     "@types/selenium-standalone" "^7.0.0"
-    "@wdio/config" "7.18.0"
-    "@wdio/logger" "7.17.3"
-    "@wdio/types" "7.18.0"
+    "@wdio/config" "7.19.1"
+    "@wdio/logger" "7.19.0"
+    "@wdio/types" "7.19.1"
     fs-extra "^10.0.0"
     selenium-standalone "^8.0.3"
 
