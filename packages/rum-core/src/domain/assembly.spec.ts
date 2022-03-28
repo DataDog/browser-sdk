@@ -430,10 +430,11 @@ describe('rum assembly', () => {
       expect(serverRumEvents[0].action).not.toBeDefined()
       serverRumEvents = []
 
+      const generatedRawRumActionEvent = createRawRumEvent(RumEventType.ACTION) as RawRumActionEvent
       notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.ACTION),
+        rawRumEvent: generatedRawRumActionEvent,
       })
-      expect((serverRumEvents[0] as RumActionEvent).action.id).not.toEqual('7890')
+      expect((serverRumEvents[0] as RumActionEvent).action.id).toEqual(generatedRawRumActionEvent.action.id)
       serverRumEvents = []
     })
   })

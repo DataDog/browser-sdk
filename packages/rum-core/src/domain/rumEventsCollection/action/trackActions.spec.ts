@@ -1,5 +1,5 @@
 import type { Context, ClocksState, Observable } from '@datadog/browser-core'
-import { relativeNow, DOM_EVENT } from '@datadog/browser-core'
+import { resetExperimentalFeatures, updateExperimentalFeatures, relativeNow, DOM_EVENT } from '@datadog/browser-core'
 import type { Clock } from '../../../../../core/test/specHelper'
 import { createNewEvent } from '../../../../../core/test/specHelper'
 import type { TestSetupBuilder } from '../../../../test/specHelper'
@@ -184,19 +184,46 @@ describe('newAction', () => {
     setupBuilder.cleanup()
   })
 
-  it('ignores any starting action while another one is happening', () => {
-    const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
-    lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
+  describe('without frustration-signals flag', () => {
+    it('ignores any starting action while another one is ongoing', () => {
+      const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
+      lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
 
-    newClick('test-1')
-    newClick('test-2')
+      newClick('test-1')
+      newClick('test-2')
 
-    clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-    domMutationObservable.notify()
+      clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+      domMutationObservable.notify()
 
-    clock.tick(EXPIRE_DELAY)
-    expect(events.length).toBe(1)
-    expect(events[0].name).toBe('test-1')
+      clock.tick(EXPIRE_DELAY)
+      expect(events.length).toBe(1)
+      expect(events[0].name).toBe('test-1')
+    })
+  })
+
+  describe('with frustration-signals flag', () => {
+    beforeEach(() => {
+      updateExperimentalFeatures(['frustration-signals'])
+    })
+    afterEach(() => {
+      resetExperimentalFeatures()
+    })
+
+    it('collect actions even if another one is ongoing', () => {
+      const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
+      lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
+
+      newClick('test-1')
+      newClick('test-2')
+
+      clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+      domMutationObservable.notify()
+
+      clock.tick(EXPIRE_DELAY)
+      expect(events.length).toBe(2)
+      expect(events[0].name).toBe('test-1')
+      expect(events[1].name).toBe('test-2')
+    })
   })
 
   it('counts errors occurring during the action', () => {
