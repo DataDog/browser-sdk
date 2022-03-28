@@ -1147,12 +1147,12 @@
     npmlog "^4.1.2"
     write-file-atomic "^3.0.3"
 
-"@mantine/core@4.0.7":
-  version "4.0.7"
-  resolved "https://registry.yarnpkg.com/@mantine/core/-/core-4.0.7.tgz#225b6be81a4bdede204eb24aa30a5029a110920b"
-  integrity sha512-HBUlPR7T5C0phuaKuY5SfyMB9hSMatXrqfbf8XE+a/3mRYacqa2wvp2YRGFtLxbLD49bZqybRXc8OR1VtsrZ6A==
+"@mantine/core@4.0.9":
+  version "4.0.9"
+  resolved "https://registry.yarnpkg.com/@mantine/core/-/core-4.0.9.tgz#c799a9441a67812da80fa25cca84f37209701dbe"
+  integrity sha512-x7qEnot6dUqstby8G3Hn06zH39sAzC610qEUUThsw1a/UFJvHjr+UONcfDkBGX3XzcgsgOLn/HnOksUHE349fg==
   dependencies:
-    "@mantine/styles" "4.0.7"
+    "@mantine/styles" "4.0.9"
     "@popperjs/core" "^2.9.3"
     "@radix-ui/react-scroll-area" "^0.1.1"
     clsx "^1.1.1"
@@ -1164,10 +1164,10 @@
   resolved "https://registry.yarnpkg.com/@mantine/hooks/-/hooks-4.0.7.tgz#7b6d12994f3bc35e653dd3054efeaef40f8af032"
   integrity sha512-SjP6SZIgri3oMLDZBDYIo+nj9EKAN5OgvCDzREfD9k++BluPk2AfyzCpaZ7mr4+4ZskS6o5FIBvKqvUZYzr9bg==
 
-"@mantine/styles@4.0.7":
-  version "4.0.7"
-  resolved "https://registry.yarnpkg.com/@mantine/styles/-/styles-4.0.7.tgz#bb2e3cde15004b9d9a0f72ed359da8c24bd8fd6a"
-  integrity sha512-8QOHAigeTZwS90XwL/MjokmMu9vZDnIJetQRUrRnprovNaLm96aklPVQeXmgxmDlWGuleDq9zhLhjyBJSMPN0A==
+"@mantine/styles@4.0.9":
+  version "4.0.9"
+  resolved "https://registry.yarnpkg.com/@mantine/styles/-/styles-4.0.9.tgz#81a5c7a8810fe663b952eea94de154963dff7361"
+  integrity sha512-pZIJ4lAl0RDbIYosJEJpEv2iYutlIDMlgoCOac32jB3GkY1iPu2mZjVTp5/aySLI1e/2hb0Pb+kHM58nnG82wA==
   dependencies:
     "@emotion/cache" "^11.7.1"
     "@emotion/react" "^11.7.1"
