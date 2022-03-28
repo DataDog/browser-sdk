@@ -1,5 +1,6 @@
 import type { Context, Duration, ClocksState, Observable, TimeStamp, RelativeTime } from '@datadog/browser-core'
 import {
+  isExperimentalFeatureEnabled,
   getRelativeTime,
   ONE_MINUTE,
   ContextHistory,
@@ -49,7 +50,7 @@ export interface AutoActionCreatedEvent {
 }
 
 export interface ActionContexts {
-  findActionId: (startTime?: RelativeTime) => string | undefined
+  findActionId: (startTime?: RelativeTime) => string | string[] | undefined
 }
 
 // Maximum duration for automatic actions
@@ -74,7 +75,7 @@ export function trackActions(
   })
 
   const { stop: stopListener } = listenEvents((event) => {
-    if (history.getCurrent()) {
+    if (!isExperimentalFeatureEnabled('frustration-signals') && history.find()) {
       // Ignore any new action if another one is already occurring.
       return
     }
@@ -89,25 +90,25 @@ export function trackActions(
       name,
       event,
       (endTime) => {
-        history.closeCurrent(getRelativeTime(endTime))
+        historyEntry.close(getRelativeTime(endTime))
       },
       () => {
-        history.clearCurrent()
+        historyEntry.remove()
       }
     )
-    history.setCurrent(actionController, actionController.startClocks.relative)
+    const historyEntry = history.add(actionController, actionController.startClocks.relative)
   })
 
   const actionContexts: ActionContexts = {
-    findActionId: (startTime?: RelativeTime) => history.find(startTime)?.id,
+    findActionId: (startTime?: RelativeTime) =>
+      isExperimentalFeatureEnabled('frustration-signals')
+        ? history.findAll(startTime).map((controller) => controller.id)
+        : history.find(startTime)?.id,
   }
 
   return {
     stop: () => {
-      const currentAction = history.getCurrent()
-      if (currentAction) {
-        currentAction.discard()
-      }
+      history.findAll().forEach((actionController) => actionController.discard())
       stopListener()
     },
     actionContexts,
