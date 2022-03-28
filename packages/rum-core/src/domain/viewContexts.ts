@@ -16,11 +16,11 @@ export function startViewContexts(lifeCycle: LifeCycle): ViewContexts {
   const viewContextHistory = new ContextHistory<ViewContext>(VIEW_CONTEXT_TIME_OUT_DELAY)
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
-    viewContextHistory.setCurrent(buildViewContext(view), view.startClocks.relative)
+    viewContextHistory.add(buildViewContext(view), view.startClocks.relative)
   })
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, ({ endClocks }) => {
-    viewContextHistory.closeCurrent(endClocks.relative)
+    viewContextHistory.closeActive(endClocks.relative)
   })
 
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
