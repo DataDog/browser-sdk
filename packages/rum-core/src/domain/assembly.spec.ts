@@ -3,7 +3,6 @@ import {
   ErrorSource,
   ONE_MINUTE,
   display,
-  combine,
   resetExperimentalFeatures,
   updateExperimentalFeatures,
 } from '@datadog/browser-core'
@@ -26,12 +25,13 @@ import { startRumAssembly } from './assembly'
 import type { LifeCycle, RawRumEventCollectedData } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import { RumSessionPlan } from './rumSessionManager'
+import type { RumConfiguration } from './configuration'
 
 describe('rum assembly', () => {
   let setupBuilder: TestSetupBuilder
   let commonContext: CommonContext
   let serverRumEvents: RumEvent[]
-  let extraConfigurationOptions: object = {}
+  let extraConfigurationOptions: Partial<RumConfiguration> = {}
   let findView: () => ViewContext
   beforeEach(() => {
     findView = () => ({
@@ -57,7 +57,7 @@ describe('rum assembly', () => {
           serverRumEvents.push(serverRumEvent)
         )
         startRumAssembly(
-          combine(configuration, extraConfigurationOptions),
+          { ...configuration, ...extraConfigurationOptions },
           lifeCycle,
           sessionManager,
           viewContexts,

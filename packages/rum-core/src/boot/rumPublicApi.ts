@@ -23,6 +23,7 @@ import { ActionType } from '../rawRumEvent.types'
 import { willSyntheticsInjectRum } from '../domain/syntheticsContext'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import { validateAndBuildRumConfiguration } from '../domain/configuration'
+import type { ViewOptions } from '../domain/rumEventsCollection/view/trackViews'
 import type { startRum } from './startRum'
 
 export type RumPublicApi = ReturnType<typeof makeRumPublicApi>
@@ -45,12 +46,6 @@ export interface RecorderApi {
 }
 interface RumPublicApiOptions {
   ignoreInitIfSyntheticsWillInjectRum?: boolean
-}
-
-interface StartViewOptions {
-  name?: string
-  service?: string
-  version?: string
 }
 
 export function makeRumPublicApi(
@@ -130,7 +125,7 @@ export function makeRumPublicApi(
     isAlreadyInitialized = true
   }
 
-  function doStartRum(configuration: RumConfiguration, initialViewOptions?: StartViewOptions) {
+  function doStartRum(configuration: RumConfiguration, initialViewOptions?: ViewOptions) {
     const startRumResults = startRumImpl(
       configuration,
       () => ({
@@ -161,7 +156,7 @@ export function makeRumPublicApi(
 
   const startView: {
     (name: string): void
-    // (options: StartViewOptions): void // uncomment when removing the feature flag
+    // (options: ViewOptions): void // uncomment when removing the feature flag
   } = monitor((options?: string) => {
     const sanitizedOptions = typeof options === 'object' ? options : { name: options }
     startViewStrategy(sanitizedOptions)
