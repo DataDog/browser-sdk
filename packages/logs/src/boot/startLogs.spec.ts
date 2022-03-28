@@ -64,7 +64,7 @@ describe('logs', () => {
   let rawErrorObservable: Observable<RawError>
   let reportObservable: Observable<RawReport>
   let consoleObservable: Observable<ConsoleLog>
-
+  let consoleLogSpy: jasmine.Spy
   const sessionManager: LogsSessionManager = {
     findTrackedSession: () => (sessionIsTracked ? { id: SESSION_ID } : undefined),
   }
@@ -97,6 +97,7 @@ describe('logs', () => {
     consoleObservable = new Observable<ConsoleLog>()
     reportObservable = new Observable<RawReport>()
     server = sinon.fakeServer.create()
+    consoleLogSpy = spyOn(console, 'log').and.callFake(() => true)
   })
 
   afterEach(() => {
@@ -201,7 +202,6 @@ describe('logs', () => {
       const sender = createSender(noop)
       const logErrorSpy = spyOn(sender, 'sendToHttp')
       const displaySpy = spyOn(display, 'log')
-      const consoleLogSpy = spyOn(console, 'log').and.callFake(() => true)
 
       consoleObservable = initConsoleObservable(['log'])
       startLogs({ sender })
@@ -219,7 +219,6 @@ describe('logs', () => {
     it('should send console logs when ff forward-logs is enabled', () => {
       const sender = createSender(noop)
       const logErrorSpy = spyOn(sender, 'sendToHttp')
-      const consoleLogSpy = spyOn(console, 'log').and.callFake(() => true)
 
       updateExperimentalFeatures(['forward-logs'])
       const { stop } = originalStartLogs(
@@ -240,7 +239,6 @@ describe('logs', () => {
     it('should not send console logs when ff forward-logs is disabled', () => {
       const sender = createSender(noop)
       const logErrorSpy = spyOn(sender, 'sendToHttp')
-      const consoleLogSpy = spyOn(console, 'log').and.callFake(() => true)
 
       const { stop } = originalStartLogs(
         validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['log'] })!,

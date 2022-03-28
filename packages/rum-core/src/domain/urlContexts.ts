@@ -28,12 +28,12 @@ export function startUrlContexts(
   let previousViewUrl: string | undefined
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, ({ endClocks }) => {
-    urlContextHistory.closeCurrent(endClocks.relative)
+    urlContextHistory.closeActive(endClocks.relative)
   })
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, ({ startClocks }) => {
     const viewUrl = location.href
-    urlContextHistory.setCurrent(
+    urlContextHistory.add(
       buildUrlContext({
         url: viewUrl,
         referrer: !previousViewUrl ? document.referrer : previousViewUrl,
@@ -44,11 +44,11 @@ export function startUrlContexts(
   })
 
   const locationChangeSubscription = locationChangeObservable.subscribe(({ newLocation }) => {
-    const current = urlContextHistory.getCurrent()
+    const current = urlContextHistory.find()
     if (current) {
       const changeTime = relativeNow()
-      urlContextHistory.closeCurrent(changeTime)
-      urlContextHistory.setCurrent(
+      urlContextHistory.closeActive(changeTime)
+      urlContextHistory.add(
         buildUrlContext({
           url: newLocation.href,
           referrer: current.view.referrer,
