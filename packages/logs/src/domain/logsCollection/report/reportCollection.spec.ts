@@ -1,8 +1,8 @@
 import { ErrorSource, resetExperimentalFeatures, updateExperimentalFeatures } from '@datadog/browser-core'
-import { stubReportingObserver } from '../../../../core/test/stubReportApis'
-import { validateAndBuildLogsConfiguration } from '../configuration'
-import { StatusType } from '../logger'
-import { createSender } from '../sender'
+import { stubReportingObserver } from '@datadog/browser-core/test/stubReportApis'
+import { validateAndBuildLogsConfiguration } from '../../configuration'
+import { StatusType } from '../../logger'
+import { createSender } from '../../sender'
 import { startReportCollection } from './reportCollection'
 
 describe('reports', () => {

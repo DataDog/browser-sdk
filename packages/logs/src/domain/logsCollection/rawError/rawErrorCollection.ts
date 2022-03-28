@@ -1,10 +1,10 @@
 import type { Context, RawError, ClocksState } from '@datadog/browser-core'
 import { Observable, trackRuntimeError } from '@datadog/browser-core'
-import type { LogsEvent } from '../../logsEvent.types'
-import type { LogsConfiguration } from '../configuration'
-import { StatusType } from '../logger'
-import type { Sender } from '../sender'
-import { trackNetworkError } from '../trackNetworkError'
+import type { LogsEvent } from '../../../logsEvent.types'
+import type { LogsConfiguration } from '../../configuration'
+import { StatusType } from '../../logger'
+import type { Sender } from '../../sender'
+import { trackNetworkError } from './trackNetworkError'
 
 export interface ProvidedError {
   startClocks: ClocksState

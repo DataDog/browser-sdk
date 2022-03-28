@@ -13,8 +13,9 @@ import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/
 import type { LogsConfiguration } from '../domain/configuration'
 import { buildAssemble, getRUMInternalContext } from '../domain/assemble'
 import type { Sender } from '../domain/sender'
-import { startRawErrorCollection } from '../domain/logsCollection/rawErrorCollection'
-import { startConsoleCollection } from '../domain/logsCollection/consoleCollection'
+import { startRawErrorCollection } from '../domain/logsCollection/rawError/rawErrorCollection'
+import { startConsoleCollection } from '../domain/logsCollection/console/consoleCollection'
+import { startReportCollection } from '../domain/logsCollection/report/reportCollection'
 
 export function startLogs(configuration: LogsConfiguration, sender: Sender) {
   const internalMonitoring = startLogsInternalMonitoring(configuration)
@@ -40,6 +41,7 @@ export function startLogs(configuration: LogsConfiguration, sender: Sender) {
 
   const { reportRawError } = startRawErrorCollection(configuration, sender)
   startConsoleCollection(configuration, sender)
+  startReportCollection(configuration, sender)
 
   const session =
     areCookiesAuthorized(configuration.cookieOptions) && !canUseEventBridge()

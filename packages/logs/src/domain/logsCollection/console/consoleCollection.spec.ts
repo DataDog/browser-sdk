@@ -1,7 +1,7 @@
 import { ErrorSource, resetExperimentalFeatures, updateExperimentalFeatures, display } from '@datadog/browser-core'
-import { validateAndBuildLogsConfiguration } from '../configuration'
-import { HandlerType, StatusType } from '../logger'
-import { createSender } from '../sender'
+import { validateAndBuildLogsConfiguration } from '../../configuration'
+import { HandlerType, StatusType } from '../../logger'
+import { createSender } from '../../sender'
 import { startConsoleCollection } from './consoleCollection'
 
 describe('error collection', () => {

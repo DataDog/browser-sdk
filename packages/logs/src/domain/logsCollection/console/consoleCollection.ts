@@ -1,9 +1,9 @@
 import type { Context, ClocksState, ConsoleLog } from '@datadog/browser-core'
 import { ConsoleApiName, ErrorSource, initConsoleObservable } from '@datadog/browser-core'
-import type { LogsEvent } from '../../logsEvent.types'
-import type { LogsConfiguration } from '../configuration'
-import { StatusType } from '../logger'
-import type { Sender } from '../sender'
+import type { LogsEvent } from '../../../logsEvent.types'
+import type { LogsConfiguration } from '../../configuration'
+import { StatusType } from '../../logger'
+import type { Sender } from '../../sender'
 
 export interface ProvidedError {
   startClocks: ClocksState

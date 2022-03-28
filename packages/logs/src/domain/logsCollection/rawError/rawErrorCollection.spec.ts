@@ -1,8 +1,8 @@
 import { ErrorSource, Observable } from '@datadog/browser-core'
 import type { RawError, RelativeTime, TimeStamp } from '@datadog/browser-core'
-import type { LogsConfiguration } from '../configuration'
-import { createSender } from '../sender'
-import { StatusType } from '../logger'
+import type { LogsConfiguration } from '../../configuration'
+import { createSender } from '../../sender'
+import { StatusType } from '../../logger'
 import { startRawErrorCollection } from './rawErrorCollection'
 
 describe('error collection', () => {

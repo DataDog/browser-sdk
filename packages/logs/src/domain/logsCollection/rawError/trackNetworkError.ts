@@ -9,7 +9,7 @@ import {
   monitor,
   noop,
 } from '@datadog/browser-core'
-import type { LogsConfiguration } from './configuration'
+import type { LogsConfiguration } from '../../configuration'
 
 export function trackNetworkError(configuration: LogsConfiguration, errorObservable: Observable<RawError>) {
   const xhrSubscription = initXhrObservable().subscribe((context) => {
