@@ -29,7 +29,7 @@ export function createIntakeServerApp(serverEvents: EventRegistry, bridgeEvents:
     } else {
       ;(req.body as string).split('\n').map((rawEvent) => {
         const event = JSON.parse(rawEvent)
-        if (intakeType === 'rum' && event._dd?.event_type === 'internal_telemetry') {
+        if (intakeType === 'rum' && event.type === 'telemetry') {
           events.push('telemetry', event)
         } else {
           events.push(intakeType, event)
