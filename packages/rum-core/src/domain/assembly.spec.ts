@@ -466,7 +466,7 @@ describe('rum assembly', () => {
 
   describe('service and version', () => {
     beforeEach(() => {
-      extraConfigurationOptions = { service: 'default service' }
+      extraConfigurationOptions = { service: 'default service', version: 'default version' }
     })
 
     it('should come from the init configuration by default', () => {
@@ -476,6 +476,7 @@ describe('rum assembly', () => {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION),
       })
       expect(serverRumEvents[0].service).toEqual('default service')
+      expect(serverRumEvents[0].version).toEqual('default version')
     })
 
     describe('when sub-apps ff enabled', () => {
@@ -488,6 +489,7 @@ describe('rum assembly', () => {
           rawRumEvent: createRawRumEvent(RumEventType.ACTION),
         })
         expect(serverRumEvents[0].service).toEqual('new service')
+        expect(serverRumEvents[0].version).toEqual('new version')
 
         resetExperimentalFeatures()
       })
@@ -501,6 +503,7 @@ describe('rum assembly', () => {
           rawRumEvent: createRawRumEvent(RumEventType.ACTION),
         })
         expect(serverRumEvents[0].service).toEqual('default service')
+        expect(serverRumEvents[0].version).toEqual('default version')
       })
     })
   })
