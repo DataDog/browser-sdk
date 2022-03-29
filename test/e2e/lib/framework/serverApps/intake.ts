@@ -13,12 +13,19 @@ export function createIntakeServerApp(serverEvents: EventRegistry, bridgeEvents:
   app.use(express.text())
   app.use(connectBusboy({ immediate: true }))
 
-  app.post('/', async (req, res) => {
+  app.post('/', (req, res) => {
     const { isBridge, intakeType } = computeIntakeType(req)
     const events = isBridge ? bridgeEvents : serverEvents
 
     if (intakeType === 'sessionReplay') {
-      events.push('sessionReplay', await readSessionReplay(req))
+      readSessionReplay(req).then(
+        (sessionReplayCall) => {
+          events.push('sessionReplay', sessionReplayCall)
+        },
+        (error) => {
+          console.error(`Error while reading session replay response: ${String(error)}`)
+        }
+      )
     } else {
       ;(req.body as string).split('\n').map((rawEvent) => {
         const event = JSON.parse(rawEvent)
