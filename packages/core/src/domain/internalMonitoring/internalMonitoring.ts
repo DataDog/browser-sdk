@@ -79,9 +79,9 @@ export function startInternalMonitoring(configuration: Configuration): InternalM
         _dd: {
           format_version: 2 as const,
         },
+        telemetry: message as any, // https://github.com/microsoft/TypeScript/issues/48457
       },
-      telemetryContextProvider !== undefined ? telemetryContextProvider() : {},
-      { telemetry: message as any } // https://github.com/microsoft/TypeScript/issues/48457
+      telemetryContextProvider !== undefined ? telemetryContextProvider() : {}
     )
   }
 
