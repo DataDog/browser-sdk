@@ -80,19 +80,44 @@ describe('trackActions', () => {
     setupBuilder.cleanup()
   })
 
-  it('discards pending action on view created', () => {
-    const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
-    mockValidatedClickAction(domMutationObservable, clock, button)
-    expect(findActionId()).not.toBeUndefined()
+  describe('without frustration-signals flag', () => {
+    it('discards pending action on view created', () => {
+      const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
+      mockValidatedClickAction(domMutationObservable, clock, button)
+      expect(findActionId()).not.toBeUndefined()
 
-    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
-      id: 'fake',
-      startClocks: jasmine.any(Object) as unknown as ClocksState,
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+        id: 'fake',
+        startClocks: jasmine.any(Object) as unknown as ClocksState,
+      })
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events).toEqual([])
+      expect(findActionId()).toBeUndefined()
     })
-    clock.tick(EXPIRE_DELAY)
+  })
 
-    expect(events).toEqual([])
-    expect(findActionId()).toBeUndefined()
+  describe('with frustration-signals flag', () => {
+    beforeEach(() => {
+      updateExperimentalFeatures(['frustration-signals'])
+    })
+    afterEach(() => {
+      resetExperimentalFeatures()
+    })
+
+    it("doesn't discard pending action on view created", () => {
+      const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
+      mockValidatedClickAction(domMutationObservable, clock, button)
+      expect(findActionId()).not.toBeUndefined()
+
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+        id: 'fake',
+        startClocks: jasmine.any(Object) as unknown as ClocksState,
+      })
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events.length).toBe(1)
+    })
   })
 
   it('starts a action when clicking on an element', () => {
