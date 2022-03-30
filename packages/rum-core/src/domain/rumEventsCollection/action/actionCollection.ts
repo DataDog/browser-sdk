@@ -50,11 +50,12 @@ function processAction(
   const autoActionProperties = isAutoAction(action)
     ? {
         action: {
+          id: action.id,
+          loading_time: toServerDuration(action.duration),
+          frustration_type: action.frustrationTypes,
           error: {
             count: action.counts.errorCount,
           },
-          id: action.id,
-          loading_time: toServerDuration(action.duration),
           long_task: {
             count: action.counts.longTaskCount,
           },

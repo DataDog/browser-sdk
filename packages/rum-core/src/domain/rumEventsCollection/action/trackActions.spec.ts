@@ -94,6 +94,7 @@ describe('trackActions', () => {
         startClocks: jasmine.any(Object),
         type: ActionType.CLICK,
         event: createNewEvent('click'),
+        frustrationTypes: [],
       },
     ])
   })

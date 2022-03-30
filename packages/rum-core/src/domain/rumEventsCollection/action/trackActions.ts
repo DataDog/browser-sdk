@@ -44,6 +44,7 @@ export interface AutoAction {
   duration: Duration
   counts: ActionCounts
   event: Event
+  frustrationTypes: FrustrationType[]
 }
 
 export interface ActionContexts {
@@ -186,7 +187,7 @@ function onClick(state: TrackActionsState, event: MouseEvent & { target: Element
 }
 
 function newPotentialAction(
-  { lifeCycle, history }: TrackActionsState,
+  { lifeCycle, history, collectFrustrations }: TrackActionsState,
   base: Pick<AutoAction, 'startClocks' | 'event' | 'name' | 'type'>
 ) {
   const id = generateUUID()
@@ -225,11 +226,18 @@ function newPotentialAction(
         return
       }
 
+      const frustrationTypes: FrustrationType[] = []
+      if (collectFrustrations) {
+        frustrations.forEach((frustration) => {
+          frustrationTypes.push(frustration)
+        })
+      }
       const { resourceCount, errorCount, longTaskCount } = eventCountsSubscription.eventCounts
       const action: AutoAction = assign(
         {
           duration: elapsed(base.startClocks.timeStamp, finalState.endTime),
           id,
+          frustrationTypes,
           counts: {
             resourceCount,
             errorCount,

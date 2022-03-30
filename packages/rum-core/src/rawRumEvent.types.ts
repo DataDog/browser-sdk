@@ -140,6 +140,7 @@ export interface RawRumActionEvent {
     id: string
     type: ActionType
     loading_time?: ServerDuration
+    frustration_type?: FrustrationType[]
     error?: Count
     long_task?: Count
     resource?: Count
