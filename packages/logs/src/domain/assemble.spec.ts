@@ -132,6 +132,23 @@ describe('assemble', () => {
     expect(assembledMessage!.foo).toBe('b')
   })
 
+  it('should include RUM context', () => {
+    window.DD_RUM = {
+      getInternalContext() {
+        return { view: { url: 'http://from-rum-context.com', id: 'view-id' } }
+      },
+    }
+
+    const message = { ...DEFAULT_MESSAGE }
+
+    const assembledMessage = assemble(message, {})
+
+    expect(assembledMessage!.view).toEqual({
+      id: 'view-id',
+      url: 'http://from-rum-context.com',
+    })
+  })
+
   describe('logs limitation', () => {
     let clock: Clock
     beforeEach(() => {

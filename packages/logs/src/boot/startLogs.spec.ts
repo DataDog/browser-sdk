@@ -99,21 +99,6 @@ describe('logs', () => {
       })
     })
 
-    it('should include RUM context', () => {
-      window.DD_RUM = {
-        getInternalContext() {
-          return { view: { url: 'http://from-rum-context.com', id: 'view-id' } }
-        },
-      }
-      const sendLog = startLogs()
-      sendLog(DEFAULT_MESSAGE, {})
-
-      expect(getLoggedMessage(server, 0).view).toEqual({
-        id: 'view-id',
-        url: 'http://from-rum-context.com',
-      })
-    })
-
     it('should all use the same batch', () => {
       const sendLog = startLogs({ configuration: { maxBatchSize: 3 } })
       sendLog(DEFAULT_MESSAGE, {})
