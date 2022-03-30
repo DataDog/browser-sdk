@@ -469,20 +469,26 @@ describe('rum assembly', () => {
       extraConfigurationOptions = { service: 'default service', version: 'default version' }
     })
 
-    it('should come from the init configuration by default', () => {
-      const { lifeCycle } = setupBuilder.build()
-
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.ACTION),
-      })
-      expect(serverRumEvents[0].service).toEqual('default service')
-      expect(serverRumEvents[0].version).toEqual('default version')
-    })
-
     describe('when sub-apps ff enabled', () => {
-      it('should be overridden by the view context', () => {
+      beforeEach(() => {
         updateExperimentalFeatures(['sub-apps'])
+      })
 
+      afterEach(() => {
+        resetExperimentalFeatures()
+      })
+
+      it('should come from the init configuration by default', () => {
+        const { lifeCycle } = setupBuilder.build()
+
+        notifyRawRumEvent(lifeCycle, {
+          rawRumEvent: createRawRumEvent(RumEventType.ACTION),
+        })
+        expect(serverRumEvents[0].service).toEqual('default service')
+        expect(serverRumEvents[0].version).toEqual('default version')
+      })
+
+      it('should be overridden by the view context', () => {
         const { lifeCycle } = setupBuilder.build()
         findView = () => ({ service: 'new service', version: 'new version', view: { id: '1234' } })
         notifyRawRumEvent(lifeCycle, {
@@ -490,8 +496,6 @@ describe('rum assembly', () => {
         })
         expect(serverRumEvents[0].service).toEqual('new service')
         expect(serverRumEvents[0].version).toEqual('new version')
-
-        resetExperimentalFeatures()
       })
     })
 
@@ -503,7 +507,7 @@ describe('rum assembly', () => {
           rawRumEvent: createRawRumEvent(RumEventType.ACTION),
         })
         expect(serverRumEvents[0].service).toEqual('default service')
-        expect(serverRumEvents[0].version).toEqual('default version')
+        expect(serverRumEvents[0].version).not.toBeDefined()
       })
     })
   })

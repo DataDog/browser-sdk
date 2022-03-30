@@ -114,7 +114,6 @@ export function startRumAssembly(
           },
           date: timeStampNow(),
           service: configuration.service,
-          version: configuration.version,
           source: 'browser',
           session: {
             id: session.id,
@@ -128,6 +127,8 @@ export function startRumAssembly(
         if (!isExperimentalFeatureEnabled('sub-apps')) {
           delete viewContext.service
           delete viewContext.version
+        } else {
+          rumContext.version = configuration.version
         }
 
         const serverRumEvent = (
