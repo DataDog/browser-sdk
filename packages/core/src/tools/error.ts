@@ -10,11 +10,6 @@ export interface RawError {
   type?: string
   stack?: string
   source: ErrorSource
-  resource?: {
-    url: string
-    statusCode: number
-    method: string
-  }
   originalError?: unknown
   handling?: ErrorHandling
   handlingStack?: string

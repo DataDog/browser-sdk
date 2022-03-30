@@ -3,16 +3,16 @@ import type { RawError, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import type { LogsConfiguration } from '../../configuration'
 import { createSender } from '../../sender'
 import { StatusType } from '../../logger'
-import { startRawErrorCollection } from './rawErrorCollection'
+import { startRuntimeErrorCollection } from './runtimeErrorCollection'
 
-describe('error collection', () => {
+describe('runtime error collection', () => {
   let rawErrorObservable: Observable<RawError>
   let sendLogSpy: jasmine.Spy
-  let stopRawErrorCollection: () => void
+  let stopRuntimeErrorCollection: () => void
   beforeEach(() => {
     rawErrorObservable = new Observable<RawError>()
     sendLogSpy = jasmine.createSpy('sendLogSpy')
-    ;({ stop: stopRawErrorCollection } = startRawErrorCollection(
+    ;({ stop: stopRuntimeErrorCollection } = startRuntimeErrorCollection(
       {} as LogsConfiguration,
       createSender(sendLogSpy),
       rawErrorObservable
@@ -20,10 +20,10 @@ describe('error collection', () => {
   })
 
   afterEach(() => {
-    stopRawErrorCollection()
+    stopRuntimeErrorCollection()
   })
 
-  it('should send log errors', () => {
+  it('should send runtime errors', () => {
     rawErrorObservable.notify({
       message: 'error!',
       source: ErrorSource.SOURCE,

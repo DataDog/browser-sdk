@@ -51,7 +51,7 @@ describe('logs', () => {
     configuration: configurationOverrides,
   }: { sender?: Sender; configuration?: Partial<LogsConfiguration> } = {}) => {
     const configuration = { ...baseConfiguration, ...configurationOverrides }
-    const startLogs = doStartLogs(configuration, () => undefined, sessionManager)
+    const startLogs = doStartLogs(configuration, sessionManager, createSender(noop))
     return startLogs.send
   }
 

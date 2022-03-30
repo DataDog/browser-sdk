@@ -9,6 +9,7 @@ import { validateAndBuildLogsConfiguration } from './configuration'
 import type { LogsMessage } from './logger'
 import { StatusType } from './logger'
 import type { LogsSessionManager } from './logsSessionManager'
+import { createSender } from './sender'
 
 describe('assemble', () => {
   const initConfiguration = { clientToken: 'xxx', service: 'service' }
@@ -22,18 +23,18 @@ describe('assemble', () => {
   let assemble: (message: LogsMessage, currentContext: Context) => Context | undefined
   let beforeSend: (event: LogsEvent) => void | boolean
   let sessionIsTracked: boolean
-  let reportRawError: jasmine.Spy
+  let sendLogSpy: jasmine.Spy
 
   beforeEach(() => {
     sessionIsTracked = true
-    reportRawError = jasmine.createSpy()
+    sendLogSpy = jasmine.createSpy()
     const configuration = {
       ...validateAndBuildLogsConfiguration(initConfiguration)!,
       maxBatchSize: 1,
       beforeSend: (x: LogsEvent) => beforeSend(x),
     }
     beforeSend = noop
-    assemble = buildAssemble(sessionManager, configuration, reportRawError)
+    assemble = buildAssemble(sessionManager, configuration, createSender(sendLogSpy))
     window.DD_RUM = {
       getInternalContext: noop,
     }
@@ -138,7 +139,7 @@ describe('assemble', () => {
       assemble = buildAssemble(
         sessionManager,
         { eventRateLimiterThreshold: 1, beforeSend: (x: LogsEvent) => beforeSend(x) } as LogsConfiguration,
-        reportRawError
+        createSender(sendLogSpy)
       )
     })
 
@@ -159,10 +160,15 @@ describe('assemble', () => {
         expect(assembledMessage1!.message).toBe('foo')
         expect(assembledMessage2).toBeUndefined()
 
-        expect(reportRawError).toHaveBeenCalledOnceWith({
+        expect(sendLogSpy).toHaveBeenCalledOnceWith({
           message,
-          source: ErrorSource.AGENT,
-          startClocks: clocksNow(),
+          status: StatusType.error,
+          date: clocksNow().timeStamp,
+          error: {
+            kind: undefined,
+            origin: ErrorSource.AGENT,
+            stack: undefined,
+          },
         })
       })
 

@@ -1,4 +1,4 @@
-import type { Context, RawError, MonitoringMessage, TelemetryEvent } from '@datadog/browser-core'
+import type { Context, MonitoringMessage, TelemetryEvent } from '@datadog/browser-core'
 import {
   areCookiesAuthorized,
   combine,
@@ -13,9 +13,10 @@ import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/
 import type { LogsConfiguration } from '../domain/configuration'
 import { buildAssemble, getRUMInternalContext } from '../domain/assemble'
 import type { Sender } from '../domain/sender'
-import { startRawErrorCollection } from '../domain/logsCollection/rawError/rawErrorCollection'
 import { startConsoleCollection } from '../domain/logsCollection/console/consoleCollection'
 import { startReportCollection } from '../domain/logsCollection/report/reportCollection'
+import { startNetworkErrorCollection } from '../domain/logsCollection/networkError/networkErrorCollection'
+import { startRuntimeErrorCollection } from '../domain/logsCollection/runtimeError/runtimeErrorCollection'
 
 export function startLogs(configuration: LogsConfiguration, sender: Sender) {
   const internalMonitoring = startLogsInternalMonitoring(configuration)
@@ -39,7 +40,8 @@ export function startLogs(configuration: LogsConfiguration, sender: Sender) {
     },
   }))
 
-  const { reportRawError } = startRawErrorCollection(configuration, sender)
+  startNetworkErrorCollection(configuration, sender)
+  startRuntimeErrorCollection(configuration, sender)
   startConsoleCollection(configuration, sender)
   startReportCollection(configuration, sender)
 
@@ -48,7 +50,7 @@ export function startLogs(configuration: LogsConfiguration, sender: Sender) {
       ? startLogsSessionManager(configuration)
       : startLogsSessionManagerStub(configuration)
 
-  return doStartLogs(configuration, reportRawError, session)
+  return doStartLogs(configuration, session, sender)
 }
 
 function startLogsInternalMonitoring(configuration: LogsConfiguration) {
@@ -76,12 +78,8 @@ function startLogsInternalMonitoring(configuration: LogsConfiguration) {
   return internalMonitoring
 }
 
-export function doStartLogs(
-  configuration: LogsConfiguration,
-  reportRawError: (error: RawError) => void,
-  sessionManager: LogsSessionManager
-) {
-  const assemble = buildAssemble(sessionManager, configuration, reportRawError)
+export function doStartLogs(configuration: LogsConfiguration, sessionManager: LogsSessionManager, sender: Sender) {
+  const assemble = buildAssemble(sessionManager, configuration, sender)
 
   let onLogEventCollected: (message: Context) => void
   if (canUseEventBridge()) {
