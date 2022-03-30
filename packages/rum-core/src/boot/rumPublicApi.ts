@@ -23,16 +23,12 @@ import { ActionType } from '../rawRumEvent.types'
 import { willSyntheticsInjectRum } from '../domain/syntheticsContext'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import { validateAndBuildRumConfiguration } from '../domain/configuration'
+import type { ViewOptions } from '../domain/rumEventsCollection/view/trackViews'
 import type { startRum } from './startRum'
 
 export type RumPublicApi = ReturnType<typeof makeRumPublicApi>
 
-export type StartRum = (
-  configuration: RumConfiguration,
-  getCommonContext: () => CommonContext,
-  recorderApi: RecorderApi,
-  initialViewName?: string
-) => StartRumResult
+export type StartRum = typeof startRum
 
 type StartRumResult = ReturnType<typeof startRum>
 
@@ -69,8 +65,8 @@ export function makeRumPublicApi(
   let addTimingStrategy: StartRumResult['addTiming'] = (name, time = timeStampNow()) => {
     bufferApiCalls.add(() => addTimingStrategy(name, time))
   }
-  let startViewStrategy: StartRumResult['startView'] = (name, startClocks = clocksNow()) => {
-    bufferApiCalls.add(() => startViewStrategy(name, startClocks))
+  let startViewStrategy: StartRumResult['startView'] = (options, startClocks = clocksNow()) => {
+    bufferApiCalls.add(() => startViewStrategy(options, startClocks))
   }
   let addActionStrategy: StartRumResult['addAction'] = (action, commonContext = clonedCommonContext()) => {
     bufferApiCalls.add(() => addActionStrategy(action, commonContext))
@@ -119,8 +115,8 @@ export function makeRumPublicApi(
       const beforeInitCalls = bufferApiCalls
       bufferApiCalls = new BoundedBuffer()
 
-      startViewStrategy = (name) => {
-        doStartRum(configuration, name)
+      startViewStrategy = (options) => {
+        doStartRum(configuration, options)
       }
       beforeInitCalls.drain()
     }
@@ -129,7 +125,7 @@ export function makeRumPublicApi(
     isAlreadyInitialized = true
   }
 
-  function doStartRum(configuration: RumConfiguration, initialViewName?: string) {
+  function doStartRum(configuration: RumConfiguration, initialViewOptions?: ViewOptions) {
     const startRumResults = startRumImpl(
       configuration,
       () => ({
@@ -138,7 +134,7 @@ export function makeRumPublicApi(
         hasReplay: recorderApi.isRecording() ? true : undefined,
       }),
       recorderApi,
-      initialViewName
+      initialViewOptions
     )
 
     ;({
@@ -157,6 +153,14 @@ export function makeRumPublicApi(
       startRumResults.viewContexts
     )
   }
+
+  const startView: {
+    (name: string): void
+    // (options: ViewOptions): void // uncomment when removing the feature flag
+  } = monitor((options?: string) => {
+    const sanitizedOptions = typeof options === 'object' ? options : { name: options }
+    startViewStrategy(sanitizedOptions)
+  })
 
   const rumPublicApi = makePublicApi({
     init: monitor(initRum),
@@ -209,9 +213,7 @@ export function makeRumPublicApi(
       user = {}
     }),
 
-    startView: monitor((name?: string) => {
-      startViewStrategy(name)
-    }),
+    startView,
 
     startSessionReplayRecording: monitor(recorderApi.start),
     stopSessionReplayRecording: monitor(recorderApi.stop),

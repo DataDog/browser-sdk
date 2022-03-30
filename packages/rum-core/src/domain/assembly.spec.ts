@@ -1,5 +1,11 @@
 import type { RawError, RelativeTime } from '@datadog/browser-core'
-import { ErrorSource, ONE_MINUTE, display } from '@datadog/browser-core'
+import {
+  ErrorSource,
+  ONE_MINUTE,
+  display,
+  resetExperimentalFeatures,
+  updateExperimentalFeatures,
+} from '@datadog/browser-core'
 import { createRumSessionManagerMock } from '../../test/mockRumSessionManager'
 import { createRawRumEvent } from '../../test/fixtures'
 import type { TestSetupBuilder } from '../../test/specHelper'
@@ -11,7 +17,7 @@ import {
   setup,
 } from '../../test/specHelper'
 import type { RumEventDomainContext } from '../domainContext.types'
-import type { CommonContext, RawRumActionEvent, RawRumErrorEvent, RawRumEvent } from '../rawRumEvent.types'
+import type { CommonContext, RawRumActionEvent, RawRumErrorEvent, RawRumEvent, ViewContext } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumActionEvent, RumErrorEvent, RumEvent } from '../rumEvent.types'
 import { initEventBridgeStub, deleteEventBridgeStub } from '../../../core/test/specHelper'
@@ -19,24 +25,28 @@ import { startRumAssembly } from './assembly'
 import type { LifeCycle, RawRumEventCollectedData } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import { RumSessionPlan } from './rumSessionManager'
+import type { RumConfiguration } from './configuration'
 
 describe('rum assembly', () => {
   let setupBuilder: TestSetupBuilder
   let commonContext: CommonContext
   let serverRumEvents: RumEvent[]
-
+  let extraConfigurationOptions: Partial<RumConfiguration> = {}
+  let findView: () => ViewContext
   beforeEach(() => {
+    findView = () => ({
+      view: {
+        id: '7890',
+        name: 'view name',
+      },
+    })
     commonContext = {
       context: {},
       user: {},
     }
     setupBuilder = setup()
       .withViewContexts({
-        findView: () => ({
-          view: {
-            id: 'abcde',
-          },
-        }),
+        findView: () => findView(),
       })
       .withActionContexts({
         findActionId: () => '7890',
@@ -47,7 +57,7 @@ describe('rum assembly', () => {
           serverRumEvents.push(serverRumEvent)
         )
         startRumAssembly(
-          configuration,
+          { ...configuration, ...extraConfigurationOptions },
           lifeCycle,
           sessionManager,
           viewContexts,
@@ -445,7 +455,60 @@ describe('rum assembly', () => {
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION),
       })
-      expect(serverRumEvents[0].view.id).toBe('abcde')
+      expect(serverRumEvents[0].view).toEqual(
+        jasmine.objectContaining({
+          id: '7890',
+          name: 'view name',
+        })
+      )
+    })
+  })
+
+  describe('service and version', () => {
+    beforeEach(() => {
+      extraConfigurationOptions = { service: 'default service', version: 'default version' }
+    })
+
+    describe('when sub-apps ff enabled', () => {
+      beforeEach(() => {
+        updateExperimentalFeatures(['sub-apps'])
+      })
+
+      afterEach(() => {
+        resetExperimentalFeatures()
+      })
+
+      it('should come from the init configuration by default', () => {
+        const { lifeCycle } = setupBuilder.build()
+
+        notifyRawRumEvent(lifeCycle, {
+          rawRumEvent: createRawRumEvent(RumEventType.ACTION),
+        })
+        expect(serverRumEvents[0].service).toEqual('default service')
+        expect(serverRumEvents[0].version).toEqual('default version')
+      })
+
+      it('should be overridden by the view context', () => {
+        const { lifeCycle } = setupBuilder.build()
+        findView = () => ({ service: 'new service', version: 'new version', view: { id: '1234' } })
+        notifyRawRumEvent(lifeCycle, {
+          rawRumEvent: createRawRumEvent(RumEventType.ACTION),
+        })
+        expect(serverRumEvents[0].service).toEqual('new service')
+        expect(serverRumEvents[0].version).toEqual('new version')
+      })
+    })
+
+    describe('when sub-apps ff disabled', () => {
+      it('should not be overridden by the view context', () => {
+        const { lifeCycle } = setupBuilder.build()
+        findView = () => ({ service: 'new service', version: 'new version', view: { id: '1234' } })
+        notifyRawRumEvent(lifeCycle, {
+          rawRumEvent: createRawRumEvent(RumEventType.ACTION),
+        })
+        expect(serverRumEvents[0].service).toEqual('default service')
+        expect(serverRumEvents[0].version).not.toBeDefined()
+      })
     })
   })
 

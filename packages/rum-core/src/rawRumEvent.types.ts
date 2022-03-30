@@ -170,6 +170,7 @@ export interface RumContext {
     id: string
   }
   service?: string
+  version?: string
   source: 'browser'
   session: {
     id: string
@@ -194,6 +195,8 @@ export interface RumContext {
 }
 
 export interface ViewContext extends Context {
+  service?: string
+  version?: string
   view: {
     id: string
     name?: string

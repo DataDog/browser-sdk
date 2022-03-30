@@ -1,5 +1,12 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
-import { timeStampNow, display, relativeToClocks, relativeNow } from '@datadog/browser-core'
+import {
+  timeStampNow,
+  display,
+  relativeToClocks,
+  relativeNow,
+  resetExperimentalFeatures,
+  updateExperimentalFeatures,
+} from '@datadog/browser-core'
 import type { TestSetupBuilder, ViewTest } from '../../../../test/specHelper'
 import { setup, setupViewTest } from '../../../../test/specHelper'
 import type {
@@ -108,7 +115,7 @@ describe('initial view', () => {
 
   beforeEach(() => {
     setupBuilder = setup().beforeBuild((buildContext) => {
-      viewTest = setupViewTest(buildContext, 'initial view name')
+      viewTest = setupViewTest(buildContext, { name: 'initial view name' })
       return viewTest
     })
   })
@@ -251,7 +258,11 @@ describe('renew session', () => {
     setupBuilder = setup()
       .withFakeLocation('/foo')
       .beforeBuild((buildContext) => {
-        viewTest = setupViewTest(buildContext, 'initial view name')
+        viewTest = setupViewTest(buildContext, {
+          name: 'initial view name',
+          service: 'initial service',
+          version: 'initial version',
+        })
         return viewTest
       })
   })
@@ -271,32 +282,80 @@ describe('renew session', () => {
     expect(getViewCreateCount()).toBe(2)
   })
 
-  it('should use the current view name for the new view', () => {
+  it('should use the current view name, service and version for the new view', () => {
+    updateExperimentalFeatures(['sub-apps'])
     const { lifeCycle, changeLocation } = setupBuilder.build()
     const { getViewCreateCount, getViewCreate, startView } = viewTest
 
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
-    startView('foo')
-    startView('bar')
+    startView({ name: 'view 1', service: 'service 1', version: 'version 1' })
+    startView({ name: 'view 2', service: 'service 2', version: 'version 2' })
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
-    startView('qux')
+    startView({ name: 'view 3', service: 'service 3', version: 'version 3' })
     changeLocation('/bar')
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
     expect(getViewCreateCount()).toBe(8)
 
-    expect(getViewCreate(0).name).toBe('initial view name')
-    expect(getViewCreate(1).name).toBe('initial view name')
-
-    expect(getViewCreate(2).name).toBe('foo')
-    expect(getViewCreate(3).name).toBe('bar')
-    expect(getViewCreate(4).name).toBe('bar')
-
-    expect(getViewCreate(5).name).toBe('qux')
-    expect(getViewCreate(6).name).toBeUndefined()
-    expect(getViewCreate(7).name).toBeUndefined()
+    expect(getViewCreate(0)).toEqual(
+      jasmine.objectContaining({
+        name: 'initial view name',
+        service: 'initial service',
+        version: 'initial version',
+      })
+    )
+    expect(getViewCreate(1)).toEqual(
+      jasmine.objectContaining({
+        name: 'initial view name',
+        service: 'initial service',
+        version: 'initial version',
+      })
+    )
+    expect(getViewCreate(2)).toEqual(
+      jasmine.objectContaining({
+        name: 'view 1',
+        service: 'service 1',
+        version: 'version 1',
+      })
+    )
+    expect(getViewCreate(3)).toEqual(
+      jasmine.objectContaining({
+        name: 'view 2',
+        service: 'service 2',
+        version: 'version 2',
+      })
+    )
+    expect(getViewCreate(4)).toEqual(
+      jasmine.objectContaining({
+        name: 'view 2',
+        service: 'service 2',
+        version: 'version 2',
+      })
+    )
+    expect(getViewCreate(5)).toEqual(
+      jasmine.objectContaining({
+        name: 'view 3',
+        service: 'service 3',
+        version: 'version 3',
+      })
+    )
+    expect(getViewCreate(6)).toEqual(
+      jasmine.objectContaining({
+        name: undefined,
+        service: undefined,
+        version: undefined,
+      })
+    )
+    expect(getViewCreate(7)).toEqual(
+      jasmine.objectContaining({
+        name: undefined,
+        service: undefined,
+        version: undefined,
+      })
+    )
+    resetExperimentalFeatures()
   })
 
   it('should not update the current view when the session is renewed', () => {
@@ -550,12 +609,43 @@ describe('start view', () => {
     const { getViewUpdate, startView } = viewTest
 
     startView()
-    startView('foo')
-    startView('bar')
+    startView({ name: 'foo' })
+    startView({ name: 'bar' })
 
     expect(getViewUpdate(2).name).toBeUndefined()
     expect(getViewUpdate(4).name).toBe('foo')
     expect(getViewUpdate(6).name).toBe('bar')
+  })
+
+  it('should have service and version', () => {
+    updateExperimentalFeatures(['sub-apps'])
+
+    setupBuilder.build()
+    const { getViewUpdate, startView } = viewTest
+
+    startView()
+    startView({ service: 'service 1', version: 'version 1' })
+    startView({ service: 'service 2', version: 'version 2' })
+
+    expect(getViewUpdate(2)).toEqual(
+      jasmine.objectContaining({
+        service: undefined,
+        version: undefined,
+      })
+    )
+    expect(getViewUpdate(4)).toEqual(
+      jasmine.objectContaining({
+        service: 'service 1',
+        version: 'version 1',
+      })
+    )
+    expect(getViewUpdate(6)).toEqual(
+      jasmine.objectContaining({
+        service: 'service 2',
+        version: 'version 2',
+      })
+    )
+    resetExperimentalFeatures()
   })
 
   it('should use the provided clock to stop the current view and start the new one', () => {
@@ -563,7 +653,7 @@ describe('start view', () => {
     const { getViewUpdate, startView } = viewTest
 
     clock.tick(100)
-    startView('foo', relativeToClocks(50 as RelativeTime))
+    startView({ name: 'foo' }, relativeToClocks(50 as RelativeTime))
 
     expect(getViewUpdate(1).duration).toBe(50 as Duration)
     expect(getViewUpdate(2).startClocks.relative).toBe(50 as RelativeTime)
