@@ -48,6 +48,7 @@ export interface AutoAction {
   duration: Duration
   counts: ActionCounts
   event: MouseEvent
+  frustrationTypes: FrustrationType[]
 }
 
 export interface ActionContexts {
@@ -266,11 +267,16 @@ function newPotentialAction(
         return
       }
 
+      const frustrationTypes: FrustrationType[] = []
+      frustrations.forEach((frustration) => {
+        frustrationTypes.push(frustration)
+      })
       const { resourceCount, errorCount, longTaskCount } = eventCountsSubscription.eventCounts
       const action: AutoAction = assign(
         {
           duration: elapsed(base.startClocks.timeStamp, finalState.endTime),
           id,
+          frustrationTypes,
           counts: {
             resourceCount,
             errorCount,
