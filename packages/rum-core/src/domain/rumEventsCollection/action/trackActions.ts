@@ -23,6 +23,7 @@ import { waitIdlePage } from '../../waitIdlePage'
 import type { BaseClick, ClickChain, ClickReference } from './clickChain'
 import { createClickChain } from './clickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
+import { trackSelectionChange } from './trackSelectionChange'
 
 type AutoActionType = ActionType.CLICK
 
@@ -58,6 +59,7 @@ export const AUTO_ACTION_MAX_DURATION = 10 * ONE_SECOND
 export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
 
 interface ActionClick extends BaseClick {
+  selectionChanged: boolean
   singleClickPotentialAction: PotentialAction
 }
 
@@ -94,8 +96,8 @@ export function trackActions(
     state.history.reset()
   })
 
-  const { stop: stopListener } = listenClickEvents((event) => {
-    onClick(state, event)
+  const { stop: stopListener } = listenClickEvents((event, selectionChanged) => {
+    onClick(state, event, selectionChanged)
   })
 
   const actionContexts: ActionContexts = {
@@ -114,20 +116,31 @@ export function trackActions(
   }
 }
 
-function listenClickEvents(callback: (clickEvent: MouseEvent & { target: Element }) => void) {
-  return addEventListener(
+function listenClickEvents(
+  callback: (clickEvent: MouseEvent & { target: Element }, selectionChanged: boolean) => void
+) {
+  const { stop: stopSelectionChangeTracking, getSelectionChanged } = trackSelectionChange()
+
+  const { stop: stopClickListener } = addEventListener(
     window,
     DOM_EVENT.CLICK,
     (clickEvent: MouseEvent) => {
       if (clickEvent.target instanceof Element) {
-        callback(clickEvent as MouseEvent & { target: Element })
+        callback(clickEvent as MouseEvent & { target: Element }, getSelectionChanged())
       }
     },
     { capture: true }
   )
+
+  return {
+    stop: () => {
+      stopClickListener()
+      stopSelectionChangeTracking()
+    },
+  }
 }
 
-function onClick(state: TrackActionsState, event: MouseEvent & { target: Element }) {
+function onClick(state: TrackActionsState, event: MouseEvent & { target: Element }, selectionChanged: boolean) {
   if (state.collectedFrustrations.size === 0 && state.history.find()) {
     // TODO: remove this in a future major version. To keep retrocompatibility, ignore any new
     // action if another one is already occurring.
@@ -154,7 +167,7 @@ function onClick(state: TrackActionsState, event: MouseEvent & { target: Element
   if (state.collectedFrustrations.has(FrustrationType.RAGE)) {
     // If we collect rage click, we have to use a "click chain", and delay the action notification
     // until we know that it's not part of a rage click
-    const clickReference = addClickToClickChain(state, singleClickPotentialAction)
+    const clickReference = addClickToClickChain(state, singleClickPotentialAction, selectionChanged)
     onEndClick = clickReference.markAsComplete
   } else {
     // Else, just notify the action when on click end
@@ -280,11 +293,16 @@ function shouldCollectAction(collectedFrustrations: Set<FrustrationType>, actual
   )
 }
 
-function addClickToClickChain(state: TrackActionsState, singleClickPotentialAction: PotentialAction): ClickReference {
+function addClickToClickChain(
+  state: TrackActionsState,
+  singleClickPotentialAction: PotentialAction,
+  selectionChanged: boolean
+): ClickReference {
   const click: ActionClick = {
     event: singleClickPotentialAction.base.event,
     timeStamp: singleClickPotentialAction.base.startClocks.timeStamp,
     singleClickPotentialAction,
+    selectionChanged,
   }
   let clickReference = state.currentClickChain && state.currentClickChain.tryAppend(click)
   // If we failed to add the click to the current click chain, create a new click chain
