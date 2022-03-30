@@ -1,13 +1,7 @@
-import type {
-  Context,
-  Duration,
-  ClocksState,
-  Observable,
-  TimeStamp,
-  RelativeTime,
-  Subscription,
-} from '@datadog/browser-core'
+import type { Context, Duration, ClocksState, RelativeTime, TimeStamp, Subscription } from '@datadog/browser-core'
 import {
+  Observable,
+  assign,
   isExperimentalFeatureEnabled,
   getRelativeTime,
   ONE_MINUTE,
@@ -19,7 +13,7 @@ import {
   ONE_SECOND,
   elapsed,
 } from '@datadog/browser-core'
-import { ActionType } from '../../../rawRumEvent.types'
+import { FrustrationType, ActionType } from '../../../rawRumEvent.types'
 import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -29,17 +23,17 @@ import { getActionNameFromElement } from './getActionNameFromElement'
 
 type AutoActionType = ActionType.CLICK
 
-export interface ActionCounts {
-  errorCount: number
-  longTaskCount: number
-  resourceCount: number
-}
-
 export interface CustomAction {
   type: ActionType.CUSTOM
   name: string
   startClocks: ClocksState
   context?: Context
+}
+
+interface ActionCounts {
+  errorCount: number
+  longTaskCount: number
+  resourceCount: number
 }
 
 export interface AutoAction {
@@ -52,11 +46,6 @@ export interface AutoAction {
   event: Event
 }
 
-export interface AutoActionCreatedEvent {
-  id: string
-  startClocks: ClocksState
-}
-
 export interface ActionContexts {
   findActionId: (startTime?: RelativeTime) => string | string[] | undefined
 }
@@ -65,10 +54,13 @@ export interface ActionContexts {
 export const AUTO_ACTION_MAX_DURATION = 10 * ONE_SECOND
 export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
 
-interface ActionController {
-  id: string
-  startClocks: ClocksState
-  discard(): void
+interface TrackActionsState {
+  readonly lifeCycle: LifeCycle
+  readonly domMutationObservable: Observable<void>
+  readonly actionNameAttribute: string | undefined
+  readonly collectedFrustrations: Set<FrustrationType>
+  readonly history: ContextHistory<string>
+  readonly stopObservable: Observable<void>
 }
 
 export function trackActions(
@@ -76,131 +68,194 @@ export function trackActions(
   domMutationObservable: Observable<void>,
   { actionNameAttribute }: RumConfiguration
 ) {
-  const history = new ContextHistory<ActionController>(ACTION_CONTEXT_TIME_OUT_DELAY)
+  const state: TrackActionsState = {
+    collectedFrustrations: new Set(
+      isExperimentalFeatureEnabled('frustration-signals')
+        ? // Just track all frustration types until we got a proper initialization parameter for it
+          [FrustrationType.RAGE, FrustrationType.DEAD, FrustrationType.ERROR]
+        : []
+    ),
+    lifeCycle,
+    domMutationObservable,
+    actionNameAttribute,
+    history: new ContextHistory(ACTION_CONTEXT_TIME_OUT_DELAY),
+    stopObservable: new Observable(),
+  }
 
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-    history.reset()
+    state.history.reset()
   })
 
-  const { stop: stopListener } = listenEvents((event) => {
-    if (!isExperimentalFeatureEnabled('frustration-signals') && history.find()) {
-      // Ignore any new action if another one is already occurring.
-      return
-    }
-    const name = getActionNameFromElement(event.target, actionNameAttribute)
-    if (!name) {
-      return
-    }
-    const actionController = newAction(
-      lifeCycle,
-      domMutationObservable,
-      ActionType.CLICK,
-      name,
-      event,
-      (endTime) => {
-        historyEntry.close(getRelativeTime(endTime))
-      },
-      () => {
-        historyEntry.remove()
-      }
-    )
-    const historyEntry = history.add(actionController, actionController.startClocks.relative)
+  const { stop: stopListener } = listenClickEvents((event) => {
+    onClick(state, event)
   })
 
   const actionContexts: ActionContexts = {
     findActionId: (startTime?: RelativeTime) =>
       isExperimentalFeatureEnabled('frustration-signals')
-        ? history.findAll(startTime).map((controller) => controller.id)
-        : history.find(startTime)?.id,
+        ? state.history.findAll(startTime)
+        : state.history.find(startTime),
   }
 
   return {
     stop: () => {
-      history.findAll().forEach((actionController) => actionController.discard())
+      state.stopObservable.notify()
       stopListener()
     },
     actionContexts,
   }
 }
 
-function listenEvents(callback: (event: Event & { target: Element }) => void) {
+function listenClickEvents(callback: (clickEvent: MouseEvent & { target: Element }) => void) {
   return addEventListener(
     window,
     DOM_EVENT.CLICK,
-    (event) => {
-      if (event.target instanceof Element) {
-        callback(event as Event & { target: Element })
+    (clickEvent: MouseEvent) => {
+      if (clickEvent.target instanceof Element) {
+        callback(clickEvent as MouseEvent & { target: Element })
       }
     },
     { capture: true }
   )
 }
 
-function newAction(
-  lifeCycle: LifeCycle,
-  domMutationObservable: Observable<void>,
-  type: AutoActionType,
-  name: string,
-  event: Event,
-  onCompleteCallback: (endTime: TimeStamp) => void,
-  onDiscardCallback: () => void
-): ActionController {
-  const id = generateUUID()
+function onClick(state: TrackActionsState, event: MouseEvent & { target: Element }) {
+  if (state.collectedFrustrations.size === 0 && state.history.find()) {
+    // TODO: remove this in a future major version. To keep retrocompatibility, ignore any new
+    // action if another one is already occurring.
+    return
+  }
+
+  const name = getActionNameFromElement(event.target, state.actionNameAttribute)
+  if (state.collectedFrustrations.size === 0 && !name) {
+    // TODO: remove this in a future major version. To keep retrocompatibility, ignore any action
+    // with a blank name
+    return
+  }
+
   const startClocks = clocksNow()
-  const eventCountsSubscription = trackEventCounts(lifeCycle)
+
+  const singleClickPotentialAction = newPotentialAction(state, {
+    name,
+    event,
+    type: ActionType.CLICK as const,
+    startClocks,
+  })
+
   const { stop: stopWaitingIdlePage } = waitIdlePage(
-    lifeCycle,
-    domMutationObservable,
+    state.lifeCycle,
+    state.domMutationObservable,
     (idleEvent) => {
-      if (idleEvent.hadActivity && startClocks.timeStamp <= idleEvent.end) {
-        complete(idleEvent.end)
+      if (!idleEvent.hadActivity) {
+        // If it has no activity, consider it as a dead click.
+        // TODO: this will yield a lot of false positive. We'll need to refine it in the future.
+        if (state.collectedFrustrations.has(FrustrationType.DEAD)) {
+          singleClickPotentialAction.frustrations.add(FrustrationType.DEAD)
+          singleClickPotentialAction.complete(startClocks.timeStamp)
+        } else {
+          singleClickPotentialAction.discard()
+        }
+      } else if (idleEvent.end < startClocks.timeStamp) {
+        // If the clock is looking weird, just discard the action
+        singleClickPotentialAction.discard()
       } else {
-        discard()
+        // Else complete the action at the end of the page activity
+        singleClickPotentialAction.complete(idleEvent.end)
       }
+      endClick()
     },
     AUTO_ACTION_MAX_DURATION
   )
+
   let viewCreatedSubscription: Subscription | undefined
-  if (!isExperimentalFeatureEnabled('frustration-signals')) {
-    // New views trigger the discard of the current pending Action
-    viewCreatedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, discard)
+  if (state.collectedFrustrations.size === 0) {
+    // TODO: remove this in a future major version. To keep retrocompatibility, end the action on a
+    // new view is created.
+    viewCreatedSubscription = state.lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, endClick)
   }
 
-  function complete(endTime: TimeStamp) {
-    cleanup()
-    const eventCounts = eventCountsSubscription.eventCounts
-    lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
-      counts: {
-        errorCount: eventCounts.errorCount,
-        longTaskCount: eventCounts.longTaskCount,
-        resourceCount: eventCounts.resourceCount,
-      },
-      duration: elapsed(startClocks.timeStamp, endTime),
-      id,
-      name,
-      startClocks,
-      type,
-      event,
-    })
-    onCompleteCallback(endTime)
-  }
+  const stopSubscription = state.stopObservable.subscribe(endClick)
 
-  function discard() {
-    cleanup()
-    onDiscardCallback()
-  }
+  function endClick() {
+    singleClickPotentialAction.notifyIfComplete()
 
-  function cleanup() {
-    stopWaitingIdlePage()
-    eventCountsSubscription.stop()
+    // Cleanup any ongoing process
+    singleClickPotentialAction.discard()
     if (viewCreatedSubscription) {
       viewCreatedSubscription.unsubscribe()
     }
+    stopWaitingIdlePage()
+    stopSubscription.unsubscribe()
   }
+}
+
+function newPotentialAction(
+  {
+    lifeCycle,
+    history,
+    collectedFrustrations,
+  }: Pick<TrackActionsState, 'lifeCycle' | 'history' | 'collectedFrustrations'>,
+  base: Pick<AutoAction, 'startClocks' | 'event' | 'name' | 'type'>
+) {
+  const id = generateUUID()
+  const historyEntry = history.add(id, base.startClocks.relative)
+  const eventCountsSubscription = trackEventCounts(lifeCycle)
+  let finalState: { isDiscarded: false; endTime: TimeStamp } | { isDiscarded: true } | undefined
+  const frustrations = new Set<FrustrationType>()
 
   return {
-    discard,
-    id,
-    startClocks,
+    base,
+    frustrations,
+
+    complete: (endTime: TimeStamp) => {
+      if (finalState) {
+        return
+      }
+      finalState = { isDiscarded: false, endTime }
+      historyEntry.close(getRelativeTime(endTime))
+      eventCountsSubscription.stop()
+      if (eventCountsSubscription.eventCounts.errorCount > 0) {
+        frustrations.add(FrustrationType.ERROR)
+      }
+    },
+
+    discard: () => {
+      if (finalState) {
+        return
+      }
+      finalState = { isDiscarded: true }
+      historyEntry.remove()
+      eventCountsSubscription.stop()
+    },
+
+    notifyIfComplete: () => {
+      if (!finalState || finalState.isDiscarded || !shouldCollectAction(collectedFrustrations, frustrations)) {
+        return
+      }
+
+      const { resourceCount, errorCount, longTaskCount } = eventCountsSubscription.eventCounts
+      const action: AutoAction = assign(
+        {
+          duration: elapsed(base.startClocks.timeStamp, finalState.endTime),
+          id,
+          counts: {
+            resourceCount,
+            errorCount,
+            longTaskCount,
+          },
+        },
+        base
+      )
+      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, action)
+    },
   }
+}
+
+function shouldCollectAction(collectedFrustrations: Set<FrustrationType>, actualFrustrations: Set<FrustrationType>) {
+  return (
+    (collectedFrustrations.has(FrustrationType.DEAD) && actualFrustrations.has(FrustrationType.DEAD)) ||
+    (collectedFrustrations.has(FrustrationType.RAGE) && actualFrustrations.has(FrustrationType.RAGE)) ||
+    (collectedFrustrations.has(FrustrationType.ERROR) && actualFrustrations.has(FrustrationType.ERROR)) ||
+    !actualFrustrations.has(FrustrationType.DEAD)
+  )
 }
