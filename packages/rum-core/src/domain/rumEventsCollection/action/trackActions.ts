@@ -1,5 +1,6 @@
 import type { Context, Duration, ClocksState, RelativeTime, TimeStamp, Subscription } from '@datadog/browser-core'
 import {
+  timeStampNow,
   Observable,
   assign,
   isExperimentalFeatureEnabled,
@@ -19,6 +20,8 @@ import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { trackEventCounts } from '../../trackEventCounts'
 import { waitIdlePage } from '../../waitIdlePage'
+import type { BaseClick, ClickChain, ClickReference } from './clickChain'
+import { createClickChain } from './clickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
 
 type AutoActionType = ActionType.CLICK
@@ -43,7 +46,7 @@ export interface AutoAction {
   startClocks: ClocksState
   duration: Duration
   counts: ActionCounts
-  event: Event
+  event: MouseEvent
 }
 
 export interface ActionContexts {
@@ -54,6 +57,10 @@ export interface ActionContexts {
 export const AUTO_ACTION_MAX_DURATION = 10 * ONE_SECOND
 export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
 
+interface ActionClick extends BaseClick {
+  singleClickPotentialAction: PotentialAction
+}
+
 interface TrackActionsState {
   readonly lifeCycle: LifeCycle
   readonly domMutationObservable: Observable<void>
@@ -61,6 +68,7 @@ interface TrackActionsState {
   readonly collectedFrustrations: Set<FrustrationType>
   readonly history: ContextHistory<string>
   readonly stopObservable: Observable<void>
+  currentClickChain?: ClickChain<ActionClick>
 }
 
 export function trackActions(
@@ -142,6 +150,17 @@ function onClick(state: TrackActionsState, event: MouseEvent & { target: Element
     startClocks,
   })
 
+  let onEndClick: () => void
+  if (state.collectedFrustrations.has(FrustrationType.RAGE)) {
+    // If we collect rage click, we have to use a "click chain", and delay the action notification
+    // until we know that it's not part of a rage click
+    const clickReference = addClickToClickChain(state, singleClickPotentialAction)
+    onEndClick = clickReference.markAsComplete
+  } else {
+    // Else, just notify the action when on click end
+    onEndClick = singleClickPotentialAction.notifyIfComplete
+  }
+
   const { stop: stopWaitingIdlePage } = waitIdlePage(
     state.lifeCycle,
     state.domMutationObservable,
@@ -177,7 +196,7 @@ function onClick(state: TrackActionsState, event: MouseEvent & { target: Element
   const stopSubscription = state.stopObservable.subscribe(endClick)
 
   function endClick() {
-    singleClickPotentialAction.notifyIfComplete()
+    onEndClick()
 
     // Cleanup any ongoing process
     singleClickPotentialAction.discard()
@@ -189,6 +208,7 @@ function onClick(state: TrackActionsState, event: MouseEvent & { target: Element
   }
 }
 
+type PotentialAction = ReturnType<typeof newPotentialAction>
 function newPotentialAction(
   {
     lifeCycle,
@@ -258,4 +278,52 @@ function shouldCollectAction(collectedFrustrations: Set<FrustrationType>, actual
     (collectedFrustrations.has(FrustrationType.ERROR) && actualFrustrations.has(FrustrationType.ERROR)) ||
     !actualFrustrations.has(FrustrationType.DEAD)
   )
+}
+
+function addClickToClickChain(state: TrackActionsState, singleClickPotentialAction: PotentialAction): ClickReference {
+  const click: ActionClick = {
+    event: singleClickPotentialAction.base.event,
+    timeStamp: singleClickPotentialAction.base.startClocks.timeStamp,
+    singleClickPotentialAction,
+  }
+  let clickReference = state.currentClickChain && state.currentClickChain.tryAppend(click)
+  // If we failed to add the click to the current click chain, create a new click chain
+  if (!clickReference) {
+    const rageClickPotentialAction = newPotentialAction(state, singleClickPotentialAction.base)
+    const newClickChain = createClickChain<ActionClick>((clicks) => {
+      flushClickChain(clicks, rageClickPotentialAction)
+      stopSubscription.unsubscribe()
+    })
+    const stopSubscription = state.stopObservable.subscribe(newClickChain.stop)
+    // adding a click to a newly created click chain should always succeed
+    clickReference = newClickChain.tryAppend(click)!
+    state.currentClickChain = newClickChain
+  }
+  return clickReference
+}
+
+function flushClickChain(clicks: ActionClick[], rageClickPotentialAction: PotentialAction) {
+  if (isRage(clicks)) {
+    // Merge any click frustration to the rage click action. In practice, it only concerns
+    // 'dead', because any potential 'error' frustration will already be there (as potential action
+    // collect it themselves), and 'rage' won't be on single click potential actions.
+    clicks.forEach((click) => {
+      click.singleClickPotentialAction.frustrations.forEach((frustration) =>
+        rageClickPotentialAction.frustrations.add(frustration)
+      )
+    })
+    // Send the rage click action
+    rageClickPotentialAction.frustrations.add(FrustrationType.RAGE)
+    rageClickPotentialAction.complete(timeStampNow())
+    rageClickPotentialAction.notifyIfComplete()
+  } else {
+    rageClickPotentialAction.discard()
+    // Send an action for each individual click
+    clicks.forEach((click) => click.singleClickPotentialAction.notifyIfComplete())
+  }
+}
+
+const RAGE_CLICK_MIN_COUNT = 3
+function isRage(clicks: ActionClick[]) {
+  return clicks.length >= RAGE_CLICK_MIN_COUNT
 }
