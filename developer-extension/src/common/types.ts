@@ -12,13 +12,13 @@ export interface BackgroundActions {
 
 export interface PopupActions {
   newStore: Store
+  newEvents: StoredEvent[]
 }
 
 export interface Store {
   devServerStatus: 'unavailable' | 'checking' | 'available'
   useDevBundles: boolean
   useRumSlim: boolean
-  logEventsFromRequests: boolean
   blockIntakeRequests: boolean
   local: {
     [tabId: number]: LocalStore
