@@ -6,8 +6,6 @@ export interface BackgroundActions {
   setStore: Partial<Store>
   flushEvents: void
   endSession: void
-  getConfig: 'rum' | 'logs'
-  configReceived: any
 }
 
 export interface PopupActions {
@@ -30,7 +28,5 @@ export type StoredEvent = (RumEvent | LogsEvent) & {
 }
 
 export interface LocalStore {
-  rumConfig: any
-  logsConfig: any
   events: StoredEvent[]
 }

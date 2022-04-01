@@ -21,8 +21,6 @@ export function setStore(newStore: Partial<Store>) {
 export function setLocalStore(newStore: Partial<LocalStore>, tabId: number) {
   if (!store.local[tabId]) {
     store.local[tabId] = {
-      rumConfig: {},
-      logsConfig: {},
       events: [],
     }
   }
