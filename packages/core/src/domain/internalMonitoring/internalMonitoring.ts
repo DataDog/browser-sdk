@@ -71,15 +71,17 @@ export function startInternalMonitoring(configuration: Configuration): InternalM
   function toTelemetryEvent(message: MonitoringMessage): TelemetryEvent & Context {
     return combine(
       {
+        type: 'telemetry' as const,
         date: timeStampNow(),
         service: 'browser-sdk',
         version: __BUILD_ENV__SDK_VERSION__,
+        source: 'browser' as const,
         _dd: {
-          event_type: 'internal_telemetry' as const,
+          format_version: 2 as const,
         },
+        telemetry: message as any, // https://github.com/microsoft/TypeScript/issues/48457
       },
-      telemetryContextProvider !== undefined ? telemetryContextProvider() : {},
-      message
+      telemetryContextProvider !== undefined ? telemetryContextProvider() : {}
     )
   }
 

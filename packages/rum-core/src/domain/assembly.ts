@@ -8,6 +8,7 @@ import {
   display,
   createEventRateLimiter,
   canUseEventBridge,
+  isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type {
@@ -122,6 +123,14 @@ export function startRumAssembly(
           ci_test: ciTestContext,
         }
         const actionId = actionContexts.findActionId(startTime)
+
+        if (!isExperimentalFeatureEnabled('sub-apps')) {
+          delete viewContext.service
+          delete viewContext.version
+        } else {
+          rumContext.version = configuration.version
+        }
+
         const serverRumEvent = (
           needToAssembleWithAction(rawRumEvent) && actionId
             ? combine(rumContext, urlContext, viewContext, { action: { id: actionId } }, rawRumEvent)

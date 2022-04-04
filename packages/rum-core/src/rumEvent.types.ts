@@ -645,6 +645,10 @@ export interface CommonProperties {
    */
   readonly service?: string
   /**
+   * The version for this application
+   */
+  readonly version?: string
+  /**
    * Session properties
    */
   readonly session: {
