@@ -14,6 +14,7 @@ import {
   ErrorSource,
   getFileFromStackTraceString,
   startBatchWithReplica,
+  isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
 import { trackNetworkError } from '../domain/trackNetworkError'
 import type { LogsMessage } from '../domain/logger'
@@ -131,6 +132,7 @@ export function doStartLogs(
       date: error.startClocks.timeStamp,
       error: {
         kind: error.type,
+        // Todo: remove error origin in the next major version
         origin: error.source,
         stack: error.stack,
       },
@@ -142,33 +144,40 @@ export function doStartLogs(
         url: error.resource.url,
       }
     }
+    if (isExperimentalFeatureEnabled('forward-logs')) {
+      messageContext.origin = error.source
+    }
     sender.sendToHttp(error.message, messageContext, StatusType.error)
   }
 
   function reportConsoleLog(log: ConsoleLog) {
-    let messageContext: Partial<LogsEvent> | undefined
+    const messageContext: Partial<LogsEvent> = {}
+
     if (log.api === ConsoleApiName.error) {
-      messageContext = {
-        error: {
-          origin: ErrorSource.CONSOLE,
-          stack: log.stack,
-        },
+      messageContext.error = {
+        // Todo: remove error origin in the next major version
+        origin: ErrorSource.CONSOLE,
+        stack: log.stack,
       }
+    }
+    if (isExperimentalFeatureEnabled('forward-logs')) {
+      messageContext.origin = ErrorSource.CONSOLE
     }
     sender.sendToHttp(log.message, messageContext, LogStatusForApi[log.api])
   }
 
   function logReport(report: RawReport) {
     let message = report.message
-    let messageContext: Partial<LogsEvent> | undefined
+    const messageContext: Partial<LogsEvent> = {
+      origin: ErrorSource.REPORT,
+    }
     const logStatus = LogStatusForReport[report.type]
     if (logStatus === StatusType.error) {
-      messageContext = {
-        error: {
-          kind: report.subtype,
-          origin: ErrorSource.REPORT,
-          stack: report.stack,
-        },
+      messageContext.error = {
+        kind: report.subtype,
+        // Todo: remove error origin in the next major version
+        origin: ErrorSource.REPORT,
+        stack: report.stack,
       }
     } else if (report.stack) {
       message += ` Found in ${getFileFromStackTraceString(report.stack)!}`

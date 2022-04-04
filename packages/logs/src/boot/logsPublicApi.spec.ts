@@ -1,5 +1,12 @@
 import type { Context } from '@datadog/browser-core'
-import { monitor, ONE_SECOND, display } from '@datadog/browser-core'
+import {
+  monitor,
+  ONE_SECOND,
+  display,
+  ErrorSource,
+  updateExperimentalFeatures,
+  resetExperimentalFeatures,
+} from '@datadog/browser-core'
 import type { Clock } from '../../../core/test/specHelper'
 import { deleteEventBridgeStub, initEventBridgeStub, mockClock } from '../../../core/test/specHelper'
 import type { HybridInitConfiguration, LogsInitConfiguration } from '../domain/configuration'
@@ -225,6 +232,14 @@ describe('logs entry', () => {
           status: StatusType.info,
         },
       })
+    })
+
+    it('logs a message with "logger" origin', () => {
+      updateExperimentalFeatures(['forward-logs'])
+      LOGS.logger.log('message')
+
+      expect(getLoggedMessage(0).message.origin).toEqual(ErrorSource.LOGGER)
+      resetExperimentalFeatures()
     })
 
     it('returns cloned initial configuration', () => {

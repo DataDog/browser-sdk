@@ -12,6 +12,10 @@ export interface LogsEvent {
    */
   status: 'debug' | 'info' | 'warn' | 'error'
   /**
+   * Origin of the log
+   */
+  origin?: 'network' | 'source' | 'console' | 'logger' | 'agent' | 'report' | 'custom'
+  /**
    * UUID of the application
    */
   application_id?: string

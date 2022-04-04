@@ -256,12 +256,12 @@ describe('logs', () => {
 
   describe('reports', () => {
     let sender: Sender
-    let logErrorSpy: jasmine.Spy
+    let sendLogSpy: jasmine.Spy
     let reportingObserverStub: ReturnType<typeof stubReportingObserver>
 
     beforeEach(() => {
-      sender = createSender(noop)
-      logErrorSpy = spyOn(sender, 'sendToHttp')
+      sendLogSpy = jasmine.createSpy()
+      sender = createSender(sendLogSpy)
       reportingObserverStub = stubReportingObserver()
     })
 
@@ -278,7 +278,12 @@ describe('logs', () => {
 
       reportingObserverStub.raiseReport('intervention')
 
-      expect(logErrorSpy).toHaveBeenCalled()
+      expect(sendLogSpy).toHaveBeenCalledWith({
+        origin: ErrorSource.REPORT,
+        error: { origin: ErrorSource.REPORT, kind: 'NavigatorVibrate', stack: jasmine.any(String) },
+        message: 'intervention: foo bar',
+        status: StatusType.error,
+      })
 
       resetExperimentalFeatures()
       stop()
@@ -291,7 +296,7 @@ describe('logs', () => {
       )
       reportingObserverStub.raiseReport('intervention')
 
-      expect(logErrorSpy).not.toHaveBeenCalled()
+      expect(sendLogSpy).not.toHaveBeenCalled()
       stop()
     })
 
@@ -299,7 +304,7 @@ describe('logs', () => {
       const { stop } = originalStartLogs(validateAndBuildLogsConfiguration({ ...initConfiguration })!, sender)
       reportingObserverStub.raiseReport('intervention')
 
-      expect(logErrorSpy).not.toHaveBeenCalled()
+      expect(sendLogSpy).not.toHaveBeenCalled()
       stop()
     })
 
@@ -312,11 +317,11 @@ describe('logs', () => {
 
       reportingObserverStub.raiseReport('deprecation')
 
-      expect(logErrorSpy).toHaveBeenCalledOnceWith(
-        'deprecation: foo bar Found in http://foo.bar/index.js:20:10',
-        undefined,
-        'warn'
-      )
+      expect(sendLogSpy).toHaveBeenCalledOnceWith({
+        origin: ErrorSource.REPORT,
+        message: 'deprecation: foo bar Found in http://foo.bar/index.js:20:10',
+        status: StatusType.warn,
+      })
 
       resetExperimentalFeatures()
       stop()
@@ -396,6 +401,23 @@ describe('logs', () => {
           status: StatusType.error,
         },
       ])
+    })
+
+    it('should have the origin when ff forward-logs is enabled', () => {
+      updateExperimentalFeatures(['forward-logs'])
+      const sendLogSpy = jasmine.createSpy()
+      startLogs({ sender: createSender(sendLogSpy) })
+
+      rawErrorObservable.notify({
+        message: 'error!',
+        source: ErrorSource.SOURCE,
+        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+        type: 'Error',
+      })
+
+      expect(sendLogSpy).toHaveBeenCalled()
+      expect(sendLogSpy.calls.first().args[0].origin).toEqual(ErrorSource.SOURCE)
+      resetExperimentalFeatures()
     })
   })
 
@@ -491,6 +513,18 @@ describe('logs', () => {
 
       expect(server.requests.length).toEqual(1)
       expect(getLoggedMessage(server, 0).message).toBe('foo')
+    })
+
+    it('should have "agent" origin when ff forward-logs is enabled', () => {
+      updateExperimentalFeatures(['forward-logs'])
+
+      const sendLogSpy = jasmine.createSpy<(message: LogsMessage & { foo?: string }) => void>()
+      const sendLog = startLogs({ sender: createSender(sendLogSpy), configuration })
+      sendLog({ message: 'foo', status: StatusType.error }, {})
+      sendLog({ message: 'bar', status: StatusType.error }, {})
+
+      expect(sendLogSpy.calls.mostRecent().args[0].origin).toEqual(ErrorSource.AGENT)
+      resetExperimentalFeatures()
     })
   })
 })
