@@ -3,7 +3,6 @@ import { listenAction, sendAction } from './actions'
 
 export const store: Store = {
   devServerStatus: 'checking',
-  logEventsFromRequests: true,
   useDevBundles: false,
   useRumSlim: false,
   blockIntakeRequests: false,
@@ -23,7 +22,6 @@ export function setLocalStore(newStore: Partial<LocalStore>, tabId: number) {
     store.local[tabId] = {
       rumConfig: {},
       logsConfig: {},
-      events: [],
     }
   }
   const localStore = store.local[tabId]

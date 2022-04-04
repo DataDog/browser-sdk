@@ -1,6 +1,6 @@
 import { Table } from '@mantine/core'
 import React from 'react'
-import { useStore } from '../useStore'
+import { useStore } from '../hooks/useStore'
 
 export function ConfigTab(props: { product: string }) {
   const [{ local }] = useStore()

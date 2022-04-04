@@ -1,18 +1,18 @@
 import { Group, Checkbox, Badge, Button } from '@mantine/core'
 import React from 'react'
 import { sendAction } from '../actions'
-import { useStore } from '../useStore'
+import { useStore } from '../hooks/useStore'
 
-export function ActionsTab() {
-  const [{ useDevBundles, useRumSlim, logEventsFromRequests, devServerStatus, blockIntakeRequests }, setStore] =
-    useStore()
+export function ActionsBar() {
+  const [{ useDevBundles, useRumSlim, devServerStatus, blockIntakeRequests }, setStore] = useStore()
   return (
-    <Group direction="column" spacing="md" align="flex-start">
+    <Group direction="row" spacing="md" align="flex-start">
       <Group spacing="md" align="center">
         <Checkbox
           label="Use dev bundles"
           checked={useDevBundles}
           onChange={(e) => setStore({ useDevBundles: isChecked(e.target) })}
+          color="violet"
         />
         {devServerStatus === 'available' ? (
           <Badge color="green">Available</Badge>
@@ -27,23 +27,23 @@ export function ActionsTab() {
         label="Use RUM Slim"
         checked={useRumSlim}
         onChange={(e) => setStore({ useRumSlim: isChecked(e.target) })}
-      />
-
-      <Checkbox
-        label="Log events"
-        checked={logEventsFromRequests}
-        onChange={(e) => setStore({ logEventsFromRequests: isChecked(e.target) })}
+        color="violet"
       />
 
       <Checkbox
         label="Block intake requests"
         checked={blockIntakeRequests}
         onChange={(e) => setStore({ blockIntakeRequests: isChecked(e.target) })}
+        color="violet"
       />
 
-      <Button onClick={() => sendAction('flushEvents', undefined)}>Flush buffered events</Button>
+      <Button color="violet" variant="light" compact onClick={() => sendAction('flushEvents', undefined)}>
+        Flush buffered events
+      </Button>
 
-      <Button onClick={() => sendAction('endSession', undefined)}>End current session</Button>
+      <Button color="violet" variant="light" compact onClick={() => sendAction('endSession', undefined)}>
+        End current session
+      </Button>
     </Group>
   )
 }
