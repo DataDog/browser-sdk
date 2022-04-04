@@ -1,6 +1,3 @@
-import type { RumEvent } from '../../../packages/rum-core/src/rumEvent.types'
-import type { LogsEvent } from '../../../packages/logs/src/logsEvent.types'
-
 export interface BackgroundActions {
   getStore: void
   setStore: Partial<Store>
@@ -12,7 +9,6 @@ export interface BackgroundActions {
 
 export interface PopupActions {
   newStore: Store
-  newEvents: StoredEvent[]
 }
 
 export interface Store {
@@ -25,12 +21,7 @@ export interface Store {
   }
 }
 
-export type StoredEvent = (RumEvent | LogsEvent) & {
-  id: string
-}
-
 export interface LocalStore {
   rumConfig: any
   logsConfig: any
-  events: StoredEvent[]
 }

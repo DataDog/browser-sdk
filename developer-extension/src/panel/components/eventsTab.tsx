@@ -3,8 +3,7 @@ import React from 'react'
 import ReactJson from 'react-json-view'
 import type { RumEvent } from '../../../../packages/rum-core/src/rumEvent.types'
 import { safeTruncate } from '../../../../packages/core/src/tools/utils'
-import type { StoredEvent } from '../../common/types'
-import type { EventFilters } from '../hooks/useEvents'
+import type { EventFilters, StoredEvent } from '../hooks/useEvents'
 
 const RUM_EVENT_TYPE_COLOR = {
   action: 'violet',

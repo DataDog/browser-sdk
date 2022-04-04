@@ -22,7 +22,6 @@ export function setLocalStore(newStore: Partial<LocalStore>, tabId: number) {
     store.local[tabId] = {
       rumConfig: {},
       logsConfig: {},
-      events: [],
     }
   }
   const localStore = store.local[tabId]
