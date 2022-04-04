@@ -1,11 +1,9 @@
-import { Badge, Button, Table } from '@mantine/core'
+import { Badge, Group, SegmentedControl, Space, Table, TextInput } from '@mantine/core'
 import React from 'react'
 import ReactJson from 'react-json-view'
-import { useStore } from '../useStore'
-import { sendAction } from '../actions'
 import type { RumEvent } from '../../../../packages/rum-core/src/rumEvent.types'
 import { safeTruncate } from '../../../../packages/core/src/tools/utils'
-import type { StoredEvent } from '../../common/types'
+import type { EventFilters, StoredEvent } from '../hooks/useEvents'
 
 const RUM_EVENT_TYPE_COLOR = {
   action: 'violet',
@@ -22,24 +20,34 @@ const LOG_STATUS_COLOR = {
   debug: 'cyan',
 }
 
-export function EventTab() {
-  const [{ local }] = useStore()
+interface EventTabProps {
+  events: StoredEvent[]
+  filters: EventFilters
+  onFiltered: (filters: EventFilters) => void
+}
 
-  const currentTabStore = local[chrome.devtools.inspectedWindow.tabId]
-  const events = currentTabStore ? currentTabStore.events : []
-
+export function EventTab({ events, filters, onFiltered }: EventTabProps) {
   return (
     events && (
       <>
-        <Button onClick={() => sendAction('flushEvents', undefined)}>Flush buffered events</Button>
-        <Table striped>
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Type</th>
-              <th>Event</th>
-            </tr>
-          </thead>
+        <Group>
+          <SegmentedControl
+            value={filters.sdk}
+            onChange={(sdk: 'rum' | 'logs') => onFiltered({ ...filters, sdk })}
+            data={[
+              { label: 'RUM', value: 'rum' },
+              { label: 'Logs', value: 'logs' },
+            ]}
+          />
+          <TextInput
+            placeholder="Filter your events"
+            value={filters.query}
+            style={{ flexGrow: 1 }}
+            onChange={(event) => onFiltered({ ...filters, query: event.currentTarget.value })}
+          />
+        </Group>
+        <Space h="sm" />
+        <Table striped verticalSpacing="xs" fontSize="xs">
           <tbody>
             {events.map((event) => (
               <tr key={event.id}>
@@ -73,7 +81,7 @@ export function EventTab() {
   )
 }
 function isRumEvent(event: StoredEvent): event is RumEvent & { id: string } {
-  return event.type !== undefined
+  return !event.status
 }
 
 const replacer = (key: any, value: any): any => {
