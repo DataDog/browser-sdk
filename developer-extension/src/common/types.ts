@@ -3,8 +3,6 @@ export interface BackgroundActions {
   setStore: Partial<Store>
   flushEvents: void
   endSession: void
-  getConfig: 'rum' | 'logs'
-  configReceived: any
 }
 
 export interface PopupActions {
@@ -16,12 +14,4 @@ export interface Store {
   useDevBundles: boolean
   useRumSlim: boolean
   blockIntakeRequests: boolean
-  local: {
-    [tabId: number]: LocalStore
-  }
-}
-
-export interface LocalStore {
-  rumConfig: any
-  logsConfig: any
 }
