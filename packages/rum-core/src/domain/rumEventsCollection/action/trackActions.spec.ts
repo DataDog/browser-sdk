@@ -1,5 +1,5 @@
-import type { Context, ClocksState, Observable } from '@datadog/browser-core'
-import { resetExperimentalFeatures, updateExperimentalFeatures, relativeNow, DOM_EVENT } from '@datadog/browser-core'
+import type { Context, ClocksState, Observable, Duration } from '@datadog/browser-core'
+import { timeStampNow, resetExperimentalFeatures, updateExperimentalFeatures, relativeNow } from '@datadog/browser-core'
 import type { Clock } from '../../../../../core/test/specHelper'
 import { createNewEvent } from '../../../../../core/test/specHelper'
 import type { TestSetupBuilder } from '../../../../test/specHelper'
@@ -33,7 +33,7 @@ function eventsCollector<T>() {
 }
 
 describe('trackActions', () => {
-  const { events, pushEvent } = eventsCollector()
+  const { events, pushEvent } = eventsCollector<AutoAction>()
   let button: HTMLButtonElement
   let emptyElement: HTMLHRElement
   let setupBuilder: TestSetupBuilder
@@ -42,17 +42,13 @@ describe('trackActions', () => {
   function mockValidatedClickAction(
     domMutationObservable: Observable<void>,
     clock: Clock,
-    target: HTMLElement,
+    target: HTMLElement = button,
     actionDuration: number = BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY
   ) {
-    target.addEventListener(DOM_EVENT.CLICK, () => {
-      clock.tick(actionDuration)
-      // Since we don't collect dom mutations for this test, manually dispatch one
-      domMutationObservable.notify()
-    })
-
-    clock.tick(SOME_ARBITRARY_DELAY)
     target.dispatchEvent(createNewEvent('click'))
+    clock.tick(actionDuration)
+    // Since we don't collect dom mutations for this test, manually dispatch one
+    domMutationObservable.notify()
   }
 
   beforeEach(() => {
@@ -80,49 +76,9 @@ describe('trackActions', () => {
     setupBuilder.cleanup()
   })
 
-  describe('without frustration-signals flag', () => {
-    it('discards pending action on view created', () => {
-      const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
-      mockValidatedClickAction(domMutationObservable, clock, button)
-      expect(findActionId()).not.toBeUndefined()
-
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
-        id: 'fake',
-        startClocks: jasmine.any(Object) as unknown as ClocksState,
-      })
-      clock.tick(EXPIRE_DELAY)
-
-      expect(events).toEqual([])
-      expect(findActionId()).toBeUndefined()
-    })
-  })
-
-  describe('with frustration-signals flag', () => {
-    beforeEach(() => {
-      updateExperimentalFeatures(['frustration-signals'])
-    })
-    afterEach(() => {
-      resetExperimentalFeatures()
-    })
-
-    it("doesn't discard pending action on view created", () => {
-      const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
-      mockValidatedClickAction(domMutationObservable, clock, button)
-      expect(findActionId()).not.toBeUndefined()
-
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
-        id: 'fake',
-        startClocks: jasmine.any(Object) as unknown as ClocksState,
-      })
-      clock.tick(EXPIRE_DELAY)
-
-      expect(events.length).toBe(1)
-    })
-  })
-
   it('starts a action when clicking on an element', () => {
     const { domMutationObservable, clock } = setupBuilder.build()
-    mockValidatedClickAction(domMutationObservable, clock, button)
+    mockValidatedClickAction(domMutationObservable, clock)
     expect(findActionId()).not.toBeUndefined()
     clock.tick(EXPIRE_DELAY)
     expect(events).toEqual([
@@ -132,7 +88,7 @@ describe('trackActions', () => {
           longTaskCount: 0,
           resourceCount: 0,
         },
-        duration: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY,
+        duration: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY as Duration,
         id: jasmine.any(String),
         name: 'Click me',
         startClocks: jasmine.any(Object),
@@ -140,16 +96,6 @@ describe('trackActions', () => {
         event: createNewEvent('click'),
       },
     ])
-  })
-
-  it('discards a action when nothing happens after a click', () => {
-    const { clock } = setupBuilder.build()
-    clock.tick(SOME_ARBITRARY_DELAY)
-    button.click()
-
-    clock.tick(EXPIRE_DELAY)
-    expect(events).toEqual([])
-    expect(findActionId()).toBeUndefined()
   })
 
   it('discards a pending action with a negative duration', () => {
@@ -162,101 +108,20 @@ describe('trackActions', () => {
     expect(findActionId()).toBeUndefined()
   })
 
-  it('ignores a actions if it fails to find a name', () => {
-    const { domMutationObservable, clock } = setupBuilder.build()
-    mockValidatedClickAction(domMutationObservable, clock, emptyElement)
-    expect(findActionId()).toBeUndefined()
-    clock.tick(EXPIRE_DELAY)
-
-    expect(events).toEqual([])
-  })
-
   it('should keep track of previously validated actions', () => {
     const { domMutationObservable, clock } = setupBuilder.build()
-    mockValidatedClickAction(domMutationObservable, clock, button)
+    mockValidatedClickAction(domMutationObservable, clock)
     const actionStartTime = relativeNow()
     clock.tick(EXPIRE_DELAY)
 
     expect(findActionId(actionStartTime)).not.toBeUndefined()
   })
-})
-
-describe('newAction', () => {
-  let setupBuilder: TestSetupBuilder
-  const { events, pushEvent } = eventsCollector<AutoAction>()
-
-  function newClick(name: string, attribute = 'title') {
-    const button = document.createElement('button')
-    button.setAttribute(attribute, name)
-    document.getElementById('root')!.appendChild(button)
-    button.click()
-  }
-
-  beforeEach(() => {
-    const root = document.createElement('root')
-    root.setAttribute('id', 'root')
-    document.body.appendChild(root)
-    setupBuilder = setup()
-      .withFakeClock()
-      .beforeBuild(({ lifeCycle, domMutationObservable, configuration }) =>
-        trackActions(lifeCycle, domMutationObservable, configuration)
-      )
-  })
-
-  afterEach(() => {
-    const root = document.getElementById('root')!
-    root.parentNode!.removeChild(root)
-    setupBuilder.cleanup()
-  })
-
-  describe('without frustration-signals flag', () => {
-    it('ignores any starting action while another one is ongoing', () => {
-      const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
-      lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
-
-      newClick('test-1')
-      newClick('test-2')
-
-      clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-      domMutationObservable.notify()
-
-      clock.tick(EXPIRE_DELAY)
-      expect(events.length).toBe(1)
-      expect(events[0].name).toBe('test-1')
-    })
-  })
-
-  describe('with frustration-signals flag', () => {
-    beforeEach(() => {
-      updateExperimentalFeatures(['frustration-signals'])
-    })
-    afterEach(() => {
-      resetExperimentalFeatures()
-    })
-
-    it('collect actions even if another one is ongoing', () => {
-      const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
-      lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
-
-      newClick('test-1')
-      newClick('test-2')
-
-      clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-      domMutationObservable.notify()
-
-      clock.tick(EXPIRE_DELAY)
-      expect(events.length).toBe(2)
-      expect(events[0].name).toBe('test-1')
-      expect(events[1].name).toBe('test-2')
-    })
-  })
 
   it('counts errors occurring during the action', () => {
     const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
     const collectedRumEvent = { type: RumEventType.ERROR } as RumEvent & Context
-    lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
 
-    newClick('test-1')
+    mockValidatedClickAction(domMutationObservable, clock)
 
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, collectedRumEvent)
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
@@ -276,18 +141,100 @@ describe('newAction', () => {
   })
 
   it('should take the name from user-configured attribute', () => {
-    const { lifeCycle, domMutationObservable, clock } = setupBuilder
+    const { domMutationObservable, clock } = setupBuilder
       .withConfiguration({ actionNameAttribute: 'data-my-custom-attribute' })
       .build()
-    lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
 
-    newClick('test-1', 'data-my-custom-attribute')
-
-    clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-    domMutationObservable.notify()
+    button.setAttribute('data-my-custom-attribute', 'test-1')
+    mockValidatedClickAction(domMutationObservable, clock)
 
     clock.tick(EXPIRE_DELAY)
     expect(events.length).toBe(1)
     expect(events[0].name).toBe('test-1')
+  })
+
+  describe('without frustration-signals flag', () => {
+    it('discards pending action on view created', () => {
+      const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
+      mockValidatedClickAction(domMutationObservable, clock)
+      expect(findActionId()).not.toBeUndefined()
+
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+        id: 'fake',
+        startClocks: jasmine.any(Object) as unknown as ClocksState,
+      })
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events).toEqual([])
+      expect(findActionId()).toBeUndefined()
+    })
+
+    it('ignores any starting action while another one is ongoing', () => {
+      const { domMutationObservable, clock } = setupBuilder.build()
+
+      const firstClickTimeStamp = timeStampNow()
+      mockValidatedClickAction(domMutationObservable, clock)
+      mockValidatedClickAction(domMutationObservable, clock)
+
+      clock.tick(EXPIRE_DELAY)
+      expect(events.length).toBe(1)
+      expect(events[0].startClocks.timeStamp).toBe(firstClickTimeStamp)
+    })
+  })
+
+  describe('with frustration-signals flag', () => {
+    beforeEach(() => {
+      updateExperimentalFeatures(['frustration-signals'])
+    })
+    afterEach(() => {
+      resetExperimentalFeatures()
+    })
+
+    it("doesn't discard pending action on view created", () => {
+      const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
+      mockValidatedClickAction(domMutationObservable, clock)
+      expect(findActionId()).not.toBeUndefined()
+
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+        id: 'fake',
+        startClocks: jasmine.any(Object) as unknown as ClocksState,
+      })
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events.length).toBe(1)
+    })
+
+    it('collect actions even if another one is ongoing', () => {
+      const { domMutationObservable, clock } = setupBuilder.build()
+
+      const firstClickTimeStamp = timeStampNow()
+      mockValidatedClickAction(domMutationObservable, clock)
+      const secondClickTimeStamp = timeStampNow()
+      mockValidatedClickAction(domMutationObservable, clock)
+
+      clock.tick(EXPIRE_DELAY)
+      expect(events.length).toBe(2)
+      expect(events[0].startClocks.timeStamp).toBe(firstClickTimeStamp)
+      expect(events[1].startClocks.timeStamp).toBe(secondClickTimeStamp)
+    })
+  })
+
+  it('discards a action when nothing happens after a click', () => {
+    const { clock } = setupBuilder.build()
+    clock.tick(SOME_ARBITRARY_DELAY)
+    button.click()
+
+    clock.tick(EXPIRE_DELAY)
+    expect(events).toEqual([])
+    expect(findActionId()).toBeUndefined()
+  })
+
+  it('ignores a actions if it fails to find a name', () => {
+    const { domMutationObservable, clock } = setupBuilder.build()
+    mockValidatedClickAction(domMutationObservable, clock, emptyElement)
+    expect(findActionId()).toBeUndefined()
+    clock.tick(EXPIRE_DELAY)
+
+    expect(events).toEqual([])
   })
 })
