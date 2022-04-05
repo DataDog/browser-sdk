@@ -13,7 +13,7 @@ import {
   ONE_SECOND,
   elapsed,
 } from '@datadog/browser-core'
-import { ActionType } from '../../../rawRumEvent.types'
+import { FrustrationType, ActionType } from '../../../rawRumEvent.types'
 import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -58,6 +58,7 @@ interface TrackActionsState {
   readonly lifeCycle: LifeCycle
   readonly domMutationObservable: Observable<void>
   readonly actionNameAttribute: string | undefined
+  readonly collectFrustrations: boolean
   readonly history: ContextHistory<string>
   readonly stopObservable: Observable<void>
 }
@@ -68,6 +69,8 @@ export function trackActions(
   { actionNameAttribute }: RumConfiguration
 ) {
   const state: TrackActionsState = {
+    // TODO: this will be changed when we introduce a proper initialization parameter for it
+    collectFrustrations: isExperimentalFeatureEnabled('frustration-signals'),
     lifeCycle,
     domMutationObservable,
     actionNameAttribute,
@@ -113,14 +116,14 @@ function listenClickEvents(callback: (clickEvent: MouseEvent & { target: Element
 }
 
 function onClick(state: TrackActionsState, event: MouseEvent & { target: Element }) {
-  if (!isExperimentalFeatureEnabled('frustration-signals') && state.history.find()) {
+  if (!state.collectFrustrations && state.history.find()) {
     // TODO: remove this in a future major version. To keep retrocompatibility, ignore any new
     // action if another one is already occurring.
     return
   }
 
   const name = getActionNameFromElement(event.target, state.actionNameAttribute)
-  if (!isExperimentalFeatureEnabled('frustration-signals') && !name) {
+  if (!state.collectFrustrations && !name) {
     // TODO: remove this in a future major version. To keep retrocompatibility, ignore any action
     // with a blank name
     return
@@ -140,7 +143,14 @@ function onClick(state: TrackActionsState, event: MouseEvent & { target: Element
     state.domMutationObservable,
     (idleEvent) => {
       if (!idleEvent.hadActivity) {
-        singleClickPotentialAction.discard()
+        // If it has no activity, consider it as a dead click.
+        // TODO: this will yield a lot of false positive. We'll need to refine it in the future.
+        if (state.collectFrustrations) {
+          singleClickPotentialAction.frustrations.add(FrustrationType.DEAD)
+          singleClickPotentialAction.complete(startClocks.timeStamp)
+        } else {
+          singleClickPotentialAction.discard()
+        }
       } else if (idleEvent.end < startClocks.timeStamp) {
         // If the clock is looking weird, just discard the action
         singleClickPotentialAction.discard()
@@ -154,7 +164,7 @@ function onClick(state: TrackActionsState, event: MouseEvent & { target: Element
   )
 
   let viewCreatedSubscription: Subscription | undefined
-  if (!isExperimentalFeatureEnabled('frustration-signals')) {
+  if (!state.collectFrustrations) {
     // TODO: remove this in a future major version. To keep retrocompatibility, end the action on a
     // new view is created.
     viewCreatedSubscription = state.lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, endClick)
@@ -183,9 +193,11 @@ function newPotentialAction(
   const historyEntry = history.add(id, base.startClocks.relative)
   const eventCountsSubscription = trackEventCounts(lifeCycle)
   let finalState: { isDiscarded: false; endTime: TimeStamp } | { isDiscarded: true } | undefined
+  const frustrations = new Set<FrustrationType>()
 
   return {
     base,
+    frustrations,
 
     complete: (endTime: TimeStamp) => {
       if (finalState) {
@@ -194,6 +206,9 @@ function newPotentialAction(
       finalState = { isDiscarded: false, endTime }
       historyEntry.close(getRelativeTime(endTime))
       eventCountsSubscription.stop()
+      if (eventCountsSubscription.eventCounts.errorCount > 0) {
+        frustrations.add(FrustrationType.ERROR)
+      }
     },
 
     discard: () => {

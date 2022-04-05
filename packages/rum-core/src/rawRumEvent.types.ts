@@ -157,6 +157,12 @@ export const enum ActionType {
   CUSTOM = 'custom',
 }
 
+export const enum FrustrationType {
+  RAGE = 'rage',
+  ERROR = 'error',
+  DEAD = 'dead',
+}
+
 export type RawRumEvent =
   | RawRumErrorEvent
   | RawRumResourceEvent
