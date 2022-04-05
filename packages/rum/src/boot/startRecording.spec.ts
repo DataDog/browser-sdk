@@ -1,10 +1,10 @@
 import { HttpRequest, DefaultPrivacyLevel, noop, isIE } from '@datadog/browser-core'
-import type { LifeCycle } from '@datadog/browser-rum-core'
+import type { LifeCycle, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { inflate } from 'pako'
 import type { RumSessionManagerMock } from '../../../rum-core/test/mockRumSessionManager'
 import { createRumSessionManagerMock } from '../../../rum-core/test/mockRumSessionManager'
-import { createNewEvent } from '../../../core/test/specHelper'
+import { createNewEvent, mockClock } from '../../../core/test/specHelper'
 
 import type { TestSetupBuilder } from '../../../rum-core/test/specHelper'
 import { setup } from '../../../rum-core/test/specHelper'
@@ -165,6 +165,37 @@ describe('startRecording', () => {
     })
   })
 
+  it('full snapshot related records should have the view change date', (done) => {
+    const clock = mockClock()
+    const { lifeCycle } = setupBuilder.build()
+
+    changeView(lifeCycle)
+    flushSegment(lifeCycle)
+
+    waitRequestSendCalls(2, (calls) => {
+      readRequestSegment(calls.first(), (segment) => {
+        expect(segment.records).toEqual([
+          { type: RecordType.Meta, timestamp: Date.now(), data: jasmine.any(Object) },
+          { type: RecordType.Focus, timestamp: Date.now(), data: jasmine.any(Object) },
+          { type: RecordType.FullSnapshot, timestamp: Date.now(), data: jasmine.any(Object) },
+          { type: RecordType.VisualViewport, timestamp: Date.now(), data: jasmine.any(Object) },
+          { type: RecordType.ViewEnd, timestamp: Date.now() },
+        ])
+        clock.cleanup()
+
+        readRequestSegment(calls.mostRecent(), (segment) => {
+          expect(segment.records).toEqual([
+            { type: RecordType.Meta, timestamp: 1, data: jasmine.any(Object) },
+            { type: RecordType.Focus, timestamp: 1, data: jasmine.any(Object) },
+            { type: RecordType.FullSnapshot, timestamp: 1, data: jasmine.any(Object) },
+            { type: RecordType.VisualViewport, timestamp: 1, data: jasmine.any(Object) },
+          ])
+          expectNoExtraRequestSendCalls(done)
+        })
+      })
+    })
+  })
+
   it('adds a ViewEnd record when the view ends', (done) => {
     const { lifeCycle } = setupBuilder.build()
 
@@ -247,7 +278,9 @@ describe('startRecording', () => {
   function changeView(lifeCycle: LifeCycle) {
     lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {} as any)
     viewId = 'view-id-2'
-    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {} as any)
+    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+      startClocks: { relative: 1, timeStamp: 1 },
+    } as Partial<ViewCreatedEvent> as any)
   }
 })
 
