@@ -1,4 +1,5 @@
-import { monitor, ONE_SECOND } from '@datadog/browser-core'
+import { monitor, ONE_SECOND, timeStampNow } from '@datadog/browser-core'
+import { FrustrationType } from '../../../rawRumEvent.types'
 import type { PotentialAction } from './trackClickActions'
 
 export interface RageClickChain {
@@ -20,6 +21,7 @@ export function createRageClickChain(firstClickAction: PotentialAction): RageCli
   let stoppedClickActionsCount = 0
   let status = RageClickChainStatus.WaitingForMoreClickActions
   let timeout: number | undefined
+  const rageClickAction = firstClickAction.clone()
 
   function dontAcceptMoreClickAction() {
     if (status === RageClickChainStatus.WaitingForMoreClickActions) {
@@ -34,7 +36,7 @@ export function createRageClickChain(firstClickAction: PotentialAction): RageCli
       stoppedClickActionsCount === bufferedClickActions.length
     ) {
       status = RageClickChainStatus.Flushed
-      flushClickActions(bufferedClickActions)
+      flushClickActions(bufferedClickActions, rageClickAction)
     }
   }
 
@@ -91,6 +93,37 @@ function mouseEventDistance(origin: MouseEvent, other: MouseEvent) {
   return Math.sqrt(Math.pow(origin.clientX - other.clientX, 2) + Math.pow(origin.clientY - other.clientY, 2))
 }
 
-function flushClickActions(clickActions: PotentialAction[]) {
-  clickActions.forEach((action) => action.validate())
+function flushClickActions(clickActions: PotentialAction[], rageClickAction: PotentialAction) {
+  if (isRage(clickActions)) {
+    // If it should be be considered as a rage click, discard individual click actions and validate
+    // the rage click action.
+    clickActions.forEach((action) => action.discard())
+
+    clickActions.forEach((action) => {
+      action.getFrustrations().forEach((frustration) => {
+        rageClickAction.addFrustration(frustration)
+      })
+    })
+    rageClickAction.addFrustration(FrustrationType.RAGE)
+    rageClickAction.validate(timeStampNow())
+  } else {
+    // Otherwise, discard the rage click action and validate the individual click actions
+    rageClickAction.discard()
+    clickActions.forEach((action) => action.validate())
+  }
+}
+
+// Minimum number of click per second to consider a chain click as "rage"
+const RAGE_CLICK_THRESHOLD = 3
+export function isRage(clickActions: PotentialAction[]) {
+  // TODO: this condition should be improved to avoid reporting 3-click selection as rage click
+  for (let i = 0; i < clickActions.length - (RAGE_CLICK_THRESHOLD - 1); i += 1) {
+    if (
+      clickActions[i + RAGE_CLICK_THRESHOLD - 1].base.event.timeStamp - clickActions[i].base.event.timeStamp <=
+      ONE_SECOND
+    ) {
+      return true
+    }
+  }
+  return false
 }

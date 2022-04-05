@@ -236,9 +236,13 @@ function newPotentialClickAction(
     addFrustration,
     stop,
 
+    getFrustrations: () => frustrations,
+
     onStop: (newOnStopCallback: () => void) => {
       onStopCallback = newOnStopCallback
     },
+
+    clone: () => newPotentialClickAction(lifeCycle, history, collectFrustrations, base),
 
     validate: (endTime?: TimeStamp) => {
       stop(endTime)
