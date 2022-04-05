@@ -2235,6 +2235,13 @@
   dependencies:
     "@wdio/utils" "7.19.1"
 
+"@wdio/repl@7.19.3":
+  version "7.19.3"
+  resolved "https://registry.yarnpkg.com/@wdio/repl/-/repl-7.19.3.tgz#879858b858aa3da1c618fd3d4eb2f75ecb64b30a"
+  integrity sha512-WVLo05chIcovPTvRD16LaBvwwdgvLacfllOYwIoywPuTJqwFGlvhNOyJSOqG00iTwdm0BcwKJkIdKme+lwJSXA==
+  dependencies:
+    "@wdio/utils" "7.19.3"
+
 "@wdio/reporter@7.19.1":
   version "7.19.1"
   resolved "https://registry.yarnpkg.com/@wdio/reporter/-/reporter-7.19.1.tgz#5c996247c0ac33d215a6b596ef1a4a5e9e1a7c69"
@@ -2320,6 +2327,15 @@
   version "7.19.1"
   resolved "https://registry.yarnpkg.com/@wdio/utils/-/utils-7.19.1.tgz#e436959518e7effa1c2420bfc13793f94f6c2d28"
   integrity sha512-Uynr6kUcXDjFqVlI7rgfcuUHGA7M1t+ICjc3R+Evr5cktBj2G8jb4S0SG0tGOPw9p7u5M49iyPy14oxTcb3aPw==
+  dependencies:
+    "@wdio/logger" "7.19.0"
+    "@wdio/types" "7.19.1"
+    p-iteration "^1.1.8"
+
+"@wdio/utils@7.19.3":
+  version "7.19.3"
+  resolved "https://registry.yarnpkg.com/@wdio/utils/-/utils-7.19.3.tgz#1aa9e740d684bcc5f79d458a752fb738243bbf21"
+  integrity sha512-ZchrBeho8cj3lV6z44yiREJcEBm8Uw2mCX8o+P6YiSOrsnEdB9Oivo+6wkU8g9vI/7ZHIHps3w35P7sH9NryzA==
   dependencies:
     "@wdio/logger" "7.19.0"
     "@wdio/types" "7.19.1"
@@ -3918,6 +3934,25 @@ devtools@7.19.1:
     "@wdio/protocols" "7.19.0"
     "@wdio/types" "7.19.1"
     "@wdio/utils" "7.19.1"
+    chrome-launcher "^0.15.0"
+    edge-paths "^2.1.0"
+    puppeteer-core "^13.1.3"
+    query-selector-shadow-dom "^1.0.0"
+    ua-parser-js "^1.0.1"
+    uuid "^8.0.0"
+
+devtools@7.19.3:
+  version "7.19.3"
+  resolved "https://registry.yarnpkg.com/devtools/-/devtools-7.19.3.tgz#a4ad87b6e7ef72e9c728724aef227b7f97283a3d"
+  integrity sha512-c37izE7ZJLcOi1ksbvJOYQEetCbAXoXOG0nm3LnVHyuZFc5iquYdzOws1VWupkRVDJhE+0RWt8rotJijf09lHw==
+  dependencies:
+    "@types/node" "^17.0.4"
+    "@types/ua-parser-js" "^0.7.33"
+    "@wdio/config" "7.19.1"
+    "@wdio/logger" "7.19.0"
+    "@wdio/protocols" "7.19.0"
+    "@wdio/types" "7.19.1"
+    "@wdio/utils" "7.19.3"
     chrome-launcher "^0.15.0"
     edge-paths "^2.1.0"
     puppeteer-core "^13.1.3"
@@ -9762,6 +9797,21 @@ webdriver@7.19.1:
     ky "^0.30.0"
     lodash.merge "^4.6.1"
 
+webdriver@7.19.3:
+  version "7.19.3"
+  resolved "https://registry.yarnpkg.com/webdriver/-/webdriver-7.19.3.tgz#f025b751dfa430b5266b91faa7396532353ef574"
+  integrity sha512-W/Wr/OW9zKHFqRvDUA0rWHV0ViW+gSQ4iNam1ZpkQqQMmH8jxyOR0auc+qrMbQy1W/w5hBcGs9L4nSucEA5pKg==
+  dependencies:
+    "@types/node" "^17.0.4"
+    "@wdio/config" "7.19.1"
+    "@wdio/logger" "7.19.0"
+    "@wdio/protocols" "7.19.0"
+    "@wdio/types" "7.19.1"
+    "@wdio/utils" "7.19.3"
+    got "^11.0.2"
+    ky "^0.30.0"
+    lodash.merge "^4.6.1"
+
 webdriverio@7.18.0:
   version "7.18.0"
   resolved "https://registry.yarnpkg.com/webdriverio/-/webdriverio-7.18.0.tgz#6d21ba14326768e2c4c3847660d8bd2fffc83d43"
@@ -9829,6 +9879,40 @@ webdriverio@7.19.1:
     rgb2hex "0.2.5"
     serialize-error "^8.0.0"
     webdriver "7.19.1"
+
+webdriverio@7.19.3:
+  version "7.19.3"
+  resolved "https://registry.yarnpkg.com/webdriverio/-/webdriverio-7.19.3.tgz#7d8b56a9dafc25a0c4a0dd33d7ff1481a09e3357"
+  integrity sha512-SZCRrixaML9CxdBZ3h4XC4PR8e70OESNWJtbxV4ZL6JFzaQry+nNb+ewsOhekcHSfQN7kktN3AhazDAJh/1j2A==
+  dependencies:
+    "@types/aria-query" "^5.0.0"
+    "@types/node" "^17.0.4"
+    "@wdio/config" "7.19.1"
+    "@wdio/logger" "7.19.0"
+    "@wdio/protocols" "7.19.0"
+    "@wdio/repl" "7.19.3"
+    "@wdio/types" "7.19.1"
+    "@wdio/utils" "7.19.3"
+    archiver "^5.0.0"
+    aria-query "^5.0.0"
+    css-shorthand-properties "^1.1.1"
+    css-value "^0.0.1"
+    devtools "7.19.3"
+    devtools-protocol "^0.0.982423"
+    fs-extra "^10.0.0"
+    get-port "^5.1.1"
+    grapheme-splitter "^1.0.2"
+    lodash.clonedeep "^4.5.0"
+    lodash.isobject "^3.0.2"
+    lodash.isplainobject "^4.0.6"
+    lodash.zip "^4.2.0"
+    minimatch "^5.0.0"
+    puppeteer-core "^13.1.3"
+    query-selector-shadow-dom "^1.0.0"
+    resq "^1.9.1"
+    rgb2hex "0.2.5"
+    serialize-error "^8.0.0"
+    webdriver "7.19.3"
 
 webidl-conversions@^3.0.0:
   version "3.0.1"
