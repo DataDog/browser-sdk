@@ -2098,10 +2098,10 @@
     got "^11.0.2"
     webdriverio "7.19.1"
 
-"@wdio/cli@7.19.1":
-  version "7.19.1"
-  resolved "https://registry.yarnpkg.com/@wdio/cli/-/cli-7.19.1.tgz#c9ca99cd9b013491a8053f6151a149ab34b2e72b"
-  integrity sha512-6e6cZ5xerj5VEJDn+fbobGjPaoGi55jsfJnSacU5sb1J+oCK5baGz5OKUjVsFOxAoD62CNW4euSk3zp7nLs8Tg==
+"@wdio/cli@7.19.3":
+  version "7.19.3"
+  resolved "https://registry.yarnpkg.com/@wdio/cli/-/cli-7.19.3.tgz#624437efbf4dc49fab664118c249f774bf6e0c42"
+  integrity sha512-u7qfFPDMiBS8SdQhXHrKCTMyqDpaDz0lqbxj8O2fDy5T18YIPFD+HHo4t5AzNo/E+jGi35s+9Jzwp6Tkn7nvZw==
   dependencies:
     "@types/ejs" "^3.0.5"
     "@types/fs-extra" "^9.0.4"
@@ -2114,20 +2114,20 @@
     "@wdio/config" "7.19.1"
     "@wdio/logger" "7.19.0"
     "@wdio/types" "7.19.1"
-    "@wdio/utils" "7.19.1"
+    "@wdio/utils" "7.19.3"
     async-exit-hook "^2.0.1"
     chalk "^4.0.0"
     chokidar "^3.0.0"
     cli-spinners "^2.1.0"
     ejs "^3.0.1"
     fs-extra "^10.0.0"
-    inquirer "8.1.5"
+    inquirer "8.2.2"
     lodash.flattendeep "^4.4.0"
     lodash.pickby "^4.6.0"
     lodash.union "^4.6.0"
     mkdirp "^1.0.4"
     recursive-readdir "^2.2.2"
-    webdriverio "7.19.1"
+    webdriverio "7.19.3"
     yargs "^17.0.0"
     yarn-install "^1.0.0"
 
@@ -5627,10 +5627,10 @@ init-package-json@^2.0.2:
     validate-npm-package-license "^3.0.4"
     validate-npm-package-name "^3.0.0"
 
-inquirer@8.1.5:
-  version "8.1.5"
-  resolved "https://registry.yarnpkg.com/inquirer/-/inquirer-8.1.5.tgz#2dc5159203c826d654915b5fe6990fd17f54a150"
-  integrity sha512-G6/9xUqmt/r+UvufSyrPpt84NYwhKZ9jLsgMbQzlx804XErNupor8WQdBnBRrXmBfTPpuwf1sV+ss2ovjgdXIg==
+inquirer@8.2.2:
+  version "8.2.2"
+  resolved "https://registry.yarnpkg.com/inquirer/-/inquirer-8.2.2.tgz#1310517a87a0814d25336c78a20b44c3d9b7629d"
+  integrity sha512-pG7I/si6K/0X7p1qU+rfWnpTE1UIkTONN1wxtzh0d+dHXtT/JG6qBgLxoyHVsQa8cFABxAPh0pD6uUUHiAoaow==
   dependencies:
     ansi-escapes "^4.2.1"
     chalk "^4.1.1"
@@ -5642,7 +5642,7 @@ inquirer@8.1.5:
     mute-stream "0.0.8"
     ora "^5.4.1"
     run-async "^2.4.0"
-    rxjs "^7.2.0"
+    rxjs "^7.5.5"
     string-width "^4.1.0"
     strip-ansi "^6.0.0"
     through "^2.3.6"
@@ -8519,7 +8519,7 @@ rxjs@^6.6.0:
   dependencies:
     tslib "^1.9.0"
 
-rxjs@^7.2.0:
+rxjs@^7.2.0, rxjs@^7.5.5:
   version "7.5.5"
   resolved "https://registry.yarnpkg.com/rxjs/-/rxjs-7.5.5.tgz#2ebad89af0f560f460ad5cc4213219e1f7dd4e9f"
   integrity sha512-sy+H0pQofO95VDmFLzyaw9xNJU4KTRSwQIGM6+iG3SypAtCiLDzpeG8sJrNCWn2Up9km+KhkvTdbkrdy+yzZdw==
