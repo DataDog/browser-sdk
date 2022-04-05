@@ -38,6 +38,7 @@ describe('action collection', () => {
           name: 'click me',
         },
         type: 'click',
+        frustration_type: [],
       })
     })
 
@@ -79,6 +80,7 @@ describe('action collection', () => {
           name: 'click me',
         },
         type: 'click',
+        frustration_type: [],
       })
 
       expect(resourceEvents.length).toBe(1)
