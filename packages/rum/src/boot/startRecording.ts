@@ -1,3 +1,4 @@
+import { timeStampNow } from '@datadog/browser-core'
 import type {
   LifeCycle,
   ViewContexts,
@@ -42,7 +43,7 @@ export function startRecording(
   const { unsubscribe: unsubscribeViewEnded } = lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, () => {
     flushMutations()
     addRecord({
-      timestamp: Date.now(),
+      timestamp: timeStampNow(),
       type: RecordType.ViewEnd,
     })
   })

@@ -1,3 +1,4 @@
+import type { TimeStamp } from '@datadog/browser-core'
 import { DOM_EVENT, isIE } from '@datadog/browser-core'
 import type { ViewContexts, ViewContext } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
@@ -16,12 +17,12 @@ import { SEND_BEACON_BYTE_LENGTH_LIMIT } from '../../transport/send'
 import { computeSegmentContext, doStartSegmentCollection, MAX_SEGMENT_DURATION } from './segmentCollection'
 
 const CONTEXT: SegmentContext = { application: { id: 'a' }, view: { id: 'b' }, session: { id: 'c' } }
-const RECORD: Record = { type: RecordType.ViewEnd, timestamp: 10 }
+const RECORD: Record = { type: RecordType.ViewEnd, timestamp: 10 as TimeStamp }
 
 // A record that will make the segment size reach the SEND_BEACON_BYTE_LENGTH_LIMIT limit
 const VERY_BIG_RECORD: Record = {
   type: RecordType.FullSnapshot,
-  timestamp: 10,
+  timestamp: 10 as TimeStamp,
   data: Array(SEND_BEACON_BYTE_LENGTH_LIMIT).join('a') as any,
 }
 

@@ -1,4 +1,4 @@
-import type { DefaultPrivacyLevel } from '@datadog/browser-core'
+import type { DefaultPrivacyLevel, TimeStamp } from '@datadog/browser-core'
 import type { FocusRecord, VisualViewportRecord, Record } from '../../types'
 import type { MutationController } from './mutationObserver'
 
@@ -69,7 +69,7 @@ export interface RecordOptions {
 
 export interface RecordAPI {
   stop: ListenerHandler
-  takeFullSnapshot: (timestamp?: number) => void
+  takeFullSnapshot: (timestamp?: TimeStamp) => void
   flushMutations: () => void
 }
 

@@ -1,4 +1,5 @@
-import { HttpRequest, DefaultPrivacyLevel, noop, isIE } from '@datadog/browser-core'
+import type { TimeStamp } from '@datadog/browser-core'
+import { HttpRequest, DefaultPrivacyLevel, noop, isIE, timeStampNow } from '@datadog/browser-core'
 import type { LifeCycle, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { inflate } from 'pako'
@@ -15,6 +16,8 @@ import type { Segment } from '../types'
 import { RecordType } from '../types'
 import { resetReplayStats } from '../domain/replayStats'
 import { startRecording } from './startRecording'
+
+const VIEW_TIMESTAMP = 1 as TimeStamp
 
 describe('startRecording', () => {
   let setupBuilder: TestSetupBuilder
@@ -175,20 +178,20 @@ describe('startRecording', () => {
     waitRequestSendCalls(2, (calls) => {
       readRequestSegment(calls.first(), (segment) => {
         expect(segment.records).toEqual([
-          { type: RecordType.Meta, timestamp: Date.now(), data: jasmine.any(Object) },
-          { type: RecordType.Focus, timestamp: Date.now(), data: jasmine.any(Object) },
-          { type: RecordType.FullSnapshot, timestamp: Date.now(), data: jasmine.any(Object) },
-          { type: RecordType.VisualViewport, timestamp: Date.now(), data: jasmine.any(Object) },
-          { type: RecordType.ViewEnd, timestamp: Date.now() },
+          { type: RecordType.Meta, timestamp: timeStampNow(), data: jasmine.any(Object) },
+          { type: RecordType.Focus, timestamp: timeStampNow(), data: jasmine.any(Object) },
+          { type: RecordType.FullSnapshot, timestamp: timeStampNow(), data: jasmine.any(Object) },
+          { type: RecordType.VisualViewport, timestamp: timeStampNow(), data: jasmine.any(Object) },
+          { type: RecordType.ViewEnd, timestamp: timeStampNow() },
         ])
         clock.cleanup()
 
         readRequestSegment(calls.mostRecent(), (segment) => {
           expect(segment.records).toEqual([
-            { type: RecordType.Meta, timestamp: 1, data: jasmine.any(Object) },
-            { type: RecordType.Focus, timestamp: 1, data: jasmine.any(Object) },
-            { type: RecordType.FullSnapshot, timestamp: 1, data: jasmine.any(Object) },
-            { type: RecordType.VisualViewport, timestamp: 1, data: jasmine.any(Object) },
+            { type: RecordType.Meta, timestamp: VIEW_TIMESTAMP, data: jasmine.any(Object) },
+            { type: RecordType.Focus, timestamp: VIEW_TIMESTAMP, data: jasmine.any(Object) },
+            { type: RecordType.FullSnapshot, timestamp: VIEW_TIMESTAMP, data: jasmine.any(Object) },
+            { type: RecordType.VisualViewport, timestamp: VIEW_TIMESTAMP, data: jasmine.any(Object) },
           ])
           expectNoExtraRequestSendCalls(done)
         })
@@ -279,7 +282,7 @@ describe('startRecording', () => {
     lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {} as any)
     viewId = 'view-id-2'
     lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
-      startClocks: { relative: 1, timeStamp: 1 },
+      startClocks: { relative: 1, timeStamp: VIEW_TIMESTAMP },
     } as Partial<ViewCreatedEvent> as any)
   }
 })

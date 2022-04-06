@@ -1,3 +1,4 @@
+import type { TimeStamp } from '@datadog/browser-core'
 import type { IncrementalData, SerializedNodeWithId } from './domain/record'
 
 export { IncrementalSource, MutationData, ViewportResizeData, ScrollData } from './domain/record'
@@ -50,7 +51,7 @@ export type RecordType = typeof RecordType[keyof typeof RecordType]
 
 export interface FullSnapshotRecord {
   type: typeof RecordType.FullSnapshot
-  timestamp: number
+  timestamp: TimeStamp
   data: {
     node: SerializedNodeWithId
     initialOffset: {
@@ -62,13 +63,13 @@ export interface FullSnapshotRecord {
 
 export interface IncrementalSnapshotRecord {
   type: typeof RecordType.IncrementalSnapshot
-  timestamp: number
+  timestamp: TimeStamp
   data: IncrementalData
 }
 
 export interface MetaRecord {
   type: typeof RecordType.Meta
-  timestamp: number
+  timestamp: TimeStamp
   data: {
     href: string
     width: number
@@ -78,7 +79,7 @@ export interface MetaRecord {
 
 export interface FocusRecord {
   type: typeof RecordType.Focus
-  timestamp: number
+  timestamp: TimeStamp
   data: {
     has_focus: boolean
   }
@@ -86,12 +87,12 @@ export interface FocusRecord {
 
 export interface ViewEndRecord {
   type: typeof RecordType.ViewEnd
-  timestamp: number
+  timestamp: TimeStamp
 }
 
 export interface VisualViewportRecord {
   type: typeof RecordType.VisualViewport
-  timestamp: number
+  timestamp: TimeStamp
   data: {
     scale: number
     offsetLeft: number
