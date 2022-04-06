@@ -177,22 +177,18 @@ describe('startRecording', () => {
 
     waitRequestSendCalls(2, (calls) => {
       readRequestSegment(calls.first(), (segment) => {
-        expect(segment.records).toEqual([
-          { type: RecordType.Meta, timestamp: timeStampNow(), data: jasmine.any(Object) },
-          { type: RecordType.Focus, timestamp: timeStampNow(), data: jasmine.any(Object) },
-          { type: RecordType.FullSnapshot, timestamp: timeStampNow(), data: jasmine.any(Object) },
-          { type: RecordType.VisualViewport, timestamp: timeStampNow(), data: jasmine.any(Object) },
-          { type: RecordType.ViewEnd, timestamp: timeStampNow() },
-        ])
+        expect(segment.records[0].timestamp).toEqual(timeStampNow())
+        expect(segment.records[1].timestamp).toEqual(timeStampNow())
+        expect(segment.records[2].timestamp).toEqual(timeStampNow())
+        expect(segment.records[3].timestamp).toEqual(timeStampNow())
+
         clock.cleanup()
 
         readRequestSegment(calls.mostRecent(), (segment) => {
-          expect(segment.records).toEqual([
-            { type: RecordType.Meta, timestamp: VIEW_TIMESTAMP, data: jasmine.any(Object) },
-            { type: RecordType.Focus, timestamp: VIEW_TIMESTAMP, data: jasmine.any(Object) },
-            { type: RecordType.FullSnapshot, timestamp: VIEW_TIMESTAMP, data: jasmine.any(Object) },
-            { type: RecordType.VisualViewport, timestamp: VIEW_TIMESTAMP, data: jasmine.any(Object) },
-          ])
+          expect(segment.records[0].timestamp).toEqual(VIEW_TIMESTAMP)
+          expect(segment.records[1].timestamp).toEqual(VIEW_TIMESTAMP)
+          expect(segment.records[2].timestamp).toEqual(VIEW_TIMESTAMP)
+
           expectNoExtraRequestSendCalls(done)
         })
       })
