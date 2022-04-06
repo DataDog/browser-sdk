@@ -216,6 +216,10 @@ describe('logs entry', () => {
       LOGS.init(DEFAULT_INIT_CONFIGURATION)
     })
 
+    afterEach(() => {
+      resetExperimentalFeatures()
+    })
+
     it('logs a message', () => {
       LOGS.logger.log('message')
 
@@ -234,12 +238,11 @@ describe('logs entry', () => {
       })
     })
 
-    it('logs a message with "logger" origin', () => {
+    it('logs a message with "logger" origin when ff forward-logs is enabled', () => {
       updateExperimentalFeatures(['forward-logs'])
       LOGS.logger.log('message')
 
       expect(getLoggedMessage(0).message.origin).toEqual(ErrorSource.LOGGER)
-      resetExperimentalFeatures()
     })
 
     it('returns cloned initial configuration', () => {

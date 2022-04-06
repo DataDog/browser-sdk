@@ -19,6 +19,10 @@ describe('Logger', () => {
     logger = new Logger(sender)
   })
 
+  afterEach(() => {
+    resetExperimentalFeatures()
+  })
+
   describe('log methods', () => {
     it("'logger.log' should have info status by default", () => {
       logger.log('message')
@@ -26,17 +30,23 @@ describe('Logger', () => {
       expect(getLoggedMessage(0).status).toEqual(StatusType.info)
     })
 
-    it("'logger.log' should set 'logger' origin", () => {
+    it("'logger.log' should set 'logger' origin when ff forward-logs enabled", () => {
       updateExperimentalFeatures(['forward-logs'])
       logger.log('message')
 
       expect(getLoggedMessage(0).origin).toEqual(ErrorSource.LOGGER)
-      resetExperimentalFeatures()
     })
 
-    it("'logger.log' should not set 'logger' origin", () => {
+    it("'logger.log' should not set 'logger' origin when ff forward-logs disabled", () => {
       logger.log('message')
       expect(getLoggedMessage(0).origin).not.toBeDefined()
+    })
+
+    it("'logger.log' message context can override the 'logger' origin", () => {
+      updateExperimentalFeatures(['forward-logs'])
+      logger.log('message', { origin: 'foo' })
+
+      expect(getLoggedMessage(0).origin).toEqual('foo')
     })
 
     STATUSES.forEach((status) => {

@@ -31,7 +31,7 @@ export function startReportCollection(configuration: LogsConfiguration, sender: 
     if (logStatus === StatusType.error) {
       messageContext.error = {
         kind: report.subtype,
-        origin: ErrorSource.REPORT,
+        origin: ErrorSource.REPORT, // Todo: Remove in the next major release
         stack: report.stack,
       }
     } else if (report.stack) {

@@ -58,14 +58,13 @@ function createConsoleObservable(api: ConsoleApiName) {
 
 function buildConsoleLog(params: unknown[], api: ConsoleApiName, handlingStack: string): ConsoleLog {
   // Todo: remove console error prefix in the next major version
-  const prefix = api === ConsoleApiName.error ? `console ${api}: ` : ''
   let message = params.map((param) => formatConsoleParameters(param)).join(' ')
   let stack
 
   if (api === ConsoleApiName.error) {
     const firstErrorParam = find(params, (param: unknown): param is Error => param instanceof Error)
     stack = firstErrorParam ? toStackTraceString(computeStackTrace(firstErrorParam)) : undefined
-    message = `${prefix}${message}`
+    message = `console error: ${message}`
   }
 
   return {

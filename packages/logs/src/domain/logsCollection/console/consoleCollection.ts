@@ -28,7 +28,7 @@ export function startConsoleCollection(configuration: LogsConfiguration, sender:
     if (log.api === ConsoleApiName.error) {
       messageContext = {
         error: {
-          origin: ErrorSource.CONSOLE,
+          origin: ErrorSource.CONSOLE, // Todo: Remove in the next major release
           stack: log.stack,
         },
       }

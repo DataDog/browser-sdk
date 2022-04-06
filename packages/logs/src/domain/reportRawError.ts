@@ -9,7 +9,7 @@ export function reportRawError(error: RawError, sender: Sender) {
     date: error.startClocks.timeStamp,
     error: {
       kind: error.type,
-      origin: error.source,
+      origin: error.source, // Todo: Remove in the next major release
       stack: error.stack,
     },
   }
