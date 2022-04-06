@@ -4,26 +4,34 @@ import type { LogsConfiguration } from './configuration'
 import type { LogsMessage } from './logger'
 import { StatusType } from './logger'
 import type { LogsSessionManager } from './logsSessionManager'
+import { reportRawError } from './reportRawError'
+import type { Sender } from './sender'
 
-export function buildAssemble(
-  sessionManager: LogsSessionManager,
-  configuration: LogsConfiguration,
-  reportRawError: (error: RawError) => void
-) {
+export function buildAssemble(sessionManager: LogsSessionManager, configuration: LogsConfiguration, sender: Sender) {
+  const reportAgentError = (error: RawError) => reportRawError(error, sender)
+
   const logRateLimiters = {
     [StatusType.error]: createEventRateLimiter(
       StatusType.error,
       configuration.eventRateLimiterThreshold,
-      reportRawError
+      reportAgentError
     ),
-    [StatusType.warn]: createEventRateLimiter(StatusType.warn, configuration.eventRateLimiterThreshold, reportRawError),
-    [StatusType.info]: createEventRateLimiter(StatusType.info, configuration.eventRateLimiterThreshold, reportRawError),
+    [StatusType.warn]: createEventRateLimiter(
+      StatusType.warn,
+      configuration.eventRateLimiterThreshold,
+      reportAgentError
+    ),
+    [StatusType.info]: createEventRateLimiter(
+      StatusType.info,
+      configuration.eventRateLimiterThreshold,
+      reportAgentError
+    ),
     [StatusType.debug]: createEventRateLimiter(
       StatusType.debug,
       configuration.eventRateLimiterThreshold,
-      reportRawError
+      reportAgentError
     ),
-    ['custom']: createEventRateLimiter('custom', configuration.eventRateLimiterThreshold, reportRawError),
+    ['custom']: createEventRateLimiter('custom', configuration.eventRateLimiterThreshold, reportAgentError),
   }
 
   return (message: LogsMessage, currentContext: Context) => {
