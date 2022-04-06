@@ -36,12 +36,6 @@ module.exports = (_env, argv) => {
       ],
     }),
     baseConfig({
-      entry: './src/contentscript',
-      output: {
-        filename: 'contentscript.js',
-      },
-    }),
-    baseConfig({
       entry: './src/devtools',
       output: {
         filename: 'devtools.js',

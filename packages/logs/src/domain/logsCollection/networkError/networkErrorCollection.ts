@@ -1,4 +1,4 @@
-import type { FetchCompleteContext, Observable, RawError, XhrCompleteContext } from '@datadog/browser-core'
+import type { FetchCompleteContext, XhrCompleteContext } from '@datadog/browser-core'
 import {
   ErrorSource,
   initXhrObservable,
@@ -8,10 +8,14 @@ import {
   toStackTraceString,
   monitor,
   noop,
+  isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
-import type { LogsConfiguration } from './configuration'
+import type { LogsEvent } from '../../../logsEvent.types'
+import type { LogsConfiguration } from '../../configuration'
+import { StatusType } from '../../logger'
+import type { Sender } from '../../sender'
 
-export function trackNetworkError(configuration: LogsConfiguration, errorObservable: Observable<RawError>) {
+export function startNetworkErrorCollection(configuration: LogsConfiguration, sender: Sender) {
   const xhrSubscription = initXhrObservable().subscribe((context) => {
     if (context.state === 'complete') {
       handleCompleteRequest(RequestType.XHR, context)
@@ -35,17 +39,23 @@ export function trackNetworkError(configuration: LogsConfiguration, errorObserva
     }
 
     function onResponseDataAvailable(responseData: unknown) {
-      errorObservable.notify({
-        message: `${format(type)} error ${request.method} ${request.url}`,
-        resource: {
-          method: request.method,
-          statusCode: request.status,
+      const messageContext: Partial<LogsEvent> = {
+        date: request.startClocks.timeStamp,
+        error: {
+          origin: ErrorSource.NETWORK,
+          stack: (responseData as string) || 'Failed to load',
+        },
+        http: {
+          method: request.method as any, // Cast resource method because of case mismatch cf issue RUMF-1152
+          status_code: request.status,
           url: request.url,
         },
-        source: ErrorSource.NETWORK,
-        stack: (responseData as string) || 'Failed to load',
-        startClocks: request.startClocks,
-      })
+      }
+      if (isExperimentalFeatureEnabled('forward-logs')) {
+        messageContext.origin = ErrorSource.NETWORK
+      }
+
+      sender.sendToHttp(`${format(type)} error ${request.method} ${request.url}`, messageContext, StatusType.error)
     }
   }
 
