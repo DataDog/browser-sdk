@@ -8,7 +8,7 @@ import { LifeCycleEventType } from '../../lifeCycle'
 import type { ForegroundContexts } from '../../foregroundContexts'
 import type { LocationChange } from '../../../browser/locationChangeObservable'
 import type { RumConfiguration } from '../../configuration'
-import type { ViewEvent } from './trackViews'
+import type { ViewEvent, ViewOptions } from './trackViews'
 import { trackViews } from './trackViews'
 
 export function startViewCollection(
@@ -19,7 +19,7 @@ export function startViewCollection(
   locationChangeObservable: Observable<LocationChange>,
   foregroundContexts: ForegroundContexts,
   recorderApi: RecorderApi,
-  initialViewName?: string
+  initialViewOptions?: ViewOptions
 ) {
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) =>
     lifeCycle.notify(
@@ -34,7 +34,7 @@ export function startViewCollection(
     domMutationObservable,
     locationChangeObservable,
     !configuration.trackViewsManually,
-    initialViewName
+    initialViewOptions
   )
 }
 

@@ -213,8 +213,12 @@ describe('internal monitoring', () => {
 
         expect(notifySpy).toHaveBeenCalled()
         const telemetryEvent = notifySpy.calls.mostRecent().args[0]
-        expect(telemetryEvent.message).toEqual('message')
-        expect(telemetryEvent._dd.event_type).toEqual('internal_telemetry')
+        expect(telemetryEvent.type).toEqual('telemetry')
+        expect(telemetryEvent.telemetry).toEqual({
+          status: 'error',
+          message: 'message',
+          error: jasmine.any(Object),
+        })
       })
 
       it('should add telemetry context', () => {

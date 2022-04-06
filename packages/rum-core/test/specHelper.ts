@@ -7,7 +7,7 @@ import type { ForegroundContexts } from '../src/domain/foregroundContexts'
 import type { RawRumEventCollectedData } from '../src/domain/lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
 import type { ViewContexts } from '../src/domain/viewContexts'
-import type { ViewEvent } from '../src/domain/rumEventsCollection/view/trackViews'
+import type { ViewEvent, ViewOptions } from '../src/domain/rumEventsCollection/view/trackViews'
 import { trackViews } from '../src/domain/rumEventsCollection/view/trackViews'
 import type { RumSessionManager } from '../src/domain/rumSessionManager'
 import { RumSessionPlan } from '../src/domain/rumSessionManager'
@@ -223,7 +223,7 @@ export type ViewTest = ReturnType<typeof setupViewTest>
 
 export function setupViewTest(
   { lifeCycle, location, domMutationObservable, configuration, locationChangeObservable }: BuildContext,
-  initialViewName?: string
+  initialViewOptions?: ViewOptions
 ) {
   const {
     handler: viewUpdateHandler,
@@ -243,7 +243,7 @@ export function setupViewTest(
     domMutationObservable,
     locationChangeObservable,
     !configuration.trackViewsManually,
-    initialViewName
+    initialViewOptions
   )
   return {
     stop,

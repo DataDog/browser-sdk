@@ -1,4 +1,12 @@
-import type { Context, Duration, ClocksState, Observable, TimeStamp, RelativeTime } from '@datadog/browser-core'
+import type {
+  Context,
+  Duration,
+  ClocksState,
+  Observable,
+  TimeStamp,
+  RelativeTime,
+  Subscription,
+} from '@datadog/browser-core'
 import {
   isExperimentalFeatureEnabled,
   getRelativeTime,
@@ -152,8 +160,11 @@ function newAction(
     },
     AUTO_ACTION_MAX_DURATION
   )
-  // New views trigger the discard of the current pending Action
-  const viewCreatedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, discard)
+  let viewCreatedSubscription: Subscription | undefined
+  if (!isExperimentalFeatureEnabled('frustration-signals')) {
+    // New views trigger the discard of the current pending Action
+    viewCreatedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, discard)
+  }
 
   function complete(endTime: TimeStamp) {
     cleanup()
@@ -182,7 +193,9 @@ function newAction(
   function cleanup() {
     stopWaitingIdlePage()
     eventCountsSubscription.stop()
-    viewCreatedSubscription.unsubscribe()
+    if (viewCreatedSubscription) {
+      viewCreatedSubscription.unsubscribe()
+    }
   }
 
   return {

@@ -28,13 +28,14 @@ import { startUrlContexts } from '../domain/urlContexts'
 import type { LocationChange } from '../browser/locationChangeObservable'
 import { createLocationChangeObservable } from '../browser/locationChangeObservable'
 import type { RumConfiguration } from '../domain/configuration'
+import type { ViewOptions } from '../domain/rumEventsCollection/view/trackViews'
 import type { RecorderApi } from './rumPublicApi'
 
 export function startRum(
   configuration: RumConfiguration,
   getCommonContext: () => CommonContext,
   recorderApi: RecorderApi,
-  initialViewName?: string
+  initialViewOptions?: ViewOptions
 ) {
   const lifeCycle = new LifeCycle()
 
@@ -96,7 +97,7 @@ export function startRum(
     locationChangeObservable,
     foregroundContexts,
     recorderApi,
-    initialViewName
+    initialViewOptions
   )
   const { addError } = startErrorCollection(lifeCycle, foregroundContexts)
 

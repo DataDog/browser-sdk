@@ -12,25 +12,31 @@ export type TelemetryEvent = TelemetryErrorEvent | TelemetryDebugEvent
  */
 export type TelemetryErrorEvent = CommonTelemetryProperties & {
   /**
-   * Level/severity of the log
+   * The telemetry information
    */
-  status: 'error'
-  /**
-   * Body of the log
-   */
-  message: string
-  /**
-   * Error properties
-   */
-  error?: {
+  telemetry: {
     /**
-     * The stack trace or the complementary information about the error
+     * Level/severity of the log
      */
-    stack?: string
+    status: 'error'
     /**
-     * The error type or kind (or code in some cases)
+     * Body of the log
      */
-    kind?: string
+    message: string
+    /**
+     * Error properties
+     */
+    error?: {
+      /**
+       * The stack trace or the complementary information about the error
+       */
+      stack?: string
+      /**
+       * The error type or kind (or code in some cases)
+       */
+      kind?: string
+      [k: string]: unknown
+    }
     [k: string]: unknown
   }
   [k: string]: unknown
@@ -40,13 +46,19 @@ export type TelemetryErrorEvent = CommonTelemetryProperties & {
  */
 export type TelemetryDebugEvent = CommonTelemetryProperties & {
   /**
-   * Level/severity of the log
+   * The telemetry information
    */
-  status: 'debug'
-  /**
-   * Body of the log
-   */
-  message: string
+  telemetry: {
+    /**
+     * Level/severity of the log
+     */
+    status: 'debug'
+    /**
+     * Body of the log
+     */
+    message: string
+    [k: string]: unknown
+  }
   [k: string]: unknown
 }
 
@@ -59,11 +71,15 @@ export interface CommonTelemetryProperties {
    */
   _dd: {
     /**
-     * Event type
+     * Version of the RUM event format
      */
-    event_type: 'internal_telemetry'
+    readonly format_version: 2
     [k: string]: unknown
   }
+  /**
+   * Telemetry event type. Should specify telemetry only.
+   */
+  readonly type: 'telemetry'
   /**
    * Start of the event in ms from epoch
    */
@@ -72,6 +88,10 @@ export interface CommonTelemetryProperties {
    * The SDK generating the telemetry event
    */
   service: string
+  /**
+   * The source of this event
+   */
+  readonly source: 'android' | 'ios' | 'browser' | 'flutter' | 'react-native'
   /**
    * The version of the SDK generating the telemetry event
    */

@@ -41,6 +41,7 @@ export interface RumConfiguration extends Configuration {
   replaySampleRate: number
   trackInteractions: boolean
   trackViewsManually: boolean
+  version?: string
 }
 
 export function validateAndBuildRumConfiguration(
@@ -75,6 +76,7 @@ export function validateAndBuildRumConfiguration(
   return assign(
     {
       applicationId: initConfiguration.applicationId,
+      version: initConfiguration.version,
       actionNameAttribute: initConfiguration.actionNameAttribute,
       replaySampleRate: initConfiguration.replaySampleRate ?? 100,
       allowedTracingOrigins: initConfiguration.allowedTracingOrigins ?? [],

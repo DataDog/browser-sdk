@@ -72,9 +72,9 @@ describe('telemetry', () => {
       await flushEvents()
       expect(serverEvents.telemetry.length).toBe(1)
       const event = serverEvents.telemetry[0] as TelemetryErrorEvent
-      expect(event.message).toBe('bar')
-      expect(event.error!.kind).toBe('Error')
-      expect(event.status).toBe('error')
+      expect(event.telemetry.message).toBe('bar')
+      expect(event.telemetry.error!.kind).toBe('Error')
+      expect(event.telemetry.status).toBe('error')
       serverEvents.empty()
     })
 
@@ -96,9 +96,9 @@ describe('telemetry', () => {
       await flushEvents()
       expect(serverEvents.telemetry.length).toBe(1)
       const event = serverEvents.telemetry[0] as TelemetryErrorEvent
-      expect(event.message).toBe('bar')
-      expect(event.error!.kind).toBe('Error')
-      expect(event.status).toBe('error')
+      expect(event.telemetry.message).toBe('bar')
+      expect(event.telemetry.error!.kind).toBe('Error')
+      expect(event.telemetry.status).toBe('error')
       serverEvents.empty()
     })
 })
