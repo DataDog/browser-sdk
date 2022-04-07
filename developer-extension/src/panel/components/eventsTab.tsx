@@ -1,4 +1,5 @@
 import { Badge, Group, SegmentedControl, Space, Table, TextInput } from '@mantine/core'
+import { useColorScheme } from '@mantine/hooks'
 import React from 'react'
 import ReactJson from 'react-json-view'
 import type { RumEvent } from '../../../../packages/rum-core/src/rumEvent.types'
@@ -28,7 +29,7 @@ interface EventTabProps {
 }
 
 export function EventTab({ events, filters, onFiltered }: EventTabProps) {
-  const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+  const colorScheme = useColorScheme()
   return (
     events && (
       <>
@@ -69,7 +70,7 @@ export function EventTab({ events, filters, onFiltered }: EventTabProps) {
                   <ReactJson
                     src={event}
                     collapsed={true}
-                    theme={isDarkMode ? 'monokai' : 'bright:inverted'}
+                    theme={colorScheme === 'dark' ? 'monokai' : 'bright:inverted'}
                     name={jsonOverview(event)}
                     displayDataTypes={false}
                   />
