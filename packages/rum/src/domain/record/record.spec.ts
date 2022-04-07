@@ -2,7 +2,7 @@ import { DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
 import type { Clock } from '../../../../core/test/specHelper'
 import { createNewEvent } from '../../../../core/test/specHelper'
 import { collectAsyncCalls, recordsPerFullSnapshot } from '../../../test/utils'
-import type { RawRecord, IncrementalSnapshotRecord, FocusRecord } from '../../types'
+import type { IncrementalSnapshotRecord, FocusRecord, Record } from '../../types'
 import { RecordType, IncrementalSource } from '../../types'
 import { record } from './record'
 import type { RecordAPI } from './types'
@@ -10,7 +10,7 @@ import type { RecordAPI } from './types'
 describe('record', () => {
   let sandbox: HTMLElement
   let recordApi: RecordAPI
-  let emitSpy: jasmine.Spy<(record: RawRecord) => void>
+  let emitSpy: jasmine.Spy<(record: Record) => void>
   let waitEmitCalls: (expectedCallsCount: number, callback: () => void) => void
   let expectNoExtraEmitCalls: (done: () => void) => void
   let clock: Clock | undefined
@@ -150,6 +150,7 @@ describe('record', () => {
       startRecording()
       expect(getEmittedRecords()[1]).toEqual({
         type: RecordType.Focus,
+        timestamp: jasmine.any(Number),
         data: {
           has_focus: true,
         },

@@ -1,10 +1,11 @@
-import { HttpRequest, DefaultPrivacyLevel, noop, isIE } from '@datadog/browser-core'
-import type { LifeCycle } from '@datadog/browser-rum-core'
+import type { TimeStamp } from '@datadog/browser-core'
+import { HttpRequest, DefaultPrivacyLevel, noop, isIE, timeStampNow } from '@datadog/browser-core'
+import type { LifeCycle, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { inflate } from 'pako'
 import type { RumSessionManagerMock } from '../../../rum-core/test/mockRumSessionManager'
 import { createRumSessionManagerMock } from '../../../rum-core/test/mockRumSessionManager'
-import { createNewEvent } from '../../../core/test/specHelper'
+import { createNewEvent, mockClock } from '../../../core/test/specHelper'
 
 import type { TestSetupBuilder } from '../../../rum-core/test/specHelper'
 import { setup } from '../../../rum-core/test/specHelper'
@@ -15,6 +16,8 @@ import type { Segment } from '../types'
 import { RecordType } from '../types'
 import { resetReplayStats } from '../domain/replayStats'
 import { startRecording } from './startRecording'
+
+const VIEW_TIMESTAMP = 1 as TimeStamp
 
 describe('startRecording', () => {
   let setupBuilder: TestSetupBuilder
@@ -165,6 +168,33 @@ describe('startRecording', () => {
     })
   })
 
+  it('full snapshot related records should have the view change date', (done) => {
+    const clock = mockClock()
+    const { lifeCycle } = setupBuilder.build()
+
+    changeView(lifeCycle)
+    flushSegment(lifeCycle)
+
+    waitRequestSendCalls(2, (calls) => {
+      readRequestSegment(calls.first(), (segment) => {
+        expect(segment.records[0].timestamp).toEqual(timeStampNow())
+        expect(segment.records[1].timestamp).toEqual(timeStampNow())
+        expect(segment.records[2].timestamp).toEqual(timeStampNow())
+        expect(segment.records[3].timestamp).toEqual(timeStampNow())
+
+        clock.cleanup()
+
+        readRequestSegment(calls.mostRecent(), (segment) => {
+          expect(segment.records[0].timestamp).toEqual(VIEW_TIMESTAMP)
+          expect(segment.records[1].timestamp).toEqual(VIEW_TIMESTAMP)
+          expect(segment.records[2].timestamp).toEqual(VIEW_TIMESTAMP)
+
+          expectNoExtraRequestSendCalls(done)
+        })
+      })
+    })
+  })
+
   it('adds a ViewEnd record when the view ends', (done) => {
     const { lifeCycle } = setupBuilder.build()
 
@@ -247,7 +277,9 @@ describe('startRecording', () => {
   function changeView(lifeCycle: LifeCycle) {
     lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {} as any)
     viewId = 'view-id-2'
-    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {} as any)
+    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+      startClocks: { relative: 1, timeStamp: VIEW_TIMESTAMP },
+    } as Partial<ViewCreatedEvent> as any)
   }
 })
 

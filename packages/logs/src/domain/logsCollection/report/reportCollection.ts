@@ -24,15 +24,15 @@ export function startReportCollection(configuration: LogsConfiguration, sender: 
 
   function logReport(report: RawReport) {
     let message = report.message
-    let messageContext: Partial<LogsEvent> | undefined
+    const messageContext: Partial<LogsEvent> = {
+      origin: ErrorSource.REPORT,
+    }
     const logStatus = LogStatusForReport[report.type]
     if (logStatus === StatusType.error) {
-      messageContext = {
-        error: {
-          kind: report.subtype,
-          origin: ErrorSource.REPORT,
-          stack: report.stack,
-        },
+      messageContext.error = {
+        kind: report.subtype,
+        origin: ErrorSource.REPORT, // Todo: Remove in the next major release
+        stack: report.stack,
       }
     } else if (report.stack) {
       message += ` Found in ${getFileFromStackTraceString(report.stack)!}`

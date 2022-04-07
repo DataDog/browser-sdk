@@ -1,61 +1,95 @@
-import { ErrorSource, resetExperimentalFeatures, updateExperimentalFeatures, display } from '@datadog/browser-core'
+import {
+  ErrorSource,
+  resetExperimentalFeatures,
+  updateExperimentalFeatures,
+  display,
+  noop,
+} from '@datadog/browser-core'
 import { validateAndBuildLogsConfiguration } from '../../configuration'
 import { HandlerType, StatusType } from '../../logger'
 import { createSender } from '../../sender'
 import { startConsoleCollection } from './consoleCollection'
 
-describe('error collection', () => {
+describe('console collection', () => {
   const initConfiguration = { clientToken: 'xxx', service: 'service' }
   let sendLogSpy: jasmine.Spy
   let consoleLogSpy: jasmine.Spy
+  let stopConsolCollection: () => void
 
   beforeEach(() => {
+    stopConsolCollection = noop
     sendLogSpy = jasmine.createSpy('sendLogSpy')
     consoleLogSpy = spyOn(console, 'log').and.callFake(() => true)
     spyOn(console, 'error').and.callFake(() => true)
   })
 
+  afterEach(() => {
+    resetExperimentalFeatures()
+    stopConsolCollection()
+  })
+
   it('should send console logs when ff forward-logs is enabled', () => {
     updateExperimentalFeatures(['forward-logs'])
-    const { stop } = startConsoleCollection(
+    ;({ stop: stopConsolCollection } = startConsoleCollection(
       validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['log'] })!,
       createSender(sendLogSpy)
-    )
+    ))
 
     /* eslint-disable-next-line no-console */
     console.log('foo', 'bar')
 
     expect(sendLogSpy).toHaveBeenCalledWith({
-      message: 'console log: foo bar',
+      message: 'foo bar',
       status: StatusType.info,
+      origin: ErrorSource.CONSOLE,
     })
 
     expect(consoleLogSpy).toHaveBeenCalled()
-
-    resetExperimentalFeatures()
-    stop()
   })
 
   it('should not send console logs when ff forward-logs is disabled', () => {
-    const { stop } = startConsoleCollection(
+    ;({ stop: stopConsolCollection } = startConsoleCollection(
       validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['log'] })!,
       createSender(sendLogSpy)
-    )
+    ))
 
     /* eslint-disable-next-line no-console */
     console.log('foo', 'bar')
 
     expect(sendLogSpy).not.toHaveBeenCalled()
     expect(consoleLogSpy).toHaveBeenCalled()
+  })
 
-    stop()
+  it('should send console errors with "console" origin when ff forward-logs is enabled', () => {
+    updateExperimentalFeatures(['forward-logs'])
+    ;({ stop: stopConsolCollection } = startConsoleCollection(
+      validateAndBuildLogsConfiguration({ ...initConfiguration, forwardErrorsToLogs: true })!,
+      createSender(sendLogSpy)
+    ))
+
+    /* eslint-disable-next-line no-console */
+    console.error('foo', 'bar')
+
+    expect(sendLogSpy.calls.mostRecent().args[0].origin).toEqual(ErrorSource.CONSOLE)
+  })
+
+  it('should not send console errors with "console" origin when ff forward-logs is disabled', () => {
+    ;({ stop: stopConsolCollection } = startConsoleCollection(
+      validateAndBuildLogsConfiguration({ ...initConfiguration, forwardErrorsToLogs: true })!,
+      createSender(sendLogSpy)
+    ))
+
+    /* eslint-disable-next-line no-console */
+    console.error('foo', 'bar')
+
+    expect(sendLogSpy.calls.mostRecent().args[0].origin).not.toBeDefined()
   })
 
   it('console error should have an error object defined', () => {
-    const { stop } = startConsoleCollection(
+    ;({ stop: stopConsolCollection } = startConsoleCollection(
       validateAndBuildLogsConfiguration({ ...initConfiguration, forwardErrorsToLogs: true })!,
       createSender(sendLogSpy)
-    )
+    ))
 
     /* eslint-disable-next-line no-console */
     console.error('foo', 'bar')
@@ -64,8 +98,6 @@ describe('error collection', () => {
       origin: ErrorSource.CONSOLE,
       stack: undefined,
     })
-
-    stop()
   })
 
   it('should not print the log twice when console handler is enabled', () => {
@@ -73,10 +105,10 @@ describe('error collection', () => {
 
     const sender = createSender(sendLogSpy)
     const displaySpy = spyOn(display, 'log')
-    const { stop } = startConsoleCollection(
+    ;({ stop: stopConsolCollection } = startConsoleCollection(
       validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['log'] })!,
       sender
-    )
+    ))
 
     sender.setHandler([HandlerType.console])
     /* eslint-disable-next-line no-console */
@@ -84,8 +116,5 @@ describe('error collection', () => {
 
     expect(consoleLogSpy).toHaveBeenCalledTimes(1)
     expect(displaySpy).not.toHaveBeenCalled()
-
-    resetExperimentalFeatures()
-    stop()
   })
 })

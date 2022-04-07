@@ -16,6 +16,16 @@
 
 ---
 
+## v4.7.1
+
+- 🐛 Adjust records generated during view change so their date matches the view date ([#1486](https://github.com/DataDog/browser-sdk/pull/1486))
+- ⚗✨ [RUMF-1224] remove console APIs prefix ([#1479](https://github.com/DataDog/browser-sdk/pull/1479))
+- ♻️ [RUMF-1178] improve logs assembly part 2 ([#1463](https://github.com/DataDog/browser-sdk/pull/1463))
+- ⚗✨ Allow update service version with start view ([#1448](https://github.com/DataDog/browser-sdk/pull/1448))
+- ⚗✨ [RUMF-1208] don't discard automatic action on view creation ([#1451](https://github.com/DataDog/browser-sdk/pull/1451))
+- ⚗✨ [RUMF-1207] collect concurrent actions ([#1434](https://github.com/DataDog/browser-sdk/pull/1434))
+- ♻️ [RUMF-1207] collect concurrent actions groundwork - move action history closer to action collection ([#1432](https://github.com/DataDog/browser-sdk/pull/1432))
+
 ## v4.7.0
 
 Note: The Logs Browser SDK 3.10.1 (released on December 21th, 2021) unexpectedly changed the initialization parameter `forwardErrorsToLogs` default value from `true` to `false`. This release restores the default value to `true`, so Logs Browser SDK users who don't specify this parameter will have errors forwarded as logs.

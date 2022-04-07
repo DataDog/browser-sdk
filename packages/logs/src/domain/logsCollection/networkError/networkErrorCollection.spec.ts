@@ -1,4 +1,4 @@
-import { isIE, ErrorSource } from '@datadog/browser-core'
+import { isIE, ErrorSource, updateExperimentalFeatures, resetExperimentalFeatures } from '@datadog/browser-core'
 import type { FetchStub, FetchStubManager } from '@datadog/browser-core/test/specHelper'
 import { SPEC_ENDPOINTS, ResponseStub, stubFetch } from '@datadog/browser-core/test/specHelper'
 import type { LogsConfiguration } from '../../configuration'
@@ -46,6 +46,18 @@ describe('network error collection', () => {
   afterEach(() => {
     stopNetworkErrorCollection()
     fetchStubManager.reset()
+    resetExperimentalFeatures()
+  })
+
+  it('should send server errors with "network" origin when ff forward-logs is enabled', (done) => {
+    updateExperimentalFeatures(['forward-logs'])
+
+    fetchStub(FAKE_URL).resolveWith(DEFAULT_REQUEST)
+
+    fetchStubManager.whenAllComplete(() => {
+      expect(sendLogSpy.calls.mostRecent().args[0].origin).toEqual(ErrorSource.NETWORK)
+      done()
+    })
   })
 
   it('should track server error', (done) => {

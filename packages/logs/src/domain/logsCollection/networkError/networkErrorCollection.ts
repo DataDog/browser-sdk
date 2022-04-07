@@ -8,6 +8,7 @@ import {
   toStackTraceString,
   monitor,
   noop,
+  isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
 import type { LogsEvent } from '../../../logsEvent.types'
 import type { LogsConfiguration } from '../../configuration'
@@ -41,7 +42,7 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, se
       const messageContext: Partial<LogsEvent> = {
         date: request.startClocks.timeStamp,
         error: {
-          origin: ErrorSource.NETWORK,
+          origin: ErrorSource.NETWORK, // Todo: Remove in the next major release
           stack: (responseData as string) || 'Failed to load',
         },
         http: {
@@ -49,6 +50,9 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, se
           status_code: request.status,
           url: request.url,
         },
+      }
+      if (isExperimentalFeatureEnabled('forward-logs')) {
+        messageContext.origin = ErrorSource.NETWORK
       }
 
       sender.sendToHttp(`${format(type)} error ${request.method} ${request.url}`, messageContext, StatusType.error)

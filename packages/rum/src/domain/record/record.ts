@@ -1,4 +1,4 @@
-import { assign } from '@datadog/browser-core'
+import { assign, timeStampNow } from '@datadog/browser-core'
 import type { IncrementalSnapshotRecord } from '../../types'
 import { RecordType } from '../../types'
 import { serializeDocument } from './serialize'
@@ -30,7 +30,7 @@ export function record(options: RecordOptions): RecordAPI {
 
   const mutationController = new MutationController()
 
-  const takeFullSnapshot = () => {
+  const takeFullSnapshot = (timestamp = timeStampNow()) => {
     mutationController.flush() // process any pending mutation before taking a full snapshot
 
     emit({
@@ -40,6 +40,7 @@ export function record(options: RecordOptions): RecordAPI {
         width: getWindowWidth(),
       },
       type: RecordType.Meta,
+      timestamp,
     })
 
     emit({
@@ -47,6 +48,7 @@ export function record(options: RecordOptions): RecordAPI {
         has_focus: document.hasFocus(),
       },
       type: RecordType.Focus,
+      timestamp,
     })
 
     emit({
@@ -58,12 +60,14 @@ export function record(options: RecordOptions): RecordAPI {
         },
       },
       type: RecordType.FullSnapshot,
+      timestamp,
     })
 
     if (window.visualViewport) {
       emit({
         data: getVisualViewport(),
         type: RecordType.VisualViewport,
+        timestamp,
       })
     }
   }
@@ -86,13 +90,15 @@ export function record(options: RecordOptions): RecordAPI {
 
     focusCb: (data) =>
       emit({
-        type: RecordType.Focus,
         data,
+        type: RecordType.Focus,
+        timestamp: timeStampNow(),
       }),
     visualViewportResizeCb: (data) => {
       emit({
         data,
         type: RecordType.VisualViewport,
+        timestamp: timeStampNow(),
       })
     },
   })
@@ -116,5 +122,6 @@ function assembleIncrementalSnapshot<Data extends IncrementalData>(
       data
     ) as Data,
     type: RecordType.IncrementalSnapshot,
+    timestamp: timeStampNow(),
   }
 }
