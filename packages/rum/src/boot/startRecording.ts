@@ -1,12 +1,17 @@
-import { assign } from '@datadog/browser-core'
-import type { LifeCycle, ViewContexts, RumConfiguration, RumSessionManager } from '@datadog/browser-rum-core'
+import { timeStampNow } from '@datadog/browser-core'
+import type {
+  LifeCycle,
+  ViewContexts,
+  RumConfiguration,
+  RumSessionManager,
+  ViewCreatedEvent,
+} from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 
 import { record } from '../domain/record'
 import type { DeflateWorker } from '../domain/segmentCollection'
 import { startSegmentCollection } from '../domain/segmentCollection'
 import { send } from '../transport/send'
-import type { RawRecord } from '../types'
 import { RecordType } from '../types'
 
 export function startRecording(
@@ -26,26 +31,28 @@ export function startRecording(
     worker
   )
 
-  function addRawRecord(rawRecord: RawRecord) {
-    addRecord(assign({ timestamp: Date.now() }, rawRecord))
-  }
-
   const {
     stop: stopRecording,
     takeFullSnapshot,
     flushMutations,
   } = record({
-    emit: addRawRecord,
+    emit: addRecord,
     defaultPrivacyLevel: configuration.defaultPrivacyLevel,
   })
 
   const { unsubscribe: unsubscribeViewEnded } = lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, () => {
     flushMutations()
-    addRawRecord({
+    addRecord({
+      timestamp: timeStampNow(),
       type: RecordType.ViewEnd,
     })
   })
-  const { unsubscribe: unsubscribeViewCreated } = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, takeFullSnapshot)
+  const { unsubscribe: unsubscribeViewCreated } = lifeCycle.subscribe(
+    LifeCycleEventType.VIEW_CREATED,
+    (view: ViewCreatedEvent) => {
+      takeFullSnapshot(view.startClocks.timeStamp)
+    }
+  )
 
   return {
     stop: () => {

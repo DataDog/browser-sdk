@@ -1,3 +1,4 @@
+import type { TimeStamp } from '@datadog/browser-core'
 import { noop, setDebugMode, display, isIE } from '@datadog/browser-core'
 import { MockWorker, parseSegment } from '../../../test/utils'
 import type { CreationReason, Record, SegmentContext } from '../../types'
@@ -6,9 +7,9 @@ import { getReplayStats, resetReplayStats } from '../replayStats'
 import { Segment } from './segment'
 
 const CONTEXT: SegmentContext = { application: { id: 'a' }, view: { id: 'b' }, session: { id: 'c' } }
-
-const RECORD: Record = { type: RecordType.ViewEnd, timestamp: 10 }
-const FULL_SNAPSHOT_RECORD: Record = { type: RecordType.FullSnapshot, timestamp: 10, data: {} as any }
+const RECORD_TIMESTAMP = 10 as TimeStamp
+const RECORD: Record = { type: RecordType.ViewEnd, timestamp: RECORD_TIMESTAMP }
+const FULL_SNAPSHOT_RECORD: Record = { type: RecordType.FullSnapshot, timestamp: RECORD_TIMESTAMP, data: {} as any }
 const ENCODED_SEGMENT_HEADER_SIZE = 12 // {"records":[
 const ENCODED_RECORD_SIZE = 25
 const ENCODED_FULL_SNAPSHOT_RECORD_SIZE = 35
@@ -53,7 +54,7 @@ describe('Segment', () => {
       has_full_snapshot: false,
       records: [
         {
-          timestamp: 10,
+          timestamp: RECORD_TIMESTAMP,
           type: RecordType.ViewEnd,
         },
       ],
@@ -123,7 +124,7 @@ describe('Segment', () => {
       let segment: Segment
       beforeEach(() => {
         segment = createSegment()
-        segment.addRecord({ type: RecordType.ViewEnd, timestamp: 15 })
+        segment.addRecord({ type: RecordType.ViewEnd, timestamp: 15 as TimeStamp })
       })
       it('increments records_count', () => {
         expect(segment.metadata.records_count).toBe(2)
