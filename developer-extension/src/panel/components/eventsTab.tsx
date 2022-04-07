@@ -1,4 +1,5 @@
 import { Badge, Group, SegmentedControl, Space, Table, TextInput } from '@mantine/core'
+import { useColorScheme } from '@mantine/hooks'
 import React from 'react'
 import ReactJson from 'react-json-view'
 import type { RumEvent } from '../../../../packages/rum-core/src/rumEvent.types'
@@ -11,6 +12,7 @@ const RUM_EVENT_TYPE_COLOR = {
   long_task: 'yellow',
   view: 'blue',
   resource: 'cyan',
+  telemetry: 'teal',
 }
 
 const LOG_STATUS_COLOR = {
@@ -27,6 +29,7 @@ interface EventTabProps {
 }
 
 export function EventTab({ events, filters, onFiltered }: EventTabProps) {
+  const colorScheme = useColorScheme()
   return (
     events && (
       <>
@@ -40,7 +43,7 @@ export function EventTab({ events, filters, onFiltered }: EventTabProps) {
             ]}
           />
           <TextInput
-            placeholder="Filter your events"
+            placeholder="Filter your events, syntax: 'type:view application.id:40d8ca4b'"
             value={filters.query}
             style={{ flexGrow: 1 }}
             onChange={(event) => onFiltered({ ...filters, query: event.currentTarget.value })}
@@ -67,7 +70,7 @@ export function EventTab({ events, filters, onFiltered }: EventTabProps) {
                   <ReactJson
                     src={event}
                     collapsed={true}
-                    theme="monokai"
+                    theme={colorScheme === 'dark' ? 'monokai' : 'bright:inverted'}
                     name={jsonOverview(event)}
                     displayDataTypes={false}
                   />
