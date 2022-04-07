@@ -28,6 +28,7 @@ interface EventTabProps {
 }
 
 export function EventTab({ events, filters, onFiltered }: EventTabProps) {
+  const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
   return (
     events && (
       <>
@@ -68,7 +69,7 @@ export function EventTab({ events, filters, onFiltered }: EventTabProps) {
                   <ReactJson
                     src={event}
                     collapsed={true}
-                    theme="monokai"
+                    theme={isDarkMode ? 'monokai' : 'bright:inverted'}
                     name={jsonOverview(event)}
                     displayDataTypes={false}
                   />
