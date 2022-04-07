@@ -40,7 +40,7 @@ export function EventTab({ events, filters, onFiltered }: EventTabProps) {
             ]}
           />
           <TextInput
-            placeholder="Filter your events"
+            placeholder="Filter your events, syntax: 'type:view application.id:40d8ca4b'"
             value={filters.query}
             style={{ flexGrow: 1 }}
             onChange={(event) => onFiltered({ ...filters, query: event.currentTarget.value })}
