@@ -57,21 +57,22 @@ function createConsoleObservable(api: ConsoleApiName) {
 }
 
 function buildConsoleLog(params: unknown[], api: ConsoleApiName, handlingStack: string): ConsoleLog {
-  const log: ConsoleLog = {
-    message: [`console ${api}:` as unknown]
-      .concat(params)
-      .map((param) => formatConsoleParameters(param))
-      .join(' '),
-    api,
-  }
+  // Todo: remove console error prefix in the next major version
+  let message = params.map((param) => formatConsoleParameters(param)).join(' ')
+  let stack
 
   if (api === ConsoleApiName.error) {
     const firstErrorParam = find(params, (param: unknown): param is Error => param instanceof Error)
-    log.stack = firstErrorParam ? toStackTraceString(computeStackTrace(firstErrorParam)) : undefined
-    log.handlingStack = handlingStack
+    stack = firstErrorParam ? toStackTraceString(computeStackTrace(firstErrorParam)) : undefined
+    message = `console error: ${message}`
   }
 
-  return log
+  return {
+    api,
+    message,
+    stack,
+    handlingStack,
+  }
 }
 
 function formatConsoleParameters(param: unknown) {
