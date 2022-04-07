@@ -11,6 +11,7 @@ const RUM_EVENT_TYPE_COLOR = {
   long_task: 'yellow',
   view: 'blue',
   resource: 'cyan',
+  telemetry: 'teal',
 }
 
 const LOG_STATUS_COLOR = {
