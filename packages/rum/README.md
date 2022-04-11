@@ -44,7 +44,7 @@ datadogRum.init({
   //  env: 'production',
   //  version: '1.0.0',
   sampleRate: 100,
-  replaySampleRate: 100 // Note: if this is not included it will default to 100% - controls the Resources and Long Tasks data collection as well as Replay recording (requires an additional function to be called) 
+  replaySampleRate: 100 // if not included - default 100
   trackInteractions: true,
 })
 ```
