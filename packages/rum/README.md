@@ -44,6 +44,7 @@ datadogRum.init({
   //  env: 'production',
   //  version: '1.0.0',
   sampleRate: 100,
+  replaySampleRate: 100, // if not included - default 100
   trackInteractions: true,
 })
 ```
@@ -71,6 +72,7 @@ Add the generated code snippet to the head tag of every HTML page you want to mo
       //  env: 'production',
       //  version: '1.0.0',
       sampleRate: 100,
+      replaySampleRate: 100, // if not included - default 100
       trackInteractions: true,
     })
   })
@@ -98,6 +100,7 @@ Add the generated code snippet to the head tag (in front of any other script tag
       //  env: 'production',
       //  version: '1.0.0',
       sampleRate: 100,
+      replaySampleRate: 100, // if not included - default 100
       trackInteractions: true,
     })
 </script>
