@@ -1,20 +1,20 @@
-import type { Context, InitConfiguration } from '@datadog/browser-core'
+import type { InitConfiguration } from '@datadog/browser-core'
 import {
   assign,
   BoundedBuffer,
-  combine,
   createContextManager,
   makePublicApi,
   monitor,
   display,
   deepClone,
   canUseEventBridge,
+  timeStampNow,
 } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
-import type { HandlerType, LogsMessage, StatusType } from '../domain/logger'
-import { Logger } from '../domain/logger'
-import { createSender } from '../domain/sender'
+import type { HandlerType, LoggerOptions, StatusType, LogsMessage } from '../domain/logger'
+import { newLoggerOptions, Logger } from '../domain/logger'
+import type { CommonContext } from '../rawLogsEvent.types'
 import type { startLogs } from './startLogs'
 
 export interface LoggerConfiguration {
@@ -27,19 +27,38 @@ export type LogsPublicApi = ReturnType<typeof makeLogsPublicApi>
 
 export type StartLogs = typeof startLogs
 
+type StartLogsResult = ReturnType<typeof startLogs>
+
 export function makeLogsPublicApi(startLogsImpl: StartLogs) {
   let isAlreadyInitialized = false
 
   const globalContextManager = createContextManager()
   const customLoggers: { [name: string]: Logger | undefined } = {}
 
-  const beforeInitSendLog = new BoundedBuffer()
-  let sendLogStrategy = (message: LogsMessage, currentContext: Context) => {
-    beforeInitSendLog.add(() => sendLogStrategy(message, currentContext))
+  const beforeInitLoggerLog = new BoundedBuffer()
+
+  let addLogStrategy: StartLogsResult['addLog'] = (
+    logsMessage: LogsMessage,
+    loggerOptions: LoggerOptions,
+    savedCommonContext = deepClone(getCommonContext())
+  ) => {
+    beforeInitLoggerLog.add(() => addLogStrategy(logsMessage, loggerOptions, savedCommonContext))
   }
+
   let getInitConfigurationStrategy = (): InitConfiguration | undefined => undefined
-  const sender = createSender(sendLog)
-  const logger = new Logger(sender)
+  const mainLoggerOptions = newLoggerOptions()
+  const logger = createLogger(mainLoggerOptions)
+
+  function getCommonContext(): CommonContext {
+    return {
+      date: timeStampNow(),
+      view: {
+        referrer: document.referrer,
+        url: window.location.href,
+      },
+      context: globalContextManager.get(),
+    }
+  }
 
   return makePublicApi({
     logger,
@@ -58,9 +77,9 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
         return
       }
 
-      sendLogStrategy = startLogsImpl(configuration, sender).send
+      ;({ addLog: addLogStrategy } = startLogsImpl(configuration, getCommonContext, mainLoggerOptions))
       getInitConfigurationStrategy = () => deepClone(initConfiguration)
-      beforeInitSendLog.drain()
+      beforeInitLoggerLog.drain()
 
       isAlreadyInitialized = true
     }),
@@ -73,15 +92,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
     removeLoggerGlobalContext: monitor(globalContextManager.remove),
 
     createLogger: monitor((name: string, conf: LoggerConfiguration = {}) => {
-      const sender = createSender(
-        sendLog,
-        conf.handler,
-        conf.level,
-        assign({}, conf.context, {
-          logger: { name },
-        })
-      )
-      customLoggers[name] = new Logger(sender)
+      customLoggers[name] = createLogger(newLoggerOptions(name, conf.handler, conf.level, conf.context))
       return customLoggers[name]!
     }),
 
@@ -104,19 +115,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
     return true
   }
 
-  function sendLog(message: LogsMessage) {
-    sendLogStrategy(
-      message,
-      combine(
-        {
-          date: Date.now(),
-          view: {
-            referrer: document.referrer,
-            url: window.location.href,
-          },
-        },
-        globalContextManager.get()
-      )
-    )
+  function createLogger(options: LoggerOptions) {
+    return new Logger(options, (...params) => addLogStrategy(...params))
   }
 }

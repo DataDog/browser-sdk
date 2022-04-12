@@ -1,20 +1,21 @@
 import type { RawError } from '@datadog/browser-core'
 import { isExperimentalFeatureEnabled } from '@datadog/browser-core'
-import type { LogsEvent } from '../logsEvent.types'
+import type { LifeCycle } from './lifeCycle'
+import { LifeCycleEventType } from './lifeCycle'
 import { StatusType } from './logger'
-import type { Sender } from './sender'
 
-export function reportRawError(error: RawError, sender: Sender) {
-  const messageContext: Partial<LogsEvent> = {
-    date: error.startClocks.timeStamp,
-    error: {
-      kind: error.type,
-      origin: error.source, // Todo: Remove in the next major release
-      stack: error.stack,
+export function reportRawError(error: RawError, lifeCycle: LifeCycle) {
+  lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+    rawLog: {
+      message: error.message,
+      date: error.startClocks.timeStamp,
+      error: {
+        kind: error.type,
+        origin: error.source, // Todo: Remove in the next major release
+        stack: error.stack,
+      },
+      origin: isExperimentalFeatureEnabled('forward-logs') ? error.source : undefined,
+      status: StatusType.error,
     },
-  }
-  if (isExperimentalFeatureEnabled('forward-logs')) {
-    messageContext.origin = error.source
-  }
-  sender.sendToHttp(error.message, messageContext, StatusType.error)
+  })
 }

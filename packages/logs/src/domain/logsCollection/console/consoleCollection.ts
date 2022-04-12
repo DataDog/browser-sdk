@@ -1,9 +1,9 @@
 import type { Context, ClocksState, ConsoleLog } from '@datadog/browser-core'
 import { ConsoleApiName, ErrorSource, initConsoleObservable, isExperimentalFeatureEnabled } from '@datadog/browser-core'
-import type { LogsEvent } from '../../../logsEvent.types'
 import type { LogsConfiguration } from '../../configuration'
+import type { LifeCycle } from '../../lifeCycle'
+import { LifeCycleEventType } from '../../lifeCycle'
 import { StatusType } from '../../logger'
-import type { Sender } from '../../sender'
 
 export interface ProvidedError {
   startClocks: ClocksState
@@ -19,24 +19,25 @@ const LogStatusForApi = {
   [ConsoleApiName.warn]: StatusType.warn,
   [ConsoleApiName.error]: StatusType.error,
 }
-export function startConsoleCollection(configuration: LogsConfiguration, sender: Sender) {
+export function startConsoleCollection(configuration: LogsConfiguration, lifeCycle: LifeCycle) {
   const consoleObservable = initConsoleObservable(configuration.forwardConsoleLogs)
   const consoleSubscription = consoleObservable.subscribe(reportConsoleLog)
 
   function reportConsoleLog(log: ConsoleLog) {
-    let messageContext: Partial<LogsEvent> = {}
-    if (log.api === ConsoleApiName.error) {
-      messageContext = {
-        error: {
-          origin: ErrorSource.CONSOLE, // Todo: Remove in the next major release
-          stack: log.stack,
-        },
-      }
-    }
-    if (isExperimentalFeatureEnabled('forward-logs')) {
-      messageContext.origin = ErrorSource.CONSOLE
-    }
-    sender.sendToHttp(log.message, messageContext, LogStatusForApi[log.api])
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+      rawLog: {
+        message: log.message,
+        origin: isExperimentalFeatureEnabled('forward-logs') ? ErrorSource.CONSOLE : undefined,
+        error:
+          log.api === ConsoleApiName.error
+            ? {
+                origin: ErrorSource.CONSOLE, // Todo: Remove in the next major release
+                stack: log.stack,
+              }
+            : undefined,
+        status: LogStatusForApi[log.api],
+      },
+    })
   }
 
   return {

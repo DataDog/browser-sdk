@@ -1,9 +1,9 @@
 import type { Context, ClocksState, RawReport } from '@datadog/browser-core'
 import { ErrorSource, RawReportType, getFileFromStackTraceString, initReportObservable } from '@datadog/browser-core'
-import type { LogsEvent } from '../../../logsEvent.types'
 import type { LogsConfiguration } from '../../configuration'
+import type { LifeCycle } from '../../lifeCycle'
+import { LifeCycleEventType } from '../../lifeCycle'
 import { StatusType } from '../../logger'
-import type { Sender } from '../../sender'
 
 export interface ProvidedError {
   startClocks: ClocksState
@@ -18,18 +18,16 @@ const LogStatusForReport = {
   [RawReportType.deprecation]: StatusType.warn,
 }
 
-export function startReportCollection(configuration: LogsConfiguration, sender: Sender) {
+export function startReportCollection(configuration: LogsConfiguration, lifeCycle: LifeCycle) {
   const reportObservable = initReportObservable(configuration.forwardReports)
   const reportSubscription = reportObservable.subscribe(logReport)
 
   function logReport(report: RawReport) {
     let message = report.message
-    const messageContext: Partial<LogsEvent> = {
-      origin: ErrorSource.REPORT,
-    }
-    const logStatus = LogStatusForReport[report.type]
-    if (logStatus === StatusType.error) {
-      messageContext.error = {
+    const status = LogStatusForReport[report.type]
+    let error
+    if (status === StatusType.error) {
+      error = {
         kind: report.subtype,
         origin: ErrorSource.REPORT, // Todo: Remove in the next major release
         stack: report.stack,
@@ -38,7 +36,14 @@ export function startReportCollection(configuration: LogsConfiguration, sender: 
       message += ` Found in ${getFileFromStackTraceString(report.stack)!}`
     }
 
-    sender.sendToHttp(message, messageContext, logStatus)
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+      rawLog: {
+        message,
+        origin: ErrorSource.REPORT,
+        error,
+        status,
+      },
+    })
   }
 
   return {

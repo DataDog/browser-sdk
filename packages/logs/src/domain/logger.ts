@@ -1,6 +1,12 @@
-import type { ContextValue, TimeStamp } from '@datadog/browser-core'
-import { combine, ErrorSource, monitored, isExperimentalFeatureEnabled } from '@datadog/browser-core'
-import type { Sender } from './sender'
+import { assign, TimeStamp } from '@datadog/browser-core'
+import { combine, createContextManager, ErrorSource, monitored } from '@datadog/browser-core'
+
+export interface LogsMessage {
+  message: string
+  status: StatusType
+  date?: TimeStamp
+  context?: object
+}
 
 export const StatusType = {
   debug: 'debug',
@@ -8,7 +14,7 @@ export const StatusType = {
   info: 'info',
   warn: 'warn',
 } as const
-// eslint-disable-next-line @typescript-eslint/no-redeclare
+
 export type StatusType = typeof StatusType[keyof typeof StatusType]
 
 export const HandlerType = {
@@ -16,29 +22,19 @@ export const HandlerType = {
   http: 'http',
   silent: 'silent',
 } as const
-// eslint-disable-next-line @typescript-eslint/no-redeclare
+
 export type HandlerType = typeof HandlerType[keyof typeof HandlerType]
 export const STATUSES = Object.keys(StatusType) as StatusType[]
 
-export interface LogsMessage {
-  message: string
-  status: StatusType
-  date?: TimeStamp
-  [key: string]: ContextValue
-}
-
 export class Logger {
-  constructor(private sender: Sender) {}
+  constructor(
+    private options: LoggerOptions,
+    private addLogStrategy: (logsMessage: LogsMessage, loggerOptions: LoggerOptions) => void
+  ) {}
 
   @monitored
   log(message: string, messageContext?: object, status: StatusType = StatusType.info) {
-    let logOrigin
-    if (isExperimentalFeatureEnabled('forward-logs')) {
-      logOrigin = {
-        origin: ErrorSource.LOGGER,
-      }
-    }
-    this.sender.sendLog(message, combine(logOrigin, messageContext), status)
+    this.addLogStrategy({ message, context: messageContext, status }, this.options)
   }
 
   debug(message: string, messageContext?: object) {
@@ -64,22 +60,42 @@ export class Logger {
   }
 
   setContext(context: object) {
-    this.sender.getContextManager().set(context)
+    this.options.contextManager.set(context)
   }
 
   addContext(key: string, value: any) {
-    this.sender.getContextManager().add(key, value)
+    this.options.contextManager.add(key, value)
   }
 
   removeContext(key: string) {
-    this.sender.getContextManager().remove(key)
+    this.options.contextManager.remove(key)
   }
 
   setHandler(handler: HandlerType | HandlerType[]) {
-    this.sender.setHandler(handler)
+    this.options.handlerType = handler
   }
 
   setLevel(level: StatusType) {
-    this.sender.setLevel(level)
+    this.options.level = level
+  }
+}
+
+export type LoggerOptions = ReturnType<typeof newLoggerOptions>
+
+export function newLoggerOptions(
+  name?: string,
+  handlerType: HandlerType | HandlerType[] = HandlerType.http,
+  level: StatusType = StatusType.debug,
+  context: object = {}
+) {
+  const contextManager = createContextManager()
+  // Todo: merge the logger name into the context in logger collection in next major version
+  contextManager.set(assign({}, context, { logger: { name } }))
+
+  return {
+    handlerType,
+    level,
+    name,
+    contextManager,
   }
 }

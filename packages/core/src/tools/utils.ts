@@ -558,6 +558,14 @@ export function combine<A, B, C, D, E>(
   d: D,
   e: E
 ): Combined<Combined<Combined<Combined<A, B>, C>, D>, E>
+export function combine<A, B, C, D, E, F>(
+  a: A,
+  b: B,
+  c: C,
+  d: D,
+  e: E,
+  f: F
+): Combined<Combined<Combined<Combined<Combined<A, B>, C>, D>, E>, F>
 export function combine(...sources: any[]): unknown {
   let destination: any
 
