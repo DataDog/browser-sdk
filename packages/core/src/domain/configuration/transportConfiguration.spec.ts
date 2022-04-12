@@ -19,25 +19,6 @@ describe('transportConfiguration', () => {
     })
   })
 
-  describe('endpoint overload', () => {
-    it('should be available for e2e-test build mode', () => {
-      ;(window as unknown as BuildEnvWindow).__BUILD_ENV__BUILD_MODE__ = 'e2e-test'
-
-      const configuration = computeTransportConfiguration({ clientToken })
-      expect(configuration.rumEndpointBuilder.build()).toEqual('<<< E2E RUM ENDPOINT >>>')
-      expect(configuration.logsEndpointBuilder.build()).toEqual('<<< E2E LOGS ENDPOINT >>>')
-      expect(configuration.internalMonitoringEndpointBuilder?.build()).toEqual(
-        '<<< E2E INTERNAL MONITORING ENDPOINT >>>'
-      )
-      expect(configuration.sessionReplayEndpointBuilder.build()).toEqual('<<< E2E SESSION REPLAY ENDPOINT >>>')
-
-      expect(configuration.isIntakeUrl('<<< E2E RUM ENDPOINT >>>')).toBe(true)
-      expect(configuration.isIntakeUrl('<<< E2E LOGS ENDPOINT >>>')).toBe(true)
-      expect(configuration.isIntakeUrl('<<< E2E SESSION REPLAY ENDPOINT >>>')).toBe(true)
-      expect(configuration.isIntakeUrl('<<< E2E INTERNAL MONITORING ENDPOINT >>>')).toBe(true)
-    })
-  })
-
   describe('site', () => {
     it('should use US site by default', () => {
       const configuration = computeTransportConfiguration({ clientToken })
@@ -60,13 +41,13 @@ describe('transportConfiguration', () => {
 
     it('should add batch_time for rum endpoint', () => {
       const configuration = computeTransportConfiguration({ clientToken })
-      expect(configuration.rumEndpointBuilder.build()).toContain(`&batch_time=`)
+      expect(configuration.rumEndpointBuilder.build()).toContain('&batch_time=')
     })
 
     it('should not add batch_time for logs and replay endpoints', () => {
       const configuration = computeTransportConfiguration({ clientToken })
-      expect(configuration.logsEndpointBuilder.build()).not.toContain(`&batch_time=`)
-      expect(configuration.sessionReplayEndpointBuilder.build()).not.toContain(`&batch_time=`)
+      expect(configuration.logsEndpointBuilder.build()).not.toContain('&batch_time=')
+      expect(configuration.sessionReplayEndpointBuilder.build()).not.toContain('&batch_time=')
     })
   })
 
@@ -76,7 +57,7 @@ describe('transportConfiguration', () => {
       expect(configuration.rumEndpointBuilder.build()).toMatch(
         `https://proxy.io/path\\?ddforward=${encodeURIComponent(
           `https://rum.browser-intake-datadoghq.com/api/v2/rum?ddsource=(.*)&ddtags=(.*)&dd-api-key=${clientToken}` +
-            `&dd-evp-origin-version=(.*)&dd-evp-origin=browser&dd-request-id=(.*)&batch_time=(.*)`
+            '&dd-evp-origin-version=(.*)&dd-evp-origin=browser&dd-request-id=(.*)&batch_time=(.*)'
         )}`
       )
     })
@@ -101,10 +82,10 @@ describe('transportConfiguration', () => {
     it('should be set as tags in the logs and rum endpoints', () => {
       const configuration = computeTransportConfiguration({ clientToken, env: 'foo', service: 'bar', version: 'baz' })
       expect(decodeURIComponent(configuration.rumEndpointBuilder.build())).toContain(
-        `&ddtags=sdk_version:some_version,env:foo,service:bar,version:baz`
+        '&ddtags=sdk_version:some_version,env:foo,service:bar,version:baz'
       )
       expect(decodeURIComponent(configuration.logsEndpointBuilder.build())).toContain(
-        `&ddtags=sdk_version:some_version,env:foo,service:bar,version:baz`
+        '&ddtags=sdk_version:some_version,env:foo,service:bar,version:baz'
       )
     })
   })
@@ -117,7 +98,7 @@ describe('transportConfiguration', () => {
         datacenter: 'us1.prod.dog',
       })
       expect(configuration.rumEndpointBuilder.build()).toContain(
-        `ddtags=sdk_version%3Asome_version%2Cservice%3Abar%3Afoo%2Cdatacenter%3Aus1.prod.dog`
+        'ddtags=sdk_version%3Asome_version%2Cservice%3Abar%3Afoo%2Cdatacenter%3Aus1.prod.dog'
       )
     })
   })
@@ -145,19 +126,19 @@ describe('transportConfiguration', () => {
 
     it('should handle sites with subdomains', () => {
       const configuration = computeTransportConfiguration({ clientToken, site: 'foo.datadoghq.com' })
-      expect(configuration.isIntakeUrl(`https://rum.browser-intake-foo-datadoghq.com/api/v2/rum?xxx`)).toBe(true)
-      expect(configuration.isIntakeUrl(`https://logs.browser-intake-foo-datadoghq.com/api/v2/logs?xxx`)).toBe(true)
+      expect(configuration.isIntakeUrl('https://rum.browser-intake-foo-datadoghq.com/api/v2/rum?xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://logs.browser-intake-foo-datadoghq.com/api/v2/logs?xxx')).toBe(true)
       expect(
-        configuration.isIntakeUrl(`https://session-replay.browser-intake-foo-datadoghq.com/api/v2/replay?xxx`)
+        configuration.isIntakeUrl('https://session-replay.browser-intake-foo-datadoghq.com/api/v2/replay?xxx')
       ).toBe(true)
     })
 
     it('should detect proxy intake request', () => {
       let configuration = computeTransportConfiguration({ clientToken, proxyUrl: 'https://www.proxy.com' })
-      expect(configuration.isIntakeUrl(`https://www.proxy.com/?ddforward=xxx`)).toBe(true)
+      expect(configuration.isIntakeUrl('https://www.proxy.com/?ddforward=xxx')).toBe(true)
 
       configuration = computeTransportConfiguration({ clientToken, proxyUrl: 'https://www.proxy.com/custom/path' })
-      expect(configuration.isIntakeUrl(`https://www.proxy.com/custom/path?ddforward=xxx`)).toBe(true)
+      expect(configuration.isIntakeUrl('https://www.proxy.com/custom/path?ddforward=xxx')).toBe(true)
     })
 
     it('should not detect request done on the same host as the proxy', () => {
@@ -180,9 +161,9 @@ describe('transportConfiguration', () => {
         expect(configuration.isIntakeUrl(`https://logs.${intakeDomain}/api/v2/logs?xxx`)).toBe(true)
         expect(configuration.isIntakeUrl(`https://session-replay.${intakeDomain}/api/v2/replay?xxx`)).toBe(true)
 
-        expect(configuration.isIntakeUrl(`https://rum.browser-intake-datadoghq.com/api/v2/rum?xxx`)).toBe(true)
-        expect(configuration.isIntakeUrl(`https://logs.browser-intake-datadoghq.com/api/v2/logs?xxx`)).toBe(true)
-        expect(configuration.isIntakeUrl(`https://session-replay.browser-intake-datadoghq.com/api/v2/replay?xxx`)).toBe(
+        expect(configuration.isIntakeUrl('https://rum.browser-intake-datadoghq.com/api/v2/rum?xxx')).toBe(true)
+        expect(configuration.isIntakeUrl('https://logs.browser-intake-datadoghq.com/api/v2/logs?xxx')).toBe(true)
+        expect(configuration.isIntakeUrl('https://session-replay.browser-intake-datadoghq.com/api/v2/replay?xxx')).toBe(
           false
         )
       })

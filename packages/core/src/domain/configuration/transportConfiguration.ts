@@ -4,9 +4,6 @@ import type { EndpointBuilder } from './endpointBuilder'
 import { createEndpointBuilder, INTAKE_SITE_US } from './endpointBuilder'
 import { buildTags } from './tags'
 
-// replaced at build time
-declare const __BUILD_ENV__BUILD_MODE__: string
-
 export interface TransportConfiguration {
   logsEndpointBuilder: EndpointBuilder
   rumEndpointBuilder: EndpointBuilder
@@ -41,20 +38,6 @@ export function computeTransportConfiguration(initConfiguration: InitConfigurati
 }
 
 function computeEndpointBuilders(initConfiguration: InitConfiguration, tags: string[]) {
-  if (__BUILD_ENV__BUILD_MODE__ === 'e2e-test') {
-    const e2eEndpointBuilder = (placeholder: string) => ({
-      build: () => placeholder,
-      buildIntakeUrl: () => placeholder,
-    })
-
-    return {
-      logsEndpointBuilder: e2eEndpointBuilder('<<< E2E LOGS ENDPOINT >>>'),
-      rumEndpointBuilder: e2eEndpointBuilder('<<< E2E RUM ENDPOINT >>>'),
-      sessionReplayEndpointBuilder: e2eEndpointBuilder('<<< E2E SESSION REPLAY ENDPOINT >>>'),
-      internalMonitoringEndpointBuilder: e2eEndpointBuilder('<<< E2E INTERNAL MONITORING ENDPOINT >>>'),
-    }
-  }
-
   const endpointBuilders = {
     logsEndpointBuilder: createEndpointBuilder(initConfiguration, 'logs', tags),
     rumEndpointBuilder: createEndpointBuilder(initConfiguration, 'rum', tags),

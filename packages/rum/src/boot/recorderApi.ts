@@ -1,7 +1,7 @@
 import { canUseEventBridge, noop, runOnReadyState } from '@datadog/browser-core'
 import type {
   LifeCycle,
-  ParentContexts,
+  ViewContexts,
   RumSessionManager,
   RecorderApi,
   RumConfiguration,
@@ -73,7 +73,7 @@ export function makeRecorderApi(
       lifeCycle: LifeCycle,
       configuration: RumConfiguration,
       sessionManager: RumSessionManager,
-      parentContexts: ParentContexts
+      viewContexts: ViewContexts
     ) => {
       lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
         if (state.status === RecorderStatus.Starting || state.status === RecorderStatus.Started) {
@@ -122,7 +122,7 @@ export function makeRecorderApi(
               lifeCycle,
               configuration,
               sessionManager,
-              parentContexts,
+              viewContexts,
               worker
             )
             state = {

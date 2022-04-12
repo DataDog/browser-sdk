@@ -1,35 +1,32 @@
-import { Tabs } from 'bumbag'
-import React from 'react'
-import { ActionsTab } from './tabs/actionsTab'
-import { ConfigTab } from './tabs/configTab'
-import { sendAction } from './actions'
+import { Space, Tabs } from '@mantine/core'
+import React, { useState } from 'react'
+import { ActionsBar } from './components/actionsBar'
+import { ConfigTab } from './components/configTab'
+import { useEvents } from './hooks/useEvents'
+import { EventTab } from './components/eventsTab'
+
+const enum PanelTabs {
+  Actions,
+  RumConfig,
+  LogsConfig,
+}
 
 export function Panel() {
-  setInterval(() => {
-    sendAction('getConfig', 'rum')
-    sendAction('getConfig', 'logs')
-  }, 2000)
+  const [activeTab, setActiveTab] = useState(PanelTabs.Actions)
+  const { events, filters, setFilters } = useEvents()
 
-  chrome.devtools.network.onNavigated.addListener(() => {
-    sendAction('getConfig', 'rum')
-    sendAction('getConfig', 'logs')
-  })
   return (
-    <Tabs>
-      <Tabs.List>
-        <Tabs.Tab tabId="tab1">Actions</Tabs.Tab>
-        <Tabs.Tab tabId="tab2">RUM Config</Tabs.Tab>
-        <Tabs.Tab tabId="tab3">Logs Config</Tabs.Tab>
-      </Tabs.List>
-      <Tabs.Panel tabId="tab1" padding="major-2">
-        <ActionsTab />
-      </Tabs.Panel>
-      <Tabs.Panel tabId="tab2" padding="major-2">
-        <ConfigTab product={'rum'} />
-      </Tabs.Panel>
-      <Tabs.Panel tabId="tab3" padding="major-2">
-        <ConfigTab product={'logs'} />
-      </Tabs.Panel>
-    </Tabs>
+    <>
+      <ActionsBar />
+      <Space h="md" />
+      <Tabs color="violet" active={activeTab} onTabChange={setActiveTab}>
+        <Tabs.Tab label="Events">
+          <EventTab events={events} filters={filters} onFiltered={setFilters} />
+        </Tabs.Tab>
+        <Tabs.Tab label="Config">
+          <ConfigTab />
+        </Tabs.Tab>
+      </Tabs>
+    </>
   )
 }

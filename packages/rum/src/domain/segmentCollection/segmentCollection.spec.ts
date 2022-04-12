@@ -1,5 +1,6 @@
+import type { TimeStamp } from '@datadog/browser-core'
 import { DOM_EVENT, isIE } from '@datadog/browser-core'
-import type { ParentContexts, ViewContext } from '@datadog/browser-rum-core'
+import type { ViewContexts, ViewContext } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test/specHelper'
 import {
@@ -16,12 +17,12 @@ import { SEND_BEACON_BYTE_LENGTH_LIMIT } from '../../transport/send'
 import { computeSegmentContext, doStartSegmentCollection, MAX_SEGMENT_DURATION } from './segmentCollection'
 
 const CONTEXT: SegmentContext = { application: { id: 'a' }, view: { id: 'b' }, session: { id: 'c' } }
-const RECORD: Record = { type: RecordType.ViewEnd, timestamp: 10 }
+const RECORD: Record = { type: RecordType.ViewEnd, timestamp: 10 as TimeStamp }
 
 // A record that will make the segment size reach the SEND_BEACON_BYTE_LENGTH_LIMIT limit
 const VERY_BIG_RECORD: Record = {
   type: RecordType.FullSnapshot,
-  timestamp: 10,
+  timestamp: 10 as TimeStamp,
   data: Array(SEND_BEACON_BYTE_LENGTH_LIMIT).join('a') as any,
 }
 
@@ -225,7 +226,7 @@ describe('computeSegmentContext', () => {
   const DEFAULT_SESSION = createRumSessionManagerMock().setId('456')
 
   it('returns a segment context', () => {
-    expect(computeSegmentContext('appid', DEFAULT_SESSION, mockParentContexts(DEFAULT_VIEW_CONTEXT))).toEqual({
+    expect(computeSegmentContext('appid', DEFAULT_SESSION, mockViewContexts(DEFAULT_VIEW_CONTEXT))).toEqual({
       application: { id: 'appid' },
       session: { id: '456' },
       view: { id: '123' },
@@ -233,7 +234,7 @@ describe('computeSegmentContext', () => {
   })
 
   it('returns undefined if there is no current view', () => {
-    expect(computeSegmentContext('appid', DEFAULT_SESSION, mockParentContexts(undefined))).toBeUndefined()
+    expect(computeSegmentContext('appid', DEFAULT_SESSION, mockViewContexts(undefined))).toBeUndefined()
   })
 
   it('returns undefined if the session is not tracked', () => {
@@ -241,12 +242,12 @@ describe('computeSegmentContext', () => {
       computeSegmentContext(
         'appid',
         createRumSessionManagerMock().setNotTracked(),
-        mockParentContexts(DEFAULT_VIEW_CONTEXT)
+        mockViewContexts(DEFAULT_VIEW_CONTEXT)
       )
     ).toBeUndefined()
   })
 
-  function mockParentContexts(view: ViewContext | undefined): ParentContexts {
+  function mockViewContexts(view: ViewContext | undefined): ViewContexts {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return {
       findView() {

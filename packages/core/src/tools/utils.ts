@@ -36,9 +36,10 @@ export const enum DOM_EVENT {
   INPUT = 'input',
   PLAY = 'play',
   PAUSE = 'pause',
+  SECURITY_POLICY_VIOLATION = 'securitypolicyviolation',
 }
 
-export enum ResourceType {
+export const enum ResourceType {
   DOCUMENT = 'document',
   XHR = 'xhr',
   BEACON = 'beacon',
@@ -51,7 +52,7 @@ export enum ResourceType {
   OTHER = 'other',
 }
 
-export enum RequestType {
+export const enum RequestType {
   FETCH = ResourceType.FETCH,
   XHR = ResourceType.XHR,
 }
@@ -318,13 +319,14 @@ export function findCommaSeparatedValue(rawString: string, name: string) {
   return matches ? matches[1] : undefined
 }
 
-export function safeTruncate(candidate: string, length: number) {
+export function safeTruncate(candidate: string, length: number, suffix = '') {
   const lastChar = candidate.charCodeAt(length - 1)
-  // check if it is the high part of a surrogate pair
-  if (lastChar >= 0xd800 && lastChar <= 0xdbff) {
-    return candidate.slice(0, length + 1)
-  }
-  return candidate.slice(0, length)
+  const isLastCharSurrogatePair = lastChar >= 0xd800 && lastChar <= 0xdbff
+  const correctedLength = isLastCharSurrogatePair ? length + 1 : length
+
+  if (candidate.length <= correctedLength) return candidate
+
+  return `${candidate.slice(0, correctedLength)}${suffix}`
 }
 
 export interface EventEmitter {
@@ -574,23 +576,17 @@ export function combine(...sources: any[]): unknown {
 export type TimeoutId = ReturnType<typeof setTimeout>
 
 export function requestIdleCallback(callback: () => void, opts?: { timeout?: number }) {
-  interface BrowserWindow extends Window {
-    requestIdleCallback: (callback: () => void, opts?: { timeout?: number }) => number
-    cancelIdleCallback: (handle?: number) => void
-  }
-  const browserWindow = window as unknown as BrowserWindow
-
   // Use 'requestIdleCallback' when available: it will throttle the mutation processing if the
   // browser is busy rendering frames (ex: when frames are below 60fps). When not available, the
   // fallback on 'requestAnimationFrame' will still ensure the mutations are processed after any
   // browser rendering process (Layout, Recalculate Style, etc.), so we can serialize DOM nodes
   // efficiently.
-  if (browserWindow.requestIdleCallback) {
-    const id = browserWindow.requestIdleCallback(monitor(callback), opts)
-    return () => browserWindow.cancelIdleCallback(id)
+  if (window.requestIdleCallback) {
+    const id = window.requestIdleCallback(monitor(callback), opts)
+    return () => window.cancelIdleCallback(id)
   }
-  const id = browserWindow.requestAnimationFrame(monitor(callback))
-  return () => browserWindow.cancelAnimationFrame(id)
+  const id = window.requestAnimationFrame(monitor(callback))
+  return () => window.cancelAnimationFrame(id)
 }
 
 export function removeDuplicates<T>(array: T[]) {

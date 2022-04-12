@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import type { Store } from '../common/types'
-import { listenAction, sendAction } from './actions'
+import type { Store } from '../../common/types'
+import { listenAction, sendAction } from '../actions'
 
 let store: Store | undefined
 const storeListeners = new Set<(store: Store) => void>()
@@ -8,7 +8,7 @@ const storeLoadingPromise = new Promise((resolve) => {
   sendAction('getStore', undefined)
   listenAction('newStore', (newStore) => {
     store = newStore
-    storeListeners.forEach((listener) => listener(store))
+    storeListeners.forEach((listener) => listener(store!))
     resolve(undefined)
   })
 })

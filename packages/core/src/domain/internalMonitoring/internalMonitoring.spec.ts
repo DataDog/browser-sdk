@@ -1,8 +1,6 @@
-import sinon from 'sinon'
-import type { Clock } from '../../../test/specHelper'
-import { deleteEventBridgeStub, initEventBridgeStub, mockClock, stubEndpointBuilder } from '../../../test/specHelper'
-
+import type { Context } from '../../tools/context'
 import type { Configuration } from '../configuration'
+import { updateExperimentalFeatures, resetExperimentalFeatures } from '../configuration'
 import type { InternalMonitoring, MonitoringMessage } from './internalMonitoring'
 import {
   monitor,
@@ -11,12 +9,9 @@ import {
   startInternalMonitoring,
   callMonitored,
 } from './internalMonitoring'
+import type { TelemetryEvent } from './telemetryEvent.types'
 
 const configuration: Partial<Configuration> = {
-  batchBytesLimit: 100,
-  flushTimeout: 60 * 1000,
-  internalMonitoringEndpointBuilder: stubEndpointBuilder('http://localhot/monitoring'),
-  maxBatchSize: 1,
   maxInternalMonitoringMessagesPerPage: 7,
 }
 
@@ -64,8 +59,12 @@ describe('internal monitoring', () => {
     })
 
     describe('after initialization', () => {
+      let notifySpy: jasmine.Spy<(message: MonitoringMessage) => void>
+
       beforeEach(() => {
-        startInternalMonitoring(configuration as Configuration)
+        const { monitoringMessageObservable } = startInternalMonitoring(configuration as Configuration)
+        notifySpy = jasmine.createSpy('notified')
+        monitoringMessageObservable.subscribe(notifySpy)
       })
 
       afterEach(() => {
@@ -82,36 +81,27 @@ describe('internal monitoring', () => {
       })
 
       it('should report error', () => {
-        const server = sinon.fakeServer.create()
-
         candidate.monitoredThrowing()
 
-        const message = JSON.parse(server.requests[0].requestBody) as MonitoringMessage
+        const message = notifySpy.calls.mostRecent().args[0]
         expect(message.message).toEqual('monitored')
         expect(message.error!.stack).toMatch('monitored')
-        server.restore()
       })
 
       it('should report string error', () => {
-        const server = sinon.fakeServer.create()
-
         candidate.monitoredStringErrorThrowing()
 
-        const message = JSON.parse(server.requests[0].requestBody) as MonitoringMessage
+        const message = notifySpy.calls.mostRecent().args[0]
         expect(message.message).toEqual('Uncaught "string error"')
         expect(message.error!.stack).toMatch('Not an instance of error')
-        server.restore()
       })
 
       it('should report object error', () => {
-        const server = sinon.fakeServer.create()
-
         candidate.monitoredObjectErrorThrowing()
 
-        const message = JSON.parse(server.requests[0].requestBody) as MonitoringMessage
+        const message = notifySpy.calls.mostRecent().args[0]
         expect(message.message).toEqual('Uncaught {"foo":"bar"}')
         expect(message.error!.stack).toMatch('Not an instance of error')
-        server.restore()
       })
     })
   })
@@ -121,9 +111,12 @@ describe('internal monitoring', () => {
     const throwing = () => {
       throw new Error('error')
     }
+    let notifySpy: jasmine.Spy<(message: MonitoringMessage) => void>
 
     beforeEach(() => {
-      startInternalMonitoring(configuration as Configuration)
+      const { monitoringMessageObservable } = startInternalMonitoring(configuration as Configuration)
+      notifySpy = jasmine.createSpy('notified')
+      monitoringMessageObservable.subscribe(notifySpy)
     })
 
     afterEach(() => {
@@ -140,12 +133,9 @@ describe('internal monitoring', () => {
       })
 
       it('should report error', () => {
-        const server = sinon.fakeServer.create()
-
         callMonitored(throwing)
 
-        expect((JSON.parse(server.requests[0].requestBody) as MonitoringMessage).message).toEqual('error')
-        server.restore()
+        expect(notifySpy.calls.mostRecent().args[0].message).toEqual('error')
       })
     })
 
@@ -161,96 +151,25 @@ describe('internal monitoring', () => {
       })
 
       it('should report error', () => {
-        const server = sinon.fakeServer.create()
-
         monitor(throwing)()
 
-        expect((JSON.parse(server.requests[0].requestBody) as MonitoringMessage).message).toEqual('error')
-        server.restore()
-      })
-    })
-  })
-
-  describe('transport', () => {
-    const FAKE_DATE = 123456
-    let server: sinon.SinonFakeServer
-    let clock: Clock
-
-    beforeEach(() => {
-      server = sinon.fakeServer.create()
-      clock = mockClock(new Date(FAKE_DATE))
-    })
-
-    afterEach(() => {
-      resetInternalMonitoring()
-      server.restore()
-      clock.cleanup()
-      deleteEventBridgeStub()
-    })
-
-    it('should send the needed data', () => {
-      startInternalMonitoring(configuration as Configuration)
-
-      callMonitored(() => {
-        throw new Error('message')
-      })
-
-      expect(server.requests.length).toEqual(1)
-      expect(server.requests[0].url).toContain(configuration.internalMonitoringEndpointBuilder!.build())
-
-      expect(JSON.parse(server.requests[0].requestBody)).toEqual({
-        date: FAKE_DATE,
-        error: jasmine.anything(),
-        message: 'message',
-        status: 'error',
-      })
-    })
-
-    it('should cap the data sent', () => {
-      startInternalMonitoring(configuration as Configuration)
-
-      const max = configuration.maxInternalMonitoringMessagesPerPage!
-      for (let i = 0; i < max + 3; i += 1) {
-        callMonitored(() => {
-          throw new Error('message')
-        })
-      }
-
-      expect(server.requests.length).toEqual(max)
-    })
-
-    it('should send bridge event when bridge is present', () => {
-      const sendSpy = spyOn(initEventBridgeStub(), 'send')
-      startInternalMonitoring(configuration as Configuration)
-
-      callMonitored(() => {
-        throw new Error('message')
-      })
-
-      expect(server.requests.length).toEqual(0)
-
-      const [message] = sendSpy.calls.mostRecent().args
-      const parsedMessage = JSON.parse(message)
-
-      expect(parsedMessage).toEqual({
-        eventType: 'internal_log',
-        event: jasmine.objectContaining({ message: 'message' }),
+        expect(notifySpy.calls.mostRecent().args[0].message).toEqual('error')
       })
     })
   })
 
   describe('external context', () => {
-    let server: sinon.SinonFakeServer
     let internalMonitoring: InternalMonitoring
+    let notifySpy: jasmine.Spy<(message: MonitoringMessage) => void>
 
     beforeEach(() => {
       internalMonitoring = startInternalMonitoring(configuration as Configuration)
-      server = sinon.fakeServer.create()
+      notifySpy = jasmine.createSpy('notified')
+      internalMonitoring.monitoringMessageObservable.subscribe(notifySpy)
     })
 
     afterEach(() => {
       resetInternalMonitoring()
-      server.restore()
     })
 
     it('should be added to error messages', () => {
@@ -260,13 +179,93 @@ describe('internal monitoring', () => {
       callMonitored(() => {
         throw new Error('message')
       })
-      expect(JSON.parse(server.requests[0].requestBody).foo).toEqual('bar')
+      expect(notifySpy.calls.mostRecent().args[0].foo).toEqual('bar')
 
       internalMonitoring.setExternalContextProvider(() => ({}))
       callMonitored(() => {
         throw new Error('message')
       })
-      expect(JSON.parse(server.requests[1].requestBody).foo).not.toBeDefined()
+      expect(notifySpy.calls.mostRecent().args[0].foo).not.toBeDefined()
+    })
+  })
+
+  describe('new telemetry', () => {
+    let internalMonitoring: InternalMonitoring
+    let notifySpy: jasmine.Spy<(event: TelemetryEvent & Context) => void>
+
+    describe('when enabled', () => {
+      beforeEach(() => {
+        updateExperimentalFeatures(['telemetry'])
+        internalMonitoring = startInternalMonitoring(configuration as Configuration)
+        notifySpy = jasmine.createSpy('notified')
+        internalMonitoring.telemetryEventObservable.subscribe(notifySpy)
+      })
+
+      afterEach(() => {
+        resetExperimentalFeatures()
+        resetInternalMonitoring()
+      })
+
+      it('should notify observable', () => {
+        callMonitored(() => {
+          throw new Error('message')
+        })
+
+        expect(notifySpy).toHaveBeenCalled()
+        const telemetryEvent = notifySpy.calls.mostRecent().args[0]
+        expect(telemetryEvent.type).toEqual('telemetry')
+        expect(telemetryEvent.telemetry).toEqual({
+          status: 'error',
+          message: 'message',
+          error: jasmine.any(Object),
+        })
+      })
+
+      it('should add telemetry context', () => {
+        internalMonitoring.setTelemetryContextProvider(() => ({ foo: 'bar' }))
+
+        callMonitored(() => {
+          throw new Error('message')
+        })
+
+        expect(notifySpy).toHaveBeenCalled()
+        const telemetryEvent = notifySpy.calls.mostRecent().args[0]
+        expect(telemetryEvent.foo).toEqual('bar')
+      })
+
+      it('should still use existing system', () => {
+        internalMonitoring.setExternalContextProvider(() => ({
+          foo: 'bar',
+        }))
+        const oldNotifySpy = jasmine.createSpy<(message: MonitoringMessage) => void>('old')
+        internalMonitoring.monitoringMessageObservable.subscribe(oldNotifySpy)
+
+        callMonitored(() => {
+          throw new Error('message')
+        })
+
+        expect(oldNotifySpy.calls.mostRecent().args[0].foo).toEqual('bar')
+      })
+    })
+
+    describe('when disabled', () => {
+      beforeEach(() => {
+        internalMonitoring = startInternalMonitoring(configuration as Configuration)
+        notifySpy = jasmine.createSpy('notified')
+        internalMonitoring.telemetryEventObservable.subscribe(notifySpy)
+      })
+
+      afterEach(() => {
+        resetInternalMonitoring()
+      })
+
+      it('should not notify observable', () => {
+        callMonitored(() => {
+          throw new Error('message')
+        })
+
+        expect(notifySpy).not.toHaveBeenCalled()
+      })
     })
   })
 })

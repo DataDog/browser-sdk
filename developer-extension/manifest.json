@@ -9,11 +9,5 @@
     "scripts": ["background.js"],
     "persistent": true
   },
-  "content_scripts": [
-    {
-      "js": ["contentscript.js"],
-      "matches": ["<all_urls>"]
-    }
-  ],
   "devtools_page": "devtools.html"
 }

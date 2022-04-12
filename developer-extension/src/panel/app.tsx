@@ -1,31 +1,22 @@
-import { Provider as BumbagProvider, Box, css } from 'bumbag'
+import { MantineProvider } from '@mantine/core'
+import { useColorScheme } from '@mantine/hooks'
 import React, { Suspense } from 'react'
 
 import { Panel } from './panel'
 
-const theme = {
-  global: {
-    fontSize: 14,
-    styles: {
-      base: css`
-        body {
-          min-height: 100vh;
-        }
-      `,
-    },
-  },
-  modes: {
-    enableLocalStorage: false,
-    useSystemColorMode: true,
-  },
-}
-
 export function App() {
+  const colorScheme = useColorScheme()
+
   return (
-    <BumbagProvider theme={theme}>
-      <Suspense fallback={<Box padding="major-4" />}>
+    <MantineProvider
+      theme={{
+        colorScheme,
+      }}
+      withGlobalStyles
+    >
+      <Suspense fallback={<></>}>
         <Panel />
       </Suspense>
-    </BumbagProvider>
+    </MantineProvider>
   )
 }

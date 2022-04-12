@@ -1,5 +1,5 @@
 import type { Context, ClocksState, Observable } from '@datadog/browser-core'
-import { DOM_EVENT } from '@datadog/browser-core'
+import { resetExperimentalFeatures, updateExperimentalFeatures, relativeNow, DOM_EVENT } from '@datadog/browser-core'
 import type { Clock } from '../../../../../core/test/specHelper'
 import { createNewEvent } from '../../../../../core/test/specHelper'
 import type { TestSetupBuilder } from '../../../../test/specHelper'
@@ -8,6 +8,7 @@ import { RumEventType, ActionType } from '../../../rawRumEvent.types'
 import type { RumEvent } from '../../../rumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { PAGE_ACTIVITY_VALIDATION_DELAY } from '../../waitIdlePage'
+import type { ActionContexts } from './actionCollection'
 import type { AutoAction } from './trackActions'
 import { AUTO_ACTION_MAX_DURATION, trackActions } from './trackActions'
 
@@ -36,8 +37,7 @@ describe('trackActions', () => {
   let button: HTMLButtonElement
   let emptyElement: HTMLHRElement
   let setupBuilder: TestSetupBuilder
-  let createSpy: jasmine.Spy
-  let discardSpy: jasmine.Spy
+  let findActionId: ActionContexts['findActionId']
 
   function mockValidatedClickAction(
     domMutationObservable: Observable<void>,
@@ -64,16 +64,13 @@ describe('trackActions', () => {
     emptyElement = document.createElement('hr')
     document.body.appendChild(emptyElement)
 
-    createSpy = jasmine.createSpy('create')
-    discardSpy = jasmine.createSpy('discard')
-
     setupBuilder = setup()
       .withFakeClock()
       .beforeBuild(({ lifeCycle, domMutationObservable, configuration }) => {
-        lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_CREATED, createSpy)
         lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
-        lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_DISCARDED, discardSpy)
-        return trackActions(lifeCycle, domMutationObservable, configuration)
+        const trackActionsResult = trackActions(lifeCycle, domMutationObservable, configuration)
+        findActionId = trackActionsResult.actionContexts.findActionId
+        return { stop: trackActionsResult.stop }
       })
   })
 
@@ -83,25 +80,50 @@ describe('trackActions', () => {
     setupBuilder.cleanup()
   })
 
-  it('discards pending action on view created', () => {
-    const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
-    mockValidatedClickAction(domMutationObservable, clock, button)
-    expect(createSpy).toHaveBeenCalled()
+  describe('without frustration-signals flag', () => {
+    it('discards pending action on view created', () => {
+      const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
+      mockValidatedClickAction(domMutationObservable, clock, button)
+      expect(findActionId()).not.toBeUndefined()
 
-    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
-      id: 'fake',
-      startClocks: jasmine.any(Object) as unknown as ClocksState,
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+        id: 'fake',
+        startClocks: jasmine.any(Object) as unknown as ClocksState,
+      })
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events).toEqual([])
+      expect(findActionId()).toBeUndefined()
     })
-    clock.tick(EXPIRE_DELAY)
+  })
 
-    expect(events).toEqual([])
-    expect(discardSpy).toHaveBeenCalled()
+  describe('with frustration-signals flag', () => {
+    beforeEach(() => {
+      updateExperimentalFeatures(['frustration-signals'])
+    })
+    afterEach(() => {
+      resetExperimentalFeatures()
+    })
+
+    it("doesn't discard pending action on view created", () => {
+      const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
+      mockValidatedClickAction(domMutationObservable, clock, button)
+      expect(findActionId()).not.toBeUndefined()
+
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+        id: 'fake',
+        startClocks: jasmine.any(Object) as unknown as ClocksState,
+      })
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events.length).toBe(1)
+    })
   })
 
   it('starts a action when clicking on an element', () => {
     const { domMutationObservable, clock } = setupBuilder.build()
     mockValidatedClickAction(domMutationObservable, clock, button)
-    expect(createSpy).toHaveBeenCalled()
+    expect(findActionId()).not.toBeUndefined()
     clock.tick(EXPIRE_DELAY)
     expect(events).toEqual([
       {
@@ -127,26 +149,35 @@ describe('trackActions', () => {
 
     clock.tick(EXPIRE_DELAY)
     expect(events).toEqual([])
-    expect(discardSpy).toHaveBeenCalled()
+    expect(findActionId()).toBeUndefined()
   })
 
   it('discards a pending action with a negative duration', () => {
     const { domMutationObservable, clock } = setupBuilder.build()
     mockValidatedClickAction(domMutationObservable, clock, button, -1)
-    expect(createSpy).toHaveBeenCalled()
+    expect(findActionId()).not.toBeUndefined()
     clock.tick(EXPIRE_DELAY)
 
     expect(events).toEqual([])
-    expect(discardSpy).toHaveBeenCalled()
+    expect(findActionId()).toBeUndefined()
   })
 
   it('ignores a actions if it fails to find a name', () => {
     const { domMutationObservable, clock } = setupBuilder.build()
     mockValidatedClickAction(domMutationObservable, clock, emptyElement)
-    expect(createSpy).not.toHaveBeenCalled()
+    expect(findActionId()).toBeUndefined()
     clock.tick(EXPIRE_DELAY)
 
     expect(events).toEqual([])
+  })
+
+  it('should keep track of previously validated actions', () => {
+    const { domMutationObservable, clock } = setupBuilder.build()
+    mockValidatedClickAction(domMutationObservable, clock, button)
+    const actionStartTime = relativeNow()
+    clock.tick(EXPIRE_DELAY)
+
+    expect(findActionId(actionStartTime)).not.toBeUndefined()
   })
 })
 
@@ -178,19 +209,46 @@ describe('newAction', () => {
     setupBuilder.cleanup()
   })
 
-  it('ignores any starting action while another one is happening', () => {
-    const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
-    lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
+  describe('without frustration-signals flag', () => {
+    it('ignores any starting action while another one is ongoing', () => {
+      const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
+      lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
 
-    newClick('test-1')
-    newClick('test-2')
+      newClick('test-1')
+      newClick('test-2')
 
-    clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-    domMutationObservable.notify()
+      clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+      domMutationObservable.notify()
 
-    clock.tick(EXPIRE_DELAY)
-    expect(events.length).toBe(1)
-    expect(events[0].name).toBe('test-1')
+      clock.tick(EXPIRE_DELAY)
+      expect(events.length).toBe(1)
+      expect(events[0].name).toBe('test-1')
+    })
+  })
+
+  describe('with frustration-signals flag', () => {
+    beforeEach(() => {
+      updateExperimentalFeatures(['frustration-signals'])
+    })
+    afterEach(() => {
+      resetExperimentalFeatures()
+    })
+
+    it('collect actions even if another one is ongoing', () => {
+      const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
+      lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
+
+      newClick('test-1')
+      newClick('test-2')
+
+      clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+      domMutationObservable.notify()
+
+      clock.tick(EXPIRE_DELAY)
+      expect(events.length).toBe(2)
+      expect(events[0].name).toBe('test-1')
+      expect(events[1].name).toBe('test-2')
+    })
   })
 
   it('counts errors occurring during the action', () => {

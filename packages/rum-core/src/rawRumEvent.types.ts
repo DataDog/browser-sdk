@@ -9,7 +9,7 @@ import type {
 } from '@datadog/browser-core'
 import type { RumSessionPlan } from './domain/rumSessionManager'
 
-export enum RumEventType {
+export const enum RumEventType {
   ACTION = 'action',
   ERROR = 'error',
   LONG_TASK = 'long_task',
@@ -50,11 +50,6 @@ export interface RawRumErrorEvent {
   date: TimeStamp
   type: RumEventType.ERROR
   error: {
-    resource?: {
-      url: string
-      status_code: number
-      method: string
-    }
     id: string
     type?: string
     stack?: string
@@ -110,7 +105,7 @@ export interface InForegroundPeriod {
   duration: ServerDuration
 }
 
-export enum ViewLoadingType {
+export const enum ViewLoadingType {
   INITIAL_LOAD = 'initial_load',
   ROUTE_CHANGE = 'route_change',
 }
@@ -157,7 +152,7 @@ export interface RawRumActionEvent {
   }
 }
 
-export enum ActionType {
+export const enum ActionType {
   CLICK = 'click',
   CUSTOM = 'custom',
 }
@@ -175,6 +170,7 @@ export interface RumContext {
     id: string
   }
   service?: string
+  version?: string
   source: 'browser'
   session: {
     id: string
@@ -199,6 +195,8 @@ export interface RumContext {
 }
 
 export interface ViewContext extends Context {
+  service?: string
+  version?: string
   view: {
     id: string
     name?: string
@@ -207,7 +205,7 @@ export interface ViewContext extends Context {
 
 export interface ActionContext extends Context {
   action: {
-    id: string
+    id: string | string[]
   }
 }
 
@@ -228,7 +226,7 @@ export interface InternalContext {
     name?: string
   }
   user_action?: {
-    id: string
+    id: string | string[]
   }
 }
 

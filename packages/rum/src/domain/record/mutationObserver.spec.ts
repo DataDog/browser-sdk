@@ -834,7 +834,7 @@ describe('startMutationCollection', () => {
       expectedAttributesMutation,
     } of testsVariations) {
       describe(`${privacyAttributeValue} mode on ${privacyAttributeOn} element`, () => {
-        it(`respects the privacy mode for newly added inputs`, () => {
+        it('respects the privacy mode for newly added inputs', () => {
           const input = document.createElement('input')
           input.value = 'foo'
           if (privacyAttributeOn === 'input') {

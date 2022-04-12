@@ -8,6 +8,7 @@ import {
   display,
   createEventRateLimiter,
   canUseEventBridge,
+  isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type {
@@ -20,21 +21,22 @@ import type {
   User,
 } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
-import { RumEvent } from '../rumEvent.types'
+import type { RumEvent } from '../rumEvent.types'
 import { getSyntheticsContext } from './syntheticsContext'
 import { getCiTestContext } from './ciTestContext'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
-import type { ParentContexts } from './parentContexts'
+import type { ViewContexts } from './viewContexts'
 import type { RumSessionManager } from './rumSessionManager'
 import { RumSessionPlan } from './rumSessionManager'
 import type { UrlContexts } from './urlContexts'
 import type { RumConfiguration } from './configuration'
+import type { ActionContexts } from './rumEventsCollection/action/actionCollection'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
 
-enum SessionType {
+const enum SessionType {
   SYNTHETICS = 'synthetics',
   USER = 'user',
   CI_TEST = 'ci_test',
@@ -62,8 +64,9 @@ export function startRumAssembly(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   sessionManager: RumSessionManager,
-  parentContexts: ParentContexts,
+  viewContexts: ViewContexts,
   urlContexts: UrlContexts,
+  actionContexts: ActionContexts,
   getCommonContext: () => CommonContext
 ) {
   const reportError = (error: RawError) => {
@@ -89,14 +92,13 @@ export function startRumAssembly(
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
     ({ startTime, rawRumEvent, domainContext, savedCommonContext, customerContext }) => {
-      const viewContext = parentContexts.findView(startTime)
+      const viewContext = viewContexts.findView(startTime)
       const urlContext = urlContexts.findUrl(startTime)
       // allow to send events if the session was tracked when they start
       // except for views which are continuously updated
       // TODO: stop sending view updates when session is expired
       const session = sessionManager.findTrackedSession(rawRumEvent.type !== RumEventType.VIEW ? startTime : undefined)
       if (session && viewContext && urlContext) {
-        const actionContext = parentContexts.findAction(startTime)
         const commonContext = savedCommonContext || getCommonContext()
         const rumContext: RumContext = {
           _dd: {
@@ -120,9 +122,18 @@ export function startRumAssembly(
           synthetics: syntheticsContext,
           ci_test: ciTestContext,
         }
+        const actionId = actionContexts.findActionId(startTime)
+
+        if (!isExperimentalFeatureEnabled('sub-apps')) {
+          delete viewContext.service
+          delete viewContext.version
+        } else {
+          rumContext.version = configuration.version
+        }
+
         const serverRumEvent = (
-          needToAssembleWithAction(rawRumEvent)
-            ? combine(rumContext, urlContext, viewContext, actionContext, rawRumEvent)
+          needToAssembleWithAction(rawRumEvent) && actionId
+            ? combine(rumContext, urlContext, viewContext, { action: { id: actionId } }, rawRumEvent)
             : combine(rumContext, urlContext, viewContext, rawRumEvent)
         ) as RumEvent & Context
 

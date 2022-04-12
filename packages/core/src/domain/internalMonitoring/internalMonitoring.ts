@@ -2,18 +2,27 @@ import type { Context } from '../../tools/context'
 import { display } from '../../tools/display'
 import { toStackTraceString } from '../../tools/error'
 import { assign, combine, jsonStringify } from '../../tools/utils'
-import { canUseEventBridge, getEventBridge } from '../../transport'
 import type { Configuration } from '../configuration'
 import { computeStackTrace } from '../tracekit'
-import { startMonitoringBatch } from './startMonitoringBatch'
+import { Observable } from '../../tools/observable'
+import { timeStampNow } from '../../tools/timeUtils'
+import { isExperimentalFeatureEnabled } from '../configuration'
+import type { TelemetryEvent } from './telemetryEvent.types'
 
-enum StatusType {
-  info = 'info',
+// replaced at build time
+declare const __BUILD_ENV__SDK_VERSION__: string
+
+const enum StatusType {
+  debug = 'debug',
   error = 'error',
 }
 
 export interface InternalMonitoring {
   setExternalContextProvider: (provider: () => Context) => void
+  monitoringMessageObservable: Observable<MonitoringMessage>
+
+  setTelemetryContextProvider: (provider: () => Context) => void
+  telemetryEventObservable: Observable<TelemetryEvent & Context>
 }
 
 export interface MonitoringMessage extends Context {
@@ -35,14 +44,15 @@ let onInternalMonitoringMessageCollected: ((message: MonitoringMessage) => void)
 
 export function startInternalMonitoring(configuration: Configuration): InternalMonitoring {
   let externalContextProvider: () => Context
+  let telemetryContextProvider: () => Context
+  const monitoringMessageObservable = new Observable<MonitoringMessage>()
+  const telemetryEventObservable = new Observable<TelemetryEvent & Context>()
 
-  if (canUseEventBridge()) {
-    const bridge = getEventBridge<'internal_log', MonitoringMessage>()!
-    onInternalMonitoringMessageCollected = (message: MonitoringMessage) =>
-      bridge.send('internal_log', withContext(message))
-  } else if (configuration.internalMonitoringEndpointBuilder) {
-    const batch = startMonitoringBatch(configuration)
-    onInternalMonitoringMessageCollected = (message: MonitoringMessage) => batch.add(withContext(message))
+  onInternalMonitoringMessageCollected = (message: MonitoringMessage) => {
+    monitoringMessageObservable.notify(withContext(message))
+    if (isExperimentalFeatureEnabled('telemetry')) {
+      telemetryEventObservable.notify(toTelemetryEvent(message))
+    }
   }
 
   assign(monitoringConfiguration, {
@@ -52,9 +62,26 @@ export function startInternalMonitoring(configuration: Configuration): InternalM
 
   function withContext(message: MonitoringMessage) {
     return combine(
-      { date: new Date().getTime() },
+      { date: timeStampNow() },
       externalContextProvider !== undefined ? externalContextProvider() : {},
       message
+    )
+  }
+
+  function toTelemetryEvent(message: MonitoringMessage): TelemetryEvent & Context {
+    return combine(
+      {
+        type: 'telemetry' as const,
+        date: timeStampNow(),
+        service: 'browser-sdk',
+        version: __BUILD_ENV__SDK_VERSION__,
+        source: 'browser' as const,
+        _dd: {
+          format_version: 2 as const,
+        },
+        telemetry: message as any, // https://github.com/microsoft/TypeScript/issues/48457
+      },
+      telemetryContextProvider !== undefined ? telemetryContextProvider() : {}
     )
   }
 
@@ -62,6 +89,11 @@ export function startInternalMonitoring(configuration: Configuration): InternalM
     setExternalContextProvider: (provider: () => Context) => {
       externalContextProvider = provider
     },
+    monitoringMessageObservable,
+    setTelemetryContextProvider: (provider: () => Context) => {
+      telemetryContextProvider = provider
+    },
+    telemetryEventObservable,
   }
 }
 
@@ -132,7 +164,7 @@ export function addMonitoringMessage(message: string, context?: Context) {
     assign(
       {
         message,
-        status: StatusType.info,
+        status: StatusType.debug,
       },
       context
     )

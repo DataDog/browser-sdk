@@ -45,7 +45,7 @@ export function createEndpointBuilder(
         `&ddtags=${encodeURIComponent([`sdk_version:${__BUILD_ENV__SDK_VERSION__}`].concat(tags).join(','))}` +
         `&dd-api-key=${clientToken}` +
         `&dd-evp-origin-version=${encodeURIComponent(__BUILD_ENV__SDK_VERSION__)}` +
-        `&dd-evp-origin=browser` +
+        '&dd-evp-origin=browser' +
         `&dd-request-id=${generateUUID()}`
 
       if (endpointType === 'rum') {

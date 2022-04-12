@@ -15,6 +15,7 @@ import type { LifeCycle, RawRumEventCollectedData } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { ForegroundContexts } from '../../foregroundContexts'
 import { trackConsoleError } from './trackConsoleError'
+import { trackReportError } from './trackReportError'
 
 export interface ProvidedError {
   startClocks: ClocksState
@@ -28,6 +29,7 @@ export function startErrorCollection(lifeCycle: LifeCycle, foregroundContexts: F
 
   trackConsoleError(errorObservable)
   trackRuntimeError(errorObservable)
+  trackReportError(errorObservable)
 
   errorObservable.subscribe((error) => lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error }))
 
@@ -85,13 +87,6 @@ function processError(
     error: {
       id: generateUUID(),
       message: error.message,
-      resource: error.resource
-        ? {
-            method: error.resource.method,
-            status_code: error.resource.statusCode,
-            url: error.resource.url,
-          }
-        : undefined,
       source: error.source,
       stack: error.stack,
       handling_stack: error.handlingStack,

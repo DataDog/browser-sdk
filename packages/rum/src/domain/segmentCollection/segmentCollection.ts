@@ -1,6 +1,6 @@
 import type { EventEmitter, TimeoutId } from '@datadog/browser-core'
 import { addEventListener, DOM_EVENT, monitor } from '@datadog/browser-core'
-import type { LifeCycle, ParentContexts, RumSessionManager } from '@datadog/browser-rum-core'
+import type { LifeCycle, ViewContexts, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { SEND_BEACON_BYTE_LENGTH_LIMIT } from '../../transport/send'
 import type { CreationReason, Record, SegmentContext, SegmentMetadata } from '../../types'
@@ -39,13 +39,13 @@ export function startSegmentCollection(
   lifeCycle: LifeCycle,
   applicationId: string,
   sessionManager: RumSessionManager,
-  parentContexts: ParentContexts,
+  viewContexts: ViewContexts,
   send: (data: Uint8Array, metadata: SegmentMetadata, rawSegmentSize: number, flushReason?: string) => void,
   worker: DeflateWorker
 ) {
   return doStartSegmentCollection(
     lifeCycle,
-    () => computeSegmentContext(applicationId, sessionManager, parentContexts),
+    () => computeSegmentContext(applicationId, sessionManager, viewContexts),
     send,
     worker
   )
@@ -177,10 +177,10 @@ export function doStartSegmentCollection(
 export function computeSegmentContext(
   applicationId: string,
   sessionManager: RumSessionManager,
-  parentContexts: ParentContexts
+  viewContexts: ViewContexts
 ) {
   const session = sessionManager.findTrackedSession()
-  const viewContext = parentContexts.findView()
+  const viewContext = viewContexts.findView()
   if (!session || !viewContext) {
     return undefined
   }
