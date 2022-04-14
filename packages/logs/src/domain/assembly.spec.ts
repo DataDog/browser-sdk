@@ -1,40 +1,51 @@
-import type { Context, RelativeTime } from '@datadog/browser-core'
-import { ErrorSource, ONE_MINUTE, getTimeStamp, noop, clocksNow } from '@datadog/browser-core'
+import type { Context, RelativeTime, TimeStamp } from '@datadog/browser-core'
+import { ErrorSource, ONE_MINUTE, getTimeStamp, noop } from '@datadog/browser-core'
 import type { LogsEvent } from '../logsEvent.types'
 import type { Clock } from '../../../core/test/specHelper'
 import { mockClock } from '../../../core/test/specHelper'
-import { buildAssemble } from './assemble'
-import type { LogsConfiguration } from './configuration'
+import type { CommonContext } from '../rawLogsEvent.types'
+import { startLogsAssembly } from './assembly'
 import { validateAndBuildLogsConfiguration } from './configuration'
-import type { LogsMessage } from './logger'
-import { StatusType } from './logger'
+import { Logger, StatusType } from './logger'
 import type { LogsSessionManager } from './logsSessionManager'
-import { createSender } from './sender'
+import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
-describe('assemble', () => {
+describe('startLogsAssembly', () => {
   const initConfiguration = { clientToken: 'xxx', service: 'service' }
   const SESSION_ID = 'session-id'
   const DEFAULT_MESSAGE = { status: StatusType.info, message: 'message' }
+  const COMMON_CONTEXT: CommonContext = {
+    date: 123456 as TimeStamp,
+    view: {
+      referrer: 'referrer_from_common_context',
+      url: 'url_from_common_context',
+    },
+    context: { common_context_key: 'common_context_value' },
+  }
 
   const sessionManager: LogsSessionManager = {
     findTrackedSession: () => (sessionIsTracked ? { id: SESSION_ID } : undefined),
   }
 
-  let assemble: (message: LogsMessage, currentContext: Context) => Context | undefined
   let beforeSend: (event: LogsEvent) => void | boolean
   let sessionIsTracked: boolean
-  let sendLogSpy: jasmine.Spy
+  let lifeCycle: LifeCycle
+  let serverLogs: Array<LogsEvent & Context> = []
+  let mainLogger: Logger
 
   beforeEach(() => {
     sessionIsTracked = true
-    sendLogSpy = jasmine.createSpy()
+    lifeCycle = new LifeCycle()
+    lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (serverRumEvent) => serverLogs.push(serverRumEvent))
     const configuration = {
       ...validateAndBuildLogsConfiguration(initConfiguration)!,
       maxBatchSize: 1,
+      eventRateLimiterThreshold: 1,
       beforeSend: (x: LogsEvent) => beforeSend(x),
     }
     beforeSend = noop
-    assemble = buildAssemble(sessionManager, configuration, createSender(sendLogSpy))
+    mainLogger = new Logger(() => noop)
+    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT, mainLogger)
     window.DD_RUM = {
       getInternalContext: noop,
     }
@@ -42,110 +53,219 @@ describe('assemble', () => {
 
   afterEach(() => {
     delete window.DD_RUM
+    serverLogs = []
   })
 
-  it('should not assemble when sessionManager is not tracked', () => {
-    sessionIsTracked = false
-
-    expect(assemble(DEFAULT_MESSAGE, { foo: 'from-current-context' })).toBeUndefined()
-  })
-
-  it('should not assemble if beforeSend returned false', () => {
+  it('should not send if beforeSend returned false', () => {
     beforeSend = () => false
-    expect(assemble(DEFAULT_MESSAGE, { foo: 'from-current-context' })).toBeUndefined()
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+      rawLog: DEFAULT_MESSAGE,
+    })
+    expect(serverLogs.length).toEqual(0)
   })
 
-  it('add default, current and RUM context to message', () => {
-    spyOn(window.DD_RUM!, 'getInternalContext').and.returnValue({
-      view: { url: 'http://from-rum-context.com', id: 'view-id' },
+  it('should not send if session is not tracked', () => {
+    sessionIsTracked = false
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+      rawLog: DEFAULT_MESSAGE,
+    })
+    expect(serverLogs.length).toEqual(0)
+  })
+
+  it('should enable/disable the sending when the tracking type change', () => {
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+      rawLog: DEFAULT_MESSAGE,
+    })
+    expect(serverLogs.length).toEqual(1)
+
+    sessionIsTracked = false
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+      rawLog: DEFAULT_MESSAGE,
+    })
+    expect(serverLogs.length).toEqual(1)
+
+    sessionIsTracked = true
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+      rawLog: DEFAULT_MESSAGE,
+    })
+    expect(serverLogs.length).toEqual(2)
+  })
+
+  describe('contexts inclusion', () => {
+    it('should include message context', () => {
+      spyOn(window.DD_RUM!, 'getInternalContext').and.returnValue({
+        view: { url: 'http://from-rum-context.com', id: 'view-id' },
+      })
+
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+        rawLog: DEFAULT_MESSAGE,
+        messageContext: { foo: 'from-message-context' },
+      })
+
+      expect(serverLogs[0].foo).toEqual('from-message-context')
     })
 
-    const assembledMessage = assemble(DEFAULT_MESSAGE, { foo: 'from-current-context' })
+    it('should include common context', () => {
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLog: DEFAULT_MESSAGE })
 
-    expect(assembledMessage).toEqual({
-      foo: 'from-current-context',
-      message: DEFAULT_MESSAGE.message,
-      service: 'service',
-      session_id: SESSION_ID,
-      status: DEFAULT_MESSAGE.status,
-      view: { url: 'http://from-rum-context.com', id: 'view-id' },
+      expect(serverLogs[0]).toEqual(
+        jasmine.objectContaining({
+          date: COMMON_CONTEXT.date,
+          view: COMMON_CONTEXT.view,
+          ...COMMON_CONTEXT.context,
+        })
+      )
+    })
+
+    it('should include saved common context instead of common context when present', () => {
+      const savedCommonContext = {
+        date: 0 as TimeStamp,
+        view: {
+          referrer: 'referrer_from_saved_common_context',
+          url: 'url_from_saved_common_context',
+        },
+        context: { foo: 'bar' },
+      }
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLog: DEFAULT_MESSAGE, savedCommonContext })
+
+      expect(serverLogs[0]).toEqual(
+        jasmine.objectContaining({
+          date: savedCommonContext.date,
+          view: savedCommonContext.view,
+          ...savedCommonContext.context,
+        })
+      )
+      expect(serverLogs[0].common_context_key).toBeUndefined()
+    })
+
+    it('should include main logger context', () => {
+      mainLogger.setContext({ foo: 'from-main-logger' })
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLog: DEFAULT_MESSAGE })
+
+      expect(serverLogs[0].foo).toEqual('from-main-logger')
+    })
+
+    it('should include logger context instead of main logger context when present', () => {
+      const logger = new Logger(() => noop)
+      mainLogger.setContext({ foo: 'from-main-logger', bar: 'from-main-logger' })
+      logger.setContext({ foo: 'from-logger' })
+
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLog: DEFAULT_MESSAGE, logger })
+
+      expect(serverLogs[0].foo).toEqual('from-logger')
+      expect(serverLogs[0].bar).toBeUndefined()
+    })
+
+    it('should include rum internal context related to the error time', () => {
+      window.DD_RUM = {
+        getInternalContext(startTime) {
+          return { foo: startTime === 1234 ? 'b' : 'a' }
+        },
+      }
+
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+        rawLog: { ...DEFAULT_MESSAGE, date: getTimeStamp(1234 as RelativeTime) },
+      })
+
+      expect(serverLogs[0].foo).toBe('b')
+    })
+
+    it('should include RUM context', () => {
+      window.DD_RUM = {
+        getInternalContext() {
+          return { view: { url: 'http://from-rum-context.com', id: 'view-id' } }
+        },
+      }
+
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLog: DEFAULT_MESSAGE })
+
+      expect(serverLogs[0].view).toEqual({
+        id: 'view-id',
+        url: 'http://from-rum-context.com',
+        referrer: 'referrer_from_common_context',
+      })
+    })
+
+    it('should include raw log', () => {
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLog: DEFAULT_MESSAGE })
+
+      expect(serverLogs[0]).toEqual(jasmine.objectContaining(DEFAULT_MESSAGE))
     })
   })
 
-  it('message context should take precedence over RUM context', () => {
-    spyOn(window.DD_RUM!, 'getInternalContext').and.returnValue({ session_id: 'from-rum-context' })
+  describe('contexts precedence', () => {
+    it('common context should take precedence over service and session_id', () => {
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+        rawLog: DEFAULT_MESSAGE,
+        savedCommonContext: {
+          ...COMMON_CONTEXT,
+          context: { service: 'foo', session_id: 'bar' },
+        },
+      })
 
-    const assembledMessage = assemble({ ...DEFAULT_MESSAGE, session_id: 'from-message-context' }, {})
+      expect(serverLogs[0].service).toBe('foo')
+      expect(serverLogs[0].session_id).toBe('bar')
+    })
 
-    expect(assembledMessage!.session_id).toBe('from-message-context')
+    it('RUM context should take precedence over common context', () => {
+      spyOn(window.DD_RUM!, 'getInternalContext').and.returnValue({ view: { url: 'from-rum-context' } })
+
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLog: DEFAULT_MESSAGE })
+
+      expect(serverLogs[0].view.url).toEqual('from-rum-context')
+    })
+
+    it('raw log should take precedence over RUM context', () => {
+      spyOn(window.DD_RUM!, 'getInternalContext').and.returnValue({ message: 'from-rum-context' })
+
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLog: DEFAULT_MESSAGE })
+
+      expect(serverLogs[0].message).toEqual('message')
+    })
+
+    it('logger context should take precedence over raw log', () => {
+      mainLogger.setContext({ message: 'from-main-logger' })
+
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLog: DEFAULT_MESSAGE })
+
+      expect(serverLogs[0].message).toEqual('from-main-logger')
+    })
+
+    it('message context should take precedence over logger context', () => {
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+        rawLog: DEFAULT_MESSAGE,
+        messageContext: { message: 'from-message-context' },
+      })
+
+      expect(serverLogs[0].message).toEqual('from-message-context')
+    })
   })
 
-  it('RUM context should take precedence over current context', () => {
-    spyOn(window.DD_RUM!, 'getInternalContext').and.returnValue({ session_id: 'from-rum-context' })
+  describe('beforeSend', () => {
+    it('should allow modification of existing fields', () => {
+      beforeSend = (event: LogsEvent) => {
+        event.message = 'modified message'
+        ;(event.service as any) = 'modified service'
+      }
 
-    const assembledMessage = assemble(DEFAULT_MESSAGE, { session_id: 'from-current-context' })
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+        rawLog: DEFAULT_MESSAGE,
+      })
 
-    expect(assembledMessage!.session_id).toBe('from-rum-context')
-  })
+      expect(serverLogs[0].message).toBe('modified message')
+      expect(serverLogs[0].service).toBe('modified service')
+    })
 
-  it('current context should take precedence over default context', () => {
-    const assembledMessage = assemble(DEFAULT_MESSAGE, { service: 'from-current-context' })
+    it('should allow adding new fields', () => {
+      beforeSend = (event: LogsEvent) => {
+        event.foo = 'bar'
+      }
 
-    expect(assembledMessage!.service).toBe('from-current-context')
-  })
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+        rawLog: DEFAULT_MESSAGE,
+      })
 
-  it('should allow modification of existing fields', () => {
-    beforeSend = (event: LogsEvent) => {
-      event.message = 'modified message'
-      ;(event.service as any) = 'modified service'
-    }
-
-    const assembledMessage = assemble(DEFAULT_MESSAGE, {})
-
-    expect(assembledMessage!.message).toBe('modified message')
-    expect(assembledMessage!.service).toBe('modified service')
-  })
-
-  it('should allow adding new fields', () => {
-    beforeSend = (event: LogsEvent) => {
-      event.foo = 'bar'
-    }
-
-    const assembledMessage = assemble(DEFAULT_MESSAGE, {})
-
-    expect(assembledMessage!.foo).toBe('bar')
-  })
-
-  it('should use the rum internal context related to the error time', () => {
-    window.DD_RUM = {
-      getInternalContext(startTime) {
-        return {
-          foo: startTime === 1234 ? 'b' : 'a',
-        }
-      },
-    }
-
-    const message = { ...DEFAULT_MESSAGE, date: getTimeStamp(1234 as RelativeTime) }
-
-    const assembledMessage = assemble(message, {})
-
-    expect(assembledMessage!.foo).toBe('b')
-  })
-
-  it('should include RUM context', () => {
-    window.DD_RUM = {
-      getInternalContext() {
-        return { view: { url: 'http://from-rum-context.com', id: 'view-id' } }
-      },
-    }
-
-    const message = { ...DEFAULT_MESSAGE }
-
-    const assembledMessage = assemble(message, {})
-
-    expect(assembledMessage!.view).toEqual({
-      id: 'view-id',
-      url: 'http://from-rum-context.com',
+      expect(serverLogs[0].foo).toBe('bar')
     })
   })
 
@@ -153,91 +273,132 @@ describe('assemble', () => {
     let clock: Clock
     beforeEach(() => {
       clock = mockClock()
-      assemble = buildAssemble(
-        sessionManager,
-        { eventRateLimiterThreshold: 1, beforeSend: (x: LogsEvent) => beforeSend(x) } as LogsConfiguration,
-        createSender(sendLogSpy)
-      )
     })
 
     afterEach(() => {
       clock.cleanup()
     })
     ;[
-      { status: StatusType.error, message: 'Reached max number of errors by minute: 1' },
-      { status: StatusType.warn, message: 'Reached max number of warns by minute: 1' },
-      { status: StatusType.info, message: 'Reached max number of infos by minute: 1' },
-      { status: StatusType.debug, message: 'Reached max number of debugs by minute: 1' },
-      { status: 'unknown' as StatusType, message: 'Reached max number of customs by minute: 1' },
-    ].forEach(({ status, message }) => {
+      { status: StatusType.error, messageContext: {}, message: 'Reached max number of errors by minute: 1' },
+      { status: StatusType.warn, messageContext: {}, message: 'Reached max number of warns by minute: 1' },
+      { status: StatusType.info, messageContext: {}, message: 'Reached max number of infos by minute: 1' },
+      { status: StatusType.debug, messageContext: {}, message: 'Reached max number of debugs by minute: 1' },
+      {
+        status: StatusType.debug,
+        messageContext: { status: 'unknown' }, // overrides the rawLog status
+        message: 'Reached max number of customs by minute: 1',
+      },
+    ].forEach(({ status, message, messageContext }) => {
       it(`stops sending ${status} logs when reaching the limit`, () => {
-        const assembledMessage1 = assemble({ message: 'foo', status }, {})
-        const assembledMessage2 = assemble({ message: 'bar', status }, {})
-
-        expect(assembledMessage1!.message).toBe('foo')
-        expect(assembledMessage2).toBeUndefined()
-
-        expect(sendLogSpy).toHaveBeenCalledOnceWith({
-          message,
-          status: StatusType.error,
-          date: clocksNow().timeStamp,
-          error: {
-            kind: undefined,
-            origin: ErrorSource.AGENT,
-            stack: undefined,
-          },
+        lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+          rawLog: { message: 'foo', status },
+          messageContext,
         })
+        lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+          rawLog: { message: 'bar', status },
+          messageContext,
+        })
+
+        expect(serverLogs.length).toEqual(2)
+        expect(serverLogs[0].message).toBe('foo')
+        expect(serverLogs[1]).toEqual(
+          jasmine.objectContaining({
+            message,
+            error: {
+              kind: undefined,
+              origin: ErrorSource.AGENT,
+              stack: undefined,
+            },
+            origin: undefined,
+          })
+        )
       })
 
       it(`does not take discarded ${status} logs into account`, () => {
-        const sendLogSpy = jasmine.createSpy<(message: LogsMessage & { foo?: string }) => void>()
         beforeSend = (event) => {
           if (event.message === 'discard me') {
             return false
           }
         }
 
-        const assembledMessage1 = assemble({ message: 'discard me', status }, {})
-        const assembledMessage2 = assemble({ message: 'discard me', status }, {})
-        const assembledMessage3 = assemble({ message: 'discard me', status }, {})
-        const assembledMessage4 = assemble({ message: 'foo', status }, {})
+        lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+          rawLog: { message: 'discard me', status },
+          messageContext,
+        })
+        lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+          rawLog: { message: 'discard me', status },
+          messageContext,
+        })
+        lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+          rawLog: { message: 'discard me', status },
+          messageContext,
+        })
+        lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+          rawLog: { message: 'foo', status },
+          messageContext,
+        })
 
-        expect(assembledMessage1).toBeUndefined()
-        expect(assembledMessage2).toBeUndefined()
-        expect(assembledMessage3).toBeUndefined()
-        expect(assembledMessage4!.message).toBe('foo')
-        expect(sendLogSpy).not.toHaveBeenCalled()
+        expect(serverLogs.length).toEqual(1)
+        expect(serverLogs[0].message).toBe('foo')
       })
 
       it(`allows to send new ${status}s after a minute`, () => {
-        const assembledMessage1 = assemble({ message: 'foo', status }, {})
-        const assembledMessage2 = assemble({ message: 'bar', status }, {})
+        lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+          rawLog: { message: 'foo', status },
+          messageContext,
+        })
+        lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+          rawLog: { message: 'bar', status },
+          messageContext,
+        })
         clock.tick(ONE_MINUTE)
-        const assembledMessage3 = assemble({ message: 'baz', status }, {})
+        lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+          rawLog: { message: 'baz', status },
+          messageContext,
+        })
 
-        expect(assembledMessage2).toBeUndefined()
-        expect(assembledMessage1!.message).toBe('foo')
-        expect(assembledMessage3!.message).toBe('baz')
+        expect(serverLogs.length).toEqual(3)
+        expect(serverLogs[0].message).toEqual('foo')
+        expect(serverLogs[1].error!.origin).toEqual(ErrorSource.AGENT)
+        expect(serverLogs[2].message).toEqual('baz')
       })
 
       it('allows to send logs with a different status when reaching the limit', () => {
-        const otherLogStatus = status === StatusType.error ? 'other' : StatusType.error
-        const assembledMessage1 = assemble({ message: 'foo', status }, {})
-        const assembledMessage2 = assemble({ message: 'bar', status }, {})
-        const assembledMessage3 = assemble({ message: 'baz', status: otherLogStatus as StatusType }, {})
+        const otherLogStatus = status === StatusType.error ? StatusType.info : StatusType.error
+        lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+          rawLog: { message: 'foo', status },
+          messageContext,
+        })
+        lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+          rawLog: { message: 'bar', status },
+          messageContext,
+        })
+        lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+          rawLog: { message: 'baz', status: otherLogStatus },
+          ...{ ...messageContext, status: otherLogStatus },
+        })
 
-        expect(assembledMessage2).toBeUndefined()
-        expect(assembledMessage1!.message).toBe('foo')
-        expect(assembledMessage3!.message).toBe('baz')
+        expect(serverLogs.length).toEqual(3)
+        expect(serverLogs[0].message).toEqual('foo')
+        expect(serverLogs[1].error!.origin).toEqual(ErrorSource.AGENT)
+        expect(serverLogs[2].message).toEqual('baz')
       })
     })
 
     it('two different custom statuses are accounted by the same limit', () => {
-      const assembledMessage1 = assemble({ message: 'foo', status: 'foo' as StatusType }, {})
-      const assembledMessage2 = assemble({ message: 'bar', status: 'bar' as StatusType }, {})
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+        rawLog: { message: 'foo', status: StatusType.info },
+        messageContext: { status: 'foo' },
+      })
 
-      expect(assembledMessage2).toBeUndefined()
-      expect(assembledMessage1!.message).toBe('foo')
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+        rawLog: { message: 'bar', status: StatusType.info },
+        messageContext: { status: 'bar' },
+      })
+
+      expect(serverLogs.length).toEqual(2)
+      expect(serverLogs[0].message).toEqual('foo')
+      expect(serverLogs[1].error!.origin).toEqual(ErrorSource.AGENT)
     })
   })
 })

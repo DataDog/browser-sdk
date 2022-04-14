@@ -1,120 +1,100 @@
-import {
-  ErrorSource,
-  resetExperimentalFeatures,
-  updateExperimentalFeatures,
-  display,
-  noop,
-} from '@datadog/browser-core'
+import { ErrorSource, resetExperimentalFeatures, updateExperimentalFeatures, noop } from '@datadog/browser-core'
 import { validateAndBuildLogsConfiguration } from '../../configuration'
-import { HandlerType, StatusType } from '../../logger'
-import { createSender } from '../../sender'
+import type { RawLogCollectedData } from '../../lifeCycle'
+import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
+import { StatusType } from '../../logger'
 import { startConsoleCollection } from './consoleCollection'
 
 describe('console collection', () => {
   const initConfiguration = { clientToken: 'xxx', service: 'service' }
-  let sendLogSpy: jasmine.Spy
   let consoleLogSpy: jasmine.Spy
-  let stopConsolCollection: () => void
+  let stopConsoleCollection: () => void
+  let lifeCycle: LifeCycle
+  let rawLogs: RawLogCollectedData[]
 
   beforeEach(() => {
-    stopConsolCollection = noop
-    sendLogSpy = jasmine.createSpy('sendLogSpy')
+    rawLogs = []
+    lifeCycle = new LifeCycle()
+    lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLog) => rawLogs.push(rawLog))
+    stopConsoleCollection = noop
     consoleLogSpy = spyOn(console, 'log').and.callFake(() => true)
     spyOn(console, 'error').and.callFake(() => true)
   })
 
   afterEach(() => {
     resetExperimentalFeatures()
-    stopConsolCollection()
+    stopConsoleCollection()
   })
 
   it('should send console logs when ff forward-logs is enabled', () => {
     updateExperimentalFeatures(['forward-logs'])
-    ;({ stop: stopConsolCollection } = startConsoleCollection(
+    ;({ stop: stopConsoleCollection } = startConsoleCollection(
       validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['log'] })!,
-      createSender(sendLogSpy)
+      lifeCycle
     ))
 
     /* eslint-disable-next-line no-console */
     console.log('foo', 'bar')
 
-    expect(sendLogSpy).toHaveBeenCalledWith({
+    expect(rawLogs[0].rawLog).toEqual({
       message: 'foo bar',
       status: StatusType.info,
       origin: ErrorSource.CONSOLE,
+      error: undefined,
     })
 
     expect(consoleLogSpy).toHaveBeenCalled()
   })
 
   it('should not send console logs when ff forward-logs is disabled', () => {
-    ;({ stop: stopConsolCollection } = startConsoleCollection(
+    ;({ stop: stopConsoleCollection } = startConsoleCollection(
       validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['log'] })!,
-      createSender(sendLogSpy)
+      lifeCycle
     ))
 
     /* eslint-disable-next-line no-console */
     console.log('foo', 'bar')
 
-    expect(sendLogSpy).not.toHaveBeenCalled()
+    expect(rawLogs.length).toEqual(0)
     expect(consoleLogSpy).toHaveBeenCalled()
   })
 
   it('should send console errors with "console" origin when ff forward-logs is enabled', () => {
     updateExperimentalFeatures(['forward-logs'])
-    ;({ stop: stopConsolCollection } = startConsoleCollection(
+    ;({ stop: stopConsoleCollection } = startConsoleCollection(
       validateAndBuildLogsConfiguration({ ...initConfiguration, forwardErrorsToLogs: true })!,
-      createSender(sendLogSpy)
+      lifeCycle
     ))
 
     /* eslint-disable-next-line no-console */
     console.error('foo', 'bar')
-
-    expect(sendLogSpy.calls.mostRecent().args[0].origin).toEqual(ErrorSource.CONSOLE)
+    expect(rawLogs[0].rawLog.origin).toEqual(ErrorSource.CONSOLE)
   })
 
   it('should not send console errors with "console" origin when ff forward-logs is disabled', () => {
-    ;({ stop: stopConsolCollection } = startConsoleCollection(
+    ;({ stop: stopConsoleCollection } = startConsoleCollection(
       validateAndBuildLogsConfiguration({ ...initConfiguration, forwardErrorsToLogs: true })!,
-      createSender(sendLogSpy)
+      lifeCycle
     ))
 
     /* eslint-disable-next-line no-console */
     console.error('foo', 'bar')
 
-    expect(sendLogSpy.calls.mostRecent().args[0].origin).not.toBeDefined()
+    expect(rawLogs[0].rawLog.origin).not.toBeDefined()
   })
 
   it('console error should have an error object defined', () => {
-    ;({ stop: stopConsolCollection } = startConsoleCollection(
+    ;({ stop: stopConsoleCollection } = startConsoleCollection(
       validateAndBuildLogsConfiguration({ ...initConfiguration, forwardErrorsToLogs: true })!,
-      createSender(sendLogSpy)
+      lifeCycle
     ))
 
     /* eslint-disable-next-line no-console */
     console.error('foo', 'bar')
 
-    expect(sendLogSpy.calls.mostRecent().args[0].error).toEqual({
+    expect(rawLogs[0].rawLog.error).toEqual({
       origin: ErrorSource.CONSOLE,
       stack: undefined,
     })
-  })
-
-  it('should not print the log twice when console handler is enabled', () => {
-    updateExperimentalFeatures(['forward-logs'])
-
-    const sender = createSender(sendLogSpy)
-    const displaySpy = spyOn(display, 'log')
-    ;({ stop: stopConsolCollection } = startConsoleCollection(
-      validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['log'] })!,
-      sender
-    ))
-
-    sender.setHandler([HandlerType.console])
-    /* eslint-disable-next-line no-console */
-    console.log('foo', 'bar')
-
-    expect(consoleLogSpy).toHaveBeenCalledTimes(1)
-    expect(displaySpy).not.toHaveBeenCalled()
   })
 })

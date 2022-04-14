@@ -2,8 +2,9 @@ import { isIE, ErrorSource, updateExperimentalFeatures, resetExperimentalFeature
 import type { FetchStub, FetchStubManager } from '@datadog/browser-core/test/specHelper'
 import { SPEC_ENDPOINTS, ResponseStub, stubFetch } from '@datadog/browser-core/test/specHelper'
 import type { LogsConfiguration } from '../../configuration'
+import type { RawLogCollectedData } from '../../lifeCycle'
+import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { StatusType } from '../../logger'
-import { createSender } from '../../sender'
 
 import {
   computeFetchErrorText,
@@ -21,7 +22,8 @@ describe('network error collection', () => {
   let fetchStub: FetchStub
   let fetchStubManager: FetchStubManager
   let stopNetworkErrorCollection: () => void
-  let sendLogSpy: jasmine.Spy
+  let lifeCycle: LifeCycle
+  let rawLogs: RawLogCollectedData[]
 
   const FAKE_URL = 'http://fake.com/'
   const DEFAULT_REQUEST = {
@@ -37,9 +39,11 @@ describe('network error collection', () => {
     if (isIE()) {
       pending('no fetch support')
     }
-    sendLogSpy = jasmine.createSpy('sendLogSpy')
+    rawLogs = []
+    lifeCycle = new LifeCycle()
+    lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLog) => rawLogs.push(rawLog))
     fetchStubManager = stubFetch()
-    ;({ stop: stopNetworkErrorCollection } = startNetworkErrorCollection(CONFIGURATION, createSender(sendLogSpy)))
+    ;({ stop: stopNetworkErrorCollection } = startNetworkErrorCollection(CONFIGURATION, lifeCycle))
     fetchStub = window.fetch as FetchStub
   })
 
@@ -55,7 +59,7 @@ describe('network error collection', () => {
     fetchStub(FAKE_URL).resolveWith(DEFAULT_REQUEST)
 
     fetchStubManager.whenAllComplete(() => {
-      expect(sendLogSpy.calls.mostRecent().args[0].origin).toEqual(ErrorSource.NETWORK)
+      expect(rawLogs[0].rawLog.origin).toEqual(ErrorSource.NETWORK)
       done()
     })
   })
@@ -64,7 +68,7 @@ describe('network error collection', () => {
     fetchStub(FAKE_URL).resolveWith(DEFAULT_REQUEST)
 
     fetchStubManager.whenAllComplete(() => {
-      expect(sendLogSpy).toHaveBeenCalledWith({
+      expect(rawLogs[0].rawLog).toEqual({
         message: 'Fetch error GET http://fake.com/',
         date: jasmine.any(Number),
         status: StatusType.error,
@@ -77,6 +81,7 @@ describe('network error collection', () => {
           status_code: 503,
           url: 'http://fake.com/',
         },
+        origin: undefined,
       })
       done()
     })
@@ -86,7 +91,7 @@ describe('network error collection', () => {
     fetchStub('https://logs-intake.com/v1/input/send?foo=bar').resolveWith(DEFAULT_REQUEST)
 
     fetchStubManager.whenAllComplete(() => {
-      expect(sendLogSpy).not.toHaveBeenCalled()
+      expect(rawLogs.length).toEqual(0)
       done()
     })
   })
@@ -95,7 +100,7 @@ describe('network error collection', () => {
     fetchStub(FAKE_URL).abort()
 
     fetchStubManager.whenAllComplete(() => {
-      expect(sendLogSpy).toHaveBeenCalled()
+      expect(rawLogs.length).toEqual(1)
       done()
     })
   })
@@ -104,7 +109,7 @@ describe('network error collection', () => {
     fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, status: 0 })
 
     fetchStubManager.whenAllComplete(() => {
-      expect(sendLogSpy).toHaveBeenCalled()
+      expect(rawLogs.length).toEqual(1)
       done()
     })
   })
@@ -113,7 +118,7 @@ describe('network error collection', () => {
     fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, status: 400 })
 
     fetchStubManager.whenAllComplete(() => {
-      expect(sendLogSpy).not.toHaveBeenCalled()
+      expect(rawLogs.length).toEqual(0)
       done()
     })
   })
@@ -122,7 +127,7 @@ describe('network error collection', () => {
     fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, status: 200 })
 
     fetchStubManager.whenAllComplete(() => {
-      expect(sendLogSpy).not.toHaveBeenCalled()
+      expect(rawLogs.length).toEqual(0)
       done()
     })
   })
@@ -131,9 +136,8 @@ describe('network error collection', () => {
     fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, responseText: '' })
 
     fetchStubManager.whenAllComplete(() => {
-      expect(sendLogSpy).toHaveBeenCalled()
-      const stack = sendLogSpy.calls.mostRecent().args[0].error.stack
-      expect(stack).toEqual('Failed to load')
+      expect(rawLogs.length).toEqual(1)
+      expect(rawLogs[0].rawLog.error!.stack).toEqual('Failed to load')
       done()
     })
   })

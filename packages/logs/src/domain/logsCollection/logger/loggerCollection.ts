@@ -2,7 +2,7 @@ import { includes, display, combine, ErrorSource, isExperimentalFeatureEnabled }
 import type { CommonContext } from '../../../rawLogsEvent.types'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
-import type { LoggerOptions, LogsMessage } from '../../logger'
+import type { Logger, LogsMessage } from '../../logger'
 import { StatusType, HandlerType } from '../../logger'
 
 export const STATUS_PRIORITIES: { [key in StatusType]: number } = {
@@ -13,14 +13,11 @@ export const STATUS_PRIORITIES: { [key in StatusType]: number } = {
 }
 
 export function startLoggerCollection(lifeCycle: LifeCycle) {
-  function addLog(logsMessage: LogsMessage, loggerOptions: LoggerOptions, savedCommonContext?: CommonContext) {
+  function handleLog(logsMessage: LogsMessage, logger: Logger, savedCommonContext?: CommonContext) {
     const messageContext = logsMessage.context
 
-    if (isAuthorized(logsMessage.status, HandlerType.console, loggerOptions)) {
-      display.log(
-        `${logsMessage.status}: ${logsMessage.message}`,
-        combine(loggerOptions.contextManager.get(), messageContext)
-      )
+    if (isAuthorized(logsMessage.status, HandlerType.console, logger)) {
+      display.log(`${logsMessage.status}: ${logsMessage.message}`, combine(logger.getContext(), messageContext))
     }
 
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
@@ -30,21 +27,20 @@ export function startLoggerCollection(lifeCycle: LifeCycle) {
         origin: isExperimentalFeatureEnabled('forward-logs') ? ErrorSource.LOGGER : undefined,
       },
       messageContext,
-      commonContext: savedCommonContext,
-      loggerOptions,
+      savedCommonContext,
+      logger,
     })
   }
 
   return {
-    addLog,
+    handleLog,
   }
 }
 
-export function isAuthorized(status: StatusType, handlerType: HandlerType, loggerOptions: LoggerOptions) {
-  const sanitizedHandlerType = Array.isArray(loggerOptions.handlerType)
-    ? loggerOptions.handlerType
-    : [loggerOptions.handlerType]
+export function isAuthorized(status: StatusType, handlerType: HandlerType, logger: Logger) {
+  const loggerHandler = logger.getHandler()
+  const sanitizedHandlerType = Array.isArray(loggerHandler) ? loggerHandler : [loggerHandler]
   return (
-    STATUS_PRIORITIES[status] >= STATUS_PRIORITIES[loggerOptions.level] && includes(sanitizedHandlerType, handlerType)
+    STATUS_PRIORITIES[status] >= STATUS_PRIORITIES[logger.getLevel()] && includes(sanitizedHandlerType, handlerType)
   )
 }

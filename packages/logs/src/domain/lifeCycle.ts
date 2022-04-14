@@ -1,7 +1,7 @@
 import type { Context, Subscription } from '@datadog/browser-core'
 import type { LogsEvent } from '../logsEvent.types'
 import type { CommonContext, RawLogsEvent } from '../rawLogsEvent.types'
-import type { LoggerOptions } from './logger'
+import type { Logger } from './logger'
 
 export const enum LifeCycleEventType {
   RAW_LOG_COLLECTED,
@@ -40,6 +40,6 @@ export class LifeCycle {
 export interface RawLogCollectedData<E extends RawLogsEvent = RawLogsEvent> {
   rawLog: E
   messageContext?: object
-  commonContext?: CommonContext
-  loggerOptions?: LoggerOptions
+  savedCommonContext?: CommonContext
+  logger?: Logger
 }

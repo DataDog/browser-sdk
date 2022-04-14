@@ -12,8 +12,8 @@ import {
 } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
-import type { HandlerType, LoggerOptions, StatusType, LogsMessage } from '../domain/logger'
-import { newLoggerOptions, Logger } from '../domain/logger'
+import type { HandlerType, StatusType, LogsMessage } from '../domain/logger'
+import { Logger } from '../domain/logger'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { startLogs } from './startLogs'
 
@@ -37,17 +37,16 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
 
   const beforeInitLoggerLog = new BoundedBuffer()
 
-  let addLogStrategy: StartLogsResult['addLog'] = (
+  let handleLogStrategy: StartLogsResult['handleLog'] = (
     logsMessage: LogsMessage,
-    loggerOptions: LoggerOptions,
+    logger: Logger,
     savedCommonContext = deepClone(getCommonContext())
   ) => {
-    beforeInitLoggerLog.add(() => addLogStrategy(logsMessage, loggerOptions, savedCommonContext))
+    beforeInitLoggerLog.add(() => handleLogStrategy(logsMessage, logger, savedCommonContext))
   }
 
   let getInitConfigurationStrategy = (): InitConfiguration | undefined => undefined
-  const mainLoggerOptions = newLoggerOptions()
-  const logger = createLogger(mainLoggerOptions)
+  const mainLogger = new Logger((...params) => handleLogStrategy(...params))
 
   function getCommonContext(): CommonContext {
     return {
@@ -61,7 +60,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
   }
 
   return makePublicApi({
-    logger,
+    logger: mainLogger,
 
     init: monitor((initConfiguration: LogsInitConfiguration) => {
       if (canUseEventBridge()) {
@@ -77,7 +76,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
         return
       }
 
-      ;({ addLog: addLogStrategy } = startLogsImpl(configuration, getCommonContext, mainLoggerOptions))
+      ;({ handleLog: handleLogStrategy } = startLogsImpl(configuration, getCommonContext, mainLogger))
       getInitConfigurationStrategy = () => deepClone(initConfiguration)
       beforeInitLoggerLog.drain()
 
@@ -92,7 +91,14 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
     removeLoggerGlobalContext: monitor(globalContextManager.remove),
 
     createLogger: monitor((name: string, conf: LoggerConfiguration = {}) => {
-      customLoggers[name] = createLogger(newLoggerOptions(name, conf.handler, conf.level, conf.context))
+      customLoggers[name] = new Logger(
+        (...params) => handleLogStrategy(...params),
+        name,
+        conf.handler,
+        conf.level,
+        conf.context
+      )
+
       return customLoggers[name]!
     }),
 
@@ -113,9 +119,5 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
       return false
     }
     return true
-  }
-
-  function createLogger(options: LoggerOptions) {
-    return new Logger(options, (...params) => addLogStrategy(...params))
   }
 }

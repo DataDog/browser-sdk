@@ -19,13 +19,9 @@ import { startLoggerCollection } from '../domain/logsCollection/logger/loggerCol
 import type { CommonContext } from '../rawLogsEvent.types'
 import { startLogsBatch } from '../transport/startLogsBatch'
 import { startLogsBridge } from '../transport/startLogsBridge'
-import type { LoggerOptions } from '../domain/logger'
+import type { Logger } from '../domain/logger'
 
-export function startLogs(
-  configuration: LogsConfiguration,
-  getCommonContext: () => CommonContext,
-  mainLoggerOptions: LoggerOptions
-) {
+export function startLogs(configuration: LogsConfiguration, getCommonContext: () => CommonContext, mainLogger: Logger) {
   const lifeCycle = new LifeCycle()
 
   const internalMonitoring = startLogsInternalMonitoring(configuration)
@@ -53,14 +49,14 @@ export function startLogs(
   startRuntimeErrorCollection(configuration, lifeCycle)
   startConsoleCollection(configuration, lifeCycle)
   startReportCollection(configuration, lifeCycle)
-  const { addLog } = startLoggerCollection(lifeCycle)
+  const { handleLog } = startLoggerCollection(lifeCycle)
 
   const session =
     areCookiesAuthorized(configuration.cookieOptions) && !canUseEventBridge()
       ? startLogsSessionManager(configuration)
       : startLogsSessionManagerStub(configuration)
 
-  startLogsAssembly(session, configuration, lifeCycle, getCommonContext, mainLoggerOptions)
+  startLogsAssembly(session, configuration, lifeCycle, getCommonContext, mainLogger)
 
   if (!canUseEventBridge()) {
     startLogsBatch(configuration, lifeCycle)
@@ -69,7 +65,7 @@ export function startLogs(
   }
 
   return {
-    addLog,
+    handleLog,
   }
 }
 

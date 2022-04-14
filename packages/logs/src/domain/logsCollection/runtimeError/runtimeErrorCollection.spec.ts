@@ -1,20 +1,25 @@
 import { ErrorSource, Observable, resetExperimentalFeatures, updateExperimentalFeatures } from '@datadog/browser-core'
 import type { RawError, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import type { LogsConfiguration } from '../../configuration'
-import { createSender } from '../../sender'
 import { StatusType } from '../../logger'
+import type { RawLogCollectedData } from '../../lifeCycle'
+import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { startRuntimeErrorCollection } from './runtimeErrorCollection'
 
 describe('runtime error collection', () => {
   let rawErrorObservable: Observable<RawError>
-  let sendLogSpy: jasmine.Spy
+  let lifeCycle: LifeCycle
   let stopRuntimeErrorCollection: () => void
+  let rawLogs: RawLogCollectedData[]
+
   beforeEach(() => {
+    rawLogs = []
     rawErrorObservable = new Observable<RawError>()
-    sendLogSpy = jasmine.createSpy('sendLogSpy')
+    lifeCycle = new LifeCycle()
+    lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLog) => rawLogs.push(rawLog))
     ;({ stop: stopRuntimeErrorCollection } = startRuntimeErrorCollection(
       {} as LogsConfiguration,
-      createSender(sendLogSpy),
+      lifeCycle,
       rawErrorObservable
     ))
   })
@@ -32,15 +37,13 @@ describe('runtime error collection', () => {
       type: 'Error',
     })
 
-    expect(sendLogSpy).toHaveBeenCalled()
-    expect(sendLogSpy.calls.first().args).toEqual([
-      {
-        date: 123456789 as TimeStamp,
-        error: { origin: ErrorSource.SOURCE, kind: 'Error', stack: undefined },
-        message: 'error!',
-        status: StatusType.error,
-      },
-    ])
+    expect(rawLogs[0].rawLog).toEqual({
+      date: 123456789 as TimeStamp,
+      error: { origin: ErrorSource.SOURCE, kind: 'Error', stack: undefined },
+      message: 'error!',
+      status: StatusType.error,
+      origin: undefined,
+    })
   })
 
   it('should send runtime errors with "source" origin when ff forward-logs is enabled', (done) => {
@@ -53,7 +56,7 @@ describe('runtime error collection', () => {
       type: 'Error',
     })
 
-    expect(sendLogSpy.calls.mostRecent().args[0].origin).toEqual(ErrorSource.SOURCE)
+    expect(rawLogs[0].rawLog.origin).toEqual(ErrorSource.SOURCE)
     done()
   })
 })

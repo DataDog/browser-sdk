@@ -1,11 +1,11 @@
-import { assign, TimeStamp } from '@datadog/browser-core'
-import { combine, createContextManager, ErrorSource, monitored } from '@datadog/browser-core'
+import type { Context, TimeStamp } from '@datadog/browser-core'
+import { deepClone, assign, combine, createContextManager, ErrorSource, monitored } from '@datadog/browser-core'
 
 export interface LogsMessage {
   message: string
   status: StatusType
   date?: TimeStamp
-  context?: object
+  context?: Context
 }
 
 export const StatusType = {
@@ -27,14 +27,21 @@ export type HandlerType = typeof HandlerType[keyof typeof HandlerType]
 export const STATUSES = Object.keys(StatusType) as StatusType[]
 
 export class Logger {
+  private contextManager = createContextManager()
+
   constructor(
-    private options: LoggerOptions,
-    private addLogStrategy: (logsMessage: LogsMessage, loggerOptions: LoggerOptions) => void
-  ) {}
+    private handleLogStrategy: (logsMessage: LogsMessage, logger: Logger) => void,
+    name?: string,
+    private handlerType: HandlerType | HandlerType[] = HandlerType.http,
+    private level: StatusType = StatusType.debug,
+    loggerContext: object = {}
+  ) {
+    this.contextManager.set(assign({}, loggerContext, name ? { logger: { name } } : undefined))
+  }
 
   @monitored
   log(message: string, messageContext?: object, status: StatusType = StatusType.info) {
-    this.addLogStrategy({ message, context: messageContext, status }, this.options)
+    this.handleLogStrategy({ message, context: deepClone(messageContext) as Context, status }, this)
   }
 
   debug(message: string, messageContext?: object) {
@@ -52,7 +59,6 @@ export class Logger {
   error(message: string, messageContext?: object) {
     const errorOrigin = {
       error: {
-        // Todo: remove error origin in the next major version
         origin: ErrorSource.LOGGER,
       },
     }
@@ -60,42 +66,34 @@ export class Logger {
   }
 
   setContext(context: object) {
-    this.options.contextManager.set(context)
+    this.contextManager.set(context)
+  }
+
+  getContext() {
+    return this.contextManager.get()
   }
 
   addContext(key: string, value: any) {
-    this.options.contextManager.add(key, value)
+    this.contextManager.add(key, value)
   }
 
   removeContext(key: string) {
-    this.options.contextManager.remove(key)
+    this.contextManager.remove(key)
   }
 
   setHandler(handler: HandlerType | HandlerType[]) {
-    this.options.handlerType = handler
+    this.handlerType = handler
+  }
+
+  getHandler() {
+    return this.handlerType
   }
 
   setLevel(level: StatusType) {
-    this.options.level = level
+    this.level = level
   }
-}
 
-export type LoggerOptions = ReturnType<typeof newLoggerOptions>
-
-export function newLoggerOptions(
-  name?: string,
-  handlerType: HandlerType | HandlerType[] = HandlerType.http,
-  level: StatusType = StatusType.debug,
-  context: object = {}
-) {
-  const contextManager = createContextManager()
-  // Todo: merge the logger name into the context in logger collection in next major version
-  contextManager.set(assign({}, context, { logger: { name } }))
-
-  return {
-    handlerType,
-    level,
-    name,
-    contextManager,
+  getLevel() {
+    return this.level
   }
 }
