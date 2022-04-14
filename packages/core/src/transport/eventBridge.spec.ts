@@ -13,6 +13,7 @@ describe('canUseEventBridge', () => {
     expect(canUseEventBridge('foo.bar')).toBeTrue()
     expect(canUseEventBridge('baz.foo.bar')).toBeTrue()
     expect(canUseEventBridge('www.foo.bar')).toBeTrue()
+    expect(canUseEventBridge('www.qux.foo.bar')).toBeTrue()
   })
 
   it('should not detect when the bridge is present and the webView host is not allowed', () => {

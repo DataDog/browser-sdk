@@ -31,8 +31,8 @@ export function canUseEventBridge(hostname = window.location.hostname): boolean 
   return (
     !!bridge &&
     bridge.getAllowedWebViewHosts().some((host) => {
-      const escapedHost = host.replace(/\./g, '\\$&')
-      const isDomainOrSubDomain = new RegExp(`(^|.+\\.)${escapedHost}$`)
+      const escapedHost = host.replace(/\./g, '\\.')
+      const isDomainOrSubDomain = new RegExp(`^(.+\\.)*${escapedHost}$`)
       return !!isDomainOrSubDomain.exec(hostname)
     })
   )
