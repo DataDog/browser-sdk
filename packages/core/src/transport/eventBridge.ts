@@ -26,7 +26,7 @@ export function getEventBridge<T, E>() {
   }
 }
 
-export function canUseEventBridge(hostname = window.location.hostname): boolean {
+export function canUseEventBridge(hostname = getGlobalObject<Window>().location?.hostname): boolean {
   const bridge = getEventBridge()
   return (
     !!bridge &&
