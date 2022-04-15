@@ -33,7 +33,7 @@ export function canUseEventBridge(hostname = getGlobalObject<Window>().location?
     bridge.getAllowedWebViewHosts().some((host) => {
       const escapedHost = host.replace(/\./g, '\\.')
       const isDomainOrSubDomain = new RegExp(`^(.+\\.)*${escapedHost}$`)
-      return !!isDomainOrSubDomain.exec(hostname)
+      return isDomainOrSubDomain.test(hostname)
     })
   )
 }
