@@ -99,7 +99,10 @@ describe('Logger', () => {
 
   describe('handler type', () => {
     beforeEach(() => {
+      spyOn(display, 'debug')
       spyOn(display, 'log')
+      spyOn(display, 'warn')
+      spyOn(display, 'error')
     })
 
     it('should be "http" by default', () => {
@@ -116,7 +119,7 @@ describe('Logger', () => {
       logger.error('message', { lorem: 'ipsum' })
 
       expect(sendLogSpy).not.toHaveBeenCalled()
-      expect(display.log).toHaveBeenCalledWith('error: message', {
+      expect(display.error).toHaveBeenCalledWith('error: message', {
         error: { origin: 'logger' },
         foo: 'bar',
         lorem: 'ipsum',
@@ -129,7 +132,7 @@ describe('Logger', () => {
       logger.error('message')
 
       expect(sendLogSpy).not.toHaveBeenCalled()
-      expect(display.log).not.toHaveBeenCalled()
+      expect(display.error).not.toHaveBeenCalled()
     })
 
     it('should be configurable to "console" and "http"', () => {
@@ -139,7 +142,7 @@ describe('Logger', () => {
       logger.debug('message')
 
       expect(sendLogSpy).toHaveBeenCalled()
-      expect(display.log).toHaveBeenCalled()
+      expect(display.debug).toHaveBeenCalled()
     })
 
     it('should be configurable to "silent" and "console"', () => {
@@ -149,7 +152,47 @@ describe('Logger', () => {
       logger.debug('message')
 
       expect(sendLogSpy).not.toHaveBeenCalled()
+      expect(display.debug).toHaveBeenCalled()
+    })
+    
+    it('should be configurable to "console" and log to debug correctly', () => {
+      logger.setHandler([HandlerType.console])
+      logger.setContext({ foo: 'bar' })
+  
+      logger.debug('message')
+  
+      expect(sendLogSpy).not.toHaveBeenCalled()
+      expect(display.debug).toHaveBeenCalled()
+    })
+    
+    it('should be configurable to "console" and log to info correctly', () => {
+      logger.setHandler([HandlerType.console])
+      logger.setContext({ foo: 'bar' })
+  
+      logger.info('message')
+  
+      expect(sendLogSpy).not.toHaveBeenCalled()
       expect(display.log).toHaveBeenCalled()
+    })
+    
+    it('should be configurable to "console" and log to warn correctly', () => {
+      logger.setHandler([HandlerType.console])
+      logger.setContext({ foo: 'bar' })
+  
+      logger.warn('message')
+  
+      expect(sendLogSpy).not.toHaveBeenCalled()
+      expect(display.warn).toHaveBeenCalled()
+    })
+    
+    it('should be configurable to "console" and log to error correctly', () => {
+      logger.setHandler([HandlerType.console])
+      logger.setContext({ foo: 'bar' })
+  
+      logger.error('message')
+  
+      expect(sendLogSpy).not.toHaveBeenCalled()
+      expect(display.error).toHaveBeenCalled()
     })
   })
 })

@@ -38,7 +38,30 @@ export function createSender(
 
   function sendToConsole(message: string, messageContext: object | undefined, status: StatusType) {
     if (isAuthorized(status, HandlerType.console)) {
-      display.log(`${status}: ${message}`, combine(contextManager.get(), messageContext))
+      const logMessage = `${status}: ${message}`
+      const logContext = combine(contextManager.get(), messageContext)
+      switch(status) {
+        case 'debug': {
+          display.debug(logMessage, logContext)
+          break
+        }
+        case 'info': {
+          display.log(logMessage, logContext)
+          break
+        }
+        case 'warn': {
+          display.warn(logMessage, logContext)
+          break
+        }
+        case 'error': {
+          display.error(logMessage, logContext)
+          break
+        }
+        default: {
+          display.log(logMessage, logContext)
+          break
+        }
+      }
     }
   }
 

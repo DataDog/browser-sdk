@@ -273,7 +273,10 @@ describe('logs entry', () => {
 
     describe('custom loggers', () => {
       beforeEach(() => {
+        spyOn(display, 'debug')
         spyOn(display, 'log')
+        spyOn(display, 'warn')
+        spyOn(display, 'error')
       })
 
       it('should have a default configuration', () => {
@@ -295,7 +298,7 @@ describe('logs entry', () => {
         logger.error('message')
 
         expect(sendLogsSpy).not.toHaveBeenCalled()
-        expect(display.log).toHaveBeenCalledWith('error: message', {
+        expect(display.error).toHaveBeenCalledWith('error: message', {
           error: { origin: 'logger' },
           logger: { name: 'foo' },
         })
@@ -310,7 +313,7 @@ describe('logs entry', () => {
         logger.debug('message')
 
         expect(sendLogsSpy).toHaveBeenCalled()
-        expect(display.log).toHaveBeenCalledWith('debug: message', { logger: { name: 'foo' } })
+        expect(display.debug).toHaveBeenCalledWith('debug: message', { logger: { name: 'foo' } })
       })
 
       it('should have their name in their context', () => {
