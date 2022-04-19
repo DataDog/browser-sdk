@@ -1,12 +1,5 @@
 import type { RawError, Subscription } from '@datadog/browser-core'
-import {
-  ErrorHandling,
-  ErrorSource,
-  Observable,
-  clocksNow,
-  updateExperimentalFeatures,
-  resetExperimentalFeatures,
-} from '@datadog/browser-core'
+import { ErrorHandling, ErrorSource, Observable, clocksNow } from '@datadog/browser-core'
 import type { Clock } from '../../../../../core/test/specHelper'
 import { mockClock } from '../../../../../core/test/specHelper'
 import { stubReportingObserver } from '../../../../../core/test/stubReportApis'
@@ -31,12 +24,9 @@ describe('trackReportError', () => {
     subscription.unsubscribe()
     clock.cleanup()
     reportingObserverStub.reset()
-    resetExperimentalFeatures()
   })
 
-  it('should report when ff forward-reports enabled', () => {
-    updateExperimentalFeatures(['forward-reports'])
-
+  it('should track reports', () => {
     trackReportError(errorObservable)
     reportingObserverStub.raiseReport('intervention')
 
@@ -48,13 +38,5 @@ describe('trackReportError', () => {
       handling: ErrorHandling.UNHANDLED,
       type: 'NavigatorVibrate',
     })
-  })
-
-  it('should not report when ff forward-reports disabled', () => {
-    trackReportError(errorObservable)
-
-    reportingObserverStub.raiseReport('intervention')
-
-    expect(notifyLog).not.toHaveBeenCalled()
   })
 })
