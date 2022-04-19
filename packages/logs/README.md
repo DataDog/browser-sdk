@@ -128,7 +128,7 @@ The following parameters are available to configure the Datadog browser logs SDK
 | `forwardConsoleLogs`  | `"all"` or an Array of `"log"` `"debug"` `"info"` `"warn"` `"error"` | No       | `[]`            | Forward logs from `console.*` to Datadog. Use `"all"` to forward everything or an array of console API names to forward only a subset. |
 | `sampleRate`          | Number                                                               | No       | `100`           | The percentage of sessions to track: `100` for all, `0` for none. Only tracked sessions send logs.                                     |
 | `silentMultipleInit`  | Boolean                                                              | No       |                 | Prevent logging errors while having multiple init.                                                                                     |
-| `proxyUrl`            | Boolean                                                              | No       |                 | Optional proxy URL (ex: https://www.proxy.com/path), see the full [proxy setup guide][6] for more information.                         |
+| `proxyUrl`            | String                                                               | No       |                 | Optional proxy URL (ex: https://www.proxy.com/path), see the full [proxy setup guide][6] for more information.                         |
 
 Options that must have a matching configuration when using the `RUM` SDK:
 
