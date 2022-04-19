@@ -1,10 +1,4 @@
-import {
-  ErrorSource,
-  resetExperimentalFeatures,
-  updateExperimentalFeatures,
-  display,
-  noop,
-} from '@datadog/browser-core'
+import { ErrorSource, display, noop } from '@datadog/browser-core'
 import { validateAndBuildLogsConfiguration } from '../../configuration'
 import { HandlerType, StatusType } from '../../logger'
 import { createSender } from '../../sender'
@@ -24,12 +18,10 @@ describe('console collection', () => {
   })
 
   afterEach(() => {
-    resetExperimentalFeatures()
     stopConsolCollection()
   })
 
-  it('should send console logs when ff forward-logs is enabled', () => {
-    updateExperimentalFeatures(['forward-logs'])
+  it('should send console logs', () => {
     ;({ stop: stopConsolCollection } = startConsoleCollection(
       validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['log'] })!,
       createSender(sendLogSpy)
@@ -45,44 +37,6 @@ describe('console collection', () => {
     })
 
     expect(consoleLogSpy).toHaveBeenCalled()
-  })
-
-  it('should not send console logs when ff forward-logs is disabled', () => {
-    ;({ stop: stopConsolCollection } = startConsoleCollection(
-      validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['log'] })!,
-      createSender(sendLogSpy)
-    ))
-
-    /* eslint-disable-next-line no-console */
-    console.log('foo', 'bar')
-
-    expect(sendLogSpy).not.toHaveBeenCalled()
-    expect(consoleLogSpy).toHaveBeenCalled()
-  })
-
-  it('should send console errors with "console" origin when ff forward-logs is enabled', () => {
-    updateExperimentalFeatures(['forward-logs'])
-    ;({ stop: stopConsolCollection } = startConsoleCollection(
-      validateAndBuildLogsConfiguration({ ...initConfiguration, forwardErrorsToLogs: true })!,
-      createSender(sendLogSpy)
-    ))
-
-    /* eslint-disable-next-line no-console */
-    console.error('foo', 'bar')
-
-    expect(sendLogSpy.calls.mostRecent().args[0].origin).toEqual(ErrorSource.CONSOLE)
-  })
-
-  it('should not send console errors with "console" origin when ff forward-logs is disabled', () => {
-    ;({ stop: stopConsolCollection } = startConsoleCollection(
-      validateAndBuildLogsConfiguration({ ...initConfiguration, forwardErrorsToLogs: true })!,
-      createSender(sendLogSpy)
-    ))
-
-    /* eslint-disable-next-line no-console */
-    console.error('foo', 'bar')
-
-    expect(sendLogSpy.calls.mostRecent().args[0].origin).not.toBeDefined()
   })
 
   it('console error should have an error object defined', () => {
@@ -101,8 +55,6 @@ describe('console collection', () => {
   })
 
   it('should not print the log twice when console handler is enabled', () => {
-    updateExperimentalFeatures(['forward-logs'])
-
     const sender = createSender(sendLogSpy)
     const displaySpy = spyOn(display, 'log')
     ;({ stop: stopConsolCollection } = startConsoleCollection(
