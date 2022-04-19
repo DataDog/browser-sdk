@@ -42,8 +42,7 @@ export function validateAndBuildLogsConfiguration(
   const forwardConsoleLogs = validateAndBuildForwardOption<ConsoleApiName>(
     initConfiguration.forwardConsoleLogs,
     objectValues(ConsoleApiName),
-    'Forward Console Logs',
-    'forward-logs'
+    'Forward Console Logs'
   )
 
   const forwardReports = validateAndBuildForwardOption<RawReportType>(
@@ -76,9 +75,9 @@ export function validateAndBuildForwardOption<T>(
   option: readonly T[] | 'all' | undefined,
   allowedValues: T[],
   label: string,
-  featureFlag: string
+  featureFlag?: string
 ): T[] | undefined {
-  if (!isExperimentalFeatureEnabled(featureFlag) || option === undefined) {
+  if ((featureFlag !== undefined && !isExperimentalFeatureEnabled(featureFlag)) || option === undefined) {
     return []
   }
 

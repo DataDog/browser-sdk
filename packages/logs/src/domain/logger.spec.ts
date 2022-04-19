@@ -1,4 +1,4 @@
-import { display, ErrorSource, resetExperimentalFeatures, updateExperimentalFeatures } from '@datadog/browser-core'
+import { display, ErrorSource } from '@datadog/browser-core'
 import type { LogsMessage } from './logger'
 import { HandlerType, Logger, STATUSES, StatusType } from './logger'
 import type { Sender } from './sender'
@@ -19,10 +19,6 @@ describe('Logger', () => {
     logger = new Logger(sender)
   })
 
-  afterEach(() => {
-    resetExperimentalFeatures()
-  })
-
   describe('log methods', () => {
     it("'logger.log' should have info status by default", () => {
       logger.log('message')
@@ -30,20 +26,13 @@ describe('Logger', () => {
       expect(getLoggedMessage(0).status).toEqual(StatusType.info)
     })
 
-    it("'logger.log' should set 'logger' origin when ff forward-logs enabled", () => {
-      updateExperimentalFeatures(['forward-logs'])
+    it("'logger.log' should set 'logger' origin", () => {
       logger.log('message')
 
       expect(getLoggedMessage(0).origin).toEqual(ErrorSource.LOGGER)
     })
 
-    it("'logger.log' should not set 'logger' origin when ff forward-logs disabled", () => {
-      logger.log('message')
-      expect(getLoggedMessage(0).origin).not.toBeDefined()
-    })
-
     it("'logger.log' message context can override the 'logger' origin", () => {
-      updateExperimentalFeatures(['forward-logs'])
       logger.log('message', { origin: 'foo' })
 
       expect(getLoggedMessage(0).origin).toEqual('foo')
@@ -118,6 +107,7 @@ describe('Logger', () => {
       expect(sendLogSpy).not.toHaveBeenCalled()
       expect(display.log).toHaveBeenCalledWith('error: message', {
         error: { origin: 'logger' },
+        origin: 'logger',
         foo: 'bar',
         lorem: 'ipsum',
       })

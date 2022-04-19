@@ -1,4 +1,4 @@
-import { ErrorSource, Observable, resetExperimentalFeatures, updateExperimentalFeatures } from '@datadog/browser-core'
+import { ErrorSource, Observable } from '@datadog/browser-core'
 import type { RawError, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import type { LogsConfiguration } from '../../configuration'
 import { createSender } from '../../sender'
@@ -21,7 +21,6 @@ describe('runtime error collection', () => {
 
   afterEach(() => {
     stopRuntimeErrorCollection()
-    resetExperimentalFeatures()
   })
 
   it('should send runtime errors', () => {
@@ -39,21 +38,8 @@ describe('runtime error collection', () => {
         error: { origin: ErrorSource.SOURCE, kind: 'Error', stack: undefined },
         message: 'error!',
         status: StatusType.error,
+        origin: ErrorSource.SOURCE,
       },
     ])
-  })
-
-  it('should send runtime errors with "source" origin when ff forward-logs is enabled', (done) => {
-    updateExperimentalFeatures(['forward-logs'])
-
-    rawErrorObservable.notify({
-      message: 'error!',
-      source: ErrorSource.SOURCE,
-      startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
-      type: 'Error',
-    })
-
-    expect(sendLogSpy.calls.mostRecent().args[0].origin).toEqual(ErrorSource.SOURCE)
-    done()
   })
 })
