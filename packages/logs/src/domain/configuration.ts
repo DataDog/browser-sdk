@@ -48,8 +48,7 @@ export function validateAndBuildLogsConfiguration(
   const forwardReports = validateAndBuildForwardOption<RawReportType>(
     initConfiguration.forwardReports,
     objectValues(RawReportType),
-    'Forward Reports',
-    'forward-reports'
+    'Forward Reports'
   )
 
   if (!baseConfiguration || !forwardConsoleLogs || !forwardReports) {
