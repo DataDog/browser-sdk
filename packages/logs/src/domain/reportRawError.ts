@@ -1,5 +1,4 @@
 import type { RawError } from '@datadog/browser-core'
-import { isExperimentalFeatureEnabled } from '@datadog/browser-core'
 import type { LogsEvent } from '../logsEvent.types'
 import { StatusType } from './logger'
 import type { Sender } from './sender'
@@ -12,9 +11,7 @@ export function reportRawError(error: RawError, sender: Sender) {
       origin: error.source, // Todo: Remove in the next major release
       stack: error.stack,
     },
-  }
-  if (isExperimentalFeatureEnabled('forward-logs')) {
-    messageContext.origin = error.source
+    origin: error.source,
   }
   sender.sendToHttp(error.message, messageContext, StatusType.error)
 }

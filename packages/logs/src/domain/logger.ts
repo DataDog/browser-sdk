@@ -1,5 +1,5 @@
 import type { ContextValue, TimeStamp } from '@datadog/browser-core'
-import { combine, ErrorSource, monitored, isExperimentalFeatureEnabled } from '@datadog/browser-core'
+import { combine, ErrorSource, monitored } from '@datadog/browser-core'
 import type { Sender } from './sender'
 
 export const StatusType = {
@@ -32,13 +32,16 @@ export class Logger {
 
   @monitored
   log(message: string, messageContext?: object, status: StatusType = StatusType.info) {
-    let logOrigin
-    if (isExperimentalFeatureEnabled('forward-logs')) {
-      logOrigin = {
-        origin: ErrorSource.LOGGER,
-      }
-    }
-    this.sender.sendLog(message, combine(logOrigin, messageContext), status)
+    this.sender.sendLog(
+      message,
+      combine(
+        {
+          origin: ErrorSource.LOGGER,
+        },
+        messageContext
+      ),
+      status
+    )
   }
 
   debug(message: string, messageContext?: object) {

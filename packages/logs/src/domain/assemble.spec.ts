@@ -181,6 +181,7 @@ describe('assemble', () => {
           message,
           status: StatusType.error,
           date: clocksNow().timeStamp,
+          origin: ErrorSource.AGENT,
           error: {
             kind: undefined,
             origin: ErrorSource.AGENT,
