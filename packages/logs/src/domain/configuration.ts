@@ -4,7 +4,6 @@ import {
   ONE_KILO_BYTE,
   validateAndBuildConfiguration,
   display,
-  isExperimentalFeatureEnabled,
   removeDuplicates,
   ConsoleApiName,
   RawReportType,
@@ -73,10 +72,9 @@ export function validateAndBuildLogsConfiguration(
 export function validateAndBuildForwardOption<T>(
   option: readonly T[] | 'all' | undefined,
   allowedValues: T[],
-  label: string,
-  featureFlag?: string
+  label: string
 ): T[] | undefined {
-  if ((featureFlag !== undefined && !isExperimentalFeatureEnabled(featureFlag)) || option === undefined) {
+  if (option === undefined) {
     return []
   }
 
