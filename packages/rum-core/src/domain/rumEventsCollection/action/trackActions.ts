@@ -127,7 +127,7 @@ export function trackActions(
           // Else complete the action at the end of the page activity
           singleClickPotentialAction.complete(idleEvent.end)
         }
-        endClick()
+        stopClickProcessing()
       },
       AUTO_ACTION_MAX_DURATION
     )
@@ -136,12 +136,12 @@ export function trackActions(
     if (!collectFrustrations) {
       // TODO: remove this in a future major version. To keep retrocompatibility, end the action on a
       // new view is created.
-      viewCreatedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, endClick)
+      viewCreatedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, stopClickProcessing)
     }
 
-    const stopSubscription = stopObservable.subscribe(endClick)
+    const stopSubscription = stopObservable.subscribe(stopClickProcessing)
 
-    function endClick() {
+    function stopClickProcessing() {
       singleClickPotentialAction.notifyIfComplete()
 
       // Cleanup any ongoing process
