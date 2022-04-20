@@ -251,6 +251,15 @@ describe('trackActions', () => {
       expect(findActionId()).toEqual([])
     })
 
+    it('does not set a duration for dead clicks', () => {
+      const { clock } = setupBuilder.build()
+      emulateClickWithoutActivity()
+
+      clock.tick(EXPIRE_DELAY)
+      expect(events.length).toBe(1)
+      expect(events[0].duration).toBeUndefined()
+    })
+
     it('collect actions even if it fails to find a name', () => {
       const { domMutationObservable, clock } = setupBuilder.build()
       emulateClickWithActivity(domMutationObservable, clock, emptyElement)

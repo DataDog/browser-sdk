@@ -41,7 +41,7 @@ export interface AutoAction {
   id: string
   name: string
   startClocks: ClocksState
-  duration: Duration
+  duration?: Duration
   counts: ActionCounts
   event: Event
   frustrationTypes: FrustrationType[]
@@ -116,7 +116,7 @@ export function trackActions(
           // TODO: this will yield a lot of false positive. We'll need to refine it in the future.
           if (collectFrustrations) {
             singleClickPotentialAction.frustrations.add(FrustrationType.DEAD)
-            singleClickPotentialAction.complete(startClocks.timeStamp)
+            singleClickPotentialAction.complete()
           } else {
             singleClickPotentialAction.discard()
           }
@@ -177,19 +177,23 @@ function newPotentialAction(
   const id = generateUUID()
   const historyEntry = history.add(id, base.startClocks.relative)
   const eventCountsSubscription = trackEventCounts(lifeCycle)
-  let finalState: { isDiscarded: false; endTime: TimeStamp } | { isDiscarded: true } | undefined
+  let finalState: { isDiscarded: false; endTime?: TimeStamp } | { isDiscarded: true } | undefined
   const frustrations = new Set<FrustrationType>()
 
   return {
     base,
     frustrations,
 
-    complete: (endTime: TimeStamp) => {
+    complete: (endTime?: TimeStamp) => {
       if (finalState) {
         return
       }
       finalState = { isDiscarded: false, endTime }
-      historyEntry.close(getRelativeTime(endTime))
+      if (endTime) {
+        historyEntry.close(getRelativeTime(endTime))
+      } else {
+        historyEntry.remove()
+      }
       eventCountsSubscription.stop()
       if (eventCountsSubscription.eventCounts.errorCount > 0) {
         frustrations.add(FrustrationType.ERROR)
@@ -219,7 +223,7 @@ function newPotentialAction(
       const { resourceCount, errorCount, longTaskCount } = eventCountsSubscription.eventCounts
       const action: AutoAction = assign(
         {
-          duration: elapsed(base.startClocks.timeStamp, finalState.endTime),
+          duration: finalState.endTime && elapsed(base.startClocks.timeStamp, finalState.endTime),
           id,
           frustrationTypes,
           counts: {
