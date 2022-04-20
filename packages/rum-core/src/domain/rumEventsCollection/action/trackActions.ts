@@ -115,8 +115,8 @@ export function trackActions(
           // If it has no activity, consider it as a dead click.
           // TODO: this will yield a lot of false positive. We'll need to refine it in the future.
           if (collectFrustrations) {
-            singleClickPotentialAction.frustrations.add(FrustrationType.DEAD)
-            singleClickPotentialAction.complete()
+            singleClickPotentialAction.addFrustration(FrustrationType.DEAD)
+            singleClickPotentialAction.validate()
           } else {
             singleClickPotentialAction.discard()
           }
@@ -124,8 +124,8 @@ export function trackActions(
           // If the clock is looking weird, just discard the action
           singleClickPotentialAction.discard()
         } else {
-          // Else complete the action at the end of the page activity
-          singleClickPotentialAction.complete(idleEvent.end)
+          // Else validate the action at the end of the page activity
+          singleClickPotentialAction.validate(idleEvent.end)
         }
         stopClickProcessing()
       },
@@ -142,8 +142,6 @@ export function trackActions(
     const stopSubscription = stopObservable.subscribe(stopClickProcessing)
 
     function stopClickProcessing() {
-      singleClickPotentialAction.notifyIfComplete()
-
       // Cleanup any ongoing process
       singleClickPotentialAction.discard()
       if (viewCreatedSubscription) {
@@ -177,53 +175,46 @@ function newPotentialAction(
   const id = generateUUID()
   const historyEntry = history.add(id, base.startClocks.relative)
   const eventCountsSubscription = trackEventCounts(lifeCycle)
-  let finalState: { isDiscarded: false; endTime?: TimeStamp } | { isDiscarded: true } | undefined
+  let isStopped = false
+
   const frustrations = new Set<FrustrationType>()
 
-  return {
-    base,
-    frustrations,
-
-    complete: (endTime?: TimeStamp) => {
-      if (finalState) {
-        return
-      }
-      finalState = { isDiscarded: false, endTime }
-      if (endTime) {
-        historyEntry.close(getRelativeTime(endTime))
-      } else {
-        historyEntry.remove()
-      }
-      eventCountsSubscription.stop()
-      if (eventCountsSubscription.eventCounts.errorCount > 0) {
-        frustrations.add(FrustrationType.ERROR)
-      }
-    },
-
-    discard: () => {
-      if (finalState) {
-        return
-      }
-      finalState = { isDiscarded: true }
+  function stop(endTime?: TimeStamp) {
+    isStopped = true
+    if (endTime) {
+      historyEntry.close(getRelativeTime(endTime))
+    } else {
       historyEntry.remove()
-      eventCountsSubscription.stop()
-    },
+    }
+    eventCountsSubscription.stop()
+  }
 
-    notifyIfComplete: () => {
-      if (!finalState || finalState.isDiscarded) {
+  function addFrustration(frustration: FrustrationType) {
+    if (collectFrustrations) {
+      frustrations.add(frustration)
+    }
+  }
+
+  return {
+    addFrustration,
+
+    validate: (endTime?: TimeStamp) => {
+      if (isStopped) {
         return
+      }
+      stop(endTime)
+      if (eventCountsSubscription.eventCounts.errorCount > 0) {
+        addFrustration(FrustrationType.ERROR)
       }
 
       const frustrationTypes: FrustrationType[] = []
-      if (collectFrustrations) {
-        frustrations.forEach((frustration) => {
-          frustrationTypes.push(frustration)
-        })
-      }
+      frustrations.forEach((frustration) => {
+        frustrationTypes.push(frustration)
+      })
       const { resourceCount, errorCount, longTaskCount } = eventCountsSubscription.eventCounts
       const action: AutoAction = assign(
         {
-          duration: finalState.endTime && elapsed(base.startClocks.timeStamp, finalState.endTime),
+          duration: endTime && elapsed(base.startClocks.timeStamp, endTime),
           id,
           frustrationTypes,
           counts: {
@@ -235,6 +226,13 @@ function newPotentialAction(
         base
       )
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, action)
+    },
+
+    discard: () => {
+      if (isStopped) {
+        return
+      }
+      stop()
     },
   }
 }
