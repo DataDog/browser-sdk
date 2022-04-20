@@ -12,7 +12,7 @@ import type { ActionContexts } from './actionCollection'
 import type { AutoAction } from './trackActions'
 import { AUTO_ACTION_MAX_DURATION, trackActions } from './trackActions'
 
-// Used to wait some time after the creation of a action
+// Used to wait some time after the creation of an action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
 // A long delay used to wait after any action is finished.
 const EXPIRE_DELAY = AUTO_ACTION_MAX_DURATION * 10
@@ -70,7 +70,7 @@ describe('trackActions', () => {
     setupBuilder.cleanup()
   })
 
-  it('starts a action when clicking on an element', () => {
+  it('starts an action when clicking on an element', () => {
     const { domMutationObservable, clock } = setupBuilder.build()
     emulateClickWithActivity(domMutationObservable, clock)
     expect(findActionId()).not.toBeUndefined()
@@ -175,7 +175,7 @@ describe('trackActions', () => {
       expect(events[0].startClocks.timeStamp).toBe(firstClickTimeStamp)
     })
 
-    it('discards a action when nothing happens after a click', () => {
+    it('discards an action when nothing happens after a click', () => {
       const { clock } = setupBuilder.build()
       emulateClickWithoutActivity()
 
@@ -184,7 +184,7 @@ describe('trackActions', () => {
       expect(findActionId()).toBeUndefined()
     })
 
-    it('ignores a actions if it fails to find a name', () => {
+    it('ignores an action if it fails to find a name', () => {
       const { domMutationObservable, clock } = setupBuilder.build()
       emulateClickWithActivity(domMutationObservable, clock, emptyElement)
       expect(findActionId()).toBeUndefined()
