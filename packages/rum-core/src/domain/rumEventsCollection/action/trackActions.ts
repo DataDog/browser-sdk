@@ -55,51 +55,103 @@ export interface ActionContexts {
 export const AUTO_ACTION_MAX_DURATION = 10 * ONE_SECOND
 export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
 
-interface TrackActionsState {
-  readonly lifeCycle: LifeCycle
-  readonly domMutationObservable: Observable<void>
-  readonly actionNameAttribute: string | undefined
-  readonly collectFrustrations: boolean
-  readonly history: ContextHistory<string>
-  readonly stopObservable: Observable<void>
-}
-
 export function trackActions(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
   { actionNameAttribute }: RumConfiguration
 ) {
-  const state: TrackActionsState = {
-    // TODO: this will be changed when we introduce a proper initialization parameter for it
-    collectFrustrations: isExperimentalFeatureEnabled('frustration-signals'),
-    lifeCycle,
-    domMutationObservable,
-    actionNameAttribute,
-    history: new ContextHistory(ACTION_CONTEXT_TIME_OUT_DELAY),
-    stopObservable: new Observable(),
-  }
+  // TODO: this will be changed when we introduce a proper initialization parameter for it
+  const collectFrustrations = isExperimentalFeatureEnabled('frustration-signals')
+  const history = new ContextHistory<string>(ACTION_CONTEXT_TIME_OUT_DELAY)
+  const stopObservable = new Observable<void>()
 
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-    state.history.reset()
+    history.reset()
   })
 
-  const { stop: stopListener } = listenClickEvents((event) => {
-    onClick(state, event)
-  })
+  const { stop: stopListener } = listenClickEvents(onClick)
 
   const actionContexts: ActionContexts = {
     findActionId: (startTime?: RelativeTime) =>
-      isExperimentalFeatureEnabled('frustration-signals')
-        ? state.history.findAll(startTime)
-        : state.history.find(startTime),
+      isExperimentalFeatureEnabled('frustration-signals') ? history.findAll(startTime) : history.find(startTime),
   }
 
   return {
     stop: () => {
-      state.stopObservable.notify()
+      stopObservable.notify()
       stopListener()
     },
     actionContexts,
+  }
+
+  function onClick(event: MouseEvent & { target: Element }) {
+    if (!collectFrustrations && history.find()) {
+      // TODO: remove this in a future major version. To keep retrocompatibility, ignore any new
+      // action if another one is already occurring.
+      return
+    }
+
+    const name = getActionNameFromElement(event.target, actionNameAttribute)
+    if (!collectFrustrations && !name) {
+      // TODO: remove this in a future major version. To keep retrocompatibility, ignore any action
+      // with a blank name
+      return
+    }
+
+    const startClocks = clocksNow()
+
+    const singleClickPotentialAction = newPotentialAction(lifeCycle, history, collectFrustrations, {
+      name,
+      event,
+      type: ActionType.CLICK as const,
+      startClocks,
+    })
+
+    const { stop: stopWaitingIdlePage } = waitIdlePage(
+      lifeCycle,
+      domMutationObservable,
+      (idleEvent) => {
+        if (!idleEvent.hadActivity) {
+          // If it has no activity, consider it as a dead click.
+          // TODO: this will yield a lot of false positive. We'll need to refine it in the future.
+          if (collectFrustrations) {
+            singleClickPotentialAction.frustrations.add(FrustrationType.DEAD)
+            singleClickPotentialAction.complete(startClocks.timeStamp)
+          } else {
+            singleClickPotentialAction.discard()
+          }
+        } else if (idleEvent.end < startClocks.timeStamp) {
+          // If the clock is looking weird, just discard the action
+          singleClickPotentialAction.discard()
+        } else {
+          // Else complete the action at the end of the page activity
+          singleClickPotentialAction.complete(idleEvent.end)
+        }
+        endClick()
+      },
+      AUTO_ACTION_MAX_DURATION
+    )
+
+    let viewCreatedSubscription: Subscription | undefined
+    if (!collectFrustrations) {
+      // TODO: remove this in a future major version. To keep retrocompatibility, end the action on a
+      // new view is created.
+      viewCreatedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, endClick)
+    }
+
+    const stopSubscription = stopObservable.subscribe(endClick)
+
+    function endClick() {
+      singleClickPotentialAction.notifyIfComplete()
+
+      // Cleanup any ongoing process
+      singleClickPotentialAction.discard()
+      if (viewCreatedSubscription) {
+        viewCreatedSubscription.unsubscribe()
+      }
+      stopWaitingIdlePage()
+      stopSubscription.unsubscribe()
+    }
   }
 }
 
@@ -116,78 +168,10 @@ function listenClickEvents(callback: (clickEvent: MouseEvent & { target: Element
   )
 }
 
-function onClick(state: TrackActionsState, event: MouseEvent & { target: Element }) {
-  if (!state.collectFrustrations && state.history.find()) {
-    // TODO: remove this in a future major version. To keep retrocompatibility, ignore any new
-    // action if another one is already occurring.
-    return
-  }
-
-  const name = getActionNameFromElement(event.target, state.actionNameAttribute)
-  if (!state.collectFrustrations && !name) {
-    // TODO: remove this in a future major version. To keep retrocompatibility, ignore any action
-    // with a blank name
-    return
-  }
-
-  const startClocks = clocksNow()
-
-  const singleClickPotentialAction = newPotentialAction(state, {
-    name,
-    event,
-    type: ActionType.CLICK as const,
-    startClocks,
-  })
-
-  const { stop: stopWaitingIdlePage } = waitIdlePage(
-    state.lifeCycle,
-    state.domMutationObservable,
-    (idleEvent) => {
-      if (!idleEvent.hadActivity) {
-        // If it has no activity, consider it as a dead click.
-        // TODO: this will yield a lot of false positive. We'll need to refine it in the future.
-        if (state.collectFrustrations) {
-          singleClickPotentialAction.frustrations.add(FrustrationType.DEAD)
-          singleClickPotentialAction.complete(startClocks.timeStamp)
-        } else {
-          singleClickPotentialAction.discard()
-        }
-      } else if (idleEvent.end < startClocks.timeStamp) {
-        // If the clock is looking weird, just discard the action
-        singleClickPotentialAction.discard()
-      } else {
-        // Else complete the action at the end of the page activity
-        singleClickPotentialAction.complete(idleEvent.end)
-      }
-      endClick()
-    },
-    AUTO_ACTION_MAX_DURATION
-  )
-
-  let viewCreatedSubscription: Subscription | undefined
-  if (!state.collectFrustrations) {
-    // TODO: remove this in a future major version. To keep retrocompatibility, end the action on a
-    // new view is created.
-    viewCreatedSubscription = state.lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, endClick)
-  }
-
-  const stopSubscription = state.stopObservable.subscribe(endClick)
-
-  function endClick() {
-    singleClickPotentialAction.notifyIfComplete()
-
-    // Cleanup any ongoing process
-    singleClickPotentialAction.discard()
-    if (viewCreatedSubscription) {
-      viewCreatedSubscription.unsubscribe()
-    }
-    stopWaitingIdlePage()
-    stopSubscription.unsubscribe()
-  }
-}
-
 function newPotentialAction(
-  { lifeCycle, history, collectFrustrations }: TrackActionsState,
+  lifeCycle: LifeCycle,
+  history: ContextHistory<string>,
+  collectFrustrations: boolean,
   base: Pick<AutoAction, 'startClocks' | 'event' | 'name' | 'type'>
 ) {
   const id = generateUUID()
