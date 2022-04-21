@@ -16,6 +16,14 @@
 
 ---
 
+## v4.8.0
+
+- ✨ [RUMF-1192] forward Reports to Datadog ([#1506](https://github.com/DataDog/browser-sdk/pull/1506))
+- ✨ [RUMF-1192] forward `console.*` logs to Datadog ([#1505](https://github.com/DataDog/browser-sdk/pull/1505))
+- 📝 fix documentation for `proxyUrl` documentation ([#1503](https://github.com/DataDog/browser-sdk/pull/1503))
+- ✨ [RUMF-1237] The event bridge allowed hosts should also match subdomains ([#1499](https://github.com/DataDog/browser-sdk/pull/1499))
+- 📝 add `replaySampleRate` to README examples ([#1370](https://github.com/DataDog/browser-sdk/pull/1370))
+
 ## v4.7.1
 
 - 🐛 Adjust records generated during view change so their date matches the view date ([#1486](https://github.com/DataDog/browser-sdk/pull/1486))
