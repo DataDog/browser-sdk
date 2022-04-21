@@ -666,11 +666,13 @@ window.DD_LOGS && DD_LOGS.logger.setHandler(['<HANDLER1>', '<HANDLER2>'])
 
 **Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the SDK.
 
-[1]: /account_management/api-app-keys/#api-keys
-[2]: /account_management/api-app-keys/#client-tokens
+<!-- Note: all URLs should be absolute -->
+
+[1]: https://docs.datadoghq.com/account_management/api-app-keys/#api-keys
+[2]: https://docs.datadoghq.com/account_management/api-app-keys/#client-tokens
 [3]: https://www.npmjs.com/package/@datadog/browser-logs
 [4]: https://github.com/DataDog/browser-sdk/blob/main/packages/logs/BROWSER_SUPPORT.md
-[5]: /real_user_monitoring/guide/enrich-and-control-rum-data/
+[5]: https://docs.datadoghq.com/real_user_monitoring/guide/enrich-and-control-rum-data/
 [6]: https://docs.datadoghq.com/real_user_monitoring/faq/proxy_rum_data/
 [7]: https://docs.datadoghq.com/getting_started/tagging/#defining-tags
 [8]: https://developer.mozilla.org/en-US/docs/Web/API/Reporting_API
