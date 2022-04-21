@@ -1,3 +1,4 @@
+import { withBrowserLogs } from '../../lib/helpers/browser'
 import { createTest, html, waitForServersIdle } from '../../lib/framework'
 import { flushEvents } from '../../lib/helpers/flushEvents'
 
@@ -85,5 +86,46 @@ describe('action collection', () => {
 
       expect(resourceEvents.length).toBe(1)
       expect(resourceEvents[0].action!.id).toBe(actionEvents[0].action.id!)
+    })
+
+  createTest('collect an "error click"')
+    .withRum({ trackInteractions: true, enableExperimentalFeatures: ['frustration-signals'] })
+    .withBody(
+      html`
+        <button>click me</button>
+        <script>
+          const button = document.querySelector('button')
+          button.addEventListener('click', () => {
+            button.setAttribute('data-clicked', 'true')
+            throw new Error('Foo')
+          })
+        </script>
+      `
+    )
+    .run(async ({ serverEvents }) => {
+      const button = await $('button')
+      await button.click()
+      await flushEvents()
+      const actionEvents = serverEvents.rumActions
+
+      expect(actionEvents.length).toBe(1)
+      expect(actionEvents[0].action.frustration_type).toEqual(['error'])
+      expect(actionEvents[0].action.error!.count).toBe(1)
+      await withBrowserLogs((browserLogs) => {
+        expect(browserLogs.length).toEqual(1)
+      })
+    })
+
+  createTest('collect a "dead click"')
+    .withRum({ trackInteractions: true, enableExperimentalFeatures: ['frustration-signals'] })
+    .withBody(html` <button>click me</button> `)
+    .run(async ({ serverEvents }) => {
+      const button = await $('button')
+      await button.click()
+      await flushEvents()
+      const actionEvents = serverEvents.rumActions
+
+      expect(actionEvents.length).toBe(1)
+      expect(actionEvents[0].action.frustration_type).toEqual(['dead'])
     })
 })
