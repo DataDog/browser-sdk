@@ -19,6 +19,7 @@ export interface InitConfiguration {
   clientToken: string
   beforeSend?: GenericBeforeSendCallback | undefined
   sampleRate?: number | undefined
+  telemetrySampleRate?: number | undefined
   silentMultipleInit?: boolean | undefined
 
   // transport options
@@ -56,6 +57,7 @@ export interface Configuration extends TransportConfiguration {
   beforeSend: GenericBeforeSendCallback | undefined
   cookieOptions: CookieOptions
   sampleRate: number
+  telemetrySampleRate: number
   service: string | undefined
   silentMultipleInit: boolean
 
@@ -81,6 +83,11 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     return
   }
 
+  if (initConfiguration.telemetrySampleRate !== undefined && !isPercentage(initConfiguration.telemetrySampleRate)) {
+    display.error('Telemetry Sample Rate should be a number between 0 and 100')
+    return
+  }
+
   // Set the experimental feature flags as early as possible, so we can use them in most places
   updateExperimentalFeatures(initConfiguration.enableExperimentalFeatures)
 
@@ -90,6 +97,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
         initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
       cookieOptions: buildCookieOptions(initConfiguration),
       sampleRate: initConfiguration.sampleRate ?? 100,
+      telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
       service: initConfiguration.service,
       silentMultipleInit: !!initConfiguration.silentMultipleInit,
 
