@@ -1,4 +1,5 @@
 import type { Context } from '../../tools/context'
+import { display } from '../../tools/display'
 import type { Configuration } from '../configuration'
 import { updateExperimentalFeatures, resetExperimentalFeatures } from '../configuration'
 import type { InternalMonitoring, MonitoringMessage } from './internalMonitoring'
@@ -8,6 +9,7 @@ import {
   resetInternalMonitoring,
   startInternalMonitoring,
   callMonitored,
+  setDebugMode,
 } from './internalMonitoring'
 import type { TelemetryEvent } from './telemetryEvent.types'
 
@@ -186,6 +188,39 @@ describe('internal monitoring', () => {
         throw new Error('message')
       })
       expect(notifySpy.calls.mostRecent().args[0].foo).not.toBeDefined()
+    })
+  })
+
+  describe('setDebug', () => {
+    let displaySpy: jasmine.Spy
+
+    beforeEach(() => {
+      displaySpy = spyOn(display, 'error')
+    })
+
+    afterEach(() => {
+      resetInternalMonitoring()
+    })
+
+    it('when not called, should not display error', () => {
+      startInternalMonitoring(configuration as Configuration)
+
+      callMonitored(() => {
+        throw new Error('message')
+      })
+
+      expect(displaySpy).not.toHaveBeenCalled()
+    })
+
+    it('when called, should display error', () => {
+      startInternalMonitoring(configuration as Configuration)
+      setDebugMode(true)
+
+      callMonitored(() => {
+        throw new Error('message')
+      })
+
+      expect(displaySpy).toHaveBeenCalled()
     })
   })
 

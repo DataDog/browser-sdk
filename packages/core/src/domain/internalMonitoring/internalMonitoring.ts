@@ -113,6 +113,7 @@ export function startFakeInternalMonitoring() {
 
 export function resetInternalMonitoring() {
   onInternalMonitoringMessageCollected = undefined
+  monitoringConfiguration.debugMode = undefined
 }
 
 export function monitored<T extends (...params: any[]) => unknown>(
