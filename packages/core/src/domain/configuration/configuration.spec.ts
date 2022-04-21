@@ -33,6 +33,11 @@ describe('validateAndBuildConfiguration', () => {
       expect(displaySpy).toHaveBeenCalledOnceWith('Client Token is not configured, we will not send any data.')
     })
 
+    it("shouldn't display any error if the configuration is correct", () => {
+      validateAndBuildConfiguration({ clientToken: 'yes' })
+      expect(displaySpy).not.toHaveBeenCalled()
+    })
+
     it('requires sampleRate to be a percentage', () => {
       expect(
         validateAndBuildConfiguration({ clientToken, sampleRate: 'foo' } as unknown as InitConfiguration)
@@ -44,10 +49,26 @@ describe('validateAndBuildConfiguration', () => {
         validateAndBuildConfiguration({ clientToken, sampleRate: 200 } as unknown as InitConfiguration)
       ).toBeUndefined()
       expect(displaySpy).toHaveBeenCalledOnceWith('Sample Rate should be a number between 0 and 100')
+
+      displaySpy.calls.reset()
+      validateAndBuildConfiguration({ clientToken: 'yes', sampleRate: 1 })
+      expect(displaySpy).not.toHaveBeenCalled()
     })
 
-    it("shouldn't display any error if the configuration is correct", () => {
-      validateAndBuildConfiguration({ clientToken: 'yes', sampleRate: 1 })
+    it('requires telemetrySampleRate to be a percentage', () => {
+      expect(
+        validateAndBuildConfiguration({ clientToken, telemetrySampleRate: 'foo' } as unknown as InitConfiguration)
+      ).toBeUndefined()
+      expect(displaySpy).toHaveBeenCalledOnceWith('Telemetry Sample Rate should be a number between 0 and 100')
+
+      displaySpy.calls.reset()
+      expect(
+        validateAndBuildConfiguration({ clientToken, telemetrySampleRate: 200 } as unknown as InitConfiguration)
+      ).toBeUndefined()
+      expect(displaySpy).toHaveBeenCalledOnceWith('Telemetry Sample Rate should be a number between 0 and 100')
+
+      displaySpy.calls.reset()
+      validateAndBuildConfiguration({ clientToken: 'yes', telemetrySampleRate: 1 })
       expect(displaySpy).not.toHaveBeenCalled()
     })
   })
