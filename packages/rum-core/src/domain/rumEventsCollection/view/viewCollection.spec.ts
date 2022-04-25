@@ -20,7 +20,7 @@ const VIEW: ViewEvent = {
     errorCount: 10,
     longTaskCount: 10,
     resourceCount: 10,
-    userActionCount: 10,
+    actionCount: 10,
   },
   id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
   name: undefined,

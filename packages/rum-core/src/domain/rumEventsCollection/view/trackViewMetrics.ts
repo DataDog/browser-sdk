@@ -27,7 +27,7 @@ export function trackViewMetrics(
       errorCount: 0,
       longTaskCount: 0,
       resourceCount: 0,
-      userActionCount: 0,
+      actionCount: 0,
     },
   }
   const { stop: stopEventCountsTracking } = trackEventCounts(lifeCycle, (newEventCounts) => {

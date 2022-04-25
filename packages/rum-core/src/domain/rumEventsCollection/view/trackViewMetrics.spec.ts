@@ -224,14 +224,14 @@ describe('rum track view metrics', () => {
       const { getViewUpdate, getViewUpdateCount, startView } = viewTest
 
       expect(getViewUpdateCount()).toEqual(1)
-      expect(getViewUpdate(0).eventCounts.userActionCount).toEqual(0)
+      expect(getViewUpdate(0).eventCounts.actionCount).toEqual(0)
 
       lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.ACTION } as RumEvent & Context)
       startView()
 
       expect(getViewUpdateCount()).toEqual(3)
-      expect(getViewUpdate(1).eventCounts.userActionCount).toEqual(1)
-      expect(getViewUpdate(2).eventCounts.userActionCount).toEqual(0)
+      expect(getViewUpdate(1).eventCounts.actionCount).toEqual(1)
+      expect(getViewUpdate(2).eventCounts.actionCount).toEqual(0)
     })
 
     it('should reset event count when the view changes', () => {
@@ -266,7 +266,7 @@ describe('rum track view metrics', () => {
         errorCount: 0,
         longTaskCount: 0,
         resourceCount: 0,
-        userActionCount: 0,
+        actionCount: 0,
       })
 
       lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.RESOURCE } as RumEvent & Context)
@@ -280,7 +280,7 @@ describe('rum track view metrics', () => {
         errorCount: 0,
         longTaskCount: 0,
         resourceCount: 1,
-        userActionCount: 0,
+        actionCount: 0,
       })
     })
 

@@ -53,7 +53,7 @@ function processViewUpdate(
     type: RumEventType.VIEW,
     view: {
       action: {
-        count: view.eventCounts.userActionCount,
+        count: view.eventCounts.actionCount,
       },
       cumulative_layout_shift: view.cumulativeLayoutShift,
       dom_complete: toServerDuration(view.timings.domComplete),

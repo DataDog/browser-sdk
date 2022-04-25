@@ -32,13 +32,13 @@ describe('trackEventCounts', () => {
   it("doesn't track views", () => {
     const { eventCounts } = trackEventCounts(lifeCycle)
     notifyCollectedRawRumEvent(RumEventType.VIEW)
-    expect(objectValues(eventCounts).every((value) => value === 0)).toBe(true)
+    expect(objectValues(eventCounts as unknown as { [key: string]: number }).every((value) => value === 0)).toBe(true)
   })
 
   it('tracks actions', () => {
     const { eventCounts } = trackEventCounts(lifeCycle)
     notifyCollectedRawRumEvent(RumEventType.ACTION)
-    expect(eventCounts.userActionCount).toBe(1)
+    expect(eventCounts.actionCount).toBe(1)
   })
 
   it('tracks resources', () => {

@@ -2,7 +2,7 @@ import type { LogsEvent } from '@datadog/browser-logs'
 import type { RumEvent } from '@datadog/browser-rum'
 import type { TelemetryEvent } from '@datadog/browser-core'
 import type { SessionReplayCall, ServerInternalMonitoringMessage } from '../types/serverEvents'
-import { isRumErrorEvent, isRumResourceEvent, isRumUserActionEvent, isRumViewEvent } from '../types/serverEvents'
+import { isRumErrorEvent, isRumResourceEvent, isRumActionEvent, isRumViewEvent } from '../types/serverEvents'
 
 export type IntakeType = 'logs' | 'rum' | 'internalMonitoring' | 'sessionReplay' | 'telemetry'
 
@@ -28,7 +28,7 @@ export class EventRegistry {
   }
 
   get rumActions() {
-    return this.rum.filter(isRumUserActionEvent)
+    return this.rum.filter(isRumActionEvent)
   }
 
   get rumErrors() {
