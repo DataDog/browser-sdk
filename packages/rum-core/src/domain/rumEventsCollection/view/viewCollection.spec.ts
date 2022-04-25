@@ -21,6 +21,7 @@ const VIEW: ViewEvent = {
     longTaskCount: 10,
     resourceCount: 10,
     actionCount: 10,
+    frustrationCount: 10,
   },
   id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
   name: undefined,
@@ -87,6 +88,9 @@ describe('viewCollection', () => {
       type: RumEventType.VIEW,
       view: {
         action: {
+          count: 10,
+        },
+        frustration: {
           count: 10,
         },
         cumulative_layout_shift: 1,

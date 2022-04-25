@@ -115,6 +115,9 @@ describe('action collection', () => {
       expect(actionEvents.length).toBe(1)
       expect(actionEvents[0].action.frustration!.type).toEqual(['error'])
       expect(actionEvents[0].action.error!.count).toBe(1)
+
+      expect(serverEvents.rumViews[0].view.frustration!.count).toBe(1)
+
       await withBrowserLogs((browserLogs) => {
         expect(browserLogs.length).toEqual(1)
       })
@@ -131,6 +134,8 @@ describe('action collection', () => {
 
       expect(actionEvents.length).toBe(1)
       expect(actionEvents[0].action.frustration!.type).toEqual(['dead'])
+
+      expect(serverEvents.rumViews[0].view.frustration!.count).toBe(1)
     })
 
   createTest('collect multiple frustrations in one action')
@@ -154,6 +159,9 @@ describe('action collection', () => {
 
       expect(actionEvents.length).toBe(1)
       expect(actionEvents[0].action.frustration!.type).toEqual(jasmine.arrayWithExactContents(['error', 'dead']))
+
+      expect(serverEvents.rumViews[0].view.frustration!.count).toBe(2)
+
       await withBrowserLogs((browserLogs) => {
         expect(browserLogs.length).toEqual(1)
       })

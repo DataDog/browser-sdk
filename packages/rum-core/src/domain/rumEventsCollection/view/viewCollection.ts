@@ -55,6 +55,9 @@ function processViewUpdate(
       action: {
         count: view.eventCounts.actionCount,
       },
+      frustration: {
+        count: view.eventCounts.frustrationCount,
+      },
       cumulative_layout_shift: view.cumulativeLayoutShift,
       dom_complete: toServerDuration(view.timings.domComplete),
       dom_content_loaded: toServerDuration(view.timings.domContentLoaded),
