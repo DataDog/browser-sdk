@@ -91,10 +91,9 @@ export function trackClickActions(
 
     const startClocks = clocksNow()
 
-    const singleClickPotentialAction = newPotentialAction(lifeCycle, history, collectFrustrations, {
+    const potentialClickAction = newPotentialClickAction(lifeCycle, history, collectFrustrations, {
       name,
       event,
-      type: ActionType.CLICK as const,
       startClocks,
     })
 
@@ -106,17 +105,17 @@ export function trackClickActions(
           // If it has no activity, consider it as a dead click.
           // TODO: this will yield a lot of false positive. We'll need to refine it in the future.
           if (collectFrustrations) {
-            singleClickPotentialAction.addFrustration(FrustrationType.DEAD)
-            singleClickPotentialAction.validate()
+            potentialClickAction.addFrustration(FrustrationType.DEAD)
+            potentialClickAction.validate()
           } else {
-            singleClickPotentialAction.discard()
+            potentialClickAction.discard()
           }
         } else if (idleEvent.end < startClocks.timeStamp) {
           // If the clock is looking weird, just discard the action
-          singleClickPotentialAction.discard()
+          potentialClickAction.discard()
         } else {
-          // Else validate the action at the end of the page activity
-          singleClickPotentialAction.validate(idleEvent.end)
+          // Else validate the potential click action at the end of the page activity
+          potentialClickAction.validate(idleEvent.end)
         }
         stopClickProcessing()
       },
@@ -125,8 +124,8 @@ export function trackClickActions(
 
     let viewCreatedSubscription: Subscription | undefined
     if (!collectFrustrations) {
-      // TODO: remove this in a future major version. To keep retrocompatibility, end the action on a
-      // new view is created.
+      // TODO: remove this in a future major version. To keep retrocompatibility, end the potential
+      // click action on a new view is created.
       viewCreatedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, stopClickProcessing)
     }
 
@@ -134,7 +133,7 @@ export function trackClickActions(
 
     function stopClickProcessing() {
       // Cleanup any ongoing process
-      singleClickPotentialAction.discard()
+      potentialClickAction.discard()
       if (viewCreatedSubscription) {
         viewCreatedSubscription.unsubscribe()
       }
@@ -157,11 +156,11 @@ function listenClickEvents(callback: (clickEvent: MouseEvent & { target: Element
   )
 }
 
-function newPotentialAction(
+function newPotentialClickAction(
   lifeCycle: LifeCycle,
   history: ContextHistory<string>,
   collectFrustrations: boolean,
-  base: Pick<ClickAction, 'startClocks' | 'event' | 'name' | 'type'>
+  base: Pick<ClickAction, 'startClocks' | 'event' | 'name'>
 ) {
   const id = generateUUID()
   const historyEntry = history.add(id, base.startClocks.relative)
@@ -203,8 +202,9 @@ function newPotentialAction(
         frustrationTypes.push(frustration)
       })
       const { resourceCount, errorCount, longTaskCount } = eventCountsSubscription.eventCounts
-      const action: ClickAction = assign(
+      const clickAction: ClickAction = assign(
         {
+          type: ActionType.CLICK as const,
           duration: endTime && elapsed(base.startClocks.timeStamp, endTime),
           id,
           frustrationTypes,
@@ -216,7 +216,7 @@ function newPotentialAction(
         },
         base
       )
-      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, action)
+      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, clickAction)
     },
 
     discard: () => {
