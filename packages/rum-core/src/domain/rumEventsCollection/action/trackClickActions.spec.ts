@@ -9,13 +9,13 @@ import type { RumEvent } from '../../../rumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { PAGE_ACTIVITY_VALIDATION_DELAY } from '../../waitIdlePage'
 import type { ActionContexts } from './actionCollection'
-import type { AutoAction } from './trackActions'
-import { AUTO_ACTION_MAX_DURATION, trackActions } from './trackActions'
+import type { ClickAction } from './trackClickActions'
+import { CLICK_ACTION_MAX_DURATION, trackClickActions } from './trackClickActions'
 
 // Used to wait some time after the creation of an action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
 // A long delay used to wait after any action is finished.
-const EXPIRE_DELAY = AUTO_ACTION_MAX_DURATION * 10
+const EXPIRE_DELAY = CLICK_ACTION_MAX_DURATION * 10
 
 function eventsCollector<T>() {
   const events: T[] = []
@@ -32,8 +32,8 @@ function eventsCollector<T>() {
 
 const RAW_ERROR_EVENT = { type: RumEventType.ERROR } as RumEvent & Context
 
-describe('trackActions', () => {
-  const { events, pushEvent } = eventsCollector<AutoAction>()
+describe('trackClickActions', () => {
+  const { events, pushEvent } = eventsCollector<ClickAction>()
   let button: HTMLButtonElement
   let emptyElement: HTMLHRElement
   let input: HTMLInputElement
@@ -57,9 +57,9 @@ describe('trackActions', () => {
       .withFakeClock()
       .beforeBuild(({ lifeCycle, domMutationObservable, configuration }) => {
         lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
-        const trackActionsResult = trackActions(lifeCycle, domMutationObservable, configuration)
-        findActionId = trackActionsResult.actionContexts.findActionId
-        return { stop: trackActionsResult.stop }
+        const trackClickActionsResult = trackClickActions(lifeCycle, domMutationObservable, configuration)
+        findActionId = trackClickActionsResult.actionContexts.findActionId
+        return { stop: trackClickActionsResult.stop }
       })
   })
 

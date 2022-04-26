@@ -4,7 +4,7 @@ import type { RumEventDomainContext } from '../domainContext.types'
 import type { CommonContext, RawRumEvent } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'
 import type { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
-import type { AutoAction } from './rumEventsCollection/action/trackActions'
+import type { AutoAction } from './rumEventsCollection/action/actionCollection'
 import type { ViewEvent, ViewCreatedEvent, ViewEndedEvent } from './rumEventsCollection/view/trackViews'
 
 export const enum LifeCycleEventType {

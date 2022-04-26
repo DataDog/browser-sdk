@@ -1,4 +1,4 @@
-import type { Context, Duration, ClocksState, RelativeTime, TimeStamp, Subscription } from '@datadog/browser-core'
+import type { Duration, ClocksState, RelativeTime, TimeStamp, Subscription } from '@datadog/browser-core'
 import {
   Observable,
   assign,
@@ -21,23 +21,14 @@ import { trackEventCounts } from '../../trackEventCounts'
 import { waitIdlePage } from '../../waitIdlePage'
 import { getActionNameFromElement } from './getActionNameFromElement'
 
-type AutoActionType = ActionType.CLICK
-
 interface ActionCounts {
   errorCount: number
   longTaskCount: number
   resourceCount: number
 }
 
-export interface CustomAction {
-  type: ActionType.CUSTOM
-  name: string
-  startClocks: ClocksState
-  context?: Context
-}
-
-export interface AutoAction {
-  type: AutoActionType
+export interface ClickAction {
+  type: ActionType.CLICK
   id: string
   name: string
   startClocks: ClocksState
@@ -51,11 +42,11 @@ export interface ActionContexts {
   findActionId: (startTime?: RelativeTime) => string | string[] | undefined
 }
 
-// Maximum duration for automatic actions
-export const AUTO_ACTION_MAX_DURATION = 10 * ONE_SECOND
+// Maximum duration for click actions
+export const CLICK_ACTION_MAX_DURATION = 10 * ONE_SECOND
 export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
 
-export function trackActions(
+export function trackClickActions(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
   { actionNameAttribute }: RumConfiguration
@@ -129,7 +120,7 @@ export function trackActions(
         }
         stopClickProcessing()
       },
-      AUTO_ACTION_MAX_DURATION
+      CLICK_ACTION_MAX_DURATION
     )
 
     let viewCreatedSubscription: Subscription | undefined
@@ -170,7 +161,7 @@ function newPotentialAction(
   lifeCycle: LifeCycle,
   history: ContextHistory<string>,
   collectFrustrations: boolean,
-  base: Pick<AutoAction, 'startClocks' | 'event' | 'name' | 'type'>
+  base: Pick<ClickAction, 'startClocks' | 'event' | 'name' | 'type'>
 ) {
   const id = generateUUID()
   const historyEntry = history.add(id, base.startClocks.relative)
@@ -212,7 +203,7 @@ function newPotentialAction(
         frustrationTypes.push(frustration)
       })
       const { resourceCount, errorCount, longTaskCount } = eventCountsSubscription.eventCounts
-      const action: AutoAction = assign(
+      const action: ClickAction = assign(
         {
           duration: endTime && elapsed(base.startClocks.timeStamp, endTime),
           id,
