@@ -118,13 +118,13 @@ function flushPotentialClickActions(
   }
 }
 
-// Minimum number of click per second to consider a chain click as "rage"
-const RAGE_CLICK_THRESHOLD = 3
+const MIN_CLICKS_PER_SECOND_TO_CONSIDER_RAGE = 3
+
 export function isRage(potentialClickActions: PotentialClickAction[]) {
   // TODO: this condition should be improved to avoid reporting 3-click selection as rage click
-  for (let i = 0; i < potentialClickActions.length - (RAGE_CLICK_THRESHOLD - 1); i += 1) {
+  for (let i = 0; i < potentialClickActions.length - (MIN_CLICKS_PER_SECOND_TO_CONSIDER_RAGE - 1); i += 1) {
     if (
-      potentialClickActions[i + RAGE_CLICK_THRESHOLD - 1].base.event.timeStamp -
+      potentialClickActions[i + MIN_CLICKS_PER_SECOND_TO_CONSIDER_RAGE - 1].base.event.timeStamp -
         potentialClickActions[i].base.event.timeStamp <=
       ONE_SECOND
     ) {
