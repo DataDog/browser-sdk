@@ -8,7 +8,6 @@ import {
   toStackTraceString,
   monitor,
   noop,
-  isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
 import type { LogsConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
@@ -53,7 +52,7 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
             url: request.url,
           },
           status: StatusType.error,
-          origin: isExperimentalFeatureEnabled('forward-logs') ? ErrorSource.NETWORK : undefined,
+          origin: ErrorSource.NETWORK,
         },
       })
     }

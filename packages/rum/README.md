@@ -305,6 +305,8 @@ datadogRum.init({
 
 {{< partial name="whats-next/whats-next.html" >}}
 
+<!-- Note: all URLs should be absolute -->
+
 [1]: https://app.datadoghq.com/rum/list
 [2]: https://docs.datadoghq.com/real_user_monitoring/data_collected/
 [3]: https://docs.datadoghq.com/real_user_monitoring/dashboards/

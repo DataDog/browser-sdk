@@ -15,11 +15,13 @@ import { createMockServerApp } from './serverApps/mock'
 const DEFAULT_RUM_CONFIGURATION = {
   applicationId: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
   clientToken: 'token',
+  telemetrySampleRate: 100,
   enableExperimentalFeatures: [],
 }
 
 const DEFAULT_LOGS_CONFIGURATION = {
   clientToken: 'token',
+  telemetrySampleRate: 100,
 }
 
 export function createTest(title: string) {

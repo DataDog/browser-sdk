@@ -1,5 +1,5 @@
 import type { TimeStamp } from '@datadog/browser-core'
-import { display, stopSessionManager } from '@datadog/browser-core'
+import { ErrorSource, display, stopSessionManager } from '@datadog/browser-core'
 import sinon from 'sinon'
 import { deleteEventBridgeStub, initEventBridgeStub, stubEndpointBuilder } from '../../../core/test/specHelper'
 import type { LogsConfiguration } from '../domain/configuration'
@@ -78,6 +78,7 @@ describe('logs', () => {
           referrer: 'common_referrer',
           url: 'common_url',
         },
+        origin: ErrorSource.LOGGER,
       })
     })
 

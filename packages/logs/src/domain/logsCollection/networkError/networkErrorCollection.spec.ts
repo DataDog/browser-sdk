@@ -1,4 +1,4 @@
-import { isIE, ErrorSource, updateExperimentalFeatures, resetExperimentalFeatures } from '@datadog/browser-core'
+import { isIE, ErrorSource } from '@datadog/browser-core'
 import type { FetchStub, FetchStubManager } from '@datadog/browser-core/test/specHelper'
 import { SPEC_ENDPOINTS, ResponseStub, stubFetch } from '@datadog/browser-core/test/specHelper'
 import type { LogsConfiguration } from '../../configuration'
@@ -50,18 +50,6 @@ describe('network error collection', () => {
   afterEach(() => {
     stopNetworkErrorCollection()
     fetchStubManager.reset()
-    resetExperimentalFeatures()
-  })
-
-  it('should send server errors with "network" origin when ff forward-logs is enabled', (done) => {
-    updateExperimentalFeatures(['forward-logs'])
-
-    fetchStub(FAKE_URL).resolveWith(DEFAULT_REQUEST)
-
-    fetchStubManager.whenAllComplete(() => {
-      expect(rawLogsEvents[0].rawLogsEvent.origin).toEqual(ErrorSource.NETWORK)
-      done()
-    })
   })
 
   it('should track server error', (done) => {
@@ -72,6 +60,7 @@ describe('network error collection', () => {
         message: 'Fetch error GET http://fake.com/',
         date: jasmine.any(Number),
         status: StatusType.error,
+        origin: ErrorSource.NETWORK,
         error: {
           origin: ErrorSource.NETWORK,
           stack: 'Server error',
@@ -81,7 +70,6 @@ describe('network error collection', () => {
           status_code: 503,
           url: 'http://fake.com/',
         },
-        origin: undefined,
       })
       done()
     })

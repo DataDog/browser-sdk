@@ -1,4 +1,3 @@
-import { resetExperimentalFeatures } from '@datadog/browser-core'
 import type { LogsMessage } from './logger'
 import { HandlerType, Logger, STATUSES, StatusType } from './logger'
 
@@ -17,10 +16,6 @@ describe('Logger', () => {
   beforeEach(() => {
     handleLogSpy = jasmine.createSpy()
     logger = new Logger(handleLogSpy)
-  })
-
-  afterEach(() => {
-    resetExperimentalFeatures()
   })
 
   describe('log methods', () => {

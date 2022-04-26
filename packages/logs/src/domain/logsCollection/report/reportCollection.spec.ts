@@ -1,4 +1,4 @@
-import { ErrorSource, noop, resetExperimentalFeatures, updateExperimentalFeatures } from '@datadog/browser-core'
+import { ErrorSource, noop } from '@datadog/browser-core'
 import { stubReportingObserver } from '@datadog/browser-core/test/stubReportApis'
 import { validateAndBuildLogsConfiguration } from '../../configuration'
 import type { RawLogsEventCollectedData } from '../../lifeCycle'
@@ -23,12 +23,10 @@ describe('reports', () => {
 
   afterEach(() => {
     reportingObserverStub.reset()
-    resetExperimentalFeatures()
     stopReportCollection()
   })
 
-  it('should send reports when ff forward-reports is enabled', () => {
-    updateExperimentalFeatures(['forward-reports'])
+  it('should send reports', () => {
     ;({ stop: stopReportCollection } = startReportCollection(
       validateAndBuildLogsConfiguration({ ...initConfiguration, forwardReports: ['intervention'] })!,
       lifeCycle
@@ -47,16 +45,6 @@ describe('reports', () => {
     })
   })
 
-  it('should not send reports when ff forward-reports is disabled', () => {
-    ;({ stop: stopReportCollection } = startReportCollection(
-      validateAndBuildLogsConfiguration({ ...initConfiguration, forwardReports: ['intervention'] })!,
-      lifeCycle
-    ))
-    reportingObserverStub.raiseReport('intervention')
-
-    expect(rawLogsEvents.length).toEqual(0)
-  })
-
   it('should not send reports when forwardReports init option not specified', () => {
     ;({ stop: stopReportCollection } = startReportCollection(
       validateAndBuildLogsConfiguration({ ...initConfiguration })!,
@@ -68,7 +56,6 @@ describe('reports', () => {
   })
 
   it('should add the source file information to the message for non error reports', () => {
-    updateExperimentalFeatures(['forward-reports'])
     ;({ stop: stopReportCollection } = startReportCollection(
       validateAndBuildLogsConfiguration({ ...initConfiguration, forwardReports: ['deprecation'] })!,
       lifeCycle

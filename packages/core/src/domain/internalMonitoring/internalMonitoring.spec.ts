@@ -1,4 +1,5 @@
 import type { Context } from '../../tools/context'
+import { display } from '../../tools/display'
 import type { Configuration } from '../configuration'
 import { updateExperimentalFeatures, resetExperimentalFeatures } from '../configuration'
 import type { InternalMonitoring, MonitoringMessage } from './internalMonitoring'
@@ -8,11 +9,13 @@ import {
   resetInternalMonitoring,
   startInternalMonitoring,
   callMonitored,
+  setDebugMode,
 } from './internalMonitoring'
 import type { TelemetryEvent } from './telemetryEvent.types'
 
 const configuration: Partial<Configuration> = {
   maxInternalMonitoringMessagesPerPage: 7,
+  telemetrySampleRate: 100,
 }
 
 describe('internal monitoring', () => {
@@ -189,6 +192,52 @@ describe('internal monitoring', () => {
     })
   })
 
+  describe('setDebug', () => {
+    let displaySpy: jasmine.Spy
+
+    beforeEach(() => {
+      displaySpy = spyOn(display, 'error')
+    })
+
+    afterEach(() => {
+      resetInternalMonitoring()
+      resetExperimentalFeatures()
+    })
+
+    it('when not called, should not display error', () => {
+      startInternalMonitoring(configuration as Configuration)
+
+      callMonitored(() => {
+        throw new Error('message')
+      })
+
+      expect(displaySpy).not.toHaveBeenCalled()
+    })
+
+    it('when called, should display error', () => {
+      startInternalMonitoring(configuration as Configuration)
+      setDebugMode(true)
+
+      callMonitored(() => {
+        throw new Error('message')
+      })
+
+      expect(displaySpy).toHaveBeenCalled()
+    })
+
+    it('when called and telemetry not sampled, should display error', () => {
+      updateExperimentalFeatures(['telemetry'])
+      startInternalMonitoring({ ...configuration, telemetrySampleRate: 0 } as Configuration)
+      setDebugMode(true)
+
+      callMonitored(() => {
+        throw new Error('message')
+      })
+
+      expect(displaySpy).toHaveBeenCalled()
+    })
+  })
+
   describe('new telemetry', () => {
     let internalMonitoring: InternalMonitoring
     let notifySpy: jasmine.Spy<(event: TelemetryEvent & Context) => void>
@@ -245,6 +294,30 @@ describe('internal monitoring', () => {
         })
 
         expect(oldNotifySpy.calls.mostRecent().args[0].foo).toEqual('bar')
+      })
+
+      it('should notify when sampled', () => {
+        spyOn(Math, 'random').and.callFake(() => 0)
+        internalMonitoring = startInternalMonitoring({ ...configuration, telemetrySampleRate: 50 } as Configuration)
+        internalMonitoring.telemetryEventObservable.subscribe(notifySpy)
+
+        callMonitored(() => {
+          throw new Error('message')
+        })
+
+        expect(notifySpy).toHaveBeenCalled()
+      })
+
+      it('should not notify when not sampled', () => {
+        spyOn(Math, 'random').and.callFake(() => 1)
+        internalMonitoring = startInternalMonitoring({ ...configuration, telemetrySampleRate: 50 } as Configuration)
+        internalMonitoring.telemetryEventObservable.subscribe(notifySpy)
+
+        callMonitored(() => {
+          throw new Error('message')
+        })
+
+        expect(notifySpy).not.toHaveBeenCalled()
       })
     })
 

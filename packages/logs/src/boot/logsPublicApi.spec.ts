@@ -1,5 +1,5 @@
 import type { TimeStamp } from '@datadog/browser-core'
-import { monitor, ONE_SECOND, display, resetExperimentalFeatures } from '@datadog/browser-core'
+import { monitor, ONE_SECOND, display } from '@datadog/browser-core'
 import type { Clock } from '../../../core/test/specHelper'
 import { deleteEventBridgeStub, initEventBridgeStub, mockClock } from '../../../core/test/specHelper'
 import type { HybridInitConfiguration, LogsInitConfiguration } from '../domain/configuration'
@@ -229,12 +229,9 @@ describe('logs entry', () => {
       LOGS.init(DEFAULT_INIT_CONFIGURATION)
     })
 
-    afterEach(() => {
-      resetExperimentalFeatures()
-    })
-
     it('logs a message', () => {
       LOGS.logger.log('message')
+
       expect(getLoggedMessage(0).message).toEqual({
         message: 'message',
         status: StatusType.info,

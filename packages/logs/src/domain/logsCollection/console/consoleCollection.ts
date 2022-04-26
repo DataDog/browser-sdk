@@ -1,5 +1,5 @@
 import type { Context, ClocksState, ConsoleLog } from '@datadog/browser-core'
-import { ConsoleApiName, ErrorSource, initConsoleObservable, isExperimentalFeatureEnabled } from '@datadog/browser-core'
+import { ConsoleApiName, ErrorSource, initConsoleObservable } from '@datadog/browser-core'
 import type { LogsConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -24,7 +24,7 @@ export function startConsoleCollection(configuration: LogsConfiguration, lifeCyc
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
       rawLogsEvent: {
         message: log.message,
-        origin: isExperimentalFeatureEnabled('forward-logs') ? ErrorSource.CONSOLE : undefined,
+        origin: ErrorSource.CONSOLE,
         error:
           log.api === ConsoleApiName.error
             ? {

@@ -1,4 +1,4 @@
-import { display, ErrorSource, resetExperimentalFeatures, updateExperimentalFeatures } from '@datadog/browser-core'
+import { display, ErrorSource } from '@datadog/browser-core'
 import type { CommonContext } from 'packages/logs/src/rawLogsEvent.types'
 import type { RawLogsEventCollectedData } from '../../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -24,26 +24,13 @@ describe('logger collection', () => {
     ;({ handleLog: handleLog } = startLoggerCollection(lifeCycle))
   })
 
-  afterEach(() => {
-    resetExperimentalFeatures()
-  })
-
-  it('logs a message with "logger" origin when ff forward-logs is enabled', () => {
-    updateExperimentalFeatures(['forward-logs'])
-
+  it('logs a message with "logger" origin', () => {
     handleLog({ message: 'message', status: StatusType.error }, logger, COMMON_CONTEXT)
 
     expect(rawLogsEvents[0].rawLogsEvent.origin).toEqual(ErrorSource.LOGGER)
   })
 
-  it('do not logs a message with "logger" origin when ff forward-logs is enabled', () => {
-    handleLog({ message: 'message', status: StatusType.error }, logger, COMMON_CONTEXT)
-
-    expect(rawLogsEvents[0].rawLogsEvent.origin).toBeUndefined()
-  })
-
   it('should print the log to the console when handler type is set to "console"', () => {
-    updateExperimentalFeatures(['forward-logs'])
     logger.setHandler(HandlerType.console)
 
     handleLog({ message: 'message', status: StatusType.error }, logger, COMMON_CONTEXT)

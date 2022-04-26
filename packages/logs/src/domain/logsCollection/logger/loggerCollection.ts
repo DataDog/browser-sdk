@@ -1,4 +1,4 @@
-import { includes, display, combine, ErrorSource, isExperimentalFeatureEnabled } from '@datadog/browser-core'
+import { includes, display, combine, ErrorSource } from '@datadog/browser-core'
 import type { CommonContext } from '../../../rawLogsEvent.types'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -24,7 +24,7 @@ export function startLoggerCollection(lifeCycle: LifeCycle) {
       rawLogsEvent: {
         message: logsMessage.message,
         status: logsMessage.status,
-        origin: isExperimentalFeatureEnabled('forward-logs') ? ErrorSource.LOGGER : undefined,
+        origin: ErrorSource.LOGGER,
       },
       messageContext,
       savedCommonContext,

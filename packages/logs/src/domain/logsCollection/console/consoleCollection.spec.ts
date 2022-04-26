@@ -1,4 +1,4 @@
-import { ErrorSource, resetExperimentalFeatures, updateExperimentalFeatures, noop } from '@datadog/browser-core'
+import { ErrorSource, noop } from '@datadog/browser-core'
 import { validateAndBuildLogsConfiguration } from '../../configuration'
 import type { RawLogsEventCollectedData } from '../../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -22,12 +22,10 @@ describe('console collection', () => {
   })
 
   afterEach(() => {
-    resetExperimentalFeatures()
     stopConsoleCollection()
   })
 
-  it('should send console logs when ff forward-logs is enabled', () => {
-    updateExperimentalFeatures(['forward-logs'])
+  it('should send console logs', () => {
     ;({ stop: stopConsoleCollection } = startConsoleCollection(
       validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['log'] })!,
       lifeCycle
@@ -44,43 +42,6 @@ describe('console collection', () => {
     })
 
     expect(consoleLogSpy).toHaveBeenCalled()
-  })
-
-  it('should not send console logs when ff forward-logs is disabled', () => {
-    ;({ stop: stopConsoleCollection } = startConsoleCollection(
-      validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['log'] })!,
-      lifeCycle
-    ))
-
-    /* eslint-disable-next-line no-console */
-    console.log('foo', 'bar')
-
-    expect(rawLogsEvents.length).toEqual(0)
-    expect(consoleLogSpy).toHaveBeenCalled()
-  })
-
-  it('should send console errors with "console" origin when ff forward-logs is enabled', () => {
-    updateExperimentalFeatures(['forward-logs'])
-    ;({ stop: stopConsoleCollection } = startConsoleCollection(
-      validateAndBuildLogsConfiguration({ ...initConfiguration, forwardErrorsToLogs: true })!,
-      lifeCycle
-    ))
-
-    /* eslint-disable-next-line no-console */
-    console.error('foo', 'bar')
-    expect(rawLogsEvents[0].rawLogsEvent.origin).toEqual(ErrorSource.CONSOLE)
-  })
-
-  it('should not send console errors with "console" origin when ff forward-logs is disabled', () => {
-    ;({ stop: stopConsoleCollection } = startConsoleCollection(
-      validateAndBuildLogsConfiguration({ ...initConfiguration, forwardErrorsToLogs: true })!,
-      lifeCycle
-    ))
-
-    /* eslint-disable-next-line no-console */
-    console.error('foo', 'bar')
-
-    expect(rawLogsEvents[0].rawLogsEvent.origin).not.toBeDefined()
   })
 
   it('console error should have an error object defined', () => {

@@ -5,7 +5,7 @@ export interface RawLogsEvent {
   date?: TimeStamp
   message: string
   status: StatusType
-  origin?: ErrorSource
+  origin: ErrorSource
   logger?: {
     name: string
     [k: string]: unknown
