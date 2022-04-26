@@ -20,10 +20,7 @@ const LogStatusForApi = {
   [ConsoleApiName.error]: StatusType.error,
 }
 export function startConsoleCollection(configuration: LogsConfiguration, lifeCycle: LifeCycle) {
-  const consoleObservable = initConsoleObservable(configuration.forwardConsoleLogs)
-  const consoleSubscription = consoleObservable.subscribe(reportConsoleLog)
-
-  function reportConsoleLog(log: ConsoleLog) {
+  const consoleSubscription = initConsoleObservable(configuration.forwardConsoleLogs).subscribe((log: ConsoleLog) => {
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
       rawLogsEvent: {
         message: log.message,
@@ -38,7 +35,7 @@ export function startConsoleCollection(configuration: LogsConfiguration, lifeCyc
         status: LogStatusForApi[log.api],
       },
     })
-  }
+  })
 
   return {
     stop: () => {

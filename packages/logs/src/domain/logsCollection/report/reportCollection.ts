@@ -19,10 +19,7 @@ const LogStatusForReport = {
 }
 
 export function startReportCollection(configuration: LogsConfiguration, lifeCycle: LifeCycle) {
-  const reportObservable = initReportObservable(configuration.forwardReports)
-  const reportSubscription = reportObservable.subscribe(logReport)
-
-  function logReport(report: RawReport) {
+  const reportSubscription = initReportObservable(configuration.forwardReports).subscribe((report: RawReport) => {
     let message = report.message
     const status = LogStatusForReport[report.type]
     let error
@@ -44,7 +41,7 @@ export function startReportCollection(configuration: LogsConfiguration, lifeCycl
         status,
       },
     })
-  }
+  })
 
   return {
     stop: () => {
