@@ -2,7 +2,7 @@ import { isIE, ErrorSource, updateExperimentalFeatures, resetExperimentalFeature
 import type { FetchStub, FetchStubManager } from '@datadog/browser-core/test/specHelper'
 import { SPEC_ENDPOINTS, ResponseStub, stubFetch } from '@datadog/browser-core/test/specHelper'
 import type { LogsConfiguration } from '../../configuration'
-import type { RawLogCollectedData } from '../../lifeCycle'
+import type { RawLogsEventCollectedData } from '../../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { StatusType } from '../../logger'
 
@@ -23,7 +23,7 @@ describe('network error collection', () => {
   let fetchStubManager: FetchStubManager
   let stopNetworkErrorCollection: () => void
   let lifeCycle: LifeCycle
-  let rawLogs: RawLogCollectedData[]
+  let rawLogsEvents: RawLogsEventCollectedData[]
 
   const FAKE_URL = 'http://fake.com/'
   const DEFAULT_REQUEST = {
@@ -39,9 +39,9 @@ describe('network error collection', () => {
     if (isIE()) {
       pending('no fetch support')
     }
-    rawLogs = []
+    rawLogsEvents = []
     lifeCycle = new LifeCycle()
-    lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLog) => rawLogs.push(rawLog))
+    lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLogsEvent) => rawLogsEvents.push(rawLogsEvent))
     fetchStubManager = stubFetch()
     ;({ stop: stopNetworkErrorCollection } = startNetworkErrorCollection(CONFIGURATION, lifeCycle))
     fetchStub = window.fetch as FetchStub
@@ -59,7 +59,7 @@ describe('network error collection', () => {
     fetchStub(FAKE_URL).resolveWith(DEFAULT_REQUEST)
 
     fetchStubManager.whenAllComplete(() => {
-      expect(rawLogs[0].rawLog.origin).toEqual(ErrorSource.NETWORK)
+      expect(rawLogsEvents[0].rawLogsEvent.origin).toEqual(ErrorSource.NETWORK)
       done()
     })
   })
@@ -68,7 +68,7 @@ describe('network error collection', () => {
     fetchStub(FAKE_URL).resolveWith(DEFAULT_REQUEST)
 
     fetchStubManager.whenAllComplete(() => {
-      expect(rawLogs[0].rawLog).toEqual({
+      expect(rawLogsEvents[0].rawLogsEvent).toEqual({
         message: 'Fetch error GET http://fake.com/',
         date: jasmine.any(Number),
         status: StatusType.error,
@@ -91,7 +91,7 @@ describe('network error collection', () => {
     fetchStub('https://logs-intake.com/v1/input/send?foo=bar').resolveWith(DEFAULT_REQUEST)
 
     fetchStubManager.whenAllComplete(() => {
-      expect(rawLogs.length).toEqual(0)
+      expect(rawLogsEvents.length).toEqual(0)
       done()
     })
   })
@@ -100,7 +100,7 @@ describe('network error collection', () => {
     fetchStub(FAKE_URL).abort()
 
     fetchStubManager.whenAllComplete(() => {
-      expect(rawLogs.length).toEqual(1)
+      expect(rawLogsEvents.length).toEqual(1)
       done()
     })
   })
@@ -109,7 +109,7 @@ describe('network error collection', () => {
     fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, status: 0 })
 
     fetchStubManager.whenAllComplete(() => {
-      expect(rawLogs.length).toEqual(1)
+      expect(rawLogsEvents.length).toEqual(1)
       done()
     })
   })
@@ -118,7 +118,7 @@ describe('network error collection', () => {
     fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, status: 400 })
 
     fetchStubManager.whenAllComplete(() => {
-      expect(rawLogs.length).toEqual(0)
+      expect(rawLogsEvents.length).toEqual(0)
       done()
     })
   })
@@ -127,7 +127,7 @@ describe('network error collection', () => {
     fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, status: 200 })
 
     fetchStubManager.whenAllComplete(() => {
-      expect(rawLogs.length).toEqual(0)
+      expect(rawLogsEvents.length).toEqual(0)
       done()
     })
   })
@@ -136,8 +136,8 @@ describe('network error collection', () => {
     fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, responseText: '' })
 
     fetchStubManager.whenAllComplete(() => {
-      expect(rawLogs.length).toEqual(1)
-      expect(rawLogs[0].rawLog.error!.stack).toEqual('Failed to load')
+      expect(rawLogsEvents.length).toEqual(1)
+      expect(rawLogsEvents[0].rawLogsEvent.error!.stack).toEqual('Failed to load')
       done()
     })
   })

@@ -6,7 +6,7 @@ import { StatusType } from './logger'
 
 export function reportRawError(error: RawError, lifeCycle: LifeCycle) {
   lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-    rawLog: {
+    rawLogsEvent: {
       message: error.message,
       date: error.startClocks.timeStamp,
       error: {

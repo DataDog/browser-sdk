@@ -1,6 +1,6 @@
 import { display, ErrorSource, resetExperimentalFeatures, updateExperimentalFeatures } from '@datadog/browser-core'
 import type { CommonContext } from 'packages/logs/src/rawLogsEvent.types'
-import type { RawLogCollectedData } from '../../lifeCycle'
+import type { RawLogsEventCollectedData } from '../../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { HandlerType, Logger, StatusType } from '../../logger'
 import { startLoggerCollection } from './loggerCollection'
@@ -12,12 +12,12 @@ describe('logger collection', () => {
   let lifeCycle: LifeCycle
   let handleLog: ReturnType<typeof startLoggerCollection>['handleLog']
   let logger: Logger
-  let rawLogs: RawLogCollectedData[]
+  let rawLogsEvents: RawLogsEventCollectedData[]
 
   beforeEach(() => {
-    rawLogs = []
+    rawLogsEvents = []
     lifeCycle = new LifeCycle()
-    lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLog) => rawLogs.push(rawLog))
+    lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLogsEvent) => rawLogsEvents.push(rawLogsEvent))
     consoleLogSpy = spyOn(display, 'log').and.callFake(() => true)
     spyOn(console, 'error').and.callFake(() => true)
     logger = new Logger((...params) => handleLog(...params))
@@ -33,13 +33,13 @@ describe('logger collection', () => {
 
     handleLog({ message: 'message', status: StatusType.error }, logger, COMMON_CONTEXT)
 
-    expect(rawLogs[0].rawLog.origin).toEqual(ErrorSource.LOGGER)
+    expect(rawLogsEvents[0].rawLogsEvent.origin).toEqual(ErrorSource.LOGGER)
   })
 
   it('do not logs a message with "logger" origin when ff forward-logs is enabled', () => {
     handleLog({ message: 'message', status: StatusType.error }, logger, COMMON_CONTEXT)
 
-    expect(rawLogs[0].rawLog.origin).toBeUndefined()
+    expect(rawLogsEvents[0].rawLogsEvent.origin).toBeUndefined()
   })
 
   it('should print the log to the console when handler type is set to "console"', () => {
@@ -49,6 +49,6 @@ describe('logger collection', () => {
     handleLog({ message: 'message', status: StatusType.error }, logger, COMMON_CONTEXT)
 
     expect(consoleLogSpy).toHaveBeenCalled()
-    expect(rawLogs.length).toEqual(1)
+    expect(rawLogsEvents.length).toEqual(1)
   })
 })

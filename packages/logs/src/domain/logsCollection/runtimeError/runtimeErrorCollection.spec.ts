@@ -2,7 +2,7 @@ import { ErrorSource, Observable, resetExperimentalFeatures, updateExperimentalF
 import type { RawError, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import type { LogsConfiguration } from '../../configuration'
 import { StatusType } from '../../logger'
-import type { RawLogCollectedData } from '../../lifeCycle'
+import type { RawLogsEventCollectedData } from '../../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { startRuntimeErrorCollection } from './runtimeErrorCollection'
 
@@ -10,13 +10,13 @@ describe('runtime error collection', () => {
   let rawErrorObservable: Observable<RawError>
   let lifeCycle: LifeCycle
   let stopRuntimeErrorCollection: () => void
-  let rawLogs: RawLogCollectedData[]
+  let rawLogsEvents: RawLogsEventCollectedData[]
 
   beforeEach(() => {
-    rawLogs = []
+    rawLogsEvents = []
     rawErrorObservable = new Observable<RawError>()
     lifeCycle = new LifeCycle()
-    lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLog) => rawLogs.push(rawLog))
+    lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLogsEvent) => rawLogsEvents.push(rawLogsEvent))
     ;({ stop: stopRuntimeErrorCollection } = startRuntimeErrorCollection(
       {} as LogsConfiguration,
       lifeCycle,
@@ -37,7 +37,7 @@ describe('runtime error collection', () => {
       type: 'Error',
     })
 
-    expect(rawLogs[0].rawLog).toEqual({
+    expect(rawLogsEvents[0].rawLogsEvent).toEqual({
       date: 123456789 as TimeStamp,
       error: { origin: ErrorSource.SOURCE, kind: 'Error', stack: undefined },
       message: 'error!',
@@ -56,7 +56,7 @@ describe('runtime error collection', () => {
       type: 'Error',
     })
 
-    expect(rawLogs[0].rawLog.origin).toEqual(ErrorSource.SOURCE)
+    expect(rawLogsEvents[0].rawLogsEvent.origin).toEqual(ErrorSource.SOURCE)
     done()
   })
 })

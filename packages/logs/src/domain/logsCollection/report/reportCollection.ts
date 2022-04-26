@@ -37,7 +37,7 @@ export function startReportCollection(configuration: LogsConfiguration, lifeCycl
     }
 
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-      rawLog: {
+      rawLogsEvent: {
         message,
         origin: ErrorSource.REPORT,
         error,

@@ -25,7 +25,7 @@ export function startConsoleCollection(configuration: LogsConfiguration, lifeCyc
 
   function reportConsoleLog(log: ConsoleLog) {
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-      rawLog: {
+      rawLogsEvent: {
         message: log.message,
         origin: isExperimentalFeatureEnabled('forward-logs') ? ErrorSource.CONSOLE : undefined,
         error:

@@ -59,7 +59,7 @@ describe('startLogsAssembly', () => {
   it('should not send if beforeSend returned false', () => {
     beforeSend = () => false
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-      rawLog: DEFAULT_MESSAGE,
+      rawLogsEvent: DEFAULT_MESSAGE,
     })
     expect(serverLogs.length).toEqual(0)
   })
@@ -67,26 +67,26 @@ describe('startLogsAssembly', () => {
   it('should not send if session is not tracked', () => {
     sessionIsTracked = false
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-      rawLog: DEFAULT_MESSAGE,
+      rawLogsEvent: DEFAULT_MESSAGE,
     })
     expect(serverLogs.length).toEqual(0)
   })
 
   it('should enable/disable the sending when the tracking type change', () => {
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-      rawLog: DEFAULT_MESSAGE,
+      rawLogsEvent: DEFAULT_MESSAGE,
     })
     expect(serverLogs.length).toEqual(1)
 
     sessionIsTracked = false
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-      rawLog: DEFAULT_MESSAGE,
+      rawLogsEvent: DEFAULT_MESSAGE,
     })
     expect(serverLogs.length).toEqual(1)
 
     sessionIsTracked = true
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-      rawLog: DEFAULT_MESSAGE,
+      rawLogsEvent: DEFAULT_MESSAGE,
     })
     expect(serverLogs.length).toEqual(2)
   })
@@ -98,7 +98,7 @@ describe('startLogsAssembly', () => {
       })
 
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLog: DEFAULT_MESSAGE,
+        rawLogsEvent: DEFAULT_MESSAGE,
         messageContext: { foo: 'from-message-context' },
       })
 
@@ -106,7 +106,7 @@ describe('startLogsAssembly', () => {
     })
 
     it('should include common context', () => {
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLog: DEFAULT_MESSAGE })
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
 
       expect(serverLogs[0]).toEqual(
         jasmine.objectContaining({
@@ -126,7 +126,7 @@ describe('startLogsAssembly', () => {
         },
         context: { foo: 'bar' },
       }
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLog: DEFAULT_MESSAGE, savedCommonContext })
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE, savedCommonContext })
 
       expect(serverLogs[0]).toEqual(
         jasmine.objectContaining({
@@ -140,7 +140,7 @@ describe('startLogsAssembly', () => {
 
     it('should include main logger context', () => {
       mainLogger.setContext({ foo: 'from-main-logger' })
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLog: DEFAULT_MESSAGE })
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
 
       expect(serverLogs[0].foo).toEqual('from-main-logger')
     })
@@ -150,7 +150,7 @@ describe('startLogsAssembly', () => {
       mainLogger.setContext({ foo: 'from-main-logger', bar: 'from-main-logger' })
       logger.setContext({ foo: 'from-logger' })
 
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLog: DEFAULT_MESSAGE, logger })
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE, logger })
 
       expect(serverLogs[0].foo).toEqual('from-logger')
       expect(serverLogs[0].bar).toBeUndefined()
@@ -164,7 +164,7 @@ describe('startLogsAssembly', () => {
       }
 
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLog: { ...DEFAULT_MESSAGE, date: getTimeStamp(1234 as RelativeTime) },
+        rawLogsEvent: { ...DEFAULT_MESSAGE, date: getTimeStamp(1234 as RelativeTime) },
       })
 
       expect(serverLogs[0].foo).toBe('b')
@@ -177,7 +177,7 @@ describe('startLogsAssembly', () => {
         },
       }
 
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLog: DEFAULT_MESSAGE })
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
 
       expect(serverLogs[0].view).toEqual({
         id: 'view-id',
@@ -187,7 +187,7 @@ describe('startLogsAssembly', () => {
     })
 
     it('should include raw log', () => {
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLog: DEFAULT_MESSAGE })
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
 
       expect(serverLogs[0]).toEqual(jasmine.objectContaining(DEFAULT_MESSAGE))
     })
@@ -196,7 +196,7 @@ describe('startLogsAssembly', () => {
   describe('contexts precedence', () => {
     it('common context should take precedence over service and session_id', () => {
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLog: DEFAULT_MESSAGE,
+        rawLogsEvent: DEFAULT_MESSAGE,
         savedCommonContext: {
           ...COMMON_CONTEXT,
           context: { service: 'foo', session_id: 'bar' },
@@ -210,7 +210,7 @@ describe('startLogsAssembly', () => {
     it('RUM context should take precedence over common context', () => {
       spyOn(window.DD_RUM!, 'getInternalContext').and.returnValue({ view: { url: 'from-rum-context' } })
 
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLog: DEFAULT_MESSAGE })
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
 
       expect(serverLogs[0].view.url).toEqual('from-rum-context')
     })
@@ -218,7 +218,7 @@ describe('startLogsAssembly', () => {
     it('raw log should take precedence over RUM context', () => {
       spyOn(window.DD_RUM!, 'getInternalContext').and.returnValue({ message: 'from-rum-context' })
 
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLog: DEFAULT_MESSAGE })
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
 
       expect(serverLogs[0].message).toEqual('message')
     })
@@ -226,14 +226,14 @@ describe('startLogsAssembly', () => {
     it('logger context should take precedence over raw log', () => {
       mainLogger.setContext({ message: 'from-main-logger' })
 
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLog: DEFAULT_MESSAGE })
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
 
       expect(serverLogs[0].message).toEqual('from-main-logger')
     })
 
     it('message context should take precedence over logger context', () => {
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLog: DEFAULT_MESSAGE,
+        rawLogsEvent: DEFAULT_MESSAGE,
         messageContext: { message: 'from-message-context' },
       })
 
@@ -249,7 +249,7 @@ describe('startLogsAssembly', () => {
       }
 
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLog: DEFAULT_MESSAGE,
+        rawLogsEvent: DEFAULT_MESSAGE,
       })
 
       expect(serverLogs[0].message).toBe('modified message')
@@ -262,7 +262,7 @@ describe('startLogsAssembly', () => {
       }
 
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLog: DEFAULT_MESSAGE,
+        rawLogsEvent: DEFAULT_MESSAGE,
       })
 
       expect(serverLogs[0].foo).toBe('bar')
@@ -285,17 +285,17 @@ describe('startLogsAssembly', () => {
       { status: StatusType.debug, messageContext: {}, message: 'Reached max number of debugs by minute: 1' },
       {
         status: StatusType.debug,
-        messageContext: { status: 'unknown' }, // overrides the rawLog status
+        messageContext: { status: 'unknown' }, // overrides the rawLogsEvent status
         message: 'Reached max number of customs by minute: 1',
       },
     ].forEach(({ status, message, messageContext }) => {
       it(`stops sending ${status} logs when reaching the limit`, () => {
         lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-          rawLog: { message: 'foo', status },
+          rawLogsEvent: { message: 'foo', status },
           messageContext,
         })
         lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-          rawLog: { message: 'bar', status },
+          rawLogsEvent: { message: 'bar', status },
           messageContext,
         })
 
@@ -322,19 +322,19 @@ describe('startLogsAssembly', () => {
         }
 
         lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-          rawLog: { message: 'discard me', status },
+          rawLogsEvent: { message: 'discard me', status },
           messageContext,
         })
         lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-          rawLog: { message: 'discard me', status },
+          rawLogsEvent: { message: 'discard me', status },
           messageContext,
         })
         lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-          rawLog: { message: 'discard me', status },
+          rawLogsEvent: { message: 'discard me', status },
           messageContext,
         })
         lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-          rawLog: { message: 'foo', status },
+          rawLogsEvent: { message: 'foo', status },
           messageContext,
         })
 
@@ -344,16 +344,16 @@ describe('startLogsAssembly', () => {
 
       it(`allows to send new ${status}s after a minute`, () => {
         lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-          rawLog: { message: 'foo', status },
+          rawLogsEvent: { message: 'foo', status },
           messageContext,
         })
         lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-          rawLog: { message: 'bar', status },
+          rawLogsEvent: { message: 'bar', status },
           messageContext,
         })
         clock.tick(ONE_MINUTE)
         lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-          rawLog: { message: 'baz', status },
+          rawLogsEvent: { message: 'baz', status },
           messageContext,
         })
 
@@ -366,15 +366,15 @@ describe('startLogsAssembly', () => {
       it('allows to send logs with a different status when reaching the limit', () => {
         const otherLogStatus = status === StatusType.error ? StatusType.info : StatusType.error
         lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-          rawLog: { message: 'foo', status },
+          rawLogsEvent: { message: 'foo', status },
           messageContext,
         })
         lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-          rawLog: { message: 'bar', status },
+          rawLogsEvent: { message: 'bar', status },
           messageContext,
         })
         lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-          rawLog: { message: 'baz', status: otherLogStatus },
+          rawLogsEvent: { message: 'baz', status: otherLogStatus },
           ...{ ...messageContext, status: otherLogStatus },
         })
 
@@ -387,12 +387,12 @@ describe('startLogsAssembly', () => {
 
     it('two different custom statuses are accounted by the same limit', () => {
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLog: { message: 'foo', status: StatusType.info },
+        rawLogsEvent: { message: 'foo', status: StatusType.info },
         messageContext: { status: 'foo' },
       })
 
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLog: { message: 'bar', status: StatusType.info },
+        rawLogsEvent: { message: 'bar', status: StatusType.info },
         messageContext: { status: 'bar' },
       })
 

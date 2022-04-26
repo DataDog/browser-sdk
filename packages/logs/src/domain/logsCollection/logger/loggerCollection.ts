@@ -21,7 +21,7 @@ export function startLoggerCollection(lifeCycle: LifeCycle) {
     }
 
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-      rawLog: {
+      rawLogsEvent: {
         message: logsMessage.message,
         status: logsMessage.status,
         origin: isExperimentalFeatureEnabled('forward-logs') ? ErrorSource.LOGGER : undefined,

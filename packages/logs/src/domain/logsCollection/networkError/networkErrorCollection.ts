@@ -40,7 +40,7 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
 
     function onResponseDataAvailable(responseData: unknown) {
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLog: {
+        rawLogsEvent: {
           message: `${format(type)} error ${request.method} ${request.url}`,
           date: request.startClocks.timeStamp,
           error: {
