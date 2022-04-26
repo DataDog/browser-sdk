@@ -91,13 +91,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
     removeLoggerGlobalContext: monitor(globalContextManager.remove),
 
     createLogger: monitor((name: string, conf: LoggerConfiguration = {}) => {
-      customLoggers[name] = new Logger(
-        (...params) => handleLogStrategy(...params),
-        name,
-        conf.handler,
-        conf.level,
-        conf.context
-      )
+      customLoggers[name] = new Logger(handleLogStrategy, name, conf.handler, conf.level, conf.context)
 
       return customLoggers[name]!
     }),

@@ -36,8 +36,7 @@ export function startLogsAssembly(
 
       const commonContext = savedCommonContext || getCommonContext()
       const log = combine(
-        { service: configuration.service, session_id: session.id },
-        { date: commonContext.date, view: commonContext.view },
+        { service: configuration.service, session_id: session.id, date: commonContext.date, view: commonContext.view },
         commonContext.context,
         getRUMInternalContext(startTime),
         rawLogsEvent,
@@ -46,11 +45,11 @@ export function startLogsAssembly(
       )
 
       if (
+        // Todo: [RUMF-1230] Move this check to the logger collection in the next major release
+        !isAuthorized(rawLogsEvent.status, HandlerType.http, logger) ||
         configuration.beforeSend?.(log) === false ||
         (log.error?.origin !== ErrorSource.AGENT &&
-          (logRateLimiters[log.status] ?? logRateLimiters['custom']).isLimitReached()) ||
-        // Todo: [RUMF-1230] Move this check to the logger collection in the next major release
-        !isAuthorized(rawLogsEvent.status, HandlerType.http, logger)
+          (logRateLimiters[log.status] ?? logRateLimiters['custom']).isLimitReached())
       ) {
         return
       }
