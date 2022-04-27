@@ -1,5 +1,6 @@
 import type { Duration, ClocksState, RelativeTime, TimeStamp, Subscription } from '@datadog/browser-core'
 import {
+  setToArray,
   Observable,
   assign,
   isExperimentalFeatureEnabled,
@@ -199,17 +200,13 @@ function newPotentialClickAction(
         addFrustration(FrustrationType.ERROR)
       }
 
-      const frustrationTypes: FrustrationType[] = []
-      frustrations.forEach((frustration) => {
-        frustrationTypes.push(frustration)
-      })
       const { resourceCount, errorCount, longTaskCount } = eventCountsSubscription.eventCounts
       const clickAction: ClickAction = assign(
         {
           type: ActionType.CLICK as const,
           duration: endTime && elapsed(base.startClocks.timeStamp, endTime),
           id,
-          frustrationTypes,
+          frustrationTypes: setToArray(frustrations),
           counts: {
             resourceCount,
             errorCount,
