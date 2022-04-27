@@ -42,6 +42,8 @@ export interface ActionContexts {
   findActionId: (startTime?: RelativeTime) => string | string[] | undefined
 }
 
+type ClickActionIdHistory = ContextHistory<ClickAction['id']>
+
 // Maximum duration for click actions
 export const CLICK_ACTION_MAX_DURATION = 10 * ONE_SECOND
 export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
@@ -53,7 +55,7 @@ export function trackClickActions(
 ) {
   // TODO: this will be changed when we introduce a proper initialization parameter for it
   const collectFrustrations = isExperimentalFeatureEnabled('frustration-signals')
-  const history = new ContextHistory<string>(ACTION_CONTEXT_TIME_OUT_DELAY)
+  const history: ClickActionIdHistory = new ContextHistory(ACTION_CONTEXT_TIME_OUT_DELAY)
   const stopObservable = new Observable<void>()
 
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
@@ -158,7 +160,7 @@ function listenClickEvents(callback: (clickEvent: MouseEvent & { target: Element
 
 function newPotentialClickAction(
   lifeCycle: LifeCycle,
-  history: ContextHistory<string>,
+  history: ClickActionIdHistory,
   collectFrustrations: boolean,
   base: Pick<ClickAction, 'startClocks' | 'event' | 'name'>
 ) {
