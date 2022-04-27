@@ -66,7 +66,7 @@ export function trackClickActions(
 
   const actionContexts: ActionContexts = {
     findActionId: (startTime?: RelativeTime) =>
-      isExperimentalFeatureEnabled('frustration-signals') ? history.findAll(startTime) : history.find(startTime),
+      collectFrustrations ? history.findAll(startTime) : history.find(startTime),
   }
 
   return {
