@@ -128,4 +128,30 @@ describe('action collection', () => {
       expect(actionEvents.length).toBe(1)
       expect(actionEvents[0].action.frustration_type).toEqual(['dead'])
     })
+
+  createTest('collect multiple frustrations in one action')
+    .withRum({ trackInteractions: true, enableExperimentalFeatures: ['frustration-signals'] })
+    .withBody(
+      html`
+        <button>click me</button>
+        <script>
+          const button = document.querySelector('button')
+          button.addEventListener('click', () => {
+            throw new Error('Foo')
+          })
+        </script>
+      `
+    )
+    .run(async ({ serverEvents }) => {
+      const button = await $('button')
+      await button.click()
+      await flushEvents()
+      const actionEvents = serverEvents.rumActions
+
+      expect(actionEvents.length).toBe(1)
+      expect(actionEvents[0].action.frustration_type).toEqual(jasmine.arrayWithExactContents(['error', 'dead']))
+      await withBrowserLogs((browserLogs) => {
+        expect(browserLogs.length).toEqual(1)
+      })
+    })
 })
