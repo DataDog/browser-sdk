@@ -1,5 +1,5 @@
 import { display, ErrorSource } from '@datadog/browser-core'
-import type { CommonContext } from 'packages/logs/src/rawLogsEvent.types'
+import type { CommonContext, RawLoggerLogsEvent } from '../../../rawLogsEvent.types'
 import type { RawLogsEventCollectedData } from '../../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { HandlerType, Logger, StatusType } from '../../logger'
@@ -12,12 +12,14 @@ describe('logger collection', () => {
   let lifeCycle: LifeCycle
   let handleLog: ReturnType<typeof startLoggerCollection>['handleLog']
   let logger: Logger
-  let rawLogsEvents: RawLogsEventCollectedData[]
+  let rawLogsEvents: Array<RawLogsEventCollectedData<RawLoggerLogsEvent>>
 
   beforeEach(() => {
     rawLogsEvents = []
     lifeCycle = new LifeCycle()
-    lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLogsEvent) => rawLogsEvents.push(rawLogsEvent))
+    lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLogsEvent) =>
+      rawLogsEvents.push(rawLogsEvent as RawLogsEventCollectedData<RawLoggerLogsEvent>)
+    )
     consoleLogSpy = spyOn(display, 'log').and.callFake(() => true)
     spyOn(console, 'error').and.callFake(() => true)
     logger = new Logger((...params) => handleLog(...params))

@@ -8,7 +8,7 @@ import type { Logger } from './logger'
 import { STATUSES, HandlerType } from './logger'
 import { isAuthorized } from './logsCollection/logger/loggerCollection'
 import type { LogsSessionManager } from './logsSessionManager'
-import { reportRawError } from './reportRawError'
+import { reportAgentError } from './reportAgentError'
 
 export function startLogsAssembly(
   sessionManager: LogsSessionManager,
@@ -17,17 +17,20 @@ export function startLogsAssembly(
   getCommonContext: () => CommonContext,
   mainLogger: Logger // Todo: [RUMF-1230] Remove this parameter in the next major release
 ) {
-  const reportAgentError = (error: RawError) => reportRawError(error, lifeCycle)
   const statusWithCustom = (STATUSES as string[]).concat(['custom'])
   const logRateLimiters: { [key: string]: EventRateLimiter } = {}
   statusWithCustom.forEach((status) => {
-    logRateLimiters[status] = createEventRateLimiter(status, configuration.eventRateLimiterThreshold, reportAgentError)
+    logRateLimiters[status] = createEventRateLimiter(
+      status,
+      configuration.eventRateLimiterThreshold,
+      (error: RawError) => reportAgentError(error, lifeCycle)
+    )
   })
 
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_LOG_COLLECTED,
     ({ rawLogsEvent, messageContext = undefined, savedCommonContext = undefined, logger = mainLogger }) => {
-      const startTime = rawLogsEvent.date ? getRelativeTime(rawLogsEvent.date) : undefined
+      const startTime = 'date' in rawLogsEvent ? getRelativeTime(rawLogsEvent.date) : undefined
       const session = sessionManager.findTrackedSession(startTime)
 
       if (!session) {

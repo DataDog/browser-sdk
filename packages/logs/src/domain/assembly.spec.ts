@@ -307,9 +307,7 @@ describe('startLogsAssembly', () => {
           jasmine.objectContaining({
             message,
             error: {
-              kind: undefined,
               origin: ErrorSource.AGENT,
-              stack: undefined,
             },
             origin: ErrorSource.AGENT,
           })

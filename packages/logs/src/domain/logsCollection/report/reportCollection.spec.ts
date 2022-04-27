@@ -1,5 +1,6 @@
 import { ErrorSource, noop } from '@datadog/browser-core'
 import { stubReportingObserver } from '@datadog/browser-core/test/stubReportApis'
+import type { RawReportLogsEvent } from '../../../rawLogsEvent.types'
 import { validateAndBuildLogsConfiguration } from '../../configuration'
 import type { RawLogsEventCollectedData } from '../../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -11,13 +12,15 @@ describe('reports', () => {
   let reportingObserverStub: ReturnType<typeof stubReportingObserver>
   let stopReportCollection: () => void
   let lifeCycle: LifeCycle
-  let rawLogsEvents: RawLogsEventCollectedData[]
+  let rawLogsEvents: Array<RawLogsEventCollectedData<RawReportLogsEvent>>
 
   beforeEach(() => {
     rawLogsEvents = []
     stopReportCollection = noop
     lifeCycle = new LifeCycle()
-    lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLogsEvent) => rawLogsEvents.push(rawLogsEvent))
+    lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLogsEvent) =>
+      rawLogsEvents.push(rawLogsEvent as RawLogsEventCollectedData<RawReportLogsEvent>)
+    )
     reportingObserverStub = stubReportingObserver()
   })
 

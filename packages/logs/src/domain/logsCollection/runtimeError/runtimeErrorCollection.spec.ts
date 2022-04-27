@@ -1,5 +1,6 @@
 import { ErrorSource, Observable } from '@datadog/browser-core'
 import type { RawError, RelativeTime, TimeStamp } from '@datadog/browser-core'
+import type { RawRuntimeLogsEvent } from '../../../rawLogsEvent.types'
 import type { LogsConfiguration } from '../../configuration'
 import { StatusType } from '../../logger'
 import type { RawLogsEventCollectedData } from '../../lifeCycle'
@@ -10,13 +11,15 @@ describe('runtime error collection', () => {
   let rawErrorObservable: Observable<RawError>
   let lifeCycle: LifeCycle
   let stopRuntimeErrorCollection: () => void
-  let rawLogsEvents: RawLogsEventCollectedData[]
+  let rawLogsEvents: Array<RawLogsEventCollectedData<RawRuntimeLogsEvent>>
 
   beforeEach(() => {
     rawLogsEvents = []
     rawErrorObservable = new Observable<RawError>()
     lifeCycle = new LifeCycle()
-    lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLogsEvent) => rawLogsEvents.push(rawLogsEvent))
+    lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLogsEvent) =>
+      rawLogsEvents.push(rawLogsEvent as RawLogsEventCollectedData<RawRuntimeLogsEvent>)
+    )
     ;({ stop: stopRuntimeErrorCollection } = startRuntimeErrorCollection(
       {} as LogsConfiguration,
       lifeCycle,

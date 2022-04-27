@@ -1,6 +1,7 @@
 import { isIE, ErrorSource } from '@datadog/browser-core'
 import type { FetchStub, FetchStubManager } from '@datadog/browser-core/test/specHelper'
 import { SPEC_ENDPOINTS, ResponseStub, stubFetch } from '@datadog/browser-core/test/specHelper'
+import type { RawNetworkLogsEvent } from '../../../rawLogsEvent.types'
 import type { LogsConfiguration } from '../../configuration'
 import type { RawLogsEventCollectedData } from '../../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -23,7 +24,7 @@ describe('network error collection', () => {
   let fetchStubManager: FetchStubManager
   let stopNetworkErrorCollection: () => void
   let lifeCycle: LifeCycle
-  let rawLogsEvents: RawLogsEventCollectedData[]
+  let rawLogsEvents: Array<RawLogsEventCollectedData<RawNetworkLogsEvent>>
 
   const FAKE_URL = 'http://fake.com/'
   const DEFAULT_REQUEST = {
@@ -41,7 +42,9 @@ describe('network error collection', () => {
     }
     rawLogsEvents = []
     lifeCycle = new LifeCycle()
-    lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLogsEvent) => rawLogsEvents.push(rawLogsEvent))
+    lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLogsEvent) =>
+      rawLogsEvents.push(rawLogsEvent as RawLogsEventCollectedData<RawNetworkLogsEvent>)
+    )
     fetchStubManager = stubFetch()
     ;({ stop: stopNetworkErrorCollection } = startNetworkErrorCollection(CONFIGURATION, lifeCycle))
     fetchStub = window.fetch as FetchStub
@@ -125,7 +128,7 @@ describe('network error collection', () => {
 
     fetchStubManager.whenAllComplete(() => {
       expect(rawLogsEvents.length).toEqual(1)
-      expect(rawLogsEvents[0].rawLogsEvent.error!.stack).toEqual('Failed to load')
+      expect(rawLogsEvents[0].rawLogsEvent.error.stack).toEqual('Failed to load')
       done()
     })
   })

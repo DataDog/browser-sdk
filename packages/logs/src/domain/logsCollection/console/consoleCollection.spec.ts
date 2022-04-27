@@ -1,4 +1,5 @@
 import { ErrorSource, noop } from '@datadog/browser-core'
+import type { RawConsoleLogsEvent } from '../../../rawLogsEvent.types'
 import { validateAndBuildLogsConfiguration } from '../../configuration'
 import type { RawLogsEventCollectedData } from '../../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -10,12 +11,14 @@ describe('console collection', () => {
   let consoleLogSpy: jasmine.Spy
   let stopConsoleCollection: () => void
   let lifeCycle: LifeCycle
-  let rawLogsEvents: RawLogsEventCollectedData[]
+  let rawLogsEvents: Array<RawLogsEventCollectedData<RawConsoleLogsEvent>>
 
   beforeEach(() => {
     rawLogsEvents = []
     lifeCycle = new LifeCycle()
-    lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLogsEvent) => rawLogsEvents.push(rawLogsEvent))
+    lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLogsEvent) =>
+      rawLogsEvents.push(rawLogsEvent as RawLogsEventCollectedData<RawConsoleLogsEvent>)
+    )
     stopConsoleCollection = noop
     consoleLogSpy = spyOn(console, 'log').and.callFake(() => true)
     spyOn(console, 'error').and.callFake(() => true)

@@ -11,7 +11,10 @@ export const enum LifeCycleEventType {
 export class LifeCycle {
   private callbacks: { [key in LifeCycleEventType]?: Array<(data: any) => void> } = {}
 
-  notify(eventType: LifeCycleEventType.RAW_LOG_COLLECTED, data: RawLogsEventCollectedData): void
+  notify<E extends RawLogsEvent = RawLogsEvent>(
+    eventType: LifeCycleEventType.RAW_LOG_COLLECTED,
+    data: RawLogsEventCollectedData<E>
+  ): void
   notify(eventType: LifeCycleEventType.LOG_COLLECTED, data: LogsEvent & Context): void
   notify(eventType: LifeCycleEventType, data?: any) {
     const eventCallbacks = this.callbacks[eventType]
@@ -37,8 +40,8 @@ export class LifeCycle {
   }
 }
 
-export interface RawLogsEventCollectedData {
-  rawLogsEvent: RawLogsEvent
+export interface RawLogsEventCollectedData<E extends RawLogsEvent = RawLogsEvent> {
+  rawLogsEvent: E
   messageContext?: object
   savedCommonContext?: CommonContext
   logger?: Logger
