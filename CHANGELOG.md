@@ -16,6 +16,12 @@
 
 ---
 
+## v4.8.1
+
+- 🐛 [RUMF-1240] fix attribute mutating to an empty value ([#1512](https://github.com/DataDog/browser-sdk/pull/1512))
+- ⚗️ [RUMF-1182] add telemetry sample rate ([#1510](https://github.com/DataDog/browser-sdk/pull/1510))
+- 💡 Update links to api key docs ([#1508](https://github.com/DataDog/browser-sdk/pull/1508))
+
 ## v4.8.0
 
 - ✨ [RUMF-1192] forward Reports to Datadog ([#1506](https://github.com/DataDog/browser-sdk/pull/1506))
