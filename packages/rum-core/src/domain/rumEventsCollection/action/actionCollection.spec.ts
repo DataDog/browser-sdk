@@ -49,7 +49,9 @@ describe('actionCollection', () => {
         },
         id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
         loading_time: (100 * 1e6) as ServerDuration,
-        frustration_type: [],
+        frustration: {
+          type: [],
+        },
         long_task: {
           count: 10,
         },

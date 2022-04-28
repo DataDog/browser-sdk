@@ -61,7 +61,9 @@ function processAction(
         action: {
           id: action.id,
           loading_time: toServerDuration(action.duration),
-          frustration_type: action.frustrationTypes,
+          frustration: {
+            type: action.frustrationTypes,
+          },
           error: {
             count: action.counts.errorCount,
           },
