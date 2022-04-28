@@ -528,6 +528,43 @@ describe('startMutationCollection', () => {
       })
     })
 
+    it('emits a mutation with an empty string when an attribute is changed to an empty string', () => {
+      const serializedDocument = serializeDocument(document, NodePrivacyLevel.ALLOW)
+      const { mutationController, getLatestMutationPayload } = startMutationCollection()
+
+      sandbox.setAttribute('foo', '')
+      mutationController.flush()
+
+      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+      validate(getLatestMutationPayload(), {
+        attributes: [
+          {
+            node: expectInitialNode({ idAttribute: 'sandbox' }),
+            attributes: { foo: '' },
+          },
+        ],
+      })
+    })
+
+    it('emits a mutation with `null` when an attribute is removed', () => {
+      sandbox.setAttribute('foo', 'bar')
+      const serializedDocument = serializeDocument(document, NodePrivacyLevel.ALLOW)
+      const { mutationController, getLatestMutationPayload } = startMutationCollection()
+
+      sandbox.removeAttribute('foo')
+      mutationController.flush()
+
+      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+      validate(getLatestMutationPayload(), {
+        attributes: [
+          {
+            node: expectInitialNode({ idAttribute: 'sandbox' }),
+            attributes: { foo: null },
+          },
+        ],
+      })
+    })
+
     it('does not emit a mutation when an attribute keeps the same value', () => {
       sandbox.setAttribute('foo', 'bar')
       serializeDocument(document, NodePrivacyLevel.ALLOW)

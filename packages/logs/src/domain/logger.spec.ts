@@ -1,4 +1,4 @@
-import { display } from '@datadog/browser-core'
+import { display, ErrorSource } from '@datadog/browser-core'
 import type { LogsMessage } from './logger'
 import { HandlerType, Logger, STATUSES, StatusType } from './logger'
 import type { Sender } from './sender'
@@ -24,6 +24,18 @@ describe('Logger', () => {
       logger.log('message')
 
       expect(getLoggedMessage(0).status).toEqual(StatusType.info)
+    })
+
+    it("'logger.log' should set 'logger' origin", () => {
+      logger.log('message')
+
+      expect(getLoggedMessage(0).origin).toEqual(ErrorSource.LOGGER)
+    })
+
+    it("'logger.log' message context can override the 'logger' origin", () => {
+      logger.log('message', { origin: 'foo' })
+
+      expect(getLoggedMessage(0).origin).toEqual('foo')
     })
 
     STATUSES.forEach((status) => {
@@ -95,6 +107,7 @@ describe('Logger', () => {
       expect(sendLogSpy).not.toHaveBeenCalled()
       expect(display.log).toHaveBeenCalledWith('error: message', {
         error: { origin: 'logger' },
+        origin: 'logger',
         foo: 'bar',
         lorem: 'ipsum',
       })

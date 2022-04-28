@@ -32,3 +32,5 @@ updates:
       # update node-fetch: RUMF-1167
       - dependency-name: 'node-fetch'
         update-types: ['version-update:semver-major']
+      - dependency-name: '*'
+        update-types: ['version-update:semver-minor', 'version-update:semver-patch']

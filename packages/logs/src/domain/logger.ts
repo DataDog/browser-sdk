@@ -32,7 +32,16 @@ export class Logger {
 
   @monitored
   log(message: string, messageContext?: object, status: StatusType = StatusType.info) {
-    this.sender.sendLog(message, messageContext, status)
+    this.sender.sendLog(
+      message,
+      combine(
+        {
+          origin: ErrorSource.LOGGER,
+        },
+        messageContext
+      ),
+      status
+    )
   }
 
   debug(message: string, messageContext?: object) {
@@ -50,6 +59,7 @@ export class Logger {
   error(message: string, messageContext?: object) {
     const errorOrigin = {
       error: {
+        // Todo: remove error origin in the next major version
         origin: ErrorSource.LOGGER,
       },
     }

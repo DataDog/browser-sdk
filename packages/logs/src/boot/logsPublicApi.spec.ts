@@ -1,5 +1,5 @@
 import type { Context } from '@datadog/browser-core'
-import { monitor, ONE_SECOND, display } from '@datadog/browser-core'
+import { monitor, ONE_SECOND, display, ErrorSource } from '@datadog/browser-core'
 import type { Clock } from '../../../core/test/specHelper'
 import { deleteEventBridgeStub, initEventBridgeStub, mockClock } from '../../../core/test/specHelper'
 import type { HybridInitConfiguration, LogsInitConfiguration } from '../domain/configuration'
@@ -223,6 +223,7 @@ describe('logs entry', () => {
         message: {
           message: 'message',
           status: StatusType.info,
+          origin: ErrorSource.LOGGER,
         },
       })
     })
@@ -278,6 +279,7 @@ describe('logs entry', () => {
 
         expect(sendLogsSpy).not.toHaveBeenCalled()
         expect(display.log).toHaveBeenCalledWith('error: message', {
+          origin: 'logger',
           error: { origin: 'logger' },
           logger: { name: 'foo' },
         })
@@ -292,7 +294,7 @@ describe('logs entry', () => {
         logger.debug('message')
 
         expect(sendLogsSpy).toHaveBeenCalled()
-        expect(display.log).toHaveBeenCalledWith('debug: message', { logger: { name: 'foo' } })
+        expect(display.log).toHaveBeenCalledWith('debug: message', { origin: 'logger', logger: { name: 'foo' } })
       })
 
       it('should have their name in their context', () => {

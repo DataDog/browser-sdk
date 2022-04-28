@@ -1,5 +1,5 @@
-import type { DefaultPrivacyLevel } from '@datadog/browser-core'
-import type { FocusRecord, RawRecord, VisualViewportRecord } from '../../types'
+import type { DefaultPrivacyLevel, TimeStamp } from '@datadog/browser-core'
+import type { FocusRecord, VisualViewportRecord, Record } from '../../types'
 import type { MutationController } from './mutationObserver'
 
 export const IncrementalSource = {
@@ -63,13 +63,13 @@ export type IncrementalData =
   | StyleSheetRuleData
 
 export interface RecordOptions {
-  emit?: (record: RawRecord) => void
+  emit?: (record: Record) => void
   defaultPrivacyLevel: DefaultPrivacyLevel
 }
 
 export interface RecordAPI {
   stop: ListenerHandler
-  takeFullSnapshot: () => void
+  takeFullSnapshot: (timestamp?: TimeStamp) => void
   flushMutations: () => void
 }
 
