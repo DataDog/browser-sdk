@@ -1,10 +1,9 @@
-import type { Context, TimeStamp } from '@datadog/browser-core'
+import type { Context } from '@datadog/browser-core'
 import { deepClone, assign, combine, createContextManager, ErrorSource, monitored } from '@datadog/browser-core'
 
 export interface LogsMessage {
   message: string
   status: StatusType
-  date?: TimeStamp
   context?: Context
 }
 

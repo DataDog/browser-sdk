@@ -14,13 +14,18 @@ const INVALID_INIT_CONFIGURATION = {} as LogsInitConfiguration
 
 describe('logs entry', () => {
   let handleLogSpy: jasmine.Spy<
-    (logsMessage: LogsMessage, logger: Logger, commonContext?: CommonContext | undefined) => void
+    (
+      logsMessage: LogsMessage,
+      logger: Logger,
+      commonContext?: CommonContext | undefined,
+      date?: TimeStamp | undefined
+    ) => void
   >
   let startLogs: jasmine.Spy<StartLogs>
 
   function getLoggedMessage(index: number) {
-    const [message, logger, savedCommonContext] = handleLogSpy.calls.argsFor(index)
-    return { message, logger, savedCommonContext }
+    const [message, logger, savedCommonContext, savedDate] = handleLogSpy.calls.argsFor(index)
+    return { message, logger, savedCommonContext, savedDate }
   }
 
   beforeEach(() => {
@@ -134,7 +139,6 @@ describe('logs entry', () => {
 
       const getCommonContext = startLogs.calls.mostRecent().args[1]
       expect(getCommonContext()).toEqual({
-        date: jasmine.any(Number),
         view: {
           referrer: document.referrer,
           url: window.location.href,
@@ -187,7 +191,7 @@ describe('logs entry', () => {
         clock.tick(ONE_SECOND)
         LOGS.init(DEFAULT_INIT_CONFIGURATION)
 
-        expect(getLoggedMessage(0).savedCommonContext!.date).toEqual((Date.now() - ONE_SECOND) as TimeStamp)
+        expect(getLoggedMessage(0).savedDate).toEqual((Date.now() - ONE_SECOND) as TimeStamp)
       })
 
       it('saves the URL', () => {
@@ -229,7 +233,7 @@ describe('logs entry', () => {
       LOGS.init(DEFAULT_INIT_CONFIGURATION)
     })
 
-    it('logs a message', () => {
+    it('main logger logs a message', () => {
       LOGS.logger.log('message')
 
       expect(getLoggedMessage(0).message).toEqual({
@@ -245,6 +249,17 @@ describe('logs entry', () => {
     })
 
     describe('custom loggers', () => {
+      it('logs a message', () => {
+        const logger = LOGS.createLogger('foo')
+        logger.log('message')
+
+        expect(getLoggedMessage(0).message).toEqual({
+          message: 'message',
+          status: StatusType.info,
+          context: undefined,
+        })
+      })
+
       it('should have a default configuration', () => {
         const logger = LOGS.createLogger('foo')
 

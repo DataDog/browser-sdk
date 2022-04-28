@@ -42,6 +42,7 @@ describe('reports', () => {
         origin: ErrorSource.REPORT,
         stack: jasmine.any(String),
       },
+      date: jasmine.any(Number),
       message: 'intervention: foo bar',
       status: StatusType.error,
       origin: ErrorSource.REPORT,
@@ -67,6 +68,7 @@ describe('reports', () => {
     reportingObserverStub.raiseReport('deprecation')
 
     expect(rawLogsEvents[0].rawLogsEvent).toEqual({
+      date: jasmine.any(Number),
       message: 'deprecation: foo bar Found in http://foo.bar/index.js:20:10',
       status: StatusType.warn,
       origin: ErrorSource.REPORT,

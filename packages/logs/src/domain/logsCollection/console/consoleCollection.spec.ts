@@ -38,6 +38,7 @@ describe('console collection', () => {
     console.log('foo', 'bar')
 
     expect(rawLogsEvents[0].rawLogsEvent).toEqual({
+      date: jasmine.any(Number),
       message: 'foo bar',
       status: StatusType.info,
       origin: ErrorSource.CONSOLE,

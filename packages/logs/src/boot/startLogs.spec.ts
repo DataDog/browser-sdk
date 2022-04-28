@@ -1,4 +1,3 @@
-import type { TimeStamp } from '@datadog/browser-core'
 import { ErrorSource, display, stopSessionManager } from '@datadog/browser-core'
 import sinon from 'sinon'
 import { deleteEventBridgeStub, initEventBridgeStub, stubEndpointBuilder } from '../../../core/test/specHelper'
@@ -13,7 +12,6 @@ import { startLogs } from './startLogs'
 function getLoggedMessage(server: sinon.SinonFakeServer, index: number) {
   return JSON.parse(server.requests[index].requestBody) as LogsEvent
 }
-const FAKE_DATE = 123456 as TimeStamp
 
 interface Rum {
   getInternalContext(startTime?: number): any | undefined
@@ -26,7 +24,6 @@ declare global {
 
 const DEFAULT_MESSAGE = { status: StatusType.info, message: 'message' }
 const COMMON_CONTEXT = {
-  date: FAKE_DATE,
   view: { referrer: 'common_referrer', url: 'common_url' },
   context: {},
 }
@@ -68,7 +65,7 @@ describe('logs', () => {
       expect(server.requests.length).toEqual(1)
       expect(server.requests[0].url).toContain(baseConfiguration.logsEndpointBuilder.build())
       expect(getLoggedMessage(server, 0)).toEqual({
-        date: FAKE_DATE,
+        date: jasmine.any(Number),
         foo: 'bar',
         message: 'message',
         service: 'service',

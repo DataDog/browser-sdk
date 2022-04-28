@@ -13,9 +13,13 @@ import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 describe('startLogsAssembly', () => {
   const initConfiguration = { clientToken: 'xxx', service: 'service' }
   const SESSION_ID = 'session-id'
-  const DEFAULT_MESSAGE = { status: StatusType.info, message: 'message', origin: ErrorSource.LOGGER }
-  const COMMON_CONTEXT: CommonContext = {
+  const DEFAULT_MESSAGE = {
+    status: StatusType.info,
+    message: 'message',
+    origin: ErrorSource.LOGGER,
     date: 123456 as TimeStamp,
+  }
+  const COMMON_CONTEXT: CommonContext = {
     view: {
       referrer: 'referrer_from_common_context',
       url: 'url_from_common_context',
@@ -110,7 +114,6 @@ describe('startLogsAssembly', () => {
 
       expect(serverLogs[0]).toEqual(
         jasmine.objectContaining({
-          date: COMMON_CONTEXT.date,
           view: COMMON_CONTEXT.view,
           ...COMMON_CONTEXT.context,
         })
@@ -119,7 +122,6 @@ describe('startLogsAssembly', () => {
 
     it('should include saved common context instead of common context when present', () => {
       const savedCommonContext = {
-        date: 0 as TimeStamp,
         view: {
           referrer: 'referrer_from_saved_common_context',
           url: 'url_from_saved_common_context',
@@ -130,7 +132,6 @@ describe('startLogsAssembly', () => {
 
       expect(serverLogs[0]).toEqual(
         jasmine.objectContaining({
-          date: savedCommonContext.date,
           view: savedCommonContext.view,
           ...savedCommonContext.context,
         })
@@ -271,7 +272,6 @@ describe('startLogsAssembly', () => {
 
   describe('logs limitation', () => {
     let clock: Clock
-    const origin = ErrorSource.LOGGER
 
     beforeEach(() => {
       clock = mockClock()
@@ -293,11 +293,11 @@ describe('startLogsAssembly', () => {
     ].forEach(({ status, message, messageContext }) => {
       it(`stops sending ${status} logs when reaching the limit`, () => {
         lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-          rawLogsEvent: { message: 'foo', status, origin },
+          rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'foo', status },
           messageContext,
         })
         lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-          rawLogsEvent: { message: 'bar', status, origin },
+          rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'bar', status },
           messageContext,
         })
 
@@ -322,19 +322,19 @@ describe('startLogsAssembly', () => {
         }
 
         lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-          rawLogsEvent: { message: 'discard me', status, origin },
+          rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'discard me', status },
           messageContext,
         })
         lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-          rawLogsEvent: { message: 'discard me', status, origin },
+          rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'discard me', status },
           messageContext,
         })
         lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-          rawLogsEvent: { message: 'discard me', status, origin },
+          rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'discard me', status },
           messageContext,
         })
         lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-          rawLogsEvent: { message: 'foo', status, origin },
+          rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'foo', status },
           messageContext,
         })
 
@@ -344,16 +344,16 @@ describe('startLogsAssembly', () => {
 
       it(`allows to send new ${status}s after a minute`, () => {
         lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-          rawLogsEvent: { message: 'foo', status, origin },
+          rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'foo', status },
           messageContext,
         })
         lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-          rawLogsEvent: { message: 'bar', status, origin },
+          rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'bar', status },
           messageContext,
         })
         clock.tick(ONE_MINUTE)
         lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-          rawLogsEvent: { message: 'baz', status, origin },
+          rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'baz', status },
           messageContext,
         })
 
@@ -366,15 +366,15 @@ describe('startLogsAssembly', () => {
       it('allows to send logs with a different status when reaching the limit', () => {
         const otherLogStatus = status === StatusType.error ? StatusType.info : StatusType.error
         lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-          rawLogsEvent: { message: 'foo', status, origin },
+          rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'foo', status },
           messageContext,
         })
         lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-          rawLogsEvent: { message: 'bar', status, origin },
+          rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'bar', status },
           messageContext,
         })
         lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-          rawLogsEvent: { message: 'baz', status: otherLogStatus, origin },
+          rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'baz', status: otherLogStatus },
           ...{ ...messageContext, status: otherLogStatus },
         })
 
@@ -387,12 +387,12 @@ describe('startLogsAssembly', () => {
 
     it('two different custom statuses are accounted by the same limit', () => {
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: { message: 'foo', status: StatusType.info, origin },
+        rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'foo', status: StatusType.info },
         messageContext: { status: 'foo' },
       })
 
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: { message: 'bar', status: StatusType.info, origin },
+        rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'bar', status: StatusType.info },
         messageContext: { status: 'bar' },
       })
 

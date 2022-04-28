@@ -30,7 +30,7 @@ export function startLogsAssembly(
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_LOG_COLLECTED,
     ({ rawLogsEvent, messageContext = undefined, savedCommonContext = undefined, logger = mainLogger }) => {
-      const startTime = 'date' in rawLogsEvent ? getRelativeTime(rawLogsEvent.date) : undefined
+      const startTime = getRelativeTime(rawLogsEvent.date)
       const session = sessionManager.findTrackedSession(startTime)
 
       if (!session) {
@@ -39,7 +39,7 @@ export function startLogsAssembly(
 
       const commonContext = savedCommonContext || getCommonContext()
       const log = combine(
-        { service: configuration.service, session_id: session.id, date: commonContext.date, view: commonContext.view },
+        { service: configuration.service, session_id: session.id, view: commonContext.view },
         commonContext.context,
         getRUMInternalContext(startTime),
         rawLogsEvent,

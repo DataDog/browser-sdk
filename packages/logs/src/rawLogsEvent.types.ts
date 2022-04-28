@@ -9,8 +9,6 @@ export type RawLogsEvent =
   | RawReportLogsEvent
   | RawRuntimeLogsEvent
 
-export type RawLogsEventOrigin = RawLogsEvent['origin']
-
 type Error = {
   kind?: string
   origin: ErrorSource // Todo: Remove in the next major release
@@ -19,14 +17,10 @@ type Error = {
 }
 
 interface CommonRawLogsEvent {
+  date: TimeStamp
   message: string
   status: StatusType
   error?: Error
-}
-
-interface CommonRawErrorLogsEvent extends CommonRawLogsEvent {
-  status: typeof StatusType.error
-  error: Error
 }
 
 export interface RawConsoleLogsEvent extends CommonRawLogsEvent {
@@ -37,9 +31,11 @@ export interface RawLoggerLogsEvent extends CommonRawLogsEvent {
   origin: typeof ErrorSource.LOGGER
 }
 
-export interface RawNetworkLogsEvent extends CommonRawErrorLogsEvent {
+export interface RawNetworkLogsEvent extends CommonRawLogsEvent {
   date: TimeStamp
   origin: typeof ErrorSource.NETWORK
+  status: typeof StatusType.error
+  error: Error
   http: {
     method: 'POST' | 'GET' | 'HEAD' | 'PUT' | 'DELETE' | 'PATCH'
     status_code: number
@@ -52,18 +48,19 @@ export interface RawReportLogsEvent extends CommonRawLogsEvent {
   origin: typeof ErrorSource.REPORT
 }
 
-export interface RawRuntimeLogsEvent extends CommonRawErrorLogsEvent {
-  date: TimeStamp
+export interface RawRuntimeLogsEvent extends CommonRawLogsEvent {
   origin: typeof ErrorSource.SOURCE
+  status: typeof StatusType.error
+  error: Error
 }
 
-export interface RawAgentLogsEvent extends CommonRawErrorLogsEvent {
-  date: TimeStamp
+export interface RawAgentLogsEvent extends CommonRawLogsEvent {
   origin: typeof ErrorSource.AGENT
+  status: typeof StatusType.error
+  error: Error
 }
 
 export interface CommonContext {
-  date: TimeStamp
   view: {
     referrer: string
     url: string

@@ -1,5 +1,5 @@
 import type { Context, ClocksState, ConsoleLog } from '@datadog/browser-core'
-import { ConsoleApiName, ErrorSource, initConsoleObservable } from '@datadog/browser-core'
+import { timeStampNow, ConsoleApiName, ErrorSource, initConsoleObservable } from '@datadog/browser-core'
 import type { RawConsoleLogsEvent } from '../../../rawLogsEvent.types'
 import type { LogsConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
@@ -24,6 +24,7 @@ export function startConsoleCollection(configuration: LogsConfiguration, lifeCyc
   const consoleSubscription = initConsoleObservable(configuration.forwardConsoleLogs).subscribe((log: ConsoleLog) => {
     lifeCycle.notify<RawConsoleLogsEvent>(LifeCycleEventType.RAW_LOG_COLLECTED, {
       rawLogsEvent: {
+        date: timeStampNow(),
         message: log.message,
         origin: ErrorSource.CONSOLE,
         error:
