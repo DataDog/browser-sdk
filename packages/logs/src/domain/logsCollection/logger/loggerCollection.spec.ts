@@ -1,5 +1,5 @@
 import type { TimeStamp } from '@datadog/browser-core'
-import { timeStampNow, display, ErrorSource } from '@datadog/browser-core'
+import { ConsoleApiName, timeStampNow, display, ErrorSource } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test/specHelper'
 import { mockClock } from '@datadog/browser-core/test/specHelper'
 import type { CommonContext, RawLoggerLogsEvent } from '../../../rawLogsEvent.types'
@@ -24,10 +24,6 @@ describe('logger collection', () => {
     lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLogsEvent) =>
       rawLogsEvents.push(rawLogsEvent as RawLogsEventCollectedData<RawLoggerLogsEvent>)
     )
-    spyOn(display, 'debug')
-    spyOn(display, 'log')
-    spyOn(display, 'warn')
-    spyOn(display, 'error')
     spyOn(console, 'error').and.callFake(() => true)
     logger = new Logger((...params) => handleLog(...params))
     ;({ handleLog: handleLog } = startLoggerCollection(lifeCycle))
@@ -55,48 +51,60 @@ describe('logger collection', () => {
     expect(rawLogsEvents[0].rawLogsEvent.date).toEqual(FAKE_DATE)
   })
 
-  it('should print the log to the console when handler type is set to "console"', () => {
-    logger.setHandler(HandlerType.console)
+  fdescribe('when handle type is set to "console"', () => {
+    beforeEach(() => {
+      logger.setHandler(HandlerType.console)
+      spyOn(display, 'debug')
+      spyOn(display, 'info')
+      spyOn(display, 'warn')
+      spyOn(display, 'error')
+      spyOn(display, 'log')
+    })
 
-    handleLog({ message: 'message', status: StatusType.info }, logger, COMMON_CONTEXT)
+    it('should print the log message and context to the console', () => {
+      logger.setContext({ 'logger-context': 'foo' })
 
-    expect(display.log).toHaveBeenCalled()
-    expect(rawLogsEvents.length).toEqual(1)
-  })
+      handleLog(
+        { message: 'message', status: StatusType.error, context: { 'log-context': 'bar' } },
+        logger,
+        COMMON_CONTEXT
+      )
 
-  it('should be configurable to "console" and log to debug correctly', () => {
-    logger.setHandler([HandlerType.console])
-    logger.setContext({ foo: 'bar' })
+      expect(display.error).toHaveBeenCalledOnceWith('message', {
+        'logger-context': 'foo',
+        'log-context': 'bar',
+      })
+      expect(rawLogsEvents.length).toEqual(1)
+    })
 
-    logger.debug('message')
+    for (const { status, api } of [
+      { status: StatusType.debug, api: ConsoleApiName.debug },
+      { status: StatusType.info, api: ConsoleApiName.info },
+      { status: StatusType.warn, api: ConsoleApiName.warn },
+      { status: StatusType.error, api: ConsoleApiName.error },
+    ]) {
+      it(`should use display.${api} to log messages with status ${status}`, () => {
+        handleLog({ message: 'message', status }, logger, COMMON_CONTEXT)
 
-    expect(display.debug).toHaveBeenCalled()
-  })
+        expect(display[api]).toHaveBeenCalled()
+      })
+    }
 
-  it('should be configurable to "console" and log to info correctly', () => {
-    logger.setHandler([HandlerType.console])
-    logger.setContext({ foo: 'bar' })
+    it('does not print the log if its status is below the logger level', () => {
+      logger.setLevel(StatusType.warn)
+      handleLog({ message: 'message', status: StatusType.info }, logger, COMMON_CONTEXT)
 
-    logger.info('message')
+      expect(display.info).not.toHaveBeenCalled()
+    })
 
-    expect(display.log).toHaveBeenCalled()
-  })
+    it('does not print the log and does not crash if its status is unknown', () => {
+      handleLog({ message: 'message', status: 'unknown' as StatusType }, logger, COMMON_CONTEXT)
 
-  it('should be configurable to "console" and log to warn correctly', () => {
-    logger.setHandler([HandlerType.console])
-    logger.setContext({ foo: 'bar' })
-
-    logger.warn('message')
-
-    expect(display.warn).toHaveBeenCalled()
-  })
-
-  it('should be configurable to "console" and log to error correctly', () => {
-    logger.setHandler([HandlerType.console])
-    logger.setContext({ foo: 'bar' })
-
-    logger.error('message')
-
-    expect(display.error).toHaveBeenCalled()
+      expect(display.info).not.toHaveBeenCalled()
+      expect(display.log).not.toHaveBeenCalled()
+      expect(display.error).not.toHaveBeenCalled()
+      expect(display.warn).not.toHaveBeenCalled()
+      expect(display.debug).not.toHaveBeenCalled()
+    })
   })
 })
