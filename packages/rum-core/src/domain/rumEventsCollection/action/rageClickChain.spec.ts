@@ -37,8 +37,8 @@ describe('createRageClickChain', () => {
     expect(clickChain.tryAppend(createFakePotentialClickAction())).toBe(true)
   })
 
-  describe('flush', () => {
-    it('flushes if we try to append a non-similar potential click action', () => {
+  describe('finalize', () => {
+    it('finalizes if we try to append a non-similar potential click action', () => {
       const firstPotentialClickAction = createFakePotentialClickAction({ target: document.documentElement })
       clickChain = createRageClickChain(firstPotentialClickAction)
       firstPotentialClickAction.stop()
@@ -46,7 +46,8 @@ describe('createRageClickChain', () => {
       expect(firstPotentialClickAction.validate).toHaveBeenCalled()
     })
 
-    it('does not flush until it waited long enough to ensure no other potential click action can be appended', () => {
+    // eslint-disable-next-line max-len
+    it('does not finalize until it waited long enough to ensure no other potential click action can be appended', () => {
       const firstPotentialClickAction = createFakePotentialClickAction()
       clickChain = createRageClickChain(firstPotentialClickAction)
       firstPotentialClickAction.stop()
@@ -56,7 +57,7 @@ describe('createRageClickChain', () => {
       expect(firstPotentialClickAction.validate).toHaveBeenCalled()
     })
 
-    it('does not flush until all potential click actions are stopped', () => {
+    it('does not finalize until all potential click actions are stopped', () => {
       const firstPotentialClickAction = createFakePotentialClickAction()
       clickChain = createRageClickChain(firstPotentialClickAction)
       clock.tick(MAX_DURATION_BETWEEN_CLICKS)
@@ -65,7 +66,7 @@ describe('createRageClickChain', () => {
       expect(firstPotentialClickAction.validate).toHaveBeenCalled()
     })
 
-    it('flushes when stopping the click chain', () => {
+    it('finalizes when stopping the click chain', () => {
       const firstPotentialClickAction = createFakePotentialClickAction({ target: document.documentElement })
       clickChain = createRageClickChain(firstPotentialClickAction)
       firstPotentialClickAction.stop()

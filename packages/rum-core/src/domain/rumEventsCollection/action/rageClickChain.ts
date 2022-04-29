@@ -13,7 +13,7 @@ export const MAX_DISTANCE_BETWEEN_CLICKS = 100
 const enum RageClickChainStatus {
   WaitingForMorePotentialClickActions,
   WaitingForPotentialClickActionsToStop,
-  Flushed,
+  Finalized,
 }
 
 export function createRageClickChain(firstPotentialClickAction: PotentialClickAction): RageClickChain {
@@ -26,24 +26,24 @@ export function createRageClickChain(firstPotentialClickAction: PotentialClickAc
   function dontAcceptMorePotentialClickAction() {
     if (status === RageClickChainStatus.WaitingForMorePotentialClickActions) {
       status = RageClickChainStatus.WaitingForPotentialClickActionsToStop
-      tryFlush()
+      tryFinalize()
     }
   }
 
-  function tryFlush() {
+  function tryFinalize() {
     if (
       status === RageClickChainStatus.WaitingForPotentialClickActionsToStop &&
       stoppedPotentialClickActionsCount === bufferedPotentialClickActions.length
     ) {
-      status = RageClickChainStatus.Flushed
-      flushPotentialClickActions(bufferedPotentialClickActions, potentialRageClickAction)
+      status = RageClickChainStatus.Finalized
+      finalizePotentialClickActions(bufferedPotentialClickActions, potentialRageClickAction)
     }
   }
 
   function appendPotentialClickAction(potentialClickAction: PotentialClickAction) {
     potentialClickAction.onStop(() => {
       stoppedPotentialClickActionsCount += 1
-      tryFlush()
+      tryFinalize()
     })
     bufferedPotentialClickActions.push(potentialClickAction)
     timeout = setTimeout(monitor(dontAcceptMorePotentialClickAction), MAX_DURATION_BETWEEN_CLICKS)
@@ -94,7 +94,7 @@ function mouseEventDistance(origin: MouseEvent, other: MouseEvent) {
   return Math.sqrt(Math.pow(origin.clientX - other.clientX, 2) + Math.pow(origin.clientY - other.clientY, 2))
 }
 
-function flushPotentialClickActions(
+function finalizePotentialClickActions(
   potentialClickActions: PotentialClickAction[],
   potentialRageClickAction: PotentialClickAction
 ) {
