@@ -94,16 +94,6 @@ describe('trackClickActions', () => {
     ])
   })
 
-  it('discards any click action with a negative duration', () => {
-    const { domMutationObservable, clock } = setupBuilder.build()
-    emulateClickWithActivity(domMutationObservable, clock, button, -1)
-    expect(findActionId()).not.toBeUndefined()
-    clock.tick(EXPIRE_DELAY)
-
-    expect(events).toEqual([])
-    expect(findActionId()).toBeUndefined()
-  })
-
   it('should keep track of previously validated click actions', () => {
     const { domMutationObservable, clock } = setupBuilder.build()
     const clickActionStartTime = relativeNow()
@@ -149,6 +139,16 @@ describe('trackClickActions', () => {
   })
 
   describe('without frustration-signals flag', () => {
+    it('discards any click action with a negative duration', () => {
+      const { domMutationObservable, clock } = setupBuilder.build()
+      emulateClickWithActivity(domMutationObservable, clock, button, -1)
+      expect(findActionId()).not.toBeUndefined()
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events).toEqual([])
+      expect(findActionId()).toBeUndefined()
+    })
+
     it('discards ongoing click action on view created', () => {
       const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
       emulateClickWithActivity(domMutationObservable, clock)
@@ -212,6 +212,16 @@ describe('trackClickActions', () => {
     })
     afterEach(() => {
       resetExperimentalFeatures()
+    })
+
+    it('discards any click action with a negative duration', () => {
+      const { domMutationObservable, clock } = setupBuilder.build()
+      emulateClickWithActivity(domMutationObservable, clock, button, -1)
+      expect(findActionId()).not.toBeUndefined()
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events).toEqual([])
+      expect(findActionId()).toEqual([])
     })
 
     it("doesn't discard ongoing click action on view created", () => {
