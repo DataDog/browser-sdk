@@ -107,17 +107,17 @@ export function trackClickActions(
 
     const startClocks = clocksNow()
 
-    const potentialClickAction = newPotentialClickAction(lifeCycle, history, collectFrustrations, {
+    const click = newClick(lifeCycle, history, collectFrustrations, {
       name,
       event,
       startClocks,
     })
 
-    // If we collect frustration, we have to add the potential click action to a "click chain" which
+    // If we collect frustration, we have to add the click to a "click chain" which
     // will validate it only if it's not part of a rage click.
-    if (collectFrustrations && (!currentRageClickChain || !currentRageClickChain.tryAppend(potentialClickAction))) {
+    if (collectFrustrations && (!currentRageClickChain || !currentRageClickChain.tryAppend(click))) {
       // If we failed to add the click to the current click chain, create a new click chain
-      currentRageClickChain = createRageClickChain(potentialClickAction)
+      currentRageClickChain = createRageClickChain(click)
     }
 
     const { stop: stopWaitingIdlePage } = waitIdlePage(
@@ -128,20 +128,20 @@ export function trackClickActions(
           // If it has no activity, consider it as a dead click.
           // TODO: this will yield a lot of false positive. We'll need to refine it in the future.
           if (collectFrustrations) {
-            potentialClickAction.addFrustration(FrustrationType.DEAD)
-            potentialClickAction.stop()
+            click.addFrustration(FrustrationType.DEAD)
+            click.stop()
           } else {
-            potentialClickAction.discard()
+            click.discard()
           }
         } else if (idleEvent.end < startClocks.timeStamp) {
-          // If the clock is looking weird, just discard the potential click action
-          potentialClickAction.discard()
+          // If the clock is looking weird, just discard the click
+          click.discard()
         } else if (collectFrustrations) {
-          // If we collect frustrations, let's stop the potential click action, but validate it later
-          potentialClickAction.stop(idleEvent.end)
+          // If we collect frustrations, let's stop the click, but validate it later
+          click.stop(idleEvent.end)
         } else {
           // Else just validate it now
-          potentialClickAction.validate(idleEvent.end)
+          click.validate(idleEvent.end)
         }
         stopClickProcessing()
       },
@@ -150,8 +150,8 @@ export function trackClickActions(
 
     let viewCreatedSubscription: Subscription | undefined
     if (!collectFrustrations) {
-      // TODO: remove this in a future major version. To keep retrocompatibility, end the potential
-      // click action on a new view is created.
+      // TODO: remove this in a future major version. To keep retrocompatibility, end the click on a
+      // new view is created.
       viewCreatedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, stopClickProcessing)
     }
 
@@ -159,7 +159,7 @@ export function trackClickActions(
 
     function stopClickProcessing() {
       // Cleanup any ongoing process
-      potentialClickAction.stop()
+      click.stop()
       if (viewCreatedSubscription) {
         viewCreatedSubscription.unsubscribe()
       }
@@ -182,23 +182,23 @@ function listenClickEvents(callback: (clickEvent: MouseEvent & { target: Element
   )
 }
 
-const enum PotentialClickActionStatus {
-  // Initial state, the potential click action is still ongoing.
+const enum ClickStatus {
+  // Initial state, the click is still ongoing.
   PENDING,
-  // The potential click action is no more ongoing but still needs to be validated or discarded.
+  // The click is no more ongoing but still needs to be validated or discarded.
   STOPPED,
-  // Final state, the potential click action has been stopped and validated or discarded.
+  // Final state, the click has been stopped and validated or discarded.
   FINALIZED,
 }
 
-type PotentialClickActionState =
-  | { status: PotentialClickActionStatus.PENDING }
-  | { status: PotentialClickActionStatus.STOPPED; endTime?: TimeStamp }
-  | { status: PotentialClickActionStatus.FINALIZED }
+type ClickState =
+  | { status: ClickStatus.PENDING }
+  | { status: ClickStatus.STOPPED; endTime?: TimeStamp }
+  | { status: ClickStatus.FINALIZED }
 
-export type PotentialClickAction = ReturnType<typeof newPotentialClickAction>
+export type Click = ReturnType<typeof newClick>
 
-function newPotentialClickAction(
+function newClick(
   lifeCycle: LifeCycle,
   history: ClickActionIdHistory,
   collectFrustrations: boolean,
@@ -207,15 +207,15 @@ function newPotentialClickAction(
   const id = generateUUID()
   const historyEntry = history.add(id, base.startClocks.relative)
   const eventCountsSubscription = trackEventCounts(lifeCycle)
-  let state: PotentialClickActionState = { status: PotentialClickActionStatus.PENDING }
+  let state: ClickState = { status: ClickStatus.PENDING }
   const frustrations = new Set<FrustrationType>()
   let onStopCallback = noop
 
   function stop(endTime?: TimeStamp) {
-    if (state.status !== PotentialClickActionStatus.PENDING) {
+    if (state.status !== ClickStatus.PENDING) {
       return
     }
-    state = { status: PotentialClickActionStatus.STOPPED, endTime }
+    state = { status: ClickStatus.STOPPED, endTime }
     if (endTime) {
       historyEntry.close(getRelativeTime(endTime))
     } else {
@@ -242,11 +242,11 @@ function newPotentialClickAction(
       onStopCallback = newOnStopCallback
     },
 
-    clone: () => newPotentialClickAction(lifeCycle, history, collectFrustrations, base),
+    clone: () => newClick(lifeCycle, history, collectFrustrations, base),
 
     validate: (endTime?: TimeStamp) => {
       stop(endTime)
-      if (state.status !== PotentialClickActionStatus.STOPPED) {
+      if (state.status !== ClickStatus.STOPPED) {
         return
       }
 
@@ -270,12 +270,12 @@ function newPotentialClickAction(
         base
       )
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, clickAction)
-      state = { status: PotentialClickActionStatus.FINALIZED }
+      state = { status: ClickStatus.FINALIZED }
     },
 
     discard: () => {
       stop()
-      state = { status: PotentialClickActionStatus.FINALIZED }
+      state = { status: ClickStatus.FINALIZED }
     },
   }
 }

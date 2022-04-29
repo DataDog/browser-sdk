@@ -9,7 +9,7 @@ import {
   createRageClickChain,
   isRage,
 } from './rageClickChain'
-import type { PotentialClickAction } from './trackClickActions'
+import type { Click } from './trackClickActions'
 
 describe('createRageClickChain', () => {
   let clickChain: RageClickChain | undefined
@@ -25,135 +25,116 @@ describe('createRageClickChain', () => {
   })
 
   it('creates a click chain', () => {
-    clickChain = createRageClickChain(createFakePotentialClickAction())
+    clickChain = createRageClickChain(createFakeClick())
     expect(clickChain).toEqual({
       tryAppend: jasmine.any(Function),
       stop: jasmine.any(Function),
     })
   })
 
-  it('appends a potential click action', () => {
-    clickChain = createRageClickChain(createFakePotentialClickAction())
-    expect(clickChain.tryAppend(createFakePotentialClickAction())).toBe(true)
+  it('appends a click', () => {
+    clickChain = createRageClickChain(createFakeClick())
+    expect(clickChain.tryAppend(createFakeClick())).toBe(true)
   })
 
   describe('finalize', () => {
-    it('finalizes if we try to append a non-similar potential click action', () => {
-      const firstPotentialClickAction = createFakePotentialClickAction({ target: document.documentElement })
-      clickChain = createRageClickChain(firstPotentialClickAction)
-      firstPotentialClickAction.stop()
-      clickChain.tryAppend(createFakePotentialClickAction({ target: document.body }))
-      expect(firstPotentialClickAction.validate).toHaveBeenCalled()
+    it('finalizes if we try to append a non-similar click', () => {
+      const firstClick = createFakeClick({ target: document.documentElement })
+      clickChain = createRageClickChain(firstClick)
+      firstClick.stop()
+      clickChain.tryAppend(createFakeClick({ target: document.body }))
+      expect(firstClick.validate).toHaveBeenCalled()
     })
 
-    // eslint-disable-next-line max-len
-    it('does not finalize until it waited long enough to ensure no other potential click action can be appended', () => {
-      const firstPotentialClickAction = createFakePotentialClickAction()
-      clickChain = createRageClickChain(firstPotentialClickAction)
-      firstPotentialClickAction.stop()
+    it('does not finalize until it waited long enough to ensure no other click can be appended', () => {
+      const firstClick = createFakeClick()
+      clickChain = createRageClickChain(firstClick)
+      firstClick.stop()
       clock.tick(MAX_DURATION_BETWEEN_CLICKS - 1)
-      expect(firstPotentialClickAction.validate).not.toHaveBeenCalled()
+      expect(firstClick.validate).not.toHaveBeenCalled()
       clock.tick(1)
-      expect(firstPotentialClickAction.validate).toHaveBeenCalled()
+      expect(firstClick.validate).toHaveBeenCalled()
     })
 
-    it('does not finalize until all potential click actions are stopped', () => {
-      const firstPotentialClickAction = createFakePotentialClickAction()
-      clickChain = createRageClickChain(firstPotentialClickAction)
+    it('does not finalize until all clicks are stopped', () => {
+      const firstClick = createFakeClick()
+      clickChain = createRageClickChain(firstClick)
       clock.tick(MAX_DURATION_BETWEEN_CLICKS)
-      expect(firstPotentialClickAction.validate).not.toHaveBeenCalled()
-      firstPotentialClickAction.stop()
-      expect(firstPotentialClickAction.validate).toHaveBeenCalled()
+      expect(firstClick.validate).not.toHaveBeenCalled()
+      firstClick.stop()
+      expect(firstClick.validate).toHaveBeenCalled()
     })
 
     it('finalizes when stopping the click chain', () => {
-      const firstPotentialClickAction = createFakePotentialClickAction({ target: document.documentElement })
-      clickChain = createRageClickChain(firstPotentialClickAction)
-      firstPotentialClickAction.stop()
+      const firstClick = createFakeClick({ target: document.documentElement })
+      clickChain = createRageClickChain(firstClick)
+      firstClick.stop()
       clickChain.stop()
-      expect(firstPotentialClickAction.validate).toHaveBeenCalled()
+      expect(firstClick.validate).toHaveBeenCalled()
     })
   })
 
-  describe('potential click actions similarity', () => {
-    it('does not accept a potential click action if its timestamp is long after the previous one', () => {
-      clickChain = createRageClickChain(createFakePotentialClickAction())
+  describe('clicks similarity', () => {
+    it('does not accept a click if its timestamp is long after the previous one', () => {
+      clickChain = createRageClickChain(createFakeClick())
       clock.tick(MAX_DURATION_BETWEEN_CLICKS)
-      expect(clickChain.tryAppend(createFakePotentialClickAction())).toBe(false)
+      expect(clickChain.tryAppend(createFakeClick())).toBe(false)
     })
 
-    it('does not accept a potential click action if its target is different', () => {
-      clickChain = createRageClickChain(createFakePotentialClickAction({ target: document.documentElement }))
-      expect(clickChain.tryAppend(createFakePotentialClickAction({ target: document.body }))).toBe(false)
+    it('does not accept a click if its target is different', () => {
+      clickChain = createRageClickChain(createFakeClick({ target: document.documentElement }))
+      expect(clickChain.tryAppend(createFakeClick({ target: document.body }))).toBe(false)
     })
 
-    it('does not accept a potential click action if its location is far from the previous one', () => {
-      clickChain = createRageClickChain(createFakePotentialClickAction({ clientX: 100, clientY: 100 }))
+    it('does not accept a click if its location is far from the previous one', () => {
+      clickChain = createRageClickChain(createFakeClick({ clientX: 100, clientY: 100 }))
       expect(
-        clickChain.tryAppend(
-          createFakePotentialClickAction({ clientX: 100, clientY: 100 + MAX_DISTANCE_BETWEEN_CLICKS + 1 })
-        )
+        clickChain.tryAppend(createFakeClick({ clientX: 100, clientY: 100 + MAX_DISTANCE_BETWEEN_CLICKS + 1 }))
       ).toBe(false)
     })
 
-    it('considers potential click actions relative to the previous one', () => {
-      clickChain = createRageClickChain(createFakePotentialClickAction())
+    it('considers clicks relative to the previous one', () => {
+      clickChain = createRageClickChain(createFakeClick())
       clock.tick(MAX_DURATION_BETWEEN_CLICKS - 1)
-      clickChain.tryAppend(createFakePotentialClickAction())
+      clickChain.tryAppend(createFakeClick())
       clock.tick(MAX_DURATION_BETWEEN_CLICKS - 1)
-      expect(clickChain.tryAppend(createFakePotentialClickAction())).toBe(true)
+      expect(clickChain.tryAppend(createFakeClick())).toBe(true)
     })
   })
 
   describe('when rage is detected', () => {
-    it('discards individual potential click actions', () => {
-      const potentialClickActions = [
-        createFakePotentialClickAction(),
-        createFakePotentialClickAction(),
-        createFakePotentialClickAction(),
-      ]
-      createValidatedRageClickChain(potentialClickActions)
-      potentialClickActions.forEach((action) => expect(action.discard).toHaveBeenCalled())
+    it('discards individual clicks', () => {
+      const clicks = [createFakeClick(), createFakeClick(), createFakeClick()]
+      createValidatedRageClickChain(clicks)
+      clicks.forEach((click) => expect(click.discard).toHaveBeenCalled())
     })
 
-    it('uses a clone of the first action to represent the rage click action', () => {
-      const potentialClickActions = [
-        createFakePotentialClickAction(),
-        createFakePotentialClickAction(),
-        createFakePotentialClickAction(),
-      ]
-      createValidatedRageClickChain(potentialClickActions)
-      expect(potentialClickActions[0].clonedAction).toBeTruthy()
-      expect(potentialClickActions[0].clonedAction?.validate).toHaveBeenCalled()
+    it('uses a clone of the first click to represent the rage click', () => {
+      const clicks = [createFakeClick(), createFakeClick(), createFakeClick()]
+      createValidatedRageClickChain(clicks)
+      expect(clicks[0].clonedClick).toBeTruthy()
+      expect(clicks[0].clonedClick?.validate).toHaveBeenCalled()
     })
 
-    it('the rage click action should have a "rage" frustration', () => {
-      const potentialClickActions = [
-        createFakePotentialClickAction(),
-        createFakePotentialClickAction(),
-        createFakePotentialClickAction(),
-      ]
-      createValidatedRageClickChain(potentialClickActions)
+    it('the rage click should have a "rage" frustration', () => {
+      const clicks = [createFakeClick(), createFakeClick(), createFakeClick()]
+      createValidatedRageClickChain(clicks)
       const expectedFrustrations = new Set()
       expectedFrustrations.add(FrustrationType.RAGE)
-      expect(potentialClickActions[0].clonedAction?.getFrustrations()).toEqual(expectedFrustrations)
+      expect(clicks[0].clonedClick?.getFrustrations()).toEqual(expectedFrustrations)
     })
 
-    it('the rage click action should contains other potential click actions frustration', () => {
-      const potentialClickActions = [
-        createFakePotentialClickAction(),
-        createFakePotentialClickAction(),
-        createFakePotentialClickAction(),
-      ]
-      potentialClickActions[1].addFrustration(FrustrationType.DEAD)
-      createValidatedRageClickChain(potentialClickActions)
-      expect(potentialClickActions[0].clonedAction?.getFrustrations().has(FrustrationType.RAGE)).toBe(true)
+    it('the rage click should contains other clicks frustration', () => {
+      const clicks = [createFakeClick(), createFakeClick(), createFakeClick()]
+      clicks[1].addFrustration(FrustrationType.DEAD)
+      createValidatedRageClickChain(clicks)
+      expect(clicks[0].clonedClick?.getFrustrations().has(FrustrationType.RAGE)).toBe(true)
     })
 
-    function createValidatedRageClickChain(potentialClickActions: PotentialClickAction[]) {
-      clickChain = createRageClickChain(potentialClickActions[0])
-      potentialClickActions.slice(1).forEach((action) => clickChain!.tryAppend(action))
-      potentialClickActions.forEach((action) => action.stop())
+    function createValidatedRageClickChain(clicks: Click[]) {
+      clickChain = createRageClickChain(clicks[0])
+      clicks.slice(1).forEach((click) => clickChain!.tryAppend(click))
+      clicks.forEach((click) => click.stop())
       clock.tick(MAX_DURATION_BETWEEN_CLICKS)
     }
   })
@@ -171,53 +152,41 @@ describe('isRage', () => {
   })
 
   it('considers as rage three clicks happening at the same time', () => {
-    expect(
-      isRage([createFakePotentialClickAction(), createFakePotentialClickAction(), createFakePotentialClickAction()])
-    ).toBe(true)
+    expect(isRage([createFakeClick(), createFakeClick(), createFakeClick()])).toBe(true)
   })
 
   it('does not consider as rage two clicks happening at the same time', () => {
-    expect(isRage([createFakePotentialClickAction(), createFakePotentialClickAction()])).toBe(false)
+    expect(isRage([createFakeClick(), createFakeClick()])).toBe(false)
   })
 
-  it('does not consider as rage the first potential click action is long before two fast clicks', () => {
-    const potentialClickActions = [createFakePotentialClickAction()]
+  it('does not consider as rage a first click long before two fast clicks', () => {
+    const clicks = [createFakeClick()]
     clock.tick(ONE_SECOND * 2)
-    potentialClickActions.push(createFakePotentialClickAction(), createFakePotentialClickAction())
+    clicks.push(createFakeClick(), createFakeClick())
 
-    expect(isRage(potentialClickActions)).toBe(false)
+    expect(isRage(clicks)).toBe(false)
   })
 
-  it('considers as rage even if the first potential click action is long before three fast clicks', () => {
-    const potentialClickActions = [createFakePotentialClickAction()]
+  it('considers as rage a first click long before three fast clicks', () => {
+    const clicks = [createFakeClick()]
     clock.tick(ONE_SECOND * 2)
-    potentialClickActions.push(
-      createFakePotentialClickAction(),
-      createFakePotentialClickAction(),
-      createFakePotentialClickAction()
-    )
+    clicks.push(createFakeClick(), createFakeClick(), createFakeClick())
 
-    expect(isRage(potentialClickActions)).toBe(true)
+    expect(isRage(clicks)).toBe(true)
   })
 
-  it('considers as rage even if the last potential click action is long after three fast clicks', () => {
-    const potentialClickActions = [
-      createFakePotentialClickAction(),
-      createFakePotentialClickAction(),
-      createFakePotentialClickAction(),
-    ]
+  it('considers as rage three fast clicks long before a last click', () => {
+    const clicks = [createFakeClick(), createFakeClick(), createFakeClick()]
     clock.tick(ONE_SECOND * 2)
-    potentialClickActions.push(createFakePotentialClickAction())
+    clicks.push(createFakeClick())
 
-    expect(isRage(potentialClickActions)).toBe(true)
+    expect(isRage(clicks)).toBe(true)
   })
 })
 
-function createFakePotentialClickAction(
-  eventPartial?: Partial<MouseEvent>
-): PotentialClickAction & { clonedAction?: PotentialClickAction } {
+function createFakeClick(eventPartial?: Partial<MouseEvent>): Click & { clonedClick?: Click } {
   let onStopCallback = noop
-  let clonedAction: PotentialClickAction | undefined
+  let clonedClick: Click | undefined
   const frustrations = new Set<FrustrationType>()
   return {
     base: {
@@ -228,7 +197,7 @@ function createFakePotentialClickAction(
         timeStamp: timeStampNow(),
         ...eventPartial,
       }),
-    } as PotentialClickAction['base'],
+    } as Click['base'],
     onStop: (newOnStopCallback) => {
       onStopCallback = newOnStopCallback
     },
@@ -236,16 +205,16 @@ function createFakePotentialClickAction(
       onStopCallback()
     },
     clone: () => {
-      clonedAction = createFakePotentialClickAction(eventPartial)
-      return clonedAction
+      clonedClick = createFakeClick(eventPartial)
+      return clonedClick
     },
     discard: jasmine.createSpy(),
     validate: jasmine.createSpy(),
     addFrustration: (frustration) => frustrations.add(frustration),
     getFrustrations: () => frustrations,
 
-    get clonedAction() {
-      return clonedAction
+    get clonedClick() {
+      return clonedClick
     },
   }
 }

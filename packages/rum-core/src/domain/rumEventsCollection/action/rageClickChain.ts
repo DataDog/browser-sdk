@@ -1,9 +1,9 @@
 import { monitor, ONE_SECOND, timeStampNow } from '@datadog/browser-core'
 import { FrustrationType } from '../../../rawRumEvent.types'
-import type { PotentialClickAction } from './trackClickActions'
+import type { Click } from './trackClickActions'
 
 export interface RageClickChain {
-  tryAppend: (potentialClickAction: PotentialClickAction) => boolean
+  tryAppend: (click: Click) => boolean
   stop: () => void
 }
 
@@ -11,70 +11,64 @@ export const MAX_DURATION_BETWEEN_CLICKS = ONE_SECOND
 export const MAX_DISTANCE_BETWEEN_CLICKS = 100
 
 const enum RageClickChainStatus {
-  WaitingForMorePotentialClickActions,
-  WaitingForPotentialClickActionsToStop,
+  WaitingForMoreClicks,
+  WaitingForClicksToStop,
   Finalized,
 }
 
-export function createRageClickChain(firstPotentialClickAction: PotentialClickAction): RageClickChain {
-  const bufferedPotentialClickActions: PotentialClickAction[] = []
-  let stoppedPotentialClickActionsCount = 0
-  let status = RageClickChainStatus.WaitingForMorePotentialClickActions
+export function createRageClickChain(firstClick: Click): RageClickChain {
+  const bufferedClicks: Click[] = []
+  let stoppedClicksCount = 0
+  let status = RageClickChainStatus.WaitingForMoreClicks
   let timeout: number | undefined
-  const potentialRageClickAction = firstPotentialClickAction.clone()
+  const rageClick = firstClick.clone()
 
-  function dontAcceptMorePotentialClickAction() {
-    if (status === RageClickChainStatus.WaitingForMorePotentialClickActions) {
-      status = RageClickChainStatus.WaitingForPotentialClickActionsToStop
+  function dontAcceptMoreClick() {
+    if (status === RageClickChainStatus.WaitingForMoreClicks) {
+      status = RageClickChainStatus.WaitingForClicksToStop
       tryFinalize()
     }
   }
 
   function tryFinalize() {
-    if (
-      status === RageClickChainStatus.WaitingForPotentialClickActionsToStop &&
-      stoppedPotentialClickActionsCount === bufferedPotentialClickActions.length
-    ) {
+    if (status === RageClickChainStatus.WaitingForClicksToStop && stoppedClicksCount === bufferedClicks.length) {
       status = RageClickChainStatus.Finalized
-      finalizePotentialClickActions(bufferedPotentialClickActions, potentialRageClickAction)
+      finalizeClicks(bufferedClicks, rageClick)
     }
   }
 
-  function appendPotentialClickAction(potentialClickAction: PotentialClickAction) {
-    potentialClickAction.onStop(() => {
-      stoppedPotentialClickActionsCount += 1
+  function appendClick(click: Click) {
+    click.onStop(() => {
+      stoppedClicksCount += 1
       tryFinalize()
     })
-    bufferedPotentialClickActions.push(potentialClickAction)
-    timeout = setTimeout(monitor(dontAcceptMorePotentialClickAction), MAX_DURATION_BETWEEN_CLICKS)
+    bufferedClicks.push(click)
+    timeout = setTimeout(monitor(dontAcceptMoreClick), MAX_DURATION_BETWEEN_CLICKS)
   }
 
-  appendPotentialClickAction(firstPotentialClickAction)
+  appendClick(firstClick)
   return {
-    tryAppend: (potentialClickAction) => {
+    tryAppend: (click) => {
       clearTimeout(timeout)
 
-      if (status !== RageClickChainStatus.WaitingForMorePotentialClickActions) {
+      if (status !== RageClickChainStatus.WaitingForMoreClicks) {
         return false
       }
 
       if (
-        bufferedPotentialClickActions.length > 0 &&
-        !areEventsSimilar(
-          bufferedPotentialClickActions[bufferedPotentialClickActions.length - 1].base.event,
-          potentialClickAction.base.event
-        )
+        bufferedClicks.length > 0 &&
+        !areEventsSimilar(bufferedClicks[bufferedClicks.length - 1].base.event, click.base.event)
       ) {
-        dontAcceptMorePotentialClickAction()
+        dontAcceptMoreClick()
         return false
       }
 
-      appendPotentialClickAction(potentialClickAction)
+      appendClick(click)
       return true
     },
     stop: () => {
       clearTimeout(timeout)
-      dontAcceptMorePotentialClickAction()
+      dontAcceptMoreClick()
     },
   }
 }
@@ -94,38 +88,33 @@ function mouseEventDistance(origin: MouseEvent, other: MouseEvent) {
   return Math.sqrt(Math.pow(origin.clientX - other.clientX, 2) + Math.pow(origin.clientY - other.clientY, 2))
 }
 
-function finalizePotentialClickActions(
-  potentialClickActions: PotentialClickAction[],
-  potentialRageClickAction: PotentialClickAction
-) {
-  if (isRage(potentialClickActions)) {
-    // If it should be be considered as a rage click, discard individual potential click actions and
-    // validate the potential rage click action.
-    potentialClickActions.forEach((potentialClickAction) => potentialClickAction.discard())
+function finalizeClicks(clicks: Click[], rageClick: Click) {
+  if (isRage(clicks)) {
+    // If it should be be considered as a rage click, discard individual clicks and
+    // validate the rage click.
+    clicks.forEach((click) => click.discard())
 
-    potentialClickActions.forEach((potentialClickAction) => {
-      potentialClickAction.getFrustrations().forEach((frustration) => {
-        potentialRageClickAction.addFrustration(frustration)
+    clicks.forEach((click) => {
+      click.getFrustrations().forEach((frustration) => {
+        rageClick.addFrustration(frustration)
       })
     })
-    potentialRageClickAction.addFrustration(FrustrationType.RAGE)
-    potentialRageClickAction.validate(timeStampNow())
+    rageClick.addFrustration(FrustrationType.RAGE)
+    rageClick.validate(timeStampNow())
   } else {
-    // Otherwise, discard the potential rage click action and validate the individual potential
-    // click actions
-    potentialRageClickAction.discard()
-    potentialClickActions.forEach((potentialClickAction) => potentialClickAction.validate())
+    // Otherwise, discard the rage click and validate the individual clicks
+    rageClick.discard()
+    clicks.forEach((click) => click.validate())
   }
 }
 
 const MIN_CLICKS_PER_SECOND_TO_CONSIDER_RAGE = 3
 
-export function isRage(potentialClickActions: PotentialClickAction[]) {
+export function isRage(clicks: Click[]) {
   // TODO: this condition should be improved to avoid reporting 3-click selection as rage click
-  for (let i = 0; i < potentialClickActions.length - (MIN_CLICKS_PER_SECOND_TO_CONSIDER_RAGE - 1); i += 1) {
+  for (let i = 0; i < clicks.length - (MIN_CLICKS_PER_SECOND_TO_CONSIDER_RAGE - 1); i += 1) {
     if (
-      potentialClickActions[i + MIN_CLICKS_PER_SECOND_TO_CONSIDER_RAGE - 1].base.event.timeStamp -
-        potentialClickActions[i].base.event.timeStamp <=
+      clicks[i + MIN_CLICKS_PER_SECOND_TO_CONSIDER_RAGE - 1].base.event.timeStamp - clicks[i].base.event.timeStamp <=
       ONE_SECOND
     ) {
       return true
