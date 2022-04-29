@@ -6,9 +6,10 @@
  * In this case, some display messages can be sent by the other SDK
  * but we should be safe from infinite loop nonetheless.
  */
-export const display: Pick<typeof console, 'debug' | 'log' | 'warn' | 'error'> = {
+export const display: Pick<typeof console, 'debug' | 'info' | 'log' | 'warn' | 'error'> = {
   debug: console.debug.bind(console),
   log: console.log.bind(console),
+  info: console.info.bind(console),
   warn: console.warn.bind(console),
   error: console.error.bind(console),
 }
