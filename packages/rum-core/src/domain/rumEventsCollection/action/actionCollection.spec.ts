@@ -32,6 +32,7 @@ describe('actionCollection', () => {
         longTaskCount: 10,
         resourceCount: 10,
       },
+      frustrationTypes: [],
       duration: 100 as Duration,
       id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
       name: 'foo',
@@ -48,6 +49,7 @@ describe('actionCollection', () => {
         },
         id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
         loading_time: (100 * 1e6) as ServerDuration,
+        frustration_type: [],
         long_task: {
           count: 10,
         },

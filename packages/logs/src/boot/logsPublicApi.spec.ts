@@ -1,12 +1,5 @@
 import type { Context } from '@datadog/browser-core'
-import {
-  monitor,
-  ONE_SECOND,
-  display,
-  ErrorSource,
-  updateExperimentalFeatures,
-  resetExperimentalFeatures,
-} from '@datadog/browser-core'
+import { monitor, ONE_SECOND, display, ErrorSource } from '@datadog/browser-core'
 import type { Clock } from '../../../core/test/specHelper'
 import { deleteEventBridgeStub, initEventBridgeStub, mockClock } from '../../../core/test/specHelper'
 import type { HybridInitConfiguration, LogsInitConfiguration } from '../domain/configuration'
@@ -216,10 +209,6 @@ describe('logs entry', () => {
       LOGS.init(DEFAULT_INIT_CONFIGURATION)
     })
 
-    afterEach(() => {
-      resetExperimentalFeatures()
-    })
-
     it('logs a message', () => {
       LOGS.logger.log('message')
 
@@ -234,15 +223,9 @@ describe('logs entry', () => {
         message: {
           message: 'message',
           status: StatusType.info,
+          origin: ErrorSource.LOGGER,
         },
       })
-    })
-
-    it('logs a message with "logger" origin when ff forward-logs is enabled', () => {
-      updateExperimentalFeatures(['forward-logs'])
-      LOGS.logger.log('message')
-
-      expect(getLoggedMessage(0).message.origin).toEqual(ErrorSource.LOGGER)
     })
 
     it('returns cloned initial configuration', () => {
@@ -296,6 +279,7 @@ describe('logs entry', () => {
 
         expect(sendLogsSpy).not.toHaveBeenCalled()
         expect(display.log).toHaveBeenCalledWith('error: message', {
+          origin: 'logger',
           error: { origin: 'logger' },
           logger: { name: 'foo' },
         })
@@ -310,7 +294,7 @@ describe('logs entry', () => {
         logger.debug('message')
 
         expect(sendLogsSpy).toHaveBeenCalled()
-        expect(display.log).toHaveBeenCalledWith('debug: message', { logger: { name: 'foo' } })
+        expect(display.log).toHaveBeenCalledWith('debug: message', { origin: 'logger', logger: { name: 'foo' } })
       })
 
       it('should have their name in their context', () => {

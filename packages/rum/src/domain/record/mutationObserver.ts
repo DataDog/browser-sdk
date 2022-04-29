@@ -311,7 +311,7 @@ function processAttributesMutations(
         continue
       }
       transformedValue = inputValue
-    } else if (attributeValue && typeof attributeValue === 'string') {
+    } else if (typeof attributeValue === 'string') {
       transformedValue = attributeValue
     } else {
       transformedValue = null

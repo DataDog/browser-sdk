@@ -589,10 +589,14 @@ export function requestIdleCallback(callback: () => void, opts?: { timeout?: num
   return () => window.cancelAnimationFrame(id)
 }
 
+export function setToArray<T>(set: Set<T>): T[] {
+  const array: T[] = []
+  set.forEach((item) => array.push(item))
+  return array
+}
+
 export function removeDuplicates<T>(array: T[]) {
-  const deduplicated: T[] = []
   const set = new Set<T>()
   array.forEach((item) => set.add(item))
-  set.forEach((item) => deduplicated.push(item))
-  return deduplicated
+  return setToArray(set)
 }

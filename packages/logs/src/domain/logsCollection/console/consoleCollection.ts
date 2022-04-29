@@ -1,5 +1,5 @@
 import type { Context, ClocksState, ConsoleLog } from '@datadog/browser-core'
-import { ConsoleApiName, ErrorSource, initConsoleObservable, isExperimentalFeatureEnabled } from '@datadog/browser-core'
+import { ConsoleApiName, ErrorSource, initConsoleObservable } from '@datadog/browser-core'
 import type { LogsEvent } from '../../../logsEvent.types'
 import type { LogsConfiguration } from '../../configuration'
 import { StatusType } from '../../logger'
@@ -24,17 +24,14 @@ export function startConsoleCollection(configuration: LogsConfiguration, sender:
   const consoleSubscription = consoleObservable.subscribe(reportConsoleLog)
 
   function reportConsoleLog(log: ConsoleLog) {
-    let messageContext: Partial<LogsEvent> = {}
-    if (log.api === ConsoleApiName.error) {
-      messageContext = {
-        error: {
-          origin: ErrorSource.CONSOLE, // Todo: Remove in the next major release
-          stack: log.stack,
-        },
-      }
+    const messageContext: Partial<LogsEvent> = {
+      origin: ErrorSource.CONSOLE,
     }
-    if (isExperimentalFeatureEnabled('forward-logs')) {
-      messageContext.origin = ErrorSource.CONSOLE
+    if (log.api === ConsoleApiName.error) {
+      messageContext.error = {
+        origin: ErrorSource.CONSOLE, // Todo: Remove in the next major release
+        stack: log.stack,
+      }
     }
     sender.sendToHttp(log.message, messageContext, LogStatusForApi[log.api])
   }
