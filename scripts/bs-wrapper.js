@@ -17,8 +17,9 @@
 const { spawnCommand, printLog, logAndExit, executeCommand, fetch } = require('./utils')
 
 const AVAILABILITY_CHECK_DELAY = 30_000
-// eslint-disable-next-line max-len
-const RUNNING_BUILDS_API = `https://${process.env.BS_USERNAME}:${process.env.BS_ACCESS_KEY}@api.browserstack.com/automate/builds.json?status=running`
+const BS_USERNAME = process.env.BS_USERNAME
+const BS_ACCESS_KEY = process.env.BS_ACCESS_KEY
+const BS_BUILD_URL = 'https://api.browserstack.com/automate/builds.json?status=running'
 
 async function main() {
   if (await executeCommand('git tag --points-at HEAD')) {
@@ -39,7 +40,11 @@ async function waitForAvailability() {
 }
 
 async function hasRunningBuild() {
-  return (await fetch(RUNNING_BUILDS_API)) !== '[]'
+  return (
+    (await fetch(BS_BUILD_URL, {
+      headers: { Authorization: `Basic ${Buffer.from(`${BS_USERNAME}:${BS_ACCESS_KEY}`).toString('base64')}` },
+    })) !== '[]'
+  )
 }
 
 function runTests() {

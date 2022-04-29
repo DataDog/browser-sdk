@@ -3,7 +3,7 @@ const fs = require('fs/promises')
 const execute = util.promisify(require('child_process').exec)
 const spawn = require('child_process').spawn
 // node-fetch v3.x only support ESM syntax.
-// Use dynamic import until we use change our node configuration from commonJS to ESM
+// Todo: Remove node-fetch when node v18 LTS is released with fetch out of the box
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args))
 
 const CI_FILE = '.gitlab-ci.yml'
@@ -94,8 +94,8 @@ function printLog(...params) {
   console.log(greenColor, ...params, resetColor)
 }
 
-async function fetchWrapper(url) {
-  const response = await fetch(url)
+async function fetchWrapper(url, options) {
+  const response = await fetch(url, options)
   if (!response.ok) {
     throw new Error(`HTTP Error Response: ${response.status} ${response.statusText}`)
   }
