@@ -51,7 +51,7 @@ describe('logger collection', () => {
     expect(rawLogsEvents[0].rawLogsEvent.date).toEqual(FAKE_DATE)
   })
 
-  fdescribe('when handle type is set to "console"', () => {
+  describe('when handle type is set to "console"', () => {
     beforeEach(() => {
       logger.setHandler(HandlerType.console)
       spyOn(display, 'debug')
