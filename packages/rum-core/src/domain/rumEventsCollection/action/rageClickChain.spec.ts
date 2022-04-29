@@ -189,15 +189,13 @@ function createFakeClick(eventPartial?: Partial<MouseEvent>): Click & { clonedCl
   let clonedClick: Click | undefined
   const frustrations = new Set<FrustrationType>()
   return {
-    base: {
-      event: createNewEvent('click', {
-        element: document.body,
-        clientX: 100,
-        clientY: 100,
-        timeStamp: timeStampNow(),
-        ...eventPartial,
-      }),
-    } as Click['base'],
+    event: createNewEvent('click', {
+      element: document.body,
+      clientX: 100,
+      clientY: 100,
+      timeStamp: timeStampNow(),
+      ...eventPartial,
+    }),
     onStop: (newOnStopCallback) => {
       onStopCallback = newOnStopCallback
     },

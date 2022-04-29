@@ -57,7 +57,7 @@ export function createRageClickChain(firstClick: Click): RageClickChain {
 
       if (
         bufferedClicks.length > 0 &&
-        !areEventsSimilar(bufferedClicks[bufferedClicks.length - 1].base.event, click.base.event)
+        !areEventsSimilar(bufferedClicks[bufferedClicks.length - 1].event, click.event)
       ) {
         dontAcceptMoreClick()
         return false
@@ -114,7 +114,7 @@ export function isRage(clicks: Click[]) {
   // TODO: this condition should be improved to avoid reporting 3-click selection as rage click
   for (let i = 0; i < clicks.length - (MIN_CLICKS_PER_SECOND_TO_CONSIDER_RAGE - 1); i += 1) {
     if (
-      clicks[i + MIN_CLICKS_PER_SECOND_TO_CONSIDER_RAGE - 1].base.event.timeStamp - clicks[i].base.event.timeStamp <=
+      clicks[i + MIN_CLICKS_PER_SECOND_TO_CONSIDER_RAGE - 1].event.timeStamp - clicks[i].event.timeStamp <=
       ONE_SECOND
     ) {
       return true

@@ -232,7 +232,7 @@ function newClick(
   }
 
   return {
-    base,
+    event: base.event,
     addFrustration,
     stop,
 
