@@ -42,9 +42,15 @@ export type RumActionEvent = CommonProperties & {
       [k: string]: unknown
     }
     /**
-     * Action frustration types
+     * Action frustration properties
      */
-    readonly frustration_type?: ('rage' | 'dead' | 'error')[]
+    readonly frustration?: {
+      /**
+       * Action frustration types
+       */
+      readonly type: ('rage' | 'dead' | 'error')[]
+      [k: string]: unknown
+    }
     /**
      * Properties of the errors of the action
      */
@@ -565,6 +571,16 @@ export type RumViewEvent = CommonProperties & {
     readonly resource: {
       /**
        * Number of resources that occurred on the view
+       */
+      readonly count: number
+      [k: string]: unknown
+    }
+    /**
+     * Properties of the frustrations of the view
+     */
+    readonly frustration?: {
+      /**
+       * Number of frustrations that occurred on the view
        */
       readonly count: number
       [k: string]: unknown

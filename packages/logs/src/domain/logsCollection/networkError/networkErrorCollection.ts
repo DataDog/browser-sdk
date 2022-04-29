@@ -9,12 +9,13 @@ import {
   monitor,
   noop,
 } from '@datadog/browser-core'
-import type { LogsEvent } from '../../../logsEvent.types'
+import type { RawNetworkLogsEvent } from '../../../rawLogsEvent.types'
 import type { LogsConfiguration } from '../../configuration'
+import type { LifeCycle } from '../../lifeCycle'
+import { LifeCycleEventType } from '../../lifeCycle'
 import { StatusType } from '../../logger'
-import type { Sender } from '../../sender'
 
-export function startNetworkErrorCollection(configuration: LogsConfiguration, sender: Sender) {
+export function startNetworkErrorCollection(configuration: LogsConfiguration, lifeCycle: LifeCycle) {
   const xhrSubscription = initXhrObservable().subscribe((context) => {
     if (context.state === 'complete') {
       handleCompleteRequest(RequestType.XHR, context)
@@ -38,21 +39,23 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, se
     }
 
     function onResponseDataAvailable(responseData: unknown) {
-      const messageContext: Partial<LogsEvent> = {
-        date: request.startClocks.timeStamp,
-        error: {
-          origin: ErrorSource.NETWORK, // Todo: Remove in the next major release
-          stack: (responseData as string) || 'Failed to load',
+      lifeCycle.notify<RawNetworkLogsEvent>(LifeCycleEventType.RAW_LOG_COLLECTED, {
+        rawLogsEvent: {
+          message: `${format(type)} error ${request.method} ${request.url}`,
+          date: request.startClocks.timeStamp,
+          error: {
+            origin: ErrorSource.NETWORK, // Todo: Remove in the next major release
+            stack: (responseData as string) || 'Failed to load',
+          },
+          http: {
+            method: request.method as any, // Cast resource method because of case mismatch cf issue RUMF-1152
+            status_code: request.status,
+            url: request.url,
+          },
+          status: StatusType.error,
+          origin: ErrorSource.NETWORK,
         },
-        http: {
-          method: request.method as any, // Cast resource method because of case mismatch cf issue RUMF-1152
-          status_code: request.status,
-          url: request.url,
-        },
-        origin: ErrorSource.NETWORK,
-      }
-
-      sender.sendToHttp(`${format(type)} error ${request.method} ${request.url}`, messageContext, StatusType.error)
+      })
     }
   }
 

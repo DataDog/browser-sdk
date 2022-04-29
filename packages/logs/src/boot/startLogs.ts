@@ -7,18 +7,23 @@ import {
   startInternalMonitoring,
   startBatchWithReplica,
 } from '@datadog/browser-core'
-import type { LogsMessage } from '../domain/logger'
-import type { LogsSessionManager } from '../domain/logsSessionManager'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { LogsConfiguration } from '../domain/configuration'
-import { buildAssemble, getRUMInternalContext } from '../domain/assemble'
-import type { Sender } from '../domain/sender'
+import { startLogsAssembly, getRUMInternalContext } from '../domain/assembly'
 import { startConsoleCollection } from '../domain/logsCollection/console/consoleCollection'
 import { startReportCollection } from '../domain/logsCollection/report/reportCollection'
 import { startNetworkErrorCollection } from '../domain/logsCollection/networkError/networkErrorCollection'
 import { startRuntimeErrorCollection } from '../domain/logsCollection/runtimeError/runtimeErrorCollection'
+import { LifeCycle } from '../domain/lifeCycle'
+import { startLoggerCollection } from '../domain/logsCollection/logger/loggerCollection'
+import type { CommonContext } from '../rawLogsEvent.types'
+import { startLogsBatch } from '../transport/startLogsBatch'
+import { startLogsBridge } from '../transport/startLogsBridge'
+import type { Logger } from '../domain/logger'
 
-export function startLogs(configuration: LogsConfiguration, sender: Sender) {
+export function startLogs(configuration: LogsConfiguration, getCommonContext: () => CommonContext, mainLogger: Logger) {
+  const lifeCycle = new LifeCycle()
+
   const internalMonitoring = startLogsInternalMonitoring(configuration)
   internalMonitoring.setExternalContextProvider(() =>
     combine({ session_id: session.findTrackedSession()?.id }, getRUMInternalContext(), {
@@ -40,17 +45,28 @@ export function startLogs(configuration: LogsConfiguration, sender: Sender) {
     },
   }))
 
-  startNetworkErrorCollection(configuration, sender)
-  startRuntimeErrorCollection(configuration, sender)
-  startConsoleCollection(configuration, sender)
-  startReportCollection(configuration, sender)
+  startNetworkErrorCollection(configuration, lifeCycle)
+  startRuntimeErrorCollection(configuration, lifeCycle)
+  startConsoleCollection(configuration, lifeCycle)
+  startReportCollection(configuration, lifeCycle)
+  const { handleLog } = startLoggerCollection(lifeCycle)
 
   const session =
     areCookiesAuthorized(configuration.cookieOptions) && !canUseEventBridge()
       ? startLogsSessionManager(configuration)
       : startLogsSessionManagerStub(configuration)
 
-  return doStartLogs(configuration, session, sender)
+  startLogsAssembly(session, configuration, lifeCycle, getCommonContext, mainLogger)
+
+  if (!canUseEventBridge()) {
+    startLogsBatch(configuration, lifeCycle)
+  } else {
+    startLogsBridge(lifeCycle)
+  }
+
+  return {
+    handleLog,
+  }
 }
 
 function startLogsInternalMonitoring(configuration: LogsConfiguration) {
@@ -76,30 +92,4 @@ function startLogsInternalMonitoring(configuration: LogsConfiguration) {
     internalMonitoring.telemetryEventObservable.subscribe((event) => monitoringBatch.add(event))
   }
   return internalMonitoring
-}
-
-export function doStartLogs(configuration: LogsConfiguration, sessionManager: LogsSessionManager, sender: Sender) {
-  const assemble = buildAssemble(sessionManager, configuration, sender)
-
-  let onLogEventCollected: (message: Context) => void
-  if (canUseEventBridge()) {
-    const bridge = getEventBridge<'log', Context>()!
-    onLogEventCollected = (message) => bridge.send('log', message)
-  } else {
-    const batch = startBatchWithReplica(
-      configuration,
-      configuration.logsEndpointBuilder,
-      configuration.replica?.logsEndpointBuilder
-    )
-    onLogEventCollected = (message) => batch.add(message)
-  }
-
-  return {
-    send: (message: LogsMessage, currentContext: Context) => {
-      const contextualizedMessage = assemble(message, currentContext)
-      if (contextualizedMessage) {
-        onLogEventCollected(contextualizedMessage)
-      }
-    },
-  }
 }

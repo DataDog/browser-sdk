@@ -140,6 +140,9 @@ export interface RawRumActionEvent {
     id: string
     type: ActionType
     loading_time?: ServerDuration
+    frustration?: {
+      type: FrustrationType[]
+    }
     error?: Count
     long_task?: Count
     resource?: Count
@@ -155,6 +158,12 @@ export interface RawRumActionEvent {
 export const enum ActionType {
   CLICK = 'click',
   CUSTOM = 'custom',
+}
+
+export const enum FrustrationType {
+  RAGE = 'rage',
+  ERROR = 'error',
+  DEAD = 'dead',
 }
 
 export type RawRumEvent =

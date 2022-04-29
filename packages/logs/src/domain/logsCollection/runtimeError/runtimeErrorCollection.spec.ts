@@ -1,20 +1,28 @@
 import { ErrorSource, Observable } from '@datadog/browser-core'
 import type { RawError, RelativeTime, TimeStamp } from '@datadog/browser-core'
+import type { RawRuntimeLogsEvent } from '../../../rawLogsEvent.types'
 import type { LogsConfiguration } from '../../configuration'
-import { createSender } from '../../sender'
 import { StatusType } from '../../logger'
+import type { RawLogsEventCollectedData } from '../../lifeCycle'
+import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { startRuntimeErrorCollection } from './runtimeErrorCollection'
 
 describe('runtime error collection', () => {
   let rawErrorObservable: Observable<RawError>
-  let sendLogSpy: jasmine.Spy
+  let lifeCycle: LifeCycle
   let stopRuntimeErrorCollection: () => void
+  let rawLogsEvents: Array<RawLogsEventCollectedData<RawRuntimeLogsEvent>>
+
   beforeEach(() => {
+    rawLogsEvents = []
     rawErrorObservable = new Observable<RawError>()
-    sendLogSpy = jasmine.createSpy('sendLogSpy')
+    lifeCycle = new LifeCycle()
+    lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLogsEvent) =>
+      rawLogsEvents.push(rawLogsEvent as RawLogsEventCollectedData<RawRuntimeLogsEvent>)
+    )
     ;({ stop: stopRuntimeErrorCollection } = startRuntimeErrorCollection(
       {} as LogsConfiguration,
-      createSender(sendLogSpy),
+      lifeCycle,
       rawErrorObservable
     ))
   })
@@ -31,15 +39,12 @@ describe('runtime error collection', () => {
       type: 'Error',
     })
 
-    expect(sendLogSpy).toHaveBeenCalled()
-    expect(sendLogSpy.calls.first().args).toEqual([
-      {
-        date: 123456789 as TimeStamp,
-        error: { origin: ErrorSource.SOURCE, kind: 'Error', stack: undefined },
-        message: 'error!',
-        status: StatusType.error,
-        origin: ErrorSource.SOURCE,
-      },
-    ])
+    expect(rawLogsEvents[0].rawLogsEvent).toEqual({
+      date: 123456789 as TimeStamp,
+      error: { origin: ErrorSource.SOURCE, kind: 'Error', stack: undefined },
+      message: 'error!',
+      status: StatusType.error,
+      origin: ErrorSource.SOURCE,
+    })
   })
 })

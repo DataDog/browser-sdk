@@ -1,9 +1,10 @@
 import type { Context, ClocksState, ConsoleLog } from '@datadog/browser-core'
-import { ConsoleApiName, ErrorSource, initConsoleObservable } from '@datadog/browser-core'
-import type { LogsEvent } from '../../../logsEvent.types'
+import { timeStampNow, ConsoleApiName, ErrorSource, initConsoleObservable } from '@datadog/browser-core'
+import type { RawConsoleLogsEvent } from '../../../rawLogsEvent.types'
 import type { LogsConfiguration } from '../../configuration'
+import type { LifeCycle } from '../../lifeCycle'
+import { LifeCycleEventType } from '../../lifeCycle'
 import { StatusType } from '../../logger'
-import type { Sender } from '../../sender'
 
 export interface ProvidedError {
   startClocks: ClocksState
@@ -19,22 +20,24 @@ const LogStatusForApi = {
   [ConsoleApiName.warn]: StatusType.warn,
   [ConsoleApiName.error]: StatusType.error,
 }
-export function startConsoleCollection(configuration: LogsConfiguration, sender: Sender) {
-  const consoleObservable = initConsoleObservable(configuration.forwardConsoleLogs)
-  const consoleSubscription = consoleObservable.subscribe(reportConsoleLog)
-
-  function reportConsoleLog(log: ConsoleLog) {
-    const messageContext: Partial<LogsEvent> = {
-      origin: ErrorSource.CONSOLE,
-    }
-    if (log.api === ConsoleApiName.error) {
-      messageContext.error = {
-        origin: ErrorSource.CONSOLE, // Todo: Remove in the next major release
-        stack: log.stack,
-      }
-    }
-    sender.sendToHttp(log.message, messageContext, LogStatusForApi[log.api])
-  }
+export function startConsoleCollection(configuration: LogsConfiguration, lifeCycle: LifeCycle) {
+  const consoleSubscription = initConsoleObservable(configuration.forwardConsoleLogs).subscribe((log: ConsoleLog) => {
+    lifeCycle.notify<RawConsoleLogsEvent>(LifeCycleEventType.RAW_LOG_COLLECTED, {
+      rawLogsEvent: {
+        date: timeStampNow(),
+        message: log.message,
+        origin: ErrorSource.CONSOLE,
+        error:
+          log.api === ConsoleApiName.error
+            ? {
+                origin: ErrorSource.CONSOLE, // Todo: Remove in the next major release
+                stack: log.stack,
+              }
+            : undefined,
+        status: LogStatusForApi[log.api],
+      },
+    })
+  })
 
   return {
     stop: () => {

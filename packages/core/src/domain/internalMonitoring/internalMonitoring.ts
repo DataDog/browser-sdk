@@ -1,7 +1,7 @@
 import type { Context } from '../../tools/context'
 import { display } from '../../tools/display'
 import { toStackTraceString } from '../../tools/error'
-import { assign, combine, jsonStringify } from '../../tools/utils'
+import { assign, combine, jsonStringify, performDraw } from '../../tools/utils'
 import type { Configuration } from '../configuration'
 import { computeStackTrace } from '../tracekit'
 import { Observable } from '../../tools/observable'
@@ -38,7 +38,8 @@ const monitoringConfiguration: {
   debugMode?: boolean
   maxMessagesPerPage: number
   sentMessageCount: number
-} = { maxMessagesPerPage: 0, sentMessageCount: 0 }
+  telemetryEnabled: boolean
+} = { maxMessagesPerPage: 0, sentMessageCount: 0, telemetryEnabled: false }
 
 let onInternalMonitoringMessageCollected: ((message: MonitoringMessage) => void) | undefined
 
@@ -48,9 +49,11 @@ export function startInternalMonitoring(configuration: Configuration): InternalM
   const monitoringMessageObservable = new Observable<MonitoringMessage>()
   const telemetryEventObservable = new Observable<TelemetryEvent & Context>()
 
+  monitoringConfiguration.telemetryEnabled = performDraw(configuration.telemetrySampleRate)
+
   onInternalMonitoringMessageCollected = (message: MonitoringMessage) => {
     monitoringMessageObservable.notify(withContext(message))
-    if (isExperimentalFeatureEnabled('telemetry')) {
+    if (isExperimentalFeatureEnabled('telemetry') && monitoringConfiguration.telemetryEnabled) {
       telemetryEventObservable.notify(toTelemetryEvent(message))
     }
   }
@@ -113,6 +116,7 @@ export function startFakeInternalMonitoring() {
 
 export function resetInternalMonitoring() {
   onInternalMonitoringMessageCollected = undefined
+  monitoringConfiguration.debugMode = undefined
 }
 
 export function monitored<T extends (...params: any[]) => unknown>(
