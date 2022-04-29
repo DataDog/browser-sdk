@@ -32,7 +32,6 @@ export interface RawLoggerLogsEvent extends CommonRawLogsEvent {
 }
 
 export interface RawNetworkLogsEvent extends CommonRawLogsEvent {
-  date: TimeStamp
   origin: typeof ErrorSource.NETWORK
   status: typeof StatusType.error
   error: Error
