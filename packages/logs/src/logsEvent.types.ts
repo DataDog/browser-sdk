@@ -79,7 +79,7 @@ export interface LogsEvent {
   /**
    * Resource properties of the error
    */
-  http: {
+  http?: {
     /**
      * HTTP method of the resource
      */
