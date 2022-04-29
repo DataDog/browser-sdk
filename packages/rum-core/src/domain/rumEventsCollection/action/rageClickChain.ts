@@ -92,9 +92,8 @@ function finalizeClicks(clicks: Click[], rageClick: Click) {
   if (isRage(clicks)) {
     // If it should be be considered as a rage click, discard individual clicks and
     // validate the rage click.
-    clicks.forEach((click) => click.discard())
-
     clicks.forEach((click) => {
+      click.discard()
       click.getFrustrations().forEach((frustration) => {
         rageClick.addFrustration(frustration)
       })
