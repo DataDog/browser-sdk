@@ -1,72 +1,65 @@
-import { ErrorSource, display, noop } from '@datadog/browser-core'
+import { ErrorSource, noop } from '@datadog/browser-core'
+import type { RawConsoleLogsEvent } from '../../../rawLogsEvent.types'
 import { validateAndBuildLogsConfiguration } from '../../configuration'
-import { HandlerType, StatusType } from '../../logger'
-import { createSender } from '../../sender'
+import type { RawLogsEventCollectedData } from '../../lifeCycle'
+import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
+import { StatusType } from '../../logger'
 import { startConsoleCollection } from './consoleCollection'
 
 describe('console collection', () => {
   const initConfiguration = { clientToken: 'xxx', service: 'service' }
-  let sendLogSpy: jasmine.Spy
   let consoleLogSpy: jasmine.Spy
-  let stopConsolCollection: () => void
+  let stopConsoleCollection: () => void
+  let lifeCycle: LifeCycle
+  let rawLogsEvents: Array<RawLogsEventCollectedData<RawConsoleLogsEvent>>
 
   beforeEach(() => {
-    stopConsolCollection = noop
-    sendLogSpy = jasmine.createSpy('sendLogSpy')
+    rawLogsEvents = []
+    lifeCycle = new LifeCycle()
+    lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLogsEvent) =>
+      rawLogsEvents.push(rawLogsEvent as RawLogsEventCollectedData<RawConsoleLogsEvent>)
+    )
+    stopConsoleCollection = noop
     consoleLogSpy = spyOn(console, 'log').and.callFake(() => true)
     spyOn(console, 'error').and.callFake(() => true)
   })
 
   afterEach(() => {
-    stopConsolCollection()
+    stopConsoleCollection()
   })
 
   it('should send console logs', () => {
-    ;({ stop: stopConsolCollection } = startConsoleCollection(
+    ;({ stop: stopConsoleCollection } = startConsoleCollection(
       validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['log'] })!,
-      createSender(sendLogSpy)
+      lifeCycle
     ))
 
     /* eslint-disable-next-line no-console */
     console.log('foo', 'bar')
 
-    expect(sendLogSpy).toHaveBeenCalledWith({
+    expect(rawLogsEvents[0].rawLogsEvent).toEqual({
+      date: jasmine.any(Number),
       message: 'foo bar',
       status: StatusType.info,
       origin: ErrorSource.CONSOLE,
+      error: undefined,
     })
 
     expect(consoleLogSpy).toHaveBeenCalled()
   })
 
   it('console error should have an error object defined', () => {
-    ;({ stop: stopConsolCollection } = startConsoleCollection(
+    ;({ stop: stopConsoleCollection } = startConsoleCollection(
       validateAndBuildLogsConfiguration({ ...initConfiguration, forwardErrorsToLogs: true })!,
-      createSender(sendLogSpy)
+      lifeCycle
     ))
 
     /* eslint-disable-next-line no-console */
     console.error('foo', 'bar')
 
-    expect(sendLogSpy.calls.mostRecent().args[0].error).toEqual({
+    expect(rawLogsEvents[0].rawLogsEvent.error).toEqual({
       origin: ErrorSource.CONSOLE,
       stack: undefined,
     })
-  })
-
-  it('should not print the log twice when console handler is enabled', () => {
-    const sender = createSender(sendLogSpy)
-    const displaySpy = spyOn(display, 'log')
-    ;({ stop: stopConsolCollection } = startConsoleCollection(
-      validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['log'] })!,
-      sender
-    ))
-
-    sender.setHandler([HandlerType.console])
-    /* eslint-disable-next-line no-console */
-    console.log('foo', 'bar')
-
-    expect(consoleLogSpy).toHaveBeenCalledTimes(1)
-    expect(displaySpy).not.toHaveBeenCalled()
   })
 })

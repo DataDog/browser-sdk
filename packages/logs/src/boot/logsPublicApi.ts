@@ -1,20 +1,20 @@
-import type { Context, InitConfiguration } from '@datadog/browser-core'
+import type { InitConfiguration } from '@datadog/browser-core'
 import {
   assign,
   BoundedBuffer,
-  combine,
   createContextManager,
   makePublicApi,
   monitor,
   display,
   deepClone,
   canUseEventBridge,
+  timeStampNow,
 } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
-import type { HandlerType, LogsMessage, StatusType } from '../domain/logger'
+import type { HandlerType, StatusType, LogsMessage } from '../domain/logger'
 import { Logger } from '../domain/logger'
-import { createSender } from '../domain/sender'
+import type { CommonContext } from '../rawLogsEvent.types'
 import type { startLogs } from './startLogs'
 
 export interface LoggerConfiguration {
@@ -27,22 +27,40 @@ export type LogsPublicApi = ReturnType<typeof makeLogsPublicApi>
 
 export type StartLogs = typeof startLogs
 
+type StartLogsResult = ReturnType<typeof startLogs>
+
 export function makeLogsPublicApi(startLogsImpl: StartLogs) {
   let isAlreadyInitialized = false
 
   const globalContextManager = createContextManager()
   const customLoggers: { [name: string]: Logger | undefined } = {}
 
-  const beforeInitSendLog = new BoundedBuffer()
-  let sendLogStrategy = (message: LogsMessage, currentContext: Context) => {
-    beforeInitSendLog.add(() => sendLogStrategy(message, currentContext))
+  const beforeInitLoggerLog = new BoundedBuffer()
+
+  let handleLogStrategy: StartLogsResult['handleLog'] = (
+    logsMessage: LogsMessage,
+    logger: Logger,
+    savedCommonContext = deepClone(getCommonContext()),
+    date = timeStampNow()
+  ) => {
+    beforeInitLoggerLog.add(() => handleLogStrategy(logsMessage, logger, savedCommonContext, date))
   }
+
   let getInitConfigurationStrategy = (): InitConfiguration | undefined => undefined
-  const sender = createSender(sendLog)
-  const logger = new Logger(sender)
+  const mainLogger = new Logger((...params) => handleLogStrategy(...params))
+
+  function getCommonContext(): CommonContext {
+    return {
+      view: {
+        referrer: document.referrer,
+        url: window.location.href,
+      },
+      context: globalContextManager.get(),
+    }
+  }
 
   return makePublicApi({
-    logger,
+    logger: mainLogger,
 
     init: monitor((initConfiguration: LogsInitConfiguration) => {
       if (canUseEventBridge()) {
@@ -58,9 +76,9 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
         return
       }
 
-      sendLogStrategy = startLogsImpl(configuration, sender).send
+      ;({ handleLog: handleLogStrategy } = startLogsImpl(configuration, getCommonContext, mainLogger))
       getInitConfigurationStrategy = () => deepClone(initConfiguration)
-      beforeInitSendLog.drain()
+      beforeInitLoggerLog.drain()
 
       isAlreadyInitialized = true
     }),
@@ -73,15 +91,14 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
     removeLoggerGlobalContext: monitor(globalContextManager.remove),
 
     createLogger: monitor((name: string, conf: LoggerConfiguration = {}) => {
-      const sender = createSender(
-        sendLog,
+      customLoggers[name] = new Logger(
+        (...params) => handleLogStrategy(...params),
+        name,
         conf.handler,
         conf.level,
-        assign({}, conf.context, {
-          logger: { name },
-        })
+        conf.context
       )
-      customLoggers[name] = new Logger(sender)
+
       return customLoggers[name]!
     }),
 
@@ -102,21 +119,5 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
       return false
     }
     return true
-  }
-
-  function sendLog(message: LogsMessage) {
-    sendLogStrategy(
-      message,
-      combine(
-        {
-          date: Date.now(),
-          view: {
-            referrer: document.referrer,
-            url: window.location.href,
-          },
-        },
-        globalContextManager.get()
-      )
-    )
   }
 }
