@@ -1,22 +1,21 @@
-import { display, ErrorSource } from '@datadog/browser-core'
 import type { LogsMessage } from './logger'
 import { HandlerType, Logger, STATUSES, StatusType } from './logger'
-import type { Sender } from './sender'
-import { createSender } from './sender'
 
 describe('Logger', () => {
   let logger: Logger
-  let sender: Sender
-  let sendLogSpy: jasmine.Spy<(message: LogsMessage) => void>
+  let handleLogSpy: jasmine.Spy<(message: LogsMessage, logger: Logger) => void>
 
   function getLoggedMessage(index: number) {
-    return sendLogSpy.calls.argsFor(index)[0]
+    return handleLogSpy.calls.argsFor(index)[0]
+  }
+
+  function getMessageLogger(index: number) {
+    return handleLogSpy.calls.argsFor(index)[1]
   }
 
   beforeEach(() => {
-    sendLogSpy = jasmine.createSpy()
-    sender = createSender(sendLogSpy)
-    logger = new Logger(sender)
+    handleLogSpy = jasmine.createSpy()
+    logger = new Logger(handleLogSpy)
   })
 
   describe('log methods', () => {
@@ -26,120 +25,83 @@ describe('Logger', () => {
       expect(getLoggedMessage(0).status).toEqual(StatusType.info)
     })
 
-    it("'logger.log' should set 'logger' origin", () => {
-      logger.log('message')
-
-      expect(getLoggedMessage(0).origin).toEqual(ErrorSource.LOGGER)
-    })
-
-    it("'logger.log' message context can override the 'logger' origin", () => {
-      logger.log('message', { origin: 'foo' })
-
-      expect(getLoggedMessage(0).origin).toEqual('foo')
-    })
-
     STATUSES.forEach((status) => {
       it(`'logger.${status}' should have ${status} status`, () => {
         logger[status]('message')
         expect(getLoggedMessage(0).status).toEqual(status)
       })
     })
-  })
 
-  describe('context', () => {
-    it('should be added to the log event', () => {
-      logger.setContext({ bar: 'foo' })
-      logger.log('message')
+    it("'logger.log' should send the log message", () => {
+      logger.log('message', { foo: 'bar' }, StatusType.info)
 
-      expect(getLoggedMessage(0).bar).toEqual('foo')
+      expect(getLoggedMessage(0)).toEqual({
+        message: 'message',
+        context: { foo: 'bar' },
+        status: StatusType.info,
+      })
     })
 
-    it('should be deep merged', () => {
-      logger.setContext({ foo: { qix: 'qux' } })
-      logger.log('message', { foo: { qux: 'qux' } })
-      logger.log('message', { foo: { hello: 'hi' } })
+    it("'logger.log' should send the logger", () => {
+      logger.log('message')
 
-      expect(getLoggedMessage(0).foo).toEqual({
-        qix: 'qux',
-        qux: 'qux',
-      })
-      expect(getLoggedMessage(1).foo).toEqual({
-        hello: 'hi',
-        qix: 'qux',
-      })
+      expect(getMessageLogger(0)).toBe(logger)
+    })
+  })
+
+  describe('contexts', () => {
+    it('logger context should be deep copied', () => {
+      const loggerContext = { foo: 'bar' }
+      logger = new Logger(handleLogSpy, undefined, HandlerType.http, StatusType.debug, loggerContext)
+      loggerContext.foo = 'baz'
+
+      expect(logger.getContext()).toEqual({ foo: 'bar' })
+    })
+
+    it('message context should be deep copied', () => {
+      const messageContext = { foo: 'bar' }
+      logger.log('message', messageContext)
+      messageContext.foo = 'baz'
+
+      expect(getLoggedMessage(0).context).toEqual({ foo: 'bar' })
     })
   })
 
   describe('level', () => {
     it('should be debug by default', () => {
-      logger.debug('message')
-
-      expect(sendLogSpy).toHaveBeenCalled()
+      expect(logger.getLevel()).toEqual(StatusType.debug)
     })
 
     it('should be configurable', () => {
       logger.setLevel(StatusType.info)
 
-      logger.debug('message')
-
-      expect(sendLogSpy).not.toHaveBeenCalled()
+      expect(logger.getLevel()).toEqual(StatusType.info)
     })
   })
 
   describe('handler type', () => {
-    beforeEach(() => {
-      spyOn(display, 'log')
-    })
-
     it('should be "http" by default', () => {
       logger.debug('message')
 
-      expect(sendLogSpy).toHaveBeenCalled()
-      expect(display.log).not.toHaveBeenCalled()
+      expect(logger.getHandler()).toEqual(HandlerType.http)
     })
 
     it('should be configurable to "console"', () => {
       logger.setHandler(HandlerType.console)
-      logger.setContext({ foo: 'bar' })
 
-      logger.error('message', { lorem: 'ipsum' })
-
-      expect(sendLogSpy).not.toHaveBeenCalled()
-      expect(display.log).toHaveBeenCalledWith('error: message', {
-        error: { origin: 'logger' },
-        origin: 'logger',
-        foo: 'bar',
-        lorem: 'ipsum',
-      })
+      expect(logger.getHandler()).toEqual(HandlerType.console)
     })
 
     it('should be configurable to "silent"', () => {
       logger.setHandler(HandlerType.silent)
 
-      logger.error('message')
-
-      expect(sendLogSpy).not.toHaveBeenCalled()
-      expect(display.log).not.toHaveBeenCalled()
+      expect(logger.getHandler()).toEqual(HandlerType.silent)
     })
 
-    it('should be configurable to "console" and "http"', () => {
+    it('should be configurable with multiple handlers', () => {
       logger.setHandler([HandlerType.console, HandlerType.http])
-      logger.setContext({ foo: 'bar' })
 
-      logger.debug('message')
-
-      expect(sendLogSpy).toHaveBeenCalled()
-      expect(display.log).toHaveBeenCalled()
-    })
-
-    it('should be configurable to "silent" and "console"', () => {
-      logger.setHandler([HandlerType.silent, HandlerType.console])
-      logger.setContext({ foo: 'bar' })
-
-      logger.debug('message')
-
-      expect(sendLogSpy).not.toHaveBeenCalled()
-      expect(display.log).toHaveBeenCalled()
+      expect(logger.getHandler()).toEqual([HandlerType.console, HandlerType.http])
     })
   })
 })

@@ -1,31 +1,17 @@
-import type { Context, TimeStamp } from '@datadog/browser-core'
-import { noop, stopSessionManager } from '@datadog/browser-core'
+import { ErrorSource, display, stopSessionManager } from '@datadog/browser-core'
 import sinon from 'sinon'
 import { deleteEventBridgeStub, initEventBridgeStub, stubEndpointBuilder } from '../../../core/test/specHelper'
 import type { LogsConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
 
-import type { LogsMessage } from '../domain/logger'
-import { StatusType } from '../domain/logger'
-import type { LogsSessionManager } from '../domain/logsSessionManager'
-import type { Sender } from '../domain/sender'
-import { createSender } from '../domain/sender'
-import { doStartLogs, startLogs as originalStartLogs } from './startLogs'
-
-interface SentMessage extends LogsMessage {
-  logger?: { name: string }
-  view: {
-    id?: string
-    referrer?: string
-    url: string
-  }
-}
+import { HandlerType, Logger, StatusType } from '../domain/logger'
+import type { startLoggerCollection } from '../domain/logsCollection/logger/loggerCollection'
+import type { LogsEvent } from '../logsEvent.types'
+import { startLogs } from './startLogs'
 
 function getLoggedMessage(server: sinon.SinonFakeServer, index: number) {
-  return JSON.parse(server.requests[index].requestBody) as SentMessage
+  return JSON.parse(server.requests[index].requestBody) as LogsEvent
 }
-const FAKE_DATE = 123456
-const SESSION_ID = 'session-id'
 
 interface Rum {
   getInternalContext(startTime?: number): any | undefined
@@ -37,23 +23,19 @@ declare global {
 }
 
 const DEFAULT_MESSAGE = { status: StatusType.info, message: 'message' }
+const COMMON_CONTEXT = {
+  view: { referrer: 'common_referrer', url: 'common_url' },
+  context: {},
+}
 
 describe('logs', () => {
   const initConfiguration = { clientToken: 'xxx', service: 'service' }
   let baseConfiguration: LogsConfiguration
-  let sessionIsTracked: boolean
   let server: sinon.SinonFakeServer
-
-  const sessionManager: LogsSessionManager = {
-    findTrackedSession: () => (sessionIsTracked ? { id: SESSION_ID } : undefined),
-  }
-  const startLogs = ({
-    configuration: configurationOverrides,
-  }: { sender?: Sender; configuration?: Partial<LogsConfiguration> } = {}) => {
-    const configuration = { ...baseConfiguration, ...configurationOverrides }
-    const startLogs = doStartLogs(configuration, sessionManager, createSender(noop))
-    return startLogs.send
-  }
+  let handleLog: ReturnType<typeof startLoggerCollection>['handleLog']
+  let logger: Logger
+  let consoleLogSpy: jasmine.Spy
+  let displayLogSpy: jasmine.Spy
 
   beforeEach(() => {
     baseConfiguration = {
@@ -61,8 +43,10 @@ describe('logs', () => {
       logsEndpointBuilder: stubEndpointBuilder('https://localhost/v1/input/log'),
       maxBatchSize: 1,
     }
-    sessionIsTracked = true
+    logger = new Logger((...params) => handleLog(...params))
     server = sinon.fakeServer.create()
+    consoleLogSpy = spyOn(console, 'log')
+    displayLogSpy = spyOn(display, 'log')
   })
 
   afterEach(() => {
@@ -74,45 +58,42 @@ describe('logs', () => {
 
   describe('request', () => {
     it('should send the needed data', () => {
-      const sendLog = startLogs()
-      sendLog(
-        { message: 'message', foo: 'bar', status: StatusType.warn },
-        {
-          date: FAKE_DATE,
-          view: { referrer: document.referrer, url: window.location.href },
-        }
-      )
+      ;({ handleLog: handleLog } = startLogs(baseConfiguration, () => COMMON_CONTEXT, logger))
+
+      handleLog({ message: 'message', status: StatusType.warn, context: { foo: 'bar' } }, logger, COMMON_CONTEXT)
 
       expect(server.requests.length).toEqual(1)
       expect(server.requests[0].url).toContain(baseConfiguration.logsEndpointBuilder.build())
       expect(getLoggedMessage(server, 0)).toEqual({
-        date: FAKE_DATE as TimeStamp,
+        date: jasmine.any(Number),
         foo: 'bar',
         message: 'message',
         service: 'service',
-        session_id: SESSION_ID,
+        session_id: jasmine.any(String),
         status: StatusType.warn,
         view: {
-          referrer: document.referrer,
-          url: window.location.href,
+          referrer: 'common_referrer',
+          url: 'common_url',
         },
+        origin: ErrorSource.LOGGER,
       })
     })
 
     it('should all use the same batch', () => {
-      const sendLog = startLogs({ configuration: { maxBatchSize: 3 } })
-      sendLog(DEFAULT_MESSAGE, {})
-      sendLog(DEFAULT_MESSAGE, {})
-      sendLog(DEFAULT_MESSAGE, {})
+      ;({ handleLog } = startLogs({ ...baseConfiguration, maxBatchSize: 3 }, () => COMMON_CONTEXT, logger))
+
+      handleLog(DEFAULT_MESSAGE, logger)
+      handleLog(DEFAULT_MESSAGE, logger)
+      handleLog(DEFAULT_MESSAGE, logger)
 
       expect(server.requests.length).toEqual(1)
     })
 
     it('should send bridge event when bridge is present', () => {
       const sendSpy = spyOn(initEventBridgeStub(), 'send')
+      ;({ handleLog: handleLog } = startLogs(baseConfiguration, () => COMMON_CONTEXT, logger))
 
-      const sendLog = startLogs()
-      sendLog(DEFAULT_MESSAGE, {})
+      handleLog(DEFAULT_MESSAGE, logger)
 
       expect(server.requests.length).toEqual(0)
       const [message] = sendSpy.calls.mostRecent().args
@@ -129,48 +110,27 @@ describe('logs', () => {
       const sendSpy = spyOn(initEventBridgeStub(), 'send')
 
       let configuration = { ...baseConfiguration, sampleRate: 0 }
-      let { send } = originalStartLogs(configuration, createSender(noop))
-      send(DEFAULT_MESSAGE, {})
+      ;({ handleLog } = startLogs(configuration, () => COMMON_CONTEXT, logger))
+      handleLog(DEFAULT_MESSAGE, logger)
 
       expect(sendSpy).not.toHaveBeenCalled()
 
       configuration = { ...baseConfiguration, sampleRate: 100 }
-      ;({ send } = originalStartLogs(configuration, createSender(noop)))
-      send(DEFAULT_MESSAGE, {})
+      ;({ handleLog } = startLogs(configuration, () => COMMON_CONTEXT, logger))
+      handleLog(DEFAULT_MESSAGE, logger)
 
       expect(sendSpy).toHaveBeenCalled()
     })
   })
 
-  describe('logger sessionManager', () => {
-    let sendLog: (message: LogsMessage, context: Context) => void
+  it('should not print the log twice when console handler is enabled', () => {
+    logger.setHandler([HandlerType.console])
+    ;({ handleLog } = startLogs({ ...baseConfiguration, forwardConsoleLogs: ['log'] }, () => COMMON_CONTEXT, logger))
 
-    beforeEach(() => {
-      sendLog = startLogs()
-    })
+    /* eslint-disable-next-line no-console */
+    console.log('foo', 'bar')
 
-    it('when tracked should enable disable logging', () => {
-      sendLog(DEFAULT_MESSAGE, {})
-      expect(server.requests.length).toEqual(1)
-    })
-
-    it('when not tracked should disable logging', () => {
-      sessionIsTracked = false
-      sendLog(DEFAULT_MESSAGE, {})
-      expect(server.requests.length).toEqual(0)
-    })
-
-    it('when type change should enable/disable existing loggers', () => {
-      sendLog(DEFAULT_MESSAGE, {})
-      expect(server.requests.length).toEqual(1)
-
-      sessionIsTracked = false
-      sendLog(DEFAULT_MESSAGE, {})
-      expect(server.requests.length).toEqual(1)
-
-      sessionIsTracked = true
-      sendLog(DEFAULT_MESSAGE, {})
-      expect(server.requests.length).toEqual(2)
-    })
+    expect(consoleLogSpy).toHaveBeenCalledTimes(1)
+    expect(displayLogSpy).not.toHaveBeenCalled()
   })
 })

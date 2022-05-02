@@ -15,7 +15,7 @@ let MAX_SEGMENT_SIZE = SEND_BEACON_BYTE_LENGTH_LIMIT
 // namings). They are stored without any processing from the intake, and fetched one after the
 // other while a session is being replayed. Their encoding (deflate) are carefully crafted to allow
 // concatenating multiple segments together. Segments have a size overhead (metadata), so our goal is to
-// build segments containing as much records as possible while complying with the various flush
+// build segments containing as many records as possible while complying with the various flush
 // strategies to guarantee a good replay quality.
 //
 // When the recording starts, a segment is initially created.  The segment is flushed (finalized and
@@ -40,7 +40,7 @@ export function startSegmentCollection(
   applicationId: string,
   sessionManager: RumSessionManager,
   viewContexts: ViewContexts,
-  send: (data: Uint8Array, metadata: SegmentMetadata, rawSegmentSize: number, flushReason?: string) => void,
+  send: (data: Uint8Array, metadata: SegmentMetadata, rawSegmentSize: number) => void,
   worker: DeflateWorker
 ) {
   return doStartSegmentCollection(
@@ -73,7 +73,7 @@ type SegmentCollectionState =
 export function doStartSegmentCollection(
   lifeCycle: LifeCycle,
   getSegmentContext: () => SegmentContext | undefined,
-  send: (data: Uint8Array, metadata: SegmentMetadata, rawSegmentSize: number, flushReason?: string) => void,
+  send: (data: Uint8Array, metadata: SegmentMetadata, rawSegmentSize: number) => void,
   worker: DeflateWorker,
   emitter: EventEmitter = window
 ) {
@@ -103,7 +103,7 @@ export function doStartSegmentCollection(
 
   function flushSegment(nextSegmentCreationReason?: CreationReason) {
     if (state.status === SegmentCollectionStatus.SegmentPending) {
-      state.segment.flush(nextSegmentCreationReason || 'sdk_stopped')
+      state.segment.flush()
       clearTimeout(state.expirationTimeoutId)
     }
 
@@ -136,7 +136,7 @@ export function doStartSegmentCollection(
         }
       },
       (data, rawSegmentSize) => {
-        send(data, segment.metadata, rawSegmentSize, segment.flushReason)
+        send(data, segment.metadata, rawSegmentSize)
       }
     )
 

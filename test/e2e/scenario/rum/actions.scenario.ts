@@ -39,7 +39,9 @@ describe('action collection', () => {
           name: 'click me',
         },
         type: 'click',
-        frustration_type: [],
+        frustration: {
+          type: [],
+        },
       })
     })
 
@@ -81,7 +83,9 @@ describe('action collection', () => {
           name: 'click me',
         },
         type: 'click',
-        frustration_type: [],
+        frustration: {
+          type: [],
+        },
       })
 
       expect(resourceEvents.length).toBe(1)
@@ -109,7 +113,7 @@ describe('action collection', () => {
       const actionEvents = serverEvents.rumActions
 
       expect(actionEvents.length).toBe(1)
-      expect(actionEvents[0].action.frustration_type).toEqual(['error'])
+      expect(actionEvents[0].action.frustration!.type).toEqual(['error'])
       expect(actionEvents[0].action.error!.count).toBe(1)
       await withBrowserLogs((browserLogs) => {
         expect(browserLogs.length).toEqual(1)
@@ -126,7 +130,7 @@ describe('action collection', () => {
       const actionEvents = serverEvents.rumActions
 
       expect(actionEvents.length).toBe(1)
-      expect(actionEvents[0].action.frustration_type).toEqual(['dead'])
+      expect(actionEvents[0].action.frustration!.type).toEqual(['dead'])
     })
 
   createTest('collect a "rage click"')
@@ -174,7 +178,7 @@ describe('action collection', () => {
       const actionEvents = serverEvents.rumActions
 
       expect(actionEvents.length).toBe(1)
-      expect(actionEvents[0].action.frustration_type).toEqual(jasmine.arrayWithExactContents(['error', 'dead']))
+      expect(actionEvents[0].action.frustration!.type).toEqual(jasmine.arrayWithExactContents(['error', 'dead']))
       await withBrowserLogs((browserLogs) => {
         expect(browserLogs.length).toEqual(1)
       })
