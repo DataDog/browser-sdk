@@ -1,13 +1,5 @@
 import type { TimeStamp } from '@datadog/browser-core'
-import {
-  objectHasValue,
-  ConsoleApiName,
-  includes,
-  display,
-  combine,
-  ErrorSource,
-  timeStampNow,
-} from '@datadog/browser-core'
+import { includes, display, combine, ErrorSource, timeStampNow } from '@datadog/browser-core'
 import type { CommonContext, RawLoggerLogsEvent } from '../../../rawLogsEvent.types'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -30,7 +22,9 @@ export function startLoggerCollection(lifeCycle: LifeCycle) {
   ) {
     const messageContext = logsMessage.context
 
-    sendToConsole(logsMessage, logger)
+    if (isAuthorized(logsMessage.status, HandlerType.console, logger)) {
+      display(logsMessage.status, logsMessage.message, combine(logger.getContext(), messageContext))
+    }
 
     lifeCycle.notify<RawLoggerLogsEvent>(LifeCycleEventType.RAW_LOG_COLLECTED, {
       rawLogsEvent: {
@@ -56,11 +50,4 @@ export function isAuthorized(status: StatusType, handlerType: HandlerType, logge
   return (
     STATUS_PRIORITIES[status] >= STATUS_PRIORITIES[logger.getLevel()] && includes(sanitizedHandlerType, handlerType)
   )
-}
-
-function sendToConsole(logsMessage: LogsMessage, logger: Logger) {
-  if (isAuthorized(logsMessage.status, HandlerType.console, logger)) {
-    const api = objectHasValue(ConsoleApiName, logsMessage.status) ? logsMessage.status : ConsoleApiName.log
-    display[api](logsMessage.message, combine(logger.getContext(), logsMessage.context))
-  }
 }
