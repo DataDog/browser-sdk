@@ -155,7 +155,7 @@ describe('action collection', () => {
       const actionEvents = serverEvents.rumActions
 
       expect(actionEvents.length).toBe(1)
-      expect(actionEvents[0].action.frustration_type).toEqual(['rage'])
+      expect(actionEvents[0].action.frustration!.type).toEqual(['rage'])
     })
 
   createTest('collect multiple frustrations in one action')
