@@ -11,6 +11,7 @@ export interface TransportConfiguration {
   internalMonitoringEndpointBuilder?: EndpointBuilder
   isIntakeUrl: (url: string) => boolean
   replica?: ReplicaConfiguration
+  site: string
 }
 
 export interface ReplicaConfiguration {
@@ -32,6 +33,7 @@ export function computeTransportConfiguration(initConfiguration: InitConfigurati
     {
       isIntakeUrl: (url: string) => intakeEndpoints.some((intakeEndpoint) => url.indexOf(intakeEndpoint) === 0),
       replica: replicaConfiguration,
+      site: initConfiguration.site || INTAKE_SITE_US,
     },
     endpointBuilders
   )
