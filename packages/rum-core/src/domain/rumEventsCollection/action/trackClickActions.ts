@@ -73,7 +73,7 @@ export function trackClickActions(
     }
   })
 
-  const { stop: stopListener } = listenClickEvents(onClick)
+  const { stop: stopListener } = listenClickEvents(processClick)
 
   const actionContexts: ActionContexts = {
     findActionId: (startTime?: RelativeTime) =>
@@ -91,7 +91,7 @@ export function trackClickActions(
     actionContexts,
   }
 
-  function onClick(event: MouseEvent & { target: Element }) {
+  function processClick(event: MouseEvent & { target: Element }) {
     if (!collectFrustrations && history.find()) {
       // TODO: remove this in a future major version. To keep retrocompatibility, ignore any new
       // action if another one is already occurring.
