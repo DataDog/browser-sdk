@@ -113,10 +113,7 @@ export function trackClickActions(
       startClocks,
     })
 
-    // If we collect frustration, we have to add the click to a "click chain" which
-    // will validate it only if it's not part of a rage click.
     if (collectFrustrations && (!currentRageClickChain || !currentRageClickChain.tryAppend(click))) {
-      // If we failed to add the click to the current click chain, create a new click chain
       currentRageClickChain = createRageClickChain(click)
     }
 

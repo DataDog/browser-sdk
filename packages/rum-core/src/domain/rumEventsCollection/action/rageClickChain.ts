@@ -90,8 +90,6 @@ function mouseEventDistance(origin: MouseEvent, other: MouseEvent) {
 
 function finalizeClicks(clicks: Click[], rageClick: Click) {
   if (isRage(clicks)) {
-    // If it should be be considered as a rage click, discard individual clicks and
-    // validate the rage click.
     clicks.forEach((click) => {
       click.discard()
       click.getFrustrations().forEach((frustration) => {
@@ -101,7 +99,6 @@ function finalizeClicks(clicks: Click[], rageClick: Click) {
     rageClick.addFrustration(FrustrationType.RAGE)
     rageClick.validate(timeStampNow())
   } else {
-    // Otherwise, discard the rage click and validate the individual clicks
     rageClick.discard()
     clicks.forEach((click) => click.validate())
   }
