@@ -13,7 +13,7 @@ export function isRumResourceEvent(event: RumEvent): event is RumResourceEvent {
   return event.type === 'resource'
 }
 
-export function isRumUserActionEvent(event: RumEvent): event is RumActionEvent {
+export function isRumActionEvent(event: RumEvent): event is RumActionEvent {
   return event.type === 'action'
 }
 

@@ -73,6 +73,7 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
           view: {
             id: generateUUID(),
             action: { count: 0 },
+            frustration: { count: 0 },
             error: { count: 0 },
             is_active: true,
             loading_type: ViewLoadingType.INITIAL_LOAD,
