@@ -147,7 +147,7 @@ export function trackClickActions(
 
     let viewCreatedSubscription: Subscription | undefined
     if (!collectFrustrations) {
-      // TODO: remove this in a future major version. To keep retrocompatibility, end the click on a
+      // TODO: remove this in a future major version. To keep backward compatibility, end the click on a
       // new view is created.
       viewCreatedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, stopClickProcessing)
     }
