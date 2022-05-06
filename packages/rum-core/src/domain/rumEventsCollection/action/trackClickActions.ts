@@ -239,6 +239,8 @@ function newClick(
       onStopCallback = newOnStopCallback
     },
 
+    isStopped: () => state.status === ClickStatus.STOPPED || state.status === ClickStatus.FINALIZED,
+
     clone: () => newClick(lifeCycle, history, collectFrustrations, base),
 
     validate: (endTime?: TimeStamp) => {

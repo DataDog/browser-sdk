@@ -186,6 +186,7 @@ describe('isRage', () => {
 
 function createFakeClick(eventPartial?: Partial<MouseEvent>): Click & { clonedClick?: Click } {
   let onStopCallback = noop
+  let isStopped = false
   let clonedClick: Click | undefined
   const frustrations = new Set<FrustrationType>()
   return {
@@ -199,7 +200,9 @@ function createFakeClick(eventPartial?: Partial<MouseEvent>): Click & { clonedCl
     onStop: (newOnStopCallback) => {
       onStopCallback = newOnStopCallback
     },
+    isStopped: () => isStopped,
     stop: () => {
+      isStopped = true
       onStopCallback()
     },
     clone: () => {

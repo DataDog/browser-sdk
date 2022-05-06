@@ -217,7 +217,7 @@ describe('trackClickActions', () => {
     it('discards any click action with a negative duration', () => {
       const { domMutationObservable, clock } = setupBuilder.build()
       emulateClickWithActivity(domMutationObservable, clock, button, -1)
-      expect(findActionId()).not.toBeUndefined()
+      expect(findActionId()!.length).toEqual(2)
       clock.tick(EXPIRE_DELAY)
 
       expect(events).toEqual([])
