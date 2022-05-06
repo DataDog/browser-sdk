@@ -21,6 +21,9 @@ const INTAKE_TRACKS = {
 type EndpointType = keyof typeof ENDPOINTS
 
 export const INTAKE_SITE_US = 'datadoghq.com'
+export const INTAKE_SITE_US3 = 'us3.datadoghq.com'
+export const INTAKE_SITE_US5 = 'us5.datadoghq.com'
+export const INTAKE_SITE_EU = 'datadoghq.eu'
 
 export type EndpointBuilder = ReturnType<typeof createEndpointBuilder>
 
