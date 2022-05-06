@@ -19,10 +19,11 @@ const enum RageClickChainStatus {
 export function createRageClickChain(firstClick: Click): RageClickChain {
   const bufferedClicks: Click[] = []
   let status = RageClickChainStatus.WaitingForMoreClicks
-  let timeout: number | undefined
+  let maxDurationBetweenClicksTimeout: number | undefined
   const rageClick = firstClick.clone()
 
   function dontAcceptMoreClick() {
+    clearTimeout(maxDurationBetweenClicksTimeout)
     if (status === RageClickChainStatus.WaitingForMoreClicks) {
       status = RageClickChainStatus.WaitingForClicksToStop
       tryFinalize()
@@ -39,14 +40,13 @@ export function createRageClickChain(firstClick: Click): RageClickChain {
   function appendClick(click: Click) {
     click.onStop(tryFinalize)
     bufferedClicks.push(click)
-    timeout = setTimeout(monitor(dontAcceptMoreClick), MAX_DURATION_BETWEEN_CLICKS)
+    clearTimeout(maxDurationBetweenClicksTimeout)
+    maxDurationBetweenClicksTimeout = setTimeout(monitor(dontAcceptMoreClick), MAX_DURATION_BETWEEN_CLICKS)
   }
 
   appendClick(firstClick)
   return {
     tryAppend: (click) => {
-      clearTimeout(timeout)
-
       if (status !== RageClickChainStatus.WaitingForMoreClicks) {
         return false
       }
@@ -63,7 +63,6 @@ export function createRageClickChain(firstClick: Click): RageClickChain {
       return true
     },
     stop: () => {
-      clearTimeout(timeout)
       dontAcceptMoreClick()
     },
   }
