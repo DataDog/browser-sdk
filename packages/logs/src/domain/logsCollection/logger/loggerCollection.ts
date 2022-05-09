@@ -23,7 +23,7 @@ export function startLoggerCollection(lifeCycle: LifeCycle) {
     const messageContext = logsMessage.context
 
     if (isAuthorized(logsMessage.status, HandlerType.console, logger)) {
-      display.log(`${logsMessage.status}: ${logsMessage.message}`, combine(logger.getContext(), messageContext))
+      display(logsMessage.status, logsMessage.message, combine(logger.getContext(), messageContext))
     }
 
     lifeCycle.notify<RawLoggerLogsEvent>(LifeCycleEventType.RAW_LOG_COLLECTED, {

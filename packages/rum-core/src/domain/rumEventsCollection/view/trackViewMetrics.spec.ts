@@ -4,7 +4,7 @@ import type { RumEvent } from '../../../rumEvent.types'
 import type { TestSetupBuilder, ViewTest } from '../../../../test/specHelper'
 import { setup, setupViewTest } from '../../../../test/specHelper'
 import type { RumPerformanceNavigationTiming } from '../../../browser/performanceCollection'
-import { RumEventType } from '../../../rawRumEvent.types'
+import { FrustrationType, RumEventType } from '../../../rawRumEvent.types'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { PAGE_ACTIVITY_END_DELAY, PAGE_ACTIVITY_VALIDATION_DELAY } from '../../waitIdlePage'
@@ -224,14 +224,40 @@ describe('rum track view metrics', () => {
       const { getViewUpdate, getViewUpdateCount, startView } = viewTest
 
       expect(getViewUpdateCount()).toEqual(1)
-      expect(getViewUpdate(0).eventCounts.userActionCount).toEqual(0)
+      expect(getViewUpdate(0).eventCounts.actionCount).toEqual(0)
 
-      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.ACTION } as RumEvent & Context)
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
+        type: RumEventType.ACTION,
+        action: { type: 'custom' },
+      } as RumEvent & Context)
       startView()
 
       expect(getViewUpdateCount()).toEqual(3)
-      expect(getViewUpdate(1).eventCounts.userActionCount).toEqual(1)
-      expect(getViewUpdate(2).eventCounts.userActionCount).toEqual(0)
+      expect(getViewUpdate(1).eventCounts.actionCount).toEqual(1)
+      expect(getViewUpdate(2).eventCounts.actionCount).toEqual(0)
+    })
+
+    it('should track frustration count', () => {
+      const { lifeCycle } = setupBuilder.build()
+      const { getViewUpdate, getViewUpdateCount, startView } = viewTest
+
+      expect(getViewUpdateCount()).toEqual(1)
+      expect(getViewUpdate(0).eventCounts.frustrationCount).toEqual(0)
+
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
+        type: RumEventType.ACTION,
+        action: {
+          type: 'click',
+          frustration: {
+            type: [FrustrationType.DEAD, FrustrationType.ERROR],
+          },
+        },
+      } as RumEvent & Context)
+      startView()
+
+      expect(getViewUpdateCount()).toEqual(3)
+      expect(getViewUpdate(1).eventCounts.frustrationCount).toEqual(2)
+      expect(getViewUpdate(2).eventCounts.frustrationCount).toEqual(0)
     })
 
     it('should reset event count when the view changes', () => {
@@ -266,7 +292,8 @@ describe('rum track view metrics', () => {
         errorCount: 0,
         longTaskCount: 0,
         resourceCount: 0,
-        userActionCount: 0,
+        actionCount: 0,
+        frustrationCount: 0,
       })
 
       lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.RESOURCE } as RumEvent & Context)
@@ -280,7 +307,8 @@ describe('rum track view metrics', () => {
         errorCount: 0,
         longTaskCount: 0,
         resourceCount: 1,
-        userActionCount: 0,
+        actionCount: 0,
+        frustrationCount: 0,
       })
     })
 
