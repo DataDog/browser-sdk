@@ -21,13 +21,13 @@ export function createRageClickChain(firstClick: Click): RageClickChain {
   let status = RageClickChainStatus.WaitingForMoreClicks
   let maxDurationBetweenClicksTimeout: number | undefined
   const rageClick = firstClick.clone()
+  appendClick(firstClick)
 
-  function dontAcceptMoreClick() {
+  function appendClick(click: Click) {
+    click.onStop(tryFinalize)
+    bufferedClicks.push(click)
     clearTimeout(maxDurationBetweenClicksTimeout)
-    if (status === RageClickChainStatus.WaitingForMoreClicks) {
-      status = RageClickChainStatus.WaitingForClicksToStop
-      tryFinalize()
-    }
+    maxDurationBetweenClicksTimeout = setTimeout(monitor(dontAcceptMoreClick), MAX_DURATION_BETWEEN_CLICKS)
   }
 
   function tryFinalize() {
@@ -37,14 +37,14 @@ export function createRageClickChain(firstClick: Click): RageClickChain {
     }
   }
 
-  function appendClick(click: Click) {
-    click.onStop(tryFinalize)
-    bufferedClicks.push(click)
+  function dontAcceptMoreClick() {
     clearTimeout(maxDurationBetweenClicksTimeout)
-    maxDurationBetweenClicksTimeout = setTimeout(monitor(dontAcceptMoreClick), MAX_DURATION_BETWEEN_CLICKS)
+    if (status === RageClickChainStatus.WaitingForMoreClicks) {
+      status = RageClickChainStatus.WaitingForClicksToStop
+      tryFinalize()
+    }
   }
 
-  appendClick(firstClick)
   return {
     tryAppend: (click) => {
       if (status !== RageClickChainStatus.WaitingForMoreClicks) {
