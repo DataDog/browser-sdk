@@ -138,6 +138,31 @@ describe('action collection', () => {
       expect(serverEvents.rumViews[0].view.frustration!.count).toBe(1)
     })
 
+  createTest('collect a "rage click"')
+    .withRum({ trackInteractions: true, enableExperimentalFeatures: ['frustration-signals'] })
+    .withBody(
+      html`
+        <button>click me</button>
+        <script>
+          const button = document.querySelector('button')
+          button.addEventListener('click', () => {
+            button.setAttribute('data-clicked', Math.random())
+          })
+        </script>
+      `
+    )
+    .run(async ({ serverEvents }) => {
+      const button = await $('button')
+      await button.click()
+      await button.click()
+      await button.click()
+      await flushEvents()
+      const actionEvents = serverEvents.rumActions
+
+      expect(actionEvents.length).toBe(1)
+      expect(actionEvents[0].action.frustration!.type).toEqual(['rage'])
+    })
+
   createTest('collect multiple frustrations in one action')
     .withRum({ trackInteractions: true, enableExperimentalFeatures: ['frustration-signals'] })
     .withBody(

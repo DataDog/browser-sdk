@@ -11,6 +11,7 @@ import { PAGE_ACTIVITY_VALIDATION_DELAY } from '../../waitIdlePage'
 import type { ActionContexts } from './actionCollection'
 import type { ClickAction } from './trackClickActions'
 import { CLICK_ACTION_MAX_DURATION, trackClickActions } from './trackClickActions'
+import { MAX_DURATION_BETWEEN_CLICKS } from './rageClickChain'
 
 // Used to wait some time after the creation of an action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
@@ -93,16 +94,6 @@ describe('trackClickActions', () => {
     ])
   })
 
-  it('discards any pending click action with a negative duration', () => {
-    const { domMutationObservable, clock } = setupBuilder.build()
-    emulateClickWithActivity(domMutationObservable, clock, button, -1)
-    expect(findActionId()).not.toBeUndefined()
-    clock.tick(EXPIRE_DELAY)
-
-    expect(events).toEqual([])
-    expect(findActionId()).toBeUndefined()
-  })
-
   it('should keep track of previously validated click actions', () => {
     const { domMutationObservable, clock } = setupBuilder.build()
     const clickActionStartTime = relativeNow()
@@ -148,7 +139,17 @@ describe('trackClickActions', () => {
   })
 
   describe('without frustration-signals flag', () => {
-    it('discards pending click action on view created', () => {
+    it('discards any click action with a negative duration', () => {
+      const { domMutationObservable, clock } = setupBuilder.build()
+      emulateClickWithActivity(domMutationObservable, clock, button, -1)
+      expect(findActionId()).not.toBeUndefined()
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events).toEqual([])
+      expect(findActionId()).toBeUndefined()
+    })
+
+    it('discards ongoing click action on view created', () => {
       const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
       emulateClickWithActivity(domMutationObservable, clock)
       expect(findActionId()).not.toBeUndefined()
@@ -175,7 +176,7 @@ describe('trackClickActions', () => {
       expect(events[0].startClocks.timeStamp).toBe(firstClickTimeStamp)
     })
 
-    it('discards an click action when nothing happens after a click', () => {
+    it('discards a click action when nothing happens after a click', () => {
       const { clock } = setupBuilder.build()
       emulateClickWithoutActivity()
 
@@ -184,7 +185,7 @@ describe('trackClickActions', () => {
       expect(findActionId()).toBeUndefined()
     })
 
-    it('ignores an click action if it fails to find a name', () => {
+    it('ignores a click action if it fails to find a name', () => {
       const { domMutationObservable, clock } = setupBuilder.build()
       emulateClickWithActivity(domMutationObservable, clock, emptyElement)
       expect(findActionId()).toBeUndefined()
@@ -213,7 +214,17 @@ describe('trackClickActions', () => {
       resetExperimentalFeatures()
     })
 
-    it("doesn't discard pending click action on view created", () => {
+    it('discards any click action with a negative duration', () => {
+      const { domMutationObservable, clock } = setupBuilder.build()
+      emulateClickWithActivity(domMutationObservable, clock, button, -1)
+      expect(findActionId()!.length).toEqual(2)
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events).toEqual([])
+      expect(findActionId()).toEqual([])
+    })
+
+    it("doesn't discard ongoing click action on view created", () => {
       const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
       emulateClickWithActivity(domMutationObservable, clock)
       expect(findActionId()).not.toBeUndefined()
@@ -269,9 +280,48 @@ describe('trackClickActions', () => {
       expect(events.length).toBe(1)
     })
 
+    describe('rage clicks', () => {
+      it('considers a chain of three clicks or more as a single action with "rage" frustration type', () => {
+        const { domMutationObservable, clock } = setupBuilder.build()
+        const firstClickTimeStamp = timeStampNow()
+        const actionDuration = 5
+        emulateClickWithActivity(domMutationObservable, clock, undefined, actionDuration)
+        emulateClickWithActivity(domMutationObservable, clock, undefined, actionDuration)
+        emulateClickWithActivity(domMutationObservable, clock, undefined, actionDuration)
+
+        clock.tick(EXPIRE_DELAY)
+        expect(events.length).toBe(1)
+        expect(events[0].startClocks.timeStamp).toBe(firstClickTimeStamp)
+        expect(events[0].frustrationTypes).toEqual([FrustrationType.RAGE])
+        expect(events[0].duration).toBe((MAX_DURATION_BETWEEN_CLICKS + 2 * actionDuration) as Duration)
+      })
+
+      it('aggregates frustrationTypes from all clicks', () => {
+        const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
+
+        // Dead
+        emulateClickWithoutActivity()
+        clock.tick(PAGE_ACTIVITY_VALIDATION_DELAY)
+
+        // Error
+        emulateClickWithActivity(domMutationObservable, clock)
+        lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, RAW_ERROR_EVENT)
+        clock.tick(PAGE_ACTIVITY_VALIDATION_DELAY)
+
+        // Third click to make a rage click
+        emulateClickWithActivity(domMutationObservable, clock)
+
+        clock.tick(EXPIRE_DELAY)
+        expect(events.length).toBe(1)
+        expect(events[0].frustrationTypes).toEqual(
+          jasmine.arrayWithExactContents([FrustrationType.DEAD, FrustrationType.ERROR, FrustrationType.RAGE])
+        )
+      })
+    })
+
     describe('error clicks', () => {
       // eslint-disable-next-line max-len
-      it('considers a "click with activity" followed by an error as an click action with "error" frustration type', () => {
+      it('considers a "click with activity" followed by an error as a click action with "error" frustration type', () => {
         const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
 
         emulateClickWithActivity(domMutationObservable, clock)
@@ -283,7 +333,7 @@ describe('trackClickActions', () => {
       })
 
       // eslint-disable-next-line max-len
-      it('considers a "click without activity" followed by an error as an click action with "error" (and "dead") frustration type', () => {
+      it('considers a "click without activity" followed by an error as a click action with "error" (and "dead") frustration type', () => {
         const { lifeCycle, clock } = setupBuilder.build()
 
         emulateClickWithoutActivity()
@@ -327,8 +377,9 @@ describe('trackClickActions', () => {
     target.dispatchEvent(
       createNewEvent('click', {
         target,
-        clientX: targetPosition.x + targetPosition.width / 2,
-        clientY: targetPosition.y + targetPosition.height / 2,
+        clientX: targetPosition.left + targetPosition.width / 2,
+        clientY: targetPosition.top + targetPosition.height / 2,
+        timeStamp: timeStampNow(),
       })
     )
   }
