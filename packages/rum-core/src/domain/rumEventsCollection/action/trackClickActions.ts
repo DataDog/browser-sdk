@@ -181,7 +181,7 @@ function listenClickEvents(callback: (clickEvent: MouseEvent & { target: Element
 
 const enum ClickStatus {
   // Initial state, the click is still ongoing.
-  PENDING,
+  ONGOING,
   // The click is no more ongoing but still needs to be validated or discarded.
   STOPPED,
   // Final state, the click has been stopped and validated or discarded.
@@ -189,7 +189,7 @@ const enum ClickStatus {
 }
 
 type ClickState =
-  | { status: ClickStatus.PENDING }
+  | { status: ClickStatus.ONGOING }
   | { status: ClickStatus.STOPPED; endTime?: TimeStamp }
   | { status: ClickStatus.FINALIZED }
 
@@ -204,12 +204,12 @@ function newClick(
   const id = generateUUID()
   const historyEntry = history.add(id, base.startClocks.relative)
   const eventCountsSubscription = trackEventCounts(lifeCycle)
-  let state: ClickState = { status: ClickStatus.PENDING }
+  let state: ClickState = { status: ClickStatus.ONGOING }
   const frustrations = new Set<FrustrationType>()
   let onStopCallback = noop
 
   function stop(endTime?: TimeStamp) {
-    if (state.status !== ClickStatus.PENDING) {
+    if (state.status !== ClickStatus.ONGOING) {
       return
     }
     state = { status: ClickStatus.STOPPED, endTime }
