@@ -5,6 +5,7 @@ import {
   canUseEventBridge,
   startBatchWithReplica,
   getEventBridge,
+  startFlushFailedSendBeacons,
 } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { startPerformanceCollection } from '../browser/performanceCollection'
@@ -103,6 +104,7 @@ export function startRum(
 
   startRequestCollection(lifeCycle, configuration, session)
   startPerformanceCollection(lifeCycle, configuration)
+  startFlushFailedSendBeacons()
 
   const internalContext = startInternalContext(
     configuration.applicationId,

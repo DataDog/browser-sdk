@@ -58,5 +58,6 @@ export function createEndpointBuilder(
     buildIntakeUrl() {
       return proxyUrl ? `${proxyUrl}?ddforward` : baseUrl
     },
+    endpointType,
   }
 }

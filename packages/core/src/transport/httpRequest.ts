@@ -1,5 +1,6 @@
 import type { EndpointBuilder } from '../domain/configuration'
 import { addMonitoringError } from '../domain/internalMonitoring'
+import { addFailedSendBeacon } from './failedSendBeacon'
 
 /**
  * Use POST request without content type to:
@@ -21,6 +22,8 @@ export class HttpRequest {
         if (isQueued) {
           return
         }
+
+        addFailedSendBeacon(this.endpointBuilder.buildIntakeUrl(), size)
       } catch (e) {
         reportBeaconError(e)
       }
