@@ -16,6 +16,14 @@
 
 ---
 
+## v4.9.0
+
+- ✨ Upgraded console logger to log the proper levels ([#1501](https://github.com/DataDog/browser-sdk/pull/1501))
+- ♻️ [RUMF-1178] New logger assembly flow ([#1497](https://github.com/DataDog/browser-sdk/pull/1497))
+- ⚗✨ [RUMF-1209] introduce "dead" and "error" frustration types ([#1487](https://github.com/DataDog/browser-sdk/pull/1487))
+- ⚗✨ [RUMF-1209] collect rage clicks ([#1488](https://github.com/DataDog/browser-sdk/pull/1488))
+- ⚗✨ [RUMF-1214] implement frustration signals counters ([#1511](https://github.com/DataDog/browser-sdk/pull/1511))
+
 ## v4.8.1
 
 - 🐛 [RUMF-1240] fix attribute mutating to an empty value ([#1512](https://github.com/DataDog/browser-sdk/pull/1512))
