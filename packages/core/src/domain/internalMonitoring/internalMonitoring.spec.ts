@@ -1,7 +1,14 @@
 import type { Context } from '../../tools/context'
 import { display } from '../../tools/display'
 import type { Configuration } from '../configuration'
-import { updateExperimentalFeatures, resetExperimentalFeatures } from '../configuration'
+import {
+  updateExperimentalFeatures,
+  resetExperimentalFeatures,
+  INTAKE_SITE_US,
+  INTAKE_SITE_US3,
+  INTAKE_SITE_EU,
+  INTAKE_SITE_US5,
+} from '../configuration'
 import type { InternalMonitoring, MonitoringMessage } from './internalMonitoring'
 import {
   monitor,
@@ -241,6 +248,31 @@ describe('internal monitoring', () => {
   describe('new telemetry', () => {
     let internalMonitoring: InternalMonitoring
     let notifySpy: jasmine.Spy<(event: TelemetryEvent & Context) => void>
+
+    describe('rollout', () => {
+      ;[
+        { site: INTAKE_SITE_US5, enabled: false },
+        { site: INTAKE_SITE_US3, enabled: false },
+        { site: INTAKE_SITE_EU, enabled: false },
+        { site: INTAKE_SITE_US, enabled: false },
+      ].forEach(({ site, enabled }) => {
+        it(`should be ${enabled ? 'enabled' : 'disabled'} on ${site}`, () => {
+          internalMonitoring = startInternalMonitoring({ ...configuration, site } as Configuration)
+          notifySpy = jasmine.createSpy('notified')
+          internalMonitoring.telemetryEventObservable.subscribe(notifySpy)
+
+          callMonitored(() => {
+            throw new Error('message')
+          })
+
+          if (enabled) {
+            expect(notifySpy).toHaveBeenCalled()
+          } else {
+            expect(notifySpy).not.toHaveBeenCalled()
+          }
+        })
+      })
+    })
 
     describe('when enabled', () => {
       beforeEach(() => {
