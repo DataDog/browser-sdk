@@ -89,7 +89,7 @@ function startLogsInternalMonitoring(configuration: LogsConfiguration) {
       configuration.rumEndpointBuilder,
       configuration.replica?.rumEndpointBuilder
     )
-    internalMonitoring.telemetryEventObservable.subscribe((event) => monitoringBatch.add(event))
+    internalMonitoring.telemetryEventObservable.subscribe((event) => monitoringBatch.add(event, false))
   }
   return internalMonitoring
 }

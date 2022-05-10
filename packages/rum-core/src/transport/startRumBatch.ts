@@ -21,11 +21,11 @@ export function startRumBatch(
     }
   })
 
-  telemetryEventObservable.subscribe((event) => batch.add(event))
+  telemetryEventObservable.subscribe((event) => batch.add(event, false))
 }
 
 interface RumBatch {
-  add: (message: Context) => void
+  add: (message: Context, replicated?: boolean) => void
   upsert: (message: Context, key: string) => void
 }
 
@@ -56,9 +56,9 @@ function makeRumBatch(configuration: RumConfiguration, lifeCycle: LifeCycle): Ru
   }
 
   return {
-    add: (message: Context) => {
+    add: (message: Context, replicated = true) => {
       primaryBatch.add(message)
-      if (replicaBatch) {
+      if (replicaBatch && replicated) {
         replicaBatch.add(withReplicaApplicationId(message))
       }
     },
