@@ -22,6 +22,7 @@ export function addFailedSendBeacon(endpointType: string, size: number, reason?:
     endpointType,
     version: __BUILD_ENV__SDK_VERSION__,
     connection: navigator.connection ? (navigator.connection as any).effectiveType : undefined,
+    onLine: navigator.onLine,
     size,
   })
   window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(requests))
