@@ -1,3 +1,5 @@
+import { mockClock } from '../../test/specHelper'
+import { ONE_SECOND } from '../tools/utils'
 import { resetExperimentalFeatures, updateExperimentalFeatures } from '../domain/configuration'
 import { addFailedSendBeacon, startFlushFailedSendBeacons } from './failedSendBeacon'
 
@@ -12,10 +14,14 @@ describe('failedSendBeacon', () => {
       updateExperimentalFeatures(['lower-batch-size'])
     })
 
-    it('should flush failed sendBeacon ', () => {
+    it('should flush failed sendBeacon after 2 second', () => {
+      const clock = mockClock()
+
       addFailedSendBeacon('foo', 100)
       startFlushFailedSendBeacons()
+      clock.tick(2 * ONE_SECOND)
       expect(window.localStorage.getItem('failed-send-beacon')).toEqual(null)
+      clock.cleanup()
     })
 
     it('should add failed sendBeacon', () => {
