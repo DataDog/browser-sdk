@@ -5,7 +5,7 @@ import { addMonitoringMessage, monitor } from '../domain/internalMonitoring'
 declare const __BUILD_ENV__SDK_VERSION__: string
 
 const FAILED_SEND_BEACON_FLUSH_INTERVAL = 2000
-const LOCAL_STORAGE_KEY = 'datadog-browser-sdk-failed-send-beacon'
+export const LOCAL_STORAGE_KEY = 'datadog-browser-sdk-failed-send-beacon'
 
 export function startFlushFailedSendBeacons() {
   if (!isExperimentalFeatureEnabled('lower-batch-size')) return

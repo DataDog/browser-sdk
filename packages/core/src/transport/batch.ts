@@ -68,11 +68,11 @@ export class Batch {
       this.remove(key)
     }
     if (this.willReachedBytesLimitWith(messageBytesSize)) {
-      this.flush()
+      this.flush('max_size')
     }
     this.push(processedMessage, messageBytesSize, key)
     if (this.isFull()) {
-      this.flush()
+      this.flush('max_messages_count')
     }
   }
 
@@ -123,7 +123,7 @@ export class Batch {
   private flushPeriodically() {
     setTimeout(
       monitor(() => {
-        this.flush()
+        this.flush('max_duration')
         this.flushPeriodically()
       }),
       this.flushTimeout

@@ -1,7 +1,7 @@
 import { mockClock } from '../../test/specHelper'
 import { ONE_SECOND } from '../tools/utils'
 import { resetExperimentalFeatures, updateExperimentalFeatures } from '../domain/configuration'
-import { addFailedSendBeacon, startFlushFailedSendBeacons } from './failedSendBeacon'
+import { addFailedSendBeacon, LOCAL_STORAGE_KEY, startFlushFailedSendBeacons } from './failedSendBeacon'
 
 describe('failedSendBeacon', () => {
   afterEach(() => {
@@ -20,13 +20,13 @@ describe('failedSendBeacon', () => {
       addFailedSendBeacon('foo', 100)
       startFlushFailedSendBeacons()
       clock.tick(2 * ONE_SECOND)
-      expect(window.localStorage.getItem('failed-send-beacon')).toEqual(null)
+      expect(window.localStorage.getItem(LOCAL_STORAGE_KEY)).toEqual(null)
       clock.cleanup()
     })
 
     it('should add failed sendBeacon', () => {
       addFailedSendBeacon('foo', 100)
-      const failedSendBeacons = JSON.parse(window.localStorage.getItem('failed-send-beacon') || '[]')
+      const failedSendBeacons = JSON.parse(window.localStorage.getItem(LOCAL_STORAGE_KEY) || '[]')
       expect(failedSendBeacons.length).toEqual(1)
     })
   })
@@ -39,7 +39,7 @@ describe('failedSendBeacon', () => {
 
     it('should not add failed sendBeacon', () => {
       addFailedSendBeacon('foo', 100)
-      expect(window.localStorage.getItem('failed-send-beacon')).toEqual(null)
+      expect(window.localStorage.getItem(LOCAL_STORAGE_KEY)).toEqual(null)
     })
   })
 })
