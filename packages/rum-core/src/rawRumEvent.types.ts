@@ -89,6 +89,7 @@ export interface RawRumViewEvent {
     action: Count
     long_task: Count
     resource: Count
+    frustration: Count
     in_foreground_periods?: InForegroundPeriod[]
   }
   session: {

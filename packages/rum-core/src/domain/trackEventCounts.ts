@@ -5,27 +5,32 @@ import { LifeCycleEventType } from './lifeCycle'
 
 export interface EventCounts {
   errorCount: number
-  userActionCount: number
+  actionCount: number
   longTaskCount: number
   resourceCount: number
+  frustrationCount: number
 }
 
 export function trackEventCounts(lifeCycle: LifeCycle, callback: (eventCounts: EventCounts) => void = noop) {
-  const eventCounts = {
+  const eventCounts: EventCounts = {
     errorCount: 0,
     longTaskCount: 0,
     resourceCount: 0,
-    userActionCount: 0,
+    actionCount: 0,
+    frustrationCount: 0,
   }
 
-  const subscription = lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, ({ type }): void => {
-    switch (type) {
+  const subscription = lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (event): void => {
+    switch (event.type) {
       case RumEventType.ERROR:
         eventCounts.errorCount += 1
         callback(eventCounts)
         break
       case RumEventType.ACTION:
-        eventCounts.userActionCount += 1
+        eventCounts.actionCount += 1
+        if (event.action.frustration) {
+          eventCounts.frustrationCount += event.action.frustration.type.length
+        }
         callback(eventCounts)
         break
       case RumEventType.LONG_TASK:

@@ -316,6 +316,8 @@ class StubXhr extends StubEventEmitter {
   }
 }
 
+export function createNewEvent(eventName: 'click', properties?: { [name: string]: unknown }): MouseEvent
+export function createNewEvent(eventName: string, properties?: { [name: string]: unknown }): Event
 export function createNewEvent(eventName: string, properties: { [name: string]: unknown } = {}) {
   let event: Event
   if (typeof Event === 'function') {
