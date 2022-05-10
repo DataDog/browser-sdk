@@ -13,7 +13,7 @@ import { addFailedSendBeacon } from './failedSendBeacon'
 export class HttpRequest {
   constructor(private endpointBuilder: EndpointBuilder, private bytesLimit: number) {}
 
-  send(data: string | FormData, size: number) {
+  send(data: string | FormData, size: number, reason?: string) {
     const url = this.endpointBuilder.build()
     const canUseBeacon = !!navigator.sendBeacon && size < this.bytesLimit
     if (canUseBeacon) {
@@ -23,7 +23,7 @@ export class HttpRequest {
           return
         }
 
-        addFailedSendBeacon(this.endpointBuilder.buildIntakeUrl(), size)
+        addFailedSendBeacon(this.endpointBuilder.endpointType, size, reason)
       } catch (e) {
         reportBeaconError(e)
       }
