@@ -256,7 +256,7 @@ describe('internal monitoring', () => {
         { site: INTAKE_SITE_EU, enabled: false },
         { site: INTAKE_SITE_US, enabled: false },
       ].forEach(({ site, enabled }) => {
-        it('should be enabled by site', () => {
+        it(`should be ${enabled ? 'enabled' : 'disabled'} on ${site}`, () => {
           internalMonitoring = startInternalMonitoring({ ...configuration, site } as Configuration)
           notifySpy = jasmine.createSpy('notified')
           internalMonitoring.telemetryEventObservable.subscribe(notifySpy)
