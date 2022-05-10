@@ -1,4 +1,9 @@
-import { DefaultPrivacyLevel, display } from '@datadog/browser-core'
+import {
+  DefaultPrivacyLevel,
+  display,
+  resetExperimentalFeatures,
+  updateExperimentalFeatures,
+} from '@datadog/browser-core'
 import { validateAndBuildRumConfiguration } from './configuration'
 
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx', applicationId: 'xxx' }
@@ -88,6 +93,66 @@ describe('validateAndBuildRumConfiguration', () => {
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackInteractions: 'foo' as any })!
           .trackInteractions
       ).toBeTrue()
+    })
+  })
+
+  describe('trackFrustrations', () => {
+    describe('without frustration-signals flag', () => {
+      it('defaults to false', () => {
+        expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackFrustrations).toBeFalse()
+      })
+
+      it('the initialization parameter is ignored, no matter its value', () => {
+        expect(
+          validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackFrustrations: true })!
+            .trackFrustrations
+        ).toBeFalse()
+        expect(
+          validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackFrustrations: 'foo' as any })!
+            .trackFrustrations
+        ).toBeFalse()
+      })
+
+      it('does not impact "trackInteractions"', () => {
+        expect(
+          validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackFrustrations: true })!
+            .trackInteractions
+        ).toBeFalse()
+      })
+    })
+
+    describe('with frustration-signals flag', () => {
+      beforeEach(() => {
+        updateExperimentalFeatures(['frustration-signals'])
+      })
+      afterEach(() => {
+        resetExperimentalFeatures()
+      })
+
+      it('defaults to false', () => {
+        expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackFrustrations).toBeFalse()
+      })
+
+      it('the initialization parameter is set to provided value', () => {
+        expect(
+          validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackFrustrations: true })!
+            .trackFrustrations
+        ).toBeTrue()
+      })
+
+      it('the initialization parameter the provided value is cast to boolean', () => {
+        expect(
+          validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackFrustrations: 'foo' as any })!
+            .trackFrustrations
+        ).toBeTrue()
+      })
+
+      it('implies "trackInteractions"', () => {
+        expect(
+          validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackFrustrations: true })!
+            .trackInteractions
+        ).toBeTrue()
+      })
     })
   })
 
