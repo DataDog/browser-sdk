@@ -1,7 +1,11 @@
 import { isExperimentalFeatureEnabled } from '../domain/configuration'
 import { addMonitoringMessage, monitor } from '../domain/internalMonitoring'
 
+// replaced at build time
+declare const __BUILD_ENV__SDK_VERSION__: string
+
 const FAILED_SEND_BEACON_FLUSH_INTERVAL = 2000
+const LOCAL_STORAGE_KEY = 'datadog-browser-sdk-failed-send-beacon'
 
 export function startFlushFailedSendBeacons() {
   if (!isExperimentalFeatureEnabled('lower-batch-size')) return
@@ -16,14 +20,15 @@ export function addFailedSendBeacon(endpointType: string, size: number, reason?:
   requests.push({
     reason,
     endpointType,
+    version: __BUILD_ENV__SDK_VERSION__,
     connection: navigator.connection ? (navigator.connection as any).effectiveType : undefined,
     size,
   })
-  window.localStorage.setItem('failed-send-beacon', JSON.stringify(requests))
+  window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(requests))
 }
 
 function getFailedSendBeacons(): any[] {
-  return JSON.parse(window.localStorage.getItem('failed-send-beacon') || '[]') as any[]
+  return JSON.parse(window.localStorage.getItem(LOCAL_STORAGE_KEY) || '[]') as any[]
 }
 
 function flushFailedSendBeacon() {
