@@ -86,6 +86,9 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackInteractions: true })!.trackInteractions
       ).toBeTrue()
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackInteractions: false })!.trackInteractions
+      ).toBeFalse()
     })
 
     it('the provided value is cast to boolean', () => {
@@ -138,6 +141,10 @@ describe('validateAndBuildRumConfiguration', () => {
           validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackFrustrations: true })!
             .trackFrustrations
         ).toBeTrue()
+        expect(
+          validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackFrustrations: false })!
+            .trackFrustrations
+        ).toBeFalse()
       })
 
       it('the initialization parameter the provided value is cast to boolean', () => {
@@ -166,6 +173,10 @@ describe('validateAndBuildRumConfiguration', () => {
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackViewsManually: true })!
           .trackViewsManually
       ).toBeTrue()
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackViewsManually: false })!
+          .trackViewsManually
+      ).toBeFalse()
     })
 
     it('the provided value is cast to boolean', () => {
