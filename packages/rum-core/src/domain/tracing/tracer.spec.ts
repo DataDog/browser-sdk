@@ -326,7 +326,6 @@ function tracingHeadersFor(traceId: TraceIdentifier, spanId: TraceIdentifier) {
   return {
     'x-datadog-origin': 'rum',
     'x-datadog-parent-id': spanId.toDecimalString(),
-    'x-datadog-sampled': '1',
     'x-datadog-sampling-priority': '1',
     'x-datadog-trace-id': traceId.toDecimalString(),
   }
