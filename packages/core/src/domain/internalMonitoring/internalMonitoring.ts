@@ -6,7 +6,7 @@ import type { Configuration } from '../configuration'
 import { computeStackTrace } from '../tracekit'
 import { Observable } from '../../tools/observable'
 import { timeStampNow } from '../../tools/timeUtils'
-import { isExperimentalFeatureEnabled } from '../configuration'
+import { isExperimentalFeatureEnabled, INTAKE_SITE_STAGING } from '../configuration'
 import type { TelemetryEvent } from './telemetryEvent.types'
 
 // replaced at build time
@@ -127,6 +127,14 @@ export function startFakeInternalMonitoring() {
 export function resetInternalMonitoring() {
   onInternalMonitoringMessageCollected = undefined
   monitoringConfiguration.debugMode = undefined
+}
+
+/**
+ * Avoid mixing telemetry events from different data centers
+ * but keep replicating staging events for reliability
+ */
+export function isTelemetryReplicationAllowed(configuration: Configuration) {
+  return configuration.site === INTAKE_SITE_STAGING
 }
 
 export function monitored<T extends (...params: any[]) => unknown>(

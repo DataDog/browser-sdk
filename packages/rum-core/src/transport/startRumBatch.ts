@@ -1,5 +1,5 @@
 import type { Context, EndpointBuilder, TelemetryEvent, Observable } from '@datadog/browser-core'
-import { Batch, combine, HttpRequest } from '@datadog/browser-core'
+import { Batch, combine, HttpRequest, isTelemetryReplicationAllowed } from '@datadog/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
@@ -21,7 +21,7 @@ export function startRumBatch(
     }
   })
 
-  telemetryEventObservable.subscribe((event) => batch.add(event, false))
+  telemetryEventObservable.subscribe((event) => batch.add(event, isTelemetryReplicationAllowed(configuration)))
 }
 
 interface RumBatch {
