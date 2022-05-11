@@ -1,5 +1,5 @@
 import type { Context, ClocksState, Observable, Duration } from '@datadog/browser-core'
-import { timeStampNow, resetExperimentalFeatures, updateExperimentalFeatures, relativeNow } from '@datadog/browser-core'
+import { timeStampNow, relativeNow } from '@datadog/browser-core'
 import type { Clock } from '../../../../../core/test/specHelper'
 import { createNewEvent } from '../../../../../core/test/specHelper'
 import type { TestSetupBuilder } from '../../../../test/specHelper'
@@ -138,7 +138,7 @@ describe('trackClickActions', () => {
     expect(events[0].name).toBe('test-1')
   })
 
-  describe('without frustration-signals flag', () => {
+  describe('without tracking frustrations', () => {
     it('discards any click action with a negative duration', () => {
       const { domMutationObservable, clock } = setupBuilder.build()
       emulateClickWithActivity(domMutationObservable, clock, button, -1)
@@ -206,12 +206,9 @@ describe('trackClickActions', () => {
     })
   })
 
-  describe('with frustration-signals flag', () => {
+  describe('when tracking frustrations', () => {
     beforeEach(() => {
-      updateExperimentalFeatures(['frustration-signals'])
-    })
-    afterEach(() => {
-      resetExperimentalFeatures()
+      setupBuilder.withConfiguration({ trackFrustrations: true })
     })
 
     it('discards any click action with a negative duration', () => {

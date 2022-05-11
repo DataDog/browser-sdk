@@ -93,7 +93,7 @@ describe('action collection', () => {
     })
 
   createTest('collect an "error click"')
-    .withRum({ trackInteractions: true, enableExperimentalFeatures: ['frustration-signals'] })
+    .withRum({ trackFrustrations: true, enableExperimentalFeatures: ['frustration-signals'] })
     .withBody(
       html`
         <button>click me</button>
@@ -124,7 +124,7 @@ describe('action collection', () => {
     })
 
   createTest('collect a "dead click"')
-    .withRum({ trackInteractions: true, enableExperimentalFeatures: ['frustration-signals'] })
+    .withRum({ trackFrustrations: true, enableExperimentalFeatures: ['frustration-signals'] })
     .withBody(html` <button>click me</button> `)
     .run(async ({ serverEvents }) => {
       const button = await $('button')
@@ -139,7 +139,7 @@ describe('action collection', () => {
     })
 
   createTest('collect a "rage click"')
-    .withRum({ trackInteractions: true, enableExperimentalFeatures: ['frustration-signals'] })
+    .withRum({ trackFrustrations: true, enableExperimentalFeatures: ['frustration-signals'] })
     .withBody(
       html`
         <button>click me</button>
@@ -164,7 +164,7 @@ describe('action collection', () => {
     })
 
   createTest('collect multiple frustrations in one action')
-    .withRum({ trackInteractions: true, enableExperimentalFeatures: ['frustration-signals'] })
+    .withRum({ trackFrustrations: true, enableExperimentalFeatures: ['frustration-signals'] })
     .withBody(
       html`
         <button>click me</button>
