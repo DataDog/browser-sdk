@@ -122,7 +122,7 @@ function computePerformanceEntryMetrics(timing: RumPerformanceResourceTiming) {
 }
 
 function computeRequestTracingInfo(request: RequestCompleteEvent) {
-  const hasBeenTraced = request.traceId && request.spanId
+  const hasBeenTraced = request.traceSampled && request.traceId && request.spanId
   if (!hasBeenTraced) {
     return undefined
   }
