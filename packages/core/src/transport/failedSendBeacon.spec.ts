@@ -34,7 +34,7 @@ describe('failedSendBeacon', () => {
   describe('when ff lower-batch-size disabled', () => {
     it('should not flush failed sendBeacon ', () => {
       startFlushFailedSendBeacons()
-      expect(spyOn(window.localStorage, 'clear')).not.toHaveBeenCalled()
+      expect(spyOn(window.localStorage, 'removeItem')).not.toHaveBeenCalled()
     })
 
     it('should not add failed sendBeacon', () => {

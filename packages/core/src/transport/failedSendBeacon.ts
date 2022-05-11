@@ -34,5 +34,5 @@ function getFailedSendBeacons(): any[] {
 
 function flushFailedSendBeacon() {
   getFailedSendBeacons().forEach((result) => addMonitoringMessage('failed sendBeacon', result))
-  window.localStorage.clear()
+  window.localStorage.removeItem(LOCAL_STORAGE_KEY)
 }
