@@ -6,6 +6,7 @@ import {
   getEventBridge,
   startInternalMonitoring,
   startBatchWithReplica,
+  isTelemetryReplicationAllowed,
 } from '@datadog/browser-core'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { LogsConfiguration } from '../domain/configuration'
@@ -89,7 +90,9 @@ function startLogsInternalMonitoring(configuration: LogsConfiguration) {
       configuration.rumEndpointBuilder,
       configuration.replica?.rumEndpointBuilder
     )
-    internalMonitoring.telemetryEventObservable.subscribe((event) => monitoringBatch.add(event))
+    internalMonitoring.telemetryEventObservable.subscribe((event) =>
+      monitoringBatch.add(event, isTelemetryReplicationAllowed(configuration))
+    )
   }
   return internalMonitoring
 }
