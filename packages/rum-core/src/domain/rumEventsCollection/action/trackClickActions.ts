@@ -1,4 +1,4 @@
-import type { Duration, ClocksState, RelativeTime, TimeStamp, Subscription } from '@datadog/browser-core'
+import type { Duration, ClocksState, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import {
   setToArray,
   Observable,
@@ -63,11 +63,8 @@ export function trackClickActions(
     history.reset()
   })
 
-  lifeCycle.subscribe(LifeCycleEventType.BEFORE_UNLOAD, () => {
-    if (currentRageClickChain) {
-      currentRageClickChain.stop()
-    }
-  })
+  lifeCycle.subscribe(LifeCycleEventType.BEFORE_UNLOAD, stopRageClickChain)
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, stopRageClickChain)
 
   const { stop: stopListener } = listenClickEvents(processClick)
 
@@ -78,13 +75,17 @@ export function trackClickActions(
 
   return {
     stop: () => {
-      if (currentRageClickChain) {
-        currentRageClickChain.stop()
-      }
+      stopRageClickChain()
       stopObservable.notify()
       stopListener()
     },
     actionContexts,
+  }
+
+  function stopRageClickChain() {
+    if (currentRageClickChain) {
+      currentRageClickChain.stop()
+    }
   }
 
   function processClick(event: MouseEvent & { target: Element }) {
@@ -140,23 +141,16 @@ export function trackClickActions(
       CLICK_ACTION_MAX_DURATION
     )
 
-    let viewCreatedSubscription: Subscription | undefined
-    if (!trackFrustrations) {
-      // TODO: remove this in a future major version. To keep backward compatibility, end the click when a
-      // new view is created.
-      viewCreatedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, () => {
-        click.stop()
-      })
-    }
+    const viewEndedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, ({ endClocks }) => {
+      click.stop(endClocks.timeStamp)
+    })
 
     const stopSubscription = stopObservable.subscribe(() => {
       click.stop()
     })
 
     click.onStop(() => {
-      if (viewCreatedSubscription) {
-        viewCreatedSubscription.unsubscribe()
-      }
+      viewEndedSubscription.unsubscribe()
       stopWaitingIdlePage()
       stopSubscription.unsubscribe()
     })

@@ -1,5 +1,5 @@
-import type { Context, ClocksState, Observable, Duration } from '@datadog/browser-core'
-import { timeStampNow, relativeNow } from '@datadog/browser-core'
+import type { Context, Observable, Duration } from '@datadog/browser-core'
+import { clocksNow, timeStampNow, relativeNow } from '@datadog/browser-core'
 import type { Clock } from '../../../../../core/test/specHelper'
 import { createNewEvent } from '../../../../../core/test/specHelper'
 import type { TestSetupBuilder } from '../../../../test/specHelper'
@@ -149,14 +149,13 @@ describe('trackClickActions', () => {
       expect(findActionId()).toBeUndefined()
     })
 
-    it('discards ongoing click action on view created', () => {
+    it('discards ongoing click action on view ended', () => {
       const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
       emulateClickWithActivity(domMutationObservable, clock)
       expect(findActionId()).not.toBeUndefined()
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
-        id: 'fake',
-        startClocks: jasmine.any(Object) as unknown as ClocksState,
+      lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {
+        endClocks: clocksNow(),
       })
       clock.tick(EXPIRE_DELAY)
 
@@ -221,18 +220,18 @@ describe('trackClickActions', () => {
       expect(findActionId()).toEqual([])
     })
 
-    it("doesn't discard ongoing click action on view created", () => {
+    it('ongoing click action is stopped on view end', () => {
       const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
-      emulateClickWithActivity(domMutationObservable, clock)
-      expect(findActionId()).not.toBeUndefined()
+      emulateClickWithActivity(domMutationObservable, clock, button, BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
-        id: 'fake',
-        startClocks: jasmine.any(Object) as unknown as ClocksState,
+      clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+
+      lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {
+        endClocks: clocksNow(),
       })
-      clock.tick(EXPIRE_DELAY)
 
       expect(events.length).toBe(1)
+      expect(events[0].duration).toBe((2 * BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY) as Duration)
     })
 
     it('collect click actions even if another one is ongoing', () => {
