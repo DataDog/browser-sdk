@@ -23,11 +23,13 @@ describe('transportConfiguration', () => {
     it('should use US site by default', () => {
       const configuration = computeTransportConfiguration({ clientToken })
       expect(configuration.rumEndpointBuilder.build()).toContain('datadoghq.com')
+      expect(configuration.site).toBe('datadoghq.com')
     })
 
     it('should use site value when set', () => {
       const configuration = computeTransportConfiguration({ clientToken, site: 'foo.com' })
       expect(configuration.rumEndpointBuilder.build()).toContain('foo.com')
+      expect(configuration.site).toBe('foo.com')
     })
   })
 
