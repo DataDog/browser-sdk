@@ -19,6 +19,7 @@ export interface CustomContext {
   requestIndex: number
   spanId?: TraceIdentifier
   traceId?: TraceIdentifier
+  traceSampled?: boolean
 }
 export interface RumFetchStartContext extends FetchStartContext, CustomContext {}
 export interface RumFetchCompleteContext extends FetchCompleteContext, CustomContext {}
