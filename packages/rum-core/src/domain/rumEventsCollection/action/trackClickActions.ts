@@ -1,7 +1,6 @@
 import type { Duration, ClocksState, RelativeTime, TimeStamp, Subscription } from '@datadog/browser-core'
 import {
   setToArray,
-  noop,
   Observable,
   assign,
   getRelativeTime,
@@ -137,7 +136,6 @@ export function trackClickActions(
           // Else just validate it now
           click.validate(idleEvent.end)
         }
-        stopClickProcessing()
       },
       CLICK_ACTION_MAX_DURATION
     )
@@ -146,20 +144,22 @@ export function trackClickActions(
     if (!trackFrustrations) {
       // TODO: remove this in a future major version. To keep backward compatibility, end the click when a
       // new view is created.
-      viewCreatedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, stopClickProcessing)
+      viewCreatedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, () => {
+        click.stop()
+      })
     }
 
-    const stopSubscription = stopObservable.subscribe(stopClickProcessing)
-
-    function stopClickProcessing() {
-      // Cleanup any ongoing process
+    const stopSubscription = stopObservable.subscribe(() => {
       click.stop()
+    })
+
+    click.onStop(() => {
       if (viewCreatedSubscription) {
         viewCreatedSubscription.unsubscribe()
       }
       stopWaitingIdlePage()
       stopSubscription.unsubscribe()
-    }
+    })
   }
 }
 
@@ -203,7 +203,7 @@ function newClick(
   const eventCountsSubscription = trackEventCounts(lifeCycle)
   let state: ClickState = { status: ClickStatus.ONGOING }
   const frustrations = new Set<FrustrationType>()
-  let onStopCallback = noop
+  const onStopCallbacks: Array<() => void> = []
 
   function stop(endTime?: TimeStamp) {
     if (state.status !== ClickStatus.ONGOING) {
@@ -216,7 +216,7 @@ function newClick(
       historyEntry.remove()
     }
     eventCountsSubscription.stop()
-    onStopCallback()
+    onStopCallbacks.forEach((callback) => callback())
   }
 
   function addFrustration(frustration: FrustrationType) {
@@ -232,8 +232,8 @@ function newClick(
 
     getFrustrations: () => frustrations,
 
-    onStop: (newOnStopCallback: () => void) => {
-      onStopCallback = newOnStopCallback
+    onStop: (onStopCallback: () => void) => {
+      onStopCallbacks.push(onStopCallback)
     },
 
     isStopped: () => state.status === ClickStatus.STOPPED || state.status === ClickStatus.FINALIZED,
