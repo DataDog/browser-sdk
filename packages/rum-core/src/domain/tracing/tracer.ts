@@ -115,6 +115,10 @@ function getCrypto() {
   return window.crypto || (window as any).msCrypto
 }
 
+/**
+ * When trace is not sampled, set priority to '0' instead of not adding the tracing headers
+ * to prepare the implementation for sampling delegation.
+ */
 function makeTracingHeaders(traceId: TraceIdentifier, spanId: TraceIdentifier, traceSampled: boolean): TracingHeaders {
   return {
     'x-datadog-origin': 'rum',
