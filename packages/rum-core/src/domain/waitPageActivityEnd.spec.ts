@@ -86,6 +86,7 @@ describe('createPageActivityObservable', () => {
   })
 
   describe('requests', () => {
+    const FAKE_URL = 'https://example.com'
     function makeFakeRequestCompleteEvent(requestIndex: number) {
       return { requestIndex } as RequestCompleteEvent
     }
@@ -103,6 +104,7 @@ describe('createPageActivityObservable', () => {
       pageActivityObservable.subscribe(pushEvent)
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
         requestIndex: 10,
+        url: FAKE_URL,
       })
       expect(events).toEqual([{ isBusy: true }])
     })
@@ -111,6 +113,7 @@ describe('createPageActivityObservable', () => {
       pageActivityObservable.subscribe(pushEvent)
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
         requestIndex: 10,
+        url: FAKE_URL,
       })
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(10))
       expect(events).toEqual([{ isBusy: true }, { isBusy: false }])
@@ -126,9 +129,11 @@ describe('createPageActivityObservable', () => {
       pageActivityObservable.subscribe(pushEvent)
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
         requestIndex: 10,
+        url: FAKE_URL,
       })
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
         requestIndex: 11,
+        url: FAKE_URL,
       })
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(9))
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(11))
