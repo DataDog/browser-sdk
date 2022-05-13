@@ -1,4 +1,4 @@
-import { noop, ONE_SECOND, timeStampNow } from '@datadog/browser-core'
+import { Observable, ONE_SECOND, timeStampNow } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test/specHelper'
 import { mockClock, createNewEvent } from '@datadog/browser-core/test/specHelper'
 import { FrustrationType } from '../../../rawRumEvent.types'
@@ -185,7 +185,7 @@ describe('isRage', () => {
 })
 
 function createFakeClick(eventPartial?: Partial<MouseEvent>): Click & { clonedClick?: Click } {
-  let onStopCallback = noop
+  const stopObservable = new Observable<void>()
   let isStopped = false
   let clonedClick: Click | undefined
   const frustrations = new Set<FrustrationType>()
@@ -197,13 +197,11 @@ function createFakeClick(eventPartial?: Partial<MouseEvent>): Click & { clonedCl
       timeStamp: timeStampNow(),
       ...eventPartial,
     }),
-    onStop: (newOnStopCallback) => {
-      onStopCallback = newOnStopCallback
-    },
+    stopObservable,
     isStopped: () => isStopped,
     stop: () => {
       isStopped = true
-      onStopCallback()
+      stopObservable.notify()
     },
     clone: () => {
       clonedClick = createFakeClick(eventPartial)

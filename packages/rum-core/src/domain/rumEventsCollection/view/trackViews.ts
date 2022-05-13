@@ -242,8 +242,8 @@ function newView(
     scheduleUpdate: scheduleViewUpdate,
     end(clocks = clocksNow()) {
       endClocks = clocks
-      stopViewMetricsTracking()
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks })
+      stopViewMetricsTracking()
     },
     triggerUpdate() {
       // cancel any pending view updates execution
