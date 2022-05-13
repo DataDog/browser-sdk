@@ -12,14 +12,14 @@ export interface PageActivityEvent {
   isBusy: boolean
 }
 
-export type IdlePageEvent = { hadActivity: true; end: TimeStamp } | { hadActivity: false }
+export type PageActivityEndEvent = { hadActivity: true; end: TimeStamp } | { hadActivity: false }
 
 /**
- * Wait for the next idle page time
+ * Wait for the page activity end
  *
  * Detection lifecycle:
  * ```
- *                           Wait idle page
+ *                        Wait page activity end
  *              .-------------------'--------------------.
  *              v                                        v
  *     [Wait for a page activity ]          [Wait for a maximum duration]
@@ -44,22 +44,22 @@ export type IdlePageEvent = { hadActivity: true; end: TimeStamp } | { hadActivit
  * Note: by assuming that maxDuration is greater than VALIDATION_DELAY, we are sure that if the
  * process is still alive after maxDuration, it has been validated.
  */
-export function waitIdlePage(
+export function waitPageActivityEnd(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
-  idlePageCallback: (event: IdlePageEvent) => void,
+  pageActivityEndCallback: (event: PageActivityEndEvent) => void,
   maxDuration?: number
 ) {
   const pageActivityObservable = createPageActivityObservable(lifeCycle, domMutationObservable)
-  return doWaitIdlePage(pageActivityObservable, idlePageCallback, maxDuration)
+  return doWaitPageActivityEnd(pageActivityObservable, pageActivityEndCallback, maxDuration)
 }
 
-export function doWaitIdlePage(
+export function doWaitPageActivityEnd(
   pageActivityObservable: Observable<PageActivityEvent>,
-  idlePageCallback: (event: IdlePageEvent) => void,
+  pageActivityEndCallback: (event: PageActivityEndEvent) => void,
   maxDuration?: number
 ) {
-  let idleTimeoutId: TimeoutId
+  let pageActivityEndTimeoutId: TimeoutId
   let hasCompleted = false
 
   const validationTimeoutId = setTimeout(
@@ -75,10 +75,10 @@ export function doWaitIdlePage(
 
   const pageActivitySubscription = pageActivityObservable.subscribe(({ isBusy }) => {
     clearTimeout(validationTimeoutId)
-    clearTimeout(idleTimeoutId)
+    clearTimeout(pageActivityEndTimeoutId)
     const lastChangeTime = timeStampNow()
     if (!isBusy) {
-      idleTimeoutId = setTimeout(
+      pageActivityEndTimeoutId = setTimeout(
         monitor(() => complete({ hadActivity: true, end: lastChangeTime })),
         PAGE_ACTIVITY_END_DELAY
       )
@@ -88,17 +88,17 @@ export function doWaitIdlePage(
   const stop = () => {
     hasCompleted = true
     clearTimeout(validationTimeoutId)
-    clearTimeout(idleTimeoutId)
+    clearTimeout(pageActivityEndTimeoutId)
     clearTimeout(maxDurationTimeoutId)
     pageActivitySubscription.unsubscribe()
   }
 
-  function complete(event: IdlePageEvent) {
+  function complete(event: PageActivityEndEvent) {
     if (hasCompleted) {
       return
     }
     stop()
-    idlePageCallback(event)
+    pageActivityEndCallback(event)
   }
   return { stop }
 }
