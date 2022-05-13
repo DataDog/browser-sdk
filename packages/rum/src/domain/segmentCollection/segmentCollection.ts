@@ -197,6 +197,6 @@ export function computeSegmentContext(
   }
 }
 
-export function setMaxSegmentSize(newSize: number = SEND_BEACON_BYTES_LIMIT) {
-  SEGMENT_BYTES_LIMIT = newSize
+export function setSegmentBytesLimit(newSegmentBytesLimit: number = SEND_BEACON_BYTES_LIMIT) {
+  SEGMENT_BYTES_LIMIT = newSegmentBytesLimit
 }
