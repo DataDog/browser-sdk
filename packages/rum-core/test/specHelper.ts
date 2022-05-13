@@ -241,6 +241,7 @@ export function setupViewTest(
     location,
     lifeCycle,
     domMutationObservable,
+    configuration,
     locationChangeObservable,
     !configuration.trackViewsManually,
     initialViewOptions

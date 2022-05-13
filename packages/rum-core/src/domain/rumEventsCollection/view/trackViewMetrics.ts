@@ -3,6 +3,7 @@ import { noop, round, ONE_SECOND, elapsed } from '@datadog/browser-core'
 import type { RumLayoutShiftTiming } from '../../../browser/performanceCollection'
 import { supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
+import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { EventCounts } from '../../trackEventCounts'
@@ -18,6 +19,7 @@ export interface ViewMetrics {
 export function trackViewMetrics(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
+  configuration: RumConfiguration,
   scheduleViewUpdate: () => void,
   loadingType: ViewLoadingType,
   viewStart: ClocksState
@@ -39,6 +41,7 @@ export function trackViewMetrics(
   const { stop: stopLoadingTimeTracking, setLoadEvent } = trackLoadingTime(
     lifeCycle,
     domMutationObservable,
+    configuration,
     loadingType,
     viewStart,
     (newLoadingTime) => {
@@ -71,6 +74,7 @@ export function trackViewMetrics(
 function trackLoadingTime(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
+  configuration: RumConfiguration,
   loadType: ViewLoadingType,
   viewStart: ClocksState,
   callback: (loadingTime: Duration) => void
@@ -85,7 +89,7 @@ function trackLoadingTime(
     }
   }
 
-  const { stop } = waitPageActivityEnd(lifeCycle, domMutationObservable, (event) => {
+  const { stop } = waitPageActivityEnd(lifeCycle, domMutationObservable, configuration, (event) => {
     if (isWaitingForActivityLoadingTime) {
       isWaitingForActivityLoadingTime = false
       if (event.hadActivity) {

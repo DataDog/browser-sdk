@@ -2,8 +2,10 @@ import type { RelativeTime } from '@datadog/browser-core'
 import { Observable, ONE_SECOND, getTimeStamp } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test/specHelper'
 import { mockClock } from '@datadog/browser-core/test/specHelper'
+import type { TestSetupBuilder } from '../../test/specHelper'
+import { setup } from '../../test/specHelper'
 import type { RumPerformanceNavigationTiming, RumPerformanceResourceTiming } from '../browser/performanceCollection'
-import { LifeCycle, LifeCycleEventType } from './lifeCycle'
+import { LifeCycleEventType } from './lifeCycle'
 import type { RequestCompleteEvent } from './requestCollection'
 import type { PageActivityEvent, PageActivityEndEvent } from './waitPageActivityEnd'
 import {
@@ -38,23 +40,28 @@ function eventsCollector<T>() {
 describe('createPageActivityObservable', () => {
   const { events, pushEvent } = eventsCollector<PageActivityEvent>()
 
-  let lifeCycle: LifeCycle
-  let domMutationObservable: Observable<void>
   let pageActivityObservable: Observable<PageActivityEvent>
+  let setupBuilder: TestSetupBuilder
 
   beforeEach(() => {
-    lifeCycle = new LifeCycle()
-    domMutationObservable = new Observable()
-    pageActivityObservable = createPageActivityObservable(lifeCycle, domMutationObservable)
+    setupBuilder = setup().beforeBuild(({ lifeCycle, domMutationObservable, configuration }) => {
+      pageActivityObservable = createPageActivityObservable(lifeCycle, domMutationObservable, configuration)
+    })
+  })
+
+  afterEach(() => {
+    setupBuilder.cleanup()
   })
 
   it('emits an activity event on dom mutation', () => {
+    const { domMutationObservable } = setupBuilder.build()
     pageActivityObservable.subscribe(pushEvent)
     domMutationObservable.notify()
     expect(events).toEqual([{ isBusy: false }])
   })
 
   it('emits an activity event on resource collected', () => {
+    const { lifeCycle } = setupBuilder.build()
     pageActivityObservable.subscribe(pushEvent)
     const performanceTiming = {
       entryType: 'resource',
@@ -64,6 +71,7 @@ describe('createPageActivityObservable', () => {
   })
 
   it('does not emit an activity event when a navigation occurs', () => {
+    const { lifeCycle } = setupBuilder.build()
     pageActivityObservable.subscribe(pushEvent)
     const performanceTiming = {
       entryType: 'navigation',
@@ -73,6 +81,7 @@ describe('createPageActivityObservable', () => {
   })
 
   it('stops emitting activities after calling stop()', () => {
+    const { domMutationObservable } = setupBuilder.build()
     const subscription = pageActivityObservable.subscribe(pushEvent)
     domMutationObservable.notify()
     expect(events).toEqual([{ isBusy: false }])
@@ -90,17 +99,9 @@ describe('createPageActivityObservable', () => {
     function makeFakeRequestCompleteEvent(requestIndex: number) {
       return { requestIndex } as RequestCompleteEvent
     }
-    let lifeCycle: LifeCycle
-    let domMutationObservable: Observable<void>
-    let pageActivityObservable: Observable<PageActivityEvent>
-
-    beforeEach(() => {
-      lifeCycle = new LifeCycle()
-      domMutationObservable = new Observable()
-      pageActivityObservable = createPageActivityObservable(lifeCycle, domMutationObservable)
-    })
 
     it('emits an activity event when a request starts', () => {
+      const { lifeCycle } = setupBuilder.build()
       pageActivityObservable.subscribe(pushEvent)
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
         requestIndex: 10,
@@ -110,6 +111,7 @@ describe('createPageActivityObservable', () => {
     })
 
     it('emits an activity event when a request completes', () => {
+      const { lifeCycle } = setupBuilder.build()
       pageActivityObservable.subscribe(pushEvent)
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
         requestIndex: 10,
@@ -120,12 +122,14 @@ describe('createPageActivityObservable', () => {
     })
 
     it('ignores requests that has started before', () => {
+      const { lifeCycle } = setupBuilder.build()
       pageActivityObservable.subscribe(pushEvent)
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(10))
       expect(events).toEqual([])
     })
 
     it('keeps emitting busy events while all requests are not completed', () => {
+      const { lifeCycle } = setupBuilder.build()
       pageActivityObservable.subscribe(pushEvent)
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
         requestIndex: 10,

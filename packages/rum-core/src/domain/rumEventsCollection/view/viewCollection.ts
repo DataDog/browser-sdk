@@ -32,6 +32,7 @@ export function startViewCollection(
     location,
     lifeCycle,
     domMutationObservable,
+    configuration,
     locationChangeObservable,
     !configuration.trackViewsManually,
     initialViewOptions

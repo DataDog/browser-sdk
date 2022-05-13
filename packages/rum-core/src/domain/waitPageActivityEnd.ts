@@ -1,5 +1,6 @@
 import type { Subscription, TimeoutId, TimeStamp } from '@datadog/browser-core'
 import { monitor, Observable, timeStampNow } from '@datadog/browser-core'
+import type { RumConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 
@@ -47,10 +48,11 @@ export type PageActivityEndEvent = { hadActivity: true; end: TimeStamp } | { had
 export function waitPageActivityEnd(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
+  configuration: RumConfiguration,
   pageActivityEndCallback: (event: PageActivityEndEvent) => void,
   maxDuration?: number
 ) {
-  const pageActivityObservable = createPageActivityObservable(lifeCycle, domMutationObservable)
+  const pageActivityObservable = createPageActivityObservable(lifeCycle, domMutationObservable, configuration)
   return doWaitPageActivityEnd(pageActivityObservable, pageActivityEndCallback, maxDuration)
 }
 
@@ -105,7 +107,8 @@ export function doWaitPageActivityEnd(
 
 export function createPageActivityObservable(
   lifeCycle: LifeCycle,
-  domMutationObservable: Observable<void>
+  domMutationObservable: Observable<void>,
+  configuration: RumConfiguration
 ): Observable<PageActivityEvent> {
   const observable = new Observable<PageActivityEvent>(() => {
     const subscriptions: Subscription[] = []
