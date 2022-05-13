@@ -1,5 +1,5 @@
 import type { Subscription, TimeoutId, TimeStamp } from '@datadog/browser-core'
-import { monitor, Observable, timeStampNow } from '@datadog/browser-core'
+import { matchList, monitor, Observable, timeStampNow } from '@datadog/browser-core'
 import type { RumConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
@@ -118,11 +118,14 @@ export function createPageActivityObservable(
     subscriptions.push(
       domMutationObservable.subscribe(() => notifyPageActivity(pendingRequestsCount)),
       lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
-        if (entries.some(({ entryType }) => entryType === 'resource')) {
+        if (entries.some((entry) => entry.entryType === 'resource' && !isExcludedUrl(configuration, entry.name))) {
           notifyPageActivity(pendingRequestsCount)
         }
       }),
       lifeCycle.subscribe(LifeCycleEventType.REQUEST_STARTED, (startEvent) => {
+        if (isExcludedUrl(configuration, startEvent.url)) {
+          return
+        }
         if (firstRequestIndex === undefined) {
           firstRequestIndex = startEvent.requestIndex
         }
@@ -130,8 +133,12 @@ export function createPageActivityObservable(
         notifyPageActivity(++pendingRequestsCount)
       }),
       lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request) => {
-        // If the request started before the tracking start, ignore it
-        if (firstRequestIndex === undefined || request.requestIndex < firstRequestIndex) {
+        if (
+          isExcludedUrl(configuration, request.url) ||
+          firstRequestIndex === undefined ||
+          // If the request started before the tracking start, ignore it
+          request.requestIndex < firstRequestIndex
+        ) {
           return
         }
         notifyPageActivity(--pendingRequestsCount)
@@ -146,4 +153,8 @@ export function createPageActivityObservable(
   }
 
   return observable
+}
+
+function isExcludedUrl(configuration: RumConfiguration, requestUrl: string): boolean {
+  return matchList(configuration.excludedActivityUrls, requestUrl)
 }

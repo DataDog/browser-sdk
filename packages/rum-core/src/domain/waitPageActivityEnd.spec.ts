@@ -25,6 +25,7 @@ const MAX_DURATION = 10 * ONE_SECOND
 const EXPIRE_DELAY = MAX_DURATION * 10
 
 const FAKE_URL = 'https://example.com'
+const EXCLUDED_FAKE_URL = 'https://example.com/excluded'
 
 function eventsCollector<T>() {
   const events: T[] = []
@@ -46,10 +47,12 @@ describe('createPageActivityObservable', () => {
   let pageActivitySubscription: Subscription
 
   beforeEach(() => {
-    setupBuilder = setup().beforeBuild(({ lifeCycle, domMutationObservable, configuration }) => {
-      const pageActivityObservable = createPageActivityObservable(lifeCycle, domMutationObservable, configuration)
-      pageActivitySubscription = pageActivityObservable.subscribe(pushEvent)
-    })
+    setupBuilder = setup()
+      .withConfiguration({ excludedActivityUrls: [EXCLUDED_FAKE_URL] })
+      .beforeBuild(({ lifeCycle, domMutationObservable, configuration }) => {
+        const pageActivityObservable = createPageActivityObservable(lifeCycle, domMutationObservable, configuration)
+        pageActivitySubscription = pageActivityObservable.subscribe(pushEvent)
+      })
   })
 
   afterEach(() => {
@@ -71,7 +74,17 @@ describe('createPageActivityObservable', () => {
     expect(events).toEqual([{ isBusy: false }])
   })
 
-  it('does not emit an activity event when a navigation occurs', () => {
+  it('emits an activity event on resource collected', () => {
+    const { lifeCycle } = setupBuilder.build()
+    const performanceTiming = {
+      entryType: 'resource',
+      name: EXCLUDED_FAKE_URL,
+    } as RumPerformanceResourceTiming
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [performanceTiming])
+    expect(events).toEqual([])
+  })
+
+  it('ignores resources that should be excluded by configuration', () => {
     const { lifeCycle } = setupBuilder.build()
     const performanceTiming = {
       entryType: 'navigation',
@@ -123,11 +136,28 @@ describe('createPageActivityObservable', () => {
       expect(events).toEqual([{ isBusy: true }, { isBusy: true }, { isBusy: true }, { isBusy: false }])
     })
 
-    function makeFakeRequestCompleteEvent(requestIndex: number) {
-      return { requestIndex, url: FAKE_URL } as RequestCompleteEvent
+    describe('excludedActivityUrls', () => {
+      it('ignores requests that should be excluded by configuration', () => {
+        const { lifeCycle } = setupBuilder.build()
+        lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, makeFakeRequestStartEvent(10, EXCLUDED_FAKE_URL))
+        lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(10, EXCLUDED_FAKE_URL))
+        expect(events).toEqual([])
+      })
+
+      it("ignored requests don't interfere with pending requests count", () => {
+        const { lifeCycle } = setupBuilder.build()
+        lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, makeFakeRequestStartEvent(9))
+        lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, makeFakeRequestStartEvent(10, EXCLUDED_FAKE_URL))
+        lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(10, EXCLUDED_FAKE_URL))
+        expect(events).toEqual([{ isBusy: true }])
+      })
+    })
+
+    function makeFakeRequestCompleteEvent(requestIndex: number, url = FAKE_URL) {
+      return { requestIndex, url } as RequestCompleteEvent
     }
-    function makeFakeRequestStartEvent(requestIndex: number): RequestStartEvent {
-      return { requestIndex, url: FAKE_URL }
+    function makeFakeRequestStartEvent(requestIndex: number, url = FAKE_URL): RequestStartEvent {
+      return { requestIndex, url }
     }
   })
 })
