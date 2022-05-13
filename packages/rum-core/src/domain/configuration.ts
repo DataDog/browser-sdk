@@ -1,5 +1,6 @@
 import type { Configuration, InitConfiguration } from '@datadog/browser-core'
 import {
+  isExperimentalFeatureEnabled,
   assign,
   DefaultPrivacyLevel,
   display,
@@ -24,6 +25,7 @@ export interface RumInitConfiguration extends InitConfiguration {
 
   // action options
   trackInteractions?: boolean | undefined
+  trackFrustrations?: boolean | undefined
   actionNameAttribute?: string | undefined
 
   // view options
@@ -40,6 +42,7 @@ export interface RumConfiguration extends Configuration {
   defaultPrivacyLevel: DefaultPrivacyLevel
   replaySampleRate: number
   trackInteractions: boolean
+  trackFrustrations: boolean
   trackViewsManually: boolean
   version?: string
 }
@@ -73,6 +76,8 @@ export function validateAndBuildRumConfiguration(
     return
   }
 
+  const trackFrustrations = isExperimentalFeatureEnabled('frustration-signals') && !!initConfiguration.trackFrustrations
+
   return assign(
     {
       applicationId: initConfiguration.applicationId,
@@ -80,7 +85,8 @@ export function validateAndBuildRumConfiguration(
       actionNameAttribute: initConfiguration.actionNameAttribute,
       replaySampleRate: initConfiguration.replaySampleRate ?? 100,
       allowedTracingOrigins: initConfiguration.allowedTracingOrigins ?? [],
-      trackInteractions: !!initConfiguration.trackInteractions,
+      trackInteractions: !!initConfiguration.trackInteractions || trackFrustrations,
+      trackFrustrations,
       trackViewsManually: !!initConfiguration.trackViewsManually,
       defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
         ? initConfiguration.defaultPrivacyLevel

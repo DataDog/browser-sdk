@@ -8,6 +8,7 @@ export {
 export {
   createEndpointBuilder,
   EndpointBuilder,
+  INTAKE_SITE_STAGING,
   INTAKE_SITE_US5,
   INTAKE_SITE_US,
   INTAKE_SITE_US3,

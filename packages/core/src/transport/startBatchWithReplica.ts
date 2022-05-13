@@ -24,9 +24,9 @@ export function startBatchWithReplica<T extends Context>(
   }
 
   return {
-    add(message: T) {
+    add(message: T, replicated = true) {
       primaryBatch.add(message)
-      if (replicaBatch) {
+      if (replicaBatch && replicated) {
         replicaBatch.add(message)
       }
     },

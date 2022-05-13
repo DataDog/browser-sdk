@@ -19,13 +19,18 @@ const isBrowserStack =
   browser.config.services &&
   browser.config.services.some((service) => (Array.isArray(service) ? service[0] : service) === 'browserstack')
 
-export const DEFAULT_SETUPS = isBrowserStack
-  ? [{ name: 'bundle', factory: bundleSetup }]
-  : [
-      { name: 'async', factory: asyncSetup },
-      { name: 'npm', factory: npmSetup },
-      { name: 'bundle', factory: bundleSetup },
-    ]
+const isContinuousIntegration = Boolean(process.env.CI_JOB_ID)
+
+// By default, run tests only with the 'bundle' setup outside of the CI (to run faster on the
+// developer laptop) or with Browser Stack (to limit flakiness).
+export const DEFAULT_SETUPS =
+  !isContinuousIntegration || isBrowserStack
+    ? [{ name: 'bundle', factory: bundleSetup }]
+    : [
+        { name: 'async', factory: asyncSetup },
+        { name: 'npm', factory: npmSetup },
+        { name: 'bundle', factory: bundleSetup },
+      ]
 
 export function asyncSetup(options: SetupOptions, servers: Servers) {
   let body = options.body || ''

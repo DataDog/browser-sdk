@@ -10,5 +10,6 @@ export {
   resetInternalMonitoring,
   setDebugMode,
   startInternalMonitoring,
+  isTelemetryReplicationAllowed,
 } from './internalMonitoring'
 export { TelemetryEvent } from './telemetryEvent.types'

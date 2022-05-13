@@ -1,10 +1,8 @@
-import type { Duration, ClocksState, RelativeTime, TimeStamp, Subscription } from '@datadog/browser-core'
+import type { Duration, ClocksState, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import {
   setToArray,
-  noop,
   Observable,
   assign,
-  isExperimentalFeatureEnabled,
   getRelativeTime,
   ONE_MINUTE,
   ContextHistory,
@@ -55,10 +53,8 @@ export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
 export function trackClickActions(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
-  { actionNameAttribute }: RumConfiguration
+  { actionNameAttribute, trackFrustrations }: RumConfiguration
 ) {
-  // TODO: this will be changed when we introduce a proper initialization parameter for it
-  const collectFrustrations = isExperimentalFeatureEnabled('frustration-signals')
   const history: ClickActionIdHistory = new ContextHistory(ACTION_CONTEXT_TIME_OUT_DELAY)
   const stopObservable = new Observable<void>()
   let currentRageClickChain: RageClickChain | undefined
@@ -67,39 +63,40 @@ export function trackClickActions(
     history.reset()
   })
 
-  lifeCycle.subscribe(LifeCycleEventType.BEFORE_UNLOAD, () => {
-    if (currentRageClickChain) {
-      currentRageClickChain.stop()
-    }
-  })
+  lifeCycle.subscribe(LifeCycleEventType.BEFORE_UNLOAD, stopRageClickChain)
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, stopRageClickChain)
 
   const { stop: stopListener } = listenClickEvents(processClick)
 
   const actionContexts: ActionContexts = {
     findActionId: (startTime?: RelativeTime) =>
-      collectFrustrations ? history.findAll(startTime) : history.find(startTime),
+      trackFrustrations ? history.findAll(startTime) : history.find(startTime),
   }
 
   return {
     stop: () => {
-      if (currentRageClickChain) {
-        currentRageClickChain.stop()
-      }
+      stopRageClickChain()
       stopObservable.notify()
       stopListener()
     },
     actionContexts,
   }
 
+  function stopRageClickChain() {
+    if (currentRageClickChain) {
+      currentRageClickChain.stop()
+    }
+  }
+
   function processClick(event: MouseEvent & { target: Element }) {
-    if (!collectFrustrations && history.find()) {
+    if (!trackFrustrations && history.find()) {
       // TODO: remove this in a future major version. To keep retrocompatibility, ignore any new
       // action if another one is already occurring.
       return
     }
 
     const name = getActionNameFromElement(event.target, actionNameAttribute)
-    if (!collectFrustrations && !name) {
+    if (!trackFrustrations && !name) {
       // TODO: remove this in a future major version. To keep retrocompatibility, ignore any action
       // with a blank name
       return
@@ -107,13 +104,13 @@ export function trackClickActions(
 
     const startClocks = clocksNow()
 
-    const click = newClick(lifeCycle, history, collectFrustrations, {
+    const click = newClick(lifeCycle, history, trackFrustrations, {
       name,
       event,
       startClocks,
     })
 
-    if (collectFrustrations && (!currentRageClickChain || !currentRageClickChain.tryAppend(click))) {
+    if (trackFrustrations && (!currentRageClickChain || !currentRageClickChain.tryAppend(click))) {
       currentRageClickChain = createRageClickChain(click)
     }
 
@@ -124,7 +121,7 @@ export function trackClickActions(
         if (!idleEvent.hadActivity) {
           // If it has no activity, consider it as a dead click.
           // TODO: this will yield a lot of false positive. We'll need to refine it in the future.
-          if (collectFrustrations) {
+          if (trackFrustrations) {
             click.addFrustration(FrustrationType.DEAD)
             click.stop()
           } else {
@@ -133,36 +130,30 @@ export function trackClickActions(
         } else if (idleEvent.end < startClocks.timeStamp) {
           // If the clock is looking weird, just discard the click
           click.discard()
-        } else if (collectFrustrations) {
-          // If we collect frustrations, let's stop the click, but validate it later
+        } else if (trackFrustrations) {
+          // If we track frustrations, let's stop the click, but validate it later
           click.stop(idleEvent.end)
         } else {
           // Else just validate it now
           click.validate(idleEvent.end)
         }
-        stopClickProcessing()
       },
       CLICK_ACTION_MAX_DURATION
     )
 
-    let viewCreatedSubscription: Subscription | undefined
-    if (!collectFrustrations) {
-      // TODO: remove this in a future major version. To keep backward compatibility, end the click when a
-      // new view is created.
-      viewCreatedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, stopClickProcessing)
-    }
+    const viewEndedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, ({ endClocks }) => {
+      click.stop(endClocks.timeStamp)
+    })
 
-    const stopSubscription = stopObservable.subscribe(stopClickProcessing)
-
-    function stopClickProcessing() {
-      // Cleanup any ongoing process
+    const stopSubscription = stopObservable.subscribe(() => {
       click.stop()
-      if (viewCreatedSubscription) {
-        viewCreatedSubscription.unsubscribe()
-      }
+    })
+
+    click.stopObservable.subscribe(() => {
+      viewEndedSubscription.unsubscribe()
       stopWaitingIdlePage()
       stopSubscription.unsubscribe()
-    }
+    })
   }
 }
 
@@ -198,7 +189,7 @@ export type Click = ReturnType<typeof newClick>
 function newClick(
   lifeCycle: LifeCycle,
   history: ClickActionIdHistory,
-  collectFrustrations: boolean,
+  trackFrustrations: boolean,
   base: Pick<ClickAction, 'startClocks' | 'event' | 'name'>
 ) {
   const id = generateUUID()
@@ -206,7 +197,7 @@ function newClick(
   const eventCountsSubscription = trackEventCounts(lifeCycle)
   let state: ClickState = { status: ClickStatus.ONGOING }
   const frustrations = new Set<FrustrationType>()
-  let onStopCallback = noop
+  const stopObservable = new Observable<void>()
 
   function stop(endTime?: TimeStamp) {
     if (state.status !== ClickStatus.ONGOING) {
@@ -219,11 +210,11 @@ function newClick(
       historyEntry.remove()
     }
     eventCountsSubscription.stop()
-    onStopCallback()
+    stopObservable.notify()
   }
 
   function addFrustration(frustration: FrustrationType) {
-    if (collectFrustrations) {
+    if (trackFrustrations) {
       frustrations.add(frustration)
     }
   }
@@ -232,16 +223,13 @@ function newClick(
     event: base.event,
     addFrustration,
     stop,
+    stopObservable,
 
     getFrustrations: () => frustrations,
 
-    onStop: (newOnStopCallback: () => void) => {
-      onStopCallback = newOnStopCallback
-    },
-
     isStopped: () => state.status === ClickStatus.STOPPED || state.status === ClickStatus.FINALIZED,
 
-    clone: () => newClick(lifeCycle, history, collectFrustrations, base),
+    clone: () => newClick(lifeCycle, history, trackFrustrations, base),
 
     validate: (endTime?: TimeStamp) => {
       stop(endTime)
