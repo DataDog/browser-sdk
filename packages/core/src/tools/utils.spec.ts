@@ -10,6 +10,7 @@ import {
   performDraw,
   round,
   safeTruncate,
+  startsWith,
   throttle,
 } from './utils'
 
@@ -556,5 +557,15 @@ describe('deepClone', () => {
 
     expect(clonedB).not.toEqual(b)
     expect(clonedB.ref.ref).toBeUndefined()
+  })
+})
+
+describe('startWith', () => {
+  it('should return true if the candidate does not start with the searched string', () => {
+    expect(startsWith('foobar', 'foo')).toEqual(true)
+  })
+
+  it('should return false if the candidate does not start with the searched string', () => {
+    expect(startsWith('barfoo', 'foo')).toEqual(false)
   })
 })

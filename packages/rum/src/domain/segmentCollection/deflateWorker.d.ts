@@ -32,6 +32,7 @@ export type DeflateWorkerAction =
       action: 'flush'
       id: number
       data?: string
+      reason?: string
     }
 
 export type DeflateWorkerResponse =
@@ -53,6 +54,7 @@ export type DeflateWorkerResponse =
       result: Uint8Array
       additionalRawSize: number
       rawSize: number
+      reason?: string
     }
   // Could happen at any time when something goes wrong in the worker
   | {

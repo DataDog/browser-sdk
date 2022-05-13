@@ -73,7 +73,7 @@ type SegmentCollectionState =
 export function doStartSegmentCollection(
   lifeCycle: LifeCycle,
   getSegmentContext: () => SegmentContext | undefined,
-  send: (data: Uint8Array, metadata: SegmentMetadata, rawSegmentSize: number) => void,
+  send: (data: Uint8Array, metadata: SegmentMetadata, rawSegmentSize: number, reason?: string) => void,
   worker: DeflateWorker,
   emitter: EventEmitter = window
 ) {
@@ -103,7 +103,7 @@ export function doStartSegmentCollection(
 
   function flushSegment(nextSegmentCreationReason?: CreationReason) {
     if (state.status === SegmentCollectionStatus.SegmentPending) {
-      state.segment.flush()
+      state.segment.flush(nextSegmentCreationReason)
       clearTimeout(state.expirationTimeoutId)
     }
 
@@ -135,8 +135,8 @@ export function doStartSegmentCollection(
           flushSegment('max_size')
         }
       },
-      (data, rawSegmentSize) => {
-        send(data, segment.metadata, rawSegmentSize)
+      (data, rawSegmentSize, reason) => {
+        send(data, segment.metadata, rawSegmentSize, reason)
       }
     )
 

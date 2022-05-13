@@ -266,6 +266,10 @@ export function mapValues<A, B>(object: { [key: string]: A }, fn: (arg: A) => B)
   return newObject
 }
 
+export function startsWith(candidate: string, search: string) {
+  return candidate.slice(0, search.length) === search
+}
+
 /**
  * inspired by https://mathiasbynens.be/notes/globalthis
  */
