@@ -10,6 +10,7 @@ export const LOCAL_STORAGE_KEY = 'datadog-browser-sdk-failed-send-beacon'
 export function startFlushFailedSendBeacons() {
   if (!isExperimentalFeatureEnabled('lower-batch-size')) return
 
+  // delay the computation to prevent the SDK from blocking the main thread on init
   setTimeout(monitor(flushFailedSendBeacon))
 }
 
