@@ -39,7 +39,7 @@ export function useEvents() {
     .filter((event) => !filters.query || matchQuery(filters.query, event))
     .slice(0, MAXIMUM_DISPLAYED_EVENTS)
 
-  return { events: filteredEvents, filters, setFilters }
+  return { events: filteredEvents, filters, setFilters, clear: () => setEvents([]) }
 }
 
 function matchQuery(query: string, event: StoredEvent) {
