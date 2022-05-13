@@ -16,17 +16,20 @@ export function startFlushFailedSendBeacons() {
 export function addFailedSendBeacon(endpointType: string, size: number, reason?: string) {
   if (!isExperimentalFeatureEnabled('lower-batch-size')) return
 
-  window.localStorage.setItem(
-    `${LOCAL_STORAGE_KEY}-${generateUUID()}`,
-    JSON.stringify({
-      reason,
-      endpointType,
-      version: __BUILD_ENV__SDK_VERSION__,
-      connection: navigator.connection ? (navigator.connection as any).effectiveType : undefined,
-      onLine: navigator.onLine,
-      size,
-    })
-  )
+  const failSendBeaconLog = {
+    reason,
+    endpointType,
+    version: __BUILD_ENV__SDK_VERSION__,
+    connection: navigator.connection ? (navigator.connection as any).effectiveType : undefined,
+    onLine: navigator.onLine,
+    size,
+  }
+
+  if (reason === 'before_unload' || reason === 'visibility_hidden') {
+    window.localStorage.setItem(`${LOCAL_STORAGE_KEY}-${generateUUID()}`, JSON.stringify(failSendBeaconLog))
+  } else {
+    addMonitoringMessage('failed sendBeacon', failSendBeaconLog)
+  }
 }
 
 function flushFailedSendBeacon() {
