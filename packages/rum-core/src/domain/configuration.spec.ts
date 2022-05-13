@@ -102,6 +102,29 @@ describe('validateAndBuildRumConfiguration', () => {
     })
   })
 
+  describe('excludedActivityUrls', () => {
+    it('defaults to an empty array', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.excludedActivityUrls).toEqual([])
+    })
+
+    it('is set to provided value', () => {
+      expect(
+        validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          excludedActivityUrls: ['foo'],
+          service: 'bar',
+        })!.excludedActivityUrls
+      ).toEqual(['foo'])
+    })
+
+    it('does not validate the configuration if an incorrect value is provided', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, excludedActivityUrls: 'foo' as any })
+      ).toBeUndefined()
+      expect(displaySpy).toHaveBeenCalledOnceWith('Excluded Activity Urls should be an array')
+    })
+  })
+
   describe('trackInteractions', () => {
     it('defaults to false', () => {
       expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackInteractions).toBeFalse()
