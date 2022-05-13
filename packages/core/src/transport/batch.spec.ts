@@ -5,7 +5,7 @@ import { Batch } from './batch'
 import type { HttpRequest } from './httpRequest'
 
 describe('batch', () => {
-  const MAX_SIZE = 3
+  const BATCH_MESSAGES_LIMIT = 3
   const BATCH_BYTES_LIMIT = 100
   const MESSAGE_BYTES_LIMIT = 50 * 1024
   const FLUSH_TIMEOUT = 60 * 1000
@@ -15,7 +15,7 @@ describe('batch', () => {
   beforeEach(() => {
     transport = { send: noop } as unknown as HttpRequest
     spyOn(transport, 'send')
-    batch = new Batch(transport, MAX_SIZE, BATCH_BYTES_LIMIT, MESSAGE_BYTES_LIMIT, FLUSH_TIMEOUT)
+    batch = new Batch(transport, BATCH_MESSAGES_LIMIT, BATCH_BYTES_LIMIT, MESSAGE_BYTES_LIMIT, FLUSH_TIMEOUT)
   })
 
   it('should add context to message', () => {
@@ -36,15 +36,15 @@ describe('batch', () => {
     expect(transport.send).not.toHaveBeenCalled()
   })
 
-  it('should calculate the byte size of message composed of 1 byte characters ', () => {
+  it('should count the bytes of a message composed of 1 byte characters', () => {
     expect(batch.sizeInBytes('1234')).toEqual(4)
   })
 
-  it('should calculate the byte size of message composed of multiple bytes characters ', () => {
+  it('should count the bytes of a message composed of multiple bytes characters', () => {
     expect(batch.sizeInBytes('🪐')).toEqual(4)
   })
 
-  it('should flush when max size is reached', () => {
+  it('should flush when the message count limit is reached', () => {
     batch.add({ message: '1' })
     batch.add({ message: '2' })
     batch.add({ message: '3' })
@@ -54,7 +54,7 @@ describe('batch', () => {
     )
   })
 
-  it('should flush when new message will overflow bytes limit', () => {
+  it('should flush when a new message will overflow the bytes limit', () => {
     batch.add({ message: '50 bytes - xxxxxxxxxxxxxxxxxxxxxxxxx' })
     expect(transport.send).not.toHaveBeenCalled()
 
@@ -65,7 +65,7 @@ describe('batch', () => {
     expect(transport.send).toHaveBeenCalledWith('{"message":"60 bytes - xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}', 60)
   })
 
-  it('should consider separator size when computing the size', () => {
+  it('should consider separators when computing the bytes size', () => {
     batch.add({ message: '30 bytes - xxxxx' }) // batch: 30 sep: 0
     batch.add({ message: '30 bytes - xxxxx' }) // batch: 60 sep: 1
     batch.add({ message: '39 bytes - xxxxxxxxxxxxxx' }) // batch: 99 sep: 2
@@ -73,7 +73,7 @@ describe('batch', () => {
     expect(transport.send).toHaveBeenCalledWith('{"message":"30 bytes - xxxxx"}\n{"message":"30 bytes - xxxxx"}', 61)
   })
 
-  it('should call send one time when the size is too high and the batch is empty', () => {
+  it('should call send one time when the bytes size is too high and the batch is empty', () => {
     const message = '101 bytes - xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
     batch.add({ message })
     expect(transport.send).toHaveBeenCalledWith(`{"message":"${message}"}`, 101)
@@ -89,7 +89,7 @@ describe('batch', () => {
 
   it('should flush after timeout', () => {
     const clock = sinon.useFakeTimers()
-    batch = new Batch(transport, MAX_SIZE, BATCH_BYTES_LIMIT, MESSAGE_BYTES_LIMIT, 10)
+    batch = new Batch(transport, BATCH_MESSAGES_LIMIT, BATCH_BYTES_LIMIT, MESSAGE_BYTES_LIMIT, 10)
     batch.add({ message: '50 bytes - xxxxxxxxxxxxxxxxxxxxxxxxx' })
     clock.tick(100)
 
@@ -98,9 +98,9 @@ describe('batch', () => {
     clock.restore()
   })
 
-  it('should not send a message with a size above the limit', () => {
+  it('should not send a message with a bytes size above the limit', () => {
     const warnStub = sinon.stub(console, 'warn')
-    batch = new Batch(transport, MAX_SIZE, BATCH_BYTES_LIMIT, 50, FLUSH_TIMEOUT)
+    batch = new Batch(transport, BATCH_MESSAGES_LIMIT, BATCH_BYTES_LIMIT, 50, FLUSH_TIMEOUT)
     batch.add({ message: '50 bytes - xxxxxxxxxxxxx' })
 
     expect(transport.send).not.toHaveBeenCalled()

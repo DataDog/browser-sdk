@@ -16,9 +16,9 @@ export class Batch {
 
   constructor(
     private request: HttpRequest,
-    private maxSize: number,
-    private bytesLimit: number,
-    private maxMessageSize: number,
+    private batchMessagesLimit: number,
+    private batchBytesLimit: number,
+    private messageBytesLimit: number,
     private flushTimeout: number,
     private beforeUnloadCallback: () => void = noop
   ) {
@@ -60,8 +60,10 @@ export class Batch {
 
   private addOrUpdate(message: Context, key?: string) {
     const { processedMessage, messageBytesSize } = this.process(message)
-    if (messageBytesSize >= this.maxMessageSize) {
-      display.warn(`Discarded a message whose size was bigger than the maximum allowed size ${this.maxMessageSize}KB.`)
+    if (messageBytesSize >= this.messageBytesLimit) {
+      display.warn(
+        `Discarded a message whose size was bigger than the maximum allowed size ${this.messageBytesLimit}KB.`
+      )
       return
     }
     if (this.hasMessageFor(key)) {
@@ -113,11 +115,11 @@ export class Batch {
 
   private willReachedBytesLimitWith(messageBytesSize: number) {
     // byte of the separator at the end of the message
-    return this.bufferBytesSize + messageBytesSize + 1 >= this.bytesLimit
+    return this.bufferBytesSize + messageBytesSize + 1 >= this.batchBytesLimit
   }
 
   private isFull() {
-    return this.bufferMessageCount === this.maxSize || this.bufferBytesSize >= this.bytesLimit
+    return this.bufferMessageCount === this.batchMessagesLimit || this.bufferBytesSize >= this.batchBytesLimit
   }
 
   private flushPeriodically() {

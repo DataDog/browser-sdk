@@ -93,7 +93,7 @@ describe('Segment', () => {
     const segment1 = createSegment({ creationReason: 'init', onWrote: onWroteSpy1 })
     segment1.flush()
     const segment2 = createSegment({
-      creationReason: 'max_duration',
+      creationReason: 'segment_duration_limit',
       initialRecord: FULL_SNAPSHOT_RECORD,
       onWrote: onWroteSpy2,
     })
