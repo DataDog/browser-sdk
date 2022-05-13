@@ -149,7 +149,7 @@ export function trackClickActions(
       click.stop()
     })
 
-    click.onStop(() => {
+    click.stopObservable.subscribe(() => {
       viewEndedSubscription.unsubscribe()
       stopWaitingIdlePage()
       stopSubscription.unsubscribe()
@@ -197,7 +197,7 @@ function newClick(
   const eventCountsSubscription = trackEventCounts(lifeCycle)
   let state: ClickState = { status: ClickStatus.ONGOING }
   const frustrations = new Set<FrustrationType>()
-  const onStopCallbacks: Array<() => void> = []
+  const stopObservable = new Observable<void>()
 
   function stop(endTime?: TimeStamp) {
     if (state.status !== ClickStatus.ONGOING) {
@@ -210,7 +210,7 @@ function newClick(
       historyEntry.remove()
     }
     eventCountsSubscription.stop()
-    onStopCallbacks.forEach((callback) => callback())
+    stopObservable.notify()
   }
 
   function addFrustration(frustration: FrustrationType) {
@@ -223,12 +223,9 @@ function newClick(
     event: base.event,
     addFrustration,
     stop,
+    stopObservable,
 
     getFrustrations: () => frustrations,
-
-    onStop: (onStopCallback: () => void) => {
-      onStopCallbacks.push(onStopCallback)
-    },
 
     isStopped: () => state.status === ClickStatus.STOPPED || state.status === ClickStatus.FINALIZED,
 
