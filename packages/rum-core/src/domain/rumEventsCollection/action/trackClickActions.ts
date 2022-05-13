@@ -18,7 +18,7 @@ import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { trackEventCounts } from '../../trackEventCounts'
-import { waitIdlePage } from '../../waitIdlePage'
+import { waitPageActivityEnd } from '../../waitPageActivityEnd'
 import type { RageClickChain } from './rageClickChain'
 import { createRageClickChain } from './rageClickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
@@ -114,11 +114,11 @@ export function trackClickActions(
       currentRageClickChain = createRageClickChain(click)
     }
 
-    const { stop: stopWaitingIdlePage } = waitIdlePage(
+    const { stop: stopWaitPageActivityEnd } = waitPageActivityEnd(
       lifeCycle,
       domMutationObservable,
-      (idleEvent) => {
-        if (!idleEvent.hadActivity) {
+      (pageActivityEndEvent) => {
+        if (!pageActivityEndEvent.hadActivity) {
           // If it has no activity, consider it as a dead click.
           // TODO: this will yield a lot of false positive. We'll need to refine it in the future.
           if (trackFrustrations) {
@@ -127,15 +127,15 @@ export function trackClickActions(
           } else {
             click.discard()
           }
-        } else if (idleEvent.end < startClocks.timeStamp) {
+        } else if (pageActivityEndEvent.end < startClocks.timeStamp) {
           // If the clock is looking weird, just discard the click
           click.discard()
         } else if (trackFrustrations) {
           // If we track frustrations, let's stop the click, but validate it later
-          click.stop(idleEvent.end)
+          click.stop(pageActivityEndEvent.end)
         } else {
           // Else just validate it now
-          click.validate(idleEvent.end)
+          click.validate(pageActivityEndEvent.end)
         }
       },
       CLICK_ACTION_MAX_DURATION
@@ -151,7 +151,7 @@ export function trackClickActions(
 
     click.stopObservable.subscribe(() => {
       viewEndedSubscription.unsubscribe()
-      stopWaitingIdlePage()
+      stopWaitPageActivityEnd()
       stopSubscription.unsubscribe()
     })
   }
