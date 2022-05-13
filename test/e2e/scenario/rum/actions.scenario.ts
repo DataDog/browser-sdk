@@ -92,6 +92,38 @@ describe('action collection', () => {
       expect(resourceEvents[0].action!.id).toBe(actionEvents[0].action.id!)
     })
 
+  createTest('increment the view.action.count of the view active when the action started')
+    .withRum({
+      // Frustrations need to be collected for this test case, else actions leading to a new view
+      // are ignored
+      trackFrustrations: true,
+      enableExperimentalFeatures: ['frustration-signals'],
+    })
+    .withBody(
+      html`
+        <button>click me</button>
+        <script>
+          const button = document.querySelector('button')
+          button.addEventListener('click', () => {
+            history.pushState(null, null, '/other-view')
+          })
+        </script>
+      `
+    )
+    .run(async ({ serverEvents }) => {
+      const button = await $('button')
+      await button.click()
+      await flushEvents()
+      const actionEvents = serverEvents.rumActions
+      expect(actionEvents.length).toBe(1)
+
+      const viewEvents = serverEvents.rumViews
+      const originalViewEvent = viewEvents.find((view) => view.view.url.endsWith('/'))!
+      const otherViewEvent = viewEvents.find((view) => view.view.url.endsWith('/other-view'))!
+      expect(originalViewEvent.view.action.count).toBe(1)
+      expect(otherViewEvent.view.action.count).toBe(0)
+    })
+
   createTest('collect an "error click"')
     .withRum({ trackFrustrations: true, enableExperimentalFeatures: ['frustration-signals'] })
     .withBody(

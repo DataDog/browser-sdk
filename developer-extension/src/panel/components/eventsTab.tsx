@@ -1,4 +1,4 @@
-import { Badge, Group, SegmentedControl, Space, Table, TextInput } from '@mantine/core'
+import { Badge, Button, Group, SegmentedControl, Space, Table, TextInput } from '@mantine/core'
 import { useColorScheme } from '@mantine/hooks'
 import React from 'react'
 import ReactJson from 'react-json-view'
@@ -26,9 +26,10 @@ interface EventTabProps {
   events: StoredEvent[]
   filters: EventFilters
   onFiltered: (filters: EventFilters) => void
+  clear: () => void
 }
 
-export function EventTab({ events, filters, onFiltered }: EventTabProps) {
+export function EventTab({ events, filters, onFiltered, clear }: EventTabProps) {
   const colorScheme = useColorScheme()
   return (
     events && (
@@ -48,6 +49,9 @@ export function EventTab({ events, filters, onFiltered }: EventTabProps) {
             style={{ flexGrow: 1 }}
             onChange={(event) => onFiltered({ ...filters, query: event.currentTarget.value })}
           />
+          <Button color="red" variant="light" onClick={clear}>
+            Clear
+          </Button>
         </Group>
         <Space h="sm" />
         <Table striped verticalSpacing="xs" fontSize="xs">

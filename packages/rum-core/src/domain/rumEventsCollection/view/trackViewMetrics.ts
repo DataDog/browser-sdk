@@ -7,7 +7,7 @@ import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { EventCounts } from '../../trackEventCounts'
 import { trackEventCounts } from '../../trackEventCounts'
-import { waitIdlePage } from '../../waitIdlePage'
+import { waitPageActivityEnd } from '../../waitPageActivityEnd'
 
 export interface ViewMetrics {
   eventCounts: EventCounts
@@ -85,7 +85,7 @@ function trackLoadingTime(
     }
   }
 
-  const { stop } = waitIdlePage(lifeCycle, domMutationObservable, (event) => {
+  const { stop } = waitPageActivityEnd(lifeCycle, domMutationObservable, (event) => {
     if (isWaitingForActivityLoadingTime) {
       isWaitingForActivityLoadingTime = false
       if (event.hadActivity) {
