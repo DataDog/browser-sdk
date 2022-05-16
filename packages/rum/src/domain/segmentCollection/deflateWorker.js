@@ -13,7 +13,7 @@ function workerCodeFn() {
     const { Deflate, constants, string2buf } = makePakoDeflate()
 
     let deflate = new Deflate()
-    let rawSize = 0
+    let rawBytesCount = 0
     self.addEventListener(
       'message',
       monitor((event) => {
@@ -25,27 +25,27 @@ function workerCodeFn() {
             })
             break
           case 'write': {
-            const additionalRawSize = pushData(data.data)
+            const additionalBytesCount = pushData(data.data)
             self.postMessage({
               type: 'wrote',
               id: data.id,
-              compressedSize: deflate.chunks.reduce((total, chunk) => total + chunk.length, 0),
-              additionalRawSize,
+              compressedBytesCount: deflate.chunks.reduce((total, chunk) => total + chunk.length, 0),
+              additionalBytesCount,
             })
             break
           }
           case 'flush': {
-            const additionalRawSize = data.data ? pushData(data.data) : 0
+            const additionalBytesCount = data.data ? pushData(data.data) : 0
             deflate.push('', constants.Z_FINISH)
             self.postMessage({
               type: 'flushed',
               id: data.id,
               result: deflate.result,
-              additionalRawSize,
-              rawSize,
+              additionalBytesCount,
+              rawBytesCount,
             })
             deflate = new Deflate()
-            rawSize = 0
+            rawBytesCount = 0
             break
           }
         }
@@ -56,7 +56,7 @@ function workerCodeFn() {
       // TextEncoder is not supported on old browser version like Edge 18, therefore we use string2buf
       const binaryData = string2buf(data)
       deflate.push(binaryData, constants.Z_SYNC_FLUSH)
-      rawSize += binaryData.length
+      rawBytesCount += binaryData.length
       return binaryData.length
     }
   })()

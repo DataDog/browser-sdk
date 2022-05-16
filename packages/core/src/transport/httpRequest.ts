@@ -13,9 +13,9 @@ import { addFailedSendBeacon } from './failedSendBeacon'
 export class HttpRequest {
   constructor(private endpointBuilder: EndpointBuilder, private bytesLimit: number) {}
 
-  send(data: string | FormData, size: number, reason?: string) {
+  send(data: string | FormData, bytesCount: number, reason?: string) {
     const url = this.endpointBuilder.build()
-    const canUseBeacon = !!navigator.sendBeacon && size < this.bytesLimit
+    const canUseBeacon = !!navigator.sendBeacon && bytesCount < this.bytesLimit
     if (canUseBeacon) {
       try {
         const isQueued = navigator.sendBeacon(url, data)
@@ -23,7 +23,7 @@ export class HttpRequest {
           return
         }
 
-        addFailedSendBeacon(this.endpointBuilder.endpointType, size, reason)
+        addFailedSendBeacon(this.endpointBuilder.endpointType, bytesCount, reason)
       } catch (e) {
         reportBeaconError(e)
       }
