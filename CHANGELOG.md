@@ -16,6 +16,16 @@
 
 ---
 
+## v4.10.0
+
+- ✨[RUMF-1253] add `tracingSampleRate` option ([#1526](https://github.com/DataDog/browser-sdk/pull/1526))
+- ⚗️✨ [RUMF-1258] stop ongoing action on view end ([#1528](https://github.com/DataDog/browser-sdk/pull/1528))
+- 🐛 [RUMF-1259] support Zone.js < 0.8.6 ([#1530](https://github.com/DataDog/browser-sdk/pull/1530))
+- ✨ add a button to clear events in the developer extension ([#1527](https://github.com/DataDog/browser-sdk/pull/1527))
+- ⚗✨ [RUMF-1210] add a `trackFrustrations` initialization parameter ([#1524](https://github.com/DataDog/browser-sdk/pull/1524))
+- ✨[RUMF-1257] prevent dual shipping of telemetry events ([#1523](https://github.com/DataDog/browser-sdk/pull/1523))
+- ✨ [RUMF-1251] allow to enable telemetry by site ([#1520](https://github.com/DataDog/browser-sdk/pull/1520))
+
 ## v4.9.0
 
 - ✨ Upgraded console logger to log the proper levels ([#1501](https://github.com/DataDog/browser-sdk/pull/1501))
