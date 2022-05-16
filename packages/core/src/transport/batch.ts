@@ -11,14 +11,14 @@ const HAS_MULTI_BYTES_CHARACTERS = /[^\u0000-\u007F]/
 export class Batch {
   private pushOnlyBuffer: string[] = []
   private upsertBuffer: { [key: string]: string } = {}
-  private bufferBytesSize = 0
-  private bufferMessageCount = 0
+  private bufferBytesCount = 0
+  private bufferMessagesCount = 0
 
   constructor(
     private request: HttpRequest,
-    private maxSize: number,
-    private bytesLimit: number,
-    private maxMessageSize: number,
+    private batchMessagesLimit: number,
+    private batchBytesLimit: number,
+    private messageBytesLimit: number,
     private flushTimeout: number,
     private beforeUnloadCallback: () => void = noop
   ) {
@@ -35,18 +35,18 @@ export class Batch {
   }
 
   flush(reason?: string) {
-    if (this.bufferMessageCount !== 0) {
+    if (this.bufferMessagesCount !== 0) {
       const messages = this.pushOnlyBuffer.concat(objectValues(this.upsertBuffer))
-      this.request.send(messages.join('\n'), this.bufferBytesSize, reason)
+      this.request.send(messages.join('\n'), this.bufferBytesCount, reason)
       this.pushOnlyBuffer = []
       this.upsertBuffer = {}
-      this.bufferBytesSize = 0
-      this.bufferMessageCount = 0
+      this.bufferBytesCount = 0
+      this.bufferMessagesCount = 0
     }
   }
 
-  sizeInBytes(candidate: string) {
-    // Accurate byte size computations can degrade performances when there is a lot of events to process
+  computeBytesCount(candidate: string) {
+    // Accurate bytes count computations can degrade performances when there is a lot of events to process
     if (!HAS_MULTI_BYTES_CHARACTERS.test(candidate)) {
       return candidate.length
     }
@@ -59,51 +59,54 @@ export class Batch {
   }
 
   private addOrUpdate(message: Context, key?: string) {
-    const { processedMessage, messageBytesSize } = this.process(message)
-    if (messageBytesSize >= this.maxMessageSize) {
-      display.warn(`Discarded a message whose size was bigger than the maximum allowed size ${this.maxMessageSize}KB.`)
+    const { processedMessage, messageBytesCount } = this.process(message)
+    if (messageBytesCount >= this.messageBytesLimit) {
+      display.warn(
+        `Discarded a message whose size was bigger than the maximum allowed size ${this.messageBytesLimit}KB.`
+      )
       return
     }
     if (this.hasMessageFor(key)) {
       this.remove(key)
     }
-    if (this.willReachedBytesLimitWith(messageBytesSize)) {
-      this.flush('max_size')
+    if (this.willReachedBytesLimitWith(messageBytesCount)) {
+      this.flush('batch_bytes_limit')
     }
-    this.push(processedMessage, messageBytesSize, key)
+
+    this.push(processedMessage, messageBytesCount, key)
     if (this.isFull()) {
-      this.flush('max_messages_count')
+      this.flush('batch_messages_limit')
     }
   }
 
   private process(message: Context) {
     const processedMessage = jsonStringify(message)!
-    const messageBytesSize = this.sizeInBytes(processedMessage)
-    return { processedMessage, messageBytesSize }
+    const messageBytesCount = this.computeBytesCount(processedMessage)
+    return { processedMessage, messageBytesCount }
   }
 
-  private push(processedMessage: string, messageBytesSize: number, key?: string) {
-    if (this.bufferMessageCount > 0) {
+  private push(processedMessage: string, messageBytesCount: number, key?: string) {
+    if (this.bufferMessagesCount > 0) {
       // \n separator at serialization
-      this.bufferBytesSize += 1
+      this.bufferBytesCount += 1
     }
     if (key !== undefined) {
       this.upsertBuffer[key] = processedMessage
     } else {
       this.pushOnlyBuffer.push(processedMessage)
     }
-    this.bufferBytesSize += messageBytesSize
-    this.bufferMessageCount += 1
+    this.bufferBytesCount += messageBytesCount
+    this.bufferMessagesCount += 1
   }
 
   private remove(key: string) {
     const removedMessage = this.upsertBuffer[key]
     delete this.upsertBuffer[key]
-    const messageBytesSize = this.sizeInBytes(removedMessage)
-    this.bufferBytesSize -= messageBytesSize
-    this.bufferMessageCount -= 1
-    if (this.bufferMessageCount > 0) {
-      this.bufferBytesSize -= 1
+    const messageBytesCount = this.computeBytesCount(removedMessage)
+    this.bufferBytesCount -= messageBytesCount
+    this.bufferMessagesCount -= 1
+    if (this.bufferMessagesCount > 0) {
+      this.bufferBytesCount -= 1
     }
   }
 
@@ -111,19 +114,19 @@ export class Batch {
     return key !== undefined && this.upsertBuffer[key] !== undefined
   }
 
-  private willReachedBytesLimitWith(messageBytesSize: number) {
+  private willReachedBytesLimitWith(messageBytesCount: number) {
     // byte of the separator at the end of the message
-    return this.bufferBytesSize + messageBytesSize + 1 >= this.bytesLimit
+    return this.bufferBytesCount + messageBytesCount + 1 >= this.batchBytesLimit
   }
 
   private isFull() {
-    return this.bufferMessageCount === this.maxSize || this.bufferBytesSize >= this.bytesLimit
+    return this.bufferMessagesCount === this.batchMessagesLimit || this.bufferBytesCount >= this.batchBytesLimit
   }
 
   private flushPeriodically() {
     setTimeout(
       monitor(() => {
-        this.flush('max_duration')
+        this.flush('batch_flush_timeout')
         this.flushPeriodically()
       }),
       this.flushTimeout

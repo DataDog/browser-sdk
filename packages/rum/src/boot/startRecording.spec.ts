@@ -10,7 +10,7 @@ import { createNewEvent, mockClock } from '../../../core/test/specHelper'
 import type { TestSetupBuilder } from '../../../rum-core/test/specHelper'
 import { setup } from '../../../rum-core/test/specHelper'
 import { collectAsyncCalls, recordsPerFullSnapshot } from '../../test/utils'
-import { setMaxSegmentSize, startDeflateWorker } from '../domain/segmentCollection'
+import { setSegmentBytesLimit, startDeflateWorker } from '../domain/segmentCollection'
 
 import type { Segment } from '../types'
 import { RecordType } from '../types'
@@ -75,7 +75,7 @@ describe('startRecording', () => {
 
   afterEach(() => {
     sandbox.remove()
-    setMaxSegmentSize()
+    setSegmentBytesLimit()
     setupBuilder.cleanup()
   })
 
@@ -102,7 +102,7 @@ describe('startRecording', () => {
     })
   })
 
-  it('flushes the segment when its compressed data is getting too large', (done) => {
+  it('flushes the segment when its compressed data reaches the segment bytes limit', (done) => {
     setupBuilder.build()
     const inputCount = 150
     const inputEvent = createNewEvent('input', { target: textField })
@@ -232,7 +232,7 @@ describe('startRecording', () => {
 
   // eslint-disable-next-line max-len
   it('does not split Meta, Focus and FullSnapshot records between multiple segments when taking a full snapshot', (done) => {
-    setMaxSegmentSize(0)
+    setSegmentBytesLimit(0)
     setupBuilder.build()
 
     waitRequestSendCalls(1, (calls) => {

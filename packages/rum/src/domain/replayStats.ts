@@ -15,8 +15,8 @@ export function addRecord(viewId: string) {
   getOrCreateReplayStats(viewId).records_count += 1
 }
 
-export function addWroteData(viewId: string, additionalRawSize: number) {
-  getOrCreateReplayStats(viewId).segments_total_raw_size += additionalRawSize
+export function addWroteData(viewId: string, additionalBytesCount: number) {
+  getOrCreateReplayStats(viewId).segments_total_raw_size += additionalBytesCount
 }
 
 export function getReplayStats(viewId: string) {

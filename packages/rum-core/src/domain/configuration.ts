@@ -19,6 +19,7 @@ export interface RumInitConfiguration extends InitConfiguration {
 
   // tracing options
   allowedTracingOrigins?: ReadonlyArray<string | RegExp> | undefined
+  tracingSampleRate?: number | undefined
 
   // replay options
   defaultPrivacyLevel?: DefaultPrivacyLevel | undefined
@@ -42,6 +43,7 @@ export interface RumConfiguration extends Configuration {
   // Built from init configuration
   actionNameAttribute: string | undefined
   allowedTracingOrigins: Array<string | RegExp>
+  tracingSampleRate: number
   applicationId: string
   defaultPrivacyLevel: DefaultPrivacyLevel
   premiumSampleRate: number
@@ -66,6 +68,11 @@ export function validateAndBuildRumConfiguration(
 
   if (initConfiguration.premiumSampleRate !== undefined && !isPercentage(initConfiguration.premiumSampleRate)) {
     display.error('Premium Sample Rate should be a number between 0 and 100')
+    return
+  }
+
+  if (initConfiguration.tracingSampleRate !== undefined && !isPercentage(initConfiguration.tracingSampleRate)) {
+    display.error('Tracing Sample Rate should be a number between 0 and 100')
     return
   }
 
@@ -94,6 +101,7 @@ export function validateAndBuildRumConfiguration(
       actionNameAttribute: initConfiguration.actionNameAttribute,
       premiumSampleRate: initConfiguration.premiumSampleRate ?? 100,
       allowedTracingOrigins: initConfiguration.allowedTracingOrigins ?? [],
+      tracingSampleRate: initConfiguration.tracingSampleRate ?? 100,
       trackInteractions: !!initConfiguration.trackInteractions || trackFrustrations,
       trackFrustrations,
       trackViewsManually: !!initConfiguration.trackViewsManually,

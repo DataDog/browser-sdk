@@ -1,14 +1,14 @@
 import type { EventEmitter, TimeoutId } from '@datadog/browser-core'
-import { addEventListener, DOM_EVENT, monitor } from '@datadog/browser-core'
+import { ONE_SECOND, addEventListener, DOM_EVENT, monitor } from '@datadog/browser-core'
 import type { LifeCycle, ViewContexts, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
-import { SEND_BEACON_BYTE_LENGTH_LIMIT } from '../../transport/send'
+import { SEND_BEACON_BYTES_LIMIT } from '../../transport/send'
 import type { CreationReason, Record, SegmentContext, SegmentMetadata } from '../../types'
 import type { DeflateWorker } from './deflateWorker'
 import { Segment } from './segment'
 
-export const MAX_SEGMENT_DURATION = 30_000
-let MAX_SEGMENT_SIZE = SEND_BEACON_BYTE_LENGTH_LIMIT
+export const SEGMENT_DURATION_LIMIT = 30 * ONE_SECOND
+let SEGMENT_BYTES_LIMIT = SEND_BEACON_BYTES_LIMIT
 
 // Segments are the main data structure for session replays. They contain context information used
 // for indexing or UI needs, and a list of records (RRWeb 'events', renamed to avoid confusing
@@ -23,7 +23,7 @@ let MAX_SEGMENT_SIZE = SEND_BEACON_BYTE_LENGTH_LIMIT
 //
 // * the page visibility change or becomes to unload
 // * the segment duration reaches a limit
-// * the encoded segment size reaches a limit
+// * the encoded segment bytes count reaches a limit
 // * ...
 //
 // A segment cannot be created without its context.  If the RUM session ends and no session id is
@@ -40,7 +40,7 @@ export function startSegmentCollection(
   applicationId: string,
   sessionManager: RumSessionManager,
   viewContexts: ViewContexts,
-  send: (data: Uint8Array, metadata: SegmentMetadata, rawSegmentSize: number) => void,
+  send: (data: Uint8Array, metadata: SegmentMetadata, rawSegmentBytesCount: number) => void,
   worker: DeflateWorker
 ) {
   return doStartSegmentCollection(
@@ -73,7 +73,7 @@ type SegmentCollectionState =
 export function doStartSegmentCollection(
   lifeCycle: LifeCycle,
   getSegmentContext: () => SegmentContext | undefined,
-  send: (data: Uint8Array, metadata: SegmentMetadata, rawSegmentSize: number, reason?: string) => void,
+  send: (data: Uint8Array, metadata: SegmentMetadata, rawSegmentBytesCount: number, reason?: string) => void,
   worker: DeflateWorker,
   emitter: EventEmitter = window
 ) {
@@ -130,13 +130,13 @@ export function doStartSegmentCollection(
       context,
       creationReason,
       initialRecord,
-      (compressedSegmentSize) => {
-        if (!segment.isFlushed && compressedSegmentSize > MAX_SEGMENT_SIZE) {
-          flushSegment('max_size')
+      (compressedSegmentBytesCount) => {
+        if (!segment.isFlushed && compressedSegmentBytesCount > SEGMENT_BYTES_LIMIT) {
+          flushSegment('segment_bytes_limit')
         }
       },
-      (data, rawSegmentSize, reason) => {
-        send(data, segment.metadata, rawSegmentSize, reason)
+      (data, rawSegmentBytesCount, reason) => {
+        send(data, segment.metadata, rawSegmentBytesCount, reason)
       }
     )
 
@@ -145,9 +145,9 @@ export function doStartSegmentCollection(
       segment,
       expirationTimeoutId: setTimeout(
         monitor(() => {
-          flushSegment('max_duration')
+          flushSegment('segment_duration_limit')
         }),
-        MAX_SEGMENT_DURATION
+        SEGMENT_DURATION_LIMIT
       ),
     }
   }
@@ -197,6 +197,6 @@ export function computeSegmentContext(
   }
 }
 
-export function setMaxSegmentSize(newSize: number = SEND_BEACON_BYTE_LENGTH_LIMIT) {
-  MAX_SEGMENT_SIZE = newSize
+export function setSegmentBytesLimit(newSegmentBytesLimit: number = SEND_BEACON_BYTES_LIMIT) {
+  SEGMENT_BYTES_LIMIT = newSegmentBytesLimit
 }
