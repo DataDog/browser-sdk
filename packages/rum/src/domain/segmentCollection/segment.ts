@@ -18,7 +18,7 @@ export class Segment {
     creationReason: CreationReason,
     initialRecord: Record,
     onWrote: (compressedSize: number) => void,
-    onFlushed: (data: Uint8Array, rawSize: number) => void
+    onFlushed: (data: Uint8Array, rawSize: number, reason?: string) => void
   ) {
     const viewId = context.view.id
 
@@ -45,7 +45,7 @@ export class Segment {
       if (data.id === this.id) {
         replayStats.addWroteData(viewId, data.additionalRawSize)
         if (data.type === 'flushed') {
-          onFlushed(data.result, data.rawSize)
+          onFlushed(data.result, data.rawSize, data.reason)
           worker.removeEventListener('message', listener)
         } else {
           onWrote(data.compressedSize)
@@ -75,11 +75,12 @@ export class Segment {
     this.worker.postMessage({ data: `,${JSON.stringify(record)}`, id: this.id, action: 'write' })
   }
 
-  flush() {
+  flush(reason?: string) {
     this.worker.postMessage({
       data: `],${JSON.stringify(this.metadata).slice(1)}\n`,
       id: this.id,
       action: 'flush',
+      reason,
     })
     this.isFlushed = true
   }
