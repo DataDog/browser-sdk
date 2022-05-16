@@ -30,7 +30,7 @@ describe('httpRequest', () => {
     expect(server.requests[0].requestBody).toEqual('{"foo":"bar1"}\n{"foo":"bar2"}')
   })
 
-  it('should use sendBeacon when the size is correct', () => {
+  it('should use sendBeacon when the bytes count is correct', () => {
     spyOn(navigator, 'sendBeacon').and.callFake(() => true)
 
     request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
@@ -38,7 +38,7 @@ describe('httpRequest', () => {
     expect(navigator.sendBeacon).toHaveBeenCalled()
   })
 
-  it('should use xhr over sendBeacon when the size too high', () => {
+  it('should use xhr over sendBeacon when the bytes count is too high', () => {
     spyOn(navigator, 'sendBeacon').and.callFake(() => true)
 
     request.send('{"foo":"bar1"}\n{"foo":"bar2"}', BATCH_BYTES_LIMIT)

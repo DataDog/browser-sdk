@@ -45,7 +45,7 @@ export class Batch {
     }
   }
 
-  countBytes(candidate: string) {
+  computeBytesCount(candidate: string) {
     // Accurate bytes count computations can degrade performances when there is a lot of events to process
     if (!HAS_MULTI_BYTES_CHARACTERS.test(candidate)) {
       return candidate.length
@@ -81,7 +81,7 @@ export class Batch {
 
   private process(message: Context) {
     const processedMessage = jsonStringify(message)!
-    const messageBytesCount = this.countBytes(processedMessage)
+    const messageBytesCount = this.computeBytesCount(processedMessage)
     return { processedMessage, messageBytesCount }
   }
 
@@ -102,7 +102,7 @@ export class Batch {
   private remove(key: string) {
     const removedMessage = this.upsertBuffer[key]
     delete this.upsertBuffer[key]
-    const messageBytesCount = this.countBytes(removedMessage)
+    const messageBytesCount = this.computeBytesCount(removedMessage)
     this.bufferBytesCount -= messageBytesCount
     this.bufferMessagesCount -= 1
     if (this.bufferMessagesCount > 0) {
