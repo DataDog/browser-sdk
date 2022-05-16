@@ -15,12 +15,16 @@ export interface RumInitConfiguration extends InitConfiguration {
   // global options
   applicationId: string
   beforeSend?: ((event: RumEvent, context: RumEventDomainContext) => void | boolean) | undefined
+  premiumSampleRate?: number | undefined
 
   // tracing options
   allowedTracingOrigins?: ReadonlyArray<string | RegExp> | undefined
 
   // replay options
   defaultPrivacyLevel?: DefaultPrivacyLevel | undefined
+  /**
+   * @deprecated use premiumSampleRate instead
+   */
   replaySampleRate?: number | undefined
 
   // action options
@@ -40,7 +44,7 @@ export interface RumConfiguration extends Configuration {
   allowedTracingOrigins: Array<string | RegExp>
   applicationId: string
   defaultPrivacyLevel: DefaultPrivacyLevel
-  replaySampleRate: number
+  premiumSampleRate: number
   trackInteractions: boolean
   trackFrustrations: boolean
   trackViewsManually: boolean
@@ -55,8 +59,13 @@ export function validateAndBuildRumConfiguration(
     return
   }
 
-  if (initConfiguration.replaySampleRate !== undefined && !isPercentage(initConfiguration.replaySampleRate)) {
-    display.error('Replay Sample Rate should be a number between 0 and 100')
+  // TODO remove me in next major
+  if (initConfiguration.replaySampleRate !== undefined && initConfiguration.premiumSampleRate === undefined) {
+    initConfiguration.premiumSampleRate = initConfiguration.replaySampleRate
+  }
+
+  if (initConfiguration.premiumSampleRate !== undefined && !isPercentage(initConfiguration.premiumSampleRate)) {
+    display.error('Premium Sample Rate should be a number between 0 and 100')
     return
   }
 
@@ -83,7 +92,7 @@ export function validateAndBuildRumConfiguration(
       applicationId: initConfiguration.applicationId,
       version: initConfiguration.version,
       actionNameAttribute: initConfiguration.actionNameAttribute,
-      replaySampleRate: initConfiguration.replaySampleRate ?? 100,
+      premiumSampleRate: initConfiguration.premiumSampleRate ?? 100,
       allowedTracingOrigins: initConfiguration.allowedTracingOrigins ?? [],
       trackInteractions: !!initConfiguration.trackInteractions || trackFrustrations,
       trackFrustrations,
