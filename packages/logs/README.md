@@ -130,7 +130,7 @@ The following parameters are available to configure the Datadog browser logs SDK
 | `sampleRate`          | Number                                                                    | No       | `100`           | The percentage of sessions to track: `100` for all, `0` for none. Only tracked sessions send logs.                                                                                   |
 | `silentMultipleInit`  | Boolean                                                                   | No       |                 | Prevent logging errors while having multiple init.                                                                                                                                   |
 | `proxyUrl`            | String                                                                    | No       |                 | Optional proxy URL (ex: https://www.proxy.com/path), see the full [proxy setup guide][6] for more information.                                                                       |
-| `telemetrySampleRate` | Number                                                                    | No       | `20`            | Telemetry data (error, debug logs) about SDK execution is sent to Datadog in order to detect and solve potential issue. Set this option to `0` to opt out from telemetry collection. |
+| `telemetrySampleRate` | Number                                                                    | No       | `20`            | Telemetry data (error, debug logs) about SDK execution is sent to Datadog in order to detect and solve potential issues. Set this option to `0` to opt out from telemetry collection. |
 
 Options that must have a matching configuration when using the `RUM` SDK:
 
