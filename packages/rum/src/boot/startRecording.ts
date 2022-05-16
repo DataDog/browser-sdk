@@ -26,8 +26,8 @@ export function startRecording(
     configuration.applicationId,
     sessionManager,
     viewContexts,
-    (data, metadata, rawSegmentSize) =>
-      send(configuration.sessionReplayEndpointBuilder, data, metadata, rawSegmentSize),
+    (data, metadata, rawSegmentBytesCount) =>
+      send(configuration.sessionReplayEndpointBuilder, data, metadata, rawSegmentBytesCount),
     worker
   )
 

@@ -13,20 +13,20 @@ import { createRumSessionManagerMock } from '../../../../rum-core/test/mockRumSe
 import type { Record, SegmentContext, SegmentMetadata } from '../../types'
 import { RecordType } from '../../types'
 import { MockWorker } from '../../../test/utils'
-import { SEND_BEACON_BYTE_LENGTH_LIMIT } from '../../transport/send'
-import { computeSegmentContext, doStartSegmentCollection, MAX_SEGMENT_DURATION } from './segmentCollection'
+import { SEND_BEACON_BYTES_LIMIT } from '../../transport/send'
+import { computeSegmentContext, doStartSegmentCollection, SEGMENT_DURATION_LIMIT } from './segmentCollection'
 
 const CONTEXT: SegmentContext = { application: { id: 'a' }, view: { id: 'b' }, session: { id: 'c' } }
 const RECORD: Record = { type: RecordType.ViewEnd, timestamp: 10 as TimeStamp }
 
-// A record that will make the segment size reach the SEND_BEACON_BYTE_LENGTH_LIMIT limit
+// A record that will make the segment size reach the SEND_BEACON_BYTES_LIMIT
 const VERY_BIG_RECORD: Record = {
   type: RecordType.FullSnapshot,
   timestamp: 10 as TimeStamp,
-  data: Array(SEND_BEACON_BYTE_LENGTH_LIMIT).join('a') as any,
+  data: Array(SEND_BEACON_BYTES_LIMIT).join('a') as any,
 }
 
-const BEFORE_MAX_SEGMENT_DURATION = MAX_SEGMENT_DURATION * 0.9
+const BEFORE_SEGMENT_DURATION_LIMIT = SEGMENT_DURATION_LIMIT * 0.9
 
 describe('startSegmentCollection', () => {
   let stopSegmentCollection: () => void
@@ -141,13 +141,13 @@ describe('startSegmentCollection', () => {
       expect(sendCurrentSegment().creation_reason).not.toBe('visibility_hidden')
     })
 
-    describe('max_size flush strategy', () => {
-      it('flushes segment when the current segment deflate size reaches SEND_BEACON_BYTE_LENGTH_LIMIT', () => {
+    describe('segment_bytes_limit flush strategy', () => {
+      it('flushes segment when the current segment deflate size reaches SEND_BEACON_BYTES_LIMIT', () => {
         const { worker, addRecord, sendCurrentSegment } = startSegmentCollection(CONTEXT)
         addRecord(VERY_BIG_RECORD)
         worker.processAllMessages()
 
-        expect(sendCurrentSegment().creation_reason).toBe('max_size')
+        expect(sendCurrentSegment().creation_reason).toBe('segment_bytes_limit')
       })
 
       it('continues to add records to the current segment while the worker is processing messages', () => {
@@ -169,7 +169,7 @@ describe('startSegmentCollection', () => {
         addRecord(RECORD)
 
         // Process only the first record. This should flush the current segment because it reached
-        // the max_size limit.
+        // the segment bytes limit.
         worker.processNextMessage()
 
         // Add a record to the new segment, to make sure it is not flushed even if it is not empty
@@ -182,29 +182,29 @@ describe('startSegmentCollection', () => {
       })
     })
 
-    describe('max_duration flush strategy', () => {
-      it('flushes a segment after MAX_SEGMENT_DURATION', () => {
+    describe('segment_duration_limit flush strategy', () => {
+      it('flushes a segment after SEGMENT_DURATION_LIMIT', () => {
         clock = mockClock()
         const { sendCurrentSegment, addRecord, sendSpy, worker } = startSegmentCollection(CONTEXT)
         addRecord(RECORD)
-        clock.tick(MAX_SEGMENT_DURATION)
+        clock.tick(SEGMENT_DURATION_LIMIT)
         worker.processAllMessages()
         expect(sendSpy).toHaveBeenCalledTimes(1)
-        expect(sendCurrentSegment().creation_reason).toBe('max_duration')
+        expect(sendCurrentSegment().creation_reason).toBe('segment_duration_limit')
       })
 
-      it('does not flush a segment after MAX_SEGMENT_DURATION if a segment has been created in the meantime', () => {
+      it('does not flush a segment after SEGMENT_DURATION_LIMIT if a segment has been created in the meantime', () => {
         clock = mockClock()
         const { lifeCycle, sendCurrentSegment, addRecord, sendSpy, worker } = startSegmentCollection(CONTEXT)
         addRecord(RECORD)
-        clock.tick(BEFORE_MAX_SEGMENT_DURATION)
+        clock.tick(BEFORE_SEGMENT_DURATION_LIMIT)
         lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
         addRecord(RECORD)
-        clock.tick(BEFORE_MAX_SEGMENT_DURATION)
+        clock.tick(BEFORE_SEGMENT_DURATION_LIMIT)
 
         worker.processAllMessages()
         expect(sendSpy).toHaveBeenCalledTimes(1)
-        expect(sendCurrentSegment().creation_reason).not.toBe('max_duration')
+        expect(sendCurrentSegment().creation_reason).not.toBe('segment_duration_limit')
       })
     })
 

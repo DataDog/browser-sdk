@@ -10,11 +10,11 @@ const CONTEXT: SegmentContext = { application: { id: 'a' }, view: { id: 'b' }, s
 const RECORD_TIMESTAMP = 10 as TimeStamp
 const RECORD: Record = { type: RecordType.ViewEnd, timestamp: RECORD_TIMESTAMP }
 const FULL_SNAPSHOT_RECORD: Record = { type: RecordType.FullSnapshot, timestamp: RECORD_TIMESTAMP, data: {} as any }
-const ENCODED_SEGMENT_HEADER_SIZE = 12 // {"records":[
-const ENCODED_RECORD_SIZE = 25
-const ENCODED_FULL_SNAPSHOT_RECORD_SIZE = 35
-const ENCODED_SEPARATOR_SIZE = 1 // ,
-const ENCODED_META_SIZE = 173 // this should stay accurate as long as less than 10 records are added
+const ENCODED_SEGMENT_HEADER_BYTES_COUNT = 12 // {"records":[
+const ENCODED_RECORD_BYTES_COUNT = 25
+const ENCODED_FULL_SNAPSHOT_RECORD_BYTES_COUNT = 35
+const ENCODED_SEPARATOR_BYTES_COUNT = 1 // ,
+const ENCODED_META_BYTES_COUNT = 173 // this should stay accurate as long as less than 10 records are added
 
 describe('Segment', () => {
   let worker: MockWorker
@@ -34,7 +34,7 @@ describe('Segment', () => {
   })
 
   it('writes a segment', () => {
-    const onWroteSpy = jasmine.createSpy<(compressedSegmentSize: number) => void>()
+    const onWroteSpy = jasmine.createSpy<(compressedSegmentBytesCount: number) => void>()
     const onFlushedSpy = jasmine.createSpy<(data: Uint8Array) => void>()
     const segment = createSegment({ onWrote: onWroteSpy, onFlushed: onFlushedSpy })
 
@@ -73,14 +73,14 @@ describe('Segment', () => {
   })
 
   it('calls the onWrote callback when data is written', () => {
-    const onWroteSpy = jasmine.createSpy<(compressedSegmentSize: number) => void>()
+    const onWroteSpy = jasmine.createSpy<(compressedSegmentBytesCount: number) => void>()
     createSegment({ onWrote: onWroteSpy })
     worker.processAllMessages()
-    expect(onWroteSpy).toHaveBeenCalledOnceWith(ENCODED_SEGMENT_HEADER_SIZE + ENCODED_RECORD_SIZE)
+    expect(onWroteSpy).toHaveBeenCalledOnceWith(ENCODED_SEGMENT_HEADER_BYTES_COUNT + ENCODED_RECORD_BYTES_COUNT)
   })
 
   it('calls the onFlushed callback when data is flush', () => {
-    const onFlushedSpy = jasmine.createSpy<(data: Uint8Array, rawSegmentSize: number) => void>()
+    const onFlushedSpy = jasmine.createSpy<(data: Uint8Array, rawSegmentBytesCount: number) => void>()
     const segment = createSegment({ onFlushed: onFlushedSpy })
     segment.flush()
     worker.processAllMessages()
@@ -88,19 +88,21 @@ describe('Segment', () => {
   })
 
   it('calls the onWrote callbacks separately when two Segment are used', () => {
-    const onWroteSpy1 = jasmine.createSpy<(compressedSegmentSize: number) => void>()
-    const onWroteSpy2 = jasmine.createSpy<(compressedSegmentSize: number) => void>()
+    const onWroteSpy1 = jasmine.createSpy<(compressedSegmentBytesCount: number) => void>()
+    const onWroteSpy2 = jasmine.createSpy<(compressedSegmentBytesCount: number) => void>()
     const segment1 = createSegment({ creationReason: 'init', onWrote: onWroteSpy1 })
     segment1.flush()
     const segment2 = createSegment({
-      creationReason: 'max_duration',
+      creationReason: 'segment_duration_limit',
       initialRecord: FULL_SNAPSHOT_RECORD,
       onWrote: onWroteSpy2,
     })
     segment2.flush()
     worker.processAllMessages()
-    expect(onWroteSpy1).toHaveBeenCalledOnceWith(ENCODED_SEGMENT_HEADER_SIZE + ENCODED_RECORD_SIZE)
-    expect(onWroteSpy2).toHaveBeenCalledOnceWith(ENCODED_SEGMENT_HEADER_SIZE + ENCODED_FULL_SNAPSHOT_RECORD_SIZE)
+    expect(onWroteSpy1).toHaveBeenCalledOnceWith(ENCODED_SEGMENT_HEADER_BYTES_COUNT + ENCODED_RECORD_BYTES_COUNT)
+    expect(onWroteSpy2).toHaveBeenCalledOnceWith(
+      ENCODED_SEGMENT_HEADER_BYTES_COUNT + ENCODED_FULL_SNAPSHOT_RECORD_BYTES_COUNT
+    )
   })
 
   it('unsubscribes from the worker if a flush() response fails and another Segment is used', () => {
@@ -177,7 +179,7 @@ describe('Segment', () => {
       expect(getReplayStats('b')).toEqual({
         segments_count: 1,
         records_count: 1,
-        segments_total_raw_size: ENCODED_SEGMENT_HEADER_SIZE + ENCODED_RECORD_SIZE,
+        segments_total_raw_size: ENCODED_SEGMENT_HEADER_BYTES_COUNT + ENCODED_RECORD_BYTES_COUNT,
       })
     })
 
@@ -188,7 +190,8 @@ describe('Segment', () => {
       expect(getReplayStats('b')).toEqual({
         segments_count: 1,
         records_count: 1,
-        segments_total_raw_size: ENCODED_SEGMENT_HEADER_SIZE + ENCODED_FULL_SNAPSHOT_RECORD_SIZE + ENCODED_META_SIZE,
+        segments_total_raw_size:
+          ENCODED_SEGMENT_HEADER_BYTES_COUNT + ENCODED_FULL_SNAPSHOT_RECORD_BYTES_COUNT + ENCODED_META_BYTES_COUNT,
       })
     })
 
@@ -200,10 +203,10 @@ describe('Segment', () => {
         segments_count: 1,
         records_count: 2,
         segments_total_raw_size:
-          ENCODED_SEGMENT_HEADER_SIZE +
-          ENCODED_FULL_SNAPSHOT_RECORD_SIZE +
-          ENCODED_SEPARATOR_SIZE +
-          ENCODED_RECORD_SIZE,
+          ENCODED_SEGMENT_HEADER_BYTES_COUNT +
+          ENCODED_FULL_SNAPSHOT_RECORD_BYTES_COUNT +
+          ENCODED_SEPARATOR_BYTES_COUNT +
+          ENCODED_RECORD_BYTES_COUNT,
       })
     })
   })
@@ -218,8 +221,8 @@ describe('Segment', () => {
     context?: SegmentContext
     initialRecord?: Record
     creationReason?: CreationReason
-    onWrote?: (compressedSegmentSize: number) => void
-    onFlushed?: (data: Uint8Array, rawSize: number) => void
+    onWrote?: (compressedSegmentBytesCount: number) => void
+    onFlushed?: (data: Uint8Array, rawBytesCount: number) => void
   } = {}) {
     return new Segment(worker, context, creationReason, initialRecord, onWrote, onFlushed)
   }

@@ -25,7 +25,7 @@ describe('collect fetch', () => {
     configuration = {
       ...validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!,
       ...SPEC_ENDPOINTS,
-      maxBatchSize: 1,
+      batchMessagesLimit: 1,
     }
     fetchStubManager = stubFetch()
 
@@ -151,7 +151,7 @@ describe('collect xhr', () => {
     configuration = {
       ...validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!,
       ...SPEC_ENDPOINTS,
-      maxBatchSize: 1,
+      batchMessagesLimit: 1,
     }
     stubXhrManager = stubXhr()
     startSpy = jasmine.createSpy('requestStart')

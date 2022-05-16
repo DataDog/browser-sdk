@@ -24,8 +24,8 @@ export interface SegmentContext {
 
 export type CreationReason =
   | 'init'
-  | 'max_duration'
-  | 'max_size'
+  | 'segment_duration_limit'
+  | 'segment_bytes_limit'
   | 'view_change'
   | 'before_unload'
   | 'visibility_hidden'
