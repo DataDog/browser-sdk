@@ -19,14 +19,14 @@ export type DeflateWorkerAction =
       action: 'init'
     }
   // Action to send when writing some unfinished data. The worker will respond with a 'wrote'
-  // response, with the same id and measurements of the wrote data size.
+  // response, with the same id and measurements of the wrote data bytes count.
   | {
       action: 'write'
       id: number
       data: string
     }
   // Action to send when finishing to write some data. The worker will respond with a 'flushed'
-  // response, with the same id, measurements of the wrote data size and the complete deflate
+  // response, with the same id, measurements of the wrote data bytes count and the complete deflate
   // data.
   | {
       action: 'flush'
@@ -44,16 +44,16 @@ export type DeflateWorkerResponse =
   | {
       type: 'wrote'
       id: number
-      compressedSize: number
-      additionalRawSize: number
+      compressedBytesCount: number
+      additionalBytesCount: number
     }
   // Response to 'flush' action
   | {
       type: 'flushed'
       id: number
       result: Uint8Array
-      additionalRawSize: number
-      rawSize: number
+      additionalBytesCount: number
+      rawBytesCount: number
       reason?: string
     }
   // Could happen at any time when something goes wrong in the worker

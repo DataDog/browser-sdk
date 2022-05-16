@@ -17,8 +17,8 @@ export class Segment {
     context: SegmentContext,
     creationReason: CreationReason,
     initialRecord: Record,
-    onWrote: (compressedSize: number) => void,
-    onFlushed: (data: Uint8Array, rawSize: number, reason?: string) => void
+    onWrote: (compressedBytesCount: number) => void,
+    onFlushed: (data: Uint8Array, rawBytesCount: number, reason?: string) => void
   ) {
     const viewId = context.view.id
 
@@ -43,12 +43,12 @@ export class Segment {
       }
 
       if (data.id === this.id) {
-        replayStats.addWroteData(viewId, data.additionalRawSize)
+        replayStats.addWroteData(viewId, data.additionalBytesCount)
         if (data.type === 'flushed') {
-          onFlushed(data.result, data.rawSize, data.reason)
+          onFlushed(data.result, data.rawBytesCount, data.reason)
           worker.removeEventListener('message', listener)
         } else {
-          onWrote(data.compressedSize)
+          onWrote(data.compressedBytesCount)
         }
       } else if (data.id > this.id) {
         // Messages should be received in the same order as they are sent, so if we receive a

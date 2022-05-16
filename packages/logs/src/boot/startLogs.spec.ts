@@ -41,7 +41,7 @@ describe('logs', () => {
     baseConfiguration = {
       ...validateAndBuildLogsConfiguration(initConfiguration)!,
       logsEndpointBuilder: stubEndpointBuilder('https://localhost/v1/input/log'),
-      maxBatchSize: 1,
+      batchMessagesLimit: 1,
     }
     logger = new Logger((...params) => handleLog(...params))
     server = sinon.fakeServer.create()
@@ -80,7 +80,7 @@ describe('logs', () => {
     })
 
     it('should all use the same batch', () => {
-      ;({ handleLog } = startLogs({ ...baseConfiguration, maxBatchSize: 3 }, () => COMMON_CONTEXT, logger))
+      ;({ handleLog } = startLogs({ ...baseConfiguration, batchMessagesLimit: 3 }, () => COMMON_CONTEXT, logger))
 
       handleLog(DEFAULT_MESSAGE, logger)
       handleLog(DEFAULT_MESSAGE, logger)
