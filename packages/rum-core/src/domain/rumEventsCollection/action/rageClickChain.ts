@@ -24,7 +24,7 @@ export function createRageClickChain(firstClick: Click): RageClickChain {
   appendClick(firstClick)
 
   function appendClick(click: Click) {
-    click.onStop(tryFinalize)
+    click.stopObservable.subscribe(tryFinalize)
     bufferedClicks.push(click)
     clearTimeout(maxDurationBetweenClicksTimeout)
     maxDurationBetweenClicksTimeout = setTimeout(monitor(dontAcceptMoreClick), MAX_DURATION_BETWEEN_CLICKS)

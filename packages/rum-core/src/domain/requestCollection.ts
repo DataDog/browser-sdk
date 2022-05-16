@@ -19,6 +19,7 @@ export interface CustomContext {
   requestIndex: number
   spanId?: TraceIdentifier
   traceId?: TraceIdentifier
+  traceSampled?: boolean
 }
 export interface RumFetchStartContext extends FetchStartContext, CustomContext {}
 export interface RumFetchCompleteContext extends FetchCompleteContext, CustomContext {}
@@ -40,6 +41,7 @@ export interface RequestCompleteEvent {
   duration: Duration
   spanId?: TraceIdentifier
   traceId?: TraceIdentifier
+  traceSampled?: boolean
   xhr?: XMLHttpRequest
   response?: Response
   input?: RequestInfo
@@ -85,6 +87,7 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: RumConfiguration, 
           startClocks: context.startClocks,
           status: context.status,
           traceId: context.traceId,
+          traceSampled: context.traceSampled,
           type: RequestType.XHR,
           url: context.url,
           xhr: context.xhr,
@@ -124,6 +127,7 @@ export function trackFetch(lifeCycle: LifeCycle, configuration: RumConfiguration
           startClocks: context.startClocks,
           status: context.status,
           traceId: context.traceId,
+          traceSampled: context.traceSampled,
           type: RequestType.FETCH,
           url: context.url,
           response: context.response,

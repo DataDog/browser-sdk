@@ -1,5 +1,6 @@
 import type { EndpointBuilder } from '../domain/configuration'
 import { addMonitoringError } from '../domain/internalMonitoring'
+import { addFailedSendBeacon } from './failedSendBeacon'
 
 /**
  * Use POST request without content type to:
@@ -12,7 +13,7 @@ import { addMonitoringError } from '../domain/internalMonitoring'
 export class HttpRequest {
   constructor(private endpointBuilder: EndpointBuilder, private bytesLimit: number) {}
 
-  send(data: string | FormData, size: number) {
+  send(data: string | FormData, size: number, reason?: string) {
     const url = this.endpointBuilder.build()
     const canUseBeacon = !!navigator.sendBeacon && size < this.bytesLimit
     if (canUseBeacon) {
@@ -21,6 +22,8 @@ export class HttpRequest {
         if (isQueued) {
           return
         }
+
+        addFailedSendBeacon(this.endpointBuilder.endpointType, size, reason)
       } catch (e) {
         reportBeaconError(e)
       }

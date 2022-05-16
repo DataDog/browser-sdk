@@ -1,4 +1,4 @@
-import type { Duration, RelativeTime } from '@datadog/browser-core'
+import type { Context, Duration, RelativeTime } from '@datadog/browser-core'
 import {
   timeStampNow,
   display,
@@ -14,7 +14,8 @@ import type {
   RumPerformanceNavigationTiming,
   RumPerformancePaintTiming,
 } from '../../../browser/performanceCollection'
-import { ViewLoadingType } from '../../../rawRumEvent.types'
+import { RumEventType, ViewLoadingType } from '../../../rawRumEvent.types'
+import type { RumEvent } from '../../../rumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { ViewEvent } from './trackViews'
 import { THROTTLE_VIEW_UPDATE_PERIOD } from './trackViews'
@@ -657,5 +658,51 @@ describe('start view', () => {
 
     expect(getViewUpdate(1).duration).toBe(50 as Duration)
     expect(getViewUpdate(2).startClocks.relative).toBe(50 as RelativeTime)
+  })
+})
+
+describe('view metrics', () => {
+  let setupBuilder: TestSetupBuilder
+  let viewTest: ViewTest
+  const FAKE_ACTION_EVENT = {
+    type: RumEventType.ACTION,
+    action: {},
+  } as RumEvent & Context
+
+  beforeEach(() => {
+    setupBuilder = setup()
+      .withFakeLocation('/foo')
+      .beforeBuild((buildContext) => {
+        viewTest = setupViewTest(buildContext)
+        return viewTest
+      })
+  })
+
+  afterEach(() => {
+    setupBuilder.cleanup()
+  })
+
+  it('includes event counts', () => {
+    const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+    const { getViewUpdate, getViewUpdateCount } = viewTest
+
+    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, FAKE_ACTION_EVENT)
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    expect(getViewUpdate(getViewUpdateCount() - 1).eventCounts.actionCount).toBe(1)
+  })
+
+  it('takes child events occurring on view end into account', () => {
+    const { lifeCycle } = setupBuilder.build()
+    const { getViewUpdate, getViewUpdateCount } = viewTest
+
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, () => {
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, FAKE_ACTION_EVENT)
+    })
+
+    lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
+
+    expect(getViewUpdate(getViewUpdateCount() - 1).eventCounts.actionCount).toBe(1)
   })
 })

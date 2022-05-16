@@ -34,10 +34,10 @@ export class Batch {
     this.addOrUpdate(message, key)
   }
 
-  flush() {
+  flush(reason?: string) {
     if (this.bufferMessagesCount !== 0) {
       const messages = this.pushOnlyBuffer.concat(objectValues(this.upsertBuffer))
-      this.request.send(messages.join('\n'), this.bufferBytesCount)
+      this.request.send(messages.join('\n'), this.bufferBytesCount, reason)
       this.pushOnlyBuffer = []
       this.upsertBuffer = {}
       this.bufferBytesCount = 0
@@ -70,12 +70,12 @@ export class Batch {
       this.remove(key)
     }
     if (this.willReachedBytesLimitWith(messageBytesCount)) {
-      this.flush()
+      this.flush('batch_bytes_limit')
     }
 
     this.push(processedMessage, messageBytesCount, key)
     if (this.isFull()) {
-      this.flush()
+      this.flush('batch_messages_limit')
     }
   }
 
@@ -126,7 +126,7 @@ export class Batch {
   private flushPeriodically() {
     setTimeout(
       monitor(() => {
-        this.flush()
+        this.flush('batch_flush_timeout')
         this.flushPeriodically()
       }),
       this.flushTimeout
@@ -152,7 +152,7 @@ export class Batch {
        */
       addEventListener(document, DOM_EVENT.VISIBILITY_CHANGE, () => {
         if (document.visibilityState === 'hidden') {
-          this.flush()
+          this.flush('visibility_hidden')
         }
       })
       /**
@@ -160,7 +160,7 @@ export class Batch {
        * - a visibility change during doc unload (cf: https://bugs.webkit.org/show_bug.cgi?id=194897)
        * - a page hide transition (cf: https://bugs.webkit.org/show_bug.cgi?id=188329)
        */
-      addEventListener(window, DOM_EVENT.BEFORE_UNLOAD, () => this.flush())
+      addEventListener(window, DOM_EVENT.BEFORE_UNLOAD, () => this.flush('before_unload'))
     }
   }
 }

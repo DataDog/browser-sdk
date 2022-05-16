@@ -1,7 +1,6 @@
-import type { Duration, ClocksState, RelativeTime, TimeStamp, Subscription } from '@datadog/browser-core'
+import type { Duration, ClocksState, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import {
   setToArray,
-  noop,
   Observable,
   assign,
   getRelativeTime,
@@ -19,7 +18,7 @@ import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { trackEventCounts } from '../../trackEventCounts'
-import { waitIdlePage } from '../../waitIdlePage'
+import { waitPageActivityEnd } from '../../waitPageActivityEnd'
 import type { RageClickChain } from './rageClickChain'
 import { createRageClickChain } from './rageClickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
@@ -64,11 +63,8 @@ export function trackClickActions(
     history.reset()
   })
 
-  lifeCycle.subscribe(LifeCycleEventType.BEFORE_UNLOAD, () => {
-    if (currentRageClickChain) {
-      currentRageClickChain.stop()
-    }
-  })
+  lifeCycle.subscribe(LifeCycleEventType.BEFORE_UNLOAD, stopRageClickChain)
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, stopRageClickChain)
 
   const { stop: stopListener } = listenClickEvents(processClick)
 
@@ -79,13 +75,17 @@ export function trackClickActions(
 
   return {
     stop: () => {
-      if (currentRageClickChain) {
-        currentRageClickChain.stop()
-      }
+      stopRageClickChain()
       stopObservable.notify()
       stopListener()
     },
     actionContexts,
+  }
+
+  function stopRageClickChain() {
+    if (currentRageClickChain) {
+      currentRageClickChain.stop()
+    }
   }
 
   function processClick(event: MouseEvent & { target: Element }) {
@@ -114,11 +114,11 @@ export function trackClickActions(
       currentRageClickChain = createRageClickChain(click)
     }
 
-    const { stop: stopWaitingIdlePage } = waitIdlePage(
+    const { stop: stopWaitPageActivityEnd } = waitPageActivityEnd(
       lifeCycle,
       domMutationObservable,
-      (idleEvent) => {
-        if (!idleEvent.hadActivity) {
+      (pageActivityEndEvent) => {
+        if (!pageActivityEndEvent.hadActivity) {
           // If it has no activity, consider it as a dead click.
           // TODO: this will yield a lot of false positive. We'll need to refine it in the future.
           if (trackFrustrations) {
@@ -127,39 +127,33 @@ export function trackClickActions(
           } else {
             click.discard()
           }
-        } else if (idleEvent.end < startClocks.timeStamp) {
+        } else if (pageActivityEndEvent.end < startClocks.timeStamp) {
           // If the clock is looking weird, just discard the click
           click.discard()
         } else if (trackFrustrations) {
           // If we track frustrations, let's stop the click, but validate it later
-          click.stop(idleEvent.end)
+          click.stop(pageActivityEndEvent.end)
         } else {
           // Else just validate it now
-          click.validate(idleEvent.end)
+          click.validate(pageActivityEndEvent.end)
         }
-        stopClickProcessing()
       },
       CLICK_ACTION_MAX_DURATION
     )
 
-    let viewCreatedSubscription: Subscription | undefined
-    if (!trackFrustrations) {
-      // TODO: remove this in a future major version. To keep backward compatibility, end the click when a
-      // new view is created.
-      viewCreatedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, stopClickProcessing)
-    }
+    const viewEndedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, ({ endClocks }) => {
+      click.stop(endClocks.timeStamp)
+    })
 
-    const stopSubscription = stopObservable.subscribe(stopClickProcessing)
-
-    function stopClickProcessing() {
-      // Cleanup any ongoing process
+    const stopSubscription = stopObservable.subscribe(() => {
       click.stop()
-      if (viewCreatedSubscription) {
-        viewCreatedSubscription.unsubscribe()
-      }
-      stopWaitingIdlePage()
+    })
+
+    click.stopObservable.subscribe(() => {
+      viewEndedSubscription.unsubscribe()
+      stopWaitPageActivityEnd()
       stopSubscription.unsubscribe()
-    }
+    })
   }
 }
 
@@ -203,7 +197,7 @@ function newClick(
   const eventCountsSubscription = trackEventCounts(lifeCycle)
   let state: ClickState = { status: ClickStatus.ONGOING }
   const frustrations = new Set<FrustrationType>()
-  let onStopCallback = noop
+  const stopObservable = new Observable<void>()
 
   function stop(endTime?: TimeStamp) {
     if (state.status !== ClickStatus.ONGOING) {
@@ -216,7 +210,7 @@ function newClick(
       historyEntry.remove()
     }
     eventCountsSubscription.stop()
-    onStopCallback()
+    stopObservable.notify()
   }
 
   function addFrustration(frustration: FrustrationType) {
@@ -229,12 +223,9 @@ function newClick(
     event: base.event,
     addFrustration,
     stop,
+    stopObservable,
 
     getFrustrations: () => frustrations,
-
-    onStop: (newOnStopCallback: () => void) => {
-      onStopCallback = newOnStopCallback
-    },
 
     isStopped: () => state.status === ClickStatus.STOPPED || state.status === ClickStatus.FINALIZED,
 

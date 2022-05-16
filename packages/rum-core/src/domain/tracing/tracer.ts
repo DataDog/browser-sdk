@@ -1,4 +1,4 @@
-import { getOrigin, objectEntries, shallowClone } from '@datadog/browser-core'
+import { getOrigin, objectEntries, shallowClone, performDraw } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type {
   RumFetchCompleteContext,
@@ -19,8 +19,8 @@ interface TracingHeaders {
 }
 
 /**
- * Clear tracing information to avoid incomplete traces. Ideally, we should do it when the the
- * request did not reach the server, but we the browser does not expose this. So, we clear tracing
+ * Clear tracing information to avoid incomplete traces. Ideally, we should do it when the
+ * request did not reach the server, but the browser does not expose this. So, we clear tracing
  * information if the request ended with status 0 without being aborted by the application.
  *
  * Reasoning:
@@ -32,13 +32,14 @@ interface TracingHeaders {
  * * Requests aborted otherwise (ex: lack of internet, CORS issue, blocked by a privacy extension)
  * are likely to finish quickly and without reaching the server.
  *
- * Of course it might not be the case every time, but it should limit having incomplete traces a
- * bit..
+ * Of course, it might not be the case every time, but it should limit having incomplete traces a
+ * bit.
  * */
 export function clearTracingIfNeeded(context: RumFetchCompleteContext | RumXhrCompleteContext) {
   if (context.status === 0 && !context.isAborted) {
     context.traceId = undefined
     context.spanId = undefined
+    context.traceSampled = undefined
   }
 }
 
@@ -92,7 +93,8 @@ function injectHeadersIfTracingAllowed(
 
   context.traceId = new TraceIdentifier()
   context.spanId = new TraceIdentifier()
-  inject(makeTracingHeaders(context.traceId, context.spanId))
+  context.traceSampled = performDraw(configuration.tracingSampleRate)
+  inject(makeTracingHeaders(context.traceId, context.spanId, context.traceSampled))
 }
 
 function isAllowedUrl(configuration: RumConfiguration, requestUrl: string) {
@@ -113,12 +115,15 @@ function getCrypto() {
   return window.crypto || (window as any).msCrypto
 }
 
-function makeTracingHeaders(traceId: TraceIdentifier, spanId: TraceIdentifier): TracingHeaders {
+/**
+ * When trace is not sampled, set priority to '0' instead of not adding the tracing headers
+ * to prepare the implementation for sampling delegation.
+ */
+function makeTracingHeaders(traceId: TraceIdentifier, spanId: TraceIdentifier, traceSampled: boolean): TracingHeaders {
   return {
     'x-datadog-origin': 'rum',
     'x-datadog-parent-id': spanId.toDecimalString(),
-    'x-datadog-sampled': '1',
-    'x-datadog-sampling-priority': '1',
+    'x-datadog-sampling-priority': traceSampled ? '1' : '0',
     'x-datadog-trace-id': traceId.toDecimalString(),
   }
 }

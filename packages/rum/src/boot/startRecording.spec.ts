@@ -84,7 +84,7 @@ describe('startRecording', () => {
     flushSegment(lifeCycle)
 
     waitRequestSendCalls(1, (calls) => {
-      expect(calls.first().args).toEqual([jasmine.any(FormData), jasmine.any(Number)])
+      expect(calls.first().args).toEqual([jasmine.any(FormData), jasmine.any(Number), undefined])
       expect(getRequestData(calls.first())).toEqual({
         'application.id': 'appId',
         creation_reason: 'init',
