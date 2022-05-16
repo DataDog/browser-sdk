@@ -142,7 +142,7 @@ describe('startRecording', () => {
 
     document.body.dispatchEvent(createNewEvent('click'))
 
-    sessionManager.setId('new-session-id').setReplayPlan()
+    sessionManager.setId('new-session-id').setPremiumPlan()
     flushSegment(lifeCycle)
     document.body.dispatchEvent(createNewEvent('click'))
 

@@ -90,7 +90,7 @@ export function makeRecorderApi(
 
       startStrategy = () => {
         const session = sessionManager.findTrackedSession()
-        if (!session || !session.hasReplayPlan) {
+        if (!session || !session.hasPremiumPlan) {
           state = { status: RecorderStatus.IntentToStart }
           return
         }
