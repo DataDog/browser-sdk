@@ -157,11 +157,12 @@ describe('resourceCollection', () => {
       expect(traceInfo.trace_id).toBe('1234')
     })
 
-    it('should be processed from completed request', () => {
+    it('should be processed from sampled completed request', () => {
       const { lifeCycle, rawRumEvents } = setupBuilder.build()
       lifeCycle.notify(
         LifeCycleEventType.REQUEST_COMPLETED,
         createCompletedRequest({
+          traceSampled: true,
           spanId: new TraceIdentifier(),
           traceId: new TraceIdentifier(),
         })
@@ -170,6 +171,20 @@ describe('resourceCollection', () => {
       expect(traceInfo).toBeDefined()
       expect(traceInfo.trace_id).toBeDefined()
       expect(traceInfo.span_id).toBeDefined()
+    })
+
+    it('should not be processed from not sampled completed request', () => {
+      const { lifeCycle, rawRumEvents } = setupBuilder.build()
+      lifeCycle.notify(
+        LifeCycleEventType.REQUEST_COMPLETED,
+        createCompletedRequest({
+          traceSampled: false,
+          spanId: new TraceIdentifier(),
+          traceId: new TraceIdentifier(),
+        })
+      )
+      const traceInfo = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd!
+      expect(traceInfo).not.toBeDefined()
     })
   })
 })

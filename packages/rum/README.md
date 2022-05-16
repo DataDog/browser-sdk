@@ -214,6 +214,12 @@ Optional proxy URL (ex: https://www.proxy.com/path), see the full [proxy setup g
 **Type**: List<br/>
 A list of request origins used to inject tracing headers. See [Connect RUM and Traces][12].
 
+`tracingSampleRate`
+: Optional<br/>
+**Type**: Number<br/>
+**Default**: `100`<br/>
+The percentage of requests to trace: `100` for all, `0` for none. See [Connect RUM and Traces][12].
+
 Options that must have matching configuration when also using `logs` SDK:
 
 `trackSessionAcrossSubdomains`

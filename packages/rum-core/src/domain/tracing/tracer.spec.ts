@@ -57,7 +57,7 @@ describe('tracer', () => {
 
       expect(context.traceId).toBeDefined()
       expect(context.spanId).toBeDefined()
-      expect(xhrStub.headers).toEqual(tracingHeadersFor(context.traceId!, context.spanId!))
+      expect(xhrStub.headers).toEqual(tracingHeadersFor(context.traceId!, context.spanId!, '1'))
     })
 
     it('should not trace request on disallowed domain', () => {
@@ -78,6 +78,30 @@ describe('tracer', () => {
       expect(context.traceId).toBeUndefined()
       expect(context.spanId).toBeUndefined()
       expect(xhrStub.headers).toEqual({})
+    })
+
+    it("should trace request with priority '1' when sampled", () => {
+      spyOn(Math, 'random').and.callFake(() => 0)
+      const tracer = startTracer({ ...configuration, tracingSampleRate: 50 }, sessionManager)
+      const context = { ...ALLOWED_DOMAIN_CONTEXT }
+      tracer.traceXhr(context, xhrStub as unknown as XMLHttpRequest)
+
+      expect(context.traceSampled).toBe(true)
+      expect(context.traceId).toBeDefined()
+      expect(context.spanId).toBeDefined()
+      expect(xhrStub.headers).toEqual(tracingHeadersFor(context.traceId!, context.spanId!, '1'))
+    })
+
+    it("should trace request with priority '0' when not sampled", () => {
+      spyOn(Math, 'random').and.callFake(() => 1)
+      const tracer = startTracer({ ...configuration, tracingSampleRate: 50 }, sessionManager)
+      const context = { ...ALLOWED_DOMAIN_CONTEXT }
+      tracer.traceXhr(context, xhrStub as unknown as XMLHttpRequest)
+
+      expect(context.traceSampled).toBe(false)
+      expect(context.traceId).toBeDefined()
+      expect(context.spanId).toBeDefined()
+      expect(xhrStub.headers).toEqual(tracingHeadersFor(context.traceId!, context.spanId!, '0'))
     })
 
     it('should trace requests on configured origins', () => {
@@ -114,7 +138,7 @@ describe('tracer', () => {
 
       expect(context.traceId).toBeDefined()
       expect(context.spanId).toBeDefined()
-      expect(context.init!.headers).toEqual(tracingHeadersAsArrayFor(context.traceId!, context.spanId!))
+      expect(context.init!.headers).toEqual(tracingHeadersAsArrayFor(context.traceId!, context.spanId!, '1'))
     })
 
     it('should preserve original request init', () => {
@@ -129,7 +153,7 @@ describe('tracer', () => {
 
       expect(context.init).not.toBe(init)
       expect(context.init!.method).toBe('POST')
-      expect(context.init!.headers).toEqual(tracingHeadersAsArrayFor(context.traceId!, context.spanId!))
+      expect(context.init!.headers).toEqual(tracingHeadersAsArrayFor(context.traceId!, context.spanId!, '1'))
     })
 
     it('should preserve original headers object', () => {
@@ -147,7 +171,7 @@ describe('tracer', () => {
       expect(context.init!.headers).not.toBe(headers)
       expect(context.init!.headers).toEqual([
         ['foo', 'bar'],
-        ...tracingHeadersAsArrayFor(context.traceId!, context.spanId!),
+        ...tracingHeadersAsArrayFor(context.traceId!, context.spanId!, '1'),
       ])
       expect(toPlainObject(headers)).toEqual({
         foo: 'bar',
@@ -168,7 +192,7 @@ describe('tracer', () => {
       expect(context.init!.headers).not.toBe(headers)
       expect(context.init!.headers).toEqual([
         ['foo', 'bar'],
-        ...tracingHeadersAsArrayFor(context.traceId!, context.spanId!),
+        ...tracingHeadersAsArrayFor(context.traceId!, context.spanId!, '1'),
       ])
 
       expect(headers).toEqual({
@@ -194,7 +218,7 @@ describe('tracer', () => {
       expect(context.init!.headers).toEqual([
         ['foo', 'bar'],
         ['foo', 'baz'],
-        ...tracingHeadersAsArrayFor(context.traceId!, context.spanId!),
+        ...tracingHeadersAsArrayFor(context.traceId!, context.spanId!, '1'),
       ])
 
       expect(headers).toEqual([
@@ -222,7 +246,7 @@ describe('tracer', () => {
       expect(context.input).not.toBe(request)
       expect(headersAsArray((context.input as Request).headers)).toEqual([
         ['foo', 'bar'],
-        ...tracingHeadersAsArrayFor(context.traceId!, context.spanId!),
+        ...tracingHeadersAsArrayFor(context.traceId!, context.spanId!, '1'),
       ])
       expect(headersAsArray(request.headers)).toEqual([['foo', 'bar']])
     })
@@ -241,7 +265,7 @@ describe('tracer', () => {
 
       expect(context.init!.headers).toEqual([
         ['x-init-header', 'baz'],
-        ...tracingHeadersAsArrayFor(context.traceId!, context.spanId!),
+        ...tracingHeadersAsArrayFor(context.traceId!, context.spanId!, '1'),
       ])
     })
 
@@ -254,6 +278,43 @@ describe('tracer', () => {
       expect(context.traceId).toBeUndefined()
       expect(context.spanId).toBeUndefined()
       expect(context.init).toBeUndefined()
+    })
+
+    it('should not trace request during untracked session', () => {
+      const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
+
+      const tracer = startTracer(configuration, sessionManager.setNotTracked())
+      tracer.traceFetch(context)
+
+      expect(context.traceId).toBeUndefined()
+      expect(context.spanId).toBeUndefined()
+      expect(context.init).toBeUndefined()
+    })
+
+    it("should trace request with priority '1' when sampled", () => {
+      const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
+
+      spyOn(Math, 'random').and.callFake(() => 0)
+      const tracer = startTracer({ ...configuration, tracingSampleRate: 50 }, sessionManager)
+      tracer.traceFetch(context)
+
+      expect(context.traceSampled).toBe(true)
+      expect(context.traceId).toBeDefined()
+      expect(context.spanId).toBeDefined()
+      expect(context.init!.headers).toEqual(tracingHeadersAsArrayFor(context.traceId!, context.spanId!, '1'))
+    })
+
+    it("should trace request with priority '0' when not sampled", () => {
+      const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
+
+      spyOn(Math, 'random').and.callFake(() => 1)
+      const tracer = startTracer({ ...configuration, tracingSampleRate: 50 }, sessionManager)
+      tracer.traceFetch(context)
+
+      expect(context.traceSampled).toBe(false)
+      expect(context.traceId).toBeDefined()
+      expect(context.spanId).toBeDefined()
+      expect(context.init!.headers).toEqual(tracingHeadersAsArrayFor(context.traceId!, context.spanId!, '0'))
     })
 
     it('should trace requests on configured urls', () => {
@@ -322,18 +383,17 @@ function toPlainObject(headers: Headers) {
   return result
 }
 
-function tracingHeadersFor(traceId: TraceIdentifier, spanId: TraceIdentifier) {
+function tracingHeadersFor(traceId: TraceIdentifier, spanId: TraceIdentifier, samplingPriority: '1' | '0') {
   return {
     'x-datadog-origin': 'rum',
     'x-datadog-parent-id': spanId.toDecimalString(),
-    'x-datadog-sampled': '1',
-    'x-datadog-sampling-priority': '1',
+    'x-datadog-sampling-priority': samplingPriority,
     'x-datadog-trace-id': traceId.toDecimalString(),
   }
 }
 
-function tracingHeadersAsArrayFor(traceId: TraceIdentifier, spanId: TraceIdentifier) {
-  return objectEntries(tracingHeadersFor(traceId, spanId)) as Array<[string, string]>
+function tracingHeadersAsArrayFor(traceId: TraceIdentifier, spanId: TraceIdentifier, samplingPriority: '1' | '0') {
+  return objectEntries(tracingHeadersFor(traceId, spanId, samplingPriority)) as Array<[string, string]>
 }
 
 function headersAsArray(headers: Headers) {
