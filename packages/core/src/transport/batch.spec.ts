@@ -37,11 +37,11 @@ describe('batch', () => {
   })
 
   it('should count the bytes of a message composed of 1 byte characters', () => {
-    expect(batch.sizeInBytes('1234')).toEqual(4)
+    expect(batch.countBytes('1234')).toEqual(4)
   })
 
   it('should count the bytes of a message composed of multiple bytes characters', () => {
-    expect(batch.sizeInBytes('🪐')).toEqual(4)
+    expect(batch.countBytes('🪐')).toEqual(4)
   })
 
   it('should flush when the message count limit is reached', () => {
@@ -65,7 +65,7 @@ describe('batch', () => {
     expect(transport.send).toHaveBeenCalledWith('{"message":"60 bytes - xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}', 60)
   })
 
-  it('should consider separators when computing the bytes size', () => {
+  it('should consider separators when computing the byte count', () => {
     batch.add({ message: '30 bytes - xxxxx' }) // batch: 30 sep: 0
     batch.add({ message: '30 bytes - xxxxx' }) // batch: 60 sep: 1
     batch.add({ message: '39 bytes - xxxxxxxxxxxxxx' }) // batch: 99 sep: 2
@@ -73,7 +73,7 @@ describe('batch', () => {
     expect(transport.send).toHaveBeenCalledWith('{"message":"30 bytes - xxxxx"}\n{"message":"30 bytes - xxxxx"}', 61)
   })
 
-  it('should call send one time when the bytes size is too high and the batch is empty', () => {
+  it('should call send one time when the byte count is too high and the batch is empty', () => {
     const message = '101 bytes - xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
     batch.add({ message })
     expect(transport.send).toHaveBeenCalledWith(`{"message":"${message}"}`, 101)

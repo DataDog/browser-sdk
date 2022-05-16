@@ -8,7 +8,7 @@ export function send(
   endpointBuilder: EndpointBuilder,
   data: Uint8Array,
   metadata: SegmentMetadata,
-  rawSegmentSize: number
+  rawSegmentBytesCount: number
 ): void {
   const formData = new FormData()
 
@@ -21,7 +21,7 @@ export function send(
   )
 
   toFormEntries(metadata, (key, value) => formData.append(key, value))
-  formData.append('raw_segment_size', rawSegmentSize.toString())
+  formData.append('raw_segment_size', rawSegmentBytesCount.toString())
 
   const request = new HttpRequest(endpointBuilder, SEND_BEACON_BYTES_LIMIT)
   request.send(formData, data.byteLength)

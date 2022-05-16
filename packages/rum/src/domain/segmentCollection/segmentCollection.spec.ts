@@ -26,7 +26,7 @@ const VERY_BIG_RECORD: Record = {
   data: Array(SEND_BEACON_BYTES_LIMIT).join('a') as any,
 }
 
-const BEFORE_MAX_SEGMENT_DURATION = SEGMENT_DURATION_LIMIT * 0.9
+const BEFORE_SEGMENT_DURATION_LIMIT = SEGMENT_DURATION_LIMIT * 0.9
 
 describe('startSegmentCollection', () => {
   let stopSegmentCollection: () => void
@@ -183,7 +183,7 @@ describe('startSegmentCollection', () => {
     })
 
     describe('segment_duration_limit flush strategy', () => {
-      it('flushes a segment after MAX_SEGMENT_DURATION', () => {
+      it('flushes a segment after SEGMENT_DURATION_LIMIT', () => {
         clock = mockClock()
         const { sendCurrentSegment, addRecord, sendSpy, worker } = startSegmentCollection(CONTEXT)
         addRecord(RECORD)
@@ -193,14 +193,14 @@ describe('startSegmentCollection', () => {
         expect(sendCurrentSegment().creation_reason).toBe('segment_duration_limit')
       })
 
-      it('does not flush a segment after MAX_SEGMENT_DURATION if a segment has been created in the meantime', () => {
+      it('does not flush a segment after SEGMENT_DURATION_LIMIT if a segment has been created in the meantime', () => {
         clock = mockClock()
         const { lifeCycle, sendCurrentSegment, addRecord, sendSpy, worker } = startSegmentCollection(CONTEXT)
         addRecord(RECORD)
-        clock.tick(BEFORE_MAX_SEGMENT_DURATION)
+        clock.tick(BEFORE_SEGMENT_DURATION_LIMIT)
         lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
         addRecord(RECORD)
-        clock.tick(BEFORE_MAX_SEGMENT_DURATION)
+        clock.tick(BEFORE_SEGMENT_DURATION_LIMIT)
 
         worker.processAllMessages()
         expect(sendSpy).toHaveBeenCalledTimes(1)
