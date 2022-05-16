@@ -220,6 +220,12 @@ A list of request origins used to inject tracing headers. See [Connect RUM and T
 **Default**: `100`<br/>
 The percentage of requests to trace: `100` for all, `0` for none. See [Connect RUM and Traces][12].
 
+`telemetrySampleRate`
+: Optional<br/>
+**Type**: Number<br/>
+**Default**: `20`<br/>
+Telemetry data (error, debug logs) about SDK execution is sent to Datadog in order to proactively detect and solve potential issue. Set this option to `0` to opt out from telemetry collection.
+
 Options that must have matching configuration when also using `logs` SDK:
 
 `trackSessionAcrossSubdomains`
