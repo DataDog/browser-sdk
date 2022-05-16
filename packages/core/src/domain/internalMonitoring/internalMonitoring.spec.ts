@@ -26,6 +26,10 @@ const configuration: Partial<Configuration> = {
 }
 
 describe('internal monitoring', () => {
+  afterEach(() => {
+    resetInternalMonitoring()
+  })
+
   describe('decorator', () => {
     class Candidate {
       @monitored
@@ -77,10 +81,6 @@ describe('internal monitoring', () => {
         monitoringMessageObservable.subscribe(notifySpy)
       })
 
-      afterEach(() => {
-        resetInternalMonitoring()
-      })
-
       it('should preserve original behavior', () => {
         expect(candidate.monitoredNotThrowing()).toEqual(1)
       })
@@ -129,10 +129,6 @@ describe('internal monitoring', () => {
       monitoringMessageObservable.subscribe(notifySpy)
     })
 
-    afterEach(() => {
-      resetInternalMonitoring()
-    })
-
     describe('direct call', () => {
       it('should preserve original behavior', () => {
         expect(callMonitored(notThrowing)).toEqual(1)
@@ -178,10 +174,6 @@ describe('internal monitoring', () => {
       internalMonitoring.monitoringMessageObservable.subscribe(notifySpy)
     })
 
-    afterEach(() => {
-      resetInternalMonitoring()
-    })
-
     it('should be added to error messages', () => {
       internalMonitoring.setExternalContextProvider(() => ({
         foo: 'bar',
@@ -207,7 +199,6 @@ describe('internal monitoring', () => {
     })
 
     afterEach(() => {
-      resetInternalMonitoring()
       resetExperimentalFeatures()
     })
 
@@ -284,7 +275,6 @@ describe('internal monitoring', () => {
 
       afterEach(() => {
         resetExperimentalFeatures()
-        resetInternalMonitoring()
       })
 
       it('should notify observable', () => {
@@ -358,10 +348,6 @@ describe('internal monitoring', () => {
         internalMonitoring = startInternalMonitoring(configuration as Configuration)
         notifySpy = jasmine.createSpy('notified')
         internalMonitoring.telemetryEventObservable.subscribe(notifySpy)
-      })
-
-      afterEach(() => {
-        resetInternalMonitoring()
       })
 
       it('should not notify observable', () => {
