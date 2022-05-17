@@ -1,8 +1,9 @@
 import type { Context } from '../../tools/context'
 import { display } from '../../tools/display'
 import { toStackTraceString } from '../../tools/error'
-import { assign, combine, jsonStringify, performDraw, includes } from '../../tools/utils'
+import { assign, combine, jsonStringify, performDraw, includes, startsWith } from '../../tools/utils'
 import type { Configuration } from '../configuration'
+import type { StackTrace } from '../tracekit'
 import { computeStackTrace } from '../tracekit'
 import { Observable } from '../../tools/observable'
 import { timeStampNow } from '../../tools/timeUtils'
@@ -16,6 +17,13 @@ const enum StatusType {
   debug = 'debug',
   error = 'error',
 }
+
+const ALLOWED_FRAME_URL = [
+  'https://www.datadoghq-browser-agent.com',
+  'https://www.datad0g-browser-agent.com',
+  'http://localhost',
+  '<anonymous>',
+]
 
 export interface InternalMonitoring {
   setExternalContextProvider: (provider: () => Context) => void
@@ -220,7 +228,7 @@ function formatError(e: unknown) {
     return {
       error: {
         kind: stackTrace.name,
-        stack: toStackTraceString(stackTrace),
+        stack: toStackTraceString(scrubCustomerFrames(stackTrace)),
       },
       message: stackTrace.message!,
     }
@@ -231,6 +239,21 @@ function formatError(e: unknown) {
     },
     message: `Uncaught ${jsonStringify(e)!}`,
   }
+}
+
+export function scrubCustomerFrames(stackTrace: StackTrace) {
+  stackTrace.stack = stackTrace.stack.filter((frame) => {
+    if (!frame.url) {
+      return true
+    }
+    for (const allowedOrigin of ALLOWED_FRAME_URL) {
+      if (startsWith(frame.url, allowedOrigin)) {
+        return true
+      }
+    }
+    return false
+  })
+  return stackTrace
 }
 
 export function setDebugMode(debugMode: boolean) {
