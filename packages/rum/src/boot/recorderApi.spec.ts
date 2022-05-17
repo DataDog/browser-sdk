@@ -193,14 +193,14 @@ describe('makeRecorderApi', () => {
       rumInit()
     })
 
-    describe('from LITE to REPLAY', () => {
+    describe('from LITE to PREMIUM', () => {
       beforeEach(() => {
         sessionManager.setLitePlan()
       })
 
       it('starts recording if startSessionReplayRecording was called', () => {
         recorderApi.start()
-        sessionManager.setReplayPlan()
+        sessionManager.setPremiumPlan()
         lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
         expect(startRecordingSpy).not.toHaveBeenCalled()
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
@@ -211,7 +211,7 @@ describe('makeRecorderApi', () => {
       it('does not starts recording if stopSessionReplayRecording was called', () => {
         recorderApi.start()
         recorderApi.stop()
-        sessionManager.setReplayPlan()
+        sessionManager.setPremiumPlan()
         lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
         expect(startRecordingSpy).not.toHaveBeenCalled()
@@ -247,9 +247,9 @@ describe('makeRecorderApi', () => {
       })
     })
 
-    describe('from REPLAY to LITE', () => {
+    describe('from PREMIUM to LITE', () => {
       beforeEach(() => {
-        sessionManager.setReplayPlan()
+        sessionManager.setPremiumPlan()
       })
 
       it('stops recording if startSessionReplayRecording was called', () => {
@@ -275,9 +275,9 @@ describe('makeRecorderApi', () => {
       })
     })
 
-    describe('from REPLAY to untracked', () => {
+    describe('from PREMIUM to untracked', () => {
       beforeEach(() => {
-        sessionManager.setReplayPlan()
+        sessionManager.setPremiumPlan()
       })
 
       it('stops recording if startSessionReplayRecording was called', () => {
@@ -291,9 +291,9 @@ describe('makeRecorderApi', () => {
       })
     })
 
-    describe('from REPLAY to REPLAY', () => {
+    describe('from PREMIUM to PREMIUM', () => {
       beforeEach(() => {
-        sessionManager.setReplayPlan()
+        sessionManager.setPremiumPlan()
       })
 
       it('keeps recording if startSessionReplayRecording was called', () => {
@@ -324,7 +324,7 @@ describe('makeRecorderApi', () => {
 
       it('starts recording if startSessionReplayRecording was called', () => {
         recorderApi.start()
-        sessionManager.setReplayPlan()
+        sessionManager.setPremiumPlan()
         lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
         expect(startRecordingSpy).toHaveBeenCalled()
@@ -334,7 +334,7 @@ describe('makeRecorderApi', () => {
       it('does not starts recording if stopSessionReplayRecording was called', () => {
         recorderApi.start()
         recorderApi.stop()
-        sessionManager.setReplayPlan()
+        sessionManager.setPremiumPlan()
         lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
         expect(startRecordingSpy).not.toHaveBeenCalled()

@@ -4,7 +4,7 @@ import { RumTrackingType } from '../src/domain/rumSessionManager'
 export interface RumSessionManagerMock extends RumSessionManager {
   setId(id: string): RumSessionManagerMock
   setNotTracked(): RumSessionManagerMock
-  setReplayPlan(): RumSessionManagerMock
+  setPremiumPlan(): RumSessionManagerMock
   setLitePlan(): RumSessionManagerMock
 }
 
@@ -12,14 +12,14 @@ const DEFAULT_ID = 'session-id'
 
 export function createRumSessionManagerMock(): RumSessionManagerMock {
   let id = DEFAULT_ID
-  let trackingType = RumTrackingType.TRACKED_REPLAY
+  let trackingType = RumTrackingType.TRACKED_PREMIUM
   return {
     findTrackedSession() {
       return trackingType !== RumTrackingType.NOT_TRACKED
         ? {
             id,
             hasLitePlan: trackingType === RumTrackingType.TRACKED_LITE,
-            hasReplayPlan: trackingType === RumTrackingType.TRACKED_REPLAY,
+            hasPremiumPlan: trackingType === RumTrackingType.TRACKED_PREMIUM,
           }
         : undefined
     },
@@ -35,8 +35,8 @@ export function createRumSessionManagerMock(): RumSessionManagerMock {
       trackingType = RumTrackingType.TRACKED_LITE
       return this
     },
-    setReplayPlan() {
-      trackingType = RumTrackingType.TRACKED_REPLAY
+    setPremiumPlan() {
+      trackingType = RumTrackingType.TRACKED_PREMIUM
       return this
     },
   }

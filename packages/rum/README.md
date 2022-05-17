@@ -44,7 +44,7 @@ datadogRum.init({
   //  env: 'production',
   //  version: '1.0.0',
   sampleRate: 100,
-  replaySampleRate: 100, // if not included - default 100
+  premiumSampleRate: 100, // if not included - default 100
   trackInteractions: true,
 })
 ```
@@ -72,7 +72,7 @@ Add the generated code snippet to the head tag of every HTML page you want to mo
       //  env: 'production',
       //  version: '1.0.0',
       sampleRate: 100,
-      replaySampleRate: 100, // if not included - default 100
+      premiumSampleRate: 100, // if not included - default 100
       trackInteractions: true,
     })
   })
@@ -100,7 +100,7 @@ Add the generated code snippet to the head tag (in front of any other script tag
       //  env: 'production',
       //  version: '1.0.0',
       sampleRate: 100,
-      replaySampleRate: 100, // if not included - default 100
+      premiumSampleRate: 100, // if not included - default 100
       trackInteractions: true,
     })
 </script>
@@ -190,13 +190,19 @@ Specify your own attribute to be used to [name actions][9].
 : Optional<br/>
 **Type**: Number<br/>
 **Default**: `100`<br/>
-The percentage of sessions to track: `100` for all, `0` for none. Only tracked sessions send RUM events. For more details about `sampleRate`, see the [sampling configuration](#browser-and-session-replay-sampling-configuration).
+The percentage of sessions to track: `100` for all, `0` for none. Only tracked sessions send RUM events. For more details about `sampleRate`, see the [sampling configuration](#browser-rum-and-rum-premium-sampling-configuration).
 
 `replaySampleRate`
+: Optional - **Deprecated**<br/>
+**Type**: Number<br/>
+**Default**: `100`<br/>
+See `premiumSampleRate`.
+
+`premiumSampleRate`
 : Optional<br/>
 **Type**: Number<br/>
 **Default**: `100`<br/>
-The percentage of tracked sessions with [Session Replay pricing][11] features: `100` for all, `0` for none. For more details about `replaySampleRate`, see the [sampling configuration](#browser-and-session-replay-sampling-configuration).
+The percentage of tracked sessions with [Premium pricing][11] features: `100` for all, `0` for none. For more details about `premiumSampleRate`, see the [sampling configuration](#browser-rum-and-rum-premium-sampling-configuration).
 
 `silentMultipleInit`
 : Optional<br/>
@@ -268,20 +274,20 @@ init(configuration: {
 })
 ```
 
-### Browser and Session Replay sampling configuration
+### Browser RUM and RUM Premium sampling configuration
 
 **Note**: This feature requires SDK v3.6.0+.
 
 When new session is created, it can be either tracked as:
 
 - [**Browser RUM**][11]: **Only** _Sessions_, _Views_, _Actions_, and _Errors_ are collected. Calls to `startSessionReplayRecording()` are ignored.
-- [**Session Replay RUM**][11]: Everything from Browser RUM plus _Resources_, _Long Tasks_, and _Replay_ recordings are collected. A call to `startSessionReplayRecording()` is needed to collect _Replay_ recordings.
+- [**RUM Premium**][11]: Everything from Browser RUM plus _Resources_, _Long Tasks_, and _Replay_ recordings are collected. A call to `startSessionReplayRecording()` is needed to collect _Replay_ recordings.
 
 Two initialization parameters are available to control how the session is tracked:
 
 - `sampleRate` controls the percentage of overall sessions being tracked. It defaults to `100%`, so every sessions will be tracked by default.
 
-- `replaySampleRate` is applied **after** the overall sample rate, and controls the percentage of sessions tracked as Session Replay RUM. It defaults to `100%`, so every sessions will be tracked as Session Replay RUM by default.
+- `premiumSampleRate` is applied **after** the overall sample rate, and controls the percentage of sessions tracked as RUM Premium. It defaults to `100%`, so every sessions will be tracked as RUM Premium by default.
 
 For example, to track 100% of your sessions as Browser RUM:
 
@@ -289,27 +295,27 @@ For example, to track 100% of your sessions as Browser RUM:
 datadogRum.init({
     ....
     sampleRate: 100,
-    replaySampleRate: 0
+    premiumSampleRate: 0
 });
 ```
 
-For example, to track 100% of your sessions as Session Replay RUM:
+For example, to track 100% of your sessions as RUM Premium:
 
 ```
 datadogRum.init({
     ....
     sampleRate: 100,
-    replaySampleRate: 100
+    premiumSampleRate: 100
 });
 ```
 
-For example, to track only 50% of your overall sessions, with half tracked as Browser RUM and the other half tracked as Session Replay RUM, set the `sampleRate` and the `replaySampleRate` to 50:
+For example, to track only 50% of your overall sessions, with half tracked as Browser RUM and the other half tracked as RUM Premium, set the `sampleRate` and the `premiumSampleRate` to 50:
 
 ```
 datadogRum.init({
     ....
     sampleRate: 50,
-    replaySampleRate: 50
+    premiumSampleRate: 50
 });
 ```
 

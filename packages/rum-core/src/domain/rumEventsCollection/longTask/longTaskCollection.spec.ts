@@ -45,10 +45,10 @@ describe('long task collection', () => {
     expect(rawRumEvents.length).toBe(1)
   })
 
-  it('should only collect when session has a replay plan', () => {
+  it('should only collect when session has a premium plan', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
 
-    sessionManager.setReplayPlan()
+    sessionManager.setPremiumPlan()
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [LONG_TASK])
     expect(rawRumEvents.length).toBe(1)
 
