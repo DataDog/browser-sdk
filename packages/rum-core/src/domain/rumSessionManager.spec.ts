@@ -24,9 +24,9 @@ describe('rum session manager', () => {
   let renewSessionSpy: jasmine.Spy
   let clock: Clock
 
-  function setupDraws({ tracked, trackedWithReplay }: { tracked?: boolean; trackedWithReplay?: boolean }) {
+  function setupDraws({ tracked, trackedWithPremium }: { tracked?: boolean; trackedWithPremium?: boolean }) {
     configuration.sampleRate = tracked ? 100 : 0
-    configuration.premiumSampleRate = trackedWithReplay ? 100 : 0
+    configuration.premiumSampleRate = trackedWithPremium ? 100 : 0
   }
 
   beforeEach(() => {
@@ -56,7 +56,7 @@ describe('rum session manager', () => {
 
   describe('cookie storage', () => {
     it('when tracked with premium plan should store session type and id', () => {
-      setupDraws({ tracked: true, trackedWithReplay: true })
+      setupDraws({ tracked: true, trackedWithPremium: true })
 
       startRumSessionManager(configuration, lifeCycle)
 
@@ -67,7 +67,7 @@ describe('rum session manager', () => {
     })
 
     it('when tracked with lite plan should store session type and id', () => {
-      setupDraws({ tracked: true, trackedWithReplay: false })
+      setupDraws({ tracked: true, trackedWithPremium: false })
 
       startRumSessionManager(configuration, lifeCycle)
 
@@ -119,7 +119,7 @@ describe('rum session manager', () => {
       expect(renewSessionSpy).not.toHaveBeenCalled()
       clock.tick(COOKIE_ACCESS_DELAY)
 
-      setupDraws({ tracked: true, trackedWithReplay: true })
+      setupDraws({ tracked: true, trackedWithPremium: true })
       document.dispatchEvent(new CustomEvent('click'))
 
       expect(expireSessionSpy).toHaveBeenCalled()
