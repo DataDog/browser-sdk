@@ -16,6 +16,11 @@
 
 ---
 
+## v4.10.2
+
+- ✨ rename Replay plan to Premium plan ([#1534](https://github.com/DataDog/browser-sdk/pull/1534))
+- ✨ enable telemetry on us3 site ([#1544](https://github.com/DataDog/browser-sdk/pull/1544))
+
 ## v4.10.1
 
 - ✨ enable telemetry on us5 site ([#1540](https://github.com/DataDog/browser-sdk/pull/1540))
