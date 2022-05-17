@@ -1,8 +1,8 @@
 import type { EndpointBuilder } from '@datadog/browser-core'
-import { HttpRequest, objectEntries } from '@datadog/browser-core'
+import { ONE_KILO_BYTE, HttpRequest, objectEntries } from '@datadog/browser-core'
 import type { SegmentMetadata } from '../types'
 
-export const SEND_BEACON_BYTES_LIMIT = 60_000
+export const SEND_BEACON_BYTES_LIMIT = 22 * ONE_KILO_BYTE
 
 export function send(
   endpointBuilder: EndpointBuilder,

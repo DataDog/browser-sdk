@@ -105,7 +105,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
        * beacon payload max queue size implementation is 64kb
        * ensure that we leave room for logs, rum and potential other users
        */
-      batchBytesLimit: 16 * ONE_KILO_BYTE,
+      batchBytesLimit: 10 * ONE_KILO_BYTE,
 
       eventRateLimiterThreshold: 3000,
       maxInternalMonitoringMessagesPerPage: 15,
