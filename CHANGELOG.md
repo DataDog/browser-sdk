@@ -16,6 +16,10 @@
 
 ---
 
+## v4.10.1
+
+- ✨ enable telemetry on us5 site ([#1540](https://github.com/DataDog/browser-sdk/pull/1540))
+
 ## v4.10.0
 
 - ✨[RUMF-1253] add `tracingSampleRate` option ([#1526](https://github.com/DataDog/browser-sdk/pull/1526))

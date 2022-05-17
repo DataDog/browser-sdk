@@ -2,24 +2,24 @@
 # yarn lockfile v1
 
 
-"@datadog/browser-core@4.10.0", "@datadog/browser-core@file:../../packages/core":
-  version "4.10.0"
+"@datadog/browser-core@4.10.1", "@datadog/browser-core@file:../../packages/core":
+  version "4.10.1"
 
 "@datadog/browser-logs@file:../../packages/logs":
-  version "4.10.0"
+  version "4.10.1"
   dependencies:
-    "@datadog/browser-core" "4.10.0"
+    "@datadog/browser-core" "4.10.1"
 
-"@datadog/browser-rum-core@4.10.0", "@datadog/browser-rum-core@file:../../packages/rum-core":
-  version "4.10.0"
+"@datadog/browser-rum-core@4.10.1", "@datadog/browser-rum-core@file:../../packages/rum-core":
+  version "4.10.1"
   dependencies:
-    "@datadog/browser-core" "4.10.0"
+    "@datadog/browser-core" "4.10.1"
 
 "@datadog/browser-rum@file:../../packages/rum":
-  version "4.10.0"
+  version "4.10.1"
   dependencies:
-    "@datadog/browser-core" "4.10.0"
-    "@datadog/browser-rum-core" "4.10.0"
+    "@datadog/browser-core" "4.10.1"
+    "@datadog/browser-rum-core" "4.10.1"
 
 "@types/eslint-scope@^3.7.0":
   version "3.7.3"
@@ -53,9 +53,9 @@
   integrity sha512-wOuvG1SN4Us4rez+tylwwwCV1psiNVOkJeM3AUWUNWg/jDQY2+HE/444y5gc+jBmRqASOm2Oeh5c1axHobwRKQ==
 
 "@types/node@*":
-  version "17.0.33"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-17.0.33.tgz#3c1879b276dc63e73030bb91165e62a4509cd506"
-  integrity sha512-miWq2m2FiQZmaHfdZNcbpp9PuXg34W5JZ5CrJ/BaS70VuhoJENBEQybeiYSaPBRNq6KQGnjfEnc/F3PN++D+XQ==
+  version "17.0.34"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-17.0.34.tgz#3b0b6a50ff797280b8d000c6281d229f9c538cef"
+  integrity sha512-XImEz7XwTvDBtzlTnm8YvMqGW/ErMWBsKZ+hMTvnDIjGCKxwK5Xpc+c/oQjOauwq8M4OS11hEkpjX8rrI/eEgA==
 
 "@webassemblyjs/ast@1.11.0":
   version "1.11.0"
