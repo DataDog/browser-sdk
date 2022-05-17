@@ -61,12 +61,9 @@ export function validateAndBuildRumConfiguration(
     return
   }
 
-  // TODO remove me in next major
-  if (initConfiguration.replaySampleRate !== undefined && initConfiguration.premiumSampleRate === undefined) {
-    initConfiguration.premiumSampleRate = initConfiguration.replaySampleRate
-  }
-
-  if (initConfiguration.premiumSampleRate !== undefined && !isPercentage(initConfiguration.premiumSampleRate)) {
+  // TODO remove fallback in next major
+  const premiumSampleRate = initConfiguration.premiumSampleRate ?? initConfiguration.replaySampleRate
+  if (premiumSampleRate !== undefined && !isPercentage(premiumSampleRate)) {
     display.error('Premium Sample Rate should be a number between 0 and 100')
     return
   }
@@ -99,7 +96,7 @@ export function validateAndBuildRumConfiguration(
       applicationId: initConfiguration.applicationId,
       version: initConfiguration.version,
       actionNameAttribute: initConfiguration.actionNameAttribute,
-      premiumSampleRate: initConfiguration.premiumSampleRate ?? 100,
+      premiumSampleRate: premiumSampleRate ?? 100,
       allowedTracingOrigins: initConfiguration.allowedTracingOrigins ?? [],
       tracingSampleRate: initConfiguration.tracingSampleRate ?? 100,
       trackInteractions: !!initConfiguration.trackInteractions || trackFrustrations,
