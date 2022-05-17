@@ -6,7 +6,7 @@ import type { Configuration } from '../configuration'
 import { computeStackTrace } from '../tracekit'
 import { Observable } from '../../tools/observable'
 import { timeStampNow } from '../../tools/timeUtils'
-import { isExperimentalFeatureEnabled, INTAKE_SITE_STAGING, INTAKE_SITE_US5 } from '../configuration'
+import { isExperimentalFeatureEnabled, INTAKE_SITE_STAGING, INTAKE_SITE_US5, INTAKE_SITE_US3 } from '../configuration'
 import type { TelemetryEvent } from './telemetryEvent.types'
 
 // replaced at build time
@@ -36,7 +36,7 @@ export interface MonitoringMessage extends Context {
 
 const TELEMETRY_ALLOWED_SITES: string[] = [
   INTAKE_SITE_US5,
-  // INTAKE_SITE_US3,
+  INTAKE_SITE_US3,
   // INTAKE_SITE_EU,
   // INTAKE_SITE_US,
 ]

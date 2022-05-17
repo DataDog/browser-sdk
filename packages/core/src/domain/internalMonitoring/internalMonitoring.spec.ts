@@ -243,7 +243,7 @@ describe('internal monitoring', () => {
     describe('rollout', () => {
       ;[
         { site: INTAKE_SITE_US5, enabled: true },
-        { site: INTAKE_SITE_US3, enabled: false },
+        { site: INTAKE_SITE_US3, enabled: true },
         { site: INTAKE_SITE_EU, enabled: false },
         { site: INTAKE_SITE_US, enabled: false },
       ].forEach(({ site, enabled }) => {
