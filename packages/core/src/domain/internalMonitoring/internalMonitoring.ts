@@ -7,7 +7,7 @@ import type { StackTrace } from '../tracekit'
 import { computeStackTrace } from '../tracekit'
 import { Observable } from '../../tools/observable'
 import { timeStampNow } from '../../tools/timeUtils'
-import { isExperimentalFeatureEnabled, INTAKE_SITE_STAGING, INTAKE_SITE_US5, INTAKE_SITE_US3 } from '../configuration'
+import { isExperimentalFeatureEnabled, INTAKE_SITE_US5, INTAKE_SITE_US3, INTAKE_SITE_STAGING } from '../configuration'
 import type { TelemetryEvent } from './telemetryEvent.types'
 
 // replaced at build time

@@ -16,6 +16,10 @@
 
 ---
 
+## v4.10.3
+
+- 🐛 Fix dependency issue ([#1549](https://github.com/DataDog/browser-sdk/pull/1549))
+
 ## v4.10.2
 
 - ✨ rename Replay plan to Premium plan ([#1534](https://github.com/DataDog/browser-sdk/pull/1534))

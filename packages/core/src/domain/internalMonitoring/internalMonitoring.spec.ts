@@ -5,10 +5,10 @@ import type { Configuration } from '../configuration'
 import {
   updateExperimentalFeatures,
   resetExperimentalFeatures,
-  INTAKE_SITE_US,
-  INTAKE_SITE_US3,
   INTAKE_SITE_EU,
   INTAKE_SITE_US5,
+  INTAKE_SITE_US3,
+  INTAKE_SITE_US,
 } from '../configuration'
 import type { InternalMonitoring, MonitoringMessage } from './internalMonitoring'
 import {
