@@ -227,7 +227,6 @@ Options that must have matching configuration when also using `logs` SDK:
 **Type:** List<br/>
 A list of request origins ignored when computing the page activity.
 
-
 `trackSessionAcrossSubdomains`
 : Optional<br/>
 **Type**: Boolean<br/>
