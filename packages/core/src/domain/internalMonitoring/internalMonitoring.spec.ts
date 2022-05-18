@@ -1,3 +1,4 @@
+import type { StackTrace } from '@datadog/browser-core'
 import type { Context } from '../../tools/context'
 import { display } from '../../tools/display'
 import type { Configuration } from '../configuration'
@@ -17,6 +18,7 @@ import {
   startInternalMonitoring,
   callMonitored,
   setDebugMode,
+  scrubCustomerFrames,
 } from './internalMonitoring'
 import type { TelemetryEvent } from './telemetryEvent.types'
 
@@ -357,6 +359,24 @@ describe('internal monitoring', () => {
 
         expect(notifySpy).not.toHaveBeenCalled()
       })
+    })
+  })
+})
+
+describe('scrubCustomerFrames', () => {
+  it('should remove stack trace frames that are related to customer files', () => {
+    ;[
+      { scrub: false, url: 'https://www.datadoghq-browser-agent.com/datadog-rum-v4.js' },
+      { scrub: false, url: 'https://www.datad0g-browser-agent.com/datadog-rum-v5.js' },
+      { scrub: false, url: 'http://localhost/index.html' },
+      { scrub: false, url: undefined },
+      { scrub: false, url: '<anonymous>' },
+      { scrub: true, url: 'https://foo.bar/path?qux=qix' },
+    ].forEach(({ url, scrub }) => {
+      const candidate: Partial<StackTrace> = {
+        stack: [{ url }],
+      }
+      expect(scrubCustomerFrames(candidate as StackTrace).stack.length).toBe(scrub ? 0 : 1, `for url: ${url!}`)
     })
   })
 })
