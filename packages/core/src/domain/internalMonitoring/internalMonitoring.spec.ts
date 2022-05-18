@@ -246,7 +246,7 @@ describe('internal monitoring', () => {
       ;[
         { site: INTAKE_SITE_US5, enabled: true },
         { site: INTAKE_SITE_US3, enabled: true },
-        { site: INTAKE_SITE_EU, enabled: false },
+        { site: INTAKE_SITE_EU, enabled: true },
         { site: INTAKE_SITE_US, enabled: false },
       ].forEach(({ site, enabled }) => {
         it(`should be ${enabled ? 'enabled' : 'disabled'} on ${site}`, () => {
