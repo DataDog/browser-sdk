@@ -18,7 +18,7 @@ const enum StatusType {
   error = 'error',
 }
 
-const ALLOWED_FRAME_URL = [
+const ALLOWED_FRAME_URLS = [
   'https://www.datadoghq-browser-agent.com',
   'https://www.datad0g-browser-agent.com',
   'http://localhost',
@@ -242,17 +242,9 @@ function formatError(e: unknown) {
 }
 
 export function scrubCustomerFrames(stackTrace: StackTrace) {
-  stackTrace.stack = stackTrace.stack.filter((frame) => {
-    if (!frame.url) {
-      return true
-    }
-    for (const allowedOrigin of ALLOWED_FRAME_URL) {
-      if (startsWith(frame.url, allowedOrigin)) {
-        return true
-      }
-    }
-    return false
-  })
+  stackTrace.stack = stackTrace.stack.filter(
+    (frame) => !frame.url || ALLOWED_FRAME_URLS.some((allowedFrameUrl) => startsWith(frame.url!, allowedFrameUrl))
+  )
   return stackTrace
 }
 
