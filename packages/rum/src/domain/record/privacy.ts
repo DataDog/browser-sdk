@@ -1,3 +1,4 @@
+import { startSpan } from '@datadog/browser-core'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
@@ -62,53 +63,58 @@ export function reducePrivacyLevel(
  * Determines the node's own privacy level without checking for ancestors.
  */
 export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefined {
-  // Only Element types can have a privacy level set
-  if (!isElement(node)) {
-    return
-  }
+  const b = startSpan('Get node privacy level')
+  try {
+    // Only Element types can have a privacy level set
+    if (!isElement(node)) {
+      return
+    }
 
-  const privAttr = node.getAttribute(PRIVACY_ATTR_NAME)
+    const privAttr = node.getAttribute(PRIVACY_ATTR_NAME)
 
-  // Overrules for replay purpose
-  if (node.tagName === 'BASE') {
-    return NodePrivacyLevel.ALLOW
-  }
+    // Overrules for replay purpose
+    if (node.tagName === 'BASE') {
+      return NodePrivacyLevel.ALLOW
+    }
 
-  // Overrules to enforce end-user protection
-  if (node.tagName === 'INPUT') {
-    const inputElement = node as HTMLInputElement
-    if (inputElement.type === 'password' || inputElement.type === 'email' || inputElement.type === 'tel') {
+    // Overrules to enforce end-user protection
+    if (node.tagName === 'INPUT') {
+      const inputElement = node as HTMLInputElement
+      if (inputElement.type === 'password' || inputElement.type === 'email' || inputElement.type === 'tel') {
+        return NodePrivacyLevel.MASK
+      }
+      if (inputElement.type === 'hidden') {
+        return NodePrivacyLevel.MASK
+      }
+      const autocomplete = inputElement.getAttribute('autocomplete')
+      // Handle input[autocomplete=cc-number/cc-csc/cc-exp/cc-exp-month/cc-exp-year]
+      if (autocomplete && autocomplete.indexOf('cc-') === 0) {
+        return NodePrivacyLevel.MASK
+      }
+    }
+
+    // Check HTML privacy attributes and classes
+    if (privAttr === PRIVACY_ATTR_VALUE_HIDDEN || node.classList.contains(PRIVACY_CLASS_HIDDEN)) {
+      return NodePrivacyLevel.HIDDEN
+    }
+
+    if (privAttr === PRIVACY_ATTR_VALUE_MASK || node.classList.contains(PRIVACY_CLASS_MASK)) {
       return NodePrivacyLevel.MASK
     }
-    if (inputElement.type === 'hidden') {
-      return NodePrivacyLevel.MASK
+
+    if (privAttr === PRIVACY_ATTR_VALUE_MASK_USER_INPUT || node.classList.contains(PRIVACY_CLASS_MASK_USER_INPUT)) {
+      return NodePrivacyLevel.MASK_USER_INPUT
     }
-    const autocomplete = inputElement.getAttribute('autocomplete')
-    // Handle input[autocomplete=cc-number/cc-csc/cc-exp/cc-exp-month/cc-exp-year]
-    if (autocomplete && autocomplete.indexOf('cc-') === 0) {
-      return NodePrivacyLevel.MASK
+
+    if (privAttr === PRIVACY_ATTR_VALUE_ALLOW || node.classList.contains(PRIVACY_CLASS_ALLOW)) {
+      return NodePrivacyLevel.ALLOW
     }
-  }
 
-  // Check HTML privacy attributes and classes
-  if (privAttr === PRIVACY_ATTR_VALUE_HIDDEN || node.classList.contains(PRIVACY_CLASS_HIDDEN)) {
-    return NodePrivacyLevel.HIDDEN
-  }
-
-  if (privAttr === PRIVACY_ATTR_VALUE_MASK || node.classList.contains(PRIVACY_CLASS_MASK)) {
-    return NodePrivacyLevel.MASK
-  }
-
-  if (privAttr === PRIVACY_ATTR_VALUE_MASK_USER_INPUT || node.classList.contains(PRIVACY_CLASS_MASK_USER_INPUT)) {
-    return NodePrivacyLevel.MASK_USER_INPUT
-  }
-
-  if (privAttr === PRIVACY_ATTR_VALUE_ALLOW || node.classList.contains(PRIVACY_CLASS_ALLOW)) {
-    return NodePrivacyLevel.ALLOW
-  }
-
-  if (shouldIgnoreElement(node)) {
-    return NodePrivacyLevel.IGNORE
+    if (shouldIgnoreElement(node)) {
+      return NodePrivacyLevel.IGNORE
+    }
+  } finally {
+    b.stop()
   }
 }
 

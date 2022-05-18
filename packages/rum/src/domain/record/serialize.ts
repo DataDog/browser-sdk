@@ -1,4 +1,4 @@
-import { assign } from '@datadog/browser-core'
+import { assign, startSpan } from '@datadog/browser-core'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
@@ -45,11 +45,14 @@ export function serializeDocument(
   document: Document,
   defaultPrivacyLevel: ParentNodePrivacyLevel
 ): SerializedNodeWithId {
+  const b = startSpan('Serialize document')
   // We are sure that Documents are never ignored, so this function never returns null
-  return serializeNodeWithId(document, {
+  const result = serializeNodeWithId(document, {
     document,
     parentNodePrivacyLevel: defaultPrivacyLevel,
   })!
+  b.stop()
+  return result
 }
 
 export function serializeNodeWithId(node: Node, options: SerializeOptions): SerializedNodeWithId | null {
@@ -58,6 +61,7 @@ export function serializeNodeWithId(node: Node, options: SerializeOptions): Seri
     return null
   }
 
+  const b = startSpan('Get previous node id')
   // Try to reuse the previous id
   const id = getSerializedNodeId(node) || generateNextId()
   const serializedNodeWithId = serializedNode as SerializedNodeWithId
@@ -66,6 +70,7 @@ export function serializeNodeWithId(node: Node, options: SerializeOptions): Seri
   if (options.serializedNodeIds) {
     options.serializedNodeIds.add(id)
   }
+  b.stop()
   return serializedNodeWithId
 }
 
@@ -118,15 +123,21 @@ function serializeDocumentTypeNode(documentType: DocumentType): DocumentTypeNode
  * - fullscreen mode
  */
 export function serializeElementNode(element: Element, options: SerializeOptions): ElementNode | undefined {
+  const b = startSpan('Serialize element')
+  const b3 = startSpan('Get element tag')
   const tagName = getValidTagName(element.tagName)
   const isSVG = isSVGElement(element) || undefined
+  b3.stop()
 
   // For performance reason, we don't use getNodePrivacyLevel directly: we leverage the
   // parentNodePrivacyLevel option to avoid iterating over all parents
   const nodePrivacyLevel = reducePrivacyLevel(getNodeSelfPrivacyLevel(element), options.parentNodePrivacyLevel)
 
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
+    const b2 = startSpan('Get element dimensions')
     const { width, height } = element.getBoundingClientRect()
+    b2.stop()
+    b.stop()
     return {
       type: NodeType.Element,
       tagName,
@@ -142,10 +153,12 @@ export function serializeElementNode(element: Element, options: SerializeOptions
 
   // Ignore Elements like Script and some Link, Metas
   if (nodePrivacyLevel === NodePrivacyLevel.IGNORE) {
+    b.stop()
     return
   }
 
   const attributes = getAttributesForPrivacyLevel(element, nodePrivacyLevel)
+  b.stop()
 
   let childNodes: SerializedNodeWithId[] = []
   if (element.childNodes.length) {
@@ -254,8 +267,10 @@ export function shouldIgnoreElement(element: Element): boolean {
 function serializeTextNode(textNode: Text, options: SerializeOptions): TextNode | undefined {
   // The parent node may not be a html element which has a tagName attribute.
   // So just let it be undefined which is ok in this use case.
+  const b = startSpan('Serialize text')
   const parentTagName = textNode.parentElement?.tagName
   const textContent = getTextContent(textNode, options.ignoreWhiteSpace || false, options.parentNodePrivacyLevel)
+  b.stop()
   if (!textContent) {
     return
   }
@@ -381,20 +396,25 @@ function getAttributesForPrivacyLevel(
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     return {}
   }
+  const b1 = startSpan('Get element attributes')
   const safeAttrs: Record<string, string | number | boolean> = {}
   const tagName = getValidTagName(element.tagName)
-  const doc = element.ownerDocument
 
+  let b2 = startSpan('Serialize attributes')
   type HtmlAttribute = { name: string; value: string }
-  for (let i = 0; i < element.attributes.length; i += 1) {
-    const attribute = element.attributes.item(i) as HtmlAttribute
+  const attributes = element.attributes
+  const len = attributes.length
+  for (let i = 0; i < len; i += 1) {
+    const attribute = attributes[i] as HtmlAttribute
     const attributeName = attribute.name
     const attributeValue = serializeAttribute(element, nodePrivacyLevel, attributeName)
     if (attributeValue !== null) {
       safeAttrs[attributeName] = attributeValue
     }
   }
+  b2.stop()
 
+  b2 = startSpan('Get input state')
   if (
     (element as HTMLInputElement).value &&
     (tagName === 'textarea' || tagName === 'select' || tagName === 'option' || tagName === 'input')
@@ -415,9 +435,12 @@ function getAttributesForPrivacyLevel(
       safeAttrs.selected = optionElement.selected
     }
   }
+  b2.stop()
 
+  b2 = startSpan('Get CSS text')
   // remote css
   if (tagName === 'link') {
+    const doc = element.ownerDocument
     const stylesheet = Array.from(doc.styleSheets).find((s) => s.href === (element as HTMLLinkElement).href)
     const cssText = getCssRulesString(stylesheet as CSSStyleSheet)
     if (cssText && stylesheet) {
@@ -439,6 +462,7 @@ function getAttributesForPrivacyLevel(
       safeAttrs._cssText = cssText
     }
   }
+  b2.stop()
 
   /**
    * Forms: input[type=checkbox,radio]
@@ -465,6 +489,7 @@ function getAttributesForPrivacyLevel(
     safeAttrs.rr_mediaState = mediaElement.paused ? 'paused' : 'played'
   }
 
+  b2 = startSpan('Get element scroll')
   /**
    * Serialize the scroll state for each element
    */
@@ -474,6 +499,8 @@ function getAttributesForPrivacyLevel(
   if (element.scrollTop) {
     safeAttrs.rr_scrollTop = Math.round(element.scrollTop)
   }
+  b2.stop()
 
+  b1.stop()
   return safeAttrs
 }

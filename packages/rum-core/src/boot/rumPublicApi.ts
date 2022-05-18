@@ -1,5 +1,5 @@
-import type { Context, InitConfiguration, TimeStamp, RelativeTime } from '@datadog/browser-core'
-import {
+import type { Context, InitConfiguration, TimeStamp, RelativeTime} from '@datadog/browser-core';
+import { startSpan ,
   assign,
   BoundedBuffer,
   buildCookieOptions,
@@ -126,6 +126,7 @@ export function makeRumPublicApi(
   }
 
   function doStartRum(configuration: RumConfiguration, initialViewOptions?: ViewOptions) {
+    const b = startSpan('Start RUM')
     const startRumResults = startRumImpl(
       configuration,
       () => ({
@@ -152,6 +153,7 @@ export function makeRumPublicApi(
       startRumResults.session,
       startRumResults.viewContexts
     )
+    b.stop()
   }
 
   const startView: {

@@ -1,5 +1,5 @@
 import type { DefaultPrivacyLevel } from '@datadog/browser-core'
-import { monitor, noop } from '@datadog/browser-core'
+import { startSpan, monitor, noop } from '@datadog/browser-core'
 import { getMutationObserverConstructor } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel } from '../../constants'
 import { getNodePrivacyLevel, getTextContent } from './privacy'
@@ -190,11 +190,13 @@ function processChildListMutations(
       continue
     }
 
+    const b = startSpan('Serialize node for mutation')
     const serializedNode = serializeNodeWithId(node, {
       document,
       serializedNodeIds,
       parentNodePrivacyLevel,
     })
+    b.stop()
     if (!serializedNode) {
       continue
     }

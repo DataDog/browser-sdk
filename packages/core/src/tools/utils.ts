@@ -631,3 +631,93 @@ export function removeDuplicates<T>(array: T[]) {
   array.forEach((item) => set.add(item))
   return setToArray(set)
 }
+
+type MapNode = { id: string; duration: number; children: Map<string, MapNode> }
+type Json = { count: number; root: MapNode }
+
+const active: MapNode[] = []
+export function startBench() {
+  const storageKey = 'rum-perf6'
+  const json = retrieve()
+
+  active.push(json.root)
+
+  setInterval(() => {
+    localStorage.setItem(
+      storageKey,
+      JSON.stringify({
+        ...json,
+        root: mapToJson(json.root),
+      })
+    )
+    console.log('Stored', storageKey)
+  }, 1000)
+
+  function retrieve() {
+    if (window.rumPerfRoot) {
+      return window.rumPerfRoot
+    }
+    let json: Json | undefined
+    try {
+      json = JSON.parse(localStorage.getItem(storageKey))
+    } catch {
+      // nop
+    }
+    if (!json) {
+      json = {
+        count: 0,
+        root: { id: '<root>', duration: 0, children: [] },
+      }
+    }
+    jsonToMap(json!.root)
+
+    json.count += 1
+    window.rumPerfRoot = json
+    return json
+  }
+
+  function mapToJson(node: MapNode) {
+    return {
+      ...node,
+      children: Array.from(node.children.values(), mapToJson).sort((a, b) => b.duration - a.duration),
+    }
+  }
+
+  function jsonToMap(node: MapNode) {
+    const children = new Map()
+    node.children.forEach((child) => {
+      jsonToMap(child)
+      children.set(child.id, child)
+    })
+    node.children = children
+  }
+}
+
+startBench()
+export function startSpan(id: string) {
+  const start = performance.now()
+
+  const parent = active[active.length - 1]
+  if (!parent) {
+    return { stop: noop }
+  }
+
+  let node = parent.children.get(id)
+  if (!node) {
+    node = { id, duration: 0, children: new Map() }
+    parent.children.set(id, node)
+  }
+  active.push(node)
+
+  return {
+    stop: () => {
+      const end = performance.now()
+      active.pop()
+      node!.duration += end - start
+
+      // if (end - start > 5) {
+      //   console.log(`${'  '.repeat(level)}${level > 0 ? '/' : '|'} ${time.toFixed(2).padStart(6, ' ')}ms`, ...args)
+      // }
+    },
+  }
+}

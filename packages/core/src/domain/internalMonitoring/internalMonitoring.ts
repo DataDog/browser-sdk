@@ -1,7 +1,7 @@
 import type { Context } from '../../tools/context'
 import { display } from '../../tools/display'
 import { toStackTraceString } from '../../tools/error'
-import { assign, combine, jsonStringify, performDraw, includes } from '../../tools/utils'
+import { assign, combine, jsonStringify, performDraw, includes, startSpan } from '../../tools/utils'
 import type { Configuration } from '../configuration'
 import { computeStackTrace } from '../tracekit'
 import { Observable } from '../../tools/observable'
@@ -46,7 +46,7 @@ const monitoringConfiguration: {
   maxMessagesPerPage: number
   sentMessageCount: number
   telemetryEnabled: boolean
-} = { maxMessagesPerPage: 0, sentMessageCount: 0, telemetryEnabled: false }
+} = { debugMode: true, maxMessagesPerPage: 0, sentMessageCount: 0, telemetryEnabled: false }
 
 let onInternalMonitoringMessageCollected: ((message: MonitoringMessage) => void) | undefined
 
@@ -167,6 +167,7 @@ export function callMonitored<T extends (...args: any[]) => any>(
   context?: any,
   args?: any
 ): ReturnType<T> | undefined {
+  // const b = startSpan('Call monitored', String(fn).split('\n')[0])
   try {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return fn.apply(context, args)
@@ -177,6 +178,8 @@ export function callMonitored<T extends (...args: any[]) => any>(
     } catch (e) {
       logErrorIfDebug(e)
     }
+  } finally {
+    // b.stop()
   }
 }
 
