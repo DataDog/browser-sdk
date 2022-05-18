@@ -1,8 +1,9 @@
 import { assign, objectValues } from '../../tools/utils'
 import type { InitConfiguration } from './configuration'
 import type { EndpointBuilder } from './endpointBuilder'
-import { createEndpointBuilder, INTAKE_SITE_US } from './endpointBuilder'
+import { createEndpointBuilder } from './endpointBuilder'
 import { buildTags } from './tags'
+import { INTAKE_SITE_US } from './intakeSites'
 
 export interface TransportConfiguration {
   logsEndpointBuilder: EndpointBuilder
