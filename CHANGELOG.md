@@ -16,6 +16,11 @@
 
 ---
 
+## v4.10.4
+
+- ✨ [RUMF-1191] enable telemetry on eu site ([#1551](https://github.com/DataDog/browser-sdk/pull/1551))
+- ✨ [RUMF-1264] scrub customer frames from telemetry errors ([#1546](https://github.com/DataDog/browser-sdk/pull/1546))
+
 ## v4.10.3
 
 - 🐛 Fix dependency issue ([#1549](https://github.com/DataDog/browser-sdk/pull/1549))
