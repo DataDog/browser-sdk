@@ -19,7 +19,7 @@ import { RecordType } from '../src/types'
 
 export class MockWorker implements DeflateWorker {
   readonly pendingMessages: DeflateWorkerAction[] = []
-  private rawSize = 0
+  private rawBytesCount = 0
   private deflatedData: Uint8Array[] = []
   private listeners: {
     message: DeflateWorkerListener[]
@@ -85,14 +85,14 @@ export class MockWorker implements DeflateWorker {
           break
         case 'write':
           {
-            const additionalRawSize = this.pushData(message.data)
+            const additionalBytesCount = this.pushData(message.data)
             this.listeners.message.forEach((listener) =>
               listener({
                 data: {
                   type: 'wrote',
                   id: message.id,
-                  compressedSize: uint8ArraysSize(this.deflatedData),
-                  additionalRawSize,
+                  compressedBytesCount: uint8ArraysSize(this.deflatedData),
+                  additionalBytesCount,
                 },
               })
             )
@@ -100,20 +100,20 @@ export class MockWorker implements DeflateWorker {
           break
         case 'flush':
           {
-            const additionalRawSize = this.pushData(message.data)
+            const additionalBytesCount = this.pushData(message.data)
             this.listeners.message.forEach((listener) =>
               listener({
                 data: {
                   type: 'flushed',
                   id: message.id,
                   result: mergeUint8Arrays(this.deflatedData),
-                  rawSize: this.rawSize,
-                  additionalRawSize,
+                  rawBytesCount: this.rawBytesCount,
+                  additionalBytesCount,
                 },
               })
             )
             this.deflatedData.length = 0
-            this.rawSize = 0
+            this.rawBytesCount = 0
           }
           break
       }
@@ -131,7 +131,7 @@ export class MockWorker implements DeflateWorker {
 
   private pushData(data?: string) {
     const encodedData = new TextEncoder().encode(data)
-    this.rawSize += encodedData.length
+    this.rawBytesCount += encodedData.length
     // In the mock worker, for simplicity, we'll just use the UTF-8 encoded string instead of deflating it.
     this.deflatedData.push(encodedData)
     return encodedData.length

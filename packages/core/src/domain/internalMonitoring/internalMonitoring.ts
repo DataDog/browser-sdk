@@ -1,12 +1,19 @@
 import type { Context } from '../../tools/context'
 import { display } from '../../tools/display'
 import { toStackTraceString } from '../../tools/error'
-import { assign, combine, jsonStringify, performDraw, includes } from '../../tools/utils'
+import { assign, combine, jsonStringify, performDraw, includes, startsWith } from '../../tools/utils'
 import type { Configuration } from '../configuration'
+import type { StackTrace } from '../tracekit'
 import { computeStackTrace } from '../tracekit'
 import { Observable } from '../../tools/observable'
 import { timeStampNow } from '../../tools/timeUtils'
-import { isExperimentalFeatureEnabled, INTAKE_SITE_STAGING } from '../configuration'
+import {
+  isExperimentalFeatureEnabled,
+  INTAKE_SITE_US5,
+  INTAKE_SITE_US3,
+  INTAKE_SITE_STAGING,
+  INTAKE_SITE_EU,
+} from '../configuration'
 import type { TelemetryEvent } from './telemetryEvent.types'
 
 // replaced at build time
@@ -16,6 +23,13 @@ const enum StatusType {
   debug = 'debug',
   error = 'error',
 }
+
+const ALLOWED_FRAME_URLS = [
+  'https://www.datadoghq-browser-agent.com',
+  'https://www.datad0g-browser-agent.com',
+  'http://localhost',
+  '<anonymous>',
+]
 
 export interface InternalMonitoring {
   setExternalContextProvider: (provider: () => Context) => void
@@ -35,9 +49,9 @@ export interface MonitoringMessage extends Context {
 }
 
 const TELEMETRY_ALLOWED_SITES: string[] = [
-  // INTAKE_SITE_US5,
-  // INTAKE_SITE_US3,
-  // INTAKE_SITE_EU,
+  INTAKE_SITE_US5,
+  INTAKE_SITE_US3,
+  INTAKE_SITE_EU,
   // INTAKE_SITE_US,
 ]
 
@@ -220,7 +234,7 @@ function formatError(e: unknown) {
     return {
       error: {
         kind: stackTrace.name,
-        stack: toStackTraceString(stackTrace),
+        stack: toStackTraceString(scrubCustomerFrames(stackTrace)),
       },
       message: stackTrace.message!,
     }
@@ -231,6 +245,13 @@ function formatError(e: unknown) {
     },
     message: `Uncaught ${jsonStringify(e)!}`,
   }
+}
+
+export function scrubCustomerFrames(stackTrace: StackTrace) {
+  stackTrace.stack = stackTrace.stack.filter(
+    (frame) => !frame.url || ALLOWED_FRAME_URLS.some((allowedFrameUrl) => startsWith(frame.url!, allowedFrameUrl))
+  )
+  return stackTrace
 }
 
 export function setDebugMode(debugMode: boolean) {

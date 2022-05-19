@@ -68,8 +68,8 @@ export interface Configuration extends TransportConfiguration {
   // Batch configuration
   batchBytesLimit: number
   flushTimeout: number
-  maxBatchSize: number
-  maxMessageSize: number
+  batchMessagesLimit: number
+  messageBytesLimit: number
 }
 
 export function validateAndBuildConfiguration(initConfiguration: InitConfiguration): Configuration | undefined {
@@ -119,8 +119,8 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
       /**
        * Logs intake limit
        */
-      maxBatchSize: 50,
-      maxMessageSize: 256 * ONE_KILO_BYTE,
+      batchMessagesLimit: 50,
+      messageBytesLimit: 256 * ONE_KILO_BYTE,
     },
     computeTransportConfiguration(initConfiguration)
   )

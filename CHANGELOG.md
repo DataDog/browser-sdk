@@ -16,6 +16,24 @@
 
 ---
 
+## v4.10.4
+
+- ✨ [RUMF-1191] enable telemetry on eu site ([#1551](https://github.com/DataDog/browser-sdk/pull/1551))
+- ✨ [RUMF-1264] scrub customer frames from telemetry errors ([#1546](https://github.com/DataDog/browser-sdk/pull/1546))
+
+## v4.10.3
+
+- 🐛 Fix dependency issue ([#1549](https://github.com/DataDog/browser-sdk/pull/1549))
+
+## v4.10.2
+
+- ✨ rename Replay plan to Premium plan ([#1534](https://github.com/DataDog/browser-sdk/pull/1534))
+- ✨ enable telemetry on us3 site ([#1544](https://github.com/DataDog/browser-sdk/pull/1544))
+
+## v4.10.1
+
+- ✨ enable telemetry on us5 site ([#1540](https://github.com/DataDog/browser-sdk/pull/1540))
+
 ## v4.10.0
 
 - ✨[RUMF-1253] add `tracingSampleRate` option ([#1526](https://github.com/DataDog/browser-sdk/pull/1526))

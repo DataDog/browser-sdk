@@ -1,13 +1,14 @@
+import type { StackTrace } from '@datadog/browser-core'
 import type { Context } from '../../tools/context'
 import { display } from '../../tools/display'
 import type { Configuration } from '../configuration'
 import {
   updateExperimentalFeatures,
   resetExperimentalFeatures,
-  INTAKE_SITE_US,
-  INTAKE_SITE_US3,
   INTAKE_SITE_EU,
   INTAKE_SITE_US5,
+  INTAKE_SITE_US3,
+  INTAKE_SITE_US,
 } from '../configuration'
 import type { InternalMonitoring, MonitoringMessage } from './internalMonitoring'
 import {
@@ -17,6 +18,7 @@ import {
   startInternalMonitoring,
   callMonitored,
   setDebugMode,
+  scrubCustomerFrames,
 } from './internalMonitoring'
 import type { TelemetryEvent } from './telemetryEvent.types'
 
@@ -26,6 +28,10 @@ const configuration: Partial<Configuration> = {
 }
 
 describe('internal monitoring', () => {
+  afterEach(() => {
+    resetInternalMonitoring()
+  })
+
   describe('decorator', () => {
     class Candidate {
       @monitored
@@ -77,10 +83,6 @@ describe('internal monitoring', () => {
         monitoringMessageObservable.subscribe(notifySpy)
       })
 
-      afterEach(() => {
-        resetInternalMonitoring()
-      })
-
       it('should preserve original behavior', () => {
         expect(candidate.monitoredNotThrowing()).toEqual(1)
       })
@@ -129,10 +131,6 @@ describe('internal monitoring', () => {
       monitoringMessageObservable.subscribe(notifySpy)
     })
 
-    afterEach(() => {
-      resetInternalMonitoring()
-    })
-
     describe('direct call', () => {
       it('should preserve original behavior', () => {
         expect(callMonitored(notThrowing)).toEqual(1)
@@ -178,10 +176,6 @@ describe('internal monitoring', () => {
       internalMonitoring.monitoringMessageObservable.subscribe(notifySpy)
     })
 
-    afterEach(() => {
-      resetInternalMonitoring()
-    })
-
     it('should be added to error messages', () => {
       internalMonitoring.setExternalContextProvider(() => ({
         foo: 'bar',
@@ -207,7 +201,6 @@ describe('internal monitoring', () => {
     })
 
     afterEach(() => {
-      resetInternalMonitoring()
       resetExperimentalFeatures()
     })
 
@@ -251,9 +244,9 @@ describe('internal monitoring', () => {
 
     describe('rollout', () => {
       ;[
-        { site: INTAKE_SITE_US5, enabled: false },
-        { site: INTAKE_SITE_US3, enabled: false },
-        { site: INTAKE_SITE_EU, enabled: false },
+        { site: INTAKE_SITE_US5, enabled: true },
+        { site: INTAKE_SITE_US3, enabled: true },
+        { site: INTAKE_SITE_EU, enabled: true },
         { site: INTAKE_SITE_US, enabled: false },
       ].forEach(({ site, enabled }) => {
         it(`should be ${enabled ? 'enabled' : 'disabled'} on ${site}`, () => {
@@ -284,7 +277,6 @@ describe('internal monitoring', () => {
 
       afterEach(() => {
         resetExperimentalFeatures()
-        resetInternalMonitoring()
       })
 
       it('should notify observable', () => {
@@ -360,10 +352,6 @@ describe('internal monitoring', () => {
         internalMonitoring.telemetryEventObservable.subscribe(notifySpy)
       })
 
-      afterEach(() => {
-        resetInternalMonitoring()
-      })
-
       it('should not notify observable', () => {
         callMonitored(() => {
           throw new Error('message')
@@ -371,6 +359,24 @@ describe('internal monitoring', () => {
 
         expect(notifySpy).not.toHaveBeenCalled()
       })
+    })
+  })
+})
+
+describe('scrubCustomerFrames', () => {
+  it('should remove stack trace frames that are related to customer files', () => {
+    ;[
+      { scrub: false, url: 'https://www.datadoghq-browser-agent.com/datadog-rum-v4.js' },
+      { scrub: false, url: 'https://www.datad0g-browser-agent.com/datadog-rum-v5.js' },
+      { scrub: false, url: 'http://localhost/index.html' },
+      { scrub: false, url: undefined },
+      { scrub: false, url: '<anonymous>' },
+      { scrub: true, url: 'https://foo.bar/path?qux=qix' },
+    ].forEach(({ url, scrub }) => {
+      const candidate: Partial<StackTrace> = {
+        stack: [{ url }],
+      }
+      expect(scrubCustomerFrames(candidate as StackTrace).stack.length).toBe(scrub ? 0 : 1, `for url: ${url!}`)
     })
   })
 })

@@ -105,7 +105,7 @@ export function startRumAssembly(
             format_version: 2,
             drift: currentDrift(),
             session: {
-              plan: session.hasReplayPlan ? RumSessionPlan.REPLAY : RumSessionPlan.LITE,
+              plan: session.hasPremiumPlan ? RumSessionPlan.PREMIUM : RumSessionPlan.LITE,
             },
             browser_sdk_version: canUseEventBridge() ? __BUILD_ENV__SDK_VERSION__ : undefined,
           },

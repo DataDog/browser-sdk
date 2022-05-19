@@ -15,6 +15,7 @@ export interface RumInitConfiguration extends InitConfiguration {
   // global options
   applicationId: string
   beforeSend?: ((event: RumEvent, context: RumEventDomainContext) => void | boolean) | undefined
+  premiumSampleRate?: number | undefined
   excludedActivityUrls?: ReadonlyArray<string | RegExp> | undefined
 
   // tracing options
@@ -23,6 +24,9 @@ export interface RumInitConfiguration extends InitConfiguration {
 
   // replay options
   defaultPrivacyLevel?: DefaultPrivacyLevel | undefined
+  /**
+   * @deprecated use premiumSampleRate instead
+   */
   replaySampleRate?: number | undefined
 
   // action options
@@ -44,7 +48,7 @@ export interface RumConfiguration extends Configuration {
   excludedActivityUrls: Array<string | RegExp>
   applicationId: string
   defaultPrivacyLevel: DefaultPrivacyLevel
-  replaySampleRate: number
+  premiumSampleRate: number
   trackInteractions: boolean
   trackFrustrations: boolean
   trackViewsManually: boolean
@@ -59,8 +63,10 @@ export function validateAndBuildRumConfiguration(
     return
   }
 
-  if (initConfiguration.replaySampleRate !== undefined && !isPercentage(initConfiguration.replaySampleRate)) {
-    display.error('Replay Sample Rate should be a number between 0 and 100')
+  // TODO remove fallback in next major
+  const premiumSampleRate = initConfiguration.premiumSampleRate ?? initConfiguration.replaySampleRate
+  if (premiumSampleRate !== undefined && !isPercentage(premiumSampleRate)) {
+    display.error('Premium Sample Rate should be a number between 0 and 100')
     return
   }
 
@@ -97,7 +103,7 @@ export function validateAndBuildRumConfiguration(
       applicationId: initConfiguration.applicationId,
       version: initConfiguration.version,
       actionNameAttribute: initConfiguration.actionNameAttribute,
-      replaySampleRate: initConfiguration.replaySampleRate ?? 100,
+      premiumSampleRate: premiumSampleRate ?? 100,
       allowedTracingOrigins: initConfiguration.allowedTracingOrigins ?? [],
       tracingSampleRate: initConfiguration.tracingSampleRate ?? 100,
       excludedActivityUrls: initConfiguration.excludedActivityUrls ?? [],
