@@ -13,17 +13,21 @@ import { createRumSessionManagerMock } from '../../../../rum-core/test/mockRumSe
 import type { Record, SegmentContext, SegmentMetadata } from '../../types'
 import { RecordType } from '../../types'
 import { MockWorker } from '../../../test/utils'
-import { SEND_BEACON_BYTES_LIMIT } from '../../transport/send'
-import { computeSegmentContext, doStartSegmentCollection, SEGMENT_DURATION_LIMIT } from './segmentCollection'
+import {
+  computeSegmentContext,
+  doStartSegmentCollection,
+  SEGMENT_BYTES_LIMIT,
+  SEGMENT_DURATION_LIMIT,
+} from './segmentCollection'
 
 const CONTEXT: SegmentContext = { application: { id: 'a' }, view: { id: 'b' }, session: { id: 'c' } }
 const RECORD: Record = { type: RecordType.ViewEnd, timestamp: 10 as TimeStamp }
 
-// A record that will make the segment size reach the SEND_BEACON_BYTES_LIMIT
+// A record that will make the segment size reach the SEGMENT_BYTES_LIMIT
 const VERY_BIG_RECORD: Record = {
   type: RecordType.FullSnapshot,
   timestamp: 10 as TimeStamp,
-  data: Array(SEND_BEACON_BYTES_LIMIT).join('a') as any,
+  data: Array(SEGMENT_BYTES_LIMIT).join('a') as any,
 }
 
 const BEFORE_SEGMENT_DURATION_LIMIT = SEGMENT_DURATION_LIMIT * 0.9
@@ -142,7 +146,7 @@ describe('startSegmentCollection', () => {
     })
 
     describe('segment_bytes_limit flush strategy', () => {
-      it('flushes segment when the current segment deflate size reaches SEND_BEACON_BYTES_LIMIT', () => {
+      it('flushes segment when the current segment deflate size reaches SEGMENT_BYTES_LIMIT', () => {
         const { worker, addRecord, sendCurrentSegment } = startSegmentCollection(CONTEXT)
         addRecord(VERY_BIG_RECORD)
         worker.processAllMessages()

@@ -1,14 +1,17 @@
 import type { EventEmitter, TimeoutId } from '@datadog/browser-core'
-import { ONE_SECOND, addEventListener, DOM_EVENT, monitor } from '@datadog/browser-core'
+import { ONE_KILO_BYTE, ONE_SECOND, addEventListener, DOM_EVENT, monitor } from '@datadog/browser-core'
 import type { LifeCycle, ViewContexts, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
-import { SEND_BEACON_BYTES_LIMIT } from '../../transport/send'
 import type { CreationReason, Record, SegmentContext, SegmentMetadata } from '../../types'
 import type { DeflateWorker } from './deflateWorker'
 import { Segment } from './segment'
 
 export const SEGMENT_DURATION_LIMIT = 30 * ONE_SECOND
-let SEGMENT_BYTES_LIMIT = SEND_BEACON_BYTES_LIMIT
+/**
+ * beacon payload max queue size implementation is 64kb
+ * ensure that we leave room for logs, rum and potential other users
+ */
+export let SEGMENT_BYTES_LIMIT = 22 * ONE_KILO_BYTE
 
 // Segments are the main data structure for session replays. They contain context information used
 // for indexing or UI needs, and a list of records (RRWeb 'events', renamed to avoid confusing
@@ -197,6 +200,6 @@ export function computeSegmentContext(
   }
 }
 
-export function setSegmentBytesLimit(newSegmentBytesLimit: number = SEND_BEACON_BYTES_LIMIT) {
+export function setSegmentBytesLimit(newSegmentBytesLimit: number = SEGMENT_BYTES_LIMIT) {
   SEGMENT_BYTES_LIMIT = newSegmentBytesLimit
 }
