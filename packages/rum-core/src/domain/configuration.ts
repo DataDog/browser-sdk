@@ -80,11 +80,9 @@ export function validateAndBuildRumConfiguration(
     }
   }
 
-  if (initConfiguration.excludedActivityUrls !== undefined) {
-    if (!Array.isArray(initConfiguration.excludedActivityUrls)) {
-      display.error('Excluded Activity Urls should be an array')
-      return
-    }
+  if (initConfiguration.excludedActivityUrls !== undefined && !Array.isArray(initConfiguration.excludedActivityUrls)) {
+    display.error('Excluded Activity Urls should be an array')
+    return
   }
 
   const baseConfiguration = validateAndBuildConfiguration(initConfiguration)
