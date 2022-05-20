@@ -1,13 +1,5 @@
-import { ONE_KILO_BYTE, TimeStamp } from '@datadog/browser-core'
-import {
-  resetExperimentalFeatures,
-  updateExperimentalFeatures,
-  HttpRequest,
-  DefaultPrivacyLevel,
-  noop,
-  isIE,
-  timeStampNow,
-} from '@datadog/browser-core'
+import type { TimeStamp } from '@datadog/browser-core'
+import { HttpRequest, DefaultPrivacyLevel, noop, isIE, timeStampNow } from '@datadog/browser-core'
 import type { LifeCycle, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { inflate } from 'pako'
@@ -18,7 +10,7 @@ import { createNewEvent, mockClock } from '../../../core/test/specHelper'
 import type { TestSetupBuilder } from '../../../rum-core/test/specHelper'
 import { setup } from '../../../rum-core/test/specHelper'
 import { collectAsyncCalls, recordsPerFullSnapshot } from '../../test/utils'
-import { SEGMENT_BYTES_LIMIT, setSegmentBytesLimit, startDeflateWorker } from '../domain/segmentCollection'
+import { setSegmentBytesLimit, startDeflateWorker } from '../domain/segmentCollection'
 
 import type { Segment } from '../types'
 import { RecordType } from '../types'
