@@ -13,6 +13,7 @@ import {
   INTAKE_SITE_US3,
   INTAKE_SITE_STAGING,
   INTAKE_SITE_EU,
+  INTAKE_SITE_US,
 } from '../configuration'
 import type { TelemetryEvent } from './telemetryEvent.types'
 
@@ -48,12 +49,7 @@ export interface MonitoringMessage extends Context {
   }
 }
 
-const TELEMETRY_ALLOWED_SITES: string[] = [
-  INTAKE_SITE_US5,
-  INTAKE_SITE_US3,
-  INTAKE_SITE_EU,
-  // INTAKE_SITE_US,
-]
+const TELEMETRY_ALLOWED_SITES: string[] = [INTAKE_SITE_US5, INTAKE_SITE_US3, INTAKE_SITE_EU, INTAKE_SITE_US]
 
 const monitoringConfiguration: {
   debugMode?: boolean
