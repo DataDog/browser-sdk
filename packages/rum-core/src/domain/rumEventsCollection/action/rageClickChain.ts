@@ -91,7 +91,7 @@ function finalizeClicks(clicks: Click[], rageClick: Click) {
         rageClick.addFrustration(frustration)
       })
     })
-    rageClick.addFrustration(FrustrationType.RAGE)
+    rageClick.addFrustration(FrustrationType.RAGE_CLICK)
     rageClick.validate(timeStampNow())
   } else {
     rageClick.discard()
