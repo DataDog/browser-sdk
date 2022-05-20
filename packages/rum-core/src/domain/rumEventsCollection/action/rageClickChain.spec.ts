@@ -120,15 +120,15 @@ describe('createRageClickChain', () => {
       const clicks = [createFakeClick(), createFakeClick(), createFakeClick()]
       createValidatedRageClickChain(clicks)
       const expectedFrustrations = new Set()
-      expectedFrustrations.add(FrustrationType.RAGE)
+      expectedFrustrations.add(FrustrationType.RAGE_CLICK)
       expect(clicks[0].clonedClick?.getFrustrations()).toEqual(expectedFrustrations)
     })
 
     it('the rage click should contains other clicks frustration', () => {
       const clicks = [createFakeClick(), createFakeClick(), createFakeClick()]
-      clicks[1].addFrustration(FrustrationType.DEAD)
+      clicks[1].addFrustration(FrustrationType.DEAD_CLICK)
       createValidatedRageClickChain(clicks)
-      expect(clicks[0].clonedClick?.getFrustrations().has(FrustrationType.RAGE)).toBe(true)
+      expect(clicks[0].clonedClick?.getFrustrations().has(FrustrationType.RAGE_CLICK)).toBe(true)
     })
 
     function createValidatedRageClickChain(clicks: Click[]) {

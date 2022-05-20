@@ -124,7 +124,7 @@ export function trackClickActions(
           // If it has no activity, consider it as a dead click.
           // TODO: this will yield a lot of false positive. We'll need to refine it in the future.
           if (trackFrustrations) {
-            click.addFrustration(FrustrationType.DEAD)
+            click.addFrustration(FrustrationType.DEAD_CLICK)
             click.stop()
           } else {
             click.discard()
@@ -240,7 +240,7 @@ function newClick(
       }
 
       if (eventCountsSubscription.eventCounts.errorCount > 0) {
-        addFrustration(FrustrationType.ERROR)
+        addFrustration(FrustrationType.ERROR_CLICK)
       }
 
       const { resourceCount, errorCount, longTaskCount } = eventCountsSubscription.eventCounts

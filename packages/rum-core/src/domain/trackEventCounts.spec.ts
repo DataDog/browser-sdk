@@ -54,7 +54,7 @@ describe('trackEventCounts', () => {
       action: {
         type: 'click',
         frustration: {
-          type: [FrustrationType.ERROR, FrustrationType.DEAD],
+          type: [FrustrationType.ERROR_CLICK, FrustrationType.DEAD_CLICK],
         },
       },
     })

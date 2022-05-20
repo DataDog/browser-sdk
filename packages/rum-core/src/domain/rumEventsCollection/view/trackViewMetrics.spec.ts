@@ -249,7 +249,7 @@ describe('rum track view metrics', () => {
         action: {
           type: 'click',
           frustration: {
-            type: [FrustrationType.DEAD, FrustrationType.ERROR],
+            type: [FrustrationType.DEAD_CLICK, FrustrationType.ERROR_CLICK],
           },
         },
       } as RumEvent & Context)

@@ -145,7 +145,7 @@ describe('action collection', () => {
       const actionEvents = serverEvents.rumActions
 
       expect(actionEvents.length).toBe(1)
-      expect(actionEvents[0].action.frustration!.type).toEqual(['error'])
+      expect(actionEvents[0].action.frustration!.type).toEqual(['error_click'])
       expect(actionEvents[0].action.error!.count).toBe(1)
 
       expect(serverEvents.rumViews[0].view.frustration!.count).toBe(1)
@@ -165,7 +165,7 @@ describe('action collection', () => {
       const actionEvents = serverEvents.rumActions
 
       expect(actionEvents.length).toBe(1)
-      expect(actionEvents[0].action.frustration!.type).toEqual(['dead'])
+      expect(actionEvents[0].action.frustration!.type).toEqual(['dead_click'])
 
       expect(serverEvents.rumViews[0].view.frustration!.count).toBe(1)
     })
@@ -192,7 +192,7 @@ describe('action collection', () => {
       const actionEvents = serverEvents.rumActions
 
       expect(actionEvents.length).toBe(1)
-      expect(actionEvents[0].action.frustration!.type).toEqual(['rage'])
+      expect(actionEvents[0].action.frustration!.type).toEqual(['rage_click'])
     })
 
   createTest('collect multiple frustrations in one action')
@@ -215,7 +215,9 @@ describe('action collection', () => {
       const actionEvents = serverEvents.rumActions
 
       expect(actionEvents.length).toBe(1)
-      expect(actionEvents[0].action.frustration!.type).toEqual(jasmine.arrayWithExactContents(['error', 'dead']))
+      expect(actionEvents[0].action.frustration!.type).toEqual(
+        jasmine.arrayWithExactContents(['error_click', 'dead_click'])
+      )
 
       expect(serverEvents.rumViews[0].view.frustration!.count).toBe(2)
 
