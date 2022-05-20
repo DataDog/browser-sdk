@@ -59,7 +59,7 @@ describe('collect fetch', () => {
     fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
 
     fetchStubManager.whenAllComplete(() => {
-      expect(startSpy).toHaveBeenCalledWith({ requestIndex: jasmine.any(Number) as unknown as number })
+      expect(startSpy).toHaveBeenCalledWith({ requestIndex: jasmine.any(Number) as unknown as number, url: FAKE_URL })
       done()
     })
   })
@@ -182,7 +182,10 @@ describe('collect xhr', () => {
         xhr.complete(200)
       },
       onComplete() {
-        expect(startSpy).toHaveBeenCalledWith({ requestIndex: jasmine.any(Number) as unknown as number })
+        expect(startSpy).toHaveBeenCalledWith({
+          requestIndex: jasmine.any(Number) as unknown as number,
+          url: jasmine.stringMatching(/\/ok$/) as unknown as string,
+        })
         done()
       },
     })

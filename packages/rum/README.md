@@ -234,6 +234,11 @@ Telemetry data (error, debug logs) about SDK execution is sent to Datadog in ord
 
 Options that must have matching configuration when also using `logs` SDK:
 
+`excludedActivityUrls`
+: Optional<br/>
+**Type:** List<br/>
+A list of request origins ignored when computing the page activity.
+
 `trackSessionAcrossSubdomains`
 : Optional<br/>
 **Type**: Boolean<br/>

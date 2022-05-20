@@ -631,3 +631,7 @@ export function removeDuplicates<T>(array: T[]) {
   array.forEach((item) => set.add(item))
   return setToArray(set)
 }
+
+export function matchList(list: Array<string | RegExp>, value: string) {
+  return list.some((item) => item === value || (item instanceof RegExp && item.test(value)))
+}

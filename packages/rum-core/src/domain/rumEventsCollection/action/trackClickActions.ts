@@ -53,10 +53,11 @@ export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
 export function trackClickActions(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
-  { actionNameAttribute, trackFrustrations }: RumConfiguration
+  configuration: RumConfiguration
 ) {
   const history: ClickActionIdHistory = new ContextHistory(ACTION_CONTEXT_TIME_OUT_DELAY)
   const stopObservable = new Observable<void>()
+  const { trackFrustrations } = configuration
   let currentRageClickChain: RageClickChain | undefined
 
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
@@ -95,7 +96,7 @@ export function trackClickActions(
       return
     }
 
-    const name = getActionNameFromElement(event.target, actionNameAttribute)
+    const name = getActionNameFromElement(event.target, configuration.actionNameAttribute)
     if (!trackFrustrations && !name) {
       // TODO: remove this in a future major version. To keep retrocompatibility, ignore any action
       // with a blank name
@@ -117,6 +118,7 @@ export function trackClickActions(
     const { stop: stopWaitPageActivityEnd } = waitPageActivityEnd(
       lifeCycle,
       domMutationObservable,
+      configuration,
       (pageActivityEndEvent) => {
         if (!pageActivityEndEvent.hadActivity) {
           // If it has no activity, consider it as a dead click.
