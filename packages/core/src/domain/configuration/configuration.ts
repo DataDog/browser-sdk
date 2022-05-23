@@ -38,7 +38,6 @@ export interface InitConfiguration {
 
   // internal options
   enableExperimentalFeatures?: string[] | undefined
-  internalMonitoringApiKey?: string | undefined
   replica?: ReplicaUserConfiguration | undefined
   datacenter?: string
 }

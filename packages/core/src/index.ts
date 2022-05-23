@@ -26,6 +26,8 @@ export {
   resetInternalMonitoring,
   setDebugMode,
   TelemetryEvent,
+  TelemetryErrorEvent,
+  TelemetryDebugEvent,
   isTelemetryReplicationAllowed,
 } from './domain/internalMonitoring'
 export { Observable, Subscription } from './tools/observable'

@@ -1,7 +1,6 @@
-import type { Context, MonitoringMessage, TelemetryEvent } from '@datadog/browser-core'
+import type { Context, TelemetryEvent } from '@datadog/browser-core'
 import {
   areCookiesAuthorized,
-  combine,
   canUseEventBridge,
   getEventBridge,
   startInternalMonitoring,
@@ -26,11 +25,6 @@ export function startLogs(configuration: LogsConfiguration, getCommonContext: ()
   const lifeCycle = new LifeCycle()
 
   const internalMonitoring = startLogsInternalMonitoring(configuration)
-  internalMonitoring.setExternalContextProvider(() =>
-    combine({ session_id: session.findTrackedSession()?.id }, getRUMInternalContext(), {
-      view: { name: null, url: null, referrer: null },
-    })
-  )
   internalMonitoring.setTelemetryContextProvider(() => ({
     application: {
       id: getRUMInternalContext()?.application_id,
@@ -73,18 +67,9 @@ export function startLogs(configuration: LogsConfiguration, getCommonContext: ()
 function startLogsInternalMonitoring(configuration: LogsConfiguration) {
   const internalMonitoring = startInternalMonitoring(configuration)
   if (canUseEventBridge()) {
-    const bridge = getEventBridge<'internal_log' | 'internal_telemetry', MonitoringMessage | TelemetryEvent>()!
-    internalMonitoring.monitoringMessageObservable.subscribe((message) => bridge.send('internal_log', message))
+    const bridge = getEventBridge<'internal_telemetry', TelemetryEvent>()!
     internalMonitoring.telemetryEventObservable.subscribe((message) => bridge.send('internal_telemetry', message))
   } else {
-    if (configuration.internalMonitoringEndpointBuilder) {
-      const batch = startBatchWithReplica(
-        configuration,
-        configuration.internalMonitoringEndpointBuilder,
-        configuration.replica?.internalMonitoringEndpointBuilder
-      )
-      internalMonitoring.monitoringMessageObservable.subscribe((message) => batch.add(message))
-    }
     const monitoringBatch = startBatchWithReplica(
       configuration,
       configuration.rumEndpointBuilder,

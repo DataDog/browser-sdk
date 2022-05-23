@@ -9,11 +9,13 @@
       DD_RUM.init({
         clientToken: 'xxx',
         applicationId: 'xxx',
-        internalMonitoringApiKey: 'xxx',
+        telemetrySampleRate: 100,
+        enableExperimentalFeatures: ['telemetry'],
       })
       DD_LOGS.init({
         clientToken: 'xxx',
-        internalMonitoringApiKey: 'xxx',
+        telemetrySampleRate: 100,
+        enableExperimentalFeatures: ['telemetry'],
       })
     </script>
   </head>

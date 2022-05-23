@@ -9,7 +9,6 @@ export interface TransportConfiguration {
   logsEndpointBuilder: EndpointBuilder
   rumEndpointBuilder: EndpointBuilder
   sessionReplayEndpointBuilder: EndpointBuilder
-  internalMonitoringEndpointBuilder?: EndpointBuilder
   isIntakeUrl: (url: string) => boolean
   replica?: ReplicaConfiguration
   site: string
@@ -19,7 +18,6 @@ export interface ReplicaConfiguration {
   applicationId?: string
   logsEndpointBuilder: EndpointBuilder
   rumEndpointBuilder: EndpointBuilder
-  internalMonitoringEndpointBuilder: EndpointBuilder
 }
 
 export function computeTransportConfiguration(initConfiguration: InitConfiguration): TransportConfiguration {
@@ -41,24 +39,11 @@ export function computeTransportConfiguration(initConfiguration: InitConfigurati
 }
 
 function computeEndpointBuilders(initConfiguration: InitConfiguration, tags: string[]) {
-  const endpointBuilders = {
+  return {
     logsEndpointBuilder: createEndpointBuilder(initConfiguration, 'logs', tags),
     rumEndpointBuilder: createEndpointBuilder(initConfiguration, 'rum', tags),
     sessionReplayEndpointBuilder: createEndpointBuilder(initConfiguration, 'sessionReplay', tags),
   }
-
-  if (initConfiguration.internalMonitoringApiKey) {
-    return assign(endpointBuilders, {
-      internalMonitoringEndpointBuilder: createEndpointBuilder(
-        assign({}, initConfiguration, { clientToken: initConfiguration.internalMonitoringApiKey }),
-        'logs',
-        tags,
-        'browser-agent-internal-monitoring'
-      ),
-    })
-  }
-
-  return endpointBuilders
 }
 
 function computeReplicaConfiguration(
@@ -78,12 +63,6 @@ function computeReplicaConfiguration(
   const replicaEndpointBuilders = {
     logsEndpointBuilder: createEndpointBuilder(replicaConfiguration, 'logs', tags),
     rumEndpointBuilder: createEndpointBuilder(replicaConfiguration, 'rum', tags),
-    internalMonitoringEndpointBuilder: createEndpointBuilder(
-      replicaConfiguration,
-      'logs',
-      tags,
-      'browser-agent-internal-monitoring'
-    ),
   }
 
   intakeEndpoints.push(...objectValues(replicaEndpointBuilders).map((builder) => builder.buildIntakeUrl()))

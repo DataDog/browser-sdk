@@ -15,16 +15,11 @@ export function stubEndpointBuilder(url: string) {
 }
 
 export const SPEC_ENDPOINTS = {
-  internalMonitoringEndpointBuilder: stubEndpointBuilder('https://monitoring-intake.com/v1/input/abcde?foo=bar'),
   logsEndpointBuilder: stubEndpointBuilder('https://logs-intake.com/v1/input/abcde?foo=bar'),
   rumEndpointBuilder: stubEndpointBuilder('https://rum-intake.com/v1/input/abcde?foo=bar'),
 
   isIntakeUrl: (url: string) => {
-    const intakeUrls = [
-      'https://monitoring-intake.com/v1/input/',
-      'https://logs-intake.com/v1/input/',
-      'https://rum-intake.com/v1/input/',
-    ]
+    const intakeUrls = ['https://logs-intake.com/v1/input/', 'https://rum-intake.com/v1/input/']
     return intakeUrls.some((intakeUrl) => url.indexOf(intakeUrl) === 0)
   },
 }

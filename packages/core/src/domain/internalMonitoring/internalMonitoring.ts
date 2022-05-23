@@ -33,9 +33,6 @@ const ALLOWED_FRAME_URLS = [
 ]
 
 export interface InternalMonitoring {
-  setExternalContextProvider: (provider: () => Context) => void
-  monitoringMessageObservable: Observable<MonitoringMessage>
-
   setTelemetryContextProvider: (provider: () => Context) => void
   telemetryEventObservable: Observable<TelemetryEvent & Context>
 }
@@ -61,15 +58,12 @@ const monitoringConfiguration: {
 let onInternalMonitoringMessageCollected: ((message: MonitoringMessage) => void) | undefined
 
 export function startInternalMonitoring(configuration: Configuration): InternalMonitoring {
-  let externalContextProvider: () => Context
   let telemetryContextProvider: () => Context
-  const monitoringMessageObservable = new Observable<MonitoringMessage>()
   const telemetryEventObservable = new Observable<TelemetryEvent & Context>()
 
   monitoringConfiguration.telemetryEnabled = performDraw(configuration.telemetrySampleRate)
 
   onInternalMonitoringMessageCollected = (message: MonitoringMessage) => {
-    monitoringMessageObservable.notify(withContext(message))
     if (
       (isExperimentalFeatureEnabled('telemetry') || includes(TELEMETRY_ALLOWED_SITES, configuration.site)) &&
       monitoringConfiguration.telemetryEnabled
@@ -82,14 +76,6 @@ export function startInternalMonitoring(configuration: Configuration): InternalM
     maxMessagesPerPage: configuration.maxInternalMonitoringMessagesPerPage,
     sentMessageCount: 0,
   })
-
-  function withContext(message: MonitoringMessage) {
-    return combine(
-      { date: timeStampNow() },
-      externalContextProvider !== undefined ? externalContextProvider() : {},
-      message
-    )
-  }
 
   function toTelemetryEvent(message: MonitoringMessage): TelemetryEvent & Context {
     return combine(
@@ -109,10 +95,6 @@ export function startInternalMonitoring(configuration: Configuration): InternalM
   }
 
   return {
-    setExternalContextProvider: (provider: () => Context) => {
-      externalContextProvider = provider
-    },
-    monitoringMessageObservable,
     setTelemetryContextProvider: (provider: () => Context) => {
       telemetryContextProvider = provider
     },

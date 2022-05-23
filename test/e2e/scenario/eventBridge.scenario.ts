@@ -62,7 +62,9 @@ describe('bridge present', () => {
     })
 
   createTest('forward internal monitoring to the bridge')
-    .withLogs({ internalMonitoringApiKey: 'xxx' })
+    .withLogs({
+      enableExperimentalFeatures: ['telemetry'],
+    })
     .withEventBridge()
     .run(async ({ serverEvents, bridgeEvents }) => {
       await browserExecute(() => {
@@ -76,8 +78,8 @@ describe('bridge present', () => {
       })
 
       await flushEvents()
-      expect(serverEvents.internalMonitoring.length).toBe(0)
-      expect(bridgeEvents.internalMonitoring.length).toBe(2)
+      expect(serverEvents.telemetry.length).toBe(0)
+      expect(bridgeEvents.telemetry.length).toBe(1)
     })
 
   createTest('forward logs to the bridge')
