@@ -26,8 +26,7 @@ export type EndpointBuilder = ReturnType<typeof createEndpointBuilder>
 export function createEndpointBuilder(
   initConfiguration: InitConfiguration,
   endpointType: EndpointType,
-  tags: string[],
-  source?: string
+  tags: string[]
 ) {
   const { site = INTAKE_SITE_US1, clientToken } = initConfiguration
 
@@ -40,7 +39,7 @@ export function createEndpointBuilder(
   return {
     build() {
       let parameters =
-        `ddsource=${source || 'browser'}` +
+        'ddsource=browser' +
         `&ddtags=${encodeURIComponent([`sdk_version:${__BUILD_ENV__SDK_VERSION__}`].concat(tags).join(','))}` +
         `&dd-api-key=${clientToken}` +
         `&dd-evp-origin-version=${encodeURIComponent(__BUILD_ENV__SDK_VERSION__)}` +
