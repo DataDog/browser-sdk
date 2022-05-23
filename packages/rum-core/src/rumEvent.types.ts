@@ -48,7 +48,7 @@ export type RumActionEvent = CommonProperties & {
       /**
        * Action frustration types
        */
-      readonly type: ('rage' | 'dead' | 'error')[]
+      readonly type: ('rage_click' | 'dead_click' | 'error_click')[]
       [k: string]: unknown
     }
     /**
