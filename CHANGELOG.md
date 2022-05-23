@@ -16,6 +16,11 @@
 
 ---
 
+## v4.11.0
+
+- ✨ [RUMF-1262] ignore some URLs when watching the page activity ([#1536](https://github.com/DataDog/browser-sdk/pull/1536))
+- ✨ [RUMF-1191] enable telemetry on us1 site ([#1554](https://github.com/DataDog/browser-sdk/pull/1554))
+
 ## v4.10.4
 
 - ✨ [RUMF-1191] enable telemetry on eu site ([#1551](https://github.com/DataDog/browser-sdk/pull/1551))
