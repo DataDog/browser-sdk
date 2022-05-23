@@ -4,7 +4,7 @@ import { startsWith } from '../tools/utils'
 import type { Configuration } from '../domain/configuration'
 import { resetExperimentalFeatures, updateExperimentalFeatures } from '../domain/configuration'
 import type { TelemetryEvent } from '../domain/telemetry'
-import { resetInternalMonitoring, startInternalMonitoring } from '../domain/telemetry'
+import { resetTelemetry, startTelemetry } from '../domain/telemetry'
 import { addFailedSendBeacon, LOCAL_STORAGE_KEY, startFlushFailedSendBeacons } from './failedSendBeacon'
 
 describe('failedSendBeacon', () => {
@@ -12,18 +12,18 @@ describe('failedSendBeacon', () => {
   let notifyLogSpy: jasmine.Spy<(event: TelemetryEvent) => void>
 
   beforeEach(() => {
-    const { telemetryEventObservable } = startInternalMonitoring({
-      maxInternalMonitoringMessagesPerPage: 1,
+    const { observable } = startTelemetry({
+      maxTelemetryEventsPerPage: 1,
       telemetrySampleRate: 100,
     } as Configuration)
     notifyLogSpy = jasmine.createSpy('notified')
-    telemetryEventObservable.subscribe(notifyLogSpy)
+    observable.subscribe(notifyLogSpy)
     clock = mockClock()
   })
 
   afterEach(() => {
     resetExperimentalFeatures()
-    resetInternalMonitoring()
+    resetTelemetry()
     window.localStorage.clear()
     clock.cleanup()
   })

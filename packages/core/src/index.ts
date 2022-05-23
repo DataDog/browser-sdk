@@ -14,16 +14,16 @@ export { computeStackTrace, StackTrace } from './domain/tracekit'
 export { defineGlobal, makePublicApi } from './boot/init'
 export { initReportObservable, RawReport, RawReportType } from './domain/report/reportObservable'
 export {
-  startInternalMonitoring,
+  startTelemetry,
   Telemetry,
-  MonitoringMessage,
+  RawTelemetryEvent,
   monitored,
   monitor,
   callMonitored,
-  addMonitoringMessage,
-  addMonitoringError,
-  startFakeInternalMonitoring,
-  resetInternalMonitoring,
+  addTelemetryDebug,
+  addTelemetryError,
+  startFakeTelemetry,
+  resetTelemetry,
   setDebugMode,
   TelemetryEvent,
   TelemetryErrorEvent,

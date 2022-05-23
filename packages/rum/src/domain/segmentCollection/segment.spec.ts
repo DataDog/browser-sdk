@@ -106,7 +106,7 @@ describe('Segment', () => {
   })
 
   it('unsubscribes from the worker if a flush() response fails and another Segment is used', () => {
-    const displaySpy = spyOn(display, 'log')
+    const displaySpy = spyOn(display, 'debug')
     const writer1 = createSegment()
     writer1.flush()
     createSegment()
@@ -115,7 +115,7 @@ describe('Segment', () => {
     worker.processAllMessages()
     expect(worker.messageListenersCount).toBe(1)
     expect(displaySpy).toHaveBeenCalledWith(
-      '[MONITORING MESSAGE]',
+      '[TELEMETRY DEBUG]',
       "Segment did not receive a 'flush' response before being replaced.",
       undefined
     )

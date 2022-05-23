@@ -61,7 +61,7 @@ describe('bridge present', () => {
       expect(bridgeEvents.rumViews.length).toBeGreaterThan(0)
     })
 
-  createTest('forward internal monitoring to the bridge')
+  createTest('forward telemetry to the bridge')
     .withLogs()
     .withEventBridge()
     .run(async ({ serverEvents, bridgeEvents }) => {

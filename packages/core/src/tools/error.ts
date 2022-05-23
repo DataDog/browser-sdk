@@ -81,7 +81,7 @@ export function formatErrorMessage(stack: StackTrace) {
  
  Constraints:
  - Has to be called at the utmost position of the call stack.
- - No internal monitoring should encapsulate the function, that is why we need to use callMonitored inside of it.
+ - No monitored function should encapsulate it, that is why we need to use callMonitored inside it.
  */
 export function createHandlingStack(): string {
   /**

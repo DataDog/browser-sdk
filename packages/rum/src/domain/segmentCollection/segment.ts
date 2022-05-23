@@ -1,4 +1,4 @@
-import { addMonitoringMessage, assign, monitor } from '@datadog/browser-core'
+import { addTelemetryDebug, assign, monitor } from '@datadog/browser-core'
 import type { CreationReason, Record, SegmentContext, SegmentMetadata } from '../../types'
 import { RecordType } from '../../types'
 import * as replayStats from '../replayStats'
@@ -60,7 +60,7 @@ export class Segment {
         // "flush" response, remove the listener to avoid any leak, and send a monitor message to
         // help investigate the issue.
         worker.removeEventListener('message', listener)
-        addMonitoringMessage("Segment did not receive a 'flush' response before being replaced.")
+        addTelemetryDebug("Segment did not receive a 'flush' response before being replaced.")
       }
     })
     worker.addEventListener('message', listener)

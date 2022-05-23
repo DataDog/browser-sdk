@@ -1,15 +1,15 @@
 export {
   Telemetry,
-  MonitoringMessage,
+  RawTelemetryEvent,
   monitored,
   monitor,
   callMonitored,
-  addMonitoringMessage,
-  addMonitoringError,
-  startFakeInternalMonitoring,
-  resetInternalMonitoring,
+  addTelemetryDebug,
+  addTelemetryError,
+  startFakeTelemetry,
+  resetTelemetry,
   setDebugMode,
-  startInternalMonitoring,
+  startTelemetry,
   isTelemetryReplicationAllowed,
 } from './telemetry'
 export * from './telemetryEvent.types'

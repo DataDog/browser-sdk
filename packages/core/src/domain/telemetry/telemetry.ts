@@ -26,11 +26,11 @@ const ALLOWED_FRAME_URLS = [
 ]
 
 export interface Telemetry {
-  setTelemetryContextProvider: (provider: () => Context) => void
-  telemetryEventObservable: Observable<TelemetryEvent & Context>
+  setContextProvider: (provider: () => Context) => void
+  observable: Observable<TelemetryEvent & Context>
 }
 
-export interface MonitoringMessage extends Context {
+export interface RawTelemetryEvent extends Context {
   message: string
   status: StatusType
   error?: {
@@ -41,33 +41,33 @@ export interface MonitoringMessage extends Context {
 
 const TELEMETRY_EXCLUDED_SITES: string[] = [INTAKE_SITE_US1_FED]
 
-const monitoringConfiguration: {
+const telemetryConfiguration: {
   debugMode?: boolean
-  maxMessagesPerPage: number
-  sentMessageCount: number
+  maxEventsPerPage: number
+  sentEventCount: number
   telemetryEnabled: boolean
-} = { maxMessagesPerPage: 0, sentMessageCount: 0, telemetryEnabled: false }
+} = { maxEventsPerPage: 0, sentEventCount: 0, telemetryEnabled: false }
 
-let onInternalMonitoringMessageCollected: ((message: MonitoringMessage) => void) | undefined
+let onRawTelemetryEventCollected: ((event: RawTelemetryEvent) => void) | undefined
 
-export function startInternalMonitoring(configuration: Configuration): Telemetry {
-  let telemetryContextProvider: () => Context
-  const telemetryEventObservable = new Observable<TelemetryEvent & Context>()
+export function startTelemetry(configuration: Configuration): Telemetry {
+  let contextProvider: () => Context
+  const observable = new Observable<TelemetryEvent & Context>()
 
-  monitoringConfiguration.telemetryEnabled = performDraw(configuration.telemetrySampleRate)
+  telemetryConfiguration.telemetryEnabled = performDraw(configuration.telemetrySampleRate)
 
-  onInternalMonitoringMessageCollected = (message: MonitoringMessage) => {
-    if (!includes(TELEMETRY_EXCLUDED_SITES, configuration.site) && monitoringConfiguration.telemetryEnabled) {
-      telemetryEventObservable.notify(toTelemetryEvent(message))
+  onRawTelemetryEventCollected = (event: RawTelemetryEvent) => {
+    if (!includes(TELEMETRY_EXCLUDED_SITES, configuration.site) && telemetryConfiguration.telemetryEnabled) {
+      observable.notify(toTelemetryEvent(event))
     }
   }
 
-  assign(monitoringConfiguration, {
-    maxMessagesPerPage: configuration.maxInternalMonitoringMessagesPerPage,
-    sentMessageCount: 0,
+  assign(telemetryConfiguration, {
+    maxEventsPerPage: configuration.maxTelemetryEventsPerPage,
+    sentEventCount: 0,
   })
 
-  function toTelemetryEvent(message: MonitoringMessage): TelemetryEvent & Context {
+  function toTelemetryEvent(event: RawTelemetryEvent): TelemetryEvent & Context {
     return combine(
       {
         type: 'telemetry' as const,
@@ -78,37 +78,37 @@ export function startInternalMonitoring(configuration: Configuration): Telemetry
         _dd: {
           format_version: 2 as const,
         },
-        telemetry: message as any, // https://github.com/microsoft/TypeScript/issues/48457
+        telemetry: event as any, // https://github.com/microsoft/TypeScript/issues/48457
       },
-      telemetryContextProvider !== undefined ? telemetryContextProvider() : {}
+      contextProvider !== undefined ? contextProvider() : {}
     )
   }
 
   return {
-    setTelemetryContextProvider: (provider: () => Context) => {
-      telemetryContextProvider = provider
+    setContextProvider: (provider: () => Context) => {
+      contextProvider = provider
     },
-    telemetryEventObservable,
+    observable,
   }
 }
 
-export function startFakeInternalMonitoring() {
-  const messages: MonitoringMessage[] = []
-  assign(monitoringConfiguration, {
-    maxMessagesPerPage: Infinity,
-    sentMessageCount: 0,
+export function startFakeTelemetry() {
+  const events: RawTelemetryEvent[] = []
+  assign(telemetryConfiguration, {
+    maxEventsPerPage: Infinity,
+    sentEventCount: 0,
   })
 
-  onInternalMonitoringMessageCollected = (message: MonitoringMessage) => {
-    messages.push(message)
+  onRawTelemetryEventCollected = (event: RawTelemetryEvent) => {
+    events.push(event)
   }
 
-  return messages
+  return events
 }
 
-export function resetInternalMonitoring() {
-  onInternalMonitoringMessageCollected = undefined
-  monitoringConfiguration.debugMode = undefined
+export function resetTelemetry() {
+  onRawTelemetryEventCollected = undefined
+  telemetryConfiguration.debugMode = undefined
 }
 
 /**
@@ -126,7 +126,7 @@ export function monitored<T extends (...params: any[]) => unknown>(
 ) {
   const originalMethod = descriptor.value!
   descriptor.value = function (this: any, ...args: Parameters<T>) {
-    const decorated = onInternalMonitoringMessageCollected ? monitor(originalMethod) : originalMethod
+    const decorated = onRawTelemetryEventCollected ? monitor(originalMethod) : originalMethod
     return decorated.apply(this, args) as ReturnType<T>
   } as T
 }
@@ -155,16 +155,16 @@ export function callMonitored<T extends (...args: any[]) => any>(
   } catch (e) {
     logErrorIfDebug(e)
     try {
-      addMonitoringError(e)
+      addTelemetryError(e)
     } catch (e) {
       logErrorIfDebug(e)
     }
   }
 }
 
-export function addMonitoringMessage(message: string, context?: Context) {
-  logMessageIfDebug(message, context)
-  addToMonitoring(
+export function addTelemetryDebug(message: string, context?: Context) {
+  logDebugIfDebug(message, context)
+  addTelemetry(
     assign(
       {
         message,
@@ -175,8 +175,8 @@ export function addMonitoringMessage(message: string, context?: Context) {
   )
 }
 
-export function addMonitoringError(e: unknown) {
-  addToMonitoring(
+export function addTelemetryError(e: unknown) {
+  addTelemetry(
     assign(
       {
         status: StatusType.error,
@@ -186,13 +186,10 @@ export function addMonitoringError(e: unknown) {
   )
 }
 
-function addToMonitoring(message: MonitoringMessage) {
-  if (
-    onInternalMonitoringMessageCollected &&
-    monitoringConfiguration.sentMessageCount < monitoringConfiguration.maxMessagesPerPage
-  ) {
-    monitoringConfiguration.sentMessageCount += 1
-    onInternalMonitoringMessageCollected(message)
+function addTelemetry(event: RawTelemetryEvent) {
+  if (onRawTelemetryEventCollected && telemetryConfiguration.sentEventCount < telemetryConfiguration.maxEventsPerPage) {
+    telemetryConfiguration.sentEventCount += 1
+    onRawTelemetryEventCollected(event)
   }
 }
 
@@ -223,17 +220,17 @@ export function scrubCustomerFrames(stackTrace: StackTrace) {
 }
 
 export function setDebugMode(debugMode: boolean) {
-  monitoringConfiguration.debugMode = debugMode
+  telemetryConfiguration.debugMode = debugMode
 }
 
 function logErrorIfDebug(e: any) {
-  if (monitoringConfiguration.debugMode) {
-    display.error('[INTERNAL ERROR]', e)
+  if (telemetryConfiguration.debugMode) {
+    display.error('[TELEMETRY ERROR]', e)
   }
 }
 
-function logMessageIfDebug(message: any, context?: Context) {
-  if (monitoringConfiguration.debugMode) {
-    display.log('[MONITORING MESSAGE]', message, context)
+function logDebugIfDebug(message: any, context?: Context) {
+  if (telemetryConfiguration.debugMode) {
+    display.debug('[TELEMETRY DEBUG]', message, context)
   }
 }
