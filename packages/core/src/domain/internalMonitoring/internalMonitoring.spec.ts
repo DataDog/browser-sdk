@@ -2,7 +2,7 @@ import type { StackTrace } from '@datadog/browser-core'
 import type { Context } from '../../tools/context'
 import { display } from '../../tools/display'
 import type { Configuration } from '../configuration'
-import { INTAKE_SITE_EU, INTAKE_SITE_US5, INTAKE_SITE_US3, INTAKE_SITE_US } from '../configuration'
+import { INTAKE_SITE_US1, INTAKE_SITE_US1_FED } from '../configuration'
 import type { InternalMonitoring } from './internalMonitoring'
 import {
   monitor,
@@ -18,7 +18,6 @@ import type { TelemetryEvent, TelemetryErrorEvent } from './telemetryEvent.types
 const configuration: Partial<Configuration> = {
   maxInternalMonitoringMessagesPerPage: 7,
   telemetrySampleRate: 100,
-  site: INTAKE_SITE_US,
 }
 
 describe('internal monitoring', () => {
@@ -260,12 +259,10 @@ describe('internal monitoring', () => {
     })
   })
 
-  describe('rollout', () => {
+  describe('excluded sites', () => {
     ;[
-      { site: INTAKE_SITE_US5, enabled: true },
-      { site: INTAKE_SITE_US3, enabled: true },
-      { site: INTAKE_SITE_EU, enabled: true },
-      { site: INTAKE_SITE_US, enabled: true },
+      { site: INTAKE_SITE_US1_FED, enabled: false },
+      { site: INTAKE_SITE_US1, enabled: true },
     ].forEach(({ site, enabled }) => {
       it(`should be ${enabled ? 'enabled' : 'disabled'} on ${site}`, () => {
         const internalMonitoring = startInternalMonitoring({ ...configuration, site } as Configuration)

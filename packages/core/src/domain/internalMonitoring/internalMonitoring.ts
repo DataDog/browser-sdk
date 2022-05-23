@@ -7,7 +7,7 @@ import type { StackTrace } from '../tracekit'
 import { computeStackTrace } from '../tracekit'
 import { Observable } from '../../tools/observable'
 import { timeStampNow } from '../../tools/timeUtils'
-import { INTAKE_SITE_US5, INTAKE_SITE_US3, INTAKE_SITE_STAGING, INTAKE_SITE_EU, INTAKE_SITE_US } from '../configuration'
+import { INTAKE_SITE_STAGING, INTAKE_SITE_US1_FED } from '../configuration'
 import type { TelemetryEvent } from './telemetryEvent.types'
 
 // replaced at build time
@@ -39,7 +39,7 @@ export interface MonitoringMessage extends Context {
   }
 }
 
-const TELEMETRY_ALLOWED_SITES: string[] = [INTAKE_SITE_US5, INTAKE_SITE_US3, INTAKE_SITE_EU, INTAKE_SITE_US]
+const TELEMETRY_EXCLUDED_SITES: string[] = [INTAKE_SITE_US1_FED]
 
 const monitoringConfiguration: {
   debugMode?: boolean
@@ -57,7 +57,7 @@ export function startInternalMonitoring(configuration: Configuration): InternalM
   monitoringConfiguration.telemetryEnabled = performDraw(configuration.telemetrySampleRate)
 
   onInternalMonitoringMessageCollected = (message: MonitoringMessage) => {
-    if (includes(TELEMETRY_ALLOWED_SITES, configuration.site) && monitoringConfiguration.telemetryEnabled) {
+    if (!includes(TELEMETRY_EXCLUDED_SITES, configuration.site) && monitoringConfiguration.telemetryEnabled) {
       telemetryEventObservable.notify(toTelemetryEvent(message))
     }
   }

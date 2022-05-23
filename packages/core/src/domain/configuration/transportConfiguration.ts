@@ -3,7 +3,7 @@ import type { InitConfiguration } from './configuration'
 import type { EndpointBuilder } from './endpointBuilder'
 import { createEndpointBuilder } from './endpointBuilder'
 import { buildTags } from './tags'
-import { INTAKE_SITE_US } from './intakeSites'
+import { INTAKE_SITE_US1 } from './intakeSites'
 
 export interface TransportConfiguration {
   logsEndpointBuilder: EndpointBuilder
@@ -32,7 +32,7 @@ export function computeTransportConfiguration(initConfiguration: InitConfigurati
     {
       isIntakeUrl: (url: string) => intakeEndpoints.some((intakeEndpoint) => url.indexOf(intakeEndpoint) === 0),
       replica: replicaConfiguration,
-      site: initConfiguration.site || INTAKE_SITE_US,
+      site: initConfiguration.site || INTAKE_SITE_US1,
     },
     endpointBuilders
   )
@@ -56,7 +56,7 @@ function computeReplicaConfiguration(
   }
 
   const replicaConfiguration: InitConfiguration = assign({}, initConfiguration, {
-    site: INTAKE_SITE_US,
+    site: INTAKE_SITE_US1,
     clientToken: initConfiguration.replica.clientToken,
   })
 

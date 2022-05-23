@@ -2,7 +2,7 @@ import { timeStampNow } from '../../tools/timeUtils'
 import { normalizeUrl } from '../../tools/urlPolyfill'
 import { generateUUID } from '../../tools/utils'
 import type { InitConfiguration } from './configuration'
-import { INTAKE_SITE_US } from './intakeSites'
+import { INTAKE_SITE_US1 } from './intakeSites'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
@@ -29,7 +29,7 @@ export function createEndpointBuilder(
   tags: string[],
   source?: string
 ) {
-  const { site = INTAKE_SITE_US, clientToken } = initConfiguration
+  const { site = INTAKE_SITE_US1, clientToken } = initConfiguration
 
   const domainParts = site.split('.')
   const extension = domainParts.pop()
