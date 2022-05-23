@@ -21,7 +21,7 @@
     "directory": "packages/rum"
   },
   "devDependencies": {
-    "@types/pako": "1.0.3",
+    "@types/pako": "2.0.0",
     "pako": "2.0.4"
   }
 }
