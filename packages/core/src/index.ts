@@ -15,7 +15,7 @@ export { defineGlobal, makePublicApi } from './boot/init'
 export { initReportObservable, RawReport, RawReportType } from './domain/report/reportObservable'
 export {
   startInternalMonitoring,
-  InternalMonitoring,
+  Telemetry,
   MonitoringMessage,
   monitored,
   monitor,
@@ -29,7 +29,7 @@ export {
   TelemetryErrorEvent,
   TelemetryDebugEvent,
   isTelemetryReplicationAllowed,
-} from './domain/internalMonitoring'
+} from './domain/telemetry'
 export { Observable, Subscription } from './tools/observable'
 export {
   startSessionManager,

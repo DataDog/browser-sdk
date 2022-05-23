@@ -3,8 +3,8 @@ import { mockClock } from '../../test/specHelper'
 import { startsWith } from '../tools/utils'
 import type { Configuration } from '../domain/configuration'
 import { resetExperimentalFeatures, updateExperimentalFeatures } from '../domain/configuration'
-import type { TelemetryEvent } from '../domain/internalMonitoring'
-import { resetInternalMonitoring, startInternalMonitoring } from '../domain/internalMonitoring'
+import type { TelemetryEvent } from '../domain/telemetry'
+import { resetInternalMonitoring, startInternalMonitoring } from '../domain/telemetry'
 import { addFailedSendBeacon, LOCAL_STORAGE_KEY, startFlushFailedSendBeacons } from './failedSendBeacon'
 
 describe('failedSendBeacon', () => {

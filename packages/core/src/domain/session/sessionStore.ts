@@ -2,7 +2,7 @@ import type { CookieOptions } from '../../browser/cookie'
 import { COOKIE_ACCESS_DELAY } from '../../browser/cookie'
 import { Observable } from '../../tools/observable'
 import * as utils from '../../tools/utils'
-import { monitor } from '../internalMonitoring'
+import { monitor } from '../telemetry'
 import { retrieveSession, withCookieLockAccess } from './sessionCookieStore'
 
 export interface SessionStore {

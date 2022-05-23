@@ -1,5 +1,5 @@
 import type { EndpointBuilder } from '../domain/configuration'
-import { addMonitoringError } from '../domain/internalMonitoring'
+import { addMonitoringError } from '../domain/telemetry'
 import { addFailedSendBeacon } from './failedSendBeacon'
 
 /**

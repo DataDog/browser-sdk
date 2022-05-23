@@ -3,7 +3,7 @@ import type { Context } from '../../tools/context'
 import { display } from '../../tools/display'
 import type { Configuration } from '../configuration'
 import { INTAKE_SITE_US1, INTAKE_SITE_US1_FED } from '../configuration'
-import type { InternalMonitoring } from './internalMonitoring'
+import type { Telemetry } from './telemetry'
 import {
   monitor,
   monitored,
@@ -12,7 +12,7 @@ import {
   callMonitored,
   setDebugMode,
   scrubCustomerFrames,
-} from './internalMonitoring'
+} from './telemetry'
 import type { TelemetryEvent, TelemetryErrorEvent } from './telemetryEvent.types'
 
 const configuration: Partial<Configuration> = {
@@ -160,7 +160,7 @@ describe('internal monitoring', () => {
   })
 
   describe('telemetry context', () => {
-    let internalMonitoring: InternalMonitoring
+    let internalMonitoring: Telemetry
     let notifySpy: jasmine.Spy<(event: TelemetryEvent) => void>
 
     beforeEach(() => {
@@ -225,7 +225,7 @@ describe('internal monitoring', () => {
   })
 
   describe('sampling', () => {
-    let internalMonitoring: InternalMonitoring
+    let internalMonitoring: Telemetry
     let notifySpy: jasmine.Spy<(event: TelemetryEvent & Context) => void>
 
     beforeEach(() => {

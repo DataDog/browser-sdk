@@ -25,7 +25,7 @@ const ALLOWED_FRAME_URLS = [
   '<anonymous>',
 ]
 
-export interface InternalMonitoring {
+export interface Telemetry {
   setTelemetryContextProvider: (provider: () => Context) => void
   telemetryEventObservable: Observable<TelemetryEvent & Context>
 }
@@ -50,7 +50,7 @@ const monitoringConfiguration: {
 
 let onInternalMonitoringMessageCollected: ((message: MonitoringMessage) => void) | undefined
 
-export function startInternalMonitoring(configuration: Configuration): InternalMonitoring {
+export function startInternalMonitoring(configuration: Configuration): Telemetry {
   let telemetryContextProvider: () => Context
   const telemetryEventObservable = new Observable<TelemetryEvent & Context>()
 

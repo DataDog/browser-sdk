@@ -13,7 +13,7 @@ async function main() {
     'rum-events-schema.json'
   )
   await generateTypesFromSchema(
-    path.join(__dirname, '../packages/core/src/domain/internalMonitoring/telemetryEvent.types.ts'),
+    path.join(__dirname, '../packages/core/src/domain/telemetry/telemetryEvent.types.ts'),
     'telemetry-events-schema.json'
   )
 }

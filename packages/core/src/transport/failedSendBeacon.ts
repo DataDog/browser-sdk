@@ -1,5 +1,5 @@
 import { isExperimentalFeatureEnabled } from '../domain/configuration'
-import { addMonitoringMessage, monitor } from '../domain/internalMonitoring'
+import { addMonitoringMessage, monitor } from '../domain/telemetry'
 import { generateUUID, startsWith } from '../tools/utils'
 
 // replaced at build time

@@ -1,5 +1,5 @@
 export {
-  InternalMonitoring,
+  Telemetry,
   MonitoringMessage,
   monitored,
   monitor,
@@ -11,5 +11,5 @@ export {
   setDebugMode,
   startInternalMonitoring,
   isTelemetryReplicationAllowed,
-} from './internalMonitoring'
+} from './telemetry'
 export * from './telemetryEvent.types'
