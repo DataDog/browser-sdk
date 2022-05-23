@@ -237,7 +237,7 @@ Options that must have matching configuration when also using `logs` SDK:
 `excludedActivityUrls`
 : Optional<br/>
 **Type:** List<br/>
-A list of request origins ignored when computing the page activity.
+A list of request origins ignored when computing the page activity. See [How page activity is calculated][16].
 
 `trackSessionAcrossSubdomains`
 : Optional<br/>
@@ -345,3 +345,4 @@ datadogRum.init({
 [13]: https://docs.datadoghq.com/real_user_monitoring/session_replay/privacy_options?tab=maskuserinput
 [14]: https://docs.datadoghq.com/agent/basic_agent_usage#datadog-site
 [15]: https://docs.datadoghq.com/getting_started/tagging/#defining-tags
+[16]: https://docs.datadoghq.com/real_user_monitoring/browser/monitoring_page_performance/#how-page-activity-is-calculated
