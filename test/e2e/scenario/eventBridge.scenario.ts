@@ -77,7 +77,7 @@ describe('bridge present', () => {
 
       await flushEvents()
       expect(serverEvents.internalMonitoring.length).toBe(0)
-      expect(bridgeEvents.internalMonitoring.length).toBe(1)
+      expect(bridgeEvents.internalMonitoring.length).toBe(2)
     })
 
   createTest('forward logs to the bridge')

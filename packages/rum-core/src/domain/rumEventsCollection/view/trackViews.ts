@@ -21,6 +21,7 @@ import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { EventCounts } from '../../trackEventCounts'
 import type { LocationChange } from '../../../browser/locationChangeObservable'
+import type { RumConfiguration } from '../../configuration'
 import type { Timings } from './trackInitialViewTimings'
 import { trackInitialViewTimings } from './trackInitialViewTimings'
 import { trackViewMetrics } from './trackViewMetrics'
@@ -68,6 +69,7 @@ export function trackViews(
   location: Location,
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
+  configuration: RumConfiguration,
   locationChangeObservable: Observable<LocationChange>,
   areViewsTrackedAutomatically: boolean,
   initialViewOptions?: ViewOptions
@@ -86,6 +88,7 @@ export function trackViews(
     const initialView = newView(
       lifeCycle,
       domMutationObservable,
+      configuration,
       location,
       ViewLoadingType.INITIAL_LOAD,
       clocksOrigin(),
@@ -99,7 +102,15 @@ export function trackViews(
   }
 
   function trackViewChange(startClocks?: ClocksState, viewOptions?: ViewOptions) {
-    return newView(lifeCycle, domMutationObservable, location, ViewLoadingType.ROUTE_CHANGE, startClocks, viewOptions)
+    return newView(
+      lifeCycle,
+      domMutationObservable,
+      configuration,
+      location,
+      ViewLoadingType.ROUTE_CHANGE,
+      startClocks,
+      viewOptions
+    )
   }
 
   function startViewLifeCycle() {
@@ -168,6 +179,7 @@ export function trackViews(
 function newView(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
+  configuration: RumConfiguration,
   initialLocation: Location,
   loadingType: ViewLoadingType,
   startClocks: ClocksState = clocksNow(),
@@ -205,7 +217,7 @@ function newView(
     setLoadEvent,
     stop: stopViewMetricsTracking,
     viewMetrics,
-  } = trackViewMetrics(lifeCycle, domMutationObservable, scheduleViewUpdate, loadingType, startClocks)
+  } = trackViewMetrics(lifeCycle, domMutationObservable, configuration, scheduleViewUpdate, loadingType, startClocks)
 
   // Initial view update
   triggerViewUpdate()

@@ -1,10 +1,12 @@
-import type { RelativeTime } from '@datadog/browser-core'
+import type { RelativeTime, Subscription } from '@datadog/browser-core'
 import { Observable, ONE_SECOND, getTimeStamp } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test/specHelper'
 import { mockClock } from '@datadog/browser-core/test/specHelper'
+import type { TestSetupBuilder } from '../../test/specHelper'
+import { setup } from '../../test/specHelper'
 import type { RumPerformanceNavigationTiming, RumPerformanceResourceTiming } from '../browser/performanceCollection'
-import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-import type { RequestCompleteEvent } from './requestCollection'
+import { LifeCycleEventType } from './lifeCycle'
+import type { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import type { PageActivityEvent, PageActivityEndEvent } from './waitPageActivityEnd'
 import {
   PAGE_ACTIVITY_END_DELAY,
@@ -22,6 +24,9 @@ const MAX_DURATION = 10 * ONE_SECOND
 // A long delay used to wait after any action is finished.
 const EXPIRE_DELAY = MAX_DURATION * 10
 
+const FAKE_URL = 'https://example.com'
+const EXCLUDED_FAKE_URL = 'https://example.com/excluded'
+
 function eventsCollector<T>() {
   const events: T[] = []
   beforeEach(() => {
@@ -38,24 +43,30 @@ function eventsCollector<T>() {
 describe('createPageActivityObservable', () => {
   const { events, pushEvent } = eventsCollector<PageActivityEvent>()
 
-  let lifeCycle: LifeCycle
-  let domMutationObservable: Observable<void>
-  let pageActivityObservable: Observable<PageActivityEvent>
+  let setupBuilder: TestSetupBuilder
+  let pageActivitySubscription: Subscription
 
   beforeEach(() => {
-    lifeCycle = new LifeCycle()
-    domMutationObservable = new Observable()
-    pageActivityObservable = createPageActivityObservable(lifeCycle, domMutationObservable)
+    setupBuilder = setup()
+      .withConfiguration({ excludedActivityUrls: [EXCLUDED_FAKE_URL] })
+      .beforeBuild(({ lifeCycle, domMutationObservable, configuration }) => {
+        const pageActivityObservable = createPageActivityObservable(lifeCycle, domMutationObservable, configuration)
+        pageActivitySubscription = pageActivityObservable.subscribe(pushEvent)
+      })
+  })
+
+  afterEach(() => {
+    setupBuilder.cleanup()
   })
 
   it('emits an activity event on dom mutation', () => {
-    pageActivityObservable.subscribe(pushEvent)
+    const { domMutationObservable } = setupBuilder.build()
     domMutationObservable.notify()
     expect(events).toEqual([{ isBusy: false }])
   })
 
   it('emits an activity event on resource collected', () => {
-    pageActivityObservable.subscribe(pushEvent)
+    const { lifeCycle } = setupBuilder.build()
     const performanceTiming = {
       entryType: 'resource',
     } as RumPerformanceResourceTiming
@@ -63,8 +74,18 @@ describe('createPageActivityObservable', () => {
     expect(events).toEqual([{ isBusy: false }])
   })
 
-  it('does not emit an activity event when a navigation occurs', () => {
-    pageActivityObservable.subscribe(pushEvent)
+  it('emits an activity event on resource collected', () => {
+    const { lifeCycle } = setupBuilder.build()
+    const performanceTiming = {
+      entryType: 'resource',
+      name: EXCLUDED_FAKE_URL,
+    } as RumPerformanceResourceTiming
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [performanceTiming])
+    expect(events).toEqual([])
+  })
+
+  it('ignores resources that should be excluded by configuration', () => {
+    const { lifeCycle } = setupBuilder.build()
     const performanceTiming = {
       entryType: 'navigation',
     } as RumPerformanceNavigationTiming
@@ -73,11 +94,11 @@ describe('createPageActivityObservable', () => {
   })
 
   it('stops emitting activities after calling stop()', () => {
-    const subscription = pageActivityObservable.subscribe(pushEvent)
+    const { domMutationObservable } = setupBuilder.build()
     domMutationObservable.notify()
     expect(events).toEqual([{ isBusy: false }])
 
-    subscription.unsubscribe()
+    pageActivitySubscription.unsubscribe()
 
     domMutationObservable.notify()
     domMutationObservable.notify()
@@ -85,56 +106,59 @@ describe('createPageActivityObservable', () => {
     expect(events).toEqual([{ isBusy: false }])
   })
 
-  describe('requests', () => {
-    function makeFakeRequestCompleteEvent(requestIndex: number) {
-      return { requestIndex } as RequestCompleteEvent
-    }
-    let lifeCycle: LifeCycle
-    let domMutationObservable: Observable<void>
-    let pageActivityObservable: Observable<PageActivityEvent>
-
-    beforeEach(() => {
-      lifeCycle = new LifeCycle()
-      domMutationObservable = new Observable()
-      pageActivityObservable = createPageActivityObservable(lifeCycle, domMutationObservable)
-    })
-
+  describe('programmatic requests', () => {
     it('emits an activity event when a request starts', () => {
-      pageActivityObservable.subscribe(pushEvent)
-      lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
-        requestIndex: 10,
-      })
+      const { lifeCycle } = setupBuilder.build()
+      lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, makeFakeRequestStartEvent(10))
       expect(events).toEqual([{ isBusy: true }])
     })
 
     it('emits an activity event when a request completes', () => {
-      pageActivityObservable.subscribe(pushEvent)
-      lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
-        requestIndex: 10,
-      })
+      const { lifeCycle } = setupBuilder.build()
+      lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, makeFakeRequestStartEvent(10))
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(10))
       expect(events).toEqual([{ isBusy: true }, { isBusy: false }])
     })
 
     it('ignores requests that has started before', () => {
-      pageActivityObservable.subscribe(pushEvent)
+      const { lifeCycle } = setupBuilder.build()
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(10))
       expect(events).toEqual([])
     })
 
     it('keeps emitting busy events while all requests are not completed', () => {
-      pageActivityObservable.subscribe(pushEvent)
-      lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
-        requestIndex: 10,
-      })
-      lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
-        requestIndex: 11,
-      })
+      const { lifeCycle } = setupBuilder.build()
+      lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, makeFakeRequestStartEvent(10))
+      lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, makeFakeRequestStartEvent(11))
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(9))
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(11))
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(10))
       expect(events).toEqual([{ isBusy: true }, { isBusy: true }, { isBusy: true }, { isBusy: false }])
     })
+
+    describe('excludedActivityUrls', () => {
+      it('ignores requests that should be excluded by configuration', () => {
+        const { lifeCycle } = setupBuilder.build()
+        lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, makeFakeRequestStartEvent(10, EXCLUDED_FAKE_URL))
+        lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(10, EXCLUDED_FAKE_URL))
+        expect(events).toEqual([])
+      })
+
+      it("ignored requests don't interfere with pending requests count", () => {
+        const { lifeCycle } = setupBuilder.build()
+        lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, makeFakeRequestStartEvent(9))
+        lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, makeFakeRequestStartEvent(10, EXCLUDED_FAKE_URL))
+        lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(10, EXCLUDED_FAKE_URL))
+        expect(events).toEqual([{ isBusy: true }])
+      })
+    })
+
+    function makeFakeRequestCompleteEvent(requestIndex: number, url = FAKE_URL) {
+      return { requestIndex, url } as RequestCompleteEvent
+    }
+    function makeFakeRequestStartEvent(requestIndex: number, url = FAKE_URL): RequestStartEvent {
+      return { requestIndex, url }
+    }
   })
 })
 
