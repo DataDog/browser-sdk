@@ -1,8 +1,13 @@
 import type { RumEvent } from '../../../../rum-core/src'
 import { display } from '../../tools/display'
+import { ONE_KILO_BYTE } from '../../tools/utils'
 import type { InitConfiguration } from './configuration'
 import { validateAndBuildConfiguration } from './configuration'
-import { isExperimentalFeatureEnabled, updateExperimentalFeatures } from './experimentalFeatures'
+import {
+  isExperimentalFeatureEnabled,
+  resetExperimentalFeatures,
+  updateExperimentalFeatures,
+} from './experimentalFeatures'
 
 describe('validateAndBuildConfiguration', () => {
   const clientToken = 'some_client_token'
@@ -121,6 +126,23 @@ describe('validateAndBuildConfiguration', () => {
       const displaySpy = spyOn(display, 'error')
       expect(configuration.beforeSend!(null, {})).toBeUndefined()
       expect(displaySpy).toHaveBeenCalledWith('beforeSend threw an error:', myError)
+    })
+  })
+
+  describe('batchBytesLimit ', () => {
+    afterEach(() => {
+      resetExperimentalFeatures()
+    })
+
+    it('should be set to 10KB when lower-batch-size is enabled', () => {
+      updateExperimentalFeatures(['lower-batch-size'])
+      const configuration = validateAndBuildConfiguration({ clientToken })!
+      expect(configuration.batchBytesLimit).toEqual(10 * ONE_KILO_BYTE)
+    })
+
+    it('should be set to 16KB when lower-batch-size is disabled', () => {
+      const configuration = validateAndBuildConfiguration({ clientToken })!
+      expect(configuration.batchBytesLimit).toEqual(16 * ONE_KILO_BYTE)
     })
   })
 })

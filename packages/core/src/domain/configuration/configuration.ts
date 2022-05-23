@@ -3,7 +3,7 @@ import { getCurrentSite } from '../../browser/cookie'
 import { catchUserErrors } from '../../tools/catchUserErrors'
 import { display } from '../../tools/display'
 import { assign, isPercentage, ONE_KILO_BYTE, ONE_SECOND } from '../../tools/utils'
-import { updateExperimentalFeatures } from './experimentalFeatures'
+import { isExperimentalFeatureEnabled, updateExperimentalFeatures } from './experimentalFeatures'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
 
@@ -105,7 +105,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
        * beacon payload max queue size implementation is 64kb
        * ensure that we leave room for logs, rum and potential other users
        */
-      batchBytesLimit: 16 * ONE_KILO_BYTE,
+      batchBytesLimit: isExperimentalFeatureEnabled('lower-batch-size') ? 10 * ONE_KILO_BYTE : 16 * ONE_KILO_BYTE,
 
       eventRateLimiterThreshold: 3000,
       maxInternalMonitoringMessagesPerPage: 15,
