@@ -3,11 +3,12 @@ import { display } from '../../tools/display'
 import { toStackTraceString } from '../../tools/error'
 import { assign, combine, jsonStringify, performDraw, includes, startsWith } from '../../tools/utils'
 import type { Configuration } from '../configuration'
+import { INTAKE_SITE_STAGING, INTAKE_SITE_US1_FED } from '../configuration'
 import type { StackTrace } from '../tracekit'
 import { computeStackTrace } from '../tracekit'
 import { Observable } from '../../tools/observable'
 import { timeStampNow } from '../../tools/timeUtils'
-import { INTAKE_SITE_STAGING, INTAKE_SITE_US1_FED } from '../configuration'
+import { ConsoleApiName } from '../console/consoleObservable'
 import type { TelemetryEvent } from './telemetryEvent.types'
 
 // replaced at build time
@@ -153,17 +154,17 @@ export function callMonitored<T extends (...args: any[]) => any>(
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return fn.apply(context, args)
   } catch (e) {
-    logErrorIfDebug(e)
+    displayIfDebugEnabled(ConsoleApiName.error, e)
     try {
       addTelemetryError(e)
     } catch (e) {
-      logErrorIfDebug(e)
+      displayIfDebugEnabled(ConsoleApiName.error, e)
     }
   }
 }
 
 export function addTelemetryDebug(message: string, context?: Context) {
-  logDebugIfDebug(message, context)
+  displayIfDebugEnabled(ConsoleApiName.debug, message, context)
   addTelemetry(
     assign(
       {
@@ -223,14 +224,8 @@ export function setDebugMode(debugMode: boolean) {
   telemetryConfiguration.debugMode = debugMode
 }
 
-function logErrorIfDebug(e: any) {
+function displayIfDebugEnabled(api: ConsoleApiName, ...args: any[]) {
   if (telemetryConfiguration.debugMode) {
-    display.error('[TELEMETRY ERROR]', e)
-  }
-}
-
-function logDebugIfDebug(message: any, context?: Context) {
-  if (telemetryConfiguration.debugMode) {
-    display.debug('[TELEMETRY DEBUG]', message, context)
+    display(api, '[TELEMETRY]', ...args)
   }
 }

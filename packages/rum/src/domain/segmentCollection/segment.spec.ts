@@ -115,7 +115,7 @@ describe('Segment', () => {
     worker.processAllMessages()
     expect(worker.messageListenersCount).toBe(1)
     expect(displaySpy).toHaveBeenCalledWith(
-      '[TELEMETRY DEBUG]',
+      '[TELEMETRY]',
       "Segment did not receive a 'flush' response before being replaced.",
       undefined
     )
