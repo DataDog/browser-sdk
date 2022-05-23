@@ -6,9 +6,7 @@ import { flushEvents } from '../lib/helpers/flushEvents'
 describe('telemetry', () => {
   createTest('send errors for logs')
     .withSetup(bundleSetup)
-    .withLogs({
-      enableExperimentalFeatures: ['telemetry'],
-    })
+    .withLogs()
     .run(async ({ serverEvents }) => {
       await browserExecute(() => {
         const context = {
@@ -30,9 +28,7 @@ describe('telemetry', () => {
 
   createTest('send errors for RUM')
     .withSetup(bundleSetup)
-    .withRum({
-      enableExperimentalFeatures: ['telemetry'],
-    })
+    .withRum()
     .run(async ({ serverEvents }) => {
       await browserExecute(() => {
         const context = {

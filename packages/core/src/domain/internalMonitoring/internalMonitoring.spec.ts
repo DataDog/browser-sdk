@@ -2,14 +2,7 @@ import type { StackTrace } from '@datadog/browser-core'
 import type { Context } from '../../tools/context'
 import { display } from '../../tools/display'
 import type { Configuration } from '../configuration'
-import {
-  updateExperimentalFeatures,
-  resetExperimentalFeatures,
-  INTAKE_SITE_EU,
-  INTAKE_SITE_US5,
-  INTAKE_SITE_US3,
-  INTAKE_SITE_US,
-} from '../configuration'
+import { INTAKE_SITE_EU, INTAKE_SITE_US5, INTAKE_SITE_US3, INTAKE_SITE_US } from '../configuration'
 import type { InternalMonitoring } from './internalMonitoring'
 import {
   monitor,
@@ -25,12 +18,12 @@ import type { TelemetryEvent, TelemetryErrorEvent } from './telemetryEvent.types
 const configuration: Partial<Configuration> = {
   maxInternalMonitoringMessagesPerPage: 7,
   telemetrySampleRate: 100,
+  site: INTAKE_SITE_US,
 }
 
 describe('internal monitoring', () => {
   afterEach(() => {
     resetInternalMonitoring()
-    resetExperimentalFeatures()
   })
 
   describe('decorator', () => {
@@ -79,7 +72,6 @@ describe('internal monitoring', () => {
       let notifySpy: jasmine.Spy<(event: TelemetryEvent) => void>
 
       beforeEach(() => {
-        updateExperimentalFeatures(['telemetry'])
         const { telemetryEventObservable } = startInternalMonitoring(configuration as Configuration)
         notifySpy = jasmine.createSpy('notified')
         telemetryEventObservable.subscribe(notifySpy)
@@ -128,7 +120,6 @@ describe('internal monitoring', () => {
     let notifySpy: jasmine.Spy<(event: TelemetryEvent) => void>
 
     beforeEach(() => {
-      updateExperimentalFeatures(['telemetry'])
       const { telemetryEventObservable } = startInternalMonitoring(configuration as Configuration)
       notifySpy = jasmine.createSpy('notified')
       telemetryEventObservable.subscribe(notifySpy)
@@ -174,7 +165,6 @@ describe('internal monitoring', () => {
     let notifySpy: jasmine.Spy<(event: TelemetryEvent) => void>
 
     beforeEach(() => {
-      updateExperimentalFeatures(['telemetry'])
       internalMonitoring = startInternalMonitoring(configuration as Configuration)
       notifySpy = jasmine.createSpy('notified')
       internalMonitoring.telemetryEventObservable.subscribe(notifySpy)
@@ -202,7 +192,6 @@ describe('internal monitoring', () => {
 
     beforeEach(() => {
       displaySpy = spyOn(display, 'error')
-      updateExperimentalFeatures(['telemetry'])
       startInternalMonitoring(configuration as Configuration)
     })
 
@@ -225,7 +214,6 @@ describe('internal monitoring', () => {
     })
 
     it('when called and telemetry not sampled, should display error', () => {
-      updateExperimentalFeatures(['telemetry'])
       startInternalMonitoring({ ...configuration, telemetrySampleRate: 0 } as Configuration)
       setDebugMode(true)
 
@@ -242,7 +230,6 @@ describe('internal monitoring', () => {
     let notifySpy: jasmine.Spy<(event: TelemetryEvent & Context) => void>
 
     beforeEach(() => {
-      updateExperimentalFeatures(['telemetry'])
       internalMonitoring = startInternalMonitoring(configuration as Configuration)
       notifySpy = jasmine.createSpy('notified')
       internalMonitoring.telemetryEventObservable.subscribe(notifySpy)
@@ -281,7 +268,6 @@ describe('internal monitoring', () => {
       { site: INTAKE_SITE_US, enabled: true },
     ].forEach(({ site, enabled }) => {
       it(`should be ${enabled ? 'enabled' : 'disabled'} on ${site}`, () => {
-        updateExperimentalFeatures(['telemetry'])
         const internalMonitoring = startInternalMonitoring({ ...configuration, site } as Configuration)
         const notifySpy = jasmine.createSpy('notified')
         internalMonitoring.telemetryEventObservable.subscribe(notifySpy)
@@ -296,25 +282,6 @@ describe('internal monitoring', () => {
           expect(notifySpy).not.toHaveBeenCalled()
         }
       })
-    })
-  })
-
-  describe('when disabled', () => {
-    let internalMonitoring: InternalMonitoring
-    let notifySpy: jasmine.Spy<(event: TelemetryEvent & Context) => void>
-
-    beforeEach(() => {
-      internalMonitoring = startInternalMonitoring(configuration as Configuration)
-      notifySpy = jasmine.createSpy('notified')
-      internalMonitoring.telemetryEventObservable.subscribe(notifySpy)
-    })
-
-    it('should not notify observable', () => {
-      callMonitored(() => {
-        throw new Error('message')
-      })
-
-      expect(notifySpy).not.toHaveBeenCalled()
     })
   })
 })
