@@ -19,7 +19,3 @@ export async function startProfiling(options: ProfilingOptions, page: Page) {
     }),
   }
 }
-
-export function isSdkBundleUrl(options: ProfilingOptions, url: string) {
-  return url === options.bundleUrl
-}
