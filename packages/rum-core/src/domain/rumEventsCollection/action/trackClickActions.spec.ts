@@ -254,7 +254,7 @@ describe('trackClickActions', () => {
 
       clock.tick(EXPIRE_DELAY)
       expect(events.length).toBe(1)
-      expect(events[0].frustrationTypes).toEqual([FrustrationType.DEAD])
+      expect(events[0].frustrationTypes).toEqual([FrustrationType.DEAD_CLICK])
       expect(findActionId()).toEqual([])
     })
 
@@ -288,7 +288,7 @@ describe('trackClickActions', () => {
         clock.tick(EXPIRE_DELAY)
         expect(events.length).toBe(1)
         expect(events[0].startClocks.timeStamp).toBe(firstClickTimeStamp)
-        expect(events[0].frustrationTypes).toEqual([FrustrationType.RAGE])
+        expect(events[0].frustrationTypes).toEqual([FrustrationType.RAGE_CLICK])
         expect(events[0].duration).toBe((MAX_DURATION_BETWEEN_CLICKS + 2 * actionDuration) as Duration)
       })
 
@@ -310,7 +310,11 @@ describe('trackClickActions', () => {
         clock.tick(EXPIRE_DELAY)
         expect(events.length).toBe(1)
         expect(events[0].frustrationTypes).toEqual(
-          jasmine.arrayWithExactContents([FrustrationType.DEAD, FrustrationType.ERROR, FrustrationType.RAGE])
+          jasmine.arrayWithExactContents([
+            FrustrationType.DEAD_CLICK,
+            FrustrationType.ERROR_CLICK,
+            FrustrationType.RAGE_CLICK,
+          ])
         )
       })
     })
@@ -325,7 +329,7 @@ describe('trackClickActions', () => {
 
         clock.tick(EXPIRE_DELAY)
         expect(events.length).toBe(1)
-        expect(events[0].frustrationTypes).toEqual([FrustrationType.ERROR])
+        expect(events[0].frustrationTypes).toEqual([FrustrationType.ERROR_CLICK])
       })
 
       // eslint-disable-next-line max-len
@@ -338,7 +342,7 @@ describe('trackClickActions', () => {
         clock.tick(EXPIRE_DELAY)
         expect(events.length).toBe(1)
         expect(events[0].frustrationTypes).toEqual(
-          jasmine.arrayWithExactContents([FrustrationType.ERROR, FrustrationType.DEAD])
+          jasmine.arrayWithExactContents([FrustrationType.ERROR_CLICK, FrustrationType.DEAD_CLICK])
         )
       })
     })
@@ -351,7 +355,7 @@ describe('trackClickActions', () => {
 
         clock.tick(EXPIRE_DELAY)
         expect(events.length).toBe(1)
-        expect(events[0].frustrationTypes).toEqual([FrustrationType.DEAD])
+        expect(events[0].frustrationTypes).toEqual([FrustrationType.DEAD_CLICK])
       })
     })
   })
