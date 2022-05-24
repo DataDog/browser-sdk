@@ -16,6 +16,12 @@
 
 ---
 
+## v4.11.1
+
+- ♻️ [RUMF-1190] cleanup telemetry ([#1560](https://github.com/DataDog/browser-sdk/pull/1560))
+- ♻️ [RUMF-1267] remove circular dependencies part 1 ([#1559](https://github.com/DataDog/browser-sdk/pull/1559))
+- ♻️ [RUMF-1277] rename frustration types ([#1557](https://github.com/DataDog/browser-sdk/pull/1557))
+
 ## v4.11.0
 
 - ✨ [RUMF-1262] ignore some URLs when watching the page activity ([#1536](https://github.com/DataDog/browser-sdk/pull/1536))
