@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-logs",
-  "version": "4.11.0",
+  "version": "4.11.1",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
   "module": "esm/entries/main.js",
@@ -13,7 +13,7 @@
     "replace-build-env": "node ../../scripts/replace-build-env.js"
   },
   "dependencies": {
-    "@datadog/browser-core": "4.11.0"
+    "@datadog/browser-core": "4.11.1"
   },
   "devDependencies": {
     "@types/sinon": "9.0.10",
