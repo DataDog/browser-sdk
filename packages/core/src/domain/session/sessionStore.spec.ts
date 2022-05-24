@@ -3,8 +3,9 @@ import { mockClock } from '../../../test/specHelper'
 import type { CookieOptions } from '../../browser/cookie'
 import { getCookie, setCookie, COOKIE_ACCESS_DELAY } from '../../browser/cookie'
 import type { SessionStore } from './sessionStore'
-import { startSessionStore, SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionStore'
+import { startSessionStore } from './sessionStore'
 import { SESSION_COOKIE_NAME } from './sessionCookieStore'
+import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 
 const enum FakeTrackingType {
   TRACKED = 'tracked',

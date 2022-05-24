@@ -4,9 +4,8 @@ import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 
 import { findAllIncrementalSnapshots, findAllVisualViewports } from '@datadog/browser-rum/test/utils'
 import type { EventRegistry } from '../../lib/framework'
-import { createTest, bundleSetup, html } from '../../lib/framework'
+import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
 import { browserExecute, getBrowserName, getPlatformName } from '../../lib/helpers/browser'
-import { flushEvents } from '../../lib/helpers/flushEvents'
 
 const NAVBAR_HEIGHT_CHANGE_UPPER_BOUND = 30
 const VIEWPORT_META_TAGS = `
