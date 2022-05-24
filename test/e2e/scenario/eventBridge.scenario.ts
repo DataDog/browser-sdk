@@ -1,6 +1,5 @@
 import { browserExecute, flushBrowserLogs } from '../lib/helpers/browser'
-import { createTest, html } from '../lib/framework'
-import { flushEvents } from '../lib/helpers/flushEvents'
+import { createTest, flushEvents, html } from '../lib/framework'
 
 describe('bridge present', () => {
   createTest('send action')

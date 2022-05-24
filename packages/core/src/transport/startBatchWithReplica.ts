@@ -1,6 +1,7 @@
 import type { Configuration, EndpointBuilder } from '../domain/configuration'
 import type { Context } from '../tools/context'
-import { Batch, HttpRequest } from './index'
+import { Batch } from './batch'
+import { HttpRequest } from './httpRequest'
 
 export function startBatchWithReplica<T extends Context>(
   configuration: Configuration,

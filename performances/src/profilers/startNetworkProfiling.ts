@@ -1,6 +1,6 @@
 import type { CDPSession, Protocol } from 'puppeteer'
 import type { ProfilingOptions } from '../types'
-import { isSdkBundleUrl } from './startProfiling'
+import { isSdkBundleUrl } from '../utils'
 
 export async function startNetworkProfiling(options: ProfilingOptions, client: CDPSession) {
   await client.send('Network.enable')
