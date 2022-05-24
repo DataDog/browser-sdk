@@ -1,5 +1,5 @@
-import { setDebugMode } from '../domain/telemetry'
 import { catchUserErrors } from '../tools/catchUserErrors'
+import { setDebugMode } from '../tools/monitor'
 import { assign } from '../tools/utils'
 
 // replaced at build time

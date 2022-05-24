@@ -17,19 +17,16 @@ export {
   startTelemetry,
   Telemetry,
   RawTelemetryEvent,
-  monitored,
-  monitor,
-  callMonitored,
   addTelemetryDebug,
   addTelemetryError,
   startFakeTelemetry,
   resetTelemetry,
-  setDebugMode,
   TelemetryEvent,
   TelemetryErrorEvent,
   TelemetryDebugEvent,
   isTelemetryReplicationAllowed,
 } from './domain/telemetry'
+export { monitored, monitor, callMonitored, setDebugMode } from './tools/monitor'
 export { Observable, Subscription } from './tools/observable'
 export {
   startSessionManager,

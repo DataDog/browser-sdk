@@ -1,19 +1,11 @@
 import type { StackTrace } from '@datadog/browser-core'
 import type { Context } from '../../tools/context'
-import { display } from '../../tools/display'
+import { callMonitored } from '../../tools/monitor'
 import type { Configuration } from '../configuration'
 import { INTAKE_SITE_US1, INTAKE_SITE_US1_FED } from '../configuration'
 import type { Telemetry } from './telemetry'
-import {
-  monitor,
-  monitored,
-  resetTelemetry,
-  startTelemetry,
-  callMonitored,
-  setDebugMode,
-  scrubCustomerFrames,
-} from './telemetry'
-import type { TelemetryEvent, TelemetryErrorEvent } from './telemetryEvent.types'
+import { resetTelemetry, startTelemetry, scrubCustomerFrames } from './telemetry'
+import type { TelemetryEvent } from './telemetryEvent.types'
 
 const configuration: Partial<Configuration> = {
   maxTelemetryEventsPerPage: 7,
@@ -23,140 +15,6 @@ const configuration: Partial<Configuration> = {
 describe('telemetry', () => {
   afterEach(() => {
     resetTelemetry()
-  })
-
-  describe('decorator', () => {
-    class Candidate {
-      @monitored
-      monitoredThrowing() {
-        throw new Error('monitored')
-      }
-
-      @monitored
-      monitoredStringErrorThrowing() {
-        // eslint-disable-next-line no-throw-literal
-        throw 'string error'
-      }
-
-      @monitored
-      monitoredObjectErrorThrowing() {
-        // eslint-disable-next-line no-throw-literal
-        throw { foo: 'bar' }
-      }
-
-      @monitored
-      monitoredNotThrowing() {
-        return 1
-      }
-
-      notMonitoredThrowing() {
-        throw new Error('not monitored')
-      }
-    }
-
-    let candidate: Candidate
-    beforeEach(() => {
-      candidate = new Candidate()
-    })
-
-    describe('before initialization', () => {
-      it('should not monitor', () => {
-        expect(() => candidate.notMonitoredThrowing()).toThrowError('not monitored')
-        expect(() => candidate.monitoredThrowing()).toThrowError('monitored')
-        expect(candidate.monitoredNotThrowing()).toEqual(1)
-      })
-    })
-
-    describe('after initialization', () => {
-      let notifySpy: jasmine.Spy<(event: TelemetryEvent) => void>
-
-      beforeEach(() => {
-        const { observable } = startTelemetry(configuration as Configuration)
-        notifySpy = jasmine.createSpy('notified')
-        observable.subscribe(notifySpy)
-      })
-
-      it('should preserve original behavior', () => {
-        expect(candidate.monitoredNotThrowing()).toEqual(1)
-      })
-
-      it('should catch error', () => {
-        expect(() => candidate.notMonitoredThrowing()).toThrowError()
-        expect(() => candidate.monitoredThrowing()).not.toThrowError()
-      })
-
-      it('should report error', () => {
-        candidate.monitoredThrowing()
-
-        const event = notifySpy.calls.mostRecent().args[0] as TelemetryErrorEvent
-        expect(event.telemetry.message).toEqual('monitored')
-        expect(event.telemetry.error!.stack).toMatch('monitored')
-      })
-
-      it('should report string error', () => {
-        candidate.monitoredStringErrorThrowing()
-
-        const event = notifySpy.calls.mostRecent().args[0] as TelemetryErrorEvent
-        expect(event.telemetry.message).toEqual('Uncaught "string error"')
-        expect(event.telemetry.error!.stack).toMatch('Not an instance of error')
-      })
-
-      it('should report object error', () => {
-        candidate.monitoredObjectErrorThrowing()
-
-        const event = notifySpy.calls.mostRecent().args[0] as TelemetryErrorEvent
-        expect(event.telemetry.message).toEqual('Uncaught {"foo":"bar"}')
-        expect(event.telemetry.error!.stack).toMatch('Not an instance of error')
-      })
-    })
-  })
-
-  describe('function', () => {
-    const notThrowing = () => 1
-    const throwing = () => {
-      throw new Error('error')
-    }
-    let notifySpy: jasmine.Spy<(event: TelemetryEvent) => void>
-
-    beforeEach(() => {
-      const { observable } = startTelemetry(configuration as Configuration)
-      notifySpy = jasmine.createSpy('notified')
-      observable.subscribe(notifySpy)
-    })
-
-    describe('direct call', () => {
-      it('should preserve original behavior', () => {
-        expect(callMonitored(notThrowing)).toEqual(1)
-      })
-
-      it('should catch error', () => {
-        expect(() => callMonitored(throwing)).not.toThrowError()
-      })
-
-      it('should report error', () => {
-        callMonitored(throwing)
-
-        expect(notifySpy.calls.mostRecent().args[0].telemetry.message).toEqual('error')
-      })
-    })
-
-    describe('wrapper', () => {
-      it('should preserve original behavior', () => {
-        const decorated = monitor(notThrowing)
-        expect(decorated()).toEqual(1)
-      })
-
-      it('should catch error', () => {
-        const decorated = monitor(throwing)
-        expect(() => decorated()).not.toThrowError()
-      })
-
-      it('should report error', () => {
-        monitor(throwing)()
-
-        expect(notifySpy.calls.mostRecent().args[0].telemetry.message).toEqual('error')
-      })
-    })
   })
 
   describe('telemetry context', () => {
@@ -183,44 +41,6 @@ describe('telemetry', () => {
         throw new Error('message')
       })
       expect(notifySpy.calls.mostRecent().args[0].foo).not.toBeDefined()
-    })
-  })
-
-  describe('setDebug', () => {
-    let displaySpy: jasmine.Spy
-
-    beforeEach(() => {
-      displaySpy = spyOn(display, 'error')
-      startTelemetry(configuration as Configuration)
-    })
-
-    it('when not called, should not display error', () => {
-      callMonitored(() => {
-        throw new Error('message')
-      })
-
-      expect(displaySpy).not.toHaveBeenCalled()
-    })
-
-    it('when called, should display error', () => {
-      setDebugMode(true)
-
-      callMonitored(() => {
-        throw new Error('message')
-      })
-
-      expect(displaySpy).toHaveBeenCalled()
-    })
-
-    it('when called and telemetry not sampled, should display error', () => {
-      startTelemetry({ ...configuration, telemetrySampleRate: 0 } as Configuration)
-      setDebugMode(true)
-
-      callMonitored(() => {
-        throw new Error('message')
-      })
-
-      expect(displaySpy).toHaveBeenCalled()
     })
   })
 

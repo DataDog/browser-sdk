@@ -1,7 +1,7 @@
 import { toStackTraceString } from '../../tools/error'
+import { monitor } from '../../tools/monitor'
 import { mergeObservables, Observable } from '../../tools/observable'
 import { DOM_EVENT, includes, addEventListener, safeTruncate } from '../../tools/utils'
-import { monitor } from '../telemetry'
 import type { Report, BrowserWindow, ReportType } from './browser.types'
 
 export const RawReportType = {
