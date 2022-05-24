@@ -206,7 +206,7 @@ The percentage of tracked sessions with [Premium pricing][11] features: `100` fo
 : Optional<br/>
 **Type**: Boolean <br/>
 **Default**: `false`<br/>
-Initialization fails silently if Real User Monitoring is already initialized on the page.
+Initialization fails silently if the RUM Browser SDK is already initialized on the page.
 
 `proxyUrl`
 : Optional<br/>
