@@ -162,9 +162,9 @@ export const enum ActionType {
 }
 
 export const enum FrustrationType {
-  RAGE = 'rage',
-  ERROR = 'error',
-  DEAD = 'dead',
+  RAGE_CLICK = 'rage_click',
+  ERROR_CLICK = 'error_click',
+  DEAD_CLICK = 'dead_click',
 }
 
 export type RawRumEvent =
