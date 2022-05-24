@@ -1,7 +1,7 @@
 import type { CookieOptions } from '../../browser/cookie'
 import type { Observable } from '../../tools/observable'
 import * as utils from '../../tools/utils'
-import { monitor } from '../internalMonitoring'
+import { monitor } from '../telemetry'
 import type { Context } from '../../tools/context'
 import { ContextHistory } from '../../tools/contextHistory'
 import type { RelativeTime } from '../../tools/timeUtils'

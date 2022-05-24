@@ -1,5 +1,5 @@
 import type { EndpointBuilder } from '../domain/configuration'
-import { addMonitoringError } from '../domain/internalMonitoring'
+import { addTelemetryError } from '../domain/telemetry'
 import { addFailedSendBeacon } from './failedSendBeacon'
 
 /**
@@ -39,6 +39,6 @@ let hasReportedBeaconError = false
 function reportBeaconError(e: unknown) {
   if (!hasReportedBeaconError) {
     hasReportedBeaconError = true
-    addMonitoringError(e)
+    addTelemetryError(e)
   }
 }

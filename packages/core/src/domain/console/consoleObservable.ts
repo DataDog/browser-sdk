@@ -1,4 +1,4 @@
-import { callMonitored } from '../internalMonitoring'
+import { callMonitored } from '../telemetry'
 import { computeStackTrace } from '../tracekit'
 import { createHandlingStack, formatErrorMessage, toStackTraceString } from '../../tools/error'
 import { mergeObservables, Observable } from '../../tools/observable'

@@ -2,7 +2,7 @@ import { timeStampNow } from '../../tools/timeUtils'
 import { normalizeUrl } from '../../tools/urlPolyfill'
 import { generateUUID } from '../../tools/utils'
 import type { InitConfiguration } from './configuration'
-import { INTAKE_SITE_US } from './intakeSites'
+import { INTAKE_SITE_US1 } from './intakeSites'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
@@ -26,10 +26,9 @@ export type EndpointBuilder = ReturnType<typeof createEndpointBuilder>
 export function createEndpointBuilder(
   initConfiguration: InitConfiguration,
   endpointType: EndpointType,
-  tags: string[],
-  source?: string
+  tags: string[]
 ) {
-  const { site = INTAKE_SITE_US, clientToken } = initConfiguration
+  const { site = INTAKE_SITE_US1, clientToken } = initConfiguration
 
   const domainParts = site.split('.')
   const extension = domainParts.pop()
@@ -40,7 +39,7 @@ export function createEndpointBuilder(
   return {
     build() {
       let parameters =
-        `ddsource=${source || 'browser'}` +
+        'ddsource=browser' +
         `&ddtags=${encodeURIComponent([`sdk_version:${__BUILD_ENV__SDK_VERSION__}`].concat(tags).join(','))}` +
         `&dd-api-key=${clientToken}` +
         `&dd-evp-origin-version=${encodeURIComponent(__BUILD_ENV__SDK_VERSION__)}` +

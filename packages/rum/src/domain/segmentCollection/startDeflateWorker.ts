@@ -1,4 +1,4 @@
-import { addMonitoringError, display, includes, monitor } from '@datadog/browser-core'
+import { addTelemetryError, display, includes, monitor } from '@datadog/browser-core'
 import type { DeflateWorker } from './deflateWorker'
 import { createDeflateWorker } from './deflateWorker'
 
@@ -103,11 +103,11 @@ function onError(error: unknown) {
           'https://docs.datadoghq.com/real_user_monitoring/faq/content_security_policy'
       )
     } else {
-      addMonitoringError(error)
+      addTelemetryError(error)
     }
     state.callbacks.forEach((callback) => callback())
     state = { status: DeflateWorkerStatus.Error }
   } else {
-    addMonitoringError(error)
+    addTelemetryError(error)
   }
 }

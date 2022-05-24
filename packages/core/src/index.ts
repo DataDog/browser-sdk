@@ -14,20 +14,22 @@ export { computeStackTrace, StackTrace } from './domain/tracekit'
 export { defineGlobal, makePublicApi } from './boot/init'
 export { initReportObservable, RawReport, RawReportType } from './domain/report/reportObservable'
 export {
-  startInternalMonitoring,
-  InternalMonitoring,
-  MonitoringMessage,
+  startTelemetry,
+  Telemetry,
+  RawTelemetryEvent,
   monitored,
   monitor,
   callMonitored,
-  addMonitoringMessage,
-  addMonitoringError,
-  startFakeInternalMonitoring,
-  resetInternalMonitoring,
+  addTelemetryDebug,
+  addTelemetryError,
+  startFakeTelemetry,
+  resetTelemetry,
   setDebugMode,
   TelemetryEvent,
+  TelemetryErrorEvent,
+  TelemetryDebugEvent,
   isTelemetryReplicationAllowed,
-} from './domain/internalMonitoring'
+} from './domain/telemetry'
 export { Observable, Subscription } from './tools/observable'
 export {
   startSessionManager,

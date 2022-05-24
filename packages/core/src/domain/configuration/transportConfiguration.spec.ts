@@ -3,20 +3,9 @@ import { computeTransportConfiguration } from './transportConfiguration'
 
 describe('transportConfiguration', () => {
   const clientToken = 'some_client_token'
-  const otherClientToken = 'some_other_client_token'
 
   beforeEach(() => {
     ;(window as unknown as BuildEnvWindow).__BUILD_ENV__SDK_VERSION__ = 'some_version'
-  })
-
-  describe('internal monitoring endpoint', () => {
-    it('should only be defined when api key is provided', () => {
-      let configuration = computeTransportConfiguration({ clientToken })
-      expect(configuration.internalMonitoringEndpointBuilder).toBeUndefined()
-
-      configuration = computeTransportConfiguration({ clientToken, internalMonitoringApiKey: otherClientToken })
-      expect(configuration.internalMonitoringEndpointBuilder?.build()).toContain(otherClientToken)
-    })
   })
 
   describe('site', () => {

@@ -1,14 +1,6 @@
 import type { RumActionEvent, RumErrorEvent, RumEvent, RumResourceEvent, RumViewEvent } from '@datadog/browser-rum'
 import type { Segment } from '@datadog/browser-rum/src/types'
 
-export interface ServerInternalMonitoringMessage {
-  message: string
-  status: string
-  error: {
-    kind: string
-  }
-}
-
 export function isRumResourceEvent(event: RumEvent): event is RumResourceEvent {
   return event.type === 'resource'
 }

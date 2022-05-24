@@ -53,16 +53,14 @@ function computeIntakeType(req: express.Request): { isBridge: boolean; intakeTyp
     const eventType = req.query.event_type
     return {
       isBridge: true,
-      intakeType: eventType === 'log' ? 'logs' : eventType === 'rum' ? 'rum' : 'internalMonitoring',
+      intakeType: eventType === 'log' ? 'logs' : 'rum',
     }
   }
 
   let intakeType: IntakeType
   const forwardUrl = new URL(ddforward)
   const endpoint = forwardUrl.pathname.split('/').pop()
-  if (endpoint === 'logs' && forwardUrl.searchParams.get('ddsource') === 'browser-agent-internal-monitoring') {
-    intakeType = 'internalMonitoring'
-  } else if (endpoint === 'logs' || endpoint === 'rum') {
+  if (endpoint === 'logs' || endpoint === 'rum') {
     intakeType = endpoint
   } else if (endpoint === 'replay' && req.busboy) {
     intakeType = 'sessionReplay'

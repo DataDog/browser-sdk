@@ -1,4 +1,4 @@
-import { setDebugMode } from '../domain/internalMonitoring'
+import { setDebugMode } from '../domain/telemetry'
 import { catchUserErrors } from '../tools/catchUserErrors'
 import { assign } from '../tools/utils'
 

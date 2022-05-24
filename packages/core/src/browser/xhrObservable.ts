@@ -1,4 +1,4 @@
-import { monitor } from '../domain/internalMonitoring'
+import { monitor } from '../domain/telemetry'
 import { instrumentMethodAndCallOriginal } from '../tools/instrumentMethod'
 import { Observable } from '../tools/observable'
 import type { Duration, RelativeTime, ClocksState } from '../tools/timeUtils'
