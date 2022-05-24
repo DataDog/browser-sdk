@@ -1,5 +1,4 @@
-import { flushEvents } from '../../lib/helpers/flushEvents'
-import { createTest, html } from '../../lib/framework'
+import { createTest, flushEvents, html } from '../../lib/framework'
 import { browserExecute, getBrowserName, sendXhr } from '../../lib/helpers/browser'
 import { expireSession, renewSession } from '../../lib/helpers/session'
 

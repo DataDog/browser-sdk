@@ -18,9 +18,8 @@ import {
 } from '@datadog/browser-rum/test/utils'
 import { renewSession } from '../../lib/helpers/session'
 import type { EventRegistry } from '../../lib/framework'
-import { createTest, bundleSetup, html } from '../../lib/framework'
+import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
 import { browserExecute } from '../../lib/helpers/browser'
-import { flushEvents } from '../../lib/helpers/flushEvents'
 
 const INTEGER_RE = /^\d+$/
 const TIMESTAMP_RE = /^\d{13}$/

@@ -1,6 +1,5 @@
 import { withBrowserLogs } from '../../lib/helpers/browser'
-import { createTest, html, waitForServersIdle } from '../../lib/framework'
-import { flushEvents } from '../../lib/helpers/flushEvents'
+import { createTest, flushEvents, html, waitForServersIdle } from '../../lib/framework'
 
 describe('action collection', () => {
   createTest('track a click action')
