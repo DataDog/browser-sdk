@@ -1,7 +1,6 @@
 import type { RumErrorEvent } from '@datadog/browser-rum-core'
-import { createTest, html } from '../../lib/framework'
+import { createTest, flushEvents, html } from '../../lib/framework'
 import { withBrowserLogs } from '../../lib/helpers/browser'
-import { flushEvents } from '../../lib/helpers/flushEvents'
 
 // Note: using `browserExecute` to throw exceptions may result in "Script error." being reported,
 // because WDIO is evaluating the script in a different context than the page.

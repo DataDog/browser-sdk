@@ -39,7 +39,7 @@ export {
 } from './domain/session/sessionManager'
 export {
   SESSION_TIME_OUT_DELAY, // Exposed for tests
-} from './domain/session/sessionStore'
+} from './domain/session/sessionConstants'
 export {
   HttpRequest,
   Batch,

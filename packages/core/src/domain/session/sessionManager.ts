@@ -7,7 +7,8 @@ import { ContextHistory } from '../../tools/contextHistory'
 import type { RelativeTime } from '../../tools/timeUtils'
 import { relativeNow, clocksOrigin } from '../../tools/timeUtils'
 import { tryOldCookiesMigration } from './oldCookiesMigration'
-import { startSessionStore, SESSION_TIME_OUT_DELAY } from './sessionStore'
+import { startSessionStore } from './sessionStore'
+import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 
 export interface SessionManager<TrackingType extends string> {
   findActiveSession: (startTime?: RelativeTime) => SessionContext<TrackingType> | undefined

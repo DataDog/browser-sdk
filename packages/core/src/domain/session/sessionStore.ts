@@ -3,6 +3,7 @@ import { COOKIE_ACCESS_DELAY } from '../../browser/cookie'
 import { Observable } from '../../tools/observable'
 import * as utils from '../../tools/utils'
 import { monitor } from '../telemetry'
+import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { retrieveSession, withCookieLockAccess } from './sessionCookieStore'
 
 export interface SessionStore {
@@ -22,9 +23,6 @@ export interface SessionState {
 
   [key: string]: string | undefined
 }
-
-export const SESSION_EXPIRATION_DELAY = 15 * utils.ONE_MINUTE
-export const SESSION_TIME_OUT_DELAY = 4 * utils.ONE_HOUR
 
 /**
  * Different session concepts:

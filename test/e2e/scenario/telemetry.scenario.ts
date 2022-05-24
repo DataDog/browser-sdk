@@ -1,7 +1,6 @@
 import type { TelemetryErrorEvent } from '@datadog/browser-core'
-import { bundleSetup, createTest } from '../lib/framework'
+import { bundleSetup, createTest, flushEvents } from '../lib/framework'
 import { browserExecute } from '../lib/helpers/browser'
-import { flushEvents } from '../lib/helpers/flushEvents'
 
 describe('telemetry', () => {
   createTest('send errors for logs')

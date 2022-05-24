@@ -7,8 +7,8 @@ import type { RelativeTime } from '../../tools/timeUtils'
 import { isIE } from '../../tools/browserDetection'
 import type { SessionManager } from './sessionManager'
 import { startSessionManager, stopSessionManager, VISIBILITY_CHECK_DELAY } from './sessionManager'
-import { SESSION_TIME_OUT_DELAY, SESSION_EXPIRATION_DELAY } from './sessionStore'
 import { SESSION_COOKIE_NAME } from './sessionCookieStore'
+import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 
 const enum FakeTrackingType {
   NOT_TRACKED = 'not-tracked',
