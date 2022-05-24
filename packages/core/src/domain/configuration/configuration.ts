@@ -38,7 +38,6 @@ export interface InitConfiguration {
 
   // internal options
   enableExperimentalFeatures?: string[] | undefined
-  internalMonitoringApiKey?: string | undefined
   replica?: ReplicaUserConfiguration | undefined
   datacenter?: string
 }
@@ -63,7 +62,7 @@ export interface Configuration extends TransportConfiguration {
 
   // Event limits
   eventRateLimiterThreshold: number // Limit the maximum number of actions, errors and logs per minutes
-  maxInternalMonitoringMessagesPerPage: number
+  maxTelemetryEventsPerPage: number
 
   // Batch configuration
   batchBytesLimit: number
@@ -108,7 +107,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
       batchBytesLimit: isExperimentalFeatureEnabled('lower-batch-size') ? 10 * ONE_KILO_BYTE : 16 * ONE_KILO_BYTE,
 
       eventRateLimiterThreshold: 3000,
-      maxInternalMonitoringMessagesPerPage: 15,
+      maxTelemetryEventsPerPage: 15,
 
       /**
        * flush automatically, aim to be lower than ALB connection timeout

@@ -1,10 +1,9 @@
-import type { Context, MonitoringMessage, TelemetryEvent } from '@datadog/browser-core'
+import type { Context, TelemetryEvent } from '@datadog/browser-core'
 import {
   areCookiesAuthorized,
-  combine,
   canUseEventBridge,
   getEventBridge,
-  startInternalMonitoring,
+  startTelemetry,
   startBatchWithReplica,
   isTelemetryReplicationAllowed,
 } from '@datadog/browser-core'
@@ -25,13 +24,8 @@ import type { Logger } from '../domain/logger'
 export function startLogs(configuration: LogsConfiguration, getCommonContext: () => CommonContext, mainLogger: Logger) {
   const lifeCycle = new LifeCycle()
 
-  const internalMonitoring = startLogsInternalMonitoring(configuration)
-  internalMonitoring.setExternalContextProvider(() =>
-    combine({ session_id: session.findTrackedSession()?.id }, getRUMInternalContext(), {
-      view: { name: null, url: null, referrer: null },
-    })
-  )
-  internalMonitoring.setTelemetryContextProvider(() => ({
+  const telemetry = startLogsTelemetry(configuration)
+  telemetry.setContextProvider(() => ({
     application: {
       id: getRUMInternalContext()?.application_id,
     },
@@ -70,29 +64,18 @@ export function startLogs(configuration: LogsConfiguration, getCommonContext: ()
   }
 }
 
-function startLogsInternalMonitoring(configuration: LogsConfiguration) {
-  const internalMonitoring = startInternalMonitoring(configuration)
+function startLogsTelemetry(configuration: LogsConfiguration) {
+  const telemetry = startTelemetry(configuration)
   if (canUseEventBridge()) {
-    const bridge = getEventBridge<'internal_log' | 'internal_telemetry', MonitoringMessage | TelemetryEvent>()!
-    internalMonitoring.monitoringMessageObservable.subscribe((message) => bridge.send('internal_log', message))
-    internalMonitoring.telemetryEventObservable.subscribe((message) => bridge.send('internal_telemetry', message))
+    const bridge = getEventBridge<'internal_telemetry', TelemetryEvent>()!
+    telemetry.observable.subscribe((event) => bridge.send('internal_telemetry', event))
   } else {
-    if (configuration.internalMonitoringEndpointBuilder) {
-      const batch = startBatchWithReplica(
-        configuration,
-        configuration.internalMonitoringEndpointBuilder,
-        configuration.replica?.internalMonitoringEndpointBuilder
-      )
-      internalMonitoring.monitoringMessageObservable.subscribe((message) => batch.add(message))
-    }
-    const monitoringBatch = startBatchWithReplica(
+    const telemetryBatch = startBatchWithReplica(
       configuration,
       configuration.rumEndpointBuilder,
       configuration.replica?.rumEndpointBuilder
     )
-    internalMonitoring.telemetryEventObservable.subscribe((event) =>
-      monitoringBatch.add(event, isTelemetryReplicationAllowed(configuration))
-    )
+    telemetry.observable.subscribe((event) => telemetryBatch.add(event, isTelemetryReplicationAllowed(configuration)))
   }
-  return internalMonitoring
+  return telemetry
 }

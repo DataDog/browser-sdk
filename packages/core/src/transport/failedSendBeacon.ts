@@ -1,5 +1,5 @@
 import { isExperimentalFeatureEnabled } from '../domain/configuration'
-import { addMonitoringMessage, monitor } from '../domain/internalMonitoring'
+import { addTelemetryDebug, monitor } from '../domain/telemetry'
 import { generateUUID, startsWith } from '../tools/utils'
 
 // replaced at build time
@@ -29,7 +29,7 @@ export function addFailedSendBeacon(endpointType: string, size: number, reason?:
   if (reason === 'before_unload' || reason === 'visibility_hidden') {
     window.localStorage.setItem(`${LOCAL_STORAGE_KEY}-${generateUUID()}`, JSON.stringify(failSendBeaconLog))
   } else {
-    addMonitoringMessage('failed sendBeacon', failSendBeaconLog)
+    addTelemetryDebug('failed sendBeacon', failSendBeaconLog)
   }
 }
 
@@ -39,7 +39,7 @@ function flushFailedSendBeacon() {
     if (startsWith(key, LOCAL_STORAGE_KEY)) {
       const value = localStorage.getItem(key)
       if (value) {
-        addMonitoringMessage('failed sendBeacon', JSON.parse(value))
+        addTelemetryDebug('failed sendBeacon', JSON.parse(value))
         window.localStorage.removeItem(key)
       }
     }

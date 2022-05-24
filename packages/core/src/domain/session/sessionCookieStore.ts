@@ -2,9 +2,9 @@ import type { CookieOptions } from '../../browser/cookie'
 import { getCookie, setCookie } from '../../browser/cookie'
 import { isChromium } from '../../tools/browserDetection'
 import * as utils from '../../tools/utils'
-import { monitor } from '../internalMonitoring'
+import { monitor } from '../telemetry'
+import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
 import type { SessionState } from './sessionStore'
-import { SESSION_EXPIRATION_DELAY } from './sessionStore'
 
 const SESSION_ENTRY_REGEXP = /^([a-z]+)=([a-z0-9-]+)$/
 const SESSION_ENTRY_SEPARATOR = '&'

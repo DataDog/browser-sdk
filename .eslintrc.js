@@ -164,6 +164,7 @@ module.exports = {
     '@typescript-eslint/no-unused-vars': ['error', { args: 'all', argsIgnorePattern: '^_', vars: 'all' }],
     '@typescript-eslint/triple-slash-reference': ['error', { path: 'always', types: 'prefer-import', lib: 'always' }],
 
+    'import/no-cycle': ['warn'],
     'import/no-default-export': 'error',
     'import/no-duplicates': 'error',
     'import/no-extraneous-dependencies': 'error',

@@ -6,7 +6,7 @@ import {
   OLD_SESSION_COOKIE_NAME,
   tryOldCookiesMigration,
 } from './oldCookiesMigration'
-import { SESSION_EXPIRATION_DELAY } from './sessionStore'
+import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
 import { SESSION_COOKIE_NAME } from './sessionCookieStore'
 
 describe('old cookies migration', () => {

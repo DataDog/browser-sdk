@@ -3,13 +3,12 @@ import type { InitConfiguration } from './configuration'
 import type { EndpointBuilder } from './endpointBuilder'
 import { createEndpointBuilder } from './endpointBuilder'
 import { buildTags } from './tags'
-import { INTAKE_SITE_US } from './intakeSites'
+import { INTAKE_SITE_US1 } from './intakeSites'
 
 export interface TransportConfiguration {
   logsEndpointBuilder: EndpointBuilder
   rumEndpointBuilder: EndpointBuilder
   sessionReplayEndpointBuilder: EndpointBuilder
-  internalMonitoringEndpointBuilder?: EndpointBuilder
   isIntakeUrl: (url: string) => boolean
   replica?: ReplicaConfiguration
   site: string
@@ -19,7 +18,6 @@ export interface ReplicaConfiguration {
   applicationId?: string
   logsEndpointBuilder: EndpointBuilder
   rumEndpointBuilder: EndpointBuilder
-  internalMonitoringEndpointBuilder: EndpointBuilder
 }
 
 export function computeTransportConfiguration(initConfiguration: InitConfiguration): TransportConfiguration {
@@ -34,31 +32,18 @@ export function computeTransportConfiguration(initConfiguration: InitConfigurati
     {
       isIntakeUrl: (url: string) => intakeEndpoints.some((intakeEndpoint) => url.indexOf(intakeEndpoint) === 0),
       replica: replicaConfiguration,
-      site: initConfiguration.site || INTAKE_SITE_US,
+      site: initConfiguration.site || INTAKE_SITE_US1,
     },
     endpointBuilders
   )
 }
 
 function computeEndpointBuilders(initConfiguration: InitConfiguration, tags: string[]) {
-  const endpointBuilders = {
+  return {
     logsEndpointBuilder: createEndpointBuilder(initConfiguration, 'logs', tags),
     rumEndpointBuilder: createEndpointBuilder(initConfiguration, 'rum', tags),
     sessionReplayEndpointBuilder: createEndpointBuilder(initConfiguration, 'sessionReplay', tags),
   }
-
-  if (initConfiguration.internalMonitoringApiKey) {
-    return assign(endpointBuilders, {
-      internalMonitoringEndpointBuilder: createEndpointBuilder(
-        assign({}, initConfiguration, { clientToken: initConfiguration.internalMonitoringApiKey }),
-        'logs',
-        tags,
-        'browser-agent-internal-monitoring'
-      ),
-    })
-  }
-
-  return endpointBuilders
 }
 
 function computeReplicaConfiguration(
@@ -71,19 +56,13 @@ function computeReplicaConfiguration(
   }
 
   const replicaConfiguration: InitConfiguration = assign({}, initConfiguration, {
-    site: INTAKE_SITE_US,
+    site: INTAKE_SITE_US1,
     clientToken: initConfiguration.replica.clientToken,
   })
 
   const replicaEndpointBuilders = {
     logsEndpointBuilder: createEndpointBuilder(replicaConfiguration, 'logs', tags),
     rumEndpointBuilder: createEndpointBuilder(replicaConfiguration, 'rum', tags),
-    internalMonitoringEndpointBuilder: createEndpointBuilder(
-      replicaConfiguration,
-      'logs',
-      tags,
-      'browser-agent-internal-monitoring'
-    ),
   }
 
   intakeEndpoints.push(...objectValues(replicaEndpointBuilders).map((builder) => builder.buildIntakeUrl()))

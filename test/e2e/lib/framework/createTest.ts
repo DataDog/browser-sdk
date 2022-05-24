@@ -1,9 +1,9 @@
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import { deleteAllCookies, getBrowserName, withBrowserLogs } from '../helpers/browser'
-import { flushEvents } from '../helpers/flushEvents'
 import { validateRumFormat } from '../helpers/validation'
 import { EventRegistry } from './eventsRegistry'
+import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
 import { getTestServers, waitForServersIdle } from './httpServers'
 import { log } from './logger'
@@ -187,7 +187,7 @@ async function setUpTest({ baseUrl }: TestContext) {
 
 async function tearDownTest({ serverEvents, bridgeEvents }: TestContext) {
   await flushEvents()
-  expect(serverEvents.internalMonitoring).toEqual([])
+  expect(serverEvents.telemetry).toEqual([])
   validateRumFormat(serverEvents.rum)
   validateRumFormat(bridgeEvents.rum)
   await withBrowserLogs((logs) => {
