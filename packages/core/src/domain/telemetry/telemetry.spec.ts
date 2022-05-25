@@ -103,7 +103,7 @@ describe('formatError', () => {
       message: 'message',
       error: {
         kind: 'Error',
-        stack: jasmine.stringMatching(/^Error: message\n/) as unknown as string,
+        stack: jasmine.stringMatching(/^Error: message(\n|$)/) as unknown as string,
       },
     })
   })
