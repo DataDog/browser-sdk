@@ -1,5 +1,4 @@
-import { ConsoleApiName } from '../domain/console/consoleObservable'
-import { display } from './display'
+import { ConsoleApiName, display } from './display'
 
 describe('display function', () => {
   it('displays a message with the provided console api', () => {

@@ -1,5 +1,5 @@
 import type { Context } from '../../tools/context'
-import { display } from '../../tools/display'
+import { ConsoleApiName, display } from '../../tools/display'
 import { toStackTraceString } from '../../tools/error'
 import { assign, combine, jsonStringify, performDraw, includes, startsWith } from '../../tools/utils'
 import type { Configuration } from '../configuration'
@@ -8,7 +8,6 @@ import type { StackTrace } from '../tracekit'
 import { computeStackTrace } from '../tracekit'
 import { Observable } from '../../tools/observable'
 import { timeStampNow } from '../../tools/timeUtils'
-import { ConsoleApiName } from '../console/consoleObservable'
 import type { TelemetryEvent } from './telemetryEvent.types'
 
 // replaced at build time

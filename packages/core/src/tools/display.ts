@@ -7,7 +7,15 @@
  * but we should be safe from infinite loop nonetheless.
  */
 
-import { ConsoleApiName } from '../domain/console/consoleObservable'
+export const ConsoleApiName = {
+  log: 'log',
+  debug: 'debug',
+  info: 'info',
+  warn: 'warn',
+  error: 'error',
+} as const
+
+export type ConsoleApiName = typeof ConsoleApiName[keyof typeof ConsoleApiName]
 
 interface Display {
   (api: ConsoleApiName, ...args: any[]): void

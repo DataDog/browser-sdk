@@ -1,8 +1,9 @@
 /* eslint-disable no-console */
 import { isIE } from '../../tools/browserDetection'
+import { ConsoleApiName } from '../../tools/display'
 import type { Subscription } from '../../tools/observable'
 import type { ConsoleLog } from './consoleObservable'
-import { ConsoleApiName, initConsoleObservable } from './consoleObservable'
+import { initConsoleObservable } from './consoleObservable'
 
 // prettier: avoid formatting issue
 // cf https://github.com/prettier/prettier/issues/12211
