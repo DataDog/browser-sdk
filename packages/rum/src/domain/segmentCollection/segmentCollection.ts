@@ -43,7 +43,7 @@ export function startSegmentCollection(
   applicationId: string,
   sessionManager: RumSessionManager,
   viewContexts: ViewContexts,
-  send: (data: Uint8Array, metadata: SegmentMetadata, rawSegmentBytesCount: number) => void,
+  send: (data: Uint8Array, metadata: SegmentMetadata, rawSegmentBytesCount: number, reason?: string) => void,
   worker: DeflateWorker
 ) {
   return doStartSegmentCollection(

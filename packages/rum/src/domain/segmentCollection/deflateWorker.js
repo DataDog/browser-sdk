@@ -43,6 +43,7 @@ function workerCodeFn() {
               result: deflate.result,
               additionalBytesCount,
               rawBytesCount,
+              reason: data.reason,
             })
             deflate = new Deflate()
             rawBytesCount = 0
