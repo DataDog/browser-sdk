@@ -1,5 +1,6 @@
 import type { Duration, ClocksState, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import {
+  isExperimentalFeatureEnabled,
   setToArray,
   Observable,
   assign,
@@ -22,6 +23,7 @@ import { waitPageActivityEnd } from '../../waitPageActivityEnd'
 import type { RageClickChain } from './rageClickChain'
 import { createRageClickChain } from './rageClickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
+import { getSelectorFromElement } from './getSelectorFromElement'
 
 interface ActionCounts {
   errorCount: number
@@ -33,10 +35,16 @@ export interface ClickAction {
   type: ActionType.CLICK
   id: string
   name: string
+  target?: {
+    selector: string
+    width: number
+    height: number
+  }
+  position?: { x: number; y: number }
   startClocks: ClocksState
   duration?: Duration
   counts: ActionCounts
-  event: MouseEvent
+  event: MouseEvent & { target: HTMLElement }
   frustrationTypes: FrustrationType[]
 }
 
@@ -89,7 +97,7 @@ export function trackClickActions(
     }
   }
 
-  function processClick(event: MouseEvent & { target: Element }) {
+  function processClick(event: MouseEvent & { target: HTMLElement }) {
     if (!trackFrustrations && history.find()) {
       // TODO: remove this in a future major version. To keep retrocompatibility, ignore any new
       // action if another one is already occurring.
@@ -159,13 +167,13 @@ export function trackClickActions(
   }
 }
 
-function listenClickEvents(callback: (clickEvent: MouseEvent & { target: Element }) => void) {
+function listenClickEvents(callback: (clickEvent: MouseEvent & { target: HTMLElement }) => void) {
   return addEventListener(
     window,
     DOM_EVENT.CLICK,
     (clickEvent: MouseEvent) => {
       if (clickEvent.target instanceof Element) {
-        callback(clickEvent as MouseEvent & { target: Element })
+        callback(clickEvent as MouseEvent & { target: HTMLElement })
       }
     },
     { capture: true }
@@ -195,6 +203,20 @@ function newClick(
   base: Pick<ClickAction, 'startClocks' | 'event' | 'name'>
 ) {
   const id = generateUUID()
+  let target: ClickAction['target']
+  let position: ClickAction['position']
+
+  if (isExperimentalFeatureEnabled('clickmap')) {
+    target = {
+      selector: getSelectorFromElement(base.event.target),
+      width: base.event.target.offsetWidth,
+      height: base.event.target.offsetHeight,
+    }
+    position = {
+      x: base.event.offsetX,
+      y: base.event.offsetY,
+    }
+  }
   const historyEntry = history.add(id, base.startClocks.relative)
   const eventCountsSubscription = trackEventCounts(lifeCycle)
   let state: ClickState = { status: ClickStatus.ONGOING }
@@ -250,6 +272,8 @@ function newClick(
           duration: state.endTime && elapsed(base.startClocks.timeStamp, state.endTime),
           id,
           frustrationTypes: setToArray(frustrations),
+          target,
+          position,
           counts: {
             resourceCount,
             errorCount,

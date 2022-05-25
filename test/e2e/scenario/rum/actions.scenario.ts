@@ -3,7 +3,7 @@ import { createTest, flushEvents, html, waitForServersIdle } from '../../lib/fra
 
 describe('action collection', () => {
   createTest('track a click action')
-    .withRum({ trackInteractions: true })
+    .withRum({ trackInteractions: true, enableExperimentalFeatures: ['clickmap'] })
     .withBody(
       html`
         <button>click me</button>
@@ -36,6 +36,13 @@ describe('action collection', () => {
         },
         target: {
           name: 'click me',
+          selector: jasmine.any(String),
+          width: jasmine.any(Number),
+          height: jasmine.any(Number),
+        },
+        position: {
+          x: jasmine.any(Number),
+          y: jasmine.any(Number),
         },
         type: 'click',
         frustration: {
