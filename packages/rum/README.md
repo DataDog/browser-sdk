@@ -200,7 +200,7 @@ See `premiumSampleRate`.
 : Optional<br/>
 **Type**: Number<br/>
 **Default**: `100`<br/>
-The percentage of tracked sessions with [Premium pricing][11] features: `100` for all, `0` for none. For more details about `premiumSampleRate`, see the [sampling configuration](#browser-rum-and-rum-premium-sampling-configuration).
+The percentage of tracked sessions with [Browser Premium pricing][11] features: `100` for all, `0` for none. For more details about `premiumSampleRate`, see the [sampling configuration](#browser-rum-and-rum-premium-sampling-configuration).
 
 `silentMultipleInit`
 : Optional<br/>
@@ -277,19 +277,19 @@ init(configuration: {
 })
 ```
 
-### Browser RUM and RUM Premium sampling configuration
+### Browser RUM and Browser Premium sampling configuration
 
 This feature requires the RUM Browser SDK v3.6.0+.
 
-When a new session is created, it can be tracked as either:
+When a session is created, RUM tracks it as either:
 
-- [**Browser RUM**][11]: Only _Sessions_, _Views_, _Actions_, and _Errors_ are collected. Calls to `startSessionReplayRecording()` are ignored.
-- [**RUM Premium**][11]: Everything from Browser RUM, including _Resources_, _Long Tasks_, and _Replay_ recordings are collected. To collect _Replay_ recordings, call `startSessionReplayRecording()`.
+- [**Browser RUM**][11]: Only sessions, views, actions, and errors are collected. Calls to `startSessionReplayRecording()` are ignored.
+- [**Browser Premium**][11]: Everything from Browser RUM (including resources, long tasks, and replay recordings) are collected. To collect replay recordings, call `startSessionReplayRecording()`.
 
 Two initialization parameters are available to control how the session is tracked:
 
 - `sampleRate` controls the percentage of overall sessions being tracked. It defaults to `100%`, so every sessions is tracked by default.
-- `premiumSampleRate` is applied **after** the overall sample rate, and controls the percentage of sessions tracked as RUM Premium. It defaults to `100%`, so every sessions is tracked as RUM Premium by default.
+- `premiumSampleRate` is applied **after** the overall sample rate, and controls the percentage of sessions tracked as Browser Premium. It defaults to `100%`, so every sessions is tracked as Browser Premium by default.
 
 To track 100% of your sessions as Browser RUM:
 
@@ -301,7 +301,7 @@ datadogRum.init({
 });
 ```
 
-To track 100% of your sessions as RUM Premium:
+To track 100% of your sessions as Browser Premium:
 
 ```
 datadogRum.init({
@@ -311,7 +311,7 @@ datadogRum.init({
 });
 ```
 
-For example, to track only 50% of your overall sessions with half tracked as Browser RUM and the other half tracked as RUM Premium, set the `sampleRate` and the `premiumSampleRate` to 50:
+For example, to track only 50% of your overall sessions with half tracked as Browser RUM and the other half tracked as Browser Premium, set the `sampleRate` and the `premiumSampleRate` to 50:
 
 ```
 datadogRum.init({
@@ -337,7 +337,7 @@ datadogRum.init({
 [8]: https://github.com/DataDog/browser-sdk/blob/main/packages/rum/BROWSER_SUPPORT.md
 [9]: https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions#declaring-a-name-for-click-actions
 [10]: https://docs.datadoghq.com/real_user_monitoring/browser/modifying_data_and_context/?tab=npm#override-default-rum-view-names
-[11]: https://www.datadoghq.com/pricing/?product=real-user-monitoring#real-user-monitoring
+[11]: https://www.datadoghq.com/pricing/?product=real-user-monitoring--session-replay#real-user-monitoring--session-replay
 [12]: https://docs.datadoghq.com/real_user_monitoring/connect_rum_and_traces?tab=browserrum
 [13]: https://docs.datadoghq.com/real_user_monitoring/session_replay/privacy_options?tab=maskuserinput
 [14]: https://docs.datadoghq.com/agent/basic_agent_usage#datadog-site
