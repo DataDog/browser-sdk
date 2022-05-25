@@ -8,6 +8,9 @@ let nextId = 0
 
 export class Segment {
   public isFlushed = false
+
+  public flushReason: string | undefined = undefined
+
   public readonly metadata: SegmentMetadata
 
   private id = nextId++
@@ -80,8 +83,8 @@ export class Segment {
       data: `],${JSON.stringify(this.metadata).slice(1)}\n`,
       id: this.id,
       action: 'flush',
-      reason,
     })
+    this.flushReason = reason
     this.isFlushed = true
   }
 }
