@@ -34,6 +34,7 @@ describe('deflateWorker', () => {
           result: new Uint8Array([120, 156, 74, 203, 207, 7, 0, 0, 0, 255, 255, 3, 0, 2, 130, 1, 69]),
           additionalBytesCount: 0,
           rawBytesCount: 3,
+          reason: undefined,
         },
       ])
       done()
@@ -52,6 +53,7 @@ describe('deflateWorker', () => {
           result: new Uint8Array([120, 156, 74, 203, 207, 7, 0, 0, 0, 255, 255, 3, 0, 2, 130, 1, 69]),
           additionalBytesCount: 3,
           rawBytesCount: 3,
+          reason: undefined,
         },
       ])
       done()
@@ -75,6 +77,7 @@ describe('deflateWorker', () => {
           result: new Uint8Array([120, 156, 74, 203, 207, 7, 0, 0, 0, 255, 255, 3, 0, 2, 130, 1, 69]),
           additionalBytesCount: 0,
           rawBytesCount: 3,
+          reason: undefined,
         },
         {
           type: 'wrote',
@@ -88,6 +91,7 @@ describe('deflateWorker', () => {
           result: new Uint8Array([120, 156, 74, 74, 44, 2, 0, 0, 0, 255, 255, 3, 0, 2, 93, 1, 54]),
           additionalBytesCount: 0,
           rawBytesCount: 3,
+          reason: undefined,
         },
       ])
       done()
