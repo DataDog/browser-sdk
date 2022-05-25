@@ -1,4 +1,4 @@
-import { ConsoleApiName, display } from '../display'
+import { ConsoleApiName, display } from './display'
 
 let onMonitorErrorCollected: undefined | ((error: unknown) => void)
 let debugMode = false

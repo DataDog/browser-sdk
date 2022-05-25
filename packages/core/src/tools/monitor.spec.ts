@@ -1,4 +1,4 @@
-import { display } from '../display'
+import { display } from './display'
 import { callMonitored, monitor, monitored, startMonitorErrorCollection, resetMonitor, setDebugMode } from './monitor'
 
 describe('monitor', () => {
