@@ -63,6 +63,6 @@ export function callMonitored<T extends (...args: any[]) => any>(
 
 export function displayIfDebugEnabled(api: ConsoleApiName, ...args: any[]) {
   if (debugMode) {
-    display(api, '[TELEMETRY]', ...args)
+    display(api, '[MONITOR]', ...args)
   }
 }

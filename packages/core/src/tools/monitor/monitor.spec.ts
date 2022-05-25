@@ -154,7 +154,7 @@ describe('monitor', () => {
         throw new Error('message')
       })
 
-      expect(displaySpy).toHaveBeenCalledOnceWith('[TELEMETRY]', new Error('message'))
+      expect(displaySpy).toHaveBeenCalledOnceWith('[MONITOR]', new Error('message'))
     })
 
     it('displays errors thrown by the onMonitorErrorCollected callback', () => {
@@ -165,8 +165,8 @@ describe('monitor', () => {
       callMonitored(() => {
         throw new Error('message')
       })
-      expect(displaySpy).toHaveBeenCalledWith('[TELEMETRY]', new Error('message'))
-      expect(displaySpy).toHaveBeenCalledWith('[TELEMETRY]', new Error('unexpected'))
+      expect(displaySpy).toHaveBeenCalledWith('[MONITOR]', new Error('message'))
+      expect(displaySpy).toHaveBeenCalledWith('[MONITOR]', new Error('unexpected'))
     })
   })
 })
