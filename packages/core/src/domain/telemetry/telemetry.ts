@@ -150,7 +150,7 @@ function addTelemetry(event: RawTelemetryEvent) {
   }
 }
 
-function formatError(e: unknown) {
+export function formatError(e: unknown) {
   if (e instanceof Error) {
     const stackTrace = computeStackTrace(e)
     return {

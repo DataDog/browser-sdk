@@ -154,7 +154,19 @@ describe('monitor', () => {
         throw new Error('message')
       })
 
-      expect(displaySpy).toHaveBeenCalled()
+      expect(displaySpy).toHaveBeenCalledOnceWith('[TELEMETRY]', new Error('message'))
+    })
+
+    it('displays errors thrown by the onMonitorErrorCollected callback', () => {
+      setDebugMode(true)
+      onMonitorErrorCollectedSpy.and.throwError(new Error('unexpected'))
+      startMonitorErrorCollection(onMonitorErrorCollectedSpy)
+
+      callMonitored(() => {
+        throw new Error('message')
+      })
+      expect(displaySpy).toHaveBeenCalledWith('[TELEMETRY]', new Error('message'))
+      expect(displaySpy).toHaveBeenCalledWith('[TELEMETRY]', new Error('unexpected'))
     })
   })
 })

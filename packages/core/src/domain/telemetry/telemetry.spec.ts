@@ -1,15 +1,21 @@
 import type { StackTrace } from '@datadog/browser-core'
-import type { Context } from '../../tools/context'
 import { callMonitored } from '../../tools/monitor'
 import type { Configuration } from '../configuration'
 import { INTAKE_SITE_US1, INTAKE_SITE_US1_FED } from '../configuration'
-import type { Telemetry } from './telemetry'
-import { resetTelemetry, startTelemetry, scrubCustomerFrames } from './telemetry'
-import type { TelemetryEvent } from './telemetryEvent.types'
+import { resetTelemetry, startTelemetry, scrubCustomerFrames, formatError } from './telemetry'
 
-const configuration: Partial<Configuration> = {
-  maxTelemetryEventsPerPage: 7,
-  telemetrySampleRate: 100,
+function startAndSpyTelemetry(configuration?: Partial<Configuration>) {
+  const telemetry = startTelemetry({
+    maxTelemetryEventsPerPage: 7,
+    telemetrySampleRate: 100,
+    ...configuration,
+  } as Configuration)
+  const notifySpy = jasmine.createSpy('notified')
+  telemetry.observable.subscribe(notifySpy)
+  return {
+    notifySpy,
+    telemetry,
+  }
 }
 
 describe('telemetry', () => {
@@ -17,17 +23,18 @@ describe('telemetry', () => {
     resetTelemetry()
   })
 
-  describe('telemetry context', () => {
-    let telemetry: Telemetry
-    let notifySpy: jasmine.Spy<(event: TelemetryEvent) => void>
-
-    beforeEach(() => {
-      telemetry = startTelemetry(configuration as Configuration)
-      notifySpy = jasmine.createSpy('notified')
-      telemetry.observable.subscribe(notifySpy)
+  it('collects "monitor" errors', () => {
+    const { notifySpy } = startAndSpyTelemetry()
+    callMonitored(() => {
+      throw new Error('message')
     })
+    expect(notifySpy).toHaveBeenCalledTimes(1)
+  })
 
+  describe('telemetry context', () => {
     it('should be added to telemetry events', () => {
+      const { telemetry, notifySpy } = startAndSpyTelemetry()
+
       telemetry.setContextProvider(() => ({
         foo: 'bar',
       }))
@@ -45,19 +52,9 @@ describe('telemetry', () => {
   })
 
   describe('sampling', () => {
-    let telemetry: Telemetry
-    let notifySpy: jasmine.Spy<(event: TelemetryEvent & Context) => void>
-
-    beforeEach(() => {
-      telemetry = startTelemetry(configuration as Configuration)
-      notifySpy = jasmine.createSpy('notified')
-      telemetry.observable.subscribe(notifySpy)
-    })
-
     it('should notify when sampled', () => {
       spyOn(Math, 'random').and.callFake(() => 0)
-      telemetry = startTelemetry({ ...configuration, telemetrySampleRate: 50 } as Configuration)
-      telemetry.observable.subscribe(notifySpy)
+      const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 50 })
 
       callMonitored(() => {
         throw new Error('message')
@@ -68,8 +65,7 @@ describe('telemetry', () => {
 
     it('should not notify when not sampled', () => {
       spyOn(Math, 'random').and.callFake(() => 1)
-      telemetry = startTelemetry({ ...configuration, telemetrySampleRate: 50 } as Configuration)
-      telemetry.observable.subscribe(notifySpy)
+      const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 50 })
 
       callMonitored(() => {
         throw new Error('message')
@@ -85,9 +81,7 @@ describe('telemetry', () => {
       { site: INTAKE_SITE_US1, enabled: true },
     ].forEach(({ site, enabled }) => {
       it(`should be ${enabled ? 'enabled' : 'disabled'} on ${site}`, () => {
-        const telemetry = startTelemetry({ ...configuration, site } as Configuration)
-        const notifySpy = jasmine.createSpy('notified')
-        telemetry.observable.subscribe(notifySpy)
+        const { notifySpy } = startAndSpyTelemetry({ site })
 
         callMonitored(() => {
           throw new Error('message')
@@ -99,6 +93,36 @@ describe('telemetry', () => {
           expect(notifySpy).not.toHaveBeenCalled()
         }
       })
+    })
+  })
+})
+
+describe('formatError', () => {
+  it('formats error instances', () => {
+    expect(formatError(new Error('message'))).toEqual({
+      message: 'message',
+      error: {
+        kind: 'Error',
+        stack: jasmine.stringMatching(/^Error: message\n/) as unknown as string,
+      },
+    })
+  })
+
+  it('formats strings', () => {
+    expect(formatError('message')).toEqual({
+      message: 'Uncaught "message"',
+      error: {
+        stack: 'Not an instance of error',
+      },
+    })
+  })
+
+  it('formats objects', () => {
+    expect(formatError({ foo: 'bar' })).toEqual({
+      message: 'Uncaught {"foo":"bar"}',
+      error: {
+        stack: 'Not an instance of error',
+      },
     })
   })
 })
