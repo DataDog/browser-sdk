@@ -203,11 +203,11 @@ export type ScrollCallback = (p: ScrollPosition) => void
 
 export interface StyleSheetAddRule {
   rule: string
-  index?: number
+  index?: number | number[]
 }
 
 export interface StyleSheetDeleteRule {
-  index: number
+  index: number | number[]
 }
 
 export interface StyleSheetRuleParam {
