@@ -1,5 +1,6 @@
 import { isExperimentalFeatureEnabled } from '../domain/configuration'
-import { addTelemetryDebug, monitor } from '../domain/telemetry'
+import { addTelemetryDebug } from '../domain/telemetry'
+import { monitor } from '../tools/monitor'
 import { generateUUID, startsWith } from '../tools/utils'
 
 // replaced at build time

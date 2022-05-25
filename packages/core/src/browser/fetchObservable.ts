@@ -1,5 +1,5 @@
-import { monitor, callMonitored } from '../domain/telemetry'
 import { instrumentMethod } from '../tools/instrumentMethod'
+import { callMonitored, monitor } from '../tools/monitor'
 import { Observable } from '../tools/observable'
 import type { Duration, ClocksState } from '../tools/timeUtils'
 import { elapsed, clocksNow, timeStampNow } from '../tools/timeUtils'

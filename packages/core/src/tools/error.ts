@@ -1,6 +1,6 @@
-import { callMonitored } from '../domain/telemetry'
 import type { StackTrace } from '../domain/tracekit'
 import { computeStackTrace } from '../domain/tracekit'
+import { callMonitored } from './monitor'
 import type { ClocksState } from './timeUtils'
 import { jsonStringify, noop } from './utils'
 

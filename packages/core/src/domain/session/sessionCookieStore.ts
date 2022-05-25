@@ -1,8 +1,8 @@
 import type { CookieOptions } from '../../browser/cookie'
 import { getCookie, setCookie } from '../../browser/cookie'
 import { isChromium } from '../../tools/browserDetection'
+import { monitor } from '../../tools/monitor'
 import * as utils from '../../tools/utils'
-import { monitor } from '../telemetry'
 import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
 import type { SessionState } from './sessionStore'
 

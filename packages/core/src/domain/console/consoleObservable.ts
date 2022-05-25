@@ -1,18 +1,9 @@
-import { callMonitored } from '../telemetry'
 import { computeStackTrace } from '../tracekit'
 import { createHandlingStack, formatErrorMessage, toStackTraceString } from '../../tools/error'
 import { mergeObservables, Observable } from '../../tools/observable'
 import { find, jsonStringify } from '../../tools/utils'
-
-export const ConsoleApiName = {
-  log: 'log',
-  debug: 'debug',
-  info: 'info',
-  warn: 'warn',
-  error: 'error',
-} as const
-
-export type ConsoleApiName = typeof ConsoleApiName[keyof typeof ConsoleApiName]
+import { ConsoleApiName } from '../../tools/display'
+import { callMonitored } from '../../tools/monitor'
 
 export interface ConsoleLog {
   message: string
