@@ -208,6 +208,14 @@ export function includes(candidate: string | unknown[], search: any) {
   return candidate.indexOf(search) !== -1
 }
 
+export function arrayFrom<T>(arrayLike: ArrayLike<T>): T[] {
+  const array = []
+  for (let i = 0; i < arrayLike.length; i++) {
+    array.push(arrayLike[i])
+  }
+  return array
+}
+
 export function find<T, S extends T>(
   array: T[],
   predicate: (item: T, index: number, array: T[]) => item is S
