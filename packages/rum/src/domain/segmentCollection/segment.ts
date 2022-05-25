@@ -48,7 +48,7 @@ export class Segment {
       if (data.id === this.id) {
         replayStats.addWroteData(viewId, data.additionalBytesCount)
         if (data.type === 'flushed') {
-          onFlushed(data.result, data.rawBytesCount, data.reason)
+          onFlushed(data.result, data.rawBytesCount)
           worker.removeEventListener('message', listener)
         } else {
           onWrote(data.compressedBytesCount)
