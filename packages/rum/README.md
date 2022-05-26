@@ -288,7 +288,7 @@ This feature requires the RUM Browser SDK v3.6.0+.
 When a session is created, RUM tracks it as either:
 
 - [**Browser RUM**][11]: Only sessions, views, actions, and errors are collected. Calls to `startSessionReplayRecording()` are ignored.
-- [**Browser Premium**][11]: Everything from Browser RUM, including resources, long tasks, and replay recordings, is collected. To collect replay recordings, call `startSessionReplayRecording()`.
+- [**Browser Premium**][11]: Everything from Browser RUM is collected, including resources, long tasks, and replay recordings. To collect replay recordings, call `startSessionReplayRecording()`.
 
 Two initialization parameters are available to control how the session is tracked:
 
