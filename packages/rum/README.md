@@ -2,21 +2,25 @@
 
 ## Overview
 
-Datadog Real User Monitoring (RUM) enables you to visualize and analyze the real-time performance and user journeys of your application's individual users.
+Datadog Real User Monitoring (RUM) enables you to visualize and analyze the real-time performance and user journeys of your application's individual users. To collect events, add the RUM Browser SDK to your browser application and configure what data is collected using initialization parameters.
 
 ## Setup
 
 The RUM Browser SDK supports all modern desktop and mobile browsers including IE11. For more information, see the [Browser Support][8] table.
 
-To set up RUM Browser Monitoring:
+To set up RUM Browser Monitoring, create a RUM application:
 
 1. In Datadog, navigate to the [**RUM Applications** page][1] and click the **New Application** button.
 2. Enter a name for your application and click **Generate Client Token**. This generates a `clientToken` and an `applicationId` for your application.
-3. Setup the RUM Browser SDK with [npm](#npm) or a hosted version ([CDN async](#cdn-async) or [CDN sync](#cdn-sync)).
-4. Deploy the changes to your application. Once your deployment is live, Datadog collects events from your users' browsers.
-5. Visualize the [data collected][2] in [dashboards][3] or create a search query in the [RUM Explorer][16].
+3. Choose the instrumentation type for the RUM Browser SDK: [npm](#npm), or a hosted version ([CDN async](#cdn-async) or [CDN sync](#cdn-sync)).
+4. Define the environment name, service name, and deployed version for your application to use [Unified Service Tagging][19] for RUM & Session Replay. For more information, see [Tagging](#tagging).
+5. Set the sampling rate of total user sessions collected and use the slider to set the percentage of total [Browser Premium][11] sessions collected. Browser Premium sessions include resources, long tasks, and replay recordings.
+6. Click the **Session Replay Enabled** toggle to enable users with permissions to access [Session Replay][17].
+7. Select a [privacy setting][18] for Session Replay in the dropdown menu.
+5. Deploy the changes to your application. Once your deployment is live, Datadog collects events from your users' browsers.
+6. Visualize the [data collected][2] in [dashboards][3] or create a search query in the [RUM Explorer][16].
 
-Until Datadog starts to receive data, your application appears as "pending" on the **RUM Applications** page.
+Until Datadog starts to receive data, your application appears as `pending` on the **RUM Applications** page.
 
 ### Choose the right installation method
 
@@ -321,6 +325,15 @@ datadogRum.init({
 });
 ```
 
+### Tagging
+
+A service is an independent, deployable code repository that maps to a set of pages. 
+
+- If your browser application was constructed as a monolith, your RUM application has one service name for the application. 
+- If your browser application was constructed as separate repositories for multiple pages, edit the default service names throughout the lifecycle of your application. 
+
+For more information, see Configuring Browser Services (link here).
+
 ## Further Reading
 
 {{< partial name="whats-next/whats-next.html" >}}
@@ -343,3 +356,6 @@ datadogRum.init({
 [14]: https://docs.datadoghq.com/agent/basic_agent_usage#datadog-site
 [15]: https://docs.datadoghq.com/getting_started/tagging/#defining-tags
 [16]: https://docs.datadoghq.com/real_user_monitoring/browser/monitoring_page_performance/#how-page-activity-is-calculated
+[17]: https://docs.datadoghq.com/real_user_monitoring/session_replay/
+[18]: https://docs.datadoghq.com/real_user_monitoring/session_replay/privacy_options
+[19]: https://docs.datadoghq.com/getting_started/tagging/using_tags
