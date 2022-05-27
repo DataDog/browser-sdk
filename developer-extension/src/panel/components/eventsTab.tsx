@@ -1,4 +1,4 @@
-import { Badge, Button, Group, SegmentedControl, Space, Table, TextInput } from '@mantine/core'
+import { Badge, Button, Chip, Chips, Group, Space, Table, TextInput } from '@mantine/core'
 import { useColorScheme } from '@mantine/hooks'
 import React from 'react'
 import ReactJson from 'react-json-view'
@@ -35,14 +35,14 @@ export function EventTab({ events, filters, onFiltered, clear }: EventTabProps) 
     events && (
       <>
         <Group>
-          <SegmentedControl
+          <Chips
+            multiple
             value={filters.sdk}
-            onChange={(sdk: 'rum' | 'logs') => onFiltered({ ...filters, sdk })}
-            data={[
-              { label: 'RUM', value: 'rum' },
-              { label: 'Logs', value: 'logs' },
-            ]}
-          />
+            onChange={(sdk) => onFiltered({ ...filters, sdk: sdk as Array<'rum' | 'logs'> })}
+          >
+            <Chip value="rum">RUM</Chip>
+            <Chip value="logs">Logs</Chip>
+          </Chips>
           <TextInput
             placeholder="Filter your events, syntax: 'type:view application.id:40d8ca4b'"
             value={filters.query}
