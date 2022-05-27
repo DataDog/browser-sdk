@@ -232,7 +232,7 @@ The percentage of requests to trace: `100` for all, `0` for none. For more infor
 : Optional<br/>
 **Type**: Number<br/>
 **Default**: `20`<br/>
-Telemetry data (error, debug logs) about SDK execution is sent to Datadog in order to detect and solve potential issues. Set this option to `0` to opt out from telemetry collection.
+Telemetry data (such as errors and debug logs) about SDK execution is sent to Datadog in order to detect and solve potential issues. Set this option to `0` to opt out from telemetry collection.
 
 `excludedActivityUrls`
 : Optional<br/>
@@ -292,8 +292,8 @@ When a session is created, RUM tracks it as either:
 
 Two initialization parameters are available to control how the session is tracked:
 
-- `sampleRate` controls the percentage of overall sessions being tracked. It defaults to `100%`, so every sessions is tracked by default.
-- `premiumSampleRate` is applied **after** the overall sample rate, and controls the percentage of sessions tracked as Browser Premium. It defaults to `100%`, so every sessions is tracked as Browser Premium by default.
+- `sampleRate` controls the percentage of overall sessions being tracked. It defaults to `100%`, so every session is tracked by default.
+- `premiumSampleRate` is applied **after** the overall sample rate, and controls the percentage of sessions tracked as Browser Premium. It defaults to `100%`, so every session is tracked as Browser Premium by default.
 
 To track 100% of your sessions as Browser:
 
@@ -315,13 +315,13 @@ datadogRum.init({
 });
 ```
 
-For example, to track only 50% of your overall sessions with half tracked as Browser and the other half tracked as Browser Premium, set the `sampleRate` and the `premiumSampleRate` to 50. 25% of your sessions are Browser Premium. 
+For example, to track only 60% of your overall sessions with half tracked as Browser and the other half tracked as Browser Premium, set the `sampleRate` and the `premiumSampleRate` to 60. 30% of your sessions are Browser Premium. 
 
 ```
 datadogRum.init({
     ....
-    sampleRate: 50,
-    premiumSampleRate: 50
+    sampleRate: 60,
+    premiumSampleRate: 60
 });
 ```
 
