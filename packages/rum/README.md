@@ -12,10 +12,10 @@ To set up RUM Browser Monitoring, create a RUM application:
 
 1. In Datadog, navigate to the [**RUM Applications** page][1] and click the **New Application** button.
 2. Enter a name for your application and click **Generate Client Token**. This generates a `clientToken` and an `applicationId` for your application.
-3. Choose the instrumentation type for the RUM Browser SDK: [npm](#npm), or a hosted version ([CDN async](#cdn-async) or [CDN sync](#cdn-sync)).
+3. Choose the installation type for the RUM Browser SDK: [npm](#npm), or a hosted version ([CDN async](#cdn-async) or [CDN sync](#cdn-sync)).
 4. Define the environment name, service name, and deployed version for your application to use [Unified Service Tagging][19] for RUM & Session Replay. For more information, see [Tagging](#tagging).
 5. Set the sampling rate of total user sessions collected and use the slider to set the percentage of total [Browser Premium][11] sessions collected. Browser Premium sessions include resources, long tasks, and replay recordings.
-6. Click the **Session Replay Enabled** toggle to enable users with permissions to access [Session Replay][17].
+6. Click the **Session Replay Enabled** toggle to access replay recordings in [Session Replay][17].
 7. Select a [privacy setting][18] for Session Replay in the dropdown menu.
 5. Deploy the changes to your application. Once your deployment is live, Datadog collects events from your users' browsers.
 6. Visualize the [data collected][2] in [dashboards][3] or create a search query in the [RUM Explorer][16].
@@ -204,7 +204,7 @@ See `premiumSampleRate`.
 : Optional<br/>
 **Type**: Number<br/>
 **Default**: `100`<br/>
-The percentage of tracked sessions with [Browser Premium pricing][11] features: `100` for all, `0` for none. For more details about `premiumSampleRate`, see the [sampling configuration](#browser-rum-and-rum-premium-sampling-configuration).
+The percentage of tracked sessions with [Browser Premium pricing][11] features: `100` for all, `0` for none. For more details about `premiumSampleRate`, see the [sampling configuration](#browser-and-rum-premium-sampling-configuration).
 
 `silentMultipleInit`
 : Optional<br/>
@@ -281,21 +281,21 @@ init(configuration: {
 })
 ```
 
-### Browser RUM and Browser Premium sampling configuration
+### Browser and Browser Premium sampling configuration
 
 This feature requires the RUM Browser SDK v3.6.0+.
 
 When a session is created, RUM tracks it as either:
 
 - [**Browser RUM**][11]: Only sessions, views, actions, and errors are collected. Calls to `startSessionReplayRecording()` are ignored.
-- [**Browser Premium**][11]: Everything from Browser RUM is collected, including resources, long tasks, and replay recordings. To collect replay recordings, call `startSessionReplayRecording()`.
+- [**Browser Premium**][11]: Everything from Browser is collected, including resources, long tasks, and replay recordings. To collect replay recordings, call `startSessionReplayRecording()`.
 
 Two initialization parameters are available to control how the session is tracked:
 
 - `sampleRate` controls the percentage of overall sessions being tracked. It defaults to `100%`, so every sessions is tracked by default.
 - `premiumSampleRate` is applied **after** the overall sample rate, and controls the percentage of sessions tracked as Browser Premium. It defaults to `100%`, so every sessions is tracked as Browser Premium by default.
 
-To track 100% of your sessions as Browser RUM:
+To track 100% of your sessions as Browser:
 
 ```
 datadogRum.init({
@@ -315,7 +315,7 @@ datadogRum.init({
 });
 ```
 
-For example, to track only 50% of your overall sessions with half tracked as Browser RUM and the other half tracked as Browser Premium, set the `sampleRate` and the `premiumSampleRate` to 50:
+For example, to track only 50% of your overall sessions with half tracked as Browser and the other half tracked as Browser Premium, set the `sampleRate` and the `premiumSampleRate` to 50. 25% of your sessions are Browser Premium. 
 
 ```
 datadogRum.init({
