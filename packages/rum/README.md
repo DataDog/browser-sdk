@@ -315,17 +315,16 @@ datadogRum.init({
 });
 ```
 
-For example, to track 60% of overall user sessions and set 70% of those sessions as Browser Premium, set `sampleRate` to 60 and `premiumSampleRate` to 70. 
+The `premiumSampleRate` is a percentage of `sampleRate`. If you set `sampleRate` to 60 and `premiumSampleRate` to 50, 40% of sessions are dropped, 30% of sessions are collected as Browser and 30% of sessions are collected as Browser Premium. 
 
 ```
 datadogRum.init({
     ....
     sampleRate: 60,
-    premiumSampleRate: 70
+    premiumSampleRate: 50
 });
 ```
 
-Within the 60% of user sessions collected for your application, 18% are Browser and 42% are Browser Premium. 
 
 ### Tagging
 
