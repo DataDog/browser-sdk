@@ -77,6 +77,8 @@ export function EventTab({ events, filters, onFiltered, clear }: EventTabProps) 
                     theme={colorScheme === 'dark' ? 'monokai' : 'bright:inverted'}
                     name={jsonOverview(event)}
                     displayDataTypes={false}
+                    style={{ backgroundColor: 'transparent' }}
+                    quotesOnKeys={false}
                   />
                 </td>
               </tr>

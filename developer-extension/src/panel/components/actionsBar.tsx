@@ -6,8 +6,8 @@ import { useStore } from '../hooks/useStore'
 export function ActionsBar() {
   const [{ useDevBundles, useRumSlim, devServerStatus, blockIntakeRequests }, setStore] = useStore()
   return (
-    <Group direction="row" spacing="md" align="flex-start">
-      <Group spacing="md" align="center">
+    <Group direction="row">
+      <Group spacing="sm">
         <Checkbox
           label="Use dev bundles"
           checked={useDevBundles}

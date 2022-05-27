@@ -1,4 +1,4 @@
-import { Space, Tabs } from '@mantine/core'
+import { Divider, Tabs } from '@mantine/core'
 import React, { useState } from 'react'
 import { ActionsBar } from './components/actionsBar'
 import { ConfigTab } from './components/configTab'
@@ -18,7 +18,7 @@ export function Panel() {
   return (
     <>
       <ActionsBar />
-      <Space h="md" />
+      <Divider my="xs" />
       <Tabs color="violet" active={activeTab} onTabChange={setActiveTab}>
         <Tabs.Tab label="Events">
           <EventTab events={events} filters={filters} onFiltered={setFilters} clear={clear} />
