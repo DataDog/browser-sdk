@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { evalInWindow } from './evalInWindow'
 
 const REFRESH_CONFIGURATION_INTERVAL = 2000
 
@@ -8,8 +9,8 @@ export function useSdkConfig() {
 
   useEffect(() => {
     function getInitConfigurations() {
-      getInitConfiguration('rum').then(setRumConfig).catch(console.error)
-      getInitConfiguration('logs').then(setLogsConfig).catch(console.error)
+      void getInitConfiguration('rum').then(setRumConfig)
+      void getInitConfiguration('logs').then(setLogsConfig)
     }
     getInitConfigurations()
     const id = setInterval(getInitConfigurations, REFRESH_CONFIGURATION_INTERVAL)
@@ -19,17 +20,16 @@ export function useSdkConfig() {
   return { rumConfig, logsConfig }
 }
 
-function getInitConfiguration(sdk: 'rum' | 'logs') {
-  return new Promise<object>((resolve, reject) => {
-    chrome.devtools.inspectedWindow.eval(
-      `window.DD_${sdk.toUpperCase()}?.getInitConfiguration()`,
-      function (config, isException) {
-        if (isException) {
-          reject(config)
-        } else {
-          resolve(config as object)
-        }
-      }
-    )
-  })
+async function getInitConfiguration(sdk: 'rum' | 'logs'): Promise<object | undefined> {
+  let result: object | undefined
+  try {
+    result = (await evalInWindow(
+      `
+        return window.DD_${sdk.toUpperCase()}?.getInitConfiguration()
+      `
+    )) as object | undefined
+  } catch (error) {
+    console.error(`Error while getting ${sdk} configuration:`, error)
+  }
+  return result
 }

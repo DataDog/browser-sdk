@@ -1,8 +1,6 @@
 export interface BackgroundActions {
   getStore: void
   setStore: Partial<Store>
-  flushEvents: void
-  endSession: void
 }
 
 export interface PopupActions {
