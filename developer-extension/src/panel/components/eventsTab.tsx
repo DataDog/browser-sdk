@@ -1,10 +1,8 @@
 import { Badge, Button, Chip, Chips, Group, Space, Table, TextInput } from '@mantine/core'
-import { useColorScheme } from '@mantine/hooks'
 import React from 'react'
-import ReactJson from 'react-json-view'
 import type { RumEvent } from '../../../../packages/rum-core/src/rumEvent.types'
-import { safeTruncate } from '../../../../packages/core/src/tools/utils'
 import type { EventFilters, StoredEvent } from '../hooks/useEvents'
+import { Json } from './json'
 
 const RUM_EVENT_TYPE_COLOR = {
   action: 'violet',
@@ -30,7 +28,6 @@ interface EventTabProps {
 }
 
 export function EventTab({ events, filters, onFiltered, clear }: EventTabProps) {
-  const colorScheme = useColorScheme()
   return (
     events && (
       <>
@@ -71,15 +68,7 @@ export function EventTab({ events, filters, onFiltered, clear }: EventTabProps) 
                   )}
                 </td>
                 <td>
-                  <ReactJson
-                    src={event}
-                    collapsed={true}
-                    theme={colorScheme === 'dark' ? 'monokai' : 'bright:inverted'}
-                    name={jsonOverview(event)}
-                    displayDataTypes={false}
-                    style={{ backgroundColor: 'transparent' }}
-                    quotesOnKeys={false}
-                  />
+                  <Json src={event} collapsed={true} />
                 </td>
               </tr>
             ))}
@@ -91,15 +80,4 @@ export function EventTab({ events, filters, onFiltered, clear }: EventTabProps) 
 }
 function isRumEvent(event: StoredEvent): event is RumEvent & { id: string } {
   return !event.status
-}
-
-const replacer = (key: any, value: any): any => {
-  if (key && typeof value === 'object') return '{...}'
-  return value
-}
-
-function jsonOverview(jsonObject: object) {
-  const overview = JSON.stringify(jsonObject, replacer)
-  const unquoted = overview.replace(/"([^"]+)":/g, '$1:')
-  return safeTruncate(unquoted, 100, '...')
 }
