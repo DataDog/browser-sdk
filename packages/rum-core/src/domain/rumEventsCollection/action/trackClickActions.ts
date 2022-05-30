@@ -210,13 +210,13 @@ function newClick(
     const rect = base.event.target.getBoundingClientRect()
     target = {
       selector: getSelectorFromElement(base.event.target),
-      width: rect.width,
-      height: rect.height,
+      width: Math.round(rect.width),
+      height: Math.round(rect.height),
     }
     position = {
       // Use clientX and Y because for SVG element offsetX and Y are relatives to the <svg> element
-      x: base.event.clientX - rect.left,
-      y: base.event.clientY - rect.top,
+      x: Math.round(base.event.clientX - rect.left),
+      y: Math.round(base.event.clientY - rect.top),
     }
   }
   const historyEntry = history.add(id, base.startClocks.relative)
