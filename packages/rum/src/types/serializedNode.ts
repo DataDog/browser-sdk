@@ -1,19 +1,21 @@
-export const enum NodeType {
-  Document,
-  DocumentType,
-  Element,
-  Text,
-  CDATA,
-  Comment,
-}
+export const NodeType = {
+  Document: 0,
+  DocumentType: 1,
+  Element: 2,
+  Text: 3,
+  CDATA: 4,
+  Comment: 5,
+} as const
+
+export type NodeType = typeof NodeType[keyof typeof NodeType]
 
 export type DocumentNode = {
-  type: NodeType.Document
+  type: typeof NodeType.Document
   childNodes: SerializedNodeWithId[]
 }
 
 export type DocumentTypeNode = {
-  type: NodeType.DocumentType
+  type: typeof NodeType.DocumentType
   name: string
   publicId: string
   systemId: string
@@ -24,7 +26,7 @@ export type Attributes = {
 }
 
 export type ElementNode = {
-  type: NodeType.Element
+  type: typeof NodeType.Element
   tagName: string
   attributes: Attributes
   childNodes: SerializedNodeWithId[]
@@ -32,13 +34,13 @@ export type ElementNode = {
 }
 
 export type TextNode = {
-  type: NodeType.Text
+  type: typeof NodeType.Text
   textContent: string
   isStyle?: true
 }
 
 export type CDataNode = {
-  type: NodeType.CDATA
+  type: typeof NodeType.CDATA
   textContent: ''
 }
 
