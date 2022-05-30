@@ -44,7 +44,7 @@ export interface ClickAction {
   startClocks: ClocksState
   duration?: Duration
   counts: ActionCounts
-  event: MouseEvent & { target: HTMLElement }
+  event: MouseEvent & { target: Element }
   frustrationTypes: FrustrationType[]
 }
 
@@ -97,7 +97,7 @@ export function trackClickActions(
     }
   }
 
-  function processClick(event: MouseEvent & { target: HTMLElement }) {
+  function processClick(event: MouseEvent & { target: Element }) {
     if (!trackFrustrations && history.find()) {
       // TODO: remove this in a future major version. To keep retrocompatibility, ignore any new
       // action if another one is already occurring.
@@ -167,13 +167,13 @@ export function trackClickActions(
   }
 }
 
-function listenClickEvents(callback: (clickEvent: MouseEvent & { target: HTMLElement }) => void) {
+function listenClickEvents(callback: (clickEvent: MouseEvent & { target: Element }) => void) {
   return addEventListener(
     window,
     DOM_EVENT.CLICK,
     (clickEvent: MouseEvent) => {
       if (clickEvent.target instanceof Element) {
-        callback(clickEvent as MouseEvent & { target: HTMLElement })
+        callback(clickEvent as MouseEvent & { target: Element })
       }
     },
     { capture: true }
@@ -207,10 +207,11 @@ function newClick(
   let position: ClickAction['position']
 
   if (isExperimentalFeatureEnabled('clickmap')) {
+    const rect = base.event.target.getBoundingClientRect()
     target = {
       selector: getSelectorFromElement(base.event.target),
-      width: base.event.target.offsetWidth,
-      height: base.event.target.offsetHeight,
+      width: rect.right - rect.left,
+      height: rect.bottom - rect.top,
     }
     position = {
       x: base.event.offsetX,
