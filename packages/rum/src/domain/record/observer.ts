@@ -11,8 +11,8 @@ import {
   noop,
 } from '@datadog/browser-core'
 import { NodePrivacyLevel } from '../../constants'
-import type { InputState, MousePosition, MouseInteractionParam } from '../../types'
-import { IncrementalSource, MediaInteractions, MouseInteractions } from '../../types'
+import type { InputState, MousePosition, MouseInteraction } from '../../types'
+import { IncrementalSource, MediaInteractionType, MouseInteractionType } from '../../types'
 import { getNodePrivacyLevel, shouldMaskNode } from './privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from './serializationUtils'
 import type {
@@ -113,15 +113,15 @@ function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {
 }
 
 const eventTypeToMouseInteraction = {
-  [DOM_EVENT.MOUSE_UP]: MouseInteractions.MouseUp,
-  [DOM_EVENT.MOUSE_DOWN]: MouseInteractions.MouseDown,
-  [DOM_EVENT.CLICK]: MouseInteractions.Click,
-  [DOM_EVENT.CONTEXT_MENU]: MouseInteractions.ContextMenu,
-  [DOM_EVENT.DBL_CLICK]: MouseInteractions.DblClick,
-  [DOM_EVENT.FOCUS]: MouseInteractions.Focus,
-  [DOM_EVENT.BLUR]: MouseInteractions.Blur,
-  [DOM_EVENT.TOUCH_START]: MouseInteractions.TouchStart,
-  [DOM_EVENT.TOUCH_END]: MouseInteractions.TouchEnd,
+  [DOM_EVENT.MOUSE_UP]: MouseInteractionType.MouseUp,
+  [DOM_EVENT.MOUSE_DOWN]: MouseInteractionType.MouseDown,
+  [DOM_EVENT.CLICK]: MouseInteractionType.Click,
+  [DOM_EVENT.CONTEXT_MENU]: MouseInteractionType.ContextMenu,
+  [DOM_EVENT.DBL_CLICK]: MouseInteractionType.DblClick,
+  [DOM_EVENT.FOCUS]: MouseInteractionType.Focus,
+  [DOM_EVENT.BLUR]: MouseInteractionType.Blur,
+  [DOM_EVENT.TOUCH_START]: MouseInteractionType.TouchStart,
+  [DOM_EVENT.TOUCH_END]: MouseInteractionType.TouchEnd,
 }
 function initMouseInteractionObserver(
   cb: MouseInteractionCallBack,
@@ -133,7 +133,7 @@ function initMouseInteractionObserver(
       return
     }
     const { clientX, clientY } = isTouchEvent(event) ? event.changedTouches[0] : event
-    const position: MouseInteractionParam = {
+    const position: MouseInteraction = {
       id: getSerializedNodeId(target),
       type: eventTypeToMouseInteraction[event.type as keyof typeof eventTypeToMouseInteraction],
       x: clientX,
@@ -339,7 +339,7 @@ function initMediaInteractionObserver(
     }
     mediaInteractionCb({
       id: getSerializedNodeId(target),
-      type: event.type === DOM_EVENT.PLAY ? MediaInteractions.Play : MediaInteractions.Pause,
+      type: event.type === DOM_EVENT.PLAY ? MediaInteractionType.Play : MediaInteractionType.Pause,
     })
   }
   return addEventListeners(document, [DOM_EVENT.PLAY, DOM_EVENT.PAUSE], handler, { capture: true, passive: true }).stop

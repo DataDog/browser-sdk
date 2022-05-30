@@ -5,11 +5,11 @@ import type {
   Record,
   MousePosition,
   IncrementalSource,
-  MouseInteractionParam,
+  MouseInteraction,
   ScrollPosition,
-  StyleSheetRuleParam,
-  ViewportResizeDimention,
-  MediaInteractionParam,
+  StyleSheetRule,
+  ViewportResizeDimension,
+  MediaInteraction,
   MutationPayload,
   InputState,
 } from '../../types'
@@ -84,17 +84,17 @@ export type MousemoveCallBack = (
   source: typeof IncrementalSource.MouseMove | typeof IncrementalSource.TouchMove
 ) => void
 
-export type MouseInteractionCallBack = (d: MouseInteractionParam) => void
+export type MouseInteractionCallBack = (d: MouseInteraction) => void
 
 export type ScrollCallback = (p: ScrollPosition) => void
 
-export type StyleSheetRuleCallback = (s: StyleSheetRuleParam) => void
+export type StyleSheetRuleCallback = (s: StyleSheetRule) => void
 
-export type ViewportResizeCallback = (d: ViewportResizeDimention) => void
+export type ViewportResizeCallback = (d: ViewportResizeDimension) => void
 
 export type InputCallback = (v: InputState & { id: number }) => void
 
-export type MediaInteractionCallback = (p: MediaInteractionParam) => void
+export type MediaInteractionCallback = (p: MediaInteraction) => void
 
 export type FocusCallback = (data: FocusRecord['data']) => void
 

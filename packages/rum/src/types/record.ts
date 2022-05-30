@@ -102,7 +102,7 @@ export interface MousemoveData {
 
 export type MouseInteractionData = {
   source: typeof IncrementalSource.MouseInteraction
-} & MouseInteractionParam
+} & MouseInteraction
 
 export type ScrollData = {
   source: typeof IncrementalSource.Scroll
@@ -110,7 +110,7 @@ export type ScrollData = {
 
 export type ViewportResizeData = {
   source: typeof IncrementalSource.ViewportResize
-} & ViewportResizeDimention
+} & ViewportResizeDimension
 
 export type InputData = {
   source: typeof IncrementalSource.Input
@@ -119,11 +119,11 @@ export type InputData = {
 
 export type MediaInteractionData = {
   source: typeof IncrementalSource.MediaInteraction
-} & MediaInteractionParam
+} & MediaInteraction
 
 export type StyleSheetRuleData = {
   source: typeof IncrementalSource.StyleSheetRule
-} & StyleSheetRuleParam
+} & StyleSheetRule
 
 export type IncrementalData =
   | MutationData
@@ -174,14 +174,14 @@ export interface MousePosition {
   timeOffset: number
 }
 
-export interface MouseInteractionParam {
-  type: MouseInteractions
+export interface MouseInteraction {
+  type: MouseInteractionType
   id: number
   x: number
   y: number
 }
 
-export const MouseInteractions = {
+export const MouseInteractionType = {
   MouseUp: 0,
   MouseDown: 1,
   Click: 2,
@@ -193,7 +193,7 @@ export const MouseInteractions = {
   TouchEnd: 9,
 } as const
 
-export type MouseInteractions = typeof MouseInteractions[keyof typeof MouseInteractions]
+export type MouseInteractionType = typeof MouseInteractionType[keyof typeof MouseInteractionType]
 
 export interface ScrollPosition {
   id: number
@@ -201,22 +201,22 @@ export interface ScrollPosition {
   y: number
 }
 
-export interface ViewportResizeDimention {
+export interface ViewportResizeDimension {
   width: number
   height: number
 }
 
 export type InputState = { text: string } | { isChecked: boolean }
 
-export const MediaInteractions = {
+export const MediaInteractionType = {
   Play: 0,
   Pause: 1,
 } as const
 
-export type MediaInteractions = typeof MediaInteractions[keyof typeof MediaInteractions]
+export type MediaInteractionType = typeof MediaInteractionType[keyof typeof MediaInteractionType]
 
-export interface MediaInteractionParam {
-  type: MediaInteractions
+export interface MediaInteraction {
+  type: MediaInteractionType
   id: number
 }
 
@@ -229,7 +229,7 @@ export interface StyleSheetDeleteRule {
   index: number | number[]
 }
 
-export interface StyleSheetRuleParam {
+export interface StyleSheetRule {
   id: number
   removes?: StyleSheetDeleteRule[]
   adds?: StyleSheetAddRule[]
