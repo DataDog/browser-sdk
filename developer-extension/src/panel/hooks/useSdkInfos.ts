@@ -29,7 +29,9 @@ export function useSdkInfos() {
 
   useEffect(() => {
     function refreshInfos() {
-      void getInfos().then(setInfos)
+      void getInfos().then((newInfos) =>
+        setInfos((previousInfos) => (deepEqual(previousInfos, newInfos) ? previousInfos : newInfos))
+      )
     }
     refreshInfos()
     const id = setInterval(refreshInfos, REFRESH_INFOS_INTERVAL)
@@ -70,4 +72,10 @@ async function getInfos(): Promise<SdkInfos> {
     console.error('Error while getting SDK infos:', error)
   }
   return {}
+}
+
+function deepEqual(a: unknown, b: unknown) {
+  // Quick and dirty but does the job. We might want to include a cleaner helper if our needs are
+  // changing.
+  return JSON.stringify(a) === JSON.stringify(b)
 }
