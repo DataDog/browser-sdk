@@ -97,7 +97,7 @@ describe('trackClickActions', () => {
         name: 'Click me',
         startClocks: jasmine.any(Object),
         type: ActionType.CLICK,
-        event: createNewEvent('click'),
+        event: createNewEvent('click', { target: document.createElement('button') }),
         frustrationTypes: [],
         target: undefined,
         position: undefined,

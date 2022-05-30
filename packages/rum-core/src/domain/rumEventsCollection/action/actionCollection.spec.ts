@@ -25,7 +25,8 @@ describe('actionCollection', () => {
   })
   it('should create action from auto action', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
-    const event = createNewEvent('click', { target: { offsetWidth: 1, offsetHeight: 2 } })
+
+    const event = createNewEvent('click', { target: document.createElement('button') })
     lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
       counts: {
         errorCount: 10,
