@@ -47,7 +47,7 @@ describe('getSelectorFromElement', () => {
 
   describe('position selector', () => {
     it('should use nth-of-type when the element as siblings', () => {
-      const html = isolatedDOM.element`<div></div><div target></div>`
+      const html = isolatedDOM.element`<span></span><div></div><span></span><div target></div>`
       expect(getSelectorFromElement(html)).toBe('BODY>DIV:nth-of-type(2)')
     })
 

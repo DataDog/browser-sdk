@@ -27,21 +27,36 @@ function getIDSelector(element: Element): string | undefined {
 
 function getClassSelector(element: Element): string | undefined {
   const orderedClassList = arrayFrom(element.classList).sort()
-  const siblings = arrayFrom(element.parentElement!.children).filter((child) => child !== element)
-  const classUniqueAmongSiblings = siblings.every(
-    (sibling) =>
-      sibling.tagName !== element.tagName ||
-      orderedClassList.some((className) => !sibling.classList.contains(className))
-  )
+  let classUniqueAmongSiblings = true
+  for (let i = 0; i < element.parentElement!.children.length; i++) {
+    const sibling = element.parentElement!.children[i]
+    if (sibling === element) continue
+
+    if (sibling.tagName === element.tagName && sameClasses(orderedClassList, sibling.classList)) {
+      classUniqueAmongSiblings = false
+      break
+    }
+  }
 
   if (classUniqueAmongSiblings)
     return `${element.tagName}${orderedClassList.map((className) => `.${className}`).join('')}`
+}
+
+function sameClasses(a: string[], b: DOMTokenList): boolean {
+  return a.length <= b.length && a.every((className) => b.contains(className))
 }
 
 function getPositionSelector(element: Element): string | undefined {
   const isUniqueChild = !element.previousElementSibling && !element.nextElementSibling
   if (isUniqueChild) return `${element.tagName}`
 
-  const index = arrayFrom(element.parentElement!.children).indexOf(element)
-  return `${element.tagName}:nth-of-type(${index + 1})`
+  let index = 1
+  let prevSibling = element.previousElementSibling
+  while (prevSibling) {
+    if (element.tagName === prevSibling.tagName) index++
+
+    prevSibling = prevSibling.previousElementSibling
+  }
+
+  return `${element.tagName}:nth-of-type(${index})`
 }
