@@ -2,6 +2,7 @@ import type { DefaultPrivacyLevel } from '@datadog/browser-core'
 import { monitor, noop } from '@datadog/browser-core'
 import { getMutationObserverConstructor } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel } from '../../constants'
+import type { AddedNodeMutation, AttributeMutation, RemovedNodeMutation, TextMutation } from '../../types'
 import { getNodePrivacyLevel, getTextContent } from './privacy'
 import type { NodeWithSerializedNode } from './serializationUtils'
 import {
@@ -12,15 +13,11 @@ import {
 } from './serializationUtils'
 import { serializeNodeWithId, serializeAttribute } from './serialize'
 import type {
-  AddedNodeMutation,
-  AttributeMutation,
   RumAttributesMutationRecord,
   RumCharacterDataMutationRecord,
   RumChildListMutationRecord,
   MutationCallBack,
   RumMutationRecord,
-  RemovedNodeMutation,
-  TextMutation,
 } from './types'
 import { forEach } from './utils'
 import { createMutationBatch } from './mutationBatch'

@@ -6,16 +6,13 @@ import type {
   SerializedNode,
   SerializedNodeWithId,
   TextNode,
-} from '../src/domain/record'
-import { IncrementalSource, NodeType } from '../src/domain/record'
-import type {
   FullSnapshotRecord,
   IncrementalSnapshotRecord,
   MetaRecord,
   VisualViewportRecord,
   Segment,
 } from '../src/types'
-import { RecordType } from '../src/types'
+import { RecordType, IncrementalSource, NodeType } from '../src/types'
 
 export class MockWorker implements DeflateWorker {
   readonly pendingMessages: DeflateWorkerAction[] = []

@@ -11,12 +11,13 @@ import {
   noop,
 } from '@datadog/browser-core'
 import { NodePrivacyLevel } from '../../constants'
+import type { InputState, MousePosition, MouseInteractionParam } from '../../types'
+import { IncrementalSource, MediaInteractions, MouseInteractions } from '../../types'
 import { getNodePrivacyLevel, shouldMaskNode } from './privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from './serializationUtils'
 import type {
   FocusCallback,
   InputCallback,
-  InputState,
   ListenerHandler,
   MediaInteractionCallback,
   MouseInteractionCallBack,
@@ -27,10 +28,7 @@ import type {
   StyleSheetRuleCallback,
   ViewportResizeCallback,
   VisualViewportResizeCallback,
-  MousePosition,
-  MouseInteractionParam,
 } from './types'
-import { IncrementalSource, MediaInteractions, MouseInteractions } from './types'
 import { forEach, isTouchEvent } from './utils'
 import type { MutationController } from './mutationObserver'
 import { startMutationObserver } from './mutationObserver'

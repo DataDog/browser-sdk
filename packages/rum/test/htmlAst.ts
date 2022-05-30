@@ -1,5 +1,5 @@
 import { objectValues } from '../../core/src'
-import type { SerializedNodeWithId } from '../src/domain/record'
+import type { SerializedNodeWithId } from '../src/types'
 import { serializeNodeWithId } from '../src/domain/record'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME } from '../src/constants'
 

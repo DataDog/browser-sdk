@@ -1,14 +1,8 @@
 import { assign, timeStampNow } from '@datadog/browser-core'
-import type { IncrementalSnapshotRecord } from '../../types'
-import { RecordType } from '../../types'
-import { serializeDocument } from './serialize'
-import { initObservers } from './observer'
-import { IncrementalSource } from './types'
 import type {
+  IncrementalSnapshotRecord,
   IncrementalData,
   InputData,
-  RecordAPI,
-  RecordOptions,
   MediaInteractionData,
   MouseInteractionData,
   MousemoveData,
@@ -16,7 +10,11 @@ import type {
   ScrollData,
   StyleSheetRuleData,
   ViewportResizeData,
-} from './types'
+} from '../../types'
+import { RecordType, IncrementalSource } from '../../types'
+import { serializeDocument } from './serialize'
+import { initObservers } from './observer'
+import type { RecordAPI, RecordOptions } from './types'
 
 import { MutationController } from './mutationObserver'
 import { getVisualViewport, getScrollX, getScrollY, getWindowHeight, getWindowWidth } from './viewports'
