@@ -2,6 +2,7 @@ import type { Clock } from '../../test/specHelper'
 import { mockClock } from '../../test/specHelper'
 import {
   combine,
+  cssEscape,
   deepClone,
   findCommaSeparatedValue,
   getType,
@@ -567,5 +568,14 @@ describe('startWith', () => {
 
   it('should return false if the candidate does not start with the searched string', () => {
     expect(startsWith('barfoo', 'foo')).toEqual(false)
+  })
+})
+
+describe('cssEscape', () => {
+  it('should escape a string', () => {
+    expect(cssEscape('.foo#bar')).toEqual('\\.foo\\#bar')
+    expect(cssEscape('()[]{}')).toEqual('\\(\\)\\[\\]\\{\\}')
+    expect(cssEscape('--a')).toEqual('--a')
+    expect(cssEscape('\0')).toEqual('\ufffd')
   })
 })

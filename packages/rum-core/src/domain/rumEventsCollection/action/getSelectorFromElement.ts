@@ -1,4 +1,4 @@
-import { arrayFrom } from '@datadog/browser-core'
+import { arrayFrom, cssEscape } from '@datadog/browser-core'
 
 export function getSelectorFromElement(targetElement: Element): string {
   const targetElementSelector = []
@@ -20,7 +20,7 @@ export function getSelectorFromElement(targetElement: Element): string {
 }
 
 function getIDSelector(element: Element): string | undefined {
-  const isUnique = element.id && element.ownerDocument.body.querySelectorAll(`#${element.id}`).length === 1
+  const isUnique = element.id && element.ownerDocument.body.querySelectorAll(`#${cssEscape(element.id)}`).length === 1
 
   if (isUnique) return `#${element.id}`
 }
