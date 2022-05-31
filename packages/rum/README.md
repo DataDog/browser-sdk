@@ -279,7 +279,7 @@ init(configuration: {
 
 ### Browser RUM and RUM Premium sampling configuration
 
-This feature requires the RUM Browser SDK v3.6.0+.
+This feature requires the RUM Browser SDK v3.0.0+. The `premiumSampleRate` initialization parameter has been introduced in the RUM Browser SDK v4.10.2, deprecating the former `replaySampleRate` initialization parameter.
 
 When a new session is created, it can be tracked as either:
 
