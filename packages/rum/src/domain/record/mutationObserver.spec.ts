@@ -7,10 +7,11 @@ import {
   PRIVACY_ATTR_VALUE_MASK,
   PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
 } from '../../constants'
+import type { AttributeMutation, Attributes } from '../../types'
+import { NodeType } from '../../types'
 import { serializeDocument } from './serialize'
 import { sortAddedAndMovedNodes, startMutationObserver, MutationController } from './mutationObserver'
-import type { AttributeMutation, Attributes, MutationCallBack } from './types'
-import { NodeType } from './types'
+import type { MutationCallBack } from './observer'
 
 describe('startMutationCollection', () => {
   let sandbox: HTMLElement

@@ -13,17 +13,18 @@ import { addFailedSendBeacon } from './failedSendBeacon'
 export class HttpRequest {
   constructor(private endpointBuilder: EndpointBuilder, private bytesLimit: number) {}
 
-  send(data: string | FormData, bytesCount: number, reason?: string) {
+  send(data: string | FormData, bytesCount: number, flushReason?: string) {
     const url = this.endpointBuilder.build()
     const canUseBeacon = !!navigator.sendBeacon && bytesCount < this.bytesLimit
     if (canUseBeacon) {
       try {
         const isQueued = navigator.sendBeacon(url, data)
+
         if (isQueued) {
           return
         }
 
-        addFailedSendBeacon(this.endpointBuilder.endpointType, bytesCount, reason)
+        addFailedSendBeacon(this.endpointBuilder.endpointType, bytesCount, flushReason)
       } catch (e) {
         reportBeaconError(e)
       }
