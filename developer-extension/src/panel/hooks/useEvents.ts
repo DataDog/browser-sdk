@@ -11,14 +11,14 @@ export type StoredEvent = (RumEvent | LogsEvent) & {
 }
 
 export interface EventFilters {
-  sdk: 'rum' | 'logs'
+  sdk: Array<'rum' | 'logs'>
   query: string
 }
 
 export function useEvents() {
   const [events, setEvents] = useState<StoredEvent[]>([])
   const [filters, setFilters] = useState<EventFilters>({
-    sdk: 'rum',
+    sdk: ['rum', 'logs'],
     query: '',
   })
 
@@ -35,11 +35,20 @@ export function useEvents() {
   )
 
   const filteredEvents = events
-    .filter((event) => (filters.sdk === 'logs' ? event.status : !event.status))
+    .filter((event) => filters.sdk.includes('logs') || !isLog(event))
+    .filter((event) => filters.sdk.includes('rum') || !isRum(event))
     .filter((event) => !filters.query || matchQuery(filters.query, event))
     .slice(0, MAXIMUM_DISPLAYED_EVENTS)
 
   return { events: filteredEvents, filters, setFilters, clear: () => setEvents([]) }
+}
+
+function isLog(event: StoredEvent) {
+  return Boolean(event.status)
+}
+
+function isRum(event: StoredEvent) {
+  return !isLog(event)
 }
 
 function matchQuery(query: string, event: StoredEvent) {
