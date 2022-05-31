@@ -8,7 +8,7 @@ export function send(
   data: Uint8Array,
   metadata: SegmentMetadata,
   rawSegmentBytesCount: number,
-  reason?: string
+  flushReason?: string
 ): void {
   const formData = new FormData()
 
@@ -24,7 +24,7 @@ export function send(
   formData.append('raw_segment_size', rawSegmentBytesCount.toString())
 
   const request = new HttpRequest(endpointBuilder, SEGMENT_BYTES_LIMIT)
-  request.send(formData, data.byteLength, reason)
+  request.send(formData, data.byteLength, flushReason)
 }
 
 export function toFormEntries(input: object, onEntry: (key: string, value: string) => void, prefix = '') {
