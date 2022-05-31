@@ -1,8 +1,8 @@
 import type { CookieOptions } from '../../browser/cookie'
 import { COOKIE_ACCESS_DELAY } from '../../browser/cookie'
+import { monitor } from '../../tools/monitor'
 import { Observable } from '../../tools/observable'
 import * as utils from '../../tools/utils'
-import { monitor } from '../telemetry'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { retrieveSession, withCookieLockAccess } from './sessionCookieStore'
 

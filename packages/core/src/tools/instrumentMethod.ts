@@ -1,4 +1,4 @@
-import { callMonitored, monitor } from '../domain/telemetry'
+import { callMonitored, monitor } from './monitor'
 import { noop } from './utils'
 
 export function instrumentMethod<OBJECT extends { [key: string]: any }, METHOD extends keyof OBJECT>(

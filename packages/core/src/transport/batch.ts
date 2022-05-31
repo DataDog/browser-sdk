@@ -1,7 +1,7 @@
 import { display } from '../tools/display'
 import type { Context } from '../tools/context'
 import { addEventListener, DOM_EVENT, jsonStringify, noop, objectValues } from '../tools/utils'
-import { monitor } from '../domain/telemetry'
+import { monitor } from '../tools/monitor'
 import type { HttpRequest } from './httpRequest'
 
 // https://en.wikipedia.org/wiki/UTF-8

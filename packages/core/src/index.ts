@@ -17,19 +17,16 @@ export {
   startTelemetry,
   Telemetry,
   RawTelemetryEvent,
-  monitored,
-  monitor,
-  callMonitored,
   addTelemetryDebug,
   addTelemetryError,
   startFakeTelemetry,
   resetTelemetry,
-  setDebugMode,
   TelemetryEvent,
   TelemetryErrorEvent,
   TelemetryDebugEvent,
   isTelemetryReplicationAllowed,
 } from './domain/telemetry'
+export { monitored, monitor, callMonitored, setDebugMode } from './tools/monitor'
 export { Observable, Subscription } from './tools/observable'
 export {
   startSessionManager,
@@ -68,7 +65,7 @@ export { Context, ContextArray, ContextValue } from './tools/context'
 export { areCookiesAuthorized, getCookie, setCookie, deleteCookie, COOKIE_ACCESS_DELAY } from './browser/cookie'
 export { initXhrObservable, XhrCompleteContext, XhrStartContext } from './browser/xhrObservable'
 export { initFetchObservable, FetchCompleteContext, FetchStartContext, FetchContext } from './browser/fetchObservable'
-export { initConsoleObservable, ConsoleLog, ConsoleApiName } from './domain/console/consoleObservable'
+export { initConsoleObservable, ConsoleLog } from './domain/console/consoleObservable'
 export { BoundedBuffer } from './tools/boundedBuffer'
 export { catchUserErrors } from './tools/catchUserErrors'
 export { createContextManager } from './tools/contextManager'

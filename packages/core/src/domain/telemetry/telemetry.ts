@@ -1,5 +1,5 @@
 import type { Context } from '../../tools/context'
-import { display } from '../../tools/display'
+import { ConsoleApiName } from '../../tools/display'
 import { toStackTraceString } from '../../tools/error'
 import { assign, combine, jsonStringify, performDraw, includes, startsWith } from '../../tools/utils'
 import type { Configuration } from '../configuration'
@@ -8,7 +8,7 @@ import type { StackTrace } from '../tracekit'
 import { computeStackTrace } from '../tracekit'
 import { Observable } from '../../tools/observable'
 import { timeStampNow } from '../../tools/timeUtils'
-import { ConsoleApiName } from '../console/consoleObservable'
+import { displayIfDebugEnabled, startMonitorErrorCollection } from '../../tools/monitor'
 import type { TelemetryEvent } from './telemetryEvent.types'
 
 // replaced at build time
@@ -43,7 +43,6 @@ export interface RawTelemetryEvent extends Context {
 const TELEMETRY_EXCLUDED_SITES: string[] = [INTAKE_SITE_US1_FED]
 
 const telemetryConfiguration: {
-  debugMode?: boolean
   maxEventsPerPage: number
   sentEventCount: number
   telemetryEnabled: boolean
@@ -62,6 +61,7 @@ export function startTelemetry(configuration: Configuration): Telemetry {
       observable.notify(toTelemetryEvent(event))
     }
   }
+  startMonitorErrorCollection(addTelemetryError)
 
   assign(telemetryConfiguration, {
     maxEventsPerPage: configuration.maxTelemetryEventsPerPage,
@@ -109,7 +109,6 @@ export function startFakeTelemetry() {
 
 export function resetTelemetry() {
   onRawTelemetryEventCollected = undefined
-  telemetryConfiguration.debugMode = undefined
 }
 
 /**
@@ -118,49 +117,6 @@ export function resetTelemetry() {
  */
 export function isTelemetryReplicationAllowed(configuration: Configuration) {
   return configuration.site === INTAKE_SITE_STAGING
-}
-
-export function monitored<T extends (...params: any[]) => unknown>(
-  _: any,
-  __: string,
-  descriptor: TypedPropertyDescriptor<T>
-) {
-  const originalMethod = descriptor.value!
-  descriptor.value = function (this: any, ...args: Parameters<T>) {
-    const decorated = onRawTelemetryEventCollected ? monitor(originalMethod) : originalMethod
-    return decorated.apply(this, args) as ReturnType<T>
-  } as T
-}
-
-export function monitor<T extends (...args: any[]) => any>(fn: T): T {
-  return function (this: any) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return callMonitored(fn, this, arguments as unknown as Parameters<T>)
-  } as unknown as T // consider output type has input type
-}
-
-export function callMonitored<T extends (...args: any[]) => any>(
-  fn: T,
-  context: ThisParameterType<T>,
-  args: Parameters<T>
-): ReturnType<T> | undefined
-export function callMonitored<T extends (this: void) => any>(fn: T): ReturnType<T> | undefined
-export function callMonitored<T extends (...args: any[]) => any>(
-  fn: T,
-  context?: any,
-  args?: any
-): ReturnType<T> | undefined {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return fn.apply(context, args)
-  } catch (e) {
-    displayIfDebugEnabled(ConsoleApiName.error, e)
-    try {
-      addTelemetryError(e)
-    } catch (e) {
-      displayIfDebugEnabled(ConsoleApiName.error, e)
-    }
-  }
 }
 
 export function addTelemetryDebug(message: string, context?: Context) {
@@ -194,7 +150,7 @@ function addTelemetry(event: RawTelemetryEvent) {
   }
 }
 
-function formatError(e: unknown) {
+export function formatError(e: unknown) {
   if (e instanceof Error) {
     const stackTrace = computeStackTrace(e)
     return {
@@ -218,14 +174,4 @@ export function scrubCustomerFrames(stackTrace: StackTrace) {
     (frame) => !frame.url || ALLOWED_FRAME_URLS.some((allowedFrameUrl) => startsWith(frame.url!, allowedFrameUrl))
   )
   return stackTrace
-}
-
-export function setDebugMode(debugMode: boolean) {
-  telemetryConfiguration.debugMode = debugMode
-}
-
-function displayIfDebugEnabled(api: ConsoleApiName, ...args: any[]) {
-  if (telemetryConfiguration.debugMode) {
-    display(api, '[TELEMETRY]', ...args)
-  }
 }

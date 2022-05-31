@@ -16,6 +16,12 @@
 
 ---
 
+## v4.11.2
+
+- 🏷️ [RUMF-1256] adjust StyleSheetRule records to support index paths ([#1571](https://github.com/DataDog/browser-sdk/pull/1571))
+- 🐛 [RUMF-1267] resolve remaining cyclic dependencies related to telemetry ([#1567](https://github.com/DataDog/browser-sdk/pull/1567))
+- 📝 Browser Monitoring Edits ([#1563](https://github.com/DataDog/browser-sdk/pull/1563))
+
 ## v4.11.1
 
 - ♻️ [RUMF-1190] cleanup telemetry ([#1560](https://github.com/DataDog/browser-sdk/pull/1560))
