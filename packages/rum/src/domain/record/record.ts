@@ -1,4 +1,5 @@
 import { assign, timeStampNow } from '@datadog/browser-core'
+import type { DefaultPrivacyLevel, TimeStamp } from '@datadog/browser-core'
 import type {
   IncrementalSnapshotRecord,
   IncrementalData,
@@ -10,14 +11,25 @@ import type {
   ScrollData,
   StyleSheetRuleData,
   ViewportResizeData,
+  Record,
 } from '../../types'
 import { RecordType, IncrementalSource } from '../../types'
 import { serializeDocument } from './serialize'
 import { initObservers } from './observer'
-import type { RecordAPI, RecordOptions } from './types'
 
 import { MutationController } from './mutationObserver'
 import { getVisualViewport, getScrollX, getScrollY, getWindowHeight, getWindowWidth } from './viewports'
+
+export interface RecordOptions {
+  emit?: (record: Record) => void
+  defaultPrivacyLevel: DefaultPrivacyLevel
+}
+
+export interface RecordAPI {
+  stop: () => void
+  takeFullSnapshot: (timestamp?: TimeStamp) => void
+  flushMutations: () => void
+}
 
 export function record(options: RecordOptions): RecordAPI {
   const { emit } = options

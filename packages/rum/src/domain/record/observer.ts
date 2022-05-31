@@ -11,24 +11,21 @@ import {
   noop,
 } from '@datadog/browser-core'
 import { NodePrivacyLevel } from '../../constants'
-import type { InputState, MousePosition, MouseInteraction } from '../../types'
+import type {
+  InputState,
+  MousePosition,
+  MouseInteraction,
+  MutationPayload,
+  ScrollPosition,
+  StyleSheetRule,
+  ViewportResizeDimension,
+  MediaInteraction,
+  FocusRecord,
+  VisualViewportRecord,
+} from '../../types'
 import { IncrementalSource, MediaInteractionType, MouseInteractionType } from '../../types'
 import { getNodePrivacyLevel, shouldMaskNode } from './privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from './serializationUtils'
-import type {
-  FocusCallback,
-  InputCallback,
-  ListenerHandler,
-  MediaInteractionCallback,
-  MouseInteractionCallBack,
-  MousemoveCallBack,
-  MutationCallBack,
-  ObserverParam,
-  ScrollCallback,
-  StyleSheetRuleCallback,
-  ViewportResizeCallback,
-  VisualViewportResizeCallback,
-} from './types'
 import { forEach, isTouchEvent } from './utils'
 import type { MutationController } from './mutationObserver'
 import { startMutationObserver } from './mutationObserver'
@@ -45,6 +42,46 @@ import {
 const MOUSE_MOVE_OBSERVER_THRESHOLD = 50
 const SCROLL_OBSERVER_THRESHOLD = 100
 const VISUAL_VIEWPORT_OBSERVER_THRESHOLD = 200
+
+type ListenerHandler = () => void
+
+type MousemoveCallBack = (
+  p: MousePosition[],
+  source: typeof IncrementalSource.MouseMove | typeof IncrementalSource.TouchMove
+) => void
+
+export type MutationCallBack = (m: MutationPayload) => void
+
+type MouseInteractionCallBack = (d: MouseInteraction) => void
+
+type ScrollCallback = (p: ScrollPosition) => void
+
+type StyleSheetRuleCallback = (s: StyleSheetRule) => void
+
+type ViewportResizeCallback = (d: ViewportResizeDimension) => void
+
+export type InputCallback = (v: InputState & { id: number }) => void
+
+type MediaInteractionCallback = (p: MediaInteraction) => void
+
+type FocusCallback = (data: FocusRecord['data']) => void
+
+type VisualViewportResizeCallback = (data: VisualViewportRecord['data']) => void
+
+interface ObserverParam {
+  defaultPrivacyLevel: DefaultPrivacyLevel
+  mutationController: MutationController
+  mutationCb: MutationCallBack
+  mousemoveCb: MousemoveCallBack
+  mouseInteractionCb: MouseInteractionCallBack
+  scrollCb: ScrollCallback
+  viewportResizeCb: ViewportResizeCallback
+  visualViewportResizeCb: VisualViewportResizeCallback
+  inputCb: InputCallback
+  mediaInteractionCb: MediaInteractionCallback
+  styleSheetRuleCb: StyleSheetRuleCallback
+  focusCb: FocusCallback
+}
 
 export function initObservers(o: ObserverParam): ListenerHandler {
   const mutationHandler = initMutationObserver(o.mutationController, o.mutationCb, o.defaultPrivacyLevel)

@@ -4,8 +4,8 @@ import { createNewEvent } from '../../../../core/test/specHelper'
 import { collectAsyncCalls, recordsPerFullSnapshot } from '../../../test/utils'
 import type { IncrementalSnapshotRecord, FocusRecord, Record } from '../../types'
 import { RecordType, IncrementalSource } from '../../types'
+import type { RecordAPI } from './record'
 import { record } from './record'
-import type { RecordAPI } from './types'
 
 describe('record', () => {
   let sandbox: HTMLElement
