@@ -20,9 +20,12 @@ export function getSelectorFromElement(targetElement: Element): string {
 }
 
 function getIDSelector(element: Element): string | undefined {
-  const isUnique = element.id && element.ownerDocument.body.querySelectorAll(`#${cssEscape(element.id)}`).length === 1
+  if (!element.id) return
 
-  if (isUnique) return `#${element.id}`
+  const escapedId = cssEscape(element.id)
+  const isUnique = element.ownerDocument.body.querySelectorAll(`#${escapedId}`).length === 1
+
+  if (isUnique) return `#${escapedId}`
 }
 
 function getClassSelector(element: Element): string | undefined {
@@ -39,7 +42,7 @@ function getClassSelector(element: Element): string | undefined {
   }
 
   if (classUniqueAmongSiblings)
-    return `${element.tagName}${orderedClassList.map((className) => `.${className}`).join('')}`
+    return `${element.tagName}${orderedClassList.map((className) => `.${cssEscape(className)}`).join('')}`
 }
 
 function sameClasses(a: string[], b: DOMTokenList): boolean {

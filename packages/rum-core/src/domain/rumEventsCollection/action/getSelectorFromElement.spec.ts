@@ -66,4 +66,12 @@ describe('getSelectorFromElement', () => {
       expect(getSelectorFromElement(isolatedDOM.element`<div class="bar"></div><div></div>`)).toBe('BODY>DIV.bar')
     })
   })
+
+  describe('should escape CSS selectors', () => {
+    it('ID selector should take precedence over class selector', () => {
+      expect(
+        getSelectorFromElement(isolatedDOM.element`<div id="#bar"><button target class=".foo"></button></div>`)
+      ).toBe('#\\#bar>BUTTON.\\.foo')
+    })
+  })
 })
