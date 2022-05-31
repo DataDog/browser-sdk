@@ -646,6 +646,10 @@ export function matchList(list: Array<string | RegExp>, value: string) {
 
 // https://github.com/jquery/jquery/blob/a684e6ba836f7c553968d7d026ed7941e1a612d8/src/selector/escapeSelector.js
 export function cssEscape(str: string) {
+  if (window.CSS && window.CSS.escape) {
+    return window.CSS.escape(str)
+  }
+
   // eslint-disable-next-line no-control-regex
   return str.replace(/([\0-\x1f\x7f]|^-?\d)|^-$|[^\x80-\uFFFF\w-]/g, function (ch, asCodePoint) {
     if (asCodePoint) {
