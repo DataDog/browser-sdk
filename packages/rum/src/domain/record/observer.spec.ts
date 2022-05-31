@@ -1,9 +1,9 @@
 import { DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
 import { createNewEvent } from '../../../../core/test/specHelper'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT } from '../../constants'
+import type { InputCallback } from './observer'
 import { initInputObserver } from './observer'
 import { serializeDocument } from './serialize'
-import type { InputCallback } from './types'
 
 describe('initInputObserver', () => {
   let stopInputObserver: () => void

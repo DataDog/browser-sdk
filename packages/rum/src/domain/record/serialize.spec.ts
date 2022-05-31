@@ -14,6 +14,8 @@ import {
   AST_MASK_USER_INPUT,
   generateLeanSerializedDoc,
 } from '../../../test/htmlAst'
+import type { ElementNode, SerializedNodeWithId, TextNode } from '../../types'
+import { NodeType } from '../../types'
 import { hasSerializedNode } from './serializationUtils'
 import type { SerializeOptions } from './serialize'
 import {
@@ -24,8 +26,6 @@ import {
   serializeAttribute,
 } from './serialize'
 import { MAX_ATTRIBUTE_VALUE_CHAR_LENGTH } from './privacy'
-import type { ElementNode, SerializedNodeWithId, TextNode } from './types'
-import { NodeType } from './types'
 
 const DEFAULT_OPTIONS: SerializeOptions = {
   document,
