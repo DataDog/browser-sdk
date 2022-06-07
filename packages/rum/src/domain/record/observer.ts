@@ -11,26 +11,21 @@ import {
   noop,
 } from '@datadog/browser-core'
 import { NodePrivacyLevel } from '../../constants'
+import type {
+  InputState,
+  MousePosition,
+  MouseInteraction,
+  MutationPayload,
+  ScrollPosition,
+  StyleSheetRule,
+  ViewportResizeDimension,
+  MediaInteraction,
+  FocusRecord,
+  VisualViewportRecord,
+} from '../../types'
+import { IncrementalSource, MediaInteractionType, MouseInteractionType } from '../../types'
 import { getNodePrivacyLevel, shouldMaskNode } from './privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from './serializationUtils'
-import type {
-  FocusCallback,
-  InputCallback,
-  InputState,
-  ListenerHandler,
-  MediaInteractionCallback,
-  MouseInteractionCallBack,
-  MousemoveCallBack,
-  MutationCallBack,
-  ObserverParam,
-  ScrollCallback,
-  StyleSheetRuleCallback,
-  ViewportResizeCallback,
-  VisualViewportResizeCallback,
-  MousePosition,
-  MouseInteractionParam,
-} from './types'
-import { IncrementalSource, MediaInteractions, MouseInteractions } from './types'
 import { forEach, isTouchEvent } from './utils'
 import type { MutationController } from './mutationObserver'
 import { startMutationObserver } from './mutationObserver'
@@ -47,6 +42,46 @@ import {
 const MOUSE_MOVE_OBSERVER_THRESHOLD = 50
 const SCROLL_OBSERVER_THRESHOLD = 100
 const VISUAL_VIEWPORT_OBSERVER_THRESHOLD = 200
+
+type ListenerHandler = () => void
+
+type MousemoveCallBack = (
+  p: MousePosition[],
+  source: typeof IncrementalSource.MouseMove | typeof IncrementalSource.TouchMove
+) => void
+
+export type MutationCallBack = (m: MutationPayload) => void
+
+type MouseInteractionCallBack = (d: MouseInteraction) => void
+
+type ScrollCallback = (p: ScrollPosition) => void
+
+type StyleSheetRuleCallback = (s: StyleSheetRule) => void
+
+type ViewportResizeCallback = (d: ViewportResizeDimension) => void
+
+export type InputCallback = (v: InputState & { id: number }) => void
+
+type MediaInteractionCallback = (p: MediaInteraction) => void
+
+type FocusCallback = (data: FocusRecord['data']) => void
+
+type VisualViewportResizeCallback = (data: VisualViewportRecord['data']) => void
+
+interface ObserverParam {
+  defaultPrivacyLevel: DefaultPrivacyLevel
+  mutationController: MutationController
+  mutationCb: MutationCallBack
+  mousemoveCb: MousemoveCallBack
+  mouseInteractionCb: MouseInteractionCallBack
+  scrollCb: ScrollCallback
+  viewportResizeCb: ViewportResizeCallback
+  visualViewportResizeCb: VisualViewportResizeCallback
+  inputCb: InputCallback
+  mediaInteractionCb: MediaInteractionCallback
+  styleSheetRuleCb: StyleSheetRuleCallback
+  focusCb: FocusCallback
+}
 
 export function initObservers(o: ObserverParam): ListenerHandler {
   const mutationHandler = initMutationObserver(o.mutationController, o.mutationCb, o.defaultPrivacyLevel)
@@ -115,15 +150,15 @@ function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {
 }
 
 const eventTypeToMouseInteraction = {
-  [DOM_EVENT.MOUSE_UP]: MouseInteractions.MouseUp,
-  [DOM_EVENT.MOUSE_DOWN]: MouseInteractions.MouseDown,
-  [DOM_EVENT.CLICK]: MouseInteractions.Click,
-  [DOM_EVENT.CONTEXT_MENU]: MouseInteractions.ContextMenu,
-  [DOM_EVENT.DBL_CLICK]: MouseInteractions.DblClick,
-  [DOM_EVENT.FOCUS]: MouseInteractions.Focus,
-  [DOM_EVENT.BLUR]: MouseInteractions.Blur,
-  [DOM_EVENT.TOUCH_START]: MouseInteractions.TouchStart,
-  [DOM_EVENT.TOUCH_END]: MouseInteractions.TouchEnd,
+  [DOM_EVENT.MOUSE_UP]: MouseInteractionType.MouseUp,
+  [DOM_EVENT.MOUSE_DOWN]: MouseInteractionType.MouseDown,
+  [DOM_EVENT.CLICK]: MouseInteractionType.Click,
+  [DOM_EVENT.CONTEXT_MENU]: MouseInteractionType.ContextMenu,
+  [DOM_EVENT.DBL_CLICK]: MouseInteractionType.DblClick,
+  [DOM_EVENT.FOCUS]: MouseInteractionType.Focus,
+  [DOM_EVENT.BLUR]: MouseInteractionType.Blur,
+  [DOM_EVENT.TOUCH_START]: MouseInteractionType.TouchStart,
+  [DOM_EVENT.TOUCH_END]: MouseInteractionType.TouchEnd,
 }
 function initMouseInteractionObserver(
   cb: MouseInteractionCallBack,
@@ -135,7 +170,7 @@ function initMouseInteractionObserver(
       return
     }
     const { clientX, clientY } = isTouchEvent(event) ? event.changedTouches[0] : event
-    const position: MouseInteractionParam = {
+    const position: MouseInteraction = {
       id: getSerializedNodeId(target),
       type: eventTypeToMouseInteraction[event.type as keyof typeof eventTypeToMouseInteraction],
       x: clientX,
@@ -341,7 +376,7 @@ function initMediaInteractionObserver(
     }
     mediaInteractionCb({
       id: getSerializedNodeId(target),
-      type: event.type === DOM_EVENT.PLAY ? MediaInteractions.Play : MediaInteractions.Pause,
+      type: event.type === DOM_EVENT.PLAY ? MediaInteractionType.Play : MediaInteractionType.Pause,
     })
   }
   return addEventListeners(document, [DOM_EVENT.PLAY, DOM_EVENT.PAUSE], handler, { capture: true, passive: true }).stop

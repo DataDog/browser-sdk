@@ -6,13 +6,6 @@ import {
   CENSORED_STRING_MARK,
   CENSORED_IMG_MARK,
 } from '../../constants'
-import {
-  getTextContent,
-  shouldMaskNode,
-  reducePrivacyLevel,
-  getNodeSelfPrivacyLevel,
-  MAX_ATTRIBUTE_VALUE_CHAR_LENGTH,
-} from './privacy'
 import type {
   SerializedNode,
   SerializedNodeWithId,
@@ -21,8 +14,15 @@ import type {
   ElementNode,
   TextNode,
   CDataNode,
-} from './types'
-import { NodeType } from './types'
+} from '../../types'
+import { NodeType } from '../../types'
+import {
+  getTextContent,
+  shouldMaskNode,
+  reducePrivacyLevel,
+  getNodeSelfPrivacyLevel,
+  MAX_ATTRIBUTE_VALUE_CHAR_LENGTH,
+} from './privacy'
 import { getSerializedNodeId, setSerializedNodeId, getElementInputValue } from './serializationUtils'
 import { forEach } from './utils'
 

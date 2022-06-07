@@ -43,7 +43,7 @@ export function startSegmentCollection(
   applicationId: string,
   sessionManager: RumSessionManager,
   viewContexts: ViewContexts,
-  send: (data: Uint8Array, metadata: SegmentMetadata, rawSegmentBytesCount: number) => void,
+  send: (data: Uint8Array, metadata: SegmentMetadata, rawSegmentBytesCount: number, flushReason?: string) => void,
   worker: DeflateWorker
 ) {
   return doStartSegmentCollection(
@@ -76,7 +76,7 @@ type SegmentCollectionState =
 export function doStartSegmentCollection(
   lifeCycle: LifeCycle,
   getSegmentContext: () => SegmentContext | undefined,
-  send: (data: Uint8Array, metadata: SegmentMetadata, rawSegmentBytesCount: number, reason?: string) => void,
+  send: (data: Uint8Array, metadata: SegmentMetadata, rawSegmentBytesCount: number, flushReason?: string) => void,
   worker: DeflateWorker,
   emitter: EventEmitter = window
 ) {
@@ -138,8 +138,8 @@ export function doStartSegmentCollection(
           flushSegment('segment_bytes_limit')
         }
       },
-      (data, rawSegmentBytesCount, reason) => {
-        send(data, segment.metadata, rawSegmentBytesCount, reason)
+      (data, rawSegmentBytesCount) => {
+        send(data, segment.metadata, rawSegmentBytesCount, segment.flushReason)
       }
     )
 

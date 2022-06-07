@@ -1,14 +1,9 @@
 import { assign, timeStampNow } from '@datadog/browser-core'
-import type { IncrementalSnapshotRecord } from '../../types'
-import { RecordType } from '../../types'
-import { serializeDocument } from './serialize'
-import { initObservers } from './observer'
-import { IncrementalSource } from './types'
+import type { DefaultPrivacyLevel, TimeStamp } from '@datadog/browser-core'
 import type {
+  IncrementalSnapshotRecord,
   IncrementalData,
   InputData,
-  RecordAPI,
-  RecordOptions,
   MediaInteractionData,
   MouseInteractionData,
   MousemoveData,
@@ -16,10 +11,25 @@ import type {
   ScrollData,
   StyleSheetRuleData,
   ViewportResizeData,
-} from './types'
+  Record,
+} from '../../types'
+import { RecordType, IncrementalSource } from '../../types'
+import { serializeDocument } from './serialize'
+import { initObservers } from './observer'
 
 import { MutationController } from './mutationObserver'
 import { getVisualViewport, getScrollX, getScrollY, getWindowHeight, getWindowWidth } from './viewports'
+
+export interface RecordOptions {
+  emit?: (record: Record) => void
+  defaultPrivacyLevel: DefaultPrivacyLevel
+}
+
+export interface RecordAPI {
+  stop: () => void
+  takeFullSnapshot: (timestamp?: TimeStamp) => void
+  flushMutations: () => void
+}
 
 export function record(options: RecordOptions): RecordAPI {
   const { emit } = options
