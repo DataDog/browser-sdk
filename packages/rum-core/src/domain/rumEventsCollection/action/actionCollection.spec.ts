@@ -25,7 +25,8 @@ describe('actionCollection', () => {
   })
   it('should create action from auto action', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
-    const event = createNewEvent('click')
+
+    const event = createNewEvent('click', { target: document.createElement('button') })
     lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
       counts: {
         errorCount: 10,
@@ -39,6 +40,12 @@ describe('actionCollection', () => {
       startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       type: ActionType.CLICK,
       event,
+      target: {
+        selector: '#foo',
+        width: 1,
+        height: 2,
+      },
+      position: { x: 1, y: 2 },
     })
 
     expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
@@ -60,6 +67,13 @@ describe('actionCollection', () => {
         },
         target: {
           name: 'foo',
+          selector: '#foo',
+          width: 1,
+          height: 2,
+        },
+        position: {
+          x: 1,
+          y: 2,
         },
         type: ActionType.CLICK,
       },
