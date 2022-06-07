@@ -28,9 +28,9 @@ describe('failedSendBeacon', () => {
     clock.cleanup()
   })
 
-  describe('when ff lower-batch-size enabled', () => {
+  describe('when ff failed-sendbeacon enabled', () => {
     beforeEach(() => {
-      updateExperimentalFeatures(['lower-batch-size'])
+      updateExperimentalFeatures(['failed-sendbeacon'])
     })
 
     it('should flush failed sendBeacon asynchronously', () => {
@@ -58,7 +58,7 @@ describe('failedSendBeacon', () => {
     })
   })
 
-  describe('when ff lower-batch-size disabled', () => {
+  describe('when ff failed-sendbeacon disabled', () => {
     it('should not flush failed sendBeacon asynchronously', () => {
       startFlushFailedSendBeacons()
       clock.tick(0)
