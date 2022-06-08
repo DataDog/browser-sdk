@@ -1,11 +1,11 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { relativeToClocks, CLEAR_OLD_CONTEXTS_INTERVAL } from '@datadog/browser-core'
-import type { TestSetupBuilder } from '../../test/specHelper'
-import { setup } from '../../test/specHelper'
-import { LifeCycleEventType } from './lifeCycle'
+import type { TestSetupBuilder } from '../../../test/specHelper'
+import { setup } from '../../../test/specHelper'
+import { LifeCycleEventType } from '../lifeCycle'
+import type { ViewCreatedEvent } from '../rumEventsCollection/view/trackViews'
 import type { ViewContexts } from './viewContexts'
 import { startViewContexts, VIEW_CONTEXT_TIME_OUT_DELAY } from './viewContexts'
-import type { ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
 
 describe('viewContexts', () => {
   const FAKE_ID = 'fake'

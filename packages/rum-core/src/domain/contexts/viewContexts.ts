@@ -1,11 +1,19 @@
-import type { RelativeTime } from '@datadog/browser-core'
+import type { Context, RelativeTime } from '@datadog/browser-core'
 import { SESSION_TIME_OUT_DELAY, ContextHistory } from '@datadog/browser-core'
-import type { ViewContext } from '../rawRumEvent.types'
-import type { LifeCycle } from './lifeCycle'
-import { LifeCycleEventType } from './lifeCycle'
-import type { ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
+import type { LifeCycle } from '../lifeCycle'
+import { LifeCycleEventType } from '../lifeCycle'
+import type { ViewCreatedEvent } from '../rumEventsCollection/view/trackViews'
 
 export const VIEW_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
+
+export interface ViewContext extends Context {
+  service?: string
+  version?: string
+  view: {
+    id: string
+    name?: string
+  }
+}
 
 export interface ViewContexts {
   findView: (startTime?: RelativeTime) => ViewContext | undefined

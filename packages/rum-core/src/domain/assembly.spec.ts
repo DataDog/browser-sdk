@@ -17,7 +17,7 @@ import {
   setup,
 } from '../../test/specHelper'
 import type { RumEventDomainContext } from '../domainContext.types'
-import type { CommonContext, RawRumActionEvent, RawRumErrorEvent, RawRumEvent, ViewContext } from '../rawRumEvent.types'
+import type { CommonContext, RawRumActionEvent, RawRumErrorEvent, RawRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumActionEvent, RumErrorEvent, RumEvent } from '../rumEvent.types'
 import { initEventBridgeStub, deleteEventBridgeStub } from '../../../core/test/specHelper'
@@ -26,6 +26,7 @@ import type { LifeCycle, RawRumEventCollectedData } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import { RumSessionPlan } from './rumSessionManager'
 import type { RumConfiguration } from './configuration'
+import type { ViewContext } from './contexts/viewContexts'
 
 describe('rum assembly', () => {
   let setupBuilder: TestSetupBuilder
