@@ -194,6 +194,12 @@ export interface RumContext {
     type: string
     has_replay?: boolean
   }
+  display?: {
+    viewport: {
+      width: number
+      height: number
+    }
+  }
   synthetics?: {
     test_id: string
     result_id: string

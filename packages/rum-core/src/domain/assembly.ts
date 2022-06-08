@@ -32,6 +32,7 @@ import { RumSessionPlan } from './rumSessionManager'
 import type { UrlContexts } from './contexts/urlContexts'
 import type { RumConfiguration } from './configuration'
 import type { ActionContexts } from './rumEventsCollection/action/actionCollection'
+import { getDisplayContext } from './contexts/displayContext'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
@@ -121,6 +122,7 @@ export function startRumAssembly(
           },
           synthetics: syntheticsContext,
           ci_test: ciTestContext,
+          display: getDisplayContext(),
         }
         const actionId = actionContexts.findActionId(startTime)
 
