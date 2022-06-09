@@ -4,6 +4,7 @@ import type { Click } from './trackClickActions'
 
 export interface ClickChain {
   tryAppend: (click: Click) => boolean
+  setSelectionChanged: () => void
   stop: () => void
 }
 
@@ -20,6 +21,7 @@ export function createClickChain(firstClick: Click): ClickChain {
   const bufferedClicks: Click[] = []
   let status = ClickChainStatus.WaitingForMoreClicks
   let maxDurationBetweenClicksTimeout: number | undefined
+  let selectionChanged = false
   const rageClick = firstClick.clone()
   appendClick(firstClick)
 
@@ -33,7 +35,7 @@ export function createClickChain(firstClick: Click): ClickChain {
   function tryFinalize() {
     if (status === ClickChainStatus.WaitingForClicksToStop && bufferedClicks.every((click) => click.isStopped())) {
       status = ClickChainStatus.Finalized
-      finalizeClicks(bufferedClicks, rageClick)
+      finalizeClicks(bufferedClicks, rageClick, selectionChanged)
     }
   }
 
@@ -62,6 +64,9 @@ export function createClickChain(firstClick: Click): ClickChain {
       appendClick(click)
       return true
     },
+    setSelectionChanged: () => {
+      selectionChanged = true
+    },
     stop: () => {
       dontAcceptMoreClick()
     },
@@ -83,26 +88,25 @@ function mouseEventDistance(origin: MouseEvent, other: MouseEvent) {
   return Math.sqrt(Math.pow(origin.clientX - other.clientX, 2) + Math.pow(origin.clientY - other.clientY, 2))
 }
 
-function finalizeClicks(clicks: Click[], rageClick: Click) {
-  if (isRage(clicks)) {
+function finalizeClicks(clicks: Click[], rageClick: Click, selectionChanged: boolean) {
+  if (!selectionChanged && isRage(clicks)) {
     clicks.forEach((click) => {
       click.discard()
-      click.getFrustrations().forEach((frustration) => {
-        rageClick.addFrustration(frustration)
-      })
+      if (click.isPotentiallyDead()) {
+        rageClick.setPotentiallyDead()
+      }
     })
     rageClick.addFrustration(FrustrationType.RAGE_CLICK)
-    rageClick.validate(timeStampNow())
+    rageClick.validate(timeStampNow(), selectionChanged)
   } else {
     rageClick.discard()
-    clicks.forEach((click) => click.validate())
+    clicks.forEach((click) => click.validate(undefined, selectionChanged))
   }
 }
 
 const MIN_CLICKS_PER_SECOND_TO_CONSIDER_RAGE = 3
 
 export function isRage(clicks: Click[]) {
-  // TODO: this condition should be improved to avoid reporting 3-click selection as rage click
   for (let i = 0; i < clicks.length - (MIN_CLICKS_PER_SECOND_TO_CONSIDER_RAGE - 1); i += 1) {
     if (
       clicks[i + MIN_CLICKS_PER_SECOND_TO_CONSIDER_RAGE - 1].event.timeStamp - clicks[i].event.timeStamp <=

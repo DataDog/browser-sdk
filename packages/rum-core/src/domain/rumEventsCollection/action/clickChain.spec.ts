@@ -21,10 +21,7 @@ describe('createClickChain', () => {
 
   it('creates a click chain', () => {
     clickChain = createClickChain(createFakeClick())
-    expect(clickChain).toEqual({
-      tryAppend: jasmine.any(Function),
-      stop: jasmine.any(Function),
-    })
+    expect(clickChain).toBeInstanceOf(Object)
   })
 
   it('appends a click', () => {
@@ -99,40 +96,51 @@ describe('createClickChain', () => {
 
   describe('when rage is detected', () => {
     it('discards individual clicks', () => {
-      const clicks = [createFakeClick(), createFakeClick(), createFakeClick()]
-      createValidatedClickChain(clicks)
+      const clicks = createValidatedClickChain()
       clicks.forEach((click) => expect(click.discard).toHaveBeenCalled())
     })
 
     it('uses a clone of the first click to represent the rage click', () => {
-      const clicks = [createFakeClick(), createFakeClick(), createFakeClick()]
-      createValidatedClickChain(clicks)
+      const clicks = createValidatedClickChain()
       expect(clicks[0].clonedClick).toBeTruthy()
       expect(clicks[0].clonedClick?.validate).toHaveBeenCalled()
     })
 
     it('the rage click should have a "rage" frustration', () => {
-      const clicks = [createFakeClick(), createFakeClick(), createFakeClick()]
-      createValidatedClickChain(clicks)
+      const clicks = createValidatedClickChain()
       const expectedFrustrations = new Set()
       expectedFrustrations.add(FrustrationType.RAGE_CLICK)
       expect(clicks[0].clonedClick?.getFrustrations()).toEqual(expectedFrustrations)
     })
 
-    it('the rage click should contains other clicks frustration', () => {
+    it('the rage click should be potentially dead if any click is potentially dead', () => {
       const clicks = [createFakeClick(), createFakeClick(), createFakeClick()]
-      clicks[1].addFrustration(FrustrationType.DEAD_CLICK)
-      createValidatedClickChain(clicks)
-      expect(clicks[0].clonedClick?.getFrustrations().has(FrustrationType.RAGE_CLICK)).toBe(true)
+      clicks[1].setPotentiallyDead()
+      createValidatedClickChain({ clicks })
+      expect(clicks[0].clonedClick?.isPotentiallyDead()).toBe(true)
     })
-
-    function createValidatedClickChain(clicks: Click[]) {
-      clickChain = createClickChain(clicks[0])
-      clicks.slice(1).forEach((click) => clickChain!.tryAppend(click))
-      clicks.forEach((click) => click.stop())
-      clock.tick(MAX_DURATION_BETWEEN_CLICKS)
-    }
   })
+
+  describe('when selection is changing', () => {
+    it('does not detect rage', () => {
+      const clicks = createValidatedClickChain({ selectionChanged: true })
+      expect(clicks[0].clonedClick?.validate).not.toHaveBeenCalled()
+    })
+  })
+
+  function createValidatedClickChain({
+    clicks = [createFakeClick(), createFakeClick(), createFakeClick()],
+    selectionChanged = false,
+  }: { clicks?: Array<ReturnType<typeof createFakeClick>>; selectionChanged?: boolean } = {}) {
+    clickChain = createClickChain(clicks[0])
+    if (selectionChanged) {
+      clickChain.setSelectionChanged()
+    }
+    clicks.slice(1).forEach((click) => clickChain!.tryAppend(click))
+    clicks.forEach((click) => click.stop())
+    clock.tick(MAX_DURATION_BETWEEN_CLICKS)
+    return clicks
+  }
 })
 
 describe('isRage', () => {
@@ -183,6 +191,7 @@ function createFakeClick(eventPartial?: Partial<MouseEvent & { target: Element }
   const stopObservable = new Observable<void>()
   let isStopped = false
   let clonedClick: Click | undefined
+  let potentiallyDead = false
   const frustrations = new Set<FrustrationType>()
   return {
     event: createNewEvent('click', {
@@ -207,6 +216,10 @@ function createFakeClick(eventPartial?: Partial<MouseEvent & { target: Element }
     validate: jasmine.createSpy(),
     addFrustration: (frustration) => frustrations.add(frustration),
     getFrustrations: () => frustrations,
+    setPotentiallyDead: () => {
+      potentiallyDead = true
+    },
+    isPotentiallyDead: () => potentiallyDead,
 
     get clonedClick() {
       return clonedClick

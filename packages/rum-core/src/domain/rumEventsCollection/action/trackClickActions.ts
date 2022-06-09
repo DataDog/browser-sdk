@@ -24,6 +24,7 @@ import type { ClickChain } from './clickChain'
 import { createClickChain } from './clickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
 import { getSelectorFromElement } from './getSelectorFromElement'
+import { trackSelectionChange } from './trackSelectionChange'
 
 interface ActionCounts {
   errorCount: number
@@ -75,7 +76,7 @@ export function trackClickActions(
   lifeCycle.subscribe(LifeCycleEventType.BEFORE_UNLOAD, stopClickChain)
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, stopClickChain)
 
-  const { stop: stopListener } = listenClickEvents(processClick)
+  const { stop: stopListener } = listenEvents(processClick)
 
   const actionContexts: ActionContexts = {
     findActionId: (startTime?: RelativeTime) =>
@@ -97,7 +98,7 @@ export function trackClickActions(
     }
   }
 
-  function processClick(event: MouseEvent & { target: Element }) {
+  function processClick(event: MouseEvent & { target: Element }, selectionChanged: boolean) {
     if (!trackFrustrations && history.find()) {
       // TODO: remove this in a future major version. To keep retrocompatibility, ignore any new
       // action if another one is already occurring.
@@ -119,8 +120,13 @@ export function trackClickActions(
       startClocks,
     })
 
-    if (trackFrustrations && (!currentClickChain || !currentClickChain.tryAppend(click))) {
-      currentClickChain = createClickChain(click)
+    if (trackFrustrations) {
+      if (!currentClickChain || !currentClickChain.tryAppend(click)) {
+        currentClickChain = createClickChain(click)
+      }
+      if (selectionChanged) {
+        currentClickChain.setSelectionChanged()
+      }
     }
 
     const { stop: stopWaitPageActivityEnd } = waitPageActivityEnd(
@@ -129,10 +135,8 @@ export function trackClickActions(
       configuration,
       (pageActivityEndEvent) => {
         if (!pageActivityEndEvent.hadActivity) {
-          // If it has no activity, consider it as a dead click.
-          // TODO: this will yield a lot of false positive. We'll need to refine it in the future.
           if (trackFrustrations) {
-            click.addFrustration(FrustrationType.DEAD_CLICK)
+            click.setPotentiallyDead()
             click.stop()
           } else {
             click.discard()
@@ -167,17 +171,24 @@ export function trackClickActions(
   }
 }
 
-function listenClickEvents(callback: (clickEvent: MouseEvent & { target: Element }) => void) {
-  return addEventListener(
+function listenEvents(callback: (clickEvent: MouseEvent & { target: Element }, selectionChanged: boolean) => void) {
+  const { stop: stopClickListener } = addEventListener(
     window,
     DOM_EVENT.CLICK,
     (clickEvent: MouseEvent) => {
       if (clickEvent.target instanceof Element) {
-        callback(clickEvent as MouseEvent & { target: Element })
+        callback(clickEvent as MouseEvent & { target: Element }, getSelectionChanged())
       }
     },
     { capture: true }
   )
+  const { stop: stopSelectionChangeTracking, getSelectionChanged } = trackSelectionChange()
+  return {
+    stop: () => {
+      stopClickListener()
+      stopSelectionChangeTracking()
+    },
+  }
 }
 
 const enum ClickStatus {
@@ -224,6 +235,7 @@ function newClick(
   let state: ClickState = { status: ClickStatus.ONGOING }
   const frustrations = new Set<FrustrationType>()
   const stopObservable = new Observable<void>()
+  let potentiallyDead = false
 
   function stop(endTime?: TimeStamp) {
     if (state.status !== ClickStatus.ONGOING) {
@@ -251,13 +263,18 @@ function newClick(
     stop,
     stopObservable,
 
+    setPotentiallyDead: () => {
+      potentiallyDead = true
+    },
+    isPotentiallyDead: () => potentiallyDead,
+
     getFrustrations: () => frustrations,
 
     isStopped: () => state.status === ClickStatus.STOPPED || state.status === ClickStatus.FINALIZED,
 
     clone: () => newClick(lifeCycle, history, trackFrustrations, base),
 
-    validate: (endTime?: TimeStamp) => {
+    validate: (endTime?: TimeStamp, selectionChanged?: boolean) => {
       stop(endTime)
       if (state.status !== ClickStatus.STOPPED) {
         return
@@ -265,6 +282,9 @@ function newClick(
 
       if (eventCountsSubscription.eventCounts.errorCount > 0) {
         addFrustration(FrustrationType.ERROR_CLICK)
+      }
+      if (potentiallyDead && !selectionChanged) {
+        addFrustration(FrustrationType.DEAD_CLICK)
       }
 
       const { resourceCount, errorCount, longTaskCount } = eventCountsSubscription.eventCounts
