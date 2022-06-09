@@ -20,8 +20,8 @@ import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { trackEventCounts } from '../../trackEventCounts'
 import { waitPageActivityEnd } from '../../waitPageActivityEnd'
-import type { RageClickChain } from './rageClickChain'
-import { createRageClickChain } from './rageClickChain'
+import type { ClickChain } from './clickChain'
+import { createClickChain } from './clickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
 import { getSelectorFromElement } from './getSelectorFromElement'
 
@@ -66,14 +66,14 @@ export function trackClickActions(
   const history: ClickActionIdHistory = new ContextHistory(ACTION_CONTEXT_TIME_OUT_DELAY)
   const stopObservable = new Observable<void>()
   const { trackFrustrations } = configuration
-  let currentRageClickChain: RageClickChain | undefined
+  let currentClickChain: ClickChain | undefined
 
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
     history.reset()
   })
 
-  lifeCycle.subscribe(LifeCycleEventType.BEFORE_UNLOAD, stopRageClickChain)
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, stopRageClickChain)
+  lifeCycle.subscribe(LifeCycleEventType.BEFORE_UNLOAD, stopClickChain)
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, stopClickChain)
 
   const { stop: stopListener } = listenClickEvents(processClick)
 
@@ -84,16 +84,16 @@ export function trackClickActions(
 
   return {
     stop: () => {
-      stopRageClickChain()
+      stopClickChain()
       stopObservable.notify()
       stopListener()
     },
     actionContexts,
   }
 
-  function stopRageClickChain() {
-    if (currentRageClickChain) {
-      currentRageClickChain.stop()
+  function stopClickChain() {
+    if (currentClickChain) {
+      currentClickChain.stop()
     }
   }
 
@@ -119,8 +119,8 @@ export function trackClickActions(
       startClocks,
     })
 
-    if (trackFrustrations && (!currentRageClickChain || !currentRageClickChain.tryAppend(click))) {
-      currentRageClickChain = createRageClickChain(click)
+    if (trackFrustrations && (!currentClickChain || !currentClickChain.tryAppend(click))) {
+      currentClickChain = createClickChain(click)
     }
 
     const { stop: stopWaitPageActivityEnd } = waitPageActivityEnd(

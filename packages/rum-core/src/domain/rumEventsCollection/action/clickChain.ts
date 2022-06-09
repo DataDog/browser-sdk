@@ -2,7 +2,7 @@ import { monitor, ONE_SECOND, timeStampNow } from '@datadog/browser-core'
 import { FrustrationType } from '../../../rawRumEvent.types'
 import type { Click } from './trackClickActions'
 
-export interface RageClickChain {
+export interface ClickChain {
   tryAppend: (click: Click) => boolean
   stop: () => void
 }
@@ -10,15 +10,15 @@ export interface RageClickChain {
 export const MAX_DURATION_BETWEEN_CLICKS = ONE_SECOND
 export const MAX_DISTANCE_BETWEEN_CLICKS = 100
 
-const enum RageClickChainStatus {
+const enum ClickChainStatus {
   WaitingForMoreClicks,
   WaitingForClicksToStop,
   Finalized,
 }
 
-export function createRageClickChain(firstClick: Click): RageClickChain {
+export function createClickChain(firstClick: Click): ClickChain {
   const bufferedClicks: Click[] = []
-  let status = RageClickChainStatus.WaitingForMoreClicks
+  let status = ClickChainStatus.WaitingForMoreClicks
   let maxDurationBetweenClicksTimeout: number | undefined
   const rageClick = firstClick.clone()
   appendClick(firstClick)
@@ -31,23 +31,23 @@ export function createRageClickChain(firstClick: Click): RageClickChain {
   }
 
   function tryFinalize() {
-    if (status === RageClickChainStatus.WaitingForClicksToStop && bufferedClicks.every((click) => click.isStopped())) {
-      status = RageClickChainStatus.Finalized
+    if (status === ClickChainStatus.WaitingForClicksToStop && bufferedClicks.every((click) => click.isStopped())) {
+      status = ClickChainStatus.Finalized
       finalizeClicks(bufferedClicks, rageClick)
     }
   }
 
   function dontAcceptMoreClick() {
     clearTimeout(maxDurationBetweenClicksTimeout)
-    if (status === RageClickChainStatus.WaitingForMoreClicks) {
-      status = RageClickChainStatus.WaitingForClicksToStop
+    if (status === ClickChainStatus.WaitingForMoreClicks) {
+      status = ClickChainStatus.WaitingForClicksToStop
       tryFinalize()
     }
   }
 
   return {
     tryAppend: (click) => {
-      if (status !== RageClickChainStatus.WaitingForMoreClicks) {
+      if (status !== ClickChainStatus.WaitingForMoreClicks) {
         return false
       }
 

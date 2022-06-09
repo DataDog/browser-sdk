@@ -17,7 +17,7 @@ import { PAGE_ACTIVITY_VALIDATION_DELAY } from '../../waitPageActivityEnd'
 import type { ActionContexts } from './actionCollection'
 import type { ClickAction } from './trackClickActions'
 import { CLICK_ACTION_MAX_DURATION, trackClickActions } from './trackClickActions'
-import { MAX_DURATION_BETWEEN_CLICKS } from './rageClickChain'
+import { MAX_DURATION_BETWEEN_CLICKS } from './clickChain'
 
 // Used to wait some time after the creation of an action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
