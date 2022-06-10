@@ -125,17 +125,17 @@ export function startRumAssembly(
             type: syntheticsContext ? SessionType.SYNTHETICS : ciTestContext ? SessionType.CI_TEST : SessionType.USER,
           },
           view: {
-            id: viewContext.view.id,
-            name: viewContext.view.name,
-            url: urlContext.view.url,
-            referrer: urlContext.view.referrer,
+            id: viewContext.id,
+            name: viewContext.name,
+            url: urlContext.url,
+            referrer: urlContext.referrer,
           },
           action: needToAssembleWithAction(rawRumEvent) && actionId ? { id: actionId } : undefined,
           synthetics: syntheticsContext,
           ci_test: ciTestContext,
         }
 
-        const serverRumEvent = combine(rumContext, rawRumEvent) as RumEvent & Context
+        const serverRumEvent = combine(rumContext as RumContext & Context, rawRumEvent) as RumEvent & Context
         serverRumEvent.context = combine(commonContext.context, customerContext)
 
         if (!('has_replay' in serverRumEvent.session)) {

@@ -1,4 +1,4 @@
-import type { TimeStamp } from '@datadog/browser-core'
+import type { Context, TimeStamp } from '@datadog/browser-core'
 import { assign, combine, Observable, noop, setCookie, deleteCookie, ONE_MINUTE } from '@datadog/browser-core'
 import type { Clock } from '../../core/test/specHelper'
 import { SPEC_ENDPOINTS, mockClock, buildLocation } from '../../core/test/specHelper'
@@ -82,10 +82,8 @@ export function setup(): TestSetupBuilder {
   let viewContexts: ViewContexts
   const urlContexts: UrlContexts = {
     findUrl: () => ({
-      view: {
-        url: fakeLocation.href!,
-        referrer: document.referrer,
-      },
+      url: fakeLocation.href!,
+      referrer: document.referrer,
     }),
     stop: noop,
   }
@@ -216,7 +214,7 @@ function validateRumEventFormat(rawRumEvent: RawRumEvent) {
       url: 'fake url',
     },
   }
-  validateRumFormat(combine(fakeContext, rawRumEvent))
+  validateRumFormat(combine(fakeContext as RumContext & Context, rawRumEvent))
 }
 
 export type ViewTest = ReturnType<typeof setupViewTest>
