@@ -181,7 +181,7 @@ export type RawRumEvent =
   | RawRumLongTaskEvent
   | RawRumActionEvent
 
-export interface RumContext {
+export interface RumContext extends Context {
   date: TimeStamp
   application: {
     id: string
@@ -193,6 +193,15 @@ export interface RumContext {
     id: string
     type: string
     has_replay?: boolean
+  }
+  view: {
+    id: string
+    referrer?: string
+    url: string
+    name?: string
+  }
+  action?: {
+    id: string | string[]
   }
   synthetics?: {
     test_id: string
@@ -211,7 +220,7 @@ export interface RumContext {
   }
 }
 
-export interface ViewContext extends Context {
+export interface ViewContext {
   service?: string
   version?: string
   view: {
@@ -220,13 +229,13 @@ export interface ViewContext extends Context {
   }
 }
 
-export interface ActionContext extends Context {
+export interface ActionContext {
   action: {
     id: string | string[]
   }
 }
 
-export interface UrlContext extends Context {
+export interface UrlContext {
   view: {
     url: string
     referrer: string

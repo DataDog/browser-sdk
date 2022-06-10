@@ -11,7 +11,7 @@ import type { ViewEvent, ViewOptions } from '../src/domain/rumEventsCollection/v
 import { trackViews } from '../src/domain/rumEventsCollection/view/trackViews'
 import type { RumSessionManager } from '../src/domain/rumSessionManager'
 import { RumSessionPlan } from '../src/domain/rumSessionManager'
-import type { RawRumEvent, RumContext, ViewContext, UrlContext } from '../src/rawRumEvent.types'
+import type { RawRumEvent, RumContext } from '../src/rawRumEvent.types'
 import type { LocationChange } from '../src/browser/locationChangeObservable'
 import type { UrlContexts } from '../src/domain/urlContexts'
 import type { BrowserWindow } from '../src/domain/syntheticsContext'
@@ -193,7 +193,7 @@ export function setup(): TestSetupBuilder {
 
 function validateRumEventFormat(rawRumEvent: RawRumEvent) {
   const fakeId = '00000000-aaaa-0000-aaaa-000000000000'
-  const fakeContext: RumContext & ViewContext & UrlContext = {
+  const fakeContext: RumContext = {
     _dd: {
       format_version: 2,
       drift: 0,
