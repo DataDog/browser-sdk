@@ -155,7 +155,7 @@ export function makeRumPublicApi(
   }
 
   const startView: {
-    (name: string): void
+    (name?: string): void
     // (options: ViewOptions): void // uncomment when removing the feature flag
   } = monitor((options?: string) => {
     const sanitizedOptions = typeof options === 'object' ? options : { name: options }
