@@ -1,9 +1,10 @@
 import { resetExperimentalFeatures, updateExperimentalFeatures } from '@datadog/browser-core'
-import { getDisplayContext } from './displayContext'
+import { getDisplayContext, resetDisplayContext } from './displayContext'
 
 describe('displayContext', () => {
   afterEach(() => {
     resetExperimentalFeatures()
+    resetDisplayContext()
   })
 
   it('should return current display context when ff enabled', () => {
