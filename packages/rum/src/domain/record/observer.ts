@@ -1,6 +1,5 @@
 import type { DefaultPrivacyLevel } from '@datadog/browser-core'
 import {
-  initViewportObservable,
   instrumentSetter,
   instrumentMethodAndCallOriginal,
   assign,
@@ -11,6 +10,7 @@ import {
   addEventListener,
   noop,
 } from '@datadog/browser-core'
+import { initViewportObservable } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel } from '../../constants'
 import type {
   InputState,

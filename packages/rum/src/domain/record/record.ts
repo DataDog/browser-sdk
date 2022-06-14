@@ -1,5 +1,6 @@
-import { assign, getViewportDimension, timeStampNow } from '@datadog/browser-core'
+import { assign, timeStampNow } from '@datadog/browser-core'
 import type { DefaultPrivacyLevel, TimeStamp } from '@datadog/browser-core'
+import { getViewportDimension } from '@datadog/browser-rum-core'
 import type {
   IncrementalSnapshotRecord,
   IncrementalData,

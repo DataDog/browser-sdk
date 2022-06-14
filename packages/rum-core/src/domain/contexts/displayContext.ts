@@ -1,4 +1,5 @@
-import { isExperimentalFeatureEnabled, initViewportObservable, getViewportDimension } from '@datadog/browser-core'
+import { isExperimentalFeatureEnabled } from '@datadog/browser-core'
+import { getViewportDimension, initViewportObservable } from '../../browser/viewportObservable'
 
 let viewport: { width: number; height: number } | undefined
 let stopListeners: (() => void) | undefined
