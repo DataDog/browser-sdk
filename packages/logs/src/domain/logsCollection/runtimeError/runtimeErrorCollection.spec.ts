@@ -1,5 +1,4 @@
-import { ErrorSource, Observable } from '@datadog/browser-core'
-import type { RawError, RelativeTime, TimeStamp } from '@datadog/browser-core'
+import { ErrorSource } from '@datadog/browser-core'
 import type { RawRuntimeLogsEvent } from '../../../rawLogsEvent.types'
 import type { LogsConfiguration } from '../../configuration'
 import { StatusType } from '../../logger'
@@ -8,43 +7,60 @@ import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { startRuntimeErrorCollection } from './runtimeErrorCollection'
 
 describe('runtime error collection', () => {
-  let rawErrorObservable: Observable<RawError>
+  const configuration = { forwardErrorsToLogs: true } as LogsConfiguration
   let lifeCycle: LifeCycle
   let stopRuntimeErrorCollection: () => void
   let rawLogsEvents: Array<RawLogsEventCollectedData<RawRuntimeLogsEvent>>
+  let onErrorSpy: jasmine.Spy
+  let originalOnErrorHandler: OnErrorEventHandler
 
   beforeEach(() => {
+    originalOnErrorHandler = window.onerror
+    onErrorSpy = jasmine.createSpy()
+    window.onerror = onErrorSpy
     rawLogsEvents = []
-    rawErrorObservable = new Observable<RawError>()
     lifeCycle = new LifeCycle()
     lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLogsEvent) =>
       rawLogsEvents.push(rawLogsEvent as RawLogsEventCollectedData<RawRuntimeLogsEvent>)
     )
-    ;({ stop: stopRuntimeErrorCollection } = startRuntimeErrorCollection(
-      {} as LogsConfiguration,
-      lifeCycle,
-      rawErrorObservable
-    ))
   })
 
   afterEach(() => {
     stopRuntimeErrorCollection()
+    window.onerror = originalOnErrorHandler
   })
 
-  it('should send runtime errors', () => {
-    rawErrorObservable.notify({
-      message: 'error!',
-      source: ErrorSource.SOURCE,
-      startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
-      type: 'Error',
+  it('should send runtime errors', (done) => {
+    ;({ stop: stopRuntimeErrorCollection } = startRuntimeErrorCollection(configuration, lifeCycle))
+    setTimeout(() => {
+      throw new Error('error!')
     })
 
-    expect(rawLogsEvents[0].rawLogsEvent).toEqual({
-      date: 123456789 as TimeStamp,
-      error: { origin: ErrorSource.SOURCE, kind: 'Error', stack: undefined },
-      message: 'error!',
-      status: StatusType.error,
-      origin: ErrorSource.SOURCE,
+    setTimeout(() => {
+      expect(rawLogsEvents[0].rawLogsEvent).toEqual({
+        date: jasmine.any(Number),
+        error: { origin: ErrorSource.SOURCE, kind: 'Error', stack: jasmine.any(String) },
+        message: 'error!',
+        status: StatusType.error,
+        origin: ErrorSource.SOURCE,
+      })
+      done()
+    }, 10)
+  })
+
+  it('should not send runtime errors when forwardErrorsToLogs is false', (done) => {
+    ;({ stop: stopRuntimeErrorCollection } = startRuntimeErrorCollection(
+      { ...configuration, forwardErrorsToLogs: false },
+      lifeCycle
+    ))
+
+    setTimeout(() => {
+      throw new Error('error!')
     })
+
+    setTimeout(() => {
+      expect(rawLogsEvents.length).toEqual(0)
+      done()
+    }, 10)
   })
 })
