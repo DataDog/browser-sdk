@@ -36,6 +36,11 @@ describe('viewportObservable', () => {
   })
 
   describe('get layout width and height has similar native behaviour', () => {
+    afterEach(() => {
+      document.body.style.removeProperty('margin-bottom')
+      document.body.style.removeProperty('margin-right')
+    })
+
     // innerWidth includes the thickness of the sidebar while `visualViewport.width` and clientWidth exclude it
     it('without scrollbars', () => {
       expect(getViewportDimension()).toEqual({ width: window.innerWidth, height: window.innerHeight })
