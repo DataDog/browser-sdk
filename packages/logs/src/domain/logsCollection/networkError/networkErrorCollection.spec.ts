@@ -36,6 +36,15 @@ describe('network error collection', () => {
     url: FAKE_URL,
   }
 
+  function startCollection(forwardErrorsToLogs = true) {
+    fetchStubManager = stubFetch()
+    ;({ stop: stopNetworkErrorCollection } = startNetworkErrorCollection(
+      { ...CONFIGURATION, forwardErrorsToLogs },
+      lifeCycle
+    ))
+    fetchStub = window.fetch as FetchStub
+  }
+
   beforeEach(() => {
     if (isIE()) {
       pending('no fetch support')
@@ -45,9 +54,6 @@ describe('network error collection', () => {
     lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLogsEvent) =>
       rawLogsEvents.push(rawLogsEvent as RawLogsEventCollectedData<RawNetworkLogsEvent>)
     )
-    fetchStubManager = stubFetch()
-    ;({ stop: stopNetworkErrorCollection } = startNetworkErrorCollection(CONFIGURATION, lifeCycle))
-    fetchStub = window.fetch as FetchStub
   })
 
   afterEach(() => {
@@ -56,6 +62,7 @@ describe('network error collection', () => {
   })
 
   it('should track server error', (done) => {
+    startCollection()
     fetchStub(FAKE_URL).resolveWith(DEFAULT_REQUEST)
 
     fetchStubManager.whenAllComplete(() => {
@@ -78,7 +85,18 @@ describe('network error collection', () => {
     })
   })
 
+  it('should not track network error when forwardErrorsToLogs is false', (done) => {
+    startCollection(false)
+    fetchStub(FAKE_URL).resolveWith(DEFAULT_REQUEST)
+
+    fetchStubManager.whenAllComplete(() => {
+      expect(rawLogsEvents.length).toEqual(0)
+      done()
+    })
+  })
+
   it('should not track intake error', (done) => {
+    startCollection()
     fetchStub('https://logs-intake.com/v1/input/send?foo=bar').resolveWith(DEFAULT_REQUEST)
 
     fetchStubManager.whenAllComplete(() => {
@@ -88,6 +106,7 @@ describe('network error collection', () => {
   })
 
   it('should track aborted requests', (done) => {
+    startCollection()
     fetchStub(FAKE_URL).abort()
 
     fetchStubManager.whenAllComplete(() => {
@@ -97,6 +116,7 @@ describe('network error collection', () => {
   })
 
   it('should track refused request', (done) => {
+    startCollection()
     fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, status: 0 })
 
     fetchStubManager.whenAllComplete(() => {
@@ -106,6 +126,7 @@ describe('network error collection', () => {
   })
 
   it('should not track client error', (done) => {
+    startCollection()
     fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, status: 400 })
 
     fetchStubManager.whenAllComplete(() => {
@@ -115,6 +136,7 @@ describe('network error collection', () => {
   })
 
   it('should not track successful request', (done) => {
+    startCollection()
     fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, status: 200 })
 
     fetchStubManager.whenAllComplete(() => {
@@ -124,6 +146,7 @@ describe('network error collection', () => {
   })
 
   it('uses a fallback when the response text is empty', (done) => {
+    startCollection()
     fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, responseText: '' })
 
     fetchStubManager.whenAllComplete(() => {
