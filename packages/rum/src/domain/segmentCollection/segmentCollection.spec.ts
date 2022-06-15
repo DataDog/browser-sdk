@@ -223,10 +223,7 @@ describe('startSegmentCollection', () => {
 })
 
 describe('computeSegmentContext', () => {
-  const DEFAULT_VIEW_CONTEXT: ViewContext = {
-    view: { id: '123' },
-  }
-
+  const DEFAULT_VIEW_CONTEXT: ViewContext = { id: '123' }
   const DEFAULT_SESSION = createRumSessionManagerMock().setId('456')
 
   it('returns a segment context', () => {

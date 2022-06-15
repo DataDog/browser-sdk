@@ -1,5 +1,4 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { assign } from '@datadog/browser-core'
 import type { ActionContexts } from '../rumEventsCollection/action/actionCollection'
 import type { RumSessionManager } from '../rumSessionManager'
 import type { ViewContexts } from './viewContexts'
@@ -41,7 +40,7 @@ export function startInternalContext(
           application_id: applicationId,
           session_id: session.id,
           user_action: actionId ? { id: actionId } : undefined,
-          view: assign({}, viewContext.view, urlContext.view),
+          view: { id: viewContext.id, name: viewContext.name, referrer: urlContext.referrer, url: urlContext.url },
         }
       }
     },

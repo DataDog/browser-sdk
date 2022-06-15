@@ -92,5 +92,9 @@
   },
   "resolutions": {
     "ansi-regex": "5.0.1"
+  },
+  "volta": {
+    "node": "16.3.0",
+    "yarn": "1.22.18"
   }
 }

@@ -1,4 +1,4 @@
-import type { RelativeTime, Observable, Context } from '@datadog/browser-core'
+import type { RelativeTime, Observable } from '@datadog/browser-core'
 import { SESSION_TIME_OUT_DELAY, relativeNow, ContextHistory } from '@datadog/browser-core'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { LifeCycle } from '../lifeCycle'
@@ -12,11 +12,9 @@ import { LifeCycleEventType } from '../lifeCycle'
 
 export const URL_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
 
-export interface UrlContext extends Context {
-  view: {
-    url: string
-    referrer: string
-  }
+export interface UrlContext {
+  url: string
+  referrer: string
 }
 
 export interface UrlContexts {
@@ -57,7 +55,7 @@ export function startUrlContexts(
       urlContextHistory.add(
         buildUrlContext({
           url: newLocation.href,
-          referrer: current.view.referrer,
+          referrer: current.referrer,
         }),
         changeTime
       )
@@ -66,10 +64,8 @@ export function startUrlContexts(
 
   function buildUrlContext({ url, referrer }: { url: string; referrer: string }) {
     return {
-      view: {
-        url,
-        referrer,
-      },
+      url,
+      referrer,
     }
   }
 

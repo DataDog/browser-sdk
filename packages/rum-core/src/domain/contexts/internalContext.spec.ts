@@ -19,9 +19,8 @@ describe('internal context', () => {
   beforeEach(() => {
     viewContextsStub = {
       findView: jasmine.createSpy('findView').and.returnValue({
-        view: {
-          id: 'abcde',
-        },
+        id: 'abcde',
+        name: 'foo',
       }),
     }
     actionContextsStub = {
@@ -53,6 +52,7 @@ describe('internal context', () => {
       },
       view: {
         id: 'abcde',
+        name: 'foo',
         referrer: document.referrer,
         url: fakeLocation.href!,
       },

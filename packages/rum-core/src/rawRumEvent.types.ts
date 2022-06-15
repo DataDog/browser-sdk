@@ -200,6 +200,15 @@ export interface RumContext {
       height: number
     }
   }
+  view: {
+    id: string
+    referrer?: string
+    url: string
+    name?: string
+  }
+  action?: {
+    id: string | string[]
+  }
   synthetics?: {
     test_id: string
     result_id: string

@@ -47,8 +47,8 @@ describe('urlContexts', () => {
     } as ViewCreatedEvent)
 
     const urlContext = urlContexts.findUrl()!
-    expect(urlContext.view.url).toBe('http://fake-url.com/')
-    expect(urlContext.view.referrer).toBe(document.referrer)
+    expect(urlContext.url).toBe('http://fake-url.com/')
+    expect(urlContext.referrer).toBe(document.referrer)
   })
 
   it('should update url context on location change', () => {
@@ -60,8 +60,8 @@ describe('urlContexts', () => {
     changeLocation('/foo')
 
     const urlContext = urlContexts.findUrl()!
-    expect(urlContext.view.url).toContain('http://fake-url.com/foo')
-    expect(urlContext.view.referrer).toBe(document.referrer)
+    expect(urlContext.url).toContain('http://fake-url.com/foo')
+    expect(urlContext.referrer).toBe(document.referrer)
   })
 
   it('should update url context on new view', () => {
@@ -79,8 +79,8 @@ describe('urlContexts', () => {
     } as ViewCreatedEvent)
 
     const urlContext = urlContexts.findUrl()!
-    expect(urlContext.view.url).toBe('http://fake-url.com/foo')
-    expect(urlContext.view.referrer).toBe('http://fake-url.com/')
+    expect(urlContext.url).toBe('http://fake-url.com/foo')
+    expect(urlContext.referrer).toBe('http://fake-url.com/')
   })
 
   it('should return the url context corresponding to the start time', () => {
@@ -112,28 +112,20 @@ describe('urlContexts', () => {
     } as ViewCreatedEvent)
 
     expect(urlContexts.findUrl(5 as RelativeTime)).toEqual({
-      view: {
-        url: 'http://fake-url.com/',
-        referrer: document.referrer,
-      },
+      url: 'http://fake-url.com/',
+      referrer: document.referrer,
     })
     expect(urlContexts.findUrl(15 as RelativeTime)).toEqual({
-      view: {
-        url: 'http://fake-url.com/foo',
-        referrer: 'http://fake-url.com/',
-      },
+      url: 'http://fake-url.com/foo',
+      referrer: 'http://fake-url.com/',
     })
     expect(urlContexts.findUrl(25 as RelativeTime)).toEqual({
-      view: {
-        url: 'http://fake-url.com/foo#bar',
-        referrer: 'http://fake-url.com/',
-      },
+      url: 'http://fake-url.com/foo#bar',
+      referrer: 'http://fake-url.com/',
     })
     expect(urlContexts.findUrl(35 as RelativeTime)).toEqual({
-      view: {
-        url: 'http://fake-url.com/qux',
-        referrer: 'http://fake-url.com/foo',
-      },
+      url: 'http://fake-url.com/qux',
+      referrer: 'http://fake-url.com/foo',
     })
   })
 

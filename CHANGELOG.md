@@ -16,6 +16,11 @@
 
 ---
 
+## v4.11.4
+
+- 🏷️ adjust types to allow updating the SDK in Datadog app ([#1587](https://github.com/DataDog/browser-sdk/pull/1587))
+- [RUMF-1280] collect click position ([#1566](https://github.com/DataDog/browser-sdk/pull/1566))
+
 ## v4.11.3
 
 - ✨ improve developer extension ([#1580](https://github.com/DataDog/browser-sdk/pull/1580))
