@@ -25,6 +25,7 @@ export function addFailedSendBeacon(endpointType: string, size: number, reason?:
     connection: navigator.connection ? (navigator.connection as any).effectiveType : undefined,
     onLine: navigator.onLine,
     size,
+    hasLowerBatchSize: isExperimentalFeatureEnabled('lower-batch-size'),
   }
 
   if (reason === 'before_unload' || reason === 'visibility_hidden') {
