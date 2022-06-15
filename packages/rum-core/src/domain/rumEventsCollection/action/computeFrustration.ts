@@ -16,11 +16,16 @@ export function computeFrustration(clicks: Click[], rageClick: Click) {
     return { isRage: true }
   }
 
+  const hasSelectionChanged = clicks.some((click) => click.hasSelectionChanged)
   clicks.forEach((click) => {
     if (click.hasError) {
       click.addFrustration(FrustrationType.ERROR_CLICK)
     }
-    if (!click.hasActivity) {
+    if (
+      !click.hasActivity &&
+      // Avoid considering clicks part of a double-click or triple-click selections as dead
+      !hasSelectionChanged
+    ) {
       click.addFrustration(FrustrationType.DEAD_CLICK)
     }
   })
@@ -28,7 +33,9 @@ export function computeFrustration(clicks: Click[], rageClick: Click) {
 }
 
 export function isRage(clicks: Click[]) {
-  // TODO: this condition should be improved to avoid reporting 3-click selection as rage click
+  if (clicks.some((click) => click.hasSelectionChanged)) {
+    return false
+  }
   for (let i = 0; i < clicks.length - (MIN_CLICKS_PER_SECOND_TO_CONSIDER_RAGE - 1); i += 1) {
     if (
       clicks[i + MIN_CLICKS_PER_SECOND_TO_CONSIDER_RAGE - 1].event.timeStamp - clicks[i].event.timeStamp <=

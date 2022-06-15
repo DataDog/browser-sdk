@@ -96,7 +96,7 @@ export function trackClickActions(
     }
   }
 
-  function processClick(event: MouseEvent & { target: Element }) {
+  function processClick(event: MouseEvent & { target: Element }, hasSelectionChanged: boolean) {
     if (!trackFrustrations && history.find()) {
       // TODO: remove this in a future major version. To keep retrocompatibility, ignore any new
       // action if another one is already occurring.
@@ -112,7 +112,7 @@ export function trackClickActions(
 
     const startClocks = clocksNow()
 
-    const click = newClick(lifeCycle, history, {
+    const click = newClick(lifeCycle, history, hasSelectionChanged, {
       name,
       event,
       startClocks,
@@ -179,6 +179,7 @@ export type Click = ReturnType<typeof newClick>
 function newClick(
   lifeCycle: LifeCycle,
   history: ClickActionIdHistory,
+  hasSelectionChanged: boolean,
   base: Pick<ClickAction, 'startClocks' | 'event' | 'name'>
 ) {
   const id = generateUUID()
@@ -231,13 +232,14 @@ function newClick(
     get hasActivity() {
       return activityEndTime !== undefined
     },
+    hasSelectionChanged,
     addFrustration: (frustrationType: FrustrationType) => {
       frustrationTypes.push(frustrationType)
     },
 
     isStopped: () => status === ClickStatus.STOPPED || status === ClickStatus.FINALIZED,
 
-    clone: () => newClick(lifeCycle, history, base),
+    clone: () => newClick(lifeCycle, history, hasSelectionChanged, base),
 
     validate: () => {
       stop()

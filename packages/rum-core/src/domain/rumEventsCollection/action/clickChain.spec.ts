@@ -157,6 +157,7 @@ function createFakeClick(eventPartial?: Partial<MouseEvent & { target: Element }
     },
     hasError: false,
     hasActivity: true,
+    hasSelectionChanged: false,
     addFrustration: jasmine.createSpy(),
   }
 }

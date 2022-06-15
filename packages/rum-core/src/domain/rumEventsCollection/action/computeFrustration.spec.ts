@@ -54,6 +54,13 @@ describe('computeFrustration', () => {
       expect(clicks[1].frustrationTypes).toEqual([FrustrationType.DEAD_CLICK])
     })
 
+    it('does not add a dead frustration to clicks if one of them is associated with a selection change', () => {
+      clicks[1].hasActivity = false
+      clicks[0].hasSelectionChanged = true
+      computeFrustration(clicks, rageClick)
+      expect(clicks[1].frustrationTypes).toEqual([])
+    })
+
     it('adds an error frustration to clicks that have an error', () => {
       clicks[1].hasError = true
       computeFrustration(clicks, rageClick)
@@ -75,6 +82,10 @@ describe('isRage', () => {
 
   it('considers as rage three clicks happening at the same time', () => {
     expect(isRage([createFakeClick(), createFakeClick(), createFakeClick()])).toBe(true)
+  })
+
+  it('considers as rage three clicks if one of them has selection change', () => {
+    expect(isRage([createFakeClick(), createFakeClick({ hasSelectionChanged: true }), createFakeClick()])).toBe(false)
   })
 
   it('does not consider as rage two clicks happening at the same time', () => {
@@ -116,6 +127,7 @@ function createFakeClick(partialClick: Partial<Click> = {}) {
     }),
     hasError: false,
     hasActivity: true,
+    hasSelectionChanged: false,
     addFrustration: (frustrationType: FrustrationType) => frustrationTypes.push(frustrationType),
     ...partialClick,
   }
