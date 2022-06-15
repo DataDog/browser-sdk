@@ -1,6 +1,6 @@
 import { monitor, ONE_SECOND, timeStampNow } from '@datadog/browser-core'
-import { FrustrationType } from '../../../rawRumEvent.types'
 import type { Click } from './trackClickActions'
+import { computeFrustration } from './computeFrustration'
 
 export interface ClickChain {
   tryAppend: (click: Click) => boolean
@@ -84,32 +84,13 @@ function mouseEventDistance(origin: MouseEvent, other: MouseEvent) {
 }
 
 function finalizeClicks(clicks: Click[], rageClick: Click) {
-  if (isRage(clicks)) {
-    clicks.forEach((click) => {
-      click.discard()
-      click.getFrustrations().forEach((frustration) => {
-        rageClick.addFrustration(frustration)
-      })
-    })
-    rageClick.addFrustration(FrustrationType.RAGE_CLICK)
-    rageClick.validate(timeStampNow())
+  const { isRage } = computeFrustration(clicks, rageClick)
+  if (isRage) {
+    clicks.forEach((click) => click.discard())
+    rageClick.stop(timeStampNow())
+    rageClick.validate()
   } else {
     rageClick.discard()
     clicks.forEach((click) => click.validate())
   }
-}
-
-const MIN_CLICKS_PER_SECOND_TO_CONSIDER_RAGE = 3
-
-export function isRage(clicks: Click[]) {
-  // TODO: this condition should be improved to avoid reporting 3-click selection as rage click
-  for (let i = 0; i < clicks.length - (MIN_CLICKS_PER_SECOND_TO_CONSIDER_RAGE - 1); i += 1) {
-    if (
-      clicks[i + MIN_CLICKS_PER_SECOND_TO_CONSIDER_RAGE - 1].event.timeStamp - clicks[i].event.timeStamp <=
-      ONE_SECOND
-    ) {
-      return true
-    }
-  }
-  return false
 }

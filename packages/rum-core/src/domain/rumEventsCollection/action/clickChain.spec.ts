@@ -1,9 +1,9 @@
-import { Observable, ONE_SECOND, timeStampNow } from '@datadog/browser-core'
+import { Observable, timeStampNow } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test/specHelper'
 import { mockClock, createNewEvent } from '@datadog/browser-core/test/specHelper'
 import { FrustrationType } from '../../../rawRumEvent.types'
 import type { ClickChain } from './clickChain'
-import { MAX_DISTANCE_BETWEEN_CLICKS, MAX_DURATION_BETWEEN_CLICKS, createClickChain, isRage } from './clickChain'
+import { MAX_DISTANCE_BETWEEN_CLICKS, MAX_DURATION_BETWEEN_CLICKS, createClickChain } from './clickChain'
 import type { Click } from './trackClickActions'
 
 describe('createClickChain', () => {
@@ -114,16 +114,7 @@ describe('createClickChain', () => {
     it('the rage click should have a "rage" frustration', () => {
       const clicks = [createFakeClick(), createFakeClick(), createFakeClick()]
       createValidatedClickChain(clicks)
-      const expectedFrustrations = new Set()
-      expectedFrustrations.add(FrustrationType.RAGE_CLICK)
-      expect(clicks[0].clonedClick?.getFrustrations()).toEqual(expectedFrustrations)
-    })
-
-    it('the rage click should contains other clicks frustration', () => {
-      const clicks = [createFakeClick(), createFakeClick(), createFakeClick()]
-      clicks[1].addFrustration(FrustrationType.DEAD_CLICK)
-      createValidatedClickChain(clicks)
-      expect(clicks[0].clonedClick?.getFrustrations().has(FrustrationType.RAGE_CLICK)).toBe(true)
+      expect(clicks[0].clonedClick?.addFrustration).toHaveBeenCalledWith(FrustrationType.RAGE_CLICK)
     })
 
     function createValidatedClickChain(clicks: Click[]) {
@@ -135,55 +126,10 @@ describe('createClickChain', () => {
   })
 })
 
-describe('isRage', () => {
-  let clock: Clock
-
-  beforeEach(() => {
-    clock = mockClock()
-  })
-
-  afterEach(() => {
-    clock.cleanup()
-  })
-
-  it('considers as rage three clicks happening at the same time', () => {
-    expect(isRage([createFakeClick(), createFakeClick(), createFakeClick()])).toBe(true)
-  })
-
-  it('does not consider as rage two clicks happening at the same time', () => {
-    expect(isRage([createFakeClick(), createFakeClick()])).toBe(false)
-  })
-
-  it('does not consider as rage a first click long before two fast clicks', () => {
-    const clicks = [createFakeClick()]
-    clock.tick(ONE_SECOND * 2)
-    clicks.push(createFakeClick(), createFakeClick())
-
-    expect(isRage(clicks)).toBe(false)
-  })
-
-  it('considers as rage a first click long before three fast clicks', () => {
-    const clicks = [createFakeClick()]
-    clock.tick(ONE_SECOND * 2)
-    clicks.push(createFakeClick(), createFakeClick(), createFakeClick())
-
-    expect(isRage(clicks)).toBe(true)
-  })
-
-  it('considers as rage three fast clicks long before a last click', () => {
-    const clicks = [createFakeClick(), createFakeClick(), createFakeClick()]
-    clock.tick(ONE_SECOND * 2)
-    clicks.push(createFakeClick())
-
-    expect(isRage(clicks)).toBe(true)
-  })
-})
-
 function createFakeClick(eventPartial?: Partial<MouseEvent & { target: Element }>): Click & { clonedClick?: Click } {
   const stopObservable = new Observable<void>()
   let isStopped = false
   let clonedClick: Click | undefined
-  const frustrations = new Set<FrustrationType>()
   return {
     event: createNewEvent('click', {
       element: document.body,
@@ -205,11 +151,12 @@ function createFakeClick(eventPartial?: Partial<MouseEvent & { target: Element }
     },
     discard: jasmine.createSpy(),
     validate: jasmine.createSpy(),
-    addFrustration: (frustration) => frustrations.add(frustration),
-    getFrustrations: () => frustrations,
 
     get clonedClick() {
       return clonedClick
     },
+    hasError: false,
+    hasActivity: true,
+    addFrustration: jasmine.createSpy(),
   }
 }
