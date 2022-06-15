@@ -42,7 +42,7 @@ export function startRum(
       id: session.findTrackedSession()?.id,
     },
     view: {
-      id: viewContexts.findView()?.view.id,
+      id: viewContexts.findView()?.id,
     },
     action: {
       id: actionContexts.findActionId(),

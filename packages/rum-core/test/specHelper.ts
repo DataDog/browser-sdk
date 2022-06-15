@@ -1,4 +1,4 @@
-import type { TimeStamp } from '@datadog/browser-core'
+import type { Context, TimeStamp } from '@datadog/browser-core'
 import { assign, combine, Observable, noop, setCookie, deleteCookie, ONE_MINUTE } from '@datadog/browser-core'
 import type { Clock } from '../../core/test/specHelper'
 import { SPEC_ENDPOINTS, mockClock, buildLocation } from '../../core/test/specHelper'
@@ -11,7 +11,7 @@ import type { ViewEvent, ViewOptions } from '../src/domain/rumEventsCollection/v
 import { trackViews } from '../src/domain/rumEventsCollection/view/trackViews'
 import type { RumSessionManager } from '../src/domain/rumSessionManager'
 import { RumSessionPlan } from '../src/domain/rumSessionManager'
-import type { RawRumEvent, RumContext, ViewContext, UrlContext } from '../src/rawRumEvent.types'
+import type { RawRumEvent, RumContext } from '../src/rawRumEvent.types'
 import type { LocationChange } from '../src/browser/locationChangeObservable'
 import type { UrlContexts } from '../src/domain/urlContexts'
 import type { BrowserWindow } from '../src/domain/syntheticsContext'
@@ -82,10 +82,8 @@ export function setup(): TestSetupBuilder {
   let viewContexts: ViewContexts
   const urlContexts: UrlContexts = {
     findUrl: () => ({
-      view: {
-        url: fakeLocation.href!,
-        referrer: document.referrer,
-      },
+      url: fakeLocation.href!,
+      referrer: document.referrer,
     }),
     stop: noop,
   }
@@ -193,7 +191,7 @@ export function setup(): TestSetupBuilder {
 
 function validateRumEventFormat(rawRumEvent: RawRumEvent) {
   const fakeId = '00000000-aaaa-0000-aaaa-000000000000'
-  const fakeContext: RumContext & ViewContext & UrlContext = {
+  const fakeContext: RumContext = {
     _dd: {
       format_version: 2,
       drift: 0,
@@ -216,7 +214,7 @@ function validateRumEventFormat(rawRumEvent: RawRumEvent) {
       url: 'fake url',
     },
   }
-  validateRumFormat(combine(fakeContext, rawRumEvent))
+  validateRumFormat(combine(fakeContext as RumContext & Context, rawRumEvent))
 }
 
 export type ViewTest = ReturnType<typeof setupViewTest>
