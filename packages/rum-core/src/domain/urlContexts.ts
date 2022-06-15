@@ -51,7 +51,7 @@ export function startUrlContexts(
       urlContextHistory.add(
         buildUrlContext({
           url: newLocation.href,
-          referrer: current.view.referrer,
+          referrer: current.referrer,
         }),
         changeTime
       )
@@ -60,10 +60,8 @@ export function startUrlContexts(
 
   function buildUrlContext({ url, referrer }: { url: string; referrer: string }) {
     return {
-      view: {
-        url,
-        referrer,
-      },
+      url,
+      referrer,
     }
   }
 

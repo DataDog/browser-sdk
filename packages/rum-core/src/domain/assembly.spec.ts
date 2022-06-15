@@ -35,10 +35,8 @@ describe('rum assembly', () => {
   let findView: () => ViewContext
   beforeEach(() => {
     findView = () => ({
-      view: {
-        id: '7890',
-        name: 'view name',
-      },
+      id: '7890',
+      name: 'view name',
     })
     commonContext = {
       context: {},
@@ -490,7 +488,7 @@ describe('rum assembly', () => {
 
       it('should be overridden by the view context', () => {
         const { lifeCycle } = setupBuilder.build()
-        findView = () => ({ service: 'new service', version: 'new version', view: { id: '1234' } })
+        findView = () => ({ service: 'new service', version: 'new version', id: '1234' })
         notifyRawRumEvent(lifeCycle, {
           rawRumEvent: createRawRumEvent(RumEventType.ACTION),
         })
@@ -502,7 +500,7 @@ describe('rum assembly', () => {
     describe('when sub-apps ff disabled', () => {
       it('should not be overridden by the view context', () => {
         const { lifeCycle } = setupBuilder.build()
-        findView = () => ({ service: 'new service', version: 'new version', view: { id: '1234' } })
+        findView = () => ({ service: 'new service', version: 'new version', id: '1234' })
         notifyRawRumEvent(lifeCycle, {
           rawRumEvent: createRawRumEvent(RumEventType.ACTION),
         })

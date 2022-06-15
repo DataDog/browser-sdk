@@ -100,6 +100,8 @@ export function startRumAssembly(
       const session = sessionManager.findTrackedSession(rawRumEvent.type !== RumEventType.VIEW ? startTime : undefined)
       if (session && viewContext && urlContext) {
         const commonContext = savedCommonContext || getCommonContext()
+        const actionId = actionContexts.findActionId(startTime)
+
         const rumContext: RumContext = {
           _dd: {
             format_version: 2,
@@ -113,30 +115,27 @@ export function startRumAssembly(
             id: configuration.applicationId,
           },
           date: timeStampNow(),
-          service: configuration.service,
+          service: isExperimentalFeatureEnabled('sub-apps')
+            ? viewContext.service || configuration.service
+            : configuration.service,
+          version: isExperimentalFeatureEnabled('sub-apps') ? viewContext.version || configuration.version : undefined,
           source: 'browser',
           session: {
             id: session.id,
             type: syntheticsContext ? SessionType.SYNTHETICS : ciTestContext ? SessionType.CI_TEST : SessionType.USER,
           },
+          view: {
+            id: viewContext.id,
+            name: viewContext.name,
+            url: urlContext.url,
+            referrer: urlContext.referrer,
+          },
+          action: needToAssembleWithAction(rawRumEvent) && actionId ? { id: actionId } : undefined,
           synthetics: syntheticsContext,
           ci_test: ciTestContext,
         }
-        const actionId = actionContexts.findActionId(startTime)
 
-        if (!isExperimentalFeatureEnabled('sub-apps')) {
-          delete viewContext.service
-          delete viewContext.version
-        } else {
-          rumContext.version = configuration.version
-        }
-
-        const serverRumEvent = (
-          needToAssembleWithAction(rawRumEvent) && actionId
-            ? combine(rumContext, urlContext, viewContext, { action: { id: actionId } }, rawRumEvent)
-            : combine(rumContext, urlContext, viewContext, rawRumEvent)
-        ) as RumEvent & Context
-
+        const serverRumEvent = combine(rumContext as RumContext & Context, rawRumEvent) as RumEvent & Context
         serverRumEvent.context = combine(commonContext.context, customerContext)
 
         if (!('has_replay' in serverRumEvent.session)) {

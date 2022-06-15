@@ -31,10 +31,8 @@ export function startViewContexts(lifeCycle: LifeCycle): ViewContexts {
     return {
       service: view.service,
       version: view.version,
-      view: {
-        id: view.id,
-        name: view.name,
-      },
+      id: view.id,
+      name: view.name,
     }
   }
 

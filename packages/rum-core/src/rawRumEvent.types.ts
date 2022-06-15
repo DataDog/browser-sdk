@@ -194,6 +194,15 @@ export interface RumContext {
     type: string
     has_replay?: boolean
   }
+  view: {
+    id: string
+    referrer?: string
+    url: string
+    name?: string
+  }
+  action?: {
+    id: string | string[]
+  }
   synthetics?: {
     test_id: string
     result_id: string
@@ -211,26 +220,22 @@ export interface RumContext {
   }
 }
 
-export interface ViewContext extends Context {
+export interface ViewContext {
   service?: string
   version?: string
-  view: {
-    id: string
-    name?: string
-  }
+  id: string
+  name?: string
 }
 
-export interface ActionContext extends Context {
+export interface ActionContext {
   action: {
     id: string | string[]
   }
 }
 
-export interface UrlContext extends Context {
-  view: {
-    url: string
-    referrer: string
-  }
+export interface UrlContext {
+  url: string
+  referrer: string
 }
 
 export interface InternalContext {
