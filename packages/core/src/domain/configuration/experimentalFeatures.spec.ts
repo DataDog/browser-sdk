@@ -2,7 +2,7 @@ import {
   updateExperimentalFeatures,
   isExperimentalFeatureEnabled,
   resetExperimentalFeatures,
-  sampleExperimentalFeature,
+  setSampledExperimentalFeatures,
 } from './experimentalFeatures'
 
 describe('experimentalFeatures', () => {
@@ -39,17 +39,13 @@ describe('experimentalFeatures', () => {
   })
 })
 
-describe('sampleExperimentalFeature', () => {
-  it('should sample experimental feature', () => {
-    updateExperimentalFeatures(['foo'])
-    updateExperimentalFeatures(['bar'])
-    updateExperimentalFeatures(['baz'])
+describe('setSampledExperimentalFeatures', () => {
+  it('should sample experimental features', () => {
+    setSampledExperimentalFeatures({ foo: 100, bar: 0 })
+    updateExperimentalFeatures(['foo', 'bar', 'baz'])
 
-    sampleExperimentalFeature('foo', 0)
-    sampleExperimentalFeature('bar', 100)
-
-    expect(isExperimentalFeatureEnabled('foo')).toBeFalse()
-    expect(isExperimentalFeatureEnabled('bar')).toBeTrue()
+    expect(isExperimentalFeatureEnabled('foo')).toBeTrue()
+    expect(isExperimentalFeatureEnabled('bar')).toBeFalse()
     expect(isExperimentalFeatureEnabled('baz')).toBeTrue()
   })
 })

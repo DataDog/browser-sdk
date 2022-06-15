@@ -8,7 +8,9 @@
 import { performDraw } from '../../tools/utils'
 
 let enabledExperimentalFeatures: Set<string>
-let sampledExperimentalFeatures: Map<string, boolean>
+let sampledExperimentalFeatures: { [feature: string]: number } = {
+  'lower-batch-size': 50,
+}
 
 export function updateExperimentalFeatures(enabledFeatures: string[] | undefined): void {
   // Safely handle external data
@@ -17,40 +19,30 @@ export function updateExperimentalFeatures(enabledFeatures: string[] | undefined
   }
 
   if (!enabledExperimentalFeatures) {
-    enabledExperimentalFeatures = new Set(enabledFeatures)
+    enabledExperimentalFeatures = new Set()
   }
 
   enabledFeatures
-    .filter((flag) => typeof flag === 'string')
+    .filter(
+      (flag) =>
+        typeof flag === 'string' &&
+        (!Object.prototype.hasOwnProperty.call(sampledExperimentalFeatures, flag) ||
+          performDraw(sampledExperimentalFeatures[flag]))
+    )
     .forEach((flag: string) => {
       enabledExperimentalFeatures.add(flag)
     })
 }
 
 export function isExperimentalFeatureEnabled(featureName: string): boolean {
-  return (
-    !!enabledExperimentalFeatures &&
-    enabledExperimentalFeatures.has(featureName) &&
-    isExperimentalFeatureSampled(featureName)
-  )
+  return !!enabledExperimentalFeatures && enabledExperimentalFeatures.has(featureName)
 }
 
 export function resetExperimentalFeatures(): void {
   enabledExperimentalFeatures = new Set()
-  sampledExperimentalFeatures = new Map()
+  sampledExperimentalFeatures = {}
 }
 
-export function sampleExperimentalFeature(featureName: string, sampleRate: number): void {
-  if (!sampledExperimentalFeatures) {
-    sampledExperimentalFeatures = new Map()
-  }
-  sampledExperimentalFeatures.set(featureName, performDraw(sampleRate))
-}
-
-function isExperimentalFeatureSampled(featureName: string): boolean {
-  return (
-    !sampledExperimentalFeatures ||
-    !sampledExperimentalFeatures.has(featureName) ||
-    sampledExperimentalFeatures.get(featureName)!
-  )
+export function setSampledExperimentalFeatures(sampledFeatures: { [feature: string]: number }) {
+  sampledExperimentalFeatures = sampledFeatures
 }
