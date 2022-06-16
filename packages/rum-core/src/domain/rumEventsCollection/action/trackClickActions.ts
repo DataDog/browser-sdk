@@ -6,8 +6,6 @@ import {
   getRelativeTime,
   ONE_MINUTE,
   ContextHistory,
-  addEventListener,
-  DOM_EVENT,
   generateUUID,
   clocksNow,
   ONE_SECOND,
@@ -24,6 +22,7 @@ import type { ClickChain } from './clickChain'
 import { createClickChain } from './clickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
 import { getSelectorFromElement } from './getSelectorFromElement'
+import { listenEvents } from './listenEvents'
 
 interface ActionCounts {
   errorCount: number
@@ -75,7 +74,7 @@ export function trackClickActions(
   lifeCycle.subscribe(LifeCycleEventType.BEFORE_UNLOAD, stopClickChain)
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, stopClickChain)
 
-  const { stop: stopListener } = listenClickEvents(processClick)
+  const { stop: stopListener } = listenEvents({ onClick: processClick })
 
   const actionContexts: ActionContexts = {
     findActionId: (startTime?: RelativeTime) =>
@@ -164,19 +163,6 @@ export function trackClickActions(
       stopSubscription.unsubscribe()
     })
   }
-}
-
-function listenClickEvents(callback: (clickEvent: MouseEvent & { target: Element }) => void) {
-  return addEventListener(
-    window,
-    DOM_EVENT.CLICK,
-    (clickEvent: MouseEvent) => {
-      if (clickEvent.target instanceof Element) {
-        callback(clickEvent as MouseEvent & { target: Element })
-      }
-    },
-    { capture: true }
-  )
 }
 
 const enum ClickStatus {
