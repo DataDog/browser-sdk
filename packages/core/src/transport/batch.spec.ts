@@ -158,7 +158,7 @@ describe('batch', () => {
         transport.send(data, BATCH_BYTES_LIMIT)
       },
     } as unknown as HttpRequest
-    const batch = new Batch(fakeRequest, 10, 100, 100, 100)
+    const batch = new Batch(fakeRequest, BATCH_MESSAGES_LIMIT, BATCH_BYTES_LIMIT, MESSAGE_BYTES_LIMIT, FLUSH_TIMEOUT)
     const addTelemetryDebugFake = () => batch.add({ message: 'telemetry message' })
 
     batch.add({ message: 'normal message' })
