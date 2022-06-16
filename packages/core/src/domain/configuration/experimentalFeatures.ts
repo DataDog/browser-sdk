@@ -8,11 +8,10 @@
 import { performDraw } from '../../tools/utils'
 
 let enabledExperimentalFeatures: Set<string>
-let sampledExperimentalFeatures: { [feature: string]: number } = {
-  'lower-batch-size': 50,
-}
 
-export function updateExperimentalFeatures(enabledFeatures: string[] | undefined): void {
+export function updateExperimentalFeatures(
+  enabledFeatures: Array<string | { [name: string]: number }> | undefined
+): void {
   // Safely handle external data
   if (!Array.isArray(enabledFeatures)) {
     return
@@ -22,16 +21,14 @@ export function updateExperimentalFeatures(enabledFeatures: string[] | undefined
     enabledExperimentalFeatures = new Set()
   }
 
-  enabledFeatures
-    .filter(
-      (flag) =>
-        typeof flag === 'string' &&
-        (!Object.prototype.hasOwnProperty.call(sampledExperimentalFeatures, flag) ||
-          performDraw(sampledExperimentalFeatures[flag]))
-    )
-    .forEach((flag: string) => {
-      enabledExperimentalFeatures.add(flag)
-    })
+  for (const feature of enabledFeatures) {
+    const featureName = typeof feature === 'object' ? Object.keys(feature)[0] : feature
+    const sampleRate = typeof feature === 'object' ? feature[featureName] : undefined
+
+    if (sampleRate === undefined || performDraw(sampleRate)) {
+      enabledExperimentalFeatures.add(featureName)
+    }
+  }
 }
 
 export function isExperimentalFeatureEnabled(featureName: string): boolean {
@@ -40,9 +37,4 @@ export function isExperimentalFeatureEnabled(featureName: string): boolean {
 
 export function resetExperimentalFeatures(): void {
   enabledExperimentalFeatures = new Set()
-  sampledExperimentalFeatures = {}
-}
-
-export function setSampledExperimentalFeatures(sampledFeatures: { [feature: string]: number }) {
-  sampledExperimentalFeatures = sampledFeatures
 }

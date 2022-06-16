@@ -6,7 +6,6 @@ import { validateAndBuildConfiguration } from './configuration'
 import {
   isExperimentalFeatureEnabled,
   resetExperimentalFeatures,
-  setSampledExperimentalFeatures,
   updateExperimentalFeatures,
 } from './experimentalFeatures'
 
@@ -136,7 +135,6 @@ describe('validateAndBuildConfiguration', () => {
     })
 
     it('should be set to 10KB when lower-batch-size is enabled', () => {
-      setSampledExperimentalFeatures({ 'lower-batch-size': 100 })
       updateExperimentalFeatures(['lower-batch-size'])
 
       const configuration = validateAndBuildConfiguration({ clientToken })!
