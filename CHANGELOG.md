@@ -16,6 +16,11 @@
 
 ---
 
+## v4.11.5
+
+- 🐛 [RUMF-1303] stop forwarding network errors when forwardErrorsToLogs is false ([#1591](https://github.com/DataDog/browser-sdk/pull/1591))
+- ♻️ Simplify RUM assembly ([#1588](https://github.com/DataDog/browser-sdk/pull/1588))
+
 ## v4.11.4
 
 - 🏷️ adjust types to allow updating the SDK in Datadog app ([#1587](https://github.com/DataDog/browser-sdk/pull/1587))
