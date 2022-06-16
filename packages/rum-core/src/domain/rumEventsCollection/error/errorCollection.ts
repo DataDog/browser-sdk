@@ -13,7 +13,7 @@ import type { CommonContext, RawRumErrorEvent } from '../../../rawRumEvent.types
 import { RumEventType } from '../../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
-import type { ForegroundContexts } from '../../foregroundContexts'
+import type { ForegroundContexts } from '../../contexts/foregroundContexts'
 import { trackConsoleError } from './trackConsoleError'
 import { trackReportError } from './trackReportError'
 

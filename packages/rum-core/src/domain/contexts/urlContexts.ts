@@ -1,9 +1,8 @@
 import type { RelativeTime, Observable } from '@datadog/browser-core'
 import { SESSION_TIME_OUT_DELAY, relativeNow, ContextHistory } from '@datadog/browser-core'
-import type { UrlContext } from '../rawRumEvent.types'
-import type { LocationChange } from '../browser/locationChangeObservable'
-import type { LifeCycle } from './lifeCycle'
-import { LifeCycleEventType } from './lifeCycle'
+import type { LocationChange } from '../../browser/locationChangeObservable'
+import type { LifeCycle } from '../lifeCycle'
+import { LifeCycleEventType } from '../lifeCycle'
 
 /**
  * We want to attach to an event:
@@ -12,6 +11,11 @@ import { LifeCycleEventType } from './lifeCycle'
  */
 
 export const URL_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
+
+export interface UrlContext {
+  url: string
+  referrer: string
+}
 
 export interface UrlContexts {
   findUrl: (startTime?: RelativeTime) => UrlContext | undefined

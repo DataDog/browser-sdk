@@ -1,9 +1,22 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import type { InternalContext } from '../rawRumEvent.types'
+import type { ActionContexts } from '../rumEventsCollection/action/actionCollection'
+import type { RumSessionManager } from '../rumSessionManager'
 import type { ViewContexts } from './viewContexts'
-import type { ActionContexts } from './rumEventsCollection/action/actionCollection'
-import type { RumSessionManager } from './rumSessionManager'
 import type { UrlContexts } from './urlContexts'
+
+export interface InternalContext {
+  application_id: string
+  session_id: string | undefined
+  view?: {
+    id: string
+    url: string
+    referrer: string
+    name?: string
+  }
+  user_action?: {
+    id: string | string[]
+  }
+}
 
 /**
  * Internal context keep returning v1 format

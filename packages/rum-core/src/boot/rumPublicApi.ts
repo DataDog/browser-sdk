@@ -16,11 +16,11 @@ import {
   areCookiesAuthorized,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
-import type { ViewContexts } from '../domain/viewContexts'
+import type { ViewContexts } from '../domain/contexts/viewContexts'
 import type { RumSessionManager } from '../domain/rumSessionManager'
 import type { CommonContext, User, ReplayStats } from '../rawRumEvent.types'
 import { ActionType } from '../rawRumEvent.types'
-import { willSyntheticsInjectRum } from '../domain/syntheticsContext'
+import { willSyntheticsInjectRum } from '../domain/contexts/syntheticsContext'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import { validateAndBuildRumConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/rumEventsCollection/view/trackViews'
