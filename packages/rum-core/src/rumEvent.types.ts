@@ -68,11 +68,11 @@ export type RumActionEvent = CommonProperties & {
      */
     readonly position?: {
       /**
-       * X coordinate of the action (in pixels)
+       * X coordinate relative to the target element of the action (in pixels)
        */
       readonly x: number
       /**
-       * Y coordinate of the action (in pixels)
+       * Y coordinate relative to the target element of the action (in pixels)
        */
       readonly y: number
       [k: string]: unknown
@@ -791,6 +791,26 @@ export interface CommonProperties {
     [k: string]: unknown
   }
   /**
+   * Display properties
+   */
+  display?: {
+    /**
+     * The viewport represents the rectangular area that is currently being viewed. Content outside the viewport is not visible onscreen until scrolled into view.
+     */
+    readonly viewport?: {
+      /**
+       * Width of the viewport (in pixels)
+       */
+      readonly width: number
+      /**
+       * Height of the viewport (in pixels)
+       */
+      readonly height: number
+      [k: string]: unknown
+    }
+    [k: string]: unknown
+  }
+  /**
    * Synthetics properties
    */
   readonly synthetics?: {
@@ -816,6 +836,46 @@ export interface CommonProperties {
      * The identifier of the current CI Visibility test execution
      */
     readonly test_execution_id: string
+    [k: string]: unknown
+  }
+  /**
+   * Operating system properties
+   */
+  os?: {
+    /**
+     * Operating system name, e.g. Android, iOS
+     */
+    readonly name: string
+    /**
+     * Full operating system version, e.g. 8.1.1
+     */
+    readonly version: string
+    /**
+     * Major operating system version, e.g. 8
+     */
+    readonly version_major: string
+    [k: string]: unknown
+  }
+  /**
+   * Device properties
+   */
+  device?: {
+    /**
+     * Device type info
+     */
+    readonly type: 'mobile' | 'desktop' | 'tablet' | 'tv' | 'gaming_console' | 'bot' | 'other'
+    /**
+     * Device marketing name, e.g. Xiaomi Redmi Note 8 Pro, Pixel 5, etc.
+     */
+    readonly name?: string
+    /**
+     * Device SKU model, e.g. Samsung SM-988GN, etc. Quite often name and model can be the same.
+     */
+    readonly model?: string
+    /**
+     * Device marketing brand, e.g. Apple, OPPO, Xiaomi, etc.
+     */
+    readonly brand?: string
     [k: string]: unknown
   }
   /**

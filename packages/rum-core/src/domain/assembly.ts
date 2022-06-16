@@ -22,16 +22,17 @@ import type {
 } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'
-import { getSyntheticsContext } from './syntheticsContext'
-import { getCiTestContext } from './ciTestContext'
+import { getSyntheticsContext } from './contexts/syntheticsContext'
+import { getCiTestContext } from './contexts/ciTestContext'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
-import type { ViewContexts } from './viewContexts'
+import type { ViewContexts } from './contexts/viewContexts'
 import type { RumSessionManager } from './rumSessionManager'
 import { RumSessionPlan } from './rumSessionManager'
-import type { UrlContexts } from './urlContexts'
+import type { UrlContexts } from './contexts/urlContexts'
 import type { RumConfiguration } from './configuration'
 import type { ActionContexts } from './rumEventsCollection/action/actionCollection'
+import { getDisplayContext } from './contexts/displayContext'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
@@ -133,6 +134,7 @@ export function startRumAssembly(
           action: needToAssembleWithAction(rawRumEvent) && actionId ? { id: actionId } : undefined,
           synthetics: syntheticsContext,
           ci_test: ciTestContext,
+          display: getDisplayContext(),
         }
 
         const serverRumEvent = combine(rumContext as RumContext & Context, rawRumEvent) as RumEvent & Context

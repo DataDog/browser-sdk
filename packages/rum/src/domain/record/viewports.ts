@@ -71,24 +71,6 @@ export const getVisualViewport = (): VisualViewportRecord['data'] => {
   }
 }
 
-// excludes the width of any rendered classic scrollbar that is fixed to the visual viewport
-export function getWindowWidth(): number {
-  const visual = window.visualViewport
-  if (visual) {
-    return visual.width * visual.scale
-  }
-  return window.innerWidth || 0
-}
-
-// excludes the height of any rendered classic scrollbar that is fixed to the visual viewport
-export function getWindowHeight(): number {
-  const visual = window.visualViewport
-  if (visual) {
-    return visual.height * visual.scale
-  }
-  return window.innerHeight || 0
-}
-
 export function getScrollX() {
   const visual = window.visualViewport
   if (visual) {

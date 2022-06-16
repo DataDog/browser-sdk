@@ -194,6 +194,12 @@ export interface RumContext {
     type: string
     has_replay?: boolean
   }
+  display?: {
+    viewport: {
+      width: number
+      height: number
+    }
+  }
   view: {
     id: string
     referrer?: string
@@ -207,6 +213,9 @@ export interface RumContext {
     test_id: string
     result_id: string
   }
+  ci_test?: {
+    test_execution_id: string
+  }
   _dd: {
     format_version: 2
     drift: number
@@ -214,41 +223,6 @@ export interface RumContext {
       plan: RumSessionPlan
     }
     browser_sdk_version?: string
-  }
-  ci_test?: {
-    test_execution_id: string
-  }
-}
-
-export interface ViewContext {
-  service?: string
-  version?: string
-  id: string
-  name?: string
-}
-
-export interface ActionContext {
-  action: {
-    id: string | string[]
-  }
-}
-
-export interface UrlContext {
-  url: string
-  referrer: string
-}
-
-export interface InternalContext {
-  application_id: string
-  session_id: string | undefined
-  view?: {
-    id: string
-    url: string
-    referrer: string
-    name?: string
-  }
-  user_action?: {
-    id: string | string[]
   }
 }
 
