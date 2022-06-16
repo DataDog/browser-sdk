@@ -16,6 +16,10 @@ import { LifeCycleEventType } from '../../lifeCycle'
 import { StatusType } from '../../logger'
 
 export function startNetworkErrorCollection(configuration: LogsConfiguration, lifeCycle: LifeCycle) {
+  if (!configuration.forwardErrorsToLogs) {
+    return { stop: noop }
+  }
+
   const xhrSubscription = initXhrObservable().subscribe((context) => {
     if (context.state === 'complete') {
       handleCompleteRequest(RequestType.XHR, context)
