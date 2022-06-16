@@ -16,6 +16,16 @@
 
 ---
 
+## v4.11.4
+
+- 🏷️ adjust types to allow updating the SDK in Datadog app ([#1587](https://github.com/DataDog/browser-sdk/pull/1587))
+- [RUMF-1280] collect click position ([#1566](https://github.com/DataDog/browser-sdk/pull/1566))
+
+## v4.11.3
+
+- ✨ improve developer extension ([#1580](https://github.com/DataDog/browser-sdk/pull/1580))
+- 🐛 [RUMF-1267] remove last circular dependencies ([#1577](https://github.com/DataDog/browser-sdk/pull/1577))
+
 ## v4.11.2
 
 - 🏷️ [RUMF-1256] adjust StyleSheetRule records to support index paths ([#1571](https://github.com/DataDog/browser-sdk/pull/1571))

@@ -184,7 +184,7 @@ describe('isRage', () => {
   })
 })
 
-function createFakeClick(eventPartial?: Partial<MouseEvent>): Click & { clonedClick?: Click } {
+function createFakeClick(eventPartial?: Partial<MouseEvent & { target: Element }>): Click & { clonedClick?: Click } {
   const stopObservable = new Observable<void>()
   let isStopped = false
   let clonedClick: Click | undefined
@@ -195,6 +195,7 @@ function createFakeClick(eventPartial?: Partial<MouseEvent>): Click & { clonedCl
       clientX: 100,
       clientY: 100,
       timeStamp: timeStampNow(),
+      target: document.body,
       ...eventPartial,
     }),
     stopObservable,

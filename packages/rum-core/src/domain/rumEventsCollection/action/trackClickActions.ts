@@ -1,5 +1,6 @@
 import type { Duration, ClocksState, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import {
+  isExperimentalFeatureEnabled,
   setToArray,
   Observable,
   assign,
@@ -22,6 +23,7 @@ import { waitPageActivityEnd } from '../../waitPageActivityEnd'
 import type { RageClickChain } from './rageClickChain'
 import { createRageClickChain } from './rageClickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
+import { getSelectorFromElement } from './getSelectorFromElement'
 
 interface ActionCounts {
   errorCount: number
@@ -33,10 +35,16 @@ export interface ClickAction {
   type: ActionType.CLICK
   id: string
   name: string
+  target?: {
+    selector: string
+    width: number
+    height: number
+  }
+  position?: { x: number; y: number }
   startClocks: ClocksState
   duration?: Duration
   counts: ActionCounts
-  event: MouseEvent
+  event: MouseEvent & { target: Element }
   frustrationTypes: FrustrationType[]
 }
 
@@ -195,6 +203,22 @@ function newClick(
   base: Pick<ClickAction, 'startClocks' | 'event' | 'name'>
 ) {
   const id = generateUUID()
+  let target: ClickAction['target']
+  let position: ClickAction['position']
+
+  if (isExperimentalFeatureEnabled('clickmap')) {
+    const rect = base.event.target.getBoundingClientRect()
+    target = {
+      selector: getSelectorFromElement(base.event.target),
+      width: Math.round(rect.width),
+      height: Math.round(rect.height),
+    }
+    position = {
+      // Use clientX and Y because for SVG element offsetX and Y are relatives to the <svg> element
+      x: Math.round(base.event.clientX - rect.left),
+      y: Math.round(base.event.clientY - rect.top),
+    }
+  }
   const historyEntry = history.add(id, base.startClocks.relative)
   const eventCountsSubscription = trackEventCounts(lifeCycle)
   let state: ClickState = { status: ClickStatus.ONGOING }
@@ -250,6 +274,8 @@ function newClick(
           duration: state.endTime && elapsed(base.startClocks.timeStamp, state.endTime),
           id,
           frustrationTypes: setToArray(frustrations),
+          target,
+          position,
           counts: {
             resourceCount,
             errorCount,

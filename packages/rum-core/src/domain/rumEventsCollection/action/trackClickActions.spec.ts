@@ -1,5 +1,11 @@
 import type { Context, Observable, Duration } from '@datadog/browser-core'
-import { clocksNow, timeStampNow, relativeNow } from '@datadog/browser-core'
+import {
+  updateExperimentalFeatures,
+  resetExperimentalFeatures,
+  clocksNow,
+  timeStampNow,
+  relativeNow,
+} from '@datadog/browser-core'
 import type { Clock } from '../../../../../core/test/specHelper'
 import { createNewEvent } from '../../../../../core/test/specHelper'
 import type { TestSetupBuilder } from '../../../../test/specHelper'
@@ -44,6 +50,9 @@ describe('trackClickActions', () => {
   beforeEach(() => {
     button = document.createElement('button')
     button.type = 'button'
+    button.id = 'button'
+    button.style.width = '100px'
+    button.style.height = '100px'
     button.appendChild(document.createTextNode('Click me'))
     document.body.appendChild(button)
 
@@ -88,10 +97,34 @@ describe('trackClickActions', () => {
         name: 'Click me',
         startClocks: jasmine.any(Object),
         type: ActionType.CLICK,
-        event: createNewEvent('click'),
+        event: createNewEvent('click', { target: document.createElement('button') }),
         frustrationTypes: [],
+        target: undefined,
+        position: undefined,
       },
     ])
+  })
+
+  describe('when clickmap ff is enabled', () => {
+    beforeEach(() => {
+      updateExperimentalFeatures(['clickmap'])
+    })
+
+    afterEach(() => {
+      resetExperimentalFeatures()
+    })
+
+    it('should set click position and target', () => {
+      const { domMutationObservable, clock } = setupBuilder.build()
+      emulateClickWithActivity(domMutationObservable, clock)
+      clock.tick(EXPIRE_DELAY)
+      expect(events[0]).toEqual(
+        jasmine.objectContaining({
+          target: { selector: '#button', width: 100, height: 100 },
+          position: { x: 50, y: 50 },
+        })
+      )
+    })
   })
 
   it('should keep track of previously validated click actions', () => {
@@ -374,11 +407,15 @@ describe('trackClickActions', () => {
 
   function emulateClickWithoutActivity(target: HTMLElement = button) {
     const targetPosition = target.getBoundingClientRect()
+    const offsetX = targetPosition.width / 2
+    const offsetY = targetPosition.height / 2
     target.dispatchEvent(
       createNewEvent('click', {
         target,
-        clientX: targetPosition.left + targetPosition.width / 2,
-        clientY: targetPosition.top + targetPosition.height / 2,
+        clientX: targetPosition.left + offsetX,
+        clientY: targetPosition.top + offsetY,
+        offsetX,
+        offsetY,
         timeStamp: timeStampNow(),
       })
     )

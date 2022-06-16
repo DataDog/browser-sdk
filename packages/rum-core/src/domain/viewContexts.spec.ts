@@ -48,7 +48,7 @@ describe('viewContexts', () => {
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent())
 
       expect(viewContexts.findView()).toBeDefined()
-      expect(viewContexts.findView()!.view.id).toEqual(FAKE_ID)
+      expect(viewContexts.findView()!.id).toEqual(FAKE_ID)
     })
 
     it('should return the view context corresponding to startTime', () => {
@@ -71,9 +71,9 @@ describe('viewContexts', () => {
         buildViewCreatedEvent({ startClocks: relativeToClocks(30 as RelativeTime), id: 'view 3' })
       )
 
-      expect(viewContexts.findView(15 as RelativeTime)!.view.id).toEqual('view 1')
-      expect(viewContexts.findView(20 as RelativeTime)!.view.id).toEqual('view 2')
-      expect(viewContexts.findView(40 as RelativeTime)!.view.id).toEqual('view 3')
+      expect(viewContexts.findView(15 as RelativeTime)!.id).toEqual('view 1')
+      expect(viewContexts.findView(20 as RelativeTime)!.id).toEqual('view 2')
+      expect(viewContexts.findView(40 as RelativeTime)!.id).toEqual('view 3')
     })
 
     it('should return undefined when no view context corresponding to startTime', () => {
@@ -100,14 +100,14 @@ describe('viewContexts', () => {
       const newViewId = 'fake 2'
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ id: newViewId }))
 
-      expect(viewContexts.findView()!.view.id).toEqual(newViewId)
+      expect(viewContexts.findView()!.id).toEqual(newViewId)
     })
 
     it('should return the view name with the view', () => {
       const { lifeCycle } = setupBuilder.build()
 
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ name: 'Fake name' }))
-      expect(viewContexts.findView()!.view.name).toBe('Fake name')
+      expect(viewContexts.findView()!.name).toBe('Fake name')
     })
   })
 

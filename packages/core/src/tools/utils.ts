@@ -208,6 +208,14 @@ export function includes(candidate: string | unknown[], search: any) {
   return candidate.indexOf(search) !== -1
 }
 
+export function arrayFrom<T>(arrayLike: ArrayLike<T>): T[] {
+  const array = []
+  for (let i = 0; i < arrayLike.length; i++) {
+    array.push(arrayLike[i])
+  }
+  return array
+}
+
 export function find<T, S extends T>(
   array: T[],
   predicate: (item: T, index: number, array: T[]) => item is S
@@ -634,4 +642,25 @@ export function removeDuplicates<T>(array: T[]) {
 
 export function matchList(list: Array<string | RegExp>, value: string) {
   return list.some((item) => item === value || (item instanceof RegExp && item.test(value)))
+}
+
+// https://github.com/jquery/jquery/blob/a684e6ba836f7c553968d7d026ed7941e1a612d8/src/selector/escapeSelector.js
+export function cssEscape(str: string) {
+  if (window.CSS && window.CSS.escape) {
+    return window.CSS.escape(str)
+  }
+
+  // eslint-disable-next-line no-control-regex
+  return str.replace(/([\0-\x1f\x7f]|^-?\d)|^-$|[^\x80-\uFFFF\w-]/g, function (ch, asCodePoint) {
+    if (asCodePoint) {
+      // U+0000 NULL becomes U+FFFD REPLACEMENT CHARACTER
+      if (ch === '\0') {
+        return '\uFFFD'
+      }
+      // Control characters and (dependent upon position) numbers get escaped as code points
+      return `${ch.slice(0, -1)}\\${ch.charCodeAt(ch.length - 1).toString(16)} `
+    }
+    // Other potentially-special ASCII characters get backslash-escaped
+    return `\\${ch}`
+  })
 }

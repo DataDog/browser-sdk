@@ -1,5 +1,5 @@
 import type { Context, RawError, ClocksState } from '@datadog/browser-core'
-import { ErrorSource, trackRuntimeError, Observable } from '@datadog/browser-core'
+import { noop, ErrorSource, trackRuntimeError, Observable } from '@datadog/browser-core'
 import type { RawRuntimeLogsEvent } from '../../../rawLogsEvent.types'
 import type { LogsConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
@@ -13,14 +13,14 @@ export interface ProvidedError {
   handlingStack: string
 }
 
-export function startRuntimeErrorCollection(
-  configuration: LogsConfiguration,
-  lifeCycle: LifeCycle,
-  rawErrorObservable = new Observable<RawError>()
-) {
-  if (configuration.forwardErrorsToLogs) {
-    trackRuntimeError(rawErrorObservable)
+export function startRuntimeErrorCollection(configuration: LogsConfiguration, lifeCycle: LifeCycle) {
+  if (!configuration.forwardErrorsToLogs) {
+    return { stop: noop }
   }
+
+  const rawErrorObservable = new Observable<RawError>()
+
+  const { stop: stopRuntimeErrorTracking } = trackRuntimeError(rawErrorObservable)
 
   const rawErrorSubscription = rawErrorObservable.subscribe((rawError) => {
     lifeCycle.notify<RawRuntimeLogsEvent>(LifeCycleEventType.RAW_LOG_COLLECTED, {
@@ -40,6 +40,7 @@ export function startRuntimeErrorCollection(
 
   return {
     stop: () => {
+      stopRuntimeErrorTracking()
       rawErrorSubscription.unsubscribe()
     },
   }

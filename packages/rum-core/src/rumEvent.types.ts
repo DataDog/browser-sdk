@@ -39,6 +39,18 @@ export type RumActionEvent = CommonProperties & {
        * Target name
        */
       name: string
+      /**
+       * CSS selector path of the target element
+       */
+      readonly selector?: string
+      /**
+       * Width of the target element (in pixels)
+       */
+      readonly width?: number
+      /**
+       * Height of the target element (in pixels)
+       */
+      readonly height?: number
       [k: string]: unknown
     }
     /**
@@ -49,6 +61,20 @@ export type RumActionEvent = CommonProperties & {
        * Action frustration types
        */
       readonly type: ('rage_click' | 'dead_click' | 'error_click')[]
+      [k: string]: unknown
+    }
+    /**
+     * Action position properties
+     */
+    readonly position?: {
+      /**
+       * X coordinate of the action (in pixels)
+       */
+      readonly x: number
+      /**
+       * Y coordinate of the action (in pixels)
+       */
+      readonly y: number
       [k: string]: unknown
     }
     /**

@@ -195,7 +195,7 @@ export function computeSegmentContext(
       id: session.id,
     },
     view: {
-      id: viewContext.view.id,
+      id: viewContext.id,
     },
   }
 }
