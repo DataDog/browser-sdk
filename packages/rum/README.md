@@ -11,14 +11,14 @@ The RUM Browser SDK supports all modern desktop and mobile browsers including IE
 To set up RUM Browser Monitoring, create a RUM application:
 
 1. In Datadog, navigate to the [**RUM Applications** page][1] and click the **New Application** button.
-2. Enter a name for your application and click **Generate Client Token**. This generates a `clientToken` and an `applicationId` for your application.
-3. Choose the installation type for the RUM Browser SDK: [npm](#npm), or a hosted version ([CDN async](#cdn-async) or [CDN sync](#cdn-sync)).
-4. Define the environment name, service name, and deployed version for your application to use [Unified Service Tagging][19] for RUM & Session Replay. For more information, see [Tagging](#tagging).
-5. Set the sampling rate of total user sessions collected and use the slider to set the percentage of total [Browser Premium][11] sessions collected. Browser Premium sessions include resources, long tasks, and replay recordings.
-6. Click the **Session Replay Enabled** toggle to access replay recordings in [Session Replay][17].
-7. Select a [privacy setting][18] for Session Replay in the dropdown menu.
-5. Deploy the changes to your application. Once your deployment is live, Datadog collects events from your users' browsers.
-6. Visualize the [data collected][2] in [dashboards][3] or create a search query in the [RUM Explorer][16].
+   - Enter a name for your application and click **Generate Client Token**. This generates a `clientToken` and an `applicationId` for your application.
+   - Choose the installation type for the RUM Browser SDK: [npm](#npm), or a hosted version ([CDN async](#cdn-async) or [CDN sync](#cdn-sync)).
+   - Define the environment name and service name for your application to use unified service tagging for [RUM & Session Replay][19]. Set a version number for your deployed application in the initialization snippet. For more information, see [Tagging](#tagging).
+   - Set the sampling rate of total user sessions collected and use the slider to set the percentage of total [Browser Premium][11] sessions collected. Browser Premium sessions include resources, long tasks, and replay recordings.
+   - Click the **Session Replay Enabled** toggle to access replay recordings in [Session Replay][17].
+   - Select a [privacy setting][18] for Session Replay in the dropdown menu.
+2. Deploy the changes to your application. Once your deployment is live, Datadog collects events from your users' browsers.
+3. Visualize the [data collected][2] in [dashboards][3] or create a search query in the [RUM Explorer][16].
 
 Until Datadog starts to receive data, your application appears as `pending` on the **RUM Applications** page.
 
@@ -285,9 +285,9 @@ init(configuration: {
 
 This feature requires the RUM Browser SDK v3.0.0+. 
 
-<div class="alert alert-info">
-The RUM Browser SDK v4.10.2 introduces the `premiumSampleRate` initialization parameter, deprecating the `replaySampleRate` initialization parameter.
-</div>
+<blockquote class="alert alert-info">
+The RUM Browser SDK v4.10.2 introduces the <code>premiumSampleRate</code> initialization parameter, deprecating the <code>replaySampleRate</code> initialization parameter.
+</blockquote>
 
 When a session is created, RUM tracks it as either:
 
@@ -351,7 +351,7 @@ For more information, see Configuring Browser Services (link here).
 [4]: https://www.npmjs.com/package/@datadog/browser-rum
 [5]: https://docs.datadoghq.com/account_management/api-app-keys/#client-tokens
 [6]: https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions
-[7]: https://docs.datadoghq.com/real_user_monitoring/faq/proxy_rum_data/
+[7]: https://docs.datadoghq.com/real_user_monitoring/guide/proxy-rum-data/
 [8]: https://github.com/DataDog/browser-sdk/blob/main/packages/rum/BROWSER_SUPPORT.md
 [9]: https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions#declaring-a-name-for-click-actions
 [10]: https://docs.datadoghq.com/real_user_monitoring/browser/modifying_data_and_context/?tab=npm#override-default-rum-view-names
