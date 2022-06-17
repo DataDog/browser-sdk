@@ -33,12 +33,12 @@ describe('listenEvents', () => {
       document.getSelection()!.removeAllRanges()
     })
 
-    it('does not report selection change if nothing changes', () => {
+    it('click without selection impact should not report a selection change', () => {
       emulateClick()
       expect(onClickSpy.calls.mostRecent().args[1]).toBe(false)
     })
 
-    it('reports selection change if some node gets selected', () => {
+    it('click and drag to select text should reports a selection change', () => {
       emulateClick({
         beforeMouseUp() {
           emulateNodeSelection(0, 3)
@@ -47,7 +47,7 @@ describe('listenEvents', () => {
       expect(onClickSpy.calls.mostRecent().args[1]).toBe(true)
     })
 
-    it('reports selection change if some node gets deselected', () => {
+    it('click to deselect previously selected text should report a selection change', () => {
       emulateNodeSelection(0, 3)
       emulateClick({
         beforeMouseUp() {
@@ -57,7 +57,18 @@ describe('listenEvents', () => {
       expect(onClickSpy.calls.mostRecent().args[1]).toBe(true)
     })
 
-    it('does not report selection change if the selection changes but stays empty', () => {
+    // eslint-disable-next-line max-len
+    it('click to change the selection position (ex: last click of a triple-click selection) should report a selection change', () => {
+      emulateNodeSelection(3, 4)
+      emulateClick({
+        beforeMouseUp() {
+          emulateNodeSelection(0, 7)
+        },
+      })
+      expect(onClickSpy.calls.mostRecent().args[1]).toBe(true)
+    })
+
+    it('click that change the caret (collapsed selection) position should not report selection change', () => {
       emulateNodeSelection(0, 0)
       emulateClick({
         beforeMouseUp() {

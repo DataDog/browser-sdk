@@ -20,7 +20,7 @@ export function listenEvents({ onClick }: { onClick: OnClickCallback }) {
     window,
     DOM_EVENT.SELECTION_CHANGE,
     () => {
-      if (selectionEmptyAtMouseDown !== isSelectionEmpty()) {
+      if (!selectionEmptyAtMouseDown || !isSelectionEmpty()) {
         hasSelectionChanged = true
       }
     },

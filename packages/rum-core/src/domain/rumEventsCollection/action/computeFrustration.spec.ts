@@ -54,7 +54,7 @@ describe('computeFrustration', () => {
       expect(clicks[1].frustrationTypes).toEqual([FrustrationType.DEAD_CLICK])
     })
 
-    it('does not add a dead frustration to clicks if one of them is associated with a selection change', () => {
+    it('does not add a dead frustration when double clicking to select a word', () => {
       clicks[1].hasActivity = false
       clicks[0].hasSelectionChanged = true
       computeFrustration(clicks, rageClick)
@@ -84,7 +84,7 @@ describe('isRage', () => {
     expect(isRage([createFakeClick(), createFakeClick(), createFakeClick()])).toBe(true)
   })
 
-  it('considers as rage three clicks if one of them has selection change', () => {
+  it('does not consider as rage when triple clicking to select a paragraph', () => {
     expect(isRage([createFakeClick(), createFakeClick({ hasSelectionChanged: true }), createFakeClick()])).toBe(false)
   })
 
