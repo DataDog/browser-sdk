@@ -2,7 +2,7 @@ import { addEventListener, DOM_EVENT } from '@datadog/browser-core'
 
 export type OnClickCallback = (clickEvent: MouseEvent & { target: Element }, hasSelectionChanged: boolean) => void
 
-export function listenEvents({ onClick }: { onClick: OnClickCallback }) {
+export function listenActionEvents({ onClick }: { onClick: OnClickCallback }) {
   let hasSelectionChanged = false
   let selectionEmptyAtMouseDown: boolean
 

@@ -1,14 +1,14 @@
 import { createNewEvent } from '../../../../../core/test/specHelper'
-import type { OnClickCallback } from './listenEvents'
-import { listenEvents } from './listenEvents'
+import type { OnClickCallback } from './listenActionEvents'
+import { listenActionEvents } from './listenActionEvents'
 
-describe('listenEvents', () => {
+describe('listenActionEvents', () => {
   let onClickSpy: jasmine.Spy<OnClickCallback>
   let stopListenEvents: () => void
 
   beforeEach(() => {
     onClickSpy = jasmine.createSpy()
-    ;({ stop: stopListenEvents } = listenEvents({ onClick: onClickSpy }))
+    ;({ stop: stopListenEvents } = listenActionEvents({ onClick: onClickSpy }))
   })
 
   afterEach(() => {

@@ -22,7 +22,7 @@ import type { ClickChain } from './clickChain'
 import { createClickChain } from './clickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
 import { getSelectorFromElement } from './getSelectorFromElement'
-import { listenEvents } from './listenEvents'
+import { listenActionEvents } from './listenActionEvents'
 
 interface ActionCounts {
   errorCount: number
@@ -74,7 +74,7 @@ export function trackClickActions(
   lifeCycle.subscribe(LifeCycleEventType.BEFORE_UNLOAD, stopClickChain)
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, stopClickChain)
 
-  const { stop: stopListener } = listenEvents({ onClick: processClick })
+  const { stop: stopActionEventsListener } = listenActionEvents({ onClick: processClick })
 
   const actionContexts: ActionContexts = {
     findActionId: (startTime?: RelativeTime) =>
@@ -85,7 +85,7 @@ export function trackClickActions(
     stop: () => {
       stopClickChain()
       stopObservable.notify()
-      stopListener()
+      stopActionEventsListener()
     },
     actionContexts,
   }
