@@ -2,6 +2,7 @@ import type { CookieOptions } from '../../browser/cookie'
 import { getCookie, setCookie } from '../../browser/cookie'
 import { isChromium } from '../../tools/browserDetection'
 import { monitor } from '../../tools/monitor'
+import { dateNow } from '../../tools/timeUtils'
 import * as utils from '../../tools/utils'
 import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
 import type { SessionState } from './sessionStore'
@@ -118,7 +119,7 @@ export function persistSession(session: SessionState, options: CookieOptions) {
     clearSession(options)
     return
   }
-  session.expire = String(Date.now() + SESSION_EXPIRATION_DELAY)
+  session.expire = String(dateNow() + SESSION_EXPIRATION_DELAY)
   setSession(session, options)
 }
 
