@@ -23,7 +23,7 @@ export function computeFrustration(clicks: Click[], rageClick: Click) {
     }
     if (
       !click.hasActivity &&
-      // Avoid considering clicks part of a double-click or triple-click selections as dead
+      // Avoid considering clicks part of a double-click or triple-click selections as dead clicks
       !hasSelectionChanged
     ) {
       click.addFrustration(FrustrationType.DEAD_CLICK)
