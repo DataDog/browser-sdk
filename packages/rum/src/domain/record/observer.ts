@@ -10,6 +10,7 @@ import {
   addEventListener,
   noop,
 } from '@datadog/browser-core'
+import { initViewportObservable } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel } from '../../constants'
 import type {
   InputState,
@@ -30,14 +31,7 @@ import { forEach, isTouchEvent } from './utils'
 import type { MutationController } from './mutationObserver'
 import { startMutationObserver } from './mutationObserver'
 
-import {
-  getVisualViewport,
-  getWindowHeight,
-  getWindowWidth,
-  getScrollX,
-  getScrollY,
-  convertMouseEventToLayoutCoordinates,
-} from './viewports'
+import { getVisualViewport, getScrollX, getScrollY, convertMouseEventToLayoutCoordinates } from './viewports'
 
 const MOUSE_MOVE_OBSERVER_THRESHOLD = 50
 const SCROLL_OBSERVER_THRESHOLD = 100
@@ -221,18 +215,7 @@ function initScrollObserver(cb: ScrollCallback, defaultPrivacyLevel: DefaultPriv
 }
 
 function initViewportResizeObserver(cb: ViewportResizeCallback): ListenerHandler {
-  const { throttled: updateDimension } = throttle(
-    monitor(() => {
-      const height = getWindowHeight()
-      const width = getWindowWidth()
-      cb({
-        height: Number(height),
-        width: Number(width),
-      })
-    }),
-    200
-  )
-  return addEventListener(window, DOM_EVENT.RESIZE, updateDimension, { capture: true, passive: true }).stop
+  return initViewportObservable().subscribe(cb).unsubscribe
 }
 
 export function initInputObserver(cb: InputCallback, defaultPrivacyLevel: DefaultPrivacyLevel): ListenerHandler {

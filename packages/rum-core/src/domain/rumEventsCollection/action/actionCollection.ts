@@ -5,7 +5,7 @@ import type { CommonContext, RawRumActionEvent } from '../../../rawRumEvent.type
 import { ActionType, RumEventType } from '../../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
-import type { ForegroundContexts } from '../../foregroundContexts'
+import type { ForegroundContexts } from '../../contexts/foregroundContexts'
 import type { RumConfiguration } from '../../configuration'
 import type { ActionContexts, ClickAction } from './trackClickActions'
 import { trackClickActions } from './trackClickActions'
