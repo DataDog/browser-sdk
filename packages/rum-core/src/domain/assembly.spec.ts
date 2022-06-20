@@ -1,11 +1,5 @@
 import type { RawError, RelativeTime } from '@datadog/browser-core'
-import {
-  ErrorSource,
-  ONE_MINUTE,
-  display,
-  resetExperimentalFeatures,
-  updateExperimentalFeatures,
-} from '@datadog/browser-core'
+import { ErrorSource, ONE_MINUTE, display } from '@datadog/browser-core'
 import { createRumSessionManagerMock } from '../../test/mockRumSessionManager'
 import { createRawRumEvent } from '../../test/fixtures'
 import type { TestSetupBuilder } from '../../test/specHelper'
@@ -468,46 +462,24 @@ describe('rum assembly', () => {
       extraConfigurationOptions = { service: 'default service', version: 'default version' }
     })
 
-    describe('when sub-apps ff enabled', () => {
-      beforeEach(() => {
-        updateExperimentalFeatures(['sub-apps'])
-      })
+    it('should come from the init configuration by default', () => {
+      const { lifeCycle } = setupBuilder.build()
 
-      afterEach(() => {
-        resetExperimentalFeatures()
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.ACTION),
       })
-
-      it('should come from the init configuration by default', () => {
-        const { lifeCycle } = setupBuilder.build()
-
-        notifyRawRumEvent(lifeCycle, {
-          rawRumEvent: createRawRumEvent(RumEventType.ACTION),
-        })
-        expect(serverRumEvents[0].service).toEqual('default service')
-        expect(serverRumEvents[0].version).toEqual('default version')
-      })
-
-      it('should be overridden by the view context', () => {
-        const { lifeCycle } = setupBuilder.build()
-        findView = () => ({ service: 'new service', version: 'new version', id: '1234' })
-        notifyRawRumEvent(lifeCycle, {
-          rawRumEvent: createRawRumEvent(RumEventType.ACTION),
-        })
-        expect(serverRumEvents[0].service).toEqual('new service')
-        expect(serverRumEvents[0].version).toEqual('new version')
-      })
+      expect(serverRumEvents[0].service).toEqual('default service')
+      expect(serverRumEvents[0].version).toEqual('default version')
     })
 
-    describe('when sub-apps ff disabled', () => {
-      it('should not be overridden by the view context', () => {
-        const { lifeCycle } = setupBuilder.build()
-        findView = () => ({ service: 'new service', version: 'new version', id: '1234' })
-        notifyRawRumEvent(lifeCycle, {
-          rawRumEvent: createRawRumEvent(RumEventType.ACTION),
-        })
-        expect(serverRumEvents[0].service).toEqual('default service')
-        expect(serverRumEvents[0].version).not.toBeDefined()
+    it('should be overridden by the view context', () => {
+      const { lifeCycle } = setupBuilder.build()
+      findView = () => ({ service: 'new service', version: 'new version', id: '1234' })
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.ACTION),
       })
+      expect(serverRumEvents[0].service).toEqual('new service')
+      expect(serverRumEvents[0].version).toEqual('new version')
     })
   })
 

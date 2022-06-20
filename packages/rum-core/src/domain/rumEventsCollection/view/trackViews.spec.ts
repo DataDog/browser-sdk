@@ -1,12 +1,5 @@
 import type { Context, Duration, RelativeTime } from '@datadog/browser-core'
-import {
-  timeStampNow,
-  display,
-  relativeToClocks,
-  relativeNow,
-  resetExperimentalFeatures,
-  updateExperimentalFeatures,
-} from '@datadog/browser-core'
+import { timeStampNow, display, relativeToClocks, relativeNow, resetExperimentalFeatures } from '@datadog/browser-core'
 import type { TestSetupBuilder, ViewTest } from '../../../../test/specHelper'
 import { setup, setupViewTest } from '../../../../test/specHelper'
 import type {
@@ -284,7 +277,6 @@ describe('renew session', () => {
   })
 
   it('should use the current view name, service and version for the new view', () => {
-    updateExperimentalFeatures(['sub-apps'])
     const { lifeCycle, changeLocation } = setupBuilder.build()
     const { getViewCreateCount, getViewCreate, startView } = viewTest
 
@@ -619,8 +611,6 @@ describe('start view', () => {
   })
 
   it('should have service and version', () => {
-    updateExperimentalFeatures(['sub-apps'])
-
     setupBuilder.build()
     const { getViewUpdate, startView } = viewTest
 
