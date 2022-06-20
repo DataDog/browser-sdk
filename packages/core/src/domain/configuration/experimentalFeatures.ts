@@ -22,11 +22,14 @@ export function updateExperimentalFeatures(
   }
 
   for (const feature of enabledFeatures) {
-    const featureName = typeof feature === 'object' ? Object.keys(feature)[0] : feature
-    const sampleRate = typeof feature === 'object' ? feature[featureName] : undefined
-
-    if (sampleRate === undefined || performDraw(sampleRate)) {
-      enabledExperimentalFeatures.add(featureName)
+    if (typeof feature === 'string') {
+      enabledExperimentalFeatures.add(feature)
+    } else {
+      for (const featureName in feature) {
+        if (Object.prototype.hasOwnProperty.call(feature, featureName) && performDraw(feature[featureName])) {
+          enabledExperimentalFeatures.add(featureName)
+        }
+      }
     }
   }
 }

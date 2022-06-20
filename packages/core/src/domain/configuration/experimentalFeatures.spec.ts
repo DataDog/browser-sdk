@@ -38,10 +38,11 @@ describe('experimentalFeatures', () => {
   })
 
   it('should sample experimental features', () => {
-    updateExperimentalFeatures([{ foo: 100 }, { bar: 0 }, 'baz'])
+    updateExperimentalFeatures([{ foo: 100, bar: 100 }, 'baz', { qux: 0 }])
 
     expect(isExperimentalFeatureEnabled('foo')).toBeTrue()
-    expect(isExperimentalFeatureEnabled('bar')).toBeFalse()
+    expect(isExperimentalFeatureEnabled('bar')).toBeTrue()
     expect(isExperimentalFeatureEnabled('baz')).toBeTrue()
+    expect(isExperimentalFeatureEnabled('qux')).toBeFalse()
   })
 })

@@ -37,7 +37,7 @@ export interface InitConfiguration {
   trackSessionAcrossSubdomains?: boolean | undefined
 
   // internal options
-  enableExperimentalFeatures?: string[] | undefined
+  enableExperimentalFeatures?: Array<string | { [name: string]: number }> | undefined
   replica?: ReplicaUserConfiguration | undefined
   datacenter?: string
 }
