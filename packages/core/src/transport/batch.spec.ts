@@ -150,4 +150,21 @@ describe('batch', () => {
 
     expect(transport.send).toHaveBeenCalledWith('{"message":"10"}\n{"message":"11"}', jasmine.any(Number), undefined)
   })
+
+  it('should be able to use telemetry in the httpRequest.send', () => {
+    const fakeRequest = {
+      send(data: string) {
+        addTelemetryDebugFake()
+        transport.send(data, BATCH_BYTES_LIMIT)
+      },
+    } as unknown as HttpRequest
+    const batch = new Batch(fakeRequest, BATCH_MESSAGES_LIMIT, BATCH_BYTES_LIMIT, MESSAGE_BYTES_LIMIT, FLUSH_TIMEOUT)
+    const addTelemetryDebugFake = () => batch.add({ message: 'telemetry message' })
+
+    batch.add({ message: 'normal message' })
+    batch.flush()
+    expect(transport.send).toHaveBeenCalledTimes(1)
+    batch.flush()
+    expect(transport.send).toHaveBeenCalledTimes(2)
+  })
 })
