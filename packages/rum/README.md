@@ -333,7 +333,7 @@ datadogRum.init({
 [4]: https://www.npmjs.com/package/@datadog/browser-rum
 [5]: https://docs.datadoghq.com/account_management/api-app-keys/#client-tokens
 [6]: https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions
-[7]: https://docs.datadoghq.com/real_user_monitoring/faq/proxy_rum_data/
+[7]: https://docs.datadoghq.com/real_user_monitoring/guide/proxy-rum-data/
 [8]: https://github.com/DataDog/browser-sdk/blob/main/packages/rum/BROWSER_SUPPORT.md
 [9]: https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions#declaring-a-name-for-click-actions
 [10]: https://docs.datadoghq.com/real_user_monitoring/browser/modifying_data_and_context/?tab=npm#override-default-rum-view-names
