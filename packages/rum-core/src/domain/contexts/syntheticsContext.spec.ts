@@ -1,4 +1,4 @@
-import { mockSyntheticsWorkerValues, cleanupSyntheticsWorkerValues } from '../../test/specHelper'
+import { mockSyntheticsWorkerValues, cleanupSyntheticsWorkerValues } from '../../../test/specHelper'
 import { getSyntheticsContext, willSyntheticsInjectRum } from './syntheticsContext'
 
 describe('getSyntheticsContext', () => {

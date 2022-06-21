@@ -1,5 +1,6 @@
 import { assign, timeStampNow } from '@datadog/browser-core'
 import type { DefaultPrivacyLevel, TimeStamp } from '@datadog/browser-core'
+import { getViewportDimension } from '@datadog/browser-rum-core'
 import type {
   IncrementalSnapshotRecord,
   IncrementalData,
@@ -18,7 +19,7 @@ import { serializeDocument } from './serialize'
 import { initObservers } from './observer'
 
 import { MutationController } from './mutationObserver'
-import { getVisualViewport, getScrollX, getScrollY, getWindowHeight, getWindowWidth } from './viewports'
+import { getVisualViewport, getScrollX, getScrollY } from './viewports'
 
 export interface RecordOptions {
   emit?: (record: Record) => void
@@ -42,12 +43,12 @@ export function record(options: RecordOptions): RecordAPI {
 
   const takeFullSnapshot = (timestamp = timeStampNow()) => {
     mutationController.flush() // process any pending mutation before taking a full snapshot
-
+    const { width, height } = getViewportDimension()
     emit({
       data: {
-        height: getWindowHeight(),
+        height,
         href: window.location.href,
-        width: getWindowWidth(),
+        width,
       },
       type: RecordType.Meta,
       timestamp,

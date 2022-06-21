@@ -1,5 +1,6 @@
 import type { Duration, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import {
+  dateNow,
   assign,
   addEventListeners,
   DOM_EVENT,
@@ -209,7 +210,7 @@ function retrieveNavigationTiming(callback: (timing: RumPerformanceNavigationTim
  * https://github.com/GoogleChrome/web-vitals/blob/master/src/lib/polyfills/firstInputPolyfill.ts
  */
 function retrieveFirstInputTiming(callback: (timing: RumFirstInputTiming) => void) {
-  const startTimeStamp = Date.now()
+  const startTimeStamp = dateNow()
   let timingSent = false
 
   const { stop: removeEventListeners } = addEventListeners(
@@ -268,7 +269,7 @@ function retrieveFirstInputTiming(callback: (timing: RumFirstInputTiming) => voi
       // - https://github.com/GoogleChromeLabs/first-input-delay/issues/6
       // - https://github.com/GoogleChromeLabs/first-input-delay/issues/7
       const delay = timing.processingStart - timing.startTime
-      if (delay >= 0 && delay < Date.now() - startTimeStamp) {
+      if (delay >= 0 && delay < dateNow() - startTimeStamp) {
         callback(timing)
       }
     }

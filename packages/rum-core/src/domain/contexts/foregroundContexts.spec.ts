@@ -1,7 +1,7 @@
 import type { RelativeTime, Duration, ServerDuration } from '@datadog/browser-core'
 import { relativeNow } from '@datadog/browser-core'
-import type { TestSetupBuilder } from '../../test/specHelper'
-import { setup } from '../../test/specHelper'
+import type { TestSetupBuilder } from '../../../test/specHelper'
+import { setup } from '../../../test/specHelper'
 import type { ForegroundContexts } from './foregroundContexts'
 import {
   startForegroundContexts,

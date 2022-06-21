@@ -80,12 +80,13 @@ async function readSessionReplay(req: express.Request): Promise<SessionReplayCal
     } = {}
     let segmentPromise: Promise<SegmentFile>
 
-    req.busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
-      if (fieldname === 'segment') {
-        segmentPromise = readStream(file.pipe(createInflate())).then((data) => ({
+    req.busboy.on('file', (name, stream, info) => {
+      const { filename, encoding, mimeType } = info
+      if (name === 'segment') {
+        segmentPromise = readStream(stream.pipe(createInflate())).then((data) => ({
           encoding,
           filename,
-          mimetype,
+          mimetype: mimeType,
           data: JSON.parse(data.toString()),
         }))
       }
