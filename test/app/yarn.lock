@@ -2,24 +2,24 @@
 # yarn lockfile v1
 
 
-"@datadog/browser-core@4.11.5", "@datadog/browser-core@file:../../packages/core":
-  version "4.11.5"
+"@datadog/browser-core@4.12.0", "@datadog/browser-core@file:../../packages/core":
+  version "4.12.0"
 
 "@datadog/browser-logs@file:../../packages/logs":
-  version "4.11.5"
+  version "4.12.0"
   dependencies:
-    "@datadog/browser-core" "4.11.5"
+    "@datadog/browser-core" "4.12.0"
 
-"@datadog/browser-rum-core@4.11.5", "@datadog/browser-rum-core@file:../../packages/rum-core":
-  version "4.11.5"
+"@datadog/browser-rum-core@4.12.0", "@datadog/browser-rum-core@file:../../packages/rum-core":
+  version "4.12.0"
   dependencies:
-    "@datadog/browser-core" "4.11.5"
+    "@datadog/browser-core" "4.12.0"
 
 "@datadog/browser-rum@file:../../packages/rum":
-  version "4.11.5"
+  version "4.12.0"
   dependencies:
-    "@datadog/browser-core" "4.11.5"
-    "@datadog/browser-rum-core" "4.11.5"
+    "@datadog/browser-core" "4.12.0"
+    "@datadog/browser-rum-core" "4.12.0"
 
 "@jridgewell/gen-mapping@^0.3.0":
   version "0.3.1"
@@ -284,9 +284,9 @@ buffer-from@^1.0.0:
   integrity sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==
 
 caniuse-lite@^1.0.30001349:
-  version "1.0.30001355"
-  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001355.tgz#e240b7177443ed0198c737a7f609536976701c77"
-  integrity sha512-Sd6pjJHF27LzCB7pT7qs+kuX2ndurzCzkpJl6Qct7LPSZ9jn0bkOA8mdgMgmqnQAWLVOOGjLpc+66V57eLtb1g==
+  version "1.0.30001358"
+  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001358.tgz#473d35dabf5e448b463095cab7924e96ccfb8c00"
+  integrity sha512-hvp8PSRymk85R20bsDra7ZTCpSVGN/PAz9pSAjPSjKC+rNmnUk5vCRgJwiTT/O4feQ/yu/drvZYpKxxhbFuChw==
 
 chalk@^2.3.0:
   version "2.4.2"
@@ -325,9 +325,9 @@ core-util-is@~1.0.0:
   integrity sha512-ZQBvi1DcpJ4GDqanjucZ2Hj3wEO5pZDS89BWbkcrvdxksJorwUDDZamX9ldFkp9aw2lmBDLgkObEA4DWNJ9FYQ==
 
 electron-to-chromium@^1.4.147:
-  version "1.4.158"
-  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.4.158.tgz#abbdaaf64676bfa4bc0307522125db34424a0ada"
-  integrity sha512-gppO3/+Y6sP432HtvwvuU8S+YYYLH4PmAYvQwqUtt9HDOmEsBwQfLnK9T8+1NIKwAS1BEygIjTaATC4H5EzvxQ==
+  version "1.4.164"
+  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.4.164.tgz#3d0f5c83557d8ec8a7faa531e498f198c3bd974a"
+  integrity sha512-K7iy5y6XyP9Pzh3uaDti0KC4JUNT6T1tLG5RTOmesqq2YgAJpYYYJ32m+anvZYjCV35llPTEh87kvEV/uSsiyQ==
 
 emojis-list@^3.0.0:
   version "3.0.0"
