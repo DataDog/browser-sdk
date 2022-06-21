@@ -47,6 +47,17 @@ describe('listenActionEvents', () => {
       expect(onClickSpy.calls.mostRecent().args[1]).toBe(true)
     })
 
+    it('click and drag that adds a selection range should reports a selection change', () => {
+      // Example: Command-Click selection on Firefox
+      emulateNodeSelection(0, 3)
+      emulateClick({
+        beforeMouseUp() {
+          emulateNodeSelection(3, 6, { clearSelection: false })
+        },
+      })
+      expect(onClickSpy.calls.mostRecent().args[1]).toBe(true)
+    })
+
     it('click to deselect previously selected text should report a selection change', () => {
       emulateNodeSelection(0, 3)
       emulateClick({
@@ -78,12 +89,18 @@ describe('listenActionEvents', () => {
       expect(onClickSpy.calls.mostRecent().args[1]).toBe(false)
     })
 
-    function emulateNodeSelection(start: number, end: number) {
+    function emulateNodeSelection(
+      start: number,
+      end: number,
+      { clearSelection = true }: { clearSelection?: boolean } = {}
+    ) {
       const selection = document.getSelection()!
       const range = document.createRange()
       range.setStart(text, start)
       range.setEnd(text, end)
-      selection.removeAllRanges()
+      if (clearSelection) {
+        selection.removeAllRanges()
+      }
       selection.addRange(range)
       window.dispatchEvent(createNewEvent('selectionchange', { target: document }))
     }
