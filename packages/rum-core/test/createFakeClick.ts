@@ -35,6 +35,7 @@ export function createFakeClick({
     hasPageActivity,
     getUserActivity: () => ({
       selection: false,
+      input: false,
       ...userActivity,
     }),
     addFrustration: jasmine.createSpy<Click['addFrustration']>(),

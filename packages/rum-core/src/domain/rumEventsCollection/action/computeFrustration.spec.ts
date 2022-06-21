@@ -4,7 +4,7 @@ import type { Clock } from '../../../../../core/test/specHelper'
 import { mockClock } from '../../../../../core/test/specHelper'
 import type { FakeClick } from '../../../../test/createFakeClick'
 import { createFakeClick } from '../../../../test/createFakeClick'
-import { computeFrustration, isRage } from './computeFrustration'
+import { computeFrustration, isRage, isDead } from './computeFrustration'
 
 describe('computeFrustration', () => {
   let clicks: FakeClick[]
@@ -32,6 +32,12 @@ describe('computeFrustration', () => {
       clicksConsideredAsRage[1] = createFakeClick({ hasPageActivity: false })
       computeFrustration(clicksConsideredAsRage, rageClick)
       expect(getFrustrations(rageClick)).toEqual([FrustrationType.RAGE_CLICK, FrustrationType.DEAD_CLICK])
+    })
+
+    it('do not add a dead frustration to the rage click if clicks are associated with an "input" event', () => {
+      clicksConsideredAsRage[1] = createFakeClick({ hasPageActivity: false, userActivity: { input: true } })
+      computeFrustration(clicksConsideredAsRage, rageClick)
+      expect(getFrustrations(rageClick)).toEqual([FrustrationType.RAGE_CLICK])
     })
 
     it('adds an error frustration to the rage click if an error occurs during the rage click lifetime', () => {
@@ -121,5 +127,19 @@ describe('isRage', () => {
     clicks.push(createFakeClick())
 
     expect(isRage(clicks)).toBe(true)
+  })
+})
+
+describe('isDead', () => {
+  it('considers as dead when the click has no page activity', () => {
+    expect(isDead(createFakeClick({ hasPageActivity: false }))).toBe(true)
+  })
+
+  it('does not consider as dead when the click has page activity', () => {
+    expect(isDead(createFakeClick({ hasPageActivity: true }))).toBe(false)
+  })
+
+  it('does not consider as dead when the click is related to an "input" event', () => {
+    expect(isDead(createFakeClick({ hasPageActivity: false, userActivity: { input: true } }))).toBe(false)
   })
 })
