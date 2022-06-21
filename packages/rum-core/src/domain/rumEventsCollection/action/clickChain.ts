@@ -1,6 +1,5 @@
-import { monitor, ONE_SECOND, timeStampNow } from '@datadog/browser-core'
+import { monitor, ONE_SECOND } from '@datadog/browser-core'
 import type { Click } from './trackClickActions'
-import { computeFrustration } from './computeFrustration'
 
 export interface ClickChain {
   tryAppend: (click: Click) => boolean
@@ -16,11 +15,10 @@ const enum ClickChainStatus {
   Finalized,
 }
 
-export function createClickChain(firstClick: Click): ClickChain {
+export function createClickChain(firstClick: Click, onFinalize: (clicks: Click[]) => void): ClickChain {
   const bufferedClicks: Click[] = []
   let status = ClickChainStatus.WaitingForMoreClicks
   let maxDurationBetweenClicksTimeout: number | undefined
-  const rageClick = firstClick.clone()
   appendClick(firstClick)
 
   function appendClick(click: Click) {
@@ -33,7 +31,7 @@ export function createClickChain(firstClick: Click): ClickChain {
   function tryFinalize() {
     if (status === ClickChainStatus.WaitingForClicksToStop && bufferedClicks.every((click) => click.isStopped())) {
       status = ClickChainStatus.Finalized
-      finalizeClicks(bufferedClicks, rageClick)
+      onFinalize(bufferedClicks)
     }
   }
 
@@ -81,16 +79,4 @@ function areEventsSimilar(first: MouseEvent, second: MouseEvent) {
 
 function mouseEventDistance(origin: MouseEvent, other: MouseEvent) {
   return Math.sqrt(Math.pow(origin.clientX - other.clientX, 2) + Math.pow(origin.clientY - other.clientY, 2))
-}
-
-function finalizeClicks(clicks: Click[], rageClick: Click) {
-  const { isRage } = computeFrustration(clicks, rageClick)
-  if (isRage) {
-    clicks.forEach((click) => click.discard())
-    rageClick.stop(timeStampNow())
-    rageClick.validate()
-  } else {
-    rageClick.discard()
-    clicks.forEach((click) => click.validate())
-  }
 }

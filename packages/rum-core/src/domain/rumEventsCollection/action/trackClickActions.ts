@@ -1,5 +1,6 @@
 import type { Duration, ClocksState, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import {
+  timeStampNow,
   isExperimentalFeatureEnabled,
   Observable,
   assign,
@@ -23,6 +24,7 @@ import { createClickChain } from './clickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
 import { getSelectorFromElement } from './getSelectorFromElement'
 import { listenActionEvents } from './listenActionEvents'
+import { computeFrustration } from './computeFrustration'
 
 interface ActionCounts {
   errorCount: number
@@ -119,7 +121,10 @@ export function trackClickActions(
     })
 
     if (trackFrustrations && (!currentClickChain || !currentClickChain.tryAppend(click))) {
-      currentClickChain = createClickChain(click)
+      const rageClick = click.clone()
+      currentClickChain = createClickChain(click, (clicks) => {
+        finalizeClicks(clicks, rageClick)
+      })
     }
 
     const { stop: stopWaitPageActivityEnd } = waitPageActivityEnd(
@@ -272,5 +277,17 @@ function newClick(
       stop()
       status = ClickStatus.FINALIZED
     },
+  }
+}
+
+export function finalizeClicks(clicks: Click[], rageClick: Click) {
+  const { isRage } = computeFrustration(clicks, rageClick)
+  if (isRage) {
+    clicks.forEach((click) => click.discard())
+    rageClick.stop(timeStampNow())
+    rageClick.validate()
+  } else {
+    rageClick.discard()
+    clicks.forEach((click) => click.validate())
   }
 }
