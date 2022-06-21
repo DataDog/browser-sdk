@@ -1680,9 +1680,9 @@
     "@types/node" "*"
 
 "@types/busboy@*":
-  version "0.2.3"
-  resolved "https://registry.yarnpkg.com/@types/busboy/-/busboy-0.2.3.tgz#6697ad29873246c530f09a3ff5a40861824230d5"
-  integrity sha1-ZpetKYcyRsUw8Jo/9aQIYYJCMNU=
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/@types/busboy/-/busboy-1.5.0.tgz#62681556cbbd2afc8d2efa6bafaa15602f0838b9"
+  integrity sha512-ncOOhwmyFDW76c/Tuvv9MA9VGYUCn8blzyWmzYELcNGDb0WXWLSmFi7hJq25YdRBYJrmMBB5jZZwUjlJe9HCjQ==
   dependencies:
     "@types/node" "*"
 
@@ -1714,13 +1714,14 @@
   resolved "https://registry.yarnpkg.com/@types/component-emitter/-/component-emitter-1.2.10.tgz#ef5b1589b9f16544642e473db5ea5639107ef3ea"
   integrity sha512-bsjleuRKWmGqajMerkzox19aGbscQX5rmmvvXl3wlIp5gMG1HgkiwPxsN5p070fBDKTNSPgojVbuY1+HWMbFhg==
 
-"@types/connect-busboy@0.0.2":
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/@types/connect-busboy/-/connect-busboy-0.0.2.tgz#2a17ab167984e8430d1def368c25f402ffa292aa"
-  integrity sha512-d0tPVq7z2knefTgdJ2IuWAavWSz3NUaToIq/DMWyUzG3wSK2lCpqfmHV/1J79BHjaz4xKvOi+JTK7JB+1LxQig==
+"@types/connect-busboy@1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@types/connect-busboy/-/connect-busboy-1.0.0.tgz#9da5c260293d09b5fbfd0b94dac3ebdf263f7e2e"
+  integrity sha512-pnz553SOSm0pWHRF4QY3hW/rTrE5jlcglakwbiCMYf0Z2RfKNxVDa+UjwRubFrZI3VXb158iEynB9XqdH+h5aw==
   dependencies:
     "@types/busboy" "*"
     "@types/express" "*"
+    "@types/node" "*"
 
 "@types/connect@*":
   version "3.4.33"
@@ -3119,12 +3120,12 @@ builtins@^5.0.0:
   dependencies:
     semver "^7.0.0"
 
-busboy@~0.3.1:
-  version "0.3.1"
-  resolved "https://registry.yarnpkg.com/busboy/-/busboy-0.3.1.tgz#170899274c5bf38aae27d5c62b71268cd585fd1b"
-  integrity sha512-y7tTxhGKXcyBxRKAni+awqx8uqaJKrSFSNFSeRG5CsWNdmy2BIK+6VGWEW7TZnIO/533mtMEA4rOevQV815YJw==
+busboy@^1.0.0:
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/busboy/-/busboy-1.6.0.tgz#966ea36a9502e43cdb9146962523b92f531f6893"
+  integrity sha512-8SFQbg/0hQ9xy3UNTB0YEnsNBbWfhf7RtnzpL7TkBiTBRfrQ9Fxcnz7VJsleJpyp6rVLvXiuORqjlHi5q+PYuA==
   dependencies:
-    dicer "0.3.0"
+    streamsearch "^1.1.0"
 
 byte-size@^7.0.0:
   version "7.0.1"
@@ -3632,12 +3633,12 @@ config-chain@^1.1.12:
     ini "^1.3.4"
     proto-list "~1.2.1"
 
-connect-busboy@0.0.3:
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/connect-busboy/-/connect-busboy-0.0.3.tgz#b8c23dcc24415b6e0d299f793057b583b201ce51"
-  integrity sha512-a4o+Jp3e+sh9qYGaqIHb9dodQRHNnV3xVgZkcb5mRmeL3qyS+JxyUVGpZJoVEd9daInfW1wpJ8ndw7wo/cv+gA==
+connect-busboy@1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/connect-busboy/-/connect-busboy-1.0.0.tgz#7ac826e4c60e09934e049c406866f235efdc3d59"
+  integrity sha512-dKON178N/CpPSeJ8E+kfOekSUBx0nQo5kyIekry7YpM+qRhgHmSRVUN5D2hpLA8SQBV0ZNMF/aG7njDzE8Gl2A==
   dependencies:
-    busboy "~0.3.1"
+    busboy "^1.0.0"
 
 connect@^3.7.0:
   version "3.7.0"
@@ -4151,13 +4152,6 @@ di@^0.0.1:
   version "0.0.1"
   resolved "https://registry.yarnpkg.com/di/-/di-0.0.1.tgz#806649326ceaa7caa3306d75d985ea2748ba913c"
   integrity sha1-gGZJMmzqp8qjMG112YXqJ0i6kTw=
-
-dicer@0.3.0:
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/dicer/-/dicer-0.3.0.tgz#eacd98b3bfbf92e8ab5c2fdb71aaac44bb06b872"
-  integrity sha512-MdceRRWqltEG2dZqO769g27N/3PXfcKl04VhYnBlo2YhH7zPi88VebsjTKclaOyiuMaGU72hTfw3VkUitGcVCA==
-  dependencies:
-    streamsearch "0.1.2"
 
 diff-sequences@^27.5.1:
   version "27.5.1"
@@ -9217,10 +9211,10 @@ streamroller@^3.0.2:
     debug "^4.1.1"
     fs-extra "^10.0.0"
 
-streamsearch@0.1.2:
-  version "0.1.2"
-  resolved "https://registry.yarnpkg.com/streamsearch/-/streamsearch-0.1.2.tgz#808b9d0e56fc273d809ba57338e929919a1a9f1a"
-  integrity sha1-gIudDlb8Jz2Am6VzOOkpkZoanxo=
+streamsearch@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/streamsearch/-/streamsearch-1.1.0.tgz#404dd1e2247ca94af554e841a8ef0eaa238da764"
+  integrity sha512-Mcc5wHehp9aXz1ax6bZUyY5afg9u2rv5cqQI3mRrYkGC8rW2hM02jWuwjtL++LS5qinSyhj2QfLyNsuc+VsExg==
 
 string-width@^1.0.1:
   version "1.0.2"
