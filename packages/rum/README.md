@@ -42,9 +42,9 @@ datadogRum.init({
   site: '<DATADOG_SITE>',
   //  service: 'my-web-application',
   //  env: 'production',
-  //  version: '1.0.0',
+  //  version: '3.6.0 or 4.0.0',
   sampleRate: 100,
-  premiumSampleRate: 100, // if not included - default 100
+  premiumSampleRate: 100, // if not included, the default is 100
   trackInteractions: true,
 })
 ```
@@ -70,9 +70,9 @@ Add the generated code snippet to the head tag of every HTML page you want to mo
       site: '<DATADOG_SITE>',
       //  service: 'my-web-application',
       //  env: 'production',
-      //  version: '1.0.0',
+      //  version: '3.6.0 or 4.0.0',
       sampleRate: 100,
-      premiumSampleRate: 100, // if not included - default 100
+      premiumSampleRate: 100, // if not included, the default is 100
       trackInteractions: true,
     })
   })
@@ -97,9 +97,9 @@ Add the generated code snippet to the head tag (in front of any other script tag
       site: '<DATADOG_SITE>',
       //  service: 'my-web-application',
       //  env: 'production',
-      //  version: '1.0.0',
+      //  version: '3.6.0 or 4.0.0',
       sampleRate: 100,
-      premiumSampleRate: 100, // if not included - default 100
+      premiumSampleRate: 100, // if not included, the default is 100
       trackInteractions: true,
     })
 </script>
