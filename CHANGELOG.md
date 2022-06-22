@@ -16,6 +16,10 @@
 
 ---
 
+## v4.13.0
+
+- ✨ Enable service and version update on startView ([#1601](https://github.com/DataDog/browser-sdk/pull/1601))
+
 ## v4.12.0
 
 - 🐛 [RUMF-1305] forbid the usage of `Date.now` ([#1600](https://github.com/DataDog/browser-sdk/pull/1600))
