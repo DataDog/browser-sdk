@@ -233,6 +233,10 @@ module.exports = {
             selector: 'ArrayExpression > SpreadElement',
             message: 'Array spread is not authorized. Please use .concat instead.',
           },
+          {
+            selector: 'MemberExpression[object.name="Date"][property.name="now"]',
+            message: '`Date.now()` is not authorized. Please use `dateNow()` instead',
+          },
         ],
       },
     },

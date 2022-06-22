@@ -2,6 +2,7 @@ import type { CookieOptions } from '../../browser/cookie'
 import { COOKIE_ACCESS_DELAY } from '../../browser/cookie'
 import { monitor } from '../../tools/monitor'
 import { Observable } from '../../tools/observable'
+import { dateNow } from '../../tools/timeUtils'
 import * as utils from '../../tools/utils'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { retrieveSession, withCookieLockAccess } from './sessionCookieStore'
@@ -98,7 +99,7 @@ export function startSessionStore<TrackingType extends string>(
     cookieSession[productKey] = trackingType
     if (isTracked && !cookieSession.id) {
       cookieSession.id = utils.generateUUID()
-      cookieSession.created = String(Date.now())
+      cookieSession.created = String(dateNow())
     }
     return isTracked
   }
@@ -133,8 +134,8 @@ export function startSessionStore<TrackingType extends string>(
     // created and expire can be undefined for versions which was not storing them
     // these checks could be removed when older versions will not be available/live anymore
     return (
-      (session.created === undefined || Date.now() - Number(session.created) < SESSION_TIME_OUT_DELAY) &&
-      (session.expire === undefined || Date.now() < Number(session.expire))
+      (session.created === undefined || dateNow() - Number(session.created) < SESSION_TIME_OUT_DELAY) &&
+      (session.expire === undefined || dateNow() < Number(session.expire))
     )
   }
 
