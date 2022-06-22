@@ -28,15 +28,15 @@ describe('computeFrustration', () => {
       expect(rageClick.addFrustration).toHaveBeenCalledOnceWith(FrustrationType.RAGE_CLICK)
     })
 
-    it('adds a dead frustration to the rage click if any click does not have activity', () => {
-      clicksConsideredAsRage[1].hasActivity = false
+    it('adds a dead frustration to the rage click if any click does not have page activity', () => {
+      clicksConsideredAsRage[1].hasPageActivity = false
       computeFrustration(clicksConsideredAsRage, rageClick)
       expect(rageClick.addFrustration).toHaveBeenCalledTimes(2)
       expect(rageClick.addFrustration.calls.argsFor(0)).toEqual([FrustrationType.RAGE_CLICK])
       expect(rageClick.addFrustration.calls.argsFor(1)).toEqual([FrustrationType.DEAD_CLICK])
     })
 
-    it('adds an error frustration to the rage click if any click does not have activity', () => {
+    it('adds an error frustration to the rage click if an error occurs during the rage click lifetime', () => {
       rageClick.hasError = true
       computeFrustration(clicksConsideredAsRage, rageClick)
       expect(rageClick.addFrustration).toHaveBeenCalledTimes(2)
@@ -54,13 +54,13 @@ describe('computeFrustration', () => {
     })
 
     it('adds a dead frustration to clicks that do not have activity', () => {
-      clicks[1].hasActivity = false
+      clicks[1].hasPageActivity = false
       computeFrustration(clicks, rageClick)
       expect(clicks[1].addFrustration).toHaveBeenCalledOnceWith(FrustrationType.DEAD_CLICK)
     })
 
     it('does not add a dead frustration when double clicking to select a word', () => {
-      clicks[1].hasActivity = false
+      clicks[1].hasPageActivity = false
       clicks[0].hasSelectionChanged = true
       computeFrustration(clicks, rageClick)
       expect(clicks[1].addFrustration).not.toHaveBeenCalled()

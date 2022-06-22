@@ -234,7 +234,7 @@ function newClick(
     get hasError() {
       return eventCountsSubscription.eventCounts.errorCount > 0
     },
-    get hasActivity() {
+    get hasPageActivity() {
       return activityEndTime !== undefined
     },
     hasSelectionChanged,

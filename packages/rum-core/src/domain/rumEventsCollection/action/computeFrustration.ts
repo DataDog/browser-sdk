@@ -7,7 +7,7 @@ const MIN_CLICKS_PER_SECOND_TO_CONSIDER_RAGE = 3
 export function computeFrustration(clicks: Click[], rageClick: Click) {
   if (isRage(clicks)) {
     rageClick.addFrustration(FrustrationType.RAGE_CLICK)
-    if (clicks.some((click) => !click.hasActivity)) {
+    if (clicks.some((click) => !click.hasPageActivity)) {
       rageClick.addFrustration(FrustrationType.DEAD_CLICK)
     }
     if (rageClick.hasError) {
@@ -22,7 +22,7 @@ export function computeFrustration(clicks: Click[], rageClick: Click) {
       click.addFrustration(FrustrationType.ERROR_CLICK)
     }
     if (
-      !click.hasActivity &&
+      !click.hasPageActivity &&
       // Avoid considering clicks part of a double-click or triple-click selections as dead clicks
       !hasSelectionChanged
     ) {

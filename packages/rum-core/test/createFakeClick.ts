@@ -24,7 +24,7 @@ export function createFakeClick(partialClick?: {
     discard: jasmine.createSpy(),
     validate: jasmine.createSpy(),
     hasError: false,
-    hasActivity: true,
+    hasPageActivity: true,
     hasSelectionChanged: false,
     addFrustration: jasmine.createSpy(),
     clone: jasmine.createSpy<typeof clone>().and.callFake(clone),
