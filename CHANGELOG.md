@@ -16,6 +16,16 @@
 
 ---
 
+## v4.13.0
+
+- ✨ Enable service and version update on startView ([#1601](https://github.com/DataDog/browser-sdk/pull/1601))
+
+## v4.12.0
+
+- 🐛 [RUMF-1305] forbid the usage of `Date.now` ([#1600](https://github.com/DataDog/browser-sdk/pull/1600))
+- 🔊 Clear batch before send to allow telemetry in httpRequest.send ([#1594](https://github.com/DataDog/browser-sdk/pull/1594))
+- ⚗✨ [RUMF-1288] Collect viewport size ([#1584](https://github.com/DataDog/browser-sdk/pull/1584))
+
 ## v4.11.5
 
 - 🐛 [RUMF-1303] stop forwarding network errors when forwardErrorsToLogs is false ([#1591](https://github.com/DataDog/browser-sdk/pull/1591))

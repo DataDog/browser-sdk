@@ -1,5 +1,5 @@
 import type { TimeStamp } from '@datadog/browser-core'
-import { findCommaSeparatedValue, ONE_MINUTE } from '@datadog/browser-core'
+import { dateNow, findCommaSeparatedValue, ONE_MINUTE } from '@datadog/browser-core'
 
 interface DocumentTraceData {
   traceId: string
@@ -11,7 +11,7 @@ export const INITIAL_DOCUMENT_OUTDATED_TRACE_ID_THRESHOLD = 2 * ONE_MINUTE
 export function getDocumentTraceId(document: Document): string | undefined {
   const data = getDocumentTraceDataFromMeta(document) || getDocumentTraceDataFromComment(document)
 
-  if (!data || data.traceTime <= Date.now() - INITIAL_DOCUMENT_OUTDATED_TRACE_ID_THRESHOLD) {
+  if (!data || data.traceTime <= dateNow() - INITIAL_DOCUMENT_OUTDATED_TRACE_ID_THRESHOLD) {
     return undefined
   }
 

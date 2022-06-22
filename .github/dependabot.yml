@@ -15,10 +15,6 @@ updates:
       # update node & express types: RUMF-1158
       - dependency-name: '@types/node'
       - dependency-name: '@types/express'
-      # update busboy: RUMF-1159
-      - dependency-name: 'connect-busboy'
-        update-types: ['version-update:semver-major']
-      - dependency-name: '@types/connect-busboy'
       # update jasmine: RUMF-1161
       - dependency-name: '*jasmine*'
       - dependency-name: '*sinon*'

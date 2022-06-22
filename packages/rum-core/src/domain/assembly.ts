@@ -8,7 +8,6 @@ import {
   display,
   createEventRateLimiter,
   canUseEventBridge,
-  isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type {
@@ -116,10 +115,8 @@ export function startRumAssembly(
             id: configuration.applicationId,
           },
           date: timeStampNow(),
-          service: isExperimentalFeatureEnabled('sub-apps')
-            ? viewContext.service || configuration.service
-            : configuration.service,
-          version: isExperimentalFeatureEnabled('sub-apps') ? viewContext.version || configuration.version : undefined,
+          service: viewContext.service || configuration.service,
+          version: viewContext.version || configuration.version,
           source: 'browser',
           session: {
             id: session.id,
