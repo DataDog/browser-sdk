@@ -35,7 +35,7 @@ describe('listenActionEvents', () => {
 
     it('click without selection impact should not report a selection change', () => {
       emulateClick()
-      expect(onClickSpy.calls.mostRecent().args[1]).toBe(false)
+      expect(hasSelectionChanged()).toBe(false)
     })
 
     it('click and drag to select text should reports a selection change', () => {
@@ -44,7 +44,7 @@ describe('listenActionEvents', () => {
           emulateNodeSelection(0, 3)
         },
       })
-      expect(onClickSpy.calls.mostRecent().args[1]).toBe(true)
+      expect(hasSelectionChanged()).toBe(true)
     })
 
     it('click and drag that adds a selection range should reports a selection change', () => {
@@ -55,7 +55,7 @@ describe('listenActionEvents', () => {
           emulateNodeSelection(3, 6, { clearSelection: false })
         },
       })
-      expect(onClickSpy.calls.mostRecent().args[1]).toBe(true)
+      expect(hasSelectionChanged()).toBe(true)
     })
 
     it('click to deselect previously selected text should report a selection change', () => {
@@ -65,7 +65,7 @@ describe('listenActionEvents', () => {
           emulateNodeSelection(0, 0)
         },
       })
-      expect(onClickSpy.calls.mostRecent().args[1]).toBe(true)
+      expect(hasSelectionChanged()).toBe(true)
     })
 
     // eslint-disable-next-line max-len
@@ -76,7 +76,7 @@ describe('listenActionEvents', () => {
           emulateNodeSelection(0, 7)
         },
       })
-      expect(onClickSpy.calls.mostRecent().args[1]).toBe(true)
+      expect(hasSelectionChanged()).toBe(true)
     })
 
     it('click that change the caret (collapsed selection) position should not report selection change', () => {
@@ -86,8 +86,12 @@ describe('listenActionEvents', () => {
           emulateNodeSelection(1, 1)
         },
       })
-      expect(onClickSpy.calls.mostRecent().args[1]).toBe(false)
+      expect(hasSelectionChanged()).toBe(false)
     })
+
+    function hasSelectionChanged() {
+      return onClickSpy.calls.mostRecent().args[1]
+    }
 
     function emulateNodeSelection(
       start: number,
