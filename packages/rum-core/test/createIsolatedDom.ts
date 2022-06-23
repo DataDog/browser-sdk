@@ -11,11 +11,16 @@ export function createIsolatedDom() {
   doc.write('<html><body></body></html>')
   doc.close()
 
+  function append(html: string) {
+    iframe.contentDocument!.body.innerHTML = html
+    return doc.querySelector('[target]') || doc.body.children[0]
+  }
+
   return {
     element(s: TemplateStringsArray) {
-      iframe.contentDocument!.body.innerHTML = s[0]
-      return doc.querySelector('[target]') || doc.body.children[0]
+      return append(s[0])
     },
+    append,
     clear() {
       iframe.parentNode!.removeChild(iframe)
     },
