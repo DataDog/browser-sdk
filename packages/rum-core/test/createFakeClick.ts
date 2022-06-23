@@ -1,5 +1,6 @@
 import { Observable, timeStampNow } from '@datadog/browser-core'
 import { createNewEvent } from '../../core/test/specHelper'
+import type { Click } from '../src/domain/rumEventsCollection/action/trackClickActions'
 
 export type FakeClick = Readonly<ReturnType<typeof createFakeClick>>
 
@@ -11,7 +12,7 @@ export function createFakeClick({
 }: {
   hasError?: boolean
   hasPageActivity?: boolean
-  userActivity?: { selection?: boolean }
+  userActivity?: { selection?: boolean; input?: boolean }
   event?: Partial<MouseEvent & { target: Element }>
 } = {}) {
   const stopObservable = new Observable<void>()
@@ -36,7 +37,7 @@ export function createFakeClick({
       selection: false,
       ...userActivity,
     }),
-    addFrustration: jasmine.createSpy(),
+    addFrustration: jasmine.createSpy<Click['addFrustration']>(),
     clone: jasmine.createSpy<typeof clone>().and.callFake(clone),
 
     event: createNewEvent('click', {

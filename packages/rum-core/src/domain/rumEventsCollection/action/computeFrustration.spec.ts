@@ -25,23 +25,19 @@ describe('computeFrustration', () => {
   describe('if clicks are considered as rage', () => {
     it('adds a rage frustration to the rage click', () => {
       computeFrustration(clicksConsideredAsRage, rageClick)
-      expect(rageClick.addFrustration).toHaveBeenCalledOnceWith(FrustrationType.RAGE_CLICK)
+      expect(getFrustrations(rageClick)).toEqual([FrustrationType.RAGE_CLICK])
     })
 
     it('adds a dead frustration to the rage click if any click does not have page activity', () => {
       clicksConsideredAsRage[1] = createFakeClick({ hasPageActivity: false })
       computeFrustration(clicksConsideredAsRage, rageClick)
-      expect(rageClick.addFrustration).toHaveBeenCalledTimes(2)
-      expect(rageClick.addFrustration.calls.argsFor(0)).toEqual([FrustrationType.RAGE_CLICK])
-      expect(rageClick.addFrustration.calls.argsFor(1)).toEqual([FrustrationType.DEAD_CLICK])
+      expect(getFrustrations(rageClick)).toEqual([FrustrationType.RAGE_CLICK, FrustrationType.DEAD_CLICK])
     })
 
     it('adds an error frustration to the rage click if an error occurs during the rage click lifetime', () => {
       rageClick = createFakeClick({ hasError: true })
       computeFrustration(clicksConsideredAsRage, rageClick)
-      expect(rageClick.addFrustration).toHaveBeenCalledTimes(2)
-      expect(rageClick.addFrustration.calls.argsFor(0)).toEqual([FrustrationType.RAGE_CLICK])
-      expect(rageClick.addFrustration.calls.argsFor(1)).toEqual([FrustrationType.ERROR_CLICK])
+      expect(getFrustrations(rageClick)).toEqual([FrustrationType.RAGE_CLICK, FrustrationType.ERROR_CLICK])
     })
   })
 
@@ -49,29 +45,33 @@ describe('computeFrustration', () => {
     it('does not add any frustration by default', () => {
       computeFrustration(clicks, rageClick)
       for (const click of clicks) {
-        expect(click.addFrustration).not.toHaveBeenCalled()
+        expect(getFrustrations(click)).toEqual([])
       }
     })
 
     it('adds a dead frustration to clicks that do not have activity', () => {
       clicks[1] = createFakeClick({ hasPageActivity: false })
       computeFrustration(clicks, rageClick)
-      expect(clicks[1].addFrustration).toHaveBeenCalledOnceWith(FrustrationType.DEAD_CLICK)
+      expect(getFrustrations(clicks[1])).toEqual([FrustrationType.DEAD_CLICK])
     })
 
     it('does not add a dead frustration when double clicking to select a word', () => {
       clicks[0] = createFakeClick({ userActivity: { selection: true } })
       clicks[1] = createFakeClick({ hasPageActivity: false })
       computeFrustration(clicks, rageClick)
-      expect(clicks[1].addFrustration).not.toHaveBeenCalled()
+      expect(getFrustrations(clicks[1])).toEqual([])
     })
 
     it('adds an error frustration to clicks that have an error', () => {
       clicks[1] = createFakeClick({ hasError: true })
       computeFrustration(clicks, rageClick)
-      expect(clicks[1].addFrustration).toHaveBeenCalledOnceWith(FrustrationType.ERROR_CLICK)
+      expect(getFrustrations(clicks[1])).toEqual([FrustrationType.ERROR_CLICK])
     })
   })
+
+  function getFrustrations(click: FakeClick) {
+    return click.addFrustration.calls.allArgs().map((args) => args[0])
+  }
 })
 
 describe('isRage', () => {
