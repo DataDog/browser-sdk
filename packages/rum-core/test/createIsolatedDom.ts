@@ -1,4 +1,6 @@
-export function createIsolatedDOM() {
+export type IsolatedDom = ReturnType<typeof createIsolatedDom>
+
+export function createIsolatedDom() {
   // Simply using a DOMParser does not fit here, because script tags created this way are
   // considered as normal markup, so they are not ignored when getting the textual content of the
   // target via innerText
