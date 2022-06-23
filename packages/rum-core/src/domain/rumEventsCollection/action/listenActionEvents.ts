@@ -9,49 +9,49 @@ export function listenActionEvents({ onClick }: { onClick(context: OnClickContex
   let hasSelectionChanged = false
   let selectionEmptyAtMouseDown: boolean
 
-  const { stop: stopMouseDownListener } = addEventListener(
-    window,
-    DOM_EVENT.MOUSE_DOWN,
-    () => {
-      hasSelectionChanged = false
-      selectionEmptyAtMouseDown = isSelectionEmpty()
-    },
-    { capture: true }
-  )
+  const listeners = [
+    addEventListener(
+      window,
+      DOM_EVENT.MOUSE_DOWN,
+      () => {
+        hasSelectionChanged = false
+        selectionEmptyAtMouseDown = isSelectionEmpty()
+      },
+      { capture: true }
+    ),
 
-  const { stop: stopSelectionChangeListener } = addEventListener(
-    window,
-    DOM_EVENT.SELECTION_CHANGE,
-    () => {
-      if (!selectionEmptyAtMouseDown || !isSelectionEmpty()) {
-        hasSelectionChanged = true
-      }
-    },
-    { capture: true }
-  )
+    addEventListener(
+      window,
+      DOM_EVENT.SELECTION_CHANGE,
+      () => {
+        if (!selectionEmptyAtMouseDown || !isSelectionEmpty()) {
+          hasSelectionChanged = true
+        }
+      },
+      { capture: true }
+    ),
 
-  const { stop: stopClickListener } = addEventListener(
-    window,
-    DOM_EVENT.CLICK,
-    (clickEvent: MouseEvent) => {
-      if (clickEvent.target instanceof Element) {
-        // Use a scoped variable to make sure the value is not changed by other clicks
-        const userActivity = { selection: hasSelectionChanged }
+    addEventListener(
+      window,
+      DOM_EVENT.CLICK,
+      (clickEvent: MouseEvent) => {
+        if (clickEvent.target instanceof Element) {
+          // Use a scoped variable to make sure the value is not changed by other clicks
+          const userActivity = { selection: hasSelectionChanged }
 
-        onClick({
-          event: clickEvent as MouseEvent & { target: Element },
-          getUserActivity: () => userActivity,
-        })
-      }
-    },
-    { capture: true }
-  )
+          onClick({
+            event: clickEvent as MouseEvent & { target: Element },
+            getUserActivity: () => userActivity,
+          })
+        }
+      },
+      { capture: true }
+    ),
+  ]
 
   return {
     stop: () => {
-      stopMouseDownListener()
-      stopSelectionChangeListener()
-      stopClickListener()
+      listeners.forEach((listener) => listener.stop())
     },
   }
 }
