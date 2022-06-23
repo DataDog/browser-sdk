@@ -1,8 +1,11 @@
 import { addEventListener, DOM_EVENT } from '@datadog/browser-core'
 
-export type OnClickCallback = (clickEvent: MouseEvent & { target: Element }, hasSelectionChanged: boolean) => void
+export interface OnClickContext {
+  event: MouseEvent & { target: Element }
+  getUserActivity(): { selection: boolean }
+}
 
-export function listenActionEvents({ onClick }: { onClick: OnClickCallback }) {
+export function listenActionEvents({ onClick }: { onClick(context: OnClickContext): void }) {
   let hasSelectionChanged = false
   let selectionEmptyAtMouseDown: boolean
 
@@ -32,7 +35,13 @@ export function listenActionEvents({ onClick }: { onClick: OnClickCallback }) {
     DOM_EVENT.CLICK,
     (clickEvent: MouseEvent) => {
       if (clickEvent.target instanceof Element) {
-        onClick(clickEvent as MouseEvent & { target: Element }, hasSelectionChanged)
+        // Use a scoped variable to make sure the value is not changed by other clicks
+        const userActivity = { selection: hasSelectionChanged }
+
+        onClick({
+          event: clickEvent as MouseEvent & { target: Element },
+          getUserActivity: () => userActivity,
+        })
       }
     },
     { capture: true }

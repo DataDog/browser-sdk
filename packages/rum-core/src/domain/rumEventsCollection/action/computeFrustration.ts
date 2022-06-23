@@ -16,7 +16,7 @@ export function computeFrustration(clicks: Click[], rageClick: Click) {
     return { isRage: true }
   }
 
-  const hasSelectionChanged = clicks.some((click) => click.hasSelectionChanged)
+  const hasSelectionChanged = clicks.some((click) => click.getUserActivity().selection)
   clicks.forEach((click) => {
     if (click.hasError) {
       click.addFrustration(FrustrationType.ERROR_CLICK)
@@ -33,7 +33,7 @@ export function computeFrustration(clicks: Click[], rageClick: Click) {
 }
 
 export function isRage(clicks: Click[]) {
-  if (clicks.some((click) => click.hasSelectionChanged)) {
+  if (clicks.some((click) => click.getUserActivity().selection)) {
     return false
   }
   for (let i = 0; i < clicks.length - (MIN_CLICKS_PER_SECOND_TO_CONSIDER_RAGE - 1); i += 1) {

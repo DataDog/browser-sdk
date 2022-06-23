@@ -1,9 +1,9 @@
 import { createNewEvent } from '../../../../../core/test/specHelper'
-import type { OnClickCallback } from './listenActionEvents'
+import type { OnClickContext } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 
 describe('listenActionEvents', () => {
-  let onClickSpy: jasmine.Spy<OnClickCallback>
+  let onClickSpy: jasmine.Spy<(context: OnClickContext) => void>
   let stopListenEvents: () => void
 
   beforeEach(() => {
@@ -17,7 +17,10 @@ describe('listenActionEvents', () => {
 
   it('listen to click events', () => {
     emulateClick()
-    expect(onClickSpy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ type: 'click' }), false)
+    expect(onClickSpy).toHaveBeenCalledOnceWith({
+      event: jasmine.objectContaining({ type: 'click' }),
+      getUserActivity: jasmine.any(Function),
+    })
   })
 
   describe('selection change', () => {
@@ -90,7 +93,7 @@ describe('listenActionEvents', () => {
     })
 
     function hasSelectionChanged() {
-      return onClickSpy.calls.mostRecent().args[1]
+      return onClickSpy.calls.mostRecent().args[0].getUserActivity().selection
     }
 
     function emulateNodeSelection(
