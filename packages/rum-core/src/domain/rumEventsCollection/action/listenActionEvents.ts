@@ -1,4 +1,4 @@
-import { addEventListener, DOM_EVENT } from '@datadog/browser-core'
+import { addEventListener, DOM_EVENT, monitor } from '@datadog/browser-core'
 
 export interface OnClickContext {
   event: MouseEvent & { target: Element }
@@ -43,9 +43,11 @@ export function listenActionEvents({ onClick }: { onClick(context: OnClickContex
             input: hasInputChanged,
           }
           if (!hasInputChanged) {
-            setTimeout(() => {
-              userActivity.input = hasInputChanged
-            })
+            setTimeout(
+              monitor(() => {
+                userActivity.input = hasInputChanged
+              })
+            )
           }
 
           onClick({
