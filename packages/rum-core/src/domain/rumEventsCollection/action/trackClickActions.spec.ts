@@ -14,10 +14,11 @@ import { RumEventType, ActionType, FrustrationType } from '../../../rawRumEvent.
 import type { RumEvent } from '../../../rumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { PAGE_ACTIVITY_VALIDATION_DELAY } from '../../waitPageActivityEnd'
+import { createFakeClick } from '../../../../test/createFakeClick'
 import type { ActionContexts } from './actionCollection'
 import type { ClickAction } from './trackClickActions'
-import { CLICK_ACTION_MAX_DURATION, trackClickActions } from './trackClickActions'
-import { MAX_DURATION_BETWEEN_CLICKS } from './rageClickChain'
+import { finalizeClicks, CLICK_ACTION_MAX_DURATION, trackClickActions } from './trackClickActions'
+import { MAX_DURATION_BETWEEN_CLICKS } from './clickChain'
 
 // Used to wait some time after the creation of an action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
@@ -420,4 +421,45 @@ describe('trackClickActions', () => {
       })
     )
   }
+})
+
+describe('finalizeClicks', () => {
+  describe('when no rage is detected', () => {
+    it('discards the rage click', () => {
+      const clicks = [createFakeClick(), createFakeClick()]
+      const rageClick = createFakeClick()
+      finalizeClicks(clicks, rageClick)
+      expect(rageClick.discard).toHaveBeenCalled()
+    })
+
+    it('validates individual clicks', () => {
+      const clicks = [createFakeClick(), createFakeClick()]
+      const rageClick = createFakeClick()
+      finalizeClicks(clicks, rageClick)
+      clicks.forEach((click) => expect(click.validate).toHaveBeenCalled())
+    })
+  })
+
+  describe('when rage is detected', () => {
+    it('discards individual clicks', () => {
+      const clicks = [createFakeClick(), createFakeClick(), createFakeClick()]
+      const rageClick = createFakeClick()
+      finalizeClicks(clicks, rageClick)
+      clicks.forEach((click) => expect(click.discard).toHaveBeenCalled())
+    })
+
+    it('validates the rage click', () => {
+      const clicks = [createFakeClick(), createFakeClick(), createFakeClick()]
+      const rageClick = createFakeClick()
+      finalizeClicks(clicks, rageClick)
+      expect(rageClick.validate).toHaveBeenCalled()
+    })
+
+    it('the rage click should have a "rage" frustration', () => {
+      const clicks = [createFakeClick(), createFakeClick(), createFakeClick()]
+      const rageClick = createFakeClick()
+      finalizeClicks(clicks, rageClick)
+      expect(rageClick.addFrustration).toHaveBeenCalledWith(FrustrationType.RAGE_CLICK)
+    })
+  })
 })
