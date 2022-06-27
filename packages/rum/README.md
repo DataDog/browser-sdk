@@ -283,7 +283,7 @@ init(configuration: {
 
 ### Browser and Browser Premium sampling configuration
 
-This feature requires the RUM Browser SDK v3.0.0+. 
+This feature requires the RUM Browser SDK v3.0.0+.
 
 <blockquote class="alert alert-info">
 The RUM Browser SDK v4.10.2 introduces the <code>premiumSampleRate</code> initialization parameter, deprecating the <code>replaySampleRate</code> initialization parameter.
@@ -319,7 +319,7 @@ datadogRum.init({
 });
 ```
 
-The `premiumSampleRate` is a percentage of `sampleRate`. If you set `sampleRate` to 60 and `premiumSampleRate` to 50, 40% of sessions are dropped, 30% of sessions are collected as Browser and 30% of sessions are collected as Browser Premium. 
+The `premiumSampleRate` is a percentage of `sampleRate`. If you set `sampleRate` to 60 and `premiumSampleRate` to 50, 40% of sessions are dropped, 30% of sessions are collected as Browser and 30% of sessions are collected as Browser Premium.
 
 ```
 datadogRum.init({
@@ -329,13 +329,12 @@ datadogRum.init({
 });
 ```
 
-
 ### Tagging
 
-A service is an independent, deployable code repository that maps to a set of pages. 
+A service is an independent, deployable code repository that maps to a set of pages.
 
-- If your browser application was constructed as a monolith, your RUM application has one service name for the application. 
-- If your browser application was constructed as separate repositories for multiple pages, edit the default service names throughout the lifecycle of your application. 
+- If your browser application was constructed as a monolith, your RUM application has one service name for the application.
+- If your browser application was constructed as separate repositories for multiple pages, edit the default service names throughout the lifecycle of your application.
 
 For more information, see Configuring Browser Services (link here).
 
