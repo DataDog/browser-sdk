@@ -336,8 +336,6 @@ A service is an independent, deployable code repository that maps to a set of pa
 - If your browser application was constructed as a monolith, your RUM application has one service name for the application.
 - If your browser application was constructed as separate repositories for multiple pages, edit the default service names throughout the lifecycle of your application.
 
-For more information, see Configuring Browser Services (link here).
-
 ## Further Reading
 
 {{< partial name="whats-next/whats-next.html" >}}
