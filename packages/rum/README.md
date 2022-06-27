@@ -192,7 +192,7 @@ Specify your own attribute to be used to [name actions][9].
 : Optional<br/>
 **Type**: Number<br/>
 **Default**: `100`<br/>
-The percentage of sessions to track: `100` for all, `0` for none. Only tracked sessions send RUM events. For more details about `sampleRate`, see the [sampling configuration](#browser-rum-and-rum-premium-sampling-configuration).
+The percentage of sessions to track: `100` for all, `0` for none. Only tracked sessions send RUM events. For more details about `sampleRate`, see the [sampling configuration](#browser-and-browser-premium-sampling-configuration).
 
 `replaySampleRate`
 : Optional - **Deprecated**<br/>
@@ -204,7 +204,7 @@ See `premiumSampleRate`.
 : Optional<br/>
 **Type**: Number<br/>
 **Default**: `100`<br/>
-The percentage of tracked sessions with [Browser Premium pricing][11] features: `100` for all, `0` for none. For more details about `premiumSampleRate`, see the [sampling configuration](#browser-and-rum-premium-sampling-configuration).
+The percentage of tracked sessions with [Browser Premium pricing][11] features: `100` for all, `0` for none. For more details about `premiumSampleRate`, see the [sampling configuration](#browser-and-browser-premium-sampling-configuration).
 
 `silentMultipleInit`
 : Optional<br/>
