@@ -53,7 +53,7 @@ datadogRum.init({
 })
 ```
 
-The `trackInteractions` parameter enables the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
+The `trackInteractions` and `trackFrustrations` parameters enable the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
 
 ### CDN async
 
@@ -83,7 +83,7 @@ Add the generated code snippet to the head tag of every HTML page you want to mo
 </script>
 ```
 
-The `trackInteractions` parameter enables the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
+The `trackInteractions` and `trackFrustrations` parameters enable the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
 
 Early RUM API calls must be wrapped in the `DD_RUM.onReady()` callback. This ensures the code only gets executed once the SDK is properly loaded.
 
@@ -109,7 +109,7 @@ Add the generated code snippet to the head tag (in front of any other script tag
 </script>
 ```
 
-The `trackInteractions` parameter enables the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
+The `trackInteractions` and `trackFrustrations` parameters enable the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
 
 The `window.DD_RUM` check is used to prevent issues if a loading failure occurs with the RUM Browser SDK.
 
@@ -176,6 +176,12 @@ Allows you to control RUM views creation. See [override default RUM view names][
 **Type**: Boolean<br/>
 **Default**: `false` <br/>
 Enables [automatic collection of users actions][6].
+
+`trackFrustrations`
+: Optional<br/>
+**Type**: Boolean<br/>
+**Default**: `false` <br/>
+Enables [automatic collection of user frustration][20]. Implies `trackInteractions: true`.
 
 `defaultPrivacyLevel`
 : Optional<br/>
@@ -361,3 +367,4 @@ A service is an independent, deployable code repository that maps to a set of pa
 [17]: https://docs.datadoghq.com/real_user_monitoring/session_replay/
 [18]: https://docs.datadoghq.com/real_user_monitoring/session_replay/privacy_options
 [19]: https://docs.datadoghq.com/getting_started/tagging/using_tags
+[20]: https://docs.datadoghq.com/real_user_monitoring/frustration_signals/
