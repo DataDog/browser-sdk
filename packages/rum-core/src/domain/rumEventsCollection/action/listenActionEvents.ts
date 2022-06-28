@@ -1,48 +1,77 @@
-import { addEventListener, DOM_EVENT } from '@datadog/browser-core'
+import { addEventListener, DOM_EVENT, monitor } from '@datadog/browser-core'
 
-export type OnClickCallback = (clickEvent: MouseEvent & { target: Element }, hasSelectionChanged: boolean) => void
+export interface OnClickContext {
+  event: MouseEvent & { target: Element }
+  getUserActivity(): { selection: boolean; input: boolean }
+}
 
-export function listenActionEvents({ onClick }: { onClick: OnClickCallback }) {
+export function listenActionEvents({ onClick }: { onClick(context: OnClickContext): void }) {
   let hasSelectionChanged = false
   let selectionEmptyAtMouseDown: boolean
+  let hasInputChanged = false
 
-  const { stop: stopMouseDownListener } = addEventListener(
-    window,
-    DOM_EVENT.MOUSE_DOWN,
-    () => {
-      hasSelectionChanged = false
-      selectionEmptyAtMouseDown = isSelectionEmpty()
-    },
-    { capture: true }
-  )
+  const listeners = [
+    addEventListener(
+      window,
+      DOM_EVENT.MOUSE_DOWN,
+      () => {
+        hasSelectionChanged = false
+        selectionEmptyAtMouseDown = isSelectionEmpty()
+      },
+      { capture: true }
+    ),
 
-  const { stop: stopSelectionChangeListener } = addEventListener(
-    window,
-    DOM_EVENT.SELECTION_CHANGE,
-    () => {
-      if (!selectionEmptyAtMouseDown || !isSelectionEmpty()) {
-        hasSelectionChanged = true
-      }
-    },
-    { capture: true }
-  )
+    addEventListener(
+      window,
+      DOM_EVENT.SELECTION_CHANGE,
+      () => {
+        if (!selectionEmptyAtMouseDown || !isSelectionEmpty()) {
+          hasSelectionChanged = true
+        }
+      },
+      { capture: true }
+    ),
 
-  const { stop: stopClickListener } = addEventListener(
-    window,
-    DOM_EVENT.CLICK,
-    (clickEvent: MouseEvent) => {
-      if (clickEvent.target instanceof Element) {
-        onClick(clickEvent as MouseEvent & { target: Element }, hasSelectionChanged)
-      }
-    },
-    { capture: true }
-  )
+    addEventListener(
+      window,
+      DOM_EVENT.CLICK,
+      (clickEvent: MouseEvent) => {
+        if (clickEvent.target instanceof Element) {
+          // Use a scoped variable to make sure the value is not changed by other clicks
+          const userActivity = {
+            selection: hasSelectionChanged,
+            input: hasInputChanged,
+          }
+          if (!hasInputChanged) {
+            setTimeout(
+              monitor(() => {
+                userActivity.input = hasInputChanged
+              })
+            )
+          }
+
+          onClick({
+            event: clickEvent as MouseEvent & { target: Element },
+            getUserActivity: () => userActivity,
+          })
+        }
+      },
+      { capture: true }
+    ),
+
+    addEventListener(
+      window,
+      DOM_EVENT.INPUT,
+      () => {
+        hasInputChanged = true
+      },
+      { capture: true }
+    ),
+  ]
 
   return {
     stop: () => {
-      stopMouseDownListener()
-      stopSelectionChangeListener()
-      stopClickListener()
+      listeners.forEach((listener) => listener.stop())
     },
   }
 }

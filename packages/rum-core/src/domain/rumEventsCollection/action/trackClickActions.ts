@@ -23,6 +23,7 @@ import type { ClickChain } from './clickChain'
 import { createClickChain } from './clickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
 import { getSelectorFromElement } from './getSelectorFromElement'
+import type { OnClickContext } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 import { computeFrustration } from './computeFrustration'
 
@@ -98,7 +99,7 @@ export function trackClickActions(
     }
   }
 
-  function processClick(event: MouseEvent & { target: Element }, hasSelectionChanged: boolean) {
+  function processClick({ event, getUserActivity }: OnClickContext) {
     if (!trackFrustrations && history.find()) {
       // TODO: remove this in a future major version. To keep retrocompatibility, ignore any new
       // action if another one is already occurring.
@@ -114,7 +115,7 @@ export function trackClickActions(
 
     const startClocks = clocksNow()
 
-    const click = newClick(lifeCycle, history, hasSelectionChanged, {
+    const click = newClick(lifeCycle, history, getUserActivity, {
       name,
       event,
       startClocks,
@@ -184,7 +185,7 @@ export type Click = ReturnType<typeof newClick>
 function newClick(
   lifeCycle: LifeCycle,
   history: ClickActionIdHistory,
-  hasSelectionChanged: boolean,
+  getUserActivity: OnClickContext['getUserActivity'],
   base: Pick<ClickAction, 'startClocks' | 'event' | 'name'>
 ) {
   const id = generateUUID()
@@ -234,17 +235,17 @@ function newClick(
     get hasError() {
       return eventCountsSubscription.eventCounts.errorCount > 0
     },
-    get hasActivity() {
+    get hasPageActivity() {
       return activityEndTime !== undefined
     },
-    hasSelectionChanged,
+    getUserActivity,
     addFrustration: (frustrationType: FrustrationType) => {
       frustrationTypes.push(frustrationType)
     },
 
     isStopped: () => status === ClickStatus.STOPPED || status === ClickStatus.FINALIZED,
 
-    clone: () => newClick(lifeCycle, history, hasSelectionChanged, base),
+    clone: () => newClick(lifeCycle, history, getUserActivity, base),
 
     validate: () => {
       stop()

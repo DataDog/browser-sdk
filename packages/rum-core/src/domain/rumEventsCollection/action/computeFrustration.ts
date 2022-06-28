@@ -7,7 +7,7 @@ const MIN_CLICKS_PER_SECOND_TO_CONSIDER_RAGE = 3
 export function computeFrustration(clicks: Click[], rageClick: Click) {
   if (isRage(clicks)) {
     rageClick.addFrustration(FrustrationType.RAGE_CLICK)
-    if (clicks.some((click) => !click.hasActivity)) {
+    if (clicks.some(isDead)) {
       rageClick.addFrustration(FrustrationType.DEAD_CLICK)
     }
     if (rageClick.hasError) {
@@ -16,13 +16,13 @@ export function computeFrustration(clicks: Click[], rageClick: Click) {
     return { isRage: true }
   }
 
-  const hasSelectionChanged = clicks.some((click) => click.hasSelectionChanged)
+  const hasSelectionChanged = clicks.some((click) => click.getUserActivity().selection)
   clicks.forEach((click) => {
     if (click.hasError) {
       click.addFrustration(FrustrationType.ERROR_CLICK)
     }
     if (
-      !click.hasActivity &&
+      isDead(click) &&
       // Avoid considering clicks part of a double-click or triple-click selections as dead clicks
       !hasSelectionChanged
     ) {
@@ -33,7 +33,7 @@ export function computeFrustration(clicks: Click[], rageClick: Click) {
 }
 
 export function isRage(clicks: Click[]) {
-  if (clicks.some((click) => click.hasSelectionChanged)) {
+  if (clicks.some((click) => click.getUserActivity().selection)) {
     return false
   }
   for (let i = 0; i < clicks.length - (MIN_CLICKS_PER_SECOND_TO_CONSIDER_RAGE - 1); i += 1) {
@@ -45,4 +45,8 @@ export function isRage(clicks: Click[]) {
     }
   }
   return false
+}
+
+export function isDead(click: Click) {
+  return !click.hasPageActivity && !click.getUserActivity().input
 }

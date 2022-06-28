@@ -1,17 +1,25 @@
 import { Observable, timeStampNow } from '@datadog/browser-core'
 import { createNewEvent } from '../../core/test/specHelper'
+import type { Click } from '../src/domain/rumEventsCollection/action/trackClickActions'
 
-export type FakeClick = ReturnType<typeof createFakeClick>
+export type FakeClick = Readonly<ReturnType<typeof createFakeClick>>
 
-export function createFakeClick(partialClick?: {
-  hasSelectionChanged?: boolean
+export function createFakeClick({
+  hasError = false,
+  hasPageActivity = true,
+  userActivity,
+  event,
+}: {
+  hasError?: boolean
+  hasPageActivity?: boolean
+  userActivity?: { selection?: boolean; input?: boolean }
   event?: Partial<MouseEvent & { target: Element }>
-}) {
+} = {}) {
   const stopObservable = new Observable<void>()
   let isStopped = false
 
   function clone() {
-    return createFakeClick(partialClick)
+    return createFakeClick({ userActivity, event })
   }
 
   return {
@@ -23,19 +31,22 @@ export function createFakeClick(partialClick?: {
     },
     discard: jasmine.createSpy(),
     validate: jasmine.createSpy(),
-    hasError: false,
-    hasActivity: true,
-    hasSelectionChanged: false,
-    addFrustration: jasmine.createSpy(),
+    hasError,
+    hasPageActivity,
+    getUserActivity: () => ({
+      selection: false,
+      input: false,
+      ...userActivity,
+    }),
+    addFrustration: jasmine.createSpy<Click['addFrustration']>(),
     clone: jasmine.createSpy<typeof clone>().and.callFake(clone),
 
-    ...partialClick,
     event: createNewEvent('click', {
       clientX: 100,
       clientY: 100,
       timeStamp: timeStampNow(),
       target: document.body,
-      ...partialClick?.event,
+      ...event,
     }),
   }
 }

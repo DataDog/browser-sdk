@@ -1,9 +1,10 @@
-import { createNewEvent } from '../../../../../core/test/specHelper'
-import type { OnClickCallback } from './listenActionEvents'
+import type { Clock } from '../../../../../core/test/specHelper'
+import { createNewEvent, mockClock } from '../../../../../core/test/specHelper'
+import type { OnClickContext } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 
 describe('listenActionEvents', () => {
-  let onClickSpy: jasmine.Spy<OnClickCallback>
+  let onClickSpy: jasmine.Spy<(context: OnClickContext) => void>
   let stopListenEvents: () => void
 
   beforeEach(() => {
@@ -17,7 +18,10 @@ describe('listenActionEvents', () => {
 
   it('listen to click events', () => {
     emulateClick()
-    expect(onClickSpy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ type: 'click' }), false)
+    expect(onClickSpy).toHaveBeenCalledOnceWith({
+      event: jasmine.objectContaining({ type: 'click' }),
+      getUserActivity: jasmine.any(Function),
+    })
   })
 
   describe('selection change', () => {
@@ -90,7 +94,7 @@ describe('listenActionEvents', () => {
     })
 
     function hasSelectionChanged() {
-      return onClickSpy.calls.mostRecent().args[1]
+      return onClickSpy.calls.mostRecent().args[0].getUserActivity().selection
     }
 
     function emulateNodeSelection(
@@ -107,6 +111,55 @@ describe('listenActionEvents', () => {
       }
       selection.addRange(range)
       window.dispatchEvent(createNewEvent('selectionchange', { target: document }))
+    }
+  })
+
+  describe('input user activity', () => {
+    let clock: Clock
+
+    beforeEach(() => {
+      clock = mockClock()
+    })
+
+    afterEach(() => {
+      clock.cleanup()
+    })
+
+    it('click that do not trigger an input input event should not report input user activity', () => {
+      emulateClick()
+      expect(hasInputUserActivity()).toBe(false)
+    })
+
+    it('click that triggers an input event during the click should report an input user activity', () => {
+      emulateClick({
+        beforeMouseUp() {
+          emulateInputEvent()
+        },
+      })
+      expect(hasInputUserActivity()).toBe(true)
+    })
+
+    it('click that triggers an input event slightly after the click should report an input user activity', () => {
+      emulateClick()
+      emulateInputEvent()
+      clock.tick(1)
+      expect(hasInputUserActivity()).toBe(true)
+    })
+
+    it('click and type should report an input user activity', () => {
+      emulateClick({
+        beforeMouseUp() {
+          emulateInputEvent()
+        },
+      })
+      expect(hasInputUserActivity()).toBe(true)
+    })
+
+    function emulateInputEvent() {
+      window.dispatchEvent(createNewEvent('input'))
+    }
+    function hasInputUserActivity() {
+      return onClickSpy.calls.mostRecent().args[0].getUserActivity().input
     }
   })
 
