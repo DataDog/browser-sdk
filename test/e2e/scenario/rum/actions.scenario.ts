@@ -202,6 +202,32 @@ describe('action collection', () => {
       expect(actionEvents[0].action.frustration!.type).toEqual([])
     })
 
+  createTest('consider a click on an already checked "radio" input as "dead_click"')
+    .withRum({ trackFrustrations: true, enableExperimentalFeatures: ['frustration-signals'] })
+    .withBody(html` <input type="radio" checked /> `)
+    .run(async ({ serverEvents }) => {
+      const input = await $('input')
+      await input.click()
+      await flushEvents()
+      const actionEvents = serverEvents.rumActions
+
+      expect(actionEvents.length).toBe(1)
+      expect(actionEvents[0].action.frustration!.type).toEqual(['dead_click'])
+    })
+
+  createTest('do not consider a click on text input as "dead_click"')
+    .withRum({ trackFrustrations: true, enableExperimentalFeatures: ['frustration-signals'] })
+    .withBody(html` <input type="text" /> `)
+    .run(async ({ serverEvents }) => {
+      const input = await $('input')
+      await input.click()
+      await flushEvents()
+      const actionEvents = serverEvents.rumActions
+
+      expect(actionEvents.length).toBe(1)
+      expect(actionEvents[0].action.frustration!.type).toEqual([])
+    })
+
   createTest('collect a "rage click"')
     .withRum({ trackFrustrations: true, enableExperimentalFeatures: ['frustration-signals'] })
     .withBody(
