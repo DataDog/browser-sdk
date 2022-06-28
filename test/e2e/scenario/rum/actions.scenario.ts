@@ -176,6 +176,32 @@ describe('action collection', () => {
       expect(serverEvents.rumViews[0].view.frustration!.count).toBe(1)
     })
 
+  createTest('do not consider a click on a checkbox as "dead_click"')
+    .withRum({ trackFrustrations: true, enableExperimentalFeatures: ['frustration-signals'] })
+    .withBody(html` <input type="checkbox" /> `)
+    .run(async ({ serverEvents }) => {
+      const input = await $('input')
+      await input.click()
+      await flushEvents()
+      const actionEvents = serverEvents.rumActions
+
+      expect(actionEvents.length).toBe(1)
+      expect(actionEvents[0].action.frustration!.type).toEqual([])
+    })
+
+  createTest('do not consider a click to change the value of a "range" input as "dead_click"')
+    .withRum({ trackFrustrations: true, enableExperimentalFeatures: ['frustration-signals'] })
+    .withBody(html` <input type="range" /> `)
+    .run(async ({ serverEvents }) => {
+      const input = await $('input')
+      await input.click({ x: 10 })
+      await flushEvents()
+      const actionEvents = serverEvents.rumActions
+
+      expect(actionEvents.length).toBe(1)
+      expect(actionEvents[0].action.frustration!.type).toEqual([])
+    })
+
   createTest('collect a "rage click"')
     .withRum({ trackFrustrations: true, enableExperimentalFeatures: ['frustration-signals'] })
     .withBody(
