@@ -181,7 +181,7 @@ Enables [automatic collection of users actions][6].
 : Optional<br/>
 **Type**: Boolean<br/>
 **Default**: `false` <br/>
-Enables [automatic collection of user frustration][20]. Implies `trackInteractions: true`.
+Enables [automatic collection of user frustrations][20]. Implies `trackInteractions: true`.
 
 `defaultPrivacyLevel`
 : Optional<br/>
