@@ -103,7 +103,6 @@ describe('action collection', () => {
       // Frustrations need to be collected for this test case, else actions leading to a new view
       // are ignored
       trackFrustrations: true,
-      enableExperimentalFeatures: ['frustration-signals'],
     })
     .withBody(
       html`
@@ -131,7 +130,7 @@ describe('action collection', () => {
     })
 
   createTest('collect an "error click"')
-    .withRum({ trackFrustrations: true, enableExperimentalFeatures: ['frustration-signals'] })
+    .withRum({ trackFrustrations: true })
     .withBody(
       html`
         <button>click me</button>
@@ -162,7 +161,7 @@ describe('action collection', () => {
     })
 
   createTest('collect a "dead click"')
-    .withRum({ trackFrustrations: true, enableExperimentalFeatures: ['frustration-signals'] })
+    .withRum({ trackFrustrations: true })
     .withBody(html` <button>click me</button> `)
     .run(async ({ serverEvents }) => {
       const button = await $('button')
@@ -177,7 +176,7 @@ describe('action collection', () => {
     })
 
   createTest('do not consider a click on a checkbox as "dead_click"')
-    .withRum({ trackFrustrations: true, enableExperimentalFeatures: ['frustration-signals'] })
+    .withRum({ trackFrustrations: true })
     .withBody(html` <input type="checkbox" /> `)
     .run(async ({ serverEvents }) => {
       const input = await $('input')
@@ -190,7 +189,7 @@ describe('action collection', () => {
     })
 
   createTest('do not consider a click to change the value of a "range" input as "dead_click"')
-    .withRum({ trackFrustrations: true, enableExperimentalFeatures: ['frustration-signals'] })
+    .withRum({ trackFrustrations: true })
     .withBody(html` <input type="range" /> `)
     .run(async ({ serverEvents }) => {
       const input = await $('input')
@@ -203,7 +202,7 @@ describe('action collection', () => {
     })
 
   createTest('consider a click on an already checked "radio" input as "dead_click"')
-    .withRum({ trackFrustrations: true, enableExperimentalFeatures: ['frustration-signals'] })
+    .withRum({ trackFrustrations: true })
     .withBody(html` <input type="radio" checked /> `)
     .run(async ({ serverEvents }) => {
       const input = await $('input')
@@ -216,7 +215,7 @@ describe('action collection', () => {
     })
 
   createTest('do not consider a click on text input as "dead_click"')
-    .withRum({ trackFrustrations: true, enableExperimentalFeatures: ['frustration-signals'] })
+    .withRum({ trackFrustrations: true })
     .withBody(html` <input type="text" /> `)
     .run(async ({ serverEvents }) => {
       const input = await $('input')
@@ -229,7 +228,7 @@ describe('action collection', () => {
     })
 
   createTest('collect a "rage click"')
-    .withRum({ trackFrustrations: true, enableExperimentalFeatures: ['frustration-signals'] })
+    .withRum({ trackFrustrations: true })
     .withBody(
       html`
         <button>click me</button>
@@ -254,7 +253,7 @@ describe('action collection', () => {
     })
 
   createTest('collect multiple frustrations in one action')
-    .withRum({ trackFrustrations: true, enableExperimentalFeatures: ['frustration-signals'] })
+    .withRum({ trackFrustrations: true })
     .withBody(
       html`
         <button>click me</button>
