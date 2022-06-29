@@ -1,54 +1,55 @@
-import { createIsolatedDOM } from '../../../../test/createIsolatedDom'
+import type { IsolatedDom } from '../../../../test/createIsolatedDom'
+import { createIsolatedDom } from '../../../../test/createIsolatedDom'
 import { getActionNameFromElement } from './getActionNameFromElement'
 
 describe('getActionNameFromElement', () => {
-  let isolatedDOM: ReturnType<typeof createIsolatedDOM>
+  let isolatedDom: IsolatedDom
 
   beforeEach(() => {
-    isolatedDOM = createIsolatedDOM()
+    isolatedDom = createIsolatedDom()
   })
 
   afterEach(() => {
-    isolatedDOM.clear()
+    isolatedDom.clear()
   })
 
   it('extracts the textual content of an element', () => {
-    expect(getActionNameFromElement(isolatedDOM.element`<div>Foo <div>bar</div></div>`)).toBe('Foo bar')
+    expect(getActionNameFromElement(isolatedDom.element`<div>Foo <div>bar</div></div>`)).toBe('Foo bar')
   })
 
   it('extracts the text of an input button', () => {
-    expect(getActionNameFromElement(isolatedDOM.element`<input type="button" value="Click" />`)).toBe('Click')
+    expect(getActionNameFromElement(isolatedDom.element`<input type="button" value="Click" />`)).toBe('Click')
   })
 
   it('extracts the alt text of an image', () => {
-    expect(getActionNameFromElement(isolatedDOM.element`<img title="foo" alt="bar" />`)).toBe('bar')
+    expect(getActionNameFromElement(isolatedDom.element`<img title="foo" alt="bar" />`)).toBe('bar')
   })
 
   it('extracts the title text of an image', () => {
-    expect(getActionNameFromElement(isolatedDOM.element`<img title="foo" />`)).toBe('foo')
+    expect(getActionNameFromElement(isolatedDom.element`<img title="foo" />`)).toBe('foo')
   })
 
   it('extracts the text of an aria-label attribute', () => {
-    expect(getActionNameFromElement(isolatedDOM.element`<span aria-label="Foo" />`)).toBe('Foo')
+    expect(getActionNameFromElement(isolatedDom.element`<span aria-label="Foo" />`)).toBe('Foo')
   })
 
   it('gets the parent element textual content if everything else fails', () => {
-    expect(getActionNameFromElement(isolatedDOM.element`<div>Foo <img target /></div>`)).toBe('Foo')
+    expect(getActionNameFromElement(isolatedDom.element`<div>Foo <img target /></div>`)).toBe('Foo')
   })
 
   it("doesn't get the value of a text input", () => {
-    expect(getActionNameFromElement(isolatedDOM.element`<input type="text" value="foo" />`)).toBe('')
+    expect(getActionNameFromElement(isolatedDom.element`<input type="text" value="foo" />`)).toBe('')
   })
 
   it("doesn't get the value of a password input", () => {
-    expect(getActionNameFromElement(isolatedDOM.element`<input type="password" value="foo" />`)).toBe('')
+    expect(getActionNameFromElement(isolatedDom.element`<input type="password" value="foo" />`)).toBe('')
   })
 
   it('limits the name length to a reasonable size', () => {
     expect(
       getActionNameFromElement(
         // eslint-disable-next-line  max-len
-        isolatedDOM.element`<div>Foooooooooooooooooo baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaar baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaz</div>`
+        isolatedDom.element`<div>Foooooooooooooooooo baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaar baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaz</div>`
       )
     ).toBe(
       // eslint-disable-next-line  max-len
@@ -57,20 +58,20 @@ describe('getActionNameFromElement', () => {
   })
 
   it('normalize white spaces', () => {
-    expect(getActionNameFromElement(isolatedDOM.element`<div>foo\tbar\n\n  baz</div>`)).toBe('foo bar baz')
+    expect(getActionNameFromElement(isolatedDom.element`<div>foo\tbar\n\n  baz</div>`)).toBe('foo bar baz')
   })
 
   it('ignores the inline script textual content', () => {
-    expect(getActionNameFromElement(isolatedDOM.element`<div><script>console.log('toto')</script>b</div>`)).toBe('b')
+    expect(getActionNameFromElement(isolatedDom.element`<div><script>console.log('toto')</script>b</div>`)).toBe('b')
   })
 
   it('extracts text from SVG elements', () => {
-    expect(getActionNameFromElement(isolatedDOM.element`<svg><text>foo  bar</text></svg>`)).toBe('foo bar')
+    expect(getActionNameFromElement(isolatedDom.element`<svg><text>foo  bar</text></svg>`)).toBe('foo bar')
   })
 
   it('extracts text from an associated label', () => {
     expect(
-      getActionNameFromElement(isolatedDOM.element`
+      getActionNameFromElement(isolatedDom.element`
         <div>
           <label for="toto">label text</label>
           <div>ignored</div>
@@ -82,7 +83,7 @@ describe('getActionNameFromElement', () => {
 
   it('extracts text from a parent label', () => {
     expect(
-      getActionNameFromElement(isolatedDOM.element`
+      getActionNameFromElement(isolatedDom.element`
         <label>
           foo
           <div>
@@ -96,7 +97,7 @@ describe('getActionNameFromElement', () => {
 
   it('extracts text from the first OPTION element when clicking on a SELECT', () => {
     expect(
-      getActionNameFromElement(isolatedDOM.element`
+      getActionNameFromElement(isolatedDom.element`
         <select>
           <option>foo</option>
           <option>bar</option>
@@ -107,7 +108,7 @@ describe('getActionNameFromElement', () => {
 
   it('extracts text from a aria-labelledby associated element', () => {
     expect(
-      getActionNameFromElement(isolatedDOM.element`
+      getActionNameFromElement(isolatedDom.element`
         <div>
           <label id="toto">label text</label>
           <div>ignored</div>
@@ -119,7 +120,7 @@ describe('getActionNameFromElement', () => {
 
   it('extracts text from multiple aria-labelledby associated elements', () => {
     expect(
-      getActionNameFromElement(isolatedDOM.element`
+      getActionNameFromElement(isolatedDom.element`
         <div>
           <label id="toto1">label</label>
           <div>ignored</div>
@@ -133,7 +134,7 @@ describe('getActionNameFromElement', () => {
 
   it('extracts text from a BUTTON element', () => {
     expect(
-      getActionNameFromElement(isolatedDOM.element`
+      getActionNameFromElement(isolatedDom.element`
         <div>
           <div>ignored</div>
           <button target>foo</button>
@@ -144,7 +145,7 @@ describe('getActionNameFromElement', () => {
 
   it('extracts text from a role=button element', () => {
     expect(
-      getActionNameFromElement(isolatedDOM.element`
+      getActionNameFromElement(isolatedDom.element`
         <div>
           <div>ignored</div>
           <div role="button" target>foo</div>
@@ -155,7 +156,7 @@ describe('getActionNameFromElement', () => {
 
   it('limits the recursion to the 10th parent', () => {
     expect(
-      getActionNameFromElement(isolatedDOM.element`
+      getActionNameFromElement(isolatedDom.element`
         <div>
           <div>ignored</div>
           <i><i><i><i><i><i><i><i><i><i>
@@ -168,7 +169,7 @@ describe('getActionNameFromElement', () => {
 
   it('limits the recursion to the BODY element', () => {
     expect(
-      getActionNameFromElement(isolatedDOM.element`
+      getActionNameFromElement(isolatedDom.element`
         <div>ignored</div>
         <i target></i>
       `)
@@ -177,7 +178,7 @@ describe('getActionNameFromElement', () => {
 
   it('limits the recursion to a FORM element', () => {
     expect(
-      getActionNameFromElement(isolatedDOM.element`
+      getActionNameFromElement(isolatedDom.element`
         <div>
           <div>ignored</div>
           <form>
@@ -190,7 +191,7 @@ describe('getActionNameFromElement', () => {
 
   it('extracts the name from a parent FORM element', () => {
     expect(
-      getActionNameFromElement(isolatedDOM.element`
+      getActionNameFromElement(isolatedDom.element`
         <div>
           <div>ignored</div>
           <form title="foo">
@@ -203,7 +204,7 @@ describe('getActionNameFromElement', () => {
 
   it('extracts the whole textual content of a button', () => {
     expect(
-      getActionNameFromElement(isolatedDOM.element`
+      getActionNameFromElement(isolatedDom.element`
         <button>
           foo
           <i target>bar</i>
@@ -214,7 +215,7 @@ describe('getActionNameFromElement', () => {
 
   it('ignores the textual content of contenteditable elements', () => {
     expect(
-      getActionNameFromElement(isolatedDOM.element`
+      getActionNameFromElement(isolatedDom.element`
         <div contenteditable>
           <i target>ignored</i>
           ignored
@@ -225,7 +226,7 @@ describe('getActionNameFromElement', () => {
 
   it('extracts the name from attributes of contenteditable elements', () => {
     expect(
-      getActionNameFromElement(isolatedDOM.element`
+      getActionNameFromElement(isolatedDom.element`
         <div contenteditable>
           <i aria-label="foo" target>ignored</i>
           ignored
@@ -237,14 +238,14 @@ describe('getActionNameFromElement', () => {
   describe('programmatically declared action name', () => {
     it('extracts the name from the data-dd-action-name attribute', () => {
       expect(
-        getActionNameFromElement(isolatedDOM.element`
+        getActionNameFromElement(isolatedDom.element`
           <div data-dd-action-name="foo">ignored</div>
         `)
       ).toBe('foo')
     })
 
     it('considers any parent', () => {
-      const target = isolatedDOM.element`
+      const target = isolatedDom.element`
         <form>
           <i><i><i><i><i><i><i><i><i><i><i><i>
             <span target>ignored</span>
@@ -258,7 +259,7 @@ describe('getActionNameFromElement', () => {
 
     it('normalizes the value', () => {
       expect(
-        getActionNameFromElement(isolatedDOM.element`
+        getActionNameFromElement(isolatedDom.element`
           <div data-dd-action-name="   foo  \t bar  ">ignored</div>
         `)
       ).toBe('foo bar')
@@ -266,7 +267,7 @@ describe('getActionNameFromElement', () => {
 
     it('fallback on an automatic strategy if the attribute is empty', () => {
       expect(
-        getActionNameFromElement(isolatedDOM.element`
+        getActionNameFromElement(isolatedDom.element`
           <div data-dd-action-name="ignored">
             <div data-dd-action-name="">
               <span target>foo</span>
@@ -279,7 +280,7 @@ describe('getActionNameFromElement', () => {
     it('extracts the name from a user-configured attribute', () => {
       expect(
         getActionNameFromElement(
-          isolatedDOM.element`
+          isolatedDom.element`
           <div data-test-id="foo">ignored</div>
         `,
           'data-test-id'
@@ -290,7 +291,7 @@ describe('getActionNameFromElement', () => {
     it('favors data-dd-action-name over user-configured attribute', () => {
       expect(
         getActionNameFromElement(
-          isolatedDOM.element`
+          isolatedDom.element`
           <div data-test-id="foo" data-dd-action-name="bar">ignored</div>
         `,
           'data-test-id'
@@ -300,7 +301,7 @@ describe('getActionNameFromElement', () => {
 
     it('remove children with programmatic action name in textual content', () => {
       expect(
-        getActionNameFromElement(isolatedDOM.element`<div>Foo <div data-dd-action-name="custom action">bar<div></div>`)
+        getActionNameFromElement(isolatedDom.element`<div>Foo <div data-dd-action-name="custom action">bar<div></div>`)
       ).toBe('Foo')
     })
 
@@ -308,7 +309,7 @@ describe('getActionNameFromElement', () => {
     it('remove children with programmatic action name in textual content based on the user-configured attribute', () => {
       expect(
         getActionNameFromElement(
-          isolatedDOM.element`<div>Foo <div data-test-id="custom action">bar<div></div>`,
+          isolatedDom.element`<div>Foo <div data-test-id="custom action">bar<div></div>`,
           'data-test-id'
         )
       ).toBe('Foo')
