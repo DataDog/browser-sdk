@@ -1,5 +1,5 @@
-import type { Context, EventRateLimiter, RawError, RelativeTime } from '@datadog/browser-core'
-import { ErrorSource, combine, createEventRateLimiter, getRelativeTime } from '@datadog/browser-core'
+import type { Context, EventRateLimiter, RawError, RelativeTime} from '@datadog/browser-core';
+import { willSyntheticsInjectRum , ErrorSource, combine, createEventRateLimiter, getRelativeTime } from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { LogsConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
@@ -63,10 +63,26 @@ export function startLogsAssembly(
 }
 
 interface Rum {
-  getInternalContext: (startTime?: RelativeTime) => Context
+  getInternalContext?: (startTime?: RelativeTime) => Context | undefined
+}
+
+interface BrowserWindow {
+  DD_RUM?: Rum
+  DD_RUM_SYNTHETICS?: Rum
 }
 
 export function getRUMInternalContext(startTime?: RelativeTime): Context | undefined {
-  const rum = (window as any).DD_RUM as Rum
-  return rum && rum.getInternalContext ? rum.getInternalContext(startTime) : undefined
+  const browserWindow = window as BrowserWindow
+
+  if (willSyntheticsInjectRum()) {
+    return getFromGlobal(browserWindow.DD_RUM_SYNTHETICS)
+  }
+
+  return getFromGlobal(browserWindow.DD_RUM)
+
+  function getFromGlobal(rum?: Rum): Context | undefined {
+    if (rum && rum.getInternalContext) {
+      return rum.getInternalContext(startTime)
+    }
+  }
 }

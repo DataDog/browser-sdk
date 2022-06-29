@@ -1,10 +1,11 @@
 import type { Context, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import { ErrorSource, ONE_MINUTE, getTimeStamp, noop } from '@datadog/browser-core'
+import { cleanupSyntheticsWorkerValues, mockSyntheticsWorkerValues } from '../../../core/test/syntheticsWorkerValues'
 import type { LogsEvent } from '../logsEvent.types'
 import type { Clock } from '../../../core/test/specHelper'
 import { mockClock } from '../../../core/test/specHelper'
 import type { CommonContext } from '../rawLogsEvent.types'
-import { startLogsAssembly } from './assembly'
+import { getRUMInternalContext, startLogsAssembly } from './assembly'
 import { validateAndBuildLogsConfiguration } from './configuration'
 import { Logger, StatusType } from './logger'
 import type { LogsSessionManager } from './logsSessionManager'
@@ -399,6 +400,46 @@ describe('startLogsAssembly', () => {
       expect(serverLogs.length).toEqual(2)
       expect(serverLogs[0].message).toEqual('foo')
       expect(serverLogs[1].error!.origin).toEqual(ErrorSource.AGENT)
+    })
+  })
+})
+
+describe('getRUMInternalContext', () => {
+  afterEach(() => {
+    delete window.DD_RUM
+    delete window.DD_RUM_SYNTHETICS
+  })
+
+  it('returns undefined if no RUM instance is present', () => {
+    expect(getRUMInternalContext()).toBeUndefined()
+  })
+
+  it('returns undefined if the global variable does not have a `getInternalContext` method', () => {
+    window.DD_RUM = {} as any
+    expect(getRUMInternalContext()).toBeUndefined()
+  })
+
+  it('returns the internal context from the `getInternalContext` method', () => {
+    window.DD_RUM = {
+      getInternalContext: () => ({ foo: 'bar' }),
+    }
+    expect(getRUMInternalContext()).toEqual({ foo: 'bar' })
+  })
+
+  describe('when RUM is injected by Synthetics', () => {
+    beforeEach(() => {
+      mockSyntheticsWorkerValues({ injectsRum: true })
+    })
+
+    afterEach(() => {
+      cleanupSyntheticsWorkerValues()
+    })
+
+    it('uses the global variable created when the synthetics worker is injecting RUM', () => {
+      window.DD_RUM_SYNTHETICS = {
+        getInternalContext: () => ({ foo: 'bar' }),
+      }
+      expect(getRUMInternalContext()).toEqual({ foo: 'bar' })
     })
   })
 })

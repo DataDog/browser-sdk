@@ -20,6 +20,7 @@ interface Rum {
 declare global {
   interface Window {
     DD_RUM?: Rum
+    DD_RUM_SYNTHETICS?: Rum
   }
 }
 
