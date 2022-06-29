@@ -1,4 +1,5 @@
-import { ErrorSource, display, stopSessionManager } from '@datadog/browser-core'
+import { ErrorSource, display, stopSessionManager, getCookie, SESSION_COOKIE_NAME } from '@datadog/browser-core'
+import { cleanupSyntheticsWorkerValues, mockSyntheticsWorkerValues } from 'packages/core/test/syntheticsWorkerValues'
 import sinon from 'sinon'
 import { deleteEventBridgeStub, initEventBridgeStub, stubEndpointBuilder } from '../../../core/test/specHelper'
 import type { LogsConfiguration } from '../domain/configuration'
@@ -132,5 +133,31 @@ describe('logs', () => {
 
     expect(consoleLogSpy).toHaveBeenCalledTimes(1)
     expect(displayLogSpy).not.toHaveBeenCalled()
+  })
+
+  describe('logs session creation', () => {
+    afterEach(() => {
+      cleanupSyntheticsWorkerValues()
+    })
+
+    it('creates a session on normal conditions', () => {
+      ;({ handleLog } = startLogs(baseConfiguration, () => COMMON_CONTEXT, logger))
+
+      expect(getCookie(SESSION_COOKIE_NAME)).not.toBeUndefined()
+    })
+
+    it('does not create a session if event bridge is present', () => {
+      initEventBridgeStub()
+      ;({ handleLog } = startLogs(baseConfiguration, () => COMMON_CONTEXT, logger))
+
+      expect(getCookie(SESSION_COOKIE_NAME)).toBeUndefined()
+    })
+
+    it('does not create a session if synthetics worker will inject RUM', () => {
+      mockSyntheticsWorkerValues({ injectsRum: true })
+      ;({ handleLog } = startLogs(baseConfiguration, () => COMMON_CONTEXT, logger))
+
+      expect(getCookie(SESSION_COOKIE_NAME)).toBeUndefined()
+    })
   })
 })
