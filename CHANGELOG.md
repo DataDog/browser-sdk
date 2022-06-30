@@ -16,6 +16,16 @@
 
 ---
 
+## v4.14.0
+
+- ✨ [RUMF-1211] release Frustration Signals publicly ([#1617](https://github.com/DataDog/browser-sdk/pull/1617))
+- 🐛 [RUMF-1294] ignore dead clicks based on the click event target ([#1610](https://github.com/DataDog/browser-sdk/pull/1610))
+- 📝 Fixing intrapage broken links ([#1613](https://github.com/DataDog/browser-sdk/pull/1613))
+- 📝 Removes Extra Link ([#1612](https://github.com/DataDog/browser-sdk/pull/1612))
+- 🐛 [RUMF-1297] frustration signals: track input changes ([#1603](https://github.com/DataDog/browser-sdk/pull/1603))
+- 📝 DOCS-2277 Browser Monitoring Edits ([#1572](https://github.com/DataDog/browser-sdk/pull/1572))
+- 🐛 [RUMF-1209] frustration signals: track selection change ([#1596](https://github.com/DataDog/browser-sdk/pull/1596))
+
 ## v4.13.0
 
 - ✨ Enable service and version update on startView ([#1601](https://github.com/DataDog/browser-sdk/pull/1601))
