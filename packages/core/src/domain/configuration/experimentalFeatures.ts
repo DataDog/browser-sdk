@@ -31,3 +31,7 @@ export function isExperimentalFeatureEnabled(featureName: string): boolean {
 export function resetExperimentalFeatures(): void {
   enabledExperimentalFeatures = new Set()
 }
+
+export function getExperimentalFeatures(): Set<string> {
+  return enabledExperimentalFeatures
+}
