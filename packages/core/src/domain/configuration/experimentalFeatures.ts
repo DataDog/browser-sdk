@@ -5,7 +5,7 @@
  * So keep in mind that in certain configurations, your experimental feature flag may affect other products.
  */
 
-let enabledExperimentalFeatures: Set<string>
+let enabledExperimentalFeatures: string[] = []
 
 export function updateExperimentalFeatures(enabledFeatures: string[] | undefined): void {
   // Safely handle external data
@@ -13,25 +13,21 @@ export function updateExperimentalFeatures(enabledFeatures: string[] | undefined
     return
   }
 
-  if (!enabledExperimentalFeatures) {
-    enabledExperimentalFeatures = new Set(enabledFeatures)
-  }
-
   enabledFeatures
     .filter((flag) => typeof flag === 'string')
     .forEach((flag: string) => {
-      enabledExperimentalFeatures.add(flag)
+      if (!enabledExperimentalFeatures.includes(flag)) enabledExperimentalFeatures.push(flag)
     })
 }
 
 export function isExperimentalFeatureEnabled(featureName: string): boolean {
-  return !!enabledExperimentalFeatures && enabledExperimentalFeatures.has(featureName)
+  return enabledExperimentalFeatures.includes(featureName)
 }
 
 export function resetExperimentalFeatures(): void {
-  enabledExperimentalFeatures = new Set()
+  enabledExperimentalFeatures = []
 }
 
-export function getExperimentalFeatures(): Set<string> {
+export function getExperimentalFeatures(): string[] {
   return enabledExperimentalFeatures
 }
