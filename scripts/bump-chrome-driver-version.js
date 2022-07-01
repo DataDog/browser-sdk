@@ -43,6 +43,13 @@ async function main() {
 
   const chromeVersionBranch = `bump-chrome-version-to-${driverVersion}`
   const commitMessage = `👷 Bump chrome to ${packageVersion}`
+
+  const isBranchAlreadyCreated = await executeCommand(`git ls-remote --heads ${REPOSITORY} ${chromeVersionBranch}`)
+  if (isBranchAlreadyCreated) {
+    printLog('Bump chrome branch already created.')
+    process.exit()
+  }
+
   await executeCommand(`git checkout -b ${chromeVersionBranch}`)
 
   printLog('Update versions...')
