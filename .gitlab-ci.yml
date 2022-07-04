@@ -226,7 +226,7 @@ deploy-staging:
     - .base-configuration
     - .staging
   script:
-    - BUILD_MODE=canary
+    - export BUILD_MODE=canary
     - yarn
     - yarn build:bundle
     - ./scripts/deploy.sh staging staging
@@ -238,7 +238,7 @@ deploy-prod-canary:
     - .base-configuration
     - .main
   script:
-    - BUILD_MODE=canary
+    - export BUILD_MODE=canary
     - yarn
     - yarn build:bundle
     - ./scripts/deploy.sh prod canary
@@ -252,7 +252,7 @@ deploy-prod-stable:
   when: manual
   allow_failure: false
   script:
-    - BUILD_MODE=release
+    - export BUILD_MODE=release
     - VERSION=$(node -p -e "require('./lerna.json').version")
     - yarn
     - yarn build:bundle
