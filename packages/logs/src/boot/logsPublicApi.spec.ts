@@ -12,6 +12,9 @@ import { makeLogsPublicApi } from './logsPublicApi'
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx' }
 const INVALID_INIT_CONFIGURATION = {} as LogsInitConfiguration
 
+const mockSessionId = 'some-session-id'
+const getInternalContext = () => ({ session_id: mockSessionId })
+
 describe('logs entry', () => {
   let handleLogSpy: jasmine.Spy<
     (
@@ -30,7 +33,7 @@ describe('logs entry', () => {
 
   beforeEach(() => {
     handleLogSpy = jasmine.createSpy()
-    startLogs = jasmine.createSpy().and.callFake(() => ({ handleLog: handleLogSpy }))
+    startLogs = jasmine.createSpy().and.callFake(() => ({ handleLog: handleLogSpy, getInternalContext }))
   })
 
   it('should define the public API with init', () => {
@@ -303,6 +306,23 @@ describe('logs entry', () => {
         const logger = LOGS.createLogger('foo')
         expect(LOGS.getLogger('foo')).toEqual(logger)
         expect(LOGS.getLogger('bar')).toBeUndefined()
+      })
+    })
+
+    describe('internal context', () => {
+      let LOGS: LogsPublicApi
+
+      beforeEach(() => {
+        LOGS = makeLogsPublicApi(startLogs)
+      })
+
+      it('should return undefined if not initalized', () => {
+        expect(LOGS.getInternalContext()).toBeUndefined()
+      })
+
+      it('should get the internal context', () => {
+        LOGS.init(DEFAULT_INIT_CONFIGURATION)
+        expect(LOGS.getInternalContext()?.session_id).toEqual(mockSessionId)
       })
     })
   })

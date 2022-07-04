@@ -15,6 +15,7 @@ import { validateAndBuildLogsConfiguration } from '../domain/configuration'
 import type { HandlerType, StatusType, LogsMessage } from '../domain/logger'
 import { Logger } from '../domain/logger'
 import type { CommonContext } from '../rawLogsEvent.types'
+import type { InternalContext } from '../domain/internalContext'
 import type { startLogs } from './startLogs'
 
 export interface LoggerConfiguration {
@@ -29,11 +30,15 @@ export type StartLogs = typeof startLogs
 
 type StartLogsResult = ReturnType<typeof startLogs>
 
+type StartTime = number | undefined
+type HoistedGetInternalContext = (startTime?: StartTime) => InternalContext | undefined
+
 export function makeLogsPublicApi(startLogsImpl: StartLogs) {
   let isAlreadyInitialized = false
 
   const globalContextManager = createContextManager()
   const customLoggers: { [name: string]: Logger | undefined } = {}
+  let hoistedGetInternalContext: HoistedGetInternalContext = () => undefined
 
   const beforeInitLoggerLog = new BoundedBuffer()
 
@@ -76,7 +81,12 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
         return
       }
 
-      ;({ handleLog: handleLogStrategy } = startLogsImpl(configuration, getCommonContext, mainLogger))
+      ;({ handleLog: handleLogStrategy, getInternalContext: hoistedGetInternalContext } = startLogsImpl(
+        configuration,
+        getCommonContext,
+        mainLogger
+      ))
+
       getInitConfigurationStrategy = () => deepClone(initConfiguration)
       beforeInitLoggerLog.drain()
 
@@ -105,6 +115,8 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
     getLogger: monitor((name: string) => customLoggers[name]),
 
     getInitConfiguration: monitor(() => getInitConfigurationStrategy()),
+
+    getInternalContext: monitor((startTime?: StartTime) => hoistedGetInternalContext(startTime)),
   })
 
   function overrideInitConfigurationForBridge<C extends InitConfiguration>(initConfiguration: C): C {

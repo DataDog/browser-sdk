@@ -20,6 +20,7 @@ import type { CommonContext } from '../rawLogsEvent.types'
 import { startLogsBatch } from '../transport/startLogsBatch'
 import { startLogsBridge } from '../transport/startLogsBridge'
 import type { Logger } from '../domain/logger'
+import { startInternalContext } from '../domain/internalContext'
 
 export function startLogs(configuration: LogsConfiguration, getCommonContext: () => CommonContext, mainLogger: Logger) {
   const lifeCycle = new LifeCycle()
@@ -59,8 +60,11 @@ export function startLogs(configuration: LogsConfiguration, getCommonContext: ()
     startLogsBridge(lifeCycle)
   }
 
+  const internalContext = startInternalContext(session)
+
   return {
     handleLog,
+    getInternalContext: internalContext.get,
   }
 }
 
