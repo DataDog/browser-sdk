@@ -416,6 +416,17 @@ export function addEventListeners<E extends Event>(
   }
 }
 
+export function elementMatches(element: Element & { msMatchesSelector?(selector: string): boolean }, selector: string) {
+  if (element.matches) {
+    return element.matches(selector)
+  }
+  // IE11 support
+  if (element.msMatchesSelector) {
+    return element.msMatchesSelector(selector)
+  }
+  return false
+}
+
 export function runOnReadyState(expectedReadyState: 'complete' | 'interactive', callback: () => void) {
   if (document.readyState === expectedReadyState || document.readyState === 'complete') {
     callback()

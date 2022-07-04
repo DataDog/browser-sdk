@@ -53,7 +53,7 @@ datadogRum.init({
 })
 ```
 
-The `trackInteractions` parameter enables the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
+The `trackInteractions` and `trackFrustrations` parameters enable the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
 
 ### CDN async
 
@@ -83,7 +83,7 @@ Add the generated code snippet to the head tag of every HTML page you want to mo
 </script>
 ```
 
-The `trackInteractions` parameter enables the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
+The `trackInteractions` and `trackFrustrations` parameters enable the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
 
 Early RUM API calls must be wrapped in the `DD_RUM.onReady()` callback. This ensures the code only gets executed once the SDK is properly loaded.
 
@@ -109,7 +109,7 @@ Add the generated code snippet to the head tag (in front of any other script tag
 </script>
 ```
 
-The `trackInteractions` parameter enables the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
+The `trackInteractions` and `trackFrustrations` parameters enable the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
 
 The `window.DD_RUM` check is used to prevent issues if a loading failure occurs with the RUM Browser SDK.
 
@@ -177,6 +177,12 @@ Allows you to control RUM views creation. See [override default RUM view names][
 **Default**: `false` <br/>
 Enables [automatic collection of users actions][6].
 
+`trackFrustrations`
+: Optional<br/>
+**Type**: Boolean<br/>
+**Default**: `false` <br/>
+Enables [automatic collection of user frustrations][20]. Implies `trackInteractions: true`.
+
 `defaultPrivacyLevel`
 : Optional<br/>
 **Type**: String<br/>
@@ -192,7 +198,7 @@ Specify your own attribute to be used to [name actions][9].
 : Optional<br/>
 **Type**: Number<br/>
 **Default**: `100`<br/>
-The percentage of sessions to track: `100` for all, `0` for none. Only tracked sessions send RUM events. For more details about `sampleRate`, see the [sampling configuration](#browser-rum-and-rum-premium-sampling-configuration).
+The percentage of sessions to track: `100` for all, `0` for none. Only tracked sessions send RUM events. For more details about `sampleRate`, see the [sampling configuration](#browser-and-browser-premium-sampling-configuration).
 
 `replaySampleRate`
 : Optional - **Deprecated**<br/>
@@ -204,7 +210,7 @@ See `premiumSampleRate`.
 : Optional<br/>
 **Type**: Number<br/>
 **Default**: `100`<br/>
-The percentage of tracked sessions with [Browser Premium pricing][11] features: `100` for all, `0` for none. For more details about `premiumSampleRate`, see the [sampling configuration](#browser-and-rum-premium-sampling-configuration).
+The percentage of tracked sessions with [Browser Premium pricing][11] features: `100` for all, `0` for none. For more details about `premiumSampleRate`, see the [sampling configuration](#browser-and-browser-premium-sampling-configuration).
 
 `silentMultipleInit`
 : Optional<br/>
@@ -336,8 +342,6 @@ A service is an independent, deployable code repository that maps to a set of pa
 - If your browser application was constructed as a monolith, your RUM application has one service name for the application.
 - If your browser application was constructed as separate repositories for multiple pages, edit the default service names throughout the lifecycle of your application.
 
-For more information, see Configuring Browser Services (link here).
-
 ## Further Reading
 
 {{< partial name="whats-next/whats-next.html" >}}
@@ -363,3 +367,4 @@ For more information, see Configuring Browser Services (link here).
 [17]: https://docs.datadoghq.com/real_user_monitoring/session_replay/
 [18]: https://docs.datadoghq.com/real_user_monitoring/session_replay/privacy_options
 [19]: https://docs.datadoghq.com/getting_started/tagging/using_tags
+[20]: https://docs.datadoghq.com/real_user_monitoring/frustration_signals/

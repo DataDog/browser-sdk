@@ -1,4 +1,6 @@
-export function createIsolatedDOM() {
+export type IsolatedDom = ReturnType<typeof createIsolatedDom>
+
+export function createIsolatedDom() {
   // Simply using a DOMParser does not fit here, because script tags created this way are
   // considered as normal markup, so they are not ignored when getting the textual content of the
   // target via innerText
@@ -9,11 +11,16 @@ export function createIsolatedDOM() {
   doc.write('<html><body></body></html>')
   doc.close()
 
+  function append(html: string) {
+    iframe.contentDocument!.body.innerHTML = html
+    return doc.querySelector('[target]') || doc.body.children[0]
+  }
+
   return {
     element(s: TemplateStringsArray) {
-      iframe.contentDocument!.body.innerHTML = s[0]
-      return doc.querySelector('[target]') || doc.body.children[0]
+      return append(s[0])
     },
+    append,
     clear() {
       iframe.parentNode!.removeChild(iframe)
     },

@@ -1,6 +1,5 @@
 import type { Configuration, InitConfiguration } from '@datadog/browser-core'
 import {
-  isExperimentalFeatureEnabled,
   assign,
   DefaultPrivacyLevel,
   display,
@@ -96,7 +95,7 @@ export function validateAndBuildRumConfiguration(
     return
   }
 
-  const trackFrustrations = isExperimentalFeatureEnabled('frustration-signals') && !!initConfiguration.trackFrustrations
+  const trackFrustrations = !!initConfiguration.trackFrustrations
 
   return assign(
     {
