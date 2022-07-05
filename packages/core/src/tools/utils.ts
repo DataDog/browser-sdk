@@ -650,16 +650,10 @@ export function requestIdleCallback(callback: () => void, opts?: { timeout?: num
   return () => window.cancelAnimationFrame(id)
 }
 
-export function setToArray<T>(set: Set<T>): T[] {
-  const array: T[] = []
-  set.forEach((item) => array.push(item))
-  return array
-}
-
 export function removeDuplicates<T>(array: T[]) {
   const set = new Set<T>()
   array.forEach((item) => set.add(item))
-  return setToArray(set)
+  return arrayFrom(set)
 }
 
 export function matchList(list: Array<string | RegExp>, value: string) {
