@@ -209,11 +209,21 @@ export function includes(candidate: string | unknown[], search: any) {
   return candidate.indexOf(search) !== -1
 }
 
-export function arrayFrom<T>(arrayLike: ArrayLike<T>): T[] {
-  const array = []
-  for (let i = 0; i < arrayLike.length; i++) {
-    array.push(arrayLike[i])
+export function arrayFrom<T>(arrayLike: ArrayLike<T> | Set<T>): T[] {
+  if (Array.from) {
+    return Array.from(arrayLike)
   }
+
+  const array = []
+
+  if (arrayLike instanceof Set) {
+    arrayLike.forEach((item) => array.push(item))
+  } else {
+    for (let i = 0; i < arrayLike.length; i++) {
+      array.push(arrayLike[i])
+    }
+  }
+
   return array
 }
 

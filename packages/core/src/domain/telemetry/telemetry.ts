@@ -1,7 +1,7 @@
 import type { Context } from '../../tools/context'
 import { ConsoleApiName } from '../../tools/display'
 import { toStackTraceString } from '../../tools/error'
-import { assign, combine, jsonStringify, performDraw, includes, startsWith } from '../../tools/utils'
+import { assign, combine, jsonStringify, performDraw, includes, startsWith, arrayFrom } from '../../tools/utils'
 import type { Configuration } from '../configuration'
 import { getExperimentalFeatures, INTAKE_SITE_STAGING, INTAKE_SITE_US1_FED } from '../configuration'
 import type { StackTrace } from '../tracekit'
@@ -80,7 +80,7 @@ export function startTelemetry(configuration: Configuration): Telemetry {
           format_version: 2 as const,
         },
         telemetry: event as any, // https://github.com/microsoft/TypeScript/issues/48457
-        experimental_features: getExperimentalFeatures(),
+        experimental_features: arrayFrom(getExperimentalFeatures()),
       },
       contextProvider !== undefined ? contextProvider() : {}
     )

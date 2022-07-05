@@ -1,5 +1,3 @@
-import { includes } from '../../tools/utils'
-
 /**
  * LIMITATION:
  * For NPM setup, this feature flag singleton is shared between RUM and Logs product.
@@ -7,7 +5,7 @@ import { includes } from '../../tools/utils'
  * So keep in mind that in certain configurations, your experimental feature flag may affect other products.
  */
 
-let enabledExperimentalFeatures: string[] = []
+let enabledExperimentalFeatures: Set<string>
 
 export function updateExperimentalFeatures(enabledFeatures: string[] | undefined): void {
   // Safely handle external data
@@ -15,21 +13,25 @@ export function updateExperimentalFeatures(enabledFeatures: string[] | undefined
     return
   }
 
+  if (!enabledExperimentalFeatures) {
+    enabledExperimentalFeatures = new Set(enabledFeatures)
+  }
+
   enabledFeatures
     .filter((flag) => typeof flag === 'string')
     .forEach((flag: string) => {
-      if (!includes(enabledExperimentalFeatures, flag)) enabledExperimentalFeatures.push(flag)
+      enabledExperimentalFeatures.add(flag)
     })
 }
 
 export function isExperimentalFeatureEnabled(featureName: string): boolean {
-  return includes(enabledExperimentalFeatures, featureName)
+  return !!enabledExperimentalFeatures && enabledExperimentalFeatures.has(featureName)
 }
 
 export function resetExperimentalFeatures(): void {
-  enabledExperimentalFeatures = []
+  enabledExperimentalFeatures = new Set()
 }
 
-export function getExperimentalFeatures(): string[] {
-  return enabledExperimentalFeatures
+export function getExperimentalFeatures(): Set<string> {
+  return enabledExperimentalFeatures || []
 }
