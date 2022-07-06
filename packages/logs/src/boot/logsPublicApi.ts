@@ -29,8 +29,6 @@ export type StartLogs = typeof startLogs
 
 type StartLogsResult = ReturnType<typeof startLogs>
 
-type StartTime = number | undefined
-
 export function makeLogsPublicApi(startLogsImpl: StartLogs) {
   let isAlreadyInitialized = false
 
@@ -114,7 +112,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
 
     getInitConfiguration: monitor(() => getInitConfigurationStrategy()),
 
-    getInternalContext: monitor((startTime?: StartTime) => getInternalContextStrategy(startTime)),
+    getInternalContext: monitor((startTime?: number | undefined) => getInternalContextStrategy(startTime)),
   })
 
   function overrideInitConfigurationForBridge<C extends InitConfiguration>(initConfiguration: C): C {
