@@ -1,6 +1,7 @@
 import type { Clock } from '../../test/specHelper'
 import { mockClock } from '../../test/specHelper'
 import {
+  arrayFrom,
   combine,
   cssEscape,
   deepClone,
@@ -592,5 +593,21 @@ describe('elementMatches', () => {
     const element = document.createElement('div')
     element.classList.add('bar')
     expect(elementMatches(element, '.foo')).toEqual(false)
+  })
+})
+
+describe('arrayFrom', () => {
+  it('should return an array from a Set', () => {
+    const set = new Set()
+    set.add('foo')
+
+    expect(arrayFrom(set)).toEqual(['foo'])
+  })
+
+  it('should return an array from a array like object', () => {
+    const div = document.createElement('div')
+    div.classList.add('foo')
+
+    expect(arrayFrom(div.classList)).toEqual(['foo'])
   })
 })
