@@ -1,7 +1,7 @@
 import type { StackTrace } from '@datadog/browser-core'
 import { callMonitored } from '../../tools/monitor'
 import type { Configuration } from '../configuration'
-import { INTAKE_SITE_US1, INTAKE_SITE_US1_FED } from '../configuration'
+import { updateExperimentalFeatures, INTAKE_SITE_US1, INTAKE_SITE_US1_FED } from '../configuration'
 import { resetTelemetry, startTelemetry, scrubCustomerFrames, formatError } from './telemetry'
 
 function startAndSpyTelemetry(configuration?: Partial<Configuration>) {
@@ -29,6 +29,16 @@ describe('telemetry', () => {
       throw new Error('message')
     })
     expect(notifySpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('should contains feature flags', () => {
+    updateExperimentalFeatures(['foo'])
+    const { notifySpy } = startAndSpyTelemetry()
+    callMonitored(() => {
+      throw new Error('message')
+    })
+
+    expect(notifySpy.calls.mostRecent().args[0].experimental_features).toEqual(['foo'])
   })
 
   describe('telemetry context', () => {

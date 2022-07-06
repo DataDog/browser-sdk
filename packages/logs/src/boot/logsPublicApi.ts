@@ -34,6 +34,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
 
   const globalContextManager = createContextManager()
   const customLoggers: { [name: string]: Logger | undefined } = {}
+  let getInternalContextStrategy: StartLogsResult['getInternalContext'] = () => undefined
 
   const beforeInitLoggerLog = new BoundedBuffer()
 
@@ -76,7 +77,12 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
         return
       }
 
-      ;({ handleLog: handleLogStrategy } = startLogsImpl(configuration, getCommonContext, mainLogger))
+      ;({ handleLog: handleLogStrategy, getInternalContext: getInternalContextStrategy } = startLogsImpl(
+        configuration,
+        getCommonContext,
+        mainLogger
+      ))
+
       getInitConfigurationStrategy = () => deepClone(initConfiguration)
       beforeInitLoggerLog.drain()
 
@@ -105,6 +111,8 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
     getLogger: monitor((name: string) => customLoggers[name]),
 
     getInitConfiguration: monitor(() => getInitConfigurationStrategy()),
+
+    getInternalContext: monitor((startTime?: number | undefined) => getInternalContextStrategy(startTime)),
   })
 
   function overrideInitConfigurationForBridge<C extends InitConfiguration>(initConfiguration: C): C {

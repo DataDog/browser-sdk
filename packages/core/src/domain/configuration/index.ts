@@ -10,5 +10,6 @@ export {
   isExperimentalFeatureEnabled,
   updateExperimentalFeatures,
   resetExperimentalFeatures,
+  getExperimentalFeatures,
 } from './experimentalFeatures'
 export * from './intakeSites'
