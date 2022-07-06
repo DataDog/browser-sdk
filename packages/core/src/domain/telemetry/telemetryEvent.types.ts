@@ -136,5 +136,9 @@ export interface CommonTelemetryProperties {
     id: string
     [k: string]: unknown
   }
+  /**
+   * Enabled experimental features
+   */
+  readonly experimental_features?: string[]
   [k: string]: unknown
 }
