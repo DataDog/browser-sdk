@@ -1,5 +1,14 @@
-import type { Context, EventRateLimiter, RawError, RelativeTime} from '@datadog/browser-core';
-import { willSyntheticsInjectRum , ErrorSource, combine, createEventRateLimiter, getRelativeTime } from '@datadog/browser-core'
+import type { Context, EventRateLimiter, RawError, RelativeTime } from '@datadog/browser-core'
+import {
+  getSyntheticsResultId,
+  getSyntheticsTestId,
+  addTelemetryDebug,
+  willSyntheticsInjectRum,
+  ErrorSource,
+  combine,
+  createEventRateLimiter,
+  getRelativeTime,
+} from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { LogsConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
@@ -71,11 +80,21 @@ interface BrowserWindow {
   DD_RUM_SYNTHETICS?: Rum
 }
 
+let logsSentBeforeRumInjectionTelemetryAdded = false
+
 export function getRUMInternalContext(startTime?: RelativeTime): Context | undefined {
   const browserWindow = window as BrowserWindow
 
   if (willSyntheticsInjectRum()) {
-    return getFromGlobal(browserWindow.DD_RUM_SYNTHETICS)
+    const context = getFromGlobal(browserWindow.DD_RUM_SYNTHETICS)
+    if (!context && !logsSentBeforeRumInjectionTelemetryAdded) {
+      logsSentBeforeRumInjectionTelemetryAdded = true
+      addTelemetryDebug('Logs sent before RUM is injected by the synthetics worker', {
+        testId: getSyntheticsTestId(),
+        resultId: getSyntheticsResultId(),
+      })
+    }
+    return context
   }
 
   return getFromGlobal(browserWindow.DD_RUM)
@@ -85,4 +104,8 @@ export function getRUMInternalContext(startTime?: RelativeTime): Context | undef
       return rum.getInternalContext(startTime)
     }
   }
+}
+
+export function resetRUMInternalContext() {
+  logsSentBeforeRumInjectionTelemetryAdded = false
 }

@@ -1,5 +1,6 @@
-import type { Context, TelemetryEvent} from '@datadog/browser-core';
-import { willSyntheticsInjectRum ,
+import type { Context, TelemetryEvent } from '@datadog/browser-core'
+import {
+  willSyntheticsInjectRum,
   areCookiesAuthorized,
   canUseEventBridge,
   getEventBridge,
