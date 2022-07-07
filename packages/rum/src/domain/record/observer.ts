@@ -40,14 +40,14 @@ const MOUSE_MOVE_OBSERVER_THRESHOLD = 50
 const SCROLL_OBSERVER_THRESHOLD = 100
 const VISUAL_VIEWPORT_OBSERVER_THRESHOLD = 200
 
-const eventIdByEventPointer = new WeakMap<Event, number>()
-let nextEventId = 0;
+const recordIds = new WeakMap<Event, number>()
+let nextId = 1;
 
 function getRecordIdForEvent(event: Event): number {
-  if (!eventIdByEventPointer.has(event)) {
-    eventIdByEventPointer.set(event, nextEventId++)
+  if (!recordIds.has(event)) {
+    recordIds.set(event, nextId++)
   }
-  return eventIdByEventPointer.get(event)!
+  return recordIds.get(event)!
 }
 
 type ListenerHandler = () => void
@@ -59,7 +59,7 @@ type MousemoveCallBack = (
 
 export type MutationCallBack = (m: MutationPayload) => void
 
-type MouseInteractionCallBack = (d: MouseInteraction) => void
+type MouseInteractionCallBack = (d: MouseInteraction & { recordId: number }) => void
 
 type ScrollCallback = (p: ScrollPosition) => void
 
@@ -183,8 +183,9 @@ function initMouseInteractionObserver(
       return
     }
     const { clientX, clientY } = isTouchEvent(event) ? event.changedTouches[0] : event
-    const position: MouseInteraction = {
+    const position: MouseInteraction & { recordId: number } = {
       id: getSerializedNodeId(target),
+      recordId: getRecordIdForEvent(event),
       type: eventTypeToMouseInteraction[event.type as keyof typeof eventTypeToMouseInteraction],
       x: clientX,
       y: clientY,

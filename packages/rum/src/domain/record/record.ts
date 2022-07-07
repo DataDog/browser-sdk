@@ -95,7 +95,10 @@ export function record(options: RecordOptions): RecordAPI {
     mediaInteractionCb: (p) =>
       emit(assembleIncrementalSnapshot<MediaInteractionData>(IncrementalSource.MediaInteraction, p)),
     mouseInteractionCb: (d) =>
-      emit(assembleIncrementalSnapshot<MouseInteractionData>(IncrementalSource.MouseInteraction, d)),
+      emit(assign(
+        { recordId: d.recordId },
+        assembleIncrementalSnapshot<MouseInteractionData>(IncrementalSource.MouseInteraction, d)
+      )),
     mousemoveCb: (positions, source) => emit(assembleIncrementalSnapshot<MousemoveData>(source, { positions })),
     mutationCb: (m) => emit(assembleIncrementalSnapshot<MutationData>(IncrementalSource.Mutation, m)),
     scrollCb: (p) => emit(assembleIncrementalSnapshot<ScrollData>(IncrementalSource.Scroll, p)),
