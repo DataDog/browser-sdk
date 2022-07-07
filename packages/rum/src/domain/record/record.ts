@@ -1,5 +1,6 @@
 import { assign, timeStampNow } from '@datadog/browser-core'
 import type { DefaultPrivacyLevel, TimeStamp } from '@datadog/browser-core'
+import type { LifeCycle } from '@datadog/browser-rum-core';
 import { getViewportDimension } from '@datadog/browser-rum-core'
 import type {
   IncrementalSnapshotRecord,
@@ -24,6 +25,7 @@ import { getVisualViewport, getScrollX, getScrollY } from './viewports'
 export interface RecordOptions {
   emit?: (record: Record) => void
   defaultPrivacyLevel: DefaultPrivacyLevel
+  lifeCycle: LifeCycle
 }
 
 export interface RecordAPI {
@@ -86,6 +88,7 @@ export function record(options: RecordOptions): RecordAPI {
   takeFullSnapshot()
 
   const stopObservers = initObservers({
+    lifeCycle: options.lifeCycle,
     mutationController,
     defaultPrivacyLevel: options.defaultPrivacyLevel,
     inputCb: (v) => emit(assembleIncrementalSnapshot<InputData>(IncrementalSource.Input, v)),
@@ -99,6 +102,11 @@ export function record(options: RecordOptions): RecordAPI {
     styleSheetRuleCb: (r) => emit(assembleIncrementalSnapshot<StyleSheetRuleData>(IncrementalSource.StyleSheetRule, r)),
     viewportResizeCb: (d) => emit(assembleIncrementalSnapshot<ViewportResizeData>(IncrementalSource.ViewportResize, d)),
 
+    frustrationCb: (data) => emit({
+      data: { frustrationType: data.frustrationType, recordIds: data.recordIds },
+      type: RecordType.FrustrationRecord,
+      timestamp: data.timestamp,
+    }),
     focusCb: (data) =>
       emit({
         data,

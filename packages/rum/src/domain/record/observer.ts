@@ -1,4 +1,4 @@
-import type { DefaultPrivacyLevel } from '@datadog/browser-core'
+import type { DefaultPrivacyLevel, TimeStamp } from '@datadog/browser-core'
 import {
   instrumentSetter,
   instrumentMethodAndCallOriginal,
@@ -10,7 +10,9 @@ import {
   addEventListener,
   noop,
 } from '@datadog/browser-core'
-import { initViewportObservable } from '@datadog/browser-rum-core'
+import type { LifeCycle, RumActionEventDomainContext} from '@datadog/browser-rum-core';
+import { initViewportObservable, LifeCycleEventType } from '@datadog/browser-rum-core'
+import { ActionType, FrustrationType, RumEventType } from 'packages/rum-core/src/rawRumEvent.types'
 import { NodePrivacyLevel } from '../../constants'
 import type {
   InputState,
@@ -23,11 +25,12 @@ import type {
   MediaInteraction,
   FocusRecord,
   VisualViewportRecord,
+  FrustrationRecord,
 } from '../../types'
 import { IncrementalSource, MediaInteractionType, MouseInteractionType } from '../../types'
 import { getNodePrivacyLevel, shouldMaskNode } from './privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from './serializationUtils'
-import { forEach, isTouchEvent } from './utils'
+import { forEach, getFrustrationFromAction, isTouchEvent } from './utils'
 import type { MutationController } from './mutationObserver'
 import { startMutationObserver } from './mutationObserver'
 
@@ -36,6 +39,16 @@ import { getVisualViewport, getScrollX, getScrollY, convertMouseEventToLayoutCoo
 const MOUSE_MOVE_OBSERVER_THRESHOLD = 50
 const SCROLL_OBSERVER_THRESHOLD = 100
 const VISUAL_VIEWPORT_OBSERVER_THRESHOLD = 200
+
+const eventIdByEventPointer = new WeakMap<Event, number>()
+let nextEventId = 0;
+
+function getRecordIdForEvent(event: Event): number {
+  if (!eventIdByEventPointer.has(event)) {
+    eventIdByEventPointer.set(event, nextEventId++)
+  }
+  return eventIdByEventPointer.get(event)!
+}
 
 type ListenerHandler = () => void
 
@@ -62,7 +75,10 @@ type FocusCallback = (data: FocusRecord['data']) => void
 
 type VisualViewportResizeCallback = (data: VisualViewportRecord['data']) => void
 
+type FrustrationCallback = (data: FrustrationRecord['data'] & { timestamp: TimeStamp }) => void
+
 interface ObserverParam {
+  lifeCycle: LifeCycle
   defaultPrivacyLevel: DefaultPrivacyLevel
   mutationController: MutationController
   mutationCb: MutationCallBack
@@ -74,7 +90,8 @@ interface ObserverParam {
   inputCb: InputCallback
   mediaInteractionCb: MediaInteractionCallback
   styleSheetRuleCb: StyleSheetRuleCallback
-  focusCb: FocusCallback
+  focusCb: FocusCallback,
+  frustrationCb: FrustrationCallback,
 }
 
 export function initObservers(o: ObserverParam): ListenerHandler {
@@ -88,6 +105,7 @@ export function initObservers(o: ObserverParam): ListenerHandler {
   const styleSheetObserver = initStyleSheetObserver(o.styleSheetRuleCb)
   const focusHandler = initFocusObserver(o.focusCb)
   const visualViewportResizeHandler = initVisualViewportResizeObserver(o.visualViewportResizeCb)
+  const frustartionHandler = initFrustrationObserver(o.lifeCycle, o.frustrationCb);
 
   return () => {
     mutationHandler()
@@ -100,6 +118,7 @@ export function initObservers(o: ObserverParam): ListenerHandler {
     styleSheetObserver()
     focusHandler()
     visualViewportResizeHandler()
+    frustartionHandler()
   }
 }
 
@@ -398,4 +417,23 @@ function initVisualViewportResizeObserver(cb: VisualViewportResizeCallback): Lis
     removeListener()
     cancelThrottle()
   }
+}
+
+function initFrustrationObserver(lifeCycle: LifeCycle, frustrationCb: FrustrationCallback): ListenerHandler {
+  return lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {
+    if (
+      data.rawRumEvent.type === RumEventType.ACTION
+      && data.rawRumEvent.action.type === ActionType.CLICK
+      && data.rawRumEvent.action.frustration?.type
+      && 'event' in data.domainContext
+      && data.domainContext.event
+    ) {
+      const frustrationType =  getFrustrationFromAction(data.rawRumEvent.action.frustration.type)
+      frustrationCb({
+        timestamp: data.rawRumEvent.date,
+        frustrationType,
+        recordIds: frustrationType === FrustrationType.RAGE_CLICK ? [] : [getRecordIdForEvent(data.domainContext.event)]
+      })
+    }
+  }).unsubscribe
 }
