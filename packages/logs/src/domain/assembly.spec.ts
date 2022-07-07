@@ -1,17 +1,19 @@
-import type { Context, RelativeTime, TimeStamp } from '@datadog/browser-core'
-import { ErrorSource, ONE_MINUTE, getTimeStamp, noop } from '@datadog/browser-core'
+import type { Context, RelativeTime, TelemetryEvent, TimeStamp } from '@datadog/browser-core'
+import { startTelemetry, ErrorSource, ONE_MINUTE, getTimeStamp, noop } from '@datadog/browser-core'
+import { cleanupSyntheticsWorkerValues, mockSyntheticsWorkerValues } from '../../../core/test/syntheticsWorkerValues'
 import type { LogsEvent } from '../logsEvent.types'
 import type { Clock } from '../../../core/test/specHelper'
 import { mockClock } from '../../../core/test/specHelper'
 import type { CommonContext } from '../rawLogsEvent.types'
-import { startLogsAssembly } from './assembly'
+import { getRUMInternalContext, resetRUMInternalContext, startLogsAssembly } from './assembly'
 import { validateAndBuildLogsConfiguration } from './configuration'
 import { Logger, StatusType } from './logger'
 import type { LogsSessionManager } from './logsSessionManager'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
+const initConfiguration = { clientToken: 'xxx', service: 'service' }
+
 describe('startLogsAssembly', () => {
-  const initConfiguration = { clientToken: 'xxx', service: 'service' }
   const SESSION_ID = 'session-id'
   const DEFAULT_MESSAGE = {
     status: StatusType.info,
@@ -399,6 +401,74 @@ describe('startLogsAssembly', () => {
       expect(serverLogs.length).toEqual(2)
       expect(serverLogs[0].message).toEqual('foo')
       expect(serverLogs[1].error!.origin).toEqual(ErrorSource.AGENT)
+    })
+  })
+})
+
+describe('getRUMInternalContext', () => {
+  afterEach(() => {
+    delete window.DD_RUM
+    delete window.DD_RUM_SYNTHETICS
+    resetRUMInternalContext()
+  })
+
+  it('returns undefined if no RUM instance is present', () => {
+    expect(getRUMInternalContext()).toBeUndefined()
+  })
+
+  it('returns undefined if the global variable does not have a `getInternalContext` method', () => {
+    window.DD_RUM = {} as any
+    expect(getRUMInternalContext()).toBeUndefined()
+  })
+
+  it('returns the internal context from the `getInternalContext` method', () => {
+    window.DD_RUM = {
+      getInternalContext: () => ({ foo: 'bar' }),
+    }
+    expect(getRUMInternalContext()).toEqual({ foo: 'bar' })
+  })
+
+  describe('when RUM is injected by Synthetics', () => {
+    let telemetrySpy: jasmine.Spy<(event: TelemetryEvent) => void>
+
+    beforeEach(() => {
+      mockSyntheticsWorkerValues({ injectsRum: true, publicId: 'test-id', resultId: 'result-id' })
+      const telemetry = startTelemetry(
+        validateAndBuildLogsConfiguration({ ...initConfiguration, telemetrySampleRate: 100 })!
+      )
+      telemetrySpy = jasmine.createSpy()
+      telemetry.observable.subscribe(telemetrySpy)
+    })
+
+    afterEach(() => {
+      cleanupSyntheticsWorkerValues()
+    })
+
+    it('uses the global variable created when the synthetics worker is injecting RUM', () => {
+      window.DD_RUM_SYNTHETICS = {
+        getInternalContext: () => ({ foo: 'bar' }),
+      }
+      expect(getRUMInternalContext()).toEqual({ foo: 'bar' })
+    })
+
+    it('adds a telemetry debug event when RUM has not been injected yet', () => {
+      getRUMInternalContext()
+      expect(telemetrySpy).toHaveBeenCalledOnceWith(
+        jasmine.objectContaining({
+          telemetry: {
+            message: 'Logs sent before RUM is injected by the synthetics worker',
+            status: 'debug',
+            testId: 'test-id',
+            resultId: 'result-id',
+          },
+        })
+      )
+    })
+
+    it('adds the telemetry debug event only once', () => {
+      getRUMInternalContext()
+      getRUMInternalContext()
+      expect(telemetrySpy).toHaveBeenCalledTimes(1)
     })
   })
 })
