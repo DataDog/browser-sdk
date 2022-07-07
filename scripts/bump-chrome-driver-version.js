@@ -38,11 +38,18 @@ async function main() {
 
   if (majorPackageVersion !== getMajor(driverVersion)) {
     printError(`No driver available for chrome ${packageVersion}.`)
-    process.exit(1)
+    process.exit()
   }
 
   const chromeVersionBranch = `bump-chrome-version-to-${driverVersion}`
   const commitMessage = `👷 Bump chrome to ${packageVersion}`
+
+  const isBranchAlreadyCreated = await executeCommand(`git ls-remote --heads ${REPOSITORY} ${chromeVersionBranch}`)
+  if (isBranchAlreadyCreated) {
+    printLog('Bump chrome branch already created.')
+    process.exit()
+  }
+
   await executeCommand(`git checkout -b ${chromeVersionBranch}`)
 
   printLog('Update versions...')
@@ -55,9 +62,12 @@ async function main() {
   await executeCommand(`git push origin ${chromeVersionBranch}`)
 
   printLog('Create PR...')
-  await createPullRequest()
 
+  const pullRequestUrl = await createPullRequest()
   printLog(`Chrome version bump PR created (from ${CURRENT_PACKAGE_VERSION} to ${packageVersion}).`)
+
+  // used to share the pull request url to the notification jobs
+  await executeCommand(`echo "BUMP_CHROME_PULL_REQUEST_URL=${pullRequestUrl}" >> build.env`)
 }
 
 async function getPackageVersion() {
@@ -85,7 +95,8 @@ function getMajor(version) {
 async function createPullRequest() {
   const githubAccessToken = await getSecretKey('ci.browser-sdk.github_access_token')
   await executeCommand(`echo "${githubAccessToken}" | gh auth login --with-token`)
-  await executeCommand(`gh pr create --fill --base ${MAIN_BRANCH}`)
+  const pullRequestUrl = await executeCommand(`gh pr create --fill --base ${MAIN_BRANCH}`)
+  return pullRequestUrl.trim()
 }
 
 main().catch(logAndExit)

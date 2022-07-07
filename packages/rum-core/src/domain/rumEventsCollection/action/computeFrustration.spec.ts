@@ -4,6 +4,8 @@ import type { Clock } from '../../../../../core/test/specHelper'
 import { mockClock } from '../../../../../core/test/specHelper'
 import type { FakeClick } from '../../../../test/createFakeClick'
 import { createFakeClick } from '../../../../test/createFakeClick'
+import type { IsolatedDom } from '../../../../test/createIsolatedDom'
+import { createIsolatedDom } from '../../../../test/createIsolatedDom'
 import { computeFrustration, isRage, isDead } from './computeFrustration'
 
 describe('computeFrustration', () => {
@@ -131,6 +133,16 @@ describe('isRage', () => {
 })
 
 describe('isDead', () => {
+  let isolatedDom: IsolatedDom
+
+  beforeEach(() => {
+    isolatedDom = createIsolatedDom()
+  })
+
+  afterEach(() => {
+    isolatedDom.clear()
+  })
+
   it('considers as dead when the click has no page activity', () => {
     expect(isDead(createFakeClick({ hasPageActivity: false }))).toBe(true)
   })
@@ -142,4 +154,26 @@ describe('isDead', () => {
   it('does not consider as dead when the click is related to an "input" event', () => {
     expect(isDead(createFakeClick({ hasPageActivity: false, userActivity: { input: true } }))).toBe(false)
   })
+
+  for (const { element, expected } of [
+    { element: '<input />', expected: false },
+    { element: '<textarea />', expected: false },
+    { element: '<input type="checkbox" />', expected: true },
+    { element: '<input type="password" />', expected: false },
+    { element: '<canvas  />', expected: false },
+    { element: '<a id="foo">Foo</a>', expected: true },
+    { element: '<a href="foo">Foo</a>', expected: false },
+    { element: '<a href="foo">Foo<span target>bar</span></a>', expected: false },
+  ]) {
+    it(`does not consider as dead when the click target is ${element}`, () => {
+      expect(
+        isDead(
+          createFakeClick({
+            hasPageActivity: false,
+            event: { target: isolatedDom.append(element) },
+          })
+        )
+      ).toBe(expected)
+    })
+  }
 })

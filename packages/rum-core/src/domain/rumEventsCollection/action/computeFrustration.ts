@@ -1,4 +1,4 @@
-import { ONE_SECOND } from '@datadog/browser-core'
+import { elementMatches, ONE_SECOND } from '@datadog/browser-core'
 import { FrustrationType } from '../../../rawRumEvent.types'
 import type { Click } from './trackClickActions'
 
@@ -47,6 +47,23 @@ export function isRage(clicks: Click[]) {
   return false
 }
 
+const DEAD_CLICK_EXCLUDE_SELECTOR =
+  // inputs that don't trigger a meaningful event like "input" when clicked, including textual
+  // inputs (using a negative selector is shorter here)
+  // eslint-disable-next-line max-len
+  'input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="range"]),' +
+  'textarea,' +
+  'select,' +
+  // canvas, as there is no good way to detect activity occurring on them
+  'canvas,' +
+  // links that are interactive (have an href attribute) or any of their descendants, as they can
+  // open a new tab or navigate to a hash without triggering a meaningful event
+  'a[href],' +
+  'a[href] *'
+
 export function isDead(click: Click) {
-  return !click.hasPageActivity && !click.getUserActivity().input
+  if (click.hasPageActivity || click.getUserActivity().input) {
+    return false
+  }
+  return !elementMatches(click.event.target, DEAD_CLICK_EXCLUDE_SELECTOR)
 }

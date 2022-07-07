@@ -14,7 +14,7 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables }) => ({
     path: path.resolve('./bundle'),
   },
   target: ['web', 'es5'],
-  devtool: mode === 'development' ? 'inline-source-map' : false,
+  devtool: mode === 'development' ? 'inline-source-map' : 'source-map',
   module: {
     rules: [
       {
