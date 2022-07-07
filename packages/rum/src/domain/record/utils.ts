@@ -1,4 +1,4 @@
-import { FrustrationType } from 'packages/rum-core/src/rawRumEvent.types'
+import { FrustrationType } from '@datadog/browser-rum-core'
 
 export function isTouchEvent(event: MouseEvent | TouchEvent): event is TouchEvent {
   return Boolean((event as TouchEvent).changedTouches)

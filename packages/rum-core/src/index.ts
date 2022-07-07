@@ -18,7 +18,7 @@ export {
   RumViewEventDomainContext,
   RumEventDomainContext,
 } from './domainContext.types'
-export { CommonContext, ReplayStats } from './rawRumEvent.types'
+export { CommonContext, ReplayStats, ActionType, RumEventType, FrustrationType } from './rawRumEvent.types'
 export { startRum } from './boot/startRum'
 export { LifeCycle, LifeCycleEventType } from './domain/lifeCycle'
 export { ViewCreatedEvent } from './domain/rumEventsCollection/view/trackViews'

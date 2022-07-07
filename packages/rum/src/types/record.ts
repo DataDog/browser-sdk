@@ -1,5 +1,5 @@
 import type { TimeStamp } from '@datadog/browser-core'
-import type { FrustrationType } from 'packages/rum-core/src/rawRumEvent.types'
+import type { FrustrationType } from '@datadog/browser-rum-core'
 import type { SerializedNodeWithId } from './serializedNode'
 
 export type Record =
