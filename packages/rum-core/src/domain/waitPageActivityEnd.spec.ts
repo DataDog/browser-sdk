@@ -83,6 +83,13 @@ describe('createPageActivityObservable', () => {
     expect(events).toEqual([])
   })
 
+  it('emits an activity event when `window.open` is used', () => {
+    spyOn(window, 'open')
+    setupBuilder.build()
+    window.open('toto')
+    expect(events).toEqual([{ isBusy: false }])
+  })
+
   it('stops emitting activities after calling stop()', () => {
     const { domMutationObservable } = setupBuilder.build()
     domMutationObservable.notify()

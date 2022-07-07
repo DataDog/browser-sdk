@@ -146,7 +146,12 @@ export function createPageActivityObservable(
       })
     )
 
-    return () => subscriptions.forEach((s) => s.unsubscribe())
+    const { stop: stopTrackingWindowOpen } = trackWindowOpen(notifyPageActivity)
+
+    return () => {
+      stopTrackingWindowOpen()
+      subscriptions.forEach((s) => s.unsubscribe())
+    }
 
     function notifyPageActivity() {
       observable.notify({ isBusy: pendingRequestsCount > 0 })
@@ -158,4 +163,8 @@ export function createPageActivityObservable(
 
 function isExcludedUrl(configuration: RumConfiguration, requestUrl: string): boolean {
   return matchList(configuration.excludedActivityUrls, requestUrl)
+}
+
+function trackWindowOpen(callback: () => void) {
+  return instrumentMethodAndCallOriginal(window, 'open', { before: callback })
 }
