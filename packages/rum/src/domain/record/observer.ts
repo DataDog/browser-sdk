@@ -10,7 +10,7 @@ import {
   addEventListener,
   noop,
 } from '@datadog/browser-core'
-import type { LifeCycle, RumActionEventDomainContext} from '@datadog/browser-rum-core';
+import type { LifeCycle } from '@datadog/browser-rum-core';
 import { initViewportObservable, LifeCycleEventType } from '@datadog/browser-rum-core'
 import { ActionType, FrustrationType, RumEventType } from 'packages/rum-core/src/rawRumEvent.types'
 import { NodePrivacyLevel } from '../../constants'
@@ -424,6 +424,7 @@ function initFrustrationObserver(lifeCycle: LifeCycle, frustrationCb: Frustratio
   return lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {
     if (
       data.rawRumEvent.type === RumEventType.ACTION
+      && 'action' in data.rawRumEvent
       && data.rawRumEvent.action.type === ActionType.CLICK
       && data.rawRumEvent.action.frustration?.type
       && 'event' in data.domainContext
