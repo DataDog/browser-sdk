@@ -89,7 +89,7 @@ export function httpRetry(
   }
 
   return {
-    send: retried,
+    retried,
   }
 }
 

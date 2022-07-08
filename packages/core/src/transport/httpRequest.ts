@@ -1,6 +1,8 @@
-import type { EndpointBuilder } from '../domain/configuration'
+import type { Configuration, EndpointBuilder } from '../domain/configuration'
 import { addTelemetryError } from '../domain/telemetry'
+import type { Observable } from '../tools/observable'
 import { addFailedSendBeacon } from './failedSendBeacon'
+import { httpRetry } from './httpRetry'
 
 /**
  * Use POST request without content type to:
@@ -11,11 +13,15 @@ import { addFailedSendBeacon } from './failedSendBeacon'
  * to be parsed correctly without content type header
  */
 export class HttpRequest {
-  constructor(private endpointBuilder: EndpointBuilder, private bytesLimit: number) {}
+  sendWithRetry: (data: string | FormData, bytesCount: number) => Observable<Response>
+
+  constructor(private endpointBuilder: EndpointBuilder, private configuration: Configuration) {
+    ;({ retried: this.sendWithRetry } = httpRetry(this.send, configuration))
+  }
 
   send(data: string | FormData, bytesCount: number, flushReason?: string) {
     const url = this.endpointBuilder.build()
-    const canUseBeacon = !!navigator.sendBeacon && bytesCount < this.bytesLimit
+    const canUseBeacon = !!navigator.sendBeacon && bytesCount < this.configuration.batchBytesLimit
     if (canUseBeacon) {
       try {
         const isQueued = navigator.sendBeacon(url, data)
