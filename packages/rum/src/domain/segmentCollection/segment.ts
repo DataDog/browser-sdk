@@ -71,7 +71,12 @@ export class Segment {
   }
 
   addRecord(record: Record): void {
-    this.metadata.end = record.timestamp
+    if (record.timestamp < this.metadata.start) {
+      this.metadata.start = record.timestamp
+    }
+    if (this.metadata.end < record.timestamp) {
+      this.metadata.end = record.timestamp
+    }
     this.metadata.records_count += 1
     replayStats.addRecord(this.metadata.view.id)
     this.metadata.has_full_snapshot ||= record.type === RecordType.FullSnapshot

@@ -39,7 +39,7 @@ export interface IncrementalSnapshotRecord {
   type: typeof RecordType.IncrementalSnapshot
   timestamp: TimeStamp
   data: IncrementalData
-  recordId?: number
+  id?: number
 }
 
 export interface FrustrationRecord {

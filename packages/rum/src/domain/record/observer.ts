@@ -1,4 +1,4 @@
-import type { DefaultPrivacyLevel, TimeStamp } from '@datadog/browser-core'
+import type { DefaultPrivacyLevel } from '@datadog/browser-core'
 import {
   instrumentSetter,
   instrumentMethodAndCallOriginal,
@@ -11,13 +11,7 @@ import {
   noop,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '@datadog/browser-rum-core'
-import {
-  initViewportObservable,
-  ActionType,
-  FrustrationType,
-  RumEventType,
-  LifeCycleEventType,
-} from '@datadog/browser-rum-core'
+import { initViewportObservable, ActionType, RumEventType, LifeCycleEventType } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel } from '../../constants'
 import type {
   InputState,
@@ -31,11 +25,13 @@ import type {
   FocusRecord,
   VisualViewportRecord,
   FrustrationRecord,
+  IncrementalSnapshotRecord,
+  MouseInteractionData,
 } from '../../types'
-import { IncrementalSource, MediaInteractionType, MouseInteractionType } from '../../types'
+import { RecordType, IncrementalSource, MediaInteractionType, MouseInteractionType } from '../../types'
 import { getNodePrivacyLevel, shouldMaskNode } from './privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from './serializationUtils'
-import { forEach, getFrustrationFromAction, isTouchEvent } from './utils'
+import { assembleIncrementalSnapshot, forEach, getFrustrationFromAction, isTouchEvent } from './utils'
 import type { MutationController } from './mutationObserver'
 import { startMutationObserver } from './mutationObserver'
 
@@ -64,7 +60,7 @@ type MousemoveCallBack = (
 
 export type MutationCallBack = (m: MutationPayload) => void
 
-type MouseInteractionCallBack = (d: MouseInteraction & { recordId: number }) => void
+type MouseInteractionCallBack = (record: IncrementalSnapshotRecord) => void
 
 type ScrollCallback = (p: ScrollPosition) => void
 
@@ -80,7 +76,7 @@ type FocusCallback = (data: FocusRecord['data']) => void
 
 type VisualViewportResizeCallback = (data: VisualViewportRecord['data']) => void
 
-type FrustrationCallback = (data: FrustrationRecord['data'] & { timestamp: TimeStamp }) => void
+type FrustrationCallback = (record: FrustrationRecord) => void
 
 interface ObserverParam {
   lifeCycle: LifeCycle
@@ -188,9 +184,8 @@ function initMouseInteractionObserver(
       return
     }
     const { clientX, clientY } = isTouchEvent(event) ? event.changedTouches[0] : event
-    const position: MouseInteraction & { recordId: number } = {
+    const position: MouseInteraction = {
       id: getSerializedNodeId(target),
-      recordId: getRecordIdForEvent(event),
       type: eventTypeToMouseInteraction[event.type as keyof typeof eventTypeToMouseInteraction],
       x: clientX,
       y: clientY,
@@ -200,7 +195,12 @@ function initMouseInteractionObserver(
       position.x = visualViewportX
       position.y = visualViewportY
     }
-    cb(position)
+
+    const record = assign(
+      { id: getRecordIdForEvent(event) },
+      assembleIncrementalSnapshot<MouseInteractionData>(IncrementalSource.MouseInteraction, position)
+    )
+    cb(record)
   }
   return addEventListeners(document, Object.keys(eventTypeToMouseInteraction) as DOM_EVENT[], handler, {
     capture: true,
@@ -437,9 +437,11 @@ function initFrustrationObserver(lifeCycle: LifeCycle, frustrationCb: Frustratio
       const frustrationType = getFrustrationFromAction(data.rawRumEvent.action.frustration.type)
       frustrationCb({
         timestamp: data.rawRumEvent.date,
-        frustrationType,
-        recordIds:
-          frustrationType === FrustrationType.RAGE_CLICK ? [] : [getRecordIdForEvent(data.domainContext.event)],
+        type: RecordType.FrustrationRecord,
+        data: {
+          frustrationType,
+          recordIds: [getRecordIdForEvent(data.domainContext.event)],
+        },
       })
     }
   }).unsubscribe

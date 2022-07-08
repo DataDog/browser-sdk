@@ -1,13 +1,10 @@
-import { assign, timeStampNow } from '@datadog/browser-core'
+import { timeStampNow } from '@datadog/browser-core'
 import type { DefaultPrivacyLevel, TimeStamp } from '@datadog/browser-core'
 import type { LifeCycle } from '@datadog/browser-rum-core'
 import { getViewportDimension } from '@datadog/browser-rum-core'
 import type {
-  IncrementalSnapshotRecord,
-  IncrementalData,
   InputData,
   MediaInteractionData,
-  MouseInteractionData,
   MousemoveData,
   MutationData,
   ScrollData,
@@ -21,6 +18,7 @@ import { initObservers } from './observer'
 
 import { MutationController } from './mutationObserver'
 import { getVisualViewport, getScrollX, getScrollY } from './viewports'
+import { assembleIncrementalSnapshot } from './utils'
 
 export interface RecordOptions {
   emit?: (record: Record) => void
@@ -94,25 +92,14 @@ export function record(options: RecordOptions): RecordAPI {
     inputCb: (v) => emit(assembleIncrementalSnapshot<InputData>(IncrementalSource.Input, v)),
     mediaInteractionCb: (p) =>
       emit(assembleIncrementalSnapshot<MediaInteractionData>(IncrementalSource.MediaInteraction, p)),
-    mouseInteractionCb: (d) =>
-      emit(
-        assign(
-          { recordId: d.recordId },
-          assembleIncrementalSnapshot<MouseInteractionData>(IncrementalSource.MouseInteraction, d)
-        )
-      ),
+    mouseInteractionCb: (mouseInteractionRecord) => emit(mouseInteractionRecord),
     mousemoveCb: (positions, source) => emit(assembleIncrementalSnapshot<MousemoveData>(source, { positions })),
     mutationCb: (m) => emit(assembleIncrementalSnapshot<MutationData>(IncrementalSource.Mutation, m)),
     scrollCb: (p) => emit(assembleIncrementalSnapshot<ScrollData>(IncrementalSource.Scroll, p)),
     styleSheetRuleCb: (r) => emit(assembleIncrementalSnapshot<StyleSheetRuleData>(IncrementalSource.StyleSheetRule, r)),
     viewportResizeCb: (d) => emit(assembleIncrementalSnapshot<ViewportResizeData>(IncrementalSource.ViewportResize, d)),
 
-    frustrationCb: (data) =>
-      emit({
-        data: { frustrationType: data.frustrationType, recordIds: data.recordIds },
-        type: RecordType.FrustrationRecord,
-        timestamp: data.timestamp,
-      }),
+    frustrationCb: (frustrationRecord) => emit(frustrationRecord),
     focusCb: (data) =>
       emit({
         data,
@@ -132,21 +119,5 @@ export function record(options: RecordOptions): RecordAPI {
     stop: stopObservers,
     takeFullSnapshot,
     flushMutations: () => mutationController.flush(),
-  }
-}
-
-function assembleIncrementalSnapshot<Data extends IncrementalData>(
-  source: Data['source'],
-  data: Omit<Data, 'source'>
-): IncrementalSnapshotRecord {
-  return {
-    data: assign(
-      {
-        source,
-      },
-      data
-    ) as Data,
-    type: RecordType.IncrementalSnapshot,
-    timestamp: timeStampNow(),
   }
 }
