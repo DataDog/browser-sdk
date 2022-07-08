@@ -43,8 +43,11 @@ export class Batch {
       this.upsertBuffer = {}
       this.bufferBytesCount = 0
       this.bufferMessagesCount = 0
-
-      this.request.send(messages.join('\n'), bytesCount, reason)
+      if (reason === 'visibility_hidden' || reason === 'before_unload') {
+        this.request.send(messages.join('\n'), bytesCount, reason)
+      } else {
+        this.request.sendWithRetry(messages.join('\n'), bytesCount)
+      }
     }
   }
 
