@@ -28,6 +28,12 @@ export function createTest(title: string) {
   return new TestBuilder(title)
 }
 
+interface TestOptions {
+  title: string
+  runner: TestRunner
+  setupOptions: SetupOptions
+}
+
 interface TestContext {
   baseUrl: string
   crossOriginUrl: string
@@ -92,31 +98,48 @@ class TestBuilder {
     return this
   }
 
+  focus() {
+    this.shouldFocus = true
+    return this
+  }
+
   run(runner: TestRunner) {
     const setups = this.setups.length ? this.setups : DEFAULT_SETUPS
 
-    const setupOptions: SetupOptions = {
-      body: this.body,
-      head: this.head,
-      logs: this.logsConfiguration,
-      rum: this.rumConfiguration,
-      rumInit: this.rumInit,
-      useRumSlim: false,
-      eventBridge: this.eventBridge,
+    const testOptions: TestOptions = {
+      title: this.title,
+      runner,
+      setupOptions: {
+        body: this.body,
+        head: this.head,
+        logs: this.logsConfiguration,
+        rum: this.rumConfiguration,
+        rumInit: this.rumInit,
+        useRumSlim: false,
+        eventBridge: this.eventBridge,
+      },
     }
 
     if (this.alsoRunWithRumSlim) {
       describe(this.title, () => {
-        declareTestsForSetups('rum', setups, setupOptions, runner)
         declareTestsForSetups(
-          'rum-slim',
-          setups.filter((setup) => setup.factory !== npmSetup),
-          { ...setupOptions, useRumSlim: true },
-          runner
+          {
+            ...testOptions,
+            title: 'rum',
+          },
+          setups
+        )
+        declareTestsForSetups(
+          {
+            ...testOptions,
+            title: 'rum-slim',
+            setupOptions: { ...testOptions.setupOptions, useRumSlim: true },
+          },
+          setups.filter((setup) => setup.factory !== npmSetup)
         )
       })
     } else {
-      declareTestsForSetups(this.title, setups, setupOptions, runner)
+      declareTestsForSetups(testOptions, setups)
     }
   }
 
@@ -130,24 +153,19 @@ interface ItResult {
 }
 declare function it(expectation: string, assertion?: jasmine.ImplementationCallback, timeout?: number): ItResult
 
-function declareTestsForSetups(
-  title: string,
-  setups: Array<{ factory: SetupFactory; name?: string }>,
-  setupOptions: SetupOptions,
-  runner: TestRunner
-) {
+function declareTestsForSetups(testOptions: TestOptions, setups: Array<{ factory: SetupFactory; name?: string }>) {
   if (setups.length > 1) {
-    describe(title, () => {
+    describe(testOptions.title, () => {
       for (const { name, factory } of setups) {
-        declareTest(name!, setupOptions, factory, runner)
+        declareTest({ ...testOptions, title: name! }, factory)
       }
     })
   } else {
-    declareTest(title, setupOptions, setups[0].factory, runner)
+    declareTest(testOptions, setups[0].factory)
   }
 }
 
-function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFactory, runner: TestRunner) {
+function declareTest({ title, setupOptions, runner }: TestOptions, factory: SetupFactory) {
   const spec = it(title, async () => {
     log(`Start '${spec.getFullName()}' in ${getBrowserName()}`)
     const servers = await getTestServers()
