@@ -30,6 +30,7 @@ export function createTest(title: string) {
 
 interface TestOptions {
   title: string
+  focus: boolean
   runner: TestRunner
   setupOptions: SetupOptions
 }
@@ -52,6 +53,7 @@ class TestBuilder {
   private body = ''
   private eventBridge = false
   private setups: Array<{ factory: SetupFactory; name?: string }> = []
+  private shouldFocus = false
 
   constructor(private title: string) {}
 
@@ -108,6 +110,7 @@ class TestBuilder {
 
     const testOptions: TestOptions = {
       title: this.title,
+      focus: this.shouldFocus,
       runner,
       setupOptions: {
         body: this.body,
@@ -152,6 +155,7 @@ interface ItResult {
   getFullName(): string
 }
 declare function it(expectation: string, assertion?: jasmine.ImplementationCallback, timeout?: number): ItResult
+declare function fit(expectation: string, assertion?: jasmine.ImplementationCallback, timeout?: number): ItResult
 
 function declareTestsForSetups(testOptions: TestOptions, setups: Array<{ factory: SetupFactory; name?: string }>) {
   if (setups.length > 1) {
@@ -165,8 +169,9 @@ function declareTestsForSetups(testOptions: TestOptions, setups: Array<{ factory
   }
 }
 
-function declareTest({ title, setupOptions, runner }: TestOptions, factory: SetupFactory) {
-  const spec = it(title, async () => {
+function declareTest({ focus, title, setupOptions, runner }: TestOptions, factory: SetupFactory) {
+  const testDeclarationFunction = focus ? fit : it
+  const spec = testDeclarationFunction(title, async () => {
     log(`Start '${spec.getFullName()}' in ${getBrowserName()}`)
     const servers = await getTestServers()
 
