@@ -1,5 +1,5 @@
 import type { Subscription, TimeoutId, TimeStamp } from '@datadog/browser-core'
-import { matchList, monitor, Observable, timeStampNow } from '@datadog/browser-core'
+import { instrumentMethodAndCallOriginal, matchList, monitor, Observable, timeStampNow } from '@datadog/browser-core'
 import type { RumConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
@@ -116,10 +116,10 @@ export function createPageActivityObservable(
     let pendingRequestsCount = 0
 
     subscriptions.push(
-      domMutationObservable.subscribe(() => notifyPageActivity(pendingRequestsCount)),
+      domMutationObservable.subscribe(notifyPageActivity),
       lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
         if (entries.some((entry) => entry.entryType === 'resource' && !isExcludedUrl(configuration, entry.name))) {
-          notifyPageActivity(pendingRequestsCount)
+          notifyPageActivity()
         }
       }),
       lifeCycle.subscribe(LifeCycleEventType.REQUEST_STARTED, (startEvent) => {
@@ -129,8 +129,8 @@ export function createPageActivityObservable(
         if (firstRequestIndex === undefined) {
           firstRequestIndex = startEvent.requestIndex
         }
-
-        notifyPageActivity(++pendingRequestsCount)
+        pendingRequestsCount += 1
+        notifyPageActivity()
       }),
       lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request) => {
         if (
@@ -141,20 +141,30 @@ export function createPageActivityObservable(
         ) {
           return
         }
-        notifyPageActivity(--pendingRequestsCount)
+        pendingRequestsCount -= 1
+        notifyPageActivity()
       })
     )
 
-    return () => subscriptions.forEach((s) => s.unsubscribe())
-  })
+    const { stop: stopTrackingWindowOpen } = trackWindowOpen(notifyPageActivity)
 
-  function notifyPageActivity(pendingRequestsCount: number) {
-    observable.notify({ isBusy: pendingRequestsCount > 0 })
-  }
+    return () => {
+      stopTrackingWindowOpen()
+      subscriptions.forEach((s) => s.unsubscribe())
+    }
+
+    function notifyPageActivity() {
+      observable.notify({ isBusy: pendingRequestsCount > 0 })
+    }
+  })
 
   return observable
 }
 
 function isExcludedUrl(configuration: RumConfiguration, requestUrl: string): boolean {
   return matchList(configuration.excludedActivityUrls, requestUrl)
+}
+
+function trackWindowOpen(callback: () => void) {
+  return instrumentMethodAndCallOriginal(window, 'open', { before: callback })
 }

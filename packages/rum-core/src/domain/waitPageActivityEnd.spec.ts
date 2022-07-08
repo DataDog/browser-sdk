@@ -74,23 +74,20 @@ describe('createPageActivityObservable', () => {
     expect(events).toEqual([{ isBusy: false }])
   })
 
-  it('emits an activity event on resource collected', () => {
-    const { lifeCycle } = setupBuilder.build()
-    const performanceTiming = {
-      entryType: 'resource',
-      name: EXCLUDED_FAKE_URL,
-    } as RumPerformanceResourceTiming
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [performanceTiming])
-    expect(events).toEqual([])
-  })
-
-  it('ignores resources that should be excluded by configuration', () => {
+  it('does not emit an activity event when a navigation occurs', () => {
     const { lifeCycle } = setupBuilder.build()
     const performanceTiming = {
       entryType: 'navigation',
     } as RumPerformanceNavigationTiming
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [performanceTiming])
     expect(events).toEqual([])
+  })
+
+  it('emits an activity event when `window.open` is used', () => {
+    spyOn(window, 'open')
+    setupBuilder.build()
+    window.open('toto')
+    expect(events).toEqual([{ isBusy: false }])
   })
 
   it('stops emitting activities after calling stop()', () => {
@@ -137,6 +134,16 @@ describe('createPageActivityObservable', () => {
     })
 
     describe('excludedActivityUrls', () => {
+      it('ignores resources that should be excluded by configuration', () => {
+        const { lifeCycle } = setupBuilder.build()
+        const performanceTiming = {
+          entryType: 'resource',
+          name: EXCLUDED_FAKE_URL,
+        } as RumPerformanceResourceTiming
+        lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [performanceTiming])
+        expect(events).toEqual([])
+      })
+
       it('ignores requests that should be excluded by configuration', () => {
         const { lifeCycle } = setupBuilder.build()
         lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, makeFakeRequestStartEvent(10, EXCLUDED_FAKE_URL))
