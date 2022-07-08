@@ -1,6 +1,6 @@
 import { assign, timeStampNow } from '@datadog/browser-core'
 import type { DefaultPrivacyLevel, TimeStamp } from '@datadog/browser-core'
-import type { LifeCycle } from '@datadog/browser-rum-core';
+import type { LifeCycle } from '@datadog/browser-rum-core'
 import { getViewportDimension } from '@datadog/browser-rum-core'
 import type {
   IncrementalSnapshotRecord,
@@ -95,21 +95,24 @@ export function record(options: RecordOptions): RecordAPI {
     mediaInteractionCb: (p) =>
       emit(assembleIncrementalSnapshot<MediaInteractionData>(IncrementalSource.MediaInteraction, p)),
     mouseInteractionCb: (d) =>
-      emit(assign(
-        { recordId: d.recordId },
-        assembleIncrementalSnapshot<MouseInteractionData>(IncrementalSource.MouseInteraction, d)
-      )),
+      emit(
+        assign(
+          { recordId: d.recordId },
+          assembleIncrementalSnapshot<MouseInteractionData>(IncrementalSource.MouseInteraction, d)
+        )
+      ),
     mousemoveCb: (positions, source) => emit(assembleIncrementalSnapshot<MousemoveData>(source, { positions })),
     mutationCb: (m) => emit(assembleIncrementalSnapshot<MutationData>(IncrementalSource.Mutation, m)),
     scrollCb: (p) => emit(assembleIncrementalSnapshot<ScrollData>(IncrementalSource.Scroll, p)),
     styleSheetRuleCb: (r) => emit(assembleIncrementalSnapshot<StyleSheetRuleData>(IncrementalSource.StyleSheetRule, r)),
     viewportResizeCb: (d) => emit(assembleIncrementalSnapshot<ViewportResizeData>(IncrementalSource.ViewportResize, d)),
 
-    frustrationCb: (data) => emit({
-      data: { frustrationType: data.frustrationType, recordIds: data.recordIds },
-      type: RecordType.FrustrationRecord,
-      timestamp: data.timestamp,
-    }),
+    frustrationCb: (data) =>
+      emit({
+        data: { frustrationType: data.frustrationType, recordIds: data.recordIds },
+        type: RecordType.FrustrationRecord,
+        timestamp: data.timestamp,
+      }),
     focusCb: (data) =>
       emit({
         data,

@@ -15,6 +15,6 @@ export function getFrustrationFromAction(frustrations: FrustrationType[]): Frust
   return frustrations.some((f) => f === FrustrationType.RAGE_CLICK)
     ? FrustrationType.RAGE_CLICK
     : frustrations.some((f) => f === FrustrationType.ERROR_CLICK)
-      ? FrustrationType.ERROR_CLICK
-      : FrustrationType.DEAD_CLICK
+    ? FrustrationType.ERROR_CLICK
+    : FrustrationType.DEAD_CLICK
 }

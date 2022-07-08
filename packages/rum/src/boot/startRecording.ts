@@ -19,7 +19,7 @@ export function startRecording(
   configuration: RumConfiguration,
   sessionManager: RumSessionManager,
   viewContexts: ViewContexts,
-  worker: DeflateWorker,
+  worker: DeflateWorker
 ) {
   if (isExperimentalFeatureEnabled('lower-batch-size')) {
     setSegmentBytesLimit(22 * ONE_KILO_BYTE)
@@ -42,7 +42,7 @@ export function startRecording(
   } = record({
     emit: addRecord,
     defaultPrivacyLevel: configuration.defaultPrivacyLevel,
-    lifeCycle
+    lifeCycle,
   })
 
   const { unsubscribe: unsubscribeViewEnded } = lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, () => {

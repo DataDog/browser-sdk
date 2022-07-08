@@ -199,7 +199,7 @@ describe('record', () => {
     recordApi = record({
       emit: emitSpy,
       defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
-      lifeCycle: new LifeCycle()
+      lifeCycle: new LifeCycle(),
     })
   }
 

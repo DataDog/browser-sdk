@@ -10,7 +10,7 @@ import {
   addEventListener,
   noop,
 } from '@datadog/browser-core'
-import type { LifeCycle} from '@datadog/browser-rum-core'
+import type { LifeCycle } from '@datadog/browser-rum-core'
 import {
   initViewportObservable,
   ActionType,
@@ -46,7 +46,7 @@ const SCROLL_OBSERVER_THRESHOLD = 100
 const VISUAL_VIEWPORT_OBSERVER_THRESHOLD = 200
 
 const recordIds = new WeakMap<Event, number>()
-let nextId = 1;
+let nextId = 1
 
 function getRecordIdForEvent(event: Event): number {
   if (!recordIds.has(event)) {
@@ -95,8 +95,8 @@ interface ObserverParam {
   inputCb: InputCallback
   mediaInteractionCb: MediaInteractionCallback
   styleSheetRuleCb: StyleSheetRuleCallback
-  focusCb: FocusCallback,
-  frustrationCb: FrustrationCallback,
+  focusCb: FocusCallback
+  frustrationCb: FrustrationCallback
 }
 
 export function initObservers(o: ObserverParam): ListenerHandler {
@@ -110,7 +110,7 @@ export function initObservers(o: ObserverParam): ListenerHandler {
   const styleSheetObserver = initStyleSheetObserver(o.styleSheetRuleCb)
   const focusHandler = initFocusObserver(o.focusCb)
   const visualViewportResizeHandler = initVisualViewportResizeObserver(o.visualViewportResizeCb)
-  const frustartionHandler = initFrustrationObserver(o.lifeCycle, o.frustrationCb);
+  const frustartionHandler = initFrustrationObserver(o.lifeCycle, o.frustrationCb)
 
   return () => {
     mutationHandler()
@@ -428,17 +428,18 @@ function initVisualViewportResizeObserver(cb: VisualViewportResizeCallback): Lis
 function initFrustrationObserver(lifeCycle: LifeCycle, frustrationCb: FrustrationCallback): ListenerHandler {
   return lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {
     if (
-      data.rawRumEvent.type === RumEventType.ACTION
-      && data.rawRumEvent.action.type === ActionType.CLICK
-      && data.rawRumEvent.action.frustration?.type
-      && 'event' in data.domainContext
-      && data.domainContext.event
+      data.rawRumEvent.type === RumEventType.ACTION &&
+      data.rawRumEvent.action.type === ActionType.CLICK &&
+      data.rawRumEvent.action.frustration?.type &&
+      'event' in data.domainContext &&
+      data.domainContext.event
     ) {
-      const frustrationType =  getFrustrationFromAction(data.rawRumEvent.action.frustration.type)
+      const frustrationType = getFrustrationFromAction(data.rawRumEvent.action.frustration.type)
       frustrationCb({
         timestamp: data.rawRumEvent.date,
         frustrationType,
-        recordIds: frustrationType === FrustrationType.RAGE_CLICK ? [] : [getRecordIdForEvent(data.domainContext.event)]
+        recordIds:
+          frustrationType === FrustrationType.RAGE_CLICK ? [] : [getRecordIdForEvent(data.domainContext.event)],
       })
     }
   }).unsubscribe

@@ -43,11 +43,11 @@ export interface IncrementalSnapshotRecord {
 }
 
 export interface FrustrationRecord {
-  type: typeof RecordType.FrustrationRecord,
-  timestamp: TimeStamp,
+  type: typeof RecordType.FrustrationRecord
+  timestamp: TimeStamp
   data: {
-    frustrationType: FrustrationType,
-    recordIds: number[],
+    frustrationType: FrustrationType
+    recordIds: number[]
   }
 }
 
