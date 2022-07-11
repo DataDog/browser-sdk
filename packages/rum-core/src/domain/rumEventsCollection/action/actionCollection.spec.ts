@@ -85,6 +85,7 @@ describe('actionCollection', () => {
     })
     expect(rawRumEvents[0].domainContext).toEqual({
       event,
+      eventsSequence: undefined,
     })
   })
 
