@@ -10,7 +10,7 @@ import {
   addEventListener,
   noop,
 } from '@datadog/browser-core'
-import type { LifeCycle } from '@datadog/browser-rum-core';
+import type { LifeCycle } from '@datadog/browser-rum-core'
 import {
   FrustrationType,
   initViewportObservable,
