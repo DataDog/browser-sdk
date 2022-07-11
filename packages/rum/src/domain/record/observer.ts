@@ -10,7 +10,7 @@ import {
   addEventListener,
   noop,
 } from '@datadog/browser-core'
-import type { LifeCycle } from '@datadog/browser-rum-core'
+import { FrustrationType, LifeCycle } from '@datadog/browser-rum-core'
 import { initViewportObservable, ActionType, RumEventType, LifeCycleEventType } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel } from '../../constants'
 import type {
@@ -440,7 +440,10 @@ function initFrustrationObserver(lifeCycle: LifeCycle, frustrationCb: Frustratio
         type: RecordType.FrustrationRecord,
         data: {
           frustrationType,
-          recordIds: [getRecordIdForEvent(data.domainContext.event)],
+          recordIds:
+            frustrationType === FrustrationType.RAGE_CLICK && data.domainContext.eventsSequence
+              ? data.domainContext.eventsSequence.map((e) => getRecordIdForEvent(e))
+              : [getRecordIdForEvent(data.domainContext.event)],
         },
       })
     }
