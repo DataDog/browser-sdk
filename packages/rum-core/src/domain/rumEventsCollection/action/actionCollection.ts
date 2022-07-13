@@ -101,7 +101,7 @@ function processAction(
     customerContext,
     rawRumEvent: actionEvent,
     startTime: action.startClocks.relative,
-    domainContext: isAutoAction(action) ? { event: action.event, eventsSequence: action.eventsSequence } : {},
+    domainContext: isAutoAction(action) ? { events: action.events } : {},
   }
 }
 

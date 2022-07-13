@@ -11,13 +11,7 @@ import {
   noop,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '@datadog/browser-rum-core'
-import {
-  FrustrationType,
-  initViewportObservable,
-  ActionType,
-  RumEventType,
-  LifeCycleEventType,
-} from '@datadog/browser-rum-core'
+import { initViewportObservable, ActionType, RumEventType, LifeCycleEventType } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel } from '../../constants'
 import type {
   InputState,
@@ -37,7 +31,7 @@ import type {
 import { RecordType, IncrementalSource, MediaInteractionType, MouseInteractionType } from '../../types'
 import { getNodePrivacyLevel, shouldMaskNode } from './privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from './serializationUtils'
-import { assembleIncrementalSnapshot, forEach, getFrustrationFromAction, isTouchEvent } from './utils'
+import { assembleIncrementalSnapshot, forEach, isTouchEvent } from './utils'
 import type { MutationController } from './mutationObserver'
 import { startMutationObserver } from './mutationObserver'
 
@@ -112,7 +106,7 @@ export function initObservers(o: ObserverParam): ListenerHandler {
   const styleSheetObserver = initStyleSheetObserver(o.styleSheetRuleCb)
   const focusHandler = initFocusObserver(o.focusCb)
   const visualViewportResizeHandler = initVisualViewportResizeObserver(o.visualViewportResizeCb)
-  const frustartionHandler = initFrustrationObserver(o.lifeCycle, o.frustrationCb)
+  const frustrationHandler = initFrustrationObserver(o.lifeCycle, o.frustrationCb)
 
   return () => {
     mutationHandler()
@@ -125,7 +119,7 @@ export function initObservers(o: ObserverParam): ListenerHandler {
     styleSheetObserver()
     focusHandler()
     visualViewportResizeHandler()
-    frustartionHandler()
+    frustrationHandler()
   }
 }
 
@@ -437,19 +431,15 @@ function initFrustrationObserver(lifeCycle: LifeCycle, frustrationCb: Frustratio
       data.rawRumEvent.type === RumEventType.ACTION &&
       data.rawRumEvent.action.type === ActionType.CLICK &&
       data.rawRumEvent.action.frustration?.type &&
-      'event' in data.domainContext &&
-      data.domainContext.event
+      'events' in data.domainContext &&
+      data.domainContext.events
     ) {
-      const frustrationType = getFrustrationFromAction(data.rawRumEvent.action.frustration.type)
       frustrationCb({
         timestamp: data.rawRumEvent.date,
         type: RecordType.FrustrationRecord,
         data: {
-          frustrationType,
-          recordIds:
-            frustrationType === FrustrationType.RAGE_CLICK && data.domainContext.eventsSequence
-              ? data.domainContext.eventsSequence.map((e) => getRecordIdForEvent(e))
-              : [getRecordIdForEvent(data.domainContext.event)],
+          frustrationTypes: data.rawRumEvent.action.frustration.type,
+          recordIds: data.domainContext.events.map((e) => getRecordIdForEvent(e)),
         },
       })
     }

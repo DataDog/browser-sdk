@@ -21,8 +21,7 @@ export interface RumViewEventDomainContext {
 }
 
 export interface RumActionEventDomainContext {
-  event?: Event
-  eventsSequence?: Event[]
+  events?: Event[]
 }
 
 export interface RumFetchResourceEventDomainContext {

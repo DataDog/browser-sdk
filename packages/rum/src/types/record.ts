@@ -46,7 +46,7 @@ export interface FrustrationRecord {
   type: typeof RecordType.FrustrationRecord
   timestamp: TimeStamp
   data: {
-    frustrationType: FrustrationType
+    frustrationTypes: FrustrationType[]
     recordIds: number[]
   }
 }

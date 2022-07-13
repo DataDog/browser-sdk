@@ -48,7 +48,7 @@ export interface ClickAction {
   counts: ActionCounts
   event: MouseEvent & { target: Element }
   frustrationTypes: FrustrationType[]
-  eventsSequence?: Event[]
+  events: Event[]
 }
 
 export interface ActionContexts {
@@ -248,7 +248,7 @@ function newClick(
 
     clone: () => newClick(lifeCycle, history, getUserActivity, base),
 
-    validate: (eventsSequence?: Event[]) => {
+    validate: (domEvents?: Event[]) => {
       stop()
       if (status !== ClickStatus.STOPPED) {
         return
@@ -268,7 +268,7 @@ function newClick(
             errorCount,
             longTaskCount,
           },
-          eventsSequence,
+          events: domEvents ?? [base.event],
         },
         base
       )

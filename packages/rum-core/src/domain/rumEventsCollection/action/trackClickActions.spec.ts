@@ -86,6 +86,7 @@ describe('trackClickActions', () => {
     emulateClickWithActivity(domMutationObservable, clock)
     expect(findActionId()).not.toBeUndefined()
     clock.tick(EXPIRE_DELAY)
+    const domEvent = createNewEvent('click', { target: document.createElement('button') })
     expect(events).toEqual([
       {
         counts: {
@@ -98,11 +99,11 @@ describe('trackClickActions', () => {
         name: 'Click me',
         startClocks: jasmine.any(Object),
         type: ActionType.CLICK,
-        event: createNewEvent('click', { target: document.createElement('button') }),
+        event: domEvent,
         frustrationTypes: [],
         target: undefined,
         position: undefined,
-        eventsSequence: undefined,
+        events: [domEvent],
       },
     ])
   })
@@ -337,7 +338,7 @@ describe('trackClickActions', () => {
         clock.tick(EXPIRE_DELAY)
         expect(events.length).toBe(1)
         expect(events[0].frustrationTypes).toEqual([FrustrationType.RAGE_CLICK])
-        expect(events[0].eventsSequence?.length).toBe(3)
+        expect(events[0].events?.length).toBe(3)
       })
 
       it('aggregates frustrationTypes from all clicks', () => {
