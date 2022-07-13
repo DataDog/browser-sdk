@@ -3,18 +3,13 @@ import { ErrorSource, ONE_MINUTE, display } from '@datadog/browser-core'
 import { createRumSessionManagerMock } from '../../test/mockRumSessionManager'
 import { createRawRumEvent } from '../../test/fixtures'
 import type { TestSetupBuilder } from '../../test/specHelper'
-import {
-  cleanupSyntheticsWorkerValues,
-  mockSyntheticsWorkerValues,
-  mockCiVisibilityWindowValues,
-  cleanupCiVisibilityWindowValues,
-  setup,
-} from '../../test/specHelper'
+import { mockCiVisibilityWindowValues, cleanupCiVisibilityWindowValues, setup } from '../../test/specHelper'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { CommonContext, RawRumActionEvent, RawRumErrorEvent, RawRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumActionEvent, RumErrorEvent, RumEvent } from '../rumEvent.types'
 import { initEventBridgeStub, deleteEventBridgeStub } from '../../../core/test/specHelper'
+import { cleanupSyntheticsWorkerValues, mockSyntheticsWorkerValues } from '../../../core/test/syntheticsWorkerValues'
 import { startRumAssembly } from './assembly'
 import type { LifeCycle, RawRumEventCollectedData } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'

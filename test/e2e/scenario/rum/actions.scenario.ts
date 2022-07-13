@@ -227,6 +227,35 @@ describe('action collection', () => {
       expect(actionEvents[0].action.frustration!.type).toEqual([])
     })
 
+  createTest('do not consider a click that open a new window as "dead_click"')
+    .withRum({ trackFrustrations: true })
+    .withBody(
+      html`
+        <button>click me</button>
+        <script>
+          const button = document.querySelector('button')
+          button.addEventListener('click', () => {
+            window.open('https://example.com')
+          })
+        </script>
+      `
+    )
+    .run(async ({ serverEvents }) => {
+      const windowHandle = await browser.getWindowHandle()
+      const button = await $('button')
+      await button.click()
+      // Ideally, we would close the newly created window. But on Safari desktop (at least), it is
+      // not possible to do so: calling `browser.closeWindow()` is failing with "no such window:
+      // unknown error". Instead, just switch back to the original window.
+      await browser.switchToWindow(windowHandle)
+
+      await flushEvents()
+      const actionEvents = serverEvents.rumActions
+
+      expect(actionEvents.length).toBe(1)
+      expect(actionEvents[0].action.frustration!.type).toEqual([])
+    })
+
   createTest('collect a "rage click"')
     .withRum({ trackFrustrations: true })
     .withBody(

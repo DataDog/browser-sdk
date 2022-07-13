@@ -1,5 +1,6 @@
 import type { Context, InitConfiguration, TimeStamp, RelativeTime } from '@datadog/browser-core'
 import {
+  willSyntheticsInjectRum,
   assign,
   BoundedBuffer,
   buildCookieOptions,
@@ -20,7 +21,6 @@ import type { ViewContexts } from '../domain/contexts/viewContexts'
 import type { RumSessionManager } from '../domain/rumSessionManager'
 import type { CommonContext, User, ReplayStats } from '../rawRumEvent.types'
 import { ActionType } from '../rawRumEvent.types'
-import { willSyntheticsInjectRum } from '../domain/contexts/syntheticsContext'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import { validateAndBuildRumConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/rumEventsCollection/view/trackViews'
