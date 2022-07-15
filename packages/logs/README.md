@@ -674,7 +674,7 @@ After the Datadog browser logs SDK is initialized, you can access the internal c
 ```
 getInternalContext (startTime?: 'number' | undefined)
 ```
-You can optionally use `startTime` parameter to get the context of a specific time. If not return the current context is parameter is omitted.
+You can optionally use `startTime` parameter to get the context of a specific time. If the parameter is omitted, the current context is returned.
 
 #### CDN async
 
