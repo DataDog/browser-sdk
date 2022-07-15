@@ -216,7 +216,7 @@ export function makeRumPublicApi(
     }),
 
     addUserAttribute: monitor((attribute, value) => {
-      userContextManager.add(attribute, value)
+      userContextManager.add(attribute, deepClone(value))
     }),
 
     removeUserAttribute: monitor((attribute) => {

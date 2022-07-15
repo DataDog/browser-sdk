@@ -525,7 +525,17 @@ describe('rum public api', () => {
       expect(userClone).toEqual({ ...user, address: addressAttribute })
     })
 
-    it('should override  attribute', () => {
+    it('should not contain original reference to object', () => {
+      const userDetails: { [key: string]: any } = { name: 'john' }
+      rumPublicApi.setUser(user)
+      rumPublicApi.addUserAttribute('userDetails', userDetails)
+      userDetails.DOB = '11/11/1999'
+      const userClone = rumPublicApi.getUser()
+
+      expect(userClone.userDetails).toEqual({ name: 'john' })
+    })
+
+    it('should override attribute', () => {
       rumPublicApi.setUser(user)
       rumPublicApi.addUserAttribute('foo', addressAttribute)
       const userClone = rumPublicApi.getUser()
