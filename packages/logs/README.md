@@ -669,7 +669,7 @@ window.DD_LOGS && DD_LOGS.logger.setHandler(['<HANDLER1>', '<HANDLER2>'])
 
 ### Access internal context
 
-After the Datadog browser logs SDK is initialized, you can access the internal context of the SDK. This will allow you to access the `session_id`.
+After the Datadog browser logs SDK is initialized, you can access the internal context of the SDK. This allows you to access the `session_id`.
 
 ```
 getInternalContext (startTime?: 'number' | undefined)
