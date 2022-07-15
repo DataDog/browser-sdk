@@ -1,4 +1,4 @@
-import type { RelativeTime, TimeStamp } from '@datadog/browser-core'
+import type { RelativeTime, TimeStamp, Context } from '@datadog/browser-core'
 import { ONE_SECOND, getTimeStamp, display, DefaultPrivacyLevel } from '@datadog/browser-core'
 import { cleanupSyntheticsWorkerValues, mockSyntheticsWorkerValues } from '../../../core/test/syntheticsWorkerValues'
 import { initEventBridgeStub, deleteEventBridgeStub } from '../../../core/test/specHelper'
@@ -452,6 +452,118 @@ describe('rum public api', () => {
       rumPublicApi.setUser(null as any)
       rumPublicApi.setUser(undefined as any)
       expect(displaySpy).toHaveBeenCalledTimes(3)
+    })
+  })
+
+  describe('getUser', () => {
+    let addActionSpy: jasmine.Spy<ReturnType<StartRum>['addAction']>
+    let rumPublicApi: RumPublicApi
+    let setupBuilder: TestSetupBuilder
+
+    beforeEach(() => {
+      addActionSpy = jasmine.createSpy()
+      rumPublicApi = makeRumPublicApi(
+        () => ({
+          ...noopStartRum(),
+          addAction: addActionSpy,
+        }),
+        noopRecorderApi
+      )
+      setupBuilder = setup()
+    })
+
+    afterEach(() => {
+      setupBuilder.cleanup()
+    })
+
+    it('should return empty object if no user has been set', () => {
+      const userClone = rumPublicApi.getUser()
+      expect(userClone).toEqual({})
+    })
+
+    it('should return a clone of the original object if set', () => {
+      const user = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
+      rumPublicApi.setUser(user)
+      const userClone = rumPublicApi.getUser()
+      const userClone2 = rumPublicApi.getUser()
+
+      expect(userClone).not.toBe(user)
+      expect(userClone).not.toBe(userClone2)
+      expect(userClone).toEqual(user)
+    })
+  })
+
+  describe('addUserAttribute', () => {
+    let addActionSpy: jasmine.Spy<ReturnType<StartRum>['addAction']>
+    let rumPublicApi: RumPublicApi
+    let setupBuilder: TestSetupBuilder
+
+    const user = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
+    const addressAttribute = { city: 'Paris' }
+
+    beforeEach(() => {
+      addActionSpy = jasmine.createSpy()
+      rumPublicApi = makeRumPublicApi(
+        () => ({
+          ...noopStartRum(),
+          addAction: addActionSpy,
+        }),
+        noopRecorderApi
+      )
+      setupBuilder = setup()
+    })
+
+    afterEach(() => {
+      setupBuilder.cleanup()
+    })
+
+    it('should add attribute', () => {
+      rumPublicApi.setUser(user)
+      rumPublicApi.addUserAttribute('address', addressAttribute)
+      const userClone = rumPublicApi.getUser()
+
+      expect(userClone).toEqual({ ...user, address: addressAttribute })
+    })
+
+    it('should override  attribute', () => {
+      rumPublicApi.setUser(user)
+      rumPublicApi.addUserAttribute('foo', addressAttribute)
+      const userClone = rumPublicApi.getUser()
+
+      expect(userClone).toEqual({ ...user, foo: addressAttribute })
+    })
+  })
+
+  describe('removeUserAttribute', () => {
+    let addActionSpy: jasmine.Spy<ReturnType<StartRum>['addAction']>
+    let rumPublicApi: RumPublicApi
+    let setupBuilder: TestSetupBuilder
+
+    const user: Context = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
+
+    beforeEach(() => {
+      addActionSpy = jasmine.createSpy()
+      rumPublicApi = makeRumPublicApi(
+        () => ({
+          ...noopStartRum(),
+          addAction: addActionSpy,
+        }),
+        noopRecorderApi
+      )
+      setupBuilder = setup()
+    })
+
+    afterEach(() => {
+      setupBuilder.cleanup()
+    })
+
+    it('should remove attribute', () => {
+      rumPublicApi.setUser(user)
+      rumPublicApi.removeUserAttribute('foo')
+      const userClone = rumPublicApi.getUser()
+      const newUser = { ...user }
+      delete newUser.foo
+      expect(userClone).toEqual(newUser)
     })
   })
 
