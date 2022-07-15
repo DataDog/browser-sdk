@@ -674,7 +674,18 @@ After the Datadog browser logs SDK is initialized, you can access the internal c
 ```
 getInternalContext (startTime?: 'number' | undefined)
 ```
+
 You can optionally use `startTime` parameter to get the context of a specific time. If the parameter is omitted, the current context is returned.
+
+##### NPM
+
+For NPM, use:
+
+```javascript
+import { datadogLogs } from '@datadog/browser-logs'
+
+datadogLogs.getInternalContext() // { session_id: "xxxx-xxxx-xxxx-xxxx" }
+```
 
 #### CDN async
 
