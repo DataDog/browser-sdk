@@ -56,7 +56,7 @@ export function makeRumPublicApi(
   let isAlreadyInitialized = false
 
   const globalContextManager = createContextManager()
-  let user: User = {}
+  const userContextManager = createContextManager()
 
   let getInternalContextStrategy: StartRumResult['getInternalContext'] = () => undefined
   let getInitConfigurationStrategy = (): InitConfiguration | undefined => undefined
@@ -78,7 +78,7 @@ export function makeRumPublicApi(
   function clonedCommonContext(): CommonContext {
     return deepClone({
       context: globalContextManager.get(),
-      user: user as Context,
+      user: userContextManager.get(),
     })
   }
 
@@ -129,7 +129,7 @@ export function makeRumPublicApi(
     const startRumResults = startRumImpl(
       configuration,
       () => ({
-        user,
+        user: userContextManager.get(),
         context: globalContextManager.get(),
         hasReplay: recorderApi.isRecording() ? true : undefined,
       }),
@@ -203,14 +203,24 @@ export function makeRumPublicApi(
     setUser: monitor((newUser: User) => {
       const sanitizedUser = sanitizeUser(newUser)
       if (sanitizedUser) {
-        user = sanitizedUser
+        userContextManager.set(sanitizedUser)
       } else {
         display.error('Unsupported user:', newUser)
       }
     }),
 
+    getUser: monitor(() => deepClone(userContextManager.get())),
+
     removeUser: monitor(() => {
-      user = {}
+      userContextManager.set({})
+    }),
+
+    addUserAttribute: monitor((attribute, value) => {
+      userContextManager.add(attribute, value)
+    }),
+
+    removeUserAttribute: monitor((attribute) => {
+      userContextManager.remove(attribute)
     }),
 
     startView,
