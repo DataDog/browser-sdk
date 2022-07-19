@@ -1,5 +1,5 @@
 import type { Observable, TelemetryEvent } from '@datadog/browser-core'
-import { startTelemetry, canUseEventBridge, getEventBridge, startFlushFailedSendBeacons } from '@datadog/browser-core'
+import { startTelemetry, canUseEventBridge, getEventBridge } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { startPerformanceCollection } from '../browser/performanceCollection'
 import { startRumAssembly } from '../domain/assembly'
@@ -85,7 +85,6 @@ export function startRum(
 
   startRequestCollection(lifeCycle, configuration, session)
   startPerformanceCollection(lifeCycle, configuration)
-  startFlushFailedSendBeacons()
 
   const internalContext = startInternalContext(
     configuration.applicationId,
