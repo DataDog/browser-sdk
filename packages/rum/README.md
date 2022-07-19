@@ -148,7 +148,7 @@ A [Datadog client token][5].
 : Required<br/>
 **Type**: String<br/>
 **Default**: `datadoghq.com`<br/>
-[The Datadog site of your organization][14].
+[The Datadog site parameter of your organization][14].
 
 `service`
 : Optional<br/>
