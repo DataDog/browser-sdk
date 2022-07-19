@@ -470,8 +470,8 @@ Error: foo
 
   it('should parse Chrome closureScript errors', () => {
     const stack = `Error: RTE Simulation
-    at day8$curves$events$handler_COLON_simulate_exception (events.cljs:1060:12)
-    at re_frame$std_interceptors$fx_handler__GT_interceptor_$_fx_handler_before (std_interceptors.cljc:128:19)
+    at foo$bar$oof$rab (events.cljs:1060:12)
+    at func1$func2$func3$func4 (std_interceptors.cljc:128:19)
     at eval (std_interceptors.cljc:132:29)`
 
     const stackFrames = computeStackTrace({ stack } as Error)
@@ -479,14 +479,14 @@ Error: foo
     expect(stackFrames.stack[0]).toEqual({
       args: [],
       column: 12,
-      func: 'day8$curves$events$handler_COLON_simulate_exception',
+      func: 'foo$bar$oof$rab',
       line: 1060,
       url: 'events.cljs',
     })
     expect(stackFrames.stack[1]).toEqual({
       args: [],
       column: 19,
-      func: 're_frame$std_interceptors$fx_handler__GT_interceptor_$_fx_handler_before',
+      func: 'func1$func2$func3$func4',
       line: 128,
       url: 'std_interceptors.cljc',
     })
