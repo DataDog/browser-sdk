@@ -468,6 +468,60 @@ Error: foo
     })
   })
 
+  it('should parse Chrome closureScript errors', () => {
+    const stack = `Error: RTE Simulation
+    at day8$curves$events$handler_COLON_simulate_exception (events.cljs:1060:12)
+    at re_frame$std_interceptors$fx_handler__GT_interceptor_$_fx_handler_before (std_interceptors.cljc:128:19)
+    at eval (std_interceptors.cljc:132:29)`
+
+    const stackFrames = computeStackTrace({ stack } as Error)
+    expect(stackFrames.stack.length).toEqual(3)
+    expect(stackFrames.stack[0]).toEqual({
+      args: [],
+      column: 12,
+      func: 'day8$curves$events$handler_COLON_simulate_exception',
+      line: 1060,
+      url: 'events.cljs',
+    })
+    expect(stackFrames.stack[1]).toEqual({
+      args: [],
+      column: 19,
+      func: 're_frame$std_interceptors$fx_handler__GT_interceptor_$_fx_handler_before',
+      line: 128,
+      url: 'std_interceptors.cljc',
+    })
+    expect(stackFrames.stack[2]).toEqual({
+      args: [],
+      column: 29,
+      func: 'eval',
+      line: 132,
+      url: 'std_interceptors.cljc',
+    })
+  })
+
+  it('should parse Chrome anonymous function errors', () => {
+    const stack = `Error: RTE Simulation
+    at https://datadoghq.com/somefile.js:8489:191
+    at chrome-extension://<id>/content/index.js:85:37379`
+
+    const stackFrames = computeStackTrace({ stack } as Error)
+    expect(stackFrames.stack.length).toEqual(2)
+    expect(stackFrames.stack[0]).toEqual({
+      args: [],
+      column: 191,
+      func: '?',
+      line: 8489,
+      url: 'https://datadoghq.com/somefile.js',
+    })
+    expect(stackFrames.stack[1]).toEqual({
+      args: [],
+      column: 37379,
+      func: '?',
+      line: 85,
+      url: 'chrome-extension://<id>/content/index.js',
+    })
+  })
+
   it('should parse Chrome 15 error', () => {
     const stackFrames = computeStackTrace(CapturedExceptions.CHROME_15 as any)
 
