@@ -677,12 +677,12 @@ describe('recorder', () => {
         const { segment } = serverEvents.sessionReplay[0]
 
         const clickRecords = findMouseInteractionRecords(segment.data, MouseInteractionType.Click)
-        const frustrations = findAllFrustrationRecords(segment.data)
+        const frustrationRecords = findAllFrustrationRecords(segment.data)
 
         expect(clickRecords.length).toBe(1)
         expect(clickRecords[0].id).toBeTruthy('mouse ineraction record should have an id')
-        expect(frustrations.length).toBe(1)
-        expect(frustrations[0].data).toEqual({
+        expect(frustrationRecords.length).toBe(1)
+        expect(frustrationRecords[0].data).toEqual({
           frustrationTypes: [FrustrationType.DEAD_CLICK],
           recordIds: [clickRecords[0].id!],
         })
@@ -710,11 +710,11 @@ describe('recorder', () => {
         const { segment } = serverEvents.sessionReplay[0]
 
         const clickRecords = findMouseInteractionRecords(segment.data, MouseInteractionType.Click)
-        const frustrations = findAllFrustrationRecords(segment.data)
+        const frustrationRecords = findAllFrustrationRecords(segment.data)
 
         expect(clickRecords.length).toBe(4)
-        expect(frustrations.length).toBe(1)
-        expect(frustrations[0].data).toEqual({
+        expect(frustrationRecords.length).toBe(1)
+        expect(frustrationRecords[0].data).toEqual({
           frustrationTypes: [FrustrationType.RAGE_CLICK],
           recordIds: clickRecords.map((r) => r.id!),
         })
