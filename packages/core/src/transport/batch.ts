@@ -34,7 +34,7 @@ export class Batch {
     this.addOrUpdate(message, key)
   }
 
-  flush(reason?: string) {
+  flush() {
     if (this.bufferMessagesCount !== 0) {
       const messages = this.pushOnlyBuffer.concat(objectValues(this.upsertBuffer))
       const bytesCount = this.bufferBytesCount
@@ -44,7 +44,7 @@ export class Batch {
       this.bufferBytesCount = 0
       this.bufferMessagesCount = 0
 
-      this.request.send(messages.join('\n'), bytesCount, reason)
+      this.request.send(messages.join('\n'), bytesCount)
     }
   }
 
@@ -73,12 +73,12 @@ export class Batch {
       this.remove(key)
     }
     if (this.willReachedBytesLimitWith(messageBytesCount)) {
-      this.flush('batch_bytes_limit')
+      this.flush()
     }
 
     this.push(processedMessage, messageBytesCount, key)
     if (this.isFull()) {
-      this.flush('batch_messages_limit')
+      this.flush()
     }
   }
 
@@ -129,7 +129,7 @@ export class Batch {
   private flushPeriodically() {
     setTimeout(
       monitor(() => {
-        this.flush('batch_flush_timeout')
+        this.flush()
         this.flushPeriodically()
       }),
       this.flushTimeout
@@ -155,7 +155,7 @@ export class Batch {
        */
       addEventListener(document, DOM_EVENT.VISIBILITY_CHANGE, () => {
         if (document.visibilityState === 'hidden') {
-          this.flush('visibility_hidden')
+          this.flush()
         }
       })
       /**
@@ -163,7 +163,7 @@ export class Batch {
        * - a visibility change during doc unload (cf: https://bugs.webkit.org/show_bug.cgi?id=194897)
        * - a page hide transition (cf: https://bugs.webkit.org/show_bug.cgi?id=188329)
        */
-      addEventListener(window, DOM_EVENT.BEFORE_UNLOAD, () => this.flush('before_unload'))
+      addEventListener(window, DOM_EVENT.BEFORE_UNLOAD, () => this.flush())
     }
   }
 }
