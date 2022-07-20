@@ -289,6 +289,10 @@ export function startsWith(candidate: string, search: string) {
   return candidate.slice(0, search.length) === search
 }
 
+export function endsWith(candidate: string, search: string) {
+  return candidate.slice(-search.length) === search
+}
+
 /**
  * inspired by https://mathiasbynens.be/notes/globalthis
  */
