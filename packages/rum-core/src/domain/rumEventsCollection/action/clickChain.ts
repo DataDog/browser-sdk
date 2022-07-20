@@ -1,8 +1,7 @@
-import { monitor, ONE_SECOND, timeStampNow } from '@datadog/browser-core'
-import { FrustrationType } from '../../../rawRumEvent.types'
+import { monitor, ONE_SECOND } from '@datadog/browser-core'
 import type { Click } from './trackClickActions'
 
-export interface RageClickChain {
+export interface ClickChain {
   tryAppend: (click: Click) => boolean
   stop: () => void
 }
@@ -10,17 +9,16 @@ export interface RageClickChain {
 export const MAX_DURATION_BETWEEN_CLICKS = ONE_SECOND
 export const MAX_DISTANCE_BETWEEN_CLICKS = 100
 
-const enum RageClickChainStatus {
+const enum ClickChainStatus {
   WaitingForMoreClicks,
   WaitingForClicksToStop,
   Finalized,
 }
 
-export function createRageClickChain(firstClick: Click): RageClickChain {
+export function createClickChain(firstClick: Click, onFinalize: (clicks: Click[]) => void): ClickChain {
   const bufferedClicks: Click[] = []
-  let status = RageClickChainStatus.WaitingForMoreClicks
+  let status = ClickChainStatus.WaitingForMoreClicks
   let maxDurationBetweenClicksTimeout: number | undefined
-  const rageClick = firstClick.clone()
   appendClick(firstClick)
 
   function appendClick(click: Click) {
@@ -31,23 +29,23 @@ export function createRageClickChain(firstClick: Click): RageClickChain {
   }
 
   function tryFinalize() {
-    if (status === RageClickChainStatus.WaitingForClicksToStop && bufferedClicks.every((click) => click.isStopped())) {
-      status = RageClickChainStatus.Finalized
-      finalizeClicks(bufferedClicks, rageClick)
+    if (status === ClickChainStatus.WaitingForClicksToStop && bufferedClicks.every((click) => click.isStopped())) {
+      status = ClickChainStatus.Finalized
+      onFinalize(bufferedClicks)
     }
   }
 
   function dontAcceptMoreClick() {
     clearTimeout(maxDurationBetweenClicksTimeout)
-    if (status === RageClickChainStatus.WaitingForMoreClicks) {
-      status = RageClickChainStatus.WaitingForClicksToStop
+    if (status === ClickChainStatus.WaitingForMoreClicks) {
+      status = ClickChainStatus.WaitingForClicksToStop
       tryFinalize()
     }
   }
 
   return {
     tryAppend: (click) => {
-      if (status !== RageClickChainStatus.WaitingForMoreClicks) {
+      if (status !== ClickChainStatus.WaitingForMoreClicks) {
         return false
       }
 
@@ -81,35 +79,4 @@ function areEventsSimilar(first: MouseEvent, second: MouseEvent) {
 
 function mouseEventDistance(origin: MouseEvent, other: MouseEvent) {
   return Math.sqrt(Math.pow(origin.clientX - other.clientX, 2) + Math.pow(origin.clientY - other.clientY, 2))
-}
-
-function finalizeClicks(clicks: Click[], rageClick: Click) {
-  if (isRage(clicks)) {
-    clicks.forEach((click) => {
-      click.discard()
-      click.getFrustrations().forEach((frustration) => {
-        rageClick.addFrustration(frustration)
-      })
-    })
-    rageClick.addFrustration(FrustrationType.RAGE_CLICK)
-    rageClick.validate(timeStampNow())
-  } else {
-    rageClick.discard()
-    clicks.forEach((click) => click.validate())
-  }
-}
-
-const MIN_CLICKS_PER_SECOND_TO_CONSIDER_RAGE = 3
-
-export function isRage(clicks: Click[]) {
-  // TODO: this condition should be improved to avoid reporting 3-click selection as rage click
-  for (let i = 0; i < clicks.length - (MIN_CLICKS_PER_SECOND_TO_CONSIDER_RAGE - 1); i += 1) {
-    if (
-      clicks[i + MIN_CLICKS_PER_SECOND_TO_CONSIDER_RAGE - 1].event.timeStamp - clicks[i].event.timeStamp <=
-      ONE_SECOND
-    ) {
-      return true
-    }
-  }
-  return false
 }

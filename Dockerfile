@@ -64,7 +64,7 @@ RUN apt-get -y install procps
 
 # Woke
 RUN curl -sSfL https://git.io/getwoke | \
-  bash -s -- -b /usr/local/bin
+  bash -s -- -b /usr/local/bin v0.17.1
 
 # Codecov https://docs.codecov.com/docs/codecov-uploader
 RUN apt-get -y install gnupg coreutils

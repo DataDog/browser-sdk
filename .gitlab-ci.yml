@@ -1,13 +1,13 @@
 variables:
-  CURRENT_STAGING: staging-26
+  CURRENT_STAGING: staging-30
   APP: 'browser-sdk'
-  CURRENT_CI_IMAGE: 31
+  CURRENT_CI_IMAGE: 32
   BUILD_STABLE_REGISTRY: '486234852809.dkr.ecr.us-east-1.amazonaws.com'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
   MAIN_BRANCH: 'main'
-  CHROME_PACKAGE_VERSION: 99.0.4844.51-1
-  CHROME_DRIVER_VERSION: 99.0.4844.51
+  CHROME_PACKAGE_VERSION: 103.0.5060.53-1
+  CHROME_DRIVER_VERSION: 103.0.5060.53
 
 cache:
   key: dependencies
@@ -226,9 +226,11 @@ deploy-staging:
     - .base-configuration
     - .staging
   script:
+    - export BUILD_MODE=canary
     - yarn
-    - BUILD_MODE=canary yarn build:bundle
+    - yarn build:bundle
     - ./scripts/deploy.sh staging staging
+    - node ./scripts/upload-source-maps.js datad0g.com,datadoghq.com staging
 
 deploy-prod-canary:
   stage: deploy:canary
@@ -236,9 +238,11 @@ deploy-prod-canary:
     - .base-configuration
     - .main
   script:
+    - export BUILD_MODE=canary
     - yarn
-    - BUILD_MODE=canary yarn build:bundle
+    - yarn build:bundle
     - ./scripts/deploy.sh prod canary
+    - node ./scripts/upload-source-maps.js datadoghq.com canary
 
 deploy-prod-stable:
   stage: deploy
@@ -248,10 +252,12 @@ deploy-prod-stable:
   when: manual
   allow_failure: false
   script:
-    - yarn
-    - BUILD_MODE=release yarn build:bundle
+    - export BUILD_MODE=release
     - VERSION=$(node -p -e "require('./lerna.json').version")
+    - yarn
+    - yarn build:bundle
     - ./scripts/deploy.sh prod v${VERSION%%.*}
+    - node ./scripts/upload-source-maps.js datadoghq.com,datadoghq.eu,us3.datadoghq.com,us5.datadoghq.com v${VERSION%%.*}
 
 ########################################################################################################################
 # Notify
@@ -428,15 +434,22 @@ bump-chrome-version-scheduled:
     - eval $(ssh-agent -s)
   script:
     - node scripts/bump-chrome-driver-version.js
+  artifacts:
+    reports:
+      dotenv: build.env
 
 bump-chrome-version-scheduled-success:
   extends: .prepare_notification
   only:
     variables:
       - $TARGET_TASK_NAME == "bump-chrome-version-scheduled"
+  before_script:
+    - '[ -z "$BUMP_CHROME_PULL_REQUEST_URL" ] && exit'
   script:
-    - 'MESSAGE_TEXT=":chrome: [*$CI_PROJECT_NAME*] New Chrome version available on <https://github.com/DataDog/browser-sdk/pulls|PRs>."'
+    - 'MESSAGE_TEXT=":chrome: [*$CI_PROJECT_NAME*] New Chrome version available on <$BUMP_CHROME_PULL_REQUEST_URL|PR>."'
     - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
+  dependencies:
+    - bump-chrome-version-scheduled
 
 bump-chrome-version-scheduled-failure:
   extends: .prepare_notification
@@ -447,3 +460,5 @@ bump-chrome-version-scheduled-failure:
   script:
     - 'MESSAGE_TEXT=":x: [*$CI_PROJECT_NAME*] Chrome version bumped failed on pipeline <$BUILD_URL|$COMMIT_MESSAGE>."'
     - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
+  dependencies:
+    - bump-chrome-version-scheduled

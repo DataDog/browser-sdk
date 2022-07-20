@@ -1,5 +1,5 @@
 import type { Context, TimeStamp } from '@datadog/browser-core'
-import { assign, combine, Observable, noop, setCookie, deleteCookie, ONE_MINUTE } from '@datadog/browser-core'
+import { assign, combine, Observable, noop } from '@datadog/browser-core'
 import type { Clock } from '../../core/test/specHelper'
 import { SPEC_ENDPOINTS, mockClock, buildLocation } from '../../core/test/specHelper'
 import type { RecorderApi } from '../src/boot/rumPublicApi'
@@ -14,12 +14,6 @@ import { RumSessionPlan } from '../src/domain/rumSessionManager'
 import type { RawRumEvent, RumContext } from '../src/rawRumEvent.types'
 import type { LocationChange } from '../src/browser/locationChangeObservable'
 import type { UrlContexts } from '../src/domain/contexts/urlContexts'
-import type { BrowserWindow } from '../src/domain/contexts/syntheticsContext'
-import {
-  SYNTHETICS_INJECTS_RUM_COOKIE_NAME,
-  SYNTHETICS_RESULT_ID_COOKIE_NAME,
-  SYNTHETICS_TEST_ID_COOKIE_NAME,
-} from '../src/domain/contexts/syntheticsContext'
 import type { CiTestWindow } from '../src/domain/contexts/ciTestContext'
 import type { RumConfiguration } from '../src/domain/configuration'
 import { validateAndBuildRumConfiguration } from '../src/domain/configuration'
@@ -275,46 +269,6 @@ export const noopRecorderApi: RecorderApi = {
   isRecording: () => false,
   onRumStart: noop,
   getReplayStats: () => undefined,
-}
-
-// Duration to create a cookie lasting at least until the end of the test
-const COOKIE_DURATION = ONE_MINUTE
-
-export function mockSyntheticsWorkerValues(
-  { publicId, resultId, injectsRum }: { publicId?: any; resultId?: any; injectsRum?: any } = {
-    publicId: 'synthetics_public_id',
-    resultId: 'synthetics_result_id',
-    injectsRum: false,
-  },
-  method: 'globals' | 'cookies' = 'globals'
-) {
-  switch (method) {
-    case 'globals':
-      ;(window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID = publicId
-      ;(window as BrowserWindow)._DATADOG_SYNTHETICS_RESULT_ID = resultId
-      ;(window as BrowserWindow)._DATADOG_SYNTHETICS_INJECTS_RUM = injectsRum
-      break
-    case 'cookies':
-      if (publicId !== undefined) {
-        setCookie(SYNTHETICS_TEST_ID_COOKIE_NAME, publicId, COOKIE_DURATION)
-      }
-      if (resultId !== undefined) {
-        setCookie(SYNTHETICS_RESULT_ID_COOKIE_NAME, resultId, COOKIE_DURATION)
-      }
-      if (injectsRum !== undefined) {
-        setCookie(SYNTHETICS_INJECTS_RUM_COOKIE_NAME, injectsRum, COOKIE_DURATION)
-      }
-      break
-  }
-}
-
-export function cleanupSyntheticsWorkerValues() {
-  delete (window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID
-  delete (window as BrowserWindow)._DATADOG_SYNTHETICS_RESULT_ID
-  delete (window as BrowserWindow)._DATADOG_SYNTHETICS_INJECTS_RUM
-  deleteCookie(SYNTHETICS_TEST_ID_COOKIE_NAME)
-  deleteCookie(SYNTHETICS_RESULT_ID_COOKIE_NAME)
-  deleteCookie(SYNTHETICS_INJECTS_RUM_COOKIE_NAME)
 }
 
 export function mockCiVisibilityWindowValues(traceId?: unknown) {

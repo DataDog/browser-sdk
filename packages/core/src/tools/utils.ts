@@ -37,6 +37,7 @@ export const enum DOM_EVENT {
   PLAY = 'play',
   PAUSE = 'pause',
   SECURITY_POLICY_VIOLATION = 'securitypolicyviolation',
+  SELECTION_CHANGE = 'selectionchange',
 }
 
 export const enum ResourceType {
@@ -208,11 +209,21 @@ export function includes(candidate: string | unknown[], search: any) {
   return candidate.indexOf(search) !== -1
 }
 
-export function arrayFrom<T>(arrayLike: ArrayLike<T>): T[] {
-  const array = []
-  for (let i = 0; i < arrayLike.length; i++) {
-    array.push(arrayLike[i])
+export function arrayFrom<T>(arrayLike: ArrayLike<T> | Set<T>): T[] {
+  if (Array.from) {
+    return Array.from(arrayLike)
   }
+
+  const array = []
+
+  if (arrayLike instanceof Set) {
+    arrayLike.forEach((item) => array.push(item))
+  } else {
+    for (let i = 0; i < arrayLike.length; i++) {
+      array.push(arrayLike[i])
+    }
+  }
+
   return array
 }
 
@@ -413,6 +424,17 @@ export function addEventListeners<E extends Event>(
   return {
     stop,
   }
+}
+
+export function elementMatches(element: Element & { msMatchesSelector?(selector: string): boolean }, selector: string) {
+  if (element.matches) {
+    return element.matches(selector)
+  }
+  // IE11 support
+  if (element.msMatchesSelector) {
+    return element.msMatchesSelector(selector)
+  }
+  return false
 }
 
 export function runOnReadyState(expectedReadyState: 'complete' | 'interactive', callback: () => void) {
@@ -628,16 +650,10 @@ export function requestIdleCallback(callback: () => void, opts?: { timeout?: num
   return () => window.cancelAnimationFrame(id)
 }
 
-export function setToArray<T>(set: Set<T>): T[] {
-  const array: T[] = []
-  set.forEach((item) => array.push(item))
-  return array
-}
-
 export function removeDuplicates<T>(array: T[]) {
   const set = new Set<T>()
   array.forEach((item) => set.add(item))
-  return setToArray(set)
+  return arrayFrom(set)
 }
 
 export function matchList(list: Array<string | RegExp>, value: string) {

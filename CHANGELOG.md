@@ -16,6 +16,28 @@
 
 ---
 
+## v4.15.0
+
+- 🐛 frustration signals: track window open ([#1631](https://github.com/DataDog/browser-sdk/pull/1631))
+- 🐛 [RUMF-1327] rum synthetics: fix logs session conflict ([#1629](https://github.com/DataDog/browser-sdk/pull/1629))
+- 🔊 Add feature flags to telemetry events ([#1625](https://github.com/DataDog/browser-sdk/pull/1625))
+- ✨[RUMF-1314] Expose a DD_LOGS.getInternalContext ([#1626](https://github.com/DataDog/browser-sdk/pull/1626))
+- 🐛 [RUMF-1273] fix BUILD_MODE scope ([#1627](https://github.com/DataDog/browser-sdk/pull/1627))
+
+## v4.14.0
+
+- ✨ [RUMF-1211] release Frustration Signals publicly ([#1617](https://github.com/DataDog/browser-sdk/pull/1617))
+- 🐛 [RUMF-1294] ignore dead clicks based on the click event target ([#1610](https://github.com/DataDog/browser-sdk/pull/1610))
+- 📝 Fixing intrapage broken links ([#1613](https://github.com/DataDog/browser-sdk/pull/1613))
+- 📝 Removes Extra Link ([#1612](https://github.com/DataDog/browser-sdk/pull/1612))
+- 🐛 [RUMF-1297] frustration signals: track input changes ([#1603](https://github.com/DataDog/browser-sdk/pull/1603))
+- 📝 DOCS-2277 Browser Monitoring Edits ([#1572](https://github.com/DataDog/browser-sdk/pull/1572))
+- 🐛 [RUMF-1209] frustration signals: track selection change ([#1596](https://github.com/DataDog/browser-sdk/pull/1596))
+
+## v4.13.0
+
+- ✨ Enable service and version update on startView ([#1601](https://github.com/DataDog/browser-sdk/pull/1601))
+
 ## v4.12.0
 
 - 🐛 [RUMF-1305] forbid the usage of `Date.now` ([#1600](https://github.com/DataDog/browser-sdk/pull/1600))

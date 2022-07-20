@@ -1,9 +1,11 @@
 import type { Clock } from '../../test/specHelper'
 import { mockClock } from '../../test/specHelper'
 import {
+  arrayFrom,
   combine,
   cssEscape,
   deepClone,
+  elementMatches,
   findCommaSeparatedValue,
   getType,
   jsonStringify,
@@ -577,5 +579,35 @@ describe('cssEscape', () => {
     expect(cssEscape('()[]{}')).toEqual('\\(\\)\\[\\]\\{\\}')
     expect(cssEscape('--a')).toEqual('--a')
     expect(cssEscape('\0')).toEqual('\ufffd')
+  })
+})
+
+describe('elementMatches', () => {
+  it('should return true if the element matches the selector', () => {
+    const element = document.createElement('div')
+    element.classList.add('foo')
+    expect(elementMatches(element, '.foo')).toEqual(true)
+  })
+
+  it('should return false if the element does not match the selector', () => {
+    const element = document.createElement('div')
+    element.classList.add('bar')
+    expect(elementMatches(element, '.foo')).toEqual(false)
+  })
+})
+
+describe('arrayFrom', () => {
+  it('should return an array from a Set', () => {
+    const set = new Set()
+    set.add('foo')
+
+    expect(arrayFrom(set)).toEqual(['foo'])
+  })
+
+  it('should return an array from a array like object', () => {
+    const div = document.createElement('div')
+    div.classList.add('foo')
+
+    expect(arrayFrom(div.classList)).toEqual(['foo'])
   })
 })

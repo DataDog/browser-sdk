@@ -103,7 +103,6 @@ describe('action collection', () => {
       // Frustrations need to be collected for this test case, else actions leading to a new view
       // are ignored
       trackFrustrations: true,
-      enableExperimentalFeatures: ['frustration-signals'],
     })
     .withBody(
       html`
@@ -131,7 +130,7 @@ describe('action collection', () => {
     })
 
   createTest('collect an "error click"')
-    .withRum({ trackFrustrations: true, enableExperimentalFeatures: ['frustration-signals'] })
+    .withRum({ trackFrustrations: true })
     .withBody(
       html`
         <button>click me</button>
@@ -162,7 +161,7 @@ describe('action collection', () => {
     })
 
   createTest('collect a "dead click"')
-    .withRum({ trackFrustrations: true, enableExperimentalFeatures: ['frustration-signals'] })
+    .withRum({ trackFrustrations: true })
     .withBody(html` <button>click me</button> `)
     .run(async ({ serverEvents }) => {
       const button = await $('button')
@@ -176,8 +175,89 @@ describe('action collection', () => {
       expect(serverEvents.rumViews[0].view.frustration!.count).toBe(1)
     })
 
+  createTest('do not consider a click on a checkbox as "dead_click"')
+    .withRum({ trackFrustrations: true })
+    .withBody(html` <input type="checkbox" /> `)
+    .run(async ({ serverEvents }) => {
+      const input = await $('input')
+      await input.click()
+      await flushEvents()
+      const actionEvents = serverEvents.rumActions
+
+      expect(actionEvents.length).toBe(1)
+      expect(actionEvents[0].action.frustration!.type).toEqual([])
+    })
+
+  createTest('do not consider a click to change the value of a "range" input as "dead_click"')
+    .withRum({ trackFrustrations: true })
+    .withBody(html` <input type="range" /> `)
+    .run(async ({ serverEvents }) => {
+      const input = await $('input')
+      await input.click({ x: 10 })
+      await flushEvents()
+      const actionEvents = serverEvents.rumActions
+
+      expect(actionEvents.length).toBe(1)
+      expect(actionEvents[0].action.frustration!.type).toEqual([])
+    })
+
+  createTest('consider a click on an already checked "radio" input as "dead_click"')
+    .withRum({ trackFrustrations: true })
+    .withBody(html` <input type="radio" checked /> `)
+    .run(async ({ serverEvents }) => {
+      const input = await $('input')
+      await input.click()
+      await flushEvents()
+      const actionEvents = serverEvents.rumActions
+
+      expect(actionEvents.length).toBe(1)
+      expect(actionEvents[0].action.frustration!.type).toEqual(['dead_click'])
+    })
+
+  createTest('do not consider a click on text input as "dead_click"')
+    .withRum({ trackFrustrations: true })
+    .withBody(html` <input type="text" /> `)
+    .run(async ({ serverEvents }) => {
+      const input = await $('input')
+      await input.click()
+      await flushEvents()
+      const actionEvents = serverEvents.rumActions
+
+      expect(actionEvents.length).toBe(1)
+      expect(actionEvents[0].action.frustration!.type).toEqual([])
+    })
+
+  createTest('do not consider a click that open a new window as "dead_click"')
+    .withRum({ trackFrustrations: true })
+    .withBody(
+      html`
+        <button>click me</button>
+        <script>
+          const button = document.querySelector('button')
+          button.addEventListener('click', () => {
+            window.open('https://example.com')
+          })
+        </script>
+      `
+    )
+    .run(async ({ serverEvents }) => {
+      const windowHandle = await browser.getWindowHandle()
+      const button = await $('button')
+      await button.click()
+      // Ideally, we would close the newly created window. But on Safari desktop (at least), it is
+      // not possible to do so: calling `browser.closeWindow()` is failing with "no such window:
+      // unknown error". Instead, just switch back to the original window.
+      await browser.switchToWindow(windowHandle)
+
+      await flushEvents()
+      const actionEvents = serverEvents.rumActions
+
+      expect(actionEvents.length).toBe(1)
+      expect(actionEvents[0].action.frustration!.type).toEqual([])
+    })
+
   createTest('collect a "rage click"')
-    .withRum({ trackFrustrations: true, enableExperimentalFeatures: ['frustration-signals'] })
+    .withRum({ trackFrustrations: true })
     .withBody(
       html`
         <button>click me</button>
@@ -202,7 +282,7 @@ describe('action collection', () => {
     })
 
   createTest('collect multiple frustrations in one action')
-    .withRum({ trackFrustrations: true, enableExperimentalFeatures: ['frustration-signals'] })
+    .withRum({ trackFrustrations: true })
     .withBody(
       html`
         <button>click me</button>
