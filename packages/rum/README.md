@@ -159,7 +159,7 @@ Add the generated code snippet to the head tag (in front of any other script tag
       site: '<DATADOG_SITE>',
       //  service: 'my-web-application',
       //  env: 'production',
-      //  version: '4.10.2',
+      //  version: '1.0.0',
       sampleRate: 100,
       premiumSampleRate: 100, // if not included, the default is 100
       trackInteractions: true,
@@ -181,7 +181,7 @@ Add the generated code snippet to the head tag (in front of any other script tag
       site: '<DATADOG_SITE>',
       //  service: 'my-web-application',
       //  env: 'production',
-      //  version: '3.0.0',
+      //  version: '1.0.0',
       sampleRate: 100,
       replaySampleRate: 100, // if not included, the default is 100
       trackInteractions: true,
