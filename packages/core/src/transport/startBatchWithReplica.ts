@@ -1,7 +1,7 @@
 import type { Configuration, EndpointBuilder } from '../domain/configuration'
 import type { Context } from '../tools/context'
 import { Batch } from './batch'
-import { HttpRequest } from './httpRequest'
+import { createHttpRequest } from './httpRequest'
 
 export function startBatchWithReplica<T extends Context>(
   configuration: Configuration,
@@ -16,7 +16,7 @@ export function startBatchWithReplica<T extends Context>(
 
   function createBatch(endpointBuilder: EndpointBuilder) {
     return new Batch(
-      new HttpRequest(endpointBuilder, configuration.batchBytesLimit),
+      createHttpRequest(endpointBuilder, configuration.batchBytesLimit),
       configuration.batchMessagesLimit,
       configuration.batchBytesLimit,
       configuration.messageBytesLimit,

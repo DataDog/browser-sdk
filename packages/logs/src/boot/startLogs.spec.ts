@@ -1,5 +1,5 @@
+import type { Context } from '@datadog/browser-core'
 import { ErrorSource, display, stopSessionManager, getCookie, SESSION_COOKIE_NAME } from '@datadog/browser-core'
-import sinon from 'sinon'
 import { cleanupSyntheticsWorkerValues, mockSyntheticsWorkerValues } from '../../../core/test/syntheticsWorkerValues'
 import { deleteEventBridgeStub, initEventBridgeStub, stubEndpointBuilder } from '../../../core/test/specHelper'
 import type { LogsConfiguration } from '../domain/configuration'
@@ -8,11 +8,8 @@ import { validateAndBuildLogsConfiguration } from '../domain/configuration'
 import { HandlerType, Logger, StatusType } from '../domain/logger'
 import type { startLoggerCollection } from '../domain/logsCollection/logger/loggerCollection'
 import type { LogsEvent } from '../logsEvent.types'
+import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { startLogs } from './startLogs'
-
-function getLoggedMessage(server: sinon.SinonFakeServer, index: number) {
-  return JSON.parse(server.requests[index].requestBody) as LogsEvent
-}
 
 interface Rum {
   getInternalContext(startTime?: number): any | undefined
@@ -33,11 +30,12 @@ const COMMON_CONTEXT = {
 describe('logs', () => {
   const initConfiguration = { clientToken: 'xxx', service: 'service' }
   let baseConfiguration: LogsConfiguration
-  let server: sinon.SinonFakeServer
   let handleLog: ReturnType<typeof startLoggerCollection>['handleLog']
   let logger: Logger
   let consoleLogSpy: jasmine.Spy
   let displayLogSpy: jasmine.Spy
+  let lifeCycle: LifeCycle
+  let logsEvents: Array<LogsEvent | Context>
 
   beforeEach(() => {
     baseConfiguration = {
@@ -46,13 +44,15 @@ describe('logs', () => {
       batchMessagesLimit: 1,
     }
     logger = new Logger((...params) => handleLog(...params))
-    server = sinon.fakeServer.create()
     consoleLogSpy = spyOn(console, 'log')
     displayLogSpy = spyOn(display, 'log')
+    lifeCycle = new LifeCycle()
+    logsEvents = []
+
+    lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (logsEvent: LogsEvent) => logsEvents.push(logsEvent))
   })
 
   afterEach(() => {
-    server.restore()
     delete window.DD_RUM
     deleteEventBridgeStub()
     stopSessionManager()
@@ -60,13 +60,12 @@ describe('logs', () => {
 
   describe('request', () => {
     it('should send the needed data', () => {
-      ;({ handleLog: handleLog } = startLogs(baseConfiguration, () => COMMON_CONTEXT, logger))
+      ;({ handleLog: handleLog } = startLogs(baseConfiguration, () => COMMON_CONTEXT, logger, lifeCycle))
 
       handleLog({ message: 'message', status: StatusType.warn, context: { foo: 'bar' } }, logger, COMMON_CONTEXT)
 
-      expect(server.requests.length).toEqual(1)
-      expect(server.requests[0].url).toContain(baseConfiguration.logsEndpointBuilder.build())
-      expect(getLoggedMessage(server, 0)).toEqual({
+      expect(logsEvents.length).toEqual(1)
+      expect(logsEvents[0]).toEqual({
         date: jasmine.any(Number),
         foo: 'bar',
         message: 'message',
@@ -81,23 +80,12 @@ describe('logs', () => {
       })
     })
 
-    it('should all use the same batch', () => {
-      ;({ handleLog } = startLogs({ ...baseConfiguration, batchMessagesLimit: 3 }, () => COMMON_CONTEXT, logger))
-
-      handleLog(DEFAULT_MESSAGE, logger)
-      handleLog(DEFAULT_MESSAGE, logger)
-      handleLog(DEFAULT_MESSAGE, logger)
-
-      expect(server.requests.length).toEqual(1)
-    })
-
     it('should send bridge event when bridge is present', () => {
       const sendSpy = spyOn(initEventBridgeStub(), 'send')
       ;({ handleLog: handleLog } = startLogs(baseConfiguration, () => COMMON_CONTEXT, logger))
 
       handleLog(DEFAULT_MESSAGE, logger)
 
-      expect(server.requests.length).toEqual(0)
       const [message] = sendSpy.calls.mostRecent().args
       const parsedMessage = JSON.parse(message)
       expect(parsedMessage).toEqual({

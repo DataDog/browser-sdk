@@ -23,9 +23,12 @@ import { startLogsBridge } from '../transport/startLogsBridge'
 import type { Logger } from '../domain/logger'
 import { startInternalContext } from '../domain/internalContext'
 
-export function startLogs(configuration: LogsConfiguration, getCommonContext: () => CommonContext, mainLogger: Logger) {
-  const lifeCycle = new LifeCycle()
-
+export function startLogs(
+  configuration: LogsConfiguration,
+  getCommonContext: () => CommonContext,
+  mainLogger: Logger,
+  lifeCycle = new LifeCycle()
+) {
   const telemetry = startLogsTelemetry(configuration)
   telemetry.setContextProvider(() => ({
     application: {

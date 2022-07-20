@@ -34,7 +34,7 @@ export class Batch {
     this.addOrUpdate(message, key)
   }
 
-  flush() {
+  flush(send = this.request.send) {
     if (this.bufferMessagesCount !== 0) {
       const messages = this.pushOnlyBuffer.concat(objectValues(this.upsertBuffer))
       const bytesCount = this.bufferBytesCount
@@ -44,7 +44,7 @@ export class Batch {
       this.bufferBytesCount = 0
       this.bufferMessagesCount = 0
 
-      this.request.send(messages.join('\n'), bytesCount)
+      send(messages.join('\n'), bytesCount)
     }
   }
 
@@ -138,32 +138,22 @@ export class Batch {
 
   private flushOnVisibilityHidden() {
     /**
-     * With sendBeacon, requests are guaranteed to be successfully sent during document unload
+     * beforeunload is called before visibilitychange
+     * register first to be sure to be called before flush on beforeunload
+     * caveat: unload can still be canceled by another listener
      */
-    // @ts-ignore this function is not always defined
-    if (navigator.sendBeacon) {
-      /**
-       * beforeunload is called before visibilitychange
-       * register first to be sure to be called before flush on beforeunload
-       * caveat: unload can still be canceled by another listener
-       */
-      addEventListener(window, DOM_EVENT.BEFORE_UNLOAD, this.beforeUnloadCallback)
+    addEventListener(window, DOM_EVENT.BEFORE_UNLOAD, this.beforeUnloadCallback)
 
-      /**
-       * Only event that guarantee to fire on mobile devices when the page transitions to background state
-       * (e.g. when user switches to a different application, goes to homescreen, etc), or is being unloaded.
-       */
-      addEventListener(document, DOM_EVENT.VISIBILITY_CHANGE, () => {
-        if (document.visibilityState === 'hidden') {
-          this.flush()
-        }
-      })
-      /**
-       * Safari does not support yet to send a request during:
-       * - a visibility change during doc unload (cf: https://bugs.webkit.org/show_bug.cgi?id=194897)
-       * - a page hide transition (cf: https://bugs.webkit.org/show_bug.cgi?id=188329)
-       */
-      addEventListener(window, DOM_EVENT.BEFORE_UNLOAD, () => this.flush())
-    }
+    /**
+     * Only event that guarantee to fire on mobile devices when the page transitions to background state
+     * (e.g. when user switches to a different application, goes to homescreen, etc), or is being unloaded.
+     */
+    addEventListener(document, DOM_EVENT.VISIBILITY_CHANGE, () => {
+      if (document.visibilityState === 'hidden') {
+        this.flush(this.request.sendBeacon)
+      }
+    })
+
+    addEventListener(window, DOM_EVENT.BEFORE_UNLOAD, () => this.flush(this.request.sendBeacon))
   }
 }
