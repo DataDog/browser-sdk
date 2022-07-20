@@ -1,4 +1,4 @@
-import { isExperimentalFeatureEnabled, ONE_KILO_BYTE, timeStampNow } from '@datadog/browser-core'
+import { timeStampNow } from '@datadog/browser-core'
 import type {
   LifeCycle,
   ViewContexts,
@@ -10,7 +10,7 @@ import { LifeCycleEventType } from '@datadog/browser-rum-core'
 
 import { record } from '../domain/record'
 import type { DeflateWorker } from '../domain/segmentCollection'
-import { setSegmentBytesLimit, startSegmentCollection } from '../domain/segmentCollection'
+import { startSegmentCollection } from '../domain/segmentCollection'
 import { send } from '../transport/send'
 import { RecordType } from '../types'
 
@@ -21,17 +21,13 @@ export function startRecording(
   viewContexts: ViewContexts,
   worker: DeflateWorker
 ) {
-  if (isExperimentalFeatureEnabled('lower-batch-size')) {
-    setSegmentBytesLimit(22 * ONE_KILO_BYTE)
-  }
-
   const { addRecord, stop: stopSegmentCollection } = startSegmentCollection(
     lifeCycle,
     configuration.applicationId,
     sessionManager,
     viewContexts,
-    (data, metadata, rawSegmentBytesCount, flushReason) =>
-      send(configuration.sessionReplayEndpointBuilder, data, metadata, rawSegmentBytesCount, flushReason),
+    (data, metadata, rawSegmentBytesCount) =>
+      send(configuration.sessionReplayEndpointBuilder, data, metadata, rawSegmentBytesCount),
     worker
   )
 
