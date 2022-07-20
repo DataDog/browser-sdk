@@ -76,7 +76,7 @@ type FocusCallback = (data: FocusRecord['data']) => void
 
 type VisualViewportResizeCallback = (data: VisualViewportRecord['data']) => void
 
-type FrustrationCallback = (record: FrustrationRecord) => void
+export type FrustrationCallback = (record: FrustrationRecord) => void
 
 interface ObserverParam {
   lifeCycle: LifeCycle
@@ -425,14 +425,14 @@ function initVisualViewportResizeObserver(cb: VisualViewportResizeCallback): Lis
   }
 }
 
-function initFrustrationObserver(lifeCycle: LifeCycle, frustrationCb: FrustrationCallback): ListenerHandler {
+export function initFrustrationObserver(lifeCycle: LifeCycle, frustrationCb: FrustrationCallback): ListenerHandler {
   return lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {
     if (
       data.rawRumEvent.type === RumEventType.ACTION &&
       data.rawRumEvent.action.type === ActionType.CLICK &&
-      data.rawRumEvent.action.frustration?.type &&
+      data.rawRumEvent.action.frustration?.type?.length &&
       'events' in data.domainContext &&
-      data.domainContext.events
+      data.domainContext.events?.length
     ) {
       frustrationCb({
         timestamp: data.rawRumEvent.date,
