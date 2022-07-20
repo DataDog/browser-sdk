@@ -77,17 +77,19 @@ describe('initInputObserver', () => {
 })
 
 describe('initFrustrationObserver', () => {
+  const lifeCycle = new LifeCycle()
   let stopFrustrationObserver: () => void
   let frustrationsCallbackSpy: jasmine.Spy<FrustrationCallback>
-  const lifeCycle = new LifeCycle()
-  const mouseEvent = new MouseEvent('click')
+  let mouseEvent: MouseEvent
   let rumData: RawRumEventCollectedData<RawRumActionEvent>
 
   beforeEach(() => {
     if (isIE()) {
       pending('IE not supported')
     }
+    mouseEvent = new MouseEvent('click')
     frustrationsCallbackSpy = jasmine.createSpy()
+
     rumData = {
       startTime: relativeNow(),
       rawRumEvent: {
