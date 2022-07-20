@@ -148,7 +148,7 @@ A [Datadog client token][5].
 : Required<br/>
 **Type**: String<br/>
 **Default**: `datadoghq.com`<br/>
-The Datadog site of your organization, the same value as the [Agent site configuration][14].
+[The Datadog site parameter of your organization][14].
 
 `service`
 : Optional<br/>
@@ -361,7 +361,7 @@ A service is an independent, deployable code repository that maps to a set of pa
 [11]: https://www.datadoghq.com/pricing/?product=real-user-monitoring--session-replay#real-user-monitoring--session-replay
 [12]: https://docs.datadoghq.com/real_user_monitoring/connect_rum_and_traces?tab=browserrum
 [13]: https://docs.datadoghq.com/real_user_monitoring/session_replay/privacy_options?tab=maskuserinput
-[14]: https://docs.datadoghq.com/agent/basic_agent_usage#datadog-site
+[14]: https://docs.datadoghq.com/getting_started/site/
 [15]: https://docs.datadoghq.com/getting_started/tagging/#defining-tags
 [16]: https://docs.datadoghq.com/real_user_monitoring/browser/monitoring_page_performance/#how-page-activity-is-calculated
 [17]: https://docs.datadoghq.com/real_user_monitoring/session_replay/
