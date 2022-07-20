@@ -37,6 +37,9 @@ CDN sync
 
 Add [`@datadog/browser-rum`][4] to your `package.json` file, then initialize it with:
 
+{{< tabs >}}
+{{% tab "v3.0.0" %}}
+
 ```javascript
 import { datadogRum } from '@datadog/browser-rum'
 
@@ -46,12 +49,31 @@ datadogRum.init({
   site: '<DATADOG_SITE>',
   //  service: 'my-web-application',
   //  env: 'production',
-  //  version: '3.6.0 or 4.0.0',
+  //  version: '3.0.0',
+  sampleRate: 100,
+  replaySampleRate: 100, // if not included, the default is 100
+  trackInteractions: true,
+})
+```
+{{% /tab %}}
+{{% tab "v4.10.2 and later" %}}
+```javascript
+import { datadogRum } from '@datadog/browser-rum'
+
+datadogRum.init({
+  applicationId: '<DATADOG_APPLICATION_ID>',
+  clientToken: '<DATADOG_CLIENT_TOKEN>',
+  site: '<DATADOG_SITE>',
+  //  service: 'my-web-application',
+  //  env: 'production',
+  //  version: '4.10.2',
   sampleRate: 100,
   premiumSampleRate: 100, // if not included, the default is 100
   trackInteractions: true,
 })
 ```
+{{% /tab %}}
+{{< /tabs >}}
 
 The `trackInteractions` and `trackFrustrations` parameters enable the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
 
@@ -59,6 +81,8 @@ The `trackInteractions` and `trackFrustrations` parameters enable the automatic 
 
 Add the generated code snippet to the head tag of every HTML page you want to monitor in your application.
 
+{{< tabs >}}
+{{% tab "v3.0.0" %}}
 <!-- prettier-ignore -->
 ```html
 <script>
@@ -74,7 +98,32 @@ Add the generated code snippet to the head tag of every HTML page you want to mo
       site: '<DATADOG_SITE>',
       //  service: 'my-web-application',
       //  env: 'production',
-      //  version: '3.6.0 or 4.0.0',
+      //  version: '3.0.0',
+      sampleRate: 100,
+      replaySampleRate: 100, // if not included, the default is 100
+      trackInteractions: true,
+    })
+  })
+</script>
+```
+{{% /tab %}}
+{{% tab "v4.10.2 and later" %}}
+<!-- prettier-ignore -->
+```html
+<script>
+ (function(h,o,u,n,d) {
+   h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}}
+   d=o.createElement(u);d.async=1;d.src=n
+   n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
+})(window,document,'script','https://www.datadoghq-browser-agent.com/datadog-rum-v4.js','DD_RUM')
+  DD_RUM.onReady(function() {
+    DD_RUM.init({
+      clientToken: '<CLIENT_TOKEN>',
+      applicationId: '<APPLICATION_ID>',
+      site: '<DATADOG_SITE>',
+      //  service: 'my-web-application',
+      //  env: 'production',
+      //  version: '4.10.2',
       sampleRate: 100,
       premiumSampleRate: 100, // if not included, the default is 100
       trackInteractions: true,
@@ -82,6 +131,8 @@ Add the generated code snippet to the head tag of every HTML page you want to mo
   })
 </script>
 ```
+{{% /tab %}}
+{{< /tabs >}}
 
 The `trackInteractions` and `trackFrustrations` parameters enable the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
 
@@ -91,6 +142,8 @@ Early RUM API calls must be wrapped in the `DD_RUM.onReady()` callback. This ens
 
 Add the generated code snippet to the head tag (in front of any other script tags) of every HTML page you want to monitor in your application. Including the script tag higher and synchronized ensures Datadog RUM can collect all performance data and errors.
 
+{{< tabs >}}
+{{% tab "v3.0.0" %}}
 ```html
 <script src="https://www.datadoghq-browser-agent.com/datadog-rum-v4.js" type="text/javascript"></script>
 <script>
@@ -101,13 +154,34 @@ Add the generated code snippet to the head tag (in front of any other script tag
       site: '<DATADOG_SITE>',
       //  service: 'my-web-application',
       //  env: 'production',
-      //  version: '3.6.0 or 4.0.0',
+      //  version: '3.0.0',
+      sampleRate: 100,
+      replaySampleRate: 100, // if not included, the default is 100
+      trackInteractions: true,
+    })
+</script>
+```
+{{% /tab %}}
+{{% tab "v4.10.2 and later" %}}
+```html
+<script src="https://www.datadoghq-browser-agent.com/datadog-rum-v4.js" type="text/javascript"></script>
+<script>
+  window.DD_RUM &&
+    window.DD_RUM.init({
+      clientToken: '<CLIENT_TOKEN>',
+      applicationId: '<APPLICATION_ID>',
+      site: '<DATADOG_SITE>',
+      //  service: 'my-web-application',
+      //  env: 'production',
+      //  version: '4.10.2',
       sampleRate: 100,
       premiumSampleRate: 100, // if not included, the default is 100
       trackInteractions: true,
     })
 </script>
 ```
+{{% /tab %}}
+{{< /tabs >}}
 
 The `trackInteractions` and `trackFrustrations` parameters enable the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
 
@@ -115,7 +189,7 @@ The `window.DD_RUM` check is used to prevent issues if a loading failure occurs 
 
 ### TypeScript
 
-Types are compatible with TypeScript >= 3.8.2. For earlier versions, import JS sources and use global variables to avoid any compilation issues:
+Types are compatible with TypeScript >= 3.8.2. For earlier versions, import JavaScript sources and use global variables to avoid any compilation issues:
 
 ```javascript
 import '@datadog/browser-rum/bundle/datadog-rum'
@@ -125,6 +199,7 @@ window.DD_RUM.init({
   clientToken: 'XXX',
   site: 'datadoghq.com',
   sampleRate: 100,
+  premiumSampleRate: 100,
 })
 ```
 
