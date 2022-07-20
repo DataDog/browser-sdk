@@ -668,7 +668,6 @@ describe('recorder', () => {
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .run(async ({ serverEvents }) => {
-        await browserExecute(() => document.documentElement.outerHTML)
         const html = await $('html')
         await html.click()
         await flushEvents()
@@ -680,7 +679,7 @@ describe('recorder', () => {
         const frustrationRecords = findAllFrustrationRecords(segment.data)
 
         expect(clickRecords.length).toBe(1)
-        expect(clickRecords[0].id).toBeTruthy('mouse ineraction record should have an id')
+        expect(clickRecords[0].id).toBeTruthy('mouse interaction record should have an id')
         expect(frustrationRecords.length).toBe(1)
         expect(frustrationRecords[0].data).toEqual({
           frustrationTypes: [FrustrationType.DEAD_CLICK],
