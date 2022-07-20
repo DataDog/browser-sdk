@@ -65,12 +65,7 @@ const priorityStrategies: NameStrategy[] = [
     } else if (element.id) {
       const label =
         element.ownerDocument &&
-        find(element.ownerDocument.querySelectorAll('label'), (label) =>
-          label.control
-            ? label === element
-            : // label.control is not defined for IE11
-              label.htmlFor === element.id
-        )
+        find(element.ownerDocument.querySelectorAll('label'), (label) => label.htmlFor === element.id)
       return label && getTextualContent(label, userProgrammaticAttribute)
     }
   },
