@@ -1,4 +1,4 @@
-import { safeTruncate, isIE } from '@datadog/browser-core'
+import { safeTruncate, isIE, find } from '@datadog/browser-core'
 
 /**
  * Get the action name from the attribute 'data-dd-action-name' on the element or any of its parent.
@@ -64,7 +64,13 @@ const priorityStrategies: NameStrategy[] = [
       }
     } else if (element.id) {
       const label =
-        element.ownerDocument && element.ownerDocument.querySelector(`label[for="${element.id.replace('"', '\\"')}"]`)
+        element.ownerDocument &&
+        find(element.ownerDocument.querySelectorAll('label'), (label) =>
+          label.control
+            ? label === element
+            : // label.control is not defined for IE11
+              label.htmlFor === element.id
+        )
       return label && getTextualContent(label, userProgrammaticAttribute)
     }
   },
