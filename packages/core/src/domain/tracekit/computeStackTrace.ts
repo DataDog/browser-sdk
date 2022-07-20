@@ -32,7 +32,7 @@ export function computeStackTrace(ex: unknown): StackTrace {
 
 const CHROME_LINE_RE =
   // eslint-disable-next-line max-len
-  /^\s*at (.*?) ?\(((?:file|https?|blob|chrome-extension|native|eval|webpack|<anonymous>|\w+\.[cljs|cljc]|\/).*?)(?::(\d+))?(?::(\d+))?\)?\s*$/i
+  /^\s*at (.*?) ?\(((?:file|https?|blob|chrome-extension|native|eval|webpack|<anonymous>|\w+\.|\/).*?)(?::(\d+))?(?::(\d+))?\)?\s*$/i
 
 const CHROME_EVAL_RE = /\((\S*)(?::(\d+))(?::(\d+))\)/
 
@@ -65,7 +65,7 @@ function parseChromeLine(line: string): StackFrame | undefined {
 
 const CHROME_ANONYMOUS_FUNCTION_RE =
   // eslint-disable-next-line max-len
-  /^\s*at ?((?:file|https?|blob|chrome-extension|native|eval|webpack|<anonymous>|\w+\.[cljs|cljc]|\/).*?)(?::(\d+))?(?::(\d+))??\s*$/i
+  /^\s*at ?((?:file|https?|blob|chrome-extension|native|eval|webpack|<anonymous>|\w+\.|\/).*?)(?::(\d+))?(?::(\d+))??\s*$/i
 
 function parseChromeAnonymousLine(line: string): StackFrame | undefined {
   const parts = CHROME_ANONYMOUS_FUNCTION_RE.exec(line)
