@@ -37,7 +37,7 @@ CDN sync
 
 Add [`@datadog/browser-rum`][4] to your `package.json` file, then initialize it with:
 
-<details open="false">
+<details open>
   <summary>Latest version</summary>
 
 ```javascript
@@ -58,7 +58,7 @@ datadogRum.init({
 </details>
 
 <details>
-  <summary><code>v4.10.2</code> and before</summary>
+  <summary>before <code>v4.10.2</code></summary>
 
 ```javascript
 import { datadogRum } from '@datadog/browser-rum'
@@ -83,7 +83,7 @@ The `trackInteractions` and `trackFrustrations` parameters enable the automatic 
 
 Add the generated code snippet to the head tag of every HTML page you want to monitor in your application.
 
-<details open="false">
+<details open>
   <summary>Latest version</summary>
 
 ```html
@@ -111,7 +111,7 @@ Add the generated code snippet to the head tag of every HTML page you want to mo
 </details>
 
 <details>
-  <summary><code>v4.10.2</code> and before</summary>
+  <summary>before<code>v4.10.2</code></summary>
 
 <!-- prettier-ignore -->
 ```html
@@ -146,7 +146,7 @@ Early RUM API calls must be wrapped in the `DD_RUM.onReady()` callback. This ens
 
 Add the generated code snippet to the head tag (in front of any other script tags) of every HTML page you want to monitor in your application. Including the script tag higher and synchronized ensures Datadog RUM can collect all performance data and errors.
 
-<details open="false">
+<details open>
   <summary>Latest version</summary>
 
 ```html
@@ -169,7 +169,7 @@ Add the generated code snippet to the head tag (in front of any other script tag
 </details>
 
 <details>
-  <summary><code>v4.10.2</code> and before</summary>
+  <summary>before<code>v4.10.2</code></summary>
 
 ```html
 <script src="https://www.datadoghq-browser-agent.com/datadog-rum-v4.js" type="text/javascript"></script>
@@ -387,7 +387,7 @@ Two initialization parameters are available to control how the session is tracke
 
 To track 100% of your sessions as Browser:
 
-<details open="false">
+<details open>
   <summary>Latest version</summary>
 
 ```
@@ -400,7 +400,7 @@ datadogRum.init({
 </details>
 
 <details>
-  <summary><code>v4.10.2</code> and before</summary>
+  <summary>before<code>v4.10.2</code></summary>
 
 ```
 datadogRum.init({
@@ -426,7 +426,7 @@ datadogRum.init({
 </details>
 
 <details>
-  <summary><code>v4.10.2</code> and before</summary>
+  <summary>before<code>v4.10.2</code></summary>
 
 ```
 datadogRum.init({
@@ -439,7 +439,7 @@ datadogRum.init({
 
 The `premiumSampleRate` is a percentage of `sampleRate`. If you set `sampleRate` to 60 and `premiumSampleRate` to 50, 40% of sessions are dropped, 30% of sessions are collected as Browser and 30% of sessions are collected as Browser Premium.
 
-<details open="false">
+<details open>
   <summary>Latest version</summary>
 
 ```
@@ -452,7 +452,7 @@ datadogRum.init({
 </details>
 
 <details>
-  <summary><code>v4.10.2</code> and before</summary>
+  <summary>before<code>v4.10.2</code></summary>
 
 ```
 datadogRum.init({
