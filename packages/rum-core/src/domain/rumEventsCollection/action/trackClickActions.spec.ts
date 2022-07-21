@@ -86,6 +86,7 @@ describe('trackClickActions', () => {
     emulateClickWithActivity(domMutationObservable, clock)
     expect(findActionId()).not.toBeUndefined()
     clock.tick(EXPIRE_DELAY)
+    const domEvent = createNewEvent('click', { target: document.createElement('button') })
     expect(events).toEqual([
       {
         counts: {
@@ -98,10 +99,11 @@ describe('trackClickActions', () => {
         name: 'Click me',
         startClocks: jasmine.any(Object),
         type: ActionType.CLICK,
-        event: createNewEvent('click', { target: document.createElement('button') }),
+        event: domEvent,
         frustrationTypes: [],
         target: undefined,
         position: undefined,
+        events: [domEvent],
       },
     ])
   })
@@ -324,6 +326,19 @@ describe('trackClickActions', () => {
         expect(events[0].startClocks.timeStamp).toBe(firstClickTimeStamp)
         expect(events[0].frustrationTypes).toEqual([FrustrationType.RAGE_CLICK])
         expect(events[0].duration).toBe((MAX_DURATION_BETWEEN_CLICKS + 2 * actionDuration) as Duration)
+      })
+
+      it('should contain original events from of rage sequence', () => {
+        const { domMutationObservable, clock } = setupBuilder.build()
+        const actionDuration = 5
+        emulateClickWithActivity(domMutationObservable, clock, undefined, actionDuration)
+        emulateClickWithActivity(domMutationObservable, clock, undefined, actionDuration)
+        emulateClickWithActivity(domMutationObservable, clock, undefined, actionDuration)
+
+        clock.tick(EXPIRE_DELAY)
+        expect(events.length).toBe(1)
+        expect(events[0].frustrationTypes).toEqual([FrustrationType.RAGE_CLICK])
+        expect(events[0].events?.length).toBe(3)
       })
 
       it('aggregates frustrationTypes from all clicks', () => {

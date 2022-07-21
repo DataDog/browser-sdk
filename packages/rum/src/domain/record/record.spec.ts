@@ -1,4 +1,5 @@
 import { DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
+import { LifeCycle } from '@datadog/browser-rum-core'
 import type { Clock } from '../../../../core/test/specHelper'
 import { createNewEvent } from '../../../../core/test/specHelper'
 import { collectAsyncCalls, recordsPerFullSnapshot } from '../../../test/utils'
@@ -198,6 +199,7 @@ describe('record', () => {
     recordApi = record({
       emit: emitSpy,
       defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
+      lifeCycle: new LifeCycle(),
     })
   }
 

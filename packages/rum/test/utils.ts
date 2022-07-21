@@ -11,6 +11,8 @@ import type {
   MetaRecord,
   VisualViewportRecord,
   Segment,
+  FrustrationRecord,
+  MouseInteractionType,
 } from '../src/types'
 import { RecordType, IncrementalSource, NodeType } from '../src/types'
 
@@ -204,6 +206,21 @@ export function findAllIncrementalSnapshots(segment: Segment, source: Incrementa
   return segment.records.filter(
     (record) => record.type === RecordType.IncrementalSnapshot && record.data.source === source
   ) as IncrementalSnapshotRecord[]
+}
+
+// Returns all the FrustrationRecords in the given Segment, if any.
+export function findAllFrustrationRecords(segment: Segment): FrustrationRecord[] {
+  return segment.records.filter((record) => record.type === RecordType.FrustrationRecord) as FrustrationRecord[]
+}
+
+// Returns all the IncrementalSnapshotRecords of the given MouseInteraction source, if any
+export function findMouseInteractionRecords(
+  segment: Segment,
+  source: MouseInteractionType
+): IncrementalSnapshotRecord[] {
+  return findAllIncrementalSnapshots(segment, IncrementalSource.MouseInteraction).filter(
+    (record) => 'type' in record.data && record.data.type === source
+  )
 }
 
 // Returns the textContent of a ElementNode, if any.
