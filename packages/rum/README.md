@@ -342,6 +342,44 @@ A service is an independent, deployable code repository that maps to a set of pa
 - If your browser application was constructed as a monolith, your RUM application has one service name for the application.
 - If your browser application was constructed as separate repositories for multiple pages, edit the default service names throughout the lifecycle of your application.
 
+### Access internal context
+
+After the Datadog browser logs SDK is initialized, you can access the internal context of the SDK. This allows you to access `session_id`, `application_id`, `user_action` and `view`.
+
+```
+getInternalContext (startTime?: 'number' | undefined)
+```
+
+You can optionally use `startTime` parameter to get the context of a specific time. If the parameter is omitted, the current context is returned.
+
+##### NPM
+
+For NPM, use:
+
+```javascript
+import { datadogRum } from '@datadog/browser-rum'
+
+datadogRum.getInternalContext() // { session_id: "xxxx", application_id: "xxxx" ... }
+```
+
+#### CDN async
+
+For CDN async, use:
+
+```javascript
+DD_RUM.onReady(function () {
+  DD_RUM.getInternalContext() // { session_id: "xxxx", application_id: "xxxx" ... }
+})
+```
+
+##### CDN sync
+
+For CDN sync, use:
+
+```javascript
+DD_RUM.getInternalContext() // { session_id: "xxxx", application_id: "xxxx" ... }
+```
+
 ## Further Reading
 
 {{< partial name="whats-next/whats-next.html" >}}
