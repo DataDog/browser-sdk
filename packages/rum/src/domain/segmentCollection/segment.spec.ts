@@ -128,14 +128,22 @@ describe('Segment', () => {
         segment = createSegment()
         segment.addRecord({ type: RecordType.ViewEnd, timestamp: 15 as TimeStamp })
       })
-      it('increments records_count', () => {
+      it('does increment records_count', () => {
         expect(segment.metadata.records_count).toBe(2)
       })
-      it('increases end timestamp', () => {
+      it('does not change start timestamp when receiving a later record', () => {
+        expect(segment.metadata.start).toBe(10)
+      })
+      it('does change the start timestamp when receiving an earlier record', () => {
+        segment.addRecord({ type: RecordType.ViewEnd, timestamp: 5 as TimeStamp })
+        expect(segment.metadata.start).toBe(5)
+      })
+      it('does increase end timestamp when receiving a later record', () => {
         expect(segment.metadata.end).toBe(15)
       })
-      it('does not change start timestamp', () => {
-        expect(segment.metadata.start).toBe(10)
+      it('does not change the end timestamp when receiving an earlier record', () => {
+        segment.addRecord({ type: RecordType.ViewEnd, timestamp: 5 as TimeStamp })
+        expect(segment.metadata.end).toBe(15)
       })
     })
 

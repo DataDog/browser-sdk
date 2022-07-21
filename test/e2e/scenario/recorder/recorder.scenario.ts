@@ -1,7 +1,8 @@
 import type { InputData, StyleSheetRuleData, CreationReason, Segment } from '@datadog/browser-rum/src/types'
-import { NodeType, IncrementalSource, RecordType } from '@datadog/browser-rum/src/types'
+import { MouseInteractionType, NodeType, IncrementalSource, RecordType } from '@datadog/browser-rum/src/types'
 
 import type { RumInitConfiguration } from '@datadog/browser-rum-core'
+import { FrustrationType } from '@datadog/browser-rum-core'
 import { DefaultPrivacyLevel } from '@datadog/browser-rum'
 
 import {
@@ -13,6 +14,8 @@ import {
   findMeta,
   findTextContent,
   createMutationPayloadValidatorFromSegment,
+  findAllFrustrationRecords,
+  findMouseInteractionRecords,
 } from '@datadog/browser-rum/test/utils'
 import { renewSession } from '../../lib/helpers/session'
 import type { EventRegistry } from '../../lib/framework'
@@ -656,6 +659,64 @@ describe('recorder', () => {
         expect(segment.records[1].type).toBe(RecordType.Focus)
         expect(segment.records[2].type).toBe(RecordType.FullSnapshot)
         expect(segment.records.slice(3).every((record) => record.type !== RecordType.FullSnapshot)).toBe(true)
+      })
+  })
+
+  describe('frustration records', () => {
+    createTest('should detect a dead click and match it to mouse interaction record')
+      .withRum({ trackFrustrations: true })
+      .withRumInit(initRumAndStartRecording)
+      .withSetup(bundleSetup)
+      .run(async ({ serverEvents }) => {
+        const html = await $('html')
+        await html.click()
+        await flushEvents()
+
+        expect(serverEvents.sessionReplay.length).toBe(1)
+        const { segment } = serverEvents.sessionReplay[0]
+
+        const clickRecords = findMouseInteractionRecords(segment.data, MouseInteractionType.Click)
+        const frustrationRecords = findAllFrustrationRecords(segment.data)
+
+        expect(clickRecords.length).toBe(1)
+        expect(clickRecords[0].id).toBeTruthy('mouse interaction record should have an id')
+        expect(frustrationRecords.length).toBe(1)
+        expect(frustrationRecords[0].data).toEqual({
+          frustrationTypes: [FrustrationType.DEAD_CLICK],
+          recordIds: [clickRecords[0].id!],
+        })
+      })
+
+    createTest('should detect a rage click and match it to mouse interaction records')
+      .withRum({ trackFrustrations: true })
+      .withRumInit(initRumAndStartRecording)
+      .withSetup(bundleSetup)
+      .withBody(
+        html`
+          <div id="main-div" />
+          <button
+            id="my-button"
+            onclick="document.querySelector('#main-div').appendChild(document.createElement('div'));"
+          />
+        `
+      )
+      .run(async ({ serverEvents }) => {
+        const button = await $('#my-button')
+        await Promise.all([button.click(), button.click(), button.click(), button.click()])
+        await flushEvents()
+
+        expect(serverEvents.sessionReplay.length).toBe(1)
+        const { segment } = serverEvents.sessionReplay[0]
+
+        const clickRecords = findMouseInteractionRecords(segment.data, MouseInteractionType.Click)
+        const frustrationRecords = findAllFrustrationRecords(segment.data)
+
+        expect(clickRecords.length).toBe(4)
+        expect(frustrationRecords.length).toBe(1)
+        expect(frustrationRecords[0].data).toEqual({
+          frustrationTypes: [FrustrationType.RAGE_CLICK],
+          recordIds: clickRecords.map((r) => r.id!),
+        })
       })
   })
 })
