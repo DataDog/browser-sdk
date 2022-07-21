@@ -344,7 +344,31 @@ A service is an independent, deployable code repository that maps to a set of pa
 
 ### Access internal context
 
-After the Datadog browser logs SDK is initialized, you can access the internal context of the SDK. This allows you to access `session_id`, `application_id`, `user_action` and `view`.
+After the Datadog browser RUM SDK is initialized, you can access the internal context of the SDK. This allows you to access:
+
+| Attribute      | Description                                                   |
+| -------------- | ------------------------------------------------------------- |
+| application_id | ID of the application                                         |
+| session_id     | ID of the session                                             |
+| user_action    | Object containing action ID (or undefined if no action found) |
+| view           | Object containing details about the current view event        |
+
+More details can be found on the [**RUM Browser Data Collected** page][2].
+
+#### Example
+
+```
+{
+  application_id : "xxx",
+  session_id : "xxx",
+  user_action: { id: "xxx" },
+  view : {
+    id : "xxx",
+    referrer : "",
+    url: "http://localhost:8080/"
+  }
+}
+```
 
 ```
 getInternalContext (startTime?: 'number' | undefined)
