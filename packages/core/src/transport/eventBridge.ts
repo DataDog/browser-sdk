@@ -1,4 +1,4 @@
-import { getGlobalObject } from '../tools/utils'
+import { endsWith, getGlobalObject } from '../tools/utils'
 
 export interface BrowserWindowWithEventBridge extends Window {
   DatadogEventBridge?: DatadogEventBridge
@@ -26,15 +26,13 @@ export function getEventBridge<T, E>() {
   }
 }
 
-export function canUseEventBridge(hostname = getGlobalObject<Window>().location?.hostname): boolean {
+export function canUseEventBridge(currentHost = getGlobalObject<Window>().location?.hostname): boolean {
   const bridge = getEventBridge()
   return (
     !!bridge &&
-    bridge.getAllowedWebViewHosts().some((host) => {
-      const escapedHost = host.replace(/\./g, '\\.')
-      const isDomainOrSubDomain = new RegExp(`^(.+\\.)*${escapedHost}$`)
-      return isDomainOrSubDomain.test(hostname)
-    })
+    bridge
+      .getAllowedWebViewHosts()
+      .some((allowedHost) => currentHost === allowedHost || endsWith(currentHost, `.${allowedHost}`))
   )
 }
 
