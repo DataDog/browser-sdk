@@ -247,17 +247,22 @@ describe('utils', () => {
   })
 
   describe('jsonStringify', () => {
-    it('should jsonStringify an object with toJSON directly defined', () => {
-      const value = [{ 1: 'a' }]
+    afterEach(() => {
+      delete (Array.prototype as any).toJSON
+      delete (Object.prototype as any).toJSON
+    })
+
+    it('should jsonStringify an Object with toJSON defined on its prototype', () => {
+      const value = { 1: 'a' }
       const expectedJson = JSON.stringify(value)
 
       expect(jsonStringify(value)).toEqual(expectedJson)
-      ;(value as any).toJSON = () => '42'
+      ;(Object.prototype as any).toJSON = () => '42'
       expect(jsonStringify(value)).toEqual(expectedJson)
       expect(JSON.stringify(value)).toEqual('"42"')
     })
 
-    it('should jsonStringify an object with toJSON defined on prototype', () => {
+    it('should jsonStringify an Array with toJSON defined on its prototype', () => {
       const value = [{ 2: 'b' }]
       const expectedJson = JSON.stringify(value)
 
@@ -265,8 +270,13 @@ describe('utils', () => {
       ;(Array.prototype as any).toJSON = () => '42'
       expect(jsonStringify(value)).toEqual(expectedJson)
       expect(JSON.stringify(value)).toEqual('"42"')
+    })
 
-      delete (Array.prototype as any).toJSON
+    it('should not restore the toJSON method on the wrong prototype', () => {
+      const value = [{ 1: 'a' }]
+      ;(Object.prototype as any).toJSON = () => '42'
+      jsonStringify(value)
+      expect(Object.prototype.hasOwnProperty.call(Array.prototype, 'toJSON')).toBe(false)
     })
 
     it('should jsonStringify edge cases', () => {

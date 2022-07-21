@@ -146,61 +146,51 @@ export function round(num: number, decimals: 0 | 1 | 2 | 3 | 4) {
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 export function noop() {}
 
-interface ObjectWithToJSON {
+interface ObjectWithToJsonMethod {
   toJSON: (() => object) | undefined
 }
+function removeToJsonMethod(object: ObjectWithToJsonMethod) {
+  const objectToJson = object.toJSON
+  if (objectToJson) {
+    delete object.toJSON
+    return () => {
+      object.toJSON = objectToJson
+    }
+  }
 
-type OriginalToJSON = [boolean, undefined | (() => object)]
+  return noop
+}
 
 /**
  * Custom implementation of JSON.stringify that ignores value.toJSON.
  * We need to do that because some sites badly override toJSON on certain objects.
- * Note this still supposes that JSON.stringify is correct...
+ * Note this still assumes that JSON.stringify is correct...
  */
 export function jsonStringify(
   value: unknown,
   replacer?: Array<string | number>,
   space?: string | number
 ): string | undefined {
-  if (value === null || value === undefined) {
-    return JSON.stringify(value)
-  }
-  let originalToJSON: OriginalToJSON = [false, undefined]
-  if (hasToJSON(value)) {
-    // We need to add a flag and not rely on the truthiness of value.toJSON
-    // because it can be set but undefined and that's actually significant.
-    originalToJSON = [true, value.toJSON]
-    delete value.toJSON
-  }
+  // Some sites are badly overriding toJSON on certain objects. We expect that the Browser SDK won't
+  // use other objects than Array and Object to represent a value to stringify, and those objects
+  // won't have an own "toJSON" method defined.
+  //
+  // Thus, we only need to make sure that Array and Object prototypes don't define their own toJSON
+  // methods. User-provided values might have `toJSON` methods, but it is safe to keep them, since
+  // it won't impact the SDK operations or data model representation.
+  //
+  // Note: Object should be handled before Array because Array is a subclass of Object.
+  const restoreObjectPrototypeToJson = removeToJsonMethod(Object.prototype as ObjectWithToJsonMethod)
+  const restoreArrayPrototypeToJson = removeToJsonMethod(Array.prototype as unknown as ObjectWithToJsonMethod)
 
-  let originalProtoToJSON: OriginalToJSON = [false, undefined]
-  let prototype
-  if (typeof value === 'object') {
-    prototype = Object.getPrototypeOf(value) as object
-    if (hasToJSON(prototype)) {
-      originalProtoToJSON = [true, prototype.toJSON]
-      delete prototype.toJSON
-    }
-  }
-
-  let result: string
   try {
-    result = JSON.stringify(value, replacer, space)
+    return JSON.stringify(value, replacer, space)
   } catch {
-    result = '<error: unable to serialize object>'
+    return '<error: unable to serialize object>'
   } finally {
-    if (originalToJSON[0]) {
-      ;(value as ObjectWithToJSON).toJSON = originalToJSON[1]
-    }
-    if (originalProtoToJSON[0]) {
-      ;(prototype as ObjectWithToJSON).toJSON = originalProtoToJSON[1]
-    }
+    restoreObjectPrototypeToJson()
+    restoreArrayPrototypeToJson()
   }
-  return result
-}
-
-function hasToJSON(value: unknown): value is ObjectWithToJSON {
-  return typeof value === 'object' && value !== null && Object.prototype.hasOwnProperty.call(value, 'toJSON')
 }
 
 export function includes(candidate: string, search: string): boolean
