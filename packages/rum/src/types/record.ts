@@ -1,4 +1,5 @@
 import type { TimeStamp } from '@datadog/browser-core'
+import type { FrustrationType } from '@datadog/browser-rum-core'
 import type { SerializedNodeWithId } from './serializedNode'
 
 export type Record =
@@ -8,6 +9,7 @@ export type Record =
   | FocusRecord
   | ViewEndRecord
   | VisualViewportRecord
+  | FrustrationRecord
 
 export const RecordType = {
   FullSnapshot: 2,
@@ -16,6 +18,7 @@ export const RecordType = {
   Focus: 6,
   ViewEnd: 7,
   VisualViewport: 8,
+  FrustrationRecord: 9,
 } as const
 
 export type RecordType = typeof RecordType[keyof typeof RecordType]
@@ -36,6 +39,16 @@ export interface IncrementalSnapshotRecord {
   type: typeof RecordType.IncrementalSnapshot
   timestamp: TimeStamp
   data: IncrementalData
+  id?: number
+}
+
+export interface FrustrationRecord {
+  type: typeof RecordType.FrustrationRecord
+  timestamp: TimeStamp
+  data: {
+    frustrationTypes: FrustrationType[]
+    recordIds: number[]
+  }
 }
 
 export interface MetaRecord {

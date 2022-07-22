@@ -228,12 +228,17 @@ export function arrayFrom<T>(arrayLike: ArrayLike<T> | Set<T>): T[] {
 }
 
 export function find<T, S extends T>(
-  array: T[],
-  predicate: (item: T, index: number, array: T[]) => item is S
-): S | undefined {
+  array: ArrayLike<T>,
+  predicate: (item: T, index: number) => item is S
+): S | undefined
+export function find<T>(array: ArrayLike<T>, predicate: (item: T, index: number) => boolean): T | undefined
+export function find(
+  array: ArrayLike<unknown>,
+  predicate: (item: unknown, index: number) => boolean
+): unknown | undefined {
   for (let i = 0; i < array.length; i += 1) {
     const item = array[i]
-    if (predicate(item, i, array)) {
+    if (predicate(item, i)) {
       return item
     }
   }
@@ -287,6 +292,10 @@ export function mapValues<A, B>(object: { [key: string]: A }, fn: (arg: A) => B)
 
 export function startsWith(candidate: string, search: string) {
   return candidate.slice(0, search.length) === search
+}
+
+export function endsWith(candidate: string, search: string) {
+  return candidate.slice(-search.length) === search
 }
 
 /**

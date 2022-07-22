@@ -9,8 +9,6 @@ let nextId = 0
 export class Segment {
   public isFlushed = false
 
-  public flushReason: string | undefined = undefined
-
   public readonly metadata: SegmentMetadata
 
   private id = nextId++
@@ -21,7 +19,7 @@ export class Segment {
     creationReason: CreationReason,
     initialRecord: Record,
     onWrote: (compressedBytesCount: number) => void,
-    onFlushed: (data: Uint8Array, rawBytesCount: number, reason?: string) => void
+    onFlushed: (data: Uint8Array, rawBytesCount: number) => void
   ) {
     const viewId = context.view.id
 
@@ -71,20 +69,20 @@ export class Segment {
   }
 
   addRecord(record: Record): void {
-    this.metadata.end = record.timestamp
+    this.metadata.start = Math.min(this.metadata.start, record.timestamp)
+    this.metadata.end = Math.max(this.metadata.end, record.timestamp)
     this.metadata.records_count += 1
     replayStats.addRecord(this.metadata.view.id)
     this.metadata.has_full_snapshot ||= record.type === RecordType.FullSnapshot
     this.worker.postMessage({ data: `,${JSON.stringify(record)}`, id: this.id, action: 'write' })
   }
 
-  flush(reason?: string) {
+  flush() {
     this.worker.postMessage({
       data: `],${JSON.stringify(this.metadata).slice(1)}\n`,
       id: this.id,
       action: 'flush',
     })
-    this.flushReason = reason
     this.isFlushed = true
   }
 }
