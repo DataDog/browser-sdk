@@ -365,7 +365,8 @@ More details can be found on the [**RUM Browser Data Collected** page][2].
   view : {
     id : "xxx",
     referrer : "",
-    url: "http://localhost:8080/"
+    url: "http://localhost:8080/",
+    name: "homepage"
   }
 }
 ```
