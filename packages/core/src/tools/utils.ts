@@ -159,7 +159,7 @@ export function jsonStringify(
   replacer?: Array<string | number>,
   space?: string | number
 ): string | undefined {
-  if (!value || typeof value !== 'object') {
+  if (typeof value !== 'object' || value === null) {
     return JSON.stringify(value)
   }
 
@@ -177,13 +177,13 @@ export function jsonStringify(
   } finally {
     restoreObjectPrototypeToJson()
     restoreArrayPrototypeToJson()
-    restoreValueToJson()
     restoreValuePrototypeToJson()
+    restoreValueToJson()
   }
 }
 
 interface ObjectWithToJsonMethod {
-  toJSON: (() => object) | undefined
+  toJSON: unknown
 }
 function detachToJsonMethod(value: object) {
   const object = value as ObjectWithToJsonMethod
