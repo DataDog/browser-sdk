@@ -149,7 +149,7 @@ export function noop() {}
 /**
  * Custom implementation of JSON.stringify that ignores some toJSON methods. We need to do that
  * because some sites badly override toJSON on certain objects. Removing all toJSON methods from
- * nested values would be too costly, so we just remove them from the root value, and native classes
+ * nested values would be too costly, so we just detach them from the root value, and native classes
  * used to build JSON values (Array and Object).
  *
  * Note: this still assumes that JSON.stringify is correct.
@@ -159,12 +159,12 @@ export function jsonStringify(
   replacer?: Array<string | number>,
   space?: string | number
 ): string | undefined {
-  // Note: The order matter here. We need to remove toJSON methods on parent classes before their
+  // Note: The order matter here. We need to detach toJSON methods on parent classes before their
   // subclasses.
-  const restoreObjectPrototypeToJson = removeToJsonMethod(Object.prototype)
-  const restoreArrayPrototypeToJson = removeToJsonMethod(Array.prototype)
-  const restoreValuePrototypeToJson = removeToJsonMethod(value && Object.getPrototypeOf(value))
-  const restoreValueToJson = removeToJsonMethod(value)
+  const restoreObjectPrototypeToJson = detachToJsonMethod(Object.prototype)
+  const restoreArrayPrototypeToJson = detachToJsonMethod(Array.prototype)
+  const restoreValuePrototypeToJson = detachToJsonMethod(value && Object.getPrototypeOf(value))
+  const restoreValueToJson = detachToJsonMethod(value)
 
   try {
     return JSON.stringify(value, replacer, space)
@@ -181,7 +181,7 @@ export function jsonStringify(
 interface ObjectWithToJsonMethod {
   toJSON: (() => object) | undefined
 }
-function removeToJsonMethod(value: unknown) {
+function detachToJsonMethod(value: unknown) {
   if (typeof value === 'object' && value !== null) {
     const object = value as ObjectWithToJsonMethod
     const objectToJson = object.toJSON
