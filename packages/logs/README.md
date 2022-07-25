@@ -702,7 +702,7 @@ DD_LOGS.onReady(function () {
 For CDN sync, use:
 
 ```javascript
-DD_LOGS.getInternalContext() // { session_id: "xxxx-xxxx-xxxx-xxxx" }
+window.DD_LOGS && window.DD_LOGS.getInternalContext() // { session_id: "xxxx-xxxx-xxxx-xxxx" }
 ```
 
 <!-- Note: all URLs should be absolute -->
