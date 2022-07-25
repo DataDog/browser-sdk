@@ -1,5 +1,10 @@
 import { addTelemetryDebug, assign, monitor } from '@datadog/browser-core'
-import type { CreationReason, Record, SegmentContext, SegmentMetadata } from '../../types'
+import type {
+  BrowserRecord as Record,
+  BrowserSegmentMetadata as SegmentMetadata,
+  CreationReason,
+  SegmentContext,
+} from '../../types'
 import { RecordType } from '../../types'
 import * as replayStats from '../replayStats'
 import type { DeflateWorker, DeflateWorkerListener } from './deflateWorker'
@@ -31,6 +36,7 @@ export class Segment {
         records_count: 1,
         has_full_snapshot: initialRecord.type === RecordType.FullSnapshot,
         index_in_view: replayStats.getSegmentsCount(viewId),
+        source: 'browser' as const,
       },
       context
     )

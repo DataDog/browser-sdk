@@ -2,7 +2,12 @@ import type { EventEmitter, TimeoutId } from '@datadog/browser-core'
 import { ONE_SECOND, addEventListener, DOM_EVENT, monitor } from '@datadog/browser-core'
 import type { LifeCycle, ViewContexts, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
-import type { CreationReason, Record, SegmentContext, SegmentMetadata } from '../../types'
+import type {
+  BrowserRecord as Record,
+  BrowserSegmentMetadata as SegmentMetadata,
+  CreationReason,
+  SegmentContext,
+} from '../../types'
 import type { DeflateWorker } from './deflateWorker'
 import { Segment } from './segment'
 

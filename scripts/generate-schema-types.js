@@ -16,9 +16,14 @@ async function main() {
     path.join(__dirname, '../packages/core/src/domain/telemetry/telemetryEvent.types.ts'),
     'telemetry-events-schema.json'
   )
+  await generateTypesFromSchema(
+    path.join(__dirname, '../packages/rum/src/types/session-replay.ts'),
+    'session-replay-browser-schema.json',
+    { options: { additionalProperties: false } }
+  )
 }
 
-async function generateTypesFromSchema(typesPath, schema) {
+async function generateTypesFromSchema(typesPath, schema, { options = {} } = {}) {
   const schemaPath = path.join(schemasDirectoryPath, schema)
   const prettierConfig = await prettier.resolveConfig(prettierConfigPath)
   printLog(`Compiling ${schemaPath}...`)
@@ -27,6 +32,7 @@ async function generateTypesFromSchema(typesPath, schema) {
     bannerComment:
       '/* eslint-disable */\n/**\n * DO NOT MODIFY IT BY HAND. Run `yarn rum-events-format:sync` instead.\n*/',
     style: prettierConfig,
+    ...options,
   })
   printLog(`Writing ${typesPath}...`)
   fs.writeFileSync(typesPath, compiledTypes)

@@ -3,7 +3,11 @@ import { LifeCycle } from '@datadog/browser-rum-core'
 import type { Clock } from '../../../../core/test/specHelper'
 import { createNewEvent } from '../../../../core/test/specHelper'
 import { collectAsyncCalls, recordsPerFullSnapshot } from '../../../test/utils'
-import type { IncrementalSnapshotRecord, FocusRecord, Record } from '../../types'
+import type {
+  BrowserIncrementalSnapshotRecord as IncrementalSnapshotRecord,
+  BrowserRecord as Record,
+  FocusRecord,
+} from '../../types'
 import { RecordType, IncrementalSource } from '../../types'
 import type { RecordAPI } from './record'
 import { record } from './record'

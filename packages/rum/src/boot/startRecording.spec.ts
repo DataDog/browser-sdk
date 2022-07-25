@@ -12,7 +12,7 @@ import { setup } from '../../../rum-core/test/specHelper'
 import { collectAsyncCalls, recordsPerFullSnapshot } from '../../test/utils'
 import { setSegmentBytesLimit, startDeflateWorker } from '../domain/segmentCollection'
 
-import type { Segment } from '../types'
+import type { BrowserSegment as Segment } from '../types'
 import { RecordType } from '../types'
 import { resetReplayStats } from '../domain/replayStats'
 import { startRecording } from './startRecording'
@@ -93,6 +93,7 @@ describe('startRecording', () => {
         raw_segment_size: jasmine.stringMatching(/^\d+$/),
         'view.id': 'view-id',
         index_in_view: '0',
+        source: 'browser',
       })
       expectNoExtraRequestSendCalls(done)
     })

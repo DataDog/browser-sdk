@@ -1,18 +1,18 @@
 import type { DeflateWorker, DeflateWorkerAction, DeflateWorkerListener } from '../src/domain/segmentCollection'
 import type {
-  MutationPayload,
-  MutationData,
+  BrowserFullSnapshotRecord as FullSnapshotRecord,
+  BrowserIncrementalSnapshotRecord as IncrementalSnapshotRecord,
+  BrowserMutationPayload as MutationPayload,
+  BrowserMutationData as MutationData,
+  BrowserSegment as Segment,
   ElementNode,
+  FrustrationRecord,
   SerializedNode,
   SerializedNodeWithId,
   TextNode,
-  FullSnapshotRecord,
-  IncrementalSnapshotRecord,
   MetaRecord,
-  VisualViewportRecord,
-  Segment,
-  FrustrationRecord,
   MouseInteractionType,
+  VisualViewportRecord,
 } from '../src/types'
 import { RecordType, IncrementalSource, NodeType } from '../src/types'
 

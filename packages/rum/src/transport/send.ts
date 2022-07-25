@@ -1,7 +1,7 @@
 import type { EndpointBuilder } from '@datadog/browser-core'
 import { HttpRequest, objectEntries } from '@datadog/browser-core'
 import { SEGMENT_BYTES_LIMIT } from '../domain/segmentCollection'
-import type { SegmentMetadata } from '../types'
+import type { BrowserSegmentMetadata as SegmentMetadata } from '../types'
 
 export function send(
   endpointBuilder: EndpointBuilder,

@@ -1,7 +1,7 @@
 import type { TimeStamp } from '@datadog/browser-core'
 import { noop, setDebugMode, display, isIE } from '@datadog/browser-core'
 import { MockWorker, parseSegment } from '../../../test/utils'
-import type { CreationReason, Record, SegmentContext } from '../../types'
+import type { CreationReason, BrowserRecord as Record, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
 import { getReplayStats, resetReplayStats } from '../replayStats'
 import { Segment } from './segment'
@@ -14,7 +14,7 @@ const ENCODED_SEGMENT_HEADER_BYTES_COUNT = 12 // {"records":[
 const ENCODED_RECORD_BYTES_COUNT = 25
 const ENCODED_FULL_SNAPSHOT_RECORD_BYTES_COUNT = 35
 const ENCODED_SEPARATOR_BYTES_COUNT = 1 // ,
-const ENCODED_META_BYTES_COUNT = 173 // this should stay accurate as long as less than 10 records are added
+const ENCODED_META_BYTES_COUNT = 192 // this should stay accurate as long as less than 10 records are added
 
 describe('Segment', () => {
   let worker: MockWorker
@@ -49,6 +49,7 @@ describe('Segment', () => {
     expect(onFlushedSpy).toHaveBeenCalledTimes(1)
 
     expect(parseSegment(onFlushedSpy.calls.mostRecent().args[0])).toEqual({
+      source: 'browser' as const,
       creation_reason: 'init' as const,
       end: 10,
       has_full_snapshot: false,

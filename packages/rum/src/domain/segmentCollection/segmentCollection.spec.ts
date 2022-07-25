@@ -10,7 +10,7 @@ import {
   setPageVisibility,
 } from '@datadog/browser-core/test/specHelper'
 import { createRumSessionManagerMock } from '../../../../rum-core/test/mockRumSessionManager'
-import type { Record, SegmentContext, SegmentMetadata } from '../../types'
+import type { BrowserRecord as Record, BrowserSegmentMetadata as SegmentMetadata, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
 import { MockWorker } from '../../../test/utils'
 import {

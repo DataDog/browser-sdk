@@ -1,5 +1,8 @@
 import { assign, timeStampNow } from '@datadog/browser-core'
-import type { IncrementalData, IncrementalSnapshotRecord } from '../../types'
+import type {
+  BrowserIncrementalData as IncrementalData,
+  BrowserIncrementalSnapshotRecord as IncrementalSnapshotRecord,
+} from '../../types'
 import { RecordType } from '../../types'
 
 export function isTouchEvent(event: MouseEvent | TouchEvent): event is TouchEvent {

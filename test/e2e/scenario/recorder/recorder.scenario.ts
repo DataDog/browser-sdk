@@ -1,5 +1,10 @@
-import type { InputData, StyleSheetRuleData, CreationReason, Segment } from '@datadog/browser-rum/src/types'
-import { MouseInteractionType, NodeType, IncrementalSource, RecordType } from '@datadog/browser-rum/src/types'
+import type {
+  InputData,
+  StyleSheetRuleData,
+  CreationReason,
+  BrowserSegment as Segment,
+} from '@datadog/browser-rum/src/types'
+import { NodeType, IncrementalSource, RecordType, MouseInteractionType } from '@datadog/browser-rum/src/types'
 
 import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import { FrustrationType } from '@datadog/browser-rum-core'
@@ -49,6 +54,7 @@ describe('recorder', () => {
         'view.id': jasmine.stringMatching(UUID_RE),
         raw_segment_size: jasmine.stringMatching(INTEGER_RE),
         index_in_view: '0',
+        source: 'browser',
       })
       expect(segment).toEqual({
         data: {
@@ -62,6 +68,7 @@ describe('recorder', () => {
           start: Number(metadata.start),
           view: { id: metadata['view.id'] },
           index_in_view: 0,
+          source: 'browser',
         },
         encoding: jasmine.any(String),
         filename: `${metadata['session.id']}-${metadata.start}`,

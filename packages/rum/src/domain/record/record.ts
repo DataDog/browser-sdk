@@ -3,14 +3,14 @@ import type { DefaultPrivacyLevel, TimeStamp } from '@datadog/browser-core'
 import type { LifeCycle } from '@datadog/browser-rum-core'
 import { getViewportDimension } from '@datadog/browser-rum-core'
 import type {
+  BrowserMutationData as MutationData,
+  BrowserRecord as Record,
   InputData,
   MediaInteractionData,
   MousemoveData,
-  MutationData,
   ScrollData,
   StyleSheetRuleData,
   ViewportResizeData,
-  Record,
 } from '../../types'
 import { RecordType, IncrementalSource } from '../../types'
 import { serializeDocument } from './serialize'

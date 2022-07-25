@@ -17,7 +17,7 @@ import type {
   InputState,
   MousePosition,
   MouseInteraction,
-  MutationPayload,
+  BrowserMutationPayload as MutationPayload,
   ScrollPosition,
   StyleSheetRule,
   ViewportResizeDimension,
@@ -25,7 +25,7 @@ import type {
   FocusRecord,
   VisualViewportRecord,
   FrustrationRecord,
-  IncrementalSnapshotRecord,
+  BrowserIncrementalSnapshotRecord as IncrementalSnapshotRecord,
   MouseInteractionData,
 } from '../../types'
 import { RecordType, IncrementalSource, MediaInteractionType, MouseInteractionType } from '../../types'
