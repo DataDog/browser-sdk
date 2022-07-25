@@ -159,11 +159,15 @@ export function jsonStringify(
   replacer?: Array<string | number>,
   space?: string | number
 ): string | undefined {
+  if (!value || typeof value !== 'object') {
+    return JSON.stringify(value)
+  }
+
   // Note: The order matter here. We need to detach toJSON methods on parent classes before their
   // subclasses.
   const restoreObjectPrototypeToJson = detachToJsonMethod(Object.prototype)
   const restoreArrayPrototypeToJson = detachToJsonMethod(Array.prototype)
-  const restoreValuePrototypeToJson = detachToJsonMethod(value && Object.getPrototypeOf(value))
+  const restoreValuePrototypeToJson = detachToJsonMethod(Object.getPrototypeOf(value))
   const restoreValueToJson = detachToJsonMethod(value)
 
   try {
@@ -181,18 +185,15 @@ export function jsonStringify(
 interface ObjectWithToJsonMethod {
   toJSON: (() => object) | undefined
 }
-function detachToJsonMethod(value: unknown) {
-  if (typeof value === 'object' && value !== null) {
-    const object = value as ObjectWithToJsonMethod
-    const objectToJson = object.toJSON
-    if (objectToJson) {
-      delete object.toJSON
-      return () => {
-        object.toJSON = objectToJson
-      }
+function detachToJsonMethod(value: object) {
+  const object = value as ObjectWithToJsonMethod
+  const objectToJson = object.toJSON
+  if (objectToJson) {
+    delete object.toJSON
+    return () => {
+      object.toJSON = objectToJson
     }
   }
-
   return noop
 }
 
