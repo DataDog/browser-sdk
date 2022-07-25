@@ -146,42 +146,25 @@ export function round(num: number, decimals: 0 | 1 | 2 | 3 | 4) {
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 export function noop() {}
 
-interface ObjectWithToJsonMethod {
-  toJSON: (() => object) | undefined
-}
-function removeToJsonMethod(object: ObjectWithToJsonMethod) {
-  const objectToJson = object.toJSON
-  if (objectToJson) {
-    delete object.toJSON
-    return () => {
-      object.toJSON = objectToJson
-    }
-  }
-
-  return noop
-}
-
 /**
- * Custom implementation of JSON.stringify that ignores value.toJSON.
- * We need to do that because some sites badly override toJSON on certain objects.
- * Note this still assumes that JSON.stringify is correct...
+ * Custom implementation of JSON.stringify that ignores some toJSON methods. We need to do that
+ * because some sites badly override toJSON on certain objects. Removing all toJSON methods from
+ * nested values would be too costly, so we just remove them from the root value, and native classes
+ * used to build JSON values (Array and Object).
+ *
+ * Note: this still assumes that JSON.stringify is correct.
  */
 export function jsonStringify(
   value: unknown,
   replacer?: Array<string | number>,
   space?: string | number
 ): string | undefined {
-  // Some sites are badly overriding toJSON on certain objects. We expect that the Browser SDK won't
-  // use other objects than Array and Object to represent a value to stringify, and those objects
-  // won't have an own "toJSON" method defined.
-  //
-  // Thus, we only need to make sure that Array and Object prototypes don't define their own toJSON
-  // methods. User-provided values might have `toJSON` methods, but it is safe to keep them, since
-  // it won't impact the SDK operations or data model representation.
-  //
-  // Note: Object should be handled before Array because Array is a subclass of Object.
-  const restoreObjectPrototypeToJson = removeToJsonMethod(Object.prototype as ObjectWithToJsonMethod)
-  const restoreArrayPrototypeToJson = removeToJsonMethod(Array.prototype as unknown as ObjectWithToJsonMethod)
+  // Note: The order matter here. We need to remove toJSON methods on parent classes before their
+  // subclasses.
+  const restoreObjectPrototypeToJson = removeToJsonMethod(Object.prototype)
+  const restoreArrayPrototypeToJson = removeToJsonMethod(Array.prototype)
+  const restoreValuePrototypeToJson = removeToJsonMethod(value && Object.getPrototypeOf(value))
+  const restoreValueToJson = removeToJsonMethod(value)
 
   try {
     return JSON.stringify(value, replacer, space)
@@ -190,7 +173,27 @@ export function jsonStringify(
   } finally {
     restoreObjectPrototypeToJson()
     restoreArrayPrototypeToJson()
+    restoreValueToJson()
+    restoreValuePrototypeToJson()
   }
+}
+
+interface ObjectWithToJsonMethod {
+  toJSON: (() => object) | undefined
+}
+function removeToJsonMethod(value: unknown) {
+  if (typeof value === 'object' && value !== null) {
+    const object = value as ObjectWithToJsonMethod
+    const objectToJson = object.toJSON
+    if (objectToJson) {
+      delete object.toJSON
+      return () => {
+        object.toJSON = objectToJson
+      }
+    }
+  }
+
+  return noop
 }
 
 export function includes(candidate: string, search: string): boolean
