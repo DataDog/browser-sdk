@@ -402,7 +402,7 @@ DD_RUM.onReady(function () {
 For CDN sync, use:
 
 ```javascript
-DD_RUM.getInternalContext() // { session_id: "xxxx", application_id: "xxxx" ... }
+window.DD_RUM && window.DD_RUM.getInternalContext() // { session_id: "xxxx", application_id: "xxxx" ... }
 ```
 
 ## Further Reading
