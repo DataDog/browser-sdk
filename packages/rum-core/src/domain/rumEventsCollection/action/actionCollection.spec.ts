@@ -46,6 +46,7 @@ describe('actionCollection', () => {
         height: 2,
       },
       position: { x: 1, y: 2 },
+      events: [event],
     })
 
     expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
@@ -85,6 +86,7 @@ describe('actionCollection', () => {
     })
     expect(rawRumEvents[0].domainContext).toEqual({
       event,
+      events: [event],
     })
   })
 

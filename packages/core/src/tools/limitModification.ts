@@ -54,5 +54,5 @@ function set(object: unknown, path: string, value: unknown) {
 }
 
 function isValidObjectContaining(object: unknown, field: string): object is { [key: string]: unknown } {
-  return typeof object === 'object' && object !== null && field in object
+  return typeof object === 'object' && object !== null && Object.prototype.hasOwnProperty.call(object, field)
 }
