@@ -1,2 +1,2 @@
 export * from './sessionReplay'
-export * from './sessionReplayUtils'
+export * from './sessionReplayConstants'
