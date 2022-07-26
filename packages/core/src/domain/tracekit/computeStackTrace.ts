@@ -81,7 +81,7 @@ function parseChromeAnonymousLine(line: string): StackFrame | undefined {
     column: parts[3] ? +parts[3] : undefined,
     func: UNKNOWN_FUNCTION,
     line: parts[2] ? +parts[2] : undefined,
-    url: parts[1] ?? undefined,
+    url: parts[1],
   }
 }
 
