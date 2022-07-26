@@ -4,10 +4,6 @@
  */
 
 /**
- * Schema of all properties of browser Session Replay
- */
-export type BrowserSessionReplay = BrowserSegment
-/**
  * Browser-specific. Schema of a Session Replay data Segment.
  */
 export type BrowserSegment = BrowserSegmentMetadata & {
