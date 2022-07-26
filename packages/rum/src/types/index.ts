@@ -1,2 +1,2 @@
-export * from './session-replay'
-export * from './session-replay-utils'
+export * from './sessionReplay'
+export * from './sessionReplayUtils'

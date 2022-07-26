@@ -17,7 +17,7 @@ async function main() {
     'telemetry-events-schema.json'
   )
   await generateTypesFromSchema(
-    path.join(__dirname, '../packages/rum/src/types/session-replay.ts'),
+    path.join(__dirname, '../packages/rum/src/types/sessionReplay.ts'),
     'session-replay-browser-schema.json',
     { options: { additionalProperties: false } }
   )

@@ -1,5 +1,4 @@
-/* eslint-disable unicorn/filename-case */
-import type * as SessionReplay from './session-replay'
+import type * as SessionReplay from './sessionReplay'
 
 export const RecordType: {
   FullSnapshot: SessionReplay.BrowserFullSnapshotRecord['type']
