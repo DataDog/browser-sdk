@@ -468,11 +468,11 @@ Error: foo
     })
   })
 
-  it('should parse Chrome closureScript errors', () => {
+  it('should parse Chrome error that only contain file name, with no path prefix', () => {
     const stack = `Error: RTE Simulation
     at foo$bar$oof$rab (events.cljs:1060:12)
-    at func1$func2$func3$func4 (std_interceptors.cljc:128:19)
-    at eval (std_interceptors.cljc:132:29)`
+    at func1$func2$func3$func4 (std_interceptors.js:128:19)
+    at eval (std_interceptors.jsx:132:29)`
 
     const stackFrames = computeStackTrace({ stack } as Error)
     expect(stackFrames.stack.length).toEqual(3)
@@ -488,14 +488,14 @@ Error: foo
       column: 19,
       func: 'func1$func2$func3$func4',
       line: 128,
-      url: 'std_interceptors.cljc',
+      url: 'std_interceptors.js',
     })
     expect(stackFrames.stack[2]).toEqual({
       args: [],
       column: 29,
       func: 'eval',
       line: 132,
-      url: 'std_interceptors.cljc',
+      url: 'std_interceptors.jsx',
     })
   })
 
