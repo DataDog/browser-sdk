@@ -29,11 +29,11 @@ export function computeStackTrace(ex: unknown): StackTrace {
     stack,
   }
 }
-const url = '((?:file|https?|blob|chrome-extension|native|eval|webpack|<anonymous>|\\w+\\.|\\/).*?)'
-const position = '(?::(\\d+))'
-const CHROME_LINE_RE = new RegExp(`^\\s*at (.*?) ?\\(${url}${position}?${position}?\\)?\\s*$`, 'i')
+const fileUrl = '((?:file|https?|blob|chrome-extension|native|eval|webpack|<anonymous>|\\w+\\.|\\/).*?)'
+const filePosition = '(?::(\\d+))'
+const CHROME_LINE_RE = new RegExp(`^\\s*at (.*?) ?\\(${fileUrl}${filePosition}?${filePosition}?\\)?\\s*$`, 'i')
 
-const CHROME_EVAL_RE = new RegExp(`\\((\\S*)${position}${position}\\)`)
+const CHROME_EVAL_RE = new RegExp(`\\((\\S*)${filePosition}${filePosition}\\)`)
 
 function parseChromeLine(line: string): StackFrame | undefined {
   const parts = CHROME_LINE_RE.exec(line)
@@ -62,7 +62,7 @@ function parseChromeLine(line: string): StackFrame | undefined {
   }
 }
 
-const CHROME_ANONYMOUS_FUNCTION_RE = new RegExp(`^\\s*at ?${url}${position}?${position}??\\s*$`, 'i')
+const CHROME_ANONYMOUS_FUNCTION_RE = new RegExp(`^\\s*at ?${fileUrl}${filePosition}?${filePosition}??\\s*$`, 'i')
 
 function parseChromeAnonymousLine(line: string): StackFrame | undefined {
   const parts = CHROME_ANONYMOUS_FUNCTION_RE.exec(line)
