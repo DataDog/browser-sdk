@@ -55,6 +55,7 @@ datadogRum.init({
   trackInteractions: true,
 })
 ```
+
 </details>
 
 <details>
@@ -75,6 +76,7 @@ datadogRum.init({
   trackInteractions: true,
 })
 ```
+
 </details>
 
 The `trackInteractions` and `trackFrustrations` parameters enable the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
@@ -86,13 +88,14 @@ Add the generated code snippet to the head tag of every HTML page you want to mo
 <details open>
   <summary>Latest version</summary>
 
+<!-- prettier-ignore -->
 ```html
 <script>
- (function(h,o,u,n,d) {
-   h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}}
-   d=o.createElement(u);d.async=1;d.src=n
-   n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
-})(window,document,'script','https://www.datadoghq-browser-agent.com/datadog-rum-v4.js','DD_RUM')
+  (function(h,o,u,n,d) {
+     h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}}
+     d=o.createElement(u);d.async=1;d.src=n
+     n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
+  })(window,document,'script','https://www.datadoghq-browser-agent.com/datadog-rum-v4.js','DD_RUM')
   DD_RUM.onReady(function() {
     DD_RUM.init({
       clientToken: '<CLIENT_TOKEN>',
@@ -108,6 +111,7 @@ Add the generated code snippet to the head tag of every HTML page you want to mo
   })
 </script>
 ```
+
 </details>
 
 <details>
@@ -116,11 +120,11 @@ Add the generated code snippet to the head tag of every HTML page you want to mo
 <!-- prettier-ignore -->
 ```html
 <script>
- (function(h,o,u,n,d) {
-   h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}}
-   d=o.createElement(u);d.async=1;d.src=n
-   n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
-})(window,document,'script','https://www.datadoghq-browser-agent.com/datadog-rum-v4.js','DD_RUM')
+  (function(h,o,u,n,d) {
+     h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}}
+     d=o.createElement(u);d.async=1;d.src=n
+     n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
+  })(window,document,'script','https://www.datadoghq-browser-agent.com/datadog-rum-v4.js','DD_RUM')
   DD_RUM.onReady(function() {
     DD_RUM.init({
       clientToken: '<CLIENT_TOKEN>',
@@ -136,6 +140,7 @@ Add the generated code snippet to the head tag of every HTML page you want to mo
   })
 </script>
 ```
+
 </details>
 
 The `trackInteractions` and `trackFrustrations` parameters enable the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
@@ -166,6 +171,7 @@ Add the generated code snippet to the head tag (in front of any other script tag
     })
 </script>
 ```
+
 </details>
 
 <details>
@@ -188,6 +194,7 @@ Add the generated code snippet to the head tag (in front of any other script tag
     })
 </script>
 ```
+
 </details>
 
 The `trackInteractions` and `trackFrustrations` parameters enable the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
@@ -397,6 +404,7 @@ datadogRum.init({
     premiumSampleRate: 0
 });
 ```
+
 </details>
 
 <details>
@@ -409,6 +417,7 @@ datadogRum.init({
     replaySampleRate: 0
 });
 ```
+
 </details>
 
 To track 100% of your sessions as Browser Premium:
@@ -423,6 +432,7 @@ datadogRum.init({
     premiumSampleRate: 100
 });
 ```
+
 </details>
 
 <details>
@@ -435,6 +445,7 @@ datadogRum.init({
     replaySampleRate: 100
 });
 ```
+
 </details>
 
 The `premiumSampleRate` is a percentage of `sampleRate`. If you set `sampleRate` to 60 and `premiumSampleRate` to 50, 40% of sessions are dropped, 30% of sessions are collected as Browser and 30% of sessions are collected as Browser Premium.
@@ -449,6 +460,7 @@ datadogRum.init({
     premiumSampleRate: 50
 });
 ```
+
 </details>
 
 <details>
@@ -461,6 +473,7 @@ datadogRum.init({
     replaySampleRate: 50
 });
 ```
+
 </details>
 
 ### Tagging
