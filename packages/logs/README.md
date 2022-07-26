@@ -667,6 +667,44 @@ window.DD_LOGS && DD_LOGS.logger.setHandler(['<HANDLER1>', '<HANDLER2>'])
 
 **Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the SDK.
 
+### Access internal context
+
+After the Datadog browser logs SDK is initialized, you can access the internal context of the SDK. This allows you to access the `session_id`.
+
+```
+getInternalContext (startTime?: 'number' | undefined)
+```
+
+You can optionally use `startTime` parameter to get the context of a specific time. If the parameter is omitted, the current context is returned.
+
+##### NPM
+
+For NPM, use:
+
+```javascript
+import { datadogLogs } from '@datadog/browser-logs'
+
+datadogLogs.getInternalContext() // { session_id: "xxxx-xxxx-xxxx-xxxx" }
+```
+
+#### CDN async
+
+For CDN async, use:
+
+```javascript
+DD_LOGS.onReady(function () {
+  DD_LOGS.getInternalContext() // { session_id: "xxxx-xxxx-xxxx-xxxx" }
+})
+```
+
+##### CDN sync
+
+For CDN sync, use:
+
+```javascript
+window.DD_LOGS && window.DD_LOGS.getInternalContext() // { session_id: "xxxx-xxxx-xxxx-xxxx" }
+```
+
 <!-- Note: all URLs should be absolute -->
 
 [1]: https://docs.datadoghq.com/account_management/api-app-keys/#api-keys
