@@ -31,11 +31,8 @@ export function computeStackTrace(ex: unknown): StackTrace {
 }
 const url = '((?:file|https?|blob|chrome-extension|native|eval|webpack|<anonymous>|\\w+\\.|\\/).*?)'
 const position = '(?::(\\d+))'
-const CHROME_LINE_RE =
-  // eslint-disable-next-line local-rules/disallow-side-effects
-  new RegExp(`^\\s*at (.*?) ?\\(${url}${position}?${position}?\\)?\\s*$`, 'i')
+const CHROME_LINE_RE = new RegExp(`^\\s*at (.*?) ?\\(${url}${position}?${position}?\\)?\\s*$`, 'i')
 
-// eslint-disable-next-line local-rules/disallow-side-effects
 const CHROME_EVAL_RE = new RegExp(`\\((\\S*)${position}${position}\\)`)
 
 function parseChromeLine(line: string): StackFrame | undefined {
@@ -65,9 +62,7 @@ function parseChromeLine(line: string): StackFrame | undefined {
   }
 }
 
-const CHROME_ANONYMOUS_FUNCTION_RE =
-  // eslint-disable-next-line local-rules/disallow-side-effects
-  new RegExp(`^\\s*at ?${url}${position}?${position}??\\s*$`, 'i')
+const CHROME_ANONYMOUS_FUNCTION_RE = new RegExp(`^\\s*at ?${url}${position}?${position}??\\s*$`, 'i')
 
 function parseChromeAnonymousLine(line: string): StackFrame | undefined {
   const parts = CHROME_ANONYMOUS_FUNCTION_RE.exec(line)
