@@ -195,11 +195,12 @@ function isAllowedCallExpression({ callee }) {
  */
 /* eslint-enable max-len */
 function isAllowedNewExpression({ callee }) {
-  switch(callee.name) {
+  switch (callee.name) {
     case 'WeakMap': // Allow "new WeakMap()"
     case 'RegExp': // Allow "new RegExp()"
       return true
 
-    default: return false
+    default:
+      return false
   }
 }
