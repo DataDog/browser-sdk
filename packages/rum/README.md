@@ -148,7 +148,7 @@ A [Datadog client token][5].
 : Required<br/>
 **Type**: String<br/>
 **Default**: `datadoghq.com`<br/>
-The Datadog site of your organization, the same value as the [Agent site configuration][14].
+[The Datadog site parameter of your organization][14].
 
 `service`
 : Optional<br/>
@@ -342,6 +342,69 @@ A service is an independent, deployable code repository that maps to a set of pa
 - If your browser application was constructed as a monolith, your RUM application has one service name for the application.
 - If your browser application was constructed as separate repositories for multiple pages, edit the default service names throughout the lifecycle of your application.
 
+### Access internal context
+
+After the Datadog browser RUM SDK is initialized, you can access the internal context of the SDK. This allows you to access:
+
+| Attribute      | Description                                                   |
+| -------------- | ------------------------------------------------------------- |
+| application_id | ID of the application                                         |
+| session_id     | ID of the session                                             |
+| user_action    | Object containing action ID (or undefined if no action found) |
+| view           | Object containing details about the current view event        |
+
+More details can be found on the [**RUM Browser Data Collected** page][2].
+
+#### Example
+
+```
+{
+  application_id : "xxx",
+  session_id : "xxx",
+  user_action: { id: "xxx" },
+  view : {
+    id : "xxx",
+    referrer : "",
+    url: "http://localhost:8080/",
+    name: "homepage"
+  }
+}
+```
+
+```
+getInternalContext (startTime?: 'number' | undefined)
+```
+
+You can optionally use `startTime` parameter to get the context of a specific time. If the parameter is omitted, the current context is returned.
+
+##### NPM
+
+For NPM, use:
+
+```javascript
+import { datadogRum } from '@datadog/browser-rum'
+
+datadogRum.getInternalContext() // { session_id: "xxxx", application_id: "xxxx" ... }
+```
+
+#### CDN async
+
+For CDN async, use:
+
+```javascript
+DD_RUM.onReady(function () {
+  DD_RUM.getInternalContext() // { session_id: "xxxx", application_id: "xxxx" ... }
+})
+```
+
+##### CDN sync
+
+For CDN sync, use:
+
+```javascript
+window.DD_RUM && window.DD_RUM.getInternalContext() // { session_id: "xxxx", application_id: "xxxx" ... }
+```
+
 ## Further Reading
 
 {{< partial name="whats-next/whats-next.html" >}}
@@ -361,7 +424,7 @@ A service is an independent, deployable code repository that maps to a set of pa
 [11]: https://www.datadoghq.com/pricing/?product=real-user-monitoring--session-replay#real-user-monitoring--session-replay
 [12]: https://docs.datadoghq.com/real_user_monitoring/connect_rum_and_traces?tab=browserrum
 [13]: https://docs.datadoghq.com/real_user_monitoring/session_replay/privacy_options?tab=maskuserinput
-[14]: https://docs.datadoghq.com/agent/basic_agent_usage#datadog-site
+[14]: https://docs.datadoghq.com/getting_started/site/
 [15]: https://docs.datadoghq.com/getting_started/tagging/#defining-tags
 [16]: https://docs.datadoghq.com/real_user_monitoring/browser/monitoring_page_performance/#how-page-activity-is-calculated
 [17]: https://docs.datadoghq.com/real_user_monitoring/session_replay/

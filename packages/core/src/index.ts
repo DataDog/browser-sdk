@@ -37,14 +37,7 @@ export {
 export {
   SESSION_TIME_OUT_DELAY, // Exposed for tests
 } from './domain/session/sessionConstants'
-export {
-  HttpRequest,
-  Batch,
-  canUseEventBridge,
-  getEventBridge,
-  startBatchWithReplica,
-  startFlushFailedSendBeacons,
-} from './transport'
+export { HttpRequest, Batch, canUseEventBridge, getEventBridge, startBatchWithReplica } from './transport'
 export * from './tools/display'
 export * from './tools/urlPolyfill'
 export * from './tools/timeUtils'

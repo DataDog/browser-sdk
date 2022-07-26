@@ -43,7 +43,7 @@ export function startSegmentCollection(
   applicationId: string,
   sessionManager: RumSessionManager,
   viewContexts: ViewContexts,
-  send: (data: Uint8Array, metadata: SegmentMetadata, rawSegmentBytesCount: number, flushReason?: string) => void,
+  send: (data: Uint8Array, metadata: SegmentMetadata, rawSegmentBytesCount: number) => void,
   worker: DeflateWorker
 ) {
   return doStartSegmentCollection(
@@ -76,7 +76,7 @@ type SegmentCollectionState =
 export function doStartSegmentCollection(
   lifeCycle: LifeCycle,
   getSegmentContext: () => SegmentContext | undefined,
-  send: (data: Uint8Array, metadata: SegmentMetadata, rawSegmentBytesCount: number, flushReason?: string) => void,
+  send: (data: Uint8Array, metadata: SegmentMetadata, rawSegmentBytesCount: number) => void,
   worker: DeflateWorker,
   emitter: EventEmitter = window
 ) {
@@ -106,7 +106,7 @@ export function doStartSegmentCollection(
 
   function flushSegment(nextSegmentCreationReason?: CreationReason) {
     if (state.status === SegmentCollectionStatus.SegmentPending) {
-      state.segment.flush(nextSegmentCreationReason)
+      state.segment.flush()
       clearTimeout(state.expirationTimeoutId)
     }
 
@@ -139,7 +139,7 @@ export function doStartSegmentCollection(
         }
       },
       (data, rawSegmentBytesCount) => {
-        send(data, segment.metadata, rawSegmentBytesCount, segment.flushReason)
+        send(data, segment.metadata, rawSegmentBytesCount)
       }
     )
 

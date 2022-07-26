@@ -120,7 +120,7 @@ The following parameters are available to configure the Datadog browser logs SDK
 | Parameter             | Type                                                                      | Required | Default         | Description                                                                                                                                                                           |
 | --------------------- | ------------------------------------------------------------------------- | -------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `clientToken`         | String                                                                    | Yes      |                 | A [Datadog client token][2].                                                                                                                                                          |
-| `site`                | String                                                                    | Yes      | `datadoghq.com` | The Datadog site of your organization. US: `datadoghq.com`, EU: `datadoghq.eu`                                                                                                        |
+| `site`                | String                                                                    | Yes      | `datadoghq.com` | The [Datadog site parameter of your organization][9].                                                                                                                                 |
 | `service`             | String                                                                    | No       |                 | The service name for your application. It should follow the [tag syntax requirements][7].                                                                                             |
 | `env`                 | String                                                                    | No       |                 | The application’s environment, for example: prod, pre-prod, staging, etc. It should follow the [tag syntax requirements][7].                                                          |
 | `version`             | String                                                                    | No       |                 | The application’s version, for example: 1.2.3, 6c44da20, 2020.02.13, etc. It should follow the [tag syntax requirements][7].                                                          |
@@ -667,6 +667,44 @@ window.DD_LOGS && DD_LOGS.logger.setHandler(['<HANDLER1>', '<HANDLER2>'])
 
 **Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the SDK.
 
+### Access internal context
+
+After the Datadog browser logs SDK is initialized, you can access the internal context of the SDK. This allows you to access the `session_id`.
+
+```
+getInternalContext (startTime?: 'number' | undefined)
+```
+
+You can optionally use `startTime` parameter to get the context of a specific time. If the parameter is omitted, the current context is returned.
+
+##### NPM
+
+For NPM, use:
+
+```javascript
+import { datadogLogs } from '@datadog/browser-logs'
+
+datadogLogs.getInternalContext() // { session_id: "xxxx-xxxx-xxxx-xxxx" }
+```
+
+#### CDN async
+
+For CDN async, use:
+
+```javascript
+DD_LOGS.onReady(function () {
+  DD_LOGS.getInternalContext() // { session_id: "xxxx-xxxx-xxxx-xxxx" }
+})
+```
+
+##### CDN sync
+
+For CDN sync, use:
+
+```javascript
+window.DD_LOGS && window.DD_LOGS.getInternalContext() // { session_id: "xxxx-xxxx-xxxx-xxxx" }
+```
+
 <!-- Note: all URLs should be absolute -->
 
 [1]: https://docs.datadoghq.com/account_management/api-app-keys/#api-keys
@@ -677,3 +715,4 @@ window.DD_LOGS && DD_LOGS.logger.setHandler(['<HANDLER1>', '<HANDLER2>'])
 [6]: https://docs.datadoghq.com/real_user_monitoring/faq/proxy_rum_data/
 [7]: https://docs.datadoghq.com/getting_started/tagging/#defining-tags
 [8]: https://developer.mozilla.org/en-US/docs/Web/API/Reporting_API
+[9]: https://docs.datadoghq.com/getting_started/site/
