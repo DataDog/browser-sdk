@@ -68,18 +68,23 @@ export function makeRumPublicApi(
   let startViewStrategy: StartRumResult['startView'] = (options, startClocks = clocksNow()) => {
     bufferApiCalls.add(() => startViewStrategy(options, startClocks))
   }
-  let addActionStrategy: StartRumResult['addAction'] = (action, commonContext = clonedCommonContext()) => {
+  let addActionStrategy: StartRumResult['addAction'] = (
+    action,
+    commonContext = {
+      context: globalContextManager.getContext(),
+      user: userContextManager.getContext(),
+    }
+  ) => {
     bufferApiCalls.add(() => addActionStrategy(action, commonContext))
   }
-  let addErrorStrategy: StartRumResult['addError'] = (providedError, commonContext = clonedCommonContext()) => {
+  let addErrorStrategy: StartRumResult['addError'] = (
+    providedError,
+    commonContext = {
+      context: globalContextManager.getContext(),
+      user: userContextManager.getContext(),
+    }
+  ) => {
     bufferApiCalls.add(() => addErrorStrategy(providedError, commonContext))
-  }
-
-  function clonedCommonContext(): CommonContext {
-    return deepClone({
-      context: globalContextManager.get(),
-      user: userContextManager.get(),
-    })
   }
 
   function initRum(initConfiguration: RumInitConfiguration) {
@@ -201,15 +206,20 @@ export function makeRumPublicApi(
     }),
 
     setUser: monitor((newUser: User) => {
-      const sanitizedUser = sanitizeUser(newUser)
-      if (sanitizedUser) {
-        userContextManager.set(sanitizedUser)
-      } else {
+      if (typeof newUser !== 'object' || !newUser) {
         display.error('Unsupported user:', newUser)
+      } else {
+        userContextManager.setContext(sanitizeUser(newUser as Context))
       }
     }),
 
-    getUser: monitor(() => deepClone(userContextManager.get())),
+    getUser: monitor(userContextManager.getContext),
+
+    setUserProperty: monitor(userContextManager.setContextProperty),
+
+    removeUserProperty: monitor(userContextManager.removeContextProperty),
+
+    clearUser: monitor(userContextManager.clearContext),
 
     removeUser: monitor(() => {
       userContextManager.set({})
@@ -230,21 +240,17 @@ export function makeRumPublicApi(
   })
   return rumPublicApi
 
-  function sanitizeUser(newUser: unknown) {
-    if (typeof newUser !== 'object' || !newUser) {
-      return
+  function sanitizeUser(newUser: Context) {
+    if ('id' in newUser) {
+      newUser.id = String(newUser.id)
     }
-    const result = deepClone(newUser as Context)
-    if ('id' in result) {
-      result.id = String(result.id)
+    if ('name' in newUser) {
+      newUser.name = String(newUser.name)
     }
-    if ('name' in result) {
-      result.name = String(result.name)
+    if ('email' in newUser) {
+      newUser.email = String(newUser.email)
     }
-    if ('email' in result) {
-      result.email = String(result.email)
-    }
-    return result
+    return newUser
   }
 
   function canHandleSession(initConfiguration: RumInitConfiguration): boolean {
