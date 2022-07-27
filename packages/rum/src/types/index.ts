@@ -1,3 +1,2 @@
-export * from './segment'
-export * from './record'
-export * from './serializedNode'
+export * from './sessionReplay'
+export * from './sessionReplayConstants'

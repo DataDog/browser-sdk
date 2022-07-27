@@ -876,6 +876,10 @@ export interface CommonProperties {
      * Device marketing brand, e.g. Apple, OPPO, Xiaomi, etc.
      */
     readonly brand?: string
+    /**
+     * The CPU architecture of the device that is reporting the error
+     */
+    readonly architecture?: string
     [k: string]: unknown
   }
   /**

@@ -12,7 +12,7 @@ import { setup } from '../../../rum-core/test/specHelper'
 import { collectAsyncCalls, recordsPerFullSnapshot } from '../../test/utils'
 import { setSegmentBytesLimit, startDeflateWorker } from '../domain/segmentCollection'
 
-import type { Segment } from '../types'
+import type { BrowserSegment } from '../types'
 import { RecordType } from '../types'
 import { resetReplayStats } from '../domain/replayStats'
 import { startRecording } from './startRecording'
@@ -93,6 +93,7 @@ describe('startRecording', () => {
         raw_segment_size: jasmine.stringMatching(/^\d+$/),
         'view.id': 'view-id',
         index_in_view: '0',
+        source: 'browser',
       })
       expectNoExtraRequestSendCalls(done)
     })
@@ -291,7 +292,7 @@ function getRequestData(call: jasmine.CallInfo<HttpRequest['send']>) {
   return result
 }
 
-function readRequestSegment(call: jasmine.CallInfo<HttpRequest['send']>, callback: (segment: Segment) => void) {
+function readRequestSegment(call: jasmine.CallInfo<HttpRequest['send']>, callback: (segment: BrowserSegment) => void) {
   const encodedSegment = getRequestFormData(call).get('segment')
   expect(encodedSegment).toBeInstanceOf(Blob)
   const reader = new FileReader()
