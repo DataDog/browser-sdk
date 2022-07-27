@@ -90,11 +90,18 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
     }),
 
     getLoggerGlobalContext: monitor(globalContextManager.get),
+    getGlobalContext: monitor(globalContextManager.getContext),
+
     setLoggerGlobalContext: monitor(globalContextManager.set),
+    setGlobalContext: monitor(globalContextManager.setContext),
 
     addLoggerGlobalContext: monitor(globalContextManager.add),
+    setGlobalContextProperty: monitor(globalContextManager.setContextProperty),
 
     removeLoggerGlobalContext: monitor(globalContextManager.remove),
+    removeGlobalContextProperty: monitor(globalContextManager.removeContextProperty),
+
+    clearGlobalContext: monitor(globalContextManager.clearContext),
 
     createLogger: monitor((name: string, conf: LoggerConfiguration = {}) => {
       customLoggers[name] = new Logger(
