@@ -171,11 +171,18 @@ export function makeRumPublicApi(
     init: monitor(initRum),
 
     addRumGlobalContext: monitor(globalContextManager.add),
+    setGlobalContextProperty: monitor(globalContextManager.setContextProperty),
 
     removeRumGlobalContext: monitor(globalContextManager.remove),
+    removeGlobalContextProperty: monitor(globalContextManager.removeContextProperty),
 
     getRumGlobalContext: monitor(globalContextManager.get),
+    getGlobalContext: monitor(globalContextManager.getContext),
+
     setRumGlobalContext: monitor(globalContextManager.set),
+    setGlobalContext: monitor(globalContextManager.setContext),
+
+    clearGlobalContext: monitor(globalContextManager.clearContext),
 
     getInternalContext: monitor((startTime?: number) => getInternalContextStrategy(startTime)),
     getInitConfiguration: monitor(() => getInitConfigurationStrategy()),
