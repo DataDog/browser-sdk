@@ -1,5 +1,5 @@
 import { addTelemetryDebug, assign, monitor } from '@datadog/browser-core'
-import type { CreationReason, Record, SegmentContext, SegmentMetadata } from '../../types'
+import type { BrowserRecord, BrowserSegmentMetadata, CreationReason, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
 import * as replayStats from '../replayStats'
 import type { DeflateWorker, DeflateWorkerListener } from './deflateWorker'
@@ -9,9 +9,7 @@ let nextId = 0
 export class Segment {
   public isFlushed = false
 
-  public flushReason: string | undefined = undefined
-
-  public readonly metadata: SegmentMetadata
+  public readonly metadata: BrowserSegmentMetadata
 
   private id = nextId++
 
@@ -19,9 +17,9 @@ export class Segment {
     private worker: DeflateWorker,
     context: SegmentContext,
     creationReason: CreationReason,
-    initialRecord: Record,
+    initialRecord: BrowserRecord,
     onWrote: (compressedBytesCount: number) => void,
-    onFlushed: (data: Uint8Array, rawBytesCount: number, reason?: string) => void
+    onFlushed: (data: Uint8Array, rawBytesCount: number) => void
   ) {
     const viewId = context.view.id
 
@@ -33,6 +31,7 @@ export class Segment {
         records_count: 1,
         has_full_snapshot: initialRecord.type === RecordType.FullSnapshot,
         index_in_view: replayStats.getSegmentsCount(viewId),
+        source: 'browser' as const,
       },
       context
     )
@@ -70,21 +69,21 @@ export class Segment {
     this.worker.postMessage({ data: `{"records":[${JSON.stringify(initialRecord)}`, id: this.id, action: 'write' })
   }
 
-  addRecord(record: Record): void {
-    this.metadata.end = record.timestamp
+  addRecord(record: BrowserRecord): void {
+    this.metadata.start = Math.min(this.metadata.start, record.timestamp)
+    this.metadata.end = Math.max(this.metadata.end, record.timestamp)
     this.metadata.records_count += 1
     replayStats.addRecord(this.metadata.view.id)
     this.metadata.has_full_snapshot ||= record.type === RecordType.FullSnapshot
     this.worker.postMessage({ data: `,${JSON.stringify(record)}`, id: this.id, action: 'write' })
   }
 
-  flush(reason?: string) {
+  flush() {
     this.worker.postMessage({
       data: `],${JSON.stringify(this.metadata).slice(1)}\n`,
       id: this.id,
       action: 'flush',
     })
-    this.flushReason = reason
     this.isFlushed = true
   }
 }

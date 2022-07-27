@@ -1,16 +1,18 @@
 import type { DeflateWorker, DeflateWorkerAction, DeflateWorkerListener } from '../src/domain/segmentCollection'
 import type {
-  MutationPayload,
-  MutationData,
+  BrowserFullSnapshotRecord,
+  BrowserIncrementalSnapshotRecord,
+  BrowserMutationPayload,
+  BrowserMutationData,
+  BrowserSegment,
   ElementNode,
+  FrustrationRecord,
   SerializedNode,
   SerializedNodeWithId,
   TextNode,
-  FullSnapshotRecord,
-  IncrementalSnapshotRecord,
   MetaRecord,
+  MouseInteractionType,
   VisualViewportRecord,
-  Segment,
 } from '../src/types'
 import { RecordType, IncrementalSource, NodeType } from '../src/types'
 
@@ -150,7 +152,7 @@ function mergeUint8Arrays(arrays: Uint8Array[]) {
 }
 
 export function parseSegment(bytes: Uint8Array) {
-  return JSON.parse(new TextDecoder().decode(bytes)) as Segment
+  return JSON.parse(new TextDecoder().decode(bytes)) as BrowserSegment
 }
 
 export function collectAsyncCalls<F extends jasmine.Func>(spy: jasmine.Spy<F>) {
@@ -178,32 +180,53 @@ export function collectAsyncCalls<F extends jasmine.Func>(spy: jasmine.Spy<F>) {
 }
 
 // Returns the first MetaRecord in a Segment, if any.
-export function findMeta(segment: Segment): MetaRecord | null {
+export function findMeta(segment: BrowserSegment): MetaRecord | null {
   return segment.records.find((record) => record.type === RecordType.Meta) as MetaRecord
 }
 
 // Returns the first FullSnapshotRecord in a Segment, if any.
-export function findFullSnapshot(segment: Segment): FullSnapshotRecord | null {
-  return segment.records.find((record) => record.type === RecordType.FullSnapshot) as FullSnapshotRecord
+export function findFullSnapshot(segment: BrowserSegment): BrowserFullSnapshotRecord | null {
+  return segment.records.find((record) => record.type === RecordType.FullSnapshot) as BrowserFullSnapshotRecord
 }
 
 // Returns all the VisualViewportRecords in a Segment, if any.
-export function findAllVisualViewports(segment: Segment): VisualViewportRecord[] {
+export function findAllVisualViewports(segment: BrowserSegment): VisualViewportRecord[] {
   return segment.records.filter((record) => record.type === RecordType.VisualViewport) as VisualViewportRecord[]
 }
 
 // Returns the first IncrementalSnapshotRecord of a given source in a Segment, if any.
-export function findIncrementalSnapshot(segment: Segment, source: IncrementalSource): IncrementalSnapshotRecord | null {
+export function findIncrementalSnapshot(
+  segment: BrowserSegment,
+  source: IncrementalSource
+): BrowserIncrementalSnapshotRecord | null {
   return segment.records.find(
     (record) => record.type === RecordType.IncrementalSnapshot && record.data.source === source
-  ) as IncrementalSnapshotRecord
+  ) as BrowserIncrementalSnapshotRecord
 }
 
 // Returns all the IncrementalSnapshotRecord of a given source in a Segment, if any.
-export function findAllIncrementalSnapshots(segment: Segment, source: IncrementalSource): IncrementalSnapshotRecord[] {
+export function findAllIncrementalSnapshots(
+  segment: BrowserSegment,
+  source: IncrementalSource
+): BrowserIncrementalSnapshotRecord[] {
   return segment.records.filter(
     (record) => record.type === RecordType.IncrementalSnapshot && record.data.source === source
-  ) as IncrementalSnapshotRecord[]
+  ) as BrowserIncrementalSnapshotRecord[]
+}
+
+// Returns all the FrustrationRecords in the given Segment, if any.
+export function findAllFrustrationRecords(segment: BrowserSegment): FrustrationRecord[] {
+  return segment.records.filter((record) => record.type === RecordType.FrustrationRecord) as FrustrationRecord[]
+}
+
+// Returns all the IncrementalSnapshotRecords of the given MouseInteraction source, if any
+export function findMouseInteractionRecords(
+  segment: BrowserSegment,
+  source: MouseInteractionType
+): BrowserIncrementalSnapshotRecord[] {
+  return findAllIncrementalSnapshots(segment, IncrementalSource.MouseInteraction).filter(
+    (record) => 'type' in record.data && record.data.type === source
+  )
 }
 
 // Returns the textContent of a ElementNode, if any.
@@ -370,7 +393,7 @@ export function createMutationPayloadValidator(initialDocument: SerializedNodeWi
     /**
      * Validates the mutation payload against the expected text, attribute, add and remove mutations.
      */
-    validate: (payload: MutationPayload, expected: ExpectedMutationsPayload) => {
+    validate: (payload: BrowserMutationPayload, expected: ExpectedMutationsPayload) => {
       payload = removeUndefinedValues(payload)
 
       expect(payload.adds).toEqual(
@@ -450,12 +473,12 @@ export function createMutationPayloadValidator(initialDocument: SerializedNodeWi
  * Validate the first and only mutation record of a segment against the expected text, attribute,
  * add and remove mutations.
  */
-export function createMutationPayloadValidatorFromSegment(segment: Segment) {
+export function createMutationPayloadValidatorFromSegment(segment: BrowserSegment) {
   const fullSnapshot = findFullSnapshot(segment)!
   expect(fullSnapshot).toBeTruthy()
 
   const mutations = findAllIncrementalSnapshots(segment, IncrementalSource.Mutation) as Array<{
-    data: MutationData
+    data: BrowserMutationData
   }>
   expect(mutations.length).toBe(1)
 

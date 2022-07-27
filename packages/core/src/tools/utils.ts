@@ -146,61 +146,55 @@ export function round(num: number, decimals: 0 | 1 | 2 | 3 | 4) {
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 export function noop() {}
 
-interface ObjectWithToJSON {
-  toJSON: (() => object) | undefined
-}
-
-type OriginalToJSON = [boolean, undefined | (() => object)]
-
 /**
- * Custom implementation of JSON.stringify that ignores value.toJSON.
- * We need to do that because some sites badly override toJSON on certain objects.
- * Note this still supposes that JSON.stringify is correct...
+ * Custom implementation of JSON.stringify that ignores some toJSON methods. We need to do that
+ * because some sites badly override toJSON on certain objects. Removing all toJSON methods from
+ * nested values would be too costly, so we just detach them from the root value, and native classes
+ * used to build JSON values (Array and Object).
+ *
+ * Note: this still assumes that JSON.stringify is correct.
  */
 export function jsonStringify(
   value: unknown,
   replacer?: Array<string | number>,
   space?: string | number
 ): string | undefined {
-  if (value === null || value === undefined) {
+  if (typeof value !== 'object' || value === null) {
     return JSON.stringify(value)
   }
-  let originalToJSON: OriginalToJSON = [false, undefined]
-  if (hasToJSON(value)) {
-    // We need to add a flag and not rely on the truthiness of value.toJSON
-    // because it can be set but undefined and that's actually significant.
-    originalToJSON = [true, value.toJSON]
-    delete value.toJSON
-  }
 
-  let originalProtoToJSON: OriginalToJSON = [false, undefined]
-  let prototype
-  if (typeof value === 'object') {
-    prototype = Object.getPrototypeOf(value) as object
-    if (hasToJSON(prototype)) {
-      originalProtoToJSON = [true, prototype.toJSON]
-      delete prototype.toJSON
-    }
-  }
+  // Note: The order matter here. We need to detach toJSON methods on parent classes before their
+  // subclasses.
+  const restoreObjectPrototypeToJson = detachToJsonMethod(Object.prototype)
+  const restoreArrayPrototypeToJson = detachToJsonMethod(Array.prototype)
+  const restoreValuePrototypeToJson = detachToJsonMethod(Object.getPrototypeOf(value))
+  const restoreValueToJson = detachToJsonMethod(value)
 
-  let result: string
   try {
-    result = JSON.stringify(value, replacer, space)
+    return JSON.stringify(value, replacer, space)
   } catch {
-    result = '<error: unable to serialize object>'
+    return '<error: unable to serialize object>'
   } finally {
-    if (originalToJSON[0]) {
-      ;(value as ObjectWithToJSON).toJSON = originalToJSON[1]
-    }
-    if (originalProtoToJSON[0]) {
-      ;(prototype as ObjectWithToJSON).toJSON = originalProtoToJSON[1]
-    }
+    restoreObjectPrototypeToJson()
+    restoreArrayPrototypeToJson()
+    restoreValuePrototypeToJson()
+    restoreValueToJson()
   }
-  return result
 }
 
-function hasToJSON(value: unknown): value is ObjectWithToJSON {
-  return typeof value === 'object' && value !== null && Object.prototype.hasOwnProperty.call(value, 'toJSON')
+interface ObjectWithToJsonMethod {
+  toJSON: unknown
+}
+function detachToJsonMethod(value: object) {
+  const object = value as ObjectWithToJsonMethod
+  const objectToJson = object.toJSON
+  if (objectToJson) {
+    delete object.toJSON
+    return () => {
+      object.toJSON = objectToJson
+    }
+  }
+  return noop
 }
 
 export function includes(candidate: string, search: string): boolean
@@ -228,12 +222,17 @@ export function arrayFrom<T>(arrayLike: ArrayLike<T> | Set<T>): T[] {
 }
 
 export function find<T, S extends T>(
-  array: T[],
-  predicate: (item: T, index: number, array: T[]) => item is S
-): S | undefined {
+  array: ArrayLike<T>,
+  predicate: (item: T, index: number) => item is S
+): S | undefined
+export function find<T>(array: ArrayLike<T>, predicate: (item: T, index: number) => boolean): T | undefined
+export function find(
+  array: ArrayLike<unknown>,
+  predicate: (item: unknown, index: number) => boolean
+): unknown | undefined {
   for (let i = 0; i < array.length; i += 1) {
     const item = array[i]
-    if (predicate(item, i, array)) {
+    if (predicate(item, i)) {
       return item
     }
   }
@@ -287,6 +286,10 @@ export function mapValues<A, B>(object: { [key: string]: A }, fn: (arg: A) => B)
 
 export function startsWith(candidate: string, search: string) {
   return candidate.slice(0, search.length) === search
+}
+
+export function endsWith(candidate: string, search: string) {
+  return candidate.slice(-search.length) === search
 }
 
 /**

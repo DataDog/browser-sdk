@@ -23,7 +23,7 @@ describe('batch', () => {
 
     batch.flush()
 
-    expect(transport.send).toHaveBeenCalledWith('{"message":"hello"}', jasmine.any(Number), undefined)
+    expect(transport.send).toHaveBeenCalledWith('{"message":"hello"}', jasmine.any(Number))
   })
 
   it('should empty the batch after a flush', () => {
@@ -50,8 +50,7 @@ describe('batch', () => {
     batch.add({ message: '3' })
     expect(transport.send).toHaveBeenCalledWith(
       '{"message":"1"}\n{"message":"2"}\n{"message":"3"}',
-      jasmine.any(Number),
-      'batch_messages_limit'
+      jasmine.any(Number)
     )
   })
 
@@ -60,18 +59,10 @@ describe('batch', () => {
     expect(transport.send).not.toHaveBeenCalled()
 
     batch.add({ message: '60 bytes - xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' })
-    expect(transport.send).toHaveBeenCalledWith(
-      '{"message":"50 bytes - xxxxxxxxxxxxxxxxxxxxxxxxx"}',
-      50,
-      'batch_bytes_limit'
-    )
+    expect(transport.send).toHaveBeenCalledWith('{"message":"50 bytes - xxxxxxxxxxxxxxxxxxxxxxxxx"}', 50)
 
     batch.flush()
-    expect(transport.send).toHaveBeenCalledWith(
-      '{"message":"60 bytes - xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}',
-      60,
-      undefined
-    )
+    expect(transport.send).toHaveBeenCalledWith('{"message":"60 bytes - xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}', 60)
   })
 
   it('should consider separators when computing the byte count', () => {
@@ -79,17 +70,13 @@ describe('batch', () => {
     batch.add({ message: '30 bytes - xxxxx' }) // batch: 60 sep: 1
     batch.add({ message: '39 bytes - xxxxxxxxxxxxxx' }) // batch: 99 sep: 2
 
-    expect(transport.send).toHaveBeenCalledWith(
-      '{"message":"30 bytes - xxxxx"}\n{"message":"30 bytes - xxxxx"}',
-      61,
-      jasmine.any(String)
-    )
+    expect(transport.send).toHaveBeenCalledWith('{"message":"30 bytes - xxxxx"}\n{"message":"30 bytes - xxxxx"}', 61)
   })
 
   it('should call send one time when the byte count is too high and the batch is empty', () => {
     const message = '101 bytes - xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
     batch.add({ message })
-    expect(transport.send).toHaveBeenCalledWith(`{"message":"${message}"}`, 101, jasmine.any(String))
+    expect(transport.send).toHaveBeenCalledWith(`{"message":"${message}"}`, 101)
   })
 
   it('should flush the batch and send the message when the message is too heavy', () => {
@@ -128,8 +115,7 @@ describe('batch', () => {
 
     expect(transport.send).toHaveBeenCalledWith(
       '{"message":"2"}\n{"message":"3"}\n{"message":"4"}',
-      jasmine.any(Number),
-      jasmine.any(String)
+      jasmine.any(Number)
     )
 
     batch.upsert({ message: '5' }, 'c')
@@ -138,8 +124,7 @@ describe('batch', () => {
 
     expect(transport.send).toHaveBeenCalledWith(
       '{"message":"5"}\n{"message":"6"}\n{"message":"7"}',
-      jasmine.any(Number),
-      jasmine.any(String)
+      jasmine.any(Number)
     )
 
     batch.upsert({ message: '8' }, 'a')
@@ -148,7 +133,7 @@ describe('batch', () => {
     batch.upsert({ message: '11' }, 'b')
     batch.flush()
 
-    expect(transport.send).toHaveBeenCalledWith('{"message":"10"}\n{"message":"11"}', jasmine.any(Number), undefined)
+    expect(transport.send).toHaveBeenCalledWith('{"message":"10"}\n{"message":"11"}', jasmine.any(Number))
   })
 
   it('should be able to use telemetry in the httpRequest.send', () => {

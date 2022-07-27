@@ -11,7 +11,8 @@ export function computeStackTrace(ex: unknown): StackTrace {
   const stackProperty = tryToGetString(ex, 'stack')
   if (stackProperty) {
     stackProperty.split('\n').forEach((line) => {
-      const stackFrame = parseChromeLine(line) || parseWinLine(line) || parseGeckoLine(line)
+      const stackFrame =
+        parseChromeLine(line) || parseChromeAnonymousLine(line) || parseWinLine(line) || parseGeckoLine(line)
       if (stackFrame) {
         if (!stackFrame.func && stackFrame.line) {
           stackFrame.func = UNKNOWN_FUNCTION
@@ -28,11 +29,11 @@ export function computeStackTrace(ex: unknown): StackTrace {
     stack,
   }
 }
+const fileUrl = '((?:file|https?|blob|chrome-extension|native|eval|webpack|<anonymous>|\\w+\\.|\\/).*?)'
+const filePosition = '(?::(\\d+))'
+const CHROME_LINE_RE = new RegExp(`^\\s*at (.*?) ?\\(${fileUrl}${filePosition}?${filePosition}?\\)?\\s*$`, 'i')
 
-const CHROME_LINE_RE =
-  // eslint-disable-next-line max-len
-  /^\s*at (.*?) ?\(((?:file|https?|blob|chrome-extension|native|eval|webpack|<anonymous>|\/).*?)(?::(\d+))?(?::(\d+))?\)?\s*$/i
-const CHROME_EVAL_RE = /\((\S*)(?::(\d+))(?::(\d+))\)/
+const CHROME_EVAL_RE = new RegExp(`\\((\\S*)${filePosition}${filePosition}\\)`)
 
 function parseChromeLine(line: string): StackFrame | undefined {
   const parts = CHROME_LINE_RE.exec(line)
@@ -58,6 +59,24 @@ function parseChromeLine(line: string): StackFrame | undefined {
     func: parts[1] || UNKNOWN_FUNCTION,
     line: parts[3] ? +parts[3] : undefined,
     url: !isNative ? parts[2] : undefined,
+  }
+}
+
+const CHROME_ANONYMOUS_FUNCTION_RE = new RegExp(`^\\s*at ?${fileUrl}${filePosition}?${filePosition}??\\s*$`, 'i')
+
+function parseChromeAnonymousLine(line: string): StackFrame | undefined {
+  const parts = CHROME_ANONYMOUS_FUNCTION_RE.exec(line)
+
+  if (!parts) {
+    return
+  }
+
+  return {
+    args: [],
+    column: parts[3] ? +parts[3] : undefined,
+    func: UNKNOWN_FUNCTION,
+    line: parts[2] ? +parts[2] : undefined,
+    url: parts[1],
   }
 }
 

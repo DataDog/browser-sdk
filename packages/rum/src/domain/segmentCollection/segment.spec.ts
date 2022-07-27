@@ -1,20 +1,24 @@
 import type { TimeStamp } from '@datadog/browser-core'
 import { noop, setDebugMode, display, isIE } from '@datadog/browser-core'
 import { MockWorker, parseSegment } from '../../../test/utils'
-import type { CreationReason, Record, SegmentContext } from '../../types'
+import type { CreationReason, BrowserRecord, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
 import { getReplayStats, resetReplayStats } from '../replayStats'
 import { Segment } from './segment'
 
 const CONTEXT: SegmentContext = { application: { id: 'a' }, view: { id: 'b' }, session: { id: 'c' } }
 const RECORD_TIMESTAMP = 10 as TimeStamp
-const RECORD: Record = { type: RecordType.ViewEnd, timestamp: RECORD_TIMESTAMP }
-const FULL_SNAPSHOT_RECORD: Record = { type: RecordType.FullSnapshot, timestamp: RECORD_TIMESTAMP, data: {} as any }
+const RECORD: BrowserRecord = { type: RecordType.ViewEnd, timestamp: RECORD_TIMESTAMP }
+const FULL_SNAPSHOT_RECORD: BrowserRecord = {
+  type: RecordType.FullSnapshot,
+  timestamp: RECORD_TIMESTAMP,
+  data: {} as any,
+}
 const ENCODED_SEGMENT_HEADER_BYTES_COUNT = 12 // {"records":[
 const ENCODED_RECORD_BYTES_COUNT = 25
 const ENCODED_FULL_SNAPSHOT_RECORD_BYTES_COUNT = 35
 const ENCODED_SEPARATOR_BYTES_COUNT = 1 // ,
-const ENCODED_META_BYTES_COUNT = 173 // this should stay accurate as long as less than 10 records are added
+const ENCODED_META_BYTES_COUNT = 192 // this should stay accurate as long as less than 10 records are added
 
 describe('Segment', () => {
   let worker: MockWorker
@@ -49,6 +53,7 @@ describe('Segment', () => {
     expect(onFlushedSpy).toHaveBeenCalledTimes(1)
 
     expect(parseSegment(onFlushedSpy.calls.mostRecent().args[0])).toEqual({
+      source: 'browser' as const,
       creation_reason: 'init' as const,
       end: 10,
       has_full_snapshot: false,
@@ -128,14 +133,22 @@ describe('Segment', () => {
         segment = createSegment()
         segment.addRecord({ type: RecordType.ViewEnd, timestamp: 15 as TimeStamp })
       })
-      it('increments records_count', () => {
+      it('does increment records_count', () => {
         expect(segment.metadata.records_count).toBe(2)
       })
-      it('increases end timestamp', () => {
+      it('does not change start timestamp when receiving a later record', () => {
+        expect(segment.metadata.start).toBe(10)
+      })
+      it('does change the start timestamp when receiving an earlier record', () => {
+        segment.addRecord({ type: RecordType.ViewEnd, timestamp: 5 as TimeStamp })
+        expect(segment.metadata.start).toBe(5)
+      })
+      it('does increase end timestamp when receiving a later record', () => {
         expect(segment.metadata.end).toBe(15)
       })
-      it('does not change start timestamp', () => {
-        expect(segment.metadata.start).toBe(10)
+      it('does not change the end timestamp when receiving an earlier record', () => {
+        segment.addRecord({ type: RecordType.ViewEnd, timestamp: 5 as TimeStamp })
+        expect(segment.metadata.end).toBe(15)
       })
     })
 
@@ -219,7 +232,7 @@ describe('Segment', () => {
     onFlushed = noop,
   }: {
     context?: SegmentContext
-    initialRecord?: Record
+    initialRecord?: BrowserRecord
     creationReason?: CreationReason
     onWrote?: (compressedSegmentBytesCount: number) => void
     onFlushed?: (data: Uint8Array, rawBytesCount: number) => void

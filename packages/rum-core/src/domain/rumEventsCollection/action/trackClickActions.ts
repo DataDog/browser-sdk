@@ -48,6 +48,7 @@ export interface ClickAction {
   counts: ActionCounts
   event: MouseEvent & { target: Element }
   frustrationTypes: FrustrationType[]
+  events: Event[]
 }
 
 export interface ActionContexts {
@@ -247,7 +248,7 @@ function newClick(
 
     clone: () => newClick(lifeCycle, history, getUserActivity, base),
 
-    validate: () => {
+    validate: (domEvents?: Event[]) => {
       stop()
       if (status !== ClickStatus.STOPPED) {
         return
@@ -267,6 +268,7 @@ function newClick(
             errorCount,
             longTaskCount,
           },
+          events: domEvents ?? [base.event],
         },
         base
       )
@@ -286,7 +288,7 @@ export function finalizeClicks(clicks: Click[], rageClick: Click) {
   if (isRage) {
     clicks.forEach((click) => click.discard())
     rageClick.stop(timeStampNow())
-    rageClick.validate()
+    rageClick.validate(clicks.map((click) => click.event))
   } else {
     rageClick.discard()
     clicks.forEach((click) => click.validate())
