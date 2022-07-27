@@ -17,7 +17,7 @@ import type {
   InputState,
   MousePosition,
   MouseInteraction,
-  BrowserMutationPayload as MutationPayload,
+  BrowserMutationPayload,
   ScrollPosition,
   StyleSheetRule,
   ViewportResizeDimension,
@@ -25,7 +25,7 @@ import type {
   FocusRecord,
   VisualViewportRecord,
   FrustrationRecord,
-  BrowserIncrementalSnapshotRecord as IncrementalSnapshotRecord,
+  BrowserIncrementalSnapshotRecord,
   MouseInteractionData,
 } from '../../types'
 import { RecordType, IncrementalSource, MediaInteractionType, MouseInteractionType } from '../../types'
@@ -58,9 +58,9 @@ type MousemoveCallBack = (
   source: typeof IncrementalSource.MouseMove | typeof IncrementalSource.TouchMove
 ) => void
 
-export type MutationCallBack = (m: MutationPayload) => void
+export type MutationCallBack = (m: BrowserMutationPayload) => void
 
-type MouseInteractionCallBack = (record: IncrementalSnapshotRecord) => void
+type MouseInteractionCallBack = (record: BrowserIncrementalSnapshotRecord) => void
 
 type ScrollCallback = (p: ScrollPosition) => void
 

@@ -3,11 +3,7 @@ import { LifeCycle } from '@datadog/browser-rum-core'
 import type { Clock } from '../../../../core/test/specHelper'
 import { createNewEvent } from '../../../../core/test/specHelper'
 import { collectAsyncCalls, recordsPerFullSnapshot } from '../../../test/utils'
-import type {
-  BrowserIncrementalSnapshotRecord as IncrementalSnapshotRecord,
-  BrowserRecord as Record,
-  FocusRecord,
-} from '../../types'
+import type { BrowserIncrementalSnapshotRecord, BrowserRecord, FocusRecord } from '../../types'
 import { RecordType, IncrementalSource } from '../../types'
 import type { RecordAPI } from './record'
 import { record } from './record'
@@ -15,7 +11,7 @@ import { record } from './record'
 describe('record', () => {
   let sandbox: HTMLElement
   let recordApi: RecordAPI
-  let emitSpy: jasmine.Spy<(record: Record) => void>
+  let emitSpy: jasmine.Spy<(record: BrowserRecord) => void>
   let waitEmitCalls: (expectedCallsCount: number, callback: () => void) => void
   let expectNoExtraEmitCalls: (done: () => void) => void
   let clock: Clock | undefined
@@ -69,42 +65,42 @@ describe('record', () => {
       }
 
       expect(records[i].type).toEqual(RecordType.IncrementalSnapshot)
-      expect((records[i++] as IncrementalSnapshotRecord).data).toEqual(
+      expect((records[i++] as BrowserIncrementalSnapshotRecord).data).toEqual(
         jasmine.objectContaining({
           source: IncrementalSource.StyleSheetRule,
           adds: [{ rule: 'body { background: #000; }', index: undefined }],
         })
       )
       expect(records[i].type).toEqual(RecordType.IncrementalSnapshot)
-      expect((records[i++] as IncrementalSnapshotRecord).data).toEqual(
+      expect((records[i++] as BrowserIncrementalSnapshotRecord).data).toEqual(
         jasmine.objectContaining({
           source: IncrementalSource.StyleSheetRule,
           adds: [{ rule: 'body { background: #111; }', index: undefined }],
         })
       )
       expect(records[i].type).toEqual(RecordType.IncrementalSnapshot)
-      expect((records[i++] as IncrementalSnapshotRecord).data).toEqual(
+      expect((records[i++] as BrowserIncrementalSnapshotRecord).data).toEqual(
         jasmine.objectContaining({
           source: IncrementalSource.StyleSheetRule,
           removes: [{ index: 0 }],
         })
       )
       expect(records[i].type).toEqual(RecordType.IncrementalSnapshot)
-      expect((records[i++] as IncrementalSnapshotRecord).data).toEqual(
+      expect((records[i++] as BrowserIncrementalSnapshotRecord).data).toEqual(
         jasmine.objectContaining({
           source: IncrementalSource.StyleSheetRule,
           adds: [{ rule: 'body { color: #fff; }', index: undefined }],
         })
       )
       expect(records[i].type).toEqual(RecordType.IncrementalSnapshot)
-      expect((records[i++] as IncrementalSnapshotRecord).data).toEqual(
+      expect((records[i++] as BrowserIncrementalSnapshotRecord).data).toEqual(
         jasmine.objectContaining({
           source: IncrementalSource.StyleSheetRule,
           removes: [{ index: 0 }],
         })
       )
       expect(records[i].type).toEqual(RecordType.IncrementalSnapshot)
-      expect((records[i++] as IncrementalSnapshotRecord).data).toEqual(
+      expect((records[i++] as BrowserIncrementalSnapshotRecord).data).toEqual(
         jasmine.objectContaining({
           source: IncrementalSource.StyleSheetRule,
           adds: [{ rule: 'body { color: #ccc; }', index: undefined }],
@@ -134,7 +130,7 @@ describe('record', () => {
         expect(records[i++].type).toEqual(RecordType.VisualViewport)
       }
       expect(records[i].type).toEqual(RecordType.IncrementalSnapshot)
-      expect((records[i++] as IncrementalSnapshotRecord).data.source).toEqual(IncrementalSource.Mutation)
+      expect((records[i++] as BrowserIncrementalSnapshotRecord).data.source).toEqual(IncrementalSource.Mutation)
       expect(records[i++].type).toEqual(RecordType.Meta)
       expect(records[i++].type).toEqual(RecordType.Focus)
       expect(records[i++].type).toEqual(RecordType.FullSnapshot)

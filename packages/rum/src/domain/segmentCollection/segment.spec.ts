@@ -1,15 +1,19 @@
 import type { TimeStamp } from '@datadog/browser-core'
 import { noop, setDebugMode, display, isIE } from '@datadog/browser-core'
 import { MockWorker, parseSegment } from '../../../test/utils'
-import type { CreationReason, BrowserRecord as Record, SegmentContext } from '../../types'
+import type { CreationReason, BrowserRecord, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
 import { getReplayStats, resetReplayStats } from '../replayStats'
 import { Segment } from './segment'
 
 const CONTEXT: SegmentContext = { application: { id: 'a' }, view: { id: 'b' }, session: { id: 'c' } }
 const RECORD_TIMESTAMP = 10 as TimeStamp
-const RECORD: Record = { type: RecordType.ViewEnd, timestamp: RECORD_TIMESTAMP }
-const FULL_SNAPSHOT_RECORD: Record = { type: RecordType.FullSnapshot, timestamp: RECORD_TIMESTAMP, data: {} as any }
+const RECORD: BrowserRecord = { type: RecordType.ViewEnd, timestamp: RECORD_TIMESTAMP }
+const FULL_SNAPSHOT_RECORD: BrowserRecord = {
+  type: RecordType.FullSnapshot,
+  timestamp: RECORD_TIMESTAMP,
+  data: {} as any,
+}
 const ENCODED_SEGMENT_HEADER_BYTES_COUNT = 12 // {"records":[
 const ENCODED_RECORD_BYTES_COUNT = 25
 const ENCODED_FULL_SNAPSHOT_RECORD_BYTES_COUNT = 35
@@ -228,7 +232,7 @@ describe('Segment', () => {
     onFlushed = noop,
   }: {
     context?: SegmentContext
-    initialRecord?: Record
+    initialRecord?: BrowserRecord
     creationReason?: CreationReason
     onWrote?: (compressedSegmentBytesCount: number) => void
     onFlushed?: (data: Uint8Array, rawBytesCount: number) => void

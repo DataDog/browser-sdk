@@ -1,10 +1,5 @@
 import { addTelemetryDebug, assign, monitor } from '@datadog/browser-core'
-import type {
-  BrowserRecord as Record,
-  BrowserSegmentMetadata as SegmentMetadata,
-  CreationReason,
-  SegmentContext,
-} from '../../types'
+import type { BrowserRecord, BrowserSegmentMetadata, CreationReason, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
 import * as replayStats from '../replayStats'
 import type { DeflateWorker, DeflateWorkerListener } from './deflateWorker'
@@ -14,7 +9,7 @@ let nextId = 0
 export class Segment {
   public isFlushed = false
 
-  public readonly metadata: SegmentMetadata
+  public readonly metadata: BrowserSegmentMetadata
 
   private id = nextId++
 
@@ -22,7 +17,7 @@ export class Segment {
     private worker: DeflateWorker,
     context: SegmentContext,
     creationReason: CreationReason,
-    initialRecord: Record,
+    initialRecord: BrowserRecord,
     onWrote: (compressedBytesCount: number) => void,
     onFlushed: (data: Uint8Array, rawBytesCount: number) => void
   ) {
@@ -74,7 +69,7 @@ export class Segment {
     this.worker.postMessage({ data: `{"records":[${JSON.stringify(initialRecord)}`, id: this.id, action: 'write' })
   }
 
-  addRecord(record: Record): void {
+  addRecord(record: BrowserRecord): void {
     this.metadata.start = Math.min(this.metadata.start, record.timestamp)
     this.metadata.end = Math.max(this.metadata.end, record.timestamp)
     this.metadata.records_count += 1

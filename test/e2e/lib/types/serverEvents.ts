@@ -1,5 +1,5 @@
 import type { RumActionEvent, RumErrorEvent, RumEvent, RumResourceEvent, RumViewEvent } from '@datadog/browser-rum'
-import type { BrowserSegment as Segment } from '@datadog/browser-rum/src/types'
+import type { BrowserSegment } from '@datadog/browser-rum/src/types'
 
 export function isRumResourceEvent(event: RumEvent): event is RumResourceEvent {
   return event.type === 'resource'
@@ -21,7 +21,7 @@ export interface SegmentFile {
   filename: string
   encoding: string
   mimetype: string
-  data: Segment
+  data: BrowserSegment
 }
 
 export interface SessionReplayCall {

@@ -2,12 +2,7 @@ import type { EventEmitter, TimeoutId } from '@datadog/browser-core'
 import { ONE_SECOND, addEventListener, DOM_EVENT, monitor } from '@datadog/browser-core'
 import type { LifeCycle, ViewContexts, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
-import type {
-  BrowserRecord as Record,
-  BrowserSegmentMetadata as SegmentMetadata,
-  CreationReason,
-  SegmentContext,
-} from '../../types'
+import type { BrowserRecord, BrowserSegmentMetadata, CreationReason, SegmentContext } from '../../types'
 import type { DeflateWorker } from './deflateWorker'
 import { Segment } from './segment'
 
@@ -48,7 +43,7 @@ export function startSegmentCollection(
   applicationId: string,
   sessionManager: RumSessionManager,
   viewContexts: ViewContexts,
-  send: (data: Uint8Array, metadata: SegmentMetadata, rawSegmentBytesCount: number) => void,
+  send: (data: Uint8Array, metadata: BrowserSegmentMetadata, rawSegmentBytesCount: number) => void,
   worker: DeflateWorker
 ) {
   return doStartSegmentCollection(
@@ -81,7 +76,7 @@ type SegmentCollectionState =
 export function doStartSegmentCollection(
   lifeCycle: LifeCycle,
   getSegmentContext: () => SegmentContext | undefined,
-  send: (data: Uint8Array, metadata: SegmentMetadata, rawSegmentBytesCount: number) => void,
+  send: (data: Uint8Array, metadata: BrowserSegmentMetadata, rawSegmentBytesCount: number) => void,
   worker: DeflateWorker,
   emitter: EventEmitter = window
 ) {
@@ -127,7 +122,7 @@ export function doStartSegmentCollection(
     }
   }
 
-  function createNewSegment(creationReason: CreationReason, initialRecord: Record) {
+  function createNewSegment(creationReason: CreationReason, initialRecord: BrowserRecord) {
     const context = getSegmentContext()
     if (!context) {
       return
@@ -161,7 +156,7 @@ export function doStartSegmentCollection(
   }
 
   return {
-    addRecord: (record: Record) => {
+    addRecord: (record: BrowserRecord) => {
       switch (state.status) {
         case SegmentCollectionStatus.WaitingForInitialRecord:
           createNewSegment(state.nextSegmentCreationReason, record)

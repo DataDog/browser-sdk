@@ -1,9 +1,4 @@
-import type {
-  InputData,
-  StyleSheetRuleData,
-  CreationReason,
-  BrowserSegment as Segment,
-} from '@datadog/browser-rum/src/types'
+import type { InputData, StyleSheetRuleData, CreationReason, BrowserSegment } from '@datadog/browser-rum/src/types'
 import { NodeType, IncrementalSource, RecordType, MouseInteractionType } from '@datadog/browser-rum/src/types'
 
 import type { RumInitConfiguration } from '@datadog/browser-rum-core'
@@ -531,7 +526,7 @@ describe('recorder', () => {
         expect(selectRecords.length).toBe(1)
         expect((selectRecords[0].data as { text?: string }).text).toBe('2')
 
-        function filterRecordsByIdAttribute(segment: Segment, idAttribute: string) {
+        function filterRecordsByIdAttribute(segment: BrowserSegment, idAttribute: string) {
           const fullSnapshot = findFullSnapshot(segment)!
           const id = findElementWithIdAttribute(fullSnapshot.data.node, idAttribute)!.id
           const records = findAllIncrementalSnapshots(segment, IncrementalSource.Input) as Array<{ data: InputData }>

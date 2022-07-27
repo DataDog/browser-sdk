@@ -10,7 +10,7 @@ import {
   setPageVisibility,
 } from '@datadog/browser-core/test/specHelper'
 import { createRumSessionManagerMock } from '../../../../rum-core/test/mockRumSessionManager'
-import type { BrowserRecord as Record, BrowserSegmentMetadata as SegmentMetadata, SegmentContext } from '../../types'
+import type { BrowserRecord, BrowserSegmentMetadata, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
 import { MockWorker } from '../../../test/utils'
 import {
@@ -21,10 +21,10 @@ import {
 } from './segmentCollection'
 
 const CONTEXT: SegmentContext = { application: { id: 'a' }, view: { id: 'b' }, session: { id: 'c' } }
-const RECORD: Record = { type: RecordType.ViewEnd, timestamp: 10 as TimeStamp }
+const RECORD: BrowserRecord = { type: RecordType.ViewEnd, timestamp: 10 as TimeStamp }
 
 // A record that will make the segment size reach the SEGMENT_BYTES_LIMIT
-const VERY_BIG_RECORD: Record = {
+const VERY_BIG_RECORD: BrowserRecord = {
   type: RecordType.FullSnapshot,
   timestamp: 10 as TimeStamp,
   data: Array(SEGMENT_BYTES_LIMIT).join('a') as any,
@@ -40,7 +40,7 @@ describe('startSegmentCollection', () => {
     const lifeCycle = new LifeCycle()
     const worker = new MockWorker()
     const eventEmitter = document.createElement('div')
-    const sendSpy = jasmine.createSpy<(data: Uint8Array, metadata: SegmentMetadata) => void>()
+    const sendSpy = jasmine.createSpy<(data: Uint8Array, metadata: BrowserSegmentMetadata) => void>()
 
     const { stop, addRecord } = doStartSegmentCollection(lifeCycle, () => context, sendSpy, worker, eventEmitter)
     stopSegmentCollection = stop

@@ -3,8 +3,8 @@ import type { DefaultPrivacyLevel, TimeStamp } from '@datadog/browser-core'
 import type { LifeCycle } from '@datadog/browser-rum-core'
 import { getViewportDimension } from '@datadog/browser-rum-core'
 import type {
-  BrowserMutationData as MutationData,
-  BrowserRecord as Record,
+  BrowserMutationData,
+  BrowserRecord,
   InputData,
   MediaInteractionData,
   MousemoveData,
@@ -21,7 +21,7 @@ import { getVisualViewport, getScrollX, getScrollY } from './viewports'
 import { assembleIncrementalSnapshot } from './utils'
 
 export interface RecordOptions {
-  emit?: (record: Record) => void
+  emit?: (record: BrowserRecord) => void
   defaultPrivacyLevel: DefaultPrivacyLevel
   lifeCycle: LifeCycle
 }
@@ -94,7 +94,7 @@ export function record(options: RecordOptions): RecordAPI {
       emit(assembleIncrementalSnapshot<MediaInteractionData>(IncrementalSource.MediaInteraction, p)),
     mouseInteractionCb: (mouseInteractionRecord) => emit(mouseInteractionRecord),
     mousemoveCb: (positions, source) => emit(assembleIncrementalSnapshot<MousemoveData>(source, { positions })),
-    mutationCb: (m) => emit(assembleIncrementalSnapshot<MutationData>(IncrementalSource.Mutation, m)),
+    mutationCb: (m) => emit(assembleIncrementalSnapshot<BrowserMutationData>(IncrementalSource.Mutation, m)),
     scrollCb: (p) => emit(assembleIncrementalSnapshot<ScrollData>(IncrementalSource.Scroll, p)),
     styleSheetRuleCb: (r) => emit(assembleIncrementalSnapshot<StyleSheetRuleData>(IncrementalSource.StyleSheetRule, r)),
     viewportResizeCb: (d) => emit(assembleIncrementalSnapshot<ViewportResizeData>(IncrementalSource.ViewportResize, d)),

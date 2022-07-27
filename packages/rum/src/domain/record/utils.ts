@@ -1,8 +1,5 @@
 import { assign, timeStampNow } from '@datadog/browser-core'
-import type {
-  BrowserIncrementalData as IncrementalData,
-  BrowserIncrementalSnapshotRecord as IncrementalSnapshotRecord,
-} from '../../types'
+import type { BrowserIncrementalData, BrowserIncrementalSnapshotRecord } from '../../types'
 import { RecordType } from '../../types'
 
 export function isTouchEvent(event: MouseEvent | TouchEvent): event is TouchEvent {
@@ -16,10 +13,10 @@ export function forEach<List extends { [index: number]: any }>(
   Array.prototype.forEach.call(list, callback as any)
 }
 
-export function assembleIncrementalSnapshot<Data extends IncrementalData>(
+export function assembleIncrementalSnapshot<Data extends BrowserIncrementalData>(
   source: Data['source'],
   data: Omit<Data, 'source'>
-): IncrementalSnapshotRecord {
+): BrowserIncrementalSnapshotRecord {
   return {
     data: assign(
       {
