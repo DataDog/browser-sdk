@@ -60,8 +60,6 @@ function processAction(
     ? {
         action: {
           id: action.id,
-          target: action.target,
-          position: action.position,
           loading_time: toServerDuration(action.duration),
           frustration: {
             type: action.frustrationTypes,
@@ -75,6 +73,10 @@ function processAction(
           resource: {
             count: action.counts.resourceCount,
           },
+        },
+        _dd: {
+          target: action.target,
+          position: action.position,
         },
       }
     : undefined

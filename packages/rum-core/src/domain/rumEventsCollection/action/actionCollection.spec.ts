@@ -68,6 +68,16 @@ describe('actionCollection', () => {
         },
         target: {
           name: 'foo',
+        },
+        type: ActionType.CLICK,
+      },
+      date: jasmine.any(Number),
+      type: RumEventType.ACTION,
+      view: {
+        in_foreground: true,
+      },
+      _dd: {
+        target: {
           selector: '#foo',
           width: 1,
           height: 2,
@@ -76,12 +86,6 @@ describe('actionCollection', () => {
           x: 1,
           y: 2,
         },
-        type: ActionType.CLICK,
-      },
-      date: jasmine.any(Number),
-      type: RumEventType.ACTION,
-      view: {
-        in_foreground: true,
       },
     })
     expect(rawRumEvents[0].domainContext).toEqual({
