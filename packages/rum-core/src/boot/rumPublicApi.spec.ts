@@ -463,10 +463,7 @@ describe('rum public api', () => {
     beforeEach(() => {
       addActionSpy = jasmine.createSpy()
       rumPublicApi = makeRumPublicApi(
-        () => ({
-          ...noopStartRum(),
-          addAction: addActionSpy,
-        }),
+        noopStartRum,
         noopRecorderApi
       )
       setupBuilder = setup()
