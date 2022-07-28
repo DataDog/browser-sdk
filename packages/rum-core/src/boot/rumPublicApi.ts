@@ -19,7 +19,7 @@ import {
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewContexts } from '../domain/contexts/viewContexts'
 import type { RumSessionManager } from '../domain/rumSessionManager'
-import type { CommonContext, User, ReplayStats } from '../rawRumEvent.types'
+import type { User, ReplayStats } from '../rawRumEvent.types'
 import { ActionType } from '../rawRumEvent.types'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import { validateAndBuildRumConfiguration } from '../domain/configuration'
