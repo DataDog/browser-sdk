@@ -456,21 +456,10 @@ describe('rum public api', () => {
   })
 
   describe('getUser', () => {
-    let addActionSpy: jasmine.Spy<ReturnType<StartRum>['addAction']>
     let rumPublicApi: RumPublicApi
-    let setupBuilder: TestSetupBuilder
 
     beforeEach(() => {
-      addActionSpy = jasmine.createSpy()
-      rumPublicApi = makeRumPublicApi(
-        noopStartRum,
-        noopRecorderApi
-      )
-      setupBuilder = setup()
-    })
-
-    afterEach(() => {
-      setupBuilder.cleanup()
+      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
     })
 
     it('should return empty object if no user has been set', () => {
