@@ -6,28 +6,20 @@ export function createContextManager() {
   let context: Context = {}
 
   return {
-    /**
-     * @deprecated use getContext instead
-     */
+    /** @deprecated use getContext instead */
     get: () => context,
 
-    /**
-     * @deprecated use setContextProperty instead
-     */
+    /** @deprecated use setContextProperty instead */
     add: (key: string, value: any) => {
       context[key] = value as ContextValue
     },
 
-    /**
-     * @deprecated use removeContextProperty instead
-     */
+    /** @deprecated renamed to removeContextProperty */
     remove: (key: string) => {
       delete context[key]
     },
 
-    /**
-     * @deprecated use setContext instead
-     */
+    /** @deprecated use setContext instead */
     set: (newContext: object) => {
       context = newContext as Context
     },

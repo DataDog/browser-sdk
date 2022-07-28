@@ -170,15 +170,19 @@ export function makeRumPublicApi(
   const rumPublicApi = makePublicApi({
     init: monitor(initRum),
 
+    /** @deprecated: use setGlobalContextProperty instead */
     addRumGlobalContext: monitor(globalContextManager.add),
     setGlobalContextProperty: monitor(globalContextManager.setContextProperty),
 
+    /** @deprecated: use removeGlobalContextProperty instead */
     removeRumGlobalContext: monitor(globalContextManager.remove),
     removeGlobalContextProperty: monitor(globalContextManager.removeContextProperty),
 
+    /** @deprecated: use getGlobalContext instead */
     getRumGlobalContext: monitor(globalContextManager.get),
     getGlobalContext: monitor(globalContextManager.getContext),
 
+    /** @deprecated: use setGlobalContext instead */
     setRumGlobalContext: monitor(globalContextManager.set),
     setGlobalContext: monitor(globalContextManager.setContext),
 
@@ -229,16 +233,12 @@ export function makeRumPublicApi(
     clearUser: monitor(userContextManager.clearContext),
 
     removeUser: monitor(() => {
-      userContextManager.set({})
+      userContextManager.clearContext()
     }),
 
-    addUserAttribute: monitor((attribute, value) => {
-      userContextManager.add(attribute, deepClone(value))
-    }),
+    addUserAttribute: monitor(userContextManager.setContextProperty),
 
-    removeUserAttribute: monitor((attribute) => {
-      userContextManager.remove(attribute)
-    }),
+    removeUserAttribute: monitor(userContextManager.removeContextProperty),
 
     startView,
 
