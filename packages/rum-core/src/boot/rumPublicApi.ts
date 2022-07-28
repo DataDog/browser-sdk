@@ -234,10 +234,6 @@ export function makeRumPublicApi(
     removeUser: monitor(userContextManager.clearContext),
     clearUser: monitor(userContextManager.clearContext),
 
-    addUserAttribute: monitor(userContextManager.setContextProperty),
-
-    removeUserAttribute: monitor(userContextManager.removeContextProperty),
-
     startView,
 
     startSessionReplayRecording: monitor(recorderApi.start),
