@@ -226,7 +226,7 @@ export function makeRumPublicApi(
 
     getUser: monitor(userContextManager.getContext),
 
-    setUserProperty: monitor(userContextManager.setContextProperty),
+    setUserProperty: monitor((key, property) => userContextManager.setContextProperty(key, sanitizeUser(property))),
 
     removeUserProperty: monitor(userContextManager.removeContextProperty),
 
@@ -241,17 +241,18 @@ export function makeRumPublicApi(
   })
   return rumPublicApi
 
-  function sanitizeUser(newUser: Context) {
-    if ('id' in newUser) {
-      newUser.id = String(newUser.id)
+  function sanitizeUser(newUser: unknown) {
+    const result = deepClone(newUser as Context)
+    if ('id' in result) {
+      result.id = String(result.id)
     }
-    if ('name' in newUser) {
-      newUser.name = String(newUser.name)
+    if ('name' in result) {
+      result.name = String(result.name)
     }
-    if ('email' in newUser) {
-      newUser.email = String(newUser.email)
+    if ('email' in result) {
+      result.email = String(result.email)
     }
-    return newUser
+    return result
   }
 
   function canHandleSession(initConfiguration: RumInitConfiguration): boolean {
