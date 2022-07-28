@@ -480,27 +480,12 @@ describe('rum public api', () => {
   })
 
   describe('addUserAttribute', () => {
-    let addActionSpy: jasmine.Spy<ReturnType<StartRum>['addAction']>
-    let rumPublicApi: RumPublicApi
-    let setupBuilder: TestSetupBuilder
-
     const user = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
     const addressAttribute = { city: 'Paris' }
+    let rumPublicApi: RumPublicApi
 
     beforeEach(() => {
-      addActionSpy = jasmine.createSpy()
-      rumPublicApi = makeRumPublicApi(
-        () => ({
-          ...noopStartRum(),
-          addAction: addActionSpy,
-        }),
-        noopRecorderApi
-      )
-      setupBuilder = setup()
-    })
-
-    afterEach(() => {
-      setupBuilder.cleanup()
+      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
     })
 
     it('should add attribute', () => {
@@ -531,29 +516,15 @@ describe('rum public api', () => {
   })
 
   describe('removeUserAttribute', () => {
-    let addActionSpy: jasmine.Spy<ReturnType<StartRum>['addAction']>
     let rumPublicApi: RumPublicApi
-    let setupBuilder: TestSetupBuilder
-
-    const user: Context = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
 
     beforeEach(() => {
-      addActionSpy = jasmine.createSpy()
-      rumPublicApi = makeRumPublicApi(
-        () => ({
-          ...noopStartRum(),
-          addAction: addActionSpy,
-        }),
-        noopRecorderApi
-      )
-      setupBuilder = setup()
-    })
-
-    afterEach(() => {
-      setupBuilder.cleanup()
+      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
     })
 
     it('should remove attribute', () => {
+      const user: Context = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
+
       rumPublicApi.setUser(user)
       rumPublicApi.removeUserAttribute('foo')
       const userClone = rumPublicApi.getUser()
