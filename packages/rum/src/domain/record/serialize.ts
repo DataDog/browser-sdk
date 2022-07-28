@@ -230,6 +230,7 @@ export function serializeAttribute(
       // Mask Attribute text content
       case 'title':
       case 'alt':
+      case 'placeholder':
         return CENSORED_STRING_MARK
     }
     // mask image URLs
@@ -247,6 +248,10 @@ export function serializeAttribute(
       // Exception: it's safe to reveal the `${PRIVACY_ATTR_NAME}` attr
       return CENSORED_STRING_MARK
     }
+  }
+
+  if (nodePrivacyLevel === NodePrivacyLevel.MASK_USER_INPUT && attributeName === 'placeholder') {
+    return CENSORED_STRING_MARK
   }
 
   if (!attributeValue || typeof attributeValue !== 'string') {
