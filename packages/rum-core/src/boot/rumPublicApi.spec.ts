@@ -479,7 +479,7 @@ describe('rum public api', () => {
     })
   })
 
-  describe('addUserAttribute', () => {
+  describe('setUserProperty', () => {
     const user = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
     const addressAttribute = { city: 'Paris' }
     let rumPublicApi: RumPublicApi
@@ -490,7 +490,7 @@ describe('rum public api', () => {
 
     it('should add attribute', () => {
       rumPublicApi.setUser(user)
-      rumPublicApi.addUserAttribute('address', addressAttribute)
+      rumPublicApi.setUserProperty('address', addressAttribute)
       const userClone = rumPublicApi.getUser()
 
       expect(userClone).toEqual({ ...user, address: addressAttribute })
@@ -499,7 +499,7 @@ describe('rum public api', () => {
     it('should not contain original reference to object', () => {
       const userDetails: { [key: string]: any } = { name: 'john' }
       rumPublicApi.setUser(user)
-      rumPublicApi.addUserAttribute('userDetails', userDetails)
+      rumPublicApi.setUserProperty('userDetails', userDetails)
       userDetails.DOB = '11/11/1999'
       const userClone = rumPublicApi.getUser()
 
@@ -508,7 +508,7 @@ describe('rum public api', () => {
 
     it('should override attribute', () => {
       rumPublicApi.setUser(user)
-      rumPublicApi.addUserAttribute('foo', addressAttribute)
+      rumPublicApi.setUserProperty('foo', addressAttribute)
       const userClone = rumPublicApi.getUser()
 
       expect(userClone).toEqual({ ...user, foo: addressAttribute })
@@ -522,11 +522,11 @@ describe('rum public api', () => {
       rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
     })
 
-    it('should remove attribute', () => {
+    it('should remove property', () => {
       const user: Context = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
 
       rumPublicApi.setUser(user)
-      rumPublicApi.removeUserAttribute('foo')
+      rumPublicApi.removeUserProperty('foo')
       const userClone = rumPublicApi.getUser()
       const newUser = { ...user }
       delete newUser.foo
