@@ -16,8 +16,9 @@
     "webpack-webextension-plugin": "0.4.1"
   },
   "dependencies": {
-    "@mantine/core": "4.1.2",
-    "@mantine/hooks": "4.1.2",
+    "@emotion/react": "11.10.0",
+    "@mantine/core": "5.0.2",
+    "@mantine/hooks": "5.0.2",
     "react": "18.0.0",
     "react-dom": "18.0.0",
     "react-json-view": "1.21.3"
