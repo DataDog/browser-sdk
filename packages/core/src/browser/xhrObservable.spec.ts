@@ -3,7 +3,7 @@ import type { Subscription } from '../tools/observable'
 import type { XhrCompleteContext, XhrContext } from './xhrObservable'
 import { initXhrObservable } from './xhrObservable'
 
-describe('xhr proxy', () => {
+describe('xhr observable', () => {
   let requestsTrackingSubscription: Subscription
   let contextEditionSubscription: Subscription | undefined
   let requests: XhrCompleteContext[]
@@ -286,6 +286,56 @@ describe('xhr proxy', () => {
         expect(xhr.onreadystatechange).toHaveBeenCalledTimes(2)
         expect(listeners.load.length).toBe(0)
         expect(listeners.loadend.length).toBe(0)
+        done()
+      },
+    })
+  })
+
+  it('should track request to undefined url', (done) => {
+    withXhr({
+      setup(xhr) {
+        xhr.open('GET', undefined)
+        xhr.send()
+        xhr.complete(404, 'NOT FOUND')
+      },
+      onComplete() {
+        const request = requests[0]
+        expect(request.method).toBe('GET')
+        expect(request.url).toContain('/undefined')
+        expect(request.status).toBe(404)
+        done()
+      },
+    })
+  })
+
+  it('should track request to null url', (done) => {
+    withXhr({
+      setup(xhr) {
+        xhr.open('GET', null)
+        xhr.send()
+        xhr.complete(404, 'NOT FOUND')
+      },
+      onComplete() {
+        const request = requests[0]
+        expect(request.method).toBe('GET')
+        expect(request.url).toContain('/null')
+        expect(request.status).toBe(404)
+        done()
+      },
+    })
+  })
+
+  it('should track request to URL object', (done) => {
+    withXhr({
+      setup(xhr) {
+        xhr.open('GET', new URL('http://example.com/path'))
+        xhr.send()
+        xhr.complete(200, 'ok')
+      },
+      onComplete() {
+        const request = requests[0]
+        expect(request.method).toBe('GET')
+        expect(request.url).toBe('http://example.com/path')
         done()
       },
     })
