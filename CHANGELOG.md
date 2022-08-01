@@ -16,6 +16,13 @@
 
 ---
 
+## v4.16.0
+
+- ✨ [REPLAY-898] Recording Frustration signals (dead, error & rage clicks) for session replay ([#1632](https://github.com/DataDog/browser-sdk/pull/1632))
+- 🐛 [RUMF-1310] handle extra stacktrace parsing cases ([#1647](https://github.com/DataDog/browser-sdk/pull/1647))
+- 🐛 improve `jsonStringify` implementation ([#1653](https://github.com/DataDog/browser-sdk/pull/1653))
+- 🔒 [RUMF-1335] fix incorrect string escape ([#1651](https://github.com/DataDog/browser-sdk/pull/1651))
+
 ## v4.15.0
 
 - 🐛 frustration signals: track window open ([#1631](https://github.com/DataDog/browser-sdk/pull/1631))
