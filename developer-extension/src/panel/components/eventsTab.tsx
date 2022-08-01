@@ -1,4 +1,4 @@
-import { Badge, Button, Chip, Chips, Group, Space, Table, TextInput } from '@mantine/core'
+import { Badge, Button, Chip, Group, Space, Table, TextInput } from '@mantine/core'
 import React from 'react'
 import type { RumEvent } from '../../../../packages/rum-core/src/rumEvent.types'
 import type { EventFilters, StoredEvent } from '../hooks/useEvents'
@@ -32,14 +32,14 @@ export function EventTab({ events, filters, onFiltered, clear }: EventTabProps) 
     events && (
       <>
         <Group>
-          <Chips
+          <Chip.Group
             multiple
             value={filters.sdk}
             onChange={(sdk) => onFiltered({ ...filters, sdk: sdk as Array<'rum' | 'logs'> })}
           >
             <Chip value="rum">RUM</Chip>
             <Chip value="logs">Logs</Chip>
-          </Chips>
+          </Chip.Group>
           <TextInput
             placeholder="Filter your events, syntax: 'type:view application.id:40d8ca4b'"
             value={filters.query}
