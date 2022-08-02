@@ -515,7 +515,7 @@ describe('rum public api', () => {
     })
   })
 
-  describe('removeUserAttribute', () => {
+  describe('removeUserProperty', () => {
     let rumPublicApi: RumPublicApi
 
     beforeEach(() => {
