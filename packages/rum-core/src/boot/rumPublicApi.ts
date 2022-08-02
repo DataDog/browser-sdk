@@ -241,18 +241,18 @@ export function makeRumPublicApi(
   })
   return rumPublicApi
 
-  function sanitizeUser(newUser: unknown) {
-    const result = deepClone(newUser as Context)
-    if ('id' in result) {
-      result.id = String(result.id)
+  function sanitizeUser(newUser: Context = {}) {
+    const shallowClondeUser = { ...newUser }
+    if ('id' in shallowClondeUser) {
+      shallowClondeUser.id = String(shallowClondeUser.id)
     }
-    if ('name' in result) {
-      result.name = String(result.name)
+    if ('name' in shallowClondeUser) {
+      shallowClondeUser.name = String(shallowClondeUser.name)
     }
-    if ('email' in result) {
-      result.email = String(result.email)
+    if ('email' in shallowClondeUser) {
+      shallowClondeUser.email = String(shallowClondeUser.email)
     }
-    return result
+    return shallowClondeUser
   }
 
   function canHandleSession(initConfiguration: RumInitConfiguration): boolean {
