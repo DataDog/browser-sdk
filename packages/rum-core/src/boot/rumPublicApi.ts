@@ -226,7 +226,10 @@ export function makeRumPublicApi(
 
     getUser: monitor(userContextManager.getContext),
 
-    setUserProperty: monitor((key, property) => userContextManager.setContextProperty(key, property)),
+    setUserProperty: monitor((key, property) => {
+      const [k] = Object.keys(sanitizeUser({ [key]: property }))
+      userContextManager.setContextProperty(k, property)
+    }),
 
     removeUserProperty: monitor(userContextManager.removeContextProperty),
 
@@ -241,7 +244,7 @@ export function makeRumPublicApi(
   })
   return rumPublicApi
 
-  function sanitizeUser(newUser: Context = {}) {
+  function sanitizeUser(newUser: Context) {
     const shallowClondeUser = { ...newUser }
     if ('id' in shallowClondeUser) {
       shallowClondeUser.id = String(shallowClondeUser.id)
