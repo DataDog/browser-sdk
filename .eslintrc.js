@@ -73,7 +73,6 @@ module.exports = {
     'object-shorthand': 'error',
     'one-var': ['error', 'never'],
     'prefer-rest-params': 'off',
-    'prefer-object-spread': 'error',
     'prefer-template': 'error',
     quotes: ['error', 'single', { avoidEscape: true }],
     radix: 'error',
