@@ -493,7 +493,7 @@ describe('rum public api', () => {
       rumPublicApi.setUserProperty('address', addressAttribute)
       const userClone = rumPublicApi.getUser()
 
-      expect(userClone).toEqual({ ...user, address: addressAttribute })
+      expect(userClone.address).toEqual(addressAttribute)
     })
 
     it('should not contain original reference to object', () => {
