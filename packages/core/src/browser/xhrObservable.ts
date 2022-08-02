@@ -67,7 +67,7 @@ function openXhr(this: XMLHttpRequest, method: string, url: string | URL | undef
   xhrContexts.set(this, {
     state: 'open',
     method,
-    url: normalizeUrl(url ? url.toString() : String(url)),
+    url: normalizeUrl(String(url)),
   })
 }
 
