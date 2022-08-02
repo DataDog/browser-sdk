@@ -226,7 +226,10 @@ export function makeRumPublicApi(
 
     getUser: monitor(userContextManager.getContext),
 
-    setUserProperty: monitor(userContextManager.setContextProperty),
+    setUserProperty: monitor((key, property) => {
+      const sanitizedProperty = sanitizeUser({ [key]: property })[key]
+      userContextManager.setContextProperty(key, sanitizedProperty)
+    }),
 
     removeUserProperty: monitor(userContextManager.removeContextProperty),
 

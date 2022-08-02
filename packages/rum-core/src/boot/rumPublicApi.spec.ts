@@ -513,6 +513,18 @@ describe('rum public api', () => {
 
       expect(userClone).toEqual({ ...user, foo: addressAttribute })
     })
+
+    it('should sanitize properties', () => {
+      rumPublicApi.setUserProperty('id', 123)
+      rumPublicApi.setUserProperty('name', ['Adam', 'Smith'])
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      rumPublicApi.setUserProperty('email', function getEmail() {})
+      const userClone = rumPublicApi.getUser()
+
+      expect(userClone.id).toEqual('123')
+      expect(userClone.name).toEqual('Adam,Smith')
+      expect(userClone.email).toEqual('function getEmail() { }')
+    })
   })
 
   describe('removeUserProperty', () => {
