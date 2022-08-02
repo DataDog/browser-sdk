@@ -528,7 +528,7 @@ describe('rum public api', () => {
       rumPublicApi.setUser(user)
       rumPublicApi.removeUserProperty('foo')
       const userClone = rumPublicApi.getUser()
-     expect(userClone.foo).toBeUndefined()
+      expect(userClone.foo).toBeUndefined()
     })
   })
 
