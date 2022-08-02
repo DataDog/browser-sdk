@@ -15,6 +15,14 @@
   "dependencies": {
     "@datadog/browser-core": "4.16.1"
   },
+  "peerDependencies": {
+    "@datadog/rum": "4.16.0"
+  },
+  "peerDependenciesMeta": {
+    "@datadog/rum": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@types/sinon": "9.0.10",
     "sinon": "9.2.4"
