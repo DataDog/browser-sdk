@@ -134,8 +134,8 @@ export function makeRumPublicApi(
     const startRumResults = startRumImpl(
       configuration,
       () => ({
-        user: userContextManager.get(),
-        context: globalContextManager.get(),
+        user: userContextManager.getContext(),
+        context: globalContextManager.getContext(),
         hasReplay: recorderApi.isRecording() ? true : undefined,
       }),
       recorderApi,
