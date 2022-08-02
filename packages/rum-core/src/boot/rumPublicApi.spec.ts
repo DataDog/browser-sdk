@@ -503,7 +503,7 @@ describe('rum public api', () => {
       userDetails.DOB = '11/11/1999'
       const userClone = rumPublicApi.getUser()
 
-      expect(userClone.userDetails).toEqual({ name: 'john' })
+      expect(userClone.userDetails).not.toBe(userDetails)
     })
 
     it('should override attribute', () => {
