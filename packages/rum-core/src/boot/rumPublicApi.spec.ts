@@ -493,7 +493,7 @@ describe('rum public api', () => {
       rumPublicApi.setUserProperty('address', addressAttribute)
       const userClone = rumPublicApi.getUser()
 
-      expect(userClone).toEqual({ ...user, address: addressAttribute })
+      expect(userClone.address).toEqual(addressAttribute)
     })
 
     it('should not contain original reference to object', () => {
@@ -503,7 +503,7 @@ describe('rum public api', () => {
       userDetails.DOB = '11/11/1999'
       const userClone = rumPublicApi.getUser()
 
-      expect(userClone.userDetails).toEqual({ name: 'john' })
+      expect(userClone.userDetails).not.toBe(userDetails)
     })
 
     it('should override attribute', () => {
@@ -515,7 +515,7 @@ describe('rum public api', () => {
     })
   })
 
-  describe('removeUserAttribute', () => {
+  describe('removeUserProperty', () => {
     let rumPublicApi: RumPublicApi
 
     beforeEach(() => {
@@ -528,9 +528,7 @@ describe('rum public api', () => {
       rumPublicApi.setUser(user)
       rumPublicApi.removeUserProperty('foo')
       const userClone = rumPublicApi.getUser()
-      const newUser = { ...user }
-      delete newUser.foo
-      expect(userClone).toEqual(newUser)
+     expect(userClone.foo).toBeUndefined()
     })
   })
 
