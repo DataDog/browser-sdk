@@ -109,6 +109,7 @@ export function startRumAssembly(
             session: {
               plan: session.hasPremiumPlan ? RumSessionPlan.PREMIUM : RumSessionPlan.LITE,
             },
+            rule_psr: 'sampleRate' in configuration ? configuration.sampleRate : undefined,
             browser_sdk_version: canUseEventBridge() ? __BUILD_ENV__SDK_VERSION__ : undefined,
           },
           application: {

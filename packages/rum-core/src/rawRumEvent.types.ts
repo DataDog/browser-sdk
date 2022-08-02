@@ -223,6 +223,7 @@ export interface RumContext {
       plan: RumSessionPlan
     }
     browser_sdk_version?: string
+    rule_psr?: number
   }
 }
 
