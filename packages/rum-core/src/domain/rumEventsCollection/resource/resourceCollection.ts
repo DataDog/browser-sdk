@@ -86,7 +86,10 @@ function processRequest(
 }
 
 // eslint-disable-next-line max-len
-function processResourceEntry(entry: RumPerformanceResourceTiming, configuration: RumConfiguration): RawRumEventCollectedData<RawRumResourceEvent> {
+function processResourceEntry(
+  entry: RumPerformanceResourceTiming,
+  configuration: RumConfiguration
+): RawRumEventCollectedData<RawRumResourceEvent> {
   const type = computeResourceKind(entry)
   const entryMetrics = computePerformanceEntryMetrics(entry)
   const tracingInfo = computeEntryTracingInfo(entry, configuration)
@@ -140,12 +143,12 @@ function computeRequestTracingInfo(request: RequestCompleteEvent, configuration:
   }
 }
 
-function computeEntryTracingInfo(entry: RumPerformanceResourceTiming, configuration : RumConfiguration) {
+function computeEntryTracingInfo(entry: RumPerformanceResourceTiming, configuration: RumConfiguration) {
   return {
     _dd: {
       trace_id: entry.traceId ? entry.traceId : undefined,
       rule_psr: configuration.tracingSampleRate,
-    }
+    },
   }
 }
 
