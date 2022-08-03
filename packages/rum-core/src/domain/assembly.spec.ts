@@ -549,15 +549,6 @@ describe('rum assembly', () => {
       })
     })
 
-    it('should include the sample rate in _dd if present', () => {
-      const SAMPLE_RATE = 60
-      const { lifeCycle } = setupBuilder.withConfiguration({ sampleRate: SAMPLE_RATE }).build()
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-      expect(serverRumEvents[0]._dd.rule_psr).toEqual(SAMPLE_RATE)
-    })
-
     it('should detect synthetics sessions based on synthetics worker values', () => {
       mockSyntheticsWorkerValues()
 

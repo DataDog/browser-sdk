@@ -38,6 +38,7 @@ export interface RawRumResourceEvent {
   _dd?: {
     trace_id?: string
     span_id?: string // not available for initial document tracing
+    rule_psr?: number
   }
 }
 
@@ -223,7 +224,6 @@ export interface RumContext {
       plan: RumSessionPlan
     }
     browser_sdk_version?: string
-    rule_psr?: number
   }
 }
 
