@@ -77,14 +77,16 @@ describe('actionCollection', () => {
         in_foreground: true,
       },
       _dd: {
-        target: {
-          selector: '#foo',
-          width: 1,
-          height: 2,
-        },
-        position: {
-          x: 1,
-          y: 2,
+        action: {
+          target: {
+            selector: '#foo',
+            width: 1,
+            height: 2,
+          },
+          position: {
+            x: 1,
+            y: 2,
+          },
         },
       },
     })

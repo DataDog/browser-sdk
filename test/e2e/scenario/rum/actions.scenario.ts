@@ -45,14 +45,16 @@ describe('action collection', () => {
             },
           },
           _dd: jasmine.objectContaining({
-            target: {
-              selector: jasmine.any(String),
-              width: jasmine.any(Number),
-              height: jasmine.any(Number),
-            },
-            position: {
-              x: jasmine.any(Number),
-              y: jasmine.any(Number),
+            action: {
+              target: {
+                selector: jasmine.any(String),
+                width: jasmine.any(Number),
+                height: jasmine.any(Number),
+              },
+              position: {
+                x: jasmine.any(Number),
+                y: jasmine.any(Number),
+              },
             },
           }),
         })

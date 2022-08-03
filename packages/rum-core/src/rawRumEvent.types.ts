@@ -155,14 +155,16 @@ export interface RawRumActionEvent {
     in_foreground: boolean
   }
   _dd?: {
-    target?: {
-      selector?: string
-      width?: number
-      height?: number
-    }
-    position?: {
-      x: number
-      y: number
+    action?: {
+      target?: {
+        selector?: string
+        width?: number
+        height?: number
+      }
+      position?: {
+        x: number
+        y: number
+      }
     }
   }
 }

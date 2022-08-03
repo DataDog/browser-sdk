@@ -75,8 +75,10 @@ function processAction(
           },
         },
         _dd: {
-          target: action.target,
-          position: action.position,
+          action: {
+            target: action.target,
+            position: action.position,
+          },
         },
       }
     : undefined
