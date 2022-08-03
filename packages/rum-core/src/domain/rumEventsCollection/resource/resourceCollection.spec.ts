@@ -47,6 +47,10 @@ describe('resourceCollection', () => {
         url: 'https://resource.com/valid',
       },
       type: RumEventType.RESOURCE,
+      _dd: {
+        trace_id: undefined,
+        rule_psr: 100,
+      },
     })
     expect(rawRumEvents[0].domainContext).toEqual({
       performanceEntry,

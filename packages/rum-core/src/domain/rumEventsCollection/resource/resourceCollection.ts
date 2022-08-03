@@ -37,7 +37,7 @@ export function startResourceCollection(lifeCycle: LifeCycle, configuration: Rum
   lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
     for (const entry of entries) {
       if (entry.entryType === 'resource' && !isRequestKind(entry)) {
-        lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processResourceEntry(entry))
+        lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processResourceEntry(entry, configuration))
       }
     }
   })
@@ -85,10 +85,11 @@ function processRequest(
   }
 }
 
-function processResourceEntry(entry: RumPerformanceResourceTiming): RawRumEventCollectedData<RawRumResourceEvent> {
+// eslint-disable-next-line max-len
+function processResourceEntry(entry: RumPerformanceResourceTiming, configuration: RumConfiguration): RawRumEventCollectedData<RawRumResourceEvent> {
   const type = computeResourceKind(entry)
   const entryMetrics = computePerformanceEntryMetrics(entry)
-  const tracingInfo = computeEntryTracingInfo(entry)
+  const tracingInfo = computeEntryTracingInfo(entry, configuration)
 
   const startClocks = relativeToClocks(entry.startTime)
   const resourceEvent = combine(
@@ -139,8 +140,13 @@ function computeRequestTracingInfo(request: RequestCompleteEvent, configuration:
   }
 }
 
-function computeEntryTracingInfo(entry: RumPerformanceResourceTiming) {
-  return entry.traceId ? { _dd: { trace_id: entry.traceId } } : undefined
+function computeEntryTracingInfo(entry: RumPerformanceResourceTiming, configuration : RumConfiguration) {
+  return {
+    _dd: {
+      trace_id: entry.traceId ? entry.traceId : undefined,
+      rule_psr: configuration.tracingSampleRate,
+    }
+  }
 }
 
 function toPerformanceEntryRepresentation(entry: RumPerformanceEntry): PerformanceEntryRepresentation {
