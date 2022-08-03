@@ -134,7 +134,7 @@ function computeRequestTracingInfo(request: RequestCompleteEvent, configuration:
     _dd: {
       span_id: request.spanId!.toDecimalString(),
       trace_id: request.traceId!.toDecimalString(),
-      rule_psr: configuration && 'tracingSampleRate' in configuration ? configuration.tracingSampleRate : undefined,
+      rule_psr: configuration.tracingSampleRate,
     },
   }
 }
