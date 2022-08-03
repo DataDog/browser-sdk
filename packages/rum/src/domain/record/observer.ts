@@ -229,8 +229,8 @@ function initScrollObserver(cb: ScrollCallback, defaultPrivacyLevel: DefaultPriv
       } else {
         cb({
           id,
-          x: (target as HTMLElement).scrollLeft,
-          y: (target as HTMLElement).scrollTop,
+          x: Math.round((target as HTMLElement).scrollLeft),
+          y: Math.round((target as HTMLElement).scrollTop),
         })
       }
     }),
