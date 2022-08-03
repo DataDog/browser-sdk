@@ -16,6 +16,10 @@
 
 ---
 
+## v4.16.1
+
+- 🐛 [RUMF-1274] track request to undefined/null URL ([#1665](https://github.com/DataDog/browser-sdk/pull/1665))
+
 ## v4.16.0
 
 - ✨ [REPLAY-898] Recording Frustration signals (dead, error & rage clicks) for session replay ([#1632](https://github.com/DataDog/browser-sdk/pull/1632))
