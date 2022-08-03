@@ -225,14 +225,6 @@ module.exports = {
         'no-restricted-syntax': [
           'error',
           {
-            selector: 'ObjectExpression > SpreadElement',
-            message: 'Object spread is not authorized. Please use "assign" from the core package utils instead.',
-          },
-          {
-            selector: 'ArrayExpression > SpreadElement',
-            message: 'Array spread is not authorized. Please use .concat instead.',
-          },
-          {
             selector: 'MemberExpression[object.name="Date"][property.name="now"]',
             message: '`Date.now()` is not authorized. Please use `dateNow()` instead',
           },
