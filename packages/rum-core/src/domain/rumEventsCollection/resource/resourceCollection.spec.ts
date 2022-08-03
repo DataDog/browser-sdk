@@ -48,7 +48,6 @@ describe('resourceCollection', () => {
       },
       type: RumEventType.RESOURCE,
       _dd: {
-        trace_id: undefined,
         rule_psr: 100,
       },
     })
