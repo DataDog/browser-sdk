@@ -14,7 +14,7 @@ import type {
 } from '../../types'
 import { RecordType, IncrementalSource } from '../../types'
 import { serializeDocument } from './serialize'
-import { initObservers } from './observer'
+import { initObservers } from './observers'
 
 import { MutationController } from './mutationObserver'
 import { getVisualViewport, getScrollX, getScrollY } from './viewports'
