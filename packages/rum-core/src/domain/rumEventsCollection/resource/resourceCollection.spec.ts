@@ -17,7 +17,10 @@ describe('resourceCollection', () => {
 
   beforeEach(() => {
     setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
-      startResourceCollection(lifeCycle)
+      startResourceCollection(
+        lifeCycle,
+        validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' }) as RumConfiguration
+      )
     })
   })
 
