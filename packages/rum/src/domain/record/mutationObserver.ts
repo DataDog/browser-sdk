@@ -211,6 +211,7 @@ function processChildListMutations(
       document,
       serializedNodeIds,
       parentNodePrivacyLevel,
+      serializationContext: 'mutation',
     })
     if (!serializedNode) {
       continue
