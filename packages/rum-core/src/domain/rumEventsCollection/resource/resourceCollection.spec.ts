@@ -8,7 +8,6 @@ import { RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { RequestCompleteEvent } from '../../requestCollection'
 import { TraceIdentifier } from '../../tracing/tracer'
-import type { RumConfiguration } from '../../configuration'
 import { validateAndBuildRumConfiguration } from '../../configuration'
 import { startResourceCollection } from './resourceCollection'
 
@@ -19,7 +18,7 @@ describe('resourceCollection', () => {
     setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
       startResourceCollection(
         lifeCycle,
-        validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' }) as RumConfiguration
+        validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!
       )
     })
   })
@@ -200,7 +199,7 @@ describe('resourceCollection', () => {
             clientToken: 'xxx',
             applicationId: 'xxx',
             tracingSampleRate: 60,
-          }) as RumConfiguration
+          })!
         )
       })
 
