@@ -85,7 +85,6 @@ function processRequest(
   }
 }
 
-// eslint-disable-next-line max-len
 function processResourceEntry(
   entry: RumPerformanceResourceTiming,
   configuration: RumConfiguration
