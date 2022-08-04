@@ -250,10 +250,6 @@ export function serializeAttribute(
     }
   }
 
-  if (nodePrivacyLevel === NodePrivacyLevel.MASK_USER_INPUT && attributeName === 'placeholder') {
-    return CENSORED_STRING_MARK
-  }
-
   if (!attributeValue || typeof attributeValue !== 'string') {
     return attributeValue
   }
