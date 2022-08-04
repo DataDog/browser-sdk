@@ -8,6 +8,7 @@ prod,@mantine/hooks,MIT,Copyright (c) 2021 Vitaly Rtishchev
 prod,react,MIT,Copyright (c) Facebook, Inc. and its affiliates.
 prod,react-dom,MIT,Copyright (c) Facebook, Inc. and its affiliates.
 prod,react-json-view,MIT,Copyright (c) 2015 Mac Gainor
+dev,@emotion/react,MIT,Emotion team and other contributors
 dev,@jsdevtools/coverage-istanbul-loader,MIT,Copyright (c) 2015 James Messinger
 dev,@types/chrome,MIT,Copyright Microsoft Corporation
 dev,@types/connect-busboy,MIT,Copyright Microsoft Corporation
