@@ -22,7 +22,7 @@ import { waitPageActivityEnd } from '../../waitPageActivityEnd'
 import type { ClickChain } from './clickChain'
 import { createClickChain } from './clickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
-import { getSelectorFromElement } from './getSelectorFromElement'
+import { getSelectorsFromElement } from './getSelectorsFromElement'
 import type { OnClickContext } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 import { computeFrustration } from './computeFrustration'
@@ -172,11 +172,13 @@ function computeClickActionBase(event: MouseEvent & { target: Element }, actionN
 
   if (isExperimentalFeatureEnabled('clickmap')) {
     const rect = event.target.getBoundingClientRect()
-    target = {
-      selector: getSelectorFromElement(event.target),
-      width: Math.round(rect.width),
-      height: Math.round(rect.height),
-    }
+    target = assign(
+      {
+        width: Math.round(rect.width),
+        height: Math.round(rect.height),
+      },
+      getSelectorsFromElement(event.target)
+    )
     position = {
       // Use clientX and Y because for SVG element offsetX and Y are relatives to the <svg> element
       x: Math.round(event.clientX - rect.left),

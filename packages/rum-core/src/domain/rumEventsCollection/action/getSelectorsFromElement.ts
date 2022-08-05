@@ -1,6 +1,12 @@
 import { arrayFrom, cssEscape } from '@datadog/browser-core'
 
-export function getSelectorFromElement(targetElement: Element): string {
+export function getSelectorsFromElement(element: Element) {
+  return {
+    selector: getSelectorFromElement(element),
+  }
+}
+
+function getSelectorFromElement(targetElement: Element): string {
   const targetElementSelector = []
   let element: Element | null = targetElement
 
