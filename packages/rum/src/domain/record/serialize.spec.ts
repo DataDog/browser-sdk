@@ -305,14 +305,6 @@ describe('serializeNodeWithId', () => {
 
         expect((serializeNodeWithId(button, DEFAULT_OPTIONS)! as ElementNode).attributes.value).toEqual('toto')
       })
-
-      it('applies mask for <input placeholder="someValue" /> value', () => {
-        const input = document.createElement('input')
-        input.placeholder = 'someValue'
-        input.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT)
-
-        expect((serializeNodeWithId(input, DEFAULT_OPTIONS)! as ElementNode).attributes.placeholder).toEqual('***')
-      })
     })
 
     describe('input privacy mode mask', () => {
