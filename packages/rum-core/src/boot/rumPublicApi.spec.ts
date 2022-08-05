@@ -1,4 +1,4 @@
-import type { RelativeTime, TimeStamp } from '@datadog/browser-core'
+import type { RelativeTime, TimeStamp, Context } from '@datadog/browser-core'
 import { ONE_SECOND, getTimeStamp, display, DefaultPrivacyLevel } from '@datadog/browser-core'
 import { cleanupSyntheticsWorkerValues, mockSyntheticsWorkerValues } from '../../../core/test/syntheticsWorkerValues'
 import { initEventBridgeStub, deleteEventBridgeStub } from '../../../core/test/specHelper'
@@ -452,6 +452,94 @@ describe('rum public api', () => {
       rumPublicApi.setUser(null as any)
       rumPublicApi.setUser(undefined as any)
       expect(displaySpy).toHaveBeenCalledTimes(3)
+    })
+  })
+
+  describe('getUser', () => {
+    let rumPublicApi: RumPublicApi
+
+    beforeEach(() => {
+      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
+    })
+
+    it('should return empty object if no user has been set', () => {
+      const userClone = rumPublicApi.getUser()
+      expect(userClone).toEqual({})
+    })
+
+    it('should return a clone of the original object if set', () => {
+      const user = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
+      rumPublicApi.setUser(user)
+      const userClone = rumPublicApi.getUser()
+      const userClone2 = rumPublicApi.getUser()
+
+      expect(userClone).not.toBe(user)
+      expect(userClone).not.toBe(userClone2)
+      expect(userClone).toEqual(user)
+    })
+  })
+
+  describe('setUserProperty', () => {
+    const user = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
+    const addressAttribute = { city: 'Paris' }
+    let rumPublicApi: RumPublicApi
+
+    beforeEach(() => {
+      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
+    })
+
+    it('should add attribute', () => {
+      rumPublicApi.setUser(user)
+      rumPublicApi.setUserProperty('address', addressAttribute)
+      const userClone = rumPublicApi.getUser()
+
+      expect(userClone.address).toEqual(addressAttribute)
+    })
+
+    it('should not contain original reference to object', () => {
+      const userDetails: { [key: string]: any } = { name: 'john' }
+      rumPublicApi.setUser(user)
+      rumPublicApi.setUserProperty('userDetails', userDetails)
+      userDetails.DOB = '11/11/1999'
+      const userClone = rumPublicApi.getUser()
+
+      expect(userClone.userDetails).not.toBe(userDetails)
+    })
+
+    it('should override attribute', () => {
+      rumPublicApi.setUser(user)
+      rumPublicApi.setUserProperty('foo', addressAttribute)
+      const userClone = rumPublicApi.getUser()
+
+      expect(userClone).toEqual({ ...user, foo: addressAttribute })
+    })
+
+    it('should sanitize properties', () => {
+      rumPublicApi.setUserProperty('id', 123)
+      rumPublicApi.setUserProperty('name', ['Adam', 'Smith'])
+      rumPublicApi.setUserProperty('email', { foo: 'bar' })
+      const userClone = rumPublicApi.getUser()
+
+      expect(userClone.id).toEqual('123')
+      expect(userClone.name).toEqual('Adam,Smith')
+      expect(userClone.email).toEqual('[object Object]')
+    })
+  })
+
+  describe('removeUserProperty', () => {
+    let rumPublicApi: RumPublicApi
+
+    beforeEach(() => {
+      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
+    })
+
+    it('should remove property', () => {
+      const user: Context = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
+
+      rumPublicApi.setUser(user)
+      rumPublicApi.removeUserProperty('foo')
+      const userClone = rumPublicApi.getUser()
+      expect(userClone.foo).toBeUndefined()
     })
   })
 
