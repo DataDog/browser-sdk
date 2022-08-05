@@ -19,7 +19,7 @@ import {
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewContexts } from '../domain/contexts/viewContexts'
 import type { RumSessionManager } from '../domain/rumSessionManager'
-import type { CommonContext, User, ReplayStats } from '../rawRumEvent.types'
+import type { User, ReplayStats } from '../rawRumEvent.types'
 import { ActionType } from '../rawRumEvent.types'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import { validateAndBuildRumConfiguration } from '../domain/configuration'
@@ -56,7 +56,7 @@ export function makeRumPublicApi(
   let isAlreadyInitialized = false
 
   const globalContextManager = createContextManager()
-  let user: User = {}
+  const userContextManager = createContextManager()
 
   let getInternalContextStrategy: StartRumResult['getInternalContext'] = () => undefined
   let getInitConfigurationStrategy = (): InitConfiguration | undefined => undefined
@@ -68,18 +68,23 @@ export function makeRumPublicApi(
   let startViewStrategy: StartRumResult['startView'] = (options, startClocks = clocksNow()) => {
     bufferApiCalls.add(() => startViewStrategy(options, startClocks))
   }
-  let addActionStrategy: StartRumResult['addAction'] = (action, commonContext = clonedCommonContext()) => {
+  let addActionStrategy: StartRumResult['addAction'] = (
+    action,
+    commonContext = {
+      context: globalContextManager.getContext(),
+      user: userContextManager.getContext(),
+    }
+  ) => {
     bufferApiCalls.add(() => addActionStrategy(action, commonContext))
   }
-  let addErrorStrategy: StartRumResult['addError'] = (providedError, commonContext = clonedCommonContext()) => {
+  let addErrorStrategy: StartRumResult['addError'] = (
+    providedError,
+    commonContext = {
+      context: globalContextManager.getContext(),
+      user: userContextManager.getContext(),
+    }
+  ) => {
     bufferApiCalls.add(() => addErrorStrategy(providedError, commonContext))
-  }
-
-  function clonedCommonContext(): CommonContext {
-    return deepClone({
-      context: globalContextManager.get(),
-      user: user as Context,
-    })
   }
 
   function initRum(initConfiguration: RumInitConfiguration) {
@@ -129,8 +134,8 @@ export function makeRumPublicApi(
     const startRumResults = startRumImpl(
       configuration,
       () => ({
-        user,
-        context: globalContextManager.get(),
+        user: userContextManager.getContext(),
+        context: globalContextManager.getContext(),
         hasReplay: recorderApi.isRecording() ? true : undefined,
       }),
       recorderApi,
@@ -165,12 +170,23 @@ export function makeRumPublicApi(
   const rumPublicApi = makePublicApi({
     init: monitor(initRum),
 
+    /** @deprecated: use setGlobalContextProperty instead */
     addRumGlobalContext: monitor(globalContextManager.add),
+    setGlobalContextProperty: monitor(globalContextManager.setContextProperty),
 
+    /** @deprecated: use removeGlobalContextProperty instead */
     removeRumGlobalContext: monitor(globalContextManager.remove),
+    removeGlobalContextProperty: monitor(globalContextManager.removeContextProperty),
 
+    /** @deprecated: use getGlobalContext instead */
     getRumGlobalContext: monitor(globalContextManager.get),
+    getGlobalContext: monitor(globalContextManager.getContext),
+
+    /** @deprecated: use setGlobalContext instead */
     setRumGlobalContext: monitor(globalContextManager.set),
+    setGlobalContext: monitor(globalContextManager.setContext),
+
+    clearGlobalContext: monitor(globalContextManager.clearContext),
 
     getInternalContext: monitor((startTime?: number) => getInternalContextStrategy(startTime)),
     getInitConfiguration: monitor(() => getInitConfigurationStrategy()),
@@ -201,17 +217,25 @@ export function makeRumPublicApi(
     }),
 
     setUser: monitor((newUser: User) => {
-      const sanitizedUser = sanitizeUser(newUser)
-      if (sanitizedUser) {
-        user = sanitizedUser
-      } else {
+      if (typeof newUser !== 'object' || !newUser) {
         display.error('Unsupported user:', newUser)
+      } else {
+        userContextManager.setContext(sanitizeUser(newUser as Context))
       }
     }),
 
-    removeUser: monitor(() => {
-      user = {}
+    getUser: monitor(userContextManager.getContext),
+
+    setUserProperty: monitor((key, property) => {
+      const sanitizedProperty = sanitizeUser({ [key]: property })[key]
+      userContextManager.setContextProperty(key, sanitizedProperty)
     }),
+
+    removeUserProperty: monitor(userContextManager.removeContextProperty),
+
+    /** @deprecated: renamed to clearUser */
+    removeUser: monitor(userContextManager.clearContext),
+    clearUser: monitor(userContextManager.clearContext),
 
     startView,
 
@@ -220,21 +244,18 @@ export function makeRumPublicApi(
   })
   return rumPublicApi
 
-  function sanitizeUser(newUser: unknown) {
-    if (typeof newUser !== 'object' || !newUser) {
-      return
+  function sanitizeUser(newUser: Context) {
+    const shallowClonedUser = assign(newUser, {})
+    if ('id' in shallowClonedUser) {
+      shallowClonedUser.id = String(shallowClonedUser.id)
     }
-    const result = deepClone(newUser as Context)
-    if ('id' in result) {
-      result.id = String(result.id)
+    if ('name' in shallowClonedUser) {
+      shallowClonedUser.name = String(shallowClonedUser.name)
     }
-    if ('name' in result) {
-      result.name = String(result.name)
+    if ('email' in shallowClonedUser) {
+      shallowClonedUser.email = String(shallowClonedUser.email)
     }
-    if ('email' in result) {
-      result.email = String(result.email)
-    }
-    return result
+    return shallowClonedUser
   }
 
   function canHandleSession(initConfiguration: RumInitConfiguration): boolean {

@@ -230,6 +230,7 @@ export function serializeAttribute(
       // Mask Attribute text content
       case 'title':
       case 'alt':
+      case 'placeholder':
         return CENSORED_STRING_MARK
     }
     // mask image URLs
