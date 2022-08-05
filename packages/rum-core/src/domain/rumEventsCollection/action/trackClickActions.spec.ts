@@ -123,7 +123,7 @@ describe('trackClickActions', () => {
       clock.tick(EXPIRE_DELAY)
       expect(events[0]).toEqual(
         jasmine.objectContaining({
-          target: { selector: '#button', width: 100, height: 100 },
+          target: { selector: '#button', selector_with_stable_attributes: '#button', width: 100, height: 100 },
           position: { x: 50, y: 50 },
         })
       )

@@ -1,8 +1,33 @@
 import { arrayFrom, cssEscape, elementMatches } from '@datadog/browser-core'
 
-export function getSelectorsFromElement(element: Element) {
+const STABLE_ATTRIBUTES = [
+  'data-dd-action-name',
+  // Common test attributes (list provided by google recorder)
+  'data-testid',
+  'data-test',
+  'data-qa',
+  'data-cy',
+  'data-test-id',
+  'data-qa-id',
+  'data-testing',
+  // Fullstory decorator attributes:
+  'data-component',
+  'data-element',
+  'data-source-file',
+]
+
+export function getSelectorsFromElement(element: Element, actionNameAttribute: string | undefined) {
+  const attributeSelectors = STABLE_ATTRIBUTES.map((attribute) => getAttributeSelector.bind(null, attribute))
+  if (actionNameAttribute) {
+    attributeSelectors.unshift(getAttributeSelector.bind(null, actionNameAttribute))
+  }
   return {
-    selector: getSelectorFromElement(element),
+    selector: getSelectorFromElement(element, [getIDSelector], [getClassSelector]),
+    selector_with_stable_attributes: getSelectorFromElement(
+      element,
+      attributeSelectors.concat(getIDSelector),
+      attributeSelectors.concat(getClassSelector)
+    ),
   }
 }
 
@@ -44,6 +69,12 @@ function getClassSelector(element: Element): string | undefined {
   if (element.classList.length > 0) {
     const orderedClassList = arrayFrom(element.classList).sort()
     return `${element.tagName}${orderedClassList.map((className) => `.${cssEscape(className)}`).join('')}`
+  }
+}
+
+function getAttributeSelector(attributeName: string, element: Element): string | undefined {
+  if (element.hasAttribute(attributeName)) {
+    return `${element.tagName}[${attributeName}="${cssEscape(element.getAttribute(attributeName)!)}"]`
   }
 }
 
