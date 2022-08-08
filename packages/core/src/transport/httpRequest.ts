@@ -9,31 +9,35 @@ import { addTelemetryError } from '../domain/telemetry'
  * multiple elements are sent separated by \n in order
  * to be parsed correctly without content type header
  */
-export class HttpRequest {
-  constructor(private endpointBuilder: EndpointBuilder, private bytesLimit: number) {}
 
-  send(data: string | FormData, bytesCount: number) {
-    const url = this.endpointBuilder.build()
-    const canUseBeacon = !!navigator.sendBeacon && bytesCount < this.bytesLimit
-    if (canUseBeacon) {
-      try {
-        const isQueued = navigator.sendBeacon(url, data)
+export type HttpRequest = ReturnType<typeof createHttpRequest>
 
-        if (isQueued) {
-          return
+export function createHttpRequest(endpointBuilder: EndpointBuilder, bytesLimit: number) {
+  return {
+    send: (data: string | FormData, bytesCount: number) => {
+      const url = endpointBuilder.build()
+      const canUseBeacon = !!navigator.sendBeacon && bytesCount < bytesLimit
+      if (canUseBeacon) {
+        try {
+          const isQueued = navigator.sendBeacon(url, data)
+
+          if (isQueued) {
+            return
+          }
+        } catch (e) {
+          reportBeaconError(e)
         }
-      } catch (e) {
-        reportBeaconError(e)
       }
-    }
 
-    const request = new XMLHttpRequest()
-    request.open('POST', url, true)
-    request.send(data)
+      const request = new XMLHttpRequest()
+      request.open('POST', url, true)
+      request.send(data)
+    },
   }
 }
 
 let hasReportedBeaconError = false
+
 function reportBeaconError(e: unknown) {
   if (!hasReportedBeaconError) {
     hasReportedBeaconError = true

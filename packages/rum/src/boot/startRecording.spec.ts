@@ -1,5 +1,5 @@
-import type { TimeStamp } from '@datadog/browser-core'
-import { HttpRequest, DefaultPrivacyLevel, noop, isIE, timeStampNow } from '@datadog/browser-core'
+import type { TimeStamp, HttpRequest } from '@datadog/browser-core'
+import { DefaultPrivacyLevel, noop, isIE, timeStampNow, createHttpRequest } from '@datadog/browser-core'
 import type { LifeCycle, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { inflate } from 'pako'
@@ -10,7 +10,7 @@ import { createNewEvent, mockClock } from '../../../core/test/specHelper'
 import type { TestSetupBuilder } from '../../../rum-core/test/specHelper'
 import { setup } from '../../../rum-core/test/specHelper'
 import { collectAsyncCalls, recordsPerFullSnapshot } from '../../test/utils'
-import { setSegmentBytesLimit, startDeflateWorker } from '../domain/segmentCollection'
+import { setSegmentBytesLimit, startDeflateWorker, SEGMENT_BYTES_LIMIT } from '../domain/segmentCollection'
 
 import type { BrowserSegment } from '../types'
 import { RecordType } from '../types'
@@ -45,10 +45,6 @@ describe('startRecording', () => {
     textField = document.createElement('input')
     sandbox.appendChild(textField)
 
-    const requestSendSpy = spyOn(HttpRequest.prototype, 'send')
-    ;({ waitAsyncCalls: waitRequestSendCalls, expectNoExtraAsyncCall: expectNoExtraRequestSendCalls } =
-      collectAsyncCalls(requestSendSpy))
-
     startDeflateWorker((worker) => {
       setupBuilder = setup()
         .withViewContexts({
@@ -61,7 +57,13 @@ describe('startRecording', () => {
           defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
         })
         .beforeBuild(({ lifeCycle, configuration, viewContexts, sessionManager }) => {
-          const recording = startRecording(lifeCycle, configuration, sessionManager, viewContexts, worker!)
+          const httpRequest = createHttpRequest(configuration.sessionReplayEndpointBuilder, SEGMENT_BYTES_LIMIT)
+
+          const requestSendSpy = spyOn(httpRequest, 'send')
+          ;({ waitAsyncCalls: waitRequestSendCalls, expectNoExtraAsyncCall: expectNoExtraRequestSendCalls } =
+            collectAsyncCalls(requestSendSpy))
+
+          const recording = startRecording(lifeCycle, configuration, sessionManager, viewContexts, worker!, httpRequest)
           stopRecording = recording ? recording.stop : noop
           return { stop: stopRecording }
         })
