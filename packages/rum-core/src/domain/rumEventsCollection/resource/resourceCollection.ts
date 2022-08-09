@@ -143,16 +143,9 @@ function computeRequestTracingInfo(request: RequestCompleteEvent, configuration:
 }
 
 function computeEntryTracingInfo(entry: RumPerformanceResourceTiming, configuration: RumConfiguration) {
-  if (entry.traceId) {
-    return {
-      _dd: {
-        trace_id: entry.traceId,
-        rule_psr: configuration.tracingSampleRate / 100, // rule_psr needs to be between 0-1
-      },
-    }
-  }
   return {
     _dd: {
+      trace_id: entry.traceId,
       rule_psr: configuration.tracingSampleRate / 100, // rule_psr needs to be between 0-1
     },
   }
