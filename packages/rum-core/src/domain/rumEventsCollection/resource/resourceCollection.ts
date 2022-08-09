@@ -53,7 +53,8 @@ function processRequest(
   const startClocks = matchingTiming ? relativeToClocks(matchingTiming.startTime) : request.startClocks
   const correspondingTimingOverrides = matchingTiming ? computePerformanceEntryMetrics(matchingTiming) : undefined
 
-  const tracingInfo = computeRequestTracingInfo(request, configuration)
+  const hasBeenTraced = request.traceSampled && request.traceId && request.spanId
+  const tracingInfo = hasBeenTraced ? computeRequestTracingInfo(request, configuration) : undefined
 
   const resourceEvent = combine(
     {
@@ -91,7 +92,9 @@ function processResourceEntry(
 ): RawRumEventCollectedData<RawRumResourceEvent> {
   const type = computeResourceKind(entry)
   const entryMetrics = computePerformanceEntryMetrics(entry)
-  const tracingInfo = computeEntryTracingInfo(entry, configuration)
+
+  const hasBeenTraced = entry.traceId
+  const tracingInfo = hasBeenTraced ? computeEntryTracingInfo(entry, configuration) : undefined
 
   const startClocks = relativeToClocks(entry.startTime)
   const resourceEvent = combine(
@@ -129,10 +132,6 @@ function computePerformanceEntryMetrics(timing: RumPerformanceResourceTiming) {
 }
 
 function computeRequestTracingInfo(request: RequestCompleteEvent, configuration: RumConfiguration) {
-  const hasBeenTraced = request.traceSampled && request.traceId && request.spanId
-  if (!hasBeenTraced) {
-    return undefined
-  }
   return {
     _dd: {
       span_id: request.spanId!.toDecimalString(),
