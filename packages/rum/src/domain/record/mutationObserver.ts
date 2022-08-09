@@ -14,7 +14,7 @@ import {
 import { serializeNodeWithId, serializeAttribute } from './serialize'
 import { forEach } from './utils'
 import { createMutationBatch } from './mutationBatch'
-import type { MutationCallBack } from './observer'
+import type { MutationCallBack } from './observers'
 
 type WithSerializedTarget<T> = T & { target: NodeWithSerializedNode }
 
@@ -211,6 +211,7 @@ function processChildListMutations(
       document,
       serializedNodeIds,
       parentNodePrivacyLevel,
+      serializationContext: 'mutation',
     })
     if (!serializedNode) {
       continue

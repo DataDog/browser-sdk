@@ -4,6 +4,7 @@ import {
   PRIVACY_ATTR_NAME,
   PRIVACY_ATTR_VALUE_ALLOW,
   PRIVACY_ATTR_VALUE_HIDDEN,
+  PRIVACY_ATTR_VALUE_MASK,
   PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
 } from '../../constants'
 import {
@@ -17,7 +18,7 @@ import {
 import type { ElementNode, SerializedNodeWithId, TextNode } from '../../types'
 import { NodeType } from '../../types'
 import { hasSerializedNode } from './serializationUtils'
-import type { SerializeOptions } from './serialize'
+import type { SerializeOptions, SerializationContext } from './serialize'
 import {
   serializeDocument,
   serializeNodeWithId,
@@ -30,6 +31,7 @@ import { MAX_ATTRIBUTE_VALUE_CHAR_LENGTH } from './privacy'
 const DEFAULT_OPTIONS: SerializeOptions = {
   document,
   parentNodePrivacyLevel: NodePrivacyLevel.ALLOW,
+  serializationContext: 'full-snapshot',
 }
 
 describe('serializeNodeWithId', () => {
@@ -113,22 +115,41 @@ describe('serializeNodeWithId', () => {
         style: 'width: 10px;',
       })
     })
+    ;[
+      {
+        description: 'serializes scroll position during full snapshot',
+        serializationContext: 'full-snapshot' as SerializationContext,
+        shouldSerializeScroll: true,
+      },
+      {
+        description: 'does not serialize scroll position during mutation',
+        serializationContext: 'mutation' as SerializationContext,
+        shouldSerializeScroll: false,
+      },
+    ].forEach(({ description, serializationContext, shouldSerializeScroll }) => {
+      it(description, () => {
+        const element = document.createElement('div')
+        Object.assign(element.style, { width: '100px', height: '100px', overflow: 'scroll' })
+        const inner = document.createElement('div')
+        Object.assign(inner.style, { width: '200px', height: '200px' })
+        element.appendChild(inner)
+        sandbox.appendChild(element)
+        element.scrollBy(10, 20)
 
-    it('serializes scroll position', () => {
-      const element = document.createElement('div')
-      Object.assign(element.style, { width: '100px', height: '100px', overflow: 'scroll' })
-      const inner = document.createElement('div')
-      Object.assign(inner.style, { width: '200px', height: '200px' })
-      element.appendChild(inner)
-      sandbox.appendChild(element)
-      element.scrollBy(10, 20)
-
-      expect((serializeNodeWithId(element, DEFAULT_OPTIONS)! as ElementNode).attributes).toEqual(
-        jasmine.objectContaining({
+        const serializedAttributes = (
+          serializeNodeWithId(element, { ...DEFAULT_OPTIONS, serializationContext })! as ElementNode
+        ).attributes
+        const attributesWithScrollPositions = jasmine.objectContaining({
           rr_scrollTop: 20,
           rr_scrollLeft: 10,
         })
-      )
+
+        if (shouldSerializeScroll) {
+          expect(serializedAttributes).toEqual(attributesWithScrollPositions)
+        } else {
+          expect(serializedAttributes).not.toEqual(attributesWithScrollPositions)
+        }
+      })
     })
 
     it('ignores white space in <head>', () => {
@@ -303,6 +324,16 @@ describe('serializeNodeWithId', () => {
         button.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT)
 
         expect((serializeNodeWithId(button, DEFAULT_OPTIONS)! as ElementNode).attributes.value).toEqual('toto')
+      })
+    })
+
+    describe('input privacy mode mask', () => {
+      it('applies mask for <input placeholder="someValue" /> value', () => {
+        const input = document.createElement('input')
+        input.placeholder = 'someValue'
+        input.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK)
+
+        expect((serializeNodeWithId(input, DEFAULT_OPTIONS)! as ElementNode).attributes.placeholder).toEqual('***')
       })
     })
   })
@@ -480,9 +511,10 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
   })
 
   it('a masked DOM Document itself is still serialized ', () => {
-    const serializeOptionsMask = {
+    const serializeOptionsMask: SerializeOptions = {
       document,
       parentNodePrivacyLevel: NodePrivacyLevel.MASK,
+      serializationContext: 'full-snapshot',
     }
     expect(serializeDocumentNode(document, serializeOptionsMask)).toEqual({
       type: NodeType.Document,
