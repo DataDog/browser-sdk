@@ -35,7 +35,8 @@ type ParentNodePrivacyLevel =
   | typeof NodePrivacyLevel.MASK_USER_INPUT
 
 export enum SerializationContext {
-  FULL_SNAPSHOT,
+  INITIAL_FULL_SNAPSHOT,
+  SUBSEQUENT_FULL_SNAPSHOT,
   MUTATION,
 }
 
@@ -49,13 +50,14 @@ export interface SerializeOptions {
 
 export function serializeDocument(
   document: Document,
-  defaultPrivacyLevel: ParentNodePrivacyLevel
+  defaultPrivacyLevel: ParentNodePrivacyLevel,
+  serializationContext: SerializationContext
 ): SerializedNodeWithId {
   // We are sure that Documents are never ignored, so this function never returns null
   return serializeNodeWithId(document, {
     document,
     parentNodePrivacyLevel: defaultPrivacyLevel,
-    serializationContext: SerializationContext.FULL_SNAPSHOT,
+    serializationContext,
   })!
 }
 
@@ -404,13 +406,16 @@ function getAttributesForPrivacyLevel(
   /**
    * Serialize the scroll state for each element only for full snapshot
    */
-  if (serializationContext === SerializationContext.FULL_SNAPSHOT) {
-    if (element.scrollLeft) {
-      safeAttrs.rr_scrollLeft = Math.round(element.scrollLeft)
-    }
-    if (element.scrollTop) {
-      safeAttrs.rr_scrollTop = Math.round(element.scrollTop)
-    }
+  switch (serializationContext) {
+    case SerializationContext.INITIAL_FULL_SNAPSHOT:
+    case SerializationContext.SUBSEQUENT_FULL_SNAPSHOT:
+      if (element.scrollLeft) {
+        safeAttrs.rr_scrollLeft = Math.round(element.scrollLeft)
+      }
+      if (element.scrollTop) {
+        safeAttrs.rr_scrollTop = Math.round(element.scrollTop)
+      }
+      break
   }
 
   return safeAttrs

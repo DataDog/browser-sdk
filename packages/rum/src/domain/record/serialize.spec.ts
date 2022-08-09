@@ -32,7 +32,7 @@ import { MAX_ATTRIBUTE_VALUE_CHAR_LENGTH } from './privacy'
 const DEFAULT_OPTIONS: SerializeOptions = {
   document,
   parentNodePrivacyLevel: NodePrivacyLevel.ALLOW,
-  serializationContext: SerializationContext.FULL_SNAPSHOT,
+  serializationContext: SerializationContext.INITIAL_FULL_SNAPSHOT,
 }
 
 describe('serializeNodeWithId', () => {
@@ -54,7 +54,7 @@ describe('serializeNodeWithId', () => {
   describe('document serialization', () => {
     it('serializes a document', () => {
       const document = new DOMParser().parseFromString('<!doctype html><html>foo</html>', 'text/html')
-      expect(serializeDocument(document, NodePrivacyLevel.ALLOW)).toEqual({
+      expect(serializeDocument(document, NodePrivacyLevel.ALLOW, SerializationContext.INITIAL_FULL_SNAPSHOT)).toEqual({
         type: NodeType.Document,
         childNodes: [
           jasmine.objectContaining({ type: NodeType.DocumentType, name: 'html', publicId: '', systemId: '' }),
@@ -118,8 +118,13 @@ describe('serializeNodeWithId', () => {
     })
     ;[
       {
-        description: 'serializes scroll position during full snapshot',
-        serializationContext: SerializationContext.FULL_SNAPSHOT,
+        description: 'serializes scroll position during initial full snapshot',
+        serializationContext: SerializationContext.INITIAL_FULL_SNAPSHOT,
+        shouldSerializeScroll: true,
+      },
+      {
+        description: 'serializes scroll position during subsequent full snapshot',
+        serializationContext: SerializationContext.SUBSEQUENT_FULL_SNAPSHOT,
         shouldSerializeScroll: true,
       },
       {
@@ -515,7 +520,7 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
     const serializeOptionsMask: SerializeOptions = {
       document,
       parentNodePrivacyLevel: NodePrivacyLevel.MASK,
-      serializationContext: SerializationContext.FULL_SNAPSHOT,
+      serializationContext: SerializationContext.INITIAL_FULL_SNAPSHOT,
     }
     expect(serializeDocumentNode(document, serializeOptionsMask)).toEqual({
       type: NodeType.Document,
