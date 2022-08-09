@@ -48,7 +48,7 @@ describe('resourceCollection', () => {
       },
       type: RumEventType.RESOURCE,
       _dd: {
-        rule_psr: 100,
+        rule_psr: 1,
       },
     })
     expect(rawRumEvents[0].domainContext).toEqual({
@@ -216,7 +216,7 @@ describe('resourceCollection', () => {
         })
       )
       const traceInfo = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd!
-      expect(traceInfo.rule_psr).toEqual(60)
+      expect(traceInfo.rule_psr).toEqual(0.6)
     })
   })
 })
