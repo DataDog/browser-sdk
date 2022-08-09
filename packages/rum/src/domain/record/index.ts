@@ -1,2 +1,2 @@
 export { record } from './record'
-export { serializeNodeWithId, serializeDocument } from './serialize'
+export { serializeNodeWithId, serializeDocument, SerializationContext } from './serialize'

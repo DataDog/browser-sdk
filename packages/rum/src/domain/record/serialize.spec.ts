@@ -18,20 +18,21 @@ import {
 import type { ElementNode, SerializedNodeWithId, TextNode } from '../../types'
 import { NodeType } from '../../types'
 import { hasSerializedNode } from './serializationUtils'
-import type { SerializeOptions, SerializationContext } from './serialize'
+import type { SerializeOptions } from './serialize'
 import {
   serializeDocument,
   serializeNodeWithId,
   serializeDocumentNode,
   serializeChildNodes,
   serializeAttribute,
+  SerializationContext,
 } from './serialize'
 import { MAX_ATTRIBUTE_VALUE_CHAR_LENGTH } from './privacy'
 
 const DEFAULT_OPTIONS: SerializeOptions = {
   document,
   parentNodePrivacyLevel: NodePrivacyLevel.ALLOW,
-  serializationContext: 'full-snapshot',
+  serializationContext: SerializationContext.FULL_SNAPSHOT,
 }
 
 describe('serializeNodeWithId', () => {
@@ -118,12 +119,12 @@ describe('serializeNodeWithId', () => {
     ;[
       {
         description: 'serializes scroll position during full snapshot',
-        serializationContext: 'full-snapshot' as SerializationContext,
+        serializationContext: SerializationContext.FULL_SNAPSHOT,
         shouldSerializeScroll: true,
       },
       {
         description: 'does not serialize scroll position during mutation',
-        serializationContext: 'mutation' as SerializationContext,
+        serializationContext: SerializationContext.MUTATION,
         shouldSerializeScroll: false,
       },
     ].forEach(({ description, serializationContext, shouldSerializeScroll }) => {
@@ -514,7 +515,7 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
     const serializeOptionsMask: SerializeOptions = {
       document,
       parentNodePrivacyLevel: NodePrivacyLevel.MASK,
-      serializationContext: 'full-snapshot',
+      serializationContext: SerializationContext.FULL_SNAPSHOT,
     }
     expect(serializeDocumentNode(document, serializeOptionsMask)).toEqual({
       type: NodeType.Document,
