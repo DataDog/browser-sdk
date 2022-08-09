@@ -336,6 +336,8 @@ describe('rum track view metrics', () => {
 
   describe('cumulativeLayoutShift', () => {
     let isLayoutShiftSupported: boolean
+    let originalSupportedEntryTypes: PropertyDescriptor | undefined
+
     function newLayoutShift(lifeCycle: LifeCycle, { value = 0.1, hadRecentInput = false }) {
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
         {
@@ -351,10 +353,17 @@ describe('rum track view metrics', () => {
       if (!('PerformanceObserver' in window) || !('supportedEntryTypes' in PerformanceObserver)) {
         pending('No PerformanceObserver support')
       }
+      originalSupportedEntryTypes = Object.getOwnPropertyDescriptor(PerformanceObserver, 'supportedEntryTypes')
       isLayoutShiftSupported = true
-      spyOnProperty(PerformanceObserver, 'supportedEntryTypes', 'get').and.callFake(() =>
-        isLayoutShiftSupported ? ['layout-shift'] : []
-      )
+      Object.defineProperty(PerformanceObserver, 'supportedEntryTypes', {
+        get: () => (isLayoutShiftSupported ? ['layout-shift'] : []),
+      })
+    })
+
+    afterEach(() => {
+      if (originalSupportedEntryTypes) {
+        Object.defineProperty(PerformanceObserver, 'supportedEntryTypes', originalSupportedEntryTypes)
+      }
     })
 
     it('should be initialized to 0', () => {

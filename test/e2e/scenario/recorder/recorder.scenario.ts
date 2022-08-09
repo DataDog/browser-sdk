@@ -1,4 +1,10 @@
-import type { InputData, StyleSheetRuleData, CreationReason, BrowserSegment } from '@datadog/browser-rum/src/types'
+import type {
+  InputData,
+  StyleSheetRuleData,
+  CreationReason,
+  BrowserSegment,
+  ScrollData,
+} from '@datadog/browser-rum/src/types'
 import { NodeType, IncrementalSource, RecordType, MouseInteractionType } from '@datadog/browser-rum/src/types'
 
 import type { RumInitConfiguration } from '@datadog/browser-rum-core'
@@ -16,11 +22,12 @@ import {
   createMutationPayloadValidatorFromSegment,
   findAllFrustrationRecords,
   findMouseInteractionRecords,
+  findElementWithTagName,
 } from '@datadog/browser-rum/test/utils'
 import { renewSession } from '../../lib/helpers/session'
 import type { EventRegistry } from '../../lib/framework'
 import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
-import { browserExecute } from '../../lib/helpers/browser'
+import { browserExecute, browserExecuteAsync } from '../../lib/helpers/browser'
 
 const INTEGER_RE = /^\d+$/
 const TIMESTAMP_RE = /^\d{13}$/
@@ -719,6 +726,100 @@ describe('recorder', () => {
           frustrationTypes: [FrustrationType.RAGE_CLICK],
           recordIds: clickRecords.map((r) => r.id!),
         })
+      })
+  })
+
+  describe('scroll positions', () => {
+    createTest('should be recorded across navigation')
+      .withRum()
+      .withSetup(bundleSetup)
+      .withBody(
+        html`
+          <style>
+            #container {
+              width: 100px;
+              height: 100px;
+              overflow-x: scroll;
+            }
+            #content {
+              width: 250px;
+            }
+            #big-element {
+              height: 4000px;
+            }
+          </style>
+          <div id="container">
+            <div id="content">I'm bigger than the container</div>
+          </div>
+          <div id="big-element"></div>
+        `
+      )
+      .run(async ({ serverEvents }) => {
+        async function scroll({ windowY, containerX }: { windowY: number; containerX: number }) {
+          return browserExecuteAsync(
+            (windowY, containerX, done) => {
+              let scrollCount = 0
+
+              document.addEventListener(
+                'scroll',
+                () => {
+                  scrollCount++
+                  if (scrollCount === 2) {
+                    // ensure to bypass observer throttling
+                    setTimeout(done, 100)
+                  }
+                },
+                { capture: true, passive: true }
+              )
+
+              window.scrollTo(0, windowY)
+              document.getElementById('container')!.scrollTo(containerX, 0)
+            },
+            windowY,
+            containerX
+          )
+        }
+
+        // initial scroll positions
+        await scroll({ windowY: 100, containerX: 10 })
+
+        await browserExecute(() => {
+          window.DD_RUM!.startSessionReplayRecording()
+        })
+
+        // wait for recorder to be properly started
+        await browser.pause(200)
+
+        // update scroll positions
+        await scroll({ windowY: 150, containerX: 20 })
+
+        // trigger new full snapshot
+        await browserExecute(() => {
+          window.DD_RUM!.startView()
+        })
+
+        await flushEvents()
+
+        expect(serverEvents.sessionReplay.length).toBe(2)
+        const firstSegment = getFirstSegment(serverEvents)
+
+        const firstFullSnapshot = findFullSnapshot(firstSegment)!
+        let htmlElement = findElementWithTagName(firstFullSnapshot.data.node, 'html')!
+        expect(htmlElement.attributes.rr_scrollTop).toBe(100)
+        let containerElement = findElementWithIdAttribute(firstFullSnapshot.data.node, 'container')!
+        expect(containerElement.attributes.rr_scrollLeft).toBe(10)
+
+        const scrollRecords = findAllIncrementalSnapshots(firstSegment, IncrementalSource.Scroll)
+        expect(scrollRecords.length).toBe(2)
+        const [windowScrollData, containerScrollData] = scrollRecords.map((record) => record.data as ScrollData)
+        expect(windowScrollData.y).toEqual(150)
+        expect(containerScrollData.x).toEqual(20)
+
+        const secondFullSnapshot = findFullSnapshot(getLastSegment(serverEvents))!
+        htmlElement = findElementWithTagName(secondFullSnapshot.data.node, 'html')!
+        expect(htmlElement.attributes.rr_scrollTop).toBe(150)
+        containerElement = findElementWithIdAttribute(secondFullSnapshot.data.node, 'container')!
+        expect(containerElement.attributes.rr_scrollLeft).toBe(20)
       })
   })
 })

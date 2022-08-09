@@ -34,11 +34,14 @@ type ParentNodePrivacyLevel =
   | typeof NodePrivacyLevel.MASK
   | typeof NodePrivacyLevel.MASK_USER_INPUT
 
+export type SerializationContext = 'full-snapshot' | 'mutation'
+
 export interface SerializeOptions {
   document: Document
   serializedNodeIds?: Set<number>
   ignoreWhiteSpace?: boolean
   parentNodePrivacyLevel: ParentNodePrivacyLevel
+  serializationContext: SerializationContext
 }
 
 export function serializeDocument(
@@ -49,6 +52,7 @@ export function serializeDocument(
   return serializeNodeWithId(document, {
     document,
     parentNodePrivacyLevel: defaultPrivacyLevel,
+    serializationContext: 'full-snapshot',
   })!
 }
 
@@ -145,7 +149,7 @@ export function serializeElementNode(element: Element, options: SerializeOptions
     return
   }
 
-  const attributes = getAttributesForPrivacyLevel(element, nodePrivacyLevel)
+  const attributes = getAttributesForPrivacyLevel(element, nodePrivacyLevel, options.serializationContext)
 
   let childNodes: SerializedNodeWithId[] = []
   if (element.childNodes.length) {
@@ -304,7 +308,8 @@ function isSVGElement(el: Element): boolean {
 
 function getAttributesForPrivacyLevel(
   element: Element,
-  nodePrivacyLevel: NodePrivacyLevel
+  nodePrivacyLevel: NodePrivacyLevel,
+  serializationContext: SerializationContext
 ): Record<string, string | number | boolean> {
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     return {}
@@ -394,13 +399,15 @@ function getAttributesForPrivacyLevel(
   }
 
   /**
-   * Serialize the scroll state for each element
+   * Serialize the scroll state for each element only for full snapshot
    */
-  if (element.scrollLeft) {
-    safeAttrs.rr_scrollLeft = Math.round(element.scrollLeft)
-  }
-  if (element.scrollTop) {
-    safeAttrs.rr_scrollTop = Math.round(element.scrollTop)
+  if (serializationContext === 'full-snapshot') {
+    if (element.scrollLeft) {
+      safeAttrs.rr_scrollLeft = Math.round(element.scrollLeft)
+    }
+    if (element.scrollTop) {
+      safeAttrs.rr_scrollTop = Math.round(element.scrollTop)
+    }
   }
 
   return safeAttrs

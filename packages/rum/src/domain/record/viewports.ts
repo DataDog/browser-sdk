@@ -72,23 +72,27 @@ export const getVisualViewport = (): VisualViewportRecord['data'] => {
 }
 
 export function getScrollX() {
+  let scrollX
   const visual = window.visualViewport
   if (visual) {
-    return visual.pageLeft - visual.offsetLeft
+    scrollX = visual.pageLeft - visual.offsetLeft
+  } else if (window.scrollX !== undefined) {
+    scrollX = window.scrollX
+  } else {
+    scrollX = window.pageXOffset || 0
   }
-  if (window.scrollX !== undefined) {
-    return window.scrollX
-  }
-  return window.pageXOffset || 0
+  return Math.round(scrollX)
 }
 
 export function getScrollY() {
+  let scrollY
   const visual = window.visualViewport
   if (visual) {
-    return visual.pageTop - visual.offsetTop
+    scrollY = visual.pageTop - visual.offsetTop
+  } else if (window.scrollY !== undefined) {
+    scrollY = window.scrollY
+  } else {
+    scrollY = window.pageYOffset || 0
   }
-  if (window.scrollY !== undefined) {
-    return window.scrollY
-  }
-  return window.pageYOffset || 0
+  return Math.round(scrollY)
 }

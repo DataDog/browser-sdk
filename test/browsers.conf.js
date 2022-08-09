@@ -18,9 +18,9 @@ module.exports = [
   {
     sessionName: 'Safari desktop',
     name: 'Safari',
-    version: '12.0',
+    version: '13.1',
     os: 'OS X',
-    osVersion: 'Mojave',
+    osVersion: 'Catalina',
   },
   {
     sessionName: 'Chrome mobile',

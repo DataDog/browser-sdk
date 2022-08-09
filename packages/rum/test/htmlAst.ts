@@ -32,6 +32,7 @@ export const generateLeanSerializedDoc = (htmlContent: string, privacyTag: strin
     serializeNodeWithId(newDoc, {
       document: newDoc,
       parentNodePrivacyLevel: NodePrivacyLevel.ALLOW,
+      serializationContext: 'full-snapshot',
     })! as unknown as Record<string, unknown>
   ) as unknown as SerializedNodeWithId
   return serializedDoc
