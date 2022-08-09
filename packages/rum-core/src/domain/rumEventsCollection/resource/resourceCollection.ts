@@ -53,8 +53,7 @@ function processRequest(
   const startClocks = matchingTiming ? relativeToClocks(matchingTiming.startTime) : request.startClocks
   const correspondingTimingOverrides = matchingTiming ? computePerformanceEntryMetrics(matchingTiming) : undefined
 
-  const hasBeenTraced = request.traceSampled && request.traceId && request.spanId
-  const tracingInfo = hasBeenTraced ? computeRequestTracingInfo(request, configuration) : undefined
+  const tracingInfo = computeRequestTracingInfo(request, configuration)
 
   const resourceEvent = combine(
     {
@@ -93,8 +92,7 @@ function processResourceEntry(
   const type = computeResourceKind(entry)
   const entryMetrics = computePerformanceEntryMetrics(entry)
 
-  const hasBeenTraced = entry.traceId
-  const tracingInfo = hasBeenTraced ? computeEntryTracingInfo(entry, configuration) : undefined
+  const tracingInfo = computeEntryTracingInfo(entry, configuration)
 
   const startClocks = relativeToClocks(entry.startTime)
   const resourceEvent = combine(
@@ -132,6 +130,10 @@ function computePerformanceEntryMetrics(timing: RumPerformanceResourceTiming) {
 }
 
 function computeRequestTracingInfo(request: RequestCompleteEvent, configuration: RumConfiguration) {
+  const hasBeenTraced = request.traceSampled && request.traceId && request.spanId
+  if (!hasBeenTraced) {
+    return undefined
+  }
   return {
     _dd: {
       span_id: request.spanId!.toDecimalString(),
@@ -142,6 +144,10 @@ function computeRequestTracingInfo(request: RequestCompleteEvent, configuration:
 }
 
 function computeEntryTracingInfo(entry: RumPerformanceResourceTiming, configuration: RumConfiguration) {
+  const hasBeenTraced = entry.traceId
+  if (!hasBeenTraced) {
+    return undefined
+  }
   return {
     _dd: {
       trace_id: entry.traceId,
