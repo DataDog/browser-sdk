@@ -8,6 +8,7 @@ import { RecordType } from '../../types'
 import type { FrustrationCallback, InputCallback } from './observers'
 import { initFrustrationObserver, initInputObserver } from './observers'
 import { serializeDocument, SerializationContext } from './serialize'
+import { createElementsScrollPositions } from './elementsScrollPositions'
 
 describe('initInputObserver', () => {
   let stopInputObserver: () => void
@@ -26,7 +27,12 @@ describe('initInputObserver', () => {
     sandbox.appendChild(input)
     document.body.appendChild(sandbox)
 
-    serializeDocument(document, NodePrivacyLevel.ALLOW, SerializationContext.INITIAL_FULL_SNAPSHOT)
+    serializeDocument(
+      document,
+      NodePrivacyLevel.ALLOW,
+      SerializationContext.INITIAL_FULL_SNAPSHOT,
+      createElementsScrollPositions()
+    )
   })
 
   afterEach(() => {

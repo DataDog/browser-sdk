@@ -12,6 +12,7 @@ import { NodeType } from '../../types'
 import { serializeDocument, SerializationContext } from './serialize'
 import { sortAddedAndMovedNodes, startMutationObserver, MutationController } from './mutationObserver'
 import type { MutationCallBack } from './observers'
+import { createElementsScrollPositions } from './elementsScrollPositions'
 
 describe('startMutationCollection', () => {
   let sandbox: HTMLElement
@@ -35,7 +36,12 @@ describe('startMutationCollection', () => {
   }
 
   function serializeDocumentWithDefaults() {
-    return serializeDocument(document, NodePrivacyLevel.ALLOW, SerializationContext.INITIAL_FULL_SNAPSHOT)
+    return serializeDocument(
+      document,
+      NodePrivacyLevel.ALLOW,
+      SerializationContext.INITIAL_FULL_SNAPSHOT,
+      createElementsScrollPositions()
+    )
   }
 
   beforeEach(() => {

@@ -25,6 +25,7 @@ import {
 } from './privacy'
 import { getSerializedNodeId, setSerializedNodeId, getElementInputValue } from './serializationUtils'
 import { forEach } from './utils'
+import type { ElementsScrollPositions } from './elementsScrollPositions'
 
 // Those values are the only one that can be used when inheriting privacy levels from parent to
 // children during serialization, since HIDDEN and IGNORE shouldn't serialize their children. This
@@ -46,18 +47,21 @@ export interface SerializeOptions {
   ignoreWhiteSpace?: boolean
   parentNodePrivacyLevel: ParentNodePrivacyLevel
   serializationContext: SerializationContext
+  elementsScrollPositions?: ElementsScrollPositions
 }
 
 export function serializeDocument(
   document: Document,
   defaultPrivacyLevel: ParentNodePrivacyLevel,
-  serializationContext: SerializationContext
+  serializationContext: SerializationContext,
+  elementsScrollPositions: ElementsScrollPositions
 ): SerializedNodeWithId {
   // We are sure that Documents are never ignored, so this function never returns null
   return serializeNodeWithId(document, {
     document,
     parentNodePrivacyLevel: defaultPrivacyLevel,
     serializationContext,
+    elementsScrollPositions,
   })!
 }
 
@@ -110,7 +114,7 @@ function serializeDocumentTypeNode(documentType: DocumentType): DocumentTypeNode
 }
 
 /**
- * Serialzing Element nodes involves capturing:
+ * Serializing Element nodes involves capturing:
  * 1. HTML ATTRIBUTES:
  * 2. JS STATE:
  * - scroll offsets
@@ -154,7 +158,12 @@ export function serializeElementNode(element: Element, options: SerializeOptions
     return
   }
 
-  const attributes = getAttributesForPrivacyLevel(element, nodePrivacyLevel, options.serializationContext)
+  const attributes = getAttributesForPrivacyLevel(
+    element,
+    nodePrivacyLevel,
+    options.serializationContext,
+    options.elementsScrollPositions
+  )
 
   let childNodes: SerializedNodeWithId[] = []
   if (element.childNodes.length) {
@@ -314,7 +323,8 @@ function isSVGElement(el: Element): boolean {
 function getAttributesForPrivacyLevel(
   element: Element,
   nodePrivacyLevel: NodePrivacyLevel,
-  serializationContext: SerializationContext
+  serializationContext: SerializationContext,
+  elementsScrollPositions?: ElementsScrollPositions
 ): Record<string, string | number | boolean> {
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     return {}
@@ -406,16 +416,26 @@ function getAttributesForPrivacyLevel(
   /**
    * Serialize the scroll state for each element only for full snapshot
    */
+  let scrollPositions
   switch (serializationContext) {
     case SerializationContext.INITIAL_FULL_SNAPSHOT:
-    case SerializationContext.SUBSEQUENT_FULL_SNAPSHOT:
-      if (element.scrollLeft) {
-        safeAttrs.rr_scrollLeft = Math.round(element.scrollLeft)
+      scrollPositions = {
+        scrollTop: element.scrollTop && Math.round(element.scrollTop),
+        scrollLeft: element.scrollLeft && Math.round(element.scrollLeft),
       }
-      if (element.scrollTop) {
-        safeAttrs.rr_scrollTop = Math.round(element.scrollTop)
+      if (scrollPositions.scrollTop || scrollPositions.scrollLeft) {
+        elementsScrollPositions?.set(element, scrollPositions)
       }
       break
+    case SerializationContext.SUBSEQUENT_FULL_SNAPSHOT:
+      scrollPositions = elementsScrollPositions?.get(element)
+      break
+  }
+  if (scrollPositions?.scrollLeft) {
+    safeAttrs.rr_scrollLeft = scrollPositions.scrollLeft
+  }
+  if (scrollPositions?.scrollTop) {
+    safeAttrs.rr_scrollTop = scrollPositions.scrollTop
   }
 
   return safeAttrs

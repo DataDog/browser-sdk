@@ -19,6 +19,7 @@ import { initObservers } from './observers'
 import { MutationController } from './mutationObserver'
 import { getVisualViewport, getScrollX, getScrollY } from './viewports'
 import { assembleIncrementalSnapshot } from './utils'
+import { createElementsScrollPositions } from './elementsScrollPositions'
 
 export interface RecordOptions {
   emit?: (record: BrowserRecord) => void
@@ -40,6 +41,7 @@ export function record(options: RecordOptions): RecordAPI {
   }
 
   const mutationController = new MutationController()
+  const elementsScrollPositions = createElementsScrollPositions()
 
   const takeFullSnapshot = (
     timestamp = timeStampNow(),
@@ -67,7 +69,7 @@ export function record(options: RecordOptions): RecordAPI {
 
     emit({
       data: {
-        node: serializeDocument(document, options.defaultPrivacyLevel, serializationContext),
+        node: serializeDocument(document, options.defaultPrivacyLevel, serializationContext, elementsScrollPositions),
         initialOffset: {
           left: getScrollX(),
           top: getScrollY(),
@@ -91,6 +93,7 @@ export function record(options: RecordOptions): RecordAPI {
   const stopObservers = initObservers({
     lifeCycle: options.lifeCycle,
     mutationController,
+    elementsScrollPositions,
     defaultPrivacyLevel: options.defaultPrivacyLevel,
     inputCb: (v) => emit(assembleIncrementalSnapshot<InputData>(IncrementalSource.Input, v)),
     mediaInteractionCb: (p) =>
