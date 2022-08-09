@@ -136,7 +136,7 @@ function computeRequestTracingInfo(request: RequestCompleteEvent, configuration:
     _dd: {
       span_id: request.spanId!.toDecimalString(),
       trace_id: request.traceId!.toDecimalString(),
-      rule_psr: configuration.tracingSampleRate / 100, // rule_psr needs to be between 0-1
+      rule_psr: getRulePsr(configuration),
     },
   }
 }
@@ -145,7 +145,7 @@ function computeEntryTracingInfo(entry: RumPerformanceResourceTiming, configurat
   return {
     _dd: {
       trace_id: entry.traceId,
-      rule_psr: configuration.tracingSampleRate / 100, // rule_psr needs to be between 0-1
+      rule_psr: getRulePsr(configuration),
     },
   }
 }
@@ -155,4 +155,11 @@ function toPerformanceEntryRepresentation(entry: RumPerformanceEntry): Performan
     entry.toJSON()
   }
   return entry as PerformanceEntryRepresentation
+}
+
+/**
+ * @returns number between 0 and 1 which represents tracing sample rate
+ */
+function getRulePsr(configuration: RumConfiguration) {
+  return configuration.tracingSampleRate / 100
 }
