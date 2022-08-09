@@ -68,13 +68,6 @@ describe('actionCollection', () => {
         },
         target: {
           name: 'foo',
-          selector: '#foo',
-          width: 1,
-          height: 2,
-        },
-        position: {
-          x: 1,
-          y: 2,
         },
         type: ActionType.CLICK,
       },
@@ -82,6 +75,19 @@ describe('actionCollection', () => {
       type: RumEventType.ACTION,
       view: {
         in_foreground: true,
+      },
+      _dd: {
+        action: {
+          target: {
+            selector: '#foo',
+            width: 1,
+            height: 2,
+          },
+          position: {
+            x: 1,
+            y: 2,
+          },
+        },
       },
     })
     expect(rawRumEvents[0].domainContext).toEqual({
