@@ -116,7 +116,7 @@ describe('record', () => {
 
     sandbox.appendChild(document.createElement('div'))
 
-    recordApi.takeFullSnapshot()
+    recordApi.takeSubsequentFullSnapshot()
 
     waitEmitCalls(1 + 2 * recordsPerFullSnapshot(), () => {
       const records = getEmittedRecords()
@@ -178,7 +178,7 @@ describe('record', () => {
       startRecording()
       emitSpy.calls.reset()
 
-      recordApi.takeFullSnapshot()
+      recordApi.takeSubsequentFullSnapshot()
       expect(getEmittedRecords()[1].type).toBe(RecordType.Focus)
     })
 

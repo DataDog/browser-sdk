@@ -7,7 +7,8 @@ import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT
 import { RecordType } from '../../types'
 import type { FrustrationCallback, InputCallback } from './observers'
 import { initFrustrationObserver, initInputObserver } from './observers'
-import { serializeDocument } from './serialize'
+import { serializeDocument, SerializationContextStatus } from './serialize'
+import { createElementsScrollPositions } from './elementsScrollPositions'
 
 describe('initInputObserver', () => {
   let stopInputObserver: () => void
@@ -26,7 +27,10 @@ describe('initInputObserver', () => {
     sandbox.appendChild(input)
     document.body.appendChild(sandbox)
 
-    serializeDocument(document, NodePrivacyLevel.ALLOW)
+    serializeDocument(document, NodePrivacyLevel.ALLOW, {
+      status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
+      elementsScrollPositions: createElementsScrollPositions(),
+    })
   })
 
   afterEach(() => {
