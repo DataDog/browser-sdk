@@ -1,6 +1,6 @@
 import { objectValues } from '../../core/src'
 import type { SerializedNodeWithId } from '../src/types'
-import { serializeNodeWithId, SerializationContext } from '../src/domain/record'
+import { serializeNodeWithId, SerializationContextStatus, createElementsScrollPositions } from '../src/domain/record'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME } from '../src/constants'
 
 export const makeHtmlDoc = (htmlContent: string, privacyTag: string) => {
@@ -32,7 +32,10 @@ export const generateLeanSerializedDoc = (htmlContent: string, privacyTag: strin
     serializeNodeWithId(newDoc, {
       document: newDoc,
       parentNodePrivacyLevel: NodePrivacyLevel.ALLOW,
-      serializationContext: SerializationContext.INITIAL_FULL_SNAPSHOT,
+      serializationContext: {
+        status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
+        elementsScrollPositions: createElementsScrollPositions(),
+      },
     })! as unknown as Record<string, unknown>
   ) as unknown as SerializedNodeWithId
   return serializedDoc

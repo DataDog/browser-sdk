@@ -13,7 +13,7 @@ import type {
   ViewportResizeData,
 } from '../../types'
 import { RecordType, IncrementalSource } from '../../types'
-import { serializeDocument, SerializationContext } from './serialize'
+import { serializeDocument, SerializationContextStatus } from './serialize'
 import { initObservers } from './observers'
 
 import { MutationController } from './mutationObserver'
@@ -45,7 +45,7 @@ export function record(options: RecordOptions): RecordAPI {
 
   const takeFullSnapshot = (
     timestamp = timeStampNow(),
-    serializationContext = SerializationContext.INITIAL_FULL_SNAPSHOT
+    serializationContext = { status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT, elementsScrollPositions }
   ) => {
     mutationController.flush() // process any pending mutation before taking a full snapshot
     const { width, height } = getViewportDimension()
@@ -69,7 +69,7 @@ export function record(options: RecordOptions): RecordAPI {
 
     emit({
       data: {
-        node: serializeDocument(document, options.defaultPrivacyLevel, serializationContext, elementsScrollPositions),
+        node: serializeDocument(document, options.defaultPrivacyLevel, serializationContext),
         initialOffset: {
           left: getScrollX(),
           top: getScrollY(),
@@ -124,7 +124,10 @@ export function record(options: RecordOptions): RecordAPI {
   return {
     stop: stopObservers,
     takeSubsequentFullSnapshot: (timestamp) =>
-      takeFullSnapshot(timestamp, SerializationContext.SUBSEQUENT_FULL_SNAPSHOT),
+      takeFullSnapshot(timestamp, {
+        status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT,
+        elementsScrollPositions,
+      }),
     flushMutations: () => mutationController.flush(),
   }
 }

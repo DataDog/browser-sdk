@@ -8,7 +8,7 @@ import type {
 } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 
-import { record, SerializationContext } from '../domain/record'
+import { record } from '../domain/record'
 import type { DeflateWorker } from '../domain/segmentCollection'
 import { startSegmentCollection } from '../domain/segmentCollection'
 import { send } from '../transport/send'

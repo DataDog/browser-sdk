@@ -9,7 +9,7 @@ import {
 } from '../../constants'
 import type { AttributeMutation, Attributes } from '../../types'
 import { NodeType } from '../../types'
-import { serializeDocument, SerializationContext } from './serialize'
+import { serializeDocument, SerializationContextStatus } from './serialize'
 import { sortAddedAndMovedNodes, startMutationObserver, MutationController } from './mutationObserver'
 import type { MutationCallBack } from './observers'
 import { createElementsScrollPositions } from './elementsScrollPositions'
@@ -36,12 +36,10 @@ describe('startMutationCollection', () => {
   }
 
   function serializeDocumentWithDefaults() {
-    return serializeDocument(
-      document,
-      NodePrivacyLevel.ALLOW,
-      SerializationContext.INITIAL_FULL_SNAPSHOT,
-      createElementsScrollPositions()
-    )
+    return serializeDocument(document, NodePrivacyLevel.ALLOW, {
+      status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
+      elementsScrollPositions: createElementsScrollPositions(),
+    })
   }
 
   beforeEach(() => {
