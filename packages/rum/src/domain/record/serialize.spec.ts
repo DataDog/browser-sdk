@@ -170,12 +170,8 @@ describe('serializeNodeWithId', () => {
           }) as ElementNode
         ).attributes
 
-        expect(serializedAttributes).not.toEqual(
-          jasmine.objectContaining({
-            rr_scrollLeft: 10,
-            rr_scrollTop: 20,
-          })
-        )
+        expect(serializedAttributes.rr_scrollLeft).toBeUndefined()
+        expect(serializedAttributes.rr_scrollTop).toBeUndefined()
         expect(elementsScrollPositions.get(element)).toBeUndefined()
       })
 
@@ -209,12 +205,8 @@ describe('serializeNodeWithId', () => {
           }) as ElementNode
         ).attributes
 
-        expect(serializedAttributes).not.toEqual(
-          jasmine.objectContaining({
-            rr_scrollLeft: 10,
-            rr_scrollTop: 20,
-          })
-        )
+        expect(serializedAttributes.rr_scrollLeft).toBeUndefined()
+        expect(serializedAttributes.rr_scrollTop).toBeUndefined()
       })
     })
 
