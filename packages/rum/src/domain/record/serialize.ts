@@ -420,8 +420,8 @@ function getAttributesForPrivacyLevel(
   switch (serializationContext) {
     case SerializationContext.INITIAL_FULL_SNAPSHOT:
       scrollPositions = {
-        scrollTop: element.scrollTop && Math.round(element.scrollTop),
-        scrollLeft: element.scrollLeft && Math.round(element.scrollLeft),
+        scrollTop: Math.round(element.scrollTop),
+        scrollLeft: Math.round(element.scrollLeft),
       }
       if (scrollPositions.scrollTop || scrollPositions.scrollLeft) {
         elementsScrollPositions?.set(element, scrollPositions)
