@@ -33,7 +33,7 @@ export function startRecording(
 
   const {
     stop: stopRecording,
-    takeFullSnapshot,
+    takeSubsequentFullSnapshot,
     flushMutations,
   } = record({
     emit: addRecord,
@@ -51,7 +51,7 @@ export function startRecording(
   const { unsubscribe: unsubscribeViewCreated } = lifeCycle.subscribe(
     LifeCycleEventType.VIEW_CREATED,
     (view: ViewCreatedEvent) => {
-      takeFullSnapshot(view.startClocks.timeStamp, SerializationContext.SUBSEQUENT_FULL_SNAPSHOT)
+      takeSubsequentFullSnapshot(view.startClocks.timeStamp)
     }
   )
 

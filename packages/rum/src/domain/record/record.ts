@@ -1,5 +1,5 @@
-import { timeStampNow } from '@datadog/browser-core'
 import type { DefaultPrivacyLevel, TimeStamp } from '@datadog/browser-core'
+import { timeStampNow } from '@datadog/browser-core'
 import type { LifeCycle } from '@datadog/browser-rum-core'
 import { getViewportDimension } from '@datadog/browser-rum-core'
 import type {
@@ -29,7 +29,7 @@ export interface RecordOptions {
 
 export interface RecordAPI {
   stop: () => void
-  takeFullSnapshot: (timestamp?: TimeStamp, serializationContext?: SerializationContext) => void
+  takeSubsequentFullSnapshot: (timestamp?: TimeStamp) => void
   flushMutations: () => void
 }
 
@@ -123,7 +123,8 @@ export function record(options: RecordOptions): RecordAPI {
 
   return {
     stop: stopObservers,
-    takeFullSnapshot,
+    takeSubsequentFullSnapshot: (timestamp) =>
+      takeFullSnapshot(timestamp, SerializationContext.SUBSEQUENT_FULL_SNAPSHOT),
     flushMutations: () => mutationController.flush(),
   }
 }
