@@ -1,5 +1,10 @@
 import { arrayFrom, cssEscape, elementMatches } from '@datadog/browser-core'
 
+/**
+ * Stable attributes are attributes that are commonly used to identify parts of a UI (ex:
+ * component). Those attribute values should should not be generated randomly (hardcoded most of the
+ * time) and stay the same across deploys. They are not necessarily unique across the document.
+ */
 const STABLE_ATTRIBUTES = [
   'data-dd-action-name',
   // Common test attributes (list provided by google recorder)
