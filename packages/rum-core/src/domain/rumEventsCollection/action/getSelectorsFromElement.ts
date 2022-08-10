@@ -47,16 +47,22 @@ function getSelectorFromElement(
   let element: Element | null = targetElement
 
   while (element && element.nodeName !== 'HTML') {
-    const uniqueSelector = findSelector(element, globallyUniqueSelectorStrategies, isSelectorUniqueGlobally)
-    if (uniqueSelector) {
-      targetElementSelector.unshift(uniqueSelector)
+    const globallyUniqueSelector = findSelector(element, globallyUniqueSelectorStrategies, isSelectorUniqueGlobally)
+    if (globallyUniqueSelector) {
+      targetElementSelector.unshift(globallyUniqueSelector)
       break
     }
 
-    targetElementSelector.unshift(
-      findSelector(element, uniqueAmongChildrenSelectorStrategies, isSelectorUniqueAmongChildren) ||
-        getPositionSelector(element)
+    const uniqueSelectorAmongChildren = findSelector(
+      element,
+      uniqueAmongChildrenSelectorStrategies,
+      isSelectorUniqueAmongChildren
     )
+    if (uniqueSelectorAmongChildren) {
+      targetElementSelector.unshift(uniqueSelectorAmongChildren)
+    } else {
+      targetElementSelector.unshift(getPositionSelector(element))
+    }
 
     element = element.parentElement
   }
