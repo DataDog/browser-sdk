@@ -22,33 +22,43 @@ describe('action collection', () => {
       const actionEvents = serverEvents.rumActions
 
       expect(actionEvents.length).toBe(1)
-      expect(actionEvents[0].action).toEqual({
-        error: {
-          count: 0,
-        },
-        id: jasmine.any(String) as unknown as string,
-        loading_time: jasmine.any(Number) as unknown as number,
-        long_task: {
-          count: jasmine.any(Number) as unknown as number,
-        },
-        resource: {
-          count: 0,
-        },
-        target: {
-          name: 'click me',
-          selector: jasmine.any(String),
-          width: jasmine.any(Number),
-          height: jasmine.any(Number),
-        },
-        position: {
-          x: jasmine.any(Number),
-          y: jasmine.any(Number),
-        },
-        type: 'click',
-        frustration: {
-          type: [],
-        },
-      })
+      expect(actionEvents[0]).toEqual(
+        jasmine.objectContaining({
+          action: {
+            error: {
+              count: 0,
+            },
+            id: jasmine.any(String),
+            loading_time: jasmine.any(Number),
+            long_task: {
+              count: jasmine.any(Number),
+            },
+            resource: {
+              count: 0,
+            },
+            target: {
+              name: 'click me',
+            },
+            type: 'click',
+            frustration: {
+              type: [],
+            },
+          },
+          _dd: jasmine.objectContaining({
+            action: {
+              target: {
+                selector: jasmine.any(String),
+                width: jasmine.any(Number),
+                height: jasmine.any(Number),
+              },
+              position: {
+                x: jasmine.any(Number),
+                y: jasmine.any(Number),
+              },
+            },
+          }),
+        })
+      )
     })
 
   createTest('associate a request to its action')
