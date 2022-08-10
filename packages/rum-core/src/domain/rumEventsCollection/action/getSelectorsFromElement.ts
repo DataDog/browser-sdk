@@ -35,6 +35,11 @@ export function getSelectorsFromElement(element: Element, actionNameAttribute: s
       attributeSelectors.concat(getIDSelector),
       attributeSelectors.concat(getClassSelector)
     ),
+    selector_without_classes: getSelectorFromElement(
+      element,
+      attributeSelectors.concat(getIDSelector),
+      attributeSelectors
+    ),
   }
 }
 

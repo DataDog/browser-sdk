@@ -120,4 +120,14 @@ describe('getSelectorFromElement', () => {
       return getSelectorsFromElement(isolatedDom.append(html), actionNameAttribute).selector_with_stable_attributes
     }
   })
+
+  describe('selector without classes', () => {
+    it('does not rely on classes', () => {
+      expect(getSelectorWithoutClasses('<div class="foo"></div>')).toBe('BODY>DIV')
+    })
+
+    function getSelectorWithoutClasses(html: string, actionNameAttribute?: string): string {
+      return getSelectorsFromElement(isolatedDom.append(html), actionNameAttribute).selector_without_classes
+    }
+  })
 })
