@@ -22,9 +22,9 @@ const STABLE_ATTRIBUTES = [
 ]
 
 export function getSelectorsFromElement(element: Element, actionNameAttribute: string | undefined) {
-  const attributeSelectors = STABLE_ATTRIBUTES.map((attribute) => getAttributeSelector.bind(null, attribute))
+  let attributeSelectors = getStableAttributeSelectors()
   if (actionNameAttribute) {
-    attributeSelectors.unshift(getAttributeSelector.bind(null, actionNameAttribute))
+    attributeSelectors = [getAttributeSelector.bind(null, actionNameAttribute)].concat(attributeSelectors)
   }
   return {
     selector: getSelectorFromElement(element, [getIDSelector], [getClassSelector]),
@@ -81,6 +81,14 @@ function getClassSelector(element: Element): string | undefined {
     const orderedClassList = arrayFrom(element.classList).sort()
     return `${element.tagName}${orderedClassList.map((className) => `.${cssEscape(className)}`).join('')}`
   }
+}
+
+let stableAttributeSelectorsCache: GetSelector[] | undefined
+function getStableAttributeSelectors() {
+  if (!stableAttributeSelectorsCache) {
+    stableAttributeSelectorsCache = STABLE_ATTRIBUTES.map((attribute) => getAttributeSelector.bind(null, attribute))
+  }
+  return stableAttributeSelectorsCache
 }
 
 function getAttributeSelector(attributeName: string, element: Element): string | undefined {
