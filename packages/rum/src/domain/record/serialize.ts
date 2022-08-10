@@ -416,26 +416,27 @@ function getAttributesForPrivacyLevel(
   /**
    * Serialize the scroll state for each element only for full snapshot
    */
-  let scrollPositions
+  let scrollTop: number | undefined
+  let scrollLeft: number | undefined
   switch (serializationContext) {
     case SerializationContext.INITIAL_FULL_SNAPSHOT:
-      scrollPositions = {
-        scrollTop: Math.round(element.scrollTop),
-        scrollLeft: Math.round(element.scrollLeft),
-      }
-      if (scrollPositions.scrollTop || scrollPositions.scrollLeft) {
-        elementsScrollPositions?.set(element, scrollPositions)
+      scrollTop = Math.round(element.scrollTop)
+      scrollLeft = Math.round(element.scrollLeft)
+      if (scrollTop || scrollLeft) {
+        elementsScrollPositions?.set(element, { scrollTop, scrollLeft })
       }
       break
     case SerializationContext.SUBSEQUENT_FULL_SNAPSHOT:
-      scrollPositions = elementsScrollPositions?.get(element)
+      if (elementsScrollPositions?.has(element)) {
+        ;({ scrollTop, scrollLeft } = elementsScrollPositions.get(element)!)
+      }
       break
   }
-  if (scrollPositions?.scrollLeft) {
-    safeAttrs.rr_scrollLeft = scrollPositions.scrollLeft
+  if (scrollLeft) {
+    safeAttrs.rr_scrollLeft = scrollLeft
   }
-  if (scrollPositions?.scrollTop) {
-    safeAttrs.rr_scrollTop = scrollPositions.scrollTop
+  if (scrollTop) {
+    safeAttrs.rr_scrollTop = scrollTop
   }
 
   return safeAttrs

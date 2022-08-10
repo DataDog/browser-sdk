@@ -19,5 +19,8 @@ export function createElementsScrollPositions() {
     get(element: Element) {
       return scrollPositionsByElement.get(element)
     },
+    has(element: Element) {
+      return scrollPositionsByElement.has(element)
+    },
   }
 }
