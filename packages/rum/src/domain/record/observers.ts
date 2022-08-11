@@ -34,8 +34,8 @@ import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from './
 import { assembleIncrementalSnapshot, forEach, isTouchEvent } from './utils'
 import type { MutationController } from './mutationObserver'
 import { startMutationObserver } from './mutationObserver'
-
 import { getVisualViewport, getScrollX, getScrollY, convertMouseEventToLayoutCoordinates } from './viewports'
+import type { ElementsScrollPositions } from './elementsScrollPositions'
 
 const MOUSE_MOVE_OBSERVER_THRESHOLD = 50
 const SCROLL_OBSERVER_THRESHOLD = 100
@@ -82,6 +82,7 @@ interface ObserverParam {
   lifeCycle: LifeCycle
   defaultPrivacyLevel: DefaultPrivacyLevel
   mutationController: MutationController
+  elementsScrollPositions: ElementsScrollPositions
   mutationCb: MutationCallBack
   mousemoveCb: MousemoveCallBack
   mouseInteractionCb: MouseInteractionCallBack
@@ -99,7 +100,7 @@ export function initObservers(o: ObserverParam): ListenerHandler {
   const mutationHandler = initMutationObserver(o.mutationController, o.mutationCb, o.defaultPrivacyLevel)
   const mousemoveHandler = initMoveObserver(o.mousemoveCb)
   const mouseInteractionHandler = initMouseInteractionObserver(o.mouseInteractionCb, o.defaultPrivacyLevel)
-  const scrollHandler = initScrollObserver(o.scrollCb, o.defaultPrivacyLevel)
+  const scrollHandler = initScrollObserver(o.scrollCb, o.defaultPrivacyLevel, o.elementsScrollPositions)
   const viewportResizeHandler = initViewportResizeObserver(o.viewportResizeCb)
   const inputHandler = initInputObserver(o.inputCb, o.defaultPrivacyLevel)
   const mediaInteractionHandler = initMediaInteractionObserver(o.mediaInteractionCb, o.defaultPrivacyLevel)
@@ -208,7 +209,11 @@ function initMouseInteractionObserver(
   }).stop
 }
 
-function initScrollObserver(cb: ScrollCallback, defaultPrivacyLevel: DefaultPrivacyLevel): ListenerHandler {
+function initScrollObserver(
+  cb: ScrollCallback,
+  defaultPrivacyLevel: DefaultPrivacyLevel,
+  elementsScrollPositions: ElementsScrollPositions
+): ListenerHandler {
   const { throttled: updatePosition } = throttle(
     monitor((event: UIEvent) => {
       const target = event.target as HTMLElement | Document
@@ -220,19 +225,22 @@ function initScrollObserver(cb: ScrollCallback, defaultPrivacyLevel: DefaultPriv
         return
       }
       const id = getSerializedNodeId(target)
-      if (target === document) {
-        cb({
-          id,
-          x: getScrollX(),
-          y: getScrollY(),
-        })
-      } else {
-        cb({
-          id,
-          x: Math.round((target as HTMLElement).scrollLeft),
-          y: Math.round((target as HTMLElement).scrollTop),
-        })
-      }
+      const scrollPositions =
+        target === document
+          ? {
+              scrollTop: getScrollY(),
+              scrollLeft: getScrollX(),
+            }
+          : {
+              scrollTop: Math.round((target as HTMLElement).scrollTop),
+              scrollLeft: Math.round((target as HTMLElement).scrollLeft),
+            }
+      elementsScrollPositions.set(target, scrollPositions)
+      cb({
+        id,
+        x: scrollPositions.scrollLeft,
+        y: scrollPositions.scrollTop,
+      })
     }),
     SCROLL_OBSERVER_THRESHOLD
   )
