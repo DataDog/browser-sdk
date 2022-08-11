@@ -11,10 +11,14 @@ export function createElementsScrollPositions() {
   }
   return {
     set(element: Element | Document, scrollPositions: ScrollPositions) {
-      scrollPositionsByElement.set(
-        element === document ? documentScrollingElement : (element as Element),
-        scrollPositions
-      )
+      try {
+        scrollPositionsByElement.set(
+          element === document ? documentScrollingElement : (element as Element),
+          scrollPositions
+        )
+      } catch (e) {
+        addTelemetryDebug(`invalid element: ${String(element)}`)
+      }
     },
     get(element: Element) {
       return scrollPositionsByElement.get(element)
