@@ -24,7 +24,9 @@ const STABLE_ATTRIBUTES = [
 export function getSelectorsFromElement(element: Element, actionNameAttribute: string | undefined) {
   let attributeSelectors = getStableAttributeSelectors()
   if (actionNameAttribute) {
-    attributeSelectors = [getAttributeSelector.bind(null, actionNameAttribute)].concat(attributeSelectors)
+    attributeSelectors = [(element: Element) => getAttributeSelector(actionNameAttribute, element)].concat(
+      attributeSelectors
+    )
   }
   return {
     selector: getSelectorFromElement(element, [getIDSelector], [getClassSelector]),
@@ -86,7 +88,9 @@ function getClassSelector(element: Element): string | undefined {
 let stableAttributeSelectorsCache: GetSelector[] | undefined
 function getStableAttributeSelectors() {
   if (!stableAttributeSelectorsCache) {
-    stableAttributeSelectorsCache = STABLE_ATTRIBUTES.map((attribute) => getAttributeSelector.bind(null, attribute))
+    stableAttributeSelectorsCache = STABLE_ATTRIBUTES.map(
+      (attribute) => (element: Element) => getAttributeSelector(attribute, element)
+    )
   }
   return stableAttributeSelectorsCache
 }
