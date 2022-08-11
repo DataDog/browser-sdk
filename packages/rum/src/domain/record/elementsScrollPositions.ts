@@ -36,6 +36,7 @@ function tryToFindScrollingElement(scrollPositions: ScrollPositions) {
   if (document.scrollingElement) {
     return document.scrollingElement
   }
+  addTelemetryDebug('null document scrolling element')
   if (scrollPositions.scrollLeft === 0 && scrollPositions.scrollTop === 0) {
     addTelemetryDebug('Unable to find scrolling element for scroll (0,0)')
     return null
