@@ -16,6 +16,15 @@
 
 ---
 
+## v4.17.0
+
+- ✨ [RUMF-1315] Extend user object methods ([#1641](https://github.com/DataDog/browser-sdk/pull/1641))
+- ⚡[RUMF-1344] Serialize scroll positions only for full snapshots ([#1670](https://github.com/DataDog/browser-sdk/pull/1670))
+- ⚡ [RUMF-1344] Access scroll attributes only on initial full snapshot ([#1680](https://github.com/DataDog/browser-sdk/pull/1680))
+- ⚗️ [RUMF-1346] heatmaps: move action event attributes ([#1667](https://github.com/DataDog/browser-sdk/pull/1667))
+- 🐛 [RUMF-1239] Hide placeholder value when privacy set to mask ([#1660](https://github.com/DataDog/browser-sdk/pull/1660))
+- 🐛 fix compatibility check ([#1685](https://github.com/DataDog/browser-sdk/pull/1685))
+
 ## v4.16.1
 
 - 🐛 [RUMF-1274] track request to undefined/null URL ([#1665](https://github.com/DataDog/browser-sdk/pull/1665))
