@@ -16,10 +16,10 @@
     "@datadog/browser-core": "4.17.1"
   },
   "peerDependencies": {
-    "@datadog/rum": "4.16.0"
+    "@datadog/browser-rum": "4.17.1"
   },
   "peerDependenciesMeta": {
-    "@datadog/rum": {
+    "@datadog/browser-rum": {
       "optional": true
     }
   },
