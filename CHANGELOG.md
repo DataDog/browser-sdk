@@ -16,6 +16,11 @@
 
 ---
 
+## v4.17.1
+
+- 🐛 [RUMF-1344] try to improve document scrolling element handling ([#1688](https://github.com/DataDog/browser-sdk/pull/1688))
+- ✨⚗ [RUMF-1355] add selector with stable attributes ([#1684](https://github.com/DataDog/browser-sdk/pull/1684))
+
 ## v4.17.0
 
 - ✨ [RUMF-1315] Extend user object methods ([#1641](https://github.com/DataDog/browser-sdk/pull/1641))
