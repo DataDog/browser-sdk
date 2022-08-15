@@ -489,16 +489,18 @@ A service is an independent, deployable code repository that maps to a set of pa
 
 ### Access internal context
 
-After the Datadog browser RUM SDK is initialized, you can access the internal context of the SDK. This allows you to access:
+After the Datadog Browser SDK is initialized, you can access the internal context of the SDK. 
 
-| Attribute      | Description                                                   |
-| -------------- | ------------------------------------------------------------- |
-| application_id | ID of the application                                         |
-| session_id     | ID of the session                                             |
-| user_action    | Object containing action ID (or undefined if no action found) |
-| view           | Object containing details about the current view event        |
+You can access the following attributes:
 
-More details can be found on the [**RUM Browser Data Collected** page][2].
+| Attribute      | Description                                                       |
+| -------------- | -------------------------------------------------------------     |
+| application_id | ID of the application.                                            |
+| session_id     | ID of the session.                                                |
+| user_action    | Object containing action ID (or undefined if no action is found). |
+| view           | Object containing details about the current view event.           |
+
+For more information, see [RUM Browser Data Collected][2].
 
 #### Example
 
@@ -516,13 +518,13 @@ More details can be found on the [**RUM Browser Data Collected** page][2].
 }
 ```
 
+You can optionally use `startTime` parameter to get the context of a specific time. If the parameter is omitted, the current context is returned.
+
 ```
 getInternalContext (startTime?: 'number' | undefined)
 ```
 
-You can optionally use `startTime` parameter to get the context of a specific time. If the parameter is omitted, the current context is returned.
-
-##### NPM
+#### NPM
 
 For NPM, use:
 
@@ -542,7 +544,7 @@ DD_RUM.onReady(function () {
 })
 ```
 
-##### CDN sync
+#### CDN sync
 
 For CDN sync, use:
 
@@ -550,7 +552,7 @@ For CDN sync, use:
 window.DD_RUM && window.DD_RUM.getInternalContext() // { session_id: "xxxx", application_id: "xxxx" ... }
 ```
 
-## Further Reading
+## Further reading
 
 {{< partial name="whats-next/whats-next.html" >}}
 
