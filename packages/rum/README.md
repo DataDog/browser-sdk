@@ -392,6 +392,8 @@ Two initialization parameters are available to control how the session is tracke
 - `sampleRate` controls the percentage of overall sessions being tracked. It defaults to `100%`, so every session is tracked by default.
 - `premiumSampleRate` is applied **after** the overall sample rate, and controls the percentage of sessions tracked as Browser Premium. It defaults to `100%`, so every session is tracked as Browser Premium by default.
 
+{{< img src="real_user_monitoring/browser/browser-initialization-snippet.png" alt="Default initialization snippet for a browser application" style="width:80%;" >}}
+
 To track 100% of your sessions as Browser:
 
 <details open>
@@ -448,6 +450,8 @@ datadogRum.init({
 
 </details>
 
+{{< img src="real_user_monitoring/browser/example-initialization-snippet.mp4" alt="Example initialization snippet for a browser application with custom percentages" video="true" width="80%" >}}
+   
 The `premiumSampleRate` is a percentage of `sampleRate`. If you set `sampleRate` to 60 and `premiumSampleRate` to 50, 40% of sessions are dropped, 30% of sessions are collected as Browser and 30% of sessions are collected as Browser Premium.
 
 <details open>
