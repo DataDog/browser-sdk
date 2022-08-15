@@ -489,7 +489,7 @@ A service is an independent, deployable code repository that maps to a set of pa
 
 After the Datadog Browser SDK is initialized, you can access the internal context of the SDK. 
 
-You can access the following attributes:
+You can explore the following attributes:
 
 | Attribute      | Description                                                       |
 | -------------- | -------------------------------------------------------------     |
