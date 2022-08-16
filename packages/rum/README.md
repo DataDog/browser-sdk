@@ -450,7 +450,6 @@ datadogRum.init({
    
 The `premiumSampleRate` is a percentage of `sampleRate`. If you set `sampleRate` to 60 and `premiumSampleRate` to 50, 40% of sessions are dropped, 30% of sessions are collected as Browser and 30% of sessions are collected as Browser Premium.
 
-{{< img src="real_user_monitoring/browser/example-initialization-snippet.mp4" alt="Example initialization snippet for a browser application with custom percentages" video="true" width="100%" >}}
 
 <details open>
   <summary>Latest version</summary>
