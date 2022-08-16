@@ -11,10 +11,10 @@ import {
   hasSerializedNode,
   nodeAndAncestorsHaveSerializedNode,
 } from './serializationUtils'
-import { serializeNodeWithId, serializeAttribute } from './serialize'
+import { serializeNodeWithId, serializeAttribute, SerializationContextStatus } from './serialize'
 import { forEach } from './utils'
 import { createMutationBatch } from './mutationBatch'
-import type { MutationCallBack } from './observer'
+import type { MutationCallBack } from './observers'
 
 type WithSerializedTarget<T> = T & { target: NodeWithSerializedNode }
 
@@ -211,6 +211,7 @@ function processChildListMutations(
       document,
       serializedNodeIds,
       parentNodePrivacyLevel,
+      serializationContext: { status: SerializationContextStatus.MUTATION },
     })
     if (!serializedNode) {
       continue

@@ -5,9 +5,10 @@ import type { RawRumEventCollectedData } from 'packages/rum-core/src/domain/life
 import { createNewEvent } from '../../../../core/test/specHelper'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT } from '../../constants'
 import { RecordType } from '../../types'
-import type { FrustrationCallback, InputCallback } from './observer'
-import { initFrustrationObserver, initInputObserver } from './observer'
-import { serializeDocument } from './serialize'
+import type { FrustrationCallback, InputCallback } from './observers'
+import { initFrustrationObserver, initInputObserver } from './observers'
+import { serializeDocument, SerializationContextStatus } from './serialize'
+import { createElementsScrollPositions } from './elementsScrollPositions'
 
 describe('initInputObserver', () => {
   let stopInputObserver: () => void
@@ -26,7 +27,10 @@ describe('initInputObserver', () => {
     sandbox.appendChild(input)
     document.body.appendChild(sandbox)
 
-    serializeDocument(document, NodePrivacyLevel.ALLOW)
+    serializeDocument(document, NodePrivacyLevel.ALLOW, {
+      status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
+      elementsScrollPositions: createElementsScrollPositions(),
+    })
   })
 
   afterEach(() => {
