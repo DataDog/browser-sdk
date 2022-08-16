@@ -479,9 +479,15 @@ if (window.DD_LOGS) {
 
 After the Datadog browser logs SDK is initialized, it is possible to:
 
-- Set the entire context for all your loggers with the `setLoggerGlobalContext (context: Context)` API.
-- Add a context to all your loggers with `addLoggerGlobalContext (key: string, value: any)` API.
-- Get the entire global context with `getLoggerGlobalContext ()` API.
+- Set the entire context for all your loggers with the `setGlobalContext (context: Context)` API.
+- Add a context to all your loggers with `setGlobalContextProperty (key: string, value: any)` API.
+- Get the entire global context with `getGlobalContext ()` API.
+
+> The Log Browser SDK v4.17.0 has updated the names of several APIs:
+> -  `getGlobalContext` instead of `getLoggerGlobalContext`
+> -  `setGlobalContext` instead of `setLoggerGlobalContext`
+> -  `setGlobalContextProperty` instead of `addLoggerGlobalContext`
+> -  `removeGlobalContextProperty` instead of `removeLoggerGlobalContext`
 
 ##### NPM
 
@@ -490,11 +496,19 @@ For NPM, use:
 ```javascript
 import { datadogLogs } from '@datadog/browser-logs'
 
-datadogLogs.setLoggerGlobalContext({ env: 'staging' })
+datadogLogs.setGlobalContext({ env: 'staging' })
 
-datadogLogs.addLoggerGlobalContext('referrer', document.referrer)
+datadogLogs.setGlobalContextProperty('referrer', document.referrer)
 
-const context = datadogLogs.getLoggerGlobalContext() // => {env: 'staging', referrer: ...}
+datadogLogs.getGlobalContext() // => {env: 'staging', referrer: ...}
+
+datadogLogs.removeGlobalContextProperty('referrer')
+
+datadogLogs.getGlobalContext() // => {env: 'staging'}
+
+datadogLogs.clearGlobalContext()
+
+datadogLogs.getGlobalContext() // => {}
 ```
 
 #### CDN async
@@ -503,15 +517,31 @@ For CDN async, use:
 
 ```javascript
 DD_LOGS.onReady(function () {
-  DD_LOGS.setLoggerGlobalContext({ env: 'staging' })
+  DD_LOGS.setGlobalContext({ env: 'staging' })
 })
 
 DD_LOGS.onReady(function () {
-  DD_LOGS.addLoggerGlobalContext('referrer', document.referrer)
+  DD_LOGS.setGlobalContextProperty('referrer', document.referrer)
 })
 
 DD_LOGS.onReady(function () {
-  var context = DD_LOGS.getLoggerGlobalContext() // => {env: 'staging', referrer: ...}
+  DD_LOGS.getGlobalContext() // => {env: 'staging', referrer: ...}
+})
+
+DD_LOGS.onReady(function () {
+  datadogLogs.removeGlobalContextProperty('referrer')
+})
+
+DD_LOGS.onReady(function () {
+  datadogLogs.getGlobalContext() // => {env: 'staging'}
+})
+
+DD_LOGS.onReady(function () {
+  datadogLogs.clearGlobalContext()
+})
+
+DD_LOGS.onReady(function () {
+  datadogLogs.getGlobalContext() // => {}
 })
 ```
 
@@ -522,11 +552,19 @@ DD_LOGS.onReady(function () {
 For CDN sync, use:
 
 ```javascript
-window.DD_LOGS && DD_LOGS.setLoggerGlobalContext({ env: 'staging' })
+window.DD_LOGS && DD_LOGS.setGlobalContext({ env: 'staging' })
 
-window.DD_LOGS && DD_LOGS.addLoggerGlobalContext('referrer', document.referrer)
+window.DD_LOGS && DD_LOGS.setGlobalContextProperty('referrer', document.referrer)
 
-var context = window.DD_LOGS && DD_LOGS.getLoggerGlobalContext() // => {env: 'staging', referrer: ...}
+window.DD_LOGS && DD_LOGS.getGlobalContext() // => {env: 'staging', referrer: ...}
+
+window.DD_LOGS && DD_LOGS.removeGlobalContextProperty('referrer')
+
+window.DD_LOGS && DD_LOGS.getGlobalContext() // => {env: 'staging'}
+
+window.DD_LOGS && DD_LOGS.clearGlobalContext()
+
+window.DD_LOGS && DD_LOGS.getGlobalContext() // => {}
 ```
 
 **Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the SDK.
