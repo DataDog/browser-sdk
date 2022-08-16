@@ -484,10 +484,11 @@ After the Datadog browser logs SDK is initialized, it is possible to:
 - Get the entire global context with `getGlobalContext ()` API.
 
 > The Log Browser SDK v4.17.0 has updated the names of several APIs:
-> -  `getGlobalContext` instead of `getLoggerGlobalContext`
-> -  `setGlobalContext` instead of `setLoggerGlobalContext`
-> -  `setGlobalContextProperty` instead of `addLoggerGlobalContext`
-> -  `removeGlobalContextProperty` instead of `removeLoggerGlobalContext`
+>
+> - `getGlobalContext` instead of `getLoggerGlobalContext`
+> - `setGlobalContext` instead of `setLoggerGlobalContext`
+> - `setGlobalContextProperty` instead of `addLoggerGlobalContext`
+> - `removeGlobalContextProperty` instead of `removeLoggerGlobalContext`
 
 ##### NPM
 
