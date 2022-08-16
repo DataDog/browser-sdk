@@ -3,7 +3,7 @@ import { clearAllCookies } from './specHelper'
 
 beforeEach(() => {
   ;(window as unknown as BuildEnvWindow).__BUILD_ENV__SDK_VERSION__ = 'dev'
-  ;(navigator.sendBeacon as any) = false
+  jasmine.getEnv().allowRespy(true)
   // reset globals
   ;(window as any).DD_LOGS = {}
   ;(window as any).DD_RUM = {}

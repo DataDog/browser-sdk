@@ -413,3 +413,24 @@ export function stubCookie() {
     },
   }
 }
+
+export interface Request {
+  type: 'xhr' | 'sendBeacon'
+  url: string
+  body: string
+}
+
+export function interceptRequests() {
+  const requests: Request[] = []
+
+  spyOn(XMLHttpRequest.prototype, 'open').and.callFake((_, url) => requests.push({ type: 'xhr', url } as Request))
+  spyOn(XMLHttpRequest.prototype, 'send').and.callFake((body) => (requests[requests.length - 1].body = body as string))
+  if ((navigator as any).sendBeacon) {
+    spyOn(navigator, 'sendBeacon').and.callFake((url, body) => {
+      requests.push({ type: 'sendBeacon', url: url as string, body: body as string })
+      return true
+    })
+  }
+
+  return requests
+}
