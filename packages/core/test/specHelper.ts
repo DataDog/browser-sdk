@@ -415,7 +415,7 @@ export function stubCookie() {
 }
 
 export interface Request {
-  type: 'xhr' | 'sendBeacon'
+  type: 'xhr' | 'sendBeacon' | 'fetch'
   url: string
   body: string
 }
@@ -429,6 +429,12 @@ export function interceptRequests() {
     spyOn(navigator, 'sendBeacon').and.callFake((url, body) => {
       requests.push({ type: 'sendBeacon', url: url as string, body: body as string })
       return true
+    })
+  }
+  if ((window as any).fetch) {
+    spyOn(window, 'fetch').and.callFake((url, config) => {
+      requests.push({ type: 'fetch', url: url as string, body: config!.body as string })
+      return new Promise<Response>(() => undefined)
     })
   }
 

@@ -1,5 +1,7 @@
 import type { EndpointBuilder } from '../domain/configuration'
+import { isExperimentalFeatureEnabled } from '../domain/configuration'
 import { addTelemetryError } from '../domain/telemetry'
+import { monitor } from '../tools/monitor'
 
 /**
  * Use POST request without content type to:
@@ -13,26 +15,55 @@ import { addTelemetryError } from '../domain/telemetry'
 export type HttpRequest = ReturnType<typeof createHttpRequest>
 
 export function createHttpRequest(endpointBuilder: EndpointBuilder, bytesLimit: number) {
+  function sendBeacon(data: string | FormData, bytesCount: number) {
+    const url = endpointBuilder.build()
+    const canUseBeacon = !!navigator.sendBeacon && bytesCount < bytesLimit
+    if (canUseBeacon) {
+      try {
+        const isQueued = navigator.sendBeacon(url, data)
+
+        if (isQueued) {
+          return
+        }
+      } catch (e) {
+        reportBeaconError(e)
+      }
+    }
+
+    sendXHR(url, data)
+  }
+
+  function sendFetch(data: string | FormData, bytesCount: number) {
+    const url = endpointBuilder.build()
+    const canUseKeepAlive = window.Request && 'keepalive' in new Request('') && bytesCount < bytesLimit
+    if (canUseKeepAlive) {
+      fetch(url, { method: 'POST', body: data, keepalive: true }).catch(
+        monitor(() => {
+          // failed to queue the request
+          sendXHR(url, data)
+        })
+      )
+    } else {
+      sendXHR(url, data)
+    }
+  }
+
+  function sendXHR(url: string, data: string | FormData) {
+    const request = new XMLHttpRequest()
+    request.open('POST', url, true)
+    request.send(data)
+  }
+
   return {
     send: (data: string | FormData, bytesCount: number) => {
-      const url = endpointBuilder.build()
-      const canUseBeacon = !!navigator.sendBeacon && bytesCount < bytesLimit
-      if (canUseBeacon) {
-        try {
-          const isQueued = navigator.sendBeacon(url, data)
-
-          if (isQueued) {
-            return
-          }
-        } catch (e) {
-          reportBeaconError(e)
-        }
+      // TODO check tests without flag
+      if (!isExperimentalFeatureEnabled('fetch-keepalive')) {
+        sendBeacon(data, bytesCount)
+      } else {
+        sendFetch(data, bytesCount)
       }
-
-      const request = new XMLHttpRequest()
-      request.open('POST', url, true)
-      request.send(data)
     },
+    sendBeacon,
   }
 }
 
