@@ -15,6 +15,14 @@
     "@datadog/browser-core": "4.17.1",
     "@datadog/browser-rum-core": "4.17.1"
   },
+  "peerDependencies": {
+    "@datadog/browser-logs": "4.17.1"
+  },
+  "peerDependenciesMeta": {
+    "@datadog/browser-logs": {
+      "optional": true
+    }
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/DataDog/browser-sdk.git",
