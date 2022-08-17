@@ -479,7 +479,7 @@ if (window.DD_LOGS) {
 
 After the Datadog browser logs SDK is initialized, it is possible to:
 
-- Set the entire context for all your loggers with the `setGlobalContext (context: Context)` API.
+- Set the entire context for all your loggers with the `setGlobalContext (context: object)` API.
 - Add a context to all your loggers with the `setGlobalContextProperty (key: string, value: any)` API.
 - Get the entire global context with the `getGlobalContext ()` API.
 - Remove context property with the `removeGlobalContextProperty (key: string)` API.
@@ -576,7 +576,7 @@ window.DD_LOGS && DD_LOGS.getGlobalContext() // => {}
 
 After a logger is created, it is possible to:
 
-- Set the entire context for your logger with the `setContext (context: Context)` API.
+- Set the entire context for your logger with the `setContext (context: object)` API.
 - Add a context to your logger with `addContext (key: string, value: any)` API:
 
 ##### NPM
