@@ -16,6 +16,12 @@
 
 ---
 
+## v4.17.2
+
+- 🐛 [RUMF-1344] scroll positions: remove fallback for null scrollingElement ([#1694](https://github.com/DataDog/browser-sdk/pull/1694))
+- ⚗️ [RUMF-1356] selectors using stable attributes and no class names ([#1689](https://github.com/DataDog/browser-sdk/pull/1689))
+- 👷 [RUMF-1357] Add a peer dependency between rum and logs packages ([#1668](https://github.com/DataDog/browser-sdk/pull/1668))
+
 ## v4.17.1
 
 - 🐛 [RUMF-1344] try to improve document scrolling element handling ([#1688](https://github.com/DataDog/browser-sdk/pull/1688))
