@@ -481,7 +481,7 @@ After the Datadog browser logs SDK is initialized, it is possible to:
 
 - Set the entire context for all your loggers with the `setGlobalContext (context: Context)` API.
 - Add a context to all your loggers with the `setGlobalContextProperty (key: string, value: any)` API.
-- Get the entire global context with `getGlobalContext ()` API.
+- Get the entire global context with the `getGlobalContext ()` API.
 
 > The Log Browser SDK v4.17.0 has updated the names of several APIs:
 >
