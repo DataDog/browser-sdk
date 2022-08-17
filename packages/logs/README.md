@@ -532,19 +532,19 @@ DD_LOGS.onReady(function () {
 })
 
 DD_LOGS.onReady(function () {
-  datadogLogs.removeGlobalContextProperty('referrer')
+  DD_LOGS.removeGlobalContextProperty('referrer')
 })
 
 DD_LOGS.onReady(function () {
-  datadogLogs.getGlobalContext() // => {env: 'staging'}
+  DD_LOGS.getGlobalContext() // => {env: 'staging'}
 })
 
 DD_LOGS.onReady(function () {
-  datadogLogs.clearGlobalContext()
+  DD_LOGS.clearGlobalContext()
 })
 
 DD_LOGS.onReady(function () {
-  datadogLogs.getGlobalContext() // => {}
+  DD_LOGS.getGlobalContext() // => {}
 })
 ```
 
