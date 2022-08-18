@@ -38,6 +38,7 @@ const COMMON_CONTEXT = {
 describe('logs', () => {
   const initConfiguration = { clientToken: 'xxx', service: 'service' }
   let baseConfiguration: LogsConfiguration
+  let interceptor: ReturnType<typeof interceptRequests>
   let requests: Request[]
   let handleLog: ReturnType<typeof startLoggerCollection>['handleLog']
   let logger: Logger
@@ -51,7 +52,8 @@ describe('logs', () => {
       batchMessagesLimit: 1,
     }
     logger = new Logger((...params) => handleLog(...params))
-    requests = interceptRequests()
+    interceptor = interceptRequests()
+    requests = interceptor.requests
     consoleLogSpy = spyOn(console, 'log')
     displayLogSpy = spyOn(display, 'log')
   })
@@ -60,6 +62,7 @@ describe('logs', () => {
     delete window.DD_RUM
     deleteEventBridgeStub()
     stopSessionManager()
+    interceptor.restore()
   })
 
   describe('request', () => {

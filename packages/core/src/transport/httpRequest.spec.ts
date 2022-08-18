@@ -8,21 +8,26 @@ import type { HttpRequest } from './httpRequest'
 
 describe('httpRequest', () => {
   const BATCH_BYTES_LIMIT = 100
+  let interceptor: ReturnType<typeof interceptRequests>
   let requests: Request[]
   let endpointBuilder: EndpointBuilder
   let request: HttpRequest
   const ENDPOINT_URL = 'http://my.website'
 
   beforeEach(() => {
-    requests = interceptRequests()
+    interceptor = interceptRequests()
+    requests = interceptor.requests
     endpointBuilder = stubEndpointBuilder(ENDPOINT_URL)
     request = createHttpRequest(endpointBuilder, BATCH_BYTES_LIMIT)
   })
 
+  afterEach(() => {
+    interceptor.restore()
+  })
+
   describe('send (without fetch-keepalive FF)', () => {
     it('should use xhr when sendBeacon is not defined', () => {
-      const originalSendBeacon = navigator.sendBeacon && navigator.sendBeacon.bind(navigator)
-      ;(navigator.sendBeacon as any) = false
+      interceptor.withSendBeacon(false)
 
       request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
 
@@ -30,11 +35,10 @@ describe('httpRequest', () => {
       expect(requests[0].type).toBe('xhr')
       expect(requests[0].url).toContain(ENDPOINT_URL)
       expect(requests[0].body).toEqual('{"foo":"bar1"}\n{"foo":"bar2"}')
-      navigator.sendBeacon = originalSendBeacon
     })
 
     it('should use sendBeacon when the bytes count is correct', () => {
-      if (!navigator.sendBeacon) {
+      if (!interceptor.isSendBeaconSupported()) {
         pending('no sendBeacon support')
       }
 
@@ -52,10 +56,10 @@ describe('httpRequest', () => {
     })
 
     it('should fallback to xhr when sendBeacon is not queued', () => {
-      if (!navigator.sendBeacon) {
+      if (!interceptor.isSendBeaconSupported()) {
         pending('no sendBeacon support')
       }
-      spyOn(navigator, 'sendBeacon').and.callFake(() => false)
+      interceptor.withSendBeacon(() => false)
 
       request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
 
@@ -64,16 +68,17 @@ describe('httpRequest', () => {
     })
 
     it('should fallback to xhr when sendBeacon throws', () => {
-      if (!navigator.sendBeacon) {
+      if (!interceptor.isSendBeaconSupported()) {
         pending('no sendBeacon support')
       }
-      spyOn(navigator, 'sendBeacon').and.callFake(() => {
+      let sendBeaconCalled = false
+      interceptor.withSendBeacon(() => {
+        sendBeaconCalled = true
         throw new TypeError()
       })
 
       request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
-
-      expect(navigator.sendBeacon).toHaveBeenCalled()
+      expect(sendBeaconCalled).toBe(true)
       expect(requests.length).toEqual(1)
       expect(requests[0].type).toBe('xhr')
     })
@@ -89,8 +94,7 @@ describe('httpRequest', () => {
     })
 
     it('should use xhr when fetch keepalive is not available', () => {
-      const originalRequest = window.Request
-      ;(window.Request as any) = false
+      interceptor.withRequest(false)
 
       request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
 
@@ -98,11 +102,10 @@ describe('httpRequest', () => {
       expect(requests[0].type).toBe('xhr')
       expect(requests[0].url).toContain(ENDPOINT_URL)
       expect(requests[0].body).toEqual('{"foo":"bar1"}\n{"foo":"bar2"}')
-      window.Request = originalRequest
     })
 
     it('should use fetch keepalive when the bytes count is correct', () => {
-      if (!('fetch' in window) || !('keepalive' in new window.Request(''))) {
+      if (!interceptor.isFetchKeepAliveSupported()) {
         pending('no fetch keepalive support')
       }
 
@@ -120,12 +123,11 @@ describe('httpRequest', () => {
     })
 
     it('should fallback to xhr when fetch keepalive is not queued', (done) => {
-      if (!('fetch' in window) || !('keepalive' in new window.Request(''))) {
+      if (!interceptor.isFetchKeepAliveSupported()) {
         pending('no fetch keepalive support')
       }
-
       let notQueuedFetch: Promise<never>
-      spyOn(window, 'fetch').and.callFake(() => {
+      interceptor.withFetch(() => {
         notQueuedFetch = Promise.reject()
         return notQueuedFetch
       })
@@ -142,8 +144,7 @@ describe('httpRequest', () => {
 
   describe('sendBeacon', () => {
     it('should use xhr when sendBeacon is not defined', () => {
-      const originalSendBeacon = navigator.sendBeacon && navigator.sendBeacon.bind(navigator)
-      ;(navigator.sendBeacon as any) = false
+      interceptor.withSendBeacon(false)
 
       request.sendBeacon('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
 
@@ -151,11 +152,10 @@ describe('httpRequest', () => {
       expect(requests[0].type).toBe('xhr')
       expect(requests[0].url).toContain(ENDPOINT_URL)
       expect(requests[0].body).toEqual('{"foo":"bar1"}\n{"foo":"bar2"}')
-      navigator.sendBeacon = originalSendBeacon
     })
 
     it('should use sendBeacon when the bytes count is correct', () => {
-      if (!navigator.sendBeacon) {
+      if (!interceptor.isSendBeaconSupported()) {
         pending('no sendBeacon support')
       }
 
@@ -173,10 +173,10 @@ describe('httpRequest', () => {
     })
 
     it('should fallback to xhr when sendBeacon is not queued', () => {
-      if (!navigator.sendBeacon) {
+      if (!interceptor.isSendBeaconSupported()) {
         pending('no sendBeacon support')
       }
-      spyOn(navigator, 'sendBeacon').and.callFake(() => false)
+      interceptor.withSendBeacon(() => false)
 
       request.sendBeacon('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
 
@@ -185,16 +185,18 @@ describe('httpRequest', () => {
     })
 
     it('should fallback to xhr when sendBeacon throws', () => {
-      if (!navigator.sendBeacon) {
+      if (!interceptor.isSendBeaconSupported()) {
         pending('no sendBeacon support')
       }
-      spyOn(navigator, 'sendBeacon').and.callFake(() => {
+      let sendBeaconCalled = false
+      interceptor.withSendBeacon(() => {
+        sendBeaconCalled = true
         throw new TypeError()
       })
 
       request.sendBeacon('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
 
-      expect(navigator.sendBeacon).toHaveBeenCalled()
+      expect(sendBeaconCalled).toBe(true)
       expect(requests.length).toEqual(1)
       expect(requests[0].type).toBe('xhr')
     })
@@ -204,14 +206,20 @@ describe('httpRequest', () => {
 describe('httpRequest intake parameters', () => {
   const clientToken = 'some_client_token'
   const BATCH_BYTES_LIMIT = 100
+  let interceptor: ReturnType<typeof interceptRequests>
   let requests: Request[]
   let endpointBuilder: EndpointBuilder
   let request: HttpRequest
 
   beforeEach(() => {
-    requests = interceptRequests()
+    interceptor = interceptRequests()
+    requests = interceptor.requests
     endpointBuilder = createEndpointBuilder({ clientToken }, 'logs', [])
     request = createHttpRequest(endpointBuilder, BATCH_BYTES_LIMIT)
+  })
+
+  afterEach(() => {
+    interceptor.restore()
   })
 
   it('should have a unique request id', () => {
