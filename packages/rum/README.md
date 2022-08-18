@@ -334,7 +334,7 @@ Telemetry data (such as errors and debug logs) about SDK execution is sent to Da
 **Type:** List<br/>
 A list of request origins ignored when computing the page activity. See [How page activity is calculated][16].
 
-Options that must have matching configuration when you using the Datadog Browser SDK for logs:
+Options that must have matching configuration when you are using the Datadog Browser SDK for logs:
 
 `trackSessionAcrossSubdomains`
 : Optional<br/>
