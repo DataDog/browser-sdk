@@ -1,10 +1,9 @@
-import type { EndpointBuilder } from '@datadog/browser-core'
-import { HttpRequest, objectEntries } from '@datadog/browser-core'
-import { SEGMENT_BYTES_LIMIT } from '../domain/segmentCollection'
+import type { HttpRequest } from '@datadog/browser-core'
+import { objectEntries } from '@datadog/browser-core'
 import type { BrowserSegmentMetadata } from '../types'
 
 export function send(
-  endpointBuilder: EndpointBuilder,
+  httpRequest: HttpRequest,
   data: Uint8Array,
   metadata: BrowserSegmentMetadata,
   rawSegmentBytesCount: number
@@ -22,8 +21,7 @@ export function send(
   toFormEntries(metadata, (key, value) => formData.append(key, value))
   formData.append('raw_segment_size', rawSegmentBytesCount.toString())
 
-  const request = new HttpRequest(endpointBuilder, SEGMENT_BYTES_LIMIT)
-  request.send(formData, data.byteLength)
+  httpRequest.send(formData, data.byteLength)
 }
 
 export function toFormEntries(input: object, onEntry: (key: string, value: string) => void, prefix = '') {

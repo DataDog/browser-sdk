@@ -1,7 +1,12 @@
 import { ErrorSource, display, stopSessionManager, getCookie, SESSION_COOKIE_NAME } from '@datadog/browser-core'
-import sinon from 'sinon'
 import { cleanupSyntheticsWorkerValues, mockSyntheticsWorkerValues } from '../../../core/test/syntheticsWorkerValues'
-import { deleteEventBridgeStub, initEventBridgeStub, stubEndpointBuilder } from '../../../core/test/specHelper'
+import {
+  deleteEventBridgeStub,
+  initEventBridgeStub,
+  stubEndpointBuilder,
+  interceptRequests,
+} from '../../../core/test/specHelper'
+import type { Request } from '../../../core/test/specHelper'
 import type { LogsConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
 
@@ -10,8 +15,8 @@ import type { startLoggerCollection } from '../domain/logsCollection/logger/logg
 import type { LogsEvent } from '../logsEvent.types'
 import { startLogs } from './startLogs'
 
-function getLoggedMessage(server: sinon.SinonFakeServer, index: number) {
-  return JSON.parse(server.requests[index].requestBody) as LogsEvent
+function getLoggedMessage(requests: Request[], index: number) {
+  return JSON.parse(requests[index].body) as LogsEvent
 }
 
 interface Rum {
@@ -33,7 +38,8 @@ const COMMON_CONTEXT = {
 describe('logs', () => {
   const initConfiguration = { clientToken: 'xxx', service: 'service' }
   let baseConfiguration: LogsConfiguration
-  let server: sinon.SinonFakeServer
+  let interceptor: ReturnType<typeof interceptRequests>
+  let requests: Request[]
   let handleLog: ReturnType<typeof startLoggerCollection>['handleLog']
   let logger: Logger
   let consoleLogSpy: jasmine.Spy
@@ -46,16 +52,17 @@ describe('logs', () => {
       batchMessagesLimit: 1,
     }
     logger = new Logger((...params) => handleLog(...params))
-    server = sinon.fakeServer.create()
+    interceptor = interceptRequests()
+    requests = interceptor.requests
     consoleLogSpy = spyOn(console, 'log')
     displayLogSpy = spyOn(display, 'log')
   })
 
   afterEach(() => {
-    server.restore()
     delete window.DD_RUM
     deleteEventBridgeStub()
     stopSessionManager()
+    interceptor.restore()
   })
 
   describe('request', () => {
@@ -64,9 +71,9 @@ describe('logs', () => {
 
       handleLog({ message: 'message', status: StatusType.warn, context: { foo: 'bar' } }, logger, COMMON_CONTEXT)
 
-      expect(server.requests.length).toEqual(1)
-      expect(server.requests[0].url).toContain(baseConfiguration.logsEndpointBuilder.build())
-      expect(getLoggedMessage(server, 0)).toEqual({
+      expect(requests.length).toEqual(1)
+      expect(requests[0].url).toContain(baseConfiguration.logsEndpointBuilder.build())
+      expect(getLoggedMessage(requests, 0)).toEqual({
         date: jasmine.any(Number),
         foo: 'bar',
         message: 'message',
@@ -88,7 +95,7 @@ describe('logs', () => {
       handleLog(DEFAULT_MESSAGE, logger)
       handleLog(DEFAULT_MESSAGE, logger)
 
-      expect(server.requests.length).toEqual(1)
+      expect(requests.length).toEqual(1)
     })
 
     it('should send bridge event when bridge is present', () => {
@@ -97,7 +104,7 @@ describe('logs', () => {
 
       handleLog(DEFAULT_MESSAGE, logger)
 
-      expect(server.requests.length).toEqual(0)
+      expect(requests.length).toEqual(0)
       const [message] = sendSpy.calls.mostRecent().args
       const parsedMessage = JSON.parse(message)
       expect(parsedMessage).toEqual({
