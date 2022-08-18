@@ -142,11 +142,11 @@ describe('httpRequest', () => {
     })
   })
 
-  describe('sendBeacon', () => {
+  describe('sendOnExit', () => {
     it('should use xhr when sendBeacon is not defined', () => {
       interceptor.withSendBeacon(false)
 
-      request.sendBeacon('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
+      request.sendOnExit('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
 
       expect(requests.length).toEqual(1)
       expect(requests[0].type).toBe('xhr')
@@ -159,14 +159,14 @@ describe('httpRequest', () => {
         pending('no sendBeacon support')
       }
 
-      request.sendBeacon('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
+      request.sendOnExit('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
 
       expect(requests.length).toEqual(1)
       expect(requests[0].type).toBe('sendBeacon')
     })
 
     it('should use xhr over sendBeacon when the bytes count is too high', () => {
-      request.sendBeacon('{"foo":"bar1"}\n{"foo":"bar2"}', BATCH_BYTES_LIMIT)
+      request.sendOnExit('{"foo":"bar1"}\n{"foo":"bar2"}', BATCH_BYTES_LIMIT)
 
       expect(requests.length).toEqual(1)
       expect(requests[0].type).toBe('xhr')
@@ -178,7 +178,7 @@ describe('httpRequest', () => {
       }
       interceptor.withSendBeacon(() => false)
 
-      request.sendBeacon('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
+      request.sendOnExit('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
 
       expect(requests.length).toEqual(1)
       expect(requests[0].type).toBe('xhr')
@@ -194,7 +194,7 @@ describe('httpRequest', () => {
         throw new TypeError()
       })
 
-      request.sendBeacon('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
+      request.sendOnExit('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
 
       expect(sendBeaconCalled).toBe(true)
       expect(requests.length).toEqual(1)

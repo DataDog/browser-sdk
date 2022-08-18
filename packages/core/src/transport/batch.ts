@@ -22,7 +22,7 @@ export class Batch {
     private flushTimeout: number,
     private beforeUnloadCallback: () => void = noop
   ) {
-    this.flushOnVisibilityHidden()
+    this.setupFlushOnExit()
     this.flushPeriodically()
   }
 
@@ -48,8 +48,8 @@ export class Batch {
     }
   }
 
-  beaconFlush() {
-    this.flush(this.request.sendBeacon)
+  flushOnExit() {
+    this.flush(this.request.sendOnExit)
   }
 
   computeBytesCount(candidate: string) {
@@ -140,7 +140,7 @@ export class Batch {
     )
   }
 
-  private flushOnVisibilityHidden() {
+  private setupFlushOnExit() {
     /**
      * With sendBeacon, requests are guaranteed to be successfully sent during document unload
      */
@@ -159,7 +159,7 @@ export class Batch {
        */
       addEventListener(document, DOM_EVENT.VISIBILITY_CHANGE, () => {
         if (document.visibilityState === 'hidden') {
-          this.beaconFlush()
+          this.flushOnExit()
         }
       })
       /**
@@ -167,7 +167,7 @@ export class Batch {
        * - a visibility change during doc unload (cf: https://bugs.webkit.org/show_bug.cgi?id=194897)
        * - a page hide transition (cf: https://bugs.webkit.org/show_bug.cgi?id=188329)
        */
-      addEventListener(window, DOM_EVENT.BEFORE_UNLOAD, () => this.beaconFlush())
+      addEventListener(window, DOM_EVENT.BEFORE_UNLOAD, () => this.flushOnExit())
     }
   }
 }

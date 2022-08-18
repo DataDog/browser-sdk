@@ -15,7 +15,7 @@ import { monitor } from '../tools/monitor'
 export type HttpRequest = ReturnType<typeof createHttpRequest>
 
 export function createHttpRequest(endpointBuilder: EndpointBuilder, bytesLimit: number) {
-  function sendBeacon(data: string | FormData, bytesCount: number) {
+  function sendBeaconStrategy(data: string | FormData, bytesCount: number) {
     const url = endpointBuilder.build()
     const canUseBeacon = !!navigator.sendBeacon && bytesCount < bytesLimit
     if (canUseBeacon) {
@@ -33,7 +33,7 @@ export function createHttpRequest(endpointBuilder: EndpointBuilder, bytesLimit: 
     sendXHR(url, data)
   }
 
-  function sendFetch(data: string | FormData, bytesCount: number) {
+  function fetchKeepAliveStrategy(data: string | FormData, bytesCount: number) {
     const url = endpointBuilder.build()
     const canUseKeepAlive = window.Request && 'keepalive' in new Request('') && bytesCount < bytesLimit
     if (canUseKeepAlive) {
@@ -57,12 +57,16 @@ export function createHttpRequest(endpointBuilder: EndpointBuilder, bytesLimit: 
   return {
     send: (data: string | FormData, bytesCount: number) => {
       if (!isExperimentalFeatureEnabled('fetch-keepalive')) {
-        sendBeacon(data, bytesCount)
+        sendBeaconStrategy(data, bytesCount)
       } else {
-        sendFetch(data, bytesCount)
+        fetchKeepAliveStrategy(data, bytesCount)
       }
     },
-    sendBeacon,
+    /**
+     * Since fetch keepalive behaves like regular fetch on Firefox,
+     * keep using sendBeaconStrategy on exit
+     */
+    sendOnExit: sendBeaconStrategy,
   }
 }
 
