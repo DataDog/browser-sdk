@@ -56,7 +56,6 @@ export function createHttpRequest(endpointBuilder: EndpointBuilder, bytesLimit: 
 
   return {
     send: (data: string | FormData, bytesCount: number) => {
-      // TODO check tests without flag
       if (!isExperimentalFeatureEnabled('fetch-keepalive')) {
         sendBeacon(data, bytesCount)
       } else {
