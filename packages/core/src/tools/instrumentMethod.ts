@@ -12,12 +12,12 @@ export function instrumentMethod<OBJECT extends { [key: string]: any }, METHOD e
 
   let instrumentation = instrumentationFactory(original)
 
-  const instrumentationWrapper = function (this: OBJECT): ReturnType<OBJECT[METHOD]> | null {
-      if (typeof instrumentation === 'function') {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-          return instrumentation.apply(this, arguments as unknown as Parameters<OBJECT[METHOD]>)
-      }
-      return null
+  const instrumentationWrapper = function (this: OBJECT): ReturnType<OBJECT[METHOD]> | undefined {
+    if (typeof instrumentation !== 'function') {
+      return undefined
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return instrumentation.apply(this, arguments as unknown as Parameters<OBJECT[METHOD]>)
   }
   object[method] = instrumentationWrapper as OBJECT[METHOD]
 
