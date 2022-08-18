@@ -56,7 +56,7 @@ export function createHttpRequest(endpointBuilder: EndpointBuilder, bytesLimit: 
 
   return {
     send: (data: string | FormData, bytesCount: number) => {
-      if (!isExperimentalFeatureEnabled('fetch-keepalive')) {
+      if (!isExperimentalFeatureEnabled('fetch_keepalive')) {
         sendBeaconStrategy(data, bytesCount)
       } else {
         fetchKeepAliveStrategy(data, bytesCount)

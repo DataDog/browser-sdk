@@ -25,7 +25,7 @@ describe('httpRequest', () => {
     interceptor.restore()
   })
 
-  describe('send (without fetch-keepalive FF)', () => {
+  describe('send (without fetch_keepalive FF)', () => {
     it('should use xhr when sendBeacon is not defined', () => {
       interceptor.withSendBeacon(false)
 
@@ -84,9 +84,9 @@ describe('httpRequest', () => {
     })
   })
 
-  describe('send (with fetch-keepalive FF)', () => {
+  describe('send (with fetch_keepalive FF)', () => {
     beforeEach(() => {
-      updateExperimentalFeatures(['fetch-keepalive'])
+      updateExperimentalFeatures(['fetch_keepalive'])
     })
 
     afterEach(() => {
