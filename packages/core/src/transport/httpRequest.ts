@@ -12,6 +12,9 @@ import { monitor } from '../tools/monitor'
  */
 
 export type HttpRequest = ReturnType<typeof createHttpRequest>
+export interface HttpResponse {
+  status: number
+}
 
 export interface Payload {
   data: string | FormData
@@ -60,23 +63,35 @@ function reportBeaconError(e: unknown) {
   }
 }
 
-function fetchKeepAliveStrategy(endpointBuilder: EndpointBuilder, bytesLimit: number, { data, bytesCount }: Payload) {
+export function fetchKeepAliveStrategy(
+  endpointBuilder: EndpointBuilder,
+  bytesLimit: number,
+  { data, bytesCount }: Payload,
+  onResponse?: (r: HttpResponse) => void
+) {
   const url = endpointBuilder.build()
   const canUseKeepAlive = window.Request && 'keepalive' in new Request('') && bytesCount < bytesLimit
   if (canUseKeepAlive) {
-    fetch(url, { method: 'POST', body: data, keepalive: true }).catch(
+    fetch(url, { method: 'POST', body: data, keepalive: true }).then(
+      monitor((response: Response) => onResponse?.({ status: response.status })),
       monitor(() => {
         // failed to queue the request
-        sendXHR(url, data)
+        sendXHR(url, data, onResponse)
       })
     )
   } else {
-    sendXHR(url, data)
+    sendXHR(url, data, onResponse)
   }
 }
 
-function sendXHR(url: string, data: Payload['data']) {
+function sendXHR(url: string, data: Payload['data'], onResponse?: (r: HttpResponse) => void) {
   const request = new XMLHttpRequest()
   request.open('POST', url, true)
   request.send(data)
+  request.addEventListener(
+    'loadend',
+    monitor(() => {
+      onResponse?.({ status: request.status })
+    })
+  )
 }

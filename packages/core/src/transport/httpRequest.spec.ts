@@ -3,16 +3,16 @@ import { stubEndpointBuilder, interceptRequests } from '../../test/specHelper'
 import type { Request } from '../../test/specHelper'
 import type { EndpointBuilder } from '../domain/configuration'
 import { createEndpointBuilder } from '../domain/configuration'
-import { createHttpRequest } from './httpRequest'
+import { createHttpRequest, fetchKeepAliveStrategy } from './httpRequest'
 import type { HttpRequest } from './httpRequest'
 
 describe('httpRequest', () => {
   const BATCH_BYTES_LIMIT = 100
+  const ENDPOINT_URL = 'http://my.website'
   let interceptor: ReturnType<typeof interceptRequests>
   let requests: Request[]
   let endpointBuilder: EndpointBuilder
   let request: HttpRequest
-  const ENDPOINT_URL = 'http://my.website'
 
   beforeEach(() => {
     interceptor = interceptRequests()
@@ -72,6 +72,67 @@ describe('httpRequest', () => {
         expect(requests[0].type).toBe('xhr')
         done()
       })
+    })
+  })
+
+  describe('fetchKeepAliveStrategy onResponse', () => {
+    it('should be called with intake response when fetch is used', (done) => {
+      if (!interceptor.isFetchKeepAliveSupported()) {
+        pending('no fetch keepalive support')
+      }
+
+      interceptor.withFetch(() => Promise.resolve({ status: 429 }))
+
+      fetchKeepAliveStrategy(
+        endpointBuilder,
+        BATCH_BYTES_LIMIT,
+        { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 },
+        (response) => {
+          expect(response).toEqual({ status: 429 })
+          done()
+        }
+      )
+    })
+
+    it('should be called with intake response when fallback to xhr due fetch not queued', (done) => {
+      if (!interceptor.isFetchKeepAliveSupported()) {
+        pending('no fetch keepalive support')
+      }
+
+      interceptor.withFetch(() => Promise.reject())
+      interceptor.withStubXhr((xhr) => {
+        setTimeout(() => {
+          xhr.complete(429)
+        })
+      })
+
+      fetchKeepAliveStrategy(
+        endpointBuilder,
+        BATCH_BYTES_LIMIT,
+        { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 },
+        (response) => {
+          expect(response).toEqual({ status: 429 })
+          done()
+        }
+      )
+    })
+
+    it('should be called with intake response when fallback to xhr due to size', (done) => {
+      interceptor.withStubXhr((xhr) => {
+        setTimeout(() => {
+          xhr.complete(429)
+        })
+      })
+
+      fetchKeepAliveStrategy(
+        endpointBuilder,
+        BATCH_BYTES_LIMIT,
+        { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: BATCH_BYTES_LIMIT },
+        (response) => {
+          expect(response).toEqual({ status: 429 })
+          done()
+        }
+      )
     })
   })
 
