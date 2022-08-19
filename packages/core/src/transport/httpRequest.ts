@@ -19,55 +19,36 @@ export interface Payload {
 }
 
 export function createHttpRequest(endpointBuilder: EndpointBuilder, bytesLimit: number) {
-  function sendBeaconStrategy({ data, bytesCount }: Payload) {
-    const url = endpointBuilder.build()
-    const canUseBeacon = !!navigator.sendBeacon && bytesCount < bytesLimit
-    if (canUseBeacon) {
-      try {
-        const isQueued = navigator.sendBeacon(url, data)
-
-        if (isQueued) {
-          return
-        }
-      } catch (e) {
-        reportBeaconError(e)
-      }
-    }
-
-    sendXHR(url, data)
-  }
-
-  function fetchKeepAliveStrategy({ data, bytesCount }: Payload) {
-    const url = endpointBuilder.build()
-    const canUseKeepAlive = window.Request && 'keepalive' in new Request('') && bytesCount < bytesLimit
-    if (canUseKeepAlive) {
-      fetch(url, { method: 'POST', body: data, keepalive: true }).catch(
-        monitor(() => {
-          // failed to queue the request
-          sendXHR(url, data)
-        })
-      )
-    } else {
-      sendXHR(url, data)
-    }
-  }
-
-  function sendXHR(url: string, data: Payload['data']) {
-    const request = new XMLHttpRequest()
-    request.open('POST', url, true)
-    request.send(data)
-  }
-
   return {
     send: (payload: Payload) => {
-      fetchKeepAliveStrategy(payload)
+      fetchKeepAliveStrategy(endpointBuilder, bytesLimit, payload)
     },
     /**
      * Since fetch keepalive behaves like regular fetch on Firefox,
      * keep using sendBeaconStrategy on exit
      */
-    sendOnExit: sendBeaconStrategy,
+    sendOnExit: (payload: Payload) => {
+      sendBeaconStrategy(endpointBuilder, bytesLimit, payload)
+    },
   }
+}
+
+function sendBeaconStrategy(endpointBuilder: EndpointBuilder, bytesLimit: number, { data, bytesCount }: Payload) {
+  const url = endpointBuilder.build()
+  const canUseBeacon = !!navigator.sendBeacon && bytesCount < bytesLimit
+  if (canUseBeacon) {
+    try {
+      const isQueued = navigator.sendBeacon(url, data)
+
+      if (isQueued) {
+        return
+      }
+    } catch (e) {
+      reportBeaconError(e)
+    }
+  }
+
+  sendXHR(url, data)
 }
 
 let hasReportedBeaconError = false
@@ -77,4 +58,25 @@ function reportBeaconError(e: unknown) {
     hasReportedBeaconError = true
     addTelemetryError(e)
   }
+}
+
+function fetchKeepAliveStrategy(endpointBuilder: EndpointBuilder, bytesLimit: number, { data, bytesCount }: Payload) {
+  const url = endpointBuilder.build()
+  const canUseKeepAlive = window.Request && 'keepalive' in new Request('') && bytesCount < bytesLimit
+  if (canUseKeepAlive) {
+    fetch(url, { method: 'POST', body: data, keepalive: true }).catch(
+      monitor(() => {
+        // failed to queue the request
+        sendXHR(url, data)
+      })
+    )
+  } else {
+    sendXHR(url, data)
+  }
+}
+
+function sendXHR(url: string, data: Payload['data']) {
+  const request = new XMLHttpRequest()
+  request.open('POST', url, true)
+  request.send(data)
 }
