@@ -154,3 +154,131 @@ describe('initFrustrationObserver', () => {
     expect(frustrationsCallbackSpy).not.toHaveBeenCalled()
   })
 })
+
+// const rule = '.selector-1 { color: #fff }'
+
+// describe('initStyleSheetObserver', () => {
+//   let stopStyleSheetObserver: () => void
+//   let styleSheetCallbackSpy: jasmine.Spy<StyleSheetRuleCallback>
+//   let styleElement: HTMLStyleElement
+//   let styleSheet: CSSStyleSheet
+
+//   beforeEach(() => {
+//     if (isIE()) {
+//       pending('IE not supported')
+//     }
+//     styleSheetCallbackSpy = jasmine.createSpy()
+
+//     styleElement = document.createElement('style');
+//     document.head.appendChild(styleElement);
+
+//     styleSheet = <CSSStyleSheet>styleElement.sheet
+//   })
+
+//   afterEach(() => {
+//     stopStyleSheetObserver()
+//     styleElement.remove()
+//   })
+
+//   describe('observing high level css stylesheet', () => {
+//     describe('when inserting rules into stylesheet', () => {
+//       it('should capture CSSStyleRule insertion when no index is provided', () => {
+//         stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy)
+//         // When
+//         stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy)
+//         styleSheet.insertRule(rule)
+//         // Then
+//         const styleSheetRule = styleSheetCallbackSpy.calls.first().args[0]
+//         expect(styleSheetRule.id).toBeDefined()
+//         expect(styleSheetRule.removes).toBeUndefined()
+//         expect(styleSheetRule.adds?.length).toEqual(1)
+//         expect(styleSheetRule.adds?.pop()?.index).toEqual(undefined)
+//       })
+//       it('should capture CSSStyleRule insertion when index is provided', () => {
+//         // Given
+//         const index = 0
+//         // When
+//         stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy)
+//         styleSheet.insertRule(rule, index)
+//         // Then
+//         const styleSheetRule = styleSheetCallbackSpy.calls.first().args[0]
+//         expect(styleSheetRule.id).toBeDefined()
+//         expect(styleSheetRule.removes).toBeUndefined()
+//         expect(styleSheetRule.adds?.length).toEqual(1)
+//         expect(styleSheetRule.adds?.pop()?.index).toEqual(index)
+//       })
+//     })
+
+//     describe('when removing rules from stylesheet', () => {
+//       it('should capture CSSStyleRule removal with the correct index', () => {
+//         styleSheet.insertRule(rule)
+//         // Given
+//         const index = 0
+//         // When
+//         stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy)
+//         styleSheet.deleteRule(index)
+//         // Then
+//         const styleSheetRule = styleSheetCallbackSpy.calls.first().args[0]
+//         expect(styleSheetRule.id).toBeDefined()
+//         expect(styleSheetRule.adds).toBeUndefined()
+//         expect(styleSheetRule.removes?.length).toEqual(1)
+//         expect(styleSheetRule.removes?.pop()).toEqual({ index })
+//       })
+//     })
+//   })
+
+//   describe('observing CSSGroupingRules inside a CSSStyleSheet', () => {
+//     describe('when inserting CSSRules inside a CSSGroupingRule', () => {
+//       it('should capture CSSRule with the correct path when no index is provided', () => {
+//         styleSheet.insertRule(
+//           '.main {opacity: 0}; @media cond-1 {.nest-1 { color: #ccc }; @media cond-2 { .nest-2 {display: none } }};'
+//         )
+//         // Given
+//         const groupingRule = (styleSheet.cssRules[1] as CSSGroupingRule).cssRules[1] as CSSGroupingRule
+//         // When
+//         stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy)
+//         groupingRule.insertRule(rule)
+//         // Then
+//         const styleSheetRule = styleSheetCallbackSpy.calls.first().args[0]
+//         expect(styleSheetRule.id).toBeDefined()
+//         expect(styleSheetRule.removes).toBeUndefined()
+//         expect(styleSheetRule.adds?.length).toEqual(1)
+//         expect(styleSheetRule.adds?.pop()?.index).toEqual([1,1,0])
+//       })
+//       it('should capture CSSRule with the correct path when index is provided', () => {
+//         styleSheet.insertRule(
+//           '.main { opacity: 0 } @media cond-1 { .nest-1 { color: #ccc } @media cond-2 { .nest-2 {display: none } } }'
+//         )
+//         // Given
+//         const groupingRule = (styleSheet.cssRules[1] as CSSGroupingRule).cssRules[1] as CSSGroupingRule
+//         // When
+//         stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy)
+//         groupingRule.insertRule(rule, 1)
+//         // Then
+//         const styleSheetRule = styleSheetCallbackSpy.calls.first().args[0]
+//         expect(styleSheetRule.id).toBeDefined()
+//         expect(styleSheetRule.removes).toBeUndefined()
+//         expect(styleSheetRule.adds?.length).toEqual(1)
+//         expect(styleSheetRule.adds?.pop()?.index).toEqual([1,1,1])
+//       })
+//     })
+//     describe('when removing CSSRules from a CSSGroupingRule', () => {
+//       it('should capture CSSRule removal with the correct path', () => {
+//         styleSheet.insertRule(
+//           '.main { opacity: 0 } @media cond-1 { .nest-1 { color: #ccc } @media cond-2 { .nest-2 {display: none } } }'
+//         )
+//         // Given
+//         const groupingRule = (styleSheet.cssRules[1] as CSSGroupingRule).cssRules[1] as CSSGroupingRule
+//         // When
+//         stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy)
+//         groupingRule.deleteRule(0)
+//         // Then
+//         const styleSheetRule = styleSheetCallbackSpy.calls.first().args[0]
+//         expect(styleSheetRule.id).toBeDefined()
+//         expect(styleSheetRule.adds).toBeUndefined()
+//         expect(styleSheetRule.removes?.length).toEqual(1)
+//         expect(styleSheetRule.removes?.pop()?.index).toEqual([1,1,0])
+//       })
+//     })
+//   })
+// })

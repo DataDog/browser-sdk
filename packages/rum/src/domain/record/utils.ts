@@ -28,3 +28,19 @@ export function assembleIncrementalSnapshot<Data extends BrowserIncrementalData>
     timestamp: timeStampNow(),
   }
 }
+
+export function getPathToNestedCSSRule(rule: CSSRule): number[] {
+  const path: number[] = []
+  let currentRule = rule
+  while (currentRule.parentRule instanceof CSSGroupingRule) {
+    const rules = Array.from(currentRule.parentRule.cssRules)
+    const index = rules.indexOf(currentRule)
+    path.unshift(index)
+    currentRule = currentRule.parentRule
+  }
+  const rules = Array.from(currentRule.parentStyleSheet!.cssRules)
+  const index = rules.indexOf(currentRule)
+  path.unshift(index)
+
+  return path
+}

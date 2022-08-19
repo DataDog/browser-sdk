@@ -31,7 +31,7 @@ import type {
 import { RecordType, IncrementalSource, MediaInteractionType, MouseInteractionType } from '../../types'
 import { getNodePrivacyLevel, shouldMaskNode } from './privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from './serializationUtils'
-import { assembleIncrementalSnapshot, forEach, isTouchEvent } from './utils'
+import { assembleIncrementalSnapshot, forEach, getPathToNestedCSSRule, isTouchEvent } from './utils'
 import type { MutationController } from './mutationObserver'
 import { startMutationObserver } from './mutationObserver'
 import { getVisualViewport, getScrollX, getScrollY, convertMouseEventToLayoutCoordinates } from './viewports'
@@ -64,7 +64,7 @@ type MouseInteractionCallBack = (record: BrowserIncrementalSnapshotRecord) => vo
 
 type ScrollCallback = (p: ScrollPosition) => void
 
-type StyleSheetRuleCallback = (s: StyleSheetRule) => void
+export type StyleSheetRuleCallback = (s: StyleSheetRule) => void
 
 type ViewportResizeCallback = (d: ViewportResizeDimension) => void
 
@@ -348,7 +348,7 @@ export function initInputObserver(cb: InputCallback, defaultPrivacyLevel: Defaul
   }
 }
 
-function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
+export function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
   const { stop: restoreInsertRule } = instrumentMethodAndCallOriginal(CSSStyleSheet.prototype, 'insertRule', {
     before(rule, index) {
       if (hasSerializedNode(this.ownerNode!)) {
@@ -371,9 +371,41 @@ function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
     },
   })
 
+  const { stop: restoreInsertNestedRule } = instrumentMethodAndCallOriginal(CSSGroupingRule.prototype, 'insertRule', {
+    before(rule, index) {
+      if (hasSerializedNode(this.parentStyleSheet!.ownerNode!)) {
+        cb({
+          id: getSerializedNodeId(this.parentStyleSheet!.ownerNode),
+          adds: [
+            {
+              rule,
+              index: getPathToNestedCSSRule(this).concat(index ?? 0),
+            },
+          ],
+        })
+      }
+    },
+  })
+  const { stop: restoreDeleteNestedRule } = instrumentMethodAndCallOriginal(CSSGroupingRule.prototype, 'deleteRule', {
+    before(index) {
+      if (hasSerializedNode(this.parentStyleSheet!.ownerNode!)) {
+        cb({
+          id: getSerializedNodeId(this.parentStyleSheet!.ownerNode),
+          removes: [
+            {
+              index: getPathToNestedCSSRule(this).concat(index),
+            },
+          ],
+        })
+      }
+    },
+  })
+
   return () => {
     restoreInsertRule()
     restoreDeleteRule()
+    restoreInsertNestedRule()
+    restoreDeleteNestedRule()
   }
 }
 
