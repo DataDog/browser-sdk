@@ -13,8 +13,13 @@ import { monitor } from '../tools/monitor'
 
 export type HttpRequest = ReturnType<typeof createHttpRequest>
 
+export interface Payload {
+  data: string | FormData
+  bytesCount: number
+}
+
 export function createHttpRequest(endpointBuilder: EndpointBuilder, bytesLimit: number) {
-  function sendBeaconStrategy(data: string | FormData, bytesCount: number) {
+  function sendBeaconStrategy({ data, bytesCount }: Payload) {
     const url = endpointBuilder.build()
     const canUseBeacon = !!navigator.sendBeacon && bytesCount < bytesLimit
     if (canUseBeacon) {
@@ -32,7 +37,7 @@ export function createHttpRequest(endpointBuilder: EndpointBuilder, bytesLimit: 
     sendXHR(url, data)
   }
 
-  function fetchKeepAliveStrategy(data: string | FormData, bytesCount: number) {
+  function fetchKeepAliveStrategy({ data, bytesCount }: Payload) {
     const url = endpointBuilder.build()
     const canUseKeepAlive = window.Request && 'keepalive' in new Request('') && bytesCount < bytesLimit
     if (canUseKeepAlive) {
@@ -47,15 +52,15 @@ export function createHttpRequest(endpointBuilder: EndpointBuilder, bytesLimit: 
     }
   }
 
-  function sendXHR(url: string, data: string | FormData) {
+  function sendXHR(url: string, data: Payload['data']) {
     const request = new XMLHttpRequest()
     request.open('POST', url, true)
     request.send(data)
   }
 
   return {
-    send: (data: string | FormData, bytesCount: number) => {
-      fetchKeepAliveStrategy(data, bytesCount)
+    send: (payload: Payload) => {
+      fetchKeepAliveStrategy(payload)
     },
     /**
      * Since fetch keepalive behaves like regular fetch on Firefox,
