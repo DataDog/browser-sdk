@@ -4,6 +4,8 @@
  * This means that an experimental flag set on the RUM product will be set on the Logs product.
  * So keep in mind that in certain configurations, your experimental feature flag may affect other products.
  */
+import { includes } from '../../tools/utils'
+import { display } from '../../tools/display'
 
 let enabledExperimentalFeatures: Set<string> | undefined
 
@@ -20,6 +22,9 @@ export function updateExperimentalFeatures(enabledFeatures: string[] | undefined
   enabledFeatures
     .filter((flag) => typeof flag === 'string')
     .forEach((flag: string) => {
+      if (includes(flag, '-')) {
+        display.warn(`please use snake case for '${flag}'`)
+      }
       enabledExperimentalFeatures!.add(flag)
     })
 }
