@@ -30,8 +30,8 @@ describe('getPathToNestedCSSRule', () => {
     // Removing rule from CSSStyleSheet
     styleSheet.deleteRule(3)
 
-    expect(grouppingRule.parentStyleSheet).toBeUndefined()
-    expect(getPathToNestedCSSRule(styleSheet.cssRules[3])).toBeUndefined()
+    expect(grouppingRule.parentStyleSheet).toEqual(null)
+    expect(getPathToNestedCSSRule(grouppingRule)).toBeUndefined()
   })
 
   it('should return path to high level CSSStyleRule', () => {
