@@ -31,7 +31,13 @@ import type {
 import { RecordType, IncrementalSource, MediaInteractionType, MouseInteractionType } from '../../types'
 import { getNodePrivacyLevel, shouldMaskNode } from './privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from './serializationUtils'
-import { assembleIncrementalSnapshot, forEach, getPathToNestedCSSRule, isTouchEvent } from './utils'
+import {
+  assembleIncrementalSnapshot,
+  forEach,
+  getPathToNestedCSSRule,
+  isTouchEvent,
+  checkStyleSheetAndCallback,
+} from './utils'
 import type { MutationController } from './mutationObserver'
 import { startMutationObserver } from './mutationObserver'
 import { getVisualViewport, getScrollX, getScrollY, convertMouseEventToLayoutCoordinates } from './viewports'
@@ -351,53 +357,34 @@ export function initInputObserver(cb: InputCallback, defaultPrivacyLevel: Defaul
 export function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
   const { stop: restoreInsertRule } = instrumentMethodAndCallOriginal(CSSStyleSheet.prototype, 'insertRule', {
     before(rule, index) {
-      if (hasSerializedNode(this.ownerNode!)) {
-        cb({
-          id: getSerializedNodeId(this.ownerNode),
-          adds: [{ rule, index }],
-        })
-      }
+      checkStyleSheetAndCallback(this, (id) => cb({ id, adds: [{ rule, index }] }))
     },
   })
 
   const { stop: restoreDeleteRule } = instrumentMethodAndCallOriginal(CSSStyleSheet.prototype, 'deleteRule', {
     before(index) {
-      if (hasSerializedNode(this.ownerNode!)) {
-        cb({
-          id: getSerializedNodeId(this.ownerNode),
-          removes: [{ index }],
-        })
-      }
+      checkStyleSheetAndCallback(this, (id) => cb({ id, removes: [{ index }] }))
     },
   })
 
   const { stop: restoreInsertNestedRule } = instrumentMethodAndCallOriginal(CSSGroupingRule.prototype, 'insertRule', {
     before(rule, index) {
-      if (hasSerializedNode(this.parentStyleSheet!.ownerNode!)) {
-        cb({
-          id: getSerializedNodeId(this.parentStyleSheet!.ownerNode),
-          adds: [
-            {
-              rule,
-              index: getPathToNestedCSSRule(this).concat(index ?? 0),
-            },
-          ],
-        })
-      }
+      checkStyleSheetAndCallback(this.parentStyleSheet, (id) => {
+        const path = getPathToNestedCSSRule(this)
+        if (path) {
+          cb({ id, adds: [{ rule, index: path.push(index ?? 0) }] })
+        }
+      })
     },
   })
   const { stop: restoreDeleteNestedRule } = instrumentMethodAndCallOriginal(CSSGroupingRule.prototype, 'deleteRule', {
     before(index) {
-      if (hasSerializedNode(this.parentStyleSheet!.ownerNode!)) {
-        cb({
-          id: getSerializedNodeId(this.parentStyleSheet!.ownerNode),
-          removes: [
-            {
-              index: getPathToNestedCSSRule(this).concat(index),
-            },
-          ],
-        })
-      }
+      checkStyleSheetAndCallback(this.parentStyleSheet, (id) => {
+        const path = getPathToNestedCSSRule(this)
+        if (path) {
+          cb({ id, removes: [{ index: path.push(index) }] })
+        }
+      })
     },
   })
 

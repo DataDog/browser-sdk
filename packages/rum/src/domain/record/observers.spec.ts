@@ -162,24 +162,19 @@ describe('initFrustrationObserver', () => {
 //   let styleSheetCallbackSpy: jasmine.Spy<StyleSheetRuleCallback>
 //   let styleElement: HTMLStyleElement
 //   let styleSheet: CSSStyleSheet
-
 //   beforeEach(() => {
 //     if (isIE()) {
 //       pending('IE not supported')
 //     }
 //     styleSheetCallbackSpy = jasmine.createSpy()
-
-//     styleElement = document.createElement('style');
-//     document.head.appendChild(styleElement);
-
+//     styleElement = document.createElement('style')
+//     document.head.appendChild(styleElement)
 //     styleSheet = <CSSStyleSheet>styleElement.sheet
 //   })
-
 //   afterEach(() => {
 //     stopStyleSheetObserver()
 //     styleElement.remove()
 //   })
-
 //   describe('observing high level css stylesheet', () => {
 //     describe('when inserting rules into stylesheet', () => {
 //       it('should capture CSSStyleRule insertion when no index is provided', () => {
@@ -199,7 +194,9 @@ describe('initFrustrationObserver', () => {
 //         const index = 0
 //         // When
 //         stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy)
-//         styleSheet.insertRule(rule, index)
+//         styleSheet.insertRule('@media cond { .class {opacity: 0}}', index)
+//         const b = styleSheet.cssRules[0] as CSSGroupingRule
+//         b.insertRule(rule, 0)
 //         // Then
 //         const styleSheetRule = styleSheetCallbackSpy.calls.first().args[0]
 //         expect(styleSheetRule.id).toBeDefined()
@@ -208,7 +205,6 @@ describe('initFrustrationObserver', () => {
 //         expect(styleSheetRule.adds?.pop()?.index).toEqual(index)
 //       })
 //     })
-
 //     describe('when removing rules from stylesheet', () => {
 //       it('should capture CSSStyleRule removal with the correct index', () => {
 //         styleSheet.insertRule(rule)
@@ -226,7 +222,6 @@ describe('initFrustrationObserver', () => {
 //       })
 //     })
 //   })
-
 //   describe('observing CSSGroupingRules inside a CSSStyleSheet', () => {
 //     describe('when inserting CSSRules inside a CSSGroupingRule', () => {
 //       it('should capture CSSRule with the correct path when no index is provided', () => {
@@ -243,7 +238,7 @@ describe('initFrustrationObserver', () => {
 //         expect(styleSheetRule.id).toBeDefined()
 //         expect(styleSheetRule.removes).toBeUndefined()
 //         expect(styleSheetRule.adds?.length).toEqual(1)
-//         expect(styleSheetRule.adds?.pop()?.index).toEqual([1,1,0])
+//         expect(styleSheetRule.adds?.pop()?.index).toEqual([1, 1, 0])
 //       })
 //       it('should capture CSSRule with the correct path when index is provided', () => {
 //         styleSheet.insertRule(
@@ -259,8 +254,9 @@ describe('initFrustrationObserver', () => {
 //         expect(styleSheetRule.id).toBeDefined()
 //         expect(styleSheetRule.removes).toBeUndefined()
 //         expect(styleSheetRule.adds?.length).toEqual(1)
-//         expect(styleSheetRule.adds?.pop()?.index).toEqual([1,1,1])
+//         expect(styleSheetRule.adds?.pop()?.index).toEqual([1, 1, 1])
 //       })
+//       it('should not create record when inserting into a detached CSSGroupingRule', () => {})
 //     })
 //     describe('when removing CSSRules from a CSSGroupingRule', () => {
 //       it('should capture CSSRule removal with the correct path', () => {
@@ -277,8 +273,9 @@ describe('initFrustrationObserver', () => {
 //         expect(styleSheetRule.id).toBeDefined()
 //         expect(styleSheetRule.adds).toBeUndefined()
 //         expect(styleSheetRule.removes?.length).toEqual(1)
-//         expect(styleSheetRule.removes?.pop()?.index).toEqual([1,1,0])
+//         expect(styleSheetRule.removes?.pop()?.index).toEqual([1, 1, 0])
 //       })
+//       it('should not create record when removing from a detached CSSGroupingRule', () => {})
 //     })
 //   })
 // })

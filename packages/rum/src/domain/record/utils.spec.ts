@@ -16,13 +16,24 @@ const secondMediaRule = `
 
 describe('getPathToNestedCSSRule', () => {
   let styleSheet: CSSStyleSheet
-  beforeAll(() => {
+  beforeEach(() => {
     styleSheet = new CSSStyleSheet()
     styleSheet.insertRule(secondMediaRule)
     styleSheet.insertRule(firstsecondMediaRule)
     styleSheet.insertRule(secondStyleRule)
     styleSheet.insertRule(firstStyleRule)
   })
+
+  it('should return undefined if the rule is not attached to a parent StyleSheet', () => {
+    const grouppingRule = styleSheet.cssRules[3]
+    expect(grouppingRule.parentStyleSheet).toBeDefined()
+    // Removing rule from CSSStyleSheet
+    styleSheet.deleteRule(3)
+
+    expect(grouppingRule.parentStyleSheet).toBeUndefined()
+    expect(getPathToNestedCSSRule(styleSheet.cssRules[3])).toBeUndefined()
+  })
+
   it('should return path to high level CSSStyleRule', () => {
     expect(getPathToNestedCSSRule(styleSheet.cssRules[1])).toEqual([1])
   })
