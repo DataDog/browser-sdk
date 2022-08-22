@@ -372,7 +372,8 @@ export function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHand
       checkStyleSheetAndCallback(this.parentStyleSheet, (id) => {
         const path = getPathToNestedCSSRule(this)
         if (path) {
-          cb({ id, adds: [{ rule, index: path.push(index ?? 0) }] })
+          path.push(index ?? 0)
+          cb({ id, adds: [{ rule, index: path }] })
         }
       })
     },
@@ -382,7 +383,8 @@ export function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHand
       checkStyleSheetAndCallback(this.parentStyleSheet, (id) => {
         const path = getPathToNestedCSSRule(this)
         if (path) {
-          cb({ id, removes: [{ index: path.push(index) }] })
+          path.push(index)
+          cb({ id, removes: [{ index: path }] })
         }
       })
     },

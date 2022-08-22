@@ -648,6 +648,95 @@ describe('recorder', () => {
         expect(styleSheetRules[0].data.removes).toEqual([{ index: 0 }])
         expect(styleSheetRules[1].data.adds).toEqual([{ rule: '.added {}', index: 0 }])
       })
+
+    createTest('record nested css rules changes')
+      .withRum()
+      .withRumInit(initRumAndStartRecording)
+      .withSetup(bundleSetup)
+      .withBody(
+        html`
+          <style>
+            @media condition-1 {
+              .foo {
+              }
+            }
+            @media condition-2 {
+              .bar {
+              }
+              .baz {
+              }
+            }
+          </style>
+        `
+      )
+      .run(async ({ serverEvents }) => {
+        await browserExecute(() => {
+          const firstGroupingRule = document.styleSheets[0].cssRules[0] as CSSMediaRule
+          const secondGroupingRule = document.styleSheets[0].cssRules[1] as CSSGroupingRule
+
+          firstGroupingRule.insertRule('.inserted {}', 0)
+          firstGroupingRule.insertRule('.added {}', 1)
+          secondGroupingRule.deleteRule(1)
+        })
+
+        await flushEvents()
+
+        expect(serverEvents.sessionReplay.length).toBe(1)
+
+        const segment = getFirstSegment(serverEvents)
+
+        const styleSheetRules = findAllIncrementalSnapshots(segment, IncrementalSource.StyleSheetRule) as Array<{
+          data: StyleSheetRuleData
+        }>
+
+        expect(styleSheetRules.length).toBe(3)
+        expect(styleSheetRules[0].data.adds).toEqual([{ rule: '.inserted {}', index: [0, 0] }])
+        expect(styleSheetRules[1].data.adds).toEqual([{ rule: '.added {}', index: [0, 1] }])
+        expect(styleSheetRules[2].data.removes).toEqual([{ index: [1, 1] }])
+      })
+
+    createTest('ignore changes applied on detached rules')
+      .withRum()
+      .withRumInit(initRumAndStartRecording)
+      .withSetup(bundleSetup)
+      .withBody(
+        html`
+          <style>
+            @media condition-1 {
+              .foo {
+              }
+            }
+            @media condition-2 {
+              .bar {
+              }
+              .baz {
+              }
+            }
+          </style>
+        `
+      )
+      .run(async ({ serverEvents }) => {
+        await browserExecute(() => {
+          const groupingRule = document.styleSheets[0].cssRules[0] as CSSGroupingRule
+          document.styleSheets[0].deleteRule(0)
+
+          groupingRule.deleteRule(0)
+          groupingRule.insertRule('.inserted {}', 0)
+          groupingRule.insertRule('.added {}', 1)
+        })
+
+        await flushEvents()
+
+        expect(serverEvents.sessionReplay.length).toBe(1)
+
+        const segment = getFirstSegment(serverEvents)
+
+        const styleSheetRules = findAllIncrementalSnapshots(segment, IncrementalSource.StyleSheetRule) as Array<{
+          data: StyleSheetRuleData
+        }>
+
+        expect(styleSheetRules.length).toBe(1)
+      })
   })
 
   describe('session renewal', () => {
