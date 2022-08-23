@@ -31,12 +31,14 @@ import type {
 import { RecordType, IncrementalSource, MediaInteractionType, MouseInteractionType } from '../../types'
 import { getNodePrivacyLevel, shouldMaskNode } from './privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from './serializationUtils'
+import type { GroupingCSSRuleTypes } from './utils'
 import {
   assembleIncrementalSnapshot,
   forEach,
   getPathToNestedCSSRule,
   isTouchEvent,
   checkStyleSheetAndCallback,
+  getSupportedCSSRuleTypes,
 } from './utils'
 import type { MutationController } from './mutationObserver'
 import { startMutationObserver } from './mutationObserver'
@@ -367,34 +369,43 @@ export function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHand
     },
   })
 
-  const { stop: restoreInsertNestedRule } = instrumentMethodAndCallOriginal(CSSGroupingRule.prototype, 'insertRule', {
-    before(rule, index) {
-      checkStyleSheetAndCallback(this.parentStyleSheet, (id) => {
-        const path = getPathToNestedCSSRule(this)
-        if (path) {
-          path.push(index ?? 0)
-          cb({ id, adds: [{ rule, index: path }] })
-        }
-      })
-    },
+  const originalInsertRestorers = getSupportedCSSRuleTypes().map((ruleType) => {
+    const { stop: restoreInsertNestedRule } = instrumentMethodAndCallOriginal(ruleType.prototype, 'insertRule', {
+      before(rule, index) {
+        checkStyleSheetAndCallback(this.parentStyleSheet, (id) => {
+          const path = getPathToNestedCSSRule(this)
+          if (path) {
+            path.push(index ?? 0)
+            cb({ id, adds: [{ rule, index: path }] })
+          }
+        })
+      },
+    })
+
+    return restoreInsertNestedRule
   })
-  const { stop: restoreDeleteNestedRule } = instrumentMethodAndCallOriginal(CSSGroupingRule.prototype, 'deleteRule', {
-    before(index) {
-      checkStyleSheetAndCallback(this.parentStyleSheet, (id) => {
-        const path = getPathToNestedCSSRule(this)
-        if (path) {
-          path.push(index)
-          cb({ id, removes: [{ index: path }] })
-        }
-      })
-    },
+
+  const originalDeleteRestorers = getSupportedCSSRuleTypes().map((ruleType: GroupingCSSRuleTypes) => {
+    const { stop: restoreDeleteNestedRule } = instrumentMethodAndCallOriginal(ruleType.prototype, 'deleteRule', {
+      before(index) {
+        checkStyleSheetAndCallback(this.parentStyleSheet, (id) => {
+          const path = getPathToNestedCSSRule(this)
+          if (path) {
+            path.push(index)
+            cb({ id, removes: [{ index: path }] })
+          }
+        })
+      },
+    })
+
+    return restoreDeleteNestedRule
   })
 
   return () => {
     restoreInsertRule()
     restoreDeleteRule()
-    restoreInsertNestedRule()
-    restoreDeleteNestedRule()
+    originalInsertRestorers.forEach((restoreOriginal) => restoreOriginal())
+    originalDeleteRestorers.forEach((restoreOriginal) => restoreOriginal())
   }
 }
 
