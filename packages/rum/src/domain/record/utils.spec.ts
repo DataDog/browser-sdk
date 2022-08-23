@@ -16,12 +16,20 @@ const secondMediaRule = `
 
 describe('getPathToNestedCSSRule', () => {
   let styleSheet: CSSStyleSheet
+  let styleElement: HTMLStyleElement
   beforeEach(() => {
-    styleSheet = new CSSStyleSheet()
+    styleElement = document.createElement('style')
+    document.head.appendChild(styleElement)
+    styleSheet = <CSSStyleSheet>styleElement.sheet
+
     styleSheet.insertRule(secondMediaRule)
     styleSheet.insertRule(firstsecondMediaRule)
     styleSheet.insertRule(secondStyleRule)
     styleSheet.insertRule(firstStyleRule)
+  })
+
+  afterEach(() => {
+    styleElement.remove()
   })
 
   it('should return undefined if the rule is not attached to a parent StyleSheet', () => {

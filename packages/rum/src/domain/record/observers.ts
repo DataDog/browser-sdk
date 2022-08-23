@@ -33,6 +33,7 @@ import { getNodePrivacyLevel, shouldMaskNode } from './privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from './serializationUtils'
 import type { GroupingCSSRuleTypes } from './utils'
 import {
+  isNestedRulesSupported,
   assembleIncrementalSnapshot,
   forEach,
   getPathToNestedCSSRule,
@@ -368,6 +369,13 @@ export function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHand
       checkStyleSheetAndCallback(this, (id) => cb({ id, removes: [{ index }] }))
     },
   })
+
+  if (!isNestedRulesSupported()) {
+    return () => {
+      restoreInsertRule()
+      restoreDeleteRule()
+    }
+  }
 
   const originalInsertRestorers = getSupportedCSSRuleTypes().map((ruleType) => {
     const { stop: restoreInsertNestedRule } = instrumentMethodAndCallOriginal(ruleType.prototype, 'insertRule', {
