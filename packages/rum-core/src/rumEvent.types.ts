@@ -48,7 +48,7 @@ export type RumActionEvent = CommonProperties & {
       /**
        * Action frustration types
        */
-      readonly type: ('rage_click' | 'dead_click' | 'error_click')[]
+      readonly type: ('rage_click' | 'dead_click' | 'error_click' | 'rage_tap' | 'error_tap')[]
       [k: string]: unknown
     }
     /**
@@ -473,6 +473,10 @@ export type RumResourceEvent = CommonProperties &
        * trace identifier in decimal format
        */
       readonly trace_id?: string
+      /**
+       * tracing sample rate in decimal format
+       */
+      readonly rule_psr?: number
       [k: string]: unknown
     }
     [k: string]: unknown
@@ -729,7 +733,7 @@ export interface CommonProperties {
   /**
    * The source of this event
    */
-  readonly source?: 'android' | 'ios' | 'browser' | 'flutter' | 'react-native'
+  readonly source?: 'android' | 'ios' | 'browser' | 'flutter' | 'react-native' | 'roku'
   /**
    * View properties
    */
