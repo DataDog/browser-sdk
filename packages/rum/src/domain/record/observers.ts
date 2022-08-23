@@ -33,7 +33,7 @@ import { getNodePrivacyLevel, shouldMaskNode } from './privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from './serializationUtils'
 import type { GroupingCSSRuleTypes } from './utils'
 import {
-  isNestedRulesSupported,
+  browserSupportsGroupingRules,
   assembleIncrementalSnapshot,
   forEach,
   getPathToNestedCSSRule,
@@ -370,7 +370,7 @@ export function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHand
     },
   })
 
-  if (!isNestedRulesSupported()) {
+  if (!browserSupportsGroupingRules()) {
     return () => {
       restoreInsertRule()
       restoreDeleteRule()

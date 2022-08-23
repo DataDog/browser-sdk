@@ -1,3 +1,4 @@
+import { isIE } from '@datadog/browser-core'
 import { getPathToNestedCSSRule } from './utils'
 
 const firstStyleRule = '.selector-1 { color: #aaa }'
@@ -18,6 +19,9 @@ describe('getPathToNestedCSSRule', () => {
   let styleSheet: CSSStyleSheet
   let styleElement: HTMLStyleElement
   beforeEach(() => {
+    if (isIE()) {
+      pending('IE not supported')
+    }
     styleElement = document.createElement('style')
     document.head.appendChild(styleElement)
     styleSheet = <CSSStyleSheet>styleElement.sheet

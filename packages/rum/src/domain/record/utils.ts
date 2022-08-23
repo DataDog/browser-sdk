@@ -37,11 +37,11 @@ export function checkStyleSheetAndCallback(styleSheet: CSSStyleSheet | null, cal
 }
 
 /*
- * We can ignore CSSCondition rule in this work around
+ * We can ignore CSSCondition rule in this workaround
  * (see https://caniuse.com/?search=cssconditionrule & https://caniuse.com/?search=cssgroupingrule)
- * if CSSGroupingRule is defined, there is no need to each sub interface (CSSMediaRule, CSSSupprtsRule,
- * CSSConditionRule). if CSSGroupingRule is not defined, CSSConditionRule is not defined neither and we
- * fall back to supported rules only
+ * if CSSGroupingRule is defined, there is no need to handle each sub interface separatly (CSSMediaRule,
+ * CSSSupprtsRule, CSSConditionRule). If CSSGroupingRule is not defined, CSSConditionRule is not defined
+ * neither and we fall back to supported rules only.
  */
 
 export type GroupingCSSRuleTypes = typeof CSSGroupingRule | typeof CSSMediaRule | typeof CSSSupportsRule
@@ -51,11 +51,11 @@ export const isCSSGroupingRuleSupported = typeof CSSGroupingRule !== 'undefined'
 export const isCSSMediaRuleSupported = typeof CSSMediaRule !== 'undefined'
 export const isCSSSupportsRuleSupported = typeof CSSSupportsRule !== 'undefined'
 
-export function isNestedRulesSupported() {
+export function browserSupportsGroupingRules(): boolean {
   return isCSSGroupingRuleSupported || isCSSMediaRuleSupported || isCSSSupportsRuleSupported
 }
 
-export function getSupportedCSSRuleTypes() {
+export function getSupportedCSSRuleTypes(): GroupingCSSRuleTypes[] {
   if (isCSSGroupingRuleSupported) {
     return [CSSGroupingRule]
   }
