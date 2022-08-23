@@ -170,7 +170,7 @@ describe('initStyleSheetObserver', () => {
     styleSheetCallbackSpy = jasmine.createSpy()
     styleElement = document.createElement('style')
     document.head.appendChild(styleElement)
-    styleSheet = <CSSStyleSheet>styleElement.sheet
+    styleSheet = styleElement.sheet!
 
     serializeDocument(document, NodePrivacyLevel.ALLOW, {
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
@@ -262,7 +262,7 @@ describe('initStyleSheetObserver', () => {
         stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy)
         groupingRule.insertRule(styleRule, 0)
         // Then
-        expect(styleSheetCallbackSpy.calls.all().length).toEqual(0)
+        expect(styleSheetCallbackSpy).not.toHaveBeenCalled()
       })
     })
 
@@ -297,7 +297,7 @@ describe('initStyleSheetObserver', () => {
         stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy)
         groupingRule.deleteRule(0)
         // Then
-        expect(styleSheetCallbackSpy.calls.all().length).toEqual(0)
+        expect(styleSheetCallbackSpy).not.toHaveBeenCalled()
       })
     })
   })

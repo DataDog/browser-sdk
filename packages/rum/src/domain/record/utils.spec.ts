@@ -24,7 +24,7 @@ describe('getPathToNestedCSSRule', () => {
     }
     styleElement = document.createElement('style')
     document.head.appendChild(styleElement)
-    styleSheet = <CSSStyleSheet>styleElement.sheet
+    styleSheet = styleElement.sheet!
 
     styleSheet.insertRule(secondMediaRule)
     styleSheet.insertRule(firstsecondMediaRule)

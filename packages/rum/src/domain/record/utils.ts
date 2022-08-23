@@ -1,7 +1,6 @@
 import { assign, timeStampNow } from '@datadog/browser-core'
 import type { BrowserIncrementalData, BrowserIncrementalSnapshotRecord } from '../../types'
 import { RecordType } from '../../types'
-import { getSerializedNodeId, hasSerializedNode } from './serializationUtils'
 
 export function isTouchEvent(event: MouseEvent | TouchEvent): event is TouchEvent {
   return Boolean((event as TouchEvent).changedTouches)
@@ -30,45 +29,7 @@ export function assembleIncrementalSnapshot<Data extends BrowserIncrementalData>
   }
 }
 
-export function checkStyleSheetAndCallback(styleSheet: CSSStyleSheet | null, callback: (id: number) => void): void {
-  if (styleSheet && hasSerializedNode(styleSheet.ownerNode!)) {
-    callback(getSerializedNodeId(styleSheet.ownerNode))
-  }
-}
-
-/*
- * We can ignore CSSCondition rule in this workaround
- * (see https://caniuse.com/?search=cssconditionrule & https://caniuse.com/?search=cssgroupingrule)
- * if CSSGroupingRule is defined, there is no need to handle each sub interface separatly (CSSMediaRule,
- * CSSSupprtsRule, CSSConditionRule). If CSSGroupingRule is not defined, CSSConditionRule is not defined
- * neither and we fall back to supported rules only.
- */
-
-export type GroupingCSSRuleTypes = typeof CSSGroupingRule | typeof CSSMediaRule | typeof CSSSupportsRule
 export type GroupingCSSRule = CSSGroupingRule | CSSSupportsRule | CSSMediaRule
-
-export const isCSSGroupingRuleSupported = typeof CSSGroupingRule !== 'undefined'
-export const isCSSMediaRuleSupported = typeof CSSMediaRule !== 'undefined'
-export const isCSSSupportsRuleSupported = typeof CSSSupportsRule !== 'undefined'
-
-export function browserSupportsGroupingRules(): boolean {
-  return isCSSGroupingRuleSupported || isCSSMediaRuleSupported || isCSSSupportsRuleSupported
-}
-
-export function getSupportedCSSRuleTypes(): GroupingCSSRuleTypes[] {
-  if (isCSSGroupingRuleSupported) {
-    return [CSSGroupingRule]
-  }
-  const supported = []
-  if (isCSSSupportsRuleSupported) {
-    supported.push(CSSSupportsRule)
-  }
-  if (isCSSMediaRuleSupported) {
-    supported.push(CSSMediaRule)
-  }
-
-  return supported
-}
 
 export function getPathToNestedCSSRule(rule: CSSRule): number[] | undefined {
   const path: number[] = []

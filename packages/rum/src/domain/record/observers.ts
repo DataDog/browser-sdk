@@ -31,16 +31,7 @@ import type {
 import { RecordType, IncrementalSource, MediaInteractionType, MouseInteractionType } from '../../types'
 import { getNodePrivacyLevel, shouldMaskNode } from './privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from './serializationUtils'
-import type { GroupingCSSRuleTypes } from './utils'
-import {
-  browserSupportsGroupingRules,
-  assembleIncrementalSnapshot,
-  forEach,
-  getPathToNestedCSSRule,
-  isTouchEvent,
-  checkStyleSheetAndCallback,
-  getSupportedCSSRuleTypes,
-} from './utils'
+import { assembleIncrementalSnapshot, forEach, getPathToNestedCSSRule, isTouchEvent } from './utils'
 import type { MutationController } from './mutationObserver'
 import { startMutationObserver } from './mutationObserver'
 import { getVisualViewport, getScrollX, getScrollY, convertMouseEventToLayoutCoordinates } from './viewports'
@@ -59,6 +50,8 @@ function getRecordIdForEvent(event: Event): number {
   }
   return recordIds.get(event)!
 }
+
+type GroupingCSSRuleTypes = typeof CSSGroupingRule | typeof CSSMediaRule | typeof CSSSupportsRule
 
 type ListenerHandler = () => void
 
@@ -358,63 +351,60 @@ export function initInputObserver(cb: InputCallback, defaultPrivacyLevel: Defaul
 }
 
 export function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
-  const { stop: restoreInsertRule } = instrumentMethodAndCallOriginal(CSSStyleSheet.prototype, 'insertRule', {
-    before(rule, index) {
-      checkStyleSheetAndCallback(this, (id) => cb({ id, adds: [{ rule, index }] }))
-    },
-  })
-
-  const { stop: restoreDeleteRule } = instrumentMethodAndCallOriginal(CSSStyleSheet.prototype, 'deleteRule', {
-    before(index) {
-      checkStyleSheetAndCallback(this, (id) => cb({ id, removes: [{ index }] }))
-    },
-  })
-
-  if (!browserSupportsGroupingRules()) {
-    return () => {
-      restoreInsertRule()
-      restoreDeleteRule()
+  function checkStyleSheetAndCallback(styleSheet: CSSStyleSheet | null, callback: (id: number) => void): void {
+    if (styleSheet && hasSerializedNode(styleSheet.ownerNode!)) {
+      callback(getSerializedNodeId(styleSheet.ownerNode))
     }
   }
 
-  const originalInsertRestorers = getSupportedCSSRuleTypes().map((ruleType) => {
-    const { stop: restoreInsertNestedRule } = instrumentMethodAndCallOriginal(ruleType.prototype, 'insertRule', {
-      before(rule, index) {
-        checkStyleSheetAndCallback(this.parentStyleSheet, (id) => {
-          const path = getPathToNestedCSSRule(this)
-          if (path) {
-            path.push(index ?? 0)
-            cb({ id, adds: [{ rule, index: path }] })
-          }
-        })
-      },
-    })
-
-    return restoreInsertNestedRule
-  })
-
-  const originalDeleteRestorers = getSupportedCSSRuleTypes().map((ruleType: GroupingCSSRuleTypes) => {
-    const { stop: restoreDeleteNestedRule } = instrumentMethodAndCallOriginal(ruleType.prototype, 'deleteRule', {
-      before(index) {
-        checkStyleSheetAndCallback(this.parentStyleSheet, (id) => {
-          const path = getPathToNestedCSSRule(this)
-          if (path) {
-            path.push(index)
-            cb({ id, removes: [{ index: path }] })
-          }
-        })
-      },
-    })
-
-    return restoreDeleteNestedRule
-  })
-
-  return () => {
-    restoreInsertRule()
-    restoreDeleteRule()
-    originalInsertRestorers.forEach((restoreOriginal) => restoreOriginal())
-    originalDeleteRestorers.forEach((restoreOriginal) => restoreOriginal())
+  function instrumentGroupingCSSRuleClass(cls: GroupingCSSRuleTypes) {
+    instrumentationStoppers.push(
+      instrumentMethodAndCallOriginal(cls.prototype, 'insertRule', {
+        before(rule, index) {
+          checkStyleSheetAndCallback(this.parentStyleSheet, (id) => {
+            const path = getPathToNestedCSSRule(this)
+            if (path) {
+              path.push(index || 0)
+              cb({ id, adds: [{ rule, index: path }] })
+            }
+          })
+        },
+      }),
+      instrumentMethodAndCallOriginal(cls.prototype, 'deleteRule', {
+        before(index) {
+          checkStyleSheetAndCallback(this.parentStyleSheet, (id) => {
+            const path = getPathToNestedCSSRule(this)
+            if (path) {
+              path.push(index)
+              cb({ id, removes: [{ index: path }] })
+            }
+          })
+        },
+      })
+    )
   }
+
+  const instrumentationStoppers = [
+    instrumentMethodAndCallOriginal(CSSStyleSheet.prototype, 'insertRule', {
+      before(rule, index) {
+        checkStyleSheetAndCallback(this, (id) => cb({ id, adds: [{ rule, index }] }))
+      },
+    }),
+    instrumentMethodAndCallOriginal(CSSStyleSheet.prototype, 'deleteRule', {
+      before(index) {
+        checkStyleSheetAndCallback(this, (id) => cb({ id, removes: [{ index }] }))
+      },
+    }),
+  ]
+
+  if (typeof CSSGroupingRule !== undefined) {
+    instrumentGroupingCSSRuleClass(CSSGroupingRule)
+  } else {
+    instrumentGroupingCSSRuleClass(CSSMediaRule)
+    instrumentGroupingCSSRuleClass(CSSSupportsRule)
+  }
+
+  return () => instrumentationStoppers.forEach((stopper) => stopper.stop())
 }
 
 function initMediaInteractionObserver(
