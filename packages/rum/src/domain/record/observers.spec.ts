@@ -2,13 +2,14 @@ import { DefaultPrivacyLevel, isIE, relativeNow, timeStampNow } from '@datadog/b
 import type { RawRumActionEvent } from '@datadog/browser-rum-core'
 import { ActionType, LifeCycle, LifeCycleEventType, RumEventType, FrustrationType } from '@datadog/browser-rum-core'
 import type { RawRumEventCollectedData } from 'packages/rum-core/src/domain/lifeCycle'
-import { createNewEvent } from '../../../../core/test/specHelper'
+import { createNewEvent, isFirefox } from '../../../../core/test/specHelper'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT } from '../../constants'
 import { RecordType } from '../../types'
 import type { FrustrationCallback, InputCallback, StyleSheetRuleCallback } from './observers'
 import { initStyleSheetObserver, initFrustrationObserver, initInputObserver } from './observers'
 import { serializeDocument, SerializationContextStatus } from './serialize'
 import { createElementsScrollPositions } from './elementsScrollPositions'
+import type { GroupingCSSRule } from './utils'
 
 describe('initInputObserver', () => {
   let stopInputObserver: () => void
@@ -235,7 +236,7 @@ describe('initStyleSheetObserver', () => {
         styleSheet.insertRule('@media cond-2 { @media cond-1 { .nest-1 { color: #ccc } } }')
         styleSheet.insertRule('.main {opacity: 0}')
         // Given
-        const groupingRule = (styleSheet.cssRules[1] as CSSGroupingRule).cssRules[0] as CSSGroupingRule
+        const groupingRule = (styleSheet.cssRules[1] as GroupingCSSRule).cssRules[0] as GroupingCSSRule
         // When
         stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy)
         groupingRule.insertRule(styleRule, 1)
@@ -248,10 +249,14 @@ describe('initStyleSheetObserver', () => {
       })
 
       it('should not create record when inserting into a detached CSSGroupingRule', () => {
+        if (isFirefox()) {
+          pending('Firefox does not support inserting rules in detached group')
+        }
+
         styleSheet.insertRule('@media cond-2 { @media cond-1 { .nest-1 { color: #ccc } } }')
         // Given
-        const parentRule = styleSheet.cssRules[0] as CSSGroupingRule
-        const groupingRule = parentRule.cssRules[0] as CSSGroupingRule
+        const parentRule = styleSheet.cssRules[0] as GroupingCSSRule
+        const groupingRule = parentRule.cssRules[0] as GroupingCSSRule
         parentRule.deleteRule(0)
         // When
         stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy)
@@ -266,7 +271,7 @@ describe('initStyleSheetObserver', () => {
         styleSheet.insertRule('@media cond-2 { @media cond-1 { .nest-1 { color: #ccc } } }')
         styleSheet.insertRule('.main {opacity: 0}')
         // Given
-        const groupingRule = (styleSheet.cssRules[1] as CSSGroupingRule).cssRules[0] as CSSGroupingRule
+        const groupingRule = (styleSheet.cssRules[1] as GroupingCSSRule).cssRules[0] as GroupingCSSRule
         // When
         stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy)
         groupingRule.deleteRule(0)
@@ -279,10 +284,14 @@ describe('initStyleSheetObserver', () => {
       })
 
       it('should not create record when removing from a detached CSSGroupingRule', () => {
+        if (isFirefox()) {
+          pending('Firefox does not support inserting rules in detached group')
+        }
+
         styleSheet.insertRule('@media cond-2 { @media cond-1 { .nest-1 { color: #ccc } } }')
         // Given
-        const parentRule = styleSheet.cssRules[0] as CSSGroupingRule
-        const groupingRule = parentRule.cssRules[0] as CSSGroupingRule
+        const parentRule = styleSheet.cssRules[0] as GroupingCSSRule
+        const groupingRule = parentRule.cssRules[0] as GroupingCSSRule
         parentRule.deleteRule(0)
         // When
         stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy)
