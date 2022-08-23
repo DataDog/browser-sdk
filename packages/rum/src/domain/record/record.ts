@@ -1,5 +1,5 @@
-import { timeStampNow } from '@datadog/browser-core'
 import type { DefaultPrivacyLevel, TimeStamp } from '@datadog/browser-core'
+import { timeStampNow } from '@datadog/browser-core'
 import type { LifeCycle } from '@datadog/browser-rum-core'
 import { getViewportDimension } from '@datadog/browser-rum-core'
 import type {
@@ -13,12 +13,13 @@ import type {
   ViewportResizeData,
 } from '../../types'
 import { RecordType, IncrementalSource } from '../../types'
-import { serializeDocument } from './serialize'
-import { initObservers } from './observer'
+import { serializeDocument, SerializationContextStatus } from './serialize'
+import { initObservers } from './observers'
 
 import { MutationController } from './mutationObserver'
 import { getVisualViewport, getScrollX, getScrollY } from './viewports'
 import { assembleIncrementalSnapshot } from './utils'
+import { createElementsScrollPositions } from './elementsScrollPositions'
 
 export interface RecordOptions {
   emit?: (record: BrowserRecord) => void
@@ -28,7 +29,7 @@ export interface RecordOptions {
 
 export interface RecordAPI {
   stop: () => void
-  takeFullSnapshot: (timestamp?: TimeStamp) => void
+  takeSubsequentFullSnapshot: (timestamp?: TimeStamp) => void
   flushMutations: () => void
 }
 
@@ -40,8 +41,12 @@ export function record(options: RecordOptions): RecordAPI {
   }
 
   const mutationController = new MutationController()
+  const elementsScrollPositions = createElementsScrollPositions()
 
-  const takeFullSnapshot = (timestamp = timeStampNow()) => {
+  const takeFullSnapshot = (
+    timestamp = timeStampNow(),
+    serializationContext = { status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT, elementsScrollPositions }
+  ) => {
     mutationController.flush() // process any pending mutation before taking a full snapshot
     const { width, height } = getViewportDimension()
     emit({
@@ -64,7 +69,7 @@ export function record(options: RecordOptions): RecordAPI {
 
     emit({
       data: {
-        node: serializeDocument(document, options.defaultPrivacyLevel),
+        node: serializeDocument(document, options.defaultPrivacyLevel, serializationContext),
         initialOffset: {
           left: getScrollX(),
           top: getScrollY(),
@@ -88,6 +93,7 @@ export function record(options: RecordOptions): RecordAPI {
   const stopObservers = initObservers({
     lifeCycle: options.lifeCycle,
     mutationController,
+    elementsScrollPositions,
     defaultPrivacyLevel: options.defaultPrivacyLevel,
     inputCb: (v) => emit(assembleIncrementalSnapshot<InputData>(IncrementalSource.Input, v)),
     mediaInteractionCb: (p) =>
@@ -117,7 +123,11 @@ export function record(options: RecordOptions): RecordAPI {
 
   return {
     stop: stopObservers,
-    takeFullSnapshot,
+    takeSubsequentFullSnapshot: (timestamp) =>
+      takeFullSnapshot(timestamp, {
+        status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT,
+        elementsScrollPositions,
+      }),
     flushMutations: () => mutationController.flush(),
   }
 }

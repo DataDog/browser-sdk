@@ -39,18 +39,6 @@ export type RumActionEvent = CommonProperties & {
        * Target name
        */
       name: string
-      /**
-       * CSS selector path of the target element
-       */
-      readonly selector?: string
-      /**
-       * Width of the target element (in pixels)
-       */
-      readonly width?: number
-      /**
-       * Height of the target element (in pixels)
-       */
-      readonly height?: number
       [k: string]: unknown
     }
     /**
@@ -61,20 +49,6 @@ export type RumActionEvent = CommonProperties & {
        * Action frustration types
        */
       readonly type: ('rage_click' | 'dead_click' | 'error_click')[]
-      [k: string]: unknown
-    }
-    /**
-     * Action position properties
-     */
-    readonly position?: {
-      /**
-       * X coordinate relative to the target element of the action (in pixels)
-       */
-      readonly x: number
-      /**
-       * Y coordinate relative to the target element of the action (in pixels)
-       */
-      readonly y: number
       [k: string]: unknown
     }
     /**
@@ -127,6 +101,50 @@ export type RumActionEvent = CommonProperties & {
      * Is the action starting in the foreground (focus in browser)
      */
     readonly in_foreground?: boolean
+    [k: string]: unknown
+  }
+  /**
+   * Internal properties
+   */
+  _dd?: {
+    /**
+     * Action properties
+     */
+    readonly action?: {
+      /**
+       * Action position properties
+       */
+      readonly position?: {
+        /**
+         * X coordinate relative to the target element of the action (in pixels)
+         */
+        readonly x: number
+        /**
+         * Y coordinate relative to the target element of the action (in pixels)
+         */
+        readonly y: number
+        [k: string]: unknown
+      }
+      /**
+       * Target properties
+       */
+      target?: {
+        /**
+         * CSS selector path of the target element
+         */
+        readonly selector?: string
+        /**
+         * Width of the target element (in pixels)
+         */
+        readonly width?: number
+        /**
+         * Height of the target element (in pixels)
+         */
+        readonly height?: number
+        [k: string]: unknown
+      }
+      [k: string]: unknown
+    }
     [k: string]: unknown
   }
   [k: string]: unknown

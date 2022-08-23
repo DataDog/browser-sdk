@@ -150,17 +150,23 @@ export interface RawRumActionEvent {
     resource?: Count
     target: {
       name: string
-      selector?: string
-      width?: number
-      height?: number
-    }
-    position?: {
-      x: number
-      y: number
     }
   }
   view?: {
     in_foreground: boolean
+  }
+  _dd?: {
+    action?: {
+      target?: {
+        selector?: string
+        width?: number
+        height?: number
+      }
+      position?: {
+        x: number
+        y: number
+      }
+    }
   }
 }
 
