@@ -194,7 +194,7 @@ describe('initStyleSheetObserver', () => {
         expect(styleSheetRule.id).toBeDefined()
         expect(styleSheetRule.removes).toBeUndefined()
         expect(styleSheetRule.adds?.length).toEqual(1)
-        expect(styleSheetRule.adds?.pop()?.index).toEqual(undefined)
+        expect(styleSheetRule.adds?.[0]?.index).toEqual(undefined)
       })
 
       it('should capture CSSStyleRule insertion when index is provided', () => {
@@ -208,7 +208,7 @@ describe('initStyleSheetObserver', () => {
         expect(styleSheetRule.id).toBeDefined()
         expect(styleSheetRule.removes).toBeUndefined()
         expect(styleSheetRule.adds?.length).toEqual(1)
-        expect(styleSheetRule.adds?.pop()?.index).toEqual(index)
+        expect(styleSheetRule.adds?.[0]?.index).toEqual(index)
       })
     })
 
@@ -225,7 +225,7 @@ describe('initStyleSheetObserver', () => {
         expect(styleSheetRule.id).toBeDefined()
         expect(styleSheetRule.adds).toBeUndefined()
         expect(styleSheetRule.removes?.length).toEqual(1)
-        expect(styleSheetRule.removes?.pop()).toEqual({ index })
+        expect(styleSheetRule.removes?.[0]).toEqual({ index })
       })
     })
   })
@@ -245,7 +245,7 @@ describe('initStyleSheetObserver', () => {
         expect(styleSheetRule.id).toBeDefined()
         expect(styleSheetRule.removes).toBeUndefined()
         expect(styleSheetRule.adds?.length).toEqual(1)
-        expect(styleSheetRule.adds?.pop()?.index).toEqual([1, 0, 1])
+        expect(styleSheetRule.adds?.[0]?.index).toEqual([1, 0, 1])
       })
 
       it('should not create record when inserting into a detached CSSGroupingRule', () => {
@@ -280,7 +280,7 @@ describe('initStyleSheetObserver', () => {
         expect(styleSheetRule.id).toBeDefined()
         expect(styleSheetRule.adds).toBeUndefined()
         expect(styleSheetRule.removes?.length).toEqual(1)
-        expect(styleSheetRule.removes?.pop()?.index).toEqual([1, 0, 0])
+        expect(styleSheetRule.removes?.[0]?.index).toEqual([1, 0, 0])
       })
 
       it('should not create record when removing from a detached CSSGroupingRule', () => {
