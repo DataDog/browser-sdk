@@ -357,6 +357,26 @@ export function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHand
     }
   }
 
+  const instrumentationStoppers = [
+    instrumentMethodAndCallOriginal(CSSStyleSheet.prototype, 'insertRule', {
+      before(rule, index) {
+        checkStyleSheetAndCallback(this, (id) => cb({ id, adds: [{ rule, index }] }))
+      },
+    }),
+    instrumentMethodAndCallOriginal(CSSStyleSheet.prototype, 'deleteRule', {
+      before(index) {
+        checkStyleSheetAndCallback(this, (id) => cb({ id, removes: [{ index }] }))
+      },
+    }),
+  ]
+
+  if (typeof CSSGroupingRule !== 'undefined') {
+    instrumentGroupingCSSRuleClass(CSSGroupingRule)
+  } else {
+    instrumentGroupingCSSRuleClass(CSSMediaRule)
+    instrumentGroupingCSSRuleClass(CSSSupportsRule)
+  }
+
   function instrumentGroupingCSSRuleClass(cls: GroupingCSSRuleTypes) {
     instrumentationStoppers.push(
       instrumentMethodAndCallOriginal(cls.prototype, 'insertRule', {
@@ -382,26 +402,6 @@ export function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHand
         },
       })
     )
-  }
-
-  const instrumentationStoppers = [
-    instrumentMethodAndCallOriginal(CSSStyleSheet.prototype, 'insertRule', {
-      before(rule, index) {
-        checkStyleSheetAndCallback(this, (id) => cb({ id, adds: [{ rule, index }] }))
-      },
-    }),
-    instrumentMethodAndCallOriginal(CSSStyleSheet.prototype, 'deleteRule', {
-      before(index) {
-        checkStyleSheetAndCallback(this, (id) => cb({ id, removes: [{ index }] }))
-      },
-    }),
-  ]
-
-  if (typeof CSSGroupingRule !== undefined) {
-    instrumentGroupingCSSRuleClass(CSSGroupingRule)
-  } else {
-    instrumentGroupingCSSRuleClass(CSSMediaRule)
-    instrumentGroupingCSSRuleClass(CSSSupportsRule)
   }
 
   return () => instrumentationStoppers.forEach((stopper) => stopper.stop())

@@ -24,6 +24,7 @@ import {
   findMouseInteractionRecords,
   findElementWithTagName,
 } from '@datadog/browser-rum/test/utils'
+import type { GroupingCSSRule } from '@datadog/browser-rum/src/domain/record/utils'
 import { renewSession } from '../../lib/helpers/session'
 import type { EventRegistry } from '../../lib/framework'
 import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
@@ -672,7 +673,7 @@ describe('recorder', () => {
       .run(async ({ serverEvents }) => {
         await browserExecute(() => {
           const firstGroupingRule = document.styleSheets[0].cssRules[0] as CSSMediaRule
-          const secondGroupingRule = document.styleSheets[0].cssRules[1] as CSSGroupingRule
+          const secondGroupingRule = document.styleSheets[0].cssRules[1] as GroupingCSSRule
 
           firstGroupingRule.insertRule('.inserted {}', 0)
           firstGroupingRule.insertRule('.added {}', 1)
