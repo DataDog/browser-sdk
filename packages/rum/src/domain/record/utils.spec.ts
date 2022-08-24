@@ -3,7 +3,7 @@ import { getPathToNestedCSSRule } from './utils'
 
 const firstStyleRule = '.selector-1 { color: #aaa }'
 const secondStyleRule = '.selector-2 { color: #bbb }'
-const firstsecondMediaRule = `
+const firstMediaRule = `
     @media cond-1 {
         .selector-3-1 { color: #ccc }
         .selector-3-2 { color: #ddd }
@@ -27,7 +27,7 @@ describe('getPathToNestedCSSRule', () => {
     styleSheet = styleElement.sheet!
 
     styleSheet.insertRule(secondMediaRule)
-    styleSheet.insertRule(firstsecondMediaRule)
+    styleSheet.insertRule(firstMediaRule)
     styleSheet.insertRule(secondStyleRule)
     styleSheet.insertRule(firstStyleRule)
   })
@@ -37,13 +37,13 @@ describe('getPathToNestedCSSRule', () => {
   })
 
   it('should return undefined if the rule is not attached to a parent StyleSheet', () => {
-    const grouppingRule = styleSheet.cssRules[3]
-    expect(grouppingRule.parentStyleSheet).toBeDefined()
+    const groupingRule = styleSheet.cssRules[3]
+    expect(groupingRule.parentStyleSheet).toBeDefined()
     // Removing rule from CSSStyleSheet
     styleSheet.deleteRule(3)
 
-    expect(grouppingRule.parentStyleSheet).toEqual(null)
-    expect(getPathToNestedCSSRule(grouppingRule)).toBeUndefined()
+    expect(groupingRule.parentStyleSheet).toEqual(null)
+    expect(getPathToNestedCSSRule(groupingRule)).toBeUndefined()
   })
 
   it('should return path to high level CSSStyleRule', () => {

@@ -93,7 +93,7 @@ interface ObserverParam {
   visualViewportResizeCb: VisualViewportResizeCallback
   inputCb: InputCallback
   mediaInteractionCb: MediaInteractionCallback
-  styleSheetRuleCb: StyleSheetRuleCallback
+  cssRulesCb: StyleSheetRuleCallback
   focusCb: FocusCallback
   frustrationCb: FrustrationCallback
 }
@@ -106,7 +106,7 @@ export function initObservers(o: ObserverParam): ListenerHandler {
   const viewportResizeHandler = initViewportResizeObserver(o.viewportResizeCb)
   const inputHandler = initInputObserver(o.inputCb, o.defaultPrivacyLevel)
   const mediaInteractionHandler = initMediaInteractionObserver(o.mediaInteractionCb, o.defaultPrivacyLevel)
-  const styleSheetObserver = initStyleSheetObserver(o.styleSheetRuleCb)
+  const CSSObservers = initCSSObservers(o.cssRulesCb)
   const focusHandler = initFocusObserver(o.focusCb)
   const visualViewportResizeHandler = initVisualViewportResizeObserver(o.visualViewportResizeCb)
   const frustrationHandler = initFrustrationObserver(o.lifeCycle, o.frustrationCb)
@@ -119,7 +119,7 @@ export function initObservers(o: ObserverParam): ListenerHandler {
     viewportResizeHandler()
     inputHandler()
     mediaInteractionHandler()
-    styleSheetObserver()
+    CSSObservers()
     focusHandler()
     visualViewportResizeHandler()
     frustrationHandler()
@@ -350,7 +350,7 @@ export function initInputObserver(cb: InputCallback, defaultPrivacyLevel: Defaul
   }
 }
 
-export function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
+export function initCSSObservers(cb: StyleSheetRuleCallback): ListenerHandler {
   function checkStyleSheetAndCallback(styleSheet: CSSStyleSheet | null, callback: (id: number) => void): void {
     if (styleSheet && hasSerializedNode(styleSheet.ownerNode!)) {
       callback(getSerializedNodeId(styleSheet.ownerNode))

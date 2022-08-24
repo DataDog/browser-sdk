@@ -6,7 +6,7 @@ import { createNewEvent, isFirefox } from '../../../../core/test/specHelper'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT } from '../../constants'
 import { RecordType } from '../../types'
 import type { FrustrationCallback, InputCallback, StyleSheetRuleCallback } from './observers'
-import { initStyleSheetObserver, initFrustrationObserver, initInputObserver } from './observers'
+import { initCSSObservers, initFrustrationObserver, initInputObserver } from './observers'
 import { serializeDocument, SerializationContextStatus } from './serialize'
 import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { GroupingCSSRule } from './utils'
@@ -156,9 +156,9 @@ describe('initFrustrationObserver', () => {
   })
 })
 
-describe('initStyleSheetObserver', () => {
-  let stopStyleSheetObserver: () => void
-  let styleSheetCallbackSpy: jasmine.Spy<StyleSheetRuleCallback>
+describe('initCSSObservers', () => {
+  let stopCSSObservers: () => void
+  let cssRulesCallbackSpy: jasmine.Spy<StyleSheetRuleCallback>
   let styleElement: HTMLStyleElement
   let styleSheet: CSSStyleSheet
   const styleRule = '.selector-1 { color: #fff }'
@@ -167,7 +167,7 @@ describe('initStyleSheetObserver', () => {
     if (isIE()) {
       pending('IE not supported')
     }
-    styleSheetCallbackSpy = jasmine.createSpy()
+    cssRulesCallbackSpy = jasmine.createSpy()
     styleElement = document.createElement('style')
     document.head.appendChild(styleElement)
     styleSheet = styleElement.sheet!
@@ -179,18 +179,17 @@ describe('initStyleSheetObserver', () => {
   })
 
   afterEach(() => {
-    stopStyleSheetObserver()
+    stopCSSObservers()
     styleElement.remove()
   })
 
   describe('observing high level css stylesheet', () => {
     describe('when inserting rules into stylesheet', () => {
       it('should capture CSSStyleRule insertion when no index is provided', () => {
-        // When
-        stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy)
+        stopCSSObservers = initCSSObservers(cssRulesCallbackSpy)
         styleSheet.insertRule(styleRule)
-        // Then
-        const styleSheetRule = styleSheetCallbackSpy.calls.first().args[0]
+
+        const styleSheetRule = cssRulesCallbackSpy.calls.first().args[0]
         expect(styleSheetRule.id).toBeDefined()
         expect(styleSheetRule.removes).toBeUndefined()
         expect(styleSheetRule.adds?.length).toEqual(1)
@@ -198,13 +197,12 @@ describe('initStyleSheetObserver', () => {
       })
 
       it('should capture CSSStyleRule insertion when index is provided', () => {
-        // Given
         const index = 0
-        // When
-        stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy)
+
+        stopCSSObservers = initCSSObservers(cssRulesCallbackSpy)
         styleSheet.insertRule(styleRule, index)
-        // Then
-        const styleSheetRule = styleSheetCallbackSpy.calls.first().args[0]
+
+        const styleSheetRule = cssRulesCallbackSpy.calls.first().args[0]
         expect(styleSheetRule.id).toBeDefined()
         expect(styleSheetRule.removes).toBeUndefined()
         expect(styleSheetRule.adds?.length).toEqual(1)
@@ -215,13 +213,12 @@ describe('initStyleSheetObserver', () => {
     describe('when removing rules from stylesheet', () => {
       it('should capture CSSStyleRule removal with the correct index', () => {
         styleSheet.insertRule(styleRule)
-        // Given
         const index = 0
-        // When
-        stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy)
+
+        stopCSSObservers = initCSSObservers(cssRulesCallbackSpy)
         styleSheet.deleteRule(index)
-        // Then
-        const styleSheetRule = styleSheetCallbackSpy.calls.first().args[0]
+
+        const styleSheetRule = cssRulesCallbackSpy.calls.first().args[0]
         expect(styleSheetRule.id).toBeDefined()
         expect(styleSheetRule.adds).toBeUndefined()
         expect(styleSheetRule.removes?.length).toEqual(1)
@@ -235,13 +232,12 @@ describe('initStyleSheetObserver', () => {
       it('should capture CSSRule with the correct path when no index is provided', () => {
         styleSheet.insertRule('@media cond-2 { @media cond-1 { .nest-1 { color: #ccc } } }')
         styleSheet.insertRule('.main {opacity: 0}')
-        // Given
         const groupingRule = (styleSheet.cssRules[1] as GroupingCSSRule).cssRules[0] as GroupingCSSRule
-        // When
-        stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy)
+
+        stopCSSObservers = initCSSObservers(cssRulesCallbackSpy)
         groupingRule.insertRule(styleRule, 1)
-        // Then
-        const styleSheetRule = styleSheetCallbackSpy.calls.first().args[0]
+
+        const styleSheetRule = cssRulesCallbackSpy.calls.first().args[0]
         expect(styleSheetRule.id).toBeDefined()
         expect(styleSheetRule.removes).toBeUndefined()
         expect(styleSheetRule.adds?.length).toEqual(1)
@@ -254,15 +250,15 @@ describe('initStyleSheetObserver', () => {
         }
 
         styleSheet.insertRule('@media cond-2 { @media cond-1 { .nest-1 { color: #ccc } } }')
-        // Given
+
         const parentRule = styleSheet.cssRules[0] as GroupingCSSRule
         const groupingRule = parentRule.cssRules[0] as GroupingCSSRule
         parentRule.deleteRule(0)
-        // When
-        stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy)
+
+        stopCSSObservers = initCSSObservers(cssRulesCallbackSpy)
         groupingRule.insertRule(styleRule, 0)
-        // Then
-        expect(styleSheetCallbackSpy).not.toHaveBeenCalled()
+
+        expect(cssRulesCallbackSpy).not.toHaveBeenCalled()
       })
     })
 
@@ -270,13 +266,12 @@ describe('initStyleSheetObserver', () => {
       it('should capture CSSRule removal with the correct path', () => {
         styleSheet.insertRule('@media cond-2 { @media cond-1 { .nest-1 { color: #ccc } } }')
         styleSheet.insertRule('.main {opacity: 0}')
-        // Given
         const groupingRule = (styleSheet.cssRules[1] as GroupingCSSRule).cssRules[0] as GroupingCSSRule
-        // When
-        stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy)
+
+        stopCSSObservers = initCSSObservers(cssRulesCallbackSpy)
         groupingRule.deleteRule(0)
-        // Then
-        const styleSheetRule = styleSheetCallbackSpy.calls.first().args[0]
+
+        const styleSheetRule = cssRulesCallbackSpy.calls.first().args[0]
         expect(styleSheetRule.id).toBeDefined()
         expect(styleSheetRule.adds).toBeUndefined()
         expect(styleSheetRule.removes?.length).toEqual(1)
@@ -289,15 +284,15 @@ describe('initStyleSheetObserver', () => {
         }
 
         styleSheet.insertRule('@media cond-2 { @media cond-1 { .nest-1 { color: #ccc } } }')
-        // Given
+
         const parentRule = styleSheet.cssRules[0] as GroupingCSSRule
         const groupingRule = parentRule.cssRules[0] as GroupingCSSRule
         parentRule.deleteRule(0)
-        // When
-        stopStyleSheetObserver = initStyleSheetObserver(styleSheetCallbackSpy)
+
+        stopCSSObservers = initCSSObservers(cssRulesCallbackSpy)
         groupingRule.deleteRule(0)
-        // Then
-        expect(styleSheetCallbackSpy).not.toHaveBeenCalled()
+
+        expect(cssRulesCallbackSpy).not.toHaveBeenCalled()
       })
     })
   })
