@@ -5,11 +5,10 @@ import type { RawRumEventCollectedData } from 'packages/rum-core/src/domain/life
 import { createNewEvent, isFirefox } from '../../../../core/test/specHelper'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT } from '../../constants'
 import { RecordType } from '../../types'
-import type { FrustrationCallback, InputCallback, StyleSheetRuleCallback } from './observers'
+import type { FrustrationCallback, InputCallback, CSSRuleCallback } from './observers'
 import { initCSSObservers, initFrustrationObserver, initInputObserver } from './observers'
 import { serializeDocument, SerializationContextStatus } from './serialize'
 import { createElementsScrollPositions } from './elementsScrollPositions'
-import type { GroupingCSSRule } from './utils'
 
 describe('initInputObserver', () => {
   let stopInputObserver: () => void
@@ -158,7 +157,7 @@ describe('initFrustrationObserver', () => {
 
 describe('initCSSObservers', () => {
   let stopCSSObservers: () => void
-  let cssRulesCallbackSpy: jasmine.Spy<StyleSheetRuleCallback>
+  let cssRulesCallbackSpy: jasmine.Spy<CSSRuleCallback>
   let styleElement: HTMLStyleElement
   let styleSheet: CSSStyleSheet
   const styleRule = '.selector-1 { color: #fff }'
@@ -232,7 +231,7 @@ describe('initCSSObservers', () => {
       it('should capture CSSRule with the correct path when no index is provided', () => {
         styleSheet.insertRule('@media cond-2 { @media cond-1 { .nest-1 { color: #ccc } } }')
         styleSheet.insertRule('.main {opacity: 0}')
-        const groupingRule = (styleSheet.cssRules[1] as GroupingCSSRule).cssRules[0] as GroupingCSSRule
+        const groupingRule = (styleSheet.cssRules[1] as CSSGroupingRule).cssRules[0] as CSSGroupingRule
 
         stopCSSObservers = initCSSObservers(cssRulesCallbackSpy)
         groupingRule.insertRule(styleRule, 1)
@@ -251,8 +250,8 @@ describe('initCSSObservers', () => {
 
         styleSheet.insertRule('@media cond-2 { @media cond-1 { .nest-1 { color: #ccc } } }')
 
-        const parentRule = styleSheet.cssRules[0] as GroupingCSSRule
-        const groupingRule = parentRule.cssRules[0] as GroupingCSSRule
+        const parentRule = styleSheet.cssRules[0] as CSSGroupingRule
+        const groupingRule = parentRule.cssRules[0] as CSSGroupingRule
         parentRule.deleteRule(0)
 
         stopCSSObservers = initCSSObservers(cssRulesCallbackSpy)
@@ -266,7 +265,7 @@ describe('initCSSObservers', () => {
       it('should capture CSSRule removal with the correct path', () => {
         styleSheet.insertRule('@media cond-2 { @media cond-1 { .nest-1 { color: #ccc } } }')
         styleSheet.insertRule('.main {opacity: 0}')
-        const groupingRule = (styleSheet.cssRules[1] as GroupingCSSRule).cssRules[0] as GroupingCSSRule
+        const groupingRule = (styleSheet.cssRules[1] as CSSGroupingRule).cssRules[0] as CSSGroupingRule
 
         stopCSSObservers = initCSSObservers(cssRulesCallbackSpy)
         groupingRule.deleteRule(0)
@@ -285,8 +284,8 @@ describe('initCSSObservers', () => {
 
         styleSheet.insertRule('@media cond-2 { @media cond-1 { .nest-1 { color: #ccc } } }')
 
-        const parentRule = styleSheet.cssRules[0] as GroupingCSSRule
-        const groupingRule = parentRule.cssRules[0] as GroupingCSSRule
+        const parentRule = styleSheet.cssRules[0] as CSSGroupingRule
+        const groupingRule = parentRule.cssRules[0] as CSSGroupingRule
         parentRule.deleteRule(0)
 
         stopCSSObservers = initCSSObservers(cssRulesCallbackSpy)

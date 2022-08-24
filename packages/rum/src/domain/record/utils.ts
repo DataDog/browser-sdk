@@ -29,13 +29,11 @@ export function assembleIncrementalSnapshot<Data extends BrowserIncrementalData>
   }
 }
 
-export type GroupingCSSRule = CSSGroupingRule | CSSSupportsRule | CSSMediaRule
-
 export function getPathToNestedCSSRule(rule: CSSRule): number[] | undefined {
   const path: number[] = []
   let currentRule = rule
   while (currentRule.parentRule) {
-    const rules = Array.from((currentRule.parentRule as GroupingCSSRule).cssRules)
+    const rules = Array.from((currentRule.parentRule as CSSGroupingRule).cssRules)
     const index = rules.indexOf(currentRule)
     path.unshift(index)
     currentRule = currentRule.parentRule

@@ -66,7 +66,7 @@ type MouseInteractionCallBack = (record: BrowserIncrementalSnapshotRecord) => vo
 
 type ScrollCallback = (p: ScrollPosition) => void
 
-export type StyleSheetRuleCallback = (s: StyleSheetRule) => void
+export type CSSRuleCallback = (s: StyleSheetRule) => void
 
 type ViewportResizeCallback = (d: ViewportResizeDimension) => void
 
@@ -93,7 +93,7 @@ interface ObserverParam {
   visualViewportResizeCb: VisualViewportResizeCallback
   inputCb: InputCallback
   mediaInteractionCb: MediaInteractionCallback
-  cssRulesCb: StyleSheetRuleCallback
+  cssRulesCb: CSSRuleCallback
   focusCb: FocusCallback
   frustrationCb: FrustrationCallback
 }
@@ -350,7 +350,7 @@ export function initInputObserver(cb: InputCallback, defaultPrivacyLevel: Defaul
   }
 }
 
-export function initCSSObservers(cb: StyleSheetRuleCallback): ListenerHandler {
+export function initCSSObservers(cb: CSSRuleCallback): ListenerHandler {
   function checkStyleSheetAndCallback(styleSheet: CSSStyleSheet | null, callback: (id: number) => void): void {
     if (styleSheet && hasSerializedNode(styleSheet.ownerNode!)) {
       callback(getSerializedNodeId(styleSheet.ownerNode))
