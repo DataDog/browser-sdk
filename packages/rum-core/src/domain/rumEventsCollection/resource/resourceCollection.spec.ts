@@ -8,6 +8,7 @@ import { RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { RequestCompleteEvent } from '../../requestCollection'
 import { TraceIdentifier } from '../../tracing/tracer'
+import { validateAndBuildRumConfiguration } from '../../configuration'
 import { startResourceCollection } from './resourceCollection'
 
 describe('resourceCollection', () => {
@@ -15,7 +16,10 @@ describe('resourceCollection', () => {
 
   beforeEach(() => {
     setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
-      startResourceCollection(lifeCycle)
+      startResourceCollection(
+        lifeCycle,
+        validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!
+      )
     })
   })
 
@@ -185,6 +189,31 @@ describe('resourceCollection', () => {
       )
       const traceInfo = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd!
       expect(traceInfo).not.toBeDefined()
+    })
+
+    it('should pull tracingSampleRate from config if present', () => {
+      setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
+        startResourceCollection(
+          lifeCycle,
+          validateAndBuildRumConfiguration({
+            clientToken: 'xxx',
+            applicationId: 'xxx',
+            tracingSampleRate: 60,
+          })!
+        )
+      })
+
+      const { lifeCycle, rawRumEvents } = setupBuilder.build()
+      lifeCycle.notify(
+        LifeCycleEventType.REQUEST_COMPLETED,
+        createCompletedRequest({
+          traceSampled: true,
+          spanId: new TraceIdentifier(),
+          traceId: new TraceIdentifier(),
+        })
+      )
+      const traceInfo = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd!
+      expect(traceInfo.rule_psr).toEqual(0.6)
     })
   })
 })
