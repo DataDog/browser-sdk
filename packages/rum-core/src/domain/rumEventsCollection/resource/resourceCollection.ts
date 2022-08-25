@@ -167,5 +167,5 @@ function toPerformanceEntryRepresentation(entry: RumPerformanceEntry): Performan
  * @returns number between 0 and 1 which represents tracing sample rate
  */
 function getRulePsr(configuration: RumConfiguration) {
-  return configuration.tracingSampleRate / 100
+  return configuration.tracingSampleRate ? configuration.tracingSampleRate / 100 : undefined
 }

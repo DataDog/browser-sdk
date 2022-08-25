@@ -58,8 +58,8 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('tracingSampleRate', () => {
-    it('defaults to 100 if the option is not provided', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.tracingSampleRate).toBe(100)
+    it('defaults to undefined if the option is not provided', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.tracingSampleRate).toBeUndefined()
     })
 
     it('is set to provided value', () => {
