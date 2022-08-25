@@ -66,7 +66,7 @@ type MouseInteractionCallBack = (record: BrowserIncrementalSnapshotRecord) => vo
 
 type ScrollCallback = (p: ScrollPosition) => void
 
-export type CSSRuleCallback = (s: StyleSheetRule) => void
+export type StyleSheetCallback = (s: StyleSheetRule) => void
 
 type ViewportResizeCallback = (d: ViewportResizeDimension) => void
 
@@ -93,7 +93,7 @@ interface ObserverParam {
   visualViewportResizeCb: VisualViewportResizeCallback
   inputCb: InputCallback
   mediaInteractionCb: MediaInteractionCallback
-  cssRulesCb: CSSRuleCallback
+  styleSheetCb: StyleSheetCallback
   focusCb: FocusCallback
   frustrationCb: FrustrationCallback
 }
@@ -106,7 +106,7 @@ export function initObservers(o: ObserverParam): ListenerHandler {
   const viewportResizeHandler = initViewportResizeObserver(o.viewportResizeCb)
   const inputHandler = initInputObserver(o.inputCb, o.defaultPrivacyLevel)
   const mediaInteractionHandler = initMediaInteractionObserver(o.mediaInteractionCb, o.defaultPrivacyLevel)
-  const CSSObservers = initCSSObservers(o.cssRulesCb)
+  const styleSheetObserver = initStyleSheetObserver(o.styleSheetCb)
   const focusHandler = initFocusObserver(o.focusCb)
   const visualViewportResizeHandler = initVisualViewportResizeObserver(o.visualViewportResizeCb)
   const frustrationHandler = initFrustrationObserver(o.lifeCycle, o.frustrationCb)
@@ -119,7 +119,7 @@ export function initObservers(o: ObserverParam): ListenerHandler {
     viewportResizeHandler()
     inputHandler()
     mediaInteractionHandler()
-    CSSObservers()
+    styleSheetObserver()
     focusHandler()
     visualViewportResizeHandler()
     frustrationHandler()
@@ -350,7 +350,7 @@ export function initInputObserver(cb: InputCallback, defaultPrivacyLevel: Defaul
   }
 }
 
-export function initCSSObservers(cb: CSSRuleCallback): ListenerHandler {
+export function initStyleSheetObserver(cb: StyleSheetCallback): ListenerHandler {
   function checkStyleSheetAndCallback(styleSheet: CSSStyleSheet | null, callback: (id: number) => void): void {
     if (styleSheet && hasSerializedNode(styleSheet.ownerNode!)) {
       callback(getSerializedNodeId(styleSheet.ownerNode))
