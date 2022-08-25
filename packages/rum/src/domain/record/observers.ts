@@ -31,7 +31,7 @@ import type {
 import { RecordType, IncrementalSource, MediaInteractionType, MouseInteractionType } from '../../types'
 import { getNodePrivacyLevel, shouldMaskNode } from './privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from './serializationUtils'
-import { assembleIncrementalSnapshot, forEach, isTouchEvent } from './utils'
+import { assembleIncrementalSnapshot, forEach, getPathToNestedCSSRule, isTouchEvent } from './utils'
 import type { MutationController } from './mutationObserver'
 import { startMutationObserver } from './mutationObserver'
 import { getVisualViewport, getScrollX, getScrollY, convertMouseEventToLayoutCoordinates } from './viewports'
@@ -51,6 +51,8 @@ function getRecordIdForEvent(event: Event): number {
   return recordIds.get(event)!
 }
 
+type GroupingCSSRuleTypes = typeof CSSGroupingRule | typeof CSSMediaRule | typeof CSSSupportsRule
+
 type ListenerHandler = () => void
 
 type MousemoveCallBack = (
@@ -64,7 +66,7 @@ type MouseInteractionCallBack = (record: BrowserIncrementalSnapshotRecord) => vo
 
 type ScrollCallback = (p: ScrollPosition) => void
 
-type StyleSheetRuleCallback = (s: StyleSheetRule) => void
+export type StyleSheetCallback = (s: StyleSheetRule) => void
 
 type ViewportResizeCallback = (d: ViewportResizeDimension) => void
 
@@ -91,7 +93,7 @@ interface ObserverParam {
   visualViewportResizeCb: VisualViewportResizeCallback
   inputCb: InputCallback
   mediaInteractionCb: MediaInteractionCallback
-  styleSheetRuleCb: StyleSheetRuleCallback
+  styleSheetCb: StyleSheetCallback
   focusCb: FocusCallback
   frustrationCb: FrustrationCallback
 }
@@ -104,7 +106,7 @@ export function initObservers(o: ObserverParam): ListenerHandler {
   const viewportResizeHandler = initViewportResizeObserver(o.viewportResizeCb)
   const inputHandler = initInputObserver(o.inputCb, o.defaultPrivacyLevel)
   const mediaInteractionHandler = initMediaInteractionObserver(o.mediaInteractionCb, o.defaultPrivacyLevel)
-  const styleSheetObserver = initStyleSheetObserver(o.styleSheetRuleCb)
+  const styleSheetObserver = initStyleSheetObserver(o.styleSheetCb)
   const focusHandler = initFocusObserver(o.focusCb)
   const visualViewportResizeHandler = initVisualViewportResizeObserver(o.visualViewportResizeCb)
   const frustrationHandler = initFrustrationObserver(o.lifeCycle, o.frustrationCb)
@@ -348,33 +350,61 @@ export function initInputObserver(cb: InputCallback, defaultPrivacyLevel: Defaul
   }
 }
 
-function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
-  const { stop: restoreInsertRule } = instrumentMethodAndCallOriginal(CSSStyleSheet.prototype, 'insertRule', {
-    before(rule, index) {
-      if (hasSerializedNode(this.ownerNode!)) {
-        cb({
-          id: getSerializedNodeId(this.ownerNode),
-          adds: [{ rule, index }],
-        })
-      }
-    },
-  })
-
-  const { stop: restoreDeleteRule } = instrumentMethodAndCallOriginal(CSSStyleSheet.prototype, 'deleteRule', {
-    before(index) {
-      if (hasSerializedNode(this.ownerNode!)) {
-        cb({
-          id: getSerializedNodeId(this.ownerNode),
-          removes: [{ index }],
-        })
-      }
-    },
-  })
-
-  return () => {
-    restoreInsertRule()
-    restoreDeleteRule()
+export function initStyleSheetObserver(cb: StyleSheetCallback): ListenerHandler {
+  function checkStyleSheetAndCallback(styleSheet: CSSStyleSheet | null, callback: (id: number) => void): void {
+    if (styleSheet && hasSerializedNode(styleSheet.ownerNode!)) {
+      callback(getSerializedNodeId(styleSheet.ownerNode))
+    }
   }
+
+  const instrumentationStoppers = [
+    instrumentMethodAndCallOriginal(CSSStyleSheet.prototype, 'insertRule', {
+      before(rule, index) {
+        checkStyleSheetAndCallback(this, (id) => cb({ id, adds: [{ rule, index }] }))
+      },
+    }),
+    instrumentMethodAndCallOriginal(CSSStyleSheet.prototype, 'deleteRule', {
+      before(index) {
+        checkStyleSheetAndCallback(this, (id) => cb({ id, removes: [{ index }] }))
+      },
+    }),
+  ]
+
+  if (typeof CSSGroupingRule !== 'undefined') {
+    instrumentGroupingCSSRuleClass(CSSGroupingRule)
+  } else {
+    instrumentGroupingCSSRuleClass(CSSMediaRule)
+    instrumentGroupingCSSRuleClass(CSSSupportsRule)
+  }
+
+  function instrumentGroupingCSSRuleClass(cls: GroupingCSSRuleTypes) {
+    instrumentationStoppers.push(
+      instrumentMethodAndCallOriginal(cls.prototype, 'insertRule', {
+        before(rule, index) {
+          checkStyleSheetAndCallback(this.parentStyleSheet, (id) => {
+            const path = getPathToNestedCSSRule(this)
+            if (path) {
+              path.push(index || 0)
+              cb({ id, adds: [{ rule, index: path }] })
+            }
+          })
+        },
+      }),
+      instrumentMethodAndCallOriginal(cls.prototype, 'deleteRule', {
+        before(index) {
+          checkStyleSheetAndCallback(this.parentStyleSheet, (id) => {
+            const path = getPathToNestedCSSRule(this)
+            if (path) {
+              path.push(index)
+              cb({ id, removes: [{ index: path }] })
+            }
+          })
+        },
+      })
+    )
+  }
+
+  return () => instrumentationStoppers.forEach((stopper) => stopper.stop())
 }
 
 function initMediaInteractionObserver(

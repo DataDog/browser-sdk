@@ -281,9 +281,7 @@ describe('action collection', () => {
     )
     .run(async ({ serverEvents }) => {
       const button = await $('button')
-      await button.click()
-      await button.click()
-      await button.click()
+      await Promise.all([button.click(), button.click(), button.click()])
       await flushEvents()
       const actionEvents = serverEvents.rumActions
 
