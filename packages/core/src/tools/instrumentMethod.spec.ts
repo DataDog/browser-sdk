@@ -99,12 +99,26 @@ describe('instrumentMethod', () => {
 
         expect(instrumentationSpy).not.toHaveBeenCalled()
       })
+
+      it('should not throw errors if original method was undefined', () => {
+        const object: { method?: () => number } = {}
+        const instrumentationStub = () => 2
+        const { stop } = instrumentMethod(object, 'method', () => instrumentationStub)
+
+        thirdPartyInstrumentation(object)
+
+        stop()
+
+        expect(object.method).not.toThrow()
+      })
     })
   })
 
-  function thirdPartyInstrumentation(object: { method: () => number }) {
+  function thirdPartyInstrumentation(object: { method?: () => number }) {
     const originalMethod = object.method
-    object.method = () => originalMethod() + 2
+    if (typeof originalMethod === 'function') {
+      object.method = () => originalMethod() + 2
+    }
   }
 })
 

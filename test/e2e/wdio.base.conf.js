@@ -2,7 +2,7 @@ const path = require('path')
 const { unlinkSync, mkdirSync } = require('fs')
 const getTestReportDirectory = require('../getTestReportDirectory')
 
-const reporters = ['spec']
+const reporters = [['spec', { onlyFailures: true }]]
 let logsPath
 
 const testReportDirectory = getTestReportDirectory()

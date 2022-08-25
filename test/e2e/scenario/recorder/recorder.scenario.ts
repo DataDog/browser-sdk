@@ -648,6 +648,52 @@ describe('recorder', () => {
         expect(styleSheetRules[0].data.removes).toEqual([{ index: 0 }])
         expect(styleSheetRules[1].data.adds).toEqual([{ rule: '.added {}', index: 0 }])
       })
+
+    createTest('record nested css rules changes')
+      .withRum()
+      .withRumInit(initRumAndStartRecording)
+      .withSetup(bundleSetup)
+      .withBody(
+        html`
+          <style>
+            @supports (display: grid) {
+              .foo {
+              }
+            }
+            @media condition {
+              .bar {
+              }
+              .baz {
+              }
+            }
+          </style>
+        `
+      )
+      .run(async ({ serverEvents }) => {
+        await browserExecute(() => {
+          const supportsRule = document.styleSheets[0].cssRules[0] as CSSGroupingRule
+          const mediaRule = document.styleSheets[0].cssRules[1] as CSSGroupingRule
+
+          supportsRule.insertRule('.inserted {}', 0)
+          supportsRule.insertRule('.added {}', 1)
+          mediaRule.deleteRule(1)
+        })
+
+        await flushEvents()
+
+        expect(serverEvents.sessionReplay.length).toBe(1)
+
+        const segment = getFirstSegment(serverEvents)
+
+        const styleSheetRules = findAllIncrementalSnapshots(segment, IncrementalSource.StyleSheetRule) as Array<{
+          data: StyleSheetRuleData
+        }>
+
+        expect(styleSheetRules.length).toBe(3)
+        expect(styleSheetRules[0].data.adds).toEqual([{ rule: '.inserted {}', index: [0, 0] }])
+        expect(styleSheetRules[1].data.adds).toEqual([{ rule: '.added {}', index: [0, 1] }])
+        expect(styleSheetRules[2].data.removes).toEqual([{ index: [1, 1] }])
+      })
   })
 
   describe('session renewal', () => {
