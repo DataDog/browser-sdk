@@ -2,7 +2,7 @@
 import { stubEndpointBuilder, interceptRequests } from '../../test/specHelper'
 import type { Request } from '../../test/specHelper'
 import type { EndpointBuilder } from '../domain/configuration'
-import { createEndpointBuilder, updateExperimentalFeatures, resetExperimentalFeatures } from '../domain/configuration'
+import { createEndpointBuilder } from '../domain/configuration'
 import { createHttpRequest } from './httpRequest'
 import type { HttpRequest } from './httpRequest'
 
@@ -25,74 +25,7 @@ describe('httpRequest', () => {
     interceptor.restore()
   })
 
-  describe('send (without fetch_keepalive FF)', () => {
-    it('should use xhr when sendBeacon is not defined', () => {
-      interceptor.withSendBeacon(false)
-
-      request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
-
-      expect(requests.length).toEqual(1)
-      expect(requests[0].type).toBe('xhr')
-      expect(requests[0].url).toContain(ENDPOINT_URL)
-      expect(requests[0].body).toEqual('{"foo":"bar1"}\n{"foo":"bar2"}')
-    })
-
-    it('should use sendBeacon when the bytes count is correct', () => {
-      if (!interceptor.isSendBeaconSupported()) {
-        pending('no sendBeacon support')
-      }
-
-      request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
-
-      expect(requests.length).toEqual(1)
-      expect(requests[0].type).toBe('sendBeacon')
-    })
-
-    it('should use xhr over sendBeacon when the bytes count is too high', () => {
-      request.send('{"foo":"bar1"}\n{"foo":"bar2"}', BATCH_BYTES_LIMIT)
-
-      expect(requests.length).toEqual(1)
-      expect(requests[0].type).toBe('xhr')
-    })
-
-    it('should fallback to xhr when sendBeacon is not queued', () => {
-      if (!interceptor.isSendBeaconSupported()) {
-        pending('no sendBeacon support')
-      }
-      interceptor.withSendBeacon(() => false)
-
-      request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
-
-      expect(requests.length).toEqual(1)
-      expect(requests[0].type).toBe('xhr')
-    })
-
-    it('should fallback to xhr when sendBeacon throws', () => {
-      if (!interceptor.isSendBeaconSupported()) {
-        pending('no sendBeacon support')
-      }
-      let sendBeaconCalled = false
-      interceptor.withSendBeacon(() => {
-        sendBeaconCalled = true
-        throw new TypeError()
-      })
-
-      request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
-      expect(sendBeaconCalled).toBe(true)
-      expect(requests.length).toEqual(1)
-      expect(requests[0].type).toBe('xhr')
-    })
-  })
-
-  describe('send (with fetch_keepalive FF)', () => {
-    beforeEach(() => {
-      updateExperimentalFeatures(['fetch_keepalive'])
-    })
-
-    afterEach(() => {
-      resetExperimentalFeatures()
-    })
-
+  describe('send', () => {
     it('should use xhr when fetch keepalive is not available', () => {
       interceptor.withRequest(false)
 
