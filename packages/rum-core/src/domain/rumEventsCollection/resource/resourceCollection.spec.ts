@@ -240,7 +240,7 @@ describe('resourceCollection', () => {
       expect(traceInfo.rule_psr).toBeUndefined()
     })
 
-    fit('should define rule_psr to 0 if tracingSampleRate is set to 0', () => {
+    it('should define rule_psr to 0 if tracingSampleRate is set to 0', () => {
       setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
         startResourceCollection(
           lifeCycle,
