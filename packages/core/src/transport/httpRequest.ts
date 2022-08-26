@@ -1,5 +1,4 @@
 import type { EndpointBuilder } from '../domain/configuration'
-import { isExperimentalFeatureEnabled } from '../domain/configuration'
 import { addTelemetryError } from '../domain/telemetry'
 import { monitor } from '../tools/monitor'
 
@@ -56,11 +55,7 @@ export function createHttpRequest(endpointBuilder: EndpointBuilder, bytesLimit: 
 
   return {
     send: (data: string | FormData, bytesCount: number) => {
-      if (!isExperimentalFeatureEnabled('fetch_keepalive')) {
-        sendBeaconStrategy(data, bytesCount)
-      } else {
-        fetchKeepAliveStrategy(data, bytesCount)
-      }
+      fetchKeepAliveStrategy(data, bytesCount)
     },
     /**
      * Since fetch keepalive behaves like regular fetch on Firefox,
