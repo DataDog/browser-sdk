@@ -383,12 +383,12 @@ A service is an independent, deployable code repository that maps to a set of pa
 
 ### Access internal context
 
-After the Datadog Browser SDK is initialized, you can access the internal context of the SDK. 
+After the Datadog Browser SDK is initialized, you can access the internal context of the SDK.
 
 You can explore the following attributes:
 
 | Attribute      | Description                                                       |
-| -------------- | -------------------------------------------------------------     |
+| -------------- | ----------------------------------------------------------------- |
 | application_id | ID of the application.                                            |
 | session_id     | ID of the session.                                                |
 | user_action    | Object containing action ID (or undefined if no action is found). |
