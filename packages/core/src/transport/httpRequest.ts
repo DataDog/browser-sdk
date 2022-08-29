@@ -1,6 +1,8 @@
 import type { EndpointBuilder } from '../domain/configuration'
 import { addTelemetryError } from '../domain/telemetry'
 import { monitor } from '../tools/monitor'
+import { isExperimentalFeatureEnabled } from '../domain/configuration'
+import { newRetryState, sendWithRetryStrategy } from './sendWithRetryStrategy'
 
 /**
  * Use POST request without content type to:
@@ -22,9 +24,17 @@ export interface Payload {
 }
 
 export function createHttpRequest(endpointBuilder: EndpointBuilder, bytesLimit: number) {
+  const retryState = newRetryState()
+  const sendStrategyForRetry = (payload: Payload, onResponse: (r: HttpResponse) => void) =>
+    fetchKeepAliveStrategy(endpointBuilder, bytesLimit, payload, onResponse)
+
   return {
     send: (payload: Payload) => {
-      fetchKeepAliveStrategy(endpointBuilder, bytesLimit, payload)
+      if (!isExperimentalFeatureEnabled('retry')) {
+        fetchKeepAliveStrategy(endpointBuilder, bytesLimit, payload)
+      } else {
+        sendWithRetryStrategy(payload, retryState, sendStrategyForRetry)
+      }
     },
     /**
      * Since fetch keepalive behaves like regular fetch on Firefox,
