@@ -11,7 +11,7 @@ module.exports = [
   {
     sessionName: 'Firefox',
     name: 'Firefox',
-    version: '100.0',
+    version: '91.0',
     os: 'Windows',
     osVersion: '11',
   },
