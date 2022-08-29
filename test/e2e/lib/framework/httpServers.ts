@@ -58,9 +58,13 @@ async function createServer<App extends ServerApp>(): Promise<Server<App>> {
   })
 
   server.on('request', (req: http.IncomingMessage, res: http.ServerResponse) => {
+    let body = ''
+    req.on('data', (chunk) => {
+      body += chunk
+    })
     res.on('close', () => {
       const requestUrl = `${req.headers.host!}${req.url!}`
-      log(`${req.method!} ${requestUrl} ${res.statusCode}`)
+      log(`${req.method!} ${requestUrl} ${res.statusCode}${body ? `\n${body}` : ''}`)
     })
   })
 
