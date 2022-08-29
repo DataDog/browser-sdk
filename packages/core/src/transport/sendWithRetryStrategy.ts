@@ -1,3 +1,4 @@
+import { addTelemetryDebug } from '../domain/telemetry'
 import { monitor } from '../tools/monitor'
 import { ONE_KILO_BYTE, ONE_MEGA_BYTE, ONE_SECOND } from '../tools/utils'
 import type { Payload, HttpResponse } from './httpRequest'
@@ -42,6 +43,11 @@ function scheduleRetry(state: RetryState, sendStrategy: SendStrategy) {
       send(payload, state, sendStrategy, {
         onSuccess: () => {
           state.queuedPayloads.dequeue()
+          addTelemetryDebug('resuming after intake failure', {
+            currentBackoffTime: state.currentBackoffTime,
+            queuedPayloadCount: state.queuedPayloads.size(),
+            queuedPayloadBytesCount: state.queuedPayloads.bytesCount,
+          })
           state.currentBackoffTime = ONE_SECOND
           sendNextPayload(state, sendStrategy)
         },
