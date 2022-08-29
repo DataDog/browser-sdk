@@ -25,7 +25,7 @@ describe('startRecording', () => {
   let viewId: string
   let waitRequestSendCalls: (
     expectedCallsCount: number,
-    callback: (calls: jasmine.Calls<HttpRequest['send']>) => void
+    callback: (calls: jasmine.Calls<HttpRequest['sendOnExit']>) => void
   ) => void
   let sandbox: HTMLElement
   let textField: HTMLInputElement
@@ -59,7 +59,7 @@ describe('startRecording', () => {
         .beforeBuild(({ lifeCycle, configuration, viewContexts, sessionManager }) => {
           const httpRequest = createHttpRequest(configuration.sessionReplayEndpointBuilder, SEGMENT_BYTES_LIMIT)
 
-          const requestSendSpy = spyOn(httpRequest, 'send')
+          const requestSendSpy = spyOn(httpRequest, 'sendOnExit')
           ;({ waitAsyncCalls: waitRequestSendCalls, expectNoExtraAsyncCall: expectNoExtraRequestSendCalls } =
             collectAsyncCalls(requestSendSpy))
 
@@ -286,7 +286,7 @@ function flushSegment(lifeCycle: LifeCycle) {
   lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
 }
 
-function getRequestData(call: jasmine.CallInfo<HttpRequest['send']>) {
+function getRequestData(call: jasmine.CallInfo<HttpRequest['sendOnExit']>) {
   const result: { [key: string]: unknown } = {}
   getRequestFormData(call).forEach((value, key) => {
     result[key] = value
@@ -294,7 +294,10 @@ function getRequestData(call: jasmine.CallInfo<HttpRequest['send']>) {
   return result
 }
 
-function readRequestSegment(call: jasmine.CallInfo<HttpRequest['send']>, callback: (segment: BrowserSegment) => void) {
+function readRequestSegment(
+  call: jasmine.CallInfo<HttpRequest['sendOnExit']>,
+  callback: (segment: BrowserSegment) => void
+) {
   const encodedSegment = getRequestFormData(call).get('segment')
   expect(encodedSegment).toBeInstanceOf(Blob)
   const reader = new FileReader()
@@ -305,7 +308,7 @@ function readRequestSegment(call: jasmine.CallInfo<HttpRequest['send']>, callbac
   reader.readAsArrayBuffer(encodedSegment as Blob)
 }
 
-function getRequestFormData(call: jasmine.CallInfo<HttpRequest['send']>) {
+function getRequestFormData(call: jasmine.CallInfo<HttpRequest['sendOnExit']>) {
   const data = call.args[0]
   expect(data).toEqual(jasmine.any(FormData))
   return data as FormData
