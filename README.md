@@ -1,6 +1,6 @@
 # Datadog Browser SDK
 
-The browser SDK is used to collect logs and RUM data from the browser.
+The Datadog Browser SDK is used to collect logs and RUM data from the browser.
 
 ## Packages
 

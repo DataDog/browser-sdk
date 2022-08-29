@@ -1,8 +1,8 @@
-# Browser Log Collection
+# Datadog Browser SDK for Logs
 
-Send logs to Datadog from web browsers or other Javascript clients with the browser logs SDK.
+Send logs to Datadog from web browsers or other Javascript clients with the Datadog Browser SDK for Logs.
 
-With the browser logs SDK, you can send logs directly to Datadog from JS clients and leverage the following features:
+With the Datadog Browser SDK for Logs, you can send logs directly to Datadog from JS clients and leverage the following features:
 
 - Use the SDK as a logger. Everything is forwarded to Datadog as JSON documents.
 - Add `context` and extra custom attributes to each log sent.
@@ -13,19 +13,19 @@ With the browser logs SDK, you can send logs directly to Datadog from JS clients
 
 ## Setup
 
-**Datadog client token**: For security reasons, [API keys][1] cannot be used to configure the browser logs SDK, because they would be exposed client-side in the JavaScript code. To collect logs from web browsers, a [client token][2] must be used. See the [client token documentation][2] for more details.
+**Datadog client token**: For security reasons, [API keys][1] cannot be used to configure the Datadog Browser SDK for Logs, because they would be exposed client-side in the JavaScript code. To collect logs from web browsers, a [client token][2] must be used. See the [client token documentation][2] for more details.
 
-**Datadog browser logs SDK**: Configure the SDK through [NPM](#npm) or use the [CDN async](#cdn-async) or [CDN sync](#cdn-sync) code snippets in the head tag.
+**Datadog Browser SDK for Logs**: Configure the SDK through [NPM](#npm) or use the [CDN async](#cdn-async) or [CDN sync](#cdn-sync) code snippets in the head tag.
 
-**Supported browsers**: The browser logs SDK supports all modern desktop and mobile browsers including IE11. See the [browser support][4] table.
+**Supported browsers**: The Datadog Browser SDK for Logs supports all modern desktop and mobile browsers including IE11. See the [browser support][4] table.
 
 ### Choose the right installation method
 
-| Installation method        | Use case                                                                                                                                                                                                                                                                                                                                                                   |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| npm (node package manager) | This method is recommended for modern web applications. The browser logs SDK gets packaged with the rest of your front-end javascript code. It has no impact on page load performance. However, the SDK might miss errors, resources and user actions triggered before the SDK is initialized. **Note:** it is recommended to use a matching version with RUM SDK if used. |
-| CDN async                  | This method is recommended for web applications with performance targets. The browser logs SDK is loaded from our CDN asynchronously: this method ensures the SDK download does not impact page load performance. However, the SDK might miss errors, resources and user actions triggered before the SDK is initialized.                                                  |
-| CDN sync                   | This method is recommended for collecting all RUM events. The browser logs SDK is loaded from our CDN synchronously: this method ensures the SDK is loaded first and collects all errors, resources and user actions. This method might impact page load performance.                                                                                                      |
+| Installation method        | Use case                                                                                                                                                                                                                                                                                                                                                                                                   |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| npm (node package manager) | This method is recommended for modern web applications. The Datadog Browser SDK for Logs gets packaged with the rest of your front-end javascript code. It has no impact on page load performance. However, the SDK might miss errors, resources and user actions triggered before the SDK is initialized. **Note:** it is recommended to use a matching version with Datadog Browser SDK for RUM if used. |
+| CDN async                  | This method is recommended for web applications with performance targets. The Datadog Browser SDK for Logs is loaded from our CDN asynchronously: this method ensures the SDK download does not impact page load performance. However, the SDK might miss errors, resources and user actions triggered before the SDK is initialized.                                                                      |
+| CDN sync                   | This method is recommended for collecting all RUM events. The Datadog Browser SDK for Logs is loaded from our CDN synchronously: this method ensures the SDK is loaded first and collects all errors, resources and user actions. This method might impact page load performance.                                                                                                                          |
 
 ### NPM
 
@@ -115,7 +115,7 @@ window.DD_LOGS.init({
 
 ### Initialization parameters
 
-The following parameters are available to configure the Datadog browser logs SDK to send logs to Datadog:
+The following parameters are available to configure the Datadog Browser SDK for Logs to send logs to Datadog:
 
 | Parameter             | Type                                                                      | Required | Default         | Description                                                                                                                                                                           |
 | --------------------- | ------------------------------------------------------------------------- | -------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -132,19 +132,19 @@ The following parameters are available to configure the Datadog browser logs SDK
 | `proxyUrl`            | String                                                                    | No       |                 | Optional proxy URL (ex: https://www.proxy.com/path), see the full [proxy setup guide][6] for more information.                                                                        |
 | `telemetrySampleRate` | Number                                                                    | No       | `20`            | Telemetry data (error, debug logs) about SDK execution is sent to Datadog in order to detect and solve potential issues. Set this option to `0` to opt out from telemetry collection. |
 
-Options that must have a matching configuration when using the `RUM` SDK:
+Options that must have a matching configuration when using the Datadog Browser SDK for RUM:
 
-| Parameter                      | Type    | Required | Default | Description                                                                                                                                                  |
-| ------------------------------ | ------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `trackSessionAcrossSubdomains` | Boolean | No       | `false` | Preserve the session across subdomains for the same site.                                                                                                    |
-| `useSecureSessionCookie`       | Boolean | No       | `false` | Use a secure session cookie. This disables logs sent on insecure (non-HTTPS) connections.                                                                    |
-| `useCrossSiteSessionCookie`    | Boolean | No       | `false` | Use a secure cross-site session cookie. This allows the logs SDK to run when the site is loaded from another one (iframe). Implies `useSecureSessionCookie`. |
+| Parameter                      | Type    | Required | Default | Description                                                                                                                                                                      |
+| ------------------------------ | ------- | -------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `trackSessionAcrossSubdomains` | Boolean | No       | `false` | Preserve the session across subdomains for the same site.                                                                                                                        |
+| `useSecureSessionCookie`       | Boolean | No       | `false` | Use a secure session cookie. This disables logs sent on insecure (non-HTTPS) connections.                                                                                        |
+| `useCrossSiteSessionCookie`    | Boolean | No       | `false` | Use a secure cross-site session cookie. This allows the Datadog Browser SDK for Logs to run when the site is loaded from another one (iframe). Implies `useSecureSessionCookie`. |
 
 ## Usage
 
 ### Custom logs
 
-After the Datadog browser logs SDK is initialized, send a custom log entry directly to Datadog with the API:
+After the Datadog Browser SDK for Logs is initialized, send a custom log entry directly to Datadog with the API:
 
 ```
 logger.debug | info | warn | error (message: string, messageContext = Context)
@@ -205,8 +205,7 @@ The results are the same when using NPM, CDN async or CDN sync:
 }
 ```
 
-The Logs SDK adds the following information by default (more fields can be added if the RUM SDK is
-present):
+The Datadog Browser SDK for Logs adds the following information by default (more fields can be added if the Datadog Browser SDK for RUM is present):
 
 - `date`
 - `view.url`
@@ -220,7 +219,7 @@ The Datadog backend adds more fields, like:
 
 ### Status parameter
 
-After the Datadog browser logs SDK is initialized, send a custom log entry to Datadog with the API using the status as a parameter:
+After the Datadog Browser SDK for Logs is initialized, send a custom log entry to Datadog with the API using the status as a parameter:
 
 ```
 log (message: string, messageContext: Context, status? = 'debug' | 'info' | 'warn' | 'error')
@@ -270,9 +269,9 @@ The placeholders in the examples above are described below:
 
 ### Scrub sensitive data from your Browser logs
 
-If your Browser logs contain sensitive information that needs redacting, configure the Browser SDK to scrub sensitive sequences by using the `beforeSend` callback when you initialize the Browser Log Collector.
+If your Browser logs contain sensitive information that needs redacting, configure the Datadog Browser SDK for Logs to scrub sensitive sequences by using the `beforeSend` initialization parameter.
 
-The `beforeSend` callback function gives you access to each log collected by the Browser SDK before it is sent to Datadog, and lets you update any property.
+The `beforeSend` callback function gives you access to each log collected by the Datadog Browser SDK for Logs before it is sent to Datadog, and lets you update any property.
 
 To redact email addresses from your web application URLs:
 
@@ -388,11 +387,11 @@ window.DD_LOGS &&
 
 ### Define multiple loggers
 
-The Datadog browser logs SDK contains a default logger, but it is possible to define different loggers.
+The Datadog Browser SDK for Logs contains a default logger, but it is possible to define different loggers.
 
 #### Create a new logger
 
-After the Datadog browser logs SDK is initialized, use the API `createLogger` to define a new logger:
+After the Datadog Browser SDK for Logs is initialized, use the API `createLogger` to define a new logger:
 
 ```typescript
 createLogger (name: string, conf?: {
@@ -477,7 +476,7 @@ if (window.DD_LOGS) {
 
 #### Global context
 
-After the Datadog browser logs SDK is initialized, it is possible to:
+After the Datadog Browser SDK for Logs is initialized, it is possible to:
 
 - Set the entire context for all your loggers with the `setGlobalContext (context: object)` API.
 - Add a context to all your loggers with the `setGlobalContextProperty (key: string, value: any)` API.
@@ -485,7 +484,7 @@ After the Datadog browser logs SDK is initialized, it is possible to:
 - Remove context property with the `removeGlobalContextProperty (key: string)` API.
 - Clear all existing context properties with the `clearGlobalContext ()` API.
 
-> The Log Browser SDK v4.17.0 has updated the names of several APIs:
+> The Datadog Browser SDK for Logs v4.17.0 has updated the names of several APIs:
 >
 > - `getGlobalContext` instead of `getLoggerGlobalContext`
 > - `setGlobalContext` instead of `setLoggerGlobalContext`
@@ -621,7 +620,7 @@ window.DD_LOGS && DD_LOGS.addContext('referrer', document.referrer)
 
 ### Filter by status
 
-After the Datadog browser logs SDK is initialized, the minimal log level for your logger is set with the API:
+After the Datadog Browser SDK for Logs is initialized, the minimal log level for your logger is set with the API:
 
 ```
 setLevel (level?: 'debug' | 'info' | 'warn' | 'error')
@@ -663,7 +662,7 @@ window.DD_LOGS && DD_LOGS.logger.setLevel('<LEVEL>')
 
 ### Change the destination
 
-By default, loggers created by the Datadog browser logs SDK are sending logs to Datadog. After the Datadog browser logs SDK is initialized, it is possible to configure the logger to:
+By default, loggers created by the Datadog Browser SDK for Logs are sending logs to Datadog. After the Datadog Browser SDK for Logs is initialized, it is possible to configure the logger to:
 
 - send logs to the `console` and Datadog (`http`)
 - send logs to the `console` only
@@ -710,7 +709,7 @@ window.DD_LOGS && DD_LOGS.logger.setHandler(['<HANDLER1>', '<HANDLER2>'])
 
 ### Access internal context
 
-After the Datadog browser logs SDK is initialized, you can access the internal context of the SDK. This allows you to access the `session_id`.
+After the Datadog Browser SDK for Logs is initialized, you can access the internal context of the SDK. This allows you to access the `session_id`.
 
 ```
 getInternalContext (startTime?: 'number' | undefined)
