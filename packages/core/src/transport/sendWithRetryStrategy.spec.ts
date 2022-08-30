@@ -105,16 +105,6 @@ describe('sendWithRetryStrategy', () => {
       sendRequest()
       expect(state.queuedPayloads.size()).toBe(1)
     })
-
-    it('should not queue payload bigger than queue limit', () => {
-      sendRequest()
-      expect(state.bandwidthMonitor.ongoingRequestCount).toBe(1)
-      expect(state.queuedPayloads.size()).toBe(0)
-
-      sendRequest({ bytesCount: MAX_QUEUE_BYTES_COUNT + 1 })
-      expect(state.bandwidthMonitor.ongoingRequestCount).toBe(1)
-      expect(state.queuedPayloads.size()).toBe(0)
-    })
   })
 
   describe('dequeue:', () => {
@@ -131,16 +121,32 @@ describe('sendWithRetryStrategy', () => {
       expect(state.queuedPayloads.size()).toBe(0)
     })
 
-    it('should remove the oldest payloads when a new payload would overflow queue bytes limit', () => {
+    it('should stop queueing new payloads when queue bytes limit is reached', () => {
       sendRequest({ bytesCount: MAX_ONGOING_BYTES_COUNT })
-      sendRequest({ bytesCount: MAX_QUEUE_BYTES_COUNT - 10 })
-      sendRequest({ bytesCount: 10 })
+      sendRequest({ bytesCount: MAX_QUEUE_BYTES_COUNT - 20 })
+      sendRequest({ bytesCount: 30 })
       expect(state.queuedPayloads.size()).toBe(2)
-      expect(state.queuedPayloads.bytesCount).toBe(MAX_QUEUE_BYTES_COUNT)
+      expect(state.queuedPayloads.bytesCount).toBe(MAX_QUEUE_BYTES_COUNT + 10)
 
       sendRequest({ bytesCount: 1 })
       expect(state.queuedPayloads.size()).toBe(2)
-      expect(state.queuedPayloads.bytesCount).toBe(11)
+      expect(state.queuedPayloads.bytesCount).toBe(MAX_QUEUE_BYTES_COUNT + 10)
+    })
+
+    it('should respect request order', () => {
+      sendRequest({ bytesCount: MAX_ONGOING_BYTES_COUNT - 10 })
+      sendRequest({ bytesCount: 20 })
+      sendRequest({ bytesCount: MAX_ONGOING_BYTES_COUNT - 15 })
+      sendRequest({ bytesCount: 10 })
+      expect(state.queuedPayloads.size()).toBe(3)
+      expect(state.queuedPayloads.bytesCount).toBe(20 + (MAX_ONGOING_BYTES_COUNT - 15) + 10)
+
+      sendStub.respondWith(0, { status: 200 })
+      expect(state.queuedPayloads.size()).toBe(2)
+      expect(state.queuedPayloads.bytesCount).toBe(MAX_ONGOING_BYTES_COUNT - 15 + 10)
+
+      sendStub.respondWith(1, { status: 200 })
+      expect(state.queuedPayloads.size()).toBe(0)
     })
   })
 

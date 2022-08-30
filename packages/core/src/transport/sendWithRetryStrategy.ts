@@ -9,8 +9,14 @@ export const MAX_QUEUE_BYTES_COUNT = 3 * ONE_MEBI_BYTE
 export const MAX_BACKOFF_TIME = 256 * ONE_SECOND
 export const INITIAL_BACKOFF_TIME = ONE_SECOND
 
+enum IntakeStatus {
+  UP,
+  ERROR_DETECTED,
+  DOWN,
+}
+
 export interface RetryState {
-  isIntakeAvailable: boolean
+  intakeStatus: IntakeStatus
   currentBackoffTime: number
   bandwidthMonitor: ReturnType<typeof newBandwidthMonitor>
   queuedPayloads: ReturnType<typeof newPayloadQueue>
@@ -19,23 +25,25 @@ export interface RetryState {
 type SendStrategy = (payload: Payload, onResponse: (r: HttpResponse) => void) => void
 
 export function sendWithRetryStrategy(payload: Payload, state: RetryState, sendStrategy: SendStrategy) {
-  if (state.isIntakeAvailable && state.bandwidthMonitor.canHandle(payload)) {
+  if (
+    state.intakeStatus === IntakeStatus.UP &&
+    state.queuedPayloads.size() === 0 &&
+    state.bandwidthMonitor.canHandle(payload)
+  ) {
     send(payload, state, sendStrategy, {
-      onSuccess: () => sendNextPayload(state, sendStrategy),
+      onSuccess: () => retryQueuedPayloads(state, sendStrategy),
       onFailure: () => {
         state.queuedPayloads.enqueue(payload)
         scheduleRetry(state, sendStrategy)
       },
     })
-    sendNextPayload(state, sendStrategy)
   } else {
     state.queuedPayloads.enqueue(payload)
   }
 }
 
 function scheduleRetry(state: RetryState, sendStrategy: SendStrategy) {
-  if (state.bandwidthMonitor.ongoingRequestCount !== 0) {
-    // avoid to enter a retry phase if another ongoing request can succeed
+  if (state.intakeStatus !== IntakeStatus.DOWN) {
     return
   }
   setTimeout(
@@ -50,7 +58,7 @@ function scheduleRetry(state: RetryState, sendStrategy: SendStrategy) {
             queuedPayloadBytesCount: state.queuedPayloads.bytesCount,
           })
           state.currentBackoffTime = INITIAL_BACKOFF_TIME
-          sendNextPayload(state, sendStrategy)
+          retryQueuedPayloads(state, sendStrategy)
         },
         onFailure: () => {
           state.currentBackoffTime = Math.min(MAX_BACKOFF_TIME, state.currentBackoffTime * 2)
@@ -60,13 +68,6 @@ function scheduleRetry(state: RetryState, sendStrategy: SendStrategy) {
     }),
     state.currentBackoffTime
   )
-}
-
-function sendNextPayload(state: RetryState, sendStrategy: SendStrategy) {
-  const nextPayload = state.queuedPayloads.dequeue()
-  if (nextPayload) {
-    sendWithRetryStrategy(nextPayload, state, sendStrategy)
-  }
 }
 
 function send(
@@ -79,13 +80,23 @@ function send(
   sendStrategy(payload, (response) => {
     state.bandwidthMonitor.remove(payload)
     if (wasRequestSuccessful(response)) {
-      state.isIntakeAvailable = true
+      state.intakeStatus = IntakeStatus.UP
       onSuccess()
     } else {
-      state.isIntakeAvailable = false
+      // do not consider intake down if another ongoing request could succeed
+      state.intakeStatus =
+        state.bandwidthMonitor.ongoingRequestCount > 0 ? IntakeStatus.ERROR_DETECTED : IntakeStatus.DOWN
       onFailure()
     }
   })
+}
+
+function retryQueuedPayloads(state: RetryState, sendStrategy: SendStrategy) {
+  const pendingPayloads = []
+  while (state.queuedPayloads.size() > 0) {
+    pendingPayloads.push(state.queuedPayloads.dequeue()!)
+  }
+  pendingPayloads.map((payload) => sendWithRetryStrategy(payload, state, sendStrategy))
 }
 
 function wasRequestSuccessful(response: HttpResponse) {
@@ -94,7 +105,7 @@ function wasRequestSuccessful(response: HttpResponse) {
 
 export function newRetryState(): RetryState {
   return {
-    isIntakeAvailable: true,
+    intakeStatus: IntakeStatus.UP,
     currentBackoffTime: INITIAL_BACKOFF_TIME,
     bandwidthMonitor: newBandwidthMonitor(),
     queuedPayloads: newPayloadQueue(),
@@ -106,11 +117,8 @@ function newPayloadQueue() {
   return {
     bytesCount: 0,
     enqueue(payload: Payload) {
-      if (payload.bytesCount > MAX_QUEUE_BYTES_COUNT) {
+      if (this.bytesCount >= MAX_QUEUE_BYTES_COUNT) {
         return
-      }
-      while (payload.bytesCount + this.bytesCount > MAX_QUEUE_BYTES_COUNT) {
-        this.dequeue()
       }
       queue.push(payload)
       this.bytesCount += payload.bytesCount
