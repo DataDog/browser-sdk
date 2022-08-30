@@ -5,8 +5,8 @@ export const ONE_MINUTE = 60 * ONE_SECOND
 export const ONE_HOUR = 60 * ONE_MINUTE
 export const ONE_DAY = 24 * ONE_HOUR
 export const ONE_YEAR = 365 * ONE_DAY
-export const ONE_KILO_BYTE = 1024
-export const ONE_MEGA_BYTE = 1024 * ONE_KILO_BYTE
+export const ONE_KIBI_BYTE = 1024
+export const ONE_MEBI_BYTE = 1024 * ONE_KIBI_BYTE
 
 export const enum DOM_EVENT {
   BEFORE_UNLOAD = 'beforeunload',

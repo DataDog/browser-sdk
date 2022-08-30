@@ -1,11 +1,11 @@
 import { addTelemetryDebug } from '../domain/telemetry'
 import { monitor } from '../tools/monitor'
-import { ONE_KILO_BYTE, ONE_MEGA_BYTE, ONE_SECOND } from '../tools/utils'
+import { ONE_KIBI_BYTE, ONE_MEBI_BYTE, ONE_SECOND } from '../tools/utils'
 import type { Payload, HttpResponse } from './httpRequest'
 
-export const MAX_ONGOING_BYTES_COUNT = 80 * ONE_KILO_BYTE
+export const MAX_ONGOING_BYTES_COUNT = 80 * ONE_KIBI_BYTE
 export const MAX_ONGOING_REQUESTS = 32
-export const MAX_QUEUE_BYTES_COUNT = 3 * ONE_MEGA_BYTE
+export const MAX_QUEUE_BYTES_COUNT = 3 * ONE_MEBI_BYTE
 export const MAX_BACKOFF_TIME = 256 * ONE_SECOND
 export const INITIAL_BACKOFF_TIME = ONE_SECOND
 
