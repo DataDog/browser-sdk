@@ -57,13 +57,6 @@ module.exports = {
     'no-extra-bind': 'error',
     'no-new-func': 'error',
     'no-new-wrappers': 'error',
-    'no-restricted-syntax': [
-      'error',
-      {
-        selector: 'TSEnumDeclaration:not([const=true])',
-        message: 'When possible, use `const enum` as it produces less code when transpiled.',
-      },
-    ],
     'no-return-await': 'error',
     'no-sequences': 'error',
     'no-template-curly-in-string': 'error',
@@ -235,6 +228,10 @@ module.exports = {
           {
             selector: 'MemberExpression[object.name="Date"][property.name="now"]',
             message: '`Date.now()` is not authorized. Please use `dateNow()` instead',
+          },
+          {
+            selector: 'TSEnumDeclaration:not([const=true])',
+            message: 'When possible, use `const enum` as it produces less code when transpiled.',
           },
         ],
       },
