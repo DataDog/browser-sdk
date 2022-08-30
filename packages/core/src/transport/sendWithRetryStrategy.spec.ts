@@ -1,6 +1,5 @@
 import { mockClock } from '../../test/specHelper'
 import type { Clock } from '../../test/specHelper'
-import { ONE_SECOND } from '../tools/utils'
 import type { RetryState } from './sendWithRetryStrategy'
 import {
   newRetryState,
@@ -8,6 +7,7 @@ import {
   MAX_ONGOING_BYTES_COUNT,
   MAX_ONGOING_REQUESTS,
   MAX_QUEUE_BYTES_COUNT,
+  INITIAL_BACKOFF_TIME,
 } from './sendWithRetryStrategy'
 import type { Payload, HttpResponse } from './httpRequest'
 
@@ -179,15 +179,15 @@ describe('sendWithRetryStrategy', () => {
       sendStub.respondWith(0, { status: 500 })
       expect(state.bandwidthMonitor.ongoingRequestCount).toBe(0)
 
-      clock.tick(ONE_SECOND)
+      clock.tick(INITIAL_BACKOFF_TIME)
       expect(state.bandwidthMonitor.ongoingRequestCount).toBe(1)
       sendStub.respondWith(1, { status: 500 })
 
-      clock.tick(2 * ONE_SECOND)
+      clock.tick(2 * INITIAL_BACKOFF_TIME)
       expect(state.bandwidthMonitor.ongoingRequestCount).toBe(1)
       sendStub.respondWith(2, { status: 500 })
 
-      clock.tick(4 * ONE_SECOND)
+      clock.tick(4 * INITIAL_BACKOFF_TIME)
       expect(state.bandwidthMonitor.ongoingRequestCount).toBe(1)
       sendStub.respondWith(3, { status: 500 })
     })
@@ -201,7 +201,7 @@ describe('sendWithRetryStrategy', () => {
       expect(state.bandwidthMonitor.ongoingRequestCount).toBe(0)
       expect(state.queuedPayloads.size()).toBe(4)
 
-      clock.tick(ONE_SECOND)
+      clock.tick(INITIAL_BACKOFF_TIME)
       expect(state.bandwidthMonitor.ongoingRequestCount).toBe(1)
       sendStub.respondWith(1, { status: 200 })
 

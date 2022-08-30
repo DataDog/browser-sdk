@@ -7,6 +7,7 @@ export const MAX_ONGOING_BYTES_COUNT = 80 * ONE_KILO_BYTE
 export const MAX_ONGOING_REQUESTS = 32
 export const MAX_QUEUE_BYTES_COUNT = 3 * ONE_MEGA_BYTE
 export const MAX_BACKOFF_TIME = 256 * ONE_SECOND
+export const INITIAL_BACKOFF_TIME = ONE_SECOND
 
 export interface RetryState {
   isIntakeAvailable: boolean
@@ -48,7 +49,7 @@ function scheduleRetry(state: RetryState, sendStrategy: SendStrategy) {
             queuedPayloadCount: state.queuedPayloads.size(),
             queuedPayloadBytesCount: state.queuedPayloads.bytesCount,
           })
-          state.currentBackoffTime = ONE_SECOND
+          state.currentBackoffTime = INITIAL_BACKOFF_TIME
           sendNextPayload(state, sendStrategy)
         },
         onFailure: () => {
@@ -94,7 +95,7 @@ function wasRequestSuccessful(response: HttpResponse) {
 export function newRetryState(): RetryState {
   return {
     isIntakeAvailable: true,
-    currentBackoffTime: ONE_SECOND,
+    currentBackoffTime: INITIAL_BACKOFF_TIME,
     bandwidthMonitor: newBandwidthMonitor(),
     queuedPayloads: newPayloadQueue(),
   }
