@@ -149,37 +149,41 @@ describe('sendWithRetryStrategy', () => {
       expect(state.queuedPayloads.size()).toBe(0)
     })
   })
+  ;[
+    { description: 'when the intake returns error:', status: 500 },
+    { description: 'when network is down:', status: 0 },
+  ].forEach(({ description, status }) => {
+    describe(description, () => {
+      it('should start queueing following requests', () => {
+        sendRequest()
+        sendStub.respondWith(0, { status })
+        expect(state.queuedPayloads.size()).toBe(1)
 
-  describe('when a request fails:', () => {
-    it('should start queueing following requests', () => {
-      sendRequest()
-      sendStub.respondWith(0, { status: 500 })
-      expect(state.queuedPayloads.size()).toBe(1)
+        sendRequest()
+        expect(state.queuedPayloads.size()).toBe(2)
+        sendRequest()
+        expect(state.queuedPayloads.size()).toBe(3)
+      })
 
-      sendRequest()
-      expect(state.queuedPayloads.size()).toBe(2)
-      sendRequest()
-      expect(state.queuedPayloads.size()).toBe(3)
-    })
+      it('should send queued requests if another ongoing request succeed', () => {
+        sendRequest()
+        sendRequest()
+        sendStub.respondWith(0, { status })
+        expect(state.bandwidthMonitor.ongoingRequestCount).toBe(1)
+        expect(state.queuedPayloads.size()).toBe(1)
 
-    it('should send queued requests if another ongoing request succeed', () => {
-      sendRequest()
-      sendRequest()
-      sendStub.respondWith(0, { status: 500 })
-      expect(state.bandwidthMonitor.ongoingRequestCount).toBe(1)
-      expect(state.queuedPayloads.size()).toBe(1)
+        sendRequest()
+        expect(state.bandwidthMonitor.ongoingRequestCount).toBe(1)
+        expect(state.queuedPayloads.size()).toBe(2)
 
-      sendRequest()
-      expect(state.bandwidthMonitor.ongoingRequestCount).toBe(1)
-      expect(state.queuedPayloads.size()).toBe(2)
-
-      sendStub.respondWith(1, { status: 200 })
-      expect(state.bandwidthMonitor.ongoingRequestCount).toBe(2)
-      expect(state.queuedPayloads.size()).toBe(0)
+        sendStub.respondWith(1, { status: 200 })
+        expect(state.bandwidthMonitor.ongoingRequestCount).toBe(2)
+        expect(state.queuedPayloads.size()).toBe(0)
+      })
     })
   })
 
-  describe('when intake offline:', () => {
+  describe('when transport down:', () => {
     it('should regularly try to send first queued request', () => {
       sendRequest()
       sendStub.respondWith(0, { status: 500 })

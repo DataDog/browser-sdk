@@ -9,14 +9,15 @@ export const MAX_QUEUE_BYTES_COUNT = 3 * ONE_MEBI_BYTE
 export const MAX_BACKOFF_TIME = 256 * ONE_SECOND
 export const INITIAL_BACKOFF_TIME = ONE_SECOND
 
-enum IntakeStatus {
+enum TransportStatus {
   UP,
-  ERROR_DETECTED,
+  FAILURE_DETECTED,
   DOWN,
 }
 
 export interface RetryState {
-  intakeStatus: IntakeStatus
+  transportStatus: TransportStatus
+  lastFailureStatus: number
   currentBackoffTime: number
   bandwidthMonitor: ReturnType<typeof newBandwidthMonitor>
   queuedPayloads: ReturnType<typeof newPayloadQueue>
@@ -26,7 +27,7 @@ type SendStrategy = (payload: Payload, onResponse: (r: HttpResponse) => void) =>
 
 export function sendWithRetryStrategy(payload: Payload, state: RetryState, sendStrategy: SendStrategy) {
   if (
-    state.intakeStatus === IntakeStatus.UP &&
+    state.transportStatus === TransportStatus.UP &&
     state.queuedPayloads.size() === 0 &&
     state.bandwidthMonitor.canHandle(payload)
   ) {
@@ -43,7 +44,7 @@ export function sendWithRetryStrategy(payload: Payload, state: RetryState, sendS
 }
 
 function scheduleRetry(state: RetryState, sendStrategy: SendStrategy) {
-  if (state.intakeStatus !== IntakeStatus.DOWN) {
+  if (state.transportStatus !== TransportStatus.DOWN) {
     return
   }
   setTimeout(
@@ -52,11 +53,14 @@ function scheduleRetry(state: RetryState, sendStrategy: SendStrategy) {
       send(payload, state, sendStrategy, {
         onSuccess: () => {
           state.queuedPayloads.dequeue()
-          addTelemetryDebug('resuming after intake failure', {
-            currentBackoffTime: state.currentBackoffTime,
-            queuedPayloadCount: state.queuedPayloads.size(),
-            queuedPayloadBytesCount: state.queuedPayloads.bytesCount,
-          })
+          if (state.lastFailureStatus !== 0) {
+            addTelemetryDebug('resuming after transport down', {
+              currentBackoffTime: state.currentBackoffTime,
+              queuedPayloadCount: state.queuedPayloads.size(),
+              queuedPayloadBytesCount: state.queuedPayloads.bytesCount,
+              failureStatus: state.lastFailureStatus,
+            })
+          }
           state.currentBackoffTime = INITIAL_BACKOFF_TIME
           retryQueuedPayloads(state, sendStrategy)
         },
@@ -80,12 +84,13 @@ function send(
   sendStrategy(payload, (response) => {
     state.bandwidthMonitor.remove(payload)
     if (wasRequestSuccessful(response)) {
-      state.intakeStatus = IntakeStatus.UP
+      state.transportStatus = TransportStatus.UP
       onSuccess()
     } else {
-      // do not consider intake down if another ongoing request could succeed
-      state.intakeStatus =
-        state.bandwidthMonitor.ongoingRequestCount > 0 ? IntakeStatus.ERROR_DETECTED : IntakeStatus.DOWN
+      // do not consider transport down if another ongoing request could succeed
+      state.transportStatus =
+        state.bandwidthMonitor.ongoingRequestCount > 0 ? TransportStatus.FAILURE_DETECTED : TransportStatus.DOWN
+      state.lastFailureStatus = response.status
       onFailure()
     }
   })
@@ -100,12 +105,13 @@ function retryQueuedPayloads(state: RetryState, sendStrategy: SendStrategy) {
 }
 
 function wasRequestSuccessful(response: HttpResponse) {
-  return response.status < 500
+  return response.status !== 0 && response.status < 500
 }
 
 export function newRetryState(): RetryState {
   return {
-    intakeStatus: IntakeStatus.UP,
+    transportStatus: TransportStatus.UP,
+    lastFailureStatus: 0,
     currentBackoffTime: INITIAL_BACKOFF_TIME,
     bandwidthMonitor: newBandwidthMonitor(),
     queuedPayloads: newPayloadQueue(),
