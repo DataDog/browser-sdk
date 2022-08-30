@@ -97,11 +97,11 @@ function send(
 }
 
 function retryQueuedPayloads(state: RetryState, sendStrategy: SendStrategy) {
-  const pendingPayloads = []
-  while (state.queuedPayloads.size() > 0) {
-    pendingPayloads.push(state.queuedPayloads.dequeue()!)
+  const previousQueue = state.queuedPayloads
+  state.queuedPayloads = newPayloadQueue()
+  while (previousQueue.size() > 0) {
+    sendWithRetryStrategy(previousQueue.dequeue()!, state, sendStrategy)
   }
-  pendingPayloads.map((payload) => sendWithRetryStrategy(payload, state, sendStrategy))
 }
 
 function wasRequestSuccessful(response: HttpResponse) {
