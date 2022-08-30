@@ -6,6 +6,7 @@ import {
   toServerDuration,
   relativeToClocks,
   assign,
+  isNumber,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
 import type { RumPerformanceEntry, RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
@@ -167,5 +168,5 @@ function toPerformanceEntryRepresentation(entry: RumPerformanceEntry): Performan
  * @returns number between 0 and 1 which represents tracing sample rate
  */
 function getRulePsr(configuration: RumConfiguration) {
-  return configuration.tracingSampleRate / 100
+  return isNumber(configuration.tracingSampleRate) ? configuration.tracingSampleRate / 100 : undefined
 }

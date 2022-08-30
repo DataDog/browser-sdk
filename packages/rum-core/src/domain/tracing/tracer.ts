@@ -1,4 +1,4 @@
-import { getOrigin, matchList, objectEntries, shallowClone, performDraw } from '@datadog/browser-core'
+import { getOrigin, matchList, objectEntries, shallowClone, performDraw, isNumber } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type {
   RumFetchCompleteContext,
@@ -93,7 +93,7 @@ function injectHeadersIfTracingAllowed(
 
   context.traceId = new TraceIdentifier()
   context.spanId = new TraceIdentifier()
-  context.traceSampled = performDraw(configuration.tracingSampleRate)
+  context.traceSampled = !isNumber(configuration.tracingSampleRate) || performDraw(configuration.tracingSampleRate)
   inject(makeTracingHeaders(context.traceId, context.spanId, context.traceSampled))
 }
 
