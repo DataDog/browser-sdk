@@ -98,6 +98,9 @@ function send(
 
 function retryQueuedPayloads(state: RetryState, sendStrategy: SendStrategy) {
   const previousQueue = state.queuedPayloads
+  if (previousQueue.isFull()) {
+    addTelemetryDebug('retry queue full')
+  }
   state.queuedPayloads = newPayloadQueue()
   while (previousQueue.size() > 0) {
     sendWithRetryStrategy(previousQueue.dequeue()!, state, sendStrategy)
@@ -123,7 +126,7 @@ function newPayloadQueue() {
   return {
     bytesCount: 0,
     enqueue(payload: Payload) {
-      if (this.bytesCount >= MAX_QUEUE_BYTES_COUNT) {
+      if (this.isFull()) {
         return
       }
       queue.push(payload)
@@ -141,6 +144,9 @@ function newPayloadQueue() {
     },
     size() {
       return queue.length
+    },
+    isFull() {
+      return this.bytesCount >= MAX_QUEUE_BYTES_COUNT
     },
   }
 }
