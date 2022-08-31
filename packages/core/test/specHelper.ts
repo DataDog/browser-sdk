@@ -263,6 +263,7 @@ class StubEventEmitter {
 }
 
 class StubXhr extends StubEventEmitter {
+  public static onSend: (xhr: StubXhr) => void | undefined
   public response: string | undefined = undefined
   public status: number | undefined = undefined
   public readyState: number = XMLHttpRequest.UNSENT
@@ -275,7 +276,9 @@ class StubXhr extends StubEventEmitter {
     this.hasEnded = false
   }
 
-  send() {}
+  send() {
+    StubXhr.onSend?.(this)
+  }
 
   abort() {
     this.status = 0
@@ -425,6 +428,7 @@ export function interceptRequests() {
   const originalSendBeacon = isSendBeaconSupported() && navigator.sendBeacon.bind(navigator)
   const originalRequest = window.Request
   const originalFetch = window.fetch
+  let stubXhrManager: { reset(): void } | undefined
 
   spyOn(XMLHttpRequest.prototype, 'open').and.callFake((_, url) => requests.push({ type: 'xhr', url } as Request))
   spyOn(XMLHttpRequest.prototype, 'send').and.callFake((body) => (requests[requests.length - 1].body = body as string))
@@ -462,6 +466,10 @@ export function interceptRequests() {
     withFetch(newFetch: any) {
       window.fetch = newFetch
     },
+    withStubXhr(onSend: (xhr: StubXhr) => void) {
+      stubXhrManager = stubXhr()
+      StubXhr.onSend = onSend
+    },
     restore() {
       if (originalSendBeacon) {
         navigator.sendBeacon = originalSendBeacon
@@ -469,6 +477,11 @@ export function interceptRequests() {
       if (originalRequest) {
         window.Request = originalRequest
       }
+      if (originalFetch) {
+        window.fetch = originalFetch
+      }
+      stubXhrManager?.reset()
+      StubXhr.onSend = noop
     },
   }
 }

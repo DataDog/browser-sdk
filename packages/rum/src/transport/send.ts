@@ -21,7 +21,7 @@ export function send(
   toFormEntries(metadata, (key, value) => formData.append(key, value))
   formData.append('raw_segment_size', rawSegmentBytesCount.toString())
 
-  httpRequest.sendOnExit(formData, data.byteLength)
+  httpRequest.sendOnExit({ data: formData, bytesCount: data.byteLength })
 }
 
 export function toFormEntries(input: object, onEntry: (key: string, value: string) => void, prefix = '') {
