@@ -33,7 +33,7 @@ export function createHttpRequest(endpointBuilder: EndpointBuilder, bytesLimit: 
       if (!isExperimentalFeatureEnabled('retry')) {
         fetchKeepAliveStrategy(endpointBuilder, bytesLimit, payload)
       } else {
-        sendWithRetryStrategy(payload, retryState, sendStrategyForRetry)
+        sendWithRetryStrategy(payload, retryState, sendStrategyForRetry, endpointBuilder.endpointType)
       }
     },
     /**

@@ -19,7 +19,7 @@ const INTAKE_TRACKS = {
   sessionReplay: 'replay',
 }
 
-type EndpointType = keyof typeof ENDPOINTS
+export type EndpointType = keyof typeof ENDPOINTS
 
 export type EndpointBuilder = ReturnType<typeof createEndpointBuilder>
 
