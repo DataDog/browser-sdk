@@ -1,4 +1,5 @@
 import { addTelemetryDebug } from '../domain/telemetry'
+import type { EndpointType } from '../domain/configuration'
 import { monitor } from '../tools/monitor'
 import { ONE_KIBI_BYTE, ONE_MEBI_BYTE, ONE_SECOND } from '../tools/utils'
 import type { Payload, HttpResponse } from './httpRequest'
@@ -25,17 +26,22 @@ export interface RetryState {
 
 type SendStrategy = (payload: Payload, onResponse: (r: HttpResponse) => void) => void
 
-export function sendWithRetryStrategy(payload: Payload, state: RetryState, sendStrategy: SendStrategy) {
+export function sendWithRetryStrategy(
+  payload: Payload,
+  state: RetryState,
+  sendStrategy: SendStrategy,
+  endpointType: EndpointType
+) {
   if (
     state.transportStatus === TransportStatus.UP &&
     state.queuedPayloads.size() === 0 &&
     state.bandwidthMonitor.canHandle(payload)
   ) {
     send(payload, state, sendStrategy, {
-      onSuccess: () => retryQueuedPayloads(state, sendStrategy),
+      onSuccess: () => retryQueuedPayloads(state, sendStrategy, 'request success', endpointType),
       onFailure: () => {
         state.queuedPayloads.enqueue(payload)
-        scheduleRetry(state, sendStrategy)
+        scheduleRetry(state, sendStrategy, endpointType)
       },
     })
   } else {
@@ -43,7 +49,7 @@ export function sendWithRetryStrategy(payload: Payload, state: RetryState, sendS
   }
 }
 
-function scheduleRetry(state: RetryState, sendStrategy: SendStrategy) {
+function scheduleRetry(state: RetryState, sendStrategy: SendStrategy, endpointType: EndpointType) {
   if (state.transportStatus !== TransportStatus.DOWN) {
     return
   }
@@ -62,11 +68,11 @@ function scheduleRetry(state: RetryState, sendStrategy: SendStrategy) {
             })
           }
           state.currentBackoffTime = INITIAL_BACKOFF_TIME
-          retryQueuedPayloads(state, sendStrategy)
+          retryQueuedPayloads(state, sendStrategy, 'transport down', endpointType)
         },
         onFailure: () => {
           state.currentBackoffTime = Math.min(MAX_BACKOFF_TIME, state.currentBackoffTime * 2)
-          scheduleRetry(state, sendStrategy)
+          scheduleRetry(state, sendStrategy, endpointType)
         },
       })
     }),
@@ -96,14 +102,22 @@ function send(
   })
 }
 
-function retryQueuedPayloads(state: RetryState, sendStrategy: SendStrategy) {
+function retryQueuedPayloads(
+  state: RetryState,
+  sendStrategy: SendStrategy,
+  reason: string,
+  endpointType: EndpointType
+) {
   const previousQueue = state.queuedPayloads
   if (previousQueue.isFull()) {
-    addTelemetryDebug('retry queue full')
+    addTelemetryDebug('retry queue full', {
+      reason,
+      endpointType,
+    })
   }
   state.queuedPayloads = newPayloadQueue()
   while (previousQueue.size() > 0) {
-    sendWithRetryStrategy(previousQueue.dequeue()!, state, sendStrategy)
+    sendWithRetryStrategy(previousQueue.dequeue()!, state, sendStrategy, endpointType)
   }
 }
 
