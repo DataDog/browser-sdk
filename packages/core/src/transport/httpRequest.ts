@@ -80,7 +80,7 @@ export function fetchKeepAliveStrategy(
   onResponse?: (r: HttpResponse) => void
 ) {
   const url = endpointBuilder.build()
-  const canUseKeepAlive = window.Request && 'keepalive' in new Request('') && bytesCount < bytesLimit
+  const canUseKeepAlive = isKeepAliveSupported() && bytesCount < bytesLimit
   if (canUseKeepAlive) {
     fetch(url, { method: 'POST', body: data, keepalive: true }).then(
       monitor((response: Response) => onResponse?.({ status: response.status })),
@@ -91,6 +91,15 @@ export function fetchKeepAliveStrategy(
     )
   } else {
     sendXHR(url, data, onResponse)
+  }
+}
+
+function isKeepAliveSupported() {
+  // Request can throw, cf https://developer.mozilla.org/en-US/docs/Web/API/Request/Request#errors
+  try {
+    return window.Request && 'keepalive' in new Request('http://a')
+  } catch {
+    return false
   }
 }
 

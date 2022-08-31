@@ -43,7 +43,7 @@ export interface RumConfiguration extends Configuration {
   // Built from init configuration
   actionNameAttribute: string | undefined
   allowedTracingOrigins: Array<string | RegExp>
-  tracingSampleRate: number
+  tracingSampleRate: number | undefined
   excludedActivityUrls: Array<string | RegExp>
   applicationId: string
   defaultPrivacyLevel: DefaultPrivacyLevel
@@ -104,7 +104,7 @@ export function validateAndBuildRumConfiguration(
       actionNameAttribute: initConfiguration.actionNameAttribute,
       premiumSampleRate: premiumSampleRate ?? 100,
       allowedTracingOrigins: initConfiguration.allowedTracingOrigins ?? [],
-      tracingSampleRate: initConfiguration.tracingSampleRate ?? 100,
+      tracingSampleRate: initConfiguration.tracingSampleRate,
       excludedActivityUrls: initConfiguration.excludedActivityUrls ?? [],
       trackInteractions: !!initConfiguration.trackInteractions || trackFrustrations,
       trackFrustrations,

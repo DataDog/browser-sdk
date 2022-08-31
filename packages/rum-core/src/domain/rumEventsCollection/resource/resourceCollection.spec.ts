@@ -215,6 +215,55 @@ describe('resourceCollection', () => {
       const traceInfo = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd!
       expect(traceInfo.rule_psr).toEqual(0.6)
     })
+
+    it('should not define rule_psr if tracingSampleRate is undefined', () => {
+      setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
+        startResourceCollection(
+          lifeCycle,
+          validateAndBuildRumConfiguration({
+            clientToken: 'xxx',
+            applicationId: 'xxx',
+          })!
+        )
+      })
+
+      const { lifeCycle, rawRumEvents } = setupBuilder.build()
+      lifeCycle.notify(
+        LifeCycleEventType.REQUEST_COMPLETED,
+        createCompletedRequest({
+          traceSampled: true,
+          spanId: new TraceIdentifier(),
+          traceId: new TraceIdentifier(),
+        })
+      )
+      const traceInfo = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd!
+      expect(traceInfo.rule_psr).toBeUndefined()
+    })
+
+    it('should define rule_psr to 0 if tracingSampleRate is set to 0', () => {
+      setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
+        startResourceCollection(
+          lifeCycle,
+          validateAndBuildRumConfiguration({
+            clientToken: 'xxx',
+            applicationId: 'xxx',
+            tracingSampleRate: 0,
+          })!
+        )
+      })
+
+      const { lifeCycle, rawRumEvents } = setupBuilder.build()
+      lifeCycle.notify(
+        LifeCycleEventType.REQUEST_COMPLETED,
+        createCompletedRequest({
+          traceSampled: true,
+          spanId: new TraceIdentifier(),
+          traceId: new TraceIdentifier(),
+        })
+      )
+      const traceInfo = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd!
+      expect(traceInfo.rule_psr).toEqual(0)
+    })
   })
 })
 
