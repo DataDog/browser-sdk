@@ -34,7 +34,7 @@ export function createHttpRequest(endpointBuilder: EndpointBuilder, bytesLimit: 
 
   function fetchKeepAliveStrategy(data: string | FormData, bytesCount: number) {
     const url = endpointBuilder.build()
-    const canUseKeepAlive = window.Request && 'keepalive' in new Request('') && bytesCount < bytesLimit
+    const canUseKeepAlive = isKeepAliveSupported() && bytesCount < bytesLimit
     if (canUseKeepAlive) {
       fetch(url, { method: 'POST', body: data, keepalive: true }).catch(
         monitor(() => {
@@ -44,6 +44,15 @@ export function createHttpRequest(endpointBuilder: EndpointBuilder, bytesLimit: 
       )
     } else {
       sendXHR(url, data)
+    }
+  }
+
+  function isKeepAliveSupported() {
+    // Request can throw, cf https://developer.mozilla.org/en-US/docs/Web/API/Request/Request#errors
+    try {
+      return window.Request && 'keepalive' in new Request('http://a')
+    } catch {
+      return false
     }
   }
 
