@@ -32,7 +32,7 @@ export function sendWithRetryStrategy(payload: Payload, state: RetryState, sendS
     state.bandwidthMonitor.canHandle(payload)
   ) {
     send(payload, state, sendStrategy, {
-      onSuccess: () => retryQueuedPayloads(state, sendStrategy),
+      onSuccess: () => retryQueuedPayloads(state, sendStrategy, 'request success'),
       onFailure: () => {
         state.queuedPayloads.enqueue(payload)
         scheduleRetry(state, sendStrategy)
@@ -62,7 +62,7 @@ function scheduleRetry(state: RetryState, sendStrategy: SendStrategy) {
             })
           }
           state.currentBackoffTime = INITIAL_BACKOFF_TIME
-          retryQueuedPayloads(state, sendStrategy)
+          retryQueuedPayloads(state, sendStrategy, 'transport down')
         },
         onFailure: () => {
           state.currentBackoffTime = Math.min(MAX_BACKOFF_TIME, state.currentBackoffTime * 2)
@@ -96,10 +96,10 @@ function send(
   })
 }
 
-function retryQueuedPayloads(state: RetryState, sendStrategy: SendStrategy) {
+function retryQueuedPayloads(state: RetryState, sendStrategy: SendStrategy, reason: string) {
   const previousQueue = state.queuedPayloads
   if (previousQueue.isFull()) {
-    addTelemetryDebug('retry queue full')
+    addTelemetryDebug(`retry queue full after ${reason}`)
   }
   state.queuedPayloads = newPayloadQueue()
   while (previousQueue.size() > 0) {
