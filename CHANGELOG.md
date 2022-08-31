@@ -16,6 +16,10 @@
 
 ---
 
+## v4.18.1
+
+- 🐛 [RUMF-1333] fix keepalive support check ([#1712](https://github.com/DataDog/browser-sdk/pull/1712))
+
 ## v4.18.0
 
 - ✨ [RUMF-1306] Send the tracing sample rate in rule_psr for resources ([#1669](https://github.com/DataDog/browser-sdk/pull/1669)), ([#1705](https://github.com/DataDog/browser-sdk/pull/1705))
