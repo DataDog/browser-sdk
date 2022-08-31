@@ -16,6 +16,13 @@
 
 ---
 
+## v4.18.0
+
+- ✨ [RUMF-1306] Send the tracing sample rate in rule_psr for resources ([#1669](https://github.com/DataDog/browser-sdk/pull/1669)), ([#1705](https://github.com/DataDog/browser-sdk/pull/1705))
+- ✨ [RUMF-1333] Send request with fetch keepalive + fallback ([#1701](https://github.com/DataDog/browser-sdk/pull/1701)), ([#1682](https://github.com/DataDog/browser-sdk/pull/1682))
+- ✨ [RUMF-1309] Implement nested CSS support ([#1699](https://github.com/DataDog/browser-sdk/pull/1699))
+- 🐛 Fix instrumention of null function with 3rd party wrapper ([#1570](https://github.com/DataDog/browser-sdk/pull/1570)) ([#1697](https://github.com/DataDog/browser-sdk/pull/1697))
+
 ## v4.17.2
 
 - 🐛 [RUMF-1344] scroll positions: remove fallback for null scrollingElement ([#1694](https://github.com/DataDog/browser-sdk/pull/1694))
