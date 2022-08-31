@@ -199,7 +199,6 @@ describe('sendWithRetryStrategy', () => {
 
       clock.tick(4 * INITIAL_BACKOFF_TIME)
       expect(state.bandwidthMonitor.ongoingRequestCount).toBe(1)
-      sendStub.respondWith(3, { status: 500 })
     })
 
     it('should send queued requests after first successful request', () => {
