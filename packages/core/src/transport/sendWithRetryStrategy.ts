@@ -9,7 +9,7 @@ export const MAX_QUEUE_BYTES_COUNT = 3 * ONE_MEBI_BYTE
 export const MAX_BACKOFF_TIME = 256 * ONE_SECOND
 export const INITIAL_BACKOFF_TIME = ONE_SECOND
 
-enum TransportStatus {
+const enum TransportStatus {
   UP,
   FAILURE_DETECTED,
   DOWN,
