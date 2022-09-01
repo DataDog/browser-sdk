@@ -67,12 +67,9 @@ export function startRumAssembly(
   viewContexts: ViewContexts,
   urlContexts: UrlContexts,
   actionContexts: ActionContexts,
-  getCommonContext: () => CommonContext
+  getCommonContext: () => CommonContext,
+  reportError: (error: RawError) => void
 ) {
-  const reportError = (error: RawError) => {
-    lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
-  }
-
   const eventRateLimiters = {
     [RumEventType.ERROR]: createEventRateLimiter(
       RumEventType.ERROR,

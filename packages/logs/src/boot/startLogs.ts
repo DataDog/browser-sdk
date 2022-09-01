@@ -1,4 +1,4 @@
-import type { Context, TelemetryEvent } from '@datadog/browser-core'
+import type { Context, TelemetryEvent, RawError } from '@datadog/browser-core'
 import {
   willSyntheticsInjectRum,
   areCookiesAuthorized,
@@ -7,6 +7,7 @@ import {
   startTelemetry,
   startBatchWithReplica,
   isTelemetryReplicationAllowed,
+  ErrorSource,
 } from '@datadog/browser-core'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { LogsConfiguration } from '../domain/configuration'
@@ -15,17 +16,30 @@ import { startConsoleCollection } from '../domain/logsCollection/console/console
 import { startReportCollection } from '../domain/logsCollection/report/reportCollection'
 import { startNetworkErrorCollection } from '../domain/logsCollection/networkError/networkErrorCollection'
 import { startRuntimeErrorCollection } from '../domain/logsCollection/runtimeError/runtimeErrorCollection'
-import { LifeCycle } from '../domain/lifeCycle'
+import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { startLoggerCollection } from '../domain/logsCollection/logger/loggerCollection'
-import type { CommonContext } from '../rawLogsEvent.types'
+import type { CommonContext, RawAgentLogsEvent } from '../rawLogsEvent.types'
 import { startLogsBatch } from '../transport/startLogsBatch'
 import { startLogsBridge } from '../transport/startLogsBridge'
 import type { Logger } from '../domain/logger'
+import { StatusType } from '../domain/logger'
 import { startInternalContext } from '../domain/internalContext'
 
 export function startLogs(configuration: LogsConfiguration, getCommonContext: () => CommonContext, mainLogger: Logger) {
   const lifeCycle = new LifeCycle()
 
+  const reportError = (error: RawError) =>
+    lifeCycle.notify<RawAgentLogsEvent>(LifeCycleEventType.RAW_LOG_COLLECTED, {
+      rawLogsEvent: {
+        message: error.message,
+        date: error.startClocks.timeStamp,
+        error: {
+          origin: ErrorSource.AGENT, // Todo: Remove in the next major release
+        },
+        origin: ErrorSource.AGENT,
+        status: StatusType.error,
+      },
+    })
   const telemetry = startLogsTelemetry(configuration)
   telemetry.setContextProvider(() => ({
     application: {
@@ -53,7 +67,7 @@ export function startLogs(configuration: LogsConfiguration, getCommonContext: ()
       ? startLogsSessionManager(configuration)
       : startLogsSessionManagerStub(configuration)
 
-  startLogsAssembly(session, configuration, lifeCycle, getCommonContext, mainLogger)
+  startLogsAssembly(session, configuration, lifeCycle, getCommonContext, mainLogger, reportError)
 
   if (!canUseEventBridge()) {
     startLogsBatch(configuration, lifeCycle)
