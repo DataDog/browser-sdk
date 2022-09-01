@@ -53,7 +53,7 @@ export function startRum(
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
   }
   if (!canUseEventBridge()) {
-    startRumBatch(configuration, lifeCycle, telemetry.observable)
+    startRumBatch(configuration, lifeCycle, telemetry.observable, reportError)
   } else {
     startRumEventBridge(lifeCycle)
   }

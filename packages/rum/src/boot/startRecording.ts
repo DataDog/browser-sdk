@@ -1,3 +1,4 @@
+import type { RawError, HttpRequest } from '@datadog/browser-core'
 import { timeStampNow, createHttpRequest } from '@datadog/browser-core'
 import type {
   LifeCycle,
@@ -20,14 +21,21 @@ export function startRecording(
   sessionManager: RumSessionManager,
   viewContexts: ViewContexts,
   worker: DeflateWorker,
-  httpRequest = createHttpRequest(configuration.sessionReplayEndpointBuilder, SEGMENT_BYTES_LIMIT)
+  httpRequest?: HttpRequest
 ) {
+  const reportError = (error: RawError) => {
+    lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
+  }
+
+  const replayRequest =
+    httpRequest || createHttpRequest(configuration.sessionReplayEndpointBuilder, SEGMENT_BYTES_LIMIT, reportError)
+
   const { addRecord, stop: stopSegmentCollection } = startSegmentCollection(
     lifeCycle,
     configuration.applicationId,
     sessionManager,
     viewContexts,
-    (data, metadata, rawSegmentBytesCount) => send(httpRequest, data, metadata, rawSegmentBytesCount),
+    (data, metadata, rawSegmentBytesCount) => send(replayRequest, data, metadata, rawSegmentBytesCount),
     worker
   )
 

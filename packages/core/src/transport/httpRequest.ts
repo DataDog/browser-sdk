@@ -2,6 +2,7 @@ import type { EndpointBuilder } from '../domain/configuration'
 import { addTelemetryError } from '../domain/telemetry'
 import { monitor } from '../tools/monitor'
 import { isExperimentalFeatureEnabled } from '../domain/configuration'
+import type { RawError } from '../tools/error'
 import { newRetryState, sendWithRetryStrategy } from './sendWithRetryStrategy'
 
 /**
@@ -23,7 +24,11 @@ export interface Payload {
   bytesCount: number
 }
 
-export function createHttpRequest(endpointBuilder: EndpointBuilder, bytesLimit: number) {
+export function createHttpRequest(
+  endpointBuilder: EndpointBuilder,
+  bytesLimit: number,
+  reportError: (error: RawError) => void
+) {
   const retryState = newRetryState()
   const sendStrategyForRetry = (payload: Payload, onResponse: (r: HttpResponse) => void) =>
     fetchKeepAliveStrategy(endpointBuilder, bytesLimit, payload, onResponse)
@@ -33,7 +38,7 @@ export function createHttpRequest(endpointBuilder: EndpointBuilder, bytesLimit: 
       if (!isExperimentalFeatureEnabled('retry')) {
         fetchKeepAliveStrategy(endpointBuilder, bytesLimit, payload)
       } else {
-        sendWithRetryStrategy(payload, retryState, sendStrategyForRetry, endpointBuilder.endpointType)
+        sendWithRetryStrategy(payload, retryState, sendStrategyForRetry, endpointBuilder.endpointType, reportError)
       }
     },
     /**

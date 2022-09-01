@@ -40,7 +40,7 @@ export function startLogs(configuration: LogsConfiguration, getCommonContext: ()
         status: StatusType.error,
       },
     })
-  const telemetry = startLogsTelemetry(configuration)
+  const telemetry = startLogsTelemetry(configuration, reportError)
   telemetry.setContextProvider(() => ({
     application: {
       id: getRUMInternalContext()?.application_id,
@@ -70,7 +70,7 @@ export function startLogs(configuration: LogsConfiguration, getCommonContext: ()
   startLogsAssembly(session, configuration, lifeCycle, getCommonContext, mainLogger, reportError)
 
   if (!canUseEventBridge()) {
-    startLogsBatch(configuration, lifeCycle)
+    startLogsBatch(configuration, lifeCycle, reportError)
   } else {
     startLogsBridge(lifeCycle)
   }
@@ -83,7 +83,7 @@ export function startLogs(configuration: LogsConfiguration, getCommonContext: ()
   }
 }
 
-function startLogsTelemetry(configuration: LogsConfiguration) {
+function startLogsTelemetry(configuration: LogsConfiguration, reportError: (error: RawError) => void) {
   const telemetry = startTelemetry(configuration)
   if (canUseEventBridge()) {
     const bridge = getEventBridge<'internal_telemetry', TelemetryEvent>()!
@@ -92,6 +92,7 @@ function startLogsTelemetry(configuration: LogsConfiguration) {
     const telemetryBatch = startBatchWithReplica(
       configuration,
       configuration.rumEndpointBuilder,
+      reportError,
       configuration.replica?.rumEndpointBuilder
     )
     telemetry.observable.subscribe((event) => telemetryBatch.add(event, isTelemetryReplicationAllowed(configuration)))
