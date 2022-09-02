@@ -156,6 +156,14 @@ export function makeRecorderApi(
   }
 }
 
+/**
+ * Test for Browser features used while recording
+ */
 function isBrowserSupported() {
-  return typeof Array.from === 'function' && typeof CSSSupportsRule === 'function'
+  return (
+    // Array.from is a bit less supported by browsers than CSSSupportsRule, but has higher chances
+    // to be polyfilled. Test for both to be more confident. We could add more things if we find out
+    // this test is not sufficient.
+    typeof Array.from === 'function' && typeof CSSSupportsRule === 'function'
+  )
 }
