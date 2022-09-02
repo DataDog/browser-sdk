@@ -31,6 +31,7 @@ const VIEW: ViewEvent = {
   location: {} as Location,
   startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
   timings: {
+    firstByte: 10 as Duration,
     domComplete: 10 as Duration,
     domContentLoaded: 10 as Duration,
     domInteractive: 10 as Duration,
@@ -98,6 +99,7 @@ describe('viewCollection', () => {
           bar: (20 * 1e6) as ServerDuration,
           foo: (10 * 1e6) as ServerDuration,
         },
+        first_byte: (10 * 1e6) as ServerDuration,
         dom_complete: (10 * 1e6) as ServerDuration,
         dom_content_loaded: (10 * 1e6) as ServerDuration,
         dom_interactive: (10 * 1e6) as ServerDuration,

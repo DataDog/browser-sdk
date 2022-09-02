@@ -16,6 +16,7 @@ export const TIMING_MAXIMUM_DELAY = 10 * ONE_MINUTE
 
 export interface Timings {
   firstContentfulPaint?: Duration
+  firstByte?: Duration
   domInteractive?: Duration
   domContentLoaded?: Duration
   domComplete?: Duration
@@ -67,6 +68,7 @@ export function trackNavigationTimings(lifeCycle: LifeCycle, callback: (timings:
           domContentLoaded: entry.domContentLoadedEventEnd,
           domInteractive: entry.domInteractive,
           loadEvent: entry.loadEventEnd,
+          firstByte: entry.responseStart,
         })
       }
     }

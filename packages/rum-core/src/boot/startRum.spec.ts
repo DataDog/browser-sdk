@@ -181,6 +181,7 @@ describe('rum session keep alive', () => {
 
 describe('rum events url', () => {
   const FAKE_NAVIGATION_ENTRY: RumPerformanceNavigationTiming = {
+    responseStart: 123 as RelativeTime,
     domComplete: 456 as RelativeTime,
     domContentLoadedEventEnd: 345 as RelativeTime,
     domInteractive: 234 as RelativeTime,

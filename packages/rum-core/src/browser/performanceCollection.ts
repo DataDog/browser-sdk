@@ -59,6 +59,7 @@ export interface RumPerformanceNavigationTiming {
   domContentLoadedEventEnd: RelativeTime
   domInteractive: RelativeTime
   loadEventEnd: RelativeTime
+  responseStart: RelativeTime
 }
 
 export interface RumLargestContentfulPaintTiming {
