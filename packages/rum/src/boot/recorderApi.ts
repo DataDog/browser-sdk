@@ -44,7 +44,7 @@ export function makeRecorderApi(
   startRecordingImpl: StartRecording,
   startDeflateWorkerImpl = startDeflateWorker
 ): RecorderApi {
-  if (canUseEventBridge()) {
+  if (canUseEventBridge() || !isBrowserSupported()) {
     return {
       start: noop,
       stop: noop,
@@ -154,4 +154,8 @@ export function makeRecorderApi(
 
     isRecording: () => state.status === RecorderStatus.Started,
   }
+}
+
+function isBrowserSupported() {
+  return typeof Array.from === 'function' && typeof CSSSupportsRule === 'function'
 }
