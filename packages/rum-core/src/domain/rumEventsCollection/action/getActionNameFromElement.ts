@@ -4,7 +4,7 @@ import { safeTruncate, isIE, find } from '@datadog/browser-core'
  * Get the action name from the attribute 'data-dd-action-name' on the element or any of its parent.
  * It can also be retrieved from a user defined attribute.
  */
-const DEFAULT_PROGRAMMATIC_ATTRIBUTE = 'data-dd-action-name'
+export const DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE = 'data-dd-action-name'
 
 export function getActionNameFromElement(element: Element, userProgrammaticAttribute?: string): string {
   // Proceed to get the action name in two steps:
@@ -14,7 +14,7 @@ export function getActionNameFromElement(element: Element, userProgrammaticAttri
   // * if no name is found this way, use strategies returning less accurate names as a fallback.
   //   Those are much likely to succeed.
   return (
-    getActionNameFromElementProgrammatically(element, DEFAULT_PROGRAMMATIC_ATTRIBUTE) ||
+    getActionNameFromElementProgrammatically(element, DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE) ||
     (userProgrammaticAttribute && getActionNameFromElementProgrammatically(element, userProgrammaticAttribute)) ||
     getActionNameFromElementForStrategies(element, userProgrammaticAttribute, priorityStrategies) ||
     getActionNameFromElementForStrategies(element, userProgrammaticAttribute, fallbackStrategies) ||
@@ -194,7 +194,7 @@ function getTextualContent(element: Element | HTMLElement, userProgrammaticAttri
     }
 
     // remove the text of elements with programmatic attribute value
-    removeTextFromElements(`[${DEFAULT_PROGRAMMATIC_ATTRIBUTE}]`)
+    removeTextFromElements(`[${DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE}]`)
 
     if (userProgrammaticAttribute) {
       removeTextFromElements(`[${userProgrammaticAttribute}]`)
