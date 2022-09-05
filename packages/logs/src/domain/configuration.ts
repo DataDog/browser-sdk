@@ -1,7 +1,7 @@
 import type { Configuration, InitConfiguration } from '@datadog/browser-core'
 import {
   assign,
-  ONE_KILO_BYTE,
+  ONE_KIBI_BYTE,
   validateAndBuildConfiguration,
   display,
   removeDuplicates,
@@ -31,7 +31,7 @@ export interface LogsConfiguration extends Configuration {
 /**
  * arbitrary value, byte precision not needed
  */
-export const DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT = 32 * ONE_KILO_BYTE
+export const DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT = 32 * ONE_KIBI_BYTE
 
 export function validateAndBuildLogsConfiguration(
   initConfiguration: LogsInitConfiguration

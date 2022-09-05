@@ -82,7 +82,7 @@ describe('startRecording', () => {
     flushSegment(lifeCycle)
 
     waitRequestSendCalls(1, (calls) => {
-      expect(calls.first().args).toEqual([jasmine.any(FormData), jasmine.any(Number)])
+      expect(calls.first().args[0]).toEqual({ data: jasmine.any(FormData), bytesCount: jasmine.any(Number) })
       expect(getRequestData(calls.first())).toEqual({
         'application.id': 'appId',
         creation_reason: 'init',
@@ -309,9 +309,9 @@ function readRequestSegment(
 }
 
 function getRequestFormData(call: jasmine.CallInfo<HttpRequest['sendOnExit']>) {
-  const data = call.args[0]
-  expect(data).toEqual(jasmine.any(FormData))
-  return data as FormData
+  const payload = call.args[0]
+  expect(payload.data).toEqual(jasmine.any(FormData))
+  return payload.data as FormData
 }
 
 function createRandomString(minLength: number) {

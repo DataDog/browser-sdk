@@ -44,7 +44,7 @@ export class Batch {
       this.bufferBytesCount = 0
       this.bufferMessagesCount = 0
 
-      sendFn(messages.join('\n'), bytesCount)
+      sendFn({ data: messages.join('\n'), bytesCount })
     }
   }
 

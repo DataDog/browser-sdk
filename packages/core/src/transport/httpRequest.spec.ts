@@ -3,16 +3,16 @@ import { stubEndpointBuilder, interceptRequests } from '../../test/specHelper'
 import type { Request } from '../../test/specHelper'
 import type { EndpointBuilder } from '../domain/configuration'
 import { createEndpointBuilder } from '../domain/configuration'
-import { createHttpRequest } from './httpRequest'
+import { createHttpRequest, fetchKeepAliveStrategy } from './httpRequest'
 import type { HttpRequest } from './httpRequest'
 
 describe('httpRequest', () => {
   const BATCH_BYTES_LIMIT = 100
+  const ENDPOINT_URL = 'http://my.website'
   let interceptor: ReturnType<typeof interceptRequests>
   let requests: Request[]
   let endpointBuilder: EndpointBuilder
   let request: HttpRequest
-  const ENDPOINT_URL = 'http://my.website'
 
   beforeEach(() => {
     interceptor = interceptRequests()
@@ -29,7 +29,7 @@ describe('httpRequest', () => {
     it('should use xhr when fetch keepalive is not available', () => {
       interceptor.withRequest(false)
 
-      request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
+      request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
 
       expect(requests.length).toEqual(1)
       expect(requests[0].type).toBe('xhr')
@@ -42,14 +42,14 @@ describe('httpRequest', () => {
         pending('no fetch keepalive support')
       }
 
-      request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
+      request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
 
       expect(requests.length).toEqual(1)
       expect(requests[0].type).toBe('fetch')
     })
 
     it('should use xhr over fetch keepalive when the bytes count is too high', () => {
-      request.send('{"foo":"bar1"}\n{"foo":"bar2"}', BATCH_BYTES_LIMIT)
+      request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: BATCH_BYTES_LIMIT })
 
       expect(requests.length).toEqual(1)
       expect(requests[0].type).toBe('xhr')
@@ -65,7 +65,7 @@ describe('httpRequest', () => {
         return notQueuedFetch
       })
 
-      request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
+      request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
 
       notQueuedFetch!.catch(() => {
         expect(requests.length).toEqual(1)
@@ -75,11 +75,72 @@ describe('httpRequest', () => {
     })
   })
 
+  describe('fetchKeepAliveStrategy onResponse', () => {
+    it('should be called with intake response when fetch is used', (done) => {
+      if (!interceptor.isFetchKeepAliveSupported()) {
+        pending('no fetch keepalive support')
+      }
+
+      interceptor.withFetch(() => Promise.resolve({ status: 429 }))
+
+      fetchKeepAliveStrategy(
+        endpointBuilder,
+        BATCH_BYTES_LIMIT,
+        { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 },
+        (response) => {
+          expect(response).toEqual({ status: 429 })
+          done()
+        }
+      )
+    })
+
+    it('should be called with intake response when fallback to xhr due fetch not queued', (done) => {
+      if (!interceptor.isFetchKeepAliveSupported()) {
+        pending('no fetch keepalive support')
+      }
+
+      interceptor.withFetch(() => Promise.reject())
+      interceptor.withStubXhr((xhr) => {
+        setTimeout(() => {
+          xhr.complete(429)
+        })
+      })
+
+      fetchKeepAliveStrategy(
+        endpointBuilder,
+        BATCH_BYTES_LIMIT,
+        { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 },
+        (response) => {
+          expect(response).toEqual({ status: 429 })
+          done()
+        }
+      )
+    })
+
+    it('should be called with intake response when fallback to xhr due to size', (done) => {
+      interceptor.withStubXhr((xhr) => {
+        setTimeout(() => {
+          xhr.complete(429)
+        })
+      })
+
+      fetchKeepAliveStrategy(
+        endpointBuilder,
+        BATCH_BYTES_LIMIT,
+        { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: BATCH_BYTES_LIMIT },
+        (response) => {
+          expect(response).toEqual({ status: 429 })
+          done()
+        }
+      )
+    })
+  })
+
   describe('sendOnExit', () => {
     it('should use xhr when sendBeacon is not defined', () => {
       interceptor.withSendBeacon(false)
 
-      request.sendOnExit('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
+      request.sendOnExit({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
 
       expect(requests.length).toEqual(1)
       expect(requests[0].type).toBe('xhr')
@@ -92,14 +153,14 @@ describe('httpRequest', () => {
         pending('no sendBeacon support')
       }
 
-      request.sendOnExit('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
+      request.sendOnExit({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
 
       expect(requests.length).toEqual(1)
       expect(requests[0].type).toBe('sendBeacon')
     })
 
     it('should use xhr over sendBeacon when the bytes count is too high', () => {
-      request.sendOnExit('{"foo":"bar1"}\n{"foo":"bar2"}', BATCH_BYTES_LIMIT)
+      request.sendOnExit({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: BATCH_BYTES_LIMIT })
 
       expect(requests.length).toEqual(1)
       expect(requests[0].type).toBe('xhr')
@@ -111,7 +172,7 @@ describe('httpRequest', () => {
       }
       interceptor.withSendBeacon(() => false)
 
-      request.sendOnExit('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
+      request.sendOnExit({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
 
       expect(requests.length).toEqual(1)
       expect(requests[0].type).toBe('xhr')
@@ -127,7 +188,7 @@ describe('httpRequest', () => {
         throw new TypeError()
       })
 
-      request.sendOnExit('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
+      request.sendOnExit({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
 
       expect(sendBeaconCalled).toBe(true)
       expect(requests.length).toEqual(1)
@@ -156,8 +217,8 @@ describe('httpRequest intake parameters', () => {
   })
 
   it('should have a unique request id', () => {
-    request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
-    request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
+    request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
+    request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
 
     const search = /dd-request-id=([^&]*)/
     const requestId1 = search.exec(requests[0].url)?.[1]
