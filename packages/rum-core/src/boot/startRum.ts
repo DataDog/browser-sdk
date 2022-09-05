@@ -1,11 +1,11 @@
-import type { Observable, TelemetryEvent } from '@datadog/browser-core'
+import type { Observable, TelemetryEvent, RawError } from '@datadog/browser-core'
 import { startTelemetry, canUseEventBridge, getEventBridge } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { startPerformanceCollection } from '../browser/performanceCollection'
 import { startRumAssembly } from '../domain/assembly'
 import { startForegroundContexts } from '../domain/contexts/foregroundContexts'
 import { startInternalContext } from '../domain/contexts/internalContext'
-import { LifeCycle } from '../domain/lifeCycle'
+import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { startViewContexts } from '../domain/contexts/viewContexts'
 import { startRequestCollection } from '../domain/requestCollection'
 import { startActionCollection } from '../domain/rumEventsCollection/action/actionCollection'
@@ -49,8 +49,11 @@ export function startRum(
     },
   }))
 
+  const reportError = (error: RawError) => {
+    lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
+  }
   if (!canUseEventBridge()) {
-    startRumBatch(configuration, lifeCycle, telemetry.observable)
+    startRumBatch(configuration, lifeCycle, telemetry.observable, reportError)
   } else {
     startRumEventBridge(lifeCycle)
   }
@@ -66,7 +69,8 @@ export function startRum(
     session,
     locationChangeObservable,
     domMutationObservable,
-    getCommonContext
+    getCommonContext,
+    reportError
   )
 
   startLongTaskCollection(lifeCycle, session)
@@ -122,7 +126,8 @@ export function startRumEventCollection(
   sessionManager: RumSessionManager,
   locationChangeObservable: Observable<LocationChange>,
   domMutationObservable: Observable<void>,
-  getCommonContext: () => CommonContext
+  getCommonContext: () => CommonContext,
+  reportError: (error: RawError) => void
 ) {
   const viewContexts = startViewContexts(lifeCycle)
   const urlContexts = startUrlContexts(lifeCycle, locationChangeObservable, location)
@@ -141,7 +146,8 @@ export function startRumEventCollection(
     viewContexts,
     urlContexts,
     actionContexts,
-    getCommonContext
+    getCommonContext,
+    reportError
   )
 
   return {

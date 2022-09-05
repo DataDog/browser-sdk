@@ -1,5 +1,6 @@
 import { mockClock } from '../../test/specHelper'
 import type { Clock } from '../../test/specHelper'
+import { ErrorSource } from '../tools/error'
 import type { RetryState } from './sendWithRetryStrategy'
 import {
   newRetryState,
@@ -12,10 +13,12 @@ import {
 import type { Payload, HttpResponse } from './httpRequest'
 
 describe('sendWithRetryStrategy', () => {
+  const ENDPOINT_TYPE = 'logs'
   let sendStub: ReturnType<typeof newSendStub>
   let state: RetryState
   let sendRequest: (payload?: Partial<Payload>) => void
   let clock: Clock
+  let reportErrorSpy: jasmine.Spy<jasmine.Func>
 
   function newSendStub() {
     const requests: Array<(r: HttpResponse) => void> = []
@@ -36,12 +39,13 @@ describe('sendWithRetryStrategy', () => {
     sendStub = newSendStub()
     state = newRetryState()
     clock = mockClock()
+    reportErrorSpy = jasmine.createSpy('reportError')
     sendRequest = (payload) => {
       const effectivePayload = {
         data: payload?.data ?? 'a',
         bytesCount: payload?.bytesCount ?? 1,
       }
-      sendWithRetryStrategy(effectivePayload, state, sendStub.sendStrategy, 'logs')
+      sendWithRetryStrategy(effectivePayload, state, sendStub.sendStrategy, ENDPOINT_TYPE, reportErrorSpy)
     }
   })
 
@@ -107,6 +111,54 @@ describe('sendWithRetryStrategy', () => {
     })
   })
 
+  describe('queue limitation:', () => {
+    it('should stop queueing new payloads when queue bytes limit is reached', () => {
+      sendRequest({ bytesCount: MAX_ONGOING_BYTES_COUNT })
+      sendRequest({ bytesCount: MAX_QUEUE_BYTES_COUNT - 20 })
+      sendRequest({ bytesCount: 30 })
+      expect(state.queuedPayloads.size()).toBe(2)
+      expect(state.queuedPayloads.bytesCount).toBe(MAX_QUEUE_BYTES_COUNT + 10)
+
+      sendRequest({ bytesCount: 1 })
+      expect(state.queuedPayloads.size()).toBe(2)
+      expect(state.queuedPayloads.bytesCount).toBe(MAX_QUEUE_BYTES_COUNT + 10)
+    })
+
+    it('should report a single error when queue is full after request success', () => {
+      sendRequest({ bytesCount: MAX_ONGOING_BYTES_COUNT })
+      sendRequest({ bytesCount: MAX_QUEUE_BYTES_COUNT })
+      expect(state.queuedPayloads.isFull()).toBe(true)
+
+      sendStub.respondWith(0, { status: 200 })
+      expect(reportErrorSpy).toHaveBeenCalled()
+      expect(reportErrorSpy.calls.argsFor(0)[0]).toEqual(
+        jasmine.objectContaining({
+          message: 'Reached max logs events size queued for upload: 3MiB',
+          source: ErrorSource.AGENT,
+        })
+      )
+      reportErrorSpy.calls.reset()
+
+      sendRequest({ bytesCount: MAX_QUEUE_BYTES_COUNT })
+      expect(state.queuedPayloads.isFull()).toBe(true)
+
+      sendStub.respondWith(1, { status: 200 })
+      expect(reportErrorSpy).not.toHaveBeenCalled()
+    })
+
+    it('should not report error when queue is full after resuming transport', () => {
+      sendRequest()
+      sendStub.respondWith(0, { status: 500 })
+      sendRequest({ bytesCount: MAX_QUEUE_BYTES_COUNT })
+      expect(state.queuedPayloads.isFull()).toBe(true)
+
+      clock.tick(INITIAL_BACKOFF_TIME)
+      sendStub.respondWith(1, { status: 200 })
+
+      expect(reportErrorSpy).not.toHaveBeenCalled()
+    })
+  })
+
   describe('dequeue:', () => {
     it('should send as much queued request as possible after a successful request', () => {
       sendRequest({ bytesCount: MAX_ONGOING_BYTES_COUNT })
@@ -119,18 +171,6 @@ describe('sendWithRetryStrategy', () => {
       sendStub.respondWith(0, { status: 200 })
       expect(state.bandwidthMonitor.ongoingRequestCount).toBe(MAX_ONGOING_REQUESTS)
       expect(state.queuedPayloads.size()).toBe(0)
-    })
-
-    it('should stop queueing new payloads when queue bytes limit is reached', () => {
-      sendRequest({ bytesCount: MAX_ONGOING_BYTES_COUNT })
-      sendRequest({ bytesCount: MAX_QUEUE_BYTES_COUNT - 20 })
-      sendRequest({ bytesCount: 30 })
-      expect(state.queuedPayloads.size()).toBe(2)
-      expect(state.queuedPayloads.bytesCount).toBe(MAX_QUEUE_BYTES_COUNT + 10)
-
-      sendRequest({ bytesCount: 1 })
-      expect(state.queuedPayloads.size()).toBe(2)
-      expect(state.queuedPayloads.bytesCount).toBe(MAX_QUEUE_BYTES_COUNT + 10)
     })
 
     it('should respect request order', () => {

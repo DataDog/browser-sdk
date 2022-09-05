@@ -1,4 +1,4 @@
-import type { RelativeTime, Observable } from '@datadog/browser-core'
+import type { RelativeTime, Observable, RawError } from '@datadog/browser-core'
 import { noop, relativeNow, isIE } from '@datadog/browser-core'
 import type { RumSessionManagerMock } from '../../test/mockRumSessionManager'
 import { createRumSessionManagerMock } from '../../test/mockRumSessionManager'
@@ -30,7 +30,8 @@ function startRum(
   sessionManager: RumSessionManager,
   location: Location,
   domMutationObservable: Observable<void>,
-  locationChangeObservable: Observable<LocationChange>
+  locationChangeObservable: Observable<LocationChange>,
+  reportError: (error: RawError) => void
 ) {
   const { stop: rumEventCollectionStop, foregroundContexts } = startRumEventCollection(
     lifeCycle,
@@ -42,7 +43,8 @@ function startRum(
     () => ({
       context: {},
       user: {},
-    })
+    }),
+    reportError
   )
   const { stop: viewCollectionStop } = startViewCollection(
     lifeCycle,
@@ -81,7 +83,8 @@ describe('rum session', () => {
           sessionManager,
           location,
           domMutationObservable,
-          locationChangeObservable
+          locationChangeObservable,
+          noop
         )
       }
     )
@@ -133,7 +136,8 @@ describe('rum session keep alive', () => {
             sessionManager,
             location,
             domMutationObservable,
-            locationChangeObservable
+            locationChangeObservable,
+            noop
           )
         }
       )
@@ -202,7 +206,8 @@ describe('rum events url', () => {
           sessionManager,
           location,
           domMutationObservable,
-          locationChangeObservable
+          locationChangeObservable,
+          noop
         )
       }
     )

@@ -17,23 +17,19 @@ import type { Logger } from './logger'
 import { STATUSES, HandlerType } from './logger'
 import { isAuthorized } from './logsCollection/logger/loggerCollection'
 import type { LogsSessionManager } from './logsSessionManager'
-import { reportAgentError } from './reportAgentError'
 
 export function startLogsAssembly(
   sessionManager: LogsSessionManager,
   configuration: LogsConfiguration,
   lifeCycle: LifeCycle,
   getCommonContext: () => CommonContext,
-  mainLogger: Logger // Todo: [RUMF-1230] Remove this parameter in the next major release
+  mainLogger: Logger, // Todo: [RUMF-1230] Remove this parameter in the next major release
+  reportError: (error: RawError) => void
 ) {
   const statusWithCustom = (STATUSES as string[]).concat(['custom'])
   const logRateLimiters: { [key: string]: EventRateLimiter } = {}
   statusWithCustom.forEach((status) => {
-    logRateLimiters[status] = createEventRateLimiter(
-      status,
-      configuration.eventRateLimiterThreshold,
-      (error: RawError) => reportAgentError(error, lifeCycle)
-    )
+    logRateLimiters[status] = createEventRateLimiter(status, configuration.eventRateLimiterThreshold, reportError)
   })
 
   lifeCycle.subscribe(

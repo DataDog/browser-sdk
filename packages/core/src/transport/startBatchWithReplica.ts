@@ -1,4 +1,5 @@
 import type { Configuration, EndpointBuilder } from '../domain/configuration'
+import type { RawError } from '../tools/error'
 import type { Context } from '../tools/context'
 import { Batch } from './batch'
 import { createHttpRequest } from './httpRequest'
@@ -6,6 +7,7 @@ import { createHttpRequest } from './httpRequest'
 export function startBatchWithReplica<T extends Context>(
   configuration: Configuration,
   endpoint: EndpointBuilder,
+  reportError: (error: RawError) => void,
   replicaEndpoint?: EndpointBuilder
 ) {
   const primaryBatch = createBatch(endpoint)
@@ -16,7 +18,7 @@ export function startBatchWithReplica<T extends Context>(
 
   function createBatch(endpointBuilder: EndpointBuilder) {
     return new Batch(
-      createHttpRequest(endpointBuilder, configuration.batchBytesLimit),
+      createHttpRequest(endpointBuilder, configuration.batchBytesLimit, reportError),
       configuration.batchMessagesLimit,
       configuration.batchBytesLimit,
       configuration.messageBytesLimit,
