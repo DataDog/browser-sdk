@@ -24,6 +24,7 @@ const FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY: RumLargestContentfulPaintTiming = {
   size: 10,
 }
 const FAKE_NAVIGATION_ENTRY: RumPerformanceNavigationTiming = {
+  responseStart: 123 as RelativeTime,
   domComplete: 456 as RelativeTime,
   domContentLoadedEventEnd: 345 as RelativeTime,
   domInteractive: 234 as RelativeTime,
@@ -142,6 +143,7 @@ describe('initial view', () => {
 
       expect(getViewUpdateCount()).toEqual(2)
       expect(getViewUpdate(1).timings).toEqual({
+        firstByte: 123 as Duration,
         domComplete: 456 as Duration,
         domContentLoaded: 345 as Duration,
         domInteractive: 234 as Duration,
@@ -167,6 +169,7 @@ describe('initial view', () => {
 
       expect(getViewUpdateCount()).toEqual(3)
       expect(getViewUpdate(1).timings).toEqual({
+        firstByte: 123 as Duration,
         domComplete: 456 as Duration,
         domContentLoaded: 345 as Duration,
         domInteractive: 234 as Duration,
@@ -223,6 +226,7 @@ describe('initial view', () => {
 
       it('should set timings only on the initial view', () => {
         expect(initialView.last.timings).toEqual({
+          firstByte: 123 as Duration,
           domComplete: 456 as Duration,
           domContentLoaded: 345 as Duration,
           domInteractive: 234 as Duration,

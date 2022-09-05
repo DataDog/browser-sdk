@@ -70,6 +70,7 @@ export interface RawRumViewEvent {
   type: RumEventType.VIEW
   view: {
     loading_type: ViewLoadingType
+    first_byte?: ServerDuration
     first_contentful_paint?: ServerDuration
     first_input_delay?: ServerDuration
     first_input_time?: ServerDuration

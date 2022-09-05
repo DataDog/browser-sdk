@@ -530,7 +530,7 @@ export type RumViewEvent = CommonProperties & {
      */
     readonly first_input_time?: number
     /**
-     * Total layout shift score that occured on the view
+     * Total layout shift score that occurred on the view
      */
     readonly cumulative_layout_shift?: number
     /**
@@ -549,6 +549,10 @@ export type RumViewEvent = CommonProperties & {
      * Duration in ns to the end of the load event handler execution
      */
     readonly load_event?: number
+    /**
+     * Duration in ns to the response start of the document request
+     */
+    readonly first_byte?: number
     /**
      * User custom timings of the view. As timing name is used as facet path, it must contain only letters, digits, or the characters - _ . @ $
      */
