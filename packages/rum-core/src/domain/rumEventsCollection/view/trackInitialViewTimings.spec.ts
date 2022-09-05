@@ -28,6 +28,7 @@ const FAKE_PAINT_ENTRY: RumPerformancePaintTiming = {
 }
 
 const FAKE_NAVIGATION_ENTRY: RumPerformanceNavigationTiming = {
+  responseStart: 123 as RelativeTime,
   domComplete: 456 as RelativeTime,
   domContentLoadedEventEnd: 345 as RelativeTime,
   domInteractive: 234 as RelativeTime,
@@ -71,6 +72,7 @@ describe('trackTimings', () => {
 
     expect(timingsCallback).toHaveBeenCalledTimes(3)
     expect(timingsCallback.calls.mostRecent().args[0]).toEqual({
+      firstByte: 123 as Duration,
       domComplete: 456 as Duration,
       domContentLoaded: 345 as Duration,
       domInteractive: 234 as Duration,
@@ -102,6 +104,7 @@ describe('trackNavigationTimings', () => {
 
     expect(navigationTimingsCallback).toHaveBeenCalledTimes(1)
     expect(navigationTimingsCallback).toHaveBeenCalledWith({
+      firstByte: 123 as Duration,
       domComplete: 456 as Duration,
       domContentLoaded: 345 as Duration,
       domInteractive: 234 as Duration,

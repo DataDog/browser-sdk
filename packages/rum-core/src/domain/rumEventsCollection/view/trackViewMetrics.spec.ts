@@ -15,6 +15,7 @@ const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = (PAGE_ACTIVITY_VALIDATION_DELAY * 
 const AFTER_PAGE_ACTIVITY_END_DELAY = PAGE_ACTIVITY_END_DELAY * 1.1
 
 const FAKE_NAVIGATION_ENTRY: RumPerformanceNavigationTiming = {
+  responseStart: 123 as RelativeTime,
   domComplete: 456 as RelativeTime,
   domContentLoadedEventEnd: 345 as RelativeTime,
   domInteractive: 234 as RelativeTime,
@@ -23,6 +24,7 @@ const FAKE_NAVIGATION_ENTRY: RumPerformanceNavigationTiming = {
 }
 
 const FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_BEFORE_ACTIVITY_TIMING: RumPerformanceNavigationTiming = {
+  responseStart: 1 as RelativeTime,
   domComplete: 2 as RelativeTime,
   domContentLoadedEventEnd: 1 as RelativeTime,
   domInteractive: 1 as RelativeTime,
@@ -31,6 +33,7 @@ const FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_BEFORE_ACTIVITY_TIMING: RumPerformanc
 }
 
 const FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING: RumPerformanceNavigationTiming = {
+  responseStart: 1 as RelativeTime,
   domComplete: 2 as RelativeTime,
   domContentLoadedEventEnd: 1 as RelativeTime,
   domInteractive: 1 as RelativeTime,

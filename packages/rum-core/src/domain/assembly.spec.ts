@@ -1,4 +1,4 @@
-import type { RawError, RelativeTime } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/browser-core'
 import { ErrorSource, ONE_MINUTE, display } from '@datadog/browser-core'
 import { createRumSessionManagerMock } from '../../test/mockRumSessionManager'
 import { createRawRumEvent } from '../../test/fixtures'
@@ -23,11 +23,13 @@ describe('rum assembly', () => {
   let serverRumEvents: RumEvent[]
   let extraConfigurationOptions: Partial<RumConfiguration> = {}
   let findView: () => ViewContext
+  let reportErrorSpy: jasmine.Spy<jasmine.Func>
   beforeEach(() => {
     findView = () => ({
       id: '7890',
       name: 'view name',
     })
+    reportErrorSpy = jasmine.createSpy('reportError')
     commonContext = {
       context: {},
       user: {},
@@ -51,7 +53,8 @@ describe('rum assembly', () => {
           viewContexts,
           urlContexts,
           actionContexts,
-          () => commonContext
+          () => commonContext,
+          reportErrorSpy
         )
       })
   })
@@ -633,15 +636,6 @@ describe('rum assembly', () => {
   })
 
   describe('error events limitation', () => {
-    const notifiedRawErrors: RawError[] = []
-
-    beforeEach(() => {
-      notifiedRawErrors.length = 0
-      setupBuilder.beforeBuild(({ lifeCycle }) => {
-        lifeCycle.subscribe(LifeCycleEventType.RAW_ERROR_COLLECTED, ({ error }) => notifiedRawErrors.push(error))
-      })
-    })
-
     it('stops sending error events when reaching the limit', () => {
       const { lifeCycle } = setupBuilder.withConfiguration({ eventRateLimiterThreshold: 1 }).build()
       notifyRawRumErrorEvent(lifeCycle, 'foo')
@@ -649,8 +643,8 @@ describe('rum assembly', () => {
 
       expect(serverRumEvents.length).toBe(1)
       expect((serverRumEvents[0] as RumErrorEvent).error.message).toBe('foo')
-      expect(notifiedRawErrors.length).toBe(1)
-      expect(notifiedRawErrors[0]).toEqual(
+      expect(reportErrorSpy).toHaveBeenCalledTimes(1)
+      expect(reportErrorSpy.calls.argsFor(0)[0]).toEqual(
         jasmine.objectContaining({
           message: 'Reached max number of errors by minute: 1',
           source: ErrorSource.AGENT,
@@ -675,7 +669,7 @@ describe('rum assembly', () => {
       notifyRawRumErrorEvent(lifeCycle, 'foo')
       expect(serverRumEvents.length).toBe(1)
       expect((serverRumEvents[0] as RumErrorEvent).error.message).toBe('foo')
-      expect(notifiedRawErrors.length).toBe(0)
+      expect(reportErrorSpy).not.toHaveBeenCalled()
     })
 
     it('allows to send new errors after a minute', () => {
@@ -703,15 +697,6 @@ describe('rum assembly', () => {
   })
 
   describe('action events limitation', () => {
-    const notifiedRawErrors: RawError[] = []
-
-    beforeEach(() => {
-      notifiedRawErrors.length = 0
-      setupBuilder.beforeBuild(({ lifeCycle }) => {
-        lifeCycle.subscribe(LifeCycleEventType.RAW_ERROR_COLLECTED, ({ error }) => notifiedRawErrors.push(error))
-      })
-    })
-
     it('stops sending action events when reaching the limit', () => {
       const { lifeCycle } = setupBuilder.withConfiguration({ eventRateLimiterThreshold: 1 }).build()
 
@@ -720,8 +705,8 @@ describe('rum assembly', () => {
 
       expect(serverRumEvents.length).toBe(1)
       expect((serverRumEvents[0] as RumActionEvent).action.target?.name).toBe('foo')
-      expect(notifiedRawErrors.length).toBe(1)
-      expect(notifiedRawErrors[0]).toEqual(
+      expect(reportErrorSpy).toHaveBeenCalledTimes(1)
+      expect(reportErrorSpy.calls.argsFor(0)[0]).toEqual(
         jasmine.objectContaining({
           message: 'Reached max number of actions by minute: 1',
           source: ErrorSource.AGENT,
@@ -746,7 +731,7 @@ describe('rum assembly', () => {
       notifyRumActionEvent(lifeCycle, 'foo')
       expect(serverRumEvents.length).toBe(1)
       expect((serverRumEvents[0] as RumActionEvent).action.target?.name).toBe('foo')
-      expect(notifiedRawErrors.length).toBe(0)
+      expect(reportErrorSpy).not.toHaveBeenCalled()
     })
 
     it('allows to send new actions after a minute', () => {

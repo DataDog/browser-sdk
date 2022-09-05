@@ -3,6 +3,7 @@ import { stubEndpointBuilder, interceptRequests } from '../../test/specHelper'
 import type { Request } from '../../test/specHelper'
 import type { EndpointBuilder } from '../domain/configuration'
 import { createEndpointBuilder } from '../domain/configuration'
+import { noop } from '../tools/utils'
 import { createHttpRequest, fetchKeepAliveStrategy } from './httpRequest'
 import type { HttpRequest } from './httpRequest'
 
@@ -18,7 +19,7 @@ describe('httpRequest', () => {
     interceptor = interceptRequests()
     requests = interceptor.requests
     endpointBuilder = stubEndpointBuilder(ENDPOINT_URL)
-    request = createHttpRequest(endpointBuilder, BATCH_BYTES_LIMIT)
+    request = createHttpRequest(endpointBuilder, BATCH_BYTES_LIMIT, noop)
   })
 
   afterEach(() => {
@@ -209,7 +210,7 @@ describe('httpRequest intake parameters', () => {
     interceptor = interceptRequests()
     requests = interceptor.requests
     endpointBuilder = createEndpointBuilder({ clientToken }, 'logs', [])
-    request = createHttpRequest(endpointBuilder, BATCH_BYTES_LIMIT)
+    request = createHttpRequest(endpointBuilder, BATCH_BYTES_LIMIT, noop)
   })
 
   afterEach(() => {
