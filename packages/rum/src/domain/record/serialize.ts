@@ -1,5 +1,6 @@
-import { assign } from '@datadog/browser-core'
+import { assign, startsWith } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
+import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from '@datadog/browser-rum-core'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
@@ -240,14 +241,20 @@ export function serializeChildNodes(node: Node, options: SerializeOptions): Seri
 export function serializeAttribute(
   element: Element,
   nodePrivacyLevel: NodePrivacyLevel,
-  attributeName: string
+  attributeName: string,
+  configuration: RumConfiguration
 ): string | number | boolean | null {
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     // dup condition for direct access case
     return null
   }
   const attributeValue = element.getAttribute(attributeName)
-  if (nodePrivacyLevel === NodePrivacyLevel.MASK) {
+  if (
+    nodePrivacyLevel === NodePrivacyLevel.MASK &&
+    attributeName !== PRIVACY_ATTR_NAME &&
+    attributeName !== DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE &&
+    attributeName !== configuration.actionNameAttribute
+  ) {
     const tagName = element.tagName
 
     switch (attributeName) {
@@ -267,8 +274,9 @@ export function serializeAttribute(
     if (tagName === 'A' && attributeName === 'href') {
       return CENSORED_STRING_MARK
     }
+
     // mask data-* attributes
-    if (attributeValue && attributeName.indexOf('data-') === 0 && attributeName !== PRIVACY_ATTR_NAME) {
+    if (attributeValue && startsWith(attributeName, 'data-')) {
       // Exception: it's safe to reveal the `${PRIVACY_ATTR_NAME}` attr
       return CENSORED_STRING_MARK
     }
@@ -342,7 +350,7 @@ function getAttributesForPrivacyLevel(
   for (let i = 0; i < element.attributes.length; i += 1) {
     const attribute = element.attributes.item(i) as HtmlAttribute
     const attributeName = attribute.name
-    const attributeValue = serializeAttribute(element, nodePrivacyLevel, attributeName)
+    const attributeValue = serializeAttribute(element, nodePrivacyLevel, attributeName, options.configuration)
     if (attributeValue !== null) {
       safeAttrs[attributeName] = attributeValue
     }

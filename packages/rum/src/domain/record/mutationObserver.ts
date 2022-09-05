@@ -316,7 +316,7 @@ function processAttributesMutations(
       continue
     }
     const privacyLevel = getNodePrivacyLevel(mutation.target, configuration.defaultPrivacyLevel)
-    const attributeValue = serializeAttribute(mutation.target, privacyLevel, mutation.attributeName!)
+    const attributeValue = serializeAttribute(mutation.target, privacyLevel, mutation.attributeName!, configuration)
 
     let transformedValue: string | null
     if (mutation.attributeName === 'value') {

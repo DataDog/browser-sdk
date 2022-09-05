@@ -1,5 +1,6 @@
 import { isIE } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
+import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from '@datadog/browser-rum-core'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
@@ -627,12 +628,60 @@ describe('serializeAttribute ', () => {
     node.setAttribute('test-truncate', exceededAttributeValue)
     node.setAttribute('test-ignored', ignoredAttributeValue)
 
-    expect(serializeAttribute(node, NodePrivacyLevel.ALLOW, 'test-okay')).toBe(maxAttributeValue)
-    expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'test-okay')).toBe(maxAttributeValue)
+    expect(serializeAttribute(node, NodePrivacyLevel.ALLOW, 'test-okay', DEFAULT_CONFIGURATION)).toBe(maxAttributeValue)
+    expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'test-okay', DEFAULT_CONFIGURATION)).toBe(maxAttributeValue)
 
-    expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'test-ignored')).toBe(ignoredAttributeValue)
+    expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'test-ignored', DEFAULT_CONFIGURATION)).toBe(
+      ignoredAttributeValue
+    )
 
-    expect(serializeAttribute(node, NodePrivacyLevel.ALLOW, 'test-truncate')).toBe('data:truncated')
-    expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'test-truncate')).toBe('data:truncated')
+    expect(serializeAttribute(node, NodePrivacyLevel.ALLOW, 'test-truncate', DEFAULT_CONFIGURATION)).toBe(
+      'data:truncated'
+    )
+    expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'test-truncate', DEFAULT_CONFIGURATION)).toBe(
+      'data:truncated'
+    )
+  })
+
+  it('does not mask the privacy attribute', () => {
+    const node = document.createElement('div')
+    node.setAttribute(PRIVACY_ATTR_NAME, NodePrivacyLevel.MASK)
+    expect(serializeAttribute(node, NodePrivacyLevel.MASK, PRIVACY_ATTR_NAME, DEFAULT_CONFIGURATION)).toBe('mask')
+  })
+
+  it('masks data attributes', () => {
+    const node = document.createElement('div')
+    node.setAttribute('data-foo', 'bar')
+    expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'data-foo', DEFAULT_CONFIGURATION)).toBe('***')
+  })
+
+  it('does not mask the default programmatic action name attributes', () => {
+    const node = document.createElement('div')
+    node.setAttribute(DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE, 'foo')
+    expect(
+      serializeAttribute(node, NodePrivacyLevel.MASK, DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE, DEFAULT_CONFIGURATION)
+    ).toBe('foo')
+  })
+
+  it('does not mask the user-supplied programmatic action name attributes when it is a data attribute', () => {
+    const node = document.createElement('div')
+    node.setAttribute('data-testid', 'foo')
+    expect(
+      serializeAttribute(node, NodePrivacyLevel.MASK, 'data-testid', {
+        ...DEFAULT_CONFIGURATION,
+        actionNameAttribute: 'data-testid',
+      })
+    ).toBe('foo')
+  })
+
+  it('does not mask the user-supplied programmatic action name attributes when it not a data attribute', () => {
+    const node = document.createElement('div')
+    node.setAttribute('testid', 'foo')
+    expect(
+      serializeAttribute(node, NodePrivacyLevel.MASK, 'testid', {
+        ...DEFAULT_CONFIGURATION,
+        actionNameAttribute: 'testid',
+      })
+    ).toBe('foo')
   })
 })
