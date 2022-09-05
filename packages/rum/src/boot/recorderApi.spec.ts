@@ -1,4 +1,4 @@
-import { noop } from '@datadog/browser-core'
+import { isIE, noop } from '@datadog/browser-core'
 import type { RecorderApi, ViewContexts, LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { createNewEvent, deleteEventBridgeStub, initEventBridgeStub } from '../../../core/test/specHelper'
@@ -36,6 +36,9 @@ describe('makeRecorderApi', () => {
   let rumInit: () => void
 
   beforeEach(() => {
+    if (isIE()) {
+      pending('IE not supported')
+    }
     setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager }) => {
       stopRecordingSpy = jasmine.createSpy('stopRecording')
       startRecordingSpy = jasmine.createSpy('startRecording').and.callFake(() => ({
