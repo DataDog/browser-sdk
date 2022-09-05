@@ -13,7 +13,6 @@ describe('telemetry', () => {
             throw new window.Error('bar')
           },
         }
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         window.DD_LOGS!.logger.log('hop', context as any)
       })
       await flushEvents()
@@ -35,7 +34,6 @@ describe('telemetry', () => {
             throw new window.Error('bar')
           },
         }
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         window.DD_RUM!.addAction('hop', context as any)
       })
       await flushEvents()

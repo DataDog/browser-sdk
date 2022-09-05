@@ -30,7 +30,6 @@ export const enum ErrorHandling {
   UNHANDLED = 'unhandled',
 }
 
-// eslint-disable-next-line @typescript-eslint/no-redeclare
 export type ErrorSource = typeof ErrorSource[keyof typeof ErrorSource]
 
 export function formatUnknownError(

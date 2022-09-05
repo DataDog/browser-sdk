@@ -20,7 +20,6 @@ export interface PerformanceResourceDetails {
   dns?: PerformanceResourceDetailsElement
   connect?: PerformanceResourceDetailsElement
   ssl?: PerformanceResourceDetailsElement
-  // eslint-disable-next-line camelcase
   first_byte: PerformanceResourceDetailsElement
   download: PerformanceResourceDetailsElement
 }

@@ -72,7 +72,6 @@ describe('listenActionEvents', () => {
       expect(hasSelectionChanged()).toBe(true)
     })
 
-    // eslint-disable-next-line max-len
     it('click to change the selection position (ex: last click of a triple-click selection) should report a selection change', () => {
       emulateNodeSelection(3, 4)
       emulateClick({

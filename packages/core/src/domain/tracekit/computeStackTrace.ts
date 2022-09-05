@@ -99,7 +99,6 @@ function parseWinLine(line: string): StackFrame | undefined {
 }
 
 const GECKO_LINE_RE =
-  // eslint-disable-next-line max-len
   /^\s*(.*?)(?:\((.*?)\))?(?:^|@)((?:file|https?|blob|chrome|webpack|resource|capacitor|\[native).*?|[^@]*bundle)(?::(\d+))?(?::(\d+))?\s*$/i
 const GECKO_EVAL_RE = /(\S+) line (\d+)(?: > eval line \d+)* > eval/i
 

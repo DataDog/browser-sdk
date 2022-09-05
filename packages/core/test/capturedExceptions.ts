@@ -238,7 +238,6 @@ export const PHANTOMJS_1_19 = {
     at http://path/to/file.js:4287`,
 }
 
-/* eslint-disable max-len */
 export const ANDROID_REACT_NATIVE = {
   message: 'Error: test',
   name: 'Error',
@@ -252,7 +251,6 @@ export const ANDROID_REACT_NATIVE = {
   at children(/home/username/sample-workspace/sampleapp.collect.react/node_modules/react-native/Libraries/Renderer/src/renderers/shared/stack/reconciler/ReactMultiChild.js:264:10)
   at this(/home/username/sample-workspace/sampleapp.collect.react/node_modules/react-native/Libraries/Renderer/src/renderers/native/ReactNativeBaseComponent.js:74:41)\n`,
 }
-/* eslint-enable max-len */
 
 export const ANDROID_REACT_NATIVE_PROD = {
   message: 'Error: test',

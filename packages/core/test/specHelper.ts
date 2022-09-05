@@ -271,7 +271,7 @@ class StubXhr extends StubEventEmitter {
 
   private hasEnded = false
 
-  /* eslint-disable @typescript-eslint/no-empty-function,@typescript-eslint/no-unused-vars */
+  /* eslint-disable @typescript-eslint/no-unused-vars */
   open(method: string, url: string | URL | undefined | null) {
     this.hasEnded = false
   }

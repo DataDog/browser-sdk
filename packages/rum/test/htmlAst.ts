@@ -10,7 +10,6 @@ export const makeHtmlDoc = (htmlContent: string, privacyTag: string) => {
     newDoc.documentElement.setAttribute(PRIVACY_ATTR_NAME, privacyTag)
     return newDoc
   } catch (e) {
-    // eslint-disable-next-line no-console
     console.error('Failed to set innerHTML of new doc:', e)
     return document
   }

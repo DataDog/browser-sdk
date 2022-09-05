@@ -1,9 +1,7 @@
 module.exports = {
   meta: {
     docs: {
-      description:
-        // eslint-disable-next-line max-len
-        'Disallow importing spec file code to avoid to execute the tests from the imported spec file twice',
+      description: 'Disallow importing spec file code to avoid to execute the tests from the imported spec file twice',
       recommended: false,
     },
     schema: [],

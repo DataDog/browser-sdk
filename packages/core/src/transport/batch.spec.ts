@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import sinon from 'sinon'
 import { noop } from '../tools/utils'
 import { Batch } from './batch'

@@ -921,9 +921,7 @@ Error: foo
       column: 41,
       func: 'this',
       line: 74,
-      url:
-        // eslint-disable-next-line  max-len
-        '/home/username/sample-workspace/sampleapp.collect.react/node_modules/react-native/Libraries/Renderer/src/renderers/native/ReactNativeBaseComponent.js',
+      url: '/home/username/sample-workspace/sampleapp.collect.react/node_modules/react-native/Libraries/Renderer/src/renderers/native/ReactNativeBaseComponent.js',
     })
   })
 
