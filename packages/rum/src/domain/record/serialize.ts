@@ -1,4 +1,5 @@
 import { assign } from '@datadog/browser-core'
+import type { RumConfiguration } from '@datadog/browser-rum-core'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
@@ -59,17 +60,19 @@ export interface SerializeOptions {
   ignoreWhiteSpace?: boolean
   parentNodePrivacyLevel: ParentNodePrivacyLevel
   serializationContext: SerializationContext
+  configuration: RumConfiguration
 }
 
 export function serializeDocument(
   document: Document,
-  defaultPrivacyLevel: ParentNodePrivacyLevel,
+  configuration: RumConfiguration,
   serializationContext: SerializationContext
 ): SerializedNodeWithId {
   // We are sure that Documents are never ignored, so this function never returns null
   return serializeNodeWithId(document, {
-    parentNodePrivacyLevel: defaultPrivacyLevel,
     serializationContext,
+    parentNodePrivacyLevel: configuration.defaultPrivacyLevel,
+    configuration,
   })!
 }
 
@@ -166,7 +169,7 @@ export function serializeElementNode(element: Element, options: SerializeOptions
     return
   }
 
-  const attributes = getAttributesForPrivacyLevel(element, nodePrivacyLevel, options.serializationContext)
+  const attributes = getAttributesForPrivacyLevel(element, nodePrivacyLevel, options)
 
   let childNodes: SerializedNodeWithId[] = []
   if (element.childNodes.length) {
@@ -326,7 +329,7 @@ function isSVGElement(el: Element): boolean {
 function getAttributesForPrivacyLevel(
   element: Element,
   nodePrivacyLevel: NodePrivacyLevel,
-  serializationContext: SerializationContext
+  options: SerializeOptions
 ): Record<string, string | number | boolean> {
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     return {}
@@ -420,6 +423,7 @@ function getAttributesForPrivacyLevel(
    */
   let scrollTop: number | undefined
   let scrollLeft: number | undefined
+  const serializationContext = options.serializationContext
   switch (serializationContext.status) {
     case SerializationContextStatus.INITIAL_FULL_SNAPSHOT:
       scrollTop = Math.round(element.scrollTop)

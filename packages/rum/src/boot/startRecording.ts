@@ -45,7 +45,7 @@ export function startRecording(
     flushMutations,
   } = record({
     emit: addRecord,
-    defaultPrivacyLevel: configuration.defaultPrivacyLevel,
+    configuration,
     lifeCycle,
   })
 

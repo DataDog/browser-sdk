@@ -1,4 +1,5 @@
 import { isIE } from '@datadog/browser-core'
+import type { RumConfiguration } from '@datadog/browser-rum-core'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
@@ -31,12 +32,17 @@ import { MAX_ATTRIBUTE_VALUE_CHAR_LENGTH } from './privacy'
 import type { ElementsScrollPositions } from './elementsScrollPositions'
 import { createElementsScrollPositions } from './elementsScrollPositions'
 
+const DEFAULT_CONFIGURATION = {} as RumConfiguration
+
+const DEFAULT_SERIALIZATION_CONTEXT = {
+  status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
+  elementsScrollPositions: createElementsScrollPositions(),
+}
+
 const DEFAULT_OPTIONS: SerializeOptions = {
   parentNodePrivacyLevel: NodePrivacyLevel.ALLOW,
-  serializationContext: {
-    status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
-    elementsScrollPositions: createElementsScrollPositions(),
-  },
+  serializationContext: DEFAULT_SERIALIZATION_CONTEXT,
+  configuration: DEFAULT_CONFIGURATION,
 }
 
 describe('serializeNodeWithId', () => {
@@ -58,7 +64,7 @@ describe('serializeNodeWithId', () => {
   describe('document serialization', () => {
     it('serializes a document', () => {
       const document = new DOMParser().parseFromString('<!doctype html><html>foo</html>', 'text/html')
-      expect(serializeDocument(document, NodePrivacyLevel.ALLOW, DEFAULT_OPTIONS.serializationContext)).toEqual({
+      expect(serializeDocument(document, DEFAULT_CONFIGURATION, DEFAULT_SERIALIZATION_CONTEXT)).toEqual({
         type: NodeType.Document,
         childNodes: [
           jasmine.objectContaining({ type: NodeType.DocumentType, name: 'html', publicId: '', systemId: '' }),
@@ -141,7 +147,10 @@ describe('serializeNodeWithId', () => {
         const serializedAttributes = (
           serializeNodeWithId(element, {
             ...DEFAULT_OPTIONS,
-            serializationContext: { status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT, elementsScrollPositions },
+            serializationContext: {
+              status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
+              elementsScrollPositions,
+            },
           }) as ElementNode
         ).attributes
 
@@ -197,7 +206,9 @@ describe('serializeNodeWithId', () => {
         const serializedAttributes = (
           serializeNodeWithId(element, {
             ...DEFAULT_OPTIONS,
-            serializationContext: { status: SerializationContextStatus.MUTATION },
+            serializationContext: {
+              status: SerializationContextStatus.MUTATION,
+            },
           }) as ElementNode
         ).attributes
 
@@ -565,8 +576,8 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
 
   it('a masked DOM Document itself is still serialized ', () => {
     const serializeOptionsMask: SerializeOptions = {
+      ...DEFAULT_OPTIONS,
       parentNodePrivacyLevel: NodePrivacyLevel.MASK,
-      serializationContext: DEFAULT_OPTIONS.serializationContext,
     }
     expect(serializeDocumentNode(document, serializeOptionsMask)).toEqual({
       type: NodeType.Document,
