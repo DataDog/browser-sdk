@@ -9,7 +9,7 @@ import type { Payload, HttpResponse } from './httpRequest'
 
 export const MAX_ONGOING_BYTES_COUNT = 80 * ONE_KIBI_BYTE
 export const MAX_ONGOING_REQUESTS = 32
-export const MAX_QUEUE_MIB_COUNT = 3
+export const MAX_QUEUE_BYTES_COUNT = 3 * ONE_MEBI_BYTE
 export const MAX_BACKOFF_TIME = 256 * ONE_SECOND
 export const INITIAL_BACKOFF_TIME = ONE_SECOND
 
@@ -123,7 +123,7 @@ function retryQueuedPayloads(
 ) {
   if (reason === RetryReason.AFTER_SUCCESS && state.queuedPayloads.isFull() && !state.queueFullReported) {
     reportError({
-      message: `Reached max ${endpointType} events size queued for upload: ${MAX_QUEUE_MIB_COUNT}MiB`,
+      message: `Reached max ${endpointType} events size queued for upload: ${MAX_QUEUE_BYTES_COUNT / ONE_MEBI_BYTE}MiB`,
       source: ErrorSource.AGENT,
       startClocks: clocksNow(),
     })
@@ -176,7 +176,7 @@ function newPayloadQueue() {
       return queue.length
     },
     isFull() {
-      return this.bytesCount >= MAX_QUEUE_MIB_COUNT * ONE_MEBI_BYTE
+      return this.bytesCount >= MAX_QUEUE_BYTES_COUNT
     },
   }
 }

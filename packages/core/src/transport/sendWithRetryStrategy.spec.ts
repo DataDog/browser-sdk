@@ -1,14 +1,13 @@
 import { mockClock } from '../../test/specHelper'
 import type { Clock } from '../../test/specHelper'
 import { ErrorSource } from '../tools/error'
-import { ONE_MEBI_BYTE } from '../tools/utils'
 import type { RetryState } from './sendWithRetryStrategy'
 import {
   newRetryState,
   sendWithRetryStrategy,
   MAX_ONGOING_BYTES_COUNT,
   MAX_ONGOING_REQUESTS,
-  MAX_QUEUE_MIB_COUNT,
+  MAX_QUEUE_BYTES_COUNT,
   INITIAL_BACKOFF_TIME,
 } from './sendWithRetryStrategy'
 import type { Payload, HttpResponse } from './httpRequest'
@@ -115,19 +114,19 @@ describe('sendWithRetryStrategy', () => {
   describe('queue limitation:', () => {
     it('should stop queueing new payloads when queue bytes limit is reached', () => {
       sendRequest({ bytesCount: MAX_ONGOING_BYTES_COUNT })
-      sendRequest({ bytesCount: MAX_QUEUE_MIB_COUNT * ONE_MEBI_BYTE - 20 })
+      sendRequest({ bytesCount: MAX_QUEUE_BYTES_COUNT - 20 })
       sendRequest({ bytesCount: 30 })
       expect(state.queuedPayloads.size()).toBe(2)
-      expect(state.queuedPayloads.bytesCount).toBe(MAX_QUEUE_MIB_COUNT * ONE_MEBI_BYTE + 10)
+      expect(state.queuedPayloads.bytesCount).toBe(MAX_QUEUE_BYTES_COUNT + 10)
 
       sendRequest({ bytesCount: 1 })
       expect(state.queuedPayloads.size()).toBe(2)
-      expect(state.queuedPayloads.bytesCount).toBe(MAX_QUEUE_MIB_COUNT * ONE_MEBI_BYTE + 10)
+      expect(state.queuedPayloads.bytesCount).toBe(MAX_QUEUE_BYTES_COUNT + 10)
     })
 
     it('should report a single error when queue is full after request success', () => {
       sendRequest({ bytesCount: MAX_ONGOING_BYTES_COUNT })
-      sendRequest({ bytesCount: MAX_QUEUE_MIB_COUNT * ONE_MEBI_BYTE })
+      sendRequest({ bytesCount: MAX_QUEUE_BYTES_COUNT })
       expect(state.queuedPayloads.isFull()).toBe(true)
 
       sendStub.respondWith(0, { status: 200 })
@@ -140,7 +139,7 @@ describe('sendWithRetryStrategy', () => {
       )
       reportErrorSpy.calls.reset()
 
-      sendRequest({ bytesCount: MAX_QUEUE_MIB_COUNT * ONE_MEBI_BYTE })
+      sendRequest({ bytesCount: MAX_QUEUE_BYTES_COUNT })
       expect(state.queuedPayloads.isFull()).toBe(true)
 
       sendStub.respondWith(1, { status: 200 })
@@ -150,7 +149,7 @@ describe('sendWithRetryStrategy', () => {
     it('should not report error when queue is full after resuming transport', () => {
       sendRequest()
       sendStub.respondWith(0, { status: 500 })
-      sendRequest({ bytesCount: MAX_QUEUE_MIB_COUNT * ONE_MEBI_BYTE })
+      sendRequest({ bytesCount: MAX_QUEUE_BYTES_COUNT })
       expect(state.queuedPayloads.isFull()).toBe(true)
 
       clock.tick(INITIAL_BACKOFF_TIME)
