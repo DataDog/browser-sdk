@@ -48,7 +48,6 @@ module.exports = {
       'undefined',
     ],
     'id-match': 'error',
-    'max-len': ['error', { code: 120, ignoreUrls: true }],
     'no-bitwise': 'error',
     'no-caller': 'error',
     'no-else-return': 'error',

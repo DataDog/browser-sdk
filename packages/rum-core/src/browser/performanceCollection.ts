@@ -287,7 +287,6 @@ function computeRelativePerformanceTiming() {
   for (const key in timing) {
     if (isNumber(timing[key as keyof PerformanceTiming])) {
       const numberKey = key as keyof RelativePerformanceTiming
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
       const timingElement = timing[numberKey] as TimeStamp
       result[numberKey] = timingElement === 0 ? (0 as RelativeTime) : getRelativeTime(timingElement)
     }

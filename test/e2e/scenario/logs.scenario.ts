@@ -8,7 +8,6 @@ describe('logs', () => {
     .withLogs()
     .run(async ({ serverEvents }) => {
       await browserExecute(() => {
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         window.DD_LOGS!.logger.log('hello')
       })
       await flushEvents()
@@ -165,7 +164,6 @@ describe('logs', () => {
     .withLogs()
     .run(async ({ serverEvents }) => {
       await browserExecute(() => {
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         window.DD_LOGS!.logger.log('hello')
       })
       await flushEvents()
@@ -182,7 +180,6 @@ describe('logs', () => {
     })
     .run(async ({ serverEvents }) => {
       await browserExecute(() => {
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         window.DD_LOGS!.logger.log('hello', {})
       })
       await flushEvents()

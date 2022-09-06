@@ -375,7 +375,6 @@ describe('trackClickActions', () => {
     })
 
     describe('error clicks', () => {
-      // eslint-disable-next-line max-len
       it('considers a "click with activity" followed by an error as a click action with "error" frustration type', () => {
         const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
 
@@ -387,7 +386,6 @@ describe('trackClickActions', () => {
         expect(events[0].frustrationTypes).toEqual([FrustrationType.ERROR_CLICK])
       })
 
-      // eslint-disable-next-line max-len
       it('considers a "click without activity" followed by an error as a click action with "error" (and "dead") frustration type', () => {
         const { lifeCycle, clock } = setupBuilder.build()
 

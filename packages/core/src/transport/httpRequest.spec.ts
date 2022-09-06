@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import { stubEndpointBuilder, interceptRequests } from '../../test/specHelper'
 import type { Request } from '../../test/specHelper'
 import type { EndpointBuilder } from '../domain/configuration'

@@ -50,7 +50,6 @@ export function isRage(clicks: Click[]) {
 const DEAD_CLICK_EXCLUDE_SELECTOR =
   // inputs that don't trigger a meaningful event like "input" when clicked, including textual
   // inputs (using a negative selector is shorter here)
-  // eslint-disable-next-line max-len
   'input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="range"]),' +
   'textarea,' +
   'select,' +

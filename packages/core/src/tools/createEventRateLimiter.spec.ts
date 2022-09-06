@@ -55,7 +55,6 @@ describe('createEventRateLimiter', () => {
     })
   })
 
-  // eslint-disable-next-line max-len
   it('returns false when called from the "onLimitReached" callback to bypass the limit for the "limit reached" error', () => {
     eventLimiter = createEventRateLimiter('error', limit, () => {
       expect(eventLimiter!.isLimitReached()).toBe(false)
@@ -88,7 +87,6 @@ describe('createEventRateLimiter', () => {
     expect(eventLimiter.isLimitReached()).toBe(true)
   })
 
-  // eslint-disable-next-line max-len
   it('returns true when the limit is reached and the "onLimitReached" callback does not call "isLimitReached" (ex: excluded by beforeSend)', () => {
     eventLimiter = createEventRateLimiter('error', limit, () => {
       // do not call isLimitReached

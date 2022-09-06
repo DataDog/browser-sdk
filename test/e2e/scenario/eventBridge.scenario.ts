@@ -70,7 +70,6 @@ describe('bridge present', () => {
             throw new window.Error('bar')
           },
         }
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         window.DD_LOGS!.logger.log('hop', context as any)
       })
 
@@ -84,7 +83,6 @@ describe('bridge present', () => {
     .withEventBridge()
     .run(async ({ serverEvents, bridgeEvents }) => {
       await browserExecute(() => {
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         window.DD_LOGS!.logger.log('hello')
       })
       await flushEvents()

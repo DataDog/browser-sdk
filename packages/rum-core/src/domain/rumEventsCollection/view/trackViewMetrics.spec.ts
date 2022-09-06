@@ -123,7 +123,6 @@ describe('rum track view metrics', () => {
       )
     })
 
-    // eslint-disable-next-line max-len
     it('should use computed loading time for initial view when load event is smaller than computed loading time', () => {
       const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
       const { getViewUpdate, getViewUpdateCount } = viewTest

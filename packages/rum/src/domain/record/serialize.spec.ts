@@ -523,7 +523,6 @@ describe('serializeNodeWithId', () => {
         const privateWordMatchCount = innerText.match(/private/g)?.length
         expect(privateWordMatchCount).toBe(10)
         expect(innerText).toBe(
-          // eslint-disable-next-line max-len
           '  \n      .example {content: "anything";}\n       private title \n \n     hello private world \n     Loreum ipsum private text \n     hello private world \n     \n      Click https://private.com/path/nested?query=param#hash\n     \n      \n     \n       private option A \n       private option B \n       private option C \n     \n      \n      \n      \n     inputFoo label \n\n      \n\n           Loreum Ipsum private ...\n     \n\n     editable private div \n'
         )
       })

@@ -88,7 +88,6 @@ describe('getSelectorFromElement', () => {
         )
       })
 
-      // eslint-disable-next-line max-len
       it('attribute selector with the custom action name attribute takes precedence over other stable attribute selectors', () => {
         expect(getStableAttributeSelector('<div action-name="foo" data-testid="bar"></div>', 'action-name')).toBe(
           'DIV[action-name="foo"]'
