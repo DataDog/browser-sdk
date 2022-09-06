@@ -32,7 +32,6 @@ import type { ElementsScrollPositions } from './elementsScrollPositions'
 import { createElementsScrollPositions } from './elementsScrollPositions'
 
 const DEFAULT_OPTIONS: SerializeOptions = {
-  document,
   parentNodePrivacyLevel: NodePrivacyLevel.ALLOW,
   serializationContext: {
     status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
@@ -566,7 +565,6 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
 
   it('a masked DOM Document itself is still serialized ', () => {
     const serializeOptionsMask: SerializeOptions = {
-      document,
       parentNodePrivacyLevel: NodePrivacyLevel.MASK,
       serializationContext: DEFAULT_OPTIONS.serializationContext,
     }

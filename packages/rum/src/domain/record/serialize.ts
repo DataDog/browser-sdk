@@ -55,7 +55,6 @@ export type SerializationContext =
     }
 
 export interface SerializeOptions {
-  document: Document
   serializedNodeIds?: Set<number>
   ignoreWhiteSpace?: boolean
   parentNodePrivacyLevel: ParentNodePrivacyLevel
@@ -69,7 +68,6 @@ export function serializeDocument(
 ): SerializedNodeWithId {
   // We are sure that Documents are never ignored, so this function never returns null
   return serializeNodeWithId(document, {
-    document,
     parentNodePrivacyLevel: defaultPrivacyLevel,
     serializationContext,
   })!

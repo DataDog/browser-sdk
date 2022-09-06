@@ -208,7 +208,6 @@ function processChildListMutations(
     }
 
     const serializedNode = serializeNodeWithId(node, {
-      document,
       serializedNodeIds,
       parentNodePrivacyLevel,
       serializationContext: { status: SerializationContextStatus.MUTATION },

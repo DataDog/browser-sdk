@@ -29,7 +29,6 @@ export const generateLeanSerializedDoc = (htmlContent: string, privacyTag: strin
   const newDoc = makeHtmlDoc(htmlContent, privacyTag)
   const serializedDoc = removeIdFieldsRecursivelyClone(
     serializeNodeWithId(newDoc, {
-      document: newDoc,
       parentNodePrivacyLevel: NodePrivacyLevel.ALLOW,
       serializationContext: {
         status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
