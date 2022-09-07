@@ -137,7 +137,7 @@ function retryQueuedPayloads(
 }
 
 function wasRequestSuccessful(response: HttpResponse) {
-  return response.status !== 0 && response.status < 500
+  return response.status !== 0 && response.status !== 429 && response.status < 500
 }
 
 export function newRetryState(): RetryState {
