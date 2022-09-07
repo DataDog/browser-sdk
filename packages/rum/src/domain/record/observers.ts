@@ -10,7 +10,7 @@ import {
   addEventListener,
   noop,
 } from '@datadog/browser-core'
-import type { LifeCycle } from '@datadog/browser-rum-core'
+import type { LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
 import { initViewportObservable, ActionType, RumEventType, LifeCycleEventType } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel } from '../../constants'
 import type {
@@ -82,7 +82,7 @@ export type FrustrationCallback = (record: FrustrationRecord) => void
 
 interface ObserverParam {
   lifeCycle: LifeCycle
-  defaultPrivacyLevel: DefaultPrivacyLevel
+  configuration: RumConfiguration
   mutationController: MutationController
   elementsScrollPositions: ElementsScrollPositions
   mutationCb: MutationCallBack
@@ -99,13 +99,19 @@ interface ObserverParam {
 }
 
 export function initObservers(o: ObserverParam): ListenerHandler {
-  const mutationHandler = initMutationObserver(o.mutationController, o.mutationCb, o.defaultPrivacyLevel)
+  const mutationHandler = initMutationObserver(o.mutationController, o.mutationCb, o.configuration)
   const mousemoveHandler = initMoveObserver(o.mousemoveCb)
-  const mouseInteractionHandler = initMouseInteractionObserver(o.mouseInteractionCb, o.defaultPrivacyLevel)
-  const scrollHandler = initScrollObserver(o.scrollCb, o.defaultPrivacyLevel, o.elementsScrollPositions)
+  const mouseInteractionHandler = initMouseInteractionObserver(
+    o.mouseInteractionCb,
+    o.configuration.defaultPrivacyLevel
+  )
+  const scrollHandler = initScrollObserver(o.scrollCb, o.configuration.defaultPrivacyLevel, o.elementsScrollPositions)
   const viewportResizeHandler = initViewportResizeObserver(o.viewportResizeCb)
-  const inputHandler = initInputObserver(o.inputCb, o.defaultPrivacyLevel)
-  const mediaInteractionHandler = initMediaInteractionObserver(o.mediaInteractionCb, o.defaultPrivacyLevel)
+  const inputHandler = initInputObserver(o.inputCb, o.configuration.defaultPrivacyLevel)
+  const mediaInteractionHandler = initMediaInteractionObserver(
+    o.mediaInteractionCb,
+    o.configuration.defaultPrivacyLevel
+  )
   const styleSheetObserver = initStyleSheetObserver(o.styleSheetCb)
   const focusHandler = initFocusObserver(o.focusCb)
   const visualViewportResizeHandler = initVisualViewportResizeObserver(o.visualViewportResizeCb)
@@ -129,9 +135,9 @@ export function initObservers(o: ObserverParam): ListenerHandler {
 function initMutationObserver(
   mutationController: MutationController,
   cb: MutationCallBack,
-  defaultPrivacyLevel: DefaultPrivacyLevel
+  configuration: RumConfiguration
 ) {
-  return startMutationObserver(mutationController, cb, defaultPrivacyLevel).stop
+  return startMutationObserver(mutationController, cb, configuration).stop
 }
 
 function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {

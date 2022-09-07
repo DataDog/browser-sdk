@@ -1,5 +1,5 @@
 import { DefaultPrivacyLevel, isIE, relativeNow, timeStampNow } from '@datadog/browser-core'
-import type { RawRumActionEvent } from '@datadog/browser-rum-core'
+import type { RawRumActionEvent, RumConfiguration } from '@datadog/browser-rum-core'
 import { ActionType, LifeCycle, LifeCycleEventType, RumEventType, FrustrationType } from '@datadog/browser-rum-core'
 import type { RawRumEventCollectedData } from 'packages/rum-core/src/domain/lifeCycle'
 import { createNewEvent, isFirefox } from '../../../../core/test/specHelper'
@@ -9,6 +9,8 @@ import type { FrustrationCallback, InputCallback, StyleSheetCallback } from './o
 import { initStyleSheetObserver, initFrustrationObserver, initInputObserver } from './observers'
 import { serializeDocument, SerializationContextStatus } from './serialize'
 import { createElementsScrollPositions } from './elementsScrollPositions'
+
+const DEFAULT_CONFIGURATION = { defaultPrivacyLevel: NodePrivacyLevel.ALLOW } as RumConfiguration
 
 describe('initInputObserver', () => {
   let stopInputObserver: () => void
@@ -27,7 +29,7 @@ describe('initInputObserver', () => {
     sandbox.appendChild(input)
     document.body.appendChild(sandbox)
 
-    serializeDocument(document, NodePrivacyLevel.ALLOW, {
+    serializeDocument(document, DEFAULT_CONFIGURATION, {
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
       elementsScrollPositions: createElementsScrollPositions(),
     })
@@ -171,7 +173,7 @@ describe('initStyleSheetObserver', () => {
     document.head.appendChild(styleElement)
     styleSheet = styleElement.sheet!
 
-    serializeDocument(document, NodePrivacyLevel.ALLOW, {
+    serializeDocument(document, DEFAULT_CONFIGURATION, {
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
       elementsScrollPositions: createElementsScrollPositions(),
     })

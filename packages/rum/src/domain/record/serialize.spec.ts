@@ -1,4 +1,6 @@
 import { isIE } from '@datadog/browser-core'
+import type { RumConfiguration } from '@datadog/browser-rum-core'
+import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from '@datadog/browser-rum-core'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
@@ -31,13 +33,17 @@ import { MAX_ATTRIBUTE_VALUE_CHAR_LENGTH } from './privacy'
 import type { ElementsScrollPositions } from './elementsScrollPositions'
 import { createElementsScrollPositions } from './elementsScrollPositions'
 
+const DEFAULT_CONFIGURATION = {} as RumConfiguration
+
+const DEFAULT_SERIALIZATION_CONTEXT = {
+  status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
+  elementsScrollPositions: createElementsScrollPositions(),
+}
+
 const DEFAULT_OPTIONS: SerializeOptions = {
-  document,
   parentNodePrivacyLevel: NodePrivacyLevel.ALLOW,
-  serializationContext: {
-    status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
-    elementsScrollPositions: createElementsScrollPositions(),
-  },
+  serializationContext: DEFAULT_SERIALIZATION_CONTEXT,
+  configuration: DEFAULT_CONFIGURATION,
 }
 
 describe('serializeNodeWithId', () => {
@@ -59,7 +65,7 @@ describe('serializeNodeWithId', () => {
   describe('document serialization', () => {
     it('serializes a document', () => {
       const document = new DOMParser().parseFromString('<!doctype html><html>foo</html>', 'text/html')
-      expect(serializeDocument(document, NodePrivacyLevel.ALLOW, DEFAULT_OPTIONS.serializationContext)).toEqual({
+      expect(serializeDocument(document, DEFAULT_CONFIGURATION, DEFAULT_SERIALIZATION_CONTEXT)).toEqual({
         type: NodeType.Document,
         childNodes: [
           jasmine.objectContaining({ type: NodeType.DocumentType, name: 'html', publicId: '', systemId: '' }),
@@ -142,7 +148,10 @@ describe('serializeNodeWithId', () => {
         const serializedAttributes = (
           serializeNodeWithId(element, {
             ...DEFAULT_OPTIONS,
-            serializationContext: { status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT, elementsScrollPositions },
+            serializationContext: {
+              status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
+              elementsScrollPositions,
+            },
           }) as ElementNode
         ).attributes
 
@@ -198,7 +207,9 @@ describe('serializeNodeWithId', () => {
         const serializedAttributes = (
           serializeNodeWithId(element, {
             ...DEFAULT_OPTIONS,
-            serializationContext: { status: SerializationContextStatus.MUTATION },
+            serializationContext: {
+              status: SerializationContextStatus.MUTATION,
+            },
           }) as ElementNode
         ).attributes
 
@@ -566,9 +577,8 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
 
   it('a masked DOM Document itself is still serialized ', () => {
     const serializeOptionsMask: SerializeOptions = {
-      document,
+      ...DEFAULT_OPTIONS,
       parentNodePrivacyLevel: NodePrivacyLevel.MASK,
-      serializationContext: DEFAULT_OPTIONS.serializationContext,
     }
     expect(serializeDocumentNode(document, serializeOptionsMask)).toEqual({
       type: NodeType.Document,
@@ -618,12 +628,60 @@ describe('serializeAttribute ', () => {
     node.setAttribute('test-truncate', exceededAttributeValue)
     node.setAttribute('test-ignored', ignoredAttributeValue)
 
-    expect(serializeAttribute(node, NodePrivacyLevel.ALLOW, 'test-okay')).toBe(maxAttributeValue)
-    expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'test-okay')).toBe(maxAttributeValue)
+    expect(serializeAttribute(node, NodePrivacyLevel.ALLOW, 'test-okay', DEFAULT_CONFIGURATION)).toBe(maxAttributeValue)
+    expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'test-okay', DEFAULT_CONFIGURATION)).toBe(maxAttributeValue)
 
-    expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'test-ignored')).toBe(ignoredAttributeValue)
+    expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'test-ignored', DEFAULT_CONFIGURATION)).toBe(
+      ignoredAttributeValue
+    )
 
-    expect(serializeAttribute(node, NodePrivacyLevel.ALLOW, 'test-truncate')).toBe('data:truncated')
-    expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'test-truncate')).toBe('data:truncated')
+    expect(serializeAttribute(node, NodePrivacyLevel.ALLOW, 'test-truncate', DEFAULT_CONFIGURATION)).toBe(
+      'data:truncated'
+    )
+    expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'test-truncate', DEFAULT_CONFIGURATION)).toBe(
+      'data:truncated'
+    )
+  })
+
+  it('does not mask the privacy attribute', () => {
+    const node = document.createElement('div')
+    node.setAttribute(PRIVACY_ATTR_NAME, NodePrivacyLevel.MASK)
+    expect(serializeAttribute(node, NodePrivacyLevel.MASK, PRIVACY_ATTR_NAME, DEFAULT_CONFIGURATION)).toBe('mask')
+  })
+
+  it('masks data attributes', () => {
+    const node = document.createElement('div')
+    node.setAttribute('data-foo', 'bar')
+    expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'data-foo', DEFAULT_CONFIGURATION)).toBe('***')
+  })
+
+  it('does not mask the default programmatic action name attributes', () => {
+    const node = document.createElement('div')
+    node.setAttribute(DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE, 'foo')
+    expect(
+      serializeAttribute(node, NodePrivacyLevel.MASK, DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE, DEFAULT_CONFIGURATION)
+    ).toBe('foo')
+  })
+
+  it('does not mask the user-supplied programmatic action name attributes when it is a data attribute', () => {
+    const node = document.createElement('div')
+    node.setAttribute('data-testid', 'foo')
+    expect(
+      serializeAttribute(node, NodePrivacyLevel.MASK, 'data-testid', {
+        ...DEFAULT_CONFIGURATION,
+        actionNameAttribute: 'data-testid',
+      })
+    ).toBe('foo')
+  })
+
+  it('does not mask the user-supplied programmatic action name attributes when it not a data attribute', () => {
+    const node = document.createElement('div')
+    node.setAttribute('testid', 'foo')
+    expect(
+      serializeAttribute(node, NodePrivacyLevel.MASK, 'testid', {
+        ...DEFAULT_CONFIGURATION,
+        actionNameAttribute: 'testid',
+      })
+    ).toBe('foo')
   })
 })

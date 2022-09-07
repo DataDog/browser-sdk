@@ -1,4 +1,5 @@
 import { DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
+import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycle } from '@datadog/browser-rum-core'
 import type { Clock } from '../../../../core/test/specHelper'
 import { createNewEvent } from '../../../../core/test/specHelper'
@@ -198,7 +199,7 @@ describe('record', () => {
   function startRecording() {
     recordApi = record({
       emit: emitSpy,
-      defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
+      configuration: { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration,
       lifeCycle: new LifeCycle(),
     })
   }

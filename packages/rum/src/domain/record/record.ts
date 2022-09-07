@@ -1,6 +1,6 @@
-import type { DefaultPrivacyLevel, TimeStamp } from '@datadog/browser-core'
+import type { TimeStamp } from '@datadog/browser-core'
 import { timeStampNow } from '@datadog/browser-core'
-import type { LifeCycle } from '@datadog/browser-rum-core'
+import type { LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
 import { getViewportDimension } from '@datadog/browser-rum-core'
 import type {
   BrowserMutationData,
@@ -23,7 +23,7 @@ import { createElementsScrollPositions } from './elementsScrollPositions'
 
 export interface RecordOptions {
   emit?: (record: BrowserRecord) => void
-  defaultPrivacyLevel: DefaultPrivacyLevel
+  configuration: RumConfiguration
   lifeCycle: LifeCycle
 }
 
@@ -69,7 +69,7 @@ export function record(options: RecordOptions): RecordAPI {
 
     emit({
       data: {
-        node: serializeDocument(document, options.defaultPrivacyLevel, serializationContext),
+        node: serializeDocument(document, options.configuration, serializationContext),
         initialOffset: {
           left: getScrollX(),
           top: getScrollY(),
@@ -92,9 +92,9 @@ export function record(options: RecordOptions): RecordAPI {
 
   const stopObservers = initObservers({
     lifeCycle: options.lifeCycle,
+    configuration: options.configuration,
     mutationController,
     elementsScrollPositions,
-    defaultPrivacyLevel: options.defaultPrivacyLevel,
     inputCb: (v) => emit(assembleIncrementalSnapshot<InputData>(IncrementalSource.Input, v)),
     mediaInteractionCb: (p) =>
       emit(assembleIncrementalSnapshot<MediaInteractionData>(IncrementalSource.MediaInteraction, p)),

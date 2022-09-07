@@ -1,4 +1,6 @@
-import { assign } from '@datadog/browser-core'
+import { assign, startsWith } from '@datadog/browser-core'
+import type { RumConfiguration } from '@datadog/browser-rum-core'
+import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from '@datadog/browser-rum-core'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
@@ -55,23 +57,23 @@ export type SerializationContext =
     }
 
 export interface SerializeOptions {
-  document: Document
   serializedNodeIds?: Set<number>
   ignoreWhiteSpace?: boolean
   parentNodePrivacyLevel: ParentNodePrivacyLevel
   serializationContext: SerializationContext
+  configuration: RumConfiguration
 }
 
 export function serializeDocument(
   document: Document,
-  defaultPrivacyLevel: ParentNodePrivacyLevel,
+  configuration: RumConfiguration,
   serializationContext: SerializationContext
 ): SerializedNodeWithId {
   // We are sure that Documents are never ignored, so this function never returns null
   return serializeNodeWithId(document, {
-    document,
-    parentNodePrivacyLevel: defaultPrivacyLevel,
     serializationContext,
+    parentNodePrivacyLevel: configuration.defaultPrivacyLevel,
+    configuration,
   })!
 }
 
@@ -168,7 +170,7 @@ export function serializeElementNode(element: Element, options: SerializeOptions
     return
   }
 
-  const attributes = getAttributesForPrivacyLevel(element, nodePrivacyLevel, options.serializationContext)
+  const attributes = getAttributesForPrivacyLevel(element, nodePrivacyLevel, options)
 
   let childNodes: SerializedNodeWithId[] = []
   if (element.childNodes.length) {
@@ -239,14 +241,20 @@ export function serializeChildNodes(node: Node, options: SerializeOptions): Seri
 export function serializeAttribute(
   element: Element,
   nodePrivacyLevel: NodePrivacyLevel,
-  attributeName: string
+  attributeName: string,
+  configuration: RumConfiguration
 ): string | number | boolean | null {
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     // dup condition for direct access case
     return null
   }
   const attributeValue = element.getAttribute(attributeName)
-  if (nodePrivacyLevel === NodePrivacyLevel.MASK) {
+  if (
+    nodePrivacyLevel === NodePrivacyLevel.MASK &&
+    attributeName !== PRIVACY_ATTR_NAME &&
+    attributeName !== DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE &&
+    attributeName !== configuration.actionNameAttribute
+  ) {
     const tagName = element.tagName
 
     switch (attributeName) {
@@ -266,8 +274,9 @@ export function serializeAttribute(
     if (tagName === 'A' && attributeName === 'href') {
       return CENSORED_STRING_MARK
     }
+
     // mask data-* attributes
-    if (attributeValue && attributeName.indexOf('data-') === 0 && attributeName !== PRIVACY_ATTR_NAME) {
+    if (attributeValue && startsWith(attributeName, 'data-')) {
       // Exception: it's safe to reveal the `${PRIVACY_ATTR_NAME}` attr
       return CENSORED_STRING_MARK
     }
@@ -328,7 +337,7 @@ function isSVGElement(el: Element): boolean {
 function getAttributesForPrivacyLevel(
   element: Element,
   nodePrivacyLevel: NodePrivacyLevel,
-  serializationContext: SerializationContext
+  options: SerializeOptions
 ): Record<string, string | number | boolean> {
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     return {}
@@ -341,7 +350,7 @@ function getAttributesForPrivacyLevel(
   for (let i = 0; i < element.attributes.length; i += 1) {
     const attribute = element.attributes.item(i) as HtmlAttribute
     const attributeName = attribute.name
-    const attributeValue = serializeAttribute(element, nodePrivacyLevel, attributeName)
+    const attributeValue = serializeAttribute(element, nodePrivacyLevel, attributeName, options.configuration)
     if (attributeValue !== null) {
       safeAttrs[attributeName] = attributeValue
     }
@@ -422,6 +431,7 @@ function getAttributesForPrivacyLevel(
    */
   let scrollTop: number | undefined
   let scrollLeft: number | undefined
+  const serializationContext = options.serializationContext
   switch (serializationContext.status) {
     case SerializationContextStatus.INITIAL_FULL_SNAPSHOT:
       scrollTop = Math.round(element.scrollTop)

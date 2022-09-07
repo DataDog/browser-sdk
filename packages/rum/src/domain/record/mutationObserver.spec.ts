@@ -1,4 +1,5 @@
 import { DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
+import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { collectAsyncCalls, createMutationPayloadValidator } from '../../../test/utils'
 import {
   NodePrivacyLevel,
@@ -22,11 +23,9 @@ describe('startMutationCollection', () => {
     const mutationCallbackSpy = jasmine.createSpy<MutationCallBack>()
     const mutationController = new MutationController()
 
-    ;({ stop: stopMutationCollection } = startMutationObserver(
-      mutationController,
-      mutationCallbackSpy,
-      defaultPrivacyLevel
-    ))
+    ;({ stop: stopMutationCollection } = startMutationObserver(mutationController, mutationCallbackSpy, {
+      defaultPrivacyLevel,
+    } as RumConfiguration))
 
     return {
       mutationController,
@@ -36,10 +35,16 @@ describe('startMutationCollection', () => {
   }
 
   function serializeDocumentWithDefaults() {
-    return serializeDocument(document, NodePrivacyLevel.ALLOW, {
-      status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
-      elementsScrollPositions: createElementsScrollPositions(),
-    })
+    return serializeDocument(
+      document,
+      {
+        defaultPrivacyLevel: NodePrivacyLevel.ALLOW,
+      } as RumConfiguration,
+      {
+        status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
+        elementsScrollPositions: createElementsScrollPositions(),
+      }
+    )
   }
 
   beforeEach(() => {
