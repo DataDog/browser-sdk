@@ -32,12 +32,17 @@ export function getSelectorsFromElement(element: Element, actionNameAttribute: s
     selector: getSelectorFromElement(
       element,
       attributeSelectors.concat(getIDSelector),
-      attributeSelectors.concat(getClassSelector)
+      attributeSelectors.concat(createClassSelector({}))
     ),
     selector_without_classes: getSelectorFromElement(
       element,
       attributeSelectors.concat(getIDSelector),
       attributeSelectors
+    ),
+    selector_without_body_classes: getSelectorFromElement(
+      element,
+      attributeSelectors.concat(getIDSelector),
+      attributeSelectors.concat(createClassSelector({ ignoreBody: true }))
     ),
   }
 }
@@ -82,10 +87,15 @@ function getIDSelector(element: Element): string | undefined {
   }
 }
 
-function getClassSelector(element: Element): string | undefined {
-  if (element.classList.length > 0) {
-    const orderedClassList = arrayFrom(element.classList).sort()
-    return `${element.tagName}${orderedClassList.map((className) => `.${cssEscape(className)}`).join('')}`
+function createClassSelector({ ignoreBody }: { ignoreBody?: boolean }) {
+  return (element: Element): string | undefined => {
+    if (ignoreBody && element.tagName === 'BODY') {
+      return
+    }
+    if (element.classList.length > 0) {
+      const orderedClassList = arrayFrom(element.classList).sort()
+      return `${element.tagName}${orderedClassList.map((className) => `.${cssEscape(className)}`).join('')}`
+    }
   }
 }
 

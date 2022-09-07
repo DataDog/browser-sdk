@@ -123,4 +123,16 @@ describe('getSelectorFromElement', () => {
       return getSelectorsFromElement(isolatedDom.append(html), actionNameAttribute).selector_without_classes
     }
   })
+
+  describe('selector without body classes', () => {
+    it('relies on classes for non-body elements', () => {
+      const element = isolatedDom.append('<div class="foo"></div>')
+      expect(getSelectorsFromElement(element, undefined).selector_without_body_classes).toBe('BODY>DIV.foo')
+    })
+    it('does not rely on classes for body elements', () => {
+      const element = isolatedDom.append('<div></div>')
+      element.ownerDocument.body.classList.add('foo')
+      expect(getSelectorsFromElement(element, undefined).selector_without_body_classes).toBe('BODY>DIV')
+    })
+  })
 })
