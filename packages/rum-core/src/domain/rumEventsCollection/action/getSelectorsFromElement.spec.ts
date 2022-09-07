@@ -148,4 +148,14 @@ describe('getSelectorFromElement', () => {
       return getSelectorsFromElement(isolatedDom.append(html), undefined).selector_without_generated_id_and_classes
     }
   })
+
+  describe('selector with only the first class', () => {
+    it('uses only the first class', () => {
+      expect(getSelectorWithOnlyFirstClass('<div class="foo bar baz baa"></div>')).toBe('BODY>DIV.foo')
+    })
+
+    function getSelectorWithOnlyFirstClass(html: string): string {
+      return getSelectorsFromElement(isolatedDom.append(html), undefined).selector_with_only_first_class
+    }
+  })
 })

@@ -49,6 +49,11 @@ export function getSelectorsFromElement(element: Element, actionNameAttribute: s
       attributeSelectors.concat(createIDSelector({ ignoreGeneratedValue: true })),
       attributeSelectors.concat(createClassSelector({ ignoreGeneratedValue: true }))
     ),
+    selector_with_only_first_class: getSelectorFromElement(
+      element,
+      attributeSelectors.concat(createIDSelector({})),
+      attributeSelectors.concat(createClassSelector({ keepOnlyFirst: true }))
+    ),
   }
 }
 
@@ -101,9 +106,11 @@ function createIDSelector({ ignoreGeneratedValue }: { ignoreGeneratedValue?: boo
 function createClassSelector({
   ignoreBody,
   ignoreGeneratedValue,
+  keepOnlyFirst,
 }: {
   ignoreBody?: boolean
   ignoreGeneratedValue?: boolean
+  keepOnlyFirst?: boolean
 }) {
   return (element: Element): string | undefined => {
     if (ignoreBody && element.tagName === 'BODY') {
@@ -113,6 +120,9 @@ function createClassSelector({
       let classList = arrayFrom(element.classList)
       if (ignoreGeneratedValue) {
         classList = classList.filter((value) => !isGeneratedValue(value))
+      }
+      if (keepOnlyFirst) {
+        classList = classList.slice(0, 1)
       }
       return `${element.tagName}${classList
         .sort()
