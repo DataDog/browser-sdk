@@ -127,6 +127,7 @@ describe('trackClickActions', () => {
             selector: '#button',
             selector_without_classes: '#button',
             selector_without_body_classes: '#button',
+            selector_without_generated_id_and_classes: '#button',
             width: 100,
             height: 100,
           },

@@ -135,4 +135,17 @@ describe('getSelectorFromElement', () => {
       expect(getSelectorsFromElement(element, undefined).selector_without_body_classes).toBe('BODY>DIV')
     })
   })
+
+  describe('selector without generated classes and ids', () => {
+    it('ignores generated classes', () => {
+      expect(getSelectorWithoutGeneratedIdAndClasses('<div class="foo4"></div>')).toBe('BODY>DIV')
+    })
+    it('ignores generated ids', () => {
+      expect(getSelectorWithoutGeneratedIdAndClasses('<div id="foo4"></div>')).toBe('BODY>DIV')
+    })
+
+    function getSelectorWithoutGeneratedIdAndClasses(html: string): string {
+      return getSelectorsFromElement(isolatedDom.append(html), undefined).selector_without_generated_id_and_classes
+    }
+  })
 })

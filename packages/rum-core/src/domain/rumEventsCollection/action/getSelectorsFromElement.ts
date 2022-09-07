@@ -31,23 +31,32 @@ export function getSelectorsFromElement(element: Element, actionNameAttribute: s
   return {
     selector: getSelectorFromElement(
       element,
-      attributeSelectors.concat(getIDSelector),
+      attributeSelectors.concat(createIDSelector({})),
       attributeSelectors.concat(createClassSelector({}))
     ),
     selector_without_classes: getSelectorFromElement(
       element,
-      attributeSelectors.concat(getIDSelector),
+      attributeSelectors.concat(createIDSelector({})),
       attributeSelectors
     ),
     selector_without_body_classes: getSelectorFromElement(
       element,
-      attributeSelectors.concat(getIDSelector),
+      attributeSelectors.concat(createIDSelector({})),
       attributeSelectors.concat(createClassSelector({ ignoreBody: true }))
+    ),
+    selector_without_generated_id_and_classes: getSelectorFromElement(
+      element,
+      attributeSelectors.concat(createIDSelector({ ignoreGeneratedValue: true })),
+      attributeSelectors.concat(createClassSelector({ ignoreGeneratedValue: true }))
     ),
   }
 }
 
 type GetSelector = (element: Element) => string | undefined
+
+function isGeneratedValue(value: string) {
+  return /[0-9]/.test(value)
+}
 
 function getSelectorFromElement(
   targetElement: Element,
@@ -81,20 +90,34 @@ function getSelectorFromElement(
   return targetElementSelector.join('>')
 }
 
-function getIDSelector(element: Element): string | undefined {
-  if (element.id) {
-    return `#${cssEscape(element.id)}`
+function createIDSelector({ ignoreGeneratedValue }: { ignoreGeneratedValue?: boolean }) {
+  return (element: Element): string | undefined => {
+    if (element.id && (!ignoreGeneratedValue || !isGeneratedValue(element.id))) {
+      return `#${cssEscape(element.id)}`
+    }
   }
 }
 
-function createClassSelector({ ignoreBody }: { ignoreBody?: boolean }) {
+function createClassSelector({
+  ignoreBody,
+  ignoreGeneratedValue,
+}: {
+  ignoreBody?: boolean
+  ignoreGeneratedValue?: boolean
+}) {
   return (element: Element): string | undefined => {
     if (ignoreBody && element.tagName === 'BODY') {
       return
     }
     if (element.classList.length > 0) {
-      const orderedClassList = arrayFrom(element.classList).sort()
-      return `${element.tagName}${orderedClassList.map((className) => `.${cssEscape(className)}`).join('')}`
+      let classList = arrayFrom(element.classList)
+      if (ignoreGeneratedValue) {
+        classList = classList.filter((value) => !isGeneratedValue(value))
+      }
+      return `${element.tagName}${classList
+        .sort()
+        .map((className) => `.${cssEscape(className)}`)
+        .join('')}`
     }
   }
 }
