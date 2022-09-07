@@ -16,6 +16,15 @@
 
 ---
 
+## v4.19.0
+
+- ✨ [RUMF-1286] test for expected features before starting recording ([#1719](https://github.com/DataDog/browser-sdk/pull/1719))
+- ✨ [RUMF-1371] Collect view time to first byte ([#1717](https://github.com/DataDog/browser-sdk/pull/1717))
+- 📝 Fix `actionNameAttribute` broken link ([#1708](https://github.com/DataDog/browser-sdk/pull/1708))
+- ⚗️🔉 [RUMF-1351] add error when reaching max events size queued for upload ([#1716](https://github.com/DataDog/browser-sdk/pull/1716))
+- ⚗️🔉 [RUMF-1351] retry: add extra context to queue full log ([#1714](https://github.com/DataDog/browser-sdk/pull/1714))
+- ⚗️✨[RUMF-1351] experiment request retry strategy ([#1700](https://github.com/DataDog/browser-sdk/pull/1700))
+
 ## v4.18.1
 
 - 🐛 [RUMF-1333] fix keepalive support check ([#1712](https://github.com/DataDog/browser-sdk/pull/1712))
