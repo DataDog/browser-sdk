@@ -54,6 +54,13 @@ export function getSelectorsFromElement(element: Element, actionNameAttribute: s
       attributeSelectors.concat(createIDSelector({})),
       attributeSelectors.concat(createClassSelector({ keepOnlyFirst: true }))
     ),
+    selector_all_together: getSelectorFromElement(
+      element,
+      attributeSelectors.concat(createIDSelector({ ignoreGeneratedValue: true })),
+      attributeSelectors.concat(
+        createClassSelector({ ignoreGeneratedValue: true, ignoreBody: true, keepOnlyFirst: true })
+      )
+    ),
   }
 }
 

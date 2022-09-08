@@ -158,4 +158,12 @@ describe('getSelectorFromElement', () => {
       return getSelectorsFromElement(isolatedDom.append(html), undefined).selector_with_only_first_class
     }
   })
+
+  describe('all experimental selectors together', () => {
+    it('everything everywhere all at once', () => {
+      const element = isolatedDom.append('<div class="foo4 foo bar baz baa"></div>')
+      element.ownerDocument.body.classList.add('foo')
+      expect(getSelectorsFromElement(element, undefined).selector_all_together).toBe('BODY>DIV.foo')
+    })
+  })
 })
