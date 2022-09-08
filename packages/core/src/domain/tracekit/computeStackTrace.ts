@@ -104,9 +104,8 @@ const GECKO_EVAL_RE = /(\S+) line (\d+)(?: > eval line \d+)* > eval/i
 
 function parseGeckoLine(line: string): StackFrame | undefined {
   const parts = GECKO_LINE_RE.exec(line)
-  if (!parts) {
-    return
-  }
+  if (!parts) return
+  if (parts[3] === line && line !== '[native code]') return // overly greedy regex likely means this is a custom error message (exception native code)
 
   const isEval = parts[3] && parts[3].indexOf(' > eval') > -1
   const submatch = GECKO_EVAL_RE.exec(parts[3])
