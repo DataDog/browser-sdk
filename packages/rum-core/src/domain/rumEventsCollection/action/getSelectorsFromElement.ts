@@ -29,8 +29,7 @@ export function getSelectorsFromElement(element: Element, actionNameAttribute: s
     )
   }
   return {
-    selector: getSelectorFromElement(element, [getIDSelector], [getClassSelector]),
-    selector_with_stable_attributes: getSelectorFromElement(
+    selector: getSelectorFromElement(
       element,
       attributeSelectors.concat(getIDSelector),
       attributeSelectors.concat(getClassSelector)
