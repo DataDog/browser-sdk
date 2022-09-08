@@ -3,14 +3,14 @@ import type { EndpointType } from '../domain/configuration'
 import { monitor } from '../tools/monitor'
 import type { RawError } from '../tools/error'
 import { clocksNow } from '../tools/timeUtils'
-import { ONE_KIBI_BYTE, ONE_MEBI_BYTE, ONE_SECOND } from '../tools/utils'
+import { ONE_KIBI_BYTE, ONE_MEBI_BYTE, ONE_SECOND, ONE_MINUTE } from '../tools/utils'
 import { ErrorSource } from '../tools/error'
 import type { Payload, HttpResponse } from './httpRequest'
 
 export const MAX_ONGOING_BYTES_COUNT = 80 * ONE_KIBI_BYTE
 export const MAX_ONGOING_REQUESTS = 32
 export const MAX_QUEUE_BYTES_COUNT = 3 * ONE_MEBI_BYTE
-export const MAX_BACKOFF_TIME = 256 * ONE_SECOND
+export const MAX_BACKOFF_TIME = ONE_MINUTE
 export const INITIAL_BACKOFF_TIME = ONE_SECOND
 
 const enum TransportStatus {
@@ -137,7 +137,7 @@ function retryQueuedPayloads(
 }
 
 function wasRequestSuccessful(response: HttpResponse) {
-  return response.status !== 0 && response.status < 500
+  return response.status !== 0 && response.status !== 429 && response.status < 500
 }
 
 export function newRetryState(): RetryState {
