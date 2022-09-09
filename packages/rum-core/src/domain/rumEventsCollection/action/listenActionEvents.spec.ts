@@ -1,15 +1,17 @@
 import type { Clock } from '../../../../../core/test/specHelper'
 import { createNewEvent, mockClock } from '../../../../../core/test/specHelper'
-import type { OnClickCallback } from './listenActionEvents'
+import type { OnClickCallback, OnPointerDownCallback } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 
 describe('listenActionEvents', () => {
   let onClickSpy: jasmine.Spy<OnClickCallback>
+  let onPointerDownSpy: jasmine.Spy<OnPointerDownCallback>
   let stopListenEvents: () => void
 
   beforeEach(() => {
     onClickSpy = jasmine.createSpy()
-    ;({ stop: stopListenEvents } = listenActionEvents({ onClick: onClickSpy }))
+    onPointerDownSpy = jasmine.createSpy().and.returnValue({ onClick: onClickSpy })
+    ;({ stop: stopListenEvents } = listenActionEvents({ onPointerDown: onPointerDownSpy }))
   })
 
   afterEach(() => {
@@ -22,6 +24,17 @@ describe('listenActionEvents', () => {
       event: jasmine.objectContaining({ type: 'click' }),
       getUserActivity: jasmine.any(Function),
     })
+  })
+
+  it('aborts click lifecycle if the pointerdown event occurs on a non-element', () => {
+    emulateClick({ target: document.createTextNode('foo') })
+    expect(onClickSpy).not.toHaveBeenCalled()
+  })
+
+  it('can abort click lifecycle by returning undefined from the onPointerDown callback', () => {
+    onPointerDownSpy.and.returnValue(undefined)
+    emulateClick()
+    expect(onClickSpy).not.toHaveBeenCalled()
   })
 
   describe('selection change', () => {
@@ -162,10 +175,12 @@ describe('listenActionEvents', () => {
     }
   })
 
-  function emulateClick({ beforeMouseUp }: { beforeMouseUp?(): void } = {}) {
-    document.body.dispatchEvent(createNewEvent('mousedown'))
+  function emulateClick({ beforeMouseUp, target = document.body }: { beforeMouseUp?(): void; target?: Node } = {}) {
+    window.dispatchEvent(createNewEvent('pointerdown', { target }))
+    window.dispatchEvent(createNewEvent('mousedown', { target }))
     beforeMouseUp?.()
-    document.body.dispatchEvent(createNewEvent('mouseup'))
-    document.body.dispatchEvent(createNewEvent('click'))
+    window.dispatchEvent(createNewEvent('pointerup', { target }))
+    window.dispatchEvent(createNewEvent('mouseup', { target }))
+    window.dispatchEvent(createNewEvent('click', { target }))
   }
 })

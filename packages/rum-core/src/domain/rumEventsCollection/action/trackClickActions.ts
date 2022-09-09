@@ -79,16 +79,8 @@ export function trackClickActions(
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, stopClickChain)
 
   const { stop: stopActionEventsListener } = listenActionEvents({
-    onClick: (onClickContext) =>
-      processClick(
-        configuration,
-        lifeCycle,
-        domMutationObservable,
-        history,
-        stopObservable,
-        appendClickToClickChain,
-        onClickContext
-      ),
+    onPointerDown: () =>
+      onPointerDown(configuration, lifeCycle, domMutationObservable, history, stopObservable, appendClickToClickChain),
   })
 
   const actionContexts: ActionContexts = {
@@ -121,74 +113,77 @@ export function trackClickActions(
   }
 }
 
-function processClick(
+function onPointerDown(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
   history: ClickActionIdHistory,
   stopObservable: Observable<void>,
-  appendClickToClickChain: (click: Click) => void,
-  { event, getUserActivity }: OnClickContext
+  appendClickToClickChain: (click: Click) => void
 ) {
-  if (!configuration.trackFrustrations && history.find()) {
-    // TODO: remove this in a future major version. To keep retrocompatibility, ignore any new
-    // action if another one is already occurring.
-    return
-  }
+  return {
+    onClick({ event, getUserActivity }: OnClickContext) {
+      if (!configuration.trackFrustrations && history.find()) {
+        // TODO: remove this in a future major version. To keep retrocompatibility, ignore any new
+        // action if another one is already occurring.
+        return
+      }
 
-  const clickActionBase = computeClickActionBase(event, configuration.actionNameAttribute)
-  if (!configuration.trackFrustrations && !clickActionBase.name) {
-    // TODO: remove this in a future major version. To keep retrocompatibility, ignore any action
-    // with a blank name
-    return
-  }
+      const clickActionBase = computeClickActionBase(event, configuration.actionNameAttribute)
+      if (!configuration.trackFrustrations && !clickActionBase.name) {
+        // TODO: remove this in a future major version. To keep retrocompatibility, ignore any action
+        // with a blank name
+        return
+      }
 
-  const click = newClick(lifeCycle, history, getUserActivity, clickActionBase)
+      const click = newClick(lifeCycle, history, getUserActivity, clickActionBase)
 
-  if (configuration.trackFrustrations) {
-    appendClickToClickChain(click)
-  }
+      if (configuration.trackFrustrations) {
+        appendClickToClickChain(click)
+      }
 
-  const { stop: stopWaitPageActivityEnd } = waitPageActivityEnd(
-    lifeCycle,
-    domMutationObservable,
-    configuration,
-    (pageActivityEndEvent) => {
-      if (pageActivityEndEvent.hadActivity && pageActivityEndEvent.end < clickActionBase.startClocks.timeStamp) {
-        // If the clock is looking weird, just discard the click
-        click.discard()
-      } else {
-        click.stop(pageActivityEndEvent.hadActivity ? pageActivityEndEvent.end : undefined)
-
-        // Validate or discard the click only if we don't track frustrations. It'll be done when
-        // the click chain is finalized.
-        if (!configuration.trackFrustrations) {
-          if (!pageActivityEndEvent.hadActivity) {
-            // If we are not tracking frustrations, we should discard the click to keep backward
-            // compatibility.
+      const { stop: stopWaitPageActivityEnd } = waitPageActivityEnd(
+        lifeCycle,
+        domMutationObservable,
+        configuration,
+        (pageActivityEndEvent) => {
+          if (pageActivityEndEvent.hadActivity && pageActivityEndEvent.end < clickActionBase.startClocks.timeStamp) {
+            // If the clock is looking weird, just discard the click
             click.discard()
           } else {
-            click.validate()
+            click.stop(pageActivityEndEvent.hadActivity ? pageActivityEndEvent.end : undefined)
+
+            // Validate or discard the click only if we don't track frustrations. It'll be done when
+            // the click chain is finalized.
+            if (!configuration.trackFrustrations) {
+              if (!pageActivityEndEvent.hadActivity) {
+                // If we are not tracking frustrations, we should discard the click to keep backward
+                // compatibility.
+                click.discard()
+              } else {
+                click.validate()
+              }
+            }
           }
-        }
-      }
+        },
+        CLICK_ACTION_MAX_DURATION
+      )
+
+      const viewEndedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, ({ endClocks }) => {
+        click.stop(endClocks.timeStamp)
+      })
+
+      const stopSubscription = stopObservable.subscribe(() => {
+        click.stop()
+      })
+
+      click.stopObservable.subscribe(() => {
+        viewEndedSubscription.unsubscribe()
+        stopWaitPageActivityEnd()
+        stopSubscription.unsubscribe()
+      })
     },
-    CLICK_ACTION_MAX_DURATION
-  )
-
-  const viewEndedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, ({ endClocks }) => {
-    click.stop(endClocks.timeStamp)
-  })
-
-  const stopSubscription = stopObservable.subscribe(() => {
-    click.stop()
-  })
-
-  click.stopObservable.subscribe(() => {
-    viewEndedSubscription.unsubscribe()
-    stopWaitPageActivityEnd()
-    stopSubscription.unsubscribe()
-  })
+  }
 }
 
 function computeClickActionBase(event: MouseEventOnElement, actionNameAttribute?: string) {
