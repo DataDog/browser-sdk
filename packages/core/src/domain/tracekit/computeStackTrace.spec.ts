@@ -500,41 +500,9 @@ Error: foo
   })
 
   it('should ignore custom error messages ', () => {
-    const stackFramesNewError = computeStackTrace(new Error('bar@http://path/to/file.js:1:1'))
+    const stackFrames = computeStackTrace(new Error('bar@http://path/to/file.js:1:1'))
 
-    expect(stackFramesNewError.stack[0].url).not.toBe('http://path/to/file.js')
-    const stack = `HttpError: 400 Bad Request, see context.apiResponse for more details
-    at s (spa.min.js:3:5)
-    at b (spa.min.js:6:8)
-    at spa.min.js:2:1`
-
-    const stackFrames = computeStackTrace({
-      stack,
-      toString: () => 'HttpError: 400 Bad Request, see context.apiResponse for more details',
-    } as Error)
-
-    expect(stackFrames.stack.length).toEqual(3)
-    expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      column: 5,
-      func: 's',
-      line: 3,
-      url: 'spa.min.js',
-    })
-    expect(stackFrames.stack[1]).toEqual({
-      args: [],
-      column: 8,
-      func: 'b',
-      line: 6,
-      url: 'spa.min.js',
-    })
-    expect(stackFrames.stack[2]).toEqual({
-      args: [],
-      column: 1,
-      func: '?',
-      line: 2,
-      url: 'spa.min.js',
-    })
+    expect(stackFrames.stack[0].url).not.toBe('http://path/to/file.js')
   })
 
   it('should parse Chrome anonymous function errors', () => {
