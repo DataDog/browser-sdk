@@ -499,7 +499,7 @@ Error: foo
     })
   })
 
-  it('should ignore custom error messages on chrome ', () => {
+  it('should ignore custom error messages ', () => {
     const stackFrames = computeStackTrace(new Error('bar@http://path/to/file.js:1:1'))
 
     expect(stackFrames.stack[0].url).not.toBe('http://path/to/file.js')
