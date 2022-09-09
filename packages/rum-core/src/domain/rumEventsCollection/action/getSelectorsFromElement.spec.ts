@@ -71,40 +71,34 @@ describe('getSelectorFromElement', () => {
       })
     })
 
-    function getDefaultSelector(html: string): string {
-      return getSelectorsFromElement(isolatedDom.append(html), undefined).selector
-    }
-  })
-
-  describe('selector with stable attributes', () => {
     describe('attribute selector', () => {
       it('uses a stable attribute if the element has one', () => {
-        expect(getStableAttributeSelector('<div data-testid="foo"></div>')).toBe('DIV[data-testid="foo"]')
+        expect(getDefaultSelector('<div data-testid="foo"></div>')).toBe('DIV[data-testid="foo"]')
       })
 
       it('escapes the attribute value', () => {
-        expect(getStableAttributeSelector('<div data-testid="&quot;foo bar&quot;"></div>')).toBe(
+        expect(getDefaultSelector('<div data-testid="&quot;foo bar&quot;"></div>')).toBe(
           'DIV[data-testid="\\"foo\\ bar\\""]'
         )
       })
 
       it('attribute selector with the custom action name attribute takes precedence over other stable attribute selectors', () => {
-        expect(getStableAttributeSelector('<div action-name="foo" data-testid="bar"></div>', 'action-name')).toBe(
+        expect(getDefaultSelector('<div action-name="foo" data-testid="bar"></div>', 'action-name')).toBe(
           'DIV[action-name="foo"]'
         )
       })
 
       it('stable attribute selector should take precedence over class selector', () => {
-        expect(getStableAttributeSelector('<div class="foo" data-testid="foo"></div>')).toBe('DIV[data-testid="foo"]')
+        expect(getDefaultSelector('<div class="foo" data-testid="foo"></div>')).toBe('DIV[data-testid="foo"]')
       })
 
       it('stable attribute selector should take precedence over ID selector', () => {
-        expect(getStableAttributeSelector('<div id="foo" data-testid="foo"></div>')).toBe('DIV[data-testid="foo"]')
+        expect(getDefaultSelector('<div id="foo" data-testid="foo"></div>')).toBe('DIV[data-testid="foo"]')
       })
 
       it("uses a stable attribute selector and continue recursing if it's not unique globally", () => {
         expect(
-          getStableAttributeSelector(`
+          getDefaultSelector(`
             <button target data-testid="foo"></button>
 
             <div>
@@ -115,8 +109,8 @@ describe('getSelectorFromElement', () => {
       })
     })
 
-    function getStableAttributeSelector(html: string, actionNameAttribute?: string): string {
-      return getSelectorsFromElement(isolatedDom.append(html), actionNameAttribute).selector_with_stable_attributes
+    function getDefaultSelector(html: string, actionNameAttribute?: string): string {
+      return getSelectorsFromElement(isolatedDom.append(html), actionNameAttribute).selector
     }
   })
 
