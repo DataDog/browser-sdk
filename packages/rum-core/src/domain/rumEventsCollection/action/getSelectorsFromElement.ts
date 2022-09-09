@@ -67,6 +67,14 @@ export function getSelectorsFromElement(element: Element, actionNameAttribute: s
 type GetSelector = (element: Element) => string | undefined
 
 function isGeneratedValue(value: string) {
+  // To compute the "URL path group", the backend replaces every URL path parts as a question mark
+  // if it thinks the part is an identifier. The condition it uses is to checks whether a digit is
+  // present.
+  //
+  // Here, we use the same strategy: if a the value contains a digit, we consider it generated. This
+  // strategy might be a bit naive and fail in some cases, but there are many fallbacks to generate
+  // CSS selectors so it should be fine most of the time. We might want to allow customers to
+  // provide their own `isGeneratedValue` at some point.
   return /[0-9]/.test(value)
 }
 
