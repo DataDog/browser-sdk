@@ -1,3 +1,4 @@
+import { startsWith } from '@datadog/browser-core'
 import type { StackTrace, StackFrame } from './types'
 
 const UNKNOWN_FUNCTION = '?'
@@ -8,7 +9,11 @@ const UNKNOWN_FUNCTION = '?'
 export function computeStackTrace(ex: unknown): StackTrace {
   const stack: StackFrame[] = []
 
-  const stackProperty = tryToGetString(ex, 'stack')
+  let stackProperty = tryToGetString(ex, 'stack')
+  const exString = String(ex)
+  if (stackProperty && startsWith(stackProperty, exString)) {
+    stackProperty = stackProperty.slice(exString.length)
+  }
   if (stackProperty) {
     stackProperty.split('\n').forEach((line) => {
       const stackFrame =
@@ -104,8 +109,9 @@ const GECKO_EVAL_RE = /(\S+) line (\d+)(?: > eval line \d+)* > eval/i
 
 function parseGeckoLine(line: string): StackFrame | undefined {
   const parts = GECKO_LINE_RE.exec(line)
-  if (!parts) return
-  if (parts[3] === line && line !== '[native code]') return // overly greedy regex likely means this is a custom error message (exception native code)
+  if (!parts) {
+    return
+  }
 
   const isEval = parts[3] && parts[3].indexOf(' > eval') > -1
   const submatch = GECKO_EVAL_RE.exec(parts[3])

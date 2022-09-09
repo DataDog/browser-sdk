@@ -499,13 +499,28 @@ Error: foo
     })
   })
 
-  it('should ignore custom error message', () => {
+  it('should ignore custom error messages on chrome ', () => {
+    const stackFrames = computeStackTrace(new Error('bar@http://path/to/file.js:1:1'))
+
+    expect(stackFrames.stack[0]).not.toEqual({
+      args: [],
+      column: 1,
+      func: 'Error: bar',
+      line: 1,
+      url: 'http://path/to/file.js',
+    })
+  })
+
+  it('should ignore messages that come from the `toString` of the error on chrome ', () => {
     const stack = `HttpError: 400 Bad Request, see context.apiResponse for more details
     at s (spa.min.js:3:5)
     at b (spa.min.js:6:8)
     at spa.min.js:2:1`
 
-    const stackFrames = computeStackTrace({ stack } as Error)
+    const stackFrames = computeStackTrace({
+      stack,
+      toString: () => 'HttpError: 400 Bad Request, see context.apiResponse for more details',
+    } as Error)
 
     expect(stackFrames.stack.length).toEqual(3)
     expect(stackFrames.stack[0]).toEqual({
