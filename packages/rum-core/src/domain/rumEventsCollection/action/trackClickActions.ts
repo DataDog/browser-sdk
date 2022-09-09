@@ -23,7 +23,7 @@ import type { ClickChain } from './clickChain'
 import { createClickChain } from './clickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
 import { getSelectorsFromElement } from './getSelectorsFromElement'
-import type { OnClickContext } from './listenActionEvents'
+import type { MouseEventOnElement, OnClickContext } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 import { computeFrustration } from './computeFrustration'
 
@@ -47,7 +47,7 @@ export interface ClickAction {
   startClocks: ClocksState
   duration?: Duration
   counts: ActionCounts
-  event: MouseEvent & { target: Element }
+  event: MouseEventOnElement
   frustrationTypes: FrustrationType[]
   events: Event[]
 }
@@ -191,7 +191,7 @@ function processClick(
   })
 }
 
-function computeClickActionBase(event: MouseEvent & { target: Element }, actionNameAttribute?: string) {
+function computeClickActionBase(event: MouseEventOnElement, actionNameAttribute?: string) {
   let target: ClickAction['target']
   let position: ClickAction['position']
 

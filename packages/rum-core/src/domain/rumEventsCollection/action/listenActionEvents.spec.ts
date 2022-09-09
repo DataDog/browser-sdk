@@ -1,10 +1,10 @@
 import type { Clock } from '../../../../../core/test/specHelper'
 import { createNewEvent, mockClock } from '../../../../../core/test/specHelper'
-import type { OnClickContext } from './listenActionEvents'
+import type { OnClickCallback } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 
 describe('listenActionEvents', () => {
-  let onClickSpy: jasmine.Spy<(context: OnClickContext) => void>
+  let onClickSpy: jasmine.Spy<OnClickCallback>
   let stopListenEvents: () => void
 
   beforeEach(() => {
