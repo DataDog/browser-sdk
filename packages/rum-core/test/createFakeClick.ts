@@ -1,4 +1,4 @@
-import { Observable, timeStampNow } from '@datadog/browser-core'
+import { clocksNow, Observable, timeStampNow } from '@datadog/browser-core'
 import { createNewEvent } from '../../core/test/specHelper'
 import type { Click } from '../src/domain/rumEventsCollection/action/trackClickActions'
 
@@ -31,6 +31,7 @@ export function createFakeClick({
     },
     discard: jasmine.createSpy(),
     validate: jasmine.createSpy(),
+    startClocks: clocksNow(),
     hasError,
     hasPageActivity,
     getUserActivity: () => ({
