@@ -502,7 +502,7 @@ Error: foo
   it('should not include error message into stacktrace ', () => {
     const stackFrames = computeStackTrace(new Error('bar@http://path/to/file.js:1:1'))
 
-    expect(stackFrames.stack[0].url).not.toBe('http://path/to/file.js')
+    expect(stackFrames.stack[0]?.url).not.toBe('http://path/to/file.js')
   })
 
   it('should parse Chrome anonymous function errors', () => {
