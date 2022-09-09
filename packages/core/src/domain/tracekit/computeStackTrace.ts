@@ -1,4 +1,4 @@
-import { startsWith } from '@datadog/browser-core'
+import { startsWith } from '../../tools/utils'
 import type { StackTrace, StackFrame } from './types'
 
 const UNKNOWN_FUNCTION = '?'
