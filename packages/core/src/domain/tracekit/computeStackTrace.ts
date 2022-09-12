@@ -1,3 +1,4 @@
+import { startsWith } from '../../tools/utils'
 import type { StackTrace, StackFrame } from './types'
 
 const UNKNOWN_FUNCTION = '?'
@@ -8,7 +9,11 @@ const UNKNOWN_FUNCTION = '?'
 export function computeStackTrace(ex: unknown): StackTrace {
   const stack: StackFrame[] = []
 
-  const stackProperty = tryToGetString(ex, 'stack')
+  let stackProperty = tryToGetString(ex, 'stack')
+  const exString = String(ex)
+  if (stackProperty && startsWith(stackProperty, exString)) {
+    stackProperty = stackProperty.slice(exString.length)
+  }
   if (stackProperty) {
     stackProperty.split('\n').forEach((line) => {
       const stackFrame =
