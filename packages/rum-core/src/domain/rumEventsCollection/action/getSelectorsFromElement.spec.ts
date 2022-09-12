@@ -123,4 +123,47 @@ describe('getSelectorFromElement', () => {
       return getSelectorsFromElement(isolatedDom.append(html), actionNameAttribute).selector_without_classes
     }
   })
+
+  describe('selector without body classes', () => {
+    it('relies on classes for non-body elements', () => {
+      const element = isolatedDom.append('<div class="foo"></div>')
+      expect(getSelectorsFromElement(element, undefined).selector_without_body_classes).toBe('BODY>DIV.foo')
+    })
+    it('does not rely on classes for body elements', () => {
+      const element = isolatedDom.append('<div></div>')
+      element.ownerDocument.body.classList.add('foo')
+      expect(getSelectorsFromElement(element, undefined).selector_without_body_classes).toBe('BODY>DIV')
+    })
+  })
+
+  describe('selector without generated classes and ids', () => {
+    it('ignores generated classes', () => {
+      expect(getSelectorWithoutGeneratedIdAndClasses('<div class="foo4"></div>')).toBe('BODY>DIV')
+    })
+    it('ignores generated ids', () => {
+      expect(getSelectorWithoutGeneratedIdAndClasses('<div id="foo4"></div>')).toBe('BODY>DIV')
+    })
+
+    function getSelectorWithoutGeneratedIdAndClasses(html: string): string {
+      return getSelectorsFromElement(isolatedDom.append(html), undefined).selector_without_generated_id_and_classes
+    }
+  })
+
+  describe('selector with only the first class', () => {
+    it('uses only the first class', () => {
+      expect(getSelectorWithOnlyFirstClass('<div class="foo bar baz baa"></div>')).toBe('BODY>DIV.foo')
+    })
+
+    function getSelectorWithOnlyFirstClass(html: string): string {
+      return getSelectorsFromElement(isolatedDom.append(html), undefined).selector_with_only_first_class
+    }
+  })
+
+  describe('all experimental selectors together', () => {
+    it('everything everywhere all at once', () => {
+      const element = isolatedDom.append('<div class="foo4 foo bar baz baa"></div>')
+      element.ownerDocument.body.classList.add('foo')
+      expect(getSelectorsFromElement(element, undefined).selector_all_together).toBe('BODY>DIV.foo')
+    })
+  })
 })

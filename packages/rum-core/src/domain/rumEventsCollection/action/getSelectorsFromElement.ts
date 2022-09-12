@@ -31,18 +31,52 @@ export function getSelectorsFromElement(element: Element, actionNameAttribute: s
   return {
     selector: getSelectorFromElement(
       element,
-      attributeSelectors.concat(getIDSelector),
-      attributeSelectors.concat(getClassSelector)
+      attributeSelectors.concat(createIDSelector({})),
+      attributeSelectors.concat(createClassSelector({}))
     ),
     selector_without_classes: getSelectorFromElement(
       element,
-      attributeSelectors.concat(getIDSelector),
+      attributeSelectors.concat(createIDSelector({})),
       attributeSelectors
+    ),
+    selector_without_body_classes: getSelectorFromElement(
+      element,
+      attributeSelectors.concat(createIDSelector({})),
+      attributeSelectors.concat(createClassSelector({ ignoreBody: true }))
+    ),
+    selector_without_generated_id_and_classes: getSelectorFromElement(
+      element,
+      attributeSelectors.concat(createIDSelector({ ignoreGeneratedValue: true })),
+      attributeSelectors.concat(createClassSelector({ ignoreGeneratedValue: true }))
+    ),
+    selector_with_only_first_class: getSelectorFromElement(
+      element,
+      attributeSelectors.concat(createIDSelector({})),
+      attributeSelectors.concat(createClassSelector({ keepOnlyFirst: true }))
+    ),
+    selector_all_together: getSelectorFromElement(
+      element,
+      attributeSelectors.concat(createIDSelector({ ignoreGeneratedValue: true })),
+      attributeSelectors.concat(
+        createClassSelector({ ignoreGeneratedValue: true, ignoreBody: true, keepOnlyFirst: true })
+      )
     ),
   }
 }
 
 type GetSelector = (element: Element) => string | undefined
+
+function isGeneratedValue(value: string) {
+  // To compute the "URL path group", the backend replaces every URL path parts as a question mark
+  // if it thinks the part is an identifier. The condition it uses is to checks whether a digit is
+  // present.
+  //
+  // Here, we use the same strategy: if a the value contains a digit, we consider it generated. This
+  // strategy might be a bit naive and fail in some cases, but there are many fallbacks to generate
+  // CSS selectors so it should be fine most of the time. We might want to allow customers to
+  // provide their own `isGeneratedValue` at some point.
+  return /[0-9]/.test(value)
+}
 
 function getSelectorFromElement(
   targetElement: Element,
@@ -76,16 +110,40 @@ function getSelectorFromElement(
   return targetElementSelector.join('>')
 }
 
-function getIDSelector(element: Element): string | undefined {
-  if (element.id) {
-    return `#${cssEscape(element.id)}`
+function createIDSelector({ ignoreGeneratedValue }: { ignoreGeneratedValue?: boolean }) {
+  return (element: Element): string | undefined => {
+    if (element.id && (!ignoreGeneratedValue || !isGeneratedValue(element.id))) {
+      return `#${cssEscape(element.id)}`
+    }
   }
 }
 
-function getClassSelector(element: Element): string | undefined {
-  if (element.classList.length > 0) {
-    const orderedClassList = arrayFrom(element.classList).sort()
-    return `${element.tagName}${orderedClassList.map((className) => `.${cssEscape(className)}`).join('')}`
+function createClassSelector({
+  ignoreBody,
+  ignoreGeneratedValue,
+  keepOnlyFirst,
+}: {
+  ignoreBody?: boolean
+  ignoreGeneratedValue?: boolean
+  keepOnlyFirst?: boolean
+}) {
+  return (element: Element): string | undefined => {
+    if (ignoreBody && element.tagName === 'BODY') {
+      return
+    }
+    if (element.classList.length > 0) {
+      let classList = arrayFrom(element.classList)
+      if (ignoreGeneratedValue) {
+        classList = classList.filter((value) => !isGeneratedValue(value))
+      }
+      if (keepOnlyFirst) {
+        classList = classList.slice(0, 1)
+      }
+      return `${element.tagName}${classList
+        .sort()
+        .map((className) => `.${cssEscape(className)}`)
+        .join('')}`
+    }
   }
 }
 
