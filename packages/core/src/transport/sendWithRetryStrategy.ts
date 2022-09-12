@@ -101,7 +101,7 @@ function send(
   state.bandwidthMonitor.add(payload)
   sendStrategy(payload, (response) => {
     state.bandwidthMonitor.remove(payload)
-    if (wasRequestSuccessful(response)) {
+    if (!shouldRetryRequest(response)) {
       state.transportStatus = TransportStatus.UP
       onSuccess()
     } else {
@@ -136,8 +136,8 @@ function retryQueuedPayloads(
   }
 }
 
-function wasRequestSuccessful(response: HttpResponse) {
-  return response.status !== 0 && response.status !== 429 && response.status < 500
+function shouldRetryRequest(response: HttpResponse) {
+  return response.status === 0 || response.status === 408 || response.status === 429 || response.status >= 500
 }
 
 export function newRetryState(): RetryState {
