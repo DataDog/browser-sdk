@@ -1,5 +1,5 @@
 import type { Context, RelativeTime, Duration } from '@datadog/browser-core'
-import { relativeNow } from '@datadog/browser-core'
+import { addDuration, relativeNow } from '@datadog/browser-core'
 import type { RumEvent } from '../../../rumEvent.types'
 import type { TestSetupBuilder, ViewTest } from '../../../../test/specHelper'
 import { setup, setupViewTest } from '../../../../test/specHelper'
@@ -145,10 +145,9 @@ describe('rum track view metrics', () => {
       // introduce a gap between time origin and tracking start
       // ensure that `load event > activity delay` and `load event < activity delay + clock gap`
       // to make the test fail if the clock gap is not correctly taken into account
-      const CLOCK_GAP =
-        FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING.loadEventEnd -
+      const CLOCK_GAP = (FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING.loadEventEnd -
         BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY +
-        1
+        1) as Duration
 
       setupBuilder.clock!.tick(CLOCK_GAP)
 
@@ -169,8 +168,7 @@ describe('rum track view metrics', () => {
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
       expect(getViewUpdateCount()).toEqual(2)
-      // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-      expect(getViewUpdate(1).loadingTime).toEqual((BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY + CLOCK_GAP) as Duration)
+      expect(getViewUpdate(1).loadingTime).toEqual(addDuration(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY, CLOCK_GAP))
     })
   })
 

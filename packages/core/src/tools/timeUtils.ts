@@ -65,6 +65,13 @@ export function elapsed(start: number, end: number) {
   return (end - start) as Duration
 }
 
+export function addDuration(a: TimeStamp, b: Duration): TimeStamp
+export function addDuration(a: RelativeTime, b: Duration): RelativeTime
+export function addDuration(a: Duration, b: Duration): Duration
+export function addDuration(a: number, b: number) {
+  return a + b
+}
+
 /**
  * Get the time since the navigation was started.
  *
