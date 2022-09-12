@@ -1,5 +1,14 @@
 import type { Duration, EventEmitter, RelativeTime } from '@datadog/browser-core'
-import { assign, addEventListeners, DOM_EVENT, elapsed, ONE_MINUTE, find, findLast } from '@datadog/browser-core'
+import {
+  assign,
+  addEventListeners,
+  DOM_EVENT,
+  elapsed,
+  ONE_MINUTE,
+  find,
+  findLast,
+  relativeNow,
+} from '@datadog/browser-core'
 
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -68,7 +77,11 @@ export function trackNavigationTimings(lifeCycle: LifeCycle, callback: (timings:
           domContentLoaded: entry.domContentLoadedEventEnd,
           domInteractive: entry.domInteractive,
           loadEvent: entry.loadEventEnd,
-          firstByte: entry.responseStart,
+          // In some cases the value reported is negative or is larger
+          // than the current page time. Ignore these cases:
+          // https://github.com/GoogleChrome/web-vitals/issues/137
+          // https://github.com/GoogleChrome/web-vitals/issues/162
+          firstByte: entry.responseStart >= 0 && entry.responseStart <= relativeNow() ? entry.responseStart : undefined,
         })
       }
     }
