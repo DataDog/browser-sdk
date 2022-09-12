@@ -135,6 +135,7 @@ describe('initial view', () => {
       expect(getViewUpdateCount()).toEqual(1)
       expect(getViewUpdate(0).timings).toEqual({})
 
+      clock.tick(FAKE_NAVIGATION_ENTRY.responseStart) // ensure now > responseStart
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [FAKE_NAVIGATION_ENTRY])
 
       expect(getViewUpdateCount()).toEqual(1)
