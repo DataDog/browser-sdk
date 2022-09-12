@@ -192,6 +192,7 @@ describe('sendWithRetryStrategy', () => {
   ;[
     { description: 'when the intake returns error:', status: 500 },
     { description: 'when the intake returns too many request:', status: 429 },
+    { description: 'when the intake returns request timeout:', status: 408 },
     { description: 'when network is down:', status: 0 },
   ].forEach(({ description, status }) => {
     describe(description, () => {
