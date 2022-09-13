@@ -24,8 +24,8 @@ describe('long task collection', () => {
     sessionManager = createRumSessionManagerMock()
     setupBuilder = setup()
       .withSessionManager(sessionManager)
-      .beforeBuild(({ lifeCycle, sessionManager }) => {
-        startLongTaskCollection(lifeCycle, sessionManager)
+      .beforeBuild(({ lifeCycle }) => {
+        startLongTaskCollection(lifeCycle)
       })
   })
 
@@ -42,18 +42,6 @@ describe('long task collection', () => {
       { duration: 100 as Duration, entryType: 'paint', startTime: 1234 },
     ] as RumPerformanceEntry[])
 
-    expect(rawRumEvents.length).toBe(1)
-  })
-
-  it('should only collect when session has a premium plan', () => {
-    const { lifeCycle, rawRumEvents } = setupBuilder.build()
-
-    sessionManager.setPremiumPlan()
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [LONG_TASK])
-    expect(rawRumEvents.length).toBe(1)
-
-    sessionManager.setLitePlan()
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [LONG_TASK])
     expect(rawRumEvents.length).toBe(1)
   })
 

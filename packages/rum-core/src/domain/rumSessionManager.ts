@@ -12,13 +12,14 @@ export interface RumSessionManager {
 
 export type RumSession = {
   id: string
-  hasPremiumPlan: boolean
-  hasLitePlan: boolean
+  hasReplayPlan: boolean
 }
 
 export const enum RumSessionPlan {
-  LITE = 1,
-  PREMIUM = 2,
+  // LITE = 1,
+  // PREMIUM = 2,
+  PRO = 3,
+  REPLAY = 4,
 }
 
 export const enum RumTrackingType {
@@ -26,8 +27,8 @@ export const enum RumTrackingType {
   // Note: the "tracking type" value (stored in the session cookie) does not match the "session
   // plan" value (sent in RUM events). This is expected, and was done to keep retrocompatibility
   // with active sessions when upgrading the SDK.
-  TRACKED_PREMIUM = '1',
-  TRACKED_LITE = '2',
+  TRACKED_REPLAY = '1',
+  TRACKED_PRO = '2',
 }
 
 export function startRumSessionManager(configuration: RumConfiguration, lifeCycle: LifeCycle): RumSessionManager {
@@ -51,8 +52,7 @@ export function startRumSessionManager(configuration: RumConfiguration, lifeCycl
       }
       return {
         id: session.id,
-        hasPremiumPlan: session.trackingType === RumTrackingType.TRACKED_PREMIUM,
-        hasLitePlan: session.trackingType === RumTrackingType.TRACKED_LITE,
+        hasReplayPlan: session.trackingType === RumTrackingType.TRACKED_REPLAY,
       }
     },
   }
@@ -60,13 +60,12 @@ export function startRumSessionManager(configuration: RumConfiguration, lifeCycl
 
 /**
  * Start a tracked replay session stub
- * It needs to be a premium plan in order to get long tasks
+ * No replay for bridge
  */
 export function startRumSessionManagerStub(): RumSessionManager {
-  const session = {
+  const session: RumSession = {
     id: '00000000-aaaa-0000-aaaa-000000000000',
-    hasPremiumPlan: true,
-    hasLitePlan: false,
+    hasReplayPlan: false,
   }
   return {
     findTrackedSession: () => session,
@@ -79,10 +78,10 @@ function computeSessionState(configuration: RumConfiguration, rawTrackingType?: 
     trackingType = rawTrackingType
   } else if (!performDraw(configuration.sampleRate)) {
     trackingType = RumTrackingType.NOT_TRACKED
-  } else if (!performDraw(configuration.premiumSampleRate)) {
-    trackingType = RumTrackingType.TRACKED_LITE
+  } else if (!performDraw(configuration.replaySampleRate)) {
+    trackingType = RumTrackingType.TRACKED_PRO
   } else {
-    trackingType = RumTrackingType.TRACKED_PREMIUM
+    trackingType = RumTrackingType.TRACKED_REPLAY
   }
   return {
     trackingType,
@@ -93,11 +92,11 @@ function computeSessionState(configuration: RumConfiguration, rawTrackingType?: 
 function hasValidRumSession(trackingType?: string): trackingType is RumTrackingType {
   return (
     trackingType === RumTrackingType.NOT_TRACKED ||
-    trackingType === RumTrackingType.TRACKED_PREMIUM ||
-    trackingType === RumTrackingType.TRACKED_LITE
+    trackingType === RumTrackingType.TRACKED_REPLAY ||
+    trackingType === RumTrackingType.TRACKED_PRO
   )
 }
 
 function isTypeTracked(rumSessionType: RumTrackingType | undefined) {
-  return rumSessionType === RumTrackingType.TRACKED_LITE || rumSessionType === RumTrackingType.TRACKED_PREMIUM
+  return rumSessionType === RumTrackingType.TRACKED_PRO || rumSessionType === RumTrackingType.TRACKED_REPLAY
 }

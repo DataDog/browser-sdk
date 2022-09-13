@@ -3,16 +3,11 @@ import type { RawRumLongTaskEvent } from '../../../rawRumEvent.types'
 import { RumEventType } from '../../../rawRumEvent.types'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
-import type { RumSessionManager } from '../../rumSessionManager'
 
-export function startLongTaskCollection(lifeCycle: LifeCycle, sessionManager: RumSessionManager) {
+export function startLongTaskCollection(lifeCycle: LifeCycle) {
   lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
     for (const entry of entries) {
       if (entry.entryType !== 'longtask') {
-        break
-      }
-      const session = sessionManager.findTrackedSession(entry.startTime)
-      if (!session || session.hasLitePlan) {
         break
       }
       const startClocks = relativeToClocks(entry.startTime)

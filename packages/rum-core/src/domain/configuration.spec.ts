@@ -19,41 +19,26 @@ describe('validateAndBuildRumConfiguration', () => {
     })
   })
 
-  describe('premiumSampleRate', () => {
-    it('defaults to 100 if the option is not provided', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.premiumSampleRate).toBe(100)
+  describe('replaySampleRate', () => {
+    it('defaults to 0 if the option is not provided', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.replaySampleRate).toBe(0)
     })
 
     it('is set to provided value', () => {
       expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, premiumSampleRate: 50 })!.premiumSampleRate
-      ).toBe(50)
-    })
-
-    it('is set to `replaySampleRate` if not defined', () => {
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, replaySampleRate: 50 })!.premiumSampleRate
-      ).toBe(50)
-      expect(
-        validateAndBuildRumConfiguration({
-          ...DEFAULT_INIT_CONFIGURATION,
-          replaySampleRate: 25,
-          premiumSampleRate: 50,
-        })!.premiumSampleRate
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, replaySampleRate: 50 })!.replaySampleRate
       ).toBe(50)
     })
 
     it('does not validate the configuration if an incorrect value is provided', () => {
       expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, premiumSampleRate: 'foo' as any })
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, replaySampleRate: 'foo' as any })
       ).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('Premium Sample Rate should be a number between 0 and 100')
+      expect(displaySpy).toHaveBeenCalledOnceWith('Replay Sample Rate should be a number between 0 and 100')
 
       displaySpy.calls.reset()
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, premiumSampleRate: 200 })
-      ).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('Premium Sample Rate should be a number between 0 and 100')
+      expect(validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, replaySampleRate: 200 })).toBeUndefined()
+      expect(displaySpy).toHaveBeenCalledOnceWith('Replay Sample Rate should be a number between 0 and 100')
     })
   })
 
