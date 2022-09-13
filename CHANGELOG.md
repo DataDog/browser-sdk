@@ -16,6 +16,16 @@
 
 ---
 
+## v4.19.1
+
+- 🐛 [RUMF-1369] Exclude error message from stacktrace parsing ([#1725](https://github.com/DataDog/browser-sdk/pull/1725))
+- 🐛 [RUMF-1384] Filter abnormal TTFB values ([#1729](https://github.com/DataDog/browser-sdk/pull/1729))
+- 🐛 [RUMF-1378] do not mask action name attributes ([#1721](https://github.com/DataDog/browser-sdk/pull/1721))
+- ⚗️ [RUMF-1378] use stable attributes when computing heatmap selector ([#1724](https://github.com/DataDog/browser-sdk/pull/1724))
+- ⚗️ [RUMF-1379] heatmaps: refine selectors pass 2 ([#1726](https://github.com/DataDog/browser-sdk/pull/1726))
+- ⚗️ [RUMF-1351] tweak retry strategy ([#1723](https://github.com/DataDog/browser-sdk/pull/1723))
+- ⚗️ [RUMF-1351] retry request on timeout ([#1728](https://github.com/DataDog/browser-sdk/pull/1728))
+
 ## v4.19.0
 
 - ✨ [RUMF-1286] test for expected features before starting recording ([#1719](https://github.com/DataDog/browser-sdk/pull/1719))
