@@ -61,6 +61,34 @@ describe('action collection', () => {
       )
     })
 
+  createTest('compute action target information before the UI changes')
+    .withRum({ trackFrustrations: true, enableExperimentalFeatures: ['clickmap'] })
+    .withBody(
+      html`
+        <button style="position: relative">click me</button>
+        <script>
+          const button = document.querySelector('button')
+          button.addEventListener('pointerdown', () => {
+            // Move the button to the right, so the mouseup/pointerup event target is different
+            // than the <button> element and click event target gets set to <body>
+            button.style.left = '1000px'
+
+            button.classList.add('active')
+          })
+        </script>
+      `
+    )
+    .run(async ({ serverEvents }) => {
+      const button = await $('button')
+      await button.click()
+      await flushEvents()
+      const actionEvents = serverEvents.rumActions
+
+      expect(actionEvents.length).toBe(1)
+      expect(actionEvents[0].action?.target?.name).toBe('click me')
+      expect(actionEvents[0]._dd.action?.target?.selector).toBe('BODY>BUTTON')
+    })
+
   createTest('associate a request to its action')
     .withRum({ trackInteractions: true })
     .withBody(
