@@ -16,6 +16,7 @@ const DEFAULT_RUM_CONFIGURATION = {
   applicationId: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
   clientToken: 'token',
   telemetrySampleRate: 100,
+  replaySampleRate: 100,
   enableExperimentalFeatures: [],
 }
 
