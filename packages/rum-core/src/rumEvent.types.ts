@@ -921,9 +921,9 @@ export interface CommonProperties {
      */
     session?: {
       /**
-       * Session plan: 1 is the 'lite' plan, 2 is the 'replay' plan
+       * Session plan: 1 is the 'lite' plan, 2 is the 'premium' plan, 3 is the 'pro' plan, 4 is the 'replay' plan
        */
-      plan: 1 | 2
+      plan: 1 | 2 | 3 | 4
       [k: string]: unknown
     }
     /**
