@@ -69,7 +69,8 @@ describe('action collection', () => {
         <script>
           const button = document.querySelector('button')
           button.addEventListener('pointerdown', () => {
-            button.textContent = 'Clicked'
+            // Using .textContent or .innerText prevents the click event to be dispatched in Safari
+            button.childNodes[0].data = 'Clicked'
             button.classList.add('active')
           })
         </script>
