@@ -87,10 +87,10 @@ describe('action collection', () => {
       expect(actionEvents[0]._dd.action?.target?.selector).toBe('BODY>BUTTON')
     })
 
-  // When the target element changes between mousedown and mousedown, Firefox does not dispatch a
+  // When the target element changes between mousedown and mouseup, Firefox does not dispatch a
   // click event. Skip this test.
   if (getBrowserName() !== 'firefox') {
-    createTest('does not report a click on the body when the target element changes between mouseup and mousedown')
+    createTest('does not report a click on the body when the target element changes between mousedown and mouseup')
       .withRum({ trackFrustrations: true, enableExperimentalFeatures: ['clickmap'] })
       .withBody(
         html`
