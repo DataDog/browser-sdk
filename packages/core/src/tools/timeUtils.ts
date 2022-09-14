@@ -11,18 +11,16 @@ export function relativeToClocks(relative: RelativeTime) {
 }
 
 function getCorrectedTimeStamp(relativeTime: RelativeTime) {
-  const correctedOrigin = dateNow() - performance.now()
+  const correctedOrigin = (dateNow() - performance.now()) as TimeStamp
   // apply correction only for positive drift
   if (correctedOrigin > getNavigationStart()) {
-    // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-    return Math.round(correctedOrigin + relativeTime) as TimeStamp
+    return Math.round(addDuration(correctedOrigin, relativeTime)) as TimeStamp
   }
   return getTimeStamp(relativeTime)
 }
 
 export function currentDrift() {
-  // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-  return Math.round(dateNow() - (getNavigationStart() + performance.now()))
+  return Math.round(dateNow() - addDuration(getNavigationStart(), performance.now() as Duration))
 }
 
 export function toServerDuration(duration: Duration): ServerDuration
@@ -84,8 +82,7 @@ export function getRelativeTime(timestamp: TimeStamp) {
 }
 
 export function getTimeStamp(relativeTime: RelativeTime) {
-  // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-  return Math.round(getNavigationStart() + relativeTime) as TimeStamp
+  return Math.round(addDuration(getNavigationStart(), relativeTime)) as TimeStamp
 }
 
 export function looksLikeRelativeTime(time: RelativeTime | TimeStamp): time is RelativeTime {
