@@ -1,40 +1,57 @@
 import type { Clock } from '../../../../../core/test/specHelper'
 import { createNewEvent, mockClock } from '../../../../../core/test/specHelper'
-import type { OnClickCallback, OnPointerDownCallback } from './listenActionEvents'
+import type { ActionEventsHooks } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 
 describe('listenActionEvents', () => {
-  let onClickSpy: jasmine.Spy<OnClickCallback>
-  let onPointerDownSpy: jasmine.Spy<OnPointerDownCallback>
+  let actionEventsHooks: {
+    onClick: jasmine.Spy<ActionEventsHooks<object>['onClick']>
+    onPointerDown: jasmine.Spy<ActionEventsHooks<object>['onPointerDown']>
+  }
   let stopListenEvents: () => void
 
   beforeEach(() => {
-    onClickSpy = jasmine.createSpy()
-    onPointerDownSpy = jasmine.createSpy().and.returnValue({ onClick: onClickSpy })
-    ;({ stop: stopListenEvents } = listenActionEvents({ onPointerDown: onPointerDownSpy }))
+    actionEventsHooks = {
+      onClick: jasmine.createSpy(),
+      onPointerDown: jasmine.createSpy().and.returnValue({}),
+    }
+    ;({ stop: stopListenEvents } = listenActionEvents(actionEventsHooks))
   })
 
   afterEach(() => {
     stopListenEvents()
   })
 
+  it('listen to mousedown events', () => {
+    emulateClick()
+    expect(actionEventsHooks.onPointerDown).toHaveBeenCalledOnceWith(jasmine.objectContaining({ type: 'pointerdown' }))
+  })
+
   it('listen to click events', () => {
     emulateClick()
-    expect(onClickSpy).toHaveBeenCalledOnceWith({
-      event: jasmine.objectContaining({ type: 'click' }),
-      getUserActivity: jasmine.any(Function),
-    })
+    expect(actionEventsHooks.onClick).toHaveBeenCalledOnceWith(
+      {},
+      jasmine.objectContaining({ type: 'click' }),
+      jasmine.any(Function)
+    )
   })
 
   it('aborts click lifecycle if the pointerdown event occurs on a non-element', () => {
     emulateClick({ target: document.createTextNode('foo') })
-    expect(onClickSpy).not.toHaveBeenCalled()
+    expect(actionEventsHooks.onPointerDown).not.toHaveBeenCalled()
   })
 
   it('can abort click lifecycle by returning undefined from the onPointerDown callback', () => {
-    onPointerDownSpy.and.returnValue(undefined)
+    actionEventsHooks.onPointerDown.and.returnValue(undefined)
     emulateClick()
-    expect(onClickSpy).not.toHaveBeenCalled()
+    expect(actionEventsHooks.onClick).not.toHaveBeenCalled()
+  })
+
+  it('passes the context created in onPointerDown to onClick', () => {
+    const context = {}
+    actionEventsHooks.onPointerDown.and.returnValue(context)
+    emulateClick()
+    expect(actionEventsHooks.onClick.calls.mostRecent().args[0]).toBe(context)
   })
 
   describe('selection change', () => {
@@ -106,7 +123,7 @@ describe('listenActionEvents', () => {
     })
 
     function hasSelectionChanged() {
-      return onClickSpy.calls.mostRecent().args[0].getUserActivity().selection
+      return actionEventsHooks.onClick.calls.mostRecent().args[2]().selection
     }
 
     function emulateNodeSelection(
@@ -171,7 +188,7 @@ describe('listenActionEvents', () => {
       window.dispatchEvent(createNewEvent('input'))
     }
     function hasInputUserActivity() {
-      return onClickSpy.calls.mostRecent().args[0].getUserActivity().input
+      return actionEventsHooks.onClick.calls.mostRecent().args[2]().input
     }
   })
 

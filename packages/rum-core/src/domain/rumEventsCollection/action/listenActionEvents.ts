@@ -2,18 +2,17 @@ import { addEventListener, DOM_EVENT, monitor } from '@datadog/browser-core'
 
 export type MouseEventOnElement = MouseEvent & { target: Element }
 
-export type OnPointerDownCallback = (event: MouseEventOnElement) => { onClick: OnClickCallback } | undefined
-export type OnClickCallback = (context: OnClickContext) => void
-export interface OnClickContext {
-  event: MouseEventOnElement
-  getUserActivity(): { selection: boolean; input: boolean }
+export type GetUserActivity = () => { selection: boolean; input: boolean }
+export interface ActionEventsHooks<ClickContext> {
+  onPointerDown: (event: MouseEventOnElement) => ClickContext | undefined
+  onClick: (context: ClickContext, event: MouseEventOnElement, getUserActivity: GetUserActivity) => void
 }
 
-export function listenActionEvents({ onPointerDown }: { onPointerDown: OnPointerDownCallback }) {
+export function listenActionEvents<ClickContext>({ onPointerDown, onClick }: ActionEventsHooks<ClickContext>) {
   let hasSelectionChanged = false
   let selectionEmptyAtPointerDown: boolean
   let hasInputChanged = false
-  let onClick: ((context: OnClickContext) => void) | undefined
+  let clickContext: ClickContext | undefined
 
   const listeners = [
     addEventListener(
@@ -23,7 +22,7 @@ export function listenActionEvents({ onPointerDown }: { onPointerDown: OnPointer
         hasSelectionChanged = false
         selectionEmptyAtPointerDown = isSelectionEmpty()
         if (isMouseEventOnElement(event)) {
-          onClick = onPointerDown(event)?.onClick
+          clickContext = onPointerDown(event)
         }
       },
       { capture: true }
@@ -44,7 +43,7 @@ export function listenActionEvents({ onPointerDown }: { onPointerDown: OnPointer
       window,
       DOM_EVENT.CLICK,
       (clickEvent: MouseEvent) => {
-        if (isMouseEventOnElement(clickEvent) && onClick) {
+        if (isMouseEventOnElement(clickEvent) && clickContext) {
           // Use a scoped variable to make sure the value is not changed by other clicks
           const userActivity = {
             selection: hasSelectionChanged,
@@ -58,11 +57,8 @@ export function listenActionEvents({ onPointerDown }: { onPointerDown: OnPointer
             )
           }
 
-          onClick({
-            event: clickEvent,
-            getUserActivity: () => userActivity,
-          })
-          onClick = undefined
+          onClick(clickContext, clickEvent, () => userActivity)
+          clickContext = undefined
         }
       },
       { capture: true }
