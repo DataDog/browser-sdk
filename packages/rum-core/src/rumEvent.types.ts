@@ -179,6 +179,28 @@ export type RumErrorEvent = CommonProperties &
        */
       stack?: string
       /**
+       * Causes of the error
+       */
+      causes?: {
+        /**
+         * Error message
+         */
+        message: string
+        /**
+         * The type of the error
+         */
+        readonly type?: string
+        /**
+         * Stacktrace of the error
+         */
+        stack?: string
+        /**
+         * Source of the error
+         */
+        readonly source: 'network' | 'source' | 'console' | 'logger' | 'agent' | 'webview' | 'custom' | 'report'
+        [k: string]: unknown
+      }[]
+      /**
        * Whether this error crashed the host application
        */
       readonly is_crash?: boolean
@@ -675,6 +697,18 @@ export type RumViewEvent = CommonProperties & {
      * Minimum refresh rate during the view’s lifetime (in frames per second)
      */
     readonly refresh_rate_min?: number
+    /**
+     * Time taken for Flutter 'build' methods.
+     */
+    flutter_build_time?: RumPerfMetric
+    /**
+     * Time taken for Flutter to rasterize the view.
+     */
+    flutter_raster_time?: RumPerfMetric
+    /**
+     * The JavaScript refresh rate for React Native
+     */
+    js_refresh_rate?: RumPerfMetric
     [k: string]: unknown
   }
   /**
@@ -921,9 +955,9 @@ export interface CommonProperties {
      */
     session?: {
       /**
-       * Session plan: 1 is the 'lite' plan, 2 is the 'replay' plan
+       * Session plan: 1 is the 'lite' plan, 2 is the 'premium' plan, 3 is the 'pro' plan, 4 is the 'replay' plan
        */
-      plan: 1 | 2
+      plan: 1 | 2 | 3 | 4
       [k: string]: unknown
     }
     /**
@@ -954,5 +988,27 @@ export interface ActionChildProperties {
     readonly id: string | string[]
     [k: string]: unknown
   }
+  [k: string]: unknown
+}
+/**
+ * Schema of properties for a technical performance metric
+ */
+export interface RumPerfMetric {
+  /**
+   * The minimum value seen for this metric during the view's lifetime.
+   */
+  readonly min: number
+  /**
+   * The maximum value seen for this metric during the view's lifetime.
+   */
+  readonly max: number
+  /**
+   * The average value for this metric during the view's lifetime.
+   */
+  readonly average: number
+  /**
+   * The maximum possible value we could see for this metric, if such a max is relevant and can vary from session to session.
+   */
+  readonly metric_max?: number
   [k: string]: unknown
 }
