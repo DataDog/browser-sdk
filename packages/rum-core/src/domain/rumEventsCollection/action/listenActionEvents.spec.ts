@@ -22,7 +22,7 @@ describe('listenActionEvents', () => {
     stopListenEvents()
   })
 
-  it('listen to mousedown events', () => {
+  it('listen to pointerdown events', () => {
     emulateClick()
     expect(actionEventsHooks.onPointerDown).toHaveBeenCalledOnceWith(jasmine.objectContaining({ type: 'pointerdown' }))
   })

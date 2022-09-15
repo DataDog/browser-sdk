@@ -79,9 +79,9 @@ export function trackClickActions(
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, stopClickChain)
 
   const { stop: stopActionEventsListener } = listenActionEvents<ClickActionBase>({
-    onPointerDown: (pointerDownEvent) => onPointerDown(configuration, history, pointerDownEvent),
+    onPointerDown: (pointerDownEvent) => processPointerDown(configuration, history, pointerDownEvent),
     onClick: (clickActionBase, clickEvent, getUserActivity) =>
-      onClick(
+      processClick(
         configuration,
         lifeCycle,
         domMutationObservable,
@@ -124,7 +124,7 @@ export function trackClickActions(
   }
 }
 
-function onPointerDown(
+function processPointerDown(
   configuration: RumConfiguration,
   history: ClickActionIdHistory,
   pointerDownEvent: MouseEventOnElement
@@ -145,7 +145,7 @@ function onPointerDown(
   return clickActionBase
 }
 
-function onClick(
+function processClick(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
