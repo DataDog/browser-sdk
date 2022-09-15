@@ -167,28 +167,17 @@ export function makeRumPublicApi(
     startViewStrategy(sanitizedOptions)
   })
 
-  const rumPublicApi = makePublicApi({
+  return makePublicApi({
     init: monitor(initRum),
 
-    /** @deprecated: use setGlobalContextProperty instead */
-    addRumGlobalContext: monitor(globalContextManager.add),
     setGlobalContextProperty: monitor(globalContextManager.setContextProperty),
-
-    /** @deprecated: use removeGlobalContextProperty instead */
-    removeRumGlobalContext: monitor(globalContextManager.remove),
     removeGlobalContextProperty: monitor(globalContextManager.removeContextProperty),
-
-    /** @deprecated: use getGlobalContext instead */
-    getRumGlobalContext: monitor(globalContextManager.get),
     getGlobalContext: monitor(globalContextManager.getContext),
-
-    /** @deprecated: use setGlobalContext instead */
-    setRumGlobalContext: monitor(globalContextManager.set),
     setGlobalContext: monitor(globalContextManager.setContext),
-
     clearGlobalContext: monitor(globalContextManager.clearContext),
 
     getInternalContext: monitor((startTime?: number) => getInternalContextStrategy(startTime)),
+
     getInitConfiguration: monitor(() => getInitConfigurationStrategy()),
 
     addAction: monitor((name: string, context?: object) => {
@@ -223,18 +212,12 @@ export function makeRumPublicApi(
         userContextManager.setContext(sanitizeUser(newUser as Context))
       }
     }),
-
     getUser: monitor(userContextManager.getContext),
-
     setUserProperty: monitor((key, property) => {
       const sanitizedProperty = sanitizeUser({ [key]: property })[key]
       userContextManager.setContextProperty(key, sanitizedProperty)
     }),
-
     removeUserProperty: monitor(userContextManager.removeContextProperty),
-
-    /** @deprecated: renamed to clearUser */
-    removeUser: monitor(userContextManager.clearContext),
     clearUser: monitor(userContextManager.clearContext),
 
     startView,
@@ -242,7 +225,6 @@ export function makeRumPublicApi(
     startSessionReplayRecording: monitor(recorderApi.start),
     stopSessionReplayRecording: monitor(recorderApi.stop),
   })
-  return rumPublicApi
 
   function sanitizeUser(newUser: Context) {
     const shallowClonedUser = assign(newUser, {})

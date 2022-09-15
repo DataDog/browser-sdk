@@ -3,41 +3,42 @@ import { createContextManager } from './contextManager'
 describe('createContextManager', () => {
   it('starts with an empty context', () => {
     const manager = createContextManager()
-    expect(manager.get()).toEqual({})
+    expect(manager.getContext()).toEqual({})
   })
 
   it('updates the context', () => {
     const manager = createContextManager()
-    manager.set({ bar: 'foo' })
-    expect(manager.get()).toEqual({ bar: 'foo' })
+    manager.setContext({ bar: 'foo' })
+    expect(manager.getContext()).toEqual({ bar: 'foo' })
   })
 
-  it('updates the context without copy', () => {
+  it('updates the context with copy', () => {
     const manager = createContextManager()
     const context = {}
-    manager.set(context)
-    expect(manager.get()).toBe(context)
+    manager.setContext(context)
+    expect(manager.getContext()).toEqual(context)
+    expect(manager.getContext()).not.toBe(context)
   })
 
   it('completely replaces the context', () => {
     const manager = createContextManager()
-    manager.set({ a: 'foo' })
-    expect(manager.get()).toEqual({ a: 'foo' })
-    manager.set({ b: 'foo' })
-    expect(manager.get()).toEqual({ b: 'foo' })
+    manager.setContext({ a: 'foo' })
+    expect(manager.getContext()).toEqual({ a: 'foo' })
+    manager.setContext({ b: 'foo' })
+    expect(manager.getContext()).toEqual({ b: 'foo' })
   })
 
   it('sets a context value', () => {
     const manager = createContextManager()
-    manager.add('foo', 'bar')
-    expect(manager.get()).toEqual({ foo: 'bar' })
+    manager.setContextProperty('foo', 'bar')
+    expect(manager.getContext()).toEqual({ foo: 'bar' })
   })
 
   it('removes a context value', () => {
     const manager = createContextManager()
-    manager.set({ a: 'foo', b: 'bar' })
-    manager.remove('a')
-    expect(manager.get()).toEqual({ b: 'bar' })
+    manager.setContext({ a: 'foo', b: 'bar' })
+    manager.removeContextProperty('a')
+    expect(manager.getContext()).toEqual({ b: 'bar' })
     manager.removeContextProperty('b')
     expect(manager.getContext()).toEqual({})
   })
