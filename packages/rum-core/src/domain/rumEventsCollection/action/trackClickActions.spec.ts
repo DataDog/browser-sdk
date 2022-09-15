@@ -1,5 +1,6 @@
 import type { Context, Observable, Duration } from '@datadog/browser-core'
 import {
+  addDuration,
   updateExperimentalFeatures,
   resetExperimentalFeatures,
   clocksNow,
@@ -24,6 +25,8 @@ import { MAX_DURATION_BETWEEN_CLICKS } from './clickChain'
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
 // A long delay used to wait after any action is finished.
 const EXPIRE_DELAY = CLICK_ACTION_MAX_DURATION * 10
+// Arbitrary duration between pointerdown and pointerup for emulated clicks
+const EMULATED_CLICK_DURATION = 80 as Duration
 
 function eventsCollector<T>() {
   const events: T[] = []
@@ -83,6 +86,7 @@ describe('trackClickActions', () => {
 
   it('starts a click action when clicking on an element', () => {
     const { domMutationObservable, clock } = setupBuilder.build()
+    const pointerDownClocks = clocksNow()
     emulateClickWithActivity(domMutationObservable, clock)
     expect(findActionId()).not.toBeUndefined()
     clock.tick(EXPIRE_DELAY)
@@ -97,7 +101,10 @@ describe('trackClickActions', () => {
         duration: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY as Duration,
         id: jasmine.any(String),
         name: 'Click me',
-        startClocks: jasmine.any(Object),
+        startClocks: {
+          relative: addDuration(pointerDownClocks.relative, EMULATED_CLICK_DURATION),
+          timeStamp: addDuration(pointerDownClocks.timeStamp, EMULATED_CLICK_DURATION),
+        },
         type: ActionType.CLICK,
         event: domEvent,
         frustrationTypes: [],
@@ -141,11 +148,11 @@ describe('trackClickActions', () => {
 
   it('should keep track of previously validated click actions', () => {
     const { domMutationObservable, clock } = setupBuilder.build()
-    const clickActionStartTime = relativeNow()
+    const pointerDownStart = relativeNow()
     emulateClickWithActivity(domMutationObservable, clock)
     clock.tick(EXPIRE_DELAY)
 
-    expect(findActionId(clickActionStartTime)).not.toBeUndefined()
+    expect(findActionId(addDuration(pointerDownStart, EMULATED_CLICK_DURATION))).not.toBeUndefined()
   })
 
   it('counts errors occurring during the click action', () => {
@@ -211,18 +218,18 @@ describe('trackClickActions', () => {
     it('ignores any starting click action while another one is ongoing', () => {
       const { domMutationObservable, clock } = setupBuilder.build()
 
-      const firstClickTimeStamp = timeStampNow()
+      const firstPointerDownTimeStamp = timeStampNow()
       emulateClickWithActivity(domMutationObservable, clock)
       emulateClickWithActivity(domMutationObservable, clock)
 
       clock.tick(EXPIRE_DELAY)
       expect(events.length).toBe(1)
-      expect(events[0].startClocks.timeStamp).toBe(firstClickTimeStamp)
+      expect(events[0].startClocks.timeStamp).toBe(addDuration(firstPointerDownTimeStamp, EMULATED_CLICK_DURATION))
     })
 
     it('discards a click action when nothing happens after a click', () => {
       const { clock } = setupBuilder.build()
-      emulateClickWithoutActivity()
+      emulateClickWithoutActivity(clock)
 
       clock.tick(EXPIRE_DELAY)
       expect(events).toEqual([])
@@ -282,20 +289,20 @@ describe('trackClickActions', () => {
     it('collect click actions even if another one is ongoing', () => {
       const { domMutationObservable, clock } = setupBuilder.build()
 
-      const firstClickTimeStamp = timeStampNow()
+      const firstPointerDownTimeStamp = timeStampNow()
       emulateClickWithActivity(domMutationObservable, clock)
-      const secondClickTimeStamp = timeStampNow()
+      const secondPointerDownTimeStamp = timeStampNow()
       emulateClickWithActivity(domMutationObservable, clock)
 
       clock.tick(EXPIRE_DELAY)
       expect(events.length).toBe(2)
-      expect(events[0].startClocks.timeStamp).toBe(firstClickTimeStamp)
-      expect(events[1].startClocks.timeStamp).toBe(secondClickTimeStamp)
+      expect(events[0].startClocks.timeStamp).toBe(addDuration(firstPointerDownTimeStamp, EMULATED_CLICK_DURATION))
+      expect(events[1].startClocks.timeStamp).toBe(addDuration(secondPointerDownTimeStamp, EMULATED_CLICK_DURATION))
     })
 
     it('collect click actions even if nothing happens after a click (dead click)', () => {
       const { clock } = setupBuilder.build()
-      emulateClickWithoutActivity()
+      emulateClickWithoutActivity(clock)
 
       clock.tick(EXPIRE_DELAY)
       expect(events.length).toBe(1)
@@ -305,7 +312,7 @@ describe('trackClickActions', () => {
 
     it('does not set a duration for dead clicks', () => {
       const { clock } = setupBuilder.build()
-      emulateClickWithoutActivity()
+      emulateClickWithoutActivity(clock)
 
       clock.tick(EXPIRE_DELAY)
       expect(events.length).toBe(1)
@@ -324,7 +331,7 @@ describe('trackClickActions', () => {
     describe('rage clicks', () => {
       it('considers a chain of three clicks or more as a single action with "rage" frustration type', () => {
         const { domMutationObservable, clock } = setupBuilder.build()
-        const firstClickTimeStamp = timeStampNow()
+        const firstPointerDownTimeStamp = timeStampNow()
         const actionDuration = 5
         emulateClickWithActivity(domMutationObservable, clock, undefined, actionDuration)
         emulateClickWithActivity(domMutationObservable, clock, undefined, actionDuration)
@@ -332,9 +339,11 @@ describe('trackClickActions', () => {
 
         clock.tick(EXPIRE_DELAY)
         expect(events.length).toBe(1)
-        expect(events[0].startClocks.timeStamp).toBe(firstClickTimeStamp)
+        expect(events[0].startClocks.timeStamp).toBe(addDuration(firstPointerDownTimeStamp, EMULATED_CLICK_DURATION))
         expect(events[0].frustrationTypes).toEqual([FrustrationType.RAGE_CLICK])
-        expect(events[0].duration).toBe((MAX_DURATION_BETWEEN_CLICKS + 2 * actionDuration) as Duration)
+        expect(events[0].duration).toBe(
+          (MAX_DURATION_BETWEEN_CLICKS + 2 * actionDuration + 2 * EMULATED_CLICK_DURATION) as Duration
+        )
       })
 
       it('should contain original events from of rage sequence', () => {
@@ -354,7 +363,7 @@ describe('trackClickActions', () => {
         const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
 
         // Dead
-        emulateClickWithoutActivity()
+        emulateClickWithoutActivity(clock)
         clock.tick(PAGE_ACTIVITY_VALIDATION_DELAY)
 
         // Error
@@ -392,7 +401,7 @@ describe('trackClickActions', () => {
       it('considers a "click without activity" followed by an error as a click action with "error" (and "dead") frustration type', () => {
         const { lifeCycle, clock } = setupBuilder.build()
 
-        emulateClickWithoutActivity()
+        emulateClickWithoutActivity(clock)
         lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, RAW_ERROR_EVENT)
 
         clock.tick(EXPIRE_DELAY)
@@ -407,7 +416,7 @@ describe('trackClickActions', () => {
       it('considers a "click without activity" as a dead click', () => {
         const { clock } = setupBuilder.build()
 
-        emulateClickWithoutActivity()
+        emulateClickWithoutActivity(clock)
 
         clock.tick(EXPIRE_DELAY)
         expect(events.length).toBe(1)
@@ -422,26 +431,28 @@ describe('trackClickActions', () => {
     target: HTMLElement = button,
     clickActionDuration: number = BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY
   ) {
-    emulateClickWithoutActivity(target)
+    emulateClickWithoutActivity(clock, target)
     clock.tick(clickActionDuration)
     // Since we don't collect dom mutations for this test, manually dispatch one
     domMutationObservable.notify()
   }
 
-  function emulateClickWithoutActivity(target: HTMLElement = button) {
+  function emulateClickWithoutActivity(clock: Clock, target: HTMLElement = button) {
     const targetPosition = target.getBoundingClientRect()
     const offsetX = targetPosition.width / 2
     const offsetY = targetPosition.height / 2
-    target.dispatchEvent(
-      createNewEvent('click', {
-        target,
-        clientX: targetPosition.left + offsetX,
-        clientY: targetPosition.top + offsetY,
-        offsetX,
-        offsetY,
-        timeStamp: timeStampNow(),
-      })
-    )
+    const eventProperties = {
+      target,
+      clientX: targetPosition.left + offsetX,
+      clientY: targetPosition.top + offsetY,
+      offsetX,
+      offsetY,
+      timeStamp: timeStampNow(),
+    }
+    target.dispatchEvent(createNewEvent('pointerdown', eventProperties))
+    clock.tick(EMULATED_CLICK_DURATION)
+    target.dispatchEvent(createNewEvent('pointerup', eventProperties))
+    target.dispatchEvent(createNewEvent('click', eventProperties))
   }
 })
 

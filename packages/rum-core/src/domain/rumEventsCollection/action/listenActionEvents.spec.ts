@@ -1,27 +1,66 @@
 import type { Clock } from '../../../../../core/test/specHelper'
 import { createNewEvent, mockClock } from '../../../../../core/test/specHelper'
-import type { OnClickContext } from './listenActionEvents'
+import type { ActionEventsHooks } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 
 describe('listenActionEvents', () => {
-  let onClickSpy: jasmine.Spy<(context: OnClickContext) => void>
+  let actionEventsHooks: {
+    onClick: jasmine.Spy<ActionEventsHooks<object>['onClick']>
+    onPointerDown: jasmine.Spy<ActionEventsHooks<object>['onPointerDown']>
+  }
   let stopListenEvents: () => void
 
   beforeEach(() => {
-    onClickSpy = jasmine.createSpy()
-    ;({ stop: stopListenEvents } = listenActionEvents({ onClick: onClickSpy }))
+    actionEventsHooks = {
+      onClick: jasmine.createSpy(),
+      onPointerDown: jasmine.createSpy().and.returnValue({}),
+    }
+    ;({ stop: stopListenEvents } = listenActionEvents(actionEventsHooks))
   })
 
   afterEach(() => {
     stopListenEvents()
   })
 
+  it('listen to pointerdown events', () => {
+    emulateClick()
+    expect(actionEventsHooks.onPointerDown).toHaveBeenCalledOnceWith(jasmine.objectContaining({ type: 'pointerdown' }))
+  })
+
   it('listen to click events', () => {
     emulateClick()
-    expect(onClickSpy).toHaveBeenCalledOnceWith({
-      event: jasmine.objectContaining({ type: 'click' }),
-      getUserActivity: jasmine.any(Function),
-    })
+    expect(actionEventsHooks.onClick).toHaveBeenCalledOnceWith(
+      {},
+      jasmine.objectContaining({ type: 'click' }),
+      jasmine.any(Function)
+    )
+  })
+
+  it('aborts click lifecycle if the pointerdown event occurs on a non-element', () => {
+    emulateClick({ target: document.createTextNode('foo') })
+    expect(actionEventsHooks.onPointerDown).not.toHaveBeenCalled()
+  })
+
+  it('can abort click lifecycle by returning undefined from the onPointerDown callback', () => {
+    actionEventsHooks.onPointerDown.and.returnValue(undefined)
+    emulateClick()
+    expect(actionEventsHooks.onClick).not.toHaveBeenCalled()
+  })
+
+  it('passes the context created in onPointerDown to onClick', () => {
+    const context = {}
+    actionEventsHooks.onPointerDown.and.returnValue(context)
+    emulateClick()
+    expect(actionEventsHooks.onClick.calls.mostRecent().args[0]).toBe(context)
+  })
+
+  it('ignore "click" events if no "pointerdown" event happened since the previous "click" event', () => {
+    emulateClick()
+    actionEventsHooks.onClick.calls.reset()
+
+    window.dispatchEvent(createNewEvent('click', { target: document.body }))
+
+    expect(actionEventsHooks.onClick).not.toHaveBeenCalled()
   })
 
   describe('selection change', () => {
@@ -93,7 +132,7 @@ describe('listenActionEvents', () => {
     })
 
     function hasSelectionChanged() {
-      return onClickSpy.calls.mostRecent().args[0].getUserActivity().selection
+      return actionEventsHooks.onClick.calls.mostRecent().args[2]().selection
     }
 
     function emulateNodeSelection(
@@ -158,14 +197,16 @@ describe('listenActionEvents', () => {
       window.dispatchEvent(createNewEvent('input'))
     }
     function hasInputUserActivity() {
-      return onClickSpy.calls.mostRecent().args[0].getUserActivity().input
+      return actionEventsHooks.onClick.calls.mostRecent().args[2]().input
     }
   })
 
-  function emulateClick({ beforeMouseUp }: { beforeMouseUp?(): void } = {}) {
-    document.body.dispatchEvent(createNewEvent('mousedown'))
+  function emulateClick({ beforeMouseUp, target = document.body }: { beforeMouseUp?(): void; target?: Node } = {}) {
+    window.dispatchEvent(createNewEvent('pointerdown', { target }))
+    window.dispatchEvent(createNewEvent('mousedown', { target }))
     beforeMouseUp?.()
-    document.body.dispatchEvent(createNewEvent('mouseup'))
-    document.body.dispatchEvent(createNewEvent('click'))
+    window.dispatchEvent(createNewEvent('pointerup', { target }))
+    window.dispatchEvent(createNewEvent('mouseup', { target }))
+    window.dispatchEvent(createNewEvent('click', { target }))
   }
 })

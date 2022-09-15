@@ -1,4 +1,4 @@
-import { withBrowserLogs } from '../../lib/helpers/browser'
+import { getBrowserName, withBrowserLogs } from '../../lib/helpers/browser'
 import { createTest, flushEvents, html, waitForServersIdle } from '../../lib/framework'
 
 describe('action collection', () => {
@@ -60,6 +60,61 @@ describe('action collection', () => {
         })
       )
     })
+
+  createTest('compute action target information before the UI changes')
+    .withRum({ trackFrustrations: true, enableExperimentalFeatures: ['clickmap'] })
+    .withBody(
+      html`
+        <button style="position: relative">click me</button>
+        <script>
+          const button = document.querySelector('button')
+          button.addEventListener('pointerdown', () => {
+            // Using .textContent or .innerText prevents the click event to be dispatched in Safari
+            button.childNodes[0].data = 'Clicked'
+            button.classList.add('active')
+          })
+        </script>
+      `
+    )
+    .run(async ({ serverEvents }) => {
+      const button = await $('button')
+      await button.click()
+      await flushEvents()
+      const actionEvents = serverEvents.rumActions
+
+      expect(actionEvents.length).toBe(1)
+      expect(actionEvents[0].action?.target?.name).toBe('click me')
+      expect(actionEvents[0]._dd.action?.target?.selector).toBe('BODY>BUTTON')
+    })
+
+  // When the target element changes between mousedown and mouseup, Firefox does not dispatch a
+  // click event. Skip this test.
+  if (getBrowserName() !== 'firefox') {
+    createTest('does not report a click on the body when the target element changes between mousedown and mouseup')
+      .withRum({ trackFrustrations: true, enableExperimentalFeatures: ['clickmap'] })
+      .withBody(
+        html`
+          <button style="position: relative">click me</button>
+          <script>
+            const button = document.querySelector('button')
+            button.addEventListener('pointerdown', () => {
+              // Move the button to the right, so the mouseup/pointerup event target is different
+              // than the <button> element and click event target gets set to <body>
+              button.style.left = '1000px'
+            })
+          </script>
+        `
+      )
+      .run(async ({ serverEvents }) => {
+        const button = await $('button')
+        await button.click()
+        await flushEvents()
+        const actionEvents = serverEvents.rumActions
+
+        expect(actionEvents.length).toBe(1)
+        expect(actionEvents[0].action?.target?.name).toBe('click me')
+      })
+  }
 
   createTest('associate a request to its action')
     .withRum({ trackInteractions: true })
