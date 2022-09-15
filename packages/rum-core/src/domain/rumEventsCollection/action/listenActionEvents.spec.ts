@@ -54,6 +54,15 @@ describe('listenActionEvents', () => {
     expect(actionEventsHooks.onClick.calls.mostRecent().args[0]).toBe(context)
   })
 
+  it('ignore "click" events if no "pointerdown" event happened since the previous "click" event', () => {
+    emulateClick()
+    actionEventsHooks.onClick.calls.reset()
+
+    window.dispatchEvent(createNewEvent('click', { target: document.body }))
+
+    expect(actionEventsHooks.onClick).not.toHaveBeenCalled()
+  })
+
   describe('selection change', () => {
     let text: Text
 
