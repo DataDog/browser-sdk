@@ -112,7 +112,7 @@ describe('initFrustrationObserver', () => {
           },
         },
       },
-      domainContext: { event: mouseEvent, events: [mouseEvent] },
+      domainContext: { events: [mouseEvent] },
     }
   })
 
