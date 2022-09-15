@@ -72,12 +72,26 @@ export class Logger {
     return this.contextManager.getContext()
   }
 
-  addContext(key: string, value: any) {
+  setContextProperty(key: string, value: any) {
     this.contextManager.setContextProperty(key, value)
   }
 
-  removeContext(key: string) {
+  /**
+   * @deprecated use setContextProperty instead
+   */
+  addContext(key: string, value: any) {
+    this.setContextProperty(key, value)
+  }
+
+  removeContextProperty(key: string) {
     this.contextManager.removeContextProperty(key)
+  }
+
+  /**
+   * @deprecated use removeContextProperty instead
+   */
+  removeContext(key: string) {
+    this.removeContextProperty(key)
   }
 
   setHandler(handler: HandlerType | HandlerType[]) {
