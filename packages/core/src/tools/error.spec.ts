@@ -99,21 +99,13 @@ describe('formatUnknownError', () => {
   })
 
   it('should format an object error with cause', () => {
-    const errorObject = new Error('foo: bar')
-    const nestedErrorObject = new Error('biz: buz') as unknown as ErrorCause
-    const deepNestedErrorObject = new Error('fiz: buz')
+    const errorObject = new Error('foo: bar') as unknown as RawError
+    const nestedErrorObject = new Error('biz: buz') as unknown as RawError
+    const deepNestedErrorObject = new Error('fiz: buz') as unknown as RawError
 
-    // Add source to only the nested Error
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore: source
     deepNestedErrorObject.source = ErrorSource.LOGGER
 
-    // Chain the cause of each error
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore: cause
     errorObject.cause = nestedErrorObject
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore: cause
     nestedErrorObject.cause = deepNestedErrorObject
 
     const formatted = formatUnknownError({
