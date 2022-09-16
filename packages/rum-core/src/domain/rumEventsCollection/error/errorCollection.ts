@@ -74,7 +74,13 @@ function computeRawError(error: unknown, handlingStack: string, startClocks: Clo
       originalError: error,
       handling: ErrorHandling.HANDLED,
     },
-    formatUnknownError(stackTrace, error, 'Provided', handlingStack)
+    formatUnknownError({
+      stackTrace,
+      errorObject: error,
+      nonErrorPrefix: 'Provided',
+      handlingStack,
+      source: ErrorSource.CUSTOM,
+    })
   )
 }
 
@@ -92,6 +98,7 @@ function processError(
       handling_stack: error.handlingStack,
       type: error.type,
       handling: error.handling,
+      causes: error.causes ?? [],
       source_type: 'browser',
     },
     type: RumEventType.ERROR as const,

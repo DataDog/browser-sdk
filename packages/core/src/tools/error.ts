@@ -4,6 +4,14 @@ import { callMonitored } from './monitor'
 import type { ClocksState } from './timeUtils'
 import { jsonStringify, noop } from './utils'
 
+export type ErrorCause = {
+  message: string
+  source: string
+  type?: string
+  stack?: string
+  cause?: RawError
+}
+
 export interface RawError {
   startClocks: ClocksState
   message: string
@@ -13,6 +21,16 @@ export interface RawError {
   originalError?: unknown
   handling?: ErrorHandling
   handlingStack?: string
+  cause?: RawError
+  causes?: ErrorCause[]
+}
+
+export interface UnknownError {
+  message: string
+  stack?: string
+  handlingStack?: string
+  type?: string
+  causes?: ErrorCause[]
 }
 
 export const ErrorSource = {
@@ -32,12 +50,20 @@ export const enum ErrorHandling {
 
 export type ErrorSource = typeof ErrorSource[keyof typeof ErrorSource]
 
-export function formatUnknownError(
-  stackTrace: StackTrace | undefined,
-  errorObject: any,
-  nonErrorPrefix: string,
+type UnknownErrorParams = {
+  stackTrace: StackTrace | undefined
+  errorObject: any
+  nonErrorPrefix: string
   handlingStack?: string
-) {
+  source: ErrorSource
+}
+export function formatUnknownError({
+  stackTrace,
+  errorObject,
+  nonErrorPrefix,
+  handlingStack,
+  source,
+}: UnknownErrorParams): UnknownError {
   if (!stackTrace || (stackTrace.message === undefined && !(errorObject instanceof Error))) {
     return {
       message: `${nonErrorPrefix} ${jsonStringify(errorObject)!}`,
@@ -52,6 +78,7 @@ export function formatUnknownError(
     stack: toStackTraceString(stackTrace),
     handlingStack,
     type: stackTrace.name,
+    causes: flattenErrorCauses(errorObject, source),
   }
 }
 
@@ -109,4 +136,21 @@ export function createHandlingStack(): string {
   })
 
   return formattedStack!
+}
+
+export function flattenErrorCauses(error: RawError, parentSource: ErrorSource): ErrorCause[] {
+  let count = 0
+  let currentError = error
+  const causes: Array<RawError | ErrorCause> = []
+  while (currentError?.cause && currentError.cause && count < 10) {
+    causes.push({
+      message: currentError.cause.message,
+      source: currentError.cause.source ?? parentSource,
+      type: currentError.cause?.type,
+      stack: currentError.cause?.stack,
+    })
+    currentError = currentError.cause
+    count++
+  }
+  return causes
 }

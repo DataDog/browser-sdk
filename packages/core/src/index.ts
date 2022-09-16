@@ -58,8 +58,10 @@ export {
   formatUnknownError,
   createHandlingStack,
   RawError,
+  ErrorCause,
   toStackTraceString,
   getFileFromStackTraceString,
+  flattenErrorCauses,
 } from './tools/error'
 export { Context, ContextArray, ContextValue } from './tools/context'
 export { areCookiesAuthorized, getCookie, setCookie, deleteCookie, COOKIE_ACCESS_DELAY } from './browser/cookie'

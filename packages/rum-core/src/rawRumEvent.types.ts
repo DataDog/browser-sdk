@@ -6,6 +6,7 @@ import type {
   ResourceType,
   ServerDuration,
   TimeStamp,
+  ErrorCause,
 } from '@datadog/browser-core'
 import type { RumSessionPlan } from './domain/rumSessionManager'
 
@@ -47,7 +48,7 @@ export interface PerformanceResourceDetailsElement {
   start: ServerDuration
 }
 
-export interface RawRumErrorEvent {
+export type RawRumErrorEvent = {
   date: TimeStamp
   type: RumEventType.ERROR
   error: {
@@ -58,6 +59,7 @@ export interface RawRumErrorEvent {
     source: ErrorSource
     message: string
     handling?: ErrorHandling
+    causes: ErrorCause[]
     source_type: 'browser'
   }
   view?: {

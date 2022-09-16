@@ -6,7 +6,13 @@ import { startUnhandledErrorCollection } from '../tracekit'
 
 export function trackRuntimeError(errorObservable: Observable<RawError>) {
   return startUnhandledErrorCollection((stackTrace, errorObject) => {
-    const { stack, message, type } = formatUnknownError(stackTrace, errorObject, 'Uncaught')
+    const { stack, message, type, causes } = formatUnknownError({
+      stackTrace,
+      errorObject,
+      nonErrorPrefix: 'Uncaught',
+      source: ErrorSource.SOURCE,
+    })
+
     errorObservable.notify({
       message,
       stack,
@@ -15,6 +21,7 @@ export function trackRuntimeError(errorObservable: Observable<RawError>) {
       startClocks: clocksNow(),
       originalError: errorObject,
       handling: ErrorHandling.UNHANDLED,
+      causes,
     })
   })
 }

@@ -1,7 +1,8 @@
-import type { RelativeTime, TimeStamp } from '@datadog/browser-core'
+import type { RelativeTime, TimeStamp, RawError } from '@datadog/browser-core'
 import { ErrorHandling, ErrorSource } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../../test/specHelper'
 import { setup } from '../../../../test/specHelper'
+import type { RawRumErrorEvent } from '../../../rawRumEvent.types'
 import { RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { doStartErrorCollection } from './errorCollection'
@@ -49,6 +50,7 @@ describe('error collection', () => {
             type: 'Error',
             handling: ErrorHandling.HANDLED,
             source_type: 'browser',
+            causes: [],
           },
           type: RumEventType.ERROR,
           view: {
@@ -59,6 +61,33 @@ describe('error collection', () => {
         startTime: 1234 as RelativeTime,
         domainContext: { error },
       })
+    })
+
+    it('should extract causes from error', () => {
+      const { rawRumEvents } = setupBuilder.build()
+      const error1 = new Error('foo') as unknown as RawError
+      const error2 = new Error('bar') as unknown as RawError
+      const error3 = new Error('biz') as unknown as RawError
+
+      error3.source = ErrorSource.LOGGER
+
+      error1.cause = error2
+      error2.cause = error3
+
+      addError({
+        error: error1,
+        handlingStack: 'Error: handling foo',
+        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+      })
+      const { error } = rawRumEvents[0].rawRumEvent as RawRumErrorEvent
+      expect(error.message).toEqual('foo')
+      expect(error.source).toEqual('custom')
+
+      expect(error.causes.length).toEqual(2)
+      expect(error.causes[0].message).toEqual('bar')
+      expect(error.causes[0].source).toEqual(ErrorSource.CUSTOM) // source comes from parent
+      expect(error.causes[1].message).toEqual('biz')
+      expect(error.causes[1].source).toEqual(ErrorSource.LOGGER)
     })
 
     it('should save the specified customer context', () => {
@@ -144,6 +173,7 @@ describe('error collection', () => {
           type: 'foo',
           handling: undefined,
           source_type: 'browser',
+          causes: [],
         },
         view: {
           in_foreground: true,

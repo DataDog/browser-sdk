@@ -1,5 +1,12 @@
 import type { StackTrace } from '../domain/tracekit'
-import { createHandlingStack, formatUnknownError, getFileFromStackTraceString } from './error'
+import type { ErrorCause, RawError } from './error'
+import {
+  createHandlingStack,
+  formatUnknownError,
+  getFileFromStackTraceString,
+  flattenErrorCauses,
+  ErrorSource,
+} from './error'
 
 describe('formatUnknownError', () => {
   const NOT_COMPUTED_STACK_TRACE: StackTrace = { name: undefined, message: undefined, stack: [] } as any
@@ -33,7 +40,12 @@ describe('formatUnknownError', () => {
       ],
     }
 
-    const formatted = formatUnknownError(stack, undefined, 'Uncaught')
+    const formatted = formatUnknownError({
+      stackTrace: stack,
+      errorObject: undefined,
+      nonErrorPrefix: 'Uncaught',
+      source: 'custom',
+    })
 
     expect(formatted.message).toEqual('oh snap!')
     expect(formatted.type).toEqual('TypeError')
@@ -50,7 +62,12 @@ describe('formatUnknownError', () => {
       stack: [],
     }
 
-    const formatted = formatUnknownError(stack, undefined, 'Uncaught')
+    const formatted = formatUnknownError({
+      stackTrace: stack,
+      errorObject: undefined,
+      nonErrorPrefix: 'Uncaught',
+      source: 'custom',
+    })
 
     expect(formatted.message).toEqual('Empty message')
   })
@@ -58,7 +75,12 @@ describe('formatUnknownError', () => {
   it('should format a string error', () => {
     const errorObject = 'oh snap!'
 
-    const formatted = formatUnknownError(NOT_COMPUTED_STACK_TRACE, errorObject, 'Uncaught')
+    const formatted = formatUnknownError({
+      stackTrace: NOT_COMPUTED_STACK_TRACE,
+      errorObject,
+      nonErrorPrefix: 'Uncaught',
+      source: 'custom',
+    })
 
     expect(formatted.message).toEqual('Uncaught "oh snap!"')
   })
@@ -66,9 +88,47 @@ describe('formatUnknownError', () => {
   it('should format an object error', () => {
     const errorObject = { foo: 'bar' }
 
-    const formatted = formatUnknownError(NOT_COMPUTED_STACK_TRACE, errorObject, 'Uncaught')
+    const formatted = formatUnknownError({
+      stackTrace: NOT_COMPUTED_STACK_TRACE,
+      errorObject,
+      nonErrorPrefix: 'Uncaught',
+      source: 'custom',
+    })
 
     expect(formatted.message).toEqual('Uncaught {"foo":"bar"}')
+  })
+
+  it('should format an object error with cause', () => {
+    const errorObject = new Error('foo: bar')
+    const nestedErrorObject = new Error('biz: buz') as unknown as ErrorCause
+    const deepNestedErrorObject = new Error('fiz: buz')
+
+    // Add source to only the nested Error
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore: source
+    deepNestedErrorObject.source = ErrorSource.LOGGER
+
+    // Chain the cause of each error
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore: cause
+    errorObject.cause = nestedErrorObject
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore: cause
+    nestedErrorObject.cause = deepNestedErrorObject
+
+    const formatted = formatUnknownError({
+      stackTrace: NOT_COMPUTED_STACK_TRACE,
+      errorObject,
+      nonErrorPrefix: 'Uncaught',
+      source: ErrorSource.SOURCE,
+    })
+
+    expect(formatted.causes?.length).toBe(2)
+    const causes = formatted.causes as ErrorCause[]
+    expect(causes[0].message).toContain(nestedErrorObject.message)
+    expect(causes[0].source).toContain(ErrorSource.SOURCE)
+    expect(causes[1].message).toContain(deepNestedErrorObject.message)
+    expect(causes[1].source).toContain(ErrorSource.LOGGER)
   })
 })
 
@@ -105,5 +165,35 @@ describe('createHandlingStack', () => {
     expect(handlingStack).toMatch(`Error: 
   at userCallTwo @ (.*)
   at userCallOne @ (.*)`)
+  })
+})
+
+describe('flattenErrorCauses', () => {
+  it('should return empty array if  no cause found', () => {
+    const error = new Error('foo') as unknown as RawError
+    const errorCauses = flattenErrorCauses(error, ErrorSource.LOGGER)
+    expect(errorCauses.length).toEqual(0)
+  })
+
+  it('should only return the first 10 errors if nested chain is longer', () => {
+    const error = new Error('foo') as unknown as RawError
+    error.cause = error
+    const errorCauses = flattenErrorCauses(error, ErrorSource.LOGGER)
+    expect(errorCauses.length).toEqual(10)
+  })
+
+  it('should use the parent source if not found on error', () => {
+    const error1 = new Error('foo') as unknown as RawError
+    const error2 = new Error('bar') as unknown as RawError
+    const error3 = new Error('biz') as unknown as RawError
+
+    error3.source = ErrorSource.SOURCE
+
+    error1.cause = error2
+    error2.cause = error3
+
+    const errorCauses = flattenErrorCauses(error1, ErrorSource.LOGGER)
+    expect(errorCauses[0].source).toEqual(ErrorSource.LOGGER)
+    expect(errorCauses[1].source).toEqual(ErrorSource.SOURCE)
   })
 })
