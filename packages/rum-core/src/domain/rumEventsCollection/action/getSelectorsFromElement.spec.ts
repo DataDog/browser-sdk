@@ -170,6 +170,19 @@ describe('getSelectorFromElement', () => {
     })
   })
 
+  describe('stopping when the selector is globally unique', () => {
+    const getSelectorStoppingWhenUnique = getSelector.bind(null, 'selector_stopping_when_unique')
+
+    it('stops recursing when the selector is unique', () => {
+      expect(
+        getSelectorStoppingWhenUnique(`
+          <button></button>
+          <div><button target></button></div>
+        `)
+      ).toBe('DIV>BUTTON')
+    })
+  })
+
   function getSelector(
     selectorName: keyof ReturnType<typeof getSelectorsFromElement>,
     htmlOrElement: string | Element,

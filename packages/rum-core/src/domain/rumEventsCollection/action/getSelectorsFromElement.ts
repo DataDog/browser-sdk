@@ -38,6 +38,11 @@ export function getSelectorsFromElement(element: Element, actionNameAttribute: s
       uniqueAmongChildrenSelectorStrategies.concat(getTagNameSelector),
       { useCombinedSelectors: true }
     ),
+    selector_stopping_when_unique: getSelectorFromElement(
+      element,
+      globallyUniqueSelectorStrategies.concat([getClassSelector, getTagNameSelector]),
+      uniqueAmongChildrenSelectorStrategies.concat(getTagNameSelector)
+    ),
   }
 }
 
