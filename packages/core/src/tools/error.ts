@@ -51,7 +51,7 @@ export const enum ErrorHandling {
 export type ErrorSource = typeof ErrorSource[keyof typeof ErrorSource]
 
 type UnknownErrorParams = {
-  stackTrace: StackTrace | undefined
+  stackTrace?: StackTrace
   errorObject: any
   nonErrorPrefix: string
   handlingStack?: string
