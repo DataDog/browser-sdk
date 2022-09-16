@@ -183,6 +183,19 @@ describe('getSelectorFromElement', () => {
     })
   })
 
+  describe('using combined selectors + stopping when the selector is globally unique', () => {
+    const getSelectorAllTogether = getSelector.bind(null, 'selector_all_together')
+
+    it('stops recursing when the composed selector is unique', () => {
+      expect(
+        getSelectorAllTogether(`
+          <div><div><button></button></div></div>
+          <div><button target></button></div>
+        `)
+      ).toBe('BODY>DIV>BUTTON')
+    })
+  })
+
   function getSelector(
     selectorName: keyof ReturnType<typeof getSelectorsFromElement>,
     htmlOrElement: string | Element,

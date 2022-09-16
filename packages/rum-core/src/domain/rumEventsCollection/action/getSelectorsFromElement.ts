@@ -43,6 +43,12 @@ export function getSelectorsFromElement(element: Element, actionNameAttribute: s
       globallyUniqueSelectorStrategies.concat([getClassSelector, getTagNameSelector]),
       uniqueAmongChildrenSelectorStrategies.concat(getTagNameSelector)
     ),
+    selector_all_together: getSelectorFromElement(
+      element,
+      globallyUniqueSelectorStrategies.concat([getClassSelector, getTagNameSelector]),
+      uniqueAmongChildrenSelectorStrategies.concat(getTagNameSelector),
+      { useCombinedSelectors: true }
+    ),
   }
 }
 
