@@ -22,11 +22,15 @@ describe('getSelectorFromElement', () => {
       it('should not use the ID selector when the ID is not unique', () => {
         expect(getDefaultSelector('<div id="foo"></div><div id="foo"></div>')).not.toContain('#foo')
       })
+
+      it('should not use generated IDs', () => {
+        expect(getDefaultSelector('<div id="foo4"></div>')).toBe('BODY>DIV')
+      })
     })
 
     describe('class selector', () => {
       it('should use the class selector when the element as classes', () => {
-        expect(getDefaultSelector('<div class="foo bar"></div>')).toBe('BODY>DIV.bar.foo')
+        expect(getDefaultSelector('<div class="foo"></div>')).toBe('BODY>DIV.foo')
       })
 
       it('should use the class selector when siblings have the same classes but different tags', () => {
@@ -38,6 +42,20 @@ describe('getSelectorFromElement', () => {
         expect(getDefaultSelector('<div target class="foo bar"></div><div class="bar foo baz"></div>')).not.toContain(
           'DIV.foo'
         )
+      })
+
+      it('should not use the class selector for body elements', () => {
+        const element = isolatedDom.append('<div></div>')
+        element.ownerDocument.body.classList.add('foo')
+        expect(getDefaultSelector(element)).toBe('BODY>DIV')
+      })
+
+      it('should not use generated classes', () => {
+        expect(getDefaultSelector('<div class="foo4"></div>')).toBe('BODY>DIV')
+      })
+
+      it('uses only the first class', () => {
+        expect(getDefaultSelector('<div class="foo bar baz baa"></div>')).toBe('BODY>DIV.foo')
       })
     })
 
@@ -109,61 +127,11 @@ describe('getSelectorFromElement', () => {
       })
     })
 
-    function getDefaultSelector(html: string, actionNameAttribute?: string): string {
-      return getSelectorsFromElement(isolatedDom.append(html), actionNameAttribute).selector
+    function getDefaultSelector(htmlOrElement: string | Element, actionNameAttribute?: string): string {
+      return getSelectorsFromElement(
+        typeof htmlOrElement === 'string' ? isolatedDom.append(htmlOrElement) : htmlOrElement,
+        actionNameAttribute
+      ).selector
     }
-  })
-
-  describe('selector without classes', () => {
-    it('does not rely on classes', () => {
-      expect(getSelectorWithoutClasses('<div class="foo"></div>')).toBe('BODY>DIV')
-    })
-
-    function getSelectorWithoutClasses(html: string, actionNameAttribute?: string): string {
-      return getSelectorsFromElement(isolatedDom.append(html), actionNameAttribute).selector_without_classes
-    }
-  })
-
-  describe('selector without body classes', () => {
-    it('relies on classes for non-body elements', () => {
-      const element = isolatedDom.append('<div class="foo"></div>')
-      expect(getSelectorsFromElement(element, undefined).selector_without_body_classes).toBe('BODY>DIV.foo')
-    })
-    it('does not rely on classes for body elements', () => {
-      const element = isolatedDom.append('<div></div>')
-      element.ownerDocument.body.classList.add('foo')
-      expect(getSelectorsFromElement(element, undefined).selector_without_body_classes).toBe('BODY>DIV')
-    })
-  })
-
-  describe('selector without generated classes and ids', () => {
-    it('ignores generated classes', () => {
-      expect(getSelectorWithoutGeneratedIdAndClasses('<div class="foo4"></div>')).toBe('BODY>DIV')
-    })
-    it('ignores generated ids', () => {
-      expect(getSelectorWithoutGeneratedIdAndClasses('<div id="foo4"></div>')).toBe('BODY>DIV')
-    })
-
-    function getSelectorWithoutGeneratedIdAndClasses(html: string): string {
-      return getSelectorsFromElement(isolatedDom.append(html), undefined).selector_without_generated_id_and_classes
-    }
-  })
-
-  describe('selector with only the first class', () => {
-    it('uses only the first class', () => {
-      expect(getSelectorWithOnlyFirstClass('<div class="foo bar baz baa"></div>')).toBe('BODY>DIV.foo')
-    })
-
-    function getSelectorWithOnlyFirstClass(html: string): string {
-      return getSelectorsFromElement(isolatedDom.append(html), undefined).selector_with_only_first_class
-    }
-  })
-
-  describe('all experimental selectors together', () => {
-    it('everything everywhere all at once', () => {
-      const element = isolatedDom.append('<div class="foo4 foo bar baz baa"></div>')
-      element.ownerDocument.body.classList.add('foo')
-      expect(getSelectorsFromElement(element, undefined).selector_all_together).toBe('BODY>DIV.foo')
-    })
   })
 })

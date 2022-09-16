@@ -1,4 +1,4 @@
-import { arrayFrom, cssEscape, elementMatches } from '@datadog/browser-core'
+import { cssEscape, elementMatches } from '@datadog/browser-core'
 import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './getActionNameFromElement'
 
 /**
@@ -32,35 +32,8 @@ export function getSelectorsFromElement(element: Element, actionNameAttribute: s
   return {
     selector: getSelectorFromElement(
       element,
-      attributeSelectors.concat(createIDSelector({})),
-      attributeSelectors.concat(createClassSelector({}))
-    ),
-    selector_without_classes: getSelectorFromElement(
-      element,
-      attributeSelectors.concat(createIDSelector({})),
-      attributeSelectors
-    ),
-    selector_without_body_classes: getSelectorFromElement(
-      element,
-      attributeSelectors.concat(createIDSelector({})),
-      attributeSelectors.concat(createClassSelector({ ignoreBody: true }))
-    ),
-    selector_without_generated_id_and_classes: getSelectorFromElement(
-      element,
-      attributeSelectors.concat(createIDSelector({ ignoreGeneratedValue: true })),
-      attributeSelectors.concat(createClassSelector({ ignoreGeneratedValue: true }))
-    ),
-    selector_with_only_first_class: getSelectorFromElement(
-      element,
-      attributeSelectors.concat(createIDSelector({})),
-      attributeSelectors.concat(createClassSelector({ keepOnlyFirst: true }))
-    ),
-    selector_all_together: getSelectorFromElement(
-      element,
-      attributeSelectors.concat(createIDSelector({ ignoreGeneratedValue: true })),
-      attributeSelectors.concat(
-        createClassSelector({ ignoreGeneratedValue: true, ignoreBody: true, keepOnlyFirst: true })
-      )
+      attributeSelectors.concat(getIDSelector),
+      attributeSelectors.concat(getClassSelector)
     ),
   }
 }
@@ -111,39 +84,24 @@ function getSelectorFromElement(
   return targetElementSelector.join('>')
 }
 
-function createIDSelector({ ignoreGeneratedValue }: { ignoreGeneratedValue?: boolean }) {
-  return (element: Element): string | undefined => {
-    if (element.id && (!ignoreGeneratedValue || !isGeneratedValue(element.id))) {
-      return `#${cssEscape(element.id)}`
-    }
+function getIDSelector(element: Element): string | undefined {
+  if (element.id && !isGeneratedValue(element.id)) {
+    return `#${cssEscape(element.id)}`
   }
 }
 
-function createClassSelector({
-  ignoreBody,
-  ignoreGeneratedValue,
-  keepOnlyFirst,
-}: {
-  ignoreBody?: boolean
-  ignoreGeneratedValue?: boolean
-  keepOnlyFirst?: boolean
-}) {
-  return (element: Element): string | undefined => {
-    if (ignoreBody && element.tagName === 'BODY') {
-      return
-    }
-    if (element.classList.length > 0) {
-      let classList = arrayFrom(element.classList)
-      if (ignoreGeneratedValue) {
-        classList = classList.filter((value) => !isGeneratedValue(value))
+function getClassSelector(element: Element): string | undefined {
+  if (element.tagName === 'BODY') {
+    return
+  }
+  if (element.classList.length > 0) {
+    for (let i = 0; i < element.classList.length; i += 1) {
+      const className = element.classList[i]
+      if (isGeneratedValue(className)) {
+        continue
       }
-      if (keepOnlyFirst) {
-        classList = classList.slice(0, 1)
-      }
-      return `${element.tagName}${classList
-        .sort()
-        .map((className) => `.${cssEscape(className)}`)
-        .join('')}`
+
+      return `${element.tagName}.${cssEscape(className)}`
     }
   }
 }
