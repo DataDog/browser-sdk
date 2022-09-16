@@ -1,4 +1,4 @@
-import { cssEscape, elementMatches } from '@datadog/browser-core'
+import { cssEscape } from '@datadog/browser-core'
 
 /**
  * Stable attributes are attributes that are commonly used to identify parts of a UI (ex:
@@ -28,11 +28,15 @@ export function getSelectorsFromElement(element: Element, actionNameAttribute: s
       attributeSelectors
     )
   }
+  const globallyUniqueSelectorStrategies = attributeSelectors.concat(getIDSelector)
+  const uniqueAmongChildrenSelectorStrategies = attributeSelectors.concat(getClassSelector)
   return {
-    selector: getSelectorFromElement(
+    selector: getSelectorFromElement(element, globallyUniqueSelectorStrategies, uniqueAmongChildrenSelectorStrategies),
+    selector_combined: getSelectorFromElement(
       element,
-      attributeSelectors.concat(getIDSelector),
-      attributeSelectors.concat(getClassSelector)
+      globallyUniqueSelectorStrategies,
+      uniqueAmongChildrenSelectorStrategies.concat(getTagNameSelector),
+      { useCombinedSelectors: true }
     ),
   }
 }
@@ -54,33 +58,38 @@ function isGeneratedValue(value: string) {
 function getSelectorFromElement(
   targetElement: Element,
   globallyUniqueSelectorStrategies: GetSelector[],
-  uniqueAmongChildrenSelectorStrategies: GetSelector[]
+  uniqueAmongChildrenSelectorStrategies: GetSelector[],
+  { useCombinedSelectors = false } = {}
 ): string {
-  const targetElementSelector: string[] = []
+  let targetElementSelector = ''
   let element: Element | null = targetElement
 
   while (element && element.nodeName !== 'HTML') {
-    const globallyUniqueSelector = findSelector(element, globallyUniqueSelectorStrategies, isSelectorUniqueGlobally)
+    const globallyUniqueSelector = findSelector(
+      element,
+      globallyUniqueSelectorStrategies,
+      isSelectorUniqueGlobally,
+      useCombinedSelectors ? targetElementSelector : undefined
+    )
     if (globallyUniqueSelector) {
-      targetElementSelector.unshift(globallyUniqueSelector)
-      break
+      return combineSelector(globallyUniqueSelector, targetElementSelector)
     }
 
     const uniqueSelectorAmongChildren = findSelector(
       element,
       uniqueAmongChildrenSelectorStrategies,
-      isSelectorUniqueAmongChildren
+      isSelectorUniqueAmongSiblings,
+      useCombinedSelectors ? targetElementSelector : undefined
     )
-    if (uniqueSelectorAmongChildren) {
-      targetElementSelector.unshift(uniqueSelectorAmongChildren)
-    } else {
-      targetElementSelector.unshift(getPositionSelector(element))
-    }
+    targetElementSelector = combineSelector(
+      uniqueSelectorAmongChildren ?? getPositionSelector(element),
+      targetElementSelector
+    )
 
     element = element.parentElement
   }
 
-  return targetElementSelector.join('>')
+  return targetElementSelector
 }
 
 function getIDSelector(element: Element): string | undefined {
@@ -103,6 +112,10 @@ function getClassSelector(element: Element): string | undefined {
       return `${element.tagName}.${cssEscape(className)}`
     }
   }
+}
+
+function getTagNameSelector(element: Element): string {
+  return element.tagName
 }
 
 let stableAttributeSelectorsCache: GetSelector[] | undefined
@@ -149,26 +162,55 @@ function getPositionSelector(element: Element): string {
 function findSelector(
   element: Element,
   selectorGetters: GetSelector[],
-  predicate: (element: Element, selector: string) => boolean
+  predicate: (element: Element, selector: string) => boolean,
+  childSelector?: string
 ) {
   for (const selectorGetter of selectorGetters) {
-    const selector = selectorGetter(element)
-    if (selector && predicate(element, selector)) {
-      return selector
+    const elementSelector = selectorGetter(element)
+    const fullSelector = elementSelector && combineSelector(elementSelector, childSelector)
+    if (fullSelector && predicate(element, fullSelector)) {
+      return elementSelector
     }
   }
 }
 
+/**
+ * Check whether the selector is unique among the whole document.
+ */
 function isSelectorUniqueGlobally(element: Element, selector: string): boolean {
-  return element.ownerDocument.body.querySelectorAll(selector).length === 1
+  return element.ownerDocument.querySelectorAll(selector).length === 1
 }
 
-function isSelectorUniqueAmongChildren(element: Element, selector: string): boolean {
-  for (let i = 0; i < element.parentElement!.children.length; i++) {
-    const sibling = element.parentElement!.children[i]
-    if (sibling !== element && elementMatches(sibling, selector)) {
-      return false
+/**
+ * Check whether the selector is unique among the element siblings. In other words, it returns true
+ * if "ELEMENT_PARENT > SELECTOR" returns a single element.
+ *
+ * The result will be less accurate on browsers that don't support :scope (i. e. IE): it will check
+ * for any element matching the selector contained in the parent (in other words,
+ * "ELEMENT_PARENT SELECTOR" returns a single element), regardless of whether the selector is a
+ * direct descendent of the element parent. This should not impact results too much: if it
+ * inaccurately returns false, we'll just fallback to another strategy.
+ */
+function isSelectorUniqueAmongSiblings(element: Element, selector: string): boolean {
+  return (
+    element.parentElement!.querySelectorAll(supportScopeSelector() ? combineSelector(':scope', selector) : selector)
+      .length === 1
+  )
+}
+
+function combineSelector(parent: string, child: string | undefined): string {
+  return child ? `${parent}>${child}` : parent
+}
+
+let supportScopeSelectorCache: boolean | undefined
+function supportScopeSelector() {
+  if (supportScopeSelectorCache === undefined) {
+    try {
+      document.querySelector(':scope')
+      supportScopeSelectorCache = true
+    } catch {
+      supportScopeSelectorCache = false
     }
   }
-  return true
+  return supportScopeSelectorCache
 }

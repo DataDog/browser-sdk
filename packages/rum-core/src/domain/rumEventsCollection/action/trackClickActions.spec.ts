@@ -132,6 +132,7 @@ describe('trackClickActions', () => {
         jasmine.objectContaining({
           target: {
             selector: '#button',
+            selector_combined: '#button',
             width: 100,
             height: 100,
           },

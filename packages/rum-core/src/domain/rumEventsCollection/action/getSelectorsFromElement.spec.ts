@@ -1,3 +1,4 @@
+import { isIE } from '@datadog/browser-core'
 import type { IsolatedDom } from '../../../../test/createIsolatedDom'
 import { createIsolatedDom } from '../../../../test/createIsolatedDom'
 import { getSelectorsFromElement } from './getSelectorsFromElement'
@@ -14,6 +15,8 @@ describe('getSelectorFromElement', () => {
   })
 
   describe('default selector', () => {
+    const getDefaultSelector = getSelector.bind(null, 'selector')
+
     describe('ID selector', () => {
       it('should use the ID selector when the element as an ID', () => {
         expect(getDefaultSelector('<div id="foo"></div>')).toBe('#foo')
@@ -61,9 +64,14 @@ describe('getSelectorFromElement', () => {
 
     describe('position selector', () => {
       it('should use nth-of-type when the element as siblings', () => {
-        expect(getDefaultSelector('<span></span><div></div><span></span><div target></div>')).toBe(
-          'BODY>DIV:nth-of-type(2)'
-        )
+        expect(
+          getDefaultSelector(`
+            <span></span>
+            <div></div>
+            <span></span>
+            <div><button target></div>
+          `)
+        ).toBe('BODY>DIV:nth-of-type(2)>BUTTON')
       })
 
       it('should not use nth-of-type when the element has no siblings', () => {
@@ -126,12 +134,50 @@ describe('getSelectorFromElement', () => {
         ).toBe('BODY>BUTTON[data-testid="foo"]')
       })
     })
-
-    function getDefaultSelector(htmlOrElement: string | Element, actionNameAttribute?: string): string {
-      return getSelectorsFromElement(
-        typeof htmlOrElement === 'string' ? isolatedDom.append(htmlOrElement) : htmlOrElement,
-        actionNameAttribute
-      ).selector
-    }
   })
+
+  describe('using combined selectors to check for unicity', () => {
+    const getCombinedSelector = getSelector.bind(null, 'selector_combined')
+
+    it('does not use the position selector if the combined selector is matching a single element', () => {
+      expect(
+        getCombinedSelector(`
+          <div></div>
+          <div><button target></button></div>
+        `)
+      ).toBe('BODY>DIV>BUTTON')
+    })
+
+    it('uses the position selector if the combined selector matching more than one element', () => {
+      expect(
+        getCombinedSelector(`
+          <div><button></button></div>
+          <div><button target></button></div>
+        `)
+      ).toBe('BODY>DIV:nth-of-type(2)>BUTTON')
+    })
+
+    it('only consider direct descendants (>) of the parent element', () => {
+      if (isIE()) {
+        pending('IE does not support :scope selectors')
+      }
+      expect(
+        getCombinedSelector(`
+          <div><div><button></button></div></div>
+          <div><button target></button></div>
+        `)
+      ).toBe('BODY>DIV>BUTTON')
+    })
+  })
+
+  function getSelector(
+    selectorName: keyof ReturnType<typeof getSelectorsFromElement>,
+    htmlOrElement: string | Element,
+    actionNameAttribute?: string
+  ): string {
+    return getSelectorsFromElement(
+      typeof htmlOrElement === 'string' ? isolatedDom.append(htmlOrElement) : htmlOrElement,
+      actionNameAttribute
+    )[selectorName]
+  }
 })
