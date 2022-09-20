@@ -59,8 +59,14 @@ export function startRumSessionManager(configuration: RumConfiguration, lifeCycl
         id: session.id,
         plan,
         sessionReplayAllowed: plan === RumSessionPlan.WITH_SESSION_REPLAY,
-        longTaskAllowed: plan === RumSessionPlan.WITH_SESSION_REPLAY,
-        resourceAllowed: plan === RumSessionPlan.WITH_SESSION_REPLAY,
+        longTaskAllowed:
+          configuration.trackLongTasks !== undefined
+            ? configuration.trackLongTasks
+            : configuration.oldPlansBehavior && plan === RumSessionPlan.WITH_SESSION_REPLAY,
+        resourceAllowed:
+          configuration.trackResources !== undefined
+            ? configuration.trackResources
+            : configuration.oldPlansBehavior && plan === RumSessionPlan.WITH_SESSION_REPLAY,
       }
     },
   }
@@ -72,7 +78,7 @@ export function startRumSessionManager(configuration: RumConfiguration, lifeCycl
 export function startRumSessionManagerStub(): RumSessionManager {
   const session: RumSession = {
     id: '00000000-aaaa-0000-aaaa-000000000000',
-    plan: RumSessionPlan.WITH_SESSION_REPLAY, // plan value should not be taken into account for mobile
+    plan: RumSessionPlan.WITHOUT_SESSION_REPLAY, // plan value should not be taken into account for mobile
     sessionReplayAllowed: false,
     longTaskAllowed: true,
     resourceAllowed: true,
@@ -88,7 +94,7 @@ function computeSessionState(configuration: RumConfiguration, rawTrackingType?: 
     trackingType = rawTrackingType
   } else if (!performDraw(configuration.sampleRate)) {
     trackingType = RumTrackingType.NOT_TRACKED
-  } else if (!performDraw(configuration.premiumSampleRate)) {
+  } else if (!performDraw(configuration.sessionReplaySampleRate)) {
     trackingType = RumTrackingType.TRACKED_WITHOUT_SESSION_REPLAY
   } else {
     trackingType = RumTrackingType.TRACKED_WITH_SESSION_REPLAY
