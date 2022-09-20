@@ -12,7 +12,7 @@ export function startLongTaskCollection(lifeCycle: LifeCycle, sessionManager: Ru
         break
       }
       const session = sessionManager.findTrackedSession(entry.startTime)
-      if (!session || session.hasLitePlan) {
+      if (!session || !session.longTaskAllowed) {
         break
       }
       const startClocks = relativeToClocks(entry.startTime)

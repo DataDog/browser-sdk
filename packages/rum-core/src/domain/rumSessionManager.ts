@@ -12,8 +12,10 @@ export interface RumSessionManager {
 
 export type RumSession = {
   id: string
-  hasPremiumPlan: boolean
-  hasLitePlan: boolean
+  plan: RumSessionPlan
+  sessionReplayAllowed: boolean
+  longTaskAllowed: boolean
+  resourceAllowed: boolean
 }
 
 export const enum RumSessionPlan {
@@ -49,10 +51,14 @@ export function startRumSessionManager(configuration: RumConfiguration, lifeCycl
       if (!session || !isTypeTracked(session.trackingType)) {
         return
       }
+      const plan =
+        session.trackingType === RumTrackingType.TRACKED_PREMIUM ? RumSessionPlan.PREMIUM : RumSessionPlan.LITE
       return {
         id: session.id,
-        hasPremiumPlan: session.trackingType === RumTrackingType.TRACKED_PREMIUM,
-        hasLitePlan: session.trackingType === RumTrackingType.TRACKED_LITE,
+        plan,
+        sessionReplayAllowed: plan === RumSessionPlan.PREMIUM,
+        longTaskAllowed: plan === RumSessionPlan.PREMIUM,
+        resourceAllowed: plan === RumSessionPlan.PREMIUM,
       }
     },
   }
@@ -60,13 +66,14 @@ export function startRumSessionManager(configuration: RumConfiguration, lifeCycl
 
 /**
  * Start a tracked replay session stub
- * It needs to be a premium plan in order to get long tasks
  */
 export function startRumSessionManagerStub(): RumSessionManager {
-  const session = {
+  const session: RumSession = {
     id: '00000000-aaaa-0000-aaaa-000000000000',
-    hasPremiumPlan: true,
-    hasLitePlan: false,
+    plan: RumSessionPlan.PREMIUM, // plan value should not be taken into account for mobile
+    sessionReplayAllowed: false,
+    longTaskAllowed: true,
+    resourceAllowed: true,
   }
   return {
     findTrackedSession: () => session,

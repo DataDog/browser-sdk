@@ -1,11 +1,13 @@
 import type { RumSessionManager } from '../src/domain/rumSessionManager'
-import { RumTrackingType } from '../src/domain/rumSessionManager'
+import { RumTrackingType, RumSessionPlan } from '../src/domain/rumSessionManager'
 
 export interface RumSessionManagerMock extends RumSessionManager {
   setId(id: string): RumSessionManagerMock
   setNotTracked(): RumSessionManagerMock
   setPremiumPlan(): RumSessionManagerMock
   setLitePlan(): RumSessionManagerMock
+  setLongTaskAllowed(longTaskAllowed: boolean): RumSessionManagerMock
+  setResourceAllowed(resourceAllowed: boolean): RumSessionManagerMock
 }
 
 const DEFAULT_ID = 'session-id'
@@ -15,13 +17,17 @@ export function createRumSessionManagerMock(): RumSessionManagerMock {
   let trackingType = RumTrackingType.TRACKED_PREMIUM
   return {
     findTrackedSession() {
-      return trackingType !== RumTrackingType.NOT_TRACKED
-        ? {
-            id,
-            hasLitePlan: trackingType === RumTrackingType.TRACKED_LITE,
-            hasPremiumPlan: trackingType === RumTrackingType.TRACKED_PREMIUM,
-          }
-        : undefined
+      if (trackingType === RumTrackingType.NOT_TRACKED) {
+        return undefined
+      }
+      const plan = trackingType === RumTrackingType.TRACKED_PREMIUM ? RumSessionPlan.PREMIUM : RumSessionPlan.LITE
+      return {
+        id,
+        plan,
+        sessionReplayAllowed: plan === RumSessionPlan.PREMIUM,
+        longTaskAllowed: plan === RumSessionPlan.PREMIUM,
+        resourceAllowed: plan === RumSessionPlan.PREMIUM,
+      }
     },
     setId(newId) {
       id = newId
@@ -37,6 +43,14 @@ export function createRumSessionManagerMock(): RumSessionManagerMock {
     },
     setPremiumPlan() {
       trackingType = RumTrackingType.TRACKED_PREMIUM
+      return this
+    },
+    setLongTaskAllowed(longTaskAllowed: boolean) {
+      trackingType = longTaskAllowed ? RumTrackingType.TRACKED_PREMIUM : RumTrackingType.TRACKED_LITE
+      return this
+    },
+    setResourceAllowed(resourceAllowed: boolean) {
+      trackingType = resourceAllowed ? RumTrackingType.TRACKED_PREMIUM : RumTrackingType.TRACKED_LITE
       return this
     },
   }

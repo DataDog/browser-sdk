@@ -14,7 +14,7 @@ import type { RumConfiguration } from './configuration'
 import { validateAndBuildRumConfiguration } from './configuration'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-import { RUM_SESSION_KEY, RumTrackingType, startRumSessionManager } from './rumSessionManager'
+import { RUM_SESSION_KEY, RumTrackingType, startRumSessionManager, RumSessionPlan } from './rumSessionManager'
 
 describe('rum session manager', () => {
   const DURATION = 123456
@@ -162,15 +162,19 @@ describe('rum session manager', () => {
     it('should return session with premium plan', () => {
       setCookie(SESSION_COOKIE_NAME, 'id=abcdef&rum=1', DURATION)
       const rumSessionManager = startRumSessionManager(configuration, lifeCycle)
-      expect(rumSessionManager.findTrackedSession()!.hasPremiumPlan).toBeTrue()
-      expect(rumSessionManager.findTrackedSession()!.hasLitePlan).toBeFalse()
+      expect(rumSessionManager.findTrackedSession()!.plan).toBe(RumSessionPlan.PREMIUM)
+      expect(rumSessionManager.findTrackedSession()!.sessionReplayAllowed).toBeTrue()
+      expect(rumSessionManager.findTrackedSession()!.longTaskAllowed).toBeTrue()
+      expect(rumSessionManager.findTrackedSession()!.resourceAllowed).toBeTrue()
     })
 
     it('should return session with lite plan', () => {
       setCookie(SESSION_COOKIE_NAME, 'id=abcdef&rum=2', DURATION)
       const rumSessionManager = startRumSessionManager(configuration, lifeCycle)
-      expect(rumSessionManager.findTrackedSession()!.hasPremiumPlan).toBeFalse()
-      expect(rumSessionManager.findTrackedSession()!.hasLitePlan).toBeTrue()
+      expect(rumSessionManager.findTrackedSession()!.plan).toBe(RumSessionPlan.LITE)
+      expect(rumSessionManager.findTrackedSession()!.sessionReplayAllowed).toBeFalse()
+      expect(rumSessionManager.findTrackedSession()!.longTaskAllowed).toBeFalse()
+      expect(rumSessionManager.findTrackedSession()!.resourceAllowed).toBeFalse()
     })
   })
 })
