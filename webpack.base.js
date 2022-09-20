@@ -60,7 +60,7 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables }) => ({
       mode === 'development'
         ? // Use an inline source map during development (default options)
           {}
-        : // When bundling for release, produce a source map file so it can be uploaded to Datadog,
+        : // When bundling for release, produce a source map file so it can be used for source code integration,
           // but don't append the source map comment to bundles as we don't upload the source map to
           // the CDN (yet).
           {
