@@ -19,8 +19,8 @@ export type RumSession = {
 }
 
 export const enum RumSessionPlan {
-  LITE = 1,
-  PREMIUM = 2,
+  WITHOUT_SESSION_REPLAY = 1,
+  WITH_SESSION_REPLAY = 2,
 }
 
 export const enum RumTrackingType {
@@ -28,8 +28,8 @@ export const enum RumTrackingType {
   // Note: the "tracking type" value (stored in the session cookie) does not match the "session
   // plan" value (sent in RUM events). This is expected, and was done to keep retrocompatibility
   // with active sessions when upgrading the SDK.
-  TRACKED_PREMIUM = '1',
-  TRACKED_LITE = '2',
+  TRACKED_WITH_SESSION_REPLAY = '1',
+  TRACKED_WITHOUT_SESSION_REPLAY = '2',
 }
 
 export function startRumSessionManager(configuration: RumConfiguration, lifeCycle: LifeCycle): RumSessionManager {
@@ -52,13 +52,15 @@ export function startRumSessionManager(configuration: RumConfiguration, lifeCycl
         return
       }
       const plan =
-        session.trackingType === RumTrackingType.TRACKED_PREMIUM ? RumSessionPlan.PREMIUM : RumSessionPlan.LITE
+        session.trackingType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY
+          ? RumSessionPlan.WITH_SESSION_REPLAY
+          : RumSessionPlan.WITHOUT_SESSION_REPLAY
       return {
         id: session.id,
         plan,
-        sessionReplayAllowed: plan === RumSessionPlan.PREMIUM,
-        longTaskAllowed: plan === RumSessionPlan.PREMIUM,
-        resourceAllowed: plan === RumSessionPlan.PREMIUM,
+        sessionReplayAllowed: plan === RumSessionPlan.WITH_SESSION_REPLAY,
+        longTaskAllowed: plan === RumSessionPlan.WITH_SESSION_REPLAY,
+        resourceAllowed: plan === RumSessionPlan.WITH_SESSION_REPLAY,
       }
     },
   }
@@ -70,7 +72,7 @@ export function startRumSessionManager(configuration: RumConfiguration, lifeCycl
 export function startRumSessionManagerStub(): RumSessionManager {
   const session: RumSession = {
     id: '00000000-aaaa-0000-aaaa-000000000000',
-    plan: RumSessionPlan.PREMIUM, // plan value should not be taken into account for mobile
+    plan: RumSessionPlan.WITH_SESSION_REPLAY, // plan value should not be taken into account for mobile
     sessionReplayAllowed: false,
     longTaskAllowed: true,
     resourceAllowed: true,
@@ -87,9 +89,9 @@ function computeSessionState(configuration: RumConfiguration, rawTrackingType?: 
   } else if (!performDraw(configuration.sampleRate)) {
     trackingType = RumTrackingType.NOT_TRACKED
   } else if (!performDraw(configuration.premiumSampleRate)) {
-    trackingType = RumTrackingType.TRACKED_LITE
+    trackingType = RumTrackingType.TRACKED_WITHOUT_SESSION_REPLAY
   } else {
-    trackingType = RumTrackingType.TRACKED_PREMIUM
+    trackingType = RumTrackingType.TRACKED_WITH_SESSION_REPLAY
   }
   return {
     trackingType,
@@ -100,11 +102,14 @@ function computeSessionState(configuration: RumConfiguration, rawTrackingType?: 
 function hasValidRumSession(trackingType?: string): trackingType is RumTrackingType {
   return (
     trackingType === RumTrackingType.NOT_TRACKED ||
-    trackingType === RumTrackingType.TRACKED_PREMIUM ||
-    trackingType === RumTrackingType.TRACKED_LITE
+    trackingType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY ||
+    trackingType === RumTrackingType.TRACKED_WITHOUT_SESSION_REPLAY
   )
 }
 
 function isTypeTracked(rumSessionType: RumTrackingType | undefined) {
-  return rumSessionType === RumTrackingType.TRACKED_LITE || rumSessionType === RumTrackingType.TRACKED_PREMIUM
+  return (
+    rumSessionType === RumTrackingType.TRACKED_WITHOUT_SESSION_REPLAY ||
+    rumSessionType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY
+  )
 }
