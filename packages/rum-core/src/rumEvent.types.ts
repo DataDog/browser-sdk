@@ -219,7 +219,7 @@ export type RumErrorEvent = CommonProperties &
       /**
        * Source type of the error (the language or platform impacting the error stacktrace format)
        */
-      readonly source_type?: 'android' | 'browser' | 'ios' | 'react-native' | 'flutter'
+      readonly source_type?: 'android' | 'browser' | 'ios' | 'react-native' | 'flutter' | 'roku'
       /**
        * Resource properties of the error
        */
@@ -499,6 +499,10 @@ export type RumResourceEvent = CommonProperties &
        * tracing sample rate in decimal format
        */
       readonly rule_psr?: number
+      /**
+       * Whether the resource should be discarded or indexed
+       */
+      readonly discarded?: boolean
       [k: string]: unknown
     }
     [k: string]: unknown
@@ -955,9 +959,9 @@ export interface CommonProperties {
      */
     session?: {
       /**
-       * Session plan: 1 is the 'lite' plan, 2 is the 'premium' plan, 3 is the 'pro' plan, 4 is the 'replay' plan
+       * Session plan: 1 is the plan without replay, 2 is the plan with replay
        */
-      plan: 1 | 2 | 3 | 4
+      plan: 1 | 2
       [k: string]: unknown
     }
     /**
