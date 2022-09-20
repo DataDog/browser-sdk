@@ -1,4 +1,4 @@
-import type { RelativeTime, TimeStamp, RawError } from '@datadog/browser-core'
+import type { RelativeTime, TimeStamp, ErrorWithCause } from '@datadog/browser-core'
 import { ErrorHandling, ErrorSource } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../../test/specHelper'
 import { setup } from '../../../../test/specHelper'
@@ -65,11 +65,9 @@ describe('error collection', () => {
 
     it('should extract causes from error', () => {
       const { rawRumEvents } = setupBuilder.build()
-      const error1 = new Error('foo') as unknown as RawError
-      const error2 = new Error('bar') as unknown as RawError
-      const error3 = new Error('biz') as unknown as RawError
-
-      error3.source = ErrorSource.LOGGER
+      const error1 = new Error('foo') as ErrorWithCause
+      const error2 = new Error('bar') as ErrorWithCause
+      const error3 = new Error('biz') as ErrorWithCause
 
       error1.cause = error2
       error2.cause = error3
@@ -85,7 +83,7 @@ describe('error collection', () => {
 
       expect(error.causes.length).toEqual(2)
       expect(error.causes[0].message).toEqual('bar')
-      expect(error.causes[0].source).toEqual(ErrorSource.CUSTOM) // source comes from parent
+      expect(error.causes[0].source).toEqual(ErrorSource.LOGGER)
       expect(error.causes[1].message).toEqual('biz')
       expect(error.causes[1].source).toEqual(ErrorSource.LOGGER)
     })

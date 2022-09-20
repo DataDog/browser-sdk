@@ -58,7 +58,7 @@ export {
   formatUnknownError,
   createHandlingStack,
   RawError,
-  ErrorCause,
+  ErrorWithCause,
   toStackTraceString,
   getFileFromStackTraceString,
   flattenErrorCauses,

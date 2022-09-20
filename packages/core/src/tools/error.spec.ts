@@ -1,5 +1,5 @@
 import type { StackTrace } from '../domain/tracekit'
-import type { ErrorCause, RawError } from './error'
+import type { RawErrorCause, ErrorWithCause } from './error'
 import {
   createHandlingStack,
   formatUnknownError,
@@ -99,11 +99,9 @@ describe('formatUnknownError', () => {
   })
 
   it('should format an object error with cause', () => {
-    const errorObject = new Error('foo: bar') as unknown as RawError
-    const nestedErrorObject = new Error('biz: buz') as unknown as RawError
-    const deepNestedErrorObject = new Error('fiz: buz') as unknown as RawError
-
-    deepNestedErrorObject.source = ErrorSource.LOGGER
+    const errorObject = new Error('foo: bar') as ErrorWithCause
+    const nestedErrorObject = new Error('biz: buz') as ErrorWithCause
+    const deepNestedErrorObject = new Error('fiz: buz') as ErrorWithCause
 
     errorObject.cause = nestedErrorObject
     nestedErrorObject.cause = deepNestedErrorObject
@@ -116,11 +114,11 @@ describe('formatUnknownError', () => {
     })
 
     expect(formatted.causes?.length).toBe(2)
-    const causes = formatted.causes as ErrorCause[]
+    const causes = formatted.causes as RawErrorCause[]
     expect(causes[0].message).toContain(nestedErrorObject.message)
     expect(causes[0].source).toContain(ErrorSource.SOURCE)
     expect(causes[1].message).toContain(deepNestedErrorObject.message)
-    expect(causes[1].source).toContain(ErrorSource.LOGGER)
+    expect(causes[1].source).toContain(ErrorSource.SOURCE)
   })
 })
 
@@ -162,30 +160,15 @@ describe('createHandlingStack', () => {
 
 describe('flattenErrorCauses', () => {
   it('should return empty array if  no cause found', () => {
-    const error = new Error('foo') as unknown as RawError
-    const errorCauses = flattenErrorCauses(error, ErrorSource.LOGGER)
+    const error = new Error('foo') as ErrorWithCause
+    const errorCauses = flattenErrorCauses({ errorObject: error, parentSource: ErrorSource.LOGGER })
     expect(errorCauses.length).toEqual(0)
   })
 
   it('should only return the first 10 errors if nested chain is longer', () => {
-    const error = new Error('foo') as unknown as RawError
+    const error = new Error('foo') as ErrorWithCause
     error.cause = error
-    const errorCauses = flattenErrorCauses(error, ErrorSource.LOGGER)
+    const errorCauses = flattenErrorCauses({ errorObject: error, parentSource: ErrorSource.LOGGER })
     expect(errorCauses.length).toEqual(10)
-  })
-
-  it('should use the parent source if not found on error', () => {
-    const error1 = new Error('foo') as unknown as RawError
-    const error2 = new Error('bar') as unknown as RawError
-    const error3 = new Error('biz') as unknown as RawError
-
-    error3.source = ErrorSource.SOURCE
-
-    error1.cause = error2
-    error2.cause = error3
-
-    const errorCauses = flattenErrorCauses(error1, ErrorSource.LOGGER)
-    expect(errorCauses[0].source).toEqual(ErrorSource.LOGGER)
-    expect(errorCauses[1].source).toEqual(ErrorSource.SOURCE)
   })
 })

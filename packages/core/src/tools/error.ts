@@ -4,12 +4,15 @@ import { callMonitored } from './monitor'
 import type { ClocksState } from './timeUtils'
 import { jsonStringify, noop } from './utils'
 
-export type ErrorCause = {
+export interface ErrorWithCause extends Error {
+  cause?: Error
+}
+
+export type RawErrorCause = {
   message: string
   source: string
   type?: string
-  stack?: string
-  cause?: RawError
+  stack?: StackTrace
 }
 
 export interface RawError {
@@ -21,8 +24,7 @@ export interface RawError {
   originalError?: unknown
   handling?: ErrorHandling
   handlingStack?: string
-  cause?: RawError
-  causes?: ErrorCause[]
+  causes?: RawErrorCause[]
 }
 
 export interface UnknownError {
@@ -30,7 +32,7 @@ export interface UnknownError {
   stack?: string
   handlingStack?: string
   type?: string
-  causes?: ErrorCause[]
+  causes?: RawErrorCause[]
 }
 
 export const ErrorSource = {
@@ -57,6 +59,7 @@ type UnknownErrorParams = {
   handlingStack?: string
   source: ErrorSource
 }
+
 export function formatUnknownError({
   stackTrace,
   errorObject,
@@ -73,12 +76,13 @@ export function formatUnknownError({
     }
   }
 
+  const causes = flattenErrorCauses({ errorObject, parentSource: source })
   return {
     message: stackTrace.message || 'Empty message',
     stack: toStackTraceString(stackTrace),
     handlingStack,
     type: stackTrace.name,
-    causes: flattenErrorCauses(errorObject, source),
+    causes,
   }
 }
 
@@ -138,19 +142,20 @@ export function createHandlingStack(): string {
   return formattedStack!
 }
 
-export function flattenErrorCauses(error: RawError, parentSource: ErrorSource): ErrorCause[] {
-  let count = 0
-  let currentError = error
-  const causes: Array<RawError | ErrorCause> = []
-  while (currentError?.cause && currentError.cause && count < 10) {
+type FormatErrorCausesParams = { errorObject: ErrorWithCause; parentSource: ErrorSource }
+
+export function flattenErrorCauses({ errorObject, parentSource }: FormatErrorCausesParams): RawErrorCause[] {
+  let currentError = errorObject
+  const causes: RawErrorCause[] = []
+  while (currentError?.cause && currentError.cause && causes.length < 10) {
+    const stackTrace = currentError.cause instanceof Error ? computeStackTrace(currentError.cause) : undefined
     causes.push({
       message: currentError.cause.message,
-      source: currentError.cause.source ?? parentSource,
-      type: currentError.cause?.type,
-      stack: currentError.cause?.stack,
+      source: parentSource,
+      type: stackTrace?.name,
+      stack: stackTrace,
     })
     currentError = currentError.cause
-    count++
   }
   return causes
 }
