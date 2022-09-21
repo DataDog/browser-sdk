@@ -52,37 +52,46 @@ export const enum ErrorHandling {
 
 export type ErrorSource = typeof ErrorSource[keyof typeof ErrorSource]
 
-type UnknownErrorParams = {
+type RawErrorParams = {
   stackTrace?: StackTrace
-  errorObject: any
-  nonErrorPrefix: string
+  error: unknown
   handlingStack?: string
+  startClocks: ClocksState
+  nonErrorPrefix: string
   source: ErrorSource
 }
 
-export function formatUnknownError({
+export function computeRawError({
   stackTrace,
-  errorObject,
-  nonErrorPrefix,
+  error,
   handlingStack,
+  startClocks,
+  nonErrorPrefix,
   source,
-}: UnknownErrorParams): UnknownError {
-  if (!stackTrace || (stackTrace.message === undefined && !(errorObject instanceof Error))) {
+}: RawErrorParams): RawError {
+  if (!stackTrace || (stackTrace.message === undefined && !(error instanceof Error))) {
     return {
-      message: `${nonErrorPrefix} ${jsonStringify(errorObject)!}`,
+      startClocks,
+      source,
+      originalError: error,
+      handling: ErrorHandling.HANDLED,
+      message: `${nonErrorPrefix} ${jsonStringify(error)!}`,
       stack: 'No stack, consider using an instance of Error',
       handlingStack,
       type: stackTrace && stackTrace.name,
     }
   }
 
-  const causes = flattenErrorCauses({ errorObject, parentSource: source })
   return {
+    startClocks,
+    source,
+    originalError: error,
+    handling: ErrorHandling.HANDLED,
     message: stackTrace.message || 'Empty message',
     stack: toStackTraceString(stackTrace),
     handlingStack,
     type: stackTrace.name,
-    causes,
+    causes: flattenErrorCauses(error as ErrorWithCause, source, stackTrace),
   }
 }
 
@@ -142,13 +151,15 @@ export function createHandlingStack(): string {
   return formattedStack!
 }
 
-type FormatErrorCausesParams = { errorObject: ErrorWithCause; parentSource: ErrorSource }
-
-export function flattenErrorCauses({ errorObject, parentSource }: FormatErrorCausesParams): RawErrorCause[] {
-  let currentError = errorObject
+export function flattenErrorCauses(
+  error: ErrorWithCause,
+  parentSource: ErrorSource,
+  stackTrace?: StackTrace
+): RawErrorCause[] | undefined {
+  let currentError = error
   const causes: RawErrorCause[] = []
-  while (currentError?.cause && currentError.cause && causes.length < 10) {
-    const stackTrace = currentError.cause instanceof Error ? computeStackTrace(currentError.cause) : undefined
+  while (currentError?.cause && causes.length < 10) {
+    if (!(currentError.cause instanceof Error)) break
     causes.push({
       message: currentError.cause.message,
       source: parentSource,
@@ -157,5 +168,5 @@ export function flattenErrorCauses({ errorObject, parentSource }: FormatErrorCau
     })
     currentError = currentError.cause
   }
-  return causes
+  return causes.length ? causes : undefined
 }

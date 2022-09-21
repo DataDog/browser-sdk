@@ -48,7 +48,7 @@ export interface PerformanceResourceDetailsElement {
   start: ServerDuration
 }
 
-export type RawRumErrorEvent = {
+export interface RawRumErrorEvent {
   date: TimeStamp
   type: RumEventType.ERROR
   error: {
@@ -59,7 +59,7 @@ export type RawRumErrorEvent = {
     source: ErrorSource
     message: string
     handling?: ErrorHandling
-    causes: RawErrorCause[]
+    causes?: RawErrorCause[]
     source_type: 'browser'
   }
   view?: {

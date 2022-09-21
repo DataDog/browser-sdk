@@ -1,14 +1,15 @@
 import type { StackTrace } from '../domain/tracekit'
 import type { RawErrorCause, ErrorWithCause } from './error'
+import { clocksNow } from './timeUtils'
 import {
   createHandlingStack,
-  formatUnknownError,
+  computeRawError,
   getFileFromStackTraceString,
   flattenErrorCauses,
   ErrorSource,
 } from './error'
 
-describe('formatUnknownError', () => {
+describe('computeRawError', () => {
   const NOT_COMPUTED_STACK_TRACE: StackTrace = { name: undefined, message: undefined, stack: [] } as any
 
   it('should format an error', () => {
@@ -40,11 +41,12 @@ describe('formatUnknownError', () => {
       ],
     }
 
-    const formatted = formatUnknownError({
+    const formatted = computeRawError({
       stackTrace: stack,
-      errorObject: undefined,
+      error: undefined,
+      startClocks: clocksNow(),
       nonErrorPrefix: 'Uncaught',
-      source: 'custom',
+      source: ErrorSource.CUSTOM,
     })
 
     expect(formatted.message).toEqual('oh snap!')
@@ -62,9 +64,10 @@ describe('formatUnknownError', () => {
       stack: [],
     }
 
-    const formatted = formatUnknownError({
+    const formatted = computeRawError({
       stackTrace: stack,
-      errorObject: undefined,
+      error: undefined,
+      startClocks: clocksNow(),
       nonErrorPrefix: 'Uncaught',
       source: 'custom',
     })
@@ -73,11 +76,12 @@ describe('formatUnknownError', () => {
   })
 
   it('should format a string error', () => {
-    const errorObject = 'oh snap!'
+    const error = 'oh snap!'
 
-    const formatted = formatUnknownError({
+    const formatted = computeRawError({
       stackTrace: NOT_COMPUTED_STACK_TRACE,
-      errorObject,
+      error,
+      startClocks: clocksNow(),
       nonErrorPrefix: 'Uncaught',
       source: 'custom',
     })
@@ -86,11 +90,12 @@ describe('formatUnknownError', () => {
   })
 
   it('should format an object error', () => {
-    const errorObject = { foo: 'bar' }
+    const error = { foo: 'bar' }
 
-    const formatted = formatUnknownError({
+    const formatted = computeRawError({
       stackTrace: NOT_COMPUTED_STACK_TRACE,
-      errorObject,
+      error,
+      startClocks: clocksNow(),
       nonErrorPrefix: 'Uncaught',
       source: 'custom',
     })
@@ -99,25 +104,26 @@ describe('formatUnknownError', () => {
   })
 
   it('should format an object error with cause', () => {
-    const errorObject = new Error('foo: bar') as ErrorWithCause
-    const nestedErrorObject = new Error('biz: buz') as ErrorWithCause
-    const deepNestedErrorObject = new Error('fiz: buz') as ErrorWithCause
+    const error = new Error('foo: bar') as ErrorWithCause
+    const nestedError = new Error('biz: buz') as ErrorWithCause
+    const deepNestedError = new Error('fiz: buz') as ErrorWithCause
 
-    errorObject.cause = nestedErrorObject
-    nestedErrorObject.cause = deepNestedErrorObject
+    error.cause = nestedError
+    nestedError.cause = deepNestedError
 
-    const formatted = formatUnknownError({
+    const formatted = computeRawError({
       stackTrace: NOT_COMPUTED_STACK_TRACE,
-      errorObject,
+      error,
+      startClocks: clocksNow(),
       nonErrorPrefix: 'Uncaught',
       source: ErrorSource.SOURCE,
     })
 
     expect(formatted.causes?.length).toBe(2)
     const causes = formatted.causes as RawErrorCause[]
-    expect(causes[0].message).toContain(nestedErrorObject.message)
+    expect(causes[0].message).toContain(nestedError.message)
     expect(causes[0].source).toContain(ErrorSource.SOURCE)
-    expect(causes[1].message).toContain(deepNestedErrorObject.message)
+    expect(causes[1].message).toContain(deepNestedError.message)
     expect(causes[1].source).toContain(ErrorSource.SOURCE)
   })
 })
@@ -159,16 +165,30 @@ describe('createHandlingStack', () => {
 })
 
 describe('flattenErrorCauses', () => {
-  it('should return empty array if no cause found', () => {
+  it('should return undefined if no cause found', () => {
     const error = new Error('foo') as ErrorWithCause
-    const errorCauses = flattenErrorCauses({ errorObject: error, parentSource: ErrorSource.LOGGER })
-    expect(errorCauses.length).toEqual(0)
+    const errorCauses = flattenErrorCauses(error, ErrorSource.LOGGER)
+    expect(errorCauses).toEqual(undefined)
+  })
+
+  it('should stop recursive loop if cause is not of type Error', () => {
+    const error = new Error('foo') as ErrorWithCause
+    const nestedError = new Error('bar')
+    const deepNestedError = { biz: 'buz', cause: new Error('boo') }
+    error.cause = nestedError
+    // @ts-ignore: want to test we can handle non error cases
+    nestedError.cause = deepNestedError
+
+    const errorCauses = flattenErrorCauses(error, ErrorSource.LOGGER)
+    expect(errorCauses?.length).toEqual(1)
+    expect(errorCauses?.[0].message).toEqual('bar')
+    expect(errorCauses?.[0].source).toEqual(ErrorSource.LOGGER)
   })
 
   it('should only return the first 10 errors if nested chain is longer', () => {
     const error = new Error('foo') as ErrorWithCause
     error.cause = error
-    const errorCauses = flattenErrorCauses({ errorObject: error, parentSource: ErrorSource.LOGGER })
-    expect(errorCauses.length).toEqual(10)
+    const errorCauses = flattenErrorCauses(error, ErrorSource.LOGGER)
+    expect(errorCauses?.length).toEqual(10)
   })
 })

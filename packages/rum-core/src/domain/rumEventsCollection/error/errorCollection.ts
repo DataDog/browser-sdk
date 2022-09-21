@@ -1,11 +1,10 @@
 import type { Context, RawError, ClocksState } from '@datadog/browser-core'
 import {
   assign,
-  computeStackTrace,
-  formatUnknownError,
   ErrorSource,
   generateUUID,
-  ErrorHandling,
+  computeRawError,
+  computeStackTrace,
   Observable,
   trackRuntimeError,
 } from '@datadog/browser-core'
@@ -55,7 +54,15 @@ export function doStartErrorCollection(lifeCycle: LifeCycle, foregroundContexts:
       { error, handlingStack, startClocks, context: customerContext }: ProvidedError,
       savedCommonContext?: CommonContext
     ) => {
-      const rawError = computeRawError(error, handlingStack, startClocks)
+      const stackTrace = error instanceof Error ? computeStackTrace(error) : undefined
+      const rawError = computeRawError({
+        stackTrace,
+        error,
+        handlingStack,
+        startClocks,
+        nonErrorPrefix: 'Provided',
+        source: ErrorSource.CUSTOM,
+      })
       lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, {
         customerContext,
         savedCommonContext,
@@ -63,25 +70,6 @@ export function doStartErrorCollection(lifeCycle: LifeCycle, foregroundContexts:
       })
     },
   }
-}
-
-function computeRawError(error: unknown, handlingStack: string, startClocks: ClocksState): RawError {
-  const stackTrace = error instanceof Error ? computeStackTrace(error) : undefined
-  return assign(
-    {
-      startClocks,
-      source: ErrorSource.CUSTOM,
-      originalError: error,
-      handling: ErrorHandling.HANDLED,
-    },
-    formatUnknownError({
-      stackTrace,
-      errorObject: error,
-      nonErrorPrefix: 'Provided',
-      handlingStack,
-      source: ErrorSource.CUSTOM,
-    })
-  )
 }
 
 function processError(

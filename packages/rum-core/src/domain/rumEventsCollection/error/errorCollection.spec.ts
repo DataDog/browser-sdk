@@ -81,11 +81,11 @@ describe('error collection', () => {
       expect(error.message).toEqual('foo')
       expect(error.source).toEqual(ErrorSource.CUSTOM)
 
-      expect(error.causes.length).toEqual(2)
-      expect(error.causes[0].message).toEqual('bar')
-      expect(error.causes[0].source).toEqual(ErrorSource.CUSTOM)
-      expect(error.causes[1].message).toEqual('biz')
-      expect(error.causes[1].source).toEqual(ErrorSource.CUSTOM)
+      expect(error?.causes?.length).toEqual(2)
+      expect(error?.causes?.[0].message).toEqual('bar')
+      expect(error?.causes?.[0].source).toEqual(ErrorSource.CUSTOM)
+      expect(error?.causes?.[1].message).toEqual('biz')
+      expect(error?.causes?.[1].source).toEqual(ErrorSource.CUSTOM)
     })
 
     it('should save the specified customer context', () => {
