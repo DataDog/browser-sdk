@@ -59,6 +59,7 @@ type RawErrorParams = {
   startClocks: ClocksState
   nonErrorPrefix: string
   source: ErrorSource
+  handling?: ErrorHandling
 }
 
 export function computeRawError({
@@ -68,13 +69,14 @@ export function computeRawError({
   startClocks,
   nonErrorPrefix,
   source,
+  handling,
 }: RawErrorParams): RawError {
   if (!stackTrace || (stackTrace.message === undefined && !(error instanceof Error))) {
     return {
       startClocks,
       source,
+      handling,
       originalError: error,
-      handling: ErrorHandling.HANDLED,
       message: `${nonErrorPrefix} ${jsonStringify(error)!}`,
       stack: 'No stack, consider using an instance of Error',
       handlingStack,
@@ -85,8 +87,8 @@ export function computeRawError({
   return {
     startClocks,
     source,
+    handling,
     originalError: error,
-    handling: ErrorHandling.HANDLED,
     message: stackTrace.message || 'Empty message',
     stack: toStackTraceString(stackTrace),
     handlingStack,

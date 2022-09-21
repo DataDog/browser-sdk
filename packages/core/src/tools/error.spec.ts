@@ -7,6 +7,7 @@ import {
   getFileFromStackTraceString,
   flattenErrorCauses,
   ErrorSource,
+  ErrorHandling,
 } from './error'
 
 describe('computeRawError', () => {
@@ -101,6 +102,32 @@ describe('computeRawError', () => {
     })
 
     expect(formatted.message).toEqual('Uncaught {"foo":"bar"}')
+  })
+
+  it('should return handling set', () => {
+    const error = { foo: 'bar' }
+
+    expect(
+      computeRawError({
+        stackTrace: NOT_COMPUTED_STACK_TRACE,
+        error,
+        startClocks: clocksNow(),
+        nonErrorPrefix: 'Uncaught',
+        source: 'custom',
+        handling: ErrorHandling.HANDLED,
+      }).handling
+    ).toEqual(ErrorHandling.HANDLED)
+
+    expect(
+      computeRawError({
+        stackTrace: NOT_COMPUTED_STACK_TRACE,
+        error,
+        startClocks: clocksNow(),
+        nonErrorPrefix: 'Uncaught',
+        source: 'custom',
+        handling: ErrorHandling.UNHANDLED,
+      }).handling
+    ).toEqual(ErrorHandling.UNHANDLED)
   })
 
   it('should format an object error with cause', () => {

@@ -4,6 +4,7 @@ import {
   ErrorSource,
   generateUUID,
   computeRawError,
+  ErrorHandling,
   computeStackTrace,
   Observable,
   trackRuntimeError,
@@ -62,7 +63,9 @@ export function doStartErrorCollection(lifeCycle: LifeCycle, foregroundContexts:
         startClocks,
         nonErrorPrefix: 'Provided',
         source: ErrorSource.CUSTOM,
+        handling: ErrorHandling.HANDLED,
       })
+
       lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, {
         customerContext,
         savedCommonContext,
