@@ -12,7 +12,7 @@ export type RawErrorCause = {
   message: string
   source: string
   type?: string
-  stack?: StackTrace
+  stack?: string
 }
 
 export interface RawError {
@@ -153,7 +153,7 @@ export function flattenErrorCauses({ errorObject, parentSource }: FormatErrorCau
       message: currentError.cause.message,
       source: parentSource,
       type: stackTrace?.name,
-      stack: stackTrace,
+      stack: stackTrace && toStackTraceString(stackTrace),
     })
     currentError = currentError.cause
   }
