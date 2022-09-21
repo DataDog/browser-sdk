@@ -185,6 +185,22 @@ describe('flattenErrorCauses', () => {
     expect(errorCauses?.[0].source).toEqual(ErrorSource.LOGGER)
   })
 
+  it('should have stack trace properties if passed', () => {
+    const error = new Error('foo') as ErrorWithCause
+    const nestedError = new Error('bar')
+
+    error.cause = nestedError
+
+    const stack: StackTrace = {
+      message: '',
+      name: 'TypeError',
+      stack: [],
+    }
+
+    const errorCauses = flattenErrorCauses(error, ErrorSource.LOGGER, stack)
+    expect(errorCauses?.[0].type).toEqual('TypeError')
+  })
+
   it('should only return the first 10 errors if nested chain is longer', () => {
     const error = new Error('foo') as ErrorWithCause
     error.cause = error
