@@ -159,7 +159,7 @@ describe('createHandlingStack', () => {
 })
 
 describe('flattenErrorCauses', () => {
-  it('should return empty array if  no cause found', () => {
+  it('should return empty array if no cause found', () => {
     const error = new Error('foo') as ErrorWithCause
     const errorCauses = flattenErrorCauses({ errorObject: error, parentSource: ErrorSource.LOGGER })
     expect(errorCauses.length).toEqual(0)
