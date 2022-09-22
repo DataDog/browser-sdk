@@ -106,7 +106,7 @@ describe('computeRawError', () => {
     expect(formatted.message).toEqual('Uncaught {"foo":"bar"}')
   })
 
-  it('should return handling set', () => {
+  it('should set handling according to given parameter', () => {
     const error = { foo: 'bar' }
 
     expect(
