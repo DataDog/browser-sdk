@@ -92,7 +92,7 @@ describe('computeRawError', () => {
     expect(formatted.message).toEqual('Uncaught "oh snap!"')
   })
 
-  it('should compute stack trace form nested error', () => {
+  it('should compute stack trace form nested error, and not use param stacktrace', () => {
     const stackTrace: StackTrace = {
       message: 'some typeError message',
       name: 'TypeError',
