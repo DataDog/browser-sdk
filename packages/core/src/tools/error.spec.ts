@@ -198,16 +198,12 @@ describe('flattenErrorCauses', () => {
 
   it('should stop recursive loop if cause is not of type Error', () => {
     const error = new Error('foo') as ErrorWithCause
-    const nestedError = new Error('bar')
-    const deepNestedError = { biz: 'buz', cause: new Error('boo') }
-    error.cause = nestedError
+    const nestedError = { biz: 'buz', cause: new Error('boo') }
     // @ts-ignore: want to test we can handle non error cases
-    nestedError.cause = deepNestedError
+    error.cause = nestedError
 
     const errorCauses = flattenErrorCauses(error, ErrorSource.LOGGER)
-    expect(errorCauses?.length).toEqual(1)
-    expect(errorCauses?.[0].message).toEqual('bar')
-    expect(errorCauses?.[0].source).toEqual(ErrorSource.LOGGER)
+    expect(errorCauses?.length).toEqual(0)
   })
 
   it('should use error to extract stack trace', () => {
