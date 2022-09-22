@@ -232,9 +232,8 @@ describe('flattenErrorCauses', () => {
 
   it('should use error to extract stack trace', () => {
     const error = new Error('foo') as ErrorWithCause
-    const nestedError = new Error('bar')
 
-    error.cause = nestedError
+    error.cause = new Error('bar')
 
     const errorCauses = flattenErrorCauses(error, ErrorSource.LOGGER)
     expect(errorCauses?.[0].type).toEqual('Error')
