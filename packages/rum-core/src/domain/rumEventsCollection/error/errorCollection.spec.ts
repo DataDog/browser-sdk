@@ -50,7 +50,7 @@ describe('error collection', () => {
             type: 'Error',
             handling: ErrorHandling.HANDLED,
             source_type: 'browser',
-            causes: [],
+            causes: undefined,
           },
           type: RumEventType.ERROR,
           view: {
@@ -171,7 +171,7 @@ describe('error collection', () => {
           type: 'foo',
           handling: undefined,
           source_type: 'browser',
-          causes: [],
+          causes: undefined,
         },
         view: {
           in_foreground: true,
