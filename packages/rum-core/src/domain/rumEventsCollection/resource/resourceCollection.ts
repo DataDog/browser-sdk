@@ -188,11 +188,9 @@ function getRulePsr(configuration: RumConfiguration) {
 
 function computeIndexingInfo(sessionManager: RumSessionManager, resourceStart: ClocksState) {
   const session = sessionManager.findTrackedSession(resourceStart.relative)
-  return session
-    ? {
-        _dd: {
-          discarded: !session.resourceAllowed,
-        },
-      }
-    : undefined
+  return {
+    _dd: {
+      discarded: !session || !session.resourceAllowed,
+    },
+  }
 }

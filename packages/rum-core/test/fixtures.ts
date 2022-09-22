@@ -62,6 +62,9 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
             type: ResourceType.OTHER,
             url: 'http://foo.bar',
           },
+          _dd: {
+            discarded: false,
+          },
         },
         overrides
       )

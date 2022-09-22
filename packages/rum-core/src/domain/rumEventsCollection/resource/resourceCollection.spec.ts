@@ -167,7 +167,7 @@ describe('resourceCollection', () => {
           traceId: '1234',
         }),
       ])
-      const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd!
+      const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
       expect(privateFields).toBeDefined()
       expect(privateFields.trace_id).toBe('1234')
     })
@@ -182,7 +182,7 @@ describe('resourceCollection', () => {
           traceId: new TraceIdentifier(),
         })
       )
-      const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd!
+      const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
       expect(privateFields.trace_id).toBeDefined()
       expect(privateFields.span_id).toBeDefined()
     })
@@ -197,7 +197,7 @@ describe('resourceCollection', () => {
           traceId: new TraceIdentifier(),
         })
       )
-      const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd!
+      const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
       expect(privateFields.trace_id).not.toBeDefined()
       expect(privateFields.span_id).not.toBeDefined()
     })
@@ -224,7 +224,7 @@ describe('resourceCollection', () => {
           traceId: new TraceIdentifier(),
         })
       )
-      const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd!
+      const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
       expect(privateFields.rule_psr).toEqual(0.6)
     })
 
@@ -249,7 +249,7 @@ describe('resourceCollection', () => {
           traceId: new TraceIdentifier(),
         })
       )
-      const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd!
+      const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
       expect(privateFields.rule_psr).toBeUndefined()
     })
 
@@ -275,19 +275,19 @@ describe('resourceCollection', () => {
           traceId: new TraceIdentifier(),
         })
       )
-      const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd!
+      const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
       expect(privateFields.rule_psr).toEqual(0)
     })
   })
 
   describe('indexing info', () => {
-    it('should not be set if session is not tracked', () => {
+    it('should be discarded=true if session is not tracked', () => {
       setupBuilder.withSessionManager(createRumSessionManagerMock().setNotTracked())
       const { lifeCycle, rawRumEvents } = setupBuilder.build()
 
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [createResourceEntry()])
 
-      expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd).not.toBeDefined()
+      expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeTrue()
     })
 
     it('should be discarded=true if session does not allow resources', () => {
@@ -296,7 +296,7 @@ describe('resourceCollection', () => {
 
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [createResourceEntry()])
 
-      expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd!.discarded).toBeTrue()
+      expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeTrue()
     })
 
     it('should be discarded=false if session allows resources', () => {
@@ -305,7 +305,7 @@ describe('resourceCollection', () => {
 
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [createResourceEntry()])
 
-      expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd!.discarded).toBeFalse()
+      expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeFalse()
     })
   })
 })
