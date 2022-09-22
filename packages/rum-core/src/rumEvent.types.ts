@@ -311,6 +311,16 @@ export type RumLongTaskEvent = CommonProperties &
       readonly is_frozen_frame?: boolean
       [k: string]: unknown
     }
+    /**
+     * Internal properties
+     */
+    readonly _dd?: {
+      /**
+       * Whether the long task should be discarded or indexed
+       */
+      readonly discarded?: boolean
+      [k: string]: unknown
+    }
     [k: string]: unknown
   }
 /**

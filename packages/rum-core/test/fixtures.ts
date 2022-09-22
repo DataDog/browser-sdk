@@ -30,6 +30,9 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
             id: generateUUID(),
             duration: 0 as ServerDuration,
           },
+          _dd: {
+            discarded: false,
+          },
         },
         overrides
       )

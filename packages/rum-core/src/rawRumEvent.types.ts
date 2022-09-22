@@ -135,6 +135,9 @@ export interface RawRumLongTaskEvent {
     id: string
     duration: ServerDuration
   }
+  _dd: {
+    discarded: boolean
+  }
 }
 
 export interface RawRumActionEvent {
