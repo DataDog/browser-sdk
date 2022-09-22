@@ -203,7 +203,7 @@ describe('flattenErrorCauses', () => {
     error.cause = nestedError
 
     const errorCauses = flattenErrorCauses(error, ErrorSource.LOGGER)
-    expect(errorCauses?.length).toEqual(0)
+    expect(errorCauses?.length).toEqual(undefined)
   })
 
   it('should use error to extract stack trace', () => {
