@@ -13,14 +13,13 @@ import {
 describe('computeRawError', () => {
   const NOT_COMPUTED_STACK_TRACE: StackTrace = { name: undefined, message: undefined, stack: [] } as any
   const DEFAULT_RAW_ERROR_PARMS = {
-    originalError: undefined,
     startClocks: clocksNow(),
     nonErrorPrefix: 'Uncaught',
     source: ErrorSource.CUSTOM,
   }
 
   it('should format an error', () => {
-    const stack: StackTrace = {
+    const stackTrace: StackTrace = {
       message: 'oh snap!',
       name: 'TypeError',
       stack: [
@@ -50,7 +49,7 @@ describe('computeRawError', () => {
 
     const formatted = computeRawError({
       ...DEFAULT_RAW_ERROR_PARMS,
-      stackTrace: stack,
+      stackTrace,
       originalError: undefined,
       handling: ErrorHandling.HANDLED,
     })
@@ -91,6 +90,31 @@ describe('computeRawError', () => {
     })
 
     expect(formatted.message).toEqual('Uncaught "oh snap!"')
+  })
+
+  it('should compute stack trace form nested error', () => {
+    const stackTrace: StackTrace = {
+      message: 'some typeError message',
+      name: 'TypeError',
+      stack: [],
+    }
+
+    const error = new Error('foo') as ErrorWithCause
+    const nestedError = new Error('bar')
+
+    error.cause = nestedError
+
+    const formatted = computeRawError({
+      ...DEFAULT_RAW_ERROR_PARMS,
+      stackTrace,
+      originalError: error,
+      handling: ErrorHandling.HANDLED,
+    })
+
+    expect(formatted?.type).toEqual('TypeError')
+    expect(formatted?.message).toEqual('some typeError message')
+    expect(formatted?.causes?.[0].type).toEqual('Error')
+    expect(formatted?.causes?.[0].message).toEqual('bar')
   })
 
   it('should format an object error', () => {
