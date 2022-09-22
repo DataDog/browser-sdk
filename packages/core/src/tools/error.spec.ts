@@ -220,10 +220,10 @@ describe('flattenErrorCauses', () => {
     expect(errorCauses).toEqual(undefined)
   })
 
-  it('should stop recursive loop if cause is not of type Error', () => {
+  it('should return undefined if cause is not of type Error', () => {
     const error = new Error('foo') as ErrorWithCause
-    const nestedError = { biz: 'buz', cause: new Error('boo') }
-    // @ts-ignore: want to test we can handle non error cases
+    const nestedError = { biz: 'buz', cause: new Error('boo') } as unknown as Error
+
     error.cause = nestedError
 
     const errorCauses = flattenErrorCauses(error, ErrorSource.LOGGER)
