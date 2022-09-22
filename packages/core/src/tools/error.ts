@@ -27,14 +27,6 @@ export interface RawError {
   causes?: RawErrorCause[]
 }
 
-export interface UnknownError {
-  message: string
-  stack?: string
-  handlingStack?: string
-  type?: string
-  causes?: RawErrorCause[]
-}
-
 export const ErrorSource = {
   AGENT: 'agent',
   CONSOLE: 'console',
@@ -54,30 +46,31 @@ export type ErrorSource = typeof ErrorSource[keyof typeof ErrorSource]
 
 type RawErrorParams = {
   stackTrace?: StackTrace
-  error: unknown
+  originalError: unknown
+
   handlingStack?: string
   startClocks: ClocksState
   nonErrorPrefix: string
   source: ErrorSource
-  handling?: ErrorHandling
+  handling: ErrorHandling
 }
 
 export function computeRawError({
   stackTrace,
-  error,
+  originalError,
   handlingStack,
   startClocks,
   nonErrorPrefix,
   source,
   handling,
 }: RawErrorParams): RawError {
-  if (!stackTrace || (stackTrace.message === undefined && !(error instanceof Error))) {
+  if (!stackTrace || (stackTrace.message === undefined && !(originalError instanceof Error))) {
     return {
       startClocks,
       source,
       handling,
-      originalError: error,
-      message: `${nonErrorPrefix} ${jsonStringify(error)!}`,
+      originalError,
+      message: `${nonErrorPrefix} ${jsonStringify(originalError)!}`,
       stack: 'No stack, consider using an instance of Error',
       handlingStack,
       type: stackTrace && stackTrace.name,
@@ -88,12 +81,12 @@ export function computeRawError({
     startClocks,
     source,
     handling,
-    originalError: error,
+    originalError,
     message: stackTrace.message || 'Empty message',
     stack: toStackTraceString(stackTrace),
     handlingStack,
     type: stackTrace.name,
-    causes: flattenErrorCauses(error as ErrorWithCause, source, stackTrace),
+    causes: flattenErrorCauses(originalError as ErrorWithCause, source),
   }
 }
 
@@ -153,15 +146,11 @@ export function createHandlingStack(): string {
   return formattedStack!
 }
 
-export function flattenErrorCauses(
-  error: ErrorWithCause,
-  parentSource: ErrorSource,
-  stackTrace?: StackTrace
-): RawErrorCause[] | undefined {
+export function flattenErrorCauses(error: ErrorWithCause, parentSource: ErrorSource): RawErrorCause[] | undefined {
   let currentError = error
   const causes: RawErrorCause[] = []
-  while (currentError?.cause && causes.length < 10) {
-    if (!(currentError.cause instanceof Error)) break
+  while (currentError?.cause instanceof Error && causes.length < 10) {
+    const stackTrace = error instanceof Error ? computeStackTrace(error) : undefined
     causes.push({
       message: currentError.cause.message,
       source: parentSource,
