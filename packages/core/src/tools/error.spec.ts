@@ -92,31 +92,6 @@ describe('computeRawError', () => {
     expect(formatted.message).toEqual('Uncaught "oh snap!"')
   })
 
-  it('should compute stack trace form nested error, and not use param stacktrace', () => {
-    const stackTrace: StackTrace = {
-      message: 'some typeError message',
-      name: 'TypeError',
-      stack: [],
-    }
-
-    const error = new Error('foo') as ErrorWithCause
-    const nestedError = new Error('bar')
-
-    error.cause = nestedError
-
-    const formatted = computeRawError({
-      ...DEFAULT_RAW_ERROR_PARMS,
-      stackTrace,
-      originalError: error,
-      handling: ErrorHandling.HANDLED,
-    })
-
-    expect(formatted?.type).toEqual('TypeError')
-    expect(formatted?.message).toEqual('some typeError message')
-    expect(formatted?.causes?.[0].type).toEqual('Error')
-    expect(formatted?.causes?.[0].message).toEqual('bar')
-  })
-
   it('should format an object error', () => {
     const error = { foo: 'bar' }
 
@@ -153,27 +128,42 @@ describe('computeRawError', () => {
   })
 
   it('should compute an object error with causes', () => {
+    const stackTrace: StackTrace = {
+      message: 'some typeError message',
+      name: 'TypeError',
+      stack: [],
+    }
+
     const error = new Error('foo: bar') as ErrorWithCause
+    error.stack = 'Error: foo: bar\n    at <anonymous>:1:15'
+
     const nestedError = new Error('biz: buz') as ErrorWithCause
+    nestedError.stack = 'NestedError: biz: buz\n    at <anonymous>:2:15'
+
     const deepNestedError = new Error('fiz: buz') as ErrorWithCause
+    deepNestedError.stack = 'NestedError: fiz: buz\n    at <anonymous>:3:15'
 
     error.cause = nestedError
     nestedError.cause = deepNestedError
 
     const formatted = computeRawError({
       ...DEFAULT_RAW_ERROR_PARMS,
-      stackTrace: NOT_COMPUTED_STACK_TRACE,
+      stackTrace,
       originalError: error,
       handling: ErrorHandling.HANDLED,
       source: ErrorSource.SOURCE,
     })
 
+    expect(formatted?.type).toEqual('TypeError')
+    expect(formatted?.message).toEqual('some typeError message')
     expect(formatted.causes?.length).toBe(2)
     const causes = formatted.causes as RawErrorCause[]
     expect(causes[0].message).toContain(nestedError.message)
     expect(causes[0].source).toContain(ErrorSource.SOURCE)
+    expect(causes[0].type).toEqual('Error')
     expect(causes[1].message).toContain(deepNestedError.message)
     expect(causes[1].source).toContain(ErrorSource.SOURCE)
+    expect(causes[1].type).toEqual('Error')
   })
 })
 
