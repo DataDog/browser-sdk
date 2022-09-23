@@ -548,7 +548,7 @@ describe('rum assembly', () => {
         type: 'user',
       })
       expect(serverRumEvents[0]._dd.session).toEqual({
-        plan: RumSessionPlan.PREMIUM,
+        plan: RumSessionPlan.WITH_SESSION_REPLAY,
       })
     })
 

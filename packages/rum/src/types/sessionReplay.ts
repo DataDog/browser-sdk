@@ -333,7 +333,7 @@ export interface CommonSegmentMetadataSchema {
   /**
    * The index of this Segment in the segments list that was recorded for this view ID. Starts from 0.
    */
-  index_in_view: number
+  index_in_view?: number
   /**
    * Whether this Segment contains a full snapshot record or not.
    */
