@@ -140,7 +140,7 @@ describe('computeRawError', () => {
     const nestedError = new Error('biz: buz') as ErrorWithCause
     nestedError.stack = 'NestedError: biz: buz\n    at <anonymous>:2:15'
 
-    const deepNestedError = new Error('fiz: buz') as ErrorWithCause
+    const deepNestedError = new TypeError('fiz: buz') as ErrorWithCause
     deepNestedError.stack = 'NestedError: fiz: buz\n    at <anonymous>:3:15'
 
     error.cause = nestedError
@@ -163,12 +163,12 @@ describe('computeRawError', () => {
 
     expect(causes[0].message).toContain(nestedError.message)
     expect(causes[0].source).toContain(ErrorSource.SOURCE)
-    expect(causes[0].type).toEqual('Error')
+    expect(causes[0].type).toEqual(nestedError.name)
     expect(causes[0].stack).toContain('Error: biz: buz')
 
     expect(causes[1].message).toContain(deepNestedError.message)
     expect(causes[1].source).toContain(ErrorSource.SOURCE)
-    expect(causes[1].type).toEqual('Error')
+    expect(causes[1].type).toEqual(deepNestedError.name)
     expect(causes[1].stack).toContain('Error: fiz: buz')
   })
 })
