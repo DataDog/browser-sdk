@@ -23,8 +23,8 @@ export function InfosTab() {
               value={formatSessionType(
                 infos.cookie.rum,
                 'Not tracked',
-                'Tracked as Browser Premium',
-                'Tracked as Browser'
+                'Tracked with Session Replay',
+                'Tracked without Session Replay'
               )}
             />
             <Entry name="Created" value={formatDate(Number(infos.cookie.created))} />

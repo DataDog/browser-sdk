@@ -45,14 +45,14 @@ describe('long task collection', () => {
     expect(rawRumEvents.length).toBe(1)
   })
 
-  it('should only collect when session has a premium plan', () => {
+  it('should only collect when session allows long tasks', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
 
-    sessionManager.setPremiumPlan()
+    sessionManager.setLongTaskAllowed(true)
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [LONG_TASK])
     expect(rawRumEvents.length).toBe(1)
 
-    sessionManager.setLitePlan()
+    sessionManager.setLongTaskAllowed(false)
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [LONG_TASK])
     expect(rawRumEvents.length).toBe(1)
   })
@@ -69,6 +69,9 @@ describe('long task collection', () => {
         duration: (100 * 1e6) as ServerDuration,
       },
       type: RumEventType.LONG_TASK,
+      _dd: {
+        discarded: false,
+      },
     })
     expect(rawRumEvents[0].domainContext).toEqual({
       performanceEntry: { name: 'self', duration: 100, entryType: 'longtask', startTime: 1234 },

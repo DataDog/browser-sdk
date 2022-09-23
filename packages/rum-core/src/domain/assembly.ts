@@ -27,7 +27,6 @@ import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import type { ViewContexts } from './contexts/viewContexts'
 import type { RumSessionManager } from './rumSessionManager'
-import { RumSessionPlan } from './rumSessionManager'
 import type { UrlContexts } from './contexts/urlContexts'
 import type { RumConfiguration } from './configuration'
 import type { ActionContexts } from './rumEventsCollection/action/actionCollection'
@@ -104,7 +103,7 @@ export function startRumAssembly(
             format_version: 2,
             drift: currentDrift(),
             session: {
-              plan: session.hasPremiumPlan ? RumSessionPlan.PREMIUM : RumSessionPlan.LITE,
+              plan: session.plan,
             },
             browser_sdk_version: canUseEventBridge() ? __BUILD_ENV__SDK_VERSION__ : undefined,
           },
