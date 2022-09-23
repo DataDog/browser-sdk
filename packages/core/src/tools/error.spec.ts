@@ -157,13 +157,19 @@ describe('computeRawError', () => {
     expect(formatted?.type).toEqual('TypeError')
     expect(formatted?.message).toEqual('some typeError message')
     expect(formatted.causes?.length).toBe(2)
+    expect(formatted.stack).toContain('TypeError: some typeError message')
+
     const causes = formatted.causes as RawErrorCause[]
+
     expect(causes[0].message).toContain(nestedError.message)
     expect(causes[0].source).toContain(ErrorSource.SOURCE)
     expect(causes[0].type).toEqual('Error')
+    expect(causes[0].stack).toContain('Error: biz: buz')
+
     expect(causes[1].message).toContain(deepNestedError.message)
     expect(causes[1].source).toContain(ErrorSource.SOURCE)
     expect(causes[1].type).toEqual('Error')
+    expect(causes[1].stack).toContain('Error: fiz: buz')
   })
 })
 

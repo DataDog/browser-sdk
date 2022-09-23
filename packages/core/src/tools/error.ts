@@ -150,7 +150,7 @@ export function flattenErrorCauses(error: ErrorWithCause, parentSource: ErrorSou
   let currentError = error
   const causes: RawErrorCause[] = []
   while (currentError?.cause instanceof Error && causes.length < 10) {
-    const stackTrace = currentError instanceof Error ? computeStackTrace(currentError) : undefined
+    const stackTrace = computeStackTrace(currentError.cause)
     causes.push({
       message: currentError.cause.message,
       source: parentSource,
