@@ -395,7 +395,7 @@ See `sessionReplaySampleRate`.
 See `sessionReplaySampleRate`.
 
 `sessionReplaySampleRate`
-: Optional - **Deprecated**<br/>
+: Optional<br/>
 **Type**: Number<br/>
 **Default**: `100`<br/>
 The percentage of tracked sessions with [Browser RUM & Session Replay pricing][11] features: `100` for all, `0` for none. For more details about `sessionReplaySampleRate`, see the [sampling configuration][21].
@@ -551,4 +551,4 @@ window.DD_RUM && window.DD_RUM.getInternalContext() // { session_id: "xxxx", app
 [18]: https://docs.datadoghq.com/real_user_monitoring/session_replay/privacy_options
 [19]: https://docs.datadoghq.com/getting_started/tagging/using_tags
 [20]: https://docs.datadoghq.com/real_user_monitoring/frustration_signals/
-[21]: https://docs.datadoghq.com/real_user_monitoring/guide/sampling-browser-and-browser-premium/
+[21]: https://docs.datadoghq.com/real_user_monitoring/guide/sampling-browser-plans/
