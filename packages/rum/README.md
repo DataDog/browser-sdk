@@ -302,7 +302,7 @@ window.DD_RUM.init({
 
 ### Initialization parameters
 
-Call the initialization command to start tracking, the following parameters are available:
+Call the initialization command to start tracking. The following parameters are available:
 
 `applicationId`
 : Required<br/>
