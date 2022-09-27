@@ -261,6 +261,16 @@ deploy-prod-stable:
     - ./scripts/deploy.sh prod v${VERSION%%.*}
     - node ./scripts/upload-source-maps.js datadoghq.com,datadoghq.eu,us3.datadoghq.com,us5.datadoghq.com v${VERSION%%.*}
 
+publish-npm:
+  stage: deploy
+  extends:
+    - .base-configuration
+    - .tags
+  when: manual
+  allow_failure: false
+  script:
+    - ./scripts/publish-npm.sh
+
 ########################################################################################################################
 # Notify
 ########################################################################################################################
