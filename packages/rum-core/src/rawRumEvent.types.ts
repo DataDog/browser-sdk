@@ -35,10 +35,11 @@ export interface RawRumResourceEvent {
     first_byte?: PerformanceResourceDetailsElement
     download?: PerformanceResourceDetailsElement
   }
-  _dd?: {
+  _dd: {
     trace_id?: string
     span_id?: string // not available for initial document tracing
     rule_psr?: number
+    discarded: boolean
   }
 }
 
@@ -133,6 +134,9 @@ export interface RawRumLongTaskEvent {
   long_task: {
     id: string
     duration: ServerDuration
+  }
+  _dd: {
+    discarded: boolean
   }
 }
 
