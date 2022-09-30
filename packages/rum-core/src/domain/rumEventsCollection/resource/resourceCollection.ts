@@ -11,7 +11,6 @@ import {
 import type { ClocksState } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
 import type { RumPerformanceEntry, RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
-import { supportPerformanceEntry } from '../../../browser/performanceCollection'
 import type {
   PerformanceEntryRepresentation,
   RumXhrResourceEventDomainContext,
@@ -172,10 +171,9 @@ function computeEntryTracingInfo(entry: RumPerformanceResourceTiming, configurat
   }
 }
 
+// TODO next major: use directly PerformanceEntry type in domain context
 function toPerformanceEntryRepresentation(entry: RumPerformanceEntry): PerformanceEntryRepresentation {
-  return (
-    supportPerformanceEntry() && entry instanceof PerformanceEntry && 'toJSON' in entry ? entry.toJSON() : entry
-  ) as PerformanceEntryRepresentation
+  return entry as PerformanceEntryRepresentation
 }
 
 /**
