@@ -446,8 +446,10 @@ export function runOnReadyState(expectedReadyState: 'complete' | 'interactive', 
     callback()
   } else {
     const eventName = expectedReadyState === 'complete' ? DOM_EVENT.LOAD : DOM_EVENT.DOM_CONTENT_LOADED
-    addEventListener(window, eventName, callback, { once: true })
+    const { stop } = addEventListener(window, eventName, callback, { once: true })
+    return stop
   }
+  return noop
 }
 
 /**
