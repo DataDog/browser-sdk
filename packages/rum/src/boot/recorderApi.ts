@@ -1,4 +1,4 @@
-import { canUseEventBridge, noop, runOnReadyState } from '@datadog/browser-core'
+import { runOnReadyState } from '@datadog/browser-core'
 import type {
   LifeCycle,
   ViewContexts,
@@ -9,161 +9,87 @@ import type {
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { getReplayStats } from '../domain/replayStats'
 import { startDeflateWorker } from '../domain/segmentCollection'
+import type { DeflateWorker } from '../domain/segmentCollection'
 
 import type { startRecording } from './startRecording'
 
-export type StartRecording = typeof startRecording
+import { initRecorderStateMachine, RecorderStatus } from './recorderStateMachine'
 
-const enum RecorderStatus {
-  // The recorder is stopped.
-  Stopped,
-  // The user started the recording while it wasn't possible yet. The recorder should start as soon
-  // as possible.
-  IntentToStart,
-  // The recorder is starting. It does not record anything yet.
-  Starting,
-  // The recorder is started, it records the session.
-  Started,
-}
-type RecorderState =
-  | {
-      status: RecorderStatus.Stopped
-    }
-  | {
-      status: RecorderStatus.IntentToStart
-    }
-  | {
-      status: RecorderStatus.Starting
-    }
-  | {
-      status: RecorderStatus.Started
-      stopRecording: () => void
-    }
+export type StartRecording = typeof startRecording
 
 export function makeRecorderApi(
   startRecordingImpl: StartRecording,
   startDeflateWorkerImpl = startDeflateWorker
 ): RecorderApi {
-  if (canUseEventBridge() || !isBrowserSupported()) {
-    return {
-      start: noop,
-      stop: noop,
-      getReplayStats: () => undefined,
-      onRumStart: noop,
-      isRecording: () => false,
-    }
-  }
+  const service = initRecorderStateMachine()
+  let removeInteractiveEventListener: (() => void) | undefined
 
-  let state: RecorderState = {
-    status: RecorderStatus.Stopped,
-  }
+  function onRumStart(
+    lifeCycle: LifeCycle,
+    configuration: RumConfiguration,
+    sessionManager: RumSessionManager,
+    viewContexts: ViewContexts
+  ) {
+    service.send({ type: 'INIT', sessionManager })
 
-  let startStrategy = () => {
-    state = { status: RecorderStatus.IntentToStart }
-  }
-  let stopStrategy = () => {
-    state = { status: RecorderStatus.Stopped }
-  }
-  return {
-    start: () => startStrategy(),
-    stop: () => stopStrategy(),
-    getReplayStats,
+    lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
+      service.send({ type: 'RESET_RECORDER' })
+    })
+    lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
+      service.send({ type: 'ATTEMPT_START' })
+    })
 
-    onRumStart: (
-      lifeCycle: LifeCycle,
-      configuration: RumConfiguration,
-      sessionManager: RumSessionManager,
-      viewContexts: ViewContexts
-    ) => {
-      lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
-        if (state.status === RecorderStatus.Starting || state.status === RecorderStatus.Started) {
-          stopStrategy()
-          state = { status: RecorderStatus.IntentToStart }
-        }
-      })
+    service.subscribe((state) => {
+      if (!state.changed) return // avoid infinite loops by only listening to changed events
 
-      lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-        if (state.status === RecorderStatus.IntentToStart) {
-          startStrategy()
-        }
-      })
+      if (state.value === RecorderStatus.IntendToStart) {
+        service.send({ type: 'ATTEMPT_START' })
+      }
 
-      startStrategy = () => {
-        const session = sessionManager.findTrackedSession()
-        if (!session || !session.sessionReplayAllowed) {
-          state = { status: RecorderStatus.IntentToStart }
-          return
-        }
-
-        if (state.status === RecorderStatus.Starting || state.status === RecorderStatus.Started) {
-          return
-        }
-
-        state = { status: RecorderStatus.Starting }
-
-        runOnReadyState('interactive', () => {
-          if (state.status !== RecorderStatus.Starting) {
-            return
-          }
-
-          startDeflateWorkerImpl((worker) => {
-            if (state.status !== RecorderStatus.Starting) {
-              return
-            }
-
-            if (!worker) {
-              state = {
-                status: RecorderStatus.Stopped,
-              }
-              return
-            }
-
-            const { stop: stopRecording } = startRecordingImpl(
-              lifeCycle,
-              configuration,
-              sessionManager,
-              viewContexts,
-              worker
-            )
-            state = {
-              status: RecorderStatus.Started,
-              stopRecording,
-            }
-          })
+      if (state.value === RecorderStatus.ListeningForInteractive) {
+        removeInteractiveEventListener = runOnReadyState('interactive', () => {
+          service.send({ type: 'PAGE_INTERACTIVE' })
         })
       }
 
-      stopStrategy = () => {
-        if (state.status === RecorderStatus.Stopped) {
-          return
-        }
-
-        if (state.status === RecorderStatus.Started) {
-          state.stopRecording()
-        }
-
-        state = {
-          status: RecorderStatus.Stopped,
-        }
+      if (state.value === RecorderStatus.ListeningForWorker) {
+        startDeflateWorkerImpl((worker) => {
+          service.send({ type: 'DEFLATE_WORKER_CALLED', worker })
+        })
       }
 
-      if (state.status === RecorderStatus.IntentToStart) {
-        startStrategy()
+      if (state.value === RecorderStatus.Starting) {
+        const { stop: stopRecording } = startRecordingImpl(
+          lifeCycle,
+          configuration,
+          sessionManager,
+          viewContexts,
+          state.context.worker as DeflateWorker
+        )
+        service.send({ type: 'START_RECORDING', stopRecording })
       }
-    },
 
-    isRecording: () => state.status === RecorderStatus.Started,
+      // Clear listeners on Stopped
+      if (state.value === RecorderStatus.Stopped && removeInteractiveEventListener) {
+        removeInteractiveEventListener()
+        removeInteractiveEventListener = undefined
+      }
+    })
   }
-}
 
-/**
- * Test for Browser features used while recording
- */
-function isBrowserSupported() {
-  return (
-    // Array.from is a bit less supported by browsers than CSSSupportsRule, but has higher chances
-    // to be polyfilled. Test for both to be more confident. We could add more things if we find out
-    // this test is not sufficient.
-    typeof Array.from === 'function' && typeof CSSSupportsRule === 'function'
-  )
+  function start() {
+    service.send({ type: 'INTEND_TO_START' })
+  }
+
+  function stop() {
+    service.send({ type: 'STOP' })
+  }
+
+  return {
+    start,
+    stop,
+    getReplayStats,
+    onRumStart,
+    isRecording: () => service.state.value === RecorderStatus.Started,
+  }
 }
