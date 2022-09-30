@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@datadog/browser-core": "4.20.0",
-    "@datadog/browser-rum-core": "4.20.0"
+    "@datadog/browser-rum-core": "4.20.0",
     "@xstate/fsm": "2.0.0"
   },
   "peerDependencies": {
