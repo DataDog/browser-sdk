@@ -173,10 +173,9 @@ function computeEntryTracingInfo(entry: RumPerformanceResourceTiming, configurat
 }
 
 function toPerformanceEntryRepresentation(entry: RumPerformanceEntry): PerformanceEntryRepresentation {
-  if (supportPerformanceEntry() && entry instanceof PerformanceEntry) {
-    entry.toJSON()
-  }
-  return entry as PerformanceEntryRepresentation
+  return (
+    supportPerformanceEntry() && entry instanceof PerformanceEntry && 'toJSON' in entry ? entry.toJSON() : entry
+  ) as PerformanceEntryRepresentation
 }
 
 /**
