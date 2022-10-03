@@ -102,11 +102,6 @@ export function supportPerformanceTimingEvent(entryType: string) {
   )
 }
 
-export function supportPerformanceEntry() {
-  // Safari 10 doesn't support PerformanceEntry
-  return typeof PerformanceEntry === 'function'
-}
-
 export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: RumConfiguration) {
   retrieveInitialDocumentResourceTiming((timing) => {
     handleRumPerformanceEntries(lifeCycle, configuration, [timing])
