@@ -16,6 +16,12 @@
 
 ---
 
+## v4.20.0
+
+- ✨ [RUMF-1391] Introduce trackResources, trackLongTasks and sessionReplaySampleRate ([#1744](https://github.com/DataDog/browser-sdk/pull/1744))
+- ♻️ [RUMF-1368] use the PointerDown event target for click actions ([#1731](https://github.com/DataDog/browser-sdk/pull/1731))
+- ⚗ [RUMF-1379] use experimented CSS selectors strategies by default ([#1738](https://github.com/DataDog/browser-sdk/pull/1738))
+
 ## v4.19.1
 
 - 🐛 [RUMF-1369] Exclude error message from stacktrace parsing ([#1725](https://github.com/DataDog/browser-sdk/pull/1725))

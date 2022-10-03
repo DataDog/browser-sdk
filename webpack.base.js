@@ -14,7 +14,7 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables }) => ({
     path: path.resolve('./bundle'),
   },
   target: ['web', 'es5'],
-  devtool: mode === 'development' ? 'inline-source-map' : 'source-map',
+  devtool: false,
   module: {
     rules: [
       {
@@ -55,11 +55,25 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables }) => ({
     ],
   },
 
-  plugins: !keepBuildEnvVariables
-    ? [
-        new webpack.DefinePlugin({
-          __BUILD_ENV__SDK_VERSION__: JSON.stringify(buildEnv.SDK_VERSION),
-        }),
-      ]
-    : [],
+  plugins: [
+    new webpack.SourceMapDevToolPlugin(
+      mode === 'development'
+        ? // Use an inline source map during development (default options)
+          {}
+        : // When bundling for release, produce a source map file so it can be used for source code integration,
+          // but don't append the source map comment to bundles as we don't upload the source map to
+          // the CDN (yet).
+          {
+            filename: '[file].map',
+            append: false,
+          }
+    ),
+    new webpack.DefinePlugin(
+      !keepBuildEnvVariables
+        ? {
+            __BUILD_ENV__SDK_VERSION__: JSON.stringify(buildEnv.SDK_VERSION),
+          }
+        : {}
+    ),
+  ],
 })
