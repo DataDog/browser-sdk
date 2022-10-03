@@ -47,6 +47,7 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
             source: ErrorSource.SOURCE,
             handling: ErrorHandling.HANDLED,
             source_type: 'browser',
+            causes: [],
           },
         },
         overrides

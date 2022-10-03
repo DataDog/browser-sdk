@@ -6,6 +6,7 @@ import type {
   ResourceType,
   ServerDuration,
   TimeStamp,
+  RawErrorCause,
 } from '@datadog/browser-core'
 import type { RumSessionPlan } from './domain/rumSessionManager'
 
@@ -59,6 +60,7 @@ export interface RawRumErrorEvent {
     source: ErrorSource
     message: string
     handling?: ErrorHandling
+    causes?: RawErrorCause[]
     source_type: 'browser'
   }
   view?: {

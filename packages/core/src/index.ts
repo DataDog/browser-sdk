@@ -55,9 +55,11 @@ export { instrumentMethod, instrumentMethodAndCallOriginal, instrumentSetter } f
 export {
   ErrorSource,
   ErrorHandling,
-  formatUnknownError,
+  computeRawError,
   createHandlingStack,
   RawError,
+  RawErrorCause,
+  ErrorWithCause,
   toStackTraceString,
   getFileFromStackTraceString,
 } from './tools/error'
