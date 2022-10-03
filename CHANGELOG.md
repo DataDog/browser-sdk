@@ -16,6 +16,12 @@
 
 ---
 
+## v4.21.0
+
+- ✨ [RUMF-1353] Collect error causes ([#1740](https://github.com/DataDog/browser-sdk/pull/1740))
+- 🐛 [RUMF-1276] handle performance entry without `toJSON` ([#1751](https://github.com/DataDog/browser-sdk/pull/1751))
+- 🐛 handle undefined policy ([#1752](https://github.com/DataDog/browser-sdk/pull/1752))
+
 ## v4.20.0
 
 - ✨ [RUMF-1391] Introduce trackResources, trackLongTasks and sessionReplaySampleRate ([#1744](https://github.com/DataDog/browser-sdk/pull/1744))
