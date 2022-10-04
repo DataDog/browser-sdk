@@ -16,6 +16,10 @@
 
 ---
 
+## v4.21.1
+
+- 🐛 npm publish: skip publish confirmation ([#1755](https://github.com/DataDog/browser-sdk/pull/1755))
+
 ## v4.21.0
 
 - ✨ [RUMF-1353] Collect error causes ([#1740](https://github.com/DataDog/browser-sdk/pull/1740))
