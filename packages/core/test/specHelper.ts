@@ -263,6 +263,7 @@ class StubEventEmitter {
 }
 
 class StubXhr extends StubEventEmitter {
+  public static onSend: (xhr: StubXhr) => void | undefined
   public response: string | undefined = undefined
   public status: number | undefined = undefined
   public readyState: number = XMLHttpRequest.UNSENT
@@ -270,12 +271,14 @@ class StubXhr extends StubEventEmitter {
 
   private hasEnded = false
 
-  /* eslint-disable @typescript-eslint/no-empty-function,@typescript-eslint/no-unused-vars */
+  /* eslint-disable @typescript-eslint/no-unused-vars */
   open(method: string, url: string | URL | undefined | null) {
     this.hasEnded = false
   }
 
-  send() {}
+  send() {
+    StubXhr.onSend?.(this)
+  }
 
   abort() {
     this.status = 0
@@ -410,6 +413,75 @@ export function stubCookie() {
     currentValue: () => cookie,
     setCurrentValue: (newCookie: string) => {
       cookie = newCookie
+    },
+  }
+}
+
+export interface Request {
+  type: 'xhr' | 'sendBeacon' | 'fetch'
+  url: string
+  body: string
+}
+
+export function interceptRequests() {
+  const requests: Request[] = []
+  const originalSendBeacon = isSendBeaconSupported() && navigator.sendBeacon.bind(navigator)
+  const originalRequest = window.Request
+  const originalFetch = window.fetch
+  let stubXhrManager: { reset(): void } | undefined
+
+  spyOn(XMLHttpRequest.prototype, 'open').and.callFake((_, url) => requests.push({ type: 'xhr', url } as Request))
+  spyOn(XMLHttpRequest.prototype, 'send').and.callFake((body) => (requests[requests.length - 1].body = body as string))
+  if (isSendBeaconSupported()) {
+    spyOn(navigator, 'sendBeacon').and.callFake((url, body) => {
+      requests.push({ type: 'sendBeacon', url: url as string, body: body as string })
+      return true
+    })
+  }
+  if (isFetchKeepAliveSupported()) {
+    spyOn(window, 'fetch').and.callFake((url, config) => {
+      requests.push({ type: 'fetch', url: url as string, body: config!.body as string })
+      return new Promise<Response>(() => undefined)
+    })
+  }
+
+  function isSendBeaconSupported() {
+    return !!navigator.sendBeacon
+  }
+
+  function isFetchKeepAliveSupported() {
+    return 'fetch' in window && 'keepalive' in new window.Request('')
+  }
+
+  return {
+    requests,
+    isSendBeaconSupported,
+    isFetchKeepAliveSupported,
+    withSendBeacon(newSendBeacon: any) {
+      navigator.sendBeacon = newSendBeacon
+    },
+    withRequest(newRequest: any) {
+      window.Request = newRequest
+    },
+    withFetch(newFetch: any) {
+      window.fetch = newFetch
+    },
+    withStubXhr(onSend: (xhr: StubXhr) => void) {
+      stubXhrManager = stubXhr()
+      StubXhr.onSend = onSend
+    },
+    restore() {
+      if (originalSendBeacon) {
+        navigator.sendBeacon = originalSendBeacon
+      }
+      if (originalRequest) {
+        window.Request = originalRequest
+      }
+      if (originalFetch) {
+        window.fetch = originalFetch
+      }
+      stubXhrManager?.reset()
+      StubXhr.onSend = noop
     },
   }
 }

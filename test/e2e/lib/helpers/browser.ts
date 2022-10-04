@@ -13,7 +13,6 @@ export async function browserExecuteAsync<R, A, B>(
 export async function browserExecuteAsync<R, A>(fn: (a: A, done: (result: R) => void) => any, arg: A): Promise<R>
 export async function browserExecuteAsync<R>(fn: (done: (result: R) => void) => any): Promise<R>
 export async function browserExecuteAsync<A extends any[]>(fn: (...params: A) => any, ...args: A) {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return browser.executeAsync(fn as any, ...args)
 }
 

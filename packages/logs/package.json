@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-logs",
-  "version": "4.16.1",
+  "version": "4.21.1",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
   "module": "esm/entries/main.js",
@@ -13,7 +13,15 @@
     "replace-build-env": "node ../../scripts/replace-build-env.js"
   },
   "dependencies": {
-    "@datadog/browser-core": "4.16.1"
+    "@datadog/browser-core": "4.21.1"
+  },
+  "peerDependencies": {
+    "@datadog/browser-rum": "4.21.1"
+  },
+  "peerDependenciesMeta": {
+    "@datadog/browser-rum": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/sinon": "9.0.10",

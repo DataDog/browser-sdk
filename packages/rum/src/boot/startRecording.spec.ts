@@ -1,5 +1,5 @@
-import type { TimeStamp } from '@datadog/browser-core'
-import { HttpRequest, DefaultPrivacyLevel, noop, isIE, timeStampNow } from '@datadog/browser-core'
+import type { TimeStamp, HttpRequest } from '@datadog/browser-core'
+import { DefaultPrivacyLevel, noop, isIE, timeStampNow, createHttpRequest } from '@datadog/browser-core'
 import type { LifeCycle, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { inflate } from 'pako'
@@ -10,7 +10,7 @@ import { createNewEvent, mockClock } from '../../../core/test/specHelper'
 import type { TestSetupBuilder } from '../../../rum-core/test/specHelper'
 import { setup } from '../../../rum-core/test/specHelper'
 import { collectAsyncCalls, recordsPerFullSnapshot } from '../../test/utils'
-import { setSegmentBytesLimit, startDeflateWorker } from '../domain/segmentCollection'
+import { setSegmentBytesLimit, startDeflateWorker, SEGMENT_BYTES_LIMIT } from '../domain/segmentCollection'
 
 import type { BrowserSegment } from '../types'
 import { RecordType } from '../types'
@@ -25,7 +25,7 @@ describe('startRecording', () => {
   let viewId: string
   let waitRequestSendCalls: (
     expectedCallsCount: number,
-    callback: (calls: jasmine.Calls<HttpRequest['send']>) => void
+    callback: (calls: jasmine.Calls<HttpRequest['sendOnExit']>) => void
   ) => void
   let sandbox: HTMLElement
   let textField: HTMLInputElement
@@ -45,10 +45,6 @@ describe('startRecording', () => {
     textField = document.createElement('input')
     sandbox.appendChild(textField)
 
-    const requestSendSpy = spyOn(HttpRequest.prototype, 'send')
-    ;({ waitAsyncCalls: waitRequestSendCalls, expectNoExtraAsyncCall: expectNoExtraRequestSendCalls } =
-      collectAsyncCalls(requestSendSpy))
-
     startDeflateWorker((worker) => {
       setupBuilder = setup()
         .withViewContexts({
@@ -61,7 +57,13 @@ describe('startRecording', () => {
           defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
         })
         .beforeBuild(({ lifeCycle, configuration, viewContexts, sessionManager }) => {
-          const recording = startRecording(lifeCycle, configuration, sessionManager, viewContexts, worker!)
+          const httpRequest = createHttpRequest(configuration.sessionReplayEndpointBuilder, SEGMENT_BYTES_LIMIT, noop)
+
+          const requestSendSpy = spyOn(httpRequest, 'sendOnExit')
+          ;({ waitAsyncCalls: waitRequestSendCalls, expectNoExtraAsyncCall: expectNoExtraRequestSendCalls } =
+            collectAsyncCalls(requestSendSpy))
+
+          const recording = startRecording(lifeCycle, configuration, sessionManager, viewContexts, worker!, httpRequest)
           stopRecording = recording ? recording.stop : noop
           return { stop: stopRecording }
         })
@@ -80,7 +82,7 @@ describe('startRecording', () => {
     flushSegment(lifeCycle)
 
     waitRequestSendCalls(1, (calls) => {
-      expect(calls.first().args).toEqual([jasmine.any(FormData), jasmine.any(Number)])
+      expect(calls.first().args[0]).toEqual({ data: jasmine.any(FormData), bytesCount: jasmine.any(Number) })
       expect(getRequestData(calls.first())).toEqual({
         'application.id': 'appId',
         creation_reason: 'init',
@@ -139,7 +141,7 @@ describe('startRecording', () => {
 
     document.body.dispatchEvent(createNewEvent('click'))
 
-    sessionManager.setId('new-session-id').setPremiumPlan()
+    sessionManager.setId('new-session-id').setPlanWithSessionReplay()
     flushSegment(lifeCycle)
     document.body.dispatchEvent(createNewEvent('click'))
 
@@ -227,7 +229,6 @@ describe('startRecording', () => {
     })
   })
 
-  // eslint-disable-next-line max-len
   it('does not split Meta, Focus and FullSnapshot records between multiple segments when taking a full snapshot', (done) => {
     setSegmentBytesLimit(0)
     setupBuilder.build()
@@ -284,7 +285,7 @@ function flushSegment(lifeCycle: LifeCycle) {
   lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
 }
 
-function getRequestData(call: jasmine.CallInfo<HttpRequest['send']>) {
+function getRequestData(call: jasmine.CallInfo<HttpRequest['sendOnExit']>) {
   const result: { [key: string]: unknown } = {}
   getRequestFormData(call).forEach((value, key) => {
     result[key] = value
@@ -292,7 +293,10 @@ function getRequestData(call: jasmine.CallInfo<HttpRequest['send']>) {
   return result
 }
 
-function readRequestSegment(call: jasmine.CallInfo<HttpRequest['send']>, callback: (segment: BrowserSegment) => void) {
+function readRequestSegment(
+  call: jasmine.CallInfo<HttpRequest['sendOnExit']>,
+  callback: (segment: BrowserSegment) => void
+) {
   const encodedSegment = getRequestFormData(call).get('segment')
   expect(encodedSegment).toBeInstanceOf(Blob)
   const reader = new FileReader()
@@ -303,10 +307,10 @@ function readRequestSegment(call: jasmine.CallInfo<HttpRequest['send']>, callbac
   reader.readAsArrayBuffer(encodedSegment as Blob)
 }
 
-function getRequestFormData(call: jasmine.CallInfo<HttpRequest['send']>) {
-  const data = call.args[0]
-  expect(data).toEqual(jasmine.any(FormData))
-  return data as FormData
+function getRequestFormData(call: jasmine.CallInfo<HttpRequest['sendOnExit']>) {
+  const payload = call.args[0]
+  expect(payload.data).toEqual(jasmine.any(FormData))
+  return payload.data as FormData
 }
 
 function createRandomString(minLength: number) {

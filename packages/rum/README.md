@@ -14,18 +14,18 @@ To set up RUM Browser Monitoring, create a RUM application:
    - Enter a name for your application and click **Generate Client Token**. This generates a `clientToken` and an `applicationId` for your application.
    - Choose the installation type for the RUM Browser SDK: [npm](#npm), or a hosted version ([CDN async](#cdn-async) or [CDN sync](#cdn-sync)).
    - Define the environment name and service name for your application to use unified service tagging for [RUM & Session Replay][19]. Set a version number for your deployed application in the initialization snippet. For more information, see [Tagging](#tagging).
-   - Set the sampling rate of total user sessions collected and use the slider to set the percentage of total [Browser Premium][11] sessions collected. Browser Premium sessions include resources, long tasks, and replay recordings.
+   - Set the sampling rate of total user sessions collected and use the slider to set the percentage of total [Browser Premium][11] sessions collected. Browser Premium sessions include resources, long tasks, and replay recordings. For more information about configuring the percentage of Browser Premium sessions collected from the total amount of user sessions, see [Configure Your Setup For Browser and Browser Premium Sampling][21].
    - Click the **Session Replay Enabled** toggle to access replay recordings in [Session Replay][17].
    - Select a [privacy setting][18] for Session Replay in the dropdown menu.
 2. Deploy the changes to your application. Once your deployment is live, Datadog collects events from your users' browsers.
 3. Visualize the [data collected][2] in [dashboards][3] or create a search query in the [RUM Explorer][16].
 
-Until Datadog starts to receive data, your application appears as `pending` on the **RUM Applications** page.
+Until Datadog starts receiving data, your application appears as `pending` on the **RUM Applications** page.
 
 ### Choose the right installation method
 
 npm (node package manager)
-: This method is recommended for modern web applications. The RUM Browser SDK is packaged with the rest of your front-end JavaScript code. It has no impact on page load performance. However, the SDK may miss errors, resources, and user actions triggered before the SDK is initialized. Datadog recommends using a matching version with the Browser Logs SDK if you are collecting logs.
+: This method is recommended for modern web applications. The RUM Browser SDK is packaged with the rest of your front-end JavaScript code. It has no impact on page load performance. However, the SDK may miss errors, resources, and user actions triggered before the SDK is initialized. Datadog recommends using a matching version with the Browser Logs SDK.
 
 CDN async
 : This method is recommended for web applications with performance targets. The RUM Browser SDK loads from our CDN asynchronously, ensuring the SDK download does not impact page load performance. However, the SDK may miss errors, resources, and user actions triggered before the SDK is initialized.
@@ -39,6 +39,29 @@ Add [`@datadog/browser-rum`][4] to your `package.json` file, then initialize it 
 
 <details open>
   <summary>Latest version</summary>
+
+```javascript
+import { datadogRum } from '@datadog/browser-rum'
+
+datadogRum.init({
+  applicationId: '<DATADOG_APPLICATION_ID>',
+  clientToken: '<DATADOG_CLIENT_TOKEN>',
+  site: '<DATADOG_SITE>',
+  //  service: 'my-web-application',
+  //  env: 'production',
+  //  version: '1.0.0',
+  sampleRate: 100,
+  sessionReplaySampleRate: 100, // if not included, the default is 100
+  trackResources: true,
+  trackLongTasks: true,
+  trackInteractions: true,
+})
+```
+
+</details>
+
+<details>
+  <summary>before <code>v4.20.0</code></summary>
 
 ```javascript
 import { datadogRum } from '@datadog/browser-rum'
@@ -87,6 +110,37 @@ Add the generated code snippet to the head tag of every HTML page you want to mo
 
 <details open>
   <summary>Latest version</summary>
+
+<!-- prettier-ignore -->
+```html
+<script>
+  (function(h,o,u,n,d) {
+     h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}}
+     d=o.createElement(u);d.async=1;d.src=n
+     n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
+  })(window,document,'script','https://www.datadoghq-browser-agent.com/datadog-rum-v4.js','DD_RUM')
+  DD_RUM.onReady(function() {
+    DD_RUM.init({
+      clientToken: '<CLIENT_TOKEN>',
+      applicationId: '<APPLICATION_ID>',
+      site: '<DATADOG_SITE>',
+      //  service: 'my-web-application',
+      //  env: 'production',
+      //  version: '1.0.0',
+      sampleRate: 100,
+      sessionReplaySampleRate: 100, // if not included, the default is 100
+      trackResources: true,
+      trackLongTasks: true,
+      trackInteractions: true,
+    })
+  })
+</script>
+```
+
+</details>
+
+<details>
+  <summary>before<code>v4.20.0</code></summary>
 
 <!-- prettier-ignore -->
 ```html
@@ -166,6 +220,31 @@ Add the generated code snippet to the head tag (in front of any other script tag
       //  env: 'production',
       //  version: '1.0.0',
       sampleRate: 100,
+      sessionReplaySampleRate: 100, // if not included, the default is 100
+      trackResources: true,
+      trackLongTasks: true,
+      trackInteractions: true,
+    })
+</script>
+```
+
+</details>
+
+<details>
+  <summary>before<code>v4.20.0</code></summary>
+
+```html
+<script src="https://www.datadoghq-browser-agent.com/datadog-rum-v4.js" type="text/javascript"></script>
+<script>
+  window.DD_RUM &&
+    window.DD_RUM.init({
+      clientToken: '<CLIENT_TOKEN>',
+      applicationId: '<APPLICATION_ID>',
+      site: '<DATADOG_SITE>',
+      //  service: 'my-web-application',
+      //  env: 'production',
+      //  version: '1.0.0',
+      sampleRate: 100,
       premiumSampleRate: 100, // if not included, the default is 100
       trackInteractions: true,
     })
@@ -213,7 +292,9 @@ window.DD_RUM.init({
   clientToken: 'XXX',
   site: 'datadoghq.com',
   sampleRate: 100,
-  premiumSampleRate: 100,
+  sessionReplaySampleRate: 100, // if not included, the default is 100
+  trackResources: true,
+  trackLongTasks: true,
 })
 ```
 
@@ -221,7 +302,7 @@ window.DD_RUM.init({
 
 ### Initialization parameters
 
-The following parameters are available:
+Call the initialization command to start tracking. The following parameters are available:
 
 `applicationId`
 : Required<br/>
@@ -272,6 +353,18 @@ Enables [automatic collection of users actions][6].
 **Default**: `false` <br/>
 Enables [automatic collection of user frustrations][20]. Implies `trackInteractions: true`.
 
+`trackResources`
+: Optional<br/>
+**Type**: Boolean<br/>
+**Default**: `false` <br/>
+Enables collection of resource events.
+
+`trackLongTasks`
+: Optional<br/>
+**Type**: Boolean<br/>
+**Default**: `false` <br/>
+Enables collection of long task events.
+
 `defaultPrivacyLevel`
 : Optional<br/>
 **Type**: String<br/>
@@ -287,19 +380,25 @@ Specify your own attribute to be used to [name actions][9].
 : Optional<br/>
 **Type**: Number<br/>
 **Default**: `100`<br/>
-The percentage of sessions to track: `100` for all, `0` for none. Only tracked sessions send RUM events. For more details about `sampleRate`, see the [sampling configuration](#browser-and-browser-premium-sampling-configuration).
+The percentage of sessions to track: `100` for all, `0` for none. Only tracked sessions send RUM events. For more details about `sampleRate`, see the [sampling configuration][21].
 
 `replaySampleRate`
 : Optional - **Deprecated**<br/>
 **Type**: Number<br/>
 **Default**: `100`<br/>
-See `premiumSampleRate`.
+See `sessionReplaySampleRate`.
 
 `premiumSampleRate`
+: Optional - **Deprecated**<br/>
+**Type**: Number<br/>
+**Default**: `100`<br/>
+See `sessionReplaySampleRate`.
+
+`sessionReplaySampleRate`
 : Optional<br/>
 **Type**: Number<br/>
 **Default**: `100`<br/>
-The percentage of tracked sessions with [Browser Premium pricing][11] features: `100` for all, `0` for none. For more details about `premiumSampleRate`, see the [sampling configuration](#browser-and-browser-premium-sampling-configuration).
+The percentage of tracked sessions with [Browser RUM & Session Replay pricing][11] features: `100` for all, `0` for none. For more details about `sessionReplaySampleRate`, see the [sampling configuration][21].
 
 `silentMultipleInit`
 : Optional<br/>
@@ -334,7 +433,7 @@ Telemetry data (such as errors and debug logs) about SDK execution is sent to Da
 **Type:** List<br/>
 A list of request origins ignored when computing the page activity. See [How page activity is calculated][16].
 
-Options that must have matching configuration when also using the Logs Browser SDK:
+Options that must have matching configuration when you are using the Logs Browser SDK:
 
 `trackSessionAcrossSubdomains`
 : Optional<br/>
@@ -354,128 +453,6 @@ Use a secure session cookie. This disables RUM events sent on insecure (non-HTTP
 **Default**:`false`<br/>
 Use a secure cross-site session cookie. This allows the RUM Browser SDK to run when the site is loaded from another one (iframe). Implies `useSecureSessionCookie`.
 
-Call the initialization command to start tracking:
-
-```
-init(configuration: {
-    applicationId: string,
-    clientToken: string,
-    site?: string,
-    sampleRate?: number,
-    silentMultipleInit?: boolean,
-    trackInteractions?: boolean,
-    service?: string,
-    env?: string,
-    version?: string,
-    allowedTracingOrigins?: Array<String|Regexp>,
-    trackSessionAcrossSubdomains?: boolean,
-    useSecureSessionCookie?: boolean,
-    useCrossSiteSessionCookie?: boolean,
-})
-```
-
-### Browser and Browser Premium sampling configuration
-
-This feature requires the RUM Browser SDK v3.0.0+.
-
-<blockquote class="alert alert-info">
-The RUM Browser SDK v4.10.2 introduces the <code>premiumSampleRate</code> initialization parameter, deprecating the <code>replaySampleRate</code> initialization parameter.
-</blockquote>
-
-When a session is created, RUM tracks it as either:
-
-- [**Browser RUM**][11]: Only sessions, views, actions, and errors are collected. Calls to `startSessionReplayRecording()` are ignored.
-- [**Browser Premium**][11]: Everything from Browser is collected, including resources, long tasks, and replay recordings. To collect replay recordings, call `startSessionReplayRecording()`.
-
-Two initialization parameters are available to control how the session is tracked:
-
-- `sampleRate` controls the percentage of overall sessions being tracked. It defaults to `100%`, so every session is tracked by default.
-- `premiumSampleRate` is applied **after** the overall sample rate, and controls the percentage of sessions tracked as Browser Premium. It defaults to `100%`, so every session is tracked as Browser Premium by default.
-
-To track 100% of your sessions as Browser:
-
-<details open>
-  <summary>Latest version</summary>
-
-```
-datadogRum.init({
-    ....
-    sampleRate: 100,
-    premiumSampleRate: 0
-});
-```
-
-</details>
-
-<details>
-  <summary>before<code>v4.10.2</code></summary>
-
-```
-datadogRum.init({
-    ....
-    sampleRate: 100,
-    replaySampleRate: 0
-});
-```
-
-</details>
-
-To track 100% of your sessions as Browser Premium:
-
-<details open="false">
-  <summary>Latest version</summary>
-
-```
-datadogRum.init({
-    ....
-    sampleRate: 100,
-    premiumSampleRate: 100
-});
-```
-
-</details>
-
-<details>
-  <summary>before<code>v4.10.2</code></summary>
-
-```
-datadogRum.init({
-    ....
-    sampleRate: 100,
-    replaySampleRate: 100
-});
-```
-
-</details>
-
-The `premiumSampleRate` is a percentage of `sampleRate`. If you set `sampleRate` to 60 and `premiumSampleRate` to 50, 40% of sessions are dropped, 30% of sessions are collected as Browser and 30% of sessions are collected as Browser Premium.
-
-<details open>
-  <summary>Latest version</summary>
-
-```
-datadogRum.init({
-    ....
-    sampleRate: 60,
-    premiumSampleRate: 50
-});
-```
-
-</details>
-
-<details>
-  <summary>before<code>v4.10.2</code></summary>
-
-```
-datadogRum.init({
-    ....
-    sampleRate: 60,
-    replaySampleRate: 50
-});
-```
-
-</details>
-
 ### Tagging
 
 A service is an independent, deployable code repository that maps to a set of pages.
@@ -485,16 +462,18 @@ A service is an independent, deployable code repository that maps to a set of pa
 
 ### Access internal context
 
-After the Datadog browser RUM SDK is initialized, you can access the internal context of the SDK. This allows you to access:
+After the Datadog browser RUM SDK is initialized, you can access the internal context of the SDK.
 
-| Attribute      | Description                                                   |
-| -------------- | ------------------------------------------------------------- |
-| application_id | ID of the application                                         |
-| session_id     | ID of the session                                             |
-| user_action    | Object containing action ID (or undefined if no action found) |
-| view           | Object containing details about the current view event        |
+You can explore the following attributes:
 
-More details can be found on the [**RUM Browser Data Collected** page][2].
+| Attribute      | Description                                                       |
+| -------------- | ----------------------------------------------------------------- |
+| application_id | ID of the application.                                            |
+| session_id     | ID of the session.                                                |
+| user_action    | Object containing action ID (or undefined if no action is found). |
+| view           | Object containing details about the current view event.           |
+
+For more information, see [RUM Browser Data Collected][2].
 
 #### Example
 
@@ -512,13 +491,13 @@ More details can be found on the [**RUM Browser Data Collected** page][2].
 }
 ```
 
+You can optionally use `startTime` parameter to get the context of a specific time. If the parameter is omitted, the current context is returned.
+
 ```
 getInternalContext (startTime?: 'number' | undefined)
 ```
 
-You can optionally use `startTime` parameter to get the context of a specific time. If the parameter is omitted, the current context is returned.
-
-##### NPM
+#### NPM
 
 For NPM, use:
 
@@ -538,7 +517,7 @@ DD_RUM.onReady(function () {
 })
 ```
 
-##### CDN sync
+#### CDN sync
 
 For CDN sync, use:
 
@@ -546,7 +525,7 @@ For CDN sync, use:
 window.DD_RUM && window.DD_RUM.getInternalContext() // { session_id: "xxxx", application_id: "xxxx" ... }
 ```
 
-## Further Reading
+## Further reading
 
 {{< partial name="whats-next/whats-next.html" >}}
 
@@ -560,7 +539,7 @@ window.DD_RUM && window.DD_RUM.getInternalContext() // { session_id: "xxxx", app
 [6]: https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions
 [7]: https://docs.datadoghq.com/real_user_monitoring/guide/proxy-rum-data/
 [8]: https://github.com/DataDog/browser-sdk/blob/main/packages/rum/BROWSER_SUPPORT.md
-[9]: https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions#declaring-a-name-for-click-actions
+[9]: https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions/#declare-a-name-for-click-actions
 [10]: https://docs.datadoghq.com/real_user_monitoring/browser/modifying_data_and_context/?tab=npm#override-default-rum-view-names
 [11]: https://www.datadoghq.com/pricing/?product=real-user-monitoring--session-replay#real-user-monitoring--session-replay
 [12]: https://docs.datadoghq.com/real_user_monitoring/connect_rum_and_traces?tab=browserrum
@@ -572,3 +551,4 @@ window.DD_RUM && window.DD_RUM.getInternalContext() // { session_id: "xxxx", app
 [18]: https://docs.datadoghq.com/real_user_monitoring/session_replay/privacy_options
 [19]: https://docs.datadoghq.com/getting_started/tagging/using_tags
 [20]: https://docs.datadoghq.com/real_user_monitoring/frustration_signals/
+[21]: https://docs.datadoghq.com/real_user_monitoring/guide/sampling-browser-plans/

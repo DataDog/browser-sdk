@@ -60,6 +60,7 @@ function processViewUpdate(
         count: view.eventCounts.frustrationCount,
       },
       cumulative_layout_shift: view.cumulativeLayoutShift,
+      first_byte: toServerDuration(view.timings.firstByte),
       dom_complete: toServerDuration(view.timings.domComplete),
       dom_content_loaded: toServerDuration(view.timings.domContentLoaded),
       dom_interactive: toServerDuration(view.timings.domInteractive),

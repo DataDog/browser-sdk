@@ -48,13 +48,9 @@ describe('getActionNameFromElement', () => {
   it('limits the name length to a reasonable size', () => {
     expect(
       getActionNameFromElement(
-        // eslint-disable-next-line  max-len
         isolatedDom.element`<div>Foooooooooooooooooo baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaar baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaz</div>`
       )
-    ).toBe(
-      // eslint-disable-next-line  max-len
-      'Foooooooooooooooooo baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa [...]'
-    )
+    ).toBe('Foooooooooooooooooo baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa [...]')
   })
 
   it('normalize white spaces', () => {
@@ -305,7 +301,6 @@ describe('getActionNameFromElement', () => {
       ).toBe('Foo')
     })
 
-    // eslint-disable-next-line max-len
     it('remove children with programmatic action name in textual content based on the user-configured attribute', () => {
       expect(
         getActionNameFromElement(

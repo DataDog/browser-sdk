@@ -499,6 +499,12 @@ Error: foo
     })
   })
 
+  it('should not include error message into stacktrace ', () => {
+    const stackFrames = computeStackTrace(new Error('bar@http://path/to/file.js:1:1'))
+
+    expect(stackFrames.stack[0]?.url).not.toBe('http://path/to/file.js')
+  })
+
   it('should parse Chrome anonymous function errors', () => {
     const stack = `Error: RTE Simulation
     at https://datadoghq.com/somefile.js:8489:191
@@ -921,9 +927,7 @@ Error: foo
       column: 41,
       func: 'this',
       line: 74,
-      url:
-        // eslint-disable-next-line  max-len
-        '/home/username/sample-workspace/sampleapp.collect.react/node_modules/react-native/Libraries/Renderer/src/renderers/native/ReactNativeBaseComponent.js',
+      url: '/home/username/sample-workspace/sampleapp.collect.react/node_modules/react-native/Libraries/Renderer/src/renderers/native/ReactNativeBaseComponent.js',
     })
   })
 

@@ -1,6 +1,7 @@
 import type { Clock } from '../../test/specHelper'
 import { mockClock } from '../../test/specHelper'
-import type { RelativeTime } from './timeUtils'
+import type { Duration, RelativeTime } from './timeUtils'
+import { addDuration } from './timeUtils'
 import { ONE_MINUTE } from './utils'
 import { CLEAR_OLD_CONTEXTS_INTERVAL, ContextHistory } from './contextHistory'
 
@@ -115,8 +116,7 @@ describe('contextHistory', () => {
 
   it('should clear old contexts', () => {
     const originalTime = performance.now() as RelativeTime
-    // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-    contextHistory.add('foo', originalTime).close((originalTime + 10) as RelativeTime)
+    contextHistory.add('foo', originalTime).close(addDuration(originalTime, 10 as Duration))
     clock.tick(10)
 
     expect(contextHistory.find(originalTime)).toBeDefined()

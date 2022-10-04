@@ -1,5 +1,5 @@
 import type { Context, RelativeTime, Duration } from '@datadog/browser-core'
-import { relativeNow } from '@datadog/browser-core'
+import { addDuration, relativeNow } from '@datadog/browser-core'
 import type { RumEvent } from '../../../rumEvent.types'
 import type { TestSetupBuilder, ViewTest } from '../../../../test/specHelper'
 import { setup, setupViewTest } from '../../../../test/specHelper'
@@ -15,6 +15,7 @@ const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = (PAGE_ACTIVITY_VALIDATION_DELAY * 
 const AFTER_PAGE_ACTIVITY_END_DELAY = PAGE_ACTIVITY_END_DELAY * 1.1
 
 const FAKE_NAVIGATION_ENTRY: RumPerformanceNavigationTiming = {
+  responseStart: 123 as RelativeTime,
   domComplete: 456 as RelativeTime,
   domContentLoadedEventEnd: 345 as RelativeTime,
   domInteractive: 234 as RelativeTime,
@@ -23,6 +24,7 @@ const FAKE_NAVIGATION_ENTRY: RumPerformanceNavigationTiming = {
 }
 
 const FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_BEFORE_ACTIVITY_TIMING: RumPerformanceNavigationTiming = {
+  responseStart: 1 as RelativeTime,
   domComplete: 2 as RelativeTime,
   domContentLoadedEventEnd: 1 as RelativeTime,
   domInteractive: 1 as RelativeTime,
@@ -31,6 +33,7 @@ const FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_BEFORE_ACTIVITY_TIMING: RumPerformanc
 }
 
 const FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING: RumPerformanceNavigationTiming = {
+  responseStart: 1 as RelativeTime,
   domComplete: 2 as RelativeTime,
   domContentLoadedEventEnd: 1 as RelativeTime,
   domInteractive: 1 as RelativeTime,
@@ -120,7 +123,6 @@ describe('rum track view metrics', () => {
       )
     })
 
-    // eslint-disable-next-line max-len
     it('should use computed loading time for initial view when load event is smaller than computed loading time', () => {
       const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
       const { getViewUpdate, getViewUpdateCount } = viewTest
@@ -143,10 +145,9 @@ describe('rum track view metrics', () => {
       // introduce a gap between time origin and tracking start
       // ensure that `load event > activity delay` and `load event < activity delay + clock gap`
       // to make the test fail if the clock gap is not correctly taken into account
-      const CLOCK_GAP =
-        FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING.loadEventEnd -
+      const CLOCK_GAP = (FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING.loadEventEnd -
         BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY +
-        1
+        1) as Duration
 
       setupBuilder.clock!.tick(CLOCK_GAP)
 
@@ -167,8 +168,7 @@ describe('rum track view metrics', () => {
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
       expect(getViewUpdateCount()).toEqual(2)
-      // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-      expect(getViewUpdate(1).loadingTime).toEqual((BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY + CLOCK_GAP) as Duration)
+      expect(getViewUpdate(1).loadingTime).toEqual(addDuration(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY, CLOCK_GAP))
     })
   })
 
@@ -336,6 +336,8 @@ describe('rum track view metrics', () => {
 
   describe('cumulativeLayoutShift', () => {
     let isLayoutShiftSupported: boolean
+    let originalSupportedEntryTypes: PropertyDescriptor | undefined
+
     function newLayoutShift(lifeCycle: LifeCycle, { value = 0.1, hadRecentInput = false }) {
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
         {
@@ -351,10 +353,17 @@ describe('rum track view metrics', () => {
       if (!('PerformanceObserver' in window) || !('supportedEntryTypes' in PerformanceObserver)) {
         pending('No PerformanceObserver support')
       }
+      originalSupportedEntryTypes = Object.getOwnPropertyDescriptor(PerformanceObserver, 'supportedEntryTypes')
       isLayoutShiftSupported = true
-      spyOnProperty(PerformanceObserver, 'supportedEntryTypes', 'get').and.callFake(() =>
-        isLayoutShiftSupported ? ['layout-shift'] : []
-      )
+      Object.defineProperty(PerformanceObserver, 'supportedEntryTypes', {
+        get: () => (isLayoutShiftSupported ? ['layout-shift'] : []),
+      })
+    })
+
+    afterEach(() => {
+      if (originalSupportedEntryTypes) {
+        Object.defineProperty(PerformanceObserver, 'supportedEntryTypes', originalSupportedEntryTypes)
+      }
     })
 
     it('should be initialized to 0', () => {

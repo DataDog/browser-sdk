@@ -1,5 +1,5 @@
 import type { RelativeTime, Duration } from '@datadog/browser-core'
-import { addEventListener, DOM_EVENT, elapsed, relativeNow, toServerDuration } from '@datadog/browser-core'
+import { addDuration, addEventListener, DOM_EVENT, elapsed, relativeNow, toServerDuration } from '@datadog/browser-core'
 import type { InForegroundPeriod } from '../../rawRumEvent.types'
 
 // Arbitrary value to cap number of element mostly for backend & to save bandwidth
@@ -99,8 +99,7 @@ function isInForegroundAt(startTime: RelativeTime): boolean {
 }
 
 function selectInForegroundPeriodsFor(eventStartTime: RelativeTime, duration: Duration): InForegroundPeriod[] {
-  // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-  const eventEndTime = (eventStartTime + duration) as RelativeTime
+  const eventEndTime = addDuration(eventStartTime, duration)
   const filteredForegroundPeriods: InForegroundPeriod[] = []
 
   const earliestIndex = Math.max(0, foregroundPeriods.length - MAX_NUMBER_OF_SELECTABLE_FOREGROUND_PERIODS)

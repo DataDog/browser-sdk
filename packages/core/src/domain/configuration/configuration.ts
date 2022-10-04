@@ -2,7 +2,7 @@ import type { CookieOptions } from '../../browser/cookie'
 import { getCurrentSite } from '../../browser/cookie'
 import { catchUserErrors } from '../../tools/catchUserErrors'
 import { display } from '../../tools/display'
-import { assign, isPercentage, ONE_KILO_BYTE, ONE_SECOND } from '../../tools/utils'
+import { assign, isPercentage, ONE_KIBI_BYTE, ONE_SECOND } from '../../tools/utils'
 import { updateExperimentalFeatures } from './experimentalFeatures'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
@@ -104,7 +104,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
        * beacon payload max queue size implementation is 64kb
        * ensure that we leave room for logs, rum and potential other users
        */
-      batchBytesLimit: 16 * ONE_KILO_BYTE,
+      batchBytesLimit: 16 * ONE_KIBI_BYTE,
 
       eventRateLimiterThreshold: 3000,
       maxTelemetryEventsPerPage: 15,
@@ -119,7 +119,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
        * Logs intake limit
        */
       batchMessagesLimit: 50,
-      messageBytesLimit: 256 * ONE_KILO_BYTE,
+      messageBytesLimit: 256 * ONE_KIBI_BYTE,
     },
     computeTransportConfiguration(initConfiguration)
   )

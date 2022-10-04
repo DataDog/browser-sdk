@@ -15,6 +15,9 @@ import { createMockServerApp } from './serverApps/mock'
 const DEFAULT_RUM_CONFIGURATION = {
   applicationId: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
   clientToken: 'token',
+  sessionReplaySampleRate: 100,
+  trackResources: true,
+  trackLongTasks: true,
   telemetrySampleRate: 100,
   enableExperimentalFeatures: [],
 }

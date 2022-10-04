@@ -1,100 +1,230 @@
-/* eslint-disable @typescript-eslint/unbound-method */
-import sinon from 'sinon'
-import { stubEndpointBuilder } from '../../test/specHelper'
+import { stubEndpointBuilder, interceptRequests } from '../../test/specHelper'
+import type { Request } from '../../test/specHelper'
 import type { EndpointBuilder } from '../domain/configuration'
 import { createEndpointBuilder } from '../domain/configuration'
-import { HttpRequest } from './httpRequest'
+import { noop } from '../tools/utils'
+import { createHttpRequest, fetchKeepAliveStrategy } from './httpRequest'
+import type { HttpRequest } from './httpRequest'
 
 describe('httpRequest', () => {
   const BATCH_BYTES_LIMIT = 100
-  let server: sinon.SinonFakeServer
+  const ENDPOINT_URL = 'http://my.website'
+  let interceptor: ReturnType<typeof interceptRequests>
+  let requests: Request[]
   let endpointBuilder: EndpointBuilder
   let request: HttpRequest
-  const ENDPOINT_URL = 'http://my.website'
 
   beforeEach(() => {
-    server = sinon.fakeServer.create()
+    interceptor = interceptRequests()
+    requests = interceptor.requests
     endpointBuilder = stubEndpointBuilder(ENDPOINT_URL)
-    request = new HttpRequest(endpointBuilder, BATCH_BYTES_LIMIT)
+    request = createHttpRequest(endpointBuilder, BATCH_BYTES_LIMIT, noop)
   })
 
   afterEach(() => {
-    server.restore()
+    interceptor.restore()
   })
 
-  it('should use xhr when sendBeacon is not defined', () => {
-    request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
+  describe('send', () => {
+    it('should use xhr when fetch keepalive is not available', () => {
+      interceptor.withRequest(false)
 
-    expect(server.requests.length).toEqual(1)
-    expect(server.requests[0].url).toContain(ENDPOINT_URL)
-    expect(server.requests[0].requestBody).toEqual('{"foo":"bar1"}\n{"foo":"bar2"}')
-  })
+      request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
 
-  it('should use sendBeacon when the bytes count is correct', () => {
-    spyOn(navigator, 'sendBeacon').and.callFake(() => true)
-
-    request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
-
-    expect(navigator.sendBeacon).toHaveBeenCalled()
-  })
-
-  it('should use xhr over sendBeacon when the bytes count is too high', () => {
-    spyOn(navigator, 'sendBeacon').and.callFake(() => true)
-
-    request.send('{"foo":"bar1"}\n{"foo":"bar2"}', BATCH_BYTES_LIMIT)
-
-    expect(server.requests.length).toEqual(1)
-    expect(server.requests[0].url).toContain(ENDPOINT_URL)
-    expect(server.requests[0].requestBody).toEqual('{"foo":"bar1"}\n{"foo":"bar2"}')
-  })
-
-  it('should fallback to xhr when sendBeacon is not queued', () => {
-    spyOn(navigator, 'sendBeacon').and.callFake(() => false)
-
-    request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
-
-    expect(navigator.sendBeacon).toHaveBeenCalled()
-    expect(server.requests.length).toEqual(1)
-  })
-
-  it('should fallback to xhr when sendBeacon throws', () => {
-    spyOn(navigator, 'sendBeacon').and.callFake(() => {
-      throw new TypeError()
+      expect(requests.length).toEqual(1)
+      expect(requests[0].type).toBe('xhr')
+      expect(requests[0].url).toContain(ENDPOINT_URL)
+      expect(requests[0].body).toEqual('{"foo":"bar1"}\n{"foo":"bar2"}')
     })
 
-    request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
+    it('should use fetch keepalive when the bytes count is correct', () => {
+      if (!interceptor.isFetchKeepAliveSupported()) {
+        pending('no fetch keepalive support')
+      }
 
-    expect(navigator.sendBeacon).toHaveBeenCalled()
-    expect(server.requests.length).toEqual(1)
+      request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
+
+      expect(requests.length).toEqual(1)
+      expect(requests[0].type).toBe('fetch')
+    })
+
+    it('should use xhr over fetch keepalive when the bytes count is too high', () => {
+      request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: BATCH_BYTES_LIMIT })
+
+      expect(requests.length).toEqual(1)
+      expect(requests[0].type).toBe('xhr')
+    })
+
+    it('should fallback to xhr when fetch keepalive is not queued', (done) => {
+      if (!interceptor.isFetchKeepAliveSupported()) {
+        pending('no fetch keepalive support')
+      }
+      let notQueuedFetch: Promise<never>
+      interceptor.withFetch(() => {
+        notQueuedFetch = Promise.reject()
+        return notQueuedFetch
+      })
+
+      request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
+
+      notQueuedFetch!.catch(() => {
+        expect(requests.length).toEqual(1)
+        expect(requests[0].type).toBe('xhr')
+        done()
+      })
+    })
+  })
+
+  describe('fetchKeepAliveStrategy onResponse', () => {
+    it('should be called with intake response when fetch is used', (done) => {
+      if (!interceptor.isFetchKeepAliveSupported()) {
+        pending('no fetch keepalive support')
+      }
+
+      interceptor.withFetch(() => Promise.resolve({ status: 429 }))
+
+      fetchKeepAliveStrategy(
+        endpointBuilder,
+        BATCH_BYTES_LIMIT,
+        { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 },
+        (response) => {
+          expect(response).toEqual({ status: 429 })
+          done()
+        }
+      )
+    })
+
+    it('should be called with intake response when fallback to xhr due fetch not queued', (done) => {
+      if (!interceptor.isFetchKeepAliveSupported()) {
+        pending('no fetch keepalive support')
+      }
+
+      interceptor.withFetch(() => Promise.reject())
+      interceptor.withStubXhr((xhr) => {
+        setTimeout(() => {
+          xhr.complete(429)
+        })
+      })
+
+      fetchKeepAliveStrategy(
+        endpointBuilder,
+        BATCH_BYTES_LIMIT,
+        { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 },
+        (response) => {
+          expect(response).toEqual({ status: 429 })
+          done()
+        }
+      )
+    })
+
+    it('should be called with intake response when fallback to xhr due to size', (done) => {
+      interceptor.withStubXhr((xhr) => {
+        setTimeout(() => {
+          xhr.complete(429)
+        })
+      })
+
+      fetchKeepAliveStrategy(
+        endpointBuilder,
+        BATCH_BYTES_LIMIT,
+        { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: BATCH_BYTES_LIMIT },
+        (response) => {
+          expect(response).toEqual({ status: 429 })
+          done()
+        }
+      )
+    })
+  })
+
+  describe('sendOnExit', () => {
+    it('should use xhr when sendBeacon is not defined', () => {
+      interceptor.withSendBeacon(false)
+
+      request.sendOnExit({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
+
+      expect(requests.length).toEqual(1)
+      expect(requests[0].type).toBe('xhr')
+      expect(requests[0].url).toContain(ENDPOINT_URL)
+      expect(requests[0].body).toEqual('{"foo":"bar1"}\n{"foo":"bar2"}')
+    })
+
+    it('should use sendBeacon when the bytes count is correct', () => {
+      if (!interceptor.isSendBeaconSupported()) {
+        pending('no sendBeacon support')
+      }
+
+      request.sendOnExit({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
+
+      expect(requests.length).toEqual(1)
+      expect(requests[0].type).toBe('sendBeacon')
+    })
+
+    it('should use xhr over sendBeacon when the bytes count is too high', () => {
+      request.sendOnExit({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: BATCH_BYTES_LIMIT })
+
+      expect(requests.length).toEqual(1)
+      expect(requests[0].type).toBe('xhr')
+    })
+
+    it('should fallback to xhr when sendBeacon is not queued', () => {
+      if (!interceptor.isSendBeaconSupported()) {
+        pending('no sendBeacon support')
+      }
+      interceptor.withSendBeacon(() => false)
+
+      request.sendOnExit({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
+
+      expect(requests.length).toEqual(1)
+      expect(requests[0].type).toBe('xhr')
+    })
+
+    it('should fallback to xhr when sendBeacon throws', () => {
+      if (!interceptor.isSendBeaconSupported()) {
+        pending('no sendBeacon support')
+      }
+      let sendBeaconCalled = false
+      interceptor.withSendBeacon(() => {
+        sendBeaconCalled = true
+        throw new TypeError()
+      })
+
+      request.sendOnExit({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
+
+      expect(sendBeaconCalled).toBe(true)
+      expect(requests.length).toEqual(1)
+      expect(requests[0].type).toBe('xhr')
+    })
   })
 })
 
 describe('httpRequest intake parameters', () => {
   const clientToken = 'some_client_token'
   const BATCH_BYTES_LIMIT = 100
-  let server: sinon.SinonFakeServer
+  let interceptor: ReturnType<typeof interceptRequests>
+  let requests: Request[]
   let endpointBuilder: EndpointBuilder
   let request: HttpRequest
 
   beforeEach(() => {
-    server = sinon.fakeServer.create()
+    interceptor = interceptRequests()
+    requests = interceptor.requests
     endpointBuilder = createEndpointBuilder({ clientToken }, 'logs', [])
-    request = new HttpRequest(endpointBuilder, BATCH_BYTES_LIMIT)
+    request = createHttpRequest(endpointBuilder, BATCH_BYTES_LIMIT, noop)
   })
 
   afterEach(() => {
-    server.restore()
+    interceptor.restore()
   })
 
   it('should have a unique request id', () => {
-    request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
-    request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
+    request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
+    request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
 
     const search = /dd-request-id=([^&]*)/
-    const requestId1 = search.exec(server.requests[0].url)?.[1]
-    const requestId2 = search.exec(server.requests[1].url)?.[1]
+    const requestId1 = search.exec(requests[0].url)?.[1]
+    const requestId2 = search.exec(requests[1].url)?.[1]
 
     expect(requestId1).not.toBe(requestId2)
-    expect(server.requests.length).toEqual(2)
+    expect(requests.length).toEqual(2)
   })
 })

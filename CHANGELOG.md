@@ -18,6 +18,72 @@
 
 ---
 
+## v4.21.1
+
+- 🐛 npm publish: skip publish confirmation ([#1755](https://github.com/DataDog/browser-sdk/pull/1755))
+
+## v4.21.0
+
+- ✨ [RUMF-1353] Collect error causes ([#1740](https://github.com/DataDog/browser-sdk/pull/1740))
+- 🐛 [RUMF-1276] handle performance entry without `toJSON` ([#1751](https://github.com/DataDog/browser-sdk/pull/1751))
+- 🐛 handle undefined policy ([#1752](https://github.com/DataDog/browser-sdk/pull/1752))
+
+## v4.20.0
+
+- ✨ [RUMF-1391] Introduce trackResources, trackLongTasks and sessionReplaySampleRate ([#1744](https://github.com/DataDog/browser-sdk/pull/1744))
+- ♻️ [RUMF-1368] use the PointerDown event target for click actions ([#1731](https://github.com/DataDog/browser-sdk/pull/1731))
+- ⚗ [RUMF-1379] use experimented CSS selectors strategies by default ([#1738](https://github.com/DataDog/browser-sdk/pull/1738))
+
+## v4.19.1
+
+- 🐛 [RUMF-1369] Exclude error message from stacktrace parsing ([#1725](https://github.com/DataDog/browser-sdk/pull/1725))
+- 🐛 [RUMF-1384] Filter abnormal TTFB values ([#1729](https://github.com/DataDog/browser-sdk/pull/1729))
+- 🐛 [RUMF-1378] do not mask action name attributes ([#1721](https://github.com/DataDog/browser-sdk/pull/1721))
+- ⚗️ [RUMF-1378] use stable attributes when computing heatmap selector ([#1724](https://github.com/DataDog/browser-sdk/pull/1724))
+- ⚗️ [RUMF-1379] heatmaps: refine selectors pass 2 ([#1726](https://github.com/DataDog/browser-sdk/pull/1726))
+- ⚗️ [RUMF-1351] tweak retry strategy ([#1723](https://github.com/DataDog/browser-sdk/pull/1723))
+- ⚗️ [RUMF-1351] retry request on timeout ([#1728](https://github.com/DataDog/browser-sdk/pull/1728))
+
+## v4.19.0
+
+- ✨ [RUMF-1286] test for expected features before starting recording ([#1719](https://github.com/DataDog/browser-sdk/pull/1719))
+- ✨ [RUMF-1371] Collect view time to first byte ([#1717](https://github.com/DataDog/browser-sdk/pull/1717))
+- 📝 Fix `actionNameAttribute` broken link ([#1708](https://github.com/DataDog/browser-sdk/pull/1708))
+- ⚗️🔉 [RUMF-1351] add error when reaching max events size queued for upload ([#1716](https://github.com/DataDog/browser-sdk/pull/1716))
+- ⚗️🔉 [RUMF-1351] retry: add extra context to queue full log ([#1714](https://github.com/DataDog/browser-sdk/pull/1714))
+- ⚗️✨[RUMF-1351] experiment request retry strategy ([#1700](https://github.com/DataDog/browser-sdk/pull/1700))
+
+## v4.18.1
+
+- 🐛 [RUMF-1333] fix keepalive support check ([#1712](https://github.com/DataDog/browser-sdk/pull/1712))
+
+## v4.18.0
+
+- ✨ [RUMF-1306] Send the tracing sample rate in rule_psr for resources ([#1669](https://github.com/DataDog/browser-sdk/pull/1669)), ([#1705](https://github.com/DataDog/browser-sdk/pull/1705))
+- ✨ [RUMF-1333] Send request with fetch keepalive + fallback ([#1701](https://github.com/DataDog/browser-sdk/pull/1701)), ([#1682](https://github.com/DataDog/browser-sdk/pull/1682))
+- ✨ [RUMF-1309] Implement nested CSS support ([#1699](https://github.com/DataDog/browser-sdk/pull/1699))
+- 🐛 Fix instrumention of null function with 3rd party wrapper ([#1570](https://github.com/DataDog/browser-sdk/pull/1570)) ([#1697](https://github.com/DataDog/browser-sdk/pull/1697))
+
+## v4.17.2
+
+- 🐛 [RUMF-1344] scroll positions: remove fallback for null scrollingElement ([#1694](https://github.com/DataDog/browser-sdk/pull/1694))
+- ⚗️ [RUMF-1356] selectors using stable attributes and no class names ([#1689](https://github.com/DataDog/browser-sdk/pull/1689))
+- 👷 [RUMF-1357] Add a peer dependency between rum and logs packages ([#1668](https://github.com/DataDog/browser-sdk/pull/1668))
+
+## v4.17.1
+
+- 🐛 [RUMF-1344] try to improve document scrolling element handling ([#1688](https://github.com/DataDog/browser-sdk/pull/1688))
+- ✨⚗ [RUMF-1355] add selector with stable attributes ([#1684](https://github.com/DataDog/browser-sdk/pull/1684))
+
+## v4.17.0
+
+- ✨ [RUMF-1315] Extend user object methods ([#1641](https://github.com/DataDog/browser-sdk/pull/1641))
+- ⚡[RUMF-1344] Serialize scroll positions only for full snapshots ([#1670](https://github.com/DataDog/browser-sdk/pull/1670))
+- ⚡ [RUMF-1344] Access scroll attributes only on initial full snapshot ([#1680](https://github.com/DataDog/browser-sdk/pull/1680))
+- ⚗️ [RUMF-1346] heatmaps: move action event attributes ([#1667](https://github.com/DataDog/browser-sdk/pull/1667))
+- 🐛 [RUMF-1239] Hide placeholder value when privacy set to mask ([#1660](https://github.com/DataDog/browser-sdk/pull/1660))
+- 🐛 fix compatibility check ([#1685](https://github.com/DataDog/browser-sdk/pull/1685))
+
 ## v4.16.1
 
 - 🐛 [RUMF-1274] track request to undefined/null URL ([#1665](https://github.com/DataDog/browser-sdk/pull/1665))

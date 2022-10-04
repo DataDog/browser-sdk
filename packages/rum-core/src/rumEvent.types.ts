@@ -39,18 +39,6 @@ export type RumActionEvent = CommonProperties & {
        * Target name
        */
       name: string
-      /**
-       * CSS selector path of the target element
-       */
-      readonly selector?: string
-      /**
-       * Width of the target element (in pixels)
-       */
-      readonly width?: number
-      /**
-       * Height of the target element (in pixels)
-       */
-      readonly height?: number
       [k: string]: unknown
     }
     /**
@@ -60,21 +48,7 @@ export type RumActionEvent = CommonProperties & {
       /**
        * Action frustration types
        */
-      readonly type: ('rage_click' | 'dead_click' | 'error_click')[]
-      [k: string]: unknown
-    }
-    /**
-     * Action position properties
-     */
-    readonly position?: {
-      /**
-       * X coordinate relative to the target element of the action (in pixels)
-       */
-      readonly x: number
-      /**
-       * Y coordinate relative to the target element of the action (in pixels)
-       */
-      readonly y: number
+      readonly type: ('rage_click' | 'dead_click' | 'error_click' | 'rage_tap' | 'error_tap')[]
       [k: string]: unknown
     }
     /**
@@ -129,6 +103,50 @@ export type RumActionEvent = CommonProperties & {
     readonly in_foreground?: boolean
     [k: string]: unknown
   }
+  /**
+   * Internal properties
+   */
+  _dd?: {
+    /**
+     * Action properties
+     */
+    readonly action?: {
+      /**
+       * Action position properties
+       */
+      readonly position?: {
+        /**
+         * X coordinate relative to the target element of the action (in pixels)
+         */
+        readonly x: number
+        /**
+         * Y coordinate relative to the target element of the action (in pixels)
+         */
+        readonly y: number
+        [k: string]: unknown
+      }
+      /**
+       * Target properties
+       */
+      target?: {
+        /**
+         * CSS selector path of the target element
+         */
+        readonly selector?: string
+        /**
+         * Width of the target element (in pixels)
+         */
+        readonly width?: number
+        /**
+         * Height of the target element (in pixels)
+         */
+        readonly height?: number
+        [k: string]: unknown
+      }
+      [k: string]: unknown
+    }
+    [k: string]: unknown
+  }
   [k: string]: unknown
 }
 /**
@@ -161,6 +179,28 @@ export type RumErrorEvent = CommonProperties &
        */
       stack?: string
       /**
+       * Causes of the error
+       */
+      causes?: {
+        /**
+         * Error message
+         */
+        message: string
+        /**
+         * The type of the error
+         */
+        readonly type?: string
+        /**
+         * Stacktrace of the error
+         */
+        stack?: string
+        /**
+         * Source of the error
+         */
+        readonly source: 'network' | 'source' | 'console' | 'logger' | 'agent' | 'webview' | 'custom' | 'report'
+        [k: string]: unknown
+      }[]
+      /**
        * Whether this error crashed the host application
        */
       readonly is_crash?: boolean
@@ -179,7 +219,7 @@ export type RumErrorEvent = CommonProperties &
       /**
        * Source type of the error (the language or platform impacting the error stacktrace format)
        */
-      readonly source_type?: 'android' | 'browser' | 'ios' | 'react-native' | 'flutter'
+      readonly source_type?: 'android' | 'browser' | 'ios' | 'react-native' | 'flutter' | 'roku'
       /**
        * Resource properties of the error
        */
@@ -269,6 +309,16 @@ export type RumLongTaskEvent = CommonProperties &
        * Whether this long task is considered a frozen frame
        */
       readonly is_frozen_frame?: boolean
+      [k: string]: unknown
+    }
+    /**
+     * Internal properties
+     */
+    readonly _dd?: {
+      /**
+       * Whether the long task should be discarded or indexed
+       */
+      readonly discarded?: boolean
       [k: string]: unknown
     }
     [k: string]: unknown
@@ -455,6 +505,14 @@ export type RumResourceEvent = CommonProperties &
        * trace identifier in decimal format
        */
       readonly trace_id?: string
+      /**
+       * tracing sample rate in decimal format
+       */
+      readonly rule_psr?: number
+      /**
+       * Whether the resource should be discarded or indexed
+       */
+      readonly discarded?: boolean
       [k: string]: unknown
     }
     [k: string]: unknown
@@ -508,7 +566,7 @@ export type RumViewEvent = CommonProperties & {
      */
     readonly first_input_time?: number
     /**
-     * Total layout shift score that occured on the view
+     * Total layout shift score that occurred on the view
      */
     readonly cumulative_layout_shift?: number
     /**
@@ -527,6 +585,10 @@ export type RumViewEvent = CommonProperties & {
      * Duration in ns to the end of the load event handler execution
      */
     readonly load_event?: number
+    /**
+     * Duration in ns to the response start of the document request
+     */
+    readonly first_byte?: number
     /**
      * User custom timings of the view. As timing name is used as facet path, it must contain only letters, digits, or the characters - _ . @ $
      */
@@ -649,6 +711,18 @@ export type RumViewEvent = CommonProperties & {
      * Minimum refresh rate during the view’s lifetime (in frames per second)
      */
     readonly refresh_rate_min?: number
+    /**
+     * Time taken for Flutter 'build' methods.
+     */
+    flutter_build_time?: RumPerfMetric
+    /**
+     * Time taken for Flutter to rasterize the view.
+     */
+    flutter_raster_time?: RumPerfMetric
+    /**
+     * The JavaScript refresh rate for React Native
+     */
+    js_refresh_rate?: RumPerfMetric
     [k: string]: unknown
   }
   /**
@@ -711,7 +785,7 @@ export interface CommonProperties {
   /**
    * The source of this event
    */
-  readonly source?: 'android' | 'ios' | 'browser' | 'flutter' | 'react-native'
+  readonly source?: 'android' | 'ios' | 'browser' | 'flutter' | 'react-native' | 'roku'
   /**
    * View properties
    */
@@ -895,7 +969,7 @@ export interface CommonProperties {
      */
     session?: {
       /**
-       * Session plan: 1 is the 'lite' plan, 2 is the 'replay' plan
+       * Session plan: 1 is the plan without replay, 2 is the plan with replay
        */
       plan: 1 | 2
       [k: string]: unknown
@@ -928,5 +1002,27 @@ export interface ActionChildProperties {
     readonly id: string | string[]
     [k: string]: unknown
   }
+  [k: string]: unknown
+}
+/**
+ * Schema of properties for a technical performance metric
+ */
+export interface RumPerfMetric {
+  /**
+   * The minimum value seen for this metric during the view's lifetime.
+   */
+  readonly min: number
+  /**
+   * The maximum value seen for this metric during the view's lifetime.
+   */
+  readonly max: number
+  /**
+   * The average value for this metric during the view's lifetime.
+   */
+  readonly average: number
+  /**
+   * The maximum possible value we could see for this metric, if such a max is relevant and can vary from session to session.
+   */
+  readonly metric_max?: number
   [k: string]: unknown
 }

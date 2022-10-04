@@ -190,7 +190,7 @@ function validateRumEventFormat(rawRumEvent: RawRumEvent) {
       format_version: 2,
       drift: 0,
       session: {
-        plan: RumSessionPlan.PREMIUM,
+        plan: RumSessionPlan.WITH_SESSION_REPLAY,
       },
     },
     application: {

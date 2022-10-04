@@ -1,6 +1,6 @@
+import type { TimeStamp } from '@datadog/browser-core'
 import { timeStampNow } from '@datadog/browser-core'
-import type { DefaultPrivacyLevel, TimeStamp } from '@datadog/browser-core'
-import type { LifeCycle } from '@datadog/browser-rum-core'
+import type { LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
 import { getViewportDimension } from '@datadog/browser-rum-core'
 import type {
   BrowserMutationData,
@@ -13,22 +13,23 @@ import type {
   ViewportResizeData,
 } from '../../types'
 import { RecordType, IncrementalSource } from '../../types'
-import { serializeDocument } from './serialize'
-import { initObservers } from './observer'
+import { serializeDocument, SerializationContextStatus } from './serialize'
+import { initObservers } from './observers'
 
 import { MutationController } from './mutationObserver'
 import { getVisualViewport, getScrollX, getScrollY } from './viewports'
 import { assembleIncrementalSnapshot } from './utils'
+import { createElementsScrollPositions } from './elementsScrollPositions'
 
 export interface RecordOptions {
   emit?: (record: BrowserRecord) => void
-  defaultPrivacyLevel: DefaultPrivacyLevel
+  configuration: RumConfiguration
   lifeCycle: LifeCycle
 }
 
 export interface RecordAPI {
   stop: () => void
-  takeFullSnapshot: (timestamp?: TimeStamp) => void
+  takeSubsequentFullSnapshot: (timestamp?: TimeStamp) => void
   flushMutations: () => void
 }
 
@@ -40,8 +41,12 @@ export function record(options: RecordOptions): RecordAPI {
   }
 
   const mutationController = new MutationController()
+  const elementsScrollPositions = createElementsScrollPositions()
 
-  const takeFullSnapshot = (timestamp = timeStampNow()) => {
+  const takeFullSnapshot = (
+    timestamp = timeStampNow(),
+    serializationContext = { status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT, elementsScrollPositions }
+  ) => {
     mutationController.flush() // process any pending mutation before taking a full snapshot
     const { width, height } = getViewportDimension()
     emit({
@@ -64,7 +69,7 @@ export function record(options: RecordOptions): RecordAPI {
 
     emit({
       data: {
-        node: serializeDocument(document, options.defaultPrivacyLevel),
+        node: serializeDocument(document, options.configuration, serializationContext),
         initialOffset: {
           left: getScrollX(),
           top: getScrollY(),
@@ -87,8 +92,9 @@ export function record(options: RecordOptions): RecordAPI {
 
   const stopObservers = initObservers({
     lifeCycle: options.lifeCycle,
+    configuration: options.configuration,
     mutationController,
-    defaultPrivacyLevel: options.defaultPrivacyLevel,
+    elementsScrollPositions,
     inputCb: (v) => emit(assembleIncrementalSnapshot<InputData>(IncrementalSource.Input, v)),
     mediaInteractionCb: (p) =>
       emit(assembleIncrementalSnapshot<MediaInteractionData>(IncrementalSource.MediaInteraction, p)),
@@ -96,7 +102,7 @@ export function record(options: RecordOptions): RecordAPI {
     mousemoveCb: (positions, source) => emit(assembleIncrementalSnapshot<MousemoveData>(source, { positions })),
     mutationCb: (m) => emit(assembleIncrementalSnapshot<BrowserMutationData>(IncrementalSource.Mutation, m)),
     scrollCb: (p) => emit(assembleIncrementalSnapshot<ScrollData>(IncrementalSource.Scroll, p)),
-    styleSheetRuleCb: (r) => emit(assembleIncrementalSnapshot<StyleSheetRuleData>(IncrementalSource.StyleSheetRule, r)),
+    styleSheetCb: (r) => emit(assembleIncrementalSnapshot<StyleSheetRuleData>(IncrementalSource.StyleSheetRule, r)),
     viewportResizeCb: (d) => emit(assembleIncrementalSnapshot<ViewportResizeData>(IncrementalSource.ViewportResize, d)),
 
     frustrationCb: (frustrationRecord) => emit(frustrationRecord),
@@ -117,7 +123,11 @@ export function record(options: RecordOptions): RecordAPI {
 
   return {
     stop: stopObservers,
-    takeFullSnapshot,
+    takeSubsequentFullSnapshot: (timestamp) =>
+      takeFullSnapshot(timestamp, {
+        status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT,
+        elementsScrollPositions,
+      }),
     flushMutations: () => mutationController.flush(),
   }
 }

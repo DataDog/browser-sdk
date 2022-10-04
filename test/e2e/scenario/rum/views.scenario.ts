@@ -9,6 +9,7 @@ describe('rum views', () => {
       await flushEvents()
       const viewEvent = serverEvents.rumViews[0]
       expect(viewEvent).toBeDefined()
+      expect(viewEvent.view.first_byte).toBeGreaterThan(0)
       expect(viewEvent.view.dom_complete).toBeGreaterThan(0)
       expect(viewEvent.view.dom_content_loaded).toBeGreaterThan(0)
       expect(viewEvent.view.dom_interactive).toBeGreaterThan(0)

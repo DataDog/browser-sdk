@@ -1,2 +1,3 @@
 export { record } from './record'
-export { serializeNodeWithId, serializeDocument } from './serialize'
+export { serializeNodeWithId, serializeDocument, SerializationContextStatus } from './serialize'
+export { createElementsScrollPositions } from './elementsScrollPositions'

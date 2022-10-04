@@ -1,4 +1,6 @@
-import { assign } from '@datadog/browser-core'
+import { assign, startsWith } from '@datadog/browser-core'
+import type { RumConfiguration } from '@datadog/browser-rum-core'
+import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from '@datadog/browser-rum-core'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
@@ -25,6 +27,7 @@ import {
 } from './privacy'
 import { getSerializedNodeId, setSerializedNodeId, getElementInputValue } from './serializationUtils'
 import { forEach } from './utils'
+import type { ElementsScrollPositions } from './elementsScrollPositions'
 
 // Those values are the only one that can be used when inheriting privacy levels from parent to
 // children during serialization, since HIDDEN and IGNORE shouldn't serialize their children. This
@@ -34,21 +37,43 @@ type ParentNodePrivacyLevel =
   | typeof NodePrivacyLevel.MASK
   | typeof NodePrivacyLevel.MASK_USER_INPUT
 
+export const enum SerializationContextStatus {
+  INITIAL_FULL_SNAPSHOT,
+  SUBSEQUENT_FULL_SNAPSHOT,
+  MUTATION,
+}
+
+export type SerializationContext =
+  | {
+      status: SerializationContextStatus.MUTATION
+    }
+  | {
+      status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT
+      elementsScrollPositions: ElementsScrollPositions
+    }
+  | {
+      status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT
+      elementsScrollPositions: ElementsScrollPositions
+    }
+
 export interface SerializeOptions {
-  document: Document
   serializedNodeIds?: Set<number>
   ignoreWhiteSpace?: boolean
   parentNodePrivacyLevel: ParentNodePrivacyLevel
+  serializationContext: SerializationContext
+  configuration: RumConfiguration
 }
 
 export function serializeDocument(
   document: Document,
-  defaultPrivacyLevel: ParentNodePrivacyLevel
+  configuration: RumConfiguration,
+  serializationContext: SerializationContext
 ): SerializedNodeWithId {
   // We are sure that Documents are never ignored, so this function never returns null
   return serializeNodeWithId(document, {
-    document,
-    parentNodePrivacyLevel: defaultPrivacyLevel,
+    serializationContext,
+    parentNodePrivacyLevel: configuration.defaultPrivacyLevel,
+    configuration,
   })!
 }
 
@@ -101,7 +126,7 @@ function serializeDocumentTypeNode(documentType: DocumentType): DocumentTypeNode
 }
 
 /**
- * Serialzing Element nodes involves capturing:
+ * Serializing Element nodes involves capturing:
  * 1. HTML ATTRIBUTES:
  * 2. JS STATE:
  * - scroll offsets
@@ -145,7 +170,7 @@ export function serializeElementNode(element: Element, options: SerializeOptions
     return
   }
 
-  const attributes = getAttributesForPrivacyLevel(element, nodePrivacyLevel)
+  const attributes = getAttributesForPrivacyLevel(element, nodePrivacyLevel, options)
 
   let childNodes: SerializedNodeWithId[] = []
   if (element.childNodes.length) {
@@ -216,20 +241,27 @@ export function serializeChildNodes(node: Node, options: SerializeOptions): Seri
 export function serializeAttribute(
   element: Element,
   nodePrivacyLevel: NodePrivacyLevel,
-  attributeName: string
+  attributeName: string,
+  configuration: RumConfiguration
 ): string | number | boolean | null {
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     // dup condition for direct access case
     return null
   }
   const attributeValue = element.getAttribute(attributeName)
-  if (nodePrivacyLevel === NodePrivacyLevel.MASK) {
+  if (
+    nodePrivacyLevel === NodePrivacyLevel.MASK &&
+    attributeName !== PRIVACY_ATTR_NAME &&
+    attributeName !== DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE &&
+    attributeName !== configuration.actionNameAttribute
+  ) {
     const tagName = element.tagName
 
     switch (attributeName) {
       // Mask Attribute text content
       case 'title':
       case 'alt':
+      case 'placeholder':
         return CENSORED_STRING_MARK
     }
     // mask image URLs
@@ -242,8 +274,9 @@ export function serializeAttribute(
     if (tagName === 'A' && attributeName === 'href') {
       return CENSORED_STRING_MARK
     }
+
     // mask data-* attributes
-    if (attributeValue && attributeName.indexOf('data-') === 0 && attributeName !== PRIVACY_ATTR_NAME) {
+    if (attributeValue && startsWith(attributeName, 'data-')) {
       // Exception: it's safe to reveal the `${PRIVACY_ATTR_NAME}` attr
       return CENSORED_STRING_MARK
     }
@@ -303,7 +336,8 @@ function isSVGElement(el: Element): boolean {
 
 function getAttributesForPrivacyLevel(
   element: Element,
-  nodePrivacyLevel: NodePrivacyLevel
+  nodePrivacyLevel: NodePrivacyLevel,
+  options: SerializeOptions
 ): Record<string, string | number | boolean> {
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     return {}
@@ -316,7 +350,7 @@ function getAttributesForPrivacyLevel(
   for (let i = 0; i < element.attributes.length; i += 1) {
     const attribute = element.attributes.item(i) as HtmlAttribute
     const attributeName = attribute.name
-    const attributeValue = serializeAttribute(element, nodePrivacyLevel, attributeName)
+    const attributeValue = serializeAttribute(element, nodePrivacyLevel, attributeName, options.configuration)
     if (attributeValue !== null) {
       safeAttrs[attributeName] = attributeValue
     }
@@ -393,13 +427,30 @@ function getAttributesForPrivacyLevel(
   }
 
   /**
-   * Serialize the scroll state for each element
+   * Serialize the scroll state for each element only for full snapshot
    */
-  if (element.scrollLeft) {
-    safeAttrs.rr_scrollLeft = Math.round(element.scrollLeft)
+  let scrollTop: number | undefined
+  let scrollLeft: number | undefined
+  const serializationContext = options.serializationContext
+  switch (serializationContext.status) {
+    case SerializationContextStatus.INITIAL_FULL_SNAPSHOT:
+      scrollTop = Math.round(element.scrollTop)
+      scrollLeft = Math.round(element.scrollLeft)
+      if (scrollTop || scrollLeft) {
+        serializationContext.elementsScrollPositions.set(element, { scrollTop, scrollLeft })
+      }
+      break
+    case SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT:
+      if (serializationContext.elementsScrollPositions.has(element)) {
+        ;({ scrollTop, scrollLeft } = serializationContext.elementsScrollPositions.get(element)!)
+      }
+      break
   }
-  if (element.scrollTop) {
-    safeAttrs.rr_scrollTop = Math.round(element.scrollTop)
+  if (scrollLeft) {
+    safeAttrs.rr_scrollLeft = scrollLeft
+  }
+  if (scrollTop) {
+    safeAttrs.rr_scrollTop = scrollTop
   }
 
   return safeAttrs
