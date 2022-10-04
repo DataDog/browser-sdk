@@ -13,3 +13,4 @@ export {
   getExperimentalFeatures,
 } from './experimentalFeatures'
 export * from './intakeSites'
+export { isSimulationActive, getSimulationLabel } from './simulation'

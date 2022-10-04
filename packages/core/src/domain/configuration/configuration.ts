@@ -4,6 +4,7 @@ import { catchUserErrors } from '../../tools/catchUserErrors'
 import { display } from '../../tools/display'
 import { assign, isPercentage, ONE_KIBI_BYTE, ONE_SECOND } from '../../tools/utils'
 import { updateExperimentalFeatures } from './experimentalFeatures'
+import { initSimulation } from './simulation'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
 
@@ -40,6 +41,11 @@ export interface InitConfiguration {
   enableExperimentalFeatures?: string[] | undefined
   replica?: ReplicaUserConfiguration | undefined
   datacenter?: string
+
+  // simulation options
+  simulationStart?: string | undefined
+  simulationEnd?: string | undefined
+  simulationLabel?: string | undefined
 }
 
 // This type is only used to build the core configuration. Logs and RUM SDKs are using a proper type
@@ -89,6 +95,8 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
 
   // Set the experimental feature flags as early as possible, so we can use them in most places
   updateExperimentalFeatures(initConfiguration.enableExperimentalFeatures)
+
+  initSimulation(initConfiguration.simulationStart, initConfiguration.simulationEnd, initConfiguration.simulationLabel)
 
   return assign(
     {
