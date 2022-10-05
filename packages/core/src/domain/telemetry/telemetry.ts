@@ -89,7 +89,7 @@ export function startTelemetry(configuration: Configuration): Telemetry {
         experimental_features: arrayFrom(getExperimentalFeatures()),
       },
       contextProvider !== undefined ? contextProvider() : {},
-      isSimulationActive() ? { simulation_label: getSimulationLabel() } : {}
+      isSimulationActive() ? { telemetry: { simulation_label: getSimulationLabel() } } : {}
     )
   }
 
