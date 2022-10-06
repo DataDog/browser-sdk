@@ -8,6 +8,8 @@ export {
   isExperimentalFeatureEnabled,
   updateExperimentalFeatures,
   resetExperimentalFeatures,
+  isSimulationActive,
+  getSimulationLabel,
 } from './domain/configuration'
 export { trackRuntimeError } from './domain/error/trackRuntimeError'
 export { computeStackTrace, StackTrace } from './domain/tracekit'

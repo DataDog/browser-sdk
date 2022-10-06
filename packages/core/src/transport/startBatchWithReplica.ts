@@ -10,15 +10,15 @@ export function startBatchWithReplica<T extends Context>(
   reportError: (error: RawError) => void,
   replicaEndpoint?: EndpointBuilder
 ) {
-  const primaryBatch = createBatch(endpoint)
+  const primaryBatch = createBatch(endpoint, true)
   let replicaBatch: Batch | undefined
   if (replicaEndpoint) {
-    replicaBatch = createBatch(replicaEndpoint)
+    replicaBatch = createBatch(replicaEndpoint, false)
   }
 
-  function createBatch(endpointBuilder: EndpointBuilder) {
+  function createBatch(endpointBuilder: EndpointBuilder, toPrimaryEndpoint: boolean) {
     return new Batch(
-      createHttpRequest(endpointBuilder, configuration.batchBytesLimit, reportError),
+      createHttpRequest(endpointBuilder, configuration.batchBytesLimit, reportError, toPrimaryEndpoint),
       configuration.batchMessagesLimit,
       configuration.batchBytesLimit,
       configuration.messageBytesLimit,

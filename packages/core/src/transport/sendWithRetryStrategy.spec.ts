@@ -45,7 +45,7 @@ describe('sendWithRetryStrategy', () => {
         data: payload?.data ?? 'a',
         bytesCount: payload?.bytesCount ?? 1,
       }
-      sendWithRetryStrategy(effectivePayload, state, sendStub.sendStrategy, ENDPOINT_TYPE, reportErrorSpy)
+      sendWithRetryStrategy(effectivePayload, state, sendStub.sendStrategy, ENDPOINT_TYPE, true, reportErrorSpy)
     }
   })
 

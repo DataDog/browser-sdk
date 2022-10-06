@@ -3,7 +3,13 @@ import { ConsoleApiName } from '../../tools/display'
 import { toStackTraceString } from '../../tools/error'
 import { assign, combine, jsonStringify, performDraw, includes, startsWith, arrayFrom } from '../../tools/utils'
 import type { Configuration } from '../configuration'
-import { getExperimentalFeatures, INTAKE_SITE_STAGING, INTAKE_SITE_US1_FED } from '../configuration'
+import {
+  getExperimentalFeatures,
+  getSimulationLabel,
+  INTAKE_SITE_STAGING,
+  INTAKE_SITE_US1_FED,
+  isSimulationActive,
+} from '../configuration'
 import type { StackTrace } from '../tracekit'
 import { computeStackTrace } from '../tracekit'
 import { Observable } from '../../tools/observable'
@@ -82,7 +88,8 @@ export function startTelemetry(configuration: Configuration): Telemetry {
         telemetry: event as any, // https://github.com/microsoft/TypeScript/issues/48457
         experimental_features: arrayFrom(getExperimentalFeatures()),
       },
-      contextProvider !== undefined ? contextProvider() : {}
+      contextProvider !== undefined ? contextProvider() : {},
+      isSimulationActive() ? { telemetry: { simulation_label: getSimulationLabel() } } : {}
     )
   }
 
