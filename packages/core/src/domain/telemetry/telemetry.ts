@@ -16,14 +16,11 @@ import { Observable } from '../../tools/observable'
 import { timeStampNow } from '../../tools/timeUtils'
 import { displayIfDebugEnabled, startMonitorErrorCollection } from '../../tools/monitor'
 import type { TelemetryEvent } from './telemetryEvent.types'
+import type { RawConfigurationTelemetryEvent, RawTelemetryEvent } from './rawTelemetryEvent.types'
+import { StatusType, TelemetryType } from './rawTelemetryEvent.types'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
-
-const enum StatusType {
-  debug = 'debug',
-  error = 'error',
-}
 
 const ALLOWED_FRAME_URLS = [
   'https://www.datadoghq-browser-agent.com',
@@ -37,16 +34,8 @@ export interface Telemetry {
   observable: Observable<TelemetryEvent & Context>
 }
 
-export interface RawTelemetryEvent extends Context {
-  message: string
-  status: StatusType
-  error?: {
-    kind?: string
-    stack: string
-  }
-}
-
 const TELEMETRY_EXCLUDED_SITES: string[] = [INTAKE_SITE_US1_FED]
+const TELEMETRY_CONFIGURATION_SAMPLE_RATE = 20
 
 const telemetryConfiguration: {
   maxEventsPerPage: number
@@ -132,6 +121,7 @@ export function addTelemetryDebug(message: string, context?: Context) {
   addTelemetry(
     assign(
       {
+        type: TelemetryType.log as const,
         message,
         status: StatusType.debug,
       },
@@ -144,11 +134,21 @@ export function addTelemetryError(e: unknown) {
   addTelemetry(
     assign(
       {
+        type: TelemetryType.log as const,
         status: StatusType.error,
       },
       formatError(e)
     )
   )
+}
+
+export function addTelemetryConfiguration(configuration: RawConfigurationTelemetryEvent['configuration']) {
+  if (performDraw(TELEMETRY_CONFIGURATION_SAMPLE_RATE)) {
+    addTelemetry({
+      type: TelemetryType.configuration as const,
+      configuration,
+    })
+  }
 }
 
 function addTelemetry(event: RawTelemetryEvent) {

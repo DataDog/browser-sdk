@@ -1,5 +1,6 @@
 import type { Configuration, InitConfiguration } from '@datadog/browser-core'
 import {
+  serializeConfiguration,
   assign,
   ONE_KIBI_BYTE,
   validateAndBuildConfiguration,
@@ -84,4 +85,17 @@ export function validateAndBuildForwardOption<T>(
   }
 
   return option === 'all' ? allowedValues : removeDuplicates<T>(option)
+}
+
+export function serializeLogsConfiguration(configuration: LogsInitConfiguration) {
+  const baseSerializedInitConfiguration = serializeConfiguration(configuration)
+
+  return assign(
+    {
+      forward_errors_to_logs: configuration.forwardErrorsToLogs,
+      forward_console_logs: configuration.forwardConsoleLogs,
+      forward_reports: configuration.forwardReports,
+    },
+    baseSerializedInitConfiguration
+  )
 }

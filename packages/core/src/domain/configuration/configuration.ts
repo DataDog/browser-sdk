@@ -149,3 +149,16 @@ export function buildCookieOptions(initConfiguration: InitConfiguration) {
 function mustUseSecureCookie(initConfiguration: InitConfiguration) {
   return !!initConfiguration.useSecureSessionCookie || !!initConfiguration.useCrossSiteSessionCookie
 }
+
+export function serializeConfiguration(configuration: InitConfiguration) {
+  return {
+    session_sample_rate: configuration.sampleRate,
+    telemetry_sample_rate: configuration.telemetrySampleRate,
+    use_before_send: !!configuration.beforeSend,
+    use_cross_site_session_cookie: configuration.useCrossSiteSessionCookie,
+    use_secure_session_cookie: configuration.useSecureSessionCookie,
+    use_proxy: configuration.proxyUrl !== undefined ? !!configuration.proxyUrl : undefined,
+    silent_multiple_init: configuration.silentMultipleInit,
+    track_session_across_subdomains: configuration.trackSessionAcrossSubdomains,
+  }
+}

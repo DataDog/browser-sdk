@@ -10,6 +10,7 @@ export {
   resetExperimentalFeatures,
   isSimulationActive,
   getSimulationLabel,
+  serializeConfiguration,
 } from './domain/configuration'
 export { trackRuntimeError } from './domain/error/trackRuntimeError'
 export { computeStackTrace, StackTrace } from './domain/tracekit'
@@ -27,6 +28,7 @@ export {
   TelemetryErrorEvent,
   TelemetryDebugEvent,
   isTelemetryReplicationAllowed,
+  addTelemetryConfiguration,
 } from './domain/telemetry'
 export { monitored, monitor, callMonitored, setDebugMode } from './tools/monitor'
 export { Observable, Subscription } from './tools/observable'

@@ -1,5 +1,6 @@
 import type { Configuration, InitConfiguration } from '@datadog/browser-core'
 import {
+  serializeConfiguration,
   assign,
   DefaultPrivacyLevel,
   display,
@@ -140,5 +141,27 @@ export function validateAndBuildRumConfiguration(
         : DefaultPrivacyLevel.MASK_USER_INPUT,
     },
     baseConfiguration
+  )
+}
+
+export function serializeRumConfiguration(configuration: RumInitConfiguration) {
+  const baseSerializedConfiguration = serializeConfiguration(configuration)
+
+  return assign(
+    {
+      premium_sample_rate: configuration.premiumSampleRate,
+      replay_sample_rate: configuration.replaySampleRate,
+      session_replay_sample_rate: configuration.sessionReplaySampleRate,
+      action_name_attribute: configuration.actionNameAttribute,
+      use_allowed_tracing_origins:
+        configuration.allowedTracingOrigins !== undefined ? !!configuration.allowedTracingOrigins : undefined,
+      default_privacy_level: configuration.defaultPrivacyLevel,
+      use_excluded_activity_urls:
+        configuration.excludedActivityUrls !== undefined ? !!configuration.excludedActivityUrls : undefined,
+      track_frustrations: configuration.trackFrustrations,
+      track_views_manually: configuration.trackViewsManually,
+      track_interactions: configuration.trackInteractions,
+    },
+    baseSerializedConfiguration
   )
 }
