@@ -16,6 +16,10 @@
 
 ---
 
+## v4.21.2
+
+- ⚗️ [RUMF-1405] add mechanism to simulate intake issue ([#1757](https://github.com/DataDog/browser-sdk/pull/1757))
+
 ## v4.21.1
 
 - 🐛 npm publish: skip publish confirmation ([#1755](https://github.com/DataDog/browser-sdk/pull/1755))
