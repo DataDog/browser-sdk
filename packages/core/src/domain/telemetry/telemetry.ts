@@ -145,7 +145,7 @@ export function addTelemetryError(e: unknown) {
   )
 }
 
-export function addTelemetryConfiguration(configuration: RawConfigurationTelemetryEvent['configuration']) {
+export function addTelemetryConfiguration(configuration: RawConfigurationTelemetryEvent) {
   if (isExperimentalFeatureEnabled('telemetry_configuration') && telemetryConfiguration.telemetryConfigurationEnabled) {
     addTelemetry({
       type: TelemetryType.configuration as const,

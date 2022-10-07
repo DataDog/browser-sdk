@@ -1,4 +1,4 @@
-import type { Configuration, InitConfiguration } from '@datadog/browser-core'
+import type { Configuration, InitConfiguration, RawConfigurationTelemetryEvent } from '@datadog/browser-core'
 import {
   serializeConfiguration,
   assign,
@@ -144,7 +144,7 @@ export function validateAndBuildRumConfiguration(
   )
 }
 
-export function serializeRumConfiguration(configuration: RumInitConfiguration) {
+export function serializeRumConfiguration(configuration: RumInitConfiguration): RawConfigurationTelemetryEvent {
   const baseSerializedConfiguration = serializeConfiguration(configuration)
 
   return assign(
@@ -154,10 +154,10 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
       session_replay_sample_rate: configuration.sessionReplaySampleRate,
       action_name_attribute: configuration.actionNameAttribute,
       use_allowed_tracing_origins:
-        configuration.allowedTracingOrigins !== undefined ? !!configuration.allowedTracingOrigins : undefined,
+        Array.isArray(configuration.allowedTracingOrigins) && configuration.allowedTracingOrigins.length > 0,
       default_privacy_level: configuration.defaultPrivacyLevel,
       use_excluded_activity_urls:
-        configuration.excludedActivityUrls !== undefined ? !!configuration.excludedActivityUrls : undefined,
+        Array.isArray(configuration.allowedTracingOrigins) && configuration.allowedTracingOrigins.length > 0,
       track_frustrations: configuration.trackFrustrations,
       track_views_manually: configuration.trackViewsManually,
       track_interactions: configuration.trackInteractions,

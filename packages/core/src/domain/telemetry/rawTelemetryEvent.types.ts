@@ -1,4 +1,4 @@
-import type { Context } from '../../tools/context'
+import type { TelemetryEvent, TelemetryConfigurationEvent } from './telemetryEvent.types'
 
 export const enum TelemetryType {
   log = 'log',
@@ -10,25 +10,5 @@ export const enum StatusType {
   error = 'error',
 }
 
-export type RawTelemetryEvent = RawDebugTelemetryEvent | RawErrorTelemetryEvent | RawConfigurationTelemetryEvent
-
-export interface RawDebugTelemetryEvent extends Context {
-  message: string
-  status: StatusType.debug
-  type: TelemetryType.log
-  error?: {
-    kind?: string
-    stack: string
-  }
-}
-
-export interface RawErrorTelemetryEvent extends Context {
-  message: string
-  status: StatusType.error
-  type: TelemetryType.log
-}
-
-export interface RawConfigurationTelemetryEvent {
-  type: TelemetryType.configuration
-  configuration: any
-}
+export type RawTelemetryEvent = TelemetryEvent['telemetry']
+export type RawConfigurationTelemetryEvent = TelemetryConfigurationEvent['telemetry']['configuration']

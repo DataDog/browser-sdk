@@ -1,4 +1,4 @@
-import type { Configuration, InitConfiguration } from '@datadog/browser-core'
+import type { Configuration, InitConfiguration, RawConfigurationTelemetryEvent } from '@datadog/browser-core'
 import {
   serializeConfiguration,
   assign,
@@ -16,8 +16,8 @@ import type { LogsEvent } from '../logsEvent.types'
 export interface LogsInitConfiguration extends InitConfiguration {
   beforeSend?: ((event: LogsEvent) => void | boolean) | undefined
   forwardErrorsToLogs?: boolean | undefined
-  forwardConsoleLogs?: readonly ConsoleApiName[] | 'all' | undefined
-  forwardReports?: readonly RawReportType[] | 'all' | undefined
+  forwardConsoleLogs?: ConsoleApiName[] | 'all' | undefined
+  forwardReports?: RawReportType[] | 'all' | undefined
 }
 
 export type HybridInitConfiguration = Omit<LogsInitConfiguration, 'clientToken'>
@@ -87,7 +87,7 @@ export function validateAndBuildForwardOption<T>(
   return option === 'all' ? allowedValues : removeDuplicates<T>(option)
 }
 
-export function serializeLogsConfiguration(configuration: LogsInitConfiguration) {
+export function serializeLogsConfiguration(configuration: LogsInitConfiguration): RawConfigurationTelemetryEvent {
   const baseSerializedInitConfiguration = serializeConfiguration(configuration)
 
   return assign(
