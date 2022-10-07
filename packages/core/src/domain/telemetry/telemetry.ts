@@ -4,6 +4,7 @@ import { toStackTraceString } from '../../tools/error'
 import { assign, combine, jsonStringify, performDraw, includes, startsWith, arrayFrom } from '../../tools/utils'
 import type { Configuration } from '../configuration'
 import {
+  isExperimentalFeatureEnabled,
   getExperimentalFeatures,
   getSimulationLabel,
   INTAKE_SITE_STAGING,
@@ -35,13 +36,13 @@ export interface Telemetry {
 }
 
 const TELEMETRY_EXCLUDED_SITES: string[] = [INTAKE_SITE_US1_FED]
-const TELEMETRY_CONFIGURATION_SAMPLE_RATE = 20
 
 const telemetryConfiguration: {
   maxEventsPerPage: number
   sentEventCount: number
   telemetryEnabled: boolean
-} = { maxEventsPerPage: 0, sentEventCount: 0, telemetryEnabled: false }
+  telemetryConfigurationEnabled: boolean
+} = { maxEventsPerPage: 0, sentEventCount: 0, telemetryEnabled: false, telemetryConfigurationEnabled: false }
 
 let onRawTelemetryEventCollected: ((event: RawTelemetryEvent) => void) | undefined
 
@@ -50,6 +51,8 @@ export function startTelemetry(configuration: Configuration): Telemetry {
   const observable = new Observable<TelemetryEvent & Context>()
 
   telemetryConfiguration.telemetryEnabled = performDraw(configuration.telemetrySampleRate)
+  telemetryConfiguration.telemetryConfigurationEnabled =
+    telemetryConfiguration.telemetryEnabled && performDraw(configuration.telemetryConfigurationSampleRate)
 
   onRawTelemetryEventCollected = (event: RawTelemetryEvent) => {
     if (!includes(TELEMETRY_EXCLUDED_SITES, configuration.site) && telemetryConfiguration.telemetryEnabled) {
@@ -143,7 +146,7 @@ export function addTelemetryError(e: unknown) {
 }
 
 export function addTelemetryConfiguration(configuration: RawConfigurationTelemetryEvent['configuration']) {
-  if (performDraw(TELEMETRY_CONFIGURATION_SAMPLE_RATE)) {
+  if (isExperimentalFeatureEnabled('telemetry_configuration') && telemetryConfiguration.telemetryConfigurationEnabled) {
     addTelemetry({
       type: TelemetryType.configuration as const,
       configuration,

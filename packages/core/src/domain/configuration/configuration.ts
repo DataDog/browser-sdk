@@ -63,6 +63,7 @@ export interface Configuration extends TransportConfiguration {
   cookieOptions: CookieOptions
   sampleRate: number
   telemetrySampleRate: number
+  telemetryConfigurationSampleRate: number
   service: string | undefined
   silentMultipleInit: boolean
 
@@ -105,6 +106,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
       cookieOptions: buildCookieOptions(initConfiguration),
       sampleRate: initConfiguration.sampleRate ?? 100,
       telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
+      telemetryConfigurationSampleRate: 20,
       service: initConfiguration.service,
       silentMultipleInit: !!initConfiguration.silentMultipleInit,
 

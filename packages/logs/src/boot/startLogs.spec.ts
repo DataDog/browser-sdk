@@ -36,7 +36,7 @@ const COMMON_CONTEXT = {
 }
 
 describe('logs', () => {
-  const initConfiguration = { clientToken: 'xxx', service: 'service' }
+  const initConfiguration = { clientToken: 'xxx', service: 'service', telemetrySampleRate: 0 }
   let baseConfiguration: LogsConfiguration
   let interceptor: ReturnType<typeof interceptRequests>
   let requests: Request[]

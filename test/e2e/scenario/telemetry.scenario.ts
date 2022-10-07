@@ -16,8 +16,9 @@ describe('telemetry', () => {
         window.DD_LOGS!.logger.log('hop', context as any)
       })
       await flushEvents()
-      expect(serverEvents.telemetry.length).toBe(1)
-      const event = serverEvents.telemetry[0] as TelemetryErrorEvent
+
+      // get the last telemetry event because telemetry configuration may have been collected first
+      const event = serverEvents.telemetry[serverEvents.telemetry.length - 1] as TelemetryErrorEvent
       expect(event.telemetry.message).toBe('bar')
       expect(event.telemetry.error!.kind).toBe('Error')
       expect(event.telemetry.status).toBe('error')
@@ -37,8 +38,9 @@ describe('telemetry', () => {
         window.DD_RUM!.addAction('hop', context as any)
       })
       await flushEvents()
-      expect(serverEvents.telemetry.length).toBe(1)
-      const event = serverEvents.telemetry[0] as TelemetryErrorEvent
+
+      // get the last telemetry event because telemetry configuration may have been collected first
+      const event = serverEvents.telemetry[serverEvents.telemetry.length - 1] as TelemetryErrorEvent
       expect(event.telemetry.message).toBe('bar')
       expect(event.telemetry.error!.kind).toBe('Error')
       expect(event.telemetry.status).toBe('error')
