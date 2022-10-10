@@ -3,7 +3,7 @@ import { getCurrentSite } from '../../browser/cookie'
 import { catchUserErrors } from '../../tools/catchUserErrors'
 import { display } from '../../tools/display'
 import { assign, isPercentage, ONE_KIBI_BYTE, ONE_SECOND } from '../../tools/utils'
-import type { RawConfigurationTelemetryEvent } from '../telemetry'
+import type { RawTelemetryConfiguration } from '../telemetry'
 import { updateExperimentalFeatures } from './experimentalFeatures'
 import { initSimulation } from './simulation'
 import type { TransportConfiguration } from './transportConfiguration'
@@ -153,9 +153,7 @@ function mustUseSecureCookie(initConfiguration: InitConfiguration) {
   return !!initConfiguration.useSecureSessionCookie || !!initConfiguration.useCrossSiteSessionCookie
 }
 
-export function serializeConfiguration(
-  configuration: InitConfiguration
-): Partial<RawConfigurationTelemetryEvent['configuration']> {
+export function serializeConfiguration(configuration: InitConfiguration): Partial<RawTelemetryConfiguration> {
   return {
     session_sample_rate: configuration.sampleRate,
     telemetry_sample_rate: configuration.telemetrySampleRate,

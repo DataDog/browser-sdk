@@ -143,8 +143,8 @@ describe('startDeflateWorker', () => {
       })
       expect(telemetryEvents).toEqual([
         {
-          type: 'log' as any,
-          status: 'error' as any,
+          type: 'log',
+          status: 'error',
           message: 'boom',
           error: { kind: 'Error', stack: jasmine.any(String) },
         },

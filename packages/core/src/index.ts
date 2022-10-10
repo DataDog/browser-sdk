@@ -20,7 +20,7 @@ export {
   startTelemetry,
   Telemetry,
   RawTelemetryEvent,
-  RawConfigurationTelemetryEvent,
+  RawTelemetryConfiguration,
   addTelemetryDebug,
   addTelemetryError,
   startFakeTelemetry,

@@ -1,4 +1,4 @@
-import type { Configuration, InitConfiguration, RawConfigurationTelemetryEvent } from '@datadog/browser-core'
+import type { Configuration, InitConfiguration, RawTelemetryConfiguration } from '@datadog/browser-core'
 import {
   serializeConfiguration,
   assign,
@@ -87,7 +87,7 @@ export function validateAndBuildForwardOption<T>(
   return option === 'all' ? allowedValues : removeDuplicates<T>(option)
 }
 
-export function serializeLogsConfiguration(configuration: LogsInitConfiguration): RawConfigurationTelemetryEvent {
+export function serializeLogsConfiguration(configuration: LogsInitConfiguration): RawTelemetryConfiguration {
   const baseSerializedInitConfiguration = serializeConfiguration(configuration)
 
   return assign(

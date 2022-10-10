@@ -1,9 +1,9 @@
 import type { TelemetryEvent, TelemetryConfigurationEvent } from './telemetryEvent.types'
 
-export const enum TelemetryType {
-  log = 'log',
-  configuration = 'configuration',
-}
+export const TelemetryType = {
+  log: 'log',
+  configuration: 'configuration',
+} as const
 
 export const enum StatusType {
   debug = 'debug',
@@ -11,4 +11,4 @@ export const enum StatusType {
 }
 
 export type RawTelemetryEvent = TelemetryEvent['telemetry']
-export type RawConfigurationTelemetryEvent = TelemetryConfigurationEvent['telemetry']['configuration']
+export type RawTelemetryConfiguration = TelemetryConfigurationEvent['telemetry']['configuration']

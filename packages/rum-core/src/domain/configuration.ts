@@ -1,4 +1,4 @@
-import type { Configuration, InitConfiguration, RawConfigurationTelemetryEvent } from '@datadog/browser-core'
+import type { Configuration, InitConfiguration, RawTelemetryConfiguration } from '@datadog/browser-core'
 import {
   serializeConfiguration,
   assign,
@@ -144,7 +144,7 @@ export function validateAndBuildRumConfiguration(
   )
 }
 
-export function serializeRumConfiguration(configuration: RumInitConfiguration): RawConfigurationTelemetryEvent {
+export function serializeRumConfiguration(configuration: RumInitConfiguration): RawTelemetryConfiguration {
   const baseSerializedConfiguration = serializeConfiguration(configuration)
 
   return assign(

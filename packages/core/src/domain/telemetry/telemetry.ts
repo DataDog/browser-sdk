@@ -17,7 +17,7 @@ import { Observable } from '../../tools/observable'
 import { timeStampNow } from '../../tools/timeUtils'
 import { displayIfDebugEnabled, startMonitorErrorCollection } from '../../tools/monitor'
 import type { TelemetryEvent } from './telemetryEvent.types'
-import type { RawConfigurationTelemetryEvent, RawTelemetryEvent } from './rawTelemetryEvent.types'
+import type { RawTelemetryConfiguration, RawTelemetryEvent } from './rawTelemetryEvent.types'
 import { StatusType, TelemetryType } from './rawTelemetryEvent.types'
 
 // replaced at build time
@@ -124,7 +124,7 @@ export function addTelemetryDebug(message: string, context?: Context) {
   addTelemetry(
     assign(
       {
-        type: TelemetryType.log as const,
+        type: TelemetryType.log,
         message,
         status: StatusType.debug,
       },
@@ -137,7 +137,7 @@ export function addTelemetryError(e: unknown) {
   addTelemetry(
     assign(
       {
-        type: TelemetryType.log as const,
+        type: TelemetryType.log,
         status: StatusType.error,
       },
       formatError(e)
@@ -145,10 +145,10 @@ export function addTelemetryError(e: unknown) {
   )
 }
 
-export function addTelemetryConfiguration(configuration: RawConfigurationTelemetryEvent) {
+export function addTelemetryConfiguration(configuration: RawTelemetryConfiguration) {
   if (isExperimentalFeatureEnabled('telemetry_configuration') && telemetryConfiguration.telemetryConfigurationEnabled) {
     addTelemetry({
-      type: TelemetryType.configuration as const,
+      type: TelemetryType.configuration,
       configuration,
     })
   }

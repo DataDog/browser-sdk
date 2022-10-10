@@ -1,4 +1,3 @@
-import type { TelemetryErrorEvent } from '@datadog/browser-core'
 import { bundleSetup, createTest, flushEvents } from '../lib/framework'
 import { browserExecute } from '../lib/helpers/browser'
 
@@ -16,9 +15,8 @@ describe('telemetry', () => {
         window.DD_LOGS!.logger.log('hop', context as any)
       })
       await flushEvents()
-
-      // get the last telemetry event because telemetry configuration may have been collected first
-      const event = serverEvents.telemetry[serverEvents.telemetry.length - 1] as TelemetryErrorEvent
+      expect(serverEvents.telemetryErrors.length).toBe(1)
+      const event = serverEvents.telemetryErrors[0]
       expect(event.telemetry.message).toBe('bar')
       expect(event.telemetry.error!.kind).toBe('Error')
       expect(event.telemetry.status).toBe('error')
@@ -38,9 +36,8 @@ describe('telemetry', () => {
         window.DD_RUM!.addAction('hop', context as any)
       })
       await flushEvents()
-
-      // get the last telemetry event because telemetry configuration may have been collected first
-      const event = serverEvents.telemetry[serverEvents.telemetry.length - 1] as TelemetryErrorEvent
+      expect(serverEvents.telemetryErrors.length).toBe(1)
+      const event = serverEvents.telemetryErrors[0]
       expect(event.telemetry.message).toBe('bar')
       expect(event.telemetry.error!.kind).toBe('Error')
       expect(event.telemetry.status).toBe('error')
