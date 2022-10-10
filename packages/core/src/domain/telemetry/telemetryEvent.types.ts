@@ -203,6 +203,7 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
   }
   [k: string]: unknown
 }
+
 /**
  * Schema of common properties of Telemetry events
  */
