@@ -42,6 +42,7 @@ export interface InitConfiguration {
   enableExperimentalFeatures?: string[] | undefined
   replica?: ReplicaUserConfiguration | undefined
   datacenter?: string
+  telemetryConfigurationSampleRate?: number
 
   // simulation options
   simulationStart?: string | undefined
@@ -95,6 +96,14 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     return
   }
 
+  if (
+    initConfiguration.telemetryConfigurationSampleRate !== undefined &&
+    !isPercentage(initConfiguration.telemetryConfigurationSampleRate)
+  ) {
+    display.error('Telemetry Configuration Sample Rate should be a number between 0 and 100')
+    return
+  }
+
   // Set the experimental feature flags as early as possible, so we can use them in most places
   updateExperimentalFeatures(initConfiguration.enableExperimentalFeatures)
 
@@ -107,7 +116,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
       cookieOptions: buildCookieOptions(initConfiguration),
       sampleRate: initConfiguration.sampleRate ?? 100,
       telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
-      telemetryConfigurationSampleRate: 5,
+      telemetryConfigurationSampleRate: initConfiguration.telemetryConfigurationSampleRate ?? 5,
       service: initConfiguration.service,
       silentMultipleInit: !!initConfiguration.silentMultipleInit,
 
@@ -157,6 +166,7 @@ export function serializeConfiguration(configuration: InitConfiguration): Partia
   return {
     session_sample_rate: configuration.sampleRate,
     telemetry_sample_rate: configuration.telemetrySampleRate,
+    telemetry_configuration_sample_rate: configuration.telemetryConfigurationSampleRate,
     use_before_send: !!configuration.beforeSend,
     use_cross_site_session_cookie: configuration.useCrossSiteSessionCookie,
     use_secure_session_cookie: configuration.useSecureSessionCookie,

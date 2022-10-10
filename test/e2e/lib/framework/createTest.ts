@@ -19,12 +19,14 @@ const DEFAULT_RUM_CONFIGURATION = {
   trackResources: true,
   trackLongTasks: true,
   telemetrySampleRate: 100,
+  telemetryConfigurationSampleRate: 100,
   enableExperimentalFeatures: [],
 }
 
 const DEFAULT_LOGS_CONFIGURATION = {
   clientToken: 'token',
   telemetrySampleRate: 100,
+  telemetryConfigurationSampleRate: 100,
 }
 
 export function createTest(title: string) {

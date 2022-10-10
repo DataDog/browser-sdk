@@ -3,6 +3,7 @@ import type { RumEvent } from '@datadog/browser-rum'
 import type { TelemetryEvent } from '@datadog/browser-core'
 import type { SessionReplayCall } from '../types/serverEvents'
 import {
+  isTelemetryConfigurationEvent,
   isRumErrorEvent,
   isRumResourceEvent,
   isRumActionEvent,
@@ -46,6 +47,9 @@ export class EventRegistry {
     return this.telemetry.filter(isTelemetryErrorEvent)
   }
 
+  get telemetryConfigurations() {
+    return this.telemetry.filter(isTelemetryConfigurationEvent)
+  }
   empty() {
     this.rum.length = 0
     this.telemetry.length = 0

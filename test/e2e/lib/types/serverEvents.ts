@@ -1,4 +1,4 @@
-import type { TelemetryErrorEvent, TelemetryEvent } from '@datadog/browser-core'
+import type { TelemetryErrorEvent, TelemetryEvent, TelemetryConfigurationEvent } from '@datadog/browser-core'
 import type { RumActionEvent, RumErrorEvent, RumEvent, RumResourceEvent, RumViewEvent } from '@datadog/browser-rum'
 import type { BrowserSegment } from '@datadog/browser-rum/src/types'
 
@@ -20,6 +20,10 @@ export function isRumErrorEvent(event: RumEvent): event is RumErrorEvent {
 
 export function isTelemetryErrorEvent(event: TelemetryEvent): event is TelemetryErrorEvent {
   return event.type === 'telemetry' && event.telemetry.status === 'error'
+}
+
+export function isTelemetryConfigurationEvent(event: TelemetryEvent): event is TelemetryConfigurationEvent {
+  return event.type === 'telemetry' && event.telemetry.type === 'configuration'
 }
 
 export interface SegmentFile {
