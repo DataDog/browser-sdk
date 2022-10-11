@@ -192,7 +192,7 @@ async function setUpTest({ baseUrl }: TestContext) {
 
 async function tearDownTest({ serverEvents, bridgeEvents }: TestContext) {
   await flushEvents()
-  expect(serverEvents.telemetry).toEqual([])
+  expect(serverEvents.telemetryErrors).toEqual([])
   validateRumFormat(serverEvents.rum)
   validateRumFormat(bridgeEvents.rum)
   await withBrowserLogs((logs) => {

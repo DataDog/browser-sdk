@@ -54,9 +54,7 @@ describe('telemetry', () => {
       await flushEvents()
       expect(serverEvents.telemetryConfigurations.length).toBe(1)
       const event = serverEvents.telemetryConfigurations[0]
-      expect(event.telemetry.type).toBe('configuration')
       expect(event.telemetry.configuration.forward_errors_to_logs).toEqual(true)
-      serverEvents.empty()
     })
 
   createTest('send init configuration for RUM')
@@ -69,8 +67,6 @@ describe('telemetry', () => {
       await flushEvents()
       expect(serverEvents.telemetryConfigurations.length).toBe(1)
       const event = serverEvents.telemetryConfigurations[0]
-      expect(event.telemetry.type).toBe('configuration')
       expect(event.telemetry.configuration.track_interactions).toEqual(true)
-      serverEvents.empty()
     })
 })

@@ -94,6 +94,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       telemetry_sample_rate?: number
       /**
+       * The percentage of telemetry configuration events sent after being sampled by telemetry_sample_rate
+       */
+      telemetry_configuration_sample_rate?: number
+      /**
        * The percentage of requests traced
        */
       trace_sample_rate?: number
