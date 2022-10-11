@@ -6,13 +6,6 @@
     <script src="http://localhost:8080/datadog-rum.js"></script>
     <script src="http://localhost:8080/datadog-logs.js"></script>
     <script>
-      let context2 = {
-        get foo() {
-          throw new window.Error('bar')
-        },
-      }
-      window.DD_RUM.addAction('hop', context2)
-
       DD_RUM.init({
         clientToken: 'xxx',
         applicationId: 'xxx',
@@ -20,16 +13,14 @@
         trackResources: true,
         trackLongTasks: true,
         telemetrySampleRate: 100,
-        telemetryConfigurationSampleRate: 100,
-        enableExperimentalFeatures: ['telemetry_configuration'],
+        enableExperimentalFeatures: [],
       })
-
       DD_RUM.startSessionReplayRecording()
-      // DD_LOGS.init({
-      //   clientToken: 'xxx',
-      //   telemetrySampleRate: 100,
-      //   enableExperimentalFeatures: [],
-      // })
+      DD_LOGS.init({
+        clientToken: 'xxx',
+        telemetrySampleRate: 100,
+        enableExperimentalFeatures: [],
+      })
     </script>
   </head>
   <body></body>

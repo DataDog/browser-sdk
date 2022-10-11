@@ -166,8 +166,8 @@ describe('startDeflateWorker', () => {
       deflateWorker.dispatchErrorMessage('boom')
       expect(telemetryEvents).toEqual([
         {
-          type: 'log' as any,
-          status: 'error' as any,
+          type: 'log',
+          status: 'error',
           message: 'Uncaught "boom"',
           error: { stack: jasmine.any(String) },
         },
