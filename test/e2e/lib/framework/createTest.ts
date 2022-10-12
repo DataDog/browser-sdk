@@ -19,12 +19,14 @@ const DEFAULT_RUM_CONFIGURATION = {
   trackResources: true,
   trackLongTasks: true,
   telemetrySampleRate: 100,
+  telemetryConfigurationSampleRate: 100,
   enableExperimentalFeatures: [],
 }
 
 const DEFAULT_LOGS_CONFIGURATION = {
   clientToken: 'token',
   telemetrySampleRate: 100,
+  telemetryConfigurationSampleRate: 100,
 }
 
 export function createTest(title: string) {
@@ -190,7 +192,7 @@ async function setUpTest({ baseUrl }: TestContext) {
 
 async function tearDownTest({ serverEvents, bridgeEvents }: TestContext) {
   await flushEvents()
-  expect(serverEvents.telemetry).toEqual([])
+  expect(serverEvents.telemetryErrors).toEqual([])
   validateRumFormat(serverEvents.rum)
   validateRumFormat(bridgeEvents.rum)
   await withBrowserLogs((logs) => {

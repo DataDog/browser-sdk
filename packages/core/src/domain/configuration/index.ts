@@ -4,6 +4,7 @@ export {
   buildCookieOptions,
   DefaultPrivacyLevel,
   validateAndBuildConfiguration,
+  serializeConfiguration,
 } from './configuration'
 export { createEndpointBuilder, EndpointBuilder, EndpointType } from './endpointBuilder'
 export {

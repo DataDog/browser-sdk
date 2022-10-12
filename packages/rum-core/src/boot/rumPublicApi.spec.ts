@@ -686,7 +686,7 @@ describe('rum public api', () => {
 
         rumPublicApi.init(MANUAL_CONFIGURATION)
         expect(startRumSpy).toHaveBeenCalled()
-        expect(startRumSpy.calls.argsFor(0)[3]).toEqual({ name: 'foo' })
+        expect(startRumSpy.calls.argsFor(0)[4]).toEqual({ name: 'foo' })
         expect(recorderApiOnRumStartSpy).toHaveBeenCalled()
         expect(startViewSpy).not.toHaveBeenCalled()
       })
@@ -698,7 +698,7 @@ describe('rum public api', () => {
 
         rumPublicApi.startView('foo')
         expect(startRumSpy).toHaveBeenCalled()
-        expect(startRumSpy.calls.argsFor(0)[3]).toEqual({ name: 'foo' })
+        expect(startRumSpy.calls.argsFor(0)[4]).toEqual({ name: 'foo' })
         expect(recorderApiOnRumStartSpy).toHaveBeenCalled()
         expect(startViewSpy).not.toHaveBeenCalled()
       })
@@ -709,7 +709,7 @@ describe('rum public api', () => {
         rumPublicApi.startView('bar')
 
         expect(startRumSpy).toHaveBeenCalled()
-        expect(startRumSpy.calls.argsFor(0)[3]).toEqual({ name: 'foo' })
+        expect(startRumSpy.calls.argsFor(0)[4]).toEqual({ name: 'foo' })
         expect(recorderApiOnRumStartSpy).toHaveBeenCalled()
         expect(startViewSpy).toHaveBeenCalled()
         expect(startViewSpy.calls.argsFor(0)[0]).toEqual({ name: 'bar' })
@@ -754,7 +754,7 @@ describe('rum public api', () => {
     let startRumSpy: jasmine.Spy<StartRum>
 
     function getCommonContext() {
-      return startRumSpy.calls.argsFor(0)[1]()
+      return startRumSpy.calls.argsFor(0)[2]()
     }
 
     beforeEach(() => {

@@ -112,7 +112,7 @@ export function makeRumPublicApi(
     }
 
     if (!configuration.trackViewsManually) {
-      doStartRum(configuration)
+      doStartRum(initConfiguration, configuration)
     } else {
       // drain beforeInitCalls by buffering them until we start RUM
       // if we get a startView, drain re-buffered calls before continuing to drain beforeInitCalls
@@ -121,7 +121,7 @@ export function makeRumPublicApi(
       bufferApiCalls = new BoundedBuffer()
 
       startViewStrategy = (options) => {
-        doStartRum(configuration, options)
+        doStartRum(initConfiguration, configuration, options)
       }
       beforeInitCalls.drain()
     }
@@ -130,8 +130,13 @@ export function makeRumPublicApi(
     isAlreadyInitialized = true
   }
 
-  function doStartRum(configuration: RumConfiguration, initialViewOptions?: ViewOptions) {
+  function doStartRum(
+    initConfiguration: RumInitConfiguration,
+    configuration: RumConfiguration,
+    initialViewOptions?: ViewOptions
+  ) {
     const startRumResults = startRumImpl(
+      initConfiguration,
       configuration,
       () => ({
         user: userContextManager.getContext(),

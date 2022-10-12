@@ -4,6 +4,7 @@ import { toStackTraceString } from '../../tools/error'
 import { assign, combine, jsonStringify, performDraw, includes, startsWith, arrayFrom } from '../../tools/utils'
 import type { Configuration } from '../configuration'
 import {
+  isExperimentalFeatureEnabled,
   getExperimentalFeatures,
   getSimulationLabel,
   INTAKE_SITE_STAGING,
@@ -16,14 +17,11 @@ import { Observable } from '../../tools/observable'
 import { timeStampNow } from '../../tools/timeUtils'
 import { displayIfDebugEnabled, startMonitorErrorCollection } from '../../tools/monitor'
 import type { TelemetryEvent } from './telemetryEvent.types'
+import type { RawTelemetryConfiguration, RawTelemetryEvent } from './rawTelemetryEvent.types'
+import { StatusType, TelemetryType } from './rawTelemetryEvent.types'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
-
-const enum StatusType {
-  debug = 'debug',
-  error = 'error',
-}
 
 const ALLOWED_FRAME_URLS = [
   'https://www.datadoghq-browser-agent.com',
@@ -37,22 +35,14 @@ export interface Telemetry {
   observable: Observable<TelemetryEvent & Context>
 }
 
-export interface RawTelemetryEvent extends Context {
-  message: string
-  status: StatusType
-  error?: {
-    kind?: string
-    stack: string
-  }
-}
-
 const TELEMETRY_EXCLUDED_SITES: string[] = [INTAKE_SITE_US1_FED]
 
 const telemetryConfiguration: {
   maxEventsPerPage: number
   sentEventCount: number
   telemetryEnabled: boolean
-} = { maxEventsPerPage: 0, sentEventCount: 0, telemetryEnabled: false }
+  telemetryConfigurationEnabled: boolean
+} = { maxEventsPerPage: 0, sentEventCount: 0, telemetryEnabled: false, telemetryConfigurationEnabled: false }
 
 let onRawTelemetryEventCollected: ((event: RawTelemetryEvent) => void) | undefined
 
@@ -61,6 +51,8 @@ export function startTelemetry(configuration: Configuration): Telemetry {
   const observable = new Observable<TelemetryEvent & Context>()
 
   telemetryConfiguration.telemetryEnabled = performDraw(configuration.telemetrySampleRate)
+  telemetryConfiguration.telemetryConfigurationEnabled =
+    telemetryConfiguration.telemetryEnabled && performDraw(configuration.telemetryConfigurationSampleRate)
 
   onRawTelemetryEventCollected = (event: RawTelemetryEvent) => {
     if (!includes(TELEMETRY_EXCLUDED_SITES, configuration.site) && telemetryConfiguration.telemetryEnabled) {
@@ -132,6 +124,7 @@ export function addTelemetryDebug(message: string, context?: Context) {
   addTelemetry(
     assign(
       {
+        type: TelemetryType.log,
         message,
         status: StatusType.debug,
       },
@@ -144,11 +137,21 @@ export function addTelemetryError(e: unknown) {
   addTelemetry(
     assign(
       {
+        type: TelemetryType.log,
         status: StatusType.error,
       },
       formatError(e)
     )
   )
+}
+
+export function addTelemetryConfiguration(configuration: RawTelemetryConfiguration) {
+  if (isExperimentalFeatureEnabled('telemetry_configuration') && telemetryConfiguration.telemetryConfigurationEnabled) {
+    addTelemetry({
+      type: TelemetryType.configuration,
+      configuration,
+    })
+  }
 }
 
 function addTelemetry(event: RawTelemetryEvent) {

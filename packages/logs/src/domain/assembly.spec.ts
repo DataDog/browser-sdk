@@ -490,6 +490,7 @@ describe('getRUMInternalContext', () => {
           telemetry: {
             message: 'Logs sent before RUM is injected by the synthetics worker',
             status: 'debug',
+            type: 'log',
             testId: 'test-id',
             resultId: 'result-id',
           },

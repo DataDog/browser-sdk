@@ -1,5 +1,5 @@
 import type { Observable, TelemetryEvent, RawError } from '@datadog/browser-core'
-import { startTelemetry, canUseEventBridge, getEventBridge } from '@datadog/browser-core'
+import { addTelemetryConfiguration, startTelemetry, canUseEventBridge, getEventBridge } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { startPerformanceCollection } from '../browser/performanceCollection'
 import { startRumAssembly } from '../domain/assembly'
@@ -21,11 +21,13 @@ import { startRumEventBridge } from '../transport/startRumEventBridge'
 import { startUrlContexts } from '../domain/contexts/urlContexts'
 import type { LocationChange } from '../browser/locationChangeObservable'
 import { createLocationChangeObservable } from '../browser/locationChangeObservable'
-import type { RumConfiguration } from '../domain/configuration'
+import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
+import { serializeRumConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/rumEventsCollection/view/trackViews'
 import type { RecorderApi } from './rumPublicApi'
 
 export function startRum(
+  initConfiguration: RumInitConfiguration,
   configuration: RumConfiguration,
   getCommonContext: () => CommonContext,
   recorderApi: RecorderApi,
@@ -72,6 +74,7 @@ export function startRum(
     getCommonContext,
     reportError
   )
+  addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
 
   startLongTaskCollection(lifeCycle, session)
   startResourceCollection(lifeCycle, configuration, session)
