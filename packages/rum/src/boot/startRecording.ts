@@ -28,7 +28,7 @@ export function startRecording(
   }
 
   const replayRequest =
-    httpRequest || createHttpRequest(configuration.sessionReplayEndpointBuilder, SEGMENT_BYTES_LIMIT, reportError, true)
+    httpRequest || createHttpRequest(configuration.sessionReplayEndpointBuilder, SEGMENT_BYTES_LIMIT, reportError)
 
   const { addRecord, stop: stopSegmentCollection } = startSegmentCollection(
     lifeCycle,
