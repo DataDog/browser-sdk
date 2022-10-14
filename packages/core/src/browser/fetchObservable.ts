@@ -88,6 +88,9 @@ function beforeSend(observable: Observable<FetchContext>, input: RequestInfo, in
   return context
 }
 
+type OverloadMethodKeys = 'json' | 'text' | 'formData' | 'blob' | 'arrayBuffer'
+export const REPORT_FETCH_TIMER = 3000
+
 function afterSend(
   observable: Observable<FetchContext>,
   responsePromise: Promise<Response>,
@@ -113,5 +116,61 @@ function afterSend(
       observable.notify(context)
     }
   }
-  responsePromise.then(monitor(reportFetch), monitor(reportFetch))
+
+  const reportFetchResolve = (response: Response) => {
+    let stopInstruments: Array<() => void> = []
+    let timeOutId: null | number = null
+
+    Promise.race([
+      new Promise((resolve) => {
+        stopInstruments = (['json', 'text', 'formData', 'blob', 'arrayBuffer'] as OverloadMethodKeys[]).map(
+          (method) => {
+            const { stop } = instrumentMethod(
+              response,
+              method,
+              (originalMethod: () => Promise<any>) =>
+                function () {
+                  const res = originalMethod.call(response)
+                  res.then(
+                    monitor(() => {
+                      reportFetch(response)
+                      resolve(null)
+                    }),
+                    monitor(() => {
+                      reportFetch(response)
+                      resolve(null)
+                    })
+                  )
+                  return res
+                }
+            )
+            return stop
+          }
+        )
+      }),
+      new Promise((resolve) => {
+        timeOutId = setTimeout(() => {
+          monitor(() => {
+            reportFetch(response)
+            resolve(null)
+          })
+        }, REPORT_FETCH_TIMER)
+      }),
+    ])
+      .then(reset)
+      .catch(reset)
+
+    function reset() {
+      stopInstruments.forEach(stop)
+      timeOutId && clearTimeout(timeOutId)
+
+      timeOutId = null
+      stopInstruments = []
+    }
+  }
+
+  responsePromise.then(
+    monitor((response) => (response.status !== 200 ? reportFetch(response) : reportFetchResolve(response))),
+    monitor(reportFetch)
+  )
 }

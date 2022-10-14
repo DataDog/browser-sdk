@@ -101,15 +101,19 @@ describe('collect fetch', () => {
   })
 
   describe('tracing', () => {
-    it('should trace requests by default', (done) => {
+    it('should trace requests by default', () => {
+      jasmine.clock().install()
       fetchStub(FAKE_URL).resolveWith({ status: 200, responseText: 'ok' })
+
+      jasmine.clock().tick(10000) // a hack used to trigger resource collections
 
       fetchStubManager.whenAllComplete(() => {
         const request = completeSpy.calls.argsFor(0)[0]
 
         expect(request.traceId).toBeDefined()
-        done()
       })
+
+      jasmine.clock().uninstall()
     })
 
     it('should trace aborted requests', (done) => {
