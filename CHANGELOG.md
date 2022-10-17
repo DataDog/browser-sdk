@@ -16,6 +16,26 @@
 
 ---
 
+## v4.21.2
+
+- ⚗️ [RUMF-1405] add mechanism to simulate intake issue ([#1757](https://github.com/DataDog/browser-sdk/pull/1757))
+
+## v4.21.1
+
+- 🐛 npm publish: skip publish confirmation ([#1755](https://github.com/DataDog/browser-sdk/pull/1755))
+
+## v4.21.0
+
+- ✨ [RUMF-1353] Collect error causes ([#1740](https://github.com/DataDog/browser-sdk/pull/1740))
+- 🐛 [RUMF-1276] handle performance entry without `toJSON` ([#1751](https://github.com/DataDog/browser-sdk/pull/1751))
+- 🐛 handle undefined policy ([#1752](https://github.com/DataDog/browser-sdk/pull/1752))
+
+## v4.20.0
+
+- ✨ [RUMF-1391] Introduce trackResources, trackLongTasks and sessionReplaySampleRate ([#1744](https://github.com/DataDog/browser-sdk/pull/1744))
+- ♻️ [RUMF-1368] use the PointerDown event target for click actions ([#1731](https://github.com/DataDog/browser-sdk/pull/1731))
+- ⚗ [RUMF-1379] use experimented CSS selectors strategies by default ([#1738](https://github.com/DataDog/browser-sdk/pull/1738))
+
 ## v4.19.1
 
 - 🐛 [RUMF-1369] Exclude error message from stacktrace parsing ([#1725](https://github.com/DataDog/browser-sdk/pull/1725))

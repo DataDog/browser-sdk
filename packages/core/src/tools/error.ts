@@ -4,6 +4,17 @@ import { callMonitored } from './monitor'
 import type { ClocksState } from './timeUtils'
 import { jsonStringify, noop } from './utils'
 
+export interface ErrorWithCause extends Error {
+  cause?: Error
+}
+
+export type RawErrorCause = {
+  message: string
+  source: string
+  type?: string
+  stack?: string
+}
+
 export interface RawError {
   startClocks: ClocksState
   message: string
@@ -13,6 +24,7 @@ export interface RawError {
   originalError?: unknown
   handling?: ErrorHandling
   handlingStack?: string
+  causes?: RawErrorCause[]
 }
 
 export const ErrorSource = {
@@ -32,15 +44,33 @@ export const enum ErrorHandling {
 
 export type ErrorSource = typeof ErrorSource[keyof typeof ErrorSource]
 
-export function formatUnknownError(
-  stackTrace: StackTrace | undefined,
-  errorObject: any,
-  nonErrorPrefix: string,
+type RawErrorParams = {
+  stackTrace?: StackTrace
+  originalError: unknown
+
   handlingStack?: string
-) {
-  if (!stackTrace || (stackTrace.message === undefined && !(errorObject instanceof Error))) {
+  startClocks: ClocksState
+  nonErrorPrefix: string
+  source: ErrorSource
+  handling: ErrorHandling
+}
+
+export function computeRawError({
+  stackTrace,
+  originalError,
+  handlingStack,
+  startClocks,
+  nonErrorPrefix,
+  source,
+  handling,
+}: RawErrorParams): RawError {
+  if (!stackTrace || (stackTrace.message === undefined && !(originalError instanceof Error))) {
     return {
-      message: `${nonErrorPrefix} ${jsonStringify(errorObject)!}`,
+      startClocks,
+      source,
+      handling,
+      originalError,
+      message: `${nonErrorPrefix} ${jsonStringify(originalError)!}`,
       stack: 'No stack, consider using an instance of Error',
       handlingStack,
       type: stackTrace && stackTrace.name,
@@ -48,10 +78,15 @@ export function formatUnknownError(
   }
 
   return {
+    startClocks,
+    source,
+    handling,
+    originalError,
     message: stackTrace.message || 'Empty message',
     stack: toStackTraceString(stackTrace),
     handlingStack,
     type: stackTrace.name,
+    causes: flattenErrorCauses(originalError as ErrorWithCause, source),
   }
 }
 
@@ -109,4 +144,20 @@ export function createHandlingStack(): string {
   })
 
   return formattedStack!
+}
+
+export function flattenErrorCauses(error: ErrorWithCause, parentSource: ErrorSource): RawErrorCause[] | undefined {
+  let currentError = error
+  const causes: RawErrorCause[] = []
+  while (currentError?.cause instanceof Error && causes.length < 10) {
+    const stackTrace = computeStackTrace(currentError.cause)
+    causes.push({
+      message: currentError.cause.message,
+      source: parentSource,
+      type: stackTrace?.name,
+      stack: stackTrace && toStackTraceString(stackTrace),
+    })
+    currentError = currentError.cause
+  }
+  return causes.length ? causes : undefined
 }

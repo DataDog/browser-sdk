@@ -9,11 +9,17 @@
       DD_RUM.init({
         clientToken: 'xxx',
         applicationId: 'xxx',
+        sessionReplaySampleRate: 100,
+        trackResources: true,
+        trackLongTasks: true,
         telemetrySampleRate: 100,
+        enableExperimentalFeatures: [],
       })
+      DD_RUM.startSessionReplayRecording()
       DD_LOGS.init({
         clientToken: 'xxx',
         telemetrySampleRate: 100,
+        enableExperimentalFeatures: [],
       })
     </script>
   </head>

@@ -1,5 +1,6 @@
 import { addTelemetryDebug } from '../domain/telemetry'
 import type { EndpointType } from '../domain/configuration'
+import { isSimulationActive } from '../domain/configuration'
 import { monitor } from '../tools/monitor'
 import type { RawError } from '../tools/error'
 import { clocksNow } from '../tools/timeUtils'
@@ -40,6 +41,7 @@ export function sendWithRetryStrategy(
   state: RetryState,
   sendStrategy: SendStrategy,
   endpointType: EndpointType,
+  toPrimaryEndpoint: boolean,
   reportError: (error: RawError) => void
 ) {
   if (
@@ -47,11 +49,19 @@ export function sendWithRetryStrategy(
     state.queuedPayloads.size() === 0 &&
     state.bandwidthMonitor.canHandle(payload)
   ) {
-    send(payload, state, sendStrategy, {
-      onSuccess: () => retryQueuedPayloads(RetryReason.AFTER_SUCCESS, state, sendStrategy, endpointType, reportError),
+    send(payload, state, sendStrategy, toPrimaryEndpoint, {
+      onSuccess: () =>
+        retryQueuedPayloads(
+          RetryReason.AFTER_SUCCESS,
+          state,
+          sendStrategy,
+          endpointType,
+          toPrimaryEndpoint,
+          reportError
+        ),
       onFailure: () => {
         state.queuedPayloads.enqueue(payload)
-        scheduleRetry(state, sendStrategy, endpointType, reportError)
+        scheduleRetry(state, sendStrategy, endpointType, toPrimaryEndpoint, reportError)
       },
     })
   } else {
@@ -63,6 +73,7 @@ function scheduleRetry(
   state: RetryState,
   sendStrategy: SendStrategy,
   endpointType: EndpointType,
+  toPrimaryEndpoint: boolean,
   reportError: (error: RawError) => void
 ) {
   if (state.transportStatus !== TransportStatus.DOWN) {
@@ -71,7 +82,7 @@ function scheduleRetry(
   setTimeout(
     monitor(() => {
       const payload = state.queuedPayloads.first()
-      send(payload, state, sendStrategy, {
+      send(payload, state, sendStrategy, toPrimaryEndpoint, {
         onSuccess: () => {
           state.queuedPayloads.dequeue()
           if (state.lastFailureStatus !== 0) {
@@ -80,11 +91,18 @@ function scheduleRetry(
             })
           }
           state.currentBackoffTime = INITIAL_BACKOFF_TIME
-          retryQueuedPayloads(RetryReason.AFTER_RESUME, state, sendStrategy, endpointType, reportError)
+          retryQueuedPayloads(
+            RetryReason.AFTER_RESUME,
+            state,
+            sendStrategy,
+            endpointType,
+            toPrimaryEndpoint,
+            reportError
+          )
         },
         onFailure: () => {
           state.currentBackoffTime = Math.min(MAX_BACKOFF_TIME, state.currentBackoffTime * 2)
-          scheduleRetry(state, sendStrategy, endpointType, reportError)
+          scheduleRetry(state, sendStrategy, endpointType, toPrimaryEndpoint, reportError)
         },
       })
     }),
@@ -96,8 +114,16 @@ function send(
   payload: Payload,
   state: RetryState,
   sendStrategy: SendStrategy,
+  toPrimaryEndpoint: boolean,
   { onSuccess, onFailure }: { onSuccess: () => void; onFailure: () => void }
 ) {
+  if (isSimulationActive() && toPrimaryEndpoint) {
+    state.transportStatus =
+      state.bandwidthMonitor.ongoingRequestCount > 0 ? TransportStatus.FAILURE_DETECTED : TransportStatus.DOWN
+    state.lastFailureStatus = 555
+    onFailure()
+    return
+  }
   state.bandwidthMonitor.add(payload)
   sendStrategy(payload, (response) => {
     state.bandwidthMonitor.remove(payload)
@@ -119,6 +145,7 @@ function retryQueuedPayloads(
   state: RetryState,
   sendStrategy: SendStrategy,
   endpointType: EndpointType,
+  toPrimaryEndpoint: boolean,
   reportError: (error: RawError) => void
 ) {
   if (reason === RetryReason.AFTER_SUCCESS && state.queuedPayloads.isFull() && !state.queueFullReported) {
@@ -132,7 +159,7 @@ function retryQueuedPayloads(
   const previousQueue = state.queuedPayloads
   state.queuedPayloads = newPayloadQueue()
   while (previousQueue.size() > 0) {
-    sendWithRetryStrategy(previousQueue.dequeue()!, state, sendStrategy, endpointType, reportError)
+    sendWithRetryStrategy(previousQueue.dequeue()!, state, sendStrategy, endpointType, toPrimaryEndpoint, reportError)
   }
 }
 

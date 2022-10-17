@@ -78,6 +78,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
       }
 
       ;({ handleLog: handleLogStrategy, getInternalContext: getInternalContextStrategy } = startLogsImpl(
+        initConfiguration,
         configuration,
         getCommonContext,
         mainLogger

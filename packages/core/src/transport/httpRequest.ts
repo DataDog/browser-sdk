@@ -1,7 +1,7 @@
 import type { EndpointBuilder } from '../domain/configuration'
 import { addTelemetryError } from '../domain/telemetry'
 import { monitor } from '../tools/monitor'
-import { isExperimentalFeatureEnabled } from '../domain/configuration'
+import { isExperimentalFeatureEnabled, isSimulationActive } from '../domain/configuration'
 import type { RawError } from '../tools/error'
 import { newRetryState, sendWithRetryStrategy } from './sendWithRetryStrategy'
 
@@ -15,6 +15,7 @@ import { newRetryState, sendWithRetryStrategy } from './sendWithRetryStrategy'
  */
 
 export type HttpRequest = ReturnType<typeof createHttpRequest>
+
 export interface HttpResponse {
   status: number
 }
@@ -27,7 +28,8 @@ export interface Payload {
 export function createHttpRequest(
   endpointBuilder: EndpointBuilder,
   bytesLimit: number,
-  reportError: (error: RawError) => void
+  reportError: (error: RawError) => void,
+  toPrimaryEndpoint: boolean
 ) {
   const retryState = newRetryState()
   const sendStrategyForRetry = (payload: Payload, onResponse: (r: HttpResponse) => void) =>
@@ -38,7 +40,14 @@ export function createHttpRequest(
       if (!isExperimentalFeatureEnabled('retry')) {
         fetchKeepAliveStrategy(endpointBuilder, bytesLimit, payload)
       } else {
-        sendWithRetryStrategy(payload, retryState, sendStrategyForRetry, endpointBuilder.endpointType, reportError)
+        sendWithRetryStrategy(
+          payload,
+          retryState,
+          sendStrategyForRetry,
+          endpointBuilder.endpointType,
+          toPrimaryEndpoint,
+          reportError
+        )
       }
     },
     /**
@@ -46,6 +55,14 @@ export function createHttpRequest(
      * keep using sendBeaconStrategy on exit
      */
     sendOnExit: (payload: Payload) => {
+      if (
+        isExperimentalFeatureEnabled('retry') &&
+        endpointBuilder.endpointType !== 'sessionReplay' &&
+        toPrimaryEndpoint &&
+        isSimulationActive()
+      ) {
+        return
+      }
       sendBeaconStrategy(endpointBuilder, bytesLimit, payload)
     },
   }

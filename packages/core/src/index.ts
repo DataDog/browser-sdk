@@ -8,6 +8,9 @@ export {
   isExperimentalFeatureEnabled,
   updateExperimentalFeatures,
   resetExperimentalFeatures,
+  isSimulationActive,
+  getSimulationLabel,
+  serializeConfiguration,
 } from './domain/configuration'
 export { trackRuntimeError } from './domain/error/trackRuntimeError'
 export { computeStackTrace, StackTrace } from './domain/tracekit'
@@ -17,6 +20,7 @@ export {
   startTelemetry,
   Telemetry,
   RawTelemetryEvent,
+  RawTelemetryConfiguration,
   addTelemetryDebug,
   addTelemetryError,
   startFakeTelemetry,
@@ -24,7 +28,9 @@ export {
   TelemetryEvent,
   TelemetryErrorEvent,
   TelemetryDebugEvent,
+  TelemetryConfigurationEvent,
   isTelemetryReplicationAllowed,
+  addTelemetryConfiguration,
 } from './domain/telemetry'
 export { monitored, monitor, callMonitored, setDebugMode } from './tools/monitor'
 export { Observable, Subscription } from './tools/observable'
@@ -55,9 +61,11 @@ export { instrumentMethod, instrumentMethodAndCallOriginal, instrumentSetter } f
 export {
   ErrorSource,
   ErrorHandling,
-  formatUnknownError,
+  computeRawError,
   createHandlingStack,
   RawError,
+  RawErrorCause,
+  ErrorWithCause,
   toStackTraceString,
   getFileFromStackTraceString,
 } from './tools/error'

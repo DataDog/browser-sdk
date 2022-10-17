@@ -1,4 +1,3 @@
-import type { TelemetryErrorEvent } from '@datadog/browser-core'
 import { bundleSetup, createTest, flushEvents } from '../lib/framework'
 import { browserExecute } from '../lib/helpers/browser'
 
@@ -16,8 +15,8 @@ describe('telemetry', () => {
         window.DD_LOGS!.logger.log('hop', context as any)
       })
       await flushEvents()
-      expect(serverEvents.telemetry.length).toBe(1)
-      const event = serverEvents.telemetry[0] as TelemetryErrorEvent
+      expect(serverEvents.telemetryErrors.length).toBe(1)
+      const event = serverEvents.telemetryErrors[0]
       expect(event.telemetry.message).toBe('bar')
       expect(event.telemetry.error!.kind).toBe('Error')
       expect(event.telemetry.status).toBe('error')
@@ -37,11 +36,37 @@ describe('telemetry', () => {
         window.DD_RUM!.addAction('hop', context as any)
       })
       await flushEvents()
-      expect(serverEvents.telemetry.length).toBe(1)
-      const event = serverEvents.telemetry[0] as TelemetryErrorEvent
+      expect(serverEvents.telemetryErrors.length).toBe(1)
+      const event = serverEvents.telemetryErrors[0]
       expect(event.telemetry.message).toBe('bar')
       expect(event.telemetry.error!.kind).toBe('Error')
       expect(event.telemetry.status).toBe('error')
       serverEvents.empty()
+    })
+
+  createTest('send init configuration for logs')
+    .withSetup(bundleSetup)
+    .withLogs({
+      enableExperimentalFeatures: ['telemetry_configuration'],
+      forwardErrorsToLogs: true,
+    })
+    .run(async ({ serverEvents }) => {
+      await flushEvents()
+      expect(serverEvents.telemetryConfigurations.length).toBe(1)
+      const event = serverEvents.telemetryConfigurations[0]
+      expect(event.telemetry.configuration.forward_errors_to_logs).toEqual(true)
+    })
+
+  createTest('send init configuration for RUM')
+    .withSetup(bundleSetup)
+    .withRum({
+      enableExperimentalFeatures: ['telemetry_configuration'],
+      trackInteractions: true,
+    })
+    .run(async ({ serverEvents }) => {
+      await flushEvents()
+      expect(serverEvents.telemetryConfigurations.length).toBe(1)
+      const event = serverEvents.telemetryConfigurations[0]
+      expect(event.telemetry.configuration.track_interactions).toEqual(true)
     })
 })

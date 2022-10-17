@@ -91,7 +91,9 @@ function buildRawReportFromCspViolation(event: SecurityPolicyViolationEvent): Ra
     message: `${type}: ${message}`,
     stack: buildStack(
       event.effectiveDirective,
-      `${message} of the policy "${safeTruncate(event.originalPolicy, 100, '...')}"`,
+      event.originalPolicy
+        ? `${message} of the policy "${safeTruncate(event.originalPolicy, 100, '...')}"`
+        : 'no policy',
       event.sourceFile,
       event.lineNumber,
       event.columnNumber

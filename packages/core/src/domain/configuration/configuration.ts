@@ -3,7 +3,9 @@ import { getCurrentSite } from '../../browser/cookie'
 import { catchUserErrors } from '../../tools/catchUserErrors'
 import { display } from '../../tools/display'
 import { assign, isPercentage, ONE_KIBI_BYTE, ONE_SECOND } from '../../tools/utils'
+import type { RawTelemetryConfiguration } from '../telemetry'
 import { updateExperimentalFeatures } from './experimentalFeatures'
+import { initSimulation } from './simulation'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
 
@@ -40,6 +42,12 @@ export interface InitConfiguration {
   enableExperimentalFeatures?: string[] | undefined
   replica?: ReplicaUserConfiguration | undefined
   datacenter?: string
+  telemetryConfigurationSampleRate?: number
+
+  // simulation options
+  simulationStart?: string | undefined
+  simulationEnd?: string | undefined
+  simulationLabel?: string | undefined
 }
 
 // This type is only used to build the core configuration. Logs and RUM SDKs are using a proper type
@@ -57,6 +65,7 @@ export interface Configuration extends TransportConfiguration {
   cookieOptions: CookieOptions
   sampleRate: number
   telemetrySampleRate: number
+  telemetryConfigurationSampleRate: number
   service: string | undefined
   silentMultipleInit: boolean
 
@@ -87,8 +96,18 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     return
   }
 
+  if (
+    initConfiguration.telemetryConfigurationSampleRate !== undefined &&
+    !isPercentage(initConfiguration.telemetryConfigurationSampleRate)
+  ) {
+    display.error('Telemetry Configuration Sample Rate should be a number between 0 and 100')
+    return
+  }
+
   // Set the experimental feature flags as early as possible, so we can use them in most places
   updateExperimentalFeatures(initConfiguration.enableExperimentalFeatures)
+
+  initSimulation(initConfiguration.simulationStart, initConfiguration.simulationEnd, initConfiguration.simulationLabel)
 
   return assign(
     {
@@ -97,6 +116,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
       cookieOptions: buildCookieOptions(initConfiguration),
       sampleRate: initConfiguration.sampleRate ?? 100,
       telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
+      telemetryConfigurationSampleRate: initConfiguration.telemetryConfigurationSampleRate ?? 5,
       service: initConfiguration.service,
       silentMultipleInit: !!initConfiguration.silentMultipleInit,
 
@@ -140,4 +160,18 @@ export function buildCookieOptions(initConfiguration: InitConfiguration) {
 
 function mustUseSecureCookie(initConfiguration: InitConfiguration) {
   return !!initConfiguration.useSecureSessionCookie || !!initConfiguration.useCrossSiteSessionCookie
+}
+
+export function serializeConfiguration(configuration: InitConfiguration): Partial<RawTelemetryConfiguration> {
+  return {
+    session_sample_rate: configuration.sampleRate,
+    telemetry_sample_rate: configuration.telemetrySampleRate,
+    telemetry_configuration_sample_rate: configuration.telemetryConfigurationSampleRate,
+    use_before_send: !!configuration.beforeSend,
+    use_cross_site_session_cookie: configuration.useCrossSiteSessionCookie,
+    use_secure_session_cookie: configuration.useSecureSessionCookie,
+    use_proxy: configuration.proxyUrl !== undefined ? !!configuration.proxyUrl : undefined,
+    silent_multiple_init: configuration.silentMultipleInit,
+    track_session_across_subdomains: configuration.trackSessionAcrossSubdomains,
+  }
 }

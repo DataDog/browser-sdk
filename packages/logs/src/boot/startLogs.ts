@@ -8,9 +8,11 @@ import {
   startBatchWithReplica,
   isTelemetryReplicationAllowed,
   ErrorSource,
+  addTelemetryConfiguration,
 } from '@datadog/browser-core'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
-import type { LogsConfiguration } from '../domain/configuration'
+import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
+import { serializeLogsConfiguration } from '../domain/configuration'
 import { startLogsAssembly, getRUMInternalContext } from '../domain/assembly'
 import { startConsoleCollection } from '../domain/logsCollection/console/consoleCollection'
 import { startReportCollection } from '../domain/logsCollection/report/reportCollection'
@@ -25,7 +27,12 @@ import type { Logger } from '../domain/logger'
 import { StatusType } from '../domain/logger'
 import { startInternalContext } from '../domain/internalContext'
 
-export function startLogs(configuration: LogsConfiguration, getCommonContext: () => CommonContext, mainLogger: Logger) {
+export function startLogs(
+  initConfiguration: LogsInitConfiguration,
+  configuration: LogsConfiguration,
+  getCommonContext: () => CommonContext,
+  mainLogger: Logger
+) {
   const lifeCycle = new LifeCycle()
 
   const reportError = (error: RawError) =>
@@ -75,6 +82,7 @@ export function startLogs(configuration: LogsConfiguration, getCommonContext: ()
     startLogsBridge(lifeCycle)
   }
 
+  addTelemetryConfiguration(serializeLogsConfiguration(initConfiguration))
   const internalContext = startInternalContext(session)
 
   return {

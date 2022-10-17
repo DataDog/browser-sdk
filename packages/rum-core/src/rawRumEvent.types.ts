@@ -6,6 +6,7 @@ import type {
   ResourceType,
   ServerDuration,
   TimeStamp,
+  RawErrorCause,
 } from '@datadog/browser-core'
 import type { RumSessionPlan } from './domain/rumSessionManager'
 
@@ -35,10 +36,11 @@ export interface RawRumResourceEvent {
     first_byte?: PerformanceResourceDetailsElement
     download?: PerformanceResourceDetailsElement
   }
-  _dd?: {
+  _dd: {
     trace_id?: string
     span_id?: string // not available for initial document tracing
     rule_psr?: number
+    discarded: boolean
   }
 }
 
@@ -58,6 +60,7 @@ export interface RawRumErrorEvent {
     source: ErrorSource
     message: string
     handling?: ErrorHandling
+    causes?: RawErrorCause[]
     source_type: 'browser'
   }
   view?: {
@@ -133,6 +136,9 @@ export interface RawRumLongTaskEvent {
   long_task: {
     id: string
     duration: ServerDuration
+  }
+  _dd: {
+    discarded: boolean
   }
 }
 

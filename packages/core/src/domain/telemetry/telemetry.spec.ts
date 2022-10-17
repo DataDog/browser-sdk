@@ -1,8 +1,19 @@
 import type { StackTrace } from '@datadog/browser-core'
 import { callMonitored } from '../../tools/monitor'
 import type { Configuration } from '../configuration'
-import { updateExperimentalFeatures, INTAKE_SITE_US1, INTAKE_SITE_US1_FED } from '../configuration'
-import { resetTelemetry, startTelemetry, scrubCustomerFrames, formatError } from './telemetry'
+import {
+  resetExperimentalFeatures,
+  updateExperimentalFeatures,
+  INTAKE_SITE_US1,
+  INTAKE_SITE_US1_FED,
+} from '../configuration'
+import {
+  resetTelemetry,
+  startTelemetry,
+  scrubCustomerFrames,
+  formatError,
+  addTelemetryConfiguration,
+} from './telemetry'
 
 function startAndSpyTelemetry(configuration?: Partial<Configuration>) {
   const telemetry = startTelemetry({
@@ -29,6 +40,48 @@ describe('telemetry', () => {
       throw new Error('message')
     })
     expect(notifySpy).toHaveBeenCalledTimes(1)
+  })
+
+  describe('addTelemetryConfiguration', () => {
+    afterEach(() => {
+      resetExperimentalFeatures()
+    })
+
+    it('should collects configuration when sampled and ff is enabled', () => {
+      updateExperimentalFeatures(['telemetry_configuration'])
+
+      const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 100, telemetryConfigurationSampleRate: 100 })
+
+      addTelemetryConfiguration({})
+
+      expect(notifySpy).toHaveBeenCalled()
+    })
+
+    it('should not notify configuration when sampled and ff is disabled', () => {
+      const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 100, telemetryConfigurationSampleRate: 100 })
+
+      addTelemetryConfiguration({})
+
+      expect(notifySpy).not.toHaveBeenCalled()
+    })
+
+    it('should not notify configuration when not sampled and ff is enabled', () => {
+      updateExperimentalFeatures(['telemetry_configuration'])
+      const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 100, telemetryConfigurationSampleRate: 0 })
+
+      addTelemetryConfiguration({})
+
+      expect(notifySpy).not.toHaveBeenCalled()
+    })
+
+    it('should not notify configuration when telemetrySampleRate is 0 and ff is enabled', () => {
+      updateExperimentalFeatures(['telemetry_configuration'])
+      const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 0, telemetryConfigurationSampleRate: 100 })
+
+      addTelemetryConfiguration({})
+
+      expect(notifySpy).not.toHaveBeenCalled()
+    })
   })
 
   it('should contains feature flags', () => {

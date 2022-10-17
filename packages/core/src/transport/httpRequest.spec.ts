@@ -18,7 +18,7 @@ describe('httpRequest', () => {
     interceptor = interceptRequests()
     requests = interceptor.requests
     endpointBuilder = stubEndpointBuilder(ENDPOINT_URL)
-    request = createHttpRequest(endpointBuilder, BATCH_BYTES_LIMIT, noop)
+    request = createHttpRequest(endpointBuilder, BATCH_BYTES_LIMIT, noop, true)
   })
 
   afterEach(() => {
@@ -209,7 +209,7 @@ describe('httpRequest intake parameters', () => {
     interceptor = interceptRequests()
     requests = interceptor.requests
     endpointBuilder = createEndpointBuilder({ clientToken }, 'logs', [])
-    request = createHttpRequest(endpointBuilder, BATCH_BYTES_LIMIT, noop)
+    request = createHttpRequest(endpointBuilder, BATCH_BYTES_LIMIT, noop, true)
   })
 
   afterEach(() => {

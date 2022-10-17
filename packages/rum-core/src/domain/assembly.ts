@@ -8,6 +8,8 @@ import {
   display,
   createEventRateLimiter,
   canUseEventBridge,
+  isSimulationActive,
+  getSimulationLabel,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type {
@@ -27,7 +29,6 @@ import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import type { ViewContexts } from './contexts/viewContexts'
 import type { RumSessionManager } from './rumSessionManager'
-import { RumSessionPlan } from './rumSessionManager'
 import type { UrlContexts } from './contexts/urlContexts'
 import type { RumConfiguration } from './configuration'
 import type { ActionContexts } from './rumEventsCollection/action/actionCollection'
@@ -104,7 +105,7 @@ export function startRumAssembly(
             format_version: 2,
             drift: currentDrift(),
             session: {
-              plan: session.hasPremiumPlan ? RumSessionPlan.PREMIUM : RumSessionPlan.LITE,
+              plan: session.plan,
             },
             browser_sdk_version: canUseEventBridge() ? __BUILD_ENV__SDK_VERSION__ : undefined,
           },
@@ -133,6 +134,10 @@ export function startRumAssembly(
 
         const serverRumEvent = combine(rumContext as RumContext & Context, rawRumEvent) as RumEvent & Context
         serverRumEvent.context = combine(commonContext.context, customerContext)
+
+        if (isSimulationActive()) {
+          serverRumEvent.context.simulation_label = getSimulationLabel()
+        }
 
         if (!('has_replay' in serverRumEvent.session)) {
           ;(serverRumEvent.session as Mutable<RumEvent['session']>).has_replay = commonContext.hasReplay
