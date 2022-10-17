@@ -30,6 +30,11 @@ const ALLOWED_FRAME_URLS = [
   '<anonymous>',
 ]
 
+export const enum TelemetryService {
+  LOGS = 'browser-logs-sdk',
+  RUM = 'browser-rum-sdk',
+}
+
 export interface Telemetry {
   setContextProvider: (provider: () => Context) => void
   observable: Observable<TelemetryEvent & Context>
@@ -46,7 +51,7 @@ const telemetryConfiguration: {
 
 let onRawTelemetryEventCollected: ((event: RawTelemetryEvent) => void) | undefined
 
-export function startTelemetry(configuration: Configuration): Telemetry {
+export function startTelemetry(telemetryService: TelemetryService, configuration: Configuration): Telemetry {
   let contextProvider: () => Context
   const observable = new Observable<TelemetryEvent & Context>()
 
@@ -56,7 +61,7 @@ export function startTelemetry(configuration: Configuration): Telemetry {
 
   onRawTelemetryEventCollected = (event: RawTelemetryEvent) => {
     if (!includes(TELEMETRY_EXCLUDED_SITES, configuration.site) && telemetryConfiguration.telemetryEnabled) {
-      observable.notify(toTelemetryEvent(event))
+      observable.notify(toTelemetryEvent(telemetryService, event))
     }
   }
   startMonitorErrorCollection(addTelemetryError)
@@ -66,12 +71,12 @@ export function startTelemetry(configuration: Configuration): Telemetry {
     sentEventCount: 0,
   })
 
-  function toTelemetryEvent(event: RawTelemetryEvent): TelemetryEvent & Context {
+  function toTelemetryEvent(telemetryService: TelemetryService, event: RawTelemetryEvent): TelemetryEvent & Context {
     return combine(
       {
         type: 'telemetry' as const,
         date: timeStampNow(),
-        service: 'browser-sdk',
+        service: telemetryService,
         version: __BUILD_ENV__SDK_VERSION__,
         source: 'browser' as const,
         _dd: {

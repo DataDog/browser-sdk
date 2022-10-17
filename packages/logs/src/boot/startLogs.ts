@@ -1,4 +1,4 @@
-import type { Context, TelemetryEvent, RawError } from '@datadog/browser-core'
+import { Context, TelemetryEvent, RawError, TelemetryService } from '@datadog/browser-core'
 import {
   willSyntheticsInjectRum,
   areCookiesAuthorized,
@@ -92,7 +92,7 @@ export function startLogs(
 }
 
 function startLogsTelemetry(configuration: LogsConfiguration, reportError: (error: RawError) => void) {
-  const telemetry = startTelemetry(configuration)
+  const telemetry = startTelemetry(TelemetryService.LOGS, configuration)
   if (canUseEventBridge()) {
     const bridge = getEventBridge<'internal_telemetry', TelemetryEvent>()!
     telemetry.observable.subscribe((event) => bridge.send('internal_telemetry', event))
