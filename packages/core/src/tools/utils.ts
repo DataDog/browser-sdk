@@ -660,8 +660,8 @@ export function removeDuplicates<T>(array: T[]) {
   return arrayFrom(set)
 }
 
-export function matchList(list: Array<string | RegExp>, value: string) {
-  return list.some((item) => item === value || (item instanceof RegExp && item.test(value)))
+export function matchList(list: Array<string | RegExp | { (origin: string): boolean }>, value: string): boolean {
+  return list.some((item) => ((typeof item === 'function') && item(value)) || item === value || (item instanceof RegExp && item.test(value)))
 }
 
 // https://github.com/jquery/jquery/blob/a684e6ba836f7c553968d7d026ed7941e1a612d8/src/selector/escapeSelector.js

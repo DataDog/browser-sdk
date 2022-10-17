@@ -22,7 +22,7 @@ export interface RumInitConfiguration extends InitConfiguration {
   excludedActivityUrls?: ReadonlyArray<string | RegExp> | undefined
 
   // tracing options
-  allowedTracingOrigins?: ReadonlyArray<string | RegExp> | undefined
+  allowedTracingOrigins?: ReadonlyArray<string | RegExp | ((origin: string) => boolean)> | undefined
   tracingSampleRate?: number | undefined
 
   // replay options
@@ -50,7 +50,7 @@ export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId'
 export interface RumConfiguration extends Configuration {
   // Built from init configuration
   actionNameAttribute: string | undefined
-  allowedTracingOrigins: Array<string | RegExp>
+  allowedTracingOrigins: Array<string | RegExp | ((origin: string) => boolean)>
   tracingSampleRate: number | undefined
   excludedActivityUrls: Array<string | RegExp>
   applicationId: string
