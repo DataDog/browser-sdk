@@ -161,7 +161,9 @@ describe('fetch proxy', () => {
     await fetchStub(FAKE_URL).resolveWith({ status: 500 })
     await fetchStub(new Request(FAKE_URL)).resolveWith({ status: 500 })
     await fetchStub(new Request(FAKE_URL, { method: 'PUT' })).resolveWith({ status: 500 })
-    await fetchStub(new Request(FAKE_URL, { method: 'PUT' }), { method: 'POST' }).resolveWith({ status: 500 })
+    await fetchStub(new Request(FAKE_URL, { method: 'PUT' }), { method: 'POST' }).resolveWith({
+      status: 500,
+    })
     await fetchStub(new Request(FAKE_URL), { method: 'POST' }).resolveWith({ status: 500 })
     await fetchStub(FAKE_URL, { method: 'POST' }).resolveWith({ status: 500 })
 

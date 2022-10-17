@@ -141,6 +141,7 @@ export function stubFetch(): FetchStubManager {
 }
 
 export interface ResponseStubOptions {
+  ok?: boolean
   status?: number
   method?: string
   type?: ResponseType
@@ -158,6 +159,7 @@ function notYetImplemented(): never {
 }
 
 export class ResponseStub implements Response {
+  public ok = true
   private _body: ReadableStream<Uint8Array> | undefined
 
   constructor(private options: Readonly<ResponseStubOptions>) {
@@ -177,6 +179,8 @@ export class ResponseStub implements Response {
         },
       })
     }
+
+    this.ok = this.options.status === 200
 
     if (this.options.json) this.json = this.options.json
     if (this.options.arrayBuffer) this.arrayBuffer = this.options.arrayBuffer
@@ -228,9 +232,6 @@ export class ResponseStub implements Response {
     return Promise.resolve(new FormData())
   }
 
-  get ok() {
-    return notYetImplemented()
-  }
   get headers() {
     return notYetImplemented()
   }
