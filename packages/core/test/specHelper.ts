@@ -113,8 +113,10 @@ export function stubFetch(): FetchStubManager {
       reject = rej
     }) as unknown as FetchStubPromise
     promise.resolveWith = (responseOptions: ResponseStubOptions) => {
-      resolve(new ResponseStub(responseOptions))
+      const response = new ResponseStub(responseOptions)
+      resolve(response)
       onRequestEnd()
+      return Promise.resolve(response)
     }
     promise.rejectWith = (error: Error) => {
       reject(error)
@@ -145,6 +147,11 @@ export interface ResponseStubOptions {
   responseText?: string
   responseTextError?: Error
   body?: ReadableStream<Uint8Array>
+  json?: () => Promise<string>
+  arrayBuffer?: () => Promise<ArrayBuffer>
+  text?: () => Promise<string>
+  blob?: () => Promise<Blob>
+  formData?: () => Promise<FormData>
 }
 function notYetImplemented(): never {
   throw new Error('not yet implemented')
@@ -170,6 +177,12 @@ export class ResponseStub implements Response {
         },
       })
     }
+
+    if (this.options.json) this.json = this.options.json
+    if (this.options.arrayBuffer) this.arrayBuffer = this.options.arrayBuffer
+    if (this.options.text) this.text = this.options.text
+    if (this.options.blob) this.blob = this.options.blob
+    if (this.options.formData) this.formData = this.options.formData
   }
 
   get status() {
@@ -199,14 +212,22 @@ export class ResponseStub implements Response {
     return new ResponseStub(this.options)
   }
 
-  // Partial implementation, feel free to implement
-  /* eslint-disable @typescript-eslint/member-ordering */
-  arrayBuffer = notYetImplemented
-  text = notYetImplemented
-  blob = notYetImplemented
-  formData = notYetImplemented
-  json = notYetImplemented
-  /* eslint-enable @typescript-eslint/member-ordering */
+  json() {
+    return Promise.resolve(JSON.stringify({ foo: 'bar' }))
+  }
+  arrayBuffer() {
+    return Promise.resolve(new ArrayBuffer(0))
+  }
+  text() {
+    return Promise.resolve('foo')
+  }
+  blob() {
+    return Promise.resolve(new Blob())
+  }
+  formData() {
+    return Promise.resolve(new FormData())
+  }
+
   get ok() {
     return notYetImplemented()
   }
@@ -230,7 +251,7 @@ export class ResponseStub implements Response {
 export type FetchStub = (input: RequestInfo, init?: RequestInit) => FetchStubPromise
 
 export interface FetchStubPromise extends Promise<Response> {
-  resolveWith: (response: ResponseStubOptions) => void
+  resolveWith: (response: ResponseStubOptions) => Promise<ResponseStub>
   rejectWith: (error: Error) => void
   abort: () => void
 }
