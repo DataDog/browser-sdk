@@ -1,9 +1,9 @@
 import type { FetchStub, FetchStubManager, FetchStubPromise } from '../../test/specHelper'
-import { stubFetch } from '../../test/specHelper'
+import { stubFetch, mockClock } from '../../test/specHelper'
 import { isIE } from '../tools/browserDetection'
 import type { Subscription } from '../tools/observable'
 import type { FetchCompleteContext, FetchContext } from './fetchObservable'
-import { initFetchObservable } from './fetchObservable'
+import { initFetchObservable, responseMethodsToOverload, REPORT_FETCH_TIMER } from './fetchObservable'
 
 describe('fetch proxy', () => {
   const FAKE_URL = 'http://fake-url/'
@@ -34,6 +34,59 @@ describe('fetch proxy', () => {
     requestsTrackingSubscription.unsubscribe()
     contextEditionSubscription?.unsubscribe()
     fetchStubManager.reset()
+  })
+
+  responseMethodsToOverload.forEach((method) => {
+    it(`should notify when ${method} method called`, async () => {
+      const responseObj = await fetchStub(FAKE_URL).resolveWith({
+        status: 200,
+        responseText: 'ok',
+      })
+
+      await responseObj[method]()
+
+      const request = requests[0]
+      expect(request.method).toEqual('GET')
+      expect(request.url).toEqual(FAKE_URL)
+      expect(request.status).toEqual(200)
+      expect(request.isAborted).toBe(false)
+    })
+
+    it(`should notify if ${method} method rejects`, async () => {
+      const spy = jasmine.createSpy().and.rejectWith()
+      const responseObj = await fetchStub(FAKE_URL).resolveWith({
+        status: 200,
+        responseText: 'ok',
+        [method]: spy,
+      })
+
+      try {
+        await responseObj[method]()
+        // eslint-disable-next-line no-empty
+      } catch (e) {}
+
+      const request = requests[0]
+      expect(request.method).toEqual('GET')
+      expect(request.url).toEqual(FAKE_URL)
+      expect(request.status).toEqual(200)
+      expect(request.isAborted).toBe(false)
+    })
+  })
+
+  it('should notify when timeout exceeded', async () => {
+    const clock = mockClock()
+    await fetchStub(FAKE_URL).resolveWith({ status: 200, responseText: 'ok' })
+
+    clock.tick(REPORT_FETCH_TIMER / 2)
+    let request = requests[0]
+    expect(request).toBeUndefined()
+
+    clock.tick(REPORT_FETCH_TIMER / 2 + 1)
+
+    request = requests[0]
+
+    expect(request).toBeDefined()
+    clock.cleanup()
   })
 
   it('should track server error', (done) => {
