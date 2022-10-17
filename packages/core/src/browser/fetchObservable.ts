@@ -89,6 +89,7 @@ function beforeSend(observable: Observable<FetchContext>, input: RequestInfo, in
 }
 
 type OverloadMethodKeys = 'json' | 'text' | 'formData' | 'blob' | 'arrayBuffer'
+export const responseMethodsToOverload: OverloadMethodKeys[] = ['json', 'text', 'formData', 'blob', 'arrayBuffer']
 export const REPORT_FETCH_TIMER = 3000
 
 function afterSend(
@@ -123,38 +124,37 @@ function afterSend(
 
     Promise.race([
       new Promise((resolve) => {
-        stopInstruments = (['json', 'text', 'formData', 'blob', 'arrayBuffer'] as OverloadMethodKeys[]).map(
-          (method) => {
-            const { stop } = instrumentMethod(
-              response,
-              method,
-              (originalMethod: () => Promise<any>) =>
-                function () {
-                  const res = originalMethod.call(response)
-                  res.then(
-                    monitor(() => {
-                      reportFetch(response)
-                      resolve(null)
-                    }),
-                    monitor(() => {
-                      reportFetch(response)
-                      resolve(null)
-                    })
-                  )
-                  return res
-                }
-            )
-            return stop
-          }
-        )
+        stopInstruments = responseMethodsToOverload.map((method) => {
+          const { stop } = instrumentMethod(
+            response,
+            method,
+            (originalMethod: () => Promise<any>) =>
+              function () {
+                const res = originalMethod.call(this)
+                res.then(
+                  monitor(() => {
+                    reportFetch(response)
+                    resolve(null)
+                  }),
+                  monitor(() => {
+                    reportFetch(response)
+                    resolve(null)
+                  })
+                )
+                return res
+              }
+          )
+          return stop
+        })
       }),
       new Promise((resolve) => {
-        timeOutId = setTimeout(() => {
+        timeOutId = setTimeout(
           monitor(() => {
             reportFetch(response)
             resolve(null)
-          })
-        }, REPORT_FETCH_TIMER)
+          }),
+          REPORT_FETCH_TIMER
+        )
       }),
     ])
       .then(reset)
