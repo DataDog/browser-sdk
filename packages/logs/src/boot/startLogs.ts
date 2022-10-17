@@ -1,5 +1,6 @@
-import { Context, TelemetryEvent, RawError, TelemetryService } from '@datadog/browser-core'
+import type { Context, TelemetryEvent, RawError } from '@datadog/browser-core'
 import {
+  TelemetryService,
   willSyntheticsInjectRum,
   areCookiesAuthorized,
   canUseEventBridge,
