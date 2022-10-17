@@ -170,7 +170,7 @@ function afterSend(
   }
 
   responsePromise.then(
-    monitor((response) => (response.status !== 200 ? reportFetch(response) : reportFetchResolve(response))),
+    monitor((response) => (!response.ok ? reportFetch(response) : reportFetchResolve(response))),
     monitor(reportFetch)
   )
 }
