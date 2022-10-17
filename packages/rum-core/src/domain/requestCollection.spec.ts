@@ -55,8 +55,8 @@ describe('collect fetch', () => {
     window.onunhandledrejection = null
   })
 
-  it('should notify on request start', (done) => {
-    fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
+  it('should notify on request start', async (done) => {
+    await fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
 
     fetchStubManager.whenAllComplete(() => {
       expect(startSpy).toHaveBeenCalledWith({ requestIndex: jasmine.any(Number) as unknown as number, url: FAKE_URL })
@@ -64,8 +64,8 @@ describe('collect fetch', () => {
     })
   })
 
-  it('should notify on request complete', (done) => {
-    fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
+  it('should notify on request complete', async (done) => {
+    await fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
 
     fetchStubManager.whenAllComplete(() => {
       const request = completeSpy.calls.argsFor(0)[0]
@@ -78,8 +78,8 @@ describe('collect fetch', () => {
     })
   })
 
-  it('should assign a request id', (done) => {
-    fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
+  it('should assign a request id', async (done) => {
+    await fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
 
     fetchStubManager.whenAllComplete(() => {
       const startRequestIndex = startSpy.calls.argsFor(0)[0].requestIndex
@@ -90,8 +90,8 @@ describe('collect fetch', () => {
     })
   })
 
-  it('should ignore intake requests', (done) => {
-    fetchStub(SPEC_ENDPOINTS.rumEndpointBuilder.build()).resolveWith({ status: 200, responseText: 'foo' })
+  it('should ignore intake requests', async (done) => {
+    await fetchStub(SPEC_ENDPOINTS.rumEndpointBuilder.build()).resolveWith({ status: 200, responseText: 'foo' })
 
     fetchStubManager.whenAllComplete(() => {
       expect(startSpy).not.toHaveBeenCalled()
@@ -101,9 +101,9 @@ describe('collect fetch', () => {
   })
 
   describe('tracing', () => {
-    it('should trace requests by default', () => {
+    it('should trace requests by default', async () => {
       jasmine.clock().install()
-      fetchStub(FAKE_URL).resolveWith({ status: 200, responseText: 'ok' })
+      await fetchStub(FAKE_URL).resolveWith({ status: 200, responseText: 'ok' })
 
       jasmine.clock().tick(10000) // a hack used to trigger resource collections
 
@@ -127,8 +127,8 @@ describe('collect fetch', () => {
       })
     })
 
-    it('should not trace requests ending with status 0', (done) => {
-      fetchStub(FAKE_URL).resolveWith({ status: 0, responseText: 'fetch cancelled' })
+    it('should not trace requests ending with status 0', async (done) => {
+      await fetchStub(FAKE_URL).resolveWith({ status: 0, responseText: 'fetch cancelled' })
 
       fetchStubManager.whenAllComplete(() => {
         const request = completeSpy.calls.argsFor(0)[0]
