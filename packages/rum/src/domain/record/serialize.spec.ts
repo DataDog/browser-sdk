@@ -1,6 +1,6 @@
 import { isIE } from '@datadog/browser-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from '@datadog/browser-rum-core'
+import type { RumConfiguration} from '@datadog/browser-rum-core';
+import { STABLE_ATTRIBUTES , DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from '@datadog/browser-rum-core'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
@@ -677,30 +677,30 @@ describe('serializeAttribute ', () => {
 
     it('does not mask the user-supplied programmatic action name attributes when it is a data attribute', () => {
       const node = document.createElement('div')
-      node.setAttribute('data-testid', 'foo')
+      node.setAttribute('data-my-custom-action-name', 'foo')
       expect(
-        serializeAttribute(node, NodePrivacyLevel.MASK, 'data-testid', {
+        serializeAttribute(node, NodePrivacyLevel.MASK, 'data-my-custom-action-name', {
           ...DEFAULT_CONFIGURATION,
-          actionNameAttribute: 'data-testid',
+          actionNameAttribute: 'data-my-custom-action-name',
         })
       ).toBe('foo')
     })
 
     it('does not mask the user-supplied programmatic action name attributes when it not a data attribute', () => {
       const node = document.createElement('div')
-      node.setAttribute('testid', 'foo')
+      node.setAttribute('my-custom-action-name', 'foo')
       expect(
-        serializeAttribute(node, NodePrivacyLevel.MASK, 'testid', {
+        serializeAttribute(node, NodePrivacyLevel.MASK, 'my-custom-action-name', {
           ...DEFAULT_CONFIGURATION,
-          actionNameAttribute: 'testid',
+          actionNameAttribute: 'my-custom-action-name',
         })
       ).toBe('foo')
     })
 
     it('does not mask other attributes used to generate CSS selectors', () => {
       const node = document.createElement('div')
-      node.setAttribute('data-test-id', 'foo')
-      expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'data-test-id', DEFAULT_CONFIGURATION)).toBe('foo')
+      node.setAttribute(STABLE_ATTRIBUTES[0], 'foo')
+      expect(serializeAttribute(node, NodePrivacyLevel.MASK, STABLE_ATTRIBUTES[0], DEFAULT_CONFIGURATION)).toBe('foo')
     })
   })
 })
