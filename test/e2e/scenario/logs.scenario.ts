@@ -83,6 +83,7 @@ describe('logs', () => {
             // The body stream needs to be cancelled, else the browser will still download the whole
             // response even if it is unused.
             response
+              .clone()
               .body!.getReader()
               .cancel()
               .catch((error) => console.log(error))
@@ -104,7 +105,7 @@ describe('logs', () => {
         // When reading the request, chunks length are probably not aligning perfectly with the
         // response length limit, so it sends few more bytes than necessary. Add a margin of error
         // to verify that it's still close to the expected limit.
-        DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT * 2
+        DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT * 4
       )
       expect(servers.base.app.getLargeResponseWroteSize()).toBeGreaterThanOrEqual(
         DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT
