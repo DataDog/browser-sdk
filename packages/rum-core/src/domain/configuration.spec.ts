@@ -222,6 +222,18 @@ describe('validateAndBuildRumConfiguration', () => {
       ).toEqual(['foo'])
     })
 
+    it('accepts functions', () => {
+      const customUrlFunction = (url: string): boolean => url === 'foo'
+
+      expect(
+        validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          excludedActivityUrls: [customUrlFunction],
+          service: 'bar',
+        })!.excludedActivityUrls
+      ).toEqual([customUrlFunction])
+    })
+
     it('does not validate the configuration if an incorrect value is provided', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, excludedActivityUrls: 'foo' as any })

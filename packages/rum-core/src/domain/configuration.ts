@@ -1,4 +1,4 @@
-import type { Configuration, InitConfiguration, RawTelemetryConfiguration } from '@datadog/browser-core'
+import type { Configuration, InitConfiguration, MatchPredicate, RawTelemetryConfiguration } from '@datadog/browser-core'
 import {
   serializeConfiguration,
   assign,
@@ -19,10 +19,10 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @deprecated use sessionReplaySampleRate instead
    */
   premiumSampleRate?: number | undefined
-  excludedActivityUrls?: ReadonlyArray<string | RegExp> | undefined
+  excludedActivityUrls?: ReadonlyArray<string | RegExp | MatchPredicate> | undefined
 
   // tracing options
-  allowedTracingOrigins?: ReadonlyArray<string | RegExp | ((origin: string) => boolean)> | undefined
+  allowedTracingOrigins?: ReadonlyArray<string | RegExp | MatchPredicate> | undefined
   tracingSampleRate?: number | undefined
 
   // replay options
@@ -50,9 +50,9 @@ export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId'
 export interface RumConfiguration extends Configuration {
   // Built from init configuration
   actionNameAttribute: string | undefined
-  allowedTracingOrigins: Array<string | RegExp | ((origin: string) => boolean)>
+  allowedTracingOrigins: Array<string | RegExp | MatchPredicate>
   tracingSampleRate: number | undefined
-  excludedActivityUrls: Array<string | RegExp>
+  excludedActivityUrls: Array<string | RegExp | MatchPredicate>
   applicationId: string
   defaultPrivacyLevel: DefaultPrivacyLevel
   oldPlansBehavior: boolean
