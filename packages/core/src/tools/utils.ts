@@ -661,8 +661,8 @@ export function removeDuplicates<T>(array: T[]) {
   return arrayFrom(set)
 }
 
-export type MatchPredicate = (value: string) => boolean
-export function matchList(list: Array<string | RegExp | MatchPredicate>, value: string): boolean {
+export type MatchOption = string | RegExp | ((value: string) => boolean)
+export function matchList(list: MatchOption[], value: string): boolean {
   return list.some((item) => {
     if (typeof item === 'function') {
       try {
