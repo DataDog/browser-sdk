@@ -20,6 +20,7 @@ export function readLimitedAmountOfBytes(
 
   function readMore() {
     reader.read().then(
+      // @ts-ignore: https://github.com/microsoft/TypeScript/issues/42970
       monitor((result: ReadableStreamDefaultReadResult<Uint8Array>) => {
         if (result.done) {
           onDone()
@@ -35,7 +36,9 @@ export function readLimitedAmountOfBytes(
           readMore()
         }
       }),
-      monitor((error) => callback(error))
+      monitor((error) => {
+        callback(error)
+      })
     )
   }
 
@@ -45,6 +48,10 @@ export function readLimitedAmountOfBytes(
       // as an unhandled rejection
       noop
     )
+    if (!shouldStoreChunks) {
+      callback()
+      return
+    }
 
     let completeBuffer: Uint8Array
     if (chunks.length === 1) {
