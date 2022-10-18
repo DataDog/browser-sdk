@@ -161,6 +161,7 @@ describe('action collection', () => {
 
       expect(resourceEvents.length).toBe(1)
       expect(resourceEvents[0].action!.id).toBe(actionEvents[0].action.id!)
+      expect(resourceEvents[0].resource.first_byte).toBeDefined()
     })
 
   createTest('increment the view.action.count of the view active when the action started')
