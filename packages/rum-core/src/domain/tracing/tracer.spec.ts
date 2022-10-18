@@ -107,7 +107,11 @@ describe('tracer', () => {
     it('should trace requests on configured origins', () => {
       const configurationWithTracingUrls = {
         ...configuration,
-        allowedTracingOrigins: [/^https?:\/\/qux\.com/, 'http://bar.com', (origin: string) => origin === 'http://dynamic.com'],
+        allowedTracingOrigins: [
+          /^https?:\/\/qux\.com/,
+          'http://bar.com',
+          (origin: string) => origin === 'http://dynamic.com',
+        ],
       }
       const stub = xhrStub as unknown as XMLHttpRequest
 
@@ -326,7 +330,11 @@ describe('tracer', () => {
     it('should trace requests on configured urls', () => {
       const configurationWithTracingUrls = {
         ...configuration,
-        allowedTracingOrigins: [/^https?:\/\/qux\.com.*/, 'http://bar.com', (origin: string) => origin === 'http://dynamic.com'],
+        allowedTracingOrigins: [
+          /^https?:\/\/qux\.com.*/,
+          'http://bar.com',
+          (origin: string) => origin === 'http://dynamic.com',
+        ],
       }
       const quxDomainContext: Partial<RumFetchStartContext> = { url: 'http://qux.com' }
       const barDomainContext: Partial<RumFetchStartContext> = { url: 'http://bar.com' }
