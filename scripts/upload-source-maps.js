@@ -23,12 +23,13 @@ async function renameFiles(bundleFolder, packageName) {
   }
 }
 
-async function uploadSourceMaps(site, apiKey, packageName, bundleFolder) {
+async function uploadSourceMaps(site, apiKey, packageName, service, bundleFolder) {
   printLog(`Uploading ${packageName} source maps for ${site}...`)
+
   const output = await executeCommand(
     `
     datadog-ci sourcemaps upload ${bundleFolder} \
-      --service browser-sdk \
+      --service ${service} \
       --release-version ${SDK_VERSION} \
       --minified-path-prefix / \
       --project-path @datadog/browser-${packageName}/ \
@@ -43,14 +44,18 @@ async function uploadSourceMaps(site, apiKey, packageName, bundleFolder) {
 }
 
 async function main() {
-  for (const packageName of ['logs', 'rum', 'rum-slim']) {
-    const bundleFolder = `packages/${packageName}/bundle`
-    await renameFiles(bundleFolder, packageName)
+  for (const package of [
+    { name: 'logs', service: 'browser-logs-sdk' },
+    { name: 'rum', service: 'browser-rum-sdk' },
+    { name: 'rum-slim', service: 'browser-rum-sdk' },
+  ]) {
+    const bundleFolder = `packages/${package.name}/bundle`
+    await renameFiles(bundleFolder, package.name)
     for (const site of sites) {
       const normalizedSite = site.replaceAll('.', '-')
       const apiKey = await getSecretKey(`ci.browser-sdk.source-maps.${normalizedSite}.ci_api_key`)
 
-      await uploadSourceMaps(site, apiKey, packageName, bundleFolder)
+      await uploadSourceMaps(site, apiKey, package.name, package.service, bundleFolder)
     }
   }
   printLog('Source maps upload done.')
