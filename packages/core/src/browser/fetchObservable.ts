@@ -118,7 +118,7 @@ function afterSend(
   const reportFetchOnPayloadComplete = (response: Response) => {
     const cloneResponse = response.clone()
     if (cloneResponse.body) {
-      readLimitedAmountOfBytes(cloneResponse.body, Number.MAX_SAFE_INTEGER, () => reportFetch(response), false)
+      readLimitedAmountOfBytes(cloneResponse.body, Number.POSITIVE_INFINITY, () => reportFetch(response), false)
     } else {
       reportFetch(response)
     }
