@@ -1,3 +1,4 @@
+import { isIE } from './browserDetection'
 import { readLimitedAmountOfBytes } from './stream'
 
 const stringChunk = 'helloWord'
@@ -5,6 +6,9 @@ const limit = 3
 
 describe('stream', () => {
   it('call callback once limit is reached', (done) => {
+    if (isIE()) {
+      pending('IE not supported')
+    }
     const stream = new ReadableStream({
       start(controller) {
         setTimeout(() => {
@@ -24,6 +28,9 @@ describe('stream', () => {
   })
 
   it('call callback with error', (done) => {
+    if (isIE()) {
+      pending('IE not supported')
+    }
     const fakeError = 'fakeError'
     const stream = new ReadableStream({
       start(controller) {
@@ -41,6 +48,9 @@ describe('stream', () => {
   })
 
   it('call callback with empty buffer if shouldStoreChunks false', (done) => {
+    if (isIE()) {
+      pending('IE not supported')
+    }
     const stream = new ReadableStream({
       start(controller) {
         setTimeout(() => {
