@@ -1,4 +1,5 @@
 import { instrumentMethod } from '../tools/instrumentMethod'
+import { readLimitedAmountOfBytes } from '../tools/stream'
 import { callMonitored, monitor } from '../tools/monitor'
 import { Observable } from '../tools/observable'
 import type { Duration, ClocksState } from '../tools/timeUtils'
@@ -113,5 +114,15 @@ function afterSend(
       observable.notify(context)
     }
   }
-  responsePromise.then(monitor(reportFetch), monitor(reportFetch))
+
+  const reportFetchOnPayloadComplete = (response: Response) => {
+    const cloneResponse = response.clone()
+    if (cloneResponse.body) {
+      readLimitedAmountOfBytes(cloneResponse.body, Number.MAX_SAFE_INTEGER, () => reportFetch(response), false)
+    } else {
+      reportFetch(response)
+    }
+  }
+
+  responsePromise.then(monitor(reportFetchOnPayloadComplete), monitor(reportFetch))
 }

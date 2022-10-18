@@ -85,3 +85,4 @@ export {
   getSyntheticsTestId,
   getSyntheticsResultId,
 } from './domain/synthetics/syntheticsWorkerValues'
+export { readLimitedAmountOfBytes } from './tools/stream'
