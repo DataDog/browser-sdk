@@ -215,7 +215,6 @@ function combineSelector(parent: string, child: string | undefined): string {
 
 let supportScopeSelectorCache: boolean | undefined
 export function supportScopeSelector() {
-  return false
   if (supportScopeSelectorCache === undefined) {
     try {
       document.querySelector(':scope')
