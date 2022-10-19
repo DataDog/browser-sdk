@@ -1,11 +1,10 @@
 import { isIE } from './browserDetection'
 import { readLimitedAmountOfBytes } from './stream'
 
-const stringChunk = 'helloWord'
-const limit = 3
-
 describe('stream', () => {
   it('call callback once limit is reached', (done) => {
+    const stringChunk = 'helloWord'
+    const limit = 3
     if (isIE()) {
       pending('IE not supported')
     }
@@ -28,6 +27,7 @@ describe('stream', () => {
   })
 
   it('call callback with error', (done) => {
+    const limit = 3
     if (isIE()) {
       pending('IE not supported')
     }
@@ -48,6 +48,8 @@ describe('stream', () => {
   })
 
   it('call callback with empty buffer if shouldStoreChunks false', (done) => {
+    const stringChunk = 'helloWord'
+    const limit = 3
     if (isIE()) {
       pending('IE not supported')
     }
