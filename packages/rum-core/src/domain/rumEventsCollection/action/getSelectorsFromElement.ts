@@ -29,24 +29,24 @@ export function getSelectorsFromElement(element: Element, actionNameAttribute: s
     )
   }
   const globallyUniqueSelectorStrategies = attributeSelectors.concat(getIDSelector)
-  const uniqueAmongChildrenSelectorStrategies = attributeSelectors.concat(getClassSelector)
+  const uniqueAmongChildrenSelectorStrategies = attributeSelectors.concat([getClassSelector, getTagNameSelector])
   return {
     selector: getSelectorFromElement(element, globallyUniqueSelectorStrategies, uniqueAmongChildrenSelectorStrategies),
     selector_combined: getSelectorFromElement(
       element,
       globallyUniqueSelectorStrategies,
-      uniqueAmongChildrenSelectorStrategies.concat(getTagNameSelector),
+      uniqueAmongChildrenSelectorStrategies,
       { useCombinedSelectors: true }
     ),
     selector_stopping_when_unique: getSelectorFromElement(
       element,
       globallyUniqueSelectorStrategies.concat([getClassSelector, getTagNameSelector]),
-      uniqueAmongChildrenSelectorStrategies.concat(getTagNameSelector)
+      uniqueAmongChildrenSelectorStrategies
     ),
     selector_all_together: getSelectorFromElement(
       element,
       globallyUniqueSelectorStrategies.concat([getClassSelector, getTagNameSelector]),
-      uniqueAmongChildrenSelectorStrategies.concat(getTagNameSelector),
+      uniqueAmongChildrenSelectorStrategies,
       { useCombinedSelectors: true }
     ),
   }
@@ -93,7 +93,7 @@ function getSelectorFromElement(
       useCombinedSelectors ? targetElementSelector : undefined
     )
     targetElementSelector = combineSelector(
-      uniqueSelectorAmongChildren ?? getPositionSelector(element),
+      uniqueSelectorAmongChildren || getPositionSelector(element) || getTagNameSelector(element),
       targetElementSelector
     )
 
@@ -145,7 +145,7 @@ function getAttributeSelector(attributeName: string, element: Element): string |
   }
 }
 
-function getPositionSelector(element: Element): string {
+function getPositionSelector(element: Element): string | undefined {
   const parent = element.parentElement!
   let sibling = parent.firstElementChild
   let currentIndex = 0
@@ -167,7 +167,7 @@ function getPositionSelector(element: Element): string {
     sibling = sibling.nextElementSibling
   }
 
-  return currentIndex === 1 ? element.tagName : `${element.tagName}:nth-of-type(${elementIndex!})`
+  return currentIndex > 1 ? `${element.tagName}:nth-of-type(${elementIndex!})` : undefined
 }
 
 function findSelector(
