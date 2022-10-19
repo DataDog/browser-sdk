@@ -173,7 +173,7 @@ describe('getSelectorFromElement', () => {
         supportScopeSelector()
           ? 'BODY>DIV>BUTTON'
           : // Degraded support for browsers not supporting scoped selector: the selector is still
-            // correct, but its quality is a bit worse as using a `nth-of-type` selector is a bit
+            // correct, but its quality is a bit worse, as using a `nth-of-type` selector is a bit
             // too specific and might not match if an element is conditionally inserted before the
             // target.
             'BODY>DIV:nth-of-type(2)>BUTTON'
@@ -207,7 +207,7 @@ describe('getSelectorFromElement', () => {
         supportScopeSelector()
           ? 'BODY>DIV>BUTTON'
           : // Degraded support for browsers not supporting scoped selector: the selector is still
-            // correct, but its quality is a bit worse as using a `nth-of-type` selector is a bit
+            // correct, but its quality is a bit worse, as using a `nth-of-type` selector is a bit
             // too specific and might not match if an element is conditionally inserted before the
             // target.
             'BODY>DIV:nth-of-type(2)>BUTTON'

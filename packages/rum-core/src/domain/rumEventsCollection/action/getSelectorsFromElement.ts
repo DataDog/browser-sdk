@@ -200,7 +200,7 @@ function isSelectorUniqueGlobally(element: Element, selector: string): boolean {
  * for any element matching the selector contained in the parent (in other words,
  * "ELEMENT_PARENT SELECTOR" returns a single element), regardless of whether the selector is a
  * direct descendent of the element parent. This should not impact results too much: if it
- * inaccurately returns false, we'll just fallback to another strategy.
+ * inaccurately returns false, we'll just fall back to another strategy.
  */
 function isSelectorUniqueAmongSiblings(element: Element, selector: string): boolean {
   return (
