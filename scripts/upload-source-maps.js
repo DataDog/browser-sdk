@@ -44,18 +44,18 @@ async function uploadSourceMaps(site, apiKey, packageName, service, bundleFolder
 }
 
 async function main() {
-  for (const package of [
-    { name: 'logs', service: 'browser-logs-sdk' },
-    { name: 'rum', service: 'browser-rum-sdk' },
-    { name: 'rum-slim', service: 'browser-rum-sdk' },
+  for (const { packageName, service } of [
+    { packageName: 'logs', service: 'browser-logs-sdk' },
+    { packageName: 'rum', service: 'browser-rum-sdk' },
+    { packageName: 'rum-slim', service: 'browser-rum-sdk' },
   ]) {
-    const bundleFolder = `packages/${package.name}/bundle`
-    await renameFiles(bundleFolder, package.name)
+    const bundleFolder = `packages/${packageName}/bundle`
+    await renameFiles(bundleFolder, packageName)
     for (const site of sites) {
       const normalizedSite = site.replaceAll('.', '-')
       const apiKey = await getSecretKey(`ci.browser-sdk.source-maps.${normalizedSite}.ci_api_key`)
 
-      await uploadSourceMaps(site, apiKey, package.name, package.service, bundleFolder)
+      await uploadSourceMaps(site, apiKey, packageName, service, bundleFolder)
     }
   }
   printLog('Source maps upload done.')
