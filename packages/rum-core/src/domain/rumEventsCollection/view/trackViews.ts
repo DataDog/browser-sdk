@@ -126,9 +126,11 @@ export function trackViews(
     })
 
     // End the current view on page unload
-    lifeCycle.subscribe(LifeCycleEventType.BEFORE_UNLOAD, () => {
-      currentView.end()
-      currentView.triggerUpdate()
+    lifeCycle.subscribe(LifeCycleEventType.PAGE_EXITED, ({ isUnloading }) => {
+      if (isUnloading) {
+        currentView.end()
+        currentView.triggerUpdate()
+      }
     })
 
     // Session keep alive

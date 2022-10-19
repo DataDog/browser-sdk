@@ -1,4 +1,11 @@
-import type { Context, EndpointBuilder, TelemetryEvent, Observable, RawError } from '@datadog/browser-core'
+import type {
+  Context,
+  EndpointBuilder,
+  TelemetryEvent,
+  Observable,
+  RawError,
+  PageExitState,
+} from '@datadog/browser-core'
 import { Batch, combine, createHttpRequest, isTelemetryReplicationAllowed } from '@datadog/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
@@ -10,9 +17,10 @@ export function startRumBatch(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   telemetryEventObservable: Observable<TelemetryEvent & Context>,
-  reportError: (error: RawError) => void
+  reportError: (error: RawError) => void,
+  pageExitState: PageExitState
 ) {
-  const batch = makeRumBatch(configuration, lifeCycle, reportError)
+  const batch = makeRumBatch(configuration, reportError, pageExitState)
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent: RumEvent & Context) => {
     if (serverRumEvent.type === RumEventType.VIEW) {
@@ -32,12 +40,10 @@ interface RumBatch {
 
 function makeRumBatch(
   configuration: RumConfiguration,
-  lifeCycle: LifeCycle,
-  reportError: (error: RawError) => void
+  reportError: (error: RawError) => void,
+  pageExitState: PageExitState
 ): RumBatch {
-  const primaryBatch = createRumBatch(configuration.rumEndpointBuilder, () =>
-    lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
-  )
+  const primaryBatch = createRumBatch(configuration.rumEndpointBuilder)
 
   let replicaBatch: Batch | undefined
   const replica = configuration.replica
@@ -45,14 +51,14 @@ function makeRumBatch(
     replicaBatch = createRumBatch(replica.rumEndpointBuilder)
   }
 
-  function createRumBatch(endpointBuilder: EndpointBuilder, unloadCallback?: () => void) {
+  function createRumBatch(endpointBuilder: EndpointBuilder) {
     return new Batch(
       createHttpRequest(endpointBuilder, configuration.batchBytesLimit, reportError),
       configuration.batchMessagesLimit,
       configuration.batchBytesLimit,
       configuration.messageBytesLimit,
       configuration.flushTimeout,
-      unloadCallback
+      pageExitState
     )
   }
 

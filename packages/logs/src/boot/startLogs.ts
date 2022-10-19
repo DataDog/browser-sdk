@@ -1,4 +1,4 @@
-import type { Context, TelemetryEvent, RawError } from '@datadog/browser-core'
+import type { Context, TelemetryEvent, RawError, PageExitState } from '@datadog/browser-core'
 import {
   TelemetryService,
   willSyntheticsInjectRum,
@@ -10,6 +10,7 @@ import {
   isTelemetryReplicationAllowed,
   ErrorSource,
   addTelemetryConfiguration,
+  createPageExitState,
 } from '@datadog/browser-core'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
@@ -48,7 +49,8 @@ export function startLogs(
         status: StatusType.error,
       },
     })
-  const telemetry = startLogsTelemetry(configuration, reportError)
+  const pageExitState = createPageExitState()
+  const telemetry = startLogsTelemetry(configuration, reportError, pageExitState)
   telemetry.setContextProvider(() => ({
     application: {
       id: getRUMInternalContext()?.application_id,
@@ -78,7 +80,7 @@ export function startLogs(
   startLogsAssembly(session, configuration, lifeCycle, getCommonContext, mainLogger, reportError)
 
   if (!canUseEventBridge()) {
-    startLogsBatch(configuration, lifeCycle, reportError)
+    startLogsBatch(configuration, lifeCycle, reportError, pageExitState)
   } else {
     startLogsBridge(lifeCycle)
   }
@@ -92,7 +94,11 @@ export function startLogs(
   }
 }
 
-function startLogsTelemetry(configuration: LogsConfiguration, reportError: (error: RawError) => void) {
+function startLogsTelemetry(
+  configuration: LogsConfiguration,
+  reportError: (error: RawError) => void,
+  pageExitState: PageExitState
+) {
   const telemetry = startTelemetry(TelemetryService.LOGS, configuration)
   if (canUseEventBridge()) {
     const bridge = getEventBridge<'internal_telemetry', TelemetryEvent>()!
@@ -102,6 +108,7 @@ function startLogsTelemetry(configuration: LogsConfiguration, reportError: (erro
       configuration,
       configuration.rumEndpointBuilder,
       reportError,
+      pageExitState,
       configuration.replica?.rumEndpointBuilder
     )
     telemetry.observable.subscribe((event) => telemetryBatch.add(event, isTelemetryReplicationAllowed(configuration)))

@@ -78,6 +78,7 @@ export { catchUserErrors } from './tools/catchUserErrors'
 export { createContextManager } from './tools/contextManager'
 export { limitModification } from './tools/limitModification'
 export { ContextHistory, ContextHistoryEntry, CLEAR_OLD_CONTEXTS_INTERVAL } from './tools/contextHistory'
+export { PageExitState, createPageExitState, PageExitEvent } from './tools/pageExitState'
 export { SESSION_COOKIE_NAME } from './domain/session/sessionCookieStore'
 export {
   willSyntheticsInjectRum,

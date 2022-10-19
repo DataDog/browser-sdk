@@ -1,5 +1,6 @@
 import type { Observable, TelemetryEvent, RawError } from '@datadog/browser-core'
 import {
+  createPageExitState,
   TelemetryService,
   addTelemetryConfiguration,
   startTelemetry,
@@ -60,8 +61,11 @@ export function startRum(
   const reportError = (error: RawError) => {
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
   }
+
   if (!canUseEventBridge()) {
-    startRumBatch(configuration, lifeCycle, telemetry.observable, reportError)
+    const pageExitState = createPageExitState()
+    pageExitState.onPageExit((event) => lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, event))
+    startRumBatch(configuration, lifeCycle, telemetry.observable, reportError, pageExitState)
   } else {
     startRumEventBridge(lifeCycle)
   }
