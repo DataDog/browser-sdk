@@ -166,17 +166,19 @@ describe('getSelectorFromElement', () => {
     it('only consider direct descendants (>) of the parent element', () => {
       expect(
         getCombinedSelector(`
-          <div><div><button></button></div></div>
-          <div><button target></button></div>
+          <main>
+            <div><div><button></button></div></div>
+            <div><button target></button></div>
+          </main>
         `)
       ).toBe(
         supportScopeSelector()
-          ? 'BODY>DIV>BUTTON'
+          ? 'BODY>MAIN>DIV>BUTTON'
           : // Degraded support for browsers not supporting scoped selector: the selector is still
             // correct, but its quality is a bit worse, as using a `nth-of-type` selector is a bit
             // too specific and might not match if an element is conditionally inserted before the
             // target.
-            'BODY>DIV:nth-of-type(2)>BUTTON'
+            'BODY>MAIN>DIV:nth-of-type(2)>BUTTON'
       )
     })
   })
@@ -187,10 +189,12 @@ describe('getSelectorFromElement', () => {
     it('stops recursing when the selector is unique', () => {
       expect(
         getSelectorStoppingWhenUnique(`
-          <button></button>
-          <div><button target></button></div>
+          <main>
+            <div><div><button></button></div></div>
+            <div><button target></button></div>
+          </main>
         `)
-      ).toBe('DIV>BUTTON')
+      ).toBe('MAIN>DIV:nth-of-type(2)>BUTTON')
     })
   })
 
@@ -200,17 +204,19 @@ describe('getSelectorFromElement', () => {
     it('stops recursing when the composed selector is unique', () => {
       expect(
         getSelectorAllTogether(`
-          <div><div><button></button></div></div>
-          <div><button target></button></div>
+          <main>
+            <div><div><button></button></div></div>
+            <div><button target></button></div>
+          </main>
         `)
       ).toBe(
         supportScopeSelector()
-          ? 'BODY>DIV>BUTTON'
+          ? 'MAIN>DIV>BUTTON'
           : // Degraded support for browsers not supporting scoped selector: the selector is still
             // correct, but its quality is a bit worse, as using a `nth-of-type` selector is a bit
             // too specific and might not match if an element is conditionally inserted before the
             // target.
-            'BODY>DIV:nth-of-type(2)>BUTTON'
+            'MAIN>DIV:nth-of-type(2)>BUTTON'
       )
     })
   })
