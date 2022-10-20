@@ -16,6 +16,14 @@
 
 ---
 
+## v4.22.0
+
+- ⚡️ Enable telemetry configuration ([#1780](https://github.com/DataDog/browser-sdk/pull/1780))
+- 🔊 [RUMF-1416] Use service distinguish log rum telemetry configuration ([#1774](https://github.com/DataDog/browser-sdk/pull/1774))
+- ✨ accept functions in allowedTracingOrigins/excludedActivityUrls arguments list ([#1775](https://github.com/DataDog/browser-sdk/pull/1775))
+- ⚗️ [RUMF-1405] remove mechanism to simulate intake issue ([#1768](https://github.com/DataDog/browser-sdk/pull/1768))
+- 🔊 Collect configuration telemetry event ([#1760](https://github.com/DataDog/browser-sdk/pull/1760))
+
 ## v4.21.2
 
 - ⚗️ [RUMF-1405] add mechanism to simulate intake issue ([#1757](https://github.com/DataDog/browser-sdk/pull/1757))
