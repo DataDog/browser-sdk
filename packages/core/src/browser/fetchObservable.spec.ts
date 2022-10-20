@@ -36,8 +36,8 @@ describe('fetch proxy', () => {
     fetchStubManager.reset()
   })
 
-  it('should track server error', (done) => {
-    fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
+  it('should track server error', async (done) => {
+    await fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
 
     fetchStubManager.whenAllComplete(() => {
       const request = requests[0]
@@ -77,9 +77,9 @@ describe('fetch proxy', () => {
     })
   })
 
-  it('should track opaque fetch', (done) => {
+  it('should track opaque fetch', async (done) => {
     // https://fetch.spec.whatwg.org/#concept-filtered-response-opaque
-    fetchStub(FAKE_URL).resolveWith({ status: 0, type: 'opaque' })
+    await fetchStub(FAKE_URL).resolveWith({ status: 0, type: 'opaque' })
 
     fetchStubManager.whenAllComplete(() => {
       const request = requests[0]
@@ -91,8 +91,8 @@ describe('fetch proxy', () => {
     })
   })
 
-  it('should track client error', (done) => {
-    fetchStub(FAKE_URL).resolveWith({ status: 400, responseText: 'Not found' })
+  it('should track client error', async (done) => {
+    await fetchStub(FAKE_URL).resolveWith({ status: 400, responseText: 'Not found' })
 
     fetchStubManager.whenAllComplete(() => {
       const request = requests[0]
@@ -104,13 +104,13 @@ describe('fetch proxy', () => {
     })
   })
 
-  it('should get method from input', (done) => {
-    fetchStub(FAKE_URL).resolveWith({ status: 500 })
-    fetchStub(new Request(FAKE_URL)).resolveWith({ status: 500 })
-    fetchStub(new Request(FAKE_URL, { method: 'PUT' })).resolveWith({ status: 500 })
-    fetchStub(new Request(FAKE_URL, { method: 'PUT' }), { method: 'POST' }).resolveWith({ status: 500 })
-    fetchStub(new Request(FAKE_URL), { method: 'POST' }).resolveWith({ status: 500 })
-    fetchStub(FAKE_URL, { method: 'POST' }).resolveWith({ status: 500 })
+  it('should get method from input', async (done) => {
+    await fetchStub(FAKE_URL).resolveWith({ status: 500 })
+    await fetchStub(new Request(FAKE_URL)).resolveWith({ status: 500 })
+    await fetchStub(new Request(FAKE_URL, { method: 'PUT' })).resolveWith({ status: 500 })
+    await fetchStub(new Request(FAKE_URL, { method: 'PUT' }), { method: 'POST' }).resolveWith({ status: 500 })
+    await fetchStub(new Request(FAKE_URL), { method: 'POST' }).resolveWith({ status: 500 })
+    await fetchStub(FAKE_URL, { method: 'POST' }).resolveWith({ status: 500 })
 
     fetchStubManager.whenAllComplete(() => {
       expect(requests[0].method).toEqual('GET')
@@ -134,13 +134,13 @@ describe('fetch proxy', () => {
     })
   })
 
-  it('should keep promise resolved behavior', (done) => {
+  it('should keep promise resolved behavior', async (done) => {
     const fetchStubPromise = fetchStub(FAKE_URL)
     const spy = jasmine.createSpy()
     fetchStubPromise.then(spy).catch(() => {
       fail('Should not have thrown an error!')
     })
-    fetchStubPromise.resolveWith({ status: 500 })
+    await fetchStubPromise.resolveWith({ status: 500 })
 
     setTimeout(() => {
       expect(spy).toHaveBeenCalled()
@@ -160,7 +160,7 @@ describe('fetch proxy', () => {
     })
   })
 
-  it('should allow to enhance the context', (done) => {
+  it('should allow to enhance the context', async (done) => {
     type CustomContext = FetchContext & { foo: string }
     contextEditionSubscription = initFetchObservable().subscribe((rawContext) => {
       const context = rawContext as CustomContext
@@ -168,7 +168,7 @@ describe('fetch proxy', () => {
         context.foo = 'bar'
       }
     })
-    fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
+    await fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
 
     fetchStubManager.whenAllComplete(() => {
       expect((requests[0] as CustomContext).foo).toBe('bar')
@@ -177,10 +177,10 @@ describe('fetch proxy', () => {
   })
 
   describe('when unsubscribing', () => {
-    it('should stop tracking requests', (done) => {
+    it('should stop tracking requests', async (done) => {
       requestsTrackingSubscription.unsubscribe()
 
-      fetchStub(FAKE_URL).resolveWith({ status: 200, responseText: 'ok' })
+      await fetchStub(FAKE_URL).resolveWith({ status: 200, responseText: 'ok' })
 
       fetchStubManager.whenAllComplete(() => {
         expect(requests).toEqual([])

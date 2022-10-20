@@ -113,8 +113,10 @@ export function stubFetch(): FetchStubManager {
       reject = rej
     }) as unknown as FetchStubPromise
     promise.resolveWith = (responseOptions: ResponseStubOptions) => {
-      resolve(new ResponseStub(responseOptions))
+      const response = new ResponseStub(responseOptions)
+      resolve(response)
       onRequestEnd()
+      return Promise.resolve(response)
     }
     promise.rejectWith = (error: Error) => {
       reject(error)
@@ -151,6 +153,7 @@ function notYetImplemented(): never {
 }
 
 export class ResponseStub implements Response {
+  public ok = true
   private _body: ReadableStream<Uint8Array> | undefined
 
   constructor(private options: Readonly<ResponseStubOptions>) {
@@ -170,6 +173,8 @@ export class ResponseStub implements Response {
         },
       })
     }
+
+    if (typeof this.options.status !== 'undefined') this.ok = this.options.status >= 200 && this.options.status < 300
   }
 
   get status() {
@@ -207,9 +212,6 @@ export class ResponseStub implements Response {
   formData = notYetImplemented
   json = notYetImplemented
   /* eslint-enable @typescript-eslint/member-ordering */
-  get ok() {
-    return notYetImplemented()
-  }
   get headers() {
     return notYetImplemented()
   }
@@ -230,7 +232,7 @@ export class ResponseStub implements Response {
 export type FetchStub = (input: RequestInfo, init?: RequestInit) => FetchStubPromise
 
 export interface FetchStubPromise extends Promise<Response> {
-  resolveWith: (response: ResponseStubOptions) => void
+  resolveWith: (response: ResponseStubOptions) => Promise<ResponseStub>
   rejectWith: (error: Error) => void
   abort: () => void
 }
