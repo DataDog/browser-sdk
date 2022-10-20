@@ -27,6 +27,7 @@ export {
   TelemetryErrorEvent,
   TelemetryDebugEvent,
   TelemetryConfigurationEvent,
+  TelemetryService,
   isTelemetryReplicationAllowed,
   addTelemetryConfiguration,
 } from './domain/telemetry'

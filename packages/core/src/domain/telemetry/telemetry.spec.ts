@@ -13,10 +13,11 @@ import {
   scrubCustomerFrames,
   formatError,
   addTelemetryConfiguration,
+  TelemetryService,
 } from './telemetry'
 
 function startAndSpyTelemetry(configuration?: Partial<Configuration>) {
-  const telemetry = startTelemetry({
+  const telemetry = startTelemetry(TelemetryService.RUM, {
     maxTelemetryEventsPerPage: 7,
     telemetrySampleRate: 100,
     ...configuration,

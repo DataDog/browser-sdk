@@ -1,5 +1,11 @@
 import type { Observable, TelemetryEvent, RawError } from '@datadog/browser-core'
-import { addTelemetryConfiguration, startTelemetry, canUseEventBridge, getEventBridge } from '@datadog/browser-core'
+import {
+  TelemetryService,
+  addTelemetryConfiguration,
+  startTelemetry,
+  canUseEventBridge,
+  getEventBridge,
+} from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { startPerformanceCollection } from '../browser/performanceCollection'
 import { startRumAssembly } from '../domain/assembly'
@@ -114,7 +120,7 @@ export function startRum(
 }
 
 function startRumTelemetry(configuration: RumConfiguration) {
-  const telemetry = startTelemetry(configuration)
+  const telemetry = startTelemetry(TelemetryService.RUM, configuration)
   if (canUseEventBridge()) {
     const bridge = getEventBridge<'internal_telemetry', TelemetryEvent>()!
     telemetry.observable.subscribe((event) => bridge.send('internal_telemetry', event))
