@@ -152,6 +152,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration): 
       premium_sample_rate: configuration.premiumSampleRate,
       replay_sample_rate: configuration.replaySampleRate,
       session_replay_sample_rate: configuration.sessionReplaySampleRate,
+      trace_sample_rate: configuration.tracingSampleRate,
       action_name_attribute: configuration.actionNameAttribute,
       use_allowed_tracing_origins:
         Array.isArray(configuration.allowedTracingOrigins) && configuration.allowedTracingOrigins.length > 0,
