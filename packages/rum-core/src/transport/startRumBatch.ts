@@ -35,19 +35,19 @@ function makeRumBatch(
   lifeCycle: LifeCycle,
   reportError: (error: RawError) => void
 ): RumBatch {
-  const primaryBatch = createRumBatch(configuration.rumEndpointBuilder, true, () =>
+  const primaryBatch = createRumBatch(configuration.rumEndpointBuilder, () =>
     lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
   )
 
   let replicaBatch: Batch | undefined
   const replica = configuration.replica
   if (replica !== undefined) {
-    replicaBatch = createRumBatch(replica.rumEndpointBuilder, false)
+    replicaBatch = createRumBatch(replica.rumEndpointBuilder)
   }
 
-  function createRumBatch(endpointBuilder: EndpointBuilder, toPrimaryEndpoint: boolean, unloadCallback?: () => void) {
+  function createRumBatch(endpointBuilder: EndpointBuilder, unloadCallback?: () => void) {
     return new Batch(
-      createHttpRequest(endpointBuilder, configuration.batchBytesLimit, reportError, toPrimaryEndpoint),
+      createHttpRequest(endpointBuilder, configuration.batchBytesLimit, reportError),
       configuration.batchMessagesLimit,
       configuration.batchBytesLimit,
       configuration.messageBytesLimit,

@@ -8,8 +8,6 @@ export {
   isExperimentalFeatureEnabled,
   updateExperimentalFeatures,
   resetExperimentalFeatures,
-  isSimulationActive,
-  getSimulationLabel,
   serializeConfiguration,
 } from './domain/configuration'
 export { trackRuntimeError } from './domain/error/trackRuntimeError'
