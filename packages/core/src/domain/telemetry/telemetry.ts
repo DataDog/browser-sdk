@@ -6,10 +6,8 @@ import type { Configuration } from '../configuration'
 import {
   isExperimentalFeatureEnabled,
   getExperimentalFeatures,
-  getSimulationLabel,
   INTAKE_SITE_STAGING,
   INTAKE_SITE_US1_FED,
-  isSimulationActive,
 } from '../configuration'
 import type { StackTrace } from '../tracekit'
 import { computeStackTrace } from '../tracekit'
@@ -85,8 +83,7 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
         telemetry: event as any, // https://github.com/microsoft/TypeScript/issues/48457
         experimental_features: arrayFrom(getExperimentalFeatures()),
       },
-      contextProvider !== undefined ? contextProvider() : {},
-      isSimulationActive() ? { telemetry: { simulation_label: getSimulationLabel() } } : {}
+      contextProvider !== undefined ? contextProvider() : {}
     )
   }
 
