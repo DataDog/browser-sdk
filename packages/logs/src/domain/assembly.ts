@@ -8,8 +8,6 @@ import {
   combine,
   createEventRateLimiter,
   getRelativeTime,
-  isSimulationActive,
-  getSimulationLabel,
 } from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { LogsConfiguration } from './configuration'
@@ -53,10 +51,6 @@ export function startLogsAssembly(
         logger.getContext(),
         messageContext
       )
-
-      if (isSimulationActive()) {
-        log.simulation_label = getSimulationLabel()
-      }
 
       if (
         // Todo: [RUMF-1230] Move this check to the logger collection in the next major release
