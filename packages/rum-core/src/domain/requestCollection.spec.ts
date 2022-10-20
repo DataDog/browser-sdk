@@ -107,9 +107,11 @@ describe('collect fetch', () => {
       await fetchStub(FAKE_URL).resolveWith({ status: 200, responseText: 'ok' })
       clock.tick(REPORT_FETCH_TIMER)
 
-      const request = completeSpy.calls.argsFor(0)[0]
+      setTimeout(() => {
+        const request = completeSpy.calls.argsFor(0)[0]
 
-      expect(request.traceId).toBeDefined()
+        expect(request.traceId).toBeDefined()
+      })
 
       clock.cleanup()
     })

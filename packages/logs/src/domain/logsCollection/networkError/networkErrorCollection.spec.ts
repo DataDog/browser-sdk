@@ -61,9 +61,9 @@ describe('network error collection', () => {
     fetchStubManager.reset()
   })
 
-  it('should track server error', (done) => {
+  it('should track server error', async (done) => {
     startCollection()
-    fetchStub(FAKE_URL).resolveWith(DEFAULT_REQUEST)
+    await fetchStub(FAKE_URL).resolveWith(DEFAULT_REQUEST)
 
     fetchStubManager.whenAllComplete(() => {
       expect(rawLogsEvents[0].rawLogsEvent).toEqual({
@@ -85,9 +85,9 @@ describe('network error collection', () => {
     })
   })
 
-  it('should not track network error when forwardErrorsToLogs is false', (done) => {
+  it('should not track network error when forwardErrorsToLogs is false', async (done) => {
     startCollection(false)
-    fetchStub(FAKE_URL).resolveWith(DEFAULT_REQUEST)
+    await fetchStub(FAKE_URL).resolveWith(DEFAULT_REQUEST)
 
     fetchStubManager.whenAllComplete(() => {
       expect(rawLogsEvents.length).toEqual(0)
@@ -95,9 +95,9 @@ describe('network error collection', () => {
     })
   })
 
-  it('should not track intake error', (done) => {
+  it('should not track intake error', async (done) => {
     startCollection()
-    fetchStub('https://logs-intake.com/v1/input/send?foo=bar').resolveWith(DEFAULT_REQUEST)
+    await fetchStub('https://logs-intake.com/v1/input/send?foo=bar').resolveWith(DEFAULT_REQUEST)
 
     fetchStubManager.whenAllComplete(() => {
       expect(rawLogsEvents.length).toEqual(0)
@@ -115,9 +115,9 @@ describe('network error collection', () => {
     })
   })
 
-  it('should track refused request', (done) => {
+  it('should track refused request', async (done) => {
     startCollection()
-    fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, status: 0 })
+    await fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, status: 0 })
 
     fetchStubManager.whenAllComplete(() => {
       expect(rawLogsEvents.length).toEqual(1)
@@ -125,9 +125,9 @@ describe('network error collection', () => {
     })
   })
 
-  it('should not track client error', (done) => {
+  it('should not track client error', async (done) => {
     startCollection()
-    fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, status: 400 })
+    await fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, status: 400 })
 
     fetchStubManager.whenAllComplete(() => {
       expect(rawLogsEvents.length).toEqual(0)
@@ -135,9 +135,9 @@ describe('network error collection', () => {
     })
   })
 
-  it('should not track successful request', (done) => {
+  it('should not track successful request', async (done) => {
     startCollection()
-    fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, status: 200 })
+    await fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, status: 200 })
 
     fetchStubManager.whenAllComplete(() => {
       expect(rawLogsEvents.length).toEqual(0)
@@ -145,9 +145,9 @@ describe('network error collection', () => {
     })
   })
 
-  it('uses a fallback when the response text is empty', (done) => {
+  it('uses a fallback when the response text is empty', async (done) => {
     startCollection()
-    fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, responseText: '' })
+    await fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, responseText: '' })
 
     fetchStubManager.whenAllComplete(() => {
       expect(rawLogsEvents.length).toEqual(1)
