@@ -63,6 +63,14 @@ describe('telemetry', () => {
 
       expect(notifySpy).not.toHaveBeenCalled()
     })
+
+    it('should not notify configuration when telemetrySampleRate is 0', () => {
+      const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 0, telemetryConfigurationSampleRate: 100 })
+
+      addTelemetryConfiguration({})
+
+      expect(notifySpy).not.toHaveBeenCalled()
+    })
   })
 
   it('should contains feature flags', () => {
