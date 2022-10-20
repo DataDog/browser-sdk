@@ -1,4 +1,4 @@
-import type { RumPerformanceResourceTiming } from '../../../rum-core/src/browser/performanceCollection'
+import type { RumPerformanceResourceTiming } from './matchResponseToPerformanceEntry'
 
 import { assign } from './utils'
 

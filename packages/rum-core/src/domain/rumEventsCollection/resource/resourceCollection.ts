@@ -8,9 +8,9 @@ import {
   assign,
   isNumber,
 } from '@datadog/browser-core'
-import type { ClocksState } from '@datadog/browser-core'
+import type { ClocksState, RumPerformanceResourceTiming } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
-import type { RumPerformanceEntry, RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
+import type { RumPerformanceEntry } from '../../../browser/performanceCollection'
 import type {
   PerformanceEntryRepresentation,
   RumXhrResourceEventDomainContext,

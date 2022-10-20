@@ -4,9 +4,9 @@ import { Observable } from '../tools/observable'
 import type { Duration, ClocksState } from '../tools/timeUtils'
 import { elapsed, clocksNow, timeStampNow } from '../tools/timeUtils'
 import { normalizeUrl } from '../tools/urlPolyfill'
-import { matchResponseToPerformanceEntry } from '../tools/matchResponseToPerformanceEntry'
 
-import type { RumPerformanceResourceTiming } from '../../../rum-core/src/browser/performanceCollection'
+import type { RumPerformanceResourceTiming } from '../tools/matchResponseToPerformanceEntry'
+import { matchResponseToPerformanceEntry } from '../tools/matchResponseToPerformanceEntry'
 
 interface FetchContextBase {
   method: string

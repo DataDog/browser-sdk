@@ -1,4 +1,4 @@
-import type { Duration, RelativeTime, TimeStamp } from '@datadog/browser-core'
+import type { Duration, RelativeTime, TimeStamp, RumPerformanceResourceTiming } from '@datadog/browser-core'
 import {
   dateNow,
   assign,
@@ -18,27 +18,6 @@ import { FAKE_INITIAL_DOCUMENT, isAllowedRequestUrl } from '../domain/rumEventsC
 
 import { getDocumentTraceId } from '../domain/tracing/getDocumentTraceId'
 import type { PerformanceEntryRepresentation } from '../domainContext.types'
-
-export interface RumPerformanceResourceTiming {
-  entryType: 'resource'
-  initiatorType: string
-  name: string
-  startTime: RelativeTime
-  duration: Duration
-  fetchStart: RelativeTime
-  domainLookupStart: RelativeTime
-  domainLookupEnd: RelativeTime
-  connectStart: RelativeTime
-  secureConnectionStart: RelativeTime
-  connectEnd: RelativeTime
-  requestStart: RelativeTime
-  responseStart: RelativeTime
-  responseEnd: RelativeTime
-  redirectStart: RelativeTime
-  redirectEnd: RelativeTime
-  decodedBodySize: number
-  traceId?: string
-}
 
 export interface RumPerformanceLongTaskTiming {
   entryType: 'longtask'
