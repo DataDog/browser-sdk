@@ -73,5 +73,5 @@ function formatConsoleParameters(param: unknown) {
   if (param instanceof Error) {
     return formatErrorMessage(computeStackTrace(param))
   }
-  return jsonStringify(param, undefined, 2)
+  return jsonStringify(param, 2)
 }
