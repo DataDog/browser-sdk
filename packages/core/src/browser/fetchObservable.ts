@@ -1,10 +1,10 @@
 import { instrumentMethod } from '../tools/instrumentMethod'
 import { callMonitored, monitor } from '../tools/monitor'
 import { Observable } from '../tools/observable'
-import type { Duration, ClocksState, RelativeTime } from '../tools/timeUtils'
-import { elapsed, clocksNow, timeStampNow, addDuration } from '../tools/timeUtils'
+import type { Duration, ClocksState } from '../tools/timeUtils'
+import { elapsed, clocksNow, timeStampNow } from '../tools/timeUtils'
 import { normalizeUrl } from '../tools/urlPolyfill'
-import { toValidEntry } from '../tools/resourceUtils'
+import { matchResponseToPerformanceEntry } from '../tools/matchResponseToPerformanceEntry'
 
 import type { RumPerformanceResourceTiming } from '../../../rum-core/src/browser/performanceCollection'
 
@@ -122,72 +122,16 @@ function afterSend(
     observable.notify(context)
   }
 
-  const reportFetchOnPerformanceObserverCallback = (response: Response) => {
+  const reportFetchOnPerformanceObserverCallback = async (response: Response) => {
     const context = constructContext(response)
 
-    let timeOutId: null | number = null
-    Promise.race([
-      new Promise((resolve) => {
-        const observer = new PerformanceObserver((list, observer) => {
-          const entries = list.getEntries() as unknown as RumPerformanceResourceTiming[]
-          entries
-            .filter(toValidEntry)
-            .filter((entry) => entry.initiatorType === 'fetch')
-            .filter((entry) => entry.name === response?.url)
-            .filter((entry) =>
-              isBetween(
-                { startTime: entry.startTime, duration: context.duration },
-                context.startClocks.relative,
-                endTime({ startTime: context.startClocks.relative, duration: context.duration })
-              )
-            )
-
-          if (entries.length) {
-            // TODO: if entries.length > 1 then we should report
-            context.matchingTiming = entries[-1]
-            observable.notify(context)
-            observer.disconnect()
-            resolve(null)
-          }
-        })
-        observer.observe({ entryTypes: ['resource'] })
-      }),
-      new Promise((resolve) => {
-        timeOutId = setTimeout(
-          monitor(() => {
-            observable.notify(context)
-            resolve(null)
-          }),
-          REPORT_FETCH_TIMER
-        )
-      }),
-    ])
-      .catch(() => observable.notify(context))
-      // @ts-ignore: if a browser supports fetch, it likely supports finally
-      .finally(reset)
-
-    function reset() {
-      timeOutId && clearTimeout(timeOutId)
-      timeOutId = null
-    }
+    const entry = await matchResponseToPerformanceEntry(response, context.duration, context.startClocks)
+    context.matchingTiming = entry
+    observable.notify(context)
   }
 
   responsePromise.then(
     monitor((response) => (response.ok ? reportFetchOnPerformanceObserverCallback(response) : reportFetch(response))),
     monitor(reportFetch)
   )
-}
-
-interface Timing {
-  startTime: RelativeTime
-  duration: Duration
-}
-
-function endTime(timing: Timing) {
-  return addDuration(timing.startTime, timing.duration)
-}
-
-function isBetween(timing: Timing, start: RelativeTime, end: RelativeTime) {
-  const errorMargin = 1 as Duration
-  return timing.startTime >= start - errorMargin && endTime(timing) <= addDuration(end, errorMargin)
 }

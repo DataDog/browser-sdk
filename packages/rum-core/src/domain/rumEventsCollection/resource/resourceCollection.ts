@@ -22,7 +22,6 @@ import type { LifeCycle, RawRumEventCollectedData } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { RequestCompleteEvent } from '../../requestCollection'
 import type { RumSessionManager } from '../../rumSessionManager'
-import { matchRequestTiming } from './matchRequestTiming'
 import {
   computePerformanceResourceDetails,
   computePerformanceResourceDuration,
@@ -59,9 +58,10 @@ function processRequest(
 ): RawRumEventCollectedData<RawRumResourceEvent> {
   const type = request.type === RequestType.XHR ? ResourceType.XHR : ResourceType.FETCH
 
-  const matchingTiming = matchRequestTiming(request)
-  const startClocks = matchingTiming ? relativeToClocks(matchingTiming.startTime) : request.startClocks
-  const correspondingTimingOverrides = matchingTiming ? computePerformanceEntryMetrics(matchingTiming) : undefined
+  const startClocks = request.matchingTiming ? relativeToClocks(request.matchingTiming.startTime) : request.startClocks
+  const correspondingTimingOverrides = request.matchingTiming
+    ? computePerformanceEntryMetrics(request.matchingTiming)
+    : undefined
 
   const tracingInfo = computeRequestTracingInfo(request, configuration)
   const indexingInfo = computeIndexingInfo(sessionManager, startClocks)
@@ -87,7 +87,7 @@ function processRequest(
     startTime: startClocks.relative,
     rawRumEvent: resourceEvent,
     domainContext: {
-      performanceEntry: matchingTiming && toPerformanceEntryRepresentation(matchingTiming),
+      performanceEntry: request.matchingTiming && toPerformanceEntryRepresentation(request.matchingTiming),
       xhr: request.xhr,
       response: request.response,
       requestInput: request.input,
