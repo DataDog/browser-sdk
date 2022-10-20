@@ -48,9 +48,7 @@ describe('telemetry', () => {
       resetExperimentalFeatures()
     })
 
-    it('should collects configuration when sampled and ff is enabled', () => {
-      updateExperimentalFeatures(['telemetry_configuration'])
-
+    it('should collects configuration when sampled', () => {
       const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 100, telemetryConfigurationSampleRate: 100 })
 
       addTelemetryConfiguration({})
@@ -58,16 +56,7 @@ describe('telemetry', () => {
       expect(notifySpy).toHaveBeenCalled()
     })
 
-    it('should not notify configuration when sampled and ff is disabled', () => {
-      const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 100, telemetryConfigurationSampleRate: 100 })
-
-      addTelemetryConfiguration({})
-
-      expect(notifySpy).not.toHaveBeenCalled()
-    })
-
-    it('should not notify configuration when not sampled and ff is enabled', () => {
-      updateExperimentalFeatures(['telemetry_configuration'])
+    it('should not notify configuration when not sampled', () => {
       const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 100, telemetryConfigurationSampleRate: 0 })
 
       addTelemetryConfiguration({})
@@ -75,8 +64,7 @@ describe('telemetry', () => {
       expect(notifySpy).not.toHaveBeenCalled()
     })
 
-    it('should not notify configuration when telemetrySampleRate is 0 and ff is enabled', () => {
-      updateExperimentalFeatures(['telemetry_configuration'])
+    it('should not notify configuration when telemetrySampleRate is 0', () => {
       const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 0, telemetryConfigurationSampleRate: 100 })
 
       addTelemetryConfiguration({})
