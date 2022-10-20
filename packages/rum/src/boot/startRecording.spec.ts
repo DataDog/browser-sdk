@@ -57,12 +57,7 @@ describe('startRecording', () => {
           defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
         })
         .beforeBuild(({ lifeCycle, configuration, viewContexts, sessionManager }) => {
-          const httpRequest = createHttpRequest(
-            configuration.sessionReplayEndpointBuilder,
-            SEGMENT_BYTES_LIMIT,
-            noop,
-            true
-          )
+          const httpRequest = createHttpRequest(configuration.sessionReplayEndpointBuilder, SEGMENT_BYTES_LIMIT, noop)
 
           const requestSendSpy = spyOn(httpRequest, 'sendOnExit')
           ;({ waitAsyncCalls: waitRequestSendCalls, expectNoExtraAsyncCall: expectNoExtraRequestSendCalls } =

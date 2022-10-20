@@ -17,6 +17,7 @@ describe('telemetry', () => {
       await flushEvents()
       expect(serverEvents.telemetryErrors.length).toBe(1)
       const event = serverEvents.telemetryErrors[0]
+      expect(event.service).toEqual('browser-logs-sdk')
       expect(event.telemetry.message).toBe('bar')
       expect(event.telemetry.error!.kind).toBe('Error')
       expect(event.telemetry.status).toBe('error')
@@ -38,6 +39,7 @@ describe('telemetry', () => {
       await flushEvents()
       expect(serverEvents.telemetryErrors.length).toBe(1)
       const event = serverEvents.telemetryErrors[0]
+      expect(event.service).toEqual('browser-rum-sdk')
       expect(event.telemetry.message).toBe('bar')
       expect(event.telemetry.error!.kind).toBe('Error')
       expect(event.telemetry.status).toBe('error')
@@ -47,26 +49,26 @@ describe('telemetry', () => {
   createTest('send init configuration for logs')
     .withSetup(bundleSetup)
     .withLogs({
-      enableExperimentalFeatures: ['telemetry_configuration'],
       forwardErrorsToLogs: true,
     })
     .run(async ({ serverEvents }) => {
       await flushEvents()
       expect(serverEvents.telemetryConfigurations.length).toBe(1)
       const event = serverEvents.telemetryConfigurations[0]
+      expect(event.service).toEqual('browser-logs-sdk')
       expect(event.telemetry.configuration.forward_errors_to_logs).toEqual(true)
     })
 
   createTest('send init configuration for RUM')
     .withSetup(bundleSetup)
     .withRum({
-      enableExperimentalFeatures: ['telemetry_configuration'],
       trackInteractions: true,
     })
     .run(async ({ serverEvents }) => {
       await flushEvents()
       expect(serverEvents.telemetryConfigurations.length).toBe(1)
       const event = serverEvents.telemetryConfigurations[0]
+      expect(event.service).toEqual('browser-rum-sdk')
       expect(event.telemetry.configuration.track_interactions).toEqual(true)
     })
 })

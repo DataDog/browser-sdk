@@ -180,6 +180,18 @@ describe('validateAndBuildRumConfiguration', () => {
       ).toEqual(['foo'])
     })
 
+    it('accepts functions', () => {
+      const customOriginFunction = (origin: string): boolean => origin === 'foo'
+
+      expect(
+        validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          allowedTracingOrigins: [customOriginFunction],
+          service: 'bar',
+        })!.allowedTracingOrigins
+      ).toEqual([customOriginFunction])
+    })
+
     it('does not validate the configuration if a value is provided and service is undefined', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, allowedTracingOrigins: ['foo'] })
@@ -208,6 +220,18 @@ describe('validateAndBuildRumConfiguration', () => {
           service: 'bar',
         })!.excludedActivityUrls
       ).toEqual(['foo'])
+    })
+
+    it('accepts functions', () => {
+      const customUrlFunction = (url: string): boolean => url === 'foo'
+
+      expect(
+        validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          excludedActivityUrls: [customUrlFunction],
+          service: 'bar',
+        })!.excludedActivityUrls
+      ).toEqual([customUrlFunction])
     })
 
     it('does not validate the configuration if an incorrect value is provided', () => {

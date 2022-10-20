@@ -8,8 +8,6 @@ export {
   isExperimentalFeatureEnabled,
   updateExperimentalFeatures,
   resetExperimentalFeatures,
-  isSimulationActive,
-  getSimulationLabel,
   serializeConfiguration,
 } from './domain/configuration'
 export { trackRuntimeError } from './domain/error/trackRuntimeError'
@@ -29,6 +27,7 @@ export {
   TelemetryErrorEvent,
   TelemetryDebugEvent,
   TelemetryConfigurationEvent,
+  TelemetryService,
   isTelemetryReplicationAllowed,
   addTelemetryConfiguration,
 } from './domain/telemetry'
