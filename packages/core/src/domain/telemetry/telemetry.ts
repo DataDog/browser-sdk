@@ -3,12 +3,7 @@ import { ConsoleApiName } from '../../tools/display'
 import { toStackTraceString } from '../../tools/error'
 import { assign, combine, jsonStringify, performDraw, includes, startsWith, arrayFrom } from '../../tools/utils'
 import type { Configuration } from '../configuration'
-import {
-  isExperimentalFeatureEnabled,
-  getExperimentalFeatures,
-  INTAKE_SITE_STAGING,
-  INTAKE_SITE_US1_FED,
-} from '../configuration'
+import { getExperimentalFeatures, INTAKE_SITE_STAGING, INTAKE_SITE_US1_FED } from '../configuration'
 import type { StackTrace } from '../tracekit'
 import { computeStackTrace } from '../tracekit'
 import { Observable } from '../../tools/observable'
@@ -148,7 +143,7 @@ export function addTelemetryError(e: unknown) {
 }
 
 export function addTelemetryConfiguration(configuration: RawTelemetryConfiguration) {
-  if (isExperimentalFeatureEnabled('telemetry_configuration') && telemetryConfiguration.telemetryConfigurationEnabled) {
+  if (telemetryConfiguration.telemetryConfigurationEnabled) {
     addTelemetry({
       type: TelemetryType.configuration,
       configuration,

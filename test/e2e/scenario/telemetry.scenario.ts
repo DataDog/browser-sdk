@@ -49,7 +49,6 @@ describe('telemetry', () => {
   createTest('send init configuration for logs')
     .withSetup(bundleSetup)
     .withLogs({
-      enableExperimentalFeatures: ['telemetry_configuration'],
       forwardErrorsToLogs: true,
     })
     .run(async ({ serverEvents }) => {
@@ -63,7 +62,6 @@ describe('telemetry', () => {
   createTest('send init configuration for RUM')
     .withSetup(bundleSetup)
     .withRum({
-      enableExperimentalFeatures: ['telemetry_configuration'],
       trackInteractions: true,
     })
     .run(async ({ serverEvents }) => {
