@@ -156,24 +156,36 @@ export function noop() {}
  *
  * Note: this still assumes that JSON.stringify is correct.
  */
-export function jsonStringify(
-  value: unknown,
-  replacer?: Array<string | number>,
-  space?: string | number
-): string | undefined {
+export function jsonStringify(value: unknown, space?: string | number): string | undefined {
   if (typeof value !== 'object' || value === null) {
     return JSON.stringify(value)
   }
 
-  // Note: The order matter here. We need to detach toJSON methods on parent classes before their
+  // Note: The order matters here. We need to detach toJSON methods on parent classes before their
   // subclasses.
   const restoreObjectPrototypeToJson = detachToJsonMethod(Object.prototype)
   const restoreArrayPrototypeToJson = detachToJsonMethod(Array.prototype)
   const restoreValuePrototypeToJson = detachToJsonMethod(Object.getPrototypeOf(value))
   const restoreValueToJson = detachToJsonMethod(value)
 
+  // Line below can be removed when migrating to TS4.8+
+  const isValidObject = (v: any): v is object => typeof v === 'object' && v !== null
+  const getCyclicReplacer = <T>() => {
+    // Using a weakmap instead of a weakset to support IE11
+    const visited = new WeakMap<object, boolean>()
+    return (_k: string, v: T) => {
+      if (isValidObject(v)) {
+        if (visited.has(v)) {
+          return '<warning: cyclic reference not serialized>'
+        }
+        visited.set(v, true)
+      }
+      return v
+    }
+  }
+
   try {
-    return JSON.stringify(value, replacer, space)
+    return JSON.stringify(value, getCyclicReplacer(), space)
   } catch {
     return '<error: unable to serialize object>'
   } finally {
