@@ -172,6 +172,34 @@ describe('rum resources', () => {
     }
   })
 
+  describe('fetch should have associated performance entry', () => {
+    createTest('track fetch performance entries')
+      .withRum()
+      .withSetup(bundleSetup)
+      .run(async ({ serverEvents }) => {
+        await browserExecuteAsync((done) => {
+          fetch('/ok').then(
+            () => done(undefined),
+            () => {
+              throw Error('Issue with fetch call')
+            }
+          )
+        })
+
+        await flushEvents()
+
+        const resourceEvent = serverEvents.rumResources.find((event) => event.resource.type === 'fetch')
+        // if PerformanceResourceDetails are defined, it means
+        // we were able to match fetch to a performance resource entry
+        expect(resourceEvent?.resource.redirect).toBeDefined()
+        expect(resourceEvent?.resource.dns).toBeDefined()
+        expect(resourceEvent?.resource.connect).toBeDefined()
+        expect(resourceEvent?.resource.ssl).toBeDefined()
+        expect(resourceEvent?.resource.first_byte).toBeDefined()
+        expect(resourceEvent?.resource.download).toBeDefined()
+      })
+  })
+
   describe('fetch abort support', () => {
     createTest('track aborted fetch')
       .withRum()
