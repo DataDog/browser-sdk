@@ -12,6 +12,7 @@ import { trackViews } from '../src/domain/rumEventsCollection/view/trackViews'
 import type { RumSessionManager } from '../src/domain/rumSessionManager'
 import { RumSessionPlan } from '../src/domain/rumSessionManager'
 import type { RawRumEvent, RumContext } from '../src/rawRumEvent.types'
+import type { RumPerformanceResourceTiming } from '../src/browser/performanceCollection'
 import type { LocationChange } from '../src/browser/locationChangeObservable'
 import type { UrlContexts } from '../src/domain/contexts/urlContexts'
 import type { CiTestWindow } from '../src/domain/contexts/ciTestContext'
@@ -285,4 +286,17 @@ export function mockCiVisibilityWindowValues(traceId?: unknown) {
 
 export function cleanupCiVisibilityWindowValues() {
   delete (window as CiTestWindow).Cypress
+}
+
+export function stubPerformanceObserver(entries: Array<RumPerformanceResourceTiming & PerformanceResourceTiming>) {
+  const spy = spyOn(window, 'PerformanceObserver').and.callFake(function (performanceObserverCallback) {
+    performanceObserverCallback(
+      { getEntries: () => [entries] } as unknown as PerformanceObserverEntryList,
+      {} as unknown as PerformanceObserver
+    )
+    return {} as unknown as PerformanceObserver
+  })
+  return {
+    clear: () => spy.and.callThrough(),
+  }
 }
