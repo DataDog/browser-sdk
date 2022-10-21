@@ -173,14 +173,14 @@ export function jsonStringify(value: unknown, space?: string | number): string |
   const getCyclicReplacer = <T>() => {
     // Using a weakmap instead of a weakset to support IE11
     const visited = new WeakMap<object, boolean>()
-    return (_k: string, v: T) => {
-      if (isValidObject(v)) {
-        if (visited.has(v)) {
+    return (_key: string, value: T) => {
+      if (isValidObject(value)) {
+        if (visited.has(value)) {
           return '<warning: cyclic reference not serialized>'
         }
-        visited.set(v, true)
+        visited.set(value, true)
       }
-      return v
+      return value
     }
   }
 
