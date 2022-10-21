@@ -4,10 +4,6 @@ import { Observable } from '../tools/observable'
 import type { Duration, ClocksState } from '../tools/timeUtils'
 import { elapsed, clocksNow, timeStampNow } from '../tools/timeUtils'
 import { normalizeUrl } from '../tools/urlPolyfill'
-
-import type { RumPerformanceResourceTiming } from '../tools/matchResponseToPerformanceEntry'
-import { matchResponseToPerformanceEntry } from '../tools/matchResponseToPerformanceEntry'
-
 interface FetchContextBase {
   method: string
   startClocks: ClocksState
@@ -28,7 +24,6 @@ export interface FetchCompleteContext extends FetchContextBase {
   responseType?: string
   isAborted: boolean
   error?: Error
-  matchingTiming?: RumPerformanceResourceTiming
 }
 
 export type FetchContext = FetchStartContext | FetchCompleteContext
@@ -92,14 +87,12 @@ function beforeSend(observable: Observable<FetchContext>, input: RequestInfo, in
   return context
 }
 
-export const REPORT_FETCH_TIMER = 5000
-
 function afterSend(
   observable: Observable<FetchContext>,
   responsePromise: Promise<Response>,
   startContext: FetchStartContext
 ) {
-  const constructContext = (response: Response | Error) => {
+  const reportFetch = (response: Response | Error) => {
     const context = startContext as unknown as FetchCompleteContext
     context.state = 'complete'
     context.duration = elapsed(context.startClocks.timeStamp, timeStampNow())
@@ -114,24 +107,9 @@ function afterSend(
       context.status = response.status
       context.isAborted = false
     }
+    observable.notify(context)
     return context
   }
 
-  const reportFetch = (response: Response | Error) => {
-    const context = constructContext(response)
-    observable.notify(context)
-  }
-
-  const reportFetchOnPerformanceObserverCallback = async (response: Response) => {
-    const context = constructContext(response)
-
-    const entry = await matchResponseToPerformanceEntry(response, context.duration, context.startClocks)
-    context.matchingTiming = entry
-    observable.notify(context)
-  }
-
-  responsePromise.then(
-    monitor((response) => (response.ok ? reportFetchOnPerformanceObserverCallback(response) : reportFetch(response))),
-    monitor(reportFetch)
-  )
+  responsePromise.then(monitor(reportFetch), monitor(reportFetch))
 }
