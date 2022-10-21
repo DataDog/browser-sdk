@@ -107,7 +107,7 @@ describe('resourceCollection', () => {
       pending('No IE support')
     }
 
-    const entry = createResourceEntry({ startTime: 1234 as RelativeTime, duration: 100 as Duration })
+    const entry = createResourceEntry({ startTime: 200 as RelativeTime, duration: 100 as Duration })
     const { clear } = stubPerformanceObserver([entry])
 
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
@@ -117,7 +117,7 @@ describe('resourceCollection', () => {
       createCompletedRequest({
         duration: 100 as Duration,
         method: 'GET',
-        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+        startClocks: { relative: 200 as RelativeTime, timeStamp: 123456789 as TimeStamp },
         status: 200,
         type: RequestType.FETCH,
         url: 'https://resource.com/valid',
@@ -128,7 +128,7 @@ describe('resourceCollection', () => {
     )
 
     setTimeout(() => {
-      expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
+      expect(rawRumEvents[0].startTime).toBe(200 as RelativeTime)
       expect(rawRumEvents[0].rawRumEvent).toEqual({
         date: jasmine.any(Number),
         resource: {
@@ -138,6 +138,12 @@ describe('resourceCollection', () => {
           status_code: 200,
           type: ResourceType.FETCH,
           url: 'https://resource.com/valid',
+          size: jasmine.any(Number),
+          download: jasmine.any(Object),
+          first_byte: jasmine.any(Object),
+          connect: jasmine.any(Object),
+          dns: jasmine.any(Object),
+          redirect: jasmine.any(Object),
         },
         type: RumEventType.RESOURCE,
         _dd: {
@@ -145,7 +151,7 @@ describe('resourceCollection', () => {
         },
       })
       expect(rawRumEvents[0].domainContext).toEqual({
-        performanceEntry: undefined,
+        performanceEntry: jasmine.any(Object),
         xhr: undefined,
         response,
         requestInput: 'https://resource.com/valid',
