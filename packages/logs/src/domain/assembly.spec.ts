@@ -1,5 +1,5 @@
 import type { Context, RelativeTime, TelemetryEvent, TimeStamp } from '@datadog/browser-core'
-import { startTelemetry, ErrorSource, ONE_MINUTE, getTimeStamp, noop } from '@datadog/browser-core'
+import { TelemetryService, startTelemetry, ErrorSource, ONE_MINUTE, getTimeStamp, noop } from '@datadog/browser-core'
 import { cleanupSyntheticsWorkerValues, mockSyntheticsWorkerValues } from '../../../core/test/syntheticsWorkerValues'
 import type { LogsEvent } from '../logsEvent.types'
 import type { Clock } from '../../../core/test/specHelper'
@@ -466,6 +466,7 @@ describe('getRUMInternalContext', () => {
     beforeEach(() => {
       mockSyntheticsWorkerValues({ injectsRum: true, publicId: 'test-id', resultId: 'result-id' })
       const telemetry = startTelemetry(
+        TelemetryService.LOGS,
         validateAndBuildLogsConfiguration({ ...initConfiguration, telemetrySampleRate: 100 })!
       )
       telemetrySpy = jasmine.createSpy()

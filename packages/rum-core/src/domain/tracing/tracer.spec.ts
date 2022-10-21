@@ -107,7 +107,11 @@ describe('tracer', () => {
     it('should trace requests on configured origins', () => {
       const configurationWithTracingUrls = {
         ...configuration,
-        allowedTracingOrigins: [/^https?:\/\/qux\.com/, 'http://bar.com'],
+        allowedTracingOrigins: [
+          /^https?:\/\/qux\.com/,
+          'http://bar.com',
+          (origin: string) => origin === 'http://dynamic.com',
+        ],
       }
       const stub = xhrStub as unknown as XMLHttpRequest
 
@@ -117,7 +121,13 @@ describe('tracer', () => {
       tracer.traceXhr(context, stub)
       expect(context.traceId).toBeDefined()
       expect(context.spanId).toBeDefined()
+
       context = { url: 'http://bar.com' }
+      tracer.traceXhr(context, stub)
+      expect(context.traceId).toBeDefined()
+      expect(context.spanId).toBeDefined()
+
+      context = { url: 'http://dynamic.com' }
       tracer.traceXhr(context, stub)
       expect(context.traceId).toBeDefined()
       expect(context.spanId).toBeDefined()
@@ -320,19 +330,27 @@ describe('tracer', () => {
     it('should trace requests on configured urls', () => {
       const configurationWithTracingUrls = {
         ...configuration,
-        allowedTracingOrigins: [/^https?:\/\/qux\.com.*/, 'http://bar.com'],
+        allowedTracingOrigins: [
+          /^https?:\/\/qux\.com.*/,
+          'http://bar.com',
+          (origin: string) => origin === 'http://dynamic.com',
+        ],
       }
       const quxDomainContext: Partial<RumFetchStartContext> = { url: 'http://qux.com' }
       const barDomainContext: Partial<RumFetchStartContext> = { url: 'http://bar.com' }
+      const dynamicDomainContext: Partial<RumFetchStartContext> = { url: 'http://dynamic.com' }
 
       const tracer = startTracer(configurationWithTracingUrls, sessionManager)
 
       tracer.traceFetch(quxDomainContext)
       tracer.traceFetch(barDomainContext)
+      tracer.traceFetch(dynamicDomainContext)
       expect(quxDomainContext.traceId).toBeDefined()
       expect(quxDomainContext.spanId).toBeDefined()
       expect(barDomainContext.traceId).toBeDefined()
       expect(barDomainContext.spanId).toBeDefined()
+      expect(dynamicDomainContext.traceId).toBeDefined()
+      expect(dynamicDomainContext.spanId).toBeDefined()
     })
   })
 

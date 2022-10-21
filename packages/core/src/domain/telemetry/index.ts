@@ -1,5 +1,6 @@
 export {
   Telemetry,
+  TelemetryService,
   addTelemetryDebug,
   addTelemetryError,
   startFakeTelemetry,
