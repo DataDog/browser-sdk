@@ -1,4 +1,4 @@
-import type { RelativeTime, ServerDuration, RumPerformanceResourceTiming } from '@datadog/browser-core'
+import type { RelativeTime, ServerDuration } from '@datadog/browser-core'
 import {
   assign,
   addTelemetryDebug,
@@ -9,6 +9,8 @@ import {
   ResourceType,
   toServerDuration,
 } from '@datadog/browser-core'
+
+import type { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 
 import type { PerformanceResourceDetailsElement } from '../../../rawRumEvent.types'
 import type { RumConfiguration } from '../../configuration'

@@ -1,7 +1,7 @@
 import { isIE, RequestType } from '@datadog/browser-core'
 import type { FetchStub, FetchStubManager } from '../../../core/test/specHelper'
 import { SPEC_ENDPOINTS, stubFetch, stubXhr, withXhr, mockClock } from '../../../core/test/specHelper'
-import { REPORT_FETCH_TIMER } from '../../../core/src/browser/fetchObservable'
+import { REPORT_FETCH_TIMER } from './rumEventsCollection/resource/matchResponseToPerformanceEntry'
 import type { RumConfiguration } from './configuration'
 import { validateAndBuildRumConfiguration } from './configuration'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'

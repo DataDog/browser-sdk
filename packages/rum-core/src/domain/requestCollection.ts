@@ -5,7 +5,6 @@ import type {
   ClocksState,
   FetchStartContext,
   FetchCompleteContext,
-  RumPerformanceResourceTiming,
 } from '@datadog/browser-core'
 import { RequestType, initFetchObservable, initXhrObservable } from '@datadog/browser-core'
 import type { RumSessionManager } from '..'
@@ -49,7 +48,6 @@ export interface RequestCompleteEvent {
   input?: RequestInfo
   init?: RequestInit
   error?: Error
-  matchingTiming?: RumPerformanceResourceTiming
 }
 
 let nextRequestIndex = 1
