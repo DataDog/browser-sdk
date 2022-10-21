@@ -24,27 +24,28 @@ export interface RumPerformanceResourceTiming {
   traceId?: string
 }
 
-export const REPORT_FETCH_TIMER = 5000
+export const REPORT_FETCH_TIMER = 3000
 
 export const matchOnPerformanceObserverCallback = (
   request: RequestCompleteEvent
 ): Promise<RumPerformanceResourceTiming | undefined> => {
   let timeOutId: null | number = null
+  let observer: PerformanceObserver | undefined
   return (
     Promise.race([
       new Promise((resolve) => {
-        const observer = new PerformanceObserver((list, observer) => {
+        observer = new PerformanceObserver((list) => {
           const entries = list.getEntries()
-          const candidates = filterCandidateEntries(entries, request.url, request.duration, request.startClocks)
+          const filteredEntries = entries.filter((entry) => entry.name === request.url)
+          const candidates = filterCandidateEntries(filteredEntries, request.duration, request.startClocks)
           if (candidates.length) {
-            if (candidates.length > 1) {
-              // log that there is an issue
-            }
-            resolve(candidates[candidates.length - 1])
-            observer.disconnect()
+            // log that there is an issue
+            if (candidates.length > 2) resolve(undefined)
+            if (candidates.length === 2 && firstCanBeOptionRequest(candidates)) resolve(candidates[1])
+            if (candidates.length === 1) resolve(candidates[0])
           }
         })
-        observer.observe({ entryTypes: ['resource'], buffered: true })
+        observer.observe({ entryTypes: ['resource'] })
       }),
       new Promise((resolve) => {
         timeOutId = setTimeout(
@@ -63,12 +64,18 @@ export const matchOnPerformanceObserverCallback = (
   function reset() {
     timeOutId && clearTimeout(timeOutId)
     timeOutId = null
+    observer && observer.disconnect()
+    observer = undefined
   }
 }
 
 interface Timing {
   startTime: RelativeTime
   duration: Duration
+}
+
+function firstCanBeOptionRequest(correspondingEntries: RumPerformanceResourceTiming[]) {
+  return endTime(correspondingEntries[0]) <= correspondingEntries[1].startTime
 }
 
 function endTime(timing: Timing) {
@@ -80,30 +87,21 @@ function isBetween(timing: Timing, start: RelativeTime, end: RelativeTime) {
   return timing.startTime >= start - errorMargin && endTime(timing) <= addDuration(end, errorMargin)
 }
 
-const filterCandidateEntries = (
-  entries: PerformanceEntryList,
-  url: string,
-  duration: Duration,
-  startClocks: ClocksState
-) =>
+const filterCandidateEntries = (entries: PerformanceEntryList, duration: Duration, startClocks: ClocksState) =>
   entries
     .map((entry) => entry.toJSON() as RumPerformanceResourceTiming)
     .filter(toValidEntry)
-    .filter((entry) => entry.name === url)
-    .filter((entry) =>
-      isBetween(
-        { startTime: entry.startTime, duration },
-        startClocks.relative,
-        endTime({ startTime: startClocks.relative, duration })
-      )
-    )
+    .filter((entry) => isBetween(entry, startClocks.relative, endTime({ startTime: startClocks.relative, duration })))
 
-export const matchOnPerformanceGetEntriesByName = (request: RequestCompleteEvent) => {
+export const matchOnPerformanceGetEntriesByName = (
+  request: RequestCompleteEvent
+): RumPerformanceResourceTiming | undefined => {
   const entries = performance.getEntriesByName(request.url, 'resource')
-  const candidates = filterCandidateEntries(entries, request.url, request.duration, request.startClocks)
+  const candidates = filterCandidateEntries(entries, request.duration, request.startClocks)
 
-  if (candidates.length > 1) {
-    // log that there is an issue
-  }
-  return candidates[candidates.length - 1]
+  // log that there is an issue
+  if (candidates.length > 2) return undefined
+  if (candidates.length === 2 && firstCanBeOptionRequest(candidates)) return candidates[1]
+  if (candidates.length === 1) return candidates[0]
+  return undefined
 }
