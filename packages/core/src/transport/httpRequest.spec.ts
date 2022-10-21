@@ -76,6 +76,9 @@ describe('httpRequest', () => {
     })
 
     it('should use retry strategy', (done) => {
+      if (!interceptor.isFetchKeepAliveSupported()) {
+        pending('no fetch keepalive support')
+      }
       let calls = 0
       interceptor.withFetch(() => {
         calls++
