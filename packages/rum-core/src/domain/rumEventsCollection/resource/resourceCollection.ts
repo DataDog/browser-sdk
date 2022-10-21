@@ -8,9 +8,9 @@ import {
   assign,
   isNumber,
 } from '@datadog/browser-core'
-import type { ClocksState, RumPerformanceResourceTiming } from '@datadog/browser-core'
+import type { ClocksState } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
-import type { RumPerformanceEntry } from '../../../browser/performanceCollection'
+import type { RumPerformanceEntry, RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 import type {
   PerformanceEntryRepresentation,
   RumXhrResourceEventDomainContext,
@@ -22,6 +22,10 @@ import type { LifeCycle, RawRumEventCollectedData } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { RequestCompleteEvent } from '../../requestCollection'
 import type { RumSessionManager } from '../../rumSessionManager'
+import {
+  matchOnPerformanceObserverCallback,
+  matchOnPerformanceGetEntriesByName,
+} from './matchResponseToPerformanceEntry'
 import {
   computePerformanceResourceDetails,
   computePerformanceResourceDuration,
@@ -36,7 +40,20 @@ export function startResourceCollection(
   sessionManager: RumSessionManager
 ) {
   lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request: RequestCompleteEvent) => {
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processRequest(request, configuration, sessionManager))
+    fetchPerformanceEntry(request)
+      .then((matchingTiming) => {
+        lifeCycle.notify(
+          LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
+          processRequest(request, configuration, sessionManager, matchingTiming)
+        )
+      })
+      .catch(() => {
+        // TODO: notify error caused when fetching telemetry
+        lifeCycle.notify(
+          LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
+          processRequest(request, configuration, sessionManager, undefined)
+        )
+      })
   })
 
   lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
@@ -51,17 +68,23 @@ export function startResourceCollection(
   })
 }
 
+async function fetchPerformanceEntry(request: RequestCompleteEvent) {
+  return request.type === RequestType.XHR || // XHR requests add performance entries synchronicity
+    request.status === 0 // strange issue when status 0
+    ? matchOnPerformanceGetEntriesByName(request)
+    : matchOnPerformanceObserverCallback(request)
+}
+
 function processRequest(
   request: RequestCompleteEvent,
   configuration: RumConfiguration,
-  sessionManager: RumSessionManager
-): RawRumEventCollectedData<RawRumResourceEvent> {
+  sessionManager: RumSessionManager,
+  matchingTiming: RumPerformanceResourceTiming | undefined
+) {
   const type = request.type === RequestType.XHR ? ResourceType.XHR : ResourceType.FETCH
 
-  const startClocks = request.matchingTiming ? relativeToClocks(request.matchingTiming.startTime) : request.startClocks
-  const correspondingTimingOverrides = request.matchingTiming
-    ? computePerformanceEntryMetrics(request.matchingTiming)
-    : undefined
+  const startClocks = matchingTiming ? relativeToClocks(matchingTiming.startTime) : request.startClocks
+  const correspondingTimingOverrides = matchingTiming ? computePerformanceEntryMetrics(matchingTiming) : undefined
 
   const tracingInfo = computeRequestTracingInfo(request, configuration)
   const indexingInfo = computeIndexingInfo(sessionManager, startClocks)
@@ -83,11 +106,12 @@ function processRequest(
     correspondingTimingOverrides,
     indexingInfo
   )
+
   return {
     startTime: startClocks.relative,
     rawRumEvent: resourceEvent,
     domainContext: {
-      performanceEntry: request.matchingTiming && toPerformanceEntryRepresentation(request.matchingTiming),
+      performanceEntry: matchingTiming && toPerformanceEntryRepresentation(matchingTiming),
       xhr: request.xhr,
       response: request.response,
       requestInput: request.input,
