@@ -2,7 +2,7 @@ import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog
 import { isIE, RequestType, ResourceType } from '@datadog/browser-core'
 import { createResourceEntry } from '../../../../test/fixtures'
 import type { TestSetupBuilder } from '../../../../test/specHelper'
-import { setup } from '../../../../test/specHelper'
+import { setup, stubPerformanceObserver } from '../../../../test/specHelper'
 import type { RawRumResourceEvent } from '../../../rawRumEvent.types'
 import { RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -107,6 +107,10 @@ describe('resourceCollection', () => {
     if (isIE()) {
       pending('No IE support')
     }
+
+    const entry = createResourceEntry({ startTime: 1234 as RelativeTime, duration: 100 as Duration })
+    const { clear } = stubPerformanceObserver([entry])
+
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
     const response = new Response()
     lifeCycle.notify(
@@ -149,6 +153,7 @@ describe('resourceCollection', () => {
         requestInit: { headers: { foo: 'bar' } },
         error: undefined,
       })
+      clear()
       done()
     })
   })
