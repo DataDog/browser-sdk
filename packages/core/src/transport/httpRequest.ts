@@ -1,7 +1,6 @@
 import type { EndpointBuilder } from '../domain/configuration'
 import { addTelemetryError } from '../domain/telemetry'
 import { monitor } from '../tools/monitor'
-import { isExperimentalFeatureEnabled } from '../domain/configuration'
 import type { RawError } from '../tools/error'
 import { newRetryState, sendWithRetryStrategy } from './sendWithRetryStrategy'
 
@@ -15,6 +14,7 @@ import { newRetryState, sendWithRetryStrategy } from './sendWithRetryStrategy'
  */
 
 export type HttpRequest = ReturnType<typeof createHttpRequest>
+
 export interface HttpResponse {
   status: number
 }
@@ -35,11 +35,7 @@ export function createHttpRequest(
 
   return {
     send: (payload: Payload) => {
-      if (!isExperimentalFeatureEnabled('retry')) {
-        fetchKeepAliveStrategy(endpointBuilder, bytesLimit, payload)
-      } else {
-        sendWithRetryStrategy(payload, retryState, sendStrategyForRetry, endpointBuilder.endpointType, reportError)
-      }
+      sendWithRetryStrategy(payload, retryState, sendStrategyForRetry, endpointBuilder.endpointType, reportError)
     },
     /**
      * Since fetch keepalive behaves like regular fetch on Firefox,

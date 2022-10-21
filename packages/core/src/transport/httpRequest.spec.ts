@@ -5,6 +5,7 @@ import { createEndpointBuilder } from '../domain/configuration'
 import { noop } from '../tools/utils'
 import { createHttpRequest, fetchKeepAliveStrategy } from './httpRequest'
 import type { HttpRequest } from './httpRequest'
+import { INITIAL_BACKOFF_TIME } from './sendWithRetryStrategy'
 
 describe('httpRequest', () => {
   const BATCH_BYTES_LIMIT = 100
@@ -72,6 +73,29 @@ describe('httpRequest', () => {
         expect(requests[0].type).toBe('xhr')
         done()
       })
+    })
+
+    it('should use retry strategy', (done) => {
+      if (!interceptor.isFetchKeepAliveSupported()) {
+        pending('no fetch keepalive support')
+      }
+      let calls = 0
+      interceptor.withFetch(() => {
+        calls++
+        if (calls === 1) {
+          return Promise.resolve({ status: 408 })
+        }
+        if (calls === 2) {
+          return Promise.resolve({ status: 200 })
+        }
+      })
+
+      request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
+
+      setTimeout(() => {
+        expect(calls).toEqual(2)
+        done()
+      }, INITIAL_BACKOFF_TIME + 1)
     })
   })
 
