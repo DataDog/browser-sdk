@@ -108,7 +108,6 @@ function afterSend(
       context.isAborted = false
     }
     observable.notify(context)
-    return context
   }
 
   responsePromise.then(monitor(reportFetch), monitor(reportFetch))
