@@ -61,6 +61,7 @@ module.exports = {
     'no-template-curly-in-string': 'error',
     'no-throw-literal': 'error',
     'no-undef-init': 'error',
+    'no-unreachable': 'error',
     'no-useless-concat': 'error',
     'object-shorthand': 'error',
     'one-var': ['error', 'never'],

@@ -1,6 +1,6 @@
 import type { IsolatedDom } from '../../../../test/createIsolatedDom'
 import { createIsolatedDom } from '../../../../test/createIsolatedDom'
-import { getSelectorsFromElement } from './getSelectorsFromElement'
+import { getSelectorsFromElement, supportScopeSelector } from './getSelectorsFromElement'
 
 describe('getSelectorFromElement', () => {
   let isolatedDom: IsolatedDom
@@ -14,6 +14,8 @@ describe('getSelectorFromElement', () => {
   })
 
   describe('default selector', () => {
+    const getDefaultSelector = getSelector.bind(null, 'selector')
+
     describe('ID selector', () => {
       it('should use the ID selector when the element as an ID', () => {
         expect(getDefaultSelector('<div id="foo"></div>')).toBe('#foo')
@@ -61,9 +63,14 @@ describe('getSelectorFromElement', () => {
 
     describe('position selector', () => {
       it('should use nth-of-type when the element as siblings', () => {
-        expect(getDefaultSelector('<span></span><div></div><span></span><div target></div>')).toBe(
-          'BODY>DIV:nth-of-type(2)'
-        )
+        expect(
+          getDefaultSelector(`
+            <span></span>
+            <div></div>
+            <span></span>
+            <div><button target></div>
+          `)
+        ).toBe('BODY>DIV:nth-of-type(2)>BUTTON')
       })
 
       it('should not use nth-of-type when the element has no siblings', () => {
@@ -123,15 +130,105 @@ describe('getSelectorFromElement', () => {
               <button data-testid="foo"></button>
             </div>
           `)
-        ).toBe('BODY>BUTTON[data-testid="foo"]')
+        ).toBe(
+          supportScopeSelector()
+            ? 'BODY>BUTTON[data-testid="foo"]'
+            : // Degraded support for browsers not supporting scoped selector: the selector is still
+              // correct, but its quality is a bit worse, as using a stable attribute reduce the
+              // chances of matching a completely unrelated element.
+              'BODY>BUTTON'
+        )
       })
     })
-
-    function getDefaultSelector(htmlOrElement: string | Element, actionNameAttribute?: string): string {
-      return getSelectorsFromElement(
-        typeof htmlOrElement === 'string' ? isolatedDom.append(htmlOrElement) : htmlOrElement,
-        actionNameAttribute
-      ).selector
-    }
   })
+
+  describe('using combined selectors to check for unicity', () => {
+    const getCombinedSelector = getSelector.bind(null, 'selector_combined')
+
+    it('does not use the position selector if the combined selector is matching a single element', () => {
+      expect(
+        getCombinedSelector(`
+          <div></div>
+          <div><button target></button></div>
+        `)
+      ).toBe('BODY>DIV>BUTTON')
+    })
+
+    it('uses the position selector if the combined selector matching more than one element', () => {
+      expect(
+        getCombinedSelector(`
+          <div><button></button></div>
+          <div><button target></button></div>
+        `)
+      ).toBe('BODY>DIV:nth-of-type(2)>BUTTON')
+    })
+
+    it('only consider direct descendants (>) of the parent element', () => {
+      expect(
+        getCombinedSelector(`
+          <main>
+            <div><div><button></button></div></div>
+            <div><button target></button></div>
+          </main>
+        `)
+      ).toBe(
+        supportScopeSelector()
+          ? 'BODY>MAIN>DIV>BUTTON'
+          : // Degraded support for browsers not supporting scoped selector: the selector is still
+            // correct, but its quality is a bit worse, as using a `nth-of-type` selector is a bit
+            // too specific and might not match if an element is conditionally inserted before the
+            // target.
+            'BODY>MAIN>DIV:nth-of-type(2)>BUTTON'
+      )
+    })
+  })
+
+  describe('stopping when the selector is globally unique', () => {
+    const getSelectorStoppingWhenUnique = getSelector.bind(null, 'selector_stopping_when_unique')
+
+    it('stops recursing when the selector is unique', () => {
+      expect(
+        getSelectorStoppingWhenUnique(`
+          <main>
+            <div><div><button></button></div></div>
+            <div><button target></button></div>
+          </main>
+        `)
+      ).toBe('MAIN>DIV:nth-of-type(2)>BUTTON')
+    })
+  })
+
+  describe('using combined selectors + stopping when the selector is globally unique', () => {
+    const getSelectorAllTogether = getSelector.bind(null, 'selector_all_together')
+
+    it('stops recursing when the composed selector is unique', () => {
+      expect(
+        getSelectorAllTogether(`
+          <main>
+            <div><div><button></button></div></div>
+            <div><button target></button></div>
+          </main>
+        `)
+      ).toBe(
+        supportScopeSelector()
+          ? 'MAIN>DIV>BUTTON'
+          : // Degraded support for browsers not supporting scoped selector: the selector is still
+            // correct, but its quality is a bit worse, as using a `nth-of-type` selector is a bit
+            // too specific and might not match if an element is conditionally inserted before the
+            // target.
+            'MAIN>DIV:nth-of-type(2)>BUTTON'
+      )
+    })
+  })
+
+  function getSelector(
+    selectorName: keyof ReturnType<typeof getSelectorsFromElement>,
+    htmlOrElement: string | Element,
+    actionNameAttribute?: string
+  ): string {
+    return getSelectorsFromElement(
+      typeof htmlOrElement === 'string' ? isolatedDom.append(htmlOrElement) : htmlOrElement,
+      actionNameAttribute
+    )[selectorName]
+  }
 })
