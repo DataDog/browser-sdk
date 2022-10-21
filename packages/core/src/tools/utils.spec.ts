@@ -1,5 +1,6 @@
 import type { Clock } from '../../test/specHelper'
 import { mockClock } from '../../test/specHelper'
+import { display } from './display'
 import {
   arrayFrom,
   combine,
@@ -9,6 +10,7 @@ import {
   findCommaSeparatedValue,
   getType,
   jsonStringify,
+  matchList,
   mergeInto,
   performDraw,
   round,
@@ -646,5 +648,39 @@ describe('arrayFrom', () => {
     div.classList.add('foo')
 
     expect(arrayFrom(div.classList)).toEqual(['foo'])
+  })
+})
+
+describe('matchList', () => {
+  it('should match exact value', () => {
+    const list = ['foo', 'bar']
+    expect(matchList(list, 'foo')).toBe(true)
+    expect(matchList(list, 'bar')).toBe(true)
+    expect(matchList(list, 'qux')).toBe(false)
+  })
+
+  it('should match regexp', () => {
+    const list = [/^foo/, /foo$/]
+    expect(matchList(list, 'foobar')).toBe(true)
+    expect(matchList(list, 'barfoo')).toBe(true)
+    expect(matchList(list, 'barqux')).toBe(false)
+  })
+
+  it('should match function', () => {
+    const list = [(value: string) => value === 'foo', (value: string) => value === 'bar']
+    expect(matchList(list, 'foo')).toBe(true)
+    expect(matchList(list, 'bar')).toBe(true)
+    expect(matchList(list, 'qux')).toBe(false)
+  })
+
+  it('should catch error from provided function', () => {
+    spyOn(display, 'error')
+    const list = [
+      (_: string) => {
+        throw new Error('oops')
+      },
+    ]
+    expect(matchList(list, 'foo')).toBe(false)
+    expect(display.error).toHaveBeenCalled()
   })
 })

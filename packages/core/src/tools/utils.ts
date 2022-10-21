@@ -1,3 +1,4 @@
+import { display } from './display'
 import { monitor } from './monitor'
 
 export const ONE_SECOND = 1000
@@ -660,8 +661,22 @@ export function removeDuplicates<T>(array: T[]) {
   return arrayFrom(set)
 }
 
-export function matchList(list: Array<string | RegExp>, value: string) {
-  return list.some((item) => item === value || (item instanceof RegExp && item.test(value)))
+export type MatchOption = string | RegExp | ((value: string) => boolean)
+export function matchList(list: MatchOption[], value: string): boolean {
+  return list.some((item) => {
+    if (typeof item === 'function') {
+      try {
+        return item(value)
+      } catch (e) {
+        display.error(e)
+        return false
+      }
+    }
+    if (item instanceof RegExp) {
+      return item.test(value)
+    }
+    return item === value
+  })
 }
 
 // https://github.com/jquery/jquery/blob/a684e6ba836f7c553968d7d026ed7941e1a612d8/src/selector/escapeSelector.js

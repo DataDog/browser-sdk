@@ -1,6 +1,6 @@
 import { assign, startsWith } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from '@datadog/browser-rum-core'
+import { STABLE_ATTRIBUTES } from '@datadog/browser-rum-core'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
@@ -130,7 +130,7 @@ function serializeDocumentTypeNode(documentType: DocumentType): DocumentTypeNode
  * 1. HTML ATTRIBUTES:
  * 2. JS STATE:
  * - scroll offsets
- * - Form fields (input value, checkbox checked, otpion selection, range)
+ * - Form fields (input value, checkbox checked, option selection, range)
  * - Canvas state,
  * - Media (video/audio) play mode + currentTime
  * - iframe contents
@@ -252,7 +252,7 @@ export function serializeAttribute(
   if (
     nodePrivacyLevel === NodePrivacyLevel.MASK &&
     attributeName !== PRIVACY_ATTR_NAME &&
-    attributeName !== DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE &&
+    !STABLE_ATTRIBUTES.includes(attributeName) &&
     attributeName !== configuration.actionNameAttribute
   ) {
     const tagName = element.tagName

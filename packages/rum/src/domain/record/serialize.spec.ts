@@ -1,6 +1,6 @@
 import { isIE } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from '@datadog/browser-rum-core'
+import { STABLE_ATTRIBUTES, DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from '@datadog/browser-rum-core'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
@@ -616,6 +616,12 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
 })
 
 describe('serializeAttribute ', () => {
+  beforeEach(() => {
+    if (isIE()) {
+      pending('IE not supported')
+    }
+  })
+
   it('truncates "data:" URIs after long string length', () => {
     const node = document.createElement('p')
 
@@ -655,33 +661,46 @@ describe('serializeAttribute ', () => {
     expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'data-foo', DEFAULT_CONFIGURATION)).toBe('***')
   })
 
-  it('does not mask the default programmatic action name attributes', () => {
-    const node = document.createElement('div')
-    node.setAttribute(DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE, 'foo')
-    expect(
-      serializeAttribute(node, NodePrivacyLevel.MASK, DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE, DEFAULT_CONFIGURATION)
-    ).toBe('foo')
-  })
+  describe('attributes used to generate CSS selectors', () => {
+    it('does not mask the default programmatic action name attributes', () => {
+      const node = document.createElement('div')
+      node.setAttribute(DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE, 'foo')
+      expect(
+        serializeAttribute(
+          node,
+          NodePrivacyLevel.MASK,
+          DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE,
+          DEFAULT_CONFIGURATION
+        )
+      ).toBe('foo')
+    })
 
-  it('does not mask the user-supplied programmatic action name attributes when it is a data attribute', () => {
-    const node = document.createElement('div')
-    node.setAttribute('data-testid', 'foo')
-    expect(
-      serializeAttribute(node, NodePrivacyLevel.MASK, 'data-testid', {
-        ...DEFAULT_CONFIGURATION,
-        actionNameAttribute: 'data-testid',
-      })
-    ).toBe('foo')
-  })
+    it('does not mask the user-supplied programmatic action name attributes when it is a data attribute', () => {
+      const node = document.createElement('div')
+      node.setAttribute('data-my-custom-action-name', 'foo')
+      expect(
+        serializeAttribute(node, NodePrivacyLevel.MASK, 'data-my-custom-action-name', {
+          ...DEFAULT_CONFIGURATION,
+          actionNameAttribute: 'data-my-custom-action-name',
+        })
+      ).toBe('foo')
+    })
 
-  it('does not mask the user-supplied programmatic action name attributes when it not a data attribute', () => {
-    const node = document.createElement('div')
-    node.setAttribute('testid', 'foo')
-    expect(
-      serializeAttribute(node, NodePrivacyLevel.MASK, 'testid', {
-        ...DEFAULT_CONFIGURATION,
-        actionNameAttribute: 'testid',
-      })
-    ).toBe('foo')
+    it('does not mask the user-supplied programmatic action name attributes when it not a data attribute', () => {
+      const node = document.createElement('div')
+      node.setAttribute('my-custom-action-name', 'foo')
+      expect(
+        serializeAttribute(node, NodePrivacyLevel.MASK, 'my-custom-action-name', {
+          ...DEFAULT_CONFIGURATION,
+          actionNameAttribute: 'my-custom-action-name',
+        })
+      ).toBe('foo')
+    })
+
+    it('does not mask other attributes used to generate CSS selectors', () => {
+      const node = document.createElement('div')
+      node.setAttribute(STABLE_ATTRIBUTES[0], 'foo')
+      expect(serializeAttribute(node, NodePrivacyLevel.MASK, STABLE_ATTRIBUTES[0], DEFAULT_CONFIGURATION)).toBe('foo')
+    })
   })
 })

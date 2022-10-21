@@ -135,12 +135,26 @@ describe('createPageActivityObservable', () => {
 
     describe('excludedActivityUrls', () => {
       it('ignores resources that should be excluded by configuration', () => {
-        const { lifeCycle } = setupBuilder.build()
-        const performanceTiming = {
-          entryType: 'resource',
-          name: EXCLUDED_FAKE_URL,
-        } as RumPerformanceResourceTiming
-        lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [performanceTiming])
+        const { lifeCycle } = setupBuilder
+          .withConfiguration({
+            excludedActivityUrls: [
+              /^https?:\/\/qux\.com.*/,
+              'http://bar.com',
+              (url: string) => url === 'http://dynamic.com',
+            ],
+          })
+          .build()
+
+        lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+          makeFakePerformanceTiming('http://qux.com'),
+        ])
+        lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+          makeFakePerformanceTiming('http://bar.com'),
+        ])
+        lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+          makeFakePerformanceTiming('http://dynamic.com'),
+        ])
+
         expect(events).toEqual([])
       })
 
@@ -160,6 +174,12 @@ describe('createPageActivityObservable', () => {
       })
     })
 
+    function makeFakePerformanceTiming(url: string) {
+      return {
+        entryType: 'resource',
+        name: url,
+      } as RumPerformanceResourceTiming
+    }
     function makeFakeRequestCompleteEvent(requestIndex: number, url = FAKE_URL) {
       return { requestIndex, url } as RequestCompleteEvent
     }
