@@ -1,5 +1,5 @@
-import type { Context, TimeStamp } from '@datadog/browser-core'
-import { assign, combine, Observable, noop } from '@datadog/browser-core'
+import type { Context, TimeStamp, Duration, RelativeTime } from '@datadog/browser-core'
+import { assign, combine, Observable, noop, RequestType } from '@datadog/browser-core'
 import type { Clock } from '../../core/test/specHelper'
 import { SPEC_ENDPOINTS, mockClock, buildLocation } from '../../core/test/specHelper'
 import type { RecorderApi } from '../src/boot/rumPublicApi'
@@ -15,6 +15,7 @@ import type { RawRumEvent, RumContext } from '../src/rawRumEvent.types'
 import type { RumPerformanceResourceTiming } from '../src/browser/performanceCollection'
 import type { LocationChange } from '../src/browser/locationChangeObservable'
 import type { UrlContexts } from '../src/domain/contexts/urlContexts'
+import type { RequestCompleteEvent } from '../src/domain/requestCollection'
 import type { CiTestWindow } from '../src/domain/contexts/ciTestContext'
 import type { RumConfiguration } from '../src/domain/configuration'
 import { validateAndBuildRumConfiguration } from '../src/domain/configuration'
@@ -291,12 +292,25 @@ export function cleanupCiVisibilityWindowValues() {
 export function stubPerformanceObserver(entries: Array<RumPerformanceResourceTiming & PerformanceResourceTiming>) {
   const spy = spyOn(window, 'PerformanceObserver').and.callFake(function (performanceObserverCallback) {
     performanceObserverCallback(
-      { getEntries: () => [entries] } as unknown as PerformanceObserverEntryList,
+      { getEntries: () => entries } as unknown as PerformanceObserverEntryList,
       {} as unknown as PerformanceObserver
     )
-    return {} as unknown as PerformanceObserver
+    return { observe: noop, disconnect: noop } as unknown as PerformanceObserver
   })
   return {
     clear: () => spy.and.callThrough(),
   }
+}
+
+export function createCompletedRequest(details?: Partial<RequestCompleteEvent>): RequestCompleteEvent {
+  const request: Partial<RequestCompleteEvent> = {
+    duration: 100 as Duration,
+    method: 'GET',
+    startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+    status: 200,
+    type: RequestType.XHR,
+    url: 'https://resource.com/valid',
+    ...details,
+  }
+  return request as RequestCompleteEvent
 }
