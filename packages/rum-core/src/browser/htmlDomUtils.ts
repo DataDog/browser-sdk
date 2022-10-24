@@ -9,3 +9,7 @@ export function isCommentNode(node: Node): node is Comment {
 export function isElementNode(node: Node): node is Element {
   return node.nodeType === node.ELEMENT_NODE
 }
+
+export function getChildNodes(node: Node) {
+  return isElementNode(node) && node.shadowRoot ? node.shadowRoot.childNodes : node.childNodes
+}

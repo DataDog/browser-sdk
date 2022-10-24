@@ -1,6 +1,6 @@
 import { assign, startsWith } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { STABLE_ATTRIBUTES } from '@datadog/browser-rum-core'
+import { getChildNodes, STABLE_ATTRIBUTES } from '@datadog/browser-rum-core'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
@@ -178,7 +178,7 @@ export function serializeElementNode(element: Element, options: SerializeOptions
   const attributes = getAttributesForPrivacyLevel(element, nodePrivacyLevel, options)
 
   let childNodes: SerializedNodeWithId[] = []
-  if (element.childNodes.length) {
+  if (getChildNodes(element).length) {
     // OBJECT POOLING OPTIMIZATION:
     // We should not create a new object systematically as it could impact performances. Try to reuse
     // the same object as much as possible, and clone it only if we need to.
@@ -194,12 +194,14 @@ export function serializeElementNode(element: Element, options: SerializeOptions
     childNodes = serializeChildNodes(element, childNodesSerializationOptions)
   }
 
+  const isShadowHost = element.shadowRoot !== null || undefined
   return {
     type: NodeType.Element,
     tagName,
     attributes,
     childNodes,
     isSVG,
+    isShadowHost,
   }
 }
 
@@ -233,7 +235,7 @@ function serializeCDataNode(): CDataNode {
 export function serializeChildNodes(node: Node, options: SerializeOptions): SerializedNodeWithId[] {
   const result: SerializedNodeWithId[] = []
 
-  forEach(node.childNodes, (childNode) => {
+  forEach(getChildNodes(node), (childNode) => {
     const serializedChildNode = serializeNodeWithId(childNode, options)
     if (serializedChildNode) {
       result.push(serializedChildNode)

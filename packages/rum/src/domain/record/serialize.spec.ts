@@ -83,6 +83,7 @@ describe('serializeNodeWithId', () => {
         tagName: 'div',
         attributes: {},
         isSVG: undefined,
+        isShadowHost: undefined,
         childNodes: [],
         id: jasmine.any(Number) as unknown as number,
       })
@@ -400,6 +401,46 @@ describe('serializeNodeWithId', () => {
         input.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK)
 
         expect((serializeNodeWithId(input, DEFAULT_OPTIONS)! as ElementNode).attributes.placeholder).toEqual('***')
+      })
+    })
+
+    it('serializes a shadow host', () => {
+      const div = document.createElement('div')
+      div.attachShadow({ mode: 'open' })
+      expect(serializeNodeWithId(div, DEFAULT_OPTIONS)).toEqual({
+        type: NodeType.Element,
+        tagName: 'div',
+        attributes: {},
+        isSVG: undefined,
+        childNodes: [],
+        id: jasmine.any(Number) as unknown as number,
+        isShadowHost: true,
+      })
+    })
+
+    it('serializes a shadow host with children', () => {
+      const div = document.createElement('div')
+      div.attachShadow({ mode: 'open' })
+      div.shadowRoot!.appendChild(document.createElement('hr'))
+
+      expect(serializeNodeWithId(div, DEFAULT_OPTIONS)).toEqual({
+        type: NodeType.Element,
+        tagName: 'div',
+        attributes: {},
+        isSVG: undefined,
+        childNodes: [
+          {
+            type: NodeType.Element,
+            tagName: 'hr',
+            attributes: {},
+            isSVG: undefined,
+            childNodes: [],
+            id: jasmine.any(Number) as unknown as number,
+            isShadowHost: undefined,
+          },
+        ],
+        id: jasmine.any(Number) as unknown as number,
+        isShadowHost: true,
       })
     })
   })
