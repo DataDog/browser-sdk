@@ -101,15 +101,25 @@ describe('matchResponseToPerformanceEntry', () => {
   })
 
   describe('matchOnPerformanceObserverCallback', () => {
-    it('should match single timing nested in the request', async () => {
-      const entry = createResourceEntry({ startTime: 1234 as RelativeTime, duration: 100 as Duration })
+    let entries: RumPerformanceResourceTiming[]
+
+    beforeEach(() => {
+      if (isIE()) {
+        pending('no full rum support')
+      }
+      entries = []
+      spyOn(performance, 'getEntriesByName').and.returnValues(entries as unknown as PerformanceResourceTiming[])
+    })
+
+    it('should match single timing nested in the request', (done) => {
+      const entry = createResourceEntry({ startTime: 200 as RelativeTime, duration: 100 as Duration })
       const { clear } = stubPerformanceObserver([entry])
 
       const response = new Response()
       const completedRequest = createCompletedRequest({
         duration: 100 as Duration,
         method: 'GET',
-        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+        startClocks: { relative: 200 as RelativeTime, timeStamp: 123456789 as TimeStamp },
         status: 200,
         type: RequestType.FETCH,
         url: 'https://resource.com/valid',
@@ -118,15 +128,21 @@ describe('matchResponseToPerformanceEntry', () => {
         init: { headers: { foo: 'bar' } },
       })
 
-      const performanceEntry = await matchOnPerformanceObserverCallback(completedRequest)
-
-      expect(performanceEntry).toEqual(entry)
-      clear()
+      matchOnPerformanceObserverCallback(completedRequest)
+        .then((performanceEntry) => {
+          expect(performanceEntry).toEqual(entry)
+          clear()
+          done()
+        })
+        .catch(() => {
+          clear()
+          done.fail()
+        })
     })
 
     it('should match two following timings nested in the request', async () => {
-      const optionsEntry = createResourceEntry({ startTime: 150 as RelativeTime, duration: 50 as Duration })
-      const actualEntry = createResourceEntry({ startTime: 200 as RelativeTime, duration: 100 as Duration })
+      const optionsEntry = createResourceEntry({ startTime: 100 as RelativeTime, duration: 50 as Duration })
+      const actualEntry = createResourceEntry({ startTime: 150 as RelativeTime, duration: 100 as Duration })
 
       const { clear } = stubPerformanceObserver([optionsEntry, actualEntry])
 
@@ -200,11 +216,13 @@ describe('matchResponseToPerformanceEntry', () => {
       clear()
     })
 
-    it('should call matchOnPerformanceGetEntriesByName if timeout', async () => {
+    it('should call matchOnPerformanceGetEntriesByName if timeout', (done) => {
       const clock = mockClock()
-      const entry1 = createResourceEntry({ startTime: 150 as RelativeTime, duration: 100 as Duration })
 
-      const { clear } = stubPerformanceObserver([entry1])
+      const match = createResourceEntry({ startTime: 150 as RelativeTime, duration: 100 as Duration })
+      entries.push(match)
+
+      const { clear } = stubPerformanceObserver([])
 
       const response = new Response()
       const completedRequest = createCompletedRequest({
@@ -219,11 +237,19 @@ describe('matchResponseToPerformanceEntry', () => {
         init: { headers: { foo: 'bar' } },
       })
 
-      await matchOnPerformanceObserverCallback(completedRequest).then((performanceEntry) => {
-        expect(performanceEntry).toBeUndefined()
-        clear()
-        clock.cleanup()
-      })
+      matchOnPerformanceObserverCallback(completedRequest)
+        .then((performanceEntry) => {
+          expect(performanceEntry).toBeDefined()
+          expect(performanceEntry).toEqual(match)
+          clear()
+          clock.cleanup()
+          done()
+        })
+        .catch(() => {
+          clock.cleanup()
+          done.fail()
+        })
+
       clock.tick(REPORT_FETCH_TIMER)
     })
   })

@@ -107,7 +107,11 @@ describe('resourceCollection', () => {
       pending('No IE support')
     }
 
-    const entry = createResourceEntry({ startTime: 200 as RelativeTime, duration: 100 as Duration })
+    const entry = createResourceEntry({
+      startTime: 200 as RelativeTime,
+      duration: 100 as Duration,
+      responseStart: 220 as RelativeTime,
+    })
     const { clear } = stubPerformanceObserver([entry])
 
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
@@ -141,9 +145,6 @@ describe('resourceCollection', () => {
           size: jasmine.any(Number),
           download: jasmine.any(Object),
           first_byte: jasmine.any(Object),
-          connect: jasmine.any(Object),
-          dns: jasmine.any(Object),
-          redirect: jasmine.any(Object),
         },
         type: RumEventType.RESOURCE,
         _dd: {
