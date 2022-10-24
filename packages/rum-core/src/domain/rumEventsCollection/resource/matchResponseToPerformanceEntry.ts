@@ -1,5 +1,5 @@
 import type { RelativeTime, Duration, ClocksState } from '@datadog/browser-core'
-import { addDuration, monitor } from '@datadog/browser-core'
+import { addDuration, monitor, elapsed, timeStampNow } from '@datadog/browser-core'
 import type { RequestCompleteEvent } from '../../requestCollection'
 import { toValidEntry } from './resourceUtils'
 
@@ -37,7 +37,7 @@ export const matchOnPerformanceObserverCallback = (
         observer = new PerformanceObserver((list) => {
           const entries = list.getEntries()
           const filteredEntries = entries.filter((entry) => entry.name === request.url)
-          const candidates = filterCandidateEntries(filteredEntries, request.duration, request.startClocks)
+          const candidates = filterCandidateEntries(filteredEntries, request.startClocks)
           if (candidates.length) {
             // log that there is an issue
             if (candidates.length > 2) resolve(undefined)
@@ -87,17 +87,19 @@ function isBetween(timing: Timing, start: RelativeTime, end: RelativeTime) {
   return timing.startTime >= start - errorMargin && endTime(timing) <= addDuration(end, errorMargin)
 }
 
-const filterCandidateEntries = (entries: PerformanceEntryList, duration: Duration, startClocks: ClocksState) =>
+const filterCandidateEntries = (entries: PerformanceEntryList, startClocks: ClocksState) =>
   entries
     .map((entry) => entry.toJSON() as RumPerformanceResourceTiming)
     .filter(toValidEntry)
-    .filter((entry) => isBetween(entry, startClocks.relative, endTime({ startTime: startClocks.relative, duration })))
+    .filter((entry) =>
+      isBetween(entry, startClocks.relative, elapsed(startClocks.timeStamp, timeStampNow()) as RelativeTime)
+    )
 
 export const matchOnPerformanceGetEntriesByName = (
   request: RequestCompleteEvent
 ): RumPerformanceResourceTiming | undefined => {
   const entries = performance.getEntriesByName(request.url, 'resource')
-  const candidates = filterCandidateEntries(entries, request.duration, request.startClocks)
+  const candidates = filterCandidateEntries(entries, request.startClocks)
 
   // log that there is an issue
   if (candidates.length > 2) return undefined
