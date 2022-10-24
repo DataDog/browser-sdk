@@ -2,24 +2,24 @@
 # yarn lockfile v1
 
 
-"@datadog/browser-core@4.22.0", "@datadog/browser-core@file:../../packages/core":
-  version "4.22.0"
+"@datadog/browser-core@4.23.0", "@datadog/browser-core@file:../../packages/core":
+  version "4.23.0"
 
 "@datadog/browser-logs@file:../../packages/logs":
-  version "4.22.0"
+  version "4.23.0"
   dependencies:
-    "@datadog/browser-core" "4.22.0"
+    "@datadog/browser-core" "4.23.0"
 
-"@datadog/browser-rum-core@4.22.0", "@datadog/browser-rum-core@file:../../packages/rum-core":
-  version "4.22.0"
+"@datadog/browser-rum-core@4.23.0", "@datadog/browser-rum-core@file:../../packages/rum-core":
+  version "4.23.0"
   dependencies:
-    "@datadog/browser-core" "4.22.0"
+    "@datadog/browser-core" "4.23.0"
 
 "@datadog/browser-rum@file:../../packages/rum":
-  version "4.22.0"
+  version "4.23.0"
   dependencies:
-    "@datadog/browser-core" "4.22.0"
-    "@datadog/browser-rum-core" "4.22.0"
+    "@datadog/browser-core" "4.23.0"
+    "@datadog/browser-rum-core" "4.23.0"
 
 "@jridgewell/gen-mapping@^0.3.0":
   version "0.3.2"
@@ -93,9 +93,9 @@
   integrity sha512-wOuvG1SN4Us4rez+tylwwwCV1psiNVOkJeM3AUWUNWg/jDQY2+HE/444y5gc+jBmRqASOm2Oeh5c1axHobwRKQ==
 
 "@types/node@*":
-  version "18.11.2"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-18.11.2.tgz#c59b7641832531264fda3f1ba610362dc9a7dfc8"
-  integrity sha512-BWN3M23gLO2jVG8g/XHIRFWiiV4/GckeFIqbU/C4V3xpoBBWSMk4OZomouN0wCkfQFPqgZikyLr7DOYDysIkkw==
+  version "18.11.4"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-18.11.4.tgz#7017a52e18dfaad32f55eebd539993014441949c"
+  integrity sha512-BxcJpBu8D3kv/GZkx/gSMz6VnTJREBj/4lbzYOQueUOELkt8WrO6zAcSPmp9uRPEW/d+lUO8QK0W2xnS1hEU0A==
 
 "@webassemblyjs/ast@1.11.0":
   version "1.11.0"
@@ -283,9 +283,9 @@ buffer-from@^1.0.0:
   integrity sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==
 
 caniuse-lite@^1.0.30001400:
-  version "1.0.30001422"
-  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001422.tgz#f2d7c6202c49a8359e6e35add894d88ef93edba1"
-  integrity sha512-hSesn02u1QacQHhaxl/kNMZwqVG35Sz/8DgvmgedxSH8z9UUpcDYSPYgsj3x5dQNRcNp6BwpSfQfVzYUTm+fog==
+  version "1.0.30001423"
+  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001423.tgz#57176d460aa8cd85ee1a72016b961eb9aca55d91"
+  integrity sha512-09iwWGOlifvE1XuHokFMP7eR38a0JnajoyL3/i87c8ZjRWRrdKo1fqjNfugfBD0UDBIOz0U+jtNhJ0EPm1VleQ==
 
 chalk@^2.3.0:
   version "2.4.2"
