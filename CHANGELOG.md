@@ -16,6 +16,12 @@
 
 ---
 
+## v4.23.0
+
+- ✨[RUMF-1377] Enable new request strategy ([#1770](https://github.com/DataDog/browser-sdk/pull/1770))
+- 🐛 [RUMF-1393] don't mask attributes used to create CSS selectors ([#1737](https://github.com/DataDog/browser-sdk/pull/1737))
+- ⚗ [RUMF-1379] heatmap: experiment improved selector regarding unicity ([#1741](https://github.com/DataDog/browser-sdk/pull/1741))
+
 ## v4.22.0
 
 - ⚡️ Enable telemetry configuration ([#1780](https://github.com/DataDog/browser-sdk/pull/1780))
