@@ -190,8 +190,7 @@ describe('rum resources', () => {
 
         const resourceEvent = serverEvents.rumResources.find((event) => event.resource.type === 'fetch')
 
-        // if PerformanceResourceDetails is defined, it means
-        // we were able to match fetch to a performance resource entry
+        expect(resourceEvent?.resource.size).toBeDefined()
         expect(resourceEvent?.resource.download).toBeDefined()
         expect(resourceEvent?.resource.first_byte).toBeDefined()
       })
