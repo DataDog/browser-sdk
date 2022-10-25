@@ -20,7 +20,7 @@ describe('matchResponseToPerformanceEntry', () => {
 
     beforeEach(() => {
       if (isIE()) {
-        pending('no full rum support')
+        pending('no fetch and PerformanceObserver support')
       }
       entries = []
       spyOn(performance, 'getEntriesByName').and.returnValues(entries as unknown as PerformanceResourceTiming[])
