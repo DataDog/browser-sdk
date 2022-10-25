@@ -85,6 +85,7 @@ export function computePerformanceResourceDuration(entry: RumPerformanceResource
   return toServerDuration(duration)
 }
 
+// https://developer.mozilla.org/en-US/docs/Web/Performance/Navigation_and_resource_timings#calculating_timings
 export function computePerformanceResourceDetails(
   entry: RumPerformanceResourceTiming
 ): PerformanceResourceDetails | undefined {
