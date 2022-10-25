@@ -7,6 +7,8 @@ import {
   relativeToClocks,
   assign,
   isNumber,
+  elapsed,
+  timeStampNow,
 } from '@datadog/browser-core'
 import type { ClocksState } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
@@ -81,7 +83,7 @@ function processRequest(
   configuration: RumConfiguration,
   sessionManager: RumSessionManager,
   matchingTiming: RumPerformanceResourceTiming | undefined
-) {
+): RawRumEventCollectedData<RawRumResourceEvent> {
   const type = request.type === RequestType.XHR ? ResourceType.XHR : ResourceType.FETCH
 
   const startClocks = matchingTiming ? relativeToClocks(matchingTiming.startTime) : request.startClocks
@@ -96,11 +98,15 @@ function processRequest(
       resource: {
         id: generateUUID(),
         type,
-        duration: toServerDuration(request.duration),
-        resolveDuration: request.resolveDuration ? toServerDuration(request.resolveDuration) : undefined,
+        duration: toServerDuration(
+          request.duration ? request.duration : elapsed(request.startClocks.timeStamp, timeStampNow())
+        ),
         method: request.method,
         status_code: request.status,
         url: request.url,
+      },
+      _dd: {
+        resolveDuration: request.resolveDuration ? toServerDuration(request.resolveDuration) : undefined,
       },
       type: RumEventType.RESOURCE as const,
     },
