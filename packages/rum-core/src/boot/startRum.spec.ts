@@ -1,5 +1,6 @@
-import type { RelativeTime, Observable, RawError } from '@datadog/browser-core'
-import { noop, relativeNow, isIE } from '@datadog/browser-core'
+import type { RelativeTime, Observable, RawError, Duration } from '@datadog/browser-core'
+import { toServerDuration, ONE_SECOND, findLast, noop, relativeNow, isIE } from '@datadog/browser-core'
+import { interceptRequests } from '../../../core/test/specHelper'
 import type { RumSessionManagerMock } from '../../test/mockRumSessionManager'
 import { createRumSessionManagerMock } from '../../test/mockRumSessionManager'
 import type { TestSetupBuilder } from '../../test/specHelper'
@@ -9,12 +10,13 @@ import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from '../domain/rumEventsCollection/view/trackViews'
 import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
-import type { RumEvent } from '../rumEvent.types'
+import type { RumEvent, RumViewEvent } from '../rumEvent.types'
 import type { LocationChange } from '../browser/locationChangeObservable'
 import { startLongTaskCollection } from '../domain/rumEventsCollection/longTask/longTaskCollection'
 import type { RumSessionManager } from '..'
-import type { RumConfiguration } from '../domain/configuration'
-import { startRumEventCollection } from './startRum'
+import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
+import { RumEventType } from '../rawRumEvent.types'
+import { startRum, startRumEventCollection } from './startRum'
 
 function collectServerEvents(lifeCycle: LifeCycle) {
   const serverRumEvents: RumEvent[] = []
@@ -24,7 +26,7 @@ function collectServerEvents(lifeCycle: LifeCycle) {
   return serverRumEvents
 }
 
-function startRum(
+function startRumStub(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
   sessionManager: RumSessionManager,
@@ -77,7 +79,7 @@ describe('rum session', () => {
     setupBuilder = setup().beforeBuild(
       ({ location, lifeCycle, configuration, sessionManager, domMutationObservable, locationChangeObservable }) => {
         serverRumEvents = collectServerEvents(lifeCycle)
-        return startRum(
+        return startRumStub(
           lifeCycle,
           configuration,
           sessionManager,
@@ -130,7 +132,7 @@ describe('rum session keep alive', () => {
       .beforeBuild(
         ({ location, lifeCycle, configuration, sessionManager, domMutationObservable, locationChangeObservable }) => {
           serverRumEvents = collectServerEvents(lifeCycle)
-          return startRum(
+          return startRumStub(
             lifeCycle,
             configuration,
             sessionManager,
@@ -201,7 +203,7 @@ describe('rum events url', () => {
     setupBuilder = setup().beforeBuild(
       ({ location, lifeCycle, configuration, sessionManager, domMutationObservable, locationChangeObservable }) => {
         serverRumEvents = collectServerEvents(lifeCycle)
-        return startRum(
+        return startRumStub(
           lifeCycle,
           configuration,
           sessionManager,
@@ -277,5 +279,45 @@ describe('rum events url', () => {
 
     expect(serverRumEvents.length).toEqual(1)
     expect(serverRumEvents[0].view.url).toEqual('http://foo.com/')
+  })
+})
+
+describe('view events', () => {
+  let setupBuilder: TestSetupBuilder
+  let interceptor: ReturnType<typeof interceptRequests>
+
+  beforeEach(() => {
+    setupBuilder = setup().beforeBuild(({ configuration }) => {
+      startRum({} as RumInitConfiguration, configuration, () => ({ context: {}, user: {} }), noopRecorderApi)
+    })
+    interceptor = interceptRequests()
+  })
+
+  afterEach(() => {
+    setupBuilder.cleanup()
+    interceptor.restore()
+  })
+
+  it('sends a view update on page unload', () => {
+    // Note: this test is intentionally very high level to make sure the view update is correctly
+    // made right before flushing the Batch.
+
+    // Arbitrary duration to simulate a non-zero view duration
+    const VIEW_DURATION = ONE_SECOND as Duration
+
+    const { clock } = setupBuilder.withFakeClock().build()
+
+    clock.tick(VIEW_DURATION)
+    window.dispatchEvent(new Event('beforeunload'))
+
+    const lastRumEvents = interceptor.requests[interceptor.requests.length - 1].body
+      .split('\n')
+      .map((line) => JSON.parse(line) as RumEvent)
+    const lastRumViewEvent = findLast(
+      lastRumEvents,
+      (serverRumEvent): serverRumEvent is RumViewEvent => serverRumEvent.type === RumEventType.VIEW
+    )!
+
+    expect(lastRumViewEvent.view.time_spent).toBe(toServerDuration(VIEW_DURATION))
   })
 })
