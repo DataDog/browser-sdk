@@ -26,7 +26,6 @@ const enum RetryReason {
 
 export interface RetryState {
   transportStatus: TransportStatus
-  lastFailureStatus: number
   currentBackoffTime: number
   bandwidthMonitor: ReturnType<typeof newBandwidthMonitor>
   queuedPayloads: ReturnType<typeof newPayloadQueue>
@@ -71,14 +70,21 @@ function scheduleRetry(
   setTimeout(
     monitor(() => {
       const payload = state.queuedPayloads.first()
+      if (!payload) {
+        addTelemetryDebug('no payload to retry', {
+          debug: {
+            queue: {
+              size: state.queuedPayloads.size(),
+              is_full: state.queuedPayloads.isFull(),
+              bytes_count: state.queuedPayloads.bytesCount,
+            },
+            transport_status: state.transportStatus,
+          },
+        })
+      }
       send(payload, state, sendStrategy, {
         onSuccess: () => {
           state.queuedPayloads.dequeue()
-          if (state.lastFailureStatus !== 0) {
-            addTelemetryDebug('resuming after transport down', {
-              failureStatus: state.lastFailureStatus,
-            })
-          }
           state.currentBackoffTime = INITIAL_BACKOFF_TIME
           retryQueuedPayloads(RetryReason.AFTER_RESUME, state, sendStrategy, endpointType, reportError)
         },
@@ -108,7 +114,6 @@ function send(
       // do not consider transport down if another ongoing request could succeed
       state.transportStatus =
         state.bandwidthMonitor.ongoingRequestCount > 0 ? TransportStatus.FAILURE_DETECTED : TransportStatus.DOWN
-      state.lastFailureStatus = response.status
       onFailure()
     }
   })
@@ -143,7 +148,6 @@ function shouldRetryRequest(response: HttpResponse) {
 export function newRetryState(): RetryState {
   return {
     transportStatus: TransportStatus.UP,
-    lastFailureStatus: 0,
     currentBackoffTime: INITIAL_BACKOFF_TIME,
     bandwidthMonitor: newBandwidthMonitor(),
     queuedPayloads: newPayloadQueue(),
