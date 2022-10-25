@@ -1,5 +1,5 @@
 import type { RelativeTime, Duration, ClocksState } from '@datadog/browser-core'
-import { addDuration, monitor, elapsed, timeStampNow } from '@datadog/browser-core'
+import { addDuration, elapsed, timeStampNow } from '@datadog/browser-core'
 import type { RequestCompleteEvent } from '../../requestCollection'
 import { toValidEntry } from './resourceUtils'
 
@@ -24,46 +24,30 @@ export interface RumPerformanceResourceTiming {
   traceId?: string
 }
 
-export const REPORT_FETCH_TIMER = 3000
-
 export const matchOnPerformanceObserverCallback = (
   request: RequestCompleteEvent
 ): Promise<RumPerformanceResourceTiming | undefined> => {
-  let timeOutId: null | number = null
   let observer: PerformanceObserver | undefined
   return (
-    Promise.race([
-      new Promise((resolve) => {
-        observer = new PerformanceObserver((list) => {
-          const entries = list.getEntries()
-          const filteredEntries = entries.filter((entry) => entry.name === request.url)
-          const candidates = filterCandidateEntries(filteredEntries, request.startClocks)
-          if (candidates.length) {
-            // log that there is an issue
-            if (candidates.length > 2) resolve(undefined)
-            if (candidates.length === 2 && firstCanBeOptionRequest(candidates)) resolve(candidates[1])
-            if (candidates.length === 1) resolve(candidates[0])
-          }
-        })
-        observer.observe({ entryTypes: ['resource'] })
-      }),
-      new Promise((resolve) => {
-        timeOutId = setTimeout(
-          monitor(() => {
-            const entity = matchOnPerformanceGetEntriesByName(request)
-            resolve(entity)
-          }),
-          REPORT_FETCH_TIMER
-        )
-      }),
-    ])
+    new Promise((resolve) => {
+      observer = new PerformanceObserver((list) => {
+        const entries = list.getEntries()
+        const filteredEntries = entries.filter((entry) => entry.name === request.url)
+        const candidates = filterCandidateEntries(filteredEntries, request.startClocks)
+        if (candidates.length) {
+          // log that there is an issue
+          if (candidates.length > 2) resolve(undefined)
+          if (candidates.length === 2 && firstCanBeOptionRequest(candidates)) resolve(candidates[1])
+          if (candidates.length === 1) resolve(candidates[0])
+        }
+      })
+      observer.observe({ entryTypes: ['resource'] })
+    })
       // @ts-ignore: if a browser supports fetch, it likely supports finally
       .finally(reset)
   )
 
   function reset() {
-    timeOutId && clearTimeout(timeOutId)
-    timeOutId = null
     observer && observer.disconnect()
     observer = undefined
   }
@@ -92,7 +76,14 @@ const filterCandidateEntries = (entries: PerformanceEntryList, startClocks: Cloc
     .map((entry) => entry.toJSON() as RumPerformanceResourceTiming)
     .filter(toValidEntry)
     .filter((entry) =>
-      isBetween(entry, startClocks.relative, elapsed(startClocks.timeStamp, timeStampNow()) as RelativeTime)
+      isBetween(
+        entry,
+        startClocks.relative,
+        endTime({
+          startTime: startClocks.relative,
+          duration: elapsed(startClocks.timeStamp, timeStampNow()),
+        })
+      )
     )
 
 export const matchOnPerformanceGetEntriesByName = (
@@ -101,7 +92,6 @@ export const matchOnPerformanceGetEntriesByName = (
   const entries = performance.getEntriesByName(request.url, 'resource')
   const candidates = filterCandidateEntries(entries, request.startClocks)
 
-  // log that there is an issue
   if (candidates.length > 2) return undefined
   if (candidates.length === 2 && firstCanBeOptionRequest(candidates)) return candidates[1]
   if (candidates.length === 1) return candidates[0]
