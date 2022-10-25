@@ -97,6 +97,7 @@ function processRequest(
         id: generateUUID(),
         type,
         duration: toServerDuration(request.duration),
+        resolveDuration: request.resolveDuration ? toServerDuration(request.resolveDuration) : undefined,
         method: request.method,
         status_code: request.status,
         url: request.url,
