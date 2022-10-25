@@ -93,7 +93,10 @@ function processRequest(
   const tracingInfo = computeRequestTracingInfo(request, configuration)
   const indexingInfo = computeIndexingInfo(sessionManager, startClocks)
 
-  // Duration is not set when request is type fetch. If se we need to create it
+  // Duration is not set when request is of type fetch.
+  // If the code reaches here it means PerformanceObserver has found matching PerformanceEntry(ies).
+  // Although ideal as a measurement, it better reflects the duration than fetchObservable's "afterSend"
+  // (which has been renamed to `resolveDuration`).
   const duration = request.duration ? request.duration : elapsed(request.startClocks.timeStamp, timeStampNow())
 
   const resourceEvent = combine(
