@@ -168,18 +168,6 @@ export function jsonStringify(value: unknown, space?: string | number): string |
   const restoreValuePrototypeToJson = detachToJsonMethod(Object.getPrototypeOf(value))
   const restoreValueToJson = detachToJsonMethod(value)
 
-  // Line below can be removed when migrating to TS4.8+
-  const isValidObject = (v: any): v is object => typeof v === 'object' && v !== null
-  const getCyclicReplacer = <T>() => {
-    const circularReferenceChecker = createCircularReferenceChecker()
-    return (_key: string, value: T) => {
-      if (isValidObject(value) && circularReferenceChecker.hasAlreadyBeenSeen(value)) {
-        return '<warning: cyclic reference not serialized>'
-      }
-      return value
-    }
-  }
-
   try {
     return JSON.stringify(value, getCyclicReplacer(), space)
   } catch {
@@ -508,6 +496,21 @@ function createCircularReferenceChecker(): CircularReferenceChecker {
       }
       return has
     },
+  }
+}
+
+/**
+ * Returns a replacer function that can be used with JSON.stringify
+ * to remove cyclic references.
+ */
+function getCyclicReplacer(): (key: string, value: unknown) => unknown {
+  const circularReferenceChecker = createCircularReferenceChecker()
+  return (_key: string, value: unknown) => {
+    const type = getType(value)
+    if ((type === 'object' || type === 'array') && circularReferenceChecker.hasAlreadyBeenSeen(value)) {
+      return '<warning: cyclic reference not serialized>'
+    }
+    return value
   }
 }
 
