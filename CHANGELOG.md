@@ -16,6 +16,10 @@
 
 ---
 
+## v4.23.1
+
+- 🔉[RUMF-1423] Add debug log for retry issue ([#1790](https://github.com/DataDog/browser-sdk/pull/1790))
+
 ## v4.23.0
 
 - ✨[RUMF-1377] Enable new request strategy ([#1770](https://github.com/DataDog/browser-sdk/pull/1770))
