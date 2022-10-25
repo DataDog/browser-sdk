@@ -192,10 +192,52 @@ describe('rum resources', () => {
 
         // if PerformanceResourceDetails is defined, it means
         // we were able to match fetch to a performance resource entry
-        expect(resourceEvent?.resource.first_byte).toBeDefined()
         expect(resourceEvent?.resource.download).toBeDefined()
+        expect(resourceEvent?.resource.first_byte).toBeDefined()
       })
   })
+
+  createTest('track redirect fetch timings')
+    .withRum()
+    .run(async ({ serverEvents }) => {
+      await browserExecuteAsync((done) => {
+        fetch(`/redirect?duration=${200}`).then(
+          () => done(undefined),
+          () => {
+            throw Error('Issue with fetch call')
+          }
+        )
+      })
+      await flushEvents()
+      const resourceEvent = serverEvents.rumResources.find((r) => r.resource.url.includes('/redirect'))!
+      expect(resourceEvent).not.toBeUndefined()
+      expect(resourceEvent.resource.method).toEqual('GET')
+      expect(resourceEvent.resource.status_code).toEqual(200)
+      expectToHaveValidTimings(resourceEvent)
+      expect(resourceEvent.resource.redirect).not.toBeUndefined()
+      expect(resourceEvent.resource.redirect!.duration).toBeGreaterThan(0)
+    })
+
+  createTest('track dns lookup fetch timings')
+    .withRum()
+    .run(async ({ serverEvents }) => {
+      await browserExecuteAsync((done) => {
+        fetch(`/redirect?duration=${REQUEST_DURATION}`).then(
+          () => done(undefined),
+          () => {
+            throw Error('Issue with fetch call')
+          }
+        )
+      })
+      await flushEvents()
+      const resourceEvent = serverEvents.rumResources.find((r) => r.resource.url.includes('/redirect'))!
+      expect(resourceEvent).not.toBeUndefined()
+      expect(resourceEvent.resource.method).toEqual('GET')
+      expect(resourceEvent.resource.status_code).toEqual(200)
+      expectToHaveValidTimings(resourceEvent)
+      expect(resourceEvent.resource.redirect).not.toBeUndefined()
+      expect(resourceEvent.resource.redirect!.duration).toBeGreaterThan(0)
+    })
 
   describe('fetch abort support', () => {
     createTest('track aborted fetch')
