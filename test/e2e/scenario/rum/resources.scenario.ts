@@ -222,7 +222,7 @@ describe('rum resources', () => {
     .withRum()
     .run(async ({ serverEvents }) => {
       await browserExecuteAsync((done) => {
-        fetch(`/redirect?duration=${REQUEST_DURATION}`).then(
+        fetch(`/redirect?duration=${200}`).then(
           () => done(undefined),
           () => {
             throw Error('Issue with fetch call')
