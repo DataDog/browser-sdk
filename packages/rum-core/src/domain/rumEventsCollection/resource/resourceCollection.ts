@@ -40,20 +40,28 @@ export function startResourceCollection(
   sessionManager: RumSessionManager
 ) {
   lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request: RequestCompleteEvent) => {
-    fetchPerformanceEntry(request)
-      .then((matchingTiming) => {
-        lifeCycle.notify(
-          LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-          processRequest(request, configuration, sessionManager, matchingTiming)
-        )
-      })
-      .catch(() => {
-        // TODO: notify error caused when fetching telemetry
-        lifeCycle.notify(
-          LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-          processRequest(request, configuration, sessionManager, undefined)
-        )
-      })
+    if (request.type === RequestType.XHR || request.status === 0) {
+      const matchingTiming = matchOnPerformanceGetEntriesByName(request)
+      lifeCycle.notify(
+        LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
+        processRequest(request, configuration, sessionManager, matchingTiming)
+      )
+    } else {
+      matchOnPerformanceObserverCallback(request)
+        .then((matchingTiming) => {
+          lifeCycle.notify(
+            LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
+            processRequest(request, configuration, sessionManager, matchingTiming)
+          )
+        })
+        .catch(() => {
+          // TODO: notify error caused when fetching telemetry
+          lifeCycle.notify(
+            LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
+            processRequest(request, configuration, sessionManager, undefined)
+          )
+        })
+    }
   })
 
   lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
@@ -66,13 +74,6 @@ export function startResourceCollection(
       }
     }
   })
-}
-
-async function fetchPerformanceEntry(request: RequestCompleteEvent) {
-  return request.type === RequestType.XHR || // XHR requests add performance entries synchronicity
-    request.status === 0 // strange issue when status 0
-    ? matchOnPerformanceGetEntriesByName(request)
-    : matchOnPerformanceObserverCallback(request)
 }
 
 function processRequest(
