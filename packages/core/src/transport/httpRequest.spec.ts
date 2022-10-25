@@ -112,7 +112,7 @@ describe('httpRequest', () => {
         BATCH_BYTES_LIMIT,
         { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 },
         (response) => {
-          expect(response).toEqual({ status: 429 })
+          expect(response).toEqual({ status: 429, api: 'fetch' })
           done()
         }
       )
@@ -135,7 +135,7 @@ describe('httpRequest', () => {
         BATCH_BYTES_LIMIT,
         { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 },
         (response) => {
-          expect(response).toEqual({ status: 429 })
+          expect(response).toEqual({ status: 429, api: 'xhr' })
           done()
         }
       )
@@ -153,7 +153,7 @@ describe('httpRequest', () => {
         BATCH_BYTES_LIMIT,
         { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: BATCH_BYTES_LIMIT },
         (response) => {
-          expect(response).toEqual({ status: 429 })
+          expect(response).toEqual({ status: 429, api: 'xhr' })
           done()
         }
       )
