@@ -1,5 +1,5 @@
 import type { RelativeTime, Duration, ClocksState } from '@datadog/browser-core'
-import { addDuration, elapsed, timeStampNow } from '@datadog/browser-core'
+import { addDuration, elapsed, timeStampNow, addTelemetryDebug } from '@datadog/browser-core'
 import type { RequestCompleteEvent } from '../../requestCollection'
 import { toValidEntry } from './resourceUtils'
 
@@ -35,9 +35,14 @@ export const matchOnPerformanceObserverCallback = (
         const filteredEntries = entries.filter((entry) => entry.name === request.url)
         const candidates = filterCandidateEntries(filteredEntries, request.startClocks)
         if (candidates.length) {
-          // log that there is an issue
-          if (candidates.length > 2) resolve(undefined)
-          if (candidates.length === 2 && firstCanBeOptionRequest(candidates)) resolve(candidates[1])
+          if (candidates.length > 2) {
+            addTelemetryDebug('more than 2 matching performance entries found')
+            resolve(undefined)
+          }
+          if (candidates.length === 2 && firstCanBeOptionRequest(candidates)) {
+            addTelemetryDebug('2 matching performance entries found')
+            resolve(candidates[1])
+          }
           if (candidates.length === 1) resolve(candidates[0])
         }
       })
@@ -92,8 +97,14 @@ export const matchOnPerformanceGetEntriesByName = (
   const entries = performance.getEntriesByName(request.url, 'resource')
   const candidates = filterCandidateEntries(entries, request.startClocks)
 
-  if (candidates.length > 2) return undefined
-  if (candidates.length === 2 && firstCanBeOptionRequest(candidates)) return candidates[1]
+  if (candidates.length > 2) {
+    addTelemetryDebug('more than 2 matching performance entries found')
+    return undefined
+  }
+  if (candidates.length === 2 && firstCanBeOptionRequest(candidates)) {
+    addTelemetryDebug('2 matching performance entries found')
+    return candidates[1]
+  }
   if (candidates.length === 1) return candidates[0]
   return undefined
 }
