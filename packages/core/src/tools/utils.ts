@@ -171,14 +171,10 @@ export function jsonStringify(value: unknown, space?: string | number): string |
   // Line below can be removed when migrating to TS4.8+
   const isValidObject = (v: any): v is object => typeof v === 'object' && v !== null
   const getCyclicReplacer = <T>() => {
-    // Using a weakmap instead of a weakset to support IE11
-    const visited = new WeakMap<object, boolean>()
+    const circularReferenceChecker = createCircularReferenceChecker()
     return (_key: string, value: T) => {
-      if (isValidObject(value)) {
-        if (visited.has(value)) {
-          return '<warning: cyclic reference not serialized>'
-        }
-        visited.set(value, true)
+      if (isValidObject(value) && circularReferenceChecker.hasAlreadyBeenSeen(value)) {
+        return '<warning: cyclic reference not serialized>'
       }
       return value
     }
@@ -502,24 +498,13 @@ interface CircularReferenceChecker {
   hasAlreadyBeenSeen(value: any): boolean
 }
 function createCircularReferenceChecker(): CircularReferenceChecker {
-  if (typeof WeakSet !== 'undefined') {
-    const set: WeakSet<any> = new WeakSet()
-    return {
-      hasAlreadyBeenSeen(value) {
-        const has = set.has(value)
-        if (!has) {
-          set.add(value)
-        }
-        return has
-      },
-    }
-  }
-  const array: any[] = []
+  // Using a weakmap instead of a weakset to support IE11
+  const map: WeakMap<any, boolean> = new WeakMap()
   return {
     hasAlreadyBeenSeen(value) {
-      const has = array.indexOf(value) >= 0
+      const has = map.has(value)
       if (!has) {
-        array.push(value)
+        map.set(value, true)
       }
       return has
     },
