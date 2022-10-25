@@ -25,7 +25,12 @@ import {
   getNodeSelfPrivacyLevel,
   MAX_ATTRIBUTE_VALUE_CHAR_LENGTH,
 } from './privacy'
-import { getSerializedNodeId, setSerializedNodeId, getElementInputValue } from './serializationUtils'
+import {
+  getSerializedNodeId,
+  setSerializedNodeId,
+  getElementInputValue,
+  switchToAbsoluteUrl,
+} from './serializationUtils'
 import { forEach } from './utils'
 import type { ElementsScrollPositions } from './elementsScrollPositions'
 
@@ -316,7 +321,7 @@ function getValidTagName(tagName: string): string {
 function getCssRulesString(s: CSSStyleSheet): string | null {
   try {
     const rules = s.rules || s.cssRules
-    return rules ? Array.from(rules).map(getCssRuleString).join('') : null
+    return rules ? switchToAbsoluteUrl(Array.from(rules, getCssRuleString).join(''), s.href) : null
   } catch (error) {
     return null
   }
