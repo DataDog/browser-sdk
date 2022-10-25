@@ -9,6 +9,7 @@ import {
   isNumber,
   elapsed,
   timeStampNow,
+  addTelemetryDebug,
 } from '@datadog/browser-core'
 import type { ClocksState } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
@@ -57,7 +58,7 @@ export function startResourceCollection(
           )
         })
         .catch(() => {
-          // TODO: notify error caused when fetching telemetry
+          addTelemetryDebug('matchOnPerformanceObserverCallback threw error')
           lifeCycle.notify(
             LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
             processRequest(request, configuration, sessionManager, undefined)
