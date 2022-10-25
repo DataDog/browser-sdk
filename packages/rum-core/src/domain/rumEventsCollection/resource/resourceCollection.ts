@@ -93,15 +93,16 @@ function processRequest(
   const tracingInfo = computeRequestTracingInfo(request, configuration)
   const indexingInfo = computeIndexingInfo(sessionManager, startClocks)
 
+  // Duration is not set when request is type fetch. If se we need to create it
+  const duration = request.duration ? request.duration : elapsed(request.startClocks.timeStamp, timeStampNow())
+
   const resourceEvent = combine(
     {
       date: startClocks.timeStamp,
       resource: {
         id: generateUUID(),
         type,
-        duration: toServerDuration(
-          request.duration ? request.duration : elapsed(request.startClocks.timeStamp, timeStampNow())
-        ),
+        duration: toServerDuration(duration),
         method: request.method,
         status_code: request.status,
         url: request.url,
