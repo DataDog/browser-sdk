@@ -3,13 +3,11 @@ import { isIE, relativeToClocks, RequestType } from '@datadog/browser-core'
 import { createResourceEntry } from '../../../../test/fixtures'
 import type { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 import type { RequestCompleteEvent } from '../../requestCollection'
-import { mockClock } from '../../../../../core/test/specHelper'
 import { stubPerformanceObserver, createCompletedRequest } from '../../../../test/specHelper'
 
 import {
   matchOnPerformanceGetEntriesByName,
   matchOnPerformanceObserverCallback,
-  REPORT_FETCH_TIMER,
 } from './matchResponseToPerformanceEntry'
 
 describe('matchResponseToPerformanceEntry', () => {
@@ -165,31 +163,6 @@ describe('matchResponseToPerformanceEntry', () => {
       clear()
     })
 
-    it('should not match two not following timings nested in the request', async () => {
-      const entry1 = createResourceEntry({ startTime: 150 as RelativeTime, duration: 100 as Duration })
-      const entry2 = createResourceEntry({ startTime: 150 as RelativeTime, duration: 100 as Duration })
-
-      const { clear } = stubPerformanceObserver([entry1, entry2])
-
-      const response = new Response()
-      const completedRequest = createCompletedRequest({
-        duration: 100 as Duration,
-        method: 'GET',
-        startClocks: { relative: 150 as RelativeTime, timeStamp: 123456789 as TimeStamp },
-        status: 200,
-        type: RequestType.FETCH,
-        url: 'https://resource.com/valid',
-        response,
-        input: 'https://resource.com/valid',
-        init: { headers: { foo: 'bar' } },
-      })
-
-      const performanceEntry = await matchOnPerformanceObserverCallback(completedRequest)
-
-      expect(performanceEntry).toBeUndefined()
-      clear()
-    })
-
     it('should not match multiple timings nested in the request', async () => {
       const entry1 = createResourceEntry({ startTime: 150 as RelativeTime, duration: 100 as Duration })
       const entry2 = createResourceEntry({ startTime: 150 as RelativeTime, duration: 100 as Duration })
@@ -214,43 +187,6 @@ describe('matchResponseToPerformanceEntry', () => {
 
       expect(performanceEntry).toBeUndefined()
       clear()
-    })
-
-    it('should call matchOnPerformanceGetEntriesByName if timeout', (done) => {
-      const clock = mockClock()
-
-      const match = createResourceEntry({ startTime: 150 as RelativeTime, duration: 100 as Duration })
-      entries.push(match)
-
-      const { clear } = stubPerformanceObserver([])
-
-      const response = new Response()
-      const completedRequest = createCompletedRequest({
-        duration: 100 as Duration,
-        method: 'GET',
-        startClocks: { relative: 150 as RelativeTime, timeStamp: 123456789 as TimeStamp },
-        status: 200,
-        type: RequestType.FETCH,
-        url: 'https://resource.com/valid',
-        response,
-        input: 'https://resource.com/valid',
-        init: { headers: { foo: 'bar' } },
-      })
-
-      matchOnPerformanceObserverCallback(completedRequest)
-        .then((performanceEntry) => {
-          expect(performanceEntry).toBeDefined()
-          expect(performanceEntry).toEqual(match)
-          clear()
-          clock.cleanup()
-          done()
-        })
-        .catch(() => {
-          clock.cleanup()
-          done.fail()
-        })
-
-      clock.tick(REPORT_FETCH_TIMER)
     })
   })
 })
