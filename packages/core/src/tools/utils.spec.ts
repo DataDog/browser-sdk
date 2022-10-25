@@ -318,6 +318,13 @@ describe('utils', () => {
       )
     })
 
+    it('should serialize arrays with cyclic references', () => {
+      const baseArray: any[] = [1]
+      baseArray.push(baseArray)
+
+      expect(jsonStringify(baseArray)).toEqual('[1,"<warning: cyclic reference not serialized>"]')
+    })
+
     it('should not crash on serialization error', () => {
       // custom toJSON is only ignored on root object.
       const sub = {
