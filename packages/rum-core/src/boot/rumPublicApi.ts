@@ -250,7 +250,7 @@ export function makeRumPublicApi(
   return rumPublicApi
 
   function sanitizeUser(newUser: Context) {
-    const shallowClonedUser = assign(newUser, {})
+    const shallowClonedUser = assign({}, newUser)
     if ('id' in shallowClonedUser) {
       shallowClonedUser.id = String(shallowClonedUser.id)
     }
