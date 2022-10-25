@@ -1,7 +1,9 @@
+import type { RelativeTime, Duration } from '@datadog/browser-core'
 import { isIE, RequestType } from '@datadog/browser-core'
 import type { FetchStub, FetchStubManager } from '../../../core/test/specHelper'
-import { SPEC_ENDPOINTS, stubFetch, stubXhr, withXhr, mockClock } from '../../../core/test/specHelper'
-import { REPORT_FETCH_TIMER } from './rumEventsCollection/resource/matchResponseToPerformanceEntry'
+import { SPEC_ENDPOINTS, stubFetch, stubXhr, withXhr } from '../../../core/test/specHelper'
+import { createResourceEntry } from '../../test/fixtures'
+import { stubPerformanceObserver } from '../../test/specHelper'
 import type { RumConfiguration } from './configuration'
 import { validateAndBuildRumConfiguration } from './configuration'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
@@ -102,18 +104,22 @@ describe('collect fetch', () => {
   })
 
   describe('tracing', () => {
-    it('should trace requests by default', async () => {
-      const clock = mockClock()
-      await fetchStub(FAKE_URL).resolveWith({ status: 200, responseText: 'ok' })
-      clock.tick(REPORT_FETCH_TIMER)
+    it('should trace requests by default', (done) => {
+      const entry = createResourceEntry({ startTime: 150 as RelativeTime, duration: 100 as Duration })
+      let clear: (() => void) | null = null
+      fetchStub(FAKE_URL)
+        .resolveWith({ status: 200, responseText: 'ok' })
+        .then(() => {
+          const request = completeSpy.calls.argsFor(0)[0]
 
-      setTimeout(() => {
-        const request = completeSpy.calls.argsFor(0)[0]
+          expect(request.traceId).toBeDefined()
+          clear && clear()
+          done()
+        })
+        .catch(done.fail)
 
-        expect(request.traceId).toBeDefined()
-      })
-
-      clock.cleanup()
+      const cb = stubPerformanceObserver([entry])
+      clear = cb.clear
     })
 
     it('should trace aborted requests', (done) => {
