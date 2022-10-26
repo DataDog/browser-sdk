@@ -1,5 +1,13 @@
 import type { RelativeTime, Observable, RawError, Duration } from '@datadog/browser-core'
-import { toServerDuration, ONE_SECOND, findLast, noop, relativeNow, isIE } from '@datadog/browser-core'
+import {
+  stopSessionManager,
+  toServerDuration,
+  ONE_SECOND,
+  findLast,
+  noop,
+  relativeNow,
+  isIE,
+} from '@datadog/browser-core'
 import { interceptRequests } from '../../../core/test/specHelper'
 import type { RumSessionManagerMock } from '../../test/mockRumSessionManager'
 import { createRumSessionManagerMock } from '../../test/mockRumSessionManager'
@@ -294,6 +302,7 @@ describe('view events', () => {
   })
 
   afterEach(() => {
+    stopSessionManager()
     setupBuilder.cleanup()
     interceptor.restore()
   })
