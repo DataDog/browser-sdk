@@ -12,29 +12,29 @@ export interface PageExitEvent {
 }
 
 const enum PageStatus {
-  NOT_EXITED,
-  EXITED_HIDDEN,
-  EXITED_UNLOADING,
+  VISIBLE,
+  HIDDEN,
+  UNLOADING,
 }
 
 export function createPageState(): PageState {
-  let status = PageStatus.NOT_EXITED
+  let currentStatus = PageStatus.VISIBLE
   const onExitObservable = new Observable<PageExitEvent>()
 
-  function setUnloadStatus(newUnloadStatus: PageStatus) {
-    if (status === PageStatus.EXITED_UNLOADING || status === newUnloadStatus) {
+  function setStatus(newStatus: PageStatus) {
+    if (currentStatus === PageStatus.UNLOADING || currentStatus === newStatus) {
       return
     }
 
-    status = newUnloadStatus
+    currentStatus = newStatus
 
     if (isExited()) {
-      onExitObservable.notify({ isUnloading: status === PageStatus.EXITED_UNLOADING })
+      onExitObservable.notify({ isUnloading: currentStatus === PageStatus.UNLOADING })
     }
   }
 
   function isExited() {
-    return status !== PageStatus.NOT_EXITED
+    return currentStatus !== PageStatus.VISIBLE
   }
 
   /**
@@ -42,7 +42,7 @@ export function createPageState(): PageState {
    * (e.g. when user switches to a different application, goes to homescreen, etc), or is being unloaded.
    */
   const { stop: stopVisibilityChangeListener } = addEventListener(document, DOM_EVENT.VISIBILITY_CHANGE, () => {
-    setUnloadStatus(document.visibilityState === 'hidden' ? PageStatus.EXITED_HIDDEN : PageStatus.NOT_EXITED)
+    setStatus(document.visibilityState === 'hidden' ? PageStatus.HIDDEN : PageStatus.VISIBLE)
   })
 
   /**
@@ -51,7 +51,7 @@ export function createPageState(): PageState {
    * - a page hide transition (cf: https://bugs.webkit.org/show_bug.cgi?id=188329)
    */
   const { stop: stopUnloadListener } = addEventListener(window, DOM_EVENT.BEFORE_UNLOAD, () => {
-    setUnloadStatus(PageStatus.EXITED_UNLOADING)
+    setStatus(PageStatus.UNLOADING)
   })
 
   return {
