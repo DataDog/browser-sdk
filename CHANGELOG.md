@@ -16,6 +16,10 @@
 
 ---
 
+## v4.23.2
+
+- 🔉[RUMF-1423] Investigation for retry issue - part 2 ([#1793](https://github.com/DataDog/browser-sdk/pull/1793))
+
 ## v4.23.1
 
 - 🔉[RUMF-1423] Add debug log for retry issue ([#1790](https://github.com/DataDog/browser-sdk/pull/1790))

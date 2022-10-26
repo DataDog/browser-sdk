@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-rum",
-  "version": "4.23.1",
+  "version": "4.23.2",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
   "module": "esm/entries/main.js",
@@ -12,11 +12,11 @@
     "build:esm": "rm -rf esm && tsc -p tsconfig.esm.json"
   },
   "dependencies": {
-    "@datadog/browser-core": "4.23.1",
-    "@datadog/browser-rum-core": "4.23.1"
+    "@datadog/browser-core": "4.23.2",
+    "@datadog/browser-rum-core": "4.23.2"
   },
   "peerDependencies": {
-    "@datadog/browser-logs": "4.23.1"
+    "@datadog/browser-logs": "4.23.2"
   },
   "peerDependenciesMeta": {
     "@datadog/browser-logs": {
