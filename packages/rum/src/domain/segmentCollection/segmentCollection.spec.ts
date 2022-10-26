@@ -106,10 +106,16 @@ describe('startSegmentCollection', () => {
       expect(sendSpy).not.toHaveBeenCalled()
     })
 
-    it('flushes segment on page exit', () => {
+    it('flushes segment on page unload', () => {
       const { lifeCycle, sendCurrentSegment } = startSegmentCollection(CONTEXT)
       lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { isUnloading: true })
       expect(sendCurrentSegment().creation_reason).toBe('before_unload')
+    })
+
+    it('flushes segment on page gets hidden', () => {
+      const { lifeCycle, sendCurrentSegment } = startSegmentCollection(CONTEXT)
+      lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { isUnloading: false })
+      expect(sendCurrentSegment().creation_reason).toBe('visibility_hidden')
     })
 
     it('flushes segment on view change', () => {
