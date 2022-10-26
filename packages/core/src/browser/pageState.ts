@@ -22,7 +22,7 @@ export function createPageState(): PageState {
   const onExitObservable = new Observable<PageExitEvent>()
 
   function setStatus(newStatus: PageStatus) {
-    if (currentStatus === PageStatus.UNLOADING || currentStatus === newStatus) {
+    if (currentStatus === PageStatus.UNLOADING && newStatus !== PageStatus.UNLOADING) {
       return
     }
 

@@ -26,9 +26,14 @@ describe('createPageState', () => {
     expect(onExitSpy).toHaveBeenCalledOnceWith({ isUnloading: false })
   })
 
-  it('calls onExit listeners only once when the page it unloading', () => {
+  it('calls onExit listeners every time the page is unloading', () => {
+    window.dispatchEvent(new Event('beforeunload'))
     window.dispatchEvent(new Event('beforeunload'))
 
+    expect(onExitSpy).toHaveBeenCalledTimes(2)
+  })
+
+  it('does not call onExit listeners when the visibility changes after the page is unloading', () => {
     window.dispatchEvent(new Event('beforeunload'))
     emulatePageVisibilityChange('hidden')
     emulatePageVisibilityChange('visible')
