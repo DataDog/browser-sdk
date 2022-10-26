@@ -1,5 +1,6 @@
 import type { EndpointBuilder } from '../domain/configuration'
 import { addTelemetryError } from '../domain/telemetry'
+import type { Context } from '../tools/context'
 import { monitor } from '../tools/monitor'
 import type { RawError } from '../tools/error'
 import { newRetryState, sendWithRetryStrategy } from './sendWithRetryStrategy'
@@ -15,8 +16,9 @@ import { newRetryState, sendWithRetryStrategy } from './sendWithRetryStrategy'
 
 export type HttpRequest = ReturnType<typeof createHttpRequest>
 
-export interface HttpResponse {
+export interface HttpResponse extends Context {
   status: number
+  api?: string
 }
 
 export interface Payload {
@@ -84,7 +86,7 @@ export function fetchKeepAliveStrategy(
   const canUseKeepAlive = isKeepAliveSupported() && bytesCount < bytesLimit
   if (canUseKeepAlive) {
     fetch(url, { method: 'POST', body: data, keepalive: true }).then(
-      monitor((response: Response) => onResponse?.({ status: response.status })),
+      monitor((response: Response) => onResponse?.({ status: response.status, api: 'fetch' })),
       monitor(() => {
         // failed to queue the request
         sendXHR(url, data, onResponse)
@@ -111,7 +113,7 @@ function sendXHR(url: string, data: Payload['data'], onResponse?: (r: HttpRespon
   request.addEventListener(
     'loadend',
     monitor(() => {
-      onResponse?.({ status: request.status })
+      onResponse?.({ status: request.status, api: 'xhr' })
     })
   )
 }

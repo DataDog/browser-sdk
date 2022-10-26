@@ -79,6 +79,10 @@ function scheduleRetry(
               bytes_count: state.queuedPayloads.bytesCount,
             },
             transport_status: state.transportStatus,
+            bandwidth: {
+              ongoing_request_count: state.bandwidthMonitor.ongoingRequestCount,
+              ongoing_byte_count: state.bandwidthMonitor.ongoingByteCount,
+            },
           },
         })
       }
@@ -105,7 +109,16 @@ function send(
   { onSuccess, onFailure }: { onSuccess: () => void; onFailure: () => void }
 ) {
   state.bandwidthMonitor.add(payload)
+  const receivedResponses: HttpResponse[] = []
   sendStrategy(payload, (response) => {
+    receivedResponses.push(response)
+    if (receivedResponses.length > 1) {
+      addTelemetryDebug('response already received', {
+        debug: {
+          responses: receivedResponses,
+        },
+      })
+    }
     state.bandwidthMonitor.remove(payload)
     if (!shouldRetryRequest(response)) {
       state.transportStatus = TransportStatus.UP
