@@ -2,7 +2,7 @@ import { display } from '../tools/display'
 import type { Context } from '../tools/context'
 import { jsonStringify, objectValues } from '../tools/utils'
 import { monitor } from '../tools/monitor'
-import type { PageExitState } from '../tools/pageExitState'
+import type { PageState } from '../browser/pageState'
 import type { HttpRequest } from './httpRequest'
 
 // https://en.wikipedia.org/wiki/UTF-8
@@ -21,9 +21,9 @@ export class Batch {
     private batchBytesLimit: number,
     private messageBytesLimit: number,
     private flushTimeout: number,
-    pageExitState: PageExitState
+    pageState: PageState
   ) {
-    pageExitState.onPageExit(() => this.flush(this.request.sendOnExit))
+    pageState.onExit(() => this.flush(this.request.sendOnExit))
     this.flushPeriodically()
   }
 

@@ -1,4 +1,4 @@
-import type { Context, PageExitState, RawError } from '@datadog/browser-core'
+import type { Context, PageState, RawError } from '@datadog/browser-core'
 import { startBatchWithReplica } from '@datadog/browser-core'
 import type { LogsConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
@@ -9,13 +9,13 @@ export function startLogsBatch(
   configuration: LogsConfiguration,
   lifeCycle: LifeCycle,
   reportError: (error: RawError) => void,
-  pageExitState: PageExitState
+  pageState: PageState
 ) {
   const batch = startBatchWithReplica(
     configuration,
     configuration.logsEndpointBuilder,
     reportError,
-    pageExitState,
+    pageState,
     configuration.replica?.logsEndpointBuilder
   )
 

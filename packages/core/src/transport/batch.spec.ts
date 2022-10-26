@@ -1,7 +1,7 @@
 import sinon from 'sinon'
 import { Observable } from '../tools/observable'
-import type { PageExitEvent, PageExitState } from '../tools/pageExitState'
-import { createPageExitState } from '../tools/pageExitState'
+import type { PageExitEvent, PageState } from '../browser/pageState'
+import { createPageState } from '../browser/pageState'
 import { noop } from '../tools/utils'
 import { Batch } from './batch'
 import type { HttpRequest } from './httpRequest'
@@ -14,14 +14,14 @@ describe('batch', () => {
   let batch: Batch
   let transport: HttpRequest
   let sendSpy: jasmine.Spy<HttpRequest['send']>
-  let onPageExitObservable: Observable<PageExitEvent>
+  let onExitObservable: Observable<PageExitEvent>
 
   beforeEach(() => {
     transport = { send: noop } as unknown as HttpRequest
     sendSpy = spyOn(transport, 'send')
-    onPageExitObservable = new Observable()
-    const pageExitState: PageExitState = {
-      onPageExit: (listener) => onPageExitObservable.subscribe(listener),
+    onExitObservable = new Observable()
+    const pageExitState: PageState = {
+      onExit: (listener) => onExitObservable.subscribe(listener),
       stop: noop,
     }
     batch = new Batch(
@@ -114,14 +114,7 @@ describe('batch', () => {
 
   it('should flush after timeout', () => {
     const clock = sinon.useFakeTimers()
-    batch = new Batch(
-      transport,
-      BATCH_MESSAGES_LIMIT,
-      BATCH_BYTES_LIMIT,
-      MESSAGE_BYTES_LIMIT,
-      10,
-      createPageExitState()
-    )
+    batch = new Batch(transport, BATCH_MESSAGES_LIMIT, BATCH_BYTES_LIMIT, MESSAGE_BYTES_LIMIT, 10, createPageState())
     batch.add({ message: '50 bytes - xxxxxxxxxxxxxxxxxxxxxxxxx' })
     clock.tick(100)
 
@@ -132,13 +125,13 @@ describe('batch', () => {
 
   it('should flush on page exit', () => {
     batch.add({ message: '1' })
-    onPageExitObservable.notify({ isUnloading: true })
+    onExitObservable.notify({ isUnloading: true })
     expect(sendSpy).toHaveBeenCalledTimes(1)
   })
 
   it('should not send a message with a bytes size above the limit', () => {
     const warnStub = sinon.stub(console, 'warn')
-    batch = new Batch(transport, BATCH_MESSAGES_LIMIT, BATCH_BYTES_LIMIT, 50, FLUSH_TIMEOUT, createPageExitState())
+    batch = new Batch(transport, BATCH_MESSAGES_LIMIT, BATCH_BYTES_LIMIT, 50, FLUSH_TIMEOUT, createPageState())
     batch.add({ message: '50 bytes - xxxxxxxxxxxxx' })
 
     expect(sendSpy).not.toHaveBeenCalled()
@@ -190,7 +183,7 @@ describe('batch', () => {
       BATCH_BYTES_LIMIT,
       MESSAGE_BYTES_LIMIT,
       FLUSH_TIMEOUT,
-      createPageExitState()
+      createPageState()
     )
     const addTelemetryDebugFake = () => batch.add({ message: 'telemetry message' })
 

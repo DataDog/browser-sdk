@@ -1,11 +1,4 @@
-import type {
-  Context,
-  EndpointBuilder,
-  TelemetryEvent,
-  Observable,
-  RawError,
-  PageExitState,
-} from '@datadog/browser-core'
+import type { Context, EndpointBuilder, TelemetryEvent, Observable, RawError, PageState } from '@datadog/browser-core'
 import { Batch, combine, createHttpRequest, isTelemetryReplicationAllowed } from '@datadog/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
@@ -18,9 +11,9 @@ export function startRumBatch(
   lifeCycle: LifeCycle,
   telemetryEventObservable: Observable<TelemetryEvent & Context>,
   reportError: (error: RawError) => void,
-  pageExitState: PageExitState
+  pageState: PageState
 ) {
-  const batch = makeRumBatch(configuration, reportError, pageExitState)
+  const batch = makeRumBatch(configuration, reportError, pageState)
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent: RumEvent & Context) => {
     if (serverRumEvent.type === RumEventType.VIEW) {
@@ -41,7 +34,7 @@ interface RumBatch {
 function makeRumBatch(
   configuration: RumConfiguration,
   reportError: (error: RawError) => void,
-  pageExitState: PageExitState
+  pageState: PageState
 ): RumBatch {
   const primaryBatch = createRumBatch(configuration.rumEndpointBuilder)
 
@@ -58,7 +51,7 @@ function makeRumBatch(
       configuration.batchBytesLimit,
       configuration.messageBytesLimit,
       configuration.flushTimeout,
-      pageExitState
+      pageState
     )
   }
 
