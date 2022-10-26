@@ -149,9 +149,15 @@ describe('replace relative urls by absolute ones', () => {
       expect(switchToAbsoluteUrl(cssText, cssHref)).toEqual(cssText)
     })
     it('should not replace url if data uri', () => {
-      const cssText = '{ font-family: FontAwesome; src: url(data://static/assets/fonts/fontawesome-webfont.eot); }'
+      const cssText =
+        '{ font-family: FontAwesome; src: url(data:image/png;base64,iVBORNSUhEUgAAVR42mP8z/C/HgwJ/lK3Q6wAkJggg==); }'
 
       expect(switchToAbsoluteUrl(cssText, cssHref)).toEqual(cssText)
+    })
+    it('should not replace url if error is thrown when building absolute url', () => {
+      const cssText =
+        '{ font-family: FontAwesome; src: url(https://site.web/app-name/static/assets/fonts/fontawesome-webfont.eot); }'
+      expect(switchToAbsoluteUrl(cssText, 'hello-world')).toEqual(cssText)
     })
   })
 })
