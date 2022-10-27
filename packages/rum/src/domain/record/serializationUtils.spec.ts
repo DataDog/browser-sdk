@@ -102,42 +102,56 @@ describe('getElementInputValue', () => {
   })
 })
 
-describe('replace relative urls by absolute ones', () => {
+describe('Build stylesheet absolute url', () => {
   const cssHref = 'https://site.web/app-name/static/assets/resource.min.css'
   const resolvedPath = 'https://site.web/app-name/static/assets/fonts/fontawesome-webfont.eot'
 
-  describe('replace relative url by absolute one', () => {
-    it('should replace url when wrapped with signle quote', () => {
+  describe('convert relative path to absolute', () => {
+    it('should replace url when wrapped in single quote', () => {
       const cssText = "{ font-family: FontAwesome; src: url('./fonts/fontawesome-webfont.eot'); }"
       expect(switchToAbsoluteUrl(cssText, cssHref)).toEqual(
         `{ font-family: FontAwesome; src: url('${resolvedPath}'); }`
       )
     })
-    it('should replace url when wrapped with double quote', () => {
+    it('should replace url when wrapped in double quote', () => {
       const cssText = '{ font-family: FontAwesome; src: url("./fonts/fontawesome-webfont.eot"); }'
       expect(switchToAbsoluteUrl(cssText, cssHref)).toEqual(
         `{ font-family: FontAwesome; src: url("${resolvedPath}"); }`
       )
     })
-    it('should replace url when not wrapped by a double quote', () => {
+    it('should replace url when not in any quote', () => {
       const cssText = '{ font-family: FontAwesome; src: url(./fonts/fontawesome-webfont.eot); }'
 
       expect(switchToAbsoluteUrl(cssText, cssHref)).toEqual(`{ font-family: FontAwesome; src: url(${resolvedPath}); }`)
     })
-
-    it('should replace url when not wrapped by a double quote', () => {
+    it('should replace url when path is relative', () => {
       const cssText = '{ font-family: FontAwesome; src: url(fonts/fontawesome-webfont.eot); }'
 
       expect(switchToAbsoluteUrl(cssText, cssHref)).toEqual(`{ font-family: FontAwesome; src: url(${resolvedPath}); }`)
     })
+    it('should replace url when path is at parent level', () => {
+      const cssText = "{ font-family: FontAwesome; src: url('../fonts/fontawesome-webfont.eot'); }"
+
+      expect(switchToAbsoluteUrl(cssText, cssHref)).toEqual(
+        "{ font-family: FontAwesome; src: url('https://site.web/app-name/static/fonts/fontawesome-webfont.eot'); }"
+      )
+    })
+    it('should replace multiple urls at the same time', () => {
+      const cssText =
+        '{ background-image: url(../images/pic.png); src: url("fonts/fantasticfont.woff"); content: url("./icons/icon.jpg");}'
+      expect(switchToAbsoluteUrl(cssText, cssHref)).toEqual(
+        '{ background-image: url(https://site.web/app-name/static/images/pic.png); src: url("https://site.web/app-name/static/assets/fonts/fantasticfont.woff"); content: url("https://site.web/app-name/static/assets/icons/icon.jpg");}'
+      )
+    })
   })
-  describe('do not replace url in css text', () => {
+
+  describe('keep urls in css text unchanged', () => {
     it('should not replace url if baseUrl is null', () => {
       const cssText = '{ font-family: FontAwesome; src: url(./fonts/fontawesome-webfont.eot); }'
 
       expect(switchToAbsoluteUrl(cssText, null)).toEqual(cssText)
     })
-    it('should not replace url if path is empty', () => {
+    it('should not replace url if it is empty', () => {
       const cssText = '{ font-family: FontAwesome; src: url(); }'
 
       expect(switchToAbsoluteUrl(cssText, cssHref)).toEqual(cssText)
@@ -148,9 +162,21 @@ describe('replace relative urls by absolute ones', () => {
 
       expect(switchToAbsoluteUrl(cssText, cssHref)).toEqual(cssText)
     })
-    it('should not replace url if data uri', () => {
+    it('should not replace url if it starts with //', () => {
+      const cssText =
+        '{ font-family: FontAwesome; src: url(//site.web/app-name/static/assets/fonts/fontawesome-webfont.eot); }'
+
+      expect(switchToAbsoluteUrl(cssText, cssHref)).toEqual(cssText)
+    })
+    it('should not replace url if data uri: lower case', () => {
       const cssText =
         '{ font-family: FontAwesome; src: url(data:image/png;base64,iVBORNSUhEUgAAVR42mP8z/C/HgwJ/lK3Q6wAkJggg==); }'
+
+      expect(switchToAbsoluteUrl(cssText, cssHref)).toEqual(cssText)
+    })
+    it('should not replace url if data uri: not lower case', () => {
+      const cssText =
+        '{ font-family: FontAwesome; src: url(DaTa:image/png;base64,iVBORNSUhEUgAAVR42mP8z/C/HgwJ/lK3Q6wAkJggg==); }'
 
       expect(switchToAbsoluteUrl(cssText, cssHref)).toEqual(cssText)
     })

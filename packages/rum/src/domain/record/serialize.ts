@@ -321,7 +321,12 @@ function getValidTagName(tagName: string): string {
 function getCssRulesString(s: CSSStyleSheet): string | null {
   try {
     const rules = s.rules || s.cssRules
-    return rules ? switchToAbsoluteUrl(Array.from(rules, getCssRuleString).join(''), s.href) : null
+    if (rules) {
+      const styleSheetCssText = Array.from(rules, getCssRuleString).join('')
+      return switchToAbsoluteUrl(styleSheetCssText, s.href)
+    }
+
+    return null
   } catch (error) {
     return null
   }

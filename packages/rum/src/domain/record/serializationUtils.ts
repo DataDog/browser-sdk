@@ -79,28 +79,28 @@ export function switchToAbsoluteUrl(cssText: string, cssHref: string | null): st
   return cssText.replace(
     URL_IN_CSS_REF,
     (
-      matched: string,
+      matchingSubstring: string,
       singleQuote: string | undefined,
-      firstPathMatched: string | undefined,
+      urlWrappedInSingleQuotes: string | undefined,
       doubleQuote: string | undefined,
-      secondPathMatched: string | undefined,
-      thirdPathMatched: string | undefined
+      urlWrappedInDoubleQuotes: string | undefined,
+      urlNotWrappedInQuotes: string | undefined
     ) => {
-      const path = firstPathMatched || secondPathMatched || thirdPathMatched
+      const url = urlWrappedInSingleQuotes || urlWrappedInDoubleQuotes || urlNotWrappedInQuotes
 
-      if (!cssHref || !path || ABSOLUTE_URL.test(path) || DATA_URI.test(path)) {
-        return matched
+      if (!cssHref || !url || ABSOLUTE_URL.test(url) || DATA_URI.test(url)) {
+        return matchingSubstring
       }
 
       const quote = singleQuote || doubleQuote || ''
-      return `url(${quote}${makeUrlAbsolute(path, cssHref)}${quote})`
+      return `url(${quote}${makeUrlAbsolute(url, cssHref)}${quote})`
     }
   )
 }
 
 export function makeUrlAbsolute(url: string, baseUrl: string): string {
   try {
-    return buildUrl(url.trim(), baseUrl).href
+    return buildUrl(url, baseUrl).href
   } catch (_) {
     return url
   }
