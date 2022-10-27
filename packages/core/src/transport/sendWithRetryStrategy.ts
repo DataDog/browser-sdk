@@ -1,4 +1,3 @@
-import { addTelemetryDebug } from '../domain/telemetry'
 import type { EndpointType } from '../domain/configuration'
 import { monitor } from '../tools/monitor'
 import type { RawError } from '../tools/error'
@@ -70,22 +69,6 @@ function scheduleRetry(
   setTimeout(
     monitor(() => {
       const payload = state.queuedPayloads.first()
-      if (!payload) {
-        addTelemetryDebug('no payload to retry', {
-          debug: {
-            queue: {
-              size: state.queuedPayloads.size(),
-              is_full: state.queuedPayloads.isFull(),
-              bytes_count: state.queuedPayloads.bytesCount,
-            },
-            transport_status: state.transportStatus,
-            bandwidth: {
-              ongoing_request_count: state.bandwidthMonitor.ongoingRequestCount,
-              ongoing_byte_count: state.bandwidthMonitor.ongoingByteCount,
-            },
-          },
-        })
-      }
       send(payload, state, sendStrategy, {
         onSuccess: () => {
           state.queuedPayloads.dequeue()
@@ -109,16 +92,7 @@ function send(
   { onSuccess, onFailure }: { onSuccess: () => void; onFailure: () => void }
 ) {
   state.bandwidthMonitor.add(payload)
-  const receivedResponses: HttpResponse[] = []
   sendStrategy(payload, (response) => {
-    receivedResponses.push(response)
-    if (receivedResponses.length > 1) {
-      addTelemetryDebug('response already received', {
-        debug: {
-          responses: receivedResponses,
-        },
-      })
-    }
     state.bandwidthMonitor.remove(payload)
     if (!shouldRetryRequest(response)) {
       state.transportStatus = TransportStatus.UP

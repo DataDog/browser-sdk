@@ -3,7 +3,7 @@ import type { Request } from '../../test/specHelper'
 import type { EndpointBuilder } from '../domain/configuration'
 import { createEndpointBuilder } from '../domain/configuration'
 import { noop } from '../tools/utils'
-import { createHttpRequest, fetchKeepAliveStrategy } from './httpRequest'
+import { createHttpRequest, fetchKeepAliveStrategy, sendXHR } from './httpRequest'
 import type { HttpRequest } from './httpRequest'
 import { INITIAL_BACKOFF_TIME } from './sendWithRetryStrategy'
 
@@ -112,7 +112,7 @@ describe('httpRequest', () => {
         BATCH_BYTES_LIMIT,
         { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 },
         (response) => {
-          expect(response).toEqual({ status: 429, api: 'fetch' })
+          expect(response).toEqual({ status: 429 })
           done()
         }
       )
@@ -135,7 +135,7 @@ describe('httpRequest', () => {
         BATCH_BYTES_LIMIT,
         { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 },
         (response) => {
-          expect(response).toEqual({ status: 429, api: 'xhr' })
+          expect(response).toEqual({ status: 429 })
           done()
         }
       )
@@ -153,10 +153,39 @@ describe('httpRequest', () => {
         BATCH_BYTES_LIMIT,
         { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: BATCH_BYTES_LIMIT },
         (response) => {
-          expect(response).toEqual({ status: 429, api: 'xhr' })
+          expect(response).toEqual({ status: 429 })
           done()
         }
       )
+    })
+  })
+
+  describe('sendXhr', () => {
+    it('should prevent third party to trigger callback multiple times', (done) => {
+      const onResponseSpy = jasmine.createSpy('xhrOnResponse')
+      let count = 0
+
+      interceptor.withStubXhr((xhr) => {
+        count++
+        setTimeout(() => {
+          xhr.complete(count === 1 ? 200 : 202)
+          if (count === 1) {
+            // reuse the xhr instance to send another request
+            xhr.open('POST', 'foo')
+            xhr.send()
+          }
+        })
+      })
+
+      sendXHR('foo', '', onResponseSpy)
+
+      setTimeout(() => {
+        expect(onResponseSpy).toHaveBeenCalledTimes(1)
+        expect(onResponseSpy).toHaveBeenCalledWith({
+          status: 200,
+        })
+        done()
+      }, 100)
     })
   })
 
