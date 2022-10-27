@@ -102,34 +102,34 @@ describe('getElementInputValue', () => {
   })
 })
 
-describe('Build stylesheet absolute url', () => {
+describe('switchToAbsoluteUrl', () => {
   const cssHref = 'https://site.web/app-name/static/assets/resource.min.css'
-  const resolvedPath = 'https://site.web/app-name/static/assets/fonts/fontawesome-webfont.eot'
+  const resolvedUrl = 'https://site.web/app-name/static/assets/fonts/fontawesome-webfont.eot'
 
-  describe('convert relative path to absolute', () => {
+  describe('convert relative url to absolute', () => {
     it('should replace url when wrapped in single quote', () => {
       const cssText = "{ font-family: FontAwesome; src: url('./fonts/fontawesome-webfont.eot'); }"
       expect(switchToAbsoluteUrl(cssText, cssHref)).toEqual(
-        `{ font-family: FontAwesome; src: url('${resolvedPath}'); }`
+        `{ font-family: FontAwesome; src: url('${resolvedUrl}'); }`
       )
     })
     it('should replace url when wrapped in double quote', () => {
       const cssText = '{ font-family: FontAwesome; src: url("./fonts/fontawesome-webfont.eot"); }'
       expect(switchToAbsoluteUrl(cssText, cssHref)).toEqual(
-        `{ font-family: FontAwesome; src: url("${resolvedPath}"); }`
+        `{ font-family: FontAwesome; src: url("${resolvedUrl}"); }`
       )
     })
     it('should replace url when not in any quote', () => {
       const cssText = '{ font-family: FontAwesome; src: url(./fonts/fontawesome-webfont.eot); }'
 
-      expect(switchToAbsoluteUrl(cssText, cssHref)).toEqual(`{ font-family: FontAwesome; src: url(${resolvedPath}); }`)
+      expect(switchToAbsoluteUrl(cssText, cssHref)).toEqual(`{ font-family: FontAwesome; src: url(${resolvedUrl}); }`)
     })
-    it('should replace url when path is relative', () => {
+    it('should replace url when url is relative', () => {
       const cssText = '{ font-family: FontAwesome; src: url(fonts/fontawesome-webfont.eot); }'
 
-      expect(switchToAbsoluteUrl(cssText, cssHref)).toEqual(`{ font-family: FontAwesome; src: url(${resolvedPath}); }`)
+      expect(switchToAbsoluteUrl(cssText, cssHref)).toEqual(`{ font-family: FontAwesome; src: url(${resolvedUrl}); }`)
     })
-    it('should replace url when path is at parent level', () => {
+    it('should replace url when url is at parent level', () => {
       const cssText = "{ font-family: FontAwesome; src: url('../fonts/fontawesome-webfont.eot'); }"
 
       expect(switchToAbsoluteUrl(cssText, cssHref)).toEqual(
