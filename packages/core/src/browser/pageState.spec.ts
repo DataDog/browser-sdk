@@ -1,4 +1,4 @@
-import { setPageVisibility } from '../../test/specHelper'
+import { restorePageVisibility, setPageVisibility } from '../../test/specHelper'
 import type { PageExitEvent, PageState } from './pageState'
 import { createPageState } from './pageState'
 
@@ -14,6 +14,7 @@ describe('createPageState', () => {
 
   afterEach(() => {
     pageState.stop()
+    restorePageVisibility()
   })
 
   it('calls onExit listeners when the page is unloading', () => {
