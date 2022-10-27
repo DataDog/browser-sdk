@@ -18,7 +18,6 @@ export type HttpRequest = ReturnType<typeof createHttpRequest>
 
 export interface HttpResponse extends Context {
   status: number
-  api?: string
 }
 
 export interface Payload {
@@ -86,7 +85,7 @@ export function fetchKeepAliveStrategy(
   const canUseKeepAlive = isKeepAliveSupported() && bytesCount < bytesLimit
   if (canUseKeepAlive) {
     fetch(url, { method: 'POST', body: data, keepalive: true }).then(
-      monitor((response: Response) => onResponse?.({ status: response.status, api: 'fetch' })),
+      monitor((response: Response) => onResponse?.({ status: response.status })),
       monitor(() => {
         // failed to queue the request
         sendXHR(url, data, onResponse)
@@ -113,7 +112,7 @@ function sendXHR(url: string, data: Payload['data'], onResponse?: (r: HttpRespon
   request.addEventListener(
     'loadend',
     monitor(() => {
-      onResponse?.({ status: request.status, api: 'xhr' })
+      onResponse?.({ status: request.status })
     })
   )
 }
