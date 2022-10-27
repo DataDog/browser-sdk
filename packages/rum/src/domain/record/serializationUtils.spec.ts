@@ -109,15 +109,11 @@ describe('switchToAbsoluteUrl', () => {
   describe('convert relative url to absolute', () => {
     it('should replace url when wrapped in single quote', () => {
       const cssText = "{ font-family: FontAwesome; src: url('./fonts/fontawesome-webfont.eot'); }"
-      expect(switchToAbsoluteUrl(cssText, cssHref)).toEqual(
-        `{ font-family: FontAwesome; src: url('${resolvedUrl}'); }`
-      )
+      expect(switchToAbsoluteUrl(cssText, cssHref)).toEqual(`{ font-family: FontAwesome; src: url('${resolvedUrl}'); }`)
     })
     it('should replace url when wrapped in double quote', () => {
       const cssText = '{ font-family: FontAwesome; src: url("./fonts/fontawesome-webfont.eot"); }'
-      expect(switchToAbsoluteUrl(cssText, cssHref)).toEqual(
-        `{ font-family: FontAwesome; src: url("${resolvedUrl}"); }`
-      )
+      expect(switchToAbsoluteUrl(cssText, cssHref)).toEqual(`{ font-family: FontAwesome; src: url("${resolvedUrl}"); }`)
     })
     it('should replace url when not in any quote', () => {
       const cssText = '{ font-family: FontAwesome; src: url(./fonts/fontawesome-webfont.eot); }'
