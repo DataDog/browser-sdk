@@ -8,6 +8,8 @@ import {
   combine,
   createEventRateLimiter,
   getRelativeTime,
+  isEmptyObject,
+  shallowClone,
 } from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { LogsConfiguration } from './configuration'
@@ -51,6 +53,10 @@ export function startLogsAssembly(
         logger.getContext(),
         messageContext
       )
+
+      if (!isEmptyObject(commonContext.user)) {
+        log.usr = shallowClone(commonContext.user)
+      }
 
       if (
         // Todo: [RUMF-1230] Move this check to the logger collection in the next major release

@@ -1,4 +1,4 @@
-import type { Context, RawError, EventRateLimiter } from '@datadog/browser-core'
+import type { Context, RawError, EventRateLimiter, User } from '@datadog/browser-core'
 import {
   combine,
   isEmptyObject,
@@ -17,7 +17,6 @@ import type {
   RawRumLongTaskEvent,
   RawRumResourceEvent,
   RumContext,
-  User,
 } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'

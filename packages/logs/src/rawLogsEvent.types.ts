@@ -1,4 +1,4 @@
-import type { Context, ErrorSource, TimeStamp } from '@datadog/browser-core'
+import type { Context, ErrorSource, TimeStamp, User } from '@datadog/browser-core'
 import type { StatusType } from './domain/logger'
 
 export type RawLogsEvent =
@@ -65,4 +65,5 @@ export interface CommonContext {
     url: string
   }
   context: Context
+  user: User
 }

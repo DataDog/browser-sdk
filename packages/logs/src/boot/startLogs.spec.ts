@@ -33,6 +33,7 @@ const DEFAULT_MESSAGE = { status: StatusType.info, message: 'message' }
 const COMMON_CONTEXT = {
   view: { referrer: 'common_referrer', url: 'common_url' },
   context: {},
+  user: {},
 }
 
 describe('logs', () => {
