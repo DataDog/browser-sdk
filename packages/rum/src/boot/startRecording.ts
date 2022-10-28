@@ -12,7 +12,6 @@ import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { record } from '../domain/record'
 import type { DeflateWorker } from '../domain/segmentCollection'
 import { startSegmentCollection, SEGMENT_BYTES_LIMIT } from '../domain/segmentCollection'
-import { send } from '../transport/send'
 import { RecordType } from '../types'
 
 export function startRecording(
@@ -35,7 +34,7 @@ export function startRecording(
     configuration.applicationId,
     sessionManager,
     viewContexts,
-    (data, metadata, rawSegmentBytesCount) => send(replayRequest, data, metadata, rawSegmentBytesCount),
+    replayRequest,
     worker
   )
 

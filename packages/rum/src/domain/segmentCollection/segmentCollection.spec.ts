@@ -1,11 +1,11 @@
-import type { TimeStamp } from '@datadog/browser-core'
+import type { HttpRequest, TimeStamp } from '@datadog/browser-core'
 import { PageExitReason, isIE } from '@datadog/browser-core'
 import type { ViewContexts, ViewContext } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test/specHelper'
 import { mockClock, restorePageVisibility } from '@datadog/browser-core/test/specHelper'
 import { createRumSessionManagerMock } from '../../../../rum-core/test/mockRumSessionManager'
-import type { BrowserRecord, BrowserSegmentMetadata, SegmentContext } from '../../types'
+import type { BrowserRecord, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
 import { MockWorker } from '../../../test/utils'
 import {
@@ -32,7 +32,10 @@ describe('startSegmentCollection', () => {
   let clock: Clock
   let lifeCycle: LifeCycle
   let worker: MockWorker
-  let sendSpy: jasmine.Spy<(data: Uint8Array, metadata: BrowserSegmentMetadata) => void>
+  let httpRequestSpy: {
+    sendOnExit: jasmine.Spy<HttpRequest['sendOnExit']>
+    send: jasmine.Spy<HttpRequest['send']>
+  }
   let addRecord: (record: BrowserRecord) => void
   let context: SegmentContext | undefined
 
@@ -48,8 +51,14 @@ describe('startSegmentCollection', () => {
     lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.UNLOADING })
   }
 
-  function getSentMetadata() {
-    return sendSpy.calls.mostRecent().args[1]
+  function getSentFormData(spy: jasmine.Spy<HttpRequest['send']>) {
+    const payload = spy.calls.mostRecent().args[0]
+
+    if (!(payload.data instanceof FormData)) {
+      throw new Error('SegmentCollection unexpectedly sent a payload without FormData')
+    }
+
+    return payload.data
   }
 
   beforeEach(() => {
@@ -58,9 +67,17 @@ describe('startSegmentCollection', () => {
     }
     lifeCycle = new LifeCycle()
     worker = new MockWorker()
-    sendSpy = jasmine.createSpy<(data: Uint8Array, metadata: BrowserSegmentMetadata) => void>()
+    httpRequestSpy = {
+      sendOnExit: jasmine.createSpy(),
+      send: jasmine.createSpy(),
+    }
     context = CONTEXT
-    ;({ stop: stopSegmentCollection, addRecord } = doStartSegmentCollection(lifeCycle, () => context, sendSpy, worker))
+    ;({ stop: stopSegmentCollection, addRecord } = doStartSegmentCollection(
+      lifeCycle,
+      () => context,
+      httpRequestSpy,
+      worker
+    ))
   })
 
   afterEach(() => {
@@ -74,18 +91,19 @@ describe('startSegmentCollection', () => {
       addRecord(RECORD)
       expect(worker.pendingData).toBe('{"records":[{"type":7,"timestamp":10}')
       worker.processAllMessages()
-      expect(sendSpy).not.toHaveBeenCalled()
+      expect(httpRequestSpy.send).not.toHaveBeenCalled()
+      expect(httpRequestSpy.sendOnExit).not.toHaveBeenCalled()
     })
 
     it('creation reason should reflect that it is the initial segment', () => {
       addRecordAndFlushSegment()
-      expect(getSentMetadata().creation_reason).toBe('init')
+      expect(getSentFormData(httpRequestSpy.sendOnExit).get('creation_reason')).toBe('init')
     })
   })
 
   it('sends a segment', () => {
     addRecordAndFlushSegment()
-    expect(sendSpy).toHaveBeenCalledTimes(1)
+    expect(httpRequestSpy.sendOnExit).toHaveBeenCalledTimes(1)
   })
 
   it("ignores calls to addRecord if context can't be get", () => {
@@ -94,7 +112,8 @@ describe('startSegmentCollection', () => {
     emulatePageUnload()
     expect(worker.pendingData).toBe('')
     worker.processAllMessages()
-    expect(sendSpy).not.toHaveBeenCalled()
+    expect(httpRequestSpy.send).not.toHaveBeenCalled()
+    expect(httpRequestSpy.sendOnExit).not.toHaveBeenCalled()
   })
 
   describe('segment flush strategy', () => {
@@ -105,14 +124,15 @@ describe('startSegmentCollection', () => {
     it('does not flush empty segments', () => {
       emulatePageUnload()
       worker.processAllMessages()
-      expect(sendSpy).not.toHaveBeenCalled()
+      expect(httpRequestSpy.send).not.toHaveBeenCalled()
+      expect(httpRequestSpy.sendOnExit).not.toHaveBeenCalled()
     })
 
     describe('flush when the page exits because it is unloading', () => {
       it('next segment is created because of beforeunload event', () => {
         addRecordAndFlushSegment(emulatePageUnload)
         addRecordAndFlushSegment()
-        expect(getSentMetadata().creation_reason).toBe('before_unload')
+        expect(getSentFormData(httpRequestSpy.sendOnExit).get('creation_reason')).toBe('before_unload')
       })
     })
 
@@ -124,7 +144,7 @@ describe('startSegmentCollection', () => {
       it('next segment is created because of visibility hidden event', () => {
         addRecordAndFlushSegment(emulatePageHidden)
         addRecordAndFlushSegment()
-        expect(getSentMetadata().creation_reason).toBe('visibility_hidden')
+        expect(getSentFormData(httpRequestSpy.sendOnExit).get('creation_reason')).toBe('visibility_hidden')
       })
     })
 
@@ -136,7 +156,7 @@ describe('startSegmentCollection', () => {
       it('next segment is created because of view change', () => {
         addRecordAndFlushSegment(emulateViewChange)
         addRecordAndFlushSegment()
-        expect(getSentMetadata().creation_reason).toBe('view_change')
+        expect(getSentFormData(httpRequestSpy.sendOnExit).get('creation_reason')).toBe('view_change')
       })
     })
 
@@ -147,7 +167,7 @@ describe('startSegmentCollection', () => {
         })
         addRecordAndFlushSegment()
 
-        expect(getSentMetadata().creation_reason).toBe('segment_bytes_limit')
+        expect(getSentFormData(httpRequestSpy.sendOnExit).get('creation_reason')).toBe('segment_bytes_limit')
       })
 
       it('continues to add records to the current segment while the worker is processing messages', () => {
@@ -157,8 +177,8 @@ describe('startSegmentCollection', () => {
         addRecord(RECORD)
         worker.processAllMessages()
 
-        expect(sendSpy).toHaveBeenCalledTimes(1)
-        expect(sendSpy.calls.mostRecent().args[1].records_count).toBe(4)
+        expect(httpRequestSpy.sendOnExit).toHaveBeenCalledTimes(1)
+        expect(getSentFormData(httpRequestSpy.sendOnExit).get('records_count')).toBe('4')
       })
 
       it('does not flush segment prematurely when records from the previous segment are still being processed', () => {
@@ -175,8 +195,8 @@ describe('startSegmentCollection', () => {
 
         worker.processAllMessages()
 
-        expect(sendSpy).toHaveBeenCalledTimes(1)
-        expect(sendSpy.calls.mostRecent().args[1].records_count).toBe(2)
+        expect(httpRequestSpy.sendOnExit).toHaveBeenCalledTimes(1)
+        expect(getSentFormData(httpRequestSpy.sendOnExit).get('records_count')).toBe('2')
       })
     })
 
@@ -187,7 +207,7 @@ describe('startSegmentCollection', () => {
           clock.tick(SEGMENT_DURATION_LIMIT)
         })
         addRecordAndFlushSegment()
-        expect(getSentMetadata().creation_reason).toBe('segment_duration_limit')
+        expect(getSentFormData(httpRequestSpy.sendOnExit).get('creation_reason')).toBe('segment_duration_limit')
       })
 
       it('does not flush a segment after SEGMENT_DURATION_LIMIT if a segment has been created in the meantime', () => {
@@ -199,16 +219,16 @@ describe('startSegmentCollection', () => {
         clock.tick(BEFORE_SEGMENT_DURATION_LIMIT)
 
         worker.processAllMessages()
-        expect(sendSpy).toHaveBeenCalledTimes(1)
+        expect(httpRequestSpy.sendOnExit).toHaveBeenCalledTimes(1)
         addRecordAndFlushSegment()
-        expect(getSentMetadata().creation_reason).not.toBe('segment_duration_limit')
+        expect(getSentFormData(httpRequestSpy.sendOnExit).get('creation_reason')).not.toBe('segment_duration_limit')
       })
     })
 
     describe('flush when stopping segment collection', () => {
       it('flushes a segment when calling stop()', () => {
         addRecordAndFlushSegment(stopSegmentCollection)
-        expect(sendSpy).toHaveBeenCalledTimes(1)
+        expect(httpRequestSpy.sendOnExit).toHaveBeenCalledTimes(1)
       })
     })
   })

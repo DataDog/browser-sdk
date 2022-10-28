@@ -44,6 +44,7 @@ export {
 } from './domain/session/sessionConstants'
 export {
   HttpRequest,
+  Payload,
   createHttpRequest,
   Batch,
   canUseEventBridge,
