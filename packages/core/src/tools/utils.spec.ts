@@ -308,11 +308,33 @@ describe('utils', () => {
       expect(jsonStringify(true)).toEqual('true')
     })
 
-    it('should not crash on serialization error', () => {
-      const circularReference: any = { otherData: 123 }
-      circularReference.myself = circularReference
+    it('should serialize objects with cyclic references', () => {
+      const nested: any = { data: 345 }
+      const circularReference: any = { otherData: 123, nested }
+      nested.parent = circularReference
 
-      expect(jsonStringify(circularReference)).toEqual('<error: unable to serialize object>')
+      expect(jsonStringify(circularReference)).toEqual(
+        '{"otherData":123,"nested":{"data":345,"parent":"<warning: cyclic reference not serialized>"}}'
+      )
+    })
+
+    it('should serialize arrays with cyclic references', () => {
+      const baseArray: any[] = [1]
+      baseArray.push(baseArray)
+
+      expect(jsonStringify(baseArray)).toEqual('[1,"<warning: cyclic reference not serialized>"]')
+    })
+
+    it('should not crash on serialization error', () => {
+      // custom toJSON is only ignored on root object.
+      const sub = {
+        toJSON: () => {
+          throw new Error('')
+        },
+      }
+      const root = { sub }
+
+      expect(jsonStringify(root)).toEqual('<error: unable to serialize object>')
     })
 
     function createSampleClassInstance(value: any = 'value') {

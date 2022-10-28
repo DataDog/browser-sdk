@@ -1,3 +1,4 @@
+import { buildUrl } from '@datadog/browser-core'
 import type { NodePrivacyLevel } from '../../constants'
 import { CENSORED_STRING_MARK } from '../../constants'
 import { shouldMaskNode } from './privacy'
@@ -68,4 +69,39 @@ export function getElementInputValue(element: Element, nodePrivacyLevel: NodePri
   }
 
   return value
+}
+
+export const URL_IN_CSS_REF = /url\((?:(')([^']*)'|(")([^"]*)"|([^)]*))\)/gm
+export const ABSOLUTE_URL = /^[A-Za-z]+:|^\/\//
+export const DATA_URI = /^data:.*,/i
+
+export function switchToAbsoluteUrl(cssText: string, cssHref: string | null): string {
+  return cssText.replace(
+    URL_IN_CSS_REF,
+    (
+      matchingSubstring: string,
+      singleQuote: string | undefined,
+      urlWrappedInSingleQuotes: string | undefined,
+      doubleQuote: string | undefined,
+      urlWrappedInDoubleQuotes: string | undefined,
+      urlNotWrappedInQuotes: string | undefined
+    ) => {
+      const url = urlWrappedInSingleQuotes || urlWrappedInDoubleQuotes || urlNotWrappedInQuotes
+
+      if (!cssHref || !url || ABSOLUTE_URL.test(url) || DATA_URI.test(url)) {
+        return matchingSubstring
+      }
+
+      const quote = singleQuote || doubleQuote || ''
+      return `url(${quote}${makeUrlAbsolute(url, cssHref)}${quote})`
+    }
+  )
+}
+
+export function makeUrlAbsolute(url: string, baseUrl: string): string {
+  try {
+    return buildUrl(url, baseUrl).href
+  } catch (_) {
+    return url
+  }
 }

@@ -2,4 +2,5 @@ bundle
 cjs
 esm
 coverage
+dist
 rum-events-format

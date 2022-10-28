@@ -1,4 +1,3 @@
-import { addTelemetryDebug } from '../domain/telemetry'
 import type { EndpointType } from '../domain/configuration'
 import { monitor } from '../tools/monitor'
 import type { RawError } from '../tools/error'
@@ -70,18 +69,6 @@ function scheduleRetry(
   setTimeout(
     monitor(() => {
       const payload = state.queuedPayloads.first()
-      if (!payload) {
-        addTelemetryDebug('no payload to retry', {
-          debug: {
-            queue: {
-              size: state.queuedPayloads.size(),
-              is_full: state.queuedPayloads.isFull(),
-              bytes_count: state.queuedPayloads.bytesCount,
-            },
-            transport_status: state.transportStatus,
-          },
-        })
-      }
       send(payload, state, sendStrategy, {
         onSuccess: () => {
           state.queuedPayloads.dequeue()

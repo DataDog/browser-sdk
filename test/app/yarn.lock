@@ -2,24 +2,24 @@
 # yarn lockfile v1
 
 
-"@datadog/browser-core@4.23.1", "@datadog/browser-core@file:../../packages/core":
-  version "4.23.1"
+"@datadog/browser-core@4.23.2", "@datadog/browser-core@file:../../packages/core":
+  version "4.23.2"
 
 "@datadog/browser-logs@file:../../packages/logs":
-  version "4.23.1"
+  version "4.23.2"
   dependencies:
-    "@datadog/browser-core" "4.23.1"
+    "@datadog/browser-core" "4.23.2"
 
-"@datadog/browser-rum-core@4.23.1", "@datadog/browser-rum-core@file:../../packages/rum-core":
-  version "4.23.1"
+"@datadog/browser-rum-core@4.23.2", "@datadog/browser-rum-core@file:../../packages/rum-core":
+  version "4.23.2"
   dependencies:
-    "@datadog/browser-core" "4.23.1"
+    "@datadog/browser-core" "4.23.2"
 
 "@datadog/browser-rum@file:../../packages/rum":
-  version "4.23.1"
+  version "4.23.2"
   dependencies:
-    "@datadog/browser-core" "4.23.1"
-    "@datadog/browser-rum-core" "4.23.1"
+    "@datadog/browser-core" "4.23.2"
+    "@datadog/browser-rum-core" "4.23.2"
 
 "@jridgewell/gen-mapping@^0.3.0":
   version "0.3.2"

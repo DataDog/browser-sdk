@@ -1,5 +1,6 @@
 import type { EndpointBuilder } from '../domain/configuration'
 import { addTelemetryError } from '../domain/telemetry'
+import type { Context } from '../tools/context'
 import { monitor } from '../tools/monitor'
 import type { RawError } from '../tools/error'
 import { newRetryState, sendWithRetryStrategy } from './sendWithRetryStrategy'
@@ -15,7 +16,7 @@ import { newRetryState, sendWithRetryStrategy } from './sendWithRetryStrategy'
 
 export type HttpRequest = ReturnType<typeof createHttpRequest>
 
-export interface HttpResponse {
+export interface HttpResponse extends Context {
   status: number
 }
 
@@ -104,14 +105,15 @@ function isKeepAliveSupported() {
   }
 }
 
-function sendXHR(url: string, data: Payload['data'], onResponse?: (r: HttpResponse) => void) {
+export function sendXHR(url: string, data: Payload['data'], onResponse?: (r: HttpResponse) => void) {
   const request = new XMLHttpRequest()
+  const onLoadEnd = monitor(() => {
+    // prevent multiple onResponse callbacks
+    // if the xhr instance is reused by a third party
+    request.removeEventListener('loadend', onLoadEnd)
+    onResponse?.({ status: request.status })
+  })
   request.open('POST', url, true)
+  request.addEventListener('loadend', onLoadEnd)
   request.send(data)
-  request.addEventListener(
-    'loadend',
-    monitor(() => {
-      onResponse?.({ status: request.status })
-    })
-  )
 }
