@@ -67,6 +67,15 @@ describe('observable', () => {
     otherSubscription.unsubscribe()
     expect(onLastUnsubscribe).toHaveBeenCalled()
   })
+
+  it('should return boolean if has subscribers', () => {
+    observable = new Observable()
+    expect(observable.hasSubscribers()).toBe(false)
+    const { unsubscribe } = observable.subscribe(() => ({}))
+    expect(observable.hasSubscribers()).toBe(true)
+    unsubscribe()
+    expect(observable.hasSubscribers()).toBe(false)
+  })
 })
 
 describe('mergeObservables', () => {

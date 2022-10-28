@@ -27,6 +27,7 @@ import { startRumEventBridge } from '../transport/startRumEventBridge'
 import { startUrlContexts } from '../domain/contexts/urlContexts'
 import type { LocationChange } from '../browser/locationChangeObservable'
 import { createLocationChangeObservable } from '../browser/locationChangeObservable'
+import { performanceObserverObservable } from '../browser/performanceObserverObservable'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import { serializeRumConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/rumEventsCollection/view/trackViews'
@@ -82,8 +83,10 @@ export function startRum(
   )
   addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
 
+  const performanceObserver = performanceObserverObservable()
+
   startLongTaskCollection(lifeCycle, session)
-  startResourceCollection(lifeCycle, configuration, session)
+  startResourceCollection(lifeCycle, configuration, session, performanceObserver)
   const { addTiming, startView } = startViewCollection(
     lifeCycle,
     configuration,

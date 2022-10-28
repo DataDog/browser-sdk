@@ -7,8 +7,9 @@ import {
   relativeToClocks,
   assign,
   isNumber,
+  addTelemetryDebug,
 } from '@datadog/browser-core'
-import type { ClocksState } from '@datadog/browser-core'
+import type { ClocksState, Observable } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
 import type { RumPerformanceEntry, RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 import type {
@@ -22,22 +23,43 @@ import type { LifeCycle, RawRumEventCollectedData } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { RequestCompleteEvent } from '../../requestCollection'
 import type { RumSessionManager } from '../../rumSessionManager'
-import { matchRequestTiming } from './matchRequestTiming'
 import {
   computePerformanceResourceDetails,
   computePerformanceResourceDuration,
   computeResourceKind,
   computeSize,
   isRequestKind,
+  toValidEntry,
 } from './resourceUtils'
+
+import { filterEntries } from './filterEntries'
 
 export function startResourceCollection(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
-  sessionManager: RumSessionManager
+  sessionManager: RumSessionManager,
+  performanceObserver: Observable<PerformanceEntry[]>
 ) {
   lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request: RequestCompleteEvent) => {
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processRequest(request, configuration, sessionManager))
+    const { unsubscribe } = performanceObserver.subscribe((entries) => {
+      const matchingTimings = filterEntries(entries, request)
+
+      if (matchingTimings.length > 0) {
+        if (matchingTimings.length > 1) addTelemetryDebug('Multiple performance entries matched')
+        const matchingTiming = matchingTimings[matchingTimings.length - 1]
+
+        lifeCycle.notify(
+          LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
+          processRequest(
+            request,
+            configuration,
+            sessionManager,
+            toValidEntry(matchingTiming) ? matchingTiming : undefined
+          )
+        )
+        unsubscribe()
+      }
+    })
   })
 
   lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
@@ -55,11 +77,11 @@ export function startResourceCollection(
 function processRequest(
   request: RequestCompleteEvent,
   configuration: RumConfiguration,
-  sessionManager: RumSessionManager
+  sessionManager: RumSessionManager,
+  matchingTiming: RumPerformanceResourceTiming | undefined
 ): RawRumEventCollectedData<RawRumResourceEvent> {
   const type = request.type === RequestType.XHR ? ResourceType.XHR : ResourceType.FETCH
 
-  const matchingTiming = matchRequestTiming(request)
   const startClocks = matchingTiming ? relativeToClocks(matchingTiming.startTime) : request.startClocks
   const correspondingTimingOverrides = matchingTiming ? computePerformanceEntryMetrics(matchingTiming) : undefined
 

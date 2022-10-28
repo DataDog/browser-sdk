@@ -26,6 +26,10 @@ export class Observable<T> {
   notify(data: T) {
     this.observers.forEach((observer) => observer(data))
   }
+
+  hasSubscribers() {
+    return this.observers.length > 0
+  }
 }
 
 export function mergeObservables<T>(...observables: Array<Observable<T>>) {

@@ -1,5 +1,5 @@
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
-import { isIE, RequestType, ResourceType } from '@datadog/browser-core'
+import { isIE, RequestType, ResourceType, Observable } from '@datadog/browser-core'
 import { createResourceEntry } from '../../../../test/fixtures'
 import type { TestSetupBuilder } from '../../../../test/specHelper'
 import { setup } from '../../../../test/specHelper'
@@ -14,13 +14,15 @@ import { startResourceCollection } from './resourceCollection'
 
 describe('resourceCollection', () => {
   let setupBuilder: TestSetupBuilder
+  const performanceObserver = new Observable<PerformanceEntry[]>()
 
   beforeEach(() => {
     setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager }) => {
       startResourceCollection(
         lifeCycle,
         validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!,
-        sessionManager
+        sessionManager,
+        performanceObserver
       )
     })
   })
@@ -66,7 +68,7 @@ describe('resourceCollection', () => {
       createCompletedRequest({
         duration: 100 as Duration,
         method: 'GET',
-        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+        startClocks: { relative: 200 as RelativeTime, timeStamp: 123456789 as TimeStamp },
         status: 200,
         type: RequestType.XHR,
         url: 'https://resource.com/valid',
@@ -74,7 +76,15 @@ describe('resourceCollection', () => {
       })
     )
 
-    expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
+    const performanceEntry = createResourceEntry({
+      startTime: 200 as RelativeTime,
+      duration: 100 as Duration,
+      responseStart: 220 as RelativeTime,
+      initiatorType: 'xmlhttprequest',
+    })
+    performanceObserver.notify([performanceEntry])
+
+    expect(rawRumEvents[0].startTime).toBe(200 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
       date: jasmine.any(Number),
       resource: {
@@ -84,6 +94,9 @@ describe('resourceCollection', () => {
         status_code: 200,
         type: ResourceType.XHR,
         url: 'https://resource.com/valid',
+        size: jasmine.any(Number),
+        download: jasmine.any(Object),
+        first_byte: jasmine.any(Object),
       },
       type: RumEventType.RESOURCE,
       _dd: {
@@ -92,7 +105,7 @@ describe('resourceCollection', () => {
     })
     expect(rawRumEvents[0].domainContext).toEqual({
       xhr,
-      performanceEntry: undefined,
+      performanceEntry: jasmine.any(Object),
       response: undefined,
       requestInput: undefined,
       requestInit: undefined,
@@ -106,12 +119,13 @@ describe('resourceCollection', () => {
     }
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
     const response = new Response()
+
     lifeCycle.notify(
       LifeCycleEventType.REQUEST_COMPLETED,
       createCompletedRequest({
         duration: 100 as Duration,
         method: 'GET',
-        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+        startClocks: { relative: 200 as RelativeTime, timeStamp: 123456789 as TimeStamp },
         status: 200,
         type: RequestType.FETCH,
         url: 'https://resource.com/valid',
@@ -121,7 +135,15 @@ describe('resourceCollection', () => {
       })
     )
 
-    expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
+    const performanceEntry = createResourceEntry({
+      startTime: 200 as RelativeTime,
+      duration: 100 as Duration,
+      responseStart: 220 as RelativeTime,
+      initiatorType: 'fetch',
+    })
+    performanceObserver.notify([performanceEntry])
+
+    expect(rawRumEvents[0].startTime).toBe(200 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
       date: jasmine.any(Number),
       resource: {
@@ -131,6 +153,9 @@ describe('resourceCollection', () => {
         status_code: 200,
         type: ResourceType.FETCH,
         url: 'https://resource.com/valid',
+        size: jasmine.any(Number),
+        download: jasmine.any(Object),
+        first_byte: jasmine.any(Object),
       },
       type: RumEventType.RESOURCE,
       _dd: {
@@ -138,7 +163,7 @@ describe('resourceCollection', () => {
       },
     })
     expect(rawRumEvents[0].domainContext).toEqual({
-      performanceEntry: undefined,
+      performanceEntry: jasmine.any(Object),
       xhr: undefined,
       response,
       requestInput: 'https://resource.com/valid',
@@ -151,6 +176,10 @@ describe('resourceCollection', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
     const error = new Error()
     lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, createCompletedRequest({ error }))
+
+    // If there is an error, should we need to listen to performance observer?
+    const performanceEntry = createResourceEntry({ initiatorType: 'xmlhttprequest' })
+    performanceObserver.notify([performanceEntry])
 
     expect(rawRumEvents[0].domainContext).toEqual(
       jasmine.objectContaining({
@@ -182,6 +211,10 @@ describe('resourceCollection', () => {
           traceId: new TraceIdentifier(),
         })
       )
+
+      const performanceEntry = createResourceEntry({ initiatorType: 'xmlhttprequest' })
+      performanceObserver.notify([performanceEntry])
+
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
       expect(privateFields.trace_id).toBeDefined()
       expect(privateFields.span_id).toBeDefined()
@@ -197,6 +230,9 @@ describe('resourceCollection', () => {
           traceId: new TraceIdentifier(),
         })
       )
+      const performanceEntry = createResourceEntry({ initiatorType: 'xmlhttprequest' })
+      performanceObserver.notify([performanceEntry])
+
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
       expect(privateFields.trace_id).not.toBeDefined()
       expect(privateFields.span_id).not.toBeDefined()
@@ -211,7 +247,8 @@ describe('resourceCollection', () => {
             applicationId: 'xxx',
             tracingSampleRate: 60,
           })!,
-          sessionManager
+          sessionManager,
+          performanceObserver
         )
       })
 
@@ -224,6 +261,10 @@ describe('resourceCollection', () => {
           traceId: new TraceIdentifier(),
         })
       )
+
+      const performanceEntry = createResourceEntry({ initiatorType: 'xmlhttprequest' })
+      performanceObserver.notify([performanceEntry])
+
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
       expect(privateFields.rule_psr).toEqual(0.6)
     })
@@ -236,7 +277,8 @@ describe('resourceCollection', () => {
             clientToken: 'xxx',
             applicationId: 'xxx',
           })!,
-          sessionManager
+          sessionManager,
+          performanceObserver
         )
       })
 
@@ -249,6 +291,10 @@ describe('resourceCollection', () => {
           traceId: new TraceIdentifier(),
         })
       )
+
+      const performanceEntry = createResourceEntry({ initiatorType: 'xmlhttprequest' })
+      performanceObserver.notify([performanceEntry])
+
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
       expect(privateFields.rule_psr).toBeUndefined()
     })
@@ -262,7 +308,8 @@ describe('resourceCollection', () => {
             applicationId: 'xxx',
             tracingSampleRate: 0,
           })!,
-          sessionManager
+          sessionManager,
+          performanceObserver
         )
       })
 
@@ -275,6 +322,10 @@ describe('resourceCollection', () => {
           traceId: new TraceIdentifier(),
         })
       )
+
+      const performanceEntry = createResourceEntry({ initiatorType: 'xmlhttprequest' })
+      performanceObserver.notify([performanceEntry])
+
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
       expect(privateFields.rule_psr).toEqual(0)
     })
@@ -314,7 +365,7 @@ function createCompletedRequest(details?: Partial<RequestCompleteEvent>): Reques
   const request: Partial<RequestCompleteEvent> = {
     duration: 100 as Duration,
     method: 'GET',
-    startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+    startClocks: { relative: 200 as RelativeTime, timeStamp: 123456789 as TimeStamp },
     status: 200,
     type: RequestType.XHR,
     url: 'https://resource.com/valid',
