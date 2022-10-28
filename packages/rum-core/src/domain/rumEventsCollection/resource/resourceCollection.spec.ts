@@ -1,5 +1,5 @@
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
-import { isIE, RequestType, ResourceType, Observable } from '@datadog/browser-core'
+import { isIE, RequestType, ResourceType, Observable, toServerDuration } from '@datadog/browser-core'
 import { createResourceEntry } from '../../../../test/fixtures'
 import type { TestSetupBuilder } from '../../../../test/specHelper'
 import { setup } from '../../../../test/specHelper'
@@ -101,6 +101,7 @@ describe('resourceCollection', () => {
       type: RumEventType.RESOURCE,
       _dd: {
         discarded: false,
+        resolveDuration: undefined,
       },
     })
     expect(rawRumEvents[0].domainContext).toEqual({
@@ -119,6 +120,7 @@ describe('resourceCollection', () => {
     }
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
     const response = new Response()
+    const resolveDuration: Duration = 789 as Duration
 
     lifeCycle.notify(
       LifeCycleEventType.REQUEST_COMPLETED,
@@ -132,6 +134,7 @@ describe('resourceCollection', () => {
         response,
         input: 'https://resource.com/valid',
         init: { headers: { foo: 'bar' } },
+        resolveDuration,
       })
     )
 
@@ -160,6 +163,7 @@ describe('resourceCollection', () => {
       type: RumEventType.RESOURCE,
       _dd: {
         discarded: false,
+        resolveDuration: toServerDuration(resolveDuration),
       },
     })
     expect(rawRumEvents[0].domainContext).toEqual({

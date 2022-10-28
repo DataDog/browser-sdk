@@ -8,6 +8,8 @@ import {
   assign,
   isNumber,
   addTelemetryDebug,
+  elapsed,
+  timeStampNow,
 } from '@datadog/browser-core'
 import type { ClocksState, Observable } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
@@ -88,16 +90,29 @@ function processRequest(
   const tracingInfo = computeRequestTracingInfo(request, configuration)
   const indexingInfo = computeIndexingInfo(sessionManager, startClocks)
 
+  // "Duration" is not set when request is of type fetch. In that case we create
+  // a new duration variable based on the current time stamp.
+  //
+  // Why?
+  // This duration takes into account the response + payload time into account; unlike
+  // before where it did not take into account the payload download time. Measuring duration using
+  // JS is never going to be perfectly accurate thus why we favour correspondingTimingOverrides
+  // generated from matchingTiming (aka PerformanceEntries).
+  const duration = request.duration ? request.duration : elapsed(request.startClocks.timeStamp, timeStampNow())
+
   const resourceEvent = combine(
     {
       date: startClocks.timeStamp,
       resource: {
         id: generateUUID(),
         type,
-        duration: toServerDuration(request.duration),
+        duration: toServerDuration(duration),
         method: request.method,
         status_code: request.status,
         url: request.url,
+      },
+      _dd: {
+        resolveDuration: request.resolveDuration ? toServerDuration(request.resolveDuration) : undefined,
       },
       type: RumEventType.RESOURCE as const,
     },
