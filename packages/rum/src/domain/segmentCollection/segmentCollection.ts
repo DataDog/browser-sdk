@@ -5,6 +5,7 @@ import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { BrowserRecord, CreationReason, SegmentContext } from '../../types'
 import type { DeflateWorker } from './deflateWorker'
 import { buildReplayPayload } from './buildReplayPayload'
+import type { FlushReason } from './segment'
 import { Segment } from './segment'
 
 export const SEGMENT_DURATION_LIMIT = 30 * ONE_SECOND
@@ -96,16 +97,16 @@ export function doStartSegmentCollection(
     }
   )
 
-  function flushSegment(nextSegmentCreationReason?: CreationReason) {
+  function flushSegment(flushReason: FlushReason) {
     if (state.status === SegmentCollectionStatus.SegmentPending) {
-      state.segment.flush()
+      state.segment.flush(flushReason)
       clearTimeout(state.expirationTimeoutId)
     }
 
-    if (nextSegmentCreationReason) {
+    if (flushReason !== 'stop') {
       state = {
         status: SegmentCollectionStatus.WaitingForInitialRecord,
-        nextSegmentCreationReason,
+        nextSegmentCreationReason: flushReason,
       }
     } else {
       state = {
@@ -126,7 +127,7 @@ export function doStartSegmentCollection(
       creationReason,
       initialRecord,
       (compressedSegmentBytesCount) => {
-        if (!segment.isFlushed && compressedSegmentBytesCount > SEGMENT_BYTES_LIMIT) {
+        if (!segment.flushReason && compressedSegmentBytesCount > SEGMENT_BYTES_LIMIT) {
           flushSegment('segment_bytes_limit')
         }
       },
@@ -162,7 +163,7 @@ export function doStartSegmentCollection(
     },
 
     stop: () => {
-      flushSegment()
+      flushSegment('stop')
       unsubscribeViewCreated()
       unsubscribePageExited()
     },
