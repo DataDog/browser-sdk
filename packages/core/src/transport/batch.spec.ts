@@ -118,6 +118,12 @@ describe('batch', () => {
     clock.restore()
   })
 
+  it('should flush on page exit', () => {
+    batch.add({ message: '1' })
+    pageExitObservable.notify({ isUnloading: true })
+    expect(sendSpy).toHaveBeenCalledTimes(1)
+  })
+
   it('should not send a message with a bytes size above the limit', () => {
     const warnStub = sinon.stub(console, 'warn')
     batch = new Batch(transport, BATCH_MESSAGES_LIMIT, BATCH_BYTES_LIMIT, 50, FLUSH_TIMEOUT, pageExitObservable)
