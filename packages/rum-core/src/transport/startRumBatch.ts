@@ -1,4 +1,11 @@
-import type { Context, EndpointBuilder, TelemetryEvent, Observable, RawError } from '@datadog/browser-core'
+import type {
+  Context,
+  EndpointBuilder,
+  TelemetryEvent,
+  Observable,
+  RawError,
+  PageExitEvent,
+} from '@datadog/browser-core'
 import { Batch, combine, createHttpRequest, isTelemetryReplicationAllowed } from '@datadog/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
@@ -10,9 +17,10 @@ export function startRumBatch(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   telemetryEventObservable: Observable<TelemetryEvent & Context>,
-  reportError: (error: RawError) => void
+  reportError: (error: RawError) => void,
+  pageExitObservable: Observable<PageExitEvent>
 ) {
-  const batch = makeRumBatch(configuration, reportError)
+  const batch = makeRumBatch(configuration, reportError, pageExitObservable)
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent: RumEvent & Context) => {
     if (serverRumEvent.type === RumEventType.VIEW) {
@@ -30,7 +38,11 @@ interface RumBatch {
   upsert: (message: Context, key: string) => void
 }
 
-function makeRumBatch(configuration: RumConfiguration, reportError: (error: RawError) => void): RumBatch {
+function makeRumBatch(
+  configuration: RumConfiguration,
+  reportError: (error: RawError) => void,
+  pageExitObservable: Observable<PageExitEvent>
+): RumBatch {
   const primaryBatch = createRumBatch(configuration.rumEndpointBuilder)
 
   let replicaBatch: Batch | undefined
@@ -39,14 +51,14 @@ function makeRumBatch(configuration: RumConfiguration, reportError: (error: RawE
     replicaBatch = createRumBatch(replica.rumEndpointBuilder)
   }
 
-  function createRumBatch(endpointBuilder: EndpointBuilder, unloadCallback?: () => void) {
+  function createRumBatch(endpointBuilder: EndpointBuilder) {
     return new Batch(
       createHttpRequest(endpointBuilder, configuration.batchBytesLimit, reportError),
       configuration.batchMessagesLimit,
       configuration.batchBytesLimit,
       configuration.messageBytesLimit,
       configuration.flushTimeout,
-      unloadCallback
+      pageExitObservable
     )
   }
 
