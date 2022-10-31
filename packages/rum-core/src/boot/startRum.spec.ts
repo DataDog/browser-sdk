@@ -8,7 +8,7 @@ import {
   relativeNow,
   isIE,
 } from '@datadog/browser-core'
-import { interceptRequests } from '../../../core/test/specHelper'
+import { createNewEvent, interceptRequests } from '../../../core/test/specHelper'
 import type { RumSessionManagerMock } from '../../test/mockRumSessionManager'
 import { createRumSessionManagerMock } from '../../test/mockRumSessionManager'
 import type { TestSetupBuilder } from '../../test/specHelper'
@@ -317,7 +317,7 @@ describe('view events', () => {
     const { clock } = setupBuilder.withFakeClock().build()
 
     clock.tick(VIEW_DURATION)
-    window.dispatchEvent(new Event('beforeunload'))
+    window.dispatchEvent(createNewEvent('beforeunload'))
 
     const lastRumEvents = interceptor.requests[interceptor.requests.length - 1].body
       .split('\n')

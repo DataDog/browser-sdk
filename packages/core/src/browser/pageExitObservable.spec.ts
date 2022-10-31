@@ -1,4 +1,4 @@
-import { restorePageVisibility, setPageVisibility } from '../../test/specHelper'
+import { createNewEvent, restorePageVisibility, setPageVisibility } from '../../test/specHelper'
 import type { Subscription } from '../tools/observable'
 import type { PageExitEvent } from './pageExitObservable'
 import { createPageExitObservable } from './pageExitObservable'
@@ -18,7 +18,7 @@ describe('createPageExitObservable', () => {
   })
 
   it('notifies when the page is unloading', () => {
-    window.dispatchEvent(new Event('beforeunload'))
+    window.dispatchEvent(createNewEvent('beforeunload'))
 
     expect(onExitSpy).toHaveBeenCalledOnceWith({ isUnloading: true })
   })
@@ -30,8 +30,8 @@ describe('createPageExitObservable', () => {
   })
 
   it('notifies multiple times', () => {
-    window.dispatchEvent(new Event('beforeunload'))
-    window.dispatchEvent(new Event('beforeunload'))
+    window.dispatchEvent(createNewEvent('beforeunload'))
+    window.dispatchEvent(createNewEvent('beforeunload'))
     emulatePageVisibilityChange('hidden')
 
     expect(onExitSpy).toHaveBeenCalledTimes(3)
@@ -45,6 +45,6 @@ describe('createPageExitObservable', () => {
 
   function emulatePageVisibilityChange(visibility: 'visible' | 'hidden') {
     setPageVisibility(visibility)
-    document.dispatchEvent(new Event('visibilitychange'))
+    document.dispatchEvent(createNewEvent('visibilitychange'))
   }
 })
