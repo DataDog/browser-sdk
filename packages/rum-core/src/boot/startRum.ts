@@ -6,6 +6,7 @@ import {
   canUseEventBridge,
   getEventBridge,
 } from '@datadog/browser-core'
+import { createPageExitObservable } from 'packages/core/src/browser/pageExitObservable'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { startPerformanceCollection } from '../browser/performanceCollection'
 import { startRumAssembly } from '../domain/assembly'
@@ -61,6 +62,10 @@ export function startRum(
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
   }
   if (!canUseEventBridge()) {
+    const pageExitObservable = createPageExitObservable()
+    pageExitObservable.subscribe((event) => {
+      lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, event)
+    })
     startRumBatch(configuration, lifeCycle, telemetry.observable, reportError)
   } else {
     startRumEventBridge(lifeCycle)

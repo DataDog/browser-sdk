@@ -1,4 +1,4 @@
-import type { Context, RawError, RelativeTime, Subscription } from '@datadog/browser-core'
+import type { Context, PageExitEvent, RawError, RelativeTime, Subscription } from '@datadog/browser-core'
 import type { RumPerformanceEntry } from '../browser/performanceCollection'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { CommonContext, RawRumEvent } from '../rawRumEvent.types'
@@ -29,7 +29,7 @@ export const enum LifeCycleEventType {
   SESSION_EXPIRED,
 
   SESSION_RENEWED,
-  BEFORE_UNLOAD,
+  PAGE_EXITED,
   RAW_RUM_EVENT_COLLECTED,
   RUM_EVENT_COLLECTED,
   RAW_ERROR_COLLECTED,
@@ -45,16 +45,12 @@ export class LifeCycle {
   notify(eventType: LifeCycleEventType.VIEW_CREATED, data: ViewCreatedEvent): void
   notify(eventType: LifeCycleEventType.VIEW_UPDATED, data: ViewEvent): void
   notify(eventType: LifeCycleEventType.VIEW_ENDED, data: ViewEndedEvent): void
+  notify(eventType: LifeCycleEventType.PAGE_EXITED, data: PageExitEvent): void
   notify(
     eventType: LifeCycleEventType.RAW_ERROR_COLLECTED,
     data: { error: RawError; savedCommonContext?: CommonContext; customerContext?: Context }
   ): void
-  notify(
-    eventType:
-      | LifeCycleEventType.SESSION_EXPIRED
-      | LifeCycleEventType.SESSION_RENEWED
-      | LifeCycleEventType.BEFORE_UNLOAD
-  ): void
+  notify(eventType: LifeCycleEventType.SESSION_EXPIRED | LifeCycleEventType.SESSION_RENEWED): void
   notify(eventType: LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, data: RawRumEventCollectedData): void
   notify(eventType: LifeCycleEventType.RUM_EVENT_COLLECTED, data: RumEvent & Context): void
   notify(eventType: LifeCycleEventType, data?: any) {
@@ -77,15 +73,13 @@ export class LifeCycle {
   subscribe(eventType: LifeCycleEventType.VIEW_CREATED, callback: (data: ViewCreatedEvent) => void): Subscription
   subscribe(eventType: LifeCycleEventType.VIEW_UPDATED, callback: (data: ViewEvent) => void): Subscription
   subscribe(eventType: LifeCycleEventType.VIEW_ENDED, callback: (data: ViewEndedEvent) => void): Subscription
+  subscribe(eventType: LifeCycleEventType.PAGE_EXITED, callback: (data: PageExitEvent) => void): Subscription
   subscribe(
     eventType: LifeCycleEventType.RAW_ERROR_COLLECTED,
     callback: (data: { error: RawError; savedCommonContext?: CommonContext; customerContext?: Context }) => void
   ): Subscription
   subscribe(
-    eventType:
-      | LifeCycleEventType.SESSION_EXPIRED
-      | LifeCycleEventType.SESSION_RENEWED
-      | LifeCycleEventType.BEFORE_UNLOAD,
+    eventType: LifeCycleEventType.SESSION_EXPIRED | LifeCycleEventType.SESSION_RENEWED,
     callback: () => void
   ): Subscription
   subscribe(

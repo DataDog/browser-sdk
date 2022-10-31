@@ -12,7 +12,7 @@ export function startRumBatch(
   telemetryEventObservable: Observable<TelemetryEvent & Context>,
   reportError: (error: RawError) => void
 ) {
-  const batch = makeRumBatch(configuration, lifeCycle, reportError)
+  const batch = makeRumBatch(configuration, reportError)
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent: RumEvent & Context) => {
     if (serverRumEvent.type === RumEventType.VIEW) {
@@ -30,14 +30,8 @@ interface RumBatch {
   upsert: (message: Context, key: string) => void
 }
 
-function makeRumBatch(
-  configuration: RumConfiguration,
-  lifeCycle: LifeCycle,
-  reportError: (error: RawError) => void
-): RumBatch {
-  const primaryBatch = createRumBatch(configuration.rumEndpointBuilder, () =>
-    lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
-  )
+function makeRumBatch(configuration: RumConfiguration, reportError: (error: RawError) => void): RumBatch {
+  const primaryBatch = createRumBatch(configuration.rumEndpointBuilder)
 
   let replicaBatch: Batch | undefined
   const replica = configuration.replica

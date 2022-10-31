@@ -282,7 +282,7 @@ describe('startRecording', () => {
 })
 
 function flushSegment(lifeCycle: LifeCycle) {
-  lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
+  lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { isUnloading: true })
 }
 
 function getRequestData(call: jasmine.CallInfo<HttpRequest['sendOnExit']>) {

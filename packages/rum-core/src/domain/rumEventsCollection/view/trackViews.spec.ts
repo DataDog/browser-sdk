@@ -696,7 +696,7 @@ describe('view metrics', () => {
       lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, FAKE_ACTION_EVENT)
     })
 
-    lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
+    lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { isUnloading: true })
 
     expect(getViewUpdate(getViewUpdateCount() - 1).eventCounts.actionCount).toBe(1)
   })

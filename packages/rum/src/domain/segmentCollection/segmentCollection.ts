@@ -89,9 +89,14 @@ export function doStartSegmentCollection(
     flushSegment('view_change')
   })
 
-  const { unsubscribe: unsubscribeBeforeUnload } = lifeCycle.subscribe(LifeCycleEventType.BEFORE_UNLOAD, () => {
-    flushSegment('before_unload')
-  })
+  const { unsubscribe: unsubscribePageExited } = lifeCycle.subscribe(
+    LifeCycleEventType.PAGE_EXITED,
+    (pageExitEvent) => {
+      if (pageExitEvent.isUnloading) {
+        flushSegment('before_unload')
+      }
+    }
+  )
 
   const { stop: unsubscribeVisibilityChange } = addEventListener(
     emitter,
@@ -171,7 +176,7 @@ export function doStartSegmentCollection(
     stop: () => {
       flushSegment()
       unsubscribeViewCreated()
-      unsubscribeBeforeUnload()
+      unsubscribePageExited()
       unsubscribeVisibilityChange()
     },
   }

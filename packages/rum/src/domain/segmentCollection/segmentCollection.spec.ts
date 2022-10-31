@@ -54,7 +54,7 @@ describe('startSegmentCollection', () => {
         // Make sure the segment is not empty
         addRecord(RECORD)
         // Flush segment
-        lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
+        lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { isUnloading: true })
         worker.processAllMessages()
         return sendSpy.calls.mostRecent().args[1]
       },
@@ -85,7 +85,7 @@ describe('startSegmentCollection', () => {
   it('sends a segment', () => {
     const { lifeCycle, worker, sendSpy, addRecord } = startSegmentCollection(CONTEXT)
     addRecord(RECORD)
-    lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
+    lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { isUnloading: true })
     worker.processAllMessages()
     expect(sendSpy).toHaveBeenCalledTimes(1)
   })
@@ -93,7 +93,7 @@ describe('startSegmentCollection', () => {
   it("ignores calls to addRecord if context can't be get", () => {
     const { lifeCycle, worker, sendSpy, addRecord } = startSegmentCollection(undefined)
     addRecord(RECORD)
-    lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
+    lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { isUnloading: true })
     expect(worker.pendingData).toBe('')
     worker.processAllMessages()
     expect(sendSpy).not.toHaveBeenCalled()
@@ -106,14 +106,14 @@ describe('startSegmentCollection', () => {
 
     it('does not flush empty segments', () => {
       const { lifeCycle, sendSpy, worker } = startSegmentCollection(CONTEXT)
-      lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
+      lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { isUnloading: true })
       worker.processAllMessages()
       expect(sendSpy).not.toHaveBeenCalled()
     })
 
     it('flushes segment on unload', () => {
       const { lifeCycle, sendCurrentSegment } = startSegmentCollection(CONTEXT)
-      lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
+      lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { isUnloading: true })
       expect(sendCurrentSegment().creation_reason).toBe('before_unload')
     })
 
@@ -202,7 +202,7 @@ describe('startSegmentCollection', () => {
         const { lifeCycle, sendCurrentSegment, addRecord, sendSpy, worker } = startSegmentCollection(CONTEXT)
         addRecord(RECORD)
         clock.tick(BEFORE_SEGMENT_DURATION_LIMIT)
-        lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
+        lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { isUnloading: true })
         addRecord(RECORD)
         clock.tick(BEFORE_SEGMENT_DURATION_LIMIT)
 
