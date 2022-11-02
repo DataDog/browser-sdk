@@ -37,7 +37,7 @@ describe('createPageExitObservable', () => {
     expect(onExitSpy).toHaveBeenCalledTimes(3)
   })
 
-  it('does notify when the page becomes visible', () => {
+  it('does not notify when the page becomes visible', () => {
     emulatePageVisibilityChange('visible')
 
     expect(onExitSpy).not.toHaveBeenCalled()
