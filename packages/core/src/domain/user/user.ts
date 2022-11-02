@@ -1,6 +1,6 @@
 import type { Context } from '../../tools/context'
 import { display } from '../../tools/display'
-import { deepClone, getType } from '../../tools/utils'
+import { assign, getType } from '../../tools/utils'
 import type { User } from './user.types'
 
 /**
@@ -9,7 +9,8 @@ import type { User } from './user.types'
  * https://docs.datadoghq.com/logs/log_configuration/attributes_naming_convention/#user-related-attributes
  */
 export function sanitizeUser(newUser: Context): Context {
-  const user = deepClone(newUser)
+  // We shallow clone only to prevent mutation of user data.
+  const user = assign({}, newUser)
   const keys = ['id', 'name', 'email']
   keys.forEach((key) => {
     if (key in user) {

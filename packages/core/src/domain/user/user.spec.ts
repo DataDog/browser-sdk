@@ -1,4 +1,3 @@
-import type { Context } from '../../tools/context'
 import { checkUser, sanitizeUser } from './user'
 import type { User } from './user.types'
 
@@ -16,14 +15,6 @@ describe('sanitize user function', () => {
 
     expect(user.id).toEqual('42')
     expect(obj.id).toEqual(42)
-  })
-
-  it('should keep a full copy of the user data ', () => {
-    const obj = { id: 42, name: 'test', email: null, custom: { deep: true } }
-    const user = sanitizeUser(obj)
-    obj.custom.deep = false
-
-    expect((user.custom as Context).deep).toEqual(true)
   })
 })
 
