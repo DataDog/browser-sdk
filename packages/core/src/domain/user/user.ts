@@ -1,5 +1,7 @@
 import type { Context } from '../../tools/context'
-import { deepClone } from '../../tools/utils'
+import { display } from '../../tools/display'
+import { deepClone, getType } from '../../tools/utils'
+import type { User } from './user.types'
 
 /**
  * Clone input data and ensure known user properties (id, name, email)
@@ -15,4 +17,15 @@ export function sanitizeUser(newUser: Context): Context {
     }
   })
   return user
+}
+
+/**
+ * Simple check to ensure user is valid
+ */
+export function checkUser(newUser: User): boolean {
+  const isValid = getType(newUser) === 'object'
+  if (!isValid) {
+    display.error('Unsupported user:', newUser)
+  }
+  return isValid
 }

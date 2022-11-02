@@ -15,6 +15,7 @@ import {
   createHandlingStack,
   canUseEventBridge,
   areCookiesAuthorized,
+  checkUser,
   sanitizeUser,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
@@ -223,9 +224,7 @@ export function makeRumPublicApi(
     }),
 
     setUser: monitor((newUser: User) => {
-      if (typeof newUser !== 'object' || !newUser) {
-        display.error('Unsupported user:', newUser)
-      } else {
+      if (checkUser(newUser)) {
         userContextManager.setContext(sanitizeUser(newUser as Context))
       }
     }),

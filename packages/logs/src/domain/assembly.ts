@@ -45,8 +45,13 @@ export function startLogsAssembly(
 
       const commonContext = savedCommonContext || getCommonContext()
       const log = combine(
-        !isEmptyObject(commonContext.user) ? { usr: commonContext.user } : {}, // Insert user first, global context has priority
-        { service: configuration.service, session_id: session.id, view: commonContext.view },
+        {
+          service: configuration.service,
+          session_id: session.id,
+          // Insert user first to allow overrides from global context
+          usr: !isEmptyObject(commonContext.user) ? commonContext.user : undefined,
+          view: commonContext.view,
+        },
         commonContext.context,
         getRUMInternalContext(startTime),
         rawLogsEvent,

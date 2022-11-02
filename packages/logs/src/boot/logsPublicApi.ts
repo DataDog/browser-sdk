@@ -9,6 +9,7 @@ import {
   deepClone,
   canUseEventBridge,
   timeStampNow,
+  checkUser,
   sanitizeUser,
 } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
@@ -131,9 +132,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
     getInternalContext: monitor((startTime?: number | undefined) => getInternalContextStrategy(startTime)),
 
     setUser: monitor((newUser: User) => {
-      if (typeof newUser !== 'object' || !newUser) {
-        display.error('Unsupported user:', newUser)
-      } else {
+      if (checkUser(newUser)) {
         userContextManager.setContext(sanitizeUser(newUser as Context))
       }
     }),
