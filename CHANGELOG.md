@@ -16,6 +16,12 @@
 
 ---
 
+## v4.23.3
+
+- 🐛 [REPLAY-1075] Convert relative URLS to absolute in stylesheets ([#1792](https://github.com/DataDog/browser-sdk/pull/1792))
+- 🐛 [RUMF-1423] prevent unexpected behavior when our xhr are reused ([#1797](https://github.com/DataDog/browser-sdk/pull/1797))
+- 🐛 [RUMF-1410] Allow serialization of objects with cyclic references ([#1783](https://github.com/DataDog/browser-sdk/pull/1783))
+
 ## v4.23.2
 
 - 🔉[RUMF-1423] Investigation for retry issue - part 2 ([#1793](https://github.com/DataDog/browser-sdk/pull/1793))
