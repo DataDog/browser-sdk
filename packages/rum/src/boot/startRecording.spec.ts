@@ -1,5 +1,5 @@
 import type { TimeStamp, HttpRequest } from '@datadog/browser-core'
-import { DefaultPrivacyLevel, noop, isIE, timeStampNow, createHttpRequest } from '@datadog/browser-core'
+import { PageExitReason, DefaultPrivacyLevel, noop, isIE, timeStampNow, createHttpRequest } from '@datadog/browser-core'
 import type { LifeCycle, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { inflate } from 'pako'
@@ -282,7 +282,7 @@ describe('startRecording', () => {
 })
 
 function flushSegment(lifeCycle: LifeCycle) {
-  lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { isUnloading: true })
+  lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.UNLOADING })
 }
 
 function getRequestData(call: jasmine.CallInfo<HttpRequest['sendOnExit']>) {

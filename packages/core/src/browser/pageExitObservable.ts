@@ -1,8 +1,13 @@
 import { Observable } from '../tools/observable'
 import { addEventListener, DOM_EVENT } from '../tools/utils'
 
+export const enum PageExitReason {
+  HIDDEN,
+  UNLOADING,
+}
+
 export interface PageExitEvent {
-  isUnloading: boolean
+  reason: PageExitReason
 }
 
 export function createPageExitObservable(): Observable<PageExitEvent> {
@@ -13,7 +18,7 @@ export function createPageExitObservable(): Observable<PageExitEvent> {
      */
     const { stop: stopVisibilityChangeListener } = addEventListener(document, DOM_EVENT.VISIBILITY_CHANGE, () => {
       if (document.visibilityState === 'hidden') {
-        observable.notify({ isUnloading: false })
+        observable.notify({ reason: PageExitReason.HIDDEN })
       }
     })
     /**
@@ -22,7 +27,7 @@ export function createPageExitObservable(): Observable<PageExitEvent> {
      * - a page hide transition (cf: https://bugs.webkit.org/show_bug.cgi?id=188329)
      */
     const { stop: stopBeforeUnloadListener } = addEventListener(window, DOM_EVENT.BEFORE_UNLOAD, () => {
-      observable.notify({ isUnloading: true })
+      observable.notify({ reason: PageExitReason.UNLOADING })
     })
 
     return () => {

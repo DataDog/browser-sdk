@@ -1,5 +1,12 @@
 import type { Context, Duration, RelativeTime } from '@datadog/browser-core'
-import { timeStampNow, display, relativeToClocks, relativeNow, resetExperimentalFeatures } from '@datadog/browser-core'
+import {
+  PageExitReason,
+  timeStampNow,
+  display,
+  relativeToClocks,
+  relativeNow,
+  resetExperimentalFeatures,
+} from '@datadog/browser-core'
 import type { TestSetupBuilder, ViewTest } from '../../../../test/specHelper'
 import { setup, setupViewTest } from '../../../../test/specHelper'
 import type {
@@ -696,7 +703,7 @@ describe('view metrics', () => {
       lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, FAKE_ACTION_EVENT)
     })
 
-    lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { isUnloading: true })
+    lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.UNLOADING })
 
     expect(getViewUpdate(getViewUpdateCount() - 1).eventCounts.actionCount).toBe(1)
   })

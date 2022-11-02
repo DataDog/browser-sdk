@@ -1,5 +1,6 @@
 import type { Duration, ClocksState, TimeStamp, Observable, Subscription, RelativeTime } from '@datadog/browser-core'
 import {
+  PageExitReason,
   shallowClone,
   assign,
   elapsed,
@@ -127,7 +128,7 @@ export function trackViews(
 
     // End the current view on page unload
     lifeCycle.subscribe(LifeCycleEventType.PAGE_EXITED, (pageExitEvent) => {
-      if (pageExitEvent.isUnloading) {
+      if (pageExitEvent.reason === PageExitReason.UNLOADING) {
         currentView.end()
         currentView.triggerUpdate()
       }

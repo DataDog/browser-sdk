@@ -1,5 +1,6 @@
 import sinon from 'sinon'
 import type { PageExitEvent } from '../browser/pageExitObservable'
+import { PageExitReason } from '../browser/pageExitObservable'
 import { Observable } from '../tools/observable'
 import { noop } from '../tools/utils'
 import { Batch } from './batch'
@@ -120,7 +121,7 @@ describe('batch', () => {
 
   it('should flush on page exit', () => {
     batch.add({ message: '1' })
-    pageExitObservable.notify({ isUnloading: true })
+    pageExitObservable.notify({ reason: PageExitReason.UNLOADING })
     expect(sendSpy).toHaveBeenCalledTimes(1)
   })
 

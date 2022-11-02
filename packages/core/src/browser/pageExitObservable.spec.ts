@@ -1,7 +1,7 @@
 import { createNewEvent, restorePageVisibility, setPageVisibility } from '../../test/specHelper'
 import type { Subscription } from '../tools/observable'
 import type { PageExitEvent } from './pageExitObservable'
-import { createPageExitObservable } from './pageExitObservable'
+import { PageExitReason, createPageExitObservable } from './pageExitObservable'
 
 describe('createPageExitObservable', () => {
   let pageExitSubscription: Subscription
@@ -20,13 +20,13 @@ describe('createPageExitObservable', () => {
   it('notifies when the page is unloading', () => {
     window.dispatchEvent(createNewEvent('beforeunload'))
 
-    expect(onExitSpy).toHaveBeenCalledOnceWith({ isUnloading: true })
+    expect(onExitSpy).toHaveBeenCalledOnceWith({ reason: PageExitReason.UNLOADING })
   })
 
   it('notifies when the page becomes hidden', () => {
     emulatePageVisibilityChange('hidden')
 
-    expect(onExitSpy).toHaveBeenCalledOnceWith({ isUnloading: false })
+    expect(onExitSpy).toHaveBeenCalledOnceWith({ reason: PageExitReason.HIDDEN })
   })
 
   it('notifies multiple times', () => {
