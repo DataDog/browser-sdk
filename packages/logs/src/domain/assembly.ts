@@ -9,7 +9,6 @@ import {
   createEventRateLimiter,
   getRelativeTime,
   isEmptyObject,
-  shallowClone,
 } from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { LogsConfiguration } from './configuration'
@@ -46,6 +45,7 @@ export function startLogsAssembly(
 
       const commonContext = savedCommonContext || getCommonContext()
       const log = combine(
+        !isEmptyObject(commonContext.user) ? { usr: commonContext.user } : {}, // Insert user first, global context has priority
         { service: configuration.service, session_id: session.id, view: commonContext.view },
         commonContext.context,
         getRUMInternalContext(startTime),
@@ -53,10 +53,6 @@ export function startLogsAssembly(
         logger.getContext(),
         messageContext
       )
-
-      if (!isEmptyObject(commonContext.user)) {
-        log.usr = shallowClone(commonContext.user)
-      }
 
       if (
         // Todo: [RUMF-1230] Move this check to the logger collection in the next major release

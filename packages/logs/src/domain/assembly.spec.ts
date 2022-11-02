@@ -321,6 +321,27 @@ describe('user management', () => {
       email: 'test@test.com',
     })
   })
+
+  it('should prioritize global context over user context', () => {
+    const globalContextWithUser = {
+      ...COMMON_CONTEXT_WITH_USER,
+      context: {
+        ...COMMON_CONTEXT.context,
+        usr: {
+          id: 4242,
+          name: 'solution',
+        },
+      },
+    }
+    startLogsAssembly(sessionManager, configuration, lifeCycle, () => globalContextWithUser, mainLogger, noop)
+
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
+    expect(serverLogs[0].usr).toEqual({
+      id: 4242,
+      name: 'solution',
+      email: 'test@test.com',
+    })
+  })
 })
 
 describe('logs limitation', () => {
