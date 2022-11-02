@@ -572,6 +572,94 @@ window.DD_LOGS && DD_LOGS.getGlobalContext() // => {}
 
 **Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the SDK.
 
+#### User context
+
+The Datadog logs SDK provides convenient functions to associate a `User` with generated logs.
+
+- Set the user for all your loggers with the `setUser (newUser: User)` API.
+- Add or modify a user property to all your loggers with the `setUserProperty (key: string, value: any)` API.
+- Get the currently stored user with the `getUser ()` API.
+- Remove a user property with the `removeUserProperty (key: string)` API.
+- Clear all existing user properties with the `clearUser ()` API.
+
+**Note**: The user context is applied before the global context. Hence, every user property included in the global context will override the user context when generating logs.
+
+##### NPM
+
+For NPM, use:
+
+```javascript
+import { datadogLogs } from '@datadog/browser-logs'
+
+datadogLogs.setUser({ id: '1234', name: 'John Doe', email: 'john@doe.com' })
+datadogLogs.setUserProperty('type', 'customer')
+datadogLogs.getUser() // => {id: '1234', name: 'John Doe', email: 'john@doe.com', type: 'customer'}
+
+datadogLogs.removeUserProperty('type')
+datadogLogs.getUser() // => {id: '1234', name: 'John Doe', email: 'john@doe.com'}
+
+datadogLogs.clearUser()
+datadogLogs.getUser() // => {}
+```
+
+#### CDN async
+
+For CDN async, use:
+
+```javascript
+DD_LOGS.onReady(function () {
+  DD_LOGS.setUser({ id: '1234', name: 'John Doe', email: 'john@doe.com' })
+})
+
+DD_LOGS.onReady(function () {
+  DD_LOGS.setUserProperty('type', 'customer')
+})
+
+DD_LOGS.onReady(function () {
+  DD_LOGS.getUser() // => {id: '1234', name: 'John Doe', email: 'john@doe.com', type: 'customer'}
+})
+
+DD_LOGS.onReady(function () {
+  DD_LOGS.removeUserProperty('type')
+})
+
+DD_LOGS.onReady(function () {
+  DD_LOGS.getUser() // => {id: '1234', name: 'John Doe', email: 'john@doe.com'}
+})
+
+DD_LOGS.onReady(function () {
+  DD_LOGS.clearUser()
+})
+
+DD_LOGS.onReady(function () {
+  DD_LOGS.getUser() // => {}
+})
+```
+
+**Note:** Early API calls must be wrapped in the `DD_LOGS.onReady()` callback. This ensures the code only gets executed once the SDK is properly loaded.
+
+##### CDN sync
+
+For CDN sync, use:
+
+```javascript
+window.DD_LOGS && DD_LOGS.setUser({ id: '1234', name: 'John Doe', email: 'john@doe.com' })
+
+window.DD_LOGS && DD_LOGS.setUserProperty('type', 'customer')
+
+window.DD_LOGS && DD_LOGS.getUser() // => {id: '1234', name: 'John Doe', email: 'john@doe.com', type: 'customer'}
+
+window.DD_LOGS && DD_LOGS.removeUserProperty('type')
+
+window.DD_LOGS && DD_LOGS.getUser() // => {id: '1234', name: 'John Doe', email: 'john@doe.com'}
+
+window.DD_LOGS && DD_LOGS.clearUser()
+
+window.DD_LOGS && DD_LOGS.getUser() // => {}
+```
+
+**Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the SDK.
+
 #### Logger context
 
 After a logger is created, it is possible to:
