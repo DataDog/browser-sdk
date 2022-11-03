@@ -3,13 +3,28 @@ import { findCommaSeparatedValue, generateUUID, ONE_SECOND } from '../tools/util
 
 export const COOKIE_ACCESS_DELAY = ONE_SECOND
 
+export type SetCookieOverride = (name: string, value: string, expireDelay: number) => void
+export type GetCookieOverride = (name: string) => string | undefined
 export interface CookieOptions {
   secure?: boolean
   crossSite?: boolean
-  domain?: string
+  domain?: string,
+  setCookie?: SetCookieOverride
+  getCookie?: GetCookieOverride
+}
+
+
+let getCookieOverride: GetCookieOverride, setCookieOverride: SetCookieOverride
+export function setCookieHandling(getCookie: GetCookieOverride, setCookie: SetCookieOverride): void {
+  getCookieOverride = getCookie
+  setCookieOverride = setCookie
 }
 
 export function setCookie(name: string, value: string, expireDelay: number, options?: CookieOptions) {
+  if (setCookieOverride) {
+    setCookieOverride(name, value, expireDelay);
+    return
+  }
   const date = new Date()
   date.setTime(date.getTime() + expireDelay)
   const expires = `expires=${date.toUTCString()}`
@@ -19,7 +34,10 @@ export function setCookie(name: string, value: string, expireDelay: number, opti
   document.cookie = `${name}=${value};${expires};path=/;samesite=${sameSite}${domain}${secure}`
 }
 
-export function getCookie(name: string) {
+export function getCookie(name: string): string | undefined {
+  if (getCookieOverride) {
+    return getCookieOverride(name)
+  }
   return findCommaSeparatedValue(document.cookie, name)
 }
 
@@ -28,6 +46,9 @@ export function deleteCookie(name: string, options?: CookieOptions) {
 }
 
 export function areCookiesAuthorized(options: CookieOptions): boolean {
+  if (!!getCookieOverride && !!setCookieHandling) {
+    return true
+  }
   if (document.cookie === undefined || document.cookie === null) {
     return false
   }

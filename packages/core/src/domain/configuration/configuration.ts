@@ -1,4 +1,4 @@
-import type { CookieOptions } from '../../browser/cookie'
+import { CookieOptions, GetCookieOverride, setCookieHandling, SetCookieOverride } from '../../browser/cookie'
 import { getCurrentSite } from '../../browser/cookie'
 import { catchUserErrors } from '../../tools/catchUserErrors'
 import { display } from '../../tools/display'
@@ -36,6 +36,8 @@ export interface InitConfiguration {
   useCrossSiteSessionCookie?: boolean | undefined
   useSecureSessionCookie?: boolean | undefined
   trackSessionAcrossSubdomains?: boolean | undefined
+  getCookie?: GetCookieOverride
+  setCookie?: SetCookieOverride
 
   // internal options
   enableExperimentalFeatures?: string[] | undefined
@@ -98,6 +100,11 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     return
   }
 
+  if (!!initConfiguration.setCookie !== !!initConfiguration.getCookie) {
+    display.error('Both setCookie and getCookie must be set or undefined.')
+    return
+  }
+
   // Set the experimental feature flags as early as possible, so we can use them in most places
   updateExperimentalFeatures(initConfiguration.enableExperimentalFeatures)
 
@@ -140,6 +147,8 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
 export function buildCookieOptions(initConfiguration: InitConfiguration) {
   const cookieOptions: CookieOptions = {}
 
+  setCookieHandling(initConfiguration.getCookie!, initConfiguration.setCookie!);
+  
   cookieOptions.secure = mustUseSecureCookie(initConfiguration)
   cookieOptions.crossSite = !!initConfiguration.useCrossSiteSessionCookie
 
