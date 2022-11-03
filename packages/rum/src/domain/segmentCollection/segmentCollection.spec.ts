@@ -104,22 +104,22 @@ describe('startSegmentCollection', () => {
       expect(sendSpy).not.toHaveBeenCalled()
     })
 
-    it('flushes segment on unload', () => {
+    it('flushes segment on page exit because it is unloading', () => {
       const { lifeCycle, sendCurrentSegment } = startSegmentCollection(CONTEXT)
       lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.UNLOADING })
       expect(sendCurrentSegment().creation_reason).toBe('before_unload')
+    })
+
+    it('flushes segment on page exit because it gets hidden', () => {
+      const { lifeCycle, sendCurrentSegment } = startSegmentCollection(CONTEXT)
+      lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.HIDDEN })
+      expect(sendCurrentSegment().creation_reason).toBe('visibility_hidden')
     })
 
     it('flushes segment on view change', () => {
       const { lifeCycle, sendCurrentSegment } = startSegmentCollection(CONTEXT)
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {} as any)
       expect(sendCurrentSegment().creation_reason).toBe('view_change')
-    })
-
-    it('flushes segment when the page become hidden', () => {
-      const { lifeCycle, sendCurrentSegment } = startSegmentCollection(CONTEXT)
-      lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.HIDDEN })
-      expect(sendCurrentSegment().creation_reason).toBe('visibility_hidden')
     })
 
     describe('segment_bytes_limit flush strategy', () => {
