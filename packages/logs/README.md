@@ -1,8 +1,8 @@
 # Browser Log Collection
 
-Send logs to Datadog from web browsers or other Javascript clients with the browser logs SDK.
+Send logs to Datadog from web browser pages with the browser logs SDK.
 
-With the browser logs SDK, you can send logs directly to Datadog from JS clients and leverage the following features:
+With the browser logs SDK, you can send logs directly to Datadog from web browser pages and leverage the following features:
 
 - Use the SDK as a logger. Everything is forwarded to Datadog as JSON documents.
 - Add `context` and extra custom attributes to each log sent.
