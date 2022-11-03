@@ -2,8 +2,8 @@ import { Observable } from '../tools/observable'
 import { addEventListener, DOM_EVENT } from '../tools/utils'
 
 export const enum PageExitReason {
-  HIDDEN,
-  UNLOADING,
+  HIDDEN = 'visibility_hidden',
+  UNLOADING = 'before_unload',
 }
 
 export interface PageExitEvent {

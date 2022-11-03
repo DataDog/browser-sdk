@@ -1,5 +1,5 @@
 import type { TimeoutId } from '@datadog/browser-core'
-import { PageExitReason, ONE_SECOND, monitor } from '@datadog/browser-core'
+import { ONE_SECOND, monitor } from '@datadog/browser-core'
 import type { LifeCycle, ViewContexts, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { BrowserRecord, BrowserSegmentMetadata, CreationReason, SegmentContext } from '../../types'
@@ -91,7 +91,7 @@ export function doStartSegmentCollection(
   const { unsubscribe: unsubscribePageExited } = lifeCycle.subscribe(
     LifeCycleEventType.PAGE_EXITED,
     (pageExitEvent) => {
-      flushSegment(pageExitEvent.reason === PageExitReason.UNLOADING ? 'before_unload' : 'visibility_hidden')
+      flushSegment(pageExitEvent.reason)
     }
   )
 
