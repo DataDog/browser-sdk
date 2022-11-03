@@ -1,4 +1,7 @@
 import sinon from 'sinon'
+import type { PageExitEvent } from '../browser/pageExitObservable'
+import { PageExitReason } from '../browser/pageExitObservable'
+import { Observable } from '../tools/observable'
 import { noop } from '../tools/utils'
 import { Batch } from './batch'
 import type { HttpRequest } from './httpRequest'
@@ -11,11 +14,20 @@ describe('batch', () => {
   let batch: Batch
   let transport: HttpRequest
   let sendSpy: jasmine.Spy<HttpRequest['send']>
+  let pageExitObservable: Observable<PageExitEvent>
 
   beforeEach(() => {
     transport = { send: noop } as unknown as HttpRequest
     sendSpy = spyOn(transport, 'send')
-    batch = new Batch(transport, BATCH_MESSAGES_LIMIT, BATCH_BYTES_LIMIT, MESSAGE_BYTES_LIMIT, FLUSH_TIMEOUT)
+    pageExitObservable = new Observable()
+    batch = new Batch(
+      transport,
+      BATCH_MESSAGES_LIMIT,
+      BATCH_BYTES_LIMIT,
+      MESSAGE_BYTES_LIMIT,
+      FLUSH_TIMEOUT,
+      pageExitObservable
+    )
   })
 
   it('should add context to message', () => {
@@ -98,7 +110,7 @@ describe('batch', () => {
 
   it('should flush after timeout', () => {
     const clock = sinon.useFakeTimers()
-    batch = new Batch(transport, BATCH_MESSAGES_LIMIT, BATCH_BYTES_LIMIT, MESSAGE_BYTES_LIMIT, 10)
+    batch = new Batch(transport, BATCH_MESSAGES_LIMIT, BATCH_BYTES_LIMIT, MESSAGE_BYTES_LIMIT, 10, pageExitObservable)
     batch.add({ message: '50 bytes - xxxxxxxxxxxxxxxxxxxxxxxxx' })
     clock.tick(100)
 
@@ -107,9 +119,15 @@ describe('batch', () => {
     clock.restore()
   })
 
+  it('should flush on page exit', () => {
+    batch.add({ message: '1' })
+    pageExitObservable.notify({ reason: PageExitReason.UNLOADING })
+    expect(sendSpy).toHaveBeenCalledTimes(1)
+  })
+
   it('should not send a message with a bytes size above the limit', () => {
     const warnStub = sinon.stub(console, 'warn')
-    batch = new Batch(transport, BATCH_MESSAGES_LIMIT, BATCH_BYTES_LIMIT, 50, FLUSH_TIMEOUT)
+    batch = new Batch(transport, BATCH_MESSAGES_LIMIT, BATCH_BYTES_LIMIT, 50, FLUSH_TIMEOUT, pageExitObservable)
     batch.add({ message: '50 bytes - xxxxxxxxxxxxx' })
 
     expect(sendSpy).not.toHaveBeenCalled()
@@ -155,7 +173,14 @@ describe('batch', () => {
         transport.send({ data, bytesCount: BATCH_BYTES_LIMIT })
       },
     } as unknown as HttpRequest
-    const batch = new Batch(fakeRequest, BATCH_MESSAGES_LIMIT, BATCH_BYTES_LIMIT, MESSAGE_BYTES_LIMIT, FLUSH_TIMEOUT)
+    const batch = new Batch(
+      fakeRequest,
+      BATCH_MESSAGES_LIMIT,
+      BATCH_BYTES_LIMIT,
+      MESSAGE_BYTES_LIMIT,
+      FLUSH_TIMEOUT,
+      pageExitObservable
+    )
     const addTelemetryDebugFake = () => batch.add({ message: 'telemetry message' })
 
     batch.add({ message: 'normal message' })

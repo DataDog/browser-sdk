@@ -1,6 +1,8 @@
 import type { Configuration, EndpointBuilder } from '../domain/configuration'
 import type { RawError } from '../tools/error'
 import type { Context } from '../tools/context'
+import type { Observable } from '../tools/observable'
+import type { PageExitEvent } from '../browser/pageExitObservable'
 import { Batch } from './batch'
 import { createHttpRequest } from './httpRequest'
 
@@ -8,6 +10,7 @@ export function startBatchWithReplica<T extends Context>(
   configuration: Configuration,
   endpoint: EndpointBuilder,
   reportError: (error: RawError) => void,
+  pageExitObservable: Observable<PageExitEvent>,
   replicaEndpoint?: EndpointBuilder
 ) {
   const primaryBatch = createBatch(endpoint)
@@ -22,7 +25,8 @@ export function startBatchWithReplica<T extends Context>(
       configuration.batchMessagesLimit,
       configuration.batchBytesLimit,
       configuration.messageBytesLimit,
-      configuration.flushTimeout
+      configuration.flushTimeout,
+      pageExitObservable
     )
   }
 

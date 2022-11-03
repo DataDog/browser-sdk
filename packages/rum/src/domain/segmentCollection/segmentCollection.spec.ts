@@ -1,14 +1,9 @@
 import type { TimeStamp } from '@datadog/browser-core'
-import { DOM_EVENT, isIE } from '@datadog/browser-core'
+import { PageExitReason, isIE } from '@datadog/browser-core'
 import type { ViewContexts, ViewContext } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test/specHelper'
-import {
-  createNewEvent,
-  mockClock,
-  restorePageVisibility,
-  setPageVisibility,
-} from '@datadog/browser-core/test/specHelper'
+import { mockClock, restorePageVisibility } from '@datadog/browser-core/test/specHelper'
 import { createRumSessionManagerMock } from '../../../../rum-core/test/mockRumSessionManager'
 import type { BrowserRecord, BrowserSegmentMetadata, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
@@ -39,14 +34,12 @@ describe('startSegmentCollection', () => {
   function startSegmentCollection(context: SegmentContext | undefined) {
     const lifeCycle = new LifeCycle()
     const worker = new MockWorker()
-    const eventEmitter = document.createElement('div')
     const sendSpy = jasmine.createSpy<(data: Uint8Array, metadata: BrowserSegmentMetadata) => void>()
 
-    const { stop, addRecord } = doStartSegmentCollection(lifeCycle, () => context, sendSpy, worker, eventEmitter)
+    const { stop, addRecord } = doStartSegmentCollection(lifeCycle, () => context, sendSpy, worker)
     stopSegmentCollection = stop
     return {
       addRecord,
-      eventEmitter,
       lifeCycle,
       sendSpy,
       worker,
@@ -54,7 +47,7 @@ describe('startSegmentCollection', () => {
         // Make sure the segment is not empty
         addRecord(RECORD)
         // Flush segment
-        lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
+        lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.UNLOADING })
         worker.processAllMessages()
         return sendSpy.calls.mostRecent().args[1]
       },
@@ -85,7 +78,7 @@ describe('startSegmentCollection', () => {
   it('sends a segment', () => {
     const { lifeCycle, worker, sendSpy, addRecord } = startSegmentCollection(CONTEXT)
     addRecord(RECORD)
-    lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
+    lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.UNLOADING })
     worker.processAllMessages()
     expect(sendSpy).toHaveBeenCalledTimes(1)
   })
@@ -93,7 +86,7 @@ describe('startSegmentCollection', () => {
   it("ignores calls to addRecord if context can't be get", () => {
     const { lifeCycle, worker, sendSpy, addRecord } = startSegmentCollection(undefined)
     addRecord(RECORD)
-    lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
+    lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.UNLOADING })
     expect(worker.pendingData).toBe('')
     worker.processAllMessages()
     expect(sendSpy).not.toHaveBeenCalled()
@@ -106,43 +99,27 @@ describe('startSegmentCollection', () => {
 
     it('does not flush empty segments', () => {
       const { lifeCycle, sendSpy, worker } = startSegmentCollection(CONTEXT)
-      lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
+      lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.UNLOADING })
       worker.processAllMessages()
       expect(sendSpy).not.toHaveBeenCalled()
     })
 
-    it('flushes segment on unload', () => {
+    it('flushes segment on page exit because it is unloading', () => {
       const { lifeCycle, sendCurrentSegment } = startSegmentCollection(CONTEXT)
-      lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
+      lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.UNLOADING })
       expect(sendCurrentSegment().creation_reason).toBe('before_unload')
+    })
+
+    it('flushes segment on page exit because it gets hidden', () => {
+      const { lifeCycle, sendCurrentSegment } = startSegmentCollection(CONTEXT)
+      lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.HIDDEN })
+      expect(sendCurrentSegment().creation_reason).toBe('visibility_hidden')
     })
 
     it('flushes segment on view change', () => {
       const { lifeCycle, sendCurrentSegment } = startSegmentCollection(CONTEXT)
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {} as any)
       expect(sendCurrentSegment().creation_reason).toBe('view_change')
-    })
-
-    it('flushes segment when the page become hidden', () => {
-      setPageVisibility('hidden')
-      const { addRecord, eventEmitter, sendCurrentSegment, worker, sendSpy } = startSegmentCollection(CONTEXT)
-      addRecord(RECORD)
-      eventEmitter.dispatchEvent(createNewEvent(DOM_EVENT.VISIBILITY_CHANGE))
-
-      worker.processAllMessages()
-      expect(sendSpy).toHaveBeenCalledTimes(1)
-      expect(sendCurrentSegment().creation_reason).toBe('visibility_hidden')
-    })
-
-    it('does not flush segment when the page become visible', () => {
-      setPageVisibility('visible')
-      const { addRecord, eventEmitter, sendCurrentSegment, worker, sendSpy } = startSegmentCollection(CONTEXT)
-      addRecord(RECORD)
-      eventEmitter.dispatchEvent(createNewEvent(DOM_EVENT.VISIBILITY_CHANGE))
-
-      worker.processAllMessages()
-      expect(sendSpy).not.toHaveBeenCalled()
-      expect(sendCurrentSegment().creation_reason).not.toBe('visibility_hidden')
     })
 
     describe('segment_bytes_limit flush strategy', () => {
@@ -202,7 +179,7 @@ describe('startSegmentCollection', () => {
         const { lifeCycle, sendCurrentSegment, addRecord, sendSpy, worker } = startSegmentCollection(CONTEXT)
         addRecord(RECORD)
         clock.tick(BEFORE_SEGMENT_DURATION_LIMIT)
-        lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
+        lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.UNLOADING })
         addRecord(RECORD)
         clock.tick(BEFORE_SEGMENT_DURATION_LIMIT)
 

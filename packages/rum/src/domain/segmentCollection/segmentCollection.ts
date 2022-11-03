@@ -1,5 +1,5 @@
-import type { EventEmitter, TimeoutId } from '@datadog/browser-core'
-import { ONE_SECOND, addEventListener, DOM_EVENT, monitor } from '@datadog/browser-core'
+import type { TimeoutId } from '@datadog/browser-core'
+import { ONE_SECOND, monitor } from '@datadog/browser-core'
 import type { LifeCycle, ViewContexts, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { BrowserRecord, BrowserSegmentMetadata, CreationReason, SegmentContext } from '../../types'
@@ -77,8 +77,7 @@ export function doStartSegmentCollection(
   lifeCycle: LifeCycle,
   getSegmentContext: () => SegmentContext | undefined,
   send: (data: Uint8Array, metadata: BrowserSegmentMetadata, rawSegmentBytesCount: number) => void,
-  worker: DeflateWorker,
-  emitter: EventEmitter = window
+  worker: DeflateWorker
 ) {
   let state: SegmentCollectionState = {
     status: SegmentCollectionStatus.WaitingForInitialRecord,
@@ -89,19 +88,11 @@ export function doStartSegmentCollection(
     flushSegment('view_change')
   })
 
-  const { unsubscribe: unsubscribeBeforeUnload } = lifeCycle.subscribe(LifeCycleEventType.BEFORE_UNLOAD, () => {
-    flushSegment('before_unload')
-  })
-
-  const { stop: unsubscribeVisibilityChange } = addEventListener(
-    emitter,
-    DOM_EVENT.VISIBILITY_CHANGE,
-    () => {
-      if (document.visibilityState === 'hidden') {
-        flushSegment('visibility_hidden')
-      }
-    },
-    { capture: true }
+  const { unsubscribe: unsubscribePageExited } = lifeCycle.subscribe(
+    LifeCycleEventType.PAGE_EXITED,
+    (pageExitEvent) => {
+      flushSegment(pageExitEvent.reason)
+    }
   )
 
   function flushSegment(nextSegmentCreationReason?: CreationReason) {
@@ -171,8 +162,7 @@ export function doStartSegmentCollection(
     stop: () => {
       flushSegment()
       unsubscribeViewCreated()
-      unsubscribeBeforeUnload()
-      unsubscribeVisibilityChange()
+      unsubscribePageExited()
     },
   }
 }

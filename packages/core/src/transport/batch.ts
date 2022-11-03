@@ -1,7 +1,9 @@
 import { display } from '../tools/display'
 import type { Context } from '../tools/context'
-import { addEventListener, DOM_EVENT, jsonStringify, noop, objectValues } from '../tools/utils'
+import { jsonStringify, objectValues } from '../tools/utils'
 import { monitor } from '../tools/monitor'
+import type { Observable } from '../tools/observable'
+import type { PageExitEvent } from '../browser/pageExitObservable'
 import type { HttpRequest } from './httpRequest'
 
 // https://en.wikipedia.org/wiki/UTF-8
@@ -20,9 +22,9 @@ export class Batch {
     private batchBytesLimit: number,
     private messageBytesLimit: number,
     private flushTimeout: number,
-    private beforeUnloadCallback: () => void = noop
+    private pageExitObservable: Observable<PageExitEvent>
   ) {
-    this.setupFlushOnExit()
+    pageExitObservable.subscribe(() => this.flush(this.request.sendOnExit))
     this.flushPeriodically()
   }
 
@@ -46,10 +48,6 @@ export class Batch {
 
       sendFn({ data: messages.join('\n'), bytesCount })
     }
-  }
-
-  flushOnExit() {
-    this.flush(this.request.sendOnExit)
   }
 
   computeBytesCount(candidate: string) {
@@ -138,36 +136,5 @@ export class Batch {
       }),
       this.flushTimeout
     )
-  }
-
-  private setupFlushOnExit() {
-    /**
-     * With sendBeacon, requests are guaranteed to be successfully sent during document unload
-     */
-    // @ts-ignore this function is not always defined
-    if (navigator.sendBeacon) {
-      /**
-       * beforeunload is called before visibilitychange
-       * register first to be sure to be called before flush on beforeunload
-       * caveat: unload can still be canceled by another listener
-       */
-      addEventListener(window, DOM_EVENT.BEFORE_UNLOAD, this.beforeUnloadCallback)
-
-      /**
-       * Only event that guarantee to fire on mobile devices when the page transitions to background state
-       * (e.g. when user switches to a different application, goes to homescreen, etc), or is being unloaded.
-       */
-      addEventListener(document, DOM_EVENT.VISIBILITY_CHANGE, () => {
-        if (document.visibilityState === 'hidden') {
-          this.flushOnExit()
-        }
-      })
-      /**
-       * Safari does not support yet to send a request during:
-       * - a visibility change during doc unload (cf: https://bugs.webkit.org/show_bug.cgi?id=194897)
-       * - a page hide transition (cf: https://bugs.webkit.org/show_bug.cgi?id=188329)
-       */
-      addEventListener(window, DOM_EVENT.BEFORE_UNLOAD, () => this.flushOnExit())
-    }
   }
 }

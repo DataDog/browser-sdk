@@ -75,7 +75,6 @@ export function trackClickActions(
     history.reset()
   })
 
-  lifeCycle.subscribe(LifeCycleEventType.BEFORE_UNLOAD, stopClickChain)
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, stopClickChain)
 
   const { stop: stopActionEventsListener } = listenActionEvents<ClickActionBase>({

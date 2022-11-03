@@ -1,5 +1,6 @@
-import type { Context, TelemetryEvent, RawError } from '@datadog/browser-core'
+import type { Context, TelemetryEvent, RawError, Observable, PageExitEvent } from '@datadog/browser-core'
 import {
+  createPageExitObservable,
   TelemetryService,
   willSyntheticsInjectRum,
   areCookiesAuthorized,
@@ -48,7 +49,8 @@ export function startLogs(
         status: StatusType.error,
       },
     })
-  const telemetry = startLogsTelemetry(configuration, reportError)
+  const pageExitObservable = createPageExitObservable()
+  const telemetry = startLogsTelemetry(configuration, reportError, pageExitObservable)
   telemetry.setContextProvider(() => ({
     application: {
       id: getRUMInternalContext()?.application_id,
@@ -78,7 +80,7 @@ export function startLogs(
   startLogsAssembly(session, configuration, lifeCycle, getCommonContext, mainLogger, reportError)
 
   if (!canUseEventBridge()) {
-    startLogsBatch(configuration, lifeCycle, reportError)
+    startLogsBatch(configuration, lifeCycle, reportError, pageExitObservable)
   } else {
     startLogsBridge(lifeCycle)
   }
@@ -92,7 +94,11 @@ export function startLogs(
   }
 }
 
-function startLogsTelemetry(configuration: LogsConfiguration, reportError: (error: RawError) => void) {
+function startLogsTelemetry(
+  configuration: LogsConfiguration,
+  reportError: (error: RawError) => void,
+  pageExitObservable: Observable<PageExitEvent>
+) {
   const telemetry = startTelemetry(TelemetryService.LOGS, configuration)
   if (canUseEventBridge()) {
     const bridge = getEventBridge<'internal_telemetry', TelemetryEvent>()!
@@ -102,6 +108,7 @@ function startLogsTelemetry(configuration: LogsConfiguration, reportError: (erro
       configuration,
       configuration.rumEndpointBuilder,
       reportError,
+      pageExitObservable,
       configuration.replica?.rumEndpointBuilder
     )
     telemetry.observable.subscribe((event) => telemetryBatch.add(event, isTelemetryReplicationAllowed(configuration)))
