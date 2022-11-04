@@ -397,7 +397,7 @@ See `sessionReplaySampleRate`.
 `sessionReplaySampleRate`
 : Optional<br/>
 **Type**: Number<br/>
-**Default**: `100`<br/>
+**Default**: `0`<br/>
 The percentage of tracked sessions with [Browser RUM & Session Replay pricing][11] features: `100` for all, `0` for none. For more details about `sessionReplaySampleRate`, see the [sampling configuration][21].
 
 `silentMultipleInit`
