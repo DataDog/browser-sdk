@@ -51,7 +51,7 @@ datadogRum.init({
   //  env: 'production',
   //  version: '1.0.0',
   sampleRate: 100,
-  sessionReplaySampleRate: 100, // if not included, the default is 100
+  sessionReplaySampleRate: 100, // if not included, the default is 0 to diable session replay. See https://docs.datadoghq.com/real_user_monitoring/session_replay/
   trackResources: true,
   trackLongTasks: true,
   trackInteractions: true,
@@ -128,7 +128,7 @@ Add the generated code snippet to the head tag of every HTML page you want to mo
       //  env: 'production',
       //  version: '1.0.0',
       sampleRate: 100,
-      sessionReplaySampleRate: 100, // if not included, the default is 100
+      sessionReplaySampleRate: 100, // if not included, the default is 0 to diable session replay. See https://docs.datadoghq.com/real_user_monitoring/session_replay/
       trackResources: true,
       trackLongTasks: true,
       trackInteractions: true,
@@ -220,7 +220,7 @@ Add the generated code snippet to the head tag (in front of any other script tag
       //  env: 'production',
       //  version: '1.0.0',
       sampleRate: 100,
-      sessionReplaySampleRate: 100, // if not included, the default is 100
+      sessionReplaySampleRate: 100, // if not included, the default is 0 to diable session replay. See https://docs.datadoghq.com/real_user_monitoring/session_replay/
       trackResources: true,
       trackLongTasks: true,
       trackInteractions: true,
@@ -292,7 +292,7 @@ window.DD_RUM.init({
   clientToken: 'XXX',
   site: 'datadoghq.com',
   sampleRate: 100,
-  sessionReplaySampleRate: 100, // if not included, the default is 100
+  sessionReplaySampleRate: 100, // if not included, the default is 0 to diable session replay. See https://docs.datadoghq.com/real_user_monitoring/session_replay/
   trackResources: true,
   trackLongTasks: true,
 })

@@ -126,7 +126,7 @@ export function validateAndBuildRumConfiguration(
       applicationId: initConfiguration.applicationId,
       version: initConfiguration.version,
       actionNameAttribute: initConfiguration.actionNameAttribute,
-      sessionReplaySampleRate: initConfiguration.sessionReplaySampleRate ?? premiumSampleRate ?? 100,
+      sessionReplaySampleRate: initConfiguration.sessionReplaySampleRate ?? premiumSampleRate ?? 0,
       oldPlansBehavior: initConfiguration.sessionReplaySampleRate === undefined,
       allowedTracingOrigins: initConfiguration.allowedTracingOrigins ?? [],
       tracingSampleRate: initConfiguration.tracingSampleRate,
