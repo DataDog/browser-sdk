@@ -94,7 +94,7 @@ To receive all logs and errors, load and configure the SDK at the beginning of t
 </html>
 ```
 
-**Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the SDK.
+**Note**: The `window.DD_LOGS` check prevents issues when a loading failure occurs with the SDK.
 
 ### TypeScript
 
@@ -174,7 +174,7 @@ DD_LOGS.onReady(function () {
 window.DD_LOGS && DD_LOGS.logger.info('Button clicked', { name: 'buttonName', id: 123 })
 ```
 
-**Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the SDK.
+**Note**: The `window.DD_LOGS` check prevents issues when a loading failure occurs with the SDK.
 
 #### Results
 
@@ -471,7 +471,7 @@ if (window.DD_LOGS) {
 }
 ```
 
-**Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the SDK.
+**Note**: The `window.DD_LOGS` check prevents issues when a loading failure occurs with the SDK.
 
 ### Overwrite context
 
@@ -570,7 +570,7 @@ window.DD_LOGS && DD_LOGS.clearGlobalContext()
 window.DD_LOGS && DD_LOGS.getGlobalContext() // => {}
 ```
 
-**Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the SDK.
+**Note**: The `window.DD_LOGS` check prevents issues when a loading failure occurs with the SDK.
 
 #### User context
 
@@ -658,7 +658,7 @@ window.DD_LOGS && DD_LOGS.clearUser()
 window.DD_LOGS && DD_LOGS.getUser() // => {}
 ```
 
-**Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the SDK.
+**Note**: The `window.DD_LOGS` check prevents issues when a loading failure occurs with the SDK.
 
 #### Logger context
 
@@ -705,7 +705,7 @@ window.DD_LOGS && DD_LOGS.setContext("{'env': 'staging'}")
 window.DD_LOGS && DD_LOGS.addContext('referrer', document.referrer)
 ```
 
-**Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the SDK.
+**Note**: The `window.DD_LOGS` check prevents issues when a loading failure occurs with the SDK.
 
 ### Filter by status
 
@@ -747,7 +747,7 @@ For CDN sync, use:
 window.DD_LOGS && DD_LOGS.logger.setLevel('<LEVEL>')
 ```
 
-**Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the SDK.
+**Note**: The `window.DD_LOGS` check prevents issues when a loading failure occurs with the SDK.
 
 ### Change the destination
 
@@ -794,7 +794,7 @@ window.DD_LOGS && DD_LOGS.logger.setHandler('<HANDLER>')
 window.DD_LOGS && DD_LOGS.logger.setHandler(['<HANDLER1>', '<HANDLER2>'])
 ```
 
-**Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the SDK.
+**Note**: The `window.DD_LOGS` check prevents issues when a loading failure occurs with the SDK.
 
 ### Access internal context
 
