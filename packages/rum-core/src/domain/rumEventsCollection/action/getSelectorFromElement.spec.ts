@@ -1,6 +1,6 @@
 import type { IsolatedDom } from '../../../../test/createIsolatedDom'
 import { createIsolatedDom } from '../../../../test/createIsolatedDom'
-import { getSelectorsFromElement, supportScopeSelector } from './getSelectorsFromElement'
+import { getSelectorsFromElement, supportScopeSelector } from './getSelectorFromElement'
 
 describe('getSelectorFromElement', () => {
   let isolatedDom: IsolatedDom
