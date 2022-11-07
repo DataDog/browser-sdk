@@ -78,18 +78,15 @@ describe('logs', () => {
     .withLogs({ forwardErrorsToLogs: true })
     .run(async ({ serverEvents, baseUrl, servers }) => {
       await browserExecuteAsync((done) => {
-        fetch('/throw-large-response').then(
-          (response) => {
-            // The body stream needs to be cancelled, else the browser will still download the whole
-            // response even if it is unused.
-            response
-              .body!.getReader()
-              .cancel()
-              .catch((error) => console.log(error))
-            done(undefined)
-          },
-          (error) => console.log(error)
-        )
+        const controller = new AbortController()
+        const signal = controller.signal
+
+        setTimeout(() => {
+          controller.abort()
+          setTimeout(() => done(undefined), 1000)
+        }, 2000)
+
+        fetch('/throw-large-response', { signal }).then((_) => ({}), console.log)
       })
 
       await flushEvents()
@@ -104,7 +101,7 @@ describe('logs', () => {
         // When reading the request, chunks length are probably not aligning perfectly with the
         // response length limit, so it sends few more bytes than necessary. Add a margin of error
         // to verify that it's still close to the expected limit.
-        DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT * 2
+        DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT * 4
       )
       expect(servers.base.app.getLargeResponseWroteSize()).toBeGreaterThanOrEqual(
         DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT
