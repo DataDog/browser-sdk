@@ -22,50 +22,54 @@ export const STABLE_ATTRIBUTES = [
   'data-source-file',
 ]
 
+type SelectorGetter = (element: Element, actionNameAttribute: string | undefined) => string | undefined
+
+// Selectors to use if they target a single element on the whole document. Those selectors are
+// considered as "stable" and uniquely identify an element regardless of the page state. If we find
+// one, we should consider the selector "complete" and stop iterating over ancestors.
+const GLOBALLY_UNIQUE_SELECTOR_GETTERS: SelectorGetter[] = [getStableAttributeSelector, getIDSelector]
+
+// Selectors to use if they target a single element among an element descendants. Those selectors
+// are more brittle than "globally unique" selectors and should be combined with ancestor selectors
+// to improve specificity.
+const UNIQUE_AMONG_CHILDREN_SELECTOR_GETTERS: SelectorGetter[] = [
+  getStableAttributeSelector,
+  getClassSelector,
+  getTagNameSelector,
+]
+
 export function getSelectorFromElement(targetElement: Element, actionNameAttribute: string | undefined) {
-  let attributeSelectors = getStableAttributeSelectors()
-
-  if (actionNameAttribute) {
-    attributeSelectors = [(element: Element) => getAttributeSelector(actionNameAttribute, element)].concat(
-      attributeSelectors
-    )
-  }
-
-  const globallyUniqueSelectorStrategies = attributeSelectors.concat(getIDSelector)
-  const uniqueAmongChildrenSelectorStrategies = attributeSelectors.concat([getClassSelector, getTagNameSelector])
-
   let targetElementSelector = ''
   let element: Element | null = targetElement
 
   while (element && element.nodeName !== 'HTML') {
     const globallyUniqueSelector = findSelector(
       element,
-      globallyUniqueSelectorStrategies,
+      GLOBALLY_UNIQUE_SELECTOR_GETTERS,
       isSelectorUniqueGlobally,
+      actionNameAttribute,
       targetElementSelector
     )
     if (globallyUniqueSelector) {
-      return combineSelector(globallyUniqueSelector, targetElementSelector)
+      return globallyUniqueSelector
     }
 
     const uniqueSelectorAmongChildren = findSelector(
       element,
-      uniqueAmongChildrenSelectorStrategies,
+      UNIQUE_AMONG_CHILDREN_SELECTOR_GETTERS,
       isSelectorUniqueAmongSiblings,
+      actionNameAttribute,
       targetElementSelector
     )
-    targetElementSelector = combineSelector(
-      uniqueSelectorAmongChildren || getPositionSelector(element) || getTagNameSelector(element),
-      targetElementSelector
-    )
+    targetElementSelector =
+      uniqueSelectorAmongChildren ||
+      combineSelector(getPositionSelector(element) || getTagNameSelector(element), targetElementSelector)
 
     element = element.parentElement
   }
 
   return targetElementSelector
 }
-
-type GetSelector = (element: Element) => string | undefined
 
 function isGeneratedValue(value: string) {
   // To compute the "URL path group", the backend replaces every URL path parts as a question mark
@@ -105,19 +109,21 @@ function getTagNameSelector(element: Element): string {
   return element.tagName
 }
 
-let stableAttributeSelectorsCache: GetSelector[] | undefined
-function getStableAttributeSelectors() {
-  if (!stableAttributeSelectorsCache) {
-    stableAttributeSelectorsCache = STABLE_ATTRIBUTES.map(
-      (attribute) => (element: Element) => getAttributeSelector(attribute, element)
-    )
+function getStableAttributeSelector(element: Element, actionNameAttribute: string | undefined): string | undefined {
+  if (actionNameAttribute) {
+    const selector = getAttributeSelector(actionNameAttribute)
+    if (selector) return selector
   }
-  return stableAttributeSelectorsCache
-}
 
-function getAttributeSelector(attributeName: string, element: Element): string | undefined {
-  if (element.hasAttribute(attributeName)) {
-    return `${element.tagName}[${attributeName}="${cssEscape(element.getAttribute(attributeName)!)}"]`
+  for (const attributeName of STABLE_ATTRIBUTES) {
+    const selector = getAttributeSelector(attributeName)
+    if (selector) return selector
+  }
+
+  function getAttributeSelector(attributeName: string) {
+    if (element.hasAttribute(attributeName)) {
+      return `${element.tagName}[${attributeName}="${cssEscape(element.getAttribute(attributeName)!)}"]`
+    }
   }
 }
 
@@ -148,15 +154,19 @@ function getPositionSelector(element: Element): string | undefined {
 
 function findSelector(
   element: Element,
-  selectorGetters: GetSelector[],
+  selectorGetters: SelectorGetter[],
   predicate: (element: Element, selector: string) => boolean,
+  actionNameAttribute: string | undefined,
   childSelector?: string
 ) {
   for (const selectorGetter of selectorGetters) {
-    const elementSelector = selectorGetter(element)
-    const fullSelector = elementSelector && combineSelector(elementSelector, childSelector)
-    if (fullSelector && predicate(element, fullSelector)) {
-      return elementSelector
+    const elementSelector = selectorGetter(element, actionNameAttribute)
+    if (!elementSelector) {
+      continue
+    }
+    const fullSelector = combineSelector(elementSelector, childSelector)
+    if (predicate(element, fullSelector)) {
+      return fullSelector
     }
   }
 }
