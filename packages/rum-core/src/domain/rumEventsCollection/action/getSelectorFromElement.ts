@@ -22,35 +22,47 @@ export const STABLE_ATTRIBUTES = [
   'data-source-file',
 ]
 
-export function getSelectorsFromElement(element: Element, actionNameAttribute: string | undefined) {
+export function getSelectorFromElement(targetElement: Element, actionNameAttribute: string | undefined) {
   let attributeSelectors = getStableAttributeSelectors()
+
   if (actionNameAttribute) {
     attributeSelectors = [(element: Element) => getAttributeSelector(actionNameAttribute, element)].concat(
       attributeSelectors
     )
   }
+
   const globallyUniqueSelectorStrategies = attributeSelectors.concat(getIDSelector)
   const uniqueAmongChildrenSelectorStrategies = attributeSelectors.concat([getClassSelector, getTagNameSelector])
-  return {
-    selector: getSelectorFromElement(element, globallyUniqueSelectorStrategies, uniqueAmongChildrenSelectorStrategies),
-    selector_combined: getSelectorFromElement(
+
+  let targetElementSelector = ''
+  let element: Element | null = targetElement
+
+  while (element && element.nodeName !== 'HTML') {
+    const globallyUniqueSelector = findSelector(
       element,
       globallyUniqueSelectorStrategies,
-      uniqueAmongChildrenSelectorStrategies,
-      { useCombinedSelectors: true }
-    ),
-    selector_stopping_when_unique: getSelectorFromElement(
+      isSelectorUniqueGlobally,
+      targetElementSelector
+    )
+    if (globallyUniqueSelector) {
+      return combineSelector(globallyUniqueSelector, targetElementSelector)
+    }
+
+    const uniqueSelectorAmongChildren = findSelector(
       element,
-      globallyUniqueSelectorStrategies.concat([getClassSelector, getTagNameSelector]),
-      uniqueAmongChildrenSelectorStrategies
-    ),
-    selector_all_together: getSelectorFromElement(
-      element,
-      globallyUniqueSelectorStrategies.concat([getClassSelector, getTagNameSelector]),
       uniqueAmongChildrenSelectorStrategies,
-      { useCombinedSelectors: true }
-    ),
+      isSelectorUniqueAmongSiblings,
+      targetElementSelector
+    )
+    targetElementSelector = combineSelector(
+      uniqueSelectorAmongChildren || getPositionSelector(element) || getTagNameSelector(element),
+      targetElementSelector
+    )
+
+    element = element.parentElement
   }
+
+  return targetElementSelector
 }
 
 type GetSelector = (element: Element) => string | undefined
@@ -65,43 +77,6 @@ function isGeneratedValue(value: string) {
   // CSS selectors so it should be fine most of the time. We might want to allow customers to
   // provide their own `isGeneratedValue` at some point.
   return /[0-9]/.test(value)
-}
-
-function getSelectorFromElement(
-  targetElement: Element,
-  globallyUniqueSelectorStrategies: GetSelector[],
-  uniqueAmongChildrenSelectorStrategies: GetSelector[],
-  { useCombinedSelectors = false } = {}
-): string {
-  let targetElementSelector = ''
-  let element: Element | null = targetElement
-
-  while (element && element.nodeName !== 'HTML') {
-    const globallyUniqueSelector = findSelector(
-      element,
-      globallyUniqueSelectorStrategies,
-      isSelectorUniqueGlobally,
-      useCombinedSelectors ? targetElementSelector : undefined
-    )
-    if (globallyUniqueSelector) {
-      return combineSelector(globallyUniqueSelector, targetElementSelector)
-    }
-
-    const uniqueSelectorAmongChildren = findSelector(
-      element,
-      uniqueAmongChildrenSelectorStrategies,
-      isSelectorUniqueAmongSiblings,
-      useCombinedSelectors ? targetElementSelector : undefined
-    )
-    targetElementSelector = combineSelector(
-      uniqueSelectorAmongChildren || getPositionSelector(element) || getTagNameSelector(element),
-      targetElementSelector
-    )
-
-    element = element.parentElement
-  }
-
-  return targetElementSelector
 }
 
 function getIDSelector(element: Element): string | undefined {
