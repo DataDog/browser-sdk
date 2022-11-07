@@ -77,6 +77,9 @@ function processRequest(
         status_code: request.status,
         url: request.url,
       },
+      _dd: {
+        resolveDuration: request.resolveDuration ? toServerDuration(request.resolveDuration) : undefined,
+      },
       type: RumEventType.RESOURCE as const,
     },
     tracingInfo,

@@ -88,6 +88,7 @@ describe('resourceCollection', () => {
       type: RumEventType.RESOURCE,
       _dd: {
         discarded: false,
+        resolveDuration: undefined,
       },
     })
     expect(rawRumEvents[0].domainContext).toEqual({
@@ -110,6 +111,7 @@ describe('resourceCollection', () => {
       LifeCycleEventType.REQUEST_COMPLETED,
       createCompletedRequest({
         duration: 100 as Duration,
+        resolveDuration: 50 as Duration,
         method: 'GET',
         startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
         status: 200,
@@ -135,6 +137,7 @@ describe('resourceCollection', () => {
       type: RumEventType.RESOURCE,
       _dd: {
         discarded: false,
+        resolveDuration: (50 * 1e6) as ServerDuration,
       },
     })
     expect(rawRumEvents[0].domainContext).toEqual({

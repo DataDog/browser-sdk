@@ -19,6 +19,7 @@ export interface FetchStartContext extends FetchContextBase {
 
 export interface FetchCompleteContext extends FetchContextBase {
   state: 'complete'
+  resolveDuration?: Duration
   duration: Duration
   status: number
   response?: Response
@@ -93,25 +94,58 @@ function afterSend(
   responsePromise: Promise<Response>,
   startContext: FetchStartContext
 ) {
-  const reportFetch = (response: Response | Error) => {
-    const context = startContext as unknown as FetchCompleteContext
-    context.state = 'complete'
-    context.duration = elapsed(context.startClocks.timeStamp, timeStampNow())
-
+  const reportFetch = (context: FetchCompleteContext, response: Response | Error) => {
     if ('stack' in response || response instanceof Error) {
       context.status = 0
       context.isAborted = response instanceof DOMException && response.code === DOMException.ABORT_ERR
       context.error = response
-
-      observable.notify(context)
     } else if ('status' in response) {
       context.response = response
       context.responseType = response.type
       context.status = response.status
       context.isAborted = false
+    }
+    observable.notify(context)
+  }
 
-      observable.notify(context)
+  const onFulfilled = (response: Response) => {
+    const context = startContext as unknown as FetchCompleteContext
+    context.state = 'complete'
+    context.resolveDuration = elapsed(context.startClocks.timeStamp, timeStampNow())
+
+    const responseClone = response.clone()
+    const reader = responseClone.body?.getReader()
+
+    if (reader && ReadableStream) {
+      new ReadableStream({
+        start(controller) {
+          return pump()
+
+          function pump(): Promise<undefined> {
+            return (reader as ReadableStreamDefaultReader<Uint8Array>).read().then(({ done }) => {
+              if (done) {
+                controller.close()
+                context.duration = elapsed(context.startClocks.timeStamp, timeStampNow())
+                reportFetch(context, response)
+                return
+              }
+              return pump()
+            })
+          }
+        },
+      })
+    } else {
+      context.duration = elapsed(context.startClocks.timeStamp, timeStampNow())
+      reportFetch(context, response)
     }
   }
-  responsePromise.then(monitor(reportFetch), monitor(reportFetch))
+
+  const onRejected = (response: Response | Error) => {
+    const context = startContext as unknown as FetchCompleteContext
+    context.state = 'complete'
+    context.duration = elapsed(context.startClocks.timeStamp, timeStampNow())
+    reportFetch(context, response)
+  }
+
+  responsePromise.then(monitor(onFulfilled), monitor(onRejected))
 }

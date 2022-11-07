@@ -39,6 +39,7 @@ export interface RequestCompleteEvent {
   status: number
   responseType?: string
   startClocks: ClocksState
+  resolveDuration?: Duration
   duration: Duration
   spanId?: TraceIdentifier
   traceId?: TraceIdentifier
@@ -122,6 +123,7 @@ export function trackFetch(lifeCycle: LifeCycle, configuration: RumConfiguration
         tracer.clearTracingIfNeeded(context)
 
         lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
+          resolveDuration: context.resolveDuration,
           duration: context.duration,
           method: context.method,
           requestIndex: context.requestIndex,
