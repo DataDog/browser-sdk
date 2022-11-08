@@ -196,30 +196,6 @@ describe('rum resources', () => {
       })
   })
 
-  describe('fetch should have associated performance entry', () => {
-    createTest('track fetch performance entries')
-      .withRum()
-      .withSetup(bundleSetup)
-      .run(async ({ serverEvents }) => {
-        await browserExecuteAsync((done) => {
-          fetch('/ok').then(
-            () => done(undefined),
-            () => {
-              throw Error('Issue with fetch call')
-            }
-          )
-        })
-
-        await flushEvents()
-
-        const resourceEvent = serverEvents.rumResources.find((event) => event.resource.type === 'fetch')
-
-        expect(resourceEvent?.resource.size).toBeDefined()
-        expect(resourceEvent?.resource.download).toBeDefined()
-        expect(resourceEvent?.resource.first_byte).toBeDefined()
-      })
-  })
-
   createTest('track redirect fetch timings')
     .withRum()
     .run(async ({ serverEvents }) => {
@@ -236,6 +212,7 @@ describe('rum resources', () => {
       expect(resourceEvent).not.toBeUndefined()
       expect(resourceEvent.resource.method).toEqual('GET')
       expect(resourceEvent.resource.status_code).toEqual(200)
+      expect(resourceEvent._dd.resolveDuration).toBeGreaterThan(0)
       expectToHaveValidTimings(resourceEvent)
       expect(resourceEvent.resource.redirect).not.toBeUndefined()
       expect(resourceEvent.resource.redirect!.duration).toBeGreaterThan(0)
@@ -257,6 +234,7 @@ describe('rum resources', () => {
       expect(resourceEvent).not.toBeUndefined()
       expect(resourceEvent.resource.method).toEqual('GET')
       expect(resourceEvent.resource.status_code).toEqual(200)
+      expect(resourceEvent._dd.resolveDuration).toBeGreaterThan(0)
       expectToHaveValidTimings(resourceEvent)
       expect(resourceEvent.resource.redirect).not.toBeUndefined()
       expect(resourceEvent.resource.redirect!.duration).toBeGreaterThan(0)
