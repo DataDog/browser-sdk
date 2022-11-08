@@ -8,7 +8,6 @@ import {
   assign,
   isNumber,
   addTelemetryDebug,
-  shallowClone,
 } from '@datadog/browser-core'
 import type { ClocksState } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
@@ -66,15 +65,12 @@ function processRequest(
   const matchingTiming = matchRequestTiming(request)
 
   if (!hasLoggedMissingResource && !matchingTiming) {
-    addTelemetryDebug(
-      'Missing PerformanceResourceTiming',
-      Object.assign(shallowClone(request), {
-        url: undefined,
-        spanId: undefined,
-        traceId: undefined,
-        traceSampled: undefined,
-      })
-    )
+    addTelemetryDebug('Missing PerformanceResourceTiming', {
+      duration: request.duration,
+      resolveDuration: request.resolveDuration,
+      status: request.status,
+      requestType: request.type === RequestType.XHR ? 'xhr' : 'fetch',
+    })
     hasLoggedMissingResource = true
   }
 
