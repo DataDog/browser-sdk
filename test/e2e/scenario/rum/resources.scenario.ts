@@ -200,29 +200,7 @@ describe('rum resources', () => {
     .withRum()
     .run(async ({ serverEvents }) => {
       await browserExecuteAsync((done) => {
-        fetch(`/redirect?duration=${200}`).then(
-          () => done(undefined),
-          () => {
-            throw Error('Issue with fetch call')
-          }
-        )
-      })
-      await flushEvents()
-      const resourceEvent = serverEvents.rumResources.find((r) => r.resource.url.includes('/redirect'))!
-      expect(resourceEvent).not.toBeUndefined()
-      expect(resourceEvent.resource.method).toEqual('GET')
-      expect(resourceEvent.resource.status_code).toEqual(200)
-      expect(resourceEvent._dd.resolveDuration).toBeGreaterThan(0)
-      expectToHaveValidTimings(resourceEvent)
-      expect(resourceEvent.resource.redirect).not.toBeUndefined()
-      expect(resourceEvent.resource.redirect!.duration).toBeGreaterThan(0)
-    })
-
-  createTest('track dns lookup fetch timings')
-    .withRum()
-    .run(async ({ serverEvents }) => {
-      await browserExecuteAsync((done) => {
-        fetch(`/redirect?duration=${200}`).then(
+        fetch('/redirect?duration=200').then(
           () => done(undefined),
           () => {
             throw Error('Issue with fetch call')
