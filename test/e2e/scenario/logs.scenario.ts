@@ -97,12 +97,6 @@ describe('logs', () => {
       const ellipsisSize = 3
       expect(serverEvents.logs[0].error?.stack?.length).toBe(DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT + ellipsisSize)
 
-      expect(servers.base.app.getLargeResponseWroteSize()).toBeLessThan(
-        // When reading the request, chunks length are probably not aligning perfectly with the
-        // response length limit, so it sends few more bytes than necessary. Add a margin of error
-        // to verify that it's still close to the expected limit.
-        DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT * 4
-      )
       expect(servers.base.app.getLargeResponseWroteSize()).toBeGreaterThanOrEqual(
         DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT
       )
