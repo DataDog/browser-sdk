@@ -25,6 +25,12 @@ const COMMON_CONTEXT: CommonContext = {
     url: 'url_from_common_context',
   },
   context: { common_context_key: 'common_context_value' },
+  user: {},
+}
+
+const COMMON_CONTEXT_WITH_USER: CommonContext = {
+  ...COMMON_CONTEXT,
+  user: { id: 'id', name: 'name', email: 'test@test.com' },
 }
 
 describe('startLogsAssembly', () => {
@@ -126,6 +132,7 @@ describe('startLogsAssembly', () => {
           url: 'url_from_saved_common_context',
         },
         context: { foo: 'bar' },
+        user: { email: 'test@test.com' },
       }
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE, savedCommonContext })
 
@@ -266,6 +273,73 @@ describe('startLogsAssembly', () => {
       })
 
       expect(serverLogs[0].foo).toBe('bar')
+    })
+  })
+})
+
+describe('user management', () => {
+  const sessionManager: LogsSessionManager = {
+    findTrackedSession: () => (sessionIsTracked ? { id: SESSION_ID } : undefined),
+  }
+
+  let sessionIsTracked: boolean
+  let lifeCycle: LifeCycle
+  let serverLogs: Array<LogsEvent & Context> = []
+
+  const beforeSend: (event: LogsEvent) => void | boolean = noop
+  const mainLogger = new Logger(() => noop)
+  const configuration = {
+    ...validateAndBuildLogsConfiguration(initConfiguration)!,
+    beforeSend: (x: LogsEvent) => beforeSend(x),
+  }
+
+  beforeEach(() => {
+    sessionIsTracked = true
+    lifeCycle = new LifeCycle()
+    lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (serverRumEvent) => serverLogs.push(serverRumEvent))
+  })
+
+  afterEach(() => {
+    delete window.DD_RUM
+    serverLogs = []
+  })
+
+  it('should not output usr key if user is not set', () => {
+    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT, mainLogger, noop)
+
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
+    expect(serverLogs[0].usr).toBeUndefined()
+  })
+
+  it('should include user data when user has been set', () => {
+    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT_WITH_USER, mainLogger, noop)
+
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
+    expect(serverLogs[0].usr).toEqual({
+      id: 'id',
+      name: 'name',
+      email: 'test@test.com',
+    })
+  })
+
+  it('should prioritize global context over user context', () => {
+    const globalContextWithUser = {
+      ...COMMON_CONTEXT_WITH_USER,
+      context: {
+        ...COMMON_CONTEXT.context,
+        usr: {
+          id: 4242,
+          name: 'solution',
+        },
+      },
+    }
+    startLogsAssembly(sessionManager, configuration, lifeCycle, () => globalContextWithUser, mainLogger, noop)
+
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
+    expect(serverLogs[0].usr).toEqual({
+      id: 4242,
+      name: 'solution',
+      email: 'test@test.com',
     })
   })
 })

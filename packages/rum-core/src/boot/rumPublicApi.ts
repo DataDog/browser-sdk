@@ -1,4 +1,4 @@
-import type { Context, InitConfiguration, TimeStamp, RelativeTime } from '@datadog/browser-core'
+import type { Context, InitConfiguration, TimeStamp, RelativeTime, User } from '@datadog/browser-core'
 import {
   willSyntheticsInjectRum,
   assign,
@@ -15,11 +15,13 @@ import {
   createHandlingStack,
   canUseEventBridge,
   areCookiesAuthorized,
+  checkUser,
+  sanitizeUser,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewContexts } from '../domain/contexts/viewContexts'
 import type { RumSessionManager } from '../domain/rumSessionManager'
-import type { User, ReplayStats } from '../rawRumEvent.types'
+import type { ReplayStats } from '../rawRumEvent.types'
 import { ActionType } from '../rawRumEvent.types'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import { validateAndBuildRumConfiguration } from '../domain/configuration'
@@ -222,9 +224,7 @@ export function makeRumPublicApi(
     }),
 
     setUser: monitor((newUser: User) => {
-      if (typeof newUser !== 'object' || !newUser) {
-        display.error('Unsupported user:', newUser)
-      } else {
+      if (checkUser(newUser)) {
         userContextManager.setContext(sanitizeUser(newUser as Context))
       }
     }),
@@ -248,20 +248,6 @@ export function makeRumPublicApi(
     stopSessionReplayRecording: monitor(recorderApi.stop),
   })
   return rumPublicApi
-
-  function sanitizeUser(newUser: Context) {
-    const shallowClonedUser = assign(newUser, {})
-    if ('id' in shallowClonedUser) {
-      shallowClonedUser.id = String(shallowClonedUser.id)
-    }
-    if ('name' in shallowClonedUser) {
-      shallowClonedUser.name = String(shallowClonedUser.name)
-    }
-    if ('email' in shallowClonedUser) {
-      shallowClonedUser.email = String(shallowClonedUser.email)
-    }
-    return shallowClonedUser
-  }
 
   function canHandleSession(initConfiguration: RumInitConfiguration): boolean {
     if (!areCookiesAuthorized(buildCookieOptions(initConfiguration))) {

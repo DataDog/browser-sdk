@@ -1,4 +1,4 @@
-import type { InitConfiguration } from '@datadog/browser-core'
+import type { Context, InitConfiguration, User } from '@datadog/browser-core'
 import {
   assign,
   BoundedBuffer,
@@ -9,6 +9,8 @@ import {
   deepClone,
   canUseEventBridge,
   timeStampNow,
+  checkUser,
+  sanitizeUser,
 } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
@@ -33,6 +35,8 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
   let isAlreadyInitialized = false
 
   const globalContextManager = createContextManager()
+  const userContextManager = createContextManager()
+
   const customLoggers: { [name: string]: Logger | undefined } = {}
   let getInternalContextStrategy: StartLogsResult['getInternalContext'] = () => undefined
 
@@ -56,7 +60,8 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
         referrer: document.referrer,
         url: window.location.href,
       },
-      context: globalContextManager.get(),
+      context: globalContextManager.getContext(),
+      user: userContextManager.getContext(),
     }
   }
 
@@ -125,6 +130,23 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
     getInitConfiguration: monitor(() => getInitConfigurationStrategy()),
 
     getInternalContext: monitor((startTime?: number | undefined) => getInternalContextStrategy(startTime)),
+
+    setUser: monitor((newUser: User) => {
+      if (checkUser(newUser)) {
+        userContextManager.setContext(sanitizeUser(newUser as Context))
+      }
+    }),
+
+    getUser: monitor(userContextManager.getContext),
+
+    setUserProperty: monitor((key, property) => {
+      const sanitizedProperty = sanitizeUser({ [key]: property })[key]
+      userContextManager.setContextProperty(key, sanitizedProperty)
+    }),
+
+    removeUserProperty: monitor(userContextManager.removeContextProperty),
+
+    clearUser: monitor(userContextManager.clearContext),
   })
 
   function overrideInitConfigurationForBridge<C extends InitConfiguration>(initConfiguration: C): C {
