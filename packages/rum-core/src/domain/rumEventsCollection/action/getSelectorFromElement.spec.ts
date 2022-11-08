@@ -151,7 +151,7 @@ describe('getSelectorFromElement', () => {
           : // Degraded support for browsers not supporting scoped selector: the selector is still
             // correct, but its quality is a bit worse, as using a stable attribute reduce the
             // chances of matching a completely unrelated element.
-            'BODY>BUTTON'
+            'BODY>BUTTON:nth-of-type(1)'
       )
     })
   })
