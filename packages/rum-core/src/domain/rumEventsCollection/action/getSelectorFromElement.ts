@@ -62,8 +62,7 @@ export function getSelectorFromElement(targetElement: Element, actionNameAttribu
       targetElementSelector
     )
     targetElementSelector =
-      uniqueSelectorAmongChildren ||
-      combineSelector(getPositionSelector(element) || getTagNameSelector(element), targetElementSelector)
+      uniqueSelectorAmongChildren || combineSelector(getPositionSelector(element), targetElementSelector)
 
     element = element.parentElement
   }
@@ -127,29 +126,18 @@ function getStableAttributeSelector(element: Element, actionNameAttribute: strin
   }
 }
 
-function getPositionSelector(element: Element): string | undefined {
-  const parent = element.parentElement!
-  let sibling = parent.firstElementChild
-  let currentIndex = 0
-  let elementIndex: number | undefined
+function getPositionSelector(element: Element): string {
+  let sibling = element.parentElement!.firstElementChild
+  let elementIndex = 1
 
-  while (sibling) {
+  while (sibling && sibling !== element) {
     if (sibling.tagName === element.tagName) {
-      currentIndex += 1
-      if (sibling === element) {
-        elementIndex = currentIndex
-      }
-
-      if (elementIndex !== undefined && currentIndex > 1) {
-        // Performance improvement: avoid iterating over all children, stop as soon as we are sure
-        // the element is not alone
-        break
-      }
+      elementIndex += 1
     }
     sibling = sibling.nextElementSibling
   }
 
-  return currentIndex > 1 ? `${element.tagName}:nth-of-type(${elementIndex!})` : undefined
+  return `${element.tagName}:nth-of-type(${elementIndex})`
 }
 
 function findSelector(
