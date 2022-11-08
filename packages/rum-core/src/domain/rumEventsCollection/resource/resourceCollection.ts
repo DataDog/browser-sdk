@@ -8,6 +8,7 @@ import {
   assign,
   isNumber,
   addTelemetryDebug,
+  shallowClone,
 } from '@datadog/browser-core'
 import type { ClocksState } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
@@ -53,6 +54,8 @@ export function startResourceCollection(
   })
 }
 
+let hasLoggedMissingResource = false
+
 function processRequest(
   request: RequestCompleteEvent,
   configuration: RumConfiguration,
@@ -61,14 +64,20 @@ function processRequest(
   const type = request.type === RequestType.XHR ? ResourceType.XHR : ResourceType.FETCH
 
   const matchingTiming = matchRequestTiming(request)
-  if (!matchingTiming) {
-    addTelemetryDebug('Missing PerformanceResourceTiming', {
-      duration: request.duration,
-      resolveDuration: request.resolveDuration,
-      status: request.status,
-      requestType: request.type === RequestType.XHR ? 'xhr' : 'fetch',
-    })
+
+  if (!hasLoggedMissingResource && !matchingTiming) {
+    addTelemetryDebug(
+      'Missing PerformanceResourceTiming',
+      Object.assign(shallowClone(request), {
+        url: undefined,
+        spanId: undefined,
+        traceId: undefined,
+        traceSampled: undefined,
+      })
+    )
+    hasLoggedMissingResource = true
   }
+
   const startClocks = matchingTiming ? relativeToClocks(matchingTiming.startTime) : request.startClocks
   const correspondingTimingOverrides = matchingTiming ? computePerformanceEntryMetrics(matchingTiming) : undefined
 
