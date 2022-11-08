@@ -7,6 +7,7 @@ import {
   relativeToClocks,
   assign,
   isNumber,
+  addTelemetryDebug,
 } from '@datadog/browser-core'
 import type { ClocksState } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
@@ -60,6 +61,14 @@ function processRequest(
   const type = request.type === RequestType.XHR ? ResourceType.XHR : ResourceType.FETCH
 
   const matchingTiming = matchRequestTiming(request)
+  if (!matchingTiming) {
+    addTelemetryDebug('Missing PerformanceResourceTiming', {
+      duration: request.duration,
+      resolveDuration: request.resolveDuration,
+      status: request.status,
+      requestType: request.type === RequestType.XHR ? 'xhr' : 'fetch',
+    })
+  }
   const startClocks = matchingTiming ? relativeToClocks(matchingTiming.startTime) : request.startClocks
   const correspondingTimingOverrides = matchingTiming ? computePerformanceEntryMetrics(matchingTiming) : undefined
 
