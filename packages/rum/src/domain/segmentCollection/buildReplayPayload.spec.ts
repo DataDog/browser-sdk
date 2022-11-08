@@ -1,4 +1,4 @@
-import { toFormEntries } from './send'
+import { toFormEntries } from './buildReplayPayload'
 
 describe('toFormEntries', () => {
   let callbackSpy: jasmine.Spy<(key: string, value: string) => void>
