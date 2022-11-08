@@ -8,6 +8,7 @@ import { normalizeUrl } from '../tools/urlPolyfill'
 interface FetchContextBase {
   method: string
   startClocks: ClocksState
+  resolveDuration?: Duration
   input: RequestInfo
   init?: RequestInit
   url: string
@@ -19,7 +20,6 @@ export interface FetchStartContext extends FetchContextBase {
 
 export interface FetchCompleteContext extends FetchContextBase {
   state: 'complete'
-  resolveDuration?: Duration
   duration: Duration
   status: number
   response?: Response
@@ -94,7 +94,11 @@ function afterSend(
   responsePromise: Promise<Response>,
   startContext: FetchStartContext
 ) {
-  const reportFetch = (context: FetchCompleteContext, response: Response | Error) => {
+  const reportFetch = (response: Response | Error, resolveDuration?: Duration) => {
+    const context = startContext as unknown as FetchCompleteContext
+    context.state = 'complete'
+    context.duration = elapsed(context.startClocks.timeStamp, timeStampNow())
+    context.resolveDuration = resolveDuration
     if ('stack' in response || response instanceof Error) {
       context.status = 0
       context.isAborted = response instanceof DOMException && response.code === DOMException.ABORT_ERR
@@ -108,44 +112,45 @@ function afterSend(
     observable.notify(context)
   }
 
-  const onFulfilled = (response: Response) => {
-    const context = startContext as unknown as FetchCompleteContext
-    context.state = 'complete'
-    context.resolveDuration = elapsed(context.startClocks.timeStamp, timeStampNow())
+  const waitForResponseToFinish = (response: Response): Promise<Duration> =>
+    new Promise((resolve) => {
+      const resolveDuration = elapsed(startContext.startClocks.timeStamp, timeStampNow())
 
-    const responseClone = response.clone()
-    const reader = responseClone.body?.getReader()
+      const responseClone = response.clone()
+      const reader = responseClone.body?.getReader()
 
-    if (reader && ReadableStream) {
-      new ReadableStream({
-        start(controller) {
-          return pump()
+      if (reader && ReadableStream) {
+        new ReadableStream({
+          start(controller) {
+            return pump()
 
-          function pump(): Promise<undefined> {
-            return (reader as ReadableStreamDefaultReader<Uint8Array>).read().then(({ done }) => {
-              if (done) {
-                controller.close()
-                context.duration = elapsed(context.startClocks.timeStamp, timeStampNow())
-                reportFetch(context, response)
-                return
-              }
-              return pump()
-            })
-          }
-        },
-      })
-    } else {
-      context.duration = elapsed(context.startClocks.timeStamp, timeStampNow())
-      reportFetch(context, response)
-    }
-  }
+            function pump(): Promise<void> {
+              return (reader as ReadableStreamDefaultReader<Uint8Array>).read().then(
+                ({ done }) => {
+                  if (!done) return pump()
+                  controller.close()
+                  resolve(resolveDuration)
+                },
+                () => {
+                  controller.close()
+                  resolve(resolveDuration)
+                }
+              )
+            }
+          },
+        })
+      } else {
+        resolve(resolveDuration)
+      }
+    })
 
-  const onRejected = (response: Response | Error) => {
-    const context = startContext as unknown as FetchCompleteContext
-    context.state = 'complete'
-    context.duration = elapsed(context.startClocks.timeStamp, timeStampNow())
-    reportFetch(context, response)
-  }
-
-  responsePromise.then(monitor(onFulfilled), monitor(onRejected))
+  responsePromise.then(
+    monitor((response) =>
+      waitForResponseToFinish(response).then(
+        (resolveDuration: Duration) => reportFetch(response, resolveDuration),
+        () => reportFetch(response)
+      )
+    ),
+    monitor(reportFetch)
+  )
 }
