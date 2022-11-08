@@ -48,16 +48,6 @@ describe('matchRequestTiming', () => {
     expect(timing).toEqual(undefined)
   })
 
-  it('should match two following timings nested in the request ', () => {
-    const optionsTiming = createResourceEntry({ startTime: 150 as RelativeTime, duration: 50 as Duration })
-    const actualTiming = createResourceEntry({ startTime: 200 as RelativeTime, duration: 100 as Duration })
-    entries.push(optionsTiming, actualTiming)
-
-    const timing = matchRequestTiming(FAKE_REQUEST as RequestCompleteEvent)
-
-    expect(timing).toEqual(actualTiming)
-  })
-
   it('should not match two not following timings nested in the request ', () => {
     const match1 = createResourceEntry({ startTime: 150 as RelativeTime, duration: 100 as Duration })
     const match2 = createResourceEntry({ startTime: 200 as RelativeTime, duration: 100 as Duration })

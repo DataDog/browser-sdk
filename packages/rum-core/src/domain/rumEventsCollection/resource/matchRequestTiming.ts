@@ -48,15 +48,7 @@ export function matchRequestTiming(request: RequestCompleteEvent) {
     return candidates[0]
   }
 
-  if (candidates.length === 2 && firstCanBeOptionRequest(candidates)) {
-    return candidates[1]
-  }
-
   return
-}
-
-function firstCanBeOptionRequest(correspondingEntries: RumPerformanceResourceTiming[]) {
-  return endTime(correspondingEntries[0]) <= correspondingEntries[1].startTime
 }
 
 function endTime(timing: Timing) {
