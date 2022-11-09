@@ -1,3 +1,4 @@
+import { DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT } from '@datadog/browser-logs/cjs/domain/configuration'
 import type { RumResourceEvent } from '@datadog/browser-rum'
 import type { EventRegistry } from '../../lib/framework'
 import { flushEvents, bundleSetup, createTest, html } from '../../lib/framework'
@@ -193,6 +194,32 @@ describe('rum resources', () => {
         const resourceEvent = serverEvents.rumResources.find((event) => event.resource.type === 'fetch')
         expect(resourceEvent).toBeTruthy()
         expect(resourceEvent?.resource.status_code).toBe(0)
+      })
+
+    createTest('aborting a request stops the response download')
+      .withLogs({ forwardErrorsToLogs: true })
+      .withRum()
+      .run(async ({ servers }) => {
+        await browserExecuteAsync((done) => {
+          const controller = new AbortController()
+          const signal = controller.signal
+
+          fetch('/large-response', { signal }).then(() => {
+            controller.abort()
+            done(undefined)
+          }, console.log)
+        })
+
+        await flushEvents()
+        expect(servers.base.app.getLargeResponseWroteSize()).toBeLessThan(
+          // When reading the request, chunks length are probably not aligning perfectly with the
+          // response length limit, so it sends few more bytes than necessary. Add a margin of error
+          // to verify that it's still close to the expected limit.
+          DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT * 2
+        )
+        expect(servers.base.app.getLargeResponseWroteSize()).toBeGreaterThanOrEqual(
+          DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT
+        )
       })
   })
 

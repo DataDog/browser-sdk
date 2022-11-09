@@ -1,3 +1,4 @@
+import type { ServerResponse } from 'http'
 import * as url from 'url'
 import cors from 'cors'
 import express from 'express'
@@ -29,6 +30,15 @@ export function createMockServerApp(servers: Servers, setup: string): MockServer
     res.status(500)
 
     const chunkText = 'Server error\n'.repeat(50)
+    generateLargeResponse(res, chunkText)
+  })
+
+  app.get('/large-response', (_req, res) => {
+    const chunkText = 'foofoobarbar\n'.repeat(50)
+    generateLargeResponse(res, chunkText)
+  })
+
+  function generateLargeResponse(res: ServerResponse, chunkText: string) {
     let bytesWritten = 0
     let timeoutId: NodeJS.Timeout
 
@@ -53,7 +63,7 @@ export function createMockServerApp(servers: Servers, setup: string): MockServer
     }
 
     writeMore()
-  })
+  }
 
   app.get('/unknown', (_req, res) => {
     res.status(404).send('Not found')

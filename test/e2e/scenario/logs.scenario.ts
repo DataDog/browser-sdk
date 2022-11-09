@@ -74,19 +74,15 @@ describe('logs', () => {
       })
     })
 
-  createTest('read only the first bytes of the response')
+  createTest('keep only the first bytes of the response')
     .withLogs({ forwardErrorsToLogs: true })
     .run(async ({ serverEvents, baseUrl, servers }) => {
       await browserExecuteAsync((done) => {
-        const controller = new AbortController()
-        const signal = controller.signal
-
-        setTimeout(() => {
-          controller.abort()
-          setTimeout(() => done(undefined), 1000)
-        }, 2000)
-
-        fetch('/throw-large-response', { signal }).then((_) => ({}), console.log)
+        fetch('/throw-large-response')
+          .then((response: Response) => response.clone().blob())
+          .then(() => {
+            done(undefined)
+          }, console.log)
       })
 
       await flushEvents()
