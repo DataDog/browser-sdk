@@ -53,8 +53,6 @@ export function startResourceCollection(
   })
 }
 
-let hasLoggedMissingResource = false
-
 function processRequest(
   request: RequestCompleteEvent,
   configuration: RumConfiguration,
@@ -63,17 +61,6 @@ function processRequest(
   const type = request.type === RequestType.XHR ? ResourceType.XHR : ResourceType.FETCH
 
   const matchingTiming = matchRequestTiming(request)
-
-  if (!hasLoggedMissingResource && !matchingTiming) {
-    addTelemetryDebug('Missing PerformanceResourceTiming', {
-      duration: request.duration,
-      resolveDuration: request.resolveDuration,
-      status: request.status,
-      requestType: request.type === RequestType.XHR ? 'xhr' : 'fetch',
-    })
-    hasLoggedMissingResource = true
-  }
-
   const startClocks = matchingTiming ? relativeToClocks(matchingTiming.startTime) : request.startClocks
   const correspondingTimingOverrides = matchingTiming ? computePerformanceEntryMetrics(matchingTiming) : undefined
 
