@@ -101,6 +101,10 @@ function send(
       // do not consider transport down if another ongoing request could succeed
       state.transportStatus =
         state.bandwidthMonitor.ongoingRequestCount > 0 ? TransportStatus.FAILURE_DETECTED : TransportStatus.DOWN
+      payload.retry = {
+        count: payload.retry ? (payload.retry.count += 1) : 1,
+        lastFailureStatus: response.status,
+      }
       onFailure()
     }
   })

@@ -1,3 +1,4 @@
+import type { RetryInfo } from '../../transport'
 import { timeStampNow } from '../../tools/timeUtils'
 import { normalizeUrl } from '../../tools/urlPolyfill'
 import { generateUUID } from '../../tools/utils'
@@ -26,7 +27,7 @@ export type EndpointBuilder = ReturnType<typeof createEndpointBuilder>
 export function createEndpointBuilder(
   initConfiguration: InitConfiguration,
   endpointType: EndpointType,
-  tags: string[]
+  configurationTags: string[]
 ) {
   const { site = INTAKE_SITE_US1, clientToken } = initConfiguration
 
@@ -37,10 +38,14 @@ export function createEndpointBuilder(
   const proxyUrl = initConfiguration.proxyUrl && normalizeUrl(initConfiguration.proxyUrl)
 
   return {
-    build() {
+    build(retry?: RetryInfo) {
+      const tags = [`sdk_version:${__BUILD_ENV__SDK_VERSION__}`].concat(configurationTags)
+      if (retry) {
+        tags.push(`retry_count:${retry.count}`, `retry_after:${retry.lastFailureStatus}`)
+      }
       let parameters =
         'ddsource=browser' +
-        `&ddtags=${encodeURIComponent([`sdk_version:${__BUILD_ENV__SDK_VERSION__}`].concat(tags).join(','))}` +
+        `&ddtags=${encodeURIComponent(tags.join(','))}` +
         `&dd-api-key=${clientToken}` +
         `&dd-evp-origin-version=${encodeURIComponent(__BUILD_ENV__SDK_VERSION__)}` +
         '&dd-evp-origin=browser' +
