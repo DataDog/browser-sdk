@@ -239,7 +239,6 @@ describe('rum resources', () => {
       expect(resourceEvent).not.toBeUndefined()
       expect(resourceEvent.resource.method).toEqual('GET')
       expect(resourceEvent.resource.status_code).toEqual(200)
-      expect(resourceEvent._dd.resolveDuration).toBeGreaterThan(0)
       expectToHaveValidTimings(resourceEvent)
       expect(resourceEvent.resource.redirect).not.toBeUndefined()
       expect(resourceEvent.resource.redirect!.duration).toBeGreaterThan(0)

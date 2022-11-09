@@ -7,7 +7,6 @@ import {
   relativeToClocks,
   assign,
   isNumber,
-  addTelemetryDebug,
 } from '@datadog/browser-core'
 import type { ClocksState } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
@@ -77,9 +76,6 @@ function processRequest(
         method: request.method,
         status_code: request.status,
         url: request.url,
-      },
-      _dd: {
-        resolveDuration: request.resolveDuration ? toServerDuration(request.resolveDuration) : undefined,
       },
       type: RumEventType.RESOURCE as const,
     },

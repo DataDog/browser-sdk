@@ -8,7 +8,6 @@ import { normalizeUrl } from '../tools/urlPolyfill'
 interface FetchContextBase {
   method: string
   startClocks: ClocksState
-  resolveDuration?: Duration
   input: RequestInfo
   init?: RequestInit
   url: string
@@ -94,11 +93,10 @@ function afterSend(
   responsePromise: Promise<Response>,
   startContext: FetchStartContext
 ) {
-  const reportFetch = (response: Response | Error, resolveDuration?: Duration) => {
+  const reportFetch = (response: Response | Error) => {
     const context = startContext as unknown as FetchCompleteContext
     context.state = 'complete'
     context.duration = elapsed(context.startClocks.timeStamp, timeStampNow())
-    context.resolveDuration = resolveDuration
     if ('stack' in response || response instanceof Error) {
       context.status = 0
       context.isAborted = response instanceof DOMException && response.code === DOMException.ABORT_ERR
@@ -112,10 +110,8 @@ function afterSend(
     observable.notify(context)
   }
 
-  const waitForResponseToFinish = (response: Response): Promise<Duration> =>
+  const waitForResponseToFinish = (response: Response): Promise<void> =>
     new Promise((resolve) => {
-      const resolveDuration = elapsed(startContext.startClocks.timeStamp, timeStampNow())
-
       const responseClone = response.clone()
       const reader = responseClone.body?.getReader()
 
@@ -129,25 +125,25 @@ function afterSend(
                 ({ done }) => {
                   if (!done) return pump()
                   controller.close()
-                  resolve(resolveDuration)
+                  resolve()
                 },
                 () => {
                   controller.close()
-                  resolve(resolveDuration)
+                  resolve()
                 }
               )
             }
           },
         })
       } else {
-        resolve(resolveDuration)
+        resolve()
       }
     })
 
   responsePromise.then(
     monitor((response) =>
       waitForResponseToFinish(response).then(
-        (resolveDuration: Duration) => reportFetch(response, resolveDuration),
+        () => reportFetch(response),
         () => reportFetch(response)
       )
     ),
