@@ -6,8 +6,10 @@ import type { DeflateWorker, DeflateWorkerListener } from './deflateWorker'
 
 let nextId = 0
 
+export type FlushReason = Exclude<CreationReason, 'init'> | 'stop'
+
 export class Segment {
-  public isFlushed = false
+  public flushReason: FlushReason | undefined
 
   public readonly metadata: BrowserSegmentMetadata
 
@@ -78,12 +80,12 @@ export class Segment {
     this.worker.postMessage({ data: `,${JSON.stringify(record)}`, id: this.id, action: 'write' })
   }
 
-  flush() {
+  flush(reason: FlushReason) {
     this.worker.postMessage({
       data: `],${JSON.stringify(this.metadata).slice(1)}\n`,
       id: this.id,
       action: 'flush',
     })
-    this.isFlushed = true
+    this.flushReason = reason
   }
 }

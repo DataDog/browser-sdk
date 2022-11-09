@@ -44,6 +44,7 @@ export {
 } from './domain/session/sessionConstants'
 export {
   HttpRequest,
+  Payload,
   createHttpRequest,
   Batch,
   canUseEventBridge,
@@ -85,3 +86,4 @@ export {
   getSyntheticsTestId,
   getSyntheticsResultId,
 } from './domain/synthetics/syntheticsWorkerValues'
+export { User, checkUser, sanitizeUser } from './domain/user'

@@ -46,7 +46,7 @@ describe('Segment', () => {
     expect(onWroteSpy).toHaveBeenCalledTimes(1)
     expect(onFlushedSpy).not.toHaveBeenCalled()
 
-    segment.flush()
+    segment.flush('before_unload')
 
     worker.processAllMessages()
     expect(onWroteSpy).toHaveBeenCalledTimes(1)
@@ -70,11 +70,11 @@ describe('Segment', () => {
     })
   })
 
-  it('is marked as flushed when flush() is called', () => {
+  it('stores the flush reason when flush() is called', () => {
     const segment = createSegment()
-    expect(segment.isFlushed).toBe(false)
-    segment.flush()
-    expect(segment.isFlushed).toBe(true)
+    expect(segment.flushReason).toBeUndefined()
+    segment.flush('before_unload')
+    expect(segment.flushReason).toBe('before_unload')
   })
 
   it('calls the onWrote callback when data is written', () => {
@@ -87,7 +87,7 @@ describe('Segment', () => {
   it('calls the onFlushed callback when data is flush', () => {
     const onFlushedSpy = jasmine.createSpy<(data: Uint8Array, rawSegmentBytesCount: number) => void>()
     const segment = createSegment({ onFlushed: onFlushedSpy })
-    segment.flush()
+    segment.flush('before_unload')
     worker.processAllMessages()
     expect(onFlushedSpy).toHaveBeenCalledOnceWith(jasmine.any(Uint8Array), jasmine.any(Number))
   })
@@ -96,13 +96,13 @@ describe('Segment', () => {
     const onWroteSpy1 = jasmine.createSpy<(compressedSegmentBytesCount: number) => void>()
     const onWroteSpy2 = jasmine.createSpy<(compressedSegmentBytesCount: number) => void>()
     const segment1 = createSegment({ creationReason: 'init', onWrote: onWroteSpy1 })
-    segment1.flush()
+    segment1.flush('segment_duration_limit')
     const segment2 = createSegment({
       creationReason: 'segment_duration_limit',
       initialRecord: FULL_SNAPSHOT_RECORD,
       onWrote: onWroteSpy2,
     })
-    segment2.flush()
+    segment2.flush('before_unload')
     worker.processAllMessages()
     expect(onWroteSpy1).toHaveBeenCalledOnceWith(ENCODED_SEGMENT_HEADER_BYTES_COUNT + ENCODED_RECORD_BYTES_COUNT)
     expect(onWroteSpy2).toHaveBeenCalledOnceWith(
@@ -113,7 +113,7 @@ describe('Segment', () => {
   it('unsubscribes from the worker if a flush() response fails and another Segment is used', () => {
     const displaySpy = spyOn(display, 'debug')
     const writer1 = createSegment()
-    writer1.flush()
+    writer1.flush('before_unload')
     createSegment()
     worker.processNextMessage() // process the segment1 initial record
     worker.dropNextMessage() // drop the segment1 flush
@@ -198,7 +198,7 @@ describe('Segment', () => {
 
     it('when flushing a segment', () => {
       const segment = createSegment({ initialRecord: FULL_SNAPSHOT_RECORD })
-      segment.flush()
+      segment.flush('before_unload')
       worker.processAllMessages()
       expect(getReplayStats('b')).toEqual({
         segments_count: 1,

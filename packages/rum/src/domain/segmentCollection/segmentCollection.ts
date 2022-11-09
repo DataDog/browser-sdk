@@ -1,9 +1,11 @@
-import type { TimeoutId } from '@datadog/browser-core'
-import { ONE_SECOND, monitor } from '@datadog/browser-core'
+import type { HttpRequest, TimeoutId } from '@datadog/browser-core'
+import { isExperimentalFeatureEnabled, ONE_SECOND, monitor } from '@datadog/browser-core'
 import type { LifeCycle, ViewContexts, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
-import type { BrowserRecord, BrowserSegmentMetadata, CreationReason, SegmentContext } from '../../types'
+import type { BrowserRecord, CreationReason, SegmentContext } from '../../types'
 import type { DeflateWorker } from './deflateWorker'
+import { buildReplayPayload } from './buildReplayPayload'
+import type { FlushReason } from './segment'
 import { Segment } from './segment'
 
 export const SEGMENT_DURATION_LIMIT = 30 * ONE_SECOND
@@ -43,13 +45,13 @@ export function startSegmentCollection(
   applicationId: string,
   sessionManager: RumSessionManager,
   viewContexts: ViewContexts,
-  send: (data: Uint8Array, metadata: BrowserSegmentMetadata, rawSegmentBytesCount: number) => void,
+  httpRequest: HttpRequest,
   worker: DeflateWorker
 ) {
   return doStartSegmentCollection(
     lifeCycle,
     () => computeSegmentContext(applicationId, sessionManager, viewContexts),
-    send,
+    httpRequest,
     worker
   )
 }
@@ -76,7 +78,7 @@ type SegmentCollectionState =
 export function doStartSegmentCollection(
   lifeCycle: LifeCycle,
   getSegmentContext: () => SegmentContext | undefined,
-  send: (data: Uint8Array, metadata: BrowserSegmentMetadata, rawSegmentBytesCount: number) => void,
+  httpRequest: HttpRequest,
   worker: DeflateWorker
 ) {
   let state: SegmentCollectionState = {
@@ -95,16 +97,16 @@ export function doStartSegmentCollection(
     }
   )
 
-  function flushSegment(nextSegmentCreationReason?: CreationReason) {
+  function flushSegment(flushReason: FlushReason) {
     if (state.status === SegmentCollectionStatus.SegmentPending) {
-      state.segment.flush()
+      state.segment.flush(flushReason)
       clearTimeout(state.expirationTimeoutId)
     }
 
-    if (nextSegmentCreationReason) {
+    if (flushReason !== 'stop') {
       state = {
         status: SegmentCollectionStatus.WaitingForInitialRecord,
-        nextSegmentCreationReason,
+        nextSegmentCreationReason: flushReason,
       }
     } else {
       state = {
@@ -125,12 +127,21 @@ export function doStartSegmentCollection(
       creationReason,
       initialRecord,
       (compressedSegmentBytesCount) => {
-        if (!segment.isFlushed && compressedSegmentBytesCount > SEGMENT_BYTES_LIMIT) {
+        if (!segment.flushReason && compressedSegmentBytesCount > SEGMENT_BYTES_LIMIT) {
           flushSegment('segment_bytes_limit')
         }
       },
       (data, rawSegmentBytesCount) => {
-        send(data, segment.metadata, rawSegmentBytesCount)
+        const payload = buildReplayPayload(data, segment.metadata, rawSegmentBytesCount)
+        if (
+          !isExperimentalFeatureEnabled('retry_replay') ||
+          segment.flushReason === 'visibility_hidden' ||
+          segment.flushReason === 'before_unload'
+        ) {
+          httpRequest.sendOnExit(payload)
+        } else {
+          httpRequest.send(payload)
+        }
       }
     )
 
@@ -160,7 +171,7 @@ export function doStartSegmentCollection(
     },
 
     stop: () => {
-      flushSegment()
+      flushSegment('stop')
       unsubscribeViewCreated()
       unsubscribePageExited()
     },

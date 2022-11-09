@@ -138,7 +138,7 @@ describe('logs entry', () => {
     })
 
     it('should have the current date, view and global context', () => {
-      LOGS.addLoggerGlobalContext('foo', 'bar')
+      LOGS.setGlobalContextProperty('foo', 'bar')
 
       const getCommonContext = startLogs.calls.mostRecent().args[2]
       expect(getCommonContext()).toEqual({
@@ -147,6 +147,7 @@ describe('logs entry', () => {
           url: window.location.href,
         },
         context: { foo: 'bar' },
+        user: {},
       })
     })
   })
@@ -323,6 +324,148 @@ describe('logs entry', () => {
       it('should get the internal context', () => {
         LOGS.init(DEFAULT_INIT_CONFIGURATION)
         expect(LOGS.getInternalContext()?.session_id).toEqual(mockSessionId)
+      })
+    })
+
+    describe('setUser', () => {
+      let logsPublicApi: LogsPublicApi
+      let displaySpy: jasmine.Spy<() => void>
+
+      beforeEach(() => {
+        displaySpy = spyOn(display, 'error')
+        logsPublicApi = makeLogsPublicApi(startLogs)
+        logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      })
+
+      it('should store user in common context', () => {
+        const user = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
+        logsPublicApi.setUser(user)
+
+        const getCommonContext = startLogs.calls.mostRecent().args[2]
+        expect(getCommonContext().user).toEqual({
+          email: 'qux',
+          foo: { bar: 'qux' },
+          id: 'foo',
+          name: 'bar',
+        })
+      })
+
+      it('should sanitize predefined properties', () => {
+        const user = { id: null, name: 2, email: { bar: 'qux' } }
+        logsPublicApi.setUser(user as any)
+        const getCommonContext = startLogs.calls.mostRecent().args[2]
+        expect(getCommonContext().user).toEqual({
+          email: '[object Object]',
+          id: 'null',
+          name: '2',
+        })
+      })
+
+      it('should clear a previously set user', () => {
+        const user = { id: 'foo', name: 'bar', email: 'qux' }
+        logsPublicApi.setUser(user)
+        logsPublicApi.clearUser()
+
+        const getCommonContext = startLogs.calls.mostRecent().args[2]
+        expect(getCommonContext().user).toEqual({})
+      })
+
+      it('should reject non object input', () => {
+        logsPublicApi.setUser(2 as any)
+        logsPublicApi.setUser(null as any)
+        logsPublicApi.setUser(undefined as any)
+        expect(displaySpy).toHaveBeenCalledTimes(3)
+      })
+    })
+
+    describe('getUser', () => {
+      let logsPublicApi: LogsPublicApi
+
+      beforeEach(() => {
+        logsPublicApi = makeLogsPublicApi(startLogs)
+        logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      })
+
+      it('should return empty object if no user has been set', () => {
+        const userClone = logsPublicApi.getUser()
+        expect(userClone).toEqual({})
+      })
+
+      it('should return a clone of the original object if set', () => {
+        const user = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
+        logsPublicApi.setUser(user)
+        const userClone = logsPublicApi.getUser()
+        const userClone2 = logsPublicApi.getUser()
+
+        expect(userClone).not.toBe(user)
+        expect(userClone).not.toBe(userClone2)
+        expect(userClone).toEqual(user)
+      })
+    })
+
+    describe('setUserProperty', () => {
+      const user = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
+      const addressAttribute = { city: 'Paris' }
+      let logsPublicApi: LogsPublicApi
+
+      beforeEach(() => {
+        logsPublicApi = makeLogsPublicApi(startLogs)
+        logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      })
+
+      it('should add attribute', () => {
+        logsPublicApi.setUser(user)
+        logsPublicApi.setUserProperty('address', addressAttribute)
+        const userClone = logsPublicApi.getUser()
+
+        expect(userClone.address).toEqual(addressAttribute)
+      })
+
+      it('should not contain original reference to object', () => {
+        const userDetails: { [key: string]: any } = { name: 'john' }
+        logsPublicApi.setUser(user)
+        logsPublicApi.setUserProperty('userDetails', userDetails)
+        userDetails.DOB = '11/11/1999'
+        const userClone = logsPublicApi.getUser()
+
+        expect(userClone.userDetails).not.toBe(userDetails)
+      })
+
+      it('should override attribute', () => {
+        logsPublicApi.setUser(user)
+        logsPublicApi.setUserProperty('foo', addressAttribute)
+        const userClone = logsPublicApi.getUser()
+
+        expect(userClone).toEqual({ ...user, foo: addressAttribute })
+      })
+
+      it('should sanitize properties', () => {
+        logsPublicApi.setUserProperty('id', 123)
+        logsPublicApi.setUserProperty('name', ['Adam', 'Smith'])
+        logsPublicApi.setUserProperty('email', { foo: 'bar' })
+        const userClone = logsPublicApi.getUser()
+
+        expect(userClone.id).toEqual('123')
+        expect(userClone.name).toEqual('Adam,Smith')
+        expect(userClone.email).toEqual('[object Object]')
+      })
+    })
+
+    describe('removeUserProperty', () => {
+      let logsPublicApi: LogsPublicApi
+
+      beforeEach(() => {
+        logsPublicApi = makeLogsPublicApi(startLogs)
+        logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      })
+
+      it('should remove property', () => {
+        const user = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
+
+        logsPublicApi.setUser(user)
+        logsPublicApi.removeUserProperty('foo')
+        const userClone = logsPublicApi.getUser()
+        expect(userClone.foo).toBeUndefined()
       })
     })
   })

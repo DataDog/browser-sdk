@@ -7,6 +7,7 @@ import type {
   ServerDuration,
   TimeStamp,
   RawErrorCause,
+  User,
 } from '@datadog/browser-core'
 import type { RumSessionPlan } from './domain/rumSessionManager'
 
@@ -238,13 +239,6 @@ export interface RumContext {
     }
     browser_sdk_version?: string
   }
-}
-
-export interface User {
-  id?: string | undefined
-  email?: string | undefined
-  name?: string | undefined
-  [key: string]: unknown
 }
 
 export interface CommonContext {
