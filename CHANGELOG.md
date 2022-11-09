@@ -16,6 +16,14 @@
 
 ---
 
+## v4.24.0
+
+- ⚗️✨ [RUMF-1379] heatmaps: enable descendant combined selectors ([#1811](https://github.com/DataDog/browser-sdk/pull/1811))
+- ✨ [RUMF-1409] Provide setUser and related functions for logs SDK ([#1801](https://github.com/DataDog/browser-sdk/pull/1801))
+- ⚗️ ✨ [RUMF-1425] use the retry/throttle transport strategy to send segments ([#1807](https://github.com/DataDog/browser-sdk/pull/1807))
+- ♻️ [RUMF-1424] factorize page exit logic ([#1805](https://github.com/DataDog/browser-sdk/pull/1805))
+- 📝 Clarify log SDK usage in the readme ([#1767](https://github.com/DataDog/browser-sdk/pull/1767))
+
 ## v4.23.3
 
 - 🐛 [REPLAY-1075] Convert relative URLS to absolute in stylesheets ([#1792](https://github.com/DataDog/browser-sdk/pull/1792))
