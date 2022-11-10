@@ -241,7 +241,7 @@ describe('computeFetchResponseText', () => {
 
     computeFetchResponseText(response, CONFIGURATION, () => {
       expect(pullSpy).toHaveBeenCalledTimes(
-        // readLimitedAmountOfBytes may read one more byte than necessary to make sure it exceeds the limit
+        // readBytesFromStream may read one more byte than necessary to make sure it exceeds the limit
         CONFIGURATION.requestErrorResponseLengthLimit + 1
       )
       expect(cancelSpy).toHaveBeenCalledTimes(1)
