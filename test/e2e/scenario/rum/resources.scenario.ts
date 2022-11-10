@@ -1,7 +1,6 @@
-import { DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT } from '@datadog/browser-logs/cjs/domain/configuration'
 import type { RumResourceEvent } from '@datadog/browser-rum'
 import type { EventRegistry } from '../../lib/framework'
-import { flushEvents, bundleSetup, createTest, html } from '../../lib/framework'
+import { flushEvents, bundleSetup, createTest, html, LARGE_RESPONSE_MIN_BYTE_SIZE } from '../../lib/framework'
 import { browserExecuteAsync, sendXhr } from '../../lib/helpers/browser'
 
 const REQUEST_DURATION = 200
@@ -211,15 +210,7 @@ describe('rum resources', () => {
         })
 
         await flushEvents()
-        expect(servers.base.app.getLargeResponseWroteSize()).toBeLessThan(
-          // When reading the request, chunks length are probably not aligning perfectly with the
-          // response length limit, so it sends few more bytes than necessary. Add a margin of error
-          // to verify that it's still close to the expected limit.
-          DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT * 2
-        )
-        expect(servers.base.app.getLargeResponseWroteSize()).toBeGreaterThanOrEqual(
-          DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT
-        )
+        expect(servers.base.app.getLargeResponseWroteSize()).toBeLessThan(LARGE_RESPONSE_MIN_BYTE_SIZE)
       })
   })
 
