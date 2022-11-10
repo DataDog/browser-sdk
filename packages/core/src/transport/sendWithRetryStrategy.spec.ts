@@ -222,6 +222,18 @@ describe('sendWithRetryStrategy', () => {
         expect(state.bandwidthMonitor.ongoingRequestCount).toBe(2)
         expect(state.queuedPayloads.size()).toBe(0)
       })
+
+      it('should add retry info to payloads', () => {
+        sendRequest()
+
+        sendStub.respondWith(0, { status })
+        expect(state.queuedPayloads.first().retry).toEqual({ count: 1, lastFailureStatus: status })
+
+        clock.tick(INITIAL_BACKOFF_TIME)
+
+        sendStub.respondWith(1, { status })
+        expect(state.queuedPayloads.first().retry).toEqual({ count: 2, lastFailureStatus: status })
+      })
     })
   })
 

@@ -23,6 +23,12 @@ export interface HttpResponse extends Context {
 export interface Payload {
   data: string | FormData
   bytesCount: number
+  retry?: RetryInfo
+}
+
+export interface RetryInfo {
+  count: number
+  lastFailureStatus: number
 }
 
 export function createHttpRequest(
@@ -78,10 +84,10 @@ function reportBeaconError(e: unknown) {
 export function fetchKeepAliveStrategy(
   endpointBuilder: EndpointBuilder,
   bytesLimit: number,
-  { data, bytesCount }: Payload,
+  { data, bytesCount, retry }: Payload,
   onResponse?: (r: HttpResponse) => void
 ) {
-  const url = endpointBuilder.build()
+  const url = endpointBuilder.build(retry)
   const canUseKeepAlive = isKeepAliveSupported() && bytesCount < bytesLimit
   if (canUseKeepAlive) {
     fetch(url, { method: 'POST', body: data, keepalive: true }).then(
