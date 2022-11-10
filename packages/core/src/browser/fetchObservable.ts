@@ -2,7 +2,7 @@ import { instrumentMethod } from '../tools/instrumentMethod'
 import { callMonitored, monitor } from '../tools/monitor'
 import { Observable } from '../tools/observable'
 import type { Duration, ClocksState } from '../tools/timeUtils'
-import { elapsed, clocksNow, timeStampNow } from '../tools/timeUtils'
+import { clocksNow } from '../tools/timeUtils'
 import { normalizeUrl } from '../tools/urlPolyfill'
 
 interface FetchContextBase {
@@ -96,7 +96,6 @@ function afterSend(
   const reportFetch = (response: Response | Error) => {
     const context = startContext as unknown as FetchCompleteContext
     context.state = 'complete'
-    context.duration = elapsed(context.startClocks.timeStamp, timeStampNow())
     if ('stack' in response || response instanceof Error) {
       context.status = 0
       context.isAborted = response instanceof DOMException && response.code === DOMException.ABORT_ERR
@@ -110,43 +109,5 @@ function afterSend(
     observable.notify(context)
   }
 
-  const waitForResponseToFinish = (response: Response): Promise<void> =>
-    new Promise((resolve) => {
-      const responseClone = response.clone()
-      const reader = responseClone.body?.getReader()
-
-      if (reader && ReadableStream) {
-        new ReadableStream({
-          start(controller) {
-            return pump()
-
-            function pump(): Promise<void> {
-              return (reader as ReadableStreamDefaultReader<Uint8Array>).read().then(
-                ({ done }) => {
-                  if (!done) return pump()
-                  controller.close()
-                  resolve()
-                },
-                () => {
-                  controller.close()
-                  resolve()
-                }
-              )
-            }
-          },
-        })
-      } else {
-        resolve()
-      }
-    })
-
-  responsePromise.then(
-    monitor((response) =>
-      waitForResponseToFinish(response).then(
-        () => reportFetch(response),
-        () => reportFetch(response)
-      )
-    ),
-    monitor(reportFetch)
-  )
+  responsePromise.then(monitor(reportFetch), monitor(reportFetch))
 }

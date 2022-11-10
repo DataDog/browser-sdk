@@ -7,8 +7,11 @@ import {
   relativeToClocks,
   assign,
   isNumber,
+  readBytesFromStream,
+  elapsed,
+  timeStampNow,
 } from '@datadog/browser-core'
-import type { ClocksState } from '@datadog/browser-core'
+import type { ClocksState, Duration } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
 import type { RumPerformanceEntry, RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 import type {
@@ -37,7 +40,12 @@ export function startResourceCollection(
   sessionManager: RumSessionManager
 ) {
   lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request: RequestCompleteEvent) => {
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processRequest(request, configuration, sessionManager))
+    waitForResponseToFinish(request, (duration) =>
+      lifeCycle.notify(
+        LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
+        processRequest(assign(request, { duration }), configuration, sessionManager)
+      )
+    )
   })
 
   lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
@@ -50,6 +58,22 @@ export function startResourceCollection(
       }
     }
   })
+}
+
+function waitForResponseToFinish(request: RequestCompleteEvent, callback: (duration: Duration) => void) {
+  const duration = request.duration || elapsed(request.startClocks.timeStamp, timeStampNow())
+  if (request.response) {
+    const responseClone = request.response.clone()
+    if (responseClone.body) {
+      readBytesFromStream(responseClone.body, Number.POSITIVE_INFINITY, false, () =>
+        callback(elapsed(request.startClocks.timeStamp, timeStampNow()))
+      )
+    } else {
+      callback(duration)
+    }
+  } else {
+    callback(duration)
+  }
 }
 
 function processRequest(
