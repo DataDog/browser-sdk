@@ -79,7 +79,7 @@ describe('logs', () => {
     .run(async ({ serverEvents, baseUrl, servers }) => {
       await browserExecuteAsync((done) => {
         fetch('/throw-large-response')
-          .then((response: Response) => response.clone().blob())
+          .then((response: Response) => response.blob())
           .then(() => {
             done(undefined)
           }, console.log)
