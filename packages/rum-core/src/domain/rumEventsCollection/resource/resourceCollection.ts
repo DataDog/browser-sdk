@@ -10,6 +10,7 @@ import {
   readBytesFromStream,
   elapsed,
   timeStampNow,
+  isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
 import type { ClocksState, Duration } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
@@ -65,7 +66,7 @@ function waitForResponseToFinish(request: RequestCompleteEvent, callback: () => 
     callback()
     return
   }
-  if (request.response) {
+  if (request.response && isExperimentalFeatureEnabled('fetch_duration')) {
     const responseClone = request.response.clone()
     if (responseClone.body) {
       readBytesFromStream(
