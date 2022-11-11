@@ -181,15 +181,22 @@ function truncateResponseStream(
   limit: number,
   callback: (error?: Error, responseText?: string) => void
 ) {
-  readBytesFromStream(stream, limit, true, (error, bytes, limitExceeded) => {
-    if (error) {
-      callback(error)
-    } else {
-      let responseText = new TextDecoder().decode(bytes)
-      if (limitExceeded) {
-        responseText += '...'
+  readBytesFromStream(
+    stream,
+    (error, bytes, limitExceeded) => {
+      if (error) {
+        callback(error)
+      } else {
+        let responseText = new TextDecoder().decode(bytes)
+        if (limitExceeded) {
+          responseText += '...'
+        }
+        callback(undefined, responseText)
       }
-      callback(undefined, responseText)
+    },
+    {
+      limit,
+      collectStreamBody: true,
     }
-  })
+  )
 }

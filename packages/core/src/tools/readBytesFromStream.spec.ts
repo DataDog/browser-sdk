@@ -20,30 +20,51 @@ describe('readBytesFromStream', () => {
   })
 
   it('should read full stream', (done) => {
-    readBytesFromStream(stream, Number.POSITIVE_INFINITY, true, (error, bytes, limitExceeded) => {
-      expect(error).toBeUndefined()
-      expect(bytes?.length).toBe(27)
-      expect(limitExceeded).toBe(false)
-      done()
-    })
+    readBytesFromStream(
+      stream,
+      (error, bytes, limitExceeded) => {
+        expect(error).toBeUndefined()
+        expect(bytes?.length).toBe(27)
+        expect(limitExceeded).toBe(false)
+        done()
+      },
+      {
+        limit: Number.POSITIVE_INFINITY,
+        collectStreamBody: true,
+      }
+    )
   })
 
   it('should read full stream without body', (done) => {
-    readBytesFromStream(stream, Number.POSITIVE_INFINITY, false, (error, bytes, limitExceeded) => {
-      expect(error).toBeUndefined()
-      expect(bytes).toBeUndefined()
-      expect(limitExceeded).toBeUndefined()
-      done()
-    })
+    readBytesFromStream(
+      stream,
+      (error, bytes, limitExceeded) => {
+        expect(error).toBeUndefined()
+        expect(bytes).toBeUndefined()
+        expect(limitExceeded).toBeUndefined()
+        done()
+      },
+      {
+        limit: Number.POSITIVE_INFINITY,
+        collectStreamBody: false,
+      }
+    )
   })
 
   it('should read stream up to limit', (done) => {
-    readBytesFromStream(stream, 10, true, (error, bytes, limitExceeded) => {
-      expect(error).toBeUndefined()
-      expect(bytes?.length).toBe(10)
-      expect(limitExceeded).toBe(true)
-      done()
-    })
+    readBytesFromStream(
+      stream,
+      (error, bytes, limitExceeded) => {
+        expect(error).toBeUndefined()
+        expect(bytes?.length).toBe(10)
+        expect(limitExceeded).toBe(true)
+        done()
+      },
+      {
+        limit: 10,
+        collectStreamBody: true,
+      }
+    )
   })
 
   it('should return error', (done) => {
@@ -51,11 +72,18 @@ describe('readBytesFromStream', () => {
       pull: () => Promise.reject(new Error('foo')),
     })
 
-    readBytesFromStream(stream, Number.POSITIVE_INFINITY, true, (error, bytes, limitExceeded) => {
-      expect(error).toBeDefined()
-      expect(bytes).toBeUndefined()
-      expect(limitExceeded).toBeUndefined()
-      done()
-    })
+    readBytesFromStream(
+      stream,
+      (error, bytes, limitExceeded) => {
+        expect(error).toBeDefined()
+        expect(bytes).toBeUndefined()
+        expect(limitExceeded).toBeUndefined()
+        done()
+      },
+      {
+        limit: Number.POSITIVE_INFINITY,
+        collectStreamBody: true,
+      }
+    )
   })
 })

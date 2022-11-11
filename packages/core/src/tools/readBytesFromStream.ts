@@ -1,6 +1,10 @@
 import { monitor } from './monitor'
 import { noop } from './utils'
 
+type Options = {
+  limit: number
+  collectStreamBody?: boolean
+}
 /**
  * Read bytes from a ReadableStream until at least `limit` bytes have been read (or until the end of
  * the stream). The callback is invoked with the at most `limit` bytes, and indicates that the limit
@@ -8,9 +12,8 @@ import { noop } from './utils'
  */
 export function readBytesFromStream(
   stream: ReadableStream<Uint8Array>,
-  limit: number,
-  collectStreamBody: boolean,
-  callback: (error?: Error, bytes?: Uint8Array, limitExceeded?: boolean) => void
+  callback: (error?: Error, bytes?: Uint8Array, limitExceeded?: boolean) => void,
+  options: Options
 ) {
   const reader = stream.getReader()
   const chunks: Uint8Array[] = []
@@ -26,10 +29,10 @@ export function readBytesFromStream(
           return
         }
 
-        collectStreamBody && chunks.push(result.value)
+        if (options.collectStreamBody) chunks.push(result.value)
         readBytesCount += result.value.length
 
-        if (readBytesCount > limit) {
+        if (readBytesCount > options.limit) {
           onDone()
         } else {
           readMore()
@@ -46,8 +49,10 @@ export function readBytesFromStream(
       noop
     )
 
-    let completeBuffer: Uint8Array | undefined
-    if (collectStreamBody) {
+    let bytes: Uint8Array | undefined
+    let limitExceeded: boolean | undefined
+    if (options.collectStreamBody) {
+      let completeBuffer: Uint8Array
       if (chunks.length === 1) {
         // optimization: if the response is small enough to fit in a single buffer (provided by the browser), just
         // use it directly.
@@ -57,16 +62,14 @@ export function readBytesFromStream(
         completeBuffer = new Uint8Array(readBytesCount)
         let offset = 0
         chunks.forEach((chunk) => {
-          ;(completeBuffer as Uint8Array).set(chunk, offset)
+          completeBuffer.set(chunk, offset)
           offset += chunk.length
         })
       }
+      bytes = completeBuffer.slice(0, options.limit)
+      limitExceeded = completeBuffer.length > options.limit
     }
 
-    callback(
-      undefined,
-      completeBuffer ? completeBuffer.slice(0, limit) : undefined,
-      completeBuffer ? completeBuffer.length > limit : undefined
-    )
+    callback(undefined, bytes, limitExceeded)
   }
 }
