@@ -90,6 +90,13 @@ function processRequest(
   const tracingInfo = computeRequestTracingInfo(request, configuration)
   const indexingInfo = computeIndexingInfo(sessionManager, startClocks)
 
+  const durationDiff = request.resolveDuration
+    ? toServerDuration((request.duration - request.resolveDuration) as Duration)
+    : undefined
+  const durationPercentageDiff = durationDiff
+    ? Math.round((durationDiff / toServerDuration(request.duration)) * 100)
+    : undefined
+
   const resourceEvent = combine(
     {
       date: startClocks.timeStamp,
@@ -100,6 +107,11 @@ function processRequest(
         method: request.method,
         status_code: request.status,
         url: request.url,
+      },
+      _dd: {
+        durationDiff,
+        durationPercentageDiff,
+        resolveDuration: request.resolveDuration ? toServerDuration(request.resolveDuration) : undefined,
       },
       type: RumEventType.RESOURCE as const,
     },

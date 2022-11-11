@@ -2,12 +2,13 @@ import { instrumentMethod } from '../tools/instrumentMethod'
 import { callMonitored, monitor } from '../tools/monitor'
 import { Observable } from '../tools/observable'
 import type { Duration, ClocksState } from '../tools/timeUtils'
-import { clocksNow } from '../tools/timeUtils'
+import { elapsed, clocksNow, timeStampNow } from '../tools/timeUtils'
 import { normalizeUrl } from '../tools/urlPolyfill'
 
 interface FetchContextBase {
   method: string
   startClocks: ClocksState
+  resolveDuration?: Duration
   input: RequestInfo
   init?: RequestInit
   url: string
@@ -96,6 +97,7 @@ function afterSend(
   const reportFetch = (response: Response | Error) => {
     const context = startContext as unknown as FetchCompleteContext
     context.state = 'complete'
+    context.resolveDuration = elapsed(startContext.startClocks.timeStamp, timeStampNow())
     if ('stack' in response || response instanceof Error) {
       context.status = 0
       context.isAborted = response instanceof DOMException && response.code === DOMException.ABORT_ERR
