@@ -40,10 +40,10 @@ export function startResourceCollection(
   sessionManager: RumSessionManager
 ) {
   lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request: RequestCompleteEvent) => {
-    waitForResponseToFinish(request, (duration) =>
+    waitForResponseToFinish(request, () =>
       lifeCycle.notify(
         LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-        processRequest(assign(request, { duration }), configuration, sessionManager)
+        processRequest(request, configuration, sessionManager)
       )
     )
   })
@@ -60,19 +60,30 @@ export function startResourceCollection(
   })
 }
 
-function waitForResponseToFinish(request: RequestCompleteEvent, callback: (duration: Duration) => void) {
-  const duration = request.duration || elapsed(request.startClocks.timeStamp, timeStampNow())
+function waitForResponseToFinish(request: RequestCompleteEvent, callback: () => void) {
+  if (request.duration !== undefined) {
+    callback()
+    return
+  }
   if (request.response) {
     const responseClone = request.response.clone()
     if (responseClone.body) {
-      readBytesFromStream(responseClone.body, Number.POSITIVE_INFINITY, false, () =>
-        callback(elapsed(request.startClocks.timeStamp, timeStampNow()))
+      readBytesFromStream(
+        responseClone.body,
+        () => {
+          request.duration = elapsed(request.startClocks.timeStamp, timeStampNow())
+          callback()
+        },
+        {
+          limit: Number.POSITIVE_INFINITY,
+          collectStreamBody: false,
+        }
       )
-    } else {
-      callback(duration)
+      return
     }
   } else {
-    callback(duration)
+    request.duration = request.resolveDuration || elapsed(request.startClocks.timeStamp, timeStampNow())
+    callback()
   }
 }
 
