@@ -1,5 +1,5 @@
 import type { HttpRequest, TimeStamp } from '@datadog/browser-core'
-import { PageExitReason, updateExperimentalFeatures, resetExperimentalFeatures, isIE } from '@datadog/browser-core'
+import { PageExitReason, isIE } from '@datadog/browser-core'
 import type { ViewContexts, ViewContext } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test/specHelper'
@@ -83,7 +83,6 @@ describe('startSegmentCollection', () => {
   afterEach(() => {
     clock?.cleanup()
     stopSegmentCollection()
-    resetExperimentalFeatures()
   })
 
   describe('initial segment', () => {
@@ -135,17 +134,6 @@ describe('startSegmentCollection', () => {
         expect(httpRequestSpy.sendOnExit).toHaveBeenCalled()
       })
 
-      describe('with the retry_replay experimental flag', () => {
-        beforeEach(() => {
-          updateExperimentalFeatures(['retry_replay'])
-        })
-
-        it('uses `httpRequest.sendOnExit` when sending the segment', () => {
-          addRecordAndFlushSegment(emulatePageUnload)
-          expect(httpRequestSpy.sendOnExit).toHaveBeenCalled()
-        })
-      })
-
       it('next segment is created because of beforeunload event', () => {
         addRecordAndFlushSegment(emulatePageUnload)
         addRecordAndFlushSegment()
@@ -163,17 +151,6 @@ describe('startSegmentCollection', () => {
         expect(httpRequestSpy.sendOnExit).toHaveBeenCalled()
       })
 
-      describe('with the retry_replay experimental flag', () => {
-        beforeEach(() => {
-          updateExperimentalFeatures(['retry_replay'])
-        })
-
-        it('uses `httpRequest.sendOnExit` when sending the segment', () => {
-          addRecordAndFlushSegment(emulatePageHidden)
-          expect(httpRequestSpy.sendOnExit).toHaveBeenCalled()
-        })
-      })
-
       it('next segment is created because of visibility hidden event', () => {
         addRecordAndFlushSegment(emulatePageHidden)
         addRecordAndFlushSegment()
@@ -186,20 +163,9 @@ describe('startSegmentCollection', () => {
         lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {} as any)
       }
 
-      it('uses `httpRequest.sendOnExit` when sending the segment', () => {
+      it('uses `httpRequest.send` when sending the segment', () => {
         addRecordAndFlushSegment(emulateViewChange)
-        expect(httpRequestSpy.sendOnExit).toHaveBeenCalled()
-      })
-
-      describe('with the retry_replay experimental flag', () => {
-        beforeEach(() => {
-          updateExperimentalFeatures(['retry_replay'])
-        })
-
-        it('uses `httpRequest.send` when sending the segment', () => {
-          addRecordAndFlushSegment(emulateViewChange)
-          expect(httpRequestSpy.send).toHaveBeenCalled()
-        })
+        expect(httpRequestSpy.send).toHaveBeenCalled()
       })
 
       it('next segment is created because of view change', () => {
@@ -210,24 +176,11 @@ describe('startSegmentCollection', () => {
     })
 
     describe('flush when reaching a bytes limit', () => {
-      it('uses `httpRequest.sendOnExit` when sending the segment', () => {
+      it('uses `httpRequest.send` when sending the segment', () => {
         addRecordAndFlushSegment(() => {
           addRecord(VERY_BIG_RECORD)
         })
-        expect(httpRequestSpy.sendOnExit).toHaveBeenCalled()
-      })
-
-      describe('with the retry_replay experimental flag', () => {
-        beforeEach(() => {
-          updateExperimentalFeatures(['retry_replay'])
-        })
-
-        it('uses `httpRequest.send` when sending the segment', () => {
-          addRecordAndFlushSegment(() => {
-            addRecord(VERY_BIG_RECORD)
-          })
-          expect(httpRequestSpy.send).toHaveBeenCalled()
-        })
+        expect(httpRequestSpy.send).toHaveBeenCalled()
       })
 
       it('next segment is created because the bytes limit has been reached', () => {
@@ -246,8 +199,8 @@ describe('startSegmentCollection', () => {
         addRecord(RECORD)
         worker.processAllMessages()
 
-        expect(httpRequestSpy.sendOnExit).toHaveBeenCalledTimes(1)
-        expect(getSentFormData(httpRequestSpy.sendOnExit).get('records_count')).toBe('4')
+        expect(httpRequestSpy.send).toHaveBeenCalledTimes(1)
+        expect(getSentFormData(httpRequestSpy.send).get('records_count')).toBe('4')
       })
 
       it('does not flush segment prematurely when records from the previous segment are still being processed', () => {
@@ -264,32 +217,18 @@ describe('startSegmentCollection', () => {
 
         worker.processAllMessages()
 
-        expect(httpRequestSpy.sendOnExit).toHaveBeenCalledTimes(1)
-        expect(getSentFormData(httpRequestSpy.sendOnExit).get('records_count')).toBe('2')
+        expect(httpRequestSpy.send).toHaveBeenCalledTimes(1)
+        expect(getSentFormData(httpRequestSpy.send).get('records_count')).toBe('2')
       })
     })
 
     describe('flush when a duration has been reached', () => {
-      it('uses `httpRequest.sendOnExit` when sending the segment', () => {
+      it('uses `httpRequest.send` when sending the segment', () => {
         clock = mockClock()
         addRecordAndFlushSegment(() => {
           clock!.tick(SEGMENT_DURATION_LIMIT)
         })
-        expect(httpRequestSpy.sendOnExit).toHaveBeenCalled()
-      })
-
-      describe('with the retry_replay experimental flag', () => {
-        beforeEach(() => {
-          updateExperimentalFeatures(['retry_replay'])
-        })
-
-        it('uses `httpRequest.send` when sending the segment', () => {
-          clock = mockClock()
-          addRecordAndFlushSegment(() => {
-            clock!.tick(SEGMENT_DURATION_LIMIT)
-          })
-          expect(httpRequestSpy.send).toHaveBeenCalled()
-        })
+        expect(httpRequestSpy.send).toHaveBeenCalled()
       })
 
       it('next segment is created because of the segment duration limit has been reached', () => {
@@ -317,20 +256,9 @@ describe('startSegmentCollection', () => {
     })
 
     describe('flush when stopping segment collection', () => {
-      it('uses `httpRequest.sendOnExit` when sending the segment', () => {
+      it('uses `httpRequest.send` when sending the segment', () => {
         addRecordAndFlushSegment(stopSegmentCollection)
-        expect(httpRequestSpy.sendOnExit).toHaveBeenCalled()
-      })
-
-      describe('with the retry_replay experimental flag', () => {
-        beforeEach(() => {
-          updateExperimentalFeatures(['retry_replay'])
-        })
-
-        it('uses `httpRequest.send` when sending the segment', () => {
-          addRecordAndFlushSegment(stopSegmentCollection)
-          expect(httpRequestSpy.send).toHaveBeenCalled()
-        })
+        expect(httpRequestSpy.send).toHaveBeenCalled()
       })
     })
   })

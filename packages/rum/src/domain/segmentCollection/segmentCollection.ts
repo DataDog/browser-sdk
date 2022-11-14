@@ -1,5 +1,5 @@
 import type { HttpRequest, TimeoutId } from '@datadog/browser-core'
-import { isExperimentalFeatureEnabled, ONE_SECOND, monitor } from '@datadog/browser-core'
+import { ONE_SECOND, monitor } from '@datadog/browser-core'
 import type { LifeCycle, ViewContexts, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { BrowserRecord, CreationReason, SegmentContext } from '../../types'
@@ -133,11 +133,7 @@ export function doStartSegmentCollection(
       },
       (data, rawSegmentBytesCount) => {
         const payload = buildReplayPayload(data, segment.metadata, rawSegmentBytesCount)
-        if (
-          !isExperimentalFeatureEnabled('retry_replay') ||
-          segment.flushReason === 'visibility_hidden' ||
-          segment.flushReason === 'before_unload'
-        ) {
+        if (segment.flushReason === 'visibility_hidden' || segment.flushReason === 'before_unload') {
           httpRequest.sendOnExit(payload)
         } else {
           httpRequest.send(payload)
