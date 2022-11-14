@@ -1,3 +1,4 @@
+import { isIE } from './browserDetection'
 import { readBytesFromStream } from './readBytesFromStream'
 
 describe('readBytesFromStream', () => {
@@ -6,6 +7,9 @@ describe('readBytesFromStream', () => {
   let stream: ReadableStream
 
   beforeEach(() => {
+    if (isIE()) {
+      pending('no ReadableStream support')
+    }
     beenCalled = false
     stream = new ReadableStream({
       pull: (controller) => {
