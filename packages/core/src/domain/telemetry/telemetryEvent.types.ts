@@ -130,6 +130,14 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       track_session_across_subdomains?: boolean
       /**
+       * Whether resources are tracked
+       */
+      track_resources?: boolean
+      /**
+       * Whether long tasks are tracked
+       */
+      track_long_task?: boolean
+      /**
        * Whether a secure cross-site session cookie is used
        */
       use_cross_site_session_cookie?: boolean
@@ -198,9 +206,57 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       mobile_vitals_update_period?: number
       /**
-       * Whether native crashes are tracked
+       * Whether error monitoring & crash reporting is enabled for the source platform
        */
-      track_native_crashes?: boolean
+      track_errors?: boolean
+      /**
+       * Whether automatic collection of network requests is enabled
+       */
+      track_network_requests?: boolean
+      /**
+       * Whether tracing features are enabled
+       */
+      use_tracing?: boolean
+      /**
+       * Whether native views are tracked (for cross platform SDKs)
+       */
+      track_native_views?: boolean
+      /**
+       * Whether native error monitoring & crash reporting is enabled (for cross platform SDKs)
+       */
+      track_native_errors?: boolean
+      /**
+       * Whether long task tracking is performed automatically
+       */
+      track_native_long_tasks?: boolean
+      /**
+       * Whether long task tracking is performed automatically for cross platform SDKs
+       */
+      track_cross_platform_long_tasks?: boolean
+      /**
+       * Whether the cross-platform SDK was initialized on top of a pre-existing native SDK instance
+       */
+      use_attach_to_existing?: boolean
+      /**
+       * Whether the client has provided a list of first party hosts
+       */
+      use_first_party_hosts?: boolean
+      /**
+       * The type of initialization the SDK used, in case multiple are supported
+       */
+      initialization_type?: string
+      /**
+       * Whether Flutter build and raster time tracking is enabled
+       */
+      track_flutter_performance?: boolean
+      /**
+       * The window duration for batches sent by the SDK (in milliseconds)
+       */
+      batch_size?: number
+      /**
+       * The upload frequency of batches (in milliseconds)
+       */
+      batch_upload_frequency?: number
       [k: string]: unknown
     }
     [k: string]: unknown
