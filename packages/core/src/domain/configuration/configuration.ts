@@ -22,6 +22,8 @@ export interface InitConfiguration {
   sampleRate?: number | undefined
   telemetrySampleRate?: number | undefined
   silentMultipleInit?: boolean | undefined
+  trackResources?: boolean | undefined
+  trackLongTasks?: boolean | undefined
 
   // transport options
   proxyUrl?: string | undefined
@@ -165,5 +167,7 @@ export function serializeConfiguration(configuration: InitConfiguration): Partia
     use_proxy: configuration.proxyUrl !== undefined ? !!configuration.proxyUrl : undefined,
     silent_multiple_init: configuration.silentMultipleInit,
     track_session_across_subdomains: configuration.trackSessionAcrossSubdomains,
+    track_resources: configuration.trackResources,
+    track_long_task: configuration.trackLongTasks,
   }
 }
