@@ -20,7 +20,7 @@ const DEFAULT_RUM_CONFIGURATION = {
   trackLongTasks: true,
   telemetrySampleRate: 100,
   telemetryConfigurationSampleRate: 100,
-  enableExperimentalFeatures: ['fetch_duration'],
+  enableExperimentalFeatures: [],
 }
 
 const DEFAULT_LOGS_CONFIGURATION = {
