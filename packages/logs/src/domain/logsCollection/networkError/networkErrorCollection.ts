@@ -178,7 +178,7 @@ function format(type: RequestType) {
 
 function truncateResponseStream(
   stream: ReadableStream<Uint8Array>,
-  limit: number,
+  bytesLimit: number,
   callback: (error?: Error, responseText?: string) => void
 ) {
   readBytesFromStream(
@@ -195,7 +195,7 @@ function truncateResponseStream(
       }
     },
     {
-      limit,
+      bytesLimit,
       collectStreamBody: true,
     }
   )

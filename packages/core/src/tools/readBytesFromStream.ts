@@ -2,7 +2,7 @@ import { monitor } from './monitor'
 import { noop } from './utils'
 
 type Options = {
-  limit: number
+  bytesLimit: number
   collectStreamBody?: boolean
 }
 /**
@@ -32,7 +32,7 @@ export function readBytesFromStream(
         if (options.collectStreamBody) chunks.push(result.value)
         readBytesCount += result.value.length
 
-        if (readBytesCount > options.limit) {
+        if (readBytesCount > options.bytesLimit) {
           onDone()
         } else {
           readMore()
@@ -66,8 +66,8 @@ export function readBytesFromStream(
           offset += chunk.length
         })
       }
-      bytes = completeBuffer.slice(0, options.limit)
-      limitExceeded = completeBuffer.length > options.limit
+      bytes = completeBuffer.slice(0, options.bytesLimit)
+      limitExceeded = completeBuffer.length > options.bytesLimit
     }
 
     callback(undefined, bytes, limitExceeded)

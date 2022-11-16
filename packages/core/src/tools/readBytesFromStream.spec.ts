@@ -33,7 +33,7 @@ describe('readBytesFromStream', () => {
         done()
       },
       {
-        limit: Number.POSITIVE_INFINITY,
+        bytesLimit: Number.POSITIVE_INFINITY,
         collectStreamBody: true,
       }
     )
@@ -49,7 +49,7 @@ describe('readBytesFromStream', () => {
         done()
       },
       {
-        limit: Number.POSITIVE_INFINITY,
+        bytesLimit: Number.POSITIVE_INFINITY,
         collectStreamBody: false,
       }
     )
@@ -65,7 +65,7 @@ describe('readBytesFromStream', () => {
         done()
       },
       {
-        limit: 10,
+        bytesLimit: 10,
         collectStreamBody: true,
       }
     )
@@ -85,7 +85,7 @@ describe('readBytesFromStream', () => {
         done()
       },
       {
-        limit: Number.POSITIVE_INFINITY,
+        bytesLimit: Number.POSITIVE_INFINITY,
         collectStreamBody: true,
       }
     )

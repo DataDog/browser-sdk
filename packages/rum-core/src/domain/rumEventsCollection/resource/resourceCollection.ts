@@ -76,7 +76,7 @@ function waitForResponseToFinish(request: RequestCompleteEvent, callback: () => 
           callback()
         },
         {
-          limit: Number.POSITIVE_INFINITY,
+          bytesLimit: Number.POSITIVE_INFINITY,
           collectStreamBody: false,
         }
       )
