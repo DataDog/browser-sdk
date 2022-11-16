@@ -8,7 +8,6 @@ import { normalizeUrl } from '../tools/urlPolyfill'
 interface FetchContextBase {
   method: string
   startClocks: ClocksState
-  resolveDuration?: Duration
   input: RequestInfo
   init?: RequestInit
   url: string
@@ -20,8 +19,8 @@ export interface FetchStartContext extends FetchContextBase {
 
 export interface FetchCompleteContext extends FetchContextBase {
   state: 'complete'
-  duration?: Duration
   status: number
+  resolveDuration?: Duration
   response?: Response
   responseType?: string
   isAborted: boolean
