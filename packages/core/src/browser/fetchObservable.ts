@@ -20,7 +20,7 @@ export interface FetchStartContext extends FetchContextBase {
 
 export interface FetchCompleteContext extends FetchContextBase {
   state: 'complete'
-  duration: Duration
+  duration?: Duration
   status: number
   response?: Response
   responseType?: string

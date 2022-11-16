@@ -7,10 +7,6 @@ import {
   relativeToClocks,
   assign,
   isNumber,
-  readBytesFromStream,
-  elapsed,
-  timeStampNow,
-  isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
 import type { ClocksState, Duration } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
@@ -41,12 +37,7 @@ export function startResourceCollection(
   sessionManager: RumSessionManager
 ) {
   lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request: RequestCompleteEvent) => {
-    waitForResponseToFinish(request, () =>
-      lifeCycle.notify(
-        LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-        processRequest(request, configuration, sessionManager)
-      )
-    )
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processRequest(request, configuration, sessionManager))
   })
 
   lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
@@ -59,33 +50,6 @@ export function startResourceCollection(
       }
     }
   })
-}
-
-function waitForResponseToFinish(request: RequestCompleteEvent, callback: () => void) {
-  if (request.duration !== undefined) {
-    callback()
-    return
-  }
-  if (request.response && isExperimentalFeatureEnabled('fetch_duration')) {
-    const responseClone = request.response.clone()
-    if (responseClone.body) {
-      readBytesFromStream(
-        responseClone.body,
-        () => {
-          request.duration = elapsed(request.startClocks.timeStamp, timeStampNow())
-          callback()
-        },
-        {
-          bytesLimit: Number.POSITIVE_INFINITY,
-          collectStreamBody: false,
-        }
-      )
-      return
-    }
-  } else {
-    request.duration = request.resolveDuration || elapsed(request.startClocks.timeStamp, timeStampNow())
-    callback()
-  }
 }
 
 function processRequest(

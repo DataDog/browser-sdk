@@ -6,7 +6,15 @@ import type {
   FetchStartContext,
   FetchCompleteContext,
 } from '@datadog/browser-core'
-import { RequestType, initFetchObservable, initXhrObservable } from '@datadog/browser-core'
+import {
+  RequestType,
+  initFetchObservable,
+  initXhrObservable,
+  readBytesFromStream,
+  elapsed,
+  timeStampNow,
+  isExperimentalFeatureEnabled,
+} from '@datadog/browser-core'
 import type { RumSessionManager } from '..'
 import type { RumConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
@@ -30,7 +38,6 @@ export interface RequestStartEvent {
   requestIndex: number
   url: string
 }
-
 export interface RequestCompleteEvent {
   requestIndex: number
   type: RequestType
@@ -120,24 +127,25 @@ export function trackFetch(lifeCycle: LifeCycle, configuration: RumConfiguration
         })
         break
       case 'complete':
-        tracer.clearTracingIfNeeded(context)
-
-        lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
-          resolveDuration: context.resolveDuration,
-          duration: context.duration,
-          method: context.method,
-          requestIndex: context.requestIndex,
-          responseType: context.responseType,
-          spanId: context.spanId,
-          startClocks: context.startClocks,
-          status: context.status,
-          traceId: context.traceId,
-          traceSampled: context.traceSampled,
-          type: RequestType.FETCH,
-          url: context.url,
-          response: context.response,
-          init: context.init,
-          input: context.input,
+        waitForResponseToFinish(context, (duration: Duration) => {
+          tracer.clearTracingIfNeeded(context)
+          lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
+            resolveDuration: context.resolveDuration,
+            duration,
+            method: context.method,
+            requestIndex: context.requestIndex,
+            responseType: context.responseType,
+            spanId: context.spanId,
+            startClocks: context.startClocks,
+            status: context.status,
+            traceId: context.traceId,
+            traceSampled: context.traceSampled,
+            type: RequestType.FETCH,
+            url: context.url,
+            response: context.response,
+            init: context.init,
+            input: context.input,
+          })
         })
         break
     }
@@ -149,4 +157,24 @@ function getNextRequestIndex() {
   const result = nextRequestIndex
   nextRequestIndex += 1
   return result
+}
+
+function waitForResponseToFinish(context: RumFetchCompleteContext, callback: (duration: Duration) => void) {
+  if (context.response && isExperimentalFeatureEnabled('fetch_duration')) {
+    const responseClone = context.response.clone()
+    if (responseClone.body) {
+      readBytesFromStream(
+        responseClone.body,
+        () => {
+          callback(elapsed(context.startClocks.timeStamp, timeStampNow()))
+        },
+        {
+          bytesLimit: Number.POSITIVE_INFINITY,
+          collectStreamBody: false,
+        }
+      )
+      return
+    }
+  }
+  callback(elapsed(context.startClocks.timeStamp, timeStampNow()))
 }
