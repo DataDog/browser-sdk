@@ -22,21 +22,17 @@ export function useEvents() {
     query: '',
   })
 
-  useEffect(() => {
-    const removeListener = listenRequests((newEvents) => {
-      setEvents((oldEvents) =>
-        [...newEvents, ...oldEvents]
-          .sort((first: any, second: any) => second.date - first.date)
-          .slice(0, MAXIMUM_LOGGED_EVENTS)
-      )
-    })
-
-    chrome.webNavigation.onCommitted.addListener((details) => {
-      if (['reload'].includes(details.transitionType)) setEvents([])
-    })
-
-    return removeListener
-  }, [])
+  useEffect(
+    () =>
+      listenRequests((newEvents) => {
+        setEvents((oldEvents) =>
+          [...newEvents, ...oldEvents]
+            .sort((first: any, second: any) => second.date - first.date)
+            .slice(0, MAXIMUM_LOGGED_EVENTS)
+        )
+      }),
+    []
+  )
 
   const filteredEvents = events
     .filter((event) => filters.sdk.includes('logs') || !isLog(event))
