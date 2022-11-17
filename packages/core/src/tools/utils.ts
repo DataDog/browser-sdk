@@ -156,12 +156,16 @@ export function noop() {}
  *
  * Note: this still assumes that JSON.stringify is correct.
  */
-export function jsonStringify(value: unknown, space?: string | number): string | undefined {
+export function jsonStringify(
+  value: unknown,
+  replacer?: Array<string | number>,
+  space?: string | number
+): string | undefined {
   if (typeof value !== 'object' || value === null) {
     return JSON.stringify(value)
   }
 
-  // Note: The order matters here. We need to detach toJSON methods on parent classes before their
+  // Note: The order matter here. We need to detach toJSON methods on parent classes before their
   // subclasses.
   const restoreObjectPrototypeToJson = detachToJsonMethod(Object.prototype)
   const restoreArrayPrototypeToJson = detachToJsonMethod(Array.prototype)
@@ -169,7 +173,7 @@ export function jsonStringify(value: unknown, space?: string | number): string |
   const restoreValueToJson = detachToJsonMethod(value)
 
   try {
-    return JSON.stringify(value, getCyclicReplacer(), space)
+    return JSON.stringify(value, replacer, space)
   } catch {
     return '<error: unable to serialize object>'
   } finally {
@@ -486,31 +490,27 @@ interface CircularReferenceChecker {
   hasAlreadyBeenSeen(value: any): boolean
 }
 function createCircularReferenceChecker(): CircularReferenceChecker {
-  // Using a weakmap instead of a weakset to support IE11
-  const map: WeakMap<any, boolean> = new WeakMap()
+  if (typeof WeakSet !== 'undefined') {
+    const set: WeakSet<any> = new WeakSet()
+    return {
+      hasAlreadyBeenSeen(value) {
+        const has = set.has(value)
+        if (!has) {
+          set.add(value)
+        }
+        return has
+      },
+    }
+  }
+  const array: any[] = []
   return {
     hasAlreadyBeenSeen(value) {
-      const has = map.has(value)
+      const has = array.indexOf(value) >= 0
       if (!has) {
-        map.set(value, true)
+        array.push(value)
       }
       return has
     },
-  }
-}
-
-/**
- * Returns a replacer function that can be used with JSON.stringify
- * to remove cyclic references.
- */
-function getCyclicReplacer(): (key: string, value: unknown) => unknown {
-  const circularReferenceChecker = createCircularReferenceChecker()
-  return (_key: string, value: unknown) => {
-    const type = getType(value)
-    if ((type === 'object' || type === 'array') && circularReferenceChecker.hasAlreadyBeenSeen(value)) {
-      return '<warning: cyclic reference not serialized>'
-    }
-    return value
   }
 }
 
