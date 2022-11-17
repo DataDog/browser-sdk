@@ -1,12 +1,14 @@
 import { Group, Checkbox, Badge, Button } from '@mantine/core'
-import React from 'react'
+import { useInterval } from 'usehooks-ts'
+import React, { useEffect } from 'react'
 import { evalInWindow } from '../evalInWindow'
 import { useStore } from '../hooks/useStore'
-import { usePolling } from '../hooks/usePolling'
 
 export function ActionsBar() {
   const [{ useDevBundles, useRumSlim, devServerStatus, blockIntakeRequests, autoFlush }, setStore] = useStore()
-  usePolling(flushEvents, autoFlush)
+
+  useEffect(flushEvents, [])
+  useInterval(flushEvents, 5000)
 
   return (
     <Group>
