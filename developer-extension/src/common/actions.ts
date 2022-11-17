@@ -7,7 +7,7 @@ type Message<Actions extends { [key: string]: any }> = ValueOf<{
   }
 }>
 
-export function createListenAction<Actions>() {
+export function createListenAction<Actions extends { [key: string]: any }>() {
   function listenAction<K extends keyof Actions>(
     action: K,
     callback: (payload: Actions[K], tabId: number | undefined) => void
@@ -27,18 +27,33 @@ export function createListenAction<Actions>() {
 }
 
 export function createSendAction<Actions>() {
+  let onDisconnect: (() => void) | undefined
+
   function sendAction<K extends keyof Actions>(action: K, payload: Actions[K]) {
-    return chrome.runtime.sendMessage({ action, payload }, () => {
-      const error = chrome.runtime.lastError
-      if (
-        error &&
-        error.message !== 'Could not establish connection. Receiving end does not exist.' &&
-        error.message !== 'The message port closed before a response was received.'
-      ) {
-        console.error(`sendAction error: ${String(error.message)}`)
-      }
-    })
+    try {
+      chrome.runtime.sendMessage({ action, payload }).catch(handleError)
+    } catch (error) {
+      handleError(error)
+    }
   }
 
-  return sendAction
+  function handleError(error: any) {
+    const message = typeof error === 'object' && error !== null ? String(error.message) : '(no message)'
+
+    if (onDisconnect && message === 'Extension context invalidated.') {
+      onDisconnect()
+    } else if (
+      message !== 'Could not establish connection. Receiving end does not exist.' &&
+      message !== 'The message port closed before a response was received.'
+    ) {
+      console.error(`sendAction error: ${message}`)
+    }
+  }
+
+  return {
+    sendAction,
+    setOnDisconnect: (newOnDisconnect: () => void) => {
+      onDisconnect = newOnDisconnect
+    },
+  }
 }
