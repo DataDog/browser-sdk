@@ -67,6 +67,8 @@ export interface RawRumErrorEvent {
   view?: {
     in_foreground: boolean
   }
+
+  feature_flags?: Context
 }
 
 export interface RawRumViewEvent {
@@ -101,6 +103,7 @@ export interface RawRumViewEvent {
   session: {
     has_replay: true | undefined
   }
+  feature_flags?: Context
   _dd: {
     document_version: number
     replay_stats?: ReplayStats

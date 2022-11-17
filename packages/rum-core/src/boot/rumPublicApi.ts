@@ -89,6 +89,10 @@ export function makeRumPublicApi(
     bufferApiCalls.add(() => addErrorStrategy(providedError, commonContext))
   }
 
+  let addFeatureFlagsStrategy: StartRumResult['addFeatureFlags'] = (featureFlags) => {
+    bufferApiCalls.add(() => addFeatureFlagsStrategy(featureFlags))
+  }
+
   function initRum(initConfiguration: RumInitConfiguration) {
     // If we are in a Synthetics test configured to automatically inject a RUM instance, we want to
     // completely discard the customer application RUM instance by ignoring their init() call.  But,
@@ -154,6 +158,7 @@ export function makeRumPublicApi(
       addAction: addActionStrategy,
       addError: addErrorStrategy,
       addTiming: addTimingStrategy,
+      addFeatureFlags: addFeatureFlagsStrategy,
       getInternalContext: getInternalContextStrategy,
     } = startRumResults)
     bufferApiCalls.drain()
@@ -221,6 +226,10 @@ export function makeRumPublicApi(
 
     addTiming: monitor((name: string, time?: number) => {
       addTimingStrategy(name, time as RelativeTime | TimeStamp | undefined)
+    }),
+
+    addFeatureFlags: monitor((featureFlags: object) => {
+      addFeatureFlagsStrategy(featureFlags as Context)
     }),
 
     setUser: monitor((newUser: User) => {

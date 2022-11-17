@@ -10,14 +10,22 @@ import { doStartErrorCollection } from './errorCollection'
 describe('error collection', () => {
   let setupBuilder: TestSetupBuilder
   let addError: ReturnType<typeof doStartErrorCollection>['addError']
+  const viewContextsStub = {
+    findView: jasmine.createSpy('findView').and.returnValue({
+      id: 'abcde',
+      name: 'foo',
+      featureFlags: { feature: 'foo' },
+    }),
+  }
 
   beforeEach(() => {
     setupBuilder = setup()
+      .withViewContexts(viewContextsStub)
       .withForegroundContexts({
         isInForegroundAt: () => true,
       })
-      .beforeBuild(({ lifeCycle, foregroundContexts }) => {
-        ;({ addError } = doStartErrorCollection(lifeCycle, foregroundContexts))
+      .beforeBuild(({ lifeCycle, foregroundContexts, viewContexts }) => {
+        ;({ addError } = doStartErrorCollection(lifeCycle, foregroundContexts, viewContexts))
       })
   })
 
@@ -56,6 +64,7 @@ describe('error collection', () => {
           view: {
             in_foreground: true,
           },
+          feature_flags: { feature: 'foo' },
         },
         savedCommonContext: undefined,
         startTime: 1234 as RelativeTime,
@@ -131,6 +140,14 @@ describe('error collection', () => {
       })
     })
 
+    // it('should have feature flag of the current view', () => {
+    //   const { rawRumEvents } = setupBuilder.build()
+
+    //   expect(rawRumEvents[0].savedCommonContext!.user).toEqual({
+    //     feature: 'foo',
+    //   })
+    // })
+
     it('should include non-Error values in domain context', () => {
       const { rawRumEvents } = setupBuilder.build()
       addError({
@@ -176,6 +193,7 @@ describe('error collection', () => {
         view: {
           in_foreground: true,
         },
+        feature_flags: { feature: 'foo' },
         type: RumEventType.ERROR,
       })
       expect(rawRumEvents[0].domainContext).toEqual({

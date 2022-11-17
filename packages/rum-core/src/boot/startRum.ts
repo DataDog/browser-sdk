@@ -89,7 +89,7 @@ export function startRum(
 
   startLongTaskCollection(lifeCycle, session)
   startResourceCollection(lifeCycle, configuration, session)
-  const { addTiming, startView } = startViewCollection(
+  const { addTiming, addFeatureFlags, startView } = startViewCollection(
     lifeCycle,
     configuration,
     location,
@@ -99,7 +99,7 @@ export function startRum(
     recorderApi,
     initialViewOptions
   )
-  const { addError } = startErrorCollection(lifeCycle, foregroundContexts)
+  const { addError } = startErrorCollection(lifeCycle, foregroundContexts, viewContexts)
 
   startRequestCollection(lifeCycle, configuration, session)
   startPerformanceCollection(lifeCycle, configuration)
@@ -116,6 +116,7 @@ export function startRum(
     addAction,
     addError,
     addTiming,
+    addFeatureFlags,
     startView,
     lifeCycle,
     viewContexts,

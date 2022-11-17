@@ -1,5 +1,14 @@
-import type { Duration, ClocksState, TimeStamp, Observable, Subscription, RelativeTime } from '@datadog/browser-core'
+import type {
+  Duration,
+  ClocksState,
+  TimeStamp,
+  Observable,
+  Subscription,
+  RelativeTime,
+  Context,
+} from '@datadog/browser-core'
 import {
+  isExperimentalFeatureEnabled,
   PageExitReason,
   shallowClone,
   assign,
@@ -43,6 +52,7 @@ export interface ViewEvent {
   loadingTime?: Duration
   loadingType: ViewLoadingType
   cumulativeLayoutShift?: number
+  featureFlags?: Context
 }
 
 export interface ViewCreatedEvent {
@@ -165,6 +175,10 @@ export function trackViews(
       currentView.addTiming(name, time)
       currentView.scheduleUpdate()
     },
+    addFeatureFlags: (featureFlags: Context) => {
+      currentView.addFeatureFlags(featureFlags)
+      currentView.scheduleUpdate()
+    },
     startView: (options?: ViewOptions, startClocks?: ClocksState) => {
       currentView.end(startClocks)
       currentView.triggerUpdate()
@@ -191,6 +205,7 @@ function newView(
   // Setup initial values
   const id = generateUUID()
   let timings: Timings = {}
+  let featureFlags: Context
   const customTimings: ViewCustomTimings = {}
   let documentVersion = 0
   let endClocks: ClocksState | undefined
@@ -244,6 +259,7 @@ function newView(
           timings,
           duration: elapsed(startClocks.timeStamp, currentEnd),
           isActive: endClocks === undefined,
+          featureFlags,
         },
         viewMetrics
       )
@@ -274,6 +290,11 @@ function newView(
     addTiming(name: string, time: RelativeTime | TimeStamp) {
       const relativeTime = looksLikeRelativeTime(time) ? time : elapsed(startClocks.timeStamp, time)
       customTimings[sanitizeTiming(name)] = relativeTime
+    },
+    addFeatureFlags(newFeatureFlags: Context) {
+      if (isExperimentalFeatureEnabled('feature_flags')) {
+        featureFlags = featureFlags ? assign(featureFlags, newFeatureFlags) : newFeatureFlags
+      }
     },
   }
 }

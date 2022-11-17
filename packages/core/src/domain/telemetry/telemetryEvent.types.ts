@@ -234,10 +234,6 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       track_cross_platform_long_tasks?: boolean
       /**
-       * Whether the cross-platform SDK was initialized on top of a pre-existing native SDK instance
-       */
-      use_attach_to_existing?: boolean
-      /**
        * Whether the client has provided a list of first party hosts
        */
       use_first_party_hosts?: boolean

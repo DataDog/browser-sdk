@@ -13,6 +13,7 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   addAction: () => undefined,
   addError: () => undefined,
   addTiming: () => undefined,
+  addFeatureFlags: () => undefined,
   startView: () => undefined,
   getInternalContext: () => undefined,
   lifeCycle: {} as any,
@@ -598,6 +599,53 @@ describe('rum public api', () => {
 
       expect(addTimingSpy.calls.argsFor(0)[0]).toEqual('foo')
       expect(addTimingSpy.calls.argsFor(0)[1]).toBe(12 as RelativeTime)
+      expect(displaySpy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('addFeatureFlags', () => {
+    let addFeatureFlagsSpy: jasmine.Spy<ReturnType<StartRum>['addFeatureFlags']>
+    let displaySpy: jasmine.Spy<() => void>
+    let rumPublicApi: RumPublicApi
+    let setupBuilder: TestSetupBuilder
+
+    beforeEach(() => {
+      addFeatureFlagsSpy = jasmine.createSpy()
+      displaySpy = spyOn(display, 'error')
+      rumPublicApi = makeRumPublicApi(
+        () => ({
+          ...noopStartRum(),
+          addFeatureFlags: addFeatureFlagsSpy,
+        }),
+        noopRecorderApi
+      )
+      setupBuilder = setup()
+    })
+
+    afterEach(() => {
+      setupBuilder.cleanup()
+    })
+
+    it('should allow to add feature flags before init', () => {
+      const { clock } = setupBuilder.withFakeClock().build()
+
+      clock.tick(10)
+      rumPublicApi.addFeatureFlags({ feature: 'foo' })
+
+      expect(addFeatureFlagsSpy).not.toHaveBeenCalled()
+
+      clock.tick(20)
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+      expect(addFeatureFlagsSpy.calls.argsFor(0)[0]).toEqual({ feature: 'foo' })
+    })
+
+    it('should add feature flags', () => {
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+      rumPublicApi.addFeatureFlags({ feature: 'foo' })
+
+      expect(addFeatureFlagsSpy.calls.argsFor(0)[0]).toEqual({ feature: 'foo' })
       expect(displaySpy).not.toHaveBeenCalled()
     })
   })

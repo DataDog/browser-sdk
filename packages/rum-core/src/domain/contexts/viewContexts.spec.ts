@@ -3,7 +3,7 @@ import { relativeToClocks, CLEAR_OLD_CONTEXTS_INTERVAL } from '@datadog/browser-
 import type { TestSetupBuilder } from '../../../test/specHelper'
 import { setup } from '../../../test/specHelper'
 import { LifeCycleEventType } from '../lifeCycle'
-import type { ViewCreatedEvent } from '../rumEventsCollection/view/trackViews'
+import type { ViewCreatedEvent, ViewEvent } from '../rumEventsCollection/view/trackViews'
 import type { ViewContexts } from './viewContexts'
 import { startViewContexts, VIEW_CONTEXT_TIME_OUT_DELAY } from './viewContexts'
 
@@ -17,6 +17,14 @@ describe('viewContexts', () => {
       id: FAKE_ID,
       ...partialViewCreatedEvent,
     }
+  }
+
+  function buildViewEvent(partialViewEvent: Partial<ViewEvent> = {}): ViewEvent {
+    return {
+      startClocks,
+      id: FAKE_ID,
+      ...partialViewEvent,
+    } as ViewEvent
   }
 
   let setupBuilder: TestSetupBuilder
@@ -108,6 +116,14 @@ describe('viewContexts', () => {
 
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ name: 'Fake name' }))
       expect(viewContexts.findView()!.name).toBe('Fake name')
+    })
+
+    it('should set the feature flags on VIEW_UPDATED', () => {
+      const { lifeCycle } = setupBuilder.build()
+
+      lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, buildViewEvent({ featureFlags: { feature: 'foo' } }))
+
+      expect(viewContexts.findView()!.id).toEqual(FAKE_ID)
     })
   })
 

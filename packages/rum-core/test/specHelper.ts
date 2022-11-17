@@ -229,7 +229,7 @@ export function setupViewTest(
     getHandledCount: getViewCreateCount,
   } = spyOnViews('view create')
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, viewCreateHandler)
-  const { stop, startView, addTiming } = trackViews(
+  const { stop, startView, addTiming, addFeatureFlags } = trackViews(
     location,
     lifeCycle,
     domMutationObservable,
@@ -242,6 +242,7 @@ export function setupViewTest(
     stop,
     startView,
     addTiming,
+    addFeatureFlags,
     getViewUpdate,
     getViewUpdateCount,
     getViewCreate,

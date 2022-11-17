@@ -127,6 +127,7 @@ describe('viewCollection', () => {
       session: {
         has_replay: undefined,
       },
+      feature_flags: undefined,
     })
   })
 

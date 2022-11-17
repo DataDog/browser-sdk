@@ -1,5 +1,6 @@
 import type { Context, Duration, RelativeTime } from '@datadog/browser-core'
 import {
+  updateExperimentalFeatures,
   PageExitReason,
   timeStampNow,
   display,
@@ -569,6 +570,66 @@ describe('view custom timings', () => {
       'foo_bar-qux.@zip_21_$____': 1234 as Duration,
     })
     expect(displaySpy).toHaveBeenCalled()
+  })
+})
+
+describe('view feature flags', () => {
+  let setupBuilder: TestSetupBuilder
+  let viewTest: ViewTest
+
+  beforeEach(() => {
+    setupBuilder = setup()
+      .withFakeClock()
+      .beforeBuild((buildContext) => {
+        viewTest = setupViewTest(buildContext)
+        return viewTest
+      })
+  })
+
+  afterEach(() => {
+    setupBuilder.cleanup()
+  })
+
+  it('should add feature flags of any type to the current view if the ff feature_flags is enabled', () => {
+    updateExperimentalFeatures(['feature_flags'])
+
+    const { clock } = setupBuilder.build()
+    const { getViewUpdate, addFeatureFlags } = viewTest
+
+    addFeatureFlags({ feature: 'foo', feature2: 2, feature3: true, feature4: { foo: 'bar' } })
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD + 1)
+
+    const view = getViewUpdate(1)
+    expect(view.featureFlags).toEqual({ feature: 'foo', feature2: 2, feature3: true, feature4: { foo: 'bar' } })
+  })
+
+  it('should replace existing feature flags to the current view if the ff feature_flags is enabled', () => {
+    updateExperimentalFeatures(['feature_flags'])
+
+    const { clock } = setupBuilder.build()
+    const { getViewUpdate, addFeatureFlags } = viewTest
+
+    addFeatureFlags({ feature: 'foo', feature2: 'baz' })
+    addFeatureFlags({ feature: 'bar' })
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD + 1)
+
+    const view = getViewUpdate(1)
+    expect(view.featureFlags).toEqual({ feature: 'bar', feature2: 'baz' })
+  })
+
+  it('should add feature flags to the current view if the ff feature_flags is disabled', () => {
+    const { clock } = setupBuilder.build()
+    const { getViewUpdate, addFeatureFlags } = viewTest
+
+    addFeatureFlags({ feature: 'foo', feature2: 'baz' })
+    addFeatureFlags({ feature: 'bar' })
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD + 1)
+
+    const view = getViewUpdate(1)
+    expect(view.featureFlags).toEqual({ feature: 'bar', feature2: 'baz' })
   })
 })
 
