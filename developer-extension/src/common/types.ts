@@ -12,4 +12,5 @@ export interface Store {
   useDevBundles: boolean
   useRumSlim: boolean
   blockIntakeRequests: boolean
+  autoFlush: boolean
 }
