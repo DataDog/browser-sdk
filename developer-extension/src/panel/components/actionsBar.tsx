@@ -1,11 +1,12 @@
 import { Group, Checkbox, Badge, Button } from '@mantine/core'
 import { useInterval } from 'usehooks-ts'
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { evalInWindow } from '../evalInWindow'
 import { useStore } from '../hooks/useStore'
 
 export function ActionsBar() {
-  const [{ useDevBundles, useRumSlim, devServerStatus, blockIntakeRequests, autoFlush }, setStore] = useStore()
+  const [{ useDevBundles, useRumSlim, devServerStatus, blockIntakeRequests }, setStore] = useStore()
+  const [autoFlush, setAutoFlush] = useState<boolean>(true)
 
   useEffect(flushEvents, [])
   useInterval(flushEvents, 5000)
@@ -42,12 +43,7 @@ export function ActionsBar() {
         />
       </Group>
       <Group>
-        <Checkbox
-          label="Auto Flush"
-          checked={autoFlush}
-          onChange={(e) => setStore({ autoFlush: isChecked(e.target) })}
-          color="violet"
-        />
+        <Checkbox label="Auto Flush" checked={autoFlush} onChange={() => setAutoFlush((b) => !b)} color="violet" />
         <Button color="violet" variant="light" compact onClick={() => flushEvents()}>
           Flush buffered events
         </Button>

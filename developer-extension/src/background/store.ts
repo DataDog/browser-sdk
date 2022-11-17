@@ -6,7 +6,6 @@ export const store: Store = {
   useDevBundles: false,
   useRumSlim: false,
   blockIntakeRequests: false,
-  autoFlush: true,
 }
 
 export function setStore(newStore: Partial<Store>) {
