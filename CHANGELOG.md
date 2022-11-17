@@ -16,6 +16,13 @@
 
 ---
 
+## v4.24.1
+
+- ⏪ Revert "🐛 [RUMF-1410] Allow serialization of objects with cyclic references ([#1783](https://github.com/DataDog/browser-sdk/pull/1783))" ([#1821](https://github.com/DataDog/browser-sdk/pull/1821))
+- 📈[RUMF-1432] Collect trackResources and trackLongTasks configs ([#1814](https://github.com/DataDog/browser-sdk/pull/1814))
+- 🗑️ [RUMF-1433] Remove Preflight request Performance Entry check ([#1813](https://github.com/DataDog/browser-sdk/pull/1813))
+- ✨[RUMF-1435] Add some retry info on events ([#1817](https://github.com/DataDog/browser-sdk/pull/1817))
+
 ## v4.24.0
 
 - ⚗️✨ [RUMF-1379] heatmaps: enable descendant combined selectors ([#1811](https://github.com/DataDog/browser-sdk/pull/1811))
