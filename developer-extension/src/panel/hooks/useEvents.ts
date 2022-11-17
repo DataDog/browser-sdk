@@ -31,11 +31,16 @@ export function useEvents() {
       )
     })
 
-    chrome.webNavigation.onCommitted.addListener((details) => {
+    const clearCurrentEvents = (details: chrome.webNavigation.WebNavigationTransitionCallbackDetails) => {
       if (['reload'].includes(details.transitionType)) setEvents([])
-    })
+    }
 
-    return removeListener
+    chrome.webNavigation.onCommitted.addListener(clearCurrentEvents)
+
+    return () => {
+      removeListener()
+      chrome.webNavigation.onCommitted.removeListener(clearCurrentEvents)
+    }
   }, [])
 
   const filteredEvents = events
