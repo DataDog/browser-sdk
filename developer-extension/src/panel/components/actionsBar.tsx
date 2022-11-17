@@ -52,7 +52,6 @@ function flushEvents() {
   evalInWindow(
     `
       const descriptor = Object.getOwnPropertyDescriptor(Document.prototype, 'visibilityState')
-      console.log(descriptor)
       Object.defineProperty(Document.prototype, 'visibilityState', { value: 'hidden' })
       document.dispatchEvent(new Event('visibilitychange', { bubbles: true }))
       Object.defineProperty(Document.prototype, 'visibilityState', descriptor)
