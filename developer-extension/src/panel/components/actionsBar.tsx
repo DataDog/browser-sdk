@@ -1,15 +1,15 @@
 import { Group, Checkbox, Badge, Button } from '@mantine/core'
-import { useInterval } from 'usehooks-ts'
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { evalInWindow } from '../evalInWindow'
+import { flushEvents } from '../flushEvents'
 import { useStore } from '../hooks/useStore'
+import { useAutoFlushEvents } from '../hooks/useAutoFlushEvents'
 
 export function ActionsBar() {
   const [{ useDevBundles, useRumSlim, devServerStatus, blockIntakeRequests }, setStore] = useStore()
   const [autoFlush, setAutoFlush] = useState<boolean>(true)
 
-  useEffect(flushEvents, [])
-  useInterval(flushEvents, 5000)
+  useAutoFlushEvents(autoFlush)
 
   return (
     <Group>
@@ -57,19 +57,6 @@ export function ActionsBar() {
 
 function isChecked(target: EventTarget) {
   return target instanceof HTMLInputElement && target.checked
-}
-
-function flushEvents() {
-  evalInWindow(
-    `
-      const descriptor = Object.getOwnPropertyDescriptor(Document.prototype, 'visibilityState')
-      console.log(descriptor)
-      Object.defineProperty(Document.prototype, 'visibilityState', { value: 'hidden' })
-      document.dispatchEvent(new Event('visibilitychange', { bubbles: true }))
-      Object.defineProperty(Document.prototype, 'visibilityState', descriptor)
-      document.dispatchEvent(new Event('visibilitychange', { bubbles: true }))
-    `
-  ).catch((error) => console.error('Error while flushing events:', error))
 }
 
 function endSession() {
