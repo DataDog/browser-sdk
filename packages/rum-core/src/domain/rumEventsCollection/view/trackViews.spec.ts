@@ -588,6 +588,7 @@ describe('view feature flags', () => {
 
   afterEach(() => {
     setupBuilder.cleanup()
+    resetExperimentalFeatures()
   })
 
   it('should add feature flags of any type to the current view if the ff feature_flags is enabled', () => {
@@ -613,23 +614,23 @@ describe('view feature flags', () => {
     addFeatureFlags({ feature: 'foo', feature2: 'baz' })
     addFeatureFlags({ feature: 'bar' })
 
-    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD + 1)
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     const view = getViewUpdate(1)
     expect(view.featureFlags).toEqual({ feature: 'bar', feature2: 'baz' })
   })
 
-  it('should add feature flags to the current view if the ff feature_flags is disabled', () => {
+  it('should not add feature flags to the current view if the ff feature_flags is disabled', () => {
     const { clock } = setupBuilder.build()
     const { getViewUpdate, addFeatureFlags } = viewTest
 
     addFeatureFlags({ feature: 'foo', feature2: 'baz' })
     addFeatureFlags({ feature: 'bar' })
 
-    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD + 1)
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     const view = getViewUpdate(1)
-    expect(view.featureFlags).toEqual({ feature: 'bar', feature2: 'baz' })
+    expect(view.featureFlags).toEqual({})
   })
 })
 

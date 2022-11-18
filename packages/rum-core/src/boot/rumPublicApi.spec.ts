@@ -1,5 +1,12 @@
 import type { RelativeTime, TimeStamp, Context } from '@datadog/browser-core'
-import { ONE_SECOND, getTimeStamp, display, DefaultPrivacyLevel } from '@datadog/browser-core'
+import {
+  updateExperimentalFeatures,
+  resetExperimentalFeatures,
+  ONE_SECOND,
+  getTimeStamp,
+  display,
+  DefaultPrivacyLevel,
+} from '@datadog/browser-core'
 import { cleanupSyntheticsWorkerValues, mockSyntheticsWorkerValues } from '../../../core/test/syntheticsWorkerValues'
 import { initEventBridgeStub, deleteEventBridgeStub } from '../../../core/test/specHelper'
 import type { TestSetupBuilder } from '../../test/specHelper'
@@ -626,26 +633,34 @@ describe('rum public api', () => {
       setupBuilder.cleanup()
     })
 
-    it('should allow to add feature flags before init', () => {
-      const { clock } = setupBuilder.withFakeClock().build()
-
-      clock.tick(10)
-      rumPublicApi.addFeatureFlags({ feature: 'foo' })
-
-      expect(addFeatureFlagsSpy).not.toHaveBeenCalled()
-
-      clock.tick(20)
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-      expect(addFeatureFlagsSpy.calls.argsFor(0)[0]).toEqual({ feature: 'foo' })
+    afterEach(() => {
+      resetExperimentalFeatures()
     })
 
-    it('should add feature flags', () => {
+    it('should add feature flags when ff feature_flags enable', () => {
+      updateExperimentalFeatures(['feature_flags'])
+
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       rumPublicApi.addFeatureFlags({ feature: 'foo' })
 
       expect(addFeatureFlagsSpy.calls.argsFor(0)[0]).toEqual({ feature: 'foo' })
+      expect(displaySpy).not.toHaveBeenCalled()
+    })
+
+    it('API should not be available when ff feature_flags disabled', () => {
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+      expect(Object.keys(rumPublicApi)).not.toContain('addFeatureFlags')
+      expect(displaySpy).not.toHaveBeenCalled()
+    })
+
+    it('API should not be available before init when ff feature_flags enabled', () => {
+      updateExperimentalFeatures(['feature_flags'])
+
+      expect(Object.keys(rumPublicApi)).not.toContain('addFeatureFlags')
+
       expect(displaySpy).not.toHaveBeenCalled()
     })
   })

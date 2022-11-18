@@ -3,7 +3,7 @@ import { relativeToClocks, CLEAR_OLD_CONTEXTS_INTERVAL } from '@datadog/browser-
 import type { TestSetupBuilder } from '../../../test/specHelper'
 import { setup } from '../../../test/specHelper'
 import { LifeCycleEventType } from '../lifeCycle'
-import type { ViewCreatedEvent, ViewEvent } from '../rumEventsCollection/view/trackViews'
+import type { ViewCreatedEvent } from '../rumEventsCollection/view/trackViews'
 import type { ViewContexts } from './viewContexts'
 import { startViewContexts, VIEW_CONTEXT_TIME_OUT_DELAY } from './viewContexts'
 
@@ -18,14 +18,6 @@ describe('viewContexts', () => {
       featureFlags: {},
       ...partialViewCreatedEvent,
     }
-  }
-
-  function buildViewEvent(partialViewEvent: Partial<ViewEvent> = {}): ViewEvent {
-    return {
-      startClocks,
-      id: FAKE_ID,
-      ...partialViewEvent,
-    } as ViewEvent
   }
 
   let setupBuilder: TestSetupBuilder

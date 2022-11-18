@@ -140,14 +140,6 @@ describe('error collection', () => {
       })
     })
 
-    // it('should have feature flag of the current view', () => {
-    //   const { rawRumEvents } = setupBuilder.build()
-
-    //   expect(rawRumEvents[0].savedCommonContext!.user).toEqual({
-    //     feature: 'foo',
-    //   })
-    // })
-
     it('should include non-Error values in domain context', () => {
       const { rawRumEvents } = setupBuilder.build()
       addError({

@@ -1,5 +1,6 @@
 import type { Context, InitConfiguration, TimeStamp, RelativeTime, User } from '@datadog/browser-core'
 import {
+  isExperimentalFeatureEnabled,
   willSyntheticsInjectRum,
   assign,
   BoundedBuffer,
@@ -117,6 +118,12 @@ export function makeRumPublicApi(
       return
     }
 
+    if (isExperimentalFeatureEnabled('feature_flags')) {
+      ;(rumPublicApi as any).addFeatureFlags = monitor((featureFlags: object) => {
+        addFeatureFlagsStrategy(featureFlags as Context)
+      })
+    }
+
     if (!configuration.trackViewsManually) {
       doStartRum(initConfiguration, configuration)
     } else {
@@ -228,10 +235,6 @@ export function makeRumPublicApi(
       addTimingStrategy(name, time as RelativeTime | TimeStamp | undefined)
     }),
 
-    addFeatureFlags: monitor((featureFlags: object) => {
-      addFeatureFlagsStrategy(featureFlags as Context)
-    }),
-
     setUser: monitor((newUser: User) => {
       if (checkUser(newUser)) {
         userContextManager.setContext(sanitizeUser(newUser as Context))
@@ -256,6 +259,7 @@ export function makeRumPublicApi(
     startSessionReplayRecording: monitor(recorderApi.start),
     stopSessionReplayRecording: monitor(recorderApi.stop),
   })
+
   return rumPublicApi
 
   function canHandleSession(initConfiguration: RumInitConfiguration): boolean {
