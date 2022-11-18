@@ -643,7 +643,7 @@ describe('rum public api', () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      rumPublicApi.addFeatureFlags({ feature: 'foo' })
+      ;(rumPublicApi as any).addFeatureFlags({ feature: 'foo' })
 
       expect(addFeatureFlagsSpy.calls.argsFor(0)[0]).toEqual({ feature: 'foo' })
       expect(displaySpy).not.toHaveBeenCalled()
