@@ -15,6 +15,7 @@ describe('viewContexts', () => {
     return {
       startClocks,
       id: FAKE_ID,
+      featureFlags: {},
       ...partialViewCreatedEvent,
     }
   }
@@ -116,14 +117,6 @@ describe('viewContexts', () => {
 
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ name: 'Fake name' }))
       expect(viewContexts.findView()!.name).toBe('Fake name')
-    })
-
-    it('should set the feature flags on VIEW_UPDATED', () => {
-      const { lifeCycle } = setupBuilder.build()
-
-      lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, buildViewEvent({ featureFlags: { feature: 'foo' } }))
-
-      expect(viewContexts.findView()!.id).toEqual(FAKE_ID)
     })
   })
 

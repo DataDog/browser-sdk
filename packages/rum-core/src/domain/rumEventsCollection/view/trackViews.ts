@@ -52,7 +52,7 @@ export interface ViewEvent {
   loadingTime?: Duration
   loadingType: ViewLoadingType
   cumulativeLayoutShift?: number
-  featureFlags?: Context
+  featureFlags: Context
 }
 
 export interface ViewCreatedEvent {
@@ -61,6 +61,7 @@ export interface ViewCreatedEvent {
   service?: string
   version?: string
   startClocks: ClocksState
+  featureFlags: Context
 }
 
 export interface ViewEndedEvent {
@@ -205,7 +206,7 @@ function newView(
   // Setup initial values
   const id = generateUUID()
   let timings: Timings = {}
-  let featureFlags: Context
+  const featureFlags: Context = {}
   const customTimings: ViewCustomTimings = {}
   let documentVersion = 0
   let endClocks: ClocksState | undefined
@@ -220,7 +221,7 @@ function newView(
     version = viewOptions.version
   }
 
-  lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, name, startClocks, service, version })
+  lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, name, startClocks, service, version, featureFlags })
 
   // Update the view every time the measures are changing
   const { throttled: scheduleViewUpdate, cancel: cancelScheduleViewUpdate } = throttle(
@@ -293,7 +294,7 @@ function newView(
     },
     addFeatureFlags(newFeatureFlags: Context) {
       if (isExperimentalFeatureEnabled('feature_flags')) {
-        featureFlags = featureFlags ? assign(featureFlags, newFeatureFlags) : newFeatureFlags
+        assign(featureFlags, newFeatureFlags)
       }
     },
   }

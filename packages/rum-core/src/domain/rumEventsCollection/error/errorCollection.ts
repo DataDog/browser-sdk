@@ -1,5 +1,6 @@
 import type { Context, RawError, ClocksState } from '@datadog/browser-core'
 import {
+  isEmptyObject,
   assign,
   ErrorSource,
   generateUUID,
@@ -110,7 +111,7 @@ function processError(
   }
 
   const viewContext = viewContexts.findView(error.startClocks.relative)
-  if (viewContext) {
+  if (viewContext && !isEmptyObject(viewContext.featureFlags)) {
     rawRumEvent.feature_flags = viewContext.featureFlags
   }
 
