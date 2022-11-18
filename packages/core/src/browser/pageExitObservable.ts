@@ -4,6 +4,7 @@ import { addEventListener, DOM_EVENT } from '../tools/utils'
 export const enum PageExitReason {
   HIDDEN = 'visibility_hidden',
   UNLOADING = 'before_unload',
+  FINAL_UNLOADING = 'final_before_unload'
 }
 
 export interface PageExitEvent {
@@ -34,6 +35,11 @@ export function createPageExitObservable(): Observable<PageExitEvent> {
      */
     const { stop: stopBeforeUnloadListener } = addEventListener(window, DOM_EVENT.BEFORE_UNLOAD, () => {
       observable.notify({ reason: PageExitReason.UNLOADING })
+      // In case clients register `beforeunload` listeners that want to send data (eg. via datadogRum.addAction)
+      // we need to also notify _after_ they've had a chance to run.
+      setTimeout(() => {
+        observable.notify({ reason: PageExitReason.FINAL_UNLOADING })
+      }, 0);
     })
 
     return () => {
