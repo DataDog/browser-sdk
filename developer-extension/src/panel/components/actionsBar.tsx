@@ -5,7 +5,12 @@ import { flushEvents } from '../flushEvents'
 import { useStore } from '../hooks/useStore'
 import { useAutoFlushEvents } from '../hooks/useAutoFlushEvents'
 
-export function ActionsBar() {
+type Props = {
+  preserveEvents: boolean
+  setPreserveEvents: (toggleBool: (b: boolean) => boolean) => void
+}
+
+export function ActionsBar({ preserveEvents, setPreserveEvents }: Props) {
   const [{ useDevBundles, useRumSlim, devServerStatus, blockIntakeRequests }, setStore] = useStore()
   const [autoFlush, setAutoFlush] = useState<boolean>(true)
 
@@ -43,6 +48,12 @@ export function ActionsBar() {
         />
       </Group>
       <Group>
+        <Checkbox
+          label="Preserve events"
+          checked={preserveEvents}
+          onChange={() => setPreserveEvents((b: boolean) => !b)}
+          color="violet"
+        />
         <Checkbox label="Auto Flush" checked={autoFlush} onChange={() => setAutoFlush((b) => !b)} color="violet" />
         <Button color="violet" variant="light" compact onClick={() => flushEvents()}>
           Flush buffered events

@@ -15,7 +15,7 @@ export interface EventFilters {
   query: string
 }
 
-export function useEvents() {
+export function useEvents(preserveEvents: boolean) {
   const [events, setEvents] = useState<StoredEvent[]>([])
   const [filters, setFilters] = useState<EventFilters>({
     sdk: ['rum', 'logs'],
@@ -32,10 +32,20 @@ export function useEvents() {
     })
 
     const clearCurrentEvents = (details: chrome.webNavigation.WebNavigationTransitionCallbackDetails) => {
-      if (['reload'].includes(details.transitionType)) setEvents([])
+      if (details.transitionType === 'reload') setEvents([])
     }
 
-    chrome.webNavigation.onCommitted.addListener(clearCurrentEvents)
+    useEffect(() => {
+      if (!preserveEvents) {
+        const clearCurrentEvents = (details: chrome.webNavigation.WebNavigationTransitionCallbackDetails) => {
+          if (details.transitionType === 'reload') setEvents([])
+        }
+        chrome.webNavigation.onCommitted.addListener(clearCurrentEvents)
+        return () => {
+          chrome.webNavigation.onCommitted.removeListener(clearCurrentEvents)
+        }
+      }
+    }, [preserveEvents])
 
     return () => {
       removeListener()
