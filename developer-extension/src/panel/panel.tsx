@@ -1,5 +1,6 @@
+import React, { useState } from 'react'
 import { Divider, Tabs } from '@mantine/core'
-import React from 'react'
+
 import { ActionsBar } from './components/actionsBar'
 import { InfosTab } from './components/infosTab'
 import { useEvents } from './hooks/useEvents'
@@ -11,11 +12,12 @@ const enum PanelTabs {
 }
 
 export function Panel() {
-  const { events, filters, setFilters, clear } = useEvents()
+  const [preserveEvents, setPreserveEvents] = useState(false)
+  const { events, filters, setFilters, clear } = useEvents(preserveEvents)
 
   return (
     <>
-      <ActionsBar />
+      <ActionsBar preserveEvents={preserveEvents} setPreserveEvents={setPreserveEvents} />
       <Divider my="xs" />
       <Tabs color="violet" defaultValue={PanelTabs.Events}>
         <Tabs.List>
