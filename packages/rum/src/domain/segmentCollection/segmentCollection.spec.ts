@@ -337,7 +337,7 @@ describe('startSegmentCollection', () => {
 })
 
 describe('computeSegmentContext', () => {
-  const DEFAULT_VIEW_CONTEXT: ViewContext = { id: '123', featureFlags: {} }
+  const DEFAULT_VIEW_CONTEXT: ViewContext = { id: '123', featureFlagEvaluations: {} }
   const DEFAULT_SESSION = createRumSessionManagerMock().setId('456')
 
   it('returns a segment context', () => {

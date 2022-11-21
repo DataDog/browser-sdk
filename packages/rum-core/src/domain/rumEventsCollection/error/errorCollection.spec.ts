@@ -14,7 +14,7 @@ describe('error collection', () => {
     findView: jasmine.createSpy('findView').and.returnValue({
       id: 'abcde',
       name: 'foo',
-      featureFlags: { feature: 'foo' },
+      featureFlagEvaluations: { feature: 'foo' },
     }),
   }
 

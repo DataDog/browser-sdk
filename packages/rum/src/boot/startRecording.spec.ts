@@ -49,7 +49,7 @@ describe('startRecording', () => {
       setupBuilder = setup()
         .withViewContexts({
           findView() {
-            return { id: viewId, featureFlags: {} }
+            return { id: viewId, featureFlagEvaluations: {} }
           },
         })
         .withSessionManager(sessionManager)

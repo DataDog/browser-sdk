@@ -89,7 +89,7 @@ export function startRum(
 
   startLongTaskCollection(lifeCycle, session)
   startResourceCollection(lifeCycle, configuration, session)
-  const { addTiming, addFeatureFlags, startView } = startViewCollection(
+  const { addTiming, addFeatureFlagEvaluation, startView } = startViewCollection(
     lifeCycle,
     configuration,
     location,
@@ -116,7 +116,7 @@ export function startRum(
     addAction,
     addError,
     addTiming,
-    addFeatureFlags,
+    addFeatureFlagEvaluation,
     startView,
     lifeCycle,
     viewContexts,

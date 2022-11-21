@@ -41,7 +41,7 @@ const VIEW: ViewEvent = {
     largestContentfulPaint: 10 as Duration,
     loadEvent: 10 as Duration,
   },
-  featureFlags: {},
+  featureFlagEvaluations: {},
 }
 
 describe('viewCollection', () => {

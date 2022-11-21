@@ -11,7 +11,7 @@ export interface ViewContext {
   version?: string
   id: string
   name?: string
-  featureFlags: Context
+  featureFlagEvaluations: Context
 }
 
 export interface ViewContexts {
@@ -40,7 +40,7 @@ export function startViewContexts(lifeCycle: LifeCycle): ViewContexts {
       version: view.version,
       id: view.id,
       name: view.name,
-      featureFlags: view.featureFlags,
+      featureFlagEvaluations: view.featureFlagEvaluations,
     }
   }
 

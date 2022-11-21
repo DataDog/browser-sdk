@@ -111,8 +111,8 @@ function processError(
   }
 
   const viewContext = viewContexts.findView(error.startClocks.relative)
-  if (viewContext && !isEmptyObject(viewContext.featureFlags)) {
-    rawRumEvent.feature_flags = viewContext.featureFlags
+  if (viewContext && !isEmptyObject(viewContext.featureFlagEvaluations)) {
+    rawRumEvent.feature_flags = viewContext.featureFlagEvaluations
   }
 
   return {

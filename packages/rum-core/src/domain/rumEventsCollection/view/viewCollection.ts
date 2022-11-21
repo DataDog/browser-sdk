@@ -85,7 +85,7 @@ function processViewUpdate(
       time_spent: toServerDuration(view.duration),
       in_foreground_periods: foregroundContexts.selectInForegroundPeriodsFor(view.startClocks.relative, view.duration),
     },
-    feature_flags: !isEmptyObject(view.featureFlags) ? view.featureFlags : undefined,
+    feature_flags: !isEmptyObject(view.featureFlagEvaluations) ? view.featureFlagEvaluations : undefined,
     session: {
       has_replay: replayStats ? true : undefined,
     },
