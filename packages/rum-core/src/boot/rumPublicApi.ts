@@ -1,5 +1,6 @@
 import type { Context, InitConfiguration, TimeStamp, RelativeTime, User } from '@datadog/browser-core'
 import {
+  isExperimentalFeatureEnabled,
   willSyntheticsInjectRum,
   assign,
   BoundedBuffer,
@@ -89,6 +90,10 @@ export function makeRumPublicApi(
     bufferApiCalls.add(() => addErrorStrategy(providedError, commonContext))
   }
 
+  let addFeatureFlagEvaluationStrategy: StartRumResult['addFeatureFlagEvaluation'] = (key: string, value: any) => {
+    bufferApiCalls.add(() => addFeatureFlagEvaluationStrategy(key, value))
+  }
+
   function initRum(initConfiguration: RumInitConfiguration) {
     // If we are in a Synthetics test configured to automatically inject a RUM instance, we want to
     // completely discard the customer application RUM instance by ignoring their init() call.  But,
@@ -111,6 +116,12 @@ export function makeRumPublicApi(
     const configuration = validateAndBuildRumConfiguration(initConfiguration)
     if (!configuration) {
       return
+    }
+
+    if (isExperimentalFeatureEnabled('feature_flags')) {
+      ;(rumPublicApi as any).addFeatureFlagEvaluation = monitor((key: string, value: any) => {
+        addFeatureFlagEvaluationStrategy(key, value)
+      })
     }
 
     if (!configuration.trackViewsManually) {
@@ -154,6 +165,7 @@ export function makeRumPublicApi(
       addAction: addActionStrategy,
       addError: addErrorStrategy,
       addTiming: addTimingStrategy,
+      addFeatureFlagEvaluation: addFeatureFlagEvaluationStrategy,
       getInternalContext: getInternalContextStrategy,
     } = startRumResults)
     bufferApiCalls.drain()
@@ -247,6 +259,7 @@ export function makeRumPublicApi(
     startSessionReplayRecording: monitor(recorderApi.start),
     stopSessionReplayRecording: monitor(recorderApi.stop),
   })
+
   return rumPublicApi
 
   function canHandleSession(initConfiguration: RumInitConfiguration): boolean {

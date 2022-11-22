@@ -10,14 +10,22 @@ import { doStartErrorCollection } from './errorCollection'
 describe('error collection', () => {
   let setupBuilder: TestSetupBuilder
   let addError: ReturnType<typeof doStartErrorCollection>['addError']
+  const viewContextsStub = {
+    findView: jasmine.createSpy('findView').and.returnValue({
+      id: 'abcde',
+      name: 'foo',
+      featureFlagEvaluations: { feature: 'foo' },
+    }),
+  }
 
   beforeEach(() => {
     setupBuilder = setup()
+      .withViewContexts(viewContextsStub)
       .withForegroundContexts({
         isInForegroundAt: () => true,
       })
-      .beforeBuild(({ lifeCycle, foregroundContexts }) => {
-        ;({ addError } = doStartErrorCollection(lifeCycle, foregroundContexts))
+      .beforeBuild(({ lifeCycle, foregroundContexts, viewContexts }) => {
+        ;({ addError } = doStartErrorCollection(lifeCycle, foregroundContexts, viewContexts))
       })
   })
 
@@ -56,6 +64,7 @@ describe('error collection', () => {
           view: {
             in_foreground: true,
           },
+          feature_flags: { feature: 'foo' },
         },
         savedCommonContext: undefined,
         startTime: 1234 as RelativeTime,
@@ -176,6 +185,7 @@ describe('error collection', () => {
         view: {
           in_foreground: true,
         },
+        feature_flags: { feature: 'foo' },
         type: RumEventType.ERROR,
       })
       expect(rawRumEvents[0].domainContext).toEqual({

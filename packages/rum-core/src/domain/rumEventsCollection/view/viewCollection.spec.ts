@@ -41,6 +41,7 @@ const VIEW: ViewEvent = {
     largestContentfulPaint: 10 as Duration,
     loadEvent: 10 as Duration,
   },
+  featureFlagEvaluations: {},
 }
 
 describe('viewCollection', () => {
@@ -127,6 +128,7 @@ describe('viewCollection', () => {
       session: {
         has_replay: undefined,
       },
+      feature_flags: undefined,
     })
   })
 

@@ -28,6 +28,7 @@ describe('rum assembly', () => {
     findView = () => ({
       id: '7890',
       name: 'view name',
+      featureFlagEvaluations: {},
     })
     reportErrorSpy = jasmine.createSpy('reportError')
     commonContext = {
@@ -472,7 +473,7 @@ describe('rum assembly', () => {
 
     it('should be overridden by the view context', () => {
       const { lifeCycle } = setupBuilder.build()
-      findView = () => ({ service: 'new service', version: 'new version', id: '1234' })
+      findView = () => ({ service: 'new service', version: 'new version', id: '1234', featureFlagEvaluations: {} })
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION),
       })
