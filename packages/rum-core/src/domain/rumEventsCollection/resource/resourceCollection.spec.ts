@@ -140,7 +140,7 @@ describe('resourceCollection', () => {
       _dd: {
         discarded: false,
         resolveDuration: (50 * 1e6) as ServerDuration,
-        durationDiff: 50000000 as ServerDuration,
+        durationDiff: (50 * 1e6) as ServerDuration,
         durationPercentageDiff: 50,
       },
     })
