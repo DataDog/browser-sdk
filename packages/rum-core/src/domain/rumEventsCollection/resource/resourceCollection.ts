@@ -66,12 +66,7 @@ function processRequest(
   const tracingInfo = computeRequestTracingInfo(request, configuration)
   const indexingInfo = computeIndexingInfo(sessionManager, startClocks)
 
-  let durationDiff
-  let durationPercentageDiff
-  if (request.resolveDuration) {
-    durationDiff = toServerDuration((request.duration - request.resolveDuration) as Duration)
-    durationPercentageDiff = Math.round((durationDiff / toServerDuration(request.duration)) * 100)
-  }
+  const { durationDiff, durationPercentageDiff } = computeResponseDurationInfo(request)
 
   const resourceEvent = combine(
     {
@@ -180,6 +175,19 @@ function computeEntryTracingInfo(entry: RumPerformanceResourceTiming, configurat
       trace_id: entry.traceId,
       rule_psr: getRulePsr(configuration),
     },
+  }
+}
+
+function computeResponseDurationInfo(request: RequestCompleteEvent) {
+  let durationDiff
+  let durationPercentageDiff
+  if (request.resolveDuration) {
+    durationDiff = toServerDuration((request.duration - request.resolveDuration) as Duration)
+    durationPercentageDiff = Math.round((durationDiff / toServerDuration(request.duration)) * 100)
+  }
+  return {
+    durationDiff,
+    durationPercentageDiff,
   }
 }
 
