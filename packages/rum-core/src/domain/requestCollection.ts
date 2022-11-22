@@ -4,7 +4,7 @@ import type {
   XhrStartContext,
   ClocksState,
   FetchStartContext,
-  FetchCompleteContext,
+  FetchResolveContext,
 } from '@datadog/browser-core'
 import {
   RequestType,
@@ -30,7 +30,7 @@ export interface CustomContext {
   traceSampled?: boolean
 }
 export interface RumFetchStartContext extends FetchStartContext, CustomContext {}
-export interface RumFetchCompleteContext extends FetchCompleteContext, CustomContext {}
+export interface RumFetchResolveContext extends FetchResolveContext, CustomContext {}
 export interface RumXhrStartContext extends XhrStartContext, CustomContext {}
 export interface RumXhrCompleteContext extends XhrCompleteContext, CustomContext {}
 
@@ -111,7 +111,7 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: RumConfiguration, 
 
 export function trackFetch(lifeCycle: LifeCycle, configuration: RumConfiguration, tracer: Tracer) {
   const subscription = initFetchObservable().subscribe((rawContext) => {
-    const context = rawContext as RumFetchCompleteContext | RumFetchStartContext
+    const context = rawContext as RumFetchResolveContext | RumFetchStartContext
     if (!isAllowedRequestUrl(configuration, context.url)) {
       return
     }
@@ -126,7 +126,7 @@ export function trackFetch(lifeCycle: LifeCycle, configuration: RumConfiguration
           url: context.url,
         })
         break
-      case 'complete':
+      case 'resolve':
         waitForResponseToFinish(context, (duration: Duration) => {
           tracer.clearTracingIfNeeded(context)
           lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
@@ -159,7 +159,7 @@ function getNextRequestIndex() {
   return result
 }
 
-function waitForResponseToFinish(context: RumFetchCompleteContext, callback: (duration: Duration) => void) {
+function waitForResponseToFinish(context: RumFetchResolveContext, callback: (duration: Duration) => void) {
   if (context.response && isExperimentalFeatureEnabled('fetch_duration')) {
     const responseClone = context.response.clone()
     if (responseClone.body) {

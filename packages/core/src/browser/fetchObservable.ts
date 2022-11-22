@@ -17,8 +17,8 @@ export interface FetchStartContext extends FetchContextBase {
   state: 'start'
 }
 
-export interface FetchCompleteContext extends FetchContextBase {
-  state: 'complete'
+export interface FetchResolveContext extends FetchContextBase {
+  state: 'resolve'
   status: number
   resolveDuration?: Duration
   response?: Response
@@ -27,7 +27,7 @@ export interface FetchCompleteContext extends FetchContextBase {
   error?: Error
 }
 
-export type FetchContext = FetchStartContext | FetchCompleteContext
+export type FetchContext = FetchStartContext | FetchResolveContext
 
 let fetchObservable: Observable<FetchContext> | undefined
 
@@ -94,8 +94,8 @@ function afterSend(
   startContext: FetchStartContext
 ) {
   const reportFetch = (response: Response | Error) => {
-    const context = startContext as unknown as FetchCompleteContext
-    context.state = 'complete'
+    const context = startContext as unknown as FetchResolveContext
+    context.state = 'resolve'
     context.resolveDuration = elapsed(startContext.startClocks.timeStamp, timeStampNow())
     if ('stack' in response || response instanceof Error) {
       context.status = 0

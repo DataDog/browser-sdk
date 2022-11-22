@@ -1,4 +1,4 @@
-import type { FetchCompleteContext, XhrCompleteContext } from '@datadog/browser-core'
+import type { FetchResolveContext, XhrCompleteContext } from '@datadog/browser-core'
 import {
   ErrorSource,
   initXhrObservable,
@@ -27,12 +27,12 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
     }
   })
   const fetchSubscription = initFetchObservable().subscribe((context) => {
-    if (context.state === 'complete') {
+    if (context.state === 'resolve') {
       handleCompleteRequest(RequestType.FETCH, context)
     }
   })
 
-  function handleCompleteRequest(type: RequestType, request: XhrCompleteContext | FetchCompleteContext) {
+  function handleCompleteRequest(type: RequestType, request: XhrCompleteContext | FetchResolveContext) {
     if (!configuration.isIntakeUrl(request.url) && (isRejected(request) || isServerError(request))) {
       if ('xhr' in request) {
         computeXhrResponseData(request.xhr, configuration, onResponseDataAvailable)
