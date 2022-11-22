@@ -1,5 +1,5 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin')
-const WebextensionPlugin = require('webpack-webextension-plugin')
+const { default: WebextensionPlugin } = require('@webextension-toolbox/webpack-webextension-plugin')
 const CopyPlugin = require('copy-webpack-plugin')
 const { DefinePlugin } = require('webpack')
 
