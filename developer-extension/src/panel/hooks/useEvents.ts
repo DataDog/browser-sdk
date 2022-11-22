@@ -31,27 +31,19 @@ export function useEvents(preserveEvents: boolean) {
       )
     })
 
-    const clearCurrentEvents = (details: chrome.webNavigation.WebNavigationTransitionCallbackDetails) => {
-      if (details.transitionType === 'reload') setEvents([])
-    }
-
-    useEffect(() => {
-      if (!preserveEvents) {
-        const clearCurrentEvents = (details: chrome.webNavigation.WebNavigationTransitionCallbackDetails) => {
-          if (details.transitionType === 'reload') setEvents([])
-        }
-        chrome.webNavigation.onCommitted.addListener(clearCurrentEvents)
-        return () => {
-          chrome.webNavigation.onCommitted.removeListener(clearCurrentEvents)
-        }
+    if (!preserveEvents) {
+      const clearCurrentEvents = (details: chrome.webNavigation.WebNavigationTransitionCallbackDetails) => {
+        if (details.transitionType === 'reload') setEvents([])
       }
-    }, [preserveEvents])
-
-    return () => {
-      removeListener()
-      chrome.webNavigation.onCommitted.removeListener(clearCurrentEvents)
+      chrome.webNavigation.onCommitted.addListener(clearCurrentEvents)
+      return () => {
+        removeListener()
+        chrome.webNavigation.onCommitted.removeListener(clearCurrentEvents)
+      }
     }
-  }, [])
+
+    return removeListener
+  }, [preserveEvents])
 
   const filteredEvents = events
     .filter((event) => filters.sdk.includes('logs') || !isLog(event))
