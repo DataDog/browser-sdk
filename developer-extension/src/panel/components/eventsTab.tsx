@@ -89,28 +89,33 @@ function getRumEventDescription(event: StoredEvent): string | undefined {
   if (isRumEvent(event)) {
     switch (event.type) {
       case 'view':
-        return `${event.view.loading_type || ''} ${event.view.name!}`
+        return `${event.view.loading_type || ''} ${getViewPage(event.view)}`
       case 'action':
-        return `${event.action.type} action ${event.action.target?.name || ''} on page ${event.view.url} `
+        return `${event.action.type} action ${event.action.target?.name || ''} on page ${getViewPage(event.view)} `
       case 'resource':
         return `${event.resource.type} ${event.resource.url}`
       case 'error':
         return `${event.error.source} error ${event.error.message}`
       case 'long_task':
-        return `long task of ${event.long_task.duration.toString()} ms`
+        return `long task of ${(event.long_task.duration / 1000).toLocaleString()} ms`
       case 'telemetry': {
-        return `${event.telemetry.type!} ${
-          event.telemetry.type === 'log'
-            ? event.telemetry.message
-            : event.telemetry.type === 'configuration'
-            ? jsonOverview(event.telemetry.configuration)
-            : ''
-        }`
+        switch (event.telemetry.type) {
+          case 'log':
+            return event.telemetry.message
+          case 'configuration':
+            return jsonOverview(event.telemetry.configuration)
+          default:
+            return ''
+        }
       }
     }
   } else {
     return event.message
   }
+}
+
+function getViewPage(view: { name?: string; url: string }) {
+  return `${view.name || new URL(view.url).pathname}`
 }
 
 function jsonOverview(jsonObject: object) {
