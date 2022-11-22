@@ -16,6 +16,11 @@
 
 ---
 
+## v4.25.0
+
+- ⚡️ ⚗ [RUMF-1438] Collect feature flags ([#1827](https://github.com/DataDog/browser-sdk/pull/1827))
+- ✨ Auto Flush for SDK extension ([#1824](https://github.com/DataDog/browser-sdk/pull/1824))
+
 ## v4.24.1
 
 - ⏪ Revert "🐛 [RUMF-1410] Allow serialization of objects with cyclic references ([#1783](https://github.com/DataDog/browser-sdk/pull/1783))" ([#1821](https://github.com/DataDog/browser-sdk/pull/1821))
