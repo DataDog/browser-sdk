@@ -22,27 +22,28 @@ export function useEvents(preserveEvents: boolean) {
     query: '',
   })
 
-  useEffect(() => {
-    const removeListener = listenRequests((newEvents) => {
-      setEvents((oldEvents) =>
-        [...newEvents, ...oldEvents]
-          .sort((first: any, second: any) => second.date - first.date)
-          .slice(0, MAXIMUM_LOGGED_EVENTS)
-      )
-    })
+  useEffect(
+    () =>
+      listenRequests((newEvents) => {
+        setEvents((oldEvents) =>
+          [...newEvents, ...oldEvents]
+            .sort((first: any, second: any) => second.date - first.date)
+            .slice(0, MAXIMUM_LOGGED_EVENTS)
+        )
+      }),
+    []
+  )
 
+  useEffect(() => {
     if (!preserveEvents) {
       const clearCurrentEvents = (details: chrome.webNavigation.WebNavigationTransitionCallbackDetails) => {
         if (details.transitionType === 'reload') setEvents([])
       }
       chrome.webNavigation.onCommitted.addListener(clearCurrentEvents)
       return () => {
-        removeListener()
         chrome.webNavigation.onCommitted.removeListener(clearCurrentEvents)
       }
     }
-
-    return removeListener
   }, [preserveEvents])
 
   const filteredEvents = events
