@@ -194,24 +194,6 @@ describe('rum resources', () => {
         expect(resourceEvent).toBeTruthy()
         expect(resourceEvent?.resource.status_code).toBe(0)
       })
-
-    createTest('aborting a request stops the response download')
-      .withLogs({ forwardErrorsToLogs: true })
-      .withRum()
-      .run(async ({ servers }) => {
-        await browserExecuteAsync((done) => {
-          const controller = new AbortController()
-          const signal = controller.signal
-
-          fetch('/large-response', { signal }).then(() => {
-            controller.abort()
-            done(undefined)
-          }, console.log)
-        })
-
-        await flushEvents()
-        expect(servers.base.app.getLargeResponseWroteSize()).toBeLessThan(LARGE_RESPONSE_MIN_BYTE_SIZE)
-      })
   })
 
   createTest('track redirect fetch timings')
