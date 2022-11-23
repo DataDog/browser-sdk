@@ -78,13 +78,7 @@ describe('logs', () => {
     .withLogs({ forwardErrorsToLogs: true })
     .run(async ({ serverEvents, baseUrl, servers }) => {
       await browserExecuteAsync((done) => {
-        // This example formerly used "response.body!.getReader().cancel()" to cancel the stream midway.
-        // However, as we not longer support ".cancel()" in streams and thus why we use "response.blob()".
-        fetch('/throw-large-response')
-          .then((response: Response) => response.blob())
-          .then(() => {
-            done(undefined)
-          }, console.log)
+        fetch('/throw-large-response').then(() => done(undefined), console.log)
       })
 
       await flushEvents()
