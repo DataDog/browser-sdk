@@ -99,35 +99,13 @@ describe('readBytesFromStream', () => {
 
     readBytesFromStream(
       stream,
-      (error, bytes, limitExceeded) => {
-        expect(error).toBeDefined()
-        expect(bytes).toBeUndefined()
-        expect(limitExceeded).toBeUndefined()
+      (error, bytes) => {
+        expect(error).toBeUndefined()
+        expect(bytes).toBeDefined()
         done()
       },
       {
         bytesLimit: 64,
-        collectStreamBody: true,
-      }
-    )
-  })
-
-  it('does not truncate the response if its size is equal to the limit', (done) => {
-    const text = 'foo'
-    const stream = new ReadableStream({
-      pull: (controller) => controller.enqueue(new TextEncoder().encode(text)),
-    })
-
-    readBytesFromStream(
-      stream,
-      (error, bytes, limitExceeded) => {
-        expect(error).toBeUndefined()
-        expect(new TextDecoder().decode(bytes)).toBe(text)
-        expect(limitExceeded).toBeUndefined()
-        done()
-      },
-      {
-        bytesLimit: text.length,
         collectStreamBody: true,
       }
     )

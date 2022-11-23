@@ -226,6 +226,18 @@ describe('computeFetchResponseText', () => {
     })
   })
 
+  it('does not truncate the response if its size is equal to the limit', (done) => {
+    const text = 'foo'
+    computeFetchResponseText(
+      new ResponseStub({ responseText: text }),
+      { ...CONFIGURATION, requestErrorResponseLengthLimit: text.length },
+      (responseData) => {
+        expect(responseData).toBe(text)
+        done()
+      }
+    )
+  })
+
   it('truncates the response if its size is greater than the limit', (done) => {
     const text = 'foobar'
     computeFetchResponseText(
