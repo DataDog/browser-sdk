@@ -13,12 +13,6 @@
     "types": [],
     "lib": ["ES2016", "DOM"],
 
-    "plugins": [
-      {
-        "name": "typescript-tslint-plugin"
-      }
-    ],
-
     "paths": {
       "@datadog/browser-core": ["./packages/core/src"],
       "@datadog/browser-rum-core": ["./packages/rum-core/src"]
