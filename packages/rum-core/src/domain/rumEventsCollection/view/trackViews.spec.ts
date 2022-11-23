@@ -736,10 +736,6 @@ describe('start view', () => {
 describe('view metrics', () => {
   let setupBuilder: TestSetupBuilder
   let viewTest: ViewTest
-  const FAKE_ACTION_EVENT = {
-    type: RumEventType.ACTION,
-    action: {},
-  } as RumEvent & Context
 
   beforeEach(() => {
     setupBuilder = setup()
@@ -758,7 +754,7 @@ describe('view metrics', () => {
     const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
     const { getViewUpdate, getViewUpdateCount } = viewTest
 
-    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, FAKE_ACTION_EVENT)
+    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeActionEvent())
 
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
@@ -770,11 +766,19 @@ describe('view metrics', () => {
     const { getViewUpdate, getViewUpdateCount } = viewTest
 
     lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, () => {
-      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, FAKE_ACTION_EVENT)
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeActionEvent())
     })
 
     lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.UNLOADING })
 
     expect(getViewUpdate(getViewUpdateCount() - 1).eventCounts.actionCount).toBe(1)
   })
+
+  function createFakeActionEvent() {
+    return {
+      type: RumEventType.ACTION,
+      action: {},
+      view: viewTest.getLatestViewContext(),
+    } as RumEvent & Context
+  }
 })
