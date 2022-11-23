@@ -127,7 +127,7 @@ export function trackFetch(lifeCycle: LifeCycle, configuration: RumConfiguration
         })
         break
       case 'resolve':
-        waitForResponseToFinish(context, (duration: Duration) => {
+        waitForResponseToComplete(context, (duration: Duration) => {
           tracer.clearTracingIfNeeded(context)
           lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
             resolveDuration: context.resolveDuration,
@@ -159,7 +159,7 @@ function getNextRequestIndex() {
   return result
 }
 
-function waitForResponseToFinish(context: RumFetchResolveContext, callback: (duration: Duration) => void) {
+function waitForResponseToComplete(context: RumFetchResolveContext, callback: (duration: Duration) => void) {
   if (context.response && isExperimentalFeatureEnabled('fetch_duration')) {
     const responseClone = context.response.clone()
     if (responseClone.body) {
