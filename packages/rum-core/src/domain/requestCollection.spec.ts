@@ -104,7 +104,7 @@ describe('collect fetch', () => {
     beforeEach(() => updateExperimentalFeatures(['fetch_duration']))
     afterEach(() => resetExperimentalFeatures())
 
-    it('should still function if response is defined', (done) => {
+    it('should notify when response is defined', (done) => {
       fetchStub(FAKE_URL).resolveWith({ status: 200, responseText: 'ok' })
 
       fetchStubManager.whenAllComplete(() => {
@@ -114,7 +114,7 @@ describe('collect fetch', () => {
       })
     })
 
-    it('should still function if response is undefined', (done) => {
+    it('should notify when response is undefined', (done) => {
       updateExperimentalFeatures(['fetch_duration'])
 
       fetchStub(FAKE_URL).rejectWith(new Error('some fetch error'))
