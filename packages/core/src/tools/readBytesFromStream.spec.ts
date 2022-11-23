@@ -71,7 +71,7 @@ describe('readBytesFromStream', () => {
     )
   })
 
-  it('should return error', (done) => {
+  it('should handle rejection error on pull', (done) => {
     const stream = new ReadableStream({
       pull: () => Promise.reject(new Error('foo')),
     })
@@ -86,6 +86,79 @@ describe('readBytesFromStream', () => {
       },
       {
         bytesLimit: Number.POSITIVE_INFINITY,
+        collectStreamBody: true,
+      }
+    )
+  })
+
+  it('should handle rejection error on cancel', (done) => {
+    const stream = new ReadableStream({
+      pull: (controller) => controller.enqueue(new TextEncoder().encode('f')),
+      cancel: () => Promise.reject(new Error('foo')),
+    })
+
+    readBytesFromStream(
+      stream,
+      (error, bytes, limitExceeded) => {
+        expect(error).toBeDefined()
+        expect(bytes).toBeUndefined()
+        expect(limitExceeded).toBeUndefined()
+        done()
+      },
+      {
+        bytesLimit: 64,
+        collectStreamBody: true,
+      }
+    )
+  })
+
+  it('does not truncate the response if its size is equal to the limit', (done) => {
+    const text = 'foo'
+    const stream = new ReadableStream({
+      pull: (controller) => controller.enqueue(new TextEncoder().encode(text)),
+    })
+
+    readBytesFromStream(
+      stream,
+      (error, bytes, limitExceeded) => {
+        expect(error).toBeUndefined()
+        expect(new TextDecoder().decode(bytes)).toBe(text)
+        expect(limitExceeded).toBeUndefined()
+        done()
+      },
+      {
+        bytesLimit: text.length,
+        collectStreamBody: true,
+      }
+    )
+  })
+
+  it('reads a limited amount of bytes from the response', (done) => {
+    // Creates a response that stream "f" indefinitely, one byte at a time
+    const cancelSpy = jasmine.createSpy()
+    const pullSpy = jasmine.createSpy().and.callFake((controller: ReadableStreamDefaultController<Uint8Array>) => {
+      controller.enqueue(new TextEncoder().encode('f'))
+    })
+
+    const bytesLimit = 64
+
+    const stream = new ReadableStream({
+      pull: pullSpy,
+      cancel: cancelSpy,
+    })
+
+    readBytesFromStream(
+      stream,
+      () => {
+        expect(pullSpy).toHaveBeenCalledTimes(
+          // readBytesFromStream may read one more byte than necessary to make sure it exceeds the limit
+          bytesLimit + 1
+        )
+        expect(cancelSpy).toHaveBeenCalledTimes(1)
+        done()
+      },
+      {
+        bytesLimit,
         collectStreamBody: true,
       }
     )
