@@ -23,16 +23,16 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
 
   const xhrSubscription = initXhrObservable().subscribe((context) => {
     if (context.state === 'complete') {
-      handleCompleteRequest(RequestType.XHR, context)
+      handleResponse(RequestType.XHR, context)
     }
   })
   const fetchSubscription = initFetchObservable().subscribe((context) => {
     if (context.state === 'resolve') {
-      handleCompleteRequest(RequestType.FETCH, context)
+      handleResponse(RequestType.FETCH, context)
     }
   })
 
-  function handleCompleteRequest(type: RequestType, request: XhrCompleteContext | FetchResolveContext) {
+  function handleResponse(type: RequestType, request: XhrCompleteContext | FetchResolveContext) {
     if (!configuration.isIntakeUrl(request.url) && (isRejected(request) || isServerError(request))) {
       if ('xhr' in request) {
         computeXhrResponseData(request.xhr, configuration, onResponseDataAvailable)
