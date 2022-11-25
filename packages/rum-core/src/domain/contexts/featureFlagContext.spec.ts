@@ -141,10 +141,10 @@ describe('featureFlagContexts', () => {
       featureFlagContexts.addFeatureFlagEvaluation('feature', 'two')
 
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {
-        endClocks: relativeToClocks(30 as RelativeTime),
+        endClocks: relativeToClocks(20 as RelativeTime),
       } as ViewEndedEvent)
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
-        startClocks: relativeToClocks(30 as RelativeTime),
+        startClocks: relativeToClocks(20 as RelativeTime),
       } as ViewCreatedEvent)
 
       expect(featureFlagContexts.findFeatureFlagEvaluations(5 as RelativeTime)).toEqual({ feature: 'one' })
