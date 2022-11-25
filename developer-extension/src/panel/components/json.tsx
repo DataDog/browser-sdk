@@ -3,8 +3,6 @@ import { useColorScheme } from '@mantine/hooks'
 import React from 'react'
 import ReactJson from 'react-json-view'
 
-import { safeTruncate } from '../../../../packages/core/src/tools/utils'
-
 interface JsonProps {
   src: object
   name?: string
@@ -39,7 +37,7 @@ export function Json({ src, name, collapsed }: JsonProps) {
         src={src}
         collapsed={collapsed}
         theme={colorScheme === 'dark' ? 'monokai' : 'bright:inverted'}
-        name={name ?? jsonOverview(src)}
+        name={name}
         displayDataTypes={false}
         style={{
           backgroundColor: 'transparent',
@@ -57,14 +55,4 @@ export function Json({ src, name, collapsed }: JsonProps) {
       />
     </>
   )
-}
-
-function jsonOverview(jsonObject: object) {
-  const replacer = (key: any, value: any): any => {
-    if (key && typeof value === 'object') return '{...}'
-    return value
-  }
-  const overview = JSON.stringify(jsonObject, replacer)
-  const unquoted = overview.replace(/"([^"]+)":/g, '$1:')
-  return safeTruncate(unquoted, 100, '...')
 }
