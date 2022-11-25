@@ -256,7 +256,6 @@ function newClick(
   const eventCountsSubscription = trackEventCounts({
     lifeCycle,
     predicate: (event) =>
-      event.type !== 'view' &&
       event.action !== undefined &&
       (Array.isArray(event.action.id) ? includes(event.action.id, id) : event.action.id === id),
   })
