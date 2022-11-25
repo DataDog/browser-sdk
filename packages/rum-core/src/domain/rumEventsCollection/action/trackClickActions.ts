@@ -255,7 +255,7 @@ function newClick(
   const historyEntry = history.add(id, startClocks.relative)
   const eventCountsSubscription = trackEventCounts({
     lifeCycle,
-    predicate: (event) =>
+    isChildEvent: (event) =>
       event.action !== undefined &&
       (Array.isArray(event.action.id) ? includes(event.action.id, id) : event.action.id === id),
   })

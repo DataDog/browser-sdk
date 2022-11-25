@@ -36,7 +36,7 @@ export function trackViewMetrics(
   }
   const { stop: stopEventCountsTracking } = trackEventCounts({
     lifeCycle,
-    predicate: (event) => event.view.id === viewId,
+    isChildEvent: (event) => event.view.id === viewId,
     callback: (newEventCounts) => {
       viewMetrics.eventCounts = newEventCounts
       scheduleViewUpdate()

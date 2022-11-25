@@ -14,11 +14,11 @@ export interface EventCounts {
 
 export function trackEventCounts({
   lifeCycle,
-  predicate,
+  isChildEvent,
   callback = noop,
 }: {
   lifeCycle: LifeCycle
-  predicate: (event: RumActionEvent | RumErrorEvent | RumLongTaskEvent | RumResourceEvent) => boolean
+  isChildEvent: (event: RumActionEvent | RumErrorEvent | RumLongTaskEvent | RumResourceEvent) => boolean
   callback?: (eventCounts: EventCounts) => void
 }) {
   const eventCounts: EventCounts = {
@@ -30,7 +30,7 @@ export function trackEventCounts({
   }
 
   const subscription = lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (event): void => {
-    if (event.type === 'view' || !predicate(event)) {
+    if (event.type === 'view' || !isChildEvent(event)) {
       return
     }
     switch (event.type) {
