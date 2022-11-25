@@ -15,11 +15,11 @@ export interface EventCounts {
 export function trackEventCounts({
   lifeCycle,
   isChildEvent,
-  callback = noop,
+  onChange: callback = noop,
 }: {
   lifeCycle: LifeCycle
   isChildEvent: (event: RumActionEvent | RumErrorEvent | RumLongTaskEvent | RumResourceEvent) => boolean
-  callback?: (eventCounts: EventCounts) => void
+  onChange?: () => void
 }) {
   const eventCounts: EventCounts = {
     errorCount: 0,
@@ -36,22 +36,22 @@ export function trackEventCounts({
     switch (event.type) {
       case RumEventType.ERROR:
         eventCounts.errorCount += 1
-        callback(eventCounts)
+        callback()
         break
       case RumEventType.ACTION:
         eventCounts.actionCount += 1
         if (event.action.frustration) {
           eventCounts.frustrationCount += event.action.frustration.type.length
         }
-        callback(eventCounts)
+        callback()
         break
       case RumEventType.LONG_TASK:
         eventCounts.longTaskCount += 1
-        callback(eventCounts)
+        callback()
         break
       case RumEventType.RESOURCE:
         eventCounts.resourceCount += 1
-        callback(eventCounts)
+        callback()
         break
     }
   })
