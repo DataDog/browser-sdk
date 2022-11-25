@@ -288,7 +288,10 @@ function processCharacterDataMutations(
       continue
     }
 
-    const parentNodePrivacyLevel = getNodePrivacyLevel(mutation.target.parentNode!, configuration.defaultPrivacyLevel)
+    const parentNodePrivacyLevel = getNodePrivacyLevel(
+      getParentNode(mutation.target)!,
+      configuration.defaultPrivacyLevel
+    )
     if (parentNodePrivacyLevel === NodePrivacyLevel.HIDDEN || parentNodePrivacyLevel === NodePrivacyLevel.IGNORE) {
       continue
     }

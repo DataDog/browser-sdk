@@ -1,4 +1,4 @@
-import { isElementNode, isTextNode } from '@datadog/browser-rum-core'
+import { isElementNode, getParentNode, isTextNode } from '@datadog/browser-rum-core'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
@@ -25,9 +25,8 @@ const TEXT_MASKING_CHAR = 'x'
  * derivePrivacyLevelGivenParent(getNodeSelfPrivacyLevel(node), parentNodePrivacyLevel)
  */
 export function getNodePrivacyLevel(node: Node, defaultPrivacyLevel: NodePrivacyLevel): NodePrivacyLevel {
-  const parentNodePrivacyLevel = node.parentNode
-    ? getNodePrivacyLevel(node.parentNode, defaultPrivacyLevel)
-    : defaultPrivacyLevel
+  const parentNode = getParentNode(node)
+  const parentNodePrivacyLevel = parentNode ? getNodePrivacyLevel(parentNode, defaultPrivacyLevel) : defaultPrivacyLevel
   const selfNodePrivacyLevel = getNodeSelfPrivacyLevel(node)
   return reducePrivacyLevel(selfNodePrivacyLevel, parentNodePrivacyLevel)
 }
