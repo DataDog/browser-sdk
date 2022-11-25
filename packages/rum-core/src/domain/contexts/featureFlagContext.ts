@@ -1,5 +1,11 @@
 import type { RelativeTime, ContextValue, Context } from '@datadog/browser-core'
-import { assign, isExperimentalFeatureEnabled, SESSION_TIME_OUT_DELAY, ContextHistory } from '@datadog/browser-core'
+import {
+  noop,
+  assign,
+  isExperimentalFeatureEnabled,
+  SESSION_TIME_OUT_DELAY,
+  ContextHistory,
+} from '@datadog/browser-core'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 
@@ -13,6 +19,13 @@ export interface FeatureFlagContexts {
 }
 
 export function startFeatureFlagContexts(lifeCycle: LifeCycle): FeatureFlagContexts {
+  if (!isExperimentalFeatureEnabled('feature_flags')) {
+    return {
+      findFeatureFlagEvaluations: () => undefined,
+      addFeatureFlagEvaluation: noop,
+    }
+  }
+
   const featureFlagContexts = new ContextHistory<FeatureFlagContext>(FEATURE_FLAG_CONTEXT_TIME_OUT_DELAY)
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, ({ endClocks }) => {
@@ -26,12 +39,10 @@ export function startFeatureFlagContexts(lifeCycle: LifeCycle): FeatureFlagConte
   return {
     findFeatureFlagEvaluations: (startTime?: RelativeTime) => featureFlagContexts.find(startTime),
     addFeatureFlagEvaluation: (key: string, value: ContextValue) => {
-      if (isExperimentalFeatureEnabled('feature_flags')) {
-        const currentContext = featureFlagContexts.find()
-        if (currentContext) {
-          // mutate the current context to avoid creating a new context history entry to save memory
-          assign(currentContext, { [key]: value })
-        }
+      const currentContext = featureFlagContexts.find()
+      if (currentContext) {
+        // mutate the current context to avoid creating a new context history entry to save memory
+        assign(currentContext, { [key]: value })
       }
     },
   }

@@ -82,7 +82,7 @@ describe('featureFlagContexts', () => {
 
       const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations()!
 
-      expect(featureFlagContext).toEqual({})
+      expect(featureFlagContext).toBeUndefined()
     })
   })
 
