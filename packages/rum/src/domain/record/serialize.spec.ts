@@ -1,4 +1,4 @@
-import { isIE } from '@datadog/browser-core'
+import { isIE, noop } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { STABLE_ATTRIBUTES, DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from '@datadog/browser-rum-core'
 import {
@@ -20,7 +20,7 @@ import {
 import type { ElementNode, SerializedNodeWithId, TextNode } from '../../types'
 import { NodeType } from '../../types'
 import { hasSerializedNode } from './serializationUtils'
-import type { SerializeOptions } from './serialize'
+import type { SerializeOptions, ShadowDomCallBack } from './serialize'
 import {
   serializeDocument,
   serializeNodeWithId,
@@ -40,14 +40,26 @@ const DEFAULT_SERIALIZATION_CONTEXT = {
   elementsScrollPositions: createElementsScrollPositions(),
 }
 
+const shadowDomCreatedCallback = jasmine.createSpy()
+
+beforeEach(() => {
+  shadowDomCreatedCallback.calls.reset()
+})
+
 const DEFAULT_OPTIONS: SerializeOptions = {
   parentNodePrivacyLevel: NodePrivacyLevel.ALLOW,
   serializationContext: DEFAULT_SERIALIZATION_CONTEXT,
   configuration: DEFAULT_CONFIGURATION,
+  shadowDomCreatedCallback: noop,
 }
 
 describe('serializeNodeWithId', () => {
   let sandbox: HTMLElement
+  let shadowDomCreatedCallbackSpy: jasmine.Spy<ShadowDomCallBack>
+
+  beforeEach(() => {
+    shadowDomCreatedCallbackSpy = jasmine.createSpy<ShadowDomCallBack>()
+  })
 
   beforeEach(() => {
     if (isIE()) {
@@ -65,7 +77,9 @@ describe('serializeNodeWithId', () => {
   describe('document serialization', () => {
     it('serializes a document', () => {
       const document = new DOMParser().parseFromString('<!doctype html><html>foo</html>', 'text/html')
-      expect(serializeDocument(document, DEFAULT_CONFIGURATION, DEFAULT_SERIALIZATION_CONTEXT)).toEqual({
+      expect(
+        serializeDocument(document, DEFAULT_CONFIGURATION, DEFAULT_SERIALIZATION_CONTEXT, shadowDomCreatedCallbackSpy)
+      ).toEqual({
         type: NodeType.Document,
         childNodes: [
           jasmine.objectContaining({ type: NodeType.DocumentType, name: 'html', publicId: '', systemId: '' }),
@@ -423,7 +437,8 @@ describe('serializeNodeWithId', () => {
       div.attachShadow({ mode: 'open' })
       div.shadowRoot!.appendChild(document.createElement('hr'))
 
-      expect(serializeNodeWithId(div, DEFAULT_OPTIONS)).toEqual({
+      const options = { ...DEFAULT_OPTIONS, shadowDomCreatedCallback: shadowDomCreatedCallbackSpy }
+      expect(serializeNodeWithId(div, options)).toEqual({
         type: NodeType.Element,
         tagName: 'div',
         attributes: {},
@@ -442,6 +457,7 @@ describe('serializeNodeWithId', () => {
         id: jasmine.any(Number) as unknown as number,
         isShadowHost: true,
       })
+      expect(shadowDomCreatedCallbackSpy).toHaveBeenCalledWith(div.shadowRoot!)
     })
   })
 

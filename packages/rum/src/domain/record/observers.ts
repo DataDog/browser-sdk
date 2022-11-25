@@ -36,6 +36,7 @@ import type { MutationController } from './mutationObserver'
 import { startMutationObserver } from './mutationObserver'
 import { getVisualViewport, getScrollX, getScrollY, convertMouseEventToLayoutCoordinates } from './viewports'
 import type { ElementsScrollPositions } from './elementsScrollPositions'
+import type { ShadowDomCallBack } from './serialize'
 
 const MOUSE_MOVE_OBSERVER_THRESHOLD = 50
 const SCROLL_OBSERVER_THRESHOLD = 100
@@ -96,10 +97,16 @@ interface ObserverParam {
   styleSheetCb: StyleSheetCallback
   focusCb: FocusCallback
   frustrationCb: FrustrationCallback
+  shadowDomCreatedCallback: ShadowDomCallBack
 }
 
 export function initObservers(o: ObserverParam): ListenerHandler {
-  const mutationHandler = initMutationObserver(o.mutationController, o.mutationCb, o.configuration)
+  const mutationHandler = initMutationObserver(
+    o.mutationController,
+    o.mutationCb,
+    o.configuration,
+    o.shadowDomCreatedCallback
+  )
   const mousemoveHandler = initMoveObserver(o.mousemoveCb)
   const mouseInteractionHandler = initMouseInteractionObserver(
     o.mouseInteractionCb,
@@ -132,12 +139,13 @@ export function initObservers(o: ObserverParam): ListenerHandler {
   }
 }
 
-function initMutationObserver(
+export function initMutationObserver(
   mutationController: MutationController,
   cb: MutationCallBack,
-  configuration: RumConfiguration
+  configuration: RumConfiguration,
+  shadowDomCreatedCallback: ShadowDomCallBack
 ) {
-  return startMutationObserver(mutationController, cb, configuration).stop
+  return startMutationObserver(mutationController, cb, configuration, shadowDomCreatedCallback, document).stop
 }
 
 function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {

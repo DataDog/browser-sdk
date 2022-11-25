@@ -1,4 +1,4 @@
-import { DefaultPrivacyLevel, isIE, relativeNow, timeStampNow } from '@datadog/browser-core'
+import { DefaultPrivacyLevel, isIE, noop, relativeNow, timeStampNow } from '@datadog/browser-core'
 import type { RawRumActionEvent, RumConfiguration } from '@datadog/browser-rum-core'
 import { ActionType, LifeCycle, LifeCycleEventType, RumEventType, FrustrationType } from '@datadog/browser-rum-core'
 import type { RawRumEventCollectedData } from 'packages/rum-core/src/domain/lifeCycle'
@@ -29,10 +29,15 @@ describe('initInputObserver', () => {
     sandbox.appendChild(input)
     document.body.appendChild(sandbox)
 
-    serializeDocument(document, DEFAULT_CONFIGURATION, {
-      status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
-      elementsScrollPositions: createElementsScrollPositions(),
-    })
+    serializeDocument(
+      document,
+      DEFAULT_CONFIGURATION,
+      {
+        status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
+        elementsScrollPositions: createElementsScrollPositions(),
+      },
+      noop
+    )
   })
 
   afterEach(() => {
@@ -173,10 +178,15 @@ describe('initStyleSheetObserver', () => {
     document.head.appendChild(styleElement)
     styleSheet = styleElement.sheet!
 
-    serializeDocument(document, DEFAULT_CONFIGURATION, {
-      status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
-      elementsScrollPositions: createElementsScrollPositions(),
-    })
+    serializeDocument(
+      document,
+      DEFAULT_CONFIGURATION,
+      {
+        status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
+        elementsScrollPositions: createElementsScrollPositions(),
+      },
+      noop
+    )
   })
 
   afterEach(() => {

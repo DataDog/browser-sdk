@@ -1,5 +1,5 @@
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { objectValues } from '../../core/src'
+import { noop, objectValues } from '../../core/src'
 import type { SerializedNodeWithId } from '../src/types'
 import { serializeNodeWithId, SerializationContextStatus, createElementsScrollPositions } from '../src/domain/record'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME } from '../src/constants'
@@ -36,6 +36,7 @@ export const generateLeanSerializedDoc = (htmlContent: string, privacyTag: strin
         elementsScrollPositions: createElementsScrollPositions(),
       },
       configuration: {} as RumConfiguration,
+      shadowDomCreatedCallback: noop,
     })! as unknown as Record<string, unknown>
   ) as unknown as SerializedNodeWithId
   return serializedDoc

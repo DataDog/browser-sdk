@@ -4,6 +4,7 @@ import type { LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
 import { getViewportDimension } from '@datadog/browser-rum-core'
 import type {
   BrowserMutationData,
+  BrowserMutationPayload,
   BrowserRecord,
   InputData,
   MediaInteractionData,
@@ -16,7 +17,7 @@ import { RecordType, IncrementalSource } from '../../types'
 import { serializeDocument, SerializationContextStatus } from './serialize'
 import { initObservers } from './observers'
 
-import { MutationController } from './mutationObserver'
+import { MutationController, startMutationObserver } from './mutationObserver'
 import { getVisualViewport, getScrollX, getScrollY } from './viewports'
 import { assembleIncrementalSnapshot } from './utils'
 import { createElementsScrollPositions } from './elementsScrollPositions'
@@ -42,6 +43,13 @@ export function record(options: RecordOptions): RecordAPI {
 
   const mutationController = new MutationController()
   const elementsScrollPositions = createElementsScrollPositions()
+
+  const mutationCb = (mutation: BrowserMutationPayload) =>
+    emit(assembleIncrementalSnapshot<BrowserMutationData>(IncrementalSource.Mutation, mutation))
+
+  const shadowDomCreatedCallback = (shadowRoot: ShadowRoot) => {
+    startMutationObserver(mutationController, mutationCb, options.configuration, shadowDomCreatedCallback, shadowRoot)
+  }
 
   const takeFullSnapshot = (
     timestamp = timeStampNow(),
@@ -69,7 +77,7 @@ export function record(options: RecordOptions): RecordAPI {
 
     emit({
       data: {
-        node: serializeDocument(document, options.configuration, serializationContext),
+        node: serializeDocument(document, options.configuration, serializationContext, shadowDomCreatedCallback),
         initialOffset: {
           left: getScrollX(),
           top: getScrollY(),
@@ -119,6 +127,7 @@ export function record(options: RecordOptions): RecordAPI {
         timestamp: timeStampNow(),
       })
     },
+    shadowDomCreatedCallback,
   })
 
   return {

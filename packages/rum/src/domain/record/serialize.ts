@@ -61,24 +61,29 @@ export type SerializationContext =
       elementsScrollPositions: ElementsScrollPositions
     }
 
+export type ShadowDomCallBack = (shadowRoot: ShadowRoot) => void
+
 export interface SerializeOptions {
   serializedNodeIds?: Set<number>
   ignoreWhiteSpace?: boolean
   parentNodePrivacyLevel: ParentNodePrivacyLevel
   serializationContext: SerializationContext
   configuration: RumConfiguration
+  shadowDomCreatedCallback: ShadowDomCallBack
 }
 
 export function serializeDocument(
   document: Document,
   configuration: RumConfiguration,
-  serializationContext: SerializationContext
+  serializationContext: SerializationContext,
+  shadowDomCreatedCallback: ShadowDomCallBack
 ): SerializedNodeWithId {
   // We are sure that Documents are never ignored, so this function never returns null
   return serializeNodeWithId(document, {
     serializationContext,
     parentNodePrivacyLevel: configuration.defaultPrivacyLevel,
     configuration,
+    shadowDomCreatedCallback,
   })!
 }
 
@@ -195,6 +200,10 @@ export function serializeElementNode(element: Element, options: SerializeOptions
   }
 
   const isShadowHost = element.shadowRoot !== null || undefined
+  if (isShadowHost && element.shadowRoot !== null) {
+    options.shadowDomCreatedCallback(element.shadowRoot)
+  }
+
   return {
     type: NodeType.Element,
     tagName,

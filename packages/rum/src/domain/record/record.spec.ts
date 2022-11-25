@@ -4,7 +4,13 @@ import { LifeCycle } from '@datadog/browser-rum-core'
 import type { Clock } from '../../../../core/test/specHelper'
 import { createNewEvent } from '../../../../core/test/specHelper'
 import { collectAsyncCalls, recordsPerFullSnapshot } from '../../../test/utils'
-import type { BrowserIncrementalSnapshotRecord, BrowserRecord, FocusRecord } from '../../types'
+import type {
+  BrowserIncrementalSnapshotRecord,
+  BrowserMutationData,
+  BrowserRecord,
+  ElementNode,
+  FocusRecord,
+} from '../../types'
 import { RecordType, IncrementalSource } from '../../types'
 import type { RecordAPI } from './record'
 import { record } from './record'
@@ -193,6 +199,53 @@ describe('record', () => {
       hasFocus = false
       startRecording()
       expect((getEmittedRecords()[1] as FocusRecord).data.has_focus).toBe(false)
+    })
+  })
+
+  describe('Adding shadow dom', () => {
+    let sandbox: HTMLElement
+
+    beforeEach(() => {
+      sandbox = document.createElement('div')
+      sandbox.id = 'sandbox'
+      document.body.appendChild(sandbox)
+    })
+
+    afterEach(() => {
+      sandbox.remove()
+    })
+
+    it('should record mutation inside a shadow root', () => {
+      startRecording()
+      expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot())
+
+      // add shadow DOM
+      const host = document.createElement('div')
+      const shadowRoot = host.attachShadow({ mode: 'open' })
+      const div = document.createElement('div')
+      div.className = 'toto'
+      shadowRoot.appendChild(div)
+      sandbox.append(host)
+      recordApi.flushMutations()
+      expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot() + 1)
+      const hostMutation = getEmittedRecords()[recordsPerFullSnapshot()] as BrowserIncrementalSnapshotRecord
+      expect(hostMutation.type).toBe(RecordType.IncrementalSnapshot)
+      expect(hostMutation.data.source).toBe(IncrementalSource.Mutation)
+      const hostMutationData = hostMutation.data as BrowserMutationData
+      expect(hostMutationData.adds.length).toBe(1)
+      const hostNode = hostMutationData.adds[0].node as ElementNode
+      expect(hostNode.isShadowHost).toBe(true)
+
+      // inner mutation
+      div.className = 'titi'
+      recordApi.flushMutations()
+      expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot() + 2)
+      const innerMutation = getEmittedRecords()[recordsPerFullSnapshot() + 1] as BrowserIncrementalSnapshotRecord
+      expect(innerMutation.type).toBe(RecordType.IncrementalSnapshot)
+      expect(innerMutation.data.source).toBe(IncrementalSource.Mutation)
+      const innerMutationData = innerMutation.data as BrowserMutationData
+      expect(innerMutationData.attributes.length).toBe(1)
+      expect(innerMutationData.attributes[0].attributes.class).toBe('titi')
     })
   })
 

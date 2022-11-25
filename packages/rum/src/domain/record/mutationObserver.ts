@@ -1,6 +1,6 @@
 import { monitor, noop } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { getMutationObserverConstructor } from '@datadog/browser-rum-core'
+import { getMutationObserverConstructor, getParentNode, getNodeOrShadowHost } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel } from '../../constants'
 import type { AddedNodeMutation, AttributeMutation, RemovedNodeMutation, TextMutation } from '../../types'
 import { getNodePrivacyLevel, getTextContent } from './privacy'
@@ -12,6 +12,7 @@ import {
   nodeAndAncestorsHaveSerializedNode,
 } from './serializationUtils'
 import { serializeNodeWithId, serializeAttribute, SerializationContextStatus } from './serialize'
+import type { ShadowDomCallBack } from './serialize'
 import { forEach } from './utils'
 import { createMutationBatch } from './mutationBatch'
 import type { MutationCallBack } from './observers'
@@ -50,19 +51,28 @@ export type RumMutationRecord =
 export function startMutationObserver(
   controller: MutationController,
   mutationCallback: MutationCallBack,
-  configuration: RumConfiguration
+  configuration: RumConfiguration,
+  shadowDomCreatedCallback: ShadowDomCallBack,
+  target: Node
 ) {
   const MutationObserver = getMutationObserverConstructor()
   if (!MutationObserver) {
     return { stop: noop }
   }
+
   const mutationBatch = createMutationBatch((mutations) => {
-    processMutations(mutations.concat(observer.takeRecords() as RumMutationRecord[]), mutationCallback, configuration)
+    processMutations(
+      mutations.concat(observer.takeRecords() as RumMutationRecord[]),
+      mutationCallback,
+      configuration,
+      shadowDomCreatedCallback,
+      target
+    )
   })
 
   const observer = new MutationObserver(monitor(mutationBatch.addMutations) as (callback: MutationRecord[]) => void)
 
-  observer.observe(document, {
+  observer.observe(target, {
     attributeOldValue: true,
     attributes: true,
     characterData: true,
@@ -98,7 +108,9 @@ export class MutationController {
 function processMutations(
   mutations: RumMutationRecord[],
   mutationCallback: MutationCallBack,
-  configuration: RumConfiguration
+  configuration: RumConfiguration,
+  shadowDomCreatedCallback: ShadowDomCallBack,
+  target: Node
 ) {
   // Discard any mutation with a 'target' node that:
   // * isn't injected in the current document or isn't known/serialized yet: those nodes are likely
@@ -106,7 +118,7 @@ function processMutations(
   // * should be hidden or ignored
   const filteredMutations = mutations.filter(
     (mutation): mutation is WithSerializedTarget<RumMutationRecord> =>
-      document.contains(mutation.target) &&
+      target.contains(mutation.target) &&
       nodeAndAncestorsHaveSerializedNode(mutation.target) &&
       getNodePrivacyLevel(mutation.target, configuration.defaultPrivacyLevel) !== NodePrivacyLevel.HIDDEN
   )
@@ -115,7 +127,8 @@ function processMutations(
     filteredMutations.filter(
       (mutation): mutation is WithSerializedTarget<RumChildListMutationRecord> => mutation.type === 'childList'
     ),
-    configuration
+    configuration,
+    shadowDomCreatedCallback
   )
 
   const texts = processCharacterDataMutations(
@@ -148,7 +161,8 @@ function processMutations(
 
 function processChildListMutations(
   mutations: Array<WithSerializedTarget<RumChildListMutationRecord>>,
-  configuration: RumConfiguration
+  configuration: RumConfiguration,
+  shadowDomCreatedCallback: ShadowDomCallBack
 ) {
   // First, we iterate over mutations to collect:
   //
@@ -208,14 +222,16 @@ function processChildListMutations(
       parentNodePrivacyLevel,
       serializationContext: { status: SerializationContextStatus.MUTATION },
       configuration,
+      shadowDomCreatedCallback,
     })
     if (!serializedNode) {
       continue
     }
 
+    const parentNode = getParentNode(node)!
     addedNodeMutations.push({
       nextId: getNextSibling(node),
-      parentId: getSerializedNodeId(node.parentNode!)!,
+      parentId: getSerializedNodeId(parentNode)!,
       node: serializedNode,
     })
   }
@@ -224,7 +240,7 @@ function processChildListMutations(
   removedNodes.forEach((parent, node) => {
     if (hasSerializedNode(node)) {
       removedNodeMutations.push({
-        parentId: getSerializedNodeId(parent),
+        parentId: getSerializedNodeId(getNodeOrShadowHost(parent) as NodeWithSerializedNode),
         id: getSerializedNodeId(node),
       })
     }
