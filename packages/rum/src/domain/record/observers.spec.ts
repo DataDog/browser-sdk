@@ -55,6 +55,17 @@ describe('initInputObserver', () => {
     })
   })
 
+  // cannot trigger a event in a Shadow DOM because event with `isTrusted:false` do not cross the root
+  it('collects input values when an "input" event is composed', () => {
+    stopInputObserver = initInputObserver(inputCallbackSpy, DefaultPrivacyLevel.ALLOW)
+    dispatchComposedInputEvent('foo')
+
+    expect(inputCallbackSpy).toHaveBeenCalledOnceWith({
+      text: 'foo',
+      id: jasmine.any(Number) as unknown as number,
+    })
+  })
+
   it('masks input values according to the element privacy level', () => {
     stopInputObserver = initInputObserver(inputCallbackSpy, DefaultPrivacyLevel.ALLOW)
     sandbox.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT)
@@ -84,6 +95,13 @@ describe('initInputObserver', () => {
   function dispatchInputEvent(newValue: string) {
     input.value = newValue
     input.dispatchEvent(createNewEvent('input', { target: input }))
+  }
+
+  function dispatchComposedInputEvent(newValue: string) {
+    input.value = newValue
+    const event = createNewEvent('input', { target: sandbox, composed: true })
+    event.composedPath = () => [input, sandbox, document.body]
+    input.dispatchEvent(event)
   }
 })
 

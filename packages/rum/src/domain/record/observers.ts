@@ -151,7 +151,7 @@ export function initMutationObserver(
 function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {
   const { throttled: updatePosition } = throttle(
     monitor((event: MouseEvent | TouchEvent) => {
-      const target = event.target as Node
+      const target = getEventTarget(event)
       if (hasSerializedNode(target)) {
         const { clientX, clientY } = isTouchEvent(event) ? event.changedTouches[0] : event
         const position: MousePosition = {
@@ -196,7 +196,7 @@ function initMouseInteractionObserver(
   defaultPrivacyLevel: DefaultPrivacyLevel
 ): ListenerHandler {
   const handler = (event: MouseEvent | TouchEvent) => {
-    const target = event.target as Node
+    const target = getEventTarget(event)
     if (getNodePrivacyLevel(target, defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN || !hasSerializedNode(target)) {
       return
     }
@@ -232,7 +232,7 @@ function initScrollObserver(
 ): ListenerHandler {
   const { throttled: updatePosition } = throttle(
     monitor((event: UIEvent) => {
-      const target = event.target as HTMLElement | Document
+      const target = getEventTarget(event) as HTMLElement | Document
       if (
         !target ||
         getNodePrivacyLevel(target, defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN ||
@@ -336,12 +336,13 @@ export function initInputObserver(cb: InputCallback, defaultPrivacyLevel: Defaul
     document,
     [DOM_EVENT.INPUT, DOM_EVENT.CHANGE],
     (event) => {
+      const target = getEventTarget(event)
       if (
-        event.target instanceof HTMLInputElement ||
-        event.target instanceof HTMLTextAreaElement ||
-        event.target instanceof HTMLSelectElement
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement
       ) {
-        onElementChange(event.target)
+        onElementChange(target)
       }
     },
     {
@@ -426,7 +427,7 @@ function initMediaInteractionObserver(
   defaultPrivacyLevel: DefaultPrivacyLevel
 ): ListenerHandler {
   const handler = (event: Event) => {
-    const target = event.target as Node
+    const target = getEventTarget(event)
     if (
       !target ||
       getNodePrivacyLevel(target, defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN ||
@@ -496,4 +497,11 @@ export function initFrustrationObserver(lifeCycle: LifeCycle, frustrationCb: Fru
       })
     }
   }).unsubscribe
+}
+
+function getEventTarget(event: Event): Node {
+  if (!event.composed) {
+    return event.target as Node
+  }
+  return event.composedPath()[0] as Node
 }
