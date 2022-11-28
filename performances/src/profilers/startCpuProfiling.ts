@@ -6,7 +6,10 @@ export async function startCPUProfiling(options: ProfilingOptions, client: CDPSe
   await client.send('Profiler.enable')
   await client.send('Profiler.start')
 
-  return async () => {
+  let totalConsumption = 0
+  let sdkConsumption = 0
+
+  async function stopAndAddProfile() {
     const { profile } = await client.send('Profiler.stop')
 
     const timeDeltaForNodeId = new Map<number, number>()
@@ -16,8 +19,6 @@ export async function startCPUProfiling(options: ProfilingOptions, client: CDPSe
       timeDeltaForNodeId.set(nodeId, (timeDeltaForNodeId.get(nodeId) || 0) + profile.timeDeltas![index])
     }
 
-    let totalConsumption = 0
-    let sdkConsumption = 0
     for (const node of profile.nodes) {
       const consumption = timeDeltaForNodeId.get(node.id) || 0
       totalConsumption += consumption
@@ -25,7 +26,18 @@ export async function startCPUProfiling(options: ProfilingOptions, client: CDPSe
         sdkConsumption += consumption
       }
     }
+  }
 
-    return { total: totalConsumption, sdk: sdkConsumption }
+  return {
+    takeCPUMeasurements: async () => {
+      // We need to restart profiling at each "measurement" because the running profile gets reset
+      // on each navigation.
+      await stopAndAddProfile()
+      await client.send('Profiler.start')
+    },
+    stopCPUProfiling: async () => {
+      await stopAndAddProfile()
+      return { total: totalConsumption, sdk: sdkConsumption }
+    },
   }
 }

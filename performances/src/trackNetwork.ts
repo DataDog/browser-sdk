@@ -22,7 +22,7 @@ export function trackNetwork(page: Page) {
     waitForNetworkIdle: async () =>
       new Promise<void>((resolve) => {
         let timeoutId: NodeJS.Timeout
-        const intervalId = setInterval(wake, 1000)
+        const periodicalWakeIntervalId = setInterval(wake, REQUEST_TIMEOUT)
 
         wake()
 
@@ -42,7 +42,7 @@ export function trackNetwork(page: Page) {
           })
 
           if (pendingRequests.size === 0) {
-            clearInterval(intervalId)
+            clearInterval(periodicalWakeIntervalId)
             timeoutId = setTimeout(() => {
               page.off('request', wake)
               page.off('requestfinished', wake)
