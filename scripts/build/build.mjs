@@ -1,16 +1,20 @@
 import { relative, dirname } from 'path'
 import * as fs from 'fs/promises'
 import esbuild from 'esbuild'
+import { minify as terserMinify } from 'terser'
 import * as buildEnv from '../build-env.js'
 import esbuildPluginTransformToEs5 from './esbuildPluginTransformToEs5.js'
 
+/**
+ * @param buildOptions {{ entryPoint: string, outputFilePath: string }}
+ */
 export default async function build({ entryPoint, outputFilePath }) {
   try {
-    console.log(`Bundle ${entryPoint}...`)
+    console.log(`Build ${entryPoint}...`)
     const bundleResult = await bundle({
       entryPoints: [entryPoint],
       outfile: outputFilePath,
-      format: 'esm',
+      format: 'iife',
     })
     const minifyResult = await minify(bundleResult.outputFiles)
     await write(minifyResult)
@@ -37,7 +41,7 @@ export function bundle({ entryPoints, outfile, watch, outdir, format, sourcemap 
     format,
     sourcemap,
     bundle: true,
-    target: ['es6'],
+    target: ['es5'],
     write: false,
     logLevel: 'info',
     define: {
@@ -55,12 +59,7 @@ async function minify(inputFiles) {
   return Promise.all(
     inputFiles.map(async ({ path, text }) => {
       console.log(`Minify ${relative(process.cwd(), path)}...`)
-      const transformResult = await esbuild.transform(text, {
-        minify: true,
-        target: ['es5'],
-        logLevel: 'info',
-        format: 'iife',
-      })
+      const transformResult = await terserMinify(text)
       return { path, text: transformResult.code }
     })
   )
