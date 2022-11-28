@@ -9096,9 +9096,9 @@ schema-utils@^3.0.0:
     ajv-keywords "^3.5.2"
 
 selenium-standalone@^8.0.3:
-  version "8.0.10"
-  resolved "https://registry.yarnpkg.com/selenium-standalone/-/selenium-standalone-8.0.10.tgz#27f4c405ea7600b9e83ede6bb26947a4ae8ca1c1"
-  integrity sha512-4Ab6mePsFQ0k1shRVn2R7WB3GhKsfmkhQlojiKvK1U84H+JJjdwVkEdRabkM/VtkLmVEWIUNEIcjLCR4MpzAsA==
+  version "8.2.4"
+  resolved "https://registry.yarnpkg.com/selenium-standalone/-/selenium-standalone-8.2.4.tgz#c83942a1c93e1a27bb92bf681d700934b1c55ca3"
+  integrity sha512-VXkiQFAmXGlcE6X5A9dakXbXuxJONqG/t39Cw4ylk7J+hxIYBk/yfJ0Tkh2P0X9QGRpcUfr0hgE0PHDil0nFiA==
   dependencies:
     commander "^9.0.0"
     cross-spawn "^7.0.3"
