@@ -13,16 +13,19 @@ export class Segment {
 
   public readonly metadata: BrowserSegmentMetadata
 
+  private worker: DeflateWorker
   private id = nextId++
 
   constructor(
-    private worker: DeflateWorker,
+    worker: DeflateWorker,
     context: SegmentContext,
     creationReason: CreationReason,
     initialRecord: BrowserRecord,
     onWrote: (compressedBytesCount: number) => void,
     onFlushed: (data: Uint8Array, rawBytesCount: number) => void
   ) {
+    this.worker = worker
+
     const viewId = context.view.id
 
     this.metadata = assign(

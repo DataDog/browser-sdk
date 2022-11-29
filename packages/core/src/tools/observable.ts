@@ -5,8 +5,11 @@ export interface Subscription {
 export class Observable<T> {
   private observers: Array<(data: T) => void> = []
   private onLastUnsubscribe?: () => void
+  private onFirstSubscribe?: () => (() => void) | void
 
-  constructor(private onFirstSubscribe?: () => (() => void) | void) {}
+  constructor(onFirstSubscribe?: () => (() => void) | void) {
+    this.onFirstSubscribe = onFirstSubscribe
+  }
 
   subscribe(f: (data: T) => void): Subscription {
     if (!this.observers.length && this.onFirstSubscribe) {

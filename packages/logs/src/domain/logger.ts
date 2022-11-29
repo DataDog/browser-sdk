@@ -27,14 +27,20 @@ export const STATUSES = Object.keys(StatusType) as StatusType[]
 
 export class Logger {
   private contextManager = createContextManager()
+  private handleLogStrategy: (logsMessage: LogsMessage, logger: Logger) => void
+  private handlerType: HandlerType | HandlerType[]
+  private level: StatusType
 
   constructor(
-    private handleLogStrategy: (logsMessage: LogsMessage, logger: Logger) => void,
+    handleLogStrategy: (logsMessage: LogsMessage, logger: Logger) => void,
     name?: string,
-    private handlerType: HandlerType | HandlerType[] = HandlerType.http,
-    private level: StatusType = StatusType.debug,
+    handlerType: HandlerType | HandlerType[] = HandlerType.http,
+    level: StatusType = StatusType.debug,
     loggerContext: object = {}
   ) {
+    this.handleLogStrategy = handleLogStrategy
+    this.handlerType = handlerType
+    this.level = level
     this.contextManager.set(assign({}, loggerContext, name ? { logger: { name } } : undefined))
   }
 

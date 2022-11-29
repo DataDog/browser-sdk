@@ -22,8 +22,10 @@ export const CLEAR_OLD_CONTEXTS_INTERVAL = ONE_MINUTE
 export class ContextHistory<Context> {
   private entries: Array<ContextHistoryEntry<Context>> = []
   private clearOldContextsInterval: TimeoutId
+  private expireDelay: number
 
-  constructor(private expireDelay: number) {
+  constructor(expireDelay: number) {
+    this.expireDelay = expireDelay
     this.clearOldContextsInterval = setInterval(() => this.clearOldContexts(), CLEAR_OLD_CONTEXTS_INTERVAL)
   }
 

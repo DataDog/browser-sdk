@@ -338,7 +338,11 @@ interface ExpectedMutationsPayload {
  * For now, its purpose is limited to specifying child nodes.
  */
 class ExpectedNode {
-  constructor(private node: Omit<SerializedNodeWithId, 'childNodes'> & { childNodes?: ExpectedNode[] }) {}
+  private node: Omit<SerializedNodeWithId, 'childNodes'> & { childNodes?: ExpectedNode[] }
+
+  constructor(node: Omit<SerializedNodeWithId, 'childNodes'> & { childNodes?: ExpectedNode[] }) {
+    this.node = node
+  }
 
   withChildren(...childNodes: ExpectedNode[]): ExpectedNode {
     return new ExpectedNode({ ...this.node, childNodes })

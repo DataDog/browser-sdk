@@ -152,8 +152,10 @@ function notYetImplemented(): never {
 
 export class ResponseStub implements Response {
   private _body: ReadableStream<Uint8Array> | undefined
+  private options: Readonly<ResponseStubOptions>
 
-  constructor(private options: Readonly<ResponseStubOptions>) {
+  constructor(options: Readonly<ResponseStubOptions>) {
+    this.options = options
     if (this.options.body) {
       this._body = this.options.body
     } else if (this.options.responseTextError !== undefined) {

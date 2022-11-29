@@ -15,15 +15,27 @@ export class Batch {
   private upsertBuffer: { [key: string]: string } = {}
   private bufferBytesCount = 0
   private bufferMessagesCount = 0
+  private request: HttpRequest
+  private batchMessagesLimit: number
+  private batchBytesLimit: number
+  private messageBytesLimit: number
+  private flushTimeout: number
+  private pageExitObservable: Observable<PageExitEvent>
 
   constructor(
-    private request: HttpRequest,
-    private batchMessagesLimit: number,
-    private batchBytesLimit: number,
-    private messageBytesLimit: number,
-    private flushTimeout: number,
-    private pageExitObservable: Observable<PageExitEvent>
+    request: HttpRequest,
+    batchMessagesLimit: number,
+    batchBytesLimit: number,
+    messageBytesLimit: number,
+    flushTimeout: number,
+    pageExitObservable: Observable<PageExitEvent>
   ) {
+    this.request = request
+    this.batchMessagesLimit = batchMessagesLimit
+    this.batchBytesLimit = batchBytesLimit
+    this.messageBytesLimit = messageBytesLimit
+    this.flushTimeout = flushTimeout
+    this.pageExitObservable = pageExitObservable
     pageExitObservable.subscribe(() => this.flush(this.request.sendOnExit))
     this.flushPeriodically()
   }
