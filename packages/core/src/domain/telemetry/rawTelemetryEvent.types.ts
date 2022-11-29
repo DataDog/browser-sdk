@@ -5,7 +5,7 @@ export const TelemetryType = {
   configuration: 'configuration',
 } as const
 
-export const enum StatusType {
+export enum StatusType {
   debug = 'debug',
   error = 'error',
 }

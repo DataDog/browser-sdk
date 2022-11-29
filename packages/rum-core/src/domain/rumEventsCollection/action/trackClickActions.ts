@@ -231,7 +231,7 @@ function computeClickActionBase(event: MouseEventOnElement, actionNameAttribute?
   }
 }
 
-const enum ClickStatus {
+enum ClickStatus {
   // Initial state, the click is still ongoing.
   ONGOING,
   // The click is no more ongoing but still needs to be validated or discarded.

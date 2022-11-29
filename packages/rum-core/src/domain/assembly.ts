@@ -34,7 +34,7 @@ import { getDisplayContext } from './contexts/displayContext'
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
 
-const enum SessionType {
+enum SessionType {
   SYNTHETICS = 'synthetics',
   USER = 'user',
   CI_TEST = 'ci_test',

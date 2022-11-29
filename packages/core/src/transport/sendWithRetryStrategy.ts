@@ -12,13 +12,13 @@ export const MAX_QUEUE_BYTES_COUNT = 3 * ONE_MEBI_BYTE
 export const MAX_BACKOFF_TIME = ONE_MINUTE
 export const INITIAL_BACKOFF_TIME = ONE_SECOND
 
-const enum TransportStatus {
+enum TransportStatus {
   UP,
   FAILURE_DETECTED,
   DOWN,
 }
 
-const enum RetryReason {
+enum RetryReason {
   AFTER_SUCCESS,
   AFTER_RESUME,
 }

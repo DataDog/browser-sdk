@@ -9,7 +9,7 @@ export const ONE_YEAR = 365 * ONE_DAY
 export const ONE_KIBI_BYTE = 1024
 export const ONE_MEBI_BYTE = 1024 * ONE_KIBI_BYTE
 
-export const enum DOM_EVENT {
+export enum DOM_EVENT {
   BEFORE_UNLOAD = 'beforeunload',
   CLICK = 'click',
   DBL_CLICK = 'dblclick',
@@ -42,7 +42,7 @@ export const enum DOM_EVENT {
   SELECTION_CHANGE = 'selectionchange',
 }
 
-export const enum ResourceType {
+export enum ResourceType {
   DOCUMENT = 'document',
   XHR = 'xhr',
   BEACON = 'beacon',
@@ -55,7 +55,7 @@ export const enum ResourceType {
   OTHER = 'other',
 }
 
-export const enum RequestType {
+export enum RequestType {
   FETCH = ResourceType.FETCH,
   XHR = ResourceType.XHR,
 }

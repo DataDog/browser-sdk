@@ -14,7 +14,7 @@ import type { startRecording } from './startRecording'
 
 export type StartRecording = typeof startRecording
 
-const enum RecorderStatus {
+enum RecorderStatus {
   // The recorder is stopped.
   Stopped,
   // The user started the recording while it wasn't possible yet. The recorder should start as soon

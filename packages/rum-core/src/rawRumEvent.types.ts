@@ -11,7 +11,7 @@ import type {
 } from '@datadog/browser-core'
 import type { RumSessionPlan } from './domain/rumSessionManager'
 
-export const enum RumEventType {
+export enum RumEventType {
   ACTION = 'action',
   ERROR = 'error',
   LONG_TASK = 'long_task',
@@ -115,7 +115,7 @@ export interface InForegroundPeriod {
   duration: ServerDuration
 }
 
-export const enum ViewLoadingType {
+export enum ViewLoadingType {
   INITIAL_LOAD = 'initial_load',
   ROUTE_CHANGE = 'route_change',
 }
@@ -181,12 +181,12 @@ export interface RawRumActionEvent {
   }
 }
 
-export const enum ActionType {
+export enum ActionType {
   CLICK = 'click',
   CUSTOM = 'custom',
 }
 
-export const enum FrustrationType {
+export enum FrustrationType {
   RAGE_CLICK = 'rage_click',
   ERROR_CLICK = 'error_click',
   DEAD_CLICK = 'dead_click',

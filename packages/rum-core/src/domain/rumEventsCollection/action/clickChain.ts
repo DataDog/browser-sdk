@@ -9,7 +9,7 @@ export interface ClickChain {
 export const MAX_DURATION_BETWEEN_CLICKS = ONE_SECOND
 export const MAX_DISTANCE_BETWEEN_CLICKS = 100
 
-const enum ClickChainStatus {
+enum ClickChainStatus {
   WaitingForMoreClicks,
   WaitingForClicksToStop,
   Finalized,

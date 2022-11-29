@@ -5,7 +5,7 @@ import { InfosTab } from './components/infosTab'
 import { useEvents } from './hooks/useEvents'
 import { EventTab } from './components/eventsTab'
 
-const enum PanelTabs {
+enum PanelTabs {
   Events = 'events',
   Infos = 'infos',
 }

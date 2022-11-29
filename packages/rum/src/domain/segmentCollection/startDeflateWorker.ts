@@ -7,7 +7,7 @@ import { createDeflateWorker } from './deflateWorker'
  * initialization messages, making the creation asynchronous.
  * These worker lifecycle states handle this case.
  */
-const enum DeflateWorkerStatus {
+enum DeflateWorkerStatus {
   Nil,
   Loading,
   Error,

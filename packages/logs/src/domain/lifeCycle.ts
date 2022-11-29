@@ -3,7 +3,7 @@ import type { LogsEvent } from '../logsEvent.types'
 import type { CommonContext, RawLogsEvent } from '../rawLogsEvent.types'
 import type { Logger } from './logger'
 
-export const enum LifeCycleEventType {
+export enum LifeCycleEventType {
   RAW_LOG_COLLECTED,
   LOG_COLLECTED,
 }

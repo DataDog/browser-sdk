@@ -42,7 +42,7 @@ type ParentNodePrivacyLevel =
   | typeof NodePrivacyLevel.MASK
   | typeof NodePrivacyLevel.MASK_USER_INPUT
 
-export const enum SerializationContextStatus {
+export enum SerializationContextStatus {
   INITIAL_FULL_SNAPSHOT,
   SUBSEQUENT_FULL_SNAPSHOT,
   MUTATION,

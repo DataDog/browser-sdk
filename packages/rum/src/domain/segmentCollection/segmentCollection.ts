@@ -56,7 +56,7 @@ export function startSegmentCollection(
   )
 }
 
-const enum SegmentCollectionStatus {
+enum SegmentCollectionStatus {
   WaitingForInitialRecord,
   SegmentPending,
   Stopped,

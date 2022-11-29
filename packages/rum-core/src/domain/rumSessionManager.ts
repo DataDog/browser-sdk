@@ -18,12 +18,12 @@ export type RumSession = {
   resourceAllowed: boolean
 }
 
-export const enum RumSessionPlan {
+export enum RumSessionPlan {
   WITHOUT_SESSION_REPLAY = 1,
   WITH_SESSION_REPLAY = 2,
 }
 
-export const enum RumTrackingType {
+export enum RumTrackingType {
   NOT_TRACKED = '0',
   // Note: the "tracking type" value (stored in the session cookie) does not match the "session
   // plan" value (sent in RUM events). This is expected, and was done to keep retrocompatibility

@@ -7,7 +7,7 @@ import { startSessionStore } from './sessionStore'
 import { SESSION_COOKIE_NAME } from './sessionCookieStore'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 
-const enum FakeTrackingType {
+enum FakeTrackingType {
   TRACKED = 'tracked',
   NOT_TRACKED = 'not-tracked',
 }

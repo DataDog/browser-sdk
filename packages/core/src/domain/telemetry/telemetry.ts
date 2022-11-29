@@ -23,7 +23,7 @@ const ALLOWED_FRAME_URLS = [
   '<anonymous>',
 ]
 
-export const enum TelemetryService {
+export enum TelemetryService {
   LOGS = 'browser-logs-sdk',
   RUM = 'browser-rum-sdk',
 }

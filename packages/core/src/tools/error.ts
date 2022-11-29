@@ -37,7 +37,7 @@ export const ErrorSource = {
   REPORT: 'report',
 } as const
 
-export const enum ErrorHandling {
+export enum ErrorHandling {
   HANDLED = 'handled',
   UNHANDLED = 'unhandled',
 }
