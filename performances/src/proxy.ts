@@ -55,6 +55,7 @@ export function startProxy() {
       })
       req.on('end', () => {
         stats.addRequest(req, requestSize)
+        res.setHeader('Access-Control-Allow-Origin', req.headers.origin!)
         res.writeHead(200)
         res.end('{}')
       })

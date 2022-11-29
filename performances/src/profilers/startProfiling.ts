@@ -6,12 +6,15 @@ import { startMemoryProfiling } from './startMemoryProfiling'
 
 export async function startProfiling(options: ProfilingOptions, page: Page) {
   const client = await page.target().createCDPSession()
-  const stopCPUProfiling = await startCPUProfiling(options, client)
+  const { stopCPUProfiling, takeCPUMeasurements } = await startCPUProfiling(options, client)
   const { stopMemoryProfiling, takeMemoryMeasurements } = await startMemoryProfiling(options, client)
   const stopNetworkProfiling = await startNetworkProfiling(options, client)
 
   return {
-    takeMeasurements: takeMemoryMeasurements,
+    takeMeasurements: async () => {
+      await takeCPUMeasurements()
+      await takeMemoryMeasurements()
+    },
     stopProfiling: async (): Promise<ProfilingResults> => ({
       memory: await stopMemoryProfiling(),
       cpu: await stopCPUProfiling(),

@@ -15,6 +15,14 @@ Illustrates a SPA scenario.
 
   async run(page, takeMeasurements) {
     const { waitForNetworkIdle } = trackNetwork(page)
+
+    // Consent to all cookies
+    await page.setCookie({
+      name: 'd_prefs',
+      value: Buffer.from('1:1,consent_version:2,text_version:1000').toString('base64'),
+      domain: 'twitter.com',
+    })
+
     await page.goto('https://twitter.com/explore')
     await waitForNetworkIdle()
 
