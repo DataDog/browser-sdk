@@ -1,5 +1,7 @@
 import type { HTTPRequest, Page } from 'puppeteer'
 
+// Arbitrary maximum time to wait for a request, to make sure `waitForNetworkIdle` does not block
+// for too long.
 const REQUEST_TIMEOUT = 5000 // 5 seconds
 
 export function trackNetwork(page: Page) {
