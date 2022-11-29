@@ -19,6 +19,7 @@ module.exports = {
     },
   ],
   frameworks: ['jasmine'],
+  exclude: ['coverage/**'],
   client: {
     jasmine: {
       random: true,
@@ -42,6 +43,7 @@ module.exports = {
     'karma-esbuild',
     'karma-spec-reporter',
     'karma-junit-reporter',
+    'karma-coverage-istanbul-reporter',
     'karma-jasmine',
     'karma-chrome-launcher',
     jasmineSeedReporterPlugin,

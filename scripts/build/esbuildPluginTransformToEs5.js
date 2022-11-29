@@ -63,6 +63,13 @@ async function transformToEs5(filename, input) {
       ['@babel/plugin-syntax-typescript'],
       // FIXME Including helpers does not pull the helpers code
       // ['@babel/plugin-external-helpers']
+      // TODO make istanbul optional/configurable
+      [
+        'istanbul',
+        {
+          include: '**/packages/**/*.ts',
+        },
+      ],
     ],
     targets: '> 0.5%, IE 11',
     caller: {
