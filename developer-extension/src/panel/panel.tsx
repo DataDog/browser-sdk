@@ -28,7 +28,11 @@ export function Panel() {
   const settings: Settings = { ...settingsFromStore, ...settingsFromMemory }
 
   return (
-    <Tabs color="violet" defaultValue={PanelTabs.Events}>
+    <Tabs
+      color="violet"
+      defaultValue={PanelTabs.Events}
+      sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}
+    >
       <Tabs.List>
         <Tabs.Tab value={PanelTabs.Events}>Events</Tabs.Tab>
         <Tabs.Tab value={PanelTabs.Infos}>
@@ -47,13 +51,13 @@ export function Panel() {
           Settings
         </Tabs.Tab>
       </Tabs.List>
-      <Tabs.Panel value={PanelTabs.Events}>
+      <Tabs.Panel value={PanelTabs.Events} sx={{ flex: 1, minHeight: 0 }}>
         <EventTab events={events} filters={filters} onFiltered={setFilters} clear={clear} />
       </Tabs.Panel>
-      <Tabs.Panel value={PanelTabs.Infos}>
+      <Tabs.Panel value={PanelTabs.Infos} sx={{ flex: 1, minHeight: 0 }}>
         <InfosTab />
       </Tabs.Panel>
-      <Tabs.Panel value={PanelTabs.Settings}>
+      <Tabs.Panel value={PanelTabs.Settings} sx={{ flex: 1, minHeight: 0 }}>
         <SettingsTab
           settings={settings}
           setSettings={(newSettings) => {

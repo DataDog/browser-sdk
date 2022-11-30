@@ -1,4 +1,4 @@
-import { Badge, Button, Chip, Container, Group, Space, Table, TextInput } from '@mantine/core'
+import { Badge, Button, Chip, Group, Table, TextInput } from '@mantine/core'
 import React from 'react'
 import type { TelemetryEvent } from '../../../../packages/core/src/domain/telemetry'
 import type { RumEvent } from '../../../../packages/rum-core/src/rumEvent.types'
@@ -6,6 +6,7 @@ import type { EventFilters, StoredEvent } from '../hooks/useEvents'
 import { safeTruncate } from '../../../../packages/core/src/tools/utils'
 import { flushEvents } from '../flushEvents'
 import { Json } from './json'
+import { TabBase } from './tabBase'
 
 const RUM_EVENT_TYPE_COLOR = {
   action: 'violet',
@@ -32,32 +33,33 @@ interface EventTabProps {
 
 export function EventTab({ events, filters, onFiltered, clear }: EventTabProps) {
   return (
-    <Container fluid>
-      <Space h="sm" />
-      <Group>
-        <Chip.Group
-          multiple
-          value={filters.sdk}
-          onChange={(sdk) => onFiltered({ ...filters, sdk: sdk as Array<'rum' | 'logs'> })}
-        >
-          <Chip value="rum">RUM</Chip>
-          <Chip value="logs">Logs</Chip>
-        </Chip.Group>
-        <TextInput
-          placeholder="Filter your events, syntax: 'type:view application.id:40d8ca4b'"
-          value={filters.query}
-          style={{ flexGrow: 1 }}
-          onChange={(event) => onFiltered({ ...filters, query: event.currentTarget.value })}
-        />
+    <TabBase
+      top={
+        <Group>
+          <Chip.Group
+            multiple
+            value={filters.sdk}
+            onChange={(sdk) => onFiltered({ ...filters, sdk: sdk as Array<'rum' | 'logs'> })}
+          >
+            <Chip value="rum">RUM</Chip>
+            <Chip value="logs">Logs</Chip>
+          </Chip.Group>
+          <TextInput
+            placeholder="Filter your events, syntax: 'type:view application.id:40d8ca4b'"
+            value={filters.query}
+            style={{ flexGrow: 1 }}
+            onChange={(event) => onFiltered({ ...filters, query: event.currentTarget.value })}
+          />
 
-        <Button color="violet" variant="light" onClick={flushEvents}>
-          Flush
-        </Button>
-        <Button color="red" variant="light" onClick={clear}>
-          Clear
-        </Button>
-      </Group>
-      <Space h="sm" />
+          <Button color="violet" variant="light" onClick={flushEvents}>
+            Flush
+          </Button>
+          <Button color="red" variant="light" onClick={clear}>
+            Clear
+          </Button>
+        </Group>
+      }
+    >
       <Table striped verticalSpacing="xs" fontSize="xs">
         <tbody>
           {events.map((event) => (
@@ -81,7 +83,7 @@ export function EventTab({ events, filters, onFiltered, clear }: EventTabProps) 
           ))}
         </tbody>
       </Table>
-    </Container>
+    </TabBase>
   )
 }
 
