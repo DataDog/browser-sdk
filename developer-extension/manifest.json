@@ -10,5 +10,12 @@
     "service_worker": "background.js",
     "type": "module"
   },
-  "devtools_page": "devtools.html"
+  "devtools_page": "devtools.html",
+  "content_scripts": [
+    {
+      "run_at": "document_start",
+      "matches": ["<all_urls>"],
+      "js": ["content-script.js"]
+    }
+  ]
 }
