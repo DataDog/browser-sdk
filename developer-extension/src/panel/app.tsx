@@ -1,11 +1,15 @@
-import { MantineProvider } from '@mantine/core'
+import { Alert, Button, Center, Group, MantineProvider } from '@mantine/core'
 import { useColorScheme } from '@mantine/hooks'
-import React, { Suspense } from 'react'
+import React, { Suspense, useState } from 'react'
+import { setOnDisconnect } from './actions'
 
 import { Panel } from './panel'
 
 export function App() {
   const colorScheme = useColorScheme()
+  const [isDisconnected, setIsDisconnected] = useState(false)
+
+  setOnDisconnect(() => setIsDisconnected(true))
 
   return (
     <MantineProvider
@@ -14,9 +18,26 @@ export function App() {
       }}
       withGlobalStyles
     >
-      <Suspense fallback={<></>}>
-        <Panel />
-      </Suspense>
+      <Suspense fallback={<></>}>{isDisconnected ? <DisconnectAlert /> : <Panel />}</Suspense>
     </MantineProvider>
+  )
+}
+
+function DisconnectAlert() {
+  return (
+    <Center
+      sx={{
+        height: '100vh',
+      }}
+    >
+      <Alert title="Extension disconnected!" color="red">
+        The extension has been disconnected. This can happen after an update.
+        <Group position="right">
+          <Button onClick={() => location.reload()} color="red">
+            Reload extension
+          </Button>
+        </Group>
+      </Alert>
+    </Center>
   )
 }

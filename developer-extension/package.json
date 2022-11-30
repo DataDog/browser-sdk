@@ -1,19 +1,19 @@
 {
   "name": "@datadog/browser-sdk-developer-extension",
-  "version": "4.24.1",
+  "version": "4.25.0",
   "private": true,
   "scripts": {
     "build": "rm -rf dist && webpack --mode production",
     "dev": "webpack --mode development --watch"
   },
   "devDependencies": {
-    "@types/chrome": "0.0.180",
+    "@types/chrome": "0.0.202",
     "@types/react": "18.0.1",
     "@types/react-dom": "18.0.0",
+    "@webextension-toolbox/webpack-webextension-plugin": "2.1.3",
     "copy-webpack-plugin": "8.1.0",
     "html-webpack-plugin": "5.3.1",
-    "webpack": "5.28.0",
-    "webpack-webextension-plugin": "0.4.1"
+    "webpack": "5.28.0"
   },
   "dependencies": {
     "@emotion/react": "11.10.0",

@@ -30,6 +30,7 @@ dev,@wdio/junit-reporter,MIT,Copyright (c) OpenJS Foundation and other contribut
 dev,@wdio/local-runner,MIT,Copyright JS Foundation and other contributors
 dev,@wdio/selenium-standalone-service,MIT,Copyright JS Foundation and other contributors
 dev,@wdio/spec-reporter,MIT,Copyright JS Foundation and other contributors
+dev,@webextension-toolbox/webpack-webextension-plugin,MIT,Copyright 2018 Henrik Wenz (handtrix@gmail.com)
 dev,ajv,MIT,Copyright 2015-2017 Evgeny Poberezkin
 dev,browserstack-local,MIT,Copyright 2016 BrowserStack
 dev,connect-busboy,MIT,Copyright Brian White
@@ -77,5 +78,4 @@ dev,webdriverio,MIT,Copyright JS Foundation and other contributors
 dev,webpack,MIT,Copyright JS Foundation and other contributors
 dev,webpack-cli,MIT,Copyright JS Foundation and other contributors
 dev,webpack-dev-middleware,MIT,Copyright JS Foundation and other contributors
-dev,webpack-webextension-plugin,MIT,Copyright 2018 Henrik Wenz (handtrix@gmail.com)
 dev,node-fetch,MIT,Copyright 2016-2020 Node Fetch Team

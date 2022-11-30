@@ -15,6 +15,7 @@ describe('viewContexts', () => {
     return {
       startClocks,
       id: FAKE_ID,
+      featureFlagEvaluations: {},
       ...partialViewCreatedEvent,
     }
   }

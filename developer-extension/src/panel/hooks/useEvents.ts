@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react'
 import { generateUUID } from '../../../../packages/core/src/tools/utils'
 import type { RumEvent } from '../../../../packages/rum-core/src/rumEvent.types'
 import type { LogsEvent } from '../../../../packages/logs/src/logsEvent.types'
+import type { TelemetryEvent } from '../../../../packages/core/src/domain/telemetry'
 
 const MAXIMUM_LOGGED_EVENTS = 1000
 const MAXIMUM_DISPLAYED_EVENTS = 100
 
-export type StoredEvent = (RumEvent | LogsEvent) & {
+export type StoredEvent = (RumEvent | TelemetryEvent | LogsEvent) & {
   id: string
 }
 
