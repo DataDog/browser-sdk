@@ -1,7 +1,8 @@
-import { Badge, Box, Button, Checkbox, Code, Group, Space, Text } from '@mantine/core'
+import { Badge, Box, Button, Checkbox, Code, Group, Select, Space, Text } from '@mantine/core'
 import React from 'react'
 import { createLogger } from '../../common/logger'
 import { evalInWindow } from '../evalInWindow'
+import type { EventSource } from '../types'
 import { Columns } from './columns'
 import { TabBase } from './tabBase'
 
@@ -13,10 +14,11 @@ export interface Settings {
   blockIntakeRequests: boolean
   autoFlush: boolean
   preserveEvents: boolean
+  eventSource: EventSource
 }
 
 export function SettingsTab({
-  settings: { useDevBundles, useRumSlim, blockIntakeRequests, preserveEvents, autoFlush },
+  settings: { useDevBundles, useRumSlim, blockIntakeRequests, preserveEvents, autoFlush, eventSource },
   setSettings,
   devServerStatus,
 }: {
@@ -92,6 +94,40 @@ export function SettingsTab({
               />
             }
             description={<>Don't clear events when reloading the page or navigating away.</>}
+          />
+
+          <SettingItem
+            input={
+              <Group>
+                <Text size="sm">Events source:</Text>
+                <Select
+                  data={[
+                    { label: 'Requests', value: 'requests' },
+                    { label: 'SDK', value: 'sdk' },
+                  ]}
+                  value={eventSource}
+                  onChange={(value) => setSettings({ eventSource: value as EventSource })}
+                  color="violet"
+                  sx={{ flex: 1 }}
+                />
+              </Group>
+            }
+            description={
+              <>
+                {eventSource === 'requests' && (
+                  <>
+                    Collect events by listening to intake HTTP requests: events need to be flushed to be collected. Any
+                    SDK setup is supported.
+                  </>
+                )}
+                {eventSource === 'sdk' && (
+                  <>
+                    Collect events by listening to messages sent from the SDK: events are available as soon as they
+                    happen. Only development versions of the SDK are supported.
+                  </>
+                )}
+              </>
+            }
           />
 
           <SettingItem
