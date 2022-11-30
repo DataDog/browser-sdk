@@ -1,5 +1,6 @@
 const path = require('path')
 const { unlinkSync, mkdirSync } = require('fs')
+const { getRunId } = require('../utils')
 const getTestReportDirectory = require('../getTestReportDirectory')
 
 const reporters = [['spec', { onlyFailures: true }]]
@@ -42,6 +43,15 @@ module.exports = {
     },
   },
   onPrepare() {
+    console.log(
+      `[RUM events] https://app.datadoghq.com/rum/explorer?query=%40application.id%3A37fe52bf-b3d5-4ac7-ad9b-44882d479ec8%20%40context.run_id%3A%22${encodeURIComponent(
+        getRunId()
+      )}%22`
+    )
+    console.log(
+      `[Log events] https://app.datadoghq.com/logs?query=%40run_id%3A%22${encodeURIComponent(getRunId())}%22\n`
+    )
+
     if (testReportDirectory) {
       try {
         mkdirSync(testReportDirectory, { recursive: true })

@@ -1,5 +1,6 @@
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { RumInitConfiguration } from '@datadog/browser-rum-core'
+import { getRunId } from '../../../utils'
 import { deleteAllCookies, getBrowserName, withBrowserLogs } from '../helpers/browser'
 import { APPLICATION_ID, CLIENT_TOKEN } from '../helpers/constants'
 import { validateRumFormat } from '../helpers/validation'
@@ -107,8 +108,13 @@ class TestBuilder {
       logs: this.logsConfiguration,
       rum: this.rumConfiguration,
       rumInit: this.rumInit,
+      logsInit: this.logsInit,
       useRumSlim: false,
       eventBridge: this.eventBridge,
+      context: {
+        run_id: getRunId(),
+        test_name: '<PLACEHOLDER>',
+      },
     }
 
     if (this.alsoRunWithRumSlim) {
@@ -128,6 +134,10 @@ class TestBuilder {
 
   private rumInit: (configuration: RumInitConfiguration) => void = (configuration) => {
     window.DD_RUM!.init(configuration)
+  }
+
+  private logsInit: (configuration: LogsInitConfiguration) => void = (configuration) => {
+    window.DD_LOGS!.init(configuration)
   }
 }
 
@@ -156,6 +166,8 @@ function declareTestsForSetups(
 function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFactory, runner: TestRunner) {
   const spec = it(title, async () => {
     log(`Start '${spec.getFullName()}' in ${getBrowserName()}`)
+    setupOptions.context.test_name = spec.getFullName()
+
     const servers = await getTestServers()
 
     const testContext = createTestContext(servers)

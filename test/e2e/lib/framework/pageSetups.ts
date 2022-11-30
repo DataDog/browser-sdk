@@ -6,10 +6,15 @@ export interface SetupOptions {
   rum?: RumInitConfiguration
   useRumSlim: boolean
   logs?: LogsInitConfiguration
+  logsInit: (initConfiguration: LogsInitConfiguration) => void
   rumInit: (initConfiguration: RumInitConfiguration) => void
   eventBridge: boolean
   head?: string
   body?: string
+  context: {
+    run_id: string
+    test_name: string
+  }
 }
 
 export type SetupFactory = (options: SetupOptions, servers: Servers) => string
@@ -53,6 +58,7 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
       <script>
         ${formatSnippet('./datadog-logs.js', 'DD_LOGS')}
         DD_LOGS.onReady(function () {
+          DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
           DD_LOGS.init(${formatConfiguration(options.logs, servers)})
         })
       </script>
@@ -64,6 +70,7 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
       <script type="text/javascript">
         ${formatSnippet(options.useRumSlim ? './datadog-rum-slim.js' : './datadog-rum.js', 'DD_RUM')}
         DD_RUM.onReady(function () {
+          DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
           ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
         })
       </script>
@@ -87,6 +94,7 @@ export function bundleSetup(options: SetupOptions, servers: Servers) {
     header += html`
       <script type="text/javascript" src="./datadog-logs.js"></script>
       <script type="text/javascript">
+        DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
         DD_LOGS.init(${formatConfiguration(options.logs, servers)})
       </script>
     `
@@ -99,6 +107,7 @@ export function bundleSetup(options: SetupOptions, servers: Servers) {
         src="${options.useRumSlim ? './datadog-rum-slim.js' : './datadog-rum.js'}"
       ></script>
       <script type="text/javascript">
+        DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
         ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
       </script>
     `
@@ -120,7 +129,10 @@ export function npmSetup(options: SetupOptions, servers: Servers) {
   if (options.logs) {
     header += html`
       <script type="text/javascript">
-        window.LOGS_CONFIG = ${formatConfiguration(options.logs, servers)}
+        window.LOGS_INIT = () => {
+          window.DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
+          ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})
+        }
       </script>
     `
   }
@@ -129,6 +141,7 @@ export function npmSetup(options: SetupOptions, servers: Servers) {
     header += html`
       <script type="text/javascript">
         window.RUM_INIT = () => {
+          window.DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
           ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
         }
       </script>
