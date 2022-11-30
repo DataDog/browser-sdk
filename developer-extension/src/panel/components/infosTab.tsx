@@ -1,7 +1,8 @@
-import { Anchor, Divider, Grid, Group, Text, Title } from '@mantine/core'
+import { Anchor, Divider, Group, Text } from '@mantine/core'
 import type { ReactNode } from 'react'
 import React from 'react'
 import { useSdkInfos } from '../hooks/useSdkInfos'
+import { Columns } from './columns'
 import { Json } from './json'
 
 export function InfosTab() {
@@ -12,8 +13,8 @@ export function InfosTab() {
   const sessionId = infos.cookie?.id
 
   return (
-    <Grid>
-      <Section name="Session">
+    <Columns>
+      <Columns.Column title="Session">
         {infos.cookie && (
           <>
             <Entry name="Id" value={infos.cookie.id} />
@@ -31,8 +32,8 @@ export function InfosTab() {
             <Entry name="Expire" value={formatDate(Number(infos.cookie.expire))} />
           </>
         )}
-      </Section>
-      <Section name="RUM">
+      </Columns.Column>
+      <Columns.Column title="RUM">
         {infos.rum && (
           <>
             {sessionId && (
@@ -59,8 +60,8 @@ export function InfosTab() {
             <Entry name="Global context" value={infos.rum.globalContext} />
           </>
         )}
-      </Section>
-      <Section name="Logs">
+      </Columns.Column>
+      <Columns.Column title="Logs">
         {infos.logs && (
           <>
             {sessionId && (
@@ -79,8 +80,8 @@ export function InfosTab() {
             <Entry name="Global context" value={infos.logs.globalContext} />
           </>
         )}
-      </Section>
-    </Grid>
+      </Columns.Column>
+    </Columns>
   )
 }
 
@@ -101,15 +102,6 @@ function AppLink({
     <Anchor href={`https://${hostname}/${path}?${new URLSearchParams(params).toString()}`} target="_blank">
       {children}
     </Anchor>
-  )
-}
-
-function Section({ name, children }: { name: string; children: ReactNode | undefined }) {
-  return (
-    <Grid.Col md={4} sm={12}>
-      <Title order={3}>{name}</Title>
-      {children || '(empty)'}
-    </Grid.Col>
   )
 }
 
