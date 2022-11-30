@@ -9,6 +9,7 @@ import { computeStackTrace } from '../tracekit'
 import { Observable } from '../../tools/observable'
 import { timeStampNow } from '../../tools/timeUtils'
 import { displayIfDebugEnabled, startMonitorErrorCollection } from '../../tools/monitor'
+import { sendToExtension } from '../../tools/sendToExtension'
 import type { TelemetryEvent } from './telemetryEvent.types'
 import type { RawTelemetryConfiguration, RawTelemetryEvent } from './rawTelemetryEvent.types'
 import { StatusType, TelemetryType } from './rawTelemetryEvent.types'
@@ -52,9 +53,11 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
   telemetryConfiguration.telemetryConfigurationEnabled =
     telemetryConfiguration.telemetryEnabled && performDraw(configuration.telemetryConfigurationSampleRate)
 
-  onRawTelemetryEventCollected = (event: RawTelemetryEvent) => {
+  onRawTelemetryEventCollected = (rawEvent: RawTelemetryEvent) => {
     if (!includes(TELEMETRY_EXCLUDED_SITES, configuration.site) && telemetryConfiguration.telemetryEnabled) {
-      observable.notify(toTelemetryEvent(telemetryService, event))
+      const event = toTelemetryEvent(telemetryService, rawEvent)
+      observable.notify(event)
+      sendToExtension('telemetry', event)
     }
   }
   startMonitorErrorCollection(addTelemetryError)

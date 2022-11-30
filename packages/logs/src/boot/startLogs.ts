@@ -1,5 +1,6 @@
 import type { Context, TelemetryEvent, RawError, Observable, PageExitEvent } from '@datadog/browser-core'
 import {
+  sendToExtension,
   createPageExitObservable,
   TelemetryService,
   willSyntheticsInjectRum,
@@ -36,6 +37,8 @@ export function startLogs(
   mainLogger: Logger
 ) {
   const lifeCycle = new LifeCycle()
+
+  lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (log) => sendToExtension('logs', log))
 
   const reportError = (error: RawError) =>
     lifeCycle.notify<RawAgentLogsEvent>(LifeCycleEventType.RAW_LOG_COLLECTED, {
