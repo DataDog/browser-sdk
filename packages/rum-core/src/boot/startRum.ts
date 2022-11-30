@@ -32,6 +32,7 @@ import type { RumConfiguration, RumInitConfiguration } from '../domain/configura
 import { serializeRumConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/rumEventsCollection/view/trackViews'
 import type { RecorderApi } from './rumPublicApi'
+import { startWsContexts } from '../domain/contexts/wsContexts'
 
 export function startRum(
   initConfiguration: RumInitConfiguration,
@@ -147,6 +148,7 @@ export function startRumEventCollection(
   const viewContexts = startViewContexts(lifeCycle)
   const urlContexts = startUrlContexts(lifeCycle, locationChangeObservable, location)
   const foregroundContexts = startForegroundContexts()
+  const wsContexts = startWsContexts()
   const { addAction, actionContexts } = startActionCollection(
     lifeCycle,
     domMutationObservable,
@@ -162,7 +164,8 @@ export function startRumEventCollection(
     urlContexts,
     actionContexts,
     getCommonContext,
-    reportError
+    reportError,
+    wsContexts
   )
 
   return {

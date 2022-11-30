@@ -30,6 +30,7 @@ import type { UrlContexts } from './contexts/urlContexts'
 import type { RumConfiguration } from './configuration'
 import type { ActionContexts } from './rumEventsCollection/action/actionCollection'
 import { getDisplayContext } from './contexts/displayContext'
+import { WsContexts } from './contexts/wsContexts'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
@@ -66,7 +67,8 @@ export function startRumAssembly(
   urlContexts: UrlContexts,
   actionContexts: ActionContexts,
   getCommonContext: () => CommonContext,
-  reportError: (error: RawError) => void
+  reportError: (error: RawError) => void,
+  wsContexts?: WsContexts
 ) {
   const eventRateLimiters = {
     [RumEventType.ERROR]: createEventRateLimiter(
@@ -130,7 +132,7 @@ export function startRumAssembly(
         }
 
         const serverRumEvent = combine(rumContext as RumContext & Context, rawRumEvent) as RumEvent & Context
-        serverRumEvent.context = combine(commonContext.context, customerContext)
+        serverRumEvent.context = combine(commonContext.context, customerContext, wsContexts?.get())
 
         if (!('has_replay' in serverRumEvent.session)) {
           ;(serverRumEvent.session as Mutable<RumEvent['session']>).has_replay = commonContext.hasReplay

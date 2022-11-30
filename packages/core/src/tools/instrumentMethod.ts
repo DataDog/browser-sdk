@@ -70,6 +70,55 @@ export function instrumentMethodAndCallOriginal<OBJECT extends { [key: string]: 
   )
 }
 
+export function instrumentConstructorAndCallOriginal<
+  OBJECT extends { [key: string]: any },
+  CONSTRUCTOR extends keyof OBJECT
+>(
+  object: OBJECT,
+  constructor: CONSTRUCTOR,
+  {
+    before,
+    after,
+  }: {
+    before?: (this: OBJECT, ...args: Parameters<OBJECT[CONSTRUCTOR]>) => void
+    after?: (
+      this: OBJECT,
+      object: ReturnType<OBJECT[CONSTRUCTOR]['new']>,
+      ...args: Parameters<OBJECT[CONSTRUCTOR]>
+    ) => void
+  }
+) {
+  return instrumentMethod(
+    object,
+    constructor,
+    (original) =>
+      function () {
+        const args = arguments as unknown as Parameters<OBJECT[CONSTRUCTOR]>
+        let result
+
+        if (before) {
+          callMonitored(before, this as ThisParameterType<OBJECT[CONSTRUCTOR]>, args)
+        }
+
+        if (typeof original === 'function') {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+          result = new original(...args)
+        }
+
+        if (after) {
+          callMonitored(
+            after,
+            this as ThisParameterType<OBJECT[CONSTRUCTOR]>,
+            [result as ReturnType<OBJECT[CONSTRUCTOR]['new']>].concat(...(args as any)) as any
+          )
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return result
+      }
+  )
+}
+
 export function instrumentSetter<OBJECT extends { [key: string]: any }, PROPERTY extends keyof OBJECT>(
   object: OBJECT,
   property: PROPERTY,
