@@ -1,4 +1,7 @@
+import { createLogger } from '../common/logger'
 import { evalInWindow } from './evalInWindow'
+
+const logger = createLogger('flushEvents')
 
 export function flushEvents() {
   evalInWindow(
@@ -9,5 +12,5 @@ export function flushEvents() {
       Object.defineProperty(Document.prototype, 'visibilityState', descriptor)
       document.dispatchEvent(new Event('visibilitychange', { bubbles: true }))
     `
-  ).catch((error) => console.error('Error while flushing events:', error))
+  ).catch((error) => logger.error('Error while flushing events:', error))
 }

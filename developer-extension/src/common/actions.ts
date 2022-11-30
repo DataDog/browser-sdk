@@ -1,3 +1,7 @@
+import { createLogger } from './logger'
+
+const logger = createLogger('action')
+
 type ValueOf<T> = T[keyof T]
 
 type Message<Actions extends { [key: string]: any }> = ValueOf<{
@@ -46,7 +50,7 @@ export function createSendAction<Actions>() {
       message !== 'Could not establish connection. Receiving end does not exist.' &&
       message !== 'The message port closed before a response was received.'
     ) {
-      console.error(`sendAction error: ${message}`)
+      logger.error(`sendAction error: ${message}`)
     }
   }
 

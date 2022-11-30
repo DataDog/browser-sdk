@@ -1,8 +1,11 @@
 import { Badge, Box, Button, Checkbox, Code, Group, Space, Text } from '@mantine/core'
 import React from 'react'
+import { createLogger } from '../../common/logger'
 import { evalInWindow } from '../evalInWindow'
 import { Columns } from './columns'
 import { TabBase } from './tabBase'
+
+const logger = createLogger('settingsTab')
 
 export interface Settings {
   useDevBundles: boolean
@@ -137,5 +140,5 @@ function endSession() {
     `
       document.cookie = '_dd_s=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'
     `
-  ).catch((error) => console.error('Error while ending session:', error))
+  ).catch((error) => logger.error('Error while ending session:', error))
 }
