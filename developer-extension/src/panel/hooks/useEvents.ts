@@ -16,7 +16,7 @@ export interface EventFilters {
   query: string
 }
 
-export function useEvents() {
+export function useEvents(preserveEvents: boolean) {
   const [events, setEvents] = useState<StoredEvent[]>([])
   const [filters, setFilters] = useState<EventFilters>({
     sdk: ['rum', 'logs'],
@@ -34,6 +34,18 @@ export function useEvents() {
       }),
     []
   )
+
+  useEffect(() => {
+    if (!preserveEvents) {
+      const clearCurrentEvents = (details: chrome.webNavigation.WebNavigationTransitionCallbackDetails) => {
+        if (details.transitionType === 'reload') setEvents([])
+      }
+      chrome.webNavigation.onCommitted.addListener(clearCurrentEvents)
+      return () => {
+        chrome.webNavigation.onCommitted.removeListener(clearCurrentEvents)
+      }
+    }
+  }, [preserveEvents])
 
   const filteredEvents = events
     .filter((event) => filters.sdk.includes('logs') || !isLog(event))
