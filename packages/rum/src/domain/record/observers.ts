@@ -267,7 +267,15 @@ function initViewportResizeObserver(cb: ViewportResizeCallback): ListenerHandler
   return initViewportObservable().subscribe(cb).unsubscribe
 }
 
-export function initInputObserver(cb: InputCallback, defaultPrivacyLevel: DefaultPrivacyLevel): ListenerHandler {
+type InputObserverOptions = {
+  domEvents?: Array<DOM_EVENT.INPUT | DOM_EVENT.CHANGE>
+  target?: Node
+}
+export function initInputObserver(
+  cb: InputCallback,
+  defaultPrivacyLevel: DefaultPrivacyLevel,
+  { domEvents = [DOM_EVENT.INPUT, DOM_EVENT.CHANGE], target = document }: InputObserverOptions = {}
+): ListenerHandler {
   const lastInputStateMap: WeakMap<Node, InputState> = new WeakMap()
 
   function onElementChange(target: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement) {
@@ -333,8 +341,8 @@ export function initInputObserver(cb: InputCallback, defaultPrivacyLevel: Defaul
   }
 
   const { stop: stopEventListeners } = addEventListeners(
-    document,
-    [DOM_EVENT.INPUT, DOM_EVENT.CHANGE],
+    target,
+    domEvents,
     (event) => {
       const target = getEventTarget(event)
       if (

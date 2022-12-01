@@ -1,5 +1,5 @@
 import type { TimeStamp } from '@datadog/browser-core'
-import { timeStampNow } from '@datadog/browser-core'
+import { DOM_EVENT, timeStampNow } from '@datadog/browser-core'
 import type { LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
 import { getViewportDimension } from '@datadog/browser-rum-core'
 import type {
@@ -15,7 +15,8 @@ import type {
 } from '../../types'
 import { RecordType, IncrementalSource } from '../../types'
 import { serializeDocument, SerializationContextStatus } from './serialize'
-import { initObservers } from './observers'
+import { initInputObserver, initObservers } from './observers'
+import type { InputCallback } from './observers'
 
 import { MutationController, startMutationObserver } from './mutationObserver'
 import { getVisualViewport, getScrollX, getScrollY } from './viewports'
@@ -46,9 +47,15 @@ export function record(options: RecordOptions): RecordAPI {
 
   const mutationCb = (mutation: BrowserMutationPayload) =>
     emit(assembleIncrementalSnapshot<BrowserMutationData>(IncrementalSource.Mutation, mutation))
+  const inputCb: InputCallback = (s) => emit(assembleIncrementalSnapshot<InputData>(IncrementalSource.Input, s))
 
   const shadowDomCreatedCallback = (shadowRoot: ShadowRoot) => {
     startMutationObserver(mutationController, mutationCb, options.configuration, shadowDomCreatedCallback, shadowRoot)
+    // the change event no do bubble up across the shadow root, we have to listen on the shadow root
+    initInputObserver(inputCb, options.configuration.defaultPrivacyLevel, {
+      target: shadowRoot,
+      domEvents: [DOM_EVENT.CHANGE],
+    })
   }
 
   const takeFullSnapshot = (

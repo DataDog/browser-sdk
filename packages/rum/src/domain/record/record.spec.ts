@@ -247,6 +247,39 @@ describe('record', () => {
       expect(innerMutationData.attributes.length).toBe(1)
       expect(innerMutationData.attributes[0].attributes.class).toBe('titi')
     })
+
+    it('should record the change event inside a shadow root', () => {
+      startRecording()
+      expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot())
+
+      // add shadow DOM
+      const host = document.createElement('div')
+      const shadowRoot = host.attachShadow({ mode: 'open' })
+      const radio = document.createElement('input')
+      radio.setAttribute('type', 'radio')
+      shadowRoot.appendChild(radio)
+      sandbox.append(host)
+      recordApi.flushMutations()
+      expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot() + 1)
+      const hostMutation = getEmittedRecords()[recordsPerFullSnapshot()] as BrowserIncrementalSnapshotRecord
+      expect(hostMutation.type).toBe(RecordType.IncrementalSnapshot)
+      expect(hostMutation.data.source).toBe(IncrementalSource.Mutation)
+      const hostMutationData = hostMutation.data as BrowserMutationData
+      expect(hostMutationData.adds.length).toBe(1)
+      const hostNode = hostMutationData.adds[0].node as ElementNode
+      expect(hostNode.isShadowHost).toBe(true)
+
+      // inner mutation
+      radio.checked = true
+      radio.dispatchEvent(createNewEvent('change', { target: radio, composed: false }))
+      recordApi.flushMutations()
+      expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot() + 2)
+      const innerMutation = getEmittedRecords()[recordsPerFullSnapshot() + 1] as BrowserIncrementalSnapshotRecord
+      expect(innerMutation.type).toBe(RecordType.IncrementalSnapshot)
+      expect(innerMutation.data.source).toBe(IncrementalSource.Input)
+      const innerMutationData = innerMutation.data as { isChecked: boolean }
+      expect(innerMutationData.isChecked).toBe(true)
+    })
   })
 
   function startRecording() {
