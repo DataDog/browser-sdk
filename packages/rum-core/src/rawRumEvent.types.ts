@@ -36,6 +36,7 @@ export interface RawRumResourceEvent {
     ssl?: PerformanceResourceDetailsElement
     first_byte?: PerformanceResourceDetailsElement
     download?: PerformanceResourceDetailsElement
+    cache_status?: CacheStatus
   }
   _dd: {
     trace_id?: string
@@ -44,6 +45,8 @@ export interface RawRumResourceEvent {
     discarded: boolean
   }
 }
+
+export type CacheStatus = 'cached' | 'fetched'
 
 export interface PerformanceResourceDetailsElement {
   duration: ServerDuration

@@ -16,7 +16,7 @@ import type {
   RumXhrResourceEventDomainContext,
   RumFetchResourceEventDomainContext,
 } from '../../../domainContext.types'
-import type { RawRumResourceEvent } from '../../../rawRumEvent.types'
+import type { RawRumResourceEvent, CacheStatus } from '../../../rawRumEvent.types'
 import { RumEventType } from '../../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -28,6 +28,7 @@ import {
   computePerformanceResourceDuration,
   computeResourceKind,
   computeSize,
+  computeCacheStatus,
   isRequestKind,
 } from './resourceUtils'
 
@@ -138,6 +139,7 @@ function computePerformanceEntryMetrics(timing: RumPerformanceResourceTiming) {
       {
         duration: computePerformanceResourceDuration(timing),
         size: computeSize(timing),
+        cache_status: computeCacheStatus(timing) as CacheStatus,
       },
       computePerformanceResourceDetails(timing)
     ),

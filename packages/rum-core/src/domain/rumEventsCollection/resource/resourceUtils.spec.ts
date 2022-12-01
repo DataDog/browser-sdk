@@ -8,6 +8,7 @@ import {
   computePerformanceResourceDuration,
   computeResourceKind,
   isAllowedRequestUrl,
+  computeCacheStatus,
 } from './resourceUtils'
 
 function generateResourceWith(overrides: Partial<RumPerformanceResourceTiming>) {
@@ -288,6 +289,21 @@ describe('computePerformanceResourceDuration', () => {
     expect(computePerformanceResourceDuration(generateResourceWith({ duration: 0 as Duration }))).toBe(
       50e6 as ServerDuration
     )
+  })
+})
+
+describe('computeCacheStatus', () => {
+  it('should return undefined', () => {
+    const cacheStatus = computeCacheStatus(generateResourceWith({ transferSize: 0, decodedBodySize: 0 }))
+    expect(cacheStatus).toBeUndefined()
+  })
+  it('should return cached', () => {
+    const cacheStatus = computeCacheStatus(generateResourceWith({ transferSize: 0, decodedBodySize: 100 }))
+    expect(cacheStatus).toBe('cached')
+  })
+  it('should return fetched', () => {
+    const cacheStatus = computeCacheStatus(generateResourceWith({ transferSize: 100, decodedBodySize: 100 }))
+    expect(cacheStatus).toBe('fetched')
   })
 })
 

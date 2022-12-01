@@ -47,6 +47,7 @@ describe('resourceCollection', () => {
         size: undefined,
         type: ResourceType.OTHER,
         url: 'https://resource.com/valid',
+        cache_status: 'fetched',
       },
       type: RumEventType.RESOURCE,
       _dd: {

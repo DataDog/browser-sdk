@@ -201,6 +201,11 @@ export function computeSize(entry: RumPerformanceResourceTiming) {
   return undefined
 }
 
+export function computeCacheStatus(entry: RumPerformanceResourceTiming) {
+  if (entry.decodedBodySize === 0) return
+  return entry.transferSize === 0 ? 'cached' : 'fetched'
+}
+
 export function isAllowedRequestUrl(configuration: RumConfiguration, url: string) {
   return url && !configuration.isIntakeUrl(url)
 }

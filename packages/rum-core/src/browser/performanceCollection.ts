@@ -37,6 +37,8 @@ export interface RumPerformanceResourceTiming {
   redirectStart: RelativeTime
   redirectEnd: RelativeTime
   decodedBodySize: number
+  cache_status?: 'cached' | 'fetched'
+  transferSize?: number
   traceId?: string
 }
 
