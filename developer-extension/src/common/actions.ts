@@ -1,7 +1,3 @@
-import { createLogger } from './logger'
-
-const logger = createLogger('action')
-
 type ValueOf<T> = T[keyof T]
 
 type Message<Actions extends { [key: string]: any }> = ValueOf<{
@@ -30,34 +26,13 @@ export function createListenAction<Actions extends { [key: string]: any }>() {
   return listenAction
 }
 
-export function createSendAction<Actions>() {
-  let onDisconnect: (() => void) | undefined
-
+export function createSendAction<Actions>(onError: (error: { message: string }) => void) {
   function sendAction<K extends keyof Actions>(action: K, payload: Actions[K]) {
     try {
-      chrome.runtime.sendMessage({ action, payload }).catch(handleError)
+      chrome.runtime.sendMessage({ action, payload }).catch(onError)
     } catch (error) {
-      handleError(error)
+      onError(error as { message: string })
     }
   }
-
-  function handleError(error: any) {
-    const message = typeof error === 'object' && error !== null ? String(error.message) : '(no message)'
-
-    if (onDisconnect && message === 'Extension context invalidated.') {
-      onDisconnect()
-    } else if (
-      message !== 'Could not establish connection. Receiving end does not exist.' &&
-      message !== 'The message port closed before a response was received.'
-    ) {
-      logger.error(`sendAction error: ${message}`)
-    }
-  }
-
-  return {
-    sendAction,
-    setOnDisconnect: (newOnDisconnect: () => void) => {
-      onDisconnect = newOnDisconnect
-    },
-  }
+  return sendAction
 }
