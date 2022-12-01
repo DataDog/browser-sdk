@@ -1,7 +1,7 @@
 import { createRoot } from 'react-dom/client'
 import React from 'react'
 
-import { App } from './app'
+import { App } from './components/app'
 
 const main = document.createElement('main')
 document.body.append(main)

@@ -1,10 +1,10 @@
 import { Anchor, Divider, Group, Text } from '@mantine/core'
 import type { ReactNode } from 'react'
 import React from 'react'
-import { useSdkInfos } from '../hooks/useSdkInfos'
-import { Columns } from './columns'
-import { Json } from './json'
-import { TabBase } from './tabBase'
+import { useSdkInfos } from '../../hooks/useSdkInfos'
+import { Columns } from '../columns'
+import { Json } from '../json'
+import { TabBase } from '../tabBase'
 
 export function InfosTab() {
   const infos = useSdkInfos()

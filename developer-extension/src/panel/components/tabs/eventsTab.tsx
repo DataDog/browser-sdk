@@ -1,12 +1,12 @@
 import { Badge, Button, Chip, Group, Table, TextInput } from '@mantine/core'
 import React from 'react'
-import type { TelemetryEvent } from '../../../../packages/core/src/domain/telemetry'
-import type { RumEvent } from '../../../../packages/rum-core/src/rumEvent.types'
-import type { EventFilters, StoredEvent } from '../hooks/useEvents'
-import { safeTruncate } from '../../../../packages/core/src/tools/utils'
-import { flushEvents } from '../flushEvents'
-import { Json } from './json'
-import { TabBase } from './tabBase'
+import type { TelemetryEvent } from '../../../../../packages/core/src/domain/telemetry'
+import type { RumEvent } from '../../../../../packages/rum-core/src/rumEvent.types'
+import type { EventFilters, StoredEvent } from '../../hooks/useEvents'
+import { safeTruncate } from '../../../../../packages/core/src/tools/utils'
+import { flushEvents } from '../../flushEvents'
+import { Json } from '../json'
+import { TabBase } from '../tabBase'
 
 const RUM_EVENT_TYPE_COLOR = {
   action: 'violet',

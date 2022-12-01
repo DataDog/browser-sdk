@@ -1,10 +1,10 @@
 import { Badge, Box, Button, Checkbox, Code, Group, Select, Space, Text } from '@mantine/core'
 import React from 'react'
-import { createLogger } from '../../common/logger'
-import { evalInWindow } from '../evalInWindow'
-import type { EventSource } from '../types'
-import { Columns } from './columns'
-import { TabBase } from './tabBase'
+import { createLogger } from '../../../common/logger'
+import { evalInWindow } from '../../evalInWindow'
+import type { EventSource } from '../../types'
+import { Columns } from '../columns'
+import { TabBase } from '../tabBase'
 
 const logger = createLogger('settingsTab')
 
