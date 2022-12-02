@@ -15,6 +15,11 @@ export function App() {
     <MantineProvider
       theme={{
         colorScheme,
+        globalStyles: () => ({
+          body: {
+            margin: 0,
+          },
+        }),
       }}
       withGlobalStyles
     >

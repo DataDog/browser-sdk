@@ -1,10 +1,12 @@
-import { Badge, Button, Chip, Group, Space, Table, TextInput } from '@mantine/core'
+import { Badge, Button, Chip, Group, Table, TextInput } from '@mantine/core'
 import React from 'react'
 import type { TelemetryEvent } from '../../../../packages/core/src/domain/telemetry'
 import type { RumEvent } from '../../../../packages/rum-core/src/rumEvent.types'
 import type { EventFilters, StoredEvent } from '../hooks/useEvents'
 import { safeTruncate } from '../../../../packages/core/src/tools/utils'
+import { flushEvents } from '../flushEvents'
 import { Json } from './json'
+import { TabBase } from './tabBase'
 
 const RUM_EVENT_TYPE_COLOR = {
   action: 'violet',
@@ -31,8 +33,8 @@ interface EventTabProps {
 
 export function EventTab({ events, filters, onFiltered, clear }: EventTabProps) {
   return (
-    events && (
-      <>
+    <TabBase
+      top={
         <Group>
           <Chip.Group
             multiple
@@ -48,36 +50,40 @@ export function EventTab({ events, filters, onFiltered, clear }: EventTabProps) 
             style={{ flexGrow: 1 }}
             onChange={(event) => onFiltered({ ...filters, query: event.currentTarget.value })}
           />
+
+          <Button color="violet" variant="light" onClick={flushEvents}>
+            Flush
+          </Button>
           <Button color="red" variant="light" onClick={clear}>
             Clear
           </Button>
         </Group>
-        <Space h="sm" />
-        <Table striped verticalSpacing="xs" fontSize="xs">
-          <tbody>
-            {events.map((event) => (
-              <tr key={event.id}>
-                <td width="20">{new Date(event.date).toLocaleTimeString()}</td>
-                <td width="20">
-                  {isRumEvent(event) ? (
-                    <Badge variant="outline" color={RUM_EVENT_TYPE_COLOR[event.type]}>
-                      {event.type}
-                    </Badge>
-                  ) : (
-                    <Badge variant="dot" color={LOG_STATUS_COLOR[event.status]}>
-                      {event.origin as string} {event.status as string}
-                    </Badge>
-                  )}
-                </td>
-                <td>
-                  <Json src={event} collapsed={true} name={getRumEventDescription(event)} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      </>
-    )
+      }
+    >
+      <Table striped verticalSpacing="xs" fontSize="xs">
+        <tbody>
+          {events.map((event) => (
+            <tr key={event.id}>
+              <td width="20">{new Date(event.date).toLocaleTimeString()}</td>
+              <td width="20">
+                {isRumEvent(event) ? (
+                  <Badge variant="outline" color={RUM_EVENT_TYPE_COLOR[event.type]}>
+                    {event.type}
+                  </Badge>
+                ) : (
+                  <Badge variant="dot" color={LOG_STATUS_COLOR[event.status]}>
+                    {event.origin as string} {event.status as string}
+                  </Badge>
+                )}
+              </td>
+              <td>
+                <Json src={event} collapsed={true} name={getRumEventDescription(event)} />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </Table>
+    </TabBase>
   )
 }
 
