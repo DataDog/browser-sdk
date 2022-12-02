@@ -1,7 +1,7 @@
 import type { RelativeTime, ContextValue, Context } from '@datadog/browser-core'
 import {
+  deepClone,
   noop,
-  assign,
   isExperimentalFeatureEnabled,
   SESSION_TIME_OUT_DELAY,
   ContextHistory,
@@ -42,7 +42,7 @@ export function startFeatureFlagContexts(lifeCycle: LifeCycle): FeatureFlagConte
       const currentContext = featureFlagContexts.find()
       if (currentContext) {
         // mutate the current context to avoid creating a new context history entry to save memory
-        assign(currentContext, { [key]: value })
+        currentContext[key] = deepClone(value)
       }
     },
   }
