@@ -147,7 +147,7 @@ async function forwardReplayToIntake(req: express.Request): Promise<any> {
 function prepareIntakeRequest(req: express.Request, headers: object) {
   const ddforward = req.query.ddforward! as string
   if (!/^https:\/\/(session-replay|rum|logs)\.browser-intake-datadoghq\.com\//.test(ddforward)) {
-    throw new Error(`Unsupprted ddforward: ${ddforward}`)
+    throw new Error(`Unsupported ddforward: ${ddforward}`)
   }
   const options = {
     method: 'POST',
