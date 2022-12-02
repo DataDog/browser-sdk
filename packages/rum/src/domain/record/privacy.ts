@@ -1,3 +1,4 @@
+import { isElementNode, isTextNode } from '@datadog/browser-rum-core'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
@@ -61,7 +62,7 @@ export function reducePrivacyLevel(
  */
 export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefined {
   // Only Element types can have a privacy level set
-  if (!isElement(node)) {
+  if (!isElementNode(node)) {
     return
   }
 
@@ -132,14 +133,6 @@ export function shouldMaskNode(node: Node, privacyLevel: NodePrivacyLevel) {
     default:
       return false
   }
-}
-
-function isElement(node: Node): node is Element {
-  return node.nodeType === node.ELEMENT_NODE
-}
-
-function isTextNode(node: Node): node is Text {
-  return node.nodeType === node.TEXT_NODE
 }
 
 function isFormElement(node: Node | null): boolean {
