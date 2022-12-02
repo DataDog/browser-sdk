@@ -99,6 +99,7 @@ export function startRum(
     recorderApi,
     initialViewOptions
   )
+
   const { addError } = startErrorCollection(lifeCycle, foregroundContexts, viewContexts)
 
   startRequestCollection(lifeCycle, configuration, session)

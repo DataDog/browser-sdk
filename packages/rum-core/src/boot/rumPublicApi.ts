@@ -27,6 +27,7 @@ import { ActionType } from '../rawRumEvent.types'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import { validateAndBuildRumConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/rumEventsCollection/view/trackViews'
+import { addComponent, patchReact } from '../domain/contexts/componentContext'
 import type { startRum } from './startRum'
 
 export type RumPublicApi = ReturnType<typeof makeRumPublicApi>
@@ -80,6 +81,7 @@ export function makeRumPublicApi(
   ) => {
     bufferApiCalls.add(() => addActionStrategy(action, commonContext))
   }
+
   let addErrorStrategy: StartRumResult['addError'] = (
     providedError,
     commonContext = {
@@ -168,6 +170,7 @@ export function makeRumPublicApi(
       addFeatureFlagEvaluation: addFeatureFlagEvaluationStrategy,
       getInternalContext: getInternalContextStrategy,
     } = startRumResults)
+
     bufferApiCalls.drain()
 
     recorderApi.onRumStart(
@@ -230,7 +233,7 @@ export function makeRumPublicApi(
         })
       })
     },
-
+    addComponent,
     addTiming: monitor((name: string, time?: number) => {
       addTimingStrategy(name, time as RelativeTime | TimeStamp | undefined)
     }),
@@ -240,6 +243,8 @@ export function makeRumPublicApi(
         userContextManager.setContext(sanitizeUser(newUser as Context))
       }
     }),
+
+    patchReact,
 
     getUser: monitor(userContextManager.getContext),
 

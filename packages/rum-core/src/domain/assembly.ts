@@ -30,6 +30,7 @@ import type { UrlContexts } from './contexts/urlContexts'
 import type { RumConfiguration } from './configuration'
 import type { ActionContexts } from './rumEventsCollection/action/actionCollection'
 import { getDisplayContext } from './contexts/displayContext'
+import { getComponent } from './contexts/componentContext'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
@@ -110,7 +111,7 @@ export function startRumAssembly(
             id: configuration.applicationId,
           },
           date: timeStampNow(),
-          service: viewContext.service || configuration.service,
+          service: getComponent() || viewContext.service || configuration.service,
           version: viewContext.version || configuration.version,
           source: 'browser',
           session: {

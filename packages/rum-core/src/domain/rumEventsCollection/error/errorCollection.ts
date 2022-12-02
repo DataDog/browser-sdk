@@ -16,6 +16,7 @@ import type { LifeCycle, RawRumEventCollectedData } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { ForegroundContexts } from '../../contexts/foregroundContexts'
 import type { ViewContexts } from '../../contexts/viewContexts'
+import { trackComponentError } from '../../contexts/componentContext'
 import { trackConsoleError } from './trackConsoleError'
 import { trackReportError } from './trackReportError'
 
@@ -36,6 +37,7 @@ export function startErrorCollection(
   trackConsoleError(errorObservable)
   trackRuntimeError(errorObservable)
   trackReportError(errorObservable)
+  trackComponentError(errorObservable)
 
   errorObservable.subscribe((error) => lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error }))
 
