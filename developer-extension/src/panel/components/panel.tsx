@@ -8,11 +8,13 @@ import type { Settings } from './tabs/settingsTab'
 import { SettingsTab } from './tabs/settingsTab'
 import { InfosTab } from './tabs/infosTab'
 import { EventTab } from './tabs/eventsTab'
+import { ReplayTab } from './tabs/replayTab'
 
 const enum PanelTabs {
   Events = 'events',
   Infos = 'infos',
   Settings = 'settings',
+  Replay = 'replay',
 }
 
 export function Panel() {
@@ -42,6 +44,9 @@ export function Panel() {
         <Tabs.Tab value={PanelTabs.Infos}>
           <Text>Infos</Text>
         </Tabs.Tab>
+        <Tabs.Tab value={PanelTabs.Replay}>
+          <Text>Live replay</Text>
+        </Tabs.Tab>
         <Tabs.Tab
           value={PanelTabs.Settings}
           rightSection={
@@ -60,6 +65,9 @@ export function Panel() {
       </Tabs.Panel>
       <Tabs.Panel value={PanelTabs.Infos} sx={{ flex: 1, minHeight: 0 }}>
         <InfosTab />
+      </Tabs.Panel>
+      <Tabs.Panel value={PanelTabs.Replay} sx={{ flex: 1, minHeight: 0 }}>
+        <ReplayTab />
       </Tabs.Panel>
       <Tabs.Panel value={PanelTabs.Settings} sx={{ flex: 1, minHeight: 0 }}>
         <SettingsTab

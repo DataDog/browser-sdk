@@ -8,7 +8,7 @@ import { notifyDisconnectEvent } from './disconnectEvent'
 
 const logger = createLogger('backgroundScriptConnection')
 
-type SdkMessage =
+export type SdkMessage =
   | {
       type: 'logs'
       payload: LogsEvent
