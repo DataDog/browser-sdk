@@ -31,15 +31,14 @@ async function main() {
   }
 
   const doesStagingExist = await executeCommand(`git ls-remote --heads ${REPOSITORY} ${NEW_STAGING_BRANCH}`)
-  if (!doesStagingExist) {
-    printLog('Creating the new staging branch...')
-    await executeCommand(`git checkout -b ${NEW_STAGING_BRANCH}`)
-    await executeCommand(`git push origin ${NEW_STAGING_BRANCH}`)
-  } else {
-    printLog('New staging branch already exists, updating...')
-    await executeCommand(`git branch -f ${NEW_STAGING_BRANCH}`)
-    await executeCommand(`git push origin ${NEW_STAGING_BRANCH}`)
+  if (doesStagingExist) {
+    printLog('New staging branch already exists, deleting...')
+    await executeCommand(`git branch -d ${NEW_STAGING_BRANCH}`)
+    await executeCommand(`git push origin --delete ${NEW_STAGING_BRANCH}`)
   }
+  printLog('Creating the new staging branch...')
+  await executeCommand(`git checkout -b ${NEW_STAGING_BRANCH}`)
+  await executeCommand(`git push origin ${NEW_STAGING_BRANCH}`)
 
   await executeCommand(`git checkout ${CURRENT_STAGING_BRANCH}`)
   await executeCommand('git pull')
