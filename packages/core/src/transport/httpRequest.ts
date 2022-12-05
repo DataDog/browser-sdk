@@ -55,11 +55,10 @@ export function createHttpRequest(
 }
 
 function sendBeaconStrategy(endpointBuilder: EndpointBuilder, bytesLimit: number, { data, bytesCount }: Payload) {
-  const beaconUrl = endpointBuilder.build('beacon')
-  const xhrUrl = endpointBuilder.build('xhr')
   const canUseBeacon = !!navigator.sendBeacon && bytesCount < bytesLimit
   if (canUseBeacon) {
     try {
+      const beaconUrl = endpointBuilder.build('beacon')
       const isQueued = navigator.sendBeacon(beaconUrl, data)
 
       if (isQueued) {
@@ -70,6 +69,7 @@ function sendBeaconStrategy(endpointBuilder: EndpointBuilder, bytesLimit: number
     }
   }
 
+  const xhrUrl = endpointBuilder.build('xhr')
   sendXHR(xhrUrl, data)
 }
 
@@ -89,17 +89,18 @@ export function fetchKeepAliveStrategy(
   onResponse?: (r: HttpResponse) => void
 ) {
   const canUseKeepAlive = isKeepAliveSupported() && bytesCount < bytesLimit
-  const fetchUrl = endpointBuilder.build('fetch', retry)
-  const xhrUrl = endpointBuilder.build('xhr', retry)
   if (canUseKeepAlive) {
+    const fetchUrl = endpointBuilder.build('fetch', retry)
     fetch(fetchUrl, { method: 'POST', body: data, keepalive: true }).then(
       monitor((response: Response) => onResponse?.({ status: response.status })),
       monitor(() => {
+        const xhrUrl = endpointBuilder.build('xhr', retry)
         // failed to queue the request
         sendXHR(xhrUrl, data, onResponse)
       })
     )
   } else {
+    const xhrUrl = endpointBuilder.build('xhr', retry)
     sendXHR(xhrUrl, data, onResponse)
   }
 }
