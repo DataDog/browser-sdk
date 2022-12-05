@@ -48,17 +48,12 @@ export function listenSdkMessages(callback: (message: SdkMessage) => void) {
 function createBackgroundScriptConnection() {
   try {
     const backgroundScriptConnection = chrome.runtime.connect({
-      name: 'devtools-panel',
+      name: `devtools-panel-for-tab-${chrome.devtools.inspectedWindow.tabId}`,
     })
 
     backgroundScriptConnection.onDisconnect.addListener(() => {
       logger.error('disconnected', chrome.runtime.lastError)
       notifyDisconnectEvent()
-    })
-
-    backgroundScriptConnection.postMessage({
-      name: 'init',
-      tabId: chrome.devtools.inspectedWindow.tabId,
     })
 
     return backgroundScriptConnection

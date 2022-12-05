@@ -13,26 +13,29 @@
 // This is the solution advised in the documentation provided by Google Chrome:
 // https://developer.chrome.com/docs/extensions/mv3/devtools/#content-script-to-devtools
 
+import { createLogger } from '../../common/logger'
+
+const logger = createLogger('messageRelay')
+
 const devtoolsConnections = new Map<number, chrome.runtime.Port>()
+
+const portNameRe = /^devtools-panel-for-tab-(\d+)$/
 
 // Listen for connection from the devtools-panel
 chrome.runtime.onConnect.addListener((port) => {
-  if (port.name !== 'devtools-panel') {
+  const match = portNameRe.exec(port.name)
+  if (!match) {
     return
   }
 
-  port.onMessage.addListener((message) => {
-    if (message.name === 'init') {
-      devtoolsConnections.set(message.tabId, port)
-    }
-  })
+  const tabId = Number(match[1])
+
+  logger.log(`New devtools connection for tab ${tabId}`)
+  devtoolsConnections.set(tabId, port)
 
   port.onDisconnect.addListener(() => {
-    for (const [tabId, otherPort] of Array.from(devtoolsConnections)) {
-      if (port === otherPort) {
-        devtoolsConnections.delete(tabId)
-      }
-    }
+    logger.log(`Remove devtools connection for tab ${tabId}`)
+    devtoolsConnections.delete(tabId)
   })
 })
 
