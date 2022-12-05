@@ -30,13 +30,15 @@ async function main() {
     printLog(`Staging branch already up to date in ${CI_FILE}. Skipping.`)
   }
 
-  const isStagingAlreadyCreated = await executeCommand(`git ls-remote --heads ${REPOSITORY} ${NEW_STAGING_BRANCH}`)
-  if (!isStagingAlreadyCreated) {
+  const isStagingAlreadyExists = await executeCommand(`git ls-remote --heads ${REPOSITORY} ${NEW_STAGING_BRANCH}`)
+  if (!isStagingAlreadyExists) {
     printLog('Creating the new staging branch...')
     await executeCommand(`git checkout -b ${NEW_STAGING_BRANCH}`)
     await executeCommand(`git push origin ${NEW_STAGING_BRANCH}`)
   } else {
-    printLog('New staging branch already created. Skipping.')
+    printLog('New staging branch already exists, updating...')
+    await executeCommand(`git branch -f ${NEW_STAGING_BRANCH}`)
+    await executeCommand(`git push origin ${NEW_STAGING_BRANCH}`)
   }
 
   await executeCommand(`git checkout ${CURRENT_STAGING_BRANCH}`)
