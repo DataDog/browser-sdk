@@ -18,6 +18,14 @@ export interface FeatureFlagContexts {
   addFeatureFlagEvaluation: (key: string, value: ContextValue) => void
 }
 
+/**
+ * Start feature flag contexts
+ *
+ * Feature flag contexts follow the life of views.
+ * A new context is added when a view is created and ended when the view is ended
+ *
+ * Note: we choose not to add a new context at each evaluation to save memory
+ */
 export function startFeatureFlagContexts(lifeCycle: LifeCycle): FeatureFlagContexts {
   if (!isExperimentalFeatureEnabled('feature_flags')) {
     return {
@@ -41,7 +49,6 @@ export function startFeatureFlagContexts(lifeCycle: LifeCycle): FeatureFlagConte
     addFeatureFlagEvaluation: (key: string, value: ContextValue) => {
       const currentContext = featureFlagContexts.find()
       if (currentContext) {
-        // mutate the current context to avoid creating a new context history entry to save memory
         currentContext[key] = deepClone(value)
       }
     },
