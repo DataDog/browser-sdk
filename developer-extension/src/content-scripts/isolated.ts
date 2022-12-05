@@ -1,8 +1,12 @@
+// This content script is executed in the "isolated" execution world. Thus, it has not access to
+// the webpage global variables, but can use webextension APIs.
 import { isDisconnectError } from '../common/isDisconnectError'
 import { createLogger } from '../common/logger'
 
-const logger = createLogger('content-script')
+const logger = createLogger('content-script-isolated')
 
+// Listen to events from the "main" content script and relays them to the background script via the
+// webextension API.
 window.addEventListener('__ddBrowserSdkMessage', (event) => {
   const detail = (event as CustomEvent).detail
   try {

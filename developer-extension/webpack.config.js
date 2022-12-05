@@ -36,9 +36,15 @@ module.exports = (_env, argv) => {
       ],
     }),
     baseConfig({
-      entry: './src/content-script',
+      entry: './src/content-scripts/main.ts',
       output: {
-        filename: 'content-script.js',
+        filename: 'content-script-main.js',
+      },
+    }),
+    baseConfig({
+      entry: './src/content-scripts/isolated.ts',
+      output: {
+        filename: 'content-script-isolated.js',
       },
     }),
     baseConfig({
