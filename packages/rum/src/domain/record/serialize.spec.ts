@@ -1,4 +1,4 @@
-import { isIE, noop } from '@datadog/browser-core'
+import { isIE, noop, resetExperimentalFeatures, updateExperimentalFeatures } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { STABLE_ATTRIBUTES, DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from '@datadog/browser-rum-core'
 import {
@@ -71,6 +71,7 @@ describe('serializeNodeWithId', () => {
   })
 
   afterEach(() => {
+    resetExperimentalFeatures()
     sandbox.remove()
   })
 
@@ -419,6 +420,7 @@ describe('serializeNodeWithId', () => {
     })
 
     it('serializes a shadow host', () => {
+      updateExperimentalFeatures(['recordShadowDom'])
       const div = document.createElement('div')
       div.attachShadow({ mode: 'open' })
       expect(serializeNodeWithId(div, DEFAULT_OPTIONS)).toEqual({
@@ -433,6 +435,7 @@ describe('serializeNodeWithId', () => {
     })
 
     it('serializes a shadow host with children', () => {
+      updateExperimentalFeatures(['recordShadowDom'])
       const div = document.createElement('div')
       div.attachShadow({ mode: 'open' })
       div.shadowRoot!.appendChild(document.createElement('hr'))
@@ -458,6 +461,24 @@ describe('serializeNodeWithId', () => {
         isShadowHost: true,
       })
       expect(shadowDomCreatedCallbackSpy).toHaveBeenCalledWith(div.shadowRoot!)
+    })
+
+    it('serializes a shadow host with children with experimental flag missing', () => {
+      const div = document.createElement('div')
+      div.attachShadow({ mode: 'open' })
+      div.shadowRoot!.appendChild(document.createElement('hr'))
+
+      const options = { ...DEFAULT_OPTIONS, shadowDomCreatedCallback: shadowDomCreatedCallbackSpy }
+      expect(serializeNodeWithId(div, options)).toEqual({
+        type: NodeType.Element,
+        tagName: 'div',
+        attributes: {},
+        isSVG: undefined,
+        childNodes: [],
+        id: jasmine.any(Number) as unknown as number,
+        isShadowHost: undefined,
+      })
+      expect(shadowDomCreatedCallbackSpy).not.toHaveBeenCalled()
     })
   })
 

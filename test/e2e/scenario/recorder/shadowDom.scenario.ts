@@ -76,7 +76,7 @@ window.customElements.define("my-open-web-component", MyOpenWebComponent);
 describe('recorder with shadow DOM', () => {
   describe('full snapshot', () => {
     createTest('can overwrite with mask-user-input')
-      .withRum({ defaultPrivacyLevel: 'allow' })
+      .withRum({ defaultPrivacyLevel: 'allow', enableExperimentalFeatures: ['recordShadowDom'] })
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(
@@ -115,7 +115,7 @@ describe('recorder with shadow DOM', () => {
   })
   describe('incremental snapshot', () => {
     createTest('record click')
-      .withRum()
+      .withRum({ enableExperimentalFeatures: ['recordShadowDom'] })
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(
@@ -142,7 +142,7 @@ describe('recorder with shadow DOM', () => {
       })
 
     createTest('record input')
-      .withRum({ defaultPrivacyLevel: 'allow' })
+      .withRum({ defaultPrivacyLevel: 'allow', enableExperimentalFeatures: ['recordShadowDom'] })
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(
@@ -168,7 +168,7 @@ describe('recorder with shadow DOM', () => {
       })
 
     createTest('record mutation')
-      .withRum({ defaultPrivacyLevel: 'allow' })
+      .withRum({ defaultPrivacyLevel: 'allow', enableExperimentalFeatures: ['recordShadowDom'] })
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(

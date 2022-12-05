@@ -1,4 +1,4 @@
-import { DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
+import { DefaultPrivacyLevel, isIE, updateExperimentalFeatures } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycle } from '@datadog/browser-rum-core'
 import type { Clock } from '../../../../core/test/specHelper'
@@ -216,6 +216,7 @@ describe('record', () => {
     })
 
     it('should record mutation inside a shadow root', () => {
+      updateExperimentalFeatures(['recordShadowDom'])
       startRecording()
       expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot())
 
@@ -249,6 +250,7 @@ describe('record', () => {
     })
 
     it('should record the change event inside a shadow root', () => {
+      updateExperimentalFeatures(['recordShadowDom'])
       startRecording()
       expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot())
 

@@ -1,4 +1,4 @@
-import { assign, startsWith } from '@datadog/browser-core'
+import { assign, isExperimentalFeatureEnabled, startsWith } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { getChildNodes, STABLE_ATTRIBUTES } from '@datadog/browser-rum-core'
 import {
@@ -199,7 +199,7 @@ export function serializeElementNode(element: Element, options: SerializeOptions
     childNodes = serializeChildNodes(element, childNodesSerializationOptions)
   }
 
-  const isShadowHost = element.shadowRoot !== null || undefined
+  const isShadowHost = (element.shadowRoot !== null && isExperimentalFeatureEnabled('recordShadowDom')) || undefined
   if (isShadowHost && element.shadowRoot !== null) {
     options.shadowDomCreatedCallback(element.shadowRoot)
   }
@@ -243,8 +243,9 @@ function serializeCDataNode(): CDataNode {
 
 export function serializeChildNodes(node: Node, options: SerializeOptions): SerializedNodeWithId[] {
   const result: SerializedNodeWithId[] = []
+  const childNodes = isExperimentalFeatureEnabled('recordShadowDom') ? getChildNodes(node) : node.childNodes
 
-  forEach(getChildNodes(node), (childNode) => {
+  forEach(childNodes, (childNode) => {
     const serializedChildNode = serializeNodeWithId(childNode, options)
     if (serializedChildNode) {
       result.push(serializedChildNode)
