@@ -226,41 +226,6 @@ describe('computeFetchResponseText', () => {
     })
   })
 
-  it('reads a limited amount of bytes from the response', (done) => {
-    // Creates a response that stream "f" indefinitely, one byte at a time
-    const cancelSpy = jasmine.createSpy()
-    const pullSpy = jasmine.createSpy().and.callFake((controller: ReadableStreamDefaultController<Uint8Array>) => {
-      controller.enqueue(new TextEncoder().encode('f'))
-    })
-    const response = new ResponseStub({
-      body: new ReadableStream({
-        pull: pullSpy,
-        cancel: cancelSpy,
-      }),
-    })
-
-    computeFetchResponseText(response, CONFIGURATION, () => {
-      expect(pullSpy).toHaveBeenCalledTimes(
-        // readLimitedAmountOfBytes may read one more byte than necessary to make sure it exceeds the limit
-        CONFIGURATION.requestErrorResponseLengthLimit + 1
-      )
-      expect(cancelSpy).toHaveBeenCalledTimes(1)
-      done()
-    })
-  })
-
-  it('truncates the response if its size is greater than the limit', (done) => {
-    const text = 'foobar'
-    computeFetchResponseText(
-      new ResponseStub({ responseText: text }),
-      { ...CONFIGURATION, requestErrorResponseLengthLimit: text.length - 1 },
-      (responseData) => {
-        expect(responseData).toBe('fooba...')
-        done()
-      }
-    )
-  })
-
   it('does not truncate the response if its size is equal to the limit', (done) => {
     const text = 'foo'
     computeFetchResponseText(
@@ -273,21 +238,16 @@ describe('computeFetchResponseText', () => {
     )
   })
 
-  it('does not yield an unhandled rejection error if the cancel promise is rejected', (done) => {
-    // Creates a response that stream "f" indefinitely and fails to be canceled
-    const response = new ResponseStub({
-      body: new ReadableStream({
-        pull: (controller) => controller.enqueue(new TextEncoder().encode('f')),
-        cancel: () => Promise.reject(new Error('foo')),
-      }),
-    })
-
-    computeFetchResponseText(response, CONFIGURATION, () => {
-      setTimeout(() => {
-        expect(onunhandledrejectionSpy).not.toHaveBeenCalled()
+  it('truncates the response if its size is greater than the limit', (done) => {
+    const text = 'foobar'
+    computeFetchResponseText(
+      new ResponseStub({ responseText: text }),
+      { ...CONFIGURATION, requestErrorResponseLengthLimit: text.length - 1 },
+      (responseData) => {
+        expect(responseData).toBe('fooba...')
         done()
-      })
-    })
+      }
+    )
   })
 })
 

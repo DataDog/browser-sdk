@@ -2,7 +2,7 @@ import type { FetchStub, FetchStubManager, FetchStubPromise } from '../../test/s
 import { stubFetch } from '../../test/specHelper'
 import { isIE } from '../tools/browserDetection'
 import type { Subscription } from '../tools/observable'
-import type { FetchCompleteContext, FetchContext } from './fetchObservable'
+import type { FetchResolveContext, FetchContext } from './fetchObservable'
 import { initFetchObservable } from './fetchObservable'
 
 describe('fetch proxy', () => {
@@ -11,7 +11,7 @@ describe('fetch proxy', () => {
   let fetchStubManager: FetchStubManager
   let requestsTrackingSubscription: Subscription
   let contextEditionSubscription: Subscription | undefined
-  let requests: FetchCompleteContext[]
+  let requests: FetchResolveContext[]
   let originalFetchStub: typeof fetch
 
   beforeEach(() => {
@@ -23,7 +23,7 @@ describe('fetch proxy', () => {
 
     requests = []
     requestsTrackingSubscription = initFetchObservable().subscribe((context) => {
-      if (context.state === 'complete') {
+      if (context.state === 'resolve') {
         requests.push(context)
       }
     })
