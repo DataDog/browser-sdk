@@ -91,7 +91,7 @@ describe('collect fetch', () => {
   })
 
   it('should ignore intake requests', (done) => {
-    fetchStub(SPEC_ENDPOINTS.rumEndpointBuilder.build()).resolveWith({ status: 200, responseText: 'foo' })
+    fetchStub(SPEC_ENDPOINTS.rumEndpointBuilder.build('xhr')).resolveWith({ status: 200, responseText: 'foo' })
 
     fetchStubManager.whenAllComplete(() => {
       expect(startSpy).not.toHaveBeenCalled()
@@ -257,7 +257,7 @@ describe('collect xhr', () => {
   it('should ignore intake requests', (done) => {
     withXhr({
       setup(xhr) {
-        xhr.open('GET', SPEC_ENDPOINTS.rumEndpointBuilder.build())
+        xhr.open('GET', SPEC_ENDPOINTS.rumEndpointBuilder.build('xhr'))
         xhr.send()
         xhr.complete(200)
       },

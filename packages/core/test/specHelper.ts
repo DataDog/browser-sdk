@@ -11,7 +11,7 @@ export interface BuildEnvWindow {
 }
 
 export function stubEndpointBuilder(url: string) {
-  return { build: () => url } as EndpointBuilder
+  return { build: (_: any) => url } as EndpointBuilder
 }
 
 export const SPEC_ENDPOINTS = {
