@@ -269,6 +269,7 @@ publish-npm:
   when: manual
   allow_failure: false
   script:
+    - yarn
     - ./scripts/publish-npm.sh
 
 ########################################################################################################################
