@@ -123,7 +123,7 @@ export function SettingsTab({
                 {eventSource === 'sdk' && (
                   <>
                     Collect events by listening to messages sent from the SDK: events are available as soon as they
-                    happen. Only development versions of the SDK are supported.
+                    happen. Only newer versions of the SDK are supported.
                   </>
                 )}
               </>
