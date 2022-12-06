@@ -21,6 +21,7 @@ export function trackViewMetrics(
   domMutationObservable: Observable<void>,
   configuration: RumConfiguration,
   scheduleViewUpdate: () => void,
+  viewId: string,
   loadingType: ViewLoadingType,
   viewStart: ClocksState
 ) {
@@ -33,9 +34,13 @@ export function trackViewMetrics(
       frustrationCount: 0,
     },
   }
-  const { stop: stopEventCountsTracking } = trackEventCounts(lifeCycle, (newEventCounts) => {
-    viewMetrics.eventCounts = newEventCounts
-    scheduleViewUpdate()
+  const { stop: stopEventCountsTracking } = trackEventCounts({
+    lifeCycle,
+    isChildEvent: (event) => event.view.id === viewId,
+    callback: (newEventCounts) => {
+      viewMetrics.eventCounts = newEventCounts
+      scheduleViewUpdate()
+    },
   })
 
   const { stop: stopLoadingTimeTracking, setLoadEvent } = trackLoadingTime(

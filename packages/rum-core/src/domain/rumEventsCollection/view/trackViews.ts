@@ -244,7 +244,15 @@ function newView(
     setLoadEvent,
     stop: stopViewMetricsTracking,
     viewMetrics,
-  } = trackViewMetrics(lifeCycle, domMutationObservable, configuration, scheduleViewUpdate, loadingType, startClocks)
+  } = trackViewMetrics(
+    lifeCycle,
+    domMutationObservable,
+    configuration,
+    scheduleViewUpdate,
+    id,
+    loadingType,
+    startClocks
+  )
 
   // Initial view update
   triggerViewUpdate()

@@ -41,8 +41,6 @@ function eventsCollector<T>() {
   }
 }
 
-const RAW_ERROR_EVENT = { type: RumEventType.ERROR } as RumEvent & Context
-
 describe('trackClickActions', () => {
   const { events, pushEvent } = eventsCollector<ClickAction>()
   let button: HTMLButtonElement
@@ -155,13 +153,13 @@ describe('trackClickActions', () => {
 
     emulateClickWithActivity(domMutationObservable, clock)
 
-    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, RAW_ERROR_EVENT)
+    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeErrorEvent())
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
     domMutationObservable.notify()
-    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, RAW_ERROR_EVENT)
+    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeErrorEvent())
 
     clock.tick(EXPIRE_DELAY)
-    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, RAW_ERROR_EVENT)
+    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeErrorEvent())
 
     expect(events.length).toBe(1)
     const clickAction = events[0]
@@ -170,6 +168,23 @@ describe('trackClickActions', () => {
       longTaskCount: 0,
       resourceCount: 0,
     })
+  })
+
+  it('does not count child events unrelated to the click action', () => {
+    const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
+
+    emulateClickWithActivity(domMutationObservable, clock)
+
+    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
+      type: RumEventType.RESOURCE,
+      action: { id: 'unrelated-action-id' },
+    } as RumEvent & Context)
+
+    clock.tick(EXPIRE_DELAY)
+
+    expect(events.length).toBe(1)
+    const clickAction = events[0]
+    expect(clickAction.counts.resourceCount).toBe(0)
   })
 
   it('should take the name from user-configured attribute', () => {
@@ -244,7 +259,7 @@ describe('trackClickActions', () => {
       const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
 
       emulateClickWithActivity(domMutationObservable, clock)
-      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, RAW_ERROR_EVENT)
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeErrorEvent())
 
       clock.tick(EXPIRE_DELAY)
       expect(events.length).toBe(1)
@@ -363,7 +378,7 @@ describe('trackClickActions', () => {
 
         // Error
         emulateClickWithActivity(domMutationObservable, clock)
-        lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, RAW_ERROR_EVENT)
+        lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeErrorEvent())
         clock.tick(PAGE_ACTIVITY_VALIDATION_DELAY)
 
         // Third click to make a rage click
@@ -386,7 +401,7 @@ describe('trackClickActions', () => {
         const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
 
         emulateClickWithActivity(domMutationObservable, clock)
-        lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, RAW_ERROR_EVENT)
+        lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeErrorEvent())
 
         clock.tick(EXPIRE_DELAY)
         expect(events.length).toBe(1)
@@ -397,7 +412,7 @@ describe('trackClickActions', () => {
         const { lifeCycle, clock } = setupBuilder.build()
 
         emulateClickWithoutActivity(clock)
-        lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, RAW_ERROR_EVENT)
+        lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeErrorEvent())
 
         clock.tick(EXPIRE_DELAY)
         expect(events.length).toBe(1)
@@ -448,6 +463,10 @@ describe('trackClickActions', () => {
     clock.tick(EMULATED_CLICK_DURATION)
     target.dispatchEvent(createNewEvent('pointerup', eventProperties))
     target.dispatchEvent(createNewEvent('click', eventProperties))
+  }
+
+  function createFakeErrorEvent() {
+    return { type: RumEventType.ERROR, action: { id: findActionId() } } as RumEvent & Context
   }
 })
 

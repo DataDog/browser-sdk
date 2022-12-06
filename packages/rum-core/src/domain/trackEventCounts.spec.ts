@@ -18,37 +18,37 @@ describe('trackEventCounts', () => {
   }
 
   it('tracks errors', () => {
-    const { eventCounts } = trackEventCounts(lifeCycle)
+    const { eventCounts } = trackEventCounts({ lifeCycle, isChildEvent: () => true })
     notifyCollectedRawRumEvent({ type: RumEventType.ERROR })
     expect(eventCounts.errorCount).toBe(1)
   })
 
   it('tracks long tasks', () => {
-    const { eventCounts } = trackEventCounts(lifeCycle)
+    const { eventCounts } = trackEventCounts({ lifeCycle, isChildEvent: () => true })
     notifyCollectedRawRumEvent({ type: RumEventType.LONG_TASK })
     expect(eventCounts.longTaskCount).toBe(1)
   })
 
   it("doesn't track views", () => {
-    const { eventCounts } = trackEventCounts(lifeCycle)
+    const { eventCounts } = trackEventCounts({ lifeCycle, isChildEvent: () => true })
     notifyCollectedRawRumEvent({ type: RumEventType.VIEW })
     expect(objectValues(eventCounts as unknown as { [key: string]: number }).every((value) => value === 0)).toBe(true)
   })
 
   it('tracks actions', () => {
-    const { eventCounts } = trackEventCounts(lifeCycle)
+    const { eventCounts } = trackEventCounts({ lifeCycle, isChildEvent: () => true })
     notifyCollectedRawRumEvent({ type: RumEventType.ACTION, action: { type: 'custom' } })
     expect(eventCounts.actionCount).toBe(1)
   })
 
   it('tracks resources', () => {
-    const { eventCounts } = trackEventCounts(lifeCycle)
+    const { eventCounts } = trackEventCounts({ lifeCycle, isChildEvent: () => true })
     notifyCollectedRawRumEvent({ type: RumEventType.RESOURCE })
     expect(eventCounts.resourceCount).toBe(1)
   })
 
   it('tracks frustration counts', () => {
-    const { eventCounts } = trackEventCounts(lifeCycle)
+    const { eventCounts } = trackEventCounts({ lifeCycle, isChildEvent: () => true })
     notifyCollectedRawRumEvent({
       type: RumEventType.ACTION,
       action: {
@@ -62,7 +62,7 @@ describe('trackEventCounts', () => {
   })
 
   it('stops tracking when stop is called', () => {
-    const { eventCounts, stop } = trackEventCounts(lifeCycle)
+    const { eventCounts, stop } = trackEventCounts({ lifeCycle, isChildEvent: () => true })
     notifyCollectedRawRumEvent({ type: RumEventType.RESOURCE })
     expect(eventCounts.resourceCount).toBe(1)
     stop()
@@ -72,7 +72,7 @@ describe('trackEventCounts', () => {
 
   it('invokes a potential callback when a count is increased', () => {
     const spy = jasmine.createSpy<(eventCounts: EventCounts) => void>()
-    trackEventCounts(lifeCycle, spy)
+    trackEventCounts({ lifeCycle, isChildEvent: () => true, callback: spy })
 
     notifyCollectedRawRumEvent({ type: RumEventType.RESOURCE })
     expect(spy).toHaveBeenCalledTimes(1)
@@ -81,5 +81,11 @@ describe('trackEventCounts', () => {
     notifyCollectedRawRumEvent({ type: RumEventType.RESOURCE })
     expect(spy).toHaveBeenCalledTimes(2)
     expect(spy.calls.mostRecent().args[0].resourceCount).toBe(2)
+  })
+
+  it('does not take into account events that are not child events', () => {
+    const { eventCounts } = trackEventCounts({ lifeCycle, isChildEvent: () => false })
+    notifyCollectedRawRumEvent({ type: RumEventType.RESOURCE })
+    expect(eventCounts.resourceCount).toBe(0)
   })
 })

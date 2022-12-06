@@ -247,6 +247,9 @@ export function setupViewTest(
     getViewUpdateCount,
     getViewCreate,
     getViewCreateCount,
+    getLatestViewContext: () => ({
+      id: getViewCreate(getViewCreateCount() - 1).id,
+    }),
   }
 }
 
