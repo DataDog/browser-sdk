@@ -1,5 +1,6 @@
 import { DefaultPrivacyLevel, display } from '@datadog/browser-core'
-import { validateAndBuildRumConfiguration } from './configuration'
+import type { RumInitConfiguration } from './configuration'
+import { serializeRumConfiguration, validateAndBuildRumConfiguration } from './configuration'
 
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx', applicationId: 'xxx' }
 
@@ -166,37 +167,35 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('allowedTracingOrigins', () => {
-    it('defaults to an empty array', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.allowedTracingOrigins).toEqual([])
-    })
-
     it('is set to provided value', () => {
       expect(
         validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
           allowedTracingOrigins: ['foo'],
           service: 'bar',
-        })!.allowedTracingOrigins
-      ).toEqual(['foo'])
+        })!.configureTracingUrls
+      ).toEqual([{ match: 'foo', headerTypes: ['dd'] }])
     })
 
     it('accepts functions', () => {
-      const customOriginFunction = (origin: string): boolean => origin === 'foo'
+      const customOriginFunction = (origin: string): boolean => origin === 'https://my.origin.com'
 
-      expect(
-        validateAndBuildRumConfiguration({
-          ...DEFAULT_INIT_CONFIGURATION,
-          allowedTracingOrigins: [customOriginFunction],
-          service: 'bar',
-        })!.allowedTracingOrigins
-      ).toEqual([customOriginFunction])
+      const func = validateAndBuildRumConfiguration({
+        ...DEFAULT_INIT_CONFIGURATION,
+        allowedTracingOrigins: [customOriginFunction],
+        service: 'bar',
+      })!.configureTracingUrls[0].match as (url: string) => boolean
+
+      expect(typeof func).toBe('function')
+      // Replicating behavior from allowedTracingOrigins, new function will treat the origin part of the URL
+      expect(func('https://my.origin.com/api')).toEqual(customOriginFunction('https://my.origin.com'))
     })
 
     it('does not validate the configuration if a value is provided and service is undefined', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, allowedTracingOrigins: ['foo'] })
       ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Service need to be configured when tracing is enabled')
+      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Service needs to be configured when tracing is enabled')
     })
 
     it('does not validate the configuration if an incorrect value is provided', () => {
@@ -204,6 +203,68 @@ describe('validateAndBuildRumConfiguration', () => {
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, allowedTracingOrigins: 'foo' as any })
       ).toBeUndefined()
       expect(displayErrorSpy).toHaveBeenCalledOnceWith('Allowed Tracing Origins should be an array')
+    })
+  })
+
+  describe('configureTracingUrls', () => {
+    it('defaults to an empty array', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.configureTracingUrls).toEqual([])
+    })
+
+    it('is set to provided value', () => {
+      expect(
+        validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          configureTracingUrls: ['foo'],
+          service: 'bar',
+        })!.configureTracingUrls
+      ).toEqual([{ match: 'foo', headerTypes: ['dd'] }])
+    })
+
+    it('accepts functions', () => {
+      const customOriginFunction = (url: string): boolean => url === 'https://my.origin.com'
+
+      expect(
+        validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          configureTracingUrls: [customOriginFunction],
+          service: 'bar',
+        })!.configureTracingUrls
+      ).toEqual([{ match: customOriginFunction, headerTypes: ['dd'] }])
+    })
+
+    it('accepts RegExp', () => {
+      expect(
+        validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          configureTracingUrls: [/az/i],
+          service: 'bar',
+        })!.configureTracingUrls
+      ).toEqual([{ match: /az/i, headerTypes: ['dd'] }])
+    })
+
+    it('keeps headers', () => {
+      expect(
+        validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          configureTracingUrls: [{ match: 'simple', headerTypes: ['b3m', 'w3c'] }],
+          service: 'bar',
+        })!.configureTracingUrls
+      ).toEqual([{ match: 'simple', headerTypes: ['b3m', 'w3c'] }])
+    })
+
+    it('does not validate the configuration if a value is provided and service is undefined', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, configureTracingUrls: ['foo'] })
+      ).toBeUndefined()
+      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Service needs to be configured when tracing is enabled')
+    })
+
+    it('does not validate the configuration if an incorrect value is provided', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, configureTracingUrls: 'foo' as any })
+      ).toBeUndefined()
+      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Configure Tracing URLs should be an array')
     })
   })
 
@@ -380,6 +441,38 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackLongTasks: false })!.trackLongTasks
       ).toBeFalse()
+    })
+  })
+
+  describe('Serialize RUM configuration', () => {
+    describe('getSelectedTracingHeaders', () => {
+      it('should not return any header type', () => {
+        expect(serializeRumConfiguration(DEFAULT_INIT_CONFIGURATION).selected_tracing_headers).toEqual([])
+      })
+
+      it('should return Datadog header type', () => {
+        const simpleTracingConfig: RumInitConfiguration = {
+          ...DEFAULT_INIT_CONFIGURATION,
+          configureTracingUrls: ['foo'],
+        }
+        expect(serializeRumConfiguration(simpleTracingConfig).selected_tracing_headers).toEqual(['dd'])
+      })
+
+      it('should return Datadog all header types', () => {
+        const complexTracingConfig: RumInitConfiguration = {
+          ...DEFAULT_INIT_CONFIGURATION,
+          configureTracingUrls: [
+            'foo',
+            { match: 'first', headerTypes: ['dd'] },
+            { match: 'test', headerTypes: ['w3c'] },
+            { match: 'other', headerTypes: ['b3'] },
+            { match: 'final', headerTypes: ['b3m'] },
+          ],
+        }
+        expect(serializeRumConfiguration(complexTracingConfig).selected_tracing_headers).toEqual(
+          jasmine.arrayWithExactContents(['dd', 'b3', 'b3m', 'w3c'])
+        )
+      })
     })
   })
 })

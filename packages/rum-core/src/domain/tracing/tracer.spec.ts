@@ -1,10 +1,10 @@
-import { isIE, objectEntries } from '@datadog/browser-core'
+import { display, isIE, objectEntries } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../test/specHelper'
 import { setup } from '../../../test/specHelper'
 import type { RumSessionManagerMock } from '../../../test/mockRumSessionManager'
 import { createRumSessionManagerMock } from '../../../test/mockRumSessionManager'
 import type { RumFetchResolveContext, RumFetchStartContext, RumXhrStartContext } from '../requestCollection'
-import type { RumConfiguration } from '../configuration'
+import type { RumConfiguration, RumInitConfiguration } from '../configuration'
 import { validateAndBuildRumConfiguration } from '../configuration'
 import { startTracer, TraceIdentifier } from './tracer'
 
@@ -19,13 +19,15 @@ describe('tracer', () => {
   let setupBuilder: TestSetupBuilder
   let sessionManager: RumSessionManagerMock
 
+  const INIT_CONFIGURATION: RumInitConfiguration = {
+    clientToken: 'xxx',
+    applicationId: 'xxx',
+    service: 'service',
+    configureTracingUrls: [{ match: window.location.origin, headerTypes: ['dd'] }],
+  }
+
   beforeEach(() => {
-    configuration = validateAndBuildRumConfiguration({
-      clientToken: 'xxx',
-      applicationId: 'xxx',
-      allowedTracingOrigins: [window.location.origin],
-      service: 'service',
-    })!
+    configuration = validateAndBuildRumConfiguration(INIT_CONFIGURATION)!
     setupBuilder = setup()
     sessionManager = createRumSessionManagerMock()
   })
@@ -105,14 +107,14 @@ describe('tracer', () => {
     })
 
     it('should trace requests on configured origins', () => {
-      const configurationWithTracingUrls = {
-        ...configuration,
-        allowedTracingOrigins: [
+      const configurationWithTracingUrls = validateAndBuildRumConfiguration({
+        ...INIT_CONFIGURATION,
+        configureTracingUrls: [
           /^https?:\/\/qux\.com/,
           'http://bar.com',
           (origin: string) => origin === 'http://dynamic.com',
         ],
-      }
+      })!
       const stub = xhrStub as unknown as XMLHttpRequest
 
       const tracer = startTracer(configurationWithTracingUrls, sessionManager)
@@ -131,6 +133,90 @@ describe('tracer', () => {
       tracer.traceXhr(context, stub)
       expect(context.traceId).toBeDefined()
       expect(context.spanId).toBeDefined()
+    })
+
+    it('should add only B3 Multiple headers', () => {
+      const configurationWithB3Multi = validateAndBuildRumConfiguration({
+        ...INIT_CONFIGURATION,
+        configureTracingUrls: [{ match: window.location.origin, headerTypes: ['b3m'] }],
+      })!
+
+      const tracer = startTracer(configurationWithB3Multi, sessionManager)
+      const context = { ...ALLOWED_DOMAIN_CONTEXT }
+      tracer.traceXhr(context, xhrStub as unknown as XMLHttpRequest)
+
+      expect(xhrStub.headers['X-B3-TraceId']).toBeDefined()
+      expect(xhrStub.headers['X-B3-SpanId']).toBeDefined()
+      expect(xhrStub.headers['X-B3-Sampled']).toBeDefined()
+
+      expect(xhrStub.headers['x-datadog-origin']).toBeUndefined()
+      expect(xhrStub.headers['x-datadog-parent-id']).toBeUndefined()
+      expect(xhrStub.headers['x-datadog-trace-id']).toBeUndefined()
+      expect(xhrStub.headers['x-datadog-sampling-priority']).toBeUndefined()
+    })
+
+    it('should add B3 (single) and W3C headers', () => {
+      const configurationWithB3andW3C = validateAndBuildRumConfiguration({
+        ...INIT_CONFIGURATION,
+        configureTracingUrls: [{ match: window.location.origin, headerTypes: ['b3', 'w3c'] }],
+      })!
+
+      const tracer = startTracer(configurationWithB3andW3C, sessionManager)
+      const context = { ...ALLOWED_DOMAIN_CONTEXT }
+      tracer.traceXhr(context, xhrStub as unknown as XMLHttpRequest)
+
+      expect(xhrStub.headers['b3']).toBeDefined()
+      expect(xhrStub.headers['traceparent']).toBeDefined()
+    })
+
+    it('should not add any headers', () => {
+      const configurationWithoutHeaders = validateAndBuildRumConfiguration({
+        ...INIT_CONFIGURATION,
+        configureTracingUrls: [{ match: window.location.origin, headerTypes: [] }],
+      })!
+
+      const tracer = startTracer(configurationWithoutHeaders, sessionManager)
+      const context = { ...ALLOWED_DOMAIN_CONTEXT }
+      tracer.traceXhr(context, xhrStub as unknown as XMLHttpRequest)
+
+      expect(xhrStub.headers['b3']).toBeUndefined()
+      expect(xhrStub.headers['traceparent']).toBeUndefined()
+      expect(xhrStub.headers['x-datadog-trace-id']).toBeUndefined()
+      expect(xhrStub.headers['X-B3-TraceId']).toBeUndefined()
+    })
+
+    it('should ignore wrong header types', () => {
+      const configurationWithBadParams = validateAndBuildRumConfiguration({
+        ...INIT_CONFIGURATION,
+        configureTracingUrls: [{ match: window.location.origin, headerTypes: ['foo', 32, () => true] as any }],
+      })!
+
+      const tracer = startTracer(configurationWithBadParams, sessionManager)
+      const context = { ...ALLOWED_DOMAIN_CONTEXT }
+      tracer.traceXhr(context, xhrStub as unknown as XMLHttpRequest)
+
+      expect(xhrStub.headers['b3']).toBeUndefined()
+      expect(xhrStub.headers['traceparent']).toBeUndefined()
+      expect(xhrStub.headers['x-datadog-trace-id']).toBeUndefined()
+      expect(xhrStub.headers['X-B3-TraceId']).toBeUndefined()
+    })
+
+    it('should survive a wrong match type', () => {
+      const displaySpy = spyOn(display, 'error')
+      const configurationWithBadParams = validateAndBuildRumConfiguration({
+        ...INIT_CONFIGURATION,
+        configureTracingUrls: [42 as any, undefined, { match: 42 as any, headerTypes: ['dd'] }],
+      })!
+
+      const tracer = startTracer(configurationWithBadParams, sessionManager)
+      const context = { ...ALLOWED_DOMAIN_CONTEXT }
+      tracer.traceXhr(context, xhrStub as unknown as XMLHttpRequest)
+
+      expect(displaySpy).toHaveBeenCalledTimes(1)
+      expect(xhrStub.headers['b3']).toBeUndefined()
+      expect(xhrStub.headers['traceparent']).toBeUndefined()
+      expect(xhrStub.headers['x-datadog-trace-id']).toBeUndefined()
+      expect(xhrStub.headers['X-B3-TraceId']).toBeUndefined()
     })
   })
 
@@ -328,14 +414,14 @@ describe('tracer', () => {
     })
 
     it('should trace requests on configured urls', () => {
-      const configurationWithTracingUrls = {
-        ...configuration,
-        allowedTracingOrigins: [
+      const configurationWithTracingUrls = validateAndBuildRumConfiguration({
+        ...INIT_CONFIGURATION,
+        configureTracingUrls: [
           /^https?:\/\/qux\.com.*/,
           'http://bar.com',
           (origin: string) => origin === 'http://dynamic.com',
         ],
-      }
+      })!
       const quxDomainContext: Partial<RumFetchStartContext> = { url: 'http://qux.com' }
       const barDomainContext: Partial<RumFetchStartContext> = { url: 'http://bar.com' }
       const dynamicDomainContext: Partial<RumFetchStartContext> = { url: 'http://dynamic.com' }
@@ -351,6 +437,56 @@ describe('tracer', () => {
       expect(barDomainContext.spanId).toBeDefined()
       expect(dynamicDomainContext.traceId).toBeDefined()
       expect(dynamicDomainContext.spanId).toBeDefined()
+    })
+
+    it('should add only B3 Multiple headers', () => {
+      const configurationWithB3Multi = validateAndBuildRumConfiguration({
+        ...INIT_CONFIGURATION,
+        configureTracingUrls: [{ match: window.location.origin, headerTypes: ['b3m'] }],
+      })!
+
+      const tracer = startTracer(configurationWithB3Multi, sessionManager)
+      const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
+      tracer.traceFetch(context)
+
+      expect(context.init!.headers).toContain(jasmine.arrayContaining(['X-B3-TraceId']))
+      expect(context.init!.headers).toContain(jasmine.arrayContaining(['X-B3-SpanId']))
+      expect(context.init!.headers).toContain(jasmine.arrayContaining(['X-B3-Sampled']))
+
+      expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['x-datadog-origin']))
+      expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['x-datadog-parent-id']))
+      expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['x-datadog-trace-id']))
+      expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['x-datadog-sampling-priority']))
+    })
+
+    it('should add B3 (single) and W3C headers', () => {
+      const configurationWithB3andW3C = validateAndBuildRumConfiguration({
+        ...INIT_CONFIGURATION,
+        configureTracingUrls: [{ match: window.location.origin, headerTypes: ['b3', 'w3c'] }],
+      })!
+
+      const tracer = startTracer(configurationWithB3andW3C, sessionManager)
+      const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
+      tracer.traceFetch(context)
+
+      expect(context.init!.headers).toContain(jasmine.arrayContaining(['b3']))
+      expect(context.init!.headers).toContain(jasmine.arrayContaining(['traceparent']))
+    })
+
+    it('should not add any headers', () => {
+      const configurationWithoutHeaders = validateAndBuildRumConfiguration({
+        ...INIT_CONFIGURATION,
+        configureTracingUrls: [{ match: window.location.origin, headerTypes: [] }],
+      })!
+
+      const tracer = startTracer(configurationWithoutHeaders, sessionManager)
+      const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
+      tracer.traceFetch(context)
+
+      expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['b3']))
+      expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['traceparent']))
+      expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['x-datadog-trace-id']))
+      expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['X-B3-TraceId']))
     })
   })
 
@@ -390,6 +526,13 @@ describe('TraceIdentifier', () => {
     const traceIdentifier = new TraceIdentifier()
 
     expect(traceIdentifier.toDecimalString()).toMatch(/^\d+$/)
+  })
+
+  it('should pad the string to 16 characters', () => {
+    const traceIdentifier: any = new TraceIdentifier() // Forcing as any to access private member: buffer
+    traceIdentifier.buffer = new Uint8Array([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07])
+
+    expect((traceIdentifier as TraceIdentifier).toPaddedHexadecimalString()).toEqual('0001020304050607')
   })
 })
 

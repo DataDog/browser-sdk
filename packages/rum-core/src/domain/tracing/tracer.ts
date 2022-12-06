@@ -1,4 +1,13 @@
-import { getOrigin, matchList, objectEntries, shallowClone, performDraw, isNumber } from '@datadog/browser-core'
+import {
+  objectEntries,
+  shallowClone,
+  performDraw,
+  isNumber,
+  assign,
+  display,
+  find,
+  startsWith,
+} from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type {
   RumFetchResolveContext,
@@ -7,6 +16,7 @@ import type {
   RumXhrStartContext,
 } from '../requestCollection'
 import type { RumSessionManager } from '../rumSessionManager'
+import type { ConfigureTracingOption, TracingHeadersType } from './tracer.types'
 
 export interface Tracer {
   traceFetch: (context: Partial<RumFetchStartContext>) => void
@@ -87,18 +97,39 @@ function injectHeadersIfTracingAllowed(
   sessionManager: RumSessionManager,
   inject: (tracingHeaders: TracingHeaders) => void
 ) {
-  if (!isTracingSupported() || !isAllowedUrl(configuration, context.url!) || !sessionManager.findTrackedSession()) {
+  if (!isTracingSupported() || !sessionManager.findTrackedSession()) {
+    return
+  }
+
+  const config = findConfigurationForUrl(configuration.configureTracingUrls, context.url!)
+  if (!config) {
     return
   }
 
   context.traceId = new TraceIdentifier()
   context.spanId = new TraceIdentifier()
   context.traceSampled = !isNumber(configuration.tracingSampleRate) || performDraw(configuration.tracingSampleRate)
-  inject(makeTracingHeaders(context.traceId, context.spanId, context.traceSampled))
+  inject(makeTracingHeaders(context.traceId, context.spanId, context.traceSampled, config.headerTypes))
 }
 
-function isAllowedUrl(configuration: RumConfiguration, requestUrl: string) {
-  return matchList(configuration.allowedTracingOrigins, getOrigin(requestUrl))
+function findConfigurationForUrl(configurationTracingUrls: ConfigureTracingOption[], url: string) {
+  return find(configurationTracingUrls, (config: ConfigureTracingOption) => {
+    try {
+      const item = config.match
+      if (typeof item === 'function') {
+        return item(url)
+      }
+      if (item instanceof RegExp) {
+        return item.test(url)
+      }
+      if (typeof item === 'string') {
+        return startsWith(url, item)
+      }
+    } catch (e) {
+      display.error(e)
+    }
+    return false
+  })
 }
 
 export function isTracingSupported() {
@@ -113,7 +144,27 @@ function getCrypto() {
  * When trace is not sampled, set priority to '0' instead of not adding the tracing headers
  * to prepare the implementation for sampling delegation.
  */
-function makeTracingHeaders(traceId: TraceIdentifier, spanId: TraceIdentifier, traceSampled: boolean): TracingHeaders {
+function makeTracingHeaders(
+  traceId: TraceIdentifier,
+  spanId: TraceIdentifier,
+  traceSampled: boolean,
+  requestedHeaders: TracingHeadersType[]
+): TracingHeaders {
+  return requestedHeaders.reduce(
+    (headers, request) =>
+      assign(
+        headers,
+        makeTracingHeadersFor[request] ? makeTracingHeadersFor[request](traceId, spanId, traceSampled) : {}
+      ),
+    {} as TracingHeaders
+  )
+}
+
+function makeTracingHeadersForDD(
+  traceId: TraceIdentifier,
+  spanId: TraceIdentifier,
+  traceSampled: boolean
+): TracingHeaders {
   return {
     'x-datadog-origin': 'rum',
     'x-datadog-parent-id': spanId.toDecimalString(),
@@ -121,6 +172,58 @@ function makeTracingHeaders(traceId: TraceIdentifier, spanId: TraceIdentifier, t
     'x-datadog-trace-id': traceId.toDecimalString(),
   }
 }
+
+/**
+ * https://www.w3.org/TR/trace-context/
+ */
+function makeTracingHeadersForW3C(
+  traceId: TraceIdentifier,
+  spanId: TraceIdentifier,
+  traceSampled: boolean
+): TracingHeaders {
+  return {
+    traceparent: `00-0000000000000000${traceId.toPaddedHexadecimalString()}-${spanId.toPaddedHexadecimalString()}-0${
+      traceSampled ? '1' : '0'
+    }`,
+  }
+}
+
+/**
+ * https://github.com/openzipkin/b3-propagation
+ */
+function makeTracingHeadersForB3(
+  traceId: TraceIdentifier,
+  spanId: TraceIdentifier,
+  traceSampled: boolean
+): TracingHeaders {
+  return {
+    b3: `${traceId.toPaddedHexadecimalString()}-${spanId.toPaddedHexadecimalString()}-${traceSampled ? '1' : '0'}`,
+  }
+}
+function makeTracingHeadersForB3M(
+  traceId: TraceIdentifier,
+  spanId: TraceIdentifier,
+  traceSampled: boolean
+): TracingHeaders {
+  return {
+    'X-B3-TraceId': traceId.toPaddedHexadecimalString(),
+    'X-B3-SpanId': spanId.toPaddedHexadecimalString(),
+    'X-B3-Sampled': traceSampled ? '1' : '0',
+  }
+}
+
+const makeTracingHeadersFor: {
+  [key in TracingHeadersType]: (
+    traceId: TraceIdentifier,
+    spanId: TraceIdentifier,
+    traceSampled: boolean
+  ) => TracingHeaders
+} = {
+  dd: makeTracingHeadersForDD,
+  w3c: makeTracingHeadersForW3C,
+  b3: makeTracingHeadersForB3,
+  b3m: makeTracingHeadersForB3M,
+} as const
 
 /* eslint-disable no-bitwise */
 export class TraceIdentifier {
@@ -151,6 +254,14 @@ export class TraceIdentifier {
    */
   toDecimalString() {
     return this.toString(10)
+  }
+
+  /**
+   * Format used by OTel headers
+   */
+  toPaddedHexadecimalString() {
+    const traceId = this.toString(16)
+    return Array(17 - traceId.length).join('0') + traceId
   }
 
   private readInt32(offset: number) {

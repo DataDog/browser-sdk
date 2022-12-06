@@ -662,6 +662,10 @@ export function removeDuplicates<T>(array: T[]) {
 }
 
 export type MatchOption = string | RegExp | ((value: string) => boolean)
+export function isMatchOption(item: unknown): item is MatchOption {
+  const itemType = getType(item)
+  return itemType === 'string' || itemType === 'function' || item instanceof RegExp
+}
 export function matchList(list: MatchOption[], value: string): boolean {
   return list.some((item) => {
     if (typeof item === 'function') {
