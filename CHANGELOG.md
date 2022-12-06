@@ -16,6 +16,18 @@
 
 ---
 
+## v4.26.0
+
+- 🐛 [RUMF-1421] improve counters by filtering child events ([#1837](https://github.com/DataDog/browser-sdk/pull/1837))
+- ✨ [RUMF-1435] Add transport api on events ([#1840](https://github.com/DataDog/browser-sdk/pull/1840))
+- ⚗️ [RUMF-1337] add `fetch_duration` experiment to resolve incorrect fetch duration ([#1810](https://github.com/DataDog/browser-sdk/pull/1810))
+- ✨ Move extension settings to a Settings panel ([#1847](https://github.com/DataDog/browser-sdk/pull/1847))
+- ✨ Clear event list on page reload for SDK extension ([#1825](https://github.com/DataDog/browser-sdk/pull/1825))
+- ⬆️ [RUMF-1434] fix yarn failing to install puppeteer on M1 mac ([#1843](https://github.com/DataDog/browser-sdk/pull/1843))
+- ⬆️ [RUMF-1434] fix running e2e tests on M1 macs ([#1842](https://github.com/DataDog/browser-sdk/pull/1842))
+- ✨ Improve event description message in developer extension ([#1831](https://github.com/DataDog/browser-sdk/pull/1831))
+- ✨ [RUMF-1396] migrate extension to manifest v3 ([#1828](https://github.com/DataDog/browser-sdk/pull/1828))
+
 ## v4.25.0
 
 - ⚡️ ⚗ [RUMF-1438] Collect feature flags ([#1827](https://github.com/DataDog/browser-sdk/pull/1827))
