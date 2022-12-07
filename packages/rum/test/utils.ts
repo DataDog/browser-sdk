@@ -13,6 +13,7 @@ import type {
   MetaRecord,
   MouseInteractionType,
   VisualViewportRecord,
+  BrowserRecord,
 } from '../src/types'
 import { RecordType, IncrementalSource, NodeType } from '../src/types'
 
@@ -185,8 +186,8 @@ export function findMeta(segment: BrowserSegment): MetaRecord | null {
 }
 
 // Returns the first FullSnapshotRecord in a Segment, if any.
-export function findFullSnapshot(segment: BrowserSegment): BrowserFullSnapshotRecord | null {
-  return segment.records.find((record) => record.type === RecordType.FullSnapshot) as BrowserFullSnapshotRecord
+export function findFullSnapshot({ records }: { records: BrowserRecord[] }): BrowserFullSnapshotRecord | null {
+  return records.find((record) => record.type === RecordType.FullSnapshot) as BrowserFullSnapshotRecord
 }
 
 // Returns all the VisualViewportRecords in a Segment, if any.

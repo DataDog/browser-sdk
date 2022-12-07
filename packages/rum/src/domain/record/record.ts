@@ -45,8 +45,9 @@ export function record(options: RecordOptions): RecordAPI {
   const mutationController = new MutationController()
   const elementsScrollPositions = createElementsScrollPositions()
 
-  const mutationCb = (mutation: BrowserMutationPayload) =>
+  const mutationCb = (mutation: BrowserMutationPayload) => {
     emit(assembleIncrementalSnapshot<BrowserMutationData>(IncrementalSource.Mutation, mutation))
+  }
   const inputCb: InputCallback = (s) => emit(assembleIncrementalSnapshot<InputData>(IncrementalSource.Input, s))
 
   const shadowDomCreatedCallback = (shadowRoot: ShadowRoot) => {
@@ -110,12 +111,12 @@ export function record(options: RecordOptions): RecordAPI {
     configuration: options.configuration,
     mutationController,
     elementsScrollPositions,
-    inputCb: (v) => emit(assembleIncrementalSnapshot<InputData>(IncrementalSource.Input, v)),
+    inputCb,
     mediaInteractionCb: (p) =>
       emit(assembleIncrementalSnapshot<MediaInteractionData>(IncrementalSource.MediaInteraction, p)),
     mouseInteractionCb: (mouseInteractionRecord) => emit(mouseInteractionRecord),
     mousemoveCb: (positions, source) => emit(assembleIncrementalSnapshot<MousemoveData>(source, { positions })),
-    mutationCb: (m) => emit(assembleIncrementalSnapshot<BrowserMutationData>(IncrementalSource.Mutation, m)),
+    mutationCb,
     scrollCb: (p) => emit(assembleIncrementalSnapshot<ScrollData>(IncrementalSource.Scroll, p)),
     styleSheetCb: (r) => emit(assembleIncrementalSnapshot<StyleSheetRuleData>(IncrementalSource.StyleSheetRule, r)),
     viewportResizeCb: (d) => emit(assembleIncrementalSnapshot<ViewportResizeData>(IncrementalSource.ViewportResize, d)),
