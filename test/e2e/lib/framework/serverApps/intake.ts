@@ -84,7 +84,6 @@ function forwardEventsToIntake(req: express.Request): Promise<any> {
   return new Promise((resolve, reject) => {
     const headers = {
       'Content-Type': 'text/plain;charset=UTF-8',
-      'Content-Length': req.body.length,
     }
     const intakeRequest = prepareIntakeRequest(req, headers)
     intakeRequest.on('response', resolve)
