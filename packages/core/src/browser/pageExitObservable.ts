@@ -1,5 +1,5 @@
 import { Observable } from '../tools/observable'
-import { addEventListener, DOM_EVENT } from '../tools/utils'
+import { addEventListener, DOM_EVENT } from './addEventListener'
 
 export const enum PageExitReason {
   HIDDEN = 'visibility_hidden',
