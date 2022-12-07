@@ -43,7 +43,11 @@ function startRumStub(
   locationChangeObservable: Observable<LocationChange>,
   reportError: (error: RawError) => void
 ) {
-  const { stop: rumEventCollectionStop, foregroundContexts } = startRumEventCollection(
+  const {
+    stop: rumEventCollectionStop,
+    foregroundContexts,
+    featureFlagContexts,
+  } = startRumEventCollection(
     lifeCycle,
     configuration,
     location,
@@ -63,6 +67,7 @@ function startRumStub(
     domMutationObservable,
     locationChangeObservable,
     foregroundContexts,
+    featureFlagContexts,
     noopRecorderApi
   )
 

@@ -8,6 +8,7 @@ import { LifeCycleEventType } from '../../lifeCycle'
 import type { ForegroundContexts } from '../../contexts/foregroundContexts'
 import type { LocationChange } from '../../../browser/locationChangeObservable'
 import type { RumConfiguration } from '../../configuration'
+import type { FeatureFlagContexts } from '../../contexts/featureFlagContext'
 import type { ViewEvent, ViewOptions } from './trackViews'
 import { trackViews } from './trackViews'
 
@@ -18,13 +19,14 @@ export function startViewCollection(
   domMutationObservable: Observable<void>,
   locationChangeObservable: Observable<LocationChange>,
   foregroundContexts: ForegroundContexts,
+  featureFlagContexts: FeatureFlagContexts,
   recorderApi: RecorderApi,
   initialViewOptions?: ViewOptions
 ) {
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) =>
     lifeCycle.notify(
       LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-      processViewUpdate(view, foregroundContexts, recorderApi)
+      processViewUpdate(view, foregroundContexts, featureFlagContexts, recorderApi)
     )
   )
 
@@ -42,9 +44,12 @@ export function startViewCollection(
 function processViewUpdate(
   view: ViewEvent,
   foregroundContexts: ForegroundContexts,
+  featureFlagContexts: FeatureFlagContexts,
   recorderApi: RecorderApi
 ): RawRumEventCollectedData<RawRumViewEvent> {
   const replayStats = recorderApi.getReplayStats(view.id)
+  const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations(view.startClocks.relative)
+
   const viewEvent: RawRumViewEvent = {
     _dd: {
       document_version: view.documentVersion,
@@ -85,7 +90,7 @@ function processViewUpdate(
       time_spent: toServerDuration(view.duration),
       in_foreground_periods: foregroundContexts.selectInForegroundPeriodsFor(view.startClocks.relative, view.duration),
     },
-    feature_flags: !isEmptyObject(view.featureFlagEvaluations) ? view.featureFlagEvaluations : undefined,
+    feature_flags: featureFlagContext && !isEmptyObject(featureFlagContext) ? featureFlagContext : undefined,
     session: {
       has_replay: replayStats ? true : undefined,
     },

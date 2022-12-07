@@ -41,7 +41,6 @@ const VIEW: ViewEvent = {
     largestContentfulPaint: 10 as Duration,
     loadEvent: 10 as Duration,
   },
-  featureFlagEvaluations: {},
 }
 
 describe('viewCollection', () => {
@@ -54,7 +53,14 @@ describe('viewCollection', () => {
         selectInForegroundPeriodsFor: () => [{ start: 0 as ServerDuration, duration: 10 as ServerDuration }],
       })
       .beforeBuild(
-        ({ lifeCycle, configuration, foregroundContexts, domMutationObservable, locationChangeObservable }) => {
+        ({
+          lifeCycle,
+          configuration,
+          foregroundContexts,
+          featureFlagContexts,
+          domMutationObservable,
+          locationChangeObservable,
+        }) => {
           getReplayStatsSpy = jasmine.createSpy()
           startViewCollection(
             lifeCycle,
@@ -63,6 +69,7 @@ describe('viewCollection', () => {
             domMutationObservable,
             locationChangeObservable,
             foregroundContexts,
+            featureFlagContexts,
             {
               ...noopRecorderApi,
               getReplayStats: getReplayStatsSpy,
@@ -147,6 +154,18 @@ describe('viewCollection', () => {
       segments_total_raw_size: 1000,
     })
     expect(rawRumViewEvent.session.has_replay).toBe(true)
+  })
+
+  it('should include feature flags', () => {
+    const { lifeCycle, rawRumEvents } = setupBuilder
+      .withFeatureFlagContexts({ findFeatureFlagEvaluations: () => ({ feature: 'foo' }) })
+      .build()
+
+    const view = { ...VIEW, loadingTime: -20 as Duration }
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, view)
+    const rawRumViewEvent = rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent
+
+    expect(rawRumViewEvent.feature_flags).toEqual({ feature: 'foo' })
   })
 
   it('should discard negative loading time', () => {

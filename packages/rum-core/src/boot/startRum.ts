@@ -31,6 +31,7 @@ import { createLocationChangeObservable } from '../browser/locationChangeObserva
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import { serializeRumConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/rumEventsCollection/view/trackViews'
+import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
 import type { RecorderApi } from './rumPublicApi'
 
 export function startRum(
@@ -75,31 +76,33 @@ export function startRum(
   const domMutationObservable = createDOMMutationObservable()
   const locationChangeObservable = createLocationChangeObservable(location)
 
-  const { viewContexts, foregroundContexts, urlContexts, actionContexts, addAction } = startRumEventCollection(
-    lifeCycle,
-    configuration,
-    location,
-    session,
-    locationChangeObservable,
-    domMutationObservable,
-    getCommonContext,
-    reportError
-  )
+  const { viewContexts, foregroundContexts, featureFlagContexts, urlContexts, actionContexts, addAction } =
+    startRumEventCollection(
+      lifeCycle,
+      configuration,
+      location,
+      session,
+      locationChangeObservable,
+      domMutationObservable,
+      getCommonContext,
+      reportError
+    )
   addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
 
   startLongTaskCollection(lifeCycle, session)
   startResourceCollection(lifeCycle, configuration, session)
-  const { addTiming, addFeatureFlagEvaluation, startView } = startViewCollection(
+  const { addTiming, startView } = startViewCollection(
     lifeCycle,
     configuration,
     location,
     domMutationObservable,
     locationChangeObservable,
     foregroundContexts,
+    featureFlagContexts,
     recorderApi,
     initialViewOptions
   )
-  const { addError } = startErrorCollection(lifeCycle, foregroundContexts, viewContexts)
+  const { addError } = startErrorCollection(lifeCycle, foregroundContexts, featureFlagContexts)
 
   startRequestCollection(lifeCycle, configuration, session)
   startPerformanceCollection(lifeCycle, configuration)
@@ -116,7 +119,7 @@ export function startRum(
     addAction,
     addError,
     addTiming,
-    addFeatureFlagEvaluation,
+    addFeatureFlagEvaluation: featureFlagContexts.addFeatureFlagEvaluation,
     startView,
     lifeCycle,
     viewContexts,
@@ -146,6 +149,8 @@ export function startRumEventCollection(
 ) {
   const viewContexts = startViewContexts(lifeCycle)
   const urlContexts = startUrlContexts(lifeCycle, locationChangeObservable, location)
+  const featureFlagContexts = startFeatureFlagContexts(lifeCycle)
+
   const foregroundContexts = startForegroundContexts()
   const { addAction, actionContexts } = startActionCollection(
     lifeCycle,
@@ -169,6 +174,7 @@ export function startRumEventCollection(
     viewContexts,
     foregroundContexts,
     urlContexts,
+    featureFlagContexts,
     addAction,
     actionContexts,
     stop: () => {

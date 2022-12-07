@@ -1,6 +1,5 @@
 import type { Context, Duration, RelativeTime } from '@datadog/browser-core'
 import {
-  updateExperimentalFeatures,
   PageExitReason,
   timeStampNow,
   display,
@@ -570,75 +569,6 @@ describe('view custom timings', () => {
       'foo_bar-qux.@zip_21_$____': 1234 as Duration,
     })
     expect(displaySpy).toHaveBeenCalled()
-  })
-})
-
-describe('view feature flag evaluations', () => {
-  let setupBuilder: TestSetupBuilder
-  let viewTest: ViewTest
-
-  beforeEach(() => {
-    setupBuilder = setup()
-      .withFakeClock()
-      .beforeBuild((buildContext) => {
-        viewTest = setupViewTest(buildContext)
-        return viewTest
-      })
-  })
-
-  afterEach(() => {
-    setupBuilder.cleanup()
-    resetExperimentalFeatures()
-  })
-
-  it('should add feature flag evaluations of any type to the current view if the ff feature_flags is enabled', () => {
-    updateExperimentalFeatures(['feature_flags'])
-
-    const { clock } = setupBuilder.build()
-    const { getViewUpdate, addFeatureFlagEvaluation } = viewTest
-
-    addFeatureFlagEvaluation('feature', 'foo')
-    addFeatureFlagEvaluation('feature2', 2)
-    addFeatureFlagEvaluation('feature3', true)
-    addFeatureFlagEvaluation('feature4', { foo: 'bar' })
-
-    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD + 1)
-
-    const view = getViewUpdate(1)
-    expect(view.featureFlagEvaluations).toEqual({
-      feature: 'foo',
-      feature2: 2,
-      feature3: true,
-      feature4: { foo: 'bar' },
-    })
-  })
-
-  it('should replace existing feature flag evaluation to the current view if the ff feature_flags is enabled', () => {
-    updateExperimentalFeatures(['feature_flags'])
-
-    const { clock } = setupBuilder.build()
-    const { getViewUpdate, addFeatureFlagEvaluation } = viewTest
-
-    addFeatureFlagEvaluation('feature', 'foo')
-    addFeatureFlagEvaluation('feature2', 'baz')
-    addFeatureFlagEvaluation('feature', 'bar')
-
-    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
-
-    const view = getViewUpdate(1)
-    expect(view.featureFlagEvaluations).toEqual({ feature: 'bar', feature2: 'baz' })
-  })
-
-  it('should not add feature flag evaluation to the current view if the ff feature_flags is disabled', () => {
-    const { clock } = setupBuilder.build()
-    const { getViewUpdate, addFeatureFlagEvaluation } = viewTest
-
-    addFeatureFlagEvaluation('feature', 'bar')
-
-    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
-
-    const view = getViewUpdate(1)
-    expect(view.featureFlagEvaluations).toEqual({})
   })
 })
 
