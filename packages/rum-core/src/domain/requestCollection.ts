@@ -4,9 +4,17 @@ import type {
   XhrStartContext,
   ClocksState,
   FetchStartContext,
-  FetchCompleteContext,
+  FetchResolveContext,
 } from '@datadog/browser-core'
-import { RequestType, initFetchObservable, initXhrObservable } from '@datadog/browser-core'
+import {
+  RequestType,
+  initFetchObservable,
+  initXhrObservable,
+  readBytesFromStream,
+  elapsed,
+  timeStampNow,
+  isExperimentalFeatureEnabled,
+} from '@datadog/browser-core'
 import type { RumSessionManager } from '..'
 import type { RumConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
@@ -22,7 +30,7 @@ export interface CustomContext {
   traceSampled?: boolean
 }
 export interface RumFetchStartContext extends FetchStartContext, CustomContext {}
-export interface RumFetchCompleteContext extends FetchCompleteContext, CustomContext {}
+export interface RumFetchResolveContext extends FetchResolveContext, CustomContext {}
 export interface RumXhrStartContext extends XhrStartContext, CustomContext {}
 export interface RumXhrCompleteContext extends XhrCompleteContext, CustomContext {}
 
@@ -30,7 +38,6 @@ export interface RequestStartEvent {
   requestIndex: number
   url: string
 }
-
 export interface RequestCompleteEvent {
   requestIndex: number
   type: RequestType
@@ -39,6 +46,7 @@ export interface RequestCompleteEvent {
   status: number
   responseType?: string
   startClocks: ClocksState
+  resolveDuration?: Duration
   duration: Duration
   spanId?: TraceIdentifier
   traceId?: TraceIdentifier
@@ -103,7 +111,7 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: RumConfiguration, 
 
 export function trackFetch(lifeCycle: LifeCycle, configuration: RumConfiguration, tracer: Tracer) {
   const subscription = initFetchObservable().subscribe((rawContext) => {
-    const context = rawContext as RumFetchCompleteContext | RumFetchStartContext
+    const context = rawContext as RumFetchResolveContext | RumFetchStartContext
     if (!isAllowedRequestUrl(configuration, context.url)) {
       return
     }
@@ -118,24 +126,26 @@ export function trackFetch(lifeCycle: LifeCycle, configuration: RumConfiguration
           url: context.url,
         })
         break
-      case 'complete':
-        tracer.clearTracingIfNeeded(context)
-
-        lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
-          duration: context.duration,
-          method: context.method,
-          requestIndex: context.requestIndex,
-          responseType: context.responseType,
-          spanId: context.spanId,
-          startClocks: context.startClocks,
-          status: context.status,
-          traceId: context.traceId,
-          traceSampled: context.traceSampled,
-          type: RequestType.FETCH,
-          url: context.url,
-          response: context.response,
-          init: context.init,
-          input: context.input,
+      case 'resolve':
+        waitForResponseToComplete(context, (duration: Duration) => {
+          tracer.clearTracingIfNeeded(context)
+          lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
+            resolveDuration: context.resolveDuration,
+            duration,
+            method: context.method,
+            requestIndex: context.requestIndex,
+            responseType: context.responseType,
+            spanId: context.spanId,
+            startClocks: context.startClocks,
+            status: context.status,
+            traceId: context.traceId,
+            traceSampled: context.traceSampled,
+            type: RequestType.FETCH,
+            url: context.url,
+            response: context.response,
+            init: context.init,
+            input: context.input,
+          })
         })
         break
     }
@@ -147,4 +157,24 @@ function getNextRequestIndex() {
   const result = nextRequestIndex
   nextRequestIndex += 1
   return result
+}
+
+function waitForResponseToComplete(context: RumFetchResolveContext, callback: (duration: Duration) => void) {
+  if (context.response && isExperimentalFeatureEnabled('fetch_duration')) {
+    const responseClone = context.response.clone()
+    if (responseClone.body) {
+      readBytesFromStream(
+        responseClone.body,
+        () => {
+          callback(elapsed(context.startClocks.timeStamp, timeStampNow()))
+        },
+        {
+          bytesLimit: Number.POSITIVE_INFINITY,
+          collectStreamBody: false,
+        }
+      )
+      return
+    }
+  }
+  callback(elapsed(context.startClocks.timeStamp, timeStampNow()))
 }

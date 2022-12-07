@@ -1,8 +1,10 @@
-import { Anchor, Divider, Grid, Group, Text, Title } from '@mantine/core'
+import { Anchor, Divider, Group, Text } from '@mantine/core'
 import type { ReactNode } from 'react'
 import React from 'react'
 import { useSdkInfos } from '../hooks/useSdkInfos'
+import { Columns } from './columns'
 import { Json } from './json'
+import { TabBase } from './tabBase'
 
 export function InfosTab() {
   const infos = useSdkInfos()
@@ -12,75 +14,77 @@ export function InfosTab() {
   const sessionId = infos.cookie?.id
 
   return (
-    <Grid>
-      <Section name="Session">
-        {infos.cookie && (
-          <>
-            <Entry name="Id" value={infos.cookie.id} />
-            <Entry name="Logs" value={formatSessionType(infos.cookie.logs, 'Not tracked', 'Tracked')} />
-            <Entry
-              name="RUM"
-              value={formatSessionType(
-                infos.cookie.rum,
-                'Not tracked',
-                'Tracked with Session Replay',
-                'Tracked without Session Replay'
+    <TabBase>
+      <Columns>
+        <Columns.Column title="Session">
+          {infos.cookie && (
+            <>
+              <Entry name="Id" value={infos.cookie.id} />
+              <Entry name="Logs" value={formatSessionType(infos.cookie.logs, 'Not tracked', 'Tracked')} />
+              <Entry
+                name="RUM"
+                value={formatSessionType(
+                  infos.cookie.rum,
+                  'Not tracked',
+                  'Tracked with Session Replay',
+                  'Tracked without Session Replay'
+                )}
+              />
+              <Entry name="Created" value={formatDate(Number(infos.cookie.created))} />
+              <Entry name="Expire" value={formatDate(Number(infos.cookie.expire))} />
+            </>
+          )}
+        </Columns.Column>
+        <Columns.Column title="RUM">
+          {infos.rum && (
+            <>
+              {sessionId && (
+                <Group>
+                  <AppLink
+                    config={infos.rum.config}
+                    path="rum/explorer"
+                    params={{
+                      query: `@session.id:${sessionId}`,
+                      live: 'true',
+                    }}
+                  >
+                    Explorer
+                  </AppLink>
+                  <Divider sx={{ height: '24px' }} orientation="vertical" />
+                  <AppLink config={infos.rum.config} path={`rum/replay/sessions/${sessionId}`} params={{}}>
+                    Session Replay
+                  </AppLink>
+                </Group>
               )}
-            />
-            <Entry name="Created" value={formatDate(Number(infos.cookie.created))} />
-            <Entry name="Expire" value={formatDate(Number(infos.cookie.expire))} />
-          </>
-        )}
-      </Section>
-      <Section name="RUM">
-        {infos.rum && (
-          <>
-            {sessionId && (
-              <Group>
+              <Entry name="Version" value={infos.rum.version} />
+              <Entry name="Configuration" value={infos.rum.config} />
+              <Entry name="Internal context" value={infos.rum.internalContext} />
+              <Entry name="Global context" value={infos.rum.globalContext} />
+            </>
+          )}
+        </Columns.Column>
+        <Columns.Column title="Logs">
+          {infos.logs && (
+            <>
+              {sessionId && (
                 <AppLink
-                  config={infos.rum.config}
-                  path="rum/explorer"
+                  config={infos.logs.config}
+                  path="logs"
                   params={{
-                    query: `@session.id:${sessionId}`,
-                    live: 'true',
+                    query: `source:browser @session_id:${sessionId}`,
                   }}
                 >
                   Explorer
                 </AppLink>
-                <Divider sx={{ height: '24px' }} orientation="vertical" />
-                <AppLink config={infos.rum.config} path={`rum/replay/sessions/${sessionId}`} params={{}}>
-                  Session Replay
-                </AppLink>
-              </Group>
-            )}
-            <Entry name="Version" value={infos.rum.version} />
-            <Entry name="Configuration" value={infos.rum.config} />
-            <Entry name="Internal context" value={infos.rum.internalContext} />
-            <Entry name="Global context" value={infos.rum.globalContext} />
-          </>
-        )}
-      </Section>
-      <Section name="Logs">
-        {infos.logs && (
-          <>
-            {sessionId && (
-              <AppLink
-                config={infos.logs.config}
-                path="logs"
-                params={{
-                  query: `source:browser @session_id:${sessionId}`,
-                }}
-              >
-                Explorer
-              </AppLink>
-            )}
-            <Entry name="Version" value={infos.logs.version} />
-            <Entry name="Configuration" value={infos.logs.config} />
-            <Entry name="Global context" value={infos.logs.globalContext} />
-          </>
-        )}
-      </Section>
-    </Grid>
+              )}
+              <Entry name="Version" value={infos.logs.version} />
+              <Entry name="Configuration" value={infos.logs.config} />
+              <Entry name="Global context" value={infos.logs.globalContext} />
+            </>
+          )}
+        </Columns.Column>
+      </Columns>
+    </TabBase>
   )
 }
 
@@ -101,15 +105,6 @@ function AppLink({
     <Anchor href={`https://${hostname}/${path}?${new URLSearchParams(params).toString()}`} target="_blank">
       {children}
     </Anchor>
-  )
-}
-
-function Section({ name, children }: { name: string; children: ReactNode | undefined }) {
-  return (
-    <Grid.Col md={4} sm={12}>
-      <Title order={3}>{name}</Title>
-      {children || '(empty)'}
-    </Grid.Col>
   )
 }
 

@@ -38,8 +38,8 @@ export function createEndpointBuilder(
   const proxyUrl = initConfiguration.proxyUrl && normalizeUrl(initConfiguration.proxyUrl)
 
   return {
-    build(retry?: RetryInfo) {
-      const tags = [`sdk_version:${__BUILD_ENV__SDK_VERSION__}`].concat(configurationTags)
+    build(api: 'xhr' | 'fetch' | 'beacon', retry?: RetryInfo) {
+      const tags = [`sdk_version:${__BUILD_ENV__SDK_VERSION__}`, `api:${api}`].concat(configurationTags)
       if (retry) {
         tags.push(`retry_count:${retry.count}`, `retry_after:${retry.lastFailureStatus}`)
       }

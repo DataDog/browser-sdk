@@ -175,13 +175,19 @@ describe('rum track view metrics', () => {
   describe('event counts', () => {
     it('should track error count', () => {
       const { lifeCycle } = setupBuilder.build()
-      const { getViewUpdate, getViewUpdateCount, startView } = viewTest
+      const { getViewUpdate, getViewUpdateCount, startView, getLatestViewContext } = viewTest
 
       expect(getViewUpdateCount()).toEqual(1)
       expect(getViewUpdate(0).eventCounts.errorCount).toEqual(0)
 
-      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.ERROR } as RumEvent & Context)
-      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.ERROR } as RumEvent & Context)
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
+        type: RumEventType.ERROR,
+        view: getLatestViewContext(),
+      } as RumEvent & Context)
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
+        type: RumEventType.ERROR,
+        view: getLatestViewContext(),
+      } as RumEvent & Context)
       startView()
 
       expect(getViewUpdateCount()).toEqual(3)
@@ -191,12 +197,15 @@ describe('rum track view metrics', () => {
 
     it('should track long task count', () => {
       const { lifeCycle } = setupBuilder.build()
-      const { getViewUpdate, getViewUpdateCount, startView } = viewTest
+      const { getViewUpdate, getViewUpdateCount, startView, getLatestViewContext } = viewTest
 
       expect(getViewUpdateCount()).toEqual(1)
       expect(getViewUpdate(0).eventCounts.longTaskCount).toEqual(0)
 
-      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.LONG_TASK } as RumEvent & Context)
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
+        type: RumEventType.LONG_TASK,
+        view: getLatestViewContext(),
+      } as RumEvent & Context)
       startView()
 
       expect(getViewUpdateCount()).toEqual(3)
@@ -206,12 +215,15 @@ describe('rum track view metrics', () => {
 
     it('should track resource count', () => {
       const { lifeCycle } = setupBuilder.build()
-      const { getViewUpdate, getViewUpdateCount, startView } = viewTest
+      const { getViewUpdate, getViewUpdateCount, startView, getLatestViewContext } = viewTest
 
       expect(getViewUpdateCount()).toEqual(1)
       expect(getViewUpdate(0).eventCounts.resourceCount).toEqual(0)
 
-      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.RESOURCE } as RumEvent & Context)
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
+        type: RumEventType.RESOURCE,
+        view: getLatestViewContext(),
+      } as RumEvent & Context)
       startView()
 
       expect(getViewUpdateCount()).toEqual(3)
@@ -221,7 +233,7 @@ describe('rum track view metrics', () => {
 
     it('should track action count', () => {
       const { lifeCycle } = setupBuilder.build()
-      const { getViewUpdate, getViewUpdateCount, startView } = viewTest
+      const { getViewUpdate, getViewUpdateCount, startView, getLatestViewContext } = viewTest
 
       expect(getViewUpdateCount()).toEqual(1)
       expect(getViewUpdate(0).eventCounts.actionCount).toEqual(0)
@@ -229,6 +241,7 @@ describe('rum track view metrics', () => {
       lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
         type: RumEventType.ACTION,
         action: { type: 'custom' },
+        view: getLatestViewContext(),
       } as RumEvent & Context)
       startView()
 
@@ -239,7 +252,7 @@ describe('rum track view metrics', () => {
 
     it('should track frustration count', () => {
       const { lifeCycle } = setupBuilder.build()
-      const { getViewUpdate, getViewUpdateCount, startView } = viewTest
+      const { getViewUpdate, getViewUpdateCount, startView, getLatestViewContext } = viewTest
 
       expect(getViewUpdateCount()).toEqual(1)
       expect(getViewUpdate(0).eventCounts.frustrationCount).toEqual(0)
@@ -248,10 +261,12 @@ describe('rum track view metrics', () => {
         type: RumEventType.ACTION,
         action: {
           type: 'click',
+          id: '123',
           frustration: {
             type: [FrustrationType.DEAD_CLICK, FrustrationType.ERROR_CLICK],
           },
         },
+        view: getLatestViewContext(),
       } as RumEvent & Context)
       startView()
 
@@ -260,22 +275,49 @@ describe('rum track view metrics', () => {
       expect(getViewUpdate(2).eventCounts.frustrationCount).toEqual(0)
     })
 
+    it('should not count child events unrelated to the view', () => {
+      const { lifeCycle } = setupBuilder.build()
+      const { getViewUpdate, getViewUpdateCount, startView } = viewTest
+
+      expect(getViewUpdateCount()).toEqual(1)
+      expect(getViewUpdate(0).eventCounts.errorCount).toEqual(0)
+
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
+        type: RumEventType.ERROR,
+        view: { id: 'unrelated-view-id' },
+      } as RumEvent & Context)
+      startView()
+
+      expect(getViewUpdateCount()).toEqual(3)
+      expect(getViewUpdate(1).eventCounts.errorCount).toEqual(0)
+      expect(getViewUpdate(2).eventCounts.errorCount).toEqual(0)
+    })
+
     it('should reset event count when the view changes', () => {
       const { lifeCycle, changeLocation } = setupBuilder.build()
-      const { getViewUpdate, getViewUpdateCount, startView } = viewTest
+      const { getViewUpdate, getViewUpdateCount, startView, getLatestViewContext } = viewTest
 
       expect(getViewUpdateCount()).toEqual(1)
       expect(getViewUpdate(0).eventCounts.resourceCount).toEqual(0)
 
-      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.RESOURCE } as RumEvent & Context)
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
+        type: RumEventType.RESOURCE,
+        view: getLatestViewContext(),
+      } as RumEvent & Context)
       startView()
 
       expect(getViewUpdateCount()).toEqual(3)
       expect(getViewUpdate(1).eventCounts.resourceCount).toEqual(1)
       expect(getViewUpdate(2).eventCounts.resourceCount).toEqual(0)
 
-      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.RESOURCE } as RumEvent & Context)
-      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.RESOURCE } as RumEvent & Context)
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
+        type: RumEventType.RESOURCE,
+        view: getLatestViewContext(),
+      } as RumEvent & Context)
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
+        type: RumEventType.RESOURCE,
+        view: getLatestViewContext(),
+      } as RumEvent & Context)
       changeLocation('/baz')
 
       expect(getViewUpdateCount()).toEqual(5)
@@ -285,7 +327,7 @@ describe('rum track view metrics', () => {
 
     it('should update eventCounts when a resource event is collected (throttled)', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
-      const { getViewUpdate, getViewUpdateCount } = viewTest
+      const { getViewUpdate, getViewUpdateCount, getLatestViewContext } = viewTest
 
       expect(getViewUpdateCount()).toEqual(1)
       expect(getViewUpdate(0).eventCounts).toEqual({
@@ -296,7 +338,10 @@ describe('rum track view metrics', () => {
         frustrationCount: 0,
       })
 
-      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.RESOURCE } as RumEvent & Context)
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
+        type: RumEventType.RESOURCE,
+        view: getLatestViewContext(),
+      } as RumEvent & Context)
 
       expect(getViewUpdateCount()).toEqual(1)
 
@@ -314,11 +359,14 @@ describe('rum track view metrics', () => {
 
     it('should not update eventCounts after ending a view', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
-      const { getViewUpdate, getViewUpdateCount, startView } = viewTest
+      const { getViewUpdate, getViewUpdateCount, startView, getLatestViewContext } = viewTest
 
       expect(getViewUpdateCount()).toEqual(1)
 
-      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.RESOURCE } as RumEvent & Context)
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
+        type: RumEventType.RESOURCE,
+        view: getLatestViewContext(),
+      } as RumEvent & Context)
 
       expect(getViewUpdateCount()).toEqual(1)
 

@@ -1,5 +1,6 @@
 import type { Duration, ClocksState, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import {
+  includes,
   timeStampNow,
   isExperimentalFeatureEnabled,
   Observable,
@@ -252,7 +253,12 @@ function newClick(
   const id = generateUUID()
   const startClocks = clocksNow()
   const historyEntry = history.add(id, startClocks.relative)
-  const eventCountsSubscription = trackEventCounts(lifeCycle)
+  const eventCountsSubscription = trackEventCounts({
+    lifeCycle,
+    isChildEvent: (event) =>
+      event.action !== undefined &&
+      (Array.isArray(event.action.id) ? includes(event.action.id, id) : event.action.id === id),
+  })
   let status = ClickStatus.ONGOING
   let activityEndTime: undefined | TimeStamp
   const frustrationTypes: FrustrationType[] = []

@@ -1,4 +1,4 @@
-import { isIE, RequestType } from '@datadog/browser-core'
+import { isIE, RequestType, updateExperimentalFeatures, resetExperimentalFeatures } from '@datadog/browser-core'
 import type { FetchStub, FetchStubManager } from '../../../core/test/specHelper'
 import { SPEC_ENDPOINTS, stubFetch, stubXhr, withXhr } from '../../../core/test/specHelper'
 import type { RumConfiguration } from './configuration'
@@ -91,12 +91,39 @@ describe('collect fetch', () => {
   })
 
   it('should ignore intake requests', (done) => {
-    fetchStub(SPEC_ENDPOINTS.rumEndpointBuilder.build()).resolveWith({ status: 200, responseText: 'foo' })
+    fetchStub(SPEC_ENDPOINTS.rumEndpointBuilder.build('xhr')).resolveWith({ status: 200, responseText: 'foo' })
 
     fetchStubManager.whenAllComplete(() => {
       expect(startSpy).not.toHaveBeenCalled()
       expect(completeSpy).not.toHaveBeenCalled()
       done()
+    })
+  })
+
+  describe('with feature flag fetch_duration', () => {
+    beforeEach(() => updateExperimentalFeatures(['fetch_duration']))
+    afterEach(() => resetExperimentalFeatures())
+
+    it('should notify when response is defined', (done) => {
+      fetchStub(FAKE_URL).resolveWith({ status: 200, responseText: 'ok' })
+
+      fetchStubManager.whenAllComplete(() => {
+        expect(startSpy).toHaveBeenCalled()
+        expect(completeSpy).toHaveBeenCalled()
+        done()
+      })
+    })
+
+    it('should notify when response is undefined', (done) => {
+      updateExperimentalFeatures(['fetch_duration'])
+
+      fetchStub(FAKE_URL).rejectWith(new Error('some fetch error'))
+
+      fetchStubManager.whenAllComplete(() => {
+        expect(startSpy).toHaveBeenCalled()
+        expect(completeSpy).toHaveBeenCalled()
+        done()
+      })
     })
   })
 
@@ -230,7 +257,7 @@ describe('collect xhr', () => {
   it('should ignore intake requests', (done) => {
     withXhr({
       setup(xhr) {
-        xhr.open('GET', SPEC_ENDPOINTS.rumEndpointBuilder.build())
+        xhr.open('GET', SPEC_ENDPOINTS.rumEndpointBuilder.build('xhr'))
         xhr.send()
         xhr.complete(200)
       },

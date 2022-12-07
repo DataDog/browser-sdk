@@ -1,4 +1,4 @@
-import type { FetchCompleteContext, XhrCompleteContext } from '@datadog/browser-core'
+import type { FetchResolveContext, XhrCompleteContext } from '@datadog/browser-core'
 import {
   ErrorSource,
   initXhrObservable,
@@ -8,6 +8,7 @@ import {
   toStackTraceString,
   monitor,
   noop,
+  readBytesFromStream,
 } from '@datadog/browser-core'
 import type { RawNetworkLogsEvent } from '../../../rawLogsEvent.types'
 import type { LogsConfiguration } from '../../configuration'
@@ -22,16 +23,16 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
 
   const xhrSubscription = initXhrObservable().subscribe((context) => {
     if (context.state === 'complete') {
-      handleCompleteRequest(RequestType.XHR, context)
+      handleResponse(RequestType.XHR, context)
     }
   })
   const fetchSubscription = initFetchObservable().subscribe((context) => {
-    if (context.state === 'complete') {
-      handleCompleteRequest(RequestType.FETCH, context)
+    if (context.state === 'resolve') {
+      handleResponse(RequestType.FETCH, context)
     }
   })
 
-  function handleCompleteRequest(type: RequestType, request: XhrCompleteContext | FetchCompleteContext) {
+  function handleResponse(type: RequestType, request: XhrCompleteContext | FetchResolveContext) {
     if (!configuration.isIntakeUrl(request.url) && (isRejected(request) || isServerError(request))) {
       if ('xhr' in request) {
         computeXhrResponseData(request.xhr, configuration, onResponseDataAvailable)
@@ -177,81 +178,25 @@ function format(type: RequestType) {
 
 function truncateResponseStream(
   stream: ReadableStream<Uint8Array>,
-  limit: number,
+  bytesLimit: number,
   callback: (error?: Error, responseText?: string) => void
 ) {
-  readLimitedAmountOfBytes(stream, limit, (error, bytes, limitExceeded) => {
-    if (error) {
-      callback(error)
-    } else {
-      let responseText = new TextDecoder().decode(bytes)
-      if (limitExceeded) {
-        responseText += '...'
+  readBytesFromStream(
+    stream,
+    (error, bytes, limitExceeded) => {
+      if (error) {
+        callback(error)
+      } else {
+        let responseText = new TextDecoder().decode(bytes)
+        if (limitExceeded) {
+          responseText += '...'
+        }
+        callback(undefined, responseText)
       }
-      callback(undefined, responseText)
+    },
+    {
+      bytesLimit,
+      collectStreamBody: true,
     }
-  })
-}
-
-/**
- * Read bytes from a ReadableStream until at least `limit` bytes have been read (or until the end of
- * the stream). The callback is invoked with the at most `limit` bytes, and indicates that the limit
- * has been exceeded if more bytes were available.
- */
-function readLimitedAmountOfBytes(
-  stream: ReadableStream<Uint8Array>,
-  limit: number,
-  callback: (error?: Error, bytes?: Uint8Array, limitExceeded?: boolean) => void
-) {
-  const reader = stream.getReader()
-  const chunks: Uint8Array[] = []
-  let readBytesCount = 0
-
-  readMore()
-
-  function readMore() {
-    reader.read().then(
-      monitor((result: ReadableStreamDefaultReadResult<Uint8Array>) => {
-        if (result.done) {
-          onDone()
-          return
-        }
-
-        chunks.push(result.value)
-        readBytesCount += result.value.length
-
-        if (readBytesCount > limit) {
-          onDone()
-        } else {
-          readMore()
-        }
-      }),
-      monitor((error) => callback(error))
-    )
-  }
-
-  function onDone() {
-    reader.cancel().catch(
-      // we don't care if cancel fails, but we still need to catch the error to avoid reporting it
-      // as an unhandled rejection
-      noop
-    )
-
-    let completeBuffer: Uint8Array
-    if (chunks.length === 1) {
-      // optim: if the response is small enough to fit in a single buffer (provided by the browser), just
-      // use it directly.
-      completeBuffer = chunks[0]
-    } else {
-      // else, we need to copy buffers into a larger buffer to concatenate them.
-      completeBuffer = new Uint8Array(readBytesCount)
-      let offset = 0
-      chunks.forEach((chunk) => {
-        completeBuffer.set(chunk, offset)
-        offset += chunk.length
-      })
-    }
-
-    callback(undefined, completeBuffer.slice(0, limit), completeBuffer.length > limit)
-  }
+  )
 }
