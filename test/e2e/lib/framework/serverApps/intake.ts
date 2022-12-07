@@ -1,6 +1,5 @@
 import { createInflate } from 'zlib'
 import https from 'https'
-import FormData from 'form-data'
 import connectBusboy from 'connect-busboy'
 import express from 'express'
 
@@ -82,12 +81,11 @@ function storeEventsData(events: EventRegistry, intakeType: 'logs' | 'rum' | 'te
 
 function forwardEventsToIntake(req: express.Request): Promise<any> {
   return new Promise((resolve, reject) => {
-    const headers = {
-      'Content-Type': 'text/plain;charset=UTF-8',
-    }
-    const intakeRequest = prepareIntakeRequest(req, headers)
+    const intakeRequest = prepareIntakeRequest(req)
     intakeRequest.on('response', resolve)
     intakeRequest.on('error', reject)
+    // can't directly pipe the request since
+    // the stream has already been read by express body parser
     intakeRequest.write(req.body)
     intakeRequest.end()
   })
@@ -129,21 +127,14 @@ async function storeReplayData(req: express.Request, events: EventRegistry): Pro
 
 async function forwardReplayToIntake(req: express.Request): Promise<any> {
   return new Promise((resolve, reject) => {
-    const form = new FormData()
-    req.busboy.on('field', (name, value, _info) => {
-      form.append(name, value)
-    })
-    req.busboy.on('file', (name, file, { filename }) => {
-      form.append(name, file, { filename })
-      const intakeRequest = prepareIntakeRequest(req, form.getHeaders())
-      form.pipe(intakeRequest)
-      intakeRequest.on('response', resolve)
-      intakeRequest.on('error', reject)
-    })
+    const intakeRequest = prepareIntakeRequest(req)
+    req.pipe(intakeRequest)
+    intakeRequest.on('response', resolve)
+    intakeRequest.on('error', reject)
   })
 }
 
-function prepareIntakeRequest(req: express.Request, headers: object) {
+function prepareIntakeRequest(req: express.Request) {
   const ddforward = req.query.ddforward! as string
   if (!/^https:\/\/(session-replay|rum|logs)\.browser-intake-datadoghq\.com\//.test(ddforward)) {
     throw new Error(`Unsupported ddforward: ${ddforward}`)
@@ -151,8 +142,8 @@ function prepareIntakeRequest(req: express.Request, headers: object) {
   const options = {
     method: 'POST',
     headers: {
-      ...headers,
       'X-Forwarded-For': req.socket.remoteAddress,
+      'Content-Type': req.headers['content-type'],
       'User-Agent': req.headers['user-agent'],
     },
   }
