@@ -357,19 +357,6 @@ export function safeTruncate(candidate: string, length: number, suffix = '') {
   return `${candidate.slice(0, correctedLength)}${suffix}`
 }
 
-export interface EventEmitter {
-  addEventListener(
-    event: DOM_EVENT,
-    listener: (event: Event) => void,
-    options?: boolean | { capture?: boolean; passive?: boolean }
-  ): void
-  removeEventListener(
-    event: DOM_EVENT,
-    listener: (event: Event) => void,
-    options?: boolean | { capture?: boolean; passive?: boolean }
-  ): void
-}
-
 interface AddEventListenerOptions {
   once?: boolean
   capture?: boolean
@@ -377,7 +364,7 @@ interface AddEventListenerOptions {
 }
 
 /**
- * Add an event listener to an event emitter object (Window, Element, mock object...).  This provides
+ * Add an event listener to an event target object (Window, Element, mock object...).  This provides
  * a few conveniences compared to using `element.addEventListener` directly:
  *
  * * supports IE11 by: using an option object only if needed and emulating the `once` option
@@ -387,16 +374,16 @@ interface AddEventListenerOptions {
  * * returns a `stop` function to remove the listener
  */
 export function addEventListener<E extends Event>(
-  emitter: EventEmitter,
+  eventTarget: EventTarget,
   event: DOM_EVENT,
   listener: (event: E) => void,
   options?: AddEventListenerOptions
 ) {
-  return addEventListeners(emitter, [event], listener, options)
+  return addEventListeners(eventTarget, [event], listener, options)
 }
 
 /**
- * Add event listeners to an event emitter object (Window, Element, mock object...).  This provides
+ * Add event listeners to an event target object (Window, Element, mock object...).  This provides
  * a few conveniences compared to using `element.addEventListener` directly:
  *
  * * supports IE11 by: using an option object only if needed and emulating the `once` option
@@ -408,10 +395,10 @@ export function addEventListener<E extends Event>(
  * * with `once: true`, the listener will be called at most once, even if different events are listened
  */
 export function addEventListeners<E extends Event>(
-  emitter: EventEmitter,
+  eventTarget: EventTarget,
   events: DOM_EVENT[],
   listener: (event: E) => void,
-  { once, capture, passive }: { once?: boolean; capture?: boolean; passive?: boolean } = {}
+  { once, capture, passive }: AddEventListenerOptions = {}
 ) {
   const wrappedListener = monitor(
     once
@@ -423,8 +410,8 @@ export function addEventListeners<E extends Event>(
   )
 
   const options = passive ? { capture, passive } : capture
-  events.forEach((event) => emitter.addEventListener(event, wrappedListener, options))
-  const stop = () => events.forEach((event) => emitter.removeEventListener(event, wrappedListener, options))
+  events.forEach((event) => eventTarget.addEventListener(event, wrappedListener, options))
+  const stop = () => events.forEach((event) => eventTarget.removeEventListener(event, wrappedListener, options))
 
   return {
     stop,
