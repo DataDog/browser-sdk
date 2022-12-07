@@ -1,4 +1,5 @@
 import { monitor } from '../tools/monitor'
+import { getZoneJsOriginalValue } from '../tools/getZoneJsOriginalValue'
 
 export const enum DOM_EVENT {
   BEFORE_UNLOAD = 'beforeunload',
@@ -86,8 +87,14 @@ export function addEventListeners<E extends Event>(
   )
 
   const options = passive ? { capture, passive } : capture
-  events.forEach((event) => eventTarget.addEventListener(event, wrappedListener, options))
-  const stop = () => events.forEach((event) => eventTarget.removeEventListener(event, wrappedListener, options))
+
+  const add = getZoneJsOriginalValue(eventTarget, 'addEventListener')
+  events.forEach((event) => add.call(eventTarget, event, wrappedListener, options))
+
+  function stop() {
+    const remove = getZoneJsOriginalValue(eventTarget, 'removeEventListener')
+    events.forEach((event) => remove.call(eventTarget, event, wrappedListener, options))
+  }
 
   return {
     stop,

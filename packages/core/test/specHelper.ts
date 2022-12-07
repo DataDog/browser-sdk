@@ -4,6 +4,7 @@ import { resetNavigationStart } from '../src/tools/timeUtils'
 import { buildUrl } from '../src/tools/urlPolyfill'
 import { noop, objectEntries, assign } from '../src/tools/utils'
 import type { BrowserWindowWithEventBridge } from '../src/transport'
+import type { BrowserWindowWithZoneJs } from '../src/tools/getZoneJsOriginalValue'
 
 // to simulate different build env behavior
 export interface BuildEnvWindow {
@@ -482,6 +483,34 @@ export function interceptRequests() {
       }
       stubXhrManager?.reset()
       StubXhr.onSend = noop
+    },
+  }
+}
+
+export function stubZoneJs() {
+  const browserWindow = window as BrowserWindowWithZoneJs
+  const restorers: Array<() => void> = []
+
+  function getSymbol(name: string) {
+    return `__zone_symbol__${name}`
+  }
+
+  browserWindow.Zone = { __symbol__: getSymbol }
+
+  return {
+    restore: () => {
+      delete browserWindow.Zone
+      restorers.forEach((restorer) => restorer())
+    },
+    getSymbol,
+    replaceProperty<Target, Name extends keyof Target & string>(target: Target, name: Name, replacement: Target[Name]) {
+      const original = target[name]
+      target[name] = replacement
+      ;(target as any)[getSymbol(name)] = original
+      restorers.push(() => {
+        delete (target as any)[getSymbol(name)]
+        target[name] = original
+      })
     },
   }
 }
