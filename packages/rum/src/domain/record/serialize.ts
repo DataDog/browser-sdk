@@ -199,7 +199,7 @@ export function serializeElementNode(element: Element, options: SerializeOptions
     childNodes = serializeChildNodes(element, childNodesSerializationOptions)
   }
 
-  const isShadowHost = (element.shadowRoot !== null && isExperimentalFeatureEnabled('recordShadowDom')) || undefined
+  const isShadowHost = isExperimentalFeatureEnabled('recordShadowDom') && element.shadowRoot !== null
   if (isShadowHost && element.shadowRoot !== null) {
     options.shadowDomCreatedCallback(element.shadowRoot)
   }
@@ -210,7 +210,7 @@ export function serializeElementNode(element: Element, options: SerializeOptions
     attributes,
     childNodes,
     isSVG,
-    isShadowHost,
+    isShadowHost: isShadowHost || undefined,
   }
 }
 

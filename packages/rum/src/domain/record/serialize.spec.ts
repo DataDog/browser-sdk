@@ -40,12 +40,6 @@ const DEFAULT_SERIALIZATION_CONTEXT = {
   elementsScrollPositions: createElementsScrollPositions(),
 }
 
-const shadowDomCreatedCallback = jasmine.createSpy()
-
-beforeEach(() => {
-  shadowDomCreatedCallback.calls.reset()
-})
-
 const DEFAULT_OPTIONS: SerializeOptions = {
   parentNodePrivacyLevel: NodePrivacyLevel.ALLOW,
   serializationContext: DEFAULT_SERIALIZATION_CONTEXT,
@@ -463,7 +457,7 @@ describe('serializeNodeWithId', () => {
       expect(shadowDomCreatedCallbackSpy).toHaveBeenCalledWith(div.shadowRoot!)
     })
 
-    it('serializes a shadow host with children with experimental flag missing', () => {
+    it('does not serialize shadow host children when the experimental flag is missing', () => {
       const div = document.createElement('div')
       div.attachShadow({ mode: 'open' })
       div.shadowRoot!.appendChild(document.createElement('hr'))
