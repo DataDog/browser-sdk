@@ -9,9 +9,16 @@ import {
   addEventListeners,
   addEventListener,
   noop,
+  isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
 import type { LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
-import { initViewportObservable, ActionType, RumEventType, LifeCycleEventType } from '@datadog/browser-rum-core'
+import {
+  isShadowHost,
+  initViewportObservable,
+  ActionType,
+  RumEventType,
+  LifeCycleEventType,
+} from '@datadog/browser-rum-core'
 import { NodePrivacyLevel } from '../../constants'
 import type {
   InputState,
@@ -507,8 +514,12 @@ export function initFrustrationObserver(lifeCycle: LifeCycle, frustrationCb: Fru
 }
 
 function getEventTarget(event: Event): Node {
-  if (!event.composed) {
-    return event.target as Node
+  if (
+    event.composed === true &&
+    isShadowHost(event.target as Node) &&
+    isExperimentalFeatureEnabled('recordShadowDom')
+  ) {
+    return event.composedPath()[0] as Node
   }
-  return event.composedPath()[0] as Node
+  return event.target as Node
 }

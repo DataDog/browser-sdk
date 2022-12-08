@@ -1,4 +1,11 @@
-import { DefaultPrivacyLevel, isIE, noop, relativeNow, timeStampNow } from '@datadog/browser-core'
+import {
+  DefaultPrivacyLevel,
+  isIE,
+  noop,
+  relativeNow,
+  timeStampNow,
+  updateExperimentalFeatures,
+} from '@datadog/browser-core'
 import type { RawRumActionEvent, RumConfiguration } from '@datadog/browser-rum-core'
 import { ActionType, LifeCycle, LifeCycleEventType, RumEventType, FrustrationType } from '@datadog/browser-rum-core'
 import type { RawRumEventCollectedData } from 'packages/rum-core/src/domain/lifeCycle'
@@ -57,8 +64,9 @@ describe('initInputObserver', () => {
 
   // cannot trigger a event in a Shadow DOM because event with `isTrusted:false` do not cross the root
   it('collects input values when an "input" event is composed', () => {
+    updateExperimentalFeatures(['recordShadowDom'])
     stopInputObserver = initInputObserver(inputCallbackSpy, DefaultPrivacyLevel.ALLOW)
-    dispatchComposedInputEvent('foo')
+    dispatchInputEventWithInShadowDom('foo')
 
     expect(inputCallbackSpy).toHaveBeenCalledOnceWith({
       text: 'foo',
@@ -97,10 +105,12 @@ describe('initInputObserver', () => {
     input.dispatchEvent(createNewEvent('input', { target: input }))
   }
 
-  function dispatchComposedInputEvent(newValue: string) {
+  function dispatchInputEventWithInShadowDom(newValue: string) {
     input.value = newValue
-    const event = createNewEvent('input', { target: sandbox, composed: true })
-    event.composedPath = () => [input, sandbox, document.body]
+    const host = document.createElement('div')
+    host.attachShadow({ mode: 'open' })
+    const event = createNewEvent('input', { target: host, composed: true })
+    event.composedPath = () => [input, host, sandbox, document.body]
     input.dispatchEvent(event)
   }
 })
