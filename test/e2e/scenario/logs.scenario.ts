@@ -1,6 +1,6 @@
 import { DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT } from '@datadog/browser-logs/cjs/domain/configuration'
 import { createTest, flushEvents } from '../lib/framework'
-import { UNREACHABLE_URL } from '../lib/helpers/constants'
+import { APPLICATION_ID, UNREACHABLE_URL } from '../lib/helpers/constants'
 import { browserExecute, browserExecuteAsync, flushBrowserLogs, withBrowserLogs } from '../lib/helpers/browser'
 
 describe('logs', () => {
@@ -152,7 +152,7 @@ describe('logs', () => {
       await flushEvents()
       expect(serverEvents.logs.length).toBe(1)
       expect(serverEvents.logs[0].view.id).toBeDefined()
-      expect(serverEvents.logs[0].application_id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
+      expect(serverEvents.logs[0].application_id).toBe(APPLICATION_ID)
     })
 
   createTest('allow to modify events')
