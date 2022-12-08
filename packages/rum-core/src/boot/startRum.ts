@@ -1,5 +1,6 @@
 import type { Observable, TelemetryEvent, RawError } from '@datadog/browser-core'
 import {
+  sendToExtension,
   createPageExitObservable,
   TelemetryService,
   addTelemetryConfiguration,
@@ -42,6 +43,8 @@ export function startRum(
   initialViewOptions?: ViewOptions
 ) {
   const lifeCycle = new LifeCycle()
+
+  lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (event) => sendToExtension('rum', event))
 
   const telemetry = startRumTelemetry(configuration)
   telemetry.setContextProvider(() => ({

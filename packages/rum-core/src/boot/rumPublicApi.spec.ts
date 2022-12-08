@@ -874,6 +874,6 @@ describe('rum public api', () => {
 
   it('should provide sdk version', () => {
     const rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
-    expect(rumPublicApi.version).toBe('dev')
+    expect(rumPublicApi.version).toBe('test')
   })
 })

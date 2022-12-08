@@ -1,7 +1,7 @@
 import { Alert, Button, Center, Group, MantineProvider } from '@mantine/core'
 import { useColorScheme } from '@mantine/hooks'
 import React, { Suspense, useState } from 'react'
-import { setOnDisconnect } from './actions'
+import { listenDisconnectEvent } from './disconnectEvent'
 
 import { Panel } from './panel'
 
@@ -9,7 +9,7 @@ export function App() {
   const colorScheme = useColorScheme()
   const [isDisconnected, setIsDisconnected] = useState(false)
 
-  setOnDisconnect(() => setIsDisconnected(true))
+  listenDisconnectEvent(() => setIsDisconnected(true))
 
   return (
     <MantineProvider

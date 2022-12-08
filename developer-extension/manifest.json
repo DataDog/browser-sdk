@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Datadog Browser SDK developer extension",
-  "permissions": ["webRequest", "storage", "browsingData", "declarativeNetRequest", "webNavigation"],
+  "permissions": ["webRequest", "storage", "browsingData", "declarativeNetRequest", "webNavigation", "scripting"],
   "host_permissions": ["<all_urls>"],
   "icons": {
     "256": "icon.png"

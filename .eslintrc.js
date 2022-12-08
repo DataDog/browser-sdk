@@ -205,7 +205,7 @@ module.exports = {
       },
     },
     {
-      files: ['packages/*/src/**/*.ts'],
+      files: ['packages/*/src/**/*.ts', 'developer-extension/src/**/*.{tsx,ts}'],
       rules: {
         'no-console': 'error',
       },
