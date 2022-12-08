@@ -16,6 +16,7 @@ describe('isTextNode', () => {
     [document.createElement('div'), false],
     [document.body, false],
     [document.createComment('hello'), false],
+    ['hello' as unknown as Node, false],
   ]
 
   parameters.forEach(([element, result]) => {
@@ -31,6 +32,7 @@ describe('isCommentNode', () => {
     [document.createTextNode('hello'), false],
     [document.createElement('div'), false],
     [document.body, false],
+    ['hello' as unknown as Node, false],
   ]
 
   parameters.forEach(([element, result]) => {
@@ -46,6 +48,7 @@ describe('isElementNode', () => {
     [document.body, true],
     [document.createTextNode('hello'), false],
     [document.createComment('hello'), false],
+    ['hello' as unknown as Node, false],
   ]
 
   parameters.forEach(([element, result]) => {
