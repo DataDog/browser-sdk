@@ -68,13 +68,15 @@ function processRequest(
 
   const responseDurationInfo = computeResponseDurationInfo(request)
 
+  const duration = toServerDuration(request.duration)
+
   const resourceEvent = combine(
     {
       date: startClocks.timeStamp,
       resource: {
         id: generateUUID(),
         type,
-        duration: toServerDuration(request.duration),
+        duration,
         method: request.method,
         status_code: request.status,
         url: request.url,
@@ -84,7 +86,15 @@ function processRequest(
     tracingInfo,
     correspondingTimingOverrides,
     indexingInfo,
-    responseDurationInfo
+    responseDurationInfo,
+    {
+      _dd: {
+        computed_duration: duration,
+        performance_entry_duration: correspondingTimingOverrides
+          ? correspondingTimingOverrides.resource.duration
+          : undefined,
+      },
+    }
   )
   return {
     startTime: startClocks.relative,
