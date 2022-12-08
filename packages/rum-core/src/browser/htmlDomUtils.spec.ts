@@ -7,6 +7,7 @@ import {
   getChildNodes,
   getNodeOrShadowHost,
   getParentNode,
+  isShadowHost,
 } from './htmlDomUtils'
 
 describe('isTextNode', () => {
@@ -71,6 +72,27 @@ describe('isShadowRoot', () => {
   parameters.forEach(([element, result]) => {
     it(`should return ${String(result)} for "${String(element)}"`, () => {
       expect(isShadowRoot(element)).toBe(result)
+    })
+  })
+})
+
+describe('isShadowHost', () => {
+  if (isIE()) {
+    pending('IE not supported')
+  }
+  const host = document.createElement('div')
+  host.attachShadow({ mode: 'open' })
+  const parameters: Array<[Node, boolean]> = [
+    [host, true],
+    [host.shadowRoot!, false],
+    [document.body, false],
+    [document.createTextNode('hello'), false],
+    [document.createComment('hello'), false],
+  ]
+
+  parameters.forEach(([element, result]) => {
+    it(`should return ${String(result)} for "${String(element)}"`, () => {
+      expect(isShadowHost(element)).toBe(result)
     })
   })
 })

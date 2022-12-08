@@ -10,6 +10,10 @@ export function isElementNode(node: Node): node is Element {
   return node.nodeType === node.ELEMENT_NODE
 }
 
+export function isShadowHost(node: Node): node is Node & { shadowRoot: ShadowRoot } {
+  return isElementNode(node) && node.shadowRoot !== null
+}
+
 export function isShadowRoot(node: Node): node is ShadowRoot {
   const shadowRoot = node as ShadowRoot
   return !!shadowRoot.host && isElementNode(shadowRoot.host)
