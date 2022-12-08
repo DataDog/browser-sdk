@@ -32,11 +32,10 @@ import { RecordType, IncrementalSource, MediaInteractionType, MouseInteractionTy
 import { getNodePrivacyLevel, shouldMaskNode } from './privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from './serializationUtils'
 import { assembleIncrementalSnapshot, forEach, getPathToNestedCSSRule, isTouchEvent } from './utils'
-import type { MutationController } from './mutationObserver'
+import type { MutationController, ShadowDomCallBacks } from './mutationObserver'
 import { startMutationObserver } from './mutationObserver'
 import { getVisualViewport, getScrollX, getScrollY, convertMouseEventToLayoutCoordinates } from './viewports'
 import type { ElementsScrollPositions } from './elementsScrollPositions'
-import type { ShadowDomCallBack } from './serialize'
 
 const MOUSE_MOVE_OBSERVER_THRESHOLD = 50
 const SCROLL_OBSERVER_THRESHOLD = 100
@@ -97,7 +96,7 @@ interface ObserverParam {
   styleSheetCb: StyleSheetCallback
   focusCb: FocusCallback
   frustrationCb: FrustrationCallback
-  shadowDomCreatedCallback: ShadowDomCallBack
+  shadowDomCallBacks: ShadowDomCallBacks
 }
 
 export function initObservers(o: ObserverParam): ListenerHandler {
@@ -105,7 +104,7 @@ export function initObservers(o: ObserverParam): ListenerHandler {
     o.mutationController,
     o.mutationCb,
     o.configuration,
-    o.shadowDomCreatedCallback
+    o.shadowDomCallBacks
   )
   const mousemoveHandler = initMoveObserver(o.mousemoveCb)
   const mouseInteractionHandler = initMouseInteractionObserver(
@@ -143,9 +142,9 @@ export function initMutationObserver(
   mutationController: MutationController,
   cb: MutationCallBack,
   configuration: RumConfiguration,
-  shadowDomCreatedCallback: ShadowDomCallBack
+  shadowDomCallBacks: ShadowDomCallBacks
 ) {
-  return startMutationObserver(mutationController, cb, configuration, shadowDomCreatedCallback, document).stop
+  return startMutationObserver(mutationController, cb, configuration, shadowDomCallBacks, document).stop
 }
 
 function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {

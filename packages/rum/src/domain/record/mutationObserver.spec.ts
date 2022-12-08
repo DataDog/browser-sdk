@@ -1,4 +1,4 @@
-import { DefaultPrivacyLevel, isIE, noop } from '@datadog/browser-core'
+import { DefaultPrivacyLevel, isIE, noop, updateExperimentalFeatures } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { collectAsyncCalls, createMutationPayloadValidator } from '../../../test/utils'
 import {
@@ -10,6 +10,7 @@ import {
 } from '../../constants'
 import type { AttributeMutation, Attributes } from '../../types'
 import { NodeType } from '../../types'
+import type { ShadowDomCallBack } from './serialize'
 import { serializeDocument, SerializationContextStatus } from './serialize'
 import { sortAddedAndMovedNodes, startMutationObserver, MutationController } from './mutationObserver'
 import type { MutationCallBack } from './observers'
@@ -18,6 +19,14 @@ import { createElementsScrollPositions } from './elementsScrollPositions'
 describe('startMutationCollection', () => {
   let sandbox: HTMLElement
   let stopMutationCollection: () => void
+
+  let shadowDomCreatedCallbackSpy: jasmine.Spy<ShadowDomCallBack>
+  let shadowDomRemovedCallbackSpy: jasmine.Spy<ShadowDomCallBack>
+
+  beforeEach(() => {
+    shadowDomCreatedCallbackSpy = jasmine.createSpy<ShadowDomCallBack>()
+    shadowDomRemovedCallbackSpy = jasmine.createSpy<ShadowDomCallBack>()
+  })
 
   function startMutationCollection(defaultPrivacyLevel: DefaultPrivacyLevel = DefaultPrivacyLevel.ALLOW) {
     const mutationCallbackSpy = jasmine.createSpy<MutationCallBack>()
@@ -29,7 +38,7 @@ describe('startMutationCollection', () => {
       {
         defaultPrivacyLevel,
       } as RumConfiguration,
-      noop,
+      { shadowDomCreatedCallback: shadowDomCreatedCallbackSpy, shadowDomRemovedCallback: shadowDomRemovedCallbackSpy },
       document
     ))
 
@@ -436,6 +445,93 @@ describe('startMutationCollection', () => {
             }),
           },
         ],
+      })
+    })
+
+    describe('for shadow DOM', () => {
+      it('should call shadowDomCreatedCallback when host is added', () => {
+        updateExperimentalFeatures(['recordShadowDom'])
+
+        const serializedDocument = serializeDocumentWithDefaults()
+        const { mutationController, mutationCallbackSpy, getLatestMutationPayload } = startMutationCollection()
+        const host = document.createElement('div')
+        const shadowRoot = host.attachShadow({ mode: 'open' })
+        shadowRoot.appendChild(document.createElement('span'))
+        sandbox.appendChild(host)
+        mutationController.flush()
+
+        expect(mutationCallbackSpy).toHaveBeenCalledTimes(1)
+        const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+
+        const child = expectNewNode({ type: NodeType.Element, tagName: 'span' })
+        const expectedHost = expectNewNode({ type: NodeType.Element, tagName: 'div', isShadowHost: true }).withChildren(
+          child
+        )
+        validate(getLatestMutationPayload(), {
+          adds: [
+            {
+              parent: expectInitialNode({ idAttribute: 'sandbox' }),
+              node: expectedHost,
+            },
+          ],
+        })
+        expect(shadowDomCreatedCallbackSpy).toHaveBeenCalledOnceWith(shadowRoot)
+        expect(shadowDomRemovedCallbackSpy).not.toHaveBeenCalled()
+      })
+
+      it('should call shadowDomCreatedCallback when host is removed', () => {
+        updateExperimentalFeatures(['recordShadowDom'])
+        const host = document.createElement('div')
+        host.id = 'host'
+        const shadowRoot = host.attachShadow({ mode: 'open' })
+        shadowRoot.appendChild(document.createElement('span'))
+        sandbox.appendChild(host)
+        const serializedDocument = serializeDocumentWithDefaults()
+        const { mutationController, mutationCallbackSpy, getLatestMutationPayload } = startMutationCollection()
+        host.remove()
+        mutationController.flush()
+        expect(mutationCallbackSpy).toHaveBeenCalledTimes(1)
+
+        const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+        validate(getLatestMutationPayload(), {
+          removes: [
+            {
+              parent: expectInitialNode({ idAttribute: 'sandbox' }),
+              node: expectInitialNode({ idAttribute: 'host' }),
+            },
+          ],
+        })
+        expect(shadowDomCreatedCallbackSpy).not.toHaveBeenCalled()
+        expect(shadowDomRemovedCallbackSpy).toHaveBeenCalledOnceWith(shadowRoot)
+      })
+
+      it('should call shadowDomCreatedCallback when parent of host is removed', () => {
+        updateExperimentalFeatures(['recordShadowDom'])
+        const parent = document.createElement('div')
+        parent.id = 'parent'
+        const host = document.createElement('div')
+        host.id = 'host'
+        parent.appendChild(host)
+        const shadowRoot = host.attachShadow({ mode: 'open' })
+        shadowRoot.appendChild(document.createElement('span'))
+        sandbox.appendChild(parent)
+        const serializedDocument = serializeDocumentWithDefaults()
+        const { mutationController, mutationCallbackSpy, getLatestMutationPayload } = startMutationCollection()
+        parent.remove()
+        mutationController.flush()
+        expect(mutationCallbackSpy).toHaveBeenCalledTimes(1)
+
+        const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+        validate(getLatestMutationPayload(), {
+          removes: [
+            {
+              parent: expectInitialNode({ idAttribute: 'sandbox' }),
+              node: expectInitialNode({ idAttribute: 'parent' }),
+            },
+          ],
+        })
+        expect(shadowDomCreatedCallbackSpy).not.toHaveBeenCalled()
+        expect(shadowDomRemovedCallbackSpy).toHaveBeenCalledOnceWith(shadowRoot)
       })
     })
   })

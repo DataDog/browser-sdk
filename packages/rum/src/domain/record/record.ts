@@ -1,5 +1,5 @@
 import type { TimeStamp } from '@datadog/browser-core'
-import { DOM_EVENT, timeStampNow } from '@datadog/browser-core'
+import { DOM_EVENT, timeStampNow, addTelemetryDebug } from '@datadog/browser-core'
 import type { LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
 import { getViewportDimension } from '@datadog/browser-rum-core'
 import type {
@@ -29,10 +29,16 @@ export interface RecordOptions {
   lifeCycle: LifeCycle
 }
 
+interface ShadowDomCallBacks {
+  stop: () => void
+  flush: () => void
+}
 export interface RecordAPI {
   stop: () => void
   takeSubsequentFullSnapshot: (timestamp?: TimeStamp) => void
+  // the following is only used for testing purposes
   flushMutations: () => void
+  shadowDomCallBacks: Map<ShadowRoot, ShadowDomCallBacks>
 }
 
 export function record(options: RecordOptions): RecordAPI {
@@ -42,28 +48,53 @@ export function record(options: RecordOptions): RecordAPI {
     throw new Error('emit function is required')
   }
 
-  const mutationController = new MutationController()
+  const shadowDomCallBacks = new Map<ShadowRoot, ShadowDomCallBacks>()
   const elementsScrollPositions = createElementsScrollPositions()
+
+  const shadowDomRemovedCallback = (shadowRoot: ShadowRoot) => {
+    const entry = shadowDomCallBacks.get(shadowRoot)
+    if (!entry) {
+      addTelemetryDebug('no shadow root in map')
+      return
+    }
+    entry.stop()
+    shadowDomCallBacks.delete(shadowRoot)
+  }
 
   const mutationCb = (mutation: BrowserMutationPayload) => {
     emit(assembleIncrementalSnapshot<BrowserMutationData>(IncrementalSource.Mutation, mutation))
   }
   const inputCb: InputCallback = (s) => emit(assembleIncrementalSnapshot<InputData>(IncrementalSource.Input, s))
-
   const shadowDomCreatedCallback = (shadowRoot: ShadowRoot) => {
-    startMutationObserver(mutationController, mutationCb, options.configuration, shadowDomCreatedCallback, shadowRoot)
+    const shadowDomMutationController = new MutationController()
+    const { stop: stopMutationObserver } = startMutationObserver(
+      shadowDomMutationController,
+      mutationCb,
+      options.configuration,
+      { shadowDomCreatedCallback, shadowDomRemovedCallback },
+      shadowRoot
+    )
     // the change event no do bubble up across the shadow root, we have to listen on the shadow root
-    initInputObserver(inputCb, options.configuration.defaultPrivacyLevel, {
+    const stopInputObserver = initInputObserver(inputCb, options.configuration.defaultPrivacyLevel, {
       target: shadowRoot,
       domEvents: [DOM_EVENT.CHANGE],
     })
+    shadowDomCallBacks.set(shadowRoot, {
+      flush: () => shadowDomMutationController.flush(),
+      stop: () => {
+        stopMutationObserver()
+        stopInputObserver()
+      },
+    })
   }
 
+  const documentMutationController = new MutationController()
   const takeFullSnapshot = (
     timestamp = timeStampNow(),
     serializationContext = { status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT, elementsScrollPositions }
   ) => {
-    mutationController.flush() // process any pending mutation before taking a full snapshot
+    shadowDomCallBacks.forEach(({ flush }) => flush())
+    documentMutationController.flush() // process any pending mutation before taking a full snapshot
     const { width, height } = getViewportDimension()
     emit({
       data: {
@@ -109,7 +140,7 @@ export function record(options: RecordOptions): RecordAPI {
   const stopObservers = initObservers({
     lifeCycle: options.lifeCycle,
     configuration: options.configuration,
-    mutationController,
+    mutationController: documentMutationController,
     elementsScrollPositions,
     inputCb,
     mediaInteractionCb: (p) =>
@@ -135,16 +166,23 @@ export function record(options: RecordOptions): RecordAPI {
         timestamp: timeStampNow(),
       })
     },
-    shadowDomCreatedCallback,
+    shadowDomCallBacks: { shadowDomCreatedCallback, shadowDomRemovedCallback },
   })
 
   return {
-    stop: stopObservers,
+    stop: () => {
+      shadowDomCallBacks.forEach(({ stop }) => stop())
+      stopObservers()
+    },
     takeSubsequentFullSnapshot: (timestamp) =>
       takeFullSnapshot(timestamp, {
         status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT,
         elementsScrollPositions,
       }),
-    flushMutations: () => mutationController.flush(),
+    flushMutations: () => {
+      shadowDomCallBacks.forEach(({ flush }) => flush())
+      documentMutationController.flush()
+    },
+    shadowDomCallBacks,
   }
 }

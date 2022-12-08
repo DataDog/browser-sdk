@@ -1,4 +1,10 @@
-import { DefaultPrivacyLevel, isIE, resetExperimentalFeatures, updateExperimentalFeatures } from '@datadog/browser-core'
+import {
+  DefaultPrivacyLevel,
+  findLast,
+  isIE,
+  resetExperimentalFeatures,
+  updateExperimentalFeatures,
+} from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycle } from '@datadog/browser-rum-core'
 import type { Clock } from '../../../../core/test/specHelper'
@@ -221,7 +227,7 @@ describe('record', () => {
       resetExperimentalFeatures()
     })
 
-    it('should record a simple mutation inside a shadow root', async () => {
+    it('should record a simple mutation inside a shadow root', () => {
       updateExperimentalFeatures(['recordShadowDom'])
       const div = document.createElement('div')
       div.className = 'toto'
@@ -230,10 +236,9 @@ describe('record', () => {
       expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot())
 
       div.className = 'titi'
-      await new Promise((resolve) => {
-        setTimeout(resolve, 100)
-      })
+
       recordApi.flushMutations()
+      expect(recordApi.shadowDomCallBacks.size).toBe(1)
       expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot() + 1)
       const innerMutationData = getLastIncrementalSnapshotData<BrowserMutationData>(
         getEmittedRecords(),
@@ -243,7 +248,7 @@ describe('record', () => {
       expect(innerMutationData.attributes[0].attributes.class).toBe('titi')
     })
 
-    it('should record a direct removal inside a shadow root', async () => {
+    it('should record a direct removal inside a shadow root', () => {
       updateExperimentalFeatures(['recordShadowDom'])
       const span = document.createElement('span')
       createShadow([span])
@@ -251,9 +256,7 @@ describe('record', () => {
       expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot())
 
       span.remove()
-      await new Promise((resolve) => {
-        setTimeout(resolve, 100)
-      })
+
       recordApi.flushMutations()
       const fs = findFullSnapshot({ records: getEmittedRecords() })!
       const host = findElementWithIdAttribute(fs.data.node, 'host')!
@@ -266,7 +269,7 @@ describe('record', () => {
       expect(innerMutationData.removes[0].parentId).toBe(host.id)
     })
 
-    it('should record a direct addition inside a shadow root', async () => {
+    it('should record a direct addition inside a shadow root', () => {
       updateExperimentalFeatures(['recordShadowDom'])
       const span = document.createElement('span')
       const shadowRoot = createShadow([span])
@@ -274,9 +277,7 @@ describe('record', () => {
       expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot())
 
       shadowRoot.appendChild(document.createElement('span'))
-      await new Promise((resolve) => {
-        setTimeout(resolve, 100)
-      })
+
       recordApi.flushMutations()
       expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot() + 1)
       const fs = findFullSnapshot({ records: getEmittedRecords() })!
@@ -323,7 +324,7 @@ describe('record', () => {
       expect(innerMutationData.attributes[0].attributes.class).toBe('titi')
     })
 
-    it('should record the change event inside a shadow root', async () => {
+    it('should record the change event inside a shadow root', () => {
       updateExperimentalFeatures(['recordShadowDom'])
       const radio = document.createElement('input')
       radio.setAttribute('type', 'radio')
@@ -334,15 +335,32 @@ describe('record', () => {
       // inner mutation
       radio.checked = true
       radio.dispatchEvent(createNewEvent('change', { target: radio, composed: false }))
-      await new Promise((resolve) => {
-        setTimeout(resolve, 100)
-      })
+
       recordApi.flushMutations()
       const innerMutationData = getLastIncrementalSnapshotData<BrowserMutationData & { isChecked: boolean }>(
         getEmittedRecords(),
         IncrementalSource.Input
       )
       expect(innerMutationData.isChecked).toBe(true)
+    })
+
+    it('should clean the state once the shadow dom is removed to avoid memory leak', () => {
+      updateExperimentalFeatures(['recordShadowDom'])
+      const div = document.createElement('div')
+      div.className = 'toto'
+      const shadowRoot = createShadow([div])
+      startRecording()
+      expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot())
+      expect(recordApi.shadowDomCallBacks.size).toBe(1)
+      shadowRoot.host.remove()
+      recordApi.flushMutations()
+      expect(recordApi.shadowDomCallBacks.size).toBe(0)
+      expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot() + 1)
+      const mutationData = getLastIncrementalSnapshotData<BrowserMutationData>(
+        getEmittedRecords(),
+        IncrementalSource.Mutation
+      )
+      expect(mutationData.removes.length).toBe(1)
     })
 
     function createShadow(children: Element[]) {
@@ -379,9 +397,11 @@ export function getLastIncrementalSnapshotData<T extends BrowserIncrementalSnaps
   records: BrowserRecord[],
   source: IncrementalSource
 ): T {
-  const record = [...records.reverse()].find(
-    (record) => record.type === RecordType.IncrementalSnapshot && record.data.source === source
+  const record = findLast(
+    records,
+    (record): record is BrowserIncrementalSnapshotRecord & { data: T } =>
+      record.type === RecordType.IncrementalSnapshot && record.data.source === source
   )
   expect(record).toBeTruthy(`Could not find IncrementalSnapshot/${source} in ${records.length} records`)
-  return (record as BrowserIncrementalSnapshotRecord).data as T
+  return record!.data
 }
