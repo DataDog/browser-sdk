@@ -1,5 +1,12 @@
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
-import { relativeToClocks, isIE, RequestType, ResourceType } from '@datadog/browser-core'
+import {
+  relativeToClocks,
+  resetExperimentalFeatures,
+  updateExperimentalFeatures,
+  isIE,
+  RequestType,
+  ResourceType,
+} from '@datadog/browser-core'
 import { createResourceEntry } from '../../../../test/fixtures'
 import type { TestSetupBuilder } from '../../../../test/specHelper'
 import { setup } from '../../../../test/specHelper'
@@ -26,6 +33,7 @@ describe('resourceCollection', () => {
   })
 
   afterEach(() => {
+    resetExperimentalFeatures()
     setupBuilder.cleanup()
   })
 
@@ -75,7 +83,7 @@ describe('resourceCollection', () => {
     )
 
     expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
-    expect(rawRumEvents[0].rawRumEvent as any).toEqual({
+    expect(rawRumEvents[0].rawRumEvent).toEqual({
       date: jasmine.any(Number),
       resource: {
         id: jasmine.any(String),
@@ -91,8 +99,6 @@ describe('resourceCollection', () => {
         resolveDuration: undefined,
         durationDiff: undefined,
         durationPercentageDiff: undefined,
-        computed_duration: 100000000,
-        performance_entry_duration: undefined,
       },
     })
     expect(rawRumEvents[0].domainContext).toEqual({
@@ -106,6 +112,8 @@ describe('resourceCollection', () => {
   })
 
   it('should collect computed duration and performance entry duration when resource_durations ff is enabled', () => {
+    updateExperimentalFeatures(['resource_durations'])
+
     const match = createResourceEntry({ startTime: 200 as RelativeTime, duration: 300 as Duration })
     spyOn(performance, 'getEntriesByName').and.returnValues([match] as unknown as PerformanceResourceTiming[])
 
@@ -155,8 +163,7 @@ describe('resourceCollection', () => {
     )
 
     expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
-
-    expect(rawRumEvents[0].rawRumEvent as any).toEqual({
+    expect(rawRumEvents[0].rawRumEvent).toEqual({
       date: jasmine.any(Number),
       resource: {
         id: jasmine.any(String),
@@ -172,8 +179,6 @@ describe('resourceCollection', () => {
         resolveDuration: (50 * 1e6) as ServerDuration,
         durationDiff: (50 * 1e6) as ServerDuration,
         durationPercentageDiff: 50,
-        computed_duration: 100000000,
-        performance_entry_duration: undefined,
       },
     })
     expect(rawRumEvents[0].domainContext).toEqual({

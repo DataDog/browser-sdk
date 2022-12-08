@@ -7,6 +7,7 @@ import {
   relativeToClocks,
   assign,
   isNumber,
+  isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
 import type { ClocksState, Duration } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
@@ -87,14 +88,16 @@ function processRequest(
     correspondingTimingOverrides,
     indexingInfo,
     responseDurationInfo,
-    {
-      _dd: {
-        computed_duration: duration,
-        performance_entry_duration: correspondingTimingOverrides
-          ? correspondingTimingOverrides.resource.duration
-          : undefined,
-      },
-    }
+    isExperimentalFeatureEnabled('resource_durations')
+      ? {
+          _dd: {
+            computed_duration: duration,
+            performance_entry_duration: correspondingTimingOverrides
+              ? correspondingTimingOverrides.resource.duration
+              : undefined,
+          },
+        }
+      : undefined
   )
   return {
     startTime: startClocks.relative,
