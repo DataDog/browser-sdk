@@ -517,7 +517,7 @@ function getEventTarget(event: Event): Node {
   if (
     event.composed === true &&
     isNodeShadowHost(event.target as Node) &&
-    isExperimentalFeatureEnabled('recordShadowDom')
+    isExperimentalFeatureEnabled('record_shadow_dom')
   ) {
     return event.composedPath()[0] as Node
   }

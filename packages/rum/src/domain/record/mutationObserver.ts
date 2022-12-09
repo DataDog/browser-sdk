@@ -412,7 +412,7 @@ export function sortAddedAndMovedNodes(nodes: Node[]) {
   })
 }
 function traverseRemovedShadowDom(removedNode: Node, shadowDomRemovedCallback: ShadowDomCallBack) {
-  if (!isExperimentalFeatureEnabled('recordShadowDom')) {
+  if (!isExperimentalFeatureEnabled('record_shadow_dom')) {
     return
   }
   if (isNodeShadowHost(removedNode)) {

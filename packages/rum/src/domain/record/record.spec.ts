@@ -228,7 +228,7 @@ describe('record', () => {
     })
 
     it('should record a simple mutation inside a shadow root', () => {
-      updateExperimentalFeatures(['recordShadowDom'])
+      updateExperimentalFeatures(['record_shadow_dom'])
       const div = document.createElement('div')
       div.className = 'toto'
       createShadow([div])
@@ -249,7 +249,7 @@ describe('record', () => {
     })
 
     it('should record a direct removal inside a shadow root', () => {
-      updateExperimentalFeatures(['recordShadowDom'])
+      updateExperimentalFeatures(['record_shadow_dom'])
       const span = document.createElement('span')
       createShadow([span])
       startRecording()
@@ -270,7 +270,7 @@ describe('record', () => {
     })
 
     it('should record a direct addition inside a shadow root', () => {
-      updateExperimentalFeatures(['recordShadowDom'])
+      updateExperimentalFeatures(['record_shadow_dom'])
       const span = document.createElement('span')
       const shadowRoot = createShadow([span])
       startRecording()
@@ -294,7 +294,7 @@ describe('record', () => {
     })
 
     it('should record mutation inside a shadow root added after the FS', () => {
-      updateExperimentalFeatures(['recordShadowDom'])
+      updateExperimentalFeatures(['record_shadow_dom'])
       startRecording()
       expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot())
 
@@ -325,7 +325,7 @@ describe('record', () => {
     })
 
     it('should record the change event inside a shadow root', () => {
-      updateExperimentalFeatures(['recordShadowDom'])
+      updateExperimentalFeatures(['record_shadow_dom'])
       const radio = document.createElement('input')
       radio.setAttribute('type', 'radio')
       createShadow([radio])
@@ -345,7 +345,7 @@ describe('record', () => {
     })
 
     it('should clean the state once the shadow dom is removed to avoid memory leak', () => {
-      updateExperimentalFeatures(['recordShadowDom'])
+      updateExperimentalFeatures(['record_shadow_dom'])
       const div = document.createElement('div')
       div.className = 'toto'
       const shadowRoot = createShadow([div])

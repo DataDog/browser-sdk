@@ -450,7 +450,7 @@ describe('startMutationCollection', () => {
 
     describe('for shadow DOM', () => {
       it('should call shadowDomCreatedCallback when host is added', () => {
-        updateExperimentalFeatures(['recordShadowDom'])
+        updateExperimentalFeatures(['record_shadow_dom'])
 
         const serializedDocument = serializeDocumentWithDefaults()
         const { mutationController, mutationCallbackSpy, getLatestMutationPayload } = startMutationCollection()
@@ -480,7 +480,7 @@ describe('startMutationCollection', () => {
       })
 
       it('should call shadowDomCreatedCallback when host is removed', () => {
-        updateExperimentalFeatures(['recordShadowDom'])
+        updateExperimentalFeatures(['record_shadow_dom'])
         const host = document.createElement('div')
         host.id = 'host'
         const shadowRoot = host.attachShadow({ mode: 'open' })
@@ -506,7 +506,7 @@ describe('startMutationCollection', () => {
       })
 
       it('should call shadowDomCreatedCallback when parent of host is removed', () => {
-        updateExperimentalFeatures(['recordShadowDom'])
+        updateExperimentalFeatures(['record_shadow_dom'])
         const parent = document.createElement('div')
         parent.id = 'parent'
         const host = document.createElement('div')

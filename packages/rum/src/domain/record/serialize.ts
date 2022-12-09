@@ -199,7 +199,7 @@ export function serializeElementNode(element: Element, options: SerializeOptions
     childNodes = serializeChildNodes(element, childNodesSerializationOptions)
   }
 
-  const isShadowHost = isExperimentalFeatureEnabled('recordShadowDom') && isNodeShadowHost(element)
+  const isShadowHost = isExperimentalFeatureEnabled('record_shadow_dom') && isNodeShadowHost(element)
   if (isShadowHost) {
     options.shadowDomCreatedCallback(element.shadowRoot)
   }
@@ -243,7 +243,7 @@ function serializeCDataNode(): CDataNode {
 
 export function serializeChildNodes(node: Node, options: SerializeOptions): SerializedNodeWithId[] {
   const result: SerializedNodeWithId[] = []
-  const childNodes = isExperimentalFeatureEnabled('recordShadowDom') ? getChildNodes(node) : node.childNodes
+  const childNodes = isExperimentalFeatureEnabled('record_shadow_dom') ? getChildNodes(node) : node.childNodes
 
   forEach(childNodes, (childNode) => {
     const serializedChildNode = serializeNodeWithId(childNode, options)

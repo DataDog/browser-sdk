@@ -414,7 +414,7 @@ describe('serializeNodeWithId', () => {
     })
 
     it('serializes a shadow host', () => {
-      updateExperimentalFeatures(['recordShadowDom'])
+      updateExperimentalFeatures(['record_shadow_dom'])
       const div = document.createElement('div')
       div.attachShadow({ mode: 'open' })
       expect(serializeNodeWithId(div, DEFAULT_OPTIONS)).toEqual({
@@ -429,7 +429,7 @@ describe('serializeNodeWithId', () => {
     })
 
     it('serializes a shadow host with children', () => {
-      updateExperimentalFeatures(['recordShadowDom'])
+      updateExperimentalFeatures(['record_shadow_dom'])
       const div = document.createElement('div')
       div.attachShadow({ mode: 'open' })
       div.shadowRoot!.appendChild(document.createElement('hr'))

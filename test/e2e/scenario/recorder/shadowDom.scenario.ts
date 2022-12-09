@@ -82,7 +82,7 @@ const divShadowDom = `<script>
 describe('recorder with shadow DOM', () => {
   describe('full snapshot', () => {
     createTest('can overwrite with mask-user-input')
-      .withRum({ defaultPrivacyLevel: 'allow', enableExperimentalFeatures: ['recordShadowDom'] })
+      .withRum({ defaultPrivacyLevel: 'allow', enableExperimentalFeatures: ['record_shadow_dom'] })
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(
@@ -121,7 +121,7 @@ describe('recorder with shadow DOM', () => {
   })
   describe('incremental snapshot', () => {
     createTest('record click')
-      .withRum({ enableExperimentalFeatures: ['recordShadowDom'] })
+      .withRum({ enableExperimentalFeatures: ['record_shadow_dom'] })
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(
@@ -147,7 +147,7 @@ describe('recorder with shadow DOM', () => {
       })
 
     createTest('record input')
-      .withRum({ defaultPrivacyLevel: 'allow', enableExperimentalFeatures: ['recordShadowDom'] })
+      .withRum({ defaultPrivacyLevel: 'allow', enableExperimentalFeatures: ['record_shadow_dom'] })
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(
@@ -172,7 +172,7 @@ describe('recorder with shadow DOM', () => {
       })
 
     createTest('record mutation')
-      .withRum({ defaultPrivacyLevel: 'allow', enableExperimentalFeatures: ['recordShadowDom'] })
+      .withRum({ defaultPrivacyLevel: 'allow', enableExperimentalFeatures: ['record_shadow_dom'] })
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(
