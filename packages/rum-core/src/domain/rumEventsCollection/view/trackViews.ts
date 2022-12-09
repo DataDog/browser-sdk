@@ -229,7 +229,11 @@ function newView(
     viewMetrics,
   } = trackViewMetrics(lifeCycle, domMutationObservable, configuration, scheduleViewUpdate, loadingType, startClocks)
 
-  const { stop: stopEventCountsTracking, eventCounts } = trackViewEventCounts(lifeCycle, id, scheduleViewUpdate)
+  const { scheduleStop: scheduleStopEventCountsTracking, eventCounts } = trackViewEventCounts(
+    lifeCycle,
+    id,
+    scheduleViewUpdate
+  )
 
   // Initial view update
   triggerViewUpdate()
@@ -269,7 +273,7 @@ function newView(
       endClocks = clocks
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks })
       stopViewMetricsTracking()
-      stopEventCountsTracking()
+      scheduleStopEventCountsTracking()
     },
     triggerUpdate() {
       // cancel any pending view updates execution
