@@ -10,7 +10,7 @@ export function isElementNode(node: Node): node is Element {
   return node.nodeType === Node.ELEMENT_NODE
 }
 
-export function isShadowHost(node: Node): node is Node & { shadowRoot: ShadowRoot } {
+export function isNodeShadowHost(node: Node): node is Node & { shadowRoot: ShadowRoot } {
   return isElementNode(node) && node.shadowRoot !== null
 }
 

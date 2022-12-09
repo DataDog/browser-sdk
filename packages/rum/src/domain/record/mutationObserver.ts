@@ -2,7 +2,7 @@ import { isExperimentalFeatureEnabled, monitor, noop } from '@datadog/browser-co
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import {
   getChildNodes,
-  isShadowHost,
+  isNodeShadowHost,
   getMutationObserverConstructor,
   getParentNode,
   getNodeOrShadowHost,
@@ -415,7 +415,7 @@ function traverseRemovedShadowDom(removedNode: Node, shadowDomRemovedCallback: S
   if (!isExperimentalFeatureEnabled('recordShadowDom')) {
     return
   }
-  if (isShadowHost(removedNode)) {
+  if (isNodeShadowHost(removedNode)) {
     shadowDomRemovedCallback(removedNode.shadowRoot)
   }
   getChildNodes(removedNode).forEach((child) => traverseRemovedShadowDom(child, shadowDomRemovedCallback))

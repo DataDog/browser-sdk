@@ -7,7 +7,7 @@ import {
   getChildNodes,
   getNodeOrShadowHost,
   getParentNode,
-  isShadowHost,
+  isNodeShadowHost,
 } from './htmlDomUtils'
 
 describe('isTextNode', () => {
@@ -95,7 +95,7 @@ describe('isShadowHost', () => {
 
   parameters.forEach(([element, result]) => {
     it(`should return ${String(result)} for "${String(element)}"`, () => {
-      expect(isShadowHost(element)).toBe(result)
+      expect(isNodeShadowHost(element)).toBe(result)
     })
   })
 })

@@ -44,5 +44,5 @@ export {
   getChildNodes,
   getParentNode,
   getNodeOrShadowHost,
-  isShadowHost,
+  isNodeShadowHost,
 } from './browser/htmlDomUtils'

@@ -1,6 +1,6 @@
 import { assign, isExperimentalFeatureEnabled, startsWith } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { getChildNodes, STABLE_ATTRIBUTES } from '@datadog/browser-rum-core'
+import { isNodeShadowHost, getChildNodes, STABLE_ATTRIBUTES } from '@datadog/browser-rum-core'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
@@ -199,8 +199,8 @@ export function serializeElementNode(element: Element, options: SerializeOptions
     childNodes = serializeChildNodes(element, childNodesSerializationOptions)
   }
 
-  const isShadowHost = isExperimentalFeatureEnabled('recordShadowDom') && element.shadowRoot !== null
-  if (isShadowHost && element.shadowRoot !== null) {
+  const isShadowHost = isExperimentalFeatureEnabled('recordShadowDom') && isNodeShadowHost(element)
+  if (isShadowHost) {
     options.shadowDomCreatedCallback(element.shadowRoot)
   }
 
