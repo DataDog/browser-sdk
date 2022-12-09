@@ -43,6 +43,8 @@ export interface InitConfiguration {
   enableExperimentalFeatures?: string[] | undefined
   replica?: ReplicaUserConfiguration | undefined
   datacenter?: string
+  internalAnalyticsSubdomain?: string
+
   telemetryConfigurationSampleRate?: number
 }
 
