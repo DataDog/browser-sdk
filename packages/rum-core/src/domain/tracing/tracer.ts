@@ -4,11 +4,10 @@ import {
   performDraw,
   isNumber,
   assign,
-  display,
   find,
-  startsWith,
   getType,
   isMatchOption,
+  matchList,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type {
@@ -110,7 +109,9 @@ function injectHeadersIfTracingAllowed(
     return
   }
 
-  const tracingOption = findTracingOptionForUrl(configuration.allowedTracingUrls, context.url!)
+  const tracingOption = find(configuration.allowedTracingUrls, (tracingOption: TracingOption) =>
+    matchList([tracingOption.match], context.url!, true)
+  )
   if (!tracingOption) {
     return
   }
@@ -119,26 +120,6 @@ function injectHeadersIfTracingAllowed(
   context.spanId = new TraceIdentifier()
   context.traceSampled = !isNumber(configuration.tracingSampleRate) || performDraw(configuration.tracingSampleRate)
   inject(makeTracingHeaders(context.traceId, context.spanId, context.traceSampled, tracingOption.headersTypes))
-}
-
-function findTracingOptionForUrl(configurationTracingUrls: TracingOption[], url: string) {
-  return find(configurationTracingUrls, (config: TracingOption) => {
-    try {
-      const item = config.match
-      if (typeof item === 'function') {
-        return item(url)
-      }
-      if (item instanceof RegExp) {
-        return item.test(url)
-      }
-      if (typeof item === 'string') {
-        return startsWith(url, item)
-      }
-    } catch (e) {
-      display.error(e)
-    }
-    return false
-  })
 }
 
 export function isTracingSupported() {

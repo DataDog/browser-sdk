@@ -673,6 +673,11 @@ describe('matchList', () => {
     expect(matchList(list, 'qux')).toBe(false)
   })
 
+  it('should compare strings using startsWith when enabling the option', () => {
+    const list = ['http://my.domain.com']
+    expect(matchList(list, 'http://my.domain.com/action', true)).toBe(true)
+  })
+
   it('should catch error from provided function', () => {
     spyOn(display, 'error')
     const list = [
