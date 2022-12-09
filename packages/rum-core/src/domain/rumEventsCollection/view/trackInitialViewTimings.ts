@@ -1,4 +1,4 @@
-import type { Duration, EventEmitter, RelativeTime } from '@datadog/browser-core'
+import type { Duration, RelativeTime } from '@datadog/browser-core'
 import {
   assign,
   addEventListeners,
@@ -116,7 +116,7 @@ export function trackFirstContentfulPaintTiming(lifeCycle: LifeCycle, callback: 
  */
 export function trackLargestContentfulPaintTiming(
   lifeCycle: LifeCycle,
-  emitter: EventEmitter,
+  eventTarget: EventTarget,
   callback: (lcpTiming: RelativeTime) => void
 ) {
   const firstHidden = trackFirstHidden()
@@ -126,7 +126,7 @@ export function trackLargestContentfulPaintTiming(
   // but the web-vitals reference implementation uses this as a safeguard.
   let firstInteractionTimestamp = Infinity
   const { stop: stopEventListener } = addEventListeners(
-    emitter,
+    eventTarget,
     [DOM_EVENT.POINTER_DOWN, DOM_EVENT.KEY_DOWN],
     (event) => {
       firstInteractionTimestamp = event.timeStamp
