@@ -1,4 +1,4 @@
-import { stubZoneJs } from '../../test/specHelper'
+import { stubZoneJs } from '../../test/stubZoneJs'
 
 import { getZoneJsOriginalValue } from './getZoneJsOriginalValue'
 import { noop } from './utils'
