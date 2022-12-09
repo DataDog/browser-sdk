@@ -62,7 +62,7 @@ export type ShadowDomCallBacks = {
 export function startMutationObserver(
   mutationCallback: MutationCallBack,
   configuration: RumConfiguration,
-  shadowDomCallBacks: ShadowDomCallBacks,
+  shadowDomCallbacks: ShadowDomCallBacks,
   target: Node
 ) {
   const MutationObserver = getMutationObserverConstructor()
@@ -75,7 +75,7 @@ export function startMutationObserver(
       mutations.concat(observer.takeRecords() as RumMutationRecord[]),
       mutationCallback,
       configuration,
-      shadowDomCallBacks,
+      shadowDomCallbacks,
       target
     )
   })
@@ -109,6 +109,14 @@ function processMutations(
   shadowDomCallbacks: ShadowDomCallBacks,
   target: Node
 ) {
+  mutations
+    .filter((mutation): mutation is RumChildListMutationRecord => mutation.type === 'childList')
+    .forEach((mutation) => {
+      mutation.removedNodes.forEach((removedNode) => {
+        traverseRemovedShadowDom(removedNode, shadowDomCallbacks.shadowDomRemovedCallback)
+      })
+    })
+
   // Discard any mutation with a 'target' node that:
   // * isn't injected in the current document or isn't known/serialized yet: those nodes are likely
   // part of a mutation occurring in a parent Node
@@ -159,7 +167,7 @@ function processMutations(
 function processChildListMutations(
   mutations: Array<WithSerializedTarget<RumChildListMutationRecord>>,
   configuration: RumConfiguration,
-  shadowDomCallBacks: ShadowDomCallBacks
+  shadowDomCallbacks: ShadowDomCallBacks
 ) {
   // First, we iterate over mutations to collect:
   //
@@ -219,7 +227,7 @@ function processChildListMutations(
       parentNodePrivacyLevel,
       serializationContext: { status: SerializationContextStatus.MUTATION },
       configuration,
-      shadowDomCreatedCallback: shadowDomCallBacks.shadowDomCreatedCallback,
+      shadowDomCreatedCallback: shadowDomCallbacks.shadowDomCreatedCallback,
     })
     if (!serializedNode) {
       continue
@@ -240,7 +248,6 @@ function processChildListMutations(
         parentId: getSerializedNodeId(getNodeOrShadowHost(parent) as NodeWithSerializedNode),
         id: getSerializedNodeId(node),
       })
-      traverseRemovedShadowDom(node, shadowDomCallBacks.shadowDomRemovedCallback)
     }
   })
 

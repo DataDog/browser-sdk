@@ -363,12 +363,37 @@ describe('record', () => {
       expect(mutationData.removes.length).toBe(1)
     })
 
-    function createShadow(children: Element[]) {
+    it('should clean the state when both the parent  shadow host is removed to avoid memory leak', () => {
+      updateExperimentalFeatures(['record_shadow_dom'])
+      const grandParent = document.createElement('div')
+      const parent = document.createElement('div')
+      grandParent.appendChild(parent)
+      const child = document.createElement('div')
+      child.className = 'toto'
+      createShadow([child], parent)
+      sandbox.appendChild(grandParent)
+      startRecording()
+      expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot())
+      expect(recordApi.shadowDomCallBacks.size).toBe(1)
+
+      parent.remove()
+      grandParent.remove()
+      recordApi.flushMutations()
+      expect(recordApi.shadowDomCallBacks.size).toBe(0)
+      expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot() + 1)
+      const mutationData = getLastIncrementalSnapshotData<BrowserMutationData>(
+        getEmittedRecords(),
+        IncrementalSource.Mutation
+      )
+      expect(mutationData.removes.length).toBe(1)
+    })
+
+    function createShadow(children: Element[], parent = sandbox) {
       const host = document.createElement('div')
       host.setAttribute('id', 'host')
       const shadowRoot = host.attachShadow({ mode: 'open' })
       children.forEach((child) => shadowRoot.appendChild(child))
-      sandbox.append(host)
+      parent.append(host)
       return shadowRoot
     }
   })
