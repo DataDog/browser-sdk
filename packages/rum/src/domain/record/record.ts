@@ -18,7 +18,7 @@ import { serializeDocument, SerializationContextStatus } from './serialize'
 import { initInputObserver, initObservers } from './observers'
 import type { InputCallback } from './observers'
 
-import { MutationController, startMutationObserver } from './mutationObserver'
+import { startMutationObserver } from './mutationObserver'
 import { getVisualViewport, getScrollX, getScrollY } from './viewports'
 import { assembleIncrementalSnapshot } from './utils'
 import { createElementsScrollPositions } from './elementsScrollPositions'
@@ -66,9 +66,7 @@ export function record(options: RecordOptions): RecordAPI {
   }
   const inputCb: InputCallback = (s) => emit(assembleIncrementalSnapshot<InputData>(IncrementalSource.Input, s))
   const shadowDomCreatedCallback = (shadowRoot: ShadowRoot) => {
-    const shadowDomMutationController = new MutationController()
-    const { stop: stopMutationObserver } = startMutationObserver(
-      shadowDomMutationController,
+    const { stop: stopMutationObserver, flush } = startMutationObserver(
       mutationCb,
       options.configuration,
       { shadowDomCreatedCallback, shadowDomRemovedCallback },
@@ -80,7 +78,7 @@ export function record(options: RecordOptions): RecordAPI {
       domEvents: [DOM_EVENT.CHANGE],
     })
     shadowDomCallBacks.set(shadowRoot, {
-      flush: () => shadowDomMutationController.flush(),
+      flush,
       stop: () => {
         stopMutationObserver()
         stopInputObserver()
@@ -88,13 +86,15 @@ export function record(options: RecordOptions): RecordAPI {
     })
   }
 
-  const documentMutationController = new MutationController()
   const takeFullSnapshot = (
     timestamp = timeStampNow(),
-    serializationContext = { status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT, elementsScrollPositions }
+    serializationContext = { status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT, elementsScrollPositions },
+    flushMutationsFromPreviousFs?: () => void
   ) => {
     shadowDomCallBacks.forEach(({ flush }) => flush())
-    documentMutationController.flush() // process any pending mutation before taking a full snapshot
+    if (flushMutationsFromPreviousFs) {
+      flushMutationsFromPreviousFs() // process any pending mutation before taking a full snapshot
+    }
     const { width, height } = getViewportDimension()
     emit({
       data: {
@@ -137,10 +137,9 @@ export function record(options: RecordOptions): RecordAPI {
 
   takeFullSnapshot()
 
-  const stopObservers = initObservers({
+  const { stop: stopObservers, flush: flushMutations } = initObservers({
     lifeCycle: options.lifeCycle,
     configuration: options.configuration,
-    mutationController: documentMutationController,
     elementsScrollPositions,
     inputCb,
     mediaInteractionCb: (p) =>
@@ -168,20 +167,23 @@ export function record(options: RecordOptions): RecordAPI {
     },
     shadowDomCallBacks: { shadowDomCreatedCallback, shadowDomRemovedCallback },
   })
-
   return {
     stop: () => {
       shadowDomCallBacks.forEach(({ stop }) => stop())
       stopObservers()
     },
     takeSubsequentFullSnapshot: (timestamp) =>
-      takeFullSnapshot(timestamp, {
-        status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT,
-        elementsScrollPositions,
-      }),
+      takeFullSnapshot(
+        timestamp,
+        {
+          status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT,
+          elementsScrollPositions,
+        },
+        flushMutations
+      ),
     flushMutations: () => {
       shadowDomCallBacks.forEach(({ flush }) => flush())
-      documentMutationController.flush()
+      flushMutations()
     },
     shadowDomCallBacks,
   }

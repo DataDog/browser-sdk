@@ -39,7 +39,7 @@ import { RecordType, IncrementalSource, MediaInteractionType, MouseInteractionTy
 import { getNodePrivacyLevel, shouldMaskNode } from './privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from './serializationUtils'
 import { assembleIncrementalSnapshot, forEach, getPathToNestedCSSRule, isTouchEvent } from './utils'
-import type { MutationController, ShadowDomCallBacks } from './mutationObserver'
+import type { ShadowDomCallBacks } from './mutationObserver'
 import { startMutationObserver } from './mutationObserver'
 import { getVisualViewport, getScrollX, getScrollY, convertMouseEventToLayoutCoordinates } from './viewports'
 import type { ElementsScrollPositions } from './elementsScrollPositions'
@@ -90,7 +90,6 @@ export type FrustrationCallback = (record: FrustrationRecord) => void
 interface ObserverParam {
   lifeCycle: LifeCycle
   configuration: RumConfiguration
-  mutationController: MutationController
   elementsScrollPositions: ElementsScrollPositions
   mutationCb: MutationCallBack
   mousemoveCb: MousemoveCallBack
@@ -106,13 +105,8 @@ interface ObserverParam {
   shadowDomCallBacks: ShadowDomCallBacks
 }
 
-export function initObservers(o: ObserverParam): ListenerHandler {
-  const mutationHandler = initMutationObserver(
-    o.mutationController,
-    o.mutationCb,
-    o.configuration,
-    o.shadowDomCallBacks
-  )
+export function initObservers(o: ObserverParam): { stop: ListenerHandler; flush: ListenerHandler } {
+  const mutationHandler = initMutationObserver(o.mutationCb, o.configuration, o.shadowDomCallBacks)
   const mousemoveHandler = initMoveObserver(o.mousemoveCb)
   const mouseInteractionHandler = initMouseInteractionObserver(
     o.mouseInteractionCb,
@@ -130,28 +124,32 @@ export function initObservers(o: ObserverParam): ListenerHandler {
   const visualViewportResizeHandler = initVisualViewportResizeObserver(o.visualViewportResizeCb)
   const frustrationHandler = initFrustrationObserver(o.lifeCycle, o.frustrationCb)
 
-  return () => {
-    mutationHandler()
-    mousemoveHandler()
-    mouseInteractionHandler()
-    scrollHandler()
-    viewportResizeHandler()
-    inputHandler()
-    mediaInteractionHandler()
-    styleSheetObserver()
-    focusHandler()
-    visualViewportResizeHandler()
-    frustrationHandler()
+  return {
+    flush: () => {
+      mutationHandler.flush()
+    },
+    stop: () => {
+      mutationHandler.stop()
+      mousemoveHandler()
+      mouseInteractionHandler()
+      scrollHandler()
+      viewportResizeHandler()
+      inputHandler()
+      mediaInteractionHandler()
+      styleSheetObserver()
+      focusHandler()
+      visualViewportResizeHandler()
+      frustrationHandler()
+    },
   }
 }
 
 export function initMutationObserver(
-  mutationController: MutationController,
   cb: MutationCallBack,
   configuration: RumConfiguration,
   shadowDomCallBacks: ShadowDomCallBacks
 ) {
-  return startMutationObserver(mutationController, cb, configuration, shadowDomCallBacks, document).stop
+  return startMutationObserver(cb, configuration, shadowDomCallBacks, document)
 }
 
 function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {
