@@ -70,6 +70,16 @@ function processRequest(
   const responseDurationInfo = computeResponseDurationInfo(request)
 
   const duration = toServerDuration(request.duration)
+  const computedAndEntryDurations = isExperimentalFeatureEnabled('resource_durations')
+    ? {
+        _dd: {
+          computed_duration: duration,
+          performance_entry_duration: correspondingTimingOverrides
+            ? correspondingTimingOverrides.resource.duration
+            : undefined,
+        },
+      }
+    : undefined
 
   const resourceEvent = combine(
     {
@@ -88,16 +98,7 @@ function processRequest(
     correspondingTimingOverrides,
     indexingInfo,
     responseDurationInfo,
-    isExperimentalFeatureEnabled('resource_durations')
-      ? {
-          _dd: {
-            computed_duration: duration,
-            performance_entry_duration: correspondingTimingOverrides
-              ? correspondingTimingOverrides.resource.duration
-              : undefined,
-          },
-        }
-      : undefined
+    computedAndEntryDurations
   )
   return {
     startTime: startClocks.relative,
