@@ -88,9 +88,6 @@ describe('resourceCollection', () => {
       type: RumEventType.RESOURCE,
       _dd: {
         discarded: false,
-        resolveDuration: undefined,
-        durationDiff: undefined,
-        durationPercentageDiff: undefined,
       },
     })
     expect(rawRumEvents[0].domainContext).toEqual({
@@ -139,9 +136,6 @@ describe('resourceCollection', () => {
       type: RumEventType.RESOURCE,
       _dd: {
         discarded: false,
-        resolveDuration: (50 * 1e6) as ServerDuration,
-        durationDiff: (50 * 1e6) as ServerDuration,
-        durationPercentageDiff: 50,
       },
     })
     expect(rawRumEvents[0].domainContext).toEqual({

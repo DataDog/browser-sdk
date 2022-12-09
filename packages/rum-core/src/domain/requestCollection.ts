@@ -13,7 +13,6 @@ import {
   readBytesFromStream,
   elapsed,
   timeStampNow,
-  isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
 import type { RumSessionManager } from '..'
 import type { RumConfiguration } from './configuration'
@@ -160,7 +159,7 @@ function getNextRequestIndex() {
 }
 
 function waitForResponseToComplete(context: RumFetchResolveContext, callback: (duration: Duration) => void) {
-  if (context.response && isExperimentalFeatureEnabled('fetch_duration')) {
+  if (context.response) {
     const responseClone = context.response.clone()
     if (responseClone.body) {
       readBytesFromStream(
