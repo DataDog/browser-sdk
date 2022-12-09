@@ -1,5 +1,5 @@
 import type { TimeStamp } from '@datadog/browser-core'
-import { DOM_EVENT, timeStampNow, addTelemetryDebug } from '@datadog/browser-core'
+import { timeStampNow } from '@datadog/browser-core'
 import type { LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
 import { getViewportDimension } from '@datadog/browser-rum-core'
 import type {
@@ -15,13 +15,13 @@ import type {
 } from '../../types'
 import { RecordType, IncrementalSource } from '../../types'
 import { serializeDocument, SerializationContextStatus } from './serialize'
-import { initInputObserver, initObservers } from './observers'
+import { initObservers } from './observers'
 import type { InputCallback } from './observers'
 
-import { startMutationObserver } from './mutationObserver'
 import { getVisualViewport, getScrollX, getScrollY } from './viewports'
 import { assembleIncrementalSnapshot } from './utils'
 import { createElementsScrollPositions } from './elementsScrollPositions'
+import { withShadowDomHelpers } from './shadowDom'
 
 export interface RecordOptions {
   emit?: (record: BrowserRecord) => void
@@ -48,50 +48,26 @@ export function record(options: RecordOptions): RecordAPI {
     throw new Error('emit function is required')
   }
 
-  const shadowDomCallBacks = new Map<ShadowRoot, ShadowDomCallBacks>()
   const elementsScrollPositions = createElementsScrollPositions()
-
-  const shadowDomRemovedCallback = (shadowRoot: ShadowRoot) => {
-    const entry = shadowDomCallBacks.get(shadowRoot)
-    if (!entry) {
-      addTelemetryDebug('no shadow root in map')
-      return
-    }
-    entry.stop()
-    shadowDomCallBacks.delete(shadowRoot)
-  }
 
   const mutationCb = (mutation: BrowserMutationPayload) => {
     emit(assembleIncrementalSnapshot<BrowserMutationData>(IncrementalSource.Mutation, mutation))
   }
   const inputCb: InputCallback = (s) => emit(assembleIncrementalSnapshot<InputData>(IncrementalSource.Input, s))
-  const shadowDomCreatedCallback = (shadowRoot: ShadowRoot) => {
-    const { stop: stopMutationObserver, flush } = startMutationObserver(
-      mutationCb,
-      options.configuration,
-      { shadowDomCreatedCallback, shadowDomRemovedCallback },
-      shadowRoot
-    )
-    // the change event no do bubble up across the shadow root, we have to listen on the shadow root
-    const stopInputObserver = initInputObserver(inputCb, options.configuration.defaultPrivacyLevel, {
-      target: shadowRoot,
-      domEvents: [DOM_EVENT.CHANGE],
-    })
-    shadowDomCallBacks.set(shadowRoot, {
-      flush,
-      stop: () => {
-        stopMutationObserver()
-        stopInputObserver()
-      },
-    })
-  }
+
+  const {
+    shadowDomCallBacks,
+    flush: flushMutationsFromShadowRoots,
+    shadowDomCreatedCallback,
+    shadowDomRemovedCallback,
+  } = withShadowDomHelpers(options.configuration, { mutationCb, inputCb })
 
   const takeFullSnapshot = (
     timestamp = timeStampNow(),
     serializationContext = { status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT, elementsScrollPositions },
     flushMutationsFromPreviousFs?: () => void
   ) => {
-    shadowDomCallBacks.forEach(({ flush }) => flush())
+    flushMutationsFromShadowRoots()
     if (flushMutationsFromPreviousFs) {
       flushMutationsFromPreviousFs() // process any pending mutation before taking a full snapshot
     }
@@ -182,7 +158,7 @@ export function record(options: RecordOptions): RecordAPI {
         flushMutations
       ),
     flushMutations: () => {
-      shadowDomCallBacks.forEach(({ flush }) => flush())
+      flushMutationsFromShadowRoots()
       flushMutations()
     },
     shadowDomCallBacks,
