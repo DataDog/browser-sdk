@@ -9,7 +9,7 @@ import {
   isNumber,
   isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
-import type { ClocksState, Duration } from '@datadog/browser-core'
+import type { ClocksState, Duration, ServerDuration } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
 import type { RumPerformanceEntry, RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 import type {
@@ -70,16 +70,7 @@ function processRequest(
   const responseDurationInfo = computeResponseDurationInfo(request)
 
   const duration = toServerDuration(request.duration)
-  const computedAndEntryDurations = isExperimentalFeatureEnabled('resource_durations')
-    ? {
-        _dd: {
-          computed_duration: duration,
-          performance_entry_duration: correspondingTimingOverrides
-            ? correspondingTimingOverrides.resource.duration
-            : undefined,
-        },
-      }
-    : undefined
+  const durationOverrideInfo = computeDurationOverrideInfo(duration, correspondingTimingOverrides?.resource.duration)
 
   const resourceEvent = combine(
     {
@@ -98,7 +89,7 @@ function processRequest(
     correspondingTimingOverrides,
     indexingInfo,
     responseDurationInfo,
-    computedAndEntryDurations
+    durationOverrideInfo
   )
   return {
     startTime: startClocks.relative,
@@ -200,6 +191,21 @@ function computeResponseDurationInfo(request: RequestCompleteEvent) {
       resolveDuration: toServerDuration(request.resolveDuration),
       durationDiff,
       durationPercentageDiff,
+    },
+  }
+}
+
+function computeDurationOverrideInfo(
+  computedDuration: ServerDuration,
+  performanceEntryDuration: ServerDuration | undefined
+) {
+  if (!isExperimentalFeatureEnabled('resource_durations')) return
+
+  return {
+    _dd: {
+      computed_duration: computedDuration,
+      performance_entry_duration: performanceEntryDuration,
+      override_duration_diff: performanceEntryDuration ? computedDuration - performanceEntryDuration : undefined,
     },
   }
 }
