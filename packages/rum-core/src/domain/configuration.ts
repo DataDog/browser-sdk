@@ -13,7 +13,8 @@ import {
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RumEvent } from '../rumEvent.types'
-import type { ConfigureTracingOption, TracingHeadersType } from './tracing/tracer.types'
+import { isTracingOption } from './tracing/tracer'
+import type { TracingOption, TracingHeadersType } from './tracing/tracer.types'
 
 export interface RumInitConfiguration extends InitConfiguration {
   // global options
@@ -27,10 +28,10 @@ export interface RumInitConfiguration extends InitConfiguration {
 
   // tracing options
   /**
-   * @deprecated use configureTracingUrls instead
+   * @deprecated use allowedTracingUrls instead
    */
   allowedTracingOrigins?: MatchOption[] | undefined
-  configureTracingUrls?: Array<MatchOption | ConfigureTracingOption> | undefined
+  allowedTracingUrls?: Array<MatchOption | TracingOption> | undefined
   tracingSampleRate?: number | undefined
 
   // replay options
@@ -59,7 +60,7 @@ export interface RumConfiguration extends Configuration {
   // Built from init configuration
   actionNameAttribute: string | undefined
   tracingSampleRate: number | undefined
-  configureTracingUrls: ConfigureTracingOption[]
+  allowedTracingUrls: TracingOption[]
   excludedActivityUrls: MatchOption[]
   applicationId: string
   defaultPrivacyLevel: DefaultPrivacyLevel
@@ -111,8 +112,8 @@ export function validateAndBuildRumConfiguration(
     return
   }
 
-  const configureTracingUrls = handleTracingParameters(initConfiguration)
-  if (configureTracingUrls === undefined) {
+  const allowedTracingUrls = validateAndBuildTracingOptions(initConfiguration)
+  if (!allowedTracingUrls) {
     return
   }
 
@@ -131,7 +132,7 @@ export function validateAndBuildRumConfiguration(
       sessionReplaySampleRate: initConfiguration.sessionReplaySampleRate ?? premiumSampleRate ?? 100,
       oldPlansBehavior: initConfiguration.sessionReplaySampleRate === undefined,
       tracingSampleRate: initConfiguration.tracingSampleRate,
-      configureTracingUrls,
+      allowedTracingUrls,
       excludedActivityUrls: initConfiguration.excludedActivityUrls ?? [],
       trackInteractions: !!initConfiguration.trackInteractions || trackFrustrations,
       trackFrustrations,
@@ -147,38 +148,44 @@ export function validateAndBuildRumConfiguration(
 }
 
 /**
- * Handles configureTracingUrls and processes legacy allowedTracingOrigins
+ * Handles allowedTracingUrls and processes legacy allowedTracingOrigins
  */
-function handleTracingParameters(initConfiguration: RumInitConfiguration): ConfigureTracingOption[] | undefined {
+function validateAndBuildTracingOptions(initConfiguration: RumInitConfiguration): TracingOption[] | undefined {
   // Advise about parameters precedence.
-  if (initConfiguration.configureTracingUrls !== undefined && initConfiguration.allowedTracingOrigins !== undefined) {
+  if (initConfiguration.allowedTracingUrls !== undefined && initConfiguration.allowedTracingOrigins !== undefined) {
     display.warn(
-      'Both configureTracingUrls and allowedTracingOrigins (deprecated) have been defined. The parameter configureTracingUrls will override allowedTracingOrigins.'
+      'Both allowedTracingUrls and allowedTracingOrigins (deprecated) have been defined. The parameter allowedTracingUrls will override allowedTracingOrigins.'
     )
   }
-
-  // Handle configureTracingUrls first
-  if (initConfiguration.configureTracingUrls !== undefined) {
-    if (!Array.isArray(initConfiguration.configureTracingUrls)) {
-      display.error('Configure Tracing URLs should be an array')
+  // Handle allowedTracingUrls first
+  if (initConfiguration.allowedTracingUrls !== undefined) {
+    if (!Array.isArray(initConfiguration.allowedTracingUrls)) {
+      display.error('Allowed Tracing URLs should be an array')
       return
     }
-    if (initConfiguration.configureTracingUrls.length !== 0 && initConfiguration.service === undefined) {
+    if (initConfiguration.allowedTracingUrls.length !== 0 && initConfiguration.service === undefined) {
       display.error('Service needs to be configured when tracing is enabled')
       return
     }
+    // Convert from (MatchOption | TracingOption) to TracingOption, remove unknown properties
+    const tracingOptions: TracingOption[] = []
+    initConfiguration.allowedTracingUrls.forEach((option) => {
+      if (isMatchOption(option)) {
+        tracingOptions.push({ match: option, headersTypes: ['dd'] })
+      } else if (isTracingOption(option)) {
+        tracingOptions.push(option)
+      } else {
+        display.warn(
+          'Allowed Tracing Urls parameters should be a string, RegExp, function, or an object. Ignoring parameter',
+          option
+        )
+      }
+    })
 
-    // Convert from MatchOption | TracingOption to TracingOption
-    const configureTracingUrls: ConfigureTracingOption[] = []
-    for (const option of initConfiguration.configureTracingUrls) {
-      configureTracingUrls.push(
-        isMatchOption(option) ? ({ match: option, headerTypes: ['dd'] } as ConfigureTracingOption) : option
-      )
-    }
-    return configureTracingUrls
+    return tracingOptions
   }
 
-  // Handle conversion of allowedTracingOrigins to configureTracingUrls
+  // Handle conversion of allowedTracingOrigins to allowedTracingUrls
   if (initConfiguration.allowedTracingOrigins !== undefined) {
     if (!Array.isArray(initConfiguration.allowedTracingOrigins)) {
       display.error('Allowed Tracing Origins should be an array')
@@ -189,13 +196,14 @@ function handleTracingParameters(initConfiguration: RumInitConfiguration): Confi
       return
     }
 
-    return initConfiguration.allowedTracingOrigins.reduce((configArray, item) => {
-      const option = convertLegacyMatchOptionToTracingOption(item)
-      if (option) {
-        configArray.push(option)
+    const tracingOptions: TracingOption[] = []
+    initConfiguration.allowedTracingOrigins.forEach((legacyMatchOption) => {
+      const tracingOption = convertLegacyMatchOptionToTracingOption(legacyMatchOption)
+      if (tracingOption) {
+        tracingOptions.push(tracingOption)
       }
-      return configArray
-    }, [] as ConfigureTracingOption[])
+    })
+    return tracingOptions
   }
 
   return []
@@ -203,17 +211,15 @@ function handleTracingParameters(initConfiguration: RumInitConfiguration): Confi
 
 /**
  * Converts parameters from the deprecated allowedTracingOrigins
- * to configureTracingUrls. Handles the change from origin to full URLs.
+ * to allowedTracingUrls. Handles the change from origin to full URLs.
  */
-function convertLegacyMatchOptionToTracingOption(item: MatchOption) {
+function convertLegacyMatchOptionToTracingOption(item: MatchOption): TracingOption | undefined {
   let match: MatchOption | undefined
   if (typeof item === 'string') {
     match = item
-  }
-  if (item instanceof RegExp) {
+  } else if (item instanceof RegExp) {
     match = (url) => item.test(getOrigin(url))
-  }
-  if (typeof item === 'function') {
+  } else if (typeof item === 'function') {
     match = (url) => item(getOrigin(url))
   }
 
@@ -222,22 +228,22 @@ function convertLegacyMatchOptionToTracingOption(item: MatchOption) {
     return undefined
   }
 
-  return { match, headerTypes: ['dd'] } as ConfigureTracingOption
+  return { match, headersTypes: ['dd'] }
 }
 
 /**
- * Combines the selected tracing headers from the different options in configureTracingUrls,
+ * Combines the selected tracing headers from the different options in allowedTracingUrls,
  * and assumes 'dd' has been selected when using allowedTracingOrigins
  */
 function getSelectedTracingHeaders(configuration: RumInitConfiguration): TracingHeadersType[] {
   const usedTracingHeaders = new Set<TracingHeadersType>()
 
-  if (Array.isArray(configuration.configureTracingUrls) && configuration.configureTracingUrls.length > 0) {
-    configuration.configureTracingUrls.forEach((config) => {
+  if (Array.isArray(configuration.allowedTracingUrls) && configuration.allowedTracingUrls.length > 0) {
+    configuration.allowedTracingUrls.forEach((config) => {
       if (isMatchOption(config)) {
         usedTracingHeaders.add('dd')
-      } else if (Array.isArray(config.headerTypes)) {
-        config.headerTypes.forEach((headerType) => usedTracingHeaders.add(headerType))
+      } else {
+        config.headersTypes.forEach((headerType) => usedTracingHeaders.add(headerType))
       }
     })
   }
@@ -261,8 +267,8 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration): 
       action_name_attribute: configuration.actionNameAttribute,
       use_allowed_tracing_origins:
         Array.isArray(configuration.allowedTracingOrigins) && configuration.allowedTracingOrigins.length > 0,
-      use_configure_tracing_urls:
-        Array.isArray(configuration.configureTracingUrls) && configuration.configureTracingUrls.length > 0,
+      use_allowed_tracing_urls:
+        Array.isArray(configuration.allowedTracingUrls) && configuration.allowedTracingUrls.length > 0,
       selected_tracing_headers: getSelectedTracingHeaders(configuration),
       default_privacy_level: configuration.defaultPrivacyLevel,
       use_excluded_activity_urls:

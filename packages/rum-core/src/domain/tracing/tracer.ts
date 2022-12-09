@@ -7,6 +7,8 @@ import {
   display,
   find,
   startsWith,
+  getType,
+  isMatchOption,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type {
@@ -16,7 +18,7 @@ import type {
   RumXhrStartContext,
 } from '../requestCollection'
 import type { RumSessionManager } from '../rumSessionManager'
-import type { ConfigureTracingOption, TracingHeadersType } from './tracer.types'
+import type { TracingOption, TracingHeadersType } from './tracer.types'
 
 export interface Tracer {
   traceFetch: (context: Partial<RumFetchStartContext>) => void
@@ -26,6 +28,13 @@ export interface Tracer {
 
 interface TracingHeaders {
   [key: string]: string
+}
+
+export function isTracingOption(item: unknown): item is TracingOption {
+  const expectedItem = item as TracingOption
+  return (
+    getType(expectedItem) === 'object' && isMatchOption(expectedItem.match) && Array.isArray(expectedItem.headersTypes)
+  )
 }
 
 /**
@@ -101,19 +110,19 @@ function injectHeadersIfTracingAllowed(
     return
   }
 
-  const config = findConfigurationForUrl(configuration.configureTracingUrls, context.url!)
-  if (!config) {
+  const tracingOption = findTracingOptionForUrl(configuration.allowedTracingUrls, context.url!)
+  if (!tracingOption) {
     return
   }
 
   context.traceId = new TraceIdentifier()
   context.spanId = new TraceIdentifier()
   context.traceSampled = !isNumber(configuration.tracingSampleRate) || performDraw(configuration.tracingSampleRate)
-  inject(makeTracingHeaders(context.traceId, context.spanId, context.traceSampled, config.headerTypes))
+  inject(makeTracingHeaders(context.traceId, context.spanId, context.traceSampled, tracingOption.headersTypes))
 }
 
-function findConfigurationForUrl(configurationTracingUrls: ConfigureTracingOption[], url: string) {
-  return find(configurationTracingUrls, (config: ConfigureTracingOption) => {
+function findTracingOptionForUrl(configurationTracingUrls: TracingOption[], url: string) {
+  return find(configurationTracingUrls, (config: TracingOption) => {
     try {
       const item = config.match
       if (typeof item === 'function') {
@@ -148,82 +157,51 @@ function makeTracingHeaders(
   traceId: TraceIdentifier,
   spanId: TraceIdentifier,
   traceSampled: boolean,
-  requestedHeaders: TracingHeadersType[]
+  requestedHeadersTypes: TracingHeadersType[]
 ): TracingHeaders {
-  return requestedHeaders.reduce(
-    (headers, request) =>
-      assign(
-        headers,
-        makeTracingHeadersFor[request] ? makeTracingHeadersFor[request](traceId, spanId, traceSampled) : {}
-      ),
-    {} as TracingHeaders
-  )
-}
+  const tracingHeaders: TracingHeaders = {}
 
-function makeTracingHeadersForDD(
-  traceId: TraceIdentifier,
-  spanId: TraceIdentifier,
-  traceSampled: boolean
-): TracingHeaders {
-  return {
-    'x-datadog-origin': 'rum',
-    'x-datadog-parent-id': spanId.toDecimalString(),
-    'x-datadog-sampling-priority': traceSampled ? '1' : '0',
-    'x-datadog-trace-id': traceId.toDecimalString(),
-  }
+  requestedHeadersTypes.forEach((requestedHeader) => {
+    switch (requestedHeader) {
+      case 'dd': {
+        assign(tracingHeaders, {
+          'x-datadog-origin': 'rum',
+          'x-datadog-parent-id': spanId.toDecimalString(),
+          'x-datadog-sampling-priority': traceSampled ? '1' : '0',
+          'x-datadog-trace-id': traceId.toDecimalString(),
+        })
+        break
+      }
+      // https://www.w3.org/TR/trace-context/
+      case 'w3c': {
+        assign(tracingHeaders, {
+          traceparent: `00-0000000000000000${traceId.toPaddedHexadecimalString()}-${spanId.toPaddedHexadecimalString()}-0${
+            traceSampled ? '1' : '0'
+          }`,
+        })
+        break
+      }
+      // https://github.com/openzipkin/b3-propagation
+      case 'b3': {
+        assign(tracingHeaders, {
+          b3: `${traceId.toPaddedHexadecimalString()}-${spanId.toPaddedHexadecimalString()}-${
+            traceSampled ? '1' : '0'
+          }`,
+        })
+        break
+      }
+      case 'b3m': {
+        assign(tracingHeaders, {
+          'X-B3-TraceId': traceId.toPaddedHexadecimalString(),
+          'X-B3-SpanId': spanId.toPaddedHexadecimalString(),
+          'X-B3-Sampled': traceSampled ? '1' : '0',
+        })
+        break
+      }
+    }
+  })
+  return tracingHeaders
 }
-
-/**
- * https://www.w3.org/TR/trace-context/
- */
-function makeTracingHeadersForW3C(
-  traceId: TraceIdentifier,
-  spanId: TraceIdentifier,
-  traceSampled: boolean
-): TracingHeaders {
-  return {
-    traceparent: `00-0000000000000000${traceId.toPaddedHexadecimalString()}-${spanId.toPaddedHexadecimalString()}-0${
-      traceSampled ? '1' : '0'
-    }`,
-  }
-}
-
-/**
- * https://github.com/openzipkin/b3-propagation
- */
-function makeTracingHeadersForB3(
-  traceId: TraceIdentifier,
-  spanId: TraceIdentifier,
-  traceSampled: boolean
-): TracingHeaders {
-  return {
-    b3: `${traceId.toPaddedHexadecimalString()}-${spanId.toPaddedHexadecimalString()}-${traceSampled ? '1' : '0'}`,
-  }
-}
-function makeTracingHeadersForB3M(
-  traceId: TraceIdentifier,
-  spanId: TraceIdentifier,
-  traceSampled: boolean
-): TracingHeaders {
-  return {
-    'X-B3-TraceId': traceId.toPaddedHexadecimalString(),
-    'X-B3-SpanId': spanId.toPaddedHexadecimalString(),
-    'X-B3-Sampled': traceSampled ? '1' : '0',
-  }
-}
-
-const makeTracingHeadersFor: {
-  [key in TracingHeadersType]: (
-    traceId: TraceIdentifier,
-    spanId: TraceIdentifier,
-    traceSampled: boolean
-  ) => TracingHeaders
-} = {
-  dd: makeTracingHeadersForDD,
-  w3c: makeTracingHeadersForW3C,
-  b3: makeTracingHeadersForB3,
-  b3m: makeTracingHeadersForB3M,
-} as const
 
 /* eslint-disable no-bitwise */
 export class TraceIdentifier {
