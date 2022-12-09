@@ -23,7 +23,7 @@ describe('tracer', () => {
     clientToken: 'xxx',
     applicationId: 'xxx',
     service: 'service',
-    allowedTracingUrls: [{ match: window.location.origin, headersTypes: ['dd'] }],
+    allowedTracingUrls: [{ match: window.location.origin, propagatorTypes: ['datadog'] }],
   }
 
   beforeEach(() => {
@@ -112,7 +112,7 @@ describe('tracer', () => {
       const configurationWithAllOtelHeaders = validateAndBuildRumConfiguration({
         ...INIT_CONFIGURATION,
         tracingSampleRate: 50,
-        allowedTracingUrls: [{ match: window.location.origin, headersTypes: ['b3', 'w3c', 'b3m'] }],
+        allowedTracingUrls: [{ match: window.location.origin, propagatorTypes: ['b3', 'tracecontext', 'b3multi'] }],
       })!
 
       const tracer = startTracer(configurationWithAllOtelHeaders, sessionManager)
@@ -157,13 +157,13 @@ describe('tracer', () => {
       expect(context.spanId).toBeDefined()
     })
 
-    it('should add only B3 Multiple headers', () => {
-      const configurationWithB3Multi = validateAndBuildRumConfiguration({
+    it('should add headers only for B3 Multiple propagator', () => {
+      const configurationWithb3multi = validateAndBuildRumConfiguration({
         ...INIT_CONFIGURATION,
-        allowedTracingUrls: [{ match: window.location.origin, headersTypes: ['b3m'] }],
+        allowedTracingUrls: [{ match: window.location.origin, propagatorTypes: ['b3multi'] }],
       })!
 
-      const tracer = startTracer(configurationWithB3Multi, sessionManager)
+      const tracer = startTracer(configurationWithb3multi, sessionManager)
       const context = { ...ALLOWED_DOMAIN_CONTEXT }
       tracer.traceXhr(context, xhrStub as unknown as XMLHttpRequest)
 
@@ -181,13 +181,13 @@ describe('tracer', () => {
       expect(xhrStub.headers['x-datadog-sampling-priority']).toBeUndefined()
     })
 
-    it('should add B3 (single) and W3C headers', () => {
-      const configurationWithB3andW3C = validateAndBuildRumConfiguration({
+    it('should add headers for B3 (single) and tracecontext propagators', () => {
+      const configurationWithB3andTracecontext = validateAndBuildRumConfiguration({
         ...INIT_CONFIGURATION,
-        allowedTracingUrls: [{ match: window.location.origin, headersTypes: ['b3', 'w3c'] }],
+        allowedTracingUrls: [{ match: window.location.origin, propagatorTypes: ['b3', 'tracecontext'] }],
       })!
 
-      const tracer = startTracer(configurationWithB3andW3C, sessionManager)
+      const tracer = startTracer(configurationWithB3andTracecontext, sessionManager)
       const context = { ...ALLOWED_DOMAIN_CONTEXT }
       tracer.traceXhr(context, xhrStub as unknown as XMLHttpRequest)
 
@@ -202,7 +202,7 @@ describe('tracer', () => {
     it('should not add any headers', () => {
       const configurationWithoutHeaders = validateAndBuildRumConfiguration({
         ...INIT_CONFIGURATION,
-        allowedTracingUrls: [{ match: window.location.origin, headersTypes: [] }],
+        allowedTracingUrls: [{ match: window.location.origin, propagatorTypes: [] }],
       })!
 
       const tracer = startTracer(configurationWithoutHeaders, sessionManager)
@@ -215,10 +215,10 @@ describe('tracer', () => {
       expect(xhrStub.headers['X-B3-TraceId']).toBeUndefined()
     })
 
-    it('should ignore wrong header types', () => {
+    it('should ignore wrong propagator types', () => {
       const configurationWithBadParams = validateAndBuildRumConfiguration({
         ...INIT_CONFIGURATION,
-        allowedTracingUrls: [{ match: window.location.origin, headersTypes: ['foo', 32, () => true] as any }],
+        allowedTracingUrls: [{ match: window.location.origin, propagatorTypes: ['foo', 32, () => true] as any }],
       })!
 
       const tracer = startTracer(configurationWithBadParams, sessionManager)
@@ -469,13 +469,13 @@ describe('tracer', () => {
       expect(dynamicDomainContext.spanId).toBeDefined()
     })
 
-    it('should add only B3 Multiple headers', () => {
-      const configurationWithB3Multi = validateAndBuildRumConfiguration({
+    it('should add headers only for B3 Multiple propagator', () => {
+      const configurationWithb3multi = validateAndBuildRumConfiguration({
         ...INIT_CONFIGURATION,
-        allowedTracingUrls: [{ match: window.location.origin, headersTypes: ['b3m'] }],
+        allowedTracingUrls: [{ match: window.location.origin, propagatorTypes: ['b3multi'] }],
       })!
 
-      const tracer = startTracer(configurationWithB3Multi, sessionManager)
+      const tracer = startTracer(configurationWithb3multi, sessionManager)
       const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
       tracer.traceFetch(context)
 
@@ -497,13 +497,13 @@ describe('tracer', () => {
       expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['x-datadog-sampling-priority']))
     })
 
-    it('should add B3 (single) and W3C headers', () => {
-      const configurationWithB3andW3C = validateAndBuildRumConfiguration({
+    it('should add headers for b3 (single) and tracecontext propagators', () => {
+      const configurationWithB3andTracecontext = validateAndBuildRumConfiguration({
         ...INIT_CONFIGURATION,
-        allowedTracingUrls: [{ match: window.location.origin, headersTypes: ['b3', 'w3c'] }],
+        allowedTracingUrls: [{ match: window.location.origin, propagatorTypes: ['b3', 'tracecontext'] }],
       })!
 
-      const tracer = startTracer(configurationWithB3andW3C, sessionManager)
+      const tracer = startTracer(configurationWithB3andTracecontext, sessionManager)
       const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
       tracer.traceFetch(context)
 
@@ -518,7 +518,7 @@ describe('tracer', () => {
     it('should not add any headers', () => {
       const configurationWithoutHeaders = validateAndBuildRumConfiguration({
         ...INIT_CONFIGURATION,
-        allowedTracingUrls: [{ match: window.location.origin, headersTypes: [] }],
+        allowedTracingUrls: [{ match: window.location.origin, propagatorTypes: [] }],
       })!
 
       const tracer = startTracer(configurationWithoutHeaders, sessionManager)

@@ -17,7 +17,7 @@ import type {
   RumXhrStartContext,
 } from '../requestCollection'
 import type { RumSessionManager } from '../rumSessionManager'
-import type { TracingOption, TracingHeadersType } from './tracer.types'
+import type { PropagatorType, TracingOption } from './tracer.types'
 
 export interface Tracer {
   traceFetch: (context: Partial<RumFetchStartContext>) => void
@@ -32,7 +32,9 @@ interface TracingHeaders {
 export function isTracingOption(item: unknown): item is TracingOption {
   const expectedItem = item as TracingOption
   return (
-    getType(expectedItem) === 'object' && isMatchOption(expectedItem.match) && Array.isArray(expectedItem.headersTypes)
+    getType(expectedItem) === 'object' &&
+    isMatchOption(expectedItem.match) &&
+    Array.isArray(expectedItem.propagatorTypes)
   )
 }
 
@@ -119,7 +121,7 @@ function injectHeadersIfTracingAllowed(
   context.traceId = new TraceIdentifier()
   context.spanId = new TraceIdentifier()
   context.traceSampled = !isNumber(configuration.tracingSampleRate) || performDraw(configuration.tracingSampleRate)
-  inject(makeTracingHeaders(context.traceId, context.spanId, context.traceSampled, tracingOption.headersTypes))
+  inject(makeTracingHeaders(context.traceId, context.spanId, context.traceSampled, tracingOption.propagatorTypes))
 }
 
 export function isTracingSupported() {
@@ -138,13 +140,13 @@ function makeTracingHeaders(
   traceId: TraceIdentifier,
   spanId: TraceIdentifier,
   traceSampled: boolean,
-  requestedHeadersTypes: TracingHeadersType[]
+  propagatorTypes: PropagatorType[]
 ): TracingHeaders {
   const tracingHeaders: TracingHeaders = {}
 
-  requestedHeadersTypes.forEach((requestedHeader) => {
-    switch (requestedHeader) {
-      case 'dd': {
+  propagatorTypes.forEach((propagatorType) => {
+    switch (propagatorType) {
+      case 'datadog': {
         assign(tracingHeaders, {
           'x-datadog-origin': 'rum',
           'x-datadog-parent-id': spanId.toDecimalString(),
@@ -154,7 +156,7 @@ function makeTracingHeaders(
         break
       }
       // https://www.w3.org/TR/trace-context/
-      case 'w3c': {
+      case 'tracecontext': {
         assign(tracingHeaders, {
           traceparent: `00-0000000000000000${traceId.toPaddedHexadecimalString()}-${spanId.toPaddedHexadecimalString()}-0${
             traceSampled ? '1' : '0'
@@ -171,7 +173,7 @@ function makeTracingHeaders(
         })
         break
       }
-      case 'b3m': {
+      case 'b3multi': {
         assign(tracingHeaders, {
           'X-B3-TraceId': traceId.toPaddedHexadecimalString(),
           'X-B3-SpanId': spanId.toPaddedHexadecimalString(),

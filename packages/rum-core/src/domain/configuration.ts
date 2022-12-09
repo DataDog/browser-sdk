@@ -14,7 +14,7 @@ import {
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RumEvent } from '../rumEvent.types'
 import { isTracingOption } from './tracing/tracer'
-import type { TracingOption, TracingHeadersType } from './tracing/tracer.types'
+import type { PropagatorType, TracingOption } from './tracing/tracer.types'
 
 export interface RumInitConfiguration extends InitConfiguration {
   // global options
@@ -171,7 +171,7 @@ function validateAndBuildTracingOptions(initConfiguration: RumInitConfiguration)
     const tracingOptions: TracingOption[] = []
     initConfiguration.allowedTracingUrls.forEach((option) => {
       if (isMatchOption(option)) {
-        tracingOptions.push({ match: option, headersTypes: ['dd'] })
+        tracingOptions.push({ match: option, propagatorTypes: ['datadog'] })
       } else if (isTracingOption(option)) {
         tracingOptions.push(option)
       } else {
@@ -228,31 +228,31 @@ function convertLegacyMatchOptionToTracingOption(item: MatchOption): TracingOpti
     return undefined
   }
 
-  return { match, headersTypes: ['dd'] }
+  return { match, propagatorTypes: ['datadog'] }
 }
 
 /**
- * Combines the selected tracing headers from the different options in allowedTracingUrls,
- * and assumes 'dd' has been selected when using allowedTracingOrigins
+ * Combines the selected tracing propagators from the different options in allowedTracingUrls,
+ * and assumes 'datadog' has been selected when using allowedTracingOrigins
  */
-function getSelectedTracingHeaders(configuration: RumInitConfiguration): TracingHeadersType[] {
-  const usedTracingHeaders = new Set<TracingHeadersType>()
+function getSelectedTracingPropagators(configuration: RumInitConfiguration): PropagatorType[] {
+  const usedTracingPropagators = new Set<PropagatorType>()
 
   if (Array.isArray(configuration.allowedTracingUrls) && configuration.allowedTracingUrls.length > 0) {
-    configuration.allowedTracingUrls.forEach((config) => {
-      if (isMatchOption(config)) {
-        usedTracingHeaders.add('dd')
+    configuration.allowedTracingUrls.forEach((option) => {
+      if (isMatchOption(option)) {
+        usedTracingPropagators.add('datadog')
       } else {
-        config.headersTypes.forEach((headerType) => usedTracingHeaders.add(headerType))
+        option.propagatorTypes.forEach((propagatorType) => usedTracingPropagators.add(propagatorType))
       }
     })
   }
 
   if (Array.isArray(configuration.allowedTracingOrigins) && configuration.allowedTracingOrigins.length > 0) {
-    usedTracingHeaders.add('dd')
+    usedTracingPropagators.add('datadog')
   }
 
-  return arrayFrom(usedTracingHeaders)
+  return arrayFrom(usedTracingPropagators)
 }
 
 export function serializeRumConfiguration(configuration: RumInitConfiguration): RawTelemetryConfiguration {
@@ -269,7 +269,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration): 
         Array.isArray(configuration.allowedTracingOrigins) && configuration.allowedTracingOrigins.length > 0,
       use_allowed_tracing_urls:
         Array.isArray(configuration.allowedTracingUrls) && configuration.allowedTracingUrls.length > 0,
-      selected_tracing_headers: getSelectedTracingHeaders(configuration),
+      selected_tracing_propagators: getSelectedTracingPropagators(configuration),
       default_privacy_level: configuration.defaultPrivacyLevel,
       use_excluded_activity_urls:
         Array.isArray(configuration.allowedTracingOrigins) && configuration.allowedTracingOrigins.length > 0,

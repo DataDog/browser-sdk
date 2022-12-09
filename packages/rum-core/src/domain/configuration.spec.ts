@@ -174,7 +174,7 @@ describe('validateAndBuildRumConfiguration', () => {
           allowedTracingOrigins: ['foo'],
           service: 'bar',
         })!.allowedTracingUrls
-      ).toEqual([{ match: 'foo', headersTypes: ['dd'] }])
+      ).toEqual([{ match: 'foo', propagatorTypes: ['datadog'] }])
     })
 
     it('accepts functions', () => {
@@ -219,7 +219,7 @@ describe('validateAndBuildRumConfiguration', () => {
           allowedTracingUrls: ['foo'],
           service: 'bar',
         })!.allowedTracingUrls
-      ).toEqual([{ match: 'foo', headersTypes: ['dd'] }])
+      ).toEqual([{ match: 'foo', propagatorTypes: ['datadog'] }])
     })
 
     it('accepts functions', () => {
@@ -231,7 +231,7 @@ describe('validateAndBuildRumConfiguration', () => {
           allowedTracingUrls: [customOriginFunction],
           service: 'bar',
         })!.allowedTracingUrls
-      ).toEqual([{ match: customOriginFunction, headersTypes: ['dd'] }])
+      ).toEqual([{ match: customOriginFunction, propagatorTypes: ['datadog'] }])
     })
 
     it('accepts RegExp', () => {
@@ -241,17 +241,17 @@ describe('validateAndBuildRumConfiguration', () => {
           allowedTracingUrls: [/az/i],
           service: 'bar',
         })!.allowedTracingUrls
-      ).toEqual([{ match: /az/i, headersTypes: ['dd'] }])
+      ).toEqual([{ match: /az/i, propagatorTypes: ['datadog'] }])
     })
 
     it('keeps headers', () => {
       expect(
         validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
-          allowedTracingUrls: [{ match: 'simple', headersTypes: ['b3m', 'w3c'] }],
+          allowedTracingUrls: [{ match: 'simple', propagatorTypes: ['b3multi', 'tracecontext'] }],
           service: 'bar',
         })!.allowedTracingUrls
-      ).toEqual([{ match: 'simple', headersTypes: ['b3m', 'w3c'] }])
+      ).toEqual([{ match: 'simple', propagatorTypes: ['b3multi', 'tracecontext'] }])
     })
 
     it('should filter out unexpected parameter types', () => {
@@ -259,7 +259,12 @@ describe('validateAndBuildRumConfiguration', () => {
         validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
           service: 'bar',
-          allowedTracingUrls: [42 as any, undefined, { match: 42 as any, headersTypes: ['dd'] }, { match: 'toto' }],
+          allowedTracingUrls: [
+            42 as any,
+            undefined,
+            { match: 42 as any, propagatorTypes: ['datadog'] },
+            { match: 'toto' },
+          ],
         })!.allowedTracingUrls
       ).toEqual([])
 
@@ -458,32 +463,32 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('serializeRumConfiguration', () => {
-    describe('selected tracing headers serialization', () => {
-      it('should not return any header type', () => {
-        expect(serializeRumConfiguration(DEFAULT_INIT_CONFIGURATION).selected_tracing_headers).toEqual([])
+    describe('selected tracing propagators serialization', () => {
+      it('should not return any propagator type', () => {
+        expect(serializeRumConfiguration(DEFAULT_INIT_CONFIGURATION).selected_tracing_propagators).toEqual([])
       })
 
-      it('should return Datadog header type', () => {
+      it('should return Datadog propagator type', () => {
         const simpleTracingConfig: RumInitConfiguration = {
           ...DEFAULT_INIT_CONFIGURATION,
           allowedTracingUrls: ['foo'],
         }
-        expect(serializeRumConfiguration(simpleTracingConfig).selected_tracing_headers).toEqual(['dd'])
+        expect(serializeRumConfiguration(simpleTracingConfig).selected_tracing_propagators).toEqual(['datadog'])
       })
 
-      it('should return all header types', () => {
+      it('should return all propagator types', () => {
         const complexTracingConfig: RumInitConfiguration = {
           ...DEFAULT_INIT_CONFIGURATION,
           allowedTracingUrls: [
             'foo',
-            { match: 'first', headersTypes: ['dd'] },
-            { match: 'test', headersTypes: ['w3c'] },
-            { match: 'other', headersTypes: ['b3'] },
-            { match: 'final', headersTypes: ['b3m'] },
+            { match: 'first', propagatorTypes: ['datadog'] },
+            { match: 'test', propagatorTypes: ['tracecontext'] },
+            { match: 'other', propagatorTypes: ['b3'] },
+            { match: 'final', propagatorTypes: ['b3multi'] },
           ],
         }
-        expect(serializeRumConfiguration(complexTracingConfig).selected_tracing_headers).toEqual(
-          jasmine.arrayWithExactContents(['dd', 'b3', 'b3m', 'w3c'])
+        expect(serializeRumConfiguration(complexTracingConfig).selected_tracing_propagators).toEqual(
+          jasmine.arrayWithExactContents(['datadog', 'b3', 'b3multi', 'tracecontext'])
         )
       })
     })
