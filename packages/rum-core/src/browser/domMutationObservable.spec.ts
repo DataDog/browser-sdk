@@ -1,5 +1,5 @@
 import { isIE } from '@datadog/browser-core'
-import type { BrowserWindow } from './domMutationObservable'
+import { stubZoneJs } from '../../../core/test/stubZoneJs'
 import { createDOMMutationObservable, getMutationObserverConstructor } from './domMutationObservable'
 
 // The MutationObserver invokes its callback in an event loop microtask, making this asynchronous.
@@ -108,38 +108,31 @@ describe('domMutationObservable', () => {
   )
 
   describe('Zone.js support', () => {
-    const browserWindow = window as BrowserWindow
-    const OriginalMutationObserverConstructor = browserWindow.MutationObserver!
+    let zoneJsStub: ReturnType<typeof stubZoneJs>
+    const OriginalMutationObserverConstructor = window.MutationObserver
 
     beforeEach(() => {
-      browserWindow.Zone = { __symbol__: zoneSymbol }
+      zoneJsStub = stubZoneJs()
     })
 
     afterEach(() => {
-      delete browserWindow.Zone
-      delete browserWindow[zoneSymbol('MutationObserver') as any]
-      browserWindow.MutationObserver = OriginalMutationObserverConstructor
+      zoneJsStub.restore()
+      window.MutationObserver = OriginalMutationObserverConstructor
     })
 
     it('gets the original MutationObserver constructor from the "window" object (Zone.js >= 0.8.6)', () => {
-      browserWindow.MutationObserver = function () {
+      zoneJsStub.replaceProperty(window, 'MutationObserver', function () {
         // This won't be instantiated.
-      } as any
-      browserWindow[zoneSymbol('MutationObserver') as any] = OriginalMutationObserverConstructor as any
-
+      } as any)
       expect(getMutationObserverConstructor()).toBe(OriginalMutationObserverConstructor)
     })
 
     it('gets the original MutationObserver constructor from a patched instance (Zone.js < 0.8.6)', () => {
-      browserWindow.MutationObserver = function (this: any, callback: () => void) {
-        this[zoneSymbol('originalInstance')] = new OriginalMutationObserverConstructor(callback)
+      window.MutationObserver = function (this: any, callback: () => void) {
+        this[zoneJsStub.getSymbol('originalInstance')] = new OriginalMutationObserverConstructor(callback)
       } as any
 
       expect(getMutationObserverConstructor()).toBe(OriginalMutationObserverConstructor)
     })
-
-    function zoneSymbol(name: string) {
-      return `__zone_symbol__${name}`
-    }
   })
 })
