@@ -64,13 +64,8 @@ export function record(options: RecordOptions): RecordAPI {
 
   const takeFullSnapshot = (
     timestamp = timeStampNow(),
-    serializationContext = { status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT, elementsScrollPositions },
-    flushMutationsFromPreviousFs?: () => void
+    serializationContext = { status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT, elementsScrollPositions }
   ) => {
-    flushMutationsFromShadowRoots()
-    if (flushMutationsFromPreviousFs) {
-      flushMutationsFromPreviousFs() // process any pending mutation before taking a full snapshot
-    }
     const { width, height } = getViewportDimension()
     emit({
       data: {
@@ -113,7 +108,7 @@ export function record(options: RecordOptions): RecordAPI {
 
   takeFullSnapshot()
 
-  const { stop: stopObservers, flush: flushMutations } = initObservers({
+  const { stop: stopObservers, flush: flushMutationsFromObservers } = initObservers({
     lifeCycle: options.lifeCycle,
     configuration: options.configuration,
     elementsScrollPositions,
@@ -143,24 +138,25 @@ export function record(options: RecordOptions): RecordAPI {
     },
     shadowDomCallBacks: { shadowDomCreatedCallback, shadowDomRemovedCallback },
   })
+
+  function flushMutations() {
+    flushMutationsFromShadowRoots()
+    flushMutationsFromObservers()
+  }
+
   return {
     stop: () => {
       shadowDomCallBacks.forEach(({ stop }) => stop())
       stopObservers()
     },
-    takeSubsequentFullSnapshot: (timestamp) =>
-      takeFullSnapshot(
-        timestamp,
-        {
-          status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT,
-          elementsScrollPositions,
-        },
-        flushMutations
-      ),
-    flushMutations: () => {
-      flushMutationsFromShadowRoots()
+    takeSubsequentFullSnapshot: (timestamp) => {
       flushMutations()
+      takeFullSnapshot(timestamp, {
+        status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT,
+        elementsScrollPositions,
+      })
     },
+    flushMutations,
     shadowDomCallBacks,
   }
 }
