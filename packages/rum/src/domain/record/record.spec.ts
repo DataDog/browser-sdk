@@ -363,7 +363,7 @@ describe('record', () => {
       expect(mutationData.removes.length).toBe(1)
     })
 
-    it('should clean the state when both the parent  shadow host is removed to avoid memory leak', () => {
+    it('should clean the state when both the parent and the shadow host is removed to avoid memory leak', () => {
       updateExperimentalFeatures(['record_shadow_dom'])
       const grandParent = document.createElement('div')
       const parent = document.createElement('div')
