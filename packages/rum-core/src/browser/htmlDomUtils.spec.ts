@@ -60,8 +60,9 @@ describe('isElementNode', () => {
 
 describe('isShadowRoot', () => {
   if (isIE()) {
-    pending('IE not supported')
+    return
   }
+
   const parent = document.createElement('div')
   parent.attachShadow({ mode: 'open' })
   const parameters: Array<[Node, boolean]> = [
@@ -81,7 +82,7 @@ describe('isShadowRoot', () => {
 
 describe('isShadowHost', () => {
   if (isIE()) {
-    pending('IE not supported')
+    return
   }
   const host = document.createElement('div')
   host.attachShadow({ mode: 'open' })
@@ -138,7 +139,7 @@ describe('getChildNodes', () => {
 
 describe('getNodeOrShadowHost', () => {
   if (isIE()) {
-    pending('IE not supported')
+    return
   }
   const parent = document.createElement('div')
   parent.attachShadow({ mode: 'open' })
@@ -158,8 +159,9 @@ describe('getNodeOrShadowHost', () => {
 
 describe('getParentNode', () => {
   if (isIE()) {
-    pending('IE not supported')
+    return
   }
+
   const parentWithShadowRoot = document.createElement('div')
   const shadowRoot = parentWithShadowRoot.attachShadow({ mode: 'open' })
   const childInShadowRoot = document.createElement('span')
