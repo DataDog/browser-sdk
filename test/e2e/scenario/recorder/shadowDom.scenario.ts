@@ -12,7 +12,7 @@ import {
 } from '@datadog/browser-rum/test/utils'
 import type { EventRegistry } from '../../lib/framework'
 import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
-import { browserExecute } from '../../lib/helpers/browser'
+import { browserExecute, getBrowserName } from '../../lib/helpers/browser'
 
 /** Will generate the following HTML 
  * ```html
@@ -44,7 +44,7 @@ const inputShadowDom = `<script>
      label.innerText = "field " + compomentId + ": ";
      const input = document.createElement("input");
      input.setAttribute("id", "input-" + compomentId);
-     input.setAttribute("value", "toto");
+     input.value = "toto"
      parent.appendChild(label)
      parent.appendChild(input)
      this.shadowRoot.appendChild(parent);
@@ -146,30 +146,33 @@ describe('recorder with shadow DOM', () => {
         expect((mouseInteraction.data as MouseInteractionData).id).toBe(divNode.id)
       })
 
-    createTest('record input')
-      .withRum({ defaultPrivacyLevel: 'allow', enableExperimentalFeatures: ['record_shadow_dom'] })
-      .withRumInit(initRumAndStartRecording)
-      .withSetup(bundleSetup)
-      .withBody(
-        html`
-          ${inputShadowDom}
-          <my-input-field />
-        `
-      )
-      .run(async ({ serverEvents }) => {
-        const input = await getNodeInsideShadowDom('my-input-field', 'input')
-        await input.addValue('t')
+    // only work on Firefox 107+ but we're currently using 106
+    if (getBrowserName() !== 'firefox') {
+      createTest('record input')
+        .withRum({ defaultPrivacyLevel: 'allow', enableExperimentalFeatures: ['record_shadow_dom'] })
+        .withRumInit(initRumAndStartRecording)
+        .withSetup(bundleSetup)
+        .withBody(
+          html`
+            ${inputShadowDom}
+            <my-input-field />
+          `
+        )
+        .run(async ({ serverEvents }) => {
+          const input = await getNodeInsideShadowDom('my-input-field', 'input')
+          await input.addValue('t')
 
-        await flushEvents()
-        expect(serverEvents.sessionReplay.length).toBe(1)
-        const fullSnapshot = findFullSnapshot(getFirstSegment(serverEvents))!
-        const inputNode = findElementWithTagName(fullSnapshot.data.node, 'input')!
-        const inputRecord = findIncrementalSnapshot(getFirstSegment(serverEvents), IncrementalSource.Input)!
-        expect(inputRecord).toBeTruthy()
-        expect(inputRecord.data.source).toBe(IncrementalSource.Input)
-        expect((inputRecord.data as InputData).id).toBe(inputNode.id)
-        expect((inputRecord.data as { text: string }).text).toBe('totot')
-      })
+          await flushEvents()
+          expect(serverEvents.sessionReplay.length).toBe(1)
+          const fullSnapshot = findFullSnapshot(getFirstSegment(serverEvents))!
+          const inputNode = findElementWithTagName(fullSnapshot.data.node, 'input')!
+          const inputRecord = findIncrementalSnapshot(getFirstSegment(serverEvents), IncrementalSource.Input)!
+          expect(inputRecord).toBeTruthy()
+          expect(inputRecord.data.source).toBe(IncrementalSource.Input)
+          expect((inputRecord.data as InputData).id).toBe(inputNode.id)
+          expect((inputRecord.data as { text: string }).text).toBe('totot')
+        })
+    }
 
     createTest('record mutation')
       .withRum({ defaultPrivacyLevel: 'allow', enableExperimentalFeatures: ['record_shadow_dom'] })
