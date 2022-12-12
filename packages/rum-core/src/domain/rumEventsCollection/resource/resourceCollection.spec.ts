@@ -1,5 +1,12 @@
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
-import { isIE, RequestType, ResourceType } from '@datadog/browser-core'
+import {
+  relativeToClocks,
+  resetExperimentalFeatures,
+  updateExperimentalFeatures,
+  isIE,
+  RequestType,
+  ResourceType,
+} from '@datadog/browser-core'
 import { createResourceEntry } from '../../../../test/fixtures'
 import type { TestSetupBuilder } from '../../../../test/specHelper'
 import { setup } from '../../../../test/specHelper'
@@ -26,6 +33,7 @@ describe('resourceCollection', () => {
   })
 
   afterEach(() => {
+    resetExperimentalFeatures()
     setupBuilder.cleanup()
   })
 
@@ -101,6 +109,35 @@ describe('resourceCollection', () => {
       requestInit: undefined,
       error: undefined,
     })
+  })
+
+  it('should collect computed duration and performance entry duration when resource_durations ff is enabled', () => {
+    updateExperimentalFeatures(['resource_durations'])
+
+    const match = createResourceEntry({ startTime: 200 as RelativeTime, duration: 300 as Duration })
+    spyOn(performance, 'getEntriesByName').and.returnValues([match] as unknown as PerformanceResourceTiming[])
+
+    const { lifeCycle, rawRumEvents } = setupBuilder.build()
+    lifeCycle.notify(
+      LifeCycleEventType.REQUEST_COMPLETED,
+      createCompletedRequest({
+        duration: 500 as Duration,
+        resolveDuration: 50 as Duration,
+        method: 'GET',
+        startClocks: relativeToClocks(100 as RelativeTime),
+        status: 200,
+        type: RequestType.FETCH,
+        url: 'https://resource.com/valid',
+        input: 'https://resource.com/valid',
+      })
+    )
+    const rawRumResourceEvent = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+    expect(rawRumResourceEvent._dd).toEqual(
+      jasmine.objectContaining({
+        computed_duration: 500000000,
+        performance_entry_duration: 300000000,
+      })
+    )
   })
 
   it('should create resource from completed fetch request', () => {
