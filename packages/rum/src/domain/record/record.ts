@@ -36,8 +36,8 @@ interface ShadowDomCallBacks {
 export interface RecordAPI {
   stop: () => void
   takeSubsequentFullSnapshot: (timestamp?: TimeStamp) => void
-  // the following is only used for testing purposes
   flushMutations: () => void
+  // the following is only used for testing purposes
   shadowDomCallBacks: Map<ShadowRoot, ShadowDomCallBacks>
 }
 
