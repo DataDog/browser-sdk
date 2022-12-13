@@ -51,8 +51,8 @@ export type RumMutationRecord =
   | RumChildListMutationRecord
 
 export type ShadowDomCallBacks = {
-  shadowDomCreatedCallback: ShadowDomCallBack
-  shadowDomRemovedCallback: ShadowDomCallBack
+  addShadowRoot: ShadowDomCallBack
+  removeShadowRoot: ShadowDomCallBack
 }
 
 /**
@@ -112,7 +112,7 @@ function processMutations(
     .filter((mutation): mutation is RumChildListMutationRecord => mutation.type === 'childList')
     .forEach((mutation) => {
       mutation.removedNodes.forEach((removedNode) => {
-        traverseRemovedShadowDom(removedNode, shadowDomCallbacks.shadowDomRemovedCallback)
+        traverseRemovedShadowDom(removedNode, shadowDomCallbacks.removeShadowRoot)
       })
     })
 
@@ -226,7 +226,7 @@ function processChildListMutations(
       parentNodePrivacyLevel,
       serializationContext: { status: SerializationContextStatus.MUTATION },
       configuration,
-      shadowDomCreatedCallback: shadowDomCallbacks.shadowDomCreatedCallback,
+      shadowDomCreatedCallback: shadowDomCallbacks.addShadowRoot,
     })
     if (!serializedNode) {
       continue

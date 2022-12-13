@@ -21,12 +21,12 @@ describe('startMutationCollection', () => {
   let stopMutationCollection: () => void
   let flushMutations: () => void
 
-  let shadowDomCreatedCallbackSpy: jasmine.Spy<ShadowDomCallBack>
-  let shadowDomRemovedCallbackSpy: jasmine.Spy<ShadowDomCallBack>
+  let addShadowRootSpy: jasmine.Spy<ShadowDomCallBack>
+  let removeShadowRootSpy: jasmine.Spy<ShadowDomCallBack>
 
   beforeEach(() => {
-    shadowDomCreatedCallbackSpy = jasmine.createSpy<ShadowDomCallBack>()
-    shadowDomRemovedCallbackSpy = jasmine.createSpy<ShadowDomCallBack>()
+    addShadowRootSpy = jasmine.createSpy<ShadowDomCallBack>()
+    removeShadowRootSpy = jasmine.createSpy<ShadowDomCallBack>()
   })
 
   function startMutationCollection(defaultPrivacyLevel: DefaultPrivacyLevel = DefaultPrivacyLevel.ALLOW) {
@@ -37,7 +37,7 @@ describe('startMutationCollection', () => {
       {
         defaultPrivacyLevel,
       } as RumConfiguration,
-      { shadowDomCreatedCallback: shadowDomCreatedCallbackSpy, shadowDomRemovedCallback: shadowDomRemovedCallbackSpy },
+      { addShadowRoot: addShadowRootSpy, removeShadowRoot: removeShadowRootSpy },
       document
     ))
 
@@ -474,8 +474,8 @@ describe('startMutationCollection', () => {
             },
           ],
         })
-        expect(shadowDomCreatedCallbackSpy).toHaveBeenCalledOnceWith(shadowRoot)
-        expect(shadowDomRemovedCallbackSpy).not.toHaveBeenCalled()
+        expect(addShadowRootSpy).toHaveBeenCalledOnceWith(shadowRoot)
+        expect(removeShadowRootSpy).not.toHaveBeenCalled()
       })
 
       it('should call shadowDomCreatedCallback when host is removed', () => {
@@ -500,8 +500,8 @@ describe('startMutationCollection', () => {
             },
           ],
         })
-        expect(shadowDomCreatedCallbackSpy).not.toHaveBeenCalled()
-        expect(shadowDomRemovedCallbackSpy).toHaveBeenCalledOnceWith(shadowRoot)
+        expect(addShadowRootSpy).not.toHaveBeenCalled()
+        expect(removeShadowRootSpy).toHaveBeenCalledOnceWith(shadowRoot)
       })
 
       it('should call shadowDomCreatedCallback when parent of host is removed', () => {
@@ -529,8 +529,8 @@ describe('startMutationCollection', () => {
             },
           ],
         })
-        expect(shadowDomCreatedCallbackSpy).not.toHaveBeenCalled()
-        expect(shadowDomRemovedCallbackSpy).toHaveBeenCalledOnceWith(shadowRoot)
+        expect(addShadowRootSpy).not.toHaveBeenCalled()
+        expect(removeShadowRootSpy).toHaveBeenCalledOnceWith(shadowRoot)
       })
     })
   })

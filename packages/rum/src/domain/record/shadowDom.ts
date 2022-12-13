@@ -9,7 +9,15 @@ interface ShadowDomCallBacks {
   flush: () => void
 }
 
-export const withShadowDomHelpers = (
+export interface ShadowRootsController {
+  addShadowRoot: (shadowRoot: ShadowRoot) => void
+  removeShadowRoot: (shadowRoot: ShadowRoot) => void
+  stop: () => void
+  flush: () => void
+  shadowDomCallBacks: Map<ShadowRoot, ShadowDomCallBacks>
+}
+
+export const initShadowRootsController = (
   configuration: RumConfiguration,
   {
     mutationCb,
@@ -18,10 +26,10 @@ export const withShadowDomHelpers = (
     mutationCb: MutationCallBack
     inputCb: InputCallback
   }
-) => {
+): ShadowRootsController => {
   const shadowDomCallBacks = new Map<ShadowRoot, ShadowDomCallBacks>()
 
-  const shadowDomRemovedCallback = (shadowRoot: ShadowRoot) => {
+  const removeShadowRoot = (shadowRoot: ShadowRoot) => {
     const entry = shadowDomCallBacks.get(shadowRoot)
     if (!entry) {
       addTelemetryDebug('no shadow root in map')
@@ -31,11 +39,11 @@ export const withShadowDomHelpers = (
     shadowDomCallBacks.delete(shadowRoot)
   }
 
-  const shadowDomCreatedCallback = (shadowRoot: ShadowRoot) => {
+  const addShadowRoot = (shadowRoot: ShadowRoot) => {
     const { stop: stopMutationObserver, flush } = startMutationObserver(
       mutationCb,
       configuration,
-      { shadowDomCreatedCallback, shadowDomRemovedCallback },
+      { addShadowRoot, removeShadowRoot },
       shadowRoot
     )
     // the change event no do bubble up across the shadow root, we have to listen on the shadow root
@@ -52,11 +60,14 @@ export const withShadowDomHelpers = (
     })
   }
   return {
-    shadowDomCallBacks,
+    stop: () => {
+      shadowDomCallBacks.forEach(({ stop }) => stop())
+    },
     flush: () => {
       shadowDomCallBacks.forEach(({ flush }) => flush())
     },
-    shadowDomRemovedCallback,
-    shadowDomCreatedCallback,
+    addShadowRoot,
+    removeShadowRoot,
+    shadowDomCallBacks,
   }
 }

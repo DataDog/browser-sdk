@@ -21,7 +21,7 @@ import type { InputCallback } from './observers'
 import { getVisualViewport, getScrollX, getScrollY } from './viewports'
 import { assembleIncrementalSnapshot } from './utils'
 import { createElementsScrollPositions } from './elementsScrollPositions'
-import { withShadowDomHelpers } from './shadowDom'
+import { initShadowRootsController } from './shadowDom'
 
 export interface RecordOptions {
   emit?: (record: BrowserRecord) => void
@@ -56,11 +56,12 @@ export function record(options: RecordOptions): RecordAPI {
   const inputCb: InputCallback = (s) => emit(assembleIncrementalSnapshot<InputData>(IncrementalSource.Input, s))
 
   const {
-    shadowDomCallBacks,
+    stop: stopFromShadowRoots,
     flush: flushMutationsFromShadowRoots,
-    shadowDomCreatedCallback,
-    shadowDomRemovedCallback,
-  } = withShadowDomHelpers(options.configuration, { mutationCb, inputCb })
+    addShadowRoot,
+    removeShadowRoot,
+    shadowDomCallBacks,
+  } = initShadowRootsController(options.configuration, { mutationCb, inputCb })
 
   const takeFullSnapshot = (
     timestamp = timeStampNow(),
@@ -87,7 +88,7 @@ export function record(options: RecordOptions): RecordAPI {
 
     emit({
       data: {
-        node: serializeDocument(document, options.configuration, serializationContext, shadowDomCreatedCallback),
+        node: serializeDocument(document, options.configuration, serializationContext, addShadowRoot),
         initialOffset: {
           left: getScrollX(),
           top: getScrollY(),
@@ -136,7 +137,7 @@ export function record(options: RecordOptions): RecordAPI {
         timestamp: timeStampNow(),
       })
     },
-    shadowDomCallBacks: { shadowDomCreatedCallback, shadowDomRemovedCallback },
+    shadowDomCallBacks: { addShadowRoot, removeShadowRoot },
   })
 
   function flushMutations() {
@@ -146,7 +147,7 @@ export function record(options: RecordOptions): RecordAPI {
 
   return {
     stop: () => {
-      shadowDomCallBacks.forEach(({ stop }) => stop())
+      stopFromShadowRoots()
       stopObservers()
     },
     takeSubsequentFullSnapshot: (timestamp) => {
