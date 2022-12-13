@@ -119,7 +119,6 @@ describe('resourceCollection', () => {
       LifeCycleEventType.REQUEST_COMPLETED,
       createCompletedRequest({
         duration: 500 as Duration,
-        resolveDuration: 50 as Duration,
         method: 'GET',
         startClocks: relativeToClocks(100 as RelativeTime),
         status: 200,
@@ -147,7 +146,6 @@ describe('resourceCollection', () => {
       LifeCycleEventType.REQUEST_COMPLETED,
       createCompletedRequest({
         duration: 100 as Duration,
-        resolveDuration: 50 as Duration,
         method: 'GET',
         startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
         status: 200,
