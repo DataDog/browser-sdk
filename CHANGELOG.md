@@ -16,6 +16,14 @@
 
 ---
 
+## v4.27.0
+
+- ✨Allow internal analytics subdomain ([#1863](https://github.com/DataDog/browser-sdk/pull/1863))
+- 🔊 Collect computed and perf entry durations ([#1861](https://github.com/DataDog/browser-sdk/pull/1861))
+- 🐛 [RUMF-1449] workaround for Firefox memory leak when using Zone.js ([#1860](https://github.com/DataDog/browser-sdk/pull/1860))
+- ✨ send data from the SDK to the extension ([#1850](https://github.com/DataDog/browser-sdk/pull/1850))
+- ♻️ [RUMF-1440] improve feature flag collection implementation ([#1839](https://github.com/DataDog/browser-sdk/pull/1839))
+
 ## v4.26.0
 
 - 🐛 [RUMF-1421] improve counters by filtering child events ([#1837](https://github.com/DataDog/browser-sdk/pull/1837))
