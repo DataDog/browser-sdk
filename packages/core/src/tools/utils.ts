@@ -1,3 +1,4 @@
+import { DOM_EVENT, addEventListener } from '../browser/addEventListener'
 import { display } from './display'
 import { monitor } from './monitor'
 
@@ -8,39 +9,6 @@ export const ONE_DAY = 24 * ONE_HOUR
 export const ONE_YEAR = 365 * ONE_DAY
 export const ONE_KIBI_BYTE = 1024
 export const ONE_MEBI_BYTE = 1024 * ONE_KIBI_BYTE
-
-export const enum DOM_EVENT {
-  BEFORE_UNLOAD = 'beforeunload',
-  CLICK = 'click',
-  DBL_CLICK = 'dblclick',
-  KEY_DOWN = 'keydown',
-  LOAD = 'load',
-  POP_STATE = 'popstate',
-  SCROLL = 'scroll',
-  TOUCH_START = 'touchstart',
-  TOUCH_END = 'touchend',
-  TOUCH_MOVE = 'touchmove',
-  VISIBILITY_CHANGE = 'visibilitychange',
-  DOM_CONTENT_LOADED = 'DOMContentLoaded',
-  POINTER_DOWN = 'pointerdown',
-  POINTER_UP = 'pointerup',
-  POINTER_CANCEL = 'pointercancel',
-  HASH_CHANGE = 'hashchange',
-  PAGE_HIDE = 'pagehide',
-  MOUSE_DOWN = 'mousedown',
-  MOUSE_UP = 'mouseup',
-  MOUSE_MOVE = 'mousemove',
-  FOCUS = 'focus',
-  BLUR = 'blur',
-  CONTEXT_MENU = 'contextmenu',
-  RESIZE = 'resize',
-  CHANGE = 'change',
-  INPUT = 'input',
-  PLAY = 'play',
-  PAUSE = 'pause',
-  SECURITY_POLICY_VIOLATION = 'securitypolicyviolation',
-  SELECTION_CHANGE = 'selectionchange',
-}
 
 export const enum ResourceType {
   DOCUMENT = 'document',
@@ -355,80 +323,6 @@ export function safeTruncate(candidate: string, length: number, suffix = '') {
   if (candidate.length <= correctedLength) return candidate
 
   return `${candidate.slice(0, correctedLength)}${suffix}`
-}
-
-export interface EventEmitter {
-  addEventListener(
-    event: DOM_EVENT,
-    listener: (event: Event) => void,
-    options?: boolean | { capture?: boolean; passive?: boolean }
-  ): void
-  removeEventListener(
-    event: DOM_EVENT,
-    listener: (event: Event) => void,
-    options?: boolean | { capture?: boolean; passive?: boolean }
-  ): void
-}
-
-interface AddEventListenerOptions {
-  once?: boolean
-  capture?: boolean
-  passive?: boolean
-}
-
-/**
- * Add an event listener to an event emitter object (Window, Element, mock object...).  This provides
- * a few conveniences compared to using `element.addEventListener` directly:
- *
- * * supports IE11 by: using an option object only if needed and emulating the `once` option
- *
- * * wraps the listener with a `monitor` function
- *
- * * returns a `stop` function to remove the listener
- */
-export function addEventListener<E extends Event>(
-  emitter: EventEmitter,
-  event: DOM_EVENT,
-  listener: (event: E) => void,
-  options?: AddEventListenerOptions
-) {
-  return addEventListeners(emitter, [event], listener, options)
-}
-
-/**
- * Add event listeners to an event emitter object (Window, Element, mock object...).  This provides
- * a few conveniences compared to using `element.addEventListener` directly:
- *
- * * supports IE11 by: using an option object only if needed and emulating the `once` option
- *
- * * wraps the listener with a `monitor` function
- *
- * * returns a `stop` function to remove the listener
- *
- * * with `once: true`, the listener will be called at most once, even if different events are listened
- */
-export function addEventListeners<E extends Event>(
-  emitter: EventEmitter,
-  events: DOM_EVENT[],
-  listener: (event: E) => void,
-  { once, capture, passive }: { once?: boolean; capture?: boolean; passive?: boolean } = {}
-) {
-  const wrappedListener = monitor(
-    once
-      ? (event: Event) => {
-          stop()
-          listener(event as E)
-        }
-      : (listener as (event: Event) => void)
-  )
-
-  const options = passive ? { capture, passive } : capture
-  events.forEach((event) => emitter.addEventListener(event, wrappedListener, options))
-  const stop = () => events.forEach((event) => emitter.removeEventListener(event, wrappedListener, options))
-
-  return {
-    stop,
-  }
 }
 
 export function elementMatches(element: Element & { msMatchesSelector?(selector: string): boolean }, selector: string) {

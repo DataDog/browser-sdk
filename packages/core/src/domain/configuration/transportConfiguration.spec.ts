@@ -2,7 +2,7 @@ import { computeTransportConfiguration } from './transportConfiguration'
 
 describe('transportConfiguration', () => {
   const clientToken = 'some_client_token'
-
+  const internalAnalyticsSubdomain = 'ia-rum-intake'
   describe('site', () => {
     it('should use US site by default', () => {
       const configuration = computeTransportConfiguration({ clientToken })
@@ -14,6 +14,25 @@ describe('transportConfiguration', () => {
       const configuration = computeTransportConfiguration({ clientToken, site: 'foo.com' })
       expect(configuration.rumEndpointBuilder.build('xhr')).toContain('foo.com')
       expect(configuration.site).toBe('foo.com')
+    })
+  })
+
+  describe('internalAnalyticsSubdomain', () => {
+    it('should use internal analytics subdomain value when set for datadoghq.com site', () => {
+      const configuration = computeTransportConfiguration({
+        clientToken,
+        internalAnalyticsSubdomain,
+      })
+      expect(configuration.rumEndpointBuilder.build('xhr')).toContain(internalAnalyticsSubdomain)
+    })
+
+    it('should not use internal analytics subdomain value when set for other sites', () => {
+      const configuration = computeTransportConfiguration({
+        clientToken,
+        site: 'foo.bar',
+        internalAnalyticsSubdomain,
+      })
+      expect(configuration.rumEndpointBuilder.build('xhr')).not.toContain(internalAnalyticsSubdomain)
     })
   })
 
@@ -58,6 +77,14 @@ describe('transportConfiguration', () => {
       })
     })
 
+    it('should detect internal analytics intake request for datadoghq.com site', () => {
+      const configuration = computeTransportConfiguration({
+        clientToken,
+        internalAnalyticsSubdomain,
+      })
+      expect(configuration.isIntakeUrl(`https://${internalAnalyticsSubdomain}.datadoghq.com/api/v2/rum?xxx`)).toBe(true)
+    })
+
     it('should not detect non intake request', () => {
       const configuration = computeTransportConfiguration({ clientToken })
       expect(configuration.isIntakeUrl('https://www.foo.com')).toBe(false)
@@ -94,15 +121,20 @@ describe('transportConfiguration', () => {
           clientToken,
           site,
           replica: { clientToken },
+          internalAnalyticsSubdomain,
         })
 
         expect(configuration.isIntakeUrl(`https://rum.${intakeDomain}/api/v2/rum?xxx`)).toBe(true)
         expect(configuration.isIntakeUrl(`https://logs.${intakeDomain}/api/v2/logs?xxx`)).toBe(true)
         expect(configuration.isIntakeUrl(`https://session-replay.${intakeDomain}/api/v2/replay?xxx`)).toBe(true)
 
-        expect(configuration.isIntakeUrl('https://rum.browser-intake-datadoghq.com/api/v2/rum?xxx')).toBe(true)
-        expect(configuration.isIntakeUrl('https://logs.browser-intake-datadoghq.com/api/v2/logs?xxx')).toBe(true)
-        expect(configuration.isIntakeUrl('https://session-replay.browser-intake-datadoghq.com/api/v2/replay?xxx')).toBe(
+        expect(configuration.isIntakeUrl(`https://${internalAnalyticsSubdomain}.datadoghq.com/api/v2/rum?xxx`)).toBe(
+          true
+        )
+        expect(configuration.isIntakeUrl(`https://${internalAnalyticsSubdomain}.datadoghq.com/api/v2/logs?xxx`)).toBe(
+          true
+        )
+        expect(configuration.isIntakeUrl(`https://${internalAnalyticsSubdomain}.datadoghq.com/api/v2/replay?xxx`)).toBe(
           false
         )
       })

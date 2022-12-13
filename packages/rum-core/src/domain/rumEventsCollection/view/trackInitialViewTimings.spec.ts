@@ -161,13 +161,13 @@ describe('trackFirstContentfulPaintTiming', () => {
 describe('largestContentfulPaintTiming', () => {
   let setupBuilder: TestSetupBuilder
   let lcpCallback: jasmine.Spy<(value: RelativeTime) => void>
-  let emitter: Element
+  let eventTarget: Element
 
   beforeEach(() => {
     lcpCallback = jasmine.createSpy()
-    emitter = document.createElement('div')
+    eventTarget = document.createElement('div')
     setupBuilder = setup().beforeBuild(({ lifeCycle }) =>
-      trackLargestContentfulPaintTiming(lifeCycle, emitter, lcpCallback)
+      trackLargestContentfulPaintTiming(lifeCycle, eventTarget, lcpCallback)
     )
     resetFirstHidden()
   })
@@ -189,7 +189,7 @@ describe('largestContentfulPaintTiming', () => {
   it('should be discarded if it is reported after a user interaction', () => {
     const { lifeCycle } = setupBuilder.build()
 
-    emitter.dispatchEvent(createNewEvent(DOM_EVENT.KEY_DOWN, { timeStamp: 1 }))
+    eventTarget.dispatchEvent(createNewEvent(DOM_EVENT.KEY_DOWN, { timeStamp: 1 }))
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY])
     expect(lcpCallback).not.toHaveBeenCalled()

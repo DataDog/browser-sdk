@@ -58,6 +58,7 @@ export * from './tools/utils'
 export * from './tools/createEventRateLimiter'
 export * from './tools/browserDetection'
 export { sendToExtension } from './tools/sendToExtension'
+export { getZoneJsOriginalValue } from './tools/getZoneJsOriginalValue'
 export { instrumentMethod, instrumentMethodAndCallOriginal, instrumentSetter } from './tools/instrumentMethod'
 export {
   ErrorSource,
@@ -75,6 +76,7 @@ export { areCookiesAuthorized, getCookie, setCookie, deleteCookie, COOKIE_ACCESS
 export { initXhrObservable, XhrCompleteContext, XhrStartContext } from './browser/xhrObservable'
 export { initFetchObservable, FetchResolveContext, FetchStartContext, FetchContext } from './browser/fetchObservable'
 export { createPageExitObservable, PageExitEvent, PageExitReason } from './browser/pageExitObservable'
+export * from './browser/addEventListener'
 export { initConsoleObservable, ConsoleLog } from './domain/console/consoleObservable'
 export { BoundedBuffer } from './tools/boundedBuffer'
 export { catchUserErrors } from './tools/catchUserErrors'
