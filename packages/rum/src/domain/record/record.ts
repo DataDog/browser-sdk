@@ -1,6 +1,6 @@
 import type { TimeStamp } from '@datadog/browser-core'
 import { timeStampNow } from '@datadog/browser-core'
-import type { LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
+import type { LifeCycle, RecorderDebugOptions, RumConfiguration } from '@datadog/browser-rum-core'
 import { getViewportDimension } from '@datadog/browser-rum-core'
 import type {
   BrowserMutationData,
@@ -28,6 +28,7 @@ export interface RecordOptions {
   emit?: (record: BrowserRecord) => void
   configuration: RumConfiguration
   lifeCycle: LifeCycle
+  debug: RecorderDebugOptions
 }
 
 export interface RecordAPI {
@@ -132,6 +133,7 @@ export function record(options: RecordOptions): RecordAPI {
       })
     },
     shadowRootsController,
+    debug: options.debug,
   })
 
   function flushMutations() {

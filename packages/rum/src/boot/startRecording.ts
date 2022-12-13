@@ -6,6 +6,7 @@ import type {
   RumConfiguration,
   RumSessionManager,
   ViewCreatedEvent,
+  RecorderDebugOptions,
 } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 
@@ -20,6 +21,7 @@ export function startRecording(
   sessionManager: RumSessionManager,
   viewContexts: ViewContexts,
   worker: DeflateWorker,
+  debug: RecorderDebugOptions,
   httpRequest?: HttpRequest
 ) {
   const reportError = (error: RawError) => {
@@ -46,6 +48,7 @@ export function startRecording(
     emit: addRecord,
     configuration,
     lifeCycle,
+    debug,
   })
 
   const { unsubscribe: unsubscribeViewEnded } = lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, () => {

@@ -397,6 +397,7 @@ describe('record', () => {
       emit: emitSpy,
       configuration: { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration,
       lifeCycle: new LifeCycle(),
+      debug: {},
     })
   }
 

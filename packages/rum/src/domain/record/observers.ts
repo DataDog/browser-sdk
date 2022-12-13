@@ -11,7 +11,7 @@ import {
   noop,
   addTelemetryDebug,
 } from '@datadog/browser-core'
-import type { LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
+import type { LifeCycle, RecorderDebugOptions, RumConfiguration } from '@datadog/browser-rum-core'
 import {
   isNodeShadowHost,
   initViewportObservable,
@@ -103,26 +103,36 @@ interface ObserverParam {
   focusCb: FocusCallback
   frustrationCb: FrustrationCallback
   shadowRootsController: ShadowRootsController
+  debug: RecorderDebugOptions
 }
 
 export function initObservers(o: ObserverParam): { stop: ListenerHandler; flush: ListenerHandler } {
-  const mutationHandler = initMutationObserver(o.mutationCb, o.configuration, o.shadowRootsController)
-  const mousemoveHandler = initMoveObserver(o.mousemoveCb)
-  const mouseInteractionHandler = initMouseInteractionObserver(
-    o.mouseInteractionCb,
-    o.configuration.defaultPrivacyLevel
-  )
-  const scrollHandler = initScrollObserver(o.scrollCb, o.configuration.defaultPrivacyLevel, o.elementsScrollPositions)
-  const viewportResizeHandler = initViewportResizeObserver(o.viewportResizeCb)
-  const inputHandler = initInputObserver(o.inputCb, o.configuration.defaultPrivacyLevel)
-  const mediaInteractionHandler = initMediaInteractionObserver(
-    o.mediaInteractionCb,
-    o.configuration.defaultPrivacyLevel
-  )
-  const styleSheetObserver = initStyleSheetObserver(o.styleSheetCb)
-  const focusHandler = initFocusObserver(o.focusCb)
-  const visualViewportResizeHandler = initVisualViewportResizeObserver(o.visualViewportResizeCb)
-  const frustrationHandler = initFrustrationObserver(o.lifeCycle, o.frustrationCb)
+  const debug = o.debug
+
+  const mutationHandler =
+    debug.mutation !== false
+      ? initMutationObserver(o.mutationCb, o.configuration, o.shadowRootsController)
+      : { stop: noop, flush: noop }
+  const mousemoveHandler = debug.mouseMove !== false ? initMoveObserver(o.mousemoveCb) : noop
+  const mouseInteractionHandler =
+    debug.mouseInteraction !== false
+      ? initMouseInteractionObserver(o.mouseInteractionCb, o.configuration.defaultPrivacyLevel)
+      : noop
+  const scrollHandler =
+    debug.scroll !== false
+      ? initScrollObserver(o.scrollCb, o.configuration.defaultPrivacyLevel, o.elementsScrollPositions)
+      : noop
+  const viewportResizeHandler = debug.viewportResize !== false ? initViewportResizeObserver(o.viewportResizeCb) : noop
+  const inputHandler = debug.input !== false ? initInputObserver(o.inputCb, o.configuration.defaultPrivacyLevel) : noop
+  const mediaInteractionHandler =
+    debug.mediaInteraction !== false
+      ? initMediaInteractionObserver(o.mediaInteractionCb, o.configuration.defaultPrivacyLevel)
+      : noop
+  const styleSheetObserver = debug.styleSheet !== false ? initStyleSheetObserver(o.styleSheetCb) : noop
+  const focusHandler = debug.focus !== false ? initFocusObserver(o.focusCb) : noop
+  const visualViewportResizeHandler =
+    debug.visualViewportResize !== false ? initVisualViewportResizeObserver(o.visualViewportResizeCb) : noop
+  const frustrationHandler = debug.frustration !== false ? initFrustrationObserver(o.lifeCycle, o.frustrationCb) : noop
 
   return {
     flush: () => {

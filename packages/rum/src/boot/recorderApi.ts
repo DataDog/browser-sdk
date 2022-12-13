@@ -5,6 +5,7 @@ import type {
   RumSessionManager,
   RecorderApi,
   RumConfiguration,
+  RecorderDebugOptions,
 } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { getReplayStats } from '../domain/replayStats'
@@ -31,6 +32,7 @@ type RecorderState =
     }
   | {
       status: RecorderStatus.IntentToStart
+      debug: RecorderDebugOptions
     }
   | {
       status: RecorderStatus.Starting
@@ -58,14 +60,14 @@ export function makeRecorderApi(
     status: RecorderStatus.Stopped,
   }
 
-  let startStrategy = () => {
-    state = { status: RecorderStatus.IntentToStart }
+  let startStrategy = (debug: RecorderDebugOptions) => {
+    state = { status: RecorderStatus.IntentToStart, debug }
   }
   let stopStrategy = () => {
     state = { status: RecorderStatus.Stopped }
   }
   return {
-    start: () => startStrategy(),
+    start: (debug) => startStrategy(debug || {}),
     stop: () => stopStrategy(),
     getReplayStats,
 
@@ -78,20 +80,20 @@ export function makeRecorderApi(
       lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
         if (state.status === RecorderStatus.Starting || state.status === RecorderStatus.Started) {
           stopStrategy()
-          state = { status: RecorderStatus.IntentToStart }
+          state = { status: RecorderStatus.IntentToStart, debug: {} }
         }
       })
 
       lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
         if (state.status === RecorderStatus.IntentToStart) {
-          startStrategy()
+          startStrategy(state.debug)
         }
       })
 
-      startStrategy = () => {
+      startStrategy = (debug) => {
         const session = sessionManager.findTrackedSession()
         if (!session || !session.sessionReplayAllowed) {
-          state = { status: RecorderStatus.IntentToStart }
+          state = { status: RecorderStatus.IntentToStart, debug }
           return
         }
 
@@ -123,7 +125,8 @@ export function makeRecorderApi(
               configuration,
               sessionManager,
               viewContexts,
-              worker
+              worker,
+              debug
             )
             state = {
               status: RecorderStatus.Started,
@@ -148,7 +151,7 @@ export function makeRecorderApi(
       }
 
       if (state.status === RecorderStatus.IntentToStart) {
-        startStrategy()
+        startStrategy(state.debug)
       }
     },
 

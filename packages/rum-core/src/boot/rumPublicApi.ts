@@ -37,7 +37,7 @@ export type StartRum = typeof startRum
 type StartRumResult = ReturnType<typeof startRum>
 
 export interface RecorderApi {
-  start: () => void
+  start: (debug?: RecorderDebugOptions) => void
   stop: () => void
   onRumStart: (
     lifeCycle: LifeCycle,
@@ -48,6 +48,22 @@ export interface RecorderApi {
   isRecording: () => boolean
   getReplayStats: (viewId: string) => ReplayStats | undefined
 }
+
+export interface RecorderDebugOptions {
+  mutation?: boolean
+  mouseMove?: boolean
+  mouseInteraction?: boolean
+  scroll?: boolean
+  scrollHandler?: boolean
+  viewportResize?: boolean
+  input?: boolean
+  mediaInteraction?: boolean
+  styleSheet?: boolean
+  focus?: boolean
+  visualViewportResize?: boolean
+  frustration?: boolean
+}
+
 interface RumPublicApiOptions {
   ignoreInitIfSyntheticsWillInjectRum?: boolean
 }

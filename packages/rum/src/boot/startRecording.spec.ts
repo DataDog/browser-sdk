@@ -67,7 +67,15 @@ describe('startRecording', () => {
           ;({ waitAsyncCalls: waitRequestSendCalls, expectNoExtraAsyncCall: expectNoExtraRequestSendCalls } =
             collectAsyncCalls(requestSendSpy))
 
-          const recording = startRecording(lifeCycle, configuration, sessionManager, viewContexts, worker!, httpRequest)
+          const recording = startRecording(
+            lifeCycle,
+            configuration,
+            sessionManager,
+            viewContexts,
+            worker!,
+            {},
+            httpRequest
+          )
           stopRecording = recording ? recording.stop : noop
           return { stop: stopRecording }
         })
