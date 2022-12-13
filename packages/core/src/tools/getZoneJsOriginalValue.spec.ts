@@ -1,5 +1,6 @@
 import { stubZoneJs } from '../../test/stubZoneJs'
 
+import type { BrowserWindowWithZoneJs } from './getZoneJsOriginalValue'
 import { getZoneJsOriginalValue } from './getZoneJsOriginalValue'
 import { noop } from './utils'
 
@@ -22,8 +23,14 @@ describe('getZoneJsOriginalValue', () => {
     expect(getZoneJsOriginalValue(object, 'name')).toBe(originalValue)
   })
 
-  it("returns undefined if Zone is defined but didn't patch that method", () => {
+  it("returns the original value if Zone is defined but didn't patch that method", () => {
     zoneJsStub = stubZoneJs()
+    expect(getZoneJsOriginalValue(object, 'name')).toBe(originalValue)
+  })
+
+  it('returns the original value if Zone is defined but does not define the __symbol__ function', () => {
+    zoneJsStub = stubZoneJs()
+    delete (window as BrowserWindowWithZoneJs).Zone!.__symbol__
     expect(getZoneJsOriginalValue(object, 'name')).toBe(originalValue)
   })
 
