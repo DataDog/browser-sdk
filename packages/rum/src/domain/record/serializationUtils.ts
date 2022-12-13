@@ -1,5 +1,5 @@
 import { buildUrl } from '@datadog/browser-core'
-import { getParentNode, isShadowRoot } from '@datadog/browser-rum-core'
+import { getParentNode, isNodeShadowRoot } from '@datadog/browser-rum-core'
 import type { NodePrivacyLevel } from '../../constants'
 import { CENSORED_STRING_MARK } from '../../constants'
 import { shouldMaskNode } from './privacy'
@@ -15,7 +15,7 @@ export function hasSerializedNode(node: Node): node is NodeWithSerializedNode {
 export function nodeAndAncestorsHaveSerializedNode(node: Node): node is NodeWithSerializedNode {
   let current: Node | null = node
   while (current) {
-    if (!hasSerializedNode(current) && !isShadowRoot(current)) {
+    if (!hasSerializedNode(current) && !isNodeShadowRoot(current)) {
       return false
     }
     current = getParentNode(current)

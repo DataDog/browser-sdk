@@ -40,9 +40,8 @@ export {
   isTextNode,
   isCommentNode,
   isElementNode,
-  isShadowRoot,
+  isNodeShadowRoot,
   getChildNodes,
   getParentNode,
-  getNodeOrShadowHost,
   isNodeShadowHost,
 } from './browser/htmlDomUtils'

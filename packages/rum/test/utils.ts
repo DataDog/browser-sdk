@@ -14,6 +14,7 @@ import type {
   MouseInteractionType,
   VisualViewportRecord,
   BrowserRecord,
+  DocumentFragmentNode,
 } from '../src/types'
 import { RecordType, IncrementalSource, NodeType } from '../src/types'
 
@@ -378,6 +379,7 @@ export function createMutationPayloadValidator(initialDocument: SerializedNodeWi
    */
   function expectNewNode(node: Optional<ElementNode, 'childNodes' | 'attributes'>): ExpectedNode
   function expectNewNode(node: TextNode): ExpectedNode
+  function expectNewNode(node: Partial<DocumentFragmentNode>): ExpectedNode
   function expectNewNode(node: Partial<SerializedNode>) {
     maxNodeId += 1
     if (node.type === NodeType.Element) {

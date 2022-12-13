@@ -92,7 +92,6 @@ describe('serializeNodeWithId', () => {
         tagName: 'div',
         attributes: {},
         isSVG: undefined,
-        isShadowHost: undefined,
         childNodes: [],
         id: jasmine.any(Number) as unknown as number,
       })
@@ -422,9 +421,15 @@ describe('serializeNodeWithId', () => {
         tagName: 'div',
         attributes: {},
         isSVG: undefined,
-        childNodes: [],
+        childNodes: [
+          {
+            type: NodeType.DocumentFragment,
+            isShadowRoot: true,
+            childNodes: [],
+            id: jasmine.any(Number) as unknown as number,
+          },
+        ],
         id: jasmine.any(Number) as unknown as number,
-        isShadowHost: true,
       })
     })
 
@@ -442,17 +447,22 @@ describe('serializeNodeWithId', () => {
         isSVG: undefined,
         childNodes: [
           {
-            type: NodeType.Element,
-            tagName: 'hr',
-            attributes: {},
-            isSVG: undefined,
-            childNodes: [],
+            type: NodeType.DocumentFragment,
+            isShadowRoot: true,
+            childNodes: [
+              {
+                type: NodeType.Element,
+                tagName: 'hr',
+                attributes: {},
+                isSVG: undefined,
+                childNodes: [],
+                id: jasmine.any(Number) as unknown as number,
+              },
+            ],
             id: jasmine.any(Number) as unknown as number,
-            isShadowHost: undefined,
           },
         ],
         id: jasmine.any(Number) as unknown as number,
-        isShadowHost: true,
       })
       expect(shadowDomCreatedCallbackSpy).toHaveBeenCalledWith(div.shadowRoot!)
     })
@@ -470,7 +480,6 @@ describe('serializeNodeWithId', () => {
         isSVG: undefined,
         childNodes: [],
         id: jasmine.any(Number) as unknown as number,
-        isShadowHost: undefined,
       })
       expect(shadowDomCreatedCallbackSpy).not.toHaveBeenCalled()
     })

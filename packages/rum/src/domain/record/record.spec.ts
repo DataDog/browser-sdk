@@ -9,20 +9,16 @@ import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycle } from '@datadog/browser-rum-core'
 import type { Clock } from '../../../../core/test/specHelper'
 import { createNewEvent } from '../../../../core/test/specHelper'
-import {
-  collectAsyncCalls,
-  findElementWithIdAttribute,
-  findFullSnapshot,
-  recordsPerFullSnapshot,
-} from '../../../test/utils'
+import { collectAsyncCalls, findFullSnapshot, findNode, recordsPerFullSnapshot } from '../../../test/utils'
 import type {
   BrowserIncrementalSnapshotRecord,
   BrowserMutationData,
   BrowserRecord,
+  DocumentFragmentNode,
   ElementNode,
   FocusRecord,
 } from '../../types'
-import { RecordType, IncrementalSource } from '../../types'
+import { NodeType, RecordType, IncrementalSource } from '../../types'
 import type { RecordAPI } from './record'
 import { record } from './record'
 
@@ -259,14 +255,18 @@ describe('record', () => {
 
       recordApi.flushMutations()
       const fs = findFullSnapshot({ records: getEmittedRecords() })!
-      const host = findElementWithIdAttribute(fs.data.node, 'host')!
+      const shadowRootNode = findNode(
+        fs.data.node,
+        (node) => node.type === NodeType.DocumentFragment && node.isShadowRoot
+      )!
+      expect(shadowRootNode).toBeTruthy()
       expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot() + 1)
       const innerMutationData = getLastIncrementalSnapshotData<BrowserMutationData>(
         getEmittedRecords(),
         IncrementalSource.Mutation
       )
       expect(innerMutationData.removes.length).toBe(1)
-      expect(innerMutationData.removes[0].parentId).toBe(host.id)
+      expect(innerMutationData.removes[0].parentId).toBe(shadowRootNode.id)
     })
 
     it('should record a direct addition inside a shadow root', () => {
@@ -281,14 +281,18 @@ describe('record', () => {
       recordApi.flushMutations()
       expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot() + 1)
       const fs = findFullSnapshot({ records: getEmittedRecords() })!
-      const host = findElementWithIdAttribute(fs.data.node, 'host')!
+      const shadowRootNode = findNode(
+        fs.data.node,
+        (node) => node.type === NodeType.DocumentFragment && node.isShadowRoot
+      )!
+      expect(shadowRootNode).toBeTruthy()
       const innerMutationData = getLastIncrementalSnapshotData<BrowserMutationData>(
         getEmittedRecords(),
         IncrementalSource.Mutation
       )
       expect(innerMutationData.adds.length).toBe(1)
       expect(innerMutationData.adds[0].node.type).toBe(2)
-      expect(innerMutationData.adds[0].parentId).toBe(host.id)
+      expect(innerMutationData.adds[0].parentId).toBe(shadowRootNode.id)
       const addedNode = innerMutationData.adds[0].node as ElementNode
       expect(addedNode.tagName).toBe('span')
     })
@@ -310,7 +314,9 @@ describe('record', () => {
       )
       expect(hostMutationData.adds.length).toBe(1)
       const hostNode = hostMutationData.adds[0].node as ElementNode
-      expect(hostNode.isShadowHost).toBe(true)
+      const shadowRoot = hostNode.childNodes[0] as DocumentFragmentNode
+      expect(shadowRoot.type).toBe(NodeType.DocumentFragment)
+      expect(shadowRoot.isShadowRoot).toBe(true)
 
       // inner mutation
       span.className = 'titi'

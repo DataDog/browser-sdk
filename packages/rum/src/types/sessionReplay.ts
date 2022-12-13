@@ -63,7 +63,7 @@ export type SerializedNodeWithId = {
 /**
  * Serialized node contained by this Record.
  */
-export type SerializedNode = DocumentNode | DocumentTypeNode | ElementNode | TextNode | CDataNode
+export type SerializedNode = DocumentNode | DocumentFragmentNode | DocumentTypeNode | ElementNode | TextNode | CDataNode
 /**
  * Browser-specific. Schema of a Record type which contains mutations of a screen.
  */
@@ -87,6 +87,7 @@ export type BrowserIncrementalData =
   | MediaInteractionData
   | StyleSheetRuleData
   | ViewportResizeData
+  | PointerInteractionData
 /**
  * Browser-specific. Schema of a MutationData.
  */
@@ -191,6 +192,15 @@ export type ViewportResizeData = {
    */
   readonly source: 4
 } & ViewportResizeDimension
+/**
+ * Schema of a PointerInteractionData.
+ */
+export type PointerInteractionData = {
+  /**
+   * The source of this type of incremental data.
+   */
+  readonly source: 9
+} & PointerInteraction
 /**
  * Schema of a Record which contains the screen properties.
  */
@@ -378,6 +388,20 @@ export interface DocumentNode {
   childNodes: SerializedNodeWithId[]
 }
 /**
+ * Schema of a Document FragmentNode.
+ */
+export interface DocumentFragmentNode {
+  /**
+   * The type of this Node.
+   */
+  readonly type: 11
+  /**
+   * Is this node a shadow root or not
+   */
+  readonly isShadowRoot: boolean
+  childNodes: SerializedNodeWithId[]
+}
+/**
  * Schema of a Document Type Node.
  */
 export interface DocumentTypeNode {
@@ -416,10 +440,6 @@ export interface ElementNode {
    * Is this node a SVG instead of a HTML
    */
   isSVG?: true
-  /**
-   * Is this node a host of a shadow root
-   */
-  isShadowHost?: true
 }
 /**
  * Schema of an Attributes type.
@@ -640,4 +660,29 @@ export interface ViewportResizeDimension {
    * The new height of the screen in pixels, normalized based on the device pixels per inch density (DPI). Example: if a device has a DPI = 2, the height is divided by 2 to get a normalized height.
    */
   height: number
+}
+/**
+ * Schema of a PointerInteraction.
+ */
+export interface PointerInteraction {
+  /**
+   * Schema of an PointerEventType
+   */
+  readonly pointerEventType: 'down' | 'up' | 'move'
+  /**
+   * Schema of an PointerType
+   */
+  readonly pointerType: 'mouse' | 'touch' | 'pen'
+  /**
+   * Id of the pointer of this PointerInteraction.
+   */
+  pointerId: number
+  /**
+   * X-axis coordinate for this PointerInteraction.
+   */
+  x: number
+  /**
+   * Y-axis coordinate for this PointerInteraction.
+   */
+  y: number
 }

@@ -1,6 +1,11 @@
 import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import { IncrementalSource, NodeType } from '@datadog/browser-rum/src/types'
-import type { MouseInteractionData, InputData, SerializedNodeWithId } from '@datadog/browser-rum/src/types'
+import type {
+  DocumentFragmentNode,
+  MouseInteractionData,
+  InputData,
+  SerializedNodeWithId,
+} from '@datadog/browser-rum/src/types'
 
 import {
   createMutationPayloadValidatorFromSegment,
@@ -102,19 +107,19 @@ describe('recorder with shadow DOM', () => {
 
         const {
           input: outsideInput,
-          shadowHost: outsideShadowHost,
+          shadowRoot: outsideShadowRoot,
           textContent: outsideTextContent,
         } = findElementsInShadowDom(fullSnapshot.data.node, 'outside')
-        expect(outsideShadowHost?.isShadowHost).toBeTrue()
+        expect(outsideShadowRoot?.isShadowRoot).toBeTrue()
         expect(outsideInput?.attributes.value).toBe('***')
         expect(outsideTextContent).toBe('field outside: ')
 
         const {
           input: insideInput,
-          shadowHost: insideShadowHost,
+          shadowRoot: insideShadowRoot,
           textContent: insideTextContent,
         } = findElementsInShadowDom(fullSnapshot.data.node, 'inside')
-        expect(insideShadowHost?.isShadowHost).toBeTrue()
+        expect(insideShadowRoot?.isShadowRoot).toBeTrue()
         expect(insideInput?.attributes.value).toBe('***')
         expect(insideTextContent).toBe('field inside: ')
       })
@@ -217,6 +222,11 @@ function findElementsInShadowDom(node: SerializedNodeWithId, id: string) {
   const shadowHost = findElementWithIdAttribute(node, id)
   expect(shadowHost).toBeTruthy()
 
+  const shadowRoot = shadowHost!.childNodes.find(
+    (node) => node.type === NodeType.DocumentFragment && node.isShadowRoot
+  ) as DocumentFragmentNode
+  expect(shadowRoot).toBeTruthy()
+
   const input = findElementWithIdAttribute(node, `input-${id}`)
   expect(input).toBeTruthy()
 
@@ -224,7 +234,7 @@ function findElementsInShadowDom(node: SerializedNodeWithId, id: string) {
   expect(text).toBeTruthy()
   const textContent = findTextContent(text!)
   expect(textContent).toBeTruthy()
-  return { shadowHost, input, text, textContent }
+  return { shadowHost, shadowRoot, input, text, textContent }
 }
 
 function getFirstSegment(events: EventRegistry) {

@@ -3,9 +3,8 @@ import {
   isTextNode,
   isCommentNode,
   isElementNode,
-  isShadowRoot,
+  isNodeShadowRoot,
   getChildNodes,
-  getNodeOrShadowHost,
   getParentNode,
   isNodeShadowHost,
 } from './htmlDomUtils'
@@ -75,7 +74,7 @@ describe('isShadowRoot', () => {
 
   parameters.forEach(([element, result]) => {
     it(`should return ${String(result)} for "${String(element)}"`, () => {
-      expect(isShadowRoot(element)).toBe(result)
+      expect(isNodeShadowRoot(element)).toBe(result)
     })
   })
 })
@@ -137,47 +136,26 @@ describe('getChildNodes', () => {
   })
 })
 
-describe('getNodeOrShadowHost', () => {
-  if (isIE()) {
-    return
-  }
-  const parent = document.createElement('div')
-  parent.attachShadow({ mode: 'open' })
-
-  const parameters: Array<[Node, Node]> = [
-    [parent.shadowRoot!, parent],
-    [document.body, document.body],
-    [parent, parent],
-  ]
-
-  parameters.forEach(([element, result]) => {
-    it(`should return ${String(result)} for "${String(element)}"`, () => {
-      expect(getNodeOrShadowHost(element)).toBe(result)
-    })
-  })
-})
-
 describe('getParentNode', () => {
   if (isIE()) {
     return
   }
 
+  const orphanDiv = document.createElement('div')
   const parentWithShadowRoot = document.createElement('div')
   const shadowRoot = parentWithShadowRoot.attachShadow({ mode: 'open' })
-  const childInShadowRoot = document.createElement('span')
-  shadowRoot.appendChild(childInShadowRoot)
 
   const parentWithoutShadowRoot = document.createElement('div')
   const child = document.createElement('span')
   parentWithoutShadowRoot.appendChild(child)
 
-  const parameters: Array<[Node, Node | null]> = [
-    [parentWithoutShadowRoot, null],
-    [childInShadowRoot, parentWithShadowRoot],
-    [child, parentWithoutShadowRoot],
+  const parameters: Array<[string, Node, Node | null]> = [
+    ['return null if without parent', orphanDiv, null],
+    ['return the host for a shadow root', shadowRoot, parentWithShadowRoot],
+    ['return the parent for normal child', child, parentWithoutShadowRoot],
   ]
-  parameters.forEach(([element, result]) => {
-    it(`should return ${String(result)} for "${String(element)}"`, () => {
+  parameters.forEach(([label, element, result]) => {
+    it(`should ${label}`, () => {
       expect(getParentNode(element)).toBe(result)
     })
   })

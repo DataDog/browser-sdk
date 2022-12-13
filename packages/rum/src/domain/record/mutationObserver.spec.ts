@@ -462,9 +462,10 @@ describe('startMutationCollection', () => {
         const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
 
         const child = expectNewNode({ type: NodeType.Element, tagName: 'span' })
-        const expectedHost = expectNewNode({ type: NodeType.Element, tagName: 'div', isShadowHost: true }).withChildren(
+        const shadowRootNode = expectNewNode({ type: NodeType.DocumentFragment, isShadowRoot: true }).withChildren(
           child
         )
+        const expectedHost = expectNewNode({ type: NodeType.Element, tagName: 'div' }).withChildren(shadowRootNode)
         validate(getLatestMutationPayload(), {
           adds: [
             {

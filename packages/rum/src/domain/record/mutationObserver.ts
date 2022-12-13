@@ -5,7 +5,6 @@ import {
   isNodeShadowHost,
   getMutationObserverConstructor,
   getParentNode,
-  getNodeOrShadowHost,
 } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel } from '../../constants'
 import type { AddedNodeMutation, AttributeMutation, RemovedNodeMutation, TextMutation } from '../../types'
@@ -245,7 +244,7 @@ function processChildListMutations(
   removedNodes.forEach((parent, node) => {
     if (hasSerializedNode(node)) {
       removedNodeMutations.push({
-        parentId: getSerializedNodeId(getNodeOrShadowHost(parent) as NodeWithSerializedNode),
+        parentId: getSerializedNodeId(parent),
         id: getSerializedNodeId(node),
       })
     }
