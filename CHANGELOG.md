@@ -16,6 +16,10 @@
 
 ---
 
+## v4.27.1
+
+- 🐛 [RUMF-1449] fix Zone support when **symbol** is missing ([#1872](https://github.com/DataDog/browser-sdk/pull/1872))
+
 ## v4.27.0
 
 - ✨Allow internal analytics subdomain ([#1863](https://github.com/DataDog/browser-sdk/pull/1863))
