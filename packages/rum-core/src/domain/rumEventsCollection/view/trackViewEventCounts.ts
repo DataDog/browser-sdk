@@ -1,12 +1,12 @@
-import { ONE_MINUTE } from '@datadog/browser-core'
+import { monitor, ONE_MINUTE } from '@datadog/browser-core'
 import type { LifeCycle } from '../../lifeCycle'
 import { trackEventCounts } from '../../trackEventCounts'
 
-// Some events are not being counted as they transcend views. To reduce the occurrence; 
-// an arbitrary delay is added for stopping event counting after the view ends. 
-// 
+// Some events are not being counted as they transcend views. To reduce the occurrence;
+// an arbitrary delay is added for stopping event counting after the view ends.
+//
 // Ideally, we would not stop and keep counting events until the end of the session.
-// But this might have a small performance impact if there are many many views: 
+// But this might have a small performance impact if there are many many views:
 // we would need to go through each event to see if the related view matches.
 // So let's have a fairly short delay to avoid impacting performances too much.
 //
@@ -28,7 +28,7 @@ export function trackViewEventCounts(lifeCycle: LifeCycle, viewId: string, onCha
 
   return {
     scheduleStop: () => {
-      setTimeout(stop, KEEP_TRACKING_EVENT_COUNTS_AFTER_VIEW_DELAY)
+      setTimeout(monitor(stop), KEEP_TRACKING_EVENT_COUNTS_AFTER_VIEW_DELAY)
     },
     eventCounts,
   }
