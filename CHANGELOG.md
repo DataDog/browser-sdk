@@ -16,6 +16,10 @@
 
 ---
 
+## v4.28.0
+
+- 🐛 [RUMF-1337] Fix incorrect fetch duration ([#1862](https://github.com/DataDog/browser-sdk/pull/1862))
+
 ## v4.27.0
 
 - ✨Allow internal analytics subdomain ([#1863](https://github.com/DataDog/browser-sdk/pull/1863))
