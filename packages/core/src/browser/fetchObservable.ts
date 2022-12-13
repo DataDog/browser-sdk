@@ -1,8 +1,8 @@
 import { instrumentMethod } from '../tools/instrumentMethod'
 import { callMonitored, monitor } from '../tools/monitor'
 import { Observable } from '../tools/observable'
-import type { ClocksState } from '../tools/timeUtils'
-import { clocksNow } from '../tools/timeUtils'
+import type { Duration, ClocksState } from '../tools/timeUtils'
+import { elapsed, clocksNow, timeStampNow } from '../tools/timeUtils'
 import { normalizeUrl } from '../tools/urlPolyfill'
 
 interface FetchContextBase {
@@ -20,6 +20,7 @@ export interface FetchStartContext extends FetchContextBase {
 export interface FetchResolveContext extends FetchContextBase {
   state: 'resolve'
   status: number
+  resolveDuration?: Duration
   response?: Response
   responseType?: string
   isAborted: boolean
@@ -95,6 +96,7 @@ function afterSend(
   const reportFetch = (response: Response | Error) => {
     const context = startContext as unknown as FetchResolveContext
     context.state = 'resolve'
+    context.resolveDuration = elapsed(startContext.startClocks.timeStamp, timeStampNow())
     if ('stack' in response || response instanceof Error) {
       context.status = 0
       context.isAborted = response instanceof DOMException && response.code === DOMException.ABORT_ERR
