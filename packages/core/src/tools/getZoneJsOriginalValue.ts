@@ -1,6 +1,9 @@
 export interface BrowserWindowWithZoneJs extends Window {
   Zone?: {
-    __symbol__: (name: string) => string
+    // All Zone.js versions expose the __symbol__ method, but we observed that some website have a
+    // 'Zone' global variable unrelated to Zone.js, so let's consider this method optional
+    // nonetheless.
+    __symbol__?: (name: string) => string
   }
 }
 
@@ -23,7 +26,7 @@ export function getZoneJsOriginalValue<Target, Name extends keyof Target & strin
 ): Target[Name] {
   const browserWindow = window as BrowserWindowWithZoneJs
   let original: Target[Name] | undefined
-  if (browserWindow.Zone) {
+  if (browserWindow.Zone && typeof browserWindow.Zone.__symbol__ === 'function') {
     original = (target as any)[browserWindow.Zone.__symbol__(name)]
   }
   if (!original) {
