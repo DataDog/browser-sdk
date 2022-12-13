@@ -197,7 +197,7 @@ describe('rum resources', () => {
   })
 
   createTest('track redirect fetch timings')
-    .withRum()
+    .withRum({ enableExperimentalFeatures: ['fetch_duration'] })
     .run(async ({ serverEvents }) => {
       await browserExecuteAsync((done) => {
         fetch('/redirect?duration=200').then(
