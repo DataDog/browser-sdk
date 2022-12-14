@@ -104,6 +104,7 @@ function send(
       payload.retry = {
         count: payload.retry ? payload.retry.count + 1 : 1,
         lastFailureStatus: response.status,
+        lastFailureType: response.type,
       }
       onFailure()
     }

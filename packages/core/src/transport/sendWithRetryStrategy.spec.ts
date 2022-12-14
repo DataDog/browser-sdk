@@ -194,6 +194,7 @@ describe('sendWithRetryStrategy', () => {
     { expectRetry: true, description: 'when the intake returns too many request:', status: 429 },
     { expectRetry: true, description: 'when the intake returns request timeout:', status: 408 },
     { expectRetry: true, description: 'when network error:', status: 0, type: undefined },
+    { expectRetry: true, description: 'when network error with response type:', status: 0, type: 'cors' as const },
     { expectRetry: false, description: 'when the intake returns opaque response:', status: 0, type: 'opaque' as const },
   ].forEach(({ expectRetry, description, status, type }) => {
     describe(description, () => {
@@ -229,12 +230,20 @@ describe('sendWithRetryStrategy', () => {
           sendRequest()
 
           sendStub.respondWith(0, { status, type })
-          expect(state.queuedPayloads.first().retry).toEqual({ count: 1, lastFailureStatus: status })
+          expect(state.queuedPayloads.first().retry).toEqual({
+            count: 1,
+            lastFailureStatus: status,
+            lastFailureType: type,
+          })
 
           clock.tick(INITIAL_BACKOFF_TIME)
 
           sendStub.respondWith(1, { status, type })
-          expect(state.queuedPayloads.first().retry).toEqual({ count: 2, lastFailureStatus: status })
+          expect(state.queuedPayloads.first().retry).toEqual({
+            count: 2,
+            lastFailureStatus: status,
+            lastFailureType: type,
+          })
         })
       } else {
         it('should not queue the payload for retry', () => {
