@@ -133,7 +133,10 @@ function retryQueuedPayloads(
 }
 
 function shouldRetryRequest(response: HttpResponse) {
-  return response.status === 0 || response.status === 408 || response.status === 429 || response.status >= 500
+  return (
+    response?.type !== 'opaque' &&
+    (response.status === 0 || response.status === 408 || response.status === 429 || response.status >= 500)
+  )
 }
 
 export function newRetryState(): RetryState {
