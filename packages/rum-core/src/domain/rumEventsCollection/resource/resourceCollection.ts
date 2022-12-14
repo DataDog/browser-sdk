@@ -9,7 +9,7 @@ import {
   isNumber,
   isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
-import type { ClocksState, Duration, ServerDuration } from '@datadog/browser-core'
+import type { ClocksState, ServerDuration } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
 import type { RumPerformanceEntry, RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 import type {
@@ -67,8 +67,6 @@ function processRequest(
   const tracingInfo = computeRequestTracingInfo(request, configuration)
   const indexingInfo = computeIndexingInfo(sessionManager, startClocks)
 
-  const responseDurationInfo = computeResponseDurationInfo(request)
-
   const duration = toServerDuration(request.duration)
   const durationOverrideInfo = computeDurationOverrideInfo(duration, correspondingTimingOverrides?.resource.duration)
 
@@ -88,7 +86,6 @@ function processRequest(
     tracingInfo,
     correspondingTimingOverrides,
     indexingInfo,
-    responseDurationInfo,
     durationOverrideInfo
   )
   return {
@@ -175,22 +172,6 @@ function computeEntryTracingInfo(entry: RumPerformanceResourceTiming, configurat
     _dd: {
       trace_id: entry.traceId,
       rule_psr: getRulePsr(configuration),
-    },
-  }
-}
-
-function computeResponseDurationInfo(request: RequestCompleteEvent) {
-  let durationDiff
-  let durationPercentageDiff
-  if (request.resolveDuration) {
-    durationDiff = toServerDuration((request.duration - request.resolveDuration) as Duration)
-    durationPercentageDiff = Math.round((durationDiff / toServerDuration(request.duration)) * 100)
-  }
-  return {
-    _dd: {
-      resolveDuration: toServerDuration(request.resolveDuration),
-      durationDiff,
-      durationPercentageDiff,
     },
   }
 }
