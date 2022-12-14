@@ -1,11 +1,12 @@
+import { createLogger } from '../../common/logger'
 import { listenAction } from '../actions'
 import { DEV_LOGS_URL } from '../constants'
 import { setStore } from '../store'
 
+const logger = createLogger('refreshDevServerStatus')
+
 listenAction('getStore', () => {
-  refreshDevServerStatus().catch((error) =>
-    console.error('refreshDevServerStatus: Unexpected error while refreshing dev server status:', error)
-  )
+  refreshDevServerStatus().catch((error) => logger.error('Unexpected error while refreshing dev server status:', error))
 })
 
 async function refreshDevServerStatus() {

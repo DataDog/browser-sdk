@@ -117,9 +117,9 @@ describe('beforeSend', () => {
       await flushEvents()
 
       const initialView = serverEvents.rumViews[0]
-      expect(initialView.context).toBeUndefined()
+      expect(initialView.context).not.toEqual(jasmine.objectContaining({ foo: 'bar' }))
       const initialDocument = serverEvents.rumResources[0]
-      expect(initialDocument.context).toEqual({ foo: 'bar' })
+      expect(initialDocument.context).toEqual(jasmine.objectContaining({ foo: 'bar' }))
     })
 
   createTest('allows to replace non-view events context')
@@ -138,9 +138,9 @@ describe('beforeSend', () => {
       await flushEvents()
 
       const initialView = serverEvents.rumViews[0]
-      expect(initialView.context).toEqual({ foo: 'baz', zig: 'zag' })
+      expect(initialView.context).toEqual(jasmine.objectContaining({ foo: 'baz', zig: 'zag' }))
       const initialDocument = serverEvents.rumResources[0]
-      expect(initialDocument.context).toEqual({ foo: 'bar' })
+      expect(initialDocument.context).toEqual(jasmine.objectContaining({ foo: 'bar' }))
     })
 })
 

@@ -18,6 +18,7 @@ import type { CiTestWindow } from '../src/domain/contexts/ciTestContext'
 import type { RumConfiguration } from '../src/domain/configuration'
 import { validateAndBuildRumConfiguration } from '../src/domain/configuration'
 import type { ActionContexts } from '../src/domain/rumEventsCollection/action/actionCollection'
+import type { FeatureFlagContexts } from '../src/domain/contexts/featureFlagContext'
 import { validateRumFormat } from './formatValidation'
 import { createRumSessionManagerMock } from './mockRumSessionManager'
 
@@ -28,6 +29,7 @@ export interface TestSetupBuilder {
   withViewContexts: (stub: Partial<ViewContexts>) => TestSetupBuilder
   withActionContexts: (stub: ActionContexts) => TestSetupBuilder
   withForegroundContexts: (stub: Partial<ForegroundContexts>) => TestSetupBuilder
+  withFeatureFlagContexts: (stub: Partial<FeatureFlagContexts>) => TestSetupBuilder
   withFakeClock: () => TestSetupBuilder
   beforeBuild: (callback: BeforeBuildCallback) => TestSetupBuilder
 
@@ -49,6 +51,7 @@ export interface BuildContext {
   viewContexts: ViewContexts
   actionContexts: ActionContexts
   foregroundContexts: ForegroundContexts
+  featureFlagContexts: FeatureFlagContexts
   urlContexts: UrlContexts
 }
 
@@ -80,6 +83,10 @@ export function setup(): TestSetupBuilder {
       referrer: document.referrer,
     }),
     stop: noop,
+  }
+  let featureFlagContexts: FeatureFlagContexts = {
+    findFeatureFlagEvaluations: () => undefined,
+    addFeatureFlagEvaluation: noop,
   }
   let actionContexts: ActionContexts = {
     findActionId: noop as () => undefined,
@@ -135,6 +142,10 @@ export function setup(): TestSetupBuilder {
       foregroundContexts = { ...foregroundContexts, ...stub }
       return setupBuilder
     },
+    withFeatureFlagContexts(stub: Partial<FeatureFlagContexts>) {
+      featureFlagContexts = { ...featureFlagContexts, ...stub }
+      return setupBuilder
+    },
     withFakeClock() {
       clock = mockClock()
       setupBuilder.clock = clock
@@ -154,6 +165,7 @@ export function setup(): TestSetupBuilder {
           urlContexts,
           actionContexts,
           foregroundContexts,
+          featureFlagContexts,
           sessionManager,
           applicationId: FAKE_APP_ID,
           configuration,
@@ -229,7 +241,7 @@ export function setupViewTest(
     getHandledCount: getViewCreateCount,
   } = spyOnViews('view create')
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, viewCreateHandler)
-  const { stop, startView, addTiming, addFeatureFlagEvaluation } = trackViews(
+  const { stop, startView, addTiming } = trackViews(
     location,
     lifeCycle,
     domMutationObservable,
@@ -242,11 +254,13 @@ export function setupViewTest(
     stop,
     startView,
     addTiming,
-    addFeatureFlagEvaluation,
     getViewUpdate,
     getViewUpdateCount,
     getViewCreate,
     getViewCreateCount,
+    getLatestViewContext: () => ({
+      id: getViewCreate(getViewCreateCount() - 1).id,
+    }),
   }
 }
 

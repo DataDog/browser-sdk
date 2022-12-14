@@ -17,11 +17,11 @@ describe('trackFirstHidden', () => {
 
     it('should ignore events', () => {
       setPageVisibility('hidden')
-      const emitter = document.createElement('div')
-      const firstHidden = trackFirstHidden(emitter)
+      const eventTarget = document.createElement('div')
+      const firstHidden = trackFirstHidden(eventTarget)
 
-      emitter.dispatchEvent(createNewEvent(DOM_EVENT.PAGE_HIDE, { timeStamp: 100 }))
-      emitter.dispatchEvent(createNewEvent(DOM_EVENT.VISIBILITY_CHANGE, { timeStamp: 100 }))
+      eventTarget.dispatchEvent(createNewEvent(DOM_EVENT.PAGE_HIDE, { timeStamp: 100 }))
+      eventTarget.dispatchEvent(createNewEvent(DOM_EVENT.VISIBILITY_CHANGE, { timeStamp: 100 }))
 
       expect(firstHidden.timeStamp).toBe(0 as RelativeTime)
     })
@@ -33,43 +33,43 @@ describe('trackFirstHidden', () => {
     })
 
     it('should return the timestamp of the first pagehide event', () => {
-      const emitter = document.createElement('div')
-      const firstHidden = trackFirstHidden(emitter)
+      const eventTarget = document.createElement('div')
+      const firstHidden = trackFirstHidden(eventTarget)
 
-      emitter.dispatchEvent(createNewEvent(DOM_EVENT.PAGE_HIDE, { timeStamp: 100 }))
+      eventTarget.dispatchEvent(createNewEvent(DOM_EVENT.PAGE_HIDE, { timeStamp: 100 }))
 
       expect(firstHidden.timeStamp).toBe(100 as RelativeTime)
     })
 
     it('should return the timestamp of the first visibilitychange event if the page is hidden', () => {
-      const emitter = document.createElement('div')
-      const firstHidden = trackFirstHidden(emitter)
+      const eventTarget = document.createElement('div')
+      const firstHidden = trackFirstHidden(eventTarget)
 
       setPageVisibility('hidden')
-      emitter.dispatchEvent(createNewEvent(DOM_EVENT.VISIBILITY_CHANGE, { timeStamp: 100 }))
+      eventTarget.dispatchEvent(createNewEvent(DOM_EVENT.VISIBILITY_CHANGE, { timeStamp: 100 }))
 
       expect(firstHidden.timeStamp).toBe(100 as RelativeTime)
     })
 
     it('should ignore visibilitychange event if the page is visible', () => {
-      const emitter = document.createElement('div')
-      const firstHidden = trackFirstHidden(emitter)
+      const eventTarget = document.createElement('div')
+      const firstHidden = trackFirstHidden(eventTarget)
 
-      emitter.dispatchEvent(createNewEvent(DOM_EVENT.VISIBILITY_CHANGE, { timeStamp: 100 }))
+      eventTarget.dispatchEvent(createNewEvent(DOM_EVENT.VISIBILITY_CHANGE, { timeStamp: 100 }))
 
       expect(firstHidden.timeStamp).toBe(Infinity as RelativeTime)
     })
 
     it('should ignore subsequent events', () => {
-      const emitter = document.createElement('div')
-      const firstHidden = trackFirstHidden(emitter)
+      const eventTarget = document.createElement('div')
+      const firstHidden = trackFirstHidden(eventTarget)
 
-      emitter.dispatchEvent(createNewEvent(DOM_EVENT.PAGE_HIDE, { timeStamp: 100 }))
+      eventTarget.dispatchEvent(createNewEvent(DOM_EVENT.PAGE_HIDE, { timeStamp: 100 }))
 
       // Subsequent events:
-      emitter.dispatchEvent(createNewEvent(DOM_EVENT.PAGE_HIDE, { timeStamp: 200 }))
+      eventTarget.dispatchEvent(createNewEvent(DOM_EVENT.PAGE_HIDE, { timeStamp: 200 }))
       setPageVisibility('hidden')
-      emitter.dispatchEvent(createNewEvent(DOM_EVENT.VISIBILITY_CHANGE, { timeStamp: 200 }))
+      eventTarget.dispatchEvent(createNewEvent(DOM_EVENT.VISIBILITY_CHANGE, { timeStamp: 200 }))
 
       expect(firstHidden.timeStamp).toBe(100 as RelativeTime)
     })

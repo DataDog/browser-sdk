@@ -15,7 +15,7 @@ import { RumEventType } from '../../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { ForegroundContexts } from '../../contexts/foregroundContexts'
-import type { ViewContexts } from '../../contexts/viewContexts'
+import type { FeatureFlagContexts } from '../../contexts/featureFlagContext'
 import { trackConsoleError } from './trackConsoleError'
 import { trackReportError } from './trackReportError'
 
@@ -29,7 +29,7 @@ export interface ProvidedError {
 export function startErrorCollection(
   lifeCycle: LifeCycle,
   foregroundContexts: ForegroundContexts,
-  viewContexts: ViewContexts
+  featureFlagContexts: FeatureFlagContexts
 ) {
   const errorObservable = new Observable<RawError>()
 
@@ -39,13 +39,13 @@ export function startErrorCollection(
 
   errorObservable.subscribe((error) => lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error }))
 
-  return doStartErrorCollection(lifeCycle, foregroundContexts, viewContexts)
+  return doStartErrorCollection(lifeCycle, foregroundContexts, featureFlagContexts)
 }
 
 export function doStartErrorCollection(
   lifeCycle: LifeCycle,
   foregroundContexts: ForegroundContexts,
-  viewContexts: ViewContexts
+  featureFlagContexts: FeatureFlagContexts
 ) {
   lifeCycle.subscribe(LifeCycleEventType.RAW_ERROR_COLLECTED, ({ error, customerContext, savedCommonContext }) => {
     lifeCycle.notify(
@@ -55,7 +55,7 @@ export function doStartErrorCollection(
           customerContext,
           savedCommonContext,
         },
-        processError(error, foregroundContexts, viewContexts)
+        processError(error, foregroundContexts, featureFlagContexts)
       )
     )
   })
@@ -88,7 +88,7 @@ export function doStartErrorCollection(
 function processError(
   error: RawError,
   foregroundContexts: ForegroundContexts,
-  viewContexts: ViewContexts
+  featureFlagContexts: FeatureFlagContexts
 ): RawRumEventCollectedData<RawRumErrorEvent> {
   const rawRumEvent: RawRumErrorEvent = {
     date: error.startClocks.timeStamp,
@@ -105,14 +105,15 @@ function processError(
     },
     type: RumEventType.ERROR as const,
   }
+
   const inForeground = foregroundContexts.isInForegroundAt(error.startClocks.relative)
   if (inForeground) {
     rawRumEvent.view = { in_foreground: inForeground }
   }
 
-  const viewContext = viewContexts.findView(error.startClocks.relative)
-  if (viewContext && !isEmptyObject(viewContext.featureFlagEvaluations)) {
-    rawRumEvent.feature_flags = viewContext.featureFlagEvaluations
+  const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations(error.startClocks.relative)
+  if (featureFlagContext && !isEmptyObject(featureFlagContext)) {
+    rawRumEvent.feature_flags = featureFlagContext
   }
 
   return {

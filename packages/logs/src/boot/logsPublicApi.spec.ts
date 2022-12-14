@@ -44,7 +44,7 @@ describe('logs entry', () => {
 
   it('should provide sdk version', () => {
     const LOGS = makeLogsPublicApi(startLogs)
-    expect(LOGS.version).toBe('dev')
+    expect(LOGS.version).toBe('test')
   })
 
   describe('configuration validation', () => {

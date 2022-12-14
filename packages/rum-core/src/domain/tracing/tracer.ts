@@ -1,7 +1,7 @@
 import { getOrigin, matchList, objectEntries, shallowClone, performDraw, isNumber } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type {
-  RumFetchCompleteContext,
+  RumFetchResolveContext,
   RumFetchStartContext,
   RumXhrCompleteContext,
   RumXhrStartContext,
@@ -11,7 +11,7 @@ import type { RumSessionManager } from '../rumSessionManager'
 export interface Tracer {
   traceFetch: (context: Partial<RumFetchStartContext>) => void
   traceXhr: (context: Partial<RumXhrStartContext>, xhr: XMLHttpRequest) => void
-  clearTracingIfNeeded: (context: RumFetchCompleteContext | RumXhrCompleteContext) => void
+  clearTracingIfNeeded: (context: RumFetchResolveContext | RumXhrCompleteContext) => void
 }
 
 interface TracingHeaders {
@@ -35,7 +35,7 @@ interface TracingHeaders {
  * Of course, it might not be the case every time, but it should limit having incomplete traces a
  * bit.
  * */
-export function clearTracingIfNeeded(context: RumFetchCompleteContext | RumXhrCompleteContext) {
+export function clearTracingIfNeeded(context: RumFetchResolveContext | RumXhrCompleteContext) {
   if (context.status === 0 && !context.isAborted) {
     context.traceId = undefined
     context.spanId = undefined

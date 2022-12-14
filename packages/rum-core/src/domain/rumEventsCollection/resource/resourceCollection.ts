@@ -7,8 +7,9 @@ import {
   relativeToClocks,
   assign,
   isNumber,
+  isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
-import type { ClocksState } from '@datadog/browser-core'
+import type { ClocksState, Duration, ServerDuration } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
 import type { RumPerformanceEntry, RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 import type {
@@ -66,13 +67,18 @@ function processRequest(
   const tracingInfo = computeRequestTracingInfo(request, configuration)
   const indexingInfo = computeIndexingInfo(sessionManager, startClocks)
 
+  const responseDurationInfo = computeResponseDurationInfo(request)
+
+  const duration = toServerDuration(request.duration)
+  const durationOverrideInfo = computeDurationOverrideInfo(duration, correspondingTimingOverrides?.resource.duration)
+
   const resourceEvent = combine(
     {
       date: startClocks.timeStamp,
       resource: {
         id: generateUUID(),
         type,
-        duration: toServerDuration(request.duration),
+        duration,
         method: request.method,
         status_code: request.status,
         url: request.url,
@@ -81,7 +87,9 @@ function processRequest(
     },
     tracingInfo,
     correspondingTimingOverrides,
-    indexingInfo
+    indexingInfo,
+    responseDurationInfo,
+    durationOverrideInfo
   )
   return {
     startTime: startClocks.relative,
@@ -167,6 +175,37 @@ function computeEntryTracingInfo(entry: RumPerformanceResourceTiming, configurat
     _dd: {
       trace_id: entry.traceId,
       rule_psr: getRulePsr(configuration),
+    },
+  }
+}
+
+function computeResponseDurationInfo(request: RequestCompleteEvent) {
+  let durationDiff
+  let durationPercentageDiff
+  if (request.resolveDuration) {
+    durationDiff = toServerDuration((request.duration - request.resolveDuration) as Duration)
+    durationPercentageDiff = Math.round((durationDiff / toServerDuration(request.duration)) * 100)
+  }
+  return {
+    _dd: {
+      resolveDuration: toServerDuration(request.resolveDuration),
+      durationDiff,
+      durationPercentageDiff,
+    },
+  }
+}
+
+function computeDurationOverrideInfo(
+  computedDuration: ServerDuration,
+  performanceEntryDuration: ServerDuration | undefined
+) {
+  if (!isExperimentalFeatureEnabled('resource_durations')) return
+
+  return {
+    _dd: {
+      computed_duration: computedDuration,
+      performance_entry_duration: performanceEntryDuration,
+      override_duration_diff: performanceEntryDuration ? computedDuration - performanceEntryDuration : undefined,
     },
   }
 }

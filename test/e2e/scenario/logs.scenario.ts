@@ -1,6 +1,6 @@
 import { DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT } from '@datadog/browser-logs/cjs/domain/configuration'
 import { createTest, flushEvents } from '../lib/framework'
-import { UNREACHABLE_URL } from '../lib/helpers/constants'
+import { APPLICATION_ID, UNREACHABLE_URL } from '../lib/helpers/constants'
 import { browserExecute, browserExecuteAsync, flushBrowserLogs, withBrowserLogs } from '../lib/helpers/browser'
 
 describe('logs', () => {
@@ -74,22 +74,11 @@ describe('logs', () => {
       })
     })
 
-  createTest('read only the first bytes of the response')
+  createTest('keep only the first bytes of the response')
     .withLogs({ forwardErrorsToLogs: true })
     .run(async ({ serverEvents, baseUrl, servers }) => {
       await browserExecuteAsync((done) => {
-        fetch('/throw-large-response').then(
-          (response) => {
-            // The body stream needs to be cancelled, else the browser will still download the whole
-            // response even if it is unused.
-            response
-              .body!.getReader()
-              .cancel()
-              .catch((error) => console.log(error))
-            done(undefined)
-          },
-          (error) => console.log(error)
-        )
+        fetch('/throw-large-response').then(() => done(undefined), console.log)
       })
 
       await flushEvents()
@@ -100,12 +89,6 @@ describe('logs', () => {
       const ellipsisSize = 3
       expect(serverEvents.logs[0].error?.stack?.length).toBe(DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT + ellipsisSize)
 
-      expect(servers.base.app.getLargeResponseWroteSize()).toBeLessThan(
-        // When reading the request, chunks length are probably not aligning perfectly with the
-        // response length limit, so it sends few more bytes than necessary. Add a margin of error
-        // to verify that it's still close to the expected limit.
-        DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT * 2
-      )
       expect(servers.base.app.getLargeResponseWroteSize()).toBeGreaterThanOrEqual(
         DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT
       )
@@ -169,7 +152,7 @@ describe('logs', () => {
       await flushEvents()
       expect(serverEvents.logs.length).toBe(1)
       expect(serverEvents.logs[0].view.id).toBeDefined()
-      expect(serverEvents.logs[0].application_id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
+      expect(serverEvents.logs[0].application_id).toBe(APPLICATION_ID)
     })
 
   createTest('allow to modify events')

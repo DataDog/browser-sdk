@@ -14,7 +14,6 @@ describe('error collection', () => {
     findView: jasmine.createSpy('findView').and.returnValue({
       id: 'abcde',
       name: 'foo',
-      featureFlagEvaluations: { feature: 'foo' },
     }),
   }
 
@@ -24,8 +23,8 @@ describe('error collection', () => {
       .withForegroundContexts({
         isInForegroundAt: () => true,
       })
-      .beforeBuild(({ lifeCycle, foregroundContexts, viewContexts }) => {
-        ;({ addError } = doStartErrorCollection(lifeCycle, foregroundContexts, viewContexts))
+      .beforeBuild(({ lifeCycle, foregroundContexts, featureFlagContexts }) => {
+        ;({ addError } = doStartErrorCollection(lifeCycle, foregroundContexts, featureFlagContexts))
       })
   })
 
@@ -64,7 +63,6 @@ describe('error collection', () => {
           view: {
             in_foreground: true,
           },
-          feature_flags: { feature: 'foo' },
         },
         savedCommonContext: undefined,
         startTime: 1234 as RelativeTime,
@@ -151,6 +149,22 @@ describe('error collection', () => {
         error: { foo: 'bar' },
       })
     })
+
+    it('should include feature flags', () => {
+      const { rawRumEvents } = setupBuilder
+        .withFeatureFlagContexts({ findFeatureFlagEvaluations: () => ({ feature: 'foo' }) })
+        .build()
+
+      addError({
+        error: { foo: 'bar' },
+        handlingStack: 'Error: handling foo',
+        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+      })
+
+      const rawRumErrorEvent = rawRumEvents[0].rawRumEvent as RawRumErrorEvent
+
+      expect(rawRumErrorEvent.feature_flags).toEqual({ feature: 'foo' })
+    })
   })
 
   describe('RAW_ERROR_COLLECTED LifeCycle event', () => {
@@ -185,7 +199,6 @@ describe('error collection', () => {
         view: {
           in_foreground: true,
         },
-        feature_flags: { feature: 'foo' },
         type: RumEventType.ERROR,
       })
       expect(rawRumEvents[0].domainContext).toEqual({

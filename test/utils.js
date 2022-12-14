@@ -17,6 +17,10 @@ function getBuildInfos() {
   }
 }
 
+function getRunId() {
+  return process.env.CI_JOB_ID || process.env.USER
+}
+
 function getCIInfos() {
   const { CI_JOB_ID, CI_PIPELINE_ID, CI_COMMIT_SHORT_SHA } = process.env
   if (CI_PIPELINE_ID && CI_JOB_ID && CI_COMMIT_SHORT_SHA) {
@@ -29,6 +33,7 @@ function getLocalInfos() {
 }
 
 module.exports = {
+  getRunId,
   getBuildInfos,
   getIp,
 }

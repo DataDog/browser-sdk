@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { generateUUID } from '../../../../packages/core/src/tools/utils'
 import type { RumEvent } from '../../../../packages/rum-core/src/rumEvent.types'
 import type { LogsEvent } from '../../../../packages/logs/src/logsEvent.types'
 import type { TelemetryEvent } from '../../../../packages/core/src/domain/telemetry'
+import { listenSdkMessages } from '../backgroundScriptConnection'
+import type { EventSource } from '../types'
 
 const MAXIMUM_LOGGED_EVENTS = 1000
 const MAXIMUM_DISPLAYED_EVENTS = 100
@@ -16,29 +18,18 @@ export interface EventFilters {
   query: string
 }
 
-export function useEvents(preserveEvents: boolean) {
-  const [events, setEvents] = useState<StoredEvent[]>([])
+export function useEvents({ preserveEvents, eventSource }: { preserveEvents: boolean; eventSource: EventSource }) {
+  const [events, clearEvents] = useEventSource(eventSource)
+
   const [filters, setFilters] = useState<EventFilters>({
     sdk: ['rum', 'logs'],
     query: '',
   })
 
-  useEffect(
-    () =>
-      listenRequests((newEvents) => {
-        setEvents((oldEvents) =>
-          [...newEvents, ...oldEvents]
-            .sort((first: any, second: any) => second.date - first.date)
-            .slice(0, MAXIMUM_LOGGED_EVENTS)
-        )
-      }),
-    []
-  )
-
   useEffect(() => {
     if (!preserveEvents) {
       const clearCurrentEvents = (details: chrome.webNavigation.WebNavigationTransitionCallbackDetails) => {
-        if (details.transitionType === 'reload') setEvents([])
+        if (details.transitionType === 'reload') clearEvents()
       }
       chrome.webNavigation.onCommitted.addListener(clearCurrentEvents)
       return () => {
@@ -53,7 +44,38 @@ export function useEvents(preserveEvents: boolean) {
     .filter((event) => !filters.query || matchQuery(filters.query, event))
     .slice(0, MAXIMUM_DISPLAYED_EVENTS)
 
-  return { events: filteredEvents, filters, setFilters, clear: () => setEvents([]) }
+  return {
+    events: filteredEvents,
+    filters,
+    setFilters,
+    clear: clearEvents,
+  }
+}
+
+function useEventSource(eventSource: EventSource) {
+  const [events, setEvents] = useState<StoredEvent[]>([])
+
+  // Reset events when the event source changes
+  const ref = useRef(eventSource)
+  if (ref.current !== eventSource) {
+    ref.current = eventSource
+    if (events.length) {
+      setEvents([])
+    }
+  }
+
+  useEffect(() => {
+    const listenToEvents = eventSource === 'requests' ? listenEventsFromRequests : listenEventsFromSdk
+    return listenToEvents((newEvents) => {
+      setEvents((oldEvents) =>
+        [...newEvents, ...oldEvents]
+          .sort((first: any, second: any) => second.date - first.date)
+          .slice(0, MAXIMUM_LOGGED_EVENTS)
+      )
+    })
+  }, [eventSource])
+
+  return [events, () => setEvents([])] as const
 }
 
 function isLog(event: StoredEvent) {
@@ -89,7 +111,7 @@ function matchQueryPart(json: unknown, searchKey: string, searchTerm: string, js
   return false
 }
 
-function listenRequests(callback: (events: StoredEvent[]) => void) {
+function listenEventsFromRequests(callback: (events: StoredEvent[]) => void) {
   function beforeRequestHandler(request: chrome.devtools.network.Request) {
     const url = new URL(request.request.url)
 
@@ -113,4 +135,12 @@ function listenRequests(callback: (events: StoredEvent[]) => void) {
   chrome.devtools.network.onRequestFinished.addListener(beforeRequestHandler)
 
   return () => chrome.devtools.network.onRequestFinished.removeListener(beforeRequestHandler)
+}
+
+function listenEventsFromSdk(events: (events: StoredEvent[]) => void) {
+  return listenSdkMessages((message) => {
+    if (message.type === 'logs' || message.type === 'rum' || message.type === 'telemetry') {
+      events([{ ...message.payload, id: generateUUID() }])
+    }
+  })
 }

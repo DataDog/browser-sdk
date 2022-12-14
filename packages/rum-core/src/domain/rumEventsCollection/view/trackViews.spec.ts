@@ -1,6 +1,5 @@
 import type { Context, Duration, RelativeTime } from '@datadog/browser-core'
 import {
-  updateExperimentalFeatures,
   PageExitReason,
   timeStampNow,
   display,
@@ -573,75 +572,6 @@ describe('view custom timings', () => {
   })
 })
 
-describe('view feature flag evaluations', () => {
-  let setupBuilder: TestSetupBuilder
-  let viewTest: ViewTest
-
-  beforeEach(() => {
-    setupBuilder = setup()
-      .withFakeClock()
-      .beforeBuild((buildContext) => {
-        viewTest = setupViewTest(buildContext)
-        return viewTest
-      })
-  })
-
-  afterEach(() => {
-    setupBuilder.cleanup()
-    resetExperimentalFeatures()
-  })
-
-  it('should add feature flag evaluations of any type to the current view if the ff feature_flags is enabled', () => {
-    updateExperimentalFeatures(['feature_flags'])
-
-    const { clock } = setupBuilder.build()
-    const { getViewUpdate, addFeatureFlagEvaluation } = viewTest
-
-    addFeatureFlagEvaluation('feature', 'foo')
-    addFeatureFlagEvaluation('feature2', 2)
-    addFeatureFlagEvaluation('feature3', true)
-    addFeatureFlagEvaluation('feature4', { foo: 'bar' })
-
-    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD + 1)
-
-    const view = getViewUpdate(1)
-    expect(view.featureFlagEvaluations).toEqual({
-      feature: 'foo',
-      feature2: 2,
-      feature3: true,
-      feature4: { foo: 'bar' },
-    })
-  })
-
-  it('should replace existing feature flag evaluation to the current view if the ff feature_flags is enabled', () => {
-    updateExperimentalFeatures(['feature_flags'])
-
-    const { clock } = setupBuilder.build()
-    const { getViewUpdate, addFeatureFlagEvaluation } = viewTest
-
-    addFeatureFlagEvaluation('feature', 'foo')
-    addFeatureFlagEvaluation('feature2', 'baz')
-    addFeatureFlagEvaluation('feature', 'bar')
-
-    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
-
-    const view = getViewUpdate(1)
-    expect(view.featureFlagEvaluations).toEqual({ feature: 'bar', feature2: 'baz' })
-  })
-
-  it('should not add feature flag evaluation to the current view if the ff feature_flags is disabled', () => {
-    const { clock } = setupBuilder.build()
-    const { getViewUpdate, addFeatureFlagEvaluation } = viewTest
-
-    addFeatureFlagEvaluation('feature', 'bar')
-
-    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
-
-    const view = getViewUpdate(1)
-    expect(view.featureFlagEvaluations).toEqual({})
-  })
-})
-
 describe('start view', () => {
   let setupBuilder: TestSetupBuilder
   let viewTest: ViewTest
@@ -736,10 +666,6 @@ describe('start view', () => {
 describe('view metrics', () => {
   let setupBuilder: TestSetupBuilder
   let viewTest: ViewTest
-  const FAKE_ACTION_EVENT = {
-    type: RumEventType.ACTION,
-    action: {},
-  } as RumEvent & Context
 
   beforeEach(() => {
     setupBuilder = setup()
@@ -758,7 +684,7 @@ describe('view metrics', () => {
     const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
     const { getViewUpdate, getViewUpdateCount } = viewTest
 
-    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, FAKE_ACTION_EVENT)
+    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeActionEvent())
 
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
@@ -770,11 +696,19 @@ describe('view metrics', () => {
     const { getViewUpdate, getViewUpdateCount } = viewTest
 
     lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, () => {
-      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, FAKE_ACTION_EVENT)
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeActionEvent())
     })
 
     lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.UNLOADING })
 
     expect(getViewUpdate(getViewUpdateCount() - 1).eventCounts.actionCount).toBe(1)
   })
+
+  function createFakeActionEvent() {
+    return {
+      type: RumEventType.ACTION,
+      action: {},
+      view: viewTest.getLatestViewContext(),
+    } as RumEvent & Context
+  }
 })

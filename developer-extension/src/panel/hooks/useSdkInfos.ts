@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
+import { createLogger } from '../../common/logger'
 import { evalInWindow } from '../evalInWindow'
+
+const logger = createLogger('useSdkInfos')
 
 const REFRESH_INFOS_INTERVAL = 2000
 
@@ -69,7 +72,7 @@ async function getInfos(): Promise<SdkInfos> {
       `
     )) as SdkInfos
   } catch (error) {
-    console.error('Error while getting SDK infos:', error)
+    logger.error('Error while getting SDK infos:', error)
   }
   return {}
 }

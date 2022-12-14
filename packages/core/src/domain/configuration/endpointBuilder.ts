@@ -29,17 +29,15 @@ export function createEndpointBuilder(
   endpointType: EndpointType,
   configurationTags: string[]
 ) {
-  const { site = INTAKE_SITE_US1, clientToken } = initConfiguration
+  const { clientToken } = initConfiguration
 
-  const domainParts = site.split('.')
-  const extension = domainParts.pop()
-  const host = `${ENDPOINTS[endpointType]}.browser-intake-${domainParts.join('-')}.${extension!}`
+  const host = buildEndpointHost(initConfiguration, endpointType)
   const baseUrl = `https://${host}/api/v2/${INTAKE_TRACKS[endpointType]}`
   const proxyUrl = initConfiguration.proxyUrl && normalizeUrl(initConfiguration.proxyUrl)
 
   return {
-    build(retry?: RetryInfo) {
-      const tags = [`sdk_version:${__BUILD_ENV__SDK_VERSION__}`].concat(configurationTags)
+    build(api: 'xhr' | 'fetch' | 'beacon', retry?: RetryInfo) {
+      const tags = [`sdk_version:${__BUILD_ENV__SDK_VERSION__}`, `api:${api}`].concat(configurationTags)
       if (retry) {
         tags.push(`retry_count:${retry.count}`, `retry_after:${retry.lastFailureStatus}`)
       }
@@ -63,4 +61,16 @@ export function createEndpointBuilder(
     },
     endpointType,
   }
+}
+
+function buildEndpointHost(initConfiguration: InitConfiguration, endpointType: EndpointType) {
+  const { site = INTAKE_SITE_US1, internalAnalyticsSubdomain } = initConfiguration
+
+  if (internalAnalyticsSubdomain && site === INTAKE_SITE_US1) {
+    return `${internalAnalyticsSubdomain}.${INTAKE_SITE_US1}`
+  }
+
+  const domainParts = site.split('.')
+  const extension = domainParts.pop()
+  return `${ENDPOINTS[endpointType]}.browser-intake-${domainParts.join('-')}.${extension!}`
 }

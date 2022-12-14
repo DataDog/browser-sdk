@@ -73,7 +73,7 @@ describe('logs', () => {
       handleLog({ message: 'message', status: StatusType.warn, context: { foo: 'bar' } }, logger, COMMON_CONTEXT)
 
       expect(requests.length).toEqual(1)
-      expect(requests[0].url).toContain(baseConfiguration.logsEndpointBuilder.build())
+      expect(requests[0].url).toContain(baseConfiguration.logsEndpointBuilder.build('xhr'))
       expect(getLoggedMessage(requests, 0)).toEqual({
         date: jasmine.any(Number),
         foo: 'bar',

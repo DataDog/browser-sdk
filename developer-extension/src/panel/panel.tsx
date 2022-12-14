@@ -17,15 +17,19 @@ const enum PanelTabs {
 
 export function Panel() {
   const [{ devServerStatus, ...settingsFromStore }, setStore] = useStore()
-  const [settingsFromMemory, setSettingsFromMemory] = useState<Pick<Settings, 'autoFlush' | 'preserveEvents'>>({
+  const [settingsFromMemory, setSettingsFromMemory] = useState<
+    Pick<Settings, 'autoFlush' | 'preserveEvents' | 'eventSource'>
+  >({
     preserveEvents: false,
     autoFlush: true,
+    eventSource: 'requests',
   })
 
   useAutoFlushEvents(settingsFromMemory.autoFlush)
-  const { events, filters, setFilters, clear } = useEvents(settingsFromMemory.preserveEvents)
 
   const settings: Settings = { ...settingsFromStore, ...settingsFromMemory }
+
+  const { events, filters, setFilters, clear } = useEvents(settings)
 
   return (
     <Tabs

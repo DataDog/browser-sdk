@@ -1,4 +1,4 @@
-import { addTelemetryDebug, assign, monitor } from '@datadog/browser-core'
+import { addTelemetryDebug, assign, monitor, sendToExtension } from '@datadog/browser-core'
 import type { BrowserRecord, BrowserSegmentMetadata, CreationReason, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
 import * as replayStats from '../replayStats'
@@ -68,6 +68,7 @@ export class Segment {
       }
     })
     worker.addEventListener('message', listener)
+    sendToExtension('record', { record: initialRecord, segment: this.metadata })
     this.worker.postMessage({ data: `{"records":[${JSON.stringify(initialRecord)}`, id: this.id, action: 'write' })
   }
 
@@ -77,6 +78,7 @@ export class Segment {
     this.metadata.records_count += 1
     replayStats.addRecord(this.metadata.view.id)
     this.metadata.has_full_snapshot ||= record.type === RecordType.FullSnapshot
+    sendToExtension('record', { record, segment: this.metadata })
     this.worker.postMessage({ data: `,${JSON.stringify(record)}`, id: this.id, action: 'write' })
   }
 

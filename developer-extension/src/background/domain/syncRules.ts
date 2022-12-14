@@ -1,6 +1,9 @@
+import { createLogger } from '../../common/logger'
 import { listenAction } from '../actions'
 import { DEV_LOGS_URL, DEV_RUM_SLIM_URL, DEV_RUM_URL, INTAKE_DOMAINS } from '../constants'
 import { store } from '../store'
+
+const logger = createLogger('syncRules')
 
 listenAction('setStore', (newStore) => {
   if ('useDevBundles' in newStore || 'useRumSlim' in newStore || 'blockIntakeRequests' in newStore) {
@@ -10,7 +13,7 @@ listenAction('setStore', (newStore) => {
 })
 
 function syncRules() {
-  console.log('syncRules: Syncing rules')
+  logger.log('Syncing rules')
   chrome.declarativeNetRequest
     .getSessionRules()
     .then((existingRules) =>
@@ -19,7 +22,7 @@ function syncRules() {
         addRules: getRules(),
       })
     )
-    .catch((error) => console.error('syncRules: Error while syncing rules:', error))
+    .catch((error) => logger.error('Error while syncing rules:', error))
 }
 
 function getRules() {
@@ -28,20 +31,22 @@ function getRules() {
 
   if (store.useDevBundles) {
     const devRumUrl = store.useRumSlim ? DEV_RUM_SLIM_URL : DEV_RUM_URL
-    console.log('syncRules: add redirect to dev bundles rules')
+    logger.log('add redirect to dev bundles rules')
     rules.push(
-      createRedirectRule(id++, /^https:\/\/.*\/datadog-rum(-v\d|canary|staging)?\.js$/, { url: devRumUrl }),
-      createRedirectRule(id++, /^https:\/\/.*\/datadog-rum-slim(-v\d|canary|staging)?\.js$/, { url: DEV_RUM_SLIM_URL }),
-      createRedirectRule(id++, /^https:\/\/.*\/datadog-logs(-v\d|canary|staging)?\.js$/, { url: DEV_LOGS_URL }),
+      createRedirectRule(id++, /^https:\/\/.*\/datadog-rum(-v\d|-canary|-staging)?\.js$/, { url: devRumUrl }),
+      createRedirectRule(id++, /^https:\/\/.*\/datadog-rum-slim(-v\d|-canary|-staging)?\.js$/, {
+        url: DEV_RUM_SLIM_URL,
+      }),
+      createRedirectRule(id++, /^https:\/\/.*\/datadog-logs(-v\d|-canary|-staging)?\.js$/, { url: DEV_LOGS_URL }),
       createRedirectRule(id++, 'https://localhost:8443/static/datadog-rum-hotdog.js', { url: devRumUrl })
     )
   } else if (store.useRumSlim) {
-    console.log('syncRules: add redirect to rum slim rule')
+    logger.log('add redirect to rum slim rule')
     rules.push(createRedirectRule(id++, /^(https:\/\/.*\/datadog-rum)(-slim)?/, { regexSubstitution: '\\1-slim' }))
   }
 
   if (store.blockIntakeRequests) {
-    console.log('syncRules: add block intake rules')
+    logger.log('add block intake rules')
     for (const intakeDomain of INTAKE_DOMAINS) {
       rules.push({
         id: id++,

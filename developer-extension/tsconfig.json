@@ -4,6 +4,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "module": "ES6",
+    "target": "esnext",
     "jsx": "react",
     "lib": ["ES2019", "DOM"],
     "types": ["chrome", "react", "react-dom"]

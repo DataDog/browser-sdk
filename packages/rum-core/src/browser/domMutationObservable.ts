@@ -1,4 +1,4 @@
-import { monitor, noop, Observable } from '@datadog/browser-core'
+import { monitor, noop, Observable, getZoneJsOriginalValue } from '@datadog/browser-core'
 
 export function createDOMMutationObservable() {
   const MutationObserver = getMutationObserverConstructor()
@@ -21,11 +21,10 @@ export function createDOMMutationObservable() {
 }
 
 type MutationObserverConstructor = new (callback: MutationCallback) => MutationObserver
+
 export interface BrowserWindow extends Window {
   MutationObserver?: MutationObserverConstructor
-  Zone?: {
-    __symbol__: (name: string) => string
-  }
+  Zone?: unknown
 }
 
 export function getMutationObserverConstructor(): MutationObserverConstructor | undefined {
@@ -44,16 +43,12 @@ export function getMutationObserverConstructor(): MutationObserverConstructor | 
   // [1] https://github.com/angular/angular/issues/26948
   // [2] https://github.com/angular/angular/issues/31712
   if (browserWindow.Zone) {
-    const zoneSymbol = browserWindow.Zone.__symbol__
-
     // Zone.js 0.8.6+ is storing original class constructors into the browser 'window' object[3].
     //
     // [3] https://github.com/angular/angular/blob/6375fa79875c0fe7b815efc45940a6e6f5c9c9eb/packages/zone.js/lib/common/utils.ts#L288
-    constructor = browserWindow[zoneSymbol('MutationObserver') as any] as unknown as
-      | MutationObserverConstructor
-      | undefined
+    constructor = getZoneJsOriginalValue(browserWindow, 'MutationObserver')
 
-    if (!constructor && browserWindow.MutationObserver) {
+    if (browserWindow.MutationObserver && constructor === browserWindow.MutationObserver) {
       // Anterior Zone.js versions (used in Angular 2) does not expose the original MutationObserver
       // in the 'window' object. Luckily, the patched MutationObserver class is storing an original
       // instance in its properties[4]. Let's get the original MutationObserver constructor from
@@ -61,11 +56,11 @@ export function getMutationObserverConstructor(): MutationObserverConstructor | 
       //
       // [4] https://github.com/angular/zone.js/blob/v0.8.5/lib/common/utils.ts#L412
 
-      const patchedInstance = new browserWindow.MutationObserver(noop) as any
-      const originalInstance = patchedInstance[zoneSymbol('originalInstance')] as
-        | { constructor: MutationObserverConstructor }
-        | undefined
+      const patchedInstance = new browserWindow.MutationObserver(noop) as {
+        originalInstance?: { constructor: MutationObserverConstructor }
+      }
 
+      const originalInstance = getZoneJsOriginalValue(patchedInstance, 'originalInstance')
       constructor = originalInstance && originalInstance.constructor
     }
   }
