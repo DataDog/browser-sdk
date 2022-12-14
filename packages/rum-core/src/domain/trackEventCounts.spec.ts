@@ -3,7 +3,6 @@ import { objectValues } from '@datadog/browser-core'
 import type { RumEvent } from '../rumEvent.types'
 import { FrustrationType, RumEventType } from '../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-import type { EventCounts } from './trackEventCounts'
 import { trackEventCounts } from './trackEventCounts'
 
 describe('trackEventCounts', () => {
@@ -71,16 +70,14 @@ describe('trackEventCounts', () => {
   })
 
   it('invokes a potential callback when a count is increased', () => {
-    const spy = jasmine.createSpy<(eventCounts: EventCounts) => void>()
-    trackEventCounts({ lifeCycle, isChildEvent: () => true, callback: spy })
+    const spy = jasmine.createSpy<() => void>()
+    trackEventCounts({ lifeCycle, isChildEvent: () => true, onChange: spy })
 
     notifyCollectedRawRumEvent({ type: RumEventType.RESOURCE })
     expect(spy).toHaveBeenCalledTimes(1)
-    expect(spy.calls.mostRecent().args[0].resourceCount).toBe(1)
 
     notifyCollectedRawRumEvent({ type: RumEventType.RESOURCE })
     expect(spy).toHaveBeenCalledTimes(2)
-    expect(spy.calls.mostRecent().args[0].resourceCount).toBe(2)
   })
 
   it('does not take into account events that are not child events', () => {

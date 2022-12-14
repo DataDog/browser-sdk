@@ -26,6 +26,7 @@ import type { RumConfiguration } from '../../configuration'
 import type { Timings } from './trackInitialViewTimings'
 import { trackInitialViewTimings } from './trackInitialViewTimings'
 import { trackViewMetrics } from './trackViewMetrics'
+import { trackViewEventCounts } from './trackViewEventCounts'
 
 export interface ViewEvent {
   id: string
@@ -226,14 +227,12 @@ function newView(
     setLoadEvent,
     stop: stopViewMetricsTracking,
     viewMetrics,
-  } = trackViewMetrics(
+  } = trackViewMetrics(lifeCycle, domMutationObservable, configuration, scheduleViewUpdate, loadingType, startClocks)
+
+  const { scheduleStop: scheduleStopEventCountsTracking, eventCounts } = trackViewEventCounts(
     lifeCycle,
-    domMutationObservable,
-    configuration,
-    scheduleViewUpdate,
     id,
-    loadingType,
-    startClocks
+    scheduleViewUpdate
   )
 
   // Initial view update
@@ -258,6 +257,7 @@ function newView(
           timings,
           duration: elapsed(startClocks.timeStamp, currentEnd),
           isActive: endClocks === undefined,
+          eventCounts,
         },
         viewMetrics
       )
@@ -273,6 +273,7 @@ function newView(
       endClocks = clocks
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks })
       stopViewMetricsTracking()
+      scheduleStopEventCountsTracking()
     },
     triggerUpdate() {
       // cancel any pending view updates execution

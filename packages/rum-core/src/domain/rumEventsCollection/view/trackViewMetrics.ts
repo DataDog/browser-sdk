@@ -6,12 +6,9 @@ import { ViewLoadingType } from '../../../rawRumEvent.types'
 import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
-import type { EventCounts } from '../../trackEventCounts'
-import { trackEventCounts } from '../../trackEventCounts'
 import { waitPageActivityEnd } from '../../waitPageActivityEnd'
 
 export interface ViewMetrics {
-  eventCounts: EventCounts
   loadingTime?: Duration
   cumulativeLayoutShift?: number
 }
@@ -21,27 +18,10 @@ export function trackViewMetrics(
   domMutationObservable: Observable<void>,
   configuration: RumConfiguration,
   scheduleViewUpdate: () => void,
-  viewId: string,
   loadingType: ViewLoadingType,
   viewStart: ClocksState
 ) {
-  const viewMetrics: ViewMetrics = {
-    eventCounts: {
-      errorCount: 0,
-      longTaskCount: 0,
-      resourceCount: 0,
-      actionCount: 0,
-      frustrationCount: 0,
-    },
-  }
-  const { stop: stopEventCountsTracking } = trackEventCounts({
-    lifeCycle,
-    isChildEvent: (event) => event.view.id === viewId,
-    callback: (newEventCounts) => {
-      viewMetrics.eventCounts = newEventCounts
-      scheduleViewUpdate()
-    },
-  })
+  const viewMetrics: ViewMetrics = {}
 
   const { stop: stopLoadingTimeTracking, setLoadEvent } = trackLoadingTime(
     lifeCycle,
@@ -67,7 +47,6 @@ export function trackViewMetrics(
   }
   return {
     stop: () => {
-      stopEventCountsTracking()
       stopLoadingTimeTracking()
       stopCLSTracking()
     },
