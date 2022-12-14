@@ -91,7 +91,7 @@ export function fetchKeepAliveStrategy(
   const canUseKeepAlive = isKeepAliveSupported() && bytesCount < bytesLimit
   if (canUseKeepAlive) {
     const fetchUrl = endpointBuilder.build('fetch', retry)
-    fetch(fetchUrl, { method: 'POST', body: data, keepalive: true }).then(
+    fetch(fetchUrl, { method: 'POST', body: data, keepalive: true, mode: 'cors' }).then(
       monitor((response: Response) => onResponse?.({ status: response.status })),
       monitor(() => {
         const xhrUrl = endpointBuilder.build('xhr', retry)
