@@ -8,7 +8,7 @@
     "performances"
   ],
   "scripts": {
-    "postinstall": "scripts/cli update_submodule",
+    "postinstall": "scripts/cli init_submodule",
     "build": "lerna run build --stream",
     "build:bundle": "lerna run build:bundle --stream",
     "format": "prettier --check .",
