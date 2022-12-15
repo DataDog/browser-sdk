@@ -14,6 +14,7 @@ import {
   findFullSnapshot,
   findIncrementalSnapshot,
   findTextContent,
+  findTextNode,
 } from '@datadog/browser-rum/test/utils'
 import type { EventRegistry } from '../../lib/framework'
 import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
@@ -61,10 +62,10 @@ const inputShadowDom = `<script>
 
 /** Will generate the following HTML 
  * ```html
- * <my-input-field id="titi">
+ * <my-div id="titi">
  *  #shadow-root
  *    <div>toto</div>
- *</my-input-field>
+ *</my-div>
  *```
  when called like `<my-div />`
  */
@@ -85,137 +86,157 @@ const divShadowDom = `<script>
  `
 
 describe('recorder with shadow DOM', () => {
-  describe('full snapshot', () => {
-    createTest('can overwrite with mask-user-input')
+  createTest('can record fullsnapshot with the detail inside the shadow root')
+    .withRum({ defaultPrivacyLevel: 'allow', enableExperimentalFeatures: ['record_shadow_dom'] })
+    .withRumInit(initRumAndStartRecording)
+    .withSetup(bundleSetup)
+    .withBody(
+      html`
+        ${divShadowDom}
+        <my-div />
+      `
+    )
+    .run(async ({ serverEvents }) => {
+      await flushEvents()
+
+      expect(serverEvents.sessionReplay.length).toBe(1)
+
+      const fullSnapshot = findFullSnapshot(getFirstSegment(serverEvents))!
+      expect(fullSnapshot).toBeTruthy()
+
+      const textNode = findTextNode(fullSnapshot.data.node, 'toto')
+      expect(textNode).toBeTruthy()
+      expect(textNode?.textContent).toBe('toto')
+    })
+
+  createTest('can over privacy from outside & inside the shadow DOM')
+    .withRum({ defaultPrivacyLevel: 'allow', enableExperimentalFeatures: ['record_shadow_dom'] })
+    .withRumInit(initRumAndStartRecording)
+    .withSetup(bundleSetup)
+    .withBody(
+      html`
+        ${inputShadowDom}
+        <div id="wrapper-outside" data-dd-privacy="mask-user-input"><my-input-field id="outside" /></div>
+        <div id="wrapper-inside"><my-input-field privacy="mask-user-input" id="inside" /></div>
+      `
+    )
+    .run(async ({ serverEvents }) => {
+      await flushEvents()
+
+      expect(serverEvents.sessionReplay.length).toBe(1)
+
+      const fullSnapshot = findFullSnapshot(getFirstSegment(serverEvents))!
+      expect(fullSnapshot).toBeTruthy()
+
+      const {
+        input: outsideInput,
+        shadowRoot: outsideShadowRoot,
+        textContent: outsideTextContent,
+      } = findElementsInShadowDom(fullSnapshot.data.node, 'outside')
+      expect(outsideShadowRoot?.isShadowRoot).toBeTrue()
+      expect(outsideInput?.attributes.value).toBe('***')
+      expect(outsideTextContent).toBe('field outside: ')
+
+      const {
+        input: insideInput,
+        shadowRoot: insideShadowRoot,
+        textContent: insideTextContent,
+      } = findElementsInShadowDom(fullSnapshot.data.node, 'inside')
+      expect(insideShadowRoot?.isShadowRoot).toBeTrue()
+      expect(insideInput?.attributes.value).toBe('***')
+      expect(insideTextContent).toBe('field inside: ')
+    })
+
+  createTest('can record click with target from inside the shadow root')
+    .withRum({ enableExperimentalFeatures: ['record_shadow_dom'] })
+    .withRumInit(initRumAndStartRecording)
+    .withSetup(bundleSetup)
+    .withBody(
+      html`
+        ${divShadowDom}
+        <my-div />
+      `
+    )
+    .run(async ({ serverEvents }) => {
+      const div = await getNodeInsideShadowDom('my-div', 'div')
+      await div.click()
+      await flushEvents()
+      expect(serverEvents.sessionReplay.length).toBe(1)
+      const fullSnapshot = findFullSnapshot(getFirstSegment(serverEvents))!
+      const divNode = findElementWithTagName(fullSnapshot.data.node, 'div')!
+      const mouseInteraction = findIncrementalSnapshot(
+        getFirstSegment(serverEvents),
+        IncrementalSource.MouseInteraction
+      )!
+      expect(mouseInteraction).toBeTruthy()
+      expect(mouseInteraction.data.source).toBe(IncrementalSource.MouseInteraction)
+      expect((mouseInteraction.data as MouseInteractionData).id).toBe(divNode.id)
+    })
+
+  // only work on Firefox 107+ but we're currently using 106
+  if (getBrowserName() !== 'firefox') {
+    createTest('can record input event with target from inside the shadow root')
       .withRum({ defaultPrivacyLevel: 'allow', enableExperimentalFeatures: ['record_shadow_dom'] })
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(
         html`
           ${inputShadowDom}
-          <div id="wrapper-outside" data-dd-privacy="mask-user-input"><my-input-field id="outside" /></div>
-          <div id="wrapper-inside"><my-input-field privacy="mask-user-input" id="inside" /></div>
+          <my-input-field />
         `
       )
       .run(async ({ serverEvents }) => {
-        await flushEvents()
+        const input = await getNodeInsideShadowDom('my-input-field', 'input')
+        await input.addValue('t')
 
-        expect(serverEvents.sessionReplay.length).toBe(1)
-
-        const fullSnapshot = findFullSnapshot(getFirstSegment(serverEvents))!
-        expect(fullSnapshot).toBeTruthy()
-
-        const {
-          input: outsideInput,
-          shadowRoot: outsideShadowRoot,
-          textContent: outsideTextContent,
-        } = findElementsInShadowDom(fullSnapshot.data.node, 'outside')
-        expect(outsideShadowRoot?.isShadowRoot).toBeTrue()
-        expect(outsideInput?.attributes.value).toBe('***')
-        expect(outsideTextContent).toBe('field outside: ')
-
-        const {
-          input: insideInput,
-          shadowRoot: insideShadowRoot,
-          textContent: insideTextContent,
-        } = findElementsInShadowDom(fullSnapshot.data.node, 'inside')
-        expect(insideShadowRoot?.isShadowRoot).toBeTrue()
-        expect(insideInput?.attributes.value).toBe('***')
-        expect(insideTextContent).toBe('field inside: ')
-      })
-  })
-  describe('incremental snapshot', () => {
-    createTest('record click')
-      .withRum({ enableExperimentalFeatures: ['record_shadow_dom'] })
-      .withRumInit(initRumAndStartRecording)
-      .withSetup(bundleSetup)
-      .withBody(
-        html`
-          ${divShadowDom}
-          <my-div />
-        `
-      )
-      .run(async ({ serverEvents }) => {
-        const div = await getNodeInsideShadowDom('my-div', 'div')
-        await div.click()
         await flushEvents()
         expect(serverEvents.sessionReplay.length).toBe(1)
         const fullSnapshot = findFullSnapshot(getFirstSegment(serverEvents))!
-        const divNode = findElementWithTagName(fullSnapshot.data.node, 'div')!
-        const mouseInteraction = findIncrementalSnapshot(
-          getFirstSegment(serverEvents),
-          IncrementalSource.MouseInteraction
-        )!
-        expect(mouseInteraction).toBeTruthy()
-        expect(mouseInteraction.data.source).toBe(IncrementalSource.MouseInteraction)
-        expect((mouseInteraction.data as MouseInteractionData).id).toBe(divNode.id)
+        const inputNode = findElementWithTagName(fullSnapshot.data.node, 'input')!
+        const inputRecord = findIncrementalSnapshot(getFirstSegment(serverEvents), IncrementalSource.Input)!
+        expect(inputRecord).toBeTruthy()
+        expect(inputRecord.data.source).toBe(IncrementalSource.Input)
+        expect((inputRecord.data as InputData).id).toBe(inputNode.id)
+        expect((inputRecord.data as { text: string }).text).toBe('totot')
       })
+  }
 
-    // only work on Firefox 107+ but we're currently using 106
-    if (getBrowserName() !== 'firefox') {
-      createTest('record input')
-        .withRum({ defaultPrivacyLevel: 'allow', enableExperimentalFeatures: ['record_shadow_dom'] })
-        .withRumInit(initRumAndStartRecording)
-        .withSetup(bundleSetup)
-        .withBody(
-          html`
-            ${inputShadowDom}
-            <my-input-field />
-          `
-        )
-        .run(async ({ serverEvents }) => {
-          const input = await getNodeInsideShadowDom('my-input-field', 'input')
-          await input.addValue('t')
-
-          await flushEvents()
-          expect(serverEvents.sessionReplay.length).toBe(1)
-          const fullSnapshot = findFullSnapshot(getFirstSegment(serverEvents))!
-          const inputNode = findElementWithTagName(fullSnapshot.data.node, 'input')!
-          const inputRecord = findIncrementalSnapshot(getFirstSegment(serverEvents), IncrementalSource.Input)!
-          expect(inputRecord).toBeTruthy()
-          expect(inputRecord.data.source).toBe(IncrementalSource.Input)
-          expect((inputRecord.data as InputData).id).toBe(inputNode.id)
-          expect((inputRecord.data as { text: string }).text).toBe('totot')
-        })
-    }
-
-    createTest('record mutation')
-      .withRum({ defaultPrivacyLevel: 'allow', enableExperimentalFeatures: ['record_shadow_dom'] })
-      .withRumInit(initRumAndStartRecording)
-      .withSetup(bundleSetup)
-      .withBody(
-        html`
-          ${divShadowDom}
-          <my-div id="host" />
-        `
+  createTest('can record mutation from inside the shadow root')
+    .withRum({ defaultPrivacyLevel: 'allow', enableExperimentalFeatures: ['record_shadow_dom'] })
+    .withRumInit(initRumAndStartRecording)
+    .withSetup(bundleSetup)
+    .withBody(
+      html`
+        ${divShadowDom}
+        <my-div id="host" />
+      `
+    )
+    .run(async ({ serverEvents }) => {
+      await browserExecute(() => {
+        const host = document.body.querySelector('#host') as HTMLElement
+        const div = host.shadowRoot!.querySelector('div') as HTMLElement
+        div.innerText = 'titi'
+      })
+      await flushEvents()
+      expect(serverEvents.sessionReplay.length).toBe(1)
+      const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidatorFromSegment(
+        getFirstSegment(serverEvents)
       )
-      .run(async ({ serverEvents }) => {
-        await browserExecute(() => {
-          const host = document.body.querySelector('#host') as HTMLElement
-          const div = host.shadowRoot!.querySelector('div') as HTMLElement
-          div.innerText = 'titi'
-        })
-        await flushEvents()
-        expect(serverEvents.sessionReplay.length).toBe(1)
-        const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidatorFromSegment(
-          getFirstSegment(serverEvents)
-        )
-        validate({
-          adds: [
-            {
-              parent: expectInitialNode({ tag: 'div' }),
-              node: expectNewNode({ type: NodeType.Text, textContent: 'titi' }),
-            },
-          ],
-          removes: [
-            {
-              parent: expectInitialNode({ tag: 'div' }),
-              node: expectInitialNode({ text: 'toto' }),
-            },
-          ],
-        })
+      validate({
+        adds: [
+          {
+            parent: expectInitialNode({ tag: 'div' }),
+            node: expectNewNode({ type: NodeType.Text, textContent: 'titi' }),
+          },
+        ],
+        removes: [
+          {
+            parent: expectInitialNode({ tag: 'div' }),
+            node: expectInitialNode({ text: 'toto' }),
+          },
+        ],
       })
-  })
+    })
 })
 
 function findElementsInShadowDom(node: SerializedNodeWithId, id: string) {
