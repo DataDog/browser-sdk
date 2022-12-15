@@ -234,13 +234,11 @@ describe('record', () => {
       div.className = 'titi'
 
       recordApi.flushMutations()
-      expect(recordApi.shadowDomCallBacks.size).toBe(1)
       expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot() + 1)
       const innerMutationData = getLastIncrementalSnapshotData<BrowserMutationData>(
         getEmittedRecords(),
         IncrementalSource.Mutation
       )
-      expect(innerMutationData.attributes.length).toBe(1)
       expect(innerMutationData.attributes[0].attributes.class).toBe('titi')
     })
 
@@ -356,11 +354,13 @@ describe('record', () => {
       div.className = 'toto'
       const shadowRoot = createShadow([div])
       startRecording()
+      spyOn(recordApi.shadowRootsController, 'removeShadowRoot')
+
       expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot())
-      expect(recordApi.shadowDomCallBacks.size).toBe(1)
+      expect(recordApi.shadowRootsController.removeShadowRoot).toHaveBeenCalledTimes(0)
       shadowRoot.host.remove()
       recordApi.flushMutations()
-      expect(recordApi.shadowDomCallBacks.size).toBe(0)
+      expect(recordApi.shadowRootsController.removeShadowRoot).toHaveBeenCalledTimes(1)
       expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot() + 1)
       const mutationData = getLastIncrementalSnapshotData<BrowserMutationData>(
         getEmittedRecords(),
@@ -379,13 +379,14 @@ describe('record', () => {
       createShadow([child], parent)
       sandbox.appendChild(grandParent)
       startRecording()
+      spyOn(recordApi.shadowRootsController, 'removeShadowRoot')
       expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot())
-      expect(recordApi.shadowDomCallBacks.size).toBe(1)
+      expect(recordApi.shadowRootsController.removeShadowRoot).toHaveBeenCalledTimes(0)
 
       parent.remove()
       grandParent.remove()
       recordApi.flushMutations()
-      expect(recordApi.shadowDomCallBacks.size).toBe(0)
+      expect(recordApi.shadowRootsController.removeShadowRoot).toHaveBeenCalledTimes(1)
       expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot() + 1)
       const mutationData = getLastIncrementalSnapshotData<BrowserMutationData>(
         getEmittedRecords(),

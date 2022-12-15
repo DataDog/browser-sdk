@@ -16,6 +16,14 @@ import type { FrustrationCallback, InputCallback, StyleSheetCallback } from './o
 import { initStyleSheetObserver, initFrustrationObserver, initInputObserver } from './observers'
 import { serializeDocument, SerializationContextStatus } from './serialize'
 import { createElementsScrollPositions } from './elementsScrollPositions'
+import type { ShadowRootsController } from './shadowDom'
+
+const DEFAULT_SHADOW_ROOT_CONTROLLER: ShadowRootsController = {
+  flush: noop,
+  stop: noop,
+  addShadowRoot: noop,
+  removeShadowRoot: noop,
+}
 
 const DEFAULT_CONFIGURATION = { defaultPrivacyLevel: NodePrivacyLevel.ALLOW } as RumConfiguration
 
@@ -36,15 +44,11 @@ describe('initInputObserver', () => {
     sandbox.appendChild(input)
     document.body.appendChild(sandbox)
 
-    serializeDocument(
-      document,
-      DEFAULT_CONFIGURATION,
-      {
-        status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
-        elementsScrollPositions: createElementsScrollPositions(),
-      },
-      noop
-    )
+    serializeDocument(document, DEFAULT_CONFIGURATION, {
+      shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
+      status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
+      elementsScrollPositions: createElementsScrollPositions(),
+    })
   })
 
   afterEach(() => {
@@ -206,15 +210,11 @@ describe('initStyleSheetObserver', () => {
     document.head.appendChild(styleElement)
     styleSheet = styleElement.sheet!
 
-    serializeDocument(
-      document,
-      DEFAULT_CONFIGURATION,
-      {
-        status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
-        elementsScrollPositions: createElementsScrollPositions(),
-      },
-      noop
-    )
+    serializeDocument(document, DEFAULT_CONFIGURATION, {
+      shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
+      status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
+      elementsScrollPositions: createElementsScrollPositions(),
+    })
   })
 
   afterEach(() => {

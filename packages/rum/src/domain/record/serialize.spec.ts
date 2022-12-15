@@ -20,7 +20,7 @@ import {
 import type { ElementNode, SerializedNodeWithId, TextNode } from '../../types'
 import { NodeType } from '../../types'
 import { hasSerializedNode } from './serializationUtils'
-import type { SerializeOptions, ShadowDomCallBack } from './serialize'
+import type { SerializationContext, SerializeOptions } from './serialize'
 import {
   serializeDocument,
   serializeNodeWithId,
@@ -32,10 +32,19 @@ import {
 import { MAX_ATTRIBUTE_VALUE_CHAR_LENGTH } from './privacy'
 import type { ElementsScrollPositions } from './elementsScrollPositions'
 import { createElementsScrollPositions } from './elementsScrollPositions'
+import type { ShadowDomCallBack, ShadowRootsController } from './shadowDom'
 
 const DEFAULT_CONFIGURATION = {} as RumConfiguration
 
-const DEFAULT_SERIALIZATION_CONTEXT = {
+const DEFAULT_SHADOW_ROOT_CONTROLLER: ShadowRootsController = {
+  flush: noop,
+  stop: noop,
+  addShadowRoot: noop,
+  removeShadowRoot: noop,
+}
+
+const DEFAULT_SERIALIZATION_CONTEXT: SerializationContext = {
+  shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
   status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
   elementsScrollPositions: createElementsScrollPositions(),
 }
@@ -44,15 +53,14 @@ const DEFAULT_OPTIONS: SerializeOptions = {
   parentNodePrivacyLevel: NodePrivacyLevel.ALLOW,
   serializationContext: DEFAULT_SERIALIZATION_CONTEXT,
   configuration: DEFAULT_CONFIGURATION,
-  shadowDomCreatedCallback: noop,
 }
 
 describe('serializeNodeWithId', () => {
   let sandbox: HTMLElement
-  let shadowDomCreatedCallbackSpy: jasmine.Spy<ShadowDomCallBack>
+  let addShadowRootSpy: jasmine.Spy<ShadowDomCallBack>
 
   beforeEach(() => {
-    shadowDomCreatedCallbackSpy = jasmine.createSpy<ShadowDomCallBack>()
+    addShadowRootSpy = jasmine.createSpy<ShadowDomCallBack>()
   })
 
   beforeEach(() => {
@@ -72,9 +80,7 @@ describe('serializeNodeWithId', () => {
   describe('document serialization', () => {
     it('serializes a document', () => {
       const document = new DOMParser().parseFromString('<!doctype html><html>foo</html>', 'text/html')
-      expect(
-        serializeDocument(document, DEFAULT_CONFIGURATION, DEFAULT_SERIALIZATION_CONTEXT, shadowDomCreatedCallbackSpy)
-      ).toEqual({
+      expect(serializeDocument(document, DEFAULT_CONFIGURATION, DEFAULT_SERIALIZATION_CONTEXT)).toEqual({
         type: NodeType.Document,
         childNodes: [
           jasmine.objectContaining({ type: NodeType.DocumentType, name: 'html', publicId: '', systemId: '' }),
@@ -158,6 +164,7 @@ describe('serializeNodeWithId', () => {
           serializeNodeWithId(element, {
             ...DEFAULT_OPTIONS,
             serializationContext: {
+              shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
               status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
               elementsScrollPositions,
             },
@@ -178,6 +185,7 @@ describe('serializeNodeWithId', () => {
           serializeNodeWithId(element, {
             ...DEFAULT_OPTIONS,
             serializationContext: {
+              shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
               status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT,
               elementsScrollPositions,
             },
@@ -196,6 +204,7 @@ describe('serializeNodeWithId', () => {
           serializeNodeWithId(element, {
             ...DEFAULT_OPTIONS,
             serializationContext: {
+              shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
               status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT,
               elementsScrollPositions,
             },
@@ -217,6 +226,7 @@ describe('serializeNodeWithId', () => {
           serializeNodeWithId(element, {
             ...DEFAULT_OPTIONS,
             serializationContext: {
+              shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
               status: SerializationContextStatus.MUTATION,
             },
           }) as ElementNode
@@ -439,7 +449,16 @@ describe('serializeNodeWithId', () => {
       div.attachShadow({ mode: 'open' })
       div.shadowRoot!.appendChild(document.createElement('hr'))
 
-      const options = { ...DEFAULT_OPTIONS, shadowDomCreatedCallback: shadowDomCreatedCallbackSpy }
+      const options: SerializeOptions = {
+        ...DEFAULT_OPTIONS,
+        serializationContext: {
+          ...DEFAULT_SERIALIZATION_CONTEXT,
+          shadowRootsController: {
+            ...DEFAULT_SHADOW_ROOT_CONTROLLER,
+            addShadowRoot: addShadowRootSpy,
+          },
+        },
+      }
       expect(serializeNodeWithId(div, options)).toEqual({
         type: NodeType.Element,
         tagName: 'div',
@@ -464,7 +483,7 @@ describe('serializeNodeWithId', () => {
         ],
         id: jasmine.any(Number) as unknown as number,
       })
-      expect(shadowDomCreatedCallbackSpy).toHaveBeenCalledWith(div.shadowRoot!)
+      expect(addShadowRootSpy).toHaveBeenCalledWith(div.shadowRoot!)
     })
 
     it('does not serialize shadow host children when the experimental flag is missing', () => {
@@ -472,7 +491,16 @@ describe('serializeNodeWithId', () => {
       div.attachShadow({ mode: 'open' })
       div.shadowRoot!.appendChild(document.createElement('hr'))
 
-      const options = { ...DEFAULT_OPTIONS, shadowDomCreatedCallback: shadowDomCreatedCallbackSpy }
+      const options: SerializeOptions = {
+        ...DEFAULT_OPTIONS,
+        serializationContext: {
+          ...DEFAULT_SERIALIZATION_CONTEXT,
+          shadowRootsController: {
+            ...DEFAULT_SHADOW_ROOT_CONTROLLER,
+            addShadowRoot: addShadowRootSpy,
+          },
+        },
+      }
       expect(serializeNodeWithId(div, options)).toEqual({
         type: NodeType.Element,
         tagName: 'div',
@@ -481,7 +509,7 @@ describe('serializeNodeWithId', () => {
         childNodes: [],
         id: jasmine.any(Number) as unknown as number,
       })
-      expect(shadowDomCreatedCallbackSpy).not.toHaveBeenCalled()
+      expect(addShadowRootSpy).not.toHaveBeenCalled()
     })
   })
 

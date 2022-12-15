@@ -10,11 +10,18 @@ import {
 } from '../../constants'
 import type { AttributeMutation, Attributes } from '../../types'
 import { NodeType } from '../../types'
-import type { ShadowDomCallBack } from './serialize'
 import { serializeDocument, SerializationContextStatus } from './serialize'
 import { sortAddedAndMovedNodes, startMutationObserver } from './mutationObserver'
 import type { MutationCallBack } from './observers'
 import { createElementsScrollPositions } from './elementsScrollPositions'
+import type { ShadowDomCallBack, ShadowRootsController } from './shadowDom'
+
+const DEFAULT_SHADOW_ROOT_CONTROLLER: ShadowRootsController = {
+  flush: noop,
+  stop: noop,
+  addShadowRoot: noop,
+  removeShadowRoot: noop,
+}
 
 describe('startMutationCollection', () => {
   let sandbox: HTMLElement
@@ -37,7 +44,7 @@ describe('startMutationCollection', () => {
       {
         defaultPrivacyLevel,
       } as RumConfiguration,
-      { addShadowRoot: addShadowRootSpy, removeShadowRoot: removeShadowRootSpy },
+      { ...DEFAULT_SHADOW_ROOT_CONTROLLER, addShadowRoot: addShadowRootSpy, removeShadowRoot: removeShadowRootSpy },
       document
     ))
 
@@ -54,10 +61,10 @@ describe('startMutationCollection', () => {
         defaultPrivacyLevel: NodePrivacyLevel.ALLOW,
       } as RumConfiguration,
       {
+        shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
         status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
         elementsScrollPositions: createElementsScrollPositions(),
-      },
-      noop
+      }
     )
   }
 

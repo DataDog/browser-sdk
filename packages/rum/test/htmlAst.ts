@@ -26,17 +26,24 @@ export const removeIdFieldsRecursivelyClone = (thing: Record<string, unknown>): 
   return thing
 }
 
+const DEFAULT_SHADOW_ROOT_CONTROLLER = {
+  flush: noop,
+  stop: noop,
+  addShadowRoot: noop,
+  removeShadowRoot: noop,
+}
+
 export const generateLeanSerializedDoc = (htmlContent: string, privacyTag: string) => {
   const newDoc = makeHtmlDoc(htmlContent, privacyTag)
   const serializedDoc = removeIdFieldsRecursivelyClone(
     serializeNodeWithId(newDoc, {
       parentNodePrivacyLevel: NodePrivacyLevel.ALLOW,
       serializationContext: {
+        shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
         status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
         elementsScrollPositions: createElementsScrollPositions(),
       },
       configuration: {} as RumConfiguration,
-      shadowDomCreatedCallback: noop,
     })! as unknown as Record<string, unknown>
   ) as unknown as SerializedNodeWithId
   return serializedDoc

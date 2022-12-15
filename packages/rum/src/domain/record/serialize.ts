@@ -34,6 +34,7 @@ import {
 } from './serializationUtils'
 import { forEach } from './utils'
 import type { ElementsScrollPositions } from './elementsScrollPositions'
+import type { ShadowRootsController } from './shadowDom'
 
 // Those values are the only one that can be used when inheriting privacy levels from parent to
 // children during serialization, since HIDDEN and IGNORE shouldn't serialize their children. This
@@ -52,17 +53,18 @@ export const enum SerializationContextStatus {
 export type SerializationContext =
   | {
       status: SerializationContextStatus.MUTATION
+      shadowRootsController: ShadowRootsController
     }
   | {
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT
       elementsScrollPositions: ElementsScrollPositions
+      shadowRootsController: ShadowRootsController
     }
   | {
       status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT
       elementsScrollPositions: ElementsScrollPositions
+      shadowRootsController: ShadowRootsController
     }
-
-export type ShadowDomCallBack = (shadowRoot: ShadowRoot) => void
 
 export interface SerializeOptions {
   serializedNodeIds?: Set<number>
@@ -70,21 +72,18 @@ export interface SerializeOptions {
   parentNodePrivacyLevel: ParentNodePrivacyLevel
   serializationContext: SerializationContext
   configuration: RumConfiguration
-  shadowDomCreatedCallback: ShadowDomCallBack
 }
 
 export function serializeDocument(
   document: Document,
   configuration: RumConfiguration,
-  serializationContext: SerializationContext,
-  shadowDomCreatedCallback: ShadowDomCallBack
+  serializationContext: SerializationContext
 ): SerializedNodeWithId {
   // We are sure that Documents are never ignored, so this function never returns null
   return serializeNodeWithId(document, {
     serializationContext,
     parentNodePrivacyLevel: configuration.defaultPrivacyLevel,
     configuration,
-    shadowDomCreatedCallback,
   })!
 }
 
@@ -149,7 +148,7 @@ function serializeDocumentFragmentNode(
 
   const isShadowRoot = isNodeShadowRoot(element)
   if (isShadowRoot) {
-    options.shadowDomCreatedCallback(element)
+    options.serializationContext.shadowRootsController.addShadowRoot(element)
   }
 
   return {

@@ -21,6 +21,7 @@ import type { InputCallback } from './observers'
 import { getVisualViewport, getScrollX, getScrollY } from './viewports'
 import { assembleIncrementalSnapshot } from './utils'
 import { createElementsScrollPositions } from './elementsScrollPositions'
+import type { ShadowRootsController } from './shadowDom'
 import { initShadowRootsController } from './shadowDom'
 
 export interface RecordOptions {
@@ -29,16 +30,11 @@ export interface RecordOptions {
   lifeCycle: LifeCycle
 }
 
-interface ShadowDomCallBacks {
-  stop: () => void
-  flush: () => void
-}
 export interface RecordAPI {
   stop: () => void
   takeSubsequentFullSnapshot: (timestamp?: TimeStamp) => void
   flushMutations: () => void
-  // the following is only used for testing purposes
-  shadowDomCallBacks: Map<ShadowRoot, ShadowDomCallBacks>
+  shadowRootsController: ShadowRootsController
 }
 
 export function record(options: RecordOptions): RecordAPI {
@@ -55,17 +51,15 @@ export function record(options: RecordOptions): RecordAPI {
   }
   const inputCb: InputCallback = (s) => emit(assembleIncrementalSnapshot<InputData>(IncrementalSource.Input, s))
 
-  const {
-    stop: stopFromShadowRoots,
-    flush: flushMutationsFromShadowRoots,
-    addShadowRoot,
-    removeShadowRoot,
-    shadowDomCallBacks,
-  } = initShadowRootsController(options.configuration, { mutationCb, inputCb })
+  const shadowRootsController = initShadowRootsController(options.configuration, { mutationCb, inputCb })
 
   const takeFullSnapshot = (
     timestamp = timeStampNow(),
-    serializationContext = { status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT, elementsScrollPositions }
+    serializationContext = {
+      status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
+      elementsScrollPositions,
+      shadowRootsController,
+    }
   ) => {
     const { width, height } = getViewportDimension()
     emit({
@@ -88,7 +82,7 @@ export function record(options: RecordOptions): RecordAPI {
 
     emit({
       data: {
-        node: serializeDocument(document, options.configuration, serializationContext, addShadowRoot),
+        node: serializeDocument(document, options.configuration, serializationContext),
         initialOffset: {
           left: getScrollX(),
           top: getScrollY(),
@@ -137,27 +131,28 @@ export function record(options: RecordOptions): RecordAPI {
         timestamp: timeStampNow(),
       })
     },
-    shadowDomCallBacks: { addShadowRoot, removeShadowRoot },
+    shadowRootsController,
   })
 
   function flushMutations() {
-    flushMutationsFromShadowRoots()
+    shadowRootsController.flush()
     flushMutationsFromObservers()
   }
 
   return {
     stop: () => {
-      stopFromShadowRoots()
+      shadowRootsController.stop()
       stopObservers()
     },
     takeSubsequentFullSnapshot: (timestamp) => {
       flushMutations()
       takeFullSnapshot(timestamp, {
+        shadowRootsController,
         status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT,
         elementsScrollPositions,
       })
     },
     flushMutations,
-    shadowDomCallBacks,
+    shadowRootsController,
   }
 }

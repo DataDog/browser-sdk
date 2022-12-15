@@ -39,10 +39,10 @@ import { RecordType, IncrementalSource, MediaInteractionType, MouseInteractionTy
 import { getNodePrivacyLevel, shouldMaskNode } from './privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from './serializationUtils'
 import { assembleIncrementalSnapshot, forEach, getPathToNestedCSSRule, isTouchEvent } from './utils'
-import type { ShadowDomCallBacks } from './mutationObserver'
 import { startMutationObserver } from './mutationObserver'
 import { getVisualViewport, getScrollX, getScrollY, convertMouseEventToLayoutCoordinates } from './viewports'
 import type { ElementsScrollPositions } from './elementsScrollPositions'
+import type { ShadowRootsController } from './shadowDom'
 
 const MOUSE_MOVE_OBSERVER_THRESHOLD = 50
 const SCROLL_OBSERVER_THRESHOLD = 100
@@ -102,11 +102,11 @@ interface ObserverParam {
   styleSheetCb: StyleSheetCallback
   focusCb: FocusCallback
   frustrationCb: FrustrationCallback
-  shadowDomCallBacks: ShadowDomCallBacks
+  shadowRootsController: ShadowRootsController
 }
 
 export function initObservers(o: ObserverParam): { stop: ListenerHandler; flush: ListenerHandler } {
-  const mutationHandler = initMutationObserver(o.mutationCb, o.configuration, o.shadowDomCallBacks)
+  const mutationHandler = initMutationObserver(o.mutationCb, o.configuration, o.shadowRootsController)
   const mousemoveHandler = initMoveObserver(o.mousemoveCb)
   const mouseInteractionHandler = initMouseInteractionObserver(
     o.mouseInteractionCb,
@@ -147,9 +147,9 @@ export function initObservers(o: ObserverParam): { stop: ListenerHandler; flush:
 export function initMutationObserver(
   cb: MutationCallBack,
   configuration: RumConfiguration,
-  shadowDomCallBacks: ShadowDomCallBacks
+  shadowRootsController: ShadowRootsController
 ) {
-  return startMutationObserver(cb, configuration, shadowDomCallBacks, document)
+  return startMutationObserver(cb, configuration, shadowRootsController, document)
 }
 
 function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {
