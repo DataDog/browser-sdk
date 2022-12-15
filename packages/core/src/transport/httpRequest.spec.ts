@@ -105,14 +105,14 @@ describe('httpRequest', () => {
         pending('no fetch keepalive support')
       }
 
-      interceptor.withFetch(() => Promise.resolve({ status: 429 }))
+      interceptor.withFetch(() => Promise.resolve({ status: 429, type: 'cors' }))
 
       fetchKeepAliveStrategy(
         endpointBuilder,
         BATCH_BYTES_LIMIT,
         { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 },
         (response) => {
-          expect(response).toEqual({ status: 429 })
+          expect(response).toEqual({ status: 429, type: 'cors' })
           done()
         }
       )

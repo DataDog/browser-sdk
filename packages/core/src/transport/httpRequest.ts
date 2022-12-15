@@ -18,6 +18,7 @@ export type HttpRequest = ReturnType<typeof createHttpRequest>
 
 export interface HttpResponse extends Context {
   status: number
+  type?: ResponseType
 }
 
 export interface Payload {
@@ -29,6 +30,7 @@ export interface Payload {
 export interface RetryInfo {
   count: number
   lastFailureStatus: number
+  lastFailureType?: ResponseType
 }
 
 export function createHttpRequest(
@@ -91,8 +93,8 @@ export function fetchKeepAliveStrategy(
   const canUseKeepAlive = isKeepAliveSupported() && bytesCount < bytesLimit
   if (canUseKeepAlive) {
     const fetchUrl = endpointBuilder.build('fetch', retry)
-    fetch(fetchUrl, { method: 'POST', body: data, keepalive: true }).then(
-      monitor((response: Response) => onResponse?.({ status: response.status })),
+    fetch(fetchUrl, { method: 'POST', body: data, keepalive: true, mode: 'cors' }).then(
+      monitor((response: Response) => onResponse?.({ status: response.status, type: response.type })),
       monitor(() => {
         const xhrUrl = endpointBuilder.build('xhr', retry)
         // failed to queue the request
