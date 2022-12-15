@@ -79,14 +79,10 @@ export function addEventListeners<E extends Event>(
   { once, capture, passive }: AddEventListenerOptions = {}
 ) {
   const wrappedListener = monitor(
-    listenerWithTelemetry(
-      once
-        ? (event: Event) => {
-            stop()
-            listener(event as E)
-          }
-        : (listener as (event: Event) => void)
-    )
+    listenerWithTelemetry((event: Event) => {
+      if (once) stop()
+      listener(event as E)
+    })
   )
 
   const options = passive ? { capture, passive } : capture
