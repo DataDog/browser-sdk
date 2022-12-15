@@ -3,15 +3,19 @@
 const fs = require('fs')
 const path = require('path')
 const readline = require('readline')
-const { executeCommand, printLog, printError, logAndExit } = require('./utils')
+const { findPackages, printLog, printError, logAndExit } = require('./utils')
 
 const LICENSE_FILE = 'LICENSE-3rdparty.csv'
 
 async function main() {
-  const packageJsonPaths = await findPackageJsonPaths()
+  const packages = await findPackages()
 
-  printLog('Looking for dependencies in:\n', packageJsonPaths, '\n')
-  const declaredDependencies = withoutDuplicates(packageJsonPaths.flatMap(retrievePackageJsonDependencies)).sort()
+  printLog(
+    'Looking for dependencies in:\n',
+    packages.map((pkg) => pkg.relativePath),
+    '\n'
+  )
+  const declaredDependencies = withoutDuplicates(packages.flatMap(retrievePackageDependencies)).sort()
 
   const declaredLicenses = (await retrieveLicenses()).sort()
 
@@ -30,16 +34,9 @@ async function main() {
   printLog('Dependencies check done.')
 }
 
-async function findPackageJsonPaths() {
-  const paths = await executeCommand('find . -path "*/node_modules/*" -prune -o -name "package.json" -print')
-  return paths.trim().split('\n')
-}
-
-function retrievePackageJsonDependencies(packageJsonPath) {
-  const packageJson = require(path.join(__dirname, '..', packageJsonPath))
-
-  return Object.keys(packageJson.dependencies || {})
-    .concat(Object.keys(packageJson.devDependencies || {}))
+function retrievePackageDependencies(pkg) {
+  return Object.keys(pkg.manifest.dependencies || {})
+    .concat(Object.keys(pkg.manifest.devDependencies || {}))
     .filter((dependency) => !dependency.includes('@datadog'))
 }
 
