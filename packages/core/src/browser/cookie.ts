@@ -1,5 +1,5 @@
 import { display } from '../tools/display'
-import { findCommaSeparatedValue, generateUUID, ONE_SECOND } from '../tools/utils'
+import { findCommaSeparatedValue, generateUUID, ONE_MINUTE, ONE_SECOND } from '../tools/utils'
 
 export const COOKIE_ACCESS_DELAY = ONE_SECOND
 
@@ -36,7 +36,7 @@ export function areCookiesAuthorized(options: CookieOptions): boolean {
     // the test cookie lifetime
     const testCookieName = `dd_cookie_test_${generateUUID()}`
     const testCookieValue = 'test'
-    setCookie(testCookieName, testCookieValue, ONE_SECOND, options)
+    setCookie(testCookieName, testCookieValue, ONE_MINUTE, options)
     const isCookieCorrectlySet = getCookie(testCookieName) === testCookieValue
     deleteCookie(testCookieName, options)
     return isCookieCorrectlySet
