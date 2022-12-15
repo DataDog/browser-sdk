@@ -58,6 +58,7 @@ export * from './tools/utils'
 export * from './tools/createEventRateLimiter'
 export * from './tools/browserDetection'
 export { sendToExtension } from './tools/sendToExtension'
+export { runOnReadyState } from './tools/runOnReadyState'
 export { getZoneJsOriginalValue } from './tools/getZoneJsOriginalValue'
 export { instrumentMethod, instrumentMethodAndCallOriginal, instrumentSetter } from './tools/instrumentMethod'
 export {
