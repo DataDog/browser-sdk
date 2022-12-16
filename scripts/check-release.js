@@ -13,7 +13,7 @@ async function main() {
 }
 
 async function checkGitTag() {
-  printLog('Checking git tag')
+  printLog('Checking release version tag is on HEAD')
   const headRef = await executeCommand('git rev-parse HEAD')
   let tagRef
   try {
