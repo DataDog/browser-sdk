@@ -77,6 +77,10 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
     `
   }
 
+  body += html`<script>
+    window.DD_ENV = 'test'
+  </script>`
+
   return basePage({
     body,
     header,
