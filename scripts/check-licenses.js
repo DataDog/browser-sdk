@@ -3,12 +3,12 @@
 const fs = require('fs')
 const path = require('path')
 const readline = require('readline')
-const { findPackages, printLog, printError, logAndExit } = require('./utils')
+const { printLog, printError, logAndExit, generateMetadataForAllNodePackages } = require('./utils')
 
 const LICENSE_FILE = 'LICENSE-3rdparty.csv'
 
 async function main() {
-  const packages = await findPackages()
+  const packages = await generateMetadataForAllNodePackages()
 
   printLog(
     'Looking for dependencies in:\n',

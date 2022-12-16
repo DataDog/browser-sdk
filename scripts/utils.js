@@ -104,7 +104,7 @@ async function fetchWrapper(url, options) {
   return response.text()
 }
 
-async function findPackages() {
+async function generateMetadataForAllNodePackages() {
   const manifestPaths = await executeCommand('git ls-files --recurse-submodules -- "package.json" "*/package.json"')
   return manifestPaths
     .trim()
@@ -131,5 +131,5 @@ module.exports = {
   replaceCiVariable,
   fetch: fetchWrapper,
   modifyFile,
-  findPackages,
+  generateMetadataForAllNodePackages,
 }

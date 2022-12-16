@@ -3,7 +3,7 @@
 const fs = require('fs')
 const path = require('path')
 const { version: releaseVersion } = require('../lerna.json')
-const { findPackages, printLog, logAndExit, executeCommand } = require('./utils')
+const { generateMetadataForAllNodePackages, printLog, logAndExit, executeCommand } = require('./utils')
 
 async function main() {
   await checkGitTag()
@@ -27,7 +27,7 @@ async function checkGitTag() {
 }
 
 async function checkPackages() {
-  const packages = await findPackages()
+  const packages = await generateMetadataForAllNodePackages()
 
   printLog(
     `Checking packages:
