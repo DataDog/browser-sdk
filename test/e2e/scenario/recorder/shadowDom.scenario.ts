@@ -1,11 +1,6 @@
 import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import { IncrementalSource, NodeType } from '@datadog/browser-rum/src/types'
-import type {
-  DocumentFragmentNode,
-  MouseInteractionData,
-  InputData,
-  SerializedNodeWithId,
-} from '@datadog/browser-rum/src/types'
+import type { DocumentFragmentNode, MouseInteractionData, SerializedNodeWithId } from '@datadog/browser-rum/src/types'
 
 import {
   createMutationPayloadValidatorFromSegment,
@@ -18,7 +13,7 @@ import {
 } from '@datadog/browser-rum/test/utils'
 import type { EventRegistry } from '../../lib/framework'
 import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
-import { browserExecute, getBrowserName } from '../../lib/helpers/browser'
+import { browserExecute } from '../../lib/helpers/browser'
 
 /** Will generate the following HTML 
  * ```html
@@ -172,34 +167,6 @@ describe('recorder with shadow DOM', () => {
       expect(mouseInteraction.data.source).toBe(IncrementalSource.MouseInteraction)
       expect((mouseInteraction.data as MouseInteractionData).id).toBe(divNode.id)
     })
-
-  // only work on Firefox 107+ but we're currently using 106
-  if (getBrowserName() !== 'firefox') {
-    createTest('can record input event with target from inside the shadow root')
-      .withRum({ defaultPrivacyLevel: 'allow', enableExperimentalFeatures: ['record_shadow_dom'] })
-      .withRumInit(initRumAndStartRecording)
-      .withSetup(bundleSetup)
-      .withBody(
-        html`
-          ${inputShadowDom}
-          <my-input-field />
-        `
-      )
-      .run(async ({ serverEvents }) => {
-        const input = await getNodeInsideShadowDom('my-input-field', 'input')
-        await input.addValue('t')
-
-        await flushEvents()
-        expect(serverEvents.sessionReplay.length).toBe(1)
-        const fullSnapshot = findFullSnapshot(getFirstSegment(serverEvents))!
-        const inputNode = findElementWithTagName(fullSnapshot.data.node, 'input')!
-        const inputRecord = findIncrementalSnapshot(getFirstSegment(serverEvents), IncrementalSource.Input)!
-        expect(inputRecord).toBeTruthy()
-        expect(inputRecord.data.source).toBe(IncrementalSource.Input)
-        expect((inputRecord.data as InputData).id).toBe(inputNode.id)
-        expect((inputRecord.data as { text: string }).text).toBe('totot')
-      })
-  }
 
   createTest('can record mutation from inside the shadow root')
     .withRum({ defaultPrivacyLevel: 'allow', enableExperimentalFeatures: ['record_shadow_dom'] })
