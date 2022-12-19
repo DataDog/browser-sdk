@@ -104,7 +104,7 @@ async function fetchWrapper(url, options) {
   return response.text()
 }
 
-async function generateMetadataForAllNodePackages() {
+async function findBrowserSdkPackageJsonFiles() {
   const manifestPaths = await executeCommand('git ls-files --recurse-submodules -- "package.json" "*/package.json"')
   return manifestPaths
     .trim()
@@ -112,9 +112,9 @@ async function generateMetadataForAllNodePackages() {
     .map((manifestPath) => {
       const absoluteManifestPath = path.join(__dirname, '..', manifestPath)
       return {
-        relativePath: path.dirname(manifestPath),
-        path: path.dirname(absoluteManifestPath),
-        manifest: require(absoluteManifestPath),
+        relativePath: manifestPath,
+        path: absoluteManifestPath,
+        content: require(absoluteManifestPath),
       }
     })
 }
@@ -131,5 +131,5 @@ module.exports = {
   replaceCiVariable,
   fetch: fetchWrapper,
   modifyFile,
-  generateMetadataForAllNodePackages,
+  findBrowserSdkPackageJsonFiles,
 }

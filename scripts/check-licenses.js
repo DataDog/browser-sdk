@@ -3,19 +3,19 @@
 const fs = require('fs')
 const path = require('path')
 const readline = require('readline')
-const { printLog, printError, logAndExit, generateMetadataForAllNodePackages } = require('./utils')
+const { printLog, printError, logAndExit, findBrowserSdkPackageJsonFiles } = require('./utils')
 
 const LICENSE_FILE = 'LICENSE-3rdparty.csv'
 
 async function main() {
-  const packages = await generateMetadataForAllNodePackages()
+  const packageJsonFiles = await findBrowserSdkPackageJsonFiles()
 
   printLog(
     'Looking for dependencies in:\n',
-    packages.map((pkg) => pkg.relativePath),
+    packageJsonFiles.map((packageJsonFile) => packageJsonFile.relativePath),
     '\n'
   )
-  const declaredDependencies = withoutDuplicates(packages.flatMap(retrievePackageDependencies)).sort()
+  const declaredDependencies = withoutDuplicates(packageJsonFiles.flatMap(retrievePackageDependencies)).sort()
 
   const declaredLicenses = (await retrieveLicenses()).sort()
 
@@ -34,9 +34,9 @@ async function main() {
   printLog('Dependencies check done.')
 }
 
-function retrievePackageDependencies(pkg) {
-  return Object.keys(pkg.manifest.dependencies || {})
-    .concat(Object.keys(pkg.manifest.devDependencies || {}))
+function retrievePackageDependencies(packageJsonFile) {
+  return Object.keys(packageJsonFile.content.dependencies || {})
+    .concat(Object.keys(packageJsonFile.content.devDependencies || {}))
     .filter((dependency) => !dependency.includes('@datadog'))
 }
 

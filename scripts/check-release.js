@@ -3,11 +3,11 @@
 const fs = require('fs')
 const path = require('path')
 const { version: releaseVersion } = require('../lerna.json')
-const { generateMetadataForAllNodePackages, printLog, logAndExit, executeCommand } = require('./utils')
+const { findBrowserSdkPackageJsonFiles, printLog, logAndExit, executeCommand } = require('./utils')
 
 async function main() {
-  await checkGitTag()
-  await checkPackages()
+  // await checkGitTag()
+  await checkBrowserSdkPackageJsonFiles()
 
   printLog('Release check done.')
 }
@@ -26,64 +26,77 @@ async function checkGitTag() {
   }
 }
 
-async function checkPackages() {
-  const packages = await generateMetadataForAllNodePackages()
+async function checkBrowserSdkPackageJsonFiles() {
+  const packageJsonFiles = await findBrowserSdkPackageJsonFiles()
 
   printLog(
-    `Checking packages:
-   - ${packages.map((pkg) => pkg.relativePath).join('\n   - ')}
+    `Checking package.json files:
+   - ${packageJsonFiles.map((packageJsonFile) => packageJsonFile.relativePath).join('\n   - ')}
 `
   )
 
-  for (const pkg of packages) {
-    checkPackage(pkg)
+  for (const packageJsonFile of packageJsonFiles) {
+    checkPackageJsonFile(packageJsonFile)
   }
 }
 
-function checkPackage(pkg) {
-  if (isBrowserSdkPackageName(pkg.manifest.name) && pkg.manifest.version !== releaseVersion) {
-    throw new Error(`Invalid version for ${pkg.relativePath}: expected ${releaseVersion}, got ${pkg.manifest.version}`)
+function checkPackageJsonFile(packageJsonFile) {
+  if (
+    isBrowserSdkPublicPackageName(packageJsonFile.content.name) &&
+    packageJsonFile.content.version !== releaseVersion
+  ) {
+    throw new Error(
+      `Invalid version for ${packageJsonFile.relativePath}: expected ${releaseVersion}, got ${packageJsonFile.content.version}`
+    )
   }
-  checkPackageDependencyVersions(pkg)
-  checkPackageEntryPoints(pkg)
+  checkPackageDependencyVersions(packageJsonFile)
+  checkPackageJsonEntryPoints(packageJsonFile)
 }
 
-function checkPackageDependencyVersions(pkg) {
-  for (const dependencies of [pkg.manifest.dependencies, pkg.manifest.devDependencies, pkg.manifest.peerDependencies]) {
+function checkPackageDependencyVersions(packageJsonFile) {
+  for (const dependencies of [
+    packageJsonFile.content.dependencies,
+    packageJsonFile.content.devDependencies,
+    packageJsonFile.content.peerDependencies,
+  ]) {
     if (!dependencies) {
       continue
     }
 
     for (const [dependencyName, dependencyVersion] of Object.entries(dependencies)) {
       if (
-        isBrowserSdkPackageName(dependencyName) &&
+        isBrowserSdkPublicPackageName(dependencyName) &&
         !dependencyVersion.startsWith('file:') &&
         dependencyVersion !== releaseVersion
       ) {
         throw new Error(
-          `Invalid dependency version for ${dependencyName} in ${pkg.relativePath}: expected ${releaseVersion}, got ${dependencyVersion}`
+          `Invalid dependency version for ${dependencyName} in ${packageJsonFile.relativePath}: expected ${releaseVersion}, got ${dependencyVersion}`
         )
       }
     }
   }
 }
 
-function checkPackageEntryPoints(pkg) {
-  for (const entryPointPath of [pkg.manifest.main, pkg.manifest.module, pkg.manifest.types]) {
+function checkPackageJsonEntryPoints(packageJsonFile) {
+  for (const entryPointPath of [
+    packageJsonFile.content.main,
+    packageJsonFile.content.module,
+    packageJsonFile.content.types,
+  ]) {
     if (!entryPointPath) {
       continue
     }
 
-    const absoluteEntryPointPath = path.resolve(pkg.path, entryPointPath)
+    const absoluteEntryPointPath = path.resolve(path.dirname(packageJsonFile.path), entryPointPath)
     if (!fs.existsSync(absoluteEntryPointPath)) {
       throw new Error(
-        `Invalid entry point ${entryPointPath} in ${pkg.relativePath}: ${absoluteEntryPointPath} not found`
+        `Invalid entry point ${entryPointPath} in ${packageJsonFile.relativePath}: ${absoluteEntryPointPath} not found`
       )
     }
   }
 }
 
-function isBrowserSdkPackageName(name) {
+function isBrowserSdkPublicPackageName(name) {
   return name?.startsWith('@datadog/')
 }
 
