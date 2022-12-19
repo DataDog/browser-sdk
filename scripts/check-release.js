@@ -36,11 +36,13 @@ async function checkBrowserSdkPackageJsonFiles() {
   )
 
   for (const packageJsonFile of packageJsonFiles) {
-    checkPackageJsonFile(packageJsonFile)
+    checkPackageJsonVersion(packageJsonFile)
+    checkPackageDependencyVersions(packageJsonFile)
+    checkPackageJsonEntryPoints(packageJsonFile)
   }
 }
 
-function checkPackageJsonFile(packageJsonFile) {
+function checkPackageJsonVersion(packageJsonFile) {
   if (
     isBrowserSdkPublicPackageName(packageJsonFile.content.name) &&
     packageJsonFile.content.version !== releaseVersion
@@ -49,8 +51,6 @@ function checkPackageJsonFile(packageJsonFile) {
       `Invalid version for ${packageJsonFile.relativePath}: expected ${releaseVersion}, got ${packageJsonFile.content.version}`
     )
   }
-  checkPackageDependencyVersions(packageJsonFile)
-  checkPackageJsonEntryPoints(packageJsonFile)
 }
 
 function checkPackageDependencyVersions(packageJsonFile) {
