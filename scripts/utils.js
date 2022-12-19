@@ -105,7 +105,7 @@ async function fetchWrapper(url, options) {
 }
 
 async function findBrowserSdkPackageJsonFiles() {
-  const manifestPaths = await executeCommand('git ls-files --recurse-submodules -- "package.json" "*/package.json"')
+  const manifestPaths = await executeCommand('git ls-files -- "package.json" "*/package.json"')
   return manifestPaths
     .trim()
     .split('\n')
