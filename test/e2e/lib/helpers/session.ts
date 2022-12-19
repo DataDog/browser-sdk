@@ -10,7 +10,7 @@ export async function renewSession() {
 export async function expireSession() {
   await deleteAllCookies()
   const sessionCookie = await findSessionCookie()
-  expect(sessionCookie === undefined || sessionCookie.value === '').toBeTrue()
+  expect(sessionCookie === undefined || sessionCookie.value === '').toBe(true)
   // Cookies are cached for 1s, wait until the cache expires
   await browser.pause(1100)
 }

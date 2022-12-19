@@ -22,43 +22,41 @@ describe('action collection', () => {
       const actionEvents = serverEvents.rumActions
 
       expect(actionEvents.length).toBe(1)
-      expect(actionEvents[0]).toEqual(
-        jasmine.objectContaining({
+      expect(actionEvents[0]).toMatchObject({
+        action: {
+          error: {
+            count: 0,
+          },
+          id: jasmine.any(String),
+          loading_time: jasmine.any(Number),
+          long_task: {
+            count: jasmine.any(Number),
+          },
+          resource: {
+            count: 0,
+          },
+          target: {
+            name: 'click me',
+          },
+          type: 'click',
+          frustration: {
+            type: [],
+          },
+        },
+        _dd: expect.objectContaining({
           action: {
-            error: {
-              count: 0,
-            },
-            id: jasmine.any(String),
-            loading_time: jasmine.any(Number),
-            long_task: {
-              count: jasmine.any(Number),
-            },
-            resource: {
-              count: 0,
-            },
-            target: {
-              name: 'click me',
-            },
-            type: 'click',
-            frustration: {
-              type: [],
+            target: expect.objectContaining({
+              selector: jasmine.any(String),
+              width: jasmine.any(Number),
+              height: jasmine.any(Number),
+            }),
+            position: {
+              x: jasmine.any(Number),
+              y: jasmine.any(Number),
             },
           },
-          _dd: jasmine.objectContaining({
-            action: {
-              target: jasmine.objectContaining({
-                selector: jasmine.any(String),
-                width: jasmine.any(Number),
-                height: jasmine.any(Number),
-              }),
-              position: {
-                x: jasmine.any(Number),
-                y: jasmine.any(Number),
-              },
-            },
-          }),
-        })
-      )
+        }),
+      })
     })
 
   createTest('compute action target information before the UI changes')
@@ -145,7 +143,7 @@ describe('action collection', () => {
         id: jasmine.any(String) as unknown as string,
         loading_time: jasmine.any(Number) as unknown as number,
         long_task: {
-          count: jasmine.any(Number) as unknown as number,
+          count: expect.any(Number) as unknown as number,
         },
         resource: {
           count: 1,
@@ -190,7 +188,7 @@ describe('action collection', () => {
       const viewEvents = serverEvents.rumViews
       const originalViewEvent = viewEvents.find((view) => view.view.url.endsWith('/'))!
       const otherViewEvent = viewEvents.find((view) => view.view.url.endsWith('/other-view'))!
-      expect(originalViewEvent.view.action.count).toBe(1)
+      expect.any(originalViewEvent.view.action.count).toBe(1)
       expect(otherViewEvent.view.action.count).toBe(0)
     })
 
@@ -362,7 +360,6 @@ describe('action collection', () => {
       await button.click()
       await flushEvents()
       const actionEvents = serverEvents.rumActions
-
       expect(actionEvents.length).toBe(1)
       expect(actionEvents[0].action.frustration!.type).toEqual(
         jasmine.arrayWithExactContents(['error_click', 'dead_click'])

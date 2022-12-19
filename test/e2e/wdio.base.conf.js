@@ -2,7 +2,7 @@ const path = require('path')
 const { unlinkSync, mkdirSync } = require('fs')
 const { getRunId } = require('../utils')
 const getTestReportDirectory = require('../getTestReportDirectory')
-const { APPLICATION_ID } = require('./lib/helpers/constants')
+const APPLICATION_ID = '37fe52bf-b3d5-4ac7-ad9b-44882d479ec8'
 
 const reporters = [['spec', { onlyFailures: true }]]
 let logsPath
@@ -25,7 +25,7 @@ if (testReportDirectory) {
 
 module.exports = {
   runner: 'local',
-  specs: ['./test/e2e/scenario/**/*.scenario.ts'],
+  specs: ['./scenario/**/*.scenario.ts'],
   maxInstances: 5,
   logLevel: 'warn',
   waitforTimeout: 10000,
@@ -40,7 +40,7 @@ module.exports = {
     tsNodeOpts: {
       transpileOnly: false,
       files: true,
-      project: 'test/e2e/tsconfig.json',
+      project: './tsconfig.json',
     },
   },
   onPrepare() {
