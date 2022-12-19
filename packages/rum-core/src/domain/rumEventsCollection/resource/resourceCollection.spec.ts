@@ -17,19 +17,27 @@ import type { RequestCompleteEvent } from '../../requestCollection'
 import { TraceIdentifier } from '../../tracing/tracer'
 import { validateAndBuildRumConfiguration } from '../../configuration'
 import { createRumSessionManagerMock } from '../../../../test/mockRumSessionManager'
+import type { PageStateContext } from '../../contexts/pageStateContexts'
 import { startResourceCollection } from './resourceCollection'
 
 describe('resourceCollection', () => {
   let setupBuilder: TestSetupBuilder
 
+  let mockPageStates: PageStateContext | undefined
   beforeEach(() => {
-    setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager }) => {
-      startResourceCollection(
-        lifeCycle,
-        validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!,
-        sessionManager
-      )
-    })
+    mockPageStates = undefined
+    setupBuilder = setup()
+      .withPageStateContexts({
+        getPageStates: () => mockPageStates,
+      })
+      .beforeBuild(({ lifeCycle, sessionManager, pageStateContexts }) => {
+        startResourceCollection(
+          lifeCycle,
+          validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!,
+          sessionManager,
+          pageStateContexts
+        )
+      })
   })
 
   afterEach(() => {
@@ -59,6 +67,7 @@ describe('resourceCollection', () => {
       type: RumEventType.RESOURCE,
       _dd: {
         discarded: false,
+        page_states: undefined,
       },
     })
     expect(rawRumEvents[0].domainContext).toEqual({
@@ -96,6 +105,7 @@ describe('resourceCollection', () => {
       type: RumEventType.RESOURCE,
       _dd: {
         discarded: false,
+        page_states: undefined,
       },
     })
     expect(rawRumEvents[0].domainContext).toEqual({
@@ -106,6 +116,27 @@ describe('resourceCollection', () => {
       requestInit: undefined,
       error: undefined,
     })
+  })
+
+  it('should collect page states on resources when ff resource_page_states enabled', () => {
+    const { lifeCycle, rawRumEvents } = setupBuilder.build()
+    mockPageStates = {
+      active: { count: 0, duration: 0 as Duration },
+      passive: { count: 0, duration: 0 as Duration },
+      hidden: { count: 0, duration: 0 as Duration },
+      frozen: { count: 0, duration: 0 as Duration },
+      terminated: { count: 0, duration: 0 as Duration },
+    }
+    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, createCompletedRequest())
+
+    const performanceEntry = createResourceEntry()
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [performanceEntry])
+
+    const rawRumResourceEventFetch = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+    const rawRumResourceEventEntry = rawRumEvents[1].rawRumEvent as RawRumResourceEvent
+
+    expect(rawRumResourceEventFetch._dd.page_states).toEqual(jasmine.objectContaining(mockPageStates))
+    expect(rawRumResourceEventEntry._dd.page_states).toEqual(jasmine.objectContaining(mockPageStates))
   })
 
   it('should collect computed duration and performance entry duration when resource_durations ff is enabled', () => {
@@ -171,6 +202,7 @@ describe('resourceCollection', () => {
       type: RumEventType.RESOURCE,
       _dd: {
         discarded: false,
+        page_states: undefined,
       },
     })
     expect(rawRumEvents[0].domainContext).toEqual({
@@ -239,7 +271,7 @@ describe('resourceCollection', () => {
     })
 
     it('should pull tracingSampleRate from config if present', () => {
-      setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager }) => {
+      setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager, pageStateContexts }) => {
         startResourceCollection(
           lifeCycle,
           validateAndBuildRumConfiguration({
@@ -247,7 +279,8 @@ describe('resourceCollection', () => {
             applicationId: 'xxx',
             tracingSampleRate: 60,
           })!,
-          sessionManager
+          sessionManager,
+          pageStateContexts
         )
       })
 
@@ -265,14 +298,15 @@ describe('resourceCollection', () => {
     })
 
     it('should not define rule_psr if tracingSampleRate is undefined', () => {
-      setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager }) => {
+      setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager, pageStateContexts }) => {
         startResourceCollection(
           lifeCycle,
           validateAndBuildRumConfiguration({
             clientToken: 'xxx',
             applicationId: 'xxx',
           })!,
-          sessionManager
+          sessionManager,
+          pageStateContexts
         )
       })
 
@@ -290,7 +324,7 @@ describe('resourceCollection', () => {
     })
 
     it('should define rule_psr to 0 if tracingSampleRate is set to 0', () => {
-      setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager }) => {
+      setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager, pageStateContexts }) => {
         startResourceCollection(
           lifeCycle,
           validateAndBuildRumConfiguration({
@@ -298,7 +332,8 @@ describe('resourceCollection', () => {
             applicationId: 'xxx',
             tracingSampleRate: 0,
           })!,
-          sessionManager
+          sessionManager,
+          pageStateContexts
         )
       })
 

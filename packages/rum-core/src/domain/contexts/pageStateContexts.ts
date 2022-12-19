@@ -1,5 +1,16 @@
-import type { RelativeTime } from '@datadog/browser-core'
-import { addEventListeners, addEventListener, relativeNow, DOM_EVENT } from '@datadog/browser-core'
+import type { Duration, RelativeTime } from '@datadog/browser-core'
+import {
+  isExperimentalFeatureEnabled,
+  noop,
+  elapsed,
+  addDuration,
+  addEventListeners,
+  addEventListener,
+  relativeNow,
+  DOM_EVENT,
+} from '@datadog/browser-core'
+
+export const PAGE_STATE_TIMELINE_MAX_LENGTH = 2500
 
 export const enum PageState {
   ACTIVE = 'active',
@@ -9,10 +20,10 @@ export const enum PageState {
   TERMINATED = 'terminated',
 }
 
-type PageStateTimeline = Array<{ state?: PageState; startTime: RelativeTime }>
+type PageStateTimeline = Array<{ state: PageState; startTime: RelativeTime }>
 
-type Counter = { count: number; duration: number }
-type PageStateInfo = {
+type Counter = { count: number; duration: Duration }
+export type PageStateContext = {
   active: Counter
   passive: Counter
   hidden: Counter
@@ -21,97 +32,105 @@ type PageStateInfo = {
 }
 
 export interface PageStateContexts {
-  getPageStates: (startTime?: RelativeTime, endTime?: RelativeTime) => PageStateInfo
+  getPageStates: (startTime: RelativeTime, duration: Duration) => PageStateContext | undefined
+  stop: () => void
 }
 
-const pageStateTimeline: PageStateTimeline = []
+let pageStateTimeline: PageStateTimeline = []
+let state: PageState | undefined
 
 export function startPageStateContexts(): PageStateContexts {
-  let state = getState()
-  // console.log('first state', state)
-  logStateChange(state)
-
-  function logStateChange(nextState: PageState) {
-    // console.log('logStateChange', state, nextState)
-
-    if (nextState !== state) {
-      state = nextState
-      // console.log('after logStateChange')
-
-      pageStateTimeline.push({ state, startTime: relativeNow() })
+  if (!isExperimentalFeatureEnabled('resource_page_states')) {
+    return {
+      getPageStates: () => undefined,
+      stop: noop,
     }
   }
 
+  addPageState(getState())
+
   const listenerOpts = { capture: true }
+  const stoppers: Array<{ stop: () => void }> = []
 
-  addEventListeners(
-    window,
-    [DOM_EVENT.PAGE_SHOW, DOM_EVENT.FOCUS, DOM_EVENT.BLUR, DOM_EVENT.VISIBILITY_CHANGE, DOM_EVENT.RESUME],
-    () => logStateChange(getState()),
-    listenerOpts
+  stoppers.push(
+    addEventListeners(
+      window,
+      [DOM_EVENT.PAGE_SHOW, DOM_EVENT.FOCUS, DOM_EVENT.BLUR, DOM_EVENT.VISIBILITY_CHANGE, DOM_EVENT.RESUME],
+      (ev) => {
+        if (ev.isTrusted) addPageState(getState())
+      },
+      listenerOpts
+    ),
+    addEventListener(
+      window,
+      DOM_EVENT.FREEZE,
+      (ev) => {
+        if (ev.isTrusted) addPageState(PageState.FROZEN)
+      },
+      listenerOpts
+    ),
+    addEventListener(
+      window,
+      DOM_EVENT.PAGE_HIDE,
+      (ev: PageTransitionEvent) => {
+        // If the event's persisted property is `true` the page is about
+        // to enter the back/forward cache, which is also in the frozen state.
+        // If the event's persisted property is not `true` the page is
+        // about to be unloaded.
+        if (ev.isTrusted) addPageState(ev.persisted ? PageState.FROZEN : PageState.TERMINATED)
+      },
+      listenerOpts
+    )
   )
 
-  addEventListener(window, DOM_EVENT.FREEZE, () => logStateChange(PageState.FROZEN), listenerOpts)
+  function findStartIndex(startTime: RelativeTime) {
+    let i = -1
+    let endTime
 
-  addEventListener(
-    window,
-    DOM_EVENT.PAGE_HIDE,
-    (event: PageTransitionEvent) => {
-      // If the event's persisted property is `true` the page is about
-      // to enter the back/forward cache, which is also in the frozen state.
-      // If the event's persisted property is not `true` the page is
-      // about to be unloaded.
-      logStateChange(event.persisted ? PageState.FROZEN : PageState.TERMINATED)
-    },
-    listenerOpts
-  )
+    do {
+      i++
+      endTime = i + 1 < pageStateTimeline.length ? pageStateTimeline[i + 1].startTime : Infinity
+    } while (i < pageStateTimeline.length && endTime <= startTime)
 
-  function getTimeline(startTime: RelativeTime, endTime: RelativeTime) {
-    const start = pageStateTimeline.findIndex((state) => state.startTime < startTime)
-
-    if (start === -1) {
-      return []
-    }
-
-    let end = pageStateTimeline.length - 1
-
-    while (pageStateTimeline[end].startTime > endTime) end--
-
-    return pageStateTimeline.slice(start, end + 1)
+    return i
   }
 
   return {
-    getPageStates(startTime: RelativeTime = 0 as RelativeTime, endTime: RelativeTime = Infinity as RelativeTime) {
-      const stateDurations = {
-        active: { count: 0, duration: 0 },
-        passive: { count: 0, duration: 0 },
-        hidden: { count: 0, duration: 0 },
-        frozen: { count: 0, duration: 0 },
-        terminated: { count: 0, duration: 0 },
+    getPageStates(startTime: RelativeTime, duration: Duration) {
+      const endTime = addDuration(startTime, duration)
+      if (pageStateTimeline.length === 0 || pageStateTimeline[0].startTime >= endTime) return
+
+      const pageStateContext: PageStateContext = {
+        active: { count: 0, duration: 0 as Duration },
+        passive: { count: 0, duration: 0 as Duration },
+        hidden: { count: 0, duration: 0 as Duration },
+        frozen: { count: 0, duration: 0 as Duration },
+        terminated: { count: 0, duration: 0 as Duration },
       }
 
-      const timeline = getTimeline(startTime, endTime)
+      let i = findStartIndex(startTime)
+      while (i < pageStateTimeline.length && pageStateTimeline[i].startTime < endTime) {
+        const curr = pageStateTimeline[i]
+        const next =
+          i + 1 < pageStateTimeline.length ? pageStateTimeline[i + 1] : { startTime: Infinity as RelativeTime }
 
-      if (!timeline.length) return stateDurations
+        const start = startTime > curr.startTime ? startTime : curr.startTime
+        const end = endTime < next.startTime ? endTime : next.startTime
 
-      timeline.push({ startTime: endTime, state: undefined as any })
-
-      for (let i = 0; i < timeline.length - 1; i++) {
-        const first = timeline[i]
-        const second = timeline[i + 1]
-        const start = startTime > first.startTime ? startTime : first.startTime
-        const end = endTime < second.startTime ? endTime : second.startTime
-
-        stateDurations[first.state!].duration += end - start
-        stateDurations[first.state!].count++
+        pageStateContext[curr.state].duration = addDuration(pageStateContext[curr.state].duration, elapsed(start, end))
+        pageStateContext[curr.state].count++
+        i++
       }
 
-      return stateDurations
+      return pageStateContext
+    },
+    stop() {
+      stoppers.forEach((stopper) => stopper.stop())
     },
   }
 }
 
-function getState(): PageState {
+export function getState(): PageState {
   if (document.visibilityState === 'hidden') {
     return PageState.HIDDEN
   }
@@ -119,4 +138,20 @@ function getState(): PageState {
     return PageState.ACTIVE
   }
   return PageState.PASSIVE
+}
+
+export function addPageState(nextState: PageState, pageStateTimelineMaxLength = PAGE_STATE_TIMELINE_MAX_LENGTH) {
+  if (nextState === state) return
+
+  state = nextState
+  const now = relativeNow()
+
+  if (pageStateTimeline.length === pageStateTimelineMaxLength) pageStateTimeline.shift()
+
+  pageStateTimeline.push({ state, startTime: now })
+}
+
+export function resetPageStates() {
+  pageStateTimeline = []
+  state = undefined
 }

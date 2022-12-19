@@ -19,6 +19,7 @@ import type { RumConfiguration } from '../src/domain/configuration'
 import { validateAndBuildRumConfiguration } from '../src/domain/configuration'
 import type { ActionContexts } from '../src/domain/rumEventsCollection/action/actionCollection'
 import type { FeatureFlagContexts } from '../src/domain/contexts/featureFlagContext'
+import type { PageStateContexts } from '../src/domain/contexts/pageStateContexts'
 import { validateRumFormat } from './formatValidation'
 import { createRumSessionManagerMock } from './mockRumSessionManager'
 
@@ -29,6 +30,7 @@ export interface TestSetupBuilder {
   withViewContexts: (stub: Partial<ViewContexts>) => TestSetupBuilder
   withActionContexts: (stub: ActionContexts) => TestSetupBuilder
   withForegroundContexts: (stub: Partial<ForegroundContexts>) => TestSetupBuilder
+  withPageStateContexts: (stub: Partial<PageStateContexts>) => TestSetupBuilder
   withFeatureFlagContexts: (stub: Partial<FeatureFlagContexts>) => TestSetupBuilder
   withFakeClock: () => TestSetupBuilder
   beforeBuild: (callback: BeforeBuildCallback) => TestSetupBuilder
@@ -51,6 +53,7 @@ export interface BuildContext {
   viewContexts: ViewContexts
   actionContexts: ActionContexts
   foregroundContexts: ForegroundContexts
+  pageStateContexts: PageStateContexts
   featureFlagContexts: FeatureFlagContexts
   urlContexts: UrlContexts
 }
@@ -94,6 +97,10 @@ export function setup(): TestSetupBuilder {
   let foregroundContexts: ForegroundContexts = {
     isInForegroundAt: () => undefined,
     selectInForegroundPeriodsFor: () => undefined,
+    stop: noop,
+  }
+  let pageStateContexts: PageStateContexts = {
+    getPageStates: () => undefined,
     stop: noop,
   }
   const FAKE_APP_ID = 'appId'
@@ -142,6 +149,10 @@ export function setup(): TestSetupBuilder {
       foregroundContexts = { ...foregroundContexts, ...stub }
       return setupBuilder
     },
+    withPageStateContexts(stub: Partial<PageStateContexts>) {
+      pageStateContexts = { ...pageStateContexts, ...stub }
+      return setupBuilder
+    },
     withFeatureFlagContexts(stub: Partial<FeatureFlagContexts>) {
       featureFlagContexts = { ...featureFlagContexts, ...stub }
       return setupBuilder
@@ -165,6 +176,7 @@ export function setup(): TestSetupBuilder {
           urlContexts,
           actionContexts,
           foregroundContexts,
+          pageStateContexts,
           featureFlagContexts,
           sessionManager,
           applicationId: FAKE_APP_ID,
