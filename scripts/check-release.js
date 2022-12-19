@@ -6,7 +6,7 @@ const { version: releaseVersion } = require('../lerna.json')
 const { findBrowserSdkPackageJsonFiles, printLog, logAndExit, executeCommand } = require('./utils')
 
 async function main() {
-  // await checkGitTag()
+  await checkGitTag()
   await checkBrowserSdkPackageJsonFiles()
 
   printLog('Release check done.')
