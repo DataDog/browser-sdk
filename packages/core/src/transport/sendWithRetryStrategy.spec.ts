@@ -230,20 +230,12 @@ describe('sendWithRetryStrategy', () => {
           sendRequest()
 
           sendStub.respondWith(0, { status, type })
-          expect(state.queuedPayloads.first().retry).toEqual({
-            count: 1,
-            lastFailureStatus: status,
-            lastFailureType: type,
-          })
+          expect(state.queuedPayloads.first().retry).toEqual({ count: 1, lastFailureStatus: status })
 
           clock.tick(INITIAL_BACKOFF_TIME)
 
           sendStub.respondWith(1, { status, type })
-          expect(state.queuedPayloads.first().retry).toEqual({
-            count: 2,
-            lastFailureStatus: status,
-            lastFailureType: type,
-          })
+          expect(state.queuedPayloads.first().retry).toEqual({ count: 2, lastFailureStatus: status })
         })
       } else {
         it('should not queue the payload for retry', () => {
