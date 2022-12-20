@@ -5,7 +5,6 @@ import {
   elapsed,
   addDuration,
   addEventListeners,
-  addEventListener,
   relativeNow,
   DOM_EVENT,
 } from '@datadog/browser-core'
@@ -49,50 +48,35 @@ export function startPageStateContexts(): PageStateContexts {
 
   addPageState(getState())
 
-  const listenerOpts = { capture: true }
-  const stoppers: Array<{ stop: () => void }> = []
-
-  stoppers.push(
-    addEventListeners(
-      window,
-      [DOM_EVENT.PAGE_SHOW, DOM_EVENT.FOCUS, DOM_EVENT.BLUR, DOM_EVENT.VISIBILITY_CHANGE, DOM_EVENT.RESUME],
-      (ev) => {
-        if (ev.isTrusted) addPageState(getState())
-      },
-      listenerOpts
-    ),
-    addEventListener(
-      window,
+  const { stop } = addEventListeners(
+    window,
+    [
+      DOM_EVENT.PAGE_SHOW,
+      DOM_EVENT.FOCUS,
+      DOM_EVENT.BLUR,
+      DOM_EVENT.VISIBILITY_CHANGE,
+      DOM_EVENT.RESUME,
       DOM_EVENT.FREEZE,
-      (ev) => {
-        if (ev.isTrusted) addPageState(PageState.FROZEN)
-      },
-      listenerOpts
-    ),
-    addEventListener(
-      window,
       DOM_EVENT.PAGE_HIDE,
-      (ev: PageTransitionEvent) => {
-        // If the event's persisted property is `true` the page is about
-        // to enter the back/forward cache, which is also in the frozen state.
-        // If the event's persisted property is not `true` the page is
-        // about to be unloaded.
-        if (ev.isTrusted) addPageState(ev.persisted ? PageState.FROZEN : PageState.TERMINATED)
-      },
-      listenerOpts
-    )
+    ],
+    (event) => {
+      if (!event.isTrusted) return
+
+      if (event.type === DOM_EVENT.FREEZE) addPageState(PageState.FROZEN)
+      else if (event.type === DOM_EVENT.PAGE_HIDE)
+        addPageState((event as PageTransitionEvent).persisted ? PageState.FROZEN : PageState.TERMINATED)
+      else addPageState(getState())
+    },
+    { capture: true }
   )
 
   function findStartIndex(startTime: RelativeTime) {
-    let i = -1
-    let endTime
+    let i = pageStateTimeline.length - 1
+    while (i >= 0 && pageStateTimeline[i].startTime > startTime) {
+      i--
+    }
 
-    do {
-      i++
-      endTime = i + 1 < pageStateTimeline.length ? pageStateTimeline[i + 1].startTime : Infinity
-    } while (i < pageStateTimeline.length && endTime <= startTime)
-
-    return i
+    return i >= 0 ? i : 0
   }
 
   return {
@@ -108,8 +92,11 @@ export function startPageStateContexts(): PageStateContexts {
         terminated: { count: 0, duration: 0 as Duration },
       }
 
-      let i = findStartIndex(startTime)
-      while (i < pageStateTimeline.length && pageStateTimeline[i].startTime < endTime) {
+      for (
+        let i = findStartIndex(startTime);
+        i < pageStateTimeline.length && pageStateTimeline[i].startTime < endTime;
+        i++
+      ) {
         const curr = pageStateTimeline[i]
         const next =
           i + 1 < pageStateTimeline.length ? pageStateTimeline[i + 1] : { startTime: Infinity as RelativeTime }
@@ -119,14 +106,11 @@ export function startPageStateContexts(): PageStateContexts {
 
         pageStateContext[curr.state].duration = addDuration(pageStateContext[curr.state].duration, elapsed(start, end))
         pageStateContext[curr.state].count++
-        i++
       }
 
       return pageStateContext
     },
-    stop() {
-      stoppers.forEach((stopper) => stopper.stop())
-    },
+    stop,
   }
 }
 

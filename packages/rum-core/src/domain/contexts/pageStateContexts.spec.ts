@@ -45,7 +45,6 @@ describe('pageContexts', () => {
     const { clock } = setupBuilder.build()
     resetPageStates()
 
-    clock.tick(0)
     addPageState(PageState.ACTIVE)
 
     clock.tick(10)
@@ -57,12 +56,15 @@ describe('pageContexts', () => {
     clock.tick(10)
     addPageState(PageState.FROZEN)
 
+    clock.tick(10)
+    addPageState(PageState.TERMINATED)
+
     expect(pageStateContexts.getPageStates(0 as RelativeTime, 50 as RelativeTime)).toEqual({
       active: { count: 1, duration: 10 as Duration },
       passive: { count: 1, duration: 10 as Duration },
       hidden: { count: 1, duration: 10 as Duration },
-      frozen: { count: 1, duration: 20 as Duration },
-      terminated: { count: 0, duration: 0 as Duration },
+      frozen: { count: 1, duration: 10 as Duration },
+      terminated: { count: 1, duration: 10 as Duration },
     })
   })
 
@@ -70,7 +72,6 @@ describe('pageContexts', () => {
     const { clock } = setupBuilder.build()
     resetPageStates()
 
-    clock.tick(0)
     addPageState(PageState.ACTIVE)
 
     clock.tick(10)
@@ -100,12 +101,12 @@ describe('pageContexts', () => {
     addPageState(PageState.PASSIVE, limit)
 
     clock.tick(10)
-    addPageState(PageState.ACTIVE, limit)
+    addPageState(PageState.HIDDEN, limit)
 
-    expect(pageStateContexts.getPageStates(0 as RelativeTime, 100 as RelativeTime)).toEqual({
-      active: { count: 1, duration: jasmine.any(Number) },
+    expect(pageStateContexts.getPageStates(0 as RelativeTime, 40 as RelativeTime)).toEqual({
+      active: { count: 0, duration: jasmine.any(Number) },
       passive: { count: 0, duration: 0 as Duration },
-      hidden: { count: 0, duration: 0 as Duration },
+      hidden: { count: 1, duration: 10 as Duration },
       frozen: { count: 0, duration: 0 as Duration },
       terminated: { count: 0, duration: 0 as Duration },
     })
