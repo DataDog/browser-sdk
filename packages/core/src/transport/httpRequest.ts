@@ -30,7 +30,6 @@ export interface Payload {
 export interface RetryInfo {
   count: number
   lastFailureStatus: number
-  lastFailureType?: ResponseType
 }
 
 export function createHttpRequest(

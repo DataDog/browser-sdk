@@ -1,4 +1,4 @@
-import { mockClock } from '../../test/specHelper'
+import { mockClock, restoreNavigatorOnLine, setNavigatorOnLine } from '../../test/specHelper'
 import type { Clock } from '../../test/specHelper'
 import { ErrorSource } from '../tools/error'
 import type { RetryState } from './sendWithRetryStrategy'
@@ -193,11 +193,19 @@ describe('sendWithRetryStrategy', () => {
     { expectRetry: true, description: 'when the intake returns error:', status: 500 },
     { expectRetry: true, description: 'when the intake returns too many request:', status: 429 },
     { expectRetry: true, description: 'when the intake returns request timeout:', status: 408 },
-    { expectRetry: true, description: 'when network error:', status: 0, type: undefined },
-    { expectRetry: true, description: 'when network error with response type:', status: 0, type: 'cors' as const },
+    { expectRetry: true, description: 'when network error while offline:', status: 0, offLine: true },
+    { expectRetry: false, description: 'when network error while online:', status: 0 },
     { expectRetry: false, description: 'when the intake returns opaque response:', status: 0, type: 'opaque' as const },
-  ].forEach(({ expectRetry, description, status, type }) => {
+  ].forEach(({ expectRetry, description, status, type, offLine }) => {
     describe(description, () => {
+      beforeEach(() => {
+        setNavigatorOnLine(!offLine)
+      })
+
+      afterEach(() => {
+        restoreNavigatorOnLine()
+      })
+
       if (expectRetry) {
         it('should start queueing following requests', () => {
           sendRequest()
@@ -230,20 +238,12 @@ describe('sendWithRetryStrategy', () => {
           sendRequest()
 
           sendStub.respondWith(0, { status, type })
-          expect(state.queuedPayloads.first().retry).toEqual({
-            count: 1,
-            lastFailureStatus: status,
-            lastFailureType: type,
-          })
+          expect(state.queuedPayloads.first().retry).toEqual({ count: 1, lastFailureStatus: status })
 
           clock.tick(INITIAL_BACKOFF_TIME)
 
           sendStub.respondWith(1, { status, type })
-          expect(state.queuedPayloads.first().retry).toEqual({
-            count: 2,
-            lastFailureStatus: status,
-            lastFailureType: type,
-          })
+          expect(state.queuedPayloads.first().retry).toEqual({ count: 2, lastFailureStatus: status })
         })
       } else {
         it('should not queue the payload for retry', () => {
