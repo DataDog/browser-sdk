@@ -28,6 +28,7 @@ describe('rum assembly', () => {
     findView = () => ({
       id: '7890',
       name: 'view name',
+      documentVersion: 42,
     })
     reportErrorSpy = jasmine.createSpy('reportError')
     commonContext = {
@@ -453,6 +454,20 @@ describe('rum assembly', () => {
         })
       )
     })
+
+    it('should include the view document version in non-view events', () => {
+      const { lifeCycle } = setupBuilder.build()
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.RESOURCE),
+      })
+      expect(serverRumEvents[0]._dd).toEqual(
+        jasmine.objectContaining({
+          view: {
+            document_version: 42,
+          },
+        })
+      )
+    })
   })
 
   describe('service and version', () => {
@@ -472,7 +487,7 @@ describe('rum assembly', () => {
 
     it('should be overridden by the view context', () => {
       const { lifeCycle } = setupBuilder.build()
-      findView = () => ({ service: 'new service', version: 'new version', id: '1234' })
+      findView = () => ({ service: 'new service', version: 'new version', id: '1234', documentVersion: 0 })
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION),
       })

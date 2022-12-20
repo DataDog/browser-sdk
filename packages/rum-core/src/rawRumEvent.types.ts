@@ -240,6 +240,9 @@ export interface RumContext {
     session: {
       plan: RumSessionPlan
     }
+    view?: {
+      document_version: number
+    }
     browser_sdk_version?: string
   }
 }

@@ -3,7 +3,7 @@ import { relativeToClocks, CLEAR_OLD_CONTEXTS_INTERVAL } from '@datadog/browser-
 import type { TestSetupBuilder } from '../../../test/specHelper'
 import { setup } from '../../../test/specHelper'
 import { LifeCycleEventType } from '../lifeCycle'
-import type { ViewCreatedEvent } from '../rumEventsCollection/view/trackViews'
+import type { ViewCreatedEvent, ViewEvent } from '../rumEventsCollection/view/trackViews'
 import type { ViewContexts } from './viewContexts'
 import { startViewContexts, VIEW_CONTEXT_TIME_OUT_DELAY } from './viewContexts'
 
@@ -108,6 +108,23 @@ describe('viewContexts', () => {
 
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ name: 'Fake name' }))
       expect(viewContexts.findView()!.name).toBe('Fake name')
+    })
+
+    it('should update the document version on update', () => {
+      const { lifeCycle } = setupBuilder.build()
+
+      const startClocks = relativeToClocks(0 as RelativeTime)
+
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ startClocks }))
+
+      expect(viewContexts.findView()!.documentVersion).toBe(0)
+
+      lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
+        startClocks,
+        documentVersion: 1,
+      } as ViewEvent)
+
+      expect(viewContexts.findView()!.documentVersion).toBe(1)
     })
   })
 

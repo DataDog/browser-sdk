@@ -104,6 +104,12 @@ export function startRumAssembly(
             session: {
               plan: session.plan,
             },
+            view:
+              rawRumEvent.type === RumEventType.VIEW
+                ? undefined
+                : {
+                    document_version: viewContext.documentVersion,
+                  },
             browser_sdk_version: canUseEventBridge() ? __BUILD_ENV__SDK_VERSION__ : undefined,
           },
           application: {
