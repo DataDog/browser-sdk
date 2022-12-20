@@ -186,6 +186,14 @@ check-licenses:
     - yarn
     - node --no-warnings scripts/check-licenses.js
 
+check-release:
+  extends:
+    - .base-configuration
+    - .tags
+  script:
+    - yarn
+    - node scripts/check-release.js
+
 unit-bs:
   stage: browserstack
   extends:

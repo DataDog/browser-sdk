@@ -1,4 +1,5 @@
 const util = require('util')
+const path = require('path')
 const fs = require('fs/promises')
 const execute = util.promisify(require('child_process').exec)
 const spawn = require('child_process').spawn
@@ -103,6 +104,21 @@ async function fetchWrapper(url, options) {
   return response.text()
 }
 
+async function findBrowserSdkPackageJsonFiles() {
+  const manifestPaths = await executeCommand('git ls-files -- "package.json" "*/package.json"')
+  return manifestPaths
+    .trim()
+    .split('\n')
+    .map((manifestPath) => {
+      const absoluteManifestPath = path.join(__dirname, '..', manifestPath)
+      return {
+        relativePath: manifestPath,
+        path: absoluteManifestPath,
+        content: require(absoluteManifestPath),
+      }
+    })
+}
+
 module.exports = {
   CI_FILE,
   getSecretKey,
@@ -115,4 +131,5 @@ module.exports = {
   replaceCiVariable,
   fetch: fetchWrapper,
   modifyFile,
+  findBrowserSdkPackageJsonFiles,
 }
