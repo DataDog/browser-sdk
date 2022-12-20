@@ -9,7 +9,7 @@ import {
   DOM_EVENT,
 } from '@datadog/browser-core'
 
-export const PAGE_STATE_TIMELINE_MAX_LENGTH = 2500
+export const PAGE_STATE_TIMELINE_MAX_LENGTH = 500
 
 export const enum PageState {
   ACTIVE = 'active',
