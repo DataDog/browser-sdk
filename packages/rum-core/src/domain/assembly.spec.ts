@@ -1,5 +1,11 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { ErrorSource, ONE_MINUTE, display } from '@datadog/browser-core'
+import {
+  updateExperimentalFeatures,
+  resetExperimentalFeatures,
+  ErrorSource,
+  ONE_MINUTE,
+  display,
+} from '@datadog/browser-core'
 import { createRumSessionManagerMock } from '../../test/mockRumSessionManager'
 import { createRawRumEvent } from '../../test/fixtures'
 import type { TestSetupBuilder } from '../../test/specHelper'
@@ -442,6 +448,10 @@ describe('rum assembly', () => {
   })
 
   describe('view context', () => {
+    afterEach(() => {
+      resetExperimentalFeatures()
+    })
+
     it('should be merged with event attributes', () => {
       const { lifeCycle } = setupBuilder.build()
       notifyRawRumEvent(lifeCycle, {
@@ -455,15 +465,18 @@ describe('rum assembly', () => {
       )
     })
 
-    it('should include the view document version in non-view events', () => {
+    it('should include the view document version in global context', () => {
+      updateExperimentalFeatures(['report_view_document_version'])
       const { lifeCycle } = setupBuilder.build()
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.RESOURCE),
       })
-      expect(serverRumEvents[0]._dd).toEqual(
+      expect(serverRumEvents[0].context).toEqual(
         jasmine.objectContaining({
-          view: {
-            document_version: 42,
+          _dd: {
+            view: {
+              document_version: 42,
+            },
           },
         })
       )
