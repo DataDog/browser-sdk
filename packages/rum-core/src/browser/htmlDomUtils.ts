@@ -20,7 +20,7 @@ export function isNodeShadowRoot(node: Node): node is ShadowRoot {
 }
 
 export function getChildNodes(node: Node) {
-  return isElementNode(node) && node.shadowRoot ? node.shadowRoot.childNodes : node.childNodes
+  return isNodeShadowHost(node) ? node.shadowRoot.childNodes : node.childNodes
 }
 
 /**
