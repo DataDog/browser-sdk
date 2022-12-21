@@ -102,6 +102,10 @@ describe('isShadowHost', () => {
 
 describe('getChildNodes', () => {
   it('should return the direct children for a normal node', () => {
+    if (isIE()) {
+      pending('IE not supported')
+    }
+
     const children: Node[] = [
       document.createTextNode('toto'),
       document.createElement('span'),
