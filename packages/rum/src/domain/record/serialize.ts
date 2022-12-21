@@ -225,7 +225,7 @@ export function serializeElementNode(element: Element, options: SerializeOptions
   if (isNodeShadowHost(element) && isExperimentalFeatureEnabled('record_shadow_dom')) {
     const shadowRoot = serializeNodeWithId(element.shadowRoot, options)
     if (shadowRoot !== null) {
-      childNodes = [shadowRoot].concat(childNodes)
+      childNodes.push(shadowRoot)
     }
   }
 
