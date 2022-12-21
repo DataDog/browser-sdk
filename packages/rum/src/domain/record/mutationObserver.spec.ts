@@ -454,7 +454,7 @@ describe('startMutationCollection', () => {
     })
 
     describe('for shadow DOM', () => {
-      it('should call shadowDomCreatedCallback when host is added', () => {
+      it('should call addShadowRoot when host is added', () => {
         updateExperimentalFeatures(['record_shadow_dom'])
 
         const serializedDocument = serializeDocumentWithDefaults()
@@ -485,7 +485,7 @@ describe('startMutationCollection', () => {
         expect(removeShadowRootSpy).not.toHaveBeenCalled()
       })
 
-      it('should call shadowDomCreatedCallback when host is removed', () => {
+      it('should call removeShadowRoot when host is removed', () => {
         updateExperimentalFeatures(['record_shadow_dom'])
         const host = document.createElement('div')
         host.id = 'host'
@@ -511,7 +511,7 @@ describe('startMutationCollection', () => {
         expect(removeShadowRootSpy).toHaveBeenCalledOnceWith(shadowRoot)
       })
 
-      it('should call shadowDomCreatedCallback when parent of host is removed', () => {
+      it('should call removeShadowRoot when parent of host is removed', () => {
         updateExperimentalFeatures(['record_shadow_dom'])
         const parent = document.createElement('div')
         parent.id = 'parent'
