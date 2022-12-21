@@ -47,7 +47,7 @@ export function startViewContexts(lifeCycle: LifeCycle): ViewContexts {
       version: view.version,
       id: view.id,
       name: view.name,
-      documentVersion: 0,
+      documentVersion: view.documentVersion,
     }
   }
 
