@@ -47,7 +47,7 @@ export const initShadowRootsController = (
       shadowRootsController,
       shadowRoot
     )
-    // the change event no do bubble up across the shadow root, we have to listen on the shadow root
+    // the change event do not bubble up across the shadow root, we have to listen on the shadow root
     const stopInputObserver = initInputObserver(inputCb, configuration.defaultPrivacyLevel, {
       target: shadowRoot,
       domEvents: [DOM_EVENT.CHANGE],
