@@ -30,45 +30,42 @@ export const initShadowRootsController = (
 ): ShadowRootsController => {
   const shadowDomCallBacks = new Map<ShadowRoot, ShadowDomCallBacks>()
 
-  function removeShadowRoot(shadowRoot: ShadowRoot) {
-    const entry = shadowDomCallBacks.get(shadowRoot)
-    if (!entry) {
-      addTelemetryDebug('no shadow root in map')
-      return
-    }
-    entry.stop()
-    shadowDomCallBacks.delete(shadowRoot)
-  }
-
-  function addShadowRoot(shadowRoot: ShadowRoot) {
-    const { stop: stopMutationObserver, flush } = startMutationObserver(
-      mutationCb,
-      configuration,
-      shadowRootsController,
-      shadowRoot
-    )
-    // the change event do not bubble up across the shadow root, we have to listen on the shadow root
-    const stopInputObserver = initInputObserver(inputCb, configuration.defaultPrivacyLevel, {
-      target: shadowRoot,
-      domEvents: [DOM_EVENT.CHANGE],
-    })
-    shadowDomCallBacks.set(shadowRoot, {
-      flush,
-      stop: () => {
-        stopMutationObserver()
-        stopInputObserver()
-      },
-    })
-  }
   const shadowRootsController: ShadowRootsController = {
+    addShadowRoot: (shadowRoot: ShadowRoot) => {
+      const { stop: stopMutationObserver, flush } = startMutationObserver(
+        mutationCb,
+        configuration,
+        shadowRootsController,
+        shadowRoot
+      )
+      // the change event no do bubble up across the shadow root, we have to listen on the shadow root
+      const stopInputObserver = initInputObserver(inputCb, configuration.defaultPrivacyLevel, {
+        target: shadowRoot,
+        domEvents: [DOM_EVENT.CHANGE],
+      })
+      shadowDomCallBacks.set(shadowRoot, {
+        flush,
+        stop: () => {
+          stopMutationObserver()
+          stopInputObserver()
+        },
+      })
+    },
+    removeShadowRoot: (shadowRoot: ShadowRoot) => {
+      const entry = shadowDomCallBacks.get(shadowRoot)
+      if (!entry) {
+        addTelemetryDebug('no shadow root in map')
+        return
+      }
+      entry.stop()
+      shadowDomCallBacks.delete(shadowRoot)
+    },
     stop: () => {
       shadowDomCallBacks.forEach(({ stop }) => stop())
     },
     flush: () => {
       shadowDomCallBacks.forEach(({ flush }) => flush())
     },
-    addShadowRoot,
-    removeShadowRoot,
   }
   return shadowRootsController
 }
