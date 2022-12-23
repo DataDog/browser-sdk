@@ -34,17 +34,17 @@ const inputShadowDom = `<script>
      this.attachShadow({ mode: "open" });
    }
    connectedCallback() {
-     const compomentId = this.getAttribute('id') ?? '';
+     const componentId = this.getAttribute('id') ?? '';
      const privacyOverride = this.getAttribute("privacy");
      const parent = document.createElement("div");
      if (privacyOverride) {
        parent.setAttribute("data-dd-privacy", privacyOverride);
      }
      const label = document.createElement("label");
-     label.setAttribute("id", "label-" + compomentId);
-     label.innerText = "field " + compomentId + ": ";
+     label.setAttribute("id", "label-" + componentId);
+     label.innerText = "field " + componentId + ": ";
      const input = document.createElement("input");
-     input.setAttribute("id", "input-" + compomentId);
+     input.setAttribute("id", "input-" + componentId);
      input.value = "toto"
      parent.appendChild(label)
      parent.appendChild(input)
@@ -104,15 +104,15 @@ describe('recorder with shadow DOM', () => {
       expect(textNode?.textContent).toBe('toto')
     })
 
-  createTest('can over privacy from outside & inside the shadow DOM')
+  createTest('can apply privacy level set from outside or inside the shadow DOM')
     .withRum({ defaultPrivacyLevel: 'allow', enableExperimentalFeatures: ['record_shadow_dom'] })
     .withRumInit(initRumAndStartRecording)
     .withSetup(bundleSetup)
     .withBody(
       html`
         ${inputShadowDom}
-        <div id="wrapper-outside" data-dd-privacy="mask-user-input"><my-input-field id="outside" /></div>
-        <div id="wrapper-inside"><my-input-field privacy="mask-user-input" id="inside" /></div>
+        <div data-dd-privacy="mask-user-input"><my-input-field id="privacy-set-outside" /></div>
+        <my-input-field privacy="mask-user-input" id="privacy-set-inside" />
       `
     )
     .run(async ({ serverEvents }) => {
@@ -127,19 +127,19 @@ describe('recorder with shadow DOM', () => {
         input: outsideInput,
         shadowRoot: outsideShadowRoot,
         textContent: outsideTextContent,
-      } = findElementsInShadowDom(fullSnapshot.data.node, 'outside')
+      } = findElementsInShadowDom(fullSnapshot.data.node, 'privacy-set-outside')
       expect(outsideShadowRoot?.isShadowRoot).toBeTrue()
       expect(outsideInput?.attributes.value).toBe('***')
-      expect(outsideTextContent).toBe('field outside: ')
+      expect(outsideTextContent).toBe('field privacy-set-outside: ')
 
       const {
         input: insideInput,
         shadowRoot: insideShadowRoot,
         textContent: insideTextContent,
-      } = findElementsInShadowDom(fullSnapshot.data.node, 'inside')
+      } = findElementsInShadowDom(fullSnapshot.data.node, 'privacy-set-inside')
       expect(insideShadowRoot?.isShadowRoot).toBeTrue()
       expect(insideInput?.attributes.value).toBe('***')
-      expect(insideTextContent).toBe('field inside: ')
+      expect(insideTextContent).toBe('field privacy-set-inside: ')
     })
 
   createTest('can record click with target from inside the shadow root')
