@@ -20,7 +20,7 @@ import { serializeNodeWithId, serializeAttribute, SerializationContextStatus } f
 import { forEach } from './utils'
 import { createMutationBatch } from './mutationBatch'
 import type { MutationCallBack } from './observers'
-import type { ShadowDomCallBack, ShadowRootsController } from './shadowDom'
+import type { ShadowDomCallBack, ShadowRootsController } from './shadowRootsController'
 
 type WithSerializedTarget<T> = T & { target: NodeWithSerializedNode }
 

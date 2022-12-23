@@ -32,7 +32,7 @@ import {
 import { MAX_ATTRIBUTE_VALUE_CHAR_LENGTH } from './privacy'
 import type { ElementsScrollPositions } from './elementsScrollPositions'
 import { createElementsScrollPositions } from './elementsScrollPositions'
-import type { ShadowDomCallBack, ShadowRootsController } from './shadowDom'
+import type { ShadowDomCallBack, ShadowRootsController } from './shadowRootsController'
 
 const DEFAULT_CONFIGURATION = {} as RumConfiguration
 

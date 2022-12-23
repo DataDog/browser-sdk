@@ -42,7 +42,7 @@ import { assembleIncrementalSnapshot, forEach, getPathToNestedCSSRule, isTouchEv
 import { startMutationObserver } from './mutationObserver'
 import { getVisualViewport, getScrollX, getScrollY, convertMouseEventToLayoutCoordinates } from './viewports'
 import type { ElementsScrollPositions } from './elementsScrollPositions'
-import type { ShadowRootsController } from './shadowDom'
+import type { ShadowRootsController } from './shadowRootsController'
 
 const MOUSE_MOVE_OBSERVER_THRESHOLD = 50
 const SCROLL_OBSERVER_THRESHOLD = 100

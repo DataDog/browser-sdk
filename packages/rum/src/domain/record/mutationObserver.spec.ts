@@ -14,7 +14,7 @@ import { serializeDocument, SerializationContextStatus } from './serialize'
 import { sortAddedAndMovedNodes, startMutationObserver } from './mutationObserver'
 import type { MutationCallBack } from './observers'
 import { createElementsScrollPositions } from './elementsScrollPositions'
-import type { ShadowDomCallBack, ShadowRootsController } from './shadowDom'
+import type { ShadowDomCallBack, ShadowRootsController } from './shadowRootsController'
 
 const DEFAULT_SHADOW_ROOT_CONTROLLER: ShadowRootsController = {
   flush: noop,

@@ -34,7 +34,7 @@ import {
 } from './serializationUtils'
 import { forEach } from './utils'
 import type { ElementsScrollPositions } from './elementsScrollPositions'
-import type { ShadowRootsController } from './shadowDom'
+import type { ShadowRootsController } from './shadowRootsController'
 
 // Those values are the only one that can be used when inheriting privacy levels from parent to
 // children during serialization, since HIDDEN and IGNORE shouldn't serialize their children. This

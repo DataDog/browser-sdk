@@ -16,7 +16,7 @@ import type { FrustrationCallback, InputCallback, StyleSheetCallback } from './o
 import { initStyleSheetObserver, initFrustrationObserver, initInputObserver } from './observers'
 import { serializeDocument, SerializationContextStatus } from './serialize'
 import { createElementsScrollPositions } from './elementsScrollPositions'
-import type { ShadowRootsController } from './shadowDom'
+import type { ShadowRootsController } from './shadowRootsController'
 
 const DEFAULT_SHADOW_ROOT_CONTROLLER: ShadowRootsController = {
   flush: noop,
