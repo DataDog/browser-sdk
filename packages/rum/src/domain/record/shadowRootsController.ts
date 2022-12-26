@@ -4,16 +4,16 @@ import { startMutationObserver } from './mutationObserver'
 import { initInputObserver } from './observers'
 import type { MutationCallBack, InputCallback } from './observers'
 
-interface ShadowDomCallBacks {
+interface ShadowRootController {
   stop: () => void
   flush: () => void
 }
 
-export type ShadowDomCallBack = (shadowRoot: ShadowRoot) => void
+export type ShadowRootCallBack = (shadowRoot: ShadowRoot) => void
 
 export interface ShadowRootsController {
-  addShadowRoot: ShadowDomCallBack
-  removeShadowRoot: ShadowDomCallBack
+  addShadowRoot: ShadowRootCallBack
+  removeShadowRoot: ShadowRootCallBack
   stop: () => void
   flush: () => void
 }
@@ -28,7 +28,7 @@ export const initShadowRootsController = (
     inputCb: InputCallback
   }
 ): ShadowRootsController => {
-  const shadowDomCallBacks = new Map<ShadowRoot, ShadowDomCallBacks>()
+  const controllerByShadowRoot = new Map<ShadowRoot, ShadowRootController>()
 
   const shadowRootsController: ShadowRootsController = {
     addShadowRoot: (shadowRoot: ShadowRoot) => {
@@ -43,7 +43,7 @@ export const initShadowRootsController = (
         target: shadowRoot,
         domEvents: [DOM_EVENT.CHANGE],
       })
-      shadowDomCallBacks.set(shadowRoot, {
+      controllerByShadowRoot.set(shadowRoot, {
         flush,
         stop: () => {
           stopMutationObserver()
@@ -52,19 +52,19 @@ export const initShadowRootsController = (
       })
     },
     removeShadowRoot: (shadowRoot: ShadowRoot) => {
-      const entry = shadowDomCallBacks.get(shadowRoot)
+      const entry = controllerByShadowRoot.get(shadowRoot)
       if (!entry) {
         addTelemetryDebug('no shadow root in map')
         return
       }
       entry.stop()
-      shadowDomCallBacks.delete(shadowRoot)
+      controllerByShadowRoot.delete(shadowRoot)
     },
     stop: () => {
-      shadowDomCallBacks.forEach(({ stop }) => stop())
+      controllerByShadowRoot.forEach(({ stop }) => stop())
     },
     flush: () => {
-      shadowDomCallBacks.forEach(({ flush }) => flush())
+      controllerByShadowRoot.forEach(({ flush }) => flush())
     },
   }
   return shadowRootsController

@@ -32,7 +32,7 @@ import {
 import { MAX_ATTRIBUTE_VALUE_CHAR_LENGTH } from './privacy'
 import type { ElementsScrollPositions } from './elementsScrollPositions'
 import { createElementsScrollPositions } from './elementsScrollPositions'
-import type { ShadowDomCallBack, ShadowRootsController } from './shadowRootsController'
+import type { ShadowRootCallBack, ShadowRootsController } from './shadowRootsController'
 
 const DEFAULT_CONFIGURATION = {} as RumConfiguration
 
@@ -57,10 +57,10 @@ const DEFAULT_OPTIONS: SerializeOptions = {
 
 describe('serializeNodeWithId', () => {
   let sandbox: HTMLElement
-  let addShadowRootSpy: jasmine.Spy<ShadowDomCallBack>
+  let addShadowRootSpy: jasmine.Spy<ShadowRootCallBack>
 
   beforeEach(() => {
-    addShadowRootSpy = jasmine.createSpy<ShadowDomCallBack>()
+    addShadowRootSpy = jasmine.createSpy<ShadowRootCallBack>()
   })
 
   beforeEach(() => {

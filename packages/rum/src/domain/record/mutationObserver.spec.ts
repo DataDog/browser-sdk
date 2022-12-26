@@ -14,7 +14,7 @@ import { serializeDocument, SerializationContextStatus } from './serialize'
 import { sortAddedAndMovedNodes, startMutationObserver } from './mutationObserver'
 import type { MutationCallBack } from './observers'
 import { createElementsScrollPositions } from './elementsScrollPositions'
-import type { ShadowDomCallBack, ShadowRootsController } from './shadowRootsController'
+import type { ShadowRootCallBack, ShadowRootsController } from './shadowRootsController'
 
 const DEFAULT_SHADOW_ROOT_CONTROLLER: ShadowRootsController = {
   flush: noop,
@@ -28,12 +28,12 @@ describe('startMutationCollection', () => {
   let stopMutationCollection: () => void
   let flushMutations: () => void
 
-  let addShadowRootSpy: jasmine.Spy<ShadowDomCallBack>
-  let removeShadowRootSpy: jasmine.Spy<ShadowDomCallBack>
+  let addShadowRootSpy: jasmine.Spy<ShadowRootCallBack>
+  let removeShadowRootSpy: jasmine.Spy<ShadowRootCallBack>
 
   beforeEach(() => {
-    addShadowRootSpy = jasmine.createSpy<ShadowDomCallBack>()
-    removeShadowRootSpy = jasmine.createSpy<ShadowDomCallBack>()
+    addShadowRootSpy = jasmine.createSpy<ShadowRootCallBack>()
+    removeShadowRootSpy = jasmine.createSpy<ShadowRootCallBack>()
   })
 
   function startMutationCollection(defaultPrivacyLevel: DefaultPrivacyLevel = DefaultPrivacyLevel.ALLOW) {

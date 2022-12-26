@@ -20,7 +20,7 @@ import { serializeNodeWithId, serializeAttribute, SerializationContextStatus } f
 import { forEach } from './utils'
 import { createMutationBatch } from './mutationBatch'
 import type { MutationCallBack } from './observers'
-import type { ShadowDomCallBack, ShadowRootsController } from './shadowRootsController'
+import type { ShadowRootCallBack, ShadowRootsController } from './shadowRootsController'
 
 type WithSerializedTarget<T> = T & { target: NodeWithSerializedNode }
 
@@ -381,7 +381,7 @@ export function sortAddedAndMovedNodes(nodes: Node[]) {
     return 0
   })
 }
-function traverseRemovedShadowDom(removedNode: Node, shadowDomRemovedCallback: ShadowDomCallBack) {
+function traverseRemovedShadowDom(removedNode: Node, shadowDomRemovedCallback: ShadowRootCallBack) {
   if (!isExperimentalFeatureEnabled('record_shadow_dom')) {
     return
   }
