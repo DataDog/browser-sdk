@@ -5,8 +5,7 @@
     ":ignoreModulesAndTests",
     ":autodetectPinVersions",
     "group:monorepos",
-    "group:recommended",
-    "group:allNonMajor"
+    "group:recommended"
   ],
   "labels": ["dependencies"],
   "commitMessagePrefix": "\uD83D\uDC77 ",
