@@ -58,7 +58,7 @@
     "eslint-plugin-jsdoc": "39.1.1",
     "eslint-plugin-local-rules": "1.1.0",
     "eslint-plugin-prefer-arrow": "1.2.3",
-    "eslint-plugin-unicorn": "42.0.0",
+    "eslint-plugin-unicorn": "45.0.2",
     "express": "4.17.3",
     "glob": "8.0.1",
     "jasmine-core": "3.6.0",
