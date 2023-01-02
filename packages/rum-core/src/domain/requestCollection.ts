@@ -13,7 +13,6 @@ import {
   readBytesFromStream,
   elapsed,
   timeStampNow,
-  isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
 import type { RumSessionManager } from '..'
 import type { RumConfiguration } from './configuration'
@@ -46,7 +45,6 @@ export interface RequestCompleteEvent {
   status: number
   responseType?: string
   startClocks: ClocksState
-  resolveDuration?: Duration
   duration: Duration
   spanId?: TraceIdentifier
   traceId?: TraceIdentifier
@@ -130,7 +128,6 @@ export function trackFetch(lifeCycle: LifeCycle, configuration: RumConfiguration
         waitForResponseToComplete(context, (duration: Duration) => {
           tracer.clearTracingIfNeeded(context)
           lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
-            resolveDuration: context.resolveDuration,
             duration,
             method: context.method,
             requestIndex: context.requestIndex,
@@ -160,7 +157,7 @@ function getNextRequestIndex() {
 }
 
 function waitForResponseToComplete(context: RumFetchResolveContext, callback: (duration: Duration) => void) {
-  if (context.response && isExperimentalFeatureEnabled('fetch_duration')) {
+  if (context.response) {
     const responseClone = context.response.clone()
     if (responseClone.body) {
       readBytesFromStream(

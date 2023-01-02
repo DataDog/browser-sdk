@@ -16,6 +16,14 @@
 
 ---
 
+## v4.28.1
+
+- Re-release v4.28.0 to work around a NPM packaging issue
+
+## v4.28.0
+
+- 🐛 [RUMF-1337] Fix incorrect fetch duration ([#1875](https://github.com/DataDog/browser-sdk/pull/1875))
+
 ## v4.27.1
 
 - 🐛 [RUMF-1449] fix Zone support when **symbol** is missing ([#1872](https://github.com/DataDog/browser-sdk/pull/1872))
