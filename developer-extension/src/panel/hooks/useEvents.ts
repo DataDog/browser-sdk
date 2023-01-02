@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { generateUUID } from '../../../../packages/core/src/tools/utils'
-import type { RumEvent } from '../../../../packages/rum-core/src/rumEvent.types'
-import type { LogsEvent } from '../../../../packages/logs/src/logsEvent.types'
 import type { TelemetryEvent } from '../../../../packages/core/src/domain/telemetry'
+import { generateUUID } from '../../../../packages/core/src/tools/utils'
+import type { LogsEvent } from '../../../../packages/logs/src/logsEvent.types'
+import type { RumEvent } from '../../../../packages/rum-core/src/rumEvent.types'
+import { INTAKE_DOMAINS } from '../../common/constants'
 import { listenSdkMessages } from '../backgroundScriptConnection'
 import type { EventSource } from '../types'
 
@@ -115,17 +116,18 @@ function listenEventsFromRequests(callback: (events: StoredEvent[]) => void) {
   function beforeRequestHandler(request: chrome.devtools.network.Request) {
     const url = new URL(request.request.url)
 
-    const intake = /^(rum|logs).browser-intake-/.exec(url.hostname)
-    if (!intake) {
+    if (!INTAKE_DOMAINS.find((rootDomain) => url.hostname.endsWith(rootDomain))) {
+      return
+    }
+    // intake request path is /api/vX/track
+    if (!['rum', 'logs'].includes(url.pathname.split('/')[3])) {
       return
     }
     if (!request.request.postData || !request.request.postData.text) {
       return
     }
 
-    const rawBody = request.request.postData.text
-
-    const decodedBody = rawBody
+    const decodedBody = request.request.postData.text
     const rawEvents = decodedBody.split('\n')
     const events = rawEvents.map((rawEvent) => ({ ...JSON.parse(rawEvent), id: generateUUID() } as StoredEvent))
 
