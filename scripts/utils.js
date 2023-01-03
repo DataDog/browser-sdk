@@ -1,5 +1,6 @@
 const util = require('util')
 const path = require('path')
+const os = require('os')
 const fsPromises = require('fs/promises')
 const fs = require('fs')
 const childProcess = require('child_process')
@@ -19,16 +20,20 @@ function getSecretKey(name) {
     .trim()
 }
 
-async function initGitConfig(repository) {
+function initGitConfig(repository) {
   const githubDeployKey = getSecretKey('ci.browser-sdk.github_deploy_key')
+  const homedir = os.homedir()
 
-  await executeCommand(`ssh-add - <<< "${githubDeployKey}"`)
-  await executeCommand('mkdir -p ~/.ssh')
-  await executeCommand('chmod 700 ~/.ssh')
-  await executeCommand('ssh-keyscan -H github.com >> ~/.ssh/known_hosts')
-  await executeCommand('git config user.email "ci.browser-sdk@datadoghq.com"')
-  await executeCommand('git config user.name "ci.browser-sdk"')
-  await executeCommand(`git remote set-url origin ${repository}`)
+  // ssh-add expects a new line at the end of the PEM-formatted private key
+  // https://stackoverflow.com/a/59595773
+  command`ssh-add -`.withInput(`${githubDeployKey}\n`).run()
+  command`mkdir -p ${homedir}/.ssh`.run()
+  command`chmod 700 ${homedir}/.ssh`.run()
+  const sshHost = command`ssh-keyscan -H github.com`.run()
+  fs.appendFileSync(`${homedir}/.ssh/known_hosts`, sshHost)
+  command`git config user.email ci.browser-sdk@datadoghq.com`.run()
+  command`git config user.name ci.browser-sdk`.run()
+  command`git remote set-url origin ${repository}`.run()
 }
 
 function readCiFileVariable(variableName) {

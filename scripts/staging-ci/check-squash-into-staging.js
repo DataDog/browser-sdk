@@ -9,7 +9,7 @@ const CI_COMMIT_REF_NAME = process.env.CI_COMMIT_REF_NAME
 const MAIN_BRANCH = process.env.MAIN_BRANCH
 
 runMain(async () => {
-  await initGitConfig(REPOSITORY)
+  initGitConfig(REPOSITORY)
   await executeCommand(`git fetch --no-tags origin ${MAIN_BRANCH}`)
   const ciConfigurationFromMain = await executeCommand(`git show origin/${MAIN_BRANCH}:.gitlab-ci.yml`)
   const currentStaging = /CURRENT_STAGING: (staging-.*)/g.exec(ciConfigurationFromMain)?.[1]

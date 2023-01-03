@@ -21,7 +21,7 @@ const CHROME_PACKAGE_URL = 'https://www.ubuntuupdates.org/package/google_chrome/
 const CHROME_DRIVER_URL = 'https://chromedriver.storage.googleapis.com/?delimiter=/&prefix='
 
 runMain(async () => {
-  await initGitConfig(REPOSITORY)
+  initGitConfig(REPOSITORY)
   await executeCommand(`git fetch --no-tags origin ${MAIN_BRANCH}`)
   await executeCommand(`git checkout ${MAIN_BRANCH} -f`)
   await executeCommand(`git pull origin ${MAIN_BRANCH}`)

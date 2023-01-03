@@ -9,7 +9,7 @@ const CI_COMMIT_SHORT_SHA = process.env.CI_COMMIT_SHORT_SHA
 const CI_COMMIT_REF_NAME = process.env.CI_COMMIT_REF_NAME
 
 runMain(async () => {
-  await initGitConfig(REPOSITORY)
+  initGitConfig(REPOSITORY)
   await executeCommand(`git fetch --no-tags origin ${CURRENT_STAGING_BRANCH}`)
   await executeCommand(`git checkout ${CURRENT_STAGING_BRANCH} -f`)
   await executeCommand(`git pull origin ${CURRENT_STAGING_BRANCH}`)

@@ -22,7 +22,7 @@ runMain(async () => {
   // used to share the new staging name to the notification jobs
   await executeCommand(`echo "NEW_STAGING=${NEW_STAGING_BRANCH}" >> build.env`)
 
-  await initGitConfig(REPOSITORY)
+  initGitConfig(REPOSITORY)
   await executeCommand(`git fetch --no-tags origin ${MAIN_BRANCH} ${CURRENT_STAGING_BRANCH}`)
   await executeCommand(`git checkout ${MAIN_BRANCH} -f`)
   await executeCommand('git pull')
