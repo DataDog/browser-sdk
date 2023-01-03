@@ -1,3 +1,4 @@
+import { isElementNode, getParentNode, isTextNode } from '@datadog/browser-rum-core'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
@@ -24,9 +25,8 @@ const TEXT_MASKING_CHAR = 'x'
  * derivePrivacyLevelGivenParent(getNodeSelfPrivacyLevel(node), parentNodePrivacyLevel)
  */
 export function getNodePrivacyLevel(node: Node, defaultPrivacyLevel: NodePrivacyLevel): NodePrivacyLevel {
-  const parentNodePrivacyLevel = node.parentNode
-    ? getNodePrivacyLevel(node.parentNode, defaultPrivacyLevel)
-    : defaultPrivacyLevel
+  const parentNode = getParentNode(node)
+  const parentNodePrivacyLevel = parentNode ? getNodePrivacyLevel(parentNode, defaultPrivacyLevel) : defaultPrivacyLevel
   const selfNodePrivacyLevel = getNodeSelfPrivacyLevel(node)
   return reducePrivacyLevel(selfNodePrivacyLevel, parentNodePrivacyLevel)
 }
@@ -61,7 +61,7 @@ export function reducePrivacyLevel(
  */
 export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefined {
   // Only Element types can have a privacy level set
-  if (!isElement(node)) {
+  if (!isElementNode(node)) {
     return
   }
 
@@ -132,14 +132,6 @@ export function shouldMaskNode(node: Node, privacyLevel: NodePrivacyLevel) {
     default:
       return false
   }
-}
-
-function isElement(node: Node): node is Element {
-  return node.nodeType === node.ELEMENT_NODE
-}
-
-function isTextNode(node: Node): node is Text {
-  return node.nodeType === node.TEXT_NODE
 }
 
 function isFormElement(node: Node | null): boolean {

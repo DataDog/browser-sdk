@@ -71,6 +71,15 @@ describe('getNodePrivacyLevel', () => {
       ancestor.appendChild(node)
       expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW)).toBe(NodePrivacyLevel.IGNORE)
     })
+
+    it('returns an ancestor privacy mode if the element has none and cross shadow DOM', () => {
+      const ancestor = document.createElement('div')
+      ancestor.attachShadow({ mode: 'open' })
+      const node = document.createElement('div')
+      ancestor.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK)
+      ancestor.shadowRoot!.appendChild(node)
+      expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW)).toBe(NodePrivacyLevel.MASK)
+    })
   })
 })
 

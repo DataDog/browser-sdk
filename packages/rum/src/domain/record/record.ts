@@ -4,6 +4,7 @@ import type { LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
 import { getViewportDimension } from '@datadog/browser-rum-core'
 import type {
   BrowserMutationData,
+  BrowserMutationPayload,
   BrowserRecord,
   InputData,
   MediaInteractionData,
@@ -15,11 +16,13 @@ import type {
 import { RecordType, IncrementalSource } from '../../types'
 import { serializeDocument, SerializationContextStatus } from './serialize'
 import { initObservers } from './observers'
+import type { InputCallback } from './observers'
 
-import { MutationController } from './mutationObserver'
 import { getVisualViewport, getScrollX, getScrollY } from './viewports'
 import { assembleIncrementalSnapshot } from './utils'
 import { createElementsScrollPositions } from './elementsScrollPositions'
+import type { ShadowRootsController } from './shadowRootsController'
+import { initShadowRootsController } from './shadowRootsController'
 
 export interface RecordOptions {
   emit?: (record: BrowserRecord) => void
@@ -31,6 +34,7 @@ export interface RecordAPI {
   stop: () => void
   takeSubsequentFullSnapshot: (timestamp?: TimeStamp) => void
   flushMutations: () => void
+  shadowRootsController: ShadowRootsController
 }
 
 export function record(options: RecordOptions): RecordAPI {
@@ -40,14 +44,23 @@ export function record(options: RecordOptions): RecordAPI {
     throw new Error('emit function is required')
   }
 
-  const mutationController = new MutationController()
   const elementsScrollPositions = createElementsScrollPositions()
+
+  const mutationCb = (mutation: BrowserMutationPayload) => {
+    emit(assembleIncrementalSnapshot<BrowserMutationData>(IncrementalSource.Mutation, mutation))
+  }
+  const inputCb: InputCallback = (s) => emit(assembleIncrementalSnapshot<InputData>(IncrementalSource.Input, s))
+
+  const shadowRootsController = initShadowRootsController(options.configuration, { mutationCb, inputCb })
 
   const takeFullSnapshot = (
     timestamp = timeStampNow(),
-    serializationContext = { status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT, elementsScrollPositions }
+    serializationContext = {
+      status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
+      elementsScrollPositions,
+      shadowRootsController,
+    }
   ) => {
-    mutationController.flush() // process any pending mutation before taking a full snapshot
     const { width, height } = getViewportDimension()
     emit({
       data: {
@@ -90,17 +103,16 @@ export function record(options: RecordOptions): RecordAPI {
 
   takeFullSnapshot()
 
-  const stopObservers = initObservers({
+  const { stop: stopObservers, flush: flushMutationsFromObservers } = initObservers({
     lifeCycle: options.lifeCycle,
     configuration: options.configuration,
-    mutationController,
     elementsScrollPositions,
-    inputCb: (v) => emit(assembleIncrementalSnapshot<InputData>(IncrementalSource.Input, v)),
+    inputCb,
     mediaInteractionCb: (p) =>
       emit(assembleIncrementalSnapshot<MediaInteractionData>(IncrementalSource.MediaInteraction, p)),
     mouseInteractionCb: (mouseInteractionRecord) => emit(mouseInteractionRecord),
     mousemoveCb: (positions, source) => emit(assembleIncrementalSnapshot<MousemoveData>(source, { positions })),
-    mutationCb: (m) => emit(assembleIncrementalSnapshot<BrowserMutationData>(IncrementalSource.Mutation, m)),
+    mutationCb,
     scrollCb: (p) => emit(assembleIncrementalSnapshot<ScrollData>(IncrementalSource.Scroll, p)),
     styleSheetCb: (r) => emit(assembleIncrementalSnapshot<StyleSheetRuleData>(IncrementalSource.StyleSheetRule, r)),
     viewportResizeCb: (d) => emit(assembleIncrementalSnapshot<ViewportResizeData>(IncrementalSource.ViewportResize, d)),
@@ -119,15 +131,28 @@ export function record(options: RecordOptions): RecordAPI {
         timestamp: timeStampNow(),
       })
     },
+    shadowRootsController,
   })
 
+  function flushMutations() {
+    shadowRootsController.flush()
+    flushMutationsFromObservers()
+  }
+
   return {
-    stop: stopObservers,
-    takeSubsequentFullSnapshot: (timestamp) =>
+    stop: () => {
+      shadowRootsController.stop()
+      stopObservers()
+    },
+    takeSubsequentFullSnapshot: (timestamp) => {
+      flushMutations()
       takeFullSnapshot(timestamp, {
+        shadowRootsController,
         status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT,
         elementsScrollPositions,
-      }),
-    flushMutations: () => mutationController.flush(),
+      })
+    },
+    flushMutations,
+    shadowRootsController,
   }
 }

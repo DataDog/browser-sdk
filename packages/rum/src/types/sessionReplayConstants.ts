@@ -26,12 +26,14 @@ export const NodeType: {
   Element: SessionReplay.ElementNode['type']
   Text: SessionReplay.TextNode['type']
   CDATA: SessionReplay.CDataNode['type']
+  DocumentFragment: SessionReplay.DocumentFragmentNode['type']
 } = {
   Document: 0,
   DocumentType: 1,
   Element: 2,
   Text: 3,
   CDATA: 4,
+  DocumentFragment: 11,
 } as const
 
 export type NodeType = typeof NodeType[keyof typeof NodeType]

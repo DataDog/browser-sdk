@@ -1,5 +1,6 @@
 import type { TimeStamp } from '@datadog/browser-core'
 import { dateNow, findCommaSeparatedValue, ONE_MINUTE } from '@datadog/browser-core'
+import { isCommentNode, isTextNode } from '../../browser/htmlDomUtils'
 
 interface DocumentTraceData {
   traceId: string
@@ -86,12 +87,4 @@ function getTraceCommentFromNode(node: Node | null) {
       return match[1]
     }
   }
-}
-
-function isCommentNode(node: Node): node is Comment {
-  return node.nodeName === '#comment'
-}
-
-function isTextNode(node: Node): node is Text {
-  return node.nodeName === '#text'
 }

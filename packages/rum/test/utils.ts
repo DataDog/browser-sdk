@@ -13,6 +13,8 @@ import type {
   MetaRecord,
   MouseInteractionType,
   VisualViewportRecord,
+  BrowserRecord,
+  DocumentFragmentNode,
 } from '../src/types'
 import { RecordType, IncrementalSource, NodeType } from '../src/types'
 
@@ -185,8 +187,8 @@ export function findMeta(segment: BrowserSegment): MetaRecord | null {
 }
 
 // Returns the first FullSnapshotRecord in a Segment, if any.
-export function findFullSnapshot(segment: BrowserSegment): BrowserFullSnapshotRecord | null {
-  return segment.records.find((record) => record.type === RecordType.FullSnapshot) as BrowserFullSnapshotRecord
+export function findFullSnapshot({ records }: { records: BrowserRecord[] }): BrowserFullSnapshotRecord | null {
+  return records.find((record) => record.type === RecordType.FullSnapshot) as BrowserFullSnapshotRecord
 }
 
 // Returns all the VisualViewportRecords in a Segment, if any.
@@ -377,6 +379,7 @@ export function createMutationPayloadValidator(initialDocument: SerializedNodeWi
    */
   function expectNewNode(node: Optional<ElementNode, 'childNodes' | 'attributes'>): ExpectedNode
   function expectNewNode(node: TextNode): ExpectedNode
+  function expectNewNode(node: Partial<DocumentFragmentNode>): ExpectedNode
   function expectNewNode(node: Partial<SerializedNode>) {
     maxNodeId += 1
     if (node.type === NodeType.Element) {

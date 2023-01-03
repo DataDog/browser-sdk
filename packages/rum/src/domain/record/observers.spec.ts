@@ -1,4 +1,11 @@
-import { DefaultPrivacyLevel, isIE, relativeNow, timeStampNow } from '@datadog/browser-core'
+import {
+  DefaultPrivacyLevel,
+  isIE,
+  noop,
+  relativeNow,
+  timeStampNow,
+  updateExperimentalFeatures,
+} from '@datadog/browser-core'
 import type { RawRumActionEvent, RumConfiguration } from '@datadog/browser-rum-core'
 import { ActionType, LifeCycle, LifeCycleEventType, RumEventType, FrustrationType } from '@datadog/browser-rum-core'
 import type { RawRumEventCollectedData } from 'packages/rum-core/src/domain/lifeCycle'
@@ -9,6 +16,14 @@ import type { FrustrationCallback, InputCallback, StyleSheetCallback } from './o
 import { initStyleSheetObserver, initFrustrationObserver, initInputObserver } from './observers'
 import { serializeDocument, SerializationContextStatus } from './serialize'
 import { createElementsScrollPositions } from './elementsScrollPositions'
+import type { ShadowRootsController } from './shadowRootsController'
+
+const DEFAULT_SHADOW_ROOT_CONTROLLER: ShadowRootsController = {
+  flush: noop,
+  stop: noop,
+  addShadowRoot: noop,
+  removeShadowRoot: noop,
+}
 
 const DEFAULT_CONFIGURATION = { defaultPrivacyLevel: NodePrivacyLevel.ALLOW } as RumConfiguration
 
@@ -30,6 +45,7 @@ describe('initInputObserver', () => {
     document.body.appendChild(sandbox)
 
     serializeDocument(document, DEFAULT_CONFIGURATION, {
+      shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
       elementsScrollPositions: createElementsScrollPositions(),
     })
@@ -43,6 +59,18 @@ describe('initInputObserver', () => {
   it('collects input values when an "input" event is dispatched', () => {
     stopInputObserver = initInputObserver(inputCallbackSpy, DefaultPrivacyLevel.ALLOW)
     dispatchInputEvent('foo')
+
+    expect(inputCallbackSpy).toHaveBeenCalledOnceWith({
+      text: 'foo',
+      id: jasmine.any(Number) as unknown as number,
+    })
+  })
+
+  // cannot trigger a event in a Shadow DOM because event with `isTrusted:false` do not cross the root
+  it('collects input values when an "input" event is composed', () => {
+    updateExperimentalFeatures(['record_shadow_dom'])
+    stopInputObserver = initInputObserver(inputCallbackSpy, DefaultPrivacyLevel.ALLOW)
+    dispatchInputEventWithInShadowDom('foo')
 
     expect(inputCallbackSpy).toHaveBeenCalledOnceWith({
       text: 'foo',
@@ -79,6 +107,15 @@ describe('initInputObserver', () => {
   function dispatchInputEvent(newValue: string) {
     input.value = newValue
     input.dispatchEvent(createNewEvent('input', { target: input }))
+  }
+
+  function dispatchInputEventWithInShadowDom(newValue: string) {
+    input.value = newValue
+    const host = document.createElement('div')
+    host.attachShadow({ mode: 'open' })
+    const event = createNewEvent('input', { target: host, composed: true })
+    event.composedPath = () => [input, host, sandbox, document.body]
+    input.dispatchEvent(event)
   }
 })
 
@@ -174,6 +211,7 @@ describe('initStyleSheetObserver', () => {
     styleSheet = styleElement.sheet!
 
     serializeDocument(document, DEFAULT_CONFIGURATION, {
+      shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
       elementsScrollPositions: createElementsScrollPositions(),
     })
