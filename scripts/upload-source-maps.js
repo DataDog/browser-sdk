@@ -1,6 +1,6 @@
 'use strict'
 
-const { getSecretKey, executeCommand, printLog, logAndExit } = require('./utils')
+const { getSecretKey, executeCommand, printLog, runMain } = require('./utils')
 const { SDK_VERSION } = require('./build-env')
 
 /**
@@ -48,7 +48,7 @@ async function uploadSourceMaps(site, apiKey, packageName, service, bundleFolder
   console.log(output)
 }
 
-async function main() {
+runMain(async () => {
   for (const { name, service } of packages) {
     const bundleFolder = `packages/${name}/bundle`
     await renameFiles(bundleFolder, name)
@@ -60,6 +60,4 @@ async function main() {
     }
   }
   printLog('Source maps upload done.')
-}
-
-main().catch(logAndExit)
+})

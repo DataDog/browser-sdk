@@ -2,12 +2,12 @@ const fs = require('fs')
 const path = require('path')
 const { compileFromFile } = require('json-schema-to-typescript')
 const prettier = require('prettier')
-const { printLog, logAndExit } = require('./utils')
+const { printLog, runMain } = require('./utils')
 
 const schemasDirectoryPath = path.join(__dirname, '../rum-events-format/schemas')
 const prettierConfigPath = path.join(__dirname, '../.prettierrc.yml')
 
-async function main() {
+runMain(async () => {
   await generateTypesFromSchema(
     path.join(__dirname, '../packages/rum-core/src/rumEvent.types.ts'),
     'rum-events-schema.json'
@@ -21,7 +21,7 @@ async function main() {
     'session-replay-browser-schema.json',
     { options: { additionalProperties: false } }
   )
-}
+})
 
 async function generateTypesFromSchema(typesPath, schema, { options = {} } = {}) {
   const schemaPath = path.join(schemasDirectoryPath, schema)
@@ -38,5 +38,3 @@ async function generateTypesFromSchema(typesPath, schema, { options = {} } = {})
   fs.writeFileSync(typesPath, compiledTypes)
   printLog('Generation done.')
 }
-
-main().catch(logAndExit)

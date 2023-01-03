@@ -6,7 +6,7 @@ const {
   initGitConfig,
   executeCommand,
   printLog,
-  logAndExit,
+  runMain,
   replaceCiFileVariable,
   readCiFileVariable,
 } = require('../utils')
@@ -18,7 +18,7 @@ const CURRENT_STAGING_BRANCH = readCiFileVariable('CURRENT_STAGING')
 const NEW_STAGING_NUMBER = getWeekNumber().toString().padStart(2, '0')
 const NEW_STAGING_BRANCH = `staging-${NEW_STAGING_NUMBER}`
 
-async function main() {
+runMain(async () => {
   // used to share the new staging name to the notification jobs
   await executeCommand(`echo "NEW_STAGING=${NEW_STAGING_BRANCH}" >> build.env`)
 
@@ -62,12 +62,10 @@ async function main() {
   }
 
   printLog('Reset done.')
-}
+})
 
 function getWeekNumber() {
   const today = new Date()
   const yearStart = new Date(Date.UTC(today.getUTCFullYear(), 0, 1))
   return Math.ceil(((today - yearStart) / 86400000 + yearStart.getUTCDay() + 1) / 7)
 }
-
-main().catch(logAndExit)
