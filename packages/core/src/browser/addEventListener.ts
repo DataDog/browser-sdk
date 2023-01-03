@@ -1,5 +1,6 @@
 import { monitor } from '../tools/monitor'
 import { getZoneJsOriginalValue } from '../tools/getZoneJsOriginalValue'
+import { addTelemetryDebug } from '../domain/telemetry'
 
 export const enum DOM_EVENT {
   BEFORE_UNLOAD = 'beforeunload',
@@ -77,14 +78,11 @@ export function addEventListeners<E extends Event>(
   listener: (event: E) => void,
   { once, capture, passive }: AddEventListenerOptions = {}
 ) {
-  const wrappedListener = monitor(
-    once
-      ? (event: Event) => {
-          stop()
-          listener(event as E)
-        }
-      : (listener as (event: Event) => void)
-  )
+  const wrappedListener = monitor((event: Event) => {
+    if (once) stop()
+    reportUntrustedEvent(event)
+    listener(event as E)
+  })
 
   const options = passive ? { capture, passive } : capture
 
@@ -99,4 +97,21 @@ export function addEventListeners<E extends Event>(
   return {
     stop,
   }
+}
+
+const reportedUntrustedEventTypes = new Set<string>()
+
+function reportUntrustedEvent(event: Event) {
+  const eventType = event.type
+
+  if (event.isTrusted || (window as any).jasmine || reportedUntrustedEventTypes.has(eventType)) {
+    return
+  }
+
+  reportedUntrustedEventTypes.add(eventType)
+  addTelemetryDebug('Untrusted event', { event_type: eventType })
+}
+
+export function resetUntrustedEventsCount() {
+  reportedUntrustedEventTypes.clear()
 }
