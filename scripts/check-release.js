@@ -3,21 +3,21 @@
 const fs = require('fs')
 const path = require('path')
 const { version: releaseVersion } = require('../lerna.json')
-const { findBrowserSdkPackageJsonFiles, printLog, runMain, executeCommand } = require('./utils')
+const { findBrowserSdkPackageJsonFiles, printLog, runMain, command } = require('./utils')
 
-runMain(async () => {
-  await checkGitTag()
+runMain(() => {
+  checkGitTag()
   checkBrowserSdkPackageJsonFiles()
 
   printLog('Release check done.')
 })
 
-async function checkGitTag() {
+function checkGitTag() {
   printLog('Checking release version tag is on HEAD')
-  const headRef = await executeCommand('git rev-parse HEAD')
+  const headRef = command`git rev-parse HEAD`.run()
   let tagRef
   try {
-    tagRef = await executeCommand(`git rev-list -n 1 v${releaseVersion} --`)
+    tagRef = command`git rev-list -n 1 v${releaseVersion} --`.run()
   } catch (error) {
     throw new Error(`Failed to find git tag reference: ${error}`)
   }
