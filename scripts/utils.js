@@ -11,22 +11,16 @@ const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fet
 
 const CI_FILE = '.gitlab-ci.yml'
 
-async function getSecretKey(name) {
-  const awsParameters = [
-    'ssm',
-    'get-parameter',
-    '--region=us-east-1',
-    '--with-decryption',
-    '--query=Parameter.Value',
-    '--out=text',
-    `--name=${name}`,
-  ]
-
-  return (await executeCommand(`aws ${awsParameters.join(' ')}`)).trim()
+function getSecretKey(name) {
+  return command`
+    aws ssm get-parameter --region=us-east-1 --with-decryption --query=Parameter.Value --out=text --name=${name}
+  `
+    .run()
+    .trim()
 }
 
 async function initGitConfig(repository) {
-  const githubDeployKey = await getSecretKey('ci.browser-sdk.github_deploy_key')
+  const githubDeployKey = getSecretKey('ci.browser-sdk.github_deploy_key')
 
   await executeCommand(`ssh-add - <<< "${githubDeployKey}"`)
   await executeCommand('mkdir -p ~/.ssh')

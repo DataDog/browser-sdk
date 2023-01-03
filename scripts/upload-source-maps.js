@@ -54,7 +54,7 @@ runMain(async () => {
     await renameFiles(bundleFolder, name)
     for (const site of sites) {
       const normalizedSite = site.replaceAll('.', '-')
-      const apiKey = await getSecretKey(`ci.browser-sdk.source-maps.${normalizedSite}.ci_api_key`)
+      const apiKey = getSecretKey(`ci.browser-sdk.source-maps.${normalizedSite}.ci_api_key`)
 
       await uploadSourceMaps(site, apiKey, name, service, bundleFolder)
     }

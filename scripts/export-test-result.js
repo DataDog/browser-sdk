@@ -12,7 +12,7 @@ const testType = process.argv[2]
 const resultFolder = `test-report/${testType}/`
 
 runMain(async () => {
-  const DATADOG_API_KEY = await getSecretKey('ci.browser-sdk.datadog_ci_api_key')
+  const DATADOG_API_KEY = getSecretKey('ci.browser-sdk.datadog_ci_api_key')
 
   await executeCommand(
     `datadog-ci junit upload --service browser-sdk --env ci --tags test.type:${testType} ${resultFolder}`,

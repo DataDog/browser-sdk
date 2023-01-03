@@ -93,7 +93,7 @@ function getMajor(version) {
 }
 
 async function createPullRequest() {
-  const githubAccessToken = await getSecretKey('ci.browser-sdk.github_access_token')
+  const githubAccessToken = getSecretKey('ci.browser-sdk.github_access_token')
   await executeCommand(`echo "${githubAccessToken}" | gh auth login --with-token`)
   const pullRequestUrl = await executeCommand(`gh pr create --fill --base ${MAIN_BRANCH}`)
   return pullRequestUrl.trim()
