@@ -62,10 +62,13 @@ export function startPageStateContexts(): PageStateContexts {
     (event) => {
       if (!event.isTrusted) return
 
-      if (event.type === DOM_EVENT.FREEZE) addPageState(PageState.FROZEN)
-      else if (event.type === DOM_EVENT.PAGE_HIDE)
+      if (event.type === DOM_EVENT.FREEZE) {
+        addPageState(PageState.FROZEN)
+      } else if (event.type === DOM_EVENT.PAGE_HIDE) {
         addPageState((event as PageTransitionEvent).persisted ? PageState.FROZEN : PageState.TERMINATED)
-      else addPageState(getState())
+      } else {
+        addPageState(getState())
+      }
     },
     { capture: true }
   )

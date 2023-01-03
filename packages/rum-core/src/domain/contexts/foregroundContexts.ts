@@ -43,12 +43,12 @@ export function addNewForegroundPeriod() {
     return
   }
   const currentForegroundPeriod = foregroundPeriods[foregroundPeriods.length - 1]
-  const now = relativeNow()
+
   if (currentForegroundPeriod !== undefined && currentForegroundPeriod.end === undefined) {
     return
   }
   foregroundPeriods.push({
-    start: now,
+    start: relativeNow(),
   })
 }
 
