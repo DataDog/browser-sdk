@@ -16,6 +16,14 @@
 
 ---
 
+## v4.29.0
+
+- 🐛 [RUMF-1435] do not retry status 0 request while online ([#1891](https://github.com/DataDog/browser-sdk/pull/1891))
+- ✨ [RUMF-1236] Add support for OTel headers ([#1832](https://github.com/DataDog/browser-sdk/pull/1832))
+- 🐛[RUMF-1435] don't retry opaque response ([#1877](https://github.com/DataDog/browser-sdk/pull/1877))
+- ✨ [RUMF-1425] enable request retry/throttle for replay intake ([#1819](https://github.com/DataDog/browser-sdk/pull/1819))
+- 🐛 [RUMF-1421] keep updating the view event counters after view end ([#1864](https://github.com/DataDog/browser-sdk/pull/1864))
+
 ## v4.28.1
 
 - Re-release v4.28.0 to work around a NPM packaging issue
