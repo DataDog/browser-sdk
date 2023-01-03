@@ -99,27 +99,19 @@ export function addEventListeners<E extends Event>(
   }
 }
 
-let untrustedEventsReported: Set<string> | undefined
+const reportedUntrustedEventTypes = new Set<string>()
 
 function reportUntrustedEvent(event: Event) {
-  if (event.isTrusted || (window as any).jasmine) {
-    return
-  }
-
-  if (!untrustedEventsReported) {
-    untrustedEventsReported = new Set()
-  }
-
   const eventType = event.type
 
-  if (untrustedEventsReported.has(eventType)) {
+  if (event.isTrusted || (window as any).jasmine || reportedUntrustedEventTypes.has(eventType)) {
     return
   }
 
-  untrustedEventsReported.add(eventType)
+  reportedUntrustedEventTypes.add(eventType)
   addTelemetryDebug('Untrusted event', { event_type: eventType })
 }
 
 export function resetUntrustedEventsCount() {
-  untrustedEventsReported = undefined
+  reportedUntrustedEventTypes.clear()
 }

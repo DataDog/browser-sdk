@@ -192,8 +192,12 @@ function isAllowedCallExpression({ callee }) {
  */
 function isAllowedNewExpression({ callee }) {
   switch (callee.name) {
-    case 'WeakMap': // Allow "new WeakMap()"
-    case 'RegExp': // Allow "new RegExp()"
+    // Allow some native constructors
+    case 'RegExp':
+    case 'WeakMap':
+    case 'WeakSet':
+    case 'Set':
+    case 'Map':
       return true
 
     default:
