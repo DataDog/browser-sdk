@@ -4,6 +4,7 @@ export const DEV_RUM_SLIM_URL = 'http://localhost:8080/datadog-rum-slim.js'
 
 export const INTAKE_DOMAINS = [
   'iam-rum-intake.datadoghq.com',
+  'browser-intake-datad0g.com',
   'browser-intake-datadoghq.com',
   'browser-intake-datadoghq.eu',
   'browser-intake-ddog-gov.com',
