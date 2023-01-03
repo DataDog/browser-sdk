@@ -5,5 +5,7 @@ export function listenDisconnectEvent(newListener: () => void) {
 }
 
 export function notifyDisconnectEvent() {
-  if (listener) listener()
+  if (listener) {
+    listener()
+  }
 }

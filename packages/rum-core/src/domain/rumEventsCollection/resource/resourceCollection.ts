@@ -180,7 +180,9 @@ function computeDurationOverrideInfo(
   computedDuration: ServerDuration,
   performanceEntryDuration: ServerDuration | undefined
 ) {
-  if (!isExperimentalFeatureEnabled('resource_durations')) return
+  if (!isExperimentalFeatureEnabled('resource_durations')) {
+    return
+  }
 
   return {
     _dd: {

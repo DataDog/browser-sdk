@@ -29,7 +29,9 @@ export function readBytesFromStream(
           return
         }
 
-        if (options.collectStreamBody) chunks.push(result.value)
+        if (options.collectStreamBody) {
+          chunks.push(result.value)
+        }
         readBytesCount += result.value.length
 
         if (readBytesCount > options.bytesLimit) {

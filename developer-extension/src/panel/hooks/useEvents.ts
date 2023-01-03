@@ -30,7 +30,9 @@ export function useEvents({ preserveEvents, eventSource }: { preserveEvents: boo
   useEffect(() => {
     if (!preserveEvents) {
       const clearCurrentEvents = (details: chrome.webNavigation.WebNavigationTransitionCallbackDetails) => {
-        if (details.transitionType === 'reload') clearEvents()
+        if (details.transitionType === 'reload') {
+          clearEvents()
+        }
       }
       chrome.webNavigation.onCommitted.addListener(clearCurrentEvents)
       return () => {
@@ -96,9 +98,13 @@ function matchQuery(query: string, event: StoredEvent) {
 }
 
 function matchQueryPart(json: unknown, searchKey: string, searchTerm: string, jsonPath = ''): boolean {
-  if (jsonPath.endsWith(searchKey) && String(json).startsWith(searchTerm)) return true
+  if (jsonPath.endsWith(searchKey) && String(json).startsWith(searchTerm)) {
+    return true
+  }
 
-  if (typeof json !== 'object') return false
+  if (typeof json !== 'object') {
+    return false
+  }
 
   for (const key in json) {
     if (

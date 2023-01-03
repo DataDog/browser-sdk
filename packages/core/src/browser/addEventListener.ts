@@ -79,7 +79,9 @@ export function addEventListeners<E extends Event>(
   { once, capture, passive }: AddEventListenerOptions = {}
 ) {
   const wrappedListener = monitor((event: Event) => {
-    if (once) stop()
+    if (once) {
+      stop()
+    }
     reportUntrustedEvent(event)
     listener(event as E)
   })

@@ -319,7 +319,9 @@ export function safeTruncate(candidate: string, length: number, suffix = '') {
   const isLastCharSurrogatePair = lastChar >= 0xd800 && lastChar <= 0xdbff
   const correctedLength = isLastCharSurrogatePair ? length + 1 : length
 
-  if (candidate.length <= correctedLength) return candidate
+  if (candidate.length <= correctedLength) {
+    return candidate
+  }
 
   return `${candidate.slice(0, correctedLength)}${suffix}`
 }
