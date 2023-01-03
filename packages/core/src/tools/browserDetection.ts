@@ -5,3 +5,7 @@ export function isIE() {
 export function isChromium() {
   return !!(window as any).chrome || /HeadlessChrome/.test(window.navigator.userAgent)
 }
+
+export function isAdoptedStyleSheetsSupported() {
+  return Boolean((document as any).adoptedStyleSheets)
+}
