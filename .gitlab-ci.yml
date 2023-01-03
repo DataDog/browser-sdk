@@ -192,6 +192,7 @@ check-release:
     - .tags
   script:
     - yarn
+    - BUILD_MODE=release yarn build
     - node scripts/check-release.js
 
 unit-bs:
