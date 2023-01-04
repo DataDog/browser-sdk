@@ -2,14 +2,13 @@ import type { Duration, RelativeTime } from '@datadog/browser-core'
 import {
   isExperimentalFeatureEnabled,
   noop,
-  elapsed,
   addDuration,
   addEventListeners,
   relativeNow,
   DOM_EVENT,
 } from '@datadog/browser-core'
 
-export const PAGE_STATE_TIMELINE_MAX_LENGTH = 500
+export const PAGE_STATE_CONTEXT_MAX_LENGTH = 500
 
 export const enum PageState {
   ACTIVE = 'active',
@@ -19,23 +18,14 @@ export const enum PageState {
   TERMINATED = 'terminated',
 }
 
-type PageStateTimeline = Array<{ state: PageState; startTime: RelativeTime }>
-
-type Counter = { count: number; duration: Duration }
-export type PageStateContext = {
-  active: Counter
-  passive: Counter
-  hidden: Counter
-  frozen: Counter
-  terminated: Counter
-}
+export type PageStateContext = Array<{ state: PageState; startTime: RelativeTime }>
 
 export interface PageStateContexts {
   getPageStates: (startTime: RelativeTime, duration: Duration) => PageStateContext | undefined
   stop: () => void
 }
 
-let pageStateTimeline: PageStateTimeline = []
+let pageStateContext: PageStateContext = []
 let state: PageState | undefined
 
 export function startPageStateContexts(): PageStateContexts {
@@ -73,45 +63,25 @@ export function startPageStateContexts(): PageStateContexts {
     { capture: true }
   )
 
-  function findStartIndex(startTime: RelativeTime) {
-    let i = pageStateTimeline.length - 1
-    while (i >= 0 && pageStateTimeline[i].startTime > startTime) {
-      i--
-    }
-
-    return i >= 0 ? i : 0
-  }
-
   return {
     getPageStates(startTime: RelativeTime, duration: Duration) {
+      const context: PageStateContext = []
       const endTime = addDuration(startTime, duration)
-      if (pageStateTimeline.length === 0 || pageStateTimeline[0].startTime >= endTime) return
+      for (let i = pageStateContext.length - 1; i >= 0; i--) {
+        const { startTime: stateStartTime } = pageStateContext[i]
 
-      const pageStateContext: PageStateContext = {
-        active: { count: 0, duration: 0 as Duration },
-        passive: { count: 0, duration: 0 as Duration },
-        hidden: { count: 0, duration: 0 as Duration },
-        frozen: { count: 0, duration: 0 as Duration },
-        terminated: { count: 0, duration: 0 as Duration },
+        if (stateStartTime >= endTime) {
+          continue
+        }
+
+        context.unshift(pageStateContext[i])
+
+        if (stateStartTime < startTime) {
+          break
+        }
       }
 
-      for (
-        let i = findStartIndex(startTime);
-        i < pageStateTimeline.length && pageStateTimeline[i].startTime < endTime;
-        i++
-      ) {
-        const curr = pageStateTimeline[i]
-        const next =
-          i + 1 < pageStateTimeline.length ? pageStateTimeline[i + 1] : { startTime: Infinity as RelativeTime }
-
-        const start = startTime > curr.startTime ? startTime : curr.startTime
-        const end = endTime < next.startTime ? endTime : next.startTime
-
-        pageStateContext[curr.state].duration = addDuration(pageStateContext[curr.state].duration, elapsed(start, end))
-        pageStateContext[curr.state].count++
-      }
-
-      return pageStateContext
+      return context.length ? context : undefined
     },
     stop,
   }
@@ -127,18 +97,18 @@ export function getState(): PageState {
   return PageState.PASSIVE
 }
 
-export function addPageState(nextState: PageState, pageStateTimelineMaxLength = PAGE_STATE_TIMELINE_MAX_LENGTH) {
+export function addPageState(nextState: PageState, pageStateContextMaxLength = PAGE_STATE_CONTEXT_MAX_LENGTH) {
   if (nextState === state) return
 
   state = nextState
   const now = relativeNow()
 
-  if (pageStateTimeline.length === pageStateTimelineMaxLength) pageStateTimeline.shift()
+  if (pageStateContext.length === pageStateContextMaxLength) pageStateContext.shift()
 
-  pageStateTimeline.push({ state, startTime: now })
+  pageStateContext.push({ state, startTime: now })
 }
 
 export function resetPageStates() {
-  pageStateTimeline = []
+  pageStateContext = []
   state = undefined
 }

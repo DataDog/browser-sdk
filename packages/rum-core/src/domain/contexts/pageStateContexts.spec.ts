@@ -1,4 +1,4 @@
-import type { Duration, RelativeTime } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/browser-core'
 import { resetExperimentalFeatures, updateExperimentalFeatures } from '@datadog/browser-core'
 import type { TestSetupBuilder } from 'packages/rum-core/test/specHelper'
 import { setup } from '../../../test/specHelper'
@@ -36,12 +36,12 @@ describe('pageContexts', () => {
     expect(pageStateContexts.getPageStates(0 as RelativeTime, 10 as RelativeTime)).toBeDefined()
   })
 
-  it('should return undefined if timings out of timeline bounds', () => {
+  it('should return undefined if the time period is out of context bounds', () => {
     pageStateContexts = startPageStateContexts()
     expect(pageStateContexts.getPageStates(-10 as RelativeTime, 0 as RelativeTime)).not.toBeDefined()
   })
 
-  it('should track the number and duration of all page state', () => {
+  it('should return the correct page states for the given time period', () => {
     const { clock } = setupBuilder.build()
     resetPageStates()
 
@@ -59,37 +59,23 @@ describe('pageContexts', () => {
     clock.tick(10)
     addPageState(PageState.TERMINATED)
 
-    expect(pageStateContexts.getPageStates(0 as RelativeTime, 50 as RelativeTime)).toEqual({
-      active: { count: 1, duration: 10 as Duration },
-      passive: { count: 1, duration: 10 as Duration },
-      hidden: { count: 1, duration: 10 as Duration },
-      frozen: { count: 1, duration: 10 as Duration },
-      terminated: { count: 1, duration: 10 as Duration },
-    })
+    expect(pageStateContexts.getPageStates(15 as RelativeTime, 20 as RelativeTime)).toEqual([
+      {
+        state: PageState.PASSIVE,
+        startTime: 10 as RelativeTime,
+      },
+      {
+        state: PageState.HIDDEN,
+        startTime: 20 as RelativeTime,
+      },
+      {
+        state: PageState.FROZEN,
+        startTime: 30 as RelativeTime,
+      },
+    ])
   })
 
-  it('should cumulate durations of the same states', () => {
-    const { clock } = setupBuilder.build()
-    resetPageStates()
-
-    addPageState(PageState.ACTIVE)
-
-    clock.tick(10)
-    addPageState(PageState.PASSIVE)
-
-    clock.tick(10)
-    addPageState(PageState.ACTIVE)
-
-    expect(pageStateContexts.getPageStates(0 as RelativeTime, 30 as RelativeTime)).toEqual({
-      active: { count: 2, duration: 20 as Duration },
-      passive: { count: 1, duration: 10 as Duration },
-      hidden: { count: 0, duration: 0 as Duration },
-      frozen: { count: 0, duration: 0 as Duration },
-      terminated: { count: 0, duration: 0 as Duration },
-    })
-  })
-
-  it('should limit timeline entry number', () => {
+  it('should limit the context entry number', () => {
     const limit = 1
     const { clock } = setupBuilder.build()
     resetPageStates()
@@ -103,12 +89,11 @@ describe('pageContexts', () => {
     clock.tick(10)
     addPageState(PageState.HIDDEN, limit)
 
-    expect(pageStateContexts.getPageStates(0 as RelativeTime, 40 as RelativeTime)).toEqual({
-      active: { count: 0, duration: jasmine.any(Number) },
-      passive: { count: 0, duration: 0 as Duration },
-      hidden: { count: 1, duration: 10 as Duration },
-      frozen: { count: 0, duration: 0 as Duration },
-      terminated: { count: 0, duration: 0 as Duration },
-    })
+    expect(pageStateContexts.getPageStates(0 as RelativeTime, 40 as RelativeTime)).toEqual([
+      {
+        state: PageState.HIDDEN,
+        startTime: 30 as RelativeTime,
+      },
+    ])
   })
 })

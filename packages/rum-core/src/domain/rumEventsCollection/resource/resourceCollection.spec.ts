@@ -18,6 +18,7 @@ import { TraceIdentifier } from '../../tracing/tracer'
 import { validateAndBuildRumConfiguration } from '../../configuration'
 import { createRumSessionManagerMock } from '../../../../test/mockRumSessionManager'
 import type { PageStateContext } from '../../contexts/pageStateContexts'
+import { PageState } from '../../contexts/pageStateContexts'
 import { startResourceCollection } from './resourceCollection'
 
 describe('resourceCollection', () => {
@@ -120,13 +121,7 @@ describe('resourceCollection', () => {
 
   it('should collect page states on resources when ff resource_page_states enabled', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
-    mockPageStates = {
-      active: { count: 0, duration: 0 as Duration },
-      passive: { count: 0, duration: 0 as Duration },
-      hidden: { count: 0, duration: 0 as Duration },
-      frozen: { count: 0, duration: 0 as Duration },
-      terminated: { count: 0, duration: 0 as Duration },
-    }
+    mockPageStates = [{ state: PageState.ACTIVE, startTime: 0 as RelativeTime }]
     lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, createCompletedRequest())
 
     const performanceEntry = createResourceEntry()
