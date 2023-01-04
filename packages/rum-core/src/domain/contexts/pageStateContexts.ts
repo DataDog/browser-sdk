@@ -50,6 +50,8 @@ export function startPageStateContexts(): PageStateContexts {
       DOM_EVENT.PAGE_HIDE,
     ],
     (event) => {
+      // Only get events fired by the browser to avoid false state changes done with custom events
+      // cf: developer extension auto flush: https://github.com/DataDog/browser-sdk/blob/2f72bf05a672794c9e33965351964382a94c72ba/developer-extension/src/panel/flushEvents.ts#L11-L12
       if (!event.isTrusted) return
 
       if (event.type === DOM_EVENT.FREEZE) {
