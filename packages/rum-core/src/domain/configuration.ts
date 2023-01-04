@@ -32,7 +32,11 @@ export interface RumInitConfiguration extends InitConfiguration {
    */
   allowedTracingOrigins?: MatchOption[] | undefined
   allowedTracingUrls?: Array<MatchOption | TracingOption> | undefined
+  /**
+   * @deprecated use traceSampleRate instead
+   */
   tracingSampleRate?: number | undefined
+  traceSampleRate?: number | undefined
 
   // replay options
   defaultPrivacyLevel?: DefaultPrivacyLevel | undefined
@@ -59,7 +63,7 @@ export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId'
 export interface RumConfiguration extends Configuration {
   // Built from init configuration
   actionNameAttribute: string | undefined
-  tracingSampleRate: number | undefined
+  traceSampleRate: number | undefined
   allowedTracingUrls: TracingOption[]
   excludedActivityUrls: MatchOption[]
   applicationId: string
@@ -102,8 +106,9 @@ export function validateAndBuildRumConfiguration(
     return
   }
 
-  if (initConfiguration.tracingSampleRate !== undefined && !isPercentage(initConfiguration.tracingSampleRate)) {
-    display.error('Tracing Sample Rate should be a number between 0 and 100')
+  const traceSampleRate = initConfiguration.traceSampleRate ?? initConfiguration.tracingSampleRate
+  if (traceSampleRate !== undefined && !isPercentage(traceSampleRate)) {
+    display.error('Trace Sample Rate should be a number between 0 and 100')
     return
   }
 
@@ -131,7 +136,7 @@ export function validateAndBuildRumConfiguration(
       actionNameAttribute: initConfiguration.actionNameAttribute,
       sessionReplaySampleRate: initConfiguration.sessionReplaySampleRate ?? premiumSampleRate ?? 100,
       oldPlansBehavior: initConfiguration.sessionReplaySampleRate === undefined,
-      tracingSampleRate: initConfiguration.tracingSampleRate,
+      traceSampleRate,
       allowedTracingUrls,
       excludedActivityUrls: initConfiguration.excludedActivityUrls ?? [],
       trackInteractions: !!initConfiguration.trackInteractions || trackFrustrations,
@@ -263,7 +268,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration): 
       premium_sample_rate: configuration.premiumSampleRate,
       replay_sample_rate: configuration.replaySampleRate,
       session_replay_sample_rate: configuration.sessionReplaySampleRate,
-      trace_sample_rate: configuration.tracingSampleRate,
+      trace_sample_rate: configuration.traceSampleRate ?? configuration.tracingSampleRate,
       action_name_attribute: configuration.actionNameAttribute,
       use_allowed_tracing_origins:
         Array.isArray(configuration.allowedTracingOrigins) && configuration.allowedTracingOrigins.length > 0,
