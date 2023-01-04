@@ -18,7 +18,9 @@ describe('trackViewEventCounts', () => {
   })
 
   afterEach(() => {
-    if (clock) clock.cleanup()
+    if (clock) {
+      clock.cleanup()
+    }
   })
 
   it('initializes eventCounts to 0', () => {

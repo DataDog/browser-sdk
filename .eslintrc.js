@@ -33,6 +33,7 @@ module.exports = {
   rules: {
     'arrow-body-style': 'error',
     camelcase: ['error', { properties: 'never', allow: ['_dd_temp_'] }],
+    curly: 'error',
     eqeqeq: ['error', 'smart'],
     'guard-for-in': 'error',
     'id-denylist': [

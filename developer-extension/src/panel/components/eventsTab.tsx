@@ -126,7 +126,9 @@ function getViewPage(view: { name?: string; url: string }) {
 
 function jsonOverview(jsonObject: object) {
   const replacer = (key: any, value: any): any => {
-    if (key && typeof value === 'object') return '{...}'
+    if (key && typeof value === 'object') {
+      return '{...}'
+    }
     return value
   }
   const overview = JSON.stringify(jsonObject, replacer)
