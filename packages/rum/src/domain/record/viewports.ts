@@ -21,6 +21,9 @@ const TOLERANCE = 25
  */
 function isVisualViewportFactoredIn() {
   const visual = window.visualViewport
+  if(!visual) {
+    return false
+  }
   return (
     Math.abs(visual.pageTop - visual.offsetTop - window.scrollY) > TOLERANCE ||
     Math.abs(visual.pageLeft - visual.offsetLeft - window.scrollX) > TOLERANCE
@@ -59,7 +62,15 @@ export const convertMouseEventToLayoutCoordinates = (clientX: number, clientY: n
 }
 
 export const getVisualViewport = (): VisualViewportRecord['data'] => {
-  const visual = window.visualViewport
+  const visual = window.visualViewport || {
+    scale: 1,
+    offsetLeft: 0,
+    offsetTop: 0,
+    pageLeft: 0,
+    pageTop: 0,
+    height: window.innerHeight,
+    width: window.innerWidth
+  }
   return {
     scale: visual.scale,
     offsetLeft: visual.offsetLeft,
