@@ -32,7 +32,7 @@ export function startActionCollection(
   )
 
   let actionContexts: ActionContexts = { findActionId: noop as () => undefined }
-  if (configuration.trackInteractions) {
+  if (configuration.trackUserInteractions) {
     actionContexts = trackClickActions(lifeCycle, domMutationObservable, configuration).actionContexts
   }
 

@@ -47,7 +47,11 @@ export interface RumInitConfiguration extends InitConfiguration {
   sessionReplaySampleRate?: number | undefined
 
   // action options
+  /**
+   * @deprecated use trackUserInteractions instead
+   */
   trackInteractions?: boolean | undefined
+  trackUserInteractions?: boolean | undefined
   trackFrustrations?: boolean | undefined
   actionNameAttribute?: string | undefined
 
@@ -70,7 +74,7 @@ export interface RumConfiguration extends Configuration {
   defaultPrivacyLevel: DefaultPrivacyLevel
   oldPlansBehavior: boolean
   sessionReplaySampleRate: number
-  trackInteractions: boolean
+  trackUserInteractions: boolean
   trackFrustrations: boolean
   trackViewsManually: boolean
   trackResources: boolean | undefined
@@ -127,6 +131,7 @@ export function validateAndBuildRumConfiguration(
     return
   }
 
+  const trackUserInteractions = !!(initConfiguration.trackUserInteractions ?? initConfiguration.trackInteractions)
   const trackFrustrations = !!initConfiguration.trackFrustrations
 
   return assign(
@@ -139,7 +144,7 @@ export function validateAndBuildRumConfiguration(
       traceSampleRate,
       allowedTracingUrls,
       excludedActivityUrls: initConfiguration.excludedActivityUrls ?? [],
-      trackInteractions: !!initConfiguration.trackInteractions || trackFrustrations,
+      trackUserInteractions: trackUserInteractions || trackFrustrations,
       trackFrustrations,
       trackViewsManually: !!initConfiguration.trackViewsManually,
       trackResources: initConfiguration.trackResources,
@@ -280,7 +285,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration): 
         Array.isArray(configuration.allowedTracingOrigins) && configuration.allowedTracingOrigins.length > 0,
       track_frustrations: configuration.trackFrustrations,
       track_views_manually: configuration.trackViewsManually,
-      track_interactions: configuration.trackInteractions,
+      track_user_interactions: configuration.trackUserInteractions ?? configuration.trackInteractions,
     },
     baseSerializedConfiguration
   )
