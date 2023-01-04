@@ -150,9 +150,17 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       action_name_attribute?: string
       /**
-       * Whether the allowed tracing origins list is used
+       * Whether the allowed tracing origins list is used (deprecated in favor of use_allowed_tracing_urls)
        */
       use_allowed_tracing_origins?: boolean
+      /**
+       * Whether the allowed tracing urls list is used
+       */
+      use_allowed_tracing_urls?: boolean
+      /**
+       * A list of selected tracing propagators
+       */
+      selected_tracing_propagators?: ('datadog' | 'b3' | 'b3multi' | 'tracecontext')[]
       /**
        * Session replay default privacy level
        */
@@ -170,9 +178,13 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       track_views_manually?: boolean
       /**
-       * Whether user actions are tracked
+       * Whether user actions are tracked (deprecated in favor of track_user_interactions)
        */
       track_interactions?: boolean
+      /**
+       * Whether user actions are tracked
+       */
+      track_user_interactions?: boolean
       /**
        * Whether console.error logs, uncaught exceptions and network errors are tracked
        */
