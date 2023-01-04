@@ -8,12 +8,14 @@ import {
   findElementWithTagName,
   findFullSnapshot,
   findIncrementalSnapshot,
+  findNode,
   findTextContent,
   findTextNode,
 } from '@datadog/browser-rum/test/utils'
+
 import type { EventRegistry } from '../../lib/framework'
 import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
-import { browserExecute } from '../../lib/helpers/browser'
+import { browserExecute, getBrowserName } from '../../lib/helpers/browser'
 
 /** Will generate the following HTML 
  * ```html
@@ -80,6 +82,34 @@ const divShadowDom = `<script>
  </script>
  `
 
+/** Will generate the following HTML 
+ * ```html
+ * <my-div id="titi">
+ *  #shadow-root
+ *    <div>toto</div>
+ *</my-div>
+ *```
+ when called like `<my-div />`
+ */
+const divWithStyleShadowDom = `<script>
+class DivWithStyle extends HTMLElement {
+ constructor() {
+   super();
+   this.attachShadow({ mode: "open" });
+ }
+ connectedCallback() {
+   const div = document.createElement("div");
+   div.textContent = 'toto'
+   this.shadowRoot.appendChild(div);
+   const styleSheet = new CSSStyleSheet();
+   styleSheet.insertRule('div { width: 100%; }')
+   this.shadowRoot.adoptedStyleSheets= [styleSheet]
+ }
+}
+     window.customElements.define("div-with-style", DivWithStyle);
+</script>
+`
+
 describe('recorder with shadow DOM', () => {
   createTest('can record fullsnapshot with the detail inside the shadow root')
     .withRum({ defaultPrivacyLevel: 'allow', enableExperimentalFeatures: ['record_shadow_dom'] })
@@ -103,6 +133,35 @@ describe('recorder with shadow DOM', () => {
       expect(textNode).toBeTruthy()
       expect(textNode?.textContent).toBe('toto')
     })
+
+  if (isAdoptedStyleSheetsSupported()) {
+    createTest('can record fullsnapshot with adoptedStylesheet')
+      .withRum({ defaultPrivacyLevel: 'allow', enableExperimentalFeatures: ['record_shadow_dom'] })
+      .withRumInit(initRumAndStartRecording)
+      .withSetup(bundleSetup)
+      .withBody(
+        html`
+          ${divWithStyleShadowDom}
+          <div-with-style />
+        `
+      )
+      .run(async ({ serverEvents }) => {
+        await flushEvents()
+
+        expect(serverEvents.sessionReplay.length).toBe(1)
+
+        const fullSnapshot = findFullSnapshot(getFirstSegment(serverEvents))!
+        expect(fullSnapshot).toBeTruthy()
+        const shadowRoot = findNode(
+          fullSnapshot.data.node,
+          (node) => node.type === NodeType.DocumentFragment
+        ) as DocumentFragmentNode
+        expect(shadowRoot.isShadowRoot).toBe(true)
+        expect(shadowRoot.adoptedStyleSheets).toEqual([
+          { cssRules: ['div { width: 100%; }'], disabled: false, media: [] },
+        ])
+      })
+  }
 
   createTest('can apply privacy level set from outside or inside the shadow DOM')
     .withRum({ defaultPrivacyLevel: 'allow', enableExperimentalFeatures: ['record_shadow_dom'] })
@@ -237,4 +296,8 @@ function initRumAndStartRecording(initConfiguration: RumInitConfiguration) {
 async function getNodeInsideShadowDom(hostTag: string, selector: string) {
   const host = await $(hostTag)
   return host.shadow$(selector)
+}
+
+function isAdoptedStyleSheetsSupported() {
+  return ['edge', 'safari'].includes(getBrowserName())
 }
