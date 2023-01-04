@@ -92,7 +92,7 @@ function computeSessionState(configuration: RumConfiguration, rawTrackingType?: 
   let trackingType: RumTrackingType
   if (hasValidRumSession(rawTrackingType)) {
     trackingType = rawTrackingType
-  } else if (!performDraw(configuration.sampleRate)) {
+  } else if (!performDraw(configuration.sessionSampleRate)) {
     trackingType = RumTrackingType.NOT_TRACKED
   } else if (!performDraw(configuration.sessionReplaySampleRate)) {
     trackingType = RumTrackingType.TRACKED_WITHOUT_SESSION_REPLAY
