@@ -26,6 +26,14 @@ describe('endpointBuilder', () => {
       expect(createEndpointBuilder(initConfiguration, 'logs', []).build('xhr')).not.toContain('&batch_time=')
       expect(createEndpointBuilder(initConfiguration, 'sessionReplay', []).build('xhr')).not.toContain('&batch_time=')
     })
+
+    it('should not start with ddsource for internal analytics mode', () => {
+      const url = createEndpointBuilder({ ...initConfiguration, internalAnalyticsSubdomain: 'foo' }, 'rum', []).build(
+        'xhr'
+      )
+      expect(url).not.toContain('/rum?ddsource')
+      expect(url).toContain('ddsource=browser')
+    })
   })
 
   describe('proxyUrl', () => {
