@@ -1,10 +1,8 @@
-const util = require('util')
 const path = require('path')
 const os = require('os')
 const fsPromises = require('fs/promises')
 const fs = require('fs')
 const childProcess = require('child_process')
-const execute = util.promisify(require('child_process').exec)
 const spawn = require('child_process').spawn
 // node-fetch v3.x only support ESM syntax.
 // Todo: Remove node-fetch when node v18 LTS is released with fetch out of the box
@@ -60,20 +58,6 @@ async function modifyFile(filePath, modifier) {
     return true
   }
   return false
-}
-
-async function executeCommand(command, envVariables) {
-  const commandResult = await execute(command, {
-    shell: '/bin/bash',
-    env: { ...process.env, ...envVariables },
-  })
-  if (commandResult.error && commandResult.error.code !== 0) {
-    throw commandResult.error
-  }
-  if (commandResult.stderr) {
-    console.error(commandResult.stderr)
-  }
-  return commandResult.stdout
 }
 
 async function spawnCommand(command, args) {
@@ -219,7 +203,6 @@ module.exports = {
   getSecretKey,
   initGitConfig,
   command,
-  executeCommand,
   spawnCommand,
   printError,
   printLog,
