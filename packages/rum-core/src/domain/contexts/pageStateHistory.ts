@@ -8,7 +8,7 @@ import {
   DOM_EVENT,
 } from '@datadog/browser-core'
 
-export const PAGE_STATE_CONTEXT_MAX_LENGTH = 500
+export const MAX_PAGE_STATE_ENTRIES = 500
 
 export const enum PageState {
   ACTIVE = 'active',
@@ -17,26 +17,23 @@ export const enum PageState {
   FROZEN = 'frozen',
   TERMINATED = 'terminated',
 }
-
-export type PageStateContext = Array<{ state: PageState; startTime: RelativeTime }>
-
-export interface PageStateContexts {
-  getPageStates: (startTime: RelativeTime, duration: Duration) => PageStateContext | undefined
+export type PageStateEntry = { state: PageState; startTime: RelativeTime }
+export interface PageStateHistory {
+  findAll: (startTime: RelativeTime, duration: Duration) => PageStateEntry[] | undefined
   stop: () => void
 }
+let pageStateEntries: PageStateEntry[] = []
+let currentPageState: PageState | undefined
 
-let pageStateContext: PageStateContext = []
-let state: PageState | undefined
-
-export function startPageStateContexts(): PageStateContexts {
+export function startPageStateHistory(): PageStateHistory {
   if (!isExperimentalFeatureEnabled('resource_page_states')) {
     return {
-      getPageStates: () => undefined,
+      findAll: () => undefined,
       stop: noop,
     }
   }
 
-  addPageState(getState())
+  addPageState(getPageState())
 
   const { stop } = addEventListeners(
     window,
@@ -50,7 +47,7 @@ export function startPageStateContexts(): PageStateContexts {
       DOM_EVENT.PAGE_HIDE,
     ],
     (event) => {
-      // Only get events fired by the browser to avoid false state changes done with custom events
+      // Only get events fired by the browser to avoid false currentPageState changes done with custom events
       // cf: developer extension auto flush: https://github.com/DataDog/browser-sdk/blob/2f72bf05a672794c9e33965351964382a94c72ba/developer-extension/src/panel/flushEvents.ts#L11-L12
       if (!event.isTrusted) {
         return
@@ -61,37 +58,37 @@ export function startPageStateContexts(): PageStateContexts {
       } else if (event.type === DOM_EVENT.PAGE_HIDE) {
         addPageState((event as PageTransitionEvent).persisted ? PageState.FROZEN : PageState.TERMINATED)
       } else {
-        addPageState(getState())
+        addPageState(getPageState())
       }
     },
     { capture: true }
   )
 
   return {
-    getPageStates(startTime: RelativeTime, duration: Duration) {
-      const context: PageStateContext = []
+    findAll(startTime: RelativeTime, duration: Duration) {
+      const entries: PageStateEntry[] = []
       const endTime = addDuration(startTime, duration)
-      for (let i = pageStateContext.length - 1; i >= 0; i--) {
-        const { startTime: stateStartTime } = pageStateContext[i]
+      for (let i = pageStateEntries.length - 1; i >= 0; i--) {
+        const { startTime: stateStartTime } = pageStateEntries[i]
 
         if (stateStartTime >= endTime) {
           continue
         }
 
-        context.unshift(pageStateContext[i])
+        entries.unshift(pageStateEntries[i])
 
         if (stateStartTime < startTime) {
           break
         }
       }
 
-      return context.length ? context : undefined
+      return entries.length ? entries : undefined
     },
     stop,
   }
 }
 
-export function getState(): PageState {
+function getPageState(): PageState {
   if (document.visibilityState === 'hidden') {
     return PageState.HIDDEN
   }
@@ -101,22 +98,21 @@ export function getState(): PageState {
   return PageState.PASSIVE
 }
 
-export function addPageState(nextState: PageState, pageStateContextMaxLength = PAGE_STATE_CONTEXT_MAX_LENGTH) {
-  if (nextState === state) {
+export function addPageState(nextPageState: PageState, maxPageStateEntries = MAX_PAGE_STATE_ENTRIES) {
+  if (nextPageState === currentPageState) {
     return
   }
 
-  state = nextState
-  const now = relativeNow()
+  currentPageState = nextPageState
 
-  if (pageStateContext.length === pageStateContextMaxLength) {
-    pageStateContext.shift()
+  if (pageStateEntries.length === maxPageStateEntries) {
+    pageStateEntries.shift()
   }
 
-  pageStateContext.push({ state, startTime: now })
+  pageStateEntries.push({ state: currentPageState, startTime: relativeNow() })
 }
 
 export function resetPageStates() {
-  pageStateContext = []
-  state = undefined
+  pageStateEntries = []
+  currentPageState = undefined
 }

@@ -23,7 +23,7 @@ import type { LifeCycle, RawRumEventCollectedData } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { RequestCompleteEvent } from '../../requestCollection'
 import type { RumSessionManager } from '../../rumSessionManager'
-import type { PageStateContexts } from '../../contexts/pageStateContexts'
+import type { PageStateHistory } from '../../contexts/pageStateHistory'
 import { matchRequestTiming } from './matchRequestTiming'
 import {
   computePerformanceResourceDetails,
@@ -37,12 +37,12 @@ export function startResourceCollection(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
   sessionManager: RumSessionManager,
-  pageStateContext: PageStateContexts
+  pageStateHistory: PageStateHistory
 ) {
   lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request: RequestCompleteEvent) => {
     lifeCycle.notify(
       LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-      processRequest(request, configuration, sessionManager, pageStateContext)
+      processRequest(request, configuration, sessionManager, pageStateHistory)
     )
   })
 
@@ -51,7 +51,7 @@ export function startResourceCollection(
       if (entry.entryType === 'resource' && !isRequestKind(entry)) {
         lifeCycle.notify(
           LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-          processResourceEntry(entry, configuration, sessionManager, pageStateContext)
+          processResourceEntry(entry, configuration, sessionManager, pageStateHistory)
         )
       }
     }
@@ -62,7 +62,7 @@ function processRequest(
   request: RequestCompleteEvent,
   configuration: RumConfiguration,
   sessionManager: RumSessionManager,
-  pageStateContext: PageStateContexts
+  pageStateHistory: PageStateHistory
 ): RawRumEventCollectedData<RawRumResourceEvent> {
   const type = request.type === RequestType.XHR ? ResourceType.XHR : ResourceType.FETCH
 
@@ -76,7 +76,7 @@ function processRequest(
   const duration = toServerDuration(request.duration)
   const durationOverrideInfo = computeDurationOverrideInfo(duration, correspondingTimingOverrides?.resource.duration)
   const pageStateInfo = computePageStateInfo(
-    pageStateContext,
+    pageStateHistory,
     startClocks,
     matchingTiming?.duration ?? request.duration
   )
@@ -119,7 +119,7 @@ function processResourceEntry(
   entry: RumPerformanceResourceTiming,
   configuration: RumConfiguration,
   sessionManager: RumSessionManager,
-  pageStateContext: PageStateContexts
+  pageStateHistory: PageStateHistory
 ): RawRumEventCollectedData<RawRumResourceEvent> {
   const type = computeResourceKind(entry)
   const entryMetrics = computePerformanceEntryMetrics(entry)
@@ -127,7 +127,7 @@ function processResourceEntry(
 
   const tracingInfo = computeEntryTracingInfo(entry, configuration)
   const indexingInfo = computeIndexingInfo(sessionManager, startClocks)
-  const pageStateInfo = computePageStateInfo(pageStateContext, startClocks, entry.duration)
+  const pageStateInfo = computePageStateInfo(pageStateHistory, startClocks, entry.duration)
 
   const resourceEvent = combine(
     {
@@ -230,10 +230,10 @@ function computeIndexingInfo(sessionManager: RumSessionManager, resourceStart: C
   }
 }
 
-function computePageStateInfo(pageStateContext: PageStateContexts, startClocks: ClocksState, duration: Duration) {
+function computePageStateInfo(pageStateHistory: PageStateHistory, startClocks: ClocksState, duration: Duration) {
   return {
     _dd: {
-      page_states: pageStateContext.getPageStates(startClocks.relative, duration),
+      page_states: pageStateHistory.findAll(startClocks.relative, duration),
     },
   }
 }

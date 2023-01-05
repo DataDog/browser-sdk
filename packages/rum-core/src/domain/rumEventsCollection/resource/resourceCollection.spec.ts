@@ -17,26 +17,26 @@ import type { RequestCompleteEvent } from '../../requestCollection'
 import { TraceIdentifier } from '../../tracing/tracer'
 import { validateAndBuildRumConfiguration } from '../../configuration'
 import { createRumSessionManagerMock } from '../../../../test/mockRumSessionManager'
-import type { PageStateContext } from '../../contexts/pageStateContexts'
-import { PageState } from '../../contexts/pageStateContexts'
+import type { PageStateEntry } from '../../contexts/pageStateHistory'
+import { PageState } from '../../contexts/pageStateHistory'
 import { startResourceCollection } from './resourceCollection'
 
 describe('resourceCollection', () => {
   let setupBuilder: TestSetupBuilder
 
-  let mockPageStates: PageStateContext | undefined
+  let mockPageStates: PageStateEntry[] | undefined
   beforeEach(() => {
     mockPageStates = undefined
     setupBuilder = setup()
       .withPageStateContexts({
-        getPageStates: () => mockPageStates,
+        findAll: () => mockPageStates,
       })
-      .beforeBuild(({ lifeCycle, sessionManager, pageStateContexts }) => {
+      .beforeBuild(({ lifeCycle, sessionManager, pageStateHistory }) => {
         startResourceCollection(
           lifeCycle,
           validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!,
           sessionManager,
-          pageStateContexts
+          pageStateHistory
         )
       })
   })
@@ -266,7 +266,7 @@ describe('resourceCollection', () => {
     })
 
     it('should pull tracingSampleRate from config if present', () => {
-      setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager, pageStateContexts }) => {
+      setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager, pageStateHistory }) => {
         startResourceCollection(
           lifeCycle,
           validateAndBuildRumConfiguration({
@@ -275,7 +275,7 @@ describe('resourceCollection', () => {
             tracingSampleRate: 60,
           })!,
           sessionManager,
-          pageStateContexts
+          pageStateHistory
         )
       })
 
@@ -293,7 +293,7 @@ describe('resourceCollection', () => {
     })
 
     it('should not define rule_psr if tracingSampleRate is undefined', () => {
-      setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager, pageStateContexts }) => {
+      setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager, pageStateHistory }) => {
         startResourceCollection(
           lifeCycle,
           validateAndBuildRumConfiguration({
@@ -301,7 +301,7 @@ describe('resourceCollection', () => {
             applicationId: 'xxx',
           })!,
           sessionManager,
-          pageStateContexts
+          pageStateHistory
         )
       })
 
@@ -319,7 +319,7 @@ describe('resourceCollection', () => {
     })
 
     it('should define rule_psr to 0 if tracingSampleRate is set to 0', () => {
-      setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager, pageStateContexts }) => {
+      setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager, pageStateHistory }) => {
         startResourceCollection(
           lifeCycle,
           validateAndBuildRumConfiguration({
@@ -328,7 +328,7 @@ describe('resourceCollection', () => {
             tracingSampleRate: 0,
           })!,
           sessionManager,
-          pageStateContexts
+          pageStateHistory
         )
       })
 
