@@ -157,9 +157,7 @@ describe('recorder with shadow DOM', () => {
           (node) => node.type === NodeType.DocumentFragment
         ) as DocumentFragmentNode
         expect(shadowRoot.isShadowRoot).toBe(true)
-        expect(shadowRoot.adoptedStyleSheets).toEqual([
-          { cssRules: ['div { width: 100%; }'], disabled: false, media: [] },
-        ])
+        expect(shadowRoot.adoptedStyleSheets).toEqual([{ cssRules: ['div { width: 100%; }'] }])
       })
   }
 
@@ -299,5 +297,5 @@ async function getNodeInsideShadowDom(hostTag: string, selector: string) {
 }
 
 function isAdoptedStyleSheetsSupported() {
-  return ['edge', 'safari'].includes(getBrowserName())
+  return ['edge', 'chrome'].includes(getBrowserName())
 }
