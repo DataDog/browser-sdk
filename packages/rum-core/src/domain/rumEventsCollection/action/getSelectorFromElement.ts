@@ -111,12 +111,16 @@ function getTagNameSelector(element: Element): string {
 function getStableAttributeSelector(element: Element, actionNameAttribute: string | undefined): string | undefined {
   if (actionNameAttribute) {
     const selector = getAttributeSelector(actionNameAttribute)
-    if (selector) return selector
+    if (selector) {
+      return selector
+    }
   }
 
   for (const attributeName of STABLE_ATTRIBUTES) {
     const selector = getAttributeSelector(attributeName)
-    if (selector) return selector
+    if (selector) {
+      return selector
+    }
   }
 
   function getAttributeSelector(attributeName: string) {

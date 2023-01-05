@@ -1,6 +1,6 @@
+import { DEV_LOGS_URL, DEV_RUM_SLIM_URL, DEV_RUM_URL, INTAKE_DOMAINS } from '../../common/constants'
 import { createLogger } from '../../common/logger'
 import { listenAction } from '../actions'
-import { DEV_LOGS_URL, DEV_RUM_SLIM_URL, DEV_RUM_URL, INTAKE_DOMAINS } from '../constants'
 import { store } from '../store'
 
 const logger = createLogger('syncRules')

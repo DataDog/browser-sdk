@@ -1,6 +1,6 @@
-import { assign, startsWith } from '@datadog/browser-core'
+import { assign, isExperimentalFeatureEnabled, startsWith } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { STABLE_ATTRIBUTES } from '@datadog/browser-rum-core'
+import { isNodeShadowHost, isNodeShadowRoot, STABLE_ATTRIBUTES } from '@datadog/browser-rum-core'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
@@ -16,6 +16,7 @@ import type {
   ElementNode,
   TextNode,
   CDataNode,
+  DocumentFragmentNode,
 } from '../../types'
 import { NodeType } from '../../types'
 import {
@@ -33,6 +34,7 @@ import {
 } from './serializationUtils'
 import { forEach } from './utils'
 import type { ElementsScrollPositions } from './elementsScrollPositions'
+import type { ShadowRootsController } from './shadowRootsController'
 
 // Those values are the only one that can be used when inheriting privacy levels from parent to
 // children during serialization, since HIDDEN and IGNORE shouldn't serialize their children. This
@@ -51,14 +53,17 @@ export const enum SerializationContextStatus {
 export type SerializationContext =
   | {
       status: SerializationContextStatus.MUTATION
+      shadowRootsController: ShadowRootsController
     }
   | {
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT
       elementsScrollPositions: ElementsScrollPositions
+      shadowRootsController: ShadowRootsController
     }
   | {
       status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT
       elementsScrollPositions: ElementsScrollPositions
+      shadowRootsController: ShadowRootsController
     }
 
 export interface SerializeOptions {
@@ -103,6 +108,8 @@ function serializeNode(node: Node, options: SerializeOptions): SerializedNode | 
   switch (node.nodeType) {
     case node.DOCUMENT_NODE:
       return serializeDocumentNode(node as Document, options)
+    case node.DOCUMENT_FRAGMENT_NODE:
+      return serializeDocumentFragmentNode(node as DocumentFragment, options)
     case node.DOCUMENT_TYPE_NODE:
       return serializeDocumentTypeNode(node as DocumentType)
     case node.ELEMENT_NODE:
@@ -127,6 +134,27 @@ function serializeDocumentTypeNode(documentType: DocumentType): DocumentTypeNode
     name: documentType.name,
     publicId: documentType.publicId,
     systemId: documentType.systemId,
+  }
+}
+
+function serializeDocumentFragmentNode(
+  element: DocumentFragment,
+  options: SerializeOptions
+): DocumentFragmentNode | undefined {
+  let childNodes: SerializedNodeWithId[] = []
+  if (element.childNodes.length) {
+    childNodes = serializeChildNodes(element, options)
+  }
+
+  const isShadowRoot = isNodeShadowRoot(element)
+  if (isShadowRoot) {
+    options.serializationContext.shadowRootsController.addShadowRoot(element)
+  }
+
+  return {
+    type: NodeType.DocumentFragment,
+    childNodes,
+    isShadowRoot,
   }
 }
 
@@ -194,6 +222,13 @@ export function serializeElementNode(element: Element, options: SerializeOptions
     childNodes = serializeChildNodes(element, childNodesSerializationOptions)
   }
 
+  if (isNodeShadowHost(element) && isExperimentalFeatureEnabled('record_shadow_dom')) {
+    const shadowRoot = serializeNodeWithId(element.shadowRoot, options)
+    if (shadowRoot !== null) {
+      childNodes.push(shadowRoot)
+    }
+  }
+
   return {
     type: NodeType.Element,
     tagName,
@@ -232,14 +267,12 @@ function serializeCDataNode(): CDataNode {
 
 export function serializeChildNodes(node: Node, options: SerializeOptions): SerializedNodeWithId[] {
   const result: SerializedNodeWithId[] = []
-
   forEach(node.childNodes, (childNode) => {
     const serializedChildNode = serializeNodeWithId(childNode, options)
     if (serializedChildNode) {
       result.push(serializedChildNode)
     }
   })
-
   return result
 }
 

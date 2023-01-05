@@ -40,20 +40,23 @@ export function createEndpointBuilder(
       const tags = [`sdk_version:${__BUILD_ENV__SDK_VERSION__}`, `api:${api}`].concat(configurationTags)
       if (retry) {
         tags.push(`retry_count:${retry.count}`, `retry_after:${retry.lastFailureStatus}`)
-        retry.lastFailureType && tags.push(`retry_after_type:${retry.lastFailureType}`)
       }
-      let parameters =
-        'ddsource=browser' +
-        `&ddtags=${encodeURIComponent(tags.join(','))}` +
-        `&dd-api-key=${clientToken}` +
-        `&dd-evp-origin-version=${encodeURIComponent(__BUILD_ENV__SDK_VERSION__)}` +
-        '&dd-evp-origin=browser' +
-        `&dd-request-id=${generateUUID()}`
+      const parameters = [
+        'ddsource=browser',
+        `ddtags=${encodeURIComponent(tags.join(','))}`,
+        `dd-api-key=${clientToken}`,
+        `dd-evp-origin-version=${encodeURIComponent(__BUILD_ENV__SDK_VERSION__)}`,
+        'dd-evp-origin=browser',
+        `dd-request-id=${generateUUID()}`,
+      ]
 
       if (endpointType === 'rum') {
-        parameters += `&batch_time=${timeStampNow()}`
+        parameters.push(`batch_time=${timeStampNow()}`)
       }
-      const endpointUrl = `${baseUrl}?${parameters}`
+      if (initConfiguration.internalAnalyticsSubdomain) {
+        parameters.reverse()
+      }
+      const endpointUrl = `${baseUrl}?${parameters.join('&')}`
 
       return proxyUrl ? `${proxyUrl}?ddforward=${encodeURIComponent(endpointUrl)}` : endpointUrl
     },

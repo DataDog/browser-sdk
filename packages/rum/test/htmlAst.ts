@@ -1,5 +1,5 @@
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { objectValues } from '../../core/src'
+import { noop, objectValues } from '../../core/src'
 import type { SerializedNodeWithId } from '../src/types'
 import { serializeNodeWithId, SerializationContextStatus, createElementsScrollPositions } from '../src/domain/record'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME } from '../src/constants'
@@ -26,12 +26,20 @@ export const removeIdFieldsRecursivelyClone = (thing: Record<string, unknown>): 
   return thing
 }
 
+const DEFAULT_SHADOW_ROOT_CONTROLLER = {
+  flush: noop,
+  stop: noop,
+  addShadowRoot: noop,
+  removeShadowRoot: noop,
+}
+
 export const generateLeanSerializedDoc = (htmlContent: string, privacyTag: string) => {
   const newDoc = makeHtmlDoc(htmlContent, privacyTag)
   const serializedDoc = removeIdFieldsRecursivelyClone(
     serializeNodeWithId(newDoc, {
       parentNodePrivacyLevel: NodePrivacyLevel.ALLOW,
       serializationContext: {
+        shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
         status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
         elementsScrollPositions: createElementsScrollPositions(),
       },

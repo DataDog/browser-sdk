@@ -5,7 +5,9 @@ let viewport: { width: number; height: number } | undefined
 let stopListeners: (() => void) | undefined
 
 export function getDisplayContext() {
-  if (!isExperimentalFeatureEnabled('clickmap')) return
+  if (!isExperimentalFeatureEnabled('clickmap')) {
+    return
+  }
 
   if (!viewport) {
     viewport = getViewportDimension()
@@ -20,6 +22,8 @@ export function getDisplayContext() {
 }
 
 export function resetDisplayContext() {
-  if (stopListeners) stopListeners()
+  if (stopListeners) {
+    stopListeners()
+  }
   viewport = undefined
 }

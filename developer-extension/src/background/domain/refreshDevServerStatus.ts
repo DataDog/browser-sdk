@@ -1,6 +1,6 @@
+import { DEV_LOGS_URL } from '../../common/constants'
 import { createLogger } from '../../common/logger'
 import { listenAction } from '../actions'
-import { DEV_LOGS_URL } from '../constants'
 import { setStore } from '../store'
 
 const logger = createLogger('refreshDevServerStatus')

@@ -1,4 +1,3 @@
-import { DOM_EVENT, addEventListener } from '../browser/addEventListener'
 import { display } from './display'
 import { monitor } from './monitor'
 
@@ -320,7 +319,9 @@ export function safeTruncate(candidate: string, length: number, suffix = '') {
   const isLastCharSurrogatePair = lastChar >= 0xd800 && lastChar <= 0xdbff
   const correctedLength = isLastCharSurrogatePair ? length + 1 : length
 
-  if (candidate.length <= correctedLength) return candidate
+  if (candidate.length <= correctedLength) {
+    return candidate
+  }
 
   return `${candidate.slice(0, correctedLength)}${suffix}`
 }
@@ -334,15 +335,6 @@ export function elementMatches(element: Element & { msMatchesSelector?(selector:
     return element.msMatchesSelector(selector)
   }
   return false
-}
-
-export function runOnReadyState(expectedReadyState: 'complete' | 'interactive', callback: () => void) {
-  if (document.readyState === expectedReadyState || document.readyState === 'complete') {
-    callback()
-  } else {
-    const eventName = expectedReadyState === 'complete' ? DOM_EVENT.LOAD : DOM_EVENT.DOM_CONTENT_LOADED
-    addEventListener(window, eventName, callback, { once: true })
-  }
 }
 
 /**

@@ -9,9 +9,16 @@ import {
   addEventListeners,
   addEventListener,
   noop,
+  isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
 import type { LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
-import { initViewportObservable, ActionType, RumEventType, LifeCycleEventType } from '@datadog/browser-rum-core'
+import {
+  isNodeShadowHost,
+  initViewportObservable,
+  ActionType,
+  RumEventType,
+  LifeCycleEventType,
+} from '@datadog/browser-rum-core'
 import { NodePrivacyLevel } from '../../constants'
 import type {
   InputState,
@@ -32,10 +39,10 @@ import { RecordType, IncrementalSource, MediaInteractionType, MouseInteractionTy
 import { getNodePrivacyLevel, shouldMaskNode } from './privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from './serializationUtils'
 import { assembleIncrementalSnapshot, forEach, getPathToNestedCSSRule, isTouchEvent } from './utils'
-import type { MutationController } from './mutationObserver'
 import { startMutationObserver } from './mutationObserver'
 import { getVisualViewport, getScrollX, getScrollY, convertMouseEventToLayoutCoordinates } from './viewports'
 import type { ElementsScrollPositions } from './elementsScrollPositions'
+import type { ShadowRootsController } from './shadowRootsController'
 
 const MOUSE_MOVE_OBSERVER_THRESHOLD = 50
 const SCROLL_OBSERVER_THRESHOLD = 100
@@ -83,7 +90,6 @@ export type FrustrationCallback = (record: FrustrationRecord) => void
 interface ObserverParam {
   lifeCycle: LifeCycle
   configuration: RumConfiguration
-  mutationController: MutationController
   elementsScrollPositions: ElementsScrollPositions
   mutationCb: MutationCallBack
   mousemoveCb: MousemoveCallBack
@@ -96,10 +102,11 @@ interface ObserverParam {
   styleSheetCb: StyleSheetCallback
   focusCb: FocusCallback
   frustrationCb: FrustrationCallback
+  shadowRootsController: ShadowRootsController
 }
 
-export function initObservers(o: ObserverParam): ListenerHandler {
-  const mutationHandler = initMutationObserver(o.mutationController, o.mutationCb, o.configuration)
+export function initObservers(o: ObserverParam): { stop: ListenerHandler; flush: ListenerHandler } {
+  const mutationHandler = initMutationObserver(o.mutationCb, o.configuration, o.shadowRootsController)
   const mousemoveHandler = initMoveObserver(o.mousemoveCb)
   const mouseInteractionHandler = initMouseInteractionObserver(
     o.mouseInteractionCb,
@@ -117,33 +124,38 @@ export function initObservers(o: ObserverParam): ListenerHandler {
   const visualViewportResizeHandler = initVisualViewportResizeObserver(o.visualViewportResizeCb)
   const frustrationHandler = initFrustrationObserver(o.lifeCycle, o.frustrationCb)
 
-  return () => {
-    mutationHandler()
-    mousemoveHandler()
-    mouseInteractionHandler()
-    scrollHandler()
-    viewportResizeHandler()
-    inputHandler()
-    mediaInteractionHandler()
-    styleSheetObserver()
-    focusHandler()
-    visualViewportResizeHandler()
-    frustrationHandler()
+  return {
+    flush: () => {
+      mutationHandler.flush()
+    },
+    stop: () => {
+      mutationHandler.stop()
+      mousemoveHandler()
+      mouseInteractionHandler()
+      scrollHandler()
+      viewportResizeHandler()
+      inputHandler()
+      mediaInteractionHandler()
+      styleSheetObserver()
+      focusHandler()
+      visualViewportResizeHandler()
+      frustrationHandler()
+    },
   }
 }
 
-function initMutationObserver(
-  mutationController: MutationController,
+export function initMutationObserver(
   cb: MutationCallBack,
-  configuration: RumConfiguration
+  configuration: RumConfiguration,
+  shadowRootsController: ShadowRootsController
 ) {
-  return startMutationObserver(mutationController, cb, configuration).stop
+  return startMutationObserver(cb, configuration, shadowRootsController, document)
 }
 
 function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {
   const { throttled: updatePosition } = throttle(
     monitor((event: MouseEvent | TouchEvent) => {
-      const target = event.target as Node
+      const target = getEventTarget(event)
       if (hasSerializedNode(target)) {
         const { clientX, clientY } = isTouchEvent(event) ? event.changedTouches[0] : event
         const position: MousePosition = {
@@ -188,7 +200,7 @@ function initMouseInteractionObserver(
   defaultPrivacyLevel: DefaultPrivacyLevel
 ): ListenerHandler {
   const handler = (event: MouseEvent | TouchEvent) => {
-    const target = event.target as Node
+    const target = getEventTarget(event)
     if (getNodePrivacyLevel(target, defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN || !hasSerializedNode(target)) {
       return
     }
@@ -224,7 +236,7 @@ function initScrollObserver(
 ): ListenerHandler {
   const { throttled: updatePosition } = throttle(
     monitor((event: UIEvent) => {
-      const target = event.target as HTMLElement | Document
+      const target = getEventTarget(event) as HTMLElement | Document
       if (
         !target ||
         getNodePrivacyLevel(target, defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN ||
@@ -259,7 +271,15 @@ function initViewportResizeObserver(cb: ViewportResizeCallback): ListenerHandler
   return initViewportObservable().subscribe(cb).unsubscribe
 }
 
-export function initInputObserver(cb: InputCallback, defaultPrivacyLevel: DefaultPrivacyLevel): ListenerHandler {
+type InputObserverOptions = {
+  domEvents?: Array<DOM_EVENT.INPUT | DOM_EVENT.CHANGE>
+  target?: Node
+}
+export function initInputObserver(
+  cb: InputCallback,
+  defaultPrivacyLevel: DefaultPrivacyLevel,
+  { domEvents = [DOM_EVENT.INPUT, DOM_EVENT.CHANGE], target = document }: InputObserverOptions = {}
+): ListenerHandler {
   const lastInputStateMap: WeakMap<Node, InputState> = new WeakMap()
 
   function onElementChange(target: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement) {
@@ -325,15 +345,16 @@ export function initInputObserver(cb: InputCallback, defaultPrivacyLevel: Defaul
   }
 
   const { stop: stopEventListeners } = addEventListeners(
-    document,
-    [DOM_EVENT.INPUT, DOM_EVENT.CHANGE],
+    target,
+    domEvents,
     (event) => {
+      const target = getEventTarget(event)
       if (
-        event.target instanceof HTMLInputElement ||
-        event.target instanceof HTMLTextAreaElement ||
-        event.target instanceof HTMLSelectElement
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement
       ) {
-        onElementChange(event.target)
+        onElementChange(target)
       }
     },
     {
@@ -418,7 +439,7 @@ function initMediaInteractionObserver(
   defaultPrivacyLevel: DefaultPrivacyLevel
 ): ListenerHandler {
   const handler = (event: Event) => {
-    const target = event.target as Node
+    const target = getEventTarget(event)
     if (
       !target ||
       getNodePrivacyLevel(target, defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN ||
@@ -488,4 +509,15 @@ export function initFrustrationObserver(lifeCycle: LifeCycle, frustrationCb: Fru
       })
     }
   }).unsubscribe
+}
+
+function getEventTarget(event: Event): Node {
+  if (
+    event.composed === true &&
+    isNodeShadowHost(event.target as Node) &&
+    isExperimentalFeatureEnabled('record_shadow_dom')
+  ) {
+    return event.composedPath()[0] as Node
+  }
+  return event.target as Node
 }

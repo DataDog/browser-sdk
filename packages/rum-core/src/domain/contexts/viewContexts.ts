@@ -10,6 +10,7 @@ export interface ViewContext {
   service?: string
   version?: string
   id: string
+  documentVersion: number
   name?: string
 }
 
@@ -23,6 +24,13 @@ export function startViewContexts(lifeCycle: LifeCycle): ViewContexts {
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
     viewContextHistory.add(buildViewContext(view), view.startClocks.relative)
+  })
+
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, ({ startClocks, documentVersion }) => {
+    const viewContext = viewContextHistory.find(startClocks.relative)
+    if (viewContext) {
+      viewContext.documentVersion = documentVersion
+    }
   })
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, ({ endClocks }) => {
@@ -39,6 +47,7 @@ export function startViewContexts(lifeCycle: LifeCycle): ViewContexts {
       version: view.version,
       id: view.id,
       name: view.name,
+      documentVersion: view.documentVersion,
     }
   }
 

@@ -1,5 +1,11 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { ErrorSource, ONE_MINUTE, display } from '@datadog/browser-core'
+import {
+  updateExperimentalFeatures,
+  resetExperimentalFeatures,
+  ErrorSource,
+  ONE_MINUTE,
+  display,
+} from '@datadog/browser-core'
 import { createRumSessionManagerMock } from '../../test/mockRumSessionManager'
 import { createRawRumEvent } from '../../test/fixtures'
 import type { TestSetupBuilder } from '../../test/specHelper'
@@ -28,6 +34,7 @@ describe('rum assembly', () => {
     findView = () => ({
       id: '7890',
       name: 'view name',
+      documentVersion: 42,
     })
     reportErrorSpy = jasmine.createSpy('reportError')
     commonContext = {
@@ -441,6 +448,10 @@ describe('rum assembly', () => {
   })
 
   describe('view context', () => {
+    afterEach(() => {
+      resetExperimentalFeatures()
+    })
+
     it('should be merged with event attributes', () => {
       const { lifeCycle } = setupBuilder.build()
       notifyRawRumEvent(lifeCycle, {
@@ -450,6 +461,23 @@ describe('rum assembly', () => {
         jasmine.objectContaining({
           id: '7890',
           name: 'view name',
+        })
+      )
+    })
+
+    it('should include the view document version in global context', () => {
+      updateExperimentalFeatures(['report_view_document_version'])
+      const { lifeCycle } = setupBuilder.build()
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.RESOURCE),
+      })
+      expect(serverRumEvents[0].context).toEqual(
+        jasmine.objectContaining({
+          _dd: {
+            view: {
+              document_version: 42,
+            },
+          },
         })
       )
     })
@@ -472,7 +500,7 @@ describe('rum assembly', () => {
 
     it('should be overridden by the view context', () => {
       const { lifeCycle } = setupBuilder.build()
-      findView = () => ({ service: 'new service', version: 'new version', id: '1234' })
+      findView = () => ({ service: 'new service', version: 'new version', id: '1234', documentVersion: 0 })
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION),
       })

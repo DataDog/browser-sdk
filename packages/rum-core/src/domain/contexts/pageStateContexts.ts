@@ -52,7 +52,9 @@ export function startPageStateContexts(): PageStateContexts {
     (event) => {
       // Only get events fired by the browser to avoid false state changes done with custom events
       // cf: developer extension auto flush: https://github.com/DataDog/browser-sdk/blob/2f72bf05a672794c9e33965351964382a94c72ba/developer-extension/src/panel/flushEvents.ts#L11-L12
-      if (!event.isTrusted) return
+      if (!event.isTrusted) {
+        return
+      }
 
       if (event.type === DOM_EVENT.FREEZE) {
         addPageState(PageState.FROZEN)
@@ -100,12 +102,16 @@ export function getState(): PageState {
 }
 
 export function addPageState(nextState: PageState, pageStateContextMaxLength = PAGE_STATE_CONTEXT_MAX_LENGTH) {
-  if (nextState === state) return
+  if (nextState === state) {
+    return
+  }
 
   state = nextState
   const now = relativeNow()
 
-  if (pageStateContext.length === pageStateContextMaxLength) pageStateContext.shift()
+  if (pageStateContext.length === pageStateContextMaxLength) {
+    pageStateContext.shift()
+  }
 
   pageStateContext.push({ state, startTime: now })
 }

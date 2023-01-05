@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { generateUUID } from '../../../../packages/core/src/tools/utils'
-import type { RumEvent } from '../../../../packages/rum-core/src/rumEvent.types'
-import type { LogsEvent } from '../../../../packages/logs/src/logsEvent.types'
 import type { TelemetryEvent } from '../../../../packages/core/src/domain/telemetry'
+import { generateUUID } from '../../../../packages/core/src/tools/utils'
+import type { LogsEvent } from '../../../../packages/logs/src/logsEvent.types'
+import type { RumEvent } from '../../../../packages/rum-core/src/rumEvent.types'
+import { INTAKE_DOMAINS } from '../../common/constants'
 import { listenSdkMessages } from '../backgroundScriptConnection'
 import type { EventSource } from '../types'
 
@@ -29,7 +30,9 @@ export function useEvents({ preserveEvents, eventSource }: { preserveEvents: boo
   useEffect(() => {
     if (!preserveEvents) {
       const clearCurrentEvents = (details: chrome.webNavigation.WebNavigationTransitionCallbackDetails) => {
-        if (details.transitionType === 'reload') clearEvents()
+        if (details.transitionType === 'reload') {
+          clearEvents()
+        }
       }
       chrome.webNavigation.onCommitted.addListener(clearCurrentEvents)
       return () => {
@@ -95,9 +98,13 @@ function matchQuery(query: string, event: StoredEvent) {
 }
 
 function matchQueryPart(json: unknown, searchKey: string, searchTerm: string, jsonPath = ''): boolean {
-  if (jsonPath.endsWith(searchKey) && String(json).startsWith(searchTerm)) return true
+  if (jsonPath.endsWith(searchKey) && String(json).startsWith(searchTerm)) {
+    return true
+  }
 
-  if (typeof json !== 'object') return false
+  if (typeof json !== 'object') {
+    return false
+  }
 
   for (const key in json) {
     if (
@@ -115,17 +122,18 @@ function listenEventsFromRequests(callback: (events: StoredEvent[]) => void) {
   function beforeRequestHandler(request: chrome.devtools.network.Request) {
     const url = new URL(request.request.url)
 
-    const intake = /^(rum|logs).browser-intake-/.exec(url.hostname)
-    if (!intake) {
+    if (!INTAKE_DOMAINS.find((rootDomain) => url.hostname.endsWith(rootDomain))) {
+      return
+    }
+    // intake request path is /api/vX/track
+    if (!['rum', 'logs'].includes(url.pathname.split('/')[3])) {
       return
     }
     if (!request.request.postData || !request.request.postData.text) {
       return
     }
 
-    const rawBody = request.request.postData.text
-
-    const decodedBody = rawBody
+    const decodedBody = request.request.postData.text
     const rawEvents = decodedBody.split('\n')
     const events = rawEvents.map((rawEvent) => ({ ...JSON.parse(rawEvent), id: generateUUID() } as StoredEvent))
 

@@ -16,7 +16,9 @@ export function stubReportingObserver() {
     { types }: ReportingObserverOption
   ) {
     types.forEach((type) => {
-      if (!callbacks[type]) callbacks[type] = []
+      if (!callbacks[type]) {
+        callbacks[type] = []
+      }
 
       callbacks[type]?.push(callback)
     })
@@ -36,7 +38,9 @@ export function stubReportingObserver() {
 
   return {
     raiseReport(type: ReportType) {
-      if (callbacks[type]) callbacks[type]!.forEach((callback) => callback([{ ...FAKE_REPORT, type }]))
+      if (callbacks[type]) {
+        callbacks[type]!.forEach((callback) => callback([{ ...FAKE_REPORT, type }]))
+      }
     },
     reset() {
       ;(window as BrowserWindow).ReportingObserver = originalReportingObserver

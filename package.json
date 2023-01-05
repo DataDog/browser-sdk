@@ -8,7 +8,7 @@
     "performances"
   ],
   "scripts": {
-    "postinstall": "scripts/cli update_submodule",
+    "postinstall": "scripts/cli init_submodule",
     "build": "lerna run build --stream",
     "build:bundle": "lerna run build:bundle --stream",
     "format": "prettier --check .",
@@ -53,12 +53,12 @@
     "eslint": "8.12.0",
     "eslint-config-prettier": "8.5.0",
     "eslint-module-utils": "2.7.3",
-    "eslint-plugin-import": "2.25.4",
+    "eslint-plugin-import": "2.26.0",
     "eslint-plugin-jasmine": "4.1.3",
     "eslint-plugin-jsdoc": "39.1.1",
     "eslint-plugin-local-rules": "1.1.0",
     "eslint-plugin-prefer-arrow": "1.2.3",
-    "eslint-plugin-unicorn": "42.0.0",
+    "eslint-plugin-unicorn": "45.0.2",
     "express": "4.17.3",
     "glob": "8.0.1",
     "jasmine-core": "3.6.0",

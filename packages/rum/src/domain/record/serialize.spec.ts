@@ -1,4 +1,4 @@
-import { isIE } from '@datadog/browser-core'
+import { isIE, noop, resetExperimentalFeatures, updateExperimentalFeatures } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { STABLE_ATTRIBUTES, DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from '@datadog/browser-rum-core'
 import {
@@ -20,7 +20,7 @@ import {
 import type { ElementNode, SerializedNodeWithId, TextNode } from '../../types'
 import { NodeType } from '../../types'
 import { hasSerializedNode } from './serializationUtils'
-import type { SerializeOptions } from './serialize'
+import type { SerializationContext, SerializeOptions } from './serialize'
 import {
   serializeDocument,
   serializeNodeWithId,
@@ -32,10 +32,19 @@ import {
 import { MAX_ATTRIBUTE_VALUE_CHAR_LENGTH } from './privacy'
 import type { ElementsScrollPositions } from './elementsScrollPositions'
 import { createElementsScrollPositions } from './elementsScrollPositions'
+import type { ShadowRootCallBack, ShadowRootsController } from './shadowRootsController'
 
 const DEFAULT_CONFIGURATION = {} as RumConfiguration
 
-const DEFAULT_SERIALIZATION_CONTEXT = {
+const DEFAULT_SHADOW_ROOT_CONTROLLER: ShadowRootsController = {
+  flush: noop,
+  stop: noop,
+  addShadowRoot: noop,
+  removeShadowRoot: noop,
+}
+
+const DEFAULT_SERIALIZATION_CONTEXT: SerializationContext = {
+  shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
   status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
   elementsScrollPositions: createElementsScrollPositions(),
 }
@@ -48,6 +57,11 @@ const DEFAULT_OPTIONS: SerializeOptions = {
 
 describe('serializeNodeWithId', () => {
   let sandbox: HTMLElement
+  let addShadowRootSpy: jasmine.Spy<ShadowRootCallBack>
+
+  beforeEach(() => {
+    addShadowRootSpy = jasmine.createSpy<ShadowRootCallBack>()
+  })
 
   beforeEach(() => {
     if (isIE()) {
@@ -59,6 +73,7 @@ describe('serializeNodeWithId', () => {
   })
 
   afterEach(() => {
+    resetExperimentalFeatures()
     sandbox.remove()
   })
 
@@ -149,6 +164,7 @@ describe('serializeNodeWithId', () => {
           serializeNodeWithId(element, {
             ...DEFAULT_OPTIONS,
             serializationContext: {
+              shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
               status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
               elementsScrollPositions,
             },
@@ -169,6 +185,7 @@ describe('serializeNodeWithId', () => {
           serializeNodeWithId(element, {
             ...DEFAULT_OPTIONS,
             serializationContext: {
+              shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
               status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT,
               elementsScrollPositions,
             },
@@ -187,6 +204,7 @@ describe('serializeNodeWithId', () => {
           serializeNodeWithId(element, {
             ...DEFAULT_OPTIONS,
             serializationContext: {
+              shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
               status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT,
               elementsScrollPositions,
             },
@@ -208,6 +226,7 @@ describe('serializeNodeWithId', () => {
           serializeNodeWithId(element, {
             ...DEFAULT_OPTIONS,
             serializationContext: {
+              shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
               status: SerializationContextStatus.MUTATION,
             },
           }) as ElementNode
@@ -401,6 +420,96 @@ describe('serializeNodeWithId', () => {
 
         expect((serializeNodeWithId(input, DEFAULT_OPTIONS)! as ElementNode).attributes.placeholder).toEqual('***')
       })
+    })
+
+    it('serializes a shadow host', () => {
+      updateExperimentalFeatures(['record_shadow_dom'])
+      const div = document.createElement('div')
+      div.attachShadow({ mode: 'open' })
+      expect(serializeNodeWithId(div, DEFAULT_OPTIONS)).toEqual({
+        type: NodeType.Element,
+        tagName: 'div',
+        attributes: {},
+        isSVG: undefined,
+        childNodes: [
+          {
+            type: NodeType.DocumentFragment,
+            isShadowRoot: true,
+            childNodes: [],
+            id: jasmine.any(Number) as unknown as number,
+          },
+        ],
+        id: jasmine.any(Number) as unknown as number,
+      })
+    })
+
+    it('serializes a shadow host with children', () => {
+      updateExperimentalFeatures(['record_shadow_dom'])
+      const div = document.createElement('div')
+      div.attachShadow({ mode: 'open' })
+      div.shadowRoot!.appendChild(document.createElement('hr'))
+
+      const options: SerializeOptions = {
+        ...DEFAULT_OPTIONS,
+        serializationContext: {
+          ...DEFAULT_SERIALIZATION_CONTEXT,
+          shadowRootsController: {
+            ...DEFAULT_SHADOW_ROOT_CONTROLLER,
+            addShadowRoot: addShadowRootSpy,
+          },
+        },
+      }
+      expect(serializeNodeWithId(div, options)).toEqual({
+        type: NodeType.Element,
+        tagName: 'div',
+        attributes: {},
+        isSVG: undefined,
+        childNodes: [
+          {
+            type: NodeType.DocumentFragment,
+            isShadowRoot: true,
+            childNodes: [
+              {
+                type: NodeType.Element,
+                tagName: 'hr',
+                attributes: {},
+                isSVG: undefined,
+                childNodes: [],
+                id: jasmine.any(Number) as unknown as number,
+              },
+            ],
+            id: jasmine.any(Number) as unknown as number,
+          },
+        ],
+        id: jasmine.any(Number) as unknown as number,
+      })
+      expect(addShadowRootSpy).toHaveBeenCalledWith(div.shadowRoot!)
+    })
+
+    it('does not serialize shadow host children when the experimental flag is missing', () => {
+      const div = document.createElement('div')
+      div.attachShadow({ mode: 'open' })
+      div.shadowRoot!.appendChild(document.createElement('hr'))
+
+      const options: SerializeOptions = {
+        ...DEFAULT_OPTIONS,
+        serializationContext: {
+          ...DEFAULT_SERIALIZATION_CONTEXT,
+          shadowRootsController: {
+            ...DEFAULT_SHADOW_ROOT_CONTROLLER,
+            addShadowRoot: addShadowRootSpy,
+          },
+        },
+      }
+      expect(serializeNodeWithId(div, options)).toEqual({
+        type: NodeType.Element,
+        tagName: 'div',
+        attributes: {},
+        isSVG: undefined,
+        childNodes: [],
+        id: jasmine.any(Number) as unknown as number,
+      })
+      expect(addShadowRootSpy).not.toHaveBeenCalled()
     })
   })
 
