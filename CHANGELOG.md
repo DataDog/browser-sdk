@@ -16,6 +16,12 @@
 
 ---
 
+## v4.29.1
+
+- ⚗️ [REPLAY] Experiment support for shadow DOM ([#1787](https://github.com/DataDog/browser-sdk/pull/1787))
+- 🔊 [RUMF-1345] add telemetry logs on untrusted events ([#1910](https://github.com/DataDog/browser-sdk/pull/1910))
+- 🔊 add view document_count in non-view events ([#1892](https://github.com/DataDog/browser-sdk/pull/1892))
+
 ## v4.29.0
 
 - 🐛 [RUMF-1435] do not retry status 0 request while online ([#1891](https://github.com/DataDog/browser-sdk/pull/1891))
