@@ -7,7 +7,7 @@ const { findBrowserSdkPackageJsonFiles, printLog, runMain, executeCommand } = re
 
 runMain(async () => {
   await checkGitTag()
-  await checkBrowserSdkPackageJsonFiles()
+  checkBrowserSdkPackageJsonFiles()
 
   printLog('Release check done.')
 })
@@ -26,8 +26,8 @@ async function checkGitTag() {
   }
 }
 
-async function checkBrowserSdkPackageJsonFiles() {
-  const packageJsonFiles = await findBrowserSdkPackageJsonFiles()
+function checkBrowserSdkPackageJsonFiles() {
+  const packageJsonFiles = findBrowserSdkPackageJsonFiles()
 
   printLog(
     `Checking package.json files:

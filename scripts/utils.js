@@ -199,8 +199,8 @@ async function fetchWrapper(url, options) {
   return response.text()
 }
 
-async function findBrowserSdkPackageJsonFiles() {
-  const manifestPaths = await executeCommand('git ls-files -- "package.json" "*/package.json"')
+function findBrowserSdkPackageJsonFiles() {
+  const manifestPaths = command`git ls-files -- package.json */package.json`.run()
   return manifestPaths
     .trim()
     .split('\n')
