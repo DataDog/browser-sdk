@@ -423,6 +423,12 @@ Optional proxy URL, for example: https://www.proxy.com/path. For more informatio
 A list of request origins used to inject tracing headers. For more information, see [Connect RUM and Traces][12].
 
 `tracingSampleRate`
+: Optional - **Deprecated**<br/>
+**Type**: Number<br/>
+**Default**: `100`<br/>
+See `traceSampleRate`.
+
+`traceSampleRate`
 : Optional<br/>
 **Type**: Number<br/>
 **Default**: `100`<br/>
