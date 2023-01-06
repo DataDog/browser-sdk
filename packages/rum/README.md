@@ -50,7 +50,7 @@ datadogRum.init({
   //  service: 'my-web-application',
   //  env: 'production',
   //  version: '1.0.0',
-  sampleRate: 100,
+  sessionSampleRate: 100,
   sessionReplaySampleRate: 100, // if not included, the default is 100
   trackResources: true,
   trackLongTasks: true,
@@ -73,7 +73,7 @@ datadogRum.init({
   //  service: 'my-web-application',
   //  env: 'production',
   //  version: '1.0.0',
-  sampleRate: 100,
+  sessionSampleRate: 100,
   premiumSampleRate: 100, // if not included, the default is 100
   trackInteractions: true,
 })
@@ -94,7 +94,7 @@ datadogRum.init({
   //  service: 'my-web-application',
   //  env: 'production',
   //  version: '1.0.0',
-  sampleRate: 100,
+  sessionSampleRate: 100,
   replaySampleRate: 100, // if not included, the default is 100
   trackInteractions: true,
 })
@@ -127,7 +127,7 @@ Add the generated code snippet to the head tag of every HTML page you want to mo
       //  service: 'my-web-application',
       //  env: 'production',
       //  version: '1.0.0',
-      sampleRate: 100,
+      sessionSampleRate: 100,
       sessionReplaySampleRate: 100, // if not included, the default is 100
       trackResources: true,
       trackLongTasks: true,
@@ -158,7 +158,7 @@ Add the generated code snippet to the head tag of every HTML page you want to mo
       //  service: 'my-web-application',
       //  env: 'production',
       //  version: '1.0.0',
-      sampleRate: 100,
+      sessionSampleRate: 100,
       premiumSampleRate: 100, // if not included, the default is 100
       trackInteractions: true,
     })
@@ -187,7 +187,7 @@ Add the generated code snippet to the head tag of every HTML page you want to mo
       //  service: 'my-web-application',
       //  env: 'production',
       //  version: '1.0.0',
-      sampleRate: 100,
+      sessionSampleRate: 100,
       replaySampleRate: 100, // if not included, the default is 100
       trackInteractions: true,
     })
@@ -219,7 +219,7 @@ Add the generated code snippet to the head tag (in front of any other script tag
       //  service: 'my-web-application',
       //  env: 'production',
       //  version: '1.0.0',
-      sampleRate: 100,
+      sessionSampleRate: 100,
       sessionReplaySampleRate: 100, // if not included, the default is 100
       trackResources: true,
       trackLongTasks: true,
@@ -244,7 +244,7 @@ Add the generated code snippet to the head tag (in front of any other script tag
       //  service: 'my-web-application',
       //  env: 'production',
       //  version: '1.0.0',
-      sampleRate: 100,
+      sessionSampleRate: 100,
       premiumSampleRate: 100, // if not included, the default is 100
       trackInteractions: true,
     })
@@ -267,7 +267,7 @@ Add the generated code snippet to the head tag (in front of any other script tag
       //  service: 'my-web-application',
       //  env: 'production',
       //  version: '1.0.0',
-      sampleRate: 100,
+      sessionSampleRate: 100,
       replaySampleRate: 100, // if not included, the default is 100
       trackInteractions: true,
     })
@@ -291,7 +291,7 @@ window.DD_RUM.init({
   applicationId: 'XXX',
   clientToken: 'XXX',
   site: 'datadoghq.com',
-  sampleRate: 100,
+  sessionSampleRate: 100,
   sessionReplaySampleRate: 100, // if not included, the default is 100
   trackResources: true,
   trackLongTasks: true,
@@ -377,10 +377,16 @@ See [Session Replay Privacy Options][13].
 Specify your own attribute to be used to [name actions][9].
 
 `sampleRate`
+: Optional - **Deprecated**<br/>
+**Type**: Number<br/>
+**Default**: `100`<br/>
+See ``sessionSampleRate`.
+
+`sessionSampleRate`
 : Optional<br/>
 **Type**: Number<br/>
 **Default**: `100`<br/>
-The percentage of sessions to track: `100` for all, `0` for none. Only tracked sessions send RUM events. For more details about `sampleRate`, see the [sampling configuration][21].
+The percentage of sessions to track: `100` for all, `0` for none. Only tracked sessions send RUM events. For more details about `sessionSampleRate`, see the [sampling configuration][21].
 
 `replaySampleRate`
 : Optional - **Deprecated**<br/>
