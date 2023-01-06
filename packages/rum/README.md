@@ -54,7 +54,7 @@ datadogRum.init({
   sessionReplaySampleRate: 100, // if not included, the default is 100
   trackResources: true,
   trackLongTasks: true,
-  trackInteractions: true,
+  trackUserInteractions: true,
 })
 ```
 
@@ -75,7 +75,7 @@ datadogRum.init({
   //  version: '1.0.0',
   sessionSampleRate: 100,
   premiumSampleRate: 100, // if not included, the default is 100
-  trackInteractions: true,
+  trackUserInteractions: true,
 })
 ```
 
@@ -96,13 +96,13 @@ datadogRum.init({
   //  version: '1.0.0',
   sessionSampleRate: 100,
   replaySampleRate: 100, // if not included, the default is 100
-  trackInteractions: true,
+  trackUserInteractions: true,
 })
 ```
 
 </details>
 
-The `trackInteractions` and `trackFrustrations` parameters enable the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
+The `trackUserInteractions` and `trackFrustrations` parameters enable the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
 
 ### CDN async
 
@@ -131,7 +131,7 @@ Add the generated code snippet to the head tag of every HTML page you want to mo
       sessionReplaySampleRate: 100, // if not included, the default is 100
       trackResources: true,
       trackLongTasks: true,
-      trackInteractions: true,
+      trackUserInteractions: true,
     })
   })
 </script>
@@ -160,7 +160,7 @@ Add the generated code snippet to the head tag of every HTML page you want to mo
       //  version: '1.0.0',
       sessionSampleRate: 100,
       premiumSampleRate: 100, // if not included, the default is 100
-      trackInteractions: true,
+      trackUserInteractions: true,
     })
   })
 </script>
@@ -189,7 +189,7 @@ Add the generated code snippet to the head tag of every HTML page you want to mo
       //  version: '1.0.0',
       sessionSampleRate: 100,
       replaySampleRate: 100, // if not included, the default is 100
-      trackInteractions: true,
+      trackUserInteractions: true,
     })
   })
 </script>
@@ -197,7 +197,7 @@ Add the generated code snippet to the head tag of every HTML page you want to mo
 
 </details>
 
-The `trackInteractions` and `trackFrustrations` parameters enable the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
+The `trackUserInteractions` and `trackFrustrations` parameters enable the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
 
 Early RUM API calls must be wrapped in the `DD_RUM.onReady()` callback. This ensures the code only gets executed once the SDK is properly loaded.
 
@@ -223,7 +223,7 @@ Add the generated code snippet to the head tag (in front of any other script tag
       sessionReplaySampleRate: 100, // if not included, the default is 100
       trackResources: true,
       trackLongTasks: true,
-      trackInteractions: true,
+      trackUserInteractions: true,
     })
 </script>
 ```
@@ -246,7 +246,7 @@ Add the generated code snippet to the head tag (in front of any other script tag
       //  version: '1.0.0',
       sessionSampleRate: 100,
       premiumSampleRate: 100, // if not included, the default is 100
-      trackInteractions: true,
+      trackUserInteractions: true,
     })
 </script>
 ```
@@ -269,14 +269,14 @@ Add the generated code snippet to the head tag (in front of any other script tag
       //  version: '1.0.0',
       sessionSampleRate: 100,
       replaySampleRate: 100, // if not included, the default is 100
-      trackInteractions: true,
+      trackUserInteractions: true,
     })
 </script>
 ```
 
 </details>
 
-The `trackInteractions` and `trackFrustrations` parameters enable the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
+The `trackUserInteractions` and `trackFrustrations` parameters enable the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
 
 The `window.DD_RUM` check is used to prevent issues if a loading failure occurs with the RUM Browser SDK.
 
@@ -342,6 +342,12 @@ The application’s version, for example: 1.2.3, 6c44da20, and 2020.02.13. Follo
 Allows you to control RUM views creation. See [override default RUM view names][10].
 
 `trackInteractions`
+: Optional - **Deprecated**<br/>
+**Type**: Boolean<br/>
+**Default**: `false` <br/>
+See `trackUserInteractions`.
+
+`trackUserInteractions`
 : Optional<br/>
 **Type**: Boolean<br/>
 **Default**: `false` <br/>
@@ -351,7 +357,7 @@ Enables [automatic collection of users actions][6].
 : Optional<br/>
 **Type**: Boolean<br/>
 **Default**: `false` <br/>
-Enables [automatic collection of user frustrations][20]. Implies `trackInteractions: true`.
+Enables [automatic collection of user frustrations][20]. Implies `trackUserInteractions: true`.
 
 `trackResources`
 : Optional<br/>
