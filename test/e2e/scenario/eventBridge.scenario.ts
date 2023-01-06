@@ -3,7 +3,7 @@ import { createTest, flushEvents, html } from '../lib/framework'
 
 describe('bridge present', () => {
   createTest('send action')
-    .withRum({ trackInteractions: true })
+    .withRum({ trackUserInteractions: true })
     .withEventBridge()
     .withBody(
       html`

@@ -289,7 +289,7 @@ export function makeRumPublicApi(
     return assign({}, initConfiguration, {
       applicationId: '00000000-aaaa-0000-aaaa-000000000000',
       clientToken: 'empty',
-      sampleRate: 100,
+      sessionSampleRate: 100,
     })
   }
 

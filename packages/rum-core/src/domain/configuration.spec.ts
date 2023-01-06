@@ -141,14 +141,14 @@ describe('validateAndBuildRumConfiguration', () => {
     })
   })
 
-  describe('tracingSampleRate', () => {
+  describe('deprecated tracingSampleRate', () => {
     it('defaults to undefined if the option is not provided', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.tracingSampleRate).toBeUndefined()
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.traceSampleRate).toBeUndefined()
     })
 
     it('is set to provided value', () => {
       expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, tracingSampleRate: 50 })!.tracingSampleRate
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, tracingSampleRate: 50 })!.traceSampleRate
       ).toBe(50)
     })
 
@@ -156,13 +156,36 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, tracingSampleRate: 'foo' as any })
       ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Tracing Sample Rate should be a number between 0 and 100')
+      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Trace Sample Rate should be a number between 0 and 100')
 
       displayErrorSpy.calls.reset()
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, tracingSampleRate: 200 })
       ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Tracing Sample Rate should be a number between 0 and 100')
+      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Trace Sample Rate should be a number between 0 and 100')
+    })
+  })
+
+  describe('traceSampleRate', () => {
+    it('defaults to undefined if the option is not provided', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.traceSampleRate).toBeUndefined()
+    })
+
+    it('is set to provided value', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, traceSampleRate: 50 })!.traceSampleRate
+      ).toBe(50)
+    })
+
+    it('does not validate the configuration if an incorrect value is provided', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, traceSampleRate: 'foo' as any })
+      ).toBeUndefined()
+      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Trace Sample Rate should be a number between 0 and 100')
+
+      displayErrorSpy.calls.reset()
+      expect(validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, traceSampleRate: 200 })).toBeUndefined()
+      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Trace Sample Rate should be a number between 0 and 100')
     })
   })
 
@@ -321,24 +344,50 @@ describe('validateAndBuildRumConfiguration', () => {
     })
   })
 
-  describe('trackInteractions', () => {
+  describe('deprecated trackInteractions', () => {
     it('defaults to false', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackInteractions).toBeFalse()
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackUserInteractions).toBeFalse()
     })
 
     it('is set to provided value', () => {
       expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackInteractions: true })!.trackInteractions
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackInteractions: true })!
+          .trackUserInteractions
       ).toBeTrue()
       expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackInteractions: false })!.trackInteractions
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackInteractions: false })!
+          .trackUserInteractions
       ).toBeFalse()
     })
 
     it('the provided value is cast to boolean', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackInteractions: 'foo' as any })!
-          .trackInteractions
+          .trackUserInteractions
+      ).toBeTrue()
+    })
+  })
+
+  describe('trackUserInteractions', () => {
+    it('defaults to false', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackUserInteractions).toBeFalse()
+    })
+
+    it('is set to provided value', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackUserInteractions: true })!
+          .trackUserInteractions
+      ).toBeTrue()
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackUserInteractions: false })!
+          .trackUserInteractions
+      ).toBeFalse()
+    })
+
+    it('the provided value is cast to boolean', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackUserInteractions: 'foo' as any })!
+          .trackUserInteractions
       ).toBeTrue()
     })
   })
@@ -364,9 +413,10 @@ describe('validateAndBuildRumConfiguration', () => {
       ).toBeTrue()
     })
 
-    it('implies "trackInteractions"', () => {
+    it('implies "trackUserInteractions"', () => {
       expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackFrustrations: true })!.trackInteractions
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackFrustrations: true })!
+          .trackUserInteractions
       ).toBeTrue()
     })
   })

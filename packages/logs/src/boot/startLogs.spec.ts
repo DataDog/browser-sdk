@@ -124,13 +124,13 @@ describe('logs', () => {
     it('should be applied when event bridge is present', () => {
       const sendSpy = spyOn(initEventBridgeStub(), 'send')
 
-      let configuration = { ...baseConfiguration, sampleRate: 0 }
+      let configuration = { ...baseConfiguration, sessionSampleRate: 0 }
       ;({ handleLog } = startLogs(initConfiguration, configuration, () => COMMON_CONTEXT, logger))
       handleLog(DEFAULT_MESSAGE, logger)
 
       expect(sendSpy).not.toHaveBeenCalled()
 
-      configuration = { ...baseConfiguration, sampleRate: 100 }
+      configuration = { ...baseConfiguration, sessionSampleRate: 100 }
       ;({ handleLog } = startLogs(initConfiguration, configuration, () => COMMON_CONTEXT, logger))
       handleLog(DEFAULT_MESSAGE, logger)
 

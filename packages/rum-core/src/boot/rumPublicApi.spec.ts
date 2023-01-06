@@ -93,10 +93,10 @@ describe('rum public api', () => {
         expect(display.error).not.toHaveBeenCalled()
       })
 
-      it('init should force sample rate to 100', () => {
-        const invalidConfiguration: HybridInitConfiguration = { sampleRate: 50 }
+      it('init should force session sample rate to 100', () => {
+        const invalidConfiguration: HybridInitConfiguration = { sessionSampleRate: 50 }
         rumPublicApi.init(invalidConfiguration as RumInitConfiguration)
-        expect(rumPublicApi.getInitConfiguration()?.sampleRate).toEqual(100)
+        expect(rumPublicApi.getInitConfiguration()?.sessionSampleRate).toEqual(100)
       })
     })
   })
