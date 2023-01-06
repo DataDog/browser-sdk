@@ -17,28 +17,23 @@ import type { RequestCompleteEvent } from '../../requestCollection'
 import { TraceIdentifier } from '../../tracing/tracer'
 import { validateAndBuildRumConfiguration } from '../../configuration'
 import { createRumSessionManagerMock } from '../../../../test/mockRumSessionManager'
-import type { PageStateEntry } from '../../contexts/pageStateHistory'
 import { PageState } from '../../contexts/pageStateHistory'
 import { startResourceCollection } from './resourceCollection'
 
 describe('resourceCollection', () => {
   let setupBuilder: TestSetupBuilder
 
-  let mockPageStates: PageStateEntry[] | undefined
+  let pageStateHistorySpy: jasmine.Spy<jasmine.Func>
   beforeEach(() => {
-    mockPageStates = undefined
-    setupBuilder = setup()
-      .withPageStateContexts({
-        findAll: () => mockPageStates,
-      })
-      .beforeBuild(({ lifeCycle, sessionManager, pageStateHistory }) => {
-        startResourceCollection(
-          lifeCycle,
-          validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!,
-          sessionManager,
-          pageStateHistory
-        )
-      })
+    setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager, pageStateHistory }) => {
+      pageStateHistorySpy = spyOn(pageStateHistory, 'findAll')
+      startResourceCollection(
+        lifeCycle,
+        validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!,
+        sessionManager,
+        pageStateHistory
+      )
+    })
   })
 
   afterEach(() => {
@@ -121,15 +116,23 @@ describe('resourceCollection', () => {
 
   it('should collect page states on resources when ff resource_page_states enabled', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
-    mockPageStates = [{ state: PageState.ACTIVE, startTime: 0 as RelativeTime }]
-    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, createCompletedRequest())
+    const mockPageStates = [{ state: PageState.ACTIVE, startTime: 0 as RelativeTime }]
+    const mockXHR = createCompletedRequest()
+    const mockPerformanceEntry = createResourceEntry()
 
-    const performanceEntry = createResourceEntry()
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [performanceEntry])
+    pageStateHistorySpy.and.returnValue(mockPageStates)
+
+    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, mockXHR)
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [mockPerformanceEntry])
 
     const rawRumResourceEventFetch = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
     const rawRumResourceEventEntry = rawRumEvents[1].rawRumEvent as RawRumResourceEvent
 
+    expect(pageStateHistorySpy.calls.first().args).toEqual([mockXHR.startClocks.relative, mockXHR.duration])
+    expect(pageStateHistorySpy.calls.mostRecent().args).toEqual([
+      mockPerformanceEntry.startTime,
+      mockPerformanceEntry.duration,
+    ])
     expect(rawRumResourceEventFetch._dd.page_states).toEqual(jasmine.objectContaining(mockPageStates))
     expect(rawRumResourceEventEntry._dd.page_states).toEqual(jasmine.objectContaining(mockPageStates))
   })

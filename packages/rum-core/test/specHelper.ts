@@ -30,7 +30,6 @@ export interface TestSetupBuilder {
   withViewContexts: (stub: Partial<ViewContexts>) => TestSetupBuilder
   withActionContexts: (stub: ActionContexts) => TestSetupBuilder
   withForegroundContexts: (stub: Partial<ForegroundContexts>) => TestSetupBuilder
-  withPageStateContexts: (stub: Partial<PageStateHistory>) => TestSetupBuilder
   withFeatureFlagContexts: (stub: Partial<FeatureFlagContexts>) => TestSetupBuilder
   withFakeClock: () => TestSetupBuilder
   beforeBuild: (callback: BeforeBuildCallback) => TestSetupBuilder
@@ -99,7 +98,7 @@ export function setup(): TestSetupBuilder {
     selectInForegroundPeriodsFor: () => undefined,
     stop: noop,
   }
-  let pageStateHistory: PageStateHistory = {
+  const pageStateHistory: PageStateHistory = {
     findAll: () => undefined,
     stop: noop,
   }
@@ -147,10 +146,6 @@ export function setup(): TestSetupBuilder {
     },
     withForegroundContexts(stub: Partial<ForegroundContexts>) {
       foregroundContexts = { ...foregroundContexts, ...stub }
-      return setupBuilder
-    },
-    withPageStateContexts(stub: Partial<PageStateHistory>) {
-      pageStateHistory = { ...pageStateHistory, ...stub }
       return setupBuilder
     },
     withFeatureFlagContexts(stub: Partial<FeatureFlagContexts>) {
