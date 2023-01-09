@@ -1,12 +1,20 @@
 'use strict'
 
 const fs = require('fs')
-const { CI_FILE, initGitConfig, executeCommand, printLog, logAndExit, replaceCiVariable } = require('../utils')
+const {
+  CI_FILE,
+  initGitConfig,
+  executeCommand,
+  printLog,
+  logAndExit,
+  replaceCiVariable,
+  readCiVariable,
+} = require('../utils')
 
 const REPOSITORY = process.env.GIT_REPOSITORY
 const MAIN_BRANCH = process.env.MAIN_BRANCH
 
-const CURRENT_STAGING_BRANCH = process.env.CURRENT_STAGING
+const CURRENT_STAGING_BRANCH = readCiVariable('CURRENT_STAGING')
 const NEW_STAGING_NUMBER = getWeekNumber().toString().padStart(2, '0')
 const NEW_STAGING_BRANCH = `staging-${NEW_STAGING_NUMBER}`
 
