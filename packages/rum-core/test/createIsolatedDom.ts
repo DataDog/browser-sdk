@@ -20,7 +20,7 @@ export function createIsolatedDom() {
     element(s: TemplateStringsArray) {
       return append(s[0])
     },
-    doc,
+    document: doc,
     window: iframe.contentWindow! as Window & { CSSStyleSheet: typeof CSSStyleSheet },
     append,
     clear() {

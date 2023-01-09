@@ -698,8 +698,8 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
     const isolatedDom = createIsolatedDom()
     const styleSheet = new isolatedDom.window.CSSStyleSheet()
     styleSheet.insertRule('div { width: 100%; }')
-    ;(isolatedDom.doc as WithAdoptedStyleSheets).adoptedStyleSheets = [styleSheet]
-    expect(serializeDocument(isolatedDom.doc, DEFAULT_CONFIGURATION, DEFAULT_SERIALIZATION_CONTEXT)).toEqual({
+    ;(isolatedDom.document as WithAdoptedStyleSheets).adoptedStyleSheets = [styleSheet]
+    expect(serializeDocument(isolatedDom.document, DEFAULT_CONFIGURATION, DEFAULT_SERIALIZATION_CONTEXT)).toEqual({
       type: NodeType.Document,
       childNodes: [jasmine.objectContaining({ type: NodeType.Element, tagName: 'html' })],
       adoptedStyleSheets: [
