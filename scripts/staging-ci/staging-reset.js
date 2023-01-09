@@ -57,7 +57,7 @@ async function main() {
 
 function getWeekNumber() {
   const today = new Date()
-  const yearStart = new Date(today.getUTCFullYear(), 0, 1)
+  const yearStart = new Date(Date.UTC(today.getUTCFullYear(), 0, 1))
   return Math.ceil(((today - yearStart) / 86400000 + yearStart.getUTCDay() + 1) / 7)
 }
 
