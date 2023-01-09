@@ -38,16 +38,11 @@ async function main() {
     printLog(`Staging branch already up to date in ${CI_FILE}. Skipping.`)
   }
 
-  let doesStagingExistLocally
   try {
-    await executeCommand(`git show-ref --heads ${NEW_STAGING_BRANCH}`)
-    doesStagingExistLocally = true
-  } catch {
-    doesStagingExistLocally = false
-  }
-  if (doesStagingExistLocally) {
-    printLog('New staging branch already exists locally, deleting...')
+    printLog('Deleting existing staging local branch if it exists...')
     await executeCommand(`git branch -D ${NEW_STAGING_BRANCH}`)
+  } catch {
+    // The local branch did not exist yet, let's continue
   }
 
   printLog('Creating the new staging branch...')
