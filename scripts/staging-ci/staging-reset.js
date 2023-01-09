@@ -1,12 +1,20 @@
 'use strict'
 
 const fs = require('fs')
-const { CI_FILE, initGitConfig, executeCommand, printLog, logAndExit, replaceCiVariable } = require('../utils')
+const {
+  CI_FILE,
+  initGitConfig,
+  executeCommand,
+  printLog,
+  logAndExit,
+  replaceCiFileVariable,
+  readCiFileVariable,
+} = require('../utils')
 
 const REPOSITORY = process.env.GIT_REPOSITORY
 const MAIN_BRANCH = process.env.MAIN_BRANCH
 
-const CURRENT_STAGING_BRANCH = process.env.CURRENT_STAGING
+const CURRENT_STAGING_BRANCH = readCiFileVariable('CURRENT_STAGING')
 const NEW_STAGING_NUMBER = getWeekNumber().toString().padStart(2, '0')
 const NEW_STAGING_BRANCH = `staging-${NEW_STAGING_NUMBER}`
 
@@ -23,22 +31,23 @@ async function main() {
   if (isNewBranch) {
     printLog(`Changing staging branch in ${CI_FILE}...`)
 
-    await replaceCiVariable('CURRENT_STAGING', NEW_STAGING_BRANCH)
+    await replaceCiFileVariable('CURRENT_STAGING', NEW_STAGING_BRANCH)
     await executeCommand(`git commit ${CI_FILE} -m "👷 Bump staging to ${NEW_STAGING_BRANCH}"`)
     await executeCommand(`git push origin ${MAIN_BRANCH}`)
   } else {
     printLog(`Staging branch already up to date in ${CI_FILE}. Skipping.`)
   }
 
-  const doesStagingExist = await executeCommand(`git ls-remote --heads ${REPOSITORY} ${NEW_STAGING_BRANCH}`)
-  if (doesStagingExist) {
-    printLog('New staging branch already exists, deleting...')
-    await executeCommand(`git branch -d ${NEW_STAGING_BRANCH}`)
-    await executeCommand(`git push origin --delete ${NEW_STAGING_BRANCH}`)
+  try {
+    printLog('Deleting existing staging local branch if it exists...')
+    await executeCommand(`git branch -D ${NEW_STAGING_BRANCH}`)
+  } catch {
+    // The local branch did not exist yet, let's continue
   }
+
   printLog('Creating the new staging branch...')
   await executeCommand(`git checkout -b ${NEW_STAGING_BRANCH}`)
-  await executeCommand(`git push origin ${NEW_STAGING_BRANCH}`)
+  await executeCommand(`git push origin -f ${NEW_STAGING_BRANCH}`)
 
   await executeCommand(`git checkout ${CURRENT_STAGING_BRANCH}`)
   await executeCommand('git pull')
@@ -57,7 +66,7 @@ async function main() {
 
 function getWeekNumber() {
   const today = new Date()
-  const yearStart = new Date(today.getUTCFullYear(), 0, 1)
+  const yearStart = new Date(Date.UTC(today.getUTCFullYear(), 0, 1))
   return Math.ceil(((today - yearStart) / 86400000 + yearStart.getUTCDay() + 1) / 7)
 }
 

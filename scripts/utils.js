@@ -1,6 +1,7 @@
 const util = require('util')
 const path = require('path')
-const fs = require('fs/promises')
+const fsPromises = require('fs/promises')
+const fs = require('fs')
 const execute = util.promisify(require('child_process').exec)
 const spawn = require('child_process').spawn
 // node-fetch v3.x only support ESM syntax.
@@ -35,7 +36,13 @@ async function initGitConfig(repository) {
   await executeCommand(`git remote set-url origin ${repository}`)
 }
 
-async function replaceCiVariable(variableName, value) {
+function readCiFileVariable(variableName) {
+  const regexp = new RegExp(`${variableName}: (.*)`)
+  const ciFileContent = fs.readFileSync(CI_FILE, { encoding: 'utf-8' })
+  return regexp.exec(ciFileContent)?.[1]
+}
+
+async function replaceCiFileVariable(variableName, value) {
   await modifyFile(CI_FILE, (content) =>
     content.replace(new RegExp(`${variableName}: .*`), `${variableName}: ${value}`)
   )
@@ -46,10 +53,10 @@ async function replaceCiVariable(variableName, value) {
  * @param modifier {(content: string) => string}
  */
 async function modifyFile(filePath, modifier) {
-  const content = await fs.readFile(filePath, { encoding: 'utf-8' })
+  const content = await fsPromises.readFile(filePath, { encoding: 'utf-8' })
   const modifiedContent = modifier(content)
   if (content !== modifiedContent) {
-    await fs.writeFile(filePath, modifiedContent)
+    await fsPromises.writeFile(filePath, modifiedContent)
     return true
   }
   return false
@@ -128,7 +135,8 @@ module.exports = {
   printError,
   printLog,
   logAndExit,
-  replaceCiVariable,
+  readCiFileVariable,
+  replaceCiFileVariable,
   fetch: fetchWrapper,
   modifyFile,
   findBrowserSdkPackageJsonFiles,
