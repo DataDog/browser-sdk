@@ -40,6 +40,7 @@ import { MAX_ATTRIBUTE_VALUE_CHAR_LENGTH } from './privacy'
 import type { ElementsScrollPositions } from './elementsScrollPositions'
 import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootCallBack, ShadowRootsController } from './shadowRootsController'
+import type { WithAdoptedStyleSheets } from './browser.types'
 
 const DEFAULT_CONFIGURATION = {} as RumConfiguration
 
@@ -701,7 +702,7 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
     const isolatedDom = createIsolatedDom()
     const styleSheet = new isolatedDom.window.CSSStyleSheet()
     styleSheet.insertRule('div { width: 100%; }')
-    isolatedDom.doc.adoptedStyleSheets = [styleSheet]
+    ;(isolatedDom.doc as WithAdoptedStyleSheets).adoptedStyleSheets = [styleSheet]
     expect(serializeDocument(isolatedDom.doc, DEFAULT_CONFIGURATION, DEFAULT_SERIALIZATION_CONTEXT)).toEqual({
       type: NodeType.Document,
       childNodes: [jasmine.objectContaining({ type: NodeType.Element, tagName: 'html' })],

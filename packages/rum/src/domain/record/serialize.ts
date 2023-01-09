@@ -36,7 +36,7 @@ import {
 import { forEach } from './utils'
 import type { ElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
-import './browser.types'
+import type { WithAdoptedStyleSheets } from './browser.types'
 
 // Those values are the only one that can be used when inheriting privacy levels from parent to
 // children during serialization, since HIDDEN and IGNORE shouldn't serialize their children. This
@@ -127,7 +127,7 @@ export function serializeDocumentNode(document: Document, options: SerializeOpti
   return {
     type: NodeType.Document,
     childNodes: serializeChildNodes(document, options),
-    adoptedStyleSheets: getStyleSheets(document.adoptedStyleSheets),
+    adoptedStyleSheets: getStyleSheets((document as WithAdoptedStyleSheets).adoptedStyleSheets),
   }
 }
 
@@ -158,7 +158,9 @@ function serializeDocumentFragmentNode(
     type: NodeType.DocumentFragment,
     childNodes,
     isShadowRoot,
-    adoptedStyleSheets: isShadowRoot ? getStyleSheets(element.adoptedStyleSheets) : undefined,
+    adoptedStyleSheets: isShadowRoot
+      ? getStyleSheets((element as WithAdoptedStyleSheets).adoptedStyleSheets)
+      : undefined,
   }
 }
 
