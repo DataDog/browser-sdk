@@ -21,6 +21,7 @@ import {
 } from '../../../test/htmlAst'
 import type { ElementNode, SerializedNodeWithId, TextNode } from '../../types'
 import { NodeType } from '../../types'
+import type { IsolatedDom } from '../../../../rum-core/test/createIsolatedDom'
 import { createIsolatedDom } from '../../../../rum-core/test/createIsolatedDom'
 import { hasSerializedNode } from './serializationUtils'
 import type { SerializationContext, SerializeOptions } from './serialize'
@@ -691,28 +692,37 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
     }
   })
 
-  it('serializes a document with adoptedStyleSheets', () => {
-    if (!isAdoptedStyleSheetsSupported()) {
-      pending('no adoptedStyleSheets support')
-    }
-    const isolatedDom = createIsolatedDom()
-    const styleSheet = new isolatedDom.window.CSSStyleSheet()
-    styleSheet.insertRule('div { width: 100%; }')
-    ;(isolatedDom.document as WithAdoptedStyleSheets).adoptedStyleSheets = [styleSheet]
-    expect(serializeDocument(isolatedDom.document, DEFAULT_CONFIGURATION, DEFAULT_SERIALIZATION_CONTEXT)).toEqual({
-      type: NodeType.Document,
-      childNodes: [jasmine.objectContaining({ type: NodeType.Element, tagName: 'html' })],
-      adoptedStyleSheets: [
-        {
-          cssRules: ['div { width: 100%; }'],
-          disabled: undefined,
-          media: undefined,
-        },
-      ],
-      id: jasmine.any(Number) as unknown as number,
+  describe('with dynamic stylesheet', () => {
+    let isolatedDom: IsolatedDom
+
+    beforeEach(() => {
+      isolatedDom = createIsolatedDom()
     })
 
-    isolatedDom.clear()
+    afterEach(() => {
+      isolatedDom.clear()
+    })
+
+    it('serializes a document with adoptedStyleSheets', () => {
+      if (!isAdoptedStyleSheetsSupported()) {
+        pending('no adoptedStyleSheets support')
+      }
+      const styleSheet = new isolatedDom.window.CSSStyleSheet()
+      styleSheet.insertRule('div { width: 100%; }')
+      ;(isolatedDom.document as WithAdoptedStyleSheets).adoptedStyleSheets = [styleSheet]
+      expect(serializeDocument(isolatedDom.document, DEFAULT_CONFIGURATION, DEFAULT_SERIALIZATION_CONTEXT)).toEqual({
+        type: NodeType.Document,
+        childNodes: [jasmine.objectContaining({ type: NodeType.Element, tagName: 'html' })],
+        adoptedStyleSheets: [
+          {
+            cssRules: ['div { width: 100%; }'],
+            disabled: undefined,
+            media: undefined,
+          },
+        ],
+        id: jasmine.any(Number) as unknown as number,
+      })
+    })
   })
 
   it('a masked DOM Document itself is still serialized ', () => {
