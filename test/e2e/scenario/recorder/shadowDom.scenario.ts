@@ -84,12 +84,12 @@ const divShadowDom = `<script>
 
 /** Will generate the following HTML 
  * ```html
- * <my-div id="titi">
+ * <iv-with-style>
  *  #shadow-root
  *    <div>toto</div>
- *</my-div>
+ *</iv-with-style>
  *```
- when called like `<my-div />`
+ when called like `<div-with-style />`
  */
 const divWithStyleShadowDom = `<script>
 class DivWithStyle extends HTMLElement {
@@ -103,7 +103,7 @@ class DivWithStyle extends HTMLElement {
    this.shadowRoot.appendChild(div);
    const styleSheet = new CSSStyleSheet();
    styleSheet.insertRule('div { width: 100%; }')
-   this.shadowRoot.adoptedStyleSheets= [styleSheet]
+   this.shadowRoot.adoptedStyleSheets = [styleSheet]
  }
 }
      window.customElements.define("div-with-style", DivWithStyle);
@@ -136,7 +136,7 @@ describe('recorder with shadow DOM', () => {
 
   if (isAdoptedStyleSheetsSupported()) {
     createTest('can record fullsnapshot with adoptedStylesheet')
-      .withRum({ defaultPrivacyLevel: 'allow', enableExperimentalFeatures: ['record_shadow_dom'] })
+      .withRum({ enableExperimentalFeatures: ['record_shadow_dom'] })
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(
