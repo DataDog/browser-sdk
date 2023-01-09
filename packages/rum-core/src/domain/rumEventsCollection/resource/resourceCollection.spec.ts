@@ -238,14 +238,14 @@ describe('resourceCollection', () => {
       expect(privateFields.span_id).not.toBeDefined()
     })
 
-    it('should pull tracingSampleRate from config if present', () => {
+    it('should pull traceSampleRate from config if present', () => {
       setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager }) => {
         startResourceCollection(
           lifeCycle,
           validateAndBuildRumConfiguration({
             clientToken: 'xxx',
             applicationId: 'xxx',
-            tracingSampleRate: 60,
+            traceSampleRate: 60,
           })!,
           sessionManager
         )
@@ -264,7 +264,7 @@ describe('resourceCollection', () => {
       expect(privateFields.rule_psr).toEqual(0.6)
     })
 
-    it('should not define rule_psr if tracingSampleRate is undefined', () => {
+    it('should not define rule_psr if traceSampleRate is undefined', () => {
       setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager }) => {
         startResourceCollection(
           lifeCycle,
@@ -289,14 +289,14 @@ describe('resourceCollection', () => {
       expect(privateFields.rule_psr).toBeUndefined()
     })
 
-    it('should define rule_psr to 0 if tracingSampleRate is set to 0', () => {
+    it('should define rule_psr to 0 if traceSampleRate is set to 0', () => {
       setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager }) => {
         startResourceCollection(
           lifeCycle,
           validateAndBuildRumConfiguration({
             clientToken: 'xxx',
             applicationId: 'xxx',
-            tracingSampleRate: 0,
+            traceSampleRate: 0,
           })!,
           sessionManager
         )

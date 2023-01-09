@@ -120,7 +120,7 @@ function injectHeadersIfTracingAllowed(
 
   context.traceId = new TraceIdentifier()
   context.spanId = new TraceIdentifier()
-  context.traceSampled = !isNumber(configuration.tracingSampleRate) || performDraw(configuration.tracingSampleRate)
+  context.traceSampled = !isNumber(configuration.traceSampleRate) || performDraw(configuration.traceSampleRate)
   inject(makeTracingHeaders(context.traceId, context.spanId, context.traceSampled, tracingOption.propagatorTypes))
 }
 

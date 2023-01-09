@@ -178,9 +178,13 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       track_views_manually?: boolean
       /**
-       * Whether user actions are tracked
+       * Whether user actions are tracked (deprecated in favor of track_user_interactions)
        */
       track_interactions?: boolean
+      /**
+       * Whether user actions are tracked
+       */
+      track_user_interactions?: boolean
       /**
        * Whether console.error logs, uncaught exceptions and network errors are tracked
        */

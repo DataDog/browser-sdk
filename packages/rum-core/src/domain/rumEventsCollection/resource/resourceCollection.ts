@@ -199,10 +199,10 @@ function toPerformanceEntryRepresentation(entry: RumPerformanceEntry): Performan
 }
 
 /**
- * @returns number between 0 and 1 which represents tracing sample rate
+ * @returns number between 0 and 1 which represents trace sample rate
  */
 function getRulePsr(configuration: RumConfiguration) {
-  return isNumber(configuration.tracingSampleRate) ? configuration.tracingSampleRate / 100 : undefined
+  return isNumber(configuration.traceSampleRate) ? configuration.traceSampleRate / 100 : undefined
 }
 
 function computeIndexingInfo(sessionManager: RumSessionManager, resourceStart: ClocksState) {
