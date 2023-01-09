@@ -50,7 +50,7 @@ async function main() {
   await executeCommand(`git push origin -f ${NEW_STAGING_BRANCH}`)
 
   await executeCommand(`git checkout ${CURRENT_STAGING_BRANCH}`)
-  await executeCommand('git pull')
+  await executeCommand(`git pull origin ${CURRENT_STAGING_BRANCH}`)
 
   if (isNewBranch && fs.existsSync(CI_FILE)) {
     printLog('Disabling CI on the old branch...')
