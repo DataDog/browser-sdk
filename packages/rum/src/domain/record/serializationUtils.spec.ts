@@ -7,7 +7,7 @@ import {
   setSerializedNodeId,
   getElementInputValue,
   switchToAbsoluteUrl,
-  getStyleSheets,
+  serializeStyleSheets,
 } from './serializationUtils'
 
 describe('serialized Node storage in DOM Nodes', () => {
@@ -193,8 +193,8 @@ describe('getStyleSheets', () => {
     }
   })
   it('should return undefined if no stylesheets', () => {
-    expect(getStyleSheets(undefined)).toBe(undefined)
-    expect(getStyleSheets([])).toBe(undefined)
+    expect(serializeStyleSheets(undefined)).toBe(undefined)
+    expect(serializeStyleSheets([])).toBe(undefined)
   })
 
   it('should return serialized stylesheet', () => {
@@ -203,7 +203,7 @@ describe('getStyleSheets', () => {
     const printStylesheet = new CSSStyleSheet({ disabled: false, media: 'print' })
     printStylesheet.insertRule('a { color: red; }')
 
-    expect(getStyleSheets([disabledStylesheet, printStylesheet])).toEqual([
+    expect(serializeStyleSheets([disabledStylesheet, printStylesheet])).toEqual([
       { cssRules: ['div { width: 100%; }'], disabled: true, media: undefined },
       { cssRules: ['a { color: red; }'], disabled: undefined, media: ['print'] },
     ])

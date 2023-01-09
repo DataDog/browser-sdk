@@ -108,7 +108,7 @@ export function makeUrlAbsolute(url: string, baseUrl: string): string {
   }
 }
 
-export function getStyleSheets(cssStyleSheets: CSSStyleSheet[] | undefined): StyleSheet[] | undefined {
+export function serializeStyleSheets(cssStyleSheets: CSSStyleSheet[] | undefined): StyleSheet[] | undefined {
   if (cssStyleSheets === undefined || cssStyleSheets.length === 0) {
     return undefined
   }

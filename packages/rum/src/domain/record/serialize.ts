@@ -31,7 +31,7 @@ import {
   setSerializedNodeId,
   getElementInputValue,
   switchToAbsoluteUrl,
-  getStyleSheets,
+  serializeStyleSheets,
 } from './serializationUtils'
 import { forEach } from './utils'
 import type { ElementsScrollPositions } from './elementsScrollPositions'
@@ -127,7 +127,7 @@ export function serializeDocumentNode(document: Document, options: SerializeOpti
   return {
     type: NodeType.Document,
     childNodes: serializeChildNodes(document, options),
-    adoptedStyleSheets: getStyleSheets((document as WithAdoptedStyleSheets).adoptedStyleSheets),
+    adoptedStyleSheets: serializeStyleSheets((document as WithAdoptedStyleSheets).adoptedStyleSheets),
   }
 }
 
@@ -159,7 +159,7 @@ function serializeDocumentFragmentNode(
     childNodes,
     isShadowRoot,
     adoptedStyleSheets: isShadowRoot
-      ? getStyleSheets((element as WithAdoptedStyleSheets).adoptedStyleSheets)
+      ? serializeStyleSheets((element as WithAdoptedStyleSheets).adoptedStyleSheets)
       : undefined,
   }
 }
