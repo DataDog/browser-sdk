@@ -5,7 +5,7 @@ const {
   printError,
   logAndExit,
   executeCommand,
-  replaceCiVariable,
+  replaceCiFileVariable,
   initGitConfig,
   getSecretKey,
   fetch,
@@ -53,9 +53,9 @@ async function main() {
   await executeCommand(`git checkout -b ${chromeVersionBranch}`)
 
   printLog('Update versions...')
-  await replaceCiVariable('CHROME_DRIVER_VERSION', driverVersion)
-  await replaceCiVariable('CHROME_PACKAGE_VERSION', packageVersion)
-  await replaceCiVariable('CURRENT_CI_IMAGE', Number(CURRENT_CI_IMAGE) + 1)
+  await replaceCiFileVariable('CHROME_DRIVER_VERSION', driverVersion)
+  await replaceCiFileVariable('CHROME_PACKAGE_VERSION', packageVersion)
+  await replaceCiFileVariable('CURRENT_CI_IMAGE', Number(CURRENT_CI_IMAGE) + 1)
 
   await executeCommand(`git add ${CI_FILE}`)
   await executeCommand(`git commit -m "${commitMessage}"`)

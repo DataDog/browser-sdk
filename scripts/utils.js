@@ -36,13 +36,13 @@ async function initGitConfig(repository) {
   await executeCommand(`git remote set-url origin ${repository}`)
 }
 
-function readCiVariable(variableName) {
+function readCiFileVariable(variableName) {
   const regexp = new RegExp(`${variableName}: (.*)`)
   const ciFileContent = fs.readFileSync(CI_FILE, { encoding: 'utf-8' })
   return regexp.exec(ciFileContent)?.[1]
 }
 
-async function replaceCiVariable(variableName, value) {
+async function replaceCiFileVariable(variableName, value) {
   await modifyFile(CI_FILE, (content) =>
     content.replace(new RegExp(`${variableName}: .*`), `${variableName}: ${value}`)
   )
@@ -135,8 +135,8 @@ module.exports = {
   printError,
   printLog,
   logAndExit,
-  readCiVariable,
-  replaceCiVariable,
+  readCiFileVariable,
+  replaceCiFileVariable,
   fetch: fetchWrapper,
   modifyFile,
   findBrowserSdkPackageJsonFiles,
