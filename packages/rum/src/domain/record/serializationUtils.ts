@@ -113,7 +113,7 @@ export function getStyleSheets(cssStyleSheets: CSSStyleSheet[] | undefined): Sty
     return undefined
   }
   return cssStyleSheets.map((cssStyleSheet) => {
-    const rules = cssStyleSheet.rules || cssStyleSheet.cssRules
+    const rules = cssStyleSheet.cssRules || cssStyleSheet.rules
     const cssRules = Array.from(rules, (cssRule) => cssRule.cssText)
 
     const styleSheet: StyleSheet = {
