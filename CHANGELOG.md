@@ -16,6 +16,10 @@
 
 ---
 
+## v4.30.0
+
+- ✨[RUMF-1397] init parameter standardisation ([#1917](https://github.com/DataDog/browser-sdk/pull/1917))
+
 ## v4.29.1
 
 - ⚗️ [REPLAY] Experiment support for shadow DOM ([#1787](https://github.com/DataDog/browser-sdk/pull/1787))
