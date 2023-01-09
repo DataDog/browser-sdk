@@ -30,15 +30,21 @@ async function main() {
     printLog(`Staging branch already up to date in ${CI_FILE}. Skipping.`)
   }
 
-  const doesStagingExist = await executeCommand(`git ls-remote --heads ${REPOSITORY} ${NEW_STAGING_BRANCH}`)
-  if (doesStagingExist) {
-    printLog('New staging branch already exists, deleting...')
-    await executeCommand(`git branch -d ${NEW_STAGING_BRANCH}`)
-    await executeCommand(`git push origin --delete ${NEW_STAGING_BRANCH}`)
+  let doesStagingExistLocally
+  try {
+    await executeCommand(`git show-ref --heads ${NEW_STAGING_BRANCH}`)
+    doesStagingExistLocally = true
+  } catch {
+    doesStagingExistLocally = false
   }
+  if (doesStagingExistLocally) {
+    printLog('New staging branch already exists locally, deleting...')
+    await executeCommand(`git branch -D ${NEW_STAGING_BRANCH}`)
+  }
+
   printLog('Creating the new staging branch...')
   await executeCommand(`git checkout -b ${NEW_STAGING_BRANCH}`)
-  await executeCommand(`git push origin ${NEW_STAGING_BRANCH}`)
+  await executeCommand(`git push origin -f ${NEW_STAGING_BRANCH}`)
 
   await executeCommand(`git checkout ${CURRENT_STAGING_BRANCH}`)
   await executeCommand('git pull')
