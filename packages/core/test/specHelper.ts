@@ -498,3 +498,7 @@ export function interceptRequests() {
     },
   }
 }
+
+export function isAdoptedStyleSheetsSupported() {
+  return Boolean((document as any).adoptedStyleSheets)
+}

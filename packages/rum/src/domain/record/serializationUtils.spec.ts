@@ -1,4 +1,5 @@
-import { isAdoptedStyleSheetsSupported, isIE } from '@datadog/browser-core'
+import { isIE } from '@datadog/browser-core'
+import { isAdoptedStyleSheetsSupported } from '../../../../core/test/specHelper'
 import { NodePrivacyLevel } from '../../constants'
 import {
   getSerializedNodeId,

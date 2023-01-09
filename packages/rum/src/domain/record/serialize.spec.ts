@@ -1,10 +1,5 @@
-import {
-  isAdoptedStyleSheetsSupported,
-  isIE,
-  noop,
-  resetExperimentalFeatures,
-  updateExperimentalFeatures,
-} from '@datadog/browser-core'
+import { isIE, noop, resetExperimentalFeatures, updateExperimentalFeatures } from '@datadog/browser-core'
+
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { STABLE_ATTRIBUTES, DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from '@datadog/browser-rum-core'
 import {
@@ -15,6 +10,7 @@ import {
   PRIVACY_ATTR_VALUE_MASK,
   PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
 } from '../../constants'
+import { isAdoptedStyleSheetsSupported } from '../../../../core/test/specHelper'
 import {
   HTML,
   AST_ALLOW,
