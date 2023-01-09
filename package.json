@@ -60,7 +60,7 @@
     "eslint-plugin-prefer-arrow": "1.2.3",
     "eslint-plugin-unicorn": "45.0.2",
     "express": "4.17.3",
-    "glob": "8.0.1",
+    "glob": "8.0.3",
     "jasmine-core": "3.6.0",
     "js-polyfills": "0.1.43",
     "json-schema-to-typescript": "bcaudan/json-schema-to-typescript#bcaudan/add-readonly-support",
