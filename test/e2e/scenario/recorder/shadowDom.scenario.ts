@@ -12,10 +12,11 @@ import {
   findTextContent,
   findTextNode,
 } from '@datadog/browser-rum/test/utils'
+import type { WithAdoptedStyleSheets } from '@datadog/browser-rum/src/domain/record/browser.types'
 
 import type { EventRegistry } from '../../lib/framework'
 import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
-import { browserExecute, getBrowserName } from '../../lib/helpers/browser'
+import { browserExecute } from '../../lib/helpers/browser'
 
 /** Will generate the following HTML 
  * ```html
@@ -134,32 +135,33 @@ describe('recorder with shadow DOM', () => {
       expect(textNode?.textContent).toBe('toto')
     })
 
-  if (isAdoptedStyleSheetsSupported()) {
-    createTest('can record fullsnapshot with adoptedStylesheet')
-      .withRum({ enableExperimentalFeatures: ['record_shadow_dom'] })
-      .withRumInit(initRumAndStartRecording)
-      .withSetup(bundleSetup)
-      .withBody(
-        html`
-          ${divWithStyleShadowDom}
-          <div-with-style />
-        `
-      )
-      .run(async ({ serverEvents }) => {
-        await flushEvents()
+  createTest('can record fullsnapshot with adoptedStylesheet')
+    .withRum({ enableExperimentalFeatures: ['record_shadow_dom'] })
+    .withRumInit(initRumAndStartRecording)
+    .withSetup(bundleSetup)
+    .withBody(
+      html`
+        ${divWithStyleShadowDom}
+        <div-with-style />
+      `
+    )
+    .run(async ({ serverEvents }) => {
+      if (!(await isAdoptedStyleSheetsSupported())) {
+        return pending('adoptedStyleSheets is not supported in this browser')
+      }
+      await flushEvents()
 
-        expect(serverEvents.sessionReplay.length).toBe(1)
+      expect(serverEvents.sessionReplay.length).toBe(1)
 
-        const fullSnapshot = findFullSnapshot(getFirstSegment(serverEvents))!
-        expect(fullSnapshot).toBeTruthy()
-        const shadowRoot = findNode(
-          fullSnapshot.data.node,
-          (node) => node.type === NodeType.DocumentFragment
-        ) as DocumentFragmentNode
-        expect(shadowRoot.isShadowRoot).toBe(true)
-        expect(shadowRoot.adoptedStyleSheets).toEqual([{ cssRules: ['div { width: 100%; }'] }])
-      })
-  }
+      const fullSnapshot = findFullSnapshot(getFirstSegment(serverEvents))!
+      expect(fullSnapshot).toBeTruthy()
+      const shadowRoot = findNode(
+        fullSnapshot.data.node,
+        (node) => node.type === NodeType.DocumentFragment
+      ) as DocumentFragmentNode
+      expect(shadowRoot.isShadowRoot).toBe(true)
+      expect(shadowRoot.adoptedStyleSheets).toEqual([{ cssRules: ['div { width: 100%; }'] }])
+    })
 
   createTest('can apply privacy level set from outside or inside the shadow DOM')
     .withRum({ defaultPrivacyLevel: 'allow', enableExperimentalFeatures: ['record_shadow_dom'] })
@@ -296,6 +298,6 @@ async function getNodeInsideShadowDom(hostTag: string, selector: string) {
   return host.shadow$(selector)
 }
 
-function isAdoptedStyleSheetsSupported() {
-  return ['edge', 'chrome'].includes(getBrowserName())
+function isAdoptedStyleSheetsSupported(): Promise<boolean> {
+  return browserExecute(() => (document as WithAdoptedStyleSheets).adoptedStyleSheets !== undefined) as Promise<boolean>
 }
