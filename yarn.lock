@@ -3278,7 +3278,18 @@ browserslist@^4.16.6:
     escalade "^3.1.1"
     node-releases "^1.1.75"
 
-browserstack-local@1.4.9, browserstack-local@^1.3.7, browserstack-local@^1.4.5:
+browserstack-local@1.5.1:
+  version "1.5.1"
+  resolved "https://registry.yarnpkg.com/browserstack-local/-/browserstack-local-1.5.1.tgz#0d424474cc2b74a9d9a22d00a2282941ff636f34"
+  integrity sha512-T/wxyWDzvBHbDvl7fZKpFU7mYze6nrUkBhNy+d+8bXBqgQX10HTYvajIGO0wb49oGSLCPM0CMZTV/s7e6LF0sA==
+  dependencies:
+    agent-base "^6.0.2"
+    https-proxy-agent "^5.0.1"
+    is-running "^2.1.0"
+    ps-tree "=1.2.0"
+    temp-fs "^0.9.9"
+
+browserstack-local@^1.3.7, browserstack-local@^1.4.5:
   version "1.4.9"
   resolved "https://registry.yarnpkg.com/browserstack-local/-/browserstack-local-1.4.9.tgz#5d3e405d425ee5a3ec5cba853c9a078242d944db"
   integrity sha512-V+q8HQwRQFr9nd32xR66ZZ3VDWa3Kct4IMMudhKgcuD7cWrvvFARZOibx71II+Rf7P5nMQpWWxl9z/3p927nbg==
@@ -5938,7 +5949,7 @@ https-proxy-agent@5.0.0, https-proxy-agent@^5.0.0:
     agent-base "6"
     debug "4"
 
-https-proxy-agent@5.0.1:
+https-proxy-agent@5.0.1, https-proxy-agent@^5.0.1:
   version "5.0.1"
   resolved "https://registry.yarnpkg.com/https-proxy-agent/-/https-proxy-agent-5.0.1.tgz#c59ef224a04fe8b754f3db0063a25ea30d0005d6"
   integrity sha512-dFcAjpTQFgoLMzC2VwU+C/CbS7uRL0lWmxDITmqm7C+7F0Odmj6s9l6alZc6AELXhrnggM2CeWSXHGOdX2YtwA==
