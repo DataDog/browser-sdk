@@ -1,6 +1,6 @@
 'use strict'
 
-const { initGitConfig, executeCommand, printLog, printError, logAndExit } = require('../utils')
+const { initGitConfig, executeCommand, printLog, printError, runMain } = require('../utils')
 
 const REPOSITORY = process.env.GIT_REPOSITORY
 const CURRENT_STAGING_BRANCH = process.env.CURRENT_STAGING
@@ -8,7 +8,7 @@ const CI_COMMIT_SHA = process.env.CI_COMMIT_SHA
 const CI_COMMIT_SHORT_SHA = process.env.CI_COMMIT_SHORT_SHA
 const CI_COMMIT_REF_NAME = process.env.CI_COMMIT_REF_NAME
 
-async function main() {
+runMain(async () => {
   await initGitConfig(REPOSITORY)
   await executeCommand(`git fetch --no-tags origin ${CURRENT_STAGING_BRANCH}`)
   await executeCommand(`git checkout ${CURRENT_STAGING_BRANCH} -f`)
@@ -38,7 +38,7 @@ async function main() {
   await executeCommand(`git push origin ${CURRENT_STAGING_BRANCH}`)
 
   printLog('Merge done.')
-}
+})
 
 async function isCommitAlreadyMerged() {
   try {
@@ -48,5 +48,3 @@ async function isCommitAlreadyMerged() {
     return false
   }
 }
-
-main().catch(logAndExit)

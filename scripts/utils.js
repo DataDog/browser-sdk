@@ -85,9 +85,16 @@ async function spawnCommand(command, args) {
   })
 }
 
-function logAndExit(error) {
-  printError('\nStacktrace:\n', error)
-  process.exit(1)
+function runMain(mainFunction) {
+  Promise.resolve()
+    // The main function can be either synchronous or asynchronous, so let's wrap it in an async
+    // callback that will catch both thrown errors and rejected promises
+    .then(() => mainFunction())
+    .catch((error) => {
+      printError('\nScript exited with error:')
+      printError(error)
+      process.exit(1)
+    })
 }
 
 const resetColor = '\x1b[0m'
@@ -134,7 +141,7 @@ module.exports = {
   spawnCommand,
   printError,
   printLog,
-  logAndExit,
+  runMain,
   readCiFileVariable,
   replaceCiFileVariable,
   fetch: fetchWrapper,
