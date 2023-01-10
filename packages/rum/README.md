@@ -61,6 +61,29 @@ datadogRum.init({
 </details>
 
 <details>
+  <summary>before <code>v4.30.0</code></summary>
+
+```javascript
+import { datadogRum } from '@datadog/browser-rum'
+
+datadogRum.init({
+  applicationId: '<DATADOG_APPLICATION_ID>',
+  clientToken: '<DATADOG_CLIENT_TOKEN>',
+  site: '<DATADOG_SITE>',
+  //  service: 'my-web-application',
+  //  env: 'production',
+  //  version: '1.0.0',
+  sampleRate: 100,
+  sessionReplaySampleRate: 100, // if not included, the default is 100
+  trackResources: true,
+  trackLongTasks: true,
+  trackInteractions: true,
+})
+```
+
+</details>
+
+<details>
   <summary>before <code>v4.20.0</code></summary>
 
 ```javascript
@@ -73,9 +96,9 @@ datadogRum.init({
   //  service: 'my-web-application',
   //  env: 'production',
   //  version: '1.0.0',
-  sessionSampleRate: 100,
+  sampleRate: 100,
   premiumSampleRate: 100, // if not included, the default is 100
-  trackUserInteractions: true,
+  trackInteractions: true,
 })
 ```
 
@@ -94,9 +117,9 @@ datadogRum.init({
   //  service: 'my-web-application',
   //  env: 'production',
   //  version: '1.0.0',
-  sessionSampleRate: 100,
+  sampleRate: 100,
   replaySampleRate: 100, // if not included, the default is 100
-  trackUserInteractions: true,
+  trackInteractions: true,
 })
 ```
 
@@ -140,6 +163,37 @@ Add the generated code snippet to the head tag of every HTML page you want to mo
 </details>
 
 <details>
+  <summary>before<code>v4.30.0</code></summary>
+
+<!-- prettier-ignore -->
+```html
+<script>
+  (function(h,o,u,n,d) {
+     h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}}
+     d=o.createElement(u);d.async=1;d.src=n
+     n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
+  })(window,document,'script','https://www.datadoghq-browser-agent.com/datadog-rum-v4.js','DD_RUM')
+  DD_RUM.onReady(function() {
+    DD_RUM.init({
+      clientToken: '<CLIENT_TOKEN>',
+      applicationId: '<APPLICATION_ID>',
+      site: '<DATADOG_SITE>',
+      //  service: 'my-web-application',
+      //  env: 'production',
+      //  version: '1.0.0',
+      sampleRate: 100,
+      sessionReplaySampleRate: 100, // if not included, the default is 100
+      trackResources: true,
+      trackLongTasks: true,
+      trackInteractions: true,
+    })
+  })
+</script>
+```
+
+</details>
+
+<details>
   <summary>before<code>v4.20.0</code></summary>
 
 <!-- prettier-ignore -->
@@ -158,9 +212,9 @@ Add the generated code snippet to the head tag of every HTML page you want to mo
       //  service: 'my-web-application',
       //  env: 'production',
       //  version: '1.0.0',
-      sessionSampleRate: 100,
+      sampleRate: 100,
       premiumSampleRate: 100, // if not included, the default is 100
-      trackUserInteractions: true,
+      trackInteractions: true,
     })
   })
 </script>
@@ -187,9 +241,9 @@ Add the generated code snippet to the head tag of every HTML page you want to mo
       //  service: 'my-web-application',
       //  env: 'production',
       //  version: '1.0.0',
-      sessionSampleRate: 100,
+      sampleRate: 100,
       replaySampleRate: 100, // if not included, the default is 100
-      trackUserInteractions: true,
+      trackInteractions: true,
     })
   })
 </script>
@@ -231,6 +285,31 @@ Add the generated code snippet to the head tag (in front of any other script tag
 </details>
 
 <details>
+  <summary>before<code>v4.30.0</code></summary>
+
+```html
+<script src="https://www.datadoghq-browser-agent.com/datadog-rum-v4.js" type="text/javascript"></script>
+<script>
+  window.DD_RUM &&
+    window.DD_RUM.init({
+      clientToken: '<CLIENT_TOKEN>',
+      applicationId: '<APPLICATION_ID>',
+      site: '<DATADOG_SITE>',
+      //  service: 'my-web-application',
+      //  env: 'production',
+      //  version: '1.0.0',
+      sampleRate: 100,
+      sessionReplaySampleRate: 100, // if not included, the default is 100
+      trackResources: true,
+      trackLongTasks: true,
+      trackInteractions: true,
+    })
+</script>
+```
+
+</details>
+
+<details>
   <summary>before<code>v4.20.0</code></summary>
 
 ```html
@@ -244,9 +323,9 @@ Add the generated code snippet to the head tag (in front of any other script tag
       //  service: 'my-web-application',
       //  env: 'production',
       //  version: '1.0.0',
-      sessionSampleRate: 100,
+      sampleRate: 100,
       premiumSampleRate: 100, // if not included, the default is 100
-      trackUserInteractions: true,
+      trackInteractions: true,
     })
 </script>
 ```
@@ -267,9 +346,9 @@ Add the generated code snippet to the head tag (in front of any other script tag
       //  service: 'my-web-application',
       //  env: 'production',
       //  version: '1.0.0',
-      sessionSampleRate: 100,
+      sampleRate: 100,
       replaySampleRate: 100, // if not included, the default is 100
-      trackUserInteractions: true,
+      trackInteractions: true,
     })
 </script>
 ```
