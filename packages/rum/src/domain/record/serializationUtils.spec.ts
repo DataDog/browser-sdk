@@ -186,7 +186,7 @@ describe('switchToAbsoluteUrl', () => {
   })
 })
 
-describe('getStyleSheets', () => {
+describe('serializeStyleSheets', () => {
   beforeEach(() => {
     if (!isAdoptedStyleSheetsSupported()) {
       pending('no adoptedStyleSheets support')

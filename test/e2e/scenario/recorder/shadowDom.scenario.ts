@@ -84,10 +84,10 @@ const divShadowDom = `<script>
 
 /** Will generate the following HTML 
  * ```html
- * <iv-with-style>
+ * <div-with-style>
  *  #shadow-root
  *    <div>toto</div>
- *</iv-with-style>
+ *</div-with-style>
  *```
  when called like `<div-with-style />`
  */
