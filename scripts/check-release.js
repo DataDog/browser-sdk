@@ -3,14 +3,14 @@
 const fs = require('fs')
 const path = require('path')
 const { version: releaseVersion } = require('../lerna.json')
-const { findBrowserSdkPackageJsonFiles, printLog, logAndExit, executeCommand } = require('./utils')
+const { findBrowserSdkPackageJsonFiles, printLog, runMain, executeCommand } = require('./utils')
 
-async function main() {
+runMain(async () => {
   await checkGitTag()
   await checkBrowserSdkPackageJsonFiles()
 
   printLog('Release check done.')
-}
+})
 
 async function checkGitTag() {
   printLog('Checking release version tag is on HEAD')
@@ -99,5 +99,3 @@ function checkPackageJsonEntryPoints(packageJsonFile) {
 function isBrowserSdkPublicPackageName(name) {
   return name?.startsWith('@datadog/')
 }
-
-main().catch(logAndExit)

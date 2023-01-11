@@ -42,7 +42,7 @@ export function startLogsSessionManagerStub(configuration: LogsConfiguration): L
 }
 
 function computeTrackingType(configuration: LogsConfiguration) {
-  if (!performDraw(configuration.sampleRate)) {
+  if (!performDraw(configuration.sessionSampleRate)) {
     return LoggerTrackingType.NOT_TRACKED
   }
   return LoggerTrackingType.TRACKED

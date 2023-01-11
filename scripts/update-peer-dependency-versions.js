@@ -1,5 +1,5 @@
 const lernaConfig = require('../lerna.json')
-const { logAndExit, modifyFile } = require('./utils')
+const { runMain, modifyFile } = require('./utils')
 
 // This script updates the peer dependency versions between rum and logs packages to match the new
 // version during a release.
@@ -10,7 +10,7 @@ const { logAndExit, modifyFile } = require('./utils')
 //
 // [1]: https://github.com/lerna/lerna/commit/bdbfc62966e5351abfeac77830f9d47b6d69f1b1
 // [2]: https://github.com/lerna/lerna/issues/1575
-async function main() {
+runMain(async () => {
   for (const packageName of ['rum', 'rum-slim', 'logs']) {
     await modifyFile(`./packages/${packageName}/package.json`, (content) => {
       const json = JSON.parse(content)
@@ -20,6 +20,4 @@ async function main() {
       return `${JSON.stringify(json, null, 2)}\n`
     })
   }
-}
-
-main().catch(logAndExit)
+})

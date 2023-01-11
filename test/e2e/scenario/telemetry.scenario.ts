@@ -62,13 +62,13 @@ describe('telemetry', () => {
   createTest('send init configuration for RUM')
     .withSetup(bundleSetup)
     .withRum({
-      trackInteractions: true,
+      trackUserInteractions: true,
     })
     .run(async ({ serverEvents }) => {
       await flushEvents()
       expect(serverEvents.telemetryConfigurations.length).toBe(1)
       const event = serverEvents.telemetryConfigurations[0]
       expect(event.service).toEqual('browser-rum-sdk')
-      expect(event.telemetry.configuration.track_interactions).toEqual(true)
+      expect(event.telemetry.configuration.track_user_interactions).toEqual(true)
     })
 })

@@ -385,7 +385,28 @@ export interface DocumentNode {
    * The type of this Node.
    */
   readonly type: 0
+  /**
+   * Stylesheet added dynamically
+   */
+  readonly adoptedStyleSheets?: StyleSheet[]
   childNodes: SerializedNodeWithId[]
+}
+/**
+ * Browser-specific. Schema of a StyleSheet
+ */
+export interface StyleSheet {
+  /**
+   * CSS rules applied (rule.cssText)
+   */
+  cssRules: string[]
+  /**
+   * MediaList of the stylesheet
+   */
+  media?: string[]
+  /**
+   * Is the stylesheet disabled
+   */
+  disabled?: boolean
 }
 /**
  * Schema of a Document FragmentNode.
@@ -395,6 +416,10 @@ export interface DocumentFragmentNode {
    * The type of this Node.
    */
   readonly type: 11
+  /**
+   * Stylesheet added dynamically
+   */
+  readonly adoptedStyleSheets?: StyleSheet[]
   /**
    * Is this node a shadow root or not
    */
