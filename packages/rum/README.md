@@ -125,7 +125,7 @@ datadogRum.init({
 
 </details>
 
-The `trackUserInteractions` and `trackFrustrations` parameters enable the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
+The `trackUserInteractions` and `trackFrustrations` parameters enable the automatic collection of user clicks in your application. **Sensitive and private data** contained in your pages may be included to identify the elements interacted with.
 
 ### CDN async
 
