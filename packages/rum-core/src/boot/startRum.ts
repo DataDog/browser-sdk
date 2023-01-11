@@ -33,6 +33,7 @@ import type { RumConfiguration, RumInitConfiguration } from '../domain/configura
 import { serializeRumConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/rumEventsCollection/view/trackViews'
 import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
+import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
 import type { RecorderApi } from './rumPublicApi'
 
 export function startRum(
@@ -93,7 +94,8 @@ export function startRum(
   addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
 
   startLongTaskCollection(lifeCycle, session)
-  startResourceCollection(lifeCycle, configuration, session)
+  const pageStateHistory = startPageStateHistory()
+  startResourceCollection(lifeCycle, configuration, session, pageStateHistory)
   const { addTiming, startView } = startViewCollection(
     lifeCycle,
     configuration,

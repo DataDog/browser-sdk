@@ -9,7 +9,7 @@ import {
   isNumber,
   isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
-import type { ClocksState, ServerDuration } from '@datadog/browser-core'
+import type { ClocksState, ServerDuration, Duration } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
 import type { RumPerformanceEntry, RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 import type {
@@ -23,6 +23,7 @@ import type { LifeCycle, RawRumEventCollectedData } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { RequestCompleteEvent } from '../../requestCollection'
 import type { RumSessionManager } from '../../rumSessionManager'
+import type { PageStateHistory } from '../../contexts/pageStateHistory'
 import { matchRequestTiming } from './matchRequestTiming'
 import {
   computePerformanceResourceDetails,
@@ -35,10 +36,14 @@ import {
 export function startResourceCollection(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
-  sessionManager: RumSessionManager
+  sessionManager: RumSessionManager,
+  pageStateHistory: PageStateHistory
 ) {
   lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request: RequestCompleteEvent) => {
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processRequest(request, configuration, sessionManager))
+    lifeCycle.notify(
+      LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
+      processRequest(request, configuration, sessionManager, pageStateHistory)
+    )
   })
 
   lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
@@ -46,7 +51,7 @@ export function startResourceCollection(
       if (entry.entryType === 'resource' && !isRequestKind(entry)) {
         lifeCycle.notify(
           LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-          processResourceEntry(entry, configuration, sessionManager)
+          processResourceEntry(entry, configuration, sessionManager, pageStateHistory)
         )
       }
     }
@@ -56,7 +61,8 @@ export function startResourceCollection(
 function processRequest(
   request: RequestCompleteEvent,
   configuration: RumConfiguration,
-  sessionManager: RumSessionManager
+  sessionManager: RumSessionManager,
+  pageStateHistory: PageStateHistory
 ): RawRumEventCollectedData<RawRumResourceEvent> {
   const type = request.type === RequestType.XHR ? ResourceType.XHR : ResourceType.FETCH
 
@@ -69,6 +75,11 @@ function processRequest(
 
   const duration = toServerDuration(request.duration)
   const durationOverrideInfo = computeDurationOverrideInfo(duration, correspondingTimingOverrides?.resource.duration)
+  const pageStateInfo = computePageStateInfo(
+    pageStateHistory,
+    startClocks,
+    matchingTiming?.duration ?? request.duration
+  )
 
   const resourceEvent = combine(
     {
@@ -86,8 +97,10 @@ function processRequest(
     tracingInfo,
     correspondingTimingOverrides,
     indexingInfo,
-    durationOverrideInfo
+    durationOverrideInfo,
+    pageStateInfo
   )
+
   return {
     startTime: startClocks.relative,
     rawRumEvent: resourceEvent,
@@ -105,7 +118,8 @@ function processRequest(
 function processResourceEntry(
   entry: RumPerformanceResourceTiming,
   configuration: RumConfiguration,
-  sessionManager: RumSessionManager
+  sessionManager: RumSessionManager,
+  pageStateHistory: PageStateHistory
 ): RawRumEventCollectedData<RawRumResourceEvent> {
   const type = computeResourceKind(entry)
   const entryMetrics = computePerformanceEntryMetrics(entry)
@@ -113,6 +127,7 @@ function processResourceEntry(
 
   const tracingInfo = computeEntryTracingInfo(entry, configuration)
   const indexingInfo = computeIndexingInfo(sessionManager, startClocks)
+  const pageStateInfo = computePageStateInfo(pageStateHistory, startClocks, entry.duration)
 
   const resourceEvent = combine(
     {
@@ -126,7 +141,8 @@ function processResourceEntry(
     },
     tracingInfo,
     entryMetrics,
-    indexingInfo
+    indexingInfo,
+    pageStateInfo
   )
   return {
     startTime: startClocks.relative,
@@ -210,6 +226,14 @@ function computeIndexingInfo(sessionManager: RumSessionManager, resourceStart: C
   return {
     _dd: {
       discarded: !session || !session.resourceAllowed,
+    },
+  }
+}
+
+function computePageStateInfo(pageStateHistory: PageStateHistory, startClocks: ClocksState, duration: Duration) {
+  return {
+    _dd: {
+      page_states: pageStateHistory.findAll(startClocks.relative, duration),
     },
   }
 }
