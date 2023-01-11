@@ -95,6 +95,9 @@ export function makeRumPublicApi(
   }
 
   function initRum(initConfiguration: RumInitConfiguration) {
+    // This function should be available, regardless of initialization success.
+    getInitConfigurationStrategy = () => deepClone<InitConfiguration>(initConfiguration)
+
     // If we are in a Synthetics test configured to automatically inject a RUM instance, we want to
     // completely discard the customer application RUM instance by ignoring their init() call.  But,
     // we should not ignore the init() call from the Synthetics-injected RUM instance, so the
@@ -138,7 +141,6 @@ export function makeRumPublicApi(
       }
       beforeInitCalls.drain()
     }
-    getInitConfigurationStrategy = () => deepClone<InitConfiguration>(initConfiguration)
 
     isAlreadyInitialized = true
   }

@@ -68,6 +68,11 @@ describe('logs entry', () => {
       expect(startLogs).not.toHaveBeenCalled()
     })
 
+    it("should return init configuration even if it's invalid", () => {
+      LOGS.init(INVALID_INIT_CONFIGURATION)
+      expect(LOGS.getInitConfiguration()).toEqual(INVALID_INIT_CONFIGURATION)
+    })
+
     it('should add a `_setDebug` that works', () => {
       const setDebug: (debug: boolean) => void = (LOGS as any)._setDebug
       expect(!!setDebug).toEqual(true)
