@@ -60,6 +60,13 @@ async function modifyFile(filePath, modifier) {
   return false
 }
 
+/**
+ * Helper to run executables asynchronously, in a shell. This function does not prevent Shell
+ * injections[0], so please use carefully. Only use it to run commands with trusted arguments.
+ * Prefer the `command` helper for most use cases.
+ *
+ * [0]: https://matklad.github.io/2021/07/30/shell-injection.html
+ */
 async function spawnCommand(command, args) {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, { stdio: 'inherit', shell: true })
