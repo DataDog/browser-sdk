@@ -102,7 +102,10 @@ export function computeFetchResponseText(
   configuration: LogsConfiguration,
   callback: (responseText?: string) => void
 ) {
-  if (!window.TextDecoder) {
+  if (!response.body || response.bodyUsed) {
+    // if the body is null or already used by another instrumentation, let's not try to read it.
+    callback()
+  } else if (!window.TextDecoder) {
     // If the browser doesn't support TextDecoder, let's read the whole response then truncate it.
     //
     // This should only be the case on early versions of Edge (before they migrated to Chromium).
@@ -137,8 +140,6 @@ export function computeFetchResponseText(
         monitor((text) => callback(truncateResponseText(text, configuration))),
         monitor((error) => callback(`Unable to retrieve response: ${error as string}`))
       )
-  } else if (!response.body) {
-    callback()
   } else {
     truncateResponseStream(
       response.clone().body!,

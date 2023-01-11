@@ -157,21 +157,20 @@ function getNextRequestIndex() {
 }
 
 function waitForResponseToComplete(context: RumFetchResolveContext, callback: (duration: Duration) => void) {
-  if (context.response) {
+  if (!context.response || !context.response.body || context.response.bodyUsed) {
+    // do not try to wait for the response if fetch error, null body or body used by another instrumentation
+    callback(elapsed(context.startClocks.timeStamp, timeStampNow()))
+  } else {
     const responseClone = context.response.clone()
-    if (responseClone.body) {
-      readBytesFromStream(
-        responseClone.body,
-        () => {
-          callback(elapsed(context.startClocks.timeStamp, timeStampNow()))
-        },
-        {
-          bytesLimit: Number.POSITIVE_INFINITY,
-          collectStreamBody: false,
-        }
-      )
-      return
-    }
+    readBytesFromStream(
+      responseClone.body!,
+      () => {
+        callback(elapsed(context.startClocks.timeStamp, timeStampNow()))
+      },
+      {
+        bytesLimit: Number.POSITIVE_INFINITY,
+        collectStreamBody: false,
+      }
+    )
   }
-  callback(elapsed(context.startClocks.timeStamp, timeStampNow()))
 }

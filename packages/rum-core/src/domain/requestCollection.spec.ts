@@ -64,6 +64,34 @@ describe('collect fetch', () => {
     })
   })
 
+  it('should notify on request without body', (done) => {
+    fetchStub(FAKE_URL).resolveWith({ status: 200 })
+
+    fetchStubManager.whenAllComplete(() => {
+      const request = completeSpy.calls.argsFor(0)[0]
+
+      expect(request.type).toEqual(RequestType.FETCH)
+      expect(request.method).toEqual('GET')
+      expect(request.url).toEqual(FAKE_URL)
+      expect(request.status).toEqual(200)
+      done()
+    })
+  })
+
+  it('should notify on request with body used by another instrumentation', (done) => {
+    fetchStub(FAKE_URL).resolveWith({ status: 200, bodyUsed: true })
+
+    fetchStubManager.whenAllComplete(() => {
+      const request = completeSpy.calls.argsFor(0)[0]
+
+      expect(request.type).toEqual(RequestType.FETCH)
+      expect(request.method).toEqual('GET')
+      expect(request.url).toEqual(FAKE_URL)
+      expect(request.status).toEqual(200)
+      done()
+    })
+  })
+
   it('should notify on request complete', (done) => {
     fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
 
