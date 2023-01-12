@@ -1,5 +1,5 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { resetExperimentalFeatures, updateExperimentalFeatures } from '@datadog/browser-core'
+import { resetExperimentalFeatures } from '@datadog/browser-core'
 import type { TestSetupBuilder } from 'packages/rum-core/test/specHelper'
 import { setup } from '../../../test/specHelper'
 import type { PageStateHistory } from './pageStateHistory'
@@ -10,7 +10,6 @@ describe('pageStateHistory', () => {
   let setupBuilder: TestSetupBuilder
 
   beforeEach(() => {
-    updateExperimentalFeatures(['resource_page_states'])
     setupBuilder = setup()
       .withFakeClock()
       .beforeBuild(() => {
@@ -23,12 +22,6 @@ describe('pageStateHistory', () => {
     setupBuilder.cleanup()
     resetPageStates()
     resetExperimentalFeatures()
-  })
-
-  it('should not track page states when ff resource_page_states is disabled', () => {
-    resetExperimentalFeatures()
-    setupBuilder.build()
-    expect(pageStateHistory.findAll(0 as RelativeTime, 10 as RelativeTime)).not.toBeDefined()
   })
 
   it('should have the current state when starting', () => {

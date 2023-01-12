@@ -231,9 +231,14 @@ function computeIndexingInfo(sessionManager: RumSessionManager, resourceStart: C
 }
 
 function computePageStateInfo(pageStateHistory: PageStateHistory, startClocks: ClocksState, duration: Duration) {
+  if (!isExperimentalFeatureEnabled('resource_page_states')) {
+    return
+  }
+
   return {
     _dd: {
       page_states: pageStateHistory.findAll(startClocks.relative, duration),
+      page_was_discarded: (document as any).wasDiscarded,
     },
   }
 }
