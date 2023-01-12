@@ -16,6 +16,14 @@
 
 ---
 
+## v4.30.1
+
+- ⚗️ [REPLAY] Add support for `adoptedStyleSheets` ([#1916](https://github.com/DataDog/browser-sdk/pull/1916))
+- 🔊 [RUMF-1345] Revert log first untrusted events of each type ([#1940](https://github.com/DataDog/browser-sdk/pull/1940))
+- 🐛 Fix `getInitConfiguration()` behaviour ([#1893](https://github.com/DataDog/browser-sdk/pull/1893))
+- ⚡ Ignore modulepreload and prefetch in link tags ([#1921](https://github.com/DataDog/browser-sdk/pull/1921))
+- ⚗️🔊 Collect page lifecycle states in resources ([#1890](https://github.com/DataDog/browser-sdk/pull/1890))
+
 ## v4.30.0
 
 - ✨[RUMF-1397] init parameter standardisation ([#1917](https://github.com/DataDog/browser-sdk/pull/1917))
