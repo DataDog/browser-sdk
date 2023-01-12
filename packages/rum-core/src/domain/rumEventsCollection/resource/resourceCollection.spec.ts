@@ -63,7 +63,6 @@ describe('resourceCollection', () => {
       type: RumEventType.RESOURCE,
       _dd: {
         discarded: false,
-        page_states: undefined,
       },
     })
     expect(rawRumEvents[0].domainContext).toEqual({
@@ -101,7 +100,6 @@ describe('resourceCollection', () => {
       type: RumEventType.RESOURCE,
       _dd: {
         discarded: false,
-        page_states: undefined,
       },
     })
     expect(rawRumEvents[0].domainContext).toEqual({
@@ -115,6 +113,7 @@ describe('resourceCollection', () => {
   })
 
   it('should collect page states on resources when ff resource_page_states enabled', () => {
+    updateExperimentalFeatures(['resource_page_states'])
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
     const mockPageStates = [{ state: PageState.ACTIVE, startTime: 0 as RelativeTime }]
     const mockXHR = createCompletedRequest()
@@ -135,6 +134,25 @@ describe('resourceCollection', () => {
     ])
     expect(rawRumResourceEventFetch._dd.page_states).toEqual(jasmine.objectContaining(mockPageStates))
     expect(rawRumResourceEventEntry._dd.page_states).toEqual(jasmine.objectContaining(mockPageStates))
+  })
+
+  it('should not collect page states on resources when ff resource_page_states disabled', () => {
+    const { lifeCycle, rawRumEvents } = setupBuilder.build()
+    const mockPageStates = [{ state: PageState.ACTIVE, startTime: 0 as RelativeTime }]
+    const mockXHR = createCompletedRequest()
+    const mockPerformanceEntry = createResourceEntry()
+
+    pageStateHistorySpy.and.returnValue(mockPageStates)
+
+    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, mockXHR)
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [mockPerformanceEntry])
+
+    const rawRumResourceEventFetch = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+    const rawRumResourceEventEntry = rawRumEvents[1].rawRumEvent as RawRumResourceEvent
+
+    expect(pageStateHistorySpy).not.toHaveBeenCalled()
+    expect(rawRumResourceEventFetch._dd.page_states).not.toBeDefined()
+    expect(rawRumResourceEventEntry._dd.page_states).not.toBeDefined()
   })
 
   it('should collect computed duration and performance entry duration when resource_durations ff is enabled', () => {
@@ -200,7 +218,6 @@ describe('resourceCollection', () => {
       type: RumEventType.RESOURCE,
       _dd: {
         discarded: false,
-        page_states: undefined,
       },
     })
     expect(rawRumEvents[0].domainContext).toEqual({
