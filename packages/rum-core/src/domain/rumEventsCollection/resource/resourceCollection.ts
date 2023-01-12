@@ -238,7 +238,7 @@ function computePageStateInfo(pageStateHistory: PageStateHistory, startClocks: C
   return {
     _dd: {
       page_states: pageStateHistory.findAll(startClocks.relative, duration),
-      page_was_discarded: (document as any).wasDiscarded,
+      page_was_discarded: String((document as any).wasDiscarded),
     },
   }
 }
