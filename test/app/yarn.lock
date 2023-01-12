@@ -2,24 +2,24 @@
 # yarn lockfile v1
 
 
-"@datadog/browser-core@4.30.0", "@datadog/browser-core@file:../../packages/core":
-  version "4.30.0"
+"@datadog/browser-core@4.30.1", "@datadog/browser-core@file:../../packages/core":
+  version "4.30.1"
 
 "@datadog/browser-logs@file:../../packages/logs":
-  version "4.30.0"
+  version "4.30.1"
   dependencies:
-    "@datadog/browser-core" "4.30.0"
+    "@datadog/browser-core" "4.30.1"
 
-"@datadog/browser-rum-core@4.30.0", "@datadog/browser-rum-core@file:../../packages/rum-core":
-  version "4.30.0"
+"@datadog/browser-rum-core@4.30.1", "@datadog/browser-rum-core@file:../../packages/rum-core":
+  version "4.30.1"
   dependencies:
-    "@datadog/browser-core" "4.30.0"
+    "@datadog/browser-core" "4.30.1"
 
 "@datadog/browser-rum@file:../../packages/rum":
-  version "4.30.0"
+  version "4.30.1"
   dependencies:
-    "@datadog/browser-core" "4.30.0"
-    "@datadog/browser-rum-core" "4.30.0"
+    "@datadog/browser-core" "4.30.1"
+    "@datadog/browser-rum-core" "4.30.1"
 
 "@jridgewell/gen-mapping@^0.3.0":
   version "0.3.2"
@@ -283,9 +283,9 @@ buffer-from@^1.0.0:
   integrity sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==
 
 caniuse-lite@^1.0.30001400:
-  version "1.0.30001442"
-  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001442.tgz#40337f1cf3be7c637b061e2f78582dc1daec0614"
-  integrity sha512-239m03Pqy0hwxYPYR5JwOIxRJfLTWtle9FV8zosfV5pHg+/51uD4nxcUlM8+mWWGfwKtt8lJNHnD3cWw9VZ6ow==
+  version "1.0.30001443"
+  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001443.tgz#8fc85f912d5471c9821acacf9e715c421ca0dd1f"
+  integrity sha512-jUo8svymO8+Mkj3qbUbVjR8zv8LUGpGkUM/jKvc9SO2BvjCI980dp9fQbf/dyLs6RascPzgR4nhAKFA4OHeSaA==
 
 chalk@^2.3.0:
   version "2.4.2"
@@ -563,9 +563,9 @@ prr@~1.0.1:
   integrity sha512-yPw4Sng1gWghHQWj0B3ZggWUm4qVbPwPFcRG8KyxiU7J2OHFSoEHKS+EZ3fv5l1t9CyCiop6l/ZYeWbrgoQejw==
 
 punycode@^2.1.0:
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/punycode/-/punycode-2.1.1.tgz#b58b010ac40c22c5657616c8d2c2c02c7bf479ec"
-  integrity sha512-XRsRjdf+j5ml+y/6GKHPZbrF/8p2Yga0JPtdqTIY2Xe5ohJPD9saDJJLPvp9+NSBprVvevdXZybnj2cv8OEd0A==
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/punycode/-/punycode-2.2.0.tgz#2092cc57cd2582c38e4e7e8bb869dc8d3148bc74"
+  integrity sha512-LN6QV1IJ9ZhxWTNdktaPClrNfp8xdSAYS0Zk2ddX7XsXZAxckMHPCBcHRo0cTcEIgYPRiGEkmji3Idkh2yFtYw==
 
 randombytes@^2.1.0:
   version "2.1.0"
