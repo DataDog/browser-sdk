@@ -116,9 +116,16 @@ function command(...templateArguments) {
 
       if (commandResult.status !== 0) {
         const formattedCommand = `${commandName} ${commandArguments.join(' ')}`
-        const formattedStderr = `----\n${commandResult.stderr || ''}\n----`
-        const exitCause = commandResult.signal ? `signal ${commandResult.signal}` : `status ${commandResult.status}`
-        const error = new Error(`Command failed with exit ${exitCause}: ${formattedCommand}\n${formattedStderr}`)
+        const formattedStderr = commandResult.stderr ? `\n---- stderr: ----\n${commandResult.stderr}\n----` : ''
+        const formattedStdout = commandResult.stdout ? `\n---- stdout: ----\n${commandResult.stdout}\n----` : ''
+        const exitCause =
+          commandResult.signal !== null
+            ? ` due to signal ${commandResult.signal}`
+            : commandResult.status !== null
+            ? ` with exit status ${commandResult.status}`
+            : ''
+        const error = new Error(`Command failed${exitCause}: ${formattedCommand}${formattedStderr}${formattedStdout}`)
+        error.cause = commandResult.error
         throw error
       }
 
