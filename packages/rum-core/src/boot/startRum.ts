@@ -1,4 +1,4 @@
-import type { Observable, TelemetryEvent, RawError } from '@datadog/browser-core'
+import type { Observable, TelemetryEvent, RawError, ContextManager } from '@datadog/browser-core'
 import {
   sendToExtension,
   createPageExitObservable,
@@ -33,6 +33,7 @@ import type { RumConfiguration, RumInitConfiguration } from '../domain/configura
 import { serializeRumConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/rumEventsCollection/view/trackViews'
 import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
+import { startUserDataTelemetry } from '../domain/startUserDataTelemetry'
 import type { RecorderApi } from './rumPublicApi'
 
 export function startRum(
@@ -40,6 +41,8 @@ export function startRum(
   configuration: RumConfiguration,
   getCommonContext: () => CommonContext,
   recorderApi: RecorderApi,
+  globalContextManager: ContextManager,
+  userContextManager: ContextManager,
   initialViewOptions?: ViewOptions
 ) {
   const lifeCycle = new LifeCycle()
@@ -65,12 +68,13 @@ export function startRum(
   const reportError = (error: RawError) => {
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
   }
+  let batch
   if (!canUseEventBridge()) {
     const pageExitObservable = createPageExitObservable()
     pageExitObservable.subscribe((event) => {
       lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, event)
     })
-    startRumBatch(configuration, lifeCycle, telemetry.observable, reportError, pageExitObservable)
+    batch = startRumBatch(configuration, lifeCycle, telemetry.observable, reportError, pageExitObservable)
   } else {
     startRumEventBridge(lifeCycle)
   }
@@ -90,6 +94,18 @@ export function startRum(
       getCommonContext,
       reportError
     )
+
+  if (batch) {
+    startUserDataTelemetry(
+      configuration,
+      telemetry,
+      lifeCycle,
+      globalContextManager,
+      userContextManager,
+      featureFlagContexts,
+      batch.flushObservable
+    )
+  }
   addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
 
   startLongTaskCollection(lifeCycle, session)

@@ -32,6 +32,7 @@ export const enum TelemetryService {
 export interface Telemetry {
   setContextProvider: (provider: () => Context) => void
   observable: Observable<TelemetryEvent & Context>
+  enabled: boolean
 }
 
 const TELEMETRY_EXCLUDED_SITES: string[] = [INTAKE_SITE_US1_FED]
@@ -90,6 +91,7 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
       contextProvider = provider
     },
     observable,
+    enabled: telemetryConfiguration.telemetryEnabled,
   }
 }
 

@@ -157,6 +157,8 @@ export function makeRumPublicApi(
         hasReplay: recorderApi.isRecording() ? true : undefined,
       }),
       recorderApi,
+      globalContextManager,
+      userContextManager,
       initialViewOptions
     )
 

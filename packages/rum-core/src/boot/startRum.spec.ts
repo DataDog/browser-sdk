@@ -1,5 +1,6 @@
 import type { RelativeTime, Observable, RawError, Duration } from '@datadog/browser-core'
 import {
+  createContextManager,
   stopSessionManager,
   toServerDuration,
   ONE_SECOND,
@@ -301,7 +302,14 @@ describe('view events', () => {
 
   beforeEach(() => {
     setupBuilder = setup().beforeBuild(({ configuration }) => {
-      startRum({} as RumInitConfiguration, configuration, () => ({ context: {}, user: {} }), noopRecorderApi)
+      startRum(
+        {} as RumInitConfiguration,
+        configuration,
+        () => ({ context: {}, user: {} }),
+        noopRecorderApi,
+        createContextManager(),
+        createContextManager()
+      )
     })
     interceptor = interceptRequests()
   })
