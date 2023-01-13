@@ -86,7 +86,7 @@ export class Batch {
 
   private process(message: Context) {
     const processedMessage = jsonStringify(message)!
-    const messageBytesCount = this.computeBytesCount(processedMessage)
+    const messageBytesCount = computeBytesCount(processedMessage)
     return { processedMessage, messageBytesCount }
   }
 
@@ -107,7 +107,7 @@ export class Batch {
   private remove(key: string) {
     const removedMessage = this.upsertBuffer[key]
     delete this.upsertBuffer[key]
-    const messageBytesCount = this.computeBytesCount(removedMessage)
+    const messageBytesCount = computeBytesCount(removedMessage)
     this.bufferBytesCount -= messageBytesCount
     this.bufferMessagesCount -= 1
     if (this.bufferMessagesCount > 0) {
