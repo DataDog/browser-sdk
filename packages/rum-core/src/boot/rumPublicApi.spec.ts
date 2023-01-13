@@ -178,9 +178,14 @@ describe('rum public api', () => {
 
   describe('getInitConfiguration', () => {
     let rumPublicApi: RumPublicApi
+    let initConfiguration: RumInitConfiguration
 
     beforeEach(() => {
       rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
+      initConfiguration = { ...DEFAULT_INIT_CONFIGURATION, service: 'my-service', version: '1.4.2', env: 'dev' }
+    })
+    afterEach(() => {
+      cleanupSyntheticsWorkerValues()
     })
 
     it('returns undefined before init', () => {
@@ -188,7 +193,18 @@ describe('rum public api', () => {
     })
 
     it('returns the user configuration after init', () => {
-      const initConfiguration = { ...DEFAULT_INIT_CONFIGURATION, service: 'my-service', version: '1.4.2', env: 'dev' }
+      rumPublicApi.init(initConfiguration)
+
+      expect(rumPublicApi.getInitConfiguration()).toEqual(initConfiguration)
+      expect(rumPublicApi.getInitConfiguration()).not.toBe(initConfiguration)
+    })
+
+    it('returns the user configuration even if skipInitIfSyntheticsWillInjectRum is true', () => {
+      mockSyntheticsWorkerValues({ injectsRum: true })
+
+      const rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi, {
+        ignoreInitIfSyntheticsWillInjectRum: true,
+      })
       rumPublicApi.init(initConfiguration)
 
       expect(rumPublicApi.getInitConfiguration()).toEqual(initConfiguration)

@@ -20,6 +20,8 @@ export function createIsolatedDom() {
     element(s: TemplateStringsArray) {
       return append(s[0])
     },
+    document: doc,
+    window: iframe.contentWindow! as Window & { CSSStyleSheet: typeof CSSStyleSheet },
     append,
     clear() {
       iframe.parentNode!.removeChild(iframe)

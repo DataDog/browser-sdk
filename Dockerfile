@@ -11,6 +11,8 @@ RUN apt-get update && apt-get install -y -q --no-install-recommends \
         libnss3 \
         libxss1 \
         libasound2 \
+        libu2f-udev \
+        libvulkan1 \
         fonts-liberation \
         libappindicator3-1 \
         lsb-release \

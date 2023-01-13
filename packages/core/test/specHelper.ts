@@ -506,3 +506,7 @@ export function contextBytesCounterStub(): ContextBytesCounter {
     invalidate: jasmine.createSpy('invalidate'),
   }
 }
+
+export function isAdoptedStyleSheetsSupported() {
+  return Boolean((document as any).adoptedStyleSheets)
+}

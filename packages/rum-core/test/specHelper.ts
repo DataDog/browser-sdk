@@ -19,6 +19,7 @@ import type { RumConfiguration } from '../src/domain/configuration'
 import { validateAndBuildRumConfiguration } from '../src/domain/configuration'
 import type { ActionContexts } from '../src/domain/rumEventsCollection/action/actionCollection'
 import type { FeatureFlagContexts } from '../src/domain/contexts/featureFlagContext'
+import type { PageStateHistory } from '../src/domain/contexts/pageStateHistory'
 import { validateRumFormat } from './formatValidation'
 import { createRumSessionManagerMock } from './mockRumSessionManager'
 
@@ -51,6 +52,7 @@ export interface BuildContext {
   viewContexts: ViewContexts
   actionContexts: ActionContexts
   foregroundContexts: ForegroundContexts
+  pageStateHistory: PageStateHistory
   featureFlagContexts: FeatureFlagContexts
   urlContexts: UrlContexts
   globalContextManager: ContextManager
@@ -99,10 +101,12 @@ export function setup(): TestSetupBuilder {
     selectInForegroundPeriodsFor: () => undefined,
     stop: noop,
   }
-
   const globalContextManager = createContextManager()
   const userContextManager = createContextManager()
-
+  const pageStateHistory: PageStateHistory = {
+    findAll: () => undefined,
+    stop: noop,
+  }
   const FAKE_APP_ID = 'appId'
   const configuration: RumConfiguration = {
     ...validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: FAKE_APP_ID })!,
@@ -172,6 +176,7 @@ export function setup(): TestSetupBuilder {
           urlContexts,
           actionContexts,
           foregroundContexts,
+          pageStateHistory,
           featureFlagContexts,
           sessionManager,
           applicationId: FAKE_APP_ID,

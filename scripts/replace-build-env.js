@@ -1,6 +1,6 @@
 const glob = require('glob')
 const buildEnv = require('./build-env')
-const { printLog, logAndExit, modifyFile } = require('./utils')
+const { printLog, runMain, modifyFile } = require('./utils')
 
 /**
  * Replace BuildEnv in build files
@@ -8,7 +8,7 @@ const { printLog, logAndExit, modifyFile } = require('./utils')
  * BUILD_MODE=zzz node replace-build-env.js /path/to/build/directory
  */
 
-async function main() {
+runMain(async () => {
   const buildDirectory = process.argv[2]
 
   printLog(`Replacing BuildEnv in '${buildDirectory}' with:`, JSON.stringify(buildEnv, null, 2))
@@ -18,9 +18,7 @@ async function main() {
       printLog(`Replaced BuildEnv in ${path}`)
     }
   }
-
-  process.exit(0)
-}
+})
 
 function replaceBuildEnv(content) {
   return Object.keys(buildEnv).reduce(
@@ -28,5 +26,3 @@ function replaceBuildEnv(content) {
     content
   )
 }
-
-main().catch(logAndExit)

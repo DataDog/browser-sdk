@@ -2,6 +2,7 @@ import { buildUrl } from '@datadog/browser-core'
 import { getParentNode, isNodeShadowRoot } from '@datadog/browser-rum-core'
 import type { NodePrivacyLevel } from '../../constants'
 import { CENSORED_STRING_MARK } from '../../constants'
+import type { StyleSheet } from '../../types'
 import { shouldMaskNode } from './privacy'
 
 export type NodeWithSerializedNode = Node & { s: 'Node with serialized node' }
@@ -105,4 +106,21 @@ export function makeUrlAbsolute(url: string, baseUrl: string): string {
   } catch (_) {
     return url
   }
+}
+
+export function serializeStyleSheets(cssStyleSheets: CSSStyleSheet[] | undefined): StyleSheet[] | undefined {
+  if (cssStyleSheets === undefined || cssStyleSheets.length === 0) {
+    return undefined
+  }
+  return cssStyleSheets.map((cssStyleSheet) => {
+    const rules = cssStyleSheet.cssRules || cssStyleSheet.rules
+    const cssRules = Array.from(rules, (cssRule) => cssRule.cssText)
+
+    const styleSheet: StyleSheet = {
+      cssRules,
+      disabled: cssStyleSheet.disabled || undefined,
+      media: cssStyleSheet.media.length > 0 ? Array.from(cssStyleSheet.media) : undefined,
+    }
+    return styleSheet
+  })
 }

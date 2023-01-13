@@ -220,8 +220,8 @@ export function shouldIgnoreElement(element: Element): boolean {
   if (element.nodeName === 'LINK') {
     const relAttribute = getLowerCaseAttribute('rel')
     return (
-      // Scripts
-      (relAttribute === 'preload' && getLowerCaseAttribute('as') === 'script') ||
+      // Link as script - Ignore only when rel=preload, modulepreload or prefetch
+      (/preload|prefetch/i.test(relAttribute) && getLowerCaseAttribute('as') === 'script') ||
       // Favicons
       relAttribute === 'shortcut icon' ||
       relAttribute === 'icon'

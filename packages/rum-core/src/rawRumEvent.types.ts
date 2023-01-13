@@ -9,6 +9,7 @@ import type {
   RawErrorCause,
   User,
 } from '@datadog/browser-core'
+import type { PageStateEntry } from './domain/contexts/pageStateHistory'
 import type { RumSessionPlan } from './domain/rumSessionManager'
 
 export const enum RumEventType {
@@ -42,6 +43,7 @@ export interface RawRumResourceEvent {
     span_id?: string // not available for initial document tracing
     rule_psr?: number
     discarded: boolean
+    page_states?: PageStateEntry[]
   }
 }
 

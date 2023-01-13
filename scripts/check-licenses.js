@@ -3,11 +3,11 @@
 const fs = require('fs')
 const path = require('path')
 const readline = require('readline')
-const { printLog, printError, logAndExit, findBrowserSdkPackageJsonFiles } = require('./utils')
+const { printLog, printError, runMain, findBrowserSdkPackageJsonFiles } = require('./utils')
 
 const LICENSE_FILE = 'LICENSE-3rdparty.csv'
 
-async function main() {
+runMain(async () => {
   const packageJsonFiles = await findBrowserSdkPackageJsonFiles()
 
   printLog(
@@ -32,7 +32,7 @@ async function main() {
     throw new Error('Dependencies mismatch')
   }
   printLog('Dependencies check done.')
-}
+})
 
 function retrievePackageDependencies(packageJsonFile) {
   return Object.keys(packageJsonFile.content.dependencies || {})
@@ -58,5 +58,3 @@ async function retrieveLicenses() {
   }
   return licenses
 }
-
-main().catch(logAndExit)
