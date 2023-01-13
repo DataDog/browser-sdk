@@ -98,18 +98,30 @@ describe('transportConfiguration', () => {
         configuration.isIntakeUrl('https://session-replay.browser-intake-foo-datadoghq.com/api/v2/replay?xxx')
       ).toBe(true)
     })
+    ;['proxy' as const, 'proxyUrl' as const].forEach((proxyConfigurationName) => {
+      describe(`${proxyConfigurationName} configuration`, () => {
+        it('should detect proxy intake request', () => {
+          let configuration = computeTransportConfiguration({
+            clientToken,
+            [proxyConfigurationName]: 'https://www.proxy.com',
+          })
+          expect(configuration.isIntakeUrl('https://www.proxy.com/?ddforward=xxx')).toBe(true)
 
-    it('should detect proxy intake request', () => {
-      let configuration = computeTransportConfiguration({ clientToken, proxyUrl: 'https://www.proxy.com' })
-      expect(configuration.isIntakeUrl('https://www.proxy.com/?ddforward=xxx')).toBe(true)
+          configuration = computeTransportConfiguration({
+            clientToken,
+            [proxyConfigurationName]: 'https://www.proxy.com/custom/path',
+          })
+          expect(configuration.isIntakeUrl('https://www.proxy.com/custom/path?ddforward=xxx')).toBe(true)
+        })
 
-      configuration = computeTransportConfiguration({ clientToken, proxyUrl: 'https://www.proxy.com/custom/path' })
-      expect(configuration.isIntakeUrl('https://www.proxy.com/custom/path?ddforward=xxx')).toBe(true)
-    })
-
-    it('should not detect request done on the same host as the proxy', () => {
-      const configuration = computeTransportConfiguration({ clientToken, proxyUrl: 'https://www.proxy.com' })
-      expect(configuration.isIntakeUrl('https://www.proxy.com/foo')).toBe(false)
+        it('should not detect request done on the same host as the proxy', () => {
+          const configuration = computeTransportConfiguration({
+            clientToken,
+            [proxyConfigurationName]: 'https://www.proxy.com',
+          })
+          expect(configuration.isIntakeUrl('https://www.proxy.com/foo')).toBe(false)
+        })
+      })
     })
     ;[
       { site: 'datadoghq.eu', intakeDomain: 'browser-intake-datadoghq.eu' },

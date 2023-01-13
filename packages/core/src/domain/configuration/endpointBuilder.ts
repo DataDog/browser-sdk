@@ -31,9 +31,8 @@ export function createEndpointBuilder(
 ) {
   const { clientToken } = initConfiguration
 
-  const host = buildEndpointHost(initConfiguration, endpointType)
-  const baseUrl = `https://${host}/api/v2/${INTAKE_TRACKS[endpointType]}`
-  const proxyUrl = initConfiguration.proxyUrl && normalizeUrl(initConfiguration.proxyUrl)
+  const baseUrl = buildEndpointBaseUrl(initConfiguration, endpointType)
+  const proxyUrl = buildProxyUrl(initConfiguration)
 
   return {
     build(api: 'xhr' | 'fetch' | 'beacon', retry?: RetryInfo) {
@@ -67,14 +66,29 @@ export function createEndpointBuilder(
   }
 }
 
-function buildEndpointHost(initConfiguration: InitConfiguration, endpointType: EndpointType) {
-  const { site = INTAKE_SITE_US1, internalAnalyticsSubdomain } = initConfiguration
+function buildProxyUrl({ proxy, proxyUrl }: InitConfiguration) {
+  const rawProxyUrl = proxy ?? proxyUrl
+  return rawProxyUrl && normalizeUrl(rawProxyUrl)
+}
 
-  if (internalAnalyticsSubdomain && site === INTAKE_SITE_US1) {
-    return `${internalAnalyticsSubdomain}.${INTAKE_SITE_US1}`
+function buildEndpointBaseUrl(
+  { site = INTAKE_SITE_US1, internalAnalyticsSubdomain, proxy }: InitConfiguration,
+  endpointType: EndpointType
+) {
+  const path = `/api/v2/${INTAKE_TRACKS[endpointType]}`
+
+  if (proxy) {
+    return path
   }
 
-  const domainParts = site.split('.')
-  const extension = domainParts.pop()
-  return `${ENDPOINTS[endpointType]}.browser-intake-${domainParts.join('-')}.${extension!}`
+  let host: string
+  if (internalAnalyticsSubdomain && site === INTAKE_SITE_US1) {
+    host = `${internalAnalyticsSubdomain}.${INTAKE_SITE_US1}`
+  } else {
+    const domainParts = site.split('.')
+    const extension = domainParts.pop()
+    host = `${ENDPOINTS[endpointType]}.browser-intake-${domainParts.join('-')}.${extension!}`
+  }
+
+  return `https://${host}${path}`
 }
