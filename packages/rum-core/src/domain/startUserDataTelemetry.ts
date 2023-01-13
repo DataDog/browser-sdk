@@ -1,5 +1,6 @@
 import type { BatchFlushEvent, Context, ContextManager, Observable, Telemetry } from '@datadog/browser-core'
 import {
+  includes,
   isExperimentalFeatureEnabled,
   performDraw,
   ONE_SECOND,
@@ -53,7 +54,7 @@ export function startUserDataTelemetry(
     updateMeasure(currentBatchGlobalContextBytes, globalContextManager.getBytesCount())
     updateMeasure(currentBatchUserContextBytes, userContextManager.getBytesCount())
 
-    if ([RumEventType.VIEW, RumEventType.ERROR].includes(event.type as RumEventType)) {
+    if (includes([RumEventType.VIEW, RumEventType.ERROR], event.type)) {
       updateMeasure(currentBatchFeatureFlagBytes, featureFlagContexts.getFeatureFlagBytesCount())
     }
   })
