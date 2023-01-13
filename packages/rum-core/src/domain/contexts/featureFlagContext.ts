@@ -1,5 +1,6 @@
 import type { RelativeTime, ContextValue, Context } from '@datadog/browser-core'
 import {
+  contextBytesCounter,
   deepClone,
   noop,
   isExperimentalFeatureEnabled,
@@ -15,6 +16,7 @@ export type FeatureFlagContext = Context
 
 export interface FeatureFlagContexts {
   findFeatureFlagEvaluations: (startTime?: RelativeTime) => FeatureFlagContext | undefined
+  getFeatureFlagBytesCount: () => number
   addFeatureFlagEvaluation: (key: string, value: ContextValue) => void
 }
 
@@ -26,10 +28,14 @@ export interface FeatureFlagContexts {
  *
  * Note: we choose not to add a new context at each evaluation to save memory
  */
-export function startFeatureFlagContexts(lifeCycle: LifeCycle): FeatureFlagContexts {
+export function startFeatureFlagContexts(
+  lifeCycle: LifeCycle,
+  bytesCounter = contextBytesCounter()
+): FeatureFlagContexts {
   if (!isExperimentalFeatureEnabled('feature_flags')) {
     return {
       findFeatureFlagEvaluations: () => undefined,
+      getFeatureFlagBytesCount: () => 0,
       addFeatureFlagEvaluation: noop,
     }
   }
@@ -42,14 +48,24 @@ export function startFeatureFlagContexts(lifeCycle: LifeCycle): FeatureFlagConte
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, ({ startClocks }) => {
     featureFlagContexts.add({}, startClocks.relative)
+    bytesCounter.invalidate()
   })
 
   return {
     findFeatureFlagEvaluations: (startTime?: RelativeTime) => featureFlagContexts.find(startTime),
+    getFeatureFlagBytesCount: () => {
+      const currentContext = featureFlagContexts.find()
+      if (!currentContext) {
+        return 0
+      }
+
+      return bytesCounter.compute(currentContext)
+    },
     addFeatureFlagEvaluation: (key: string, value: ContextValue) => {
       const currentContext = featureFlagContexts.find()
       if (currentContext) {
         currentContext[key] = deepClone(value)
+        bytesCounter.invalidate()
       }
     },
   }

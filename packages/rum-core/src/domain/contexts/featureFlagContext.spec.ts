@@ -1,5 +1,7 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { resetExperimentalFeatures, updateExperimentalFeatures, relativeToClocks } from '@datadog/browser-core'
+import type { ContextBytesCounter } from '../../../../core/src/tools/contextManager'
+import { contextBytesCounterStub } from '../../../../core/test/specHelper'
 import type { TestSetupBuilder } from '../../../test/specHelper'
 import { setup } from '../../../test/specHelper'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -10,10 +12,12 @@ import { startFeatureFlagContexts } from './featureFlagContext'
 describe('featureFlagContexts', () => {
   let setupBuilder: TestSetupBuilder
   let featureFlagContexts: FeatureFlagContexts
+  let bytesCounterStub: ContextBytesCounter
 
   beforeEach(() => {
     setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
-      featureFlagContexts = startFeatureFlagContexts(lifeCycle)
+      bytesCounterStub = contextBytesCounterStub()
+      featureFlagContexts = startFeatureFlagContexts(lifeCycle, bytesCounterStub)
     })
   })
 
@@ -84,6 +88,18 @@ describe('featureFlagContexts', () => {
 
       expect(featureFlagContext).toBeUndefined()
     })
+
+    it('should invalidate the context bytes count when a new feature flag is added or a view is created', () => {
+      updateExperimentalFeatures(['feature_flags'])
+
+      const { lifeCycle } = setupBuilder.withFakeClock().build()
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+        startClocks: relativeToClocks(0 as RelativeTime),
+      } as ViewCreatedEvent)
+
+      featureFlagContexts.addFeatureFlagEvaluation('feature', 'foo')
+      expect(bytesCounterStub.invalidate).toHaveBeenCalledTimes(2)
+    })
   })
 
   describe('findFeatureFlagEvaluations', () => {
@@ -142,6 +158,23 @@ describe('featureFlagContexts', () => {
 
       expect(featureFlagContexts.findFeatureFlagEvaluations(5 as RelativeTime)).toEqual({ feature: 'one' })
       expect(featureFlagContexts.findFeatureFlagEvaluations(15 as RelativeTime)).toEqual({ feature: 'two' })
+    })
+  })
+
+  describe('getFeatureFlagBytesCount', () => {
+    it('should get the context bytes count', () => {
+      updateExperimentalFeatures(['feature_flags'])
+
+      const { lifeCycle } = setupBuilder.withFakeClock().build()
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+        startClocks: relativeToClocks(0 as RelativeTime),
+      } as ViewCreatedEvent)
+
+      featureFlagContexts.addFeatureFlagEvaluation('foo', 'bar')
+
+      const bytesCount = featureFlagContexts.getFeatureFlagBytesCount()
+
+      expect(bytesCount).toEqual(1)
     })
   })
 })
