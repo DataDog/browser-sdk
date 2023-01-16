@@ -1,4 +1,5 @@
 import type { BuildEnvWindow } from '../../../test/specHelper'
+import { startsWith } from '../../tools/utils'
 import type { InitConfiguration } from './configuration'
 import { createEndpointBuilder } from './endpointBuilder'
 
@@ -50,9 +51,10 @@ describe('endpointBuilder', () => {
 
     it('normalizes the proxy url', () => {
       expect(
-        createEndpointBuilder({ ...initConfiguration, proxy: '/path' }, 'rum', [])
-          .build('xhr')
-          .startsWith(`${location.origin}/path?ddforward`)
+        startsWith(
+          createEndpointBuilder({ ...initConfiguration, proxy: '/path' }, 'rum', []).build('xhr'),
+          `${location.origin}/path?ddforward`
+        )
       ).toBeTrue()
     })
 
@@ -89,9 +91,10 @@ describe('endpointBuilder', () => {
 
     it('normalizes the proxy url', () => {
       expect(
-        createEndpointBuilder({ ...initConfiguration, proxyUrl: '/path' }, 'rum', [])
-          .build('xhr')
-          .startsWith(`${location.origin}/path?ddforward`)
+        startsWith(
+          createEndpointBuilder({ ...initConfiguration, proxyUrl: '/path' }, 'rum', []).build('xhr'),
+          `${location.origin}/path?ddforward`
+        )
       ).toBeTrue()
     })
   })
