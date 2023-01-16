@@ -91,7 +91,7 @@ async function spawnCommand(command, args) {
  * [0]: https://matklad.github.io/2021/07/30/shell-injection.html
  */
 function command(...templateArguments) {
-  const [commandName, ...commandArguments] = parseCommandArguments(...templateArguments)
+  const [commandName, ...commandArguments] = parseCommandTemplateArguments(...templateArguments)
 
   let input = ''
   let env
@@ -138,7 +138,38 @@ function command(...templateArguments) {
   }
 }
 
-function parseCommandArguments(templateStrings, ...templateVariables) {
+/**
+ * Parse template values passed to the `command` template tag, and return a list of arguments to run
+ * the command.
+ *
+ * It expects the same parameters as a template tag: the first parameter is a list of template
+ * strings, and the other parameters are template variables. See MDN for tagged template
+ * documentation[1].
+ *
+ * The resulting command arguments is a list of strings generated as if the template literal was
+ * split on white spaces. For example:
+ *
+ * parseCommandTemplateArguments`foo bar` == ['foo', 'bar']
+ * parseCommandTemplateArguments`foo ${'bar'} baz` == ['foo', 'bar', 'baz']
+ *
+ * Template variables are considered as part of the previous or next command argument if they are
+ * not separated with a space:
+ *
+ * parseCommandTemplateArguments`foo${'bar'} baz` == ['foobar', 'baz']
+ * parseCommandTemplateArguments`foo ${'bar'}baz` == ['foo', 'barbaz']
+ * parseCommandTemplateArguments`foo${'bar'}baz` == ['foobarbaz']
+ *
+ * Template variables are never split on white spaces, allowing to pass any arbitrary argument to
+ * the command without worrying on shell escaping:
+ *
+ * parseCommandTemplateArguments`foo ${'bar baz'}` == ['foo', 'bar baz']
+ *
+ * const commitMessage = 'my commit message'
+ * parseCommandTemplateArguments`git commit -c ${commitMessage}` == ['git', 'commit', '-c', 'my commit message']
+ *
+ * [1]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals#tagged_templates
+ */
+function parseCommandTemplateArguments(templateStrings, ...templateVariables) {
   let parsedArguments = []
   for (let i = 0; i < templateStrings.length; i += 1) {
     if (i > 0) {
