@@ -8,7 +8,7 @@ module.exports = {
   create(context) {
     return {
       'TaggedTemplateExpression[tag.name="command"]'(node) {
-        if (!isCommandIsExecuted(node)) {
+        if (!isCommandExecuted(node)) {
           context.report({
             node,
             message: 'Command is missing a `run()` call',
@@ -26,7 +26,7 @@ module.exports = {
   },
 }
 
-function isCommandIsExecuted(node) {
+function isCommandExecuted(node) {
   let methodCallNames = []
   let currentMethodCall = node.parent
 
