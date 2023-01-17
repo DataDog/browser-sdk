@@ -69,34 +69,14 @@ export function startRum(
   const reportError = (error: RawError) => {
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
   }
-  let batch
+  const featureFlagContexts = startFeatureFlagContexts(lifeCycle)
+
   if (!canUseEventBridge()) {
     const pageExitObservable = createPageExitObservable()
     pageExitObservable.subscribe((event) => {
       lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, event)
     })
-    batch = startRumBatch(configuration, lifeCycle, telemetry.observable, reportError, pageExitObservable)
-  } else {
-    startRumEventBridge(lifeCycle)
-  }
-
-  const session = !canUseEventBridge() ? startRumSessionManager(configuration, lifeCycle) : startRumSessionManagerStub()
-  const domMutationObservable = createDOMMutationObservable()
-  const locationChangeObservable = createLocationChangeObservable(location)
-
-  const { viewContexts, foregroundContexts, featureFlagContexts, urlContexts, actionContexts, addAction } =
-    startRumEventCollection(
-      lifeCycle,
-      configuration,
-      location,
-      session,
-      locationChangeObservable,
-      domMutationObservable,
-      getCommonContext,
-      reportError
-    )
-
-  if (batch) {
+    const batch = startRumBatch(configuration, lifeCycle, telemetry.observable, reportError, pageExitObservable)
     startUserDataTelemetry(
       configuration,
       telemetry,
@@ -106,7 +86,25 @@ export function startRum(
       featureFlagContexts,
       batch.flushObservable
     )
+  } else {
+    startRumEventBridge(lifeCycle)
   }
+
+  const session = !canUseEventBridge() ? startRumSessionManager(configuration, lifeCycle) : startRumSessionManagerStub()
+  const domMutationObservable = createDOMMutationObservable()
+  const locationChangeObservable = createLocationChangeObservable(location)
+
+  const { viewContexts, foregroundContexts, urlContexts, actionContexts, addAction } = startRumEventCollection(
+    lifeCycle,
+    configuration,
+    location,
+    session,
+    locationChangeObservable,
+    domMutationObservable,
+    getCommonContext,
+    reportError
+  )
+
   addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
 
   startLongTaskCollection(lifeCycle, session)
@@ -170,7 +168,6 @@ export function startRumEventCollection(
 ) {
   const viewContexts = startViewContexts(lifeCycle)
   const urlContexts = startUrlContexts(lifeCycle, locationChangeObservable, location)
-  const featureFlagContexts = startFeatureFlagContexts(lifeCycle)
 
   const foregroundContexts = startForegroundContexts()
   const { addAction, actionContexts } = startActionCollection(
@@ -195,7 +192,6 @@ export function startRumEventCollection(
     viewContexts,
     foregroundContexts,
     urlContexts,
-    featureFlagContexts,
     addAction,
     actionContexts,
     stop: () => {
