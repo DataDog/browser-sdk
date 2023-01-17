@@ -36,9 +36,7 @@ export function createEndpointBuilder(
       const parameters = buildEndpointParameters(initConfiguration, endpointType, configurationTags, api, retry)
       return buildUrlWithParameters(parameters)
     },
-    buildIntakeUrl() {
-      return buildUrlWithParameters('')
-    },
+    urlPrefix: buildUrlWithParameters(''),
     endpointType,
   }
 }

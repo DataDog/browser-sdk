@@ -24,13 +24,13 @@ export function computeTransportConfiguration(initConfiguration: InitConfigurati
   const tags = buildTags(initConfiguration)
 
   const endpointBuilders = computeEndpointBuilders(initConfiguration, tags)
-  const intakeEndpoints = objectValues(endpointBuilders).map((builder) => builder.buildIntakeUrl())
+  const intakeUrlPrefixes = objectValues(endpointBuilders).map((builder) => builder.urlPrefix)
 
-  const replicaConfiguration = computeReplicaConfiguration(initConfiguration, intakeEndpoints, tags)
+  const replicaConfiguration = computeReplicaConfiguration(initConfiguration, intakeUrlPrefixes, tags)
 
   return assign(
     {
-      isIntakeUrl: (url: string) => intakeEndpoints.some((intakeEndpoint) => url.indexOf(intakeEndpoint) === 0),
+      isIntakeUrl: (url: string) => intakeUrlPrefixes.some((intakeEndpoint) => url.indexOf(intakeEndpoint) === 0),
       replica: replicaConfiguration,
       site: initConfiguration.site || INTAKE_SITE_US1,
     },
@@ -48,7 +48,7 @@ function computeEndpointBuilders(initConfiguration: InitConfiguration, tags: str
 
 function computeReplicaConfiguration(
   initConfiguration: InitConfiguration,
-  intakeEndpoints: string[],
+  intakeUrlPrefixes: string[],
   tags: string[]
 ): ReplicaConfiguration | undefined {
   if (!initConfiguration.replica) {
@@ -65,7 +65,7 @@ function computeReplicaConfiguration(
     rumEndpointBuilder: createEndpointBuilder(replicaConfiguration, 'rum', tags),
   }
 
-  intakeEndpoints.push(...objectValues(replicaEndpointBuilders).map((builder) => builder.buildIntakeUrl()))
+  intakeUrlPrefixes.push(...objectValues(replicaEndpointBuilders).map((builder) => builder.urlPrefix))
 
   return assign({ applicationId: initConfiguration.replica.applicationId }, replicaEndpointBuilders)
 }
