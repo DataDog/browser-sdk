@@ -29,66 +29,91 @@ export function createEndpointBuilder(
   endpointType: EndpointType,
   configurationTags: string[]
 ) {
-  const { clientToken } = initConfiguration
-
-  const baseUrl = buildEndpointBaseUrl(initConfiguration, endpointType)
-  const proxyUrl = buildProxyUrl(initConfiguration)
+  const buildUrlWithParameters = createEndpointUrlWithParametersBuilder(initConfiguration, endpointType)
 
   return {
     build(api: 'xhr' | 'fetch' | 'beacon', retry?: RetryInfo) {
-      const tags = [`sdk_version:${__BUILD_ENV__SDK_VERSION__}`, `api:${api}`].concat(configurationTags)
-      if (retry) {
-        tags.push(`retry_count:${retry.count}`, `retry_after:${retry.lastFailureStatus}`)
-      }
-      const parameters = [
-        'ddsource=browser',
-        `ddtags=${encodeURIComponent(tags.join(','))}`,
-        `dd-api-key=${clientToken}`,
-        `dd-evp-origin-version=${encodeURIComponent(__BUILD_ENV__SDK_VERSION__)}`,
-        'dd-evp-origin=browser',
-        `dd-request-id=${generateUUID()}`,
-      ]
-
-      if (endpointType === 'rum') {
-        parameters.push(`batch_time=${timeStampNow()}`)
-      }
-      if (initConfiguration.internalAnalyticsSubdomain) {
-        parameters.reverse()
-      }
-      const endpointUrl = `${baseUrl}?${parameters.join('&')}`
-
-      return proxyUrl ? `${proxyUrl}?ddforward=${encodeURIComponent(endpointUrl)}` : endpointUrl
+      const parameters = buildEndpointParameters(initConfiguration, endpointType, configurationTags, api, retry)
+      return buildUrlWithParameters(parameters)
     },
     buildIntakeUrl() {
-      return proxyUrl ? `${proxyUrl}?ddforward` : baseUrl
+      return buildUrlWithParameters('')
     },
     endpointType,
   }
 }
 
-function buildProxyUrl({ proxy, proxyUrl }: InitConfiguration) {
-  const rawProxyUrl = proxy ?? proxyUrl
-  return rawProxyUrl && normalizeUrl(rawProxyUrl)
-}
-
-function buildEndpointBaseUrl(
-  { site = INTAKE_SITE_US1, internalAnalyticsSubdomain, proxy }: InitConfiguration,
+/**
+ * Create a function used to build a full endpoint url from provided parameters. The goal of this
+ * function is to pre-compute some parts of the URL to avoid re-computing everything on every
+ * request, as only parameters are changing.
+ */
+function createEndpointUrlWithParametersBuilder(
+  initConfiguration: InitConfiguration,
   endpointType: EndpointType
-) {
+): (parameters: string) => string {
   const path = `/api/v2/${INTAKE_TRACKS[endpointType]}`
 
+  const { proxy, proxyUrl } = initConfiguration
   if (proxy) {
-    return path
+    const normalizedProxyUrl = normalizeUrl(proxy)
+    return (parameters) => `${normalizedProxyUrl}?ddforward=${encodeURIComponent(`${path}?${parameters}`)}`
   }
 
-  let host: string
+  const host = buildEndpointHost(initConfiguration, endpointType)
+
+  if (proxy === undefined && proxyUrl) {
+    // TODO: remove this in a future major.
+    const normalizedProxyUrl = normalizeUrl(proxyUrl)
+    return (parameters) =>
+      `${normalizedProxyUrl}?ddforward=${encodeURIComponent(`https://${host}${path}?${parameters}`)}`
+  }
+
+  return (parameters) => `https://${host}${path}?${parameters}`
+}
+
+function buildEndpointHost(initConfiguration: InitConfiguration, endpointType: EndpointType) {
+  const { site = INTAKE_SITE_US1, internalAnalyticsSubdomain } = initConfiguration
+
   if (internalAnalyticsSubdomain && site === INTAKE_SITE_US1) {
-    host = `${internalAnalyticsSubdomain}.${INTAKE_SITE_US1}`
-  } else {
-    const domainParts = site.split('.')
-    const extension = domainParts.pop()
-    host = `${ENDPOINTS[endpointType]}.browser-intake-${domainParts.join('-')}.${extension!}`
+    return `${internalAnalyticsSubdomain}.${INTAKE_SITE_US1}`
   }
 
-  return `https://${host}${path}`
+  const domainParts = site.split('.')
+  const extension = domainParts.pop()
+  return `${ENDPOINTS[endpointType]}.browser-intake-${domainParts.join('-')}.${extension!}`
+}
+
+/**
+ * Build parameters to be used for an intake request. Parameters should be re-built for each
+ * request, as they change randomly.
+ */
+function buildEndpointParameters(
+  { clientToken, internalAnalyticsSubdomain }: InitConfiguration,
+  endpointType: EndpointType,
+  configurationTags: string[],
+  api: 'xhr' | 'fetch' | 'beacon',
+  retry: RetryInfo | undefined
+) {
+  const tags = [`sdk_version:${__BUILD_ENV__SDK_VERSION__}`, `api:${api}`].concat(configurationTags)
+  if (retry) {
+    tags.push(`retry_count:${retry.count}`, `retry_after:${retry.lastFailureStatus}`)
+  }
+  const parameters = [
+    'ddsource=browser',
+    `ddtags=${encodeURIComponent(tags.join(','))}`,
+    `dd-api-key=${clientToken}`,
+    `dd-evp-origin-version=${encodeURIComponent(__BUILD_ENV__SDK_VERSION__)}`,
+    'dd-evp-origin=browser',
+    `dd-request-id=${generateUUID()}`,
+  ]
+
+  if (endpointType === 'rum') {
+    parameters.push(`batch_time=${timeStampNow()}`)
+  }
+  if (internalAnalyticsSubdomain) {
+    parameters.reverse()
+  }
+
+  return parameters.join('&')
 }
