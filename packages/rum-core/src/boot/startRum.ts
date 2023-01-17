@@ -33,7 +33,7 @@ import type { RumConfiguration, RumInitConfiguration } from '../domain/configura
 import { serializeRumConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/rumEventsCollection/view/trackViews'
 import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
-import { startUserDataTelemetry } from '../domain/startUserDataTelemetry'
+import { startCustomerDataTelemetry } from '../domain/startCustomerDataTelemetry'
 import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
 import type { RecorderApi } from './rumPublicApi'
 
@@ -77,7 +77,7 @@ export function startRum(
       lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, event)
     })
     const batch = startRumBatch(configuration, lifeCycle, telemetry.observable, reportError, pageExitObservable)
-    startUserDataTelemetry(
+    startCustomerDataTelemetry(
       configuration,
       telemetry,
       lifeCycle,

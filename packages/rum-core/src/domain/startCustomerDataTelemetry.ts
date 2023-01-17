@@ -33,7 +33,7 @@ let currentBatchGlobalContextBytes: Measure
 let currentBatchUserContextBytes: Measure
 let currentBatchFeatureFlagBytes: Measure
 
-export function startUserDataTelemetry(
+export function startCustomerDataTelemetry(
   configuration: RumConfiguration,
   telemetry: Telemetry,
   lifeCycle: LifeCycle,
@@ -42,8 +42,9 @@ export function startUserDataTelemetry(
   featureFlagContexts: FeatureFlagContexts,
   batchFlushObservable: Observable<BatchFlushEvent>
 ) {
-  const userDataTelemetryEnabled = telemetry.enabled && performDraw(configuration.userDataTelemetrySampleRate)
-  if (!userDataTelemetryEnabled || !isExperimentalFeatureEnabled('user_data_telemetry')) {
+  const customerDataTelemetrySampleRate =
+    telemetry.enabled && performDraw(configuration.customerDataTelemetrySampleRate)
+  if (!customerDataTelemetrySampleRate || !isExperimentalFeatureEnabled('customer_data_telemetry')) {
     return
   }
 
@@ -77,7 +78,7 @@ function sendMeasures() {
     return
   }
 
-  addTelemetryDebug('User data measures', {
+  addTelemetryDebug('Customer data measures', {
     batchCount,
     batchBytesCount,
     batchMessagesCount,

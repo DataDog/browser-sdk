@@ -80,7 +80,7 @@ export interface RumConfiguration extends Configuration {
   trackResources: boolean | undefined
   trackLongTasks: boolean | undefined
   version?: string
-  userDataTelemetrySampleRate: number
+  customerDataTelemetrySampleRate: number
 }
 
 export function validateAndBuildRumConfiguration(
@@ -153,7 +153,7 @@ export function validateAndBuildRumConfiguration(
       defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
         ? initConfiguration.defaultPrivacyLevel
         : DefaultPrivacyLevel.MASK_USER_INPUT,
-      userDataTelemetrySampleRate: 1,
+      customerDataTelemetrySampleRate: 1,
     },
     baseConfiguration
   )

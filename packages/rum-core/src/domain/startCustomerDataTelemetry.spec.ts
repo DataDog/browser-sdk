@@ -11,9 +11,9 @@ import { setup } from '../../test/specHelper'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-import { MEASURES_FLUSH_INTERVAL, startUserDataTelemetry } from './startUserDataTelemetry'
+import { MEASURES_FLUSH_INTERVAL, startCustomerDataTelemetry } from './startCustomerDataTelemetry'
 
-describe('userDataTelemetry', () => {
+describe('customerDataTelemetry', () => {
   let setupBuilder: TestSetupBuilder
   let batchFlushObservable: Observable<BatchFlushEvent>
   let telemetryEvents: TelemetryEvent[]
@@ -37,10 +37,14 @@ describe('userDataTelemetry', () => {
   }
 
   beforeEach(() => {
-    updateExperimentalFeatures(['user_data_telemetry'])
+    updateExperimentalFeatures(['customer_data_telemetry'])
     setupBuilder = setup()
       .withFakeClock()
-      .withConfiguration({ telemetrySampleRate: 100, userDataTelemetrySampleRate: 100, maxTelemetryEventsPerPage: 2 })
+      .withConfiguration({
+        telemetrySampleRate: 100,
+        customerDataTelemetrySampleRate: 100,
+        maxTelemetryEventsPerPage: 2,
+      })
       .beforeBuild(({ globalContextManager, userContextManager, featureFlagContexts, configuration }) => {
         batchFlushObservable = new Observable()
         lifeCycle = new LifeCycle()
@@ -54,7 +58,7 @@ describe('userDataTelemetry', () => {
         const telemetry = startTelemetry(TelemetryService.RUM, configuration)
         telemetry.observable.subscribe((telemetryEvent) => telemetryEvents.push(telemetryEvent))
 
-        startUserDataTelemetry(
+        startCustomerDataTelemetry(
           configuration,
           telemetry,
           lifeCycle,
@@ -71,7 +75,7 @@ describe('userDataTelemetry', () => {
     resetExperimentalFeatures()
   })
 
-  it('should collect user data telemetry', () => {
+  it('should collect customer data telemetry', () => {
     const { clock } = setupBuilder.build()
 
     generateBatch({ eventNumber: 2, contextBytesCount: 2, batchBytesCount: 2 })
@@ -81,7 +85,7 @@ describe('userDataTelemetry', () => {
     expect(telemetryEvents[0].telemetry).toEqual({
       type: 'log',
       status: 'debug',
-      message: 'User data measures',
+      message: 'Customer data measures',
       batchCount: 2,
       batchBytesCount: { min: 1, max: 2, sum: 3 },
       batchMessagesCount: { min: 1, max: 2, sum: 3 },
@@ -121,9 +125,9 @@ describe('userDataTelemetry', () => {
     )
   })
 
-  it('should not collect user data telemetry when telemetry disabled', () => {
+  it('should not collect customer data telemetry when telemetry disabled', () => {
     const { clock } = setupBuilder
-      .withConfiguration({ telemetrySampleRate: 100, userDataTelemetrySampleRate: 0 })
+      .withConfiguration({ telemetrySampleRate: 100, customerDataTelemetrySampleRate: 0 })
       .build()
 
     generateBatch({ eventNumber: 1, contextBytesCount: 1, batchBytesCount: 1 })
@@ -132,7 +136,7 @@ describe('userDataTelemetry', () => {
     expect(telemetryEvents.length).toEqual(0)
   })
 
-  it('should not collect user data telemetry when user_data_telemetry ff is disabled', () => {
+  it('should not collect customer data telemetry when customer_data_telemetry ff is disabled', () => {
     resetExperimentalFeatures()
     const { clock } = setupBuilder.build()
 
