@@ -193,6 +193,7 @@ module.exports = {
       files: ['scripts/**/*.js'],
       rules: {
         'unicorn/filename-case': ['error', { case: 'kebabCase' }],
+        'local-rules/secure-command-execution': 'error',
       },
     },
     {

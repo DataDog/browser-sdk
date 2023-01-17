@@ -1,10 +1,11 @@
 'use strict'
 
+const fs = require('fs')
 const {
   printLog,
   printError,
   runMain,
-  executeCommand,
+  command,
   replaceCiFileVariable,
   initGitConfig,
   getSecretKey,
@@ -21,10 +22,10 @@ const CHROME_PACKAGE_URL = 'https://www.ubuntuupdates.org/package/google_chrome/
 const CHROME_DRIVER_URL = 'https://chromedriver.storage.googleapis.com/?delimiter=/&prefix='
 
 runMain(async () => {
-  await initGitConfig(REPOSITORY)
-  await executeCommand(`git fetch --no-tags origin ${MAIN_BRANCH}`)
-  await executeCommand(`git checkout ${MAIN_BRANCH} -f`)
-  await executeCommand(`git pull origin ${MAIN_BRANCH}`)
+  initGitConfig(REPOSITORY)
+  command`git fetch --no-tags origin ${MAIN_BRANCH}`.run()
+  command`git checkout ${MAIN_BRANCH} -f`.run()
+  command`git pull origin ${MAIN_BRANCH}`.run()
 
   const packageVersion = await getPackageVersion()
   const majorPackageVersion = getMajor(packageVersion)
@@ -44,30 +45,30 @@ runMain(async () => {
   const chromeVersionBranch = `bump-chrome-version-to-${driverVersion}`
   const commitMessage = `👷 Bump chrome to ${packageVersion}`
 
-  const isBranchAlreadyCreated = await executeCommand(`git ls-remote --heads ${REPOSITORY} ${chromeVersionBranch}`)
+  const isBranchAlreadyCreated = command`git ls-remote --heads ${REPOSITORY} ${chromeVersionBranch}`.run()
   if (isBranchAlreadyCreated) {
     printLog('Bump chrome branch already created.')
     return
   }
 
-  await executeCommand(`git checkout -b ${chromeVersionBranch}`)
+  command`git checkout -b ${chromeVersionBranch}`.run()
 
   printLog('Update versions...')
   await replaceCiFileVariable('CHROME_DRIVER_VERSION', driverVersion)
   await replaceCiFileVariable('CHROME_PACKAGE_VERSION', packageVersion)
   await replaceCiFileVariable('CURRENT_CI_IMAGE', Number(CURRENT_CI_IMAGE) + 1)
 
-  await executeCommand(`git add ${CI_FILE}`)
-  await executeCommand(`git commit -m "${commitMessage}"`)
-  await executeCommand(`git push origin ${chromeVersionBranch}`)
+  command`git add ${CI_FILE}`.run()
+  command`git commit -m ${commitMessage}`.run()
+  command`git push origin ${chromeVersionBranch}`.run()
 
   printLog('Create PR...')
 
-  const pullRequestUrl = await createPullRequest()
+  const pullRequestUrl = createPullRequest()
   printLog(`Chrome version bump PR created (from ${CURRENT_PACKAGE_VERSION} to ${packageVersion}).`)
 
   // used to share the pull request url to the notification jobs
-  await executeCommand(`echo "BUMP_CHROME_PULL_REQUEST_URL=${pullRequestUrl}" >> build.env`)
+  fs.appendFileSync('build.env', `BUMP_CHROME_PULL_REQUEST_URL=${pullRequestUrl}`)
 })
 
 async function getPackageVersion() {
@@ -92,9 +93,9 @@ function getMajor(version) {
   return Number(major)
 }
 
-async function createPullRequest() {
-  const githubAccessToken = await getSecretKey('ci.browser-sdk.github_access_token')
-  await executeCommand(`echo "${githubAccessToken}" | gh auth login --with-token`)
-  const pullRequestUrl = await executeCommand(`gh pr create --fill --base ${MAIN_BRANCH}`)
+function createPullRequest() {
+  const githubAccessToken = getSecretKey('ci.browser-sdk.github_access_token')
+  command`gh auth login --with-token`.withInput(githubAccessToken).run()
+  const pullRequestUrl = command`gh pr create --fill --base ${MAIN_BRANCH}`.run()
   return pullRequestUrl.trim()
 }

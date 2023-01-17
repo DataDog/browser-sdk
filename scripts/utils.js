@@ -1,8 +1,8 @@
-const util = require('util')
 const path = require('path')
+const os = require('os')
 const fsPromises = require('fs/promises')
 const fs = require('fs')
-const execute = util.promisify(require('child_process').exec)
+const childProcess = require('child_process')
 const spawn = require('child_process').spawn
 // node-fetch v3.x only support ESM syntax.
 // Todo: Remove node-fetch when node v18 LTS is released with fetch out of the box
@@ -10,30 +10,28 @@ const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fet
 
 const CI_FILE = '.gitlab-ci.yml'
 
-async function getSecretKey(name) {
-  const awsParameters = [
-    'ssm',
-    'get-parameter',
-    '--region=us-east-1',
-    '--with-decryption',
-    '--query=Parameter.Value',
-    '--out=text',
-    `--name=${name}`,
-  ]
-
-  return (await executeCommand(`aws ${awsParameters.join(' ')}`)).trim()
+function getSecretKey(name) {
+  return command`
+    aws ssm get-parameter --region=us-east-1 --with-decryption --query=Parameter.Value --out=text --name=${name}
+  `
+    .run()
+    .trim()
 }
 
-async function initGitConfig(repository) {
-  const githubDeployKey = await getSecretKey('ci.browser-sdk.github_deploy_key')
+function initGitConfig(repository) {
+  const githubDeployKey = getSecretKey('ci.browser-sdk.github_deploy_key')
+  const homedir = os.homedir()
 
-  await executeCommand(`ssh-add - <<< "${githubDeployKey}"`)
-  await executeCommand('mkdir -p ~/.ssh')
-  await executeCommand('chmod 700 ~/.ssh')
-  await executeCommand('ssh-keyscan -H github.com >> ~/.ssh/known_hosts')
-  await executeCommand('git config user.email "ci.browser-sdk@datadoghq.com"')
-  await executeCommand('git config user.name "ci.browser-sdk"')
-  await executeCommand(`git remote set-url origin ${repository}`)
+  // ssh-add expects a new line at the end of the PEM-formatted private key
+  // https://stackoverflow.com/a/59595773
+  command`ssh-add -`.withInput(`${githubDeployKey}\n`).run()
+  command`mkdir -p ${homedir}/.ssh`.run()
+  command`chmod 700 ${homedir}/.ssh`.run()
+  const sshHost = command`ssh-keyscan -H github.com`.run()
+  fs.appendFileSync(`${homedir}/.ssh/known_hosts`, sshHost)
+  command`git config user.email ci.browser-sdk@datadoghq.com`.run()
+  command`git config user.name ci.browser-sdk`.run()
+  command`git remote set-url origin ${repository}`.run()
 }
 
 function readCiFileVariable(variableName) {
@@ -62,20 +60,13 @@ async function modifyFile(filePath, modifier) {
   return false
 }
 
-async function executeCommand(command, envVariables) {
-  const commandResult = await execute(command, {
-    shell: '/bin/bash',
-    env: { ...process.env, ...envVariables },
-  })
-  if (commandResult.error && commandResult.error.code !== 0) {
-    throw commandResult.error
-  }
-  if (commandResult.stderr) {
-    console.error(commandResult.stderr)
-  }
-  return commandResult.stdout
-}
-
+/**
+ * Helper to run executables asynchronously, in a shell. This function does not prevent Shell
+ * injections[0], so please use carefully. Only use it to run commands with trusted arguments.
+ * Prefer the `command` helper for most use cases.
+ *
+ * [0]: https://matklad.github.io/2021/07/30/shell-injection.html
+ */
 async function spawnCommand(command, args) {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, { stdio: 'inherit', shell: true })
@@ -83,6 +74,125 @@ async function spawnCommand(command, args) {
     child.on('close', resolve)
     child.on('exit', resolve)
   })
+}
+
+/**
+ * Helper to run executables. This has been introduced to work around Shell injections[0] while
+ * keeping a good developer experience. The template string is split on white spaces and passed to
+ * a child_process method that don't use a shell.
+ *
+ * Prefer this helper over using other child_process methods. Avoid using `child_process.exec`,
+ * `child_process.execSync` or the `shell` option of other `child_process` functions.
+ *
+ * Use this as a tagged string template. Example:
+ *
+ * > command`git ls-files ${directory}`.run()
+ *
+ * [0]: https://matklad.github.io/2021/07/30/shell-injection.html
+ */
+function command(...templateArguments) {
+  const [commandName, ...commandArguments] = parseCommandTemplateArguments(...templateArguments)
+
+  let input = ''
+  let env
+
+  return {
+    withInput(newInput) {
+      input = newInput
+      return this
+    },
+
+    withEnvironment(newEnv) {
+      env = newEnv
+      return this
+    },
+
+    run() {
+      const commandResult = childProcess.spawnSync(commandName, commandArguments, {
+        input,
+        env: { ...process.env, ...env },
+        encoding: 'utf-8',
+      })
+
+      if (commandResult.status !== 0) {
+        const formattedCommand = `${commandName} ${commandArguments.join(' ')}`
+        const formattedStderr = commandResult.stderr ? `\n---- stderr: ----\n${commandResult.stderr}\n----` : ''
+        const formattedStdout = commandResult.stdout ? `\n---- stdout: ----\n${commandResult.stdout}\n----` : ''
+        const exitCause =
+          commandResult.signal !== null
+            ? ` due to signal ${commandResult.signal}`
+            : commandResult.status !== null
+            ? ` with exit status ${commandResult.status}`
+            : ''
+        const error = new Error(`Command failed${exitCause}: ${formattedCommand}${formattedStderr}${formattedStdout}`)
+        error.cause = commandResult.error
+        throw error
+      }
+
+      if (commandResult.stderr) {
+        printError(commandResult.stderr)
+      }
+
+      return commandResult.stdout
+    },
+  }
+}
+
+/**
+ * Parse template values passed to the `command` template tag, and return a list of arguments to run
+ * the command.
+ *
+ * It expects the same parameters as a template tag: the first parameter is a list of template
+ * strings, and the other parameters are template variables. See MDN for tagged template
+ * documentation[1].
+ *
+ * The resulting command arguments is a list of strings generated as if the template literal was
+ * split on white spaces. For example:
+ *
+ * parseCommandTemplateArguments`foo bar` == ['foo', 'bar']
+ * parseCommandTemplateArguments`foo ${'bar'} baz` == ['foo', 'bar', 'baz']
+ *
+ * Template variables are considered as part of the previous or next command argument if they are
+ * not separated with a space:
+ *
+ * parseCommandTemplateArguments`foo${'bar'} baz` == ['foobar', 'baz']
+ * parseCommandTemplateArguments`foo ${'bar'}baz` == ['foo', 'barbaz']
+ * parseCommandTemplateArguments`foo${'bar'}baz` == ['foobarbaz']
+ *
+ * Template variables are never split on white spaces, allowing to pass any arbitrary argument to
+ * the command without worrying on shell escaping:
+ *
+ * parseCommandTemplateArguments`foo ${'bar baz'}` == ['foo', 'bar baz']
+ *
+ * const commitMessage = 'my commit message'
+ * parseCommandTemplateArguments`git commit -c ${commitMessage}` == ['git', 'commit', '-c', 'my commit message']
+ *
+ * [1]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals#tagged_templates
+ */
+function parseCommandTemplateArguments(templateStrings, ...templateVariables) {
+  let parsedArguments = []
+  for (let i = 0; i < templateStrings.length; i += 1) {
+    if (i > 0) {
+      // Interleave variables with template strings
+      if (!parsedArguments.length || templateStrings[i - 1].match(/\s$/)) {
+        // If the latest string ends with a space, consider the variable as a separate argument
+        parsedArguments.push(templateVariables[i - 1])
+      } else {
+        // Else, append the variable to the latest argument
+        parsedArguments[parsedArguments.length - 1] += templateVariables[i - 1]
+      }
+    }
+
+    const words = templateStrings[i].split(/\s+/).filter((word) => word)
+
+    if (parsedArguments.length && words.length && !templateStrings[i].match(/^\s/)) {
+      // If the string does not start with a space, append it to the latest argument
+      parsedArguments[parsedArguments.length - 1] += words.shift()
+    }
+
+    parsedArguments.push(...words)
+  }
+  return parsedArguments
 }
 
 function runMain(mainFunction) {
@@ -118,8 +228,8 @@ async function fetchWrapper(url, options) {
   return response.text()
 }
 
-async function findBrowserSdkPackageJsonFiles() {
-  const manifestPaths = await executeCommand('git ls-files -- "package.json" "*/package.json"')
+function findBrowserSdkPackageJsonFiles() {
+  const manifestPaths = command`git ls-files -- package.json */package.json`.run()
   return manifestPaths
     .trim()
     .split('\n')
@@ -137,7 +247,7 @@ module.exports = {
   CI_FILE,
   getSecretKey,
   initGitConfig,
-  executeCommand,
+  command,
   spawnCommand,
   printError,
   printLog,

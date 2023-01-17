@@ -11,4 +11,5 @@ module.exports = {
   'disallow-enum-exports': require('./disallowEnumExports'),
   'disallow-spec-import': require('./disallowSpecImport'),
   'disallow-protected-directory-import': require('./disallowProtectedDirectoryImport'),
+  'secure-command-execution': require('./secureCommandExecution'),
 }
