@@ -14,7 +14,7 @@ import type { FeatureFlagContexts } from './contexts/featureFlagContext'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 
-export const MEASURES_FLUSH_INTERVAL = 10 * ONE_SECOND
+export const MEASURES_PERIOD_DURATION = 10 * ONE_SECOND
 
 type Measure = {
   min: number
@@ -22,16 +22,23 @@ type Measure = {
   sum: number
 }
 
-let batchCount: number
-let batchBytesCount: Measure
-let batchMessagesCount: Measure
-let globalContextBytes: Measure
-let userContextBytes: Measure
-let featureFlagBytes: Measure
+type CurrentPeriodMeasures = {
+  batchCount: number
+  batchBytesCount: Measure
+  batchMessagesCount: Measure
+  globalContextBytes: Measure
+  userContextBytes: Measure
+  featureFlagBytes: Measure
+}
 
-let currentBatchGlobalContextBytes: Measure
-let currentBatchUserContextBytes: Measure
-let currentBatchFeatureFlagBytes: Measure
+type CurrentBatchMeasures = {
+  globalContextBytes: Measure
+  userContextBytes: Measure
+  featureFlagBytes: Measure
+}
+
+let currentPeriodMeasures: CurrentPeriodMeasures
+let currentBatchMeasures: CurrentBatchMeasures
 
 export function startCustomerDataTelemetry(
   configuration: RumConfiguration,
@@ -48,74 +55,79 @@ export function startCustomerDataTelemetry(
     return
   }
 
-  initMeasures()
+  initCurrentPeriodMeasures()
   initCurrentBatchMeasures()
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (event: RumEvent & Context) => {
-    updateMeasure(currentBatchGlobalContextBytes, globalContextManager.getBytesCount())
-    updateMeasure(currentBatchUserContextBytes, userContextManager.getBytesCount())
+    updateMeasure(currentBatchMeasures.globalContextBytes, globalContextManager.getBytesCount())
+    updateMeasure(currentBatchMeasures.userContextBytes, userContextManager.getBytesCount())
 
     if (includes([RumEventType.VIEW, RumEventType.ERROR], event.type)) {
-      updateMeasure(currentBatchFeatureFlagBytes, featureFlagContexts.getFeatureFlagBytesCount())
+      updateMeasure(currentBatchMeasures.featureFlagBytes, featureFlagContexts.getFeatureFlagBytesCount())
     }
   })
 
   batchFlushObservable.subscribe(({ bufferBytesCount, bufferMessagesCount }) => {
-    batchCount += 1
-    updateMeasure(batchBytesCount, bufferBytesCount)
-    updateMeasure(batchMessagesCount, bufferMessagesCount)
-    mergeMeasure(globalContextBytes, currentBatchGlobalContextBytes)
-    mergeMeasure(userContextBytes, currentBatchUserContextBytes)
-    mergeMeasure(featureFlagBytes, currentBatchFeatureFlagBytes)
+    currentPeriodMeasures.batchCount += 1
+    updateMeasure(currentPeriodMeasures.batchBytesCount, bufferBytesCount)
+    updateMeasure(currentPeriodMeasures.batchMessagesCount, bufferMessagesCount)
+    mergeMeasure(currentPeriodMeasures.globalContextBytes, currentBatchMeasures.globalContextBytes)
+    mergeMeasure(currentPeriodMeasures.userContextBytes, currentBatchMeasures.userContextBytes)
+    mergeMeasure(currentPeriodMeasures.featureFlagBytes, currentBatchMeasures.featureFlagBytes)
     initCurrentBatchMeasures()
   })
 
-  setInterval(monitor(sendMeasures), MEASURES_FLUSH_INTERVAL)
+  setInterval(monitor(sendCurrentPeriodMeasures), MEASURES_PERIOD_DURATION)
 }
 
-function sendMeasures() {
-  if (batchCount === 0) {
+function sendCurrentPeriodMeasures() {
+  if (currentPeriodMeasures.batchCount === 0) {
     return
   }
-
+  const { batchCount, batchBytesCount, batchMessagesCount, globalContextBytes, userContextBytes, featureFlagBytes } =
+    currentPeriodMeasures
   addTelemetryDebug('Customer data measures', {
     batchCount,
     batchBytesCount,
     batchMessagesCount,
     globalContextBytes: globalContextBytes.sum ? globalContextBytes : undefined,
-    userContextBytes: globalContextBytes.sum ? userContextBytes : undefined,
-    featureFlagBytes: globalContextBytes.sum ? featureFlagBytes : undefined,
+    userContextBytes: userContextBytes.sum ? userContextBytes : undefined,
+    featureFlagBytes: featureFlagBytes.sum ? featureFlagBytes : undefined,
   })
-  initMeasures()
+  initCurrentPeriodMeasures()
 }
 
 function createMeasure(): Measure {
   return { min: Infinity, max: 0, sum: 0 }
 }
 
-export function updateMeasure(measure: Measure, value: number) {
+function updateMeasure(measure: Measure, value: number) {
   measure.sum += value
   measure.min = Math.min(measure.min, value)
   measure.max = Math.max(measure.max, value)
 }
 
-export function mergeMeasure(target: Measure, source: Measure) {
+function mergeMeasure(target: Measure, source: Measure) {
   target.sum += source.sum
   target.min = Math.min(target.min, source.min)
   target.max = Math.max(target.max, source.max)
 }
 
-function initMeasures() {
-  batchCount = 0
-  batchBytesCount = createMeasure()
-  batchMessagesCount = createMeasure()
-  globalContextBytes = createMeasure()
-  userContextBytes = createMeasure()
-  featureFlagBytes = createMeasure()
+function initCurrentPeriodMeasures() {
+  currentPeriodMeasures = {
+    batchCount: 0,
+    batchBytesCount: createMeasure(),
+    batchMessagesCount: createMeasure(),
+    globalContextBytes: createMeasure(),
+    userContextBytes: createMeasure(),
+    featureFlagBytes: createMeasure(),
+  }
 }
 
 function initCurrentBatchMeasures() {
-  currentBatchGlobalContextBytes = createMeasure()
-  currentBatchUserContextBytes = createMeasure()
-  currentBatchFeatureFlagBytes = createMeasure()
+  currentBatchMeasures = {
+    globalContextBytes: createMeasure(),
+    userContextBytes: createMeasure(),
+    featureFlagBytes: createMeasure(),
+  }
 }

@@ -11,7 +11,7 @@ import { setup } from '../../test/specHelper'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-import { MEASURES_FLUSH_INTERVAL, startCustomerDataTelemetry } from './startCustomerDataTelemetry'
+import { MEASURES_PERIOD_DURATION, startCustomerDataTelemetry } from './startCustomerDataTelemetry'
 
 describe('customerDataTelemetry', () => {
   let setupBuilder: TestSetupBuilder
@@ -80,7 +80,7 @@ describe('customerDataTelemetry', () => {
 
     generateBatch({ eventNumber: 2, contextBytesCount: 2, batchBytesCount: 2 })
     generateBatch({ eventNumber: 1, contextBytesCount: 1, batchBytesCount: 1 })
-    clock.tick(MEASURES_FLUSH_INTERVAL)
+    clock.tick(MEASURES_PERIOD_DURATION)
 
     expect(telemetryEvents[0].telemetry).toEqual({
       type: 'log',
@@ -99,7 +99,7 @@ describe('customerDataTelemetry', () => {
     const { clock } = setupBuilder.build()
 
     generateBatch({ eventNumber: 1, contextBytesCount: 0, batchBytesCount: 1 })
-    clock.tick(MEASURES_FLUSH_INTERVAL)
+    clock.tick(MEASURES_PERIOD_DURATION)
 
     expect(telemetryEvents[0].telemetry.globalContextBytes).not.toBeDefined()
     expect(telemetryEvents[0].telemetry.userContextBytes).not.toBeDefined()
@@ -111,7 +111,7 @@ describe('customerDataTelemetry', () => {
 
     generateBatch({ eventNumber: 1, contextBytesCount: 1, batchBytesCount: 1 })
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.VIEW } as RumEvent & Context)
-    clock.tick(MEASURES_FLUSH_INTERVAL)
+    clock.tick(MEASURES_PERIOD_DURATION)
 
     expect(telemetryEvents[0].telemetry).toEqual(
       jasmine.objectContaining({
@@ -131,7 +131,7 @@ describe('customerDataTelemetry', () => {
       .build()
 
     generateBatch({ eventNumber: 1, contextBytesCount: 1, batchBytesCount: 1 })
-    clock.tick(MEASURES_FLUSH_INTERVAL)
+    clock.tick(MEASURES_PERIOD_DURATION)
 
     expect(telemetryEvents.length).toEqual(0)
   })
@@ -141,7 +141,7 @@ describe('customerDataTelemetry', () => {
     const { clock } = setupBuilder.build()
 
     generateBatch({ eventNumber: 1, contextBytesCount: 1, batchBytesCount: 1 })
-    clock.tick(MEASURES_FLUSH_INTERVAL)
+    clock.tick(MEASURES_PERIOD_DURATION)
 
     expect(telemetryEvents.length).toEqual(0)
   })
