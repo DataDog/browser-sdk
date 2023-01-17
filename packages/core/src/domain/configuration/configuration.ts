@@ -19,7 +19,11 @@ export interface InitConfiguration {
   // global options
   clientToken: string
   beforeSend?: GenericBeforeSendCallback | undefined
+  /**
+   * @deprecated use sessionSampleRate instead
+   */
   sampleRate?: number | undefined
+  sessionSampleRate?: number | undefined
   telemetrySampleRate?: number | undefined
   silentMultipleInit?: boolean | undefined
   trackResources?: boolean | undefined
@@ -61,7 +65,7 @@ export interface Configuration extends TransportConfiguration {
   // Built from init configuration
   beforeSend: GenericBeforeSendCallback | undefined
   cookieOptions: CookieOptions
-  sampleRate: number
+  sessionSampleRate: number
   telemetrySampleRate: number
   telemetryConfigurationSampleRate: number
   service: string | undefined
@@ -84,8 +88,9 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     return
   }
 
-  if (initConfiguration.sampleRate !== undefined && !isPercentage(initConfiguration.sampleRate)) {
-    display.error('Sample Rate should be a number between 0 and 100')
+  const sessionSampleRate = initConfiguration.sessionSampleRate ?? initConfiguration.sampleRate
+  if (sessionSampleRate !== undefined && !isPercentage(sessionSampleRate)) {
+    display.error('Session Sample Rate should be a number between 0 and 100')
     return
   }
 
@@ -110,7 +115,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
       beforeSend:
         initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
       cookieOptions: buildCookieOptions(initConfiguration),
-      sampleRate: initConfiguration.sampleRate ?? 100,
+      sessionSampleRate: sessionSampleRate ?? 100,
       telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
       telemetryConfigurationSampleRate: initConfiguration.telemetryConfigurationSampleRate ?? 5,
       service: initConfiguration.service,
@@ -160,7 +165,7 @@ function mustUseSecureCookie(initConfiguration: InitConfiguration) {
 
 export function serializeConfiguration(configuration: InitConfiguration): Partial<RawTelemetryConfiguration> {
   return {
-    session_sample_rate: configuration.sampleRate,
+    session_sample_rate: configuration.sessionSampleRate ?? configuration.sampleRate,
     telemetry_sample_rate: configuration.telemetrySampleRate,
     telemetry_configuration_sample_rate: configuration.telemetryConfigurationSampleRate,
     use_before_send: !!configuration.beforeSend,

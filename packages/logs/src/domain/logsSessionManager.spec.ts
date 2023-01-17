@@ -20,7 +20,7 @@ import {
 
 describe('logs session manager', () => {
   const DURATION = 123456
-  const configuration: Partial<LogsConfiguration> = { sampleRate: 0.5 }
+  const configuration: Partial<LogsConfiguration> = { sessionSampleRate: 0.5 }
   let clock: Clock
   let tracked: boolean
 
@@ -121,11 +121,11 @@ describe('logs session manager', () => {
 
 describe('logger session stub', () => {
   it('isTracked is computed at each init and getId is always undefined', () => {
-    const firstLogsSessionManager = startLogsSessionManagerStub({ sampleRate: 100 } as LogsConfiguration)
+    const firstLogsSessionManager = startLogsSessionManagerStub({ sessionSampleRate: 100 } as LogsConfiguration)
     expect(firstLogsSessionManager.findTrackedSession()).toBeDefined()
     expect(firstLogsSessionManager.findTrackedSession()!.id).toBeUndefined()
 
-    const secondLogsSessionManager = startLogsSessionManagerStub({ sampleRate: 0 } as LogsConfiguration)
+    const secondLogsSessionManager = startLogsSessionManagerStub({ sessionSampleRate: 0 } as LogsConfiguration)
     expect(secondLogsSessionManager.findTrackedSession()).toBeUndefined()
   })
 })

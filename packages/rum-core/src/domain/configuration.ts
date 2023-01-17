@@ -32,7 +32,11 @@ export interface RumInitConfiguration extends InitConfiguration {
    */
   allowedTracingOrigins?: MatchOption[] | undefined
   allowedTracingUrls?: Array<MatchOption | TracingOption> | undefined
+  /**
+   * @deprecated use traceSampleRate instead
+   */
   tracingSampleRate?: number | undefined
+  traceSampleRate?: number | undefined
 
   // replay options
   defaultPrivacyLevel?: DefaultPrivacyLevel | undefined
@@ -43,7 +47,11 @@ export interface RumInitConfiguration extends InitConfiguration {
   sessionReplaySampleRate?: number | undefined
 
   // action options
+  /**
+   * @deprecated use trackUserInteractions instead
+   */
   trackInteractions?: boolean | undefined
+  trackUserInteractions?: boolean | undefined
   trackFrustrations?: boolean | undefined
   actionNameAttribute?: string | undefined
 
@@ -59,14 +67,14 @@ export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId'
 export interface RumConfiguration extends Configuration {
   // Built from init configuration
   actionNameAttribute: string | undefined
-  tracingSampleRate: number | undefined
+  traceSampleRate: number | undefined
   allowedTracingUrls: TracingOption[]
   excludedActivityUrls: MatchOption[]
   applicationId: string
   defaultPrivacyLevel: DefaultPrivacyLevel
   oldPlansBehavior: boolean
   sessionReplaySampleRate: number
-  trackInteractions: boolean
+  trackUserInteractions: boolean
   trackFrustrations: boolean
   trackViewsManually: boolean
   trackResources: boolean | undefined
@@ -102,8 +110,9 @@ export function validateAndBuildRumConfiguration(
     return
   }
 
-  if (initConfiguration.tracingSampleRate !== undefined && !isPercentage(initConfiguration.tracingSampleRate)) {
-    display.error('Tracing Sample Rate should be a number between 0 and 100')
+  const traceSampleRate = initConfiguration.traceSampleRate ?? initConfiguration.tracingSampleRate
+  if (traceSampleRate !== undefined && !isPercentage(traceSampleRate)) {
+    display.error('Trace Sample Rate should be a number between 0 and 100')
     return
   }
 
@@ -122,6 +131,7 @@ export function validateAndBuildRumConfiguration(
     return
   }
 
+  const trackUserInteractions = !!(initConfiguration.trackUserInteractions ?? initConfiguration.trackInteractions)
   const trackFrustrations = !!initConfiguration.trackFrustrations
 
   return assign(
@@ -131,10 +141,10 @@ export function validateAndBuildRumConfiguration(
       actionNameAttribute: initConfiguration.actionNameAttribute,
       sessionReplaySampleRate: initConfiguration.sessionReplaySampleRate ?? premiumSampleRate ?? 100,
       oldPlansBehavior: initConfiguration.sessionReplaySampleRate === undefined,
-      tracingSampleRate: initConfiguration.tracingSampleRate,
+      traceSampleRate,
       allowedTracingUrls,
       excludedActivityUrls: initConfiguration.excludedActivityUrls ?? [],
-      trackInteractions: !!initConfiguration.trackInteractions || trackFrustrations,
+      trackUserInteractions: trackUserInteractions || trackFrustrations,
       trackFrustrations,
       trackViewsManually: !!initConfiguration.trackViewsManually,
       trackResources: initConfiguration.trackResources,
@@ -263,7 +273,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration): 
       premium_sample_rate: configuration.premiumSampleRate,
       replay_sample_rate: configuration.replaySampleRate,
       session_replay_sample_rate: configuration.sessionReplaySampleRate,
-      trace_sample_rate: configuration.tracingSampleRate,
+      trace_sample_rate: configuration.traceSampleRate ?? configuration.tracingSampleRate,
       action_name_attribute: configuration.actionNameAttribute,
       use_allowed_tracing_origins:
         Array.isArray(configuration.allowedTracingOrigins) && configuration.allowedTracingOrigins.length > 0,
@@ -275,7 +285,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration): 
         Array.isArray(configuration.allowedTracingOrigins) && configuration.allowedTracingOrigins.length > 0,
       track_frustrations: configuration.trackFrustrations,
       track_views_manually: configuration.trackViewsManually,
-      track_interactions: configuration.trackInteractions,
+      track_user_interactions: configuration.trackUserInteractions ?? configuration.trackInteractions,
     },
     baseSerializedConfiguration
   )

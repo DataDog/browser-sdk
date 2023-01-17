@@ -1,4 +1,5 @@
 import { isIE, noop, resetExperimentalFeatures, updateExperimentalFeatures } from '@datadog/browser-core'
+
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { STABLE_ATTRIBUTES, DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from '@datadog/browser-rum-core'
 import {
@@ -9,6 +10,7 @@ import {
   PRIVACY_ATTR_VALUE_MASK,
   PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
 } from '../../constants'
+import { isAdoptedStyleSheetsSupported } from '../../../../core/test/specHelper'
 import {
   HTML,
   AST_ALLOW,
@@ -19,6 +21,8 @@ import {
 } from '../../../test/htmlAst'
 import type { ElementNode, SerializedNodeWithId, TextNode } from '../../types'
 import { NodeType } from '../../types'
+import type { IsolatedDom } from '../../../../rum-core/test/createIsolatedDom'
+import { createIsolatedDom } from '../../../../rum-core/test/createIsolatedDom'
 import { hasSerializedNode } from './serializationUtils'
 import type { SerializationContext, SerializeOptions } from './serialize'
 import {
@@ -33,6 +37,7 @@ import { MAX_ATTRIBUTE_VALUE_CHAR_LENGTH } from './privacy'
 import type { ElementsScrollPositions } from './elementsScrollPositions'
 import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootCallBack, ShadowRootsController } from './shadowRootsController'
+import type { WithAdoptedStyleSheets } from './browser.types'
 
 const DEFAULT_CONFIGURATION = {} as RumConfiguration
 
@@ -86,6 +91,7 @@ describe('serializeNodeWithId', () => {
           jasmine.objectContaining({ type: NodeType.DocumentType, name: 'html', publicId: '', systemId: '' }),
           jasmine.objectContaining({ type: NodeType.Element, tagName: 'html' }),
         ],
+        adoptedStyleSheets: undefined,
         id: jasmine.any(Number) as unknown as number,
       })
     })
@@ -437,6 +443,7 @@ describe('serializeNodeWithId', () => {
             isShadowRoot: true,
             childNodes: [],
             id: jasmine.any(Number) as unknown as number,
+            adoptedStyleSheets: undefined,
           },
         ],
         id: jasmine.any(Number) as unknown as number,
@@ -468,6 +475,7 @@ describe('serializeNodeWithId', () => {
           {
             type: NodeType.DocumentFragment,
             isShadowRoot: true,
+            adoptedStyleSheets: undefined,
             childNodes: [
               {
                 type: NodeType.Element,
@@ -684,6 +692,39 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
     }
   })
 
+  describe('with dynamic stylesheet', () => {
+    let isolatedDom: IsolatedDom
+
+    beforeEach(() => {
+      isolatedDom = createIsolatedDom()
+    })
+
+    afterEach(() => {
+      isolatedDom.clear()
+    })
+
+    it('serializes a document with adoptedStyleSheets', () => {
+      if (!isAdoptedStyleSheetsSupported()) {
+        pending('no adoptedStyleSheets support')
+      }
+      const styleSheet = new isolatedDom.window.CSSStyleSheet()
+      styleSheet.insertRule('div { width: 100%; }')
+      ;(isolatedDom.document as WithAdoptedStyleSheets).adoptedStyleSheets = [styleSheet]
+      expect(serializeDocument(isolatedDom.document, DEFAULT_CONFIGURATION, DEFAULT_SERIALIZATION_CONTEXT)).toEqual({
+        type: NodeType.Document,
+        childNodes: [jasmine.objectContaining({ type: NodeType.Element, tagName: 'html' })],
+        adoptedStyleSheets: [
+          {
+            cssRules: ['div { width: 100%; }'],
+            disabled: undefined,
+            media: undefined,
+          },
+        ],
+        id: jasmine.any(Number) as unknown as number,
+      })
+    })
+  })
+
   it('a masked DOM Document itself is still serialized ', () => {
     const serializeOptionsMask: SerializeOptions = {
       ...DEFAULT_OPTIONS,
@@ -692,6 +733,7 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
     expect(serializeDocumentNode(document, serializeOptionsMask)).toEqual({
       type: NodeType.Document,
       childNodes: serializeChildNodes(document, serializeOptionsMask),
+      adoptedStyleSheets: undefined,
     })
   })
 

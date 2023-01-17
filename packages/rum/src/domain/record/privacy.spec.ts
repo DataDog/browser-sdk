@@ -203,6 +203,26 @@ describe('getNodeSelfPrivacyLevel', () => {
       html: '<script class="dd-privacy-allow">',
       expected: NodePrivacyLevel.ALLOW,
     },
+    {
+      msg: 'is a link with rel=preload and as=script',
+      html: '<link rel="preload" crossorigins as="script">',
+      expected: NodePrivacyLevel.IGNORE,
+    },
+    {
+      msg: 'is a link with rel=modulepreload and as=script',
+      html: '<link rel="modulepreload" as="script">',
+      expected: NodePrivacyLevel.IGNORE,
+    },
+    {
+      msg: 'is a link with rel=prefetch and as=script',
+      html: '<link rel="prefetch" as="script">',
+      expected: NodePrivacyLevel.IGNORE,
+    },
+    {
+      msg: 'is a link with rel=stylesheet and a not expected as=script',
+      html: '<link rel="stylesheet" as="script">',
+      expected: undefined,
+    },
 
     // Precedence
     {

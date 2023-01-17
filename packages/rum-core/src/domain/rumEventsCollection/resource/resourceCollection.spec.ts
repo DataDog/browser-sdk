@@ -17,17 +17,21 @@ import type { RequestCompleteEvent } from '../../requestCollection'
 import { TraceIdentifier } from '../../tracing/tracer'
 import { validateAndBuildRumConfiguration } from '../../configuration'
 import { createRumSessionManagerMock } from '../../../../test/mockRumSessionManager'
+import { PageState } from '../../contexts/pageStateHistory'
 import { startResourceCollection } from './resourceCollection'
 
 describe('resourceCollection', () => {
   let setupBuilder: TestSetupBuilder
 
+  let pageStateHistorySpy: jasmine.Spy<jasmine.Func>
   beforeEach(() => {
-    setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager }) => {
+    setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager, pageStateHistory }) => {
+      pageStateHistorySpy = spyOn(pageStateHistory, 'findAll')
       startResourceCollection(
         lifeCycle,
         validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!,
-        sessionManager
+        sessionManager,
+        pageStateHistory
       )
     })
   })
@@ -106,6 +110,49 @@ describe('resourceCollection', () => {
       requestInit: undefined,
       error: undefined,
     })
+  })
+
+  it('should collect page states on resources when ff resource_page_states enabled', () => {
+    updateExperimentalFeatures(['resource_page_states'])
+    const { lifeCycle, rawRumEvents } = setupBuilder.build()
+    const mockPageStates = [{ state: PageState.ACTIVE, startTime: 0 as RelativeTime }]
+    const mockXHR = createCompletedRequest()
+    const mockPerformanceEntry = createResourceEntry()
+
+    pageStateHistorySpy.and.returnValue(mockPageStates)
+
+    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, mockXHR)
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [mockPerformanceEntry])
+
+    const rawRumResourceEventFetch = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+    const rawRumResourceEventEntry = rawRumEvents[1].rawRumEvent as RawRumResourceEvent
+
+    expect(pageStateHistorySpy.calls.first().args).toEqual([mockXHR.startClocks.relative, mockXHR.duration])
+    expect(pageStateHistorySpy.calls.mostRecent().args).toEqual([
+      mockPerformanceEntry.startTime,
+      mockPerformanceEntry.duration,
+    ])
+    expect(rawRumResourceEventFetch._dd.page_states).toEqual(jasmine.objectContaining(mockPageStates))
+    expect(rawRumResourceEventEntry._dd.page_states).toEqual(jasmine.objectContaining(mockPageStates))
+  })
+
+  it('should not collect page states on resources when ff resource_page_states disabled', () => {
+    const { lifeCycle, rawRumEvents } = setupBuilder.build()
+    const mockPageStates = [{ state: PageState.ACTIVE, startTime: 0 as RelativeTime }]
+    const mockXHR = createCompletedRequest()
+    const mockPerformanceEntry = createResourceEntry()
+
+    pageStateHistorySpy.and.returnValue(mockPageStates)
+
+    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, mockXHR)
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [mockPerformanceEntry])
+
+    const rawRumResourceEventFetch = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+    const rawRumResourceEventEntry = rawRumEvents[1].rawRumEvent as RawRumResourceEvent
+
+    expect(pageStateHistorySpy).not.toHaveBeenCalled()
+    expect(rawRumResourceEventFetch._dd.page_states).not.toBeDefined()
+    expect(rawRumResourceEventEntry._dd.page_states).not.toBeDefined()
   })
 
   it('should collect computed duration and performance entry duration when resource_durations ff is enabled', () => {
@@ -238,16 +285,17 @@ describe('resourceCollection', () => {
       expect(privateFields.span_id).not.toBeDefined()
     })
 
-    it('should pull tracingSampleRate from config if present', () => {
-      setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager }) => {
+    it('should pull traceSampleRate from config if present', () => {
+      setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager, pageStateHistory }) => {
         startResourceCollection(
           lifeCycle,
           validateAndBuildRumConfiguration({
             clientToken: 'xxx',
             applicationId: 'xxx',
-            tracingSampleRate: 60,
+            traceSampleRate: 60,
           })!,
-          sessionManager
+          sessionManager,
+          pageStateHistory
         )
       })
 
@@ -264,15 +312,16 @@ describe('resourceCollection', () => {
       expect(privateFields.rule_psr).toEqual(0.6)
     })
 
-    it('should not define rule_psr if tracingSampleRate is undefined', () => {
-      setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager }) => {
+    it('should not define rule_psr if traceSampleRate is undefined', () => {
+      setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager, pageStateHistory }) => {
         startResourceCollection(
           lifeCycle,
           validateAndBuildRumConfiguration({
             clientToken: 'xxx',
             applicationId: 'xxx',
           })!,
-          sessionManager
+          sessionManager,
+          pageStateHistory
         )
       })
 
@@ -289,16 +338,17 @@ describe('resourceCollection', () => {
       expect(privateFields.rule_psr).toBeUndefined()
     })
 
-    it('should define rule_psr to 0 if tracingSampleRate is set to 0', () => {
-      setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager }) => {
+    it('should define rule_psr to 0 if traceSampleRate is set to 0', () => {
+      setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager, pageStateHistory }) => {
         startResourceCollection(
           lifeCycle,
           validateAndBuildRumConfiguration({
             clientToken: 'xxx',
             applicationId: 'xxx',
-            tracingSampleRate: 0,
+            traceSampleRate: 0,
           })!,
-          sessionManager
+          sessionManager,
+          pageStateHistory
         )
       })
 

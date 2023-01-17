@@ -38,7 +38,7 @@ datadogLogs.init({
   clientToken: '<DATADOG_CLIENT_TOKEN>',
   site: '<DATADOG_SITE>',
   forwardErrorsToLogs: true,
-  sampleRate: 100,
+  sessionSampleRate: 100,
 })
 ```
 
@@ -61,8 +61,8 @@ Load and configure the SDK in the head section of your pages.
           DD_LOGS.init({
             clientToken: 'XXX',
             site: 'datadoghq.com',
-            forwardErrorsToLogs: true,
-            sampleRate: 100,
+            forwardErrorsToLogs: true, 
+            sessionSampleRate: 100,
           })
         })
       </script>
@@ -87,7 +87,7 @@ To receive all logs and errors, load and configure the SDK at the beginning of t
           clientToken: '<CLIENT_TOKEN>',
           site: '<DATADOG_SITE>',
           forwardErrorsToLogs: true,
-          sampleRate: 100,
+          sessionSampleRate: 100,
         })
     </script>
   </head>
@@ -107,7 +107,7 @@ window.DD_LOGS.init({
   clientToken: '<CLIENT_TOKEN>',
   site: '<DATADOG_SITE>',
   forwardErrorsToLogs: true,
-  sampleRate: 100,
+  sessionSampleRate: 100,
 })
 ```
 
@@ -127,7 +127,8 @@ The following parameters are available to configure the Datadog browser logs SDK
 | `forwardErrorsToLogs` | Boolean                                                                   | No       | `true`          | Set to `false` to stop forwarding console.error logs, uncaught exceptions and network errors to Datadog.                                                                              |
 | `forwardConsoleLogs`  | `"all"` or an Array of `"log"` `"debug"` `"info"` `"warn"` `"error"`      | No       | `[]`            | Forward logs from `console.*` to Datadog. Use `"all"` to forward everything or an array of console API names to forward only a subset.                                                |
 | `forwardReports`      | `"all"` or an Array of `"intervention"` `"deprecation"` `"csp_violation"` | No       | `[]`            | Forward reports from the [Reporting API][8] to Datadog. Use `"all"` to forward everything or an array of report types to forward only a subset.                                       |
-| `sampleRate`          | Number                                                                    | No       | `100`           | The percentage of sessions to track: `100` for all, `0` for none. Only tracked sessions send logs.                                                                                    |
+| `sampleRate`          | Number                                                                    | No       | `100`           | **Deprecated** - see `sessionSampleRate`.                                                                                                                                             |
+| `sessionSampleRate`   | Number                                                                    | No       | `100`           | The percentage of sessions to track: `100` for all, `0` for none. Only tracked sessions send logs.                                                                                    |
 | `silentMultipleInit`  | Boolean                                                                   | No       |                 | Prevent logging errors while having multiple init.                                                                                                                                    |
 | `proxyUrl`            | String                                                                    | No       |                 | Optional proxy URL (ex: https://www.proxy.com/path), see the full [proxy setup guide][6] for more information.                                                                        |
 | `telemetrySampleRate` | Number                                                                    | No       | `20`            | Telemetry data (error, debug logs) about SDK execution is sent to Datadog in order to detect and solve potential issues. Set this option to `0` to opt out from telemetry collection. |

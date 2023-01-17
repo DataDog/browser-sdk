@@ -6,12 +6,12 @@ const readFile = util.promisify(require('fs').readFile)
 const emojiNameMap = require('emoji-name-map')
 
 const lernaConfig = require('../lerna.json')
-const { executeCommand, spawnCommand, printError, logAndExit, modifyFile } = require('./utils')
+const { executeCommand, spawnCommand, printError, runMain, modifyFile } = require('./utils')
 
 const CHANGELOG_FILE = 'CHANGELOG.md'
 const CONTRIBUTING_FILE = 'CONTRIBUTING.md'
 
-async function main() {
+runMain(async () => {
   if (!process.env.EDITOR) {
     printError('Please configure your environment variable EDITOR')
     process.exit(1)
@@ -40,7 +40,7 @@ ${content.slice(content.indexOf('\n##'))}`
   await spawnCommand('yarn', ['run', 'prettier', '--write', CHANGELOG_FILE])
 
   await executeCommand(`git add ${CHANGELOG_FILE}`)
-}
+})
 
 async function getEmojisLegend() {
   const contributing = await readFile(CONTRIBUTING_FILE, { encoding: 'utf-8' })
@@ -98,5 +98,3 @@ function emojiNameToUnicode(changes) {
   const emojiNameRegex = new RegExp(/:[^:\s]*(?:::[^:\s]*)*:/, 'gm')
   return changes.replace(emojiNameRegex, (emoji) => emojiNameMap.get(emoji) || emoji)
 }
-
-main().catch(logAndExit)

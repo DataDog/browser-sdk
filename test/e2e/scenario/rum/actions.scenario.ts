@@ -3,7 +3,7 @@ import { createTest, flushEvents, html, waitForServersIdle } from '../../lib/fra
 
 describe('action collection', () => {
   createTest('track a click action')
-    .withRum({ trackInteractions: true, enableExperimentalFeatures: ['clickmap'] })
+    .withRum({ trackUserInteractions: true, enableExperimentalFeatures: ['clickmap'] })
     .withBody(
       html`
         <button>click me</button>
@@ -117,7 +117,7 @@ describe('action collection', () => {
   }
 
   createTest('associate a request to its action')
-    .withRum({ trackInteractions: true })
+    .withRum({ trackUserInteractions: true })
     .withBody(
       html`
         <button>click me</button>

@@ -69,6 +69,9 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
     logger: mainLogger,
 
     init: monitor((initConfiguration: LogsInitConfiguration) => {
+      // This function should be available, regardless of initialization success.
+      getInitConfigurationStrategy = () => deepClone(initConfiguration)
+
       if (canUseEventBridge()) {
         initConfiguration = overrideInitConfigurationForBridge(initConfiguration)
       }
@@ -89,7 +92,6 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
         mainLogger
       ))
 
-      getInitConfigurationStrategy = () => deepClone(initConfiguration)
       beforeInitLoggerLog.drain()
 
       isAlreadyInitialized = true

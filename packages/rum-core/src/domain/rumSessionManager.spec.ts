@@ -31,7 +31,7 @@ describe('rum session manager', () => {
     tracked?: boolean
     trackedWithSessionReplay?: boolean
   }) {
-    configuration.sampleRate = tracked ? 100 : 0
+    configuration.sessionSampleRate = tracked ? 100 : 0
     configuration.sessionReplaySampleRate = trackedWithSessionReplay ? 100 : 0
   }
 
@@ -41,7 +41,7 @@ describe('rum session manager', () => {
     }
     configuration = {
       ...validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!,
-      sampleRate: 50,
+      sessionSampleRate: 50,
       sessionReplaySampleRate: 50,
       trackResources: true,
       trackLongTasks: true,
