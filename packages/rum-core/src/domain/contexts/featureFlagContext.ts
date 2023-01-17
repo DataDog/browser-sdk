@@ -1,6 +1,7 @@
 import type { RelativeTime, ContextValue, Context } from '@datadog/browser-core'
 import {
-  contextBytesCounter,
+  jsonStringify,
+  computeBytesCount,
   deepClone,
   noop,
   isExperimentalFeatureEnabled,
@@ -30,7 +31,7 @@ export interface FeatureFlagContexts {
  */
 export function startFeatureFlagContexts(
   lifeCycle: LifeCycle,
-  bytesCounter = contextBytesCounter()
+  computeBytesCountImpl = computeBytesCount
 ): FeatureFlagContexts {
   if (!isExperimentalFeatureEnabled('feature_flags')) {
     return {
@@ -41,6 +42,7 @@ export function startFeatureFlagContexts(
   }
 
   const featureFlagContexts = new ContextHistory<FeatureFlagContext>(FEATURE_FLAG_CONTEXT_TIME_OUT_DELAY)
+  let bytesCountCache: number | undefined
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, ({ endClocks }) => {
     featureFlagContexts.closeActive(endClocks.relative)
@@ -48,7 +50,7 @@ export function startFeatureFlagContexts(
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, ({ startClocks }) => {
     featureFlagContexts.add({}, startClocks.relative)
-    bytesCounter.invalidate()
+    bytesCountCache = undefined
   })
 
   return {
@@ -59,13 +61,16 @@ export function startFeatureFlagContexts(
         return 0
       }
 
-      return bytesCounter.compute(currentContext)
+      if (bytesCountCache === undefined) {
+        bytesCountCache = computeBytesCountImpl(jsonStringify(currentContext)!)
+      }
+      return bytesCountCache
     },
     addFeatureFlagEvaluation: (key: string, value: ContextValue) => {
       const currentContext = featureFlagContexts.find()
       if (currentContext) {
         currentContext[key] = deepClone(value)
-        bytesCounter.invalidate()
+        bytesCountCache = undefined
       }
     },
   }

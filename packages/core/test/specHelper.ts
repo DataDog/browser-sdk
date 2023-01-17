@@ -1,5 +1,4 @@
 import type { EndpointBuilder } from '../src/domain/configuration'
-import type { ContextBytesCounter } from '../src/tools/contextManager'
 import { instrumentMethod } from '../src/tools/instrumentMethod'
 import { resetNavigationStart } from '../src/tools/timeUtils'
 import { buildUrl } from '../src/tools/urlPolyfill'
@@ -500,12 +499,12 @@ export function interceptRequests() {
   }
 }
 
-export function contextBytesCounterStub(): ContextBytesCounter {
-  return {
-    compute: () => 1,
-    invalidate: jasmine.createSpy('invalidate'),
-  }
-}
+// export function contextBytesCounterStub(): ContextBytesCounter {
+//   return {
+//     compute: () => 1,
+//     invalidate: jasmine.createSpy('invalidate'),
+//   }
+// }
 
 export function isAdoptedStyleSheetsSupported() {
   return Boolean((document as any).adoptedStyleSheets)

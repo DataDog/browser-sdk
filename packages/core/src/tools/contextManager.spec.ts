@@ -1,6 +1,4 @@
-import { contextBytesCounterStub } from '../../test/specHelper'
-import { contextBytesCounter, createContextManager } from './contextManager'
-import { computeBytesCount } from './utils'
+import { createContextManager } from './contextManager'
 
 describe('createContextManager', () => {
   it('starts with an empty context', () => {
@@ -76,55 +74,28 @@ describe('createContextManager', () => {
     expect(manager.getContext()).toEqual({})
   })
 
-  it('should invalidate the context bytes counter at each mutation', () => {
-    const bytesCountStub = contextBytesCounterStub()
-    const manager = createContextManager(bytesCountStub)
+  it('should compute the bytes count only if a the context has been updated', () => {
+    const computeBytesCountStub = jasmine.createSpy('computeBytesCountStub').and.returnValue(1)
+    const manager = createContextManager(computeBytesCountStub)
     manager.add('foo', 'bar')
+    manager.getBytesCount()
+
     manager.remove('foo')
+    manager.getBytesCount()
+
     manager.set({ foo: 'bar' })
+    manager.getBytesCount()
+
     manager.removeContextProperty('foo')
+    manager.getBytesCount()
+
     manager.setContext({ foo: 'bar' })
+    manager.getBytesCount()
+
     manager.clearContext()
+    manager.getBytesCount()
+    manager.getBytesCount()
 
-    expect(bytesCountStub.invalidate).toHaveBeenCalledTimes(6)
-  })
-
-  it('should get the context bytes count', () => {
-    const bytesCountStub = contextBytesCounterStub()
-    const manager = createContextManager(bytesCountStub)
-    const contextBytesCount = manager.getBytesCount()
-
-    expect(contextBytesCount).toEqual(1)
-  })
-})
-
-describe('contextBytesCounter', () => {
-  let computeBytesCountSpy: jasmine.Spy
-  let counter: ReturnType<typeof contextBytesCounter>
-
-  beforeEach(() => {
-    computeBytesCountSpy = jasmine.createSpy('computeBytesCount', computeBytesCount).and.callThrough()
-    counter = contextBytesCounter(computeBytesCountSpy)
-  })
-
-  it('should compute the batch count when the cache is invalidate', () => {
-    const bytesCount1 = counter.compute({ a: 'b' })
-    counter.invalidate()
-    const bytesCount2 = counter.compute({ foo: 'bar' })
-
-    expect(computeBytesCountSpy).toHaveBeenCalledTimes(2)
-    expect(bytesCount1).not.toEqual(bytesCount2)
-  })
-
-  it('should use the cached bytes count when the cache is not invalidate', () => {
-    const bytesCount1 = counter.compute({ a: 'b' })
-    const bytesCount2 = counter.compute({ foo: 'bar' })
-    expect(computeBytesCountSpy).toHaveBeenCalledTimes(1)
-    expect(bytesCount1).toEqual(bytesCount2)
-  })
-
-  it('should return a bytes count at 0 when the object is empty', () => {
-    const bytesCount = counter.compute({})
-    expect(bytesCount).toEqual(0)
+    expect(computeBytesCountStub).toHaveBeenCalledTimes(6)
   })
 })
