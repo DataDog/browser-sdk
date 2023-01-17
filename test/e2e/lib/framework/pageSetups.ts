@@ -178,6 +178,14 @@ export function html(parts: readonly string[], ...vars: string[]) {
 function setupEventBridge(servers: Servers) {
   const baseHostname = new URL(servers.base.url).hostname
 
+  // Send EventBridge events to the intake so we can inspect them in our E2E test cases. The URL
+  // needs to be similar to the normal Datadog intake (through proxy) to make the SDK completely
+  // ignore them.
+  const eventBridgeIntake = `${servers.intake.url}/?${new URLSearchParams({
+    ddforward: '/api/v2/rum?',
+    bridge: 'true',
+  }).toString()}`
+
   return html`
     <script type="text/javascript">
       window.DatadogEventBridge = {
@@ -187,7 +195,7 @@ function setupEventBridge(servers: Servers) {
         send(e) {
           const { eventType, event } = JSON.parse(e)
           const request = new XMLHttpRequest()
-          request.open('POST', \`${servers.intake.url}/?ddforward=bridge&event_type=\${eventType}\`, true)
+          request.open('POST', ${JSON.stringify(eventBridgeIntake)} + '&event_type=' + eventType, true)
           request.send(JSON.stringify(event))
         },
       }
@@ -199,7 +207,7 @@ function formatConfiguration(initConfiguration: LogsInitConfiguration | RumInitC
   let result = JSON.stringify(
     {
       ...initConfiguration,
-      proxyUrl: servers.intake.url,
+      proxy: servers.intake.url,
     },
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     (key, value) => (key === 'beforeSend' ? 'BEFORE_SEND' : value)
