@@ -49,6 +49,7 @@ export function mockClock(date?: Date) {
   resetNavigationStart()
   return {
     tick: (ms: number) => jasmine.clock().tick(ms),
+    setDate: (date: Date) => jasmine.clock().mockDate(date),
     cleanup: () => {
       jasmine.clock().uninstall()
       resetNavigationStart()

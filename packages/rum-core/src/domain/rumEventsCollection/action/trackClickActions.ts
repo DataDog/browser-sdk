@@ -145,8 +145,6 @@ function processPointerDown(
   return clickActionBase
 }
 
-export let lastClick: ReturnType<typeof newClick>
-
 function processClick(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
@@ -159,7 +157,6 @@ function processClick(
   getUserActivity: GetUserActivity
 ) {
   const click = newClick(lifeCycle, history, getUserActivity, clickActionBase, clickEvent)
-  lastClick = click
 
   if (configuration.trackFrustrations) {
     appendClickToClickChain(click)

@@ -1,6 +1,5 @@
-import type { Context, Observable, Duration, RelativeTime } from '@datadog/browser-core'
+import type { Context, Observable, Duration } from '@datadog/browser-core'
 import {
-  getTimeStamp,
   addDuration,
   updateExperimentalFeatures,
   resetExperimentalFeatures,
@@ -19,7 +18,7 @@ import { PAGE_ACTIVITY_VALIDATION_DELAY } from '../../waitPageActivityEnd'
 import { createFakeClick } from '../../../../test/createFakeClick'
 import type { ActionContexts } from './actionCollection'
 import type { ClickAction } from './trackClickActions'
-import { lastClick, finalizeClicks, CLICK_ACTION_MAX_DURATION, trackClickActions } from './trackClickActions'
+import { finalizeClicks, CLICK_ACTION_MAX_DURATION, trackClickActions } from './trackClickActions'
 import { MAX_DURATION_BETWEEN_CLICKS } from './clickChain'
 
 // Used to wait some time after the creation of an action
@@ -444,10 +443,8 @@ describe('trackClickActions', () => {
   ) {
     emulateClickWithoutActivity(clock, target)
     if (clickActionDuration < 0) {
-      // Manually change last click timestamp because negative clock tick does not work since jasmine 4: https://github.com/jasmine/jasmine/pull/1948
-      lastClick.startClocks.timeStamp = getTimeStamp(
-        (BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY - clickActionDuration) as RelativeTime
-      )
+      // Do not use `.tick()` here because negative clock tick does not work since jasmine 4: https://github.com/jasmine/jasmine/pull/1948
+      clock.setDate(new Date(Date.now() + clickActionDuration))
     } else {
       clock.tick(clickActionDuration)
     }
