@@ -24,7 +24,7 @@ import type { ClickChain } from './clickChain'
 import { createClickChain } from './clickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
 import { getSelectorFromElement } from './getSelectorFromElement'
-import type { MouseEventOnElement, GetUserActivity } from './listenActionEvents'
+import type { MouseEventOnElement, UserActivity } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 import { computeFrustration } from './computeFrustration'
 
@@ -154,7 +154,7 @@ function processClick(
   appendClickToClickChain: (click: Click) => void,
   clickActionBase: ClickActionBase,
   clickEvent: MouseEventOnElement,
-  getUserActivity: GetUserActivity
+  getUserActivity: () => UserActivity
 ) {
   const click = newClick(lifeCycle, history, getUserActivity, clickActionBase, clickEvent)
 
@@ -246,7 +246,7 @@ export type Click = ReturnType<typeof newClick>
 function newClick(
   lifeCycle: LifeCycle,
   history: ClickActionIdHistory,
-  getUserActivity: GetUserActivity,
+  getUserActivity: () => UserActivity,
   clickActionBase: ClickActionBase,
   clickEvent: MouseEventOnElement
 ) {

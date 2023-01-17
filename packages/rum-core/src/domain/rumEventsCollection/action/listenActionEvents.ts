@@ -1,17 +1,22 @@
-import { addEventListener, DOM_EVENT, monitor } from '@datadog/browser-core'
+import { addEventListener, DOM_EVENT } from '@datadog/browser-core'
 
 export type MouseEventOnElement = MouseEvent & { target: Element }
 
-export type GetUserActivity = () => { selection: boolean; input: boolean }
+export interface UserActivity {
+  selection: boolean
+  input: boolean
+}
 export interface ActionEventsHooks<ClickContext> {
   onPointerDown: (event: MouseEventOnElement) => ClickContext | undefined
-  onClick: (context: ClickContext, event: MouseEventOnElement, getUserActivity: GetUserActivity) => void
+  onClick: (context: ClickContext, event: MouseEventOnElement, getUserActivity: () => UserActivity) => void
 }
 
 export function listenActionEvents<ClickContext>({ onPointerDown, onClick }: ActionEventsHooks<ClickContext>) {
-  let hasSelectionChanged = false
   let selectionEmptyAtPointerDown: boolean
-  let hasInputChanged = false
+  let userActivity: UserActivity = {
+    selection: false,
+    input: false,
+  }
   let clickContext: ClickContext | undefined
 
   const listeners = [
@@ -19,8 +24,11 @@ export function listenActionEvents<ClickContext>({ onPointerDown, onClick }: Act
       window,
       DOM_EVENT.POINTER_DOWN,
       (event) => {
-        hasSelectionChanged = false
         selectionEmptyAtPointerDown = isSelectionEmpty()
+        userActivity = {
+          selection: false,
+          input: false,
+        }
         if (isMouseEventOnElement(event)) {
           clickContext = onPointerDown(event)
         }
@@ -33,7 +41,7 @@ export function listenActionEvents<ClickContext>({ onPointerDown, onClick }: Act
       DOM_EVENT.SELECTION_CHANGE,
       () => {
         if (!selectionEmptyAtPointerDown || !isSelectionEmpty()) {
-          hasSelectionChanged = true
+          userActivity.selection = true
         }
       },
       { capture: true }
@@ -45,19 +53,8 @@ export function listenActionEvents<ClickContext>({ onPointerDown, onClick }: Act
       (clickEvent: MouseEvent) => {
         if (isMouseEventOnElement(clickEvent) && clickContext) {
           // Use a scoped variable to make sure the value is not changed by other clicks
-          const userActivity = {
-            selection: hasSelectionChanged,
-            input: hasInputChanged,
-          }
-          if (!hasInputChanged) {
-            setTimeout(
-              monitor(() => {
-                userActivity.input = hasInputChanged
-              })
-            )
-          }
-
-          onClick(clickContext, clickEvent, () => userActivity)
+          const localUserActivity = userActivity
+          onClick(clickContext, clickEvent, () => localUserActivity)
           clickContext = undefined
         }
       },
@@ -68,7 +65,7 @@ export function listenActionEvents<ClickContext>({ onPointerDown, onClick }: Act
       window,
       DOM_EVENT.INPUT,
       () => {
-        hasInputChanged = true
+        userActivity.input = true
       },
       { capture: true }
     ),
