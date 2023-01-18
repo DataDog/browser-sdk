@@ -27,8 +27,27 @@ describe('listenActionEvents', () => {
     expect(actionEventsHooks.onPointerDown).toHaveBeenCalledOnceWith(jasmine.objectContaining({ type: 'pointerdown' }))
   })
 
+  it('ignore non-primary pointerdown events', () => {
+    emulateClick({
+      beforeMouseUp() {
+        window.dispatchEvent(createNewEvent('pointerdown', { target: document.body, isPrimary: false }))
+      },
+    })
+    expect(actionEventsHooks.onPointerDown).toHaveBeenCalledTimes(1)
+  })
+
   it('listen to click events', () => {
     emulateClick()
+    expect(actionEventsHooks.onClick).toHaveBeenCalledOnceWith(
+      {},
+      jasmine.objectContaining({ type: 'click' }),
+      jasmine.any(Function)
+    )
+  })
+
+  it('listen to non-primary click events', () => {
+    // This emulates a Chrome behavior where all click events are non-primary
+    emulateClick({ clickEventIsPrimary: false })
     expect(actionEventsHooks.onClick).toHaveBeenCalledOnceWith(
       {},
       jasmine.objectContaining({ type: 'click' }),
@@ -201,12 +220,16 @@ describe('listenActionEvents', () => {
     }
   })
 
-  function emulateClick({ beforeMouseUp, target = document.body }: { beforeMouseUp?(): void; target?: Node } = {}) {
-    window.dispatchEvent(createNewEvent('pointerdown', { target }))
+  function emulateClick({
+    beforeMouseUp,
+    target = document.body,
+    clickEventIsPrimary = undefined,
+  }: { beforeMouseUp?(): void; target?: Node; clickEventIsPrimary?: boolean } = {}) {
+    window.dispatchEvent(createNewEvent('pointerdown', { target, isPrimary: true }))
     window.dispatchEvent(createNewEvent('mousedown', { target }))
     beforeMouseUp?.()
-    window.dispatchEvent(createNewEvent('pointerup', { target }))
+    window.dispatchEvent(createNewEvent('pointerup', { target, isPrimary: true }))
     window.dispatchEvent(createNewEvent('mouseup', { target }))
-    window.dispatchEvent(createNewEvent('click', { target }))
+    window.dispatchEvent(createNewEvent('click', { target, isPrimary: clickEventIsPrimary }))
   }
 })

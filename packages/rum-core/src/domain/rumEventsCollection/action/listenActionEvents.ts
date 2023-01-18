@@ -23,13 +23,13 @@ export function listenActionEvents<ClickContext>({ onPointerDown, onClick }: Act
     addEventListener(
       window,
       DOM_EVENT.POINTER_DOWN,
-      (event) => {
-        selectionEmptyAtPointerDown = isSelectionEmpty()
-        userActivity = {
-          selection: false,
-          input: false,
-        }
-        if (isMouseEventOnElement(event)) {
+      (event: PointerEvent) => {
+        if (isValidMouseEvent(event)) {
+          selectionEmptyAtPointerDown = isSelectionEmpty()
+          userActivity = {
+            selection: false,
+            input: false,
+          }
           clickContext = onPointerDown(event)
         }
       },
@@ -51,7 +51,7 @@ export function listenActionEvents<ClickContext>({ onPointerDown, onClick }: Act
       window,
       DOM_EVENT.CLICK,
       (clickEvent: MouseEvent) => {
-        if (isMouseEventOnElement(clickEvent) && clickContext) {
+        if (isValidMouseEvent(clickEvent) && clickContext) {
           // Use a scoped variable to make sure the value is not changed by other clicks
           const localUserActivity = userActivity
           onClick(clickContext, clickEvent, () => localUserActivity)
@@ -83,6 +83,14 @@ function isSelectionEmpty(): boolean {
   return !selection || selection.isCollapsed
 }
 
-function isMouseEventOnElement(event: Event): event is MouseEventOnElement {
-  return event.target instanceof Element
+function isValidMouseEvent(event: MouseEvent): event is MouseEventOnElement {
+  return (
+    event.target instanceof Element &&
+    // Only consider 'primary' pointer events for now. Multi-touch support could be implemented in
+    // the future.
+    // On Chrome, click events are PointerEvent with `isPrimary = false`, but we should still
+    // consider them valid. This could be removed when we enable the `click-action-on-pointerup`
+    // flag, since we won't rely on click events anymore.
+    (event.type === 'click' || (event as PointerEvent).isPrimary !== false)
+  )
 }

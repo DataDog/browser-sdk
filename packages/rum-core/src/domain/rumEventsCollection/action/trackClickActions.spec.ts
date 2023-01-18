@@ -451,6 +451,7 @@ describe('trackClickActions', () => {
       offsetX,
       offsetY,
       timeStamp: timeStampNow(),
+      isPrimary: true,
     }
     target.dispatchEvent(createNewEvent('pointerdown', eventProperties))
     setupBuilder.clock!.tick(EMULATED_CLICK_DURATION)
