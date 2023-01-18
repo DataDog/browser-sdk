@@ -80,8 +80,8 @@ export function trackClickActions(
 
   const { stop: stopActionEventsListener } = listenActionEvents<ClickActionBase>({
     onPointerDown: (pointerDownEvent) => processPointerDown(configuration, history, pointerDownEvent),
-    onClick: (clickActionBase, clickEvent, getUserActivity) =>
-      processClick(
+    onActionStart: (clickActionBase, startEvent, getUserActivity) =>
+      startClickAction(
         configuration,
         lifeCycle,
         domMutationObservable,
@@ -89,7 +89,7 @@ export function trackClickActions(
         stopObservable,
         appendClickToClickChain,
         clickActionBase,
-        clickEvent,
+        startEvent,
         getUserActivity
       ),
   })
@@ -145,7 +145,7 @@ function processPointerDown(
   return clickActionBase
 }
 
-function processClick(
+function startClickAction(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
@@ -153,10 +153,10 @@ function processClick(
   stopObservable: Observable<void>,
   appendClickToClickChain: (click: Click) => void,
   clickActionBase: ClickActionBase,
-  clickEvent: MouseEventOnElement,
+  startEvent: MouseEventOnElement,
   getUserActivity: () => UserActivity
 ) {
-  const click = newClick(lifeCycle, history, getUserActivity, clickActionBase, clickEvent)
+  const click = newClick(lifeCycle, history, getUserActivity, clickActionBase, startEvent)
 
   if (configuration.trackFrustrations) {
     appendClickToClickChain(click)
@@ -248,7 +248,7 @@ function newClick(
   history: ClickActionIdHistory,
   getUserActivity: () => UserActivity,
   clickActionBase: ClickActionBase,
-  clickEvent: MouseEventOnElement
+  startEvent: MouseEventOnElement
 ) {
   const id = generateUUID()
   const startClocks = clocksNow()
@@ -280,7 +280,7 @@ function newClick(
   }
 
   return {
-    event: clickEvent,
+    event: startEvent,
     stop,
     stopObservable,
 
@@ -298,7 +298,7 @@ function newClick(
 
     isStopped: () => status === ClickStatus.STOPPED || status === ClickStatus.FINALIZED,
 
-    clone: () => newClick(lifeCycle, history, getUserActivity, clickActionBase, clickEvent),
+    clone: () => newClick(lifeCycle, history, getUserActivity, clickActionBase, startEvent),
 
     validate: (domEvents?: Event[]) => {
       stop()
@@ -319,8 +319,8 @@ function newClick(
             errorCount,
             longTaskCount,
           },
-          events: domEvents ?? [clickEvent],
-          event: clickEvent,
+          events: domEvents ?? [startEvent],
+          event: startEvent,
         },
         clickActionBase
       )

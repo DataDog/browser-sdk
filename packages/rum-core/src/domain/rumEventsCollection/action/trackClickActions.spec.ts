@@ -429,6 +429,26 @@ describe('trackClickActions', () => {
         expect(events.length).toBe(1)
         expect(events[0].frustrationTypes).toEqual([FrustrationType.DEAD_CLICK])
       })
+
+      describe('click_action_on_pointerup experimental feature', () => {
+        beforeEach(() => {
+          updateExperimentalFeatures(['click_action_on_pointerup'])
+        })
+
+        afterEach(() => {
+          resetExperimentalFeatures()
+        })
+
+        it('does not consider a click with activity happening on pointerup as a dead click', () => {
+          const { clock } = setupBuilder.build()
+
+          emulateClick({ activity: { on: 'pointerup' } })
+
+          clock.tick(EXPIRE_DELAY)
+          expect(events.length).toBe(1)
+          expect(events[0].frustrationTypes).toEqual([])
+        })
+      })
     })
   })
 
@@ -439,6 +459,7 @@ describe('trackClickActions', () => {
     target?: HTMLElement
     activity?: {
       delay?: number
+      on?: 'pointerup' | 'click'
     }
   } = {}) {
     const targetPosition = target.getBoundingClientRect()
@@ -456,18 +477,22 @@ describe('trackClickActions', () => {
     target.dispatchEvent(createNewEvent('pointerdown', eventProperties))
     setupBuilder.clock!.tick(EMULATED_CLICK_DURATION)
     target.dispatchEvent(createNewEvent('pointerup', eventProperties))
+    emulateActivityIfNeeded('pointerup')
     target.dispatchEvent(createNewEvent('click', eventProperties))
+    emulateActivityIfNeeded('click')
 
-    if (activity) {
-      const delay = activity.delay ?? BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY
-      if (delay < 0) {
-        // Do not use `.tick()` here because negative clock tick does not work since jasmine 4: https://github.com/jasmine/jasmine/pull/1948
-        setupBuilder.clock!.setDate(new Date(Date.now() + delay))
-      } else {
-        setupBuilder.clock!.tick(delay)
+    function emulateActivityIfNeeded(event: 'pointerup' | 'click') {
+      if (activity && (activity.on ?? 'click') === event) {
+        const delay = activity.delay ?? BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY
+        if (delay < 0) {
+          // Do not use `.tick()` here because negative clock tick does not work since jasmine 4: https://github.com/jasmine/jasmine/pull/1948
+          setupBuilder.clock!.setDate(new Date(Date.now() + delay))
+        } else {
+          setupBuilder.clock!.tick(delay)
+        }
+        // Since we don't collect dom mutations for this test, manually dispatch one
+        setupBuilder.domMutationObservable.notify()
       }
-      // Since we don't collect dom mutations for this test, manually dispatch one
-      setupBuilder.domMutationObservable.notify()
     }
   }
 

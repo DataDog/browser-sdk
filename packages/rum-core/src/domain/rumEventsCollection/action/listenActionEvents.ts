@@ -1,4 +1,4 @@
-import { addEventListener, DOM_EVENT } from '@datadog/browser-core'
+import { addEventListener, DOM_EVENT, isExperimentalFeatureEnabled } from '@datadog/browser-core'
 
 export type MouseEventOnElement = MouseEvent & { target: Element }
 
@@ -8,10 +8,10 @@ export interface UserActivity {
 }
 export interface ActionEventsHooks<ClickContext> {
   onPointerDown: (event: MouseEventOnElement) => ClickContext | undefined
-  onClick: (context: ClickContext, event: MouseEventOnElement, getUserActivity: () => UserActivity) => void
+  onActionStart: (context: ClickContext, startEvent: MouseEventOnElement, getUserActivity: () => UserActivity) => void
 }
 
-export function listenActionEvents<ClickContext>({ onPointerDown, onClick }: ActionEventsHooks<ClickContext>) {
+export function listenActionEvents<ClickContext>({ onPointerDown, onActionStart }: ActionEventsHooks<ClickContext>) {
   let selectionEmptyAtPointerDown: boolean
   let userActivity: UserActivity = {
     selection: false,
@@ -49,12 +49,12 @@ export function listenActionEvents<ClickContext>({ onPointerDown, onClick }: Act
 
     addEventListener(
       window,
-      DOM_EVENT.CLICK,
-      (clickEvent: MouseEvent) => {
-        if (isValidMouseEvent(clickEvent) && clickContext) {
+      isExperimentalFeatureEnabled('click_action_on_pointerup') ? DOM_EVENT.POINTER_UP : DOM_EVENT.CLICK,
+      (startEvent: MouseEvent) => {
+        if (isValidMouseEvent(startEvent) && clickContext) {
           // Use a scoped variable to make sure the value is not changed by other clicks
           const localUserActivity = userActivity
-          onClick(clickContext, clickEvent, () => localUserActivity)
+          onActionStart(clickContext, startEvent, () => localUserActivity)
           clickContext = undefined
         }
       },
