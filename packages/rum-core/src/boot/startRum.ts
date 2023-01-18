@@ -23,7 +23,6 @@ import { startResourceCollection } from '../domain/rumEventsCollection/resource/
 import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
 import type { RumSessionManager } from '../domain/rumSessionManager'
 import { startRumSessionManager, startRumSessionManagerStub } from '../domain/rumSessionManager'
-import type { CommonContext } from '../rawRumEvent.types'
 import { startRumBatch } from '../transport/startRumBatch'
 import { startRumEventBridge } from '../transport/startRumEventBridge'
 import { startUrlContexts } from '../domain/contexts/urlContexts'
@@ -35,12 +34,13 @@ import type { ViewOptions } from '../domain/rumEventsCollection/view/trackViews'
 import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
 import { startCustomerDataTelemetry } from '../domain/startCustomerDataTelemetry'
 import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
+import type { CommonContext } from '../domain/contexts/commonContext'
+import { getCommonContext } from '../domain/contexts/commonContext'
 import type { RecorderApi } from './rumPublicApi'
 
 export function startRum(
   initConfiguration: RumInitConfiguration,
   configuration: RumConfiguration,
-  getCommonContext: () => CommonContext,
   recorderApi: RecorderApi,
   globalContextManager: ContextManager,
   userContextManager: ContextManager,
@@ -101,7 +101,7 @@ export function startRum(
     session,
     locationChangeObservable,
     domMutationObservable,
-    getCommonContext,
+    () => getCommonContext(globalContextManager, userContextManager, recorderApi),
     reportError
   )
 

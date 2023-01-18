@@ -1,4 +1,6 @@
+import type { Context } from '@datadog/browser-core'
 import type { EndpointBuilder } from '../src/domain/configuration'
+import type { ContextManager } from '../src/tools/contextManager'
 import { instrumentMethod } from '../src/tools/instrumentMethod'
 import { resetNavigationStart } from '../src/tools/timeUtils'
 import { buildUrl } from '../src/tools/urlPolyfill'
@@ -499,13 +501,24 @@ export function interceptRequests() {
   }
 }
 
-// export function contextBytesCounterStub(): ContextBytesCounter {
-//   return {
-//     compute: () => 1,
-//     invalidate: jasmine.createSpy('invalidate'),
-//   }
-// }
-
 export function isAdoptedStyleSheetsSupported() {
   return Boolean((document as any).adoptedStyleSheets)
+}
+
+export function createContextManagerStub(initialContext: Context = {}): ContextManager {
+  let context = initialContext
+  return {
+    getBytesCount: () => 0,
+    get: () => context,
+    add: noop,
+    remove: noop,
+    set: noop,
+    getContext: () => context,
+    setContext: (newContext: Context) => {
+      context = newContext
+    },
+    setContextProperty: noop,
+    removeContextProperty: noop,
+    clearContext: noop,
+  }
 }

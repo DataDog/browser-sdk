@@ -12,7 +12,6 @@ import {
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type {
-  CommonContext,
   RawRumErrorEvent,
   RawRumEvent,
   RawRumLongTaskEvent,
@@ -31,6 +30,7 @@ import type { UrlContexts } from './contexts/urlContexts'
 import type { RumConfiguration } from './configuration'
 import type { ActionContexts } from './rumEventsCollection/action/actionCollection'
 import { getDisplayContext } from './contexts/displayContext'
+import type { CommonContext } from './contexts/commonContext'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string

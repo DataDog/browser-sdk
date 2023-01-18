@@ -765,7 +765,7 @@ describe('rum public api', () => {
 
         rumPublicApi.init(MANUAL_CONFIGURATION)
         expect(startRumSpy).toHaveBeenCalled()
-        expect(startRumSpy.calls.argsFor(0)[6]).toEqual({ name: 'foo' })
+        expect(startRumSpy.calls.argsFor(0)[5]).toEqual({ name: 'foo' })
         expect(recorderApiOnRumStartSpy).toHaveBeenCalled()
         expect(startViewSpy).not.toHaveBeenCalled()
       })
@@ -777,7 +777,7 @@ describe('rum public api', () => {
 
         rumPublicApi.startView('foo')
         expect(startRumSpy).toHaveBeenCalled()
-        expect(startRumSpy.calls.argsFor(0)[6]).toEqual({ name: 'foo' })
+        expect(startRumSpy.calls.argsFor(0)[5]).toEqual({ name: 'foo' })
         expect(recorderApiOnRumStartSpy).toHaveBeenCalled()
         expect(startViewSpy).not.toHaveBeenCalled()
       })
@@ -788,7 +788,7 @@ describe('rum public api', () => {
         rumPublicApi.startView('bar')
 
         expect(startRumSpy).toHaveBeenCalled()
-        expect(startRumSpy.calls.argsFor(0)[6]).toEqual({ name: 'foo' })
+        expect(startRumSpy.calls.argsFor(0)[5]).toEqual({ name: 'foo' })
         expect(recorderApiOnRumStartSpy).toHaveBeenCalled()
         expect(startViewSpy).toHaveBeenCalled()
         expect(startViewSpy.calls.argsFor(0)[0]).toEqual({ name: 'bar' })
@@ -823,36 +823,6 @@ describe('rum public api', () => {
 
         expect(addTimingSpy.calls.argsFor(2)[0]).toEqual('third')
         expect(addTimingSpy.calls.argsFor(2)[1]).toBeUndefined() // no time saved when started
-      })
-    })
-  })
-
-  describe('common context', () => {
-    let isRecording: boolean
-    let rumPublicApi: RumPublicApi
-    let startRumSpy: jasmine.Spy<StartRum>
-
-    function getCommonContext() {
-      return startRumSpy.calls.argsFor(0)[2]()
-    }
-
-    beforeEach(() => {
-      isRecording = false
-      startRumSpy = jasmine.createSpy('startRum')
-      rumPublicApi = makeRumPublicApi(startRumSpy, { ...noopRecorderApi, isRecording: () => isRecording })
-    })
-
-    describe('hasReplay', () => {
-      it('should be undefined if it is not recording', () => {
-        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-        isRecording = false
-        expect(getCommonContext().hasReplay).toBeUndefined()
-      })
-
-      it('should be true if it is recording', () => {
-        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-        isRecording = true
-        expect(getCommonContext().hasReplay).toBeTrue()
       })
     })
   })

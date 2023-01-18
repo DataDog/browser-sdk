@@ -302,7 +302,6 @@ describe('view events', () => {
       startRum(
         {} as RumInitConfiguration,
         configuration,
-        () => ({ context: {}, user: {} }),
         noopRecorderApi,
         createContextManager(),
         createContextManager()

@@ -118,7 +118,7 @@ describe('error collection', () => {
         },
         { context: { foo: 'bar' }, user: {} }
       )
-      expect(rawRumEvents[0].savedCommonContext!.context).toEqual({
+      expect(rawRumEvents[0].savedCommonContext.context).toEqual({
         foo: 'bar',
       })
     })
@@ -133,7 +133,7 @@ describe('error collection', () => {
         },
         { context: {}, user: { id: 'foo' } }
       )
-      expect(rawRumEvents[0].savedCommonContext!.user).toEqual({
+      expect(rawRumEvents[0].savedCommonContext.user).toEqual({
         id: 'foo',
       })
     })
