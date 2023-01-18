@@ -53,8 +53,8 @@ function computeIntakeType(
   }
 
   let intakeType: IntakeType
-  const forwardUrl = new URL(ddforward, 'http://example.com')
-  const endpoint = forwardUrl.pathname.split('/').pop()
+  // ddforward = /api/v2/rum?key=value
+  const endpoint = ddforward.split(/[/?]/)[3]
   if (endpoint === 'logs' || endpoint === 'rum') {
     intakeType = endpoint
   } else if (endpoint === 'replay' && req.busboy) {
