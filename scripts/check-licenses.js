@@ -8,7 +8,7 @@ const { printLog, printError, runMain, findBrowserSdkPackageJsonFiles } = requir
 const LICENSE_FILE = 'LICENSE-3rdparty.csv'
 
 runMain(async () => {
-  const packageJsonFiles = await findBrowserSdkPackageJsonFiles()
+  const packageJsonFiles = findBrowserSdkPackageJsonFiles()
 
   printLog(
     'Looking for dependencies in:\n',

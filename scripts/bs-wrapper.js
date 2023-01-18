@@ -14,7 +14,7 @@
 // after killing it. There might be a better way of prematurely aborting the test command if we need
 // to in the future.
 
-const { spawnCommand, printLog, runMain, executeCommand, fetch } = require('./utils')
+const { spawnCommand, printLog, runMain, command, fetch } = require('./utils')
 
 const AVAILABILITY_CHECK_DELAY = 30_000
 const BS_USERNAME = process.env.BS_USERNAME
@@ -22,7 +22,7 @@ const BS_ACCESS_KEY = process.env.BS_ACCESS_KEY
 const BS_BUILD_URL = 'https://api.browserstack.com/automate/builds.json?status=running'
 
 runMain(async () => {
-  if (await executeCommand('git tag --points-at HEAD')) {
+  if (command`git tag --points-at HEAD`.run()) {
     printLog('Skip bs execution on tags')
     return
   }

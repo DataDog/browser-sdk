@@ -1,12 +1,5 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
-import {
-  isExperimentalFeatureEnabled,
-  noop,
-  addDuration,
-  addEventListeners,
-  relativeNow,
-  DOM_EVENT,
-} from '@datadog/browser-core'
+import { addDuration, addEventListeners, relativeNow, DOM_EVENT } from '@datadog/browser-core'
 
 export const MAX_PAGE_STATE_ENTRIES = 500
 
@@ -26,13 +19,6 @@ let pageStateEntries: PageStateEntry[] = []
 let currentPageState: PageState | undefined
 
 export function startPageStateHistory(): PageStateHistory {
-  if (!isExperimentalFeatureEnabled('resource_page_states')) {
-    return {
-      findAll: () => undefined,
-      stop: noop,
-    }
-  }
-
   addPageState(getPageState())
 
   const { stop } = addEventListeners(
