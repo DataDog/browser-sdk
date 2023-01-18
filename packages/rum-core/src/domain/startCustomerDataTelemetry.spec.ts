@@ -1,4 +1,4 @@
-import type { BatchFlushEvent, Context, TelemetryEvent } from '@datadog/browser-core'
+import type { BatchFlushEvent, Context, ContextManager, TelemetryEvent } from '@datadog/browser-core'
 import {
   resetExperimentalFeatures,
   updateExperimentalFeatures,
@@ -10,6 +10,7 @@ import type { TestSetupBuilder } from '../../test/specHelper'
 import { setup } from '../../test/specHelper'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'
+import type { FeatureFlagContexts } from './contexts/featureFlagContext'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { MEASURES_PERIOD_DURATION, startCustomerDataTelemetry } from './startCustomerDataTelemetry'
 
@@ -17,23 +18,38 @@ describe('customerDataTelemetry', () => {
   let setupBuilder: TestSetupBuilder
   let batchFlushObservable: Observable<BatchFlushEvent>
   let telemetryEvents: TelemetryEvent[]
+  let fakeContext: Context
   let fakeContextBytesCount: number
   let lifeCycle: LifeCycle
 
   function generateBatch({
     eventNumber,
-    contextBytesCount,
-    batchBytesCount,
+    batchBytesCount = 1,
+    contextBytesCount = fakeContextBytesCount,
+    context = fakeContext,
   }: {
     eventNumber: number
-    contextBytesCount: number
-    batchBytesCount: number
+    batchBytesCount?: number
+    contextBytesCount?: number
+    context?: Context
   }) {
     fakeContextBytesCount = contextBytesCount
+    fakeContext = context
+
     for (let index = 0; index < eventNumber; index++) {
       lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.VIEW } as RumEvent & Context)
     }
     batchFlushObservable.notify({ bufferBytesCount: batchBytesCount, bufferMessagesCount: eventNumber })
+  }
+
+  function spyOnContextManager(contextManager: ContextManager) {
+    spyOn(contextManager, 'getContext').and.callFake(() => fakeContext)
+    spyOn(contextManager, 'getBytesCount').and.callFake(() => fakeContextBytesCount)
+  }
+
+  function spyOnFeatureFlagContexts(featureFlagContexts: FeatureFlagContexts) {
+    spyOn(featureFlagContexts, 'findFeatureFlagEvaluations').and.callFake(() => fakeContext)
+    spyOn(featureFlagContexts, 'getFeatureFlagBytesCount').and.callFake(() => fakeContextBytesCount)
   }
 
   beforeEach(() => {
@@ -49,10 +65,10 @@ describe('customerDataTelemetry', () => {
         batchFlushObservable = new Observable()
         lifeCycle = new LifeCycle()
         fakeContextBytesCount = 1
-
-        spyOn(globalContextManager, 'getBytesCount').and.callFake(() => fakeContextBytesCount)
-        spyOn(userContextManager, 'getBytesCount').and.callFake(() => fakeContextBytesCount)
-        spyOn(featureFlagContexts, 'getFeatureFlagBytesCount').and.callFake(() => fakeContextBytesCount)
+        fakeContext = { foo: 'bar' }
+        spyOnContextManager(globalContextManager)
+        spyOnContextManager(userContextManager)
+        spyOnFeatureFlagContexts(featureFlagContexts)
 
         telemetryEvents = []
         const telemetry = startTelemetry(TelemetryService.RUM, configuration)
@@ -98,7 +114,8 @@ describe('customerDataTelemetry', () => {
   it('should not collect empty contexts telemetry', () => {
     const { clock } = setupBuilder.build()
 
-    generateBatch({ eventNumber: 1, contextBytesCount: 0, batchBytesCount: 1 })
+    generateBatch({ eventNumber: 1, context: {} })
+
     clock.tick(MEASURES_PERIOD_DURATION)
 
     expect(telemetryEvents[0].telemetry.globalContextBytes).not.toBeDefined()
@@ -130,7 +147,7 @@ describe('customerDataTelemetry', () => {
       .withConfiguration({ telemetrySampleRate: 100, customerDataTelemetrySampleRate: 0 })
       .build()
 
-    generateBatch({ eventNumber: 1, contextBytesCount: 1, batchBytesCount: 1 })
+    generateBatch({ eventNumber: 1 })
     clock.tick(MEASURES_PERIOD_DURATION)
 
     expect(telemetryEvents.length).toEqual(0)
@@ -140,7 +157,7 @@ describe('customerDataTelemetry', () => {
     resetExperimentalFeatures()
     const { clock } = setupBuilder.build()
 
-    generateBatch({ eventNumber: 1, contextBytesCount: 1, batchBytesCount: 1 })
+    generateBatch({ eventNumber: 1 })
     clock.tick(MEASURES_PERIOD_DURATION)
 
     expect(telemetryEvents.length).toEqual(0)

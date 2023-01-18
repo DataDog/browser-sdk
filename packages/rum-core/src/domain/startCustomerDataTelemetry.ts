@@ -1,5 +1,6 @@
 import type { BatchFlushEvent, Context, ContextManager, Observable, Telemetry } from '@datadog/browser-core'
 import {
+  isEmptyObject,
   includes,
   isExperimentalFeatureEnabled,
   performDraw,
@@ -59,10 +60,19 @@ export function startCustomerDataTelemetry(
   initCurrentBatchMeasures()
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (event: RumEvent & Context) => {
-    updateMeasure(currentBatchMeasures.globalContextBytes, globalContextManager.getBytesCount())
-    updateMeasure(currentBatchMeasures.userContextBytes, userContextManager.getBytesCount())
+    if (!isEmptyObject(globalContextManager.getContext())) {
+      updateMeasure(currentBatchMeasures.globalContextBytes, globalContextManager.getBytesCount())
+    }
+    if (!isEmptyObject(userContextManager.getContext())) {
+      updateMeasure(currentBatchMeasures.userContextBytes, userContextManager.getBytesCount())
+    }
 
-    if (includes([RumEventType.VIEW, RumEventType.ERROR], event.type)) {
+    const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations()
+    if (
+      includes([RumEventType.VIEW, RumEventType.ERROR], event.type) &&
+      featureFlagContext &&
+      !isEmptyObject(featureFlagContext)
+    ) {
       updateMeasure(currentBatchMeasures.featureFlagBytes, featureFlagContexts.getFeatureFlagBytesCount())
     }
   })
