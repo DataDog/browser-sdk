@@ -1,6 +1,6 @@
 'use strict'
 
-const { getSecretKey, executeCommand, printLog, runMain } = require('./utils')
+const { getSecretKey, command, printLog, runMain } = require('./utils')
 const { SDK_VERSION } = require('./build-env')
 
 /**
@@ -17,46 +17,44 @@ const packages = [
   { name: 'rum-slim', service: 'browser-rum-sdk' },
 ]
 
-async function renameFiles(bundleFolder, packageName) {
+function renameFiles(bundleFolder, packageName) {
   // The datadog-ci CLI is taking a directory as an argument. It will scan every source map files in
   // it and upload those along with the minified bundle. The file names must match the one from the
   // CDN, thus we need to rename the bundles with the right suffix.
   for (const ext of ['js', 'js.map']) {
     const filePath = `${bundleFolder}/datadog-${packageName}.${ext}`
     const suffixedFilePath = `${bundleFolder}/datadog-${packageName}-${suffix}.${ext}`
-    await executeCommand(`mv ${filePath} ${suffixedFilePath}`)
+    command`mv ${filePath} ${suffixedFilePath}`.run()
   }
 }
 
-async function uploadSourceMaps(site, apiKey, packageName, service, bundleFolder) {
+function uploadSourceMaps(site, apiKey, packageName, service, bundleFolder) {
   printLog(`Uploading ${packageName} source maps for ${site}...`)
 
-  const output = await executeCommand(
-    `
-    datadog-ci sourcemaps upload ${bundleFolder} \
-      --service ${service} \
-      --release-version ${SDK_VERSION} \
-      --minified-path-prefix / \
-      --project-path @datadog/browser-${packageName}/ \
-      --repository-url https://www.github.com/datadog/browser-sdk \
-  `,
-    {
+  command`
+    datadog-ci sourcemaps upload ${bundleFolder}
+      --service ${service}
+      --release-version ${SDK_VERSION}
+      --minified-path-prefix /
+      --project-path @datadog/browser-${packageName}/
+      --repository-url https://www.github.com/datadog/browser-sdk
+  `
+    .withEnvironment({
       DATADOG_API_KEY: apiKey,
       DATADOG_SITE: site,
-    }
-  )
-  console.log(output)
+    })
+    .run()
 }
 
-runMain(async () => {
+runMain(() => {
   for (const { name, service } of packages) {
     const bundleFolder = `packages/${name}/bundle`
-    await renameFiles(bundleFolder, name)
+    renameFiles(bundleFolder, name)
     for (const site of sites) {
       const normalizedSite = site.replaceAll('.', '-')
-      const apiKey = await getSecretKey(`ci.browser-sdk.source-maps.${normalizedSite}.ci_api_key`)
+      const apiKey = getSecretKey(`ci.browser-sdk.source-maps.${normalizedSite}.ci_api_key`)
 
-      await uploadSourceMaps(site, apiKey, name, service, bundleFolder)
+      uploadSourceMaps(site, apiKey, name, service, bundleFolder)
     }
   }
   printLog('Source maps upload done.')

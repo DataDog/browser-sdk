@@ -503,9 +503,14 @@ Initialization fails silently if the RUM Browser SDK is already initialized on t
 Optional proxy URL, for example: https://www.proxy.com/path. For more information, see the full [proxy setup guide][7].
 
 `allowedTracingOrigins`
-: Optional<br/>
+: Optional - **Deprecated**<br/>
 **Type**: List<br/>
 A list of request origins used to inject tracing headers. For more information, see [Connect RUM and Traces][12].
+
+`allowedTracingUrls`
+: Optional<br/>
+**Type**: List<br/>
+A list of request URLs used to inject tracing headers. For more information, see [Connect RUM and Traces][12].
 
 `tracingSampleRate`
 : Optional - **Deprecated**<br/>

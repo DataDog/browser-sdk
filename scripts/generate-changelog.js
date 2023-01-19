@@ -6,7 +6,7 @@ const readFile = util.promisify(require('fs').readFile)
 const emojiNameMap = require('emoji-name-map')
 
 const lernaConfig = require('../lerna.json')
-const { executeCommand, spawnCommand, printError, runMain, modifyFile } = require('./utils')
+const { command, spawnCommand, printError, runMain, modifyFile } = require('./utils')
 
 const CHANGELOG_FILE = 'CHANGELOG.md'
 const CONTRIBUTING_FILE = 'CONTRIBUTING.md'
@@ -18,7 +18,7 @@ runMain(async () => {
   }
 
   const emojisLegend = await getEmojisLegend()
-  const changesList = await getChangesList()
+  const changesList = getChangesList()
 
   await modifyFile(
     CHANGELOG_FILE,
@@ -37,9 +37,9 @@ ${content.slice(content.indexOf('\n##'))}`
 
   await spawnCommand(process.env.EDITOR, [CHANGELOG_FILE])
 
-  await spawnCommand('yarn', ['run', 'prettier', '--write', CHANGELOG_FILE])
+  command`yarn run prettier --write ${CHANGELOG_FILE}`.run()
 
-  await executeCommand(`git add ${CHANGELOG_FILE}`)
+  command`git add ${CHANGELOG_FILE}`.run()
 })
 
 async function getEmojisLegend() {
@@ -63,12 +63,12 @@ async function getEmojisLegend() {
   return lines.join('\n')
 }
 
-async function getChangesList() {
-  await executeCommand('git fetch --tags -q')
-  const lastTagHash = await executeCommand('git rev-list --tags --max-count=1')
-  const lastTagName = await executeCommand(`git describe --tags ${lastTagHash}`)
+function getChangesList() {
+  command`git fetch --tags -q`.run()
+  const lastTagHash = command`git rev-list --tags --max-count=1`.run().trim()
+  const lastTagName = command`git describe --tags ${lastTagHash}`.run()
 
-  const commits = await executeCommand(`git log ${lastTagName.trimEnd()}..HEAD --pretty=format:"- %s"`)
+  const commits = command`git log ${lastTagName.trimEnd()}..HEAD --pretty=format:${'- %s'}`.run()
 
   const changesWithEmojis = emojiNameToUnicode(commits)
 
