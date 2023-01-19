@@ -60,10 +60,10 @@ export function startCustomerDataTelemetry(
   initCurrentBatchMeasures()
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (event: RumEvent & Context) => {
-    if (!isEmptyObject(globalContextManager.getContext())) {
+    if (!isEmptyObject(globalContextManager.get())) {
       updateMeasure(currentBatchMeasures.globalContextBytes, globalContextManager.getBytesCount())
     }
-    if (!isEmptyObject(userContextManager.getContext())) {
+    if (!isEmptyObject(userContextManager.get())) {
       updateMeasure(currentBatchMeasures.userContextBytes, userContextManager.getBytesCount())
     }
 
