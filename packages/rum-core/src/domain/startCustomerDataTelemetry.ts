@@ -59,6 +59,8 @@ export function startCustomerDataTelemetry(
   initCurrentPeriodMeasures()
   initCurrentBatchMeasures()
 
+  // We measure the data of every view updates even if there could only be one per batch due to the upsert
+  // It means that contexts bytes count sums can be higher than it really is
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (event: RumEvent & Context) => {
     if (!isEmptyObject(globalContextManager.get())) {
       updateMeasure(currentBatchMeasures.globalContextBytes, globalContextManager.getBytesCount())
