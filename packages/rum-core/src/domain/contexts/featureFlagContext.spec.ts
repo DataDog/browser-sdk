@@ -148,7 +148,7 @@ describe('featureFlagContexts', () => {
   })
 
   describe('getFeatureFlagBytesCount', () => {
-    it('should compute the bytes count only if a the context has been updated', () => {
+    it('should compute the bytes count only if the context has been updated', () => {
       updateExperimentalFeatures(['feature_flags'])
       const { lifeCycle } = setupBuilder.withFakeClock().build()
 
@@ -165,8 +165,9 @@ describe('featureFlagContexts', () => {
         startClocks: relativeToClocks(10 as RelativeTime),
       } as ViewCreatedEvent)
       featureFlagContexts.getFeatureFlagBytesCount()
-      featureFlagContexts.getFeatureFlagBytesCount()
+      const bytesCount = featureFlagContexts.getFeatureFlagBytesCount()
 
+      expect(bytesCount).toEqual(1)
       expect(computeBytesCountStub).toHaveBeenCalledTimes(3)
     })
   })

@@ -74,10 +74,10 @@ describe('createContextManager', () => {
     expect(manager.getContext()).toEqual({})
   })
 
-  it('should compute the bytes count only if a the context has been updated', () => {
+  it('should compute the bytes count only if the context has been updated', () => {
     const computeBytesCountStub = jasmine.createSpy('computeBytesCountStub').and.returnValue(1)
     const manager = createContextManager(computeBytesCountStub)
-    manager.add('foo', 'bar')
+
     manager.getBytesCount()
 
     manager.remove('foo')
@@ -94,8 +94,9 @@ describe('createContextManager', () => {
 
     manager.clearContext()
     manager.getBytesCount()
-    manager.getBytesCount()
+    const bytesCount = manager.getBytesCount()
 
+    expect(bytesCount).toEqual(1)
     expect(computeBytesCountStub).toHaveBeenCalledTimes(6)
   })
 })
