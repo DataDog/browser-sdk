@@ -42,6 +42,7 @@ describe('listenActionEvents', () => {
     expect(actionEventsHooks.onActionStart).toHaveBeenCalledOnceWith(
       {},
       jasmine.objectContaining({ type: 'click' }),
+      jasmine.any(Function),
       jasmine.any(Function)
     )
   })
@@ -52,6 +53,7 @@ describe('listenActionEvents', () => {
     expect(actionEventsHooks.onActionStart).toHaveBeenCalledOnceWith(
       {},
       jasmine.objectContaining({ type: 'click' }),
+      jasmine.any(Function),
       jasmine.any(Function)
     )
   })
@@ -100,6 +102,7 @@ describe('listenActionEvents', () => {
       expect(actionEventsHooks.onActionStart).toHaveBeenCalledOnceWith(
         {},
         jasmine.objectContaining({ type: 'pointerup' }),
+        jasmine.any(Function),
         jasmine.any(Function)
       )
     })

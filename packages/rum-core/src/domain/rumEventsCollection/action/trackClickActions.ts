@@ -51,6 +51,7 @@ export interface ClickAction {
   event: MouseEventOnElement
   frustrationTypes: FrustrationType[]
   events: Event[]
+  pointerUpDelay?: Duration
 }
 
 export interface ActionContexts {
@@ -80,7 +81,7 @@ export function trackClickActions(
 
   const { stop: stopActionEventsListener } = listenActionEvents<ClickActionBase>({
     onPointerDown: (pointerDownEvent) => processPointerDown(configuration, history, pointerDownEvent),
-    onActionStart: (clickActionBase, startEvent, getUserActivity) =>
+    onActionStart: (clickActionBase, startEvent, getUserActivity, getClickEventTimeStamp) =>
       startClickAction(
         configuration,
         lifeCycle,
@@ -90,7 +91,8 @@ export function trackClickActions(
         appendClickToClickChain,
         clickActionBase,
         startEvent,
-        getUserActivity
+        getUserActivity,
+        getClickEventTimeStamp
       ),
   })
 
@@ -154,9 +156,10 @@ function startClickAction(
   appendClickToClickChain: (click: Click) => void,
   clickActionBase: ClickActionBase,
   startEvent: MouseEventOnElement,
-  getUserActivity: () => UserActivity
+  getUserActivity: () => UserActivity,
+  getClickEventTimeStamp: () => TimeStamp | undefined
 ) {
-  const click = newClick(lifeCycle, history, getUserActivity, clickActionBase, startEvent)
+  const click = newClick(lifeCycle, history, getUserActivity, getClickEventTimeStamp, clickActionBase, startEvent)
 
   if (configuration.trackFrustrations) {
     appendClickToClickChain(click)
@@ -247,6 +250,7 @@ function newClick(
   lifeCycle: LifeCycle,
   history: ClickActionIdHistory,
   getUserActivity: () => UserActivity,
+  getClickEventTimeStamp: () => TimeStamp | undefined,
   clickActionBase: ClickActionBase,
   startEvent: MouseEventOnElement
 ) {
@@ -298,7 +302,7 @@ function newClick(
 
     isStopped: () => status === ClickStatus.STOPPED || status === ClickStatus.FINALIZED,
 
-    clone: () => newClick(lifeCycle, history, getUserActivity, clickActionBase, startEvent),
+    clone: () => newClick(lifeCycle, history, getUserActivity, getClickEventTimeStamp, clickActionBase, startEvent),
 
     validate: (domEvents?: Event[]) => {
       stop()
@@ -307,6 +311,7 @@ function newClick(
       }
 
       const { resourceCount, errorCount, longTaskCount } = eventCountsSubscription.eventCounts
+      const clickEventTimeStamp = getClickEventTimeStamp()
       const clickAction: ClickAction = assign(
         {
           type: ActionType.CLICK as const,
@@ -321,6 +326,7 @@ function newClick(
           },
           events: domEvents ?? [startEvent],
           event: startEvent,
+          pointerUpDelay: clickEventTimeStamp && elapsed(startClocks.timeStamp, clickEventTimeStamp),
         },
         clickActionBase
       )

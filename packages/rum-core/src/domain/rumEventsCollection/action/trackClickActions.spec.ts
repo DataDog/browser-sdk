@@ -108,6 +108,7 @@ describe('trackClickActions', () => {
         target: undefined,
         position: undefined,
         events: [domEvent],
+        pointerUpDelay: undefined,
       },
     ])
   })
@@ -447,6 +448,17 @@ describe('trackClickActions', () => {
           clock.tick(EXPIRE_DELAY)
           expect(events.length).toBe(1)
           expect(events[0].frustrationTypes).toEqual([])
+        })
+
+        it('reports the delay between pointerup and click event', () => {
+          const { clock } = setupBuilder.build()
+
+          const pointerUpActivityDelay = 5 as Duration
+          emulateClick({ activity: { on: 'pointerup', delay: pointerUpActivityDelay } })
+
+          clock.tick(EXPIRE_DELAY)
+          expect(events.length).toBe(1)
+          expect(events[0].pointerUpDelay).toBe(pointerUpActivityDelay)
         })
       })
     })
