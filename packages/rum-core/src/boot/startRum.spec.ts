@@ -55,6 +55,7 @@ function startRumStub(
     () => ({
       context: {},
       user: {},
+      hasReplay: undefined,
     }),
     reportError
   )

@@ -1,26 +1,30 @@
 import type { Context, ContextManager } from '@datadog/browser-core'
-import { createContextManagerStub } from '../../../../core/test/specHelper'
+import { createContextManager } from '@datadog/browser-core'
 import { noopRecorderApi } from '../../../test/specHelper'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 import type { CommonContext } from './commonContext'
-import { getCommonContext as getCommonContextImpl } from './commonContext'
+import { buildCommonContext as buildCommonContextImpl } from './commonContext'
 
 describe('commonContext', () => {
   let isRecording: boolean
   let fakeContext: Context
-  let getCommonContext: () => CommonContext
+  let buildCommonContext: () => CommonContext
 
   beforeEach(() => {
     isRecording = false
     fakeContext = { foo: 'bar' }
-    const globalContextManager: ContextManager = createContextManagerStub(fakeContext)
-    const userContextManager: ContextManager = createContextManagerStub(fakeContext)
+    const globalContextManager: ContextManager = createContextManager()
+    const userContextManager: ContextManager = createContextManager()
+    spyOn(globalContextManager, 'getContext').and.callFake(() => fakeContext)
+    spyOn(userContextManager, 'getContext').and.callFake(() => fakeContext)
+
     const recorderApi: RecorderApi = { ...noopRecorderApi, isRecording: () => isRecording }
-    getCommonContext = (): CommonContext => getCommonContextImpl(globalContextManager, userContextManager, recorderApi)
+    buildCommonContext = (): CommonContext =>
+      buildCommonContextImpl(globalContextManager, userContextManager, recorderApi)
   })
 
   it('should return common context', () => {
-    expect(getCommonContext()).toEqual({
+    expect(buildCommonContext()).toEqual({
       context: fakeContext,
       user: fakeContext,
       hasReplay: undefined,
@@ -30,12 +34,12 @@ describe('commonContext', () => {
   describe('hasReplay', () => {
     it('should be undefined if it is not recording', () => {
       isRecording = false
-      expect(getCommonContext().hasReplay).toBeUndefined()
+      expect(buildCommonContext().hasReplay).toBeUndefined()
     })
 
     it('should be true if it is recording', () => {
       isRecording = true
-      expect(getCommonContext().hasReplay).toBeTrue()
+      expect(buildCommonContext().hasReplay).toBeTrue()
     })
   })
 })

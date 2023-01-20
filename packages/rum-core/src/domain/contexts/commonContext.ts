@@ -4,22 +4,17 @@ import type { RecorderApi } from '../../boot/rumPublicApi'
 export interface CommonContext {
   user: User
   context: Context
-  hasReplay?: true
+  hasReplay: true | undefined
 }
 
-export function getCommonContext(
+export function buildCommonContext(
   globalContextManager: ContextManager,
   userContextManager: ContextManager,
-  recorderApi?: RecorderApi
+  recorderApi: RecorderApi
 ): CommonContext {
-  const commonContext: CommonContext = {
+  return {
     context: globalContextManager.getContext(),
     user: userContextManager.getContext(),
+    hasReplay: recorderApi.isRecording() ? true : undefined,
   }
-
-  if (recorderApi) {
-    commonContext.hasReplay = recorderApi.isRecording() ? true : undefined
-  }
-
-  return commonContext
 }

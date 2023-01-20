@@ -35,7 +35,7 @@ import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
 import { startCustomerDataTelemetry } from '../domain/startCustomerDataTelemetry'
 import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
 import type { CommonContext } from '../domain/contexts/commonContext'
-import { getCommonContext } from '../domain/contexts/commonContext'
+import { buildCommonContext } from '../domain/contexts/commonContext'
 import type { RecorderApi } from './rumPublicApi'
 
 export function startRum(
@@ -101,7 +101,7 @@ export function startRum(
     session,
     locationChangeObservable,
     domMutationObservable,
-    () => getCommonContext(globalContextManager, userContextManager, recorderApi),
+    () => buildCommonContext(globalContextManager, userContextManager, recorderApi),
     reportError
   )
 
@@ -163,7 +163,7 @@ export function startRumEventCollection(
   sessionManager: RumSessionManager,
   locationChangeObservable: Observable<LocationChange>,
   domMutationObservable: Observable<void>,
-  getCommonContext: () => CommonContext,
+  buildCommonContext: () => CommonContext,
   reportError: (error: RawError) => void
 ) {
   const viewContexts = startViewContexts(lifeCycle)
@@ -184,7 +184,7 @@ export function startRumEventCollection(
     viewContexts,
     urlContexts,
     actionContexts,
-    getCommonContext,
+    buildCommonContext,
     reportError
   )
 

@@ -247,7 +247,7 @@ describe('rum public api', () => {
           startClocks: jasmine.any(Object),
           type: ActionType.CUSTOM,
         },
-        { context: {}, user: {} },
+        { context: {}, user: {}, hasReplay: undefined },
       ])
     })
 
@@ -338,7 +338,7 @@ describe('rum public api', () => {
           handlingStack: jasmine.any(String),
           startClocks: jasmine.any(Object),
         },
-        { context: {}, user: {} },
+        { context: {}, user: {}, hasReplay: undefined },
       ])
     })
 

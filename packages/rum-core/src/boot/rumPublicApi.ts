@@ -27,7 +27,7 @@ import { ActionType } from '../rawRumEvent.types'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import { validateAndBuildRumConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/rumEventsCollection/view/trackViews'
-import { getCommonContext } from '../domain/contexts/commonContext'
+import { buildCommonContext } from '../domain/contexts/commonContext'
 import type { startRum } from './startRum'
 
 export type RumPublicApi = ReturnType<typeof makeRumPublicApi>
@@ -74,13 +74,13 @@ export function makeRumPublicApi(
   }
   let addActionStrategy: StartRumResult['addAction'] = (
     action,
-    commonContext = getCommonContext(globalContextManager, userContextManager)
+    commonContext = buildCommonContext(globalContextManager, userContextManager, recorderApi)
   ) => {
     bufferApiCalls.add(() => addActionStrategy(action, commonContext))
   }
   let addErrorStrategy: StartRumResult['addError'] = (
     providedError,
-    commonContext = getCommonContext(globalContextManager, userContextManager)
+    commonContext = buildCommonContext(globalContextManager, userContextManager, recorderApi)
   ) => {
     bufferApiCalls.add(() => addErrorStrategy(providedError, commonContext))
   }

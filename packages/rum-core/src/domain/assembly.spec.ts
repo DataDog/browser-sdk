@@ -41,6 +41,7 @@ describe('rum assembly', () => {
     commonContext = {
       context: {},
       user: {},
+      hasReplay: undefined,
     }
     setupBuilder = setup()
       .withViewContexts({
@@ -364,6 +365,7 @@ describe('rum assembly', () => {
         savedCommonContext: {
           context: { replacedContext: 'a' },
           user: {},
+          hasReplay: undefined,
         },
       })
 
@@ -402,6 +404,7 @@ describe('rum assembly', () => {
         savedCommonContext: {
           context: {},
           user: { replacedAttribute: 'a' },
+          hasReplay: undefined,
         },
       })
 

@@ -66,7 +66,7 @@ export function startRumAssembly(
   viewContexts: ViewContexts,
   urlContexts: UrlContexts,
   actionContexts: ActionContexts,
-  getCommonContext: () => CommonContext,
+  buildCommonContext: () => CommonContext,
   reportError: (error: RawError) => void
 ) {
   const eventRateLimiters = {
@@ -95,7 +95,7 @@ export function startRumAssembly(
       // TODO: stop sending view updates when session is expired
       const session = sessionManager.findTrackedSession(rawRumEvent.type !== RumEventType.VIEW ? startTime : undefined)
       if (session && viewContext && urlContext) {
-        const commonContext = savedCommonContext || getCommonContext()
+        const commonContext = savedCommonContext || buildCommonContext()
         const actionId = actionContexts.findActionId(startTime)
 
         const rumContext: RumContext = {

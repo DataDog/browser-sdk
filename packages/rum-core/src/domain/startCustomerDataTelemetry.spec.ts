@@ -21,6 +21,7 @@ describe('customerDataTelemetry', () => {
   let fakeContext: Context
   let fakeContextBytesCount: number
   let lifeCycle: LifeCycle
+  const viewEvent = { type: RumEventType.VIEW } as RumEvent & Context
 
   function generateBatch({
     eventNumber,
@@ -37,7 +38,7 @@ describe('customerDataTelemetry', () => {
     fakeContext = context
 
     for (let index = 0; index < eventNumber; index++) {
-      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.VIEW } as RumEvent & Context)
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, viewEvent)
     }
     batchFlushObservable.notify({ bufferBytesCount: batchBytesCount, bufferMessagesCount: eventNumber })
   }
@@ -94,7 +95,7 @@ describe('customerDataTelemetry', () => {
   it('should collect customer data telemetry', () => {
     const { clock } = setupBuilder.build()
 
-    generateBatch({ eventNumber: 2, contextBytesCount: 2, batchBytesCount: 2 })
+    generateBatch({ eventNumber: 10, contextBytesCount: 10, batchBytesCount: 10 })
     generateBatch({ eventNumber: 1, contextBytesCount: 1, batchBytesCount: 1 })
     clock.tick(MEASURES_PERIOD_DURATION)
 
@@ -103,11 +104,11 @@ describe('customerDataTelemetry', () => {
       status: 'debug',
       message: 'Customer data measures',
       batchCount: 2,
-      batchBytesCount: { min: 1, max: 2, sum: 3 },
-      batchMessagesCount: { min: 1, max: 2, sum: 3 },
-      globalContextBytes: { min: 1, max: 2, sum: 5 },
-      userContextBytes: { min: 1, max: 2, sum: 5 },
-      featureFlagBytes: { min: 1, max: 2, sum: 5 },
+      batchBytesCount: { min: 1, max: 10, sum: 11 },
+      batchMessagesCount: { min: 1, max: 10, sum: 11 },
+      globalContextBytes: { min: 1, max: 10, sum: 101 },
+      userContextBytes: { min: 1, max: 10, sum: 101 },
+      featureFlagBytes: { min: 1, max: 10, sum: 101 },
     })
   })
 
@@ -126,20 +127,15 @@ describe('customerDataTelemetry', () => {
   it('should not collect contexts telemetry of a unfinished batches', () => {
     const { clock } = setupBuilder.build()
 
-    generateBatch({ eventNumber: 1, contextBytesCount: 1, batchBytesCount: 1 })
-    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.VIEW } as RumEvent & Context)
+    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, viewEvent)
+    batchFlushObservable.notify({ bufferBytesCount: 1, bufferMessagesCount: 1 })
+    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, viewEvent)
     clock.tick(MEASURES_PERIOD_DURATION)
 
-    expect(telemetryEvents[0].telemetry).toEqual(
-      jasmine.objectContaining({
-        batchCount: 1,
-        batchBytesCount: { min: 1, max: 1, sum: 1 },
-        batchMessagesCount: { min: 1, max: 1, sum: 1 },
-        globalContextBytes: { min: 1, max: 1, sum: 1 },
-        userContextBytes: { min: 1, max: 1, sum: 1 },
-        featureFlagBytes: { min: 1, max: 1, sum: 1 },
-      })
-    )
+    expect(telemetryEvents[0].telemetry.batchMessagesCount).toEqual(jasmine.objectContaining({ sum: 1 }))
+    expect(telemetryEvents[0].telemetry.globalContextBytes).toEqual(jasmine.objectContaining({ sum: 1 }))
+    expect(telemetryEvents[0].telemetry.userContextBytes).toEqual(jasmine.objectContaining({ sum: 1 }))
+    expect(telemetryEvents[0].telemetry.featureFlagBytes).toEqual(jasmine.objectContaining({ sum: 1 }))
   })
 
   it('should not collect customer data telemetry when telemetry disabled', () => {

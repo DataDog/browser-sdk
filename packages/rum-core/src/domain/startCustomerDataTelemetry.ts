@@ -50,9 +50,11 @@ export function startCustomerDataTelemetry(
   featureFlagContexts: FeatureFlagContexts,
   batchFlushObservable: Observable<BatchFlushEvent>
 ) {
-  const customerDataTelemetrySampleRate =
-    telemetry.enabled && performDraw(configuration.customerDataTelemetrySampleRate)
-  if (!customerDataTelemetrySampleRate || !isExperimentalFeatureEnabled('customer_data_telemetry')) {
+  const customerDataTelemetryEnabled =
+    telemetry.enabled &&
+    isExperimentalFeatureEnabled('customer_data_telemetry') &&
+    performDraw(configuration.customerDataTelemetrySampleRate)
+  if (!customerDataTelemetryEnabled) {
     return
   }
 
