@@ -145,6 +145,7 @@ export interface ResponseStubOptions {
   responseText?: string
   responseTextError?: Error
   body?: ReadableStream<Uint8Array>
+  bodyUsed?: boolean
 }
 function notYetImplemented(): never {
   throw new Error('not yet implemented')
@@ -154,7 +155,9 @@ export class ResponseStub implements Response {
   private _body: ReadableStream<Uint8Array> | undefined
 
   constructor(private options: Readonly<ResponseStubOptions>) {
-    if (this.options.body) {
+    if (this.options.bodyUsed) {
+      this._body = { locked: true } as any
+    } else if (this.options.body) {
       this._body = this.options.body
     } else if (this.options.responseTextError !== undefined) {
       this._body = new ReadableStream({

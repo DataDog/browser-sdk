@@ -218,6 +218,22 @@ describe('computeFetchResponseText', () => {
     )
   })
 
+  it('should return undefined if no response body', (done) => {
+    const response = new ResponseStub({})
+    computeFetchResponseText(response, CONFIGURATION, (responseText) => {
+      expect(responseText).toBeUndefined()
+      done()
+    })
+  })
+
+  it('should return undefined if body used by another instrumentation', (done) => {
+    const response = new ResponseStub({ bodyUsed: true })
+    computeFetchResponseText(response, CONFIGURATION, (responseText) => {
+      expect(responseText).toBeUndefined()
+      done()
+    })
+  })
+
   it('does not consume the response body', (done) => {
     const response = new ResponseStub({ responseText: 'foo' })
     computeFetchResponseText(response, CONFIGURATION, () => {
