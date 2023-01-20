@@ -10,7 +10,7 @@ import {
   PRIVACY_ATTR_VALUE_MASK,
   PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
 } from '../../constants'
-import { isAdoptedStyleSheetsSupported } from '../../../../core/test/specHelper'
+import { isAdoptedStyleSheetsSupported, isCSSStyleSheetConstructorSupported } from '../../../../core/test/specHelper'
 import {
   HTML,
   AST_ALLOW,
@@ -561,6 +561,9 @@ describe('serializeNodeWithId', () => {
     })
 
     it('serializes style node with dynamic CSS that can be fetched', () => {
+      if (!isCSSStyleSheetConstructorSupported()) {
+        pending('no CSSStyleSheet constructor')
+      }
       const linkNode = document.createElement('link')
       linkNode.setAttribute('rel', 'stylesheet')
       linkNode.setAttribute('href', 'https://datadoghq.com/some/style.css')
