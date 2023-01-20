@@ -27,7 +27,7 @@ describe('layout viewport', () => {
     // Those tests are triggering asynchronous scroll events that might impact tests run after them.
     // To avoid that, we wait for the next scroll event before continuing to the next one.
     if (shouldWaitForWindowScrollEvent) {
-      addEventListener(window, DOM_EVENT.SCROLL, done, { passive: true, once: true, capture: true })
+      addEventListener(window, DOM_EVENT.SCROLL, () => done(), { passive: true, once: true, capture: true })
     } else {
       done()
     }

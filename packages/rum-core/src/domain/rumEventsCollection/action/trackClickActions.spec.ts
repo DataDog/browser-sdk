@@ -442,7 +442,12 @@ describe('trackClickActions', () => {
     clickActionDuration: number = BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY
   ) {
     emulateClickWithoutActivity(clock, target)
-    clock.tick(clickActionDuration)
+    if (clickActionDuration < 0) {
+      // Do not use `.tick()` here because negative clock tick does not work since jasmine 4: https://github.com/jasmine/jasmine/pull/1948
+      clock.setDate(new Date(Date.now() + clickActionDuration))
+    } else {
+      clock.tick(clickActionDuration)
+    }
     // Since we don't collect dom mutations for this test, manually dispatch one
     domMutationObservable.notify()
   }
