@@ -10,7 +10,7 @@ import {
   PRIVACY_ATTR_VALUE_MASK,
   PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
 } from '../../constants'
-import { isAdoptedStyleSheetsSupported, isCSSStyleSheetConstructorSupported } from '../../../../core/test/specHelper'
+import { isAdoptedStyleSheetsSupported } from '../../../../core/test/specHelper'
 import {
   HTML,
   AST_ALLOW,
@@ -561,17 +561,18 @@ describe('serializeNodeWithId', () => {
     })
 
     it('serializes style node with dynamic CSS that can be fetched', () => {
-      if (!isCSSStyleSheetConstructorSupported()) {
-        pending('no CSSStyleSheet constructor')
-      }
       const linkNode = document.createElement('link')
       linkNode.setAttribute('rel', 'stylesheet')
       linkNode.setAttribute('href', 'https://datadoghq.com/some/style.css')
       isolatedDom.document.head.appendChild(linkNode)
-      const styleSheet = new CSSStyleSheet()
-      styleSheet.insertRule('body { width: 100%; }')
-      spyOnProperty(styleSheet, 'href', 'get').and.returnValue('https://datadoghq.com/some/style.css')
-      spyOnProperty(isolatedDom.document, 'styleSheets', 'get').and.returnValue([styleSheet])
+      Object.defineProperty(isolatedDom.document, 'styleSheets', {
+        value: [
+          {
+            href: 'https://datadoghq.com/some/style.css',
+            cssRules: [{ cssText: 'body { width: 100%; }' }],
+          },
+        ],
+      })
 
       expect(serializeNodeWithId(linkNode, DEFAULT_OPTIONS)).toEqual({
         type: NodeType.Element,

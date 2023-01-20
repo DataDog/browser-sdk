@@ -506,12 +506,3 @@ export function interceptRequests() {
 export function isAdoptedStyleSheetsSupported() {
   return Boolean((document as any).adoptedStyleSheets)
 }
-
-export function isCSSStyleSheetConstructorSupported() {
-  try {
-    new CSSStyleSheet()
-  } catch (err) {
-    return false
-  }
-  return true
-}
