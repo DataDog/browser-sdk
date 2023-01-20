@@ -40,6 +40,7 @@ type CurrentBatchMeasures = {
 
 let currentPeriodMeasures: CurrentPeriodMeasures
 let currentBatchMeasures: CurrentBatchMeasures
+let batchHasRumEvent: boolean
 
 export function startCustomerDataTelemetry(
   configuration: RumConfiguration,
@@ -64,24 +65,34 @@ export function startCustomerDataTelemetry(
   // We measure the data of every view updates even if there could only be one per batch due to the upsert
   // It means that contexts bytes count sums can be higher than it really is
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (event: RumEvent & Context) => {
-    if (!isEmptyObject(globalContextManager.get())) {
-      updateMeasure(currentBatchMeasures.globalContextBytes, globalContextManager.getBytesCount())
-    }
-    if (!isEmptyObject(userContextManager.get())) {
-      updateMeasure(currentBatchMeasures.userContextBytes, userContextManager.getBytesCount())
-    }
+    batchHasRumEvent = true
+    updateMeasure(
+      currentBatchMeasures.globalContextBytes,
+      !isEmptyObject(globalContextManager.get()) ? globalContextManager.getBytesCount() : 0
+    )
+
+    updateMeasure(
+      currentBatchMeasures.userContextBytes,
+      !isEmptyObject(userContextManager.get()) ? userContextManager.getBytesCount() : 0
+    )
 
     const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations()
-    if (
+    const hasFeatureFlagContext =
       includes([RumEventType.VIEW, RumEventType.ERROR], event.type) &&
       featureFlagContext &&
       !isEmptyObject(featureFlagContext)
-    ) {
-      updateMeasure(currentBatchMeasures.featureFlagBytes, featureFlagContexts.getFeatureFlagBytesCount())
-    }
+    updateMeasure(
+      currentBatchMeasures.featureFlagBytes,
+      hasFeatureFlagContext ? featureFlagContexts.getFeatureFlagBytesCount() : 0
+    )
   })
 
   batchFlushObservable.subscribe(({ bufferBytesCount, bufferMessagesCount }) => {
+    // Don't measure batch that only contains telemetry events to avoid batch sending loop
+    // It could happen because after each batch we are adding a customer data measures telemetry event to the next one
+    if (!batchHasRumEvent) {
+      return
+    }
     currentPeriodMeasures.batchCount += 1
     updateMeasure(currentPeriodMeasures.batchBytesCount, bufferBytesCount)
     updateMeasure(currentPeriodMeasures.batchMessagesCount, bufferMessagesCount)
@@ -98,16 +109,8 @@ function sendCurrentPeriodMeasures() {
   if (currentPeriodMeasures.batchCount === 0) {
     return
   }
-  const { batchCount, batchBytesCount, batchMessagesCount, globalContextBytes, userContextBytes, featureFlagBytes } =
-    currentPeriodMeasures
-  addTelemetryDebug('Customer data measures', {
-    batchCount,
-    batchBytesCount,
-    batchMessagesCount,
-    globalContextBytes: globalContextBytes.sum ? globalContextBytes : undefined,
-    userContextBytes: userContextBytes.sum ? userContextBytes : undefined,
-    featureFlagBytes: featureFlagBytes.sum ? featureFlagBytes : undefined,
-  })
+
+  addTelemetryDebug('Customer data measures', currentPeriodMeasures)
   initCurrentPeriodMeasures()
 }
 
@@ -139,6 +142,7 @@ function initCurrentPeriodMeasures() {
 }
 
 function initCurrentBatchMeasures() {
+  batchHasRumEvent = false
   currentBatchMeasures = {
     globalContextBytes: createMeasure(),
     userContextBytes: createMeasure(),

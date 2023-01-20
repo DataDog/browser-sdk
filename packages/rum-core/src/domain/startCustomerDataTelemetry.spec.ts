@@ -30,6 +30,7 @@ describe('customerDataTelemetry', () => {
     context = fakeContext,
   }: {
     eventNumber: number
+    eventType?: RumEventType | 'Telemetry'
     batchBytesCount?: number
     contextBytesCount?: number
     context?: Context
@@ -112,16 +113,30 @@ describe('customerDataTelemetry', () => {
     })
   })
 
-  it('should not collect empty contexts telemetry', () => {
+  it('should collect empty contexts telemetry', () => {
     const { clock } = setupBuilder.build()
 
     generateBatch({ eventNumber: 1, context: {} })
 
     clock.tick(MEASURES_PERIOD_DURATION)
 
-    expect(telemetryEvents[0].telemetry.globalContextBytes).not.toBeDefined()
-    expect(telemetryEvents[0].telemetry.userContextBytes).not.toBeDefined()
-    expect(telemetryEvents[0].telemetry.featureFlagBytes).not.toBeDefined()
+    expect(telemetryEvents[0].telemetry).toEqual(
+      jasmine.objectContaining({
+        globalContextBytes: { min: 0, max: 0, sum: 0 },
+        userContextBytes: { min: 0, max: 0, sum: 0 },
+        featureFlagBytes: { min: 0, max: 0, sum: 0 },
+      })
+    )
+  })
+
+  it('should collect customer data only if batches contains rum events, no just telemetry', () => {
+    const { clock } = setupBuilder.build()
+
+    batchFlushObservable.notify({ bufferBytesCount: 1, bufferMessagesCount: 1 })
+
+    clock.tick(MEASURES_PERIOD_DURATION)
+
+    expect(telemetryEvents.length).toEqual(0)
   })
 
   it('should not collect contexts telemetry of a unfinished batches', () => {
