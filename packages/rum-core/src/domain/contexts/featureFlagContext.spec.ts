@@ -10,10 +10,12 @@ import { startFeatureFlagContexts } from './featureFlagContext'
 describe('featureFlagContexts', () => {
   let setupBuilder: TestSetupBuilder
   let featureFlagContexts: FeatureFlagContexts
+  let computeBytesCountStub: jasmine.Spy
 
   beforeEach(() => {
     setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
-      featureFlagContexts = startFeatureFlagContexts(lifeCycle)
+      computeBytesCountStub = jasmine.createSpy('computeBytesCountStub').and.returnValue(1)
+      featureFlagContexts = startFeatureFlagContexts(lifeCycle, computeBytesCountStub)
     })
   })
 
@@ -142,6 +144,31 @@ describe('featureFlagContexts', () => {
 
       expect(featureFlagContexts.findFeatureFlagEvaluations(5 as RelativeTime)).toEqual({ feature: 'one' })
       expect(featureFlagContexts.findFeatureFlagEvaluations(15 as RelativeTime)).toEqual({ feature: 'two' })
+    })
+  })
+
+  describe('getFeatureFlagBytesCount', () => {
+    it('should compute the bytes count only if the context has been updated', () => {
+      updateExperimentalFeatures(['feature_flags'])
+      const { lifeCycle } = setupBuilder.withFakeClock().build()
+
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+        startClocks: relativeToClocks(0 as RelativeTime),
+      } as ViewCreatedEvent)
+      featureFlagContexts.addFeatureFlagEvaluation('feature1', 'foo')
+      featureFlagContexts.getFeatureFlagBytesCount()
+      featureFlagContexts.addFeatureFlagEvaluation('feature2', 'bar')
+      featureFlagContexts.getFeatureFlagBytesCount()
+
+      // feature flags are cleared when a view is created
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+        startClocks: relativeToClocks(10 as RelativeTime),
+      } as ViewCreatedEvent)
+      featureFlagContexts.getFeatureFlagBytesCount()
+      const bytesCount = featureFlagContexts.getFeatureFlagBytesCount()
+
+      expect(bytesCount).toEqual(1)
+      expect(computeBytesCountStub).toHaveBeenCalledTimes(3)
     })
   })
 })

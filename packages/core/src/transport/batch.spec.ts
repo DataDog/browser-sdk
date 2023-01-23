@@ -3,6 +3,7 @@ import type { PageExitEvent } from '../browser/pageExitObservable'
 import { PageExitReason } from '../browser/pageExitObservable'
 import { Observable } from '../tools/observable'
 import { noop } from '../tools/utils'
+import type { BatchFlushEvent } from './batch'
 import { Batch } from './batch'
 import type { HttpRequest } from './httpRequest'
 
@@ -15,6 +16,7 @@ describe('batch', () => {
   let transport: HttpRequest
   let sendSpy: jasmine.Spy<HttpRequest['send']>
   let pageExitObservable: Observable<PageExitEvent>
+  let flushNotifySpy: jasmine.Spy<() => BatchFlushEvent>
 
   beforeEach(() => {
     transport = { send: noop } as unknown as HttpRequest
@@ -28,6 +30,7 @@ describe('batch', () => {
       FLUSH_TIMEOUT,
       pageExitObservable
     )
+    flushNotifySpy = spyOn(batch.flushObservable, 'notify')
   })
 
   it('should add context to message', () => {
@@ -49,14 +52,6 @@ describe('batch', () => {
     batch.flush()
 
     expect(transport.send).not.toHaveBeenCalled()
-  })
-
-  it('should count the bytes of a message composed of 1 byte characters', () => {
-    expect(batch.computeBytesCount('1234')).toEqual(4)
-  })
-
-  it('should count the bytes of a message composed of multiple bytes characters', () => {
-    expect(batch.computeBytesCount('🪐')).toEqual(4)
   })
 
   it('should flush when the message count limit is reached', () => {
@@ -188,5 +183,11 @@ describe('batch', () => {
     expect(sendSpy).toHaveBeenCalledTimes(1)
     batch.flush()
     expect(sendSpy).toHaveBeenCalledTimes(2)
+  })
+
+  it('should notify when the batch is flushed', () => {
+    batch.add({})
+    batch.flush()
+    expect(flushNotifySpy).toHaveBeenCalledOnceWith({ bufferBytesCount: 2, bufferMessagesCount: 1 })
   })
 })
