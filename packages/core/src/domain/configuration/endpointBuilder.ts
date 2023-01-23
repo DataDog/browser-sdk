@@ -3,7 +3,7 @@ import { timeStampNow } from '../../tools/timeUtils'
 import { normalizeUrl } from '../../tools/urlPolyfill'
 import { generateUUID } from '../../tools/utils'
 import type { InitConfiguration } from './configuration'
-import { INTAKE_SITE_US1 } from './intakeSites'
+import { INTAKE_SITE_US1, INTAKE_SITE_AP1 } from './intakeSites'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
@@ -72,6 +72,12 @@ function buildEndpointHost(initConfiguration: InitConfiguration, endpointType: E
 
   if (internalAnalyticsSubdomain && site === INTAKE_SITE_US1) {
     return `${internalAnalyticsSubdomain}.${INTAKE_SITE_US1}`
+  }
+
+  if (site === INTAKE_SITE_AP1) {
+    // TODO: intake domains will be changed in a future major release. This hardcoded case should be
+    // removed and be dynamically computed following the same pattern as other sites.
+    return 'ap1.browser-intake-datadoghq.com'
   }
 
   const domainParts = site.split('.')

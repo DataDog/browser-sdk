@@ -63,17 +63,26 @@ describe('transportConfiguration', () => {
 
   describe('isIntakeUrl', () => {
     ;[
-      { site: 'datadoghq.eu', intakeDomain: 'browser-intake-datadoghq.eu' },
-      { site: 'datadoghq.com', intakeDomain: 'browser-intake-datadoghq.com' },
-      { site: 'us3.datadoghq.com', intakeDomain: 'browser-intake-us3-datadoghq.com' },
-      { site: 'us5.datadoghq.com', intakeDomain: 'browser-intake-us5-datadoghq.com' },
-      { site: 'ddog-gov.com', intakeDomain: 'browser-intake-ddog-gov.com' },
-    ].forEach(({ site, intakeDomain }) => {
+      { site: 'datadoghq.eu', intakeDomain: 'browser-intake-datadoghq.eu', useEndpointTypeSubDomain: true },
+      { site: 'datadoghq.com', intakeDomain: 'browser-intake-datadoghq.com', useEndpointTypeSubDomain: true },
+      { site: 'us3.datadoghq.com', intakeDomain: 'browser-intake-us3-datadoghq.com', useEndpointTypeSubDomain: true },
+      { site: 'us5.datadoghq.com', intakeDomain: 'browser-intake-us5-datadoghq.com', useEndpointTypeSubDomain: true },
+      { site: 'ap1.datadoghq.com', intakeDomain: 'ap1.browser-intake-datadoghq.com' },
+      { site: 'ddog-gov.com', intakeDomain: 'browser-intake-ddog-gov.com', useEndpointTypeSubDomain: true },
+    ].forEach(({ site, intakeDomain, useEndpointTypeSubDomain }) => {
       it(`should detect intake request for ${site} site`, () => {
         const configuration = computeTransportConfiguration({ clientToken, site })
-        expect(configuration.isIntakeUrl(`https://rum.${intakeDomain}/api/v2/rum?xxx`)).toBe(true)
-        expect(configuration.isIntakeUrl(`https://logs.${intakeDomain}/api/v2/logs?xxx`)).toBe(true)
-        expect(configuration.isIntakeUrl(`https://session-replay.${intakeDomain}/api/v2/replay?xxx`)).toBe(true)
+        expect(
+          configuration.isIntakeUrl(`https://${useEndpointTypeSubDomain ? 'rum.' : ''}${intakeDomain}/api/v2/rum?xxx`)
+        ).toBe(true)
+        expect(
+          configuration.isIntakeUrl(`https://${useEndpointTypeSubDomain ? 'logs.' : ''}${intakeDomain}/api/v2/logs?xxx`)
+        ).toBe(true)
+        expect(
+          configuration.isIntakeUrl(
+            `https://${useEndpointTypeSubDomain ? 'session-replay.' : ''}${intakeDomain}/api/v2/replay?xxx`
+          )
+        ).toBe(true)
       })
     })
 
@@ -112,10 +121,11 @@ describe('transportConfiguration', () => {
       expect(configuration.isIntakeUrl('https://www.proxy.com/foo')).toBe(false)
     })
     ;[
-      { site: 'datadoghq.eu', intakeDomain: 'browser-intake-datadoghq.eu' },
-      { site: 'us3.datadoghq.com', intakeDomain: 'browser-intake-us3-datadoghq.com' },
-      { site: 'us5.datadoghq.com', intakeDomain: 'browser-intake-us5-datadoghq.com' },
-    ].forEach(({ site, intakeDomain }) => {
+      { site: 'datadoghq.eu', intakeDomain: 'browser-intake-datadoghq.eu', useEndpointTypeSubDomain: true },
+      { site: 'us3.datadoghq.com', intakeDomain: 'browser-intake-us3-datadoghq.com', useEndpointTypeSubDomain: true },
+      { site: 'us5.datadoghq.com', intakeDomain: 'browser-intake-us5-datadoghq.com', useEndpointTypeSubDomain: true },
+      { site: 'ap1.datadoghq.com', intakeDomain: 'ap1.browser-intake-datadoghq.com' },
+    ].forEach(({ site, intakeDomain, useEndpointTypeSubDomain }) => {
       it(`should detect replica intake request for site ${site}`, () => {
         const configuration = computeTransportConfiguration({
           clientToken,
@@ -124,9 +134,17 @@ describe('transportConfiguration', () => {
           internalAnalyticsSubdomain,
         })
 
-        expect(configuration.isIntakeUrl(`https://rum.${intakeDomain}/api/v2/rum?xxx`)).toBe(true)
-        expect(configuration.isIntakeUrl(`https://logs.${intakeDomain}/api/v2/logs?xxx`)).toBe(true)
-        expect(configuration.isIntakeUrl(`https://session-replay.${intakeDomain}/api/v2/replay?xxx`)).toBe(true)
+        expect(
+          configuration.isIntakeUrl(`https://${useEndpointTypeSubDomain ? 'rum.' : ''}${intakeDomain}/api/v2/rum?xxx`)
+        ).toBe(true)
+        expect(
+          configuration.isIntakeUrl(`https://${useEndpointTypeSubDomain ? 'logs.' : ''}${intakeDomain}/api/v2/logs?xxx`)
+        ).toBe(true)
+        expect(
+          configuration.isIntakeUrl(
+            `https://${useEndpointTypeSubDomain ? 'session-replay.' : ''}${intakeDomain}/api/v2/replay?xxx`
+          )
+        ).toBe(true)
 
         expect(configuration.isIntakeUrl(`https://${internalAnalyticsSubdomain}.datadoghq.com/api/v2/rum?xxx`)).toBe(
           true
