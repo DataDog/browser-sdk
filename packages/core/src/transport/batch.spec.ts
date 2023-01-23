@@ -3,7 +3,6 @@ import type { PageExitEvent } from '../browser/pageExitObservable'
 import { PageExitReason } from '../browser/pageExitObservable'
 import { Observable } from '../tools/observable'
 import { noop } from '../tools/utils'
-import type { BatchFlushEvent } from './batch'
 import { Batch } from './batch'
 import type { HttpRequest } from './httpRequest'
 
@@ -16,7 +15,7 @@ describe('batch', () => {
   let transport: HttpRequest
   let sendSpy: jasmine.Spy<HttpRequest['send']>
   let pageExitObservable: Observable<PageExitEvent>
-  let flushNotifySpy: jasmine.Spy<() => BatchFlushEvent>
+  let flushNotifySpy: jasmine.Spy
 
   beforeEach(() => {
     transport = { send: noop } as unknown as HttpRequest
