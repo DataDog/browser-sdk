@@ -98,6 +98,16 @@ describe('serializeNodeWithId', () => {
   })
 
   describe('elements serialization', () => {
+    let isolatedDom: IsolatedDom
+
+    beforeEach(() => {
+      isolatedDom = createIsolatedDom()
+    })
+
+    afterEach(() => {
+      isolatedDom.clear()
+    })
+
     it('serializes a div', () => {
       expect(serializeNodeWithId(document.createElement('div'), DEFAULT_OPTIONS)).toEqual({
         type: NodeType.Element,
@@ -518,6 +528,64 @@ describe('serializeNodeWithId', () => {
         id: jasmine.any(Number) as unknown as number,
       })
       expect(addShadowRootSpy).not.toHaveBeenCalled()
+    })
+
+    it('serializes style node with local CSS', () => {
+      const styleNode = document.createElement('style')
+      isolatedDom.document.head.appendChild(styleNode)
+      const styleSheet = styleNode.sheet
+      styleSheet?.insertRule('body { width: 100%; }')
+      expect(serializeNodeWithId(styleNode, DEFAULT_OPTIONS)).toEqual({
+        type: NodeType.Element,
+        tagName: 'style',
+        id: jasmine.any(Number) as unknown as number,
+        isSVG: undefined,
+        attributes: { _cssText: 'body { width: 100%; }' },
+        childNodes: [],
+      })
+    })
+
+    it('serializes style node with dynamic CSS that cannot be fetched', () => {
+      const linkNode = document.createElement('link')
+      linkNode.setAttribute('rel', 'stylesheet')
+      linkNode.setAttribute('href', 'https://datadoghq.com/some/style.css')
+      isolatedDom.document.head.appendChild(linkNode)
+      expect(serializeNodeWithId(linkNode, DEFAULT_OPTIONS)).toEqual({
+        type: NodeType.Element,
+        tagName: 'link',
+        id: jasmine.any(Number) as unknown as number,
+        isSVG: undefined,
+        attributes: { rel: 'stylesheet', href: 'https://datadoghq.com/some/style.css' },
+        childNodes: [],
+      })
+    })
+
+    it('serializes style node with dynamic CSS that can be fetched', () => {
+      const linkNode = document.createElement('link')
+      linkNode.setAttribute('rel', 'stylesheet')
+      linkNode.setAttribute('href', 'https://datadoghq.com/some/style.css')
+      isolatedDom.document.head.appendChild(linkNode)
+      Object.defineProperty(isolatedDom.document, 'styleSheets', {
+        value: [
+          {
+            href: 'https://datadoghq.com/some/style.css',
+            cssRules: [{ cssText: 'body { width: 100%; }' }],
+          },
+        ],
+      })
+
+      expect(serializeNodeWithId(linkNode, DEFAULT_OPTIONS)).toEqual({
+        type: NodeType.Element,
+        tagName: 'link',
+        id: jasmine.any(Number) as unknown as number,
+        isSVG: undefined,
+        attributes: {
+          _cssText: 'body { width: 100%; }',
+          rel: 'stylesheet',
+          href: 'https://datadoghq.com/some/style.css',
+        },
+        childNodes: [],
+      })
     })
   })
 
