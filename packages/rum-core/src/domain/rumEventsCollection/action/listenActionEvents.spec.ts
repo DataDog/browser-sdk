@@ -180,8 +180,15 @@ describe('listenActionEvents', () => {
     it('click that triggers an input event slightly after the click should report an input user activity', () => {
       emulateClick()
       emulateInputEvent()
-      clock.tick(1)
+      clock.tick(1) // run immediate timeouts
       expect(hasInputUserActivity()).toBe(true)
+    })
+
+    it('input events that precede clicks should not be taken into account', () => {
+      emulateInputEvent()
+      emulateClick()
+      clock.tick(1) // run immediate timeouts
+      expect(hasInputUserActivity()).toBe(false)
     })
 
     it('click and type should report an input user activity', () => {

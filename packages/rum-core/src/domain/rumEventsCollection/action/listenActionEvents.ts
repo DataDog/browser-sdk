@@ -21,6 +21,7 @@ export function listenActionEvents<ClickContext>({ onPointerDown, onClick }: Act
       (event) => {
         hasSelectionChanged = false
         selectionEmptyAtPointerDown = isSelectionEmpty()
+        hasInputChanged = false
         if (isMouseEventOnElement(event)) {
           clickContext = onPointerDown(event)
         }
