@@ -1,3 +1,4 @@
+import type { BackgroundToDevtoolsMessage } from '../common/types'
 import { EventListeners } from '../common/eventListeners'
 import { createLogger } from '../common/logger'
 

@@ -53,7 +53,7 @@ onDevtoolsLastDisconnection.subscribe(() => {
 // devtools panel connection.
 chrome.runtime.onMessage.addListener((message, sender) => {
   if (sender.tab && sender.tab.id) {
-    sendMessageToDevtools(sender.tab.id, message)
+    sendMessageToDevtools(sender.tab.id, { type: 'sdk-message', message })
   }
 })
 

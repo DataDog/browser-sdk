@@ -1,7 +1,7 @@
 import type { BrowserRecord } from '../../../../packages/rum/src/types'
 import { IncrementalSource, RecordType } from '../../../../packages/rum/src/types'
 import { createLogger } from '../../common/logger'
-import { listenSdkMessages } from '../backgroundScriptConnection'
+import { listenBackgroundMessages } from '../backgroundScriptConnection'
 import type { MessageBridgeUp } from './types'
 import { MessageBridgeDownType } from './types'
 
@@ -50,20 +50,25 @@ export function startSessionReplayPlayer(
     }
   })
 
-  const stopListeningToSdkMessages = listenSdkMessages((message) => {
-    if (message.type === 'record') {
-      const record = message.payload.record
-      if (status === 'loading') {
-        bufferedRecords.add(record)
-      } else if (status === 'waiting-for-full-snapshot') {
-        if (isFullSnapshotStart(record)) {
-          status = 'ready'
-          onStatusChange(status)
-          messageBridge.sendRecord(record)
-        }
-      } else {
+  const stopListeningToSdkMessages = listenBackgroundMessages((backgroundMessage) => {
+    if (backgroundMessage.type !== 'sdk-message') {
+      return
+    }
+    const sdkMessage = backgroundMessage.message
+    if (sdkMessage.type !== 'record') {
+      return
+    }
+    const record = sdkMessage.payload.record
+    if (status === 'loading') {
+      bufferedRecords.add(record)
+    } else if (status === 'waiting-for-full-snapshot') {
+      if (isFullSnapshotStart(record)) {
+        status = 'ready'
+        onStatusChange(status)
         messageBridge.sendRecord(record)
       }
+    } else {
+      messageBridge.sendRecord(record)
     }
   })
 

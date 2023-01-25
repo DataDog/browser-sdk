@@ -1,37 +1,13 @@
+import type { BackgroundToDevtoolsMessage } from '../common/types'
 import { isDisconnectError } from '../common/isDisconnectError'
-import type { TelemetryEvent } from '../../../packages/core/src/domain/telemetry'
-import type { LogsEvent } from '../../../packages/logs/src/logsEvent.types'
-import type { RumEvent } from '../../../packages/rum-core/src/rumEvent.types'
-import type { BrowserRecord, BrowserSegmentMetadata } from '../../../packages/rum/src/types'
 import { createLogger } from '../common/logger'
 import { notifyDisconnectEvent } from './disconnectEvent'
 
 const logger = createLogger('backgroundScriptConnection')
 
-type SdkMessage =
-  | {
-      type: 'logs'
-      payload: LogsEvent
-    }
-  | {
-      type: 'rum'
-      payload: RumEvent
-    }
-  | {
-      type: 'telemetry'
-      payload: TelemetryEvent
-    }
-  | {
-      type: 'record'
-      payload: {
-        record: BrowserRecord
-        segment: BrowserSegmentMetadata
-      }
-    }
-
 let backgroundScriptConnection: chrome.runtime.Port | undefined
 
-export function listenSdkMessages(callback: (message: SdkMessage) => void) {
+export function listenBackgroundMessages(callback: (message: BackgroundToDevtoolsMessage) => void) {
   if (!backgroundScriptConnection) {
     backgroundScriptConnection = createBackgroundScriptConnection()
     if (!backgroundScriptConnection) {
