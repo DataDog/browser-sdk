@@ -23,7 +23,7 @@ export function startLogsAssembly(
   sessionManager: LogsSessionManager,
   configuration: LogsConfiguration,
   lifeCycle: LifeCycle,
-  getCommonContext: () => CommonContext,
+  buildCommonContext: () => CommonContext,
   mainLogger: Logger, // Todo: [RUMF-1230] Remove this parameter in the next major release
   reportError: (error: RawError) => void
 ) {
@@ -43,7 +43,7 @@ export function startLogsAssembly(
         return
       }
 
-      const commonContext = savedCommonContext || getCommonContext()
+      const commonContext = savedCommonContext || buildCommonContext()
       const log = combine(
         {
           service: configuration.service,

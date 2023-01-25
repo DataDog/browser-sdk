@@ -1,5 +1,5 @@
-import type { Context, TimeStamp } from '@datadog/browser-core'
-import { assign, combine, Observable, noop } from '@datadog/browser-core'
+import type { Context, ContextManager, TimeStamp } from '@datadog/browser-core'
+import { createContextManager, assign, combine, Observable, noop } from '@datadog/browser-core'
 import type { Clock } from '../../core/test/specHelper'
 import { SPEC_ENDPOINTS, mockClock, buildLocation } from '../../core/test/specHelper'
 import type { RecorderApi } from '../src/boot/rumPublicApi'
@@ -56,6 +56,8 @@ export interface BuildContext {
   pageStateHistory: PageStateHistory
   featureFlagContexts: FeatureFlagContexts
   urlContexts: UrlContexts
+  globalContextManager: ContextManager
+  userContextManager: ContextManager
 }
 
 export interface TestIO {
@@ -90,6 +92,7 @@ export function setup(): TestSetupBuilder {
   let featureFlagContexts: FeatureFlagContexts = {
     findFeatureFlagEvaluations: () => undefined,
     addFeatureFlagEvaluation: noop,
+    getFeatureFlagBytesCount: () => 0,
   }
   let actionContexts: ActionContexts = {
     findActionId: noop as () => undefined,
@@ -99,6 +102,8 @@ export function setup(): TestSetupBuilder {
     selectInForegroundPeriodsFor: () => undefined,
     stop: noop,
   }
+  const globalContextManager = createContextManager()
+  const userContextManager = createContextManager()
   const pageStateHistory: PageStateHistory = {
     findAll: () => undefined,
     stop: noop,
@@ -183,6 +188,8 @@ export function setup(): TestSetupBuilder {
           applicationId: FAKE_APP_ID,
           configuration,
           location: fakeLocation as Location,
+          globalContextManager,
+          userContextManager,
         })
         if (result && result.stop) {
           cleanupTasks.push(result.stop)

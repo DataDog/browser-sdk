@@ -10,12 +10,13 @@ import {
   Observable,
   trackRuntimeError,
 } from '@datadog/browser-core'
-import type { CommonContext, RawRumErrorEvent } from '../../../rawRumEvent.types'
+import type { RawRumErrorEvent } from '../../../rawRumEvent.types'
 import { RumEventType } from '../../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { ForegroundContexts } from '../../contexts/foregroundContexts'
 import type { FeatureFlagContexts } from '../../contexts/featureFlagContext'
+import type { CommonContext } from '../../contexts/commonContext'
 import { trackConsoleError } from './trackConsoleError'
 import { trackReportError } from './trackReportError'
 

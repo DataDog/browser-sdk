@@ -11,7 +11,7 @@ import { createRawRumEvent } from '../../test/fixtures'
 import type { TestSetupBuilder } from '../../test/specHelper'
 import { mockCiVisibilityWindowValues, cleanupCiVisibilityWindowValues, setup } from '../../test/specHelper'
 import type { RumEventDomainContext } from '../domainContext.types'
-import type { CommonContext, RawRumActionEvent, RawRumErrorEvent, RawRumEvent } from '../rawRumEvent.types'
+import type { RawRumActionEvent, RawRumErrorEvent, RawRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumActionEvent, RumErrorEvent, RumEvent } from '../rumEvent.types'
 import { initEventBridgeStub, deleteEventBridgeStub } from '../../../core/test/specHelper'
@@ -22,6 +22,7 @@ import { LifeCycleEventType } from './lifeCycle'
 import { RumSessionPlan } from './rumSessionManager'
 import type { RumConfiguration } from './configuration'
 import type { ViewContext } from './contexts/viewContexts'
+import type { CommonContext } from './contexts/commonContext'
 
 describe('rum assembly', () => {
   let setupBuilder: TestSetupBuilder
@@ -40,6 +41,7 @@ describe('rum assembly', () => {
     commonContext = {
       context: {},
       user: {},
+      hasReplay: undefined,
     }
     setupBuilder = setup()
       .withViewContexts({
@@ -363,6 +365,7 @@ describe('rum assembly', () => {
         savedCommonContext: {
           context: { replacedContext: 'a' },
           user: {},
+          hasReplay: undefined,
         },
       })
 
@@ -401,6 +404,7 @@ describe('rum assembly', () => {
         savedCommonContext: {
           context: {},
           user: { replacedAttribute: 'a' },
+          hasReplay: undefined,
         },
       })
 

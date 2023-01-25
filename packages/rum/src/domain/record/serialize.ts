@@ -431,8 +431,6 @@ function getAttributesForPrivacyLevel(
     const stylesheet = Array.from(doc.styleSheets).find((s) => s.href === (element as HTMLLinkElement).href)
     const cssText = getCssRulesString(stylesheet as CSSStyleSheet)
     if (cssText && stylesheet) {
-      delete safeAttrs.rel
-      delete safeAttrs.href
       safeAttrs._cssText = cssText
     }
   }

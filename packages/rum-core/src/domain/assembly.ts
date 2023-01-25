@@ -12,7 +12,6 @@ import {
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type {
-  CommonContext,
   RawRumErrorEvent,
   RawRumEvent,
   RawRumLongTaskEvent,
@@ -31,6 +30,7 @@ import type { UrlContexts } from './contexts/urlContexts'
 import type { RumConfiguration } from './configuration'
 import type { ActionContexts } from './rumEventsCollection/action/actionCollection'
 import { getDisplayContext } from './contexts/displayContext'
+import type { CommonContext } from './contexts/commonContext'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
@@ -66,7 +66,7 @@ export function startRumAssembly(
   viewContexts: ViewContexts,
   urlContexts: UrlContexts,
   actionContexts: ActionContexts,
-  getCommonContext: () => CommonContext,
+  buildCommonContext: () => CommonContext,
   reportError: (error: RawError) => void
 ) {
   const eventRateLimiters = {
@@ -95,7 +95,7 @@ export function startRumAssembly(
       // TODO: stop sending view updates when session is expired
       const session = sessionManager.findTrackedSession(rawRumEvent.type !== RumEventType.VIEW ? startTime : undefined)
       if (session && viewContext && urlContext) {
-        const commonContext = savedCommonContext || getCommonContext()
+        const commonContext = savedCommonContext || buildCommonContext()
         const actionId = actionContexts.findActionId(startTime)
 
         const rumContext: RumContext = {

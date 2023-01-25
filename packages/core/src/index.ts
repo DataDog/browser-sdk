@@ -47,6 +47,7 @@ export {
   Payload,
   createHttpRequest,
   Batch,
+  BatchFlushEvent,
   canUseEventBridge,
   getEventBridge,
   startBatchWithReplica,
@@ -81,7 +82,7 @@ export * from './browser/addEventListener'
 export { initConsoleObservable, ConsoleLog } from './domain/console/consoleObservable'
 export { BoundedBuffer } from './tools/boundedBuffer'
 export { catchUserErrors } from './tools/catchUserErrors'
-export { createContextManager } from './tools/contextManager'
+export { createContextManager, ContextManager } from './tools/contextManager'
 export { limitModification } from './tools/limitModification'
 export { ContextHistory, ContextHistoryEntry, CLEAR_OLD_CONTEXTS_INTERVAL } from './tools/contextHistory'
 export { readBytesFromStream } from './tools/readBytesFromStream'
