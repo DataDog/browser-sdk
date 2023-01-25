@@ -102,6 +102,7 @@ format:
   extends:
     - .base-configuration
     - .test-allowed-branches
+  interruptible: true
   script:
     - yarn
     - yarn format
@@ -110,6 +111,7 @@ woke:
   extends:
     - .base-configuration
     - .test-allowed-branches
+  interruptible: true
   script:
     - yarn woke
 
@@ -117,6 +119,7 @@ typecheck:
   extends:
     - .base-configuration
     - .test-allowed-branches
+  interruptible: true
   script:
     - yarn
     - yarn typecheck
@@ -125,6 +128,7 @@ build-and-lint:
   extends:
     - .base-configuration
     - .test-allowed-branches
+  interruptible: true
   script:
     - yarn
     - yarn build
@@ -136,6 +140,7 @@ build-bundle:
   extends:
     - .base-configuration
     - .test-allowed-branches
+  interruptible: true
   script:
     - yarn
     - yarn build:bundle
@@ -144,6 +149,7 @@ compatibility:
   extends:
     - .base-configuration
     - .test-allowed-branches
+  interruptible: true
   script:
     - yarn
     - yarn test:compat:tsc
@@ -153,6 +159,7 @@ unit:
   extends:
     - .base-configuration
     - .test-allowed-branches
+  interruptible: true
   artifacts:
     reports:
       junit: test-report/unit/*.xml
@@ -167,6 +174,7 @@ e2e:
   extends:
     - .base-configuration
     - .test-allowed-branches
+  interruptible: true
   artifacts:
     when: always
     paths: ['test-report/e2e/specs.log']
@@ -182,6 +190,7 @@ check-licenses:
   extends:
     - .base-configuration
     - .test-allowed-branches
+  interruptible: true
   script:
     - yarn
     - node --no-warnings scripts/check-licenses.js
@@ -190,6 +199,7 @@ check-release:
   extends:
     - .base-configuration
     - .tags
+  interruptible: true
   script:
     - yarn
     - BUILD_MODE=release yarn build
@@ -200,6 +210,7 @@ unit-bs:
   extends:
     - .base-configuration
     - .bs-allowed-branches
+  interruptible: true
   resource_group: browserstack
   artifacts:
     reports:
@@ -215,6 +226,7 @@ e2e-bs:
   extends:
     - .base-configuration
     - .bs-allowed-branches
+  interruptible: true
   resource_group: browserstack
   artifacts:
     when: always
@@ -413,6 +425,7 @@ check-staging-merge:
   extends:
     - .base-configuration
     - .feature-branches
+  interruptible: true
   before_script:
     - eval $(ssh-agent -s)
   script:
@@ -426,6 +439,7 @@ tests-passed:
   extends:
     - .base-configuration
     - .feature-branches
+  interruptible: true
   script:
     - 'true'
 
@@ -436,6 +450,7 @@ check-squash-into-staging:
   extends:
     - .base-configuration
     - .feature-branches
+  interruptible: true
   before_script:
     - eval $(ssh-agent -s)
   script:
