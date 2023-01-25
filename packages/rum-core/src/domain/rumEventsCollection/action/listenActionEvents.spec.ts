@@ -1,3 +1,4 @@
+import { resetExperimentalFeatures, updateExperimentalFeatures } from '@datadog/browser-core'
 import type { Clock } from '../../../../../core/test/specHelper'
 import { createNewEvent, mockClock } from '../../../../../core/test/specHelper'
 import type { ActionEventsHooks } from './listenActionEvents'
@@ -184,11 +185,24 @@ describe('listenActionEvents', () => {
       expect(hasInputUserActivity()).toBe(true)
     })
 
-    it('input events that precede clicks should not be taken into account', () => {
-      emulateInputEvent()
-      emulateClick()
-      clock.tick(1) // run immediate timeouts
-      expect(hasInputUserActivity()).toBe(false)
+    describe('with fix_dead_clicks_after_input flag', () => {
+      beforeEach(() => {
+        stopListenEvents()
+
+        updateExperimentalFeatures(['fix_dead_clicks_after_input'])
+        ;({ stop: stopListenEvents } = listenActionEvents(actionEventsHooks))
+      })
+
+      afterEach(() => {
+        resetExperimentalFeatures()
+      })
+
+      it('input events that precede clicks should not be taken into account', () => {
+        emulateInputEvent()
+        emulateClick()
+        clock.tick(1) // run immediate timeouts
+        expect(hasInputUserActivity()).toBe(false)
+      })
     })
 
     it('click and type should report an input user activity', () => {

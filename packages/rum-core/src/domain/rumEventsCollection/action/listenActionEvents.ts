@@ -1,4 +1,4 @@
-import { addEventListener, DOM_EVENT, monitor } from '@datadog/browser-core'
+import { addEventListener, DOM_EVENT, isExperimentalFeatureEnabled, monitor } from '@datadog/browser-core'
 
 export type MouseEventOnElement = MouseEvent & { target: Element }
 
@@ -21,7 +21,9 @@ export function listenActionEvents<ClickContext>({ onPointerDown, onClick }: Act
       (event) => {
         hasSelectionChanged = false
         selectionEmptyAtPointerDown = isSelectionEmpty()
-        hasInputChanged = false
+        if (isExperimentalFeatureEnabled('fix_dead_clicks_after_input')) {
+          hasInputChanged = false
+        }
         if (isMouseEventOnElement(event)) {
           clickContext = onPointerDown(event)
         }
