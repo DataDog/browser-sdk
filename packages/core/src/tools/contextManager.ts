@@ -1,5 +1,6 @@
 import { computeBytesCount, deepClone, jsonStringify } from './utils'
 import type { Context, ContextValue } from './context'
+import { sanitize } from './sanitize'
 
 export type ContextManager = ReturnType<typeof createContextManager>
 
@@ -38,12 +39,12 @@ export function createContextManager(computeBytesCountImpl = computeBytesCount) 
     getContext: () => deepClone(context),
 
     setContext: (newContext: Context) => {
-      context = deepClone(newContext)
+      context = sanitize(newContext) as Context
       bytesCountCache = undefined
     },
 
     setContextProperty: (key: string, property: any) => {
-      context[key] = deepClone(property)
+      context[key] = sanitize(property) as ContextValue
       bytesCountCache = undefined
     },
 

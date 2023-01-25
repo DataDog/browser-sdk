@@ -11,6 +11,7 @@ import {
   timeStampNow,
   checkUser,
   sanitizeUser,
+  sanitize,
 } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
@@ -121,7 +122,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
         name,
         conf.handler,
         conf.level,
-        conf.context
+        sanitize(conf.context) as object
       )
 
       return customLoggers[name]!

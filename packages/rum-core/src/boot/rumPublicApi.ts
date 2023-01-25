@@ -18,6 +18,7 @@ import {
   areCookiesAuthorized,
   checkUser,
   sanitizeUser,
+  sanitize,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewContexts } from '../domain/contexts/viewContexts'
@@ -206,8 +207,8 @@ export function makeRumPublicApi(
 
     addAction: monitor((name: string, context?: object) => {
       addActionStrategy({
-        name,
-        context: deepClone(context as Context),
+        name: typeof name === 'string' ? name : JSON.stringify(sanitize(name)),
+        context: sanitize(context) as Context,
         startClocks: clocksNow(),
         type: ActionType.CUSTOM,
       })
@@ -217,9 +218,9 @@ export function makeRumPublicApi(
       const handlingStack = createHandlingStack()
       callMonitored(() => {
         addErrorStrategy({
-          error,
+          error, // Do not sanitize error here, it is needed unserialized by computeRawError()
           handlingStack,
-          context: deepClone(context as Context),
+          context: sanitize(context) as Context,
           startClocks: clocksNow(),
         })
       })

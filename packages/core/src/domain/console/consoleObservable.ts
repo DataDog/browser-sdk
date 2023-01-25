@@ -4,6 +4,7 @@ import { mergeObservables, Observable } from '../../tools/observable'
 import { find, jsonStringify } from '../../tools/utils'
 import { ConsoleApiName } from '../../tools/display'
 import { callMonitored } from '../../tools/monitor'
+import { sanitize } from '../../tools/sanitize'
 
 export interface ConsoleLog {
   message: string
@@ -73,5 +74,5 @@ function formatConsoleParameters(param: unknown) {
   if (param instanceof Error) {
     return formatErrorMessage(computeStackTrace(param))
   }
-  return jsonStringify(param, undefined, 2)
+  return jsonStringify(sanitize(param), undefined, 2)
 }
