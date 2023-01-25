@@ -16,7 +16,7 @@ const enum PanelTabs {
 }
 
 export function Panel() {
-  const [{ devServerStatus, ...settingsFromStore }, setStore] = useStore()
+  const [settingsFromStore, setStore] = useStore()
   const [settingsFromMemory, setSettingsFromMemory] = useState<
     Pick<Settings, 'autoFlush' | 'preserveEvents' | 'eventSource'>
   >({
@@ -76,7 +76,6 @@ export function Panel() {
               }
             }
           }}
-          devServerStatus={devServerStatus}
         />
       </Tabs.Panel>
     </Tabs>

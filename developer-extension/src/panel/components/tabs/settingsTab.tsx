@@ -1,5 +1,6 @@
 import { Badge, Box, Checkbox, Code, Group, Select, Space, Text } from '@mantine/core'
 import React from 'react'
+import { DevServerStatus, useDevServerStatus } from '../../hooks/useDevServerStatus'
 import type { EventSource } from '../../types'
 import { Columns } from '../columns'
 import { TabBase } from '../tabBase'
@@ -16,12 +17,12 @@ export interface Settings {
 export function SettingsTab({
   settings: { useDevBundles, useRumSlim, blockIntakeRequests, preserveEvents, autoFlush, eventSource },
   setSettings,
-  devServerStatus,
 }: {
   settings: Settings
   setSettings: (newSettings: Partial<Settings>) => void
-  devServerStatus: string
 }) {
+  const devServerStatus = useDevServerStatus()
+
   return (
     <TabBase>
       <Columns>
@@ -35,9 +36,9 @@ export function SettingsTab({
                   onChange={(e) => setSettings({ useDevBundles: isChecked(e.target) })}
                   color="violet"
                 />
-                {devServerStatus === 'available' ? (
+                {devServerStatus === DevServerStatus.AVAILABLE ? (
                   <Badge color="green">Available</Badge>
-                ) : devServerStatus === 'checking' ? (
+                ) : devServerStatus === DevServerStatus.CHECKING ? (
                   <Badge color="yellow">Checking...</Badge>
                 ) : (
                   <Badge color="red">Unavailable</Badge>

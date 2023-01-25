@@ -2,7 +2,6 @@ import type { Store } from '../common/types'
 import { listenAction, sendAction } from './actions'
 
 export const store: Store = {
-  devServerStatus: 'checking',
   useDevBundles: false,
   useRumSlim: false,
   blockIntakeRequests: false,
