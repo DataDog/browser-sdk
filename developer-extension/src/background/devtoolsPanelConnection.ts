@@ -1,4 +1,4 @@
-import type { BackgroundToDevtoolsMessage, DevtoolsToBackgroundMessage } from '../common/types'
+import type { DevtoolsToBackgroundMessage } from '../common/types'
 import { EventListeners } from '../common/eventListeners'
 import { createLogger } from '../common/logger'
 
@@ -25,12 +25,6 @@ export function sendMessageToDevtools(tabId: TabId, message: any) {
   }
 
   port.postMessage(message)
-}
-
-export function sendMessageToAllDevtools(message: BackgroundToDevtoolsMessage) {
-  for (const port of devtoolsConnectionsByTabId.values()) {
-    port.postMessage(message)
-  }
 }
 
 // Listen for connection from the devtools-panel

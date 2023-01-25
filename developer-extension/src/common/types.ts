@@ -3,28 +3,15 @@ import type { LogsEvent } from '../../../packages/logs/src/logsEvent.types'
 import type { RumEvent } from '../../../packages/rum-core/src/rumEvent.types'
 import type { BrowserRecord, BrowserSegmentMetadata } from '../../../packages/rum/src/types'
 
-export type BackgroundToDevtoolsMessage =
-  | {
-      type: 'sdk-message'
-      message: SdkMessage
-    }
-  | {
-      type: 'new-store'
-      store: Store
-    }
+export type BackgroundToDevtoolsMessage = {
+  type: 'sdk-message'
+  message: SdkMessage
+}
 
-export type DevtoolsToBackgroundMessage =
-  | {
-      type: 'set-store'
-      store: Partial<Store>
-    }
-  | {
-      type: 'get-store'
-    }
-  | {
-      type: 'update-net-request-rules'
-      options: NetRequestRulesOptions
-    }
+export type DevtoolsToBackgroundMessage = {
+  type: 'update-net-request-rules'
+  options: NetRequestRulesOptions
+}
 
 export interface NetRequestRulesOptions {
   tabId: number
@@ -53,9 +40,3 @@ export type SdkMessage =
         segment: BrowserSegmentMetadata
       }
     }
-
-export interface Store {
-  useDevBundles: boolean
-  useRumSlim: boolean
-  blockIntakeRequests: boolean
-}
