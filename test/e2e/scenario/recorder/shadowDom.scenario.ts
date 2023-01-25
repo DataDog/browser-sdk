@@ -113,7 +113,7 @@ class DivWithStyle extends HTMLElement {
 
 describe('recorder with shadow DOM', () => {
   createTest('can record fullsnapshot with the detail inside the shadow root')
-    .withRum({ defaultPrivacyLevel: 'allow', enableExperimentalFeatures: ['record_shadow_dom'] })
+    .withRum({ defaultPrivacyLevel: 'allow' })
     .withRumInit(initRumAndStartRecording)
     .withSetup(bundleSetup)
     .withBody(
@@ -136,7 +136,7 @@ describe('recorder with shadow DOM', () => {
     })
 
   createTest('can record fullsnapshot with adoptedStylesheet')
-    .withRum({ enableExperimentalFeatures: ['record_shadow_dom'] })
+    .withRum()
     .withRumInit(initRumAndStartRecording)
     .withSetup(bundleSetup)
     .withBody(
@@ -164,7 +164,7 @@ describe('recorder with shadow DOM', () => {
     })
 
   createTest('can apply privacy level set from outside or inside the shadow DOM')
-    .withRum({ defaultPrivacyLevel: 'allow', enableExperimentalFeatures: ['record_shadow_dom'] })
+    .withRum({ defaultPrivacyLevel: 'allow' })
     .withRumInit(initRumAndStartRecording)
     .withSetup(bundleSetup)
     .withBody(
@@ -202,7 +202,7 @@ describe('recorder with shadow DOM', () => {
     })
 
   createTest('can record click with target from inside the shadow root')
-    .withRum({ enableExperimentalFeatures: ['record_shadow_dom'] })
+    .withRum()
     .withRumInit(initRumAndStartRecording)
     .withSetup(bundleSetup)
     .withBody(
@@ -228,7 +228,7 @@ describe('recorder with shadow DOM', () => {
     })
 
   createTest('can record mutation from inside the shadow root')
-    .withRum({ defaultPrivacyLevel: 'allow', enableExperimentalFeatures: ['record_shadow_dom'] })
+    .withRum({ defaultPrivacyLevel: 'allow' })
     .withRumInit(initRumAndStartRecording)
     .withSetup(bundleSetup)
     .withBody(

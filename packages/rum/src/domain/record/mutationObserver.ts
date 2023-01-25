@@ -1,4 +1,4 @@
-import { isExperimentalFeatureEnabled, monitor, noop } from '@datadog/browser-core'
+import { monitor, noop } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import {
   getChildNodes,
@@ -382,9 +382,6 @@ export function sortAddedAndMovedNodes(nodes: Node[]) {
   })
 }
 function traverseRemovedShadowDom(removedNode: Node, shadowDomRemovedCallback: ShadowRootCallBack) {
-  if (!isExperimentalFeatureEnabled('record_shadow_dom')) {
-    return
-  }
   if (isNodeShadowHost(removedNode)) {
     shadowDomRemovedCallback(removedNode.shadowRoot)
   }

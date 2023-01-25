@@ -1,10 +1,4 @@
-import {
-  DefaultPrivacyLevel,
-  findLast,
-  isIE,
-  resetExperimentalFeatures,
-  updateExperimentalFeatures,
-} from '@datadog/browser-core'
+import { DefaultPrivacyLevel, findLast, isIE, resetExperimentalFeatures } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycle } from '@datadog/browser-rum-core'
 import type { Clock } from '../../../../core/test/specHelper'
@@ -224,7 +218,6 @@ describe('record', () => {
     })
 
     it('should record a simple mutation inside a shadow root', () => {
-      updateExperimentalFeatures(['record_shadow_dom'])
       const div = document.createElement('div')
       div.className = 'toto'
       createShadow([div])
@@ -243,7 +236,6 @@ describe('record', () => {
     })
 
     it('should record a direct removal inside a shadow root', () => {
-      updateExperimentalFeatures(['record_shadow_dom'])
       const span = document.createElement('span')
       createShadow([span])
       startRecording()
@@ -268,7 +260,6 @@ describe('record', () => {
     })
 
     it('should record a direct addition inside a shadow root', () => {
-      updateExperimentalFeatures(['record_shadow_dom'])
       const span = document.createElement('span')
       const shadowRoot = createShadow([span])
       startRecording()
@@ -296,7 +287,6 @@ describe('record', () => {
     })
 
     it('should record mutation inside a shadow root added after the FS', () => {
-      updateExperimentalFeatures(['record_shadow_dom'])
       startRecording()
       expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot())
 
@@ -329,7 +319,6 @@ describe('record', () => {
     })
 
     it('should record the change event inside a shadow root', () => {
-      updateExperimentalFeatures(['record_shadow_dom'])
       const radio = document.createElement('input')
       radio.setAttribute('type', 'radio')
       createShadow([radio])
@@ -349,7 +338,6 @@ describe('record', () => {
     })
 
     it('should clean the state once the shadow dom is removed to avoid memory leak', () => {
-      updateExperimentalFeatures(['record_shadow_dom'])
       const div = document.createElement('div')
       div.className = 'toto'
       const shadowRoot = createShadow([div])
@@ -370,7 +358,6 @@ describe('record', () => {
     })
 
     it('should clean the state when both the parent and the shadow host is removed to avoid memory leak', () => {
-      updateExperimentalFeatures(['record_shadow_dom'])
       const grandParent = document.createElement('div')
       const parent = document.createElement('div')
       grandParent.appendChild(parent)

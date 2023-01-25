@@ -1,4 +1,4 @@
-import { isIE, noop, resetExperimentalFeatures, updateExperimentalFeatures } from '@datadog/browser-core'
+import { isIE, noop, resetExperimentalFeatures } from '@datadog/browser-core'
 
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { STABLE_ATTRIBUTES, DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from '@datadog/browser-rum-core'
@@ -439,7 +439,6 @@ describe('serializeNodeWithId', () => {
     })
 
     it('serializes a shadow host', () => {
-      updateExperimentalFeatures(['record_shadow_dom'])
       const div = document.createElement('div')
       div.attachShadow({ mode: 'open' })
       expect(serializeNodeWithId(div, DEFAULT_OPTIONS)).toEqual({
@@ -461,7 +460,6 @@ describe('serializeNodeWithId', () => {
     })
 
     it('serializes a shadow host with children', () => {
-      updateExperimentalFeatures(['record_shadow_dom'])
       const div = document.createElement('div')
       div.attachShadow({ mode: 'open' })
       div.shadowRoot!.appendChild(document.createElement('hr'))
@@ -502,32 +500,6 @@ describe('serializeNodeWithId', () => {
         id: jasmine.any(Number) as unknown as number,
       })
       expect(addShadowRootSpy).toHaveBeenCalledWith(div.shadowRoot!)
-    })
-
-    it('does not serialize shadow host children when the experimental flag is missing', () => {
-      const div = document.createElement('div')
-      div.attachShadow({ mode: 'open' })
-      div.shadowRoot!.appendChild(document.createElement('hr'))
-
-      const options: SerializeOptions = {
-        ...DEFAULT_OPTIONS,
-        serializationContext: {
-          ...DEFAULT_SERIALIZATION_CONTEXT,
-          shadowRootsController: {
-            ...DEFAULT_SHADOW_ROOT_CONTROLLER,
-            addShadowRoot: addShadowRootSpy,
-          },
-        },
-      }
-      expect(serializeNodeWithId(div, options)).toEqual({
-        type: NodeType.Element,
-        tagName: 'div',
-        attributes: {},
-        isSVG: undefined,
-        childNodes: [],
-        id: jasmine.any(Number) as unknown as number,
-      })
-      expect(addShadowRootSpy).not.toHaveBeenCalled()
     })
 
     it('serializes style node with local CSS', () => {

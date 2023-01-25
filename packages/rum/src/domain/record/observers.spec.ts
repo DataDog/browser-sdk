@@ -1,11 +1,4 @@
-import {
-  DefaultPrivacyLevel,
-  isIE,
-  noop,
-  relativeNow,
-  timeStampNow,
-  updateExperimentalFeatures,
-} from '@datadog/browser-core'
+import { DefaultPrivacyLevel, isIE, noop, relativeNow, timeStampNow } from '@datadog/browser-core'
 import type { RawRumActionEvent, RumConfiguration } from '@datadog/browser-rum-core'
 import { ActionType, LifeCycle, LifeCycleEventType, RumEventType, FrustrationType } from '@datadog/browser-rum-core'
 import type { RawRumEventCollectedData } from 'packages/rum-core/src/domain/lifeCycle'
@@ -68,7 +61,6 @@ describe('initInputObserver', () => {
 
   // cannot trigger a event in a Shadow DOM because event with `isTrusted:false` do not cross the root
   it('collects input values when an "input" event is composed', () => {
-    updateExperimentalFeatures(['record_shadow_dom'])
     stopInputObserver = initInputObserver(inputCallbackSpy, DefaultPrivacyLevel.ALLOW)
     dispatchInputEventWithInShadowDom('foo')
 
