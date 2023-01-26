@@ -54,7 +54,10 @@ export const initShadowRootsController = (
     removeShadowRoot: (shadowRoot: ShadowRoot) => {
       const entry = controllerByShadowRoot.get(shadowRoot)
       if (!entry) {
-        addTelemetryDebug('no shadow root in map')
+        addTelemetryDebug('no shadow root in map', {
+          shadowRoot: shadowRoot ? shadowRoot.nodeName : 'no node name',
+          childrenLength: shadowRoot ? shadowRoot.childElementCount : '-1',
+        })
         return
       }
       entry.stop()
