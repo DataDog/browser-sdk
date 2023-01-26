@@ -16,6 +16,15 @@
 
 ---
 
+## v4.31.0
+
+- ✨[REPLAY] Add support for shadow dom ([#1969](https://github.com/DataDog/browser-sdk/pull/1969))
+- ✨[REPLAY] Keep Href from link even when importing CSS ([#1960](https://github.com/DataDog/browser-sdk/pull/1960))
+- 🐛[RUMF-1465] fix missing data when fetch instrumented by zone.js ([#1942](https://github.com/DataDog/browser-sdk/pull/1942))
+- ⚗️ 🐛 reset input state at the beginning of each click ([#1968](https://github.com/DataDog/browser-sdk/pull/1968))
+- ⚗️ 🔊[RUMF-1467] Collect user data telemetry ([#1941](https://github.com/DataDog/browser-sdk/pull/1941))
+- ⚗️ 🔊 [RUMF-1445] Check if the page was discarded before a resource ([#1945](https://github.com/DataDog/browser-sdk/pull/1945))
+
 ## v4.30.1
 
 - ⚗️ [REPLAY] Add support for `adoptedStyleSheets` ([#1916](https://github.com/DataDog/browser-sdk/pull/1916))
