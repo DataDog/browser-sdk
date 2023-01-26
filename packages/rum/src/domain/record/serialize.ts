@@ -1,4 +1,4 @@
-import { assign, isExperimentalFeatureEnabled, startsWith } from '@datadog/browser-core'
+import { assign, startsWith } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { isNodeShadowHost, isNodeShadowRoot, STABLE_ATTRIBUTES } from '@datadog/browser-rum-core'
 import {
@@ -228,7 +228,7 @@ export function serializeElementNode(element: Element, options: SerializeOptions
     childNodes = serializeChildNodes(element, childNodesSerializationOptions)
   }
 
-  if (isNodeShadowHost(element) && isExperimentalFeatureEnabled('record_shadow_dom')) {
+  if (isNodeShadowHost(element)) {
     const shadowRoot = serializeNodeWithId(element.shadowRoot, options)
     if (shadowRoot !== null) {
       childNodes.push(shadowRoot)

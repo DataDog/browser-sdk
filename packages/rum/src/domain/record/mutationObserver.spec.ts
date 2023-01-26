@@ -1,4 +1,4 @@
-import { DefaultPrivacyLevel, isIE, noop, updateExperimentalFeatures } from '@datadog/browser-core'
+import { DefaultPrivacyLevel, isIE, noop } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { collectAsyncCalls, createMutationPayloadValidator } from '../../../test/utils'
 import {
@@ -455,8 +455,6 @@ describe('startMutationCollection', () => {
 
     describe('for shadow DOM', () => {
       it('should call addShadowRoot when host is added', () => {
-        updateExperimentalFeatures(['record_shadow_dom'])
-
         const serializedDocument = serializeDocumentWithDefaults()
         const { mutationCallbackSpy, getLatestMutationPayload } = startMutationCollection()
         const host = document.createElement('div')
@@ -486,7 +484,6 @@ describe('startMutationCollection', () => {
       })
 
       it('should call removeShadowRoot when host is removed', () => {
-        updateExperimentalFeatures(['record_shadow_dom'])
         const host = document.createElement('div')
         host.id = 'host'
         const shadowRoot = host.attachShadow({ mode: 'open' })
@@ -512,7 +509,6 @@ describe('startMutationCollection', () => {
       })
 
       it('should call removeShadowRoot when parent of host is removed', () => {
-        updateExperimentalFeatures(['record_shadow_dom'])
         const parent = document.createElement('div')
         parent.id = 'parent'
         const host = document.createElement('div')
