@@ -1,4 +1,4 @@
-import { DefaultPrivacyLevel, findLast, isIE, resetExperimentalFeatures } from '@datadog/browser-core'
+import { DefaultPrivacyLevel, findLast, isIE } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycle } from '@datadog/browser-rum-core'
 import type { Clock } from '../../../../core/test/specHelper'
@@ -214,7 +214,6 @@ describe('record', () => {
 
     afterEach(() => {
       sandbox.remove()
-      resetExperimentalFeatures()
     })
 
     it('should record a simple mutation inside a shadow root', () => {
