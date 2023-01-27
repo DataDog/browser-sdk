@@ -58,7 +58,10 @@ export const initShadowRootsController = (
           shadowRoot: shadowRoot ? shadowRoot.nodeName : 'no node name',
           childrenLength: shadowRoot ? shadowRoot.childElementCount : '-1',
           controllerByShadowRootSize: controllerByShadowRoot.size,
-          html: shadowRoot && isExperimentalFeatureEnabled('shadow_dom_debug') ? shadowRoot.innerHTML : undefined,
+          html:
+            shadowRoot && isExperimentalFeatureEnabled('shadow_dom_debug')
+              ? shadowRoot.innerHTML.substring(0, 2000)
+              : undefined,
         })
         return
       }
