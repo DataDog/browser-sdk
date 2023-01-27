@@ -85,11 +85,11 @@ describe('listenActionEvents', () => {
     expect(actionEventsHooks.onActionStart).not.toHaveBeenCalled()
   })
 
-  describe('click_action_on_pointerup experimental feature', () => {
+  describe('dead_click_fixes experimental feature', () => {
     beforeEach(() => {
       stopListenEvents()
 
-      updateExperimentalFeatures(['click_action_on_pointerup'])
+      updateExperimentalFeatures(['dead_click_fixes'])
       ;({ stop: stopListenEvents } = listenActionEvents(actionEventsHooks))
     })
 

@@ -55,7 +55,7 @@ export function listenActionEvents<ClickContext>({ onPointerDown, onActionStart 
 
     addEventListener(
       window,
-      isExperimentalFeatureEnabled('click_action_on_pointerup') ? DOM_EVENT.POINTER_UP : DOM_EVENT.CLICK,
+      isExperimentalFeatureEnabled('dead_click_fixes') ? DOM_EVENT.POINTER_UP : DOM_EVENT.CLICK,
       (startEvent: MouseEvent) => {
         if (isValidMouseEvent(startEvent) && clickContext) {
           // Use a scoped variable to make sure the value is not changed by other clicks
@@ -68,7 +68,7 @@ export function listenActionEvents<ClickContext>({ onPointerDown, onActionStart 
             () => clickEventTimeStamp
           )
           clickContext = undefined
-          if (isExperimentalFeatureEnabled('click_action_on_pointerup')) {
+          if (isExperimentalFeatureEnabled('dead_click_fixes')) {
             addEventListener(
               window,
               DOM_EVENT.CLICK,

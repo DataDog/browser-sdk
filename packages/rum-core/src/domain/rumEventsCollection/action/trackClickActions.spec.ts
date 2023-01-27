@@ -431,9 +431,9 @@ describe('trackClickActions', () => {
         expect(events[0].frustrationTypes).toEqual([FrustrationType.DEAD_CLICK])
       })
 
-      describe('click_action_on_pointerup experimental feature', () => {
+      describe('dead_click_fixes experimental feature', () => {
         beforeEach(() => {
-          updateExperimentalFeatures(['click_action_on_pointerup'])
+          updateExperimentalFeatures(['dead_click_fixes'])
         })
 
         afterEach(() => {
