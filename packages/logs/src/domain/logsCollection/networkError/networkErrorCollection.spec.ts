@@ -234,6 +234,14 @@ describe('computeFetchResponseText', () => {
     })
   })
 
+  it('should return undefined if body is disturbed', (done) => {
+    const response = new ResponseStub({ bodyDisturbed: true })
+    computeFetchResponseText(response, CONFIGURATION, (responseText) => {
+      expect(responseText).toBeUndefined()
+      done()
+    })
+  })
+
   it('does not consume the response body', (done) => {
     const response = new ResponseStub({ responseText: 'foo' })
     computeFetchResponseText(response, CONFIGURATION, () => {

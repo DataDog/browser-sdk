@@ -9,6 +9,7 @@ import {
   monitor,
   noop,
   readBytesFromStream,
+  tryToClone,
 } from '@datadog/browser-core'
 import type { RawNetworkLogsEvent } from '../../../rawLogsEvent.types'
 import type { LogsConfiguration } from '../../configuration'
@@ -102,8 +103,9 @@ export function computeFetchResponseText(
   configuration: LogsConfiguration,
   callback: (responseText?: string) => void
 ) {
-  if (!response.body || response.bodyUsed) {
-    // if the body is null or already used by another instrumentation, let's not try to read it.
+  const clonedResponse = tryToClone(response)
+  if (!clonedResponse || !clonedResponse.body) {
+    // if the clone failed or if the body is null, let's not try to read it.
     callback()
   } else if (!window.TextDecoder) {
     // If the browser doesn't support TextDecoder, let's read the whole response then truncate it.
@@ -133,16 +135,13 @@ export function computeFetchResponseText(
     //   }
     //   response.body.getReader().cancel()
     // })
-    response
-      .clone()
-      .text()
-      .then(
-        monitor((text) => callback(truncateResponseText(text, configuration))),
-        monitor((error) => callback(`Unable to retrieve response: ${error as string}`))
-      )
+    clonedResponse.text().then(
+      monitor((text) => callback(truncateResponseText(text, configuration))),
+      monitor((error) => callback(`Unable to retrieve response: ${error as string}`))
+    )
   } else {
     truncateResponseStream(
-      response.clone().body!,
+      clonedResponse.body,
       configuration.requestErrorResponseLengthLimit,
       (error, responseText) => {
         if (error) {
