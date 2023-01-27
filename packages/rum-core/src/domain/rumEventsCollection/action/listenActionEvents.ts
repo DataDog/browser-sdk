@@ -34,7 +34,11 @@ export function listenActionEvents<ClickContext>({ onPointerDown, onActionStart 
           selectionEmptyAtPointerDown = isSelectionEmpty()
           userActivity = {
             selection: false,
-            input: false,
+            input: isExperimentalFeatureEnabled('dead_click_fixes')
+              ? false
+              : // Mimics the issue that was fixed in https://github.com/DataDog/browser-sdk/pull/1968
+                // The goal is to release all dead click fixes at the same time
+                userActivity.input,
           }
           clickContext = onPointerDown(event)
         }
