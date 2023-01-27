@@ -102,8 +102,14 @@ export function computeFetchResponseText(
   configuration: LogsConfiguration,
   callback: (responseText?: string) => void
 ) {
-  if (!response.body || response.bodyUsed) {
-    // if the body is null or already used by another instrumentation, let's not try to read it.
+  let clonedResponse: Response | undefined
+  try {
+    clonedResponse = response.clone()
+  } catch (e) {
+    // clone can throw if the response has already been used by another instrumentation or is disturbed
+  }
+  if (!clonedResponse || !clonedResponse.body) {
+    // if the clone failed or if the body is null, let's not try to read it.
     callback()
   } else if (!window.TextDecoder) {
     // If the browser doesn't support TextDecoder, let's read the whole response then truncate it.
@@ -133,16 +139,13 @@ export function computeFetchResponseText(
     //   }
     //   response.body.getReader().cancel()
     // })
-    response
-      .clone()
-      .text()
-      .then(
-        monitor((text) => callback(truncateResponseText(text, configuration))),
-        monitor((error) => callback(`Unable to retrieve response: ${error as string}`))
-      )
+    clonedResponse.text().then(
+      monitor((text) => callback(truncateResponseText(text, configuration))),
+      monitor((error) => callback(`Unable to retrieve response: ${error as string}`))
+    )
   } else {
     truncateResponseStream(
-      response.clone().body!,
+      clonedResponse.body,
       configuration.requestErrorResponseLengthLimit,
       (error, responseText) => {
         if (error) {

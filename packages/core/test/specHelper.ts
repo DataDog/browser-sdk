@@ -147,6 +147,7 @@ export interface ResponseStubOptions {
   responseTextError?: Error
   body?: ReadableStream<Uint8Array>
   bodyUsed?: boolean
+  bodyDisturbed?: boolean
 }
 function notYetImplemented(): never {
   throw new Error('not yet implemented')
@@ -158,6 +159,8 @@ export class ResponseStub implements Response {
   constructor(private options: Readonly<ResponseStubOptions>) {
     if (this.options.bodyUsed) {
       this._body = { locked: true } as any
+    } else if (this.options.bodyDisturbed) {
+      this._body = { disturbed: true } as any
     } else if (this.options.body) {
       this._body = this.options.body
     } else if (this.options.responseTextError !== undefined) {
@@ -192,6 +195,10 @@ export class ResponseStub implements Response {
     return this._body ? this._body.locked : false
   }
 
+  get bodyDisturbed() {
+    return this._body ? !!(this._body as any).disturbed : false
+  }
+
   get body() {
     return this._body || null
   }
@@ -199,6 +206,9 @@ export class ResponseStub implements Response {
   clone() {
     if (this.bodyUsed) {
       throw new TypeError("Failed to execute 'clone' on 'Response': Response body is already used")
+    }
+    if (this.bodyDisturbed) {
+      throw new TypeError('Cannot clone a disturbed Response')
     }
     return new ResponseStub(this.options)
   }

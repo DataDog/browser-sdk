@@ -157,13 +157,18 @@ function getNextRequestIndex() {
 }
 
 function waitForResponseToComplete(context: RumFetchResolveContext, callback: (duration: Duration) => void) {
-  if (!context.response || !context.response.body || context.response.bodyUsed) {
-    // do not try to wait for the response if fetch error, null body or body used by another instrumentation
+  let clonedResponse: Response | undefined
+  try {
+    clonedResponse = context.response && context.response.clone()
+  } catch (e) {
+    // clone can throw if the response has already been used by another instrumentation or is disturbed
+  }
+  if (!clonedResponse || !clonedResponse.body) {
+    // do not try to wait for the response if the clone failed, fetch error or null body
     callback(elapsed(context.startClocks.timeStamp, timeStampNow()))
   } else {
-    const responseClone = context.response.clone()
     readBytesFromStream(
-      responseClone.body!,
+      clonedResponse.body,
       () => {
         callback(elapsed(context.startClocks.timeStamp, timeStampNow()))
       },
