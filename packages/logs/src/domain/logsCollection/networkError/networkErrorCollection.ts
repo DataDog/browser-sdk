@@ -9,6 +9,7 @@ import {
   monitor,
   noop,
   readBytesFromStream,
+  tryToClone,
 } from '@datadog/browser-core'
 import type { RawNetworkLogsEvent } from '../../../rawLogsEvent.types'
 import type { LogsConfiguration } from '../../configuration'
@@ -102,12 +103,7 @@ export function computeFetchResponseText(
   configuration: LogsConfiguration,
   callback: (responseText?: string) => void
 ) {
-  let clonedResponse: Response | undefined
-  try {
-    clonedResponse = response.clone()
-  } catch (e) {
-    // clone can throw if the response has already been used by another instrumentation or is disturbed
-  }
+  const clonedResponse = tryToClone(response)
   if (!clonedResponse || !clonedResponse.body) {
     // if the clone failed or if the body is null, let's not try to read it.
     callback()

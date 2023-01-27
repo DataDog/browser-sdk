@@ -13,6 +13,7 @@ import {
   readBytesFromStream,
   elapsed,
   timeStampNow,
+  tryToClone,
 } from '@datadog/browser-core'
 import type { RumSessionManager } from '..'
 import type { RumConfiguration } from './configuration'
@@ -157,12 +158,7 @@ function getNextRequestIndex() {
 }
 
 function waitForResponseToComplete(context: RumFetchResolveContext, callback: (duration: Duration) => void) {
-  let clonedResponse: Response | undefined
-  try {
-    clonedResponse = context.response && context.response.clone()
-  } catch (e) {
-    // clone can throw if the response has already been used by another instrumentation or is disturbed
-  }
+  const clonedResponse = context.response && tryToClone(context.response)
   if (!clonedResponse || !clonedResponse.body) {
     // do not try to wait for the response if the clone failed, fetch error or null body
     callback(elapsed(context.startClocks.timeStamp, timeStampNow()))
