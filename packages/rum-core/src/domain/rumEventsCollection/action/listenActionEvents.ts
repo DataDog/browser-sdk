@@ -1,30 +1,45 @@
-import { addEventListener, DOM_EVENT, isExperimentalFeatureEnabled, monitor } from '@datadog/browser-core'
+import type { TimeStamp } from '@datadog/browser-core'
+import { addEventListener, DOM_EVENT, isExperimentalFeatureEnabled, timeStampNow } from '@datadog/browser-core'
 
 export type MouseEventOnElement = MouseEvent & { target: Element }
 
-export type GetUserActivity = () => { selection: boolean; input: boolean }
+export interface UserActivity {
+  selection: boolean
+  input: boolean
+}
 export interface ActionEventsHooks<ClickContext> {
   onPointerDown: (event: MouseEventOnElement) => ClickContext | undefined
-  onClick: (context: ClickContext, event: MouseEventOnElement, getUserActivity: GetUserActivity) => void
+  onStartEvent: (
+    context: ClickContext,
+    event: MouseEventOnElement,
+    getUserActivity: () => UserActivity,
+    getClickEventTimeStamp: () => TimeStamp | undefined
+  ) => void
 }
 
-export function listenActionEvents<ClickContext>({ onPointerDown, onClick }: ActionEventsHooks<ClickContext>) {
-  let hasSelectionChanged = false
+export function listenActionEvents<ClickContext>({ onPointerDown, onStartEvent }: ActionEventsHooks<ClickContext>) {
   let selectionEmptyAtPointerDown: boolean
-  let hasInputChanged = false
+  let userActivity: UserActivity = {
+    selection: false,
+    input: false,
+  }
   let clickContext: ClickContext | undefined
 
   const listeners = [
     addEventListener(
       window,
       DOM_EVENT.POINTER_DOWN,
-      (event) => {
-        hasSelectionChanged = false
-        selectionEmptyAtPointerDown = isSelectionEmpty()
-        if (isExperimentalFeatureEnabled('fix_dead_clicks_after_input')) {
-          hasInputChanged = false
-        }
-        if (isMouseEventOnElement(event)) {
+      (event: PointerEvent) => {
+        if (isValidMouseEvent(event)) {
+          selectionEmptyAtPointerDown = isSelectionEmpty()
+          userActivity = {
+            selection: false,
+            input: isExperimentalFeatureEnabled('dead_click_fixes')
+              ? false
+              : // Mimics the issue that was fixed in https://github.com/DataDog/browser-sdk/pull/1968
+                // The goal is to release all dead click fixes at the same time
+                userActivity.input,
+          }
           clickContext = onPointerDown(event)
         }
       },
@@ -36,7 +51,7 @@ export function listenActionEvents<ClickContext>({ onPointerDown, onClick }: Act
       DOM_EVENT.SELECTION_CHANGE,
       () => {
         if (!selectionEmptyAtPointerDown || !isSelectionEmpty()) {
-          hasSelectionChanged = true
+          userActivity.selection = true
         }
       },
       { capture: true }
@@ -44,24 +59,29 @@ export function listenActionEvents<ClickContext>({ onPointerDown, onClick }: Act
 
     addEventListener(
       window,
-      DOM_EVENT.CLICK,
-      (clickEvent: MouseEvent) => {
-        if (isMouseEventOnElement(clickEvent) && clickContext) {
+      isExperimentalFeatureEnabled('dead_click_fixes') ? DOM_EVENT.POINTER_UP : DOM_EVENT.CLICK,
+      (startEvent: MouseEvent) => {
+        if (isValidMouseEvent(startEvent) && clickContext) {
           // Use a scoped variable to make sure the value is not changed by other clicks
-          const userActivity = {
-            selection: hasSelectionChanged,
-            input: hasInputChanged,
-          }
-          if (!hasInputChanged) {
-            setTimeout(
-              monitor(() => {
-                userActivity.input = hasInputChanged
-              })
+          const localUserActivity = userActivity
+          let clickEventTimeStamp: TimeStamp | undefined
+          onStartEvent(
+            clickContext,
+            startEvent,
+            () => localUserActivity,
+            () => clickEventTimeStamp
+          )
+          clickContext = undefined
+          if (isExperimentalFeatureEnabled('dead_click_fixes')) {
+            addEventListener(
+              window,
+              DOM_EVENT.CLICK,
+              () => {
+                clickEventTimeStamp = timeStampNow()
+              },
+              { capture: true, once: true }
             )
           }
-
-          onClick(clickContext, clickEvent, () => userActivity)
-          clickContext = undefined
         }
       },
       { capture: true }
@@ -71,7 +91,7 @@ export function listenActionEvents<ClickContext>({ onPointerDown, onClick }: Act
       window,
       DOM_EVENT.INPUT,
       () => {
-        hasInputChanged = true
+        userActivity.input = true
       },
       { capture: true }
     ),
@@ -89,6 +109,14 @@ function isSelectionEmpty(): boolean {
   return !selection || selection.isCollapsed
 }
 
-function isMouseEventOnElement(event: Event): event is MouseEventOnElement {
-  return event.target instanceof Element
+function isValidMouseEvent(event: MouseEvent): event is MouseEventOnElement {
+  return (
+    event.target instanceof Element &&
+    // Only consider 'primary' pointer events for now. Multi-touch support could be implemented in
+    // the future.
+    // On Chrome, click events are PointerEvent with `isPrimary = false`, but we should still
+    // consider them valid. This could be removed when we enable the `click-action-on-pointerup`
+    // flag, since we won't rely on click events anymore.
+    (event.type === 'click' || (event as PointerEvent).isPrimary !== false)
+  )
 }

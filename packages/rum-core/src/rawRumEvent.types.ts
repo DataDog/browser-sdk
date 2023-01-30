@@ -178,6 +178,7 @@ export interface RawRumActionEvent {
         x: number
         y: number
       }
+      pointer_up_delay?: Duration
     }
   }
 }
