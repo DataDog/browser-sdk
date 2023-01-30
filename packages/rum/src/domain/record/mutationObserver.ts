@@ -17,7 +17,6 @@ import {
   nodeAndAncestorsHaveSerializedNode,
 } from './serializationUtils'
 import { serializeNodeWithId, serializeAttribute, SerializationContextStatus } from './serialize'
-import { forEach } from './utils'
 import { createMutationBatch } from './mutationBatch'
 import type { MutationCallBack } from './observers'
 import type { ShadowRootCallBack, ShadowRootsController } from './shadowRootsController'
@@ -177,10 +176,10 @@ function processChildListMutations(
   const addedAndMovedNodes = new Set<Node>()
   const removedNodes = new Map<Node, NodeWithSerializedNode>()
   for (const mutation of mutations) {
-    forEach(mutation.addedNodes, (node) => {
+    mutation.addedNodes.forEach((node) => {
       addedAndMovedNodes.add(node)
     })
-    forEach(mutation.removedNodes, (node) => {
+    mutation.removedNodes.forEach((node) => {
       if (!addedAndMovedNodes.has(node)) {
         removedNodes.set(node, mutation.target)
       }
