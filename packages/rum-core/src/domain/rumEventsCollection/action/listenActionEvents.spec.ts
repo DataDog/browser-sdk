@@ -6,14 +6,14 @@ import { listenActionEvents } from './listenActionEvents'
 
 describe('listenActionEvents', () => {
   let actionEventsHooks: {
-    onActionStart: jasmine.Spy<ActionEventsHooks<object>['onActionStart']>
+    onStartEvent: jasmine.Spy<ActionEventsHooks<object>['onStartEvent']>
     onPointerDown: jasmine.Spy<ActionEventsHooks<object>['onPointerDown']>
   }
   let stopListenEvents: () => void
 
   beforeEach(() => {
     actionEventsHooks = {
-      onActionStart: jasmine.createSpy(),
+      onStartEvent: jasmine.createSpy(),
       onPointerDown: jasmine.createSpy().and.returnValue({}),
     }
     ;({ stop: stopListenEvents } = listenActionEvents(actionEventsHooks))
@@ -39,7 +39,7 @@ describe('listenActionEvents', () => {
 
   it('listen to click events', () => {
     emulateClick()
-    expect(actionEventsHooks.onActionStart).toHaveBeenCalledOnceWith(
+    expect(actionEventsHooks.onStartEvent).toHaveBeenCalledOnceWith(
       {},
       jasmine.objectContaining({ type: 'click' }),
       jasmine.any(Function),
@@ -50,7 +50,7 @@ describe('listenActionEvents', () => {
   it('listen to non-primary click events', () => {
     // This emulates a Chrome behavior where all click events are non-primary
     emulateClick({ clickEventIsPrimary: false })
-    expect(actionEventsHooks.onActionStart).toHaveBeenCalledOnceWith(
+    expect(actionEventsHooks.onStartEvent).toHaveBeenCalledOnceWith(
       {},
       jasmine.objectContaining({ type: 'click' }),
       jasmine.any(Function),
@@ -66,23 +66,23 @@ describe('listenActionEvents', () => {
   it('can abort click lifecycle by returning undefined from the onPointerDown callback', () => {
     actionEventsHooks.onPointerDown.and.returnValue(undefined)
     emulateClick()
-    expect(actionEventsHooks.onActionStart).not.toHaveBeenCalled()
+    expect(actionEventsHooks.onStartEvent).not.toHaveBeenCalled()
   })
 
-  it('passes the context created in onPointerDown to onActionStart', () => {
+  it('passes the context created in onPointerDown to onStartEvent', () => {
     const context = {}
     actionEventsHooks.onPointerDown.and.returnValue(context)
     emulateClick()
-    expect(actionEventsHooks.onActionStart.calls.mostRecent().args[0]).toBe(context)
+    expect(actionEventsHooks.onStartEvent.calls.mostRecent().args[0]).toBe(context)
   })
 
   it('ignore "click" events if no "pointerdown" event happened since the previous "click" event', () => {
     emulateClick()
-    actionEventsHooks.onActionStart.calls.reset()
+    actionEventsHooks.onStartEvent.calls.reset()
 
     window.dispatchEvent(createNewEvent('click', { target: document.body }))
 
-    expect(actionEventsHooks.onActionStart).not.toHaveBeenCalled()
+    expect(actionEventsHooks.onStartEvent).not.toHaveBeenCalled()
   })
 
   describe('dead_click_fixes experimental feature', () => {
@@ -99,7 +99,7 @@ describe('listenActionEvents', () => {
 
     it('listen to pointerup events', () => {
       emulateClick()
-      expect(actionEventsHooks.onActionStart).toHaveBeenCalledOnceWith(
+      expect(actionEventsHooks.onStartEvent).toHaveBeenCalledOnceWith(
         {},
         jasmine.objectContaining({ type: 'pointerup' }),
         jasmine.any(Function),
@@ -177,7 +177,7 @@ describe('listenActionEvents', () => {
     })
 
     function hasSelectionChanged() {
-      return actionEventsHooks.onActionStart.calls.mostRecent().args[2]().selection
+      return actionEventsHooks.onStartEvent.calls.mostRecent().args[2]().selection
     }
 
     function emulateNodeSelection(
@@ -269,7 +269,7 @@ describe('listenActionEvents', () => {
       window.dispatchEvent(createNewEvent('input'))
     }
     function hasInputUserActivity() {
-      return actionEventsHooks.onActionStart.calls.mostRecent().args[2]().input
+      return actionEventsHooks.onStartEvent.calls.mostRecent().args[2]().input
     }
   })
 

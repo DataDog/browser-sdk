@@ -9,7 +9,7 @@ export interface UserActivity {
 }
 export interface ActionEventsHooks<ClickContext> {
   onPointerDown: (event: MouseEventOnElement) => ClickContext | undefined
-  onActionStart: (
+  onStartEvent: (
     context: ClickContext,
     event: MouseEventOnElement,
     getUserActivity: () => UserActivity,
@@ -17,7 +17,7 @@ export interface ActionEventsHooks<ClickContext> {
   ) => void
 }
 
-export function listenActionEvents<ClickContext>({ onPointerDown, onActionStart }: ActionEventsHooks<ClickContext>) {
+export function listenActionEvents<ClickContext>({ onPointerDown, onStartEvent }: ActionEventsHooks<ClickContext>) {
   let selectionEmptyAtPointerDown: boolean
   let userActivity: UserActivity = {
     selection: false,
@@ -65,7 +65,7 @@ export function listenActionEvents<ClickContext>({ onPointerDown, onActionStart 
           // Use a scoped variable to make sure the value is not changed by other clicks
           const localUserActivity = userActivity
           let clickEventTimeStamp: TimeStamp | undefined
-          onActionStart(
+          onStartEvent(
             clickContext,
             startEvent,
             () => localUserActivity,
