@@ -1,11 +1,5 @@
 import type { BatchFlushEvent, Context, ContextManager, TelemetryEvent } from '@datadog/browser-core'
-import {
-  resetExperimentalFeatures,
-  updateExperimentalFeatures,
-  TelemetryService,
-  startTelemetry,
-  Observable,
-} from '@datadog/browser-core'
+import { resetExperimentalFeatures, TelemetryService, startTelemetry, Observable } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../test/specHelper'
 import { setup } from '../../test/specHelper'
 import { RumEventType } from '../rawRumEvent.types'
@@ -55,7 +49,6 @@ describe('customerDataTelemetry', () => {
   }
 
   beforeEach(() => {
-    updateExperimentalFeatures(['customer_data_telemetry'])
     setupBuilder = setup()
       .withFakeClock()
       .withConfiguration({
@@ -157,16 +150,6 @@ describe('customerDataTelemetry', () => {
     const { clock } = setupBuilder
       .withConfiguration({ telemetrySampleRate: 100, customerDataTelemetrySampleRate: 0 })
       .build()
-
-    generateBatch({ eventNumber: 1 })
-    clock.tick(MEASURES_PERIOD_DURATION)
-
-    expect(telemetryEvents.length).toEqual(0)
-  })
-
-  it('should not collect customer data telemetry when customer_data_telemetry ff is disabled', () => {
-    resetExperimentalFeatures()
-    const { clock } = setupBuilder.build()
 
     generateBatch({ eventNumber: 1 })
     clock.tick(MEASURES_PERIOD_DURATION)
