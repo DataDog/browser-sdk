@@ -440,6 +440,26 @@ describe('trackClickActions', () => {
           resetExperimentalFeatures()
         })
 
+        it('does not consider a click with activity happening on pointerdown as a dead click', () => {
+          const { clock } = setupBuilder.build()
+
+          emulateClick({ activity: { on: 'pointerdown' } })
+
+          clock.tick(EXPIRE_DELAY)
+          expect(events.length).toBe(1)
+          expect(events[0].frustrationTypes).toEqual([])
+        })
+
+        it('activity happening on pointerdown is not taken into account for the action duration', () => {
+          const { clock } = setupBuilder.build()
+
+          emulateClick({ activity: { on: 'pointerdown' } })
+
+          clock.tick(EXPIRE_DELAY)
+          expect(events.length).toBe(1)
+          expect(events[0].duration).toBe(0 as Duration)
+        })
+
         it('does not consider a click with activity happening on pointerup as a dead click', () => {
           const { clock } = setupBuilder.build()
 
@@ -471,7 +491,7 @@ describe('trackClickActions', () => {
     target?: HTMLElement
     activity?: {
       delay?: number
-      on?: 'pointerup' | 'click'
+      on?: 'pointerup' | 'click' | 'pointerdown'
     }
   } = {}) {
     const targetPosition = target.getBoundingClientRect()
@@ -487,13 +507,14 @@ describe('trackClickActions', () => {
       isPrimary: true,
     }
     target.dispatchEvent(createNewEvent('pointerdown', eventProperties))
+    emulateActivityIfNeeded('pointerdown')
     setupBuilder.clock!.tick(EMULATED_CLICK_DURATION)
     target.dispatchEvent(createNewEvent('pointerup', eventProperties))
     emulateActivityIfNeeded('pointerup')
     target.dispatchEvent(createNewEvent('click', eventProperties))
     emulateActivityIfNeeded('click')
 
-    function emulateActivityIfNeeded(event: 'pointerup' | 'click') {
+    function emulateActivityIfNeeded(event: 'pointerdown' | 'pointerup' | 'click') {
       if (activity && (activity.on ?? 'click') === event) {
         const delay = activity.delay ?? BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY
         if (delay < 0) {

@@ -19,7 +19,7 @@ import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { trackEventCounts } from '../../trackEventCounts'
-import { waitPageActivityEnd } from '../../waitPageActivityEnd'
+import { PAGE_ACTIVITY_VALIDATION_DELAY, waitPageActivityEnd } from '../../waitPageActivityEnd'
 import type { ClickChain } from './clickChain'
 import { createClickChain } from './clickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
@@ -79,9 +79,18 @@ export function trackClickActions(
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, stopClickChain)
 
-  const { stop: stopActionEventsListener } = listenActionEvents<ClickActionBase>({
-    onPointerDown: (pointerDownEvent) => processPointerDown(configuration, history, pointerDownEvent),
-    onStartEvent: (clickActionBase, startEvent, getUserActivity, getClickEventTimeStamp) =>
+  const { stop: stopActionEventsListener } = listenActionEvents<{
+    clickActionBase: ClickActionBase
+    hadActivityOnPointerDown: () => boolean
+  }>({
+    onPointerDown: (pointerDownEvent) =>
+      processPointerDown(configuration, lifeCycle, domMutationObservable, history, pointerDownEvent),
+    onStartEvent: (
+      { clickActionBase, hadActivityOnPointerDown },
+      startEvent,
+      getUserActivity,
+      getClickEventTimeStamp
+    ) =>
       startClickAction(
         configuration,
         lifeCycle,
@@ -92,6 +101,7 @@ export function trackClickActions(
         clickActionBase,
         startEvent,
         getUserActivity,
+        hadActivityOnPointerDown,
         getClickEventTimeStamp
       ),
   })
@@ -128,6 +138,8 @@ export function trackClickActions(
 
 function processPointerDown(
   configuration: RumConfiguration,
+  lifeCycle: LifeCycle,
+  domMutationObservable: Observable<void>,
   history: ClickActionIdHistory,
   pointerDownEvent: MouseEventOnElement
 ) {
@@ -144,7 +156,23 @@ function processPointerDown(
     return
   }
 
-  return clickActionBase
+  let hadActivityOnPointerDown = false
+
+  if (isExperimentalFeatureEnabled('dead_click_fixes')) {
+    waitPageActivityEnd(
+      lifeCycle,
+      domMutationObservable,
+      configuration,
+      (pageActivityEndEvent) => {
+        hadActivityOnPointerDown = pageActivityEndEvent.hadActivity
+      },
+      // We don't care about the activity duration, we just want to know whether an activity did happen
+      // within the "validation delay" or not. Limit the duration so the callback is called sooner.
+      PAGE_ACTIVITY_VALIDATION_DELAY
+    )
+  }
+
+  return { clickActionBase, hadActivityOnPointerDown: () => hadActivityOnPointerDown }
 }
 
 function startClickAction(
@@ -157,6 +185,7 @@ function startClickAction(
   clickActionBase: ClickActionBase,
   startEvent: MouseEventOnElement,
   getUserActivity: () => UserActivity,
+  hadActivityOnPointerDown: () => boolean,
   getClickEventTimeStamp: () => TimeStamp | undefined
 ) {
   const click = newClick(lifeCycle, history, getUserActivity, getClickEventTimeStamp, clickActionBase, startEvent)
@@ -174,7 +203,17 @@ function startClickAction(
         // If the clock is looking weird, just discard the click
         click.discard()
       } else {
-        click.stop(pageActivityEndEvent.hadActivity ? pageActivityEndEvent.end : undefined)
+        if (pageActivityEndEvent.hadActivity) {
+          click.stop(pageActivityEndEvent.end)
+        } else if (hadActivityOnPointerDown()) {
+          click.stop(
+            // using the click start as activity end, so the click will have some activity but its
+            // duration will be 0 (as the activity started before the click start)
+            click.startClocks.timeStamp
+          )
+        } else {
+          click.stop()
+        }
 
         // Validate or discard the click only if we don't track frustrations. It'll be done when
         // the click chain is finalized.
