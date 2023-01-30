@@ -9,12 +9,13 @@ import { createNewEvent, mockClock } from '../../../core/test/specHelper'
 
 import type { TestSetupBuilder } from '../../../rum-core/test/specHelper'
 import { setup } from '../../../rum-core/test/specHelper'
-import { collectAsyncCalls, recordsPerFullSnapshot } from '../../test/utils'
+import { recordsPerFullSnapshot } from '../../test/utils'
 import { setSegmentBytesLimit, startDeflateWorker } from '../domain/segmentCollection'
 
 import type { BrowserSegment } from '../types'
 import { RecordType } from '../types'
 import { resetReplayStats } from '../domain/replayStats'
+import { collectAsyncCalls } from '../../../core/test/collectAsyncCalls'
 import { startRecording } from './startRecording'
 
 const VIEW_TIMESTAMP = 1 as TimeStamp

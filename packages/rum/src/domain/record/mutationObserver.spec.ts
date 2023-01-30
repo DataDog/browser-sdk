@@ -1,6 +1,6 @@
 import { DefaultPrivacyLevel, isIE, noop } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { collectAsyncCalls, createMutationPayloadValidator } from '../../../test/utils'
+import { createMutationPayloadValidator } from '../../../test/utils'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
@@ -10,6 +10,7 @@ import {
 } from '../../constants'
 import type { AttributeMutation, Attributes } from '../../types'
 import { NodeType } from '../../types'
+import { collectAsyncCalls } from '../../../../core/test/collectAsyncCalls'
 import { serializeDocument, SerializationContextStatus } from './serialize'
 import { sortAddedAndMovedNodes, startMutationObserver } from './mutationObserver'
 import type { MutationCallBack } from './observers'
