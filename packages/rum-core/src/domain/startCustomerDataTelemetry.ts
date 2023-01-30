@@ -1,13 +1,5 @@
 import type { BatchFlushEvent, Context, ContextManager, Observable, Telemetry } from '@datadog/browser-core'
-import {
-  isEmptyObject,
-  includes,
-  isExperimentalFeatureEnabled,
-  performDraw,
-  ONE_SECOND,
-  addTelemetryDebug,
-  monitor,
-} from '@datadog/browser-core'
+import { isEmptyObject, includes, performDraw, ONE_SECOND, addTelemetryDebug, monitor } from '@datadog/browser-core'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'
 import type { RumConfiguration } from './configuration'
@@ -51,10 +43,7 @@ export function startCustomerDataTelemetry(
   featureFlagContexts: FeatureFlagContexts,
   batchFlushObservable: Observable<BatchFlushEvent>
 ) {
-  const customerDataTelemetryEnabled =
-    telemetry.enabled &&
-    isExperimentalFeatureEnabled('customer_data_telemetry') &&
-    performDraw(configuration.customerDataTelemetrySampleRate)
+  const customerDataTelemetryEnabled = telemetry.enabled && performDraw(configuration.customerDataTelemetrySampleRate)
   if (!customerDataTelemetryEnabled) {
     return
   }
