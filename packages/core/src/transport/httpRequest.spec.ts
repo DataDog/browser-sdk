@@ -3,9 +3,9 @@ import type { Request } from '../../test/specHelper'
 import type { EndpointBuilder } from '../domain/configuration'
 import { createEndpointBuilder } from '../domain/configuration'
 import { noop } from '../tools/utils'
+import { collectAsyncCalls } from '../../test/collectAsyncCalls'
 import { createHttpRequest, fetchKeepAliveStrategy, sendXHR } from './httpRequest'
 import type { HttpRequest } from './httpRequest'
-import { INITIAL_BACKOFF_TIME } from './sendWithRetryStrategy'
 
 describe('httpRequest', () => {
   const BATCH_BYTES_LIMIT = 100
@@ -79,8 +79,9 @@ describe('httpRequest', () => {
       if (!interceptor.isFetchKeepAliveSupported()) {
         pending('no fetch keepalive support')
       }
+
       let calls = 0
-      interceptor.withFetch(() => {
+      const fetchSpy = jasmine.createSpy().and.callFake(() => {
         calls++
         if (calls === 1) {
           return Promise.resolve({ status: 408 })
@@ -89,13 +90,13 @@ describe('httpRequest', () => {
           return Promise.resolve({ status: 200 })
         }
       })
+      const { waitAsyncCalls, expectNoExtraAsyncCall } = collectAsyncCalls(fetchSpy)
+
+      interceptor.withFetch(fetchSpy)
 
       request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
 
-      setTimeout(() => {
-        expect(calls).toEqual(2)
-        done()
-      }, INITIAL_BACKOFF_TIME + 1)
+      waitAsyncCalls(2, () => expectNoExtraAsyncCall(done))
     })
   })
 
