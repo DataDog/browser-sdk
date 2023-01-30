@@ -33,7 +33,6 @@ import {
   switchToAbsoluteUrl,
   serializeStyleSheets,
 } from './serializationUtils'
-import { forEach } from './utils'
 import type { ElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
 import type { WithAdoptedStyleSheets } from './browser.types'
@@ -273,7 +272,7 @@ function serializeCDataNode(): CDataNode {
 
 export function serializeChildNodes(node: Node, options: SerializeOptions): SerializedNodeWithId[] {
   const result: SerializedNodeWithId[] = []
-  forEach(node.childNodes, (childNode) => {
+  node.childNodes.forEach((childNode) => {
     const serializedChildNode = serializeNodeWithId(childNode, options)
     if (serializedChildNode) {
       result.push(serializedChildNode)
