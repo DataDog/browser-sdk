@@ -106,7 +106,7 @@ function processMutations(
   mutations
     .filter((mutation): mutation is RumChildListMutationRecord => mutation.type === 'childList')
     .forEach((mutation) => {
-      mutation.removedNodes.forEach((removedNode) => {
+      forEach(mutation.removedNodes, (removedNode) => {
         traverseRemovedShadowDom(removedNode, shadowRootsController.removeShadowRoot)
       })
     })
