@@ -1,4 +1,4 @@
-import { elementMatches, ONE_SECOND } from '@datadog/browser-core'
+import { elementMatches, isExperimentalFeatureEnabled, ONE_SECOND } from '@datadog/browser-core'
 import { FrustrationType } from '../../../rawRumEvent.types'
 import type { Click } from './trackClickActions'
 
@@ -64,5 +64,11 @@ export function isDead(click: Click) {
   if (click.hasPageActivity || click.getUserActivity().input) {
     return false
   }
-  return !elementMatches(click.event.target, DEAD_CLICK_EXCLUDE_SELECTOR)
+  return !elementMatches(
+    click.event.target,
+    isExperimentalFeatureEnabled('dead_click_fixes')
+      ? // contenteditable and their descendants don't always trigger meaningful changes when manipulated
+        `${DEAD_CLICK_EXCLUDE_SELECTOR},[contenteditable],[contenteditable] *`
+      : DEAD_CLICK_EXCLUDE_SELECTOR
+  )
 }
