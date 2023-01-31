@@ -64,7 +64,7 @@ async function getEmojisLegend() {
 }
 
 function getChangesList() {
-  command`git fetch --tags -q`.run()
+  command`git fetch --tags -f -q`.run()
   const lastTagHash = command`git rev-list --tags --max-count=1`.run().trim()
   const lastTagName = command`git describe --tags ${lastTagHash}`.run()
 
