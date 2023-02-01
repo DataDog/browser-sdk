@@ -339,14 +339,10 @@ describe('initMouseInteractionObserver', () => {
   let stopObserver: () => void
   let sandbox: HTMLDivElement
   let a: HTMLAnchorElement
-  let coordinatesComputed: boolean
 
   beforeEach(() => {
     if (isIE()) {
       pending('IE not supported')
-    }
-    if (!window.visualViewport) {
-      pending('no visualViewport')
     }
 
     sandbox = document.createElement('div')
@@ -362,27 +358,18 @@ describe('initMouseInteractionObserver', () => {
       elementsScrollPositions: createElementsScrollPositions(),
     })
 
-    coordinatesComputed = false
-    Object.defineProperty(window.visualViewport, 'offsetTop', {
-      get() {
-        coordinatesComputed = true
-        return 0
-      },
-      configurable: true,
-    })
-
     mouseInteractionCallbackSpy = jasmine.createSpy()
     stopObserver = initMouseInteractionObserver(mouseInteractionCallbackSpy, DefaultPrivacyLevel.ALLOW)
   })
 
   afterEach(() => {
     sandbox.remove()
-    delete (window.visualViewport as any).offsetTop
     stopObserver()
   })
 
-  it('should compute x/y coordinates for click record', () => {
+  it('should generate click record', () => {
     a.click()
+
     expect(mouseInteractionCallbackSpy).toHaveBeenCalledWith({
       id: jasmine.any(Number),
       type: RecordType.IncrementalSnapshot,
@@ -395,12 +382,11 @@ describe('initMouseInteractionObserver', () => {
         y: jasmine.any(Number),
       },
     })
-    expect(coordinatesComputed).toBeTrue()
   })
 
-  // related to safari issue, see RUMF-1450
-  it('should not compute x/y coordinates for blur record', () => {
+  it('should generate blur record', () => {
     a.blur()
+
     expect(mouseInteractionCallbackSpy).toHaveBeenCalledWith({
       id: jasmine.any(Number),
       type: RecordType.IncrementalSnapshot,
@@ -411,6 +397,39 @@ describe('initMouseInteractionObserver', () => {
         id: jasmine.any(Number),
       },
     })
-    expect(coordinatesComputed).toBeFalse()
+  })
+
+  // related to safari issue, see RUMF-1450
+  describe('forced layout issue', () => {
+    let coordinatesComputed: boolean
+
+    beforeEach(() => {
+      if (!window.visualViewport) {
+        pending('no visualViewport')
+      }
+
+      coordinatesComputed = false
+      Object.defineProperty(window.visualViewport, 'offsetTop', {
+        get() {
+          coordinatesComputed = true
+          return 0
+        },
+        configurable: true,
+      })
+    })
+
+    afterEach(() => {
+      delete (window.visualViewport as any).offsetTop
+    })
+
+    it('should compute x/y coordinates for click record', () => {
+      a.click()
+      expect(coordinatesComputed).toBeTrue()
+    })
+
+    it('should not compute x/y coordinates for blur record', () => {
+      a.blur()
+      expect(coordinatesComputed).toBeFalse()
+    })
   })
 })
