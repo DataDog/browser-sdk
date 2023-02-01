@@ -4,7 +4,7 @@ import { ActionType, LifeCycle, LifeCycleEventType, RumEventType, FrustrationTyp
 import type { RawRumEventCollectedData } from 'packages/rum-core/src/domain/lifeCycle'
 import { createNewEvent, isFirefox } from '../../../../core/test/specHelper'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT } from '../../constants'
-import { RecordType } from '../../types'
+import { IncrementalSource, MouseInteractionType, RecordType } from '../../types'
 import type { FrustrationCallback, InputCallback, MouseInteractionCallBack, StyleSheetCallback } from './observers'
 import {
   initStyleSheetObserver,
@@ -383,14 +383,34 @@ describe('initMouseInteractionObserver', () => {
 
   it('should compute x/y coordinates for click record', () => {
     a.click()
-    expect(mouseInteractionCallbackSpy).toHaveBeenCalled()
+    expect(mouseInteractionCallbackSpy).toHaveBeenCalledWith({
+      id: jasmine.any(Number),
+      type: RecordType.IncrementalSnapshot,
+      timestamp: jasmine.any(Number),
+      data: {
+        source: IncrementalSource.MouseInteraction,
+        type: MouseInteractionType.Click,
+        id: jasmine.any(Number),
+        x: jasmine.any(Number),
+        y: jasmine.any(Number),
+      },
+    })
     expect(coordinatesComputed).toBeTrue()
   })
 
   // related to safari issue, see RUMF-1450
   it('should not compute x/y coordinates for blur record', () => {
     a.blur()
-    expect(mouseInteractionCallbackSpy).toHaveBeenCalled()
+    expect(mouseInteractionCallbackSpy).toHaveBeenCalledWith({
+      id: jasmine.any(Number),
+      type: RecordType.IncrementalSnapshot,
+      timestamp: jasmine.any(Number),
+      data: {
+        source: IncrementalSource.MouseInteraction,
+        type: MouseInteractionType.Blur,
+        id: jasmine.any(Number),
+      },
+    })
     expect(coordinatesComputed).toBeFalse()
   })
 })
