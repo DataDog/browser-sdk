@@ -2,24 +2,24 @@
 # yarn lockfile v1
 
 
-"@datadog/browser-core@4.32.0", "@datadog/browser-core@file:../../packages/core":
-  version "4.32.0"
+"@datadog/browser-core@4.32.1", "@datadog/browser-core@file:../../packages/core":
+  version "4.32.1"
 
 "@datadog/browser-logs@file:../../packages/logs":
-  version "4.32.0"
+  version "4.32.1"
   dependencies:
-    "@datadog/browser-core" "4.32.0"
+    "@datadog/browser-core" "4.32.1"
 
-"@datadog/browser-rum-core@4.32.0", "@datadog/browser-rum-core@file:../../packages/rum-core":
-  version "4.32.0"
+"@datadog/browser-rum-core@4.32.1", "@datadog/browser-rum-core@file:../../packages/rum-core":
+  version "4.32.1"
   dependencies:
-    "@datadog/browser-core" "4.32.0"
+    "@datadog/browser-core" "4.32.1"
 
 "@datadog/browser-rum@file:../../packages/rum":
-  version "4.32.0"
+  version "4.32.1"
   dependencies:
-    "@datadog/browser-core" "4.32.0"
-    "@datadog/browser-rum-core" "4.32.0"
+    "@datadog/browser-core" "4.32.1"
+    "@datadog/browser-rum-core" "4.32.1"
 
 "@jridgewell/gen-mapping@^0.3.0":
   version "0.3.2"
@@ -283,9 +283,9 @@ buffer-from@^1.0.0:
   integrity sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==
 
 caniuse-lite@^1.0.30001449:
-  version "1.0.30001449"
-  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001449.tgz#a8d11f6a814c75c9ce9d851dc53eb1d1dfbcd657"
-  integrity sha512-CPB+UL9XMT/Av+pJxCKGhdx+yg1hzplvFJQlJ2n68PyQGMz9L/E2zCyLdOL8uasbouTUgnPl+y0tccI/se+BEw==
+  version "1.0.30001450"
+  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001450.tgz#022225b91200589196b814b51b1bbe45144cf74f"
+  integrity sha512-qMBmvmQmFXaSxexkjjfMvD5rnDL0+m+dUMZKoDYsGG8iZN29RuYh9eRoMvKsT6uMAWlyUUGDEQGJJYjzCIO9ew==
 
 chalk@^2.3.0:
   version "2.4.2"
