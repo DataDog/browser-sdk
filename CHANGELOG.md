@@ -16,6 +16,10 @@
 
 ---
 
+## v4.32.1
+
+- 🐛[RUMF-1450] stop computing coordinates for focus/blur records ([#1985](https://github.com/DataDog/browser-sdk/pull/1985))
+
 ## v4.32.0
 
 - 🐛 ignore contenteditable elements for dead clicks ([#1986](https://github.com/DataDog/browser-sdk/pull/1986))
