@@ -9,6 +9,7 @@ import {
   addEventListeners,
   addEventListener,
   noop,
+  addTelemetryDebug,
 } from '@datadog/browser-core'
 import type { LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
 import {
@@ -61,7 +62,7 @@ type GroupingCSSRuleTypes = typeof CSSGroupingRule | typeof CSSMediaRule | typeo
 
 type ListenerHandler = () => void
 
-type MousemoveCallBack = (
+export type MousemoveCallBack = (
   p: MousePosition[],
   source: typeof IncrementalSource.MouseMove | typeof IncrementalSource.TouchMove
 ) => void
@@ -151,23 +152,26 @@ export function initMutationObserver(
   return startMutationObserver(cb, configuration, shadowRootsController, document)
 }
 
-function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {
+export function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {
   const { throttled: updatePosition } = throttle(
     monitor((event: MouseEvent | TouchEvent) => {
       const target = getEventTarget(event)
       if (hasSerializedNode(target)) {
-        const { clientX, clientY } = isTouchEvent(event) ? event.changedTouches[0] : event
+        const { x, y } = computeCoordinates(event)
+        if (!Number.isFinite(x) || !Number.isFinite(y)) {
+          addTelemetryDebug('mouse/touch event without x/y', {
+            isTrusted: event.isTrusted,
+            position: { x, y },
+          })
+          return
+        }
         const position: MousePosition = {
           id: getSerializedNodeId(target),
           timeOffset: 0,
-          x: clientX,
-          y: clientY,
+          x,
+          y,
         }
-        if (window.visualViewport) {
-          const { visualViewportX, visualViewportY } = convertMouseEventToLayoutCoordinates(clientX, clientY)
-          position.x = visualViewportX
-          position.y = visualViewportY
-        }
+
         cb([position], isTouchEvent(event) ? IncrementalSource.TouchMove : IncrementalSource.MouseMove)
       }
     }),
@@ -209,6 +213,13 @@ export function initMouseInteractionObserver(
     let interaction: MouseInteraction
     if (type !== MouseInteractionType.Blur && type !== MouseInteractionType.Focus) {
       const { x, y } = computeCoordinates(event)
+      if (!Number.isFinite(x) || !Number.isFinite(y)) {
+        addTelemetryDebug('mouse/touch event without x/y', {
+          isTrusted: event.isTrusted,
+          position: { x, y },
+        })
+        return
+      }
       interaction = { id, type, x, y }
     } else {
       interaction = { id, type }

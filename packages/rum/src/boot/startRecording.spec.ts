@@ -125,11 +125,11 @@ describe('startRecording', () => {
   it('stops sending new segment when the session is expired', (done) => {
     const { lifeCycle } = setupBuilder.build()
 
-    document.body.dispatchEvent(createNewEvent('click'))
+    document.body.dispatchEvent(createNewEvent('click', { clientX: 1, clientY: 2 }))
 
     sessionManager.setNotTracked()
     flushSegment(lifeCycle)
-    document.body.dispatchEvent(createNewEvent('click'))
+    document.body.dispatchEvent(createNewEvent('click', { clientX: 1, clientY: 2 }))
 
     flushSegment(lifeCycle)
 
@@ -143,11 +143,11 @@ describe('startRecording', () => {
     sessionManager.setNotTracked()
     const { lifeCycle } = setupBuilder.build()
 
-    document.body.dispatchEvent(createNewEvent('click'))
+    document.body.dispatchEvent(createNewEvent('click', { clientX: 1, clientY: 2 }))
 
     sessionManager.setId('new-session-id').setPlanWithSessionReplay()
     flushSegment(lifeCycle)
-    document.body.dispatchEvent(createNewEvent('click'))
+    document.body.dispatchEvent(createNewEvent('click', { clientX: 1, clientY: 2 }))
 
     flushSegment(lifeCycle)
 
@@ -251,9 +251,9 @@ describe('startRecording', () => {
     it('stops collecting records', (done) => {
       const { lifeCycle } = setupBuilder.build()
 
-      document.body.dispatchEvent(createNewEvent('click'))
+      document.body.dispatchEvent(createNewEvent('click', { clientX: 1, clientY: 2 }))
       stopRecording()
-      document.body.dispatchEvent(createNewEvent('click'))
+      document.body.dispatchEvent(createNewEvent('click', { clientX: 1, clientY: 2 }))
       flushSegment(lifeCycle)
 
       waitRequestSendCalls(1, (calls) => {
