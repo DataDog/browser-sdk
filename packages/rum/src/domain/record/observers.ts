@@ -157,19 +157,18 @@ export function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {
     monitor((event: MouseEvent | TouchEvent) => {
       const target = getEventTarget(event)
       if (hasSerializedNode(target)) {
-        const { x, y } = computeCoordinates(event)
-        if (!Number.isFinite(x) || !Number.isFinite(y)) {
+        const coordinates = tryComputeCoordinates(event)
+        if (!coordinates) {
           addTelemetryDebug('mouse/touch event without x/y', {
             isTrusted: event.isTrusted,
-            position: { x, y },
           })
           return
         }
         const position: MousePosition = {
           id: getSerializedNodeId(target),
           timeOffset: 0,
-          x,
-          y,
+          x: coordinates.x,
+          y: coordinates.y,
         }
 
         cb([position], isTouchEvent(event) ? IncrementalSource.TouchMove : IncrementalSource.MouseMove)
@@ -212,15 +211,14 @@ export function initMouseInteractionObserver(
 
     let interaction: MouseInteraction
     if (type !== MouseInteractionType.Blur && type !== MouseInteractionType.Focus) {
-      const { x, y } = computeCoordinates(event)
-      if (!Number.isFinite(x) || !Number.isFinite(y)) {
+      const coordinates = tryComputeCoordinates(event)
+      if (!coordinates) {
         addTelemetryDebug('mouse/touch event without x/y', {
           isTrusted: event.isTrusted,
-          position: { x, y },
         })
         return
       }
-      interaction = { id, type, x, y }
+      interaction = { id, type, x: coordinates.x, y: coordinates.y }
     } else {
       interaction = { id, type }
     }
@@ -237,12 +235,15 @@ export function initMouseInteractionObserver(
   }).stop
 }
 
-function computeCoordinates(event: MouseEvent | TouchEvent) {
+function tryComputeCoordinates(event: MouseEvent | TouchEvent) {
   let { clientX: x, clientY: y } = isTouchEvent(event) ? event.changedTouches[0] : event
   if (window.visualViewport) {
     const { visualViewportX, visualViewportY } = convertMouseEventToLayoutCoordinates(x, y)
     x = visualViewportX
     y = visualViewportY
+  }
+  if (!Number.isFinite(x) || !Number.isFinite(y)) {
+    return undefined
   }
   return { x, y }
 }
