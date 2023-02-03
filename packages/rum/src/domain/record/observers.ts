@@ -157,7 +157,7 @@ export function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {
     monitor((event: MouseEvent | TouchEvent) => {
       const target = getEventTarget(event)
       if (hasSerializedNode(target)) {
-        const coordinates = tryComputeCoordinates(event)
+        const coordinates = tryToComputeCoordinates(event)
         if (!coordinates) {
           return
         }
@@ -208,7 +208,7 @@ export function initMouseInteractionObserver(
 
     let interaction: MouseInteraction
     if (type !== MouseInteractionType.Blur && type !== MouseInteractionType.Focus) {
-      const coordinates = tryComputeCoordinates(event)
+      const coordinates = tryToComputeCoordinates(event)
       if (!coordinates) {
         return
       }
@@ -229,7 +229,7 @@ export function initMouseInteractionObserver(
   }).stop
 }
 
-function tryComputeCoordinates(event: MouseEvent | TouchEvent) {
+function tryToComputeCoordinates(event: MouseEvent | TouchEvent) {
   let { clientX: x, clientY: y } = isTouchEvent(event) ? event.changedTouches[0] : event
   if (window.visualViewport) {
     const { visualViewportX, visualViewportY } = convertMouseEventToLayoutCoordinates(x, y)
