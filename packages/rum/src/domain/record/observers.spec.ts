@@ -451,20 +451,11 @@ describe('initMouseInteractionObserver', () => {
 describe('initMoveObserver', () => {
   let mouseMoveCallbackSpy: jasmine.Spy<MousemoveCallBack>
   let stopObserver: () => void
-  let sandbox: HTMLDivElement
-  let a: HTMLAnchorElement
 
   beforeEach(() => {
     if (isIE()) {
       pending('IE not supported')
     }
-
-    sandbox = document.createElement('div')
-    a = document.createElement('a')
-    a.setAttribute('tabindex', '0') // make the element focusable
-    sandbox.appendChild(a)
-    document.body.appendChild(sandbox)
-    a.focus()
 
     serializeDocument(document, DEFAULT_CONFIGURATION, {
       shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
@@ -477,13 +468,12 @@ describe('initMoveObserver', () => {
   })
 
   afterEach(() => {
-    sandbox.remove()
     stopObserver()
   })
 
   it('should generate mouse move record', () => {
     const event = createNewEvent('mousemove', { clientX: 1, clientY: 2 })
-    a.dispatchEvent(event)
+    document.body.dispatchEvent(event)
 
     expect(mouseMoveCallbackSpy).toHaveBeenCalledWith(
       [
@@ -500,7 +490,7 @@ describe('initMoveObserver', () => {
 
   it('should generate touch move record', () => {
     const event = createNewEvent('touchmove', { changedTouches: [{ clientX: 1, clientY: 2 }] })
-    a.dispatchEvent(event)
+    document.body.dispatchEvent(event)
 
     expect(mouseMoveCallbackSpy).toHaveBeenCalledWith(
       [
@@ -517,7 +507,7 @@ describe('initMoveObserver', () => {
 
   it('should not generate mouse move record if x/y are missing', () => {
     const mouseMove = createNewEvent('mousemove')
-    a.dispatchEvent(mouseMove)
+    document.body.dispatchEvent(mouseMove)
 
     expect(mouseMoveCallbackSpy).not.toHaveBeenCalled()
   })
