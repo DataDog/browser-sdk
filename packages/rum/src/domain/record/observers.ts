@@ -159,9 +159,9 @@ export function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {
       if (hasSerializedNode(target)) {
         const coordinates = tryComputeCoordinates(event)
         if (!coordinates) {
-          addTelemetryDebug('mouse/touch event without x/y', {
-            isTrusted: event.isTrusted,
-          })
+          if (event.isTrusted) {
+            addTelemetryDebug('mouse/touch event without x/y')
+          }
           return
         }
         const position: MousePosition = {
@@ -213,9 +213,9 @@ export function initMouseInteractionObserver(
     if (type !== MouseInteractionType.Blur && type !== MouseInteractionType.Focus) {
       const coordinates = tryComputeCoordinates(event)
       if (!coordinates) {
-        addTelemetryDebug('mouse/touch event without x/y', {
-          isTrusted: event.isTrusted,
-        })
+        if (event.isTrusted) {
+          addTelemetryDebug('mouse/touch event without x/y')
+        }
         return
       }
       interaction = { id, type, x: coordinates.x, y: coordinates.y }
