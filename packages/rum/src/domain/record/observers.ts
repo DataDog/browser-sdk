@@ -9,6 +9,7 @@ import {
   addEventListeners,
   addEventListener,
   noop,
+  addTelemetryDebug,
 } from '@datadog/browser-core'
 import type { LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
 import {
@@ -61,7 +62,7 @@ type GroupingCSSRuleTypes = typeof CSSGroupingRule | typeof CSSMediaRule | typeo
 
 type ListenerHandler = () => void
 
-type MousemoveCallBack = (
+export type MousemoveCallBack = (
   p: MousePosition[],
   source: typeof IncrementalSource.MouseMove | typeof IncrementalSource.TouchMove
 ) => void
@@ -151,23 +152,22 @@ export function initMutationObserver(
   return startMutationObserver(cb, configuration, shadowRootsController, document)
 }
 
-function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {
+export function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {
   const { throttled: updatePosition } = throttle(
     monitor((event: MouseEvent | TouchEvent) => {
       const target = getEventTarget(event)
       if (hasSerializedNode(target)) {
-        const { clientX, clientY } = isTouchEvent(event) ? event.changedTouches[0] : event
+        const coordinates = tryToComputeCoordinates(event)
+        if (!coordinates) {
+          return
+        }
         const position: MousePosition = {
           id: getSerializedNodeId(target),
           timeOffset: 0,
-          x: clientX,
-          y: clientY,
+          x: coordinates.x,
+          y: coordinates.y,
         }
-        if (window.visualViewport) {
-          const { visualViewportX, visualViewportY } = convertMouseEventToLayoutCoordinates(clientX, clientY)
-          position.x = visualViewportX
-          position.y = visualViewportY
-        }
+
         cb([position], isTouchEvent(event) ? IncrementalSource.TouchMove : IncrementalSource.MouseMove)
       }
     }),
@@ -208,8 +208,11 @@ export function initMouseInteractionObserver(
 
     let interaction: MouseInteraction
     if (type !== MouseInteractionType.Blur && type !== MouseInteractionType.Focus) {
-      const { x, y } = computeCoordinates(event)
-      interaction = { id, type, x, y }
+      const coordinates = tryToComputeCoordinates(event)
+      if (!coordinates) {
+        return
+      }
+      interaction = { id, type, x: coordinates.x, y: coordinates.y }
     } else {
       interaction = { id, type }
     }
@@ -226,12 +229,18 @@ export function initMouseInteractionObserver(
   }).stop
 }
 
-function computeCoordinates(event: MouseEvent | TouchEvent) {
+function tryToComputeCoordinates(event: MouseEvent | TouchEvent) {
   let { clientX: x, clientY: y } = isTouchEvent(event) ? event.changedTouches[0] : event
   if (window.visualViewport) {
     const { visualViewportX, visualViewportY } = convertMouseEventToLayoutCoordinates(x, y)
     x = visualViewportX
     y = visualViewportY
+  }
+  if (!Number.isFinite(x) || !Number.isFinite(y)) {
+    if (event.isTrusted) {
+      addTelemetryDebug('mouse/touch event without x/y')
+    }
+    return undefined
   }
   return { x, y }
 }
