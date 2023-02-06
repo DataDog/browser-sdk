@@ -184,7 +184,16 @@ export function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {
 }
 
 const eventTypeToMouseInteraction = {
-  [DOM_EVENT.MOUSE_UP]: MouseInteractionType.MouseUp,
+  // Listen for pointerup DOM events instead of mouseup for MouseInteraction/MouseUp records. This
+  // allows to reference such records from Frustration records.
+  //
+  // In the context of supporting Mobile Session Replay, we introduced `PointerInteraction` records
+  // used by the Mobile SDKs in place of `MouseInteraction`. In the future, we should replace
+  // `MouseInteraction` by `PointerInteraction` in the Browser SDK so we have an uniform way to
+  // convey such interaction. This would cleanly solve the issue since we would have
+  // `PointerInteraction/Up` records that we could reference from `Frustration` records.
+  [DOM_EVENT.POINTER_UP]: MouseInteractionType.MouseUp,
+
   [DOM_EVENT.MOUSE_DOWN]: MouseInteractionType.MouseDown,
   [DOM_EVENT.CLICK]: MouseInteractionType.Click,
   [DOM_EVENT.CONTEXT_MENU]: MouseInteractionType.ContextMenu,

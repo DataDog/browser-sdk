@@ -719,7 +719,7 @@ describe('recorder', () => {
 
   describe('frustration records', () => {
     createTest('should detect a dead click and match it to mouse interaction record')
-      .withRum({ trackFrustrations: true })
+      .withRum({ trackFrustrations: true, enableExperimentalFeatures: ['dead_click_fixes'] })
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .run(async ({ serverEvents }) => {
@@ -730,20 +730,20 @@ describe('recorder', () => {
         expect(serverEvents.sessionReplay.length).toBe(1)
         const { segment } = serverEvents.sessionReplay[0]
 
-        const clickRecords = findMouseInteractionRecords(segment.data, MouseInteractionType.Click)
+        const mouseupRecords = findMouseInteractionRecords(segment.data, MouseInteractionType.MouseUp)
         const frustrationRecords = findAllFrustrationRecords(segment.data)
 
-        expect(clickRecords.length).toBe(1)
-        expect(clickRecords[0].id).toBeTruthy('mouse interaction record should have an id')
+        expect(mouseupRecords.length).toBe(1)
+        expect(mouseupRecords[0].id).toBeTruthy('mouse interaction record should have an id')
         expect(frustrationRecords.length).toBe(1)
         expect(frustrationRecords[0].data).toEqual({
           frustrationTypes: [FrustrationType.DEAD_CLICK],
-          recordIds: [clickRecords[0].id!],
+          recordIds: [mouseupRecords[0].id!],
         })
       })
 
     createTest('should detect a rage click and match it to mouse interaction records')
-      .withRum({ trackFrustrations: true })
+      .withRum({ trackFrustrations: true, enableExperimentalFeatures: ['dead_click_fixes'] })
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(
@@ -763,14 +763,14 @@ describe('recorder', () => {
         expect(serverEvents.sessionReplay.length).toBe(1)
         const { segment } = serverEvents.sessionReplay[0]
 
-        const clickRecords = findMouseInteractionRecords(segment.data, MouseInteractionType.Click)
+        const mouseupRecords = findMouseInteractionRecords(segment.data, MouseInteractionType.MouseUp)
         const frustrationRecords = findAllFrustrationRecords(segment.data)
 
-        expect(clickRecords.length).toBe(4)
+        expect(mouseupRecords.length).toBe(4)
         expect(frustrationRecords.length).toBe(1)
         expect(frustrationRecords[0].data).toEqual({
           frustrationTypes: [FrustrationType.RAGE_CLICK],
-          recordIds: clickRecords.map((r) => r.id!),
+          recordIds: mouseupRecords.map((r) => r.id!),
         })
       })
   })
