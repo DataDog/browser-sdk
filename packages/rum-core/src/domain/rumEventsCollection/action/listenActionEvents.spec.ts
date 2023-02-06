@@ -1,5 +1,4 @@
-import type { Clock } from '../../../../../core/test/specHelper'
-import { createNewEvent, mockClock } from '../../../../../core/test/specHelper'
+import { createNewEvent } from '../../../../../core/test/specHelper'
 import type { ActionEventsHooks } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 
@@ -162,16 +161,6 @@ describe('listenActionEvents', () => {
   })
 
   describe('input user activity', () => {
-    let clock: Clock
-
-    beforeEach(() => {
-      clock = mockClock()
-    })
-
-    afterEach(() => {
-      clock.cleanup()
-    })
-
     it('click that do not trigger an input input event should not report input user activity', () => {
       emulateClick()
       expect(hasInputUserActivity()).toBe(false)
@@ -189,14 +178,12 @@ describe('listenActionEvents', () => {
     it('click that triggers an input event slightly after the click should report an input user activity', () => {
       emulateClick()
       emulateInputEvent()
-      clock.tick(1) // run immediate timeouts
       expect(hasInputUserActivity()).toBe(true)
     })
 
     it('input events that precede clicks should not be taken into account', () => {
       emulateInputEvent()
       emulateClick()
-      clock.tick(1) // run immediate timeouts
       expect(hasInputUserActivity()).toBe(false)
     })
 
