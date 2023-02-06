@@ -1,4 +1,3 @@
-import { resetExperimentalFeatures, updateExperimentalFeatures } from '@datadog/browser-core'
 import type { Clock } from '../../../../../core/test/specHelper'
 import { createNewEvent, mockClock } from '../../../../../core/test/specHelper'
 import type { ActionEventsHooks } from './listenActionEvents'
@@ -37,22 +36,11 @@ describe('listenActionEvents', () => {
     expect(actionEventsHooks.onPointerDown).toHaveBeenCalledTimes(1)
   })
 
-  it('listen to click events', () => {
+  it('listen to pointerup events', () => {
     emulateClick()
     expect(actionEventsHooks.onStartEvent).toHaveBeenCalledOnceWith(
       {},
-      jasmine.objectContaining({ type: 'click' }),
-      jasmine.any(Function),
-      jasmine.any(Function)
-    )
-  })
-
-  it('listen to non-primary click events', () => {
-    // This emulates a Chrome behavior where all click events are non-primary
-    emulateClick({ clickEventIsPrimary: false })
-    expect(actionEventsHooks.onStartEvent).toHaveBeenCalledOnceWith(
-      {},
-      jasmine.objectContaining({ type: 'click' }),
+      jasmine.objectContaining({ type: 'pointerup' }),
       jasmine.any(Function),
       jasmine.any(Function)
     )
@@ -83,29 +71,6 @@ describe('listenActionEvents', () => {
     window.dispatchEvent(createNewEvent('click', { target: document.body }))
 
     expect(actionEventsHooks.onStartEvent).not.toHaveBeenCalled()
-  })
-
-  describe('dead_click_fixes experimental feature', () => {
-    beforeEach(() => {
-      stopListenEvents()
-
-      updateExperimentalFeatures(['dead_click_fixes'])
-      ;({ stop: stopListenEvents } = listenActionEvents(actionEventsHooks))
-    })
-
-    afterEach(() => {
-      resetExperimentalFeatures()
-    })
-
-    it('listen to pointerup events', () => {
-      emulateClick()
-      expect(actionEventsHooks.onStartEvent).toHaveBeenCalledOnceWith(
-        {},
-        jasmine.objectContaining({ type: 'pointerup' }),
-        jasmine.any(Function),
-        jasmine.any(Function)
-      )
-    })
   })
 
   describe('selection change', () => {
