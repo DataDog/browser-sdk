@@ -50,7 +50,7 @@ describe('startRecording', () => {
       setupBuilder = setup()
         .withViewContexts({
           findView() {
-            return { id: viewId, documentVersion: 0 }
+            return { id: viewId }
           },
         })
         .withSessionManager(sessionManager)
