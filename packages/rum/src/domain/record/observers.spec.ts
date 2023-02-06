@@ -13,6 +13,7 @@ import type {
   MousemoveCallBack,
 } from './observers'
 import {
+  getRecordIdForEvent,
   initStyleSheetObserver,
   initFrustrationObserver,
   initInputObserver,
@@ -134,7 +135,7 @@ describe('initFrustrationObserver', () => {
     if (isIE()) {
       pending('IE not supported')
     }
-    mouseEvent = new MouseEvent('click')
+    mouseEvent = new MouseEvent('pointerup')
     frustrationsCallbackSpy = jasmine.createSpy()
 
     rumData = {
@@ -169,6 +170,7 @@ describe('initFrustrationObserver', () => {
     expect(frustrationRecord.type).toEqual(RecordType.FrustrationRecord)
     expect(frustrationRecord.timestamp).toEqual(rumData.rawRumEvent.date)
     expect(frustrationRecord.data.frustrationTypes).toEqual(rumData.rawRumEvent.action.frustration!.type)
+    expect(frustrationRecord.data.recordIds).toEqual([getRecordIdForEvent(mouseEvent)])
   })
 
   it('ignores events other than click actions', () => {
@@ -384,6 +386,24 @@ describe('initMouseInteractionObserver', () => {
       data: {
         source: IncrementalSource.MouseInteraction,
         type: MouseInteractionType.Click,
+        id: jasmine.any(Number),
+        x: jasmine.any(Number),
+        y: jasmine.any(Number),
+      },
+    })
+  })
+
+  it('should generate mouseup record on pointerup DOM event', () => {
+    const pointerupEvent = createNewEvent('pointerup', { clientX: 1, clientY: 2 })
+    a.dispatchEvent(pointerupEvent)
+
+    expect(mouseInteractionCallbackSpy).toHaveBeenCalledWith({
+      id: getRecordIdForEvent(pointerupEvent),
+      type: RecordType.IncrementalSnapshot,
+      timestamp: jasmine.any(Number),
+      data: {
+        source: IncrementalSource.MouseInteraction,
+        type: MouseInteractionType.MouseUp,
         id: jasmine.any(Number),
         x: jasmine.any(Number),
         y: jasmine.any(Number),

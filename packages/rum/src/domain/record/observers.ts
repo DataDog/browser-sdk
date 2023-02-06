@@ -51,7 +51,7 @@ const VISUAL_VIEWPORT_OBSERVER_THRESHOLD = 200
 const recordIds = new WeakMap<Event, number>()
 let nextId = 1
 
-function getRecordIdForEvent(event: Event): number {
+export function getRecordIdForEvent(event: Event): number {
   if (!recordIds.has(event)) {
     recordIds.set(event, nextId++)
   }
