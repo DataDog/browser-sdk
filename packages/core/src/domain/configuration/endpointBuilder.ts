@@ -3,7 +3,7 @@ import { timeStampNow } from '../../tools/timeUtils'
 import { normalizeUrl } from '../../tools/urlPolyfill'
 import { generateUUID } from '../../tools/utils'
 import type { InitConfiguration } from './configuration'
-import { INTAKE_SITE_US1 } from './intakeSites'
+import { INTAKE_SITE_AP1, INTAKE_SITE_US1 } from './intakeSites'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
@@ -76,5 +76,6 @@ function buildEndpointHost(initConfiguration: InitConfiguration, endpointType: E
 
   const domainParts = site.split('.')
   const extension = domainParts.pop()
-  return `${ENDPOINTS[endpointType]}.browser-intake-${domainParts.join('-')}.${extension!}`
+  const subdomain = site !== INTAKE_SITE_AP1 ? `${ENDPOINTS[endpointType]}.` : ''
+  return `${subdomain}browser-intake-${domainParts.join('-')}.${extension!}`
 }
