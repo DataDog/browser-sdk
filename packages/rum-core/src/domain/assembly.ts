@@ -1,6 +1,5 @@
 import type { Context, RawError, EventRateLimiter, User } from '@datadog/browser-core'
 import {
-  isExperimentalFeatureEnabled,
   combine,
   isEmptyObject,
   limitModification,
@@ -139,14 +138,6 @@ export function startRumAssembly(
 
         if (!isEmptyObject(commonContext.user)) {
           ;(serverRumEvent.usr as Mutable<RumEvent['usr']>) = commonContext.user as User & Context
-        }
-
-        if (isExperimentalFeatureEnabled('report_view_document_version')) {
-          serverRumEvent.context._dd = {
-            view: {
-              document_version: viewContext.documentVersion,
-            },
-          }
         }
 
         if (shouldSend(serverRumEvent, configuration.beforeSend, domainContext, eventRateLimiters)) {

@@ -52,7 +52,6 @@ export interface ViewCreatedEvent {
   service?: string
   version?: string
   startClocks: ClocksState
-  documentVersion: number
 }
 
 export interface ViewEndedEvent {
@@ -213,7 +212,6 @@ function newView(
     startClocks,
     service,
     version,
-    documentVersion,
   })
 
   // Update the view every time the measures are changing
