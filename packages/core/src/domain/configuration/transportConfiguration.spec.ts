@@ -63,17 +63,25 @@ describe('transportConfiguration', () => {
 
   describe('isIntakeUrl', () => {
     ;[
-      { site: 'datadoghq.eu', intakeDomain: 'browser-intake-datadoghq.eu' },
-      { site: 'datadoghq.com', intakeDomain: 'browser-intake-datadoghq.com' },
-      { site: 'us3.datadoghq.com', intakeDomain: 'browser-intake-us3-datadoghq.com' },
-      { site: 'us5.datadoghq.com', intakeDomain: 'browser-intake-us5-datadoghq.com' },
-      { site: 'ddog-gov.com', intakeDomain: 'browser-intake-ddog-gov.com' },
-    ].forEach(({ site, intakeDomain }) => {
+      { expectSubdomain: true, site: 'datadoghq.eu', intakeDomain: 'browser-intake-datadoghq.eu' },
+      { expectSubdomain: true, site: 'datadoghq.com', intakeDomain: 'browser-intake-datadoghq.com' },
+      { expectSubdomain: true, site: 'us3.datadoghq.com', intakeDomain: 'browser-intake-us3-datadoghq.com' },
+      { expectSubdomain: true, site: 'us5.datadoghq.com', intakeDomain: 'browser-intake-us5-datadoghq.com' },
+      { expectSubdomain: true, site: 'ddog-gov.com', intakeDomain: 'browser-intake-ddog-gov.com' },
+      { expectSubdomain: false, site: 'ap1.datadoghq.com', intakeDomain: 'browser-intake-ap1-datadoghq.com' },
+    ].forEach(({ site, intakeDomain, expectSubdomain }) => {
       it(`should detect intake request for ${site} site`, () => {
         const configuration = computeTransportConfiguration({ clientToken, site })
-        expect(configuration.isIntakeUrl(`https://rum.${intakeDomain}/api/v2/rum?xxx`)).toBe(true)
-        expect(configuration.isIntakeUrl(`https://logs.${intakeDomain}/api/v2/logs?xxx`)).toBe(true)
-        expect(configuration.isIntakeUrl(`https://session-replay.${intakeDomain}/api/v2/replay?xxx`)).toBe(true)
+
+        expect(configuration.isIntakeUrl(`https://rum.${intakeDomain}/api/v2/rum?xxx`)).toBe(expectSubdomain)
+        expect(configuration.isIntakeUrl(`https://logs.${intakeDomain}/api/v2/logs?xxx`)).toBe(expectSubdomain)
+        expect(configuration.isIntakeUrl(`https://session-replay.${intakeDomain}/api/v2/replay?xxx`)).toBe(
+          expectSubdomain
+        )
+
+        expect(configuration.isIntakeUrl(`https://${intakeDomain}/api/v2/rum?xxx`)).toBe(!expectSubdomain)
+        expect(configuration.isIntakeUrl(`https://${intakeDomain}/api/v2/logs?xxx`)).toBe(!expectSubdomain)
+        expect(configuration.isIntakeUrl(`https://${intakeDomain}/api/v2/replay?xxx`)).toBe(!expectSubdomain)
       })
     })
 
@@ -90,15 +98,6 @@ describe('transportConfiguration', () => {
       expect(configuration.isIntakeUrl('https://www.foo.com')).toBe(false)
     })
 
-    it('should handle sites with subdomains', () => {
-      const configuration = computeTransportConfiguration({ clientToken, site: 'foo.datadoghq.com' })
-      expect(configuration.isIntakeUrl('https://rum.browser-intake-foo-datadoghq.com/api/v2/rum?xxx')).toBe(true)
-      expect(configuration.isIntakeUrl('https://logs.browser-intake-foo-datadoghq.com/api/v2/logs?xxx')).toBe(true)
-      expect(
-        configuration.isIntakeUrl('https://session-replay.browser-intake-foo-datadoghq.com/api/v2/replay?xxx')
-      ).toBe(true)
-    })
-
     it('should detect proxy intake request', () => {
       let configuration = computeTransportConfiguration({ clientToken, proxyUrl: 'https://www.proxy.com' })
       expect(configuration.isIntakeUrl('https://www.proxy.com/?ddforward=xxx')).toBe(true)
@@ -112,10 +111,11 @@ describe('transportConfiguration', () => {
       expect(configuration.isIntakeUrl('https://www.proxy.com/foo')).toBe(false)
     })
     ;[
-      { site: 'datadoghq.eu', intakeDomain: 'browser-intake-datadoghq.eu' },
-      { site: 'us3.datadoghq.com', intakeDomain: 'browser-intake-us3-datadoghq.com' },
-      { site: 'us5.datadoghq.com', intakeDomain: 'browser-intake-us5-datadoghq.com' },
-    ].forEach(({ site, intakeDomain }) => {
+      { site: 'datadoghq.eu' },
+      { site: 'us3.datadoghq.com' },
+      { site: 'us5.datadoghq.com' },
+      { site: 'ap1.datadoghq.com' },
+    ].forEach(({ site }) => {
       it(`should detect replica intake request for site ${site}`, () => {
         const configuration = computeTransportConfiguration({
           clientToken,
@@ -123,10 +123,6 @@ describe('transportConfiguration', () => {
           replica: { clientToken },
           internalAnalyticsSubdomain,
         })
-
-        expect(configuration.isIntakeUrl(`https://rum.${intakeDomain}/api/v2/rum?xxx`)).toBe(true)
-        expect(configuration.isIntakeUrl(`https://logs.${intakeDomain}/api/v2/logs?xxx`)).toBe(true)
-        expect(configuration.isIntakeUrl(`https://session-replay.${intakeDomain}/api/v2/replay?xxx`)).toBe(true)
 
         expect(configuration.isIntakeUrl(`https://${internalAnalyticsSubdomain}.datadoghq.com/api/v2/rum?xxx`)).toBe(
           true
