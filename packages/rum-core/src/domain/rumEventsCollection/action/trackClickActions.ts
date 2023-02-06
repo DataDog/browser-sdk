@@ -151,19 +151,17 @@ function processPointerDown(
 
   let hadActivityOnPointerDown = false
 
-  if (isExperimentalFeatureEnabled('dead_click_fixes')) {
-    waitPageActivityEnd(
-      lifeCycle,
-      domMutationObservable,
-      configuration,
-      (pageActivityEndEvent) => {
-        hadActivityOnPointerDown = pageActivityEndEvent.hadActivity
-      },
-      // We don't care about the activity duration, we just want to know whether an activity did happen
-      // within the "validation delay" or not. Limit the duration so the callback is called sooner.
-      PAGE_ACTIVITY_VALIDATION_DELAY
-    )
-  }
+  waitPageActivityEnd(
+    lifeCycle,
+    domMutationObservable,
+    configuration,
+    (pageActivityEndEvent) => {
+      hadActivityOnPointerDown = pageActivityEndEvent.hadActivity
+    },
+    // We don't care about the activity duration, we just want to know whether an activity did happen
+    // within the "validation delay" or not. Limit the duration so the callback is called sooner.
+    PAGE_ACTIVITY_VALIDATION_DELAY
+  )
 
   return { clickActionBase, hadActivityOnPointerDown: () => hadActivityOnPointerDown }
 }

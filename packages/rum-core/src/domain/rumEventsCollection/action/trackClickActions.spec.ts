@@ -430,34 +430,24 @@ describe('trackClickActions', () => {
         expect(events[0].frustrationTypes).toEqual([FrustrationType.DEAD_CLICK])
       })
 
-      describe('dead_click_fixes experimental feature', () => {
-        beforeEach(() => {
-          updateExperimentalFeatures(['dead_click_fixes'])
-        })
+      it('does not consider a click with activity happening on pointerdown as a dead click', () => {
+        const { clock } = setupBuilder.build()
 
-        afterEach(() => {
-          resetExperimentalFeatures()
-        })
+        emulateClick({ activity: { on: 'pointerdown' } })
 
-        it('does not consider a click with activity happening on pointerdown as a dead click', () => {
-          const { clock } = setupBuilder.build()
+        clock.tick(EXPIRE_DELAY)
+        expect(events.length).toBe(1)
+        expect(events[0].frustrationTypes).toEqual([])
+      })
 
-          emulateClick({ activity: { on: 'pointerdown' } })
+      it('activity happening on pointerdown is not taken into account for the action duration', () => {
+        const { clock } = setupBuilder.build()
 
-          clock.tick(EXPIRE_DELAY)
-          expect(events.length).toBe(1)
-          expect(events[0].frustrationTypes).toEqual([])
-        })
+        emulateClick({ activity: { on: 'pointerdown' } })
 
-        it('activity happening on pointerdown is not taken into account for the action duration', () => {
-          const { clock } = setupBuilder.build()
-
-          emulateClick({ activity: { on: 'pointerdown' } })
-
-          clock.tick(EXPIRE_DELAY)
-          expect(events.length).toBe(1)
-          expect(events[0].duration).toBe(0 as Duration)
-        })
+        clock.tick(EXPIRE_DELAY)
+        expect(events.length).toBe(1)
+        expect(events[0].duration).toBe(0 as Duration)
       })
 
       it('does not consider a click with activity happening on pointerup as a dead click', () => {
