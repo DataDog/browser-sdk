@@ -41,7 +41,6 @@ describe('listenActionEvents', () => {
     expect(actionEventsHooks.onStartEvent).toHaveBeenCalledOnceWith(
       {},
       jasmine.objectContaining({ type: 'pointerup' }),
-      jasmine.any(Function),
       jasmine.any(Function)
     )
   })

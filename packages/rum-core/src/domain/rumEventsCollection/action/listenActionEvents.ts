@@ -1,5 +1,4 @@
-import type { TimeStamp } from '@datadog/browser-core'
-import { addEventListener, DOM_EVENT, isExperimentalFeatureEnabled, timeStampNow } from '@datadog/browser-core'
+import { addEventListener, DOM_EVENT } from '@datadog/browser-core'
 
 export type MouseEventOnElement = PointerEvent & { target: Element }
 
@@ -9,12 +8,7 @@ export interface UserActivity {
 }
 export interface ActionEventsHooks<ClickContext> {
   onPointerDown: (event: MouseEventOnElement) => ClickContext | undefined
-  onStartEvent: (
-    context: ClickContext,
-    event: MouseEventOnElement,
-    getUserActivity: () => UserActivity,
-    getClickEventTimeStamp: () => TimeStamp | undefined
-  ) => void
+  onStartEvent: (context: ClickContext, event: MouseEventOnElement, getUserActivity: () => UserActivity) => void
 }
 
 export function listenActionEvents<ClickContext>({ onPointerDown, onStartEvent }: ActionEventsHooks<ClickContext>) {
@@ -60,24 +54,8 @@ export function listenActionEvents<ClickContext>({ onPointerDown, onStartEvent }
         if (isValidPointerEvent(startEvent) && clickContext) {
           // Use a scoped variable to make sure the value is not changed by other clicks
           const localUserActivity = userActivity
-          let clickEventTimeStamp: TimeStamp | undefined
-          onStartEvent(
-            clickContext,
-            startEvent,
-            () => localUserActivity,
-            () => clickEventTimeStamp
-          )
+          onStartEvent(clickContext, startEvent, () => localUserActivity)
           clickContext = undefined
-          if (isExperimentalFeatureEnabled('dead_click_fixes')) {
-            addEventListener(
-              window,
-              DOM_EVENT.CLICK,
-              () => {
-                clickEventTimeStamp = timeStampNow()
-              },
-              { capture: true, once: true }
-            )
-          }
         }
       },
       { capture: true }

@@ -87,7 +87,6 @@ describe('actionCollection', () => {
             x: 1,
             y: 2,
           },
-          pointer_up_delay: undefined,
         },
       },
     })
