@@ -136,7 +136,7 @@ async function forwardReplayToIntake(req: express.Request): Promise<any> {
 
 function prepareIntakeRequest(req: express.Request) {
   const ddforward = req.query.ddforward! as string
-  if (!/^https:\/\/(session-replay|rum|logs)\.browser-intake-datadoghq\.com\//.test(ddforward)) {
+  if (!/^\/api\/v2\//.test(ddforward)) {
     throw new Error(`Unsupported ddforward: ${ddforward}`)
   }
   const options = {
@@ -147,7 +147,7 @@ function prepareIntakeRequest(req: express.Request) {
       'User-Agent': req.headers['user-agent'],
     },
   }
-  return https.request(ddforward, options)
+  return https.request(new URL(ddforward, 'https://browser-intake-datadoghq.com'), options)
 }
 
 async function readStream(stream: NodeJS.ReadableStream): Promise<Buffer> {
