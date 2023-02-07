@@ -4,6 +4,7 @@ import { display } from './display'
 import {
   arrayFrom,
   combine,
+  computeBytesCount,
   cssEscape,
   deepClone,
   elementMatches,
@@ -687,5 +688,15 @@ describe('matchList', () => {
     ]
     expect(matchList(list, 'foo')).toBe(false)
     expect(display.error).toHaveBeenCalled()
+  })
+})
+
+describe('computeBytesCount', () => {
+  it('should count the bytes of a message composed of 1 byte characters', () => {
+    expect(computeBytesCount('1234')).toEqual(4)
+  })
+
+  it('should count the bytes of a message composed of multiple bytes characters', () => {
+    expect(computeBytesCount('🪐')).toEqual(4)
   })
 })

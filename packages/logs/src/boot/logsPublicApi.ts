@@ -45,7 +45,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
   let handleLogStrategy: StartLogsResult['handleLog'] = (
     logsMessage: LogsMessage,
     logger: Logger,
-    savedCommonContext = deepClone(getCommonContext()),
+    savedCommonContext = deepClone(buildCommonContext()),
     date = timeStampNow()
   ) => {
     beforeInitLoggerLog.add(() => handleLogStrategy(logsMessage, logger, savedCommonContext, date))
@@ -54,7 +54,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
   let getInitConfigurationStrategy = (): InitConfiguration | undefined => undefined
   const mainLogger = new Logger((...params) => handleLogStrategy(...params))
 
-  function getCommonContext(): CommonContext {
+  function buildCommonContext(): CommonContext {
     return {
       view: {
         referrer: document.referrer,
@@ -88,7 +88,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
       ;({ handleLog: handleLogStrategy, getInternalContext: getInternalContextStrategy } = startLogsImpl(
         initConfiguration,
         configuration,
-        getCommonContext,
+        buildCommonContext,
         mainLogger
       ))
 

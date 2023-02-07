@@ -9,7 +9,7 @@ import {
   addEventListeners,
   addEventListener,
   noop,
-  isExperimentalFeatureEnabled,
+  addTelemetryDebug,
 } from '@datadog/browser-core'
 import type { LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
 import {
@@ -62,14 +62,14 @@ type GroupingCSSRuleTypes = typeof CSSGroupingRule | typeof CSSMediaRule | typeo
 
 type ListenerHandler = () => void
 
-type MousemoveCallBack = (
+export type MousemoveCallBack = (
   p: MousePosition[],
   source: typeof IncrementalSource.MouseMove | typeof IncrementalSource.TouchMove
 ) => void
 
 export type MutationCallBack = (m: BrowserMutationPayload) => void
 
-type MouseInteractionCallBack = (record: BrowserIncrementalSnapshotRecord) => void
+export type MouseInteractionCallBack = (record: BrowserIncrementalSnapshotRecord) => void
 
 type ScrollCallback = (p: ScrollPosition) => void
 
@@ -152,23 +152,22 @@ export function initMutationObserver(
   return startMutationObserver(cb, configuration, shadowRootsController, document)
 }
 
-function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {
+export function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {
   const { throttled: updatePosition } = throttle(
     monitor((event: MouseEvent | TouchEvent) => {
       const target = getEventTarget(event)
       if (hasSerializedNode(target)) {
-        const { clientX, clientY } = isTouchEvent(event) ? event.changedTouches[0] : event
+        const coordinates = tryToComputeCoordinates(event)
+        if (!coordinates) {
+          return
+        }
         const position: MousePosition = {
           id: getSerializedNodeId(target),
           timeOffset: 0,
-          x: clientX,
-          y: clientY,
+          x: coordinates.x,
+          y: coordinates.y,
         }
-        if (window.visualViewport) {
-          const { visualViewportX, visualViewportY } = convertMouseEventToLayoutCoordinates(clientX, clientY)
-          position.x = visualViewportX
-          position.y = visualViewportY
-        }
+
         cb([position], isTouchEvent(event) ? IncrementalSource.TouchMove : IncrementalSource.MouseMove)
       }
     }),
@@ -195,7 +194,7 @@ const eventTypeToMouseInteraction = {
   [DOM_EVENT.TOUCH_START]: MouseInteractionType.TouchStart,
   [DOM_EVENT.TOUCH_END]: MouseInteractionType.TouchEnd,
 }
-function initMouseInteractionObserver(
+export function initMouseInteractionObserver(
   cb: MouseInteractionCallBack,
   defaultPrivacyLevel: DefaultPrivacyLevel
 ): ListenerHandler {
@@ -204,22 +203,23 @@ function initMouseInteractionObserver(
     if (getNodePrivacyLevel(target, defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN || !hasSerializedNode(target)) {
       return
     }
-    const { clientX, clientY } = isTouchEvent(event) ? event.changedTouches[0] : event
-    const position: MouseInteraction = {
-      id: getSerializedNodeId(target),
-      type: eventTypeToMouseInteraction[event.type as keyof typeof eventTypeToMouseInteraction],
-      x: clientX,
-      y: clientY,
-    }
-    if (window.visualViewport) {
-      const { visualViewportX, visualViewportY } = convertMouseEventToLayoutCoordinates(clientX, clientY)
-      position.x = visualViewportX
-      position.y = visualViewportY
+    const id = getSerializedNodeId(target)
+    const type = eventTypeToMouseInteraction[event.type as keyof typeof eventTypeToMouseInteraction]
+
+    let interaction: MouseInteraction
+    if (type !== MouseInteractionType.Blur && type !== MouseInteractionType.Focus) {
+      const coordinates = tryToComputeCoordinates(event)
+      if (!coordinates) {
+        return
+      }
+      interaction = { id, type, x: coordinates.x, y: coordinates.y }
+    } else {
+      interaction = { id, type }
     }
 
     const record = assign(
       { id: getRecordIdForEvent(event) },
-      assembleIncrementalSnapshot<MouseInteractionData>(IncrementalSource.MouseInteraction, position)
+      assembleIncrementalSnapshot<MouseInteractionData>(IncrementalSource.MouseInteraction, interaction)
     )
     cb(record)
   }
@@ -227,6 +227,22 @@ function initMouseInteractionObserver(
     capture: true,
     passive: true,
   }).stop
+}
+
+function tryToComputeCoordinates(event: MouseEvent | TouchEvent) {
+  let { clientX: x, clientY: y } = isTouchEvent(event) ? event.changedTouches[0] : event
+  if (window.visualViewport) {
+    const { visualViewportX, visualViewportY } = convertMouseEventToLayoutCoordinates(x, y)
+    x = visualViewportX
+    y = visualViewportY
+  }
+  if (!Number.isFinite(x) || !Number.isFinite(y)) {
+    if (event.isTrusted) {
+      addTelemetryDebug('mouse/touch event without x/y')
+    }
+    return undefined
+  }
+  return { x, y }
 }
 
 function initScrollObserver(
@@ -512,11 +528,7 @@ export function initFrustrationObserver(lifeCycle: LifeCycle, frustrationCb: Fru
 }
 
 function getEventTarget(event: Event): Node {
-  if (
-    event.composed === true &&
-    isNodeShadowHost(event.target as Node) &&
-    isExperimentalFeatureEnabled('record_shadow_dom')
-  ) {
+  if (event.composed === true && isNodeShadowHost(event.target as Node)) {
     return event.composedPath()[0] as Node
   }
   return event.target as Node

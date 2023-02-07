@@ -1,4 +1,4 @@
-import type { Observable, TelemetryEvent, RawError } from '@datadog/browser-core'
+import type { Observable, TelemetryEvent, RawError, ContextManager } from '@datadog/browser-core'
 import {
   sendToExtension,
   createPageExitObservable,
@@ -23,7 +23,6 @@ import { startResourceCollection } from '../domain/rumEventsCollection/resource/
 import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
 import type { RumSessionManager } from '../domain/rumSessionManager'
 import { startRumSessionManager, startRumSessionManagerStub } from '../domain/rumSessionManager'
-import type { CommonContext } from '../rawRumEvent.types'
 import { startRumBatch } from '../transport/startRumBatch'
 import { startRumEventBridge } from '../transport/startRumEventBridge'
 import { startUrlContexts } from '../domain/contexts/urlContexts'
@@ -33,14 +32,18 @@ import type { RumConfiguration, RumInitConfiguration } from '../domain/configura
 import { serializeRumConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/rumEventsCollection/view/trackViews'
 import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
+import { startCustomerDataTelemetry } from '../domain/startCustomerDataTelemetry'
 import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
+import type { CommonContext } from '../domain/contexts/commonContext'
+import { buildCommonContext } from '../domain/contexts/commonContext'
 import type { RecorderApi } from './rumPublicApi'
 
 export function startRum(
   initConfiguration: RumInitConfiguration,
   configuration: RumConfiguration,
-  getCommonContext: () => CommonContext,
   recorderApi: RecorderApi,
+  globalContextManager: ContextManager,
+  userContextManager: ContextManager,
   initialViewOptions?: ViewOptions
 ) {
   const lifeCycle = new LifeCycle()
@@ -66,12 +69,23 @@ export function startRum(
   const reportError = (error: RawError) => {
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
   }
+  const featureFlagContexts = startFeatureFlagContexts(lifeCycle)
+
   if (!canUseEventBridge()) {
     const pageExitObservable = createPageExitObservable()
     pageExitObservable.subscribe((event) => {
       lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, event)
     })
-    startRumBatch(configuration, lifeCycle, telemetry.observable, reportError, pageExitObservable)
+    const batch = startRumBatch(configuration, lifeCycle, telemetry.observable, reportError, pageExitObservable)
+    startCustomerDataTelemetry(
+      configuration,
+      telemetry,
+      lifeCycle,
+      globalContextManager,
+      userContextManager,
+      featureFlagContexts,
+      batch.flushObservable
+    )
   } else {
     startRumEventBridge(lifeCycle)
   }
@@ -80,17 +94,17 @@ export function startRum(
   const domMutationObservable = createDOMMutationObservable()
   const locationChangeObservable = createLocationChangeObservable(location)
 
-  const { viewContexts, foregroundContexts, featureFlagContexts, urlContexts, actionContexts, addAction } =
-    startRumEventCollection(
-      lifeCycle,
-      configuration,
-      location,
-      session,
-      locationChangeObservable,
-      domMutationObservable,
-      getCommonContext,
-      reportError
-    )
+  const { viewContexts, foregroundContexts, urlContexts, actionContexts, addAction } = startRumEventCollection(
+    lifeCycle,
+    configuration,
+    location,
+    session,
+    locationChangeObservable,
+    domMutationObservable,
+    () => buildCommonContext(globalContextManager, userContextManager, recorderApi),
+    reportError
+  )
+
   addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
 
   startLongTaskCollection(lifeCycle, session)
@@ -149,12 +163,11 @@ export function startRumEventCollection(
   sessionManager: RumSessionManager,
   locationChangeObservable: Observable<LocationChange>,
   domMutationObservable: Observable<void>,
-  getCommonContext: () => CommonContext,
+  buildCommonContext: () => CommonContext,
   reportError: (error: RawError) => void
 ) {
   const viewContexts = startViewContexts(lifeCycle)
   const urlContexts = startUrlContexts(lifeCycle, locationChangeObservable, location)
-  const featureFlagContexts = startFeatureFlagContexts(lifeCycle)
 
   const foregroundContexts = startForegroundContexts()
   const { addAction, actionContexts } = startActionCollection(
@@ -171,7 +184,7 @@ export function startRumEventCollection(
     viewContexts,
     urlContexts,
     actionContexts,
-    getCommonContext,
+    buildCommonContext,
     reportError
   )
 
@@ -179,7 +192,6 @@ export function startRumEventCollection(
     viewContexts,
     foregroundContexts,
     urlContexts,
-    featureFlagContexts,
     addAction,
     actionContexts,
     stop: () => {

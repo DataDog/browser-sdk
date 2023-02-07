@@ -1,4 +1,4 @@
-import { collectAsyncCalls } from '../../../test/utils'
+import { collectAsyncCalls } from '../../../../core/test/collectAsyncCalls'
 import { createMutationBatch } from './mutationBatch'
 import type { RumMutationRecord } from './mutationObserver'
 

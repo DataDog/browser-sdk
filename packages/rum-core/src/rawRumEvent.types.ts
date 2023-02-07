@@ -7,7 +7,6 @@ import type {
   ServerDuration,
   TimeStamp,
   RawErrorCause,
-  User,
 } from '@datadog/browser-core'
 import type { PageStateEntry } from './domain/contexts/pageStateHistory'
 import type { RumSessionPlan } from './domain/rumSessionManager'
@@ -179,6 +178,7 @@ export interface RawRumActionEvent {
         x: number
         y: number
       }
+      pointer_up_delay?: Duration
     }
   }
 }
@@ -242,15 +242,6 @@ export interface RumContext {
     session: {
       plan: RumSessionPlan
     }
-    view?: {
-      document_version: number
-    }
     browser_sdk_version?: string
   }
-}
-
-export interface CommonContext {
-  user: User
-  context: Context
-  hasReplay?: true
 }

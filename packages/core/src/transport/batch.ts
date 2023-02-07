@@ -1,16 +1,19 @@
 import { display } from '../tools/display'
 import type { Context } from '../tools/context'
-import { jsonStringify, objectValues } from '../tools/utils'
+import { computeBytesCount, jsonStringify, objectValues } from '../tools/utils'
 import { monitor } from '../tools/monitor'
-import type { Observable } from '../tools/observable'
+import { Observable } from '../tools/observable'
 import type { PageExitEvent } from '../browser/pageExitObservable'
 import type { HttpRequest } from './httpRequest'
 
-// https://en.wikipedia.org/wiki/UTF-8
-// eslint-disable-next-line no-control-regex
-const HAS_MULTI_BYTES_CHARACTERS = /[^\u0000-\u007F]/
+export interface BatchFlushEvent {
+  bufferBytesCount: number
+  bufferMessagesCount: number
+}
 
 export class Batch {
+  flushObservable = new Observable<BatchFlushEvent>()
+
   private pushOnlyBuffer: string[] = []
   private upsertBuffer: { [key: string]: string } = {}
   private bufferBytesCount = 0
@@ -41,6 +44,11 @@ export class Batch {
       const messages = this.pushOnlyBuffer.concat(objectValues(this.upsertBuffer))
       const bytesCount = this.bufferBytesCount
 
+      this.flushObservable.notify({
+        bufferBytesCount: this.bufferBytesCount,
+        bufferMessagesCount: this.bufferMessagesCount,
+      })
+
       this.pushOnlyBuffer = []
       this.upsertBuffer = {}
       this.bufferBytesCount = 0
@@ -48,19 +56,6 @@ export class Batch {
 
       sendFn({ data: messages.join('\n'), bytesCount })
     }
-  }
-
-  computeBytesCount(candidate: string) {
-    // Accurate bytes count computations can degrade performances when there is a lot of events to process
-    if (!HAS_MULTI_BYTES_CHARACTERS.test(candidate)) {
-      return candidate.length
-    }
-
-    if (window.TextEncoder !== undefined) {
-      return new TextEncoder().encode(candidate).length
-    }
-
-    return new Blob([candidate]).size
   }
 
   private addOrUpdate(message: Context, key?: string) {
@@ -86,7 +81,7 @@ export class Batch {
 
   private process(message: Context) {
     const processedMessage = jsonStringify(message)!
-    const messageBytesCount = this.computeBytesCount(processedMessage)
+    const messageBytesCount = computeBytesCount(processedMessage)
     return { processedMessage, messageBytesCount }
   }
 
@@ -107,7 +102,7 @@ export class Batch {
   private remove(key: string) {
     const removedMessage = this.upsertBuffer[key]
     delete this.upsertBuffer[key]
-    const messageBytesCount = this.computeBytesCount(removedMessage)
+    const messageBytesCount = computeBytesCount(removedMessage)
     this.bufferBytesCount -= messageBytesCount
     this.bufferMessagesCount -= 1
     if (this.bufferMessagesCount > 0) {

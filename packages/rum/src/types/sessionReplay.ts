@@ -128,6 +128,38 @@ export type MouseInteractionData = {
   readonly source: 2
 } & MouseInteraction
 /**
+ * Browser-specific. Schema of a MouseInteraction.
+ */
+export type MouseInteraction =
+  | {
+      /**
+       * The type of MouseInteraction: 0=mouseup, 1=mousedown, 2=click, 3=contextmenu, 4=dblclick, 7=touchstart, 9=touchend
+       */
+      readonly type: 0 | 1 | 2 | 3 | 4 | 7 | 9
+      /**
+       * Id for the target node for this MouseInteraction.
+       */
+      id: number
+      /**
+       * X-axis coordinate for this MouseInteraction.
+       */
+      x: number
+      /**
+       * Y-axis coordinate for this MouseInteraction.
+       */
+      y: number
+    }
+  | {
+      /**
+       * The type of MouseInteraction: 5=focus, 6=blur
+       */
+      readonly type: 5 | 6
+      /**
+       * Id for the target node for this MouseInteraction.
+       */
+      id: number
+    }
+/**
  * Browser-specific. Schema of a ScrollData.
  */
 export type ScrollData = {
@@ -582,27 +614,6 @@ export interface MousePosition {
    * Observed time offset for this MousePosition.
    */
   timeOffset: number
-}
-/**
- * Browser-specific. Schema of a MouseInteraction.
- */
-export interface MouseInteraction {
-  /**
-   * The type of MouseInteraction.
-   */
-  readonly type: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 9
-  /**
-   * Id for the target node for this MouseInteraction.
-   */
-  id: number
-  /**
-   * X-axis coordinate for this MouseInteraction.
-   */
-  x: number
-  /**
-   * Y-axis coordinate for this MouseInteraction.
-   */
-  y: number
 }
 /**
  * Browser-specific. Schema of a ScrollPosition.

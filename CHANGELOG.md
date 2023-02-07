@@ -16,6 +16,32 @@
 
 ---
 
+## v4.32.1
+
+- 🐛[RUMF-1450] stop computing coordinates for focus/blur records ([#1985](https://github.com/DataDog/browser-sdk/pull/1985))
+
+## v4.32.0
+
+- 🐛 ignore contenteditable elements for dead clicks ([#1986](https://github.com/DataDog/browser-sdk/pull/1986))
+- 🐛 [RUMF-1476] Fix removednodes.foreach is not a function ([#1984](https://github.com/DataDog/browser-sdk/pull/1984))
+- 🐛⚗ [RUMF-1293] discard dead clicks when activity occurs on pointerdown ([#1979](https://github.com/DataDog/browser-sdk/pull/1979))
+- ⬆️ fix flaky test ([#1982](https://github.com/DataDog/browser-sdk/pull/1982))
+- 🔊 Enable customer data telemetry ([#1983](https://github.com/DataDog/browser-sdk/pull/1983))
+- ⚗🐛 [RUMF-1296] use pointerup to trigger click actions ([#1958](https://github.com/DataDog/browser-sdk/pull/1958))
+- [REPLAY] Add telemetry for shadow dom ([#1978](https://github.com/DataDog/browser-sdk/pull/1978))
+- ⬆️ fix Jasmine deprecation warning on unit tests/IE ([#1974](https://github.com/DataDog/browser-sdk/pull/1974))
+- 🐛[RUMF-1465] collect data for disturbed response ([#1977](https://github.com/DataDog/browser-sdk/pull/1977))
+- 🔊 [REPLAY] Add telemetry for shadow DOM ([#1975](https://github.com/DataDog/browser-sdk/pull/1975))
+
+## v4.31.0
+
+- ✨[REPLAY] Add support for shadow dom ([#1969](https://github.com/DataDog/browser-sdk/pull/1969))
+- ✨[REPLAY] Keep Href from link even when importing CSS ([#1960](https://github.com/DataDog/browser-sdk/pull/1960))
+- 🐛[RUMF-1465] fix missing data when fetch instrumented by zone.js ([#1942](https://github.com/DataDog/browser-sdk/pull/1942))
+- ⚗️ 🐛 reset input state at the beginning of each click ([#1968](https://github.com/DataDog/browser-sdk/pull/1968))
+- ⚗️ 🔊[RUMF-1467] Collect user data telemetry ([#1941](https://github.com/DataDog/browser-sdk/pull/1941))
+- ⚗️ 🔊 [RUMF-1445] Check if the page was discarded before a resource ([#1945](https://github.com/DataDog/browser-sdk/pull/1945))
+
 ## v4.30.1
 
 - ⚗️ [REPLAY] Add support for `adoptedStyleSheets` ([#1916](https://github.com/DataDog/browser-sdk/pull/1916))

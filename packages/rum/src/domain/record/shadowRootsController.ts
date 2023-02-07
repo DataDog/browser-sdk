@@ -1,4 +1,4 @@
-import { addTelemetryDebug, DOM_EVENT } from '@datadog/browser-core'
+import { addTelemetryDebug, DOM_EVENT, isExperimentalFeatureEnabled } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { startMutationObserver } from './mutationObserver'
 import { initInputObserver } from './observers'
@@ -54,7 +54,15 @@ export const initShadowRootsController = (
     removeShadowRoot: (shadowRoot: ShadowRoot) => {
       const entry = controllerByShadowRoot.get(shadowRoot)
       if (!entry) {
-        addTelemetryDebug('no shadow root in map')
+        addTelemetryDebug('no shadow root in map', {
+          shadowRoot: shadowRoot ? shadowRoot.nodeName : 'no node name',
+          childrenLength: shadowRoot ? shadowRoot.childElementCount : '-1',
+          controllerByShadowRootSize: controllerByShadowRoot.size,
+          html:
+            shadowRoot && isExperimentalFeatureEnabled('shadow_dom_debug')
+              ? shadowRoot.innerHTML.substring(0, 2000)
+              : undefined,
+        })
         return
       }
       entry.stop()

@@ -9,12 +9,13 @@ import { createNewEvent, mockClock } from '../../../core/test/specHelper'
 
 import type { TestSetupBuilder } from '../../../rum-core/test/specHelper'
 import { setup } from '../../../rum-core/test/specHelper'
-import { collectAsyncCalls, recordsPerFullSnapshot } from '../../test/utils'
+import { recordsPerFullSnapshot } from '../../test/utils'
 import { setSegmentBytesLimit, startDeflateWorker } from '../domain/segmentCollection'
 
 import type { BrowserSegment } from '../types'
 import { RecordType } from '../types'
 import { resetReplayStats } from '../domain/replayStats'
+import { collectAsyncCalls } from '../../../core/test/collectAsyncCalls'
 import { startRecording } from './startRecording'
 
 const VIEW_TIMESTAMP = 1 as TimeStamp
@@ -49,7 +50,7 @@ describe('startRecording', () => {
       setupBuilder = setup()
         .withViewContexts({
           findView() {
-            return { id: viewId, documentVersion: 0 }
+            return { id: viewId }
           },
         })
         .withSessionManager(sessionManager)
@@ -124,11 +125,11 @@ describe('startRecording', () => {
   it('stops sending new segment when the session is expired', (done) => {
     const { lifeCycle } = setupBuilder.build()
 
-    document.body.dispatchEvent(createNewEvent('click'))
+    document.body.dispatchEvent(createNewEvent('click', { clientX: 1, clientY: 2 }))
 
     sessionManager.setNotTracked()
     flushSegment(lifeCycle)
-    document.body.dispatchEvent(createNewEvent('click'))
+    document.body.dispatchEvent(createNewEvent('click', { clientX: 1, clientY: 2 }))
 
     flushSegment(lifeCycle)
 
@@ -142,11 +143,11 @@ describe('startRecording', () => {
     sessionManager.setNotTracked()
     const { lifeCycle } = setupBuilder.build()
 
-    document.body.dispatchEvent(createNewEvent('click'))
+    document.body.dispatchEvent(createNewEvent('click', { clientX: 1, clientY: 2 }))
 
     sessionManager.setId('new-session-id').setPlanWithSessionReplay()
     flushSegment(lifeCycle)
-    document.body.dispatchEvent(createNewEvent('click'))
+    document.body.dispatchEvent(createNewEvent('click', { clientX: 1, clientY: 2 }))
 
     flushSegment(lifeCycle)
 
@@ -250,9 +251,9 @@ describe('startRecording', () => {
     it('stops collecting records', (done) => {
       const { lifeCycle } = setupBuilder.build()
 
-      document.body.dispatchEvent(createNewEvent('click'))
+      document.body.dispatchEvent(createNewEvent('click', { clientX: 1, clientY: 2 }))
       stopRecording()
-      document.body.dispatchEvent(createNewEvent('click'))
+      document.body.dispatchEvent(createNewEvent('click', { clientX: 1, clientY: 2 }))
       flushSegment(lifeCycle)
 
       waitRequestSendCalls(1, (calls) => {

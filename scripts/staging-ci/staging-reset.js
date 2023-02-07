@@ -4,7 +4,7 @@ const fs = require('fs')
 const {
   CI_FILE,
   initGitConfig,
-  executeCommand,
+  command,
   printLog,
   runMain,
   replaceCiFileVariable,
@@ -20,43 +20,43 @@ const NEW_STAGING_BRANCH = `staging-${NEW_STAGING_NUMBER}`
 
 runMain(async () => {
   // used to share the new staging name to the notification jobs
-  await executeCommand(`echo "NEW_STAGING=${NEW_STAGING_BRANCH}" >> build.env`)
+  fs.appendFileSync('build.env', `NEW_STAGING=${NEW_STAGING_BRANCH}`)
 
-  await initGitConfig(REPOSITORY)
-  await executeCommand(`git fetch --no-tags origin ${MAIN_BRANCH} ${CURRENT_STAGING_BRANCH}`)
-  await executeCommand(`git checkout ${MAIN_BRANCH} -f`)
-  await executeCommand('git pull')
+  initGitConfig(REPOSITORY)
+  command`git fetch --no-tags origin ${MAIN_BRANCH} ${CURRENT_STAGING_BRANCH}`.run()
+  command`git checkout ${MAIN_BRANCH} -f`.run()
+  command`git pull`.run()
 
   const isNewBranch = CURRENT_STAGING_BRANCH !== NEW_STAGING_BRANCH
   if (isNewBranch) {
     printLog(`Changing staging branch in ${CI_FILE}...`)
 
     await replaceCiFileVariable('CURRENT_STAGING', NEW_STAGING_BRANCH)
-    await executeCommand(`git commit ${CI_FILE} -m "👷 Bump staging to ${NEW_STAGING_BRANCH}"`)
-    await executeCommand(`git push origin ${MAIN_BRANCH}`)
+    command`git commit ${CI_FILE} -m ${`👷 Bump staging to ${NEW_STAGING_BRANCH}`}`.run()
+    command`git push origin ${MAIN_BRANCH}`.run()
   } else {
     printLog(`Staging branch already up to date in ${CI_FILE}. Skipping.`)
   }
 
   try {
     printLog('Deleting existing staging local branch if it exists...')
-    await executeCommand(`git branch -D ${NEW_STAGING_BRANCH}`)
+    command`git branch -D ${NEW_STAGING_BRANCH}`.run()
   } catch {
     // The local branch did not exist yet, let's continue
   }
 
   printLog('Creating the new staging branch...')
-  await executeCommand(`git checkout -b ${NEW_STAGING_BRANCH}`)
-  await executeCommand(`git push origin -f ${NEW_STAGING_BRANCH}`)
+  command`git checkout -b ${NEW_STAGING_BRANCH}`.run()
+  command`git push origin -f ${NEW_STAGING_BRANCH}`.run()
 
-  await executeCommand(`git checkout ${CURRENT_STAGING_BRANCH}`)
-  await executeCommand(`git pull origin ${CURRENT_STAGING_BRANCH}`)
+  command`git checkout ${CURRENT_STAGING_BRANCH}`.run()
+  command`git pull origin ${CURRENT_STAGING_BRANCH}`.run()
 
   if (isNewBranch && fs.existsSync(CI_FILE)) {
     printLog('Disabling CI on the old branch...')
-    await executeCommand(`git rm ${CI_FILE}`)
-    await executeCommand(`git commit ${CI_FILE} -m "Remove ${CI_FILE} on old branch so pushes are noop"`)
-    await executeCommand(`git push origin ${CURRENT_STAGING_BRANCH}`)
+    command`git rm ${CI_FILE}`.run()
+    command`git commit ${CI_FILE} -m ${`Remove ${CI_FILE} on old branch so pushes are noop`}`.run()
+    command`git push origin ${CURRENT_STAGING_BRANCH}`.run()
   } else {
     printLog('CI already disabled on the old branch. Skipping.')
   }

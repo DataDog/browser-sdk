@@ -5,6 +5,7 @@ import type {
   Observable,
   RawError,
   PageExitEvent,
+  BatchFlushEvent,
 } from '@datadog/browser-core'
 import { Batch, combine, createHttpRequest, isTelemetryReplicationAllowed } from '@datadog/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
@@ -31,9 +32,12 @@ export function startRumBatch(
   })
 
   telemetryEventObservable.subscribe((event) => batch.add(event, isTelemetryReplicationAllowed(configuration)))
+
+  return batch
 }
 
-interface RumBatch {
+export interface RumBatch {
+  flushObservable: Observable<BatchFlushEvent>
   add: (message: Context, replicated?: boolean) => void
   upsert: (message: Context, key: string) => void
 }
@@ -44,7 +48,6 @@ function makeRumBatch(
   pageExitObservable: Observable<PageExitEvent>
 ): RumBatch {
   const primaryBatch = createRumBatch(configuration.rumEndpointBuilder)
-
   let replicaBatch: Batch | undefined
   const replica = configuration.replica
   if (replica !== undefined) {
@@ -67,6 +70,7 @@ function makeRumBatch(
   }
 
   return {
+    flushObservable: primaryBatch.flushObservable,
     add: (message: Context, replicated = true) => {
       primaryBatch.add(message)
       if (replicaBatch && replicated) {

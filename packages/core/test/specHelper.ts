@@ -49,6 +49,7 @@ export function mockClock(date?: Date) {
   resetNavigationStart()
   return {
     tick: (ms: number) => jasmine.clock().tick(ms),
+    setDate: (date: Date) => jasmine.clock().mockDate(date),
     cleanup: () => {
       jasmine.clock().uninstall()
       resetNavigationStart()
@@ -145,6 +146,8 @@ export interface ResponseStubOptions {
   responseText?: string
   responseTextError?: Error
   body?: ReadableStream<Uint8Array>
+  bodyUsed?: boolean
+  bodyDisturbed?: boolean
 }
 function notYetImplemented(): never {
   throw new Error('not yet implemented')
@@ -154,7 +157,11 @@ export class ResponseStub implements Response {
   private _body: ReadableStream<Uint8Array> | undefined
 
   constructor(private options: Readonly<ResponseStubOptions>) {
-    if (this.options.body) {
+    if (this.options.bodyUsed) {
+      this._body = { locked: true } as any
+    } else if (this.options.bodyDisturbed) {
+      this._body = { disturbed: true } as any
+    } else if (this.options.body) {
       this._body = this.options.body
     } else if (this.options.responseTextError !== undefined) {
       this._body = new ReadableStream({
@@ -188,6 +195,10 @@ export class ResponseStub implements Response {
     return this._body ? this._body.locked : false
   }
 
+  get bodyDisturbed() {
+    return this._body ? !!(this._body as any).disturbed : false
+  }
+
   get body() {
     return this._body || null
   }
@@ -195,6 +206,9 @@ export class ResponseStub implements Response {
   clone() {
     if (this.bodyUsed) {
       throw new TypeError("Failed to execute 'clone' on 'Response': Response body is already used")
+    }
+    if (this.bodyDisturbed) {
+      throw new TypeError('Cannot clone a disturbed Response')
     }
     return new ResponseStub(this.options)
   }

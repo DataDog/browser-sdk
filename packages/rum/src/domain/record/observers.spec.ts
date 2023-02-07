@@ -1,19 +1,24 @@
-import {
-  DefaultPrivacyLevel,
-  isIE,
-  noop,
-  relativeNow,
-  timeStampNow,
-  updateExperimentalFeatures,
-} from '@datadog/browser-core'
+import { DefaultPrivacyLevel, isIE, noop, relativeNow, timeStampNow } from '@datadog/browser-core'
 import type { RawRumActionEvent, RumConfiguration } from '@datadog/browser-rum-core'
 import { ActionType, LifeCycle, LifeCycleEventType, RumEventType, FrustrationType } from '@datadog/browser-rum-core'
 import type { RawRumEventCollectedData } from 'packages/rum-core/src/domain/lifeCycle'
 import { createNewEvent, isFirefox } from '../../../../core/test/specHelper'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT } from '../../constants'
-import { RecordType } from '../../types'
-import type { FrustrationCallback, InputCallback, StyleSheetCallback } from './observers'
-import { initStyleSheetObserver, initFrustrationObserver, initInputObserver } from './observers'
+import { IncrementalSource, MouseInteractionType, RecordType } from '../../types'
+import type {
+  FrustrationCallback,
+  InputCallback,
+  MouseInteractionCallBack,
+  StyleSheetCallback,
+  MousemoveCallBack,
+} from './observers'
+import {
+  initStyleSheetObserver,
+  initFrustrationObserver,
+  initInputObserver,
+  initMouseInteractionObserver,
+  initMoveObserver,
+} from './observers'
 import { serializeDocument, SerializationContextStatus } from './serialize'
 import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
@@ -68,7 +73,6 @@ describe('initInputObserver', () => {
 
   // cannot trigger a event in a Shadow DOM because event with `isTrusted:false` do not cross the root
   it('collects input values when an "input" event is composed', () => {
-    updateExperimentalFeatures(['record_shadow_dom'])
     stopInputObserver = initInputObserver(inputCallbackSpy, DefaultPrivacyLevel.ALLOW)
     dispatchInputEventWithInShadowDom('foo')
 
@@ -334,5 +338,177 @@ describe('initStyleSheetObserver', () => {
         expect(styleSheetCallbackSpy).not.toHaveBeenCalled()
       })
     })
+  })
+})
+
+describe('initMouseInteractionObserver', () => {
+  let mouseInteractionCallbackSpy: jasmine.Spy<MouseInteractionCallBack>
+  let stopObserver: () => void
+  let sandbox: HTMLDivElement
+  let a: HTMLAnchorElement
+
+  beforeEach(() => {
+    if (isIE()) {
+      pending('IE not supported')
+    }
+
+    sandbox = document.createElement('div')
+    a = document.createElement('a')
+    a.setAttribute('tabindex', '0') // make the element focusable
+    sandbox.appendChild(a)
+    document.body.appendChild(sandbox)
+    a.focus()
+
+    serializeDocument(document, DEFAULT_CONFIGURATION, {
+      shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
+      status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
+      elementsScrollPositions: createElementsScrollPositions(),
+    })
+
+    mouseInteractionCallbackSpy = jasmine.createSpy()
+    stopObserver = initMouseInteractionObserver(mouseInteractionCallbackSpy, DefaultPrivacyLevel.ALLOW)
+  })
+
+  afterEach(() => {
+    sandbox.remove()
+    stopObserver()
+  })
+
+  it('should generate click record', () => {
+    a.click()
+
+    expect(mouseInteractionCallbackSpy).toHaveBeenCalledWith({
+      id: jasmine.any(Number),
+      type: RecordType.IncrementalSnapshot,
+      timestamp: jasmine.any(Number),
+      data: {
+        source: IncrementalSource.MouseInteraction,
+        type: MouseInteractionType.Click,
+        id: jasmine.any(Number),
+        x: jasmine.any(Number),
+        y: jasmine.any(Number),
+      },
+    })
+  })
+
+  it('should not generate click record if x/y are missing', () => {
+    const clickEvent = createNewEvent('click')
+    a.dispatchEvent(clickEvent)
+
+    expect(mouseInteractionCallbackSpy).not.toHaveBeenCalled()
+  })
+
+  it('should generate blur record', () => {
+    a.blur()
+
+    expect(mouseInteractionCallbackSpy).toHaveBeenCalledWith({
+      id: jasmine.any(Number),
+      type: RecordType.IncrementalSnapshot,
+      timestamp: jasmine.any(Number),
+      data: {
+        source: IncrementalSource.MouseInteraction,
+        type: MouseInteractionType.Blur,
+        id: jasmine.any(Number),
+      },
+    })
+  })
+
+  // related to safari issue, see RUMF-1450
+  describe('forced layout issue', () => {
+    let coordinatesComputed: boolean
+
+    beforeEach(() => {
+      if (!window.visualViewport) {
+        pending('no visualViewport')
+      }
+
+      coordinatesComputed = false
+      Object.defineProperty(window.visualViewport, 'offsetTop', {
+        get() {
+          coordinatesComputed = true
+          return 0
+        },
+        configurable: true,
+      })
+    })
+
+    afterEach(() => {
+      delete (window.visualViewport as any).offsetTop
+    })
+
+    it('should compute x/y coordinates for click record', () => {
+      a.click()
+      expect(coordinatesComputed).toBeTrue()
+    })
+
+    it('should not compute x/y coordinates for blur record', () => {
+      a.blur()
+      expect(coordinatesComputed).toBeFalse()
+    })
+  })
+})
+
+describe('initMoveObserver', () => {
+  let mouseMoveCallbackSpy: jasmine.Spy<MousemoveCallBack>
+  let stopObserver: () => void
+
+  beforeEach(() => {
+    if (isIE()) {
+      pending('IE not supported')
+    }
+
+    serializeDocument(document, DEFAULT_CONFIGURATION, {
+      shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
+      status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
+      elementsScrollPositions: createElementsScrollPositions(),
+    })
+
+    mouseMoveCallbackSpy = jasmine.createSpy()
+    stopObserver = initMoveObserver(mouseMoveCallbackSpy)
+  })
+
+  afterEach(() => {
+    stopObserver()
+  })
+
+  it('should generate mouse move record', () => {
+    const event = createNewEvent('mousemove', { clientX: 1, clientY: 2 })
+    document.body.dispatchEvent(event)
+
+    expect(mouseMoveCallbackSpy).toHaveBeenCalledWith(
+      [
+        {
+          x: 1,
+          y: 2,
+          id: jasmine.any(Number),
+          timeOffset: 0,
+        },
+      ],
+      IncrementalSource.MouseMove
+    )
+  })
+
+  it('should generate touch move record', () => {
+    const event = createNewEvent('touchmove', { changedTouches: [{ clientX: 1, clientY: 2 }] })
+    document.body.dispatchEvent(event)
+
+    expect(mouseMoveCallbackSpy).toHaveBeenCalledWith(
+      [
+        {
+          x: 1,
+          y: 2,
+          id: jasmine.any(Number),
+          timeOffset: 0,
+        },
+      ],
+      IncrementalSource.TouchMove
+    )
+  })
+
+  it('should not generate mouse move record if x/y are missing', () => {
+    const mouseMove = createNewEvent('mousemove')
+    document.body.dispatchEvent(mouseMove)
+
+    expect(mouseMoveCallbackSpy).not.toHaveBeenCalled()
   })
 })

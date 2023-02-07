@@ -420,7 +420,7 @@ describe('makeRecorderApi', () => {
 })
 
 function mockDocumentReadyState() {
-  let readyState = 'loading'
+  let readyState: DocumentReadyState = 'loading'
   spyOnProperty(Document.prototype, 'readyState', 'get').and.callFake(() => readyState)
   return {
     triggerOnDomLoaded: () => {

@@ -1,4 +1,4 @@
-import { isExperimentalFeatureEnabled, monitor, noop } from '@datadog/browser-core'
+import { monitor, noop } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import {
   getChildNodes,
@@ -17,7 +17,6 @@ import {
   nodeAndAncestorsHaveSerializedNode,
 } from './serializationUtils'
 import { serializeNodeWithId, serializeAttribute, SerializationContextStatus } from './serialize'
-import { forEach } from './utils'
 import { createMutationBatch } from './mutationBatch'
 import type { MutationCallBack } from './observers'
 import type { ShadowRootCallBack, ShadowRootsController } from './shadowRootsController'
@@ -177,10 +176,10 @@ function processChildListMutations(
   const addedAndMovedNodes = new Set<Node>()
   const removedNodes = new Map<Node, NodeWithSerializedNode>()
   for (const mutation of mutations) {
-    forEach(mutation.addedNodes, (node) => {
+    mutation.addedNodes.forEach((node) => {
       addedAndMovedNodes.add(node)
     })
-    forEach(mutation.removedNodes, (node) => {
+    mutation.removedNodes.forEach((node) => {
       if (!addedAndMovedNodes.has(node)) {
         removedNodes.set(node, mutation.target)
       }
@@ -382,9 +381,6 @@ export function sortAddedAndMovedNodes(nodes: Node[]) {
   })
 }
 function traverseRemovedShadowDom(removedNode: Node, shadowDomRemovedCallback: ShadowRootCallBack) {
-  if (!isExperimentalFeatureEnabled('record_shadow_dom')) {
-    return
-  }
   if (isNodeShadowHost(removedNode)) {
     shadowDomRemovedCallback(removedNode.shadowRoot)
   }

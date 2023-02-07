@@ -1,5 +1,6 @@
 import type { RelativeTime, Observable, RawError, Duration } from '@datadog/browser-core'
 import {
+  createContextManager,
   stopSessionManager,
   toServerDuration,
   ONE_SECOND,
@@ -24,6 +25,7 @@ import { startLongTaskCollection } from '../domain/rumEventsCollection/longTask/
 import type { RumSessionManager } from '..'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import { RumEventType } from '../rawRumEvent.types'
+import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
 import { startRum, startRumEventCollection } from './startRum'
 
 function collectServerEvents(lifeCycle: LifeCycle) {
@@ -43,11 +45,7 @@ function startRumStub(
   locationChangeObservable: Observable<LocationChange>,
   reportError: (error: RawError) => void
 ) {
-  const {
-    stop: rumEventCollectionStop,
-    foregroundContexts,
-    featureFlagContexts,
-  } = startRumEventCollection(
+  const { stop: rumEventCollectionStop, foregroundContexts } = startRumEventCollection(
     lifeCycle,
     configuration,
     location,
@@ -57,6 +55,7 @@ function startRumStub(
     () => ({
       context: {},
       user: {},
+      hasReplay: undefined,
     }),
     reportError
   )
@@ -67,7 +66,7 @@ function startRumStub(
     domMutationObservable,
     locationChangeObservable,
     foregroundContexts,
-    featureFlagContexts,
+    startFeatureFlagContexts(lifeCycle),
     noopRecorderApi
   )
 
@@ -301,7 +300,13 @@ describe('view events', () => {
 
   beforeEach(() => {
     setupBuilder = setup().beforeBuild(({ configuration }) => {
-      startRum({} as RumInitConfiguration, configuration, () => ({ context: {}, user: {} }), noopRecorderApi)
+      startRum(
+        {} as RumInitConfiguration,
+        configuration,
+        noopRecorderApi,
+        createContextManager(),
+        createContextManager()
+      )
     })
     interceptor = interceptRequests()
   })

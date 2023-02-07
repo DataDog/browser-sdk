@@ -32,6 +32,7 @@ export const enum TelemetryService {
 export interface Telemetry {
   setContextProvider: (provider: () => Context) => void
   observable: Observable<TelemetryEvent & Context>
+  enabled: boolean
 }
 
 const TELEMETRY_EXCLUDED_SITES: string[] = [INTAKE_SITE_US1_FED]
@@ -49,12 +50,13 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
   let contextProvider: () => Context
   const observable = new Observable<TelemetryEvent & Context>()
 
-  telemetryConfiguration.telemetryEnabled = performDraw(configuration.telemetrySampleRate)
+  telemetryConfiguration.telemetryEnabled =
+    !includes(TELEMETRY_EXCLUDED_SITES, configuration.site) && performDraw(configuration.telemetrySampleRate)
   telemetryConfiguration.telemetryConfigurationEnabled =
     telemetryConfiguration.telemetryEnabled && performDraw(configuration.telemetryConfigurationSampleRate)
 
   onRawTelemetryEventCollected = (rawEvent: RawTelemetryEvent) => {
-    if (!includes(TELEMETRY_EXCLUDED_SITES, configuration.site) && telemetryConfiguration.telemetryEnabled) {
+    if (telemetryConfiguration.telemetryEnabled) {
       const event = toTelemetryEvent(telemetryService, rawEvent)
       observable.notify(event)
       sendToExtension('telemetry', event)
@@ -90,6 +92,7 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
       contextProvider = provider
     },
     observable,
+    enabled: telemetryConfiguration.telemetryEnabled,
   }
 }
 

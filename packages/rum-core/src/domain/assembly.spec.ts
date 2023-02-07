@@ -1,17 +1,11 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import {
-  updateExperimentalFeatures,
-  resetExperimentalFeatures,
-  ErrorSource,
-  ONE_MINUTE,
-  display,
-} from '@datadog/browser-core'
+import { ErrorSource, ONE_MINUTE, display } from '@datadog/browser-core'
 import { createRumSessionManagerMock } from '../../test/mockRumSessionManager'
 import { createRawRumEvent } from '../../test/fixtures'
 import type { TestSetupBuilder } from '../../test/specHelper'
 import { mockCiVisibilityWindowValues, cleanupCiVisibilityWindowValues, setup } from '../../test/specHelper'
 import type { RumEventDomainContext } from '../domainContext.types'
-import type { CommonContext, RawRumActionEvent, RawRumErrorEvent, RawRumEvent } from '../rawRumEvent.types'
+import type { RawRumActionEvent, RawRumErrorEvent, RawRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumActionEvent, RumErrorEvent, RumEvent } from '../rumEvent.types'
 import { initEventBridgeStub, deleteEventBridgeStub } from '../../../core/test/specHelper'
@@ -22,6 +16,7 @@ import { LifeCycleEventType } from './lifeCycle'
 import { RumSessionPlan } from './rumSessionManager'
 import type { RumConfiguration } from './configuration'
 import type { ViewContext } from './contexts/viewContexts'
+import type { CommonContext } from './contexts/commonContext'
 
 describe('rum assembly', () => {
   let setupBuilder: TestSetupBuilder
@@ -34,12 +29,12 @@ describe('rum assembly', () => {
     findView = () => ({
       id: '7890',
       name: 'view name',
-      documentVersion: 42,
     })
     reportErrorSpy = jasmine.createSpy('reportError')
     commonContext = {
       context: {},
       user: {},
+      hasReplay: undefined,
     }
     setupBuilder = setup()
       .withViewContexts({
@@ -363,6 +358,7 @@ describe('rum assembly', () => {
         savedCommonContext: {
           context: { replacedContext: 'a' },
           user: {},
+          hasReplay: undefined,
         },
       })
 
@@ -401,6 +397,7 @@ describe('rum assembly', () => {
         savedCommonContext: {
           context: {},
           user: { replacedAttribute: 'a' },
+          hasReplay: undefined,
         },
       })
 
@@ -448,10 +445,6 @@ describe('rum assembly', () => {
   })
 
   describe('view context', () => {
-    afterEach(() => {
-      resetExperimentalFeatures()
-    })
-
     it('should be merged with event attributes', () => {
       const { lifeCycle } = setupBuilder.build()
       notifyRawRumEvent(lifeCycle, {
@@ -461,23 +454,6 @@ describe('rum assembly', () => {
         jasmine.objectContaining({
           id: '7890',
           name: 'view name',
-        })
-      )
-    })
-
-    it('should include the view document version in global context', () => {
-      updateExperimentalFeatures(['report_view_document_version'])
-      const { lifeCycle } = setupBuilder.build()
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.RESOURCE),
-      })
-      expect(serverRumEvents[0].context).toEqual(
-        jasmine.objectContaining({
-          _dd: {
-            view: {
-              document_version: 42,
-            },
-          },
         })
       )
     })
@@ -500,7 +476,7 @@ describe('rum assembly', () => {
 
     it('should be overridden by the view context', () => {
       const { lifeCycle } = setupBuilder.build()
-      findView = () => ({ service: 'new service', version: 'new version', id: '1234', documentVersion: 0 })
+      findView = () => ({ service: 'new service', version: 'new version', id: '1234' })
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION),
       })

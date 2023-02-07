@@ -33,7 +33,7 @@ import { startInternalContext } from '../domain/internalContext'
 export function startLogs(
   initConfiguration: LogsInitConfiguration,
   configuration: LogsConfiguration,
-  getCommonContext: () => CommonContext,
+  buildCommonContext: () => CommonContext,
   mainLogger: Logger
 ) {
   const lifeCycle = new LifeCycle()
@@ -80,7 +80,7 @@ export function startLogs(
       ? startLogsSessionManager(configuration)
       : startLogsSessionManagerStub(configuration)
 
-  startLogsAssembly(session, configuration, lifeCycle, getCommonContext, mainLogger, reportError)
+  startLogsAssembly(session, configuration, lifeCycle, buildCommonContext, mainLogger, reportError)
 
   if (!canUseEventBridge()) {
     startLogsBatch(configuration, lifeCycle, reportError, pageExitObservable)

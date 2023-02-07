@@ -1,4 +1,4 @@
-import { assign, isExperimentalFeatureEnabled, startsWith } from '@datadog/browser-core'
+import { assign, startsWith } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { isNodeShadowHost, isNodeShadowRoot, STABLE_ATTRIBUTES } from '@datadog/browser-rum-core'
 import {
@@ -33,7 +33,6 @@ import {
   switchToAbsoluteUrl,
   serializeStyleSheets,
 } from './serializationUtils'
-import { forEach } from './utils'
 import type { ElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
 import type { WithAdoptedStyleSheets } from './browser.types'
@@ -228,7 +227,7 @@ export function serializeElementNode(element: Element, options: SerializeOptions
     childNodes = serializeChildNodes(element, childNodesSerializationOptions)
   }
 
-  if (isNodeShadowHost(element) && isExperimentalFeatureEnabled('record_shadow_dom')) {
+  if (isNodeShadowHost(element)) {
     const shadowRoot = serializeNodeWithId(element.shadowRoot, options)
     if (shadowRoot !== null) {
       childNodes.push(shadowRoot)
@@ -273,7 +272,7 @@ function serializeCDataNode(): CDataNode {
 
 export function serializeChildNodes(node: Node, options: SerializeOptions): SerializedNodeWithId[] {
   const result: SerializedNodeWithId[] = []
-  forEach(node.childNodes, (childNode) => {
+  node.childNodes.forEach((childNode) => {
     const serializedChildNode = serializeNodeWithId(childNode, options)
     if (serializedChildNode) {
       result.push(serializedChildNode)
@@ -431,8 +430,6 @@ function getAttributesForPrivacyLevel(
     const stylesheet = Array.from(doc.styleSheets).find((s) => s.href === (element as HTMLLinkElement).href)
     const cssText = getCssRulesString(stylesheet as CSSStyleSheet)
     if (cssText && stylesheet) {
-      delete safeAttrs.rel
-      delete safeAttrs.href
       safeAttrs._cssText = cssText
     }
   }

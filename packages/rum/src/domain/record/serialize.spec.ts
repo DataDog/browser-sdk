@@ -1,4 +1,4 @@
-import { isIE, noop, resetExperimentalFeatures, updateExperimentalFeatures } from '@datadog/browser-core'
+import { isIE, noop } from '@datadog/browser-core'
 
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { STABLE_ATTRIBUTES, DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from '@datadog/browser-rum-core'
@@ -78,7 +78,6 @@ describe('serializeNodeWithId', () => {
   })
 
   afterEach(() => {
-    resetExperimentalFeatures()
     sandbox.remove()
   })
 
@@ -98,6 +97,16 @@ describe('serializeNodeWithId', () => {
   })
 
   describe('elements serialization', () => {
+    let isolatedDom: IsolatedDom
+
+    beforeEach(() => {
+      isolatedDom = createIsolatedDom()
+    })
+
+    afterEach(() => {
+      isolatedDom.clear()
+    })
+
     it('serializes a div', () => {
       expect(serializeNodeWithId(document.createElement('div'), DEFAULT_OPTIONS)).toEqual({
         type: NodeType.Element,
@@ -429,7 +438,6 @@ describe('serializeNodeWithId', () => {
     })
 
     it('serializes a shadow host', () => {
-      updateExperimentalFeatures(['record_shadow_dom'])
       const div = document.createElement('div')
       div.attachShadow({ mode: 'open' })
       expect(serializeNodeWithId(div, DEFAULT_OPTIONS)).toEqual({
@@ -451,7 +459,6 @@ describe('serializeNodeWithId', () => {
     })
 
     it('serializes a shadow host with children', () => {
-      updateExperimentalFeatures(['record_shadow_dom'])
       const div = document.createElement('div')
       div.attachShadow({ mode: 'open' })
       div.shadowRoot!.appendChild(document.createElement('hr'))
@@ -494,30 +501,62 @@ describe('serializeNodeWithId', () => {
       expect(addShadowRootSpy).toHaveBeenCalledWith(div.shadowRoot!)
     })
 
-    it('does not serialize shadow host children when the experimental flag is missing', () => {
-      const div = document.createElement('div')
-      div.attachShadow({ mode: 'open' })
-      div.shadowRoot!.appendChild(document.createElement('hr'))
-
-      const options: SerializeOptions = {
-        ...DEFAULT_OPTIONS,
-        serializationContext: {
-          ...DEFAULT_SERIALIZATION_CONTEXT,
-          shadowRootsController: {
-            ...DEFAULT_SHADOW_ROOT_CONTROLLER,
-            addShadowRoot: addShadowRootSpy,
-          },
-        },
-      }
-      expect(serializeNodeWithId(div, options)).toEqual({
+    it('serializes style node with local CSS', () => {
+      const styleNode = document.createElement('style')
+      isolatedDom.document.head.appendChild(styleNode)
+      const styleSheet = styleNode.sheet
+      styleSheet?.insertRule('body { width: 100%; }')
+      expect(serializeNodeWithId(styleNode, DEFAULT_OPTIONS)).toEqual({
         type: NodeType.Element,
-        tagName: 'div',
-        attributes: {},
-        isSVG: undefined,
-        childNodes: [],
+        tagName: 'style',
         id: jasmine.any(Number) as unknown as number,
+        isSVG: undefined,
+        attributes: { _cssText: 'body { width: 100%; }' },
+        childNodes: [],
       })
-      expect(addShadowRootSpy).not.toHaveBeenCalled()
+    })
+
+    it('serializes style node with dynamic CSS that cannot be fetched', () => {
+      const linkNode = document.createElement('link')
+      linkNode.setAttribute('rel', 'stylesheet')
+      linkNode.setAttribute('href', 'https://datadoghq.com/some/style.css')
+      isolatedDom.document.head.appendChild(linkNode)
+      expect(serializeNodeWithId(linkNode, DEFAULT_OPTIONS)).toEqual({
+        type: NodeType.Element,
+        tagName: 'link',
+        id: jasmine.any(Number) as unknown as number,
+        isSVG: undefined,
+        attributes: { rel: 'stylesheet', href: 'https://datadoghq.com/some/style.css' },
+        childNodes: [],
+      })
+    })
+
+    it('serializes style node with dynamic CSS that can be fetched', () => {
+      const linkNode = document.createElement('link')
+      linkNode.setAttribute('rel', 'stylesheet')
+      linkNode.setAttribute('href', 'https://datadoghq.com/some/style.css')
+      isolatedDom.document.head.appendChild(linkNode)
+      Object.defineProperty(isolatedDom.document, 'styleSheets', {
+        value: [
+          {
+            href: 'https://datadoghq.com/some/style.css',
+            cssRules: [{ cssText: 'body { width: 100%; }' }],
+          },
+        ],
+      })
+
+      expect(serializeNodeWithId(linkNode, DEFAULT_OPTIONS)).toEqual({
+        type: NodeType.Element,
+        tagName: 'link',
+        id: jasmine.any(Number) as unknown as number,
+        isSVG: undefined,
+        attributes: {
+          _cssText: 'body { width: 100%; }',
+          rel: 'stylesheet',
+          href: 'https://datadoghq.com/some/style.css',
+        },
+        childNodes: [],
+      })
     })
   })
 

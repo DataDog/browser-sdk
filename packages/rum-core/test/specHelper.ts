@@ -1,5 +1,5 @@
-import type { Context, TimeStamp } from '@datadog/browser-core'
-import { assign, combine, Observable, noop } from '@datadog/browser-core'
+import type { Context, ContextManager, TimeStamp } from '@datadog/browser-core'
+import { createContextManager, assign, combine, Observable, noop } from '@datadog/browser-core'
 import type { Clock } from '../../core/test/specHelper'
 import { SPEC_ENDPOINTS, mockClock, buildLocation } from '../../core/test/specHelper'
 import type { RecorderApi } from '../src/boot/rumPublicApi'
@@ -34,7 +34,8 @@ export interface TestSetupBuilder {
   withFakeClock: () => TestSetupBuilder
   beforeBuild: (callback: BeforeBuildCallback) => TestSetupBuilder
 
-  clock?: Clock
+  clock: Clock | undefined
+  domMutationObservable: Observable<void>
 
   cleanup: () => void
   build: () => TestIO
@@ -55,6 +56,8 @@ export interface BuildContext {
   pageStateHistory: PageStateHistory
   featureFlagContexts: FeatureFlagContexts
   urlContexts: UrlContexts
+  globalContextManager: ContextManager
+  userContextManager: ContextManager
 }
 
 export interface TestIO {
@@ -89,6 +92,7 @@ export function setup(): TestSetupBuilder {
   let featureFlagContexts: FeatureFlagContexts = {
     findFeatureFlagEvaluations: () => undefined,
     addFeatureFlagEvaluation: noop,
+    getFeatureFlagBytesCount: () => 0,
   }
   let actionContexts: ActionContexts = {
     findActionId: noop as () => undefined,
@@ -98,6 +102,8 @@ export function setup(): TestSetupBuilder {
     selectInForegroundPeriodsFor: () => undefined,
     stop: noop,
   }
+  const globalContextManager = createContextManager()
+  const userContextManager = createContextManager()
   const pageStateHistory: PageStateHistory = {
     findAll: () => undefined,
     stop: noop,
@@ -124,6 +130,11 @@ export function setup(): TestSetupBuilder {
   }
 
   const setupBuilder: TestSetupBuilder = {
+    domMutationObservable,
+    get clock() {
+      return clock
+    },
+
     withFakeLocation(initialUrl: string) {
       fakeLocation = buildLocation(initialUrl)
       return setupBuilder
@@ -154,9 +165,9 @@ export function setup(): TestSetupBuilder {
     },
     withFakeClock() {
       clock = mockClock()
-      setupBuilder.clock = clock
       return setupBuilder
     },
+
     beforeBuild(callback: BeforeBuildCallback) {
       beforeBuildTasks.push(callback)
       return setupBuilder
@@ -177,6 +188,8 @@ export function setup(): TestSetupBuilder {
           applicationId: FAKE_APP_ID,
           configuration,
           location: fakeLocation as Location,
+          globalContextManager,
+          userContextManager,
         })
         if (result && result.stop) {
           cleanupTasks.push(result.stop)
