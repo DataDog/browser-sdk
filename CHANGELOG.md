@@ -16,6 +16,13 @@
 
 ---
 
+## v4.33.0
+
+- 🐛 fix frustration animation in session replay ([#1999](https://github.com/DataDog/browser-sdk/pull/1999))
+- ✨ Add new intake strategy for ap1 ([#1997](https://github.com/DataDog/browser-sdk/pull/1997))
+- Revert "🔊 add view document_count in non-view events ([#1892](https://github.com/DataDog/browser-sdk/pull/1892))" ([#1959](https://github.com/DataDog/browser-sdk/pull/1959))
+- 🐛 [REPLAY] Discard mouse/touch event without x/y position ([#1993](https://github.com/DataDog/browser-sdk/pull/1993))
+
 ## v4.32.1
 
 - 🐛[RUMF-1450] stop computing coordinates for focus/blur records ([#1985](https://github.com/DataDog/browser-sdk/pull/1985))
