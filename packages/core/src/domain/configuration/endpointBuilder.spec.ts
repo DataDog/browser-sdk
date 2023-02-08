@@ -1,4 +1,5 @@
 import type { BuildEnvWindow } from '../../../test/specHelper'
+import { startsWith } from '../../tools/utils'
 import type { InitConfiguration } from './configuration'
 import { createEndpointBuilder } from './endpointBuilder'
 
@@ -36,7 +37,47 @@ describe('endpointBuilder', () => {
     })
   })
 
-  describe('proxyUrl', () => {
+  describe('proxy configuration', () => {
+    it('should replace the intake endpoint by the proxy and set the intake path and parameters in the attribute ddforward', () => {
+      expect(
+        createEndpointBuilder({ ...initConfiguration, proxy: 'https://proxy.io/path' }, 'rum', []).build('xhr')
+      ).toMatch(
+        `https://proxy.io/path\\?ddforward=${encodeURIComponent(
+          `/api/v2/rum?ddsource=(.*)&ddtags=(.*)&dd-api-key=${clientToken}` +
+            '&dd-evp-origin-version=(.*)&dd-evp-origin=browser&dd-request-id=(.*)&batch_time=(.*)'
+        )}`
+      )
+    })
+
+    it('normalizes the proxy url', () => {
+      expect(
+        startsWith(
+          createEndpointBuilder({ ...initConfiguration, proxy: '/path' }, 'rum', []).build('xhr'),
+          `${location.origin}/path?ddforward`
+        )
+      ).toBeTrue()
+    })
+
+    it('uses `proxy` over `proxyUrl`', () => {
+      expect(
+        createEndpointBuilder(
+          { ...initConfiguration, proxy: 'https://proxy.io/path', proxyUrl: 'https://legacy-proxy.io/path' },
+          'rum',
+          []
+        ).build('xhr')
+      ).toMatch(/^https:\/\/proxy.io\/path\?/)
+
+      expect(
+        createEndpointBuilder(
+          { ...initConfiguration, proxy: false as any, proxyUrl: 'https://legacy-proxy.io/path' },
+          'rum',
+          []
+        ).build('xhr')
+      ).toMatch(/^https:\/\/rum.browser-intake-datadoghq.com\//)
+    })
+  })
+
+  describe('deprecated proxyUrl configuration', () => {
     it('should replace the full intake endpoint by the proxyUrl and set it in the attribute ddforward', () => {
       expect(
         createEndpointBuilder({ ...initConfiguration, proxyUrl: 'https://proxy.io/path' }, 'rum', []).build('xhr')
@@ -46,6 +87,15 @@ describe('endpointBuilder', () => {
             '&dd-evp-origin-version=(.*)&dd-evp-origin=browser&dd-request-id=(.*)&batch_time=(.*)'
         )}`
       )
+    })
+
+    it('normalizes the proxy url', () => {
+      expect(
+        startsWith(
+          createEndpointBuilder({ ...initConfiguration, proxyUrl: '/path' }, 'rum', []).build('xhr'),
+          `${location.origin}/path?ddforward`
+        )
+      ).toBeTrue()
     })
   })
 
