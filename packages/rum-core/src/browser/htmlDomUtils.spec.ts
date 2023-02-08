@@ -81,12 +81,18 @@ if (!isIE()) {
   describe('isShadowHost', () => {
     const host = document.createElement('div')
     host.attachShadow({ mode: 'open' })
+
+    // Edge 18 and before doesn't support shadow dom, so `Element#shadowRoot` is undefined.
+    const oldEdgeElement = document.createElement('div')
+    Object.defineProperty(oldEdgeElement, 'shadowRoot', { value: undefined })
+
     const parameters: Array<[Node, boolean]> = [
       [host, true],
       [host.shadowRoot!, false],
       [document.body, false],
       [document.createTextNode('hello'), false],
       [document.createComment('hello'), false],
+      [oldEdgeElement, false],
     ]
 
     parameters.forEach(([element, result]) => {
