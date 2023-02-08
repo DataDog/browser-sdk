@@ -8,7 +8,7 @@ import { normalizeUrl } from '../tools/urlPolyfill'
 interface FetchContextBase {
   method: string
   startClocks: ClocksState
-  input: RequestInfo
+  input: unknown
   init?: RequestInit
   url: string
 }
@@ -52,7 +52,7 @@ function createFetchObservable() {
 
           const context = callMonitored(beforeSend, null, [observable, input, init])
           if (context) {
-            responsePromise = originalFetch.call(this, context.input, context.init)
+            responsePromise = originalFetch.call(this, context.input as Request | string, context.init)
             callMonitored(afterSend, null, [observable, responsePromise, context])
           } else {
             responsePromise = originalFetch.call(this, input, init)
@@ -68,9 +68,9 @@ function createFetchObservable() {
   return observable
 }
 
-function beforeSend(observable: Observable<FetchContext>, input: RequestInfo, init?: RequestInit) {
-  const method = (init && init.method) || (typeof input === 'object' && input.method) || 'GET'
-  const url = normalizeUrl((typeof input === 'object' && input.url) || (input as string))
+function beforeSend(observable: Observable<FetchContext>, input: unknown, init?: RequestInit) {
+  const method = (init && init.method) || (input instanceof Request && input.method) || 'GET'
+  const url = input instanceof Request ? input.url : normalizeUrl(String(input))
   const startClocks = clocksNow()
 
   const context: FetchStartContext = {
