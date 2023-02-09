@@ -16,6 +16,11 @@
 
 ---
 
+## v4.34.0
+
+- 🐛 fix Shadow DOM support on Microsoft Edge ([#2003](https://github.com/DataDog/browser-sdk/pull/2003))
+- ✨ [RUMF-1469] introduce a new `proxy` initialization parameter ([#1947](https://github.com/DataDog/browser-sdk/pull/1947))
+
 ## v4.33.0
 
 - 🐛 fix frustration animation in session replay ([#1999](https://github.com/DataDog/browser-sdk/pull/1999))
