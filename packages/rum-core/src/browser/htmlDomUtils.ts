@@ -11,7 +11,7 @@ export function isElementNode(node: Node): node is Element {
 }
 
 export function isNodeShadowHost(node: Node): node is Element & { shadowRoot: ShadowRoot } {
-  return isElementNode(node) && node.shadowRoot !== null
+  return isElementNode(node) && Boolean(node.shadowRoot)
 }
 
 export function isNodeShadowRoot(node: Node): node is ShadowRoot {
