@@ -21,8 +21,8 @@ export function Panel() {
     Pick<Settings, 'autoFlush' | 'preserveEvents' | 'eventSource'>
   >({
     preserveEvents: false,
-    autoFlush: true,
-    eventSource: 'requests',
+    autoFlush: false,
+    eventSource: 'sdk',
   })
 
   useAutoFlushEvents(settingsFromMemory.autoFlush)
