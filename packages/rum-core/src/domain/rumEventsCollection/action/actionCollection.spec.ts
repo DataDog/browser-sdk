@@ -26,7 +26,7 @@ describe('actionCollection', () => {
   it('should create action from auto action', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
 
-    const event = createNewEvent('click', { target: document.createElement('button') })
+    const event = createNewEvent('pointerup', { target: document.createElement('button') })
     lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
       counts: {
         errorCount: 10,
@@ -87,7 +87,6 @@ describe('actionCollection', () => {
             x: 1,
             y: 2,
           },
-          pointer_up_delay: undefined,
         },
       },
     })

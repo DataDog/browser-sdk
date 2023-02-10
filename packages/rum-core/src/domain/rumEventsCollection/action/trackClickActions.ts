@@ -51,7 +51,6 @@ export interface ClickAction {
   event: MouseEventOnElement
   frustrationTypes: FrustrationType[]
   events: Event[]
-  pointerUpDelay?: Duration
 }
 
 export interface ActionContexts {
@@ -85,12 +84,7 @@ export function trackClickActions(
   }>({
     onPointerDown: (pointerDownEvent) =>
       processPointerDown(configuration, lifeCycle, domMutationObservable, history, pointerDownEvent),
-    onStartEvent: (
-      { clickActionBase, hadActivityOnPointerDown },
-      startEvent,
-      getUserActivity,
-      getClickEventTimeStamp
-    ) =>
+    onPointerUp: ({ clickActionBase, hadActivityOnPointerDown }, startEvent, getUserActivity) =>
       startClickAction(
         configuration,
         lifeCycle,
@@ -101,8 +95,7 @@ export function trackClickActions(
         clickActionBase,
         startEvent,
         getUserActivity,
-        hadActivityOnPointerDown,
-        getClickEventTimeStamp
+        hadActivityOnPointerDown
       ),
   })
 
@@ -158,19 +151,17 @@ function processPointerDown(
 
   let hadActivityOnPointerDown = false
 
-  if (isExperimentalFeatureEnabled('dead_click_fixes')) {
-    waitPageActivityEnd(
-      lifeCycle,
-      domMutationObservable,
-      configuration,
-      (pageActivityEndEvent) => {
-        hadActivityOnPointerDown = pageActivityEndEvent.hadActivity
-      },
-      // We don't care about the activity duration, we just want to know whether an activity did happen
-      // within the "validation delay" or not. Limit the duration so the callback is called sooner.
-      PAGE_ACTIVITY_VALIDATION_DELAY
-    )
-  }
+  waitPageActivityEnd(
+    lifeCycle,
+    domMutationObservable,
+    configuration,
+    (pageActivityEndEvent) => {
+      hadActivityOnPointerDown = pageActivityEndEvent.hadActivity
+    },
+    // We don't care about the activity duration, we just want to know whether an activity did happen
+    // within the "validation delay" or not. Limit the duration so the callback is called sooner.
+    PAGE_ACTIVITY_VALIDATION_DELAY
+  )
 
   return { clickActionBase, hadActivityOnPointerDown: () => hadActivityOnPointerDown }
 }
@@ -185,10 +176,9 @@ function startClickAction(
   clickActionBase: ClickActionBase,
   startEvent: MouseEventOnElement,
   getUserActivity: () => UserActivity,
-  hadActivityOnPointerDown: () => boolean,
-  getClickEventTimeStamp: () => TimeStamp | undefined
+  hadActivityOnPointerDown: () => boolean
 ) {
-  const click = newClick(lifeCycle, history, getUserActivity, getClickEventTimeStamp, clickActionBase, startEvent)
+  const click = newClick(lifeCycle, history, getUserActivity, clickActionBase, startEvent)
 
   if (configuration.trackFrustrations) {
     appendClickToClickChain(click)
@@ -289,7 +279,6 @@ function newClick(
   lifeCycle: LifeCycle,
   history: ClickActionIdHistory,
   getUserActivity: () => UserActivity,
-  getClickEventTimeStamp: () => TimeStamp | undefined,
   clickActionBase: ClickActionBase,
   startEvent: MouseEventOnElement
 ) {
@@ -341,7 +330,7 @@ function newClick(
 
     isStopped: () => status === ClickStatus.STOPPED || status === ClickStatus.FINALIZED,
 
-    clone: () => newClick(lifeCycle, history, getUserActivity, getClickEventTimeStamp, clickActionBase, startEvent),
+    clone: () => newClick(lifeCycle, history, getUserActivity, clickActionBase, startEvent),
 
     validate: (domEvents?: Event[]) => {
       stop()
@@ -350,7 +339,6 @@ function newClick(
       }
 
       const { resourceCount, errorCount, longTaskCount } = eventCountsSubscription.eventCounts
-      const clickEventTimeStamp = getClickEventTimeStamp()
       const clickAction: ClickAction = assign(
         {
           type: ActionType.CLICK as const,
@@ -365,7 +353,6 @@ function newClick(
           },
           events: domEvents ?? [startEvent],
           event: startEvent,
-          pointerUpDelay: clickEventTimeStamp && elapsed(startClocks.timeStamp, clickEventTimeStamp),
         },
         clickActionBase
       )

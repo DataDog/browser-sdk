@@ -1,4 +1,4 @@
-import { elementMatches, isExperimentalFeatureEnabled, ONE_SECOND } from '@datadog/browser-core'
+import { elementMatches, ONE_SECOND } from '@datadog/browser-core'
 import { FrustrationType } from '../../../rawRumEvent.types'
 import type { Click } from './trackClickActions'
 
@@ -53,6 +53,9 @@ const DEAD_CLICK_EXCLUDE_SELECTOR =
   'input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="range"]),' +
   'textarea,' +
   'select,' +
+  // contenteditable and their descendants don't always trigger meaningful changes when manipulated
+  '[contenteditable],' +
+  '[contenteditable] *,' +
   // canvas, as there is no good way to detect activity occurring on them
   'canvas,' +
   // links that are interactive (have an href attribute) or any of their descendants, as they can
@@ -64,11 +67,5 @@ export function isDead(click: Click) {
   if (click.hasPageActivity || click.getUserActivity().input) {
     return false
   }
-  return !elementMatches(
-    click.event.target,
-    isExperimentalFeatureEnabled('dead_click_fixes')
-      ? // contenteditable and their descendants don't always trigger meaningful changes when manipulated
-        `${DEAD_CLICK_EXCLUDE_SELECTOR},[contenteditable],[contenteditable] *`
-      : DEAD_CLICK_EXCLUDE_SELECTOR
-  )
+  return !elementMatches(click.event.target, DEAD_CLICK_EXCLUDE_SELECTOR)
 }

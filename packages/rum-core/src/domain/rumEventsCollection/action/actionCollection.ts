@@ -79,7 +79,6 @@ function processAction(
           action: {
             target: action.target,
             position: action.position,
-            pointer_up_delay: action.pointerUpDelay,
           },
         },
       }

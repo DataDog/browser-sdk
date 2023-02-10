@@ -1,4 +1,4 @@
-import { ONE_SECOND, resetExperimentalFeatures, updateExperimentalFeatures } from '@datadog/browser-core'
+import { ONE_SECOND } from '@datadog/browser-core'
 import { FrustrationType } from '../../../rawRumEvent.types'
 import type { Clock } from '../../../../../core/test/specHelper'
 import { mockClock } from '../../../../../core/test/specHelper'
@@ -137,12 +137,10 @@ describe('isDead', () => {
 
   beforeEach(() => {
     isolatedDom = createIsolatedDom()
-    updateExperimentalFeatures(['dead_click_fixes'])
   })
 
   afterEach(() => {
     isolatedDom.clear()
-    resetExperimentalFeatures()
   })
 
   it('considers as dead when the click has no page activity', () => {
