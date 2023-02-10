@@ -84,7 +84,7 @@ export function trackClickActions(
   }>({
     onPointerDown: (pointerDownEvent) =>
       processPointerDown(configuration, lifeCycle, domMutationObservable, history, pointerDownEvent),
-    onStartEvent: ({ clickActionBase, hadActivityOnPointerDown }, startEvent, getUserActivity) =>
+    onPointerUp: ({ clickActionBase, hadActivityOnPointerDown }, startEvent, getUserActivity) =>
       startClickAction(
         configuration,
         lifeCycle,

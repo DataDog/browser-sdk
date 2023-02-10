@@ -4,14 +4,14 @@ import { listenActionEvents } from './listenActionEvents'
 
 describe('listenActionEvents', () => {
   let actionEventsHooks: {
-    onStartEvent: jasmine.Spy<ActionEventsHooks<object>['onStartEvent']>
+    onPointerUp: jasmine.Spy<ActionEventsHooks<object>['onPointerUp']>
     onPointerDown: jasmine.Spy<ActionEventsHooks<object>['onPointerDown']>
   }
   let stopListenEvents: () => void
 
   beforeEach(() => {
     actionEventsHooks = {
-      onStartEvent: jasmine.createSpy(),
+      onPointerUp: jasmine.createSpy(),
       onPointerDown: jasmine.createSpy().and.returnValue({}),
     }
     ;({ stop: stopListenEvents } = listenActionEvents(actionEventsHooks))
@@ -37,7 +37,7 @@ describe('listenActionEvents', () => {
 
   it('listen to pointerup events', () => {
     emulateClick()
-    expect(actionEventsHooks.onStartEvent).toHaveBeenCalledOnceWith(
+    expect(actionEventsHooks.onPointerUp).toHaveBeenCalledOnceWith(
       {},
       jasmine.objectContaining({ type: 'pointerup' }),
       jasmine.any(Function)
@@ -52,23 +52,23 @@ describe('listenActionEvents', () => {
   it('can abort click lifecycle by returning undefined from the onPointerDown callback', () => {
     actionEventsHooks.onPointerDown.and.returnValue(undefined)
     emulateClick()
-    expect(actionEventsHooks.onStartEvent).not.toHaveBeenCalled()
+    expect(actionEventsHooks.onPointerUp).not.toHaveBeenCalled()
   })
 
-  it('passes the context created in onPointerDown to onStartEvent', () => {
+  it('passes the context created in onPointerDown to onPointerUp', () => {
     const context = {}
     actionEventsHooks.onPointerDown.and.returnValue(context)
     emulateClick()
-    expect(actionEventsHooks.onStartEvent.calls.mostRecent().args[0]).toBe(context)
+    expect(actionEventsHooks.onPointerUp.calls.mostRecent().args[0]).toBe(context)
   })
 
   it('ignore "click" events if no "pointerdown" event happened since the previous "click" event', () => {
     emulateClick()
-    actionEventsHooks.onStartEvent.calls.reset()
+    actionEventsHooks.onPointerUp.calls.reset()
 
     window.dispatchEvent(createNewEvent('click', { target: document.body }))
 
-    expect(actionEventsHooks.onStartEvent).not.toHaveBeenCalled()
+    expect(actionEventsHooks.onPointerUp).not.toHaveBeenCalled()
   })
 
   describe('selection change', () => {
@@ -140,7 +140,7 @@ describe('listenActionEvents', () => {
     })
 
     function hasSelectionChanged() {
-      return actionEventsHooks.onStartEvent.calls.mostRecent().args[2]().selection
+      return actionEventsHooks.onPointerUp.calls.mostRecent().args[2]().selection
     }
 
     function emulateNodeSelection(
@@ -200,7 +200,7 @@ describe('listenActionEvents', () => {
       window.dispatchEvent(createNewEvent('input'))
     }
     function hasInputUserActivity() {
-      return actionEventsHooks.onStartEvent.calls.mostRecent().args[2]().input
+      return actionEventsHooks.onPointerUp.calls.mostRecent().args[2]().input
     }
   })
 
