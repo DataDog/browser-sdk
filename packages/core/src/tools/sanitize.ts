@@ -1,7 +1,15 @@
-import { detachToJsonMethod } from './utils'
+import type { ContextValue } from './context'
+import { detachToJsonMethod, ONE_KIBI_BYTE } from './utils'
 
 type DataWithToJson = unknown & { toJSON?: () => unknown }
-type QueueElement = { source: Record<any, any>; target: Record<any, any>; path: string }
+type ContainerElementsToProcess = { source: Record<any, any>; target: Record<any, any>; path: string }
+
+// The maximum size of a single event is 256KiB. By default, we ensure that user-provided data
+// going through sanitize fits inside our events, while leaving room for other contexts, metadata, ...
+const SANITIZE_DEFAULT_MAX_CHARACTER_COUNT = 220 * ONE_KIBI_BYTE
+
+// Symbol for the root element of the JSONPath used for visited objects
+const JSON_PATH_ROOT_ELEMENT = '$'
 
 /**
  * Ensures user-provided data is 'safe' for the SDK
@@ -14,51 +22,68 @@ type QueueElement = { source: Record<any, any>; target: Record<any, any>; path: 
  * - Size does not take into account indentation that can be applied to JSON.stringify
  * - Non-numerical properties of Arrays are ignored. Same behavior as JSON.stringify
  *
- * @param data        User-provided data meant to be serialized using JSON.stringify
- * @param maxLength   Maximum number of characters allowed in serialized form
+ * @param source              User-provided data meant to be serialized using JSON.stringify
+ * @param maxCharacterCount   Maximum number of characters allowed in serialized form
  * @returns
  */
-export function sanitize(data: unknown, maxLength = 220000) {
+export function sanitize(source: unknown, maxCharacterCount = SANITIZE_DEFAULT_MAX_CHARACTER_COUNT) {
   // Unbind any toJSON we may have on [] or {} prototypes
   const restoreObjectPrototypeToJson = detachToJsonMethod(Object.prototype)
   const restoreArrayPrototypeToJson = detachToJsonMethod(Array.prototype)
 
   // Initial call to sanitizeProcessor will populate queue if required
-  const queue: QueueElement[] = []
-  const visited = new WeakMap<object, string>()
-  const clonedData = sanitizeProcessor(data, '$', null, queue, visited)
-  let accumulatedSize = computeSize(clonedData)
-  if (accumulatedSize > maxLength) {
+  const containerQueue: ContainerElementsToProcess[] = []
+  const visitedObjectsWithPath = new WeakMap<object, string>()
+  const sanitizedData = sanitizeProcessor(
+    source,
+    JSON_PATH_ROOT_ELEMENT,
+    undefined,
+    containerQueue,
+    visitedObjectsWithPath
+  )
+  let accumulatedSize = computeSize(sanitizedData)
+  if (accumulatedSize > maxCharacterCount) {
     return undefined
   }
 
-  while (queue.length > 0 && accumulatedSize < maxLength) {
-    const current = queue.shift()!
-    let first = 0
+  while (containerQueue.length > 0 && accumulatedSize < maxCharacterCount) {
+    const containerToProcess = containerQueue.shift()!
+    let separatorLength = 0
 
     // Arrays and Objects have to be handled distinctly to ensure
-    // we do not pickup non-numerical properties from Arrays
-    if (Array.isArray(current.source)) {
-      const len = current.source.length
-      for (let key = 0; key < len; key++) {
-        const targetData = sanitizeProcessor(current.source[key], current.path, key, queue, visited)
-        accumulatedSize += computeSize(targetData, first)
-        if (accumulatedSize > maxLength) {
+    // we do not pick up non-numerical properties from Arrays
+    if (Array.isArray(containerToProcess.source)) {
+      for (let key = 0; key < containerToProcess.source.length; key++) {
+        const targetData = sanitizeProcessor(
+          containerToProcess.source[key],
+          containerToProcess.path,
+          key,
+          containerQueue,
+          visitedObjectsWithPath
+        )
+        accumulatedSize += computeSize(targetData, separatorLength)
+        if (accumulatedSize > maxCharacterCount) {
           break
         }
-        first = 1
-        current.target[key] = targetData
+        separatorLength = 1
+        containerToProcess.target[key] = targetData
       }
     } else {
-      for (const key in current.source) {
-        if (Object.prototype.hasOwnProperty.call(current.source, key)) {
-          const targetData = sanitizeProcessor(current.source[key], current.path, key, queue, visited)
-          accumulatedSize += computeSize(targetData, first, key)
-          if (accumulatedSize > maxLength) {
+      for (const key in containerToProcess.source) {
+        if (Object.prototype.hasOwnProperty.call(containerToProcess.source, key)) {
+          const targetData = sanitizeProcessor(
+            containerToProcess.source[key],
+            containerToProcess.path,
+            key,
+            containerQueue,
+            visitedObjectsWithPath
+          )
+          accumulatedSize += computeSize(targetData, separatorLength, key)
+          if (accumulatedSize > maxCharacterCount) {
             break
           }
-          first = 1
-          current.target[key] = targetData
+          separatorLength = 1
+          containerToProcess.target[key] = targetData
         }
       }
     }
@@ -68,7 +93,7 @@ export function sanitize(data: unknown, maxLength = 220000) {
   restoreObjectPrototypeToJson()
   restoreArrayPrototypeToJson()
 
-  return clonedData
+  return sanitizedData
 }
 
 /**
@@ -79,52 +104,52 @@ export function sanitize(data: unknown, maxLength = 220000) {
 function sanitizeProcessor(
   source: any,
   parentPath: string,
-  key: string | number | null,
-  queue: QueueElement[],
-  visited: WeakMap<object, string>
+  key: string | number | undefined,
+  queue: ContainerElementsToProcess[],
+  visitedObjectsWithPath: WeakMap<object, string>
 ) {
   // Start by handling toJSON, as we want to sanitize its output
-  const processedToJSon = handleToJSON(source)
+  const sourceToSanitize = tryToApplyToJSON(source)
 
-  if (!processedToJSon || typeof processedToJSon !== 'object') {
-    return sanitizeSimpleTypes(processedToJSon)
+  if (!sourceToSanitize || typeof sourceToSanitize !== 'object') {
+    return sanitizePrimitivesAndFunctions(sourceToSanitize)
   }
 
-  const processedSource = sanitizeObjects(processedToJSon)
-  if (processedSource !== '[Object]' && processedSource !== '[Array]') {
-    return processedSource
+  const sanitizedSource = sanitizeObjects(sourceToSanitize)
+  if (sanitizedSource !== '[Object]' && sanitizedSource !== '[Array]') {
+    return sanitizedSource
   }
 
   // Handle potential cyclic references
-  if (visited.has(source)) {
-    const path = visited.get(source)!
-    return visited.get(source) === parentPath ? '[Circular Ref]' : `[Visited] ${path}`
+  // We need to use source as sourceToSanitize could be a reference to a new object
+  if (visitedObjectsWithPath.has(source)) {
+    return `[Reference seen at ${visitedObjectsWithPath.get(source)!}]`
   }
 
   // Add processed source to queue
   const currentPath = key ? `${parentPath}.${key}` : `${parentPath}`
-  const clonedChild = (Array.isArray(source) ? [] : {}) as Record<any, any>
-  visited.set(source, currentPath)
-  queue.push({ source: processedToJSon, target: clonedChild, path: currentPath })
+  const target = (Array.isArray(sourceToSanitize) ? [] : {}) as Record<any, ContextValue>
+  visitedObjectsWithPath.set(source, currentPath)
+  queue.push({ source: sourceToSanitize, target, path: currentPath })
 
-  return clonedChild
+  return target
 }
 
 /**
  * Used to approximate the number of characters elements occupy inside a container
- * "key":"value" => returns a size of 13 if first, 14 otherwise
+ * "key":"value" => returns a size of 13 if first value in collection (separatorLength=0), 14 otherwise (separatorLength=1)
  *
  * LIMITATIONS
  * - Actual byte count may differ according to character encoding
  *
- * @param value     value in key/value pair
- * @param first     0 if first pair in container, 1 otherwise (accounts for the comma separator)
- * @param key       key in key/value pair (undefined for arrays)
+ * @param value              value in key/value pair
+ * @param separatorLength    0 if first pair in container, 1 otherwise (accounts for the comma separator)
+ * @param key                key in key/value pair (undefined for arrays)
  *
  */
-function computeSize(value: unknown, first = 0, key?: string) {
+function computeSize(value: unknown, separatorLength = 0, key?: string) {
   try {
-    return JSON.stringify(value).length + first + (key ? key.length + 3 : 0)
+    return JSON.stringify(value).length + separatorLength + (key ? key.length + 3 : 0)
   } catch {
     // We do not expect this to happen as complex types will have been processed previously
   }
@@ -135,7 +160,7 @@ function computeSize(value: unknown, first = 0, key?: string) {
  * Handles sanitization of simple, non-object types
  *
  */
-function sanitizeSimpleTypes(value: unknown) {
+function sanitizePrimitivesAndFunctions(value: unknown) {
   // BigInt cannot be serialized by JSON.stringify(), convert it to a string representation
   if (typeof value === 'bigint') {
     return `[BigInt] ${value.toString()}`
@@ -149,7 +174,7 @@ function sanitizeSimpleTypes(value: unknown) {
 }
 
 /**
- * Handles sanitization of objects types
+ * Handles sanitization of object types
  *
  * LIMITATIONS
  * - If a class defines a toStringTag Symbol, it will fall in the catch-all method and prevent enumeration of properties.
@@ -175,7 +200,7 @@ function sanitizeObjects(value: object) {
       return `[${match[1]}]`
     }
   } catch {
-    // If the previous serialization attemps failed, and we cannot convert using
+    // If the previous serialization attempts failed, and we cannot convert using
     // Object.prototype.toString, declare the value unserializable
   }
   return '[Unserializable]'
@@ -185,7 +210,7 @@ function sanitizeObjects(value: object) {
  * Checks if a toJSON function exists and tries to execute it
  *
  */
-function handleToJSON(value: DataWithToJson) {
+function tryToApplyToJSON(value: DataWithToJson) {
   if (value && typeof value.toJSON === 'function') {
     try {
       return value.toJSON()

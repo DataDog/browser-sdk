@@ -40,19 +40,22 @@ export class Logger {
 
   @monitored
   log(message: string, messageContext?: object, status: StatusType = StatusType.info) {
-    this.handleLogStrategy({ message, context: sanitize(messageContext) as Context, status }, this)
+    this.handleLogStrategy(
+      { message: sanitize(message) as string, context: sanitize(messageContext) as Context, status },
+      this
+    )
   }
 
   debug(message: string, messageContext?: object) {
-    this.log(message, sanitize(messageContext) as object, StatusType.debug)
+    this.log(message, messageContext as object, StatusType.debug)
   }
 
   info(message: string, messageContext?: object) {
-    this.log(message, sanitize(messageContext) as object, StatusType.info)
+    this.log(message, messageContext as object, StatusType.info)
   }
 
   warn(message: string, messageContext?: object) {
-    this.log(message, sanitize(messageContext) as object, StatusType.warn)
+    this.log(message, messageContext as object, StatusType.warn)
   }
 
   error(message: string, messageContext?: object) {
@@ -61,7 +64,7 @@ export class Logger {
         origin: ErrorSource.LOGGER,
       },
     }
-    this.log(message, combine(errorOrigin, sanitize(messageContext) as object), StatusType.error)
+    this.log(message, combine(errorOrigin, messageContext as object), StatusType.error)
   }
 
   setContext(context: object) {

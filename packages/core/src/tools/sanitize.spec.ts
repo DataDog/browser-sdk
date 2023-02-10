@@ -104,14 +104,31 @@ describe('sanitize', () => {
       const obj: any = { a: 42 }
       obj.self = obj
 
-      expect(sanitize(obj)).toEqual({ a: 42, self: '[Circular Ref]' })
+      expect(sanitize(obj)).toEqual({ a: 42, self: '[Reference seen at $]' })
+    })
+
+    it('should remove deep circular references', () => {
+      const obj: any = {}
+      obj.toto = { inner: obj }
+
+      expect(sanitize(obj)).toEqual({ toto: { inner: '[Reference seen at $]' } })
+    })
+
+    it('should remove circular references between two branches in a tree', () => {
+      const a: any = {}
+      const b: any = {}
+      a.link = b
+      b.link = a
+      const obj = { a, b }
+
+      expect(sanitize(obj)).toEqual({ a: { link: '[Reference seen at $.b]' }, b: { link: '[Reference seen at $.a]' } })
     })
 
     it('should replace already visited objects with a json path', () => {
       const inner = [1]
       const obj = { a: inner, b: inner }
 
-      expect(sanitize(obj)).toEqual({ a: [1], b: '[Visited] $.a' })
+      expect(sanitize(obj)).toEqual({ a: [1], b: '[Reference seen at $.a]' })
     })
   })
 
@@ -130,6 +147,11 @@ describe('sanitize', () => {
 
       expect(sanitize(obj)).toEqual({ a: 1, b: 2, c: { d: 4 } })
       expect(toJSON).toHaveBeenCalledTimes(1)
+    })
+
+    it('should switch to the proper container type after applying toJSON', () => {
+      const obj = { a: 42, toJSON: () => [42] }
+      expect(sanitize(obj)).toEqual([42])
     })
 
     it('should not use toJSON methods added to arrays and objects prototypes', () => {

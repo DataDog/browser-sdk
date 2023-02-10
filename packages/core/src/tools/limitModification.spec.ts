@@ -155,4 +155,16 @@ describe('limitModification', () => {
       foo: { bar: 'qux' },
     })
   })
+
+  it('should call sanitize on newly provided values', () => {
+    const object: Context = { bar: { baz: 42 } }
+
+    const modifier = (candidate: any) => {
+      candidate.bar.self = candidate.bar
+    }
+
+    limitModification(object, ['bar'], modifier)
+
+    expect(() => JSON.stringify(object)).not.toThrowError()
+  })
 })
