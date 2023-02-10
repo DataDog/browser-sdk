@@ -50,11 +50,11 @@ export function listenActionEvents<ClickContext>({ onPointerDown, onPointerUp }:
     addEventListener(
       window,
       DOM_EVENT.POINTER_UP,
-      (startEvent: PointerEvent) => {
-        if (isValidPointerEvent(startEvent) && clickContext) {
+      (event: PointerEvent) => {
+        if (isValidPointerEvent(event) && clickContext) {
           // Use a scoped variable to make sure the value is not changed by other clicks
           const localUserActivity = userActivity
-          onPointerUp(clickContext, startEvent, () => localUserActivity)
+          onPointerUp(clickContext, event, () => localUserActivity)
           clickContext = undefined
         }
       },
