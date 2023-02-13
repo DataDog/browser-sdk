@@ -300,7 +300,7 @@ describe('action collection', () => {
         <script>
           const button = document.querySelector('button')
           button.addEventListener('click', () => {
-            window.open('https://example.com')
+            window.open(window.location.href)
           })
         </script>
       `
