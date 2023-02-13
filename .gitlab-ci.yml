@@ -280,7 +280,7 @@ deploy-prod-stable:
     - yarn
     - yarn build:bundle
     - ./scripts/deploy.sh prod v${VERSION%%.*}
-    - node ./scripts/upload-source-maps.js datadoghq.com,datadoghq.eu,us3.datadoghq.com,us5.datadoghq.com v${VERSION%%.*}
+    - node ./scripts/upload-source-maps.js datadoghq.com,datadoghq.eu,us3.datadoghq.com,us5.datadoghq.com,ap1.datadoghq.com v${VERSION%%.*}
 
 publish-npm:
   stage: deploy
