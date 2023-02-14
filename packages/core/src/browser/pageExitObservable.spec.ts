@@ -29,6 +29,12 @@ describe('createPageExitObservable', () => {
     expect(onExitSpy).toHaveBeenCalledOnceWith({ reason: PageExitReason.HIDDEN })
   })
 
+  it('notifies when the page becomes frozen', () => {
+    window.dispatchEvent(createNewEvent('freeze'))
+
+    expect(onExitSpy).toHaveBeenCalledOnceWith({ reason: PageExitReason.FROZEN })
+  })
+
   it('notifies multiple times', () => {
     window.dispatchEvent(createNewEvent('beforeunload'))
     window.dispatchEvent(createNewEvent('beforeunload'))
