@@ -61,10 +61,16 @@ if (!isIE()) {
   describe('isShadowRoot', () => {
     const parent = document.createElement('div')
     parent.attachShadow({ mode: 'open' })
+    const form = document.createElement('form')
+    const input = document.createElement('input')
+    input.setAttribute('name', 'host')
+    form.appendChild(input)
     const parameters: Array<[Node, boolean]> = [
       [parent.shadowRoot!, true],
+      [form, false],
       [parent, false],
       [document.body, false],
+      [input, false],
       [document.createTextNode('hello'), false],
       [document.createComment('hello'), false],
     ]
