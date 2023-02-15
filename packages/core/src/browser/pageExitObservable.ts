@@ -17,7 +17,7 @@ export interface PageExitEvent {
 export function createPageExitObservable(): Observable<PageExitEvent> {
   const observable = new Observable<PageExitEvent>(() => {
     const { stop: stopListeners } = addEventListeners(
-      document,
+      window,
       [DOM_EVENT.VISIBILITY_CHANGE, DOM_EVENT.FREEZE],
       (event) => {
         if (event.type === DOM_EVENT.VISIBILITY_CHANGE && document.visibilityState === 'hidden') {
