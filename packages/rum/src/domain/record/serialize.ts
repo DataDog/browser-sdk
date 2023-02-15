@@ -356,7 +356,10 @@ function getValidTagName(tagName: string): string {
   return processedTagName
 }
 
-function getCssRulesString(s: CSSStyleSheet): string | null {
+function getCssRulesString(s: CSSStyleSheet | undefined | null): string | null {
+  if (!s) {
+    return null
+  }
   try {
     const rules = s.rules || s.cssRules
     if (rules) {
@@ -428,7 +431,7 @@ function getAttributesForPrivacyLevel(
   // remote css
   if (tagName === 'link') {
     const stylesheet = Array.from(doc.styleSheets).find((s) => s.href === (element as HTMLLinkElement).href)
-    const cssText = getCssRulesString(stylesheet as CSSStyleSheet)
+    const cssText = getCssRulesString(stylesheet)
     if (cssText && stylesheet) {
       safeAttrs._cssText = cssText
     }
@@ -441,7 +444,7 @@ function getAttributesForPrivacyLevel(
     // TODO: Currently we only try to get dynamic stylesheet when it is an empty style element
     !((element as HTMLStyleElement).innerText || element.textContent || '').trim().length
   ) {
-    const cssText = getCssRulesString((element as HTMLStyleElement).sheet as CSSStyleSheet)
+    const cssText = getCssRulesString((element as HTMLStyleElement).sheet)
     if (cssText) {
       safeAttrs._cssText = cssText
     }
