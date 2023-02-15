@@ -81,14 +81,14 @@ if (!isIE()) {
       expect(isNodeShadowRoot(shadowRoot)).toBe(true)
     })
 
-    it('should return false for a[href] since it has a host property', () => {
+    it('should return false for a[href] despite it has a host property', () => {
       const link = document.createElement('a')
       link.setAttribute('href', 'http://localhost/some/path')
       expect(link.host).toBeTruthy()
       expect(isNodeShadowRoot(link)).toBe(false)
     })
 
-    it('should return false for form > input[name="host"] since the host property will be added to the form element', () => {
+    it('should return false for a form with an input[name="host"] despite it has a host property', () => {
       const form = document.createElement('form')
       const input = document.createElement('input')
       input.setAttribute('name', 'host')
