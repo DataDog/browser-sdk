@@ -158,6 +158,23 @@ describe('startSegmentCollection', () => {
       })
     })
 
+    describe('flush when the page exits because it gets frozen', () => {
+      function emulatePageFrozen() {
+        lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.FROZEN })
+      }
+
+      it('uses `httpRequest.sendOnExit` when sending the segment', () => {
+        addRecordAndFlushSegment(emulatePageFrozen)
+        expect(httpRequestSpy.sendOnExit).toHaveBeenCalled()
+      })
+
+      it('next segment is created because of page freeze event', () => {
+        addRecordAndFlushSegment(emulatePageFrozen)
+        addRecordAndFlushSegment()
+        expect(getSentFormData(httpRequestSpy.sendOnExit).get('creation_reason')).toBe('page_frozen')
+      })
+    })
+
     describe('flush when the view changes', () => {
       function emulateViewChange() {
         lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {} as any)

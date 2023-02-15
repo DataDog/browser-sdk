@@ -1,10 +1,14 @@
 import { Observable } from '../tools/observable'
-import { addEventListener, DOM_EVENT } from './addEventListener'
+import { includes, objectValues } from '../tools/utils'
+import { addEventListener, addEventListeners, DOM_EVENT } from './addEventListener'
 
-export const enum PageExitReason {
-  HIDDEN = 'visibility_hidden',
-  UNLOADING = 'before_unload',
-}
+export const PageExitReason = {
+  HIDDEN: 'visibility_hidden',
+  UNLOADING: 'before_unload',
+  FROZEN: 'page_frozen',
+} as const
+
+type PageExitReason = typeof PageExitReason[keyof typeof PageExitReason]
 
 export interface PageExitEvent {
   reason: PageExitReason
@@ -12,16 +16,22 @@ export interface PageExitEvent {
 
 export function createPageExitObservable(): Observable<PageExitEvent> {
   const observable = new Observable<PageExitEvent>(() => {
-    /**
-     * Only event that guarantee to fire on mobile devices when the page transitions to background state
-     * (e.g. when user switches to a different application, goes to homescreen, etc), or is being unloaded.
-     */
-    const { stop: stopVisibilityChangeListener } = addEventListener(
-      document,
-      DOM_EVENT.VISIBILITY_CHANGE,
-      () => {
-        if (document.visibilityState === 'hidden') {
+    const { stop: stopListeners } = addEventListeners(
+      window,
+      [DOM_EVENT.VISIBILITY_CHANGE, DOM_EVENT.FREEZE],
+      (event) => {
+        if (event.type === DOM_EVENT.VISIBILITY_CHANGE && document.visibilityState === 'hidden') {
+          /**
+           * Only event that guarantee to fire on mobile devices when the page transitions to background state
+           * (e.g. when user switches to a different application, goes to homescreen, etc), or is being unloaded.
+           */
           observable.notify({ reason: PageExitReason.HIDDEN })
+        } else if (event.type === DOM_EVENT.FREEZE) {
+          /**
+           * After transitioning in background a tab can be freezed to preserve resources. (cf: https://developer.chrome.com/blog/page-lifecycle-api)
+           * Allow to collect events happening between hidden and frozen state.
+           */
+          observable.notify({ reason: PageExitReason.FROZEN })
         }
       },
       { capture: true }
@@ -37,10 +47,14 @@ export function createPageExitObservable(): Observable<PageExitEvent> {
     })
 
     return () => {
-      stopVisibilityChangeListener()
+      stopListeners()
       stopBeforeUnloadListener()
     }
   })
 
   return observable
+}
+
+export function isPageExitReason(reason: string | undefined): reason is PageExitReason {
+  return includes(objectValues(PageExitReason), reason)
 }
