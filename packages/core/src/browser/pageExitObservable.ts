@@ -29,7 +29,7 @@ export function createPageExitObservable(): Observable<PageExitEvent> {
         } else if (event.type === DOM_EVENT.FREEZE) {
           /**
            * After transitioning in background a tab can be freezed to preserve resources. (cf: https://developer.chrome.com/blog/page-lifecycle-api)
-           * If events happen between hidden and frozen state, we have to handle them.
+           * Allow to collect events happening between hidden and frozen state.
            */
           observable.notify({ reason: PageExitReason.FROZEN })
         }
