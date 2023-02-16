@@ -16,7 +16,7 @@ export function isNodeShadowHost(node: Node): node is Element & { shadowRoot: Sh
 
 export function isNodeShadowRoot(node: Node): node is ShadowRoot {
   const shadowRoot = node as ShadowRoot
-  return !!shadowRoot.host && isElementNode(shadowRoot.host)
+  return !!shadowRoot.host && shadowRoot.nodeType === Node.DOCUMENT_FRAGMENT_NODE && isElementNode(shadowRoot.host)
 }
 
 export function getChildNodes(node: Node) {
