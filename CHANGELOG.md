@@ -16,6 +16,12 @@
 
 ---
 
+## v4.34.1
+
+- 🐛 [RUMF-1493] Avoid infinite loop on `form > input[name="host"]` element ([#2017](https://github.com/DataDog/browser-sdk/pull/2017))
+- 🐛 [RUMF-1485] Flush event when page becomes frozen ([#2015](https://github.com/DataDog/browser-sdk/pull/2015))
+- 🐛 [RUMF-1296][rumf-1293] Fix dead click computation ([#1998](https://github.com/DataDog/browser-sdk/pull/1998))
+
 ## v4.34.0
 
 - 🐛 fix Shadow DOM support on Microsoft Edge ([#2003](https://github.com/DataDog/browser-sdk/pull/2003))
