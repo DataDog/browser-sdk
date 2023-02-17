@@ -1,4 +1,5 @@
 import { createNewEvent, restorePageVisibility, setPageVisibility } from '../../test/specHelper'
+import { resetExperimentalFeatures, updateExperimentalFeatures } from '../domain/configuration'
 import type { Subscription } from '../tools/observable'
 import type { PageExitEvent } from './pageExitObservable'
 import { PageExitReason, createPageExitObservable } from './pageExitObservable'
@@ -15,9 +16,22 @@ describe('createPageExitObservable', () => {
   afterEach(() => {
     pageExitSubscription.unsubscribe()
     restorePageVisibility()
+    resetExperimentalFeatures()
   })
 
-  it('notifies when the page is unloading', () => {
+  it('notifies when the page fires pagehide if ff pagehide is enabled', () => {
+    updateExperimentalFeatures(['pagehide'])
+    onExitSpy = jasmine.createSpy()
+    pageExitSubscription = createPageExitObservable().subscribe(onExitSpy)
+
+    window.dispatchEvent(createNewEvent('pagehide'))
+    window.dispatchEvent(createNewEvent('beforeunload'))
+
+    expect(onExitSpy).toHaveBeenCalledOnceWith({ reason: PageExitReason.PAGEHIDE })
+  })
+
+  it('notifies when the page fires beforeunload if ff pagehide is disabled', () => {
+    window.dispatchEvent(createNewEvent('pagehide'))
     window.dispatchEvent(createNewEvent('beforeunload'))
 
     expect(onExitSpy).toHaveBeenCalledOnceWith({ reason: PageExitReason.UNLOADING })
