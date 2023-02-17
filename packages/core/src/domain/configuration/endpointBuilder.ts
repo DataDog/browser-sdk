@@ -1,9 +1,10 @@
-import type { RetryInfo } from '../../transport'
+import type { RetryInfo, FlushReason } from '../../transport'
 import { timeStampNow } from '../../tools/timeUtils'
 import { normalizeUrl } from '../../tools/urlPolyfill'
 import { generateUUID } from '../../tools/utils'
 import type { InitConfiguration } from './configuration'
 import { INTAKE_SITE_AP1, INTAKE_SITE_US1 } from './intakeSites'
+import { isExperimentalFeatureEnabled } from './experimentalFeatures'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
@@ -32,8 +33,15 @@ export function createEndpointBuilder(
   const buildUrlWithParameters = createEndpointUrlWithParametersBuilder(initConfiguration, endpointType)
 
   return {
-    build(api: 'xhr' | 'fetch' | 'beacon', retry?: RetryInfo) {
-      const parameters = buildEndpointParameters(initConfiguration, endpointType, configurationTags, api, retry)
+    build(api: 'xhr' | 'fetch' | 'beacon', flushReason?: FlushReason, retry?: RetryInfo) {
+      const parameters = buildEndpointParameters(
+        initConfiguration,
+        endpointType,
+        configurationTags,
+        api,
+        flushReason,
+        retry
+      )
       return buildUrlWithParameters(parameters)
     },
     urlPrefix: buildUrlWithParameters(''),
@@ -92,9 +100,13 @@ function buildEndpointParameters(
   endpointType: EndpointType,
   configurationTags: string[],
   api: 'xhr' | 'fetch' | 'beacon',
+  flushReason: FlushReason | undefined,
   retry: RetryInfo | undefined
 ) {
   const tags = [`sdk_version:${__BUILD_ENV__SDK_VERSION__}`, `api:${api}`].concat(configurationTags)
+  if (flushReason && isExperimentalFeatureEnabled('collect_flush_reason')) {
+    tags.push(`flush_reason:${flushReason}`)
+  }
   if (retry) {
     tags.push(`retry_count:${retry.count}`, `retry_after:${retry.lastFailureStatus}`)
   }

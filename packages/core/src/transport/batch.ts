@@ -11,6 +11,14 @@ export interface BatchFlushEvent {
   bufferMessagesCount: number
 }
 
+export type FlushReason =
+  | 'batch_duration_limit'
+  | 'batch_bytes_limit'
+  | 'before_unload'
+  | 'pagehide'
+  | 'visibility_hidden'
+  | 'page_frozen'
+
 export class Batch {
   flushObservable = new Observable<BatchFlushEvent>()
 
@@ -27,7 +35,7 @@ export class Batch {
     private flushTimeout: number,
     private pageExitObservable: Observable<PageExitEvent>
   ) {
-    pageExitObservable.subscribe(() => this.flush(this.request.sendOnExit))
+    pageExitObservable.subscribe((event) => this.flush(event.reason, this.request.sendOnExit))
     this.flushPeriodically()
   }
 
@@ -39,7 +47,7 @@ export class Batch {
     this.addOrUpdate(message, key)
   }
 
-  flush(sendFn = this.request.send) {
+  flush(flushReason: FlushReason, sendFn = this.request.send) {
     if (this.bufferMessagesCount !== 0) {
       const messages = this.pushOnlyBuffer.concat(objectValues(this.upsertBuffer))
       const bytesCount = this.bufferBytesCount
@@ -54,7 +62,7 @@ export class Batch {
       this.bufferBytesCount = 0
       this.bufferMessagesCount = 0
 
-      sendFn({ data: messages.join('\n'), bytesCount })
+      sendFn({ data: messages.join('\n'), bytesCount, flushReason })
     }
   }
 
@@ -70,12 +78,12 @@ export class Batch {
       this.remove(key)
     }
     if (this.willReachedBytesLimitWith(messageBytesCount)) {
-      this.flush()
+      this.flush('batch_bytes_limit')
     }
 
     this.push(processedMessage, messageBytesCount, key)
     if (this.isFull()) {
-      this.flush()
+      this.flush('batch_bytes_limit')
     }
   }
 
@@ -126,7 +134,7 @@ export class Batch {
   private flushPeriodically() {
     setTimeout(
       monitor(() => {
-        this.flush()
+        this.flush('batch_duration_limit')
         this.flushPeriodically()
       }),
       this.flushTimeout
