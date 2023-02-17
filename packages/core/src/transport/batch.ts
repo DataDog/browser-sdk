@@ -15,7 +15,7 @@ export type FlushReason =
   | 'batch_duration_limit'
   | 'batch_bytes_limit'
   | 'before_unload'
-  | 'pagehide'
+  | 'page_hide'
   | 'visibility_hidden'
   | 'page_frozen'
 

@@ -6,7 +6,7 @@ import { addEventListeners, addEventListener, DOM_EVENT } from './addEventListen
 export const PageExitReason = {
   HIDDEN: 'visibility_hidden',
   UNLOADING: 'before_unload',
-  PAGEHIDE: 'pagehide',
+  PAGEHIDE: 'page_hide',
   FROZEN: 'page_frozen',
 } as const
 
