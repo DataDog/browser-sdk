@@ -76,7 +76,7 @@ function sendBeaconStrategy(
     }
   }
 
-  const xhrUrl = endpointBuilder.build('xhr')
+  const xhrUrl = endpointBuilder.build('xhr', flushReason)
   sendXHR(xhrUrl, data)
 }
 
