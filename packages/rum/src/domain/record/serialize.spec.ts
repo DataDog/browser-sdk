@@ -359,6 +359,66 @@ describe('serializeNodeWithId', () => {
       )
     })
 
+    it('serializes <input type="radio"> elements checked state', () => {
+      const radio = document.createElement('input')
+      radio.type = 'radio'
+      expect(serializeNodeWithId(radio, DEFAULT_OPTIONS)! as ElementNode).toEqual(
+        jasmine.objectContaining({
+          attributes: {
+            type: 'radio',
+            value: 'on',
+            checked: false,
+          },
+        })
+      )
+
+      radio.checked = true
+
+      expect(serializeNodeWithId(radio, DEFAULT_OPTIONS)! as ElementNode).toEqual(
+        jasmine.objectContaining({
+          attributes: {
+            type: 'radio',
+            value: 'on',
+            checked: true,
+          },
+        })
+      )
+    })
+
+    it('serializes <input type="radio"> elements checked state with mask serialization', () => {
+      const radio = document.createElement('input')
+      radio.type = 'radio'
+      expect(
+        serializeNodeWithId(radio, {
+          ...DEFAULT_OPTIONS,
+          parentNodePrivacyLevel: NodePrivacyLevel.MASK_USER_INPUT,
+        })! as ElementNode
+      ).toEqual(
+        jasmine.objectContaining({
+          attributes: {
+            type: 'radio',
+            value: '***',
+          },
+        })
+      )
+
+      radio.checked = true
+
+      expect(
+        serializeNodeWithId(radio, {
+          ...DEFAULT_OPTIONS,
+          parentNodePrivacyLevel: NodePrivacyLevel.MASK_USER_INPUT,
+        })! as ElementNode
+      ).toEqual(
+        jasmine.objectContaining({
+          attributes: {
+            type: 'radio',
+            value: '***',
+          },
+        })
+      )
+    })
+
     it('serializes <audio> elements paused state', () => {
       const audio = document.createElement('audio')
 
