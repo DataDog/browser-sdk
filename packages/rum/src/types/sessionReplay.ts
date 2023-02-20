@@ -34,7 +34,6 @@ export type CreationReason =
   | 'before_unload'
   | 'visibility_hidden'
   | 'page_frozen'
-  | 'page_hide'
 /**
  * Browser-specific. Schema of a Session Replay Record.
  */
