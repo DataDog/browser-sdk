@@ -1,4 +1,4 @@
-import { assign, startsWith } from '@datadog/browser-core'
+import { assign, monitor, startsWith } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { isNodeShadowHost, isNodeShadowRoot, STABLE_ATTRIBUTES } from '@datadog/browser-rum-core'
 import {
@@ -356,25 +356,25 @@ function getValidTagName(tagName: string): string {
   return processedTagName
 }
 
-function getCssRulesString(s: CSSStyleSheet | undefined | null): string | null {
-  if (!s) {
-    return null
-  }
-  try {
-    const rules = s.rules || s.cssRules
-    if (rules) {
-      const styleSheetCssText = Array.from(rules, getCssRuleString).join('')
-      return switchToAbsoluteUrl(styleSheetCssText, s.href)
-    }
+function getCssRulesString(cssStyleSheet: CSSStyleSheet | undefined | null): string | null {
+  // TODO: remove monitor once we're confident the try/catch was not hiding more error
+  return monitor(_getCssRulesString)(cssStyleSheet)
+}
 
-    return null
-  } catch (error) {
+function _getCssRulesString(cssStyleSheet: CSSStyleSheet | undefined | null): string | null {
+  if (!cssStyleSheet) {
     return null
   }
+  const rules = cssStyleSheet.rules || cssStyleSheet.cssRules
+  if (!rules) {
+    return null
+  }
+  const styleSheetCssText = Array.from(rules, getCssRuleString).join('')
+  return switchToAbsoluteUrl(styleSheetCssText, cssStyleSheet.href)
 }
 
 function getCssRuleString(rule: CSSRule): string {
-  return isCSSImportRule(rule) ? getCssRulesString(rule.styleSheet) || '' : rule.cssText
+  return isCSSImportRule(rule) ? _getCssRulesString(rule.styleSheet) || '' : rule.cssText
 }
 
 function isCSSImportRule(rule: CSSRule): rule is CSSImportRule {
