@@ -151,8 +151,8 @@ export function jsonStringify(
   }
 }
 
-interface ObjectWithToJsonMethod {
-  toJSON: unknown
+export interface ObjectWithToJsonMethod {
+  toJSON?: () => unknown
 }
 export function detachToJsonMethod(value: object) {
   const object = value as ObjectWithToJsonMethod

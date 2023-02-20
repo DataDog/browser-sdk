@@ -40,10 +40,7 @@ export class Logger {
 
   @monitored
   log(message: string, messageContext?: object, status: StatusType = StatusType.info) {
-    this.handleLogStrategy(
-      { message: sanitize(message) as string, context: sanitize(messageContext) as Context, status },
-      this
-    )
+    this.handleLogStrategy({ message: sanitize(message)!, context: sanitize(messageContext) as Context, status }, this)
   }
 
   debug(message: string, messageContext?: object) {

@@ -69,7 +69,7 @@ export function startFeatureFlagContexts(
     addFeatureFlagEvaluation: (key: string, value: ContextValue) => {
       const currentContext = featureFlagContexts.find()
       if (currentContext) {
-        currentContext[key] = sanitize(value) as ContextValue
+        currentContext[key] = sanitize(value)
         bytesCountCache = undefined
       }
     },

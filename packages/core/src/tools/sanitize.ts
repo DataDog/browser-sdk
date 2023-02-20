@@ -1,8 +1,10 @@
-import type { ContextValue } from './context'
+import type { Context, ContextArray, ContextValue } from './context'
+import type { ObjectWithToJsonMethod } from './utils'
 import { detachToJsonMethod, ONE_KIBI_BYTE } from './utils'
 
-type DataWithToJson = unknown & { toJSON?: () => unknown }
-type ContainerElementsToProcess = { source: Record<any, any>; target: Record<any, any>; path: string }
+type ContainerElementsToProcess = { source: ContextArray | Context; target: ContextArray | Context; path: string }
+// eslint-disable-next-line @typescript-eslint/ban-types
+type ExtendedContextValue = ContextValue | symbol | bigint | Function
 
 // The maximum size of a single event is 256KiB. By default, we ensure that user-provided data
 // going through sanitize fits inside our events, while leaving room for other contexts, metadata, ...
@@ -26,8 +28,10 @@ const JSON_PATH_ROOT_ELEMENT = '$'
  * @param maxCharacterCount   Maximum number of characters allowed in serialized form
  * @returns
  */
+export function sanitize(source: string, maxCharacterCount?: number): string | undefined
+export function sanitize(source: unknown, maxCharacterCount?: number): ContextValue
 export function sanitize(source: unknown, maxCharacterCount = SANITIZE_DEFAULT_MAX_CHARACTER_COUNT) {
-  // Unbind any toJSON we may have on [] or {} prototypes
+  // Unbind any toJSON function we may have on [] or {} prototypes
   const restoreObjectPrototypeToJson = detachToJsonMethod(Object.prototype)
   const restoreArrayPrototypeToJson = detachToJsonMethod(Array.prototype)
 
@@ -35,7 +39,7 @@ export function sanitize(source: unknown, maxCharacterCount = SANITIZE_DEFAULT_M
   const containerQueue: ContainerElementsToProcess[] = []
   const visitedObjectsWithPath = new WeakMap<object, string>()
   const sanitizedData = sanitizeProcessor(
-    source,
+    source as ExtendedContextValue,
     JSON_PATH_ROOT_ELEMENT,
     undefined,
     containerQueue,
@@ -66,7 +70,7 @@ export function sanitize(source: unknown, maxCharacterCount = SANITIZE_DEFAULT_M
           break
         }
         separatorLength = 1
-        containerToProcess.target[key] = targetData
+        ;(containerToProcess.target as ContextArray)[key] = targetData
       }
     } else {
       for (const key in containerToProcess.source) {
@@ -83,7 +87,7 @@ export function sanitize(source: unknown, maxCharacterCount = SANITIZE_DEFAULT_M
             break
           }
           separatorLength = 1
-          containerToProcess.target[key] = targetData
+          ;(containerToProcess.target as Context)[key] = targetData
         }
       }
     }
@@ -102,7 +106,7 @@ export function sanitize(source: unknown, maxCharacterCount = SANITIZE_DEFAULT_M
  *
  */
 function sanitizeProcessor(
-  source: any,
+  source: ExtendedContextValue,
   parentPath: string,
   key: string | number | undefined,
   queue: ContainerElementsToProcess[],
@@ -122,14 +126,16 @@ function sanitizeProcessor(
 
   // Handle potential cyclic references
   // We need to use source as sourceToSanitize could be a reference to a new object
-  if (visitedObjectsWithPath.has(source)) {
-    return `[Reference seen at ${visitedObjectsWithPath.get(source)!}]`
+  // At this stage, we know the source is an object type
+  const sourceAsObject = source as object
+  if (visitedObjectsWithPath.has(sourceAsObject)) {
+    return `[Reference seen at ${visitedObjectsWithPath.get(sourceAsObject)!}]`
   }
 
   // Add processed source to queue
   const currentPath = key ? `${parentPath}.${key}` : `${parentPath}`
-  const target = (Array.isArray(sourceToSanitize) ? [] : {}) as Record<any, ContextValue>
-  visitedObjectsWithPath.set(source, currentPath)
+  const target = Array.isArray(sourceToSanitize) ? [] : {}
+  visitedObjectsWithPath.set(sourceAsObject, currentPath)
   queue.push({ source: sourceToSanitize, target, path: currentPath })
 
   return target
@@ -147,7 +153,7 @@ function sanitizeProcessor(
  * @param key                key in key/value pair (undefined for arrays)
  *
  */
-function computeSize(value: unknown, separatorLength = 0, key?: string) {
+function computeSize(value: ContextValue, separatorLength = 0, key?: string) {
   try {
     return JSON.stringify(value).length + separatorLength + (key ? key.length + 3 : 0)
   } catch {
@@ -160,7 +166,7 @@ function computeSize(value: unknown, separatorLength = 0, key?: string) {
  * Handles sanitization of simple, non-object types
  *
  */
-function sanitizePrimitivesAndFunctions(value: unknown) {
+function sanitizePrimitivesAndFunctions(value: ExtendedContextValue) {
   // BigInt cannot be serialized by JSON.stringify(), convert it to a string representation
   if (typeof value === 'bigint') {
     return `[BigInt] ${value.toString()}`
@@ -170,6 +176,11 @@ function sanitizePrimitivesAndFunctions(value: unknown) {
   if (typeof value === 'function') {
     return `[Function] ${value.name || 'unknown'}`
   }
+  // JSON.stringify() does not serialize symbols. We cannot use (yet) symbol.description as it is part of ES2019+
+  if (typeof value === 'symbol') {
+    return `[Symbol] ${value.toString()}`
+  }
+
   return value
 }
 
@@ -210,10 +221,11 @@ function sanitizeObjects(value: object) {
  * Checks if a toJSON function exists and tries to execute it
  *
  */
-function tryToApplyToJSON(value: DataWithToJson) {
-  if (value && typeof value.toJSON === 'function') {
+function tryToApplyToJSON(value: ExtendedContextValue) {
+  const object = value as ObjectWithToJsonMethod
+  if (object && typeof object.toJSON === 'function') {
     try {
-      return value.toJSON()
+      return object.toJSON() as ExtendedContextValue
     } catch {
       // If toJSON fails, we continue by trying to serialize the value manually
     }

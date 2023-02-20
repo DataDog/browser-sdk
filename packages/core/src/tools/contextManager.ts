@@ -44,7 +44,7 @@ export function createContextManager(computeBytesCountImpl = computeBytesCount) 
     },
 
     setContextProperty: (key: string, property: any) => {
-      context[key] = sanitize(property) as ContextValue
+      context[key] = sanitize(property)
       bytesCountCache = undefined
     },
 
