@@ -558,6 +558,31 @@ describe('serializeNodeWithId', () => {
         childNodes: [],
       })
     })
+
+    it('does not serialize style node with dynamic CSS that is behind CORS', () => {
+      const linkNode = document.createElement('link')
+      linkNode.setAttribute('rel', 'stylesheet')
+      linkNode.setAttribute('href', 'https://datadoghq.com/some/style.css')
+      isolatedDom.document.head.appendChild(linkNode)
+      const styleSheet = new CSSStyleSheet()
+      spyOnProperty(styleSheet, 'cssRules', 'get').and.throwError(new DOMException('cors issue', 'SecurityError'))
+
+      Object.defineProperty(isolatedDom.document, 'styleSheets', {
+        value: [styleSheet],
+      })
+
+      expect(serializeNodeWithId(linkNode, DEFAULT_OPTIONS)).toEqual({
+        type: NodeType.Element,
+        tagName: 'link',
+        id: jasmine.any(Number) as unknown as number,
+        isSVG: undefined,
+        attributes: {
+          rel: 'stylesheet',
+          href: 'https://datadoghq.com/some/style.css',
+        },
+        childNodes: [],
+      })
+    })
   })
 
   describe('text nodes serialization', () => {

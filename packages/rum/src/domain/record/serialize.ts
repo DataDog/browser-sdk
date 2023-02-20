@@ -365,12 +365,20 @@ function _getCssRulesString(cssStyleSheet: CSSStyleSheet | undefined | null): st
   if (!cssStyleSheet) {
     return null
   }
-  const rules = cssStyleSheet.rules || cssStyleSheet.cssRules
-  if (!rules) {
-    return null
+  try {
+    const rules = cssStyleSheet.rules || cssStyleSheet.cssRules
+    if (!rules) {
+      return null
+    }
+    const styleSheetCssText = Array.from(rules, getCssRuleString).join('')
+    return switchToAbsoluteUrl(styleSheetCssText, cssStyleSheet.href)
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'SecurityError') {
+      // if css is protected by CORS we cannot access cssRules see: https://www.w3.org/TR/cssom-1/#the-cssstylesheet-interface
+      return null
+    }
+    throw err
   }
-  const styleSheetCssText = Array.from(rules, getCssRuleString).join('')
-  return switchToAbsoluteUrl(styleSheetCssText, cssStyleSheet.href)
 }
 
 function getCssRuleString(rule: CSSRule): string {
