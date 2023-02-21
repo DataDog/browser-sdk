@@ -108,7 +108,7 @@ describe('serializeNodeWithId', () => {
     })
 
     function serializeElement(
-      node: Node,
+      node: Element,
       options: SerializeOptions = DEFAULT_OPTIONS
     ): (ElementNode & { id: number }) | null {
       return serializeNodeWithId(node, options) as (ElementNode & { id: number }) | null
