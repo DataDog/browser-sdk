@@ -59,20 +59,41 @@ describe('isElementNode', () => {
 
 if (!isIE()) {
   describe('isShadowRoot', () => {
-    const parent = document.createElement('div')
-    parent.attachShadow({ mode: 'open' })
-    const parameters: Array<[Node, boolean]> = [
-      [parent.shadowRoot!, true],
-      [parent, false],
-      [document.body, false],
-      [document.createTextNode('hello'), false],
-      [document.createComment('hello'), false],
+    const notShadowDomNodes: Node[] = [
+      document,
+      document.head,
+      document.body,
+      document.createElement('div'),
+      document.createTextNode('hello'),
+      document.createComment('hello'),
     ]
 
-    parameters.forEach(([element, result]) => {
-      it(`should return ${String(result)} for "${String(element)}"`, () => {
-        expect(isNodeShadowRoot(element)).toBe(result)
+    notShadowDomNodes.forEach((element) => {
+      it(`should return false for "${String(element.nodeName)}"`, () => {
+        expect(isNodeShadowRoot(element)).toBe(false)
       })
+    })
+
+    it('should return true for shadow root but not its host', () => {
+      const parent = document.createElement('div')
+      const shadowRoot = parent.attachShadow({ mode: 'open' })
+      expect(isNodeShadowRoot(parent)).toBe(false)
+      expect(isNodeShadowRoot(shadowRoot)).toBe(true)
+    })
+
+    it('should return false for a[href] despite it has a host property', () => {
+      const link = document.createElement('a')
+      link.setAttribute('href', 'http://localhost/some/path')
+      expect(link.host).toBeTruthy()
+      expect(isNodeShadowRoot(link)).toBe(false)
+    })
+
+    it('should return false for a form with an input[name="host"] despite it has a host property', () => {
+      const form = document.createElement('form')
+      const input = document.createElement('input')
+      input.setAttribute('name', 'host')
+      form.appendChild(input)
+      expect(isNodeShadowRoot(form)).toBe(false)
     })
   })
 }

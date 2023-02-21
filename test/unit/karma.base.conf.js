@@ -63,4 +63,10 @@ module.exports = {
     logLevel: 'warn',
   },
   plugins: ['karma-*', jasmineSeedReporterPlugin],
+
+  // Running tests on low performance environments (ex: BrowserStack) can block JS execution for a
+  // few seconds. We need to increase those two timeout values to make sure Karma (and underlying
+  // Socket.io) does not consider that the browser crashed.
+  pingTimeout: 60_000,
+  browserNoActivityTimeout: 60_000,
 }
