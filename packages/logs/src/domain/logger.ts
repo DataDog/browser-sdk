@@ -1,5 +1,14 @@
 import type { Context } from '@datadog/browser-core'
-import { deepClone, assign, combine, createContextManager, ErrorSource, monitored } from '@datadog/browser-core'
+import {
+  computeStackTrace,
+  toStackTraceString,
+  deepClone,
+  assign,
+  combine,
+  createContextManager,
+  ErrorSource,
+  monitored,
+} from '@datadog/browser-core'
 
 export interface LogsMessage {
   message: string
@@ -25,6 +34,9 @@ export const HandlerType = {
 export type HandlerType = typeof HandlerType[keyof typeof HandlerType]
 export const STATUSES = Object.keys(StatusType) as StatusType[]
 
+export const NO_ERROR_STACK_PRESENT_MESSAGE = 'No stack, consider using an instance of Error'
+export const PROVIDED_ERROR_MESSAGE_PREFIX = 'Provided:'
+
 export class Logger {
   private contextManager = createContextManager()
 
@@ -39,29 +51,47 @@ export class Logger {
   }
 
   @monitored
-  log(message: string, messageContext?: object, status: StatusType = StatusType.info) {
-    this.handleLogStrategy({ message, context: deepClone(messageContext) as Context, status }, this)
-  }
+  log(message: string, messageContext?: object, status: StatusType = StatusType.info, error?: Error) {
+    let context: Context
 
-  debug(message: string, messageContext?: object) {
-    this.log(message, messageContext, StatusType.debug)
-  }
+    if (status === StatusType.error || (error !== undefined && error !== null)) {
+      // Always add origin if status is error (backward compatibility), or we have an actual error
+      const errorContext = { error: { origin: ErrorSource.LOGGER } as Context }
 
-  info(message: string, messageContext?: object) {
-    this.log(message, messageContext, StatusType.info)
-  }
+      // Extract information from error object if provided
+      if (error instanceof Error) {
+        const stackTrace = computeStackTrace(error)
+        errorContext.error.kind = stackTrace.name
+        errorContext.error.message = stackTrace.message
+        errorContext.error.stack = toStackTraceString(stackTrace)
+        // Serialize other types if provided as error parameter
+      } else if (error !== undefined && error !== null) {
+        errorContext.error.message = `${PROVIDED_ERROR_MESSAGE_PREFIX} ${JSON.stringify(error, undefined, 2)}`
+        errorContext.error.stack = NO_ERROR_STACK_PRESENT_MESSAGE
+      }
 
-  warn(message: string, messageContext?: object) {
-    this.log(message, messageContext, StatusType.warn)
-  }
-
-  error(message: string, messageContext?: object) {
-    const errorOrigin = {
-      error: {
-        origin: ErrorSource.LOGGER,
-      },
+      context = combine(errorContext, messageContext)
+    } else {
+      context = deepClone(messageContext) as Context
     }
-    this.log(message, combine(errorOrigin, messageContext), StatusType.error)
+
+    this.handleLogStrategy({ message, context, status }, this)
+  }
+
+  debug(message: string, messageContext?: object, error?: Error) {
+    this.log(message, messageContext, StatusType.debug, error)
+  }
+
+  info(message: string, messageContext?: object, error?: Error) {
+    this.log(message, messageContext, StatusType.info, error)
+  }
+
+  warn(message: string, messageContext?: object, error?: Error) {
+    this.log(message, messageContext, StatusType.warn, error)
+  }
+
+  error(message: string, messageContext?: object, error?: Error) {
+    this.log(message, messageContext, StatusType.error, error)
   }
 
   setContext(context: object) {
