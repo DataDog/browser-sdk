@@ -4,6 +4,7 @@ import type { Context } from '../tools/context'
 import { monitor } from '../tools/monitor'
 import type { RawError } from '../tools/error'
 import { newRetryState, sendWithRetryStrategy } from './sendWithRetryStrategy'
+import type { FlushReason } from './batch'
 
 /**
  * Use POST request without content type to:
@@ -25,6 +26,7 @@ export interface Payload {
   data: string | FormData
   bytesCount: number
   retry?: RetryInfo
+  flushReason?: FlushReason
 }
 
 export interface RetryInfo {
@@ -55,11 +57,15 @@ export function createHttpRequest(
   }
 }
 
-function sendBeaconStrategy(endpointBuilder: EndpointBuilder, bytesLimit: number, { data, bytesCount }: Payload) {
+function sendBeaconStrategy(
+  endpointBuilder: EndpointBuilder,
+  bytesLimit: number,
+  { data, bytesCount, flushReason }: Payload
+) {
   const canUseBeacon = !!navigator.sendBeacon && bytesCount < bytesLimit
   if (canUseBeacon) {
     try {
-      const beaconUrl = endpointBuilder.build('beacon')
+      const beaconUrl = endpointBuilder.build('beacon', flushReason)
       const isQueued = navigator.sendBeacon(beaconUrl, data)
 
       if (isQueued) {
@@ -70,7 +76,7 @@ function sendBeaconStrategy(endpointBuilder: EndpointBuilder, bytesLimit: number
     }
   }
 
-  const xhrUrl = endpointBuilder.build('xhr')
+  const xhrUrl = endpointBuilder.build('xhr', flushReason)
   sendXHR(xhrUrl, data)
 }
 
@@ -86,22 +92,22 @@ function reportBeaconError(e: unknown) {
 export function fetchKeepAliveStrategy(
   endpointBuilder: EndpointBuilder,
   bytesLimit: number,
-  { data, bytesCount, retry }: Payload,
+  { data, bytesCount, flushReason, retry }: Payload,
   onResponse?: (r: HttpResponse) => void
 ) {
   const canUseKeepAlive = isKeepAliveSupported() && bytesCount < bytesLimit
   if (canUseKeepAlive) {
-    const fetchUrl = endpointBuilder.build('fetch', retry)
+    const fetchUrl = endpointBuilder.build('fetch', flushReason, retry)
     fetch(fetchUrl, { method: 'POST', body: data, keepalive: true, mode: 'cors' }).then(
       monitor((response: Response) => onResponse?.({ status: response.status, type: response.type })),
       monitor(() => {
-        const xhrUrl = endpointBuilder.build('xhr', retry)
+        const xhrUrl = endpointBuilder.build('xhr', flushReason, retry)
         // failed to queue the request
         sendXHR(xhrUrl, data, onResponse)
       })
     )
   } else {
-    const xhrUrl = endpointBuilder.build('xhr', retry)
+    const xhrUrl = endpointBuilder.build('xhr', flushReason, retry)
     sendXHR(xhrUrl, data, onResponse)
   }
 }
