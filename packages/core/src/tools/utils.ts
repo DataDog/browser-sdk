@@ -1,3 +1,4 @@
+import type { TimeoutId } from '../browser/timer'
 import { display } from './display'
 import { monitor } from './monitor'
 
@@ -524,8 +525,6 @@ export function combine(...sources: any[]): unknown {
 
   return destination as unknown
 }
-
-export type TimeoutId = ReturnType<typeof setTimeout>
 
 export function requestIdleCallback(callback: () => void, opts?: { timeout?: number }) {
   // Use 'requestIdleCallback' when available: it will throttle the mutation processing if the
