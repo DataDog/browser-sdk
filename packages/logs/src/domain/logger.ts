@@ -1,5 +1,7 @@
 import type { Context } from '@datadog/browser-core'
 import {
+  NO_ERROR_STACK_PRESENT_MESSAGE,
+  PROVIDED_ERROR_MESSAGE_PREFIX,
   computeStackTrace,
   toStackTraceString,
   deepClone,
@@ -9,6 +11,7 @@ import {
   ErrorSource,
   monitored,
 } from '@datadog/browser-core'
+import type { LogsEvent } from '../logsEvent.types'
 
 export interface LogsMessage {
   message: string
@@ -34,9 +37,6 @@ export const HandlerType = {
 export type HandlerType = typeof HandlerType[keyof typeof HandlerType]
 export const STATUSES = Object.keys(StatusType) as StatusType[]
 
-export const NO_ERROR_STACK_PRESENT_MESSAGE = 'No stack, consider using an instance of Error'
-export const PROVIDED_ERROR_MESSAGE_PREFIX = 'Provided:'
-
 export class Logger {
   private contextManager = createContextManager()
 
@@ -56,21 +56,21 @@ export class Logger {
 
     if (status === StatusType.error || (error !== undefined && error !== null)) {
       // Always add origin if status is error (backward compatibility), or we have an actual error
-      const errorContext = { error: { origin: ErrorSource.LOGGER } as Context }
+      const errorContext = ({ origin: ErrorSource.LOGGER } as LogsEvent['error'])!
 
       // Extract information from error object if provided
       if (error instanceof Error) {
         const stackTrace = computeStackTrace(error)
-        errorContext.error.kind = stackTrace.name
-        errorContext.error.message = stackTrace.message
-        errorContext.error.stack = toStackTraceString(stackTrace)
+        errorContext.kind = stackTrace.name
+        errorContext.message = stackTrace.message
+        errorContext.stack = toStackTraceString(stackTrace)
         // Serialize other types if provided as error parameter
       } else if (error !== undefined && error !== null) {
-        errorContext.error.message = `${PROVIDED_ERROR_MESSAGE_PREFIX} ${JSON.stringify(error, undefined, 2)}`
-        errorContext.error.stack = NO_ERROR_STACK_PRESENT_MESSAGE
+        errorContext.message = `${PROVIDED_ERROR_MESSAGE_PREFIX} ${JSON.stringify(error, undefined, 2)}`
+        errorContext.stack = NO_ERROR_STACK_PRESENT_MESSAGE
       }
 
-      context = combine(errorContext, messageContext)
+      context = combine({ error: errorContext }, messageContext) as Context
     } else {
       context = deepClone(messageContext) as Context
     }
