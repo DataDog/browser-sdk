@@ -601,7 +601,12 @@ describe('serializeNodeWithId', () => {
       linkNode.setAttribute('rel', 'stylesheet')
       linkNode.setAttribute('href', 'https://datadoghq.com/some/style.css')
       isolatedDom.document.head.appendChild(linkNode)
-      const styleSheet = new CSSStyleSheet()
+      class FakeCSSStyleSheet {
+        get cssRules() {
+          return []
+        }
+      }
+      const styleSheet = new FakeCSSStyleSheet()
       spyOnProperty(styleSheet, 'cssRules', 'get').and.throwError(new DOMException('cors issue', 'SecurityError'))
 
       Object.defineProperty(isolatedDom.document, 'styleSheets', {
