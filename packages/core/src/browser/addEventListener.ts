@@ -65,6 +65,8 @@ type EventMapFor<T> = T extends Window
     GlobalEventHandlersEventMap
   : T extends XMLHttpRequest
   ? XMLHttpRequestEventMap
+  : T extends Performance
+  ? PerformanceEventMap
   : Record<never, never>
 
 /**
