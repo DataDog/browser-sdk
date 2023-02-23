@@ -1,6 +1,6 @@
 import type { CookieOptions } from '../../browser/cookie'
 import { COOKIE_ACCESS_DELAY } from '../../browser/cookie'
-import { monitor } from '../../tools/monitor'
+import { clearInterval, setInterval } from '../../browser/timer'
 import { Observable } from '../../tools/observable'
 import { dateNow } from '../../tools/timeUtils'
 import * as utils from '../../tools/utils'
@@ -39,7 +39,7 @@ export function startSessionStore<TrackingType extends string>(
   const renewObservable = new Observable<void>()
   const expireObservable = new Observable<void>()
 
-  const watchSessionTimeoutId = setInterval(monitor(watchSession), COOKIE_ACCESS_DELAY)
+  const watchSessionTimeoutId = setInterval(watchSession, COOKIE_ACCESS_DELAY)
   let sessionCache: SessionState = retrieveActiveSession()
 
   function expandOrRenewSession() {
