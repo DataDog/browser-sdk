@@ -463,7 +463,7 @@ function getAttributesForPrivacyLevel(
     if (nodePrivacyLevel === NodePrivacyLevel.ALLOW) {
       safeAttrs.checked = !!inputElement.checked
     } else if (shouldMaskNode(inputElement, nodePrivacyLevel)) {
-      safeAttrs.checked = CENSORED_STRING_MARK
+      delete safeAttrs.checked
     }
   }
 

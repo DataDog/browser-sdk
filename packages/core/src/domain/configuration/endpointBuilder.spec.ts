@@ -2,6 +2,7 @@ import type { BuildEnvWindow } from '../../../test/specHelper'
 import { startsWith } from '../../tools/utils'
 import type { InitConfiguration } from './configuration'
 import { createEndpointBuilder } from './endpointBuilder'
+import { resetExperimentalFeatures, updateExperimentalFeatures } from './experimentalFeatures'
 
 describe('endpointBuilder', () => {
   const clientToken = 'some_client_token'
@@ -10,6 +11,7 @@ describe('endpointBuilder', () => {
   beforeEach(() => {
     initConfiguration = { clientToken }
     ;(window as unknown as BuildEnvWindow).__BUILD_ENV__SDK_VERSION__ = 'some_version'
+    resetExperimentalFeatures()
   })
 
   describe('query parameters', () => {
@@ -116,8 +118,24 @@ describe('endpointBuilder', () => {
 
     it('should contain retry infos', () => {
       expect(
-        createEndpointBuilder(initConfiguration, 'rum', []).build('xhr', { count: 5, lastFailureStatus: 408 })
+        createEndpointBuilder(initConfiguration, 'rum', []).build('xhr', 'batch_bytes_limit', {
+          count: 5,
+          lastFailureStatus: 408,
+        })
       ).toContain('retry_count%3A5%2Cretry_after%3A408')
+    })
+
+    it('should contain flush reason when ff collect_flush_reason is enabled', () => {
+      updateExperimentalFeatures(['collect_flush_reason'])
+      expect(createEndpointBuilder(initConfiguration, 'rum', []).build('xhr', 'batch_bytes_limit')).toContain(
+        'flush_reason%3Abatch_bytes_limit'
+      )
+    })
+
+    it('should not contain flush reason when ff collect_flush_reason is disnabled', () => {
+      expect(createEndpointBuilder(initConfiguration, 'rum', []).build('xhr', 'batch_bytes_limit')).not.toContain(
+        'flush_reason'
+      )
     })
   })
 })
