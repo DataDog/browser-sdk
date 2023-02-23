@@ -1,3 +1,4 @@
+import { stubZoneJs } from '../../test/stubZoneJs'
 import type { Clock } from '../../test/specHelper'
 import { mockClock } from '../../test/specHelper'
 import { instrumentMethod, instrumentSetter } from './instrumentMethod'
@@ -124,10 +125,14 @@ describe('instrumentMethod', () => {
 
 describe('instrumentSetter', () => {
   let clock: Clock
+  let zoneJsStub: ReturnType<typeof stubZoneJs>
+
   beforeEach(() => {
     clock = mockClock()
+    zoneJsStub = stubZoneJs()
   })
   afterEach(() => {
+    zoneJsStub.restore()
     clock.cleanup()
   })
 
@@ -186,6 +191,21 @@ describe('instrumentSetter', () => {
     expect(instrumentationSetterSpy).not.toHaveBeenCalled()
     clock.tick(0)
     expect(instrumentationSetterSpy).toHaveBeenCalledOnceWith(object, 1)
+  })
+
+  it('does not use the Zone.js setTimeout function', () => {
+    const zoneJsSetTimeoutSpy = jasmine.createSpy()
+    zoneJsStub.replaceProperty(window, 'setTimeout', zoneJsSetTimeoutSpy)
+
+    const object = {} as { foo: number }
+    Object.defineProperty(object, 'foo', { set: noop, configurable: true })
+
+    instrumentSetter(object, 'foo', noop)
+    object.foo = 2
+
+    clock.tick(0)
+
+    expect(zoneJsSetTimeoutSpy).not.toHaveBeenCalled()
   })
 
   it('allows other instrumentations from third parties', () => {
