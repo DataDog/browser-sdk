@@ -1,5 +1,5 @@
 import type { EndpointType } from '../domain/configuration'
-import { monitor } from '../tools/monitor'
+import { setTimeout } from '../browser/timer'
 import type { RawError } from '../tools/error'
 import { clocksNow } from '../tools/timeUtils'
 import { ONE_KIBI_BYTE, ONE_MEBI_BYTE, ONE_SECOND, ONE_MINUTE } from '../tools/utils'
@@ -66,23 +66,20 @@ function scheduleRetry(
   if (state.transportStatus !== TransportStatus.DOWN) {
     return
   }
-  setTimeout(
-    monitor(() => {
-      const payload = state.queuedPayloads.first()
-      send(payload, state, sendStrategy, {
-        onSuccess: () => {
-          state.queuedPayloads.dequeue()
-          state.currentBackoffTime = INITIAL_BACKOFF_TIME
-          retryQueuedPayloads(RetryReason.AFTER_RESUME, state, sendStrategy, endpointType, reportError)
-        },
-        onFailure: () => {
-          state.currentBackoffTime = Math.min(MAX_BACKOFF_TIME, state.currentBackoffTime * 2)
-          scheduleRetry(state, sendStrategy, endpointType, reportError)
-        },
-      })
-    }),
-    state.currentBackoffTime
-  )
+  setTimeout(() => {
+    const payload = state.queuedPayloads.first()
+    send(payload, state, sendStrategy, {
+      onSuccess: () => {
+        state.queuedPayloads.dequeue()
+        state.currentBackoffTime = INITIAL_BACKOFF_TIME
+        retryQueuedPayloads(RetryReason.AFTER_RESUME, state, sendStrategy, endpointType, reportError)
+      },
+      onFailure: () => {
+        state.currentBackoffTime = Math.min(MAX_BACKOFF_TIME, state.currentBackoffTime * 2)
+        scheduleRetry(state, sendStrategy, endpointType, reportError)
+      },
+    })
+  }, state.currentBackoffTime)
 }
 
 function send(

@@ -7,6 +7,7 @@ import {
   getRelativeTime,
   isNumber,
   monitor,
+  setTimeout,
   relativeNow,
   runOnReadyState,
 } from '@datadog/browser-core'
@@ -111,7 +112,7 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
     const performanceEntries = performance.getEntries()
     // Because the performance entry list can be quite large
     // delay the computation to prevent the SDK from blocking the main thread on init
-    setTimeout(monitor(() => handleRumPerformanceEntries(lifeCycle, configuration, performanceEntries)))
+    setTimeout(() => handleRumPerformanceEntries(lifeCycle, configuration, performanceEntries))
   }
 
   if (window.PerformanceObserver) {
@@ -197,7 +198,7 @@ function retrieveNavigationTiming(callback: (timing: RumPerformanceNavigationTim
 
   runOnReadyState('complete', () => {
     // Send it a bit after the actual load event, so the "loadEventEnd" timing is accurate
-    setTimeout(monitor(sendFakeTiming))
+    setTimeout(sendFakeTiming)
   })
 }
 

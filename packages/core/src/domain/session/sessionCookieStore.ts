@@ -1,7 +1,7 @@
 import type { CookieOptions } from '../../browser/cookie'
 import { getCookie, setCookie } from '../../browser/cookie'
+import { setTimeout } from '../../browser/timer'
 import { isChromium } from '../../tools/browserDetection'
-import { monitor } from '../../tools/monitor'
 import { dateNow } from '../../tools/timeUtils'
 import * as utils from '../../tools/utils'
 import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
@@ -98,12 +98,9 @@ function isCookieLockEnabled() {
 }
 
 function retryLater(operations: Operations, currentNumberOfRetries: number) {
-  setTimeout(
-    monitor(() => {
-      withCookieLockAccess(operations, currentNumberOfRetries + 1)
-    }),
-    LOCK_RETRY_DELAY
-  )
+  setTimeout(() => {
+    withCookieLockAccess(operations, currentNumberOfRetries + 1)
+  }, LOCK_RETRY_DELAY)
 }
 
 function next() {

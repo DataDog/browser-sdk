@@ -1,5 +1,13 @@
 import type { Subscription, TimeoutId, TimeStamp } from '@datadog/browser-core'
-import { instrumentMethodAndCallOriginal, matchList, monitor, Observable, timeStampNow } from '@datadog/browser-core'
+import {
+  instrumentMethodAndCallOriginal,
+  matchList,
+  monitor,
+  Observable,
+  timeStampNow,
+  setTimeout,
+  clearTimeout,
+} from '@datadog/browser-core'
 import type { RumConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'

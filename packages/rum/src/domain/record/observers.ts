@@ -1,9 +1,9 @@
 import type { DefaultPrivacyLevel } from '@datadog/browser-core'
 import {
+  monitor,
   instrumentSetter,
   instrumentMethodAndCallOriginal,
   assign,
-  monitor,
   throttle,
   DOM_EVENT,
   addEventListeners,

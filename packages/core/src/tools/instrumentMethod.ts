@@ -1,5 +1,5 @@
-import { getZoneJsOriginalValue } from './getZoneJsOriginalValue'
-import { callMonitored, monitor } from './monitor'
+import { setTimeout } from '../browser/timer'
+import { callMonitored } from './monitor'
 import { noop } from './utils'
 
 export function instrumentMethod<OBJECT extends { [key: string]: any }, METHOD extends keyof OBJECT>(
@@ -81,17 +81,11 @@ export function instrumentSetter<OBJECT extends { [key: string]: any }, PROPERTY
     return { stop: noop }
   }
 
-  // Using the patched `setTimeout` from Zone.js triggers a rendering loop in some Angular
-  // component, see issue RUMF-1443
-  const setTimeout = getZoneJsOriginalValue(window, 'setTimeout')
   let instrumentation = (thisObject: OBJECT, value: OBJECT[PROPERTY]) => {
     // put hooked setter into event loop to avoid of set latency
-    setTimeout(
-      monitor(() => {
-        after(thisObject, value)
-      }),
-      0
-    )
+    setTimeout(() => {
+      after(thisObject, value)
+    }, 0)
   }
 
   const instrumentationWrapper = function (this: OBJECT, value: OBJECT[PROPERTY]) {
