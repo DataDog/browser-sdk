@@ -13,7 +13,10 @@ const PROBLEMATIC_IDENTIFIERS = {
   setInterval: 'Use `setInterval` from @datadog/browser-core instead',
   clearInterval: 'Use `clearInterval` from @datadog/browser-core instead',
 
-  // TODO: disallow addEventListener, removeEventListener
+  // Using the patched `addEventListener` from Zone.js might trigger a memory leak in Firefox, see
+  // PR #1860
+  addEventListener: 'Use `addEventListener` from @datadog/browser-core instead',
+  removeEventListener: 'Use `addEventListener` from @datadog/browser-core instead',
 }
 
 module.exports = {
