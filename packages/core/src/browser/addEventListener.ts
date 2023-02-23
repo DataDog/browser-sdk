@@ -67,6 +67,8 @@ type EventMapFor<T> = T extends Window
   ? XMLHttpRequestEventMap
   : T extends Performance
   ? PerformanceEventMap
+  : T extends Worker
+  ? WorkerEventMap
   : Record<never, never>
 
 /**
