@@ -1,4 +1,4 @@
-import { Observable, throttle, addEventListener, DOM_EVENT, monitor } from '@datadog/browser-core'
+import { Observable, throttle, addEventListener, DOM_EVENT } from '@datadog/browser-core'
 
 export interface ViewportDimension {
   height: number
@@ -16,12 +16,9 @@ export function initViewportObservable() {
 
 export function createViewportObservable() {
   const observable = new Observable<ViewportDimension>(() => {
-    const { throttled: updateDimension } = throttle(
-      monitor(() => {
-        observable.notify(getViewportDimension())
-      }),
-      200
-    )
+    const { throttled: updateDimension } = throttle(() => {
+      observable.notify(getViewportDimension())
+    }, 200)
 
     return addEventListener(window, DOM_EVENT.RESIZE, updateDimension, { capture: true, passive: true }).stop
   })
