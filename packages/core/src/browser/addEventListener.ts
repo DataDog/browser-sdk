@@ -63,6 +63,8 @@ type EventMapFor<T> = T extends Window
     // GlobalEventHandlersEventMap which is more than enough as we only need to listen for events bubbling
     // through the ShadowRoot like "change" or "input"
     GlobalEventHandlersEventMap
+  : T extends XMLHttpRequest
+  ? XMLHttpRequestEventMap
   : Record<never, never>
 
 /**

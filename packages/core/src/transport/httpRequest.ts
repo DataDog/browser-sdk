@@ -3,6 +3,7 @@ import { addTelemetryError } from '../domain/telemetry'
 import type { Context } from '../tools/context'
 import { monitor } from '../tools/monitor'
 import type { RawError } from '../domain/error/error'
+import { addEventListener } from '../browser/addEventListener'
 import { newRetryState, sendWithRetryStrategy } from './sendWithRetryStrategy'
 import type { FlushReason } from './batch'
 
@@ -123,13 +124,18 @@ function isKeepAliveSupported() {
 
 export function sendXHR(url: string, data: Payload['data'], onResponse?: (r: HttpResponse) => void) {
   const request = new XMLHttpRequest()
-  const onLoadEnd = monitor(() => {
-    // prevent multiple onResponse callbacks
-    // if the xhr instance is reused by a third party
-    request.removeEventListener('loadend', onLoadEnd)
-    onResponse?.({ status: request.status })
-  })
   request.open('POST', url, true)
-  request.addEventListener('loadend', onLoadEnd)
+  addEventListener(
+    request,
+    'loadend',
+    () => {
+      onResponse?.({ status: request.status })
+    },
+    {
+      // prevent multiple onResponse callbacks
+      // if the xhr instance is reused by a third party
+      once: true,
+    }
+  )
   request.send(data)
 }
