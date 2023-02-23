@@ -1,4 +1,4 @@
-import { assign, monitor, startsWith } from '@datadog/browser-core'
+import { assign, startsWith } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { isNodeShadowHost, isNodeShadowRoot, STABLE_ATTRIBUTES } from '@datadog/browser-rum-core'
 import {
@@ -357,32 +357,24 @@ function getValidTagName(tagName: string): string {
 }
 
 function getCssRulesString(cssStyleSheet: CSSStyleSheet | undefined | null): string | null {
-  // TODO: remove monitor once we're confident the try/catch was not hiding more error
-  return monitor(_getCssRulesString)(cssStyleSheet)
-}
-
-function _getCssRulesString(cssStyleSheet: CSSStyleSheet | undefined | null): string | null {
   if (!cssStyleSheet) {
     return null
   }
+  let rules: CSSRuleList | undefined
   try {
-    const rules = cssStyleSheet.rules || cssStyleSheet.cssRules
-    if (!rules) {
-      return null
-    }
-    const styleSheetCssText = Array.from(rules, getCssRuleString).join('')
-    return switchToAbsoluteUrl(styleSheetCssText, cssStyleSheet.href)
-  } catch (err) {
-    if (err instanceof DOMException && err.name === 'SecurityError') {
-      // if css is protected by CORS we cannot access cssRules see: https://www.w3.org/TR/cssom-1/#the-cssstylesheet-interface
-      return null
-    }
-    throw err
+    rules = cssStyleSheet.rules || cssStyleSheet.cssRules
+  } catch {
+    // if css is protected by CORS we cannot access cssRules see: https://www.w3.org/TR/cssom-1/#the-cssstylesheet-interface
   }
+  if (!rules) {
+    return null
+  }
+  const styleSheetCssText = Array.from(rules, getCssRuleString).join('')
+  return switchToAbsoluteUrl(styleSheetCssText, cssStyleSheet.href)
 }
 
 function getCssRuleString(rule: CSSRule): string {
-  return isCSSImportRule(rule) ? _getCssRulesString(rule.styleSheet) || '' : rule.cssText
+  return isCSSImportRule(rule) ? getCssRulesString(rule.styleSheet) || '' : rule.cssText
 }
 
 function isCSSImportRule(rule: CSSRule): rule is CSSImportRule {
