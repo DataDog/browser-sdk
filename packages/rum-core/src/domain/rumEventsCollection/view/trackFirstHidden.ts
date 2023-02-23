@@ -4,7 +4,7 @@ import { addEventListeners, DOM_EVENT } from '@datadog/browser-core'
 let trackFirstHiddenSingleton: { timeStamp: RelativeTime } | undefined
 let stopListeners: (() => void) | undefined
 
-export function trackFirstHidden(eventTarget: EventTarget = window) {
+export function trackFirstHidden(eventTarget: Window = window) {
   if (!trackFirstHiddenSingleton) {
     if (document.visibilityState === 'hidden') {
       trackFirstHiddenSingleton = {
