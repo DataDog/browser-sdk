@@ -97,7 +97,7 @@ function onInitialized(worker: DeflateWorker) {
 function onError(error: unknown) {
   if (state.status === DeflateWorkerStatus.Loading) {
     display.error('Session Replay recording failed to start: an error occurred while creating the Worker:', error)
-    if (error instanceof Event || (error instanceof Error && includes(error.message, 'Content Security Policy'))) {
+    if (error instanceof Event || (error instanceof Error && isMessageCspRelated(error.message))) {
       display.error(
         'Please make sure CSP is correctly configured ' +
           'https://docs.datadoghq.com/real_user_monitoring/faq/content_security_policy'
@@ -110,4 +110,12 @@ function onError(error: unknown) {
   } else {
     addTelemetryError(error)
   }
+}
+
+function isMessageCspRelated(message: string) {
+  return (
+    includes(message, 'Content Security Policy') ||
+    // Related to `require-trusted-types-for` CSP: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/require-trusted-types-for
+    includes(message, "requires 'TrustedScriptURL'")
+  )
 }
