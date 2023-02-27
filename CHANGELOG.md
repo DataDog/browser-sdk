@@ -16,6 +16,12 @@
 
 ---
 
+## v4.34.2
+
+- 🐛 [RUMF-1443] fix Zone.js/Angular crash when recording the session ([#2030](https://github.com/DataDog/browser-sdk/pull/2030))
+- 🐛 [REPLAY] Fix serialization for checkbox & radio ([#2021](https://github.com/DataDog/browser-sdk/pull/2021))
+- ⚗️ [RUMF-1484] use pagehide as unload event ([#2020](https://github.com/DataDog/browser-sdk/pull/2020))
+
 ## v4.34.1
 
 - 🐛 [RUMF-1493] Avoid infinite loop on `form > input[name="host"]` element ([#2017](https://github.com/DataDog/browser-sdk/pull/2017))
