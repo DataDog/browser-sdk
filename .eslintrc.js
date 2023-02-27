@@ -217,6 +217,7 @@ module.exports = {
       excludedFiles: '*.spec.ts',
       rules: {
         'local-rules/disallow-side-effects': 'error',
+        'local-rules/disallow-zone-js-patched-values': 'error',
         'no-restricted-syntax': [
           'error',
           {
