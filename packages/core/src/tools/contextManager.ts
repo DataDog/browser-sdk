@@ -39,7 +39,7 @@ export function createContextManager(computeBytesCountImpl = computeBytesCount) 
     getContext: () => deepClone(context),
 
     setContext: (newContext: Context) => {
-      context = sanitize(newContext) as Context
+      context = sanitize(newContext)
       bytesCountCache = undefined
     },
 

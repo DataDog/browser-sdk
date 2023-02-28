@@ -207,7 +207,7 @@ export function makeRumPublicApi(
 
     addAction: monitor((name: string, context?: object) => {
       addActionStrategy({
-        name: typeof name === 'string' ? name : JSON.stringify(sanitize(name)),
+        name: sanitize(name)!,
         context: sanitize(context) as Context,
         startClocks: clocksNow(),
         type: ActionType.CUSTOM,
@@ -227,7 +227,7 @@ export function makeRumPublicApi(
     },
 
     addTiming: monitor((name: string, time?: number) => {
-      addTimingStrategy(name, time as RelativeTime | TimeStamp | undefined)
+      addTimingStrategy(sanitize(name)!, time as RelativeTime | TimeStamp | undefined)
     }),
 
     setUser: monitor((newUser: User) => {

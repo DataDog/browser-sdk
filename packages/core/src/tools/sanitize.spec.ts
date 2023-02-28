@@ -45,6 +45,16 @@ describe('sanitize', () => {
         pending('BigInt is not supported on this browser')
       }
     })
+
+    it('shoud handle symbols', () => {
+      const symbolFunction: (description: string) => any = (window as any).Symbol
+      if (typeof symbolFunction === 'function') {
+        const symbol = symbolFunction('description')
+        expect(sanitize(symbol)).toEqual('[Symbol] description')
+      } else {
+        pending('Symbol is not supported on this browser')
+      }
+    })
   })
 
   describe('objects handling', () => {
@@ -70,7 +80,6 @@ describe('sanitize', () => {
       }
 
       expect(sanitize(event)).toEqual({
-        type: 'MyEvent',
         isTrusted: false,
       })
     })
@@ -129,6 +138,13 @@ describe('sanitize', () => {
       const obj = { a: inner, b: inner }
 
       expect(sanitize(obj)).toEqual({ a: [1], b: '[Reference seen at $.a]' })
+    })
+
+    it('should create an understandable path for visited objects in arrays', () => {
+      const inner = { a: 42 }
+      const arr = [inner, inner]
+
+      expect(sanitize(arr)).toEqual([{ a: 42 }, '[Reference seen at $.0]'])
     })
   })
 
