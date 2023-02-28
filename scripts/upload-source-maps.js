@@ -6,25 +6,29 @@ const { SDK_VERSION } = require('./build-env')
 /**
  * Upload source maps to datadog
  * Usage:
- * BUILD_MODE=canary|release node upload-source-maps.js site1,site2,... staging|canary|vXXX
+ * BUILD_MODE=canary|release node upload-source-maps.js staging|canary|vXXX
  */
 
-const sites = process.argv[2].split(',')
-const suffix = process.argv[3]
+const version = process.argv[2]
 const packages = [
   { name: 'logs', service: 'browser-logs-sdk' },
   { name: 'rum', service: 'browser-rum-sdk' },
   { name: 'rum-slim', service: 'browser-rum-sdk' },
 ]
+const sitesByVersion = {
+  staging: ['datad0g.com', 'datadoghq.com'],
+  canary: ['datadoghq.com'],
+  v4: ['datadoghq.com', 'datadoghq.eu', 'us3.datadoghq.com', 'us5.datadoghq.com', 'ap1.datadoghq.com'],
+}
 
-function renameFiles(bundleFolder, packageName) {
+function renameFilesWithVersionSuffix(bundleFolder, packageName) {
   // The datadog-ci CLI is taking a directory as an argument. It will scan every source map files in
   // it and upload those along with the minified bundle. The file names must match the one from the
   // CDN, thus we need to rename the bundles with the right suffix.
   for (const ext of ['js', 'js.map']) {
-    const filePath = `${bundleFolder}/datadog-${packageName}.${ext}`
-    const suffixedFilePath = `${bundleFolder}/datadog-${packageName}-${suffix}.${ext}`
-    command`mv ${filePath} ${suffixedFilePath}`.run()
+    const sourceFilePath = `${bundleFolder}/datadog-${packageName}.${ext}`
+    const targetFilePath = `${bundleFolder}/datadog-${packageName}-${version}.${ext}`
+    command`mv ${sourceFilePath} ${targetFilePath}`.run()
   }
 }
 
@@ -49,8 +53,8 @@ function uploadSourceMaps(site, apiKey, packageName, service, bundleFolder) {
 runMain(() => {
   for (const { name, service } of packages) {
     const bundleFolder = `packages/${name}/bundle`
-    renameFiles(bundleFolder, name)
-    for (const site of sites) {
+    renameFilesWithVersionSuffix(bundleFolder, name)
+    for (const site of sitesByVersion[version]) {
       const normalizedSite = site.replaceAll('.', '-')
       const apiKey = getSecretKey(`ci.browser-sdk.source-maps.${normalizedSite}.ci_api_key`)
 
