@@ -3,7 +3,6 @@ import {
   instrumentSetter,
   instrumentMethodAndCallOriginal,
   assign,
-  monitor,
   throttle,
   DOM_EVENT,
   addEventListeners,
@@ -154,7 +153,7 @@ export function initMutationObserver(
 
 export function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {
   const { throttled: updatePosition } = throttle(
-    monitor((event: MouseEvent | TouchEvent) => {
+    (event: MouseEvent | TouchEvent) => {
       const target = getEventTarget(event)
       if (hasSerializedNode(target)) {
         const coordinates = tryToComputeCoordinates(event)
@@ -170,7 +169,7 @@ export function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {
 
         cb([position], isTouchEvent(event) ? IncrementalSource.TouchMove : IncrementalSource.MouseMove)
       }
-    }),
+    },
     MOUSE_MOVE_OBSERVER_THRESHOLD,
     {
       trailing: false,
@@ -259,36 +258,33 @@ function initScrollObserver(
   defaultPrivacyLevel: DefaultPrivacyLevel,
   elementsScrollPositions: ElementsScrollPositions
 ): ListenerHandler {
-  const { throttled: updatePosition } = throttle(
-    monitor((event: UIEvent) => {
-      const target = getEventTarget(event) as HTMLElement | Document
-      if (
-        !target ||
-        getNodePrivacyLevel(target, defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN ||
-        !hasSerializedNode(target)
-      ) {
-        return
-      }
-      const id = getSerializedNodeId(target)
-      const scrollPositions =
-        target === document
-          ? {
-              scrollTop: getScrollY(),
-              scrollLeft: getScrollX(),
-            }
-          : {
-              scrollTop: Math.round((target as HTMLElement).scrollTop),
-              scrollLeft: Math.round((target as HTMLElement).scrollLeft),
-            }
-      elementsScrollPositions.set(target, scrollPositions)
-      cb({
-        id,
-        x: scrollPositions.scrollLeft,
-        y: scrollPositions.scrollTop,
-      })
-    }),
-    SCROLL_OBSERVER_THRESHOLD
-  )
+  const { throttled: updatePosition } = throttle((event: UIEvent) => {
+    const target = getEventTarget(event) as HTMLElement | Document
+    if (
+      !target ||
+      getNodePrivacyLevel(target, defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN ||
+      !hasSerializedNode(target)
+    ) {
+      return
+    }
+    const id = getSerializedNodeId(target)
+    const scrollPositions =
+      target === document
+        ? {
+            scrollTop: getScrollY(),
+            scrollLeft: getScrollX(),
+          }
+        : {
+            scrollTop: Math.round((target as HTMLElement).scrollTop),
+            scrollLeft: Math.round((target as HTMLElement).scrollLeft),
+          }
+    elementsScrollPositions.set(target, scrollPositions)
+    cb({
+      id,
+      x: scrollPositions.scrollLeft,
+      y: scrollPositions.scrollTop,
+    })
+  }, SCROLL_OBSERVER_THRESHOLD)
   return addEventListener(document, DOM_EVENT.SCROLL, updatePosition, { capture: true, passive: true }).stop
 }
 
@@ -491,9 +487,9 @@ function initVisualViewportResizeObserver(cb: VisualViewportResizeCallback): Lis
     return noop
   }
   const { throttled: updateDimension, cancel: cancelThrottle } = throttle(
-    monitor(() => {
+    () => {
       cb(getVisualViewport())
-    }),
+    },
     VISUAL_VIEWPORT_OBSERVER_THRESHOLD,
     {
       trailing: false,

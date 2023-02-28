@@ -3,7 +3,12 @@ const PROBLEMATIC_IDENTIFIERS = {
   // occasion, see PRs #376 #866 #1530
   MutationObserver: 'Use `getMutationObserverConstructor` from @datadog/browser-rum-core instead',
 
-  // TODO: disallow setTimeout, clearTimeout, addEventListener, removeEventListener
+  // Using the patched `setTimeout` from Zone.js triggers a rendering loop in some Angular
+  // component, see issue PR #2030
+  setTimeout: 'Use `setTimeout` from @datadog/browser-core instead',
+  clearTimeout: 'Use `clearTimeout` from @datadog/browser-core instead',
+
+  // TODO: disallow addEventListener, removeEventListener
 }
 
 module.exports = {

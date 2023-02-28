@@ -1,5 +1,5 @@
 import type { HttpRequest, TimeoutId } from '@datadog/browser-core'
-import { isPageExitReason, ONE_SECOND, monitor } from '@datadog/browser-core'
+import { isPageExitReason, ONE_SECOND, clearTimeout, setTimeout } from '@datadog/browser-core'
 import type { LifeCycle, ViewContexts, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { BrowserRecord, CreationReason, SegmentContext } from '../../types'
@@ -145,12 +145,9 @@ export function doStartSegmentCollection(
     state = {
       status: SegmentCollectionStatus.SegmentPending,
       segment,
-      expirationTimeoutId: setTimeout(
-        monitor(() => {
-          flushSegment('segment_duration_limit')
-        }),
-        SEGMENT_DURATION_LIMIT
-      ),
+      expirationTimeoutId: setTimeout(() => {
+        flushSegment('segment_duration_limit')
+      }, SEGMENT_DURATION_LIMIT),
     }
   }
 
