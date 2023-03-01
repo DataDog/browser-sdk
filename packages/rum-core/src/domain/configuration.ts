@@ -40,6 +40,7 @@ export interface RumInitConfiguration extends InitConfiguration {
 
   // replay options
   defaultPrivacyLevel?: DefaultPrivacyLevel | undefined
+  subdomain?: string
   /**
    * @deprecated use sessionReplaySampleRate instead
    */
@@ -80,6 +81,7 @@ export interface RumConfiguration extends Configuration {
   trackResources: boolean | undefined
   trackLongTasks: boolean | undefined
   version?: string
+  subdomain?: string
   customerDataTelemetrySampleRate: number
 }
 
@@ -150,6 +152,7 @@ export function validateAndBuildRumConfiguration(
       trackViewsManually: !!initConfiguration.trackViewsManually,
       trackResources: initConfiguration.trackResources,
       trackLongTasks: initConfiguration.trackLongTasks,
+      subdomain: initConfiguration.subdomain,
       defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
         ? initConfiguration.defaultPrivacyLevel
         : DefaultPrivacyLevel.MASK_USER_INPUT,

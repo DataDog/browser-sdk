@@ -8,6 +8,7 @@ import type {
 } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { getReplayStats } from '../domain/replayStats'
+import { getSessionReplayLink } from '../domain/getSessionReplayLink'
 import { startDeflateWorker } from '../domain/segmentCollection'
 
 import type { startRecording } from './startRecording'
@@ -51,6 +52,7 @@ export function makeRecorderApi(
       getReplayStats: () => undefined,
       onRumStart: noop,
       isRecording: () => false,
+      getSessionReplayLink: () => undefined,
     }
   }
 
@@ -68,7 +70,7 @@ export function makeRecorderApi(
     start: () => startStrategy(),
     stop: () => stopStrategy(),
     getReplayStats,
-
+    getSessionReplayLink,
     onRumStart: (
       lifeCycle: LifeCycle,
       configuration: RumConfiguration,

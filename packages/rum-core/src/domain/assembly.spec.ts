@@ -1,4 +1,4 @@
-import type { RelativeTime } from '@datadog/browser-core'
+import type { ClocksState, RelativeTime } from '@datadog/browser-core'
 import { ErrorSource, ONE_MINUTE, display } from '@datadog/browser-core'
 import {
   initEventBridgeStub,
@@ -37,6 +37,7 @@ describe('rum assembly', () => {
     findView = () => ({
       id: '7890',
       name: 'view name',
+      startClocks: {} as ClocksState,
     })
     reportErrorSpy = jasmine.createSpy('reportError')
     commonContext = {
@@ -484,7 +485,7 @@ describe('rum assembly', () => {
 
     it('should be overridden by the view context', () => {
       const { lifeCycle } = setupBuilder.build()
-      findView = () => ({ service: 'new service', version: 'new version', id: '1234' })
+      findView = () => ({ service: 'new service', version: 'new version', id: '1234', startClocks: {} as ClocksState })
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION),
       })
