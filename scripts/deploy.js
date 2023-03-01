@@ -24,9 +24,6 @@ const AWS_CONFIG = {
 const env = process.argv[2]
 const version = process.argv[3]
 
-const browserCache = version === 'staging' || version === 'canary' ? 15 * ONE_MINUTE_IN_SECOND : 4 * ONE_HOUR_IN_SECOND
-const cacheControl = `max-age=${browserCache}, s-maxage=60`
-
 const bundles = {
   'packages/rum/bundle/datadog-rum.js': `datadog-rum-${version}.js`,
   'packages/rum-slim/bundle/datadog-rum-slim.js': `datadog-rum-slim-${version}.js`,
@@ -40,6 +37,10 @@ runMain(() => {
 
 function uploadToS3(awsConfig) {
   const accessToS3 = generateEnvironmentForRole(awsConfig.accountId, 'build-stable-browser-agent-artifacts-s3-write')
+  const browserCache =
+    version === 'staging' || version === 'canary' ? 15 * ONE_MINUTE_IN_SECOND : 4 * ONE_HOUR_IN_SECOND
+  const cacheControl = `max-age=${browserCache}, s-maxage=60`
+
   for (const [filePath, bundleName] of Object.entries(bundles)) {
     printLog(`Upload ${filePath} to s3://${awsConfig.bucketName}/${bundleName}`)
     command`
