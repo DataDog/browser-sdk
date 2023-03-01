@@ -33,18 +33,10 @@ const bundles = {
   'packages/logs/bundle/datadog-logs.js': `datadog-logs-${version}.js`,
 }
 
-function generateEnvironmentForRole(awsAccountId, roleName) {
-  const rawCredentials = command`
-  aws sts assume-role 
-    --role-arn arn:aws:iam::${awsAccountId}:role/${roleName} 
-    --role-session-name AWSCLI-Session`.run()
-  const credentials = JSON.parse(rawCredentials)['Credentials']
-  return {
-    AWS_ACCESS_KEY_ID: credentials['AccessKeyId'],
-    AWS_SECRET_ACCESS_KEY: credentials['SecretAccessKey'],
-    AWS_SESSION_TOKEN: credentials['SessionToken'],
-  }
-}
+runMain(() => {
+  uploadToS3(AWS_CONFIG[env])
+  invalidateCloudfront(AWS_CONFIG[env])
+})
 
 function uploadToS3(awsConfig) {
   const accessToS3 = generateEnvironmentForRole(awsConfig.accountId, 'build-stable-browser-agent-artifacts-s3-write')
@@ -68,7 +60,15 @@ function invalidateCloudfront(awsConfig) {
     .run()
 }
 
-runMain(() => {
-  uploadToS3(AWS_CONFIG[env])
-  invalidateCloudfront(AWS_CONFIG[env])
-})
+function generateEnvironmentForRole(awsAccountId, roleName) {
+  const rawCredentials = command`
+  aws sts assume-role 
+    --role-arn arn:aws:iam::${awsAccountId}:role/${roleName} 
+    --role-session-name AWSCLI-Session`.run()
+  const credentials = JSON.parse(rawCredentials)['Credentials']
+  return {
+    AWS_ACCESS_KEY_ID: credentials['AccessKeyId'],
+    AWS_SECRET_ACCESS_KEY: credentials['SecretAccessKey'],
+    AWS_SESSION_TOKEN: credentials['SessionToken'],
+  }
+}

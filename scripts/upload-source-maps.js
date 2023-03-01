@@ -21,6 +21,20 @@ const sitesByVersion = {
   v4: ['datadoghq.com', 'datadoghq.eu', 'us3.datadoghq.com', 'us5.datadoghq.com', 'ap1.datadoghq.com'],
 }
 
+runMain(() => {
+  for (const { name, service } of packages) {
+    const bundleFolder = `packages/${name}/bundle`
+    renameFilesWithVersionSuffix(bundleFolder, name)
+    for (const site of sitesByVersion[version]) {
+      const normalizedSite = site.replaceAll('.', '-')
+      const apiKey = getSecretKey(`ci.browser-sdk.source-maps.${normalizedSite}.ci_api_key`)
+
+      uploadSourceMaps(site, apiKey, name, service, bundleFolder)
+    }
+  }
+  printLog('Source maps upload done.')
+})
+
 function renameFilesWithVersionSuffix(bundleFolder, packageName) {
   // The datadog-ci CLI is taking a directory as an argument. It will scan every source map files in
   // it and upload those along with the minified bundle. The file names must match the one from the
@@ -49,17 +63,3 @@ function uploadSourceMaps(site, apiKey, packageName, service, bundleFolder) {
     })
     .run()
 }
-
-runMain(() => {
-  for (const { name, service } of packages) {
-    const bundleFolder = `packages/${name}/bundle`
-    renameFilesWithVersionSuffix(bundleFolder, name)
-    for (const site of sitesByVersion[version]) {
-      const normalizedSite = site.replaceAll('.', '-')
-      const apiKey = getSecretKey(`ci.browser-sdk.source-maps.${normalizedSite}.ci_api_key`)
-
-      uploadSourceMaps(site, apiKey, name, service, bundleFolder)
-    }
-  }
-  printLog('Source maps upload done.')
-})
