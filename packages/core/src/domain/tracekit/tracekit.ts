@@ -1,4 +1,5 @@
 import { instrumentMethodAndCallOriginal } from '../../tools/instrumentMethod'
+import { jsonStringify } from '../../tools/utils'
 import { computeStackTrace } from './computeStackTrace'
 import type { UnhandledErrorCallback, StackTrace } from './types'
 
@@ -55,36 +56,44 @@ export function startUnhandledErrorCollection(callback: UnhandledErrorCallback) 
  */
 function instrumentOnError(callback: UnhandledErrorCallback) {
   return instrumentMethodAndCallOriginal(window, 'onerror', {
-    before(this: any, message: Event | string, url?: string, lineNo?: number, columnNo?: number, errorObj?: Error) {
-      let stack: StackTrace
-
-      if (errorObj) {
-        stack = computeStackTrace(errorObj)
+    before(this: any, message: Event | string, url?: string, lineNo?: number, columnNo?: number, errorObj?: unknown) {
+      // Priority is given to errorObj if it is an instance of Error. This allows us to compute the most comprehensive stack trace.
+      if (errorObj instanceof Error) {
+        const stack = computeStackTrace(errorObj)
         callback(stack, errorObj)
       } else {
-        const location = {
-          url,
-          column: columnNo,
-          line: lineNo,
-        }
+        let name: string | undefined
+        let msg: string | undefined
 
-        let name
-        let msg = message
+        // Try to extract information about the error from the provided message
         if ({}.toString.call(message) === '[object String]') {
-          const groups = ERROR_TYPES_RE.exec(msg as string)
+          msg = message as string
+          const groups = ERROR_TYPES_RE.exec(message as string)
           if (groups) {
             name = groups[1]
             msg = groups[2]
           }
         }
 
-        stack = {
-          name,
-          message: typeof msg === 'string' ? msg : undefined,
-          stack: [location],
+        // If an errorObj is provided, give priority to its content to populate the message of the stack trace
+        if (errorObj) {
+          msg = jsonStringify(errorObj)
         }
 
-        callback(stack, message)
+        const stack: StackTrace = {
+          name,
+          // We only include the `Uncaught` prefix when errorObj is present, to preserve backward compatibility
+          message: errorObj && msg ? `Uncaught ${msg}` : msg,
+          stack: [
+            {
+              url,
+              column: columnNo,
+              line: lineNo,
+            },
+          ],
+        }
+        // If provided, give priority to errorObj over message as original error
+        callback(stack, errorObj || message)
       }
     },
   })
