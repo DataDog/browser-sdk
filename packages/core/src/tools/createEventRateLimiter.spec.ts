@@ -1,6 +1,6 @@
 import type { Clock } from '../../test/specHelper'
 import { mockClock } from '../../test/specHelper'
-import type { RawError } from './error'
+import type { RawError } from './error.types'
 import type { EventRateLimiter } from './createEventRateLimiter'
 import { createEventRateLimiter } from './createEventRateLimiter'
 import type { RelativeTime } from './timeUtils'

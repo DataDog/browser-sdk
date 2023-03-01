@@ -62,17 +62,8 @@ export { sendToExtension } from './tools/sendToExtension'
 export { runOnReadyState } from './tools/runOnReadyState'
 export { getZoneJsOriginalValue } from './tools/getZoneJsOriginalValue'
 export { instrumentMethod, instrumentMethodAndCallOriginal, instrumentSetter } from './tools/instrumentMethod'
-export {
-  ErrorSource,
-  ErrorHandling,
-  computeRawError,
-  createHandlingStack,
-  RawError,
-  RawErrorCause,
-  ErrorWithCause,
-  toStackTraceString,
-  getFileFromStackTraceString,
-} from './tools/error'
+export { computeRawError, createHandlingStack, toStackTraceString, getFileFromStackTraceString } from './tools/error'
+export * from './tools/error.types'
 export { Context, ContextArray, ContextValue } from './tools/context'
 export { areCookiesAuthorized, getCookie, setCookie, deleteCookie, COOKIE_ACCESS_DELAY } from './browser/cookie'
 export { initXhrObservable, XhrCompleteContext, XhrStartContext } from './browser/xhrObservable'

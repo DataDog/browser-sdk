@@ -1,4 +1,4 @@
-import type { RawError } from '../../tools/error'
+import type { RawError } from '../../tools/error.types'
 import { Observable } from '../../tools/observable'
 import { trackRuntimeError } from './trackRuntimeError'
 

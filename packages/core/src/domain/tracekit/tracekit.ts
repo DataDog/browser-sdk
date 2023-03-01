@@ -1,3 +1,4 @@
+import { NonErrorPrefix } from '../../tools/error.types'
 import { instrumentMethodAndCallOriginal } from '../../tools/instrumentMethod'
 import { jsonStringify } from '../../tools/utils'
 import { computeStackTrace } from './computeStackTrace'
@@ -83,7 +84,7 @@ function instrumentOnError(callback: UnhandledErrorCallback) {
         const stack: StackTrace = {
           name,
           // We only include the `Uncaught` prefix when errorObj is present, to preserve backward compatibility
-          message: errorObj && msg ? `Uncaught ${msg}` : msg,
+          message: errorObj && msg ? `${NonErrorPrefix.UNCAUGHT} ${msg}` : msg,
           stack: [
             {
               url,

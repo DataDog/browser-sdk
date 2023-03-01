@@ -1,6 +1,7 @@
 import type { Context } from '../../tools/context'
 import { ConsoleApiName } from '../../tools/display'
 import { toStackTraceString } from '../../tools/error'
+import { NonErrorPrefix } from '../../tools/error.types'
 import { assign, combine, jsonStringify, performDraw, includes, startsWith, arrayFrom } from '../../tools/utils'
 import type { Configuration } from '../configuration'
 import { getExperimentalFeatures, INTAKE_SITE_STAGING, INTAKE_SITE_US1_FED } from '../configuration'
@@ -179,7 +180,7 @@ export function formatError(e: unknown) {
     error: {
       stack: 'Not an instance of error',
     },
-    message: `Uncaught ${jsonStringify(e)!}`,
+    message: `${NonErrorPrefix.UNCAUGHT} ${jsonStringify(e)!}`,
   }
 }
 
