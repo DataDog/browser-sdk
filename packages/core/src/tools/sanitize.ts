@@ -2,9 +2,17 @@ import type { Context, ContextArray, ContextValue } from './context'
 import type { ObjectWithToJsonMethod } from './utils'
 import { detachToJsonMethod, ONE_KIBI_BYTE } from './utils'
 
-type ContainerElementsToProcess = { source: ContextArray | Context; target: ContextArray | Context; path: string }
 // eslint-disable-next-line @typescript-eslint/ban-types
-type ExtendedContextValue = ContextValue | symbol | bigint | Function
+type PrimitivesAndFunctions = string | number | boolean | undefined | null | symbol | bigint | Function
+type ExtendedContextValue = PrimitivesAndFunctions | object | ExtendedContext | ExtendedContextArray
+type ExtendedContext = { [key: string]: ExtendedContextValue }
+type ExtendedContextArray = ExtendedContextValue[]
+
+type ContainerElementsToProcess = {
+  source: ExtendedContextArray | ExtendedContext
+  target: ContextArray | Context
+  path: string
+}
 
 // The maximum size of a single event is 256KiB. By default, we ensure that user-provided data
 // going through sanitize fits inside our events, while leaving room for other contexts, metadata, ...
@@ -138,9 +146,9 @@ function sanitizeProcessor(
 
   // Add processed source to queue
   const currentPath = key !== undefined ? `${parentPath}.${key}` : parentPath
-  const target = Array.isArray(sourceToSanitize) ? [] : {}
+  const target = Array.isArray(sourceToSanitize) ? ([] as ContextArray) : ({} as Context)
   visitedObjectsWithPath.set(sourceAsObject, currentPath)
-  queue.push({ source: sourceToSanitize, target, path: currentPath })
+  queue.push({ source: sourceToSanitize as ExtendedContext | ExtendedContextArray, target, path: currentPath })
 
   return target
 }
@@ -149,7 +157,7 @@ function sanitizeProcessor(
  * Handles sanitization of simple, non-object types
  *
  */
-function sanitizePrimitivesAndFunctions(value: ExtendedContextValue) {
+function sanitizePrimitivesAndFunctions(value: PrimitivesAndFunctions) {
   // BigInt cannot be serialized by JSON.stringify(), convert it to a string representation
   if (typeof value === 'bigint') {
     return `[BigInt] ${value.toString()}`
