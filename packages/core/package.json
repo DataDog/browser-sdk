@@ -20,5 +20,8 @@
     "type": "git",
     "url": "https://github.com/DataDog/browser-sdk.git",
     "directory": "packages/core"
+  },
+  "volta": {
+    "extends": "../../package.json"
   }
 }
