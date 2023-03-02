@@ -15,8 +15,8 @@ import type {
 } from '../../types'
 import { RecordType, IncrementalSource } from '../../types'
 import { serializeDocument, SerializationContextStatus } from './serialize'
-import { initObservers } from './observers'
-import type { InputCallback } from './observers'
+import { initObservers } from './observers/observers'
+import type { InputCallback } from './observers/observers'
 
 import { getVisualViewport, getScrollX, getScrollY } from './viewports'
 import { assembleIncrementalSnapshot } from './utils'

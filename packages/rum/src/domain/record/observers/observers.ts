@@ -18,7 +18,7 @@ import {
   RumEventType,
   LifeCycleEventType,
 } from '@datadog/browser-rum-core'
-import { NodePrivacyLevel } from '../../constants'
+import { NodePrivacyLevel } from '../../../constants'
 import type {
   InputState,
   MousePosition,
@@ -33,15 +33,15 @@ import type {
   FrustrationRecord,
   BrowserIncrementalSnapshotRecord,
   MouseInteractionData,
-} from '../../types'
-import { RecordType, IncrementalSource, MediaInteractionType, MouseInteractionType } from '../../types'
-import { getNodePrivacyLevel, shouldMaskNode } from './privacy'
-import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from './serializationUtils'
-import { assembleIncrementalSnapshot, forEach, getPathToNestedCSSRule, isTouchEvent } from './utils'
+} from '../../../types'
+import { RecordType, IncrementalSource, MediaInteractionType, MouseInteractionType } from '../../../types'
+import { getNodePrivacyLevel, shouldMaskNode } from '../privacy'
+import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from '../serializationUtils'
+import { assembleIncrementalSnapshot, forEach, getPathToNestedCSSRule, isTouchEvent } from '../utils'
+import { getVisualViewport, getScrollX, getScrollY, convertMouseEventToLayoutCoordinates } from '../viewports'
+import type { ElementsScrollPositions } from '../elementsScrollPositions'
+import type { ShadowRootsController } from '../shadowRootsController'
 import { startMutationObserver } from './mutationObserver'
-import { getVisualViewport, getScrollX, getScrollY, convertMouseEventToLayoutCoordinates } from './viewports'
-import type { ElementsScrollPositions } from './elementsScrollPositions'
-import type { ShadowRootsController } from './shadowRootsController'
 
 const MOUSE_MOVE_OBSERVER_THRESHOLD = 50
 const SCROLL_OBSERVER_THRESHOLD = 100

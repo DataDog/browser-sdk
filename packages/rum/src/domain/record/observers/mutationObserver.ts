@@ -6,20 +6,20 @@ import {
   getMutationObserverConstructor,
   getParentNode,
 } from '@datadog/browser-rum-core'
-import { NodePrivacyLevel } from '../../constants'
-import type { AddedNodeMutation, AttributeMutation, RemovedNodeMutation, TextMutation } from '../../types'
-import { getNodePrivacyLevel, getTextContent } from './privacy'
-import type { NodeWithSerializedNode } from './serializationUtils'
+import { NodePrivacyLevel } from '../../../constants'
+import type { AddedNodeMutation, AttributeMutation, RemovedNodeMutation, TextMutation } from '../../../types'
+import { getNodePrivacyLevel, getTextContent } from '../privacy'
+import type { NodeWithSerializedNode } from '../serializationUtils'
 import {
   getElementInputValue,
   getSerializedNodeId,
   hasSerializedNode,
   nodeAndAncestorsHaveSerializedNode,
-} from './serializationUtils'
-import { serializeNodeWithId, serializeAttribute, SerializationContextStatus } from './serialize'
-import { createMutationBatch } from './mutationBatch'
+} from '../serializationUtils'
+import { serializeNodeWithId, serializeAttribute, SerializationContextStatus } from '../serialize'
+import { createMutationBatch } from '../mutationBatch'
+import type { ShadowRootCallBack, ShadowRootsController } from '../shadowRootsController'
 import type { MutationCallBack } from './observers'
-import type { ShadowRootCallBack, ShadowRootsController } from './shadowRootsController'
 
 type WithSerializedTarget<T> = T & { target: NodeWithSerializedNode }
 

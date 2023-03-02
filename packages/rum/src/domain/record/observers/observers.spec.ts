@@ -2,16 +2,12 @@ import { DefaultPrivacyLevel, isIE, noop, relativeNow, timeStampNow } from '@dat
 import type { RawRumActionEvent, RumConfiguration } from '@datadog/browser-rum-core'
 import { ActionType, LifeCycle, LifeCycleEventType, RumEventType, FrustrationType } from '@datadog/browser-rum-core'
 import type { RawRumEventCollectedData } from 'packages/rum-core/src/domain/lifeCycle'
-import { createNewEvent, isFirefox } from '../../../../core/test/specHelper'
-import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT } from '../../constants'
-import { IncrementalSource, MouseInteractionType, RecordType } from '../../types'
-import type {
-  FrustrationCallback,
-  InputCallback,
-  MouseInteractionCallBack,
-  StyleSheetCallback,
-  MousemoveCallBack,
-} from './observers'
+import { createNewEvent, isFirefox } from '@datadog/browser-core/test/specHelper'
+import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT } from '../../../constants'
+import { IncrementalSource, MouseInteractionType, RecordType } from '../../../types'
+import { serializeDocument, SerializationContextStatus } from '../serialize'
+import { createElementsScrollPositions } from '../elementsScrollPositions'
+import type { ShadowRootsController } from '../shadowRootsController'
 import {
   getRecordIdForEvent,
   initStyleSheetObserver,
@@ -20,9 +16,13 @@ import {
   initMouseInteractionObserver,
   initMoveObserver,
 } from './observers'
-import { serializeDocument, SerializationContextStatus } from './serialize'
-import { createElementsScrollPositions } from './elementsScrollPositions'
-import type { ShadowRootsController } from './shadowRootsController'
+import type {
+  FrustrationCallback,
+  InputCallback,
+  MouseInteractionCallBack,
+  StyleSheetCallback,
+  MousemoveCallBack,
+} from './observers'
 
 const DEFAULT_SHADOW_ROOT_CONTROLLER: ShadowRootsController = {
   flush: noop,
