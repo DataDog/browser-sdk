@@ -252,8 +252,8 @@ deploy-staging:
     - export BUILD_MODE=canary
     - yarn
     - yarn build:bundle
-    - ./scripts/deploy.sh staging staging
-    - node ./scripts/upload-source-maps.js datad0g.com,datadoghq.com staging
+    - node ./scripts/deploy.js staging staging
+    - node ./scripts/upload-source-maps.js staging
 
 deploy-prod-canary:
   stage: deploy:canary
@@ -264,8 +264,8 @@ deploy-prod-canary:
     - export BUILD_MODE=canary
     - yarn
     - yarn build:bundle
-    - ./scripts/deploy.sh prod canary
-    - node ./scripts/upload-source-maps.js datadoghq.com canary
+    - node ./scripts/deploy.js prod canary
+    - node ./scripts/upload-source-maps.js canary
 
 deploy-prod-stable:
   stage: deploy
@@ -279,8 +279,8 @@ deploy-prod-stable:
     - VERSION=$(node -p -e "require('./lerna.json').version")
     - yarn
     - yarn build:bundle
-    - ./scripts/deploy.sh prod v${VERSION%%.*}
-    - node ./scripts/upload-source-maps.js datadoghq.com,datadoghq.eu,us3.datadoghq.com,us5.datadoghq.com,ap1.datadoghq.com v${VERSION%%.*}
+    - node ./scripts/deploy.js prod v${VERSION%%.*}
+    - node ./scripts/upload-source-maps.js v${VERSION%%.*}
 
 publish-npm:
   stage: deploy
