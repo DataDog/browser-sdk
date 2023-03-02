@@ -1,4 +1,5 @@
 import { assign, timeStampNow } from '@datadog/browser-core'
+import { isNodeShadowHost } from '@datadog/browser-rum-core'
 import type { BrowserIncrementalData, BrowserIncrementalSnapshotRecord } from '../../types'
 import { RecordType } from '../../types'
 
@@ -48,4 +49,13 @@ export function getPathToNestedCSSRule(rule: CSSRule): number[] | undefined {
   path.unshift(index)
 
   return path
+}
+
+export type ListenerHandler = () => void
+
+export function getEventTarget(event: Event): Node {
+  if (event.composed === true && isNodeShadowHost(event.target as Node)) {
+    return event.composedPath()[0] as Node
+  }
+  return event.target as Node
 }

@@ -6,9 +6,7 @@ import {
   throttle,
   DOM_EVENT,
   addEventListeners,
-  addEventListener,
   noop,
-  addTelemetryDebug,
 } from '@datadog/browser-core'
 import type { LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
 import {
@@ -24,7 +22,6 @@ import type {
   MousePosition,
   MouseInteraction,
   BrowserMutationPayload,
-  ScrollPosition,
   StyleSheetRule,
   ViewportResizeDimension,
   MediaInteraction,
@@ -37,14 +34,16 @@ import type {
 import { RecordType, IncrementalSource, MediaInteractionType, MouseInteractionType } from '../../../types'
 import { getNodePrivacyLevel, shouldMaskNode } from '../privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from '../serializationUtils'
-import { assembleIncrementalSnapshot, forEach, getPathToNestedCSSRule, isTouchEvent } from '../utils'
-import { getVisualViewport, getScrollX, getScrollY, convertMouseEventToLayoutCoordinates } from '../viewports'
+import type { ListenerHandler } from '../utils'
+import { assembleIncrementalSnapshot, forEach, getPathToNestedCSSRule } from '../utils'
+import { getVisualViewport } from '../viewports'
 import type { ElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootsController } from '../shadowRootsController'
 import { startMutationObserver } from './mutationObserver'
+import { initMoveObserver, tryToComputeCoordinates } from './moveObserver'
+import type { ScrollCallback } from './scrollObserver'
+import { initScrollObserver } from './scrollObserver'
 
-const MOUSE_MOVE_OBSERVER_THRESHOLD = 50
-const SCROLL_OBSERVER_THRESHOLD = 100
 const VISUAL_VIEWPORT_OBSERVER_THRESHOLD = 200
 
 const recordIds = new WeakMap<Event, number>()
@@ -59,8 +58,6 @@ export function getRecordIdForEvent(event: Event): number {
 
 type GroupingCSSRuleTypes = typeof CSSGroupingRule | typeof CSSMediaRule | typeof CSSSupportsRule
 
-type ListenerHandler = () => void
-
 export type MousemoveCallBack = (
   p: MousePosition[],
   source: typeof IncrementalSource.MouseMove | typeof IncrementalSource.TouchMove
@@ -69,8 +66,6 @@ export type MousemoveCallBack = (
 export type MutationCallBack = (m: BrowserMutationPayload) => void
 
 export type MouseInteractionCallBack = (record: BrowserIncrementalSnapshotRecord) => void
-
-type ScrollCallback = (p: ScrollPosition) => void
 
 export type StyleSheetCallback = (s: StyleSheetRule) => void
 
@@ -151,37 +146,6 @@ export function initMutationObserver(
   return startMutationObserver(cb, configuration, shadowRootsController, document)
 }
 
-export function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {
-  const { throttled: updatePosition } = throttle(
-    (event: MouseEvent | TouchEvent) => {
-      const target = getEventTarget(event)
-      if (hasSerializedNode(target)) {
-        const coordinates = tryToComputeCoordinates(event)
-        if (!coordinates) {
-          return
-        }
-        const position: MousePosition = {
-          id: getSerializedNodeId(target),
-          timeOffset: 0,
-          x: coordinates.x,
-          y: coordinates.y,
-        }
-
-        cb([position], isTouchEvent(event) ? IncrementalSource.TouchMove : IncrementalSource.MouseMove)
-      }
-    },
-    MOUSE_MOVE_OBSERVER_THRESHOLD,
-    {
-      trailing: false,
-    }
-  )
-
-  return addEventListeners(document, [DOM_EVENT.MOUSE_MOVE, DOM_EVENT.TOUCH_MOVE], updatePosition, {
-    capture: true,
-    passive: true,
-  }).stop
-}
-
 const eventTypeToMouseInteraction = {
   // Listen for pointerup DOM events instead of mouseup for MouseInteraction/MouseUp records. This
   // allows to reference such records from Frustration records.
@@ -235,57 +199,6 @@ export function initMouseInteractionObserver(
     capture: true,
     passive: true,
   }).stop
-}
-
-function tryToComputeCoordinates(event: MouseEvent | TouchEvent) {
-  let { clientX: x, clientY: y } = isTouchEvent(event) ? event.changedTouches[0] : event
-  if (window.visualViewport) {
-    const { visualViewportX, visualViewportY } = convertMouseEventToLayoutCoordinates(x, y)
-    x = visualViewportX
-    y = visualViewportY
-  }
-  if (!Number.isFinite(x) || !Number.isFinite(y)) {
-    if (event.isTrusted) {
-      addTelemetryDebug('mouse/touch event without x/y')
-    }
-    return undefined
-  }
-  return { x, y }
-}
-
-function initScrollObserver(
-  cb: ScrollCallback,
-  defaultPrivacyLevel: DefaultPrivacyLevel,
-  elementsScrollPositions: ElementsScrollPositions
-): ListenerHandler {
-  const { throttled: updatePosition } = throttle((event: UIEvent) => {
-    const target = getEventTarget(event) as HTMLElement | Document
-    if (
-      !target ||
-      getNodePrivacyLevel(target, defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN ||
-      !hasSerializedNode(target)
-    ) {
-      return
-    }
-    const id = getSerializedNodeId(target)
-    const scrollPositions =
-      target === document
-        ? {
-            scrollTop: getScrollY(),
-            scrollLeft: getScrollX(),
-          }
-        : {
-            scrollTop: Math.round((target as HTMLElement).scrollTop),
-            scrollLeft: Math.round((target as HTMLElement).scrollLeft),
-          }
-    elementsScrollPositions.set(target, scrollPositions)
-    cb({
-      id,
-      x: scrollPositions.scrollLeft,
-      y: scrollPositions.scrollTop,
-    })
-  }, SCROLL_OBSERVER_THRESHOLD)
-  return addEventListener(document, DOM_EVENT.SCROLL, updatePosition, { capture: true, passive: true }).stop
 }
 
 function initViewportResizeObserver(cb: ViewportResizeCallback): ListenerHandler {
