@@ -15,7 +15,7 @@ export const ConsoleApiName = {
   error: 'error',
 } as const
 
-export type ConsoleApiName = typeof ConsoleApiName[keyof typeof ConsoleApiName]
+export type ConsoleApiName = (typeof ConsoleApiName)[keyof typeof ConsoleApiName]
 
 interface Display {
   (api: ConsoleApiName, ...args: any[]): void

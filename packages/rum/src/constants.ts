@@ -7,7 +7,7 @@ export const NodePrivacyLevel = {
   MASK: DefaultPrivacyLevel.MASK,
   MASK_USER_INPUT: DefaultPrivacyLevel.MASK_USER_INPUT,
 } as const
-export type NodePrivacyLevel = typeof NodePrivacyLevel[keyof typeof NodePrivacyLevel]
+export type NodePrivacyLevel = (typeof NodePrivacyLevel)[keyof typeof NodePrivacyLevel]
 
 export const PRIVACY_ATTR_NAME = 'data-dd-privacy'
 
