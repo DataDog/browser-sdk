@@ -11,7 +11,7 @@ export const RawReportType = {
   cspViolation: 'csp_violation',
 } as const
 
-export type RawReportType = typeof RawReportType[keyof typeof RawReportType]
+export type RawReportType = (typeof RawReportType)[keyof typeof RawReportType]
 
 export interface RawReport {
   type: RawReportType

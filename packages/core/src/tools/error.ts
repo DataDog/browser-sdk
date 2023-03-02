@@ -42,7 +42,7 @@ export const enum ErrorHandling {
   UNHANDLED = 'unhandled',
 }
 
-export type ErrorSource = typeof ErrorSource[keyof typeof ErrorSource]
+export type ErrorSource = (typeof ErrorSource)[keyof typeof ErrorSource]
 
 type RawErrorParams = {
   stackTrace?: StackTrace
