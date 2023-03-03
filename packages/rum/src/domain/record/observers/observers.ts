@@ -1,16 +1,8 @@
 import { throttle, DOM_EVENT, addEventListeners, noop } from '@datadog/browser-core'
 import type { LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
-import { initViewportObservable, ActionType, RumEventType, LifeCycleEventType } from '@datadog/browser-rum-core'
-import type {
-  BrowserMutationPayload,
-  ViewportResizeDimension,
-  FocusRecord,
-  VisualViewportRecord,
-  FrustrationRecord,
-} from '../../../types'
-import { RecordType } from '../../../types'
+import { initViewportObservable } from '@datadog/browser-rum-core'
+import type { BrowserMutationPayload, ViewportResizeDimension, FocusRecord, VisualViewportRecord } from '../../../types'
 import type { ListenerHandler } from '../utils'
-import { getRecordIdForEvent } from '../utils'
 import { getVisualViewport } from '../viewports'
 import type { ElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootsController } from '../shadowRootsController'
@@ -27,6 +19,8 @@ import type { StyleSheetCallback } from './styleSheetObserver'
 import { initStyleSheetObserver } from './styleSheetObserver'
 import type { MediaInteractionCallback } from './mediaInteractionObserver'
 import { initMediaInteractionObserver } from './mediaInteractionObserver'
+import type { FrustrationCallback } from './frustrationObserver'
+import { initFrustrationObserver } from './frustrationObserver'
 
 const VISUAL_VIEWPORT_OBSERVER_THRESHOLD = 200
 
@@ -37,8 +31,6 @@ type ViewportResizeCallback = (d: ViewportResizeDimension) => void
 type FocusCallback = (data: FocusRecord['data']) => void
 
 type VisualViewportResizeCallback = (data: VisualViewportRecord['data']) => void
-
-export type FrustrationCallback = (record: FrustrationRecord) => void
 
 interface ObserverParam {
   lifeCycle: LifeCycle
@@ -142,25 +134,4 @@ function initVisualViewportResizeObserver(cb: VisualViewportResizeCallback): Lis
     removeListener()
     cancelThrottle()
   }
-}
-
-export function initFrustrationObserver(lifeCycle: LifeCycle, frustrationCb: FrustrationCallback): ListenerHandler {
-  return lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {
-    if (
-      data.rawRumEvent.type === RumEventType.ACTION &&
-      data.rawRumEvent.action.type === ActionType.CLICK &&
-      data.rawRumEvent.action.frustration?.type?.length &&
-      'events' in data.domainContext &&
-      data.domainContext.events?.length
-    ) {
-      frustrationCb({
-        timestamp: data.rawRumEvent.date,
-        type: RecordType.FrustrationRecord,
-        data: {
-          frustrationTypes: data.rawRumEvent.action.frustration.type,
-          recordIds: data.domainContext.events.map((e) => getRecordIdForEvent(e)),
-        },
-      })
-    }
-  }).unsubscribe
 }
