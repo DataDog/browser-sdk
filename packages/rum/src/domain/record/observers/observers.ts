@@ -1,11 +1,10 @@
 import type { DefaultPrivacyLevel } from '@datadog/browser-core'
-import { instrumentMethodAndCallOriginal, throttle, DOM_EVENT, addEventListeners, noop } from '@datadog/browser-core'
+import { throttle, DOM_EVENT, addEventListeners, noop } from '@datadog/browser-core'
 import type { LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
 import { initViewportObservable, ActionType, RumEventType, LifeCycleEventType } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel } from '../../../constants'
 import type {
   BrowserMutationPayload,
-  StyleSheetRule,
   ViewportResizeDimension,
   MediaInteraction,
   FocusRecord,
@@ -16,7 +15,7 @@ import { RecordType, MediaInteractionType } from '../../../types'
 import { getNodePrivacyLevel } from '../privacy'
 import { getSerializedNodeId, hasSerializedNode } from '../serializationUtils'
 import type { ListenerHandler } from '../utils'
-import { getRecordIdForEvent, getEventTarget, getPathToNestedCSSRule } from '../utils'
+import { getRecordIdForEvent, getEventTarget } from '../utils'
 import { getVisualViewport } from '../viewports'
 import type { ElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootsController } from '../shadowRootsController'
@@ -29,14 +28,12 @@ import type { MouseInteractionCallBack } from './mouseInteractionObserver'
 import { initMouseInteractionObserver } from './mouseInteractionObserver'
 import type { InputCallback } from './inputObserver'
 import { initInputObserver } from './inputObserver'
+import type { StyleSheetCallback } from './styleSheetObserver'
+import { initStyleSheetObserver } from './styleSheetObserver'
 
 const VISUAL_VIEWPORT_OBSERVER_THRESHOLD = 200
 
-type GroupingCSSRuleTypes = typeof CSSGroupingRule | typeof CSSMediaRule | typeof CSSSupportsRule
-
 export type MutationCallBack = (m: BrowserMutationPayload) => void
-
-export type StyleSheetCallback = (s: StyleSheetRule) => void
 
 type ViewportResizeCallback = (d: ViewportResizeDimension) => void
 
@@ -115,63 +112,6 @@ export function initMutationObserver(
 
 function initViewportResizeObserver(cb: ViewportResizeCallback): ListenerHandler {
   return initViewportObservable().subscribe(cb).unsubscribe
-}
-
-export function initStyleSheetObserver(cb: StyleSheetCallback): ListenerHandler {
-  function checkStyleSheetAndCallback(styleSheet: CSSStyleSheet | null, callback: (id: number) => void): void {
-    if (styleSheet && hasSerializedNode(styleSheet.ownerNode!)) {
-      callback(getSerializedNodeId(styleSheet.ownerNode))
-    }
-  }
-
-  const instrumentationStoppers = [
-    instrumentMethodAndCallOriginal(CSSStyleSheet.prototype, 'insertRule', {
-      before(rule, index) {
-        checkStyleSheetAndCallback(this, (id) => cb({ id, adds: [{ rule, index }] }))
-      },
-    }),
-    instrumentMethodAndCallOriginal(CSSStyleSheet.prototype, 'deleteRule', {
-      before(index) {
-        checkStyleSheetAndCallback(this, (id) => cb({ id, removes: [{ index }] }))
-      },
-    }),
-  ]
-
-  if (typeof CSSGroupingRule !== 'undefined') {
-    instrumentGroupingCSSRuleClass(CSSGroupingRule)
-  } else {
-    instrumentGroupingCSSRuleClass(CSSMediaRule)
-    instrumentGroupingCSSRuleClass(CSSSupportsRule)
-  }
-
-  function instrumentGroupingCSSRuleClass(cls: GroupingCSSRuleTypes) {
-    instrumentationStoppers.push(
-      instrumentMethodAndCallOriginal(cls.prototype, 'insertRule', {
-        before(rule, index) {
-          checkStyleSheetAndCallback(this.parentStyleSheet, (id) => {
-            const path = getPathToNestedCSSRule(this)
-            if (path) {
-              path.push(index || 0)
-              cb({ id, adds: [{ rule, index: path }] })
-            }
-          })
-        },
-      }),
-      instrumentMethodAndCallOriginal(cls.prototype, 'deleteRule', {
-        before(index) {
-          checkStyleSheetAndCallback(this.parentStyleSheet, (id) => {
-            const path = getPathToNestedCSSRule(this)
-            if (path) {
-              path.push(index)
-              cb({ id, removes: [{ index: path }] })
-            }
-          })
-        },
-      })
-    )
-  }
-
-  return () => instrumentationStoppers.forEach((stopper) => stopper.stop())
 }
 
 function initMediaInteractionObserver(
