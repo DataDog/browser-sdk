@@ -4,7 +4,6 @@ import type { BrowserMutationPayload, FocusRecord } from '../../../types'
 import type { ListenerHandler } from '../utils'
 import type { ElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootsController } from '../shadowRootsController'
-import { startMutationObserver } from './mutationObserver'
 import type { MousemoveCallBack } from './moveObserver'
 import { initMoveObserver } from './moveObserver'
 import type { ScrollCallback } from './scrollObserver'
@@ -21,6 +20,7 @@ import type { FrustrationCallback } from './frustrationObserver'
 import { initFrustrationObserver } from './frustrationObserver'
 import type { ViewportResizeCallback, VisualViewportResizeCallback } from './viewportResizeObserver'
 import { initViewportResizeObserver, initVisualViewportResizeObserver } from './viewportResizeObserver'
+import { initMutationObserver } from './mutationObserver'
 
 export type MutationCallBack = (m: BrowserMutationPayload) => void
 
@@ -81,14 +81,6 @@ export function initObservers(o: ObserverParam): { stop: ListenerHandler; flush:
       frustrationHandler()
     },
   }
-}
-
-export function initMutationObserver(
-  cb: MutationCallBack,
-  configuration: RumConfiguration,
-  shadowRootsController: ShadowRootsController
-) {
-  return startMutationObserver(cb, configuration, shadowRootsController, document)
 }
 
 function initFocusObserver(focusCb: FocusCallback): ListenerHandler {
