@@ -267,7 +267,7 @@ deploy-prod-canary:
     - node ./scripts/deploy.js prod canary root
     - node ./scripts/upload-source-maps.js canary root
 
-deploy-prod-stable:
+deploy-prod-all-dcs:
   stage: deploy
   extends:
     - .base-configuration
@@ -279,8 +279,23 @@ deploy-prod-stable:
     - VERSION=$(node -p -e "require('./lerna.json').version")
     - yarn
     - yarn build:bundle
-    - node ./scripts/deploy.js prod v${VERSION%%.*} root,us1,eu1,us3,us5,ap1
-    - node ./scripts/upload-source-maps.js v${VERSION%%.*} root,us1,eu1,us3,us5,ap1
+    - node ./scripts/deploy.js prod v${VERSION%%.*} us1,eu1,us3,us5,ap1
+    - node ./scripts/upload-source-maps.js v${VERSION%%.*} us1,eu1,us3,us5,ap1
+
+deploy-prod-root:
+  stage: deploy
+  extends:
+    - .base-configuration
+    - .tags
+  when: manual
+  allow_failure: false
+  script:
+    - export BUILD_MODE=release
+    - VERSION=$(node -p -e "require('./lerna.json').version")
+    - yarn
+    - yarn build:bundle
+    - node ./scripts/deploy.js prod v${VERSION%%.*} root
+    - node ./scripts/upload-source-maps.js v${VERSION%%.*} root
 
 publish-npm:
   stage: deploy
