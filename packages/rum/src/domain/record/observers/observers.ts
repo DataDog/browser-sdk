@@ -1,6 +1,5 @@
-import { DOM_EVENT, addEventListeners } from '@datadog/browser-core'
 import type { LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
-import type { BrowserMutationPayload, FocusRecord } from '../../../types'
+import type { BrowserMutationPayload } from '../../../types'
 import type { ListenerHandler } from '../utils'
 import type { ElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootsController } from '../shadowRootsController'
@@ -21,10 +20,10 @@ import { initFrustrationObserver } from './frustrationObserver'
 import type { ViewportResizeCallback, VisualViewportResizeCallback } from './viewportResizeObserver'
 import { initViewportResizeObserver, initVisualViewportResizeObserver } from './viewportResizeObserver'
 import { initMutationObserver } from './mutationObserver'
+import type { FocusCallback } from './focusObserver'
+import { initFocusObserver } from './focusObserver'
 
 export type MutationCallBack = (m: BrowserMutationPayload) => void
-
-type FocusCallback = (data: FocusRecord['data']) => void
 
 interface ObserverParam {
   lifeCycle: LifeCycle
@@ -81,10 +80,4 @@ export function initObservers(o: ObserverParam): { stop: ListenerHandler; flush:
       frustrationHandler()
     },
   }
-}
-
-function initFocusObserver(focusCb: FocusCallback): ListenerHandler {
-  return addEventListeners(window, [DOM_EVENT.FOCUS, DOM_EVENT.BLUR], () => {
-    focusCb({ has_focus: document.hasFocus() })
-  }).stop
 }
