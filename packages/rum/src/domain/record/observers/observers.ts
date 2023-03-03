@@ -1,21 +1,16 @@
-import type { DefaultPrivacyLevel } from '@datadog/browser-core'
 import { throttle, DOM_EVENT, addEventListeners, noop } from '@datadog/browser-core'
 import type { LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
 import { initViewportObservable, ActionType, RumEventType, LifeCycleEventType } from '@datadog/browser-rum-core'
-import { NodePrivacyLevel } from '../../../constants'
 import type {
   BrowserMutationPayload,
   ViewportResizeDimension,
-  MediaInteraction,
   FocusRecord,
   VisualViewportRecord,
   FrustrationRecord,
 } from '../../../types'
-import { RecordType, MediaInteractionType } from '../../../types'
-import { getNodePrivacyLevel } from '../privacy'
-import { getSerializedNodeId, hasSerializedNode } from '../serializationUtils'
+import { RecordType } from '../../../types'
 import type { ListenerHandler } from '../utils'
-import { getRecordIdForEvent, getEventTarget } from '../utils'
+import { getRecordIdForEvent } from '../utils'
 import { getVisualViewport } from '../viewports'
 import type { ElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootsController } from '../shadowRootsController'
@@ -30,14 +25,14 @@ import type { InputCallback } from './inputObserver'
 import { initInputObserver } from './inputObserver'
 import type { StyleSheetCallback } from './styleSheetObserver'
 import { initStyleSheetObserver } from './styleSheetObserver'
+import type { MediaInteractionCallback } from './mediaInteractionObserver'
+import { initMediaInteractionObserver } from './mediaInteractionObserver'
 
 const VISUAL_VIEWPORT_OBSERVER_THRESHOLD = 200
 
 export type MutationCallBack = (m: BrowserMutationPayload) => void
 
 type ViewportResizeCallback = (d: ViewportResizeDimension) => void
-
-type MediaInteractionCallback = (p: MediaInteraction) => void
 
 type FocusCallback = (data: FocusRecord['data']) => void
 
@@ -112,27 +107,6 @@ export function initMutationObserver(
 
 function initViewportResizeObserver(cb: ViewportResizeCallback): ListenerHandler {
   return initViewportObservable().subscribe(cb).unsubscribe
-}
-
-function initMediaInteractionObserver(
-  mediaInteractionCb: MediaInteractionCallback,
-  defaultPrivacyLevel: DefaultPrivacyLevel
-): ListenerHandler {
-  const handler = (event: Event) => {
-    const target = getEventTarget(event)
-    if (
-      !target ||
-      getNodePrivacyLevel(target, defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN ||
-      !hasSerializedNode(target)
-    ) {
-      return
-    }
-    mediaInteractionCb({
-      id: getSerializedNodeId(target),
-      type: event.type === DOM_EVENT.PLAY ? MediaInteractionType.Play : MediaInteractionType.Pause,
-    })
-  }
-  return addEventListeners(document, [DOM_EVENT.PLAY, DOM_EVENT.PAUSE], handler, { capture: true, passive: true }).stop
 }
 
 function initFocusObserver(focusCb: FocusCallback): ListenerHandler {
