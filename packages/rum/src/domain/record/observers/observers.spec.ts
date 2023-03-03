@@ -1,16 +1,16 @@
-import { DefaultPrivacyLevel, isIE, noop, relativeNow, timeStampNow } from '@datadog/browser-core'
+import { isIE, noop, relativeNow, timeStampNow } from '@datadog/browser-core'
 import type { RawRumActionEvent, RumConfiguration } from '@datadog/browser-rum-core'
 import { ActionType, LifeCycle, LifeCycleEventType, RumEventType, FrustrationType } from '@datadog/browser-rum-core'
 import type { RawRumEventCollectedData } from 'packages/rum-core/src/domain/lifeCycle'
-import { createNewEvent, isFirefox } from '@datadog/browser-core/test/specHelper'
-import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT } from '../../../constants'
+import { isFirefox } from '@datadog/browser-core/test/specHelper'
+import { NodePrivacyLevel } from '../../../constants'
 import { RecordType } from '../../../types'
 import { serializeDocument, SerializationContextStatus } from '../serialize'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootsController } from '../shadowRootsController'
 import { getRecordIdForEvent } from '../utils'
-import { initStyleSheetObserver, initFrustrationObserver, initInputObserver } from './observers'
-import type { FrustrationCallback, InputCallback, StyleSheetCallback } from './observers'
+import { initStyleSheetObserver, initFrustrationObserver } from './observers'
+import type { FrustrationCallback, StyleSheetCallback } from './observers'
 
 const DEFAULT_SHADOW_ROOT_CONTROLLER: ShadowRootsController = {
   flush: noop,
@@ -20,97 +20,6 @@ const DEFAULT_SHADOW_ROOT_CONTROLLER: ShadowRootsController = {
 }
 
 const DEFAULT_CONFIGURATION = { defaultPrivacyLevel: NodePrivacyLevel.ALLOW } as RumConfiguration
-
-describe('initInputObserver', () => {
-  let stopInputObserver: () => void
-  let inputCallbackSpy: jasmine.Spy<InputCallback>
-  let sandbox: HTMLElement
-  let input: HTMLInputElement
-
-  beforeEach(() => {
-    if (isIE()) {
-      pending('IE not supported')
-    }
-    inputCallbackSpy = jasmine.createSpy()
-
-    sandbox = document.createElement('div')
-    input = document.createElement('input')
-    sandbox.appendChild(input)
-    document.body.appendChild(sandbox)
-
-    serializeDocument(document, DEFAULT_CONFIGURATION, {
-      shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
-      status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
-      elementsScrollPositions: createElementsScrollPositions(),
-    })
-  })
-
-  afterEach(() => {
-    stopInputObserver()
-    sandbox.remove()
-  })
-
-  it('collects input values when an "input" event is dispatched', () => {
-    stopInputObserver = initInputObserver(inputCallbackSpy, DefaultPrivacyLevel.ALLOW)
-    dispatchInputEvent('foo')
-
-    expect(inputCallbackSpy).toHaveBeenCalledOnceWith({
-      text: 'foo',
-      id: jasmine.any(Number) as unknown as number,
-    })
-  })
-
-  // cannot trigger a event in a Shadow DOM because event with `isTrusted:false` do not cross the root
-  it('collects input values when an "input" event is composed', () => {
-    stopInputObserver = initInputObserver(inputCallbackSpy, DefaultPrivacyLevel.ALLOW)
-    dispatchInputEventWithInShadowDom('foo')
-
-    expect(inputCallbackSpy).toHaveBeenCalledOnceWith({
-      text: 'foo',
-      id: jasmine.any(Number) as unknown as number,
-    })
-  })
-
-  it('masks input values according to the element privacy level', () => {
-    stopInputObserver = initInputObserver(inputCallbackSpy, DefaultPrivacyLevel.ALLOW)
-    sandbox.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT)
-
-    dispatchInputEvent('foo')
-
-    expect((inputCallbackSpy.calls.first().args[0] as { text?: string }).text).toBe('***')
-  })
-
-  it('masks input values according to a parent element privacy level', () => {
-    stopInputObserver = initInputObserver(inputCallbackSpy, DefaultPrivacyLevel.ALLOW)
-    input.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT)
-
-    dispatchInputEvent('foo')
-
-    expect((inputCallbackSpy.calls.first().args[0] as { text?: string }).text).toBe('***')
-  })
-
-  it('masks input values according to a the default privacy level', () => {
-    stopInputObserver = initInputObserver(inputCallbackSpy, DefaultPrivacyLevel.MASK)
-
-    dispatchInputEvent('foo')
-
-    expect((inputCallbackSpy.calls.first().args[0] as { text?: string }).text).toBe('***')
-  })
-
-  function dispatchInputEvent(newValue: string) {
-    input.value = newValue
-    input.dispatchEvent(createNewEvent('input', { target: input }))
-  }
-
-  function dispatchInputEventWithInShadowDom(newValue: string) {
-    input.value = newValue
-    const host = document.createElement('div')
-    host.attachShadow({ mode: 'open' })
-    const event = createNewEvent('input', { target: host, composed: true })
-    event.composedPath = () => [input, host, sandbox, document.body]
-    input.dispatchEvent(event)
-  }
-})
 
 describe('initFrustrationObserver', () => {
   const lifeCycle = new LifeCycle()

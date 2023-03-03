@@ -1,18 +1,9 @@
 import type { DefaultPrivacyLevel } from '@datadog/browser-core'
-import {
-  instrumentSetter,
-  instrumentMethodAndCallOriginal,
-  assign,
-  throttle,
-  DOM_EVENT,
-  addEventListeners,
-  noop,
-} from '@datadog/browser-core'
+import { instrumentMethodAndCallOriginal, throttle, DOM_EVENT, addEventListeners, noop } from '@datadog/browser-core'
 import type { LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
 import { initViewportObservable, ActionType, RumEventType, LifeCycleEventType } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel } from '../../../constants'
 import type {
-  InputState,
   BrowserMutationPayload,
   StyleSheetRule,
   ViewportResizeDimension,
@@ -22,10 +13,10 @@ import type {
   FrustrationRecord,
 } from '../../../types'
 import { RecordType, MediaInteractionType } from '../../../types'
-import { getNodePrivacyLevel, shouldMaskNode } from '../privacy'
-import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from '../serializationUtils'
+import { getNodePrivacyLevel } from '../privacy'
+import { getSerializedNodeId, hasSerializedNode } from '../serializationUtils'
 import type { ListenerHandler } from '../utils'
-import { getRecordIdForEvent, getEventTarget, forEach, getPathToNestedCSSRule } from '../utils'
+import { getRecordIdForEvent, getEventTarget, getPathToNestedCSSRule } from '../utils'
 import { getVisualViewport } from '../viewports'
 import type { ElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootsController } from '../shadowRootsController'
@@ -36,6 +27,8 @@ import type { ScrollCallback } from './scrollObserver'
 import { initScrollObserver } from './scrollObserver'
 import type { MouseInteractionCallBack } from './mouseInteractionObserver'
 import { initMouseInteractionObserver } from './mouseInteractionObserver'
+import type { InputCallback } from './inputObserver'
+import { initInputObserver } from './inputObserver'
 
 const VISUAL_VIEWPORT_OBSERVER_THRESHOLD = 200
 
@@ -46,8 +39,6 @@ export type MutationCallBack = (m: BrowserMutationPayload) => void
 export type StyleSheetCallback = (s: StyleSheetRule) => void
 
 type ViewportResizeCallback = (d: ViewportResizeDimension) => void
-
-export type InputCallback = (v: InputState & { id: number }) => void
 
 type MediaInteractionCallback = (p: MediaInteraction) => void
 
@@ -124,112 +115,6 @@ export function initMutationObserver(
 
 function initViewportResizeObserver(cb: ViewportResizeCallback): ListenerHandler {
   return initViewportObservable().subscribe(cb).unsubscribe
-}
-
-type InputObserverOptions = {
-  domEvents?: Array<DOM_EVENT.INPUT | DOM_EVENT.CHANGE>
-  target?: Node
-}
-export function initInputObserver(
-  cb: InputCallback,
-  defaultPrivacyLevel: DefaultPrivacyLevel,
-  { domEvents = [DOM_EVENT.INPUT, DOM_EVENT.CHANGE], target = document }: InputObserverOptions = {}
-): ListenerHandler {
-  const lastInputStateMap: WeakMap<Node, InputState> = new WeakMap()
-
-  function onElementChange(target: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement) {
-    const nodePrivacyLevel = getNodePrivacyLevel(target, defaultPrivacyLevel)
-    if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
-      return
-    }
-
-    const type = target.type
-
-    let inputState: InputState
-    if (type === 'radio' || type === 'checkbox') {
-      if (shouldMaskNode(target, nodePrivacyLevel)) {
-        return
-      }
-      inputState = { isChecked: (target as HTMLInputElement).checked }
-    } else {
-      const value = getElementInputValue(target, nodePrivacyLevel)
-      if (value === undefined) {
-        return
-      }
-      inputState = { text: value }
-    }
-
-    // Can be multiple changes on the same node within the same batched mutation observation.
-    cbWithDedup(target, inputState)
-
-    // If a radio was checked, other radios with the same name attribute will be unchecked.
-    const name = target.name
-    if (type === 'radio' && name && (target as HTMLInputElement).checked) {
-      forEach(document.querySelectorAll(`input[type="radio"][name="${name}"]`), (el: Element) => {
-        if (el !== target) {
-          // TODO: Consider the privacy implications for various differing input privacy levels
-          cbWithDedup(el, { isChecked: false })
-        }
-      })
-    }
-  }
-
-  /**
-   * There can be multiple changes on the same node within the same batched mutation observation.
-   */
-  function cbWithDedup(target: Node, inputState: InputState) {
-    if (!hasSerializedNode(target)) {
-      return
-    }
-    const lastInputState = lastInputStateMap.get(target)
-    if (
-      !lastInputState ||
-      (lastInputState as { text?: string }).text !== (inputState as { text?: string }).text ||
-      (lastInputState as { isChecked?: boolean }).isChecked !== (inputState as { isChecked?: boolean }).isChecked
-    ) {
-      lastInputStateMap.set(target, inputState)
-      cb(
-        assign(
-          {
-            id: getSerializedNodeId(target),
-          },
-          inputState
-        )
-      )
-    }
-  }
-
-  const { stop: stopEventListeners } = addEventListeners(
-    target,
-    domEvents,
-    (event) => {
-      const target = getEventTarget(event)
-      if (
-        target instanceof HTMLInputElement ||
-        target instanceof HTMLTextAreaElement ||
-        target instanceof HTMLSelectElement
-      ) {
-        onElementChange(target)
-      }
-    },
-    {
-      capture: true,
-      passive: true,
-    }
-  )
-
-  const instrumentationStoppers = [
-    instrumentSetter(HTMLInputElement.prototype, 'value', onElementChange),
-    instrumentSetter(HTMLInputElement.prototype, 'checked', onElementChange),
-    instrumentSetter(HTMLSelectElement.prototype, 'value', onElementChange),
-    instrumentSetter(HTMLTextAreaElement.prototype, 'value', onElementChange),
-    instrumentSetter(HTMLSelectElement.prototype, 'selectedIndex', onElementChange),
-  ]
-
-  return () => {
-    instrumentationStoppers.forEach((stopper) => stopper.stop())
-    stopEventListeners()
-  }
 }
 
 export function initStyleSheetObserver(cb: StyleSheetCallback): ListenerHandler {
