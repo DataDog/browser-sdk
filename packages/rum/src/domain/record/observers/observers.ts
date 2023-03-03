@@ -1,9 +1,7 @@
-import { throttle, DOM_EVENT, addEventListeners, noop } from '@datadog/browser-core'
+import { DOM_EVENT, addEventListeners } from '@datadog/browser-core'
 import type { LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
-import { initViewportObservable } from '@datadog/browser-rum-core'
-import type { BrowserMutationPayload, ViewportResizeDimension, FocusRecord, VisualViewportRecord } from '../../../types'
+import type { BrowserMutationPayload, FocusRecord } from '../../../types'
 import type { ListenerHandler } from '../utils'
-import { getVisualViewport } from '../viewports'
 import type { ElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootsController } from '../shadowRootsController'
 import { startMutationObserver } from './mutationObserver'
@@ -21,16 +19,12 @@ import type { MediaInteractionCallback } from './mediaInteractionObserver'
 import { initMediaInteractionObserver } from './mediaInteractionObserver'
 import type { FrustrationCallback } from './frustrationObserver'
 import { initFrustrationObserver } from './frustrationObserver'
-
-const VISUAL_VIEWPORT_OBSERVER_THRESHOLD = 200
+import type { ViewportResizeCallback, VisualViewportResizeCallback } from './viewportResizeObserver'
+import { initViewportResizeObserver, initVisualViewportResizeObserver } from './viewportResizeObserver'
 
 export type MutationCallBack = (m: BrowserMutationPayload) => void
 
-type ViewportResizeCallback = (d: ViewportResizeDimension) => void
-
 type FocusCallback = (data: FocusRecord['data']) => void
-
-type VisualViewportResizeCallback = (data: VisualViewportRecord['data']) => void
 
 interface ObserverParam {
   lifeCycle: LifeCycle
@@ -97,41 +91,8 @@ export function initMutationObserver(
   return startMutationObserver(cb, configuration, shadowRootsController, document)
 }
 
-function initViewportResizeObserver(cb: ViewportResizeCallback): ListenerHandler {
-  return initViewportObservable().subscribe(cb).unsubscribe
-}
-
 function initFocusObserver(focusCb: FocusCallback): ListenerHandler {
   return addEventListeners(window, [DOM_EVENT.FOCUS, DOM_EVENT.BLUR], () => {
     focusCb({ has_focus: document.hasFocus() })
   }).stop
-}
-
-function initVisualViewportResizeObserver(cb: VisualViewportResizeCallback): ListenerHandler {
-  if (!window.visualViewport) {
-    return noop
-  }
-  const { throttled: updateDimension, cancel: cancelThrottle } = throttle(
-    () => {
-      cb(getVisualViewport())
-    },
-    VISUAL_VIEWPORT_OBSERVER_THRESHOLD,
-    {
-      trailing: false,
-    }
-  )
-  const removeListener = addEventListeners(
-    window.visualViewport,
-    [DOM_EVENT.RESIZE, DOM_EVENT.SCROLL],
-    updateDimension,
-    {
-      capture: true,
-      passive: true,
-    }
-  ).stop
-
-  return function stop() {
-    removeListener()
-    cancelThrottle()
-  }
 }
