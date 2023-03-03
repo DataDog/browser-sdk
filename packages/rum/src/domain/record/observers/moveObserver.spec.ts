@@ -1,21 +1,11 @@
-import { isIE, noop } from '@datadog/browser-core'
+import { isIE } from '@datadog/browser-core'
 import { createNewEvent } from '@datadog/browser-core/test/specHelper'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { SerializationContextStatus, serializeDocument } from '../serialize'
-import { NodePrivacyLevel } from '../../../constants'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { IncrementalSource } from '../../../types'
-import type { ShadowRootsController } from '../shadowRootsController'
+import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from '../../../../test/utils'
 import type { MousemoveCallBack } from './moveObserver'
 import { initMoveObserver } from './moveObserver'
-
-const DEFAULT_CONFIGURATION = { defaultPrivacyLevel: NodePrivacyLevel.ALLOW } as RumConfiguration
-const DEFAULT_SHADOW_ROOT_CONTROLLER: ShadowRootsController = {
-  flush: noop,
-  stop: noop,
-  addShadowRoot: noop,
-  removeShadowRoot: noop,
-}
 
 describe('initMoveObserver', () => {
   let mouseMoveCallbackSpy: jasmine.Spy<MousemoveCallBack>

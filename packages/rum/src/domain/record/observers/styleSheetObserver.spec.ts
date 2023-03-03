@@ -1,21 +1,10 @@
-import { isIE, noop } from '@datadog/browser-core'
+import { isIE } from '@datadog/browser-core'
 import { isFirefox } from '@datadog/browser-core/test/specHelper'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
+import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from '../../../../test/utils'
 import { serializeDocument, SerializationContextStatus } from '../serialize'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
-import { NodePrivacyLevel } from '../../../constants'
-import type { ShadowRootsController } from '../shadowRootsController'
 import type { StyleSheetCallback } from './styleSheetObserver'
 import { initStyleSheetObserver } from './styleSheetObserver'
-
-const DEFAULT_SHADOW_ROOT_CONTROLLER: ShadowRootsController = {
-  flush: noop,
-  stop: noop,
-  addShadowRoot: noop,
-  removeShadowRoot: noop,
-}
-
-const DEFAULT_CONFIGURATION = { defaultPrivacyLevel: NodePrivacyLevel.ALLOW } as RumConfiguration
 
 describe('initStyleSheetObserver', () => {
   let stopStyleSheetObserver: () => void

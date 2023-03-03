@@ -1,23 +1,12 @@
-import { DefaultPrivacyLevel, isIE, noop } from '@datadog/browser-core'
+import { DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
 import { createNewEvent } from '@datadog/browser-core/test/specHelper'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { IncrementalSource, MouseInteractionType, RecordType } from '../../../types'
 import { serializeDocument, SerializationContextStatus } from '../serialize'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { getRecordIdForEvent } from '../utils'
-import type { ShadowRootsController } from '../shadowRootsController'
-import { NodePrivacyLevel } from '../../../constants'
+import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from '../../../../test/utils'
 import type { MouseInteractionCallBack } from './mouseInteractionObserver'
 import { initMouseInteractionObserver } from './mouseInteractionObserver'
-
-const DEFAULT_SHADOW_ROOT_CONTROLLER: ShadowRootsController = {
-  flush: noop,
-  stop: noop,
-  addShadowRoot: noop,
-  removeShadowRoot: noop,
-}
-
-const DEFAULT_CONFIGURATION = { defaultPrivacyLevel: NodePrivacyLevel.ALLOW } as RumConfiguration
 
 describe('initMouseInteractionObserver', () => {
   let mouseInteractionCallbackSpy: jasmine.Spy<MouseInteractionCallBack>
