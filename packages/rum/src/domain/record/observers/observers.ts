@@ -9,18 +9,10 @@ import {
   noop,
 } from '@datadog/browser-core'
 import type { LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
-import {
-  isNodeShadowHost,
-  initViewportObservable,
-  ActionType,
-  RumEventType,
-  LifeCycleEventType,
-} from '@datadog/browser-rum-core'
+import { initViewportObservable, ActionType, RumEventType, LifeCycleEventType } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel } from '../../../constants'
 import type {
   InputState,
-  MousePosition,
-  MouseInteraction,
   BrowserMutationPayload,
   StyleSheetRule,
   ViewportResizeDimension,
@@ -28,44 +20,28 @@ import type {
   FocusRecord,
   VisualViewportRecord,
   FrustrationRecord,
-  BrowserIncrementalSnapshotRecord,
-  MouseInteractionData,
 } from '../../../types'
-import { RecordType, IncrementalSource, MediaInteractionType, MouseInteractionType } from '../../../types'
+import { RecordType, MediaInteractionType } from '../../../types'
 import { getNodePrivacyLevel, shouldMaskNode } from '../privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from '../serializationUtils'
 import type { ListenerHandler } from '../utils'
-import { assembleIncrementalSnapshot, forEach, getPathToNestedCSSRule } from '../utils'
+import { getRecordIdForEvent, getEventTarget, forEach, getPathToNestedCSSRule } from '../utils'
 import { getVisualViewport } from '../viewports'
 import type { ElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootsController } from '../shadowRootsController'
 import { startMutationObserver } from './mutationObserver'
-import { initMoveObserver, tryToComputeCoordinates } from './moveObserver'
+import type { MousemoveCallBack } from './moveObserver'
+import { initMoveObserver } from './moveObserver'
 import type { ScrollCallback } from './scrollObserver'
 import { initScrollObserver } from './scrollObserver'
+import type { MouseInteractionCallBack } from './mouseInteractionObserver'
+import { initMouseInteractionObserver } from './mouseInteractionObserver'
 
 const VISUAL_VIEWPORT_OBSERVER_THRESHOLD = 200
 
-const recordIds = new WeakMap<Event, number>()
-let nextId = 1
-
-export function getRecordIdForEvent(event: Event): number {
-  if (!recordIds.has(event)) {
-    recordIds.set(event, nextId++)
-  }
-  return recordIds.get(event)!
-}
-
 type GroupingCSSRuleTypes = typeof CSSGroupingRule | typeof CSSMediaRule | typeof CSSSupportsRule
 
-export type MousemoveCallBack = (
-  p: MousePosition[],
-  source: typeof IncrementalSource.MouseMove | typeof IncrementalSource.TouchMove
-) => void
-
 export type MutationCallBack = (m: BrowserMutationPayload) => void
-
-export type MouseInteractionCallBack = (record: BrowserIncrementalSnapshotRecord) => void
 
 export type StyleSheetCallback = (s: StyleSheetRule) => void
 
@@ -144,61 +120,6 @@ export function initMutationObserver(
   shadowRootsController: ShadowRootsController
 ) {
   return startMutationObserver(cb, configuration, shadowRootsController, document)
-}
-
-const eventTypeToMouseInteraction = {
-  // Listen for pointerup DOM events instead of mouseup for MouseInteraction/MouseUp records. This
-  // allows to reference such records from Frustration records.
-  //
-  // In the context of supporting Mobile Session Replay, we introduced `PointerInteraction` records
-  // used by the Mobile SDKs in place of `MouseInteraction`. In the future, we should replace
-  // `MouseInteraction` by `PointerInteraction` in the Browser SDK so we have an uniform way to
-  // convey such interaction. This would cleanly solve the issue since we would have
-  // `PointerInteraction/Up` records that we could reference from `Frustration` records.
-  [DOM_EVENT.POINTER_UP]: MouseInteractionType.MouseUp,
-
-  [DOM_EVENT.MOUSE_DOWN]: MouseInteractionType.MouseDown,
-  [DOM_EVENT.CLICK]: MouseInteractionType.Click,
-  [DOM_EVENT.CONTEXT_MENU]: MouseInteractionType.ContextMenu,
-  [DOM_EVENT.DBL_CLICK]: MouseInteractionType.DblClick,
-  [DOM_EVENT.FOCUS]: MouseInteractionType.Focus,
-  [DOM_EVENT.BLUR]: MouseInteractionType.Blur,
-  [DOM_EVENT.TOUCH_START]: MouseInteractionType.TouchStart,
-  [DOM_EVENT.TOUCH_END]: MouseInteractionType.TouchEnd,
-}
-export function initMouseInteractionObserver(
-  cb: MouseInteractionCallBack,
-  defaultPrivacyLevel: DefaultPrivacyLevel
-): ListenerHandler {
-  const handler = (event: MouseEvent | TouchEvent) => {
-    const target = getEventTarget(event)
-    if (getNodePrivacyLevel(target, defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN || !hasSerializedNode(target)) {
-      return
-    }
-    const id = getSerializedNodeId(target)
-    const type = eventTypeToMouseInteraction[event.type as keyof typeof eventTypeToMouseInteraction]
-
-    let interaction: MouseInteraction
-    if (type !== MouseInteractionType.Blur && type !== MouseInteractionType.Focus) {
-      const coordinates = tryToComputeCoordinates(event)
-      if (!coordinates) {
-        return
-      }
-      interaction = { id, type, x: coordinates.x, y: coordinates.y }
-    } else {
-      interaction = { id, type }
-    }
-
-    const record = assign(
-      { id: getRecordIdForEvent(event) },
-      assembleIncrementalSnapshot<MouseInteractionData>(IncrementalSource.MouseInteraction, interaction)
-    )
-    cb(record)
-  }
-  return addEventListeners(document, Object.keys(eventTypeToMouseInteraction) as DOM_EVENT[], handler, {
-    capture: true,
-    passive: true,
-  }).stop
 }
 
 function initViewportResizeObserver(cb: ViewportResizeCallback): ListenerHandler {
@@ -443,11 +364,4 @@ export function initFrustrationObserver(lifeCycle: LifeCycle, frustrationCb: Fru
       })
     }
   }).unsubscribe
-}
-
-function getEventTarget(event: Event): Node {
-  if (event.composed === true && isNodeShadowHost(event.target as Node)) {
-    return event.composedPath()[0] as Node
-  }
-  return event.target as Node
 }

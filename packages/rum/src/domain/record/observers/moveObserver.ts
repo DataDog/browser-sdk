@@ -5,8 +5,13 @@ import { getEventTarget, isTouchEvent } from '../utils'
 import type { MousePosition } from '../../../types'
 import { IncrementalSource } from '../../../types'
 import { convertMouseEventToLayoutCoordinates } from '../viewports'
-import type { MousemoveCallBack } from './observers'
+
 const MOUSE_MOVE_OBSERVER_THRESHOLD = 50
+
+export type MousemoveCallBack = (
+  p: MousePosition[],
+  source: typeof IncrementalSource.MouseMove | typeof IncrementalSource.TouchMove
+) => void
 
 export function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {
   const { throttled: updatePosition } = throttle(

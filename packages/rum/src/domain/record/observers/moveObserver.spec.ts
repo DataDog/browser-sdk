@@ -6,7 +6,7 @@ import { NodePrivacyLevel } from '../../../constants'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { IncrementalSource } from '../../../types'
 import type { ShadowRootsController } from '../shadowRootsController'
-import type { MousemoveCallBack } from './observers'
+import type { MousemoveCallBack } from './moveObserver'
 import { initMoveObserver } from './moveObserver'
 
 const DEFAULT_CONFIGURATION = { defaultPrivacyLevel: NodePrivacyLevel.ALLOW } as RumConfiguration

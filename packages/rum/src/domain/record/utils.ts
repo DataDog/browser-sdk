@@ -59,3 +59,13 @@ export function getEventTarget(event: Event): Node {
   }
   return event.target as Node
 }
+
+const recordIds = new WeakMap<Event, number>()
+let nextId = 1
+
+export function getRecordIdForEvent(event: Event): number {
+  if (!recordIds.has(event)) {
+    recordIds.set(event, nextId++)
+  }
+  return recordIds.get(event)!
+}
