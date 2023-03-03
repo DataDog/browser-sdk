@@ -253,7 +253,7 @@ deploy-staging:
     - yarn
     - yarn build:bundle
     - node ./scripts/deploy.js staging staging root
-    - node ./scripts/upload-source-maps.js staging
+    - node ./scripts/upload-source-maps.js staging root
 
 deploy-prod-canary:
   stage: deploy:canary
@@ -265,7 +265,7 @@ deploy-prod-canary:
     - yarn
     - yarn build:bundle
     - node ./scripts/deploy.js prod canary root
-    - node ./scripts/upload-source-maps.js canary
+    - node ./scripts/upload-source-maps.js canary root
 
 deploy-prod-stable:
   stage: deploy
@@ -280,7 +280,7 @@ deploy-prod-stable:
     - yarn
     - yarn build:bundle
     - node ./scripts/deploy.js prod v${VERSION%%.*} root,us1,eu1,us3,us5,ap1
-    - node ./scripts/upload-source-maps.js v${VERSION%%.*}
+    - node ./scripts/upload-source-maps.js v${VERSION%%.*} root,us1,eu1,us3,us5,ap1
 
 publish-npm:
   stage: deploy
