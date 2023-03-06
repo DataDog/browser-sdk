@@ -1,7 +1,7 @@
 'use strict'
 
 const { printLog, command, runMain } = require('./utils')
-const { buildRootUploadPath, buildDatacenterUploadPath, buildSourcePath, packages } = require('./deployment-utils')
+const { buildRootUploadPath, buildDatacenterUploadPath, buildBundlePath, packages } = require('./deployment-utils')
 
 const ONE_MINUTE_IN_SECOND = 60
 const ONE_HOUR_IN_SECOND = 60 * ONE_MINUTE_IN_SECOND
@@ -33,26 +33,26 @@ runMain(() => {
     for (const uploadPathType of uploadPathTypes) {
       const buildUploadPath =
         uploadPathType === 'root' ? buildRootUploadPath : buildDatacenterUploadPath(uploadPathType)
-      const sourcePath = buildSourcePath(packageName)
+      const bundlePath = buildBundlePath(packageName)
       const uploadPath = buildUploadPath(packageName, version)
 
-      uploadToS3(awsConfig, sourcePath, uploadPath)
+      uploadToS3(awsConfig, bundlePath, uploadPath)
       cloudfrontPathsToInvalidate.push(`/${uploadPath}`)
     }
   }
   invalidateCloudfront(awsConfig, cloudfrontPathsToInvalidate)
 })
 
-function uploadToS3(awsConfig, sourcePath, uploadPath) {
+function uploadToS3(awsConfig, bundlePath, uploadPath) {
   const accessToS3 = generateEnvironmentForRole(awsConfig.accountId, 'build-stable-browser-agent-artifacts-s3-write')
 
   const browserCache =
     version === 'staging' || version === 'canary' ? 15 * ONE_MINUTE_IN_SECOND : 4 * ONE_HOUR_IN_SECOND
   const cacheControl = `max-age=${browserCache}, s-maxage=60`
 
-  printLog(`Upload ${sourcePath} to s3://${awsConfig.bucketName}/${uploadPath}`)
+  printLog(`Upload ${bundlePath} to s3://${awsConfig.bucketName}/${uploadPath}`)
   command`
-  aws s3 cp --cache-control ${cacheControl} ${sourcePath} s3://${awsConfig.bucketName}/${uploadPath}`
+  aws s3 cp --cache-control ${cacheControl} ${bundlePath} s3://${awsConfig.bucketName}/${uploadPath}`
     .withEnvironment(accessToS3)
     .run()
 }

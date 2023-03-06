@@ -14,12 +14,12 @@ const buildDatacenterUploadPath =
     `${datacenter}/${version}/datadog-${packageName}.${extension}`
 
 // ex: packages/rum/bundle/datadog-rum.js
-const buildSourcePath = (packageName, extension = 'js') =>
+const buildBundlePath = (packageName, extension = 'js') =>
   `packages/${packageName}/bundle/datadog-${packageName}.${extension}`
 
 module.exports = {
   packages,
   buildRootUploadPath,
   buildDatacenterUploadPath,
-  buildSourcePath,
+  buildBundlePath,
 }

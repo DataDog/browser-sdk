@@ -2,7 +2,7 @@
 
 const path = require('path')
 const { getSecretKey, command, printLog, runMain } = require('./utils')
-const { buildRootUploadPath, buildDatacenterUploadPath, buildSourcePath, packages } = require('./deployment-utils')
+const { buildRootUploadPath, buildDatacenterUploadPath, buildBundlePath, packages } = require('./deployment-utils')
 const { SDK_VERSION } = require('./build-env')
 
 /**
@@ -28,13 +28,13 @@ const sitesByVersion = {
 
 runMain(() => {
   if (uploadPathTypes.find((value) => value === 'root')) {
-    // root upload done last to rename source files safely
+    // root upload done last to rename bundle files safely
     uploadPathTypes = uploadPathTypes.filter((value) => value !== 'root')
     uploadPathTypes.push('root')
   }
 
   for (const { packageName, service } of packages) {
-    const bundleFolder = path.dirname(buildSourcePath(packageName))
+    const bundleFolder = path.dirname(buildBundlePath(packageName))
     for (const uploadPathType of uploadPathTypes) {
       let sites
       let buildUploadPath
@@ -58,9 +58,9 @@ function renameFilesWithVersionSuffix(packageName, bundleFolder) {
   // it and upload those along with the minified bundle. The file names must match the one from the
   // CDN, thus we need to rename the bundles with the right suffix.
   for (const extension of ['js', 'js.map']) {
-    const sourceFilePath = buildSourcePath(packageName, extension)
-    const targetFilePath = `${bundleFolder}/${buildRootUploadPath(packageName, version, extension)}`
-    command`mv ${sourceFilePath} ${targetFilePath}`.run()
+    const bundlePath = buildBundlePath(packageName, extension)
+    const uploadPath = `${bundleFolder}/${buildRootUploadPath(packageName, version, extension)}`
+    command`mv ${bundlePath} ${uploadPath}`.run()
   }
 }
 
