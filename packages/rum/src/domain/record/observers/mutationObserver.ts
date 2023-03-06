@@ -7,7 +7,13 @@ import {
   getParentNode,
 } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel } from '../../../constants'
-import type { AddedNodeMutation, AttributeMutation, RemovedNodeMutation, TextMutation } from '../../../types'
+import type {
+  AddedNodeMutation,
+  AttributeMutation,
+  BrowserMutationPayload,
+  RemovedNodeMutation,
+  TextMutation,
+} from '../../../types'
 import { getNodePrivacyLevel, getTextContent } from '../privacy'
 import type { NodeWithSerializedNode } from '../serializationUtils'
 import {
@@ -19,7 +25,8 @@ import {
 import { serializeNodeWithId, serializeAttribute, SerializationContextStatus } from '../serialize'
 import { createMutationBatch } from '../mutationBatch'
 import type { ShadowRootCallBack, ShadowRootsController } from '../shadowRootsController'
-import type { MutationCallBack } from './observers'
+
+export type MutationCallBack = (m: BrowserMutationPayload) => void
 
 type WithSerializedTarget<T> = T & { target: NodeWithSerializedNode }
 

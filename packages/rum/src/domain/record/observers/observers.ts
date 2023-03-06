@@ -1,5 +1,4 @@
 import type { LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
-import type { BrowserMutationPayload } from '../../../types'
 import type { ListenerHandler } from '../utils'
 import type { ElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootsController } from '../shadowRootsController'
@@ -19,11 +18,10 @@ import type { FrustrationCallback } from './frustrationObserver'
 import { initFrustrationObserver } from './frustrationObserver'
 import type { ViewportResizeCallback, VisualViewportResizeCallback } from './viewportResizeObserver'
 import { initViewportResizeObserver, initVisualViewportResizeObserver } from './viewportResizeObserver'
+import type { MutationCallBack } from './mutationObserver'
 import { initMutationObserver } from './mutationObserver'
 import type { FocusCallback } from './focusObserver'
 import { initFocusObserver } from './focusObserver'
-
-export type MutationCallBack = (m: BrowserMutationPayload) => void
 
 interface ObserverParam {
   lifeCycle: LifeCycle

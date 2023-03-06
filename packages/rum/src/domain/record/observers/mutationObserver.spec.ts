@@ -15,7 +15,7 @@ import { serializeDocument, SerializationContextStatus } from '../serialize'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootCallBack } from '../shadowRootsController'
 import { sortAddedAndMovedNodes, startMutationObserver } from './mutationObserver'
-import type { MutationCallBack } from './observers'
+import type { MutationCallBack } from './mutationObserver'
 
 describe('startMutationCollection', () => {
   let sandbox: HTMLElement

@@ -1,9 +1,7 @@
 import { addTelemetryDebug, DOM_EVENT, isExperimentalFeatureEnabled } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import type { InputCallback } from './observers/inputObserver'
-import { initInputObserver } from './observers/inputObserver'
-import { startMutationObserver } from './observers/mutationObserver'
-import type { MutationCallBack } from './observers/observers'
+import type { InputCallback, MutationCallBack } from './observers'
+import { initInputObserver, startMutationObserver } from './observers'
 
 interface ShadowRootController {
   stop: () => void
