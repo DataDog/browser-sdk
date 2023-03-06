@@ -181,6 +181,7 @@ module.exports = {
     ],
 
     'unicorn/filename-case': ['error', { case: 'camelCase' }],
+    'unicorn/no-empty-file': 'error',
   },
   overrides: [
     {

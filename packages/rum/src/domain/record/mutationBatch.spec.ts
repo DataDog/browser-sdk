@@ -1,6 +1,6 @@
 import { collectAsyncCalls } from '../../../../core/test/collectAsyncCalls'
 import { createMutationBatch } from './mutationBatch'
-import type { RumMutationRecord } from './mutationObserver'
+import type { RumMutationRecord } from './observers'
 
 describe('createMutationBatch', () => {
   let mutationBatch: ReturnType<typeof createMutationBatch>

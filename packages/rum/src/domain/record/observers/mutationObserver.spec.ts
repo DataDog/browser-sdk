@@ -1,28 +1,21 @@
-import { DefaultPrivacyLevel, isIE, noop } from '@datadog/browser-core'
+import { DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { createMutationPayloadValidator } from '../../../test/utils'
+import { collectAsyncCalls } from '@datadog/browser-core/test/collectAsyncCalls'
+import { createMutationPayloadValidator, DEFAULT_SHADOW_ROOT_CONTROLLER } from '../../../../test/utils'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
   PRIVACY_ATTR_VALUE_ALLOW,
   PRIVACY_ATTR_VALUE_MASK,
   PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
-} from '../../constants'
-import type { AttributeMutation, Attributes } from '../../types'
-import { NodeType } from '../../types'
-import { collectAsyncCalls } from '../../../../core/test/collectAsyncCalls'
-import { serializeDocument, SerializationContextStatus } from './serialize'
-import { sortAddedAndMovedNodes, startMutationObserver } from './mutationObserver'
-import type { MutationCallBack } from './observers'
-import { createElementsScrollPositions } from './elementsScrollPositions'
-import type { ShadowRootCallBack, ShadowRootsController } from './shadowRootsController'
-
-const DEFAULT_SHADOW_ROOT_CONTROLLER: ShadowRootsController = {
-  flush: noop,
-  stop: noop,
-  addShadowRoot: noop,
-  removeShadowRoot: noop,
-}
+} from '../../../constants'
+import type { AttributeMutation, Attributes } from '../../../types'
+import { NodeType } from '../../../types'
+import { serializeDocument, SerializationContextStatus } from '../serialize'
+import { createElementsScrollPositions } from '../elementsScrollPositions'
+import type { ShadowRootCallBack } from '../shadowRootsController'
+import { sortAddedAndMovedNodes, initMutationObserver } from './mutationObserver'
+import type { MutationCallBack } from './mutationObserver'
 
 describe('startMutationCollection', () => {
   let sandbox: HTMLElement
@@ -40,7 +33,7 @@ describe('startMutationCollection', () => {
   function startMutationCollection(defaultPrivacyLevel: DefaultPrivacyLevel = DefaultPrivacyLevel.ALLOW) {
     const mutationCallbackSpy = jasmine.createSpy<MutationCallBack>()
 
-    ;({ stop: stopMutationCollection, flush: flushMutations } = startMutationObserver(
+    ;({ stop: stopMutationCollection, flush: flushMutations } = initMutationObserver(
       mutationCallbackSpy,
       {
         defaultPrivacyLevel,
