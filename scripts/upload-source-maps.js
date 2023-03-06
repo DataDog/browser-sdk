@@ -27,12 +27,6 @@ const sitesByVersion = {
 }
 
 runMain(() => {
-  if (uploadPathTypes.find((value) => value === 'root')) {
-    // root upload done last to rename bundle files safely
-    uploadPathTypes = uploadPathTypes.filter((value) => value !== 'root')
-    uploadPathTypes.push('root')
-  }
-
   for (const { packageName, service } of packages) {
     const bundleFolder = path.dirname(buildBundlePath(packageName))
     for (const uploadPathType of uploadPathTypes) {
