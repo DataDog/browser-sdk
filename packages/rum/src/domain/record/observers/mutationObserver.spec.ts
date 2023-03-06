@@ -14,7 +14,7 @@ import { NodeType } from '../../../types'
 import { serializeDocument, SerializationContextStatus } from '../serialize'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootCallBack } from '../shadowRootsController'
-import { sortAddedAndMovedNodes, startMutationObserver } from './mutationObserver'
+import { sortAddedAndMovedNodes, initMutationObserver } from './mutationObserver'
 import type { MutationCallBack } from './mutationObserver'
 
 describe('startMutationCollection', () => {
@@ -33,7 +33,7 @@ describe('startMutationCollection', () => {
   function startMutationCollection(defaultPrivacyLevel: DefaultPrivacyLevel = DefaultPrivacyLevel.ALLOW) {
     const mutationCallbackSpy = jasmine.createSpy<MutationCallBack>()
 
-    ;({ stop: stopMutationCollection, flush: flushMutations } = startMutationObserver(
+    ;({ stop: stopMutationCollection, flush: flushMutations } = initMutationObserver(
       mutationCallbackSpy,
       {
         defaultPrivacyLevel,

@@ -42,7 +42,7 @@ interface ObserverParam {
 }
 
 export function initObservers(o: ObserverParam): { stop: ListenerHandler; flush: ListenerHandler } {
-  const mutationHandler = initMutationObserver(o.mutationCb, o.configuration, o.shadowRootsController)
+  const mutationHandler = initMutationObserver(o.mutationCb, o.configuration, o.shadowRootsController, document)
   const mousemoveHandler = initMoveObserver(o.mousemoveCb)
   const mouseInteractionHandler = initMouseInteractionObserver(
     o.mouseInteractionCb,
