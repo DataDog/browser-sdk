@@ -1,6 +1,6 @@
 const glob = require('glob')
+const { printLog, runMain, modifyFile } = require('../utils')
 const buildEnv = require('./build-env')
-const { printLog, runMain, modifyFile } = require('./utils')
 
 /**
  * Replace BuildEnv in build files

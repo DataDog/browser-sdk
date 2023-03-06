@@ -9,7 +9,7 @@ const {
   buildBundleFileName,
   packages,
 } = require('./deployment-utils')
-const { SDK_VERSION } = require('./build-env')
+const { SDK_VERSION } = require('./build/build-env')
 
 /**
  * Upload source maps to datadog
