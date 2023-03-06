@@ -99,6 +99,10 @@ describe('sanitize', () => {
     })
 
     it('should survive an improperly implemented toStringTag', () => {
+      if (isIE()) {
+        pending('IE does not support Symbols')
+      }
+
       function Func() {
         /* empty */
       }
