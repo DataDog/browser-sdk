@@ -1,7 +1,13 @@
 'use strict'
 
 const { printLog, command, runMain } = require('./utils')
-const { buildRootUploadPath, buildDatacenterUploadPath, buildBundlePath, packages } = require('./deployment-utils')
+const {
+  buildRootUploadPath,
+  buildDatacenterUploadPath,
+  buildBundleFolder,
+  buildBundleFileName,
+  packages,
+} = require('./deployment-utils')
 
 const ONE_MINUTE_IN_SECOND = 60
 const ONE_HOUR_IN_SECOND = 60 * ONE_MINUTE_IN_SECOND
@@ -30,10 +36,11 @@ runMain(() => {
   const awsConfig = AWS_CONFIG[env]
   let cloudfrontPathsToInvalidate = []
   for (const { packageName } of packages) {
+    const bundleFolder = buildBundleFolder(packageName)
     for (const uploadPathType of uploadPathTypes) {
       const buildUploadPath =
         uploadPathType === 'root' ? buildRootUploadPath : buildDatacenterUploadPath(uploadPathType)
-      const bundlePath = buildBundlePath(packageName)
+      const bundlePath = `${bundleFolder}/${buildBundleFileName(packageName)}`
       const uploadPath = buildUploadPath(packageName, version)
 
       uploadToS3(awsConfig, bundlePath, uploadPath)
