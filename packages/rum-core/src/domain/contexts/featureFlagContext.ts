@@ -6,7 +6,6 @@ import {
   isExperimentalFeatureEnabled,
   SESSION_TIME_OUT_DELAY,
   ContextHistory,
-  sanitize,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -69,7 +68,7 @@ export function startFeatureFlagContexts(
     addFeatureFlagEvaluation: (key: string, value: ContextValue) => {
       const currentContext = featureFlagContexts.find()
       if (currentContext) {
-        currentContext[key] = sanitize(value)
+        currentContext[key] = value
         bytesCountCache = undefined
       }
     },

@@ -69,7 +69,7 @@ function buildConsoleLog(params: unknown[], api: ConsoleApiName, handlingStack: 
 
 function formatConsoleParameters(param: unknown) {
   if (typeof param === 'string') {
-    return param
+    return sanitize(param)
   }
   if (param instanceof Error) {
     return formatErrorMessage(computeStackTrace(param))

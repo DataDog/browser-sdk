@@ -1,4 +1,5 @@
 import type { Context, ContextArray, ContextValue } from './context'
+import { display } from './display'
 import type { ObjectWithToJsonMethod } from './utils'
 import { detachToJsonMethod, ONE_KIBI_BYTE } from './utils'
 
@@ -8,7 +9,7 @@ type ExtendedContextValue = PrimitivesAndFunctions | object | ExtendedContext | 
 type ExtendedContext = { [key: string]: ExtendedContextValue }
 type ExtendedContextArray = ExtendedContextValue[]
 
-type ContainerElementsToProcess = {
+type ContainerElementToProcess = {
   source: ExtendedContextArray | ExtendedContext
   target: ContextArray | Context
   path: string
@@ -48,7 +49,7 @@ export function sanitize(source: unknown, maxCharacterCount = SANITIZE_DEFAULT_M
   const restoreArrayPrototypeToJson = detachToJsonMethod(Array.prototype)
 
   // Initial call to sanitizeProcessor - will populate containerQueue if source is an Array or a plain Object
-  const containerQueue: ContainerElementsToProcess[] = []
+  const containerQueue: ContainerElementToProcess[] = []
   const visitedObjectsWithPath = new WeakMap<object, string>()
   const sanitizedData = sanitizeProcessor(
     source as ExtendedContextValue,
@@ -57,12 +58,12 @@ export function sanitize(source: unknown, maxCharacterCount = SANITIZE_DEFAULT_M
     containerQueue,
     visitedObjectsWithPath
   )
-  let accumulatedSize = JSON.stringify(sanitizedData)?.length || 0
-  if (accumulatedSize > maxCharacterCount) {
+  let accumulatedCharacterCount = JSON.stringify(sanitizedData)?.length || 0
+  if (isOverCharacterLimit(accumulatedCharacterCount, maxCharacterCount, true, source)) {
     return undefined
   }
 
-  while (containerQueue.length > 0 && accumulatedSize < maxCharacterCount) {
+  while (containerQueue.length > 0 && accumulatedCharacterCount < maxCharacterCount) {
     const containerToProcess = containerQueue.shift()!
     let separatorLength = 0 // 0 for the first element, 1 for subsequent elements
 
@@ -77,8 +78,8 @@ export function sanitize(source: unknown, maxCharacterCount = SANITIZE_DEFAULT_M
           containerQueue,
           visitedObjectsWithPath
         )
-        accumulatedSize += JSON.stringify(targetData).length + separatorLength
-        if (accumulatedSize > maxCharacterCount) {
+        accumulatedCharacterCount += JSON.stringify(targetData).length + separatorLength
+        if (isOverCharacterLimit(accumulatedCharacterCount, maxCharacterCount, false, source)) {
           break
         }
         separatorLength = 1
@@ -94,8 +95,9 @@ export function sanitize(source: unknown, maxCharacterCount = SANITIZE_DEFAULT_M
             containerQueue,
             visitedObjectsWithPath
           )
-          accumulatedSize += JSON.stringify(targetData).length + separatorLength + key.length + KEY_DECORATION_LENGTH
-          if (accumulatedSize > maxCharacterCount) {
+          accumulatedCharacterCount +=
+            JSON.stringify(targetData).length + separatorLength + key.length + KEY_DECORATION_LENGTH
+          if (isOverCharacterLimit(accumulatedCharacterCount, maxCharacterCount, false, source)) {
             break
           }
           separatorLength = 1
@@ -121,7 +123,7 @@ function sanitizeProcessor(
   source: ExtendedContextValue,
   parentPath: string,
   key: string | number | undefined,
-  queue: ContainerElementsToProcess[],
+  queue: ContainerElementToProcess[],
   visitedObjectsWithPath: WeakMap<object, string>
 ) {
   // Start by handling toJSON, as we want to sanitize its output
@@ -224,4 +226,26 @@ function tryToApplyToJSON(value: ExtendedContextValue) {
   }
 
   return value
+}
+
+/**
+ * Helper function that displays a warning when the accumulated character count is over the limit
+ */
+function isOverCharacterLimit(
+  currentCharacterCount: number,
+  maxCharacterCount: number,
+  isDiscarded: boolean,
+  source: unknown
+) {
+  if (currentCharacterCount > maxCharacterCount) {
+    display.warn(
+      `The data provided has been ${
+        isDiscarded ? 'discarded' : 'truncated'
+      } as it is over the limit of ${maxCharacterCount} characters:`,
+      source
+    )
+    return true
+  }
+
+  return false
 }

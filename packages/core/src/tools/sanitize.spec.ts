@@ -1,4 +1,5 @@
 import { isIE } from './browserDetection'
+import { display } from './display'
 import { sanitize } from './sanitize'
 
 describe('sanitize', () => {
@@ -95,6 +96,25 @@ describe('sanitize', () => {
       } else {
         expect(sanitize(map)).toBe('[Map]')
       }
+    })
+
+    it('should survive an improperly implemented toStringTag', () => {
+      function Func() {
+        /* empty */
+      }
+
+      Object.defineProperty(Func.prototype, Symbol.toStringTag, {
+        get: () => {
+          throw Error('Cannot serialize')
+        },
+        enumerable: false,
+        configurable: true,
+      })
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      const func = new (Func as any)()
+
+      expect(sanitize(func)).toEqual('[Unserializable]')
     })
   })
 
@@ -202,21 +222,27 @@ describe('sanitize', () => {
 
   describe('maxSize verification', () => {
     it('should return nothing if a simple type is over max size ', () => {
+      const displaySpy = spyOn(display, 'warn')
       const str = 'A not so long string...'
 
       expect(sanitize(str, 5)).toBe(undefined)
+      expect(displaySpy).toHaveBeenCalled()
     })
 
     it('should stop cloning if an object container type reaches max size', () => {
+      const displaySpy = spyOn(display, 'warn')
       const obj = { a: 'abc', b: 'def', c: 'ghi' } // Length of 31 after JSON.stringify
       const sanitized = sanitize(obj, 21)
       expect(sanitized).toEqual({ a: 'abc', b: 'def' }) // Length of 21 after JSON.stringify
+      expect(displaySpy).toHaveBeenCalled()
     })
 
     it('should stop cloning if an array container type reaches max size', () => {
+      const displaySpy = spyOn(display, 'warn')
       const obj = [1, 2, 3, 4] // Length of 9 after JSON.stringify
       const sanitized = sanitize(obj, 5)
       expect(sanitized).toEqual([1, 2]) // Length of 5 after JSON.stringify
+      expect(displaySpy).toHaveBeenCalled()
     })
   })
 })

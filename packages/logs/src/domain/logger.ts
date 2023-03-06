@@ -44,15 +44,15 @@ export class Logger {
   }
 
   debug(message: string, messageContext?: object) {
-    this.log(message, messageContext as object, StatusType.debug)
+    this.log(message, messageContext, StatusType.debug)
   }
 
   info(message: string, messageContext?: object) {
-    this.log(message, messageContext as object, StatusType.info)
+    this.log(message, messageContext, StatusType.info)
   }
 
   warn(message: string, messageContext?: object) {
-    this.log(message, messageContext as object, StatusType.warn)
+    this.log(message, messageContext, StatusType.warn)
   }
 
   error(message: string, messageContext?: object) {
@@ -61,7 +61,7 @@ export class Logger {
         origin: ErrorSource.LOGGER,
       },
     }
-    this.log(message, combine(errorOrigin, messageContext as object), StatusType.error)
+    this.log(message, combine(errorOrigin, messageContext), StatusType.error)
   }
 
   setContext(context: object) {

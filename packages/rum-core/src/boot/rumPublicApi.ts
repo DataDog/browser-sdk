@@ -119,7 +119,7 @@ export function makeRumPublicApi(
 
     if (isExperimentalFeatureEnabled('feature_flags')) {
       ;(rumPublicApi as any).addFeatureFlagEvaluation = monitor((key: string, value: any) => {
-        addFeatureFlagEvaluationStrategy(key, value)
+        addFeatureFlagEvaluationStrategy(sanitize(key)!, sanitize(value))
       })
     }
 

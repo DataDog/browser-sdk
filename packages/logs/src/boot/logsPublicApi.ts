@@ -119,7 +119,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
     createLogger: monitor((name: string, conf: LoggerConfiguration = {}) => {
       customLoggers[name] = new Logger(
         (...params) => handleLogStrategy(...params),
-        name,
+        sanitize(name),
         conf.handler,
         conf.level,
         sanitize(conf.context) as object
