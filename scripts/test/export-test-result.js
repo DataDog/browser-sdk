@@ -1,6 +1,6 @@
 'use strict'
 
-const { getSecretKey, command, printLog, runMain } = require('./utils')
+const { getSecretKey, command, printLog, runMain } = require('../utils')
 
 /**
  * Upload test result to datadog

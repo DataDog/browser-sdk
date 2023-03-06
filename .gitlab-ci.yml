@@ -166,9 +166,9 @@ unit:
   script:
     - yarn
     - yarn test:unit
-    - ./scripts/codecov.sh
+    - ./scripts/test/codecov.sh
   after_script:
-    - node ./scripts/export-test-result.js unit
+    - node ./scripts/test/export-test-result.js unit
 
 e2e:
   extends:
@@ -184,7 +184,7 @@ e2e:
     - yarn
     - yarn test:e2e
   after_script:
-    - node ./scripts/export-test-result.js e2e
+    - node ./scripts/test/export-test-result.js e2e
 
 check-licenses:
   extends:
@@ -217,9 +217,9 @@ unit-bs:
       junit: test-report/unit-bs/*.xml
   script:
     - yarn
-    - ./scripts/ci-bs.sh test:unit
+    - ./scripts/test/ci-bs.sh test:unit
   after_script:
-    - node ./scripts/export-test-result.js unit-bs
+    - node ./scripts/test/export-test-result.js unit-bs
 
 e2e-bs:
   stage: browserstack
@@ -235,9 +235,9 @@ e2e-bs:
       junit: test-report/e2e-bs/*.xml
   script:
     - yarn
-    - ./scripts/ci-bs.sh test:e2e
+    - ./scripts/test/ci-bs.sh test:e2e
   after_script:
-    - node ./scripts/export-test-result.js e2e-bs
+    - node ./scripts/test/export-test-result.js e2e-bs
 
 ########################################################################################################################
 # Deploy
@@ -485,7 +485,7 @@ bump-chrome-version-scheduled:
   before_script:
     - eval $(ssh-agent -s)
   script:
-    - node scripts/bump-chrome-driver-version.js
+    - node scripts/test/bump-chrome-driver-version.js
   artifacts:
     reports:
       dotenv: build.env
