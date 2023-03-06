@@ -203,7 +203,7 @@ check-release:
   script:
     - yarn
     - BUILD_MODE=release yarn build
-    - node scripts/check-release.js
+    - node scripts/release/check-release.js
 
 unit-bs:
   stage: browserstack

@@ -60,8 +60,8 @@ cmd_release () {
 }
 
 cmd_version () {
-  node ./scripts/generate-changelog.js
-  node ./scripts/update-peer-dependency-versions.js
+  node ./scripts/release/generate-changelog.js
+  node ./scripts/release/update-peer-dependency-versions.js
   # keep test app lockfile up to date
   cd test/app
   yarn upgrade
