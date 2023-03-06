@@ -1,6 +1,6 @@
 import { DOM_EVENT, addEventListeners } from '@datadog/browser-core'
 import type { FocusRecord } from '../../../types'
-import type { ListenerHandler } from '../utils'
+import type { ListenerHandler } from './utils'
 
 export type FocusCallback = (data: FocusRecord['data']) => void
 

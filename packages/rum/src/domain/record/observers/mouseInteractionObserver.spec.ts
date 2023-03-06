@@ -3,10 +3,10 @@ import { createNewEvent } from '@datadog/browser-core/test/specHelper'
 import { IncrementalSource, MouseInteractionType, RecordType } from '../../../types'
 import { serializeDocument, SerializationContextStatus } from '../serialize'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
-import { getRecordIdForEvent } from '../utils'
 import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from '../../../../test/utils'
 import type { MouseInteractionCallBack } from './mouseInteractionObserver'
 import { initMouseInteractionObserver } from './mouseInteractionObserver'
+import { getRecordIdForEvent } from './utils'
 
 describe('initMouseInteractionObserver', () => {
   let mouseInteractionCallbackSpy: jasmine.Spy<MouseInteractionCallBack>

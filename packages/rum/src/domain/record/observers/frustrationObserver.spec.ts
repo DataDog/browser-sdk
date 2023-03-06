@@ -3,9 +3,9 @@ import type { RawRumActionEvent } from '@datadog/browser-rum-core'
 import { ActionType, LifeCycle, LifeCycleEventType, RumEventType, FrustrationType } from '@datadog/browser-rum-core'
 import type { RawRumEventCollectedData } from 'packages/rum-core/src/domain/lifeCycle'
 import { RecordType } from '../../../types'
-import { getRecordIdForEvent } from '../utils'
 import type { FrustrationCallback } from './frustrationObserver'
 import { initFrustrationObserver } from './frustrationObserver'
+import { getRecordIdForEvent } from './utils'
 
 describe('initFrustrationObserver', () => {
   const lifeCycle = new LifeCycle()

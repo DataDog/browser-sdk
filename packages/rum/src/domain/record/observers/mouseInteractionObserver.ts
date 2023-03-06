@@ -5,9 +5,10 @@ import type { MouseInteraction, MouseInteractionData, BrowserIncrementalSnapshot
 import { IncrementalSource, MouseInteractionType } from '../../../types'
 import { getNodePrivacyLevel } from '../privacy'
 import { getSerializedNodeId, hasSerializedNode } from '../serializationUtils'
-import type { ListenerHandler } from '../utils'
-import { getRecordIdForEvent, getEventTarget, assembleIncrementalSnapshot } from '../utils'
+import { assembleIncrementalSnapshot } from '../utils'
 import { tryToComputeCoordinates } from './moveObserver'
+import type { ListenerHandler } from './utils'
+import { getRecordIdForEvent, getEventTarget } from './utils'
 
 const eventTypeToMouseInteraction = {
   // Listen for pointerup DOM events instead of mouseup for MouseInteraction/MouseUp records. This

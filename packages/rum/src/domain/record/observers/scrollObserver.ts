@@ -3,11 +3,12 @@ import { DOM_EVENT, throttle, addEventListener } from '@datadog/browser-core'
 import type { ElementsScrollPositions } from '../elementsScrollPositions'
 import { getNodePrivacyLevel } from '../privacy'
 import { getSerializedNodeId, hasSerializedNode } from '../serializationUtils'
-import type { ListenerHandler } from '../utils'
-import { getEventTarget } from '../utils'
+
 import { getScrollX, getScrollY } from '../viewports'
 import type { ScrollPosition } from '../../../types'
 import { NodePrivacyLevel } from '../../../constants'
+import type { ListenerHandler } from './utils'
+import { getEventTarget } from './utils'
 
 const SCROLL_OBSERVER_THRESHOLD = 100
 

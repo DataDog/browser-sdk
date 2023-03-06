@@ -1,8 +1,8 @@
 import { instrumentMethodAndCallOriginal } from '@datadog/browser-core'
 import type { StyleSheetRule } from '../../../types'
 import { getSerializedNodeId, hasSerializedNode } from '../serializationUtils'
-import type { ListenerHandler } from '../utils'
 import { getPathToNestedCSSRule } from '../utils'
+import type { ListenerHandler } from './utils'
 
 type GroupingCSSRuleTypes = typeof CSSGroupingRule | typeof CSSMediaRule | typeof CSSSupportsRule
 

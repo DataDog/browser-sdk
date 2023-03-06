@@ -4,8 +4,8 @@ import { NodePrivacyLevel } from '../../../constants'
 import type { InputState } from '../../../types'
 import { getNodePrivacyLevel, shouldMaskNode } from '../privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from '../serializationUtils'
-import type { ListenerHandler } from '../utils'
-import { getEventTarget, forEach } from '../utils'
+import type { ListenerHandler } from './utils'
+import { getEventTarget, forEach } from './utils'
 
 type InputObserverOptions = {
   domEvents?: Array<DOM_EVENT.INPUT | DOM_EVENT.CHANGE>
