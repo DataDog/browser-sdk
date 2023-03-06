@@ -1,3 +1,4 @@
+import { addTelemetryDebug } from '../domain/telemetry'
 import { getLinkElementOrigin, getLocationOrigin } from './utils'
 
 export function normalizeUrl(url: string) {
@@ -35,7 +36,15 @@ export function getHash(url: string) {
 
 export function buildUrl(url: string, base?: string) {
   if (checkURLSupported()) {
-    return base !== undefined ? new URL(url, base) : new URL(url)
+    try {
+      return base !== undefined ? new URL(url, base) : new URL(url)
+    } catch (error) {
+      addTelemetryDebug('Failed to construct URL', {
+        url,
+        base,
+      })
+      throw error
+    }
   }
   if (base === undefined && !/:/.test(url)) {
     throw new Error(`Invalid URL: '${url}'`)
