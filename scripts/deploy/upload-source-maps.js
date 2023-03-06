@@ -1,7 +1,8 @@
 'use strict'
 
 const path = require('path')
-const { getSecretKey, command, printLog, runMain } = require('./utils')
+const { getSecretKey, command, printLog, runMain } = require('../utils')
+const { SDK_VERSION } = require('../build/build-env')
 const {
   buildRootUploadPath,
   buildDatacenterUploadPath,
@@ -9,7 +10,6 @@ const {
   buildBundleFileName,
   packages,
 } = require('./deployment-utils')
-const { SDK_VERSION } = require('./build/build-env')
 
 /**
  * Upload source maps to datadog
