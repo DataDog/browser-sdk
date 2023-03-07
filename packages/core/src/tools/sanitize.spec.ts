@@ -98,27 +98,19 @@ describe('sanitize', () => {
       }
     })
 
-    it('should survive an improperly implemented toStringTag', () => {
+    it('should survive when toStringTag throws', () => {
       if (isIE()) {
         pending('IE does not support Symbols')
       }
 
-      function Func() {
-        /* empty */
-      }
-
-      Object.defineProperty(Func.prototype, Symbol.toStringTag, {
-        get: () => {
+      class CannotSerialize {
+        get [Symbol.toStringTag]() {
           throw Error('Cannot serialize')
-        },
-        enumerable: false,
-        configurable: true,
-      })
+        }
+      }
+      const cannotSerialize = new CannotSerialize()
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      const func = new (Func as any)()
-
-      expect(sanitize(func)).toEqual('[Unserializable]')
+      expect(sanitize(cannotSerialize)).toEqual('[Unserializable]')
     })
   })
 

@@ -59,7 +59,8 @@ export function sanitize(source: unknown, maxCharacterCount = SANITIZE_DEFAULT_M
     visitedObjectsWithPath
   )
   let accumulatedCharacterCount = JSON.stringify(sanitizedData)?.length || 0
-  if (isOverCharacterLimit(accumulatedCharacterCount, maxCharacterCount, true, source)) {
+  if (accumulatedCharacterCount > maxCharacterCount) {
+    warnOverCharacterLimit(maxCharacterCount, 'discarded', source)
     return undefined
   }
 
@@ -79,7 +80,8 @@ export function sanitize(source: unknown, maxCharacterCount = SANITIZE_DEFAULT_M
           visitedObjectsWithPath
         )
         accumulatedCharacterCount += JSON.stringify(targetData).length + separatorLength
-        if (isOverCharacterLimit(accumulatedCharacterCount, maxCharacterCount, false, source)) {
+        if (accumulatedCharacterCount > maxCharacterCount) {
+          warnOverCharacterLimit(maxCharacterCount, 'truncated', source)
           break
         }
         separatorLength = 1
@@ -97,7 +99,8 @@ export function sanitize(source: unknown, maxCharacterCount = SANITIZE_DEFAULT_M
           )
           accumulatedCharacterCount +=
             JSON.stringify(targetData).length + separatorLength + key.length + KEY_DECORATION_LENGTH
-          if (isOverCharacterLimit(accumulatedCharacterCount, maxCharacterCount, false, source)) {
+          if (accumulatedCharacterCount > maxCharacterCount) {
+            warnOverCharacterLimit(maxCharacterCount, 'truncated', source)
             break
           }
           separatorLength = 1
@@ -229,23 +232,11 @@ function tryToApplyToJSON(value: ExtendedContextValue) {
 }
 
 /**
- * Helper function that displays a warning when the accumulated character count is over the limit
+ * Helper function to display the warning when the accumulated character count is over the limit
  */
-function isOverCharacterLimit(
-  currentCharacterCount: number,
-  maxCharacterCount: number,
-  isDiscarded: boolean,
-  source: unknown
-) {
-  if (currentCharacterCount > maxCharacterCount) {
-    display.warn(
-      `The data provided has been ${
-        isDiscarded ? 'discarded' : 'truncated'
-      } as it is over the limit of ${maxCharacterCount} characters:`,
-      source
-    )
-    return true
-  }
-
-  return false
+function warnOverCharacterLimit(maxCharacterCount: number, changeType: 'discarded' | 'truncated', source: unknown) {
+  display.warn(
+    `The data provided has been ${changeType} as it is over the limit of ${maxCharacterCount} characters:`,
+    source
+  )
 }
