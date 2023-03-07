@@ -38,10 +38,13 @@ runMain(() => {
   for (const { packageName } of packages) {
     const bundleFolder = buildBundleFolder(packageName)
     for (const uploadPathType of uploadPathTypes) {
-      const buildUploadPath =
-        uploadPathType === 'root' ? buildRootUploadPath : buildDatacenterUploadPath(uploadPathType)
+      let uploadPath
+      if (uploadPathType === 'root') {
+        uploadPath = buildRootUploadPath(packageName, version)
+      } else {
+        uploadPath = buildDatacenterUploadPath(uploadPathType, packageName, version)
+      }
       const bundlePath = `${bundleFolder}/${buildBundleFileName(packageName)}`
-      const uploadPath = buildUploadPath(packageName, version)
 
       uploadToS3(awsConfig, bundlePath, uploadPath)
       cloudfrontPathsToInvalidate.push(`/${uploadPath}`)

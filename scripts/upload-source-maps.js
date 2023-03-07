@@ -37,16 +37,16 @@ runMain(() => {
     const bundleFolder = buildBundleFolder(packageName)
     for (const uploadPathType of uploadPathTypes) {
       let sites
-      let buildUploadPath
+      let uploadPath
       if (uploadPathType === 'root') {
         sites = sitesByVersion[version]
-        buildUploadPath = buildRootUploadPath
+        uploadPath = buildRootUploadPath(packageName, version)
         renameFilesWithVersionSuffix(packageName, bundleFolder)
       } else {
         sites = [siteByDatacenter[uploadPathType]]
-        buildUploadPath = buildDatacenterUploadPath(uploadPathType)
+        uploadPath = buildDatacenterUploadPath(uploadPathType, packageName, version)
       }
-      const prefix = path.dirname(`/${buildUploadPath(packageName, version)}`)
+      const prefix = path.dirname(`/${uploadPath}`)
       uploadSourceMaps(packageName, service, prefix, bundleFolder, sites)
     }
   }

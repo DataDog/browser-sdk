@@ -8,10 +8,8 @@ const packages = [
 const buildRootUploadPath = (packageName, version, extension = 'js') => `datadog-${packageName}-${version}.${extension}`
 
 // ex: us1/v4/datadog-rum.js
-const buildDatacenterUploadPath =
-  (datacenter) =>
-  (packageName, version, extension = 'js') =>
-    `${datacenter}/${version}/datadog-${packageName}.${extension}`
+const buildDatacenterUploadPath = (datacenter, packageName, version, extension = 'js') =>
+  `${datacenter}/${version}/datadog-${packageName}.${extension}`
 
 // ex: datadog-rum.js
 const buildBundleFileName = (packageName, extension = 'js') => `datadog-${packageName}.${extension}`
