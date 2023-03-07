@@ -12,7 +12,6 @@ import {
   findTextContent,
   findTextNode,
 } from '@datadog/browser-rum/test/utils'
-import type { WithAdoptedStyleSheets } from '@datadog/browser-rum/src/domain/record/browser.types'
 
 import type { EventRegistry } from '../../lib/framework'
 import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
@@ -299,5 +298,5 @@ async function getNodeInsideShadowDom(hostTag: string, selector: string) {
 }
 
 function isAdoptedStyleSheetsSupported(): Promise<boolean> {
-  return browserExecute(() => (document as WithAdoptedStyleSheets).adoptedStyleSheets !== undefined) as Promise<boolean>
+  return browserExecute(() => document.adoptedStyleSheets !== undefined) as Promise<boolean>
 }
