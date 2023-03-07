@@ -1,5 +1,4 @@
-import { addTelemetryDebug } from '../domain/telemetry'
-import { getLinkElementOrigin, getLocationOrigin } from './utils'
+import { getLinkElementOrigin, getLocationOrigin, jsonStringify } from './utils'
 
 export function normalizeUrl(url: string) {
   return buildUrl(url, getLocationOrigin()).href
@@ -39,11 +38,7 @@ export function buildUrl(url: string, base?: string) {
     try {
       return base !== undefined ? new URL(url, base) : new URL(url)
     } catch (error) {
-      addTelemetryDebug('Failed to construct URL', {
-        url,
-        base,
-      })
-      throw error
+      throw new Error(`Failed to construct URL. ${jsonStringify({ url, base })!}`)
     }
   }
   if (base === undefined && !/:/.test(url)) {
