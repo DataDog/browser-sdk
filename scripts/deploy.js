@@ -1,6 +1,13 @@
 'use strict'
 
 const { printLog, command, runMain } = require('./utils')
+const {
+  buildRootUploadPath,
+  buildDatacenterUploadPath,
+  buildBundleFolder,
+  buildBundleFileName,
+  packages,
+} = require('./deployment-utils')
 
 const ONE_MINUTE_IN_SECOND = 60
 const ONE_HOUR_IN_SECOND = 60 * ONE_MINUTE_IN_SECOND
@@ -19,40 +26,49 @@ const AWS_CONFIG = {
 /**
  * Deploy SDK files to CDN
  * Usage:
- * node deploy.js staging|prod staging|canary|vXXX
+ * node deploy.js staging|prod staging|canary|vXXX root,us1,eu1,...
  */
 const env = process.argv[2]
 const version = process.argv[3]
-
-const bundles = {
-  'packages/rum/bundle/datadog-rum.js': `datadog-rum-${version}.js`,
-  'packages/rum-slim/bundle/datadog-rum-slim.js': `datadog-rum-slim-${version}.js`,
-  'packages/logs/bundle/datadog-logs.js': `datadog-logs-${version}.js`,
-}
+const uploadPathTypes = process.argv[4].split(',')
 
 runMain(() => {
-  uploadToS3(AWS_CONFIG[env])
-  invalidateCloudfront(AWS_CONFIG[env])
+  const awsConfig = AWS_CONFIG[env]
+  let cloudfrontPathsToInvalidate = []
+  for (const { packageName } of packages) {
+    const bundleFolder = buildBundleFolder(packageName)
+    for (const uploadPathType of uploadPathTypes) {
+      let uploadPath
+      if (uploadPathType === 'root') {
+        uploadPath = buildRootUploadPath(packageName, version)
+      } else {
+        uploadPath = buildDatacenterUploadPath(uploadPathType, packageName, version)
+      }
+      const bundlePath = `${bundleFolder}/${buildBundleFileName(packageName)}`
+
+      uploadToS3(awsConfig, bundlePath, uploadPath)
+      cloudfrontPathsToInvalidate.push(`/${uploadPath}`)
+    }
+  }
+  invalidateCloudfront(awsConfig, cloudfrontPathsToInvalidate)
 })
 
-function uploadToS3(awsConfig) {
+function uploadToS3(awsConfig, bundlePath, uploadPath) {
   const accessToS3 = generateEnvironmentForRole(awsConfig.accountId, 'build-stable-browser-agent-artifacts-s3-write')
+
   const browserCache =
     version === 'staging' || version === 'canary' ? 15 * ONE_MINUTE_IN_SECOND : 4 * ONE_HOUR_IN_SECOND
   const cacheControl = `max-age=${browserCache}, s-maxage=60`
 
-  for (const [filePath, bundleName] of Object.entries(bundles)) {
-    printLog(`Upload ${filePath} to s3://${awsConfig.bucketName}/${bundleName}`)
-    command`
-    aws s3 cp --cache-control ${cacheControl} ${filePath} s3://${awsConfig.bucketName}/${bundleName}`
-      .withEnvironment(accessToS3)
-      .run()
-  }
+  printLog(`Upload ${bundlePath} to s3://${awsConfig.bucketName}/${uploadPath}`)
+  command`
+  aws s3 cp --cache-control ${cacheControl} ${bundlePath} s3://${awsConfig.bucketName}/${uploadPath}`
+    .withEnvironment(accessToS3)
+    .run()
 }
 
-function invalidateCloudfront(awsConfig) {
+function invalidateCloudfront(awsConfig, pathsToInvalidate) {
   const accessToCloudfront = generateEnvironmentForRole(awsConfig.accountId, 'build-stable-cloudfront-invalidation')
-  const pathsToInvalidate = Object.values(bundles).map((path) => `/${path}`)
 
   printLog(`Trigger invalidation on ${awsConfig.distributionId} for: ${pathsToInvalidate.join(', ')}`)
   command`
