@@ -15,27 +15,23 @@ export function initViewportResizeObserver(cb: ViewportResizeCallback): Listener
 }
 
 export function initVisualViewportResizeObserver(cb: VisualViewportResizeCallback): ListenerHandler {
-  if (!window.visualViewport) {
+  const visualViewport = window.visualViewport
+  if (!visualViewport) {
     return noop
   }
   const { throttled: updateDimension, cancel: cancelThrottle } = throttle(
     () => {
-      cb(getVisualViewport())
+      cb(getVisualViewport(visualViewport))
     },
     VISUAL_VIEWPORT_OBSERVER_THRESHOLD,
     {
       trailing: false,
     }
   )
-  const removeListener = addEventListeners(
-    window.visualViewport,
-    [DOM_EVENT.RESIZE, DOM_EVENT.SCROLL],
-    updateDimension,
-    {
-      capture: true,
-      passive: true,
-    }
-  ).stop
+  const removeListener = addEventListeners(visualViewport, [DOM_EVENT.RESIZE, DOM_EVENT.SCROLL], updateDimension, {
+    capture: true,
+    passive: true,
+  }).stop
 
   return function stop() {
     removeListener()
