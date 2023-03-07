@@ -2,7 +2,7 @@
 
 const path = require('path')
 const { getSecretKey, command, printLog, runMain } = require('../lib/utils')
-const { SDK_VERSION } = require('../build/build-env')
+const { SDK_VERSION } = require('../lib/build-env')
 const {
   buildRootUploadPath,
   buildDatacenterUploadPath,
