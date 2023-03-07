@@ -1,5 +1,5 @@
 const glob = require('glob')
-const { printLog, runMain, modifyFile } = require('../utils')
+const { printLog, runMain, modifyFile } = require('../lib/utils')
 const buildEnv = require('./build-env')
 
 /**
