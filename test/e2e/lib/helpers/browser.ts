@@ -20,7 +20,7 @@ export async function browserExecuteAsync<A extends any[]>(fn: (...params: A) =>
 const validPlatformNames = ['windows', 'macos', 'linux', 'ios', 'android'] as const
 const validBrowserNames = ['edge', 'safari', 'chrome', 'firefox', 'ie'] as const
 
-export function getBrowserName(): typeof validBrowserNames[number] {
+export function getBrowserName(): (typeof validBrowserNames)[number] {
   const capabilities = browser.capabilities
 
   // Look for the browser name in capabilities. It should always be there as long as we don't change
@@ -39,7 +39,7 @@ export function getBrowserName(): typeof validBrowserNames[number] {
   return browserName
 }
 
-export function getPlatformName(): typeof validPlatformNames[number] {
+export function getPlatformName(): (typeof validPlatformNames)[number] {
   const capabilities = browser.capabilities
 
   let platformName: string

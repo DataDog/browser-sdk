@@ -164,6 +164,11 @@ function command(...templateArguments) {
  *
  * parseCommandTemplateArguments`foo ${'bar baz'}` == ['foo', 'bar baz']
  *
+ * To pass template variables as different command arguments use an array as template argument:
+ *
+ * parseCommandTemplateArguments`foo ${['bar', 'baz']}` == ['foo', 'bar', 'baz']
+ *
+ *
  * const commitMessage = 'my commit message'
  * parseCommandTemplateArguments`git commit -c ${commitMessage}` == ['git', 'commit', '-c', 'my commit message']
  *
@@ -175,8 +180,13 @@ function parseCommandTemplateArguments(templateStrings, ...templateVariables) {
     if (i > 0) {
       // Interleave variables with template strings
       if (!parsedArguments.length || templateStrings[i - 1].match(/\s$/)) {
-        // If the latest string ends with a space, consider the variable as a separate argument
-        parsedArguments.push(templateVariables[i - 1])
+        // If the latest string ends with a space, consider the variable as separate argument(s)
+        const variable = templateVariables[i - 1]
+        if (Array.isArray(variable)) {
+          parsedArguments.push(...variable)
+        } else {
+          parsedArguments.push(variable)
+        }
       } else {
         // Else, append the variable to the latest argument
         parsedArguments[parsedArguments.length - 1] += templateVariables[i - 1]

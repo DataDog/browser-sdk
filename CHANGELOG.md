@@ -16,6 +16,13 @@
 
 ---
 
+## v4.34.3
+
+- 🐛 Handle undefined cancel idle callback ([#2045](https://github.com/DataDog/browser-sdk/pull/2045))
+- ♻️ [RUMF-1500] tweak deployment scripts ([#2046](https://github.com/DataDog/browser-sdk/pull/2046))
+- ♻️ [RUMF-1505] introduce and use a safe `setTimeout` helper function ([#2032](https://github.com/DataDog/browser-sdk/pull/2032))
+- ♻️ [REPLAY] Avoid casting & add proper check instead of relying on try/catch ([#2016](https://github.com/DataDog/browser-sdk/pull/2016))
+
 ## v4.34.2
 
 - 🐛 [RUMF-1443] fix Zone.js/Angular crash when recording the session ([#2030](https://github.com/DataDog/browser-sdk/pull/2030))
