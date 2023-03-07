@@ -16,6 +16,10 @@
 
 ---
 
+## v4.35.0
+
+- ✨[RUMF-1500] deploy new datacenter files ([#2049](https://github.com/DataDog/browser-sdk/pull/2049))
+
 ## v4.34.3
 
 - 🐛 Handle undefined cancel idle callback ([#2045](https://github.com/DataDog/browser-sdk/pull/2045))
