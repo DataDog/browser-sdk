@@ -23,7 +23,7 @@ export function readBytesFromStream(
 
   function readMore() {
     reader.read().then(
-      monitor((result: ReadableStreamDefaultReadResult<Uint8Array>) => {
+      monitor((result: ReadableStreamReadResult<Uint8Array>) => {
         if (result.done) {
           onDone()
           return
