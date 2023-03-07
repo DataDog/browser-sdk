@@ -446,7 +446,7 @@ export function mergeInto<D, S>(
     return merged as unknown as Merged<D, S>
   }
 
-  const merged: Record<any, any> = getType(destination) === 'object' ? destination : {}
+  const merged = getType(destination) === 'object' ? (destination as Record<any, any>) : {}
   for (const key in source) {
     if (Object.prototype.hasOwnProperty.call(source, key)) {
       merged[key] = mergeInto(merged[key], source[key], circularReferenceChecker)

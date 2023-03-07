@@ -247,7 +247,7 @@ interface VisualViewportData {
 
 function getVisualViewport(): Promise<VisualViewportData> {
   return browserExecute(() => {
-    const visual = window.visualViewport || {}
+    const visual = window.visualViewport || ({} as Record<string, undefined>)
     return {
       scale: visual.scale,
       width: visual.width,
