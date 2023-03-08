@@ -53,7 +53,7 @@ export function startSessionStore<TrackingType extends string>(
       },
       after: (cookieSession) => {
         if (isTracked && !hasSessionInCache()) {
-          renewSession(cookieSession)
+          renewSessionInCache(cookieSession)
         }
         sessionCache = cookieSession
       },
@@ -86,7 +86,7 @@ export function startSessionStore<TrackingType extends string>(
     }
     if (hasSessionInCache()) {
       if (isSessionInCacheOutdated(cookieSession)) {
-        expireSession()
+        expireSessionInCache()
       } else {
         sessionCache = cookieSession
       }
@@ -112,12 +112,12 @@ export function startSessionStore<TrackingType extends string>(
     return sessionCache.id !== cookieSession.id || sessionCache[productKey] !== cookieSession[productKey]
   }
 
-  function expireSession() {
+  function expireSessionInCache() {
     sessionCache = {}
     expireObservable.notify()
   }
 
-  function renewSession(cookieSession: SessionState) {
+  function renewSessionInCache(cookieSession: SessionState) {
     sessionCache = cookieSession
     renewObservable.notify()
   }
