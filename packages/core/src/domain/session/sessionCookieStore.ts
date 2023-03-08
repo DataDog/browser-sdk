@@ -1,5 +1,5 @@
 import type { CookieOptions } from '../../browser/cookie'
-import { getCookie, setCookie } from '../../browser/cookie'
+import { deleteCookie, getCookie, setCookie } from '../../browser/cookie'
 import { setTimeout } from '../../browser/timer'
 import { isChromium } from '../../tools/browserDetection'
 import { dateNow } from '../../tools/timeUtils'
@@ -113,7 +113,7 @@ function next() {
 
 export function persistSessionCookie(session: SessionState, options: CookieOptions) {
   if (isExpiredState(session)) {
-    clearSessionCookie(options)
+    deleteSessionCookie(options)
     return
   }
   session.expire = String(dateNow() + SESSION_EXPIRATION_DELAY)
@@ -157,6 +157,6 @@ function isExpiredState(session: SessionState) {
   return utils.isEmptyObject(session)
 }
 
-function clearSessionCookie(options: CookieOptions) {
-  setCookie(SESSION_COOKIE_NAME, '', 0, options)
+function deleteSessionCookie(options: CookieOptions) {
+  deleteCookie(SESSION_COOKIE_NAME, options)
 }
