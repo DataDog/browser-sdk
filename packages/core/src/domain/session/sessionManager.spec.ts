@@ -33,7 +33,7 @@ describe('startSessionManager', () => {
   const COOKIE_OPTIONS: CookieOptions = {}
   let clock: Clock
 
-  function expireSession() {
+  function expireSessionCookie() {
     setCookie(SESSION_COOKIE_NAME, '', DURATION)
     clock.tick(COOKIE_ACCESS_DELAY)
   }
@@ -186,7 +186,7 @@ describe('startSessionManager', () => {
       const renewSessionSpy = jasmine.createSpy()
       sessionManager.renewObservable.subscribe(renewSessionSpy)
 
-      expireSession()
+      expireSessionCookie()
 
       expect(renewSessionSpy).not.toHaveBeenCalled()
       expectSessionIdToNotBeDefined(sessionManager)
@@ -204,7 +204,7 @@ describe('startSessionManager', () => {
       const renewSessionSpy = jasmine.createSpy()
       sessionManager.renewObservable.subscribe(renewSessionSpy)
 
-      expireSession()
+      expireSessionCookie()
 
       clock.tick(VISIBILITY_CHECK_DELAY)
 
@@ -273,7 +273,7 @@ describe('startSessionManager', () => {
       const renewSessionBSpy = jasmine.createSpy()
       secondSessionManager.renewObservable.subscribe(renewSessionBSpy)
 
-      expireSession()
+      expireSessionCookie()
 
       expect(expireSessionASpy).toHaveBeenCalled()
       expect(expireSessionBSpy).toHaveBeenCalled()
@@ -429,7 +429,7 @@ describe('startSessionManager', () => {
   describe('session history', () => {
     it('should return undefined when there is no current session and no startTime', () => {
       const sessionManager = startSessionManager(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => TRACKED_SESSION_STATE)
-      expireSession()
+      expireSessionCookie()
 
       expect(sessionManager.findActiveSession()).toBeUndefined()
     })
@@ -448,7 +448,7 @@ describe('startSessionManager', () => {
       clock.tick(10 * ONE_SECOND - COOKIE_ACCESS_DELAY)
       const firstSessionId = sessionManager.findActiveSession()!.id
       const firstSessionTrackingType = sessionManager.findActiveSession()!.trackingType
-      expireSession()
+      expireSessionCookie()
 
       // 10s to 20s: no session
       clock.tick(10 * ONE_SECOND)
