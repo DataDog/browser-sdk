@@ -1,9 +1,9 @@
 import { buildUrl } from '@datadog/browser-core'
 import { getParentNode, isNodeShadowRoot } from '@datadog/browser-rum-core'
-import type { NodePrivacyLevel } from '../../constants'
-import { CENSORED_STRING_MARK } from '../../constants'
-import type { StyleSheet } from '../../types'
-import { shouldMaskNode } from './privacy'
+import type { NodePrivacyLevel } from '../../../constants'
+import { CENSORED_STRING_MARK } from '../../../constants'
+import type { StyleSheet } from '../../../types'
+import { shouldMaskNode } from '../privacy'
 
 export type NodeWithSerializedNode = Node & { s: 'Node with serialized node' }
 

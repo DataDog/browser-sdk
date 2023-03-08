@@ -7,7 +7,7 @@ import {
   PRIVACY_ATTR_VALUE_HIDDEN,
   CENSORED_STRING_MARK,
   CENSORED_IMG_MARK,
-} from '../../constants'
+} from '../../../constants'
 import type {
   SerializedNode,
   SerializedNodeWithId,
@@ -17,15 +17,18 @@ import type {
   TextNode,
   CDataNode,
   DocumentFragmentNode,
-} from '../../types'
-import { NodeType } from '../../types'
+} from '../../../types'
+import { NodeType } from '../../../types'
 import {
   getTextContent,
   shouldMaskNode,
   reducePrivacyLevel,
   getNodeSelfPrivacyLevel,
   MAX_ATTRIBUTE_VALUE_CHAR_LENGTH,
-} from './privacy'
+} from '../privacy'
+import type { ElementsScrollPositions } from '../elementsScrollPositions'
+import type { ShadowRootsController } from '../shadowRootsController'
+import type { WithAdoptedStyleSheets } from '../browser.types'
 import {
   getSerializedNodeId,
   setSerializedNodeId,
@@ -33,9 +36,6 @@ import {
   switchToAbsoluteUrl,
   serializeStyleSheets,
 } from './serializationUtils'
-import type { ElementsScrollPositions } from './elementsScrollPositions'
-import type { ShadowRootsController } from './shadowRootsController'
-import type { WithAdoptedStyleSheets } from './browser.types'
 
 // Those values are the only one that can be used when inheriting privacy levels from parent to
 // children during serialization, since HIDDEN and IGNORE shouldn't serialize their children. This

@@ -9,8 +9,8 @@ import {
   PRIVACY_ATTR_VALUE_HIDDEN,
   PRIVACY_ATTR_VALUE_MASK,
   PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
-} from '../../constants'
-import { isAdoptedStyleSheetsSupported } from '../../../../core/test/specHelper'
+} from '../../../constants'
+import { isAdoptedStyleSheetsSupported } from '../../../../../core/test/specHelper'
 import {
   HTML,
   AST_ALLOW,
@@ -18,13 +18,16 @@ import {
   AST_MASK,
   AST_MASK_USER_INPUT,
   generateLeanSerializedDoc,
-} from '../../../test/htmlAst'
-import type { ElementNode, SerializedNodeWithId, TextNode } from '../../types'
-import { NodeType } from '../../types'
-import type { IsolatedDom } from '../../../../rum-core/test/createIsolatedDom'
-import { createIsolatedDom } from '../../../../rum-core/test/createIsolatedDom'
-import { hasSerializedNode } from './serializationUtils'
-import type { SerializationContext, SerializeOptions } from './serialize'
+} from '../../../../test/htmlAst'
+import type { ElementNode, SerializedNodeWithId, TextNode } from '../../../types'
+import { NodeType } from '../../../types'
+import type { IsolatedDom } from '../../../../../rum-core/test/createIsolatedDom'
+import { createIsolatedDom } from '../../../../../rum-core/test/createIsolatedDom'
+import { MAX_ATTRIBUTE_VALUE_CHAR_LENGTH } from '../privacy'
+import type { ElementsScrollPositions } from '../elementsScrollPositions'
+import { createElementsScrollPositions } from '../elementsScrollPositions'
+import type { ShadowRootCallBack, ShadowRootsController } from '../shadowRootsController'
+import type { WithAdoptedStyleSheets } from '../browser.types'
 import {
   serializeDocument,
   serializeNodeWithId,
@@ -33,11 +36,8 @@ import {
   serializeAttribute,
   SerializationContextStatus,
 } from './serialize'
-import { MAX_ATTRIBUTE_VALUE_CHAR_LENGTH } from './privacy'
-import type { ElementsScrollPositions } from './elementsScrollPositions'
-import { createElementsScrollPositions } from './elementsScrollPositions'
-import type { ShadowRootCallBack, ShadowRootsController } from './shadowRootsController'
-import type { WithAdoptedStyleSheets } from './browser.types'
+import type { SerializationContext, SerializeOptions } from './serialize'
+import { hasSerializedNode } from './serializationUtils'
 
 const DEFAULT_CONFIGURATION = {} as RumConfiguration
 
