@@ -52,7 +52,7 @@ function createFetchObservable() {
 
           const context = callMonitored(beforeSend, null, [observable, input, init])
           if (context) {
-            responsePromise = originalFetch.call(this, context.input as Request | string, context.init)
+            responsePromise = originalFetch.call(this, context.input as RequestInfo, context.init)
             callMonitored(afterSend, null, [observable, responsePromise, context])
           } else {
             responsePromise = originalFetch.call(this, input, init)
