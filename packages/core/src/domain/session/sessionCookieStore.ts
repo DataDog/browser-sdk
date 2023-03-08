@@ -146,6 +146,10 @@ export function retrieveSessionCookie(): SessionState {
   return session
 }
 
+export function deleteSessionCookie(options: CookieOptions) {
+  deleteCookie(SESSION_COOKIE_NAME, options)
+}
+
 function isValidSessionString(sessionString: string | undefined): sessionString is string {
   return (
     sessionString !== undefined &&
@@ -155,8 +159,4 @@ function isValidSessionString(sessionString: string | undefined): sessionString 
 
 function isExpiredState(session: SessionState) {
   return utils.isEmptyObject(session)
-}
-
-function deleteSessionCookie(options: CookieOptions) {
-  deleteCookie(SESSION_COOKIE_NAME, options)
 }

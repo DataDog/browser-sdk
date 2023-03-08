@@ -5,7 +5,7 @@ import { Observable } from '../../tools/observable'
 import { dateNow } from '../../tools/timeUtils'
 import * as utils from '../../tools/utils'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
-import { retrieveSessionCookie, withCookieLockAccess } from './sessionCookieStore'
+import { deleteSessionCookie, retrieveSessionCookie, withCookieLockAccess } from './sessionCookieStore'
 
 export interface SessionStore {
   expandOrRenewSession: () => void
@@ -13,6 +13,7 @@ export interface SessionStore {
   getSession: () => SessionState
   renewObservable: Observable<void>
   expireObservable: Observable<void>
+  expire: () => void
   stop: () => void
 }
 
@@ -145,6 +146,10 @@ export function startSessionStore<TrackingType extends string>(
     getSession: () => sessionCache,
     renewObservable,
     expireObservable,
+    expire: () => {
+      deleteSessionCookie(options)
+      synchronizeSession({})
+    },
     stop: () => {
       clearInterval(watchSessionTimeoutId)
     },

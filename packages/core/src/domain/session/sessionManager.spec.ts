@@ -324,7 +324,7 @@ describe('startSessionManager', () => {
     })
   })
 
-  describe('session expiration', () => {
+  describe('automatic session expiration', () => {
     beforeEach(() => {
       setPageVisibility('hidden')
     })
@@ -423,6 +423,54 @@ describe('startSessionManager', () => {
       clock.tick(10)
       expectTrackingTypeToNotBeDefined(sessionManager, FIRST_PRODUCT_KEY)
       expect(expireSessionSpy).toHaveBeenCalled()
+    })
+  })
+
+  describe('manual session expiration', () => {
+    it('expires the session when calling expire()', () => {
+      const sessionManager = startSessionManager(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => TRACKED_SESSION_STATE)
+      const expireSessionSpy = jasmine.createSpy()
+      sessionManager.expireObservable.subscribe(expireSessionSpy)
+
+      sessionManager.expire()
+
+      expectSessionIdToNotBeDefined(sessionManager)
+      expect(expireSessionSpy).toHaveBeenCalled()
+    })
+
+    it('notifies expired session only once when calling expire() multiple times', () => {
+      const sessionManager = startSessionManager(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => TRACKED_SESSION_STATE)
+      const expireSessionSpy = jasmine.createSpy()
+      sessionManager.expireObservable.subscribe(expireSessionSpy)
+
+      sessionManager.expire()
+      sessionManager.expire()
+
+      expectSessionIdToNotBeDefined(sessionManager)
+      expect(expireSessionSpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('notifies expired session only once when calling expire() after the session has been expired', () => {
+      const sessionManager = startSessionManager(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => TRACKED_SESSION_STATE)
+      const expireSessionSpy = jasmine.createSpy()
+      sessionManager.expireObservable.subscribe(expireSessionSpy)
+
+      clock.tick(SESSION_EXPIRATION_DELAY)
+      sessionManager.expire()
+
+      expectSessionIdToNotBeDefined(sessionManager)
+      expect(expireSessionSpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('renew the session on user activity', () => {
+      const sessionManager = startSessionManager(COOKIE_OPTIONS, FIRST_PRODUCT_KEY, () => TRACKED_SESSION_STATE)
+      clock.tick(COOKIE_ACCESS_DELAY)
+
+      sessionManager.expire()
+
+      document.dispatchEvent(new CustomEvent('click'))
+
+      expectSessionIdToBeDefined(sessionManager)
     })
   })
 

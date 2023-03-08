@@ -1,5 +1,5 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { performDraw, startSessionManager } from '@datadog/browser-core'
+import { noop, performDraw, startSessionManager } from '@datadog/browser-core'
 import type { RumConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
@@ -8,6 +8,7 @@ export const RUM_SESSION_KEY = 'rum'
 
 export interface RumSessionManager {
   findTrackedSession: (startTime?: RelativeTime) => RumSession | undefined
+  expire: () => void
 }
 
 export type RumSession = {
@@ -69,6 +70,7 @@ export function startRumSessionManager(configuration: RumConfiguration, lifeCycl
             : configuration.oldPlansBehavior && plan === RumSessionPlan.WITH_SESSION_REPLAY,
       }
     },
+    expire: sessionManager.expire,
   }
 }
 
@@ -85,6 +87,7 @@ export function startRumSessionManagerStub(): RumSessionManager {
   }
   return {
     findTrackedSession: () => session,
+    expire: noop,
   }
 }
 
