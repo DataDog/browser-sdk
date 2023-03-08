@@ -1,7 +1,7 @@
 import type { CookieOptions } from '../../browser/cookie'
 import { getCookie } from '../../browser/cookie'
 import type { SessionState } from './sessionStore'
-import { SESSION_COOKIE_NAME, persistSession } from './sessionCookieStore'
+import { SESSION_COOKIE_NAME, persistSessionCookie } from './sessionCookieStore'
 
 export const OLD_SESSION_COOKIE_NAME = '_dd'
 export const OLD_RUM_COOKIE_NAME = '_dd_r'
@@ -31,6 +31,6 @@ export function tryOldCookiesMigration(options: CookieOptions) {
     if (oldRumType && /^[012]$/.test(oldRumType)) {
       session[RUM_SESSION_KEY] = oldRumType
     }
-    persistSession(session, options)
+    persistSessionCookie(session, options)
   }
 }

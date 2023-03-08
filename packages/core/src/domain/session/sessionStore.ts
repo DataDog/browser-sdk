@@ -5,7 +5,7 @@ import { Observable } from '../../tools/observable'
 import { dateNow } from '../../tools/timeUtils'
 import * as utils from '../../tools/utils'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
-import { retrieveSession, withCookieLockAccess } from './sessionCookieStore'
+import { retrieveSessionCookie, withCookieLockAccess } from './sessionCookieStore'
 
 export interface SessionStore {
   expandOrRenewSession: () => void
@@ -123,7 +123,7 @@ export function startSessionStore<TrackingType extends string>(
   }
 
   function retrieveActiveSession(): SessionState {
-    const session = retrieveSession()
+    const session = retrieveSessionCookie()
     if (isActiveSession(session)) {
       return session
     }
