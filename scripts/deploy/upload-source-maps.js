@@ -9,7 +9,7 @@ const {
   buildBundleFolder,
   buildBundleFileName,
   packages,
-} = require('../lib/deployment-utils')
+} = require('./lib/deployment-utils')
 
 /**
  * Upload source maps to datadog

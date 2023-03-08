@@ -7,7 +7,7 @@ const {
   buildBundleFolder,
   buildBundleFileName,
   packages,
-} = require('../lib/deployment-utils')
+} = require('./lib/deployment-utils')
 
 const ONE_MINUTE_IN_SECOND = 60
 const ONE_HOUR_IN_SECOND = 60 * ONE_MINUTE_IN_SECOND
