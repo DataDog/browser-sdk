@@ -1,5 +1,6 @@
 import type { Context, InitConfiguration, TimeStamp, RelativeTime, User } from '@datadog/browser-core'
 import {
+  noop,
   isExperimentalFeatureEnabled,
   willSyntheticsInjectRum,
   assign,
@@ -64,6 +65,7 @@ export function makeRumPublicApi(
 
   let getInternalContextStrategy: StartRumResult['getInternalContext'] = () => undefined
   let getInitConfigurationStrategy = (): InitConfiguration | undefined => undefined
+  let stopSessionStrategy: () => void = noop
 
   let bufferApiCalls = new BoundedBuffer()
   let addTimingStrategy: StartRumResult['addTiming'] = (name, time = timeStampNow()) => {
@@ -122,6 +124,12 @@ export function makeRumPublicApi(
       })
     }
 
+    if (isExperimentalFeatureEnabled('kiosk_apps')) {
+      ;(rumPublicApi as any).stopSession = monitor(() => {
+        stopSessionStrategy()
+      })
+    }
+
     if (!configuration.trackViewsManually) {
       doStartRum(initConfiguration, configuration)
     } else {
@@ -161,6 +169,7 @@ export function makeRumPublicApi(
       addTiming: addTimingStrategy,
       addFeatureFlagEvaluation: addFeatureFlagEvaluationStrategy,
       getInternalContext: getInternalContextStrategy,
+      stopSession: stopSessionStrategy,
     } = startRumResults)
     bufferApiCalls.drain()
 

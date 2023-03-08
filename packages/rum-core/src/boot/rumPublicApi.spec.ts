@@ -26,6 +26,7 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   lifeCycle: {} as any,
   viewContexts: {} as any,
   session: {} as any,
+  stopSession: () => undefined,
 })
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const INVALID_INIT_CONFIGURATION = { clientToken: 'yes' } as RumInitConfiguration
@@ -824,6 +825,40 @@ describe('rum public api', () => {
         expect(addTimingSpy.calls.argsFor(2)[0]).toEqual('third')
         expect(addTimingSpy.calls.argsFor(2)[1]).toBeUndefined() // no time saved when started
       })
+    })
+  })
+
+  describe('stopSession', () => {
+    let rumPublicApi: RumPublicApi
+    let stopSessionSpy: jasmine.Spy
+
+    beforeEach(() => {
+      stopSessionSpy = jasmine.createSpy()
+      rumPublicApi = makeRumPublicApi(() => ({ ...noopStartRum(), stopSession: stopSessionSpy }), noopRecorderApi)
+    })
+
+    afterEach(() => {
+      resetExperimentalFeatures()
+    })
+
+    it('API should not be available when ff kiosk_apps disabled', () => {
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+      expect(Object.keys(rumPublicApi)).not.toContain('stopSession')
+    })
+
+    it('API should not be available before init when ff kiosk_apps enabled', () => {
+      updateExperimentalFeatures(['kiosk_apps'])
+
+      expect(Object.keys(rumPublicApi)).not.toContain('stopSession')
+    })
+
+    it('calls stopSession on the startRum result', () => {
+      updateExperimentalFeatures(['kiosk_apps'])
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      ;(rumPublicApi as any).stopSession()
+      expect(stopSessionSpy).toHaveBeenCalled()
     })
   })
 

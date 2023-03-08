@@ -143,6 +143,7 @@ export function startRum(
     lifeCycle,
     viewContexts,
     session,
+    stopSession: () => session.expire(),
     getInternalContext: internalContext.get,
   }
 }
