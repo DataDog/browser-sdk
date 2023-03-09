@@ -7,8 +7,8 @@ import {
   setSerializedNodeId,
   getElementInputValue,
   switchToAbsoluteUrl,
-  serializeStyleSheets,
 } from './serializationUtils'
+import { serializeStyleSheets } from './serializeStyleSheets'
 
 describe('serialized Node storage in DOM Nodes', () => {
   describe('hasSerializedNode', () => {

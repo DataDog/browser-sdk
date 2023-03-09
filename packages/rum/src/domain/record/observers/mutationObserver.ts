@@ -15,16 +15,16 @@ import type {
   TextMutation,
 } from '../../../types'
 import { getNodePrivacyLevel, getTextContent } from '../privacy'
-import type { NodeWithSerializedNode } from '../serializers'
+import type { NodeWithSerializedNode } from '../serialization'
 import {
   getElementInputValue,
   getSerializedNodeId,
   hasSerializedNode,
   nodeAndAncestorsHaveSerializedNode,
   serializeNodeWithId,
-  serializeAttribute,
   SerializationContextStatus,
-} from '../serializers'
+  serializeAttribute,
+} from '../serialization'
 import { createMutationBatch } from '../mutationBatch'
 import type { ShadowRootCallBack, ShadowRootsController } from '../shadowRootsController'
 
