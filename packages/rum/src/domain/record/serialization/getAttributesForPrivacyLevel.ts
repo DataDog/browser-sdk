@@ -17,9 +17,8 @@ export function getAttributesForPrivacyLevel(
   const tagName = getValidTagName(element.tagName)
   const doc = element.ownerDocument
 
-  type HtmlAttribute = { name: string; value: string }
   for (let i = 0; i < element.attributes.length; i += 1) {
-    const attribute = element.attributes.item(i) as HtmlAttribute
+    const attribute = element.attributes.item(i)!
     const attributeName = attribute.name
     const attributeValue = serializeAttribute(element, nodePrivacyLevel, attributeName, options.configuration)
     if (attributeValue !== null) {
