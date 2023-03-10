@@ -1,5 +1,4 @@
 import { isIE } from '@datadog/browser-core'
-import { isAdoptedStyleSheetsSupported } from '@datadog/browser-core/test/specHelper'
 import { NodePrivacyLevel } from '../../../constants'
 import {
   getSerializedNodeId,
@@ -8,7 +7,6 @@ import {
   getElementInputValue,
   switchToAbsoluteUrl,
 } from './serializationUtils'
-import { serializeStyleSheets } from './serializeStyleSheets'
 
 describe('serialized Node storage in DOM Nodes', () => {
   describe('hasSerializedNode', () => {
@@ -183,29 +181,5 @@ describe('switchToAbsoluteUrl', () => {
         '{ font-family: FontAwesome; src: url(https://site.web/app-name/static/assets/fonts/fontawesome-webfont.eot); }'
       expect(switchToAbsoluteUrl(cssText, 'hello-world')).toEqual(cssText)
     })
-  })
-})
-
-describe('serializeStyleSheets', () => {
-  beforeEach(() => {
-    if (!isAdoptedStyleSheetsSupported()) {
-      pending('no adoptedStyleSheets support')
-    }
-  })
-  it('should return undefined if no stylesheets', () => {
-    expect(serializeStyleSheets(undefined)).toBe(undefined)
-    expect(serializeStyleSheets([])).toBe(undefined)
-  })
-
-  it('should return serialized stylesheet', () => {
-    const disabledStylesheet = new CSSStyleSheet({ disabled: true })
-    disabledStylesheet.insertRule('div { width: 100%; }')
-    const printStylesheet = new CSSStyleSheet({ disabled: false, media: 'print' })
-    printStylesheet.insertRule('a { color: red; }')
-
-    expect(serializeStyleSheets([disabledStylesheet, printStylesheet])).toEqual([
-      { cssRules: ['div { width: 100%; }'], disabled: true, media: undefined },
-      { cssRules: ['a { color: red; }'], disabled: undefined, media: ['print'] },
-    ])
   })
 })
