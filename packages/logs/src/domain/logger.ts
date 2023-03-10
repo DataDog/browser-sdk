@@ -1,9 +1,10 @@
 import type { Context } from '@datadog/browser-core'
 import {
-  NO_ERROR_STACK_PRESENT_MESSAGE,
+  clocksNow,
+  computeRawError,
+  ErrorHandling,
   PROVIDED_ERROR_MESSAGE_PREFIX,
   computeStackTrace,
-  toStackTraceString,
   deepClone,
   assign,
   combine,
@@ -55,19 +56,25 @@ export class Logger {
     let context: Context
 
     if (status === StatusType.error || (error !== undefined && error !== null)) {
-      // Always add origin if status is error (backward compatibility), or we have an actual error
+      // Always add origin if status is error (backward compatibility - Remove in next major)
       const errorContext = ({ origin: ErrorSource.LOGGER } as LogsEvent['error'])!
 
-      // Extract information from error object if provided
-      if (error instanceof Error) {
-        const stackTrace = computeStackTrace(error)
-        errorContext.kind = stackTrace.name
-        errorContext.message = stackTrace.message
-        errorContext.stack = toStackTraceString(stackTrace)
-        // Serialize other types if provided as error parameter
-      } else if (error !== undefined && error !== null) {
-        errorContext.message = `${PROVIDED_ERROR_MESSAGE_PREFIX} ${JSON.stringify(error, undefined, 2)}`
-        errorContext.stack = NO_ERROR_STACK_PRESENT_MESSAGE
+      if (error !== undefined && error !== null) {
+        const stackTrace = error instanceof Error ? computeStackTrace(error) : undefined
+        const rawError = computeRawError({
+          stackTrace,
+          originalError: error,
+          nonErrorPrefix: PROVIDED_ERROR_MESSAGE_PREFIX,
+          source: ErrorSource.LOGGER,
+          handling: ErrorHandling.HANDLED,
+          startClocks: clocksNow(),
+        })
+
+        errorContext.stack = rawError.stack
+        errorContext.message = rawError.message
+        if (rawError.type) {
+          errorContext.kind = rawError.type
+        }
       }
 
       context = combine({ error: errorContext }, messageContext) as Context

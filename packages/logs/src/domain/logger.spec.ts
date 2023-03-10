@@ -70,7 +70,7 @@ describe('Logger', () => {
         context: {
           error: {
             origin: 'logger',
-            message: 'Provided: "My Error"',
+            message: 'Provided "My Error"',
             stack: NO_ERROR_STACK_PRESENT_MESSAGE,
           },
         },
