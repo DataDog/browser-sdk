@@ -72,9 +72,7 @@ export class Logger {
 
         errorContext.stack = rawError.stack
         errorContext.message = rawError.message
-        if (rawError.type) {
-          errorContext.kind = rawError.type
-        }
+        errorContext.kind = rawError.type
       }
 
       context = combine({ error: errorContext }, messageContext) as Context
