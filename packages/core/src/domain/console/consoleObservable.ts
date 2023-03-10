@@ -5,6 +5,7 @@ import { find, jsonStringify } from '../../tools/utils'
 import { ConsoleApiName } from '../../tools/display'
 import { callMonitored } from '../../tools/monitor'
 import { sanitize } from '../../tools/sanitize'
+import { isExperimentalFeatureEnabled } from '../configuration'
 
 export interface ConsoleLog {
   message: string
@@ -69,10 +70,10 @@ function buildConsoleLog(params: unknown[], api: ConsoleApiName, handlingStack: 
 
 function formatConsoleParameters(param: unknown) {
   if (typeof param === 'string') {
-    return sanitize(param)
+    return isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(param) : param
   }
   if (param instanceof Error) {
     return formatErrorMessage(computeStackTrace(param))
   }
-  return jsonStringify(sanitize(param), undefined, 2)
+  return jsonStringify(isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(param) : param, undefined, 2)
 }

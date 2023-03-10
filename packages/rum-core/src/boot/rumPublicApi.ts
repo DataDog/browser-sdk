@@ -119,7 +119,10 @@ export function makeRumPublicApi(
 
     if (isExperimentalFeatureEnabled('feature_flags')) {
       ;(rumPublicApi as any).addFeatureFlagEvaluation = monitor((key: string, value: any) => {
-        addFeatureFlagEvaluationStrategy(sanitize(key)!, sanitize(value))
+        addFeatureFlagEvaluationStrategy(
+          isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(key)! : key,
+          isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(value) : value
+        )
       })
     }
 
@@ -207,8 +210,8 @@ export function makeRumPublicApi(
 
     addAction: monitor((name: string, context?: object) => {
       addActionStrategy({
-        name: sanitize(name)!,
-        context: sanitize(context) as Context,
+        name: isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(name)! : name,
+        context: (isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(context) : deepClone(context)) as Context,
         startClocks: clocksNow(),
         type: ActionType.CUSTOM,
       })
@@ -220,14 +223,19 @@ export function makeRumPublicApi(
         addErrorStrategy({
           error, // Do not sanitize error here, it is needed unserialized by computeRawError()
           handlingStack,
-          context: sanitize(context) as Context,
+          context: (isExperimentalFeatureEnabled('sanitize_inputs')
+            ? sanitize(context)
+            : deepClone(context)) as Context,
           startClocks: clocksNow(),
         })
       })
     },
 
     addTiming: monitor((name: string, time?: number) => {
-      addTimingStrategy(sanitize(name)!, time as RelativeTime | TimeStamp | undefined)
+      addTimingStrategy(
+        isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(name)! : name,
+        time as RelativeTime | TimeStamp | undefined
+      )
     }),
 
     setUser: monitor((newUser: User) => {

@@ -1,5 +1,14 @@
 import type { Context } from '@datadog/browser-core'
-import { assign, combine, createContextManager, ErrorSource, monitored, sanitize } from '@datadog/browser-core'
+import {
+  deepClone,
+  isExperimentalFeatureEnabled,
+  assign,
+  combine,
+  createContextManager,
+  ErrorSource,
+  monitored,
+  sanitize,
+} from '@datadog/browser-core'
 
 export interface LogsMessage {
   message: string
@@ -40,7 +49,16 @@ export class Logger {
 
   @monitored
   log(message: string, messageContext?: object, status: StatusType = StatusType.info) {
-    this.handleLogStrategy({ message: sanitize(message)!, context: sanitize(messageContext) as Context, status }, this)
+    this.handleLogStrategy(
+      {
+        message: isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(message)! : message,
+        context: (isExperimentalFeatureEnabled('sanitize_inputs')
+          ? sanitize(messageContext)
+          : deepClone(messageContext)) as Context,
+        status,
+      },
+      this
+    )
   }
 
   debug(message: string, messageContext?: object) {

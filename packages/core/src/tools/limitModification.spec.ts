@@ -1,3 +1,4 @@
+import { resetExperimentalFeatures, updateExperimentalFeatures } from '../domain/configuration'
 import type { Context } from './context'
 import { limitModification } from './limitModification'
 
@@ -157,6 +158,7 @@ describe('limitModification', () => {
   })
 
   it('should call sanitize on newly provided values', () => {
+    updateExperimentalFeatures(['sanitize_inputs'])
     const object: Context = { bar: { baz: 42 } }
 
     const modifier = (candidate: any) => {
@@ -164,7 +166,7 @@ describe('limitModification', () => {
     }
 
     limitModification(object, ['bar'], modifier)
-
     expect(() => JSON.stringify(object)).not.toThrowError()
+    resetExperimentalFeatures()
   })
 })
