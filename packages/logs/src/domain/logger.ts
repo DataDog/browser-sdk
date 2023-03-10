@@ -53,32 +53,35 @@ export class Logger {
 
   @monitored
   log(message: string, messageContext?: object, status: StatusType = StatusType.info, error?: Error) {
-    let context: Context
+    let errorContext: LogsEvent['error']
 
-    if (status === StatusType.error || (error !== undefined && error !== null)) {
+    if (status === StatusType.error) {
       // Always add origin if status is error (backward compatibility - Remove in next major)
-      const errorContext = ({ origin: ErrorSource.LOGGER } as LogsEvent['error'])!
-
-      if (error !== undefined && error !== null) {
-        const stackTrace = error instanceof Error ? computeStackTrace(error) : undefined
-        const rawError = computeRawError({
-          stackTrace,
-          originalError: error,
-          nonErrorPrefix: PROVIDED_ERROR_MESSAGE_PREFIX,
-          source: ErrorSource.LOGGER,
-          handling: ErrorHandling.HANDLED,
-          startClocks: clocksNow(),
-        })
-
-        errorContext.stack = rawError.stack
-        errorContext.message = rawError.message
-        errorContext.kind = rawError.type
-      }
-
-      context = combine({ error: errorContext }, messageContext) as Context
-    } else {
-      context = deepClone(messageContext) as Context
+      errorContext = { origin: ErrorSource.LOGGER }
     }
+
+    if (error !== undefined && error !== null) {
+      const stackTrace = error instanceof Error ? computeStackTrace(error) : undefined
+      const rawError = computeRawError({
+        stackTrace,
+        originalError: error,
+        nonErrorPrefix: PROVIDED_ERROR_MESSAGE_PREFIX,
+        source: ErrorSource.LOGGER,
+        handling: ErrorHandling.HANDLED,
+        startClocks: clocksNow(),
+      })
+
+      errorContext = {
+        origin: ErrorSource.LOGGER, // Remove in next major
+        stack: rawError.stack,
+        kind: rawError.type,
+        message: rawError.message,
+      }
+    }
+
+    const context = errorContext
+      ? (combine({ error: errorContext }, messageContext) as Context)
+      : (deepClone(messageContext) as Context)
 
     this.handleLogStrategy({ message, context, status }, this)
   }
