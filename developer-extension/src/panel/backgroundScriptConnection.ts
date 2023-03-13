@@ -1,4 +1,4 @@
-import type { BackgroundToDevtoolsMessage } from '../common/types'
+import type { BackgroundToDevtoolsMessage, DevtoolsToBackgroundMessage } from '../common/types'
 import { isDisconnectError } from '../common/isDisconnectError'
 import { createLogger } from '../common/logger'
 import { notifyDisconnectEvent } from './disconnectEvent'
@@ -39,5 +39,11 @@ function createBackgroundScriptConnection() {
     } else {
       logger.error('While creating connection:', error)
     }
+  }
+}
+
+export function sendMessageToBackground(message: DevtoolsToBackgroundMessage) {
+  if (backgroundScriptConnection) {
+    backgroundScriptConnection.postMessage(message)
   }
 }
