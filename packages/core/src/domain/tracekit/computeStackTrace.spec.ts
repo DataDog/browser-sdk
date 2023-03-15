@@ -712,6 +712,19 @@ Error: foo
     })
   })
 
+  it('should parse errors from Chrome Snippets', () => {
+    const stackFrames = computeStackTrace(CapturedExceptions.CHROME_111_SNIPPET)
+
+    expect(stackFrames.stack.length).toEqual(1)
+    expect(stackFrames.stack[0]).toEqual({
+      args: [],
+      column: 13,
+      func: '?',
+      line: 1,
+      url: 'snippet:///snippet_file',
+    })
+  })
+
   it('should parse empty IE 9 error', () => {
     const stackFrames = computeStackTrace(CapturedExceptions.IE_9)
 
