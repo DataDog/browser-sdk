@@ -22,8 +22,8 @@ stages:
   - browserstack
   - pre-deploy
   - pre-deploy-notify
-  - deploy:canary
-  - notify:canary
+  #  - deploy:canary
+  #  - notify:canary
   - deploy
   - notify
 
@@ -255,17 +255,17 @@ deploy-staging:
     - node ./scripts/deploy.js staging staging root
     - node ./scripts/upload-source-maps.js staging root
 
-deploy-prod-canary:
-  stage: deploy:canary
-  extends:
-    - .base-configuration
-    - .main
-  script:
-    - export BUILD_MODE=canary
-    - yarn
-    - yarn build:bundle
-    - node ./scripts/deploy.js prod canary root
-    - node ./scripts/upload-source-maps.js canary root
+#deploy-prod-canary:
+#  stage: deploy:canary
+#  extends:
+#    - .base-configuration
+#    - .main
+#  script:
+#    - export BUILD_MODE=canary
+#    - yarn
+#    - yarn build:bundle
+#    - node ./scripts/deploy.js prod canary root
+#    - node ./scripts/upload-source-maps.js canary root
 
 deploy-prod-all-dcs:
   stage: deploy
@@ -344,26 +344,26 @@ notify-release-ready:
     - 'MESSAGE_TEXT=":i: $CI_PROJECT_NAME <$BUILD_URL|$COMMIT_MESSAGE> ready to be deployed to :datadog:"'
     - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
 
-notify-prod-canary-success:
-  stage: notify:canary
-  extends:
-    - .prepare_notification
-    - .main
-  script:
-    - 'MESSAGE_TEXT=":rocket: $CI_PROJECT_NAME <$COMMIT_URL|$COMMIT_MESSAGE> deployed to :datadog:."'
-    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
-    - postmessage "#rum-browser-sdk-ops" "$MESSAGE_TEXT"
-
-notify-prod-canary-failure:
-  stage: notify:canary
-  extends:
-    - .prepare_notification
-    - .main
-  when: on_failure
-  script:
-    - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME release pipeline <$BUILD_URL|$COMMIT_MESSAGE> failed."'
-    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
-
+#notify-prod-canary-success:
+#  stage: notify:canary
+#  extends:
+#    - .prepare_notification
+#    - .main
+#  script:
+#    - 'MESSAGE_TEXT=":rocket: $CI_PROJECT_NAME <$COMMIT_URL|$COMMIT_MESSAGE> deployed to :datadog:."'
+#    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
+#    - postmessage "#rum-browser-sdk-ops" "$MESSAGE_TEXT"
+#
+#notify-prod-canary-failure:
+#  stage: notify:canary
+#  extends:
+#    - .prepare_notification
+#    - .main
+#  when: on_failure
+#  script:
+#    - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME release pipeline <$BUILD_URL|$COMMIT_MESSAGE> failed."'
+#    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
+#
 notify-prod-stable-success:
   extends:
     - .prepare_notification
