@@ -1,12 +1,8 @@
-import { Badge, Box, Button, Checkbox, Code, Group, Select, Space, Text } from '@mantine/core'
+import { Badge, Box, Checkbox, Code, Group, Select, Space, Text } from '@mantine/core'
 import React from 'react'
-import { createLogger } from '../../../common/logger'
-import { evalInWindow } from '../../evalInWindow'
 import type { EventSource } from '../../types'
 import { Columns } from '../columns'
 import { TabBase } from '../tabBase'
-
-const logger = createLogger('settingsTab')
 
 export interface Settings {
   useDevBundles: boolean
@@ -142,12 +138,6 @@ export function SettingsTab({
             description={<>Force the SDK to flush events periodically.</>}
           />
         </Columns.Column>
-
-        <Columns.Column title="Misc">
-          <Button color="violet" variant="light" onClick={() => endSession()}>
-            End current session
-          </Button>
-        </Columns.Column>
       </Columns>
     </TabBase>
   )
@@ -169,12 +159,4 @@ function SettingItem({ description, input }: { description?: React.ReactNode; in
 
 function isChecked(target: EventTarget) {
   return target instanceof HTMLInputElement && target.checked
-}
-
-function endSession() {
-  evalInWindow(
-    `
-      document.cookie = '_dd_s=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'
-    `
-  ).catch((error) => logger.error('Error while ending session:', error))
 }
