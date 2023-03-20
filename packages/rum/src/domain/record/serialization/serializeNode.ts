@@ -17,7 +17,7 @@ import { reducePrivacyLevel, getNodeSelfPrivacyLevel, getTextContent } from '../
 import { getSerializedNodeId, getValidTagName, setSerializedNodeId } from './serializationUtils'
 import type { SerializeOptions } from './serialization.types'
 import { serializeStyleSheets } from './serializeStyleSheets'
-import { getAttributesForPrivacyLevel } from './getAttributesForPrivacyLevel'
+import { serializeAttributes } from './serializeAttributes'
 
 export function serializeNodeWithId(node: Node, options: SerializeOptions): SerializedNodeWithId | null {
   const serializedNode = serializeNode(node, options)
@@ -156,7 +156,7 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
     return
   }
 
-  const attributes = getAttributesForPrivacyLevel(element, nodePrivacyLevel, options)
+  const attributes = serializeAttributes(element, nodePrivacyLevel, options)
 
   let childNodes: SerializedNodeWithId[] = []
   if (element.childNodes.length) {

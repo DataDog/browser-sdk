@@ -5,7 +5,7 @@ import type { SerializeOptions } from './serialization.types'
 import { SerializationContextStatus } from './serialization.types'
 import { serializeAttribute } from './serializeAttribute'
 
-export function getAttributesForPrivacyLevel(
+export function serializeAttributes(
   element: Element,
   nodePrivacyLevel: NodePrivacyLevel,
   options: SerializeOptions
