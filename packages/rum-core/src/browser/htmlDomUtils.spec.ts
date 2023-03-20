@@ -7,6 +7,7 @@ import {
   getChildNodes,
   getParentNode,
   isNodeShadowHost,
+  isNodeIframeElement,
 } from './htmlDomUtils'
 
 describe('isTextNode', () => {
@@ -53,6 +54,23 @@ describe('isElementNode', () => {
   parameters.forEach(([element, result]) => {
     it(`should return ${String(result)} for "${String(element)}"`, () => {
       expect(isElementNode(element)).toBe(result)
+    })
+  })
+})
+
+describe('isNodeIframeElement', () => {
+  const parameters: Array<[Node, boolean]> = [
+    [document.createElement('iframe'), true],
+    [document.createElement('div'), false],
+    [document.body, false],
+    [document.createTextNode('hello'), false],
+    [document.createComment('hello'), false],
+    ['hello' as unknown as Node, false],
+  ]
+
+  parameters.forEach(([element, result]) => {
+    it(`should return ${String(result)} for "${String(element)}"`, () => {
+      expect(isNodeIframeElement(element)).toBe(result)
     })
   })
 })

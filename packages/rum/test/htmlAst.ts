@@ -33,12 +33,20 @@ const DEFAULT_SHADOW_ROOT_CONTROLLER = {
   removeShadowRoot: noop,
 }
 
+const DEFAULT_IFRAME_CONTROLLER = {
+  flush: noop,
+  stop: noop,
+  addIframe: noop,
+  removeIframe: noop,
+}
+
 export const generateLeanSerializedDoc = (htmlContent: string, privacyTag: string) => {
   const newDoc = makeHtmlDoc(htmlContent, privacyTag)
   const serializedDoc = removeIdFieldsRecursivelyClone(
     serializeNodeWithId(newDoc, {
       parentNodePrivacyLevel: NodePrivacyLevel.ALLOW,
       serializationContext: {
+        iframesController: DEFAULT_IFRAME_CONTROLLER,
         shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
         status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
         elementsScrollPositions: createElementsScrollPositions(),

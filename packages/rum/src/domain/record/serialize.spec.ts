@@ -38,6 +38,7 @@ import type { ElementsScrollPositions } from './elementsScrollPositions'
 import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootCallBack, ShadowRootsController } from './shadowRootsController'
 import type { WithAdoptedStyleSheets } from './browser.types'
+import type { IFrameCallback, IframesController } from './iframeController'
 
 const DEFAULT_CONFIGURATION = {} as RumConfiguration
 
@@ -48,8 +49,16 @@ const DEFAULT_SHADOW_ROOT_CONTROLLER: ShadowRootsController = {
   removeShadowRoot: noop,
 }
 
+const DEFAULT_IFRAMES_CONTROLLER: IframesController = {
+  flush: noop,
+  stop: noop,
+  addIframe: noop,
+  removeIframe: noop,
+}
+
 const DEFAULT_SERIALIZATION_CONTEXT: SerializationContext = {
   shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
+  iframesController: DEFAULT_IFRAMES_CONTROLLER,
   status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
   elementsScrollPositions: createElementsScrollPositions(),
 }
@@ -63,9 +72,11 @@ const DEFAULT_OPTIONS: SerializeOptions = {
 describe('serializeNodeWithId', () => {
   let sandbox: HTMLElement
   let addShadowRootSpy: jasmine.Spy<ShadowRootCallBack>
+  let addIframeSpy: jasmine.Spy<IFrameCallback>
 
   beforeEach(() => {
     addShadowRootSpy = jasmine.createSpy<ShadowRootCallBack>()
+    addIframeSpy = jasmine.createSpy<IFrameCallback>()
   })
 
   beforeEach(() => {
@@ -91,7 +102,7 @@ describe('serializeNodeWithId', () => {
           jasmine.objectContaining({ type: NodeType.Element, tagName: 'html' }),
         ],
         adoptedStyleSheets: undefined,
-        id: jasmine.any(Number) as unknown as number,
+        id: jasmine.any(Number),
       })
     })
   })
@@ -186,6 +197,7 @@ describe('serializeNodeWithId', () => {
           ...DEFAULT_OPTIONS,
           serializationContext: {
             shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
+            iframesController: DEFAULT_IFRAMES_CONTROLLER,
             status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
             elementsScrollPositions,
           },
@@ -205,6 +217,7 @@ describe('serializeNodeWithId', () => {
           ...DEFAULT_OPTIONS,
           serializationContext: {
             shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
+            iframesController: DEFAULT_IFRAMES_CONTROLLER,
             status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT,
             elementsScrollPositions,
           },
@@ -222,6 +235,7 @@ describe('serializeNodeWithId', () => {
           ...DEFAULT_OPTIONS,
           serializationContext: {
             shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
+            iframesController: DEFAULT_IFRAMES_CONTROLLER,
             status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT,
             elementsScrollPositions,
           },
@@ -242,6 +256,7 @@ describe('serializeNodeWithId', () => {
           ...DEFAULT_OPTIONS,
           serializationContext: {
             shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
+            iframesController: DEFAULT_IFRAMES_CONTROLLER,
             status: SerializationContextStatus.MUTATION,
           },
         })!.attributes
@@ -487,11 +502,11 @@ describe('serializeNodeWithId', () => {
             type: NodeType.DocumentFragment,
             isShadowRoot: true,
             childNodes: [],
-            id: jasmine.any(Number) as unknown as number,
+            id: jasmine.any(Number),
             adoptedStyleSheets: undefined,
           },
         ],
-        id: jasmine.any(Number) as unknown as number,
+        id: jasmine.any(Number),
       })
     })
 
@@ -527,15 +542,86 @@ describe('serializeNodeWithId', () => {
                 attributes: {},
                 isSVG: undefined,
                 childNodes: [],
-                id: jasmine.any(Number) as unknown as number,
+                id: jasmine.any(Number),
               },
             ],
-            id: jasmine.any(Number) as unknown as number,
+            id: jasmine.any(Number),
           },
         ],
-        id: jasmine.any(Number) as unknown as number,
+        id: jasmine.any(Number),
       })
       expect(addShadowRootSpy).toHaveBeenCalledWith(div.shadowRoot!)
+    })
+
+    it('serializes a iframe with children', () => {
+      const iframe = document.createElement('iframe')
+      const div = document.createElement('div')
+      div.textContent = 'toto'
+      document.body.appendChild(iframe)
+      iframe.contentDocument!.body.appendChild(div)
+
+      const options: SerializeOptions = {
+        ...DEFAULT_OPTIONS,
+        serializationContext: {
+          ...DEFAULT_SERIALIZATION_CONTEXT,
+          iframesController: {
+            ...DEFAULT_IFRAMES_CONTROLLER,
+            addIframe: addIframeSpy,
+          },
+        },
+      }
+      expect(serializeElement(iframe, options)).toEqual({
+        type: NodeType.Element,
+        isSVG: undefined,
+        tagName: 'iframe',
+        attributes: {},
+        childNodes: [
+          {
+            type: NodeType.Document,
+            adoptedStyleSheets: undefined,
+            childNodes: [
+              {
+                type: NodeType.Element,
+                isSVG: undefined,
+                tagName: 'html',
+                attributes: {},
+                childNodes: [
+                  {
+                    type: NodeType.Element,
+                    isSVG: undefined,
+                    tagName: 'head',
+                    attributes: {},
+                    childNodes: [],
+                    id: jasmine.any(Number),
+                  },
+                  {
+                    type: NodeType.Element,
+                    isSVG: undefined,
+                    tagName: 'body',
+                    attributes: {},
+                    childNodes: [
+                      {
+                        type: NodeType.Element,
+                        isSVG: undefined,
+                        tagName: 'div',
+                        attributes: {},
+                        childNodes: [{ type: 3, textContent: 'toto', isStyle: undefined, id: jasmine.any(Number) }],
+                        id: jasmine.any(Number),
+                      },
+                    ],
+                    id: jasmine.any(Number),
+                  },
+                ],
+                id: jasmine.any(Number),
+              },
+            ],
+            id: jasmine.any(Number),
+          },
+        ],
+        id: jasmine.any(Number),
+      })
+      expect(addIframeSpy).toHaveBeenCalledWith(iframe)
+      document.body.removeChild(iframe)
     })
 
     it('serializes style node with local CSS', () => {
@@ -546,7 +632,7 @@ describe('serializeNodeWithId', () => {
       expect(serializeElement(styleNode)).toEqual({
         type: NodeType.Element,
         tagName: 'style',
-        id: jasmine.any(Number) as unknown as number,
+        id: jasmine.any(Number),
         isSVG: undefined,
         attributes: { _cssText: 'body { width: 100%; }' },
         childNodes: [],
@@ -561,7 +647,7 @@ describe('serializeNodeWithId', () => {
       expect(serializeNodeWithId(linkNode, DEFAULT_OPTIONS)).toEqual({
         type: NodeType.Element,
         tagName: 'link',
-        id: jasmine.any(Number) as unknown as number,
+        id: jasmine.any(Number),
         isSVG: undefined,
         attributes: { rel: 'stylesheet', href: 'https://datadoghq.com/some/style.css' },
         childNodes: [],
@@ -585,7 +671,7 @@ describe('serializeNodeWithId', () => {
       expect(serializeNodeWithId(linkNode, DEFAULT_OPTIONS)).toEqual({
         type: NodeType.Element,
         tagName: 'link',
-        id: jasmine.any(Number) as unknown as number,
+        id: jasmine.any(Number),
         isSVG: undefined,
         attributes: {
           _cssText: 'body { width: 100%; }',
@@ -616,7 +702,7 @@ describe('serializeNodeWithId', () => {
       expect(serializeNodeWithId(linkNode, DEFAULT_OPTIONS)).toEqual({
         type: NodeType.Element,
         tagName: 'link',
-        id: jasmine.any(Number) as unknown as number,
+        id: jasmine.any(Number),
         isSVG: undefined,
         attributes: {
           rel: 'stylesheet',
@@ -635,7 +721,7 @@ describe('serializeNodeWithId', () => {
       parentEl.appendChild(textNode)
       expect(serializeNodeWithId(textNode, DEFAULT_OPTIONS)).toEqual({
         type: NodeType.Text,
-        id: jasmine.any(Number) as unknown as number,
+        id: jasmine.any(Number),
         isStyle: undefined,
         textContent: 'foo',
       })
@@ -665,7 +751,7 @@ describe('serializeNodeWithId', () => {
       const xmlDocument = new DOMParser().parseFromString('<root></root>', 'text/xml')
       expect(serializeNodeWithId(xmlDocument.createCDATASection('foo'), DEFAULT_OPTIONS)).toEqual({
         type: NodeType.CDATA,
-        id: jasmine.any(Number) as unknown as number,
+        id: jasmine.any(Number),
         textContent: '',
       })
     })
@@ -826,7 +912,7 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
             media: undefined,
           },
         ],
-        id: jasmine.any(Number) as unknown as number,
+        id: jasmine.any(Number),
       })
     })
   })

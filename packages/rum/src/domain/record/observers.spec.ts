@@ -23,12 +23,20 @@ import {
 import { serializeDocument, SerializationContextStatus } from './serialize'
 import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
+import type { IframesController } from './iframeController'
 
 const DEFAULT_SHADOW_ROOT_CONTROLLER: ShadowRootsController = {
   flush: noop,
   stop: noop,
   addShadowRoot: noop,
   removeShadowRoot: noop,
+}
+
+const DEFAULT_IFRAMES_CONTROLLER: IframesController = {
+  flush: noop,
+  stop: noop,
+  addIframe: noop,
+  removeIframe: noop,
 }
 
 const DEFAULT_CONFIGURATION = { defaultPrivacyLevel: NodePrivacyLevel.ALLOW } as RumConfiguration
@@ -52,6 +60,7 @@ describe('initInputObserver', () => {
 
     serializeDocument(document, DEFAULT_CONFIGURATION, {
       shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
+      iframesController: DEFAULT_IFRAMES_CONTROLLER,
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
       elementsScrollPositions: createElementsScrollPositions(),
     })
@@ -218,6 +227,7 @@ describe('initStyleSheetObserver', () => {
 
     serializeDocument(document, DEFAULT_CONFIGURATION, {
       shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
+      iframesController: DEFAULT_IFRAMES_CONTROLLER,
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
       elementsScrollPositions: createElementsScrollPositions(),
     })
@@ -363,6 +373,7 @@ describe('initMouseInteractionObserver', () => {
 
     serializeDocument(document, DEFAULT_CONFIGURATION, {
       shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
+      iframesController: DEFAULT_IFRAMES_CONTROLLER,
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
       elementsScrollPositions: createElementsScrollPositions(),
     })
@@ -479,6 +490,7 @@ describe('initMoveObserver', () => {
 
     serializeDocument(document, DEFAULT_CONFIGURATION, {
       shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
+      iframesController: DEFAULT_IFRAMES_CONTROLLER,
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
       elementsScrollPositions: createElementsScrollPositions(),
     })

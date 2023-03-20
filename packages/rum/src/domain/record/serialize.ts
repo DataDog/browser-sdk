@@ -1,6 +1,6 @@
 import { assign, startsWith } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { isNodeShadowHost, isNodeShadowRoot, STABLE_ATTRIBUTES } from '@datadog/browser-rum-core'
+import { isNodeShadowHost, isNodeShadowRoot, isNodeIframeElement, STABLE_ATTRIBUTES } from '@datadog/browser-rum-core'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
@@ -36,6 +36,7 @@ import {
 import type { ElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
 import type { WithAdoptedStyleSheets } from './browser.types'
+import type { IframesController } from './iframeController'
 
 // Those values are the only one that can be used when inheriting privacy levels from parent to
 // children during serialization, since HIDDEN and IGNORE shouldn't serialize their children. This
@@ -55,16 +56,19 @@ export type SerializationContext =
   | {
       status: SerializationContextStatus.MUTATION
       shadowRootsController: ShadowRootsController
+      iframesController: IframesController
     }
   | {
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT
       elementsScrollPositions: ElementsScrollPositions
       shadowRootsController: ShadowRootsController
+      iframesController: IframesController
     }
   | {
       status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT
       elementsScrollPositions: ElementsScrollPositions
       shadowRootsController: ShadowRootsController
+      iframesController: IframesController
     }
 
 export interface SerializeOptions {
@@ -231,6 +235,14 @@ export function serializeElementNode(element: Element, options: SerializeOptions
     const shadowRoot = serializeNodeWithId(element.shadowRoot, options)
     if (shadowRoot !== null) {
       childNodes.push(shadowRoot)
+    }
+  }
+
+  if (isNodeIframeElement(element) && element.contentDocument) {
+    options.serializationContext.iframesController.addIframe(element)
+    const iframeDocument = serializeNodeWithId(element.contentDocument, options)
+    if (iframeDocument !== null) {
+      childNodes.push(iframeDocument)
     }
   }
 

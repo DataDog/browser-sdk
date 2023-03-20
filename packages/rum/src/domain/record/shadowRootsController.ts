@@ -1,8 +1,9 @@
-import { addTelemetryDebug, DOM_EVENT, isExperimentalFeatureEnabled } from '@datadog/browser-core'
+import { addTelemetryDebug, DOM_EVENT, isExperimentalFeatureEnabled, noop } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { startMutationObserver } from './mutationObserver'
 import { initInputObserver } from './observers'
 import type { MutationCallBack, InputCallback } from './observers'
+import type { IframesController } from './iframeController'
 
 interface ShadowRootController {
   stop: () => void
@@ -30,12 +31,21 @@ export const initShadowRootsController = (
 ): ShadowRootsController => {
   const controllerByShadowRoot = new Map<ShadowRoot, ShadowRootController>()
 
+  // no support for iframe in shadow root because cyclic dep to solve
+  const iframeController: IframesController = {
+    addIframe: noop,
+    removeIframe: noop,
+    stop: noop,
+    flush: noop,
+  }
+
   const shadowRootsController: ShadowRootsController = {
     addShadowRoot: (shadowRoot: ShadowRoot) => {
       const { stop: stopMutationObserver, flush } = startMutationObserver(
         mutationCb,
         configuration,
         shadowRootsController,
+        iframeController,
         shadowRoot
       )
       // the change event no do bubble up across the shadow root, we have to listen on the shadow root

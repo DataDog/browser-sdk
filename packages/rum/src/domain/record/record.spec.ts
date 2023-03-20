@@ -392,6 +392,45 @@ describe('record', () => {
     }
   })
 
+  describe('Iframe', () => {
+    let sandbox: HTMLElement
+
+    beforeEach(() => {
+      sandbox = document.createElement('div')
+      sandbox.id = 'sandbox'
+      document.body.appendChild(sandbox)
+    })
+
+    afterEach(() => {
+      sandbox.remove()
+    })
+
+    it('should record a simple mutation inside a iframe', () => {
+      const div = document.createElement('div')
+      div.className = 'toto'
+      createIframe([div])
+      startRecording()
+      expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot())
+
+      div.className = 'titi'
+
+      recordApi.flushMutations()
+      expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot() + 1)
+      const innerMutationData = getLastIncrementalSnapshotData<BrowserMutationData>(
+        getEmittedRecords(),
+        IncrementalSource.Mutation
+      )
+      expect(innerMutationData.attributes[0].attributes.class).toBe('titi')
+    })
+
+    function createIframe(children: Element[], parent = sandbox) {
+      const iframe = document.createElement('iframe')
+      parent.append(iframe)
+      children.forEach((child) => iframe.contentDocument!.body.appendChild(child))
+      return iframe
+    }
+  })
+
   function startRecording() {
     recordApi = record({
       emit: emitSpy,

@@ -43,6 +43,7 @@ import { startMutationObserver } from './mutationObserver'
 import { getVisualViewport, getScrollX, getScrollY, convertMouseEventToLayoutCoordinates } from './viewports'
 import type { ElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
+import type { IframesController } from './iframeController'
 
 const MOUSE_MOVE_OBSERVER_THRESHOLD = 50
 const SCROLL_OBSERVER_THRESHOLD = 100
@@ -103,10 +104,16 @@ interface ObserverParam {
   focusCb: FocusCallback
   frustrationCb: FrustrationCallback
   shadowRootsController: ShadowRootsController
+  iframesController: IframesController
 }
 
 export function initObservers(o: ObserverParam): { stop: ListenerHandler; flush: ListenerHandler } {
-  const mutationHandler = initMutationObserver(o.mutationCb, o.configuration, o.shadowRootsController)
+  const mutationHandler = initMutationObserver(
+    o.mutationCb,
+    o.configuration,
+    o.shadowRootsController,
+    o.iframesController
+  )
   const mousemoveHandler = initMoveObserver(o.mousemoveCb)
   const mouseInteractionHandler = initMouseInteractionObserver(
     o.mouseInteractionCb,
@@ -147,9 +154,10 @@ export function initObservers(o: ObserverParam): { stop: ListenerHandler; flush:
 export function initMutationObserver(
   cb: MutationCallBack,
   configuration: RumConfiguration,
-  shadowRootsController: ShadowRootsController
+  shadowRootsController: ShadowRootsController,
+  iframesController: IframesController
 ) {
-  return startMutationObserver(cb, configuration, shadowRootsController, document)
+  return startMutationObserver(cb, configuration, shadowRootsController, iframesController, document)
 }
 
 export function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {

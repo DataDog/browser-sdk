@@ -23,6 +23,8 @@ import { assembleIncrementalSnapshot } from './utils'
 import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
 import { initShadowRootsController } from './shadowRootsController'
+import type { IframesController } from './iframeController'
+import { initIframeController } from './iframeController'
 
 export interface RecordOptions {
   emit?: (record: BrowserRecord) => void
@@ -35,6 +37,7 @@ export interface RecordAPI {
   takeSubsequentFullSnapshot: (timestamp?: TimeStamp) => void
   flushMutations: () => void
   shadowRootsController: ShadowRootsController
+  iframesController: IframesController
 }
 
 export function record(options: RecordOptions): RecordAPI {
@@ -52,6 +55,7 @@ export function record(options: RecordOptions): RecordAPI {
   const inputCb: InputCallback = (s) => emit(assembleIncrementalSnapshot<InputData>(IncrementalSource.Input, s))
 
   const shadowRootsController = initShadowRootsController(options.configuration, { mutationCb, inputCb })
+  const iframesController = initIframeController(options.configuration, { mutationCb })
 
   const takeFullSnapshot = (
     timestamp = timeStampNow(),
@@ -59,6 +63,7 @@ export function record(options: RecordOptions): RecordAPI {
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
       elementsScrollPositions,
       shadowRootsController,
+      iframesController,
     }
   ) => {
     const { width, height } = getViewportDimension()
@@ -132,27 +137,32 @@ export function record(options: RecordOptions): RecordAPI {
       })
     },
     shadowRootsController,
+    iframesController,
   })
 
   function flushMutations() {
     shadowRootsController.flush()
+    iframesController.flush()
     flushMutationsFromObservers()
   }
 
   return {
     stop: () => {
       shadowRootsController.stop()
+      iframesController.stop()
       stopObservers()
     },
     takeSubsequentFullSnapshot: (timestamp) => {
       flushMutations()
       takeFullSnapshot(timestamp, {
         shadowRootsController,
+        iframesController,
         status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT,
         elementsScrollPositions,
       })
     },
     flushMutations,
     shadowRootsController,
+    iframesController,
   }
 }

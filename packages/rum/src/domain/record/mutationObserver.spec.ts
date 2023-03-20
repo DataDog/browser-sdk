@@ -16,12 +16,20 @@ import { sortAddedAndMovedNodes, startMutationObserver } from './mutationObserve
 import type { MutationCallBack } from './observers'
 import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootCallBack, ShadowRootsController } from './shadowRootsController'
+import type { IFrameCallback, IframesController } from './iframeController'
 
 const DEFAULT_SHADOW_ROOT_CONTROLLER: ShadowRootsController = {
   flush: noop,
   stop: noop,
   addShadowRoot: noop,
   removeShadowRoot: noop,
+}
+
+const DEFAULT_IFRAMES_CONTROLLER: IframesController = {
+  flush: noop,
+  stop: noop,
+  addIframe: noop,
+  removeIframe: noop,
 }
 
 describe('startMutationCollection', () => {
@@ -31,10 +39,14 @@ describe('startMutationCollection', () => {
 
   let addShadowRootSpy: jasmine.Spy<ShadowRootCallBack>
   let removeShadowRootSpy: jasmine.Spy<ShadowRootCallBack>
+  let addIframeSpy: jasmine.Spy<IFrameCallback>
+  let removeIframeSpy: jasmine.Spy<IFrameCallback>
 
   beforeEach(() => {
     addShadowRootSpy = jasmine.createSpy<ShadowRootCallBack>()
     removeShadowRootSpy = jasmine.createSpy<ShadowRootCallBack>()
+    addIframeSpy = jasmine.createSpy<IFrameCallback>()
+    removeIframeSpy = jasmine.createSpy<IFrameCallback>()
   })
 
   function startMutationCollection(defaultPrivacyLevel: DefaultPrivacyLevel = DefaultPrivacyLevel.ALLOW) {
@@ -46,6 +58,7 @@ describe('startMutationCollection', () => {
         defaultPrivacyLevel,
       } as RumConfiguration,
       { ...DEFAULT_SHADOW_ROOT_CONTROLLER, addShadowRoot: addShadowRootSpy, removeShadowRoot: removeShadowRootSpy },
+      { ...DEFAULT_IFRAMES_CONTROLLER, addIframe: addIframeSpy, removeIframe: removeIframeSpy },
       document
     ))
 
@@ -63,6 +76,7 @@ describe('startMutationCollection', () => {
       } as RumConfiguration,
       {
         shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
+        iframesController: DEFAULT_IFRAMES_CONTROLLER,
         status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
         elementsScrollPositions: createElementsScrollPositions(),
       }

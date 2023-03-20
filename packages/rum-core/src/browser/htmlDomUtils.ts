@@ -14,6 +14,10 @@ export function isNodeShadowHost(node: Node): node is Element & { shadowRoot: Sh
   return isElementNode(node) && Boolean(node.shadowRoot)
 }
 
+export function isNodeIframeElement(node: Node): node is HTMLIFrameElement {
+  return isElementNode(node) && node.tagName === 'IFRAME'
+}
+
 export function isNodeShadowRoot(node: Node): node is ShadowRoot {
   const shadowRoot = node as ShadowRoot
   return !!shadowRoot.host && shadowRoot.nodeType === Node.DOCUMENT_FRAGMENT_NODE && isElementNode(shadowRoot.host)
