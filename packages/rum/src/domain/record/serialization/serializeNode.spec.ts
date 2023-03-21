@@ -9,14 +9,6 @@ import {
   PRIVACY_ATTR_VALUE_MASK,
   PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
 } from '../../../constants'
-import {
-  HTML,
-  generateLeanSerializedDoc,
-  AST_HIDDEN,
-  AST_MASK,
-  AST_MASK_USER_INPUT,
-  AST_ALLOW,
-} from '../../../../test/htmlAst'
 import type { ElementNode, SerializedNodeWithId, TextNode } from '../../../types'
 import { NodeType } from '../../../types'
 import type { IsolatedDom } from '../../../../../rum-core/test/createIsolatedDom'
@@ -26,6 +18,7 @@ import { createElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootCallBack, ShadowRootsController } from '../shadowRootsController'
 import type { WithAdoptedStyleSheets } from '../browser.types'
 import { isAdoptedStyleSheetsSupported } from '../../../../../core/test/specHelper'
+import { HTML, generateLeanSerializedDoc, AST_HIDDEN, AST_MASK, AST_MASK_USER_INPUT, AST_ALLOW } from './test/htmlAst'
 import { serializeDocument } from './serializeDocument'
 import type { SerializationContext, SerializeOptions } from './serialization.types'
 import { SerializationContextStatus } from './serialization.types'
