@@ -1,12 +1,5 @@
 import type { RelativeTime, TimeStamp, Context } from '@datadog/browser-core'
-import {
-  updateExperimentalFeatures,
-  resetExperimentalFeatures,
-  ONE_SECOND,
-  getTimeStamp,
-  display,
-  DefaultPrivacyLevel,
-} from '@datadog/browser-core'
+import { ONE_SECOND, getTimeStamp, display, DefaultPrivacyLevel } from '@datadog/browser-core'
 import { cleanupSyntheticsWorkerValues, mockSyntheticsWorkerValues } from '../../../core/test/syntheticsWorkerValues'
 import { initEventBridgeStub, deleteEventBridgeStub } from '../../../core/test/specHelper'
 import type { TestSetupBuilder } from '../../test/specHelper'
@@ -649,34 +642,12 @@ describe('rum public api', () => {
       setupBuilder.cleanup()
     })
 
-    afterEach(() => {
-      resetExperimentalFeatures()
-    })
-
-    it('should add feature flag evaluation when ff feature_flags enable', () => {
-      updateExperimentalFeatures(['feature_flags'])
-
+    it('should add feature flag evaluation when ff feature_flags enabled', () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      ;(rumPublicApi as any).addFeatureFlagEvaluation('feature', 'foo')
+      rumPublicApi.addFeatureFlagEvaluation('feature', 'foo')
 
       expect(addFeatureFlagEvaluationSpy.calls.argsFor(0)).toEqual(['feature', 'foo'])
-      expect(displaySpy).not.toHaveBeenCalled()
-    })
-
-    it('API should not be available when ff feature_flags disabled', () => {
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-      expect(Object.keys(rumPublicApi)).not.toContain('addFeatureFlagEvaluation')
-      expect(displaySpy).not.toHaveBeenCalled()
-    })
-
-    it('API should not be available before init when ff feature_flags enabled', () => {
-      updateExperimentalFeatures(['feature_flags'])
-
-      expect(Object.keys(rumPublicApi)).not.toContain('addFeatureFlagEvaluation')
-
       expect(displaySpy).not.toHaveBeenCalled()
     })
   })

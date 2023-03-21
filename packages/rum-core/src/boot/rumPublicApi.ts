@@ -1,6 +1,5 @@
 import type { Context, InitConfiguration, TimeStamp, RelativeTime, User } from '@datadog/browser-core'
 import {
-  isExperimentalFeatureEnabled,
   willSyntheticsInjectRum,
   assign,
   BoundedBuffer,
@@ -114,12 +113,6 @@ export function makeRumPublicApi(
     const configuration = validateAndBuildRumConfiguration(initConfiguration)
     if (!configuration) {
       return
-    }
-
-    if (isExperimentalFeatureEnabled('feature_flags')) {
-      ;(rumPublicApi as any).addFeatureFlagEvaluation = monitor((key: string, value: any) => {
-        addFeatureFlagEvaluationStrategy(key, value)
-      })
     }
 
     if (!configuration.trackViewsManually) {
@@ -252,6 +245,13 @@ export function makeRumPublicApi(
 
     startSessionReplayRecording: monitor(recorderApi.start),
     stopSessionReplayRecording: monitor(recorderApi.stop),
+
+    /**
+     * This feature is currently in beta. For more information see the full [feature flag tracking guide](https://docs.datadoghq.com/real_user_monitoring/feature_flag_tracking/).
+     */
+    addFeatureFlagEvaluation: monitor((key: string, value: any) => {
+      addFeatureFlagEvaluationStrategy(key, value)
+    }),
   })
 
   return rumPublicApi
