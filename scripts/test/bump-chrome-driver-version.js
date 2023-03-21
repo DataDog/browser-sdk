@@ -11,7 +11,7 @@ const {
   getSecretKey,
   fetch,
   CI_FILE,
-} = require('./utils')
+} = require('../lib/utils')
 
 const REPOSITORY = process.env.GIT_REPOSITORY
 const MAIN_BRANCH = process.env.MAIN_BRANCH

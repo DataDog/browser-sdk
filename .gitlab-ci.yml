@@ -166,9 +166,9 @@ unit:
   script:
     - yarn
     - yarn test:unit
-    - ./scripts/codecov.sh
+    - ./scripts/test/codecov.sh
   after_script:
-    - node ./scripts/export-test-result.js unit
+    - node ./scripts/test/export-test-result.js unit
 
 e2e:
   extends:
@@ -184,7 +184,7 @@ e2e:
     - yarn
     - yarn test:e2e
   after_script:
-    - node ./scripts/export-test-result.js e2e
+    - node ./scripts/test/export-test-result.js e2e
 
 check-licenses:
   extends:
@@ -203,7 +203,7 @@ check-release:
   script:
     - yarn
     - BUILD_MODE=release yarn build
-    - node scripts/check-release.js
+    - node scripts/release/check-release.js
 
 unit-bs:
   stage: browserstack
@@ -217,9 +217,9 @@ unit-bs:
       junit: test-report/unit-bs/*.xml
   script:
     - yarn
-    - ./scripts/ci-bs.sh test:unit
+    - ./scripts/test/ci-bs.sh test:unit
   after_script:
-    - node ./scripts/export-test-result.js unit-bs
+    - node ./scripts/test/export-test-result.js unit-bs
 
 e2e-bs:
   stage: browserstack
@@ -235,9 +235,9 @@ e2e-bs:
       junit: test-report/e2e-bs/*.xml
   script:
     - yarn
-    - ./scripts/ci-bs.sh test:e2e
+    - ./scripts/test/ci-bs.sh test:e2e
   after_script:
-    - node ./scripts/export-test-result.js e2e-bs
+    - node ./scripts/test/export-test-result.js e2e-bs
 
 ########################################################################################################################
 # Deploy
@@ -252,8 +252,8 @@ deploy-staging:
     - export BUILD_MODE=canary
     - yarn
     - yarn build:bundle
-    - node ./scripts/deploy.js staging staging root
-    - node ./scripts/upload-source-maps.js staging root
+    - node ./scripts/deploy/deploy.js staging staging root
+    - node ./scripts/deploy/upload-source-maps.js staging root
 
 deploy-prod-canary:
   stage: deploy:canary
@@ -264,8 +264,8 @@ deploy-prod-canary:
     - export BUILD_MODE=canary
     - yarn
     - yarn build:bundle
-    - node ./scripts/deploy.js prod canary root
-    - node ./scripts/upload-source-maps.js canary root
+    - node ./scripts/deploy/deploy.js prod canary root
+    - node ./scripts/deploy/upload-source-maps.js canary root
 
 deploy-prod-all-dcs:
   stage: deploy
@@ -279,8 +279,8 @@ deploy-prod-all-dcs:
     - VERSION=$(node -p -e "require('./lerna.json').version")
     - yarn
     - yarn build:bundle
-    - node ./scripts/deploy.js prod v${VERSION%%.*} us1,eu1,us3,us5,ap1
-    - node ./scripts/upload-source-maps.js v${VERSION%%.*} us1,eu1,us3,us5,ap1
+    - node ./scripts/deploy/deploy.js prod v${VERSION%%.*} us1,eu1,us3,us5,ap1
+    - node ./scripts/deploy/upload-source-maps.js v${VERSION%%.*} us1,eu1,us3,us5,ap1
 
 deploy-prod-root:
   stage: deploy
@@ -294,8 +294,8 @@ deploy-prod-root:
     - VERSION=$(node -p -e "require('./lerna.json').version")
     - yarn
     - yarn build:bundle
-    - node ./scripts/deploy.js prod v${VERSION%%.*} root
-    - node ./scripts/upload-source-maps.js v${VERSION%%.*} root
+    - node ./scripts/deploy/deploy.js prod v${VERSION%%.*} root
+    - node ./scripts/deploy/upload-source-maps.js v${VERSION%%.*} root
 
 publish-npm:
   stage: deploy
@@ -306,7 +306,7 @@ publish-npm:
   allow_failure: false
   script:
     - yarn
-    - ./scripts/publish-npm.sh
+    - ./scripts/deploy/publish-npm.sh
 
 ########################################################################################################################
 # Notify
@@ -485,7 +485,7 @@ bump-chrome-version-scheduled:
   before_script:
     - eval $(ssh-agent -s)
   script:
-    - node scripts/bump-chrome-driver-version.js
+    - node scripts/test/bump-chrome-driver-version.js
   artifacts:
     reports:
       dotenv: build.env

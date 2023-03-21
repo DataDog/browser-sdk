@@ -1,5 +1,5 @@
-const lernaConfig = require('../lerna.json')
-const { runMain, modifyFile } = require('./utils')
+const lernaConfig = require('../../lerna.json')
+const { runMain, modifyFile } = require('../lib/utils')
 
 // This script updates the peer dependency versions between rum and logs packages to match the new
 // version during a release.
