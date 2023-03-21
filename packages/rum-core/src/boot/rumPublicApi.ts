@@ -259,6 +259,10 @@ export function makeRumPublicApi(
 
     startView,
 
+    stopSession: monitor(() => {
+      stopSessionStrategy()
+    }),
+
     startSessionReplayRecording: monitor(recorderApi.start),
     stopSessionReplayRecording: monitor(recorderApi.stop),
   })
