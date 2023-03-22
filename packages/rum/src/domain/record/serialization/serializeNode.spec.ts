@@ -18,7 +18,14 @@ import { createElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootCallBack, ShadowRootsController } from '../shadowRootsController'
 import type { WithAdoptedStyleSheets } from '../browser.types'
 import { isAdoptedStyleSheetsSupported } from '../../../../../core/test/specHelper'
-import { HTML, generateLeanSerializedDoc, AST_HIDDEN, AST_MASK, AST_MASK_USER_INPUT, AST_ALLOW } from './test/htmlAst'
+import {
+  HTML,
+  generateLeanSerializedDoc,
+  AST_HIDDEN,
+  AST_MASK,
+  AST_MASK_USER_INPUT,
+  AST_ALLOW,
+} from './htmlAst.specHelper'
 import { serializeDocument } from './serializeDocument'
 import type { SerializationContext, SerializeOptions } from './serialization.types'
 import { SerializationContextStatus } from './serialization.types'
