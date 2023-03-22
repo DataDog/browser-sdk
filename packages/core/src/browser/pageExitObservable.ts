@@ -1,4 +1,4 @@
-import { isExperimentalFeatureEnabled } from '../domain/configuration'
+import { isExperimentalFeatureEnabled, ExperimentalFeature } from '../domain/configuration'
 import { Observable } from '../tools/observable'
 import { includes, noop, objectValues } from '../tools/utils'
 import { addEventListeners, addEventListener, DOM_EVENT } from './addEventListener'
@@ -18,7 +18,7 @@ export interface PageExitEvent {
 
 export function createPageExitObservable(): Observable<PageExitEvent> {
   const observable = new Observable<PageExitEvent>(() => {
-    const pagehideEnabled = isExperimentalFeatureEnabled('pagehide')
+    const pagehideEnabled = isExperimentalFeatureEnabled(ExperimentalFeature.PAGEHIDE)
     const { stop: stopListeners } = addEventListeners(
       window,
       [DOM_EVENT.VISIBILITY_CHANGE, DOM_EVENT.FREEZE, DOM_EVENT.PAGE_HIDE],

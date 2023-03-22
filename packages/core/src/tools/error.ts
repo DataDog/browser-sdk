@@ -1,4 +1,4 @@
-import { isExperimentalFeatureEnabled } from '../domain/configuration'
+import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../domain/configuration'
 import type { StackTrace } from '../domain/tracekit'
 import { computeStackTrace } from '../domain/tracekit'
 import { callMonitored } from './monitor'
@@ -70,7 +70,9 @@ export function computeRawError({
   handling,
 }: RawErrorParams): RawError {
   if (!stackTrace || (stackTrace.message === undefined && !(originalError instanceof Error))) {
-    const sanitizedError = isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(originalError) : originalError
+    const sanitizedError = isExperimentalFeatureEnabled(ExperimentalFeature.SANITIZE_INPUTS)
+      ? sanitize(originalError)
+      : originalError
     return {
       startClocks,
       source,

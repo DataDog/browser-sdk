@@ -6,6 +6,7 @@ import {
   clocksNow,
   timeStampNow,
   relativeNow,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 import { createNewEvent } from '../../../../../core/test/specHelper'
 import type { TestSetupBuilder } from '../../../../test/testSetupBuilder'
@@ -114,7 +115,7 @@ describe('trackClickActions', () => {
 
   describe('when clickmap ff is enabled', () => {
     beforeEach(() => {
-      updateExperimentalFeatures(['clickmap'])
+      updateExperimentalFeatures([ExperimentalFeature.CLICKMAP])
     })
 
     afterEach(() => {

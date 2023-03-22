@@ -6,6 +6,7 @@ export {
   DefaultPrivacyLevel,
   EndpointBuilder,
   isExperimentalFeatureEnabled,
+  ExperimentalFeature,
   updateExperimentalFeatures,
   resetExperimentalFeatures,
   serializeConfiguration,

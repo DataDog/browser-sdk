@@ -2,7 +2,7 @@ import type { RumEvent } from '../../../../rum-core/src'
 import { display } from '../../tools/display'
 import type { InitConfiguration } from './configuration'
 import { validateAndBuildConfiguration } from './configuration'
-import { isExperimentalFeatureEnabled, updateExperimentalFeatures } from './experimentalFeatures'
+import { ExperimentalFeature, isExperimentalFeatureEnabled, updateExperimentalFeatures } from './experimentalFeatures'
 
 describe('validateAndBuildConfiguration', () => {
   const clientToken = 'some_client_token'
@@ -11,9 +11,21 @@ describe('validateAndBuildConfiguration', () => {
     updateExperimentalFeatures([])
   })
 
-  it('updates experimental feature flags', () => {
-    validateAndBuildConfiguration({ clientToken, enableExperimentalFeatures: ['foo'] })
-    expect(isExperimentalFeatureEnabled('foo')).toBeTrue()
+  describe('experimentalFeatures', () => {
+    const TEST_FEATURE_FLAG = 'foo' as ExperimentalFeature
+
+    beforeEach(() => {
+      ;(ExperimentalFeature as any).FOO = TEST_FEATURE_FLAG
+    })
+
+    afterEach(() => {
+      delete (ExperimentalFeature as any).FOO
+    })
+
+    it('updates experimental feature flags', () => {
+      validateAndBuildConfiguration({ clientToken, enableExperimentalFeatures: ['foo'] })
+      expect(isExperimentalFeatureEnabled(TEST_FEATURE_FLAG)).toBeTrue()
+    })
   })
 
   describe('validate init configuration', () => {

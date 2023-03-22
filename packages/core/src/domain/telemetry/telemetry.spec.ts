@@ -1,6 +1,6 @@
 import type { StackTrace } from '@datadog/browser-core'
 import { callMonitored } from '../../tools/monitor'
-import type { Configuration } from '../configuration'
+import type { Configuration, ExperimentalFeature } from '../configuration'
 import {
   resetExperimentalFeatures,
   updateExperimentalFeatures,
@@ -74,7 +74,7 @@ describe('telemetry', () => {
   })
 
   it('should contains feature flags', () => {
-    updateExperimentalFeatures(['foo'])
+    updateExperimentalFeatures(['foo' as ExperimentalFeature])
     const { notifySpy } = startAndSpyTelemetry()
     callMonitored(() => {
       throw new Error('message')

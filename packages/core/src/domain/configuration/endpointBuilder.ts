@@ -4,7 +4,7 @@ import { normalizeUrl } from '../../tools/urlPolyfill'
 import { generateUUID } from '../../tools/utils'
 import type { InitConfiguration } from './configuration'
 import { INTAKE_SITE_AP1, INTAKE_SITE_US1 } from './intakeSites'
-import { isExperimentalFeatureEnabled } from './experimentalFeatures'
+import { ExperimentalFeature, isExperimentalFeatureEnabled } from './experimentalFeatures'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
@@ -104,7 +104,7 @@ function buildEndpointParameters(
   retry: RetryInfo | undefined
 ) {
   const tags = [`sdk_version:${__BUILD_ENV__SDK_VERSION__}`, `api:${api}`].concat(configurationTags)
-  if (flushReason && isExperimentalFeatureEnabled('collect_flush_reason')) {
+  if (flushReason && isExperimentalFeatureEnabled(ExperimentalFeature.COLLECT_FLUSH_REASON)) {
     tags.push(`flush_reason:${flushReason}`)
   }
   if (retry) {

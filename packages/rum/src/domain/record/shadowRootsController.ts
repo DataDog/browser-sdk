@@ -1,4 +1,4 @@
-import { addTelemetryDebug, DOM_EVENT, isExperimentalFeatureEnabled } from '@datadog/browser-core'
+import { addTelemetryDebug, DOM_EVENT, ExperimentalFeature, isExperimentalFeatureEnabled } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import type { InputCallback, MutationCallBack } from './observers'
 import { initInputObserver, initMutationObserver } from './observers'
@@ -58,7 +58,7 @@ export const initShadowRootsController = (
           childrenLength: shadowRoot ? shadowRoot.childElementCount : '-1',
           controllerByShadowRootSize: controllerByShadowRoot.size,
           html:
-            shadowRoot && isExperimentalFeatureEnabled('shadow_dom_debug')
+            shadowRoot && isExperimentalFeatureEnabled(ExperimentalFeature.SHADOW_DOM_DEBUG)
               ? shadowRoot.innerHTML.substring(0, 2000)
               : undefined,
         })

@@ -3,13 +3,27 @@
  * For NPM setup, this feature flag singleton is shared between RUM and Logs product.
  * This means that an experimental flag set on the RUM product will be set on the Logs product.
  * So keep in mind that in certain configurations, your experimental feature flag may affect other products.
+ *
+ * FORMAT:
+ * All feature flags should be snake_cased
  */
-import { includes } from '../../tools/utils'
-import { display } from '../../tools/display'
+// We want to use a real enum (i.e. not a const enum) here, to be able to check whether an arbitrary
+// string is an expected feature flag
+// eslint-disable-next-line no-restricted-syntax
+export enum ExperimentalFeature {
+  PAGEHIDE = 'pagehide',
+  SHADOW_DOM_DEBUG = 'shadow_dom_debug',
+  FEATURE_FLAGS = 'feature_flags',
+  RESOURCE_DURATIONS = 'resource_durations',
+  RESOURCE_PAGE_STATES = 'resource_page_states',
+  CLICKMAP = 'clickmap',
+  COLLECT_FLUSH_REASON = 'collect_flush_reason',
+  SANITIZE_INPUTS = 'sanitize_inputs',
+}
 
-let enabledExperimentalFeatures: Set<string> | undefined
+let enabledExperimentalFeatures: Set<ExperimentalFeature> | undefined
 
-export function updateExperimentalFeatures(enabledFeatures: string[] | undefined): void {
+export function updateExperimentalFeatures(enabledFeatures: ExperimentalFeature[] | undefined): void {
   // Safely handle external data
   if (!Array.isArray(enabledFeatures)) {
     return
@@ -19,17 +33,12 @@ export function updateExperimentalFeatures(enabledFeatures: string[] | undefined
     enabledExperimentalFeatures = new Set(enabledFeatures)
   }
 
-  enabledFeatures
-    .filter((flag) => typeof flag === 'string')
-    .forEach((flag: string) => {
-      if (includes(flag, '-')) {
-        display.warn(`please use snake case for '${flag}'`)
-      }
-      enabledExperimentalFeatures!.add(flag)
-    })
+  enabledFeatures.forEach((flag) => {
+    enabledExperimentalFeatures!.add(flag)
+  })
 }
 
-export function isExperimentalFeatureEnabled(featureName: string): boolean {
+export function isExperimentalFeatureEnabled(featureName: ExperimentalFeature): boolean {
   return !!enabledExperimentalFeatures && enabledExperimentalFeatures.has(featureName)
 }
 

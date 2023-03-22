@@ -6,6 +6,7 @@ import {
   isExperimentalFeatureEnabled,
   SESSION_TIME_OUT_DELAY,
   ContextHistory,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -32,7 +33,7 @@ export function startFeatureFlagContexts(
   lifeCycle: LifeCycle,
   computeBytesCountImpl = computeBytesCount
 ): FeatureFlagContexts {
-  if (!isExperimentalFeatureEnabled('feature_flags')) {
+  if (!isExperimentalFeatureEnabled(ExperimentalFeature.FEATURE_FLAGS)) {
     return {
       findFeatureFlagEvaluations: () => undefined,
       getFeatureFlagBytesCount: () => 0,

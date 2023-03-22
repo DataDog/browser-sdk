@@ -1,4 +1,4 @@
-import { resetExperimentalFeatures, updateExperimentalFeatures } from '../domain/configuration'
+import { ExperimentalFeature, resetExperimentalFeatures, updateExperimentalFeatures } from '../domain/configuration'
 import type { Context } from './context'
 import { limitModification } from './limitModification'
 
@@ -158,7 +158,7 @@ describe('limitModification', () => {
   })
 
   it('should call sanitize on newly provided values', () => {
-    updateExperimentalFeatures(['sanitize_inputs'])
+    updateExperimentalFeatures([ExperimentalFeature.SANITIZE_INPUTS])
     const object: Context = { bar: { baz: 42 } }
 
     const modifier = (candidate: any) => {

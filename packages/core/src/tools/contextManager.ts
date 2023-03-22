@@ -1,4 +1,4 @@
-import { isExperimentalFeatureEnabled } from '../domain/configuration'
+import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../domain/configuration'
 import { computeBytesCount, deepClone, jsonStringify } from './utils'
 import type { Context, ContextValue } from './context'
 import { sanitize } from './sanitize'
@@ -40,12 +40,16 @@ export function createContextManager(computeBytesCountImpl = computeBytesCount) 
     getContext: () => deepClone(context),
 
     setContext: (newContext: Context) => {
-      context = isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(newContext) : deepClone(newContext)
+      context = isExperimentalFeatureEnabled(ExperimentalFeature.SANITIZE_INPUTS)
+        ? sanitize(newContext)
+        : deepClone(newContext)
       bytesCountCache = undefined
     },
 
     setContextProperty: (key: string, property: any) => {
-      context[key] = isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(property) : deepClone(property)
+      context[key] = isExperimentalFeatureEnabled(ExperimentalFeature.SANITIZE_INPUTS)
+        ? sanitize(property)
+        : deepClone(property)
       bytesCountCache = undefined
     },
 
