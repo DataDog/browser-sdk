@@ -60,7 +60,7 @@
     "eslint-plugin-prefer-arrow": "1.2.3",
     "eslint-plugin-unicorn": "46.0.0",
     "express": "4.18.2",
-    "glob": "8.1.0",
+    "glob": "9.3.1",
     "jasmine-core": "3.99.1",
     "js-polyfills": "0.1.43",
     "json-schema-to-typescript": "bcaudan/json-schema-to-typescript#bcaudan/add-readonly-support",
@@ -93,7 +93,7 @@
     "ansi-regex": "5.0.1"
   },
   "volta": {
-    "node": "16.19.1",
+    "node": "18.15.0",
     "yarn": "1.22.19"
   }
 }
