@@ -219,9 +219,9 @@ The Datadog backend adds more fields, like:
 - `http.useragent`
 - `network.client.ip`
 
-### Status parameter
+### Generic logger function
 
-After the Datadog browser logs SDK is initialized, send a custom log entry to Datadog with the API using the status as a parameter:
+The Datadog browser logs SDK adds shorthand functions (.debug, .info, .warn, .error) to the loggers for convenience. A generic logger function is also available, exposing the `status` parameter:
 
 ```
 log (message: string, messageContext?: Context, status? = 'debug' | 'info' | 'warn' | 'error', error?: Error)
@@ -234,7 +234,7 @@ For NPM, use:
 ```javascript
 import { datadogLogs } from '@datadog/browser-logs';
 
-datadogLogs.logger.log(<MESSAGE>,<JSON_ATTRIBUTES>,<STATUS>);
+datadogLogs.logger.log(<MESSAGE>,<JSON_ATTRIBUTES>,<STATUS>,<ERROR>);
 ```
 
 #### CDN async
@@ -243,7 +243,7 @@ For CDN async, use:
 
 ```javascript
 DD_LOGS.onReady(function() {
-  DD_LOGS.logger.log(<MESSAGE>,<JSON_ATTRIBUTES>,<STATUS>);
+  DD_LOGS.logger.log(<MESSAGE>,<JSON_ATTRIBUTES>,<STATUS>,<ERROR>);
 })
 ```
 
@@ -254,7 +254,7 @@ DD_LOGS.onReady(function() {
 For CDN sync, use:
 
 ```javascript
-window.DD_LOGS && DD_LOGS.logger.log(<MESSAGE>,<JSON_ATTRIBUTES>,<STATUS>);
+window.DD_LOGS && DD_LOGS.logger.log(<MESSAGE>,<JSON_ATTRIBUTES>,<STATUS>,<ERROR>);
 ```
 
 #### Placeholders
@@ -266,6 +266,7 @@ The placeholders in the examples above are described below:
 | `<MESSAGE>`         | The message of your log that is fully indexed by Datadog.                               |
 | `<JSON_ATTRIBUTES>` | A valid JSON object, which includes all attributes attached to the `<MESSAGE>`.         |
 | `<STATUS>`          | The status of your log; accepted status values are `debug`, `info`, `warn`, or `error`. |
+| `<ERROR>`           | An instance of a [JavaScript Error][10] object.                                         |
 
 ## Advanced usage
 
@@ -846,3 +847,4 @@ window.DD_LOGS && window.DD_LOGS.getInternalContext() // { session_id: "xxxx-xxx
 [7]: https://docs.datadoghq.com/getting_started/tagging/#defining-tags
 [8]: https://developer.mozilla.org/en-US/docs/Web/API/Reporting_API
 [9]: https://docs.datadoghq.com/getting_started/site/
+[10]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error
