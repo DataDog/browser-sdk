@@ -52,7 +52,7 @@ export interface RequestCompleteEvent {
   traceSampled?: boolean
   xhr?: XMLHttpRequest
   response?: Response
-  input?: RequestInfo
+  input?: unknown
   init?: RequestInit
   error?: Error
 }

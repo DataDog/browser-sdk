@@ -7,6 +7,8 @@ import { initFetchObservable } from './fetchObservable'
 
 describe('fetch proxy', () => {
   const FAKE_URL = 'http://fake-url/'
+  const FAKE_RELATIVE_URL = '/fake-path'
+  const NORMALIZED_FAKE_RELATIVE_URL = `${location.origin}/fake-path`
   let fetchStub: (input: RequestInfo, init?: RequestInit) => FetchStubPromise
   let fetchStubManager: FetchStubManager
   let requestsTrackingSubscription: Subscription
@@ -111,6 +113,8 @@ describe('fetch proxy', () => {
     fetchStub(new Request(FAKE_URL, { method: 'PUT' }), { method: 'POST' }).resolveWith({ status: 500 })
     fetchStub(new Request(FAKE_URL), { method: 'POST' }).resolveWith({ status: 500 })
     fetchStub(FAKE_URL, { method: 'POST' }).resolveWith({ status: 500 })
+    fetchStub(null as any).resolveWith({ status: 500 })
+    fetchStub({ method: 'POST' } as any).resolveWith({ status: 500 })
 
     fetchStubManager.whenAllComplete(() => {
       expect(requests[0].method).toEqual('GET')
@@ -119,17 +123,31 @@ describe('fetch proxy', () => {
       expect(requests[3].method).toEqual('POST')
       expect(requests[4].method).toEqual('POST')
       expect(requests[5].method).toEqual('POST')
+      expect(requests[6].method).toEqual('GET')
+      expect(requests[7].method).toEqual('GET')
       done()
     })
   })
 
-  it('should get url from input', (done) => {
+  it('should get the normalized url from input', (done) => {
     fetchStub(FAKE_URL).rejectWith(new Error('fetch error'))
     fetchStub(new Request(FAKE_URL)).rejectWith(new Error('fetch error'))
+    fetchStub(null as any).rejectWith(new Error('fetch error'))
+    fetchStub({
+      toString() {
+        return FAKE_RELATIVE_URL
+      },
+    } as any).rejectWith(new Error('fetch error'))
+    fetchStub(FAKE_RELATIVE_URL).rejectWith(new Error('fetch error'))
+    fetchStub(new Request(FAKE_RELATIVE_URL)).rejectWith(new Error('fetch error'))
 
     fetchStubManager.whenAllComplete(() => {
       expect(requests[0].url).toEqual(FAKE_URL)
       expect(requests[1].url).toEqual(FAKE_URL)
+      expect(requests[2].url).toMatch(/\/null$/)
+      expect(requests[3].url).toEqual(NORMALIZED_FAKE_RELATIVE_URL)
+      expect(requests[4].url).toEqual(NORMALIZED_FAKE_RELATIVE_URL)
+      expect(requests[5].url).toEqual(NORMALIZED_FAKE_RELATIVE_URL)
       done()
     })
   })

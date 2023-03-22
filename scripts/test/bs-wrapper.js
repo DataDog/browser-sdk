@@ -14,7 +14,7 @@
 // after killing it. There might be a better way of prematurely aborting the test command if we need
 // to in the future.
 
-const { spawnCommand, printLog, runMain, command, fetch } = require('./utils')
+const { spawnCommand, printLog, runMain, command, fetch } = require('../lib/utils')
 
 const AVAILABILITY_CHECK_DELAY = 30_000
 const BS_USERNAME = process.env.BS_USERNAME
