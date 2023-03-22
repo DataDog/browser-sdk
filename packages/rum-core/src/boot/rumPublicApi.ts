@@ -124,12 +124,6 @@ export function makeRumPublicApi(
       })
     }
 
-    if (isExperimentalFeatureEnabled('kiosk_apps')) {
-      ;(rumPublicApi as any).stopSession = monitor(() => {
-        stopSessionStrategy()
-      })
-    }
-
     if (!configuration.trackViewsManually) {
       doStartRum(initConfiguration, configuration)
     } else {
