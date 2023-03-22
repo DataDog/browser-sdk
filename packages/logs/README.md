@@ -148,7 +148,7 @@ Options that must have a matching configuration when using the `RUM` SDK:
 After the Datadog browser logs SDK is initialized, send a custom log entry directly to Datadog with the API:
 
 ```
-logger.debug | info | warn | error (message: string, messageContext = Context)
+logger.debug | info | warn | error (message: string, messageContext?: Context, error?: Error)
 ```
 
 #### NPM
@@ -224,7 +224,7 @@ The Datadog backend adds more fields, like:
 After the Datadog browser logs SDK is initialized, send a custom log entry to Datadog with the API using the status as a parameter:
 
 ```
-log (message: string, messageContext: Context, status? = 'debug' | 'info' | 'warn' | 'error')
+log (message: string, messageContext?: Context, status? = 'debug' | 'info' | 'warn' | 'error', error?: Error)
 ```
 
 #### NPM
