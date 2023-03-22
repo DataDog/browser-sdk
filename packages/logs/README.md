@@ -219,6 +219,78 @@ The Datadog backend adds more fields, like:
 - `http.useragent`
 - `network.client.ip`
 
+### Error tracking
+
+The Datadog browser logs SDK allows for manual error tracking by using the optional `error` parameter. When an instance of a [JavaScript Error][10] is provided, the SDK will extract relevant information (kind, message, stack trace) from the error.
+
+```
+logger.debug | info | warn | error (message: string, messageContext?: Context, error?: Error)
+```
+
+#### NPM
+
+```javascript
+import { datadogLogs } from '@datadog/browser-logs'
+
+try {
+  ...
+  throw new Error('Wrong behavior')
+  ...
+} catch (ex) {
+  datadogLogs.logger.error('Error occurred', {}, ex)
+}
+```
+
+#### CDN async
+
+```javascript
+try {
+  ...
+  throw new Error('Wrong behavior')
+  ...
+} catch (ex) {
+  DD_LOGS.onReady(function () {
+    DD_LOGS.logger.error('Error occurred', {}, ex)
+  })
+}
+```
+
+**Note:** Early API calls must be wrapped in the `DD_LOGS.onReady()` callback. This ensures the code only gets executed once the SDK is properly loaded.
+
+#### CDN sync
+
+```javascript
+try {
+  ...
+  throw new Error('Wrong behavior')
+  ...
+} catch (ex) {
+    window.DD_LOGS && DD_LOGS.logger.error('Error occurred', {}, ex)
+}
+```
+
+**Note**: The `window.DD_LOGS` check prevents issues when a loading failure occurs with the SDK.
+
+#### Results
+
+The results are the same when using NPM, CDN async or CDN sync:
+
+```json
+{
+  "status": "error",
+  "session_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "message": "Error occurred",
+  "date": 1234567890000,
+  "origin": "logger",
+  "error" : {
+    "message": "Wrong behavior",
+    "kind" : "Error",
+    "stack" : "Error: Wrong behavior at <anonymous> @ <anonymous>:1:1"
+  },
+  ...
+}
+```
+
 ### Generic logger function
 
 The Datadog browser logs SDK adds shorthand functions (.debug, .info, .warn, .error) to the loggers for convenience. A generic logger function is also available, exposing the `status` parameter:
