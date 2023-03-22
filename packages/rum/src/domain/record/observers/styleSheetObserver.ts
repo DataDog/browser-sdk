@@ -1,6 +1,6 @@
 import { instrumentMethodAndCallOriginal } from '@datadog/browser-core'
 import type { StyleSheetRule } from '../../../types'
-import { getSerializedNodeId, hasSerializedNode } from '../serializationUtils'
+import { getSerializedNodeId, hasSerializedNode } from '../serialization'
 import { getPathToNestedCSSRule } from '../utils'
 import type { ListenerHandler } from './utils'
 

@@ -1,11 +1,9 @@
 import { buildUrl } from '@datadog/browser-core'
 import { getParentNode, isNodeShadowRoot } from '@datadog/browser-rum-core'
-import type { NodePrivacyLevel } from '../../constants'
-import { CENSORED_STRING_MARK } from '../../constants'
-import type { StyleSheet } from '../../types'
-import { shouldMaskNode } from './privacy'
-
-export type NodeWithSerializedNode = Node & { s: 'Node with serialized node' }
+import type { NodePrivacyLevel } from '../../../constants'
+import { CENSORED_STRING_MARK } from '../../../constants'
+import { shouldMaskNode } from '../privacy'
+import type { NodeWithSerializedNode } from './serialization.types'
 
 const serializedNodeIds = new WeakMap<Node, number>()
 
@@ -108,19 +106,16 @@ export function makeUrlAbsolute(url: string, baseUrl: string): string {
   }
 }
 
-export function serializeStyleSheets(cssStyleSheets: CSSStyleSheet[] | undefined): StyleSheet[] | undefined {
-  if (cssStyleSheets === undefined || cssStyleSheets.length === 0) {
-    return undefined
-  }
-  return cssStyleSheets.map((cssStyleSheet) => {
-    const rules = cssStyleSheet.cssRules || cssStyleSheet.rules
-    const cssRules = Array.from(rules, (cssRule) => cssRule.cssText)
+const TAG_NAME_REGEX = /[^a-z1-6-_]/
+export function getValidTagName(tagName: string): string {
+  const processedTagName = tagName.toLowerCase().trim()
 
-    const styleSheet: StyleSheet = {
-      cssRules,
-      disabled: cssStyleSheet.disabled || undefined,
-      media: cssStyleSheet.media.length > 0 ? Array.from(cssStyleSheet.media) : undefined,
-    }
-    return styleSheet
-  })
+  if (TAG_NAME_REGEX.test(processedTagName)) {
+    // if the tag name is odd and we cannot extract
+    // anything from the string, then we return a
+    // generic div
+    return 'div'
+  }
+
+  return processedTagName
 }
