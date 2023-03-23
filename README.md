@@ -4,13 +4,13 @@ Collect and send browser data to Datadog.
 
 ## Getting Started
 
-### Log Collection
+### Log collection
 
-See the dedicated [Datadog Browser Log Collection documentation][08] to learn how to forward logs from your Browser application to Datadog.
+See the dedicated [Datadog Browser Log Collection documentation][08] to learn how to forward logs from your browser application to Datadog.
 
 ### Real User Monitoring
 
-See the dedicated [Datadog Browser RUM Collection documentation][18] to learn how to send RUM data from your Browser application to Datadog.
+See the dedicated [Datadog Browser RUM Collection documentation][18] to learn how to send RUM data from your browser application to Datadog.
 
 ## npm packages
 
@@ -26,7 +26,7 @@ This repository contains several packages:
 
 ## CDN bundles
 
-We provide one CDN bundle by [Datadog site][60]:
+Datadog provides one CDN bundle per [site][60]:
 
 | Site    | logs                                                           | rum                                                           | rum-slim                                                           |
 | ------- | -------------------------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------ |
