@@ -16,6 +16,23 @@
 
 ---
 
+## v4.35.0
+
+- ✨[RUMF-1500] deploy new datacenter files ([#2049](https://github.com/DataDog/browser-sdk/pull/2049))
+
+## v4.34.3
+
+- 🐛 Handle undefined cancel idle callback ([#2045](https://github.com/DataDog/browser-sdk/pull/2045))
+- ♻️ [RUMF-1500] tweak deployment scripts ([#2046](https://github.com/DataDog/browser-sdk/pull/2046))
+- ♻️ [RUMF-1505] introduce and use a safe `setTimeout` helper function ([#2032](https://github.com/DataDog/browser-sdk/pull/2032))
+- ♻️ [REPLAY] Avoid casting & add proper check instead of relying on try/catch ([#2016](https://github.com/DataDog/browser-sdk/pull/2016))
+
+## v4.34.2
+
+- 🐛 [RUMF-1443] fix Zone.js/Angular crash when recording the session ([#2030](https://github.com/DataDog/browser-sdk/pull/2030))
+- 🐛 [REPLAY] Fix serialization for checkbox & radio ([#2021](https://github.com/DataDog/browser-sdk/pull/2021))
+- ⚗️ [RUMF-1484] use pagehide as unload event ([#2020](https://github.com/DataDog/browser-sdk/pull/2020))
+
 ## v4.34.1
 
 - 🐛 [RUMF-1493] Avoid infinite loop on `form > input[name="host"]` element ([#2017](https://github.com/DataDog/browser-sdk/pull/2017))

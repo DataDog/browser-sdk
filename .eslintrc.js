@@ -128,7 +128,6 @@ module.exports = {
             'protected-abstract-field',
             'private-decorated-field',
             'private-instance-field',
-            'private-abstract-field',
             'public-constructor',
             'protected-constructor',
             'private-constructor',
@@ -143,7 +142,6 @@ module.exports = {
             'protected-abstract-method',
             'private-decorated-method',
             'private-instance-method',
-            'private-abstract-method',
           ],
           order: 'as-written',
         },
@@ -181,6 +179,7 @@ module.exports = {
     ],
 
     'unicorn/filename-case': ['error', { case: 'camelCase' }],
+    'unicorn/no-empty-file': 'error',
   },
   overrides: [
     {
@@ -217,6 +216,7 @@ module.exports = {
       excludedFiles: '*.spec.ts',
       rules: {
         'local-rules/disallow-side-effects': 'error',
+        'local-rules/disallow-zone-js-patched-values': 'error',
         'no-restricted-syntax': [
           'error',
           {

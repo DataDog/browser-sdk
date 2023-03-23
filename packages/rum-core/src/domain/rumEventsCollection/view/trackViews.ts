@@ -216,7 +216,7 @@ function newView(
 
   // Update the view every time the measures are changing
   const { throttled: scheduleViewUpdate, cancel: cancelScheduleViewUpdate } = throttle(
-    monitor(triggerViewUpdate),
+    triggerViewUpdate,
     THROTTLE_VIEW_UPDATE_PERIOD,
     {
       leading: false,

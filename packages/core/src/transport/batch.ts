@@ -1,8 +1,8 @@
 import { display } from '../tools/display'
 import type { Context } from '../tools/context'
 import { computeBytesCount, jsonStringify, objectValues } from '../tools/utils'
-import { monitor } from '../tools/monitor'
 import { Observable } from '../tools/observable'
+import { setTimeout } from '../browser/timer'
 import type { PageExitEvent } from '../browser/pageExitObservable'
 import type { HttpRequest } from './httpRequest'
 
@@ -132,12 +132,9 @@ export class Batch {
   }
 
   private flushPeriodically() {
-    setTimeout(
-      monitor(() => {
-        this.flush('batch_duration_limit')
-        this.flushPeriodically()
-      }),
-      this.flushTimeout
-    )
+    setTimeout(() => {
+      this.flush('batch_duration_limit')
+      this.flushPeriodically()
+    }, this.flushTimeout)
   }
 }

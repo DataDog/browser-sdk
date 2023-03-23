@@ -23,7 +23,7 @@ export const StatusType = {
   warn: 'warn',
 } as const
 
-export type StatusType = typeof StatusType[keyof typeof StatusType]
+export type StatusType = (typeof StatusType)[keyof typeof StatusType]
 
 export const HandlerType = {
   console: 'console',
@@ -31,7 +31,7 @@ export const HandlerType = {
   silent: 'silent',
 } as const
 
-export type HandlerType = typeof HandlerType[keyof typeof HandlerType]
+export type HandlerType = (typeof HandlerType)[keyof typeof HandlerType]
 export const STATUSES = Object.keys(StatusType) as StatusType[]
 
 export class Logger {

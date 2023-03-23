@@ -117,15 +117,6 @@ export function makeRumPublicApi(
       return
     }
 
-    if (isExperimentalFeatureEnabled('feature_flags')) {
-      ;(rumPublicApi as any).addFeatureFlagEvaluation = monitor((key: string, value: any) => {
-        addFeatureFlagEvaluationStrategy(
-          isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(key)! : key,
-          isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(value) : value
-        )
-      })
-    }
-
     if (!configuration.trackViewsManually) {
       doStartRum(initConfiguration, configuration)
     } else {
@@ -261,6 +252,16 @@ export function makeRumPublicApi(
 
     startSessionReplayRecording: monitor(recorderApi.start),
     stopSessionReplayRecording: monitor(recorderApi.stop),
+
+    /**
+     * This feature is currently in beta. For more information see the full [feature flag tracking guide](https://docs.datadoghq.com/real_user_monitoring/feature_flag_tracking/).
+     */
+    addFeatureFlagEvaluation: monitor((key: string, value: any) => {
+      addFeatureFlagEvaluationStrategy(
+        isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(key)! : key,
+        isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(value) : value
+      )
+    }),
   })
 
   return rumPublicApi

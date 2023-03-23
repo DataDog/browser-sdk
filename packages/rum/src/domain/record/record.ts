@@ -14,15 +14,14 @@ import type {
   ViewportResizeData,
 } from '../../types'
 import { RecordType, IncrementalSource } from '../../types'
-import { serializeDocument, SerializationContextStatus } from './serialize'
+import { SerializationContextStatus, serializeDocument } from './serialization'
 import { initObservers } from './observers'
-import type { InputCallback } from './observers'
-
 import { getVisualViewport, getScrollX, getScrollY } from './viewports'
 import { assembleIncrementalSnapshot } from './utils'
 import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
 import { initShadowRootsController } from './shadowRootsController'
+import type { InputCallback } from './observers'
 
 export interface RecordOptions {
   emit?: (record: BrowserRecord) => void

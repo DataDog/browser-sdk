@@ -13,7 +13,7 @@ export const DefaultPrivacyLevel = {
   MASK: 'mask',
   MASK_USER_INPUT: 'mask-user-input',
 } as const
-export type DefaultPrivacyLevel = typeof DefaultPrivacyLevel[keyof typeof DefaultPrivacyLevel]
+export type DefaultPrivacyLevel = (typeof DefaultPrivacyLevel)[keyof typeof DefaultPrivacyLevel]
 
 export interface InitConfiguration {
   // global options

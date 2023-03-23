@@ -18,7 +18,7 @@ export const RecordType: {
   FrustrationRecord: 9,
 } as const
 
-export type RecordType = typeof RecordType[keyof typeof RecordType]
+export type RecordType = (typeof RecordType)[keyof typeof RecordType]
 
 export const NodeType: {
   Document: SessionReplay.DocumentNode['type']
@@ -36,7 +36,7 @@ export const NodeType: {
   DocumentFragment: 11,
 } as const
 
-export type NodeType = typeof NodeType[keyof typeof NodeType]
+export type NodeType = (typeof NodeType)[keyof typeof NodeType]
 
 export const IncrementalSource: {
   Mutation: SessionReplay.BrowserMutationData['source']
@@ -62,7 +62,7 @@ export const IncrementalSource: {
   // Font : 10,
 } as const
 
-export type IncrementalSource = typeof IncrementalSource[keyof typeof IncrementalSource]
+export type IncrementalSource = (typeof IncrementalSource)[keyof typeof IncrementalSource]
 
 export const MouseInteractionType = {
   MouseUp: 0,
@@ -76,11 +76,11 @@ export const MouseInteractionType = {
   TouchEnd: 9,
 } as const
 
-export type MouseInteractionType = typeof MouseInteractionType[keyof typeof MouseInteractionType]
+export type MouseInteractionType = (typeof MouseInteractionType)[keyof typeof MouseInteractionType]
 
 export const MediaInteractionType = {
   Play: 0,
   Pause: 1,
 } as const
 
-export type MediaInteractionType = typeof MediaInteractionType[keyof typeof MediaInteractionType]
+export type MediaInteractionType = (typeof MediaInteractionType)[keyof typeof MediaInteractionType]

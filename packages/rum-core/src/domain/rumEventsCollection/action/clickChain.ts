@@ -1,4 +1,4 @@
-import { monitor, ONE_SECOND } from '@datadog/browser-core'
+import { ONE_SECOND, clearTimeout, setTimeout } from '@datadog/browser-core'
 import type { Click } from './trackClickActions'
 
 export interface ClickChain {
@@ -25,7 +25,7 @@ export function createClickChain(firstClick: Click, onFinalize: (clicks: Click[]
     click.stopObservable.subscribe(tryFinalize)
     bufferedClicks.push(click)
     clearTimeout(maxDurationBetweenClicksTimeout)
-    maxDurationBetweenClicksTimeout = setTimeout(monitor(dontAcceptMoreClick), MAX_DURATION_BETWEEN_CLICKS)
+    maxDurationBetweenClicksTimeout = setTimeout(dontAcceptMoreClick, MAX_DURATION_BETWEEN_CLICKS)
   }
 
   function tryFinalize() {

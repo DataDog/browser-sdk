@@ -140,7 +140,7 @@ export function startSessionStore<TrackingType extends string>(
   }
 
   return {
-    expandOrRenewSession: utils.throttle(monitor(expandOrRenewSession), COOKIE_ACCESS_DELAY).throttled,
+    expandOrRenewSession: utils.throttle(expandOrRenewSession, COOKIE_ACCESS_DELAY).throttled,
     expandSession,
     getSession: () => sessionCache,
     renewObservable,

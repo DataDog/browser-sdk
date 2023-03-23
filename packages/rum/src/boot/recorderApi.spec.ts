@@ -156,7 +156,7 @@ describe('makeRecorderApi', () => {
     })
 
     describe('if browser is not supported', () => {
-      let originalArrayFrom: typeof Array['from']
+      let originalArrayFrom: (typeof Array)['from']
 
       beforeEach(() => {
         originalArrayFrom = Array.from

@@ -1,6 +1,6 @@
+import type { TimeoutId } from '../browser/timer'
 import type { RelativeTime } from './timeUtils'
 import { relativeNow } from './timeUtils'
-import type { TimeoutId } from './utils'
 import { ONE_MINUTE } from './utils'
 
 const END_OF_TIMES = Infinity as RelativeTime

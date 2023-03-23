@@ -1,4 +1,4 @@
-import { monitor, ONE_MINUTE } from '@datadog/browser-core'
+import { ONE_MINUTE, setTimeout } from '@datadog/browser-core'
 import type { LifeCycle } from '../../lifeCycle'
 import { trackEventCounts } from '../../trackEventCounts'
 
@@ -28,7 +28,7 @@ export function trackViewEventCounts(lifeCycle: LifeCycle, viewId: string, onCha
 
   return {
     scheduleStop: () => {
-      setTimeout(monitor(stop), KEEP_TRACKING_EVENT_COUNTS_AFTER_VIEW_DELAY)
+      setTimeout(stop, KEEP_TRACKING_EVENT_COUNTS_AFTER_VIEW_DELAY)
     },
     eventCounts,
   }
