@@ -72,6 +72,8 @@ export {
   ErrorWithCause,
   toStackTraceString,
   getFileFromStackTraceString,
+  NO_ERROR_STACK_PRESENT_MESSAGE,
+  PROVIDED_ERROR_MESSAGE_PREFIX,
 } from './tools/error'
 export { Context, ContextArray, ContextValue } from './tools/context'
 export { areCookiesAuthorized, getCookie, setCookie, deleteCookie, COOKIE_ACCESS_DELAY } from './browser/cookie'

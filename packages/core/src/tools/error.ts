@@ -4,6 +4,9 @@ import { callMonitored } from './monitor'
 import type { ClocksState } from './timeUtils'
 import { jsonStringify, noop } from './utils'
 
+export const NO_ERROR_STACK_PRESENT_MESSAGE = 'No stack, consider using an instance of Error'
+export const PROVIDED_ERROR_MESSAGE_PREFIX = 'Provided'
+
 export interface ErrorWithCause extends Error {
   cause?: Error
 }
@@ -71,7 +74,7 @@ export function computeRawError({
       handling,
       originalError,
       message: `${nonErrorPrefix} ${jsonStringify(originalError)!}`,
-      stack: 'No stack, consider using an instance of Error',
+      stack: NO_ERROR_STACK_PRESENT_MESSAGE,
       handlingStack,
       type: stackTrace && stackTrace.name,
     }

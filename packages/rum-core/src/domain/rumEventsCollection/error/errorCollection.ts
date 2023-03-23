@@ -1,5 +1,6 @@
 import type { Context, RawError, ClocksState } from '@datadog/browser-core'
 import {
+  PROVIDED_ERROR_MESSAGE_PREFIX,
   isEmptyObject,
   assign,
   ErrorSource,
@@ -72,7 +73,7 @@ export function doStartErrorCollection(
         originalError: error,
         handlingStack,
         startClocks,
-        nonErrorPrefix: 'Provided',
+        nonErrorPrefix: PROVIDED_ERROR_MESSAGE_PREFIX,
         source: ErrorSource.CUSTOM,
         handling: ErrorHandling.HANDLED,
       })
