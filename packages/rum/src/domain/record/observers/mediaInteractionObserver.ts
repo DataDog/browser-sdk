@@ -3,9 +3,9 @@ import { DOM_EVENT, addEventListeners } from '@datadog/browser-core'
 import { NodePrivacyLevel } from '../../../constants'
 import type { MediaInteraction } from '../../../types'
 import { MediaInteractionType } from '../../../types'
+import { getEventTarget } from '../eventsUtils'
 import { getNodePrivacyLevel } from '../privacy'
 import { getSerializedNodeId, hasSerializedNode } from '../serialization'
-import { getEventTarget } from './utils'
 
 export type MediaInteractionCallback = (p: MediaInteraction) => void
 

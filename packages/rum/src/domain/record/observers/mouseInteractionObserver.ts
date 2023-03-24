@@ -4,11 +4,11 @@ import { NodePrivacyLevel } from '../../../constants'
 import type { MouseInteraction, MouseInteractionData, BrowserIncrementalSnapshotRecord } from '../../../types'
 import { IncrementalSource, MouseInteractionType } from '../../../types'
 import { assembleIncrementalSnapshot } from '../assembly'
+import { getEventTarget } from '../eventsUtils'
 import { getNodePrivacyLevel } from '../privacy'
 import { getSerializedNodeId, hasSerializedNode } from '../serialization'
 import { tryToComputeCoordinates } from './moveObserver'
 import type { RecordIds } from './recordIds'
-import { getEventTarget } from './utils'
 
 const eventTypeToMouseInteraction = {
   // Listen for pointerup DOM events instead of mouseup for MouseInteraction/MouseUp records. This
