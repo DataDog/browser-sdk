@@ -13,7 +13,7 @@ import { createNewEvent, interceptRequests } from '../../../core/test/specHelper
 import type { RumSessionManagerMock } from '../../test/mockRumSessionManager'
 import { createRumSessionManagerMock } from '../../test/mockRumSessionManager'
 import type { TestSetupBuilder } from '../../test/specHelper'
-import { noopRecorderApi, setup } from '../../test/specHelper'
+import { setup } from '../../test/specHelper'
 import type { RumPerformanceNavigationTiming, RumPerformanceEntry } from '../browser/performanceCollection'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
@@ -26,6 +26,7 @@ import type { RumSessionManager } from '..'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import { RumEventType } from '../rawRumEvent.types'
 import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
+import { noopRecorderApi } from '../../test/noopRecorderApi'
 import { startRum, startRumEventCollection } from './startRum'
 
 function collectServerEvents(lifeCycle: LifeCycle) {

@@ -3,7 +3,6 @@ import { assign, combine, createContextManager, noop, Observable } from '@datado
 import type { Clock } from '../../core/test/specHelper'
 import { buildLocation, mockClock, SPEC_ENDPOINTS } from '../../core/test/specHelper'
 import type { LocationChange } from '../src/browser/locationChangeObservable'
-import type { RecorderApi } from '../src/boot/rumPublicApi'
 import type { RumConfiguration } from '../src/domain/configuration'
 import { validateAndBuildRumConfiguration } from '../src/domain/configuration'
 import type { FeatureFlagContexts } from '../src/domain/contexts/featureFlagContext'
@@ -17,7 +16,6 @@ import type { ActionContexts } from '../src/domain/rumEventsCollection/action/ac
 import type { RumSessionManager } from '../src/domain/rumSessionManager'
 import { RumSessionPlan } from '../src/domain/rumSessionManager'
 import type { RawRumEvent, RumContext } from '../src/rawRumEvent.types'
-import type { CiTestWindow } from '../src/domain/contexts/ciTestContext'
 import { validateRumFormat } from './formatValidation'
 import { createRumSessionManagerMock } from './mockRumSessionManager'
 
@@ -239,28 +237,4 @@ function validateRumEventFormat(rawRumEvent: RawRumEvent) {
     },
   }
   validateRumFormat(combine(fakeContext as RumContext & Context, rawRumEvent))
-}
-
-export const noopRecorderApi: RecorderApi = {
-  start: noop,
-  stop: noop,
-  isRecording: () => false,
-  onRumStart: noop,
-  getReplayStats: () => undefined,
-}
-
-export function mockCiVisibilityWindowValues(traceId?: unknown) {
-  if (traceId) {
-    ;(window as CiTestWindow).Cypress = {
-      env: (key: string) => {
-        if (typeof traceId === 'string' && key === 'traceId') {
-          return traceId
-        }
-      },
-    }
-  }
-}
-
-export function cleanupCiVisibilityWindowValues() {
-  delete (window as CiTestWindow).Cypress
 }

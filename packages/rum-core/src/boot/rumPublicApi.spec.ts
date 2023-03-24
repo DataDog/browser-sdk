@@ -3,9 +3,10 @@ import { ONE_SECOND, getTimeStamp, display, DefaultPrivacyLevel } from '@datadog
 import { cleanupSyntheticsWorkerValues, mockSyntheticsWorkerValues } from '../../../core/test/syntheticsWorkerValues'
 import { initEventBridgeStub, deleteEventBridgeStub } from '../../../core/test/specHelper'
 import type { TestSetupBuilder } from '../../test/specHelper'
-import { noopRecorderApi, setup } from '../../test/specHelper'
+import { setup } from '../../test/specHelper'
 import type { HybridInitConfiguration, RumInitConfiguration } from '../domain/configuration'
 import { ActionType } from '../rawRumEvent.types'
+import { noopRecorderApi } from '../../test/noopRecorderApi'
 import type { RumPublicApi, StartRum, RecorderApi } from './rumPublicApi'
 import { makeRumPublicApi } from './rumPublicApi'
 
