@@ -6,6 +6,7 @@ import {
   ErrorHandling,
   PROVIDED_ERROR_MESSAGE_PREFIX,
   computeStackTrace,
+  CustomerDataType,
   deepClone,
   assign,
   combine,
@@ -14,6 +15,7 @@ import {
   monitored,
   sanitize,
 } from '@datadog/browser-core'
+
 import type { LogsEvent } from '../logsEvent.types'
 
 export interface LogsMessage {
@@ -41,7 +43,7 @@ export type HandlerType = (typeof HandlerType)[keyof typeof HandlerType]
 export const STATUSES = Object.keys(StatusType) as StatusType[]
 
 export class Logger {
-  private contextManager = createContextManager()
+  private contextManager = createContextManager(CustomerDataType.GlobalContext)
 
   constructor(
     private handleLogStrategy: (logsMessage: LogsMessage, logger: Logger) => void,
