@@ -7,6 +7,7 @@ export const enum CustomerDataType {
   FeatureFlag = 'feature flag evaluation',
   User = 'user',
   GlobalContext = 'global context',
+  LoggerContext = 'logger context',
 }
 
 export function warnIfCustomerDataLimitReached(bytesCount: number, customerDataType: CustomerDataType) {
