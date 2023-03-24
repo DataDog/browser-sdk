@@ -1,4 +1,4 @@
-import type { DefaultPrivacyLevel } from '@datadog/browser-core'
+import type { DefaultPrivacyLevel, ListenerHandler } from '@datadog/browser-core'
 import { assign, addEventListeners, DOM_EVENT } from '@datadog/browser-core'
 import { NodePrivacyLevel } from '../../../constants'
 import type { MouseInteraction, MouseInteractionData, BrowserIncrementalSnapshotRecord } from '../../../types'
@@ -8,7 +8,6 @@ import { getSerializedNodeId, hasSerializedNode } from '../serialization'
 import { assembleIncrementalSnapshot } from '../utils'
 import { tryToComputeCoordinates } from './moveObserver'
 import type { RecordIds } from './recordIds'
-import type { ListenerHandler } from './utils'
 import { getEventTarget } from './utils'
 
 const eventTypeToMouseInteraction = {

@@ -1,8 +1,8 @@
+import type { ListenerHandler } from '@datadog/browser-core'
 import { throttle, DOM_EVENT, addEventListeners, noop } from '@datadog/browser-core'
 import { initViewportObservable } from '@datadog/browser-rum-core'
 import type { ViewportResizeDimension, VisualViewportRecord } from '../../../types'
 import { getVisualViewport } from '../viewports'
-import type { ListenerHandler } from './utils'
 
 const VISUAL_VIEWPORT_OBSERVER_THRESHOLD = 200
 

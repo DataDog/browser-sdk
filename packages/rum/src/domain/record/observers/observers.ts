@@ -1,3 +1,4 @@
+import type { ListenerHandler } from '@datadog/browser-core'
 import type { LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
 import type { ElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootsController } from '../shadowRootsController'
@@ -22,7 +23,6 @@ import { initMutationObserver } from './mutationObserver'
 import type { FocusCallback } from './focusObserver'
 import { initFocusObserver } from './focusObserver'
 import { initRecordIds } from './recordIds'
-import type { ListenerHandler } from './utils'
 
 interface ObserverParam {
   lifeCycle: LifeCycle

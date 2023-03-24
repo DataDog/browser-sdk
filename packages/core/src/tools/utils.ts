@@ -117,6 +117,8 @@ export function round(num: number, decimals: 0 | 1 | 2 | 3 | 4) {
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 export function noop() {}
 
+export type ListenerHandler = () => void
+
 /**
  * Custom implementation of JSON.stringify that ignores some toJSON methods. We need to do that
  * because some sites badly override toJSON on certain objects. Removing all toJSON methods from
