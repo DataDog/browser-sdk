@@ -4,14 +4,6 @@ const spawn = require('child_process').spawn
 // Todo: Remove node-fetch when node v18 LTS is released with fetch out of the box
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args))
 
-function getSecretKey(name) {
-  return command`
-    aws ssm get-parameter --region=us-east-1 --with-decryption --query=Parameter.Value --out=text --name=${name}
-  `
-    .run()
-    .trim()
-}
-
 /**
  * Helper to run executables asynchronously, in a shell. This function does not prevent Shell
  * injections[0], so please use carefully. Only use it to run commands with trusted arguments.
@@ -191,7 +183,6 @@ async function fetchWrapper(url, options) {
 }
 
 module.exports = {
-  getSecretKey,
   command,
   spawnCommand,
   printError,

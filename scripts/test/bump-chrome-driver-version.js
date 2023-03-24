@@ -1,9 +1,10 @@
 'use strict'
 
 const fs = require('fs')
-const { printLog, printError, runMain, command, getSecretKey, fetch } = require('../lib/utils')
+const { printLog, printError, runMain, command, fetch } = require('../lib/utils')
 const { CI_FILE, replaceCiFileVariable } = require('../lib/files.utils')
 const { initGitConfig } = require('../lib/git.utils')
+const { getGithubAccessToken } = require('../lib/secrets')
 
 const REPOSITORY = process.env.GIT_REPOSITORY
 const MAIN_BRANCH = process.env.MAIN_BRANCH
@@ -86,8 +87,7 @@ function getMajor(version) {
 }
 
 function createPullRequest() {
-  const githubAccessToken = getSecretKey('ci.browser-sdk.github_access_token')
-  command`gh auth login --with-token`.withInput(githubAccessToken).run()
+  command`gh auth login --with-token`.withInput(getGithubAccessToken()).run()
   const pullRequestUrl = command`gh pr create --fill --base ${MAIN_BRANCH}`.run()
   return pullRequestUrl.trim()
 }
