@@ -1,14 +1,10 @@
-const path = require('path')
 const os = require('os')
-const fsPromises = require('fs/promises')
 const fs = require('fs')
 const childProcess = require('child_process')
 const spawn = require('child_process').spawn
 // node-fetch v3.x only support ESM syntax.
 // Todo: Remove node-fetch when node v18 LTS is released with fetch out of the box
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args))
-
-const CI_FILE = '.gitlab-ci.yml'
 
 function getSecretKey(name) {
   return command`
@@ -32,32 +28,6 @@ function initGitConfig(repository) {
   command`git config user.email ci.browser-sdk@datadoghq.com`.run()
   command`git config user.name ci.browser-sdk`.run()
   command`git remote set-url origin ${repository}`.run()
-}
-
-function readCiFileVariable(variableName) {
-  const regexp = new RegExp(`${variableName}: (.*)`)
-  const ciFileContent = fs.readFileSync(CI_FILE, { encoding: 'utf-8' })
-  return regexp.exec(ciFileContent)?.[1]
-}
-
-async function replaceCiFileVariable(variableName, value) {
-  await modifyFile(CI_FILE, (content) =>
-    content.replace(new RegExp(`${variableName}: .*`), `${variableName}: ${value}`)
-  )
-}
-
-/**
- * @param filePath {string}
- * @param modifier {(content: string) => string}
- */
-async function modifyFile(filePath, modifier) {
-  const content = await fsPromises.readFile(filePath, { encoding: 'utf-8' })
-  const modifiedContent = modifier(content)
-  if (content !== modifiedContent) {
-    await fsPromises.writeFile(filePath, modifiedContent)
-    return true
-  }
-  return false
 }
 
 /**
@@ -238,23 +208,7 @@ async function fetchWrapper(url, options) {
   return response.text()
 }
 
-function findBrowserSdkPackageJsonFiles() {
-  const manifestPaths = command`git ls-files -- package.json */package.json`.run()
-  return manifestPaths
-    .trim()
-    .split('\n')
-    .map((manifestPath) => {
-      const absoluteManifestPath = path.join(__dirname, '../..', manifestPath)
-      return {
-        relativePath: manifestPath,
-        path: absoluteManifestPath,
-        content: require(absoluteManifestPath),
-      }
-    })
-}
-
 module.exports = {
-  CI_FILE,
   getSecretKey,
   initGitConfig,
   command,
@@ -262,9 +216,5 @@ module.exports = {
   printError,
   printLog,
   runMain,
-  readCiFileVariable,
-  replaceCiFileVariable,
   fetch: fetchWrapper,
-  modifyFile,
-  findBrowserSdkPackageJsonFiles,
 }

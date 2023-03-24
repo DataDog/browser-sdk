@@ -1,15 +1,8 @@
 'use strict'
 
 const fs = require('fs')
-const {
-  CI_FILE,
-  initGitConfig,
-  command,
-  printLog,
-  runMain,
-  replaceCiFileVariable,
-  readCiFileVariable,
-} = require('../lib/utils')
+const { initGitConfig, command, printLog, runMain } = require('../lib/utils')
+const { CI_FILE, replaceCiFileVariable, readCiFileVariable } = require('../lib/files.utils')
 
 const REPOSITORY = process.env.GIT_REPOSITORY
 const MAIN_BRANCH = process.env.MAIN_BRANCH
