@@ -1,6 +1,6 @@
 import { display, isIE, objectEntries } from '@datadog/browser-core'
-import type { TestSetupBuilder } from '../../../test/specHelper'
-import { setup } from '../../../test/specHelper'
+import type { TestSetupBuilder } from '../../../test/testSetupBuilder'
+import { setup } from '../../../test/testSetupBuilder'
 import type { RumSessionManagerMock } from '../../../test/mockRumSessionManager'
 import { createRumSessionManagerMock } from '../../../test/mockRumSessionManager'
 import type { RumFetchResolveContext, RumFetchStartContext, RumXhrStartContext } from '../requestCollection'
