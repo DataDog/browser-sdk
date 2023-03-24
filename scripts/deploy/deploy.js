@@ -1,6 +1,6 @@
 'use strict'
 
-const { printLog, command, runMain } = require('../lib/utils')
+const { printLog, command, runMain } = require('../lib/execution.utils')
 const {
   buildRootUploadPath,
   buildDatacenterUploadPath,

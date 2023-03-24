@@ -1,6 +1,6 @@
 'use strict'
 
-const { command, printLog, runMain } = require('../lib/utils')
+const { command, printLog, runMain } = require('../lib/execution.utils')
 const { getOrg2ApiKey } = require('../lib/secrets')
 
 /**

@@ -1,6 +1,6 @@
 'use strict'
 
-const { command, printLog, printError, runMain } = require('../lib/utils')
+const { command, printLog, printError, runMain } = require('../lib/execution.utils')
 const { initGitConfig } = require('../lib/git.utils')
 
 const REPOSITORY = process.env.GIT_REPOSITORY

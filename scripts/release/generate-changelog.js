@@ -6,7 +6,7 @@ const readFile = util.promisify(require('fs').readFile)
 const emojiNameMap = require('emoji-name-map')
 
 const lernaConfig = require('../../lerna.json')
-const { command, spawnCommand, printError, runMain } = require('../lib/utils')
+const { command, spawnCommand, printError, runMain } = require('../lib/execution.utils')
 const { modifyFile } = require('../lib/files.utils')
 
 const CHANGELOG_FILE = 'CHANGELOG.md'
