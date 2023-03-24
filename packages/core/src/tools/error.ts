@@ -6,6 +6,9 @@ import { sanitize } from './sanitize'
 import type { ClocksState } from './timeUtils'
 import { jsonStringify, noop } from './utils'
 
+export const NO_ERROR_STACK_PRESENT_MESSAGE = 'No stack, consider using an instance of Error'
+export const PROVIDED_ERROR_MESSAGE_PREFIX = 'Provided'
+
 export interface ErrorWithCause extends Error {
   cause?: Error
 }
