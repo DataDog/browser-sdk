@@ -7,8 +7,9 @@ import { getNodePrivacyLevel } from '../privacy'
 import { getSerializedNodeId, hasSerializedNode } from '../serialization'
 import { assembleIncrementalSnapshot } from '../utils'
 import { tryToComputeCoordinates } from './moveObserver'
+import type { RecordIds } from './recordIds'
 import type { ListenerHandler } from './utils'
-import { getRecordIdForEvent, getEventTarget } from './utils'
+import { getEventTarget } from './utils'
 
 const eventTypeToMouseInteraction = {
   // Listen for pointerup DOM events instead of mouseup for MouseInteraction/MouseUp records. This
@@ -35,7 +36,8 @@ export type MouseInteractionCallBack = (record: BrowserIncrementalSnapshotRecord
 
 export function initMouseInteractionObserver(
   cb: MouseInteractionCallBack,
-  defaultPrivacyLevel: DefaultPrivacyLevel
+  defaultPrivacyLevel: DefaultPrivacyLevel,
+  recordIds: RecordIds
 ): ListenerHandler {
   const handler = (event: MouseEvent | TouchEvent) => {
     const target = getEventTarget(event)
@@ -57,7 +59,7 @@ export function initMouseInteractionObserver(
     }
 
     const record = assign(
-      { id: getRecordIdForEvent(event) },
+      { id: recordIds.get(event) },
       assembleIncrementalSnapshot<MouseInteractionData>(IncrementalSource.MouseInteraction, interaction)
     )
     cb(record)

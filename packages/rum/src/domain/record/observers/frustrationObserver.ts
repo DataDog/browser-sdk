@@ -2,12 +2,16 @@ import type { LifeCycle } from '@datadog/browser-rum-core'
 import { ActionType, RumEventType, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { FrustrationRecord } from '../../../types'
 import { RecordType } from '../../../types'
+import type { RecordIds } from './recordIds'
 import type { ListenerHandler } from './utils'
-import { getRecordIdForEvent } from './utils'
 
 export type FrustrationCallback = (record: FrustrationRecord) => void
 
-export function initFrustrationObserver(lifeCycle: LifeCycle, frustrationCb: FrustrationCallback): ListenerHandler {
+export function initFrustrationObserver(
+  lifeCycle: LifeCycle,
+  frustrationCb: FrustrationCallback,
+  recordIds: RecordIds
+): ListenerHandler {
   return lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {
     if (
       data.rawRumEvent.type === RumEventType.ACTION &&
@@ -21,7 +25,7 @@ export function initFrustrationObserver(lifeCycle: LifeCycle, frustrationCb: Fru
         type: RecordType.FrustrationRecord,
         data: {
           frustrationTypes: data.rawRumEvent.action.frustration.type,
-          recordIds: data.domainContext.events.map((e) => getRecordIdForEvent(e)),
+          recordIds: data.domainContext.events.map((e) => recordIds.get(e)),
         },
       })
     }
