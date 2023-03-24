@@ -223,6 +223,13 @@ export function findLast<T, S extends T>(
   return undefined
 }
 
+export function forEach<List extends { [index: number]: any }>(
+  list: List,
+  callback: (value: List[number], index: number, parent: List) => void
+) {
+  Array.prototype.forEach.call(list, callback as any)
+}
+
 export function isPercentage(value: unknown) {
   return isNumber(value) && value >= 0 && value <= 100
 }

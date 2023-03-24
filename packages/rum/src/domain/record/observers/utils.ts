@@ -1,12 +1,6 @@
 import { isNodeShadowHost } from '@datadog/browser-rum-core'
-export type ListenerHandler = () => void
 
-export function forEach<List extends { [index: number]: any }>(
-  list: List,
-  callback: (value: List[number], index: number, parent: List) => void
-) {
-  Array.prototype.forEach.call(list, callback as any)
-}
+export type ListenerHandler = () => void
 
 export function getEventTarget(event: Event): Node {
   if (event.composed === true && isNodeShadowHost(event.target as Node)) {
