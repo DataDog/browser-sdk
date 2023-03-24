@@ -1,7 +1,7 @@
 'use strict'
 
 const path = require('path')
-const { command, printLog, runMain } = require('../lib/execution.utils')
+const { command, printLog, runMain } = require('../lib/execution-utils')
 const { SDK_VERSION } = require('../lib/build-env')
 const { getTelemetryOrgApiKey } = require('../lib/secrets')
 const {

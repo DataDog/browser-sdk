@@ -1,9 +1,9 @@
 'use strict'
 
 const fs = require('fs')
-const { printLog, printError, runMain, command, fetch } = require('../lib/execution.utils')
-const { CI_FILE, replaceCiFileVariable } = require('../lib/files.utils')
-const { initGitConfig } = require('../lib/git.utils')
+const { printLog, printError, runMain, command, fetch } = require('../lib/execution-utils')
+const { CI_FILE, replaceCiFileVariable } = require('../lib/files-utils')
+const { initGitConfig } = require('../lib/git-utils')
 const { getGithubAccessToken } = require('../lib/secrets')
 
 const REPOSITORY = process.env.GIT_REPOSITORY

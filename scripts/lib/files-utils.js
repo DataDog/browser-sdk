@@ -2,7 +2,7 @@ const fs = require('fs')
 const path = require('path')
 const fsPromises = require('fs/promises')
 
-const { command } = require('./execution.utils')
+const { command } = require('./execution-utils')
 
 const CI_FILE = '.gitlab-ci.yml'
 

@@ -3,8 +3,8 @@
 const fs = require('fs')
 const path = require('path')
 const { version: releaseVersion } = require('../../lerna.json')
-const { printLog, runMain, command } = require('../lib/execution.utils')
-const { findBrowserSdkPackageJsonFiles } = require('../lib/files.utils')
+const { printLog, runMain, command } = require('../lib/execution-utils')
+const { findBrowserSdkPackageJsonFiles } = require('../lib/files-utils')
 
 runMain(() => {
   checkGitTag()

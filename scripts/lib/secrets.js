@@ -1,4 +1,4 @@
-const { command } = require('./execution.utils')
+const { command } = require('./execution-utils')
 
 function getGithubDeployKey() {
   return getSecretKey('ci.browser-sdk.github_deploy_key')
