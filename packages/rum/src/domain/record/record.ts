@@ -14,10 +14,10 @@ import type {
   ViewportResizeData,
 } from '../../types'
 import { RecordType, IncrementalSource } from '../../types'
+import { assembleIncrementalSnapshot } from './assembly'
 import { SerializationContextStatus, serializeDocument } from './serialization'
 import { initObservers } from './observers'
 import { getVisualViewport, getScrollX, getScrollY } from './viewports'
-import { assembleIncrementalSnapshot } from './utils'
 import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
 import { initShadowRootsController } from './shadowRootsController'
