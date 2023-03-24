@@ -5,7 +5,7 @@ import { setup } from '../../../test/specHelper'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { ViewCreatedEvent, ViewEndedEvent } from '../rumEventsCollection/view/trackViews'
 import type { FeatureFlagContexts } from './featureFlagContext'
-import { startFeatureFlagContexts } from './featureFlagContext'
+import { BYTES_COMPUTATION_THROTTLING_DELAY, startFeatureFlagContexts } from './featureFlagContext'
 
 describe('featureFlagContexts', () => {
   let setupBuilder: TestSetupBuilder
@@ -150,25 +150,24 @@ describe('featureFlagContexts', () => {
   describe('getFeatureFlagBytesCount', () => {
     it('should compute the bytes count only if the context has been updated', () => {
       updateExperimentalFeatures(['feature_flags'])
-      const { lifeCycle } = setupBuilder.withFakeClock().build()
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
 
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
         startClocks: relativeToClocks(0 as RelativeTime),
       } as ViewCreatedEvent)
       featureFlagContexts.addFeatureFlagEvaluation('feature1', 'foo')
-      featureFlagContexts.getFeatureFlagBytesCount()
+      clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
       featureFlagContexts.addFeatureFlagEvaluation('feature2', 'bar')
-      featureFlagContexts.getFeatureFlagBytesCount()
+      clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
 
       // feature flags are cleared when a view is created
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
         startClocks: relativeToClocks(10 as RelativeTime),
       } as ViewCreatedEvent)
-      featureFlagContexts.getFeatureFlagBytesCount()
       const bytesCount = featureFlagContexts.getFeatureFlagBytesCount()
 
-      expect(bytesCount).toEqual(1)
-      expect(computeBytesCountStub).toHaveBeenCalledTimes(3)
+      expect(bytesCount).toEqual(0)
+      expect(computeBytesCountStub).toHaveBeenCalledTimes(2)
     })
   })
 })

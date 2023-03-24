@@ -1,5 +1,13 @@
 import type { Context } from '@datadog/browser-core'
-import { deepClone, assign, combine, createContextManager, ErrorSource, monitored } from '@datadog/browser-core'
+import {
+  CustomerDataType,
+  deepClone,
+  assign,
+  combine,
+  createContextManager,
+  ErrorSource,
+  monitored,
+} from '@datadog/browser-core'
 
 export interface LogsMessage {
   message: string
@@ -26,7 +34,7 @@ export type HandlerType = (typeof HandlerType)[keyof typeof HandlerType]
 export const STATUSES = Object.keys(StatusType) as StatusType[]
 
 export class Logger {
-  private contextManager = createContextManager()
+  private contextManager = createContextManager(CustomerDataType.GlobalContext)
 
   constructor(
     private handleLogStrategy: (logsMessage: LogsMessage, logger: Logger) => void,

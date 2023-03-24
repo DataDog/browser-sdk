@@ -1,5 +1,6 @@
 import type { Context, InitConfiguration, User } from '@datadog/browser-core'
 import {
+  CustomerDataType,
   assign,
   BoundedBuffer,
   createContextManager,
@@ -34,8 +35,8 @@ type StartLogsResult = ReturnType<typeof startLogs>
 export function makeLogsPublicApi(startLogsImpl: StartLogs) {
   let isAlreadyInitialized = false
 
-  const globalContextManager = createContextManager()
-  const userContextManager = createContextManager()
+  const globalContextManager = createContextManager(CustomerDataType.GlobalContext)
+  const userContextManager = createContextManager(CustomerDataType.User)
 
   const customLoggers: { [name: string]: Logger | undefined } = {}
   let getInternalContextStrategy: StartLogsResult['getInternalContext'] = () => undefined

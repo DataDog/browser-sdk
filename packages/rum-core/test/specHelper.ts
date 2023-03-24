@@ -1,5 +1,5 @@
 import type { Context, ContextManager, TimeStamp } from '@datadog/browser-core'
-import { createContextManager, assign, combine, Observable, noop } from '@datadog/browser-core'
+import { CustomerDataType, createContextManager, assign, combine, Observable, noop } from '@datadog/browser-core'
 import type { Clock } from '../../core/test/specHelper'
 import { SPEC_ENDPOINTS, mockClock, buildLocation } from '../../core/test/specHelper'
 import type { RecorderApi } from '../src/boot/rumPublicApi'
@@ -102,8 +102,8 @@ export function setup(): TestSetupBuilder {
     selectInForegroundPeriodsFor: () => undefined,
     stop: noop,
   }
-  const globalContextManager = createContextManager()
-  const userContextManager = createContextManager()
+  const globalContextManager = createContextManager(CustomerDataType.GlobalContext)
+  const userContextManager = createContextManager(CustomerDataType.User)
   const pageStateHistory: PageStateHistory = {
     findAll: () => undefined,
     stop: noop,

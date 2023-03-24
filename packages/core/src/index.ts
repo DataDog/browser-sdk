@@ -84,6 +84,7 @@ export { initConsoleObservable, ConsoleLog } from './domain/console/consoleObser
 export { BoundedBuffer } from './tools/boundedBuffer'
 export { catchUserErrors } from './tools/catchUserErrors'
 export { createContextManager, ContextManager } from './tools/contextManager'
+export { warnIfCustomerDataLimitReached, CustomerDataType } from './tools/heavyCustomerDataWarning'
 export { limitModification } from './tools/limitModification'
 export { ContextHistory, ContextHistoryEntry, CLEAR_OLD_CONTEXTS_INTERVAL } from './tools/contextHistory'
 export { readBytesFromStream } from './tools/readBytesFromStream'
