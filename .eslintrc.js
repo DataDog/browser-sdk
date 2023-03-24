@@ -169,6 +169,7 @@ module.exports = {
     'jsdoc/check-indentation': 'error',
 
     'local-rules/disallow-test-import-export-from-src': 'error',
+    'local-rules/disallow-generic-utils': 'error',
     'local-rules/disallow-protected-directory-import': [
       'error',
       {
