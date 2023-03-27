@@ -13,6 +13,8 @@ export function createContextManager(customerDataType: CustomerDataType, compute
   let context: Context = {}
   let bytesCountCache: number
 
+  // Throttle the bytes computation to minimize the impact on performance.
+  // Especially usefull if the user call context APIs synchronously mutliple times in a row
   const { throttled: computeBytesCountThrottled } = throttle((context: Context) => {
     bytesCountCache = computeBytesCountImpl(jsonStringify(context)!)
     warnIfCustomerDataLimitReached(bytesCountCache, customerDataType)
