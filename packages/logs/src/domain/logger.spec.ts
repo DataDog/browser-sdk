@@ -1,3 +1,4 @@
+import { NO_ERROR_STACK_PRESENT_MESSAGE } from '@datadog/browser-core'
 import type { LogsMessage } from './logger'
 import { HandlerType, Logger, STATUSES, StatusType } from './logger'
 
@@ -30,6 +31,19 @@ describe('Logger', () => {
         logger[status]('message')
         expect(getLoggedMessage(0).status).toEqual(status)
       })
+
+      it(`'logger.${status}' should populate an error context when an Error object is provided`, () => {
+        logger[status]('message', {}, SyntaxError('My Error'))
+
+        expect(getLoggedMessage(0).context).toEqual({
+          error: {
+            origin: 'logger',
+            kind: 'SyntaxError',
+            message: 'My Error',
+            stack: jasmine.stringMatching(/^SyntaxError: My Error/),
+          },
+        })
+      })
     })
 
     it("'logger.log' should send the log message", () => {
@@ -46,6 +60,37 @@ describe('Logger', () => {
       logger.log('message')
 
       expect(getMessageLogger(0)).toBe(logger)
+    })
+
+    it("'logger.log' should serialize error parameter value when type is not Error", () => {
+      logger.log('message', {}, StatusType.error, 'My Error' as any)
+
+      expect(getLoggedMessage(0)).toEqual({
+        message: 'message',
+        context: {
+          error: {
+            origin: 'logger',
+            kind: undefined,
+            message: 'Provided "My Error"',
+            stack: NO_ERROR_STACK_PRESENT_MESSAGE,
+          },
+        },
+        status: 'error',
+      })
+    })
+
+    it("'logger.error' should populate an error context with origin even if no Error object is provided", () => {
+      logger.error('message')
+
+      expect(getLoggedMessage(0)).toEqual({
+        message: 'message',
+        context: {
+          error: {
+            origin: 'logger',
+          },
+        },
+        status: 'error',
+      })
     })
   })
 

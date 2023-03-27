@@ -244,7 +244,7 @@ function findBrowserSdkPackageJsonFiles() {
     .trim()
     .split('\n')
     .map((manifestPath) => {
-      const absoluteManifestPath = path.join(__dirname, '..', manifestPath)
+      const absoluteManifestPath = path.join(__dirname, '../..', manifestPath)
       return {
         relativePath: manifestPath,
         path: absoluteManifestPath,

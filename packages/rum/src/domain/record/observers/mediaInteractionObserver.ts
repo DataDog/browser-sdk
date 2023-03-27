@@ -4,7 +4,7 @@ import { NodePrivacyLevel } from '../../../constants'
 import type { MediaInteraction } from '../../../types'
 import { MediaInteractionType } from '../../../types'
 import { getNodePrivacyLevel } from '../privacy'
-import { getSerializedNodeId, hasSerializedNode } from '../serializationUtils'
+import { getSerializedNodeId, hasSerializedNode } from '../serialization'
 import type { ListenerHandler } from './utils'
 import { getEventTarget } from './utils'
 

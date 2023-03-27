@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-core",
-  "version": "4.35.0",
+  "version": "4.36.0",
   "license": "Apache-2.0",
   "main": "cjs/index.js",
   "module": "esm/index.js",
@@ -10,7 +10,7 @@
     "build": "run-p build:cjs build:esm",
     "build:cjs": "rm -rf cjs && tsc -p tsconfig.cjs.json && yarn replace-build-env cjs",
     "build:esm": "rm -rf esm && tsc -p tsconfig.esm.json && yarn replace-build-env esm",
-    "replace-build-env": "node ../../scripts/replace-build-env.js"
+    "replace-build-env": "node ../../scripts/build/replace-build-env.js"
   },
   "devDependencies": {
     "@types/sinon": "9.0.10",

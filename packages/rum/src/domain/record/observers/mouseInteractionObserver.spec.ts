@@ -1,7 +1,7 @@
 import { DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
 import { createNewEvent } from '@datadog/browser-core/test/specHelper'
 import { IncrementalSource, MouseInteractionType, RecordType } from '../../../types'
-import { serializeDocument, SerializationContextStatus } from '../serialize'
+import { serializeDocument, SerializationContextStatus } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from '../../../../test/utils'
 import type { MouseInteractionCallBack } from './mouseInteractionObserver'

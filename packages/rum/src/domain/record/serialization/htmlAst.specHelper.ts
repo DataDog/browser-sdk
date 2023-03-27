@@ -1,8 +1,8 @@
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { noop, objectValues } from '../../core/src'
-import type { SerializedNodeWithId } from '../src/types'
-import { serializeNodeWithId, SerializationContextStatus, createElementsScrollPositions } from '../src/domain/record'
-import { NodePrivacyLevel, PRIVACY_ATTR_NAME } from '../src/constants'
+import { display, noop, objectValues } from '@datadog/browser-core'
+import type { SerializedNodeWithId } from '../../../types'
+import { serializeNodeWithId, SerializationContextStatus, createElementsScrollPositions } from '..'
+import { NodePrivacyLevel, PRIVACY_ATTR_NAME } from '../../../constants'
 
 export const makeHtmlDoc = (htmlContent: string, privacyTag: string) => {
   try {
@@ -11,7 +11,7 @@ export const makeHtmlDoc = (htmlContent: string, privacyTag: string) => {
     newDoc.documentElement.setAttribute(PRIVACY_ATTR_NAME, privacyTag)
     return newDoc
   } catch (e) {
-    console.error('Failed to set innerHTML of new doc:', e)
+    display.error('Failed to set innerHTML of new doc:', e)
     return document
   }
 }
