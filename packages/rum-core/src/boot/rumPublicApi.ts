@@ -1,6 +1,7 @@
 import type { Context, InitConfiguration, TimeStamp, RelativeTime, User } from '@datadog/browser-core'
 import {
   noop,
+  isExperimentalFeatureEnabled,
   willSyntheticsInjectRum,
   assign,
   BoundedBuffer,
@@ -18,6 +19,7 @@ import {
   areCookiesAuthorized,
   checkUser,
   sanitizeUser,
+  sanitize,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewContexts } from '../domain/contexts/viewContexts'
@@ -202,8 +204,8 @@ export function makeRumPublicApi(
 
     addAction: monitor((name: string, context?: object) => {
       addActionStrategy({
-        name,
-        context: deepClone(context as Context),
+        name: isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(name)! : name,
+        context: (isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(context) : deepClone(context)) as Context,
         startClocks: clocksNow(),
         type: ActionType.CUSTOM,
       })
@@ -213,16 +215,21 @@ export function makeRumPublicApi(
       const handlingStack = createHandlingStack()
       callMonitored(() => {
         addErrorStrategy({
-          error,
+          error, // Do not sanitize error here, it is needed unserialized by computeRawError()
           handlingStack,
-          context: deepClone(context as Context),
+          context: (isExperimentalFeatureEnabled('sanitize_inputs')
+            ? sanitize(context)
+            : deepClone(context)) as Context,
           startClocks: clocksNow(),
         })
       })
     },
 
     addTiming: monitor((name: string, time?: number) => {
-      addTimingStrategy(name, time as RelativeTime | TimeStamp | undefined)
+      addTimingStrategy(
+        isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(name)! : name,
+        time as RelativeTime | TimeStamp | undefined
+      )
     }),
 
     setUser: monitor((newUser: User) => {
@@ -257,7 +264,10 @@ export function makeRumPublicApi(
      * This feature is currently in beta. For more information see the full [feature flag tracking guide](https://docs.datadoghq.com/real_user_monitoring/feature_flag_tracking/).
      */
     addFeatureFlagEvaluation: monitor((key: string, value: any) => {
-      addFeatureFlagEvaluationStrategy(key, value)
+      addFeatureFlagEvaluationStrategy(
+        isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(key)! : key,
+        isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(value) : value
+      )
     }),
   })
 

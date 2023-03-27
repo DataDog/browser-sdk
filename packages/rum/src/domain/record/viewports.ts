@@ -19,11 +19,10 @@ const TOLERANCE = 25
  * in order to determine if window.scrollX/Y is measuring the layout or visual viewport.
  * This finding corresponds to which viewport mouseEvent.clientX/Y and window.innerWidth/Height measures.
  */
-function isVisualViewportFactoredIn() {
-  const visual = window.visualViewport
+function isVisualViewportFactoredIn(visualViewport: VisualViewport) {
   return (
-    Math.abs(visual.pageTop - visual.offsetTop - window.scrollY) > TOLERANCE ||
-    Math.abs(visual.pageLeft - visual.offsetLeft - window.scrollX) > TOLERANCE
+    Math.abs(visualViewport.pageTop - visualViewport.offsetTop - window.scrollY) > TOLERANCE ||
+    Math.abs(visualViewport.pageLeft - visualViewport.offsetLeft - window.scrollX) > TOLERANCE
   )
 }
 
@@ -35,41 +34,38 @@ interface LayoutCoordinates {
 }
 
 export const convertMouseEventToLayoutCoordinates = (clientX: number, clientY: number): LayoutCoordinates => {
-  const visual = window.visualViewport
-  const normalised: LayoutCoordinates = {
+  const visualViewport = window.visualViewport
+  const normalized: LayoutCoordinates = {
     layoutViewportX: clientX,
     layoutViewportY: clientY,
     visualViewportX: clientX,
     visualViewportY: clientY,
   }
 
-  if (!visual) {
-    // On old browsers, we cannot normalise, so fallback to clientX/Y
-    return normalised
-  } else if (isVisualViewportFactoredIn()) {
+  if (!visualViewport) {
+    // On old browsers, we cannot normalize, so fallback to clientX/Y
+    return normalized
+  } else if (isVisualViewportFactoredIn(visualViewport)) {
     // Typically Mobile Devices
-    normalised.layoutViewportX = Math.round(clientX + visual.offsetLeft)
-    normalised.layoutViewportY = Math.round(clientY + visual.offsetTop)
+    normalized.layoutViewportX = Math.round(clientX + visualViewport.offsetLeft)
+    normalized.layoutViewportY = Math.round(clientY + visualViewport.offsetTop)
   } else {
     // Typically Desktop Devices
-    normalised.visualViewportX = Math.round(clientX - visual.offsetLeft)
-    normalised.visualViewportY = Math.round(clientY - visual.offsetTop)
+    normalized.visualViewportX = Math.round(clientX - visualViewport.offsetLeft)
+    normalized.visualViewportY = Math.round(clientY - visualViewport.offsetTop)
   }
-  return normalised
+  return normalized
 }
 
-export const getVisualViewport = (): VisualViewportRecord['data'] => {
-  const visual = window.visualViewport
-  return {
-    scale: visual.scale,
-    offsetLeft: visual.offsetLeft,
-    offsetTop: visual.offsetTop,
-    pageLeft: visual.pageLeft,
-    pageTop: visual.pageTop,
-    height: visual.height,
-    width: visual.width,
-  }
-}
+export const getVisualViewport = (visualViewport: VisualViewport): VisualViewportRecord['data'] => ({
+  scale: visualViewport.scale,
+  offsetLeft: visualViewport.offsetLeft,
+  offsetTop: visualViewport.offsetTop,
+  pageLeft: visualViewport.pageLeft,
+  pageTop: visualViewport.pageTop,
+  height: visualViewport.height,
+  width: visualViewport.width,
+})
 
 export function getScrollX() {
   let scrollX

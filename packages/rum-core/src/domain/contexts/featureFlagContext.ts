@@ -2,7 +2,6 @@ import type { RelativeTime, ContextValue, Context } from '@datadog/browser-core'
 import {
   jsonStringify,
   computeBytesCount,
-  deepClone,
   noop,
   isExperimentalFeatureEnabled,
   SESSION_TIME_OUT_DELAY,
@@ -69,7 +68,7 @@ export function startFeatureFlagContexts(
     addFeatureFlagEvaluation: (key: string, value: ContextValue) => {
       const currentContext = featureFlagContexts.find()
       if (currentContext) {
-        currentContext[key] = deepClone(value)
+        currentContext[key] = value
         bytesCountCache = undefined
       }
     },

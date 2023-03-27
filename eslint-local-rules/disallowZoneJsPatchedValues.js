@@ -8,6 +8,11 @@ const PROBLEMATIC_IDENTIFIERS = {
   setTimeout: 'Use `setTimeout` from @datadog/browser-core instead',
   clearTimeout: 'Use `clearTimeout` from @datadog/browser-core instead',
 
+  // We didn't stumble on cases where using the patched `setInterval` from Zone.js is problematic
+  // yet, but still consider it problematic in prevention and to unify its usages with `setTimeout`.
+  setInterval: 'Use `setInterval` from @datadog/browser-core instead',
+  clearInterval: 'Use `clearInterval` from @datadog/browser-core instead',
+
   // TODO: disallow addEventListener, removeEventListener
 }
 
