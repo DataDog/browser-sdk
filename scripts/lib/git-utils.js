@@ -1,7 +1,7 @@
 const os = require('os')
 const fs = require('fs')
 
-const { command } = require('./execution-utils')
+const { command } = require('../lib/command')
 const { getGithubDeployKey } = require('./secrets')
 
 function initGitConfig(repository) {

@@ -3,7 +3,8 @@
 const fs = require('fs')
 const path = require('path')
 const { version: releaseVersion } = require('../../lerna.json')
-const { printLog, runMain, command } = require('../lib/execution-utils')
+const { printLog, runMain } = require('../lib/execution-utils')
+const { command } = require('../lib/command')
 const { findBrowserSdkPackageJsonFiles } = require('../lib/files-utils')
 
 runMain(() => {

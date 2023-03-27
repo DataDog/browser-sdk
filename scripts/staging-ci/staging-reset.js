@@ -1,7 +1,8 @@
 'use strict'
 
 const fs = require('fs')
-const { command, printLog, runMain } = require('../lib/execution-utils')
+const { printLog, runMain } = require('../lib/execution-utils')
+const { command } = require('../lib/command')
 const { CI_FILE, replaceCiFileVariable, readCiFileVariable } = require('../lib/files-utils')
 const { initGitConfig } = require('../lib/git-utils')
 
