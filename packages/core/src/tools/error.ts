@@ -1,6 +1,8 @@
+import { isExperimentalFeatureEnabled } from '../domain/configuration'
 import type { StackTrace } from '../domain/tracekit'
 import { computeStackTrace } from '../domain/tracekit'
 import { callMonitored } from './monitor'
+import { sanitize } from './sanitize'
 import type { ClocksState } from './timeUtils'
 import { jsonStringify, noop } from './utils'
 
@@ -68,13 +70,14 @@ export function computeRawError({
   handling,
 }: RawErrorParams): RawError {
   if (!stackTrace || (stackTrace.message === undefined && !(originalError instanceof Error))) {
+    const sanitizedError = isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(originalError) : originalError
     return {
       startClocks,
       source,
       handling,
-      originalError,
-      message: `${nonErrorPrefix} ${jsonStringify(originalError)!}`,
-      stack: NO_ERROR_STACK_PRESENT_MESSAGE,
+      originalError: sanitizedError,
+      message: `${nonErrorPrefix} ${jsonStringify(sanitizedError)!}`,
+      stack: 'No stack, consider using an instance of Error',
       handlingStack,
       type: stackTrace && stackTrace.name,
     }

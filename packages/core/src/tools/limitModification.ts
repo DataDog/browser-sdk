@@ -1,4 +1,6 @@
+import { isExperimentalFeatureEnabled } from '../domain/configuration'
 import type { Context } from './context'
+import { sanitize } from './sanitize'
 import { deepClone, getType } from './utils'
 
 /**
@@ -18,7 +20,7 @@ export function limitModification<T extends Context, Result>(
     const originalType = getType(originalValue)
     const newType = getType(newValue)
     if (newType === originalType) {
-      set(object, path, newValue)
+      set(object, path, isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(newValue) : newValue)
     } else if (originalType === 'object' && (newType === 'undefined' || newType === 'null')) {
       set(object, path, {})
     }

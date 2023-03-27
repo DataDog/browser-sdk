@@ -1,5 +1,6 @@
 import type { Context } from '@datadog/browser-core'
 import {
+  isExperimentalFeatureEnabled,
   clocksNow,
   computeRawError,
   ErrorHandling,
@@ -11,6 +12,7 @@ import {
   createContextManager,
   ErrorSource,
   monitored,
+  sanitize,
 } from '@datadog/browser-core'
 import type { LogsEvent } from '../logsEvent.types'
 
@@ -79,11 +81,18 @@ export class Logger {
       }
     }
 
-    const context = errorContext
-      ? (combine({ error: errorContext }, messageContext) as Context)
-      : (deepClone(messageContext) as Context)
+    const sanitizedMessageContext = (
+      isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(messageContext) : deepClone(messageContext)
+    ) as Context
 
-    this.handleLogStrategy({ message, context, status }, this)
+    const context = errorContext
+      ? (combine({ error: errorContext }, sanitizedMessageContext) as Context)
+      : sanitizedMessageContext
+
+    this.handleLogStrategy(
+      { message: isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(message)! : message, context, status },
+      this
+    )
   }
 
   debug(message: string, messageContext?: object, error?: Error) {
