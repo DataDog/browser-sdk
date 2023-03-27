@@ -5,8 +5,8 @@ import type { Context } from '../../tools/context'
 import { ContextHistory } from '../../tools/contextHistory'
 import type { RelativeTime } from '../../tools/timeUtils'
 import { relativeNow, clocksOrigin } from '../../tools/timeUtils'
-import { monitor } from '../../tools/monitor'
 import { DOM_EVENT, addEventListener, addEventListeners } from '../../browser/addEventListener'
+import { clearInterval, setInterval } from '../../browser/timer'
 import { tryOldCookiesMigration } from './oldCookiesMigration'
 import { startSessionStore } from './sessionStore'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
@@ -81,11 +81,11 @@ function trackActivity(expandOrRenewSession: () => void) {
 }
 
 function trackVisibility(expandSession: () => void) {
-  const expandSessionWhenVisible = monitor(() => {
+  const expandSessionWhenVisible = () => {
     if (document.visibilityState === 'visible') {
       expandSession()
     }
-  })
+  }
 
   const { stop } = addEventListener(document, DOM_EVENT.VISIBILITY_CHANGE, expandSessionWhenVisible)
   stopCallbacks.push(stop)
