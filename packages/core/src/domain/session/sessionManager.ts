@@ -15,6 +15,7 @@ export interface SessionManager<TrackingType extends string> {
   findActiveSession: (startTime?: RelativeTime) => SessionContext<TrackingType> | undefined
   renewObservable: Observable<void>
   expireObservable: Observable<void>
+  expire: () => void
 }
 
 export interface SessionContext<TrackingType extends string> extends Context {
@@ -62,6 +63,7 @@ export function startSessionManager<TrackingType extends string>(
     findActiveSession: (startTime) => sessionContextHistory.find(startTime),
     renewObservable: sessionStore.renewObservable,
     expireObservable: sessionStore.expireObservable,
+    expire: sessionStore.expire,
   }
 }
 

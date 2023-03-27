@@ -1,5 +1,5 @@
 import type { CookieOptions } from '../../browser/cookie'
-import { getCookie, setCookie } from '../../browser/cookie'
+import { deleteCookie, getCookie, setCookie } from '../../browser/cookie'
 import { setTimeout } from '../../browser/timer'
 import { isChromium } from '../../tools/browserDetection'
 import { dateNow } from '../../tools/timeUtils'
@@ -38,7 +38,7 @@ export function withCookieLockAccess(operations: Operations, numberOfRetries = 0
     return
   }
   let currentLock: string
-  let currentSession = retrieveSession()
+  let currentSession = retrieveSessionCookie()
   if (isCookieLockEnabled()) {
     // if someone has lock, retry later
     if (currentSession.lock) {
@@ -48,9 +48,9 @@ export function withCookieLockAccess(operations: Operations, numberOfRetries = 0
     // acquire lock
     currentLock = utils.generateUUID()
     currentSession.lock = currentLock
-    setSession(currentSession, operations.options)
+    setSessionCookie(currentSession, operations.options)
     // if lock is not acquired, retry later
-    currentSession = retrieveSession()
+    currentSession = retrieveSessionCookie()
     if (currentSession.lock !== currentLock) {
       retryLater(operations, numberOfRetries)
       return
@@ -59,27 +59,27 @@ export function withCookieLockAccess(operations: Operations, numberOfRetries = 0
   let processedSession = operations.process(currentSession)
   if (isCookieLockEnabled()) {
     // if lock corrupted after process, retry later
-    currentSession = retrieveSession()
+    currentSession = retrieveSessionCookie()
     if (currentSession.lock !== currentLock!) {
       retryLater(operations, numberOfRetries)
       return
     }
   }
   if (processedSession) {
-    persistSession(processedSession, operations.options)
+    persistSessionCookie(processedSession, operations.options)
   }
   if (isCookieLockEnabled()) {
     // correctly handle lock around expiration would require to handle this case properly at several levels
     // since we don't have evidence of lock issues around expiration, let's just not do the corruption check for it
     if (!(processedSession && isExpiredState(processedSession))) {
       // if lock corrupted after persist, retry later
-      currentSession = retrieveSession()
+      currentSession = retrieveSessionCookie()
       if (currentSession.lock !== currentLock!) {
         retryLater(operations, numberOfRetries)
         return
       }
       delete currentSession.lock
-      setSession(currentSession, operations.options)
+      setSessionCookie(currentSession, operations.options)
       processedSession = currentSession
     }
   }
@@ -111,16 +111,16 @@ function next() {
   }
 }
 
-export function persistSession(session: SessionState, options: CookieOptions) {
+export function persistSessionCookie(session: SessionState, options: CookieOptions) {
   if (isExpiredState(session)) {
-    clearSession(options)
+    deleteSessionCookie(options)
     return
   }
   session.expire = String(dateNow() + SESSION_EXPIRATION_DELAY)
-  setSession(session, options)
+  setSessionCookie(session, options)
 }
 
-function setSession(session: SessionState, options: CookieOptions) {
+function setSessionCookie(session: SessionState, options: CookieOptions) {
   setCookie(SESSION_COOKIE_NAME, toSessionString(session), SESSION_EXPIRATION_DELAY, options)
 }
 
@@ -131,7 +131,7 @@ export function toSessionString(session: SessionState) {
     .join(SESSION_ENTRY_SEPARATOR)
 }
 
-export function retrieveSession(): SessionState {
+export function retrieveSessionCookie(): SessionState {
   const sessionString = getCookie(SESSION_COOKIE_NAME)
   const session: SessionState = {}
   if (isValidSessionString(sessionString)) {
@@ -146,6 +146,10 @@ export function retrieveSession(): SessionState {
   return session
 }
 
+export function deleteSessionCookie(options: CookieOptions) {
+  deleteCookie(SESSION_COOKIE_NAME, options)
+}
+
 function isValidSessionString(sessionString: string | undefined): sessionString is string {
   return (
     sessionString !== undefined &&
@@ -155,8 +159,4 @@ function isValidSessionString(sessionString: string | undefined): sessionString 
 
 function isExpiredState(session: SessionState) {
   return utils.isEmptyObject(session)
-}
-
-function clearSession(options: CookieOptions) {
-  setCookie(SESSION_COOKIE_NAME, '', 0, options)
 }
