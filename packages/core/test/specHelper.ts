@@ -1,7 +1,6 @@
 import { instrumentMethod } from '../src/tools/instrumentMethod'
 import { resetNavigationStart } from '../src/tools/timeUtils'
-import { buildUrl } from '../src/tools/urlPolyfill'
-import { noop, assign } from '../src/tools/utils'
+import { noop } from '../src/tools/utils'
 import type { BrowserWindowWithEventBridge } from '../src/transport'
 
 export type Clock = ReturnType<typeof mockClock>
@@ -21,37 +20,6 @@ export function mockClock(date?: Date) {
       resetNavigationStart()
     },
   }
-}
-
-export function mockLocation(initialUrl: string) {
-  const fakeLocation = buildLocation(initialUrl)
-  spyOn(history, 'pushState').and.callFake((_: any, __: string, pathname: string) => {
-    assign(fakeLocation, buildLocation(pathname, fakeLocation.href))
-  })
-
-  function hashchangeCallBack() {
-    fakeLocation.hash = window.location.hash
-    fakeLocation.href = fakeLocation.href.replace(/#.*/, '') + window.location.hash
-  }
-
-  window.addEventListener('hashchange', hashchangeCallBack)
-  return {
-    location: fakeLocation,
-    cleanup: () => {
-      window.removeEventListener('hashchange', hashchangeCallBack)
-      window.location.hash = ''
-    },
-  }
-}
-
-export function buildLocation(url: string, base = location.href) {
-  const urlObject = buildUrl(url, base)
-  return {
-    hash: urlObject.hash,
-    href: urlObject.href,
-    pathname: urlObject.pathname,
-    search: urlObject.search,
-  } as Location
 }
 
 export function setPageVisibility(visibility: 'visible' | 'hidden') {
