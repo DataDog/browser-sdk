@@ -1,6 +1,5 @@
-import { stubZoneJs } from '../../test/stubZoneJs'
-import type { Clock } from '../../test/specHelper'
-import { mockClock } from '../../test/specHelper'
+import { mockClock, stubZoneJs } from '../../test'
+import type { Clock } from '../../test'
 import { noop } from '../tools/utils'
 import { resetMonitor, startMonitorErrorCollection } from '../tools/monitor'
 import { setTimeout, clearTimeout, setInterval, clearInterval } from './timer'

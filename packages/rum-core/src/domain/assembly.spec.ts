@@ -1,16 +1,20 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { ErrorSource, ONE_MINUTE, display } from '@datadog/browser-core'
+import {
+  initEventBridgeStub,
+  deleteEventBridgeStub,
+  cleanupSyntheticsWorkerValues,
+  mockSyntheticsWorkerValues,
+} from '@datadog/browser-core/test'
 import { createRumSessionManagerMock } from '../../test/mockRumSessionManager'
 import { createRawRumEvent } from '../../test/fixtures'
 import type { TestSetupBuilder } from '../../test/testSetupBuilder'
 import { setup } from '../../test/testSetupBuilder'
+import { cleanupCiVisibilityWindowValues, mockCiVisibilityWindowValues } from '../../test/mockCiVisibilityWindowValues'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumActionEvent, RawRumErrorEvent, RawRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumActionEvent, RumErrorEvent, RumEvent } from '../rumEvent.types'
-import { initEventBridgeStub, deleteEventBridgeStub } from '../../../core/test/specHelper'
-import { cleanupSyntheticsWorkerValues, mockSyntheticsWorkerValues } from '../../../core/test/syntheticsWorkerValues'
-import { cleanupCiVisibilityWindowValues, mockCiVisibilityWindowValues } from '../../test/mockCiVisibilityWindowValues'
 import { startRumAssembly } from './assembly'
 import type { LifeCycle, RawRumEventCollectedData } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'

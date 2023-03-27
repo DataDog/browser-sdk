@@ -1,15 +1,16 @@
 import { ErrorSource, display, stopSessionManager, getCookie, SESSION_COOKIE_NAME } from '@datadog/browser-core'
-import { cleanupSyntheticsWorkerValues, mockSyntheticsWorkerValues } from '../../../core/test/syntheticsWorkerValues'
+import type { Request } from '@datadog/browser-core/test'
 import {
+  interceptRequests,
+  stubEndpointBuilder,
   deleteEventBridgeStub,
   initEventBridgeStub,
-  stubEndpointBuilder,
-  interceptRequests,
-} from '../../../core/test/specHelper'
-import type { Request } from '../../../core/test/specHelper'
+  cleanupSyntheticsWorkerValues,
+  mockSyntheticsWorkerValues,
+} from '@datadog/browser-core/test'
+
 import type { LogsConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
-
 import { HandlerType, Logger, StatusType } from '../domain/logger'
 import type { startLoggerCollection } from '../domain/logsCollection/logger/loggerCollection'
 import type { LogsEvent } from '../logsEvent.types'

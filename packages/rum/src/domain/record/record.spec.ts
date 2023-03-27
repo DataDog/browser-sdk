@@ -1,9 +1,8 @@
 import { DefaultPrivacyLevel, findLast, isIE } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycle } from '@datadog/browser-rum-core'
-import { collectAsyncCalls } from '../../../../core/test/collectAsyncCalls'
-import type { Clock } from '../../../../core/test/specHelper'
-import { createNewEvent } from '../../../../core/test/specHelper'
+import type { Clock } from '@datadog/browser-core/test'
+import { createNewEvent, collectAsyncCalls } from '@datadog/browser-core/test'
 import { findFullSnapshot, findNode, recordsPerFullSnapshot } from '../../../test/utils'
 import type {
   BrowserIncrementalSnapshotRecord,

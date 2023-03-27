@@ -1,5 +1,5 @@
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
-import { createNewEvent } from '../../../../../core/test/specHelper'
+import { createNewEvent } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../../../test/testSetupBuilder'
 import { setup } from '../../../../test/testSetupBuilder'
 import { RumEventType, ActionType } from '../../../rawRumEvent.types'

@@ -1,5 +1,5 @@
 import { isIE } from '@datadog/browser-core'
-import { createNewEvent } from '@datadog/browser-core/test/specHelper'
+import { createNewEvent } from '@datadog/browser-core/test'
 import { SerializationContextStatus, serializeDocument } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { IncrementalSource } from '../../../types'

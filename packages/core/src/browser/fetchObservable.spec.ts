@@ -1,5 +1,5 @@
-import type { FetchStub, FetchStubManager, FetchStubPromise } from '../../test/specHelper'
-import { stubFetch } from '../../test/specHelper'
+import type { FetchStub, FetchStubManager, FetchStubPromise } from '../../test'
+import { stubFetch } from '../../test'
 import { isIE } from '../tools/browserDetection'
 import type { Subscription } from '../tools/observable'
 import type { FetchResolveContext, FetchContext } from './fetchObservable'

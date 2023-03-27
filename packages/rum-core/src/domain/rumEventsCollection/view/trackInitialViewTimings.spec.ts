@@ -1,6 +1,6 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { DOM_EVENT } from '@datadog/browser-core'
-import { createNewEvent, restorePageVisibility, setPageVisibility } from '../../../../../core/test/specHelper'
+import { restorePageVisibility, setPageVisibility, createNewEvent } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../../../test/testSetupBuilder'
 import { setup } from '../../../../test/testSetupBuilder'
 import type {

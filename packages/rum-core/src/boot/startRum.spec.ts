@@ -9,7 +9,7 @@ import {
   relativeNow,
   isIE,
 } from '@datadog/browser-core'
-import { createNewEvent, interceptRequests } from '../../../core/test/specHelper'
+import { createNewEvent, interceptRequests } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock } from '../../test/mockRumSessionManager'
 import { createRumSessionManagerMock } from '../../test/mockRumSessionManager'
 import type { TestSetupBuilder } from '../../test/testSetupBuilder'

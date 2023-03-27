@@ -1,7 +1,7 @@
 import { isIE, noop } from '@datadog/browser-core'
 import type { RecorderApi, ViewContexts, LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
-import { createNewEvent, deleteEventBridgeStub, initEventBridgeStub } from '../../../core/test/specHelper'
+import { deleteEventBridgeStub, initEventBridgeStub, createNewEvent } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock } from '../../../rum-core/test/mockRumSessionManager'
 import { createRumSessionManagerMock } from '../../../rum-core/test/mockRumSessionManager'
 import type { TestSetupBuilder } from '../../../rum-core/test/testSetupBuilder'

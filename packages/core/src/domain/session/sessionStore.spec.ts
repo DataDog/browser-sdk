@@ -1,5 +1,5 @@
-import type { Clock } from '../../../test/specHelper'
-import { mockClock } from '../../../test/specHelper'
+import type { Clock } from '../../../test'
+import { mockClock } from '../../../test'
 import type { CookieOptions } from '../../browser/cookie'
 import { getCookie, setCookie, COOKIE_ACCESS_DELAY } from '../../browser/cookie'
 import type { SessionStore } from './sessionStore'

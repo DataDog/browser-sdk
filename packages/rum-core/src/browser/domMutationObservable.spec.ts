@@ -1,5 +1,5 @@
 import { isIE } from '@datadog/browser-core'
-import { stubZoneJs } from '../../../core/test/stubZoneJs'
+import { stubZoneJs } from '@datadog/browser-core/test'
 import { createDOMMutationObservable, getMutationObserverConstructor } from './domMutationObservable'
 
 // The MutationObserver invokes its callback in an event loop microtask, making this asynchronous.

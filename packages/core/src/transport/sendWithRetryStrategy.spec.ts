@@ -1,5 +1,5 @@
-import { mockClock, restoreNavigatorOnLine, setNavigatorOnLine } from '../../test/specHelper'
-import type { Clock } from '../../test/specHelper'
+import { mockClock, restoreNavigatorOnLine, setNavigatorOnLine } from '../../test'
+import type { Clock } from '../../test'
 import { ErrorSource } from '../tools/error'
 import type { RetryState } from './sendWithRetryStrategy'
 import {
