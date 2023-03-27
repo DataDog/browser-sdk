@@ -1,6 +1,6 @@
-import { SESSION_COOKIE_NAME } from '@datadog/browser-core'
 import { createTest, flushEvents } from '../../lib/framework'
 import { browserExecute, browserExecuteAsync } from '../../lib/helpers/browser'
+import { findSessionCookie } from '../../lib/helpers/session'
 
 describe('rum sessions', () => {
   createTest('calling stopSession() stops the session')
@@ -20,7 +20,7 @@ describe('rum sessions', () => {
       })
       await flushEvents()
 
-      expect(await getSessionCookie()).toBeUndefined()
+      expect(await findSessionCookie()).toBeUndefined()
       expect(serverEvents.rumActions.length).toBe(0)
     })
 
@@ -33,7 +33,7 @@ describe('rum sessions', () => {
       await (await $('html')).click()
 
       // The session is not created right away, let's wait until we see a cookie
-      await browser.waitUntil(async () => Boolean(await getSessionCookie()))
+      await browser.waitUntil(async () => Boolean(await findSessionCookie()))
 
       await browserExecute(() => {
         window.DD_RUM!.addAction('foo')
@@ -41,14 +41,7 @@ describe('rum sessions', () => {
 
       await flushEvents()
 
-      expect(await getSessionCookie()).not.toBeUndefined()
+      expect(await findSessionCookie()).not.toBeUndefined()
       expect(serverEvents.rumActions.length).toBe(1)
     })
 })
-
-async function getSessionCookie() {
-  const cookies = await browser.getCookies(SESSION_COOKIE_NAME)
-  // In some case, the session cookie is returned but with an empty value. Let's consider it expired
-  // in this case.
-  return cookies?.[0].value || undefined
-}
