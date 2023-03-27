@@ -19,5 +19,5 @@ export async function findSessionCookie() {
   const cookies = await browser.getCookies(SESSION_COOKIE_NAME)
   // In some case, the session cookie is returned but with an empty value. Let's consider it expired
   // in this case.
-  return cookies?.[0].value || undefined
+  return cookies[0]?.value || undefined
 }
