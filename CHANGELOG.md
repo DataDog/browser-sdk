@@ -16,6 +16,12 @@
 
 ---
 
+## v4.36.0
+
+- ✨ [RUMF-1497] Allow logger APIs to pass an Error parameter ([#2029](https://github.com/DataDog/browser-sdk/pull/2029))
+- ⚗️ [RUMF-1522] Expose addFeatureFlagEvaluation ([#2096](https://github.com/DataDog/browser-sdk/pull/2096))
+- 🐛 [RUMF-1491] fix error when calling `fetch` with an unexpected value as first parameter ([#2061](https://github.com/DataDog/browser-sdk/pull/2061))
+
 ## v4.35.0
 
 - ✨[RUMF-1500] deploy new datacenter files ([#2049](https://github.com/DataDog/browser-sdk/pull/2049))

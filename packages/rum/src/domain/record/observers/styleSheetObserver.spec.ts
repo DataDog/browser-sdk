@@ -1,7 +1,7 @@
 import { isIE } from '@datadog/browser-core'
 import { isFirefox } from '@datadog/browser-core/test/specHelper'
 import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from '../../../../test/utils'
-import { serializeDocument, SerializationContextStatus } from '../serialize'
+import { serializeDocument, SerializationContextStatus } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import type { StyleSheetCallback } from './styleSheetObserver'
 import { initStyleSheetObserver } from './styleSheetObserver'

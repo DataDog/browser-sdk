@@ -1,5 +1,5 @@
 import { addEventListeners, addTelemetryDebug, DOM_EVENT, throttle } from '@datadog/browser-core'
-import { getSerializedNodeId, hasSerializedNode } from '../serializationUtils'
+import { getSerializedNodeId, hasSerializedNode } from '../serialization'
 import { isTouchEvent } from '../utils'
 import type { MousePosition } from '../../../types'
 import { IncrementalSource } from '../../../types'

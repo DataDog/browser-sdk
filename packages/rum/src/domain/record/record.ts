@@ -14,7 +14,7 @@ import type {
   ViewportResizeData,
 } from '../../types'
 import { RecordType, IncrementalSource } from '../../types'
-import { serializeDocument, SerializationContextStatus } from './serialize'
+import { SerializationContextStatus, serializeDocument } from './serialization'
 import { initObservers } from './observers'
 import { getVisualViewport, getScrollX, getScrollY } from './viewports'
 import { assembleIncrementalSnapshot } from './utils'

@@ -3,7 +3,7 @@ import { instrumentSetter, assign, DOM_EVENT, addEventListeners } from '@datadog
 import { NodePrivacyLevel } from '../../../constants'
 import type { InputState } from '../../../types'
 import { getNodePrivacyLevel, shouldMaskNode } from '../privacy'
-import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from '../serializationUtils'
+import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from '../serialization'
 import type { ListenerHandler } from './utils'
 import { getEventTarget, forEach } from './utils'
 

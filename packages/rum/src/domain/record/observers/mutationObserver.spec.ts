@@ -11,7 +11,7 @@ import {
 } from '../../../constants'
 import type { AttributeMutation, Attributes } from '../../../types'
 import { NodeType } from '../../../types'
-import { serializeDocument, SerializationContextStatus } from '../serialize'
+import { serializeDocument, SerializationContextStatus } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootCallBack } from '../shadowRootsController'
 import { sortAddedAndMovedNodes, initMutationObserver } from './mutationObserver'

@@ -1,6 +1,6 @@
 import { isIE } from '@datadog/browser-core'
 import { createNewEvent } from '@datadog/browser-core/test/specHelper'
-import { SerializationContextStatus, serializeDocument } from '../serialize'
+import { SerializationContextStatus, serializeDocument } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { IncrementalSource } from '../../../types'
 import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from '../../../../test/utils'
