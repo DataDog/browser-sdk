@@ -24,14 +24,6 @@ export const SPEC_ENDPOINTS = {
   },
 }
 
-export function isSafari() {
-  return /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
-}
-
-export function isFirefox() {
-  return navigator.userAgent.toLowerCase().indexOf('firefox') > -1
-}
-
 export type Clock = ReturnType<typeof mockClock>
 
 export function mockClock(date?: Date) {
@@ -509,8 +501,4 @@ export function interceptRequests() {
       StubXhr.onSend = noop
     },
   }
-}
-
-export function isAdoptedStyleSheetsSupported() {
-  return Boolean((document as any).adoptedStyleSheets)
 }

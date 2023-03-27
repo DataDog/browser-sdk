@@ -1,3 +1,4 @@
+export * from './browserChecks'
 export * from './capturedExceptions'
 export * from './collectAsyncCalls'
 export * from './stubReportApis'
