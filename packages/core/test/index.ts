@@ -1,4 +1,5 @@
 export * from './browserChecks'
+export * from './buildEnv'
 export * from './capturedExceptions'
 export * from './collectAsyncCalls'
 export * from './stubReportApis'

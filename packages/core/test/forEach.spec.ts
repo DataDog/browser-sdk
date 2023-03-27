@@ -1,4 +1,4 @@
-import type { BuildEnvWindow } from './specHelper'
+import type { BuildEnvWindow } from './buildEnv'
 
 beforeEach(() => {
   ;(window as unknown as BuildEnvWindow).__BUILD_ENV__SDK_VERSION__ = 'test'
