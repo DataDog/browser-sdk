@@ -30,7 +30,7 @@ export function restoreNavigatorOnLine() {
 
 export function initEventBridgeStub(allowedWebViewHosts: string[] = [window.location.hostname]) {
   const eventBridgeStub = {
-    send: (msg: string) => undefined,
+    send: (_msg: string) => undefined,
     getAllowedWebViewHosts: () => JSON.stringify(allowedWebViewHosts),
   }
   ;(window as BrowserWindowWithEventBridge).DatadogEventBridge = eventBridgeStub
