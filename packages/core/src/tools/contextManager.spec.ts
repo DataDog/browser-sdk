@@ -88,26 +88,46 @@ describe('createContextManager', () => {
     expect(manager.getContext()).toEqual({})
   })
 
-  it('should compute the bytes count only if the context has been updated', () => {
-    const computeBytesCountStub = jasmine.createSpy('computeBytesCountStub').and.returnValue(1)
-    const manager = createContextManager(CustomerDataType.User, computeBytesCountStub)
+  describe('bytes count computation', () => {
+    it('should be done only if the context has been updated', () => {
+      const computeBytesCountStub = jasmine.createSpy('computeBytesCountStub').and.returnValue(1)
+      const manager = createContextManager(CustomerDataType.User, computeBytesCountStub)
 
-    manager.remove('foo')
-    clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
+      manager.add('foo', 'bar')
+      clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
 
-    manager.set({ foo: 'bar' })
-    clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
+      manager.remove('foo')
+      clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
 
-    manager.removeContextProperty('foo')
-    clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
+      manager.set({ foo: 'bar' })
+      clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
 
-    manager.setContext({ foo: 'bar' })
-    clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
+      manager.setContextProperty('foo', 'bar')
+      clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
 
-    manager.clearContext()
-    const bytesCount = manager.getBytesCount()
+      manager.removeContextProperty('foo')
+      clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
 
-    expect(bytesCount).toEqual(0)
-    expect(computeBytesCountStub).toHaveBeenCalledTimes(4)
+      manager.setContext({ foo: 'bar' })
+      clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
+
+      manager.clearContext()
+      const bytesCount = manager.getBytesCount()
+
+      expect(bytesCount).toEqual(0)
+      expect(computeBytesCountStub).toHaveBeenCalledTimes(6)
+    })
+
+    it('should be throttled to minimize the impact on performance', () => {
+      const computeBytesCountStub = jasmine.createSpy('computeBytesCountStub').and.returnValue(1)
+      const manager = createContextManager(CustomerDataType.User, computeBytesCountStub)
+
+      manager.setContextProperty('1', 'foo') // leading call executed synchronously
+      manager.setContextProperty('2', 'bar') // ignored
+      manager.setContextProperty('3', 'bar') // trailing call executed after BYTES_COMPUTATION_THROTTLING_DELAY
+      clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
+
+      expect(computeBytesCountStub).toHaveBeenCalledTimes(2)
+    })
   })
 })
