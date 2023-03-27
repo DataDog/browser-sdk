@@ -1,11 +1,10 @@
 import { isExperimentalFeatureEnabled } from '../domain/configuration'
-import { computeBytesCount, deepClone, jsonStringify, ONE_KIBI_BYTE, throttle } from './utils'
+import { computeBytesCount, deepClone, jsonStringify, throttle } from './utils'
 import type { Context, ContextValue } from './context'
 import type { CustomerDataType } from './heavyCustomerDataWarning'
 import { warnIfCustomerDataLimitReached } from './heavyCustomerDataWarning'
 import { sanitize } from './sanitize'
 
-export const CUSTOMER_CONTEXT_BYTES_LIMIT = 5 + ONE_KIBI_BYTE
 export const BYTES_COMPUTATION_THROTTLING_DELAY = 200
 
 export type ContextManager = ReturnType<typeof createContextManager>
