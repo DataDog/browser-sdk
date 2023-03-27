@@ -1,7 +1,7 @@
 import { instrumentMethod } from '../src/tools/instrumentMethod'
 import { resetNavigationStart } from '../src/tools/timeUtils'
 import { buildUrl } from '../src/tools/urlPolyfill'
-import { noop, objectEntries, assign } from '../src/tools/utils'
+import { noop, assign } from '../src/tools/utils'
 import type { BrowserWindowWithEventBridge } from '../src/transport'
 
 export type Clock = ReturnType<typeof mockClock>
@@ -52,31 +52,6 @@ export function buildLocation(url: string, base = location.href) {
     pathname: urlObject.pathname,
     search: urlObject.search,
   } as Location
-}
-
-export function createNewEvent<P extends Record<string, unknown>>(eventName: 'click', properties?: P): MouseEvent & P
-export function createNewEvent<P extends Record<string, unknown>>(
-  eventName: 'pointerup',
-  properties?: P
-): PointerEvent & P
-export function createNewEvent(eventName: string, properties?: { [name: string]: unknown }): Event
-export function createNewEvent(eventName: string, properties: { [name: string]: unknown } = {}) {
-  let event: Event
-  if (typeof Event === 'function') {
-    event = new Event(eventName)
-  } else {
-    event = document.createEvent('Event')
-    event.initEvent(eventName, true, true)
-  }
-  objectEntries(properties).forEach(([name, value]) => {
-    // Setting values directly or with a `value` descriptor seems unsupported in IE11
-    Object.defineProperty(event, name, {
-      get() {
-        return value
-      },
-    })
-  })
-  return event
 }
 
 export function setPageVisibility(visibility: 'visible' | 'hidden') {
