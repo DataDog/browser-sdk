@@ -7,7 +7,6 @@ import type {
 } from '@datadog/browser-rum/src/types'
 import { NodeType, IncrementalSource, RecordType, MouseInteractionType } from '@datadog/browser-rum/src/types'
 
-import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import { FrustrationType } from '@datadog/browser-rum-core'
 import { DefaultPrivacyLevel } from '@datadog/browser-rum'
 
@@ -25,9 +24,9 @@ import {
   findElementWithTagName,
 } from '@datadog/browser-rum/test/utils'
 import { renewSession } from '../../lib/helpers/session'
-import type { EventRegistry } from '../../lib/framework'
 import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
 import { browserExecute, browserExecuteAsync } from '../../lib/helpers/browser'
+import { getFirstSegment, getLastSegment, initRumAndStartRecording } from '../../lib/helpers/replay'
 
 const INTEGER_RE = /^\d+$/
 const TIMESTAMP_RE = /^\d{13}$/
@@ -869,16 +868,3 @@ describe('recorder', () => {
       })
   })
 })
-
-function getFirstSegment(events: EventRegistry) {
-  return events.sessionReplay[0].segment.data
-}
-
-function getLastSegment(events: EventRegistry) {
-  return events.sessionReplay[events.sessionReplay.length - 1].segment.data
-}
-
-function initRumAndStartRecording(initConfiguration: RumInitConfiguration) {
-  window.DD_RUM!.init(initConfiguration)
-  window.DD_RUM!.startSessionReplayRecording()
-}
