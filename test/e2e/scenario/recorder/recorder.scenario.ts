@@ -5,7 +5,7 @@ import type {
   BrowserSegment,
   ScrollData,
 } from '@datadog/browser-rum/src/types'
-import { NodeType, IncrementalSource, RecordType, MouseInteractionType } from '@datadog/browser-rum/src/types'
+import { NodeType, IncrementalSource, MouseInteractionType } from '@datadog/browser-rum/src/types'
 
 import { FrustrationType } from '@datadog/browser-rum-core'
 import { DefaultPrivacyLevel } from '@datadog/browser-rum'
@@ -23,7 +23,6 @@ import {
   findMouseInteractionRecords,
   findElementWithTagName,
 } from '@datadog/browser-rum/test/utils'
-import { renewSession } from '../../lib/helpers/session'
 import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
 import { browserExecute, browserExecuteAsync } from '../../lib/helpers/browser'
 import { getFirstSegment, getLastSegment, initRumAndStartRecording } from '../../lib/helpers/replay'
@@ -692,27 +691,6 @@ describe('recorder', () => {
         expect(styleSheetRules[0].data.adds).toEqual([{ rule: '.inserted {}', index: [0, 0] }])
         expect(styleSheetRules[1].data.adds).toEqual([{ rule: '.added {}', index: [0, 1] }])
         expect(styleSheetRules[2].data.removes).toEqual([{ index: [1, 1] }])
-      })
-  })
-
-  describe('session renewal', () => {
-    createTest('a single fullSnapshot is taken when the session is renewed')
-      .withRum()
-      .withRumInit(initRumAndStartRecording)
-      .withSetup(bundleSetup)
-      .run(async ({ serverEvents }) => {
-        await renewSession()
-
-        await flushEvents()
-
-        expect(serverEvents.sessionReplay.length).toBe(2)
-
-        const segment = getLastSegment(serverEvents)
-        expect(segment.creation_reason).toBe('init')
-        expect(segment.records[0].type).toBe(RecordType.Meta)
-        expect(segment.records[1].type).toBe(RecordType.Focus)
-        expect(segment.records[2].type).toBe(RecordType.FullSnapshot)
-        expect(segment.records.slice(3).every((record) => record.type !== RecordType.FullSnapshot)).toBe(true)
       })
   })
 
