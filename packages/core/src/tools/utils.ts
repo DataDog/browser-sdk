@@ -239,7 +239,7 @@ export function objectHasValue<T extends { [key: string]: unknown }>(object: T, 
   return Object.keys(object).some((key) => object[key] === value)
 }
 
-export function objectEntries(object: { [key: string]: unknown }): Array<[string, unknown]> {
+export function objectEntries<T = unknown>(object: { [key: string]: T }): Array<[string, T]> {
   return Object.keys(object).map((key) => [key, object[key]])
 }
 
@@ -446,7 +446,7 @@ export function mergeInto<D, S>(
     return merged as unknown as Merged<D, S>
   }
 
-  const merged: Record<any, any> = getType(destination) === 'object' ? destination : {}
+  const merged = getType(destination) === 'object' ? (destination as Record<any, any>) : {}
   for (const key in source) {
     if (Object.prototype.hasOwnProperty.call(source, key)) {
       merged[key] = mergeInto(merged[key], source[key], circularReferenceChecker)
