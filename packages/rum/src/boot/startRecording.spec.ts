@@ -4,11 +4,9 @@ import type { LifeCycle, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { inflate } from 'pako'
 import { collectAsyncCalls, createNewEvent, mockClock } from '@datadog/browser-core/test'
-import type { RumSessionManagerMock } from '../../../rum-core/test/mockRumSessionManager'
-import { createRumSessionManagerMock } from '../../../rum-core/test/mockRumSessionManager'
+import type { RumSessionManagerMock, TestSetupBuilder } from '../../../rum-core/test'
+import { createRumSessionManagerMock, setup } from '../../../rum-core/test'
 
-import type { TestSetupBuilder } from '../../../rum-core/test/testSetupBuilder'
-import { setup } from '../../../rum-core/test/testSetupBuilder'
 import { recordsPerFullSnapshot } from '../../test/utils'
 import { setSegmentBytesLimit, startDeflateWorker } from '../domain/segmentCollection'
 

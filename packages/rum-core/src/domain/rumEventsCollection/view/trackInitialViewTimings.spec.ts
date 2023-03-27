@@ -1,8 +1,8 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { DOM_EVENT } from '@datadog/browser-core'
 import { restorePageVisibility, setPageVisibility, createNewEvent } from '@datadog/browser-core/test'
-import type { TestSetupBuilder } from '../../../../test/testSetupBuilder'
-import { setup } from '../../../../test/testSetupBuilder'
+import type { TestSetupBuilder } from '../../../../test'
+import { setup } from '../../../../test'
 import type {
   RumFirstInputTiming,
   RumLargestContentfulPaintTiming,

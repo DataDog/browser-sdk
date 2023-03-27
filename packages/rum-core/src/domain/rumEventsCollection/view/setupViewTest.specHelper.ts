@@ -1,4 +1,4 @@
-import type { BuildContext } from '../../../../test/testSetupBuilder'
+import type { BuildContext } from '../../../../test'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { ViewEvent, ViewOptions } from './trackViews'
 import { trackViews } from './trackViews'

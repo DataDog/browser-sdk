@@ -6,11 +6,14 @@ import {
   cleanupSyntheticsWorkerValues,
   mockSyntheticsWorkerValues,
 } from '@datadog/browser-core/test'
-import { createRumSessionManagerMock } from '../../test/mockRumSessionManager'
-import { createRawRumEvent } from '../../test/fixtures'
-import type { TestSetupBuilder } from '../../test/testSetupBuilder'
-import { setup } from '../../test/testSetupBuilder'
-import { cleanupCiVisibilityWindowValues, mockCiVisibilityWindowValues } from '../../test/mockCiVisibilityWindowValues'
+import type { TestSetupBuilder } from '../../test'
+import {
+  createRumSessionManagerMock,
+  mockCiVisibilityWindowValues,
+  setup,
+  createRawRumEvent,
+  cleanupCiVisibilityWindowValues,
+} from '../../test'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumActionEvent, RawRumErrorEvent, RawRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
