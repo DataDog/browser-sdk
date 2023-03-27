@@ -32,12 +32,6 @@ export function isFirefox() {
   return navigator.userAgent.toLowerCase().indexOf('firefox') > -1
 }
 
-export function clearAllCookies() {
-  document.cookie.split(';').forEach((c) => {
-    document.cookie = c.replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/;samesite=strict`)
-  })
-}
-
 export type Clock = ReturnType<typeof mockClock>
 
 export function mockClock(date?: Date) {
