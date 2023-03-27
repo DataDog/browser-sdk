@@ -1,7 +1,9 @@
+import { isExperimentalFeatureEnabled } from '../domain/configuration'
 import { computeBytesCount, deepClone, jsonStringify, throttle } from './utils'
 import type { Context, ContextValue } from './context'
 import type { CustomerDataType } from './heavyCustomerDataWarning'
 import { warnIfCustomerDataLimitReached } from './heavyCustomerDataWarning'
+import { sanitize } from './sanitize'
 
 export const BYTES_COMPUTATION_THROTTLING_DELAY = 200
 
@@ -44,12 +46,12 @@ export function createContextManager(customerDataType: CustomerDataType, compute
     getContext: () => deepClone(context),
 
     setContext: (newContext: Context) => {
-      context = deepClone(newContext)
+      context = isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(newContext) : deepClone(newContext)
       computeBytesCountThrottled(context)
     },
 
     setContextProperty: (key: string, property: any) => {
-      context[key] = deepClone(property)
+      context[key] = isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(property) : deepClone(property)
       computeBytesCountThrottled(context)
     },
 

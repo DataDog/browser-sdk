@@ -53,7 +53,7 @@ export function instrumentMethodAndCallOriginal<OBJECT extends { [key: string]: 
         let result
 
         if (before) {
-          callMonitored(before, this as ThisParameterType<OBJECT[METHOD]>, args)
+          callMonitored(before, this, args)
         }
 
         if (typeof original === 'function') {
@@ -62,7 +62,7 @@ export function instrumentMethodAndCallOriginal<OBJECT extends { [key: string]: 
         }
 
         if (after) {
-          callMonitored(after, this as ThisParameterType<OBJECT[METHOD]>, args)
+          callMonitored(after, this, args)
         }
 
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return

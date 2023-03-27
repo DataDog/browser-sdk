@@ -5,7 +5,6 @@ import {
   throttle,
   jsonStringify,
   computeBytesCount,
-  deepClone,
   noop,
   isExperimentalFeatureEnabled,
   SESSION_TIME_OUT_DELAY,
@@ -75,7 +74,7 @@ export function startFeatureFlagContexts(
     addFeatureFlagEvaluation: (key: string, value: ContextValue) => {
       const currentContext = featureFlagContexts.find()
       if (currentContext) {
-        currentContext[key] = deepClone(value)
+        currentContext[key] = value
         computeBytesCountThrottled(currentContext)
       }
     },

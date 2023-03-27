@@ -5,7 +5,6 @@ import {
   assign,
   elapsed,
   generateUUID,
-  monitor,
   ONE_MINUTE,
   throttle,
   clocksNow,
@@ -13,6 +12,8 @@ import {
   timeStampNow,
   display,
   looksLikeRelativeTime,
+  setInterval,
+  clearInterval,
 } from '@datadog/browser-core'
 
 import type { ViewCustomTimings } from '../../../rawRumEvent.types'
@@ -136,12 +137,9 @@ export function trackViews(
     })
 
     // Session keep alive
-    const keepAliveInterval = window.setInterval(
-      monitor(() => {
-        currentView.triggerUpdate()
-      }),
-      SESSION_KEEP_ALIVE_INTERVAL
-    )
+    const keepAliveInterval = setInterval(() => {
+      currentView.triggerUpdate()
+    }, SESSION_KEEP_ALIVE_INTERVAL)
 
     return {
       stop: () => {
