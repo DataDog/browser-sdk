@@ -32,8 +32,15 @@ function getLocalInfos() {
   return `${process.env.USER} ${new Date().toLocaleString()}`
 }
 
+function getTestReportDirectory() {
+  if (process.env.CI_JOB_NAME) {
+    return `test-report/${process.env.CI_JOB_NAME}`
+  }
+}
+
 module.exports = {
   getRunId,
   getBuildInfos,
   getIp,
+  getTestReportDirectory,
 }
