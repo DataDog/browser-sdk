@@ -1,7 +1,7 @@
 import { Alert, Button, Center, Group, MantineProvider } from '@mantine/core'
 import { useColorScheme } from '@mantine/hooks'
 import React, { Suspense, useState } from 'react'
-import { listenDisconnectEvent } from './disconnectEvent'
+import { listenDisconnectEvent } from '../disconnectEvent'
 
 import { Panel } from './panel'
 
