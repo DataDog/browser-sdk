@@ -7,7 +7,7 @@ import { collectAsyncCalls, createNewEvent, mockClock } from '@datadog/browser-c
 import type { RumSessionManagerMock, TestSetupBuilder } from '../../../rum-core/test'
 import { createRumSessionManagerMock, setup } from '../../../rum-core/test'
 
-import { recordsPerFullSnapshot } from '../../test/utils'
+import { recordsPerFullSnapshot } from '../../test'
 import { setSegmentBytesLimit, startDeflateWorker } from '../domain/segmentCollection'
 
 import type { BrowserSegment } from '../types'

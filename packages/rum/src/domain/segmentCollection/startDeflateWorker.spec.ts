@@ -1,6 +1,6 @@
 import type { RawTelemetryEvent } from '@datadog/browser-core'
 import { display, isIE, noop, resetTelemetry, startFakeTelemetry } from '@datadog/browser-core'
-import { MockWorker } from '../../../test/utils'
+import { MockWorker } from '../../../test'
 import type { createDeflateWorker } from './deflateWorker'
 import { startDeflateWorker, resetDeflateWorkerState } from './startDeflateWorker'
 

@@ -22,7 +22,7 @@ import {
   findAllFrustrationRecords,
   findMouseInteractionRecords,
   findElementWithTagName,
-} from '@datadog/browser-rum/test/utils'
+} from '@datadog/browser-rum/test'
 import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
 import { browserExecute, browserExecuteAsync } from '../../lib/helpers/browser'
 import { getFirstSegment, getLastSegment, initRumAndStartRecording } from '../../lib/helpers/replay'

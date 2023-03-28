@@ -3,7 +3,7 @@ import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycle } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, collectAsyncCalls } from '@datadog/browser-core/test'
-import { findFullSnapshot, findNode, recordsPerFullSnapshot } from '../../../test/utils'
+import { findFullSnapshot, findNode, recordsPerFullSnapshot } from '../../../test'
 import type {
   BrowserIncrementalSnapshotRecord,
   BrowserMutationData,

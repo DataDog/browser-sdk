@@ -7,7 +7,7 @@ import { mockClock, restorePageVisibility } from '@datadog/browser-core/test'
 import { createRumSessionManagerMock } from '../../../../rum-core/test'
 import type { BrowserRecord, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
-import { MockWorker } from '../../../test/utils'
+import { MockWorker } from '../../../test'
 import {
   computeSegmentContext,
   doStartSegmentCollection,

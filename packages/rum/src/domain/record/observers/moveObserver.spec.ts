@@ -3,7 +3,7 @@ import { createNewEvent } from '@datadog/browser-core/test'
 import { SerializationContextStatus, serializeDocument } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { IncrementalSource } from '../../../types'
-import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from '../../../../test/utils'
+import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from '../../../../test'
 import type { MousemoveCallBack } from './moveObserver'
 import { initMoveObserver } from './moveObserver'
 
