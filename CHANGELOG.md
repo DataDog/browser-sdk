@@ -16,6 +16,16 @@
 
 ---
 
+## v4.37.0
+
+- ♻️[RUMF-1517] split rum-core specHelper ([#2106](https://github.com/DataDog/browser-sdk/pull/2106))
+- ♻️[RUMF-1517] split scripts utils ([#2102](https://github.com/DataDog/browser-sdk/pull/2102))
+- ✨[RUMF-1500] Remove some references to legacy bundles ([#2097](https://github.com/DataDog/browser-sdk/pull/2097))
+- 📝 RUMF-1497 Update logger API documentation ([#2098](https://github.com/DataDog/browser-sdk/pull/2098))
+- ✨ [RUMF-1518] implement a new API to stop the RUM session ([#2064](https://github.com/DataDog/browser-sdk/pull/2064))
+- 🐛 ♻️ [RUMF 1470] Fix serialization issues ([#1971](https://github.com/DataDog/browser-sdk/pull/1971))
+- ♻️ [RUMF-1505] introduce a safe `setInterval` helper function ([#2044](https://github.com/DataDog/browser-sdk/pull/2044))
+
 ## v4.36.0
 
 - ✨ [RUMF-1497] Allow logger APIs to pass an Error parameter ([#2029](https://github.com/DataDog/browser-sdk/pull/2029))
