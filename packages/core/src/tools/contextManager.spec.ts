@@ -89,7 +89,7 @@ describe('createContextManager', () => {
   })
 
   describe('bytes count computation', () => {
-    it('should be done only if the context has been updated', () => {
+    it('should be done every time the context is updated', () => {
       const computeBytesCountStub = jasmine.createSpy('computeBytesCountStub').and.returnValue(1)
       const manager = createContextManager(CustomerDataType.User, computeBytesCountStub)
 
