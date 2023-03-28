@@ -1,6 +1,6 @@
 const path = require('path')
 const { unlinkSync, mkdirSync } = require('fs')
-const { getRunId } = require('../utils')
+const { getRunId } = require('../envUtils')
 const getTestReportDirectory = require('../getTestReportDirectory')
 const { APPLICATION_ID } = require('./lib/helpers/constants')
 

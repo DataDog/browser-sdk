@@ -1,5 +1,5 @@
 const browsers = require('../browsers.conf')
-const { getBuildInfos, getIp } = require('../utils')
+const { getBuildInfos, getIp } = require('../envUtils')
 const karmaBaseConf = require('./karma.base.conf')
 
 module.exports = function (config) {
