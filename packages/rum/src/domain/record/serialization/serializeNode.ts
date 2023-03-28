@@ -11,7 +11,6 @@ import type {
   TextNode,
 } from '../../../types'
 import { NodeType } from '../../../types'
-import type { WithAdoptedStyleSheets } from '../browser.types'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN } from '../../../constants'
 import { reducePrivacyLevel, getNodeSelfPrivacyLevel, getTextContent } from '../privacy'
 import { getSerializedNodeId, getValidTagName, setSerializedNodeId } from './serializationUtils'
@@ -73,7 +72,7 @@ export function serializeDocumentNode(document: Document, options: SerializeOpti
   return {
     type: NodeType.Document,
     childNodes: serializeChildNodes(document, options),
-    adoptedStyleSheets: serializeStyleSheets((document as WithAdoptedStyleSheets).adoptedStyleSheets),
+    adoptedStyleSheets: serializeStyleSheets(document.adoptedStyleSheets),
   }
 }
 
@@ -95,9 +94,7 @@ function serializeDocumentFragmentNode(
     type: NodeType.DocumentFragment,
     childNodes,
     isShadowRoot,
-    adoptedStyleSheets: isShadowRoot
-      ? serializeStyleSheets((element as WithAdoptedStyleSheets).adoptedStyleSheets)
-      : undefined,
+    adoptedStyleSheets: isShadowRoot ? serializeStyleSheets(element.adoptedStyleSheets) : undefined,
   }
 }
 

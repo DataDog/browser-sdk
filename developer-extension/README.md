@@ -29,7 +29,7 @@ Then, in Google Chrome:
 - Flush buffered events
 - End current session
 - Load the SDK development bundles instead of production ones
-- Switch between `datadog-rum-v4.js` and `datadog-rum-slim-v4.js` bundles
+- Switch between `rum` and `rum-slim` bundles
 - Retrieve Logs/RUM configuration
 
 ## Browser compatibility

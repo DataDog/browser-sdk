@@ -1,8 +1,10 @@
 'use strict'
 
 const path = require('path')
-const { getSecretKey, command, printLog, runMain } = require('../lib/utils')
+const { printLog, runMain } = require('../lib/execution-utils')
+const { command } = require('../lib/command')
 const { SDK_VERSION } = require('../lib/build-env')
+const { getTelemetryOrgApiKey } = require('../lib/secrets')
 const {
   buildRootUploadPath,
   buildDatacenterUploadPath,
@@ -66,9 +68,6 @@ function renameFilesWithVersionSuffix(packageName, bundleFolder) {
 
 function uploadSourceMaps(packageName, service, prefix, bundleFolder, sites) {
   for (const site of sites) {
-    const normalizedSite = site.replaceAll('.', '-')
-    const apiKey = getSecretKey(`ci.browser-sdk.source-maps.${normalizedSite}.ci_api_key`)
-
     printLog(`Uploading ${packageName} source maps with prefix ${prefix} for ${site}...`)
 
     command`
@@ -80,7 +79,7 @@ function uploadSourceMaps(packageName, service, prefix, bundleFolder, sites) {
       --repository-url https://www.github.com/datadog/browser-sdk
   `
       .withEnvironment({
-        DATADOG_API_KEY: apiKey,
+        DATADOG_API_KEY: getTelemetryOrgApiKey(site),
         DATADOG_SITE: site,
       })
       .run()

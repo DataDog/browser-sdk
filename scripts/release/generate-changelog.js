@@ -6,7 +6,9 @@ const readFile = util.promisify(require('fs').readFile)
 const emojiNameMap = require('emoji-name-map')
 
 const lernaConfig = require('../../lerna.json')
-const { command, spawnCommand, printError, runMain, modifyFile } = require('../lib/utils')
+const { spawnCommand, printError, runMain } = require('../lib/execution-utils')
+const { command } = require('../lib/command')
+const { modifyFile } = require('../lib/files-utils')
 
 const CHANGELOG_FILE = 'CHANGELOG.md'
 const CONTRIBUTING_FILE = 'CONTRIBUTING.md'
@@ -78,12 +80,11 @@ function getChangesList() {
     .filter(isNotMaintenanceEntry)
     .join('\n')
 
-  const changesWithPullRequestLinks = allowedChanges.replace(
+  // changes with pull request links
+  return allowedChanges.replace(
     /\(#(\d+)\)/gm,
     (_, id) => `([#${id}](https://github.com/DataDog/browser-sdk/pull/${id}))`
   )
-
-  return changesWithPullRequestLinks
 }
 
 function isNotVersionEntry(line) {

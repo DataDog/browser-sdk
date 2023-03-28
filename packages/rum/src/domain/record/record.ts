@@ -93,7 +93,7 @@ export function record(options: RecordOptions): RecordAPI {
 
     if (window.visualViewport) {
       emit({
-        data: getVisualViewport(),
+        data: getVisualViewport(window.visualViewport),
         type: RecordType.VisualViewport,
         timestamp,
       })

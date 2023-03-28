@@ -6,7 +6,7 @@ const webpack = require('webpack')
 const logsConfig = require('../packages/logs/webpack.config')
 const rumSlimConfig = require('../packages/rum-slim/webpack.config')
 const rumConfig = require('../packages/rum/webpack.config')
-const { printLog } = require('./lib/utils')
+const { printLog } = require('./lib/execution-utils')
 
 const port = 8080
 const app = express()
