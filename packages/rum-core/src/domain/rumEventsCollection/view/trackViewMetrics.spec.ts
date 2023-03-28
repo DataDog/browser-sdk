@@ -1,14 +1,16 @@
 import type { Context, RelativeTime, Duration } from '@datadog/browser-core'
 import { addDuration, relativeNow } from '@datadog/browser-core'
 import type { RumEvent } from '../../../rumEvent.types'
-import type { TestSetupBuilder, ViewTest } from '../../../../test/specHelper'
-import { setup, setupViewTest } from '../../../../test/specHelper'
+import type { TestSetupBuilder } from '../../../../test/testSetupBuilder'
+import { setup } from '../../../../test/testSetupBuilder'
 import type { RumPerformanceNavigationTiming } from '../../../browser/performanceCollection'
 import { FrustrationType, RumEventType } from '../../../rawRumEvent.types'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { PAGE_ACTIVITY_END_DELAY, PAGE_ACTIVITY_VALIDATION_DELAY } from '../../waitPageActivityEnd'
 import { THROTTLE_VIEW_UPDATE_PERIOD } from './trackViews'
+import type { ViewTest } from './setupViewTest.specHelper'
+import { setupViewTest } from './setupViewTest.specHelper'
 
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = (PAGE_ACTIVITY_VALIDATION_DELAY * 0.8) as Duration
 

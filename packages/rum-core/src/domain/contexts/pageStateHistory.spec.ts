@@ -1,7 +1,7 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { resetExperimentalFeatures } from '@datadog/browser-core'
-import type { TestSetupBuilder } from 'packages/rum-core/test/specHelper'
-import { setup } from '../../../test/specHelper'
+import type { TestSetupBuilder } from 'packages/rum-core/test/testSetupBuilder'
+import { setup } from '../../../test/testSetupBuilder'
 import type { PageStateHistory } from './pageStateHistory'
 import { resetPageStates, startPageStateHistory, addPageState, PageState } from './pageStateHistory'
 

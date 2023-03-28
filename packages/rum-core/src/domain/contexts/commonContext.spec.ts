@@ -1,7 +1,7 @@
 import type { Context, ContextManager } from '@datadog/browser-core'
 import { createContextManager } from '@datadog/browser-core'
-import { noopRecorderApi } from '../../../test/specHelper'
 import type { RecorderApi } from '../../boot/rumPublicApi'
+import { noopRecorderApi } from '../../../test/noopRecorderApi'
 import type { CommonContext } from './commonContext'
 import { buildCommonContext as buildCommonContextImpl } from './commonContext'
 
