@@ -1,6 +1,5 @@
 import type { Context, InitConfiguration, TimeStamp, RelativeTime, User } from '@datadog/browser-core'
 import {
-  CustomerDataType,
   noop,
   isExperimentalFeatureEnabled,
   willSyntheticsInjectRum,
@@ -62,8 +61,8 @@ export function makeRumPublicApi(
 ) {
   let isAlreadyInitialized = false
 
-  const globalContextManager = createContextManager(CustomerDataType.GlobalContext)
-  const userContextManager = createContextManager(CustomerDataType.User)
+  const globalContextManager = createContextManager()
+  const userContextManager = createContextManager()
 
   let getInternalContextStrategy: StartRumResult['getInternalContext'] = () => undefined
   let getInitConfigurationStrategy = (): InitConfiguration | undefined => undefined

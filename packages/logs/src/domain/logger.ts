@@ -1,6 +1,5 @@
 import type { Context } from '@datadog/browser-core'
 import {
-  CustomerDataType,
   isExperimentalFeatureEnabled,
   clocksNow,
   computeRawError,
@@ -15,7 +14,6 @@ import {
   monitored,
   sanitize,
 } from '@datadog/browser-core'
-
 import type { LogsEvent } from '../logsEvent.types'
 
 export interface LogsMessage {
@@ -43,7 +41,7 @@ export type HandlerType = (typeof HandlerType)[keyof typeof HandlerType]
 export const STATUSES = Object.keys(StatusType) as StatusType[]
 
 export class Logger {
-  private contextManager = createContextManager(CustomerDataType.LoggerContext)
+  private contextManager = createContextManager()
 
   constructor(
     private handleLogStrategy: (logsMessage: LogsMessage, logger: Logger) => void,
