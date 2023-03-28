@@ -7,8 +7,8 @@ import {
   relativeNow,
   resetExperimentalFeatures,
 } from '@datadog/browser-core'
-import type { TestSetupBuilder, ViewTest } from '../../../../test/specHelper'
-import { setup, setupViewTest } from '../../../../test/specHelper'
+import type { TestSetupBuilder } from '../../../../test/testSetupBuilder'
+import { setup } from '../../../../test/testSetupBuilder'
 import type {
   RumLargestContentfulPaintTiming,
   RumPerformanceNavigationTiming,
@@ -19,6 +19,8 @@ import type { RumEvent } from '../../../rumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { ViewEvent } from './trackViews'
 import { THROTTLE_VIEW_UPDATE_PERIOD } from './trackViews'
+import type { ViewTest } from './setupViewTest.specHelper'
+import { setupViewTest } from './setupViewTest.specHelper'
 
 const FAKE_PAINT_ENTRY: RumPerformancePaintTiming = {
   entryType: 'paint',

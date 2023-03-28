@@ -1,25 +1,21 @@
 import type { Context, ContextManager, TimeStamp } from '@datadog/browser-core'
-import { createContextManager, assign, combine, Observable, noop } from '@datadog/browser-core'
+import { assign, combine, createContextManager, noop, Observable } from '@datadog/browser-core'
 import type { Clock } from '../../core/test/specHelper'
-import { SPEC_ENDPOINTS, mockClock, buildLocation } from '../../core/test/specHelper'
-import type { RecorderApi } from '../src/boot/rumPublicApi'
+import { buildLocation, mockClock, SPEC_ENDPOINTS } from '../../core/test/specHelper'
+import type { LocationChange } from '../src/browser/locationChangeObservable'
+import type { RumConfiguration } from '../src/domain/configuration'
+import { validateAndBuildRumConfiguration } from '../src/domain/configuration'
+import type { FeatureFlagContexts } from '../src/domain/contexts/featureFlagContext'
 import type { ForegroundContexts } from '../src/domain/contexts/foregroundContexts'
+import type { PageStateHistory } from '../src/domain/contexts/pageStateHistory'
+import type { UrlContexts } from '../src/domain/contexts/urlContexts'
+import type { ViewContexts } from '../src/domain/contexts/viewContexts'
 import type { RawRumEventCollectedData } from '../src/domain/lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
-import type { ViewContexts } from '../src/domain/contexts/viewContexts'
-import type { ViewEvent, ViewOptions } from '../src/domain/rumEventsCollection/view/trackViews'
-import { trackViews } from '../src/domain/rumEventsCollection/view/trackViews'
+import type { ActionContexts } from '../src/domain/rumEventsCollection/action/actionCollection'
 import type { RumSessionManager } from '../src/domain/rumSessionManager'
 import { RumSessionPlan } from '../src/domain/rumSessionManager'
 import type { RawRumEvent, RumContext } from '../src/rawRumEvent.types'
-import type { LocationChange } from '../src/browser/locationChangeObservable'
-import type { UrlContexts } from '../src/domain/contexts/urlContexts'
-import type { CiTestWindow } from '../src/domain/contexts/ciTestContext'
-import type { RumConfiguration } from '../src/domain/configuration'
-import { validateAndBuildRumConfiguration } from '../src/domain/configuration'
-import type { ActionContexts } from '../src/domain/rumEventsCollection/action/actionCollection'
-import type { FeatureFlagContexts } from '../src/domain/contexts/featureFlagContext'
-import type { PageStateHistory } from '../src/domain/contexts/pageStateHistory'
 import { validateRumFormat } from './formatValidation'
 import { createRumSessionManagerMock } from './mockRumSessionManager'
 
@@ -241,83 +237,4 @@ function validateRumEventFormat(rawRumEvent: RawRumEvent) {
     },
   }
   validateRumFormat(combine(fakeContext as RumContext & Context, rawRumEvent))
-}
-
-export type ViewTest = ReturnType<typeof setupViewTest>
-
-export function setupViewTest(
-  { lifeCycle, location, domMutationObservable, configuration, locationChangeObservable }: BuildContext,
-  initialViewOptions?: ViewOptions
-) {
-  const {
-    handler: viewUpdateHandler,
-    getViewEvent: getViewUpdate,
-    getHandledCount: getViewUpdateCount,
-  } = spyOnViews('view update')
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, viewUpdateHandler)
-  const {
-    handler: viewCreateHandler,
-    getViewEvent: getViewCreate,
-    getHandledCount: getViewCreateCount,
-  } = spyOnViews('view create')
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, viewCreateHandler)
-  const { stop, startView, addTiming } = trackViews(
-    location,
-    lifeCycle,
-    domMutationObservable,
-    configuration,
-    locationChangeObservable,
-    !configuration.trackViewsManually,
-    initialViewOptions
-  )
-  return {
-    stop,
-    startView,
-    addTiming,
-    getViewUpdate,
-    getViewUpdateCount,
-    getViewCreate,
-    getViewCreateCount,
-    getLatestViewContext: () => ({
-      id: getViewCreate(getViewCreateCount() - 1).id,
-    }),
-  }
-}
-
-export function spyOnViews(name?: string) {
-  const handler = jasmine.createSpy(name)
-
-  function getViewEvent(index: number) {
-    return handler.calls.argsFor(index)[0] as ViewEvent
-  }
-
-  function getHandledCount() {
-    return handler.calls.count()
-  }
-
-  return { handler, getViewEvent, getHandledCount }
-}
-
-export const noopRecorderApi: RecorderApi = {
-  start: noop,
-  stop: noop,
-  isRecording: () => false,
-  onRumStart: noop,
-  getReplayStats: () => undefined,
-}
-
-export function mockCiVisibilityWindowValues(traceId?: unknown) {
-  if (traceId) {
-    ;(window as CiTestWindow).Cypress = {
-      env: (key: string) => {
-        if (typeof traceId === 'string' && key === 'traceId') {
-          return traceId
-        }
-      },
-    }
-  }
-}
-
-export function cleanupCiVisibilityWindowValues() {
-  delete (window as CiTestWindow).Cypress
 }
