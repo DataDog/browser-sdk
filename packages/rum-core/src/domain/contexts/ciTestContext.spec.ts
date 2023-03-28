@@ -1,4 +1,7 @@
-import { mockCiVisibilityWindowValues, cleanupCiVisibilityWindowValues } from '../../../test/specHelper'
+import {
+  cleanupCiVisibilityWindowValues,
+  mockCiVisibilityWindowValues,
+} from '../../../test/mockCiVisibilityWindowValues'
 import { getCiTestContext } from './ciTestContext'
 
 describe('getCiTestContext', () => {

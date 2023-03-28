@@ -5,7 +5,8 @@ import type { RawRumEventCollectedData } from 'packages/rum-core/src/domain/life
 import { RecordType } from '../../../types'
 import type { FrustrationCallback } from './frustrationObserver'
 import { initFrustrationObserver } from './frustrationObserver'
-import { getRecordIdForEvent } from './utils'
+import type { RecordIds } from './recordIds'
+import { initRecordIds } from './recordIds'
 
 describe('initFrustrationObserver', () => {
   const lifeCycle = new LifeCycle()
@@ -13,6 +14,7 @@ describe('initFrustrationObserver', () => {
   let frustrationsCallbackSpy: jasmine.Spy<FrustrationCallback>
   let mouseEvent: MouseEvent
   let rumData: RawRumEventCollectedData<RawRumActionEvent>
+  let recordIds: RecordIds
 
   beforeEach(() => {
     if (isIE()) {
@@ -20,6 +22,7 @@ describe('initFrustrationObserver', () => {
     }
     mouseEvent = new MouseEvent('pointerup')
     frustrationsCallbackSpy = jasmine.createSpy()
+    recordIds = initRecordIds()
 
     rumData = {
       startTime: relativeNow(),
@@ -46,19 +49,19 @@ describe('initFrustrationObserver', () => {
   })
 
   it('calls callback if the raw data inserted is a click action', () => {
-    stopFrustrationObserver = initFrustrationObserver(lifeCycle, frustrationsCallbackSpy)
+    stopFrustrationObserver = initFrustrationObserver(lifeCycle, frustrationsCallbackSpy, recordIds)
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rumData)
 
     const frustrationRecord = frustrationsCallbackSpy.calls.first().args[0]
     expect(frustrationRecord.type).toEqual(RecordType.FrustrationRecord)
     expect(frustrationRecord.timestamp).toEqual(rumData.rawRumEvent.date)
     expect(frustrationRecord.data.frustrationTypes).toEqual(rumData.rawRumEvent.action.frustration!.type)
-    expect(frustrationRecord.data.recordIds).toEqual([getRecordIdForEvent(mouseEvent)])
+    expect(frustrationRecord.data.recordIds).toEqual([recordIds.getIdForEvent(mouseEvent)])
   })
 
   it('ignores events other than click actions', () => {
     rumData.rawRumEvent.action.type = ActionType.CUSTOM
-    stopFrustrationObserver = initFrustrationObserver(lifeCycle, frustrationsCallbackSpy)
+    stopFrustrationObserver = initFrustrationObserver(lifeCycle, frustrationsCallbackSpy, recordIds)
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rumData)
 
     expect(frustrationsCallbackSpy).not.toHaveBeenCalled()
@@ -67,7 +70,7 @@ describe('initFrustrationObserver', () => {
   it('ignores click actions without frustrations', () => {
     rumData.rawRumEvent.action.frustration = { type: [] }
 
-    stopFrustrationObserver = initFrustrationObserver(lifeCycle, frustrationsCallbackSpy)
+    stopFrustrationObserver = initFrustrationObserver(lifeCycle, frustrationsCallbackSpy, recordIds)
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rumData)
 
     expect(frustrationsCallbackSpy).not.toHaveBeenCalled()
@@ -76,7 +79,7 @@ describe('initFrustrationObserver', () => {
   it('ignores click actions which are missing the original mouse events', () => {
     rumData.domainContext = {}
 
-    stopFrustrationObserver = initFrustrationObserver(lifeCycle, frustrationsCallbackSpy)
+    stopFrustrationObserver = initFrustrationObserver(lifeCycle, frustrationsCallbackSpy, recordIds)
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rumData)
 
     expect(frustrationsCallbackSpy).not.toHaveBeenCalled()

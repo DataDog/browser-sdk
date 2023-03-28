@@ -7,8 +7,8 @@ import type { RumSessionManagerMock } from '../../../rum-core/test/mockRumSessio
 import { createRumSessionManagerMock } from '../../../rum-core/test/mockRumSessionManager'
 import { createNewEvent, mockClock } from '../../../core/test/specHelper'
 
-import type { TestSetupBuilder } from '../../../rum-core/test/specHelper'
-import { setup } from '../../../rum-core/test/specHelper'
+import type { TestSetupBuilder } from '../../../rum-core/test/testSetupBuilder'
+import { setup } from '../../../rum-core/test/testSetupBuilder'
 import { recordsPerFullSnapshot } from '../../test/utils'
 import { setSegmentBytesLimit, startDeflateWorker } from '../domain/segmentCollection'
 

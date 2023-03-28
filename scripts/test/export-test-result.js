@@ -1,6 +1,8 @@
 'use strict'
 
-const { getSecretKey, command, printLog, runMain } = require('../lib/utils')
+const { printLog, runMain } = require('../lib/execution-utils')
+const { command } = require('../lib/command')
+const { getOrg2ApiKey } = require('../lib/secrets')
 
 /**
  * Upload test result to datadog
@@ -12,11 +14,9 @@ const testType = process.argv[2]
 const resultFolder = `test-report/${testType}/`
 
 runMain(() => {
-  const DATADOG_API_KEY = getSecretKey('ci.browser-sdk.datadog_ci_api_key')
-
   command`datadog-ci junit upload --service browser-sdk --env ci --tags test.type:${testType} ${resultFolder}`
     .withEnvironment({
-      DATADOG_API_KEY,
+      DATADOG_API_KEY: getOrg2ApiKey(),
     })
     .run()
 

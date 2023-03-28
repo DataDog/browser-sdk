@@ -1,14 +1,12 @@
-import type { DefaultPrivacyLevel } from '@datadog/browser-core'
+import type { DefaultPrivacyLevel, ListenerHandler } from '@datadog/browser-core'
 import { DOM_EVENT, throttle, addEventListener } from '@datadog/browser-core'
 import type { ElementsScrollPositions } from '../elementsScrollPositions'
+import { getEventTarget } from '../eventsUtils'
 import { getNodePrivacyLevel } from '../privacy'
 import { getSerializedNodeId, hasSerializedNode } from '../serialization'
-
 import { getScrollX, getScrollY } from '../viewports'
 import type { ScrollPosition } from '../../../types'
 import { NodePrivacyLevel } from '../../../constants'
-import type { ListenerHandler } from './utils'
-import { getEventTarget } from './utils'
 
 const SCROLL_OBSERVER_THRESHOLD = 100
 

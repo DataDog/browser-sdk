@@ -8,8 +8,8 @@ import {
   relativeNow,
 } from '@datadog/browser-core'
 import { createNewEvent } from '../../../../../core/test/specHelper'
-import type { TestSetupBuilder } from '../../../../test/specHelper'
-import { setup } from '../../../../test/specHelper'
+import type { TestSetupBuilder } from '../../../../test/testSetupBuilder'
+import { setup } from '../../../../test/testSetupBuilder'
 import { RumEventType, ActionType, FrustrationType } from '../../../rawRumEvent.types'
 import type { RumEvent } from '../../../rumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'

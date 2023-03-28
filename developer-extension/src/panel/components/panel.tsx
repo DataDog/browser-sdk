@@ -1,13 +1,13 @@
 import React, { useState } from 'react'
 import { Tabs, Text } from '@mantine/core'
 
-import type { Settings } from './components/settingsTab'
-import { SettingsTab } from './components/settingsTab'
-import { InfosTab } from './components/infosTab'
-import { useEvents } from './hooks/useEvents'
-import { EventTab } from './components/eventsTab'
-import { useStore } from './hooks/useStore'
-import { useAutoFlushEvents } from './hooks/useAutoFlushEvents'
+import { useEvents } from '../hooks/useEvents'
+import { useStore } from '../hooks/useStore'
+import { useAutoFlushEvents } from '../hooks/useAutoFlushEvents'
+import type { Settings } from './tabs/settingsTab'
+import { SettingsTab } from './tabs/settingsTab'
+import { InfosTab } from './tabs/infosTab'
+import { EventTab } from './tabs/eventsTab'
 
 const enum PanelTabs {
   Events = 'events',
@@ -16,7 +16,7 @@ const enum PanelTabs {
 }
 
 export function Panel() {
-  const [{ devServerStatus, ...settingsFromStore }, setStore] = useStore()
+  const [settingsFromStore, setStore] = useStore()
   const [settingsFromMemory, setSettingsFromMemory] = useState<
     Pick<Settings, 'autoFlush' | 'preserveEvents' | 'eventSource'>
   >({
@@ -76,7 +76,6 @@ export function Panel() {
               }
             }
           }}
-          devServerStatus={devServerStatus}
         />
       </Tabs.Panel>
     </Tabs>

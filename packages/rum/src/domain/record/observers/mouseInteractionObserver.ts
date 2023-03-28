@@ -1,14 +1,14 @@
-import type { DefaultPrivacyLevel } from '@datadog/browser-core'
+import type { DefaultPrivacyLevel, ListenerHandler } from '@datadog/browser-core'
 import { assign, addEventListeners, DOM_EVENT } from '@datadog/browser-core'
 import { NodePrivacyLevel } from '../../../constants'
 import type { MouseInteraction, MouseInteractionData, BrowserIncrementalSnapshotRecord } from '../../../types'
 import { IncrementalSource, MouseInteractionType } from '../../../types'
+import { assembleIncrementalSnapshot } from '../assembly'
+import { getEventTarget } from '../eventsUtils'
 import { getNodePrivacyLevel } from '../privacy'
 import { getSerializedNodeId, hasSerializedNode } from '../serialization'
-import { assembleIncrementalSnapshot } from '../utils'
 import { tryToComputeCoordinates } from './moveObserver'
-import type { ListenerHandler } from './utils'
-import { getRecordIdForEvent, getEventTarget } from './utils'
+import type { RecordIds } from './recordIds'
 
 const eventTypeToMouseInteraction = {
   // Listen for pointerup DOM events instead of mouseup for MouseInteraction/MouseUp records. This
@@ -35,7 +35,8 @@ export type MouseInteractionCallBack = (record: BrowserIncrementalSnapshotRecord
 
 export function initMouseInteractionObserver(
   cb: MouseInteractionCallBack,
-  defaultPrivacyLevel: DefaultPrivacyLevel
+  defaultPrivacyLevel: DefaultPrivacyLevel,
+  recordIds: RecordIds
 ): ListenerHandler {
   const handler = (event: MouseEvent | TouchEvent) => {
     const target = getEventTarget(event)
@@ -57,7 +58,7 @@ export function initMouseInteractionObserver(
     }
 
     const record = assign(
-      { id: getRecordIdForEvent(event) },
+      { id: recordIds.getIdForEvent(event) },
       assembleIncrementalSnapshot<MouseInteractionData>(IncrementalSource.MouseInteraction, interaction)
     )
     cb(record)

@@ -1,6 +1,5 @@
 import { createTest, flushEvents, html } from '../../lib/framework'
-import { browserExecute, getBrowserName, sendXhr } from '../../lib/helpers/browser'
-import { expireSession, renewSession } from '../../lib/helpers/session'
+import { browserExecute, getBrowserName } from '../../lib/helpers/browser'
 
 describe('rum views', () => {
   createTest('send performance timings along the view events')
@@ -31,30 +30,6 @@ describe('rum views', () => {
         expect(viewEvent.view.first_input_delay).toBeGreaterThanOrEqual(0)
       })
   }
-
-  createTest('create a new View when the session is renewed')
-    .withRum()
-    .run(async ({ serverEvents }) => {
-      await renewSession()
-      await flushEvents()
-      const viewEvents = serverEvents.rumViews
-      const firstViewEvent = viewEvents[0]
-      const lastViewEvent = viewEvents[viewEvents.length - 1]
-      expect(firstViewEvent.session.id).not.toBe(lastViewEvent.session.id)
-      expect(firstViewEvent.view.id).not.toBe(lastViewEvent.view.id)
-
-      const distinctIds = new Set(viewEvents.map((viewEvent) => viewEvent.view.id))
-      expect(distinctIds.size).toBe(2)
-    })
-
-  createTest("don't send events when session is expired")
-    .withRum()
-    .run(async ({ serverEvents }) => {
-      await expireSession()
-      serverEvents.empty()
-      await sendXhr('/ok')
-      expect(serverEvents.count).toBe(0)
-    })
 
   describe('anchor navigation', () => {
     createTest("don't create a new view when it is an Anchor navigation")
