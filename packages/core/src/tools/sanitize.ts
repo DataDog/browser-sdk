@@ -79,12 +79,14 @@ export function sanitize(source: unknown, maxCharacterCount = SANITIZE_DEFAULT_M
           containerQueue,
           visitedObjectsWithPath
         )
-        accumulatedCharacterCount += JSON.stringify(targetData).length + separatorLength
+        // When an element of an Array (targetData) is undefined, it is serialized as null:
+        // JSON.stringify([undefined]) => '[null]' - This accounts for 4 characters
+        accumulatedCharacterCount += (JSON.stringify(targetData)?.length ?? 4) + separatorLength
+        separatorLength = 1
         if (accumulatedCharacterCount > maxCharacterCount) {
           warnOverCharacterLimit(maxCharacterCount, 'truncated', source)
           break
         }
-        separatorLength = 1
         ;(containerToProcess.target as ContextArray)[key] = targetData
       }
     } else {
@@ -97,13 +99,17 @@ export function sanitize(source: unknown, maxCharacterCount = SANITIZE_DEFAULT_M
             containerQueue,
             visitedObjectsWithPath
           )
-          accumulatedCharacterCount +=
-            JSON.stringify(targetData).length + separatorLength + key.length + KEY_DECORATION_LENGTH
+          // When a property of an object has an undefined value, it will be dropped during serialization:
+          // JSON.stringify({a:undefined}) => '{}'
+          if (targetData !== undefined) {
+            accumulatedCharacterCount +=
+              JSON.stringify(targetData).length + separatorLength + key.length + KEY_DECORATION_LENGTH
+            separatorLength = 1
+          }
           if (accumulatedCharacterCount > maxCharacterCount) {
             warnOverCharacterLimit(maxCharacterCount, 'truncated', source)
             break
           }
-          separatorLength = 1
           ;(containerToProcess.target as Context)[key] = targetData
         }
       }
