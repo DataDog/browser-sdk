@@ -1,3 +1,5 @@
 export * from './mockWorker'
 export * from './utils'
 export * from './mutationPayloadValidator'
+export * from './nodes'
+export * from './segments'

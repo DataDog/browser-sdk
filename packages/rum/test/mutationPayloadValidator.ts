@@ -9,13 +9,8 @@ import type {
   BrowserSegment,
   BrowserMutationData,
 } from '../src/types'
-import {
-  findTextNode,
-  findElementWithIdAttribute,
-  findElementWithTagName,
-  findFullSnapshot,
-  findAllIncrementalSnapshots,
-} from './utils'
+import { findAllIncrementalSnapshots, findFullSnapshot } from './segments'
+import { findTextNode, findElementWithTagName, findElementWithIdAttribute } from './nodes'
 
 interface NodeSelector {
   // Select the first node with the given tag name from the initial full snapshot
