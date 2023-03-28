@@ -1,12 +1,11 @@
-import type { DefaultPrivacyLevel } from '@datadog/browser-core'
+import type { DefaultPrivacyLevel, ListenerHandler } from '@datadog/browser-core'
 import { DOM_EVENT, addEventListeners } from '@datadog/browser-core'
 import { NodePrivacyLevel } from '../../../constants'
 import type { MediaInteraction } from '../../../types'
 import { MediaInteractionType } from '../../../types'
+import { getEventTarget } from '../eventsUtils'
 import { getNodePrivacyLevel } from '../privacy'
 import { getSerializedNodeId, hasSerializedNode } from '../serialization'
-import type { ListenerHandler } from './utils'
-import { getEventTarget } from './utils'
 
 export type MediaInteractionCallback = (p: MediaInteraction) => void
 

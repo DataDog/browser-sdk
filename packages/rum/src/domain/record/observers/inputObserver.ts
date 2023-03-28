@@ -1,11 +1,10 @@
-import type { DefaultPrivacyLevel } from '@datadog/browser-core'
-import { instrumentSetter, assign, DOM_EVENT, addEventListeners } from '@datadog/browser-core'
+import type { DefaultPrivacyLevel, ListenerHandler } from '@datadog/browser-core'
+import { instrumentSetter, assign, DOM_EVENT, addEventListeners, forEach } from '@datadog/browser-core'
 import { NodePrivacyLevel } from '../../../constants'
 import type { InputState } from '../../../types'
+import { getEventTarget } from '../eventsUtils'
 import { getNodePrivacyLevel, shouldMaskNode } from '../privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from '../serialization'
-import type { ListenerHandler } from './utils'
-import { getEventTarget, forEach } from './utils'
 
 type InputObserverOptions = {
   domEvents?: Array<DOM_EVENT.INPUT | DOM_EVENT.CHANGE>

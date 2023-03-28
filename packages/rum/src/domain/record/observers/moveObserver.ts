@@ -1,11 +1,10 @@
+import type { ListenerHandler } from '@datadog/browser-core'
 import { addEventListeners, addTelemetryDebug, DOM_EVENT, throttle } from '@datadog/browser-core'
 import { getSerializedNodeId, hasSerializedNode } from '../serialization'
-import { isTouchEvent } from '../utils'
 import type { MousePosition } from '../../../types'
 import { IncrementalSource } from '../../../types'
+import { getEventTarget, isTouchEvent } from '../eventsUtils'
 import { convertMouseEventToLayoutCoordinates } from '../viewports'
-import type { ListenerHandler } from './utils'
-import { getEventTarget } from './utils'
 
 const MOUSE_MOVE_OBSERVER_THRESHOLD = 50
 
