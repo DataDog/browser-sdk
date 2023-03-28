@@ -161,7 +161,7 @@ describe('featureFlagContexts', () => {
       } as ViewCreatedEvent)
     })
 
-    it('should be done only if the context has been updated', () => {
+    it('should be done each time the context is updated', () => {
       featureFlagContexts.addFeatureFlagEvaluation('feature1', 'foo')
       clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
       featureFlagContexts.addFeatureFlagEvaluation('feature2', 'bar')
