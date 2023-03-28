@@ -1,10 +1,10 @@
 import { isIE } from '@datadog/browser-core'
 import { isFirefox } from '@datadog/browser-core/test'
-import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from '../../../../test'
 import { serializeDocument, SerializationContextStatus } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import type { StyleSheetCallback } from './styleSheetObserver'
 import { initStyleSheetObserver, getPathToNestedCSSRule } from './styleSheetObserver'
+import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './observers.specHelper'
 
 describe('initStyleSheetObserver', () => {
   let stopStyleSheetObserver: () => void
