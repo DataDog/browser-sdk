@@ -1,5 +1,6 @@
 import type { RelativeTime, Observable, RawError, Duration } from '@datadog/browser-core'
 import {
+  CustomerDataType,
   createContextManager,
   stopSessionManager,
   toServerDuration,
@@ -305,8 +306,8 @@ describe('view events', () => {
         {} as RumInitConfiguration,
         configuration,
         noopRecorderApi,
-        createContextManager(),
-        createContextManager()
+        createContextManager(CustomerDataType.GlobalContext),
+        createContextManager(CustomerDataType.User)
       )
     })
     interceptor = interceptRequests()

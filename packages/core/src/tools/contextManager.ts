@@ -1,62 +1,68 @@
 import { isExperimentalFeatureEnabled } from '../domain/configuration'
-import { computeBytesCount, deepClone, jsonStringify } from './utils'
+import { computeBytesCount, deepClone, jsonStringify, throttle } from './utils'
 import type { Context, ContextValue } from './context'
+import type { CustomerDataType } from './heavyCustomerDataWarning'
+import { warnIfCustomerDataLimitReached } from './heavyCustomerDataWarning'
 import { sanitize } from './sanitize'
+
+export const BYTES_COMPUTATION_THROTTLING_DELAY = 200
 
 export type ContextManager = ReturnType<typeof createContextManager>
 
-export function createContextManager(computeBytesCountImpl = computeBytesCount) {
+export function createContextManager(customerDataType: CustomerDataType, computeBytesCountImpl = computeBytesCount) {
   let context: Context = {}
-  let bytesCountCache: number | undefined
+  let bytesCountCache: number
+
+  // Throttle the bytes computation to minimize the impact on performance.
+  // Especially usefull if the user call context APIs synchronously mutliple times in a row
+  const { throttled: computeBytesCountThrottled } = throttle((context: Context) => {
+    bytesCountCache = computeBytesCountImpl(jsonStringify(context)!)
+    warnIfCustomerDataLimitReached(bytesCountCache, customerDataType)
+  }, BYTES_COMPUTATION_THROTTLING_DELAY)
 
   return {
-    getBytesCount: () => {
-      if (bytesCountCache === undefined) {
-        bytesCountCache = computeBytesCountImpl(jsonStringify(context)!)
-      }
-      return bytesCountCache
-    },
+    getBytesCount: () => bytesCountCache,
     /** @deprecated use getContext instead */
     get: () => context,
 
     /** @deprecated use setContextProperty instead */
     add: (key: string, value: any) => {
       context[key] = value as ContextValue
-      bytesCountCache = undefined
+      computeBytesCountThrottled(context)
     },
 
     /** @deprecated renamed to removeContextProperty */
     remove: (key: string) => {
       delete context[key]
-      bytesCountCache = undefined
+      computeBytesCountThrottled(context)
     },
 
     /** @deprecated use setContext instead */
     set: (newContext: object) => {
       context = newContext as Context
-      bytesCountCache = undefined
+      computeBytesCountThrottled(context)
     },
 
     getContext: () => deepClone(context),
 
     setContext: (newContext: Context) => {
       context = isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(newContext) : deepClone(newContext)
-      bytesCountCache = undefined
+      computeBytesCountThrottled(context)
     },
 
     setContextProperty: (key: string, property: any) => {
       context[key] = isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(property) : deepClone(property)
-      bytesCountCache = undefined
+      computeBytesCountThrottled(context)
     },
 
     removeContextProperty: (key: string) => {
       delete context[key]
-      bytesCountCache = undefined
+      computeBytesCountThrottled(context)
     },
 
     clearContext: () => {
       context = {}
-      bytesCountCache = undefined
+      bytesCountCache = 0
     },
   }
 }
