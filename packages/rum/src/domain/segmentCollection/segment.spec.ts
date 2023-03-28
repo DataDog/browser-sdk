@@ -1,7 +1,7 @@
 import type { TimeStamp } from '@datadog/browser-core'
 import { noop, setDebugMode, display, isIE } from '@datadog/browser-core'
-import { MockWorker, parseSegment } from '../../../test'
-import type { CreationReason, BrowserRecord, SegmentContext } from '../../types'
+import { MockWorker } from '../../../test'
+import type { CreationReason, BrowserRecord, SegmentContext, BrowserSegment } from '../../types'
 import { RecordType } from '../../types'
 import { getReplayStats, resetReplayStats } from '../replayStats'
 import { Segment } from './segment'
@@ -240,3 +240,7 @@ describe('Segment', () => {
     return new Segment(worker, context, creationReason, initialRecord, onWrote, onFlushed)
   }
 })
+
+function parseSegment(bytes: Uint8Array) {
+  return JSON.parse(new TextDecoder().decode(bytes)) as BrowserSegment
+}

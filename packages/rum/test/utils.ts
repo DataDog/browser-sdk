@@ -21,10 +21,6 @@ import type {
 } from '../src/types'
 import { RecordType, IncrementalSource, NodeType } from '../src/types'
 
-export function parseSegment(bytes: Uint8Array) {
-  return JSON.parse(new TextDecoder().decode(bytes)) as BrowserSegment
-}
-
 // Returns the first MetaRecord in a Segment, if any.
 export function findMeta(segment: BrowserSegment): MetaRecord | null {
   return segment.records.find((record) => record.type === RecordType.Meta) as MetaRecord
