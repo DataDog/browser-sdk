@@ -58,7 +58,7 @@ export function initMouseInteractionObserver(
     }
 
     const record = assign(
-      { id: recordIds.get(event) },
+      { id: recordIds.getIdForEvent(event) },
       assembleIncrementalSnapshot<MouseInteractionData>(IncrementalSource.MouseInteraction, interaction)
     )
     cb(record)

@@ -66,7 +66,7 @@ describe('initMouseInteractionObserver', () => {
     a.dispatchEvent(pointerupEvent)
 
     expect(mouseInteractionCallbackSpy).toHaveBeenCalledWith({
-      id: recordIds.get(pointerupEvent),
+      id: recordIds.getIdForEvent(pointerupEvent),
       type: RecordType.IncrementalSnapshot,
       timestamp: jasmine.any(Number),
       data: {

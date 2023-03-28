@@ -56,7 +56,7 @@ describe('initFrustrationObserver', () => {
     expect(frustrationRecord.type).toEqual(RecordType.FrustrationRecord)
     expect(frustrationRecord.timestamp).toEqual(rumData.rawRumEvent.date)
     expect(frustrationRecord.data.frustrationTypes).toEqual(rumData.rawRumEvent.action.frustration!.type)
-    expect(frustrationRecord.data.recordIds).toEqual([recordIds.get(mouseEvent)])
+    expect(frustrationRecord.data.recordIds).toEqual([recordIds.getIdForEvent(mouseEvent)])
   })
 
   it('ignores events other than click actions', () => {
