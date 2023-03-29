@@ -1,4 +1,4 @@
-import type { BrowserWindowWithZoneJs } from '../src/tools/getZoneJsOriginalValue'
+import type { BrowserWindowWithZoneJs } from '../../src/tools/getZoneJsOriginalValue'
 
 export function stubZoneJs() {
   const browserWindow = window as BrowserWindowWithZoneJs

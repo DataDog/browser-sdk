@@ -1,4 +1,4 @@
-import { assign, buildUrl } from '../src'
+import { assign, buildUrl } from '@datadog/browser-core'
 
 export function mockLocation(initialUrl: string) {
   const fakeLocation = buildLocation(initialUrl)

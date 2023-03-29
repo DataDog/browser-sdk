@@ -1,6 +1,6 @@
-import { instrumentMethod } from '../src/tools/instrumentMethod'
-import { noop } from '../src/tools/utils'
-import type { BrowserWindowWithEventBridge } from '../src/transport'
+import { instrumentMethod } from '../../src/tools/instrumentMethod'
+import { noop } from '../../src/tools/utils'
+import type { BrowserWindowWithEventBridge } from '../../src/transport'
 
 export function setPageVisibility(visibility: 'visible' | 'hidden') {
   Object.defineProperty(document, 'visibilityState', {
