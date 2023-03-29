@@ -2,6 +2,7 @@ import pako from 'pako'
 
 import type { Payload } from '@datadog/browser-core'
 import type { BrowserSegment } from '../src/types'
+import type { BrowserSegmentMetadataAndSegmentSizes } from '../src/domain/segmentCollection'
 
 export async function readReplayPayload(payload: Payload) {
   return {
@@ -16,18 +17,8 @@ function readSegmentFromReplayPayload(payload: Payload) {
   }) as Promise<BrowserSegment>
 }
 
-// In the next commit, this method will change and will be async. This is an intermediary
-// implementation to prepare for the real metadata change.
-// eslint-disable-next-line @typescript-eslint/require-await
 export async function readMetadataFromReplayPayload(payload: Payload) {
-  const data = payload.data as FormData
-  const result: Record<string, string> = {}
-  data.forEach((value, key) => {
-    if (typeof value === 'string') {
-      result[key] = value
-    }
-  })
-  return result
+  return readJsonBlob((payload.data as FormData).get('event') as Blob) as Promise<BrowserSegmentMetadataAndSegmentSizes>
 }
 
 function readJsonBlob(blob: Blob, { decompress = false }: { decompress?: boolean } = {}) {

@@ -211,7 +211,7 @@ describe('startSegmentCollection', () => {
         worker.processAllMessages()
 
         expect(httpRequestSpy.send).toHaveBeenCalledTimes(1)
-        expect((await readMostRecentMetadata(httpRequestSpy.send)).records_count).toBe('4')
+        expect((await readMostRecentMetadata(httpRequestSpy.send)).records_count).toBe(4)
       })
 
       it('does not flush segment prematurely when records from the previous segment are still being processed', async () => {
@@ -229,7 +229,7 @@ describe('startSegmentCollection', () => {
         worker.processAllMessages()
 
         expect(httpRequestSpy.send).toHaveBeenCalledTimes(1)
-        expect((await readMostRecentMetadata(httpRequestSpy.send)).records_count).toBe('2')
+        expect((await readMostRecentMetadata(httpRequestSpy.send)).records_count).toBe(2)
       })
     })
 

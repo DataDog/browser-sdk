@@ -2,3 +2,4 @@ export { startSegmentCollection, setSegmentBytesLimit } from './segmentCollectio
 export { DeflateWorker, DeflateWorkerAction, DeflateWorkerListener } from './deflateWorker'
 export { startDeflateWorker } from './startDeflateWorker'
 export { SEGMENT_BYTES_LIMIT } from './segmentCollection'
+export type { BrowserSegmentMetadataAndSegmentSizes } from './buildReplayPayload'

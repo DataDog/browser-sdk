@@ -79,16 +79,22 @@ describe('startRecording', () => {
     const requests = await readSentRequests(1)
     expect(requests[0].segment).toEqual(jasmine.any(Object))
     expect(requests[0].metadata).toEqual({
-      'application.id': 'appId',
+      application: {
+        id: 'appId',
+      },
       creation_reason: 'init',
       end: jasmine.stringMatching(/^\d{13}$/),
-      has_full_snapshot: 'true',
-      records_count: String(recordsPerFullSnapshot()),
-      'session.id': 'session-id',
-      start: jasmine.stringMatching(/^\d{13}$/),
-      raw_segment_size: jasmine.stringMatching(/^\d+$/),
-      'view.id': 'view-id',
-      index_in_view: '0',
+      has_full_snapshot: true,
+      records_count: recordsPerFullSnapshot(),
+      session: {
+        id: 'session-id',
+      },
+      start: jasmine.any(Number),
+      raw_segment_size: jasmine.any(Number),
+      view: {
+        id: 'view-id',
+      },
+      index_in_view: 0,
       source: 'browser',
     })
   })
@@ -105,7 +111,7 @@ describe('startRecording', () => {
     }
 
     const requests = await readSentRequests(1)
-    expect(requests[0].metadata.records_count).toBe(String(inputCount + recordsPerFullSnapshot()))
+    expect(requests[0].metadata.records_count).toBe(inputCount + recordsPerFullSnapshot())
   })
 
   it('stops sending new segment when the session is expired', async () => {
@@ -120,7 +126,7 @@ describe('startRecording', () => {
     flushSegment(lifeCycle)
 
     const requests = await readSentRequests(1)
-    expect(requests[0].metadata.records_count).toBe(String(1 + recordsPerFullSnapshot()))
+    expect(requests[0].metadata.records_count).toBe(1 + recordsPerFullSnapshot())
   })
 
   it('restarts sending segments when the session is renewed', async () => {
@@ -136,8 +142,8 @@ describe('startRecording', () => {
     flushSegment(lifeCycle)
 
     const requests = await readSentRequests(1)
-    expect(requests[0].metadata.records_count).toBe('1')
-    expect(requests[0].metadata['session.id']).toBe('new-session-id')
+    expect(requests[0].metadata.records_count).toBe(1)
+    expect(requests[0].metadata.session.id).toBe('new-session-id')
   })
 
   it('takes a full snapshot when the view changes', async () => {
@@ -147,7 +153,7 @@ describe('startRecording', () => {
     flushSegment(lifeCycle)
 
     const requests = await readSentRequests(2)
-    expect(requests[1].metadata.has_full_snapshot).toBe('true')
+    expect(requests[1].metadata.has_full_snapshot).toBe(true)
   })
 
   it('full snapshot related records should have the view change date', async () => {
@@ -177,7 +183,7 @@ describe('startRecording', () => {
     flushSegment(lifeCycle)
 
     const requests = await readSentRequests(2)
-    expect(requests[0].metadata['view.id']).toBe('view-id')
+    expect(requests[0].metadata.view.id).toBe('view-id')
     const records = requests[0].segment.records
     expect(records[records.length - 1].type).toBe(RecordType.ViewEnd)
   })
@@ -218,7 +224,7 @@ describe('startRecording', () => {
       flushSegment(lifeCycle)
 
       const requests = await readSentRequests(1)
-      expect(requests[0].metadata.records_count).toBe(String(1 + recordsPerFullSnapshot()))
+      expect(requests[0].metadata.records_count).toBe(1 + recordsPerFullSnapshot())
     })
 
     it('stops taking full snapshots on view creation', async () => {
@@ -229,7 +235,7 @@ describe('startRecording', () => {
       flushSegment(lifeCycle)
 
       const requests = await readSentRequests(1)
-      expect(requests[0].metadata.records_count).toBe(String(recordsPerFullSnapshot()))
+      expect(requests[0].metadata.records_count).toBe(recordsPerFullSnapshot())
     })
   })
 

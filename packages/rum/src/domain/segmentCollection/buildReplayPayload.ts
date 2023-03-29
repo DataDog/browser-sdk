@@ -1,6 +1,10 @@
 import type { Payload } from '@datadog/browser-core'
-import { objectEntries } from '@datadog/browser-core'
+import { assign } from '@datadog/browser-core'
 import type { BrowserSegmentMetadata } from '../../types'
+
+export type BrowserSegmentMetadataAndSegmentSizes = BrowserSegmentMetadata & {
+  raw_segment_size: number
+}
 
 export function buildReplayPayload(
   data: Uint8Array,
@@ -17,18 +21,14 @@ export function buildReplayPayload(
     `${metadata.session.id}-${metadata.start}`
   )
 
-  toFormEntries(metadata, (key, value) => formData.append(key, value))
-  formData.append('raw_segment_size', rawSegmentBytesCount.toString())
+  const metadataAndSegmentSizes: BrowserSegmentMetadataAndSegmentSizes = assign(
+    {
+      raw_segment_size: rawSegmentBytesCount,
+    },
+    metadata
+  )
+  const serializedMetadataAndSegmentSizes = JSON.stringify(metadataAndSegmentSizes)
+  formData.append('event', new Blob([serializedMetadataAndSegmentSizes], { type: 'application/json' }))
 
   return { data: formData, bytesCount: data.byteLength }
-}
-
-export function toFormEntries(input: object, onEntry: (key: string, value: string) => void, prefix = '') {
-  objectEntries(input as { [key: string]: unknown }).forEach(([key, value]) => {
-    if (typeof value === 'object' && value !== null) {
-      toFormEntries(value, onEntry, `${prefix}${key}.`)
-    } else {
-      onEntry(`${prefix}${key}`, String(value))
-    }
-  })
 }
