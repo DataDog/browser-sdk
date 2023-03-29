@@ -4,6 +4,7 @@ import type { BrowserSegmentMetadata } from '../../types'
 
 export type BrowserSegmentMetadataAndSegmentSizes = BrowserSegmentMetadata & {
   raw_segment_size: number
+  compressed_segment_size: number
 }
 
 export function buildReplayPayload(
@@ -24,6 +25,7 @@ export function buildReplayPayload(
   const metadataAndSegmentSizes: BrowserSegmentMetadataAndSegmentSizes = assign(
     {
       raw_segment_size: rawSegmentBytesCount,
+      compressed_segment_size: data.byteLength,
     },
     metadata
   )

@@ -21,6 +21,7 @@ describe('buildReplayPayload', () => {
   const METADATA_AND_SEGMENT_SIZES = {
     ...METADATA,
     raw_segment_size: SERIALIZED_SEGMENT.length,
+    compressed_segment_size: COMPRESSED_SEGMENT.byteLength,
   }
 
   beforeEach(() => {
