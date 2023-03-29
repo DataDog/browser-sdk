@@ -1,6 +1,6 @@
 import type { ExperimentalFeature } from './experimentalFeatures'
 import {
-  updateExperimentalFeatures,
+  addExperimentalFeatures,
   isExperimentalFeatureEnabled,
   resetExperimentalFeatures,
 } from './experimentalFeatures'
@@ -19,24 +19,24 @@ describe('experimentalFeatures', () => {
   })
 
   it('should define enabled experimental features', () => {
-    updateExperimentalFeatures([TEST_FEATURE_FLAG_ONE])
+    addExperimentalFeatures([TEST_FEATURE_FLAG_ONE])
     expect(isExperimentalFeatureEnabled(TEST_FEATURE_FLAG_ONE)).toBeTrue()
     expect(isExperimentalFeatureEnabled(TEST_FEATURE_FLAG_TWO)).toBeFalse()
   })
 
   it('should allow to be shared between products', () => {
-    updateExperimentalFeatures([TEST_FEATURE_FLAG_ONE])
-    updateExperimentalFeatures([TEST_FEATURE_FLAG_TWO])
+    addExperimentalFeatures([TEST_FEATURE_FLAG_ONE])
+    addExperimentalFeatures([TEST_FEATURE_FLAG_TWO])
 
     expect(isExperimentalFeatureEnabled(TEST_FEATURE_FLAG_ONE)).toBeTrue()
     expect(isExperimentalFeatureEnabled(TEST_FEATURE_FLAG_TWO)).toBeTrue()
   })
 
   it('should support some edge cases', () => {
-    updateExperimentalFeatures([TEST_FEATURE_FLAG_ONE])
-    updateExperimentalFeatures(undefined)
-    updateExperimentalFeatures([])
-    updateExperimentalFeatures([11 as any])
+    addExperimentalFeatures([TEST_FEATURE_FLAG_ONE])
+    addExperimentalFeatures(undefined)
+    addExperimentalFeatures([])
+    addExperimentalFeatures([11 as any])
 
     expect(isExperimentalFeatureEnabled(TEST_FEATURE_FLAG_ONE)).toBeTrue()
   })

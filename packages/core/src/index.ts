@@ -7,7 +7,7 @@ export {
   EndpointBuilder,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
-  updateExperimentalFeatures,
+  addExperimentalFeatures,
   resetExperimentalFeatures,
   serializeConfiguration,
 } from './domain/configuration'

@@ -23,7 +23,7 @@ export enum ExperimentalFeature {
 
 let enabledExperimentalFeatures: Set<ExperimentalFeature> | undefined
 
-export function updateExperimentalFeatures(enabledFeatures: ExperimentalFeature[] | undefined): void {
+export function addExperimentalFeatures(enabledFeatures: ExperimentalFeature[] | undefined): void {
   // Safely handle external data
   if (!Array.isArray(enabledFeatures)) {
     return

@@ -2,7 +2,7 @@ import type { BuildEnvWindow } from '../../../test/specHelper'
 import { startsWith } from '../../tools/utils'
 import type { InitConfiguration } from './configuration'
 import { createEndpointBuilder } from './endpointBuilder'
-import { ExperimentalFeature, resetExperimentalFeatures, updateExperimentalFeatures } from './experimentalFeatures'
+import { ExperimentalFeature, resetExperimentalFeatures, addExperimentalFeatures } from './experimentalFeatures'
 
 describe('endpointBuilder', () => {
   const clientToken = 'some_client_token'
@@ -126,7 +126,7 @@ describe('endpointBuilder', () => {
     })
 
     it('should contain flush reason when ff collect_flush_reason is enabled', () => {
-      updateExperimentalFeatures([ExperimentalFeature.COLLECT_FLUSH_REASON])
+      addExperimentalFeatures([ExperimentalFeature.COLLECT_FLUSH_REASON])
       expect(createEndpointBuilder(initConfiguration, 'rum', []).build('xhr', 'batch_bytes_limit')).toContain(
         'flush_reason%3Abatch_bytes_limit'
       )

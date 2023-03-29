@@ -1,7 +1,7 @@
 import type { Context, Duration } from '@datadog/browser-core'
 import {
   addDuration,
-  updateExperimentalFeatures,
+  addExperimentalFeatures,
   resetExperimentalFeatures,
   clocksNow,
   timeStampNow,
@@ -115,7 +115,7 @@ describe('trackClickActions', () => {
 
   describe('when clickmap ff is enabled', () => {
     beforeEach(() => {
-      updateExperimentalFeatures([ExperimentalFeature.CLICKMAP])
+      addExperimentalFeatures([ExperimentalFeature.CLICKMAP])
     })
 
     afterEach(() => {

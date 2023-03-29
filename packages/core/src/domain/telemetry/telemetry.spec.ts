@@ -3,7 +3,7 @@ import { callMonitored } from '../../tools/monitor'
 import type { Configuration, ExperimentalFeature } from '../configuration'
 import {
   resetExperimentalFeatures,
-  updateExperimentalFeatures,
+  addExperimentalFeatures,
   INTAKE_SITE_US1,
   INTAKE_SITE_US1_FED,
 } from '../configuration'
@@ -74,7 +74,7 @@ describe('telemetry', () => {
   })
 
   it('should contains feature flags', () => {
-    updateExperimentalFeatures(['foo' as ExperimentalFeature])
+    addExperimentalFeatures(['foo' as ExperimentalFeature])
     const { notifySpy } = startAndSpyTelemetry()
     callMonitored(() => {
       throw new Error('message')

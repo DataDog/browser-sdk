@@ -1,4 +1,4 @@
-import { ExperimentalFeature, resetExperimentalFeatures, updateExperimentalFeatures } from '@datadog/browser-core'
+import { ExperimentalFeature, resetExperimentalFeatures, addExperimentalFeatures } from '@datadog/browser-core'
 import { getDisplayContext, resetDisplayContext } from './displayContext'
 
 describe('displayContext', () => {
@@ -8,7 +8,7 @@ describe('displayContext', () => {
   })
 
   it('should return current display context when ff enabled', () => {
-    updateExperimentalFeatures([ExperimentalFeature.CLICKMAP])
+    addExperimentalFeatures([ExperimentalFeature.CLICKMAP])
 
     expect(getDisplayContext()).toEqual({
       viewport: {

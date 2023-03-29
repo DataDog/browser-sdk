@@ -2,13 +2,13 @@ import type { RumEvent } from '../../../../rum-core/src'
 import { display } from '../../tools/display'
 import type { InitConfiguration } from './configuration'
 import { validateAndBuildConfiguration } from './configuration'
-import { ExperimentalFeature, isExperimentalFeatureEnabled, updateExperimentalFeatures } from './experimentalFeatures'
+import { ExperimentalFeature, isExperimentalFeatureEnabled, addExperimentalFeatures } from './experimentalFeatures'
 
 describe('validateAndBuildConfiguration', () => {
   const clientToken = 'some_client_token'
 
   beforeEach(() => {
-    updateExperimentalFeatures([])
+    addExperimentalFeatures([])
   })
 
   describe('experimentalFeatures', () => {

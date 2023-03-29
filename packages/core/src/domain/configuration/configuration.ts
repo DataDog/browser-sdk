@@ -4,7 +4,7 @@ import { catchUserErrors } from '../../tools/catchUserErrors'
 import { display } from '../../tools/display'
 import { assign, isPercentage, objectHasValue, ONE_KIBI_BYTE, ONE_SECOND } from '../../tools/utils'
 import type { RawTelemetryConfiguration } from '../telemetry'
-import { ExperimentalFeature, updateExperimentalFeatures } from './experimentalFeatures'
+import { ExperimentalFeature, addExperimentalFeatures } from './experimentalFeatures'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
 
@@ -113,7 +113,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
 
   // Set the experimental feature flags as early as possible, so we can use them in most places
   if (Array.isArray(initConfiguration.enableExperimentalFeatures)) {
-    updateExperimentalFeatures(
+    addExperimentalFeatures(
       initConfiguration.enableExperimentalFeatures.filter((flag): flag is ExperimentalFeature =>
         objectHasValue(ExperimentalFeature, flag)
       )

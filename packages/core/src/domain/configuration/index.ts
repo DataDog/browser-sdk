@@ -9,7 +9,7 @@ export {
 export { createEndpointBuilder, EndpointBuilder, EndpointType } from './endpointBuilder'
 export {
   isExperimentalFeatureEnabled,
-  updateExperimentalFeatures,
+  addExperimentalFeatures,
   resetExperimentalFeatures,
   getExperimentalFeatures,
   ExperimentalFeature,
