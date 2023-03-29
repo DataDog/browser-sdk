@@ -79,9 +79,15 @@ export function sanitize(source: unknown, maxCharacterCount = SANITIZE_DEFAULT_M
           containerQueue,
           visitedObjectsWithPath
         )
-        // When an element of an Array (targetData) is undefined, it is serialized as null:
-        // JSON.stringify([undefined]) => '[null]' - This accounts for 4 characters
-        accumulatedCharacterCount += (JSON.stringify(targetData)?.length ?? 4) + separatorLength
+
+        if (targetData !== undefined) {
+          accumulatedCharacterCount += JSON.stringify(targetData).length
+        } else {
+          // When an element of an Array (targetData) is undefined, it is serialized as null:
+          // JSON.stringify([undefined]) => '[null]' - This accounts for 4 characters
+          accumulatedCharacterCount += 4
+        }
+        accumulatedCharacterCount += separatorLength
         separatorLength = 1
         if (accumulatedCharacterCount > maxCharacterCount) {
           warnOverCharacterLimit(maxCharacterCount, 'truncated', source)
