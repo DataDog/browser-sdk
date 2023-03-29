@@ -1,13 +1,11 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { resetExperimentalFeatures, updateExperimentalFeatures, relativeToClocks } from '@datadog/browser-core'
-import type { Clock } from '@datadog/browser-core/test'
-import type { LifeCycle } from '../lifeCycle'
 import type { TestSetupBuilder } from '../../../test'
 import { setup } from '../../../test'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { ViewCreatedEvent, ViewEndedEvent } from '../rumEventsCollection/view/trackViews'
 import type { FeatureFlagContexts } from './featureFlagContext'
-import { BYTES_COMPUTATION_THROTTLING_DELAY, startFeatureFlagContexts } from './featureFlagContext'
+import { startFeatureFlagContexts } from './featureFlagContext'
 
 describe('featureFlagContexts', () => {
   let setupBuilder: TestSetupBuilder
@@ -149,41 +147,28 @@ describe('featureFlagContexts', () => {
     })
   })
 
-  describe('bytes count computation', () => {
-    let clock: Clock
-    let lifeCycle: LifeCycle
-
-    beforeEach(() => {
+  describe('getFeatureFlagBytesCount', () => {
+    it('should compute the bytes count only if the context has been updated', () => {
       updateExperimentalFeatures(['feature_flags'])
-      ;({ clock, lifeCycle } = setupBuilder.withFakeClock().build())
+      const { lifeCycle } = setupBuilder.withFakeClock().build()
+
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
         startClocks: relativeToClocks(0 as RelativeTime),
       } as ViewCreatedEvent)
-    })
-
-    it('should be done each time the context is updated', () => {
       featureFlagContexts.addFeatureFlagEvaluation('feature1', 'foo')
-      clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
+      featureFlagContexts.getFeatureFlagBytesCount()
       featureFlagContexts.addFeatureFlagEvaluation('feature2', 'bar')
-      clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
+      featureFlagContexts.getFeatureFlagBytesCount()
 
       // feature flags are cleared when a view is created
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
         startClocks: relativeToClocks(10 as RelativeTime),
       } as ViewCreatedEvent)
+      featureFlagContexts.getFeatureFlagBytesCount()
       const bytesCount = featureFlagContexts.getFeatureFlagBytesCount()
 
-      expect(bytesCount).toEqual(0)
-      expect(computeBytesCountStub).toHaveBeenCalledTimes(2)
-    })
-
-    it('should be throttled to minimize the impact on performance', () => {
-      featureFlagContexts.addFeatureFlagEvaluation('feature1', 'foo') // leading call executed synchronously
-      featureFlagContexts.addFeatureFlagEvaluation('feature2', 'bar') // ignored
-      featureFlagContexts.addFeatureFlagEvaluation('feature3', 'baz') // trailing call executed after BYTES_COMPUTATION_THROTTLING_DELAY
-      clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
-
-      expect(computeBytesCountStub).toHaveBeenCalledTimes(2)
+      expect(bytesCount).toEqual(1)
+      expect(computeBytesCountStub).toHaveBeenCalledTimes(3)
     })
   })
 })

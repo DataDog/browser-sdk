@@ -1,5 +1,3 @@
-import { getGlobalObject } from './getGlobalObject'
-
 export interface BrowserWindowWithZoneJs extends Window {
   Zone?: {
     // All Zone.js versions expose the __symbol__ method, but we observed that some website have a
@@ -26,7 +24,7 @@ export function getZoneJsOriginalValue<Target, Name extends keyof Target & strin
   target: Target,
   name: Name
 ): Target[Name] {
-  const browserWindow = getGlobalObject<BrowserWindowWithZoneJs>()
+  const browserWindow = window as BrowserWindowWithZoneJs
   let original: Target[Name] | undefined
   if (browserWindow.Zone && typeof browserWindow.Zone.__symbol__ === 'function') {
     original = (target as any)[browserWindow.Zone.__symbol__(name)]
