@@ -1,12 +1,15 @@
 import type { RelativeTime, TimeStamp, Context } from '@datadog/browser-core'
 import { ONE_SECOND, getTimeStamp, display, DefaultPrivacyLevel } from '@datadog/browser-core'
-import { cleanupSyntheticsWorkerValues, mockSyntheticsWorkerValues } from '../../../core/test/syntheticsWorkerValues'
-import { initEventBridgeStub, deleteEventBridgeStub } from '../../../core/test/specHelper'
-import type { TestSetupBuilder } from '../../test/testSetupBuilder'
-import { setup } from '../../test/testSetupBuilder'
+import {
+  initEventBridgeStub,
+  deleteEventBridgeStub,
+  cleanupSyntheticsWorkerValues,
+  mockSyntheticsWorkerValues,
+} from '@datadog/browser-core/test'
+import type { TestSetupBuilder } from '../../test'
+import { setup, noopRecorderApi } from '../../test'
 import type { HybridInitConfiguration, RumInitConfiguration } from '../domain/configuration'
 import { ActionType } from '../rawRumEvent.types'
-import { noopRecorderApi } from '../../test/noopRecorderApi'
 import type { RumPublicApi, StartRum, RecorderApi } from './rumPublicApi'
 import { makeRumPublicApi } from './rumPublicApi'
 

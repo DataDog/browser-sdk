@@ -1,4 +1,4 @@
-import { disableJasmineUncaughtErrorHandler } from '../../../test/specHelper'
+import { disableJasmineUncaughtErrorHandler } from '../../../test'
 import { startUnhandledErrorCollection } from './tracekit'
 import type { UnhandledErrorCallback } from './types'
 

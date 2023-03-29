@@ -1,6 +1,6 @@
 import { isIE, ErrorSource } from '@datadog/browser-core'
-import type { FetchStub, FetchStubManager } from '@datadog/browser-core/test/specHelper'
-import { SPEC_ENDPOINTS, ResponseStub, stubFetch } from '@datadog/browser-core/test/specHelper'
+import type { FetchStub, FetchStubManager } from '@datadog/browser-core/test'
+import { SPEC_ENDPOINTS, ResponseStub, stubFetch } from '@datadog/browser-core/test'
 import type { RawNetworkLogsEvent } from '../../../rawLogsEvent.types'
 import type { LogsConfiguration } from '../../configuration'
 import type { RawLogsEventCollectedData } from '../../lifeCycle'

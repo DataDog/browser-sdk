@@ -1,4 +1,4 @@
-import { createNewEvent, restorePageVisibility, setPageVisibility } from '../../test/specHelper'
+import { createNewEvent, restorePageVisibility, setPageVisibility } from '../../test'
 import { resetExperimentalFeatures, updateExperimentalFeatures } from '../domain/configuration'
 import type { Subscription } from '../tools/observable'
 import type { PageExitEvent } from './pageExitObservable'

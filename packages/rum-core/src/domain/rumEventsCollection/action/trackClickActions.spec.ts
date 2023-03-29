@@ -7,14 +7,13 @@ import {
   timeStampNow,
   relativeNow,
 } from '@datadog/browser-core'
-import { createNewEvent } from '../../../../../core/test/specHelper'
-import type { TestSetupBuilder } from '../../../../test/testSetupBuilder'
-import { setup } from '../../../../test/testSetupBuilder'
+import { createNewEvent } from '@datadog/browser-core/test'
+import type { TestSetupBuilder } from '../../../../test'
+import { setup, createFakeClick } from '../../../../test'
 import { RumEventType, ActionType, FrustrationType } from '../../../rawRumEvent.types'
 import type { RumEvent } from '../../../rumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { PAGE_ACTIVITY_VALIDATION_DELAY } from '../../waitPageActivityEnd'
-import { createFakeClick } from '../../../../test/createFakeClick'
 import type { ActionContexts } from './actionCollection'
 import type { ClickAction } from './trackClickActions'
 import { finalizeClicks, CLICK_ACTION_MAX_DURATION, trackClickActions } from './trackClickActions'

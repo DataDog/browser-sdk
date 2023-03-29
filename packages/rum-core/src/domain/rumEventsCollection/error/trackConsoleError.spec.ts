@@ -1,7 +1,7 @@
 import type { RawError, Subscription } from '@datadog/browser-core'
 import { ErrorHandling, ErrorSource, Observable, clocksNow } from '@datadog/browser-core'
-import type { Clock } from '../../../../../core/test/specHelper'
-import { mockClock } from '../../../../../core/test/specHelper'
+import type { Clock } from '@datadog/browser-core/test'
+import { mockClock } from '@datadog/browser-core/test'
 import { trackConsoleError } from './trackConsoleError'
 
 describe('trackConsoleError', () => {

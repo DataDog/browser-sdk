@@ -1,4 +1,4 @@
-import { stubZoneJs } from '../../test/stubZoneJs'
+import { stubZoneJs } from '../../test'
 import { noop } from '../tools/utils'
 
 import { addEventListener, DOM_EVENT } from './addEventListener'

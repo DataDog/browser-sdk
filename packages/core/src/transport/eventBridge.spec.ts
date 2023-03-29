@@ -1,4 +1,4 @@
-import { deleteEventBridgeStub, initEventBridgeStub } from '../../test/specHelper'
+import { deleteEventBridgeStub, initEventBridgeStub } from '../../test'
 import { getEventBridge, canUseEventBridge } from './eventBridge'
 
 describe('canUseEventBridge', () => {

@@ -8,16 +8,14 @@ import {
   ResourceType,
 } from '@datadog/browser-core'
 import type { RumFetchResourceEventDomainContext } from '../../../domainContext.types'
-import { createResourceEntry } from '../../../../test/fixtures'
-import type { TestSetupBuilder } from '../../../../test/testSetupBuilder'
-import { setup } from '../../../../test/testSetupBuilder'
+import { createResourceEntry, setup, createRumSessionManagerMock } from '../../../../test'
+import type { TestSetupBuilder } from '../../../../test'
 import type { RawRumResourceEvent } from '../../../rawRumEvent.types'
 import { RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { RequestCompleteEvent } from '../../requestCollection'
 import { TraceIdentifier } from '../../tracing/tracer'
 import { validateAndBuildRumConfiguration } from '../../configuration'
-import { createRumSessionManagerMock } from '../../../../test/mockRumSessionManager'
 import { PageState } from '../../contexts/pageStateHistory'
 import { startResourceCollection } from './resourceCollection'
 

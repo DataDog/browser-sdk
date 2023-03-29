@@ -1,6 +1,7 @@
 import { isIE, noop } from '@datadog/browser-core'
 
 import type { RumConfiguration } from '@datadog/browser-rum-core'
+import { isAdoptedStyleSheetsSupported } from '@datadog/browser-core/test'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
@@ -11,12 +12,11 @@ import {
 } from '../../../constants'
 import type { ElementNode, SerializedNodeWithId, TextNode } from '../../../types'
 import { NodeType } from '../../../types'
-import type { IsolatedDom } from '../../../../../rum-core/test/createIsolatedDom'
-import { createIsolatedDom } from '../../../../../rum-core/test/createIsolatedDom'
+import type { IsolatedDom } from '../../../../../rum-core/test'
+import { createIsolatedDom } from '../../../../../rum-core/test'
 import type { ElementsScrollPositions } from '../elementsScrollPositions'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootCallBack, ShadowRootsController } from '../shadowRootsController'
-import { isAdoptedStyleSheetsSupported } from '../../../../../core/test/specHelper'
 import {
   HTML,
   generateLeanSerializedDoc,

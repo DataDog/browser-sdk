@@ -1,4 +1,4 @@
-import type { BuildEnvWindow } from '../../../test/specHelper'
+import type { BuildEnvWindow } from '../../../test'
 import { startsWith } from '../../tools/utils'
 import type { InitConfiguration } from './configuration'
 import { createEndpointBuilder } from './endpointBuilder'
