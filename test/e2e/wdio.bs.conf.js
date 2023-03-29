@@ -1,4 +1,4 @@
-const { getBuildInfos } = require('../utils')
+const { getBuildInfos } = require('../envUtils')
 const browsers = require('../browsers.conf')
 const baseConf = require('./wdio.base.conf')
 
