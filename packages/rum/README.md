@@ -26,7 +26,7 @@ datadogRum.init({
 })
 ```
 
-**Note**: The `trackUserInteractions` parameter enable the automatic collection of user clicks in your application. **Sensitive and private data** contained in your pages may be included to identify the elements interacted with.
+**Note**: The `trackUserInteractions` parameter enables the automatic collection of user clicks in your application. **Sensitive and private data** contained in your pages may be included to identify the elements interacted with.
 
 <!-- Note: all URLs should be absolute -->
 
