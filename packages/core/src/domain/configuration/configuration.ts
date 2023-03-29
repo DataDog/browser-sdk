@@ -2,9 +2,9 @@ import type { CookieOptions } from '../../browser/cookie'
 import { getCurrentSite } from '../../browser/cookie'
 import { catchUserErrors } from '../../tools/catchUserErrors'
 import { display } from '../../tools/display'
-import { assign, isPercentage, ONE_KIBI_BYTE, ONE_SECOND } from '../../tools/utils'
+import { assign, isPercentage, objectHasValue, ONE_KIBI_BYTE, ONE_SECOND } from '../../tools/utils'
 import type { RawTelemetryConfiguration } from '../telemetry'
-import { updateExperimentalFeatures } from './experimentalFeatures'
+import { ExperimentalFeature, addExperimentalFeatures } from './experimentalFeatures'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
 
@@ -112,7 +112,13 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
   }
 
   // Set the experimental feature flags as early as possible, so we can use them in most places
-  updateExperimentalFeatures(initConfiguration.enableExperimentalFeatures)
+  if (Array.isArray(initConfiguration.enableExperimentalFeatures)) {
+    addExperimentalFeatures(
+      initConfiguration.enableExperimentalFeatures.filter((flag): flag is ExperimentalFeature =>
+        objectHasValue(ExperimentalFeature, flag)
+      )
+    )
+  }
 
   return assign(
     {

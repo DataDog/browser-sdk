@@ -8,6 +8,7 @@ import {
   assign,
   isNumber,
   isExperimentalFeatureEnabled,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { ClocksState, ServerDuration, Duration } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
@@ -196,7 +197,7 @@ function computeDurationOverrideInfo(
   computedDuration: ServerDuration,
   performanceEntryDuration: ServerDuration | undefined
 ) {
-  if (!isExperimentalFeatureEnabled('resource_durations')) {
+  if (!isExperimentalFeatureEnabled(ExperimentalFeature.RESOURCE_DURATIONS)) {
     return
   }
 
@@ -231,7 +232,7 @@ function computeIndexingInfo(sessionManager: RumSessionManager, resourceStart: C
 }
 
 function computePageStateInfo(pageStateHistory: PageStateHistory, startClocks: ClocksState, duration: Duration) {
-  if (!isExperimentalFeatureEnabled('resource_page_states')) {
+  if (!isExperimentalFeatureEnabled(ExperimentalFeature.RESOURCE_PAGE_STATES)) {
     return
   }
 

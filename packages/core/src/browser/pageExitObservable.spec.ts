@@ -1,5 +1,5 @@
 import { createNewEvent, restorePageVisibility, setPageVisibility } from '../../test'
-import { resetExperimentalFeatures, updateExperimentalFeatures } from '../domain/configuration'
+import { resetExperimentalFeatures, addExperimentalFeatures, ExperimentalFeature } from '../domain/configuration'
 import type { Subscription } from '../tools/observable'
 import type { PageExitEvent } from './pageExitObservable'
 import { PageExitReason, createPageExitObservable } from './pageExitObservable'
@@ -20,7 +20,7 @@ describe('createPageExitObservable', () => {
   })
 
   it('notifies when the page fires pagehide if ff pagehide is enabled', () => {
-    updateExperimentalFeatures(['pagehide'])
+    addExperimentalFeatures([ExperimentalFeature.PAGEHIDE])
     onExitSpy = jasmine.createSpy()
     pageExitSubscription = createPageExitObservable().subscribe(onExitSpy)
 
