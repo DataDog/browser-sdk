@@ -1,4 +1,4 @@
-import { objectEntries } from '@datadog/browser-core'
+import { objectEntries } from '../../src'
 
 export function createNewEvent<P extends Record<string, unknown>>(eventName: 'click', properties?: P): MouseEvent & P
 export function createNewEvent<P extends Record<string, unknown>>(
