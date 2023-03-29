@@ -1,11 +1,10 @@
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
 import type { RecorderApi } from '../../../boot/rumPublicApi'
-import type { TestSetupBuilder } from '../../../../test/testSetupBuilder'
-import { setup } from '../../../../test/testSetupBuilder'
+import type { TestSetupBuilder } from '../../../../test'
+import { setup, noopRecorderApi } from '../../../../test'
 import type { RawRumViewEvent } from '../../../rawRumEvent.types'
 import { RumEventType, ViewLoadingType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
-import { noopRecorderApi } from '../../../../test/noopRecorderApi'
 import type { ViewEvent } from './trackViews'
 import { startViewCollection } from './viewCollection'
 

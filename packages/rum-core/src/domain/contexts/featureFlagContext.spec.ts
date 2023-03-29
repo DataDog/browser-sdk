@@ -5,8 +5,8 @@ import {
   addExperimentalFeatures,
   relativeToClocks,
 } from '@datadog/browser-core'
-import type { TestSetupBuilder } from '../../../test/testSetupBuilder'
-import { setup } from '../../../test/testSetupBuilder'
+import type { TestSetupBuilder } from '../../../test'
+import { setup } from '../../../test'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { ViewCreatedEvent, ViewEndedEvent } from '../rumEventsCollection/view/trackViews'
 import type { FeatureFlagContexts } from './featureFlagContext'

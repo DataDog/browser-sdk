@@ -1,6 +1,6 @@
 import type { TimeStamp } from '@datadog/browser-core'
 import { noop, setDebugMode, display, isIE } from '@datadog/browser-core'
-import { MockWorker, parseSegment } from '../../../test/utils'
+import { MockWorker, parseSegment } from '../../../test'
 import type { CreationReason, BrowserRecord, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
 import { getReplayStats, resetReplayStats } from '../replayStats'

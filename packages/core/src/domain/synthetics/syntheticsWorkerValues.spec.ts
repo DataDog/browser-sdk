@@ -1,4 +1,4 @@
-import { mockSyntheticsWorkerValues, cleanupSyntheticsWorkerValues } from '../../../test/syntheticsWorkerValues'
+import { mockSyntheticsWorkerValues, cleanupSyntheticsWorkerValues } from '../../../test'
 import { getSyntheticsResultId, getSyntheticsTestId, willSyntheticsInjectRum } from './syntheticsWorkerValues'
 
 describe('syntheticsWorkerValues', () => {

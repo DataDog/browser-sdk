@@ -1,3 +1,4 @@
+import type { ListenerHandler } from '@datadog/browser-core'
 import type { LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
 import type { ElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootsController } from '../shadowRootsController'
@@ -21,7 +22,7 @@ import type { MutationCallBack } from './mutationObserver'
 import { initMutationObserver } from './mutationObserver'
 import type { FocusCallback } from './focusObserver'
 import { initFocusObserver } from './focusObserver'
-import type { ListenerHandler } from './utils'
+import { initRecordIds } from './recordIds'
 
 interface ObserverParam {
   lifeCycle: LifeCycle
@@ -42,11 +43,13 @@ interface ObserverParam {
 }
 
 export function initObservers(o: ObserverParam): { stop: ListenerHandler; flush: ListenerHandler } {
+  const recordIds = initRecordIds()
   const mutationHandler = initMutationObserver(o.mutationCb, o.configuration, o.shadowRootsController, document)
   const mousemoveHandler = initMoveObserver(o.mousemoveCb)
   const mouseInteractionHandler = initMouseInteractionObserver(
     o.mouseInteractionCb,
-    o.configuration.defaultPrivacyLevel
+    o.configuration.defaultPrivacyLevel,
+    recordIds
   )
   const scrollHandler = initScrollObserver(o.scrollCb, o.configuration.defaultPrivacyLevel, o.elementsScrollPositions)
   const viewportResizeHandler = initViewportResizeObserver(o.viewportResizeCb)
@@ -58,7 +61,7 @@ export function initObservers(o: ObserverParam): { stop: ListenerHandler; flush:
   const styleSheetObserver = initStyleSheetObserver(o.styleSheetCb)
   const focusHandler = initFocusObserver(o.focusCb)
   const visualViewportResizeHandler = initVisualViewportResizeObserver(o.visualViewportResizeCb)
-  const frustrationHandler = initFrustrationObserver(o.lifeCycle, o.frustrationCb)
+  const frustrationHandler = initFrustrationObserver(o.lifeCycle, o.frustrationCb, recordIds)
 
   return {
     flush: () => {

@@ -1,7 +1,7 @@
 import type { RelativeTime, Duration, ServerDuration } from '@datadog/browser-core'
 import { relativeNow } from '@datadog/browser-core'
-import type { TestSetupBuilder } from '../../../test/testSetupBuilder'
-import { setup } from '../../../test/testSetupBuilder'
+import type { TestSetupBuilder } from '../../../test'
+import { setup } from '../../../test'
 import type { ForegroundContexts } from './foregroundContexts'
 import {
   startForegroundContexts,
@@ -58,7 +58,7 @@ describe('foreground context', () => {
     })
 
     describe('with two closed focus period & one active one', () => {
-      /* 
+      /*
       events         F      B   F       B   F
       periods        <------>   <------->   <---- - - -
       time       0   5  10  15  20  25  30  35  40  45

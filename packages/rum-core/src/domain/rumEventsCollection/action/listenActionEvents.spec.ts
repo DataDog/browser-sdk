@@ -1,4 +1,4 @@
-import { createNewEvent } from '../../../../../core/test/specHelper'
+import { createNewEvent } from '@datadog/browser-core/test'
 import type { ActionEventsHooks } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 

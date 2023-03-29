@@ -3,19 +3,16 @@ import { PageExitReason, DefaultPrivacyLevel, noop, isIE, timeStampNow } from '@
 import type { LifeCycle, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { inflate } from 'pako'
-import type { RumSessionManagerMock } from '../../../rum-core/test/mockRumSessionManager'
-import { createRumSessionManagerMock } from '../../../rum-core/test/mockRumSessionManager'
-import { createNewEvent, mockClock } from '../../../core/test/specHelper'
+import { collectAsyncCalls, createNewEvent, mockClock } from '@datadog/browser-core/test'
+import type { RumSessionManagerMock, TestSetupBuilder } from '../../../rum-core/test'
+import { createRumSessionManagerMock, setup } from '../../../rum-core/test'
 
-import type { TestSetupBuilder } from '../../../rum-core/test/testSetupBuilder'
-import { setup } from '../../../rum-core/test/testSetupBuilder'
-import { recordsPerFullSnapshot } from '../../test/utils'
+import { recordsPerFullSnapshot } from '../../test'
 import { setSegmentBytesLimit, startDeflateWorker } from '../domain/segmentCollection'
 
 import type { BrowserSegment } from '../types'
 import { RecordType } from '../types'
 import { resetReplayStats } from '../domain/replayStats'
-import { collectAsyncCalls } from '../../../core/test/collectAsyncCalls'
 import { startRecording } from './startRecording'
 
 const VIEW_TIMESTAMP = 1 as TimeStamp

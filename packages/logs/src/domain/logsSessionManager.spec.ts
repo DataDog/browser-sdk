@@ -7,8 +7,8 @@ import {
   stopSessionManager,
   ONE_SECOND,
 } from '@datadog/browser-core'
-import type { Clock } from '../../../core/test/specHelper'
-import { mockClock } from '../../../core/test/specHelper'
+import type { Clock } from '@datadog/browser-core/test'
+import { mockClock } from '@datadog/browser-core/test'
 
 import type { LogsConfiguration } from './configuration'
 import {

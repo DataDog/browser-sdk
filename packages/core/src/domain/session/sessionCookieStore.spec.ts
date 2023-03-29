@@ -1,4 +1,4 @@
-import { stubCookie, mockClock } from '../../../test/specHelper'
+import { mockClock, stubCookie } from '../../../test'
 import { isChromium } from '../../tools/browserDetection'
 import {
   SESSION_COOKIE_NAME,

@@ -1,7 +1,7 @@
 import { DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { collectAsyncCalls } from '@datadog/browser-core/test/collectAsyncCalls'
-import { createMutationPayloadValidator, DEFAULT_SHADOW_ROOT_CONTROLLER } from '../../../../test/utils'
+import { collectAsyncCalls } from '@datadog/browser-core/test'
+import { createMutationPayloadValidator, DEFAULT_SHADOW_ROOT_CONTROLLER } from '../../../../test'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,

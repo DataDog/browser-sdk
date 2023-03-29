@@ -1,5 +1,5 @@
-import { isSafari } from '../../../test/specHelper'
-import * as CapturedExceptions from '../../../test/capturedExceptions'
+import * as CapturedExceptions from '../../../test'
+import { isSafari } from '../../../test'
 import { computeStackTrace } from './computeStackTrace'
 
 describe('computeStackTrace', () => {

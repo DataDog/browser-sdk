@@ -1,10 +1,14 @@
-import { Anchor, Divider, Group, Text } from '@mantine/core'
+import { Anchor, Button, Divider, Group, Space, Text } from '@mantine/core'
 import type { ReactNode } from 'react'
 import React from 'react'
-import { useSdkInfos } from '../hooks/useSdkInfos'
-import { Columns } from './columns'
-import { Json } from './json'
-import { TabBase } from './tabBase'
+import { evalInWindow } from '../../evalInWindow'
+import { useSdkInfos } from '../../hooks/useSdkInfos'
+import { Columns } from '../columns'
+import { Json } from '../json'
+import { TabBase } from '../tabBase'
+import { createLogger } from '../../../common/logger'
+
+const logger = createLogger('infosTab')
 
 export function InfosTab() {
   const infos = useSdkInfos()
@@ -32,6 +36,10 @@ export function InfosTab() {
               />
               <Entry name="Created" value={formatDate(Number(infos.cookie.created))} />
               <Entry name="Expire" value={formatDate(Number(infos.cookie.expire))} />
+              <Space h="sm" />
+              <Button color="violet" variant="light" onClick={endSession}>
+                End current session
+              </Button>
             </>
           )}
         </Columns.Column>
@@ -133,4 +141,12 @@ function formatDate(timestamp: number) {
 function formatSessionType(value: string, ...labels: string[]) {
   const index = Number(value)
   return !isNaN(index) && index >= 0 && index < labels.length ? labels[index] : value
+}
+
+function endSession() {
+  evalInWindow(
+    `
+      document.cookie = '_dd_s=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'
+    `
+  ).catch((error) => logger.error('Error while ending session:', error))
 }

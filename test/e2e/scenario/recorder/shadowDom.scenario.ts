@@ -11,13 +11,13 @@ import {
   findNode,
   findTextContent,
   findTextNode,
-} from '@datadog/browser-rum/test/utils'
+} from '@datadog/browser-rum/test'
 
 import type { EventRegistry } from '../../lib/framework'
 import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
 import { browserExecute } from '../../lib/helpers/browser'
 
-/** Will generate the following HTML 
+/** Will generate the following HTML
  * ```html
  * <my-input-field id="titi">
  *  #shadow-root
@@ -57,7 +57,7 @@ const inputShadowDom = `<script>
  </script>
  `
 
-/** Will generate the following HTML 
+/** Will generate the following HTML
  * ```html
  * <my-div id="titi">
  *  #shadow-root
@@ -82,7 +82,7 @@ const divShadowDom = `<script>
  </script>
  `
 
-/** Will generate the following HTML 
+/** Will generate the following HTML
  * ```html
  * <div-with-style>
  *  #shadow-root

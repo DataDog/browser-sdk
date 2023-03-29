@@ -2,7 +2,7 @@ import type { ViewportResizeData, ScrollData } from '@datadog/browser-rum/cjs/ty
 import { IncrementalSource } from '@datadog/browser-rum/cjs/types'
 import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 
-import { findAllIncrementalSnapshots, findAllVisualViewports } from '@datadog/browser-rum/test/utils'
+import { findAllIncrementalSnapshots, findAllVisualViewports } from '@datadog/browser-rum/test'
 import type { EventRegistry } from '../../lib/framework'
 import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
 import { browserExecute, getBrowserName, getPlatformName } from '../../lib/helpers/browser'

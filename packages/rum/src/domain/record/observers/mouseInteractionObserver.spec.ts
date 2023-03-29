@@ -1,16 +1,18 @@
 import { DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
-import { createNewEvent } from '@datadog/browser-core/test/specHelper'
+import { createNewEvent } from '@datadog/browser-core/test'
 import { IncrementalSource, MouseInteractionType, RecordType } from '../../../types'
 import { serializeDocument, SerializationContextStatus } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
-import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from '../../../../test/utils'
+import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from '../../../../test'
 import type { MouseInteractionCallBack } from './mouseInteractionObserver'
 import { initMouseInteractionObserver } from './mouseInteractionObserver'
-import { getRecordIdForEvent } from './utils'
+import type { RecordIds } from './recordIds'
+import { initRecordIds } from './recordIds'
 
 describe('initMouseInteractionObserver', () => {
   let mouseInteractionCallbackSpy: jasmine.Spy<MouseInteractionCallBack>
   let stopObserver: () => void
+  let recordIds: RecordIds
   let sandbox: HTMLDivElement
   let a: HTMLAnchorElement
 
@@ -33,7 +35,8 @@ describe('initMouseInteractionObserver', () => {
     })
 
     mouseInteractionCallbackSpy = jasmine.createSpy()
-    stopObserver = initMouseInteractionObserver(mouseInteractionCallbackSpy, DefaultPrivacyLevel.ALLOW)
+    recordIds = initRecordIds()
+    stopObserver = initMouseInteractionObserver(mouseInteractionCallbackSpy, DefaultPrivacyLevel.ALLOW, recordIds)
   })
 
   afterEach(() => {
@@ -63,7 +66,7 @@ describe('initMouseInteractionObserver', () => {
     a.dispatchEvent(pointerupEvent)
 
     expect(mouseInteractionCallbackSpy).toHaveBeenCalledWith({
-      id: getRecordIdForEvent(pointerupEvent),
+      id: recordIds.getIdForEvent(pointerupEvent),
       type: RecordType.IncrementalSnapshot,
       timestamp: jasmine.any(Number),
       data: {

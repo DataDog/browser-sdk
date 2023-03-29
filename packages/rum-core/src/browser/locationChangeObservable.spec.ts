@@ -1,5 +1,5 @@
 import type { Observable, Subscription } from '@datadog/browser-core'
-import { mockLocation } from '../../../core/test/specHelper'
+import { mockLocation } from '@datadog/browser-core/test'
 import type { LocationChange } from './locationChangeObservable'
 import { createLocationChangeObservable } from './locationChangeObservable'
 

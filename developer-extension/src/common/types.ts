@@ -8,7 +8,6 @@ export interface PopupActions {
 }
 
 export interface Store {
-  devServerStatus: 'unavailable' | 'checking' | 'available'
   useDevBundles: boolean
   useRumSlim: boolean
   blockIntakeRequests: boolean
