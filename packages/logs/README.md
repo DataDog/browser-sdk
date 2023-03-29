@@ -14,7 +14,8 @@ import { datadogLogs } from '@datadog/browser-logs'
 datadogLogs.init({
   clientToken: '<DATADOG_CLIENT_TOKEN>',
   site: '<DATADOG_SITE>',
-  ...
+  forwardErrorsToLogs: true,
+  sessionSampleRate: 100,
 })
 ```
 
