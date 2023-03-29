@@ -21,31 +21,22 @@ export enum ExperimentalFeature {
   SANITIZE_INPUTS = 'sanitize_inputs',
 }
 
-let enabledExperimentalFeatures: Set<ExperimentalFeature> | undefined
+const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()
 
-export function addExperimentalFeatures(enabledFeatures: ExperimentalFeature[] | undefined): void {
-  // Safely handle external data
-  if (!Array.isArray(enabledFeatures)) {
-    return
-  }
-
-  if (!enabledExperimentalFeatures) {
-    enabledExperimentalFeatures = new Set(enabledFeatures)
-  }
-
+export function addExperimentalFeatures(enabledFeatures: ExperimentalFeature[]): void {
   enabledFeatures.forEach((flag) => {
-    enabledExperimentalFeatures!.add(flag)
+    enabledExperimentalFeatures.add(flag)
   })
 }
 
 export function isExperimentalFeatureEnabled(featureName: ExperimentalFeature): boolean {
-  return !!enabledExperimentalFeatures && enabledExperimentalFeatures.has(featureName)
+  return enabledExperimentalFeatures.has(featureName)
 }
 
 export function resetExperimentalFeatures(): void {
-  enabledExperimentalFeatures = new Set()
+  enabledExperimentalFeatures.clear()
 }
 
-export function getExperimentalFeatures(): Set<string> {
-  return enabledExperimentalFeatures || new Set()
+export function getExperimentalFeatures(): Set<ExperimentalFeature> {
+  return enabledExperimentalFeatures
 }

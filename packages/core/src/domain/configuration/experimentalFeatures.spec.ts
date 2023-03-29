@@ -31,13 +31,4 @@ describe('experimentalFeatures', () => {
     expect(isExperimentalFeatureEnabled(TEST_FEATURE_FLAG_ONE)).toBeTrue()
     expect(isExperimentalFeatureEnabled(TEST_FEATURE_FLAG_TWO)).toBeTrue()
   })
-
-  it('should support some edge cases', () => {
-    addExperimentalFeatures([TEST_FEATURE_FLAG_ONE])
-    addExperimentalFeatures(undefined)
-    addExperimentalFeatures([])
-    addExperimentalFeatures([11 as any])
-
-    expect(isExperimentalFeatureEnabled(TEST_FEATURE_FLAG_ONE)).toBeTrue()
-  })
 })

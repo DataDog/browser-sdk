@@ -26,6 +26,17 @@ describe('validateAndBuildConfiguration', () => {
       validateAndBuildConfiguration({ clientToken, enableExperimentalFeatures: ['foo'] })
       expect(isExperimentalFeatureEnabled(TEST_FEATURE_FLAG)).toBeTrue()
     })
+
+    it('ignores unknown experimental features', () => {
+      validateAndBuildConfiguration({
+        clientToken,
+        enableExperimentalFeatures: ['bar', undefined as any, null as any, 11 as any],
+      })
+      expect(isExperimentalFeatureEnabled('bar' as any)).toBeFalse()
+      expect(isExperimentalFeatureEnabled(undefined as any)).toBeFalse()
+      expect(isExperimentalFeatureEnabled(null as any)).toBeFalse()
+      expect(isExperimentalFeatureEnabled(11 as any)).toBeFalse()
+    })
   })
 
   describe('validate init configuration', () => {
