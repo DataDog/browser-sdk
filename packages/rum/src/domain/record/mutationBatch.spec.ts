@@ -19,14 +19,9 @@ describe('createMutationBatch', () => {
     const mutation = { type: 'childList' } as RumMutationRecord
     mutationBatch.addMutations([mutation])
 
-    const {
-      waitAsyncCalls: waitProcessMutationBatchCalls,
-      expectNoExtraAsyncCall: expectNoExtraProcessMutationBatchCall,
-    } = collectAsyncCalls(processMutationBatchSpy)
-
-    waitProcessMutationBatchCalls(1, (calls) => {
+    collectAsyncCalls(processMutationBatchSpy, 1, (calls) => {
       expect(calls.mostRecent().args[0]).toEqual([mutation])
-      expectNoExtraProcessMutationBatchCall(done)
+      done()
     })
   })
 
