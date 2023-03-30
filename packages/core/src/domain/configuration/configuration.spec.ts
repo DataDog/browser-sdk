@@ -1,10 +1,5 @@
 import type { RumEvent } from '../../../../rum-core/src'
-import { display } from '../../tools/display'
-import {
-  ExperimentalFeature,
-  isExperimentalFeatureEnabled,
-  resetExperimentalFeatures,
-} from '../../tools/experimentalFeatures'
+import { display, ExperimentalFeature, isExperimentalFeatureEnabled, resetExperimentalFeatures } from '../../tools'
 import type { InitConfiguration } from './configuration'
 import { validateAndBuildConfiguration } from './configuration'
 

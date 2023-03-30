@@ -1,4 +1,4 @@
-import { instrumentMethodAndCallOriginal } from '../../tools/instrumentMethod'
+import { instrumentMethodAndCallOriginal } from '../../tools'
 import { computeStackTrace } from './computeStackTrace'
 import type { UnhandledErrorCallback, StackTrace } from './types'
 

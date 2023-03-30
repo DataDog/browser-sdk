@@ -1,5 +1,4 @@
-import { monitor } from '../tools/monitor'
-import { getZoneJsOriginalValue } from '../tools/getZoneJsOriginalValue'
+import { monitor, getZoneJsOriginalValue } from '../tools'
 
 export const enum DOM_EVENT {
   BEFORE_UNLOAD = 'beforeunload',

@@ -1,10 +1,17 @@
 import type { CookieOptions } from '../../browser/cookie'
 import { getCurrentSite } from '../../browser/cookie'
-import { catchUserErrors } from '../../tools/catchUserErrors'
-import { display } from '../../tools/display'
-import { assign, isPercentage, objectHasValue, ONE_KIBI_BYTE, ONE_SECOND } from '../../tools/utils'
+import {
+  catchUserErrors,
+  display,
+  assign,
+  isPercentage,
+  objectHasValue,
+  ONE_KIBI_BYTE,
+  ONE_SECOND,
+  ExperimentalFeature,
+  addExperimentalFeatures,
+} from '../../tools'
 import type { RawTelemetryConfiguration } from '../telemetry'
-import { ExperimentalFeature, addExperimentalFeatures } from '../../tools/experimentalFeatures'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
 

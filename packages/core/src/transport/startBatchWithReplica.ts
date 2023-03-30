@@ -1,7 +1,6 @@
 import type { Configuration, EndpointBuilder } from '../domain/configuration'
 import type { RawError } from '../domain/error/error'
-import type { Context } from '../tools/context'
-import type { Observable } from '../tools/observable'
+import type { Context, Observable } from '../tools'
 import type { PageExitEvent } from '../browser/pageExitObservable'
 import { Batch } from './batch'
 import { createHttpRequest } from './httpRequest'

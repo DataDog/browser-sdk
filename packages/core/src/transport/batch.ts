@@ -1,8 +1,5 @@
-import { display } from '../tools/display'
-import type { Context } from '../tools/context'
-import { computeBytesCount, jsonStringify, objectValues } from '../tools/utils'
-import { Observable } from '../tools/observable'
-import { setTimeout } from '../tools/timer'
+import { display, computeBytesCount, jsonStringify, objectValues, Observable, setTimeout } from '../tools'
+import type { Context } from '../tools'
 import type { PageExitEvent } from '../browser/pageExitObservable'
 import type { HttpRequest } from './httpRequest'
 

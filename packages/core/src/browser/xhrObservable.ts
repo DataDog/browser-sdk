@@ -1,10 +1,15 @@
-import { instrumentMethodAndCallOriginal } from '../tools/instrumentMethod'
-import { monitor } from '../tools/monitor'
-import { Observable } from '../tools/observable'
-import type { Duration, RelativeTime, ClocksState } from '../tools/timeUtils'
-import { elapsed, relativeNow, clocksNow, timeStampNow } from '../tools/timeUtils'
-import { normalizeUrl } from '../tools/urlPolyfill'
-import { shallowClone } from '../tools/utils'
+import {
+  instrumentMethodAndCallOriginal,
+  monitor,
+  Observable,
+  elapsed,
+  relativeNow,
+  clocksNow,
+  timeStampNow,
+  normalizeUrl,
+  shallowClone,
+} from '../tools'
+import type { Duration, RelativeTime, ClocksState } from '../tools'
 
 export interface XhrOpenContext {
   state: 'open'

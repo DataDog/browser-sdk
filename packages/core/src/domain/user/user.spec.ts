@@ -1,4 +1,4 @@
-import { display } from '../../tools/display'
+import { display } from '../../tools'
 import { checkUser, sanitizeUser } from './user'
 import type { User } from './user.types'
 

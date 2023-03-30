@@ -1,9 +1,8 @@
 import type { Clock } from '../../../test'
 import { mockClock } from '../../../test'
 import type { RawError } from '../error/error'
-import type { RelativeTime } from '../../tools/timeUtils'
-import { relativeToClocks, resetNavigationStart } from '../../tools/timeUtils'
-import { noop, ONE_MINUTE } from '../../tools/utils'
+import type { RelativeTime } from '../../tools'
+import { relativeToClocks, resetNavigationStart, noop, ONE_MINUTE } from '../../tools'
 import { createEventRateLimiter } from './createEventRateLimiter'
 import type { EventRateLimiter } from './createEventRateLimiter'
 

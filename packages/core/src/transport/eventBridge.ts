@@ -1,4 +1,4 @@
-import { endsWith, getGlobalObject } from '../tools/utils'
+import { endsWith, getGlobalObject } from '../tools'
 
 export interface BrowserWindowWithEventBridge extends Window {
   DatadogEventBridge?: DatadogEventBridge

@@ -2,7 +2,7 @@ import { collectAsyncCalls, stubEndpointBuilder, interceptRequests } from '../..
 import type { Request } from '../../test'
 import type { EndpointBuilder } from '../domain/configuration'
 import { createEndpointBuilder } from '../domain/configuration'
-import { noop } from '../tools/utils'
+import { noop } from '../tools'
 import { createHttpRequest, fetchKeepAliveStrategy, sendXHR } from './httpRequest'
 import type { HttpRequest } from './httpRequest'
 

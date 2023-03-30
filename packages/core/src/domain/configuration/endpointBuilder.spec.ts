@@ -1,10 +1,5 @@
 import type { BuildEnvWindow } from '../../../test'
-import { startsWith } from '../../tools/utils'
-import {
-  ExperimentalFeature,
-  resetExperimentalFeatures,
-  addExperimentalFeatures,
-} from '../../tools/experimentalFeatures'
+import { startsWith, ExperimentalFeature, resetExperimentalFeatures, addExperimentalFeatures } from '../../tools'
 import type { InitConfiguration } from './configuration'
 import { createEndpointBuilder } from './endpointBuilder'
 

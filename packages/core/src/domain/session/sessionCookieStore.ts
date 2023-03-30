@@ -1,9 +1,6 @@
 import type { CookieOptions } from '../../browser/cookie'
 import { deleteCookie, getCookie, setCookie } from '../../browser/cookie'
-import { setTimeout } from '../../tools/timer'
-import { isChromium } from '../../tools/browserDetection'
-import { dateNow } from '../../tools/timeUtils'
-import * as utils from '../../tools/utils'
+import { setTimeout, isChromium, dateNow, objectEntries, isEmptyObject, generateUUID } from '../../tools'
 import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
 import type { SessionState } from './sessionStore'
 
@@ -46,7 +43,7 @@ export function withCookieLockAccess(operations: Operations, numberOfRetries = 0
       return
     }
     // acquire lock
-    currentLock = utils.generateUUID()
+    currentLock = generateUUID()
     currentSession.lock = currentLock
     setSessionCookie(currentSession, operations.options)
     // if lock is not acquired, retry later
@@ -125,8 +122,7 @@ function setSessionCookie(session: SessionState, options: CookieOptions) {
 }
 
 export function toSessionString(session: SessionState) {
-  return utils
-    .objectEntries(session)
+  return objectEntries(session)
     .map(([key, value]) => `${key}=${value as string}`)
     .join(SESSION_ENTRY_SEPARATOR)
 }
@@ -158,5 +154,5 @@ function isValidSessionString(sessionString: string | undefined): sessionString 
 }
 
 function isExpiredState(session: SessionState) {
-  return utils.isEmptyObject(session)
+  return isEmptyObject(session)
 }

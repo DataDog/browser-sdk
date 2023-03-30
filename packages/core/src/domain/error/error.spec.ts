@@ -1,5 +1,5 @@
 import type { StackTrace } from '../tracekit'
-import { clocksNow } from '../../tools/timeUtils'
+import { clocksNow } from '../../tools'
 import type { RawErrorCause, ErrorWithCause } from './error'
 import {
   createHandlingStack,

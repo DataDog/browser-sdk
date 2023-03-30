@@ -1,16 +1,25 @@
-import type { Context } from '../../tools/context'
-import { ConsoleApiName } from '../../tools/display'
+import type { Context } from '../../tools'
+import {
+  ConsoleApiName,
+  assign,
+  combine,
+  jsonStringify,
+  performDraw,
+  includes,
+  startsWith,
+  arrayFrom,
+  getExperimentalFeatures,
+  Observable,
+  timeStampNow,
+  displayIfDebugEnabled,
+  startMonitorErrorCollection,
+  sendToExtension,
+} from '../../tools'
 import { toStackTraceString } from '../error/error'
-import { assign, combine, jsonStringify, performDraw, includes, startsWith, arrayFrom } from '../../tools/utils'
-import { getExperimentalFeatures } from '../../tools/experimentalFeatures'
 import type { Configuration } from '../configuration'
 import { INTAKE_SITE_STAGING, INTAKE_SITE_US1_FED } from '../configuration'
 import type { StackTrace } from '../tracekit'
 import { computeStackTrace } from '../tracekit'
-import { Observable } from '../../tools/observable'
-import { timeStampNow } from '../../tools/timeUtils'
-import { displayIfDebugEnabled, startMonitorErrorCollection } from '../../tools/monitor'
-import { sendToExtension } from '../../tools/sendToExtension'
 import type { TelemetryEvent } from './telemetryEvent.types'
 import type { RawTelemetryConfiguration, RawTelemetryEvent } from './rawTelemetryEvent.types'
 import { StatusType, TelemetryType } from './rawTelemetryEvent.types'
