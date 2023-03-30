@@ -1,4 +1,4 @@
-import { toStackTraceString } from '../../tools/error'
+import { toStackTraceString } from '../error/error'
 import { monitor } from '../../tools/monitor'
 import { mergeObservables, Observable } from '../../tools/observable'
 import { includes, safeTruncate } from '../../tools/utils'

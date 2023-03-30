@@ -1,6 +1,6 @@
 import type { Context } from '../../tools/context'
 import { ConsoleApiName } from '../../tools/display'
-import { toStackTraceString } from '../../tools/error'
+import { toStackTraceString } from '../error/error'
 import { assign, combine, jsonStringify, performDraw, includes, startsWith, arrayFrom } from '../../tools/utils'
 import { getExperimentalFeatures } from '../../tools/experimentalFeatures'
 import type { Configuration } from '../configuration'

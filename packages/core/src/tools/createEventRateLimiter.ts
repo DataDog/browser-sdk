@@ -1,6 +1,6 @@
 import { setTimeout } from '../browser/timer'
-import type { RawError } from './error'
-import { ErrorSource } from './error'
+import type { RawError } from '../domain/error/error'
+import { ErrorSource } from '../domain/error/error'
 import { clocksNow } from './timeUtils'
 import { ONE_MINUTE } from './utils'
 
