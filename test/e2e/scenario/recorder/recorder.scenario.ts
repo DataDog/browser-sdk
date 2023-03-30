@@ -1,10 +1,4 @@
-import type {
-  InputData,
-  StyleSheetRuleData,
-  CreationReason,
-  BrowserSegment,
-  ScrollData,
-} from '@datadog/browser-rum/src/types'
+import type { InputData, StyleSheetRuleData, BrowserSegment, ScrollData } from '@datadog/browser-rum/src/types'
 import { NodeType, IncrementalSource, MouseInteractionType } from '@datadog/browser-rum/src/types'
 
 import { FrustrationType } from '@datadog/browser-rum-core'
@@ -27,7 +21,6 @@ import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
 import { browserExecute, browserExecuteAsync } from '../../lib/helpers/browser'
 import { getFirstSegment, getLastSegment, initRumAndStartRecording } from '../../lib/helpers/replay'
 
-const INTEGER_RE = /^\d+$/
 const TIMESTAMP_RE = /^\d{13}$/
 const UUID_RE = /^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/
 
@@ -44,34 +37,35 @@ describe('recorder', () => {
       expect(serverEvents.sessionReplay.length).toBe(1)
       const { segment, metadata } = serverEvents.sessionReplay[0]
       expect(metadata).toEqual({
-        'application.id': jasmine.stringMatching(UUID_RE),
+        application: { id: jasmine.stringMatching(UUID_RE) },
         creation_reason: 'init',
         end: jasmine.stringMatching(TIMESTAMP_RE),
-        has_full_snapshot: 'true',
-        records_count: jasmine.stringMatching(INTEGER_RE),
-        'session.id': jasmine.stringMatching(UUID_RE),
+        has_full_snapshot: true,
+        records_count: jasmine.any(Number),
+        session: { id: jasmine.stringMatching(UUID_RE) },
         start: jasmine.stringMatching(TIMESTAMP_RE),
-        'view.id': jasmine.stringMatching(UUID_RE),
-        raw_segment_size: jasmine.stringMatching(INTEGER_RE),
-        index_in_view: '0',
+        view: { id: jasmine.stringMatching(UUID_RE) },
+        raw_segment_size: jasmine.any(Number),
+        compressed_segment_size: jasmine.any(Number),
+        index_in_view: 0,
         source: 'browser',
       })
       expect(segment).toEqual({
         data: {
-          application: { id: metadata['application.id'] },
-          creation_reason: metadata.creation_reason as CreationReason,
+          application: { id: metadata.application.id },
+          creation_reason: metadata.creation_reason,
           end: Number(metadata.end),
           has_full_snapshot: true,
           records: jasmine.any(Array),
           records_count: Number(metadata.records_count),
-          session: { id: metadata['session.id'] },
+          session: { id: metadata.session.id },
           start: Number(metadata.start),
-          view: { id: metadata['view.id'] },
+          view: { id: metadata.view.id },
           index_in_view: 0,
           source: 'browser',
         },
         encoding: jasmine.any(String),
-        filename: `${metadata['session.id']}-${metadata.start}`,
+        filename: `${metadata.session.id}-${metadata.start}`,
         mimetype: 'application/octet-stream',
       })
       expect(findMeta(segment.data)).toBeTruthy('have a Meta record')

@@ -4,6 +4,7 @@ import connectBusboy from 'connect-busboy'
 import express from 'express'
 
 import cors from 'cors'
+import type { BrowserSegmentMetadataAndSegmentSizes } from '@datadog/browser-rum/src/domain/segmentCollection'
 import type { SegmentFile } from '../../types/serverEvents'
 import type { EventRegistry, IntakeType } from '../eventsRegistry'
 
@@ -93,10 +94,8 @@ function forwardEventsToIntake(req: express.Request): Promise<any> {
 
 async function storeReplayData(req: express.Request, events: EventRegistry): Promise<any> {
   return new Promise((resolve, reject) => {
-    const metadata: {
-      [field: string]: string
-    } = {}
     let segmentPromise: Promise<SegmentFile>
+    let metadataPromise: Promise<BrowserSegmentMetadataAndSegmentSizes>
 
     req.busboy.on('file', (name, stream, info) => {
       const { filename, encoding, mimeType } = info
@@ -107,16 +106,16 @@ async function storeReplayData(req: express.Request, events: EventRegistry): Pro
           mimetype: mimeType,
           data: JSON.parse(data.toString()),
         }))
+      } else if (name === 'event') {
+        metadataPromise = readStream(stream).then(
+          (data) => JSON.parse(data.toString()) as BrowserSegmentMetadataAndSegmentSizes
+        )
       }
     })
 
-    req.busboy.on('field', (key: string, value: string) => {
-      metadata[key] = value
-    })
-
     req.busboy.on('finish', () => {
-      segmentPromise
-        .then((segment) => {
+      Promise.all([segmentPromise, metadataPromise])
+        .then(([segment, metadata]) => {
           events.push('sessionReplay', { metadata, segment })
         })
         .then(resolve)
