@@ -89,13 +89,12 @@ describe('httpRequest', () => {
           return Promise.resolve({ status: 200 })
         }
       })
-      const { waitAsyncCalls, expectNoExtraAsyncCall } = collectAsyncCalls(fetchSpy)
 
       interceptor.withFetch(fetchSpy)
 
       request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
 
-      waitAsyncCalls(2, () => expectNoExtraAsyncCall(done))
+      collectAsyncCalls(fetchSpy, 2, () => done())
     })
   })
 

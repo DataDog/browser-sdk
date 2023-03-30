@@ -102,16 +102,12 @@ describe('startMutationCollection', () => {
     it('processes mutations asynchronously', (done) => {
       serializeDocumentWithDefaults()
       const { mutationCallbackSpy } = startMutationCollection()
-      const { waitAsyncCalls: waitMutationCallbackCalls, expectNoExtraAsyncCall: expectNoExtraMutationCallbackCalls } =
-        collectAsyncCalls(mutationCallbackSpy)
 
       sandbox.appendChild(document.createElement('div'))
 
       expect(mutationCallbackSpy).not.toHaveBeenCalled()
 
-      waitMutationCallbackCalls(1, () => {
-        expectNoExtraMutationCallbackCalls(done)
-      })
+      collectAsyncCalls(mutationCallbackSpy, 1, () => done())
     })
 
     it('does not emit a mutation when a node is appended to a unknown node', () => {
