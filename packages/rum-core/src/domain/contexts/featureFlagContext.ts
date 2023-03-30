@@ -46,6 +46,7 @@ export function startFeatureFlagContexts(
 
   const featureFlagContexts = new ContextHistory<FeatureFlagContext>(FEATURE_FLAG_CONTEXT_TIME_OUT_DELAY)
   let bytesCountCache = 0
+  let alreadyWarned = false
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, ({ endClocks }) => {
     featureFlagContexts.closeActive(endClocks.relative)
@@ -56,9 +57,14 @@ export function startFeatureFlagContexts(
     bytesCountCache = 0
   })
 
+  // Throttle the bytes computation to minimize the impact on performance.
+  // Especially useful if the user call addFeatureFlagEvaluation API synchronously multiple times in a row
   const { throttled: computeBytesCountThrottled } = throttle((context: Context) => {
     bytesCountCache = computeBytesCountImpl(jsonStringify(context)!)
-    warnIfCustomerDataLimitReached(bytesCountCache, CustomerDataType.FeatureFlag)
+    if (!alreadyWarned) {
+      warnIfCustomerDataLimitReached(bytesCountCache, CustomerDataType.FeatureFlag)
+      alreadyWarned = true
+    }
   }, BYTES_COMPUTATION_THROTTLING_DELAY)
 
   return {

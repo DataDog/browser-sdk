@@ -1,13 +1,17 @@
 import type { Clock } from '../../test'
 import { mockClock } from '../../test'
 import { BYTES_COMPUTATION_THROTTLING_DELAY, createContextManager } from './contextManager'
-import { CustomerDataType } from './heavyCustomerDataWarning'
+import { display } from './display'
+import { CustomerDataType, CUSTOMER_DATA_BYTES_LIMIT } from './heavyCustomerDataWarning'
 
 describe('createContextManager', () => {
   let clock: Clock
 
+  let displaySpy: jasmine.Spy<typeof display.warn>
+
   beforeEach(() => {
     clock = mockClock()
+    displaySpy = spyOn(display, 'warn')
   })
 
   afterEach(() => {
@@ -129,5 +133,19 @@ describe('createContextManager', () => {
 
       expect(computeBytesCountStub).toHaveBeenCalledTimes(2)
     })
+  })
+
+  it('should warn once if the context bytes limit is reached', () => {
+    const computeBytesCountStub = jasmine
+      .createSpy('computeBytesCountStub')
+      .and.returnValue(CUSTOMER_DATA_BYTES_LIMIT + 1)
+    const manager = createContextManager(CustomerDataType.User, computeBytesCountStub)
+
+    manager.setContext({})
+    clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
+    manager.setContext({})
+    clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
+
+    expect(displaySpy).toHaveBeenCalledTimes(1)
   })
 })

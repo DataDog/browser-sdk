@@ -12,12 +12,16 @@ export type ContextManager = ReturnType<typeof createContextManager>
 export function createContextManager(customerDataType: CustomerDataType, computeBytesCountImpl = computeBytesCount) {
   let context: Context = {}
   let bytesCountCache: number
+  let alreadyWarned = false
 
   // Throttle the bytes computation to minimize the impact on performance.
-  // Especially usefull if the user call context APIs synchronously mutliple times in a row
+  // Especially useful if the user call context APIs synchronously multiple times in a row
   const { throttled: computeBytesCountThrottled } = throttle((context: Context) => {
     bytesCountCache = computeBytesCountImpl(jsonStringify(context)!)
-    warnIfCustomerDataLimitReached(bytesCountCache, customerDataType)
+    if (!alreadyWarned) {
+      warnIfCustomerDataLimitReached(bytesCountCache, customerDataType)
+      alreadyWarned = true
+    }
   }, BYTES_COMPUTATION_THROTTLING_DELAY)
 
   return {

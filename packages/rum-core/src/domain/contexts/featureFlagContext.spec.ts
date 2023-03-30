@@ -1,5 +1,6 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { resetExperimentalFeatures, updateExperimentalFeatures, relativeToClocks } from '@datadog/browser-core'
+import { display, resetExperimentalFeatures, updateExperimentalFeatures, relativeToClocks } from '@datadog/browser-core'
+import { CUSTOMER_DATA_BYTES_LIMIT } from '../../../../core/src/tools/heavyCustomerDataWarning'
 import type { TestSetupBuilder } from '../../../test'
 import { setup } from '../../../test'
 import type { Clock } from '../../../../core/test'
@@ -13,10 +14,13 @@ describe('featureFlagContexts', () => {
   let setupBuilder: TestSetupBuilder
   let featureFlagContexts: FeatureFlagContexts
   let computeBytesCountStub: jasmine.Spy
+  let displaySpy: jasmine.Spy<typeof display.warn>
+  let fakeBytesCount = 1
 
   beforeEach(() => {
+    displaySpy = spyOn(display, 'warn')
     setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
-      computeBytesCountStub = jasmine.createSpy('computeBytesCountStub').and.returnValue(1)
+      computeBytesCountStub = jasmine.createSpy('computeBytesCountStub').and.callFake(() => fakeBytesCount)
       featureFlagContexts = startFeatureFlagContexts(lifeCycle, computeBytesCountStub)
     })
   })
@@ -87,6 +91,24 @@ describe('featureFlagContexts', () => {
       const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations()!
 
       expect(featureFlagContext).toBeUndefined()
+    })
+
+    it('should warn once if the context bytes limit is reached', () => {
+      updateExperimentalFeatures(['feature_flags'])
+
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+      fakeBytesCount = CUSTOMER_DATA_BYTES_LIMIT + 1
+
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+        startClocks: relativeToClocks(0 as RelativeTime),
+      } as ViewCreatedEvent)
+
+      featureFlagContexts.addFeatureFlagEvaluation('feature', 'foo')
+      clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
+      featureFlagContexts.addFeatureFlagEvaluation('feature2', 'foo')
+      clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
+
+      expect(displaySpy).toHaveBeenCalledTimes(1)
     })
   })
 
