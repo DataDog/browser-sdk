@@ -1,4 +1,4 @@
-import { cleanupSyntheticsWorkerValues, mockSyntheticsWorkerValues } from '../../../../core/test/syntheticsWorkerValues'
+import { cleanupSyntheticsWorkerValues, mockSyntheticsWorkerValues } from '../../../../core/test'
 import { getSyntheticsContext } from './syntheticsContext'
 
 describe('getSyntheticsContext', () => {

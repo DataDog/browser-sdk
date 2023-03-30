@@ -12,6 +12,7 @@ import {
   clocksNow,
   ONE_SECOND,
   elapsed,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { FrustrationType } from '../../../rawRumEvent.types'
 import { ActionType } from '../../../rawRumEvent.types'
@@ -242,7 +243,7 @@ function computeClickActionBase(event: MouseEventOnElement, actionNameAttribute?
   let target: ClickAction['target']
   let position: ClickAction['position']
 
-  if (isExperimentalFeatureEnabled('clickmap')) {
+  if (isExperimentalFeatureEnabled(ExperimentalFeature.CLICKMAP)) {
     const rect = event.target.getBoundingClientRect()
     target = {
       width: Math.round(rect.width),

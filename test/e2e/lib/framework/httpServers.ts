@@ -1,6 +1,6 @@
 import * as http from 'http'
 import type { AddressInfo } from 'net'
-import { getIp } from '../../../utils'
+import { getIp } from '../../../envUtils'
 import { log } from './logger'
 
 const MAX_SERVER_CREATION_RETRY = 5

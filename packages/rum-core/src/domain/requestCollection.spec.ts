@@ -1,6 +1,6 @@
 import { isIE, RequestType } from '@datadog/browser-core'
-import type { FetchStub, FetchStubManager } from '../../../core/test/specHelper'
-import { SPEC_ENDPOINTS, stubFetch, stubXhr, withXhr } from '../../../core/test/specHelper'
+import type { FetchStub, FetchStubManager } from '@datadog/browser-core/test'
+import { SPEC_ENDPOINTS, stubFetch, stubXhr, withXhr } from '@datadog/browser-core/test'
 import type { RumConfiguration } from './configuration'
 import { validateAndBuildRumConfiguration } from './configuration'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'

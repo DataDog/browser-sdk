@@ -1,9 +1,8 @@
-import { stubEndpointBuilder, interceptRequests } from '../../test/specHelper'
-import type { Request } from '../../test/specHelper'
+import { collectAsyncCalls, stubEndpointBuilder, interceptRequests } from '../../test'
+import type { Request } from '../../test'
 import type { EndpointBuilder } from '../domain/configuration'
 import { createEndpointBuilder } from '../domain/configuration'
 import { noop } from '../tools/utils'
-import { collectAsyncCalls } from '../../test/collectAsyncCalls'
 import { createHttpRequest, fetchKeepAliveStrategy, sendXHR } from './httpRequest'
 import type { HttpRequest } from './httpRequest'
 

@@ -1,7 +1,7 @@
 import { DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { collectAsyncCalls } from '@datadog/browser-core/test/collectAsyncCalls'
-import { createMutationPayloadValidator, DEFAULT_SHADOW_ROOT_CONTROLLER } from '../../../../test/utils'
+import { collectAsyncCalls } from '@datadog/browser-core/test'
+import { createMutationPayloadValidator } from '../../../../test'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
@@ -11,11 +11,12 @@ import {
 } from '../../../constants'
 import type { AttributeMutation, Attributes } from '../../../types'
 import { NodeType } from '../../../types'
-import { serializeDocument, SerializationContextStatus } from '../serialize'
+import { serializeDocument, SerializationContextStatus } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootCallBack } from '../shadowRootsController'
 import { sortAddedAndMovedNodes, initMutationObserver } from './mutationObserver'
 import type { MutationCallBack } from './mutationObserver'
+import { DEFAULT_SHADOW_ROOT_CONTROLLER } from './observers.specHelper'
 
 describe('startMutationCollection', () => {
   let sandbox: HTMLElement

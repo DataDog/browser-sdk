@@ -1,6 +1,5 @@
-import { stubZoneJs } from '../../test/stubZoneJs'
-import type { Clock } from '../../test/specHelper'
-import { mockClock } from '../../test/specHelper'
+import { mockClock, stubZoneJs } from '../../test'
+import type { Clock } from '../../test'
 import { instrumentMethod, instrumentSetter } from './instrumentMethod'
 import { noop } from './utils'
 

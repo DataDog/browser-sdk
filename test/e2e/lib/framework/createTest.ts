@@ -1,6 +1,6 @@
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { RumInitConfiguration } from '@datadog/browser-rum-core'
-import { getRunId } from '../../../utils'
+import { getRunId } from '../../../envUtils'
 import { deleteAllCookies, getBrowserName, withBrowserLogs } from '../helpers/browser'
 import { APPLICATION_ID, CLIENT_TOKEN } from '../helpers/constants'
 import { validateRumFormat } from '../helpers/validation'

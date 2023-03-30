@@ -1,5 +1,5 @@
 import type { BatchFlushEvent, Context, ContextManager, Observable, Telemetry } from '@datadog/browser-core'
-import { isEmptyObject, includes, performDraw, ONE_SECOND, addTelemetryDebug, monitor } from '@datadog/browser-core'
+import { isEmptyObject, includes, performDraw, ONE_SECOND, addTelemetryDebug, setInterval } from '@datadog/browser-core'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'
 import type { RumConfiguration } from './configuration'
@@ -91,7 +91,7 @@ export function startCustomerDataTelemetry(
     initCurrentBatchMeasures()
   })
 
-  setInterval(monitor(sendCurrentPeriodMeasures), MEASURES_PERIOD_DURATION)
+  setInterval(sendCurrentPeriodMeasures, MEASURES_PERIOD_DURATION)
 }
 
 function sendCurrentPeriodMeasures() {

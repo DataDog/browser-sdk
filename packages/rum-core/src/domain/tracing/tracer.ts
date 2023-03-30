@@ -75,7 +75,7 @@ export function startTracer(configuration: RumConfiguration, sessionManager: Rum
           })
         } else {
           context.init = shallowClone(context.init)
-          const headers: string[][] = []
+          const headers: Array<[string, string]> = []
           if (context.init.headers instanceof Headers) {
             context.init.headers.forEach((value, key) => {
               headers.push([key, value])
@@ -89,7 +89,7 @@ export function startTracer(configuration: RumConfiguration, sessionManager: Rum
               headers.push([key, (context.init!.headers as Record<string, string>)[key]])
             })
           }
-          context.init.headers = headers.concat(objectEntries(tracingHeaders) as string[][])
+          context.init.headers = headers.concat(objectEntries(tracingHeaders))
         }
       }),
     traceXhr: (context, xhr) =>

@@ -1,11 +1,11 @@
 import type { CookieOptions } from '../../browser/cookie'
 import { COOKIE_ACCESS_DELAY } from '../../browser/cookie'
-import { monitor } from '../../tools/monitor'
+import { clearInterval, setInterval } from '../../browser/timer'
 import { Observable } from '../../tools/observable'
 import { dateNow } from '../../tools/timeUtils'
 import * as utils from '../../tools/utils'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
-import { retrieveSession, withCookieLockAccess } from './sessionCookieStore'
+import { deleteSessionCookie, retrieveSessionCookie, withCookieLockAccess } from './sessionCookieStore'
 
 export interface SessionStore {
   expandOrRenewSession: () => void
@@ -13,6 +13,7 @@ export interface SessionStore {
   getSession: () => SessionState
   renewObservable: Observable<void>
   expireObservable: Observable<void>
+  expire: () => void
   stop: () => void
 }
 
@@ -39,7 +40,7 @@ export function startSessionStore<TrackingType extends string>(
   const renewObservable = new Observable<void>()
   const expireObservable = new Observable<void>()
 
-  const watchSessionTimeoutId = setInterval(monitor(watchSession), COOKIE_ACCESS_DELAY)
+  const watchSessionTimeoutId = setInterval(watchSession, COOKIE_ACCESS_DELAY)
   let sessionCache: SessionState = retrieveActiveSession()
 
   function expandOrRenewSession() {
@@ -53,7 +54,7 @@ export function startSessionStore<TrackingType extends string>(
       },
       after: (cookieSession) => {
         if (isTracked && !hasSessionInCache()) {
-          renewSession(cookieSession)
+          renewSessionInCache(cookieSession)
         }
         sessionCache = cookieSession
       },
@@ -86,7 +87,7 @@ export function startSessionStore<TrackingType extends string>(
     }
     if (hasSessionInCache()) {
       if (isSessionInCacheOutdated(cookieSession)) {
-        expireSession()
+        expireSessionInCache()
       } else {
         sessionCache = cookieSession
       }
@@ -112,18 +113,18 @@ export function startSessionStore<TrackingType extends string>(
     return sessionCache.id !== cookieSession.id || sessionCache[productKey] !== cookieSession[productKey]
   }
 
-  function expireSession() {
+  function expireSessionInCache() {
     sessionCache = {}
     expireObservable.notify()
   }
 
-  function renewSession(cookieSession: SessionState) {
+  function renewSessionInCache(cookieSession: SessionState) {
     sessionCache = cookieSession
     renewObservable.notify()
   }
 
   function retrieveActiveSession(): SessionState {
-    const session = retrieveSession()
+    const session = retrieveSessionCookie()
     if (isActiveSession(session)) {
       return session
     }
@@ -145,6 +146,10 @@ export function startSessionStore<TrackingType extends string>(
     getSession: () => sessionCache,
     renewObservable,
     expireObservable,
+    expire: () => {
+      deleteSessionCookie(options)
+      synchronizeSession({})
+    },
     stop: () => {
       clearInterval(watchSessionTimeoutId)
     },

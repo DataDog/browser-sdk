@@ -1,4 +1,4 @@
-import { stubZoneJs } from '../../test/stubZoneJs'
+import { stubZoneJs } from '../../test'
 
 import type { BrowserWindowWithZoneJs } from './getZoneJsOriginalValue'
 import { getZoneJsOriginalValue } from './getZoneJsOriginalValue'

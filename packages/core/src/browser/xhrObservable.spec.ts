@@ -1,4 +1,4 @@
-import { stubXhr, withXhr } from '../../test/specHelper'
+import { withXhr, stubXhr } from '../../test'
 import { isIE } from '../tools/browserDetection'
 import type { Subscription } from '../tools/observable'
 import type { XhrCompleteContext, XhrContext } from './xhrObservable'

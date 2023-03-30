@@ -1,6 +1,6 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { DOM_EVENT } from '@datadog/browser-core'
-import { createNewEvent, restorePageVisibility, setPageVisibility } from '../../../../../core/test/specHelper'
+import { createNewEvent, restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
 import { resetFirstHidden, trackFirstHidden } from './trackFirstHidden'
 
 describe('trackFirstHidden', () => {

@@ -1,5 +1,7 @@
 import type { Context, InitConfiguration, User } from '@datadog/browser-core'
 import {
+  ExperimentalFeature,
+  isExperimentalFeatureEnabled,
   assign,
   BoundedBuffer,
   createContextManager,
@@ -11,6 +13,7 @@ import {
   timeStampNow,
   checkUser,
   sanitizeUser,
+  sanitize,
 } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
@@ -118,10 +121,12 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
     createLogger: monitor((name: string, conf: LoggerConfiguration = {}) => {
       customLoggers[name] = new Logger(
         (...params) => handleLogStrategy(...params),
-        name,
+        isExperimentalFeatureEnabled(ExperimentalFeature.SANITIZE_INPUTS) ? sanitize(name) : name,
         conf.handler,
         conf.level,
-        conf.context
+        isExperimentalFeatureEnabled(ExperimentalFeature.SANITIZE_INPUTS)
+          ? (sanitize(conf.context) as object)
+          : conf.context
       )
 
       return customLoggers[name]!

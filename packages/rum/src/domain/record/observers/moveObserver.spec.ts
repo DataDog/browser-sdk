@@ -1,11 +1,11 @@
 import { isIE } from '@datadog/browser-core'
-import { createNewEvent } from '@datadog/browser-core/test/specHelper'
-import { SerializationContextStatus, serializeDocument } from '../serialize'
+import { createNewEvent } from '@datadog/browser-core/test'
+import { SerializationContextStatus, serializeDocument } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { IncrementalSource } from '../../../types'
-import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from '../../../../test/utils'
 import type { MousemoveCallBack } from './moveObserver'
 import { initMoveObserver } from './moveObserver'
+import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './observers.specHelper'
 
 describe('initMoveObserver', () => {
   let mouseMoveCallbackSpy: jasmine.Spy<MousemoveCallBack>

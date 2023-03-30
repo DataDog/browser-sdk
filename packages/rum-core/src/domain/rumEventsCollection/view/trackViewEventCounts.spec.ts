@@ -1,9 +1,9 @@
 import type { Context } from '@datadog/browser-core'
 import { noop } from '@datadog/browser-core'
+import type { Clock } from '@datadog/browser-core/test'
+import { mockClock } from '@datadog/browser-core/test'
 import type { RumResourceEvent } from '../../../rumEvent.types'
 import { RumEventType } from '../../../rawRumEvent.types'
-import type { Clock } from '../../../../../core/test/specHelper'
-import { mockClock } from '../../../../../core/test/specHelper'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { KEEP_TRACKING_EVENT_COUNTS_AFTER_VIEW_DELAY, trackViewEventCounts } from './trackViewEventCounts'
 

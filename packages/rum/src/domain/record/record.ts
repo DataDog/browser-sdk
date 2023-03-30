@@ -14,10 +14,10 @@ import type {
   ViewportResizeData,
 } from '../../types'
 import { RecordType, IncrementalSource } from '../../types'
-import { serializeDocument, SerializationContextStatus } from './serialize'
+import { assembleIncrementalSnapshot } from './assembly'
+import { SerializationContextStatus, serializeDocument } from './serialization'
 import { initObservers } from './observers'
 import { getVisualViewport, getScrollX, getScrollY } from './viewports'
-import { assembleIncrementalSnapshot } from './utils'
 import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
 import { initShadowRootsController } from './shadowRootsController'
@@ -93,7 +93,7 @@ export function record(options: RecordOptions): RecordAPI {
 
     if (window.visualViewport) {
       emit({
-        data: getVisualViewport(),
+        data: getVisualViewport(window.visualViewport),
         type: RecordType.VisualViewport,
         timestamp,
       })

@@ -2,12 +2,12 @@ import type { HttpRequest, TimeStamp } from '@datadog/browser-core'
 import { PageExitReason, isIE } from '@datadog/browser-core'
 import type { ViewContexts, ViewContext } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
-import type { Clock } from '@datadog/browser-core/test/specHelper'
-import { mockClock, restorePageVisibility } from '@datadog/browser-core/test/specHelper'
-import { createRumSessionManagerMock } from '../../../../rum-core/test/mockRumSessionManager'
+import type { Clock } from '@datadog/browser-core/test'
+import { mockClock, restorePageVisibility } from '@datadog/browser-core/test'
+import { createRumSessionManagerMock } from '../../../../rum-core/test'
 import type { BrowserRecord, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
-import { MockWorker } from '../../../test/utils'
+import { MockWorker } from '../../../test'
 import {
   computeSegmentContext,
   doStartSegmentCollection,
