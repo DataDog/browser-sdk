@@ -1,6 +1,6 @@
 import type { CookieOptions } from '../../browser/cookie'
 import { COOKIE_ACCESS_DELAY } from '../../browser/cookie'
-import { clearInterval, setInterval } from '../../browser/timer'
+import { clearInterval, setInterval } from '../../tools/timer'
 import { Observable } from '../../tools/observable'
 import { dateNow } from '../../tools/timeUtils'
 import * as utils from '../../tools/utils'

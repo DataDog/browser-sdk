@@ -1,5 +1,5 @@
 import type { EndpointType } from '../domain/configuration'
-import { setTimeout } from '../browser/timer'
+import { setTimeout } from '../tools/timer'
 import type { RawError } from '../domain/error/error'
 import { clocksNow } from '../tools/timeUtils'
 import { ONE_KIBI_BYTE, ONE_MEBI_BYTE, ONE_SECOND, ONE_MINUTE } from '../tools/utils'

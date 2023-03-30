@@ -1,4 +1,4 @@
-import { setTimeout } from '../../browser/timer'
+import { setTimeout } from '../../tools/timer'
 import type { RawError } from '../error/error'
 import { ErrorSource } from '../error/error'
 import { clocksNow } from '../../tools/timeUtils'

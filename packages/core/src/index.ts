@@ -86,7 +86,7 @@ export { initXhrObservable, XhrCompleteContext, XhrStartContext } from './browse
 export { initFetchObservable, FetchResolveContext, FetchStartContext, FetchContext } from './browser/fetchObservable'
 export { createPageExitObservable, PageExitEvent, PageExitReason, isPageExitReason } from './browser/pageExitObservable'
 export * from './browser/addEventListener'
-export * from './browser/timer'
+export * from './tools/timer'
 export { initConsoleObservable, ConsoleLog } from './domain/console/consoleObservable'
 export { BoundedBuffer } from './tools/boundedBuffer'
 export { catchUserErrors } from './tools/catchUserErrors'
