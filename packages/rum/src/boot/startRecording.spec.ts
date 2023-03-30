@@ -3,6 +3,7 @@ import { PageExitReason, DefaultPrivacyLevel, noop, isIE, timeStampNow } from '@
 import type { LifeCycle, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { inflate } from 'pako'
+import type { Clock } from '@datadog/browser-core/test'
 import { collectAsyncCalls, createNewEvent, mockClock } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock, TestSetupBuilder } from '../../../rum-core/test'
 import { createRumSessionManagerMock, setup } from '../../../rum-core/test'
@@ -25,6 +26,7 @@ describe('startRecording', () => {
   let textField: HTMLInputElement
   let requestSendSpy: jasmine.Spy<HttpRequest['sendOnExit']>
   let stopRecording: () => void
+  let clock: Clock | undefined
 
   beforeEach((done) => {
     if (isIE()) {
@@ -69,6 +71,7 @@ describe('startRecording', () => {
     sandbox.remove()
     setSegmentBytesLimit()
     setupBuilder.cleanup()
+    clock?.cleanup()
   })
 
   it('sends recorded segments with valid context', (done) => {
@@ -162,7 +165,7 @@ describe('startRecording', () => {
   })
 
   it('full snapshot related records should have the view change date', (done) => {
-    const clock = mockClock()
+    clock = mockClock()
     const { lifeCycle } = setupBuilder.build()
 
     changeView(lifeCycle)
@@ -174,8 +177,6 @@ describe('startRecording', () => {
         expect(segment.records[1].timestamp).toEqual(timeStampNow())
         expect(segment.records[2].timestamp).toEqual(timeStampNow())
         expect(segment.records[3].timestamp).toEqual(timeStampNow())
-
-        clock.cleanup()
 
         readRequestSegment(calls.mostRecent(), (segment) => {
           expect(segment.records[0].timestamp).toEqual(VIEW_TIMESTAMP)
