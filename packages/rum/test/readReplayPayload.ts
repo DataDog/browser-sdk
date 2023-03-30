@@ -19,7 +19,7 @@ function readSegmentFromReplayPayload(payload: Payload) {
 // In the next commit, this method will change and will be async. This is an intermediary
 // implementation to prepare for the real metadata change.
 // eslint-disable-next-line @typescript-eslint/require-await
-async function readMetadataFromReplayPayload(payload: Payload) {
+export async function readMetadataFromReplayPayload(payload: Payload) {
   const data = payload.data as FormData
   const result: Record<string, string> = {}
   data.forEach((value, key) => {
