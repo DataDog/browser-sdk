@@ -1,11 +1,11 @@
-import type { Clock } from '../../test'
-import { mockClock } from '../../test'
-import type { RawError } from '../domain/error/error'
-import type { EventRateLimiter } from './createEventRateLimiter'
+import type { Clock } from '../../../test'
+import { mockClock } from '../../../test'
+import type { RawError } from '../error/error'
+import type { RelativeTime } from '../../tools/timeUtils'
+import { relativeToClocks, resetNavigationStart } from '../../tools/timeUtils'
+import { noop, ONE_MINUTE } from '../../tools/utils'
 import { createEventRateLimiter } from './createEventRateLimiter'
-import type { RelativeTime } from './timeUtils'
-import { relativeToClocks, resetNavigationStart } from './timeUtils'
-import { noop, ONE_MINUTE } from './utils'
+import type { EventRateLimiter } from './createEventRateLimiter'
 
 describe('createEventRateLimiter', () => {
   let eventLimiter: EventRateLimiter | undefined
