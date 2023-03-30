@@ -64,7 +64,7 @@ export * from './tools/sanitize'
 export * from './domain/eventRateLimiter/createEventRateLimiter'
 export * from './tools/browserDetection'
 export { sendToExtension } from './tools/sendToExtension'
-export { runOnReadyState } from './tools/runOnReadyState'
+export { runOnReadyState } from './browser/runOnReadyState'
 export { getZoneJsOriginalValue } from './tools/getZoneJsOriginalValue'
 export { instrumentMethod, instrumentMethodAndCallOriginal, instrumentSetter } from './tools/instrumentMethod'
 export {
