@@ -5,12 +5,15 @@ export {
   validateAndBuildConfiguration,
   DefaultPrivacyLevel,
   EndpointBuilder,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
-  addExperimentalFeatures,
-  resetExperimentalFeatures,
   serializeConfiguration,
 } from './domain/configuration'
+export {
+  isExperimentalFeatureEnabled,
+  addExperimentalFeatures,
+  resetExperimentalFeatures,
+  getExperimentalFeatures,
+  ExperimentalFeature,
+} from './tools/experimentalFeatures'
 export { trackRuntimeError } from './domain/error/trackRuntimeError'
 export { computeStackTrace, StackTrace } from './domain/tracekit'
 export { defineGlobal, makePublicApi } from './boot/init'

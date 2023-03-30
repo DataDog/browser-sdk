@@ -1,6 +1,6 @@
-import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../domain/configuration'
 import type { StackTrace } from '../domain/tracekit'
 import { computeStackTrace } from '../domain/tracekit'
+import { ExperimentalFeature, isExperimentalFeatureEnabled } from './experimentalFeatures'
 import { callMonitored } from './monitor'
 import { sanitize } from './sanitize'
 import type { ClocksState } from './timeUtils'
