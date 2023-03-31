@@ -1,4 +1,4 @@
-import { display } from '../tools'
+import { display } from '../tools/display'
 import { defineGlobal } from './init'
 
 describe('defineGlobal', () => {

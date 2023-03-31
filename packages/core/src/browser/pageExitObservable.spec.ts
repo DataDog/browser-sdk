@@ -1,6 +1,6 @@
 import { createNewEvent, restorePageVisibility, setPageVisibility } from '../../test'
-import { resetExperimentalFeatures, addExperimentalFeatures, ExperimentalFeature } from '../tools'
-import type { Subscription } from '../tools'
+import { resetExperimentalFeatures, addExperimentalFeatures, ExperimentalFeature } from '../tools/experimentalFeatures'
+import type { Subscription } from '../tools/observable'
 import type { PageExitEvent } from './pageExitObservable'
 import { PageExitReason, createPageExitObservable } from './pageExitObservable'
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { TelemetryEvent } from '../../../../packages/core/src/domain/telemetry'
-import { generateUUID } from '../../../../packages/core/src/tools'
+import { generateUUID } from '../../../../packages/core/src/tools/utils'
 import type { LogsEvent } from '../../../../packages/logs/src/logsEvent.types'
 import type { RumEvent } from '../../../../packages/rum-core/src/rumEvent.types'
 import { INTAKE_DOMAINS } from '../../common/constants'

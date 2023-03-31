@@ -1,14 +1,10 @@
 import type { StackTrace } from '../tracekit'
 import { computeStackTrace } from '../tracekit'
-import {
-  ExperimentalFeature,
-  isExperimentalFeatureEnabled,
-  callMonitored,
-  sanitize,
-  jsonStringify,
-  noop,
-} from '../../tools'
-import type { ClocksState } from '../../tools'
+import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/experimentalFeatures'
+import { callMonitored } from '../../tools/monitor'
+import { sanitize } from '../../tools/sanitize'
+import type { ClocksState } from '../../tools/timeUtils'
+import { jsonStringify, noop } from '../../tools/utils'
 
 export const NO_ERROR_STACK_PRESENT_MESSAGE = 'No stack, consider using an instance of Error'
 export const PROVIDED_ERROR_MESSAGE_PREFIX = 'Provided'

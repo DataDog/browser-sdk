@@ -1,4 +1,6 @@
-import { catchUserErrors, setDebugMode, assign } from '../tools'
+import { catchUserErrors } from '../tools/catchUserErrors'
+import { setDebugMode } from '../tools/monitor'
+import { assign } from '../tools/utils'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string

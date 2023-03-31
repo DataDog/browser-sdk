@@ -1,4 +1,4 @@
-import type { Subscription } from '@datadog/browser-core/src/tools'
+import type { Subscription } from '@datadog/browser-core/src/tools/observable'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, createNewEvent } from '@datadog/browser-core/test'
 import type { ViewportDimension } from './viewportObservable'

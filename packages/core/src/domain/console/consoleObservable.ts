@@ -1,16 +1,11 @@
 import { computeStackTrace } from '../tracekit'
 import { createHandlingStack, formatErrorMessage, toStackTraceString } from '../error/error'
-import {
-  mergeObservables,
-  Observable,
-  find,
-  jsonStringify,
-  ConsoleApiName,
-  callMonitored,
-  sanitize,
-  ExperimentalFeature,
-  isExperimentalFeatureEnabled,
-} from '../../tools'
+import { mergeObservables, Observable } from '../../tools/observable'
+import { find, jsonStringify } from '../../tools/utils'
+import { ConsoleApiName } from '../../tools/display'
+import { callMonitored } from '../../tools/monitor'
+import { sanitize } from '../../tools/sanitize'
+import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/experimentalFeatures'
 
 export interface ConsoleLog {
   message: string

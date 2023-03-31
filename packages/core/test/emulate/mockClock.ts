@@ -1,4 +1,4 @@
-import { resetNavigationStart } from '../../src/tools'
+import { resetNavigationStart } from '../../src/tools/timeUtils'
 
 export type Clock = ReturnType<typeof mockClock>
 

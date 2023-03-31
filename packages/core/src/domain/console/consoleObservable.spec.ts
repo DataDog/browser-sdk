@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
-import { isIE, ConsoleApiName } from '../../tools'
-import type { Subscription } from '../../tools'
+import { isIE } from '../../tools/browserDetection'
+import { ConsoleApiName } from '../../tools/display'
+import type { Subscription } from '../../tools/observable'
 import type { ConsoleLog } from './consoleObservable'
 import { initConsoleObservable } from './consoleObservable'
 

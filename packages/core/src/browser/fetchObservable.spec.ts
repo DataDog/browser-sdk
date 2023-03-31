@@ -1,7 +1,7 @@
 import type { FetchStub, FetchStubManager, FetchStubPromise } from '../../test'
 import { stubFetch } from '../../test'
-import { isIE } from '../tools'
-import type { Subscription } from '../tools'
+import { isIE } from '../tools/browserDetection'
+import type { Subscription } from '../tools/observable'
 import type { FetchResolveContext, FetchContext } from './fetchObservable'
 import { initFetchObservable } from './fetchObservable'
 

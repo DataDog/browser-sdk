@@ -1,5 +1,5 @@
 import { stubReportingObserver, stubCspEventListener } from '../../../test'
-import type { Subscription } from '../../tools'
+import type { Subscription } from '../../tools/observable'
 import { initReportObservable, RawReportType } from './reportObservable'
 
 describe('report observable', () => {

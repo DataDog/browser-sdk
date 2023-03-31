@@ -1,5 +1,5 @@
-import type { Observable } from '../../tools'
-import { clocksNow } from '../../tools'
+import type { Observable } from '../../tools/observable'
+import { clocksNow } from '../../tools/timeUtils'
 import { startUnhandledErrorCollection } from '../tracekit'
 import { ErrorSource, computeRawError, ErrorHandling } from './error'
 import type { RawError } from './error'

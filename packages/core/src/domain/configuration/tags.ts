@@ -1,4 +1,4 @@
-import { display } from '../../tools'
+import { display } from '../../tools/display'
 import type { InitConfiguration } from './configuration'
 
 export const TAG_SIZE_LIMIT = 200

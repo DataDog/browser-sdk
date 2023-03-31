@@ -1,4 +1,4 @@
-import { display } from '../../tools'
+import { display } from '../../tools/display'
 import type { InitConfiguration } from './configuration'
 import { buildTag, buildTags, TAG_SIZE_LIMIT } from './tags'
 
