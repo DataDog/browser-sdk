@@ -1,5 +1,3 @@
 export { initObservers } from './observers'
 export { InputCallback, initInputObserver } from './inputObserver'
 export { initMutationObserver, MutationCallBack, RumMutationRecord } from './mutationObserver'
-export { DEFAULT_CONFIGURATION } from './observers.specHelper'
-export { DEFAULT_SHADOW_ROOT_CONTROLLER } from './observers.specHelper'
