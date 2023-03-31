@@ -1,6 +1,6 @@
-import type { Clock } from '@datadog/browser-core/test/specHelper'
-import { createNewEvent, mockClock } from '@datadog/browser-core/test/specHelper'
 import type { Subscription } from '@datadog/browser-core/src/tools/observable'
+import type { Clock } from '@datadog/browser-core/test'
+import { mockClock, createNewEvent } from '@datadog/browser-core/test'
 import type { ViewportDimension } from './viewportObservable'
 import { getViewportDimension, initViewportObservable } from './viewportObservable'
 

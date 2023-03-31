@@ -117,6 +117,8 @@ export function round(num: number, decimals: 0 | 1 | 2 | 3 | 4) {
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 export function noop() {}
 
+export type ListenerHandler = () => void
+
 /**
  * Custom implementation of JSON.stringify that ignores some toJSON methods. We need to do that
  * because some sites badly override toJSON on certain objects. Removing all toJSON methods from
@@ -153,10 +155,10 @@ export function jsonStringify(
   }
 }
 
-interface ObjectWithToJsonMethod {
-  toJSON: unknown
+export interface ObjectWithToJsonMethod {
+  toJSON?: () => unknown
 }
-function detachToJsonMethod(value: object) {
+export function detachToJsonMethod(value: object) {
   const object = value as ObjectWithToJsonMethod
   const objectToJson = object.toJSON
   if (objectToJson) {
@@ -223,6 +225,13 @@ export function findLast<T, S extends T>(
   return undefined
 }
 
+export function forEach<List extends { [index: number]: any }>(
+  list: List,
+  callback: (value: List[number], index: number, parent: List) => void
+) {
+  Array.prototype.forEach.call(list, callback as any)
+}
+
 export function isPercentage(value: unknown) {
   return isNumber(value) && value >= 0 && value <= 100
 }
@@ -239,7 +248,7 @@ export function objectHasValue<T extends { [key: string]: unknown }>(object: T, 
   return Object.keys(object).some((key) => object[key] === value)
 }
 
-export function objectEntries(object: { [key: string]: unknown }): Array<[string, unknown]> {
+export function objectEntries<T = unknown>(object: { [key: string]: T }): Array<[string, T]> {
   return Object.keys(object).map((key) => [key, object[key]])
 }
 
@@ -446,7 +455,7 @@ export function mergeInto<D, S>(
     return merged as unknown as Merged<D, S>
   }
 
-  const merged: Record<any, any> = getType(destination) === 'object' ? destination : {}
+  const merged = getType(destination) === 'object' ? (destination as Record<any, any>) : {}
   for (const key in source) {
     if (Object.prototype.hasOwnProperty.call(source, key)) {
       merged[key] = mergeInto(merged[key], source[key], circularReferenceChecker)

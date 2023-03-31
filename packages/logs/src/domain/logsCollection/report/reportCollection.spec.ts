@@ -1,5 +1,5 @@
 import { ErrorSource, noop } from '@datadog/browser-core'
-import { stubReportingObserver } from '@datadog/browser-core/test/stubReportApis'
+import { stubReportingObserver } from '@datadog/browser-core/test'
 import type { RawReportLogsEvent } from '../../../rawLogsEvent.types'
 import { validateAndBuildLogsConfiguration } from '../../configuration'
 import type { RawLogsEventCollectedData } from '../../lifeCycle'

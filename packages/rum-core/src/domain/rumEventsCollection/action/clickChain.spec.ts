@@ -1,6 +1,6 @@
-import type { Clock } from '@datadog/browser-core/test/specHelper'
-import { mockClock } from '@datadog/browser-core/test/specHelper'
-import { createFakeClick } from '../../../../test/createFakeClick'
+import type { Clock } from '@datadog/browser-core/test'
+import { mockClock } from '@datadog/browser-core/test'
+import { createFakeClick } from '../../../../test'
 import type { ClickChain } from './clickChain'
 import { MAX_DISTANCE_BETWEEN_CLICKS, MAX_DURATION_BETWEEN_CLICKS, createClickChain } from './clickChain'
 

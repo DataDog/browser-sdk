@@ -3,19 +3,16 @@ import { PageExitReason, DefaultPrivacyLevel, noop, isIE, timeStampNow } from '@
 import type { LifeCycle, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { inflate } from 'pako'
-import type { RumSessionManagerMock } from '../../../rum-core/test/mockRumSessionManager'
-import { createRumSessionManagerMock } from '../../../rum-core/test/mockRumSessionManager'
-import { createNewEvent, mockClock } from '../../../core/test/specHelper'
+import { collectAsyncCalls, createNewEvent, mockClock } from '@datadog/browser-core/test'
+import type { RumSessionManagerMock, TestSetupBuilder } from '../../../rum-core/test'
+import { createRumSessionManagerMock, setup } from '../../../rum-core/test'
 
-import type { TestSetupBuilder } from '../../../rum-core/test/specHelper'
-import { setup } from '../../../rum-core/test/specHelper'
-import { recordsPerFullSnapshot } from '../../test/utils'
+import { recordsPerFullSnapshot } from '../../test'
 import { setSegmentBytesLimit, startDeflateWorker } from '../domain/segmentCollection'
 
 import type { BrowserSegment } from '../types'
 import { RecordType } from '../types'
 import { resetReplayStats } from '../domain/replayStats'
-import { collectAsyncCalls } from '../../../core/test/collectAsyncCalls'
 import { startRecording } from './startRecording'
 
 const VIEW_TIMESTAMP = 1 as TimeStamp
@@ -24,13 +21,9 @@ describe('startRecording', () => {
   let setupBuilder: TestSetupBuilder
   let sessionManager: RumSessionManagerMock
   let viewId: string
-  let waitRequestSendCalls: (
-    expectedCallsCount: number,
-    callback: (calls: jasmine.Calls<HttpRequest['sendOnExit']>) => void
-  ) => void
   let sandbox: HTMLElement
   let textField: HTMLInputElement
-  let expectNoExtraRequestSendCalls: (done: () => void) => void
+  let requestSendSpy: jasmine.Spy<HttpRequest['sendOnExit']>
   let stopRecording: () => void
 
   beforeEach((done) => {
@@ -58,14 +51,11 @@ describe('startRecording', () => {
           defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
         })
         .beforeBuild(({ lifeCycle, configuration, viewContexts, sessionManager }) => {
-          const requestSendSpy = jasmine.createSpy()
-          const httpRequest: HttpRequest = {
+          requestSendSpy = jasmine.createSpy()
+          const httpRequest = {
             send: requestSendSpy,
             sendOnExit: requestSendSpy,
           }
-
-          ;({ waitAsyncCalls: waitRequestSendCalls, expectNoExtraAsyncCall: expectNoExtraRequestSendCalls } =
-            collectAsyncCalls(requestSendSpy))
 
           const recording = startRecording(lifeCycle, configuration, sessionManager, viewContexts, worker!, httpRequest)
           stopRecording = recording ? recording.stop : noop
@@ -85,7 +75,7 @@ describe('startRecording', () => {
     const { lifeCycle } = setupBuilder.build()
     flushSegment(lifeCycle)
 
-    waitRequestSendCalls(1, (calls) => {
+    collectAsyncCalls(requestSendSpy, 1, (calls) => {
       expect(calls.first().args[0]).toEqual({ data: jasmine.any(FormData), bytesCount: jasmine.any(Number) })
       expect(getRequestData(calls.first())).toEqual({
         'application.id': 'appId',
@@ -101,7 +91,7 @@ describe('startRecording', () => {
         index_in_view: '0',
         source: 'browser',
       })
-      expectNoExtraRequestSendCalls(done)
+      done()
     })
   })
 
@@ -116,9 +106,9 @@ describe('startRecording', () => {
       document.body.dispatchEvent(inputEvent)
     }
 
-    waitRequestSendCalls(1, (calls) => {
+    collectAsyncCalls(requestSendSpy, 1, (calls) => {
       expect(getRequestData(calls.first()).records_count).toBe(String(inputCount + recordsPerFullSnapshot()))
-      expectNoExtraRequestSendCalls(done)
+      done()
     })
   })
 
@@ -133,9 +123,9 @@ describe('startRecording', () => {
 
     flushSegment(lifeCycle)
 
-    waitRequestSendCalls(1, (calls) => {
+    collectAsyncCalls(requestSendSpy, 1, (calls) => {
       expect(getRequestData(calls.first()).records_count).toBe(String(1 + recordsPerFullSnapshot()))
-      expectNoExtraRequestSendCalls(done)
+      done()
     })
   })
 
@@ -151,11 +141,11 @@ describe('startRecording', () => {
 
     flushSegment(lifeCycle)
 
-    waitRequestSendCalls(1, (calls) => {
+    collectAsyncCalls(requestSendSpy, 1, (calls) => {
       const data = getRequestData(calls.first())
       expect(data.records_count).toBe('1')
       expect(data['session.id']).toBe('new-session-id')
-      expectNoExtraRequestSendCalls(done)
+      done()
     })
   })
 
@@ -165,9 +155,9 @@ describe('startRecording', () => {
     changeView(lifeCycle)
     flushSegment(lifeCycle)
 
-    waitRequestSendCalls(2, (calls) => {
+    collectAsyncCalls(requestSendSpy, 2, (calls) => {
       expect(getRequestData(calls.mostRecent()).has_full_snapshot).toBe('true')
-      expectNoExtraRequestSendCalls(done)
+      done()
     })
   })
 
@@ -178,7 +168,7 @@ describe('startRecording', () => {
     changeView(lifeCycle)
     flushSegment(lifeCycle)
 
-    waitRequestSendCalls(2, (calls) => {
+    collectAsyncCalls(requestSendSpy, 2, (calls) => {
       readRequestSegment(calls.first(), (segment) => {
         expect(segment.records[0].timestamp).toEqual(timeStampNow())
         expect(segment.records[1].timestamp).toEqual(timeStampNow())
@@ -192,7 +182,7 @@ describe('startRecording', () => {
           expect(segment.records[1].timestamp).toEqual(VIEW_TIMESTAMP)
           expect(segment.records[2].timestamp).toEqual(VIEW_TIMESTAMP)
 
-          expectNoExtraRequestSendCalls(done)
+          done()
         })
       })
     })
@@ -204,11 +194,11 @@ describe('startRecording', () => {
     changeView(lifeCycle)
     flushSegment(lifeCycle)
 
-    waitRequestSendCalls(2, (calls) => {
+    collectAsyncCalls(requestSendSpy, 2, (calls) => {
       expect(getRequestData(calls.first())['view.id']).toBe('view-id')
       readRequestSegment(calls.first(), (segment) => {
         expect(segment.records[segment.records.length - 1].type).toBe(RecordType.ViewEnd)
-        expectNoExtraRequestSendCalls(done)
+        done()
       })
     })
   })
@@ -220,14 +210,14 @@ describe('startRecording', () => {
     changeView(lifeCycle)
     flushSegment(lifeCycle)
 
-    waitRequestSendCalls(2, (calls) => {
+    collectAsyncCalls(requestSendSpy, 2, (calls) => {
       readRequestSegment(calls.first(), (segment) => {
         expect(segment.records[segment.records.length - 2].type).toBe(RecordType.IncrementalSnapshot)
         expect(segment.records[segment.records.length - 1].type).toBe(RecordType.ViewEnd)
 
         readRequestSegment(calls.mostRecent(), (segment) => {
           expect(segment.records[0].type).toBe(RecordType.Meta)
-          expectNoExtraRequestSendCalls(done)
+          done()
         })
       })
     })
@@ -237,12 +227,12 @@ describe('startRecording', () => {
     setSegmentBytesLimit(0)
     setupBuilder.build()
 
-    waitRequestSendCalls(1, (calls) => {
+    collectAsyncCalls(requestSendSpy, 1, (calls) => {
       readRequestSegment(calls.first(), (segment) => {
         expect(segment.records[0].type).toBe(RecordType.Meta)
         expect(segment.records[1].type).toBe(RecordType.Focus)
         expect(segment.records[2].type).toBe(RecordType.FullSnapshot)
-        expectNoExtraRequestSendCalls(done)
+        done()
       })
     })
   })
@@ -256,9 +246,9 @@ describe('startRecording', () => {
       document.body.dispatchEvent(createNewEvent('click', { clientX: 1, clientY: 2 }))
       flushSegment(lifeCycle)
 
-      waitRequestSendCalls(1, (calls) => {
+      collectAsyncCalls(requestSendSpy, 1, (calls) => {
         expect(getRequestData(calls.first()).records_count).toBe(String(1 + recordsPerFullSnapshot()))
-        expectNoExtraRequestSendCalls(done)
+        done()
       })
     })
 
@@ -269,9 +259,9 @@ describe('startRecording', () => {
       changeView(lifeCycle)
       flushSegment(lifeCycle)
 
-      waitRequestSendCalls(1, (calls) => {
+      collectAsyncCalls(requestSendSpy, 1, (calls) => {
         expect(getRequestData(calls.first()).records_count).toBe(String(recordsPerFullSnapshot()))
-        expectNoExtraRequestSendCalls(done)
+        done()
       })
     })
   })

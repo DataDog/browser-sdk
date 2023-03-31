@@ -1,8 +1,6 @@
 import { display, isIE, objectEntries } from '@datadog/browser-core'
-import type { TestSetupBuilder } from '../../../test/specHelper'
-import { setup } from '../../../test/specHelper'
-import type { RumSessionManagerMock } from '../../../test/mockRumSessionManager'
-import { createRumSessionManagerMock } from '../../../test/mockRumSessionManager'
+import type { TestSetupBuilder, RumSessionManagerMock } from '../../../test'
+import { setup, createRumSessionManagerMock } from '../../../test'
 import type { RumFetchResolveContext, RumFetchStartContext, RumXhrStartContext } from '../requestCollection'
 import type { RumConfiguration, RumInitConfiguration } from '../configuration'
 import { validateAndBuildRumConfiguration } from '../configuration'
@@ -327,7 +325,7 @@ describe('tracer', () => {
     })
 
     it('should preserve original headers array', () => {
-      const headers = [
+      const headers: Array<[string, string]> = [
         ['foo', 'bar'],
         ['foo', 'baz'],
       ]
@@ -597,7 +595,7 @@ function tracingHeadersFor(traceId: TraceIdentifier, spanId: TraceIdentifier, sa
 }
 
 function tracingHeadersAsArrayFor(traceId: TraceIdentifier, spanId: TraceIdentifier, samplingPriority: '1' | '0') {
-  return objectEntries(tracingHeadersFor(traceId, spanId, samplingPriority)) as Array<[string, string]>
+  return objectEntries(tracingHeadersFor(traceId, spanId, samplingPriority))
 }
 
 function headersAsArray(headers: Headers) {

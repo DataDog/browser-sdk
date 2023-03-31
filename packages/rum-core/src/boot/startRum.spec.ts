@@ -9,11 +9,9 @@ import {
   relativeNow,
   isIE,
 } from '@datadog/browser-core'
-import { createNewEvent, interceptRequests } from '../../../core/test/specHelper'
-import type { RumSessionManagerMock } from '../../test/mockRumSessionManager'
-import { createRumSessionManagerMock } from '../../test/mockRumSessionManager'
-import type { TestSetupBuilder } from '../../test/specHelper'
-import { noopRecorderApi, setup } from '../../test/specHelper'
+import { createNewEvent, interceptRequests } from '@datadog/browser-core/test'
+import type { RumSessionManagerMock, TestSetupBuilder } from '../../test'
+import { createRumSessionManagerMock, noopRecorderApi, setup } from '../../test'
 import type { RumPerformanceNavigationTiming, RumPerformanceEntry } from '../browser/performanceCollection'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'

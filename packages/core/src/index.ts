@@ -6,7 +6,8 @@ export {
   DefaultPrivacyLevel,
   EndpointBuilder,
   isExperimentalFeatureEnabled,
-  updateExperimentalFeatures,
+  ExperimentalFeature,
+  addExperimentalFeatures,
   resetExperimentalFeatures,
   serializeConfiguration,
 } from './domain/configuration'
@@ -56,6 +57,7 @@ export * from './tools/display'
 export * from './tools/urlPolyfill'
 export * from './tools/timeUtils'
 export * from './tools/utils'
+export * from './tools/sanitize'
 export * from './tools/createEventRateLimiter'
 export * from './tools/browserDetection'
 export { sendToExtension } from './tools/sendToExtension'
@@ -72,6 +74,8 @@ export {
   ErrorWithCause,
   toStackTraceString,
   getFileFromStackTraceString,
+  NO_ERROR_STACK_PRESENT_MESSAGE,
+  PROVIDED_ERROR_MESSAGE_PREFIX,
 } from './tools/error'
 export { Context, ContextArray, ContextValue } from './tools/context'
 export { areCookiesAuthorized, getCookie, setCookie, deleteCookie, COOKIE_ACCESS_DELAY } from './browser/cookie'

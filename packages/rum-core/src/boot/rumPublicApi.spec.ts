@@ -1,16 +1,13 @@
 import type { RelativeTime, TimeStamp, Context } from '@datadog/browser-core'
+import { ONE_SECOND, getTimeStamp, display, DefaultPrivacyLevel } from '@datadog/browser-core'
 import {
-  updateExperimentalFeatures,
-  resetExperimentalFeatures,
-  ONE_SECOND,
-  getTimeStamp,
-  display,
-  DefaultPrivacyLevel,
-} from '@datadog/browser-core'
-import { cleanupSyntheticsWorkerValues, mockSyntheticsWorkerValues } from '../../../core/test/syntheticsWorkerValues'
-import { initEventBridgeStub, deleteEventBridgeStub } from '../../../core/test/specHelper'
-import type { TestSetupBuilder } from '../../test/specHelper'
-import { noopRecorderApi, setup } from '../../test/specHelper'
+  initEventBridgeStub,
+  deleteEventBridgeStub,
+  cleanupSyntheticsWorkerValues,
+  mockSyntheticsWorkerValues,
+} from '@datadog/browser-core/test'
+import type { TestSetupBuilder } from '../../test'
+import { setup, noopRecorderApi } from '../../test'
 import type { HybridInitConfiguration, RumInitConfiguration } from '../domain/configuration'
 import { ActionType } from '../rawRumEvent.types'
 import type { RumPublicApi, StartRum, RecorderApi } from './rumPublicApi'
@@ -26,6 +23,7 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   lifeCycle: {} as any,
   viewContexts: {} as any,
   session: {} as any,
+  stopSession: () => undefined,
 })
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const INVALID_INIT_CONFIGURATION = { clientToken: 'yes' } as RumInitConfiguration
@@ -649,34 +647,12 @@ describe('rum public api', () => {
       setupBuilder.cleanup()
     })
 
-    afterEach(() => {
-      resetExperimentalFeatures()
-    })
-
-    it('should add feature flag evaluation when ff feature_flags enable', () => {
-      updateExperimentalFeatures(['feature_flags'])
-
+    it('should add feature flag evaluation when ff feature_flags enabled', () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      ;(rumPublicApi as any).addFeatureFlagEvaluation('feature', 'foo')
+      rumPublicApi.addFeatureFlagEvaluation('feature', 'foo')
 
       expect(addFeatureFlagEvaluationSpy.calls.argsFor(0)).toEqual(['feature', 'foo'])
-      expect(displaySpy).not.toHaveBeenCalled()
-    })
-
-    it('API should not be available when ff feature_flags disabled', () => {
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-      expect(Object.keys(rumPublicApi)).not.toContain('addFeatureFlagEvaluation')
-      expect(displaySpy).not.toHaveBeenCalled()
-    })
-
-    it('API should not be available before init when ff feature_flags enabled', () => {
-      updateExperimentalFeatures(['feature_flags'])
-
-      expect(Object.keys(rumPublicApi)).not.toContain('addFeatureFlagEvaluation')
-
       expect(displaySpy).not.toHaveBeenCalled()
     })
   })
@@ -824,6 +800,28 @@ describe('rum public api', () => {
         expect(addTimingSpy.calls.argsFor(2)[0]).toEqual('third')
         expect(addTimingSpy.calls.argsFor(2)[1]).toBeUndefined() // no time saved when started
       })
+    })
+  })
+
+  describe('stopSession', () => {
+    let rumPublicApi: RumPublicApi
+    let stopSessionSpy: jasmine.Spy
+
+    beforeEach(() => {
+      stopSessionSpy = jasmine.createSpy()
+      rumPublicApi = makeRumPublicApi(() => ({ ...noopStartRum(), stopSession: stopSessionSpy }), noopRecorderApi)
+    })
+
+    it('calls stopSession on the startRum result', () => {
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.stopSession()
+      expect(stopSessionSpy).toHaveBeenCalled()
+    })
+
+    it('does nothing when called before init', () => {
+      rumPublicApi.stopSession()
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      expect(stopSessionSpy).not.toHaveBeenCalled()
     })
   })
 

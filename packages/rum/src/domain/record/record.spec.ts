@@ -1,10 +1,9 @@
 import { DefaultPrivacyLevel, findLast, isIE } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycle } from '@datadog/browser-rum-core'
-import { collectAsyncCalls } from '../../../../core/test/collectAsyncCalls'
-import type { Clock } from '../../../../core/test/specHelper'
-import { createNewEvent } from '../../../../core/test/specHelper'
-import { findFullSnapshot, findNode, recordsPerFullSnapshot } from '../../../test/utils'
+import type { Clock } from '@datadog/browser-core/test'
+import { createNewEvent, collectAsyncCalls } from '@datadog/browser-core/test'
+import { findFullSnapshot, findNode, recordsPerFullSnapshot } from '../../../test'
 import type {
   BrowserIncrementalSnapshotRecord,
   BrowserMutationData,
@@ -21,8 +20,6 @@ describe('record', () => {
   let sandbox: HTMLElement
   let recordApi: RecordAPI
   let emitSpy: jasmine.Spy<(record: BrowserRecord) => void>
-  let waitEmitCalls: (expectedCallsCount: number, callback: () => void) => void
-  let expectNoExtraEmitCalls: (done: () => void) => void
   let clock: Clock | undefined
 
   beforeEach(() => {
@@ -31,7 +28,6 @@ describe('record', () => {
     }
 
     emitSpy = jasmine.createSpy()
-    ;({ waitAsyncCalls: waitEmitCalls, expectNoExtraAsyncCall: expectNoExtraEmitCalls } = collectAsyncCalls(emitSpy))
     sandbox = createDOMSandbox()
   })
 
@@ -61,7 +57,7 @@ describe('record', () => {
       styleSheet.insertRule('body { color: #ccc; }')
     }, 10)
 
-    waitEmitCalls(recordsPerFullSnapshot() + 6, () => {
+    collectAsyncCalls(emitSpy, recordsPerFullSnapshot() + 6, () => {
       const records = getEmittedRecords()
       let i = 0
 
@@ -116,7 +112,7 @@ describe('record', () => {
         })
       )
 
-      expectNoExtraEmitCalls(done)
+      done()
     })
   })
 
@@ -127,7 +123,7 @@ describe('record', () => {
 
     recordApi.takeSubsequentFullSnapshot()
 
-    waitEmitCalls(1 + 2 * recordsPerFullSnapshot(), () => {
+    collectAsyncCalls(emitSpy, 1 + 2 * recordsPerFullSnapshot(), () => {
       const records = getEmittedRecords()
       let i = 0
 
@@ -144,7 +140,7 @@ describe('record', () => {
       expect(records[i++].type).toEqual(RecordType.Focus)
       expect(records[i++].type).toEqual(RecordType.FullSnapshot)
 
-      expectNoExtraEmitCalls(done)
+      done()
     })
   })
 

@@ -2,21 +2,21 @@ import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog
 import {
   relativeToClocks,
   resetExperimentalFeatures,
-  updateExperimentalFeatures,
+  addExperimentalFeatures,
   isIE,
   RequestType,
   ResourceType,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
-import { createResourceEntry } from '../../../../test/fixtures'
-import type { TestSetupBuilder } from '../../../../test/specHelper'
-import { setup } from '../../../../test/specHelper'
+import type { RumFetchResourceEventDomainContext } from '../../../domainContext.types'
+import { createResourceEntry, setup, createRumSessionManagerMock } from '../../../../test'
+import type { TestSetupBuilder } from '../../../../test'
 import type { RawRumResourceEvent } from '../../../rawRumEvent.types'
 import { RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { RequestCompleteEvent } from '../../requestCollection'
 import { TraceIdentifier } from '../../tracing/tracer'
 import { validateAndBuildRumConfiguration } from '../../configuration'
-import { createRumSessionManagerMock } from '../../../../test/mockRumSessionManager'
 import { PageState } from '../../contexts/pageStateHistory'
 import { startResourceCollection } from './resourceCollection'
 
@@ -113,7 +113,7 @@ describe('resourceCollection', () => {
   })
 
   it('should collect page states on resources when ff resource_page_states enabled', () => {
-    updateExperimentalFeatures(['resource_page_states'])
+    addExperimentalFeatures([ExperimentalFeature.RESOURCE_PAGE_STATES])
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
     const mockPageStates = [{ state: PageState.ACTIVE, startTime: 0 as RelativeTime }]
     const mockXHR = createCompletedRequest()
@@ -156,7 +156,7 @@ describe('resourceCollection', () => {
   })
 
   it('should collect computed duration and performance entry duration when resource_durations ff is enabled', () => {
-    updateExperimentalFeatures(['resource_durations'])
+    addExperimentalFeatures([ExperimentalFeature.RESOURCE_DURATIONS])
 
     const match = createResourceEntry({ startTime: 200 as RelativeTime, duration: 300 as Duration })
     spyOn(performance, 'getEntriesByName').and.returnValues([match] as unknown as PerformanceResourceTiming[])
@@ -227,6 +227,26 @@ describe('resourceCollection', () => {
       requestInput: 'https://resource.com/valid',
       requestInit: { headers: { foo: 'bar' } },
       error: undefined,
+    })
+  })
+  ;[null, undefined, 42, {}].forEach((input: any) => {
+    it(`should support ${
+      typeof input === 'object' ? JSON.stringify(input) : String(input)
+    } as fetch input parameter`, () => {
+      if (isIE()) {
+        pending('No IE support')
+      }
+      const { lifeCycle, rawRumEvents } = setupBuilder.build()
+      lifeCycle.notify(
+        LifeCycleEventType.REQUEST_COMPLETED,
+        createCompletedRequest({
+          type: RequestType.FETCH,
+          input,
+        })
+      )
+
+      expect(rawRumEvents.length).toBe(1)
+      expect((rawRumEvents[0].domainContext as RumFetchResourceEventDomainContext).requestInput).toBe(input)
     })
   })
 

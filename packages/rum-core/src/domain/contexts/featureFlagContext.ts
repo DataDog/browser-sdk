@@ -2,11 +2,11 @@ import type { RelativeTime, ContextValue, Context } from '@datadog/browser-core'
 import {
   jsonStringify,
   computeBytesCount,
-  deepClone,
   noop,
   isExperimentalFeatureEnabled,
   SESSION_TIME_OUT_DELAY,
   ContextHistory,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -33,7 +33,7 @@ export function startFeatureFlagContexts(
   lifeCycle: LifeCycle,
   computeBytesCountImpl = computeBytesCount
 ): FeatureFlagContexts {
-  if (!isExperimentalFeatureEnabled('feature_flags')) {
+  if (!isExperimentalFeatureEnabled(ExperimentalFeature.FEATURE_FLAGS)) {
     return {
       findFeatureFlagEvaluations: () => undefined,
       getFeatureFlagBytesCount: () => 0,
@@ -69,7 +69,7 @@ export function startFeatureFlagContexts(
     addFeatureFlagEvaluation: (key: string, value: ContextValue) => {
       const currentContext = featureFlagContexts.find()
       if (currentContext) {
-        currentContext[key] = deepClone(value)
+        currentContext[key] = value
         bytesCountCache = undefined
       }
     },

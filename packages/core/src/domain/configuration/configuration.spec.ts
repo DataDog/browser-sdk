@@ -2,18 +2,41 @@ import type { RumEvent } from '../../../../rum-core/src'
 import { display } from '../../tools/display'
 import type { InitConfiguration } from './configuration'
 import { validateAndBuildConfiguration } from './configuration'
-import { isExperimentalFeatureEnabled, updateExperimentalFeatures } from './experimentalFeatures'
+import { ExperimentalFeature, isExperimentalFeatureEnabled, resetExperimentalFeatures } from './experimentalFeatures'
 
 describe('validateAndBuildConfiguration', () => {
   const clientToken = 'some_client_token'
 
-  beforeEach(() => {
-    updateExperimentalFeatures([])
+  afterEach(() => {
+    resetExperimentalFeatures()
   })
 
-  it('updates experimental feature flags', () => {
-    validateAndBuildConfiguration({ clientToken, enableExperimentalFeatures: ['foo'] })
-    expect(isExperimentalFeatureEnabled('foo')).toBeTrue()
+  describe('experimentalFeatures', () => {
+    const TEST_FEATURE_FLAG = 'foo' as ExperimentalFeature
+
+    beforeEach(() => {
+      ;(ExperimentalFeature as any).FOO = TEST_FEATURE_FLAG
+    })
+
+    afterEach(() => {
+      delete (ExperimentalFeature as any).FOO
+    })
+
+    it('updates experimental feature flags', () => {
+      validateAndBuildConfiguration({ clientToken, enableExperimentalFeatures: ['foo'] })
+      expect(isExperimentalFeatureEnabled(TEST_FEATURE_FLAG)).toBeTrue()
+    })
+
+    it('ignores unknown experimental features', () => {
+      validateAndBuildConfiguration({
+        clientToken,
+        enableExperimentalFeatures: ['bar', undefined as any, null as any, 11 as any],
+      })
+      expect(isExperimentalFeatureEnabled('bar' as any)).toBeFalse()
+      expect(isExperimentalFeatureEnabled(undefined as any)).toBeFalse()
+      expect(isExperimentalFeatureEnabled(null as any)).toBeFalse()
+      expect(isExperimentalFeatureEnabled(11 as any)).toBeFalse()
+    })
   })
 
   describe('validate init configuration', () => {

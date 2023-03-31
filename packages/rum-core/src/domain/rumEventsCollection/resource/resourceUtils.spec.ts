@@ -1,5 +1,5 @@
 import type { Duration, RelativeTime, ServerDuration } from '@datadog/browser-core'
-import { SPEC_ENDPOINTS } from '../../../../../core/test/specHelper'
+import { SPEC_ENDPOINTS } from '@datadog/browser-core/test'
 import type { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 import type { RumConfiguration } from '../../configuration'
 import { validateAndBuildRumConfiguration } from '../../configuration'

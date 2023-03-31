@@ -1,4 +1,4 @@
-import { isFirefox } from '../../test/specHelper'
+import { isFirefox } from '../../test'
 import { getHash, getOrigin, getPathName, getSearch, isValidUrl, normalizeUrl } from './urlPolyfill'
 import { getLocationOrigin } from './utils'
 

@@ -14,6 +14,12 @@
   "schedule": ["every weekend"],
   "packageRules": [
     {
+      "groupName": "all non-major dependencies",
+      "groupSlug": "all-minor-patch",
+      "excludePackageNames": ["typescript"],
+      "matchUpdateTypes": ["minor", "patch"]
+    },
+    {
       "matchPackageNames": ["puppeteer", "@types/node", "@types/express", "ajv", "ansi-regex"],
       "enabled": false
     },

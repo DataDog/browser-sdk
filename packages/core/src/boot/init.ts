@@ -33,7 +33,7 @@ export function makePublicApi<T>(stub: T): T & { onReady(callback: () => void): 
 }
 
 export function defineGlobal<Global, Name extends keyof Global>(global: Global, name: Name, api: Global[Name]) {
-  const existingGlobalVariable: { q?: Array<() => void> } | undefined = global[name]
+  const existingGlobalVariable = global[name] as { q?: Array<() => void> } | undefined
   global[name] = api
   if (existingGlobalVariable && existingGlobalVariable.q) {
     existingGlobalVariable.q.forEach((fn) => catchUserErrors(fn, 'onReady callback threw an error:')())

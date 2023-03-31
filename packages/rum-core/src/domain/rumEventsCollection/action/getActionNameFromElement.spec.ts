@@ -1,5 +1,5 @@
-import type { IsolatedDom } from '../../../../test/createIsolatedDom'
-import { createIsolatedDom } from '../../../../test/createIsolatedDom'
+import type { IsolatedDom } from '../../../../test'
+import { createIsolatedDom } from '../../../../test'
 import { getActionNameFromElement } from './getActionNameFromElement'
 
 describe('getActionNameFromElement', () => {

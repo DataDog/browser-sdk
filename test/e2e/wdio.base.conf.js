@@ -1,7 +1,6 @@
 const path = require('path')
 const { unlinkSync, mkdirSync } = require('fs')
-const { getRunId } = require('../utils')
-const getTestReportDirectory = require('../getTestReportDirectory')
+const { getRunId, getTestReportDirectory } = require('../envUtils')
 const { APPLICATION_ID } = require('./lib/helpers/constants')
 
 const reporters = [['spec', { onlyFailures: true }]]
