@@ -168,6 +168,7 @@ module.exports = {
     'jsdoc/check-alignment': 'error',
     'jsdoc/check-indentation': 'error',
 
+    'local-rules/disallow-test-import-export-from-src': 'error',
     'local-rules/disallow-protected-directory-import': [
       'error',
       {
