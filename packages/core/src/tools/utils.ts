@@ -6,24 +6,6 @@ import { monitor } from './monitor'
 export const ONE_KIBI_BYTE = 1024
 export const ONE_MEBI_BYTE = 1024 * ONE_KIBI_BYTE
 
-export const enum ResourceType {
-  DOCUMENT = 'document',
-  XHR = 'xhr',
-  BEACON = 'beacon',
-  FETCH = 'fetch',
-  CSS = 'css',
-  JS = 'js',
-  IMAGE = 'image',
-  FONT = 'font',
-  MEDIA = 'media',
-  OTHER = 'other',
-}
-
-export const enum RequestType {
-  FETCH = ResourceType.FETCH,
-  XHR = ResourceType.XHR,
-}
-
 // use lodash API
 export function throttle<T extends (...args: any[]) => void>(
   fn: T,
