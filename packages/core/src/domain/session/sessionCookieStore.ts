@@ -4,6 +4,7 @@ import { setTimeout } from '../../tools/timer'
 import { isChromium } from '../../tools/browserDetection'
 import { dateNow } from '../../tools/timeUtils'
 import * as utils from '../../tools/utils'
+import { objectEntries } from '../../tools/polyfills'
 import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
 import type { SessionState } from './sessionStore'
 
@@ -125,8 +126,7 @@ function setSessionCookie(session: SessionState, options: CookieOptions) {
 }
 
 export function toSessionString(session: SessionState) {
-  return utils
-    .objectEntries(session)
+  return objectEntries(session)
     .map(([key, value]) => `${key}=${value as string}`)
     .join(SESSION_ENTRY_SEPARATOR)
 }

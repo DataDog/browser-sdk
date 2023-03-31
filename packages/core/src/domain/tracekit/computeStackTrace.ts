@@ -1,4 +1,4 @@
-import { startsWith } from '../../tools/utils'
+import { startsWith } from '../../tools/polyfills'
 import type { StackTrace, StackFrame } from './types'
 
 const UNKNOWN_FUNCTION = '?'

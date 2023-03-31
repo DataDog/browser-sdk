@@ -2,6 +2,7 @@ import type { TimeoutId } from './timer'
 import { setTimeout, clearTimeout } from './timer'
 import { display } from './display'
 import { monitor } from './monitor'
+import { startsWith, arrayFrom } from './polyfills'
 
 export const ONE_KIBI_BYTE = 1024
 export const ONE_MEBI_BYTE = 1024 * ONE_KIBI_BYTE
@@ -147,68 +148,6 @@ export function detachToJsonMethod(value: object) {
   return noop
 }
 
-export function includes(candidate: string, search: string): boolean
-export function includes<T>(candidate: T[], search: T): boolean
-export function includes(candidate: string | unknown[], search: any) {
-  return candidate.indexOf(search) !== -1
-}
-
-export function arrayFrom<T>(arrayLike: ArrayLike<T> | Set<T>): T[] {
-  if (Array.from) {
-    return Array.from(arrayLike)
-  }
-
-  const array = []
-
-  if (arrayLike instanceof Set) {
-    arrayLike.forEach((item) => array.push(item))
-  } else {
-    for (let i = 0; i < arrayLike.length; i++) {
-      array.push(arrayLike[i])
-    }
-  }
-
-  return array
-}
-
-export function find<T, S extends T>(
-  array: ArrayLike<T>,
-  predicate: (item: T, index: number) => item is S
-): S | undefined
-export function find<T>(array: ArrayLike<T>, predicate: (item: T, index: number) => boolean): T | undefined
-export function find(
-  array: ArrayLike<unknown>,
-  predicate: (item: unknown, index: number) => boolean
-): unknown | undefined {
-  for (let i = 0; i < array.length; i += 1) {
-    const item = array[i]
-    if (predicate(item, i)) {
-      return item
-    }
-  }
-  return undefined
-}
-
-export function findLast<T, S extends T>(
-  array: T[],
-  predicate: (item: T, index: number, array: T[]) => item is S
-): S | undefined {
-  for (let i = array.length - 1; i >= 0; i -= 1) {
-    const item = array[i]
-    if (predicate(item, i, array)) {
-      return item
-    }
-  }
-  return undefined
-}
-
-export function forEach<List extends { [index: number]: any }>(
-  list: List,
-  callback: (value: List[number], index: number, parent: List) => void
-) {
-  Array.prototype.forEach.call(list, callback as any)
-}
-
 export function isPercentage(value: unknown) {
   return isNumber(value) && value >= 0 && value <= 100
 }
@@ -217,16 +156,8 @@ export function isNumber(value: unknown): value is number {
   return typeof value === 'number'
 }
 
-export function objectValues<T = unknown>(object: { [key: string]: T }) {
-  return Object.keys(object).map((key) => object[key])
-}
-
 export function objectHasValue<T extends { [key: string]: unknown }>(object: T, value: unknown): value is T[keyof T] {
   return Object.keys(object).some((key) => object[key] === value)
-}
-
-export function objectEntries<T = unknown>(object: { [key: string]: T }): Array<[string, T]> {
-  return Object.keys(object).map((key) => [key, object[key]])
 }
 
 export function isEmptyObject(object: object) {
@@ -239,14 +170,6 @@ export function mapValues<A, B>(object: { [key: string]: A }, fn: (arg: A) => B)
     newObject[key] = fn(object[key])
   }
   return newObject
-}
-
-export function startsWith(candidate: string, search: string) {
-  return candidate.slice(0, search.length) === search
-}
-
-export function endsWith(candidate: string, search: string) {
-  return candidate.slice(-search.length) === search
 }
 
 export function getLocationOrigin() {
@@ -281,17 +204,6 @@ export function safeTruncate(candidate: string, length: number, suffix = '') {
   }
 
   return `${candidate.slice(0, correctedLength)}${suffix}`
-}
-
-export function elementMatches(element: Element & { msMatchesSelector?(selector: string): boolean }, selector: string) {
-  if (element.matches) {
-    return element.matches(selector)
-  }
-  // IE11 support
-  if (element.msMatchesSelector) {
-    return element.msMatchesSelector(selector)
-  }
-  return false
 }
 
 /**
@@ -529,27 +441,6 @@ export function matchList(list: MatchOption[], value: string, useStartsWith = fa
       display.error(e)
     }
     return false
-  })
-}
-
-// https://github.com/jquery/jquery/blob/a684e6ba836f7c553968d7d026ed7941e1a612d8/src/selector/escapeSelector.js
-export function cssEscape(str: string) {
-  if (window.CSS && window.CSS.escape) {
-    return window.CSS.escape(str)
-  }
-
-  // eslint-disable-next-line no-control-regex
-  return str.replace(/([\0-\x1f\x7f]|^-?\d)|^-$|[^\x80-\uFFFF\w-]/g, function (ch, asCodePoint) {
-    if (asCodePoint) {
-      // U+0000 NULL becomes U+FFFD REPLACEMENT CHARACTER
-      if (ch === '\0') {
-        return '\uFFFD'
-      }
-      // Control characters and (dependent upon position) numbers get escaped as code points
-      return `${ch.slice(0, -1)}\\${ch.charCodeAt(ch.length - 1).toString(16)} `
-    }
-    // Other potentially-special ASCII characters get backslash-escaped
-    return `\\${ch}`
   })
 }
 

@@ -104,3 +104,4 @@ export {
 } from './domain/synthetics/syntheticsWorkerValues'
 export { User, checkUser, sanitizeUser } from './domain/user'
 export * from './domain/resourceUtils'
+export * from './tools/polyfills'

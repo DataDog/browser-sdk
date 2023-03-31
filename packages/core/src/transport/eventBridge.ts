@@ -1,4 +1,4 @@
-import { endsWith } from '../tools/utils'
+import { endsWith } from '../tools/polyfills'
 import { getGlobalObject } from '../tools/getGlobalObject'
 
 export interface BrowserWindowWithEventBridge extends Window {
