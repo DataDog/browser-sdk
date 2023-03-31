@@ -1,8 +1,7 @@
 import type { Clock } from '../../test'
 import { mockClock } from '../../test'
 import type { Duration, RelativeTime } from './timeUtils'
-import { addDuration } from './timeUtils'
-import { ONE_MINUTE } from './utils'
+import { addDuration, ONE_MINUTE } from './timeUtils'
 import { CLEAR_OLD_CONTEXTS_INTERVAL, ContextHistory } from './contextHistory'
 
 const EXPIRE_DELAY = 10 * ONE_MINUTE

@@ -1,8 +1,8 @@
 import type { EndpointType } from '../domain/configuration'
 import { setTimeout } from '../tools/timer'
 import type { RawError } from '../domain/error/error'
-import { clocksNow } from '../tools/timeUtils'
-import { ONE_KIBI_BYTE, ONE_MEBI_BYTE, ONE_SECOND, ONE_MINUTE } from '../tools/utils'
+import { clocksNow, ONE_MINUTE, ONE_SECOND } from '../tools/timeUtils'
+import { ONE_KIBI_BYTE, ONE_MEBI_BYTE } from '../tools/utils'
 import { ErrorSource } from '../domain/error/error'
 import type { Payload, HttpResponse } from './httpRequest'
 

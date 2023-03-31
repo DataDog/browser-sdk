@@ -3,11 +3,6 @@ import { setTimeout, clearTimeout } from './timer'
 import { display } from './display'
 import { monitor } from './monitor'
 
-export const ONE_SECOND = 1000
-export const ONE_MINUTE = 60 * ONE_SECOND
-export const ONE_HOUR = 60 * ONE_MINUTE
-export const ONE_DAY = 24 * ONE_HOUR
-export const ONE_YEAR = 365 * ONE_DAY
 export const ONE_KIBI_BYTE = 1024
 export const ONE_MEBI_BYTE = 1024 * ONE_KIBI_BYTE
 
