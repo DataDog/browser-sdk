@@ -1,5 +1,6 @@
 import { monitor } from '../tools/monitor'
 import { getZoneJsOriginalValue } from '../tools/getZoneJsOriginalValue'
+import type { VisualViewport, VisualViewportEventMap } from './types'
 
 export const enum DOM_EVENT {
   BEFORE_UNLOAD = 'beforeunload',
@@ -58,7 +59,10 @@ type EventMapFor<T> = T extends Window
   : T extends VisualViewport
   ? VisualViewportEventMap
   : T extends ShadowRoot
-  ? ShadowRootEventMap & GlobalEventHandlersEventMap // ShadowRoot also support any bubbling "global" event like "change" or "input"
+  ? // ShadowRootEventMap is not yet defined in our supported TS version. Instead, use
+    // GlobalEventHandlersEventMap which is more than enough as we only need to listen for events bubbling
+    // through the ShadowRoot like "change" or "input"
+    GlobalEventHandlersEventMap
   : Record<never, never>
 
 /**
