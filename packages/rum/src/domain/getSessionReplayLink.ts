@@ -1,5 +1,6 @@
 import type { RumConfiguration, RumSessionManager, ViewContexts } from '@datadog/browser-rum-core'
 import { getDatadogOrigin } from '@datadog/browser-rum-core'
+import { isBrowserSupported } from '../boot/isBrowserSupported'
 import { getReplayStats } from './replayStats'
 
 export function getSessionReplayLink(
@@ -33,6 +34,9 @@ export function getSessionReplayLink(
     if (!replayStats && !queryParams['error-type']) {
       queryParams['error-type'] = 'replay-not-started'
     }
+  }
+  if (!isBrowserSupported()) {
+    queryParams['error-type'] = 'browser-not-supported'
   }
 
   let path = `/rum/replay/sessions/${sessionId}`
