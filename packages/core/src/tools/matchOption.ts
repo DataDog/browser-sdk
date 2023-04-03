@@ -1,6 +1,6 @@
 import { startsWith } from './polyfills'
 import { display } from './display'
-import { getType } from './utils'
+import { getType } from './typeUtils'
 
 export type MatchOption = string | RegExp | ((value: string) => boolean)
 
