@@ -16,6 +16,22 @@
 
 ---
 
+## v4.38.0
+
+- ✨ [RUMF-1510] Warn the user when a heavy context is used ([#2120](https://github.com/DataDog/browser-sdk/pull/2120))
+- ♻️ [RUMF-1517] reorganise some components ([#2124](https://github.com/DataDog/browser-sdk/pull/2124))
+- 🐛 [RUMF-1470] Sanitize - Fix size computation ([#2116](https://github.com/DataDog/browser-sdk/pull/2116))
+- ✅ improve async calls collection ([#2123](https://github.com/DataDog/browser-sdk/pull/2123))
+- 🔊 Collect url and base on failing URL build telemetry ([#2062](https://github.com/DataDog/browser-sdk/pull/2062))
+- 📝 [RUMF-1526] simplify rum package README.md ([#2122](https://github.com/DataDog/browser-sdk/pull/2122))
+- 📝 [RUMF-1526] simplify logs package README.md ([#2121](https://github.com/DataDog/browser-sdk/pull/2121))
+- ♻️ [RUMF-1529] use an enum for experimental features ([#2113](https://github.com/DataDog/browser-sdk/pull/2113))
+- ♻️ [RUMF-1517] split rum test utils ([#2117](https://github.com/DataDog/browser-sdk/pull/2117))
+- ♻️ [RUMF-1517] split core specHelper ([#2111](https://github.com/DataDog/browser-sdk/pull/2111))
+- ♻️ [RUMF-1517] rework test utils ([#2118](https://github.com/DataDog/browser-sdk/pull/2118))
+- ♻️ [RUMF-1517] add test index files ([#2115](https://github.com/DataDog/browser-sdk/pull/2115))
+- ♻️ [RUMF-1517] split domain utils ([#2105](https://github.com/DataDog/browser-sdk/pull/2105))
+
 ## v4.37.0
 
 - ♻️[RUMF-1517] split rum-core specHelper ([#2106](https://github.com/DataDog/browser-sdk/pull/2106))
