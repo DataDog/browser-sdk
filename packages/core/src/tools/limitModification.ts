@@ -1,5 +1,5 @@
 import { ExperimentalFeature, isExperimentalFeatureEnabled } from './experimentalFeatures'
-import type { Context } from './context'
+import type { Context } from './context/context'
 import { sanitize } from './sanitize'
 import { deepClone } from './mergeInto'
 import { getType } from './utils/typeUtils'

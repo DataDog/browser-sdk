@@ -1,5 +1,5 @@
 import { ExperimentalFeature, resetExperimentalFeatures, addExperimentalFeatures } from './experimentalFeatures'
-import type { Context } from './context'
+import type { Context } from './context/context'
 import { limitModification } from './limitModification'
 
 describe('limitModification', () => {

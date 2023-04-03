@@ -1,7 +1,7 @@
-import { setInterval, clearInterval } from './timer'
-import type { TimeoutId } from './timer'
-import type { RelativeTime } from './utils/timeUtils'
-import { relativeNow, ONE_MINUTE } from './utils/timeUtils'
+import { setInterval, clearInterval } from '../timer'
+import type { TimeoutId } from '../timer'
+import type { RelativeTime } from '../utils/timeUtils'
+import { relativeNow, ONE_MINUTE } from '../utils/timeUtils'
 
 const END_OF_TIMES = Infinity as RelativeTime
 

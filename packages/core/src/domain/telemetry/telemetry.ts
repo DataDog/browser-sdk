@@ -1,4 +1,4 @@
-import type { Context } from '../../tools/context'
+import type { Context } from '../../tools/context/context'
 import { ConsoleApiName } from '../../tools/display'
 import { toStackTraceString } from '../error/error'
 import { getExperimentalFeatures } from '../../tools/experimentalFeatures'

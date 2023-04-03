@@ -1,4 +1,4 @@
-import { display } from './display'
+import { display } from '../display'
 import { CustomerDataType, CUSTOMER_DATA_BYTES_LIMIT, warnIfCustomerDataLimitReached } from './heavyCustomerDataWarning'
 
 describe('warnIfCustomerDataLimitReached', () => {

@@ -1,5 +1,5 @@
 import { display } from '../tools/display'
-import type { Context } from '../tools/context'
+import type { Context } from '../tools/context/context'
 import { Observable } from '../tools/observable'
 import { setTimeout } from '../tools/timer'
 import type { PageExitEvent } from '../browser/pageExitObservable'

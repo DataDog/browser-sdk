@@ -1,7 +1,7 @@
-import type { Clock } from '../../test'
-import { mockClock } from '../../test'
+import type { Clock } from '../../../test'
+import { mockClock } from '../../../test'
+import { display } from '../display'
 import { BYTES_COMPUTATION_THROTTLING_DELAY, createContextManager } from './contextManager'
-import { display } from './display'
 import { CustomerDataType, CUSTOMER_DATA_BYTES_LIMIT } from './heavyCustomerDataWarning'
 
 describe('createContextManager', () => {

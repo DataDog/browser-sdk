@@ -6,7 +6,7 @@ import {
   addExperimentalFeatures,
   relativeToClocks,
 } from '@datadog/browser-core'
-import { CUSTOMER_DATA_BYTES_LIMIT } from '../../../../core/src/tools/heavyCustomerDataWarning'
+import { CUSTOMER_DATA_BYTES_LIMIT } from '../../../../core/src/tools/context/heavyCustomerDataWarning'
 import type { TestSetupBuilder } from '../../../test'
 import { setup } from '../../../test'
 import type { Clock } from '../../../../core/test'

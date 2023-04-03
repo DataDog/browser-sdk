@@ -1,12 +1,12 @@
-import { ExperimentalFeature, isExperimentalFeatureEnabled } from './experimentalFeatures'
-import type { Context, ContextValue } from './context'
-import type { CustomerDataType } from './heavyCustomerDataWarning'
+import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../experimentalFeatures'
+import { sanitize } from '../sanitize'
+import { computeBytesCount } from '../utils/byteUtils'
+import { throttle } from '../utils/functionUtils'
+import { jsonStringify } from '../jsonStringify'
+import { deepClone } from '../mergeInto'
 import { warnIfCustomerDataLimitReached } from './heavyCustomerDataWarning'
-import { sanitize } from './sanitize'
-import { computeBytesCount } from './utils/byteUtils'
-import { throttle } from './utils/functionUtils'
-import { jsonStringify } from './jsonStringify'
-import { deepClone } from './mergeInto'
+import type { CustomerDataType } from './heavyCustomerDataWarning'
+import type { Context, ContextValue } from './context'
 
 export const BYTES_COMPUTATION_THROTTLING_DELAY = 200
 

@@ -1,4 +1,4 @@
-import type { Context, ContextArray, ContextValue } from './context'
+import type { Context, ContextArray, ContextValue } from './context/context'
 import { display } from './display'
 import { ONE_KIBI_BYTE } from './utils/byteUtils'
 import type { ObjectWithToJsonMethod } from './jsonStringify'

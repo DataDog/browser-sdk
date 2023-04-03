@@ -81,7 +81,7 @@ export {
   NO_ERROR_STACK_PRESENT_MESSAGE,
   PROVIDED_ERROR_MESSAGE_PREFIX,
 } from './domain/error/error'
-export { Context, ContextArray, ContextValue } from './tools/context'
+export { Context, ContextArray, ContextValue } from './tools/context/context'
 export { areCookiesAuthorized, getCookie, setCookie, deleteCookie, COOKIE_ACCESS_DELAY } from './browser/cookie'
 export { initXhrObservable, XhrCompleteContext, XhrStartContext } from './browser/xhrObservable'
 export { initFetchObservable, FetchResolveContext, FetchStartContext, FetchContext } from './browser/fetchObservable'
@@ -91,10 +91,10 @@ export * from './tools/timer'
 export { initConsoleObservable, ConsoleLog } from './domain/console/consoleObservable'
 export { BoundedBuffer } from './tools/boundedBuffer'
 export { catchUserErrors } from './tools/catchUserErrors'
-export { createContextManager, ContextManager } from './tools/contextManager'
-export { warnIfCustomerDataLimitReached, CustomerDataType } from './tools/heavyCustomerDataWarning'
+export { createContextManager, ContextManager } from './tools/context/contextManager'
+export { warnIfCustomerDataLimitReached, CustomerDataType } from './tools/context/heavyCustomerDataWarning'
 export { limitModification } from './tools/limitModification'
-export { ContextHistory, ContextHistoryEntry, CLEAR_OLD_CONTEXTS_INTERVAL } from './tools/contextHistory'
+export { ContextHistory, ContextHistoryEntry, CLEAR_OLD_CONTEXTS_INTERVAL } from './tools/context/contextHistory'
 export { readBytesFromStream } from './tools/readBytesFromStream'
 export { SESSION_COOKIE_NAME } from './domain/session/sessionCookieStore'
 export {
