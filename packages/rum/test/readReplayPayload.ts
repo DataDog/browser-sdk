@@ -17,7 +17,7 @@ function readSegmentFromReplayPayload(payload: Payload) {
   }) as Promise<BrowserSegment>
 }
 
-export async function readMetadataFromReplayPayload(payload: Payload) {
+export function readMetadataFromReplayPayload(payload: Payload) {
   return readJsonBlob((payload.data as FormData).get('event') as Blob) as Promise<BrowserSegmentMetadataAndSegmentSizes>
 }
 

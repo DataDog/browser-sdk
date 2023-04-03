@@ -50,7 +50,7 @@ describe('buildReplayPayload', () => {
     expect(metadata).toEqual(METADATA_AND_SEGMENT_SIZES)
   })
 
-  it('returns the approximative byte counts of the request', () => {
+  it('returns the approximate byte counts of the request', () => {
     const payload = buildReplayPayload(COMPRESSED_SEGMENT, METADATA, SERIALIZED_SEGMENT.length)
     expect(payload.bytesCount).toBe(COMPRESSED_SEGMENT.byteLength)
   })
