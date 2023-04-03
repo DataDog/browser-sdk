@@ -105,3 +105,4 @@ export {
 export { User, checkUser, sanitizeUser } from './domain/user'
 export * from './domain/resourceUtils'
 export * from './tools/polyfills'
+export * from './tools/numberUtils'
