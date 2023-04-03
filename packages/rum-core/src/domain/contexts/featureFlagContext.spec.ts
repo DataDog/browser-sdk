@@ -21,9 +21,10 @@ describe('featureFlagContexts', () => {
   let featureFlagContexts: FeatureFlagContexts
   let computeBytesCountStub: jasmine.Spy
   let displaySpy: jasmine.Spy<typeof display.warn>
-  let fakeBytesCount = 1
+  let fakeBytesCount: number
 
   beforeEach(() => {
+    fakeBytesCount = 1
     displaySpy = spyOn(display, 'warn')
     setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
       computeBytesCountStub = jasmine.createSpy('computeBytesCountStub').and.callFake(() => fakeBytesCount)
