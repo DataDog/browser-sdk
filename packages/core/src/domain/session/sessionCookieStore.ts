@@ -1,6 +1,6 @@
 import type { CookieOptions } from '../../browser/cookie'
 import { deleteCookie, getCookie, setCookie } from '../../browser/cookie'
-import { setTimeout } from '../../browser/timer'
+import { setTimeout } from '../../tools/timer'
 import { isChromium } from '../../tools/browserDetection'
 import { dateNow } from '../../tools/timeUtils'
 import * as utils from '../../tools/utils'

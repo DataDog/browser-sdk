@@ -1,6 +1,6 @@
-import type { StackTrace } from '../domain/tracekit'
+import type { StackTrace } from '../tracekit'
+import { clocksNow } from '../../tools/timeUtils'
 import type { RawErrorCause, ErrorWithCause } from './error'
-import { clocksNow } from './timeUtils'
 import {
   createHandlingStack,
   computeRawError,
@@ -12,7 +12,7 @@ import {
 
 describe('computeRawError', () => {
   const NOT_COMPUTED_STACK_TRACE: StackTrace = { name: undefined, message: undefined, stack: [] } as any
-  const DEFAULT_RAW_ERROR_PARMS = {
+  const DEFAULT_RAW_ERROR_PARAMS = {
     startClocks: clocksNow(),
     nonErrorPrefix: 'Uncaught',
     source: ErrorSource.CUSTOM,
@@ -48,7 +48,7 @@ describe('computeRawError', () => {
     }
 
     const formatted = computeRawError({
-      ...DEFAULT_RAW_ERROR_PARMS,
+      ...DEFAULT_RAW_ERROR_PARAMS,
       stackTrace,
       originalError: undefined,
       handling: ErrorHandling.HANDLED,
@@ -70,7 +70,7 @@ describe('computeRawError', () => {
     }
 
     const formatted = computeRawError({
-      ...DEFAULT_RAW_ERROR_PARMS,
+      ...DEFAULT_RAW_ERROR_PARAMS,
       stackTrace,
       originalError: undefined,
       handling: ErrorHandling.HANDLED,
@@ -83,7 +83,7 @@ describe('computeRawError', () => {
     const error = 'oh snap!'
 
     const formatted = computeRawError({
-      ...DEFAULT_RAW_ERROR_PARMS,
+      ...DEFAULT_RAW_ERROR_PARAMS,
       stackTrace: NOT_COMPUTED_STACK_TRACE,
       originalError: error,
       handling: ErrorHandling.HANDLED,
@@ -96,7 +96,7 @@ describe('computeRawError', () => {
     const error = { foo: 'bar' }
 
     const formatted = computeRawError({
-      ...DEFAULT_RAW_ERROR_PARMS,
+      ...DEFAULT_RAW_ERROR_PARAMS,
       stackTrace: NOT_COMPUTED_STACK_TRACE,
       originalError: error,
       handling: ErrorHandling.HANDLED,
@@ -110,7 +110,7 @@ describe('computeRawError', () => {
 
     expect(
       computeRawError({
-        ...DEFAULT_RAW_ERROR_PARMS,
+        ...DEFAULT_RAW_ERROR_PARAMS,
         stackTrace: NOT_COMPUTED_STACK_TRACE,
         originalError: error,
         handling: ErrorHandling.HANDLED,
@@ -119,7 +119,7 @@ describe('computeRawError', () => {
 
     expect(
       computeRawError({
-        ...DEFAULT_RAW_ERROR_PARMS,
+        ...DEFAULT_RAW_ERROR_PARAMS,
         stackTrace: NOT_COMPUTED_STACK_TRACE,
         originalError: error,
         handling: ErrorHandling.UNHANDLED,
@@ -147,7 +147,7 @@ describe('computeRawError', () => {
     nestedError.cause = deepNestedError
 
     const formatted = computeRawError({
-      ...DEFAULT_RAW_ERROR_PARMS,
+      ...DEFAULT_RAW_ERROR_PARAMS,
       stackTrace,
       originalError: error,
       handling: ErrorHandling.HANDLED,

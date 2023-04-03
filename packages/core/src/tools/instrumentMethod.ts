@@ -1,4 +1,4 @@
-import { setTimeout } from '../browser/timer'
+import { setTimeout } from './timer'
 import { callMonitored } from './monitor'
 import { noop } from './utils'
 
