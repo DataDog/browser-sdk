@@ -1,7 +1,6 @@
 import { display } from './display'
 import { monitor } from './monitor'
 import { startsWith, arrayFrom } from './polyfills'
-import { noop } from './functionUtils'
 
 /**
  * UUID v4
@@ -12,57 +11,6 @@ export function generateUUID(placeholder?: string): string {
     ? // eslint-disable-next-line  no-bitwise
       (parseInt(placeholder, 10) ^ ((Math.random() * 16) >> (parseInt(placeholder, 10) / 4))).toString(16)
     : `${1e7}-${1e3}-${4e3}-${8e3}-${1e11}`.replace(/[018]/g, generateUUID)
-}
-
-/**
- * Custom implementation of JSON.stringify that ignores some toJSON methods. We need to do that
- * because some sites badly override toJSON on certain objects. Removing all toJSON methods from
- * nested values would be too costly, so we just detach them from the root value, and native classes
- * used to build JSON values (Array and Object).
- *
- * Note: this still assumes that JSON.stringify is correct.
- */
-export function jsonStringify(
-  value: unknown,
-  replacer?: Array<string | number>,
-  space?: string | number
-): string | undefined {
-  if (typeof value !== 'object' || value === null) {
-    return JSON.stringify(value)
-  }
-
-  // Note: The order matter here. We need to detach toJSON methods on parent classes before their
-  // subclasses.
-  const restoreObjectPrototypeToJson = detachToJsonMethod(Object.prototype)
-  const restoreArrayPrototypeToJson = detachToJsonMethod(Array.prototype)
-  const restoreValuePrototypeToJson = detachToJsonMethod(Object.getPrototypeOf(value))
-  const restoreValueToJson = detachToJsonMethod(value)
-
-  try {
-    return JSON.stringify(value, replacer, space)
-  } catch {
-    return '<error: unable to serialize object>'
-  } finally {
-    restoreObjectPrototypeToJson()
-    restoreArrayPrototypeToJson()
-    restoreValuePrototypeToJson()
-    restoreValueToJson()
-  }
-}
-
-export interface ObjectWithToJsonMethod {
-  toJSON?: () => unknown
-}
-export function detachToJsonMethod(value: object) {
-  const object = value as ObjectWithToJsonMethod
-  const objectToJson = object.toJSON
-  if (objectToJson) {
-    delete object.toJSON
-    return () => {
-      object.toJSON = objectToJson
-    }
-  }
-  return noop
 }
 
 export function getLocationOrigin() {

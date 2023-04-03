@@ -1,4 +1,5 @@
-import { getLinkElementOrigin, getLocationOrigin, jsonStringify } from './utils'
+import { getLinkElementOrigin, getLocationOrigin } from './utils'
+import { jsonStringify } from './jsonStringify'
 
 export function normalizeUrl(url: string) {
   return buildUrl(url, getLocationOrigin()).href

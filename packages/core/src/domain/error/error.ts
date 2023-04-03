@@ -4,8 +4,8 @@ import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/e
 import { callMonitored } from '../../tools/monitor'
 import { sanitize } from '../../tools/sanitize'
 import type { ClocksState } from '../../tools/timeUtils'
-import { jsonStringify } from '../../tools/utils'
 import { noop } from '../../tools/functionUtils'
+import { jsonStringify } from '../../tools/jsonStringify'
 
 export const NO_ERROR_STACK_PRESENT_MESSAGE = 'No stack, consider using an instance of Error'
 export const PROVIDED_ERROR_MESSAGE_PREFIX = 'Provided'
