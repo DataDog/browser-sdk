@@ -1,6 +1,6 @@
 import type { CDPSession } from 'puppeteer'
 import type { ProfilingOptions } from '../types'
-import { isSdkBundleUrl } from '../utils'
+import { isSdkBundleUrl } from './profilingUtils'
 
 export async function startCPUProfiling(options: ProfilingOptions, client: CDPSession) {
   await client.send('Profiler.enable')
