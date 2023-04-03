@@ -1,5 +1,5 @@
-import type { TimeoutId } from '../browser/timer'
-import { setTimeout, clearTimeout } from '../browser/timer'
+import type { TimeoutId } from './timer'
+import { setTimeout, clearTimeout } from './timer'
 import { display } from './display'
 import { monitor } from './monitor'
 

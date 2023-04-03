@@ -1,7 +1,7 @@
 import { DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { collectAsyncCalls } from '@datadog/browser-core/test'
-import { createMutationPayloadValidator, DEFAULT_SHADOW_ROOT_CONTROLLER } from '../../../../test'
+import { createMutationPayloadValidator } from '../../../../test'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
@@ -16,6 +16,7 @@ import { createElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootCallBack } from '../shadowRootsController'
 import { sortAddedAndMovedNodes, initMutationObserver } from './mutationObserver'
 import type { MutationCallBack } from './mutationObserver'
+import { DEFAULT_SHADOW_ROOT_CONTROLLER } from './observers.specHelper'
 
 describe('startMutationCollection', () => {
   let sandbox: HTMLElement
@@ -101,16 +102,12 @@ describe('startMutationCollection', () => {
     it('processes mutations asynchronously', (done) => {
       serializeDocumentWithDefaults()
       const { mutationCallbackSpy } = startMutationCollection()
-      const { waitAsyncCalls: waitMutationCallbackCalls, expectNoExtraAsyncCall: expectNoExtraMutationCallbackCalls } =
-        collectAsyncCalls(mutationCallbackSpy)
 
       sandbox.appendChild(document.createElement('div'))
 
       expect(mutationCallbackSpy).not.toHaveBeenCalled()
 
-      waitMutationCallbackCalls(1, () => {
-        expectNoExtraMutationCallbackCalls(done)
-      })
+      collectAsyncCalls(mutationCallbackSpy, 1, () => done())
     })
 
     it('does not emit a mutation when a node is appended to a unknown node', () => {

@@ -1,4 +1,4 @@
-import { isExperimentalFeatureEnabled } from '../domain/configuration'
+import { ExperimentalFeature, isExperimentalFeatureEnabled } from './experimentalFeatures'
 import { computeBytesCount, deepClone, jsonStringify, throttle } from './utils'
 import type { Context, ContextValue } from './context'
 import type { CustomerDataType } from './heavyCustomerDataWarning'
@@ -50,12 +50,16 @@ export function createContextManager(customerDataType: CustomerDataType, compute
     getContext: () => deepClone(context),
 
     setContext: (newContext: Context) => {
-      context = isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(newContext) : deepClone(newContext)
+      context = isExperimentalFeatureEnabled(ExperimentalFeature.SANITIZE_INPUTS)
+        ? sanitize(newContext)
+        : deepClone(newContext)
       computeBytesCountThrottled(context)
     },
 
     setContextProperty: (key: string, property: any) => {
-      context[key] = isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(property) : deepClone(property)
+      context[key] = isExperimentalFeatureEnabled(ExperimentalFeature.SANITIZE_INPUTS)
+        ? sanitize(property)
+        : deepClone(property)
       computeBytesCountThrottled(context)
     },
 

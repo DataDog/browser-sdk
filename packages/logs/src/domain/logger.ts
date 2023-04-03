@@ -1,5 +1,6 @@
 import type { Context } from '@datadog/browser-core'
 import {
+  ExperimentalFeature,
   isExperimentalFeatureEnabled,
   clocksNow,
   computeRawError,
@@ -84,7 +85,9 @@ export class Logger {
     }
 
     const sanitizedMessageContext = (
-      isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(messageContext) : deepClone(messageContext)
+      isExperimentalFeatureEnabled(ExperimentalFeature.SANITIZE_INPUTS)
+        ? sanitize(messageContext)
+        : deepClone(messageContext)
     ) as Context
 
     const context = errorContext
@@ -92,7 +95,11 @@ export class Logger {
       : sanitizedMessageContext
 
     this.handleLogStrategy(
-      { message: isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(message)! : message, context, status },
+      {
+        message: isExperimentalFeatureEnabled(ExperimentalFeature.SANITIZE_INPUTS) ? sanitize(message)! : message,
+        context,
+        status,
+      },
       this
     )
   }

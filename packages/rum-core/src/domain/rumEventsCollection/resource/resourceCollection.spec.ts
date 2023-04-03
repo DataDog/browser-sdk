@@ -2,10 +2,11 @@ import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog
 import {
   relativeToClocks,
   resetExperimentalFeatures,
-  updateExperimentalFeatures,
+  addExperimentalFeatures,
   isIE,
   RequestType,
   ResourceType,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { RumFetchResourceEventDomainContext } from '../../../domainContext.types'
 import { createResourceEntry, setup, createRumSessionManagerMock } from '../../../../test'
@@ -112,7 +113,7 @@ describe('resourceCollection', () => {
   })
 
   it('should collect page states on resources when ff resource_page_states enabled', () => {
-    updateExperimentalFeatures(['resource_page_states'])
+    addExperimentalFeatures([ExperimentalFeature.RESOURCE_PAGE_STATES])
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
     const mockPageStates = [{ state: PageState.ACTIVE, startTime: 0 as RelativeTime }]
     const mockXHR = createCompletedRequest()
@@ -155,7 +156,7 @@ describe('resourceCollection', () => {
   })
 
   it('should collect computed duration and performance entry duration when resource_durations ff is enabled', () => {
-    updateExperimentalFeatures(['resource_durations'])
+    addExperimentalFeatures([ExperimentalFeature.RESOURCE_DURATIONS])
 
     const match = createResourceEntry({ startTime: 200 as RelativeTime, duration: 300 as Duration })
     spyOn(performance, 'getEntriesByName').and.returnValues([match] as unknown as PerformanceResourceTiming[])

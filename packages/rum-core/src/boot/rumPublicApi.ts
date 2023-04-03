@@ -1,5 +1,6 @@
 import type { Context, InitConfiguration, TimeStamp, RelativeTime, User } from '@datadog/browser-core'
 import {
+  ExperimentalFeature,
   noop,
   isExperimentalFeatureEnabled,
   CustomerDataType,
@@ -205,8 +206,10 @@ export function makeRumPublicApi(
 
     addAction: monitor((name: string, context?: object) => {
       addActionStrategy({
-        name: isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(name)! : name,
-        context: (isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(context) : deepClone(context)) as Context,
+        name: isExperimentalFeatureEnabled(ExperimentalFeature.SANITIZE_INPUTS) ? sanitize(name)! : name,
+        context: (isExperimentalFeatureEnabled(ExperimentalFeature.SANITIZE_INPUTS)
+          ? sanitize(context)
+          : deepClone(context)) as Context,
         startClocks: clocksNow(),
         type: ActionType.CUSTOM,
       })
@@ -218,7 +221,7 @@ export function makeRumPublicApi(
         addErrorStrategy({
           error, // Do not sanitize error here, it is needed unserialized by computeRawError()
           handlingStack,
-          context: (isExperimentalFeatureEnabled('sanitize_inputs')
+          context: (isExperimentalFeatureEnabled(ExperimentalFeature.SANITIZE_INPUTS)
             ? sanitize(context)
             : deepClone(context)) as Context,
           startClocks: clocksNow(),
@@ -228,7 +231,7 @@ export function makeRumPublicApi(
 
     addTiming: monitor((name: string, time?: number) => {
       addTimingStrategy(
-        isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(name)! : name,
+        isExperimentalFeatureEnabled(ExperimentalFeature.SANITIZE_INPUTS) ? sanitize(name)! : name,
         time as RelativeTime | TimeStamp | undefined
       )
     }),
@@ -266,8 +269,8 @@ export function makeRumPublicApi(
      */
     addFeatureFlagEvaluation: monitor((key: string, value: any) => {
       addFeatureFlagEvaluationStrategy(
-        isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(key)! : key,
-        isExperimentalFeatureEnabled('sanitize_inputs') ? sanitize(value) : value
+        isExperimentalFeatureEnabled(ExperimentalFeature.SANITIZE_INPUTS) ? sanitize(key)! : key,
+        isExperimentalFeatureEnabled(ExperimentalFeature.SANITIZE_INPUTS) ? sanitize(value) : value
       )
     }),
   })

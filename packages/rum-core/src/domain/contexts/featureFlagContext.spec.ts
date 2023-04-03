@@ -1,5 +1,11 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { display, resetExperimentalFeatures, updateExperimentalFeatures, relativeToClocks } from '@datadog/browser-core'
+import {
+  display,
+  ExperimentalFeature,
+  resetExperimentalFeatures,
+  addExperimentalFeatures,
+  relativeToClocks,
+} from '@datadog/browser-core'
 import { CUSTOMER_DATA_BYTES_LIMIT } from '../../../../core/src/tools/heavyCustomerDataWarning'
 import type { TestSetupBuilder } from '../../../test'
 import { setup } from '../../../test'
@@ -38,7 +44,7 @@ describe('featureFlagContexts', () => {
 
   describe('addFeatureFlagEvaluation', () => {
     it('should add feature flag evaluations of any type when the ff feature_flags is enabled', () => {
-      updateExperimentalFeatures(['feature_flags'])
+      addExperimentalFeatures([ExperimentalFeature.FEATURE_FLAGS])
 
       const { lifeCycle } = setupBuilder.build()
 
@@ -62,7 +68,7 @@ describe('featureFlagContexts', () => {
     })
 
     it('should replace existing feature flag evaluation to the current context when the ff feature_flags is enabled', () => {
-      updateExperimentalFeatures(['feature_flags'])
+      addExperimentalFeatures([ExperimentalFeature.FEATURE_FLAGS])
 
       const { lifeCycle } = setupBuilder.build()
 
@@ -94,7 +100,7 @@ describe('featureFlagContexts', () => {
     })
 
     it('should warn once if the context bytes limit is reached', () => {
-      updateExperimentalFeatures(['feature_flags'])
+      addExperimentalFeatures([ExperimentalFeature.FEATURE_FLAGS])
 
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
       fakeBytesCount = CUSTOMER_DATA_BYTES_LIMIT + 1
@@ -118,7 +124,7 @@ describe('featureFlagContexts', () => {
      * (which seems unlikely) and this event would anyway be rejected by lack of view id
      */
     it('should return undefined when no current view', () => {
-      updateExperimentalFeatures(['feature_flags'])
+      addExperimentalFeatures([ExperimentalFeature.FEATURE_FLAGS])
 
       setupBuilder.build()
 
@@ -126,7 +132,7 @@ describe('featureFlagContexts', () => {
     })
 
     it('should clear feature flag context on new view', () => {
-      updateExperimentalFeatures(['feature_flags'])
+      addExperimentalFeatures([ExperimentalFeature.FEATURE_FLAGS])
 
       const { lifeCycle } = setupBuilder.build()
 
@@ -146,7 +152,7 @@ describe('featureFlagContexts', () => {
     })
 
     it('should return the feature flag context corresponding to the start time', () => {
-      updateExperimentalFeatures(['feature_flags'])
+      addExperimentalFeatures([ExperimentalFeature.FEATURE_FLAGS])
 
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
 
@@ -176,7 +182,7 @@ describe('featureFlagContexts', () => {
     let lifeCycle: LifeCycle
 
     beforeEach(() => {
-      updateExperimentalFeatures(['feature_flags'])
+      addExperimentalFeatures([ExperimentalFeature.FEATURE_FLAGS])
       ;({ clock, lifeCycle } = setupBuilder.withFakeClock().build())
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
         startClocks: relativeToClocks(0 as RelativeTime),

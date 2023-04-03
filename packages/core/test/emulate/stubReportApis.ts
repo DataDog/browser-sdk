@@ -4,8 +4,8 @@ import type {
   Report,
   ReportingObserverConstructor,
   ReportingObserverOption,
-} from '../src/domain/report/browser.types'
-import { noop } from '../src/tools/utils'
+} from '../../src/domain/report/browser.types'
+import { noop } from '../../src/tools/utils'
 
 export function stubReportingObserver() {
   const originalReportingObserver = (window as BrowserWindow).ReportingObserver

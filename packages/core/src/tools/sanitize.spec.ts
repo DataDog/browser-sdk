@@ -112,6 +112,11 @@ describe('sanitize', () => {
 
       expect(sanitize(cannotSerialize)).toEqual('[Unserializable]')
     })
+
+    it('should handle objects with properties including null or undefined', () => {
+      const obj = { a: null, b: undefined }
+      expect(sanitize(obj)).toEqual({ a: null, b: undefined })
+    })
   })
 
   describe('arrays handling', () => {
@@ -121,6 +126,11 @@ describe('sanitize', () => {
       ;(arr as any)['test'] = 'test'
 
       expect(sanitize(arr)).toEqual([1, 2, 3, 4])
+    })
+
+    it('should handle arrays containing null or undefined', () => {
+      const arr = [null, undefined]
+      expect(sanitize(arr)).toEqual([null, undefined])
     })
   })
 
@@ -239,6 +249,23 @@ describe('sanitize', () => {
       const sanitized = sanitize(obj, 5)
       expect(sanitized).toEqual([1, 2]) // Length of 5 after JSON.stringify
       expect(displaySpy).toHaveBeenCalled()
+    })
+
+    it('should count size properly when array contains undefined values', () => {
+      // This is a special case: JSON.stringify([undefined]) => '[null]'
+      const displaySpy = spyOn(display, 'warn')
+      const arr = [undefined, undefined] // Length of 11 after JSON.stringify
+      const sanitized = sanitize(arr, 10)
+      expect(sanitized).toEqual([undefined])
+      expect(displaySpy).toHaveBeenCalled()
+    })
+
+    it('should count size properly when an object contains properties with undefined values', () => {
+      const displaySpy = spyOn(display, 'warn')
+      const obj = { a: undefined, b: 42 } // Length of 8 after JSON.stringify
+      const sanitized = sanitize(obj, 8)
+      expect(sanitized).toEqual({ a: undefined, b: 42 })
+      expect(displaySpy).not.toHaveBeenCalled()
     })
   })
 })
