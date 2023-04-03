@@ -7,7 +7,8 @@ import type {
 } from '@datadog/browser-rum/src/types'
 import { NodeType, IncrementalSource, MouseInteractionType } from '@datadog/browser-rum/src/types'
 
-import { FrustrationType } from '@datadog/browser-rum-core'
+// Import from src to have properties of const enums
+import { FrustrationType } from '@datadog/browser-rum-core/src/rawRumEvent.types'
 import { DefaultPrivacyLevel } from '@datadog/browser-rum'
 
 import {

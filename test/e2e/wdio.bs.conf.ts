@@ -1,9 +1,10 @@
-const { getBuildInfos } = require('../envUtils')
-const browsers = require('../browsers.conf')
-const baseConf = require('./wdio.base.conf')
+import type { Options } from '@wdio/types'
+import browsers from '../browsers.conf'
+import { getBuildInfos } from '../envUtils'
+import { config as baseConfig } from './wdio.base.conf'
 
-exports.config = {
-  ...baseConf,
+export const config: Options.Testrunner = {
+  ...baseConfig,
 
   specFileRetries: 1,
 
