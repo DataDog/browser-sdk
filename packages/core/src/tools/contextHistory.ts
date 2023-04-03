@@ -1,5 +1,5 @@
-import { setInterval, clearInterval } from '../browser/timer'
-import type { TimeoutId } from '../browser/timer'
+import { setInterval, clearInterval } from './timer'
+import type { TimeoutId } from './timer'
 import type { RelativeTime } from './timeUtils'
 import { relativeNow } from './timeUtils'
 import { ONE_MINUTE } from './utils'

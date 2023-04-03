@@ -1,4 +1,4 @@
-import { DOM_EVENT, addEventListener } from '../browser/addEventListener'
+import { DOM_EVENT, addEventListener } from './addEventListener'
 
 export function runOnReadyState(expectedReadyState: 'complete' | 'interactive', callback: () => void) {
   if (document.readyState === expectedReadyState || document.readyState === 'complete') {

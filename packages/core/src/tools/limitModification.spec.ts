@@ -1,4 +1,4 @@
-import { ExperimentalFeature, resetExperimentalFeatures, addExperimentalFeatures } from '../domain/configuration'
+import { ExperimentalFeature, resetExperimentalFeatures, addExperimentalFeatures } from './experimentalFeatures'
 import type { Context } from './context'
 import { limitModification } from './limitModification'
 

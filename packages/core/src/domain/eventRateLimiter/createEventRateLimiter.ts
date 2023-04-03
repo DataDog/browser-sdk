@@ -1,8 +1,8 @@
-import { setTimeout } from '../browser/timer'
-import type { RawError } from './error'
-import { ErrorSource } from './error'
-import { clocksNow } from './timeUtils'
-import { ONE_MINUTE } from './utils'
+import { setTimeout } from '../../tools/timer'
+import type { RawError } from '../error/error'
+import { ErrorSource } from '../error/error'
+import { clocksNow } from '../../tools/timeUtils'
+import { ONE_MINUTE } from '../../tools/utils'
 
 export type EventRateLimiter = ReturnType<typeof createEventRateLimiter>
 

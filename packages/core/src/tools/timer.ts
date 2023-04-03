@@ -1,5 +1,5 @@
-import { getZoneJsOriginalValue } from '../tools/getZoneJsOriginalValue'
-import { monitor } from '../tools/monitor'
+import { getZoneJsOriginalValue } from './getZoneJsOriginalValue'
+import { monitor } from './monitor'
 
 export type TimeoutId = ReturnType<typeof window.setTimeout>
 

@@ -4,7 +4,7 @@ import { catchUserErrors } from '../../tools/catchUserErrors'
 import { display } from '../../tools/display'
 import { assign, isPercentage, objectHasValue, ONE_KIBI_BYTE, ONE_SECOND } from '../../tools/utils'
 import type { RawTelemetryConfiguration } from '../telemetry'
-import { ExperimentalFeature, addExperimentalFeatures } from './experimentalFeatures'
+import { ExperimentalFeature, addExperimentalFeatures } from '../../tools/experimentalFeatures'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
 

@@ -5,12 +5,15 @@ export {
   validateAndBuildConfiguration,
   DefaultPrivacyLevel,
   EndpointBuilder,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
-  addExperimentalFeatures,
-  resetExperimentalFeatures,
   serializeConfiguration,
 } from './domain/configuration'
+export {
+  isExperimentalFeatureEnabled,
+  addExperimentalFeatures,
+  resetExperimentalFeatures,
+  getExperimentalFeatures,
+  ExperimentalFeature,
+} from './tools/experimentalFeatures'
 export { trackRuntimeError } from './domain/error/trackRuntimeError'
 export { computeStackTrace, StackTrace } from './domain/tracekit'
 export { defineGlobal, makePublicApi } from './boot/init'
@@ -58,10 +61,10 @@ export * from './tools/urlPolyfill'
 export * from './tools/timeUtils'
 export * from './tools/utils'
 export * from './tools/sanitize'
-export * from './tools/createEventRateLimiter'
+export * from './domain/eventRateLimiter/createEventRateLimiter'
 export * from './tools/browserDetection'
 export { sendToExtension } from './tools/sendToExtension'
-export { runOnReadyState } from './tools/runOnReadyState'
+export { runOnReadyState } from './browser/runOnReadyState'
 export { getZoneJsOriginalValue } from './tools/getZoneJsOriginalValue'
 export { instrumentMethod, instrumentMethodAndCallOriginal, instrumentSetter } from './tools/instrumentMethod'
 export {
@@ -76,14 +79,14 @@ export {
   getFileFromStackTraceString,
   NO_ERROR_STACK_PRESENT_MESSAGE,
   PROVIDED_ERROR_MESSAGE_PREFIX,
-} from './tools/error'
+} from './domain/error/error'
 export { Context, ContextArray, ContextValue } from './tools/context'
 export { areCookiesAuthorized, getCookie, setCookie, deleteCookie, COOKIE_ACCESS_DELAY } from './browser/cookie'
 export { initXhrObservable, XhrCompleteContext, XhrStartContext } from './browser/xhrObservable'
 export { initFetchObservable, FetchResolveContext, FetchStartContext, FetchContext } from './browser/fetchObservable'
 export { createPageExitObservable, PageExitEvent, PageExitReason, isPageExitReason } from './browser/pageExitObservable'
 export * from './browser/addEventListener'
-export * from './browser/timer'
+export * from './tools/timer'
 export { initConsoleObservable, ConsoleLog } from './domain/console/consoleObservable'
 export { BoundedBuffer } from './tools/boundedBuffer'
 export { catchUserErrors } from './tools/catchUserErrors'

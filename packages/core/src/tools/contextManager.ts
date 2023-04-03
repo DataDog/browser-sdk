@@ -1,4 +1,4 @@
-import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../domain/configuration'
+import { ExperimentalFeature, isExperimentalFeatureEnabled } from './experimentalFeatures'
 import { computeBytesCount, deepClone, jsonStringify } from './utils'
 import type { Context, ContextValue } from './context'
 import { sanitize } from './sanitize'

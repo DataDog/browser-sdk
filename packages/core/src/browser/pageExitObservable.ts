@@ -1,4 +1,4 @@
-import { isExperimentalFeatureEnabled, ExperimentalFeature } from '../domain/configuration'
+import { isExperimentalFeatureEnabled, ExperimentalFeature } from '../tools/experimentalFeatures'
 import { Observable } from '../tools/observable'
 import { includes, noop, objectValues } from '../tools/utils'
 import { addEventListeners, addEventListener, DOM_EVENT } from './addEventListener'
