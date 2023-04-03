@@ -59,7 +59,7 @@ export {
 export * from './tools/display'
 export * from './tools/urlPolyfill'
 export * from './tools/timeUtils'
-export * from './tools/utils'
+export * from './tools/arrayUtils'
 export * from './tools/sanitize'
 export * from './tools/getGlobalObject'
 export * from './domain/eventRateLimiter/createEventRateLimiter'
