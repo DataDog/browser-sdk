@@ -13,12 +13,14 @@ export const enum CustomerDataType {
   LoggerContext = 'logger context',
 }
 
-export function warnIfCustomerDataLimitReached(bytesCount: number, customerDataType: CustomerDataType) {
+export function warnIfCustomerDataLimitReached(bytesCount: number, customerDataType: CustomerDataType): boolean {
   if (bytesCount > CUSTOMER_DATA_BYTES_LIMIT) {
     display.warn(
       `The ${customerDataType} data is over ${
         CUSTOMER_DATA_BYTES_LIMIT / ONE_KIBI_BYTE
       }KiB. On low connectivity, the SDK has the potential to exhaust the user's upload bandwidth.`
     )
+    return true
   }
+  return false
 }

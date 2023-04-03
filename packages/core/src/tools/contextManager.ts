@@ -19,8 +19,7 @@ export function createContextManager(customerDataType: CustomerDataType, compute
   const { throttled: computeBytesCountThrottled } = throttle((context: Context) => {
     bytesCountCache = computeBytesCountImpl(jsonStringify(context)!)
     if (!alreadyWarned) {
-      warnIfCustomerDataLimitReached(bytesCountCache, customerDataType)
-      alreadyWarned = true
+      alreadyWarned = warnIfCustomerDataLimitReached(bytesCountCache, customerDataType)
     }
   }, BYTES_COMPUTATION_THROTTLING_DELAY)
 

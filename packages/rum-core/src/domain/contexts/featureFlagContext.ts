@@ -63,8 +63,7 @@ export function startFeatureFlagContexts(
   const { throttled: computeBytesCountThrottled } = throttle((context: Context) => {
     bytesCountCache = computeBytesCountImpl(jsonStringify(context)!)
     if (!alreadyWarned) {
-      warnIfCustomerDataLimitReached(bytesCountCache, CustomerDataType.FeatureFlag)
-      alreadyWarned = true
+      alreadyWarned = warnIfCustomerDataLimitReached(bytesCountCache, CustomerDataType.FeatureFlag)
     }
   }, BYTES_COMPUTATION_THROTTLING_DELAY)
 

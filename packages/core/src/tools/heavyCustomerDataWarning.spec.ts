@@ -8,14 +8,16 @@ describe('warnIfCustomerDataLimitReached', () => {
   })
 
   it('should warn when the customer data reach the limit', () => {
-    warnIfCustomerDataLimitReached(CUSTOMER_DATA_BYTES_LIMIT + 1, CustomerDataType.User)
+    const warned = warnIfCustomerDataLimitReached(CUSTOMER_DATA_BYTES_LIMIT + 1, CustomerDataType.User)
+    expect(warned).toEqual(true)
     expect(displaySpy).toHaveBeenCalledWith(
       "The user data is over 3KiB. On low connectivity, the SDK has the potential to exhaust the user's upload bandwidth."
     )
   })
 
   it('should not warn when the customer data does not reach the limit', () => {
-    warnIfCustomerDataLimitReached(CUSTOMER_DATA_BYTES_LIMIT - 1, CustomerDataType.User)
+    const warned = warnIfCustomerDataLimitReached(CUSTOMER_DATA_BYTES_LIMIT - 1, CustomerDataType.User)
+    expect(warned).toEqual(false)
     expect(displaySpy).not.toHaveBeenCalled()
   })
 })
