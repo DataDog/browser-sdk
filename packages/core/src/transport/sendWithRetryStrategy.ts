@@ -2,8 +2,8 @@ import type { EndpointType } from '../domain/configuration'
 import { setTimeout } from '../tools/timer'
 import type { RawError } from '../domain/error/error'
 import { clocksNow, ONE_MINUTE, ONE_SECOND } from '../tools/timeUtils'
-import { ONE_KIBI_BYTE, ONE_MEBI_BYTE } from '../tools/utils'
 import { ErrorSource } from '../domain/error/error'
+import { ONE_MEBI_BYTE, ONE_KIBI_BYTE } from '../tools/byteUtils'
 import type { Payload, HttpResponse } from './httpRequest'
 
 export const MAX_ONGOING_BYTES_COUNT = 80 * ONE_KIBI_BYTE

@@ -1,7 +1,8 @@
 import type { Context, ContextArray, ContextValue } from './context'
 import { display } from './display'
 import type { ObjectWithToJsonMethod } from './utils'
-import { detachToJsonMethod, ONE_KIBI_BYTE } from './utils'
+import { detachToJsonMethod } from './utils'
+import { ONE_KIBI_BYTE } from './byteUtils'
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 type PrimitivesAndFunctions = string | number | boolean | undefined | null | symbol | bigint | Function
