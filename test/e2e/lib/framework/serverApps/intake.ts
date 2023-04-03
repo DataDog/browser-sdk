@@ -91,7 +91,7 @@ function forwardEventsToIntake(req: express.Request): Promise<any> {
   })
 }
 
-async function storeReplayData(req: express.Request, events: EventRegistry): Promise<any> {
+function storeReplayData(req: express.Request, events: EventRegistry): Promise<any> {
   return new Promise((resolve, reject) => {
     const metadata: {
       [field: string]: string
@@ -125,7 +125,7 @@ async function storeReplayData(req: express.Request, events: EventRegistry): Pro
   })
 }
 
-async function forwardReplayToIntake(req: express.Request): Promise<any> {
+function forwardReplayToIntake(req: express.Request): Promise<any> {
   return new Promise((resolve, reject) => {
     const intakeRequest = prepareIntakeRequest(req)
     req.pipe(intakeRequest)
@@ -150,7 +150,7 @@ function prepareIntakeRequest(req: express.Request) {
   return https.request(new URL(ddforward, 'https://browser-intake-datadoghq.com'), options)
 }
 
-async function readStream(stream: NodeJS.ReadableStream): Promise<Buffer> {
+function readStream(stream: NodeJS.ReadableStream): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const buffers: Buffer[] = []
     stream.on('data', (data: Buffer) => {

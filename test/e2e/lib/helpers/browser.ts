@@ -1,18 +1,14 @@
 import * as os from 'os'
 
 // typing issue for execute https://github.com/webdriverio/webdriverio/issues/3796
-export async function browserExecute(fn: any) {
+export function browserExecute(fn: any) {
   return browser.execute(fn)
 }
 
-export async function browserExecuteAsync<R, A, B>(
-  fn: (a: A, b: B, done: (result: R) => void) => any,
-  a: A,
-  b: B
-): Promise<R>
-export async function browserExecuteAsync<R, A>(fn: (a: A, done: (result: R) => void) => any, arg: A): Promise<R>
-export async function browserExecuteAsync<R>(fn: (done: (result: R) => void) => any): Promise<R>
-export async function browserExecuteAsync<A extends any[]>(fn: (...params: A) => any, ...args: A) {
+export function browserExecuteAsync<R, A, B>(fn: (a: A, b: B, done: (result: R) => void) => any, a: A, b: B): Promise<R>
+export function browserExecuteAsync<R, A>(fn: (a: A, done: (result: R) => void) => any, arg: A): Promise<R>
+export function browserExecuteAsync<R>(fn: (done: (result: R) => void) => any): Promise<R>
+export function browserExecuteAsync<A extends any[]>(fn: (...params: A) => any, ...args: A) {
   return browser.executeAsync(fn as any, ...args)
 }
 
@@ -94,7 +90,7 @@ export async function flushBrowserLogs() {
 }
 
 // wdio method does not work for some browsers
-export async function deleteAllCookies() {
+export function deleteAllCookies() {
   return browserExecute(() => {
     const cookies = document.cookie.split(';')
     for (const cookie of cookies) {
