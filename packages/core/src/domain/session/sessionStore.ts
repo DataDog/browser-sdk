@@ -3,8 +3,8 @@ import { COOKIE_ACCESS_DELAY } from '../../browser/cookie'
 import { clearInterval, setInterval } from '../../tools/timer'
 import { Observable } from '../../tools/observable'
 import { dateNow } from '../../tools/timeUtils'
-import * as utils from '../../tools/utils'
 import { throttle } from '../../tools/functionUtils'
+import { generateUUID } from '../../tools/stringUtils'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { deleteSessionCookie, retrieveSessionCookie, withCookieLockAccess } from './sessionCookieStore'
 
@@ -100,7 +100,7 @@ export function startSessionStore<TrackingType extends string>(
     const { trackingType, isTracked } = computeSessionState(cookieSession[productKey])
     cookieSession[productKey] = trackingType
     if (isTracked && !cookieSession.id) {
-      cookieSession.id = utils.generateUUID()
+      cookieSession.id = generateUUID()
       cookieSession.created = String(dateNow())
     }
     return isTracked

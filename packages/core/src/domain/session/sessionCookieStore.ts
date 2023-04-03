@@ -3,9 +3,9 @@ import { deleteCookie, getCookie, setCookie } from '../../browser/cookie'
 import { setTimeout } from '../../tools/timer'
 import { isChromium } from '../../tools/browserDetection'
 import { dateNow } from '../../tools/timeUtils'
-import * as utils from '../../tools/utils'
 import { objectEntries } from '../../tools/polyfills'
 import { isEmptyObject } from '../../tools/objectUtils'
+import { generateUUID } from '../../tools/stringUtils'
 import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
 import type { SessionState } from './sessionStore'
 
@@ -48,7 +48,7 @@ export function withCookieLockAccess(operations: Operations, numberOfRetries = 0
       return
     }
     // acquire lock
-    currentLock = utils.generateUUID()
+    currentLock = generateUUID()
     currentSession.lock = currentLock
     setSessionCookie(currentSession, operations.options)
     // if lock is not acquired, retry later

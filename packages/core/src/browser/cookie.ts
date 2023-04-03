@@ -1,6 +1,6 @@
 import { display } from '../tools/display'
-import { findCommaSeparatedValue, generateUUID } from '../tools/utils'
 import { ONE_MINUTE, ONE_SECOND } from '../tools/timeUtils'
+import { findCommaSeparatedValue, generateUUID } from '../tools/stringUtils'
 
 export const COOKIE_ACCESS_DELAY = ONE_SECOND
 
