@@ -1,25 +1,32 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import {
+  display,
   ExperimentalFeature,
   resetExperimentalFeatures,
   addExperimentalFeatures,
   relativeToClocks,
 } from '@datadog/browser-core'
+import { CUSTOMER_DATA_BYTES_LIMIT } from '../../../../core/src/tools/heavyCustomerDataWarning'
 import type { TestSetupBuilder } from '../../../test'
 import { setup } from '../../../test'
+import type { Clock } from '../../../../core/test'
+import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { ViewCreatedEvent, ViewEndedEvent } from '../rumEventsCollection/view/trackViews'
 import type { FeatureFlagContexts } from './featureFlagContext'
-import { startFeatureFlagContexts } from './featureFlagContext'
+import { BYTES_COMPUTATION_THROTTLING_DELAY, startFeatureFlagContexts } from './featureFlagContext'
 
 describe('featureFlagContexts', () => {
   let setupBuilder: TestSetupBuilder
   let featureFlagContexts: FeatureFlagContexts
   let computeBytesCountStub: jasmine.Spy
+  let displaySpy: jasmine.Spy<typeof display.warn>
+  let fakeBytesCount = 1
 
   beforeEach(() => {
+    displaySpy = spyOn(display, 'warn')
     setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
-      computeBytesCountStub = jasmine.createSpy('computeBytesCountStub').and.returnValue(1)
+      computeBytesCountStub = jasmine.createSpy('computeBytesCountStub').and.callFake(() => fakeBytesCount)
       featureFlagContexts = startFeatureFlagContexts(lifeCycle, computeBytesCountStub)
     })
   })
@@ -91,6 +98,24 @@ describe('featureFlagContexts', () => {
 
       expect(featureFlagContext).toBeUndefined()
     })
+
+    it('should warn once if the context bytes limit is reached', () => {
+      addExperimentalFeatures([ExperimentalFeature.FEATURE_FLAGS])
+
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+      fakeBytesCount = CUSTOMER_DATA_BYTES_LIMIT + 1
+
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+        startClocks: relativeToClocks(0 as RelativeTime),
+      } as ViewCreatedEvent)
+
+      featureFlagContexts.addFeatureFlagEvaluation('feature', 'foo')
+      clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
+      featureFlagContexts.addFeatureFlagEvaluation('feature2', 'foo')
+      clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
+
+      expect(displaySpy).toHaveBeenCalledTimes(1)
+    })
   })
 
   describe('findFeatureFlagEvaluations', () => {
@@ -152,28 +177,41 @@ describe('featureFlagContexts', () => {
     })
   })
 
-  describe('getFeatureFlagBytesCount', () => {
-    it('should compute the bytes count only if the context has been updated', () => {
-      addExperimentalFeatures([ExperimentalFeature.FEATURE_FLAGS])
-      const { lifeCycle } = setupBuilder.withFakeClock().build()
+  describe('bytes count computation', () => {
+    let clock: Clock
+    let lifeCycle: LifeCycle
 
+    beforeEach(() => {
+      addExperimentalFeatures([ExperimentalFeature.FEATURE_FLAGS])
+      ;({ clock, lifeCycle } = setupBuilder.withFakeClock().build())
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
         startClocks: relativeToClocks(0 as RelativeTime),
       } as ViewCreatedEvent)
+    })
+
+    it('should be done each time the context is updated', () => {
       featureFlagContexts.addFeatureFlagEvaluation('feature1', 'foo')
-      featureFlagContexts.getFeatureFlagBytesCount()
+      clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
       featureFlagContexts.addFeatureFlagEvaluation('feature2', 'bar')
-      featureFlagContexts.getFeatureFlagBytesCount()
+      clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
 
       // feature flags are cleared when a view is created
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
         startClocks: relativeToClocks(10 as RelativeTime),
       } as ViewCreatedEvent)
-      featureFlagContexts.getFeatureFlagBytesCount()
       const bytesCount = featureFlagContexts.getFeatureFlagBytesCount()
 
-      expect(bytesCount).toEqual(1)
-      expect(computeBytesCountStub).toHaveBeenCalledTimes(3)
+      expect(bytesCount).toEqual(0)
+      expect(computeBytesCountStub).toHaveBeenCalledTimes(2)
+    })
+
+    it('should be throttled to minimize the impact on performance', () => {
+      featureFlagContexts.addFeatureFlagEvaluation('feature1', 'foo') // leading call executed synchronously
+      featureFlagContexts.addFeatureFlagEvaluation('feature2', 'bar') // ignored
+      featureFlagContexts.addFeatureFlagEvaluation('feature3', 'baz') // trailing call executed after BYTES_COMPUTATION_THROTTLING_DELAY
+      clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
+
+      expect(computeBytesCountStub).toHaveBeenCalledTimes(2)
     })
   })
 })

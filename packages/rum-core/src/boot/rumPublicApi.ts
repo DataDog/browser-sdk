@@ -3,6 +3,7 @@ import {
   ExperimentalFeature,
   noop,
   isExperimentalFeatureEnabled,
+  CustomerDataType,
   willSyntheticsInjectRum,
   assign,
   BoundedBuffer,
@@ -62,8 +63,8 @@ export function makeRumPublicApi(
 ) {
   let isAlreadyInitialized = false
 
-  const globalContextManager = createContextManager()
-  const userContextManager = createContextManager()
+  const globalContextManager = createContextManager(CustomerDataType.GlobalContext)
+  const userContextManager = createContextManager(CustomerDataType.User)
 
   let getInternalContextStrategy: StartRumResult['getInternalContext'] = () => undefined
   let getInitConfigurationStrategy = (): InitConfiguration | undefined => undefined
