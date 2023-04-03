@@ -3,7 +3,7 @@ import { mockClock } from '../../../test'
 import type { RawError } from '../error/error'
 import type { RelativeTime } from '../../tools/timeUtils'
 import { relativeToClocks, resetNavigationStart, ONE_MINUTE } from '../../tools/timeUtils'
-import { noop } from '../../tools/utils'
+import { noop } from '../../tools/functionUtils'
 import { createEventRateLimiter } from './createEventRateLimiter'
 import type { EventRateLimiter } from './createEventRateLimiter'
 

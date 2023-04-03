@@ -1,5 +1,5 @@
 import { monitor } from './monitor'
-import { noop } from './utils'
+import { noop } from './functionUtils'
 
 type Options = {
   bytesLimit: number

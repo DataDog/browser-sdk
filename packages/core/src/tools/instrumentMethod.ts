@@ -1,6 +1,6 @@
 import { setTimeout } from './timer'
 import { callMonitored } from './monitor'
-import { noop } from './utils'
+import { noop } from './functionUtils'
 
 export function instrumentMethod<OBJECT extends { [key: string]: any }, METHOD extends keyof OBJECT>(
   object: OBJECT,

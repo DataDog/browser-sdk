@@ -1,48 +1,7 @@
-import type { TimeoutId } from './timer'
-import { setTimeout, clearTimeout } from './timer'
 import { display } from './display'
 import { monitor } from './monitor'
 import { startsWith, arrayFrom } from './polyfills'
-
-// use lodash API
-export function throttle<T extends (...args: any[]) => void>(
-  fn: T,
-  wait: number,
-  options?: { leading?: boolean; trailing?: boolean }
-) {
-  const needLeadingExecution = options && options.leading !== undefined ? options.leading : true
-  const needTrailingExecution = options && options.trailing !== undefined ? options.trailing : true
-  let inWaitPeriod = false
-  let pendingExecutionWithParameters: Parameters<T> | undefined
-  let pendingTimeoutId: TimeoutId
-
-  return {
-    throttled: (...parameters: Parameters<T>) => {
-      if (inWaitPeriod) {
-        pendingExecutionWithParameters = parameters
-        return
-      }
-      if (needLeadingExecution) {
-        fn(...parameters)
-      } else {
-        pendingExecutionWithParameters = parameters
-      }
-      inWaitPeriod = true
-      pendingTimeoutId = setTimeout(() => {
-        if (needTrailingExecution && pendingExecutionWithParameters) {
-          fn(...pendingExecutionWithParameters)
-        }
-        inWaitPeriod = false
-        pendingExecutionWithParameters = undefined
-      }, wait)
-    },
-    cancel: () => {
-      clearTimeout(pendingTimeoutId)
-      inWaitPeriod = false
-      pendingExecutionWithParameters = undefined
-    },
-  }
-}
+import { noop } from './functionUtils'
 
 /**
  * UUID v4
@@ -54,11 +13,6 @@ export function generateUUID(placeholder?: string): string {
       (parseInt(placeholder, 10) ^ ((Math.random() * 16) >> (parseInt(placeholder, 10) / 4))).toString(16)
     : `${1e7}-${1e3}-${4e3}-${8e3}-${1e11}`.replace(/[018]/g, generateUUID)
 }
-
-// eslint-disable-next-line @typescript-eslint/no-empty-function
-export function noop() {}
-
-export type ListenerHandler = () => void
 
 /**
  * Custom implementation of JSON.stringify that ignores some toJSON methods. We need to do that

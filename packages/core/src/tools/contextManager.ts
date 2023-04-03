@@ -1,10 +1,11 @@
 import { ExperimentalFeature, isExperimentalFeatureEnabled } from './experimentalFeatures'
-import { deepClone, jsonStringify, throttle } from './utils'
+import { deepClone, jsonStringify } from './utils'
 import type { Context, ContextValue } from './context'
 import type { CustomerDataType } from './heavyCustomerDataWarning'
 import { warnIfCustomerDataLimitReached } from './heavyCustomerDataWarning'
 import { sanitize } from './sanitize'
 import { computeBytesCount } from './byteUtils'
+import { throttle } from './functionUtils'
 
 export const BYTES_COMPUTATION_THROTTLING_DELAY = 200
 

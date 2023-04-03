@@ -4,6 +4,7 @@ import { clearInterval, setInterval } from '../../tools/timer'
 import { Observable } from '../../tools/observable'
 import { dateNow } from '../../tools/timeUtils'
 import * as utils from '../../tools/utils'
+import { throttle } from '../../tools/functionUtils'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { deleteSessionCookie, retrieveSessionCookie, withCookieLockAccess } from './sessionCookieStore'
 
@@ -141,7 +142,7 @@ export function startSessionStore<TrackingType extends string>(
   }
 
   return {
-    expandOrRenewSession: utils.throttle(expandOrRenewSession, COOKIE_ACCESS_DELAY).throttled,
+    expandOrRenewSession: throttle(expandOrRenewSession, COOKIE_ACCESS_DELAY).throttled,
     expandSession,
     getSession: () => sessionCache,
     renewObservable,
