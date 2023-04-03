@@ -4,7 +4,7 @@ import { Observable } from '../tools/observable'
 import type { Duration, RelativeTime, ClocksState } from '../tools/timeUtils'
 import { elapsed, relativeNow, clocksNow, timeStampNow } from '../tools/timeUtils'
 import { normalizeUrl } from '../tools/urlPolyfill'
-import { shallowClone } from '../tools/utils'
+import { shallowClone } from '../tools/objectUtils'
 
 export interface XhrOpenContext {
   state: 'open'

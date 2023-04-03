@@ -1,6 +1,7 @@
 import type { Context } from '../../tools/context'
 import { display } from '../../tools/display'
-import { assign, getType } from '../../tools/utils'
+import { getType } from '../../tools/utils'
+import { assign } from '../../tools/objectUtils'
 import type { User } from './user.types'
 
 /**
