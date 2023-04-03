@@ -13,22 +13,6 @@ export function generateUUID(placeholder?: string): string {
     : `${1e7}-${1e3}-${4e3}-${8e3}-${1e11}`.replace(/[018]/g, generateUUID)
 }
 
-export function getLocationOrigin() {
-  return getLinkElementOrigin(window.location)
-}
-
-/**
- * IE fallback
- * https://developer.mozilla.org/en-US/docs/Web/API/HTMLHyperlinkElementUtils/origin
- */
-export function getLinkElementOrigin(element: Location | HTMLAnchorElement | URL) {
-  if (element.origin) {
-    return element.origin
-  }
-  const sanitizedHost = element.host.replace(/(:80|:443)$/, '')
-  return `${element.protocol}//${sanitizedHost}`
-}
-
 export function findCommaSeparatedValue(rawString: string, name: string) {
   const regex = new RegExp(`(?:^|;)\\s*${name}\\s*=\\s*([^;]+)`)
   const matches = regex.exec(rawString)

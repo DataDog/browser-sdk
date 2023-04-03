@@ -1,4 +1,3 @@
-import { getLinkElementOrigin, getLocationOrigin } from './utils'
 import { jsonStringify } from './jsonStringify'
 
 export function normalizeUrl(url: string) {
@@ -71,4 +70,20 @@ function checkURLSupported() {
     isURLSupported = false
   }
   return isURLSupported
+}
+
+export function getLocationOrigin() {
+  return getLinkElementOrigin(window.location)
+}
+
+/**
+ * IE fallback
+ * https://developer.mozilla.org/en-US/docs/Web/API/HTMLHyperlinkElementUtils/origin
+ */
+export function getLinkElementOrigin(element: Location | HTMLAnchorElement | URL) {
+  if (element.origin) {
+    return element.origin
+  }
+  const sanitizedHost = element.host.replace(/(:80|:443)$/, '')
+  return `${element.protocol}//${sanitizedHost}`
 }
