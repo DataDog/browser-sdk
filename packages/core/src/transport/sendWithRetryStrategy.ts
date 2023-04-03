@@ -4,6 +4,7 @@ import type { RawError } from '../domain/error/error'
 import { clocksNow, ONE_MINUTE, ONE_SECOND } from '../tools/timeUtils'
 import { ErrorSource } from '../domain/error/error'
 import { ONE_MEBI_BYTE, ONE_KIBI_BYTE } from '../tools/byteUtils'
+import { isServerError } from '../tools/responseUtils'
 import type { Payload, HttpResponse } from './httpRequest'
 
 export const MAX_ONGOING_BYTES_COUNT = 80 * ONE_KIBI_BYTE
@@ -135,7 +136,7 @@ function shouldRetryRequest(response: HttpResponse) {
     ((response.status === 0 && !navigator.onLine) ||
       response.status === 408 ||
       response.status === 429 ||
-      response.status >= 500)
+      isServerError(response.status))
   )
 }
 
