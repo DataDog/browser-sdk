@@ -1,7 +1,7 @@
 import { setTimeout } from '../../tools/timer'
 import type { RawError } from '../error/error'
 import { ErrorSource } from '../error/error'
-import { clocksNow, ONE_MINUTE } from '../../tools/timeUtils'
+import { clocksNow, ONE_MINUTE } from '../../tools/utils/timeUtils'
 
 export type EventRateLimiter = ReturnType<typeof createEventRateLimiter>
 

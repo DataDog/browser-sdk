@@ -1,4 +1,4 @@
-import { isIE } from './browserDetection'
+import { isIE } from './utils/browserDetection'
 import { display } from './display'
 import { sanitize } from './sanitize'
 

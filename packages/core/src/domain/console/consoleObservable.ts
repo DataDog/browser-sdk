@@ -5,7 +5,7 @@ import { ConsoleApiName } from '../../tools/display'
 import { callMonitored } from '../../tools/monitor'
 import { sanitize } from '../../tools/sanitize'
 import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/experimentalFeatures'
-import { find } from '../../tools/polyfills'
+import { find } from '../../tools/utils/polyfills'
 import { jsonStringify } from '../../tools/jsonStringify'
 
 export interface ConsoleLog {

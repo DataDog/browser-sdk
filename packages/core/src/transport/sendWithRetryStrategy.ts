@@ -1,10 +1,10 @@
 import type { EndpointType } from '../domain/configuration'
 import { setTimeout } from '../tools/timer'
 import type { RawError } from '../domain/error/error'
-import { clocksNow, ONE_MINUTE, ONE_SECOND } from '../tools/timeUtils'
+import { clocksNow, ONE_MINUTE, ONE_SECOND } from '../tools/utils/timeUtils'
 import { ErrorSource } from '../domain/error/error'
-import { ONE_MEBI_BYTE, ONE_KIBI_BYTE } from '../tools/byteUtils'
-import { isServerError } from '../tools/responseUtils'
+import { ONE_MEBI_BYTE, ONE_KIBI_BYTE } from '../tools/utils/byteUtils'
+import { isServerError } from '../tools/utils/responseUtils'
 import type { Payload, HttpResponse } from './httpRequest'
 
 export const MAX_ONGOING_BYTES_COUNT = 80 * ONE_KIBI_BYTE

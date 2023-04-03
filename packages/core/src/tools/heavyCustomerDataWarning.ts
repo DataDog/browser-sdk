@@ -1,4 +1,4 @@
-import { ONE_KIBI_BYTE } from './byteUtils'
+import { ONE_KIBI_BYTE } from './utils/byteUtils'
 import { display } from './display'
 
 // RUM and logs batch bytes limit is 16KB

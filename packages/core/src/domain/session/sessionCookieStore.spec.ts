@@ -1,5 +1,5 @@
 import { mockClock, stubCookie } from '../../../test'
-import { isChromium } from '../../tools/browserDetection'
+import { isChromium } from '../../tools/utils/browserDetection'
 import {
   SESSION_COOKIE_NAME,
   toSessionString,

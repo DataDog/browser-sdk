@@ -1,4 +1,4 @@
-import { ONE_MINUTE } from '../../src/tools/timeUtils'
+import { ONE_MINUTE } from '../../src/tools/utils/timeUtils'
 import { deleteCookie, setCookie } from '../../src/browser/cookie'
 import type { BrowserWindow } from '../../src/domain/synthetics/syntheticsWorkerValues'
 import {

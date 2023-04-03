@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { generateUUID } from '../../../../packages/core/src/tools/stringUtils'
+import { generateUUID } from '../../../../packages/core/src/tools/utils/stringUtils'
 import type { TelemetryEvent } from '../../../../packages/core/src/domain/telemetry'
 import type { LogsEvent } from '../../../../packages/logs/src/logsEvent.types'
 import type { RumEvent } from '../../../../packages/rum-core/src/rumEvent.types'

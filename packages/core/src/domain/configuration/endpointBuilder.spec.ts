@@ -4,7 +4,7 @@ import {
   resetExperimentalFeatures,
   addExperimentalFeatures,
 } from '../../tools/experimentalFeatures'
-import { startsWith } from '../../tools/polyfills'
+import { startsWith } from '../../tools/utils/polyfills'
 import type { InitConfiguration } from './configuration'
 import { createEndpointBuilder } from './endpointBuilder'
 

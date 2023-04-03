@@ -1,6 +1,6 @@
 import type { Context, ContextArray, ContextValue } from './context'
 import { display } from './display'
-import { ONE_KIBI_BYTE } from './byteUtils'
+import { ONE_KIBI_BYTE } from './utils/byteUtils'
 import type { ObjectWithToJsonMethod } from './jsonStringify'
 import { detachToJsonMethod } from './jsonStringify'
 

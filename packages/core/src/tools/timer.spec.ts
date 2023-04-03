@@ -2,7 +2,7 @@ import { mockClock, stubZoneJs } from '../../test'
 import type { Clock } from '../../test'
 import { resetMonitor, startMonitorErrorCollection } from './monitor'
 import { setTimeout, clearTimeout, setInterval, clearInterval } from './timer'
-import { noop } from './functionUtils'
+import { noop } from './utils/functionUtils'
 ;[
   {
     name: 'setTimeout' as const,

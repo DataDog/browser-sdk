@@ -1,4 +1,4 @@
-import { getType } from './typeUtils'
+import { getType } from './utils/typeUtils'
 
 type Merged<TDestination, TSource> =
   // case 1 - source is undefined - return destination

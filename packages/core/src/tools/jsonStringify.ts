@@ -1,4 +1,4 @@
-import { noop } from './functionUtils'
+import { noop } from './utils/functionUtils'
 
 /**
  * Custom implementation of JSON.stringify that ignores some toJSON methods. We need to do that

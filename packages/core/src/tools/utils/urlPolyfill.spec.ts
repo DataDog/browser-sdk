@@ -1,4 +1,4 @@
-import { isFirefox } from '../../test'
+import { isFirefox } from '../../../test'
 import { getHash, getOrigin, getPathName, getSearch, isValidUrl, normalizeUrl, getLocationOrigin } from './urlPolyfill'
 
 describe('normalize url', () => {

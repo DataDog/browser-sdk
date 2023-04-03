@@ -2,7 +2,7 @@ import { ExperimentalFeature, isExperimentalFeatureEnabled } from './experimenta
 import type { Context } from './context'
 import { sanitize } from './sanitize'
 import { deepClone } from './mergeInto'
-import { getType } from './typeUtils'
+import { getType } from './utils/typeUtils'
 
 /**
  * Current limitation:

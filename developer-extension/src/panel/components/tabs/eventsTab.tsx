@@ -1,6 +1,6 @@
 import { Badge, Button, Chip, Group, Table, TextInput } from '@mantine/core'
 import React from 'react'
-import { safeTruncate } from '../../../../../packages/core/src/tools/stringUtils'
+import { safeTruncate } from '../../../../../packages/core/src/tools/utils/stringUtils'
 import type { TelemetryEvent } from '../../../../../packages/core/src/domain/telemetry'
 import type { RumEvent } from '../../../../../packages/rum-core/src/rumEvent.types'
 import type { EventFilters, StoredEvent } from '../../hooks/useEvents'

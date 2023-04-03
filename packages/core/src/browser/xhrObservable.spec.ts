@@ -1,5 +1,5 @@
 import { withXhr, stubXhr } from '../../test'
-import { isIE } from '../tools/browserDetection'
+import { isIE } from '../tools/utils/browserDetection'
 import type { Subscription } from '../tools/observable'
 import type { XhrCompleteContext, XhrContext } from './xhrObservable'
 import { initXhrObservable } from './xhrObservable'

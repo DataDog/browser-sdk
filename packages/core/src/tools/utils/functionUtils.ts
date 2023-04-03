@@ -1,5 +1,5 @@
-import type { TimeoutId } from './timer'
-import { setTimeout, clearTimeout } from './timer'
+import type { TimeoutId } from '../timer'
+import { setTimeout, clearTimeout } from '../timer'
 
 // use lodash API
 export function throttle<T extends (...args: any[]) => void>(
