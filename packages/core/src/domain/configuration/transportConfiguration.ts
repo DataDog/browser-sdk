@@ -1,5 +1,4 @@
-import { assign } from '../../tools/utils/objectUtils'
-import { objectValues } from '../../tools/utils/polyfills'
+import { objectValues, assign } from '../../tools/utils/polyfills'
 import type { InitConfiguration } from './configuration'
 import type { EndpointBuilder } from './endpointBuilder'
 import { createEndpointBuilder } from './endpointBuilder'

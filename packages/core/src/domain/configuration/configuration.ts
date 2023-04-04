@@ -7,7 +7,8 @@ import { ExperimentalFeature, addExperimentalFeatures } from '../../tools/experi
 import { ONE_SECOND } from '../../tools/utils/timeUtils'
 import { isPercentage } from '../../tools/utils/numberUtils'
 import { ONE_KIBI_BYTE } from '../../tools/utils/byteUtils'
-import { objectHasValue, assign } from '../../tools/utils/objectUtils'
+import { objectHasValue } from '../../tools/utils/objectUtils'
+import { assign } from '../../tools/utils/polyfills'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
 

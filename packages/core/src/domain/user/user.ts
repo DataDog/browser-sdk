@@ -1,7 +1,7 @@
 import type { Context } from '../../tools/context/context'
 import { display } from '../../tools/display'
-import { assign } from '../../tools/utils/objectUtils'
 import { getType } from '../../tools/utils/typeUtils'
+import { assign } from '../../tools/utils/polyfills'
 import type { User } from './user.types'
 
 /**
