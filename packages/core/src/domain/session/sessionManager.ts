@@ -1,7 +1,7 @@
 import type { CookieOptions } from '../../browser/cookie'
 import type { Observable } from '../../tools/observable'
 import type { Context } from '../../tools/context/context'
-import { ContextHistory } from '../../tools/contextHistory'
+import { ValueHistory } from '../../tools/valueHistory'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
 import { relativeNow, clocksOrigin, ONE_MINUTE } from '../../tools/utils/timeUtils'
 import { DOM_EVENT, addEventListener, addEventListeners } from '../../browser/addEventListener'
@@ -35,7 +35,7 @@ export function startSessionManager<TrackingType extends string>(
   const sessionStore = startSessionStore(options, productKey, computeSessionState)
   stopCallbacks.push(() => sessionStore.stop())
 
-  const sessionContextHistory = new ContextHistory<SessionContext<TrackingType>>(SESSION_CONTEXT_TIMEOUT_DELAY)
+  const sessionContextHistory = new ValueHistory<SessionContext<TrackingType>>(SESSION_CONTEXT_TIMEOUT_DELAY)
   stopCallbacks.push(() => sessionContextHistory.stop())
 
   sessionStore.renewObservable.subscribe(() => {

@@ -7,7 +7,7 @@ import {
   assign,
   getRelativeTime,
   ONE_MINUTE,
-  ContextHistory,
+  ValueHistory,
   generateUUID,
   clocksNow,
   ONE_SECOND,
@@ -58,7 +58,7 @@ export interface ActionContexts {
   findActionId: (startTime?: RelativeTime) => string | string[] | undefined
 }
 
-type ClickActionIdHistory = ContextHistory<ClickAction['id']>
+type ClickActionIdHistory = ValueHistory<ClickAction['id']>
 
 // Maximum duration for click actions
 export const CLICK_ACTION_MAX_DURATION = 10 * ONE_SECOND
@@ -69,7 +69,7 @@ export function trackClickActions(
   domMutationObservable: Observable<void>,
   configuration: RumConfiguration
 ) {
-  const history: ClickActionIdHistory = new ContextHistory(ACTION_CONTEXT_TIME_OUT_DELAY)
+  const history: ClickActionIdHistory = new ValueHistory(ACTION_CONTEXT_TIME_OUT_DELAY)
   const stopObservable = new Observable<void>()
   let currentClickChain: ClickChain | undefined
 
