@@ -2,3 +2,4 @@ export { HttpRequest, createHttpRequest, Payload, RetryInfo } from './httpReques
 export { Batch, BatchFlushEvent, FlushReason } from './batch'
 export { canUseEventBridge, getEventBridge, BrowserWindowWithEventBridge } from './eventBridge'
 export { startBatchWithReplica } from './startBatchWithReplica'
+export { createFlushController } from './flushController'

@@ -2,9 +2,9 @@ import { display } from '../tools/display'
 import type { Context } from '../tools/context'
 import { computeBytesCount, jsonStringify, objectValues } from '../tools/utils'
 import { Observable } from '../tools/observable'
-import { setTimeout } from '../tools/timer'
-import type { PageExitEvent } from '../browser/pageExitObservable'
+import { isPageExitReason } from '../browser/pageExitObservable'
 import type { HttpRequest } from './httpRequest'
+import type { FlushController } from './flushController'
 
 export interface BatchFlushEvent {
   bufferBytesCount: number
@@ -29,14 +29,10 @@ export class Batch {
 
   constructor(
     private request: HttpRequest,
-    private batchMessagesLimit: number,
-    private batchBytesLimit: number,
-    private messageBytesLimit: number,
-    private flushTimeout: number,
-    private pageExitObservable: Observable<PageExitEvent>
+    private flushController: FlushController,
+    private messageBytesLimit: number
   ) {
-    pageExitObservable.subscribe((event) => this.flush(event.reason, this.request.sendOnExit))
-    this.flushPeriodically()
+    this.flushController.flushObservable.subscribe((flushReason) => this.flush(flushReason))
   }
 
   add(message: Context) {
@@ -47,7 +43,7 @@ export class Batch {
     this.addOrUpdate(message, key)
   }
 
-  flush(flushReason: FlushReason, sendFn = this.request.send) {
+  flush(flushReason: FlushReason) {
     if (this.bufferMessagesCount !== 0) {
       const messages = this.pushOnlyBuffer.concat(objectValues(this.upsertBuffer))
       const bytesCount = this.bufferBytesCount
@@ -62,7 +58,12 @@ export class Batch {
       this.bufferBytesCount = 0
       this.bufferMessagesCount = 0
 
-      sendFn({ data: messages.join('\n'), bytesCount, flushReason })
+      const payload = { data: messages.join('\n'), bytesCount, flushReason }
+      if (isPageExitReason(flushReason)) {
+        this.request.sendOnExit(payload)
+      } else {
+        this.request.send(payload)
+      }
     }
   }
 
@@ -77,14 +78,12 @@ export class Batch {
     if (this.hasMessageFor(key)) {
       this.remove(key)
     }
-    if (this.willReachedBytesLimitWith(messageBytesCount)) {
-      this.flush('batch_bytes_limit')
-    }
+
+    this.flushController.flushIfFull(this.bufferMessagesCount, this.bufferBytesCount + messageBytesCount)
 
     this.push(processedMessage, messageBytesCount, key)
-    if (this.isFull()) {
-      this.flush('batch_bytes_limit')
-    }
+
+    this.flushController.flushIfFull(this.bufferMessagesCount, this.bufferBytesCount)
   }
 
   private process(message: Context) {
@@ -120,21 +119,5 @@ export class Batch {
 
   private hasMessageFor(key?: string): key is string {
     return key !== undefined && this.upsertBuffer[key] !== undefined
-  }
-
-  private willReachedBytesLimitWith(messageBytesCount: number) {
-    // byte of the separator at the end of the message
-    return this.bufferBytesCount + messageBytesCount + 1 >= this.batchBytesLimit
-  }
-
-  private isFull() {
-    return this.bufferMessagesCount === this.batchMessagesLimit || this.bufferBytesCount >= this.batchBytesLimit
-  }
-
-  private flushPeriodically() {
-    setTimeout(() => {
-      this.flush('batch_duration_limit')
-      this.flushPeriodically()
-    }, this.flushTimeout)
   }
 }

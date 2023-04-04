@@ -2,9 +2,9 @@ import sinon from 'sinon'
 import type { PageExitEvent } from '../browser/pageExitObservable'
 import { PageExitReason } from '../browser/pageExitObservable'
 import { Observable } from '../tools/observable'
-import { noop } from '../tools/utils'
 import type { FlushReason } from './batch'
 import { Batch } from './batch'
+import { createFlushController } from './flushController'
 import type { HttpRequest } from './httpRequest'
 
 describe('batch', () => {
@@ -13,23 +13,30 @@ describe('batch', () => {
   const MESSAGE_BYTES_LIMIT = 50 * 1024
   const FLUSH_TIMEOUT = 60 * 1000
   let batch: Batch
-  let transport: HttpRequest
-  let sendSpy: jasmine.Spy<HttpRequest['send']>
+  let transport: {
+    send: jasmine.Spy<HttpRequest['send']>
+    sendOnExit: jasmine.Spy<HttpRequest['sendOnExit']>
+  }
+
   let pageExitObservable: Observable<PageExitEvent>
   let flushNotifySpy: jasmine.Spy
   const flushReason: FlushReason = 'batch_bytes_limit'
 
   beforeEach(() => {
-    transport = { send: noop } as unknown as HttpRequest
-    sendSpy = spyOn(transport, 'send')
+    transport = {
+      send: jasmine.createSpy(),
+      sendOnExit: jasmine.createSpy(),
+    } satisfies HttpRequest
     pageExitObservable = new Observable()
     batch = new Batch(
       transport,
-      BATCH_MESSAGES_LIMIT,
-      BATCH_BYTES_LIMIT,
-      MESSAGE_BYTES_LIMIT,
-      FLUSH_TIMEOUT,
-      pageExitObservable
+      createFlushController({
+        batchMessagesLimit: BATCH_MESSAGES_LIMIT,
+        batchBytesLimit: BATCH_BYTES_LIMIT,
+        flushTimeout: FLUSH_TIMEOUT,
+        pageExitObservable,
+      }),
+      MESSAGE_BYTES_LIMIT
     )
     flushNotifySpy = spyOn(batch.flushObservable, 'notify')
   })
@@ -39,7 +46,7 @@ describe('batch', () => {
 
     batch.flush(flushReason)
 
-    expect(sendSpy.calls.mostRecent().args[0]).toEqual({
+    expect(transport.send.calls.mostRecent().args[0]).toEqual({
       data: '{"message":"hello"}',
       bytesCount: jasmine.any(Number),
       flushReason,
@@ -50,7 +57,7 @@ describe('batch', () => {
     batch.add({ message: 'hello' })
 
     batch.flush(flushReason)
-    sendSpy.calls.reset()
+    transport.send.calls.reset()
     batch.flush(flushReason)
 
     expect(transport.send).not.toHaveBeenCalled()
@@ -60,7 +67,7 @@ describe('batch', () => {
     batch.add({ message: '1' })
     batch.add({ message: '2' })
     batch.add({ message: '3' })
-    expect(sendSpy.calls.mostRecent().args[0]).toEqual({
+    expect(transport.send.calls.mostRecent().args[0]).toEqual({
       data: '{"message":"1"}\n{"message":"2"}\n{"message":"3"}',
       bytesCount: jasmine.any(Number),
       flushReason,
@@ -69,17 +76,17 @@ describe('batch', () => {
 
   it('should flush when a new message will overflow the bytes limit', () => {
     batch.add({ message: '50 bytes - xxxxxxxxxxxxxxxxxxxxxxxxx' })
-    expect(sendSpy).not.toHaveBeenCalled()
+    expect(transport.send).not.toHaveBeenCalled()
 
     batch.add({ message: '60 bytes - xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' })
-    expect(sendSpy).toHaveBeenCalledWith({
+    expect(transport.send).toHaveBeenCalledWith({
       data: '{"message":"50 bytes - xxxxxxxxxxxxxxxxxxxxxxxxx"}',
       bytesCount: 50,
       flushReason,
     })
 
     batch.flush(flushReason)
-    expect(sendSpy).toHaveBeenCalledWith({
+    expect(transport.send).toHaveBeenCalledWith({
       data: '{"message":"60 bytes - xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}',
       bytesCount: 60,
       flushReason,
@@ -91,7 +98,7 @@ describe('batch', () => {
     batch.add({ message: '30 bytes - xxxxx' }) // batch: 60 sep: 1
     batch.add({ message: '39 bytes - xxxxxxxxxxxxxx' }) // batch: 99 sep: 2
 
-    expect(sendSpy).toHaveBeenCalledWith({
+    expect(transport.send).toHaveBeenCalledWith({
       data: '{"message":"30 bytes - xxxxx"}\n{"message":"30 bytes - xxxxx"}',
       bytesCount: 61,
       flushReason,
@@ -101,7 +108,7 @@ describe('batch', () => {
   it('should call send one time when the byte count is too high and the batch is empty', () => {
     const message = '101 bytes - xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
     batch.add({ message })
-    expect(sendSpy).toHaveBeenCalledWith({ data: `{"message":"${message}"}`, bytesCount: 101, flushReason })
+    expect(transport.send).toHaveBeenCalledWith({ data: `{"message":"${message}"}`, bytesCount: 101, flushReason })
   })
 
   it('should flush the batch and send the message when the message is too heavy', () => {
@@ -109,16 +116,25 @@ describe('batch', () => {
 
     batch.add({ message: '50 bytes - xxxxxxxxxxxxxxxxxxxxxxxxx' })
     batch.add({ message })
-    expect(sendSpy).toHaveBeenCalledTimes(2)
+    expect(transport.send).toHaveBeenCalledTimes(2)
   })
 
   it('should flush after timeout', () => {
     const clock = sinon.useFakeTimers()
-    batch = new Batch(transport, BATCH_MESSAGES_LIMIT, BATCH_BYTES_LIMIT, MESSAGE_BYTES_LIMIT, 10, pageExitObservable)
+    batch = new Batch(
+      transport,
+      createFlushController({
+        batchMessagesLimit: BATCH_MESSAGES_LIMIT,
+        batchBytesLimit: BATCH_BYTES_LIMIT,
+        flushTimeout: 10,
+        pageExitObservable,
+      }),
+      MESSAGE_BYTES_LIMIT
+    )
     batch.add({ message: '50 bytes - xxxxxxxxxxxxxxxxxxxxxxxxx' })
     clock.tick(100)
 
-    expect(sendSpy).toHaveBeenCalled()
+    expect(transport.send).toHaveBeenCalled()
 
     clock.restore()
   })
@@ -126,15 +142,24 @@ describe('batch', () => {
   it('should flush on page exit', () => {
     batch.add({ message: '1' })
     pageExitObservable.notify({ reason: PageExitReason.UNLOADING })
-    expect(sendSpy).toHaveBeenCalledTimes(1)
+    expect(transport.sendOnExit).toHaveBeenCalledTimes(1)
   })
 
   it('should not send a message with a bytes size above the limit', () => {
     const warnStub = sinon.stub(console, 'warn')
-    batch = new Batch(transport, BATCH_MESSAGES_LIMIT, BATCH_BYTES_LIMIT, 50, FLUSH_TIMEOUT, pageExitObservable)
+    batch = new Batch(
+      transport,
+      createFlushController({
+        batchMessagesLimit: BATCH_MESSAGES_LIMIT,
+        batchBytesLimit: BATCH_BYTES_LIMIT,
+        flushTimeout: FLUSH_TIMEOUT,
+        pageExitObservable,
+      }),
+      50
+    )
     batch.add({ message: '50 bytes - xxxxxxxxxxxxx' })
 
-    expect(sendSpy).not.toHaveBeenCalled()
+    expect(transport.send).not.toHaveBeenCalled()
     warnStub.restore()
   })
 
@@ -144,7 +169,7 @@ describe('batch', () => {
     batch.upsert({ message: '3' }, 'b')
     batch.upsert({ message: '4' }, 'c')
 
-    expect(sendSpy.calls.mostRecent().args[0]).toEqual({
+    expect(transport.send.calls.mostRecent().args[0]).toEqual({
       data: '{"message":"2"}\n{"message":"3"}\n{"message":"4"}',
       bytesCount: jasmine.any(Number),
       flushReason,
@@ -154,7 +179,7 @@ describe('batch', () => {
     batch.upsert({ message: '6' }, 'b')
     batch.upsert({ message: '7' }, 'a')
 
-    expect(sendSpy.calls.mostRecent().args[0]).toEqual({
+    expect(transport.send.calls.mostRecent().args[0]).toEqual({
       data: '{"message":"5"}\n{"message":"6"}\n{"message":"7"}',
       bytesCount: jasmine.any(Number),
       flushReason,
@@ -166,7 +191,7 @@ describe('batch', () => {
     batch.upsert({ message: '11' }, 'b')
     batch.flush(flushReason)
 
-    expect(sendSpy.calls.mostRecent().args[0]).toEqual({
+    expect(transport.send.calls.mostRecent().args[0]).toEqual({
       data: '{"message":"10"}\n{"message":"11"}',
       bytesCount: jasmine.any(Number),
       flushReason,
@@ -182,19 +207,21 @@ describe('batch', () => {
     } as unknown as HttpRequest
     const batch = new Batch(
       fakeRequest,
-      BATCH_MESSAGES_LIMIT,
-      BATCH_BYTES_LIMIT,
-      MESSAGE_BYTES_LIMIT,
-      FLUSH_TIMEOUT,
-      pageExitObservable
+      createFlushController({
+        batchMessagesLimit: BATCH_MESSAGES_LIMIT,
+        batchBytesLimit: BATCH_BYTES_LIMIT,
+        flushTimeout: FLUSH_TIMEOUT,
+        pageExitObservable,
+      }),
+      MESSAGE_BYTES_LIMIT
     )
     const addTelemetryDebugFake = () => batch.add({ message: 'telemetry message' })
 
     batch.add({ message: 'normal message' })
     batch.flush(flushReason)
-    expect(sendSpy).toHaveBeenCalledTimes(1)
+    expect(transport.send).toHaveBeenCalledTimes(1)
     batch.flush(flushReason)
-    expect(sendSpy).toHaveBeenCalledTimes(2)
+    expect(transport.send).toHaveBeenCalledTimes(2)
   })
 
   it('should notify when the batch is flushed', () => {

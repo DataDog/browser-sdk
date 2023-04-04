@@ -55,6 +55,7 @@ export {
   canUseEventBridge,
   getEventBridge,
   startBatchWithReplica,
+  createFlushController,
 } from './transport'
 export * from './tools/display'
 export * from './tools/urlPolyfill'
