@@ -93,7 +93,7 @@ export { BoundedBuffer } from './tools/boundedBuffer'
 export { catchUserErrors } from './tools/catchUserErrors'
 export { createContextManager, ContextManager } from './tools/context/contextManager'
 export { warnIfCustomerDataLimitReached, CustomerDataType } from './tools/context/heavyCustomerDataWarning'
-export { ContextHistory, ContextHistoryEntry, CLEAR_OLD_CONTEXTS_INTERVAL } from './tools/context/contextHistory'
+export { ContextHistory, ContextHistoryEntry, CLEAR_OLD_CONTEXTS_INTERVAL } from './tools/contextHistory'
 export { readBytesFromStream } from './tools/readBytesFromStream'
 export { SESSION_COOKIE_NAME } from './domain/session/sessionCookieStore'
 export {
