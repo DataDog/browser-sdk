@@ -1,6 +1,6 @@
 import type { CookieOptions } from '../../browser/cookie'
 import type { Observable } from '../../tools/observable'
-import type { Context } from '../../tools/context/context'
+import type { Context } from '../../tools/serialisation/context'
 import { ValueHistory } from '../../tools/valueHistory'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
 import { relativeNow, clocksOrigin, ONE_MINUTE } from '../../tools/utils/timeUtils'

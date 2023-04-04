@@ -1,4 +1,4 @@
-import { jsonStringify } from '../jsonStringify'
+import { jsonStringify } from '../serialisation/jsonStringify'
 
 export function normalizeUrl(url: string) {
   return buildUrl(url, getLocationOrigin()).href

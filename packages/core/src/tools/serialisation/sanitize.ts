@@ -1,6 +1,6 @@
-import type { Context, ContextArray, ContextValue } from './context/context'
-import { display } from './display'
-import { ONE_KIBI_BYTE } from './utils/byteUtils'
+import { display } from '../display'
+import { ONE_KIBI_BYTE } from '../utils/byteUtils'
+import type { Context, ContextArray, ContextValue } from './context'
 import type { ObjectWithToJsonMethod } from './jsonStringify'
 import { detachToJsonMethod } from './jsonStringify'
 
