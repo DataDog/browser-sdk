@@ -34,7 +34,7 @@ export function computeStackTrace(ex: unknown): StackTrace {
     stack,
   }
 }
-const fileUrl = '((?:file|https?|blob|chrome-extension|native|eval|webpack|<anonymous>|\\w+\\.|\\/).*?)'
+const fileUrl = '((?:file|https?|blob|chrome-extension|native|eval|webpack|snippet|<anonymous>|\\w+\\.|\\/).*?)'
 const filePosition = '(?::(\\d+))'
 const CHROME_LINE_RE = new RegExp(`^\\s*at (.*?) ?\\(${fileUrl}${filePosition}?${filePosition}?\\)?\\s*$`, 'i')
 
