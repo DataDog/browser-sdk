@@ -1,3 +1,4 @@
+import { isIE } from '@datadog/browser-core'
 import type { RumConfiguration, ViewContexts } from '@datadog/browser-rum-core'
 import { createRumSessionManagerMock } from '../../../rum-core/test'
 import { getSessionReplayLink } from './getSessionReplayLink'
@@ -48,7 +49,11 @@ describe('getReplayLink', () => {
 
       const link = getSessionReplayLink({ ...DEFAULT_CONFIGURATION, site, subdomain }, sessionManager, viewContexts)
 
-      expect(link).toBe(`https://${host}/rum/replay/sessions/session-id-1?seed=view-id-1&from=123456`)
+      expect(link).toBe(
+        isIE()
+          ? `https://${host}/rum/replay/sessions/session-id-1?seed=view-id-1&from=1234566&error-type=browser-not-supported`
+          : `https://${host}/rum/replay/sessions/session-id-1?seed=view-id-1&from=123456`
+      )
     })
   })
 
