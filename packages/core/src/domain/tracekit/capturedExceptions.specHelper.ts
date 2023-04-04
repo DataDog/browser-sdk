@@ -231,6 +231,13 @@ at Object.speak (http://localhost:8080/file.js:21:17)
 at http://localhost:8080/file.js:31:13\n`,
 }
 
+export const CHROME_111_SNIPPET = {
+  message: 'message string',
+  name: 'Error',
+  stack: `Error: message string
+at snippet:///snippet_file:1:13`,
+}
+
 export const PHANTOMJS_1_19 = {
   stack: `Error: foo
     at file:///path/to/file.js:878
