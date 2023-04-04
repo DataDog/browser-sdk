@@ -16,7 +16,7 @@ const PROBLEMATIC_IDENTIFIERS = {
   // Using the patched `addEventListener` from Zone.js might trigger a memory leak in Firefox, see
   // PR #1860
   addEventListener: 'Use `addEventListener` from @datadog/browser-core instead',
-  removeEventListener: 'Use `addEventListener` from @datadog/browser-core instead',
+  removeEventListener: 'Use `addEventListener().stop` from @datadog/browser-core instead',
 }
 
 module.exports = {
