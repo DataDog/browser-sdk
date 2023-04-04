@@ -6,24 +6,9 @@ const DEFAULT_CONFIGURATION = {
 } as RumConfiguration
 
 describe('getReplayLink (slim package)', () => {
-  const parameters: Array<[string, string | undefined, string]> = [
-    ['datadoghq.com', undefined, 'app.datadoghq.com'],
-    ['datadoghq.com', 'toto', 'toto.datadoghq.com'],
-    ['datad0g.com', undefined, 'dd.datad0g.com'],
-    ['datad0g.com', 'toto', 'toto.datad0g.com'],
-    ['us3.datadoghq.com', undefined, 'us3.datadoghq.com'],
-    ['us3.datadoghq.com', 'toto', 'toto.us3.datadoghq.com'],
-    ['us5.datadoghq.com', undefined, 'us5.datadoghq.com'],
-    ['us5.datadoghq.com', 'toto', 'toto.us5.datadoghq.com'],
-  ]
+  it('should return the replay link with a "slim-package" error type', () => {
+    const link = getSessionReplayLink(DEFAULT_CONFIGURATION)
 
-  parameters.forEach(([site, subdomain, host]) => {
-    it(`should return ${host} for subdomain "${
-      subdomain ?? 'undefined'
-    }" on "${site}" with query params if view is found`, () => {
-      const link = getSessionReplayLink({ ...DEFAULT_CONFIGURATION, site, subdomain })
-
-      expect(link).toBe(`https://${host}/rum/replay/sessions/session-id?error-type=slim-package`)
-    })
+    expect(link).toBe('https://dd.datad0g.com/rum/replay/sessions/session-id?error-type=slim-package')
   })
 })

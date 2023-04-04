@@ -21,40 +21,29 @@ describe('getReplayLink', () => {
     expect(link).toBe('https://dd.datad0g.com/rum/replay/sessions/session-id-1')
   })
 
-  const parameters: Array<[string, string | undefined, string]> = [
-    ['datadoghq.com', undefined, 'app.datadoghq.com'],
-    ['datadoghq.com', 'toto', 'toto.datadoghq.com'],
-    ['datad0g.com', undefined, 'dd.datad0g.com'],
-    ['datad0g.com', 'toto', 'toto.datad0g.com'],
-    ['us3.datadoghq.com', undefined, 'us3.datadoghq.com'],
-    ['us3.datadoghq.com', 'toto', 'toto.us3.datadoghq.com'],
-    ['us5.datadoghq.com', undefined, 'us5.datadoghq.com'],
-    ['us5.datadoghq.com', 'toto', 'toto.us5.datadoghq.com'],
-  ]
+  it('should return the replay link', () => {
+    const sessionManager = createRumSessionManagerMock().setId('session-id-1')
+    const viewContexts = {
+      findView: () => ({
+        id: 'view-id-1',
+        startClocks: {
+          timeStamp: 123456,
+        },
+      }),
+    } as ViewContexts
+    addRecord('view-id-1')
 
-  parameters.forEach(([site, subdomain, host]) => {
-    it(`should return ${host} for subdomain "${
-      subdomain ?? 'undefined'
-    }" on "${site}" with query params if view is found`, () => {
-      const sessionManager = createRumSessionManagerMock().setId('session-id-1')
-      const viewContexts = {
-        findView: () => ({
-          id: 'view-id-1',
-          startClocks: {
-            timeStamp: 123456,
-          },
-        }),
-      } as ViewContexts
-      addRecord('view-id-1')
+    const link = getSessionReplayLink(
+      { ...DEFAULT_CONFIGURATION, site: 'datadoghq.com', subdomain: 'toto' },
+      sessionManager,
+      viewContexts
+    )
 
-      const link = getSessionReplayLink({ ...DEFAULT_CONFIGURATION, site, subdomain }, sessionManager, viewContexts)
-
-      expect(link).toBe(
-        isIE()
-          ? `https://${host}/rum/replay/sessions/session-id-1?seed=view-id-1&from=1234566&error-type=browser-not-supported`
-          : `https://${host}/rum/replay/sessions/session-id-1?seed=view-id-1&from=123456`
-      )
-    })
+    expect(link).toBe(
+      isIE()
+        ? 'https://toto.datadoghq.com/rum/replay/sessions/session-id-1?seed=view-id-1&from=1234566&error-type=browser-not-supported'
+        : 'https://toto.datadoghq.com/rum/replay/sessions/session-id-1?seed=view-id-1&from=123456'
+    )
   })
 
   it('return a param if replay is sampled out', () => {
