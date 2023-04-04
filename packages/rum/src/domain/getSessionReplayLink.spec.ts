@@ -18,7 +18,7 @@ describe('getReplayLink', () => {
 
     const link = getSessionReplayLink(DEFAULT_CONFIGURATION, sessionManager, viewContexts)
 
-    expect(link).toBe('https://dd.datad0g.com/rum/replay/sessions/session-id-1')
+    expect(link).toBe('https://dd.datad0g.com/rum/replay/sessions/session-id-1?')
   })
 
   it('should return the replay link', () => {
