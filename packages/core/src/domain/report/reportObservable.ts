@@ -63,11 +63,9 @@ function createReportObservable(reportTypes: ReportType[]) {
 
 function createCspViolationReportObservable() {
   const observable = new Observable<RawReport>(() => {
-    const handleCspViolation = monitor((event: SecurityPolicyViolationEvent) => {
+    const { stop } = addEventListener(document, DOM_EVENT.SECURITY_POLICY_VIOLATION, (event) => {
       observable.notify(buildRawReportFromCspViolation(event))
     })
-
-    const { stop } = addEventListener(document, DOM_EVENT.SECURITY_POLICY_VIOLATION, handleCspViolation)
 
     return stop
   })

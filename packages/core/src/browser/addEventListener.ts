@@ -1,5 +1,6 @@
 import { monitor } from '../tools/monitor'
 import { getZoneJsOriginalValue } from '../tools/getZoneJsOriginalValue'
+import type { VisualViewport, VisualViewportEventMap } from './types'
 
 export const enum DOM_EVENT {
   BEFORE_UNLOAD = 'beforeunload',
@@ -43,6 +44,27 @@ interface AddEventListenerOptions {
   passive?: boolean
 }
 
+type EventMapFor<T> = T extends Window
+  ? WindowEventMap & {
+      // TS 4.9.5 does not support `freeze` and `resume` events yet
+      freeze: Event
+      resume: Event
+      // TS 4.9.5 does not define `visibilitychange` on Window (only Document)
+      visibilitychange: Event
+    }
+  : T extends Document
+  ? DocumentEventMap
+  : T extends HTMLElement
+  ? HTMLElementEventMap
+  : T extends VisualViewport
+  ? VisualViewportEventMap
+  : T extends ShadowRoot
+  ? // ShadowRootEventMap is not yet defined in our supported TS version. Instead, use
+    // GlobalEventHandlersEventMap which is more than enough as we only need to listen for events bubbling
+    // through the ShadowRoot like "change" or "input"
+    GlobalEventHandlersEventMap
+  : Record<never, never>
+
 /**
  * Add an event listener to an event target object (Window, Element, mock object...).  This provides
  * a few conveniences compared to using `element.addEventListener` directly:
@@ -53,13 +75,13 @@ interface AddEventListenerOptions {
  *
  * * returns a `stop` function to remove the listener
  */
-export function addEventListener<E extends Event>(
-  eventTarget: EventTarget,
-  event: DOM_EVENT,
-  listener: (event: E) => void,
+export function addEventListener<Target extends EventTarget, EventName extends keyof EventMapFor<Target> & string>(
+  eventTarget: Target,
+  eventName: EventName,
+  listener: (event: EventMapFor<Target>[EventName]) => void,
   options?: AddEventListenerOptions
 ) {
-  return addEventListeners(eventTarget, [event], listener, options)
+  return addEventListeners(eventTarget, [eventName], listener, options)
 }
 
 /**
@@ -74,17 +96,17 @@ export function addEventListener<E extends Event>(
  *
  * * with `once: true`, the listener will be called at most once, even if different events are listened
  */
-export function addEventListeners<E extends Event>(
-  eventTarget: EventTarget,
-  events: DOM_EVENT[],
-  listener: (event: E) => void,
+export function addEventListeners<Target extends EventTarget, EventName extends keyof EventMapFor<Target> & string>(
+  eventTarget: Target,
+  eventNames: EventName[],
+  listener: (event: EventMapFor<Target>[EventName]) => void,
   { once, capture, passive }: AddEventListenerOptions = {}
 ) {
   const wrappedListener = monitor(
     once
       ? (event: Event) => {
           stop()
-          listener(event as E)
+          listener(event as EventMapFor<Target>[EventName])
         }
       : (listener as (event: Event) => void)
   )
@@ -92,11 +114,11 @@ export function addEventListeners<E extends Event>(
   const options = passive ? { capture, passive } : capture
 
   const add = getZoneJsOriginalValue(eventTarget, 'addEventListener')
-  events.forEach((event) => add.call(eventTarget, event, wrappedListener, options))
+  eventNames.forEach((eventName) => add.call(eventTarget, eventName, wrappedListener, options))
 
   function stop() {
     const remove = getZoneJsOriginalValue(eventTarget, 'removeEventListener')
-    events.forEach((event) => remove.call(eventTarget, event, wrappedListener, options))
+    eventNames.forEach((eventName) => remove.call(eventTarget, eventName, wrappedListener, options))
   }
 
   return {

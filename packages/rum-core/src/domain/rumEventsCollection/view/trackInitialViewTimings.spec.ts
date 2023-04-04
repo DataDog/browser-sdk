@@ -161,11 +161,11 @@ describe('trackFirstContentfulPaintTiming', () => {
 describe('largestContentfulPaintTiming', () => {
   let setupBuilder: TestSetupBuilder
   let lcpCallback: jasmine.Spy<(value: RelativeTime) => void>
-  let eventTarget: Element
+  let eventTarget: Window
 
   beforeEach(() => {
     lcpCallback = jasmine.createSpy()
-    eventTarget = document.createElement('div')
+    eventTarget = document.createElement('div') as unknown as Window
     setupBuilder = setup().beforeBuild(({ lifeCycle }) =>
       trackLargestContentfulPaintTiming(lifeCycle, eventTarget, lcpCallback)
     )
