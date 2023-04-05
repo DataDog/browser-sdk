@@ -72,6 +72,6 @@ describe('getReplayLink', () => {
 
     const link = getSessionReplayLink({ ...DEFAULT_CONFIGURATION, site: 'datadoghq.com' }, sessionManager, viewContexts)
 
-    expect(link).toBe('https://app.datadoghq.com/rum/replay/sessions/session-id?error-type=rum-not-tracked')
+    expect(link).toBe('https://app.datadoghq.com/rum/replay/sessions/no-session-id?error-type=rum-not-tracked')
   })
 })

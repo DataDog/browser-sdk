@@ -16,7 +16,7 @@ export function getSessionReplayLink(
 ): string | undefined {
   const session = sessionManager.findTrackedSession()
   const parameters: string[] = []
-  const sessionId = session ? session.id : 'session-id'
+  const sessionId = session ? session.id : 'no-session-id'
 
   const view = viewContexts.findView()
 

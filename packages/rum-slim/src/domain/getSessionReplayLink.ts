@@ -3,5 +3,5 @@ import { getDatadogSiteUrl } from '@datadog/browser-rum-core'
 
 export function getSessionReplayLink(configuration: RumConfiguration): string | undefined {
   const origin = getDatadogSiteUrl(configuration)
-  return `${origin}/rum/replay/sessions/session-id?error-type=slim-package`
+  return `${origin}/rum/replay/sessions/no-session-id?error-type=slim-package`
 }
