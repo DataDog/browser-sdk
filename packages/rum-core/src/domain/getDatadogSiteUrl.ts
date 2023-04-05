@@ -1,3 +1,4 @@
+import { INTAKE_SITE_STAGING, INTAKE_SITE_US1, INTAKE_SITE_EU1 } from '@datadog/browser-core'
 import type { RumConfiguration } from './configuration'
 
 export function getDatadogSiteUrl(rumConfiguration: RumConfiguration) {
@@ -8,11 +9,10 @@ export function getDatadogSiteUrl(rumConfiguration: RumConfiguration) {
 
 function getSiteDefaultSubdomain(configuration: RumConfiguration): string | undefined {
   switch (configuration.site) {
-    case 'datadoghq.com':
+    case INTAKE_SITE_US1:
+    case INTAKE_SITE_EU1:
       return 'app'
-    case 'datadoghq.eu':
-      return 'app'
-    case 'datad0g.com':
+    case INTAKE_SITE_STAGING:
       return 'dd'
     default:
       return undefined
