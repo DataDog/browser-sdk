@@ -38,7 +38,7 @@ export function initMouseInteractionObserver(
   defaultPrivacyLevel: DefaultPrivacyLevel,
   recordIds: RecordIds
 ): ListenerHandler {
-  const handler = (event: MouseEvent | TouchEvent) => {
+  const handler = (event: MouseEvent | TouchEvent | FocusEvent) => {
     const target = getEventTarget(event)
     if (getNodePrivacyLevel(target, defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN || !hasSerializedNode(target)) {
       return
@@ -48,7 +48,7 @@ export function initMouseInteractionObserver(
 
     let interaction: MouseInteraction
     if (type !== MouseInteractionType.Blur && type !== MouseInteractionType.Focus) {
-      const coordinates = tryToComputeCoordinates(event)
+      const coordinates = tryToComputeCoordinates(event as MouseEvent | TouchEvent)
       if (!coordinates) {
         return
       }
@@ -63,8 +63,13 @@ export function initMouseInteractionObserver(
     )
     cb(record)
   }
-  return addEventListeners(document, Object.keys(eventTypeToMouseInteraction) as DOM_EVENT[], handler, {
-    capture: true,
-    passive: true,
-  }).stop
+  return addEventListeners(
+    document,
+    Object.keys(eventTypeToMouseInteraction) as Array<keyof typeof eventTypeToMouseInteraction>,
+    handler,
+    {
+      capture: true,
+      passive: true,
+    }
+  ).stop
 }

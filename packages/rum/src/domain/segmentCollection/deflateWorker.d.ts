@@ -1,13 +1,7 @@
 export function createDeflateWorker(): DeflateWorker
 
-export interface DeflateWorker {
-  addEventListener(name: 'message', listener: DeflateWorkerListener): void
-  addEventListener(name: 'error', listener: (error: ErrorEvent) => void): void
-  removeEventListener(name: 'message', listener: DeflateWorkerListener): void
-  removeEventListener(name: 'error', listener: (error: ErrorEvent) => void): void
-
+export interface DeflateWorker extends Worker {
   postMessage(message: DeflateWorkerAction): void
-  terminate(): void
 }
 
 export type DeflateWorkerListener = (event: { data: DeflateWorkerResponse }) => void

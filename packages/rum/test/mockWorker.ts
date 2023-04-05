@@ -1,6 +1,10 @@
 import type { DeflateWorker, DeflateWorkerAction, DeflateWorkerListener } from '../src/domain/segmentCollection'
 
 export class MockWorker implements DeflateWorker {
+  public onmessage = null
+  public onmessageerror = null
+  public onerror = null
+
   readonly pendingMessages: DeflateWorkerAction[] = []
   private rawBytesCount = 0
   private deflatedData: Uint8Array[] = []
@@ -9,8 +13,6 @@ export class MockWorker implements DeflateWorker {
     error: Array<(error: unknown) => void>
   } = { message: [], error: [] }
 
-  addEventListener(eventName: 'message', listener: DeflateWorkerListener): void
-  addEventListener(eventName: 'error', listener: (error: ErrorEvent) => void): void
   addEventListener(eventName: 'message' | 'error', listener: any): void {
     const index = this.listeners[eventName].indexOf(listener)
     if (index < 0) {
@@ -18,13 +20,16 @@ export class MockWorker implements DeflateWorker {
     }
   }
 
-  removeEventListener(eventName: 'message', listener: DeflateWorkerListener): void
-  removeEventListener(eventName: 'error', listener: (error: ErrorEvent) => void): void
   removeEventListener(eventName: 'message' | 'error', listener: any): void {
     const index = this.listeners[eventName].indexOf(listener)
     if (index >= 0) {
       this.listeners[eventName].splice(index, 1)
     }
+  }
+
+  dispatchEvent(): boolean {
+    // Partial implementation, feel free to implement
+    throw new Error('not yet implemented')
   }
 
   postMessage(message: DeflateWorkerAction): void {

@@ -116,7 +116,7 @@ export function trackFirstContentfulPaintTiming(lifeCycle: LifeCycle, callback: 
  */
 export function trackLargestContentfulPaintTiming(
   lifeCycle: LifeCycle,
-  eventTarget: EventTarget,
+  eventTarget: Window,
   callback: (lcpTiming: RelativeTime) => void
 ) {
   const firstHidden = trackFirstHidden()
