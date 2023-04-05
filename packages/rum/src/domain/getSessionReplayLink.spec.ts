@@ -75,4 +75,23 @@ describe('getReplayLink', () => {
     const errorType = isIE() ? 'browser-not-supported' : 'rum-not-tracked'
     expect(link).toBe(`https://app.datadoghq.com/rum/replay/sessions/no-session-id?error-type=${errorType}`)
   })
+
+  it('should add a param if the replay was not started', () => {
+    const sessionManager = createRumSessionManagerMock().setId('session-id-1')
+    const viewContexts = {
+      findView: () => ({
+        id: 'view-id-1',
+        startClocks: {
+          timeStamp: 123456,
+        },
+      }),
+    } as ViewContexts
+
+    const link = getSessionReplayLink({ ...DEFAULT_CONFIGURATION, site: 'datadoghq.com' }, sessionManager, viewContexts)
+
+    const errorType = isIE() ? 'browser-not-supported' : 'replay-not-started'
+    expect(link).toBe(
+      `https://app.datadoghq.com/rum/replay/sessions/session-id-1?error-type=${errorType}&seed=view-id-1&from=123456`
+    )
+  })
 })
