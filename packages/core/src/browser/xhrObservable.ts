@@ -1,10 +1,10 @@
 import { instrumentMethodAndCallOriginal } from '../tools/instrumentMethod'
-import { monitor } from '../tools/monitor'
 import { Observable } from '../tools/observable'
 import type { Duration, RelativeTime, ClocksState } from '../tools/timeUtils'
 import { elapsed, relativeNow, clocksNow, timeStampNow } from '../tools/timeUtils'
 import { normalizeUrl } from '../tools/urlPolyfill'
 import { shallowClone } from '../tools/utils'
+import { addEventListener } from './addEventListener'
 
 export interface XhrOpenContext {
   state: 'open'
@@ -98,8 +98,8 @@ function sendXhr(this: XMLHttpRequest, observable: Observable<XhrContext>) {
     },
   })
 
-  const onEnd = monitor(() => {
-    this.removeEventListener('loadend', onEnd)
+  const onEnd = () => {
+    unsubscribeLoadEndListener()
     stopInstrumentingOnReadyStateChange()
     if (hasBeenReported) {
       return
@@ -111,8 +111,10 @@ function sendXhr(this: XMLHttpRequest, observable: Observable<XhrContext>) {
     completeContext.duration = elapsed(startContext.startClocks.timeStamp, timeStampNow())
     completeContext.status = this.status
     observable.notify(shallowClone(completeContext))
-  })
-  this.addEventListener('loadend', onEnd)
+  }
+
+  const { stop: unsubscribeLoadEndListener } = addEventListener(this, 'loadend', onEnd)
+
   observable.notify(startContext)
 }
 
