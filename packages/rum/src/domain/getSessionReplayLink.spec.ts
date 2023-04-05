@@ -18,7 +18,11 @@ describe('getReplayLink', () => {
 
     const link = getSessionReplayLink(DEFAULT_CONFIGURATION, sessionManager, viewContexts, true)
 
-    expect(link).toBe('https://dd.datad0g.com/rum/replay/sessions/session-id-1?')
+    expect(link).toBe(
+      isIE()
+        ? 'https://dd.datad0g.com/rum/replay/sessions/session-id-1?error-type=browser-not-supported'
+        : 'https://dd.datad0g.com/rum/replay/sessions/session-id-1?'
+    )
   })
 
   it('should return the replay link', () => {
@@ -42,7 +46,7 @@ describe('getReplayLink', () => {
 
     expect(link).toBe(
       isIE()
-        ? 'https://toto.datadoghq.com/rum/replay/sessions/session-id-1?error-type=browser-not-supported&seed=view-id-1&from=1234566'
+        ? 'https://toto.datadoghq.com/rum/replay/sessions/session-id-1?error-type=browser-not-supported&seed=view-id-1&from=123456'
         : 'https://toto.datadoghq.com/rum/replay/sessions/session-id-1?seed=view-id-1&from=123456'
     )
   })
