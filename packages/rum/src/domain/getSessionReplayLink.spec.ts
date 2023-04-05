@@ -41,7 +41,7 @@ describe('getReplayLink', () => {
 
     expect(link).toBe(
       isIE()
-        ? 'https://toto.datadoghq.com/rum/replay/sessions/session-id-1?seed=view-id-1&from=1234566&error-type=browser-not-supported'
+        ? 'https://toto.datadoghq.com/rum/replay/sessions/session-id-1?error-type=browser-not-supported&seed=view-id-1&from=1234566'
         : 'https://toto.datadoghq.com/rum/replay/sessions/session-id-1?seed=view-id-1&from=123456'
     )
   })
@@ -58,9 +58,9 @@ describe('getReplayLink', () => {
     } as ViewContexts
 
     const link = getSessionReplayLink({ ...DEFAULT_CONFIGURATION, site: 'datadoghq.com' }, sessionManager, viewContexts)
-
+    const errorType = isIE() ? 'browser-not-supported' : 'incorrect-session-plan'
     expect(link).toBe(
-      'https://app.datadoghq.com/rum/replay/sessions/session-id-1?error-type=incorrect-session-plan&seed=view-id-1&from=123456'
+      `https://app.datadoghq.com/rum/replay/sessions/session-id-1?error-type=${errorType}&seed=view-id-1&from=123456`
     )
   })
 
@@ -72,6 +72,7 @@ describe('getReplayLink', () => {
 
     const link = getSessionReplayLink({ ...DEFAULT_CONFIGURATION, site: 'datadoghq.com' }, sessionManager, viewContexts)
 
-    expect(link).toBe('https://app.datadoghq.com/rum/replay/sessions/no-session-id?error-type=rum-not-tracked')
+    const errorType = isIE() ? 'browser-not-supported' : 'rum-not-tracked'
+    expect(link).toBe(`https://app.datadoghq.com/rum/replay/sessions/no-session-id?error-type=${errorType}`)
   })
 })
