@@ -71,7 +71,8 @@ export function makeRecorderApi(
     start: () => startStrategy(),
     stop: () => stopStrategy(),
     getReplayStats,
-    getSessionReplayLink,
+    getSessionReplayLink: (configuration, sessionManager, viewContexts) =>
+      getSessionReplayLink(configuration, sessionManager, viewContexts, state.status !== RecorderStatus.Stopped),
     onRumStart: (
       lifeCycle: LifeCycle,
       configuration: RumConfiguration,

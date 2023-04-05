@@ -1,29 +1,23 @@
-import type {
-  RumConfiguration,
-  RumSessionManager,
-  ViewContext,
-  ViewContexts,
-  RumSession,
-} from '@datadog/browser-rum-core'
+import type { RumConfiguration, RumSessionManager, ViewContexts, RumSession } from '@datadog/browser-rum-core'
 import { getDatadogSiteUrl } from '@datadog/browser-rum-core'
 import { isBrowserSupported } from '../boot/isBrowserSupported'
-import { getReplayStats } from './replayStats'
 
 export function getSessionReplayLink(
   configuration: RumConfiguration,
   sessionManager: RumSessionManager,
-  viewContexts: ViewContexts
+  viewContexts: ViewContexts,
+  isRecordingStarted: boolean
 ): string | undefined {
   const session = sessionManager.findTrackedSession()
   const parameters: string[] = []
   const sessionId = session ? session.id : 'no-session-id'
 
-  const view = viewContexts.findView()
-
-  const errorType = getErrorType(session, view)
+  const errorType = getErrorType(session, isRecordingStarted)
   if (errorType) {
     parameters.push(`error-type=${errorType}`)
   }
+
+  const view = viewContexts.findView()
   if (view) {
     parameters.push(`seed=${view.id}`)
     parameters.push(`from=${view.startClocks.timeStamp}`)
@@ -34,7 +28,7 @@ export function getSessionReplayLink(
   return `${origin}${path}?${parameters.join('&')}`
 }
 
-function getErrorType(session: RumSession | undefined, view: ViewContext | undefined) {
+function getErrorType(session: RumSession | undefined, isRecordingStarted: boolean) {
   if (!isBrowserSupported()) {
     return 'browser-not-supported'
   }
@@ -49,7 +43,7 @@ function getErrorType(session: RumSession | undefined, view: ViewContext | undef
     // - replay sampled out
     return 'incorrect-session-plan'
   }
-  if (view && !getReplayStats(view.id)) {
+  if (!isRecordingStarted) {
     return 'replay-not-started'
   }
 }

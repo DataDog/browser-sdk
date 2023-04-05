@@ -16,7 +16,7 @@ describe('getReplayLink', () => {
     const sessionManager = createRumSessionManagerMock().setId('session-id-1')
     const viewContexts = { findView: () => undefined } as ViewContexts
 
-    const link = getSessionReplayLink(DEFAULT_CONFIGURATION, sessionManager, viewContexts)
+    const link = getSessionReplayLink(DEFAULT_CONFIGURATION, sessionManager, viewContexts, true)
 
     expect(link).toBe('https://dd.datad0g.com/rum/replay/sessions/session-id-1?')
   })
@@ -36,7 +36,8 @@ describe('getReplayLink', () => {
     const link = getSessionReplayLink(
       { ...DEFAULT_CONFIGURATION, site: 'datadoghq.com', subdomain: 'toto' },
       sessionManager,
-      viewContexts
+      viewContexts,
+      true
     )
 
     expect(link).toBe(
@@ -57,7 +58,12 @@ describe('getReplayLink', () => {
       }),
     } as ViewContexts
 
-    const link = getSessionReplayLink({ ...DEFAULT_CONFIGURATION, site: 'datadoghq.com' }, sessionManager, viewContexts)
+    const link = getSessionReplayLink(
+      { ...DEFAULT_CONFIGURATION, site: 'datadoghq.com' },
+      sessionManager,
+      viewContexts,
+      true
+    )
     const errorType = isIE() ? 'browser-not-supported' : 'incorrect-session-plan'
     expect(link).toBe(
       `https://app.datadoghq.com/rum/replay/sessions/session-id-1?error-type=${errorType}&seed=view-id-1&from=123456`
@@ -70,7 +76,12 @@ describe('getReplayLink', () => {
       findView: () => undefined,
     } as ViewContexts
 
-    const link = getSessionReplayLink({ ...DEFAULT_CONFIGURATION, site: 'datadoghq.com' }, sessionManager, viewContexts)
+    const link = getSessionReplayLink(
+      { ...DEFAULT_CONFIGURATION, site: 'datadoghq.com' },
+      sessionManager,
+      viewContexts,
+      true
+    )
 
     const errorType = isIE() ? 'browser-not-supported' : 'rum-not-tracked'
     expect(link).toBe(`https://app.datadoghq.com/rum/replay/sessions/no-session-id?error-type=${errorType}`)
@@ -87,7 +98,12 @@ describe('getReplayLink', () => {
       }),
     } as ViewContexts
 
-    const link = getSessionReplayLink({ ...DEFAULT_CONFIGURATION, site: 'datadoghq.com' }, sessionManager, viewContexts)
+    const link = getSessionReplayLink(
+      { ...DEFAULT_CONFIGURATION, site: 'datadoghq.com' },
+      sessionManager,
+      viewContexts,
+      false
+    )
 
     const errorType = isIE() ? 'browser-not-supported' : 'replay-not-started'
     expect(link).toBe(
