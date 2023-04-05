@@ -1,12 +1,12 @@
 import type { RumConfiguration } from './configuration'
 
-export function getDatadogOrigin(rumConfiguration: RumConfiguration) {
+export function getDatadogSiteUrl(rumConfiguration: RumConfiguration) {
   const site = rumConfiguration.site
-  const subdomain = rumConfiguration.subdomain || getDefaultSubdomain(rumConfiguration)
+  const subdomain = rumConfiguration.subdomain || getSiteDefaultSubdomain(rumConfiguration)
   return `https://${subdomain ? `${subdomain}.` : ''}${site}`
 }
 
-function getDefaultSubdomain(configuration: RumConfiguration): string | undefined {
+function getSiteDefaultSubdomain(configuration: RumConfiguration): string | undefined {
   switch (configuration.site) {
     case 'datadoghq.com':
       return 'app'

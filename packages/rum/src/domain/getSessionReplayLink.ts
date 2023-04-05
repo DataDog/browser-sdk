@@ -5,7 +5,7 @@ import type {
   ViewContexts,
   RumSession,
 } from '@datadog/browser-rum-core'
-import { getDatadogOrigin } from '@datadog/browser-rum-core'
+import { getDatadogSiteUrl } from '@datadog/browser-rum-core'
 import { isBrowserSupported } from '../boot/isBrowserSupported'
 import { getReplayStats } from './replayStats'
 
@@ -29,7 +29,7 @@ export function getSessionReplayLink(
     parameters.push(`from=${view.startClocks.timeStamp}`)
   }
 
-  const origin = getDatadogOrigin(configuration)
+  const origin = getDatadogSiteUrl(configuration)
   const path = `/rum/replay/sessions/${sessionId}`
   return `${origin}${path}?${parameters.join('&')}`
 }

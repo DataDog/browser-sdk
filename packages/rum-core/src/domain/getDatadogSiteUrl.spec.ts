@@ -1,11 +1,11 @@
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { getDatadogOrigin } from './getDatadogOrigin'
+import { getDatadogSiteUrl } from './getDatadogSiteUrl'
 
 const DEFAULT_CONFIGURATION = {
   site: 'datad0g.com',
 } as RumConfiguration
 
-describe('getDatadogOrigin', () => {
+describe('getDatadogSiteUrl', () => {
   const parameters: Array<[string, string | undefined, string]> = [
     ['datadoghq.com', undefined, 'app.datadoghq.com'],
     ['datadoghq.com', 'toto', 'toto.datadoghq.com'],
@@ -21,7 +21,7 @@ describe('getDatadogOrigin', () => {
     it(`should return ${host} for subdomain "${
       subdomain ?? 'undefined'
     }" on "${site}" with query params if view is found`, () => {
-      const link = getDatadogOrigin({ ...DEFAULT_CONFIGURATION, site, subdomain })
+      const link = getDatadogSiteUrl({ ...DEFAULT_CONFIGURATION, site, subdomain })
 
       expect(link).toBe(`https://${host}`)
     })
