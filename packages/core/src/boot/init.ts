@@ -1,6 +1,6 @@
 import { catchUserErrors } from '../tools/catchUserErrors'
 import { setDebugMode } from '../tools/monitor'
-import { assign } from '../tools/utils'
+import { assign } from '../tools/utils/polyfills'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string

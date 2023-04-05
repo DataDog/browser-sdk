@@ -1,5 +1,5 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { relativeToClocks, CLEAR_OLD_CONTEXTS_INTERVAL } from '@datadog/browser-core'
+import { relativeToClocks, CLEAR_OLD_VALUES_INTERVAL } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../test'
 import { setup } from '../../../test'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -165,7 +165,7 @@ describe('viewContexts', () => {
       clock.tick(10)
       expect(viewContexts.findView(targetTime)).toBeDefined()
 
-      clock.tick(VIEW_CONTEXT_TIME_OUT_DELAY + CLEAR_OLD_CONTEXTS_INTERVAL)
+      clock.tick(VIEW_CONTEXT_TIME_OUT_DELAY + CLEAR_OLD_VALUES_INTERVAL)
       expect(viewContexts.findView(targetTime)).toBeUndefined()
     })
   })

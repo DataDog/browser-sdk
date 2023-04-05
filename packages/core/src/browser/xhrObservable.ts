@@ -1,9 +1,9 @@
 import { instrumentMethodAndCallOriginal } from '../tools/instrumentMethod'
 import { Observable } from '../tools/observable'
-import type { Duration, RelativeTime, ClocksState } from '../tools/timeUtils'
-import { elapsed, relativeNow, clocksNow, timeStampNow } from '../tools/timeUtils'
-import { normalizeUrl } from '../tools/urlPolyfill'
-import { shallowClone } from '../tools/utils'
+import type { Duration, RelativeTime, ClocksState } from '../tools/utils/timeUtils'
+import { elapsed, relativeNow, clocksNow, timeStampNow } from '../tools/utils/timeUtils'
+import { normalizeUrl } from '../tools/utils/urlPolyfill'
+import { shallowClone } from '../tools/utils/objectUtils'
 import { addEventListener } from './addEventListener'
 
 export interface XhrOpenContext {

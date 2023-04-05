@@ -57,13 +57,13 @@ export {
   startBatchWithReplica,
 } from './transport'
 export * from './tools/display'
-export * from './tools/urlPolyfill'
-export * from './tools/timeUtils'
-export * from './tools/utils'
-export * from './tools/sanitize'
+export * from './tools/utils/urlPolyfill'
+export * from './tools/utils/timeUtils'
+export * from './tools/utils/arrayUtils'
+export * from './tools/serialisation/sanitize'
 export * from './tools/getGlobalObject'
 export * from './domain/eventRateLimiter/createEventRateLimiter'
-export * from './tools/browserDetection'
+export * from './tools/utils/browserDetection'
 export { sendToExtension } from './tools/sendToExtension'
 export { runOnReadyState } from './browser/runOnReadyState'
 export { getZoneJsOriginalValue } from './tools/getZoneJsOriginalValue'
@@ -81,7 +81,7 @@ export {
   NO_ERROR_STACK_PRESENT_MESSAGE,
   PROVIDED_ERROR_MESSAGE_PREFIX,
 } from './domain/error/error'
-export { Context, ContextArray, ContextValue } from './tools/context'
+export { Context, ContextArray, ContextValue } from './tools/serialisation/context'
 export { areCookiesAuthorized, getCookie, setCookie, deleteCookie, COOKIE_ACCESS_DELAY } from './browser/cookie'
 export { initXhrObservable, XhrCompleteContext, XhrStartContext } from './browser/xhrObservable'
 export { initFetchObservable, FetchResolveContext, FetchStartContext, FetchContext } from './browser/fetchObservable'
@@ -91,10 +91,13 @@ export * from './tools/timer'
 export { initConsoleObservable, ConsoleLog } from './domain/console/consoleObservable'
 export { BoundedBuffer } from './tools/boundedBuffer'
 export { catchUserErrors } from './tools/catchUserErrors'
-export { createContextManager, ContextManager } from './tools/contextManager'
-export { warnIfCustomerDataLimitReached, CustomerDataType } from './tools/heavyCustomerDataWarning'
-export { limitModification } from './tools/limitModification'
-export { ContextHistory, ContextHistoryEntry, CLEAR_OLD_CONTEXTS_INTERVAL } from './tools/contextHistory'
+export { createContextManager, ContextManager } from './tools/serialisation/contextManager'
+export {
+  warnIfCustomerDataLimitReached,
+  CustomerDataType,
+  CUSTOMER_DATA_BYTES_LIMIT,
+} from './tools/serialisation/heavyCustomerDataWarning'
+export { ValueHistory, ValueHistoryEntry, CLEAR_OLD_VALUES_INTERVAL } from './tools/valueHistory'
 export { readBytesFromStream } from './tools/readBytesFromStream'
 export { SESSION_COOKIE_NAME } from './domain/session/sessionCookieStore'
 export {
@@ -103,3 +106,15 @@ export {
   getSyntheticsResultId,
 } from './domain/synthetics/syntheticsWorkerValues'
 export { User, checkUser, sanitizeUser } from './domain/user'
+export * from './domain/resourceUtils'
+export * from './tools/utils/polyfills'
+export * from './tools/utils/numberUtils'
+export * from './tools/utils/byteUtils'
+export * from './tools/utils/objectUtils'
+export * from './tools/utils/functionUtils'
+export * from './tools/serialisation/jsonStringify'
+export * from './tools/mergeInto'
+export * from './tools/utils/stringUtils'
+export * from './tools/matchOption'
+export * from './tools/utils/responseUtils'
+export * from './tools/utils/typeUtils'

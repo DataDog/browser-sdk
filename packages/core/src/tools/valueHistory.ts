@@ -1,40 +1,39 @@
 import { setInterval, clearInterval } from './timer'
 import type { TimeoutId } from './timer'
-import type { RelativeTime } from './timeUtils'
-import { relativeNow } from './timeUtils'
-import { ONE_MINUTE } from './utils'
+import type { RelativeTime } from './utils/timeUtils'
+import { relativeNow, ONE_MINUTE } from './utils/timeUtils'
 
 const END_OF_TIMES = Infinity as RelativeTime
 
-export interface ContextHistoryEntry<T> {
+export interface ValueHistoryEntry<T> {
   startTime: RelativeTime
   endTime: RelativeTime
-  context: T
+  value: T
   remove(): void
   close(endTime: RelativeTime): void
 }
 
-export const CLEAR_OLD_CONTEXTS_INTERVAL = ONE_MINUTE
+export const CLEAR_OLD_VALUES_INTERVAL = ONE_MINUTE
 
 /**
- * Store and keep track of contexts spans. This whole class assumes that contexts are added in
+ * Store and keep track of values spans. This whole class assumes that values are added in
  * chronological order (i.e. all entries have an increasing start time).
  */
-export class ContextHistory<Context> {
-  private entries: Array<ContextHistoryEntry<Context>> = []
-  private clearOldContextsInterval: TimeoutId
+export class ValueHistory<Value> {
+  private entries: Array<ValueHistoryEntry<Value>> = []
+  private clearOldValuesInterval: TimeoutId
 
   constructor(private expireDelay: number) {
-    this.clearOldContextsInterval = setInterval(() => this.clearOldContexts(), CLEAR_OLD_CONTEXTS_INTERVAL)
+    this.clearOldValuesInterval = setInterval(() => this.clearOldValues(), CLEAR_OLD_VALUES_INTERVAL)
   }
 
   /**
-   * Add a context to the history associated with a start time. Returns a reference to this newly
+   * Add a value to the history associated with a start time. Returns a reference to this newly
    * added entry that can be removed or closed.
    */
-  add(context: Context, startTime: RelativeTime): ContextHistoryEntry<Context> {
-    const entry: ContextHistoryEntry<Context> = {
-      context,
+  add(value: Value, startTime: RelativeTime): ValueHistoryEntry<Value> {
+    const entry: ValueHistoryEntry<Value> = {
+      value,
       startTime,
       endTime: END_OF_TIMES,
       remove: () => {
@@ -52,14 +51,14 @@ export class ContextHistory<Context> {
   }
 
   /**
-   * Return the latest context that was active during `startTime`, or the currently active context
+   * Return the latest value that was active during `startTime`, or the currently active value
    * if no `startTime` is provided. This method assumes that entries are not overlapping.
    */
-  find(startTime: RelativeTime = END_OF_TIMES): Context | undefined {
+  find(startTime: RelativeTime = END_OF_TIMES): Value | undefined {
     for (const entry of this.entries) {
       if (entry.startTime <= startTime) {
         if (startTime <= entry.endTime) {
-          return entry.context
+          return entry.value
         }
         break
       }
@@ -67,7 +66,7 @@ export class ContextHistory<Context> {
   }
 
   /**
-   * Helper function to close the currently active context, if any. This method assumes that entries
+   * Helper function to close the currently active value, if any. This method assumes that entries
    * are not overlapping.
    */
   closeActive(endTime: RelativeTime) {
@@ -78,13 +77,13 @@ export class ContextHistory<Context> {
   }
 
   /**
-   * Return all contexts that were active during `startTime`, or all currently active contexts if no
+   * Return all values that were active during `startTime`, or all currently active values if no
    * `startTime` is provided.
    */
-  findAll(startTime: RelativeTime = END_OF_TIMES): Context[] {
+  findAll(startTime: RelativeTime = END_OF_TIMES): Value[] {
     return this.entries
       .filter((entry) => entry.startTime <= startTime && startTime <= entry.endTime)
-      .map((entry) => entry.context)
+      .map((entry) => entry.value)
   }
 
   /**
@@ -98,10 +97,10 @@ export class ContextHistory<Context> {
    * Stop internal garbage collection of past entries.
    */
   stop() {
-    clearInterval(this.clearOldContextsInterval)
+    clearInterval(this.clearOldValuesInterval)
   }
 
-  private clearOldContexts() {
+  private clearOldValues() {
     const oldTimeThreshold = relativeNow() - this.expireDelay
     while (this.entries.length > 0 && this.entries[this.entries.length - 1].endTime < oldTimeThreshold) {
       this.entries.pop()

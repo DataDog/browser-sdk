@@ -1,9 +1,12 @@
-import { ExperimentalFeature, isExperimentalFeatureEnabled } from './experimentalFeatures'
-import { computeBytesCount, deepClone, jsonStringify, throttle } from './utils'
-import type { Context, ContextValue } from './context'
-import type { CustomerDataType } from './heavyCustomerDataWarning'
-import { warnIfCustomerDataLimitReached } from './heavyCustomerDataWarning'
+import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../experimentalFeatures'
+import { computeBytesCount } from '../utils/byteUtils'
+import { throttle } from '../utils/functionUtils'
+import { deepClone } from '../mergeInto'
+import { jsonStringify } from './jsonStringify'
 import { sanitize } from './sanitize'
+import { warnIfCustomerDataLimitReached } from './heavyCustomerDataWarning'
+import type { CustomerDataType } from './heavyCustomerDataWarning'
+import type { Context, ContextValue } from './context'
 
 export const BYTES_COMPUTATION_THROTTLING_DELAY = 200
 

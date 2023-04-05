@@ -1,5 +1,5 @@
-import { ExperimentalFeature, resetExperimentalFeatures, addExperimentalFeatures } from './experimentalFeatures'
-import type { Context } from './context'
+import { ExperimentalFeature, resetExperimentalFeatures, addExperimentalFeatures } from '@datadog/browser-core'
+import type { Context } from '@datadog/browser-core'
 import { limitModification } from './limitModification'
 
 describe('limitModification', () => {

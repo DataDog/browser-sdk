@@ -2,7 +2,6 @@ import type { Context, RawError, EventRateLimiter, User } from '@datadog/browser
 import {
   combine,
   isEmptyObject,
-  limitModification,
   timeStampNow,
   currentDrift,
   display,
@@ -30,6 +29,7 @@ import type { RumConfiguration } from './configuration'
 import type { ActionContexts } from './rumEventsCollection/action/actionCollection'
 import { getDisplayContext } from './contexts/displayContext'
 import type { CommonContext } from './contexts/commonContext'
+import { limitModification } from './limitModification'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string

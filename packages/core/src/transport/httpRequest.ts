@@ -1,6 +1,6 @@
 import type { EndpointBuilder } from '../domain/configuration'
 import { addTelemetryError } from '../domain/telemetry'
-import type { Context } from '../tools/context'
+import type { Context } from '../tools/serialisation/context'
 import { monitor } from '../tools/monitor'
 import type { RawError } from '../domain/error/error'
 import { addEventListener } from '../browser/addEventListener'

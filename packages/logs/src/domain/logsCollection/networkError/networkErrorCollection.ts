@@ -10,6 +10,7 @@ import {
   noop,
   readBytesFromStream,
   tryToClone,
+  isServerError,
 } from '@datadog/browser-core'
 import type { RawNetworkLogsEvent } from '../../../rawLogsEvent.types'
 import type { LogsConfiguration } from '../../configuration'
@@ -34,7 +35,7 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
   })
 
   function handleResponse(type: RequestType, request: XhrCompleteContext | FetchResolveContext) {
-    if (!configuration.isIntakeUrl(request.url) && (isRejected(request) || isServerError(request))) {
+    if (!configuration.isIntakeUrl(request.url) && (isRejected(request) || isServerError(request.status))) {
       if ('xhr' in request) {
         computeXhrResponseData(request.xhr, configuration, onResponseDataAvailable)
       } else if (request.response) {
@@ -156,10 +157,6 @@ export function computeFetchResponseText(
 
 function isRejected(request: { status: number; responseType?: string }) {
   return request.status === 0 && request.responseType !== 'opaque'
-}
-
-function isServerError(request: { status: number }) {
-  return request.status >= 500
 }
 
 function truncateResponseText(responseText: string, configuration: LogsConfiguration) {

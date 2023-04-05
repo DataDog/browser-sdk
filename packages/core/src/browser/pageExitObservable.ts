@@ -1,6 +1,7 @@
 import { isExperimentalFeatureEnabled, ExperimentalFeature } from '../tools/experimentalFeatures'
 import { Observable } from '../tools/observable'
-import { includes, noop, objectValues } from '../tools/utils'
+import { objectValues, includes } from '../tools/utils/polyfills'
+import { noop } from '../tools/utils/functionUtils'
 import { addEventListeners, addEventListener, DOM_EVENT } from './addEventListener'
 
 export const PageExitReason = {

@@ -1,5 +1,5 @@
-import { isIE } from './browserDetection'
-import { display } from './display'
+import { isIE } from '../utils/browserDetection'
+import { display } from '../display'
 import { sanitize } from './sanitize'
 
 describe('sanitize', () => {
