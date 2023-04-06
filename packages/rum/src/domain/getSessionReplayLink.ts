@@ -1,5 +1,11 @@
-import type { RumConfiguration, RumSessionManager, ViewContexts, RumSession } from '@datadog/browser-rum-core'
-import { getDatadogSiteUrl } from '@datadog/browser-rum-core'
+import type {
+  RumConfiguration,
+  RumSessionManager,
+  ViewContexts,
+  RumSession,
+  SessionReplayUrlQueryParams,
+} from '@datadog/browser-rum-core'
+import { getSessionReplayUrl } from '@datadog/browser-rum-core'
 import { isBrowserSupported } from '../boot/isBrowserSupported'
 
 export function getSessionReplayLink(
@@ -9,23 +15,21 @@ export function getSessionReplayLink(
   isRecordingStarted: boolean
 ): string | undefined {
   const session = sessionManager.findTrackedSession()
-  const parameters: string[] = []
   const sessionId = session ? session.id : 'no-session-id'
+  const queryParams: SessionReplayUrlQueryParams = {}
 
   const errorType = getErrorType(session, isRecordingStarted)
   if (errorType) {
-    parameters.push(`error-type=${errorType}`)
+    queryParams.errorType = errorType
   }
 
   const view = viewContexts.findView()
   if (view) {
-    parameters.push(`seed=${view.id}`)
-    parameters.push(`from=${view.startClocks.timeStamp}`)
+    queryParams.seed = view.id
+    queryParams.from = view.startClocks.timeStamp
   }
 
-  const origin = getDatadogSiteUrl(configuration)
-  const path = `/rum/replay/sessions/${sessionId}`
-  return `${origin}${path}?${parameters.join('&')}`
+  return getSessionReplayUrl(configuration, sessionId, queryParams)
 }
 
 function getErrorType(session: RumSession | undefined, isRecordingStarted: boolean) {
