@@ -39,9 +39,7 @@ export function buildUrl(url: string, base?: string) {
     try {
       return base !== undefined ? new supportedURL(url, base) : new supportedURL(url)
     } catch (error) {
-      throw new Error(
-        `Failed to construct URL. ${jsonStringify({ url, base, error: error instanceof Error ? error.message : '' })!}`
-      )
+      throw new Error(`Failed to construct URL: ${String(error)} ${jsonStringify({ url, base })!}`)
     }
   }
   if (base === undefined && !/:/.test(url)) {
