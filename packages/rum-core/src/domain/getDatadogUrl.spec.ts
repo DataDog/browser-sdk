@@ -1,4 +1,4 @@
-import type { RumConfiguration, SessionReplayUrlQueryParams } from '@datadog/browser-rum-core'
+import type { RumConfiguration, RumSession, ViewContext } from '@datadog/browser-rum-core'
 import { getSessionReplayUrl, getDatadogSiteUrl } from './getDatadogUrl'
 
 describe('getDatadogSiteUrl', () => {
@@ -25,30 +25,48 @@ describe('getDatadogSiteUrl', () => {
 })
 
 describe('getSessionReplayUrl', () => {
-  const parameters: Array<[string, SessionReplayUrlQueryParams, string]> = [
-    ['session-id-1', {}, 'https://app.datadoghq.com/rum/replay/sessions/session-id-1?'],
-    [
-      'no-session-id',
-      { errorType: 'toto' },
-      'https://app.datadoghq.com/rum/replay/sessions/no-session-id?error-type=toto',
-    ],
+  const parameters: Array<
+    [string | undefined, { viewId: string; ts: number } | undefined, string | undefined, string]
+  > = [
+    ['session-id-1', undefined, undefined, 'https://app.datadoghq.com/rum/replay/sessions/session-id-1?'],
+    [undefined, undefined, 'toto', 'https://app.datadoghq.com/rum/replay/sessions/no-session-id?error-type=toto'],
     [
       'session-id-2',
-      { seed: 'view-id-1', from: 1234 },
+      { viewId: 'view-id-1', ts: 1234 },
+      undefined,
       'https://app.datadoghq.com/rum/replay/sessions/session-id-2?seed=view-id-1&from=1234',
     ],
     [
       'session-id-3',
-      { seed: 'view-id-2', from: 1234, errorType: 'titi' },
+      { viewId: 'view-id-2', ts: 1234 },
+      'titi',
       'https://app.datadoghq.com/rum/replay/sessions/session-id-3?error-type=titi&seed=view-id-2&from=1234',
     ],
   ]
 
-  parameters.forEach(([sessionId, queryParams, expected]) => {
-    it(`should return ${expected} for sessionId "${sessionId}" with "${JSON.stringify(
-      queryParams
-    )}" as query params`, () => {
-      const link = getSessionReplayUrl({ site: 'datadoghq.com' } as RumConfiguration, sessionId, queryParams)
+  parameters.forEach(([sessionId, viewData, errorType, expected]) => {
+    it(`should return ${expected} for sessionId "${sessionId ?? 'no-session-id'}" with "${JSON.stringify(
+      viewData ?? null
+    )}" as view context`, () => {
+      const session = sessionId
+        ? ({
+            id: sessionId,
+          } as RumSession)
+        : undefined
+      const viewContext = viewData
+        ? ({
+            id: viewData.viewId,
+            startClocks: {
+              timeStamp: viewData.ts,
+            },
+          } as ViewContext)
+        : undefined
+
+      const link = getSessionReplayUrl({ site: 'datadoghq.com' } as RumConfiguration, {
+        viewContext,
+        session,
+        errorType,
+      })
 
       expect(link).toBe(expected)
     })

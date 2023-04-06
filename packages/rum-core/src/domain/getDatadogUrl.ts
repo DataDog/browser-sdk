@@ -1,22 +1,31 @@
 import { INTAKE_SITE_STAGING, INTAKE_SITE_US1, INTAKE_SITE_EU1 } from '@datadog/browser-core'
 import type { RumConfiguration } from './configuration'
+import type { ViewContext } from './contexts/viewContexts'
+import type { RumSession } from './rumSessionManager'
 
 export type SessionReplayUrlQueryParams = { errorType?: string; seed?: string; from?: number }
 export function getSessionReplayUrl(
   configuration: RumConfiguration,
-  sessionId: string,
-  { errorType, seed, from }: SessionReplayUrlQueryParams
+  {
+    session,
+    viewContext,
+    errorType,
+  }: {
+    session?: RumSession
+    viewContext?: ViewContext
+    errorType?: string
+  }
 ): string {
+  const sessionId = session ? session.id : 'no-session-id'
   const parameters: string[] = []
   if (errorType !== undefined) {
     parameters.push(`error-type=${errorType}`)
   }
-  if (seed !== undefined) {
-    parameters.push(`seed=${seed}`)
+  if (viewContext) {
+    parameters.push(`seed=${viewContext.id}`)
+    parameters.push(`from=${viewContext.startClocks.timeStamp}`)
   }
-  if (from !== undefined) {
-    parameters.push(`from=${from}`)
-  }
+
   const origin = getDatadogSiteUrl(configuration)
   const path = `/rum/replay/sessions/${sessionId}`
   return `${origin}${path}?${parameters.join('&')}`
