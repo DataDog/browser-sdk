@@ -219,6 +219,7 @@ module.exports = {
       rules: {
         'local-rules/disallow-side-effects': 'error',
         'local-rules/disallow-zone-js-patched-values': 'error',
+        'local-rules/disallow-url-constructor-patched-values': 'error',
         'no-restricted-syntax': [
           'error',
           {
