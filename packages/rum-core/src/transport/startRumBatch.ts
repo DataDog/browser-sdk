@@ -7,7 +7,13 @@ import type {
   PageExitEvent,
   BatchFlushEvent,
 } from '@datadog/browser-core'
-import { Batch, combine, createHttpRequest, isTelemetryReplicationAllowed } from '@datadog/browser-core'
+import {
+  createFlushController,
+  Batch,
+  combine,
+  createHttpRequest,
+  isTelemetryReplicationAllowed,
+} from '@datadog/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
@@ -55,13 +61,17 @@ function makeRumBatch(
   }
 
   function createRumBatch(endpointBuilder: EndpointBuilder) {
+    const flushController = createFlushController({
+      messagesLimit: configuration.batchMessagesLimit,
+      bytesLimit: configuration.batchBytesLimit,
+      durationLimit: configuration.flushTimeout,
+      pageExitObservable,
+    })
+
     return new Batch(
       createHttpRequest(endpointBuilder, configuration.batchBytesLimit, reportError),
-      configuration.batchMessagesLimit,
-      configuration.batchBytesLimit,
-      configuration.messageBytesLimit,
-      configuration.flushTimeout,
-      pageExitObservable
+      flushController,
+      configuration.messageBytesLimit
     )
   }
 

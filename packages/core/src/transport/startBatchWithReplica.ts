@@ -5,6 +5,7 @@ import type { Observable } from '../tools/observable'
 import type { PageExitEvent } from '../browser/pageExitObservable'
 import { Batch } from './batch'
 import { createHttpRequest } from './httpRequest'
+import { createFlushController } from './flushController'
 
 export function startBatchWithReplica<T extends Context>(
   configuration: Configuration,
@@ -22,11 +23,13 @@ export function startBatchWithReplica<T extends Context>(
   function createBatch(endpointBuilder: EndpointBuilder) {
     return new Batch(
       createHttpRequest(endpointBuilder, configuration.batchBytesLimit, reportError),
-      configuration.batchMessagesLimit,
-      configuration.batchBytesLimit,
-      configuration.messageBytesLimit,
-      configuration.flushTimeout,
-      pageExitObservable
+      createFlushController({
+        messagesLimit: configuration.batchMessagesLimit,
+        bytesLimit: configuration.batchBytesLimit,
+        durationLimit: configuration.flushTimeout,
+        pageExitObservable,
+      }),
+      configuration.messageBytesLimit
     )
   }
 

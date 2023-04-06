@@ -122,7 +122,7 @@ describe('endpointBuilder', () => {
 
     it('should contain retry infos', () => {
       expect(
-        createEndpointBuilder(initConfiguration, 'rum', []).build('xhr', 'batch_bytes_limit', {
+        createEndpointBuilder(initConfiguration, 'rum', []).build('xhr', 'bytes_limit', {
           count: 5,
           lastFailureStatus: 408,
         })
@@ -131,13 +131,13 @@ describe('endpointBuilder', () => {
 
     it('should contain flush reason when ff collect_flush_reason is enabled', () => {
       addExperimentalFeatures([ExperimentalFeature.COLLECT_FLUSH_REASON])
-      expect(createEndpointBuilder(initConfiguration, 'rum', []).build('xhr', 'batch_bytes_limit')).toContain(
-        'flush_reason%3Abatch_bytes_limit'
+      expect(createEndpointBuilder(initConfiguration, 'rum', []).build('xhr', 'bytes_limit')).toContain(
+        'flush_reason%3Abytes_limit'
       )
     })
 
     it('should not contain flush reason when ff collect_flush_reason is disnabled', () => {
-      expect(createEndpointBuilder(initConfiguration, 'rum', []).build('xhr', 'batch_bytes_limit')).not.toContain(
+      expect(createEndpointBuilder(initConfiguration, 'rum', []).build('xhr', 'bytes_limit')).not.toContain(
         'flush_reason'
       )
     })

@@ -5,7 +5,7 @@ import { monitor } from '../tools/monitor'
 import type { RawError } from '../domain/error/error'
 import { addEventListener } from '../browser/addEventListener'
 import { newRetryState, sendWithRetryStrategy } from './sendWithRetryStrategy'
-import type { FlushReason } from './batch'
+import type { FlushReason } from './flushController'
 
 /**
  * Use POST request without content type to:
