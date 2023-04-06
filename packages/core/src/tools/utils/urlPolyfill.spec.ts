@@ -31,7 +31,7 @@ describe('isValidUrl', () => {
     expect(isValidUrl('')).toBe(false)
   })
 
-  it('should return the same result if the URL as been wrongfully overridden between calls', () => {
+  it('should return the same result if the URL has been wrongfully overridden between calls', () => {
     expect(isValidUrl('http://www.datadoghq.com')).toBe(true)
     spyOn(window, 'URL').and.throwError('wrong URL override')
     expect(isValidUrl('http://www.datadoghq.com')).toBe(true)
