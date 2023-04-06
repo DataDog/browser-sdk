@@ -63,14 +63,13 @@ export function buildUrl(url: string, base?: string) {
 const originalURL = URL
 let isURLSupported: boolean | undefined
 function getSupportedUrl(): typeof URL | undefined {
-  if (isURLSupported !== undefined) {
-    return originalURL
-  }
-  try {
-    const url = new originalURL('http://test/path')
-    isURLSupported = url.href === 'http://test/path'
-  } catch {
-    isURLSupported = false
+  if (isURLSupported === undefined) {
+    try {
+      const url = new originalURL('http://test/path')
+      isURLSupported = url.href === 'http://test/path'
+    } catch {
+      isURLSupported = false
+    }
   }
   return isURLSupported ? originalURL : undefined
 }
