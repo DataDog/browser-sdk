@@ -1,5 +1,5 @@
 import type { RumConfiguration, RumSession, ViewContext } from '@datadog/browser-rum-core'
-import { getSessionReplayUrl, getDatadogSiteUrl } from './getDatadogUrl'
+import { getSessionReplayUrl, getDatadogSiteUrl } from './getSessionReplayUrl'
 
 describe('getDatadogSiteUrl', () => {
   const parameters: Array<[string, string | undefined, string]> = [
