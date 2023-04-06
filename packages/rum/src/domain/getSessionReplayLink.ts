@@ -1,9 +1,4 @@
-import type {
-  RumConfiguration,
-  RumSessionManager,
-  ViewContexts,
-  RumSession,
-} from '@datadog/browser-rum-core'
+import type { RumConfiguration, RumSessionManager, ViewContexts, RumSession } from '@datadog/browser-rum-core'
 import { getSessionReplayUrl } from '@datadog/browser-rum-core'
 import { isBrowserSupported } from '../boot/isBrowserSupported'
 
