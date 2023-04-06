@@ -19,7 +19,6 @@ describe('batch', () => {
     sendOnExit: jasmine.Spy<HttpRequest['sendOnExit']>
   }
 
-  let flushNotifySpy: jasmine.Spy
   const flushReason: FlushReason = 'bytes_limit'
   let flushController: MockFlushController
 
@@ -30,7 +29,6 @@ describe('batch', () => {
     } satisfies HttpRequest
     flushController = createMockFlushController()
     batch = new Batch(transport, flushController, MESSAGE_BYTES_LIMIT)
-    flushNotifySpy = spyOn(batch.flushObservable, 'notify')
   })
 
   it('should send a message', () => {
@@ -136,11 +134,5 @@ describe('batch', () => {
 
     flushController.notifyFlush()
     expect(transport.send).toHaveBeenCalledTimes(2)
-  })
-
-  it('should notify when the batch is flushed', () => {
-    batch.add({})
-    flushController.notifyFlush()
-    expect(flushNotifySpy).toHaveBeenCalledOnceWith({ bufferBytesCount: 2, bufferMessagesCount: 1 })
   })
 })

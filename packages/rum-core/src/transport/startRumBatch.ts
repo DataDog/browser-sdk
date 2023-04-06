@@ -5,7 +5,7 @@ import type {
   Observable,
   RawError,
   PageExitEvent,
-  BatchFlushEvent,
+  FlushEvent,
 } from '@datadog/browser-core'
 import {
   createFlushController,
@@ -43,7 +43,7 @@ export function startRumBatch(
 }
 
 export interface RumBatch {
-  flushObservable: Observable<BatchFlushEvent>
+  flushObservable: Observable<FlushEvent>
   add: (message: Context, replicated?: boolean) => void
   upsert: (message: Context, key: string) => void
 }
@@ -53,11 +53,13 @@ function makeRumBatch(
   reportError: (error: RawError) => void,
   pageExitObservable: Observable<PageExitEvent>
 ): RumBatch {
-  const primaryBatch = createRumBatch(configuration.rumEndpointBuilder)
+  const { batch: primaryBatch, flushController: primaryFlushController } = createRumBatch(
+    configuration.rumEndpointBuilder
+  )
   let replicaBatch: Batch | undefined
   const replica = configuration.replica
   if (replica !== undefined) {
-    replicaBatch = createRumBatch(replica.rumEndpointBuilder)
+    replicaBatch = createRumBatch(replica.rumEndpointBuilder).batch
   }
 
   function createRumBatch(endpointBuilder: EndpointBuilder) {
@@ -68,11 +70,16 @@ function makeRumBatch(
       pageExitObservable,
     })
 
-    return new Batch(
+    const batch = new Batch(
       createHttpRequest(endpointBuilder, configuration.batchBytesLimit, reportError),
       flushController,
       configuration.messageBytesLimit
     )
+
+    return {
+      batch,
+      flushController,
+    }
   }
 
   function withReplicaApplicationId(message: Context) {
@@ -80,7 +87,7 @@ function makeRumBatch(
   }
 
   return {
-    flushObservable: primaryBatch.flushObservable,
+    flushObservable: primaryFlushController.flushObservable,
     add: (message: Context, replicated = true) => {
       primaryBatch.add(message)
       if (replicaBatch && replicated) {

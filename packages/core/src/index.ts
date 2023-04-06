@@ -51,7 +51,6 @@ export {
   Payload,
   createHttpRequest,
   Batch,
-  BatchFlushEvent,
   canUseEventBridge,
   getEventBridge,
   startBatchWithReplica,

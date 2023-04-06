@@ -1,6 +1,5 @@
 import { display } from '../tools/display'
 import type { Context } from '../tools/serialisation/context'
-import { Observable } from '../tools/observable'
 import { objectValues } from '../tools/utils/polyfills'
 import { isPageExitReason } from '../browser/pageExitObservable'
 import { computeBytesCount } from '../tools/utils/byteUtils'
@@ -8,14 +7,7 @@ import { jsonStringify } from '../tools/serialisation/jsonStringify'
 import type { HttpRequest } from './httpRequest'
 import type { FlushController, FlushEvent } from './flushController'
 
-export interface BatchFlushEvent {
-  bufferBytesCount: number
-  bufferMessagesCount: number
-}
-
 export class Batch {
-  flushObservable = new Observable<BatchFlushEvent>()
-
   private pushOnlyBuffer: string[] = []
   private upsertBuffer: { [key: string]: string } = {}
 
@@ -37,12 +29,6 @@ export class Batch {
 
   flush(event: FlushEvent) {
     const messages = this.pushOnlyBuffer.concat(objectValues(this.upsertBuffer))
-
-    this.flushObservable.notify({
-      // TODO
-      bufferBytesCount: event.bytesCount,
-      bufferMessagesCount: event.messagesCount,
-    })
 
     this.pushOnlyBuffer = []
     this.upsertBuffer = {}
