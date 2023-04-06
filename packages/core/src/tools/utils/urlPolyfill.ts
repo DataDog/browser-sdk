@@ -34,11 +34,12 @@ export function getHash(url: string) {
 }
 
 export function buildUrl(url: string, base?: string) {
-  if (checkURLSupported()) {
+  const supportedURL = getSupportedUrl()
+  if (supportedURL) {
     try {
-      return base !== undefined ? new URL(url, base) : new URL(url)
+      return base !== undefined ? new supportedURL(url, base) : new supportedURL(url)
     } catch (error) {
-      throw new Error(`Failed to construct URL. ${jsonStringify({ url, base })!}`)
+      throw new Error(`Failed to construct URL: ${String(error)} ${jsonStringify({ url, base })!}`)
     }
   }
   if (base === undefined && !/:/.test(url)) {
@@ -57,19 +58,18 @@ export function buildUrl(url: string, base?: string) {
   return anchorElement
 }
 
+const originalURL = URL
 let isURLSupported: boolean | undefined
-function checkURLSupported() {
-  if (isURLSupported !== undefined) {
-    return isURLSupported
+function getSupportedUrl(): typeof URL | undefined {
+  if (isURLSupported === undefined) {
+    try {
+      const url = new originalURL('http://test/path')
+      isURLSupported = url.href === 'http://test/path'
+    } catch {
+      isURLSupported = false
+    }
   }
-  try {
-    const url = new URL('http://test/path')
-    isURLSupported = url.href === 'http://test/path'
-    return isURLSupported
-  } catch {
-    isURLSupported = false
-  }
-  return isURLSupported
+  return isURLSupported ? originalURL : undefined
 }
 
 export function getLocationOrigin() {
