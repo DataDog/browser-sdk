@@ -1,7 +1,5 @@
-import { ExperimentalFeature, isExperimentalFeatureEnabled } from './experimentalFeatures'
-import type { Context } from './context'
-import { sanitize } from './sanitize'
-import { deepClone, getType } from './utils'
+import { ExperimentalFeature, isExperimentalFeatureEnabled, sanitize, deepClone, getType } from '@datadog/browser-core'
+import type { Context } from '@datadog/browser-core'
 
 /**
  * Current limitation:

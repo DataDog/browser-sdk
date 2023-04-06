@@ -1,7 +1,7 @@
 import { mockClock, stubZoneJs } from '../../test'
 import type { Clock } from '../../test'
 import { instrumentMethod, instrumentSetter } from './instrumentMethod'
-import { noop } from './utils'
+import { noop } from './utils/functionUtils'
 
 describe('instrumentMethod', () => {
   it('replaces the original method', () => {

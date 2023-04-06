@@ -2,8 +2,9 @@ import type { CookieOptions } from '../../browser/cookie'
 import { COOKIE_ACCESS_DELAY } from '../../browser/cookie'
 import { clearInterval, setInterval } from '../../tools/timer'
 import { Observable } from '../../tools/observable'
-import { dateNow } from '../../tools/timeUtils'
-import * as utils from '../../tools/utils'
+import { dateNow } from '../../tools/utils/timeUtils'
+import { throttle } from '../../tools/utils/functionUtils'
+import { generateUUID } from '../../tools/utils/stringUtils'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { deleteSessionCookie, retrieveSessionCookie, withCookieLockAccess } from './sessionCookieStore'
 
@@ -99,7 +100,7 @@ export function startSessionStore<TrackingType extends string>(
     const { trackingType, isTracked } = computeSessionState(cookieSession[productKey])
     cookieSession[productKey] = trackingType
     if (isTracked && !cookieSession.id) {
-      cookieSession.id = utils.generateUUID()
+      cookieSession.id = generateUUID()
       cookieSession.created = String(dateNow())
     }
     return isTracked
@@ -141,7 +142,7 @@ export function startSessionStore<TrackingType extends string>(
   }
 
   return {
-    expandOrRenewSession: utils.throttle(expandOrRenewSession, COOKIE_ACCESS_DELAY).throttled,
+    expandOrRenewSession: throttle(expandOrRenewSession, COOKIE_ACCESS_DELAY).throttled,
     expandSession,
     getSession: () => sessionCache,
     renewObservable,

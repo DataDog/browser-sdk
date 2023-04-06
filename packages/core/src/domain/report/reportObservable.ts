@@ -1,8 +1,9 @@
 import { toStackTraceString } from '../error/error'
 import { monitor } from '../../tools/monitor'
 import { mergeObservables, Observable } from '../../tools/observable'
-import { includes, safeTruncate } from '../../tools/utils'
 import { addEventListener, DOM_EVENT } from '../../browser/addEventListener'
+import { includes } from '../../tools/utils/polyfills'
+import { safeTruncate } from '../../tools/utils/stringUtils'
 import type { Report, BrowserWindow, ReportType } from './browser.types'
 
 export const RawReportType = {
@@ -63,11 +64,9 @@ function createReportObservable(reportTypes: ReportType[]) {
 
 function createCspViolationReportObservable() {
   const observable = new Observable<RawReport>(() => {
-    const handleCspViolation = monitor((event: SecurityPolicyViolationEvent) => {
+    const { stop } = addEventListener(document, DOM_EVENT.SECURITY_POLICY_VIOLATION, (event) => {
       observable.notify(buildRawReportFromCspViolation(event))
     })
-
-    const { stop } = addEventListener(document, DOM_EVENT.SECURITY_POLICY_VIOLATION, handleCspViolation)
 
     return stop
   })

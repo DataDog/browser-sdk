@@ -1,9 +1,11 @@
 import { display } from '../tools/display'
-import type { Context } from '../tools/context'
-import { computeBytesCount, jsonStringify, objectValues } from '../tools/utils'
+import type { Context } from '../tools/serialisation/context'
 import { Observable } from '../tools/observable'
 import { setTimeout } from '../tools/timer'
 import type { PageExitEvent } from '../browser/pageExitObservable'
+import { objectValues } from '../tools/utils/polyfills'
+import { computeBytesCount } from '../tools/utils/byteUtils'
+import { jsonStringify } from '../tools/serialisation/jsonStringify'
 import type { HttpRequest } from './httpRequest'
 
 export interface BatchFlushEvent {

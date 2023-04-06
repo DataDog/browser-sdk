@@ -1,8 +1,8 @@
 import type { RetryInfo, FlushReason } from '../../transport'
-import { timeStampNow } from '../../tools/timeUtils'
-import { normalizeUrl } from '../../tools/urlPolyfill'
-import { generateUUID } from '../../tools/utils'
+import { timeStampNow } from '../../tools/utils/timeUtils'
+import { normalizeUrl } from '../../tools/utils/urlPolyfill'
 import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/experimentalFeatures'
+import { generateUUID } from '../../tools/utils/stringUtils'
 import type { InitConfiguration } from './configuration'
 import { INTAKE_SITE_AP1, INTAKE_SITE_US1 } from './intakeSites'
 

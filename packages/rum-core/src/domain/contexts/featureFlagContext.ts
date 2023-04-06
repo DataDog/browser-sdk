@@ -8,7 +8,7 @@ import {
   noop,
   isExperimentalFeatureEnabled,
   SESSION_TIME_OUT_DELAY,
-  ContextHistory,
+  ValueHistory,
   ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../lifeCycle'
@@ -45,7 +45,7 @@ export function startFeatureFlagContexts(
     }
   }
 
-  const featureFlagContexts = new ContextHistory<FeatureFlagContext>(FEATURE_FLAG_CONTEXT_TIME_OUT_DELAY)
+  const featureFlagContexts = new ValueHistory<FeatureFlagContext>(FEATURE_FLAG_CONTEXT_TIME_OUT_DELAY)
   let bytesCountCache = 0
   let alreadyWarned = false
 

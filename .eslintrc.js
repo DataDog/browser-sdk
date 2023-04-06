@@ -168,6 +168,8 @@ module.exports = {
     'jsdoc/check-alignment': 'error',
     'jsdoc/check-indentation': 'error',
 
+    'local-rules/disallow-test-import-export-from-src': 'error',
+    'local-rules/disallow-generic-utils': 'error',
     'local-rules/disallow-protected-directory-import': [
       'error',
       {
@@ -265,6 +267,22 @@ module.exports = {
       rules: {
         // E2E codebase is importing @datadog/browser-* packages referenced by tsconfig.
         'import/no-extraneous-dependencies': 'off',
+      },
+    },
+    {
+      files: ['packages/core/src/tools/**/*.ts'],
+      rules: {
+        'no-restricted-imports': [
+          'error',
+          {
+            patterns: [
+              {
+                group: ['../**/boot/*', '../**/browser/*', '../**/domain/*', '../**/transport/*'],
+                message: 'tools components should not import from other directories',
+              },
+            ],
+          },
+        ],
       },
     },
   ],

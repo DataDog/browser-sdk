@@ -1,4 +1,4 @@
-import { isIE } from './browserDetection'
+import { isIE } from './utils/browserDetection'
 import { readBytesFromStream } from './readBytesFromStream'
 
 describe('readBytesFromStream', () => {

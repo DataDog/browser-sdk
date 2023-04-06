@@ -1,5 +1,5 @@
 import type { EndpointBuilder } from '../src'
-import { noop } from '../src'
+import { noop, isServerError } from '../src'
 
 export const SPEC_ENDPOINTS = {
   logsEndpointBuilder: stubEndpointBuilder('https://logs-intake.com/v1/input/abcde?foo=bar'),
@@ -320,7 +320,7 @@ class StubXhr extends StubEventEmitter {
     if (status >= 200 && status < 500) {
       this.dispatchEvent('load')
     }
-    if (status >= 500) {
+    if (isServerError(status)) {
       this.dispatchEvent('error')
     }
     this.dispatchEvent('loadend')
