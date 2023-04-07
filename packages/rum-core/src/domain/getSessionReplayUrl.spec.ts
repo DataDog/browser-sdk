@@ -1,4 +1,6 @@
-import type { RumConfiguration, RumSession, ViewContext } from '@datadog/browser-rum-core'
+import { getTimeStamp, relativeToClocks } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/browser-core'
+import type { RumConfiguration, RumSession } from '@datadog/browser-rum-core'
 import { getSessionReplayUrl, getDatadogSiteUrl } from './getSessionReplayUrl'
 
 describe('getDatadogSiteUrl', () => {
@@ -25,49 +27,56 @@ describe('getDatadogSiteUrl', () => {
 })
 
 describe('getSessionReplayUrl', () => {
-  const parameters: Array<
-    [string | undefined, { viewId: string; ts: number } | undefined, string | undefined, string]
-  > = [
-    ['session-id-1', undefined, undefined, 'https://app.datadoghq.com/rum/replay/sessions/session-id-1?'],
-    [undefined, undefined, 'toto', 'https://app.datadoghq.com/rum/replay/sessions/no-session-id?error-type=toto'],
+  const parameters = [
     [
-      'session-id-2',
-      { viewId: 'view-id-1', ts: 1234 },
-      undefined,
-      'https://app.datadoghq.com/rum/replay/sessions/session-id-2?seed=view-id-1&from=1234',
+      {
+        testCase: 'session, no view, no error',
+        session: { id: 'session-id-1' } as RumSession,
+        viewContext: undefined,
+        errorType: undefined,
+        expected: 'https://app.datadoghq.com/rum/replay/sessions/session-id-1?',
+      },
     ],
     [
-      'session-id-3',
-      { viewId: 'view-id-2', ts: 1234 },
-      'titi',
-      'https://app.datadoghq.com/rum/replay/sessions/session-id-3?error-type=titi&seed=view-id-2&from=1234',
+      {
+        testCase: 'no session, no view, error',
+        session: undefined,
+        viewContext: undefined,
+        errorType: 'toto',
+        expected: 'https://app.datadoghq.com/rum/replay/sessions/no-session-id?error-type=toto',
+      },
+    ],
+    [
+      {
+        testCase: 'session, view, no error',
+        session: { id: 'session-id-2' } as RumSession,
+        viewContext: { id: 'view-id-1', startClocks: relativeToClocks(1234 as RelativeTime) },
+        errorType: undefined,
+        expected: `https://app.datadoghq.com/rum/replay/sessions/session-id-2?seed=view-id-1&from=${getTimeStamp(
+          1234 as RelativeTime
+        )}`,
+      },
+    ],
+    [
+      {
+        testCase: 'session, view, error',
+        session: { id: 'session-id-3' } as RumSession,
+        viewContext: { id: 'view-id-2', startClocks: relativeToClocks(1234 as RelativeTime) },
+        errorType: 'titi',
+        expected: `https://app.datadoghq.com/rum/replay/sessions/session-id-3?error-type=titi&seed=view-id-2&from=${getTimeStamp(
+          1234 as RelativeTime
+        )}`,
+      },
     ],
   ]
 
-  parameters.forEach(([sessionId, viewData, errorType, expected]) => {
-    it(`should return ${expected} for sessionId "${sessionId ?? 'no-session-id'}" with "${JSON.stringify(
-      viewData ?? null
-    )}" as view context`, () => {
-      const session = sessionId
-        ? ({
-            id: sessionId,
-          } as RumSession)
-        : undefined
-      const viewContext = viewData
-        ? ({
-            id: viewData.viewId,
-            startClocks: {
-              timeStamp: viewData.ts,
-            },
-          } as ViewContext)
-        : undefined
-
+  parameters.forEach(([{ testCase, session, viewContext, errorType, expected }]) => {
+    it(`should build url when ${testCase}`, () => {
       const link = getSessionReplayUrl({ site: 'datadoghq.com' } as RumConfiguration, {
         viewContext,
         session,
         errorType,
       })
-
       expect(link).toBe(expected)
     })
   })
