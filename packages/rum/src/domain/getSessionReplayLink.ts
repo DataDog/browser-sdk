@@ -9,7 +9,6 @@ export function getSessionReplayLink(
   isRecordingStarted: boolean
 ): string | undefined {
   const session = sessionManager.findTrackedSession()
-
   const errorType = getErrorType(session, isRecordingStarted)
   const viewContext = viewContexts.findView()
 
