@@ -1,6 +1,6 @@
-import { getTimeStamp, relativeToClocks } from '@datadog/browser-core'
-import type { RelativeTime } from '@datadog/browser-core'
+import type { ClocksState } from '@datadog/browser-core'
 import type { RumConfiguration, RumSession } from '@datadog/browser-rum-core'
+
 import { getSessionReplayUrl, getDatadogSiteUrl } from './getSessionReplayUrl'
 
 describe('getDatadogSiteUrl', () => {
@@ -50,22 +50,18 @@ describe('getSessionReplayUrl', () => {
       {
         testCase: 'session, view, no error',
         session: { id: 'session-id-2' } as RumSession,
-        viewContext: { id: 'view-id-1', startClocks: relativeToClocks(1234 as RelativeTime) },
+        viewContext: { id: 'view-id-1', startClocks: { relative: 0, timeStamp: 1234 } as ClocksState },
         errorType: undefined,
-        expected: `https://app.datadoghq.com/rum/replay/sessions/session-id-2?seed=view-id-1&from=${getTimeStamp(
-          1234 as RelativeTime
-        )}`,
+        expected: 'https://app.datadoghq.com/rum/replay/sessions/session-id-2?seed=view-id-1&from=1234',
       },
     ],
     [
       {
         testCase: 'session, view, error',
         session: { id: 'session-id-3' } as RumSession,
-        viewContext: { id: 'view-id-2', startClocks: relativeToClocks(1234 as RelativeTime) },
+        viewContext: { id: 'view-id-2', startClocks: { relative: 0, timeStamp: 1234 } as ClocksState },
         errorType: 'titi',
-        expected: `https://app.datadoghq.com/rum/replay/sessions/session-id-3?error-type=titi&seed=view-id-2&from=${getTimeStamp(
-          1234 as RelativeTime
-        )}`,
+        expected: 'https://app.datadoghq.com/rum/replay/sessions/session-id-3?error-type=titi&seed=view-id-2&from=1234',
       },
     ],
   ]
