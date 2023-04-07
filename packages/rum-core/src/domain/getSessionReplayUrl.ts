@@ -3,7 +3,6 @@ import type { RumConfiguration } from './configuration'
 import type { ViewContext } from './contexts/viewContexts'
 import type { RumSession } from './rumSessionManager'
 
-export type SessionReplayUrlQueryParams = { errorType?: string; seed?: string; from?: number }
 export function getSessionReplayUrl(
   configuration: RumConfiguration,
   {
