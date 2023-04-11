@@ -27,7 +27,7 @@ export class Batch {
     this.addOrUpdate(message, key)
   }
 
-  flush(event: FlushEvent) {
+  private flush(event: FlushEvent) {
     const messages = this.pushOnlyBuffer.concat(objectValues(this.upsertBuffer))
 
     this.pushOnlyBuffer = []
