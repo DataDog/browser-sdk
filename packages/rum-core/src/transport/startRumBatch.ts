@@ -25,9 +25,10 @@ export function startRumBatch(
   lifeCycle: LifeCycle,
   telemetryEventObservable: Observable<TelemetryEvent & Context>,
   reportError: (error: RawError) => void,
-  pageExitObservable: Observable<PageExitEvent>
+  pageExitObservable: Observable<PageExitEvent>,
+  sessionExpireObservable: Observable<void>
 ) {
-  const batch = makeRumBatch(configuration, reportError, pageExitObservable)
+  const batch = makeRumBatch(configuration, reportError, pageExitObservable, sessionExpireObservable)
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent: RumEvent & Context) => {
     if (serverRumEvent.type === RumEventType.VIEW) {
@@ -51,7 +52,8 @@ export interface RumBatch {
 function makeRumBatch(
   configuration: RumConfiguration,
   reportError: (error: RawError) => void,
-  pageExitObservable: Observable<PageExitEvent>
+  pageExitObservable: Observable<PageExitEvent>,
+  sessionExpireObservable: Observable<void>
 ): RumBatch {
   const { batch: primaryBatch, flushController: primaryFlushController } = createRumBatch(
     configuration.rumEndpointBuilder
@@ -68,6 +70,7 @@ function makeRumBatch(
       bytesLimit: configuration.batchBytesLimit,
       durationLimit: configuration.flushTimeout,
       pageExitObservable,
+      sessionExpireObservable,
     })
 
     const batch = new Batch(

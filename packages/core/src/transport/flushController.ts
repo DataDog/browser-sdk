@@ -4,7 +4,7 @@ import type { TimeoutId } from '../tools/timer'
 import { clearTimeout, setTimeout } from '../tools/timer'
 import type { Duration } from '../tools/utils/timeUtils'
 
-export type FlushReason = PageExitReason | 'duration_limit' | 'bytes_limit' | 'messages_limit'
+export type FlushReason = PageExitReason | 'duration_limit' | 'bytes_limit' | 'messages_limit' | 'session_expire'
 
 export type FlushController = ReturnType<typeof createFlushController>
 export interface FlushEvent {
@@ -18,6 +18,7 @@ interface FlushControllerOptions {
   bytesLimit: number
   durationLimit: Duration
   pageExitObservable: Observable<PageExitEvent>
+  sessionExpireObservable: Observable<void>
 }
 
 export function createFlushController({
@@ -25,10 +26,12 @@ export function createFlushController({
   bytesLimit,
   durationLimit,
   pageExitObservable,
+  sessionExpireObservable,
 }: FlushControllerOptions) {
   const flushObservable = new Observable<FlushEvent>()
 
   pageExitObservable.subscribe((event) => flush(event.reason))
+  sessionExpireObservable.subscribe(() => flush('session_expire'))
 
   let currentBytesCount = 0
   let currentMessagesCount = 0

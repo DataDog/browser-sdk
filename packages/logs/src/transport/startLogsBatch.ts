@@ -9,13 +9,15 @@ export function startLogsBatch(
   configuration: LogsConfiguration,
   lifeCycle: LifeCycle,
   reportError: (error: RawError) => void,
-  pageExitObservable: Observable<PageExitEvent>
+  pageExitObservable: Observable<PageExitEvent>,
+  sessionExpireObservable: Observable<void>
 ) {
   const batch = startBatchWithReplica(
     configuration,
     configuration.logsEndpointBuilder,
     reportError,
     pageExitObservable,
+    sessionExpireObservable,
     configuration.replica?.logsEndpointBuilder
   )
 

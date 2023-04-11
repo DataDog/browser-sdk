@@ -1,11 +1,12 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { performDraw, startSessionManager } from '@datadog/browser-core'
+import { Observable, performDraw, startSessionManager } from '@datadog/browser-core'
 import type { LogsConfiguration } from './configuration'
 
 export const LOGS_SESSION_KEY = 'logs'
 
 export interface LogsSessionManager {
   findTrackedSession: (startTime?: RelativeTime) => LogsSession | undefined
+  expireObservable: Observable<void>
 }
 
 export type LogsSession = {
@@ -30,6 +31,7 @@ export function startLogsSessionManager(configuration: LogsConfiguration): LogsS
           }
         : undefined
     },
+    expireObservable: sessionManager.expireObservable,
   }
 }
 
@@ -38,6 +40,7 @@ export function startLogsSessionManagerStub(configuration: LogsConfiguration): L
   const session = isTracked ? {} : undefined
   return {
     findTrackedSession: () => session,
+    expireObservable: new Observable(),
   }
 }
 

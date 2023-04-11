@@ -1,3 +1,4 @@
+import { Observable } from '@datadog/browser-core'
 import type { RumSessionManager } from '../src/domain/rumSessionManager'
 import { RumSessionPlan } from '../src/domain/rumSessionManager'
 
@@ -44,7 +45,9 @@ export function createRumSessionManagerMock(): RumSessionManagerMock {
     },
     expire() {
       sessionStatus = SessionStatus.EXPIRED
+      this.expireObservable.notify()
     },
+    expireObservable: new Observable(),
     setId(newId) {
       id = newId
       return this
