@@ -1,6 +1,6 @@
 import { RecordType } from '@datadog/browser-rum/src/types'
 import { expireSession, findSessionCookie, renewSession } from '../../lib/helpers/session'
-import { bundleSetup, createTest, flushEvents } from '../../lib/framework'
+import { bundleSetup, createTest, flushEvents, waitForRequests } from '../../lib/framework'
 import { browserExecute, browserExecuteAsync, sendXhr } from '../../lib/helpers/browser'
 import { getLastSegment, initRumAndStartRecording } from '../../lib/helpers/replay'
 
@@ -93,6 +93,27 @@ describe('rum sessions', () => {
 
         expect(await findSessionCookie()).not.toBeUndefined()
         expect(serverEvents.rumActions.length).toBe(1)
+      })
+
+    createTest('flush events when the session expires')
+      .withRum()
+      .withLogs()
+      .withRumInit(initRumAndStartRecording)
+      .run(async ({ serverEvents }) => {
+        expect(serverEvents.rumViews.length).toBe(0)
+        expect(serverEvents.logs.length).toBe(0)
+        expect(serverEvents.sessionReplay.length).toBe(0)
+
+        await browserExecute(() => {
+          window.DD_LOGS!.logger.log('foo')
+          window.DD_RUM!.stopSession()
+        })
+
+        await waitForRequests()
+
+        expect(serverEvents.rumViews.length).toBe(1)
+        expect(serverEvents.logs.length).toBe(1)
+        expect(serverEvents.sessionReplay.length).toBe(1)
       })
   })
 })
