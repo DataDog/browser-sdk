@@ -1,4 +1,4 @@
-import type { BatchFlushEvent, Context, ContextManager, Observable, Telemetry } from '@datadog/browser-core'
+import type { Context, ContextManager, FlushEvent, Observable, Telemetry } from '@datadog/browser-core'
 import { isEmptyObject, includes, performDraw, ONE_SECOND, addTelemetryDebug, setInterval } from '@datadog/browser-core'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'
@@ -41,7 +41,7 @@ export function startCustomerDataTelemetry(
   globalContextManager: ContextManager,
   userContextManager: ContextManager,
   featureFlagContexts: FeatureFlagContexts,
-  batchFlushObservable: Observable<BatchFlushEvent>
+  batchFlushObservable: Observable<FlushEvent>
 ) {
   const customerDataTelemetryEnabled = telemetry.enabled && performDraw(configuration.customerDataTelemetrySampleRate)
   if (!customerDataTelemetryEnabled) {
@@ -76,15 +76,15 @@ export function startCustomerDataTelemetry(
     )
   })
 
-  batchFlushObservable.subscribe(({ bufferBytesCount, bufferMessagesCount }) => {
+  batchFlushObservable.subscribe(({ bytesCount, messagesCount }) => {
     // Don't measure batch that only contains telemetry events to avoid batch sending loop
     // It could happen because after each batch we are adding a customer data measures telemetry event to the next one
     if (!batchHasRumEvent) {
       return
     }
     currentPeriodMeasures.batchCount += 1
-    updateMeasure(currentPeriodMeasures.batchBytesCount, bufferBytesCount)
-    updateMeasure(currentPeriodMeasures.batchMessagesCount, bufferMessagesCount)
+    updateMeasure(currentPeriodMeasures.batchBytesCount, bytesCount)
+    updateMeasure(currentPeriodMeasures.batchMessagesCount, messagesCount)
     mergeMeasure(currentPeriodMeasures.globalContextBytes, currentBatchMeasures.globalContextBytes)
     mergeMeasure(currentPeriodMeasures.userContextBytes, currentBatchMeasures.userContextBytes)
     mergeMeasure(currentPeriodMeasures.featureFlagBytes, currentBatchMeasures.featureFlagBytes)
