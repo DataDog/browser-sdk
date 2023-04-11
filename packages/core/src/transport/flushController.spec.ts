@@ -135,12 +135,12 @@ describe('flushController', () => {
       expect(flushSpy).toHaveBeenCalled()
     })
 
-    it('flush reason should be "bytes_limit"', () => {
+    it('flush reason should be "messages_limit"', () => {
       for (let i = 0; i < MESSAGES_LIMIT; i += 1) {
         flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
         flushController.notifyAfterAddMessage()
       }
-      expect(flushSpy.calls.first().args[0].reason).toBe('bytes_limit')
+      expect(flushSpy.calls.first().args[0].reason).toBe('messages_limit')
     })
 
     it('does not flush when the message was not fully added yet', () => {

@@ -4,7 +4,7 @@ import type { TimeoutId } from '../tools/timer'
 import { clearTimeout, setTimeout } from '../tools/timer'
 import type { Duration } from '../tools/utils/timeUtils'
 
-export type FlushReason = PageExitReason | 'duration_limit' | 'bytes_limit'
+export type FlushReason = PageExitReason | 'duration_limit' | 'bytes_limit' | 'messages_limit'
 
 export type FlushController = ReturnType<typeof createFlushController>
 export interface FlushEvent {
@@ -85,7 +85,9 @@ export function createFlushController({
     },
 
     notifyAfterAddMessage() {
-      if (currentMessagesCount >= messagesLimit || currentBytesCount >= bytesLimit) {
+      if (currentMessagesCount >= messagesLimit) {
+        flush('messages_limit')
+      } else if (currentBytesCount >= bytesLimit) {
         flush('bytes_limit')
       }
     },
