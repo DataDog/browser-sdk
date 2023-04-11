@@ -24,7 +24,7 @@
       "enabled": false
     },
     {
-      "matchPackagePatterns": ["jasmine", "sinon", "webpack"],
+      "matchPackagePatterns": ["jasmine", "webpack"],
       "enabled": false
     }
   ]

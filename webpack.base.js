@@ -40,10 +40,6 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables }) => ({
     alias: {
       // The default "pako.esm.js" build is not transpiled to es5
       pako: 'pako/dist/pako.es5.js',
-      // By default, a non-bundled version of sinon is pulled in, which require the nodejs 'util'
-      // module. Since v5, webpack doesn't provide nodejs polyfills. Use a bundled version of sinon
-      // which have its own 'util' module polyfill.
-      sinon: 'sinon/pkg/sinon.js',
     },
   },
 
