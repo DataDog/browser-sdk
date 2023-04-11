@@ -51,6 +51,11 @@ export interface RecorderApi {
   ) => void
   isRecording: () => boolean
   getReplayStats: (viewId: string) => ReplayStats | undefined
+  getSessionReplayLink: (
+    configuration: RumConfiguration,
+    sessionManager: RumSessionManager,
+    viewContexts: ViewContexts
+  ) => string | undefined
 }
 interface RumPublicApiOptions {
   ignoreInitIfSyntheticsWillInjectRum?: boolean
@@ -69,6 +74,7 @@ export function makeRumPublicApi(
   let getInternalContextStrategy: StartRumResult['getInternalContext'] = () => undefined
   let getInitConfigurationStrategy = (): InitConfiguration | undefined => undefined
   let stopSessionStrategy: () => void = noop
+  let getSessionReplayLinkStrategy: () => string | undefined = () => undefined
 
   let bufferApiCalls = new BoundedBuffer()
   let addTimingStrategy: StartRumResult['addTiming'] = (name, time = timeStampNow()) => {
@@ -152,7 +158,8 @@ export function makeRumPublicApi(
       userContextManager,
       initialViewOptions
     )
-
+    getSessionReplayLinkStrategy = () =>
+      recorderApi.getSessionReplayLink(configuration, startRumResults.session, startRumResults.viewContexts)
     ;({
       startView: startViewStrategy,
       addAction: addActionStrategy,
@@ -273,6 +280,7 @@ export function makeRumPublicApi(
         isExperimentalFeatureEnabled(ExperimentalFeature.SANITIZE_INPUTS) ? sanitize(value) : value
       )
     }),
+    getSessionReplayLink: monitor(() => getSessionReplayLinkStrategy()),
   })
 
   return rumPublicApi

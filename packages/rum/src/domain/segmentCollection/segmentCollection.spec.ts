@@ -1,4 +1,4 @@
-import type { HttpRequest, TimeStamp } from '@datadog/browser-core'
+import type { ClocksState, HttpRequest, TimeStamp } from '@datadog/browser-core'
 import { PageExitReason, isIE } from '@datadog/browser-core'
 import type { ViewContexts, ViewContext } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
@@ -282,7 +282,7 @@ describe('startSegmentCollection', () => {
 })
 
 describe('computeSegmentContext', () => {
-  const DEFAULT_VIEW_CONTEXT: ViewContext = { id: '123' }
+  const DEFAULT_VIEW_CONTEXT: ViewContext = { id: '123', startClocks: {} as ClocksState }
   const DEFAULT_SESSION = createRumSessionManagerMock().setId('456')
 
   it('returns a segment context', () => {

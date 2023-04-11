@@ -1,4 +1,4 @@
-import type { TimeStamp, HttpRequest } from '@datadog/browser-core'
+import type { TimeStamp, HttpRequest, ClocksState } from '@datadog/browser-core'
 import { PageExitReason, DefaultPrivacyLevel, noop, isIE, timeStampNow } from '@datadog/browser-core'
 import type { LifeCycle, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
@@ -43,7 +43,7 @@ describe('startRecording', () => {
       setupBuilder = setup()
         .withViewContexts({
           findView() {
-            return { id: viewId }
+            return { id: viewId, startClocks: {} as ClocksState }
           },
         })
         .withSessionManager(sessionManager)
