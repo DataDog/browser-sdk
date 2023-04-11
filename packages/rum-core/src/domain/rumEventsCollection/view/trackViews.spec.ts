@@ -315,13 +315,15 @@ describe('view lifecycle', () => {
 
     it('should send a final view update', () => {
       const { lifeCycle } = setupBuilder.build()
-      const { getViewUpdateCount } = viewTest
+      const { getViewUpdateCount, getViewUpdate } = viewTest
 
       expect(getViewUpdateCount()).toBe(1)
 
       lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
 
       expect(getViewUpdateCount()).toBe(2)
+      expect(getViewUpdate(0).sessionIsActive).toBe(true)
+      expect(getViewUpdate(1).sessionIsActive).toBe(false)
     })
 
     it('should not start a new view if the session expired', () => {
