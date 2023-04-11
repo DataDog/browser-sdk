@@ -12,9 +12,7 @@
 // eslint-disable-next-line no-restricted-syntax
 export enum ExperimentalFeature {
   PAGEHIDE = 'pagehide',
-  SHADOW_DOM_DEBUG = 'shadow_dom_debug',
   FEATURE_FLAGS = 'feature_flags',
-  RESOURCE_DURATIONS = 'resource_durations',
   RESOURCE_PAGE_STATES = 'resource_page_states',
   CLICKMAP = 'clickmap',
   COLLECT_FLUSH_REASON = 'collect_flush_reason',

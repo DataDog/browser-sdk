@@ -1,6 +1,5 @@
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
 import {
-  relativeToClocks,
   resetExperimentalFeatures,
   addExperimentalFeatures,
   isIE,
@@ -153,34 +152,6 @@ describe('resourceCollection', () => {
     expect(pageStateHistorySpy).not.toHaveBeenCalled()
     expect(rawRumResourceEventFetch._dd.page_states).not.toBeDefined()
     expect(rawRumResourceEventEntry._dd.page_states).not.toBeDefined()
-  })
-
-  it('should collect computed duration and performance entry duration when resource_durations ff is enabled', () => {
-    addExperimentalFeatures([ExperimentalFeature.RESOURCE_DURATIONS])
-
-    const match = createResourceEntry({ startTime: 200 as RelativeTime, duration: 300 as Duration })
-    spyOn(performance, 'getEntriesByName').and.returnValues([match] as unknown as PerformanceResourceTiming[])
-
-    const { lifeCycle, rawRumEvents } = setupBuilder.build()
-    lifeCycle.notify(
-      LifeCycleEventType.REQUEST_COMPLETED,
-      createCompletedRequest({
-        duration: 500 as Duration,
-        method: 'GET',
-        startClocks: relativeToClocks(100 as RelativeTime),
-        status: 200,
-        type: RequestType.FETCH,
-        url: 'https://resource.com/valid',
-        input: 'https://resource.com/valid',
-      })
-    )
-    const rawRumResourceEvent = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
-    expect(rawRumResourceEvent._dd).toEqual(
-      jasmine.objectContaining({
-        computed_duration: 500000000,
-        performance_entry_duration: 300000000,
-      })
-    )
   })
 
   it('should create resource from completed fetch request', () => {

@@ -10,7 +10,7 @@ import {
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
 } from '@datadog/browser-core'
-import type { ClocksState, ServerDuration, Duration } from '@datadog/browser-core'
+import type { ClocksState, Duration } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
 import type { RumPerformanceEntry, RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 import type {
@@ -75,7 +75,6 @@ function processRequest(
   const indexingInfo = computeIndexingInfo(sessionManager, startClocks)
 
   const duration = toServerDuration(request.duration)
-  const durationOverrideInfo = computeDurationOverrideInfo(duration, correspondingTimingOverrides?.resource.duration)
   const pageStateInfo = computePageStateInfo(
     pageStateHistory,
     startClocks,
@@ -98,7 +97,6 @@ function processRequest(
     tracingInfo,
     correspondingTimingOverrides,
     indexingInfo,
-    durationOverrideInfo,
     pageStateInfo
   )
 
@@ -189,23 +187,6 @@ function computeEntryTracingInfo(entry: RumPerformanceResourceTiming, configurat
     _dd: {
       trace_id: entry.traceId,
       rule_psr: getRulePsr(configuration),
-    },
-  }
-}
-
-function computeDurationOverrideInfo(
-  computedDuration: ServerDuration,
-  performanceEntryDuration: ServerDuration | undefined
-) {
-  if (!isExperimentalFeatureEnabled(ExperimentalFeature.RESOURCE_DURATIONS)) {
-    return
-  }
-
-  return {
-    _dd: {
-      computed_duration: computedDuration,
-      performance_entry_duration: performanceEntryDuration,
-      override_duration_diff: performanceEntryDuration ? computedDuration - performanceEntryDuration : undefined,
     },
   }
 }
