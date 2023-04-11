@@ -5,9 +5,15 @@ import type {
   Observable,
   RawError,
   PageExitEvent,
-  BatchFlushEvent,
+  FlushEvent,
 } from '@datadog/browser-core'
-import { Batch, combine, createHttpRequest, isTelemetryReplicationAllowed } from '@datadog/browser-core'
+import {
+  createFlushController,
+  Batch,
+  combine,
+  createHttpRequest,
+  isTelemetryReplicationAllowed,
+} from '@datadog/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
@@ -37,7 +43,7 @@ export function startRumBatch(
 }
 
 export interface RumBatch {
-  flushObservable: Observable<BatchFlushEvent>
+  flushObservable: Observable<FlushEvent>
   add: (message: Context, replicated?: boolean) => void
   upsert: (message: Context, key: string) => void
 }
@@ -47,22 +53,33 @@ function makeRumBatch(
   reportError: (error: RawError) => void,
   pageExitObservable: Observable<PageExitEvent>
 ): RumBatch {
-  const primaryBatch = createRumBatch(configuration.rumEndpointBuilder)
+  const { batch: primaryBatch, flushController: primaryFlushController } = createRumBatch(
+    configuration.rumEndpointBuilder
+  )
   let replicaBatch: Batch | undefined
   const replica = configuration.replica
   if (replica !== undefined) {
-    replicaBatch = createRumBatch(replica.rumEndpointBuilder)
+    replicaBatch = createRumBatch(replica.rumEndpointBuilder).batch
   }
 
   function createRumBatch(endpointBuilder: EndpointBuilder) {
-    return new Batch(
+    const flushController = createFlushController({
+      messagesLimit: configuration.batchMessagesLimit,
+      bytesLimit: configuration.batchBytesLimit,
+      durationLimit: configuration.flushTimeout,
+      pageExitObservable,
+    })
+
+    const batch = new Batch(
       createHttpRequest(endpointBuilder, configuration.batchBytesLimit, reportError),
-      configuration.batchMessagesLimit,
-      configuration.batchBytesLimit,
-      configuration.messageBytesLimit,
-      configuration.flushTimeout,
-      pageExitObservable
+      flushController,
+      configuration.messageBytesLimit
     )
+
+    return {
+      batch,
+      flushController,
+    }
   }
 
   function withReplicaApplicationId(message: Context) {
@@ -70,7 +87,7 @@ function makeRumBatch(
   }
 
   return {
-    flushObservable: primaryBatch.flushObservable,
+    flushObservable: primaryFlushController.flushObservable,
     add: (message: Context, replicated = true) => {
       primaryBatch.add(message)
       if (replicaBatch && replicated) {

@@ -56,10 +56,12 @@ export {
   Payload,
   createHttpRequest,
   Batch,
-  BatchFlushEvent,
   canUseEventBridge,
   getEventBridge,
   startBatchWithReplica,
+  createFlushController,
+  FlushEvent,
+  FlushReason,
 } from './transport'
 export * from './tools/display'
 export * from './tools/utils/urlPolyfill'

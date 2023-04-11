@@ -1,44 +1,22 @@
 import { display } from '../tools/display'
 import type { Context } from '../tools/serialisation/context'
-import { Observable } from '../tools/observable'
-import { setTimeout } from '../tools/timer'
-import type { PageExitEvent } from '../browser/pageExitObservable'
 import { objectValues } from '../tools/utils/polyfills'
+import { isPageExitReason } from '../browser/pageExitObservable'
 import { computeBytesCount } from '../tools/utils/byteUtils'
 import { jsonStringify } from '../tools/serialisation/jsonStringify'
 import type { HttpRequest } from './httpRequest'
-
-export interface BatchFlushEvent {
-  bufferBytesCount: number
-  bufferMessagesCount: number
-}
-
-export type FlushReason =
-  | 'batch_duration_limit'
-  | 'batch_bytes_limit'
-  | 'before_unload'
-  | 'page_hide'
-  | 'visibility_hidden'
-  | 'page_frozen'
+import type { FlushController, FlushEvent } from './flushController'
 
 export class Batch {
-  flushObservable = new Observable<BatchFlushEvent>()
-
   private pushOnlyBuffer: string[] = []
   private upsertBuffer: { [key: string]: string } = {}
-  private bufferBytesCount = 0
-  private bufferMessagesCount = 0
 
   constructor(
     private request: HttpRequest,
-    private batchMessagesLimit: number,
-    private batchBytesLimit: number,
-    private messageBytesLimit: number,
-    private flushTimeout: number,
-    private pageExitObservable: Observable<PageExitEvent>
+    private flushController: FlushController,
+    private messageBytesLimit: number
   ) {
-    pageExitObservable.subscribe((event) => this.flush(event.reason, this.request.sendOnExit))
-    this.flushPeriodically()
+    this.flushController.flushObservable.subscribe((event) => this.flush(event))
   }
 
   add(message: Context) {
@@ -49,44 +27,35 @@ export class Batch {
     this.addOrUpdate(message, key)
   }
 
-  flush(flushReason: FlushReason, sendFn = this.request.send) {
-    if (this.bufferMessagesCount !== 0) {
-      const messages = this.pushOnlyBuffer.concat(objectValues(this.upsertBuffer))
-      const bytesCount = this.bufferBytesCount
+  private flush(event: FlushEvent) {
+    const messages = this.pushOnlyBuffer.concat(objectValues(this.upsertBuffer))
 
-      this.flushObservable.notify({
-        bufferBytesCount: this.bufferBytesCount,
-        bufferMessagesCount: this.bufferMessagesCount,
-      })
+    this.pushOnlyBuffer = []
+    this.upsertBuffer = {}
 
-      this.pushOnlyBuffer = []
-      this.upsertBuffer = {}
-      this.bufferBytesCount = 0
-      this.bufferMessagesCount = 0
-
-      sendFn({ data: messages.join('\n'), bytesCount, flushReason })
+    const payload = { data: messages.join('\n'), bytesCount: event.bytesCount, flushReason: event.reason }
+    if (isPageExitReason(event.reason)) {
+      this.request.sendOnExit(payload)
+    } else {
+      this.request.send(payload)
     }
   }
 
   private addOrUpdate(message: Context, key?: string) {
     const { processedMessage, messageBytesCount } = this.process(message)
+
     if (messageBytesCount >= this.messageBytesLimit) {
       display.warn(
         `Discarded a message whose size was bigger than the maximum allowed size ${this.messageBytesLimit}KB.`
       )
       return
     }
+
     if (this.hasMessageFor(key)) {
       this.remove(key)
     }
-    if (this.willReachedBytesLimitWith(messageBytesCount)) {
-      this.flush('batch_bytes_limit')
-    }
 
     this.push(processedMessage, messageBytesCount, key)
-    if (this.isFull()) {
-      this.flush('batch_bytes_limit')
-    }
   }
 
   private process(message: Context) {
@@ -96,47 +65,28 @@ export class Batch {
   }
 
   private push(processedMessage: string, messageBytesCount: number, key?: string) {
-    if (this.bufferMessagesCount > 0) {
-      // \n separator at serialization
-      this.bufferBytesCount += 1
-    }
+    // If there are other messages, a '\n' will be added at serialization
+    const separatorBytesCount = this.flushController.messagesCount > 0 ? 1 : 0
+
+    this.flushController.notifyBeforeAddMessage(messageBytesCount + separatorBytesCount)
     if (key !== undefined) {
       this.upsertBuffer[key] = processedMessage
     } else {
       this.pushOnlyBuffer.push(processedMessage)
     }
-    this.bufferBytesCount += messageBytesCount
-    this.bufferMessagesCount += 1
+    this.flushController.notifyAfterAddMessage()
   }
 
   private remove(key: string) {
     const removedMessage = this.upsertBuffer[key]
     delete this.upsertBuffer[key]
     const messageBytesCount = computeBytesCount(removedMessage)
-    this.bufferBytesCount -= messageBytesCount
-    this.bufferMessagesCount -= 1
-    if (this.bufferMessagesCount > 0) {
-      this.bufferBytesCount -= 1
-    }
+    // If there are other messages, a '\n' will be added at serialization
+    const separatorBytesCount = this.flushController.messagesCount > 1 ? 1 : 0
+    this.flushController.notifyAfterRemoveMessage(messageBytesCount + separatorBytesCount)
   }
 
   private hasMessageFor(key?: string): key is string {
     return key !== undefined && this.upsertBuffer[key] !== undefined
-  }
-
-  private willReachedBytesLimitWith(messageBytesCount: number) {
-    // byte of the separator at the end of the message
-    return this.bufferBytesCount + messageBytesCount + 1 >= this.batchBytesLimit
-  }
-
-  private isFull() {
-    return this.bufferMessagesCount === this.batchMessagesLimit || this.bufferBytesCount >= this.batchBytesLimit
-  }
-
-  private flushPeriodically() {
-    setTimeout(() => {
-      this.flush('batch_duration_limit')
-      this.flushPeriodically()
-    }, this.flushTimeout)
   }
 }

@@ -11,7 +11,7 @@ export const PageExitReason = {
   FROZEN: 'page_frozen',
 } as const
 
-type PageExitReason = (typeof PageExitReason)[keyof typeof PageExitReason]
+export type PageExitReason = (typeof PageExitReason)[keyof typeof PageExitReason]
 
 export interface PageExitEvent {
   reason: PageExitReason
