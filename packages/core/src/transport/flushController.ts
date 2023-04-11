@@ -43,7 +43,7 @@ export function createFlushController({
 
     currentMessagesCount = 0
     currentBytesCount = 0
-    cancelFlushTimeout()
+    cancelDurationLimitTimeout()
 
     flushObservable.notify({
       reason: flushReason,
@@ -52,18 +52,18 @@ export function createFlushController({
     })
   }
 
-  let flushTimeoutId: TimeoutId | undefined
-  function scheduleFlushTimeout() {
-    if (flushTimeoutId === undefined) {
-      flushTimeoutId = setTimeout(() => {
+  let durationLimitTimeoutId: TimeoutId | undefined
+  function scheduleDurationLimitTimeout() {
+    if (durationLimitTimeoutId === undefined) {
+      durationLimitTimeoutId = setTimeout(() => {
         flush('duration_limit')
       }, durationLimit)
     }
   }
 
-  function cancelFlushTimeout() {
-    clearTimeout(flushTimeoutId)
-    flushTimeoutId = undefined
+  function cancelDurationLimitTimeout() {
+    clearTimeout(durationLimitTimeoutId)
+    durationLimitTimeoutId = undefined
   }
 
   return {
@@ -81,7 +81,7 @@ export function createFlushController({
       // flush is needed (for example on page exit).
       currentMessagesCount += 1
       currentBytesCount += messageBytesCount
-      scheduleFlushTimeout()
+      scheduleDurationLimitTimeout()
     },
 
     didAddMessage() {
@@ -94,7 +94,7 @@ export function createFlushController({
       currentBytesCount -= messageBytesCount
       currentMessagesCount -= 1
       if (currentMessagesCount === 0) {
-        cancelFlushTimeout()
+        cancelDurationLimitTimeout()
       }
     },
   }
