@@ -1,5 +1,5 @@
 const path = require('path')
-const minimatch = require('minimatch')
+const { minimatch } = require('minimatch')
 const resolve = require('eslint-module-utils/resolve').default
 const moduleVisitor = require('eslint-module-utils/moduleVisitor').default
 const importType = require('eslint-plugin-import/lib/core/importType').default
