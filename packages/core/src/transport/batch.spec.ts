@@ -46,8 +46,8 @@ describe('batch', () => {
   it('should add message to the flush controller', () => {
     batch.add(SMALL_MESSAGE)
 
-    expect(flushController.willAddMessage).toHaveBeenCalledOnceWith(SMALL_MESSAGE_BYTES_COUNT)
-    expect(flushController.didAddMessage).toHaveBeenCalledOnceWith()
+    expect(flushController.notifyBeforeAddMessage).toHaveBeenCalledOnceWith(SMALL_MESSAGE_BYTES_COUNT)
+    expect(flushController.notifyAfterAddMessage).toHaveBeenCalledOnceWith()
   })
 
   it('should consider separators when adding message', () => {
@@ -55,7 +55,7 @@ describe('batch', () => {
     batch.add(SMALL_MESSAGE)
     batch.add(SMALL_MESSAGE)
 
-    expect(flushController.willAddMessage.calls.allArgs()).toEqual([
+    expect(flushController.notifyBeforeAddMessage.calls.allArgs()).toEqual([
       [SMALL_MESSAGE_BYTES_COUNT],
       [SMALL_MESSAGE_BYTES_COUNT + SEPARATOR_BYTES_COUNT],
       [SMALL_MESSAGE_BYTES_COUNT + SEPARATOR_BYTES_COUNT],
@@ -66,12 +66,16 @@ describe('batch', () => {
     batch.add(SMALL_MESSAGE)
     batch.upsert(SMALL_MESSAGE, 'a')
 
-    flushController.willAddMessage.calls.reset()
+    flushController.notifyBeforeAddMessage.calls.reset()
 
     batch.upsert(SMALL_MESSAGE, 'a')
 
-    expect(flushController.didRemoveMessage).toHaveBeenCalledOnceWith(SMALL_MESSAGE_BYTES_COUNT + SEPARATOR_BYTES_COUNT)
-    expect(flushController.willAddMessage).toHaveBeenCalledOnceWith(SMALL_MESSAGE_BYTES_COUNT + SEPARATOR_BYTES_COUNT)
+    expect(flushController.notifyAfterRemoveMessage).toHaveBeenCalledOnceWith(
+      SMALL_MESSAGE_BYTES_COUNT + SEPARATOR_BYTES_COUNT
+    )
+    expect(flushController.notifyBeforeAddMessage).toHaveBeenCalledOnceWith(
+      SMALL_MESSAGE_BYTES_COUNT + SEPARATOR_BYTES_COUNT
+    )
   })
 
   it('should not send a message with a bytes size above the limit', () => {
@@ -79,7 +83,7 @@ describe('batch', () => {
     batch.add(BIG_MESSAGE_OVER_BYTES_LIMIT)
 
     expect(warnSpy).toHaveBeenCalled()
-    expect(flushController.willAddMessage).not.toHaveBeenCalled()
+    expect(flushController.notifyBeforeAddMessage).not.toHaveBeenCalled()
   })
 
   it('should upsert a message for a given key', () => {
@@ -126,11 +130,11 @@ describe('batch', () => {
     const addTelemetryDebugFake = () => batch.add({ message: 'telemetry message' })
 
     batch.add({ message: 'normal message' })
-    expect(flushController.willAddMessage).toHaveBeenCalledTimes(1)
+    expect(flushController.notifyBeforeAddMessage).toHaveBeenCalledTimes(1)
 
     flushController.notifyFlush()
     expect(transport.send).toHaveBeenCalledTimes(1)
-    expect(flushController.willAddMessage).toHaveBeenCalledTimes(2)
+    expect(flushController.notifyBeforeAddMessage).toHaveBeenCalledTimes(2)
 
     flushController.notifyFlush()
     expect(transport.send).toHaveBeenCalledTimes(2)

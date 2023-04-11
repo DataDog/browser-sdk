@@ -72,25 +72,25 @@ export function createFlushController({
       return currentMessagesCount
     },
 
-    willAddMessage(messageBytesCount: number) {
+    notifyBeforeAddMessage(messageBytesCount: number) {
       if (currentBytesCount + messageBytesCount >= bytesLimit) {
         flush('bytes_limit')
       }
-      // Consider the message to be added now rather than in `didAddMessage`, because if no message
-      // was added yet and `didAddMessage` is called asynchronously, we still want to notify when a
+      // Consider the message to be added now rather than in `notifyAfterAddMessage`, because if no message
+      // was added yet and `notifyAfterAddMessage` is called asynchronously, we still want to notify when a
       // flush is needed (for example on page exit).
       currentMessagesCount += 1
       currentBytesCount += messageBytesCount
       scheduleDurationLimitTimeout()
     },
 
-    didAddMessage() {
+    notifyAfterAddMessage() {
       if (currentMessagesCount >= messagesLimit || currentBytesCount >= bytesLimit) {
         flush('bytes_limit')
       }
     },
 
-    didRemoveMessage(messageBytesCount: number) {
+    notifyAfterRemoveMessage(messageBytesCount: number) {
       currentBytesCount -= messageBytesCount
       currentMessagesCount -= 1
       if (currentMessagesCount === 0) {

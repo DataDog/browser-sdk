@@ -68,13 +68,13 @@ export class Batch {
     // If there are other messages, a '\n' will be added at serialization
     const separatorBytesCount = this.flushController.messagesCount > 0 ? 1 : 0
 
-    this.flushController.willAddMessage(messageBytesCount + separatorBytesCount)
+    this.flushController.notifyBeforeAddMessage(messageBytesCount + separatorBytesCount)
     if (key !== undefined) {
       this.upsertBuffer[key] = processedMessage
     } else {
       this.pushOnlyBuffer.push(processedMessage)
     }
-    this.flushController.didAddMessage()
+    this.flushController.notifyAfterAddMessage()
   }
 
   private remove(key: string) {
@@ -83,7 +83,7 @@ export class Batch {
     const messageBytesCount = computeBytesCount(removedMessage)
     // If there are other messages, a '\n' will be added at serialization
     const separatorBytesCount = this.flushController.messagesCount > 1 ? 1 : 0
-    this.flushController.didRemoveMessage(messageBytesCount + separatorBytesCount)
+    this.flushController.notifyAfterRemoveMessage(messageBytesCount + separatorBytesCount)
   }
 
   private hasMessageFor(key?: string): key is string {

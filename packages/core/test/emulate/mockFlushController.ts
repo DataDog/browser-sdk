@@ -9,15 +9,19 @@ export function createMockFlushController() {
   let currentBytesCount = 0
 
   return {
-    willAddMessage: jasmine.createSpy<FlushController['willAddMessage']>().and.callFake((messageBytesCount) => {
-      currentBytesCount += messageBytesCount
-      currentMessagesCount += 1
-    }),
-    didAddMessage: jasmine.createSpy<FlushController['didAddMessage']>(),
-    didRemoveMessage: jasmine.createSpy<FlushController['didRemoveMessage']>().and.callFake((messageBytesCount) => {
-      currentBytesCount -= messageBytesCount
-      currentMessagesCount -= 1
-    }),
+    notifyBeforeAddMessage: jasmine
+      .createSpy<FlushController['notifyBeforeAddMessage']>()
+      .and.callFake((messageBytesCount) => {
+        currentBytesCount += messageBytesCount
+        currentMessagesCount += 1
+      }),
+    notifyAfterAddMessage: jasmine.createSpy<FlushController['notifyAfterAddMessage']>(),
+    notifyAfterRemoveMessage: jasmine
+      .createSpy<FlushController['notifyAfterRemoveMessage']>()
+      .and.callFake((messageBytesCount) => {
+        currentBytesCount -= messageBytesCount
+        currentMessagesCount -= 1
+      }),
     get messagesCount() {
       return currentMessagesCount
     },
