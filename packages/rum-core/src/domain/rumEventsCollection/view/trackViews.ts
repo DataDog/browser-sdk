@@ -43,6 +43,7 @@ export interface ViewEvent {
   startClocks: ClocksState
   duration: Duration
   isActive: boolean
+  sessionIsActive: boolean
   loadingTime?: Duration
   loadingType: ViewLoadingType
   cumulativeLayoutShift?: number
@@ -223,6 +224,7 @@ function newView(
           timings,
           duration: elapsed(startClocks.timeStamp, currentEnd),
           isActive: endClocks === undefined,
+          sessionIsActive: true, // TODO set this to false when session is inactive
           eventCounts,
         },
         viewMetrics

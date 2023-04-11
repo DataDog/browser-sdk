@@ -544,6 +544,7 @@ describe('rum assembly', () => {
       })
       expect(serverRumEvents[0].session).toEqual({
         has_replay: undefined,
+        is_active: undefined,
         id: '1234',
         type: 'user',
       })
