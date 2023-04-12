@@ -16,16 +16,9 @@
     {
       "groupName": "all non-major dependencies",
       "groupSlug": "all-minor-patch",
-      "excludePackageNames": ["typescript"],
+      "excludePackageNames": ["typescript", "puppeteer", "@types/node", "@types/express", "ajv", "ansi-regex"],
+      "excludePackagePatterns": ["jasmine", "webpack"],
       "matchUpdateTypes": ["minor", "patch"]
-    },
-    {
-      "matchPackageNames": ["puppeteer", "@types/node", "@types/express", "ajv", "ansi-regex"],
-      "enabled": false
-    },
-    {
-      "matchPackagePatterns": ["jasmine", "webpack"],
-      "enabled": false
     }
   ]
 }
