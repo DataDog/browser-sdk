@@ -23,7 +23,7 @@ export function startRuntimeErrorCollection(configuration: LogsConfiguration, li
   const { stop: stopRuntimeErrorTracking } = trackRuntimeError(rawErrorObservable)
 
   const rawErrorSubscription = rawErrorObservable.subscribe((rawError) => {
-    lifeCycle.notify<RawRuntimeLogsEvent>(LifeCycleEventType.RAW_LOG_COLLECTED, {
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
       rawLogsEvent: {
         message: rawError.message,
         date: rawError.startClocks.timeStamp,
@@ -34,7 +34,7 @@ export function startRuntimeErrorCollection(configuration: LogsConfiguration, li
         },
         origin: ErrorSource.SOURCE,
         status: StatusType.error,
-      },
+      } satisfies RawRuntimeLogsEvent,
     })
   })
 

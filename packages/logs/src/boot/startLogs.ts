@@ -41,7 +41,7 @@ export function startLogs(
   lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (log) => sendToExtension('logs', log))
 
   const reportError = (error: RawError) =>
-    lifeCycle.notify<RawAgentLogsEvent>(LifeCycleEventType.RAW_LOG_COLLECTED, {
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
       rawLogsEvent: {
         message: error.message,
         date: error.startClocks.timeStamp,
@@ -50,7 +50,7 @@ export function startLogs(
         },
         origin: ErrorSource.AGENT,
         status: StatusType.error,
-      },
+      } satisfies RawAgentLogsEvent,
     })
   const pageExitObservable = createPageExitObservable()
   const telemetry = startLogsTelemetry(configuration, reportError, pageExitObservable)

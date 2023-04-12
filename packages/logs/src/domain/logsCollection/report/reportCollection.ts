@@ -40,14 +40,14 @@ export function startReportCollection(configuration: LogsConfiguration, lifeCycl
       message += ` Found in ${getFileFromStackTraceString(report.stack)!}`
     }
 
-    lifeCycle.notify<RawReportLogsEvent>(LifeCycleEventType.RAW_LOG_COLLECTED, {
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
       rawLogsEvent: {
         date: timeStampNow(),
         message,
         origin: ErrorSource.REPORT,
         error,
         status,
-      },
+      } satisfies RawReportLogsEvent,
     })
   })
 

@@ -22,7 +22,7 @@ const LogStatusForApi = {
 }
 export function startConsoleCollection(configuration: LogsConfiguration, lifeCycle: LifeCycle) {
   const consoleSubscription = initConsoleObservable(configuration.forwardConsoleLogs).subscribe((log: ConsoleLog) => {
-    lifeCycle.notify<RawConsoleLogsEvent>(LifeCycleEventType.RAW_LOG_COLLECTED, {
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
       rawLogsEvent: {
         date: timeStampNow(),
         message: log.message,
@@ -35,7 +35,7 @@ export function startConsoleCollection(configuration: LogsConfiguration, lifeCyc
               }
             : undefined,
         status: LogStatusForApi[log.api],
-      },
+      } satisfies RawConsoleLogsEvent,
     })
   })
 

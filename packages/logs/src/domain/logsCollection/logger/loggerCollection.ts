@@ -26,13 +26,13 @@ export function startLoggerCollection(lifeCycle: LifeCycle) {
       display(logsMessage.status, logsMessage.message, combine(logger.getContext(), messageContext))
     }
 
-    lifeCycle.notify<RawLoggerLogsEvent>(LifeCycleEventType.RAW_LOG_COLLECTED, {
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
       rawLogsEvent: {
         date: savedDate || timeStampNow(),
         message: logsMessage.message,
         status: logsMessage.status,
         origin: ErrorSource.LOGGER,
-      },
+      } satisfies RawLoggerLogsEvent,
       messageContext,
       savedCommonContext,
       logger,
