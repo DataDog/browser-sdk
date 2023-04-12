@@ -1,3 +1,4 @@
+import type { TimeoutId } from '@datadog/browser-core'
 import { ONE_SECOND, clearTimeout, setTimeout } from '@datadog/browser-core'
 import type { Click } from './trackClickActions'
 
@@ -18,14 +19,14 @@ const enum ClickChainStatus {
 export function createClickChain(firstClick: Click, onFinalize: (clicks: Click[]) => void): ClickChain {
   const bufferedClicks: Click[] = []
   let status = ClickChainStatus.WaitingForMoreClicks
-  let maxDurationBetweenClicksTimeout: number | undefined
+  let maxDurationBetweenClicksTimeoutId: TimeoutId | undefined
   appendClick(firstClick)
 
   function appendClick(click: Click) {
     click.stopObservable.subscribe(tryFinalize)
     bufferedClicks.push(click)
-    clearTimeout(maxDurationBetweenClicksTimeout)
-    maxDurationBetweenClicksTimeout = setTimeout(dontAcceptMoreClick, MAX_DURATION_BETWEEN_CLICKS)
+    clearTimeout(maxDurationBetweenClicksTimeoutId)
+    maxDurationBetweenClicksTimeoutId = setTimeout(dontAcceptMoreClick, MAX_DURATION_BETWEEN_CLICKS)
   }
 
   function tryFinalize() {
@@ -36,7 +37,7 @@ export function createClickChain(firstClick: Click, onFinalize: (clicks: Click[]
   }
 
   function dontAcceptMoreClick() {
-    clearTimeout(maxDurationBetweenClicksTimeout)
+    clearTimeout(maxDurationBetweenClicksTimeoutId)
     if (status === ClickChainStatus.WaitingForMoreClicks) {
       status = ClickChainStatus.WaitingForClicksToStop
       tryFinalize()
