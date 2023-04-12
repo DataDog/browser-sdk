@@ -75,7 +75,7 @@ export const config: Options.Testrunner = {
     }
   },
   beforeSession: (_config, _capabilities, _specs, _cid) => {
-    // Export everything besides expect, as we want to keep the one from Jasmine
+    // Expose everything besides expect, as we want to keep the one from Jasmine
     global.browser = browser
     global.driver = browser
     global.$ = $
