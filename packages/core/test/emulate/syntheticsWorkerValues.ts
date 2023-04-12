@@ -1,3 +1,4 @@
+import { ONE_MINUTE } from '../../src/tools/utils/timeUtils'
 import { deleteCookie, setCookie } from '../../src/browser/cookie'
 import type { BrowserWindow } from '../../src/domain/synthetics/syntheticsWorkerValues'
 import {
@@ -5,7 +6,6 @@ import {
   SYNTHETICS_RESULT_ID_COOKIE_NAME,
   SYNTHETICS_TEST_ID_COOKIE_NAME,
 } from '../../src/domain/synthetics/syntheticsWorkerValues'
-import { ONE_MINUTE } from '../../src/tools/utils'
 
 // Duration to create a cookie lasting at least until the end of the test
 const COOKIE_DURATION = ONE_MINUTE

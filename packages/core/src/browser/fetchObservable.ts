@@ -1,9 +1,9 @@
 import { instrumentMethod } from '../tools/instrumentMethod'
 import { callMonitored, monitor } from '../tools/monitor'
 import { Observable } from '../tools/observable'
-import type { ClocksState } from '../tools/timeUtils'
-import { clocksNow } from '../tools/timeUtils'
-import { normalizeUrl } from '../tools/urlPolyfill'
+import type { ClocksState } from '../tools/utils/timeUtils'
+import { clocksNow } from '../tools/utils/timeUtils'
+import { normalizeUrl } from '../tools/utils/urlPolyfill'
 
 interface FetchContextBase {
   method: string

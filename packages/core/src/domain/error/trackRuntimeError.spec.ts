@@ -1,5 +1,5 @@
-import type { RawError } from '../../tools/error'
 import { Observable } from '../../tools/observable'
+import type { RawError } from './error'
 import { trackRuntimeError } from './trackRuntimeError'
 
 describe('runtime error tracker', () => {

@@ -1,8 +1,8 @@
-import { addTelemetryDebug, assign, monitor, sendToExtension } from '@datadog/browser-core'
+import { addTelemetryDebug, assign, sendToExtension, addEventListener } from '@datadog/browser-core'
 import type { BrowserRecord, BrowserSegmentMetadata, CreationReason, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
 import * as replayStats from '../replayStats'
-import type { DeflateWorker, DeflateWorkerListener } from './deflateWorker'
+import type { DeflateWorker, DeflateWorkerResponse } from './deflateWorker'
 
 let nextId = 0
 
@@ -41,33 +41,36 @@ export class Segment {
     replayStats.addSegment(viewId)
     replayStats.addRecord(viewId)
 
-    const listener: DeflateWorkerListener = monitor(({ data }) => {
-      if (data.type === 'errored' || data.type === 'initialized') {
-        return
-      }
-
-      if (data.id === this.id) {
-        replayStats.addWroteData(viewId, data.additionalBytesCount)
-        if (data.type === 'flushed') {
-          onFlushed(data.result, data.rawBytesCount)
-          worker.removeEventListener('message', listener)
-        } else {
-          onWrote(data.compressedBytesCount)
+    const { stop: removeMessageListener } = addEventListener(
+      worker,
+      'message',
+      ({ data }: MessageEvent<DeflateWorkerResponse>) => {
+        if (data.type === 'errored' || data.type === 'initialized') {
+          return
         }
-      } else if (data.id > this.id) {
-        // Messages should be received in the same order as they are sent, so if we receive a
-        // message with an id superior to this Segment instance id, we know that another, more
-        // recent Segment instance is being used.
-        //
-        // In theory, a "flush" response should have been received at this point, so the listener
-        // should already have been removed. But if something goes wrong and we didn't receive a
-        // "flush" response, remove the listener to avoid any leak, and send a monitor message to
-        // help investigate the issue.
-        worker.removeEventListener('message', listener)
-        addTelemetryDebug("Segment did not receive a 'flush' response before being replaced.")
+
+        if (data.id === this.id) {
+          replayStats.addWroteData(viewId, data.additionalBytesCount)
+          if (data.type === 'flushed') {
+            onFlushed(data.result, data.rawBytesCount)
+            removeMessageListener()
+          } else {
+            onWrote(data.compressedBytesCount)
+          }
+        } else if (data.id > this.id) {
+          // Messages should be received in the same order as they are sent, so if we receive a
+          // message with an id superior to this Segment instance id, we know that another, more
+          // recent Segment instance is being used.
+          //
+          // In theory, a "flush" response should have been received at this point, so the listener
+          // should already have been removed. But if something goes wrong and we didn't receive a
+          // "flush" response, remove the listener to avoid any leak, and send a monitor message to
+          // help investigate the issue.
+          removeMessageListener()
+          addTelemetryDebug("Segment did not receive a 'flush' response before being replaced.")
+        }
       }
-    })
-    worker.addEventListener('message', listener)
+    )
     sendToExtension('record', { record: initialRecord, segment: this.metadata })
     this.worker.postMessage({ data: `{"records":[${JSON.stringify(initialRecord)}`, id: this.id, action: 'write' })
   }

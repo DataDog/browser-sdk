@@ -8,7 +8,7 @@ import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from '..
 
 type InputObserverOptions = {
   domEvents?: Array<DOM_EVENT.INPUT | DOM_EVENT.CHANGE>
-  target?: Node
+  target?: Document | ShadowRoot
 }
 export type InputCallback = (v: InputState & { id: number }) => void
 

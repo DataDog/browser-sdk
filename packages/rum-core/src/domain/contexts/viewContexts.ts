@@ -1,5 +1,5 @@
-import type { RelativeTime } from '@datadog/browser-core'
-import { SESSION_TIME_OUT_DELAY, ContextHistory } from '@datadog/browser-core'
+import type { RelativeTime, ClocksState } from '@datadog/browser-core'
+import { SESSION_TIME_OUT_DELAY, ValueHistory } from '@datadog/browser-core'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { ViewCreatedEvent } from '../rumEventsCollection/view/trackViews'
@@ -11,6 +11,7 @@ export interface ViewContext {
   version?: string
   id: string
   name?: string
+  startClocks: ClocksState
 }
 
 export interface ViewContexts {
@@ -19,7 +20,7 @@ export interface ViewContexts {
 }
 
 export function startViewContexts(lifeCycle: LifeCycle): ViewContexts {
-  const viewContextHistory = new ContextHistory<ViewContext>(VIEW_CONTEXT_TIME_OUT_DELAY)
+  const viewContextHistory = new ValueHistory<ViewContext>(VIEW_CONTEXT_TIME_OUT_DELAY)
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
     viewContextHistory.add(buildViewContext(view), view.startClocks.relative)
@@ -39,6 +40,7 @@ export function startViewContexts(lifeCycle: LifeCycle): ViewContexts {
       version: view.version,
       id: view.id,
       name: view.name,
+      startClocks: view.startClocks,
     }
   }
 

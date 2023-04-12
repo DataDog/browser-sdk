@@ -17,7 +17,7 @@ export function initScrollObserver(
   defaultPrivacyLevel: DefaultPrivacyLevel,
   elementsScrollPositions: ElementsScrollPositions
 ): ListenerHandler {
-  const { throttled: updatePosition } = throttle((event: UIEvent) => {
+  const { throttled: updatePosition } = throttle((event: Event) => {
     const target = getEventTarget(event) as HTMLElement | Document
     if (
       !target ||

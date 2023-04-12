@@ -10,6 +10,7 @@ import {
   setTimeout,
   relativeNow,
   runOnReadyState,
+  addEventListener,
 } from '@datadog/browser-core'
 
 import type { RumConfiguration } from '../domain/configuration'
@@ -141,7 +142,7 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
 
     if (supportPerformanceObject() && 'addEventListener' in performance) {
       // https://bugzilla.mozilla.org/show_bug.cgi?id=1559377
-      performance.addEventListener('resourcetimingbufferfull', () => {
+      addEventListener(performance, 'resourcetimingbufferfull', () => {
         performance.clearResourceTimings()
       })
     }

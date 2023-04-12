@@ -1,5 +1,5 @@
-import { addTelemetryError, display, includes, monitor } from '@datadog/browser-core'
-import type { DeflateWorker } from './deflateWorker'
+import { addTelemetryError, display, includes, addEventListener } from '@datadog/browser-core'
+import type { DeflateWorker, DeflateWorkerResponse } from './deflateWorker'
 import { createDeflateWorker } from './deflateWorker'
 
 /**
@@ -69,17 +69,14 @@ export function resetDeflateWorkerState() {
 export function doStartDeflateWorker(createDeflateWorkerImpl = createDeflateWorker) {
   try {
     const worker = createDeflateWorkerImpl()
-    worker.addEventListener('error', monitor(onError))
-    worker.addEventListener(
-      'message',
-      monitor(({ data }) => {
-        if (data.type === 'errored') {
-          onError(data.error)
-        } else if (data.type === 'initialized') {
-          onInitialized(worker)
-        }
-      })
-    )
+    addEventListener(worker, 'error', onError)
+    addEventListener(worker, 'message', ({ data }: MessageEvent<DeflateWorkerResponse>) => {
+      if (data.type === 'errored') {
+        onError(data.error)
+      } else if (data.type === 'initialized') {
+        onInitialized(worker)
+      }
+    })
     worker.postMessage({ action: 'init' })
     return worker
   } catch (error) {

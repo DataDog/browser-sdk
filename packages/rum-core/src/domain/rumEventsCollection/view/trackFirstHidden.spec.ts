@@ -17,7 +17,7 @@ describe('trackFirstHidden', () => {
 
     it('should ignore events', () => {
       setPageVisibility('hidden')
-      const eventTarget = document.createElement('div')
+      const eventTarget = createWindowEventTarget()
       const firstHidden = trackFirstHidden(eventTarget)
 
       eventTarget.dispatchEvent(createNewEvent(DOM_EVENT.PAGE_HIDE, { timeStamp: 100 }))
@@ -33,7 +33,7 @@ describe('trackFirstHidden', () => {
     })
 
     it('should return the timestamp of the first pagehide event', () => {
-      const eventTarget = document.createElement('div')
+      const eventTarget = createWindowEventTarget()
       const firstHidden = trackFirstHidden(eventTarget)
 
       eventTarget.dispatchEvent(createNewEvent(DOM_EVENT.PAGE_HIDE, { timeStamp: 100 }))
@@ -42,7 +42,7 @@ describe('trackFirstHidden', () => {
     })
 
     it('should return the timestamp of the first visibilitychange event if the page is hidden', () => {
-      const eventTarget = document.createElement('div')
+      const eventTarget = createWindowEventTarget()
       const firstHidden = trackFirstHidden(eventTarget)
 
       setPageVisibility('hidden')
@@ -52,7 +52,7 @@ describe('trackFirstHidden', () => {
     })
 
     it('should ignore visibilitychange event if the page is visible', () => {
-      const eventTarget = document.createElement('div')
+      const eventTarget = createWindowEventTarget()
       const firstHidden = trackFirstHidden(eventTarget)
 
       eventTarget.dispatchEvent(createNewEvent(DOM_EVENT.VISIBILITY_CHANGE, { timeStamp: 100 }))
@@ -61,7 +61,7 @@ describe('trackFirstHidden', () => {
     })
 
     it('should ignore subsequent events', () => {
-      const eventTarget = document.createElement('div')
+      const eventTarget = createWindowEventTarget()
       const firstHidden = trackFirstHidden(eventTarget)
 
       eventTarget.dispatchEvent(createNewEvent(DOM_EVENT.PAGE_HIDE, { timeStamp: 100 }))
@@ -74,4 +74,8 @@ describe('trackFirstHidden', () => {
       expect(firstHidden.timeStamp).toBe(100 as RelativeTime)
     })
   })
+
+  function createWindowEventTarget() {
+    return document.createElement('div') as unknown as Window
+  }
 })
