@@ -21,7 +21,7 @@ describe('AbstractLifeCycle', () => {
     lifeCycle.notify('foo', 'bar')
 
     expect(subscriber1Spy).toHaveBeenCalledOnceWith('bar')
-    expect(subscriber1Spy).toHaveBeenCalledOnceWith('bar')
+    expect(subscriber2Spy).toHaveBeenCalledOnceWith('bar')
   })
 
   it('notifies subscribers for events without data', () => {
