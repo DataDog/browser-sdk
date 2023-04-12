@@ -120,6 +120,7 @@ function reportPotentialSideEffect(context, node) {
     case 'TSTypeAliasDeclaration':
     case 'TSModuleDeclaration':
     case 'TSDeclareFunction':
+    case 'TSInstantiationExpression':
     case 'Literal':
     case 'Identifier':
       return
