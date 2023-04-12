@@ -1,4 +1,5 @@
-import type { Context, PageExitEvent, RawError, RelativeTime, Subscription } from '@datadog/browser-core'
+import type { Context, PageExitEvent, RawError, RelativeTime } from '@datadog/browser-core'
+import { AbstractLifeCycle } from '@datadog/browser-core'
 import type { RumPerformanceEntry } from '../browser/performanceCollection'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumEvent } from '../rawRumEvent.types'
@@ -36,71 +37,25 @@ export const enum LifeCycleEventType {
   RAW_ERROR_COLLECTED,
 }
 
-export class LifeCycle {
-  private callbacks: { [key in LifeCycleEventType]?: Array<(data: any) => void> } = {}
-
-  notify(eventType: LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, data: RumPerformanceEntry[]): void
-  notify(eventType: LifeCycleEventType.REQUEST_STARTED, data: RequestStartEvent): void
-  notify(eventType: LifeCycleEventType.REQUEST_COMPLETED, data: RequestCompleteEvent): void
-  notify(eventType: LifeCycleEventType.AUTO_ACTION_COMPLETED, data: AutoAction): void
-  notify(eventType: LifeCycleEventType.VIEW_CREATED, data: ViewCreatedEvent): void
-  notify(eventType: LifeCycleEventType.VIEW_UPDATED, data: ViewEvent): void
-  notify(eventType: LifeCycleEventType.VIEW_ENDED, data: ViewEndedEvent): void
-  notify(eventType: LifeCycleEventType.PAGE_EXITED, data: PageExitEvent): void
-  notify(
-    eventType: LifeCycleEventType.RAW_ERROR_COLLECTED,
-    data: { error: RawError; savedCommonContext?: CommonContext; customerContext?: Context }
-  ): void
-  notify(eventType: LifeCycleEventType.SESSION_EXPIRED | LifeCycleEventType.SESSION_RENEWED): void
-  notify(eventType: LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, data: RawRumEventCollectedData): void
-  notify(eventType: LifeCycleEventType.RUM_EVENT_COLLECTED, data: RumEvent & Context): void
-  notify(eventType: LifeCycleEventType, data?: any) {
-    const eventCallbacks = this.callbacks[eventType]
-    if (eventCallbacks) {
-      eventCallbacks.forEach((callback) => callback(data))
-    }
-  }
-
-  subscribe(
-    eventType: LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED,
-    callback: (data: RumPerformanceEntry[]) => void
-  ): Subscription
-  subscribe(eventType: LifeCycleEventType.REQUEST_STARTED, callback: (data: RequestStartEvent) => void): Subscription
-  subscribe(
-    eventType: LifeCycleEventType.REQUEST_COMPLETED,
-    callback: (data: RequestCompleteEvent) => void
-  ): Subscription
-  subscribe(eventType: LifeCycleEventType.AUTO_ACTION_COMPLETED, callback: (data: AutoAction) => void): Subscription
-  subscribe(eventType: LifeCycleEventType.VIEW_CREATED, callback: (data: ViewCreatedEvent) => void): Subscription
-  subscribe(eventType: LifeCycleEventType.VIEW_UPDATED, callback: (data: ViewEvent) => void): Subscription
-  subscribe(eventType: LifeCycleEventType.VIEW_ENDED, callback: (data: ViewEndedEvent) => void): Subscription
-  subscribe(eventType: LifeCycleEventType.PAGE_EXITED, callback: (data: PageExitEvent) => void): Subscription
-  subscribe(
-    eventType: LifeCycleEventType.RAW_ERROR_COLLECTED,
-    callback: (data: { error: RawError; savedCommonContext?: CommonContext; customerContext?: Context }) => void
-  ): Subscription
-  subscribe(
-    eventType: LifeCycleEventType.SESSION_EXPIRED | LifeCycleEventType.SESSION_RENEWED,
-    callback: () => void
-  ): Subscription
-  subscribe(
-    eventType: LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-    callback: (data: RawRumEventCollectedData) => void
-  ): Subscription
-  subscribe(
-    eventType: LifeCycleEventType.RUM_EVENT_COLLECTED,
-    callback: (data: RumEvent & Context) => void
-  ): Subscription
-  subscribe(eventType: LifeCycleEventType, callback: (data?: any) => void) {
-    if (!this.callbacks[eventType]) {
-      this.callbacks[eventType] = []
-    }
-    this.callbacks[eventType]!.push(callback)
-    return {
-      unsubscribe: () => {
-        this.callbacks[eventType] = this.callbacks[eventType]!.filter((other) => callback !== other)
-      },
-    }
+// Note: this interface needs to be exported even if it is not used outside of this module, else TS
+// fails to build the rum-core package with error TS4058
+export interface LifeCycleEventMap {
+  [LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED]: RumPerformanceEntry[]
+  [LifeCycleEventType.AUTO_ACTION_COMPLETED]: AutoAction
+  [LifeCycleEventType.VIEW_CREATED]: ViewCreatedEvent
+  [LifeCycleEventType.VIEW_UPDATED]: ViewEvent
+  [LifeCycleEventType.VIEW_ENDED]: ViewEndedEvent
+  [LifeCycleEventType.REQUEST_STARTED]: RequestStartEvent
+  [LifeCycleEventType.REQUEST_COMPLETED]: RequestCompleteEvent
+  [LifeCycleEventType.SESSION_EXPIRED]: void
+  [LifeCycleEventType.SESSION_RENEWED]: void
+  [LifeCycleEventType.PAGE_EXITED]: PageExitEvent
+  [LifeCycleEventType.RAW_RUM_EVENT_COLLECTED]: RawRumEventCollectedData
+  [LifeCycleEventType.RUM_EVENT_COLLECTED]: RumEvent & Context
+  [LifeCycleEventType.RAW_ERROR_COLLECTED]: {
+    error: RawError
+    savedCommonContext?: CommonContext
+    customerContext?: Context
   }
 }
 
@@ -111,3 +66,6 @@ export interface RawRumEventCollectedData<E extends RawRumEvent = RawRumEvent> {
   rawRumEvent: E
   domainContext: RumEventDomainContext<E['type']>
 }
+
+export const LifeCycle = AbstractLifeCycle<LifeCycleEventMap>
+export type LifeCycle = AbstractLifeCycle<LifeCycleEventMap>
