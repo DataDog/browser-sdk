@@ -23,7 +23,7 @@ import { startNetworkErrorCollection } from '../domain/logsCollection/networkErr
 import { startRuntimeErrorCollection } from '../domain/logsCollection/runtimeError/runtimeErrorCollection'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { startLoggerCollection } from '../domain/logsCollection/logger/loggerCollection'
-import type { CommonContext, RawAgentLogsEvent } from '../rawLogsEvent.types'
+import type { CommonContext } from '../rawLogsEvent.types'
 import { startLogsBatch } from '../transport/startLogsBatch'
 import { startLogsBridge } from '../transport/startLogsBridge'
 import type { Logger } from '../domain/logger'
@@ -50,7 +50,7 @@ export function startLogs(
         },
         origin: ErrorSource.AGENT,
         status: StatusType.error,
-      } satisfies RawAgentLogsEvent,
+      },
     })
   const pageExitObservable = createPageExitObservable()
   const telemetry = startLogsTelemetry(configuration, reportError, pageExitObservable)

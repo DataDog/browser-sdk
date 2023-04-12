@@ -1,6 +1,5 @@
 import type { Context, RawError, ClocksState } from '@datadog/browser-core'
 import { noop, ErrorSource, trackRuntimeError, Observable } from '@datadog/browser-core'
-import type { RawRuntimeLogsEvent } from '../../../rawLogsEvent.types'
 import type { LogsConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -34,7 +33,7 @@ export function startRuntimeErrorCollection(configuration: LogsConfiguration, li
         },
         origin: ErrorSource.SOURCE,
         status: StatusType.error,
-      } satisfies RawRuntimeLogsEvent,
+      },
     })
   })
 
