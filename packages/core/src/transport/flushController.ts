@@ -21,6 +21,11 @@ interface FlushControllerOptions {
   sessionExpireObservable: Observable<void>
 }
 
+/**
+ * Returns a "flush controller", responsible of notifying when flushing a pool of pending data needs
+ * to happen. The implementation is designed to support both synchronous and asynchronous usages,
+ * but relies on invariants described in each method documentation to keep a coherent state.
+ */
 export function createFlushController({
   messagesLimit,
   bytesLimit,
@@ -75,18 +80,30 @@ export function createFlushController({
       return currentMessagesCount
     },
 
+    /**
+     * Notifies that a message will be added to a pool of pending messages waiting to be flushed.
+     *
+     * This function needs to be called synchronously, right before adding the message, so no flush
+     * event can happen after `notifyBeforeAddMessage` and before adding the message.
+     */
     notifyBeforeAddMessage(messageBytesCount: number) {
       if (currentBytesCount + messageBytesCount >= bytesLimit) {
         flush('bytes_limit')
       }
-      // Consider the message to be added now rather than in `notifyAfterAddMessage`, because if no message
-      // was added yet and `notifyAfterAddMessage` is called asynchronously, we still want to notify when a
-      // flush is needed (for example on page exit).
+      // Consider the message to be added now rather than in `notifyAfterAddMessage`, because if no
+      // message was added yet and `notifyAfterAddMessage` is called asynchronously, we still want
+      // to notify when a flush is needed (for example on page exit).
       currentMessagesCount += 1
       currentBytesCount += messageBytesCount
       scheduleDurationLimitTimeout()
     },
 
+    /**
+     * Notifies that a message *was* added to a pool of pending messages waiting to be flushed.
+     *
+     * This function can be called asynchronously after the message was added, but in this case it
+     * should not be called if a flush event occurred in between.
+     */
     notifyAfterAddMessage() {
       if (currentMessagesCount >= messagesLimit) {
         flush('messages_limit')
@@ -95,6 +112,12 @@ export function createFlushController({
       }
     },
 
+    /**
+     * Notifies that a message was removed from a pool of pending messages waiting to be flushed.
+     *
+     * This function needs to be called synchronously, right after removing the message, so no flush
+     * event can happen after removing the message and before `notifyAfterRemoveMessage`.
+     */
     notifyAfterRemoveMessage(messageBytesCount: number) {
       currentBytesCount -= messageBytesCount
       currentMessagesCount -= 1
