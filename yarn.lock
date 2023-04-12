@@ -1633,11 +1633,6 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-18.15.11.tgz#b3b790f09cb1696cffcec605de025b088fa4225f"
   integrity sha512-E5Kwq2n4SbMzQOn6wnmBjuK9ouqlURrcZDVfbo9ftDDTFt3nk7ZKK4GMOzoYgnpQJKcxwQw+lGaBvvlMo0qN/Q==
 
-"@types/node@^17.0.4":
-  version "17.0.45"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-17.0.45.tgz#2c0fafd78705e7a18b7906b5201a522719dc5190"
-  integrity sha512-w+tIMs3rq2afQdsPJlODhoUEKzFP1ayaoyl1CcnwtIlsVe7K7bA1NGm4s3PraqTLlXnbIN84zuBlxBWo1u9BLw==
-
 "@types/normalize-package-data@^2.4.0":
   version "2.4.0"
   resolved "https://registry.yarnpkg.com/@types/normalize-package-data/-/normalize-package-data-2.4.0.tgz#e486d0d97396d79beedd0a6e33f4534ff6b4973e"
@@ -1942,16 +1937,16 @@
     deepmerge "^4.0.0"
     glob "^8.0.3"
 
-"@wdio/jasmine-framework@7.18.0":
-  version "7.18.0"
-  resolved "https://registry.yarnpkg.com/@wdio/jasmine-framework/-/jasmine-framework-7.18.0.tgz#c96b565cef6d095fcd878dd53e5a0534901dcd69"
-  integrity sha512-pdLeyntODnlSadjO957nXqOPZyvXldRDns/ZStLPG22BKvMwt8Rjiqj/vuq0/OVIr6dS3gfZ+o4vyXK2fdIotA==
+"@wdio/jasmine-framework@7.30.2":
+  version "7.30.2"
+  resolved "https://registry.yarnpkg.com/@wdio/jasmine-framework/-/jasmine-framework-7.30.2.tgz#bd5b848aaa344ff8f998e6b36ee126abfd5def39"
+  integrity sha512-BjzRlrhcopjfCzgz56n1RuZseOvsTEFgdTwkg5El/mWeftyTPrKBh4sp9cF8V8SIs08UN5xOijT9EJqaxrTRbA==
   dependencies:
     "@types/jasmine" "3.10.3"
-    "@types/node" "^17.0.4"
-    "@wdio/logger" "7.17.3"
-    "@wdio/types" "7.18.0"
-    "@wdio/utils" "7.18.0"
+    "@types/node" "^18.0.0"
+    "@wdio/logger" "7.26.0"
+    "@wdio/types" "7.30.2"
+    "@wdio/utils" "7.30.2"
     expect-webdriverio "^3.0.0"
     jasmine "3.10.0"
 
@@ -1981,16 +1976,6 @@
     async-exit-hook "^2.0.1"
     split2 "^4.0.0"
     stream-buffers "^3.0.2"
-
-"@wdio/logger@7.17.3":
-  version "7.17.3"
-  resolved "https://registry.yarnpkg.com/@wdio/logger/-/logger-7.17.3.tgz#fcdfcbd9892173f9df0de67f448ae6d6f2aa6c3b"
-  integrity sha512-hpvJDsJMX8G/8gXHOEipxkQPjojjA+BRCZqCvZRLCVpWm2JB7tBoMzu9sUJXcpSkY03b94KAd4EwNA2uNAf9aQ==
-  dependencies:
-    chalk "^4.0.0"
-    loglevel "^1.6.0"
-    loglevel-plugin-prefix "^0.8.4"
-    strip-ansi "^6.0.0"
 
 "@wdio/logger@7.26.0":
   version "7.26.0"
@@ -2086,14 +2071,6 @@
     easy-table "^1.1.1"
     pretty-ms "^7.0.0"
 
-"@wdio/types@7.18.0":
-  version "7.18.0"
-  resolved "https://registry.yarnpkg.com/@wdio/types/-/types-7.18.0.tgz#0f3eebc68f16ef565ead871a2ca38b3d775e1544"
-  integrity sha512-GZO5gmobbAOGln4+edAsyPbeLes4I6ZCa0iBn/KVM72y8cvHH+L2ojLsDvzd6Pn/g79zDjEUpBH7BgkDplj8lg==
-  dependencies:
-    "@types/node" "^17.0.4"
-    got "^11.8.1"
-
 "@wdio/types@7.25.4":
   version "7.25.4"
   resolved "https://registry.yarnpkg.com/@wdio/types/-/types-7.25.4.tgz#6f8f028e3108dc880de5068264695f1572e65352"
@@ -2109,15 +2086,6 @@
   dependencies:
     "@types/node" "^18.0.0"
     got "^11.8.1"
-
-"@wdio/utils@7.18.0":
-  version "7.18.0"
-  resolved "https://registry.yarnpkg.com/@wdio/utils/-/utils-7.18.0.tgz#743e5db774a564ebc0e8588a5ca4ae3bc4629ebc"
-  integrity sha512-/Inq+rlz81D61ocmFOizZ7TVXKO4+zD2WZ5ZEU/AS4PDjDKsNBiCvXmC67sxU+Ky/p7lFuAxJFO4wmf5niGE5g==
-  dependencies:
-    "@wdio/logger" "7.17.3"
-    "@wdio/types" "7.18.0"
-    p-iteration "^1.1.8"
 
 "@wdio/utils@7.30.2":
   version "7.30.2"
