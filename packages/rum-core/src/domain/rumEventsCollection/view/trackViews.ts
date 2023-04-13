@@ -80,7 +80,7 @@ export function trackViews(
   const { stop: stopInitialViewTracking, initialView } = trackInitialView(initialViewOptions)
   let currentView = initialView
 
-  const { stop: stopViewLifeCycle } = startViewLifeCycle()
+  startViewLifeCycle()
 
   let locationChangeSubscription: Subscription
   if (areViewsTrackedAutomatically) {
@@ -137,17 +137,6 @@ export function trackViews(
         currentView.triggerUpdate()
       }
     })
-
-    // Session keep alive
-    const keepAliveInterval = setInterval(() => {
-      currentView.triggerUpdate()
-    }, SESSION_KEEP_ALIVE_INTERVAL)
-
-    return {
-      stop: () => {
-        clearInterval(keepAliveInterval)
-      },
-    }
   }
 
   function renewViewOnLocationChange(locationChangeObservable: Observable<LocationChange>) {
@@ -173,7 +162,6 @@ export function trackViews(
     stop: () => {
       locationChangeSubscription?.unsubscribe()
       stopInitialViewTracking()
-      stopViewLifeCycle()
       currentView.end()
     },
   }
@@ -234,6 +222,9 @@ function newView(
     scheduleViewUpdate
   )
 
+  // Session keep alive
+  const keepAliveIntervalId = setInterval(triggerViewUpdate, SESSION_KEEP_ALIVE_INTERVAL)
+
   // Initial view update
   triggerViewUpdate()
 
@@ -275,6 +266,7 @@ function newView(
       }
       endClocks = clocks
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks })
+      clearInterval(keepAliveIntervalId)
       stopViewMetricsTracking()
       scheduleStopEventCountsTracking()
     },

@@ -428,6 +428,19 @@ describe('view lifecycle', () => {
 
       expect(getViewUpdateCount()).toEqual(2)
     })
+
+    it('should not send periodical updates after the session has expired', () => {
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+      const { getViewUpdateCount } = viewTest
+
+      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+
+      expect(getViewUpdateCount()).toBe(1)
+
+      clock.tick(SESSION_KEEP_ALIVE_INTERVAL)
+
+      expect(getViewUpdateCount()).toBe(1)
+    })
   })
 
   describe('page exit', () => {
