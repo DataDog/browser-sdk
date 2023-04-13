@@ -78,7 +78,6 @@ export const config: OptionsWithLogsPath = {
   beforeSession: (_config, _capabilities, _specs, _cid) => {
     // Expose everything besides expect, as we want to keep the one from Jasmine
     global.browser = browser
-    global.driver = browser
     global.$ = $
     global.$$ = $$
   },

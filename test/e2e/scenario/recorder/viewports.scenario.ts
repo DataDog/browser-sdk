@@ -182,7 +182,7 @@ async function pinchZoom(xChange: number) {
       ],
     },
   ]
-  await driver.performActions(actions)
+  await browser.performActions(actions)
 }
 
 async function performSignificantZoom() {
@@ -219,7 +219,7 @@ async function visualScrollVerticallyDown(yChange: number) {
       ],
     },
   ]
-  await driver.performActions(actions)
+  await browser.performActions(actions)
 }
 
 async function buildScrollablePage() {
