@@ -126,6 +126,8 @@ export function trackViews(
     })
 
     lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
+      // Make sure initial view is not updated after session expiration
+      stopInitialViewTracking()
       currentView.end()
     })
 

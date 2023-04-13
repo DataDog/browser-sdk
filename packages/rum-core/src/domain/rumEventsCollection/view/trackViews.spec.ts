@@ -190,6 +190,22 @@ describe('initial view', () => {
       expect(getViewUpdate(2).timings).toEqual({})
     })
 
+    it('should not update timings after session expires', () => {
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+      const { getViewUpdateCount } = viewTest
+
+      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+
+      expect(getViewUpdateCount()).toEqual(2)
+
+      clock.tick(FAKE_NAVIGATION_ENTRY.responseStart) // ensure now > responseStart
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [FAKE_NAVIGATION_ENTRY])
+
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+      expect(getViewUpdateCount()).toEqual(2)
+    })
+
     describe('load event happening after initial view end', () => {
       let initialView: { init: ViewEvent; end: ViewEvent; last: ViewEvent }
       let secondView: { init: ViewEvent; last: ViewEvent }
