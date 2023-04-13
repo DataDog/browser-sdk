@@ -6,7 +6,6 @@ import {
   getFileFromStackTraceString,
   initReportObservable,
 } from '@datadog/browser-core'
-import type { RawReportLogsEvent } from '../../../rawLogsEvent.types'
 import type { LogsConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -40,7 +39,7 @@ export function startReportCollection(configuration: LogsConfiguration, lifeCycl
       message += ` Found in ${getFileFromStackTraceString(report.stack)!}`
     }
 
-    lifeCycle.notify<RawReportLogsEvent>(LifeCycleEventType.RAW_LOG_COLLECTED, {
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
       rawLogsEvent: {
         date: timeStampNow(),
         message,

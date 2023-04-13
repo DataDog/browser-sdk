@@ -12,7 +12,6 @@ import {
   tryToClone,
   isServerError,
 } from '@datadog/browser-core'
-import type { RawNetworkLogsEvent } from '../../../rawLogsEvent.types'
 import type { LogsConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -46,7 +45,7 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
     }
 
     function onResponseDataAvailable(responseData: unknown) {
-      lifeCycle.notify<RawNetworkLogsEvent>(LifeCycleEventType.RAW_LOG_COLLECTED, {
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
         rawLogsEvent: {
           message: `${format(type)} error ${request.method} ${request.url}`,
           date: request.startClocks.timeStamp,

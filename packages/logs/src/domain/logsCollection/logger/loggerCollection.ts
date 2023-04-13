@@ -1,6 +1,6 @@
 import type { TimeStamp } from '@datadog/browser-core'
 import { includes, display, combine, ErrorSource, timeStampNow } from '@datadog/browser-core'
-import type { CommonContext, RawLoggerLogsEvent } from '../../../rawLogsEvent.types'
+import type { CommonContext } from '../../../rawLogsEvent.types'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { Logger, LogsMessage } from '../../logger'
@@ -26,7 +26,7 @@ export function startLoggerCollection(lifeCycle: LifeCycle) {
       display(logsMessage.status, logsMessage.message, combine(logger.getContext(), messageContext))
     }
 
-    lifeCycle.notify<RawLoggerLogsEvent>(LifeCycleEventType.RAW_LOG_COLLECTED, {
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
       rawLogsEvent: {
         date: savedDate || timeStampNow(),
         message: logsMessage.message,

@@ -23,7 +23,7 @@ import { startNetworkErrorCollection } from '../domain/logsCollection/networkErr
 import { startRuntimeErrorCollection } from '../domain/logsCollection/runtimeError/runtimeErrorCollection'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { startLoggerCollection } from '../domain/logsCollection/logger/loggerCollection'
-import type { CommonContext, RawAgentLogsEvent } from '../rawLogsEvent.types'
+import type { CommonContext } from '../rawLogsEvent.types'
 import { startLogsBatch } from '../transport/startLogsBatch'
 import { startLogsBridge } from '../transport/startLogsBridge'
 import type { Logger } from '../domain/logger'
@@ -41,7 +41,7 @@ export function startLogs(
   lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (log) => sendToExtension('logs', log))
 
   const reportError = (error: RawError) =>
-    lifeCycle.notify<RawAgentLogsEvent>(LifeCycleEventType.RAW_LOG_COLLECTED, {
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
       rawLogsEvent: {
         message: error.message,
         date: error.startClocks.timeStamp,
