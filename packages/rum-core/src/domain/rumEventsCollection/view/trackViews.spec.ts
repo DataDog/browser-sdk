@@ -688,6 +688,21 @@ describe('view custom timings', () => {
     })
     expect(displaySpy).toHaveBeenCalled()
   })
+
+  it('should not add custom timing when the session has expired', () => {
+    const { clock, lifeCycle } = setupBuilder.build()
+    const { getViewUpdateCount, addTiming } = viewTest
+
+    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+
+    expect(getViewUpdateCount()).toBe(2)
+
+    addTiming('foo', relativeNow())
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    expect(getViewUpdateCount()).toBe(2)
+  })
 })
 
 describe('start view', () => {

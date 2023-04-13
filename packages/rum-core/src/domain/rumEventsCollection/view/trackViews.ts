@@ -277,6 +277,9 @@ function newView(
       scheduleViewUpdate()
     },
     addTiming(name: string, time: RelativeTime | TimeStamp) {
+      if (endClocks) {
+        return
+      }
       const relativeTime = looksLikeRelativeTime(time) ? time : elapsed(startClocks.timeStamp, time)
       customTimings[sanitizeTiming(name)] = relativeTime
       scheduleViewUpdate()
