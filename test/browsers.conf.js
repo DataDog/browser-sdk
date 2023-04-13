@@ -1,6 +1,6 @@
 // Capabilities: https://www.browserstack.com/automate/capabilities
 
-module.exports = [
+const browserConfigurations = [
   {
     sessionName: 'Edge',
     name: 'Edge',
@@ -44,3 +44,7 @@ module.exports = [
     osVersion: '10',
   },
 ]
+
+module.exports = {
+  browserConfigurations,
+}

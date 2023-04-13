@@ -1,4 +1,4 @@
-declare const browsers: Array<{
+export const browserConfigurations: Array<{
   sessionName: string
   name: string
   version?: string
@@ -6,6 +6,3 @@ declare const browsers: Array<{
   osVersion: string
   device?: string
 }>
-
-// eslint-disable-next-line import/no-default-export
-export default browsers

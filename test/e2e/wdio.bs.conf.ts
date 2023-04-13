@@ -1,5 +1,5 @@
 import type { Options } from '@wdio/types'
-import browsers from '../browsers.conf'
+import { browserConfigurations } from '../browsers.conf'
 import { getBuildInfos } from '../envUtils'
 import { config as baseConfig } from './wdio.base.conf'
 
@@ -8,7 +8,7 @@ export const config: Options.Testrunner = {
 
   specFileRetries: 1,
 
-  capabilities: browsers
+  capabilities: browserConfigurations
     .filter(
       (browser) =>
         browser.sessionName !== 'IE' &&
