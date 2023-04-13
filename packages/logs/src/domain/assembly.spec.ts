@@ -1,5 +1,13 @@
 import type { Context, RelativeTime, TelemetryEvent, TimeStamp } from '@datadog/browser-core'
-import { TelemetryService, startTelemetry, ErrorSource, ONE_MINUTE, getTimeStamp, noop } from '@datadog/browser-core'
+import {
+  Observable,
+  TelemetryService,
+  startTelemetry,
+  ErrorSource,
+  ONE_MINUTE,
+  getTimeStamp,
+  noop,
+} from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, cleanupSyntheticsWorkerValues, mockSyntheticsWorkerValues } from '@datadog/browser-core/test'
 import type { LogsEvent } from '../logsEvent.types'
@@ -35,6 +43,7 @@ const COMMON_CONTEXT_WITH_USER: CommonContext = {
 describe('startLogsAssembly', () => {
   const sessionManager: LogsSessionManager = {
     findTrackedSession: () => (sessionIsTracked ? { id: SESSION_ID } : undefined),
+    expireObservable: new Observable(),
   }
 
   let beforeSend: (event: LogsEvent) => void | boolean
@@ -279,6 +288,7 @@ describe('startLogsAssembly', () => {
 describe('user management', () => {
   const sessionManager: LogsSessionManager = {
     findTrackedSession: () => (sessionIsTracked ? { id: SESSION_ID } : undefined),
+    expireObservable: new Observable<void>(),
   }
 
   let sessionIsTracked: boolean
@@ -345,8 +355,9 @@ describe('user management', () => {
 
 describe('logs limitation', () => {
   let clock: Clock
-  const sessionManager = {
+  const sessionManager: LogsSessionManager = {
     findTrackedSession: () => ({ id: SESSION_ID }),
+    expireObservable: new Observable(),
   }
 
   let beforeSend: (event: LogsEvent) => void | boolean

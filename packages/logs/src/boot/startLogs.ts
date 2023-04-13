@@ -53,7 +53,13 @@ export function startLogs(
       },
     })
   const pageExitObservable = createPageExitObservable()
-  const telemetry = startLogsTelemetry(configuration, reportError, pageExitObservable)
+
+  const session =
+    areCookiesAuthorized(configuration.cookieOptions) && !canUseEventBridge() && !willSyntheticsInjectRum()
+      ? startLogsSessionManager(configuration)
+      : startLogsSessionManagerStub(configuration)
+
+  const telemetry = startLogsTelemetry(configuration, reportError, pageExitObservable, session.expireObservable)
   telemetry.setContextProvider(() => ({
     application: {
       id: getRUMInternalContext()?.application_id,
@@ -75,15 +81,10 @@ export function startLogs(
   startReportCollection(configuration, lifeCycle)
   const { handleLog } = startLoggerCollection(lifeCycle)
 
-  const session =
-    areCookiesAuthorized(configuration.cookieOptions) && !canUseEventBridge() && !willSyntheticsInjectRum()
-      ? startLogsSessionManager(configuration)
-      : startLogsSessionManagerStub(configuration)
-
   startLogsAssembly(session, configuration, lifeCycle, buildCommonContext, mainLogger, reportError)
 
   if (!canUseEventBridge()) {
-    startLogsBatch(configuration, lifeCycle, reportError, pageExitObservable)
+    startLogsBatch(configuration, lifeCycle, reportError, pageExitObservable, session.expireObservable)
   } else {
     startLogsBridge(lifeCycle)
   }
@@ -100,7 +101,8 @@ export function startLogs(
 function startLogsTelemetry(
   configuration: LogsConfiguration,
   reportError: (error: RawError) => void,
-  pageExitObservable: Observable<PageExitEvent>
+  pageExitObservable: Observable<PageExitEvent>,
+  sessionExpireObservable: Observable<void>
 ) {
   const telemetry = startTelemetry(TelemetryService.LOGS, configuration)
   if (canUseEventBridge()) {
@@ -112,6 +114,7 @@ function startLogsTelemetry(
       configuration.rumEndpointBuilder,
       reportError,
       pageExitObservable,
+      sessionExpireObservable,
       configuration.replica?.rumEndpointBuilder
     )
     telemetry.observable.subscribe((event) => telemetryBatch.add(event, isTelemetryReplicationAllowed(configuration)))

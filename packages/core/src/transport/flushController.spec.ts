@@ -17,15 +17,18 @@ describe('flushController', () => {
   let flushController: FlushController
   let flushSpy: jasmine.Spy<(event: FlushEvent) => void>
   let pageExitObservable: Observable<PageExitEvent>
+  let sessionExpireObservable: Observable<void>
 
   beforeEach(() => {
     clock = mockClock()
     pageExitObservable = new Observable()
+    sessionExpireObservable = new Observable()
     flushController = createFlushController({
       bytesLimit: BYTES_LIMIT,
       messagesLimit: MESSAGES_LIMIT,
       durationLimit: DURATION_LIMIT,
       pageExitObservable,
+      sessionExpireObservable,
     })
     flushSpy = jasmine.createSpy()
     flushController.flushObservable.subscribe(flushSpy)
@@ -74,6 +77,33 @@ describe('flushController', () => {
     it('notifies when the page is exiting even if no message have been fully added yet', () => {
       flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
       pageExitObservable.notify({ reason: 'before_unload' })
+      expect(flushSpy).toHaveBeenCalled()
+    })
+  })
+
+  describe('session expire', () => {
+    it('notifies when the session expires', () => {
+      flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
+      flushController.notifyAfterAddMessage()
+      sessionExpireObservable.notify()
+      expect(flushSpy).toHaveBeenCalled()
+    })
+
+    it('flush reason should be "session_expire"', () => {
+      flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
+      flushController.notifyAfterAddMessage()
+      sessionExpireObservable.notify()
+      expect(flushSpy.calls.first().args[0].reason).toBe('session_expire')
+    })
+
+    it('does not notify if no message was added', () => {
+      sessionExpireObservable.notify()
+      expect(flushSpy).not.toHaveBeenCalled()
+    })
+
+    it('notifies when the session expires even if no message have been fully added yet', () => {
+      flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
+      sessionExpireObservable.notify()
       expect(flushSpy).toHaveBeenCalled()
     })
   })

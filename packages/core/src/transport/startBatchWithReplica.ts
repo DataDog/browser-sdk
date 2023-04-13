@@ -12,6 +12,7 @@ export function startBatchWithReplica<T extends Context>(
   endpoint: EndpointBuilder,
   reportError: (error: RawError) => void,
   pageExitObservable: Observable<PageExitEvent>,
+  sessionExpireObservable: Observable<void>,
   replicaEndpoint?: EndpointBuilder
 ) {
   const primaryBatch = createBatch(endpoint)
@@ -28,6 +29,7 @@ export function startBatchWithReplica<T extends Context>(
         bytesLimit: configuration.batchBytesLimit,
         durationLimit: configuration.flushTimeout,
         pageExitObservable,
+        sessionExpireObservable,
       }),
       configuration.messageBytesLimit
     )

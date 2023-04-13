@@ -1,14 +1,8 @@
-import { browserExecuteAsync } from '../helpers/browser'
 import { getTestServers, waitForServersIdle } from './httpServers'
+import { waitForRequests } from './waitForRequests'
 
 export async function flushEvents() {
-  // wait to process actions + event loop before switching page
-  await browserExecuteAsync((done) =>
-    setTimeout(() => {
-      done(undefined)
-    }, 200)
-  )
-  await waitForServersIdle()
+  await waitForRequests()
 
   const servers = await getTestServers()
 
