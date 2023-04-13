@@ -118,14 +118,16 @@ export function trackViews(
 
   function startViewLifeCycle() {
     lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-      // do not trigger view update to avoid wrong data
-      currentView.end()
       // Renew view on session renewal
       currentView = trackViewChange(undefined, {
         name: currentView.name,
         service: currentView.service,
         version: currentView.version,
       })
+    })
+
+    lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
+      currentView.end()
     })
 
     // End the current view on page unload
@@ -267,6 +269,10 @@ function newView(
     version,
     scheduleUpdate: scheduleViewUpdate,
     end(clocks = clocksNow()) {
+      if (endClocks) {
+        // view already ended
+        return
+      }
       endClocks = clocks
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks })
       stopViewMetricsTracking()

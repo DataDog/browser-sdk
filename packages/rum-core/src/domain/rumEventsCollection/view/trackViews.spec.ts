@@ -279,16 +279,52 @@ describe('view lifecycle', () => {
     setupBuilder.cleanup()
   })
 
+  describe('expire session', () => {
+    it('should end the view when the session expires', () => {
+      const { lifeCycle } = setupBuilder.build()
+      const { getViewEndCount } = viewTest
+
+      expect(getViewEndCount()).toBe(0)
+
+      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+
+      expect(getViewEndCount()).toBe(1)
+    })
+
+    it('should not start a new view the session expires', () => {
+      const { lifeCycle } = setupBuilder.build()
+      const { getViewCreateCount } = viewTest
+
+      expect(getViewCreateCount()).toBe(1)
+
+      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+
+      expect(getViewCreateCount()).toBe(1)
+    })
+
+    it('should not end the view if the view already ended', () => {
+      const { lifeCycle } = setupBuilder.build()
+      const { getViewEndCount } = viewTest
+
+      lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.UNLOADING })
+
+      expect(getViewEndCount()).toBe(1)
+
+      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+
+      expect(getViewEndCount()).toBe(1)
+    })
+  })
+
   describe('renew session', () => {
     it('should create new view on renew session', () => {
       const { lifeCycle } = setupBuilder.build()
-      const { getViewCreateCount, getViewEndCount } = viewTest
+      const { getViewCreateCount } = viewTest
 
       expect(getViewCreateCount()).toBe(1)
 
       lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
-      expect(getViewEndCount()).toBe(1)
       expect(getViewCreateCount()).toBe(2)
     })
 
