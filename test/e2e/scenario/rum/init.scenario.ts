@@ -124,7 +124,7 @@ describe('beforeSend', () => {
 
   createTest('allows to replace non-view events context')
     .withRum({
-      beforeSend: (event: any) => {
+      beforeSend: (event) => {
         event.context = { foo: 'bar' }
       },
     })

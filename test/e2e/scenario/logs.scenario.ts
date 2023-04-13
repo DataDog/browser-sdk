@@ -157,7 +157,7 @@ describe('logs', () => {
 
   createTest('allow to modify events')
     .withLogs({
-      beforeSend: (event: any) => {
+      beforeSend: (event) => {
         event.foo = 'bar'
       },
     })

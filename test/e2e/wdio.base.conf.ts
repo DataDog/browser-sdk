@@ -6,7 +6,7 @@ import { getRunId, getTestReportDirectory } from '../envUtils'
 import { APPLICATION_ID } from './lib/helpers/constants'
 
 const reporters: Reporters.ReporterEntry[] = [['spec', { onlyFailures: true }]]
-let logsPath: string
+let logsPath: string | undefined
 
 const testReportDirectory = getTestReportDirectory()
 if (testReportDirectory) {
@@ -25,7 +25,8 @@ if (testReportDirectory) {
   logsPath = 'specs.log'
 }
 
-export const config: Options.Testrunner = {
+type OptionsWithLogsPath = Options.Testrunner & { logsPath?: string }
+export const config: OptionsWithLogsPath = {
   runner: 'local',
   autoCompileOpts: {
     autoCompile: true,
@@ -81,4 +82,5 @@ export const config: Options.Testrunner = {
     global.$ = $
     global.$$ = $$
   },
+  logsPath,
 }
