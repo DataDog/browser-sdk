@@ -154,7 +154,6 @@ export function trackViews(
         currentView.end()
         currentView.triggerUpdate()
         currentView = trackViewChange()
-        return
       }
     })
   }
