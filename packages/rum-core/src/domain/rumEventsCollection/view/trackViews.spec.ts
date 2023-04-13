@@ -291,6 +291,17 @@ describe('view lifecycle', () => {
       expect(getViewEndCount()).toBe(1)
     })
 
+    it('should send a final view update', () => {
+      const { lifeCycle } = setupBuilder.build()
+      const { getViewUpdateCount } = viewTest
+
+      expect(getViewUpdateCount()).toBe(1)
+
+      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+
+      expect(getViewUpdateCount()).toBe(2)
+    })
+
     it('should not start a new view the session expires', () => {
       const { lifeCycle } = setupBuilder.build()
       const { getViewCreateCount } = viewTest
@@ -304,15 +315,17 @@ describe('view lifecycle', () => {
 
     it('should not end the view if the view already ended', () => {
       const { lifeCycle } = setupBuilder.build()
-      const { getViewEndCount } = viewTest
+      const { getViewEndCount, getViewUpdateCount } = viewTest
 
       lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.UNLOADING })
 
       expect(getViewEndCount()).toBe(1)
+      expect(getViewUpdateCount()).toBe(2)
 
       lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
 
       expect(getViewEndCount()).toBe(1)
+      expect(getViewUpdateCount()).toBe(2)
     })
   })
 
@@ -402,18 +415,6 @@ describe('view lifecycle', () => {
       )
       resetExperimentalFeatures()
     })
-
-    it('should not update the current view when the session is renewed', () => {
-      const { lifeCycle } = setupBuilder.build()
-      const { getViewUpdateCount, getViewUpdate } = viewTest
-
-      expect(getViewUpdateCount()).toEqual(1)
-
-      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-
-      expect(getViewUpdateCount()).toEqual(2)
-      expect(getViewUpdate(0).id).not.toBe(getViewUpdate(1).id)
-    })
   })
 
   describe('session keep alive', () => {
@@ -435,11 +436,11 @@ describe('view lifecycle', () => {
 
       lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
 
-      expect(getViewUpdateCount()).toBe(1)
+      expect(getViewUpdateCount()).toBe(2)
 
       clock.tick(SESSION_KEEP_ALIVE_INTERVAL)
 
-      expect(getViewUpdateCount()).toBe(1)
+      expect(getViewUpdateCount()).toBe(2)
     })
   })
 

@@ -99,7 +99,6 @@ export function trackViews(
     )
     const { stop } = trackInitialViewTimings(lifeCycle, (timings) => {
       initialView.updateTimings(timings)
-      initialView.scheduleUpdate()
     })
     return { initialView, stop }
   }
@@ -134,7 +133,6 @@ export function trackViews(
     lifeCycle.subscribe(LifeCycleEventType.PAGE_EXITED, (pageExitEvent) => {
       if (pageExitEvent.reason === PageExitReason.UNLOADING || pageExitEvent.reason === PageExitReason.PAGEHIDE) {
         currentView.end()
-        currentView.triggerUpdate()
       }
     })
   }
@@ -143,7 +141,6 @@ export function trackViews(
     return locationChangeObservable.subscribe(({ oldLocation, newLocation }) => {
       if (areDifferentLocation(oldLocation, newLocation)) {
         currentView.end()
-        currentView.triggerUpdate()
         currentView = trackViewChange()
       }
     })
@@ -152,11 +149,9 @@ export function trackViews(
   return {
     addTiming: (name: string, time: RelativeTime | TimeStamp = timeStampNow()) => {
       currentView.addTiming(name, time)
-      currentView.scheduleUpdate()
     },
     startView: (options?: ViewOptions, startClocks?: ClocksState) => {
       currentView.end(startClocks)
-      currentView.triggerUpdate()
       currentView = trackViewChange(startClocks, options)
     },
     stop: () => {
@@ -229,6 +224,8 @@ function newView(
   triggerViewUpdate()
 
   function triggerViewUpdate() {
+    cancelScheduleViewUpdate()
+
     documentVersion += 1
     const currentEnd = endClocks === undefined ? timeStampNow() : endClocks.timeStamp
     lifeCycle.notify(
@@ -258,7 +255,6 @@ function newView(
     name,
     service,
     version,
-    scheduleUpdate: scheduleViewUpdate,
     end(clocks = clocksNow()) {
       if (endClocks) {
         // view already ended
@@ -269,10 +265,6 @@ function newView(
       clearInterval(keepAliveIntervalId)
       stopViewMetricsTracking()
       scheduleStopEventCountsTracking()
-    },
-    triggerUpdate() {
-      // cancel any pending view updates execution
-      cancelScheduleViewUpdate()
       triggerViewUpdate()
     },
     updateTimings(newTimings: Timings) {
@@ -280,10 +272,12 @@ function newView(
       if (newTimings.loadEvent !== undefined) {
         setLoadEvent(newTimings.loadEvent)
       }
+      scheduleViewUpdate()
     },
     addTiming(name: string, time: RelativeTime | TimeStamp) {
       const relativeTime = looksLikeRelativeTime(time) ? time : elapsed(startClocks.timeStamp, time)
       customTimings[sanitizeTiming(name)] = relativeTime
+      scheduleViewUpdate()
     },
   }
 }
