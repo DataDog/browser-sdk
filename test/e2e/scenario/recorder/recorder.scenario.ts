@@ -23,7 +23,7 @@ import {
   findMouseInteractionRecords,
   findElementWithTagName,
 } from '@datadog/browser-rum/test'
-import { ExperimentalFeature } from '@datadog/browser-core/src/domain/configuration/experimentalFeatures'
+import { ExperimentalFeature } from '@datadog/browser-core/src/tools/experimentalFeatures'
 import type { BrowserSegmentMetadataAndSegmentSizes } from '@datadog/browser-rum/src/domain/segmentCollection'
 import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
 import { browserExecute, browserExecuteAsync } from '../../lib/helpers/browser'
