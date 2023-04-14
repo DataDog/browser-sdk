@@ -8,9 +8,11 @@ import type {
 } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { getReplayStats } from '../domain/replayStats'
+import { getSessionReplayLink } from '../domain/getSessionReplayLink'
 import { startDeflateWorker } from '../domain/segmentCollection'
 
 import type { startRecording } from './startRecording'
+import { isBrowserSupported } from './isBrowserSupported'
 
 export type StartRecording = typeof startRecording
 
@@ -51,6 +53,7 @@ export function makeRecorderApi(
       getReplayStats: () => undefined,
       onRumStart: noop,
       isRecording: () => false,
+      getSessionReplayLink: () => undefined,
     }
   }
 
@@ -68,7 +71,8 @@ export function makeRecorderApi(
     start: () => startStrategy(),
     stop: () => stopStrategy(),
     getReplayStats,
-
+    getSessionReplayLink: (configuration, sessionManager, viewContexts) =>
+      getSessionReplayLink(configuration, sessionManager, viewContexts, state.status !== RecorderStatus.Stopped),
     onRumStart: (
       lifeCycle: LifeCycle,
       configuration: RumConfiguration,
@@ -154,16 +158,4 @@ export function makeRecorderApi(
 
     isRecording: () => state.status === RecorderStatus.Started,
   }
-}
-
-/**
- * Test for Browser features used while recording
- */
-function isBrowserSupported() {
-  return (
-    // Array.from is a bit less supported by browsers than CSSSupportsRule, but has higher chances
-    // to be polyfilled. Test for both to be more confident. We could add more things if we find out
-    // this test is not sufficient.
-    typeof Array.from === 'function' && typeof CSSSupportsRule === 'function' && 'forEach' in NodeList.prototype
-  )
 }

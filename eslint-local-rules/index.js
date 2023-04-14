@@ -11,6 +11,9 @@ module.exports = {
   'disallow-enum-exports': require('./disallowEnumExports'),
   'disallow-spec-import': require('./disallowSpecImport'),
   'disallow-protected-directory-import': require('./disallowProtectedDirectoryImport'),
+  'disallow-test-import-export-from-src': require('./disallowTestImportExportFromSrc'),
   'disallow-zone-js-patched-values': require('./disallowZoneJsPatchedValues'),
+  'disallow-url-constructor-patched-values': require('./disallowUrlConstructorPatchValues.js'),
+  'disallow-generic-utils': require('./disallowGenericUtils'),
   'secure-command-execution': require('./secureCommandExecution'),
 }

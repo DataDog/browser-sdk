@@ -1,6 +1,7 @@
-import type { Context } from '../../tools/context'
+import type { Context } from '../../tools/serialisation/context'
 import { display } from '../../tools/display'
-import { assign, getType } from '../../tools/utils'
+import { getType } from '../../tools/utils/typeUtils'
+import { assign } from '../../tools/utils/polyfills'
 import type { User } from './user.types'
 
 /**

@@ -1,4 +1,4 @@
-import type { BatchFlushEvent, Context, ContextManager, TelemetryEvent } from '@datadog/browser-core'
+import type { FlushEvent, Context, ContextManager, TelemetryEvent } from '@datadog/browser-core'
 import { resetExperimentalFeatures, TelemetryService, startTelemetry, Observable } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../test'
 import { setup } from '../../test'
@@ -10,7 +10,7 @@ import { MEASURES_PERIOD_DURATION, startCustomerDataTelemetry } from './startCus
 
 describe('customerDataTelemetry', () => {
   let setupBuilder: TestSetupBuilder
-  let batchFlushObservable: Observable<BatchFlushEvent>
+  let batchFlushObservable: Observable<FlushEvent>
   let telemetryEvents: TelemetryEvent[]
   let fakeContext: Context
   let fakeContextBytesCount: number
@@ -35,7 +35,11 @@ describe('customerDataTelemetry', () => {
     for (let index = 0; index < eventNumber; index++) {
       lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, viewEvent)
     }
-    batchFlushObservable.notify({ bufferBytesCount: batchBytesCount, bufferMessagesCount: eventNumber })
+    batchFlushObservable.notify({
+      reason: 'duration_limit',
+      bytesCount: batchBytesCount,
+      messagesCount: eventNumber,
+    })
   }
 
   function spyOnContextManager(contextManager: ContextManager) {
@@ -125,7 +129,7 @@ describe('customerDataTelemetry', () => {
   it('should collect customer data only if batches contains rum events, no just telemetry', () => {
     const { clock } = setupBuilder.build()
 
-    batchFlushObservable.notify({ bufferBytesCount: 1, bufferMessagesCount: 1 })
+    batchFlushObservable.notify({ reason: 'duration_limit', bytesCount: 1, messagesCount: 1 })
 
     clock.tick(MEASURES_PERIOD_DURATION)
 
@@ -136,7 +140,7 @@ describe('customerDataTelemetry', () => {
     const { clock } = setupBuilder.build()
 
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, viewEvent)
-    batchFlushObservable.notify({ bufferBytesCount: 1, bufferMessagesCount: 1 })
+    batchFlushObservable.notify({ reason: 'duration_limit', bytesCount: 1, messagesCount: 1 })
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, viewEvent)
     clock.tick(MEASURES_PERIOD_DURATION)
 

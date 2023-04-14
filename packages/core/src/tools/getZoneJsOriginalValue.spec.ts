@@ -2,7 +2,7 @@ import { stubZoneJs } from '../../test'
 
 import type { BrowserWindowWithZoneJs } from './getZoneJsOriginalValue'
 import { getZoneJsOriginalValue } from './getZoneJsOriginalValue'
-import { noop } from './utils'
+import { noop } from './utils/functionUtils'
 
 describe('getZoneJsOriginalValue', () => {
   let zoneJsStub: ReturnType<typeof stubZoneJs> | undefined

@@ -2,9 +2,14 @@ import type { CookieOptions } from '../../browser/cookie'
 import { getCurrentSite } from '../../browser/cookie'
 import { catchUserErrors } from '../../tools/catchUserErrors'
 import { display } from '../../tools/display'
-import { assign, isPercentage, objectHasValue, ONE_KIBI_BYTE, ONE_SECOND } from '../../tools/utils'
 import type { RawTelemetryConfiguration } from '../telemetry'
-import { ExperimentalFeature, addExperimentalFeatures } from './experimentalFeatures'
+import { ExperimentalFeature, addExperimentalFeatures } from '../../tools/experimentalFeatures'
+import type { Duration } from '../../tools/utils/timeUtils'
+import { ONE_SECOND } from '../../tools/utils/timeUtils'
+import { isPercentage } from '../../tools/utils/numberUtils'
+import { ONE_KIBI_BYTE } from '../../tools/utils/byteUtils'
+import { objectHasValue } from '../../tools/utils/objectUtils'
+import { assign } from '../../tools/utils/polyfills'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
 
@@ -81,7 +86,7 @@ export interface Configuration extends TransportConfiguration {
 
   // Batch configuration
   batchBytesLimit: number
-  flushTimeout: number
+  flushTimeout: Duration
   batchMessagesLimit: number
   messageBytesLimit: number
 }
@@ -144,7 +149,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
        * flush automatically, aim to be lower than ALB connection timeout
        * to maximize connection reuse.
        */
-      flushTimeout: 30 * ONE_SECOND,
+      flushTimeout: (30 * ONE_SECOND) as Duration,
 
       /**
        * Logs intake limit

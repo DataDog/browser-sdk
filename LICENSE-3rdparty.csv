@@ -20,7 +20,6 @@ dev,@types/node-forge,MIT,Copyright Microsoft Corporation
 dev,@types/pako,MIT,Copyright Microsoft Corporation
 dev,@types/react,MIT,Copyright Microsoft Corporation
 dev,@types/react-dom,MIT,Copyright Microsoft Corporation
-dev,@types/sinon,MIT,Copyright Microsoft Corporation
 dev,@typescript-eslint/eslint-plugin,MIT,Copyright JS Foundation and other contributors
 dev,@typescript-eslint/parser,MIT,Copyright JS Foundation and other contributors
 dev,@wdio/browserstack-service,MIT,Copyright JS Foundation and other contributors
@@ -68,7 +67,6 @@ dev,npm-run-all,MIT,Copyright 2015 Toru Nagashima
 dev,pako,MIT,(C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
 dev,prettier,MIT,Copyright James Long and contributors
 dev,puppeteer,Apache-2.0,Copyright 2017 Google Inc.
-dev,sinon,BSD-3-Clause,Copyright 2010-2017 Christian Johansen
 dev,terser-webpack-plugin,MIT,Copyright JS Foundation and other contributors
 dev,ts-loader,MIT,Copyright 2015 TypeStrong
 dev,ts-node,MIT,Copyright 2014 Blake Embrey

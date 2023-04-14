@@ -1,9 +1,11 @@
+import { Observable } from '@datadog/browser-core'
 import { startInternalContext } from './internalContext'
 
 describe('internal context', () => {
   it('should return undefined if sessionManager cannot find session', () => {
     const sessionManagerMock = {
       findTrackedSession: () => undefined,
+      expireObservable: new Observable<void>(),
     }
     expect(startInternalContext(sessionManagerMock).get()).toEqual(undefined)
   })
@@ -14,6 +16,7 @@ describe('internal context', () => {
       findTrackedSession: () => ({
         id: sessionIdMock,
       }),
+      expireObservable: new Observable<void>(),
     }
     expect(startInternalContext(sessionManagerMock).get()).toEqual({
       session_id: sessionIdMock,

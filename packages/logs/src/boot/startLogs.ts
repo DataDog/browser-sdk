@@ -23,7 +23,7 @@ import { startNetworkErrorCollection } from '../domain/logsCollection/networkErr
 import { startRuntimeErrorCollection } from '../domain/logsCollection/runtimeError/runtimeErrorCollection'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { startLoggerCollection } from '../domain/logsCollection/logger/loggerCollection'
-import type { CommonContext, RawAgentLogsEvent } from '../rawLogsEvent.types'
+import type { CommonContext } from '../rawLogsEvent.types'
 import { startLogsBatch } from '../transport/startLogsBatch'
 import { startLogsBridge } from '../transport/startLogsBridge'
 import type { Logger } from '../domain/logger'
@@ -41,7 +41,7 @@ export function startLogs(
   lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (log) => sendToExtension('logs', log))
 
   const reportError = (error: RawError) =>
-    lifeCycle.notify<RawAgentLogsEvent>(LifeCycleEventType.RAW_LOG_COLLECTED, {
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
       rawLogsEvent: {
         message: error.message,
         date: error.startClocks.timeStamp,
@@ -53,7 +53,13 @@ export function startLogs(
       },
     })
   const pageExitObservable = createPageExitObservable()
-  const telemetry = startLogsTelemetry(configuration, reportError, pageExitObservable)
+
+  const session =
+    areCookiesAuthorized(configuration.cookieOptions) && !canUseEventBridge() && !willSyntheticsInjectRum()
+      ? startLogsSessionManager(configuration)
+      : startLogsSessionManagerStub(configuration)
+
+  const telemetry = startLogsTelemetry(configuration, reportError, pageExitObservable, session.expireObservable)
   telemetry.setContextProvider(() => ({
     application: {
       id: getRUMInternalContext()?.application_id,
@@ -75,15 +81,10 @@ export function startLogs(
   startReportCollection(configuration, lifeCycle)
   const { handleLog } = startLoggerCollection(lifeCycle)
 
-  const session =
-    areCookiesAuthorized(configuration.cookieOptions) && !canUseEventBridge() && !willSyntheticsInjectRum()
-      ? startLogsSessionManager(configuration)
-      : startLogsSessionManagerStub(configuration)
-
   startLogsAssembly(session, configuration, lifeCycle, buildCommonContext, mainLogger, reportError)
 
   if (!canUseEventBridge()) {
-    startLogsBatch(configuration, lifeCycle, reportError, pageExitObservable)
+    startLogsBatch(configuration, lifeCycle, reportError, pageExitObservable, session.expireObservable)
   } else {
     startLogsBridge(lifeCycle)
   }
@@ -100,7 +101,8 @@ export function startLogs(
 function startLogsTelemetry(
   configuration: LogsConfiguration,
   reportError: (error: RawError) => void,
-  pageExitObservable: Observable<PageExitEvent>
+  pageExitObservable: Observable<PageExitEvent>,
+  sessionExpireObservable: Observable<void>
 ) {
   const telemetry = startTelemetry(TelemetryService.LOGS, configuration)
   if (canUseEventBridge()) {
@@ -112,6 +114,7 @@ function startLogsTelemetry(
       configuration.rumEndpointBuilder,
       reportError,
       pageExitObservable,
+      sessionExpireObservable,
       configuration.replica?.rumEndpointBuilder
     )
     telemetry.observable.subscribe((event) => telemetryBatch.add(event, isTelemetryReplicationAllowed(configuration)))

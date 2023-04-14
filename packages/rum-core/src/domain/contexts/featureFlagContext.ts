@@ -1,17 +1,21 @@
 import type { RelativeTime, ContextValue, Context } from '@datadog/browser-core'
 import {
+  CustomerDataType,
+  warnIfCustomerDataLimitReached,
+  throttle,
   jsonStringify,
   computeBytesCount,
   noop,
   isExperimentalFeatureEnabled,
   SESSION_TIME_OUT_DELAY,
-  ContextHistory,
+  ValueHistory,
   ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 
 export const FEATURE_FLAG_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
+export const BYTES_COMPUTATION_THROTTLING_DELAY = 200
 
 export type FeatureFlagContext = Context
 
@@ -41,8 +45,9 @@ export function startFeatureFlagContexts(
     }
   }
 
-  const featureFlagContexts = new ContextHistory<FeatureFlagContext>(FEATURE_FLAG_CONTEXT_TIME_OUT_DELAY)
-  let bytesCountCache: number | undefined
+  const featureFlagContexts = new ValueHistory<FeatureFlagContext>(FEATURE_FLAG_CONTEXT_TIME_OUT_DELAY)
+  let bytesCountCache = 0
+  let alreadyWarned = false
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, ({ endClocks }) => {
     featureFlagContexts.closeActive(endClocks.relative)
@@ -50,8 +55,17 @@ export function startFeatureFlagContexts(
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, ({ startClocks }) => {
     featureFlagContexts.add({}, startClocks.relative)
-    bytesCountCache = undefined
+    bytesCountCache = 0
   })
+
+  // Throttle the bytes computation to minimize the impact on performance.
+  // Especially useful if the user call addFeatureFlagEvaluation API synchronously multiple times in a row
+  const { throttled: computeBytesCountThrottled } = throttle((context: Context) => {
+    bytesCountCache = computeBytesCountImpl(jsonStringify(context)!)
+    if (!alreadyWarned) {
+      alreadyWarned = warnIfCustomerDataLimitReached(bytesCountCache, CustomerDataType.FeatureFlag)
+    }
+  }, BYTES_COMPUTATION_THROTTLING_DELAY)
 
   return {
     findFeatureFlagEvaluations: (startTime?: RelativeTime) => featureFlagContexts.find(startTime),
@@ -61,16 +75,13 @@ export function startFeatureFlagContexts(
         return 0
       }
 
-      if (bytesCountCache === undefined) {
-        bytesCountCache = computeBytesCountImpl(jsonStringify(currentContext)!)
-      }
       return bytesCountCache
     },
     addFeatureFlagEvaluation: (key: string, value: ContextValue) => {
       const currentContext = featureFlagContexts.find()
       if (currentContext) {
         currentContext[key] = value
-        bytesCountCache = undefined
+        computeBytesCountThrottled(currentContext)
       }
     },
   }

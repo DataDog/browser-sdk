@@ -1,6 +1,6 @@
 import { mockClock, restoreNavigatorOnLine, setNavigatorOnLine } from '../../test'
 import type { Clock } from '../../test'
-import { ErrorSource } from '../tools/error'
+import { ErrorSource } from '../domain/error/error'
 import type { RetryState } from './sendWithRetryStrategy'
 import {
   newRetryState,

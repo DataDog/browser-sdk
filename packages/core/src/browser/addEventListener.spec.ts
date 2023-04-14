@@ -1,6 +1,5 @@
 import { stubZoneJs } from '../../test'
-import { noop } from '../tools/utils'
-
+import { noop } from '../tools/utils/functionUtils'
 import { addEventListener, DOM_EVENT } from './addEventListener'
 
 describe('addEventListener', () => {

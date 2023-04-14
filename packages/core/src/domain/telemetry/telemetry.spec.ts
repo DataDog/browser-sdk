@@ -1,12 +1,9 @@
 import type { StackTrace } from '@datadog/browser-core'
 import { callMonitored } from '../../tools/monitor'
-import type { Configuration, ExperimentalFeature } from '../configuration'
-import {
-  resetExperimentalFeatures,
-  addExperimentalFeatures,
-  INTAKE_SITE_US1,
-  INTAKE_SITE_US1_FED,
-} from '../configuration'
+import type { ExperimentalFeature } from '../../tools/experimentalFeatures'
+import { resetExperimentalFeatures, addExperimentalFeatures } from '../../tools/experimentalFeatures'
+import type { Configuration } from '../configuration'
+import { INTAKE_SITE_US1, INTAKE_SITE_US1_FED } from '../configuration'
 import {
   resetTelemetry,
   startTelemetry,

@@ -71,12 +71,21 @@ export function startRum(
   }
   const featureFlagContexts = startFeatureFlagContexts(lifeCycle)
 
+  const session = !canUseEventBridge() ? startRumSessionManager(configuration, lifeCycle) : startRumSessionManagerStub()
+
   if (!canUseEventBridge()) {
     const pageExitObservable = createPageExitObservable()
     pageExitObservable.subscribe((event) => {
       lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, event)
     })
-    const batch = startRumBatch(configuration, lifeCycle, telemetry.observable, reportError, pageExitObservable)
+    const batch = startRumBatch(
+      configuration,
+      lifeCycle,
+      telemetry.observable,
+      reportError,
+      pageExitObservable,
+      session.expireObservable
+    )
     startCustomerDataTelemetry(
       configuration,
       telemetry,
@@ -90,7 +99,6 @@ export function startRum(
     startRumEventBridge(lifeCycle)
   }
 
-  const session = !canUseEventBridge() ? startRumSessionManager(configuration, lifeCycle) : startRumSessionManagerStub()
   const domMutationObservable = createDOMMutationObservable()
   const locationChangeObservable = createLocationChangeObservable(location)
 

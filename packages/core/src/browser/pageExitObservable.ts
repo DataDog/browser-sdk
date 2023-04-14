@@ -1,6 +1,7 @@
-import { isExperimentalFeatureEnabled, ExperimentalFeature } from '../domain/configuration'
+import { isExperimentalFeatureEnabled, ExperimentalFeature } from '../tools/experimentalFeatures'
 import { Observable } from '../tools/observable'
-import { includes, noop, objectValues } from '../tools/utils'
+import { objectValues, includes } from '../tools/utils/polyfills'
+import { noop } from '../tools/utils/functionUtils'
 import { addEventListeners, addEventListener, DOM_EVENT } from './addEventListener'
 
 export const PageExitReason = {
@@ -10,7 +11,7 @@ export const PageExitReason = {
   FROZEN: 'page_frozen',
 } as const
 
-type PageExitReason = (typeof PageExitReason)[keyof typeof PageExitReason]
+export type PageExitReason = (typeof PageExitReason)[keyof typeof PageExitReason]
 
 export interface PageExitEvent {
   reason: PageExitReason
