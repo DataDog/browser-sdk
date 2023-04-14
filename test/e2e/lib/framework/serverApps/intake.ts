@@ -95,7 +95,12 @@ function forwardEventsToIntake(req: express.Request): Promise<any> {
 async function storeReplayData(req: express.Request, events: EventRegistry): Promise<any> {
   return new Promise((resolve, reject) => {
     let segmentPromise: Promise<SegmentFile>
-    let metadataPromise: Promise<BrowserSegmentMetadataAndSegmentSizes>
+    let metadataFromJsonPayloadPromise: Promise<BrowserSegmentMetadataAndSegmentSizes>
+
+    // TODO: remove this when enabling replay_json_payload
+    const metadataFromMultipartFields: {
+      [field: string]: string
+    } = {}
 
     req.busboy.on('file', (name, stream, info) => {
       const { filename, encoding, mimeType } = info
@@ -107,16 +112,20 @@ async function storeReplayData(req: express.Request, events: EventRegistry): Pro
           data: JSON.parse(data.toString()),
         }))
       } else if (name === 'event') {
-        metadataPromise = readStream(stream).then(
+        metadataFromJsonPayloadPromise = readStream(stream).then(
           (data) => JSON.parse(data.toString()) as BrowserSegmentMetadataAndSegmentSizes
         )
       }
     })
 
+    req.busboy.on('field', (key: string, value: string) => {
+      metadataFromMultipartFields[key] = value
+    })
+
     req.busboy.on('finish', () => {
-      Promise.all([segmentPromise, metadataPromise])
-        .then(([segment, metadata]) => {
-          events.push('sessionReplay', { metadata, segment })
+      Promise.all([segmentPromise, metadataFromJsonPayloadPromise])
+        .then(([segment, metadataFromJsonPayload]) => {
+          events.push('sessionReplay', { metadata: metadataFromJsonPayload || metadataFromMultipartFields, segment })
         })
         .then(resolve)
         .catch((e) => reject(e))

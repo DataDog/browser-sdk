@@ -91,7 +91,6 @@ describe('startRecording', () => {
       },
       start: jasmine.any(Number),
       raw_segment_size: jasmine.any(Number),
-      compressed_segment_size: jasmine.any(Number),
       view: {
         id: 'view-id',
       },

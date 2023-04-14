@@ -36,5 +36,8 @@ export interface SegmentFile {
 
 export interface SessionReplayCall {
   segment: SegmentFile
-  metadata: BrowserSegmentMetadataAndSegmentSizes
+  metadata:
+    | BrowserSegmentMetadataAndSegmentSizes
+    // TODO: remove this when enabling replay_json_payload
+    | Record<string, string>
 }

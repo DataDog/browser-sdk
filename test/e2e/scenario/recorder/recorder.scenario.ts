@@ -1,4 +1,10 @@
-import type { InputData, StyleSheetRuleData, BrowserSegment, ScrollData } from '@datadog/browser-rum/src/types'
+import type {
+  InputData,
+  StyleSheetRuleData,
+  BrowserSegment,
+  ScrollData,
+  CreationReason,
+} from '@datadog/browser-rum/src/types'
 import { NodeType, IncrementalSource, MouseInteractionType } from '@datadog/browser-rum/src/types'
 
 import { FrustrationType } from '@datadog/browser-rum-core'
@@ -17,10 +23,14 @@ import {
   findMouseInteractionRecords,
   findElementWithTagName,
 } from '@datadog/browser-rum/test'
+import { ExperimentalFeature } from '@datadog/browser-core/src/domain/configuration/experimentalFeatures'
+import type { BrowserSegmentMetadataAndSegmentSizes } from '@datadog/browser-rum/src/domain/segmentCollection'
 import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
 import { browserExecute, browserExecuteAsync } from '../../lib/helpers/browser'
 import { getFirstSegment, getLastSegment, initRumAndStartRecording } from '../../lib/helpers/replay'
+import type { SegmentFile } from '../../lib/types/serverEvents'
 
+const INTEGER_RE = /^\d+$/
 const TIMESTAMP_RE = /^\d{13}$/
 const UUID_RE = /^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/
 
@@ -35,7 +45,64 @@ describe('recorder', () => {
       await flushEvents()
 
       expect(serverEvents.sessionReplay.length).toBe(1)
-      const { segment, metadata } = serverEvents.sessionReplay[0]
+      const { segment, metadata } = serverEvents.sessionReplay[0] as {
+        segment: SegmentFile
+        metadata: Record<string, string>
+      }
+      expect(metadata).toEqual({
+        'application.id': jasmine.stringMatching(UUID_RE),
+        creation_reason: 'init',
+        end: jasmine.stringMatching(TIMESTAMP_RE),
+        has_full_snapshot: 'true',
+        records_count: jasmine.stringMatching(INTEGER_RE),
+        'session.id': jasmine.stringMatching(UUID_RE),
+        start: jasmine.stringMatching(TIMESTAMP_RE),
+        'view.id': jasmine.stringMatching(UUID_RE),
+        raw_segment_size: jasmine.stringMatching(INTEGER_RE),
+        index_in_view: '0',
+        source: 'browser',
+      })
+      expect(segment).toEqual({
+        data: {
+          application: { id: metadata['application.id'] },
+          creation_reason: metadata.creation_reason as CreationReason,
+          end: Number(metadata.end),
+          has_full_snapshot: true,
+          records: jasmine.any(Array),
+          records_count: Number(metadata.records_count),
+          session: { id: metadata['session.id'] },
+          start: Number(metadata.start),
+          view: { id: metadata['view.id'] },
+          index_in_view: 0,
+          source: 'browser',
+        },
+        encoding: jasmine.any(String),
+        filename: `${metadata['session.id']}-${metadata.start}`,
+        mimetype: 'application/octet-stream',
+      })
+      expect(findMeta(segment.data)).toBeTruthy('have a Meta record')
+      expect(findFullSnapshot(segment.data)).toBeTruthy('have a FullSnapshot record')
+      expect(findIncrementalSnapshot(segment.data, IncrementalSource.MouseInteraction)).toBeTruthy(
+        'have a IncrementalSnapshot/MouseInteraction record'
+      )
+    })
+
+  createTest('record mouse move with replay_json_payload experimental feature')
+    .withRum({
+      enableExperimentalFeatures: [ExperimentalFeature.REPLAY_JSON_PAYLOAD],
+    })
+    .withRumInit(initRumAndStartRecording)
+    .run(async ({ serverEvents }) => {
+      await browserExecute(() => document.documentElement.outerHTML)
+      const html = await $('html')
+      await html.click()
+      await flushEvents()
+
+      expect(serverEvents.sessionReplay.length).toBe(1)
+      const { segment, metadata } = serverEvents.sessionReplay[0] as {
+        segment: SegmentFile
+        metadata: BrowserSegmentMetadataAndSegmentSizes
+      }
       expect(metadata).toEqual({
         application: { id: jasmine.stringMatching(UUID_RE) },
         creation_reason: 'init',
