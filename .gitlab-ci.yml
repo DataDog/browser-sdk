@@ -17,6 +17,7 @@ cache:
 stages:
   - task
   - ci-image
+  - build
   - test
   - after-tests
   - browserstack
@@ -95,6 +96,22 @@ ci-image:
     - docker push $CI_IMAGE
 
 ########################################################################################################################
+# Build
+########################################################################################################################
+
+build:
+  stage: build
+  extends:
+    - .base-configuration
+  interruptible: true
+  script:
+    - yarn
+    - yarn build
+  artifacts:
+    paths:
+      - packages/*/{cjs,esm,bundle}
+
+########################################################################################################################
 # Tests
 ########################################################################################################################
 
@@ -124,26 +141,16 @@ typecheck:
     - yarn
     - yarn typecheck
 
-build-and-lint:
+lint:
   extends:
     - .base-configuration
     - .test-allowed-branches
   interruptible: true
   script:
     - yarn
-    - yarn build
     - yarn lint
     - scripts/cli typecheck test/app
     - scripts/cli typecheck test/e2e
-
-build-bundle:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-  interruptible: true
-  script:
-    - yarn
-    - yarn build:bundle
 
 compatibility:
   extends:
@@ -202,7 +209,6 @@ check-release:
   interruptible: true
   script:
     - yarn
-    - BUILD_MODE=release yarn build
     - node scripts/release/check-release.js
 
 unit-bs:
@@ -251,7 +257,6 @@ deploy-staging:
   script:
     - export BUILD_MODE=canary
     - yarn
-    - yarn build:bundle
     - node ./scripts/deploy/deploy.js staging staging root
     - node ./scripts/deploy/upload-source-maps.js staging root
 
@@ -263,7 +268,6 @@ deploy-prod-canary:
   script:
     - export BUILD_MODE=canary
     - yarn
-    - yarn build:bundle
     - node ./scripts/deploy/deploy.js prod canary root
     - node ./scripts/deploy/upload-source-maps.js canary root
 
@@ -278,7 +282,6 @@ deploy-prod-all-dcs:
     - export BUILD_MODE=release
     - VERSION=$(node -p -e "require('./lerna.json').version")
     - yarn
-    - yarn build:bundle
     - node ./scripts/deploy/deploy.js prod v${VERSION%%.*} us1,eu1,us3,us5,ap1
     - node ./scripts/deploy/upload-source-maps.js v${VERSION%%.*} us1,eu1,us3,us5,ap1
 
@@ -293,7 +296,6 @@ deploy-prod-root:
     - export BUILD_MODE=release
     - VERSION=$(node -p -e "require('./lerna.json').version")
     - yarn
-    - yarn build:bundle
     - node ./scripts/deploy/deploy.js prod v${VERSION%%.*} root
     - node ./scripts/deploy/upload-source-maps.js v${VERSION%%.*} root
 
