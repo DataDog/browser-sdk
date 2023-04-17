@@ -77,11 +77,12 @@ export function doWaitPageActivityEnd(
     PAGE_ACTIVITY_VALIDATION_DELAY
   )
   const maxDurationTimeoutId =
-    maxDuration &&
-    setTimeout(
-      monitor(() => complete({ hadActivity: true, end: timeStampNow() })),
-      maxDuration
-    )
+    maxDuration !== undefined
+      ? setTimeout(
+          monitor(() => complete({ hadActivity: true, end: timeStampNow() })),
+          maxDuration
+        )
+      : undefined
 
   const pageActivitySubscription = pageActivityObservable.subscribe(({ isBusy }) => {
     clearTimeout(validationTimeoutId)

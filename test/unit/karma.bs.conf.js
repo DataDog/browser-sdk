@@ -1,4 +1,4 @@
-const browsers = require('../browsers.conf')
+const { browserConfigurations } = require('../browsers.conf')
 const { getBuildInfos, getIp } = require('../envUtils')
 const karmaBaseConf = require('./karma.base.conf')
 
@@ -7,7 +7,7 @@ module.exports = function (config) {
     ...karmaBaseConf,
     plugins: [...karmaBaseConf.plugins, 'karma-browserstack-launcher'],
     reporters: [...karmaBaseConf.reporters, 'BrowserStack'],
-    browsers: browsers.map((browser) => browser.sessionName),
+    browsers: browserConfigurations.map((configuration) => configuration.sessionName),
     concurrency: 5,
     browserDisconnectTolerance: 3,
     hostname: getIp(),
@@ -19,17 +19,17 @@ module.exports = function (config) {
       video: false,
     },
     customLaunchers: Object.fromEntries(
-      browsers.map((browser) => [
-        browser.sessionName,
+      browserConfigurations.map((configuration) => [
+        configuration.sessionName,
         // See https://github.com/karma-runner/karma-browserstack-launcher#per-browser-options
         {
           base: 'BrowserStack',
-          os: browser.os,
-          os_version: browser.osVersion,
-          browser: browser.name,
-          browser_version: browser.version,
-          device: browser.device,
-          name: browser.sessionName,
+          os: configuration.os,
+          os_version: configuration.osVersion,
+          browser: configuration.name,
+          browser_version: configuration.version,
+          device: configuration.device,
+          name: configuration.sessionName,
         },
       ])
     ),

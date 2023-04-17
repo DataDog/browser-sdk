@@ -108,7 +108,7 @@ describe('API calls and events around init', () => {
 describe('beforeSend', () => {
   createTest('allows to edit non-view events context')
     .withRum({
-      beforeSend(event) {
+      beforeSend: (event: any) => {
         event.context!.foo = 'bar'
       },
     })
@@ -124,7 +124,7 @@ describe('beforeSend', () => {
 
   createTest('allows to replace non-view events context')
     .withRum({
-      beforeSend(event) {
+      beforeSend: (event) => {
         event.context = { foo: 'bar' }
       },
     })

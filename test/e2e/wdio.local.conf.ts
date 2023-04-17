@@ -1,12 +1,12 @@
-const readFile = require('fs').readFileSync
+import { readFileSync } from 'fs'
+import type { Options } from '@wdio/types'
+import { config as baseConfig } from './wdio.base.conf'
 
-const baseConf = require('./wdio.base.conf')
-
-const ciConf = readFile('.gitlab-ci.yml', { encoding: 'utf-8' })
+const ciConf = readFileSync('.gitlab-ci.yml', { encoding: 'utf-8' })
 const CHROME_DRIVER_VERSION = /CHROME_DRIVER_VERSION: (.*)/.exec(ciConf)?.[1]
 
-exports.config = {
-  ...baseConf,
+export const config: Options.Testrunner = {
+  ...baseConfig,
 
   capabilities: [
     {

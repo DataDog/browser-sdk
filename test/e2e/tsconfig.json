@@ -2,10 +2,12 @@
   "compilerOptions": {
     "baseUrl": ".",
     "strict": true,
+    "skipLibCheck": true,
     "experimentalDecorators": true,
     "esModuleInterop": true,
+    "moduleResolution": "node",
     "resolveJsonModule": true,
-    "target": "es5",
-    "types": ["node", "webdriverio/async", "jasmine", "ajv"]
+    "target": "ES2015",
+    "types": ["node", "jasmine", "@wdio/globals/types", "ajv"]
   }
 }

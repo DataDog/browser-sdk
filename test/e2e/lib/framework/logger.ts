@@ -1,7 +1,7 @@
 import * as fs from 'fs'
 import { inspect } from 'util'
 
-const logsPath = (browser.config as WebdriverIO.Config & { logsPath: string }).logsPath
+const logsPath = (browser.options as WebdriverIO.Config & { logsPath: string }).logsPath
 const stream: { write(s: string): void } = logsPath ? fs.createWriteStream(logsPath, { flags: 'a' }) : process.stdout
 
 export function log(...args: any[]) {
