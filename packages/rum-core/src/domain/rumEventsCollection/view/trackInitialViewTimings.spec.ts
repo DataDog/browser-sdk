@@ -13,6 +13,7 @@ import { LifeCycleEventType } from '../../lifeCycle'
 import { resetFirstHidden } from './trackFirstHidden'
 import type { Timings } from './trackInitialViewTimings'
 import {
+  KEEP_TRACKING_TIMINGS_AFTER_VIEW_DELAY,
   trackFirstContentfulPaintTiming,
   trackFirstInputTimings,
   trackLargestContentfulPaintTiming,
@@ -51,10 +52,14 @@ const FAKE_FIRST_INPUT_ENTRY: RumFirstInputTiming = {
 describe('trackTimings', () => {
   let setupBuilder: TestSetupBuilder
   let timingsCallback: jasmine.Spy<(value: Partial<Timings>) => void>
+  let trackInitialViewTimingsResult: ReturnType<typeof trackInitialViewTimings>
 
   beforeEach(() => {
     timingsCallback = jasmine.createSpy()
-    setupBuilder = setup().beforeBuild(({ lifeCycle }) => trackInitialViewTimings(lifeCycle, timingsCallback))
+    setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
+      trackInitialViewTimingsResult = trackInitialViewTimings(lifeCycle, timingsCallback)
+      return trackInitialViewTimingsResult
+    })
   })
 
   afterEach(() => {
@@ -81,6 +86,21 @@ describe('trackTimings', () => {
       firstInputTime: 1000 as Duration,
       loadEvent: 567 as Duration,
     })
+  })
+
+  it('allows delaying the stop logic', () => {
+    const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+    trackInitialViewTimingsResult.scheduleStop()
+
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [FAKE_NAVIGATION_ENTRY])
+
+    expect(timingsCallback).toHaveBeenCalledTimes(1)
+
+    clock.tick(KEEP_TRACKING_TIMINGS_AFTER_VIEW_DELAY)
+
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [FAKE_PAINT_ENTRY])
+
+    expect(timingsCallback).toHaveBeenCalledTimes(1)
   })
 })
 

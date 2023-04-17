@@ -21,6 +21,7 @@ import type { ViewEvent } from './trackViews'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from './trackViews'
 import type { ViewTest } from './setupViewTest.specHelper'
 import { setupViewTest } from './setupViewTest.specHelper'
+import { KEEP_TRACKING_TIMINGS_AFTER_VIEW_DELAY } from './trackInitialViewTimings'
 
 const FAKE_PAINT_ENTRY: RumPerformancePaintTiming = {
   entryType: 'paint',
@@ -190,22 +191,6 @@ describe('initial view', () => {
       expect(getViewUpdate(2).timings).toEqual({})
     })
 
-    it('should not update timings after session expires', () => {
-      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
-      const { getViewUpdateCount } = viewTest
-
-      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
-
-      expect(getViewUpdateCount()).toEqual(2)
-
-      clock.tick(FAKE_NAVIGATION_ENTRY.responseStart) // ensure now > responseStart
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [FAKE_NAVIGATION_ENTRY])
-
-      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
-
-      expect(getViewUpdateCount()).toEqual(2)
-    })
-
     describe('load event happening after initial view end', () => {
       let initialView: { init: ViewEvent; end: ViewEvent; last: ViewEvent }
       let secondView: { init: ViewEvent; last: ViewEvent }
@@ -270,6 +255,27 @@ describe('initial view', () => {
       it('should update the initial view loadingTime following the loadEventEnd value', () => {
         expect(initialView.last.loadingTime).toBe(FAKE_NAVIGATION_ENTRY.loadEventEnd)
       })
+    })
+
+    it('should not update timings long after the view ended', () => {
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+      const { getViewUpdateCount, startView } = viewTest
+
+      startView()
+
+      clock.tick(KEEP_TRACKING_TIMINGS_AFTER_VIEW_DELAY)
+
+      expect(getViewUpdateCount()).toEqual(4)
+
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+        FAKE_PAINT_ENTRY,
+        FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY,
+        FAKE_NAVIGATION_ENTRY,
+      ])
+
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+      expect(getViewUpdateCount()).toEqual(4)
     })
   })
 })
