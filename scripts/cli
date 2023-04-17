@@ -22,8 +22,10 @@ cmd_help () {
 }
 
 cmd_typecheck () {
-  local project_path="${1}"
-  tsc -p "$project_path" --noEmit true
+  for project_path in . ./developer-extension ./test/app ./test/e2e; do
+    echo "Typechecking $project_path ..."
+    tsc -p "$project_path" --noEmit true
+  done
 }
 
 cmd_lint () {

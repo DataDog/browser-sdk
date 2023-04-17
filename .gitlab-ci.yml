@@ -149,8 +149,6 @@ lint:
   script:
     - yarn
     - yarn lint
-    - scripts/cli typecheck test/app
-    - scripts/cli typecheck test/e2e
 
 compatibility:
   extends:
