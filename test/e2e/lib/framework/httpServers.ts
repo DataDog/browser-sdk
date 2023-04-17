@@ -100,7 +100,7 @@ async function instantiateServer(): Promise<http.Server> {
   throw new Error(`Failed to create a server after ${MAX_SERVER_CREATION_RETRY} retries`)
 }
 
-async function instantiateServerOnPort(port: number): Promise<http.Server> {
+function instantiateServerOnPort(port: number): Promise<http.Server> {
   return new Promise((resolve, reject) => {
     const server = http.createServer()
     server.on('error', reject)
@@ -117,7 +117,7 @@ function createServerIdleWaiter(server: http.Server) {
     idleWaiter.pushActivity(new Promise((resolve) => res.on('close', resolve)))
   })
 
-  return async () => idleWaiter.idlePromise
+  return () => idleWaiter.idlePromise
 }
 
 const IDLE_WAIT_DURATION = 500

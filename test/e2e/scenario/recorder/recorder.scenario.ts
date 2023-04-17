@@ -840,7 +840,7 @@ describe('recorder', () => {
         `
       )
       .run(async ({ serverEvents }) => {
-        async function scroll({ windowY, containerX }: { windowY: number; containerX: number }) {
+        function scroll({ windowY, containerX }: { windowY: number; containerX: number }) {
           return browserExecuteAsync(
             (windowY, containerX, done) => {
               let scrollCount = 0

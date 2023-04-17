@@ -10,7 +10,7 @@ const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fet
  *
  * [0]: https://matklad.github.io/2021/07/30/shell-injection.html
  */
-async function spawnCommand(command, args) {
+function spawnCommand(command, args) {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, { stdio: 'inherit', shell: true })
     child.on('error', reject)

@@ -70,6 +70,7 @@ module.exports = {
     'prefer-template': 'error',
     quotes: ['error', 'single', { avoidEscape: true }],
     radix: 'error',
+    'require-await': 'error',
     'spaced-comment': [
       'error',
       'always',

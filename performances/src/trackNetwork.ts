@@ -21,7 +21,7 @@ export function trackNetwork(page: Page) {
   })
 
   return {
-    waitForNetworkIdle: async () =>
+    waitForNetworkIdle: () =>
       new Promise<void>((resolve) => {
         let timeoutId: NodeJS.Timeout
         const periodicalWakeIntervalId = setInterval(wake, REQUEST_TIMEOUT)
