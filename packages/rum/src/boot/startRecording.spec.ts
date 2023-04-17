@@ -2,15 +2,14 @@ import type { TimeStamp, HttpRequest, ClocksState } from '@datadog/browser-core'
 import { PageExitReason, DefaultPrivacyLevel, noop, isIE, timeStampNow } from '@datadog/browser-core'
 import type { LifeCycle, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
-import { inflate } from 'pako'
+import type { Clock } from '@datadog/browser-core/test'
 import { collectAsyncCalls, createNewEvent, mockClock } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock, TestSetupBuilder } from '../../../rum-core/test'
 import { createRumSessionManagerMock, setup } from '../../../rum-core/test'
 
-import { recordsPerFullSnapshot } from '../../test'
+import { recordsPerFullSnapshot, readReplayPayload } from '../../test'
 import { setSegmentBytesLimit, startDeflateWorker } from '../domain/segmentCollection'
 
-import type { BrowserSegment } from '../types'
 import { RecordType } from '../types'
 import { resetReplayStats } from '../domain/replayStats'
 import { startRecording } from './startRecording'
@@ -25,6 +24,7 @@ describe('startRecording', () => {
   let textField: HTMLInputElement
   let requestSendSpy: jasmine.Spy<HttpRequest['sendOnExit']>
   let stopRecording: () => void
+  let clock: Clock | undefined
 
   beforeEach((done) => {
     if (isIE()) {
@@ -69,33 +69,37 @@ describe('startRecording', () => {
     sandbox.remove()
     setSegmentBytesLimit()
     setupBuilder.cleanup()
+    clock?.cleanup()
   })
 
-  it('sends recorded segments with valid context', (done) => {
+  it('sends recorded segments with valid context', async () => {
     const { lifeCycle } = setupBuilder.build()
     flushSegment(lifeCycle)
 
-    collectAsyncCalls(requestSendSpy, 1, (calls) => {
-      expect(calls.first().args[0]).toEqual({ data: jasmine.any(FormData), bytesCount: jasmine.any(Number) })
-      expect(getRequestData(calls.first())).toEqual({
-        'application.id': 'appId',
-        creation_reason: 'init',
-        end: jasmine.stringMatching(/^\d{13}$/),
-        has_full_snapshot: 'true',
-        records_count: String(recordsPerFullSnapshot()),
-        segment: jasmine.any(File),
-        'session.id': 'session-id',
-        start: jasmine.stringMatching(/^\d{13}$/),
-        raw_segment_size: jasmine.stringMatching(/^\d+$/),
-        'view.id': 'view-id',
-        index_in_view: '0',
-        source: 'browser',
-      })
-      done()
+    const requests = await readSentRequests(1)
+    expect(requests[0].segment).toEqual(jasmine.any(Object))
+    expect(requests[0].metadata).toEqual({
+      application: {
+        id: 'appId',
+      },
+      creation_reason: 'init',
+      end: jasmine.stringMatching(/^\d{13}$/),
+      has_full_snapshot: true,
+      records_count: recordsPerFullSnapshot(),
+      session: {
+        id: 'session-id',
+      },
+      start: jasmine.any(Number),
+      raw_segment_size: jasmine.any(Number),
+      view: {
+        id: 'view-id',
+      },
+      index_in_view: 0,
+      source: 'browser',
     })
   })
 
-  it('flushes the segment when its compressed data reaches the segment bytes limit', (done) => {
+  it('flushes the segment when its compressed data reaches the segment bytes limit', async () => {
     setupBuilder.build()
     const inputCount = 150
     const inputEvent = createNewEvent('input', { target: textField })
@@ -106,13 +110,11 @@ describe('startRecording', () => {
       document.body.dispatchEvent(inputEvent)
     }
 
-    collectAsyncCalls(requestSendSpy, 1, (calls) => {
-      expect(getRequestData(calls.first()).records_count).toBe(String(inputCount + recordsPerFullSnapshot()))
-      done()
-    })
+    const requests = await readSentRequests(1)
+    expect(requests[0].metadata.records_count).toBe(inputCount + recordsPerFullSnapshot())
   })
 
-  it('stops sending new segment when the session is expired', (done) => {
+  it('stops sending new segment when the session is expired', async () => {
     const { lifeCycle } = setupBuilder.build()
 
     document.body.dispatchEvent(createNewEvent('click', { clientX: 1, clientY: 2 }))
@@ -123,13 +125,11 @@ describe('startRecording', () => {
 
     flushSegment(lifeCycle)
 
-    collectAsyncCalls(requestSendSpy, 1, (calls) => {
-      expect(getRequestData(calls.first()).records_count).toBe(String(1 + recordsPerFullSnapshot()))
-      done()
-    })
+    const requests = await readSentRequests(1)
+    expect(requests[0].metadata.records_count).toBe(1 + recordsPerFullSnapshot())
   })
 
-  it('restarts sending segments when the session is renewed', (done) => {
+  it('restarts sending segments when the session is renewed', async () => {
     sessionManager.setNotTracked()
     const { lifeCycle } = setupBuilder.build()
 
@@ -141,104 +141,81 @@ describe('startRecording', () => {
 
     flushSegment(lifeCycle)
 
-    collectAsyncCalls(requestSendSpy, 1, (calls) => {
-      const data = getRequestData(calls.first())
-      expect(data.records_count).toBe('1')
-      expect(data['session.id']).toBe('new-session-id')
-      done()
-    })
+    const requests = await readSentRequests(1)
+    expect(requests[0].metadata.records_count).toBe(1)
+    expect(requests[0].metadata.session.id).toBe('new-session-id')
   })
 
-  it('takes a full snapshot when the view changes', (done) => {
+  it('takes a full snapshot when the view changes', async () => {
     const { lifeCycle } = setupBuilder.build()
 
     changeView(lifeCycle)
     flushSegment(lifeCycle)
 
-    collectAsyncCalls(requestSendSpy, 2, (calls) => {
-      expect(getRequestData(calls.mostRecent()).has_full_snapshot).toBe('true')
-      done()
-    })
+    const requests = await readSentRequests(2)
+    expect(requests[1].metadata.has_full_snapshot).toBe(true)
   })
 
-  it('full snapshot related records should have the view change date', (done) => {
-    const clock = mockClock()
+  it('full snapshot related records should have the view change date', async () => {
+    clock = mockClock()
     const { lifeCycle } = setupBuilder.build()
 
     changeView(lifeCycle)
     flushSegment(lifeCycle)
 
-    collectAsyncCalls(requestSendSpy, 2, (calls) => {
-      readRequestSegment(calls.first(), (segment) => {
-        expect(segment.records[0].timestamp).toEqual(timeStampNow())
-        expect(segment.records[1].timestamp).toEqual(timeStampNow())
-        expect(segment.records[2].timestamp).toEqual(timeStampNow())
-        expect(segment.records[3].timestamp).toEqual(timeStampNow())
+    const requests = await readSentRequests(2)
+    const firstSegment = requests[0].segment
+    expect(firstSegment.records[0].timestamp).toEqual(timeStampNow())
+    expect(firstSegment.records[1].timestamp).toEqual(timeStampNow())
+    expect(firstSegment.records[2].timestamp).toEqual(timeStampNow())
+    expect(firstSegment.records[3].timestamp).toEqual(timeStampNow())
 
-        clock.cleanup()
-
-        readRequestSegment(calls.mostRecent(), (segment) => {
-          expect(segment.records[0].timestamp).toEqual(VIEW_TIMESTAMP)
-          expect(segment.records[1].timestamp).toEqual(VIEW_TIMESTAMP)
-          expect(segment.records[2].timestamp).toEqual(VIEW_TIMESTAMP)
-
-          done()
-        })
-      })
-    })
+    const secondSegment = requests[1].segment
+    expect(secondSegment.records[0].timestamp).toEqual(VIEW_TIMESTAMP)
+    expect(secondSegment.records[1].timestamp).toEqual(VIEW_TIMESTAMP)
+    expect(secondSegment.records[2].timestamp).toEqual(VIEW_TIMESTAMP)
   })
 
-  it('adds a ViewEnd record when the view ends', (done) => {
+  it('adds a ViewEnd record when the view ends', async () => {
     const { lifeCycle } = setupBuilder.build()
 
     changeView(lifeCycle)
     flushSegment(lifeCycle)
 
-    collectAsyncCalls(requestSendSpy, 2, (calls) => {
-      expect(getRequestData(calls.first())['view.id']).toBe('view-id')
-      readRequestSegment(calls.first(), (segment) => {
-        expect(segment.records[segment.records.length - 1].type).toBe(RecordType.ViewEnd)
-        done()
-      })
-    })
+    const requests = await readSentRequests(2)
+    expect(requests[0].metadata.view.id).toBe('view-id')
+    const records = requests[0].segment.records
+    expect(records[records.length - 1].type).toBe(RecordType.ViewEnd)
   })
 
-  it('flushes pending mutations before ending the view', (done) => {
+  it('flushes pending mutations before ending the view', async () => {
     const { lifeCycle } = setupBuilder.build()
 
     sandbox.appendChild(document.createElement('hr'))
     changeView(lifeCycle)
     flushSegment(lifeCycle)
 
-    collectAsyncCalls(requestSendSpy, 2, (calls) => {
-      readRequestSegment(calls.first(), (segment) => {
-        expect(segment.records[segment.records.length - 2].type).toBe(RecordType.IncrementalSnapshot)
-        expect(segment.records[segment.records.length - 1].type).toBe(RecordType.ViewEnd)
+    const requests = await readSentRequests(2)
+    const firstSegment = requests[0].segment
+    expect(firstSegment.records[firstSegment.records.length - 2].type).toBe(RecordType.IncrementalSnapshot)
+    expect(firstSegment.records[firstSegment.records.length - 1].type).toBe(RecordType.ViewEnd)
 
-        readRequestSegment(calls.mostRecent(), (segment) => {
-          expect(segment.records[0].type).toBe(RecordType.Meta)
-          done()
-        })
-      })
-    })
+    const secondSegment = requests[1].segment
+    expect(secondSegment.records[0].type).toBe(RecordType.Meta)
   })
 
-  it('does not split Meta, Focus and FullSnapshot records between multiple segments when taking a full snapshot', (done) => {
+  it('does not split Meta, Focus and FullSnapshot records between multiple segments when taking a full snapshot', async () => {
     setSegmentBytesLimit(0)
     setupBuilder.build()
 
-    collectAsyncCalls(requestSendSpy, 1, (calls) => {
-      readRequestSegment(calls.first(), (segment) => {
-        expect(segment.records[0].type).toBe(RecordType.Meta)
-        expect(segment.records[1].type).toBe(RecordType.Focus)
-        expect(segment.records[2].type).toBe(RecordType.FullSnapshot)
-        done()
-      })
-    })
+    const requests = await readSentRequests(1)
+    expect(requests[0].segment.records[0].type).toBe(RecordType.Meta)
+    expect(requests[0].segment.records[1].type).toBe(RecordType.Focus)
+    expect(requests[0].segment.records[2].type).toBe(RecordType.FullSnapshot)
   })
 
   describe('when calling stop()', () => {
-    it('stops collecting records', (done) => {
+    it('stops collecting records', async () => {
       const { lifeCycle } = setupBuilder.build()
 
       document.body.dispatchEvent(createNewEvent('click', { clientX: 1, clientY: 2 }))
@@ -246,23 +223,19 @@ describe('startRecording', () => {
       document.body.dispatchEvent(createNewEvent('click', { clientX: 1, clientY: 2 }))
       flushSegment(lifeCycle)
 
-      collectAsyncCalls(requestSendSpy, 1, (calls) => {
-        expect(getRequestData(calls.first()).records_count).toBe(String(1 + recordsPerFullSnapshot()))
-        done()
-      })
+      const requests = await readSentRequests(1)
+      expect(requests[0].metadata.records_count).toBe(1 + recordsPerFullSnapshot())
     })
 
-    it('stops taking full snapshots on view creation', (done) => {
+    it('stops taking full snapshots on view creation', async () => {
       const { lifeCycle } = setupBuilder.build()
 
       stopRecording()
       changeView(lifeCycle)
       flushSegment(lifeCycle)
 
-      collectAsyncCalls(requestSendSpy, 1, (calls) => {
-        expect(getRequestData(calls.first()).records_count).toBe(String(recordsPerFullSnapshot()))
-        done()
-      })
+      const requests = await readSentRequests(1)
+      expect(requests[0].metadata.records_count).toBe(recordsPerFullSnapshot())
     })
   })
 
@@ -273,38 +246,17 @@ describe('startRecording', () => {
       startClocks: { relative: 1, timeStamp: VIEW_TIMESTAMP },
     } as Partial<ViewCreatedEvent> as any)
   }
+
+  async function readSentRequests(expectedSentRequestCount: number) {
+    const calls = await new Promise<jasmine.Calls<HttpRequest['sendOnExit']>>((resolve) =>
+      collectAsyncCalls(requestSendSpy, expectedSentRequestCount, resolve)
+    )
+    return Promise.all(calls.all().map((call) => readReplayPayload(call.args[0])))
+  }
 })
 
 function flushSegment(lifeCycle: LifeCycle) {
   lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.UNLOADING })
-}
-
-function getRequestData(call: jasmine.CallInfo<HttpRequest['sendOnExit']>) {
-  const result: { [key: string]: unknown } = {}
-  getRequestFormData(call).forEach((value, key) => {
-    result[key] = value
-  })
-  return result
-}
-
-function readRequestSegment(
-  call: jasmine.CallInfo<HttpRequest['sendOnExit']>,
-  callback: (segment: BrowserSegment) => void
-) {
-  const encodedSegment = getRequestFormData(call).get('segment')
-  expect(encodedSegment).toBeInstanceOf(Blob)
-  const reader = new FileReader()
-  reader.addEventListener('loadend', () => {
-    const textDecoder = new TextDecoder()
-    callback(JSON.parse(textDecoder.decode(inflate(reader.result as Uint8Array))))
-  })
-  reader.readAsArrayBuffer(encodedSegment as Blob)
-}
-
-function getRequestFormData(call: jasmine.CallInfo<HttpRequest['sendOnExit']>) {
-  const payload = call.args[0]
-  expect(payload.data).toEqual(jasmine.any(FormData))
-  return payload.data as FormData
 }
 
 function createRandomString(minLength: number) {

@@ -7,7 +7,7 @@ import { mockClock, restorePageVisibility } from '@datadog/browser-core/test'
 import { createRumSessionManagerMock } from '../../../../rum-core/test'
 import type { BrowserRecord, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
-import { MockWorker } from '../../../test'
+import { MockWorker, readMetadataFromReplayPayload } from '../../../test'
 import {
   computeSegmentContext,
   doStartSegmentCollection,
@@ -51,14 +51,8 @@ describe('startSegmentCollection', () => {
     lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.UNLOADING })
   }
 
-  function getSentFormData(spy: jasmine.Spy<HttpRequest['send']>) {
-    const payload = spy.calls.mostRecent().args[0]
-
-    if (!(payload.data instanceof FormData)) {
-      throw new Error('SegmentCollection unexpectedly sent a payload without FormData')
-    }
-
-    return payload.data
+  function readMostRecentMetadata(spy: jasmine.Spy<HttpRequest['send']>) {
+    return readMetadataFromReplayPayload(spy.calls.mostRecent().args[0])
   }
 
   beforeEach(() => {
@@ -95,9 +89,9 @@ describe('startSegmentCollection', () => {
       expect(httpRequestSpy.sendOnExit).not.toHaveBeenCalled()
     })
 
-    it('creation reason should reflect that it is the initial segment', () => {
+    it('creation reason should reflect that it is the initial segment', async () => {
       addRecordAndFlushSegment()
-      expect(getSentFormData(httpRequestSpy.sendOnExit).get('creation_reason')).toBe('init')
+      expect((await readMostRecentMetadata(httpRequestSpy.sendOnExit)).creation_reason).toBe('init')
     })
   })
 
@@ -134,10 +128,10 @@ describe('startSegmentCollection', () => {
         expect(httpRequestSpy.sendOnExit).toHaveBeenCalled()
       })
 
-      it('next segment is created because of beforeunload event', () => {
+      it('next segment is created because of beforeunload event', async () => {
         addRecordAndFlushSegment(emulatePageUnload)
         addRecordAndFlushSegment()
-        expect(getSentFormData(httpRequestSpy.sendOnExit).get('creation_reason')).toBe('before_unload')
+        expect((await readMostRecentMetadata(httpRequestSpy.sendOnExit)).creation_reason).toBe('before_unload')
       })
     })
 
@@ -151,10 +145,10 @@ describe('startSegmentCollection', () => {
         expect(httpRequestSpy.sendOnExit).toHaveBeenCalled()
       })
 
-      it('next segment is created because of visibility hidden event', () => {
+      it('next segment is created because of visibility hidden event', async () => {
         addRecordAndFlushSegment(emulatePageHidden)
         addRecordAndFlushSegment()
-        expect(getSentFormData(httpRequestSpy.sendOnExit).get('creation_reason')).toBe('visibility_hidden')
+        expect((await readMostRecentMetadata(httpRequestSpy.sendOnExit)).creation_reason).toBe('visibility_hidden')
       })
     })
 
@@ -168,10 +162,10 @@ describe('startSegmentCollection', () => {
         expect(httpRequestSpy.sendOnExit).toHaveBeenCalled()
       })
 
-      it('next segment is created because of page freeze event', () => {
+      it('next segment is created because of page freeze event', async () => {
         addRecordAndFlushSegment(emulatePageFrozen)
         addRecordAndFlushSegment()
-        expect(getSentFormData(httpRequestSpy.sendOnExit).get('creation_reason')).toBe('page_frozen')
+        expect((await readMostRecentMetadata(httpRequestSpy.sendOnExit)).creation_reason).toBe('page_frozen')
       })
     })
 
@@ -185,10 +179,10 @@ describe('startSegmentCollection', () => {
         expect(httpRequestSpy.send).toHaveBeenCalled()
       })
 
-      it('next segment is created because of view change', () => {
+      it('next segment is created because of view change', async () => {
         addRecordAndFlushSegment(emulateViewChange)
         addRecordAndFlushSegment()
-        expect(getSentFormData(httpRequestSpy.sendOnExit).get('creation_reason')).toBe('view_change')
+        expect((await readMostRecentMetadata(httpRequestSpy.sendOnExit)).creation_reason).toBe('view_change')
       })
     })
 
@@ -200,16 +194,16 @@ describe('startSegmentCollection', () => {
         expect(httpRequestSpy.send).toHaveBeenCalled()
       })
 
-      it('next segment is created because the bytes limit has been reached', () => {
+      it('next segment is created because the bytes limit has been reached', async () => {
         addRecordAndFlushSegment(() => {
           addRecord(VERY_BIG_RECORD)
         })
         addRecordAndFlushSegment()
 
-        expect(getSentFormData(httpRequestSpy.sendOnExit).get('creation_reason')).toBe('segment_bytes_limit')
+        expect((await readMostRecentMetadata(httpRequestSpy.sendOnExit)).creation_reason).toBe('segment_bytes_limit')
       })
 
-      it('continues to add records to the current segment while the worker is processing messages', () => {
+      it('continues to add records to the current segment while the worker is processing messages', async () => {
         addRecord(VERY_BIG_RECORD)
         addRecord(RECORD)
         addRecord(RECORD)
@@ -217,10 +211,10 @@ describe('startSegmentCollection', () => {
         worker.processAllMessages()
 
         expect(httpRequestSpy.send).toHaveBeenCalledTimes(1)
-        expect(getSentFormData(httpRequestSpy.send).get('records_count')).toBe('4')
+        expect((await readMostRecentMetadata(httpRequestSpy.send)).records_count).toBe(4)
       })
 
-      it('does not flush segment prematurely when records from the previous segment are still being processed', () => {
+      it('does not flush segment prematurely when records from the previous segment are still being processed', async () => {
         // Add two records to the current segment
         addRecord(VERY_BIG_RECORD)
         addRecord(RECORD)
@@ -235,7 +229,7 @@ describe('startSegmentCollection', () => {
         worker.processAllMessages()
 
         expect(httpRequestSpy.send).toHaveBeenCalledTimes(1)
-        expect(getSentFormData(httpRequestSpy.send).get('records_count')).toBe('2')
+        expect((await readMostRecentMetadata(httpRequestSpy.send)).records_count).toBe(2)
       })
     })
 
@@ -248,16 +242,16 @@ describe('startSegmentCollection', () => {
         expect(httpRequestSpy.send).toHaveBeenCalled()
       })
 
-      it('next segment is created because of the segment duration limit has been reached', () => {
+      it('next segment is created because of the segment duration limit has been reached', async () => {
         clock = mockClock()
         addRecordAndFlushSegment(() => {
           clock!.tick(SEGMENT_DURATION_LIMIT)
         })
         addRecordAndFlushSegment()
-        expect(getSentFormData(httpRequestSpy.sendOnExit).get('creation_reason')).toBe('segment_duration_limit')
+        expect((await readMostRecentMetadata(httpRequestSpy.sendOnExit)).creation_reason).toBe('segment_duration_limit')
       })
 
-      it('does not flush a segment after SEGMENT_DURATION_LIMIT if a segment has been created in the meantime', () => {
+      it('does not flush a segment after SEGMENT_DURATION_LIMIT if a segment has been created in the meantime', async () => {
         clock = mockClock()
         addRecord(RECORD)
         clock.tick(BEFORE_SEGMENT_DURATION_LIMIT)
@@ -268,7 +262,9 @@ describe('startSegmentCollection', () => {
         worker.processAllMessages()
         expect(httpRequestSpy.sendOnExit).toHaveBeenCalledTimes(1)
         addRecordAndFlushSegment()
-        expect(getSentFormData(httpRequestSpy.sendOnExit).get('creation_reason')).not.toBe('segment_duration_limit')
+        expect((await readMostRecentMetadata(httpRequestSpy.sendOnExit)).creation_reason).not.toBe(
+          'segment_duration_limit'
+        )
       })
     })
 

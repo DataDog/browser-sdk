@@ -1,6 +1,11 @@
 import type { Payload } from '@datadog/browser-core'
-import { objectEntries } from '@datadog/browser-core'
+import { ExperimentalFeature, isExperimentalFeatureEnabled, objectEntries, assign } from '@datadog/browser-core'
 import type { BrowserSegmentMetadata } from '../../types'
+
+export type BrowserSegmentMetadataAndSegmentSizes = BrowserSegmentMetadata & {
+  raw_segment_size: number
+  compressed_segment_size: number
+}
 
 export function buildReplayPayload(
   data: Uint8Array,
@@ -17,8 +22,20 @@ export function buildReplayPayload(
     `${metadata.session.id}-${metadata.start}`
   )
 
-  toFormEntries(metadata, (key, value) => formData.append(key, value))
-  formData.append('raw_segment_size', rawSegmentBytesCount.toString())
+  if (isExperimentalFeatureEnabled(ExperimentalFeature.REPLAY_JSON_PAYLOAD)) {
+    const metadataAndSegmentSizes: BrowserSegmentMetadataAndSegmentSizes = assign(
+      {
+        raw_segment_size: rawSegmentBytesCount,
+        compressed_segment_size: data.byteLength,
+      },
+      metadata
+    )
+    const serializedMetadataAndSegmentSizes = JSON.stringify(metadataAndSegmentSizes)
+    formData.append('event', new Blob([serializedMetadataAndSegmentSizes], { type: 'application/json' }))
+  } else {
+    toFormEntries(metadata, (key, value) => formData.append(key, value))
+    formData.append('raw_segment_size', rawSegmentBytesCount.toString())
+  }
 
   return { data: formData, bytesCount: data.byteLength }
 }
