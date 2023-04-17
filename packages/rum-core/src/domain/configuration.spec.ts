@@ -541,6 +541,14 @@ describe('validateAndBuildRumConfiguration', () => {
           jasmine.arrayWithExactContents(['datadog', 'b3', 'b3multi', 'tracecontext'])
         )
       })
+
+      it('should survive a configuration with wrong parameters', () => {
+        const wrongTracingConfig: RumInitConfiguration = {
+          ...DEFAULT_INIT_CONFIGURATION,
+          allowedTracingUrls: [42 as any, { match: 'test', propagatorTypes: 42 }, undefined, null, {}],
+        }
+        expect(serializeRumConfiguration(wrongTracingConfig).selected_tracing_propagators).toEqual([])
+      })
     })
   })
 })
