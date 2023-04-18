@@ -44,14 +44,22 @@ export interface Timings {
   firstInputTime?: Duration
 }
 
-export function trackInitialViewTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void) {
+export function trackInitialViewTimings(
+  lifeCycle: LifeCycle,
+  setLoadEvent: (loadEnd: Duration) => void,
+  scheduleViewUpdate: () => void
+) {
   const timings: Timings = {}
+
   function setTimings(newTimings: Partial<Timings>) {
     assign(timings, newTimings)
-    callback(timings)
+    scheduleViewUpdate()
   }
 
-  const { stop: stopNavigationTracking } = trackNavigationTimings(lifeCycle, setTimings)
+  const { stop: stopNavigationTracking } = trackNavigationTimings(lifeCycle, (newTimings) => {
+    setLoadEvent(newTimings.loadEvent)
+    setTimings(newTimings)
+  })
   const { stop: stopFCPTracking } = trackFirstContentfulPaintTiming(lifeCycle, (firstContentfulPaint) =>
     setTimings({ firstContentfulPaint })
   )
@@ -76,13 +84,22 @@ export function trackInitialViewTimings(lifeCycle: LifeCycle, callback: (timings
 
   return {
     stop,
+    timings,
     scheduleStop: () => {
       setTimeout(stop, KEEP_TRACKING_TIMINGS_AFTER_VIEW_DELAY)
     },
   }
 }
 
-export function trackNavigationTimings(lifeCycle: LifeCycle, callback: (timings: Partial<Timings>) => void) {
+interface NavigationTimings {
+  domComplete: Duration
+  domContentLoaded: Duration
+  domInteractive: Duration
+  loadEvent: Duration
+  firstByte: Duration | undefined
+}
+
+export function trackNavigationTimings(lifeCycle: LifeCycle, callback: (timings: NavigationTimings) => void) {
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
     for (const entry of entries) {
       if (entry.entryType === 'navigation') {

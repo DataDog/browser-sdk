@@ -148,7 +148,6 @@ function newView(
 ) {
   // Setup initial values
   const id = generateUUID()
-  let timings: Timings = {}
   const customTimings: ViewCustomTimings = {}
   let documentVersion = 0
   let endClocks: ClocksState | undefined
@@ -171,19 +170,6 @@ function newView(
     version,
   })
 
-  let scheduleStopInitialViewTimingsTracking: () => void
-  if (loadingType === ViewLoadingType.INITIAL_LOAD) {
-    ;({ scheduleStop: scheduleStopInitialViewTimingsTracking } = trackInitialViewTimings(lifeCycle, (newTimings) => {
-      timings = newTimings
-      if (newTimings.loadEvent !== undefined) {
-        setLoadEvent(newTimings.loadEvent)
-      }
-      scheduleViewUpdate()
-    }))
-  } else {
-    scheduleStopInitialViewTimingsTracking = noop
-  }
-
   // Update the view every time the measures are changing
   const { throttled: scheduleViewUpdate, cancel: cancelScheduleViewUpdate } = throttle(
     triggerViewUpdate,
@@ -198,6 +184,11 @@ function newView(
     stop: stopViewMetricsTracking,
     viewMetrics,
   } = trackViewMetrics(lifeCycle, domMutationObservable, configuration, scheduleViewUpdate, loadingType, startClocks)
+
+  const { scheduleStop: scheduleStopInitialViewTimingsTracking, timings } =
+    loadingType === ViewLoadingType.INITIAL_LOAD
+      ? trackInitialViewTimings(lifeCycle, setLoadEvent, scheduleViewUpdate)
+      : { scheduleStop: noop, timings: {} as Timings }
 
   const { scheduleStop: scheduleStopEventCountsTracking, eventCounts } = trackViewEventCounts(
     lifeCycle,
