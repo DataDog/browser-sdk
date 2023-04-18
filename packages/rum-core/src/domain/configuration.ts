@@ -1,5 +1,6 @@
 import type { Configuration, InitConfiguration, MatchOption, RawTelemetryConfiguration } from '@datadog/browser-core'
 import {
+  getType,
   arrayFrom,
   getOrigin,
   isMatchOption,
@@ -257,7 +258,8 @@ function getSelectedTracingPropagators(configuration: RumInitConfiguration): Pro
     configuration.allowedTracingUrls.forEach((option) => {
       if (isMatchOption(option)) {
         usedTracingPropagators.add('datadog')
-      } else {
+      } else if (getType(option) === 'object' && Array.isArray(option.propagatorTypes)) {
+        // Ensure we have an array, as we cannot rely on types yet (configuration is provided by users)
         option.propagatorTypes.forEach((propagatorType) => usedTracingPropagators.add(propagatorType))
       }
     })
