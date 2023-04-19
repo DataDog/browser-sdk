@@ -14,7 +14,6 @@ export enum ExperimentalFeature {
   PAGEHIDE = 'pagehide',
   FEATURE_FLAGS = 'feature_flags',
   RESOURCE_PAGE_STATES = 'resource_page_states',
-  CLICKMAP = 'clickmap',
   COLLECT_FLUSH_REASON = 'collect_flush_reason',
   SANITIZE_INPUTS = 'sanitize_inputs',
   REPLAY_JSON_PAYLOAD = 'replay_json_payload',

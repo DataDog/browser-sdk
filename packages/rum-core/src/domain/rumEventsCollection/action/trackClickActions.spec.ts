@@ -1,13 +1,5 @@
 import type { Context, Duration } from '@datadog/browser-core'
-import {
-  addDuration,
-  addExperimentalFeatures,
-  resetExperimentalFeatures,
-  clocksNow,
-  timeStampNow,
-  relativeNow,
-  ExperimentalFeature,
-} from '@datadog/browser-core'
+import { addDuration, clocksNow, timeStampNow, relativeNow } from '@datadog/browser-core'
 import { createNewEvent } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../../../test'
 import { setup, createFakeClick } from '../../../../test'
@@ -105,37 +97,15 @@ describe('trackClickActions', () => {
         type: ActionType.CLICK,
         event: domEvent,
         frustrationTypes: [],
-        target: undefined,
-        position: undefined,
+        target: {
+          selector: '#button',
+          width: 100,
+          height: 100,
+        },
+        position: { x: 50, y: 50 },
         events: [domEvent],
       },
     ])
-  })
-
-  describe('when clickmap ff is enabled', () => {
-    beforeEach(() => {
-      addExperimentalFeatures([ExperimentalFeature.CLICKMAP])
-    })
-
-    afterEach(() => {
-      resetExperimentalFeatures()
-    })
-
-    it('should set click position and target', () => {
-      const { clock } = setupBuilder.build()
-      emulateClick({ activity: {} })
-      clock.tick(EXPIRE_DELAY)
-      expect(events[0]).toEqual(
-        jasmine.objectContaining({
-          target: {
-            selector: '#button',
-            width: 100,
-            height: 100,
-          },
-          position: { x: 50, y: 50 },
-        })
-      )
-    })
   })
 
   it('should keep track of previously validated click actions', () => {
