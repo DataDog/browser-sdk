@@ -3,5 +3,4 @@ schema-version: v1
 kind: mergequeue
 team: ci-interfaces
 enable: true
-merge_method: merge
 to_staging_enable: true
