@@ -17,7 +17,6 @@ export enum ExperimentalFeature {
   CLICKMAP = 'clickmap',
   COLLECT_FLUSH_REASON = 'collect_flush_reason',
   SANITIZE_INPUTS = 'sanitize_inputs',
-  REPLAY_JSON_PAYLOAD = 'replay_json_payload',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()
