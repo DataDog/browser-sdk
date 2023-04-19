@@ -324,7 +324,7 @@ describe('view lifecycle', () => {
       expect(getViewUpdateCount()).toBe(2)
     })
 
-    it('should not start a new view the session expires', () => {
+    it('should not start a new view if the session expired', () => {
       const { lifeCycle } = setupBuilder.build()
       const { getViewCreateCount } = viewTest
 
