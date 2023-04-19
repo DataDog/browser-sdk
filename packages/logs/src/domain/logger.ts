@@ -1,14 +1,11 @@
 import type { Context } from '@datadog/browser-core'
 import {
-  ExperimentalFeature,
-  isExperimentalFeatureEnabled,
   clocksNow,
   computeRawError,
   ErrorHandling,
   PROVIDED_ERROR_MESSAGE_PREFIX,
   computeStackTrace,
   CustomerDataType,
-  deepClone,
   assign,
   combine,
   createContextManager,
@@ -84,11 +81,7 @@ export class Logger {
       }
     }
 
-    const sanitizedMessageContext = (
-      isExperimentalFeatureEnabled(ExperimentalFeature.SANITIZE_INPUTS)
-        ? sanitize(messageContext)
-        : deepClone(messageContext)
-    ) as Context
+    const sanitizedMessageContext = sanitize(messageContext) as Context
 
     const context = errorContext
       ? (combine({ error: errorContext }, sanitizedMessageContext) as Context)
@@ -96,7 +89,7 @@ export class Logger {
 
     this.handleLogStrategy(
       {
-        message: isExperimentalFeatureEnabled(ExperimentalFeature.SANITIZE_INPUTS) ? sanitize(message)! : message,
+        message: sanitize(message)!,
         context,
         status,
       },
