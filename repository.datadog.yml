@@ -1,6 +1,6 @@
 ---
 schema-version: v1
 kind: mergequeue
-team: ci-interfaces
+team: rum-browser
 enable: true
 to_staging_enable: true
