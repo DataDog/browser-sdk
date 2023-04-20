@@ -100,6 +100,7 @@ export interface RawRumViewEvent {
     resource: Count
     frustration: Count
     in_foreground_periods?: InForegroundPeriod[]
+    max_scroll_depth?: number
   }
   session: {
     has_replay: true | undefined

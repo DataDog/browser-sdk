@@ -89,6 +89,7 @@ function processViewUpdate(
       },
       time_spent: toServerDuration(view.duration),
       in_foreground_periods: foregroundContexts.selectInForegroundPeriodsFor(view.startClocks.relative, view.duration),
+      max_scroll_depth: view.maxScrollDepth,
     },
     feature_flags: featureFlagContext && !isEmptyObject(featureFlagContext) ? featureFlagContext : undefined,
     session: {

@@ -28,6 +28,7 @@ import type { Timings } from './trackInitialViewTimings'
 import { trackInitialViewTimings } from './trackInitialViewTimings'
 import { trackViewMetrics } from './trackViewMetrics'
 import { trackViewEventCounts } from './trackViewEventCounts'
+import { trackScrollMetrics } from './trackScrollMetrics'
 
 export interface ViewEvent {
   id: string
@@ -45,6 +46,7 @@ export interface ViewEvent {
   loadingTime?: Duration
   loadingType: ViewLoadingType
   cumulativeLayoutShift?: number
+  maxScrollDepth?: number
 }
 
 export interface ViewCreatedEvent {
@@ -227,6 +229,8 @@ function newView(
     viewMetrics,
   } = trackViewMetrics(lifeCycle, domMutationObservable, configuration, scheduleViewUpdate, loadingType, startClocks)
 
+  const { scrollMetrics, stop: stopScrollMetricsTracking } = trackScrollMetrics()
+
   const { scheduleStop: scheduleStopEventCountsTracking, eventCounts } = trackViewEventCounts(
     lifeCycle,
     id,
@@ -257,7 +261,8 @@ function newView(
           isActive: endClocks === undefined,
           eventCounts,
         },
-        viewMetrics
+        viewMetrics,
+        scrollMetrics
       )
     )
   }
@@ -272,6 +277,7 @@ function newView(
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks })
       stopViewMetricsTracking()
       scheduleStopEventCountsTracking()
+      stopScrollMetricsTracking()
     },
     triggerUpdate() {
       // cancel any pending view updates execution
