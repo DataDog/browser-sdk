@@ -1,4 +1,5 @@
 import { Observable } from '../../tools/observable'
+import { NO_ERROR_STACK_PRESENT_MESSAGE } from './error'
 import { trackRuntimeError } from './trackRuntimeError'
 import type { RawError } from './error.types'
 
@@ -73,7 +74,7 @@ describe('runtime error tracker', () => {
     setTimeout(() => {
       const collectedError = notifyError.calls.mostRecent().args[0] as RawError
       expect(collectedError.message).toEqual('Uncaught {"foo":"bar"}')
-      expect(collectedError.stack).toEqual('No stack, consider using an instance of Error')
+      expect(collectedError.stack).toEqual(NO_ERROR_STACK_PRESENT_MESSAGE)
       done()
     }, 100)
   })

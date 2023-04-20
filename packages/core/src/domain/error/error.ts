@@ -40,7 +40,7 @@ export function computeRawError({
       handling,
       originalError: sanitizedError,
       message: `${nonErrorPrefix} ${jsonStringify(sanitizedError)!}`,
-      stack: 'No stack, consider using an instance of Error',
+      stack: NO_ERROR_STACK_PRESENT_MESSAGE,
       handlingStack,
       type: stackTrace && stackTrace.name,
     }

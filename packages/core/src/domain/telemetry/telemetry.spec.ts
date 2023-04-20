@@ -1,4 +1,5 @@
 import type { StackTrace } from '@datadog/browser-core'
+import { NO_ERROR_STACK_PRESENT_MESSAGE } from '../error/error'
 import { callMonitored } from '../../tools/monitor'
 import type { ExperimentalFeature } from '../../tools/experimentalFeatures'
 import { resetExperimentalFeatures, addExperimentalFeatures } from '../../tools/experimentalFeatures'
@@ -161,7 +162,7 @@ describe('formatError', () => {
     expect(formatError('message')).toEqual({
       message: 'Uncaught "message"',
       error: {
-        stack: 'Not an instance of error',
+        stack: NO_ERROR_STACK_PRESENT_MESSAGE,
       },
     })
   })
@@ -170,7 +171,7 @@ describe('formatError', () => {
     expect(formatError({ foo: 'bar' })).toEqual({
       message: 'Uncaught {"foo":"bar"}',
       error: {
-        stack: 'Not an instance of error',
+        stack: NO_ERROR_STACK_PRESENT_MESSAGE,
       },
     })
   })
