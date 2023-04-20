@@ -1,5 +1,5 @@
 import type { RelativeTime, TimeStamp, ErrorWithCause } from '@datadog/browser-core'
-import { ErrorHandling, ErrorSource } from '@datadog/browser-core'
+import { ErrorHandling, ErrorSource, NO_ERROR_STACK_PRESENT_MESSAGE } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../../test'
 import { setup } from '../../../../test'
 import type { RawRumErrorEvent } from '../../../rawRumEvent.types'
@@ -32,41 +32,64 @@ describe('error collection', () => {
     setupBuilder.cleanup()
   })
 
-  describe('provided', () => {
-    it('notifies a raw rum error event', () => {
-      const { rawRumEvents } = setupBuilder.build()
-      const error = new Error('foo')
+  describe('addError', () => {
+    ;[
+      {
+        testCase: 'an error instance',
+        error: new Error('foo'),
+        message: 'foo',
+        type: 'Error',
+        stack: jasmine.stringMatching('Error: foo'),
+      },
+      {
+        testCase: 'a string',
+        error: 'foo',
+        message: 'Provided "foo"',
+        type: undefined,
+        stack: NO_ERROR_STACK_PRESENT_MESSAGE,
+      },
+      {
+        testCase: 'an object',
+        error: { a: 'foo' },
+        message: 'Provided {"a":"foo"}',
+        type: undefined,
+        stack: NO_ERROR_STACK_PRESENT_MESSAGE,
+      },
+    ].forEach(({ testCase, error, message, type, stack }) => {
+      it(`notifies a raw rum error event from ${testCase}`, () => {
+        const { rawRumEvents } = setupBuilder.build()
 
-      addError({
-        error,
-        handlingStack: 'Error: handling foo',
-        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
-      })
+        addError({
+          error,
+          handlingStack: 'Error: handling foo',
+          startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+        })
 
-      expect(rawRumEvents.length).toBe(1)
-      expect(rawRumEvents[0]).toEqual({
-        customerContext: undefined,
-        rawRumEvent: {
-          date: jasmine.any(Number),
-          error: {
-            id: jasmine.any(String),
-            message: 'foo',
-            source: ErrorSource.CUSTOM,
-            stack: jasmine.stringMatching('Error: foo'),
-            handling_stack: 'Error: handling foo',
-            type: 'Error',
-            handling: ErrorHandling.HANDLED,
-            source_type: 'browser',
-            causes: undefined,
+        expect(rawRumEvents.length).toBe(1)
+        expect(rawRumEvents[0]).toEqual({
+          customerContext: undefined,
+          rawRumEvent: {
+            date: jasmine.any(Number),
+            error: {
+              id: jasmine.any(String),
+              message,
+              source: ErrorSource.CUSTOM,
+              stack,
+              handling_stack: 'Error: handling foo',
+              type,
+              handling: ErrorHandling.HANDLED,
+              source_type: 'browser',
+              causes: undefined,
+            },
+            type: RumEventType.ERROR,
+            view: {
+              in_foreground: true,
+            },
           },
-          type: RumEventType.ERROR,
-          view: {
-            in_foreground: true,
-          },
-        },
-        savedCommonContext: undefined,
-        startTime: 1234 as RelativeTime,
-        domainContext: { error },
+          savedCommonContext: undefined,
+          startTime: 1234 as RelativeTime,
+          domainContext: { error },
+        })
       })
     })
 
