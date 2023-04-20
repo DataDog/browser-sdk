@@ -33,6 +33,11 @@ export const ErrorSource = {
   REPORT: 'report',
 } as const
 
+export const enum NonErrorPrefix {
+  UNCAUGHT = 'Uncaught',
+  PROVIDED = 'Provided',
+}
+
 export const enum ErrorHandling {
   HANDLED = 'handled',
   UNHANDLED = 'unhandled',

@@ -82,8 +82,8 @@ export {
   toStackTraceString,
   getFileFromStackTraceString,
   NO_ERROR_STACK_PRESENT_MESSAGE,
-  PROVIDED_ERROR_MESSAGE_PREFIX,
 } from './domain/error/error'
+export { NonErrorPrefix } from './domain/error/error.types'
 export { Context, ContextArray, ContextValue } from './tools/serialisation/context'
 export { areCookiesAuthorized, getCookie, setCookie, deleteCookie, COOKIE_ACCESS_DELAY } from './browser/cookie'
 export { initXhrObservable, XhrCompleteContext, XhrStartContext } from './browser/xhrObservable'

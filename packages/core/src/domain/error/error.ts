@@ -6,10 +6,9 @@ import { sanitize } from '../../tools/serialisation/sanitize'
 import type { ClocksState } from '../../tools/utils/timeUtils'
 import { noop } from '../../tools/utils/functionUtils'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
-import type { ErrorSource, ErrorHandling, RawError, RawErrorCause, ErrorWithCause } from './error.types'
+import type { ErrorSource, ErrorHandling, RawError, RawErrorCause, ErrorWithCause, NonErrorPrefix } from './error.types'
 
 export const NO_ERROR_STACK_PRESENT_MESSAGE = 'No stack, consider using an instance of Error'
-export const PROVIDED_ERROR_MESSAGE_PREFIX = 'Provided'
 
 type RawErrorParams = {
   stackTrace?: StackTrace
@@ -17,7 +16,7 @@ type RawErrorParams = {
 
   handlingStack?: string
   startClocks: ClocksState
-  nonErrorPrefix: string
+  nonErrorPrefix: NonErrorPrefix
   source: ErrorSource
   handling: ErrorHandling
 }

@@ -3,7 +3,7 @@ import { clocksNow } from '../../tools/utils/timeUtils'
 import { startUnhandledErrorCollection } from '../tracekit'
 import { computeRawError } from './error'
 import type { RawError } from './error.types'
-import { ErrorHandling, ErrorSource } from './error.types'
+import { ErrorHandling, ErrorSource, NonErrorPrefix } from './error.types'
 
 export function trackRuntimeError(errorObservable: Observable<RawError>) {
   return startUnhandledErrorCollection((stackTrace, originalError) => {
@@ -12,7 +12,7 @@ export function trackRuntimeError(errorObservable: Observable<RawError>) {
         stackTrace,
         originalError,
         startClocks: clocksNow(),
-        nonErrorPrefix: 'Uncaught',
+        nonErrorPrefix: NonErrorPrefix.UNCAUGHT,
         source: ErrorSource.SOURCE,
         handling: ErrorHandling.UNHANDLED,
       })

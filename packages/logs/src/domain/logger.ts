@@ -5,7 +5,6 @@ import {
   clocksNow,
   computeRawError,
   ErrorHandling,
-  PROVIDED_ERROR_MESSAGE_PREFIX,
   computeStackTrace,
   CustomerDataType,
   deepClone,
@@ -15,6 +14,7 @@ import {
   ErrorSource,
   monitored,
   sanitize,
+  NonErrorPrefix,
 } from '@datadog/browser-core'
 
 import type { LogsEvent } from '../logsEvent.types'
@@ -70,7 +70,7 @@ export class Logger {
       const rawError = computeRawError({
         stackTrace,
         originalError: error,
-        nonErrorPrefix: PROVIDED_ERROR_MESSAGE_PREFIX,
+        nonErrorPrefix: NonErrorPrefix.PROVIDED,
         source: ErrorSource.LOGGER,
         handling: ErrorHandling.HANDLED,
         startClocks: clocksNow(),

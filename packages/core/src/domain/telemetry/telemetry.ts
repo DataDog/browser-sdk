@@ -14,6 +14,7 @@ import { startsWith, arrayFrom, includes, assign } from '../../tools/utils/polyf
 import { performDraw } from '../../tools/utils/numberUtils'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
 import { combine } from '../../tools/mergeInto'
+import { NonErrorPrefix } from '../error/error.types'
 import type { TelemetryEvent } from './telemetryEvent.types'
 import type { RawTelemetryConfiguration, RawTelemetryEvent } from './rawTelemetryEvent.types'
 import { StatusType, TelemetryType } from './rawTelemetryEvent.types'
@@ -183,7 +184,7 @@ export function formatError(e: unknown) {
     error: {
       stack: 'Not an instance of error',
     },
-    message: `Uncaught ${jsonStringify(e)!}`,
+    message: `${NonErrorPrefix.UNCAUGHT} ${jsonStringify(e)!}`,
   }
 }
 
