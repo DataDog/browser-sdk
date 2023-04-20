@@ -1,5 +1,6 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import {
+  setTimeout,
   assign,
   addEventListeners,
   DOM_EVENT,
@@ -23,6 +24,14 @@ import { trackFirstHidden } from './trackFirstHidden'
 // It happens in some cases like sleep mode or some browser implementations
 export const TIMING_MAXIMUM_DELAY = 10 * ONE_MINUTE
 
+/**
+ * The initial view can finish quickly, before some metrics can be produced (ex: before the page load
+ * event, or the first input). Also, we don't want to trigger a view update indefinitely, to avoid
+ * updates on views that ended a long time ago. Keep watching for metrics after the view ends for a
+ * limited amount of time.
+ */
+export const KEEP_TRACKING_TIMINGS_AFTER_VIEW_DELAY = 5 * ONE_MINUTE
+
 export interface Timings {
   firstContentfulPaint?: Duration
   firstByte?: Duration
@@ -35,14 +44,22 @@ export interface Timings {
   firstInputTime?: Duration
 }
 
-export function trackInitialViewTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void) {
+export function trackInitialViewTimings(
+  lifeCycle: LifeCycle,
+  setLoadEvent: (loadEnd: Duration) => void,
+  scheduleViewUpdate: () => void
+) {
   const timings: Timings = {}
+
   function setTimings(newTimings: Partial<Timings>) {
     assign(timings, newTimings)
-    callback(timings)
+    scheduleViewUpdate()
   }
 
-  const { stop: stopNavigationTracking } = trackNavigationTimings(lifeCycle, setTimings)
+  const { stop: stopNavigationTracking } = trackNavigationTimings(lifeCycle, (newTimings) => {
+    setLoadEvent(newTimings.loadEvent)
+    setTimings(newTimings)
+  })
   const { stop: stopFCPTracking } = trackFirstContentfulPaintTiming(lifeCycle, (firstContentfulPaint) =>
     setTimings({ firstContentfulPaint })
   )
@@ -58,17 +75,31 @@ export function trackInitialViewTimings(lifeCycle: LifeCycle, callback: (timings
     })
   })
 
+  function stop() {
+    stopNavigationTracking()
+    stopFCPTracking()
+    stopLCPTracking()
+    stopFIDTracking()
+  }
+
   return {
-    stop: () => {
-      stopNavigationTracking()
-      stopFCPTracking()
-      stopLCPTracking()
-      stopFIDTracking()
+    stop,
+    timings,
+    scheduleStop: () => {
+      setTimeout(stop, KEEP_TRACKING_TIMINGS_AFTER_VIEW_DELAY)
     },
   }
 }
 
-export function trackNavigationTimings(lifeCycle: LifeCycle, callback: (timings: Partial<Timings>) => void) {
+interface NavigationTimings {
+  domComplete: Duration
+  domContentLoaded: Duration
+  domInteractive: Duration
+  loadEvent: Duration
+  firstByte: Duration | undefined
+}
+
+export function trackNavigationTimings(lifeCycle: LifeCycle, callback: (timings: NavigationTimings) => void) {
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
     for (const entry of entries) {
       if (entry.entryType === 'navigation') {
