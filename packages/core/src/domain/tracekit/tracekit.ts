@@ -1,6 +1,6 @@
 import { instrumentMethodAndCallOriginal } from '../../tools/instrumentMethod'
 import { computeStackTrace } from './computeStackTrace'
-import type { UnhandledErrorCallback, StackTrace } from './types'
+import type { UnhandledErrorCallback } from './types'
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error#Error_types
 const ERROR_TYPES_RE =
@@ -55,39 +55,34 @@ export function startUnhandledErrorCollection(callback: UnhandledErrorCallback) 
  */
 function instrumentOnError(callback: UnhandledErrorCallback) {
   return instrumentMethodAndCallOriginal(window, 'onerror', {
-    before(this: any, message: Event | string, url?: string, lineNo?: number, columnNo?: number, errorObj?: Error) {
-      let stack: StackTrace
-
+    before(this: any, messageObj: unknown, url?: string, line?: number, column?: number, errorObj?: unknown) {
       if (errorObj) {
-        stack = computeStackTrace(errorObj)
-        callback(stack, errorObj)
-      } else {
-        const location = {
-          url,
-          column: columnNo,
-          line: lineNo,
-        }
-
-        let name
-        let msg = message
-        if ({}.toString.call(message) === '[object String]') {
-          const groups = ERROR_TYPES_RE.exec(msg as string)
-          if (groups) {
-            name = groups[1]
-            msg = groups[2]
-          }
-        }
-
-        stack = {
-          name,
-          message: typeof msg === 'string' ? msg : undefined,
-          stack: [location],
-        }
-
-        callback(stack, message)
+        callback(computeStackTrace(errorObj), errorObj)
+        return
       }
+      const stack = [{ url, column, line }]
+      const { name, message } = tryToParseMessage(messageObj)
+      const stackTrace = {
+        name,
+        message,
+        stack,
+      }
+      callback(stackTrace, messageObj)
     },
   })
+}
+
+function tryToParseMessage(messageObj: unknown) {
+  let name
+  let message
+  if ({}.toString.call(messageObj) === '[object String]') {
+    const groups = ERROR_TYPES_RE.exec(messageObj as string)
+    if (groups) {
+      name = groups[1]
+      message = groups[2]
+    }
+  }
+  return { name, message }
 }
 
 /**
