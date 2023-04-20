@@ -207,7 +207,6 @@ function newView(
 
   function triggerViewUpdate() {
     cancelScheduleViewUpdate()
-
     documentVersion += 1
     const currentEnd = endClocks === undefined ? timeStampNow() : endClocks.timeStamp
     lifeCycle.notify(
@@ -250,10 +249,6 @@ function newView(
       scheduleStopInitialViewTimingsTracking()
       scheduleStopEventCountsTracking()
       stopScrollMetricsTracking()
-    },
-    triggerUpdate() {
-      // cancel any pending view updates execution
-      cancelScheduleViewUpdate()
       triggerViewUpdate()
     },
     addTiming(name: string, time: RelativeTime | TimeStamp) {

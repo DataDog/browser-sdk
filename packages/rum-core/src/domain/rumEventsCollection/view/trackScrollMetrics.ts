@@ -20,7 +20,7 @@ export function trackScrollMetrics() {
       scrollMetrics.maxScrollDepth = Math.max(scrollMetrics.maxScrollDepth ?? 0, scrollDepth)
     },
     1000,
-    { leading: true, trailing: true }
+    { leading: false, trailing: true }
   )
 
   window.addEventListener('scroll', handleScrollEvent.throttled)
