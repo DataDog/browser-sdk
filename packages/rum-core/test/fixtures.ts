@@ -90,6 +90,7 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
           },
           session: {
             has_replay: undefined,
+            is_active: undefined,
           },
         },
         overrides

@@ -112,6 +112,7 @@ describe('rum sessions', () => {
         await waitForRequests()
 
         expect(serverEvents.rumViews.length).toBe(1)
+        expect(serverEvents.rumViews[0].session.is_active).toBe(false)
         expect(serverEvents.logs.length).toBe(1)
         expect(serverEvents.sessionReplay.length).toBe(1)
       })

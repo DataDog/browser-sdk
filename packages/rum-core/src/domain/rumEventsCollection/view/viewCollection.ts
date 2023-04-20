@@ -93,6 +93,7 @@ function processViewUpdate(
     feature_flags: featureFlagContext && !isEmptyObject(featureFlagContext) ? featureFlagContext : undefined,
     session: {
       has_replay: replayStats ? true : undefined,
+      is_active: view.sessionIsActive ? undefined : false,
     },
   }
   if (!isEmptyObject(view.customTimings)) {
