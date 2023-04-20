@@ -1,4 +1,4 @@
-import { throttle } from '@datadog/browser-core'
+import { throttle, addEventListener, DOM_EVENT } from '@datadog/browser-core'
 
 export interface ScrollMetrics {
   maxScrollDepth?: number
@@ -23,12 +23,12 @@ export function trackScrollMetrics() {
     { leading: false, trailing: true }
   )
 
-  window.addEventListener('scroll', handleScrollEvent.throttled)
+  const { stop } = addEventListener(window, DOM_EVENT.SCROLL, handleScrollEvent.throttled)
 
   return {
     stop: () => {
       handleScrollEvent.cancel()
-      window.removeEventListener('scroll', handleScrollEvent.throttled)
+      stop()
     },
     scrollMetrics,
   }
