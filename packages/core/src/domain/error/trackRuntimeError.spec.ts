@@ -1,6 +1,6 @@
 import { Observable } from '../../tools/observable'
-import type { RawError } from './error'
 import { trackRuntimeError } from './trackRuntimeError'
+import type { RawError } from './error.types'
 
 describe('runtime error tracker', () => {
   const ERROR_MESSAGE = 'foo'

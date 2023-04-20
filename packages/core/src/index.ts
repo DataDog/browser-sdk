@@ -77,13 +77,8 @@ export { runOnReadyState } from './browser/runOnReadyState'
 export { getZoneJsOriginalValue } from './tools/getZoneJsOriginalValue'
 export { instrumentMethod, instrumentMethodAndCallOriginal, instrumentSetter } from './tools/instrumentMethod'
 export {
-  ErrorSource,
-  ErrorHandling,
   computeRawError,
   createHandlingStack,
-  RawError,
-  RawErrorCause,
-  ErrorWithCause,
   toStackTraceString,
   getFileFromStackTraceString,
   NO_ERROR_STACK_PRESENT_MESSAGE,
@@ -126,3 +121,8 @@ export * from './tools/utils/stringUtils'
 export * from './tools/matchOption'
 export * from './tools/utils/responseUtils'
 export * from './tools/utils/typeUtils'
+export { ErrorHandling } from './domain/error/error.types'
+export { ErrorSource } from './domain/error/error.types'
+export { RawError } from './domain/error/error.types'
+export { RawErrorCause } from './domain/error/error.types'
+export { ErrorWithCause } from './domain/error/error.types'

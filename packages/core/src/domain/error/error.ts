@@ -6,49 +6,10 @@ import { sanitize } from '../../tools/serialisation/sanitize'
 import type { ClocksState } from '../../tools/utils/timeUtils'
 import { noop } from '../../tools/utils/functionUtils'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
+import type { ErrorSource, ErrorHandling, RawError, RawErrorCause, ErrorWithCause } from './error.types'
 
 export const NO_ERROR_STACK_PRESENT_MESSAGE = 'No stack, consider using an instance of Error'
 export const PROVIDED_ERROR_MESSAGE_PREFIX = 'Provided'
-
-export interface ErrorWithCause extends Error {
-  cause?: Error
-}
-
-export type RawErrorCause = {
-  message: string
-  source: string
-  type?: string
-  stack?: string
-}
-
-export interface RawError {
-  startClocks: ClocksState
-  message: string
-  type?: string
-  stack?: string
-  source: ErrorSource
-  originalError?: unknown
-  handling?: ErrorHandling
-  handlingStack?: string
-  causes?: RawErrorCause[]
-}
-
-export const ErrorSource = {
-  AGENT: 'agent',
-  CONSOLE: 'console',
-  CUSTOM: 'custom',
-  LOGGER: 'logger',
-  NETWORK: 'network',
-  SOURCE: 'source',
-  REPORT: 'report',
-} as const
-
-export const enum ErrorHandling {
-  HANDLED = 'handled',
-  UNHANDLED = 'unhandled',
-}
-
-export type ErrorSource = (typeof ErrorSource)[keyof typeof ErrorSource]
 
 type RawErrorParams = {
   stackTrace?: StackTrace

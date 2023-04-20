@@ -1,14 +1,8 @@
 import type { StackTrace } from '../tracekit'
 import { clocksNow } from '../../tools/utils/timeUtils'
-import type { RawErrorCause, ErrorWithCause } from './error'
-import {
-  createHandlingStack,
-  computeRawError,
-  getFileFromStackTraceString,
-  flattenErrorCauses,
-  ErrorSource,
-  ErrorHandling,
-} from './error'
+import { createHandlingStack, computeRawError, getFileFromStackTraceString, flattenErrorCauses } from './error'
+import type { RawErrorCause, ErrorWithCause } from './error.types'
+import { ErrorHandling, ErrorSource } from './error.types'
 
 describe('computeRawError', () => {
   const NOT_COMPUTED_STACK_TRACE: StackTrace = { name: undefined, message: undefined, stack: [] } as any
