@@ -2,7 +2,6 @@ import type { Duration, ClocksState, RelativeTime, TimeStamp } from '@datadog/br
 import {
   includes,
   timeStampNow,
-  isExperimentalFeatureEnabled,
   Observable,
   assign,
   getRelativeTime,
@@ -12,7 +11,6 @@ import {
   clocksNow,
   ONE_SECOND,
   elapsed,
-  ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { FrustrationType } from '../../../rawRumEvent.types'
 import { ActionType } from '../../../rawRumEvent.types'
@@ -240,27 +238,19 @@ function startClickAction(
 type ClickActionBase = Pick<ClickAction, 'type' | 'name' | 'target' | 'position'>
 
 function computeClickActionBase(event: MouseEventOnElement, actionNameAttribute?: string): ClickActionBase {
-  let target: ClickAction['target']
-  let position: ClickAction['position']
-
-  if (isExperimentalFeatureEnabled(ExperimentalFeature.CLICKMAP)) {
-    const rect = event.target.getBoundingClientRect()
-    target = {
+  const rect = event.target.getBoundingClientRect()
+  return {
+    type: ActionType.CLICK,
+    target: {
       width: Math.round(rect.width),
       height: Math.round(rect.height),
       selector: getSelectorFromElement(event.target, actionNameAttribute),
-    }
-    position = {
+    },
+    position: {
       // Use clientX and Y because for SVG element offsetX and Y are relatives to the <svg> element
       x: Math.round(event.clientX - rect.left),
       y: Math.round(event.clientY - rect.top),
-    }
-  }
-
-  return {
-    type: ActionType.CLICK,
-    target,
-    position,
+    },
     name: getActionNameFromElement(event.target, actionNameAttribute),
   }
 }
