@@ -56,7 +56,7 @@ export function startUnhandledErrorCollection(callback: UnhandledErrorCallback) 
 function instrumentOnError(callback: UnhandledErrorCallback) {
   return instrumentMethodAndCallOriginal(window, 'onerror', {
     before(this: any, messageObj: unknown, url?: string, line?: number, column?: number, errorObj?: unknown) {
-      if (errorObj) {
+      if (errorObj instanceof Error) {
         callback(computeStackTrace(errorObj), errorObj)
         return
       }
@@ -67,7 +67,7 @@ function instrumentOnError(callback: UnhandledErrorCallback) {
         message,
         stack,
       }
-      callback(stackTrace, messageObj)
+      callback(stackTrace, errorObj ?? messageObj)
     },
   })
 }

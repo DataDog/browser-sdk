@@ -31,11 +31,12 @@ export function computeRawError({
 }: RawErrorParams): RawError {
   const isErrorInstance = originalError instanceof Error
 
-  const message = stackTrace?.message
-    ? stackTrace.message
-    : !isErrorInstance
-    ? `${nonErrorPrefix} ${jsonStringify(sanitize(originalError))!}`
-    : 'Empty message'
+  const message =
+    stackTrace?.message && stackTrace?.name
+      ? stackTrace.message
+      : !isErrorInstance
+      ? `${nonErrorPrefix} ${jsonStringify(sanitize(originalError))!}`
+      : 'Empty message'
   const stack = hasUsableStack(isErrorInstance, stackTrace)
     ? toStackTraceString(stackTrace)
     : NO_ERROR_STACK_PRESENT_MESSAGE

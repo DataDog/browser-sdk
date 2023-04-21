@@ -75,7 +75,7 @@ describe('trackRuntimeError', () => {
     collectAsyncCalls(onErrorSpy, 1, () => {
       const collectedError = notifyError.calls.mostRecent().args[0] as RawError
       expect(collectedError.message).toEqual('Uncaught "foo"')
-      expect(collectedError.stack).toEqual(NO_ERROR_STACK_PRESENT_MESSAGE)
+      expect(collectedError.stack).not.toEqual(NO_ERROR_STACK_PRESENT_MESSAGE)
       done()
     })
   })
@@ -88,7 +88,7 @@ describe('trackRuntimeError', () => {
     collectAsyncCalls(onErrorSpy, 1, () => {
       const collectedError = notifyError.calls.mostRecent().args[0] as RawError
       expect(collectedError.message).toEqual('Uncaught {"a":"foo"}')
-      expect(collectedError.stack).toEqual(NO_ERROR_STACK_PRESENT_MESSAGE)
+      expect(collectedError.stack).not.toEqual(NO_ERROR_STACK_PRESENT_MESSAGE)
       done()
     })
   })
