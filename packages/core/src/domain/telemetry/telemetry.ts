@@ -1,6 +1,6 @@
 import type { Context } from '../../tools/serialisation/context'
 import { ConsoleApiName } from '../../tools/display'
-import { toStackTraceString } from '../error/error'
+import { toStackTraceString, NO_ERROR_STACK_PRESENT_MESSAGE } from '../error/error'
 import { getExperimentalFeatures } from '../../tools/experimentalFeatures'
 import type { Configuration } from '../configuration'
 import { INTAKE_SITE_STAGING, INTAKE_SITE_US1_FED } from '../configuration'
@@ -14,6 +14,7 @@ import { startsWith, arrayFrom, includes, assign } from '../../tools/utils/polyf
 import { performDraw } from '../../tools/utils/numberUtils'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
 import { combine } from '../../tools/mergeInto'
+import { NonErrorPrefix } from '../error/error.types'
 import type { TelemetryEvent } from './telemetryEvent.types'
 import type { RawTelemetryConfiguration, RawTelemetryEvent } from './rawTelemetryEvent.types'
 import { StatusType, TelemetryType } from './rawTelemetryEvent.types'
@@ -181,9 +182,9 @@ export function formatError(e: unknown) {
   }
   return {
     error: {
-      stack: 'Not an instance of error',
+      stack: NO_ERROR_STACK_PRESENT_MESSAGE,
     },
-    message: `Uncaught ${jsonStringify(e)!}`,
+    message: `${NonErrorPrefix.UNCAUGHT} ${jsonStringify(e)!}`,
   }
 }
 
