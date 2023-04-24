@@ -70,13 +70,12 @@ export function computeRawError({
   handling,
 }: RawErrorParams): RawError {
   if (!stackTrace || (stackTrace.message === undefined && !(originalError instanceof Error))) {
-    const sanitizedError = sanitize(originalError)
     return {
       startClocks,
       source,
       handling,
-      originalError: sanitizedError,
-      message: `${nonErrorPrefix} ${jsonStringify(sanitizedError)!}`,
+      originalError,
+      message: `${nonErrorPrefix} ${jsonStringify(sanitize(originalError))!}`,
       stack: 'No stack, consider using an instance of Error',
       handlingStack,
       type: stackTrace && stackTrace.name,
