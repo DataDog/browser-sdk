@@ -7,6 +7,7 @@ import {
   display,
   createEventRateLimiter,
   canUseEventBridge,
+  assign,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type {
@@ -29,6 +30,7 @@ import type { RumConfiguration } from './configuration'
 import type { ActionContexts } from './rumEventsCollection/action/actionCollection'
 import { getDisplayContext } from './contexts/displayContext'
 import type { CommonContext } from './contexts/commonContext'
+import type { ModifiableFieldPaths } from './limitModification'
 import { limitModification } from './limitModification'
 
 // replaced at build time
@@ -40,21 +42,16 @@ const enum SessionType {
   CI_TEST = 'ci_test',
 }
 
-const VIEW_EVENTS_MODIFIABLE_FIELD_PATHS = [
-  // Fields with sensitive data
-  'view.url',
-  'view.referrer',
-  'action.target.name',
-  'error.message',
-  'error.stack',
-  'error.resource.url',
-  'resource.url',
-]
+const VIEW_MODIFIABLE_FIELD_PATHS: ModifiableFieldPaths = {
+  'view.url': 'string',
+  'view.referrer': 'string',
+}
 
-const OTHER_EVENTS_MODIFIABLE_FIELD_PATHS = VIEW_EVENTS_MODIFIABLE_FIELD_PATHS.concat([
-  // User-customizable field
-  'context',
-])
+const USER_CUSTOMIZABLE_FIELD_PATHS: ModifiableFieldPaths = {
+  context: 'object',
+}
+
+let MODIFIABLE_FIELD_PATHS_BY_EVENT: { [key in RumEventType]: ModifiableFieldPaths }
 
 type Mutable<T> = { -readonly [P in keyof T]: T[P] }
 
@@ -68,6 +65,33 @@ export function startRumAssembly(
   buildCommonContext: () => CommonContext,
   reportError: (error: RawError) => void
 ) {
+  MODIFIABLE_FIELD_PATHS_BY_EVENT = {
+    [RumEventType.VIEW]: VIEW_MODIFIABLE_FIELD_PATHS,
+    [RumEventType.ERROR]: assign(
+      {
+        'error.message': 'string',
+        'error.stack': 'string',
+        'error.resource.url': 'string',
+      },
+      USER_CUSTOMIZABLE_FIELD_PATHS,
+      VIEW_MODIFIABLE_FIELD_PATHS
+    ),
+    [RumEventType.RESOURCE]: assign(
+      {
+        'resource.url': 'string',
+      },
+      USER_CUSTOMIZABLE_FIELD_PATHS,
+      VIEW_MODIFIABLE_FIELD_PATHS
+    ),
+    [RumEventType.ACTION]: assign(
+      {
+        'action.target.name': 'string',
+      },
+      USER_CUSTOMIZABLE_FIELD_PATHS,
+      VIEW_MODIFIABLE_FIELD_PATHS
+    ),
+    [RumEventType.LONG_TASK]: assign({}, USER_CUSTOMIZABLE_FIELD_PATHS, VIEW_MODIFIABLE_FIELD_PATHS),
+  }
   const eventRateLimiters = {
     [RumEventType.ERROR]: createEventRateLimiter(
       RumEventType.ERROR,
@@ -155,10 +179,8 @@ function shouldSend(
   eventRateLimiters: { [key in RumEventType]?: EventRateLimiter }
 ) {
   if (beforeSend) {
-    const result = limitModification(
-      event,
-      event.type === RumEventType.VIEW ? VIEW_EVENTS_MODIFIABLE_FIELD_PATHS : OTHER_EVENTS_MODIFIABLE_FIELD_PATHS,
-      (event) => beforeSend(event, domainContext)
+    const result = limitModification(event, MODIFIABLE_FIELD_PATHS_BY_EVENT[event.type], (event) =>
+      beforeSend(event, domainContext)
     )
     if (result === false && event.type !== RumEventType.VIEW) {
       return false

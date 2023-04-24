@@ -1,5 +1,7 @@
-import { sanitize, deepClone, getType } from '@datadog/browser-core'
+import { sanitize, deepClone, getType, objectEntries } from '@datadog/browser-core'
 import type { Context } from '@datadog/browser-core'
+
+export type ModifiableFieldPaths = { [path: string]: 'string' | 'object' }
 
 /**
  * Current limitation:
@@ -7,12 +9,12 @@ import type { Context } from '@datadog/browser-core'
  */
 export function limitModification<T extends Context, Result>(
   object: T,
-  modifiableFieldPaths: string[],
+  modifiableFieldPaths: ModifiableFieldPaths,
   modifier: (object: T) => Result
 ): Result | undefined {
   const clone = deepClone(object)
   const result = modifier(clone)
-  modifiableFieldPaths.forEach((path) => {
+  objectEntries(modifiableFieldPaths).forEach(([path]) => {
     const originalValue = get(object, path)
     const newValue = get(clone, path)
     const originalType = getType(originalValue)
