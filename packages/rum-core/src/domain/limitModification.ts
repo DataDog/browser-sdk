@@ -1,4 +1,4 @@
-import { ExperimentalFeature, isExperimentalFeatureEnabled, sanitize, deepClone, getType } from '@datadog/browser-core'
+import { sanitize, deepClone, getType } from '@datadog/browser-core'
 import type { Context } from '@datadog/browser-core'
 
 /**
@@ -18,11 +18,7 @@ export function limitModification<T extends Context, Result>(
     const originalType = getType(originalValue)
     const newType = getType(newValue)
     if (newType === originalType) {
-      set(
-        object,
-        path,
-        isExperimentalFeatureEnabled(ExperimentalFeature.SANITIZE_INPUTS) ? sanitize(newValue) : newValue
-      )
+      set(object, path, sanitize(newValue))
     } else if (originalType === 'object' && (newType === 'undefined' || newType === 'null')) {
       set(object, path, {})
     }

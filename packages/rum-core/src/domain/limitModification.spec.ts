@@ -1,4 +1,3 @@
-import { ExperimentalFeature, resetExperimentalFeatures, addExperimentalFeatures } from '@datadog/browser-core'
 import type { Context } from '@datadog/browser-core'
 import { limitModification } from './limitModification'
 
@@ -158,7 +157,6 @@ describe('limitModification', () => {
   })
 
   it('should call sanitize on newly provided values', () => {
-    addExperimentalFeatures([ExperimentalFeature.SANITIZE_INPUTS])
     const object: Context = { bar: { baz: 42 } }
 
     const modifier = (candidate: any) => {
@@ -167,6 +165,5 @@ describe('limitModification', () => {
 
     limitModification(object, ['bar'], modifier)
     expect(() => JSON.stringify(object)).not.toThrowError()
-    resetExperimentalFeatures()
   })
 })

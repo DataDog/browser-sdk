@@ -1,6 +1,5 @@
 import type { StackTrace } from '../tracekit'
 import { computeStackTrace } from '../tracekit'
-import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/experimentalFeatures'
 import { callMonitored } from '../../tools/monitor'
 import { sanitize } from '../../tools/serialisation/sanitize'
 import type { ClocksState } from '../../tools/utils/timeUtils'
@@ -31,14 +30,11 @@ export function computeRawError({
   handling,
 }: RawErrorParams): RawError {
   const isErrorInstance = originalError instanceof Error
-  const sanitizedError = isExperimentalFeatureEnabled(ExperimentalFeature.SANITIZE_INPUTS)
-    ? sanitize(originalError)
-    : originalError
 
   const message = stackTrace?.message
     ? stackTrace.message
     : !isErrorInstance
-    ? `${nonErrorPrefix} ${jsonStringify(sanitizedError)!}`
+    ? `${nonErrorPrefix} ${jsonStringify(sanitize(originalError))!}`
     : 'Empty message'
   const stack = isValidStackTrace(isErrorInstance, stackTrace)
     ? toStackTraceString(stackTrace)

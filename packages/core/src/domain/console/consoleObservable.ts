@@ -4,7 +4,6 @@ import { mergeObservables, Observable } from '../../tools/observable'
 import { ConsoleApiName } from '../../tools/display'
 import { callMonitored } from '../../tools/monitor'
 import { sanitize } from '../../tools/serialisation/sanitize'
-import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/experimentalFeatures'
 import { find } from '../../tools/utils/polyfills'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
 
@@ -71,14 +70,10 @@ function buildConsoleLog(params: unknown[], api: ConsoleApiName, handlingStack: 
 
 function formatConsoleParameters(param: unknown) {
   if (typeof param === 'string') {
-    return isExperimentalFeatureEnabled(ExperimentalFeature.SANITIZE_INPUTS) ? sanitize(param) : param
+    return sanitize(param)
   }
   if (param instanceof Error) {
     return formatErrorMessage(computeStackTrace(param))
   }
-  return jsonStringify(
-    isExperimentalFeatureEnabled(ExperimentalFeature.SANITIZE_INPUTS) ? sanitize(param) : param,
-    undefined,
-    2
-  )
+  return jsonStringify(sanitize(param), undefined, 2)
 }
