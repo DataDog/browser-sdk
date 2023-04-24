@@ -16,6 +16,19 @@
 
 ---
 
+## v4.40.0
+
+- ♻️ [RUMF-1508] refactor error types / constants ([#2179](https://github.com/DataDog/browser-sdk/pull/2179))
+- ✨ [RUMF-1530] enable sending replay metadata as json ([#2177](https://github.com/DataDog/browser-sdk/pull/2177))
+- ✨ [RUMF-1479] enable heatmaps collection ([#2178](https://github.com/DataDog/browser-sdk/pull/2178))
+- ✨ [RUMF-1534] send a view update when session is expiring ([#2166](https://github.com/DataDog/browser-sdk/pull/2166))
+- ✨ [RUMF-1534] allow (some) view updates after session expiration ([#2167](https://github.com/DataDog/browser-sdk/pull/2167))
+- 🐛 Fix exception when using wrong tracing parameters ([#2173](https://github.com/DataDog/browser-sdk/pull/2173))
+- 🚨 add require-await rule and remove useless async ([#2132](https://github.com/DataDog/browser-sdk/pull/2132))
+- ✨ [RUMF-1530] send replay metadata as json ([#2125](https://github.com/DataDog/browser-sdk/pull/2125))
+- ✨ [RUMF-1533] flush pending data on session expiration ([#2150](https://github.com/DataDog/browser-sdk/pull/2150))
+- ♻️ factorize LifeCycle and simplify its types ([#2165](https://github.com/DataDog/browser-sdk/pull/2165))
+
 ## v4.39.0
 
 - ♻️ [RUMF-1533] extract the Flush logic into a reusable component ([#2144](https://github.com/DataDog/browser-sdk/pull/2144))
