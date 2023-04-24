@@ -34,7 +34,7 @@ describe('limitModification', () => {
     })
   })
 
-  it('should not allow to add a modifiable fields not present on the original object', () => {
+  it('should allow to add a modifiable fields not present on the original object', () => {
     const object = { foo: { bar: 'bar' }, qux: 'qux' }
     const modifier = (candidate: any) => {
       candidate.foo.bar = 'modified1'
@@ -43,6 +43,23 @@ describe('limitModification', () => {
     }
 
     limitModification(object, { 'foo.bar': 'string', qux: 'string', qix: 'string' }, modifier)
+
+    expect(object as any).toEqual({
+      foo: { bar: 'modified1' },
+      qux: 'modified2',
+      qix: 'modified3',
+    })
+  })
+
+  it('should not allow to add a non modifiable fields not present on the original object', () => {
+    const object = { foo: { bar: 'bar' }, qux: 'qux' }
+    const modifier = (candidate: any) => {
+      candidate.foo.bar = 'modified1'
+      candidate.qux = 'modified2'
+      candidate.qix = 'modified3'
+    }
+
+    limitModification(object, { 'foo.bar': 'string', qux: 'string' }, modifier)
 
     expect(object).toEqual({
       foo: { bar: 'modified1' },

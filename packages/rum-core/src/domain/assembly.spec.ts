@@ -242,6 +242,22 @@ describe('rum assembly', () => {
 
         expect(serverRumEvents[0].view.id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
       })
+
+      it('should not allow to add a sensitive field on the wrong event type', () => {
+        const { lifeCycle } = setupBuilder
+          .withConfiguration({
+            beforeSend: (event) => {
+              event.error = { message: 'added' }
+            },
+          })
+          .build()
+
+        notifyRawRumEvent(lifeCycle, {
+          rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+        })
+
+        expect((serverRumEvents[0] as any).error?.message).toBeUndefined()
+      })
     })
 
     describe('events dismission', () => {

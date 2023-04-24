@@ -14,15 +14,13 @@ export function limitModification<T extends Context, Result>(
 ): Result | undefined {
   const clone = deepClone(object)
   const result = modifier(clone)
-  objectEntries(modifiableFieldPaths).forEach(([path]) => {
-    const originalValue = get(object, path)
-    const newValue = get(clone, path)
-    const originalType = getType(originalValue)
+  objectEntries(modifiableFieldPaths).forEach(([fieldPath, fieldType]) => {
+    const newValue = get(clone, fieldPath)
     const newType = getType(newValue)
-    if (newType === originalType) {
-      set(object, path, sanitize(newValue))
-    } else if (originalType === 'object' && (newType === 'undefined' || newType === 'null')) {
-      set(object, path, {})
+    if (newType === fieldType) {
+      set(object, fieldPath, sanitize(newValue))
+    } else if (fieldType === 'object' && (newType === 'undefined' || newType === 'null')) {
+      set(object, fieldPath, {})
     }
   })
   return result
@@ -44,7 +42,7 @@ function set(object: unknown, path: string, value: unknown) {
   const fields = path.split('.')
   for (let i = 0; i < fields.length; i += 1) {
     const field = fields[i]
-    if (!isValidObjectContaining(current, field)) {
+    if (!isValidObject(current)) {
       return
     }
     if (i !== fields.length - 1) {
@@ -55,6 +53,10 @@ function set(object: unknown, path: string, value: unknown) {
   }
 }
 
+function isValidObject(object: unknown): object is { [key: string]: unknown } {
+  return typeof object === 'object' && object !== null
+}
+
 function isValidObjectContaining(object: unknown, field: string): object is { [key: string]: unknown } {
-  return typeof object === 'object' && object !== null && Object.prototype.hasOwnProperty.call(object, field)
+  return isValidObject(object) && Object.prototype.hasOwnProperty.call(object, field)
 }
