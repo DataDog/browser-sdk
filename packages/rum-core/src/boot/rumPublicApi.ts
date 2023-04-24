@@ -1,8 +1,6 @@
 import type { Context, InitConfiguration, TimeStamp, RelativeTime, User } from '@datadog/browser-core'
 import {
-  ExperimentalFeature,
   noop,
-  isExperimentalFeatureEnabled,
   CustomerDataType,
   willSyntheticsInjectRum,
   assign,
@@ -213,10 +211,8 @@ export function makeRumPublicApi(
 
     addAction: monitor((name: string, context?: object) => {
       addActionStrategy({
-        name: isExperimentalFeatureEnabled(ExperimentalFeature.SANITIZE_INPUTS) ? sanitize(name)! : name,
-        context: (isExperimentalFeatureEnabled(ExperimentalFeature.SANITIZE_INPUTS)
-          ? sanitize(context)
-          : deepClone(context)) as Context,
+        name: sanitize(name)!,
+        context: sanitize(context) as Context,
         startClocks: clocksNow(),
         type: ActionType.CUSTOM,
       })
@@ -228,19 +224,14 @@ export function makeRumPublicApi(
         addErrorStrategy({
           error, // Do not sanitize error here, it is needed unserialized by computeRawError()
           handlingStack,
-          context: (isExperimentalFeatureEnabled(ExperimentalFeature.SANITIZE_INPUTS)
-            ? sanitize(context)
-            : deepClone(context)) as Context,
+          context: sanitize(context) as Context,
           startClocks: clocksNow(),
         })
       })
     },
 
     addTiming: monitor((name: string, time?: number) => {
-      addTimingStrategy(
-        isExperimentalFeatureEnabled(ExperimentalFeature.SANITIZE_INPUTS) ? sanitize(name)! : name,
-        time as RelativeTime | TimeStamp | undefined
-      )
+      addTimingStrategy(sanitize(name)!, time as RelativeTime | TimeStamp | undefined)
     }),
 
     setUser: monitor((newUser: User) => {
@@ -275,10 +266,7 @@ export function makeRumPublicApi(
      * This feature is currently in beta. For more information see the full [feature flag tracking guide](https://docs.datadoghq.com/real_user_monitoring/feature_flag_tracking/).
      */
     addFeatureFlagEvaluation: monitor((key: string, value: any) => {
-      addFeatureFlagEvaluationStrategy(
-        isExperimentalFeatureEnabled(ExperimentalFeature.SANITIZE_INPUTS) ? sanitize(key)! : key,
-        isExperimentalFeatureEnabled(ExperimentalFeature.SANITIZE_INPUTS) ? sanitize(value) : value
-      )
+      addFeatureFlagEvaluationStrategy(sanitize(key)!, sanitize(value))
     }),
     getSessionReplayLink: monitor(() => getSessionReplayLinkStrategy()),
   })

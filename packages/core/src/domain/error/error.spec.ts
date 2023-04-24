@@ -165,6 +165,32 @@ describe('computeRawError', () => {
     expect(causes[1].type).toEqual(deepNestedError.name)
     expect(causes[1].stack).toContain('Error: fiz: buz')
   })
+
+  it('should propagate the original error without modifications', () => {
+    const error = { description: 'syntax error' }
+    const stackTrace: StackTrace = {
+      message: 'some syntax message',
+      name: 'SyntaxError',
+      stack: [],
+    }
+
+    const formattedWithoutStackTrace = computeRawError({
+      ...DEFAULT_RAW_ERROR_PARAMS,
+      stackTrace: NOT_COMPUTED_STACK_TRACE,
+      originalError: error,
+      handling: ErrorHandling.HANDLED,
+    })
+
+    const formattedWithStackTrace = computeRawError({
+      ...DEFAULT_RAW_ERROR_PARAMS,
+      stackTrace,
+      originalError: error,
+      handling: ErrorHandling.HANDLED,
+    })
+
+    expect(formattedWithStackTrace.originalError).toBe(error)
+    expect(formattedWithoutStackTrace.originalError).toBe(error)
+  })
 })
 
 describe('getFileFromStackTraceString', () => {
