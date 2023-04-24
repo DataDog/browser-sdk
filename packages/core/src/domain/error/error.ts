@@ -60,11 +60,13 @@ export function computeRawError({
 }
 
 function isValidStackTrace(isErrorInstance: boolean, stackTrace?: StackTrace): stackTrace is StackTrace {
-  return (
-    stackTrace !== undefined &&
-    (isErrorInstance ||
-      (stackTrace.stack.length > 0 && (stackTrace.stack.length > 1 || stackTrace.stack[0].url !== undefined)))
-  )
+  if (stackTrace === undefined) {
+    return false
+  }
+  if (isErrorInstance) {
+    return true
+  }
+  return stackTrace.stack.length > 0 && (stackTrace.stack.length > 1 || stackTrace.stack[0].url !== undefined)
 }
 
 export function toStackTraceString(stack: StackTrace) {
