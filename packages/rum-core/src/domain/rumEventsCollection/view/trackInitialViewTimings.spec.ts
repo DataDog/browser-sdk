@@ -13,6 +13,7 @@ import { LifeCycleEventType } from '../../lifeCycle'
 import { resetFirstHidden } from './trackFirstHidden'
 import type { Timings } from './trackInitialViewTimings'
 import {
+  KEEP_TRACKING_TIMINGS_AFTER_VIEW_DELAY,
   trackFirstContentfulPaintTiming,
   trackFirstInputTimings,
   trackLargestContentfulPaintTiming,
@@ -48,13 +49,19 @@ const FAKE_FIRST_INPUT_ENTRY: RumFirstInputTiming = {
   startTime: 1000 as RelativeTime,
 }
 
-describe('trackTimings', () => {
+describe('trackInitialViewTimings', () => {
   let setupBuilder: TestSetupBuilder
-  let timingsCallback: jasmine.Spy<(value: Partial<Timings>) => void>
+  let scheduleViewUpdateSpy: jasmine.Spy<() => void>
+  let trackInitialViewTimingsResult: ReturnType<typeof trackInitialViewTimings>
+  let setLoadEventSpy: jasmine.Spy<(loadEvent: Duration) => void>
 
   beforeEach(() => {
-    timingsCallback = jasmine.createSpy()
-    setupBuilder = setup().beforeBuild(({ lifeCycle }) => trackInitialViewTimings(lifeCycle, timingsCallback))
+    scheduleViewUpdateSpy = jasmine.createSpy()
+    setLoadEventSpy = jasmine.createSpy()
+    setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
+      trackInitialViewTimingsResult = trackInitialViewTimings(lifeCycle, setLoadEventSpy, scheduleViewUpdateSpy)
+      return trackInitialViewTimingsResult
+    })
   })
 
   afterEach(() => {
@@ -70,8 +77,8 @@ describe('trackTimings', () => {
       FAKE_FIRST_INPUT_ENTRY,
     ])
 
-    expect(timingsCallback).toHaveBeenCalledTimes(3)
-    expect(timingsCallback.calls.mostRecent().args[0]).toEqual({
+    expect(scheduleViewUpdateSpy).toHaveBeenCalledTimes(3)
+    expect(trackInitialViewTimingsResult.timings).toEqual({
       firstByte: 123 as Duration,
       domComplete: 456 as Duration,
       domContentLoaded: 345 as Duration,
@@ -81,6 +88,33 @@ describe('trackTimings', () => {
       firstInputTime: 1000 as Duration,
       loadEvent: 567 as Duration,
     })
+  })
+
+  it('allows delaying the stop logic', () => {
+    const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+    trackInitialViewTimingsResult.scheduleStop()
+
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [FAKE_NAVIGATION_ENTRY])
+
+    expect(scheduleViewUpdateSpy).toHaveBeenCalledTimes(1)
+
+    clock.tick(KEEP_TRACKING_TIMINGS_AFTER_VIEW_DELAY)
+
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [FAKE_PAINT_ENTRY])
+
+    expect(scheduleViewUpdateSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('calls the `setLoadEvent` callback when the loadEvent timing is known', () => {
+    const { lifeCycle } = setupBuilder.build()
+
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      FAKE_NAVIGATION_ENTRY,
+      FAKE_PAINT_ENTRY,
+      FAKE_FIRST_INPUT_ENTRY,
+    ])
+
+    expect(setLoadEventSpy).toHaveBeenCalledOnceWith(567 as Duration)
   })
 })
 

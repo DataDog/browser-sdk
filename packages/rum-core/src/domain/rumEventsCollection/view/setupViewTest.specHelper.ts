@@ -15,12 +15,17 @@ export function setupViewTest(
     getHandledCount: getViewUpdateCount,
   } = spyOnViews('view update')
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, viewUpdateHandler)
+
   const {
     handler: viewCreateHandler,
     getViewEvent: getViewCreate,
     getHandledCount: getViewCreateCount,
   } = spyOnViews('view create')
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, viewCreateHandler)
+
+  const { handler: viewEndHandler, getViewEvent: getViewEnd, getHandledCount: getViewEndCount } = spyOnViews('view end')
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, viewEndHandler)
+
   const { stop, startView, addTiming } = trackViews(
     location,
     lifeCycle,
@@ -38,6 +43,8 @@ export function setupViewTest(
     getViewUpdateCount,
     getViewCreate,
     getViewCreateCount,
+    getViewEnd,
+    getViewEndCount,
     getLatestViewContext: () => ({
       id: getViewCreate(getViewCreateCount() - 1).id,
     }),

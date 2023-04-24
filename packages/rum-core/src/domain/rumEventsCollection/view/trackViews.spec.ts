@@ -18,9 +18,10 @@ import { RumEventType, ViewLoadingType } from '../../../rawRumEvent.types'
 import type { RumEvent } from '../../../rumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { ViewEvent } from './trackViews'
-import { THROTTLE_VIEW_UPDATE_PERIOD } from './trackViews'
+import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from './trackViews'
 import type { ViewTest } from './setupViewTest.specHelper'
 import { setupViewTest } from './setupViewTest.specHelper'
+import { KEEP_TRACKING_TIMINGS_AFTER_VIEW_DELAY } from './trackInitialViewTimings'
 
 const FAKE_PAINT_ENTRY: RumPerformancePaintTiming = {
   entryType: 'paint',
@@ -255,10 +256,31 @@ describe('initial view', () => {
         expect(initialView.last.loadingTime).toBe(FAKE_NAVIGATION_ENTRY.loadEventEnd)
       })
     })
+
+    it('should not update timings long after the view ended', () => {
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+      const { getViewUpdateCount, startView } = viewTest
+
+      startView()
+
+      clock.tick(KEEP_TRACKING_TIMINGS_AFTER_VIEW_DELAY)
+
+      expect(getViewUpdateCount()).toEqual(4)
+
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+        FAKE_PAINT_ENTRY,
+        FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY,
+        FAKE_NAVIGATION_ENTRY,
+      ])
+
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+      expect(getViewUpdateCount()).toEqual(4)
+    })
   })
 })
 
-describe('renew session', () => {
+describe('view lifecycle', () => {
   let setupBuilder: TestSetupBuilder
   let viewTest: ViewTest
 
@@ -279,102 +301,204 @@ describe('renew session', () => {
     setupBuilder.cleanup()
   })
 
-  it('should create new view on renew session', () => {
-    const { lifeCycle } = setupBuilder.build()
-    const { getViewCreateCount } = viewTest
+  describe('expire session', () => {
+    it('should end the view when the session expires', () => {
+      const { lifeCycle } = setupBuilder.build()
+      const { getViewEndCount } = viewTest
 
-    expect(getViewCreateCount()).toBe(1)
+      expect(getViewEndCount()).toBe(0)
 
-    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
 
-    expect(getViewCreateCount()).toBe(2)
+      expect(getViewEndCount()).toBe(1)
+    })
+
+    it('should send a final view update', () => {
+      const { lifeCycle } = setupBuilder.build()
+      const { getViewUpdateCount, getViewUpdate } = viewTest
+
+      expect(getViewUpdateCount()).toBe(1)
+
+      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+
+      expect(getViewUpdateCount()).toBe(2)
+      expect(getViewUpdate(0).sessionIsActive).toBe(true)
+      expect(getViewUpdate(1).sessionIsActive).toBe(false)
+    })
+
+    it('should not start a new view if the session expired', () => {
+      const { lifeCycle } = setupBuilder.build()
+      const { getViewCreateCount } = viewTest
+
+      expect(getViewCreateCount()).toBe(1)
+
+      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+
+      expect(getViewCreateCount()).toBe(1)
+    })
+
+    it('should not end the view if the view already ended', () => {
+      const { lifeCycle } = setupBuilder.build()
+      const { getViewEndCount, getViewUpdateCount } = viewTest
+
+      lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.UNLOADING })
+
+      expect(getViewEndCount()).toBe(1)
+      expect(getViewUpdateCount()).toBe(2)
+
+      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+
+      expect(getViewEndCount()).toBe(1)
+      expect(getViewUpdateCount()).toBe(2)
+    })
   })
 
-  it('should use the current view name, service and version for the new view', () => {
-    const { lifeCycle, changeLocation } = setupBuilder.build()
-    const { getViewCreateCount, getViewCreate, startView } = viewTest
+  describe('renew session', () => {
+    it('should create new view on renew session', () => {
+      const { lifeCycle } = setupBuilder.build()
+      const { getViewCreateCount } = viewTest
 
-    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+      expect(getViewCreateCount()).toBe(1)
 
-    startView({ name: 'view 1', service: 'service 1', version: 'version 1' })
-    startView({ name: 'view 2', service: 'service 2', version: 'version 2' })
-    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
-    startView({ name: 'view 3', service: 'service 3', version: 'version 3' })
-    changeLocation('/bar')
-    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+      expect(getViewCreateCount()).toBe(2)
+    })
 
-    expect(getViewCreateCount()).toBe(8)
+    it('should use the current view name, service and version for the new view', () => {
+      const { lifeCycle, changeLocation } = setupBuilder.build()
+      const { getViewCreateCount, getViewCreate, startView } = viewTest
 
-    expect(getViewCreate(0)).toEqual(
-      jasmine.objectContaining({
-        name: 'initial view name',
-        service: 'initial service',
-        version: 'initial version',
-      })
-    )
-    expect(getViewCreate(1)).toEqual(
-      jasmine.objectContaining({
-        name: 'initial view name',
-        service: 'initial service',
-        version: 'initial version',
-      })
-    )
-    expect(getViewCreate(2)).toEqual(
-      jasmine.objectContaining({
-        name: 'view 1',
-        service: 'service 1',
-        version: 'version 1',
-      })
-    )
-    expect(getViewCreate(3)).toEqual(
-      jasmine.objectContaining({
-        name: 'view 2',
-        service: 'service 2',
-        version: 'version 2',
-      })
-    )
-    expect(getViewCreate(4)).toEqual(
-      jasmine.objectContaining({
-        name: 'view 2',
-        service: 'service 2',
-        version: 'version 2',
-      })
-    )
-    expect(getViewCreate(5)).toEqual(
-      jasmine.objectContaining({
-        name: 'view 3',
-        service: 'service 3',
-        version: 'version 3',
-      })
-    )
-    expect(getViewCreate(6)).toEqual(
-      jasmine.objectContaining({
-        name: undefined,
-        service: undefined,
-        version: undefined,
-      })
-    )
-    expect(getViewCreate(7)).toEqual(
-      jasmine.objectContaining({
-        name: undefined,
-        service: undefined,
-        version: undefined,
-      })
-    )
-    resetExperimentalFeatures()
+      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+      startView({ name: 'view 1', service: 'service 1', version: 'version 1' })
+      startView({ name: 'view 2', service: 'service 2', version: 'version 2' })
+      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+      startView({ name: 'view 3', service: 'service 3', version: 'version 3' })
+      changeLocation('/bar')
+      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+      expect(getViewCreateCount()).toBe(8)
+
+      expect(getViewCreate(0)).toEqual(
+        jasmine.objectContaining({
+          name: 'initial view name',
+          service: 'initial service',
+          version: 'initial version',
+        })
+      )
+      expect(getViewCreate(1)).toEqual(
+        jasmine.objectContaining({
+          name: 'initial view name',
+          service: 'initial service',
+          version: 'initial version',
+        })
+      )
+      expect(getViewCreate(2)).toEqual(
+        jasmine.objectContaining({
+          name: 'view 1',
+          service: 'service 1',
+          version: 'version 1',
+        })
+      )
+      expect(getViewCreate(3)).toEqual(
+        jasmine.objectContaining({
+          name: 'view 2',
+          service: 'service 2',
+          version: 'version 2',
+        })
+      )
+      expect(getViewCreate(4)).toEqual(
+        jasmine.objectContaining({
+          name: 'view 2',
+          service: 'service 2',
+          version: 'version 2',
+        })
+      )
+      expect(getViewCreate(5)).toEqual(
+        jasmine.objectContaining({
+          name: 'view 3',
+          service: 'service 3',
+          version: 'version 3',
+        })
+      )
+      expect(getViewCreate(6)).toEqual(
+        jasmine.objectContaining({
+          name: undefined,
+          service: undefined,
+          version: undefined,
+        })
+      )
+      expect(getViewCreate(7)).toEqual(
+        jasmine.objectContaining({
+          name: undefined,
+          service: undefined,
+          version: undefined,
+        })
+      )
+      resetExperimentalFeatures()
+    })
   })
 
-  it('should not update the current view when the session is renewed', () => {
-    const { lifeCycle } = setupBuilder.build()
-    const { getViewUpdateCount, getViewUpdate } = viewTest
+  describe('session keep alive', () => {
+    it('should emit a view update periodically', () => {
+      const { clock } = setupBuilder.withFakeClock().build()
 
-    expect(getViewUpdateCount()).toEqual(1)
+      const { getViewUpdateCount } = viewTest
 
-    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+      expect(getViewUpdateCount()).toEqual(1)
 
-    expect(getViewUpdateCount()).toEqual(2)
-    expect(getViewUpdate(0).id).not.toBe(getViewUpdate(1).id)
+      clock.tick(SESSION_KEEP_ALIVE_INTERVAL)
+
+      expect(getViewUpdateCount()).toEqual(2)
+    })
+
+    it('should not send periodical updates after the session has expired', () => {
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+      const { getViewUpdateCount } = viewTest
+
+      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+
+      expect(getViewUpdateCount()).toBe(2)
+
+      clock.tick(SESSION_KEEP_ALIVE_INTERVAL)
+
+      expect(getViewUpdateCount()).toBe(2)
+    })
+  })
+
+  describe('page exit', () => {
+    ;[
+      { exitReason: PageExitReason.UNLOADING, expectViewEnd: true },
+      { exitReason: PageExitReason.PAGEHIDE, expectViewEnd: true },
+      { exitReason: PageExitReason.FROZEN, expectViewEnd: false },
+      { exitReason: PageExitReason.HIDDEN, expectViewEnd: false },
+    ].forEach(({ exitReason, expectViewEnd }) => {
+      it(`should ${
+        expectViewEnd ? '' : 'not '
+      }end the current view when the page is exiting for reason ${exitReason}`, () => {
+        const { lifeCycle } = setupBuilder.build()
+        const { getViewEndCount } = viewTest
+
+        expect(getViewEndCount()).toEqual(0)
+
+        lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: exitReason })
+
+        expect(getViewEndCount()).toEqual(expectViewEnd ? 1 : 0)
+      })
+    })
+
+    it('should not create a new view when ending the view on page exit', () => {
+      const { lifeCycle } = setupBuilder.build()
+      const { getViewCreateCount } = viewTest
+
+      expect(getViewCreateCount()).toEqual(1)
+
+      lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, { reason: PageExitReason.UNLOADING })
+
+      expect(getViewCreateCount()).toEqual(1)
+    })
   })
 })
 
@@ -571,6 +695,21 @@ describe('view custom timings', () => {
       'foo_bar-qux.@zip_21_$____': 1234 as Duration,
     })
     expect(displaySpy).toHaveBeenCalled()
+  })
+
+  it('should not add custom timing when the session has expired', () => {
+    const { clock, lifeCycle } = setupBuilder.build()
+    const { getViewUpdateCount, addTiming } = viewTest
+
+    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+
+    expect(getViewUpdateCount()).toBe(2)
+
+    addTiming('foo', relativeNow())
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    expect(getViewUpdateCount()).toBe(2)
   })
 })
 

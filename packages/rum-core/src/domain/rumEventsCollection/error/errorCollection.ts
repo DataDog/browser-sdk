@@ -1,6 +1,5 @@
 import type { Context, RawError, ClocksState } from '@datadog/browser-core'
 import {
-  PROVIDED_ERROR_MESSAGE_PREFIX,
   isEmptyObject,
   assign,
   ErrorSource,
@@ -10,6 +9,7 @@ import {
   computeStackTrace,
   Observable,
   trackRuntimeError,
+  NonErrorPrefix,
 } from '@datadog/browser-core'
 import type { RawRumErrorEvent } from '../../../rawRumEvent.types'
 import { RumEventType } from '../../../rawRumEvent.types'
@@ -73,7 +73,7 @@ export function doStartErrorCollection(
         originalError: error,
         handlingStack,
         startClocks,
-        nonErrorPrefix: PROVIDED_ERROR_MESSAGE_PREFIX,
+        nonErrorPrefix: NonErrorPrefix.PROVIDED,
         source: ErrorSource.CUSTOM,
         handling: ErrorHandling.HANDLED,
       })

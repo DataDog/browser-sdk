@@ -1,5 +1,6 @@
 import type { Duration, ClocksState, TimeStamp, Observable, Subscription, RelativeTime } from '@datadog/browser-core'
 import {
+  noop,
   PageExitReason,
   shallowClone,
   assign,
@@ -42,6 +43,7 @@ export interface ViewEvent {
   startClocks: ClocksState
   duration: Duration
   isActive: boolean
+  sessionIsActive: boolean
   loadingTime?: Duration
   loadingType: ViewLoadingType
   cumulativeLayoutShift?: number
@@ -77,84 +79,46 @@ export function trackViews(
   areViewsTrackedAutomatically: boolean,
   initialViewOptions?: ViewOptions
 ) {
-  const { stop: stopInitialViewTracking, initialView } = trackInitialView(initialViewOptions)
-  let currentView = initialView
+  let currentView = startNewView(ViewLoadingType.INITIAL_LOAD, clocksOrigin(), initialViewOptions)
 
-  const { stop: stopViewLifeCycle } = startViewLifeCycle()
+  startViewLifeCycle()
 
   let locationChangeSubscription: Subscription
   if (areViewsTrackedAutomatically) {
     locationChangeSubscription = renewViewOnLocationChange(locationChangeObservable)
   }
 
-  function trackInitialView(options?: ViewOptions) {
-    const initialView = newView(
-      lifeCycle,
-      domMutationObservable,
-      configuration,
-      location,
-      ViewLoadingType.INITIAL_LOAD,
-      clocksOrigin(),
-      options
-    )
-    const { stop } = trackInitialViewTimings(lifeCycle, (timings) => {
-      initialView.updateTimings(timings)
-      initialView.scheduleUpdate()
-    })
-    return { initialView, stop }
-  }
-
-  function trackViewChange(startClocks?: ClocksState, viewOptions?: ViewOptions) {
-    return newView(
-      lifeCycle,
-      domMutationObservable,
-      configuration,
-      location,
-      ViewLoadingType.ROUTE_CHANGE,
-      startClocks,
-      viewOptions
-    )
+  function startNewView(loadingType: ViewLoadingType, startClocks?: ClocksState, viewOptions?: ViewOptions) {
+    return newView(lifeCycle, domMutationObservable, configuration, location, loadingType, startClocks, viewOptions)
   }
 
   function startViewLifeCycle() {
     lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-      // do not trigger view update to avoid wrong data
-      currentView.end()
       // Renew view on session renewal
-      currentView = trackViewChange(undefined, {
+      currentView = startNewView(ViewLoadingType.ROUTE_CHANGE, undefined, {
         name: currentView.name,
         service: currentView.service,
         version: currentView.version,
       })
     })
 
+    lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
+      currentView.end({ sessionIsActive: false })
+    })
+
     // End the current view on page unload
     lifeCycle.subscribe(LifeCycleEventType.PAGE_EXITED, (pageExitEvent) => {
       if (pageExitEvent.reason === PageExitReason.UNLOADING || pageExitEvent.reason === PageExitReason.PAGEHIDE) {
         currentView.end()
-        currentView.triggerUpdate()
       }
     })
-
-    // Session keep alive
-    const keepAliveInterval = setInterval(() => {
-      currentView.triggerUpdate()
-    }, SESSION_KEEP_ALIVE_INTERVAL)
-
-    return {
-      stop: () => {
-        clearInterval(keepAliveInterval)
-      },
-    }
   }
 
   function renewViewOnLocationChange(locationChangeObservable: Observable<LocationChange>) {
     return locationChangeObservable.subscribe(({ oldLocation, newLocation }) => {
       if (areDifferentLocation(oldLocation, newLocation)) {
         currentView.end()
-        currentView.triggerUpdate()
-        currentView = trackViewChange()
-        return
+        currentView = startNewView(ViewLoadingType.ROUTE_CHANGE)
       }
     })
   }
@@ -162,17 +126,13 @@ export function trackViews(
   return {
     addTiming: (name: string, time: RelativeTime | TimeStamp = timeStampNow()) => {
       currentView.addTiming(name, time)
-      currentView.scheduleUpdate()
     },
     startView: (options?: ViewOptions, startClocks?: ClocksState) => {
-      currentView.end(startClocks)
-      currentView.triggerUpdate()
-      currentView = trackViewChange(startClocks, options)
+      currentView.end({ endClocks: startClocks })
+      currentView = startNewView(ViewLoadingType.ROUTE_CHANGE, startClocks, options)
     },
     stop: () => {
       locationChangeSubscription?.unsubscribe()
-      stopInitialViewTracking()
-      stopViewLifeCycle()
       currentView.end()
     },
   }
@@ -189,12 +149,12 @@ function newView(
 ) {
   // Setup initial values
   const id = generateUUID()
-  let timings: Timings = {}
   const customTimings: ViewCustomTimings = {}
   let documentVersion = 0
   let endClocks: ClocksState | undefined
   const location = shallowClone(initialLocation)
 
+  let sessionIsActive = true
   let name: string | undefined
   let service: string | undefined
   let version: string | undefined
@@ -227,16 +187,26 @@ function newView(
     viewMetrics,
   } = trackViewMetrics(lifeCycle, domMutationObservable, configuration, scheduleViewUpdate, loadingType, startClocks)
 
+  const { scheduleStop: scheduleStopInitialViewTimingsTracking, timings } =
+    loadingType === ViewLoadingType.INITIAL_LOAD
+      ? trackInitialViewTimings(lifeCycle, setLoadEvent, scheduleViewUpdate)
+      : { scheduleStop: noop, timings: {} as Timings }
+
   const { scheduleStop: scheduleStopEventCountsTracking, eventCounts } = trackViewEventCounts(
     lifeCycle,
     id,
     scheduleViewUpdate
   )
 
+  // Session keep alive
+  const keepAliveIntervalId = setInterval(triggerViewUpdate, SESSION_KEEP_ALIVE_INTERVAL)
+
   // Initial view update
   triggerViewUpdate()
 
   function triggerViewUpdate() {
+    cancelScheduleViewUpdate()
+
     documentVersion += 1
     const currentEnd = endClocks === undefined ? timeStampNow() : endClocks.timeStamp
     lifeCycle.notify(
@@ -255,6 +225,7 @@ function newView(
           timings,
           duration: elapsed(startClocks.timeStamp, currentEnd),
           isActive: endClocks === undefined,
+          sessionIsActive,
           eventCounts,
         },
         viewMetrics
@@ -266,27 +237,28 @@ function newView(
     name,
     service,
     version,
-    scheduleUpdate: scheduleViewUpdate,
-    end(clocks = clocksNow()) {
-      endClocks = clocks
+    end(options: { endClocks?: ClocksState; sessionIsActive?: boolean } = {}) {
+      if (endClocks) {
+        // view already ended
+        return
+      }
+      endClocks = options.endClocks ?? clocksNow()
+      sessionIsActive = options.sessionIsActive ?? true
+
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks })
+      clearInterval(keepAliveIntervalId)
       stopViewMetricsTracking()
+      scheduleStopInitialViewTimingsTracking()
       scheduleStopEventCountsTracking()
-    },
-    triggerUpdate() {
-      // cancel any pending view updates execution
-      cancelScheduleViewUpdate()
       triggerViewUpdate()
     },
-    updateTimings(newTimings: Timings) {
-      timings = newTimings
-      if (newTimings.loadEvent !== undefined) {
-        setLoadEvent(newTimings.loadEvent)
-      }
-    },
     addTiming(name: string, time: RelativeTime | TimeStamp) {
+      if (endClocks) {
+        return
+      }
       const relativeTime = looksLikeRelativeTime(time) ? time : elapsed(startClocks.timeStamp, time)
       customTimings[sanitizeTiming(name)] = relativeTime
+      scheduleViewUpdate()
     },
   }
 }

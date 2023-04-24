@@ -103,6 +103,7 @@ export interface RawRumViewEvent {
   }
   session: {
     has_replay: true | undefined
+    is_active: false | undefined
   }
   feature_flags?: Context
   _dd: {

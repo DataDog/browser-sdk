@@ -534,19 +534,6 @@ describe('rum assembly', () => {
 
       expect(rumSessionManager.findTrackedSession).toHaveBeenCalledWith(123 as RelativeTime)
     })
-
-    it('should get current session state for view event', () => {
-      const rumSessionManager = createRumSessionManagerMock()
-      spyOn(rumSessionManager, 'findTrackedSession').and.callThrough()
-
-      const { lifeCycle } = setupBuilder.withSessionManager(rumSessionManager).build()
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-        startTime: 123 as RelativeTime,
-      })
-
-      expect(rumSessionManager.findTrackedSession).toHaveBeenCalledWith(undefined)
-    })
   })
 
   describe('session context', () => {
@@ -557,6 +544,7 @@ describe('rum assembly', () => {
       })
       expect(serverRumEvents[0].session).toEqual({
         has_replay: undefined,
+        is_active: undefined,
         id: '1234',
         type: 'user',
       })
