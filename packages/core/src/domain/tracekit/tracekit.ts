@@ -76,11 +76,7 @@ function tryToParseMessage(messageObj: unknown) {
   let name
   let message
   if ({}.toString.call(messageObj) === '[object String]') {
-    const groups = ERROR_TYPES_RE.exec(messageObj as string)
-    if (groups) {
-      name = groups[1]
-      message = groups[2]
-    }
+    ;[, name, message] = ERROR_TYPES_RE.exec(messageObj as string)!
   }
   return { name, message }
 }
