@@ -2,24 +2,24 @@
 # yarn lockfile v1
 
 
-"@datadog/browser-core@4.40.0", "@datadog/browser-core@file:../../packages/core":
-  version "4.40.0"
+"@datadog/browser-core@4.41.0", "@datadog/browser-core@file:../../packages/core":
+  version "4.41.0"
 
 "@datadog/browser-logs@file:../../packages/logs":
-  version "4.40.0"
+  version "4.41.0"
   dependencies:
-    "@datadog/browser-core" "4.40.0"
+    "@datadog/browser-core" "4.41.0"
 
-"@datadog/browser-rum-core@4.40.0", "@datadog/browser-rum-core@file:../../packages/rum-core":
-  version "4.40.0"
+"@datadog/browser-rum-core@4.41.0", "@datadog/browser-rum-core@file:../../packages/rum-core":
+  version "4.41.0"
   dependencies:
-    "@datadog/browser-core" "4.40.0"
+    "@datadog/browser-core" "4.41.0"
 
 "@datadog/browser-rum@file:../../packages/rum":
-  version "4.40.0"
+  version "4.41.0"
   dependencies:
-    "@datadog/browser-core" "4.40.0"
-    "@datadog/browser-rum-core" "4.40.0"
+    "@datadog/browser-core" "4.41.0"
+    "@datadog/browser-rum-core" "4.41.0"
 
 "@jridgewell/gen-mapping@^0.3.0":
   version "0.3.3"
@@ -334,9 +334,9 @@ core-util-is@~1.0.0:
   integrity sha512-ZQBvi1DcpJ4GDqanjucZ2Hj3wEO5pZDS89BWbkcrvdxksJorwUDDZamX9ldFkp9aw2lmBDLgkObEA4DWNJ9FYQ==
 
 electron-to-chromium@^1.4.284:
-  version "1.4.369"
-  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.4.369.tgz#a98d838cdd79be4471cd04e9b4dffe891d037874"
-  integrity sha512-LfxbHXdA/S+qyoTEA4EbhxGjrxx7WK2h6yb5K2v0UCOufUKX+VZaHbl3svlzZfv9sGseym/g3Ne4DpsgRULmqg==
+  version "1.4.371"
+  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.4.371.tgz#393983ef087268a20c926a89be30e9f0bfc803b0"
+  integrity sha512-jlBzY4tFcJaiUjzhRTCWAqRvTO/fWzjA3Bls0mykzGZ7zvcMP7h05W6UcgzfT9Ca1SW2xyKDOFRyI0pQeRNZGw==
 
 emojis-list@^3.0.0:
   version "3.0.0"
