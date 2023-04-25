@@ -72,6 +72,7 @@ export function startRumAssembly(
         'error.message': 'string',
         'error.stack': 'string',
         'error.resource.url': 'string',
+        'error.fingerprint': 'string',
       },
       USER_CUSTOMIZABLE_FIELD_PATHS,
       VIEW_MODIFIABLE_FIELD_PATHS

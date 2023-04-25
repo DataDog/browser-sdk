@@ -227,7 +227,23 @@ describe('rum assembly', () => {
         })
       })
 
-      it('should reject modification on non sensitive and non context field', () => {
+      describe('allowed customer provided field', () => {
+        it('should allow modification of the error fingerprint', () => {
+          const { lifeCycle } = setupBuilder
+            .withConfiguration({
+              beforeSend: (event) => (event.error.fingerprint = 'my_fingerprint'),
+            })
+            .build()
+
+          notifyRawRumEvent(lifeCycle, {
+            rawRumEvent: createRawRumEvent(RumEventType.ERROR),
+          })
+
+          expect((serverRumEvents[0] as RumErrorEvent).error.fingerprint).toBe('my_fingerprint')
+        })
+      })
+
+      it('should reject modification of field not sensitive, context or customer provided', () => {
         const { lifeCycle } = setupBuilder
           .withConfiguration({
             beforeSend: (event: RumEvent) => ((event.view as any).id = 'modified'),
