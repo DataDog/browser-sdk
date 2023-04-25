@@ -1,4 +1,5 @@
 import { Observable } from '../../tools/observable'
+import { collectAsyncCalls } from '../../../test'
 import { NO_ERROR_STACK_PRESENT_MESSAGE } from './error'
 import { trackRuntimeError } from './trackRuntimeError'
 import type { RawError } from './error.types'
@@ -14,14 +15,6 @@ describe('trackRuntimeError', () => {
 
   let notifyError: jasmine.Spy
   let stopRuntimeErrorTracking: () => void
-
-  function afterOnErrorInstrumentation(callback: () => void) {
-    const instrumentedOnError = window.onerror!
-    window.onerror = function () {
-      instrumentedOnError.apply(window, arguments as any)
-      callback()
-    }
-  }
 
   beforeEach(() => {
     originalOnErrorHandler = window.onerror
@@ -48,7 +41,7 @@ describe('trackRuntimeError', () => {
     setTimeout(() => {
       throw new Error(ERROR_MESSAGE)
     })
-    afterOnErrorInstrumentation(() => {
+    collectAsyncCalls(onErrorSpy, 1, () => {
       expect(onErrorSpy.calls.mostRecent().args[0]).toMatch(ERROR_MESSAGE)
       done()
     })
@@ -66,7 +59,7 @@ describe('trackRuntimeError', () => {
     setTimeout(() => {
       throw new Error(ERROR_MESSAGE)
     })
-    afterOnErrorInstrumentation(() => {
+    collectAsyncCalls(onErrorSpy, 1, () => {
       const collectedError = notifyError.calls.mostRecent().args[0] as RawError
       expect(collectedError.message).toEqual(ERROR_MESSAGE)
       expect(collectedError.stack).not.toEqual(NO_ERROR_STACK_PRESENT_MESSAGE)
@@ -79,7 +72,7 @@ describe('trackRuntimeError', () => {
       // eslint-disable-next-line no-throw-literal
       throw 'foo'
     })
-    afterOnErrorInstrumentation(() => {
+    collectAsyncCalls(onErrorSpy, 1, () => {
       const collectedError = notifyError.calls.mostRecent().args[0] as RawError
       expect(collectedError.message).toEqual('Uncaught "foo"')
       expect(collectedError.stack).toEqual(NO_ERROR_STACK_PRESENT_MESSAGE)
@@ -92,7 +85,7 @@ describe('trackRuntimeError', () => {
       // eslint-disable-next-line no-throw-literal
       throw { a: 'foo' }
     })
-    afterOnErrorInstrumentation(() => {
+    collectAsyncCalls(onErrorSpy, 1, () => {
       const collectedError = notifyError.calls.mostRecent().args[0] as RawError
       expect(collectedError.message).toEqual('Uncaught {"a":"foo"}')
       expect(collectedError.stack).toEqual(NO_ERROR_STACK_PRESENT_MESSAGE)
@@ -104,7 +97,7 @@ describe('trackRuntimeError', () => {
     setTimeout(() => {
       window.onerror!({ foo: 'bar' } as any)
     })
-    afterOnErrorInstrumentation(() => {
+    collectAsyncCalls(onErrorSpy, 1, () => {
       const collectedError = notifyError.calls.mostRecent().args[0] as RawError
       expect(collectedError.message).toEqual('Uncaught {"foo":"bar"}')
       expect(collectedError.stack).toEqual(NO_ERROR_STACK_PRESENT_MESSAGE)
