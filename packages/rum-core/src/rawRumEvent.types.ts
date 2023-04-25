@@ -59,6 +59,7 @@ export interface RawRumErrorEvent {
     type?: string
     stack?: string
     handling_stack?: string
+    fingerprint?: string
     source: ErrorSource
     message: string
     handling?: ErrorHandling

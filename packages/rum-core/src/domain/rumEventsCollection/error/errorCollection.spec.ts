@@ -80,6 +80,7 @@ describe('error collection', () => {
               handling: ErrorHandling.HANDLED,
               source_type: 'browser',
               causes: undefined,
+              fingerprint: undefined,
             },
             type: RumEventType.ERROR,
             view: {
@@ -116,6 +117,39 @@ describe('error collection', () => {
       expect(error?.causes?.[0].source).toEqual(ErrorSource.CUSTOM)
       expect(error?.causes?.[1].message).toEqual('biz')
       expect(error?.causes?.[1].source).toEqual(ErrorSource.CUSTOM)
+    })
+
+    it('should extract fingerprint from error', () => {
+      const { rawRumEvents } = setupBuilder.build()
+
+      interface DatadogError extends Error {
+        dd_fingerprint?: string
+      }
+      const error = new Error('foo')
+      ;(error as DatadogError).dd_fingerprint = 'my-fingerprint'
+
+      addError({
+        error,
+        handlingStack: 'Error: handling foo',
+        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+      })
+
+      expect((rawRumEvents[0].rawRumEvent as RawRumErrorEvent).error.fingerprint).toEqual('my-fingerprint')
+    })
+
+    it('should sanitize error fingerprint', () => {
+      const { rawRumEvents } = setupBuilder.build()
+
+      const error = new Error('foo')
+      ;(error as any).dd_fingerprint = 2
+
+      addError({
+        error,
+        handlingStack: 'Error: handling foo',
+        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+      })
+
+      expect((rawRumEvents[0].rawRumEvent as RawRumErrorEvent).error.fingerprint).toEqual('2')
     })
 
     it('should save the specified customer context', () => {
@@ -218,6 +252,7 @@ describe('error collection', () => {
           handling: undefined,
           source_type: 'browser',
           causes: undefined,
+          fingerprint: undefined,
         },
         view: {
           in_foreground: true,
