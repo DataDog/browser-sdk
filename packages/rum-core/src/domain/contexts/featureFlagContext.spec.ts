@@ -33,6 +33,7 @@ describe('featureFlagContexts', () => {
   })
 
   afterEach(() => {
+    featureFlagContexts.stop()
     resetExperimentalFeatures()
     setupBuilder.cleanup()
   })
