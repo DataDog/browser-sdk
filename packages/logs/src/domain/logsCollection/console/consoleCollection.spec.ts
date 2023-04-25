@@ -60,6 +60,28 @@ describe('console collection', () => {
     expect(rawLogsEvents[0].rawLogsEvent.error).toEqual({
       origin: ErrorSource.CONSOLE,
       stack: undefined,
+      fingerprint: undefined,
+    })
+  })
+
+  it('should retrieve fingerprint from console error', () => {
+    ;({ stop: stopConsoleCollection } = startConsoleCollection(
+      validateAndBuildLogsConfiguration({ ...initConfiguration, forwardErrorsToLogs: true })!,
+      lifeCycle
+    ))
+    interface DatadogError extends Error {
+      dd_fingerprint?: string
+    }
+    const error = new Error('foo')
+    ;(error as DatadogError).dd_fingerprint = 'my-fingerprint'
+
+    // eslint-disable-next-line no-console
+    console.error(error)
+
+    expect(rawLogsEvents[0].rawLogsEvent.error).toEqual({
+      origin: ErrorSource.CONSOLE,
+      stack: jasmine.any(String),
+      fingerprint: 'my-fingerprint',
     })
   })
 })

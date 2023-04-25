@@ -67,7 +67,7 @@ function hasUsableStack(isErrorInstance: boolean, stackTrace?: StackTrace): stac
   return stackTrace.stack.length > 0 && (stackTrace.stack.length > 1 || stackTrace.stack[0].url !== undefined)
 }
 
-function isErrorWithFingerprint(error: unknown): error is { dd_fingerprint: unknown } {
+export function isErrorWithFingerprint(error: unknown): error is { dd_fingerprint: unknown } {
   return error instanceof Error && 'dd_fingerprint' in error
 }
 
