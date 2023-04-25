@@ -36,7 +36,7 @@ export function computeRawError({
     : !isErrorInstance
     ? `${nonErrorPrefix} ${jsonStringify(sanitize(originalError))!}`
     : 'Empty message'
-  const stack = isValidStackTrace(isErrorInstance, stackTrace)
+  const stack = hasUsableStack(isErrorInstance, stackTrace)
     ? toStackTraceString(stackTrace)
     : NO_ERROR_STACK_PRESENT_MESSAGE
   const causes = isErrorInstance ? flattenErrorCauses(originalError as ErrorWithCause, source) : undefined
@@ -55,7 +55,7 @@ export function computeRawError({
   }
 }
 
-function isValidStackTrace(isErrorInstance: boolean, stackTrace?: StackTrace): stackTrace is StackTrace {
+function hasUsableStack(isErrorInstance: boolean, stackTrace?: StackTrace): stackTrace is StackTrace {
   if (stackTrace === undefined) {
     return false
   }
