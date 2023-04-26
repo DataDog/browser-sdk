@@ -51,7 +51,7 @@ const USER_CUSTOMIZABLE_FIELD_PATHS: ModifiableFieldPaths = {
   context: 'object',
 }
 
-let MODIFIABLE_FIELD_PATHS_BY_EVENT: { [key in RumEventType]: ModifiableFieldPaths }
+let modifiableFieldPathsByEvent: { [key in RumEventType]: ModifiableFieldPaths }
 
 type Mutable<T> = { -readonly [P in keyof T]: T[P] }
 
@@ -65,7 +65,7 @@ export function startRumAssembly(
   buildCommonContext: () => CommonContext,
   reportError: (error: RawError) => void
 ) {
-  MODIFIABLE_FIELD_PATHS_BY_EVENT = {
+  modifiableFieldPathsByEvent = {
     [RumEventType.VIEW]: VIEW_MODIFIABLE_FIELD_PATHS,
     [RumEventType.ERROR]: assign(
       {
@@ -179,7 +179,7 @@ function shouldSend(
   eventRateLimiters: { [key in RumEventType]?: EventRateLimiter }
 ) {
   if (beforeSend) {
-    const result = limitModification(event, MODIFIABLE_FIELD_PATHS_BY_EVENT[event.type], (event) =>
+    const result = limitModification(event, modifiableFieldPathsByEvent[event.type], (event) =>
       beforeSend(event, domainContext)
     )
     if (result === false && event.type !== RumEventType.VIEW) {
