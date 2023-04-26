@@ -175,7 +175,7 @@ describe('limitModification', () => {
   })
 })
 
-function generateModifiableFieldPathsFrom(object: { [path: string]: string | object }) {
+function generateModifiableFieldPathsFrom(object: Record<string, string | object>) {
   const modifiableFieldPaths: ModifiableFieldPaths = {}
   objectEntries(object).forEach(([key, value]) => {
     modifiableFieldPaths[key] = typeof value as 'object' | 'string'

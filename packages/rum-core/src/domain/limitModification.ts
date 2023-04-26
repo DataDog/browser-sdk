@@ -1,7 +1,7 @@
 import { sanitize, deepClone, getType, objectEntries } from '@datadog/browser-core'
 import type { Context } from '@datadog/browser-core'
 
-export type ModifiableFieldPaths = { [path: string]: 'string' | 'object' }
+export type ModifiableFieldPaths = Record<string, 'string' | 'object'>
 
 /**
  * Current limitation:
@@ -53,10 +53,10 @@ function set(object: unknown, path: string, value: unknown) {
   }
 }
 
-function isValidObject(object: unknown): object is { [key: string]: unknown } {
+function isValidObject(object: unknown): object is Record<string, unknown> {
   return getType(object) === 'object'
 }
 
-function isValidObjectContaining(object: unknown, field: string): object is { [key: string]: unknown } {
+function isValidObjectContaining(object: unknown, field: string): object is Record<string, unknown> {
   return isValidObject(object) && Object.prototype.hasOwnProperty.call(object, field)
 }
