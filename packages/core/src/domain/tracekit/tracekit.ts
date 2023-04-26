@@ -1,6 +1,6 @@
 import { instrumentMethodAndCallOriginal } from '../../tools/instrumentMethod'
 import { computeStackTrace } from './computeStackTrace'
-import type { UnhandledErrorCallback } from './types'
+import type { UnhandledErrorCallback, StackTrace } from './types'
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error#Error_types
 const ERROR_TYPES_RE =
@@ -56,16 +56,17 @@ export function startUnhandledErrorCollection(callback: UnhandledErrorCallback) 
 function instrumentOnError(callback: UnhandledErrorCallback) {
   return instrumentMethodAndCallOriginal(window, 'onerror', {
     before(this: any, messageObj: unknown, url?: string, line?: number, column?: number, errorObj?: unknown) {
+      let stackTrace: StackTrace
       if (errorObj instanceof Error) {
-        callback(computeStackTrace(errorObj), errorObj)
-        return
-      }
-      const stack = [{ url, column, line }]
-      const { name, message } = tryToParseMessage(messageObj)
-      const stackTrace = {
-        name,
-        message,
-        stack,
+        stackTrace = computeStackTrace(errorObj)
+      } else {
+        const stack = [{ url, column, line }]
+        const { name, message } = tryToParseMessage(messageObj)
+        stackTrace = {
+          name,
+          message,
+          stack,
+        }
       }
       callback(stackTrace, errorObj ?? messageObj)
     },
