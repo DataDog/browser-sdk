@@ -54,7 +54,7 @@ function set(object: unknown, path: string, value: unknown) {
 }
 
 function isValidObject(object: unknown): object is { [key: string]: unknown } {
-  return typeof object === 'object' && object !== null
+  return getType(object) === 'object'
 }
 
 function isValidObjectContaining(object: unknown, field: string): object is { [key: string]: unknown } {
