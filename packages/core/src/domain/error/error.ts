@@ -31,11 +31,7 @@ export function computeRawError({
 }: RawErrorParams): RawError {
   const isErrorInstance = originalError instanceof Error
 
-  const message = stackTrace?.message
-    ? stackTrace.message
-    : !isErrorInstance
-    ? `${nonErrorPrefix} ${jsonStringify(sanitize(originalError))!}`
-    : 'Empty message'
+  const message = computeMessage(stackTrace, isErrorInstance, nonErrorPrefix, originalError)
   const stack = hasUsableStack(isErrorInstance, stackTrace)
     ? toStackTraceString(stackTrace)
     : NO_ERROR_STACK_PRESENT_MESSAGE
@@ -55,6 +51,21 @@ export function computeRawError({
   }
 }
 
+function computeMessage(
+  stackTrace: StackTrace | undefined,
+  isErrorInstance: boolean,
+  nonErrorPrefix: NonErrorPrefix,
+  originalError: unknown
+) {
+  // Favor stackTrace message only if tracekit has really been able to extract something meaningful (message + name)
+  // TODO rework tracekit integration to avoid scattering error building logic
+  return stackTrace?.message && stackTrace?.name
+    ? stackTrace.message
+    : !isErrorInstance
+    ? `${nonErrorPrefix} ${jsonStringify(sanitize(originalError))!}`
+    : 'Empty message'
+}
+
 function hasUsableStack(isErrorInstance: boolean, stackTrace?: StackTrace): stackTrace is StackTrace {
   if (stackTrace === undefined) {
     return false
@@ -62,6 +73,8 @@ function hasUsableStack(isErrorInstance: boolean, stackTrace?: StackTrace): stac
   if (isErrorInstance) {
     return true
   }
+  // handle cases where tracekit return stack = [] or stack = [{url: undefined, line: undefined, column: undefined}]
+  // TODO rework tracekit integration to avoid generating those unusable stack
   return stackTrace.stack.length > 0 && (stackTrace.stack.length > 1 || stackTrace.stack[0].url !== undefined)
 }
 

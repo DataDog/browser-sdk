@@ -4,6 +4,7 @@ import type { UnhandledErrorCallback } from './types'
 
 describe('startUnhandledErrorCollection', () => {
   const testLineNo = 1337
+  const testColNo = 42
 
   let callbackSpy: jasmine.Spy<UnhandledErrorCallback>
   let stopCollectingUnhandledError: () => void
@@ -74,6 +75,27 @@ describe('startUnhandledErrorCollection', () => {
       const [stack, error] = callbackSpy.calls.mostRecent().args
       expect(stack.message).toBeUndefined()
       expect(error).toEqual({ foo: 'bar' }) // consider the message as initial error
+    })
+  })
+
+  describe('when 5th argument (errorObj) is not of type Error', () => {
+    it('should handle strings', () => {
+      window.onerror!('Any error message', 'https://example.com', testLineNo, testColNo, 'Actual Error Message' as any)
+      const [stack, error] = callbackSpy.calls.mostRecent().args
+      expect(stack.message).toBe('Any error message')
+      expect(stack.stack).toEqual([{ url: 'https://example.com', column: testColNo, line: testLineNo }])
+      expect(error).toEqual('Actual Error Message')
+    })
+
+    it('should handle objects', () => {
+      window.onerror!('Any error message', 'https://example.com', testLineNo, testColNo, {
+        message: 'SyntaxError',
+        data: 'foo',
+      } as any)
+      const [stack, error] = callbackSpy.calls.mostRecent().args
+      expect(stack.message).toBe('Any error message')
+      expect(stack.stack).toEqual([{ url: 'https://example.com', column: testColNo, line: testLineNo }])
+      expect(error).toEqual({ message: 'SyntaxError', data: 'foo' })
     })
   })
 
