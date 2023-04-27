@@ -16,6 +16,10 @@
 
 ---
 
+## v4.41.0
+
+- ✨ [RUMF-1470] enable sanitize for user-provided data ([#2175](https://github.com/DataDog/browser-sdk/pull/2175))
+
 ## v4.40.0
 
 - ♻️ [RUMF-1508] refactor error types / constants ([#2179](https://github.com/DataDog/browser-sdk/pull/2179))
