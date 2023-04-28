@@ -41,7 +41,7 @@ export function computeRawError({
     : NO_ERROR_STACK_PRESENT_MESSAGE
   const causes = isErrorInstance ? flattenErrorCauses(originalError as ErrorWithCause, source) : undefined
   const type = stackTrace?.name
-  const fingerprint = isErrorWithFingerprint(originalError) ? String(originalError.dd_fingerprint) : undefined
+  const fingerprint = tryToGetFingerprint(originalError)
 
   return {
     startClocks,
@@ -67,8 +67,10 @@ function hasUsableStack(isErrorInstance: boolean, stackTrace?: StackTrace): stac
   return stackTrace.stack.length > 0 && (stackTrace.stack.length > 1 || stackTrace.stack[0].url !== undefined)
 }
 
-export function isErrorWithFingerprint(error: unknown): error is { dd_fingerprint: unknown } {
-  return error instanceof Error && 'dd_fingerprint' in error
+export function tryToGetFingerprint(originalError: unknown) {
+  return originalError instanceof Error && 'dd_fingerprint' in originalError
+    ? String(originalError.dd_fingerprint)
+    : undefined
 }
 
 export function toStackTraceString(stack: StackTrace) {

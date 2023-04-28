@@ -1,5 +1,5 @@
 import { computeStackTrace } from '../tracekit'
-import { createHandlingStack, formatErrorMessage, toStackTraceString, isErrorWithFingerprint } from '../error/error'
+import { createHandlingStack, formatErrorMessage, toStackTraceString, tryToGetFingerprint } from '../error/error'
 import { mergeObservables, Observable } from '../../tools/observable'
 import { ConsoleApiName } from '../../tools/display'
 import { callMonitored } from '../../tools/monitor'
@@ -63,7 +63,7 @@ function buildConsoleLog(params: unknown[], api: ConsoleApiName, handlingStack: 
   if (api === ConsoleApiName.error) {
     const firstErrorParam = find(params, (param: unknown): param is Error => param instanceof Error)
     stack = firstErrorParam ? toStackTraceString(computeStackTrace(firstErrorParam)) : undefined
-    fingerprint = isErrorWithFingerprint(firstErrorParam) ? String(firstErrorParam.dd_fingerprint) : undefined
+    fingerprint = tryToGetFingerprint(firstErrorParam)
     message = `console error: ${message}`
   }
 
