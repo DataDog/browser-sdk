@@ -13,7 +13,7 @@ const { modifyFile } = require('../lib/files-utils')
 const CHANGELOG_FILE = 'CHANGELOG.md'
 const CONTRIBUTING_FILE = 'CONTRIBUTING.md'
 const EMOJI_PRIORITY = ['💥', '✨', '🐛', '⚗️', '♻️']
-const START_WITH_EMOJI = new RegExp(/^(\p{Emoji_Presentation})/u)
+const START_WITH_EMOJI = /^\p{Emoji_Presentation}/u
 
 runMain(async () => {
   if (!process.env.EDITOR) {
