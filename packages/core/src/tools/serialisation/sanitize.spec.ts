@@ -85,6 +85,23 @@ describe('sanitize', () => {
       })
     })
 
+    it('should serialize errors as JSON.stringify does', () => {
+      // Explicitely keep the previous behavior to avoid breaking changes in 4.x
+      // Browsers have different behaviors:
+      // IE11 adds a description field
+      // Safari IOS12 adds parts of the stack
+      const error = new Error('My Error')
+      expect(JSON.stringify(sanitize(error))).toEqual(JSON.stringify(error))
+    })
+
+    it('should serialize additional properties from errors', () => {
+      // JSON.stringify does not serialize message/name/stack from an Error, but
+      // will serialize all other additional properties
+      const error = new Error('My Error')
+      ;(error as any).additionalProperty = { inner: 'test' }
+      expect(JSON.stringify(sanitize(error))).toEqual(JSON.stringify(error))
+    })
+
     it('should serialize objects like maps as a string', () => {
       const map = new Map([
         ['a', 13],
