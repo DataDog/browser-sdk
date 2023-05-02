@@ -10,9 +10,11 @@ variables:
   CHROME_DRIVER_VERSION: 112.0.5615.28
 
 cache:
-  key: dependencies
+  key:
+    files:
+      - yarn.lock
   paths:
-    - node_modules/
+    - .yarn/cache
 
 stages:
   - task
@@ -114,6 +116,7 @@ woke:
     - .test-allowed-branches
   interruptible: true
   script:
+    - yarn
     - yarn woke
 
 typecheck:
