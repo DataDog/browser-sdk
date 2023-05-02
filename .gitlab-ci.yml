@@ -114,6 +114,7 @@ woke:
     - .test-allowed-branches
   interruptible: true
   script:
+    - yarn
     - yarn woke
 
 typecheck:

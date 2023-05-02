@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-PATH="$PATH:$(yarn bin)"
+PATH="$PATH:node_modules/.bin"
 
 main () {
   if [[ $# -lt 1 ]]; then
@@ -64,7 +64,7 @@ cmd_version () {
   node ./scripts/release/update-peer-dependency-versions.js
   # keep test app lockfile up to date
   cd test/app
-  yarn upgrade
+  yarn up
   git add yarn.lock
 }
 
