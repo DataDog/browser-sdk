@@ -45,7 +45,7 @@ stages:
   except:
     refs:
       - main
-      - /^mq-working-branch-staging-[0-9]+-[0-9]+$/
+      - /^mq-working-branch-staging-[0-9]+-[a-z0-9]+$/
       - /^staging-[0-9]+$/
       - /^release\//
       - schedules
