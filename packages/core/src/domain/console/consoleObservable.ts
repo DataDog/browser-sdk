@@ -1,5 +1,5 @@
 import { computeStackTrace } from '../tracekit'
-import { createHandlingStack, formatErrorMessage, toStackTraceString } from '../error/error'
+import { createHandlingStack, formatErrorMessage, toStackTraceString, tryToGetFingerprint } from '../error/error'
 import { mergeObservables, Observable } from '../../tools/observable'
 import { ConsoleApiName } from '../../tools/display'
 import { callMonitored } from '../../tools/monitor'
@@ -12,9 +12,10 @@ export interface ConsoleLog {
   api: ConsoleApiName
   stack?: string
   handlingStack?: string
+  fingerprint?: string
 }
 
-const consoleObservablesByApi: { [k in ConsoleApiName]?: Observable<ConsoleLog> } = {}
+let consoleObservablesByApi: { [k in ConsoleApiName]?: Observable<ConsoleLog> } = {}
 
 export function initConsoleObservable(apis: ConsoleApiName[]) {
   const consoleObservables = apis.map((api) => {
@@ -25,6 +26,10 @@ export function initConsoleObservable(apis: ConsoleApiName[]) {
   })
 
   return mergeObservables<ConsoleLog>(...consoleObservables)
+}
+
+export function resetConsoleObservable() {
+  consoleObservablesByApi = {}
 }
 
 /* eslint-disable no-console */
@@ -53,10 +58,12 @@ function buildConsoleLog(params: unknown[], api: ConsoleApiName, handlingStack: 
   // Todo: remove console error prefix in the next major version
   let message = params.map((param) => formatConsoleParameters(param)).join(' ')
   let stack
+  let fingerprint
 
   if (api === ConsoleApiName.error) {
     const firstErrorParam = find(params, (param: unknown): param is Error => param instanceof Error)
     stack = firstErrorParam ? toStackTraceString(computeStackTrace(firstErrorParam)) : undefined
+    fingerprint = tryToGetFingerprint(firstErrorParam)
     message = `console error: ${message}`
   }
 
@@ -65,6 +72,7 @@ function buildConsoleLog(params: unknown[], api: ConsoleApiName, handlingStack: 
     message,
     stack,
     handlingStack,
+    fingerprint,
   }
 }
 

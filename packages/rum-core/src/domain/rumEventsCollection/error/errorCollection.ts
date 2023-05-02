@@ -104,6 +104,7 @@ function processError(
       handling: error.handling,
       causes: error.causes,
       source_type: 'browser',
+      fingerprint: error.fingerprint,
     },
     type: RumEventType.ERROR as const,
   }

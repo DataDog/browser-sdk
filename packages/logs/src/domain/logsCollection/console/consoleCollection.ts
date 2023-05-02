@@ -31,6 +31,7 @@ export function startConsoleCollection(configuration: LogsConfiguration, lifeCyc
             ? {
                 origin: ErrorSource.CONSOLE, // Todo: Remove in the next major release
                 stack: log.stack,
+                fingerprint: log.fingerprint,
               }
             : undefined,
         status: LogStatusForApi[log.api],

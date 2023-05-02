@@ -21,6 +21,7 @@ export interface RawError {
   handling?: ErrorHandling
   handlingStack?: string
   causes?: RawErrorCause[]
+  fingerprint?: string
 }
 
 export const ErrorSource = {

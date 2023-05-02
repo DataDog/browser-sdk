@@ -205,6 +205,10 @@ export type RumErrorEvent = CommonProperties &
        */
       readonly is_crash?: boolean
       /**
+       * Fingerprint used for Error Tracking custom grouping
+       */
+      fingerprint?: string
+      /**
        * The type of the error
        */
       readonly type?: string
