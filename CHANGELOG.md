@@ -16,6 +16,14 @@
 
 ---
 
+## v4.42.0
+
+- ✨[RUMF-1573] Allow to provide custom fingerprint to RUM errors ([#2189](https://github.com/DataDog/browser-sdk/pull/2189))
+- ✨[RUMF-1508] Provide stack trace for all uncaught exceptions ([#2182](https://github.com/DataDog/browser-sdk/pull/2182))
+- ✨[RUMF-1573] allow to add modifiable field paths with beforeSend ([#2186](https://github.com/DataDog/browser-sdk/pull/2186))
+- 🐛 Revert Errors serialization behavior ([#2197](https://github.com/DataDog/browser-sdk/pull/2197))
+- ♻️ [RUMF-1508] reorganise error handling ([#2181](https://github.com/DataDog/browser-sdk/pull/2181))
+
 ## v4.41.0
 
 - ✨ [RUMF-1470] enable sanitize for user-provided data ([#2175](https://github.com/DataDog/browser-sdk/pull/2175))
