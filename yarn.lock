@@ -391,7 +391,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@datadog/browser-core@4.41.0, @datadog/browser-core@workspace:packages/core":
+"@datadog/browser-core@4.42.0, @datadog/browser-core@workspace:packages/core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-core@workspace:packages/core"
   languageName: unknown
@@ -401,7 +401,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-logs@workspace:packages/logs"
   dependencies:
-    "@datadog/browser-core": 4.41.0
+    "@datadog/browser-core": 4.42.0
   peerDependencies:
     "@datadog/browser-rum": 4.41.0
   peerDependenciesMeta:
@@ -410,11 +410,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@datadog/browser-rum-core@4.41.0, @datadog/browser-rum-core@workspace:packages/rum-core":
+"@datadog/browser-rum-core@4.42.0, @datadog/browser-rum-core@workspace:packages/rum-core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-core@workspace:packages/rum-core"
   dependencies:
-    "@datadog/browser-core": 4.41.0
+    "@datadog/browser-core": 4.42.0
     ajv: 6.12.6
   languageName: unknown
   linkType: soft
@@ -423,8 +423,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-slim@workspace:packages/rum-slim"
   dependencies:
-    "@datadog/browser-core": 4.41.0
-    "@datadog/browser-rum-core": 4.41.0
+    "@datadog/browser-core": 4.42.0
+    "@datadog/browser-rum-core": 4.42.0
   peerDependencies:
     "@datadog/browser-logs": 4.41.0
   peerDependenciesMeta:
@@ -437,8 +437,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum@workspace:packages/rum"
   dependencies:
-    "@datadog/browser-core": 4.41.0
-    "@datadog/browser-rum-core": 4.41.0
+    "@datadog/browser-core": 4.42.0
+    "@datadog/browser-rum-core": 4.42.0
     "@types/pako": 2.0.0
     pako: 2.1.0
   peerDependencies:
