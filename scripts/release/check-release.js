@@ -68,7 +68,7 @@ function checkPackageDependencyVersions(packageJsonFile) {
     for (const [dependencyName, dependencyVersion] of Object.entries(dependencies)) {
       if (
         isBrowserSdkPublicPackageName(dependencyName) &&
-        !dependencyVersion.startsWith('file:') &&
+        !dependencyVersion.startsWith('portal:') &&
         dependencyVersion !== releaseVersion
       ) {
         throw new Error(
