@@ -1,9 +1,9 @@
 const lernaConfig = require('../../lerna.json')
 const { runMain } = require('../lib/execution-utils')
 const { modifyFile } = require('../lib/files-utils')
+const { command } = require('../lib/command')
 
 const JSON_FILES = ['rum', 'rum-slim', 'logs'].map((packageName) => `./packages/${packageName}/package.json`)
-const YAML_FILES = ['yarn.lock']
 
 // This script updates the peer dependency versions between rum and logs packages to match the new
 // version during a release.
@@ -18,18 +18,14 @@ runMain(async () => {
   for (const jsonFile of JSON_FILES) {
     await modifyFile(jsonFile, updateJsonPeerDependencies)
   }
-  for (const yamlFile of YAML_FILES) {
-    await modifyFile(yamlFile, updateYamlPeerDependencies)
-  }
+  // update yarn.lock to match the updated JSON files
+  command`yarn`.run()
 })
+
 function updateJsonPeerDependencies(content) {
   const json = JSON.parse(content)
   Object.keys(json.peerDependencies).forEach((key) => {
     json.peerDependencies[key] = lernaConfig.version
   })
   return `${JSON.stringify(json, null, 2)}\n`
-}
-
-function updateYamlPeerDependencies(content) {
-  return content.replaceAll(/(peerDependencies:\s+"@datadog\/[^"]+":\s)[\d.]+/g, `$1${lernaConfig.version}`)
 }
