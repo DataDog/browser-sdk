@@ -3715,7 +3715,6 @@ __metadata:
     express: 4.18.2
     glob: 10.0.0
     jasmine-core: 3.99.1
-    js-polyfills: 0.1.43
     json-schema-to-typescript: "bcaudan/json-schema-to-typescript#bcaudan/add-readonly-support"
     karma: 6.4.1
     karma-browserstack-launcher: 1.6.0
@@ -8646,13 +8645,6 @@ __metadata:
     merge-stream: ^2.0.0
     supports-color: ^8.0.0
   checksum: 98cd68b696781caed61c983a3ee30bf880b5bd021c01d98f47b143d4362b85d0737f8523761e2713d45e18b4f9a2b98af1eaee77afade4111bb65c77d6f7c980
-  languageName: node
-  linkType: hard
-
-"js-polyfills@npm:0.1.43":
-  version: 0.1.43
-  resolution: "js-polyfills@npm:0.1.43"
-  checksum: ac1c23d10f62e4a79dd2b38ee8a8640f5deddffd626db4f00961955991001df3d6a443f62a72ef25884c7cb9b6d31827941eae7e596f258a08b7ab0a002483e8
   languageName: node
   linkType: hard
 
