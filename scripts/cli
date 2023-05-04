@@ -78,6 +78,7 @@ cmd_check_typescript_compatibility () {
   cd test/app
   rm -rf node_modules
   yarn
+  check_typescript_isolated_modules_compatibility || fail 'typescript isolated modules compatibility broken'
   check_typescript_3_compatibility || fail 'typescript@3.8.2 compatibility broken'
   check_typescript_latest_compatibility || fail 'typescript@latest compatibility broken'
 }
@@ -88,7 +89,7 @@ check_typescript_3_compatibility () {
 
 check_typescript_latest_compatibility () {
   # Add typescript options only supported in newer versions
-  perl -i -l -p -e 'print "\"exactOptionalPropertyTypes\": true," if $. == 3' tsconfig.json
+  insert_line_in_file tsconfig.json 3 '"exactOptionalPropertyTypes": true,'
 
   yarn add --dev typescript@latest
   local succeeded=true
@@ -100,6 +101,27 @@ check_typescript_latest_compatibility () {
   git checkout .
 
   $succeeded
+}
+
+check_typescript_isolated_modules_compatibility () {
+  insert_line_in_file tsconfig.json 3 '"isolatedModules": true,'
+
+  local succeeded=true
+  if ! yarn compat:tsc; then
+    succeeded=false
+  fi
+
+  # Revert all changes
+  git checkout .
+
+  $succeeded
+}
+
+insert_line_in_file () {
+  local file="$1"
+  local line_number="$2"
+  local line_content="$3"
+  perl -i -l -p -e "print '${line_content}' if \$. == ${line_number}" "$file"
 }
 
 cmd_check_server_side_rendering_compatibility () {
