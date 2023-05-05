@@ -1,7 +1,7 @@
 import { computeStackTrace } from '../tracekit'
 import { createHandlingStack, formatErrorMessage, toStackTraceString, tryToGetFingerprint } from '../error/error'
 import { mergeObservables, Observable } from '../../tools/observable'
-import { ConsoleApiName } from '../../tools/display'
+import { ConsoleApiName, globalConsole } from '../../tools/display'
 import { callMonitored } from '../../tools/monitor'
 import { sanitize } from '../../tools/serialisation/sanitize'
 import { find } from '../../tools/utils/polyfills'
@@ -32,12 +32,11 @@ export function resetConsoleObservable() {
   consoleObservablesByApi = {}
 }
 
-/* eslint-disable no-console */
 function createConsoleObservable(api: ConsoleApiName) {
   const observable = new Observable<ConsoleLog>(() => {
-    const originalConsoleApi = console[api]
+    const originalConsoleApi = globalConsole[api]
 
-    console[api] = (...params: unknown[]) => {
+    globalConsole[api] = (...params: unknown[]) => {
       originalConsoleApi.apply(console, params)
       const handlingStack = createHandlingStack()
 
@@ -47,7 +46,7 @@ function createConsoleObservable(api: ConsoleApiName) {
     }
 
     return () => {
-      console[api] = originalConsoleApi
+      globalConsole[api] = originalConsoleApi
     }
   })
 
