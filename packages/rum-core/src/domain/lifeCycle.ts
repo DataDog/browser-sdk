@@ -47,7 +47,9 @@ export const enum LifeCycleEventType {
 // "declare" statement, it will only be used during typecheck and completely ignored when building
 // JavaScript).
 //
-// See issue https://github.com/DataDog/browser-sdk/issues/2208
+// See issues:
+// * https://github.com/DataDog/browser-sdk/issues/2208
+// * https://github.com/microsoft/TypeScript/issues/54152
 declare const LifeCycleEventTypeAsConst: {
   PERFORMANCE_ENTRIES_COLLECTED: LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED
   AUTO_ACTION_COMPLETED: LifeCycleEventType.AUTO_ACTION_COMPLETED
