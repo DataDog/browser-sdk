@@ -48,16 +48,16 @@ export function startSessionStore<TrackingType extends string>(
     let isTracked: boolean
     withCookieLockAccess({
       options,
-      process: (cookieSession) => {
-        const synchronizedSession = synchronizeSession(cookieSession)
+      process: (sessionState) => {
+        const synchronizedSession = synchronizeSession(sessionState)
         isTracked = expandOrRenewCookie(synchronizedSession)
         return synchronizedSession
       },
-      after: (cookieSession) => {
+      after: (sessionState) => {
         if (isTracked && !hasSessionInCache()) {
-          renewSessionInCache(cookieSession)
+          renewSessionInCache(sessionState)
         }
-        sessionCache = cookieSession
+        sessionCache = sessionState
       },
     })
   }
@@ -65,7 +65,7 @@ export function startSessionStore<TrackingType extends string>(
   function expandSession() {
     withCookieLockAccess({
       options,
-      process: (cookieSession) => (hasSessionInCache() ? synchronizeSession(cookieSession) : undefined),
+      process: (sessionState) => (hasSessionInCache() ? synchronizeSession(sessionState) : undefined),
     })
   }
 
@@ -77,31 +77,31 @@ export function startSessionStore<TrackingType extends string>(
   function watchSession() {
     withCookieLockAccess({
       options,
-      process: (cookieSession) => (!isActiveSession(cookieSession) ? {} : undefined),
+      process: (sessionState) => (!isActiveSession(sessionState) ? {} : undefined),
       after: synchronizeSession,
     })
   }
 
-  function synchronizeSession(cookieSession: SessionState) {
-    if (!isActiveSession(cookieSession)) {
-      cookieSession = {}
+  function synchronizeSession(sessionState: SessionState) {
+    if (!isActiveSession(sessionState)) {
+      sessionState = {}
     }
     if (hasSessionInCache()) {
-      if (isSessionInCacheOutdated(cookieSession)) {
+      if (isSessionInCacheOutdated(sessionState)) {
         expireSessionInCache()
       } else {
-        sessionCache = cookieSession
+        sessionCache = sessionState
       }
     }
-    return cookieSession
+    return sessionState
   }
 
-  function expandOrRenewCookie(cookieSession: SessionState) {
-    const { trackingType, isTracked } = computeSessionState(cookieSession[productKey])
-    cookieSession[productKey] = trackingType
-    if (isTracked && !cookieSession.id) {
-      cookieSession.id = generateUUID()
-      cookieSession.created = String(dateNow())
+  function expandOrRenewCookie(sessionState: SessionState) {
+    const { trackingType, isTracked } = computeSessionState(sessionState[productKey])
+    sessionState[productKey] = trackingType
+    if (isTracked && !sessionState.id) {
+      sessionState.id = generateUUID()
+      sessionState.created = String(dateNow())
     }
     return isTracked
   }
@@ -110,8 +110,8 @@ export function startSessionStore<TrackingType extends string>(
     return sessionCache[productKey] !== undefined
   }
 
-  function isSessionInCacheOutdated(cookieSession: SessionState) {
-    return sessionCache.id !== cookieSession.id || sessionCache[productKey] !== cookieSession[productKey]
+  function isSessionInCacheOutdated(sessionState: SessionState) {
+    return sessionCache.id !== sessionState.id || sessionCache[productKey] !== sessionState[productKey]
   }
 
   function expireSessionInCache() {
@@ -119,8 +119,8 @@ export function startSessionStore<TrackingType extends string>(
     expireObservable.notify()
   }
 
-  function renewSessionInCache(cookieSession: SessionState) {
-    sessionCache = cookieSession
+  function renewSessionInCache(sessionState: SessionState) {
+    sessionCache = sessionState
     renewObservable.notify()
   }
 
@@ -132,12 +132,12 @@ export function startSessionStore<TrackingType extends string>(
     return {}
   }
 
-  function isActiveSession(session: SessionState) {
+  function isActiveSession(sessionDate: SessionState) {
     // created and expire can be undefined for versions which was not storing them
     // these checks could be removed when older versions will not be available/live anymore
     return (
-      (session.created === undefined || dateNow() - Number(session.created) < SESSION_TIME_OUT_DELAY) &&
-      (session.expire === undefined || dateNow() < Number(session.expire))
+      (sessionDate.created === undefined || dateNow() - Number(sessionDate.created) < SESSION_TIME_OUT_DELAY) &&
+      (sessionDate.expire === undefined || dateNow() < Number(sessionDate.expire))
     )
   }
 
