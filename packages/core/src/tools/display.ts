@@ -1,4 +1,4 @@
-/* eslint-disable no-console, local-rules/disallow-side-effects */
+/* eslint-disable local-rules/disallow-side-effects */
 /**
  * Keep references on console methods to avoid triggering patched behaviors
  *
@@ -33,8 +33,19 @@ export const display: Display = (api, ...args) => {
   display[api](...args)
 }
 
-display.debug = console.debug.bind(console)
-display.log = console.log.bind(console)
-display.info = console.info.bind(console)
-display.warn = console.warn.bind(console)
-display.error = console.error.bind(console)
+/**
+ * When building JS bundles, some users might use a plugin[1] or configuration[2] to remove
+ * "console.*" references. This causes some issue as we expect `console.*` to be defined.
+ * As a workaround, let's use a variable alias, so those expressions won't be taken into account by
+ * simple static analysis.
+ *
+ * [1]: https://babeljs.io/docs/babel-plugin-transform-remove-console/
+ * [2]: https://github.com/terser/terser#compress-options (look for drop_console)
+ */
+export const globalConsole = console
+
+display.debug = globalConsole.debug.bind(globalConsole)
+display.log = globalConsole.log.bind(globalConsole)
+display.info = globalConsole.info.bind(globalConsole)
+display.warn = globalConsole.warn.bind(globalConsole)
+display.error = globalConsole.error.bind(globalConsole)
