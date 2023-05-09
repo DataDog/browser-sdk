@@ -13,6 +13,7 @@ const app = express()
 
 app.use(express.static(path.join(__dirname, '../sandbox')))
 for (const config of [rumConfig, logsConfig, rumSlimConfig]) {
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   app.use(middleware(webpack(config(null, { mode: 'development' }))))
 }
 app.use(redirectSuffixedFiles)
