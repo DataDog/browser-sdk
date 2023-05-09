@@ -9,7 +9,7 @@ import {
   LOCK_RETRY_DELAY,
   withCookieLockAccess,
 } from './sessionCookieStore'
-import type { SessionState } from './sessionStore'
+import type { SessionState } from './sessionStorage'
 
 describe('session cookie store', () => {
   const COOKIE_OPTIONS = {}

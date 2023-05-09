@@ -7,7 +7,7 @@ import { objectEntries } from '../../tools/utils/polyfills'
 import { isEmptyObject } from '../../tools/utils/objectUtils'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
-import type { SessionState } from './sessionStore'
+import type { SessionState } from './sessionStorage'
 
 const SESSION_ENTRY_REGEXP = /^([a-z]+)=([a-z0-9-]+)$/
 const SESSION_ENTRY_SEPARATOR = '&'

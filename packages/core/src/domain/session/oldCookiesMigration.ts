@@ -1,6 +1,6 @@
 import type { CookieOptions } from '../../browser/cookie'
 import { getCookie } from '../../browser/cookie'
-import type { SessionState } from './sessionStore'
+import type { SessionState } from './sessionStorage'
 import { SESSION_COOKIE_NAME, persistSessionCookie } from './sessionCookieStore'
 
 export const OLD_SESSION_COOKIE_NAME = '_dd'

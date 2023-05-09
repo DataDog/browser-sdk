@@ -7,6 +7,7 @@ import { throttle } from '../../tools/utils/functionUtils'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { deleteSessionCookie, retrieveSessionCookie, withCookieLockAccess } from './sessionCookieStore'
+import type { SessionState } from './sessionStorage'
 
 export interface SessionStore {
   expandOrRenewSession: () => void
@@ -16,15 +17,6 @@ export interface SessionStore {
   expireObservable: Observable<void>
   expire: () => void
   stop: () => void
-}
-
-export interface SessionState {
-  id?: string
-  created?: string
-  expire?: string
-  lock?: string
-
-  [key: string]: string | undefined
 }
 
 /**
