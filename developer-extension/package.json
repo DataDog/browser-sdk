@@ -8,15 +8,15 @@
   },
   "devDependencies": {
     "@types/chrome": "0.0.235",
-    "@types/react": "18.2.0",
-    "@types/react-dom": "18.2.1",
+    "@types/react": "18.2.6",
+    "@types/react-dom": "18.2.4",
     "@webextension-toolbox/webpack-webextension-plugin": "3.0.0",
     "copy-webpack-plugin": "11.0.0",
     "html-webpack-plugin": "5.5.1",
     "webpack": "5.82.0"
   },
   "dependencies": {
-    "@emotion/react": "11.10.8",
+    "@emotion/react": "11.11.0",
     "@mantine/core": "6.0.10",
     "@mantine/hooks": "6.0.10",
     "react": "18.2.0",
