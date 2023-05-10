@@ -29,6 +29,7 @@ import type { Timings } from './trackInitialViewTimings'
 import { trackInitialViewTimings } from './trackInitialViewTimings'
 import { trackViewMetrics } from './trackViewMetrics'
 import { trackViewEventCounts } from './trackViewEventCounts'
+import type { ScrollMetrics } from './trackScrollMetrics'
 import { trackScrollMetrics } from './trackScrollMetrics'
 
 export interface ViewEvent {
@@ -48,7 +49,7 @@ export interface ViewEvent {
   loadingTime?: Duration
   loadingType: ViewLoadingType
   cumulativeLayoutShift?: number
-  maxScrollDepth?: number
+  scrollMetrics?: ScrollMetrics
 }
 
 export interface ViewCreatedEvent {
@@ -231,7 +232,7 @@ function newView(
           eventCounts,
         },
         viewMetrics,
-        scrollMetrics
+        { scrollMetrics }
       )
     )
   }

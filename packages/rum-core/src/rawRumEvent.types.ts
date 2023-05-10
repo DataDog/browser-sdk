@@ -101,16 +101,24 @@ export interface RawRumViewEvent {
     resource: Count
     frustration: Count
     in_foreground_periods?: InForegroundPeriod[]
-    max_scroll_depth?: number
   }
   session: {
     has_replay: true | undefined
     is_active: false | undefined
   }
   feature_flags?: Context
+  display?: ViewDisplay
   _dd: {
     document_version: number
     replay_stats?: ReplayStats
+  }
+}
+
+interface ViewDisplay {
+  scroll: {
+    max_depth?: number
+    max_scroll_height?: number
+    max_depth_timestamp?: ServerDuration
   }
 }
 

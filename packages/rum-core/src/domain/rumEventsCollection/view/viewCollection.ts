@@ -89,9 +89,18 @@ function processViewUpdate(
       },
       time_spent: toServerDuration(view.duration),
       in_foreground_periods: foregroundContexts.selectInForegroundPeriodsFor(view.startClocks.relative, view.duration),
-      max_scroll_depth: view.maxScrollDepth,
     },
     feature_flags: featureFlagContext && !isEmptyObject(featureFlagContext) ? featureFlagContext : undefined,
+    display:
+      view.scrollMetrics && !isEmptyObject(view.scrollMetrics)
+        ? {
+            scroll: {
+              max_depth: view.scrollMetrics?.maxScrollDepth,
+              max_scroll_height: view.scrollMetrics?.maxscrollHeight,
+              max_depth_timestamp: toServerDuration(view.scrollMetrics?.maxScrollDepthTimestamp),
+            },
+          }
+        : undefined,
     session: {
       has_replay: replayStats ? true : undefined,
       is_active: view.sessionIsActive ? undefined : false,
