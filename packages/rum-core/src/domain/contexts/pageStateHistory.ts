@@ -1,7 +1,18 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
-import { addDuration, addEventListeners, relativeNow, DOM_EVENT } from '@datadog/browser-core'
+import {
+  elapsed,
+  ValueHistory,
+  SESSION_TIME_OUT_DELAY,
+  toServerDuration,
+  addEventListeners,
+  relativeNow,
+  DOM_EVENT,
+} from '@datadog/browser-core'
+import type { PageStateServerEntry } from '../../rawRumEvent.types'
 
-export const MAX_PAGE_STATE_ENTRIES = 500
+export const MAX_PAGE_STATE_ENTRIES = 200
+
+export const PAGE_STATE_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
 
 export const enum PageState {
   ACTIVE = 'active',
@@ -10,18 +21,32 @@ export const enum PageState {
   FROZEN = 'frozen',
   TERMINATED = 'terminated',
 }
+
 export type PageStateEntry = { state: PageState; startTime: RelativeTime }
+
 export interface PageStateHistory {
-  findAll: (startTime: RelativeTime, duration: Duration) => PageStateEntry[] | undefined
+  findAll: (startTime: RelativeTime, duration?: Duration) => PageStateServerEntry[] | undefined
+  addPageState(nextPageState: PageState, startTime?: RelativeTime): void
   stop: () => void
 }
-let pageStateEntries: PageStateEntry[] = []
-let currentPageState: PageState | undefined
 
 export function startPageStateHistory(): PageStateHistory {
-  addPageState(getPageState())
+  const pageStateHistory = new ValueHistory<PageStateEntry>(PAGE_STATE_CONTEXT_TIME_OUT_DELAY, MAX_PAGE_STATE_ENTRIES)
 
-  const { stop } = addEventListeners(
+  let currentPageState: PageState
+  addPageState(getPageState(), relativeNow())
+
+  function addPageState(nextPageState: PageState, startTime = relativeNow()) {
+    if (nextPageState === currentPageState) {
+      return
+    }
+
+    currentPageState = nextPageState
+    pageStateHistory.closeActive(startTime)
+    pageStateHistory.add({ state: currentPageState, startTime }, startTime)
+  }
+
+  const { stop: stopEventListeners } = addEventListeners(
     window,
     [
       DOM_EVENT.PAGE_SHOW,
@@ -38,67 +63,54 @@ export function startPageStateHistory(): PageStateHistory {
       if (!event.isTrusted) {
         return
       }
+      const startTime = event.timeStamp as RelativeTime
 
       if (event.type === DOM_EVENT.FREEZE) {
-        addPageState(PageState.FROZEN)
+        addPageState(PageState.FROZEN, startTime)
       } else if (event.type === DOM_EVENT.PAGE_HIDE) {
-        addPageState((event as PageTransitionEvent).persisted ? PageState.FROZEN : PageState.TERMINATED)
+        addPageState((event as PageTransitionEvent).persisted ? PageState.FROZEN : PageState.TERMINATED, startTime)
       } else {
-        addPageState(getPageState())
+        addPageState(getPageState(), startTime)
       }
     },
     { capture: true }
   )
 
   return {
-    findAll(startTime: RelativeTime, duration: Duration) {
-      const entries: PageStateEntry[] = []
-      const endTime = addDuration(startTime, duration)
-      for (let i = pageStateEntries.length - 1; i >= 0; i--) {
-        const { startTime: stateStartTime } = pageStateEntries[i]
+    findAll: (startTime: RelativeTime, duration?: Duration): PageStateServerEntry[] | undefined => {
+      const pageStateEntries = pageStateHistory
+        .findAll(startTime, duration)
+        .reverse()
+        .map((pageState) => {
+          const correctedStartTime = startTime > pageState.startTime ? startTime : pageState.startTime
+          const recenteredStartTime = elapsed(startTime, correctedStartTime)
 
-        if (stateStartTime >= endTime) {
-          continue
-        }
+          return {
+            state: pageState.state,
+            start: toServerDuration(recenteredStartTime),
+          }
+        })
 
-        entries.unshift(pageStateEntries[i])
-
-        if (stateStartTime < startTime) {
-          break
-        }
+      if (pageStateEntries.length > 0) {
+        return pageStateEntries
       }
-
-      return entries.length ? entries : undefined
     },
-    stop,
+    addPageState,
+    stop: () => {
+      stopEventListeners()
+      pageStateHistory.stop()
+    },
   }
 }
 
-function getPageState(): PageState {
+export function getPageState() {
   if (document.visibilityState === 'hidden') {
     return PageState.HIDDEN
   }
+
   if (document.hasFocus()) {
     return PageState.ACTIVE
   }
+
   return PageState.PASSIVE
-}
-
-export function addPageState(nextPageState: PageState, maxPageStateEntries = MAX_PAGE_STATE_ENTRIES) {
-  if (nextPageState === currentPageState) {
-    return
-  }
-
-  currentPageState = nextPageState
-
-  if (pageStateEntries.length === maxPageStateEntries) {
-    pageStateEntries.shift()
-  }
-
-  pageStateEntries.push({ state: currentPageState, startTime: relativeNow() })
-}
-
-export function resetPageStates() {
-  pageStateEntries = []
-  currentPageState = undefined
 }
