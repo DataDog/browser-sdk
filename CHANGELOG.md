@@ -16,6 +16,15 @@
 
 ---
 
+## v4.42.1
+
+- 🐛 fix isolatedModules support ([#2209](https://github.com/DataDog/browser-sdk/pull/2209))
+- 🐛 [RUMF-1576] fix support for tools that removes console.\* references ([#2210](https://github.com/DataDog/browser-sdk/pull/2210))
+- 📦👷 include webpack, typescript and @types/express in common upgrades ([#2222](https://github.com/DataDog/browser-sdk/pull/2222))
+- ⚡ remove spec files from npm packages ([#2224](https://github.com/DataDog/browser-sdk/pull/2224))
+- 📦 [RUMF-1532] update webpack-related dependencies ([#2212](https://github.com/DataDog/browser-sdk/pull/2212))
+- 📦 update vulnerable subdependency engine.io ([#2211](https://github.com/DataDog/browser-sdk/pull/2211))
+
 ## v4.42.0
 
 - ✨[RUMF-1573] Allow to provide custom fingerprint to RUM errors ([#2189](https://github.com/DataDog/browser-sdk/pull/2189))
