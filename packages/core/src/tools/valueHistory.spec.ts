@@ -5,6 +5,7 @@ import { addDuration, ONE_MINUTE } from './utils/timeUtils'
 import { CLEAR_OLD_VALUES_INTERVAL, ValueHistory } from './valueHistory'
 
 const EXPIRE_DELAY = 10 * ONE_MINUTE
+const MAX_ENTRIES = 5
 
 describe('valueHistory', () => {
   let valueHistory: ValueHistory<string>
@@ -12,7 +13,7 @@ describe('valueHistory', () => {
 
   beforeEach(() => {
     clock = mockClock()
-    valueHistory = new ValueHistory(EXPIRE_DELAY)
+    valueHistory = new ValueHistory(EXPIRE_DELAY, MAX_ENTRIES)
   })
 
   afterEach(() => {
@@ -134,5 +135,14 @@ describe('valueHistory', () => {
     clock.tick(EXPIRE_DELAY + CLEAR_OLD_VALUES_INTERVAL)
 
     expect(valueHistory.find(originalTime)).toBeUndefined()
+  })
+
+  it('should limit the number of entries', () => {
+    for (let i = 0; i < MAX_ENTRIES + 1; i++) {
+      valueHistory.add(`${i}`, 0 as RelativeTime)
+    }
+    const values = valueHistory.findAll()
+    expect(values.length).toEqual(5)
+    expect(values).toEqual(['5', '4', '3', '2', '1'])
   })
 })

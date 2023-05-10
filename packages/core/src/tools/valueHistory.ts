@@ -23,7 +23,7 @@ export class ValueHistory<Value> {
   private entries: Array<ValueHistoryEntry<Value>> = []
   private clearOldValuesInterval: TimeoutId
 
-  constructor(private expireDelay: number) {
+  constructor(private expireDelay: number, private maxEntries?: number) {
     this.clearOldValuesInterval = setInterval(() => this.clearOldValues(), CLEAR_OLD_VALUES_INTERVAL)
   }
 
@@ -46,7 +46,13 @@ export class ValueHistory<Value> {
         entry.endTime = endTime
       },
     }
+
+    if (this.maxEntries && this.entries.length >= this.maxEntries) {
+      this.entries.pop()
+    }
+
     this.entries.unshift(entry)
+
     return entry
   }
 
