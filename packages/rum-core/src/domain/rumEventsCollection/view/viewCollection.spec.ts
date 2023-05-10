@@ -104,7 +104,6 @@ describe('viewCollection', () => {
           count: 10,
         },
         cumulative_layout_shift: 1,
-        max_scroll_depth: 1000,
         custom_timings: {
           bar: (20 * 1e6) as ServerDuration,
           foo: (10 * 1e6) as ServerDuration,
