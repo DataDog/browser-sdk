@@ -23,6 +23,7 @@ export interface FeatureFlagContexts {
   findFeatureFlagEvaluations: (startTime?: RelativeTime) => FeatureFlagContext | undefined
   getFeatureFlagBytesCount: () => number
   addFeatureFlagEvaluation: (key: string, value: ContextValue) => void
+  stop: () => void
 }
 
 /**
@@ -42,6 +43,7 @@ export function startFeatureFlagContexts(
       findFeatureFlagEvaluations: () => undefined,
       getFeatureFlagBytesCount: () => 0,
       addFeatureFlagEvaluation: noop,
+      stop: noop,
     }
   }
 
@@ -60,7 +62,7 @@ export function startFeatureFlagContexts(
 
   // Throttle the bytes computation to minimize the impact on performance.
   // Especially useful if the user call addFeatureFlagEvaluation API synchronously multiple times in a row
-  const { throttled: computeBytesCountThrottled } = throttle((context: Context) => {
+  const { throttled: computeBytesCountThrottled, cancel: cancelPendingComputation } = throttle((context: Context) => {
     bytesCountCache = computeBytesCountImpl(jsonStringify(context)!)
     if (!alreadyWarned) {
       alreadyWarned = warnIfCustomerDataLimitReached(bytesCountCache, CustomerDataType.FeatureFlag)
@@ -84,5 +86,6 @@ export function startFeatureFlagContexts(
         computeBytesCountThrottled(currentContext)
       }
     },
+    stop: cancelPendingComputation,
   }
 }

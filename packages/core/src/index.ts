@@ -77,18 +77,13 @@ export { runOnReadyState } from './browser/runOnReadyState'
 export { getZoneJsOriginalValue } from './tools/getZoneJsOriginalValue'
 export { instrumentMethod, instrumentMethodAndCallOriginal, instrumentSetter } from './tools/instrumentMethod'
 export {
-  ErrorSource,
-  ErrorHandling,
   computeRawError,
   createHandlingStack,
-  RawError,
-  RawErrorCause,
-  ErrorWithCause,
   toStackTraceString,
   getFileFromStackTraceString,
   NO_ERROR_STACK_PRESENT_MESSAGE,
-  PROVIDED_ERROR_MESSAGE_PREFIX,
 } from './domain/error/error'
+export { NonErrorPrefix } from './domain/error/error.types'
 export { Context, ContextArray, ContextValue } from './tools/serialisation/context'
 export { areCookiesAuthorized, getCookie, setCookie, deleteCookie, COOKIE_ACCESS_DELAY } from './browser/cookie'
 export { initXhrObservable, XhrCompleteContext, XhrStartContext } from './browser/xhrObservable'
@@ -96,7 +91,7 @@ export { initFetchObservable, FetchResolveContext, FetchStartContext, FetchConte
 export { createPageExitObservable, PageExitEvent, PageExitReason, isPageExitReason } from './browser/pageExitObservable'
 export * from './browser/addEventListener'
 export * from './tools/timer'
-export { initConsoleObservable, ConsoleLog } from './domain/console/consoleObservable'
+export { initConsoleObservable, resetConsoleObservable, ConsoleLog } from './domain/console/consoleObservable'
 export { BoundedBuffer } from './tools/boundedBuffer'
 export { catchUserErrors } from './tools/catchUserErrors'
 export { createContextManager, ContextManager } from './tools/serialisation/contextManager'
@@ -126,3 +121,8 @@ export * from './tools/utils/stringUtils'
 export * from './tools/matchOption'
 export * from './tools/utils/responseUtils'
 export * from './tools/utils/typeUtils'
+export { ErrorHandling } from './domain/error/error.types'
+export { ErrorSource } from './domain/error/error.types'
+export { RawError } from './domain/error/error.types'
+export { RawErrorCause } from './domain/error/error.types'
+export { ErrorWithCause } from './domain/error/error.types'

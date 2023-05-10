@@ -7,6 +7,7 @@ export function trackConsoleError(errorObservable: Observable<RawError>) {
       startClocks: clocksNow(),
       message: consoleError.message,
       stack: consoleError.stack,
+      fingerprint: consoleError.fingerprint,
       source: ErrorSource.CONSOLE,
       handling: ErrorHandling.HANDLED,
       handlingStack: consoleError.handlingStack,

@@ -12,6 +12,8 @@ const { modifyFile } = require('../lib/files-utils')
 
 const CHANGELOG_FILE = 'CHANGELOG.md'
 const CONTRIBUTING_FILE = 'CONTRIBUTING.md'
+const EMOJI_PRIORITY = ['💥', '✨', '🐛', '⚗️', '♻️']
+const START_WITH_EMOJI = /^\p{Emoji_Presentation}/u
 
 runMain(async () => {
   if (!process.env.EDITOR) {
@@ -70,7 +72,7 @@ function getChangesList() {
   const lastTagHash = command`git rev-list --tags --max-count=1`.run().trim()
   const lastTagName = command`git describe --tags ${lastTagHash}`.run()
 
-  const commits = command`git log ${lastTagName.trimEnd()}..HEAD --pretty=format:${'- %s'}`.run()
+  const commits = command`git log ${lastTagName.trimEnd()}..HEAD --pretty=format:%s`.run()
 
   const changesWithEmojis = emojiNameToUnicode(commits)
 
@@ -78,6 +80,8 @@ function getChangesList() {
     .split('\n')
     .filter(isNotVersionEntry)
     .filter(isNotMaintenanceEntry)
+    .sort(byEmojiPriority)
+    .map((entry) => `- ${entry}`)
     .join('\n')
 
   // changes with pull request links
@@ -88,14 +92,34 @@ function getChangesList() {
 }
 
 function isNotVersionEntry(line) {
-  return !/^- v\d+\.\d+\.\d+/.test(line)
+  return !/^v\d+\.\d+\.\d+/.test(line)
 }
 
 function isNotMaintenanceEntry(line) {
-  return !/^- 👷/.test(line)
+  return !/^👷/.test(line)
 }
 
 function emojiNameToUnicode(changes) {
   const emojiNameRegex = new RegExp(/:[^:\s]*(?:::[^:\s]*)*:/, 'gm')
   return changes.replace(emojiNameRegex, (emoji) => emojiNameMap.get(emoji) || emoji)
+}
+
+function byEmojiPriority(a, b) {
+  const priorityA = computeEmojiPriority(a)
+  const priorityB = computeEmojiPriority(b)
+  if (priorityA < priorityB) {
+    return -1
+  }
+  if (priorityB > priorityA) {
+    return 1
+  }
+  return 0
+}
+
+function computeEmojiPriority(entry) {
+  const match = START_WITH_EMOJI.exec(entry)
+  if (match && EMOJI_PRIORITY.includes(match[0])) {
+    return EMOJI_PRIORITY.indexOf(match[0])
+  }
+  return Number.MAX_VALUE
 }

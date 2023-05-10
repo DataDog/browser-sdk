@@ -13,6 +13,7 @@ type Error = {
   kind?: string
   origin: ErrorSource // Todo: Remove in the next major release
   stack?: string
+  fingerprint?: string
   [k: string]: unknown
 }
 

@@ -3,7 +3,7 @@ import { createTest, flushEvents, html, waitForServersIdle } from '../../lib/fra
 
 describe('action collection', () => {
   createTest('track a click action')
-    .withRum({ trackUserInteractions: true, enableExperimentalFeatures: ['clickmap'] })
+    .withRum({ trackUserInteractions: true })
     .withBody(
       html`
         <button>click me</button>
@@ -62,7 +62,7 @@ describe('action collection', () => {
     })
 
   createTest('compute action target information before the UI changes')
-    .withRum({ trackFrustrations: true, enableExperimentalFeatures: ['clickmap'] })
+    .withRum({ trackFrustrations: true })
     .withBody(
       html`
         <button style="position: relative">click me</button>
@@ -91,7 +91,7 @@ describe('action collection', () => {
   // click event. Skip this test.
   if (getBrowserName() !== 'firefox') {
     createTest('does not report a click on the body when the target element changes between mousedown and mouseup')
-      .withRum({ trackFrustrations: true, enableExperimentalFeatures: ['clickmap'] })
+      .withRum({ trackFrustrations: true })
       .withBody(
         html`
           <button style="position: relative">click me</button>

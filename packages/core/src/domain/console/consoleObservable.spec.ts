@@ -110,4 +110,29 @@ describe('console error observable', () => {
       expect(stack).toContain('TypeError: foo')
     }
   })
+
+  it('should retrieve fingerprint from error', () => {
+    interface DatadogError extends Error {
+      dd_fingerprint?: string
+    }
+    const error = new Error('foo')
+    ;(error as DatadogError).dd_fingerprint = 'my-fingerprint'
+
+    // eslint-disable-next-line no-console
+    console.error(error)
+
+    const consoleLog = notifyLog.calls.mostRecent().args[0]
+    expect(consoleLog.fingerprint).toBe('my-fingerprint')
+  })
+
+  it('should sanitize error fingerprint', () => {
+    const error = new Error('foo')
+    ;(error as any).dd_fingerprint = 2
+
+    // eslint-disable-next-line no-console
+    console.error(error)
+
+    const consoleLog = notifyLog.calls.mostRecent().args[0]
+    expect(consoleLog.fingerprint).toBe('2')
+  })
 })

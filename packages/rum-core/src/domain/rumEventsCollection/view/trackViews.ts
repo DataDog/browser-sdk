@@ -44,6 +44,7 @@ export interface ViewEvent {
   startClocks: ClocksState
   duration: Duration
   isActive: boolean
+  sessionIsActive: boolean
   loadingTime?: Duration
   loadingType: ViewLoadingType
   cumulativeLayoutShift?: number
@@ -104,7 +105,7 @@ export function trackViews(
     })
 
     lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
-      currentView.end()
+      currentView.end({ sessionIsActive: false })
     })
 
     // End the current view on page unload
@@ -129,7 +130,7 @@ export function trackViews(
       currentView.addTiming(name, time)
     },
     startView: (options?: ViewOptions, startClocks?: ClocksState) => {
-      currentView.end(startClocks)
+      currentView.end({ endClocks: startClocks })
       currentView = startNewView(ViewLoadingType.ROUTE_CHANGE, startClocks, options)
     },
     stop: () => {
@@ -155,6 +156,7 @@ function newView(
   let endClocks: ClocksState | undefined
   const location = shallowClone(initialLocation)
 
+  let sessionIsActive = true
   let name: string | undefined
   let service: string | undefined
   let version: string | undefined
@@ -225,6 +227,7 @@ function newView(
           timings,
           duration: elapsed(startClocks.timeStamp, currentEnd),
           isActive: endClocks === undefined,
+          sessionIsActive,
           eventCounts,
         },
         viewMetrics,
@@ -237,12 +240,14 @@ function newView(
     name,
     service,
     version,
-    end(clocks = clocksNow()) {
+    end(options: { endClocks?: ClocksState; sessionIsActive?: boolean } = {}) {
       if (endClocks) {
         // view already ended
         return
       }
-      endClocks = clocks
+      endClocks = options.endClocks ?? clocksNow()
+      sessionIsActive = options.sessionIsActive ?? true
+
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks })
       clearInterval(keepAliveIntervalId)
       stopViewMetricsTracking()

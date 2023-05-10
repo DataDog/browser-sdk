@@ -227,7 +227,23 @@ describe('rum assembly', () => {
         })
       })
 
-      it('should reject modification on non sensitive and non context field', () => {
+      describe('allowed customer provided field', () => {
+        it('should allow modification of the error fingerprint', () => {
+          const { lifeCycle } = setupBuilder
+            .withConfiguration({
+              beforeSend: (event) => (event.error.fingerprint = 'my_fingerprint'),
+            })
+            .build()
+
+          notifyRawRumEvent(lifeCycle, {
+            rawRumEvent: createRawRumEvent(RumEventType.ERROR),
+          })
+
+          expect((serverRumEvents[0] as RumErrorEvent).error.fingerprint).toBe('my_fingerprint')
+        })
+      })
+
+      it('should reject modification of field not sensitive, context or customer provided', () => {
         const { lifeCycle } = setupBuilder
           .withConfiguration({
             beforeSend: (event: RumEvent) => ((event.view as any).id = 'modified'),
@@ -241,6 +257,22 @@ describe('rum assembly', () => {
         })
 
         expect(serverRumEvents[0].view.id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
+      })
+
+      it('should not allow to add a sensitive field on the wrong event type', () => {
+        const { lifeCycle } = setupBuilder
+          .withConfiguration({
+            beforeSend: (event) => {
+              event.error = { message: 'added' }
+            },
+          })
+          .build()
+
+        notifyRawRumEvent(lifeCycle, {
+          rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+        })
+
+        expect((serverRumEvents[0] as any).error?.message).toBeUndefined()
       })
     })
 
@@ -544,6 +576,7 @@ describe('rum assembly', () => {
       })
       expect(serverRumEvents[0].session).toEqual({
         has_replay: undefined,
+        is_active: undefined,
         id: '1234',
         type: 'user',
       })

@@ -55,39 +55,31 @@ export function startUnhandledErrorCollection(callback: UnhandledErrorCallback) 
  */
 function instrumentOnError(callback: UnhandledErrorCallback) {
   return instrumentMethodAndCallOriginal(window, 'onerror', {
-    before(this: any, message: Event | string, url?: string, lineNo?: number, columnNo?: number, errorObj?: Error) {
-      let stack: StackTrace
-
-      if (errorObj) {
-        stack = computeStackTrace(errorObj)
-        callback(stack, errorObj)
+    before(this: any, messageObj: unknown, url?: string, line?: number, column?: number, errorObj?: unknown) {
+      let stackTrace: StackTrace
+      if (errorObj instanceof Error) {
+        stackTrace = computeStackTrace(errorObj)
       } else {
-        const location = {
-          url,
-          column: columnNo,
-          line: lineNo,
-        }
-
-        let name
-        let msg = message
-        if ({}.toString.call(message) === '[object String]') {
-          const groups = ERROR_TYPES_RE.exec(msg as string)
-          if (groups) {
-            name = groups[1]
-            msg = groups[2]
-          }
-        }
-
-        stack = {
+        const stack = [{ url, column, line }]
+        const { name, message } = tryToParseMessage(messageObj)
+        stackTrace = {
           name,
-          message: typeof msg === 'string' ? msg : undefined,
-          stack: [location],
+          message,
+          stack,
         }
-
-        callback(stack, message)
       }
+      callback(stackTrace, errorObj ?? messageObj)
     },
   })
+}
+
+function tryToParseMessage(messageObj: unknown) {
+  let name
+  let message
+  if ({}.toString.call(messageObj) === '[object String]') {
+    ;[, name, message] = ERROR_TYPES_RE.exec(messageObj as string)!
+  }
+  return { name, message }
 }
 
 /**

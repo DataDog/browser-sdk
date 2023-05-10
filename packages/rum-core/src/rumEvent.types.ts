@@ -205,6 +205,10 @@ export type RumErrorEvent = CommonProperties &
        */
       readonly is_crash?: boolean
       /**
+       * Fingerprint used for Error Tracking custom grouping
+       */
+      fingerprint?: string
+      /**
        * The type of the error
        */
       readonly type?: string
@@ -729,6 +733,25 @@ export type RumViewEvent = CommonProperties & {
      * The JavaScript refresh rate for React Native
      */
     js_refresh_rate?: RumPerfMetric
+    [k: string]: unknown
+  }
+  /**
+   * Session properties
+   */
+  readonly session?: {
+    /**
+     * The precondition that led to the creation of the session
+     */
+    readonly start_precondition?:
+      | 'app_launch'
+      | 'inactivity_timeout'
+      | 'max_duration'
+      | 'explicit_stop'
+      | 'background_event'
+    /**
+     * Whether this session is currently active. Set to false to manually stop a session
+     */
+    readonly is_active?: boolean
     [k: string]: unknown
   }
   /**

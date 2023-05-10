@@ -150,7 +150,7 @@ function sanitizeProcessor(
   }
 
   const sanitizedSource = sanitizeObjects(sourceToSanitize)
-  if (sanitizedSource !== '[Object]' && sanitizedSource !== '[Array]') {
+  if (sanitizedSource !== '[Object]' && sanitizedSource !== '[Array]' && sanitizedSource !== '[Error]') {
     return sanitizedSource
   }
 

@@ -1,5 +1,5 @@
 variables:
-  CURRENT_STAGING: staging-16
+  CURRENT_STAGING: staging-19
   APP: 'browser-sdk'
   CURRENT_CI_IMAGE: 45
   BUILD_STABLE_REGISTRY: '486234852809.dkr.ecr.us-east-1.amazonaws.com'
@@ -10,9 +10,11 @@ variables:
   CHROME_DRIVER_VERSION: 112.0.5615.28
 
 cache:
-  key: dependencies
+  key:
+    files:
+      - yarn.lock
   paths:
-    - node_modules/
+    - .yarn/cache
 
 stages:
   - task
@@ -45,6 +47,7 @@ stages:
   except:
     refs:
       - main
+      - /^mq-working-branch-staging-[0-9]+-[a-z0-9]+$/
       - /^staging-[0-9]+$/
       - /^release\//
       - schedules
@@ -113,6 +116,7 @@ woke:
     - .test-allowed-branches
   interruptible: true
   script:
+    - yarn
     - yarn woke
 
 typecheck:
@@ -485,6 +489,7 @@ bump-chrome-version-scheduled:
   before_script:
     - eval $(ssh-agent -s)
   script:
+    - yarn
     - node scripts/test/bump-chrome-driver-version.js
   artifacts:
     reports:

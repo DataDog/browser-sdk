@@ -1,10 +1,9 @@
 import { computeStackTrace } from '../tracekit'
-import { createHandlingStack, formatErrorMessage, toStackTraceString } from '../error/error'
+import { createHandlingStack, formatErrorMessage, toStackTraceString, tryToGetFingerprint } from '../error/error'
 import { mergeObservables, Observable } from '../../tools/observable'
-import { ConsoleApiName } from '../../tools/display'
+import { ConsoleApiName, globalConsole } from '../../tools/display'
 import { callMonitored } from '../../tools/monitor'
 import { sanitize } from '../../tools/serialisation/sanitize'
-import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/experimentalFeatures'
 import { find } from '../../tools/utils/polyfills'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
 
@@ -13,9 +12,10 @@ export interface ConsoleLog {
   api: ConsoleApiName
   stack?: string
   handlingStack?: string
+  fingerprint?: string
 }
 
-const consoleObservablesByApi: { [k in ConsoleApiName]?: Observable<ConsoleLog> } = {}
+let consoleObservablesByApi: { [k in ConsoleApiName]?: Observable<ConsoleLog> } = {}
 
 export function initConsoleObservable(apis: ConsoleApiName[]) {
   const consoleObservables = apis.map((api) => {
@@ -28,12 +28,15 @@ export function initConsoleObservable(apis: ConsoleApiName[]) {
   return mergeObservables<ConsoleLog>(...consoleObservables)
 }
 
-/* eslint-disable no-console */
+export function resetConsoleObservable() {
+  consoleObservablesByApi = {}
+}
+
 function createConsoleObservable(api: ConsoleApiName) {
   const observable = new Observable<ConsoleLog>(() => {
-    const originalConsoleApi = console[api]
+    const originalConsoleApi = globalConsole[api]
 
-    console[api] = (...params: unknown[]) => {
+    globalConsole[api] = (...params: unknown[]) => {
       originalConsoleApi.apply(console, params)
       const handlingStack = createHandlingStack()
 
@@ -43,7 +46,7 @@ function createConsoleObservable(api: ConsoleApiName) {
     }
 
     return () => {
-      console[api] = originalConsoleApi
+      globalConsole[api] = originalConsoleApi
     }
   })
 
@@ -54,10 +57,12 @@ function buildConsoleLog(params: unknown[], api: ConsoleApiName, handlingStack: 
   // Todo: remove console error prefix in the next major version
   let message = params.map((param) => formatConsoleParameters(param)).join(' ')
   let stack
+  let fingerprint
 
   if (api === ConsoleApiName.error) {
     const firstErrorParam = find(params, (param: unknown): param is Error => param instanceof Error)
     stack = firstErrorParam ? toStackTraceString(computeStackTrace(firstErrorParam)) : undefined
+    fingerprint = tryToGetFingerprint(firstErrorParam)
     message = `console error: ${message}`
   }
 
@@ -66,19 +71,16 @@ function buildConsoleLog(params: unknown[], api: ConsoleApiName, handlingStack: 
     message,
     stack,
     handlingStack,
+    fingerprint,
   }
 }
 
 function formatConsoleParameters(param: unknown) {
   if (typeof param === 'string') {
-    return isExperimentalFeatureEnabled(ExperimentalFeature.SANITIZE_INPUTS) ? sanitize(param) : param
+    return sanitize(param)
   }
   if (param instanceof Error) {
     return formatErrorMessage(computeStackTrace(param))
   }
-  return jsonStringify(
-    isExperimentalFeatureEnabled(ExperimentalFeature.SANITIZE_INPUTS) ? sanitize(param) : param,
-    undefined,
-    2
-  )
+  return jsonStringify(sanitize(param), undefined, 2)
 }

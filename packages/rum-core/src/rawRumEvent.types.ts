@@ -59,6 +59,7 @@ export interface RawRumErrorEvent {
     type?: string
     stack?: string
     handling_stack?: string
+    fingerprint?: string
     source: ErrorSource
     message: string
     handling?: ErrorHandling
@@ -104,6 +105,7 @@ export interface RawRumViewEvent {
   }
   session: {
     has_replay: true | undefined
+    is_active: false | undefined
   }
   feature_flags?: Context
   _dd: {

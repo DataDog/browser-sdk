@@ -1,14 +1,9 @@
-import { ExperimentalFeature, isExperimentalFeatureEnabled } from '@datadog/browser-core'
 import { getViewportDimension, initViewportObservable } from '../../browser/viewportObservable'
 
 let viewport: { width: number; height: number } | undefined
 let stopListeners: (() => void) | undefined
 
 export function getDisplayContext() {
-  if (!isExperimentalFeatureEnabled(ExperimentalFeature.CLICKMAP)) {
-    return
-  }
-
   if (!viewport) {
     viewport = getViewportDimension()
     stopListeners = initViewportObservable().subscribe((viewportDimension) => {

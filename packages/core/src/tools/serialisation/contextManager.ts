@@ -1,4 +1,3 @@
-import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../experimentalFeatures'
 import { computeBytesCount } from '../utils/byteUtils'
 import { throttle } from '../utils/functionUtils'
 import { deepClone } from '../mergeInto'
@@ -52,16 +51,12 @@ export function createContextManager(customerDataType: CustomerDataType, compute
     getContext: () => deepClone(context),
 
     setContext: (newContext: Context) => {
-      context = isExperimentalFeatureEnabled(ExperimentalFeature.SANITIZE_INPUTS)
-        ? sanitize(newContext)
-        : deepClone(newContext)
+      context = sanitize(newContext)
       computeBytesCountThrottled(context)
     },
 
     setContextProperty: (key: string, property: any) => {
-      context[key] = isExperimentalFeatureEnabled(ExperimentalFeature.SANITIZE_INPUTS)
-        ? sanitize(property)
-        : deepClone(property)
+      context[key] = sanitize(property)
       computeBytesCountThrottled(context)
     },
 

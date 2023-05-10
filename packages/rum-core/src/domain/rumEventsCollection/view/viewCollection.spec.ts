@@ -41,6 +41,7 @@ const VIEW: ViewEvent = {
     largestContentfulPaint: 10 as Duration,
     loadEvent: 10 as Duration,
   },
+  sessionIsActive: true,
 }
 
 describe('viewCollection', () => {
@@ -134,9 +135,16 @@ describe('viewCollection', () => {
       },
       session: {
         has_replay: undefined,
+        is_active: undefined,
       },
       feature_flags: undefined,
     })
+  })
+
+  it('should set session.is_active to false if the session is inactive', () => {
+    const { lifeCycle, rawRumEvents } = setupBuilder.build()
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, { ...VIEW, sessionIsActive: false })
+    expect((rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent).session.is_active).toBe(false)
   })
 
   it('should include replay information if available', () => {

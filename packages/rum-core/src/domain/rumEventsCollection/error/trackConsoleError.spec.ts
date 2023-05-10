@@ -1,5 +1,5 @@
 import type { RawError, Subscription } from '@datadog/browser-core'
-import { ErrorHandling, ErrorSource, Observable, clocksNow } from '@datadog/browser-core'
+import { ErrorHandling, ErrorSource, Observable, clocksNow, resetConsoleObservable } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import { trackConsoleError } from './trackConsoleError'
@@ -20,6 +20,7 @@ describe('trackConsoleError', () => {
   })
 
   afterEach(() => {
+    resetConsoleObservable()
     subscription.unsubscribe()
     clock.cleanup()
   })
@@ -32,9 +33,31 @@ describe('trackConsoleError', () => {
       startClocks: clocksNow(),
       message: jasmine.any(String),
       stack: jasmine.any(String),
+      fingerprint: undefined,
       source: ErrorSource.CONSOLE,
       handling: ErrorHandling.HANDLED,
       handlingStack: jasmine.any(String),
+    })
+  })
+
+  it('should retrieve fingerprint from console error', () => {
+    interface DatadogError extends Error {
+      dd_fingerprint?: string
+    }
+    const error = new Error('foo')
+    ;(error as DatadogError).dd_fingerprint = 'my-fingerprint'
+
+    // eslint-disable-next-line no-console
+    console.error(error)
+
+    expect(notifyLog).toHaveBeenCalledWith({
+      startClocks: clocksNow(),
+      message: jasmine.any(String),
+      stack: jasmine.any(String),
+      source: ErrorSource.CONSOLE,
+      handling: ErrorHandling.HANDLED,
+      handlingStack: jasmine.any(String),
+      fingerprint: 'my-fingerprint',
     })
   })
 })

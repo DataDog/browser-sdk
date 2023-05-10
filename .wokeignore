@@ -1,5 +1,6 @@
 **/dist/**
 yarn.lock
+.yarn/releases
 
 # code import
 deflateWorker.js
