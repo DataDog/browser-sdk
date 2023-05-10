@@ -10,7 +10,12 @@ import {
   relativeNow,
   isIE,
 } from '@datadog/browser-core'
-import { createNewEvent, interceptRequests } from '@datadog/browser-core/test'
+import {
+  createNewEvent,
+  interceptRequests,
+  initEventBridgeStub,
+  deleteEventBridgeStub,
+} from '@datadog/browser-core/test'
 import type { RumSessionManagerMock, TestSetupBuilder } from '../../test'
 import { createRumSessionManagerMock, noopRecorderApi, setup } from '../../test'
 import type { RumPerformanceNavigationTiming, RumPerformanceEntry } from '../browser/performanceCollection'
@@ -311,12 +316,13 @@ describe('view events', () => {
   })
 
   afterEach(() => {
+    deleteEventBridgeStub()
     stopSessionManager()
     setupBuilder.cleanup()
     interceptor.restore()
   })
 
-  it('sends a view update on page unload', () => {
+  it('sends a view update on page unload when bridge is absent', () => {
     // Note: this test is intentionally very high level to make sure the view update is correctly
     // made right before flushing the Batch.
 
@@ -337,5 +343,21 @@ describe('view events', () => {
     )!
 
     expect(lastRumViewEvent.view.time_spent).toBe(toServerDuration(VIEW_DURATION))
+  })
+
+  it('sends a view update on page unload when bridge is present', () => {
+    const eventBridgeStub = initEventBridgeStub()
+    const sendSpy = spyOn(eventBridgeStub, 'send')
+
+    const VIEW_DURATION = ONE_SECOND as Duration
+
+    const { clock } = setupBuilder.withFakeClock().build()
+
+    clock.tick(VIEW_DURATION)
+    window.dispatchEvent(createNewEvent('beforeunload'))
+
+    const lastBridgeMessage = JSON.parse(sendSpy.calls.mostRecent().args[0]) as { eventType: 'rum'; event: RumEvent }
+    expect(lastBridgeMessage.event.type).toBe('view')
+    expect(lastBridgeMessage.event.view.time_spent).toBe(toServerDuration(VIEW_DURATION))
   })
 })
