@@ -86,6 +86,17 @@ describe('valueHistory', () => {
 
       expect(valueHistory.findAll(15 as RelativeTime)).toEqual([])
     })
+
+    it('should return all context overlapping with the duration', () => {
+      valueHistory.add('foo', 0 as RelativeTime)
+      valueHistory.add('bar', 5 as RelativeTime).close(10 as RelativeTime)
+      valueHistory.add('baz', 10 as RelativeTime).close(15 as RelativeTime)
+      valueHistory.add('qux', 15 as RelativeTime)
+
+      expect(valueHistory.findAll(0 as RelativeTime, 20 as Duration)).toEqual(['qux', 'baz', 'bar', 'foo'])
+      expect(valueHistory.findAll(6 as RelativeTime, 5 as Duration)).toEqual(['baz', 'bar', 'foo'])
+      expect(valueHistory.findAll(11 as RelativeTime, 5 as Duration)).toEqual(['qux', 'baz', 'foo'])
+    })
   })
 
   describe('removing entries', () => {
