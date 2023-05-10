@@ -54,7 +54,6 @@ export interface RumInitConfiguration extends InitConfiguration {
    */
   trackInteractions?: boolean | undefined
   trackUserInteractions?: boolean | undefined
-  trackFrustrations?: boolean | undefined
   actionNameAttribute?: string | undefined
 
   // view options
@@ -77,7 +76,6 @@ export interface RumConfiguration extends Configuration {
   oldPlansBehavior: boolean
   sessionReplaySampleRate: number
   trackUserInteractions: boolean
-  trackFrustrations: boolean
   trackViewsManually: boolean
   trackResources: boolean | undefined
   trackLongTasks: boolean | undefined
@@ -136,7 +134,6 @@ export function validateAndBuildRumConfiguration(
   }
 
   const trackUserInteractions = !!(initConfiguration.trackUserInteractions ?? initConfiguration.trackInteractions)
-  const trackFrustrations = !!initConfiguration.trackFrustrations
 
   return assign(
     {
@@ -148,8 +145,7 @@ export function validateAndBuildRumConfiguration(
       traceSampleRate,
       allowedTracingUrls,
       excludedActivityUrls: initConfiguration.excludedActivityUrls ?? [],
-      trackUserInteractions: trackUserInteractions || trackFrustrations,
-      trackFrustrations,
+      trackUserInteractions,
       trackViewsManually: !!initConfiguration.trackViewsManually,
       trackResources: initConfiguration.trackResources,
       trackLongTasks: initConfiguration.trackLongTasks,
@@ -290,7 +286,6 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration): 
       default_privacy_level: configuration.defaultPrivacyLevel,
       use_excluded_activity_urls:
         Array.isArray(configuration.allowedTracingOrigins) && configuration.allowedTracingOrigins.length > 0,
-      track_frustrations: configuration.trackFrustrations,
       track_views_manually: configuration.trackViewsManually,
       track_user_interactions: configuration.trackUserInteractions ?? configuration.trackInteractions,
     },

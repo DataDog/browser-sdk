@@ -392,35 +392,6 @@ describe('validateAndBuildRumConfiguration', () => {
     })
   })
 
-  describe('trackFrustrations', () => {
-    it('defaults to false', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackFrustrations).toBeFalse()
-    })
-
-    it('the initialization parameter is set to provided value', () => {
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackFrustrations: true })!.trackFrustrations
-      ).toBeTrue()
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackFrustrations: false })!.trackFrustrations
-      ).toBeFalse()
-    })
-
-    it('the initialization parameter the provided value is cast to boolean', () => {
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackFrustrations: 'foo' as any })!
-          .trackFrustrations
-      ).toBeTrue()
-    })
-
-    it('implies "trackUserInteractions"', () => {
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackFrustrations: true })!
-          .trackUserInteractions
-      ).toBeTrue()
-    })
-  })
-
   describe('trackViewsManually', () => {
     it('defaults to false', () => {
       expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackViewsManually).toBeFalse()
