@@ -1,4 +1,5 @@
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
+import { resetExperimentalFeatures, ExperimentalFeature, addExperimentalFeatures } from '@datadog/browser-core'
 import type { RecorderApi } from '../../../boot/rumPublicApi'
 import type { TestSetupBuilder } from '../../../../test'
 import { setup, noopRecorderApi } from '../../../../test'
@@ -61,6 +62,7 @@ describe('viewCollection', () => {
           featureFlagContexts,
           domMutationObservable,
           locationChangeObservable,
+          pageStateHistory,
         }) => {
           getReplayStatsSpy = jasmine.createSpy()
           startViewCollection(
@@ -71,6 +73,7 @@ describe('viewCollection', () => {
             locationChangeObservable,
             foregroundContexts,
             featureFlagContexts,
+            pageStateHistory,
             {
               ...noopRecorderApi,
               getReplayStats: getReplayStatsSpy,
@@ -82,6 +85,7 @@ describe('viewCollection', () => {
 
   afterEach(() => {
     setupBuilder.cleanup()
+    resetExperimentalFeatures()
   })
 
   it('should create view from view update', () => {
@@ -93,6 +97,7 @@ describe('viewCollection', () => {
       _dd: {
         document_version: 3,
         replay_stats: undefined,
+        page_states: undefined,
       },
       date: jasmine.any(Number),
       type: RumEventType.VIEW,
@@ -183,5 +188,24 @@ describe('viewCollection', () => {
     const rawRumViewEvent = rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent
 
     expect(rawRumViewEvent.view.loading_time).toBeUndefined()
+  })
+
+  it('should include page_states but not in_foreground_periods when PAGE_STATES ff is enabled', () => {
+    addExperimentalFeatures([ExperimentalFeature.PAGE_STATES])
+    const { lifeCycle, rawRumEvents } = setupBuilder.build()
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
+    const rawRumViewEvent = rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent
+
+    expect(rawRumViewEvent._dd.page_states).toBeDefined()
+    expect(rawRumViewEvent.view.in_foreground_periods).toBeUndefined()
+  })
+
+  it('should include in_foreground_periods but not page_states when PAGE_STATES ff is disabled', () => {
+    const { lifeCycle, rawRumEvents } = setupBuilder.build()
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
+    const rawRumViewEvent = rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent
+
+    expect(rawRumViewEvent._dd.page_states).toBeUndefined()
+    expect(rawRumViewEvent.view.in_foreground_periods).toBeDefined()
   })
 })
