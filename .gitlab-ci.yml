@@ -489,6 +489,7 @@ bump-chrome-version-scheduled:
   before_script:
     - eval $(ssh-agent -s)
   script:
+    - yarn
     - node scripts/test/bump-chrome-driver-version.js
   artifacts:
     reports:
