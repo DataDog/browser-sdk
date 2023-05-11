@@ -557,7 +557,7 @@ describe('startMutationCollection', () => {
       })
     })
 
-    it('emits a mutation when a empty text node is changed', () => {
+    it('emits a mutation when an empty text node is changed', () => {
       textNode.data = ''
       serializeDocumentWithDefaults()
       const { mutationCallbackSpy } = startMutationCollection()
