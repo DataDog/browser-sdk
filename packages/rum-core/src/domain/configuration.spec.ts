@@ -189,47 +189,6 @@ describe('validateAndBuildRumConfiguration', () => {
     })
   })
 
-  describe('allowedTracingOrigins', () => {
-    it('is set to provided value', () => {
-      expect(
-        validateAndBuildRumConfiguration({
-          ...DEFAULT_INIT_CONFIGURATION,
-          allowedTracingOrigins: ['foo'],
-          service: 'bar',
-        })!.allowedTracingUrls
-      ).toEqual([{ match: 'foo', propagatorTypes: ['datadog'] }])
-    })
-
-    it('accepts functions', () => {
-      const originMatchSpy = jasmine.createSpy<(origin: string) => boolean>()
-
-      const tracingUrlOptionMatch = validateAndBuildRumConfiguration({
-        ...DEFAULT_INIT_CONFIGURATION,
-        allowedTracingOrigins: [originMatchSpy],
-        service: 'bar',
-      })!.allowedTracingUrls[0].match as (url: string) => boolean
-
-      expect(typeof tracingUrlOptionMatch).toBe('function')
-      // Replicating behavior from allowedTracingOrigins, new function will treat the origin part of the URL
-      tracingUrlOptionMatch('https://my.origin.com/api')
-      expect(originMatchSpy).toHaveBeenCalledWith('https://my.origin.com')
-    })
-
-    it('does not validate the configuration if a value is provided and service is undefined', () => {
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, allowedTracingOrigins: ['foo'] })
-      ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Service needs to be configured when tracing is enabled')
-    })
-
-    it('does not validate the configuration if an incorrect value is provided', () => {
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, allowedTracingOrigins: 'foo' as any })
-      ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Allowed Tracing Origins should be an array')
-    })
-  })
-
   describe('allowedTracingUrls', () => {
     it('defaults to an empty array', () => {
       expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.allowedTracingUrls).toEqual([])
