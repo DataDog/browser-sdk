@@ -271,7 +271,7 @@ deploy-prod-canary:
     - node ./scripts/deploy/deploy.js prod canary root
     - node ./scripts/deploy/upload-source-maps.js canary root
 
-deploy-prod-all-dcs:
+.deploy-prod:
   stage: deploy
   extends:
     - .base-configuration
@@ -283,25 +283,28 @@ deploy-prod-all-dcs:
     - VERSION=$(node -p -e "require('./lerna.json').version")
     - yarn
     - yarn build:bundle
-    - node ./scripts/deploy/deploy.js prod v${VERSION%%.*} us1,eu1,us3,us5,ap1
-    - node ./scripts/deploy/upload-source-maps.js v${VERSION%%.*} us1,eu1,us3,us5,ap1
+    - node ./scripts/deploy/deploy.js prod v${VERSION%%.*} $UPLOAD_PATH
+    - node ./scripts/deploy/upload-source-maps.js v${VERSION%%.*} $UPLOAD_PATH
 
-deploy-prod-root:
-  stage: deploy
+step-1_deploy-prod-minor-dcs:
   extends:
-    - .base-configuration
-    - .tags
-  when: manual
-  allow_failure: false
-  script:
-    - export BUILD_MODE=release
-    - VERSION=$(node -p -e "require('./lerna.json').version")
-    - yarn
-    - yarn build:bundle
-    - node ./scripts/deploy/deploy.js prod v${VERSION%%.*} root
-    - node ./scripts/deploy/upload-source-maps.js v${VERSION%%.*} root
+    - .deploy-prod
+  variables:
+    UPLOAD_PATH: eu1,us3,us5,ap1
 
-publish-npm:
+step-2_deploy-prod-us1:
+  extends:
+    - .deploy-prod
+  variables:
+    UPLOAD_PATH: us1
+
+step-3_deploy-prod-root:
+  extends:
+    - .deploy-prod
+  variables:
+    UPLOAD_PATH: root
+
+step-4_publish-npm:
   stage: deploy
   extends:
     - .base-configuration
