@@ -1,28 +1,27 @@
 import type { CookieOptions } from '../../browser/cookie'
 import { deleteCookie, getCookie, setCookie } from '../../browser/cookie'
 import { isChromium } from '../../tools/utils/browserDetection'
-import { dateNow } from '../../tools/utils/timeUtils'
 import { objectEntries } from '../../tools/utils/polyfills'
-import { isEmptyObject } from '../../tools/utils/objectUtils'
 import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
-import type { SessionState } from './sessionStorage'
+import type { SessionState, SessionStorage } from './sessionStorage'
 
 const SESSION_ENTRY_REGEXP = /^([a-z]+)=([a-z0-9-]+)$/
 const SESSION_ENTRY_SEPARATOR = '&'
 
 export const SESSION_COOKIE_NAME = '_dd_s'
 
-export function persistSessionCookie(session: SessionState, options: CookieOptions) {
-  if (isExpiredState(session)) {
-    deleteSessionCookie(options)
-    return
+export function initCookieStorage(options: CookieOptions): SessionStorage {
+  return {
+    persistSession: persistSessionCookie(options),
+    retrieveSession: retrieveSessionCookie,
+    clearSession: deleteSessionCookie(options),
   }
-  session.expire = String(dateNow() + SESSION_EXPIRATION_DELAY)
-  setSessionCookie(session, options)
 }
 
-export function setSessionCookie(session: SessionState, options: CookieOptions) {
-  setCookie(SESSION_COOKIE_NAME, toSessionString(session), SESSION_EXPIRATION_DELAY, options)
+export function persistSessionCookie(options: CookieOptions) {
+  return (session: SessionState) => {
+    setCookie(SESSION_COOKIE_NAME, toSessionString(session), SESSION_EXPIRATION_DELAY, options)
+  }
 }
 
 export function toSessionString(session: SessionState) {
@@ -31,7 +30,7 @@ export function toSessionString(session: SessionState) {
     .join(SESSION_ENTRY_SEPARATOR)
 }
 
-export function retrieveSessionCookie(): SessionState {
+function retrieveSessionCookie(): SessionState {
   const sessionString = getCookie(SESSION_COOKIE_NAME)
   const session: SessionState = {}
   if (isValidSessionString(sessionString)) {
@@ -47,7 +46,9 @@ export function retrieveSessionCookie(): SessionState {
 }
 
 export function deleteSessionCookie(options: CookieOptions) {
-  deleteCookie(SESSION_COOKIE_NAME, options)
+  return () => {
+    deleteCookie(SESSION_COOKIE_NAME, options)
+  }
 }
 
 function isValidSessionString(sessionString: string | undefined): sessionString is string {
@@ -55,10 +56,6 @@ function isValidSessionString(sessionString: string | undefined): sessionString 
     sessionString !== undefined &&
     (sessionString.indexOf(SESSION_ENTRY_SEPARATOR) !== -1 || SESSION_ENTRY_REGEXP.test(sessionString))
   )
-}
-
-export function isExpiredState(session: SessionState) {
-  return isEmptyObject(session)
 }
 
 /**
