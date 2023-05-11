@@ -633,6 +633,18 @@ describe('serializeNodeWithId', () => {
       })
     })
 
+    it('serializes an empty text node', () => {
+      const parentEl = document.createElement('bar')
+      const textNode = document.createTextNode('')
+      parentEl.appendChild(textNode)
+      expect(serializeNodeWithId(textNode, DEFAULT_OPTIONS)).toEqual({
+        type: NodeType.Text,
+        id: jasmine.any(Number) as unknown as number,
+        isStyle: undefined,
+        textContent: '',
+      })
+    })
+
     it('does not serialize text nodes with only white space if the ignoreWhiteSpace option is specified', () => {
       expect(
         serializeNodeWithId(document.createTextNode('   '), { ...DEFAULT_OPTIONS, ignoreWhiteSpace: true })
