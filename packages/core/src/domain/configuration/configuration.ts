@@ -24,10 +24,6 @@ export interface InitConfiguration {
   // global options
   clientToken: string
   beforeSend?: GenericBeforeSendCallback | undefined
-  /**
-   * @deprecated use sessionSampleRate instead
-   */
-  sampleRate?: number | undefined
   sessionSampleRate?: number | undefined
   telemetrySampleRate?: number | undefined
   silentMultipleInit?: boolean | undefined
@@ -93,8 +89,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     return
   }
 
-  const sessionSampleRate = initConfiguration.sessionSampleRate ?? initConfiguration.sampleRate
-  if (sessionSampleRate !== undefined && !isPercentage(sessionSampleRate)) {
+  if (initConfiguration.sessionSampleRate !== undefined && !isPercentage(initConfiguration.sessionSampleRate)) {
     display.error('Session Sample Rate should be a number between 0 and 100')
     return
   }
@@ -126,7 +121,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
       beforeSend:
         initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
       cookieOptions: buildCookieOptions(initConfiguration),
-      sessionSampleRate: sessionSampleRate ?? 100,
+      sessionSampleRate: initConfiguration.sessionSampleRate ?? 100,
       telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
       telemetryConfigurationSampleRate: initConfiguration.telemetryConfigurationSampleRate ?? 5,
       service: initConfiguration.service,
@@ -176,7 +171,7 @@ function mustUseSecureCookie(initConfiguration: InitConfiguration) {
 
 export function serializeConfiguration(configuration: InitConfiguration): Partial<RawTelemetryConfiguration> {
   return {
-    session_sample_rate: configuration.sessionSampleRate ?? configuration.sampleRate,
+    session_sample_rate: configuration.sessionSampleRate,
     telemetry_sample_rate: configuration.telemetrySampleRate,
     telemetry_configuration_sample_rate: configuration.telemetryConfigurationSampleRate,
     use_before_send: !!configuration.beforeSend,
