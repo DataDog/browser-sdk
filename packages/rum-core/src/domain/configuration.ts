@@ -28,10 +28,6 @@ export interface RumInitConfiguration extends InitConfiguration {
 
   // tracing options
   allowedTracingUrls?: Array<MatchOption | TracingOption> | undefined
-  /**
-   * @deprecated use traceSampleRate instead
-   */
-  tracingSampleRate?: number | undefined
   traceSampleRate?: number | undefined
 
   // replay options
@@ -109,8 +105,7 @@ export function validateAndBuildRumConfiguration(
     return
   }
 
-  const traceSampleRate = initConfiguration.traceSampleRate ?? initConfiguration.tracingSampleRate
-  if (traceSampleRate !== undefined && !isPercentage(traceSampleRate)) {
+  if (initConfiguration.traceSampleRate !== undefined && !isPercentage(initConfiguration.traceSampleRate)) {
     display.error('Trace Sample Rate should be a number between 0 and 100')
     return
   }
@@ -140,7 +135,7 @@ export function validateAndBuildRumConfiguration(
       actionNameAttribute: initConfiguration.actionNameAttribute,
       sessionReplaySampleRate: initConfiguration.sessionReplaySampleRate ?? premiumSampleRate ?? 100,
       oldPlansBehavior: initConfiguration.sessionReplaySampleRate === undefined,
-      traceSampleRate,
+      traceSampleRate: initConfiguration.traceSampleRate,
       allowedTracingUrls,
       excludedActivityUrls: initConfiguration.excludedActivityUrls ?? [],
       trackUserInteractions: trackUserInteractions || trackFrustrations,
@@ -221,7 +216,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration): 
       premium_sample_rate: configuration.premiumSampleRate,
       replay_sample_rate: configuration.replaySampleRate,
       session_replay_sample_rate: configuration.sessionReplaySampleRate,
-      trace_sample_rate: configuration.traceSampleRate ?? configuration.tracingSampleRate,
+      trace_sample_rate: configuration.traceSampleRate,
       action_name_attribute: configuration.actionNameAttribute,
       use_allowed_tracing_urls:
         Array.isArray(configuration.allowedTracingUrls) && configuration.allowedTracingUrls.length > 0,

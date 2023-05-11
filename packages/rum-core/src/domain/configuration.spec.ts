@@ -141,31 +141,6 @@ describe('validateAndBuildRumConfiguration', () => {
     })
   })
 
-  describe('deprecated tracingSampleRate', () => {
-    it('defaults to undefined if the option is not provided', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.traceSampleRate).toBeUndefined()
-    })
-
-    it('is set to provided value', () => {
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, tracingSampleRate: 50 })!.traceSampleRate
-      ).toBe(50)
-    })
-
-    it('does not validate the configuration if an incorrect value is provided', () => {
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, tracingSampleRate: 'foo' as any })
-      ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Trace Sample Rate should be a number between 0 and 100')
-
-      displayErrorSpy.calls.reset()
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, tracingSampleRate: 200 })
-      ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Trace Sample Rate should be a number between 0 and 100')
-    })
-  })
-
   describe('traceSampleRate', () => {
     it('defaults to undefined if the option is not provided', () => {
       expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.traceSampleRate).toBeUndefined()
