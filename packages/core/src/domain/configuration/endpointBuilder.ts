@@ -59,22 +59,12 @@ function createEndpointUrlWithParametersBuilder(
   endpointType: EndpointType
 ): (parameters: string) => string {
   const path = `/api/v2/${INTAKE_TRACKS[endpointType]}`
-
-  const { proxy, proxyUrl } = initConfiguration
+  const proxy = initConfiguration.proxy
   if (proxy) {
     const normalizedProxyUrl = normalizeUrl(proxy)
     return (parameters) => `${normalizedProxyUrl}?ddforward=${encodeURIComponent(`${path}?${parameters}`)}`
   }
-
   const host = buildEndpointHost(initConfiguration, endpointType)
-
-  if (proxy === undefined && proxyUrl) {
-    // TODO: remove this in a future major.
-    const normalizedProxyUrl = normalizeUrl(proxyUrl)
-    return (parameters) =>
-      `${normalizedProxyUrl}?ddforward=${encodeURIComponent(`https://${host}${path}?${parameters}`)}`
-  }
-
   return (parameters) => `https://${host}${path}?${parameters}`
 }
 
