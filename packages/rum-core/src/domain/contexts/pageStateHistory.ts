@@ -10,7 +10,10 @@ import {
 } from '@datadog/browser-core'
 import type { PageStateServerEntry } from '../../rawRumEvent.types'
 
-export const MAX_PAGE_STATE_ENTRIES = 200
+// Arbitrary value to cap number of element for memory consumption in the browser
+export const MAX_PAGE_STATE_ENTRIES = 4000
+// Arbitrary value to cap number of element for backend & to save bandwidth
+export const MAX_PAGE_STATE_ENTRIES_SELECTABLE = 500
 
 export const PAGE_STATE_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
 
@@ -25,12 +28,14 @@ export const enum PageState {
 export type PageStateEntry = { state: PageState; startTime: RelativeTime }
 
 export interface PageStateHistory {
-  findAll: (startTime: RelativeTime, duration?: Duration) => PageStateServerEntry[] | undefined
+  findAll: (startTime: RelativeTime, duration: Duration) => PageStateServerEntry[] | undefined
   addPageState(nextPageState: PageState, startTime?: RelativeTime): void
   stop: () => void
 }
 
-export function startPageStateHistory(): PageStateHistory {
+export function startPageStateHistory(
+  maxPageStateEntriesSelectable = MAX_PAGE_STATE_ENTRIES_SELECTABLE
+): PageStateHistory {
   const pageStateHistory = new ValueHistory<PageStateEntry>(PAGE_STATE_CONTEXT_TIME_OUT_DELAY, MAX_PAGE_STATE_ENTRIES)
 
   let currentPageState: PageState
@@ -77,23 +82,28 @@ export function startPageStateHistory(): PageStateHistory {
   )
 
   return {
-    findAll: (startTime: RelativeTime, duration?: Duration): PageStateServerEntry[] | undefined => {
-      const pageStateEntries = pageStateHistory
-        .findAll(startTime, duration)
-        .reverse()
-        .map((pageState) => {
-          const correctedStartTime = startTime > pageState.startTime ? startTime : pageState.startTime
-          const recenteredStartTime = elapsed(startTime, correctedStartTime)
+    findAll: (startTime: RelativeTime, duration: Duration): PageStateServerEntry[] | undefined => {
+      const pageStateEntries = pageStateHistory.findAll(startTime, duration)
 
-          return {
-            state: pageState.state,
-            start: toServerDuration(recenteredStartTime),
-          }
-        })
-
-      if (pageStateEntries.length > 0) {
-        return pageStateEntries
+      if (pageStateEntries.length === 0) {
+        return
       }
+
+      const pageStateServerEntries = []
+      const limit = Math.max(0, pageStateEntries.length - maxPageStateEntriesSelectable)
+
+      for (let index = pageStateEntries.length - 1; index >= limit; index--) {
+        const pageState = pageStateEntries[index]
+        const correctedStartTime = startTime > pageState.startTime ? startTime : pageState.startTime
+        const recenteredStartTime = elapsed(startTime, correctedStartTime)
+
+        pageStateServerEntries.push({
+          state: pageState.state,
+          start: toServerDuration(recenteredStartTime),
+        })
+      }
+
+      return pageStateServerEntries
     },
     addPageState,
     stop: () => {

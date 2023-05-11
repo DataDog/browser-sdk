@@ -1,42 +1,31 @@
 import type { RelativeTime, ServerDuration } from '@datadog/browser-core'
-import { resetExperimentalFeatures } from '@datadog/browser-core'
-import type { TestSetupBuilder } from '../../../test'
-import { setup } from '../../../test'
+import type { Clock } from '../../../../core/test'
+import { mockClock } from '../../../../core/test'
 import type { PageStateHistory } from './pageStateHistory'
 import { startPageStateHistory, PageState } from './pageStateHistory'
 
 describe('pageStateHistory', () => {
   let pageStateHistory: PageStateHistory
-  let setupBuilder: TestSetupBuilder
-
+  let clock: Clock
   beforeEach(() => {
-    setupBuilder = setup()
-      .withFakeClock()
-      .beforeBuild(() => {
-        pageStateHistory = startPageStateHistory()
-        return pageStateHistory
-      })
+    clock = mockClock()
+    pageStateHistory = startPageStateHistory()
   })
 
   afterEach(() => {
-    setupBuilder.cleanup()
     pageStateHistory.stop()
-    resetExperimentalFeatures()
+    clock.cleanup()
   })
 
   it('should have the current state when starting', () => {
-    setupBuilder.build()
     expect(pageStateHistory.findAll(0 as RelativeTime, 10 as RelativeTime)).toBeDefined()
   })
 
   it('should return undefined if the time period is out of history bounds', () => {
-    pageStateHistory = startPageStateHistory()
     expect(pageStateHistory.findAll(-10 as RelativeTime, 0 as RelativeTime)).not.toBeDefined()
   })
 
   it('should return the correct page states for the given time period', () => {
-    const { clock } = setupBuilder.build()
-
     pageStateHistory.addPageState(PageState.ACTIVE)
 
     clock.tick(10)
@@ -65,5 +54,18 @@ describe('pageStateHistory', () => {
         start: 15000000 as ServerDuration,
       },
     ])
+  })
+
+  it('should limit the number of selectable entries', () => {
+    const maxPageStateEntriesSelectable = 1
+    pageStateHistory = startPageStateHistory(maxPageStateEntriesSelectable)
+
+    pageStateHistory.addPageState(PageState.ACTIVE)
+    clock.tick(10)
+    pageStateHistory.addPageState(PageState.PASSIVE)
+
+    expect(pageStateHistory.findAll(0 as RelativeTime, Infinity as RelativeTime)?.length).toEqual(
+      maxPageStateEntriesSelectable
+    )
   })
 })
