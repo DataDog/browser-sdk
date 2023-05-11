@@ -40,10 +40,6 @@ export interface RumInitConfiguration extends InitConfiguration {
   sessionReplaySampleRate?: number | undefined
 
   // action options
-  /**
-   * @deprecated use trackUserInteractions instead
-   */
-  trackInteractions?: boolean | undefined
   trackUserInteractions?: boolean | undefined
   trackFrustrations?: boolean | undefined
   actionNameAttribute?: string | undefined
@@ -125,7 +121,6 @@ export function validateAndBuildRumConfiguration(
     return
   }
 
-  const trackUserInteractions = !!(initConfiguration.trackUserInteractions ?? initConfiguration.trackInteractions)
   const trackFrustrations = !!initConfiguration.trackFrustrations
 
   return assign(
@@ -138,7 +133,7 @@ export function validateAndBuildRumConfiguration(
       traceSampleRate: initConfiguration.traceSampleRate,
       allowedTracingUrls,
       excludedActivityUrls: initConfiguration.excludedActivityUrls ?? [],
-      trackUserInteractions: trackUserInteractions || trackFrustrations,
+      trackUserInteractions: !!initConfiguration.trackUserInteractions || trackFrustrations,
       trackFrustrations,
       trackViewsManually: !!initConfiguration.trackViewsManually,
       trackResources: initConfiguration.trackResources,
@@ -226,7 +221,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration): 
         Array.isArray(configuration.excludedActivityUrls) && configuration.excludedActivityUrls.length > 0,
       track_frustrations: configuration.trackFrustrations,
       track_views_manually: configuration.trackViewsManually,
-      track_user_interactions: configuration.trackUserInteractions ?? configuration.trackInteractions,
+      track_user_interactions: configuration.trackUserInteractions,
     },
     baseSerializedConfiguration
   )

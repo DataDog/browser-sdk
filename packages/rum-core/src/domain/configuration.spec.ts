@@ -278,30 +278,6 @@ describe('validateAndBuildRumConfiguration', () => {
     })
   })
 
-  describe('deprecated trackInteractions', () => {
-    it('defaults to false', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackUserInteractions).toBeFalse()
-    })
-
-    it('is set to provided value', () => {
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackInteractions: true })!
-          .trackUserInteractions
-      ).toBeTrue()
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackInteractions: false })!
-          .trackUserInteractions
-      ).toBeFalse()
-    })
-
-    it('the provided value is cast to boolean', () => {
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackInteractions: 'foo' as any })!
-          .trackUserInteractions
-      ).toBeTrue()
-    })
-  })
-
   describe('trackUserInteractions', () => {
     it('defaults to false', () => {
       expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackUserInteractions).toBeFalse()
