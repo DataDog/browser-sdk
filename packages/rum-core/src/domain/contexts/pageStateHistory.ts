@@ -41,16 +41,6 @@ export function startPageStateHistory(
   let currentPageState: PageState
   addPageState(getPageState(), relativeNow())
 
-  function addPageState(nextPageState: PageState, startTime = relativeNow()) {
-    if (nextPageState === currentPageState) {
-      return
-    }
-
-    currentPageState = nextPageState
-    pageStateHistory.closeActive(startTime)
-    pageStateHistory.add({ state: currentPageState, startTime }, startTime)
-  }
-
   const { stop: stopEventListeners } = addEventListeners(
     window,
     [
@@ -65,25 +55,26 @@ export function startPageStateHistory(
     (event) => {
       // Only get events fired by the browser to avoid false currentPageState changes done with custom events
       // cf: developer extension auto flush: https://github.com/DataDog/browser-sdk/blob/2f72bf05a672794c9e33965351964382a94c72ba/developer-extension/src/panel/flushEvents.ts#L11-L12
-      if (!event.isTrusted) {
-        return
-      }
-      const startTime = event.timeStamp as RelativeTime
-
-      if (event.type === DOM_EVENT.FREEZE) {
-        addPageState(PageState.FROZEN, startTime)
-      } else if (event.type === DOM_EVENT.PAGE_HIDE) {
-        addPageState((event as PageTransitionEvent).persisted ? PageState.FROZEN : PageState.TERMINATED, startTime)
-      } else {
-        addPageState(getPageState(), startTime)
+      if (event.isTrusted) {
+        addPageState(computePageState(event), event.timeStamp as RelativeTime)
       }
     },
     { capture: true }
   )
 
+  function addPageState(nextPageState: PageState, startTime = relativeNow()) {
+    if (nextPageState === currentPageState) {
+      return
+    }
+
+    currentPageState = nextPageState
+    pageStateHistory.closeActive(startTime)
+    pageStateHistory.add({ state: currentPageState, startTime }, startTime)
+  }
+
   return {
-    findAll: (startTime: RelativeTime, duration: Duration): PageStateServerEntry[] | undefined => {
-      const pageStateEntries = pageStateHistory.findAll(startTime, duration)
+    findAll: (eventStartTime: RelativeTime, duration: Duration): PageStateServerEntry[] | undefined => {
+      const pageStateEntries = pageStateHistory.findAll(eventStartTime, duration)
 
       if (pageStateEntries.length === 0) {
         return
@@ -94,8 +85,10 @@ export function startPageStateHistory(
 
       for (let index = pageStateEntries.length - 1; index >= limit; index--) {
         const pageState = pageStateEntries[index]
-        const correctedStartTime = startTime > pageState.startTime ? startTime : pageState.startTime
-        const recenteredStartTime = elapsed(startTime, correctedStartTime)
+        // correct the start time to allays be higher or equal to the event start time
+        const correctedStartTime = eventStartTime > pageState.startTime ? eventStartTime : pageState.startTime
+        // recenter the start time to be relative to the event start time (ex: to be relative to the view start time)
+        const recenteredStartTime = elapsed(eventStartTime, correctedStartTime)
 
         pageStateServerEntries.push({
           state: pageState.state,
@@ -113,7 +106,16 @@ export function startPageStateHistory(
   }
 }
 
-export function getPageState() {
+function computePageState(event: Event) {
+  if (event.type === DOM_EVENT.FREEZE) {
+    return PageState.FROZEN
+  } else if (event.type === DOM_EVENT.PAGE_HIDE) {
+    return (event as PageTransitionEvent).persisted ? PageState.FROZEN : PageState.TERMINATED
+  }
+  return getPageState()
+}
+
+function getPageState() {
   if (document.visibilityState === 'hidden') {
     return PageState.HIDDEN
   }
