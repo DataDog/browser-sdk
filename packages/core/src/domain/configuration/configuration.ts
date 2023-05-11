@@ -36,10 +36,6 @@ export interface InitConfiguration {
 
   // transport options
   proxy?: string | undefined
-  /**
-   * @deprecated use `proxy` instead
-   */
-  proxyUrl?: string | undefined
   site?: string | undefined
 
   // tag and context options
@@ -179,7 +175,6 @@ function mustUseSecureCookie(initConfiguration: InitConfiguration) {
 }
 
 export function serializeConfiguration(configuration: InitConfiguration): Partial<RawTelemetryConfiguration> {
-  const proxy = configuration.proxy ?? configuration.proxyUrl
   return {
     session_sample_rate: configuration.sessionSampleRate ?? configuration.sampleRate,
     telemetry_sample_rate: configuration.telemetrySampleRate,
@@ -187,7 +182,7 @@ export function serializeConfiguration(configuration: InitConfiguration): Partia
     use_before_send: !!configuration.beforeSend,
     use_cross_site_session_cookie: configuration.useCrossSiteSessionCookie,
     use_secure_session_cookie: configuration.useSecureSessionCookie,
-    use_proxy: proxy !== undefined ? !!proxy : undefined,
+    use_proxy: !!configuration.proxy,
     silent_multiple_init: configuration.silentMultipleInit,
     track_session_across_subdomains: configuration.trackSessionAcrossSubdomains,
     track_resources: configuration.trackResources,

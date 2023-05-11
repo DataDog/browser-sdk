@@ -97,44 +97,34 @@ describe('transportConfiguration', () => {
       const configuration = computeTransportConfiguration({ clientToken })
       expect(configuration.isIntakeUrl('https://www.foo.com')).toBe(false)
     })
-    ;[
-      {
-        proxyConfigurationName: 'proxy' as const,
-        intakeUrl: '/api/v2/rum',
-      },
-      {
-        proxyConfigurationName: 'proxyUrl' as const,
-        intakeUrl: 'https://rum.browser-intake-datadoghq.com/api/v2/rum',
-      },
-    ].forEach(({ proxyConfigurationName, intakeUrl }) => {
-      describe(`${proxyConfigurationName} configuration`, () => {
-        it('should detect proxy intake request', () => {
-          let configuration = computeTransportConfiguration({
-            clientToken,
-            [proxyConfigurationName]: 'https://www.proxy.com',
-          })
-          expect(
-            configuration.isIntakeUrl(`https://www.proxy.com/?ddforward=${encodeURIComponent(`${intakeUrl}?foo=bar`)}`)
-          ).toBe(true)
 
-          configuration = computeTransportConfiguration({
-            clientToken,
-            [proxyConfigurationName]: 'https://www.proxy.com/custom/path',
-          })
-          expect(
-            configuration.isIntakeUrl(
-              `https://www.proxy.com/custom/path?ddforward=${encodeURIComponent(`${intakeUrl}?foo=bar`)}`
-            )
-          ).toBe(true)
+    describe('proxy configuration', () => {
+      it('should detect proxy intake request', () => {
+        let configuration = computeTransportConfiguration({
+          clientToken,
+          proxy: 'https://www.proxy.com',
         })
+        expect(
+          configuration.isIntakeUrl(`https://www.proxy.com/?ddforward=${encodeURIComponent('/api/v2/rum?foo=bar')}`)
+        ).toBe(true)
 
-        it('should not detect request done on the same host as the proxy', () => {
-          const configuration = computeTransportConfiguration({
-            clientToken,
-            [proxyConfigurationName]: 'https://www.proxy.com',
-          })
-          expect(configuration.isIntakeUrl('https://www.proxy.com/foo')).toBe(false)
+        configuration = computeTransportConfiguration({
+          clientToken,
+          proxy: 'https://www.proxy.com/custom/path',
         })
+        expect(
+          configuration.isIntakeUrl(
+            `https://www.proxy.com/custom/path?ddforward=${encodeURIComponent('/api/v2/rum?foo=bar')}`
+          )
+        ).toBe(true)
+      })
+
+      it('should not detect request done on the same host as the proxy', () => {
+        const configuration = computeTransportConfiguration({
+          clientToken,
+          proxy: 'https://www.proxy.com',
+        })
+        expect(configuration.isIntakeUrl('https://www.proxy.com/foo')).toBe(false)
       })
     })
     ;[
