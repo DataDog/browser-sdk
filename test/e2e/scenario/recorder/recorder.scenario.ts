@@ -691,7 +691,7 @@ describe('recorder', () => {
 
   describe('frustration records', () => {
     createTest('should detect a dead click and match it to mouse interaction record')
-      .withRum({ trackFrustrations: true })
+      .withRum({ trackUserInteractions: true })
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .run(async ({ serverEvents }) => {
@@ -715,7 +715,7 @@ describe('recorder', () => {
       })
 
     createTest('should detect a rage click and match it to mouse interaction records')
-      .withRum({ trackFrustrations: true })
+      .withRum({ trackUserInteractions: true })
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(
