@@ -190,7 +190,7 @@ function newView(
     viewMetrics,
   } = trackViewMetrics(lifeCycle, domMutationObservable, configuration, scheduleViewUpdate, loadingType, startClocks)
 
-  const { scrollMetrics, stop: stopScrollMetricsTracking } = trackScrollMetrics()
+  const { scrollMetrics, stop: stopScrollMetricsTracking } = trackScrollMetrics(startClocks)
   const { scheduleStop: scheduleStopInitialViewTimingsTracking, timings } =
     loadingType === ViewLoadingType.INITIAL_LOAD
       ? trackInitialViewTimings(lifeCycle, setLoadEvent, scheduleViewUpdate)
@@ -230,9 +230,9 @@ function newView(
           isActive: endClocks === undefined,
           sessionIsActive,
           eventCounts,
+          scrollMetrics,
         },
-        viewMetrics,
-        { scrollMetrics }
+        viewMetrics
       )
     )
   }

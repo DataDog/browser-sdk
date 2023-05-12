@@ -94,9 +94,9 @@ function processViewUpdate(
     display: !isEmptyObject(view.scrollMetrics)
       ? {
           scroll: {
-            max_depth: view.scrollMetrics?.maxScrollDepth,
-            max_scroll_height: view.scrollMetrics?.maxscrollHeight,
-            max_depth_timestamp: toServerDuration(view.scrollMetrics?.maxScrollDepthTimestamp),
+            max_depth: view.scrollMetrics.maxScrollDepth,
+            max_scroll_height: view.scrollMetrics.maxscrollHeight,
+            max_depth_timestamp: toServerDuration(view.scrollMetrics.maxScrollDepthTimestamp),
           },
         }
       : undefined,
