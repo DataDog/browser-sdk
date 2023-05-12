@@ -118,7 +118,7 @@ interface ViewDisplay {
   scroll: {
     max_depth?: number
     max_scroll_height?: number
-    max_depth_timestamp?: ServerDuration
+    max_depth_time?: ServerDuration
   }
 }
 

@@ -6,7 +6,7 @@ import { getScrollY } from '../../../browser/scroll'
 export interface ScrollMetrics {
   maxScrollDepth?: number
   maxscrollHeight?: number
-  maxScrollDepthTimestamp?: Duration
+  maxScrollDepthTime?: Duration
 }
 
 const THROTTLE_SCROLL_DURATION = ONE_SECOND
@@ -33,9 +33,7 @@ export function trackScrollMetrics(viewStart: ClocksState) {
   const { scrollHeight, scrollDepth, timeStamp, scrollTop } = getScrollMetrics(viewStart)
 
   const scrollMetrics: ScrollMetrics =
-    scrollTop > 0
-      ? { maxScrollDepth: scrollDepth, maxscrollHeight: scrollHeight, maxScrollDepthTimestamp: timeStamp }
-      : {}
+    scrollTop > 0 ? { maxScrollDepth: scrollDepth, maxscrollHeight: scrollHeight, maxScrollDepthTime: timeStamp } : {}
 
   const handleScrollEvent = throttle(
     () => {
@@ -44,7 +42,7 @@ export function trackScrollMetrics(viewStart: ClocksState) {
       if (scrollDepth > (scrollMetrics.maxScrollDepth || 0)) {
         scrollMetrics.maxScrollDepth = scrollDepth
         scrollMetrics.maxscrollHeight = scrollHeight
-        scrollMetrics.maxScrollDepthTimestamp = timeStamp
+        scrollMetrics.maxScrollDepthTime = timeStamp
       }
     },
     THROTTLE_SCROLL_DURATION,
