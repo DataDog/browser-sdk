@@ -152,7 +152,6 @@ export function validateAndBuildRumConfiguration(
  * Validates allowedTracingUrls and converts match options to tracing options
  */
 function validateAndBuildTracingOptions(initConfiguration: RumInitConfiguration): TracingOption[] | undefined {
-  // Handle allowedTracingUrls first
   if (initConfiguration.allowedTracingUrls !== undefined) {
     if (!Array.isArray(initConfiguration.allowedTracingUrls)) {
       display.error('Allowed Tracing URLs should be an array')
