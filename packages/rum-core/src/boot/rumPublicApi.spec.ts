@@ -460,7 +460,7 @@ describe('rum public api', () => {
     it('should remove the user', () => {
       const user = { id: 'foo', name: 'bar', email: 'qux' }
       rumPublicApi.setUser(user)
-      rumPublicApi.removeUser()
+      rumPublicApi.clearUser()
       rumPublicApi.addAction('message')
 
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)

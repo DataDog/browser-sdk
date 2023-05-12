@@ -249,8 +249,6 @@ export function makeRumPublicApi(
 
     removeUserProperty: monitor(userContextManager.removeContextProperty),
 
-    /** @deprecated: renamed to clearUser */
-    removeUser: monitor(userContextManager.clearContext),
     clearUser: monitor(userContextManager.clearContext),
 
     startView,
