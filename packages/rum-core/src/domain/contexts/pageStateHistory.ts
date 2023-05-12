@@ -81,8 +81,10 @@ export function startPageStateHistory(
       }
 
       const pageStateServerEntries = []
+      // limit the number of entries to return
       const limit = Math.max(0, pageStateEntries.length - maxPageStateEntriesSelectable)
 
+      // loop page state entries backward to return the selected ones in desc order
       for (let index = pageStateEntries.length - 1; index >= limit; index--) {
         const pageState = pageStateEntries[index]
         // compute the start time relative to the event start time (ex: to be relative to the view start time)
