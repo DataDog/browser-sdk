@@ -49,7 +49,7 @@ export interface ViewEvent {
   loadingTime?: Duration
   loadingType: ViewLoadingType
   cumulativeLayoutShift?: number
-  scrollMetrics?: ScrollMetrics
+  scrollMetrics: ScrollMetrics
 }
 
 export interface ViewCreatedEvent {

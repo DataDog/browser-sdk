@@ -1,5 +1,7 @@
 import type { Duration } from '@datadog/browser-core'
-import { throttle, addEventListener, DOM_EVENT } from '@datadog/browser-core'
+import { ONE_SECOND, throttle, addEventListener, DOM_EVENT } from '@datadog/browser-core'
+import { getViewportDimension } from '../../../browser/viewportObservable'
+import { getScrollY } from '../../../browser/scroll'
 
 export interface ScrollMetrics {
   maxScrollDepth?: number
@@ -7,24 +9,27 @@ export interface ScrollMetrics {
   maxScrollDepthTimestamp?: Duration
 }
 
+const THROTTLE_SCROLL_DURATION = ONE_SECOND
+
 export function trackScrollMetrics() {
   const scrollMetrics: ScrollMetrics = {}
 
   const handleScrollEvent = throttle(
     (event: Event) => {
-      const scrollTop =
-        window.pageYOffset || (document.documentElement || document.body.parentNode || document.body).scrollTop
+      const scrollTop = getScrollY()
+
+      const { height } = getViewportDimension()
 
       const scrollHeight = Math.round(document.documentElement.scrollHeight)
-      const scrollDepth = Math.round(Math.min(document.documentElement.clientHeight + scrollTop, scrollHeight))
+      const scrollDepth = Math.round(Math.min(height + scrollTop, scrollHeight))
 
-      if (scrollDepth > (scrollMetrics?.maxScrollDepth ?? 0)) {
+      if (scrollDepth > (scrollMetrics.maxScrollDepth || 0)) {
         scrollMetrics.maxScrollDepth = scrollDepth
         scrollMetrics.maxscrollHeight = scrollHeight
         scrollMetrics.maxScrollDepthTimestamp = event.timeStamp as Duration
       }
     },
-    1000,
+    THROTTLE_SCROLL_DURATION,
     { leading: false, trailing: true }
   )
 
