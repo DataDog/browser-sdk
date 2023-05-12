@@ -85,14 +85,12 @@ export function startPageStateHistory(
 
       for (let index = pageStateEntries.length - 1; index >= limit; index--) {
         const pageState = pageStateEntries[index]
-        // correct the start time to allays be higher or equal to the event start time
-        const correctedStartTime = eventStartTime > pageState.startTime ? eventStartTime : pageState.startTime
-        // recenter the start time to be relative to the event start time (ex: to be relative to the view start time)
-        const recenteredStartTime = elapsed(eventStartTime, correctedStartTime)
+        // compute the start time relative to the event start time (ex: to be relative to the view start time)
+        const relativeStartTime = elapsed(eventStartTime, pageState.startTime)
 
         pageStateServerEntries.push({
           state: pageState.state,
-          start: toServerDuration(recenteredStartTime),
+          start: toServerDuration(relativeStartTime),
         })
       }
 

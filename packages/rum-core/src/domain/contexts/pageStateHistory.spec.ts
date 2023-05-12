@@ -40,10 +40,18 @@ describe('pageStateHistory', () => {
     clock.tick(10)
     pageStateHistory.addPageState(PageState.TERMINATED)
 
-    expect(pageStateHistory.findAll(15 as RelativeTime, 20 as RelativeTime)).toEqual([
+    /*
+    page state time    0     10    20    30    40
+    event time                  15<-------->35
+    */
+    const event = {
+      startTime: 15 as RelativeTime,
+      duration: 20 as RelativeTime,
+    }
+    expect(pageStateHistory.findAll(event.startTime, event.duration)).toEqual([
       {
         state: PageState.PASSIVE,
-        start: 0 as ServerDuration,
+        start: -5000000 as ServerDuration,
       },
       {
         state: PageState.HIDDEN,
