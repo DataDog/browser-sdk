@@ -149,7 +149,7 @@ export function validateAndBuildRumConfiguration(
 }
 
 /**
- * Validates allowedTracingUrls and convert match options to tracing options
+ * Validates allowedTracingUrls and converts match options to tracing options
  */
 function validateAndBuildTracingOptions(initConfiguration: RumInitConfiguration): TracingOption[] | undefined {
   // Handle allowedTracingUrls first
