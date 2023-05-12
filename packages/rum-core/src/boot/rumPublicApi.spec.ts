@@ -263,9 +263,9 @@ describe('rum public api', () => {
       })
 
       it('stores a deep copy of the global context', () => {
-        rumPublicApi.addRumGlobalContext('foo', 'bar')
+        rumPublicApi.setGlobalContextProperty('foo', 'bar')
         rumPublicApi.addAction('message')
-        rumPublicApi.addRumGlobalContext('foo', 'baz')
+        rumPublicApi.setGlobalContextProperty('foo', 'baz')
 
         rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
@@ -365,9 +365,9 @@ describe('rum public api', () => {
       })
 
       it('stores a deep copy of the global context', () => {
-        rumPublicApi.addRumGlobalContext('foo', 'bar')
+        rumPublicApi.setGlobalContextProperty('foo', 'bar')
         rumPublicApi.addError(new Error('message'))
-        rumPublicApi.addRumGlobalContext('foo', 'baz')
+        rumPublicApi.setGlobalContextProperty('foo', 'baz')
 
         rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
