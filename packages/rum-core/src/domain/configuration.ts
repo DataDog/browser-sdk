@@ -2,7 +2,6 @@ import type { Configuration, InitConfiguration, MatchOption, RawTelemetryConfigu
 import {
   getType,
   arrayFrom,
-  getOrigin,
   isMatchOption,
   serializeConfiguration,
   assign,
@@ -28,15 +27,7 @@ export interface RumInitConfiguration extends InitConfiguration {
   excludedActivityUrls?: MatchOption[] | undefined
 
   // tracing options
-  /**
-   * @deprecated use allowedTracingUrls instead
-   */
-  allowedTracingOrigins?: MatchOption[] | undefined
   allowedTracingUrls?: Array<MatchOption | TracingOption> | undefined
-  /**
-   * @deprecated use traceSampleRate instead
-   */
-  tracingSampleRate?: number | undefined
   traceSampleRate?: number | undefined
 
   // replay options
@@ -49,10 +40,6 @@ export interface RumInitConfiguration extends InitConfiguration {
   sessionReplaySampleRate?: number | undefined
 
   // action options
-  /**
-   * @deprecated use trackUserInteractions instead
-   */
-  trackInteractions?: boolean | undefined
   trackUserInteractions?: boolean | undefined
   actionNameAttribute?: string | undefined
 
@@ -112,8 +99,7 @@ export function validateAndBuildRumConfiguration(
     return
   }
 
-  const traceSampleRate = initConfiguration.traceSampleRate ?? initConfiguration.tracingSampleRate
-  if (traceSampleRate !== undefined && !isPercentage(traceSampleRate)) {
+  if (initConfiguration.traceSampleRate !== undefined && !isPercentage(initConfiguration.traceSampleRate)) {
     display.error('Trace Sample Rate should be a number between 0 and 100')
     return
   }
@@ -133,8 +119,6 @@ export function validateAndBuildRumConfiguration(
     return
   }
 
-  const trackUserInteractions = !!(initConfiguration.trackUserInteractions ?? initConfiguration.trackInteractions)
-
   return assign(
     {
       applicationId: initConfiguration.applicationId,
@@ -142,10 +126,10 @@ export function validateAndBuildRumConfiguration(
       actionNameAttribute: initConfiguration.actionNameAttribute,
       sessionReplaySampleRate: initConfiguration.sessionReplaySampleRate ?? premiumSampleRate ?? 100,
       oldPlansBehavior: initConfiguration.sessionReplaySampleRate === undefined,
-      traceSampleRate,
+      traceSampleRate: initConfiguration.traceSampleRate,
       allowedTracingUrls,
       excludedActivityUrls: initConfiguration.excludedActivityUrls ?? [],
-      trackUserInteractions,
+      trackUserInteractions: !!initConfiguration.trackUserInteractions,
       trackViewsManually: !!initConfiguration.trackViewsManually,
       trackResources: initConfiguration.trackResources,
       trackLongTasks: initConfiguration.trackLongTasks,
@@ -160,16 +144,9 @@ export function validateAndBuildRumConfiguration(
 }
 
 /**
- * Handles allowedTracingUrls and processes legacy allowedTracingOrigins
+ * Validates allowedTracingUrls and converts match options to tracing options
  */
 function validateAndBuildTracingOptions(initConfiguration: RumInitConfiguration): TracingOption[] | undefined {
-  // Advise about parameters precedence.
-  if (initConfiguration.allowedTracingUrls !== undefined && initConfiguration.allowedTracingOrigins !== undefined) {
-    display.warn(
-      'Both allowedTracingUrls and allowedTracingOrigins (deprecated) have been defined. The parameter allowedTracingUrls will override allowedTracingOrigins.'
-    )
-  }
-  // Handle allowedTracingUrls first
   if (initConfiguration.allowedTracingUrls !== undefined) {
     if (!Array.isArray(initConfiguration.allowedTracingUrls)) {
       display.error('Allowed Tracing URLs should be an array')
@@ -197,55 +174,11 @@ function validateAndBuildTracingOptions(initConfiguration: RumInitConfiguration)
     return tracingOptions
   }
 
-  // Handle conversion of allowedTracingOrigins to allowedTracingUrls
-  if (initConfiguration.allowedTracingOrigins !== undefined) {
-    if (!Array.isArray(initConfiguration.allowedTracingOrigins)) {
-      display.error('Allowed Tracing Origins should be an array')
-      return
-    }
-    if (initConfiguration.allowedTracingOrigins.length !== 0 && initConfiguration.service === undefined) {
-      display.error('Service needs to be configured when tracing is enabled')
-      return
-    }
-
-    const tracingOptions: TracingOption[] = []
-    initConfiguration.allowedTracingOrigins.forEach((legacyMatchOption) => {
-      const tracingOption = convertLegacyMatchOptionToTracingOption(legacyMatchOption)
-      if (tracingOption) {
-        tracingOptions.push(tracingOption)
-      }
-    })
-    return tracingOptions
-  }
-
   return []
 }
 
 /**
- * Converts parameters from the deprecated allowedTracingOrigins
- * to allowedTracingUrls. Handles the change from origin to full URLs.
- */
-function convertLegacyMatchOptionToTracingOption(item: MatchOption): TracingOption | undefined {
-  let match: MatchOption | undefined
-  if (typeof item === 'string') {
-    match = item
-  } else if (item instanceof RegExp) {
-    match = (url) => item.test(getOrigin(url))
-  } else if (typeof item === 'function') {
-    match = (url) => item(getOrigin(url))
-  }
-
-  if (match === undefined) {
-    display.warn('Allowed Tracing Origins parameters should be a string, RegExp or function. Ignoring parameter', item)
-    return undefined
-  }
-
-  return { match, propagatorTypes: ['datadog'] }
-}
-
-/**
- * Combines the selected tracing propagators from the different options in allowedTracingUrls,
- * and assumes 'datadog' has been selected when using allowedTracingOrigins
+ * Combines the selected tracing propagators from the different options in allowedTracingUrls
  */
 function getSelectedTracingPropagators(configuration: RumInitConfiguration): PropagatorType[] {
   const usedTracingPropagators = new Set<PropagatorType>()
@@ -261,10 +194,6 @@ function getSelectedTracingPropagators(configuration: RumInitConfiguration): Pro
     })
   }
 
-  if (Array.isArray(configuration.allowedTracingOrigins) && configuration.allowedTracingOrigins.length > 0) {
-    usedTracingPropagators.add('datadog')
-  }
-
   return arrayFrom(usedTracingPropagators)
 }
 
@@ -276,10 +205,8 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration): 
       premium_sample_rate: configuration.premiumSampleRate,
       replay_sample_rate: configuration.replaySampleRate,
       session_replay_sample_rate: configuration.sessionReplaySampleRate,
-      trace_sample_rate: configuration.traceSampleRate ?? configuration.tracingSampleRate,
+      trace_sample_rate: configuration.traceSampleRate,
       action_name_attribute: configuration.actionNameAttribute,
-      use_allowed_tracing_origins:
-        Array.isArray(configuration.allowedTracingOrigins) && configuration.allowedTracingOrigins.length > 0,
       use_allowed_tracing_urls:
         Array.isArray(configuration.allowedTracingUrls) && configuration.allowedTracingUrls.length > 0,
       selected_tracing_propagators: getSelectedTracingPropagators(configuration),
@@ -287,7 +214,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration): 
       use_excluded_activity_urls:
         Array.isArray(configuration.excludedActivityUrls) && configuration.excludedActivityUrls.length > 0,
       track_views_manually: configuration.trackViewsManually,
-      track_user_interactions: configuration.trackUserInteractions ?? configuration.trackInteractions,
+      track_user_interactions: configuration.trackUserInteractions,
     },
     baseSerializedConfiguration
   )

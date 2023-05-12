@@ -81,8 +81,8 @@ async function setupSDK(page: Page, options: ProfilingOptions) {
             clientToken: 'xxx',
             applicationId: 'xxx',
             site: 'datadoghq.com',
-            trackInteractions: true,
-            proxyUrl: ${JSON.stringify(options.proxy.origin)}
+            trackUserInteractions: true,
+            proxy: ${JSON.stringify(options.proxy.origin)}
           })
           ${options.startRecording ? 'window.DD_RUM.startSessionReplayRecording()' : ''}
         })

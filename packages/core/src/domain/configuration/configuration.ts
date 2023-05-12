@@ -24,10 +24,6 @@ export interface InitConfiguration {
   // global options
   clientToken: string
   beforeSend?: GenericBeforeSendCallback | undefined
-  /**
-   * @deprecated use sessionSampleRate instead
-   */
-  sampleRate?: number | undefined
   sessionSampleRate?: number | undefined
   telemetrySampleRate?: number | undefined
   silentMultipleInit?: boolean | undefined
@@ -36,10 +32,6 @@ export interface InitConfiguration {
 
   // transport options
   proxy?: string | undefined
-  /**
-   * @deprecated use `proxy` instead
-   */
-  proxyUrl?: string | undefined
   site?: string | undefined
 
   // tag and context options
@@ -97,8 +89,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     return
   }
 
-  const sessionSampleRate = initConfiguration.sessionSampleRate ?? initConfiguration.sampleRate
-  if (sessionSampleRate !== undefined && !isPercentage(sessionSampleRate)) {
+  if (initConfiguration.sessionSampleRate !== undefined && !isPercentage(initConfiguration.sessionSampleRate)) {
     display.error('Session Sample Rate should be a number between 0 and 100')
     return
   }
@@ -130,7 +121,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
       beforeSend:
         initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
       cookieOptions: buildCookieOptions(initConfiguration),
-      sessionSampleRate: sessionSampleRate ?? 100,
+      sessionSampleRate: initConfiguration.sessionSampleRate ?? 100,
       telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
       telemetryConfigurationSampleRate: initConfiguration.telemetryConfigurationSampleRate ?? 5,
       service: initConfiguration.service,
@@ -179,15 +170,14 @@ function mustUseSecureCookie(initConfiguration: InitConfiguration) {
 }
 
 export function serializeConfiguration(configuration: InitConfiguration): Partial<RawTelemetryConfiguration> {
-  const proxy = configuration.proxy ?? configuration.proxyUrl
   return {
-    session_sample_rate: configuration.sessionSampleRate ?? configuration.sampleRate,
+    session_sample_rate: configuration.sessionSampleRate,
     telemetry_sample_rate: configuration.telemetrySampleRate,
     telemetry_configuration_sample_rate: configuration.telemetryConfigurationSampleRate,
     use_before_send: !!configuration.beforeSend,
     use_cross_site_session_cookie: configuration.useCrossSiteSessionCookie,
     use_secure_session_cookie: configuration.useSecureSessionCookie,
-    use_proxy: proxy !== undefined ? !!proxy : undefined,
+    use_proxy: !!configuration.proxy,
     silent_multiple_init: configuration.silentMultipleInit,
     track_session_across_subdomains: configuration.trackSessionAcrossSubdomains,
     track_resources: configuration.trackResources,
