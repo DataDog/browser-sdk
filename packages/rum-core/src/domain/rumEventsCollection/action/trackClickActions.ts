@@ -82,7 +82,7 @@ export function trackClickActions(
     hadActivityOnPointerDown: () => boolean
   }>({
     onPointerDown: (pointerDownEvent) =>
-      processPointerDown(configuration, lifeCycle, domMutationObservable, history, pointerDownEvent),
+      processPointerDown(configuration, lifeCycle, domMutationObservable, pointerDownEvent),
     onPointerUp: ({ clickActionBase, hadActivityOnPointerDown }, startEvent, getUserActivity) =>
       startClickAction(
         configuration,
@@ -99,8 +99,7 @@ export function trackClickActions(
   })
 
   const actionContexts: ActionContexts = {
-    findActionId: (startTime?: RelativeTime) =>
-      configuration.trackFrustrations ? history.findAll(startTime) : history.find(startTime),
+    findActionId: (startTime?: RelativeTime) => history.findAll(startTime),
   }
 
   return {
@@ -132,21 +131,9 @@ function processPointerDown(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
-  history: ClickActionIdHistory,
   pointerDownEvent: MouseEventOnElement
 ) {
-  if (!configuration.trackFrustrations && history.find()) {
-    // TODO: remove this in a future major version. To keep retrocompatibility, ignore any new
-    // action if another one is already occurring.
-    return
-  }
-
   const clickActionBase = computeClickActionBase(pointerDownEvent, configuration.actionNameAttribute)
-  if (!configuration.trackFrustrations && !clickActionBase.name) {
-    // TODO: remove this in a future major version. To keep retrocompatibility, ignore any action
-    // with a blank name
-    return
-  }
 
   let hadActivityOnPointerDown = false
 
@@ -178,10 +165,7 @@ function startClickAction(
   hadActivityOnPointerDown: () => boolean
 ) {
   const click = newClick(lifeCycle, history, getUserActivity, clickActionBase, startEvent)
-
-  if (configuration.trackFrustrations) {
-    appendClickToClickChain(click)
-  }
+  appendClickToClickChain(click)
 
   const { stop: stopWaitPageActivityEnd } = waitPageActivityEnd(
     lifeCycle,
@@ -202,18 +186,6 @@ function startClickAction(
           )
         } else {
           click.stop()
-        }
-
-        // Validate or discard the click only if we don't track frustrations. It'll be done when
-        // the click chain is finalized.
-        if (!configuration.trackFrustrations) {
-          if (!pageActivityEndEvent.hadActivity) {
-            // If we are not tracking frustrations, we should discard the click to keep backward
-            // compatibility.
-            click.discard()
-          } else {
-            click.validate()
-          }
         }
       }
     },
