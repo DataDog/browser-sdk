@@ -50,7 +50,7 @@ async function getInfos(): Promise<SdkInfos> {
       `
         const cookieRawValue = document.cookie
           .split(';')
-          .map(cookie => cookie.match(/(\\S*?)=(.*)/).slice(1))
+          .map(cookie => cookie.match(/(\\S*?)=(.*)/)?.slice(1) || [])
           .find(([name, _]) => name === '_dd_s')
           ?.[1]
 
