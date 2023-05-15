@@ -69,8 +69,8 @@ export function startSessionStore<TrackingType extends string>(
 
   /**
    * allows two behaviors:
-   * - if the session is active, synchronize the session cache without updating the session cookie
-   * - if the session is not active, clear the session cookie and expire the session cache
+   * - if the session is active, synchronize the session cache without updating the session storage
+   * - if the session is not active, clear the session storage and expire the session cache
    */
   function watchSession() {
     processStorageOperations(
@@ -231,7 +231,7 @@ export function processStorageOperations(operations: Operations, sessionStorage:
     }
   }
   // call after even if session is not persisted in order to perform operations on
-  // up-to-date cookie value, the value could have been modified by another tab
+  // up-to-date session state value => the value could have been modified by another tab
   operations.after?.(processedSession || currentSession)
   next(sessionStorage)
 }
