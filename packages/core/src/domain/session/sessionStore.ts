@@ -1,13 +1,11 @@
-import type { CookieOptions } from '../../browser/cookie'
-import { COOKIE_ACCESS_DELAY } from '../../browser/cookie'
 import { clearInterval, setInterval, setTimeout } from '../../tools/timer'
 import { Observable } from '../../tools/observable'
 import { dateNow } from '../../tools/utils/timeUtils'
 import { throttle } from '../../tools/utils/functionUtils'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
-import { isCookieLockEnabled, initCookieStorage } from './sessionCookieStore'
-import type { SessionState, SessionStorage } from './sessionStorage'
+import { initCookieStorage } from './sessionCookieStore'
+import type { SessionState, SessionStorage, StorageInitOptions } from './sessionStorage'
 import { isSessionInExpiredState } from './sessionStorage'
 
 export interface SessionStore {
@@ -27,7 +25,7 @@ export interface SessionStore {
  * - inactive, no session in store or session expired, waiting for a renew session
  */
 export function startSessionStore<TrackingType extends string>(
-  options: CookieOptions,
+  options: StorageInitOptions,
   productKey: string,
   computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean }
 ): SessionStore {
@@ -35,9 +33,9 @@ export function startSessionStore<TrackingType extends string>(
   const expireObservable = new Observable<void>()
 
   const sessionStorage = initCookieStorage(options)
-  const { clearSession, retrieveSession } = sessionStorage
+  const { clearSession, retrieveSession, storageAccessOptions } = sessionStorage
 
-  const watchSessionTimeoutId = setInterval(watchSession, COOKIE_ACCESS_DELAY)
+  const watchSessionTimeoutId = setInterval(watchSession, storageAccessOptions.pollDelay)
   let sessionCache: SessionState = retrieveActiveSession()
 
   function expandOrRenewSession() {
@@ -144,7 +142,7 @@ export function startSessionStore<TrackingType extends string>(
   }
 
   return {
-    expandOrRenewSession: throttle(expandOrRenewSession, COOKIE_ACCESS_DELAY).throttled,
+    expandOrRenewSession: throttle(expandOrRenewSession, storageAccessOptions.pollDelay).throttled,
     expandSession,
     getSession: () => sessionCache,
     renewObservable,
@@ -159,20 +157,16 @@ export function startSessionStore<TrackingType extends string>(
   }
 }
 
-// arbitrary values
-export const LOCK_RETRY_DELAY = 10
-export const MAX_NUMBER_OF_LOCK_RETRIES = 100
-
 type Operations = {
-  process: (cookieSession: SessionState) => SessionState | undefined
-  after?: (cookieSession: SessionState) => void
+  process: (sessionState: SessionState) => SessionState | undefined
+  after?: (sessionState: SessionState) => void
 }
 
 const bufferedOperations: Operations[] = []
 let ongoingOperations: Operations | undefined
 
 export function processStorageOperations(operations: Operations, sessionStorage: SessionStorage, numberOfRetries = 0) {
-  const { retrieveSession, persistSession, clearSession } = sessionStorage
+  const { retrieveSession, persistSession, clearSession, storageAccessOptions } = sessionStorage
 
   if (!ongoingOperations) {
     ongoingOperations = operations
@@ -181,16 +175,16 @@ export function processStorageOperations(operations: Operations, sessionStorage:
     bufferedOperations.push(operations)
     return
   }
-  if (numberOfRetries >= MAX_NUMBER_OF_LOCK_RETRIES) {
+  if (storageAccessOptions.lockEnabled && numberOfRetries >= storageAccessOptions.lockMaxTries) {
     next(sessionStorage)
     return
   }
   let currentLock: string
   let currentSession = retrieveSession()
-  if (isCookieLockEnabled()) {
+  if (storageAccessOptions.lockEnabled) {
     // if someone has lock, retry later
     if (currentSession.lock) {
-      retryLater(operations, sessionStorage, numberOfRetries)
+      retryLater(operations, sessionStorage, numberOfRetries, storageAccessOptions.lockRetryDelay)
       return
     }
     // acquire lock
@@ -200,16 +194,16 @@ export function processStorageOperations(operations: Operations, sessionStorage:
     // if lock is not acquired, retry later
     currentSession = retrieveSession()
     if (currentSession.lock !== currentLock) {
-      retryLater(operations, sessionStorage, numberOfRetries)
+      retryLater(operations, sessionStorage, numberOfRetries, storageAccessOptions.lockRetryDelay)
       return
     }
   }
   let processedSession = operations.process(currentSession)
-  if (isCookieLockEnabled()) {
+  if (storageAccessOptions.lockEnabled) {
     // if lock corrupted after process, retry later
     currentSession = retrieveSession()
     if (currentSession.lock !== currentLock!) {
-      retryLater(operations, sessionStorage, numberOfRetries)
+      retryLater(operations, sessionStorage, numberOfRetries, storageAccessOptions.lockRetryDelay)
       return
     }
   }
@@ -221,14 +215,14 @@ export function processStorageOperations(operations: Operations, sessionStorage:
       persistSession(processedSession)
     }
   }
-  if (isCookieLockEnabled()) {
+  if (storageAccessOptions.lockEnabled) {
     // correctly handle lock around expiration would require to handle this case properly at several levels
     // since we don't have evidence of lock issues around expiration, let's just not do the corruption check for it
     if (!(processedSession && isSessionInExpiredState(processedSession))) {
       // if lock corrupted after persist, retry later
       currentSession = retrieveSession()
       if (currentSession.lock !== currentLock!) {
-        retryLater(operations, sessionStorage, numberOfRetries)
+        retryLater(operations, sessionStorage, numberOfRetries, storageAccessOptions.lockRetryDelay)
         return
       }
       delete currentSession.lock
@@ -242,10 +236,15 @@ export function processStorageOperations(operations: Operations, sessionStorage:
   next(sessionStorage)
 }
 
-function retryLater(operations: Operations, sessionStorage: SessionStorage, currentNumberOfRetries: number) {
+function retryLater(
+  operations: Operations,
+  sessionStorage: SessionStorage,
+  currentNumberOfRetries: number,
+  retryDelay: number
+) {
   setTimeout(() => {
     processStorageOperations(operations, sessionStorage, currentNumberOfRetries + 1)
-  }, LOCK_RETRY_DELAY)
+  }, retryDelay)
 }
 
 function next(sessionStorage: SessionStorage) {

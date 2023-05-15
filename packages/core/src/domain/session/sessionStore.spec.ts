@@ -4,12 +4,7 @@ import type { CookieOptions } from '../../browser/cookie'
 import { getCookie, setCookie, COOKIE_ACCESS_DELAY } from '../../browser/cookie'
 import { isChromium } from '../../tools/utils/browserDetection'
 import type { SessionStore } from './sessionStore'
-import {
-  LOCK_RETRY_DELAY,
-  MAX_NUMBER_OF_LOCK_RETRIES,
-  processStorageOperations,
-  startSessionStore,
-} from './sessionStore'
+import { processStorageOperations, startSessionStore } from './sessionStore'
 import { SESSION_COOKIE_NAME, initCookieStorage, toSessionString } from './sessionCookieStore'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import type { SessionState, SessionStorage } from './sessionStorage'
@@ -554,7 +549,14 @@ describe('session store', () => {
         cookie.getSpy.and.returnValue(buildSessionString({ ...initialSession, lock: 'locked' }))
         processStorageOperations({ process: processSpy, after: afterSpy }, cookieStorage)
 
-        clock.tick(MAX_NUMBER_OF_LOCK_RETRIES * LOCK_RETRY_DELAY)
+        const lockMaxTries = cookieStorage.storageAccessOptions.lockEnabled
+          ? cookieStorage.storageAccessOptions.lockMaxTries
+          : 0
+        const lockRetryDelay = cookieStorage.storageAccessOptions.lockEnabled
+          ? cookieStorage.storageAccessOptions.lockRetryDelay
+          : 0
+
+        clock.tick(lockMaxTries * lockRetryDelay)
         expect(processSpy).not.toHaveBeenCalled()
         expect(afterSpy).not.toHaveBeenCalled()
         expect(cookie.setSpy).not.toHaveBeenCalled()

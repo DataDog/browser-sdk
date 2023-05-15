@@ -1,5 +1,5 @@
 import type { CookieOptions } from '../../browser/cookie'
-import { deleteCookie, getCookie, setCookie } from '../../browser/cookie'
+import { COOKIE_ACCESS_DELAY, deleteCookie, getCookie, setCookie } from '../../browser/cookie'
 import { isChromium } from '../../tools/utils/browserDetection'
 import { objectEntries } from '../../tools/utils/polyfills'
 import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
@@ -10,8 +10,22 @@ const SESSION_ENTRY_SEPARATOR = '&'
 
 export const SESSION_COOKIE_NAME = '_dd_s'
 
+// Arbitrary values
+export const LOCK_RETRY_DELAY = 10
+export const MAX_NUMBER_OF_LOCK_RETRIES = 100
+
 export function initCookieStorage(options: CookieOptions): SessionStorage {
   return {
+    storageAccessOptions: {
+      pollDelay: COOKIE_ACCESS_DELAY,
+      /**
+       * Cookie lock strategy allows mitigating issues due to concurrent access to cookie.
+       * This issue concerns only chromium browsers and enabling this on firefox increase cookie write failures.
+       */
+      lockEnabled: isChromium(),
+      lockRetryDelay: LOCK_RETRY_DELAY,
+      lockMaxTries: MAX_NUMBER_OF_LOCK_RETRIES,
+    },
     persistSession: persistSessionCookie(options),
     retrieveSession: retrieveSessionCookie,
     clearSession: deleteSessionCookie(options),
@@ -56,12 +70,4 @@ function isValidSessionString(sessionString: string | undefined): sessionString 
     sessionString !== undefined &&
     (sessionString.indexOf(SESSION_ENTRY_SEPARATOR) !== -1 || SESSION_ENTRY_REGEXP.test(sessionString))
   )
-}
-
-/**
- * Cookie lock strategy allows mitigating issues due to concurrent access to cookie.
- * This issue concerns only chromium browsers and enabling this on firefox increase cookie write failures.
- */
-export function isCookieLockEnabled() {
-  return isChromium()
 }
