@@ -29,12 +29,14 @@ import { startLogsBridge } from '../transport/startLogsBridge'
 import type { Logger } from '../domain/logger'
 import { StatusType } from '../domain/logger'
 import { startInternalContext } from '../domain/internalContext'
+import type { LogsPlugin } from './logsPublicApi'
 
 export function startLogs(
   initConfiguration: LogsInitConfiguration,
   configuration: LogsConfiguration,
   buildCommonContext: () => CommonContext,
-  mainLogger: Logger
+  mainLogger: Logger,
+  logsPlugins: LogsPlugin[]
 ) {
   const lifeCycle = new LifeCycle()
 
@@ -81,7 +83,7 @@ export function startLogs(
   startReportCollection(configuration, lifeCycle)
   const { handleLog } = startLoggerCollection(lifeCycle)
 
-  startLogsAssembly(session, configuration, lifeCycle, buildCommonContext, mainLogger, reportError)
+  startLogsAssembly(session, configuration, lifeCycle, buildCommonContext, mainLogger, reportError, logsPlugins)
 
   if (!canUseEventBridge()) {
     startLogsBatch(configuration, lifeCycle, reportError, pageExitObservable, session.expireObservable)

@@ -62,7 +62,7 @@ describe('startLogsAssembly', () => {
     }
     beforeSend = noop
     mainLogger = new Logger(() => noop)
-    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT, mainLogger, noop)
+    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT, mainLogger, noop, [])
     window.DD_RUM = {
       getInternalContext: noop,
     }
@@ -314,14 +314,14 @@ describe('user management', () => {
   })
 
   it('should not output usr key if user is not set', () => {
-    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT, mainLogger, noop)
+    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT, mainLogger, noop, [])
 
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
     expect(serverLogs[0].usr).toBeUndefined()
   })
 
   it('should include user data when user has been set', () => {
-    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT_WITH_USER, mainLogger, noop)
+    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT_WITH_USER, mainLogger, noop, [])
 
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
     expect(serverLogs[0].usr).toEqual({
@@ -342,7 +342,7 @@ describe('user management', () => {
         },
       },
     }
-    startLogsAssembly(sessionManager, configuration, lifeCycle, () => globalContextWithUser, mainLogger, noop)
+    startLogsAssembly(sessionManager, configuration, lifeCycle, () => globalContextWithUser, mainLogger, noop, [])
 
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
     expect(serverLogs[0].usr).toEqual({
@@ -378,7 +378,7 @@ describe('logs limitation', () => {
     beforeSend = noop
     mainLogger = new Logger(() => noop)
     reportErrorSpy = jasmine.createSpy('reportError')
-    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT, mainLogger, reportErrorSpy)
+    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT, mainLogger, reportErrorSpy, [])
     clock = mockClock()
   })
 

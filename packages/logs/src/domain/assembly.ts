@@ -11,6 +11,8 @@ import {
   isEmptyObject,
 } from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
+import type { LogsPlugin } from '../boot/logsPublicApi'
+import type { LogsEvent } from '../logsEvent.types'
 import type { LogsConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
@@ -25,7 +27,8 @@ export function startLogsAssembly(
   lifeCycle: LifeCycle,
   buildCommonContext: () => CommonContext,
   mainLogger: Logger, // Todo: [RUMF-1230] Remove this parameter in the next major release
-  reportError: (error: RawError) => void
+  reportError: (error: RawError) => void,
+  logsPlugins: LogsPlugin[]
 ) {
   const statusWithCustom = (STATUSES as string[]).concat(['custom'])
   const logRateLimiters: { [key: string]: EventRateLimiter } = {}
@@ -62,15 +65,34 @@ export function startLogsAssembly(
       if (
         // Todo: [RUMF-1230] Move this check to the logger collection in the next major release
         !isAuthorized(rawLogsEvent.status, HandlerType.http, logger) ||
-        configuration.beforeSend?.(log) === false ||
-        (log.error?.origin !== ErrorSource.AGENT &&
-          (logRateLimiters[log.status] ?? logRateLimiters['custom']).isLimitReached())
+        !shouldSend(log, configuration, logsPlugins, logRateLimiters)
       ) {
         return
       }
 
       lifeCycle.notify(LifeCycleEventType.LOG_COLLECTED, log)
     }
+  )
+}
+
+function shouldSend(
+  log: LogsEvent,
+  configuration: LogsConfiguration,
+  logsPlugins: LogsPlugin[],
+  logRateLimiters: { [key: string]: EventRateLimiter }
+) {
+  const modifiers = [configuration.beforeSend].concat(logsPlugins.map((plugin) => plugin.beforeSend?.bind(plugin)))
+  for (const modifier of modifiers) {
+    if (modifier) {
+      const result = modifier(log)
+      if (result === false) {
+        return false
+      }
+    }
+  }
+  return (
+    log.error?.origin === ErrorSource.AGENT ||
+    !(logRateLimiters[log.status] ?? logRateLimiters['custom']).isLimitReached()
   )
 }
 

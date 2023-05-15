@@ -69,7 +69,7 @@ describe('logs', () => {
 
   describe('request', () => {
     it('should send the needed data', () => {
-      ;({ handleLog: handleLog } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT, logger))
+      ;({ handleLog: handleLog } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT, logger, []))
 
       handleLog({ message: 'message', status: StatusType.warn, context: { foo: 'bar' } }, logger, COMMON_CONTEXT)
 
@@ -95,7 +95,8 @@ describe('logs', () => {
         initConfiguration,
         { ...baseConfiguration, batchMessagesLimit: 3 },
         () => COMMON_CONTEXT,
-        logger
+        logger,
+        []
       ))
 
       handleLog(DEFAULT_MESSAGE, logger)
@@ -107,7 +108,7 @@ describe('logs', () => {
 
     it('should send bridge event when bridge is present', () => {
       const sendSpy = spyOn(initEventBridgeStub(), 'send')
-      ;({ handleLog: handleLog } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT, logger))
+      ;({ handleLog: handleLog } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT, logger, []))
 
       handleLog(DEFAULT_MESSAGE, logger)
 
@@ -126,13 +127,13 @@ describe('logs', () => {
       const sendSpy = spyOn(initEventBridgeStub(), 'send')
 
       let configuration = { ...baseConfiguration, sessionSampleRate: 0 }
-      ;({ handleLog } = startLogs(initConfiguration, configuration, () => COMMON_CONTEXT, logger))
+      ;({ handleLog } = startLogs(initConfiguration, configuration, () => COMMON_CONTEXT, logger, []))
       handleLog(DEFAULT_MESSAGE, logger)
 
       expect(sendSpy).not.toHaveBeenCalled()
 
       configuration = { ...baseConfiguration, sessionSampleRate: 100 }
-      ;({ handleLog } = startLogs(initConfiguration, configuration, () => COMMON_CONTEXT, logger))
+      ;({ handleLog } = startLogs(initConfiguration, configuration, () => COMMON_CONTEXT, logger, []))
       handleLog(DEFAULT_MESSAGE, logger)
 
       expect(sendSpy).toHaveBeenCalled()
@@ -145,7 +146,8 @@ describe('logs', () => {
       initConfiguration,
       { ...baseConfiguration, forwardConsoleLogs: ['log'] },
       () => COMMON_CONTEXT,
-      logger
+      logger,
+      []
     ))
 
     /* eslint-disable-next-line no-console */
@@ -161,21 +163,21 @@ describe('logs', () => {
     })
 
     it('creates a session on normal conditions', () => {
-      ;({ handleLog } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT, logger))
+      ;({ handleLog } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT, logger, []))
 
       expect(getCookie(SESSION_COOKIE_NAME)).not.toBeUndefined()
     })
 
     it('does not create a session if event bridge is present', () => {
       initEventBridgeStub()
-      ;({ handleLog } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT, logger))
+      ;({ handleLog } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT, logger, []))
 
       expect(getCookie(SESSION_COOKIE_NAME)).toBeUndefined()
     })
 
     it('does not create a session if synthetics worker will inject RUM', () => {
       mockSyntheticsWorkerValues({ injectsRum: true })
-      ;({ handleLog } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT, logger))
+      ;({ handleLog } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT, logger, []))
 
       expect(getCookie(SESSION_COOKIE_NAME)).toBeUndefined()
     })
