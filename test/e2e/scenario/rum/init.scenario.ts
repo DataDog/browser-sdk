@@ -131,8 +131,8 @@ describe('beforeSend', () => {
     .withRumSlim()
     .withRumInit((configuration) => {
       window.DD_RUM!.init(configuration)
-      window.DD_RUM!.addRumGlobalContext('foo', 'baz')
-      window.DD_RUM!.addRumGlobalContext('zig', 'zag')
+      window.DD_RUM!.setGlobalContextProperty('foo', 'baz')
+      window.DD_RUM!.setGlobalContextProperty('zig', 'zag')
     })
     .run(async ({ serverEvents }) => {
       await flushEvents()

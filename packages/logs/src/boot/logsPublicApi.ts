@@ -99,20 +99,12 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
       isAlreadyInitialized = true
     }),
 
-    /** @deprecated: use getGlobalContext instead */
-    getLoggerGlobalContext: monitor(globalContextManager.get),
     getGlobalContext: monitor(globalContextManager.getContext),
 
-    /** @deprecated: use setGlobalContext instead */
-    setLoggerGlobalContext: monitor(globalContextManager.set),
     setGlobalContext: monitor(globalContextManager.setContext),
 
-    /** @deprecated: use setGlobalContextProperty instead */
-    addLoggerGlobalContext: monitor(globalContextManager.add),
     setGlobalContextProperty: monitor(globalContextManager.setContextProperty),
 
-    /** @deprecated: use removeGlobalContextProperty instead */
-    removeLoggerGlobalContext: monitor(globalContextManager.remove),
     removeGlobalContextProperty: monitor(globalContextManager.removeContextProperty),
 
     clearGlobalContext: monitor(globalContextManager.clearContext),

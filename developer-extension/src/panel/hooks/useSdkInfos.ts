@@ -61,12 +61,12 @@ async function getInfos(): Promise<SdkInfos> {
           version: window.DD_RUM?.version,
           config: window.DD_RUM?.getInitConfiguration?.(),
           internalContext: window.DD_RUM?.getInternalContext?.(),
-          globalContext: window.DD_RUM?.getRumGlobalContext?.(),
+          globalContext: window.DD_RUM?.getGlobalContext?.(),
         }
         const logs = window.DD_RUM && {
           version: window.DD_LOGS?.version,
           config: window.DD_LOGS?.getInitConfiguration?.(),
-          globalContext: window.DD_LOGS?.getLoggerGlobalContext?.(),
+          globalContext: window.DD_LOGS?.getGlobalContext?.(),
         }
         return { rum, logs, cookie }
       `
