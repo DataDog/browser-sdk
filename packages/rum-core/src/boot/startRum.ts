@@ -36,7 +36,7 @@ import { startCustomerDataTelemetry } from '../domain/startCustomerDataTelemetry
 import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
 import type { CommonContext } from '../domain/contexts/commonContext'
 import { buildCommonContext } from '../domain/contexts/commonContext'
-import type { RecorderApi } from './rumPublicApi'
+import type { RecorderApi, RumPlugin } from './rumPublicApi'
 
 export function startRum(
   initConfiguration: RumInitConfiguration,
@@ -44,6 +44,7 @@ export function startRum(
   recorderApi: RecorderApi,
   globalContextManager: ContextManager,
   userContextManager: ContextManager,
+  rumPlugins: RumPlugin[],
   initialViewOptions?: ViewOptions
 ) {
   const lifeCycle = new LifeCycle()
@@ -110,7 +111,8 @@ export function startRum(
     locationChangeObservable,
     domMutationObservable,
     () => buildCommonContext(globalContextManager, userContextManager, recorderApi),
-    reportError
+    reportError,
+    rumPlugins
   )
 
   addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
@@ -173,7 +175,8 @@ export function startRumEventCollection(
   locationChangeObservable: Observable<LocationChange>,
   domMutationObservable: Observable<void>,
   buildCommonContext: () => CommonContext,
-  reportError: (error: RawError) => void
+  reportError: (error: RawError) => void,
+  rumPlugins: RumPlugin[]
 ) {
   const viewContexts = startViewContexts(lifeCycle)
   const urlContexts = startUrlContexts(lifeCycle, locationChangeObservable, location)
@@ -194,7 +197,8 @@ export function startRumEventCollection(
     urlContexts,
     actionContexts,
     buildCommonContext,
-    reportError
+    reportError,
+    rumPlugins
   )
 
   return {

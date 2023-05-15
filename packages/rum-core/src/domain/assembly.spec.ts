@@ -65,7 +65,8 @@ describe('rum assembly', () => {
           urlContexts,
           actionContexts,
           () => commonContext,
-          reportErrorSpy
+          reportErrorSpy,
+          []
         )
       })
   })

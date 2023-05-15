@@ -55,6 +55,12 @@ export interface RecorderApi {
     viewContexts: ViewContexts
   ) => string | undefined
 }
+
+export interface RumPlugin {
+  onRegistered?: (datadogRum: RumPublicApi) => void
+  beforeSend?: RumInitConfiguration['beforeSend']
+}
+
 interface RumPublicApiOptions {
   ignoreInitIfSyntheticsWillInjectRum?: boolean
 }
@@ -96,6 +102,12 @@ export function makeRumPublicApi(
 
   let addFeatureFlagEvaluationStrategy: StartRumResult['addFeatureFlagEvaluation'] = (key: string, value: any) => {
     bufferApiCalls.add(() => addFeatureFlagEvaluationStrategy(key, value))
+  }
+
+  const rumPlugins: RumPlugin[] = []
+  function registerPlugins(...newRumPlugins: RumPlugin[]) {
+    rumPlugins.push(...newRumPlugins)
+    newRumPlugins.map((plugin) => plugin.onRegistered?.(rumPublicApi))
   }
 
   function initRum(initConfiguration: RumInitConfiguration) {
@@ -154,6 +166,7 @@ export function makeRumPublicApi(
       recorderApi,
       globalContextManager,
       userContextManager,
+      rumPlugins,
       initialViewOptions
     )
     getSessionReplayLinkStrategy = () =>
@@ -269,6 +282,8 @@ export function makeRumPublicApi(
       addFeatureFlagEvaluationStrategy(sanitize(key)!, sanitize(value))
     }),
     getSessionReplayLink: monitor(() => getSessionReplayLinkStrategy()),
+
+    registerPlugins: monitor(registerPlugins),
   })
 
   return rumPublicApi

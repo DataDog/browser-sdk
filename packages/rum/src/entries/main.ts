@@ -10,6 +10,7 @@ export {
   CommonProperties,
   RumPublicApi as RumGlobal,
   RumInitConfiguration,
+  RumPlugin,
   // Events
   RumEvent,
   RumActionEvent,

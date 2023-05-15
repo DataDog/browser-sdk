@@ -61,7 +61,8 @@ function startRumStub(
       user: {},
       hasReplay: undefined,
     }),
-    reportError
+    reportError,
+    []
   )
   const { stop: viewCollectionStop } = startViewCollection(
     lifeCycle,
@@ -309,7 +310,8 @@ describe('view events', () => {
         configuration,
         noopRecorderApi,
         createContextManager(CustomerDataType.GlobalContext),
-        createContextManager(CustomerDataType.User)
+        createContextManager(CustomerDataType.User),
+        []
       )
     })
     interceptor = interceptRequests()
