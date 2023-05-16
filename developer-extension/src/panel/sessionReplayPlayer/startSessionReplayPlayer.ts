@@ -1,7 +1,7 @@
 import type { BrowserRecord } from '../../../../packages/rum/src/types'
 import { IncrementalSource, RecordType } from '../../../../packages/rum/src/types'
 import { createLogger } from '../../common/logger'
-import { listenBackgroundMessages } from '../backgroundScriptConnection'
+import { onBackgroundMessage } from '../backgroundScriptConnection'
 import type { MessageBridgeUp } from './types'
 import { MessageBridgeDownType } from './types'
 
@@ -50,7 +50,7 @@ export function startSessionReplayPlayer(
     }
   })
 
-  const stopListeningToSdkMessages = listenBackgroundMessages((backgroundMessage) => {
+  const backgroundMessageSubscription = onBackgroundMessage.subscribe((backgroundMessage) => {
     if (backgroundMessage.type !== 'sdk-message') {
       return
     }
@@ -77,7 +77,7 @@ export function startSessionReplayPlayer(
   return {
     stop() {
       messageBridge.stop()
-      stopListeningToSdkMessages()
+      backgroundMessageSubscription.unsubscribe()
     },
   }
 }

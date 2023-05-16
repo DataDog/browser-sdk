@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import type { Store } from '../../common/types'
-import { listenBackgroundMessages, sendMessageToBackground } from '../backgroundScriptConnection'
+import { onBackgroundMessage, sendMessageToBackground } from '../backgroundScriptConnection'
 
 let store: Store | undefined
 const storeListeners = new Set<(store: Store) => void>()
 const storeLoadingPromise = new Promise((resolve) => {
-  listenBackgroundMessages((backgroundMessage) => {
+  onBackgroundMessage.subscribe((backgroundMessage) => {
     if (backgroundMessage.type === 'new-store') {
       store = backgroundMessage.store
       storeListeners.forEach((listener) => listener(store!))

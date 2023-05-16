@@ -1,16 +1,18 @@
 import { Button, MantineProvider } from '@mantine/core'
 import { useColorScheme } from '@mantine/hooks'
-import React, { Suspense, useState } from 'react'
-import { listenDisconnectEvent } from '../disconnectEvent'
+import React, { Suspense, useEffect, useState } from 'react'
+import { onBackgroundDisconnection } from '../backgroundScriptConnection'
 import { Alert } from './alert'
-
 import { Panel } from './panel'
 
 export function App() {
   const colorScheme = useColorScheme()
   const [isDisconnected, setIsDisconnected] = useState(false)
 
-  listenDisconnectEvent(() => setIsDisconnected(true))
+  useEffect(() => {
+    const subscription = onBackgroundDisconnection.subscribe(() => setIsDisconnected(true))
+    return () => subscription.unsubscribe()
+  }, [])
 
   return (
     <MantineProvider

@@ -1,41 +1,34 @@
 import type { BackgroundToDevtoolsMessage, DevtoolsToBackgroundMessage } from '../common/types'
 import { isDisconnectError } from '../common/isDisconnectError'
 import { createLogger } from '../common/logger'
-import { notifyDisconnectEvent } from './disconnectEvent'
+import { EventListeners } from '../common/eventListeners'
 
 const logger = createLogger('backgroundScriptConnection')
 
+export const onBackgroundMessage = new EventListeners<BackgroundToDevtoolsMessage>()
+export const onBackgroundDisconnection = new EventListeners<void>()
+
 let backgroundScriptConnection: chrome.runtime.Port | undefined
 
-export function listenBackgroundMessages(callback: (message: BackgroundToDevtoolsMessage) => void) {
-  if (!backgroundScriptConnection) {
-    backgroundScriptConnection = createBackgroundScriptConnection()
-    if (!backgroundScriptConnection) {
-      return () => {
-        // nothing to cleanup in this case
-      }
-    }
-  }
+connectToBackgroundScript()
 
-  backgroundScriptConnection.onMessage.addListener(callback)
-  return () => backgroundScriptConnection!.onMessage.removeListener(callback)
-}
-
-function createBackgroundScriptConnection() {
+function connectToBackgroundScript() {
   try {
-    const backgroundScriptConnection = chrome.runtime.connect({
+    backgroundScriptConnection = chrome.runtime.connect({
       name: `devtools-panel-for-tab-${chrome.devtools.inspectedWindow.tabId}`,
     })
 
     backgroundScriptConnection.onDisconnect.addListener(() => {
       logger.error('disconnected', chrome.runtime.lastError)
-      notifyDisconnectEvent()
+      onBackgroundDisconnection.notify()
     })
 
-    return backgroundScriptConnection
+    backgroundScriptConnection.onMessage.addListener((backgroundMessage) =>
+      onBackgroundMessage.notify(backgroundMessage)
+    )
   } catch (error) {
     if (isDisconnectError(error)) {
-      notifyDisconnectEvent()
+      onBackgroundDisconnection.notify()
     } else {
       logger.error('While creating connection:', error)
     }
