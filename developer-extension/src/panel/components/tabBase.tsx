@@ -26,8 +26,7 @@ export function TabBase({ top, children }: TabBaseProps) {
           </Container>
         </>
       )}
-      <Container fluid sx={{ flex: 1, overflowY: 'auto', margin: 0 }}>
-        {!top && <Space h="sm" />}
+      <Container fluid sx={{ flex: 1, overflowY: 'auto', padding: 0, margin: 0 }}>
         {children}
       </Container>
     </Flex>
