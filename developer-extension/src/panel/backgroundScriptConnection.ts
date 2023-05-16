@@ -19,7 +19,19 @@ function connectToBackgroundScript() {
     })
 
     backgroundScriptConnection.onDisconnect.addListener(() => {
-      connectToBackgroundScript()
+      // The background script can be disconnected for (at least) two main reasons:
+      // * the extension is updated and its context is invalidated
+      // * the background script has been idle for too long
+      //
+      // We want to try to automatically reconnect, and notify only if the extension context is
+      // invalidated (in which case, calling `chrome.runtime.connect` should throw an exception).
+      //
+      // Somehow, if we try to reconnect right after the extension is updated, the connection
+      // unexpectedly succeeds (does not throw or notify onDisconnect). It turns out that we need to
+      // wait a few milliseconds to have the expected behavior.
+      setTimeout(() => {
+        connectToBackgroundScript()
+      }, 100)
     })
 
     backgroundScriptConnection.onMessage.addListener((backgroundMessage) =>
