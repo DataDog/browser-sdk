@@ -12,11 +12,13 @@ interface SdkInfos {
     config?: object & { site?: string }
     internalContext?: object & { session: { id: string } }
     globalContext?: object
+    user: object
   }
   logs?: {
     version?: string
     config?: object & { site?: string }
     globalContext?: object
+    user: object
   }
   cookie?: {
     id: string
@@ -62,11 +64,13 @@ async function getInfos(): Promise<SdkInfos> {
           config: window.DD_RUM?.getInitConfiguration?.(),
           internalContext: window.DD_RUM?.getInternalContext?.(),
           globalContext: window.DD_RUM?.getRumGlobalContext?.(),
+          user: window.DD_RUM?.getUser?.(),
         }
-        const logs = window.DD_RUM && {
+        const logs = window.DD_LOGS && {
           version: window.DD_LOGS?.version,
           config: window.DD_LOGS?.getInitConfiguration?.(),
           globalContext: window.DD_LOGS?.getLoggerGlobalContext?.(),
+          user: window.DD_LOGS?.getUser?.(),
         }
         return { rum, logs, cookie }
       `
