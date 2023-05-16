@@ -19,8 +19,7 @@ function connectToBackgroundScript() {
     })
 
     backgroundScriptConnection.onDisconnect.addListener(() => {
-      logger.error('disconnected', chrome.runtime.lastError)
-      onBackgroundDisconnection.notify()
+      connectToBackgroundScript()
     })
 
     backgroundScriptConnection.onMessage.addListener((backgroundMessage) =>
