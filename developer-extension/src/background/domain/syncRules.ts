@@ -1,48 +1,76 @@
+import type { NetRequestRulesOptions } from '../../common/types'
 import { DEV_LOGS_URL, DEV_RUM_SLIM_URL, DEV_RUM_URL, INTAKE_DOMAINS } from '../../common/constants'
 import { createLogger } from '../../common/logger'
-import type { NetRequestRulesOptions } from '../../common/types'
-import { onDevtoolsMessage } from '../devtoolsPanelConnection'
+import { onDevtoolsDisconnection, onDevtoolsMessage } from '../devtoolsPanelConnection'
 
 const logger = createLogger('syncRules')
 
+onDevtoolsDisconnection.subscribe((tabId) => {
+  clearRules(tabId).catch((error) => logger.error('Error while clearing rules:', error))
+})
+
 onDevtoolsMessage.subscribe((message) => {
   if (message.type === 'update-net-request-rules') {
-    void chrome.browsingData.removeCache({})
-    syncRules(message.options)
+    updateRules(message.options).catch((error) => logger.error('Error while updating rules:', error))
   }
 })
 
-function syncRules(options: NetRequestRulesOptions) {
-  logger.log('Syncing rules')
-  chrome.declarativeNetRequest
-    .getSessionRules()
-    .then((existingRules) =>
-      chrome.declarativeNetRequest.updateSessionRules({
-        removeRuleIds: existingRules.map((rule) => rule.id),
-        addRules: getRules(options),
-      })
-    )
-    .catch((error) => logger.error('Error while syncing rules:', error))
+async function clearRules(tabId: number) {
+  logger.log(`Clearing rules for tab ${tabId}`)
+  const { tabRuleIds } = await getExistingRulesInfos(tabId)
+  await chrome.declarativeNetRequest.updateSessionRules({
+    removeRuleIds: tabRuleIds,
+  })
+  await chrome.browsingData.removeCache({})
 }
 
-function getRules({ useDevBundles, useRumSlim, blockIntakeRequests }: NetRequestRulesOptions) {
+async function updateRules(options: NetRequestRulesOptions) {
+  logger.log(`Updating rules for tab ${options.tabId}`)
+  const { tabRuleIds, nextRuleId } = await getExistingRulesInfos(options.tabId)
+  await chrome.declarativeNetRequest.updateSessionRules({
+    removeRuleIds: tabRuleIds,
+    addRules: buildRules(options, nextRuleId),
+  })
+  await chrome.browsingData.removeCache({})
+}
+
+async function getExistingRulesInfos(tabId: number) {
+  const rules = await chrome.declarativeNetRequest.getSessionRules()
+
+  let nextRuleId = 1
+  const tabRuleIds: number[] = []
+  for (const rule of rules) {
+    if (rule.condition.tabIds?.includes(tabId)) {
+      tabRuleIds.push(rule.id)
+    } else {
+      nextRuleId = rule.id + 1
+    }
+  }
+
+  return { tabRuleIds, nextRuleId }
+}
+
+function buildRules(
+  { tabId, useDevBundles, useRumSlim, blockIntakeRequests }: NetRequestRulesOptions,
+  nextRuleId: number
+) {
   const rules: chrome.declarativeNetRequest.Rule[] = []
-  let id = 1
+  let id = nextRuleId
 
   if (useDevBundles) {
     const devRumUrl = useRumSlim ? DEV_RUM_SLIM_URL : DEV_RUM_URL
     logger.log('add redirect to dev bundles rules')
     rules.push(
-      createRedirectRule(id++, /^https:\/\/.*\/datadog-rum(-v\d|-canary|-staging)?\.js$/, { url: devRumUrl }),
-      createRedirectRule(id++, /^https:\/\/.*\/datadog-rum-slim(-v\d|-canary|-staging)?\.js$/, {
+      createRedirectRule(/^https:\/\/.*\/datadog-rum(-v\d|-canary|-staging)?\.js$/, { url: devRumUrl }),
+      createRedirectRule(/^https:\/\/.*\/datadog-rum-slim(-v\d|-canary|-staging)?\.js$/, {
         url: DEV_RUM_SLIM_URL,
       }),
-      createRedirectRule(id++, /^https:\/\/.*\/datadog-logs(-v\d|-canary|-staging)?\.js$/, { url: DEV_LOGS_URL }),
-      createRedirectRule(id++, 'https://localhost:8443/static/datadog-rum-hotdog.js', { url: devRumUrl })
+      createRedirectRule(/^https:\/\/.*\/datadog-logs(-v\d|-canary|-staging)?\.js$/, { url: DEV_LOGS_URL }),
+      createRedirectRule('https://localhost:8443/static/datadog-rum-hotdog.js', { url: devRumUrl })
     )
   } else if (useRumSlim) {
     logger.log('add redirect to rum slim rule')
-    rules.push(createRedirectRule(id++, /^(https:\/\/.*\/datadog-rum)(-slim)?/, { regexSubstitution: '\\1-slim' }))
+    rules.push(createRedirectRule(/^(https:\/\/.*\/datadog-rum)(-slim)?/, { regexSubstitution: '\\1-slim' }))
   }
 
   if (blockIntakeRequests) {
@@ -50,7 +78,7 @@ function getRules({ useDevBundles, useRumSlim, blockIntakeRequests }: NetRequest
     for (const intakeDomain of INTAKE_DOMAINS) {
       rules.push({
         id: id++,
-        condition: { urlFilter: `||${intakeDomain}` },
+        condition: { tabIds: [tabId], urlFilter: `||${intakeDomain}` },
         action: {
           type: chrome.declarativeNetRequest.RuleActionType.BLOCK,
         },
@@ -58,20 +86,21 @@ function getRules({ useDevBundles, useRumSlim, blockIntakeRequests }: NetRequest
     }
   }
 
-  return rules
-}
-
-function createRedirectRule(
-  id: number,
-  filter: RegExp | string,
-  redirect: chrome.declarativeNetRequest.Redirect
-): chrome.declarativeNetRequest.Rule {
-  return {
-    id,
-    action: {
-      type: chrome.declarativeNetRequest.RuleActionType.REDIRECT,
-      redirect,
-    },
-    condition: typeof filter === 'string' ? { urlFilter: `|${filter}|` } : { regexFilter: filter.source },
+  function createRedirectRule(
+    filter: RegExp | string,
+    redirect: chrome.declarativeNetRequest.Redirect
+  ): chrome.declarativeNetRequest.Rule {
+    const tabIds = [tabId]
+    return {
+      id: id++,
+      action: {
+        type: chrome.declarativeNetRequest.RuleActionType.REDIRECT,
+        redirect,
+      },
+      condition:
+        typeof filter === 'string' ? { tabIds, urlFilter: `|${filter}|` } : { tabIds, regexFilter: filter.source },
+    }
   }
+
+  return rules
 }
