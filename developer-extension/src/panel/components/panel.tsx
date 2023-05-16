@@ -4,6 +4,7 @@ import { Tabs, Text } from '@mantine/core'
 import { useEvents } from '../hooks/useEvents'
 import { useStore } from '../hooks/useStore'
 import { useAutoFlushEvents } from '../hooks/useAutoFlushEvents'
+import { useNetworkRules } from '../hooks/useNetworkRules'
 import type { Settings } from './tabs/settingsTab'
 import { SettingsTab } from './tabs/settingsTab'
 import { InfosTab } from './tabs/infosTab'
@@ -28,6 +29,7 @@ export function Panel() {
   })
 
   useAutoFlushEvents(settingsFromMemory.autoFlush)
+  useNetworkRules(settingsFromStore)
 
   const settings: Settings = { ...settingsFromStore, ...settingsFromMemory }
 

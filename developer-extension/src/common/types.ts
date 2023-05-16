@@ -21,6 +21,17 @@ export type DevtoolsToBackgroundMessage =
   | {
       type: 'get-store'
     }
+  | {
+      type: 'update-net-request-rules'
+      options: NetRequestRulesOptions
+    }
+
+export interface NetRequestRulesOptions {
+  tabId: number
+  useDevBundles: boolean
+  useRumSlim: boolean
+  blockIntakeRequests: boolean
+}
 
 export type SdkMessage =
   | {
