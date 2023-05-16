@@ -107,7 +107,7 @@ export function makeRumPublicApi(
   const rumPlugins: RumPlugin[] = []
   function registerPlugins(...newRumPlugins: RumPlugin[]) {
     rumPlugins.push(...newRumPlugins)
-    newRumPlugins.map((plugin) => plugin.onRegistered?.(rumPublicApi))
+    newRumPlugins.forEach((plugin) => plugin.onRegistered && monitor(plugin.onRegistered.bind(plugin))(rumPublicApi))
   }
 
   function initRum(initConfiguration: RumInitConfiguration) {

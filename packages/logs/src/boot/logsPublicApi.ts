@@ -75,7 +75,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
   const logsPlugins: LogsPlugin[] = []
   function registerPlugins(...newLogsPlugins: LogsPlugin[]) {
     logsPlugins.push(...newLogsPlugins)
-    newLogsPlugins.forEach((plugin) => plugin.onRegistered?.(logsPublicApi))
+    newLogsPlugins.forEach((plugin) => plugin.onRegistered && monitor(plugin.onRegistered.bind(plugin))(logsPublicApi))
   }
 
   const logsPublicApi = makePublicApi({
