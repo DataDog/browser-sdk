@@ -9,6 +9,10 @@ const sandboxLogger = createLogger('sandbox')
 
 export type SessionReplayPlayerStatus = 'loading' | 'waiting-for-full-snapshot' | 'ready'
 
+const sandboxOrigin = 'https://session-replay-datadoghq.com'
+// To follow web-ui development, this version will need to be manually updated from time to time.
+// When doing that, be sure to update types and implement any protocol changes.
+const sandboxVersion = '0.68.0'
 const sandboxParams = new URLSearchParams({
   staticContext: JSON.stringify({
     tabId: 'xxx',
@@ -25,8 +29,7 @@ const sandboxParams = new URLSearchParams({
     },
   }),
 })
-const sandboxOrigin = 'https://session-replay-datadoghq.com'
-const sandboxUrl = `${sandboxOrigin}/0.68.0/index.html?${String(sandboxParams)}`
+const sandboxUrl = `${sandboxOrigin}/${sandboxVersion}/index.html?${String(sandboxParams)}`
 
 export function startSessionReplayPlayer(
   iframe: HTMLIFrameElement,
@@ -131,7 +134,7 @@ function createMessageBridge(iframe: HTMLIFrameElement, onReady: () => void) {
       } else if (message.type === 'ready') {
         onReady()
       } else {
-        // sandboxLogger.log('Unhandled message type:', message)
+        // Ignore other messages for now.
       }
     }
   }
