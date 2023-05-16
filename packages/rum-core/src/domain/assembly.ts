@@ -8,7 +8,7 @@ import {
   createEventRateLimiter,
   canUseEventBridge,
   assign,
-  monitor,
+  monitorPlugin,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type {
@@ -183,9 +183,7 @@ function shouldSend(
   domainContext: RumEventDomainContext,
   eventRateLimiters: { [key in RumEventType]?: EventRateLimiter }
 ) {
-  const modifiers = [beforeSend].concat(
-    rumPlugins.map((plugin) => plugin.beforeSend && monitor(plugin.beforeSend.bind(plugin)))
-  )
+  const modifiers = [beforeSend].concat(rumPlugins.map((plugin) => monitorPlugin(plugin, plugin.beforeSend)))
   for (const modifier of modifiers) {
     if (modifier) {
       const result = limitModification(event, modifiableFieldPathsByEvent[event.type], (event) =>

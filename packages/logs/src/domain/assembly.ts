@@ -9,7 +9,7 @@ import {
   createEventRateLimiter,
   getRelativeTime,
   isEmptyObject,
-  monitor,
+  monitorPlugin,
 } from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { LogsPlugin } from '../boot/logsPublicApi'
@@ -83,7 +83,7 @@ function shouldSend(
   logRateLimiters: { [key: string]: EventRateLimiter }
 ) {
   const modifiers = [configuration.beforeSend].concat(
-    logsPlugins.map((plugin) => plugin.beforeSend && monitor(plugin.beforeSend.bind(plugin)))
+    logsPlugins.map((plugin) => monitorPlugin(plugin, plugin.beforeSend))
   )
   for (const modifier of modifiers) {
     if (modifier) {

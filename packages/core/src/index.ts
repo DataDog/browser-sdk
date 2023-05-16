@@ -22,6 +22,7 @@ export {
 export { trackRuntimeError } from './domain/error/trackRuntimeError'
 export { computeStackTrace, StackTrace } from './domain/tracekit'
 export { defineGlobal, makePublicApi } from './boot/init'
+export { Plugin, monitorPlugin } from './domain/plugins/plugins'
 export { initReportObservable, RawReport, RawReportType } from './domain/report/reportObservable'
 export {
   startTelemetry,

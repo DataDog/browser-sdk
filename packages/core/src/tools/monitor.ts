@@ -1,9 +1,10 @@
 import { ConsoleApiName, display } from './display'
+import type { Context } from './serialisation/context'
 
-let onMonitorErrorCollected: undefined | ((error: unknown) => void)
+let onMonitorErrorCollected: undefined | ((error: unknown, context?: Context) => void)
 let debugMode = false
 
-export function startMonitorErrorCollection(newOnMonitorErrorCollected: (error: unknown) => void) {
+export function startMonitorErrorCollection(newOnMonitorErrorCollected: (error: unknown, context?: Context) => void) {
   onMonitorErrorCollected = newOnMonitorErrorCollected
 }
 
@@ -64,5 +65,34 @@ export function callMonitored<T extends (...args: any[]) => any>(
 export function displayIfDebugEnabled(api: ConsoleApiName, ...args: any[]) {
   if (debugMode) {
     display(api, '[MONITOR]', ...args)
+  }
+}
+
+// TODO try to factorize with existing functions
+export function monitorWithErrorContext<T extends (...args: any[]) => any>(errorContext: Context, fn: T): T {
+  return function (this: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return callMonitoredWithErrorContext(fn, errorContext, this, arguments as unknown as Parameters<T>)
+  } as unknown as T // consider output type has input type
+}
+
+export function callMonitoredWithErrorContext<T extends (...args: any[]) => any>(
+  fn: T,
+  errorContext: Context,
+  context?: any,
+  args?: any
+): ReturnType<T> | undefined {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return fn.apply(context, args)
+  } catch (e) {
+    displayIfDebugEnabled(ConsoleApiName.error, e, errorContext)
+    if (onMonitorErrorCollected) {
+      try {
+        onMonitorErrorCollected(e, errorContext)
+      } catch (e) {
+        displayIfDebugEnabled(ConsoleApiName.error, e, errorContext)
+      }
+    }
   }
 }

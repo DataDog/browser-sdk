@@ -1,4 +1,4 @@
-import type { Context, InitConfiguration, TimeStamp, RelativeTime, User } from '@datadog/browser-core'
+import type { Context, InitConfiguration, TimeStamp, RelativeTime, User, Plugin } from '@datadog/browser-core'
 import {
   noop,
   CustomerDataType,
@@ -20,6 +20,7 @@ import {
   checkUser,
   sanitizeUser,
   sanitize,
+  monitorPlugin,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewContexts } from '../domain/contexts/viewContexts'
@@ -56,7 +57,7 @@ export interface RecorderApi {
   ) => string | undefined
 }
 
-export interface RumPlugin {
+export interface RumPlugin extends Plugin {
   onRegistered?: (datadogRum: RumPublicApi) => void
   beforeSend?: RumInitConfiguration['beforeSend']
 }
@@ -107,7 +108,7 @@ export function makeRumPublicApi(
   const rumPlugins: RumPlugin[] = []
   function registerPlugins(...newRumPlugins: RumPlugin[]) {
     rumPlugins.push(...newRumPlugins)
-    newRumPlugins.forEach((plugin) => plugin.onRegistered && monitor(plugin.onRegistered.bind(plugin))(rumPublicApi))
+    newRumPlugins.forEach((plugin) => monitorPlugin(plugin, plugin.onRegistered)(rumPublicApi))
   }
 
   function initRum(initConfiguration: RumInitConfiguration) {

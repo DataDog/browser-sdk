@@ -1,4 +1,4 @@
-import type { Context, InitConfiguration, User } from '@datadog/browser-core'
+import type { Context, InitConfiguration, User, Plugin } from '@datadog/browser-core'
 import {
   CustomerDataType,
   assign,
@@ -13,6 +13,7 @@ import {
   checkUser,
   sanitizeUser,
   sanitize,
+  monitorPlugin,
 } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
@@ -31,7 +32,7 @@ export type LogsPublicApi = ReturnType<typeof makeLogsPublicApi>
 
 export type StartLogs = typeof startLogs
 
-export interface LogsPlugin {
+export interface LogsPlugin extends Plugin {
   onRegistered?: (datadogLogs: LogsPublicApi) => void
   beforeSend?: LogsInitConfiguration['beforeSend']
 }
@@ -75,7 +76,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
   const logsPlugins: LogsPlugin[] = []
   function registerPlugins(...newLogsPlugins: LogsPlugin[]) {
     logsPlugins.push(...newLogsPlugins)
-    newLogsPlugins.forEach((plugin) => plugin.onRegistered && monitor(plugin.onRegistered.bind(plugin))(logsPublicApi))
+    newLogsPlugins.forEach((plugin) => monitorPlugin(plugin, plugin.onRegistered)(logsPublicApi))
   }
 
   const logsPublicApi = makePublicApi({
