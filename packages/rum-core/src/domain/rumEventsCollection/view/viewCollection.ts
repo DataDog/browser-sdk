@@ -1,5 +1,12 @@
 import type { Duration, ServerDuration, Observable } from '@datadog/browser-core'
-import { isEmptyObject, mapValues, toServerDuration, isNumber } from '@datadog/browser-core'
+import {
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
+  isEmptyObject,
+  mapValues,
+  toServerDuration,
+  isNumber,
+} from '@datadog/browser-core'
 import type { RecorderApi } from '../../../boot/rumPublicApi'
 import type { RawRumViewEvent } from '../../../rawRumEvent.types'
 import { RumEventType } from '../../../rawRumEvent.types'
@@ -9,6 +16,7 @@ import type { ForegroundContexts } from '../../contexts/foregroundContexts'
 import type { LocationChange } from '../../../browser/locationChangeObservable'
 import type { RumConfiguration } from '../../configuration'
 import type { FeatureFlagContexts } from '../../contexts/featureFlagContext'
+import type { PageStateHistory } from '../../contexts/pageStateHistory'
 import type { ViewEvent, ViewOptions } from './trackViews'
 import { trackViews } from './trackViews'
 
@@ -20,17 +28,17 @@ export function startViewCollection(
   locationChangeObservable: Observable<LocationChange>,
   foregroundContexts: ForegroundContexts,
   featureFlagContexts: FeatureFlagContexts,
+  pageStateHistory: PageStateHistory,
   recorderApi: RecorderApi,
   initialViewOptions?: ViewOptions
 ) {
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) =>
     lifeCycle.notify(
       LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-      processViewUpdate(view, foregroundContexts, featureFlagContexts, recorderApi)
+      processViewUpdate(view, foregroundContexts, featureFlagContexts, recorderApi, pageStateHistory)
     )
   )
-
-  return trackViews(
+  const trackViewResult = trackViews(
     location,
     lifeCycle,
     domMutationObservable,
@@ -39,21 +47,25 @@ export function startViewCollection(
     !configuration.trackViewsManually,
     initialViewOptions
   )
+
+  return trackViewResult
 }
 
 function processViewUpdate(
   view: ViewEvent,
   foregroundContexts: ForegroundContexts,
   featureFlagContexts: FeatureFlagContexts,
-  recorderApi: RecorderApi
+  recorderApi: RecorderApi,
+  pageStateHistory: PageStateHistory
 ): RawRumEventCollectedData<RawRumViewEvent> {
   const replayStats = recorderApi.getReplayStats(view.id)
   const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations(view.startClocks.relative)
-
+  const pageStatesEnabled = isExperimentalFeatureEnabled(ExperimentalFeature.PAGE_STATES)
   const viewEvent: RawRumViewEvent = {
     _dd: {
       document_version: view.documentVersion,
       replay_stats: replayStats,
+      page_states: pageStatesEnabled ? pageStateHistory.findAll(view.startClocks.relative, view.duration) : undefined,
     },
     date: view.startClocks.timeStamp,
     type: RumEventType.VIEW,
@@ -88,7 +100,9 @@ function processViewUpdate(
         count: view.eventCounts.resourceCount,
       },
       time_spent: toServerDuration(view.duration),
-      in_foreground_periods: foregroundContexts.selectInForegroundPeriodsFor(view.startClocks.relative, view.duration),
+      in_foreground_periods: !pageStatesEnabled
+        ? foregroundContexts.selectInForegroundPeriodsFor(view.startClocks.relative, view.duration)
+        : undefined,
     },
     feature_flags: featureFlagContext && !isEmptyObject(featureFlagContext) ? featureFlagContext : undefined,
     session: {

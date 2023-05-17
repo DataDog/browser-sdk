@@ -1,7 +1,7 @@
 import { setInterval, clearInterval } from './timer'
 import type { TimeoutId } from './timer'
-import type { RelativeTime } from './utils/timeUtils'
-import { relativeNow, ONE_MINUTE } from './utils/timeUtils'
+import type { Duration, RelativeTime } from './utils/timeUtils'
+import { addDuration, relativeNow, ONE_MINUTE } from './utils/timeUtils'
 
 const END_OF_TIMES = Infinity as RelativeTime
 
@@ -23,7 +23,7 @@ export class ValueHistory<Value> {
   private entries: Array<ValueHistoryEntry<Value>> = []
   private clearOldValuesInterval: TimeoutId
 
-  constructor(private expireDelay: number) {
+  constructor(private expireDelay: number, private maxEntries?: number) {
     this.clearOldValuesInterval = setInterval(() => this.clearOldValues(), CLEAR_OLD_VALUES_INTERVAL)
   }
 
@@ -46,7 +46,13 @@ export class ValueHistory<Value> {
         entry.endTime = endTime
       },
     }
+
+    if (this.maxEntries && this.entries.length >= this.maxEntries) {
+      this.entries.pop()
+    }
+
     this.entries.unshift(entry)
+
     return entry
   }
 
@@ -77,12 +83,14 @@ export class ValueHistory<Value> {
   }
 
   /**
-   * Return all values that were active during `startTime`, or all currently active values if no
-   * `startTime` is provided.
+   * Return all values with an active period overlapping with the duration,
+   * or all values that were active during `startTime` if no duration is provided,
+   * or all currently active values if no `startTime` is provided.
    */
-  findAll(startTime: RelativeTime = END_OF_TIMES): Value[] {
+  findAll(startTime: RelativeTime = END_OF_TIMES, duration = 0 as Duration): Value[] {
+    const endTime = addDuration(startTime, duration)
     return this.entries
-      .filter((entry) => entry.startTime <= startTime && startTime <= entry.endTime)
+      .filter((entry) => entry.startTime <= endTime && startTime <= entry.endTime)
       .map((entry) => entry.value)
   }
 

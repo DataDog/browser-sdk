@@ -102,21 +102,21 @@ export function startRum(
   const domMutationObservable = createDOMMutationObservable()
   const locationChangeObservable = createLocationChangeObservable(location)
 
-  const { viewContexts, foregroundContexts, urlContexts, actionContexts, addAction } = startRumEventCollection(
-    lifeCycle,
-    configuration,
-    location,
-    session,
-    locationChangeObservable,
-    domMutationObservable,
-    () => buildCommonContext(globalContextManager, userContextManager, recorderApi),
-    reportError
-  )
+  const { viewContexts, foregroundContexts, pageStateHistory, urlContexts, actionContexts, addAction } =
+    startRumEventCollection(
+      lifeCycle,
+      configuration,
+      location,
+      session,
+      locationChangeObservable,
+      domMutationObservable,
+      () => buildCommonContext(globalContextManager, userContextManager, recorderApi),
+      reportError
+    )
 
   addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
 
   startLongTaskCollection(lifeCycle, session)
-  const pageStateHistory = startPageStateHistory()
   startResourceCollection(lifeCycle, configuration, session, pageStateHistory)
   const { addTiming, startView } = startViewCollection(
     lifeCycle,
@@ -126,6 +126,7 @@ export function startRum(
     locationChangeObservable,
     foregroundContexts,
     featureFlagContexts,
+    pageStateHistory,
     recorderApi,
     initialViewOptions
   )
@@ -179,6 +180,8 @@ export function startRumEventCollection(
   const urlContexts = startUrlContexts(lifeCycle, locationChangeObservable, location)
 
   const foregroundContexts = startForegroundContexts()
+  const pageStateHistory = startPageStateHistory()
+
   const { addAction, actionContexts } = startActionCollection(
     lifeCycle,
     domMutationObservable,
@@ -200,6 +203,7 @@ export function startRumEventCollection(
   return {
     viewContexts,
     foregroundContexts,
+    pageStateHistory,
     urlContexts,
     addAction,
     actionContexts,
