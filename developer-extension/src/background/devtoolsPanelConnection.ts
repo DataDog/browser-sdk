@@ -4,16 +4,18 @@ import { createLogger } from '../common/logger'
 
 const logger = createLogger('devtoolsPanelConnection')
 
-const devtoolsConnections = new Map<number, chrome.runtime.Port>()
+type TabId = number
+
+const devtoolsConnectionsByTabId = new Map<TabId, chrome.runtime.Port>()
 
 const portNameRe = /^devtools-panel-for-tab-(\d+)$/
 
-export const onDevtoolsFirstConnection = new EventListeners<number>()
-export const onDevtoolsLastDisconnection = new EventListeners<number>()
+export const onDevtoolsFirstConnection = new EventListeners<TabId>()
+export const onDevtoolsLastDisconnection = new EventListeners<TabId>()
 export const onDevtoolsMessage = new EventListeners<DevtoolsToBackgroundMessage>()
 
-export function sendMessageToDevtools(tabId: number, message: any) {
-  const port = devtoolsConnections.get(tabId)
+export function sendMessageToDevtools(tabId: TabId, message: any) {
+  const port = devtoolsConnectionsByTabId.get(tabId)
 
   if (!port) {
     // Extension not yet opened
@@ -24,7 +26,7 @@ export function sendMessageToDevtools(tabId: number, message: any) {
 }
 
 export function sendMessageToAllDevtools(message: BackgroundToDevtoolsMessage) {
-  for (const port of devtoolsConnections.values()) {
+  for (const port of devtoolsConnectionsByTabId.values()) {
     port.postMessage(message)
   }
 }
@@ -39,9 +41,9 @@ chrome.runtime.onConnect.addListener((port) => {
   const tabId = Number(match[1])
 
   logger.log(`New devtools connection for tab ${tabId}`)
-  devtoolsConnections.set(tabId, port)
+  devtoolsConnectionsByTabId.set(tabId, port)
 
-  if (devtoolsConnections.size === 1) {
+  if (devtoolsConnectionsByTabId.size === 1) {
     onDevtoolsFirstConnection.notify(tabId)
   }
 
@@ -51,8 +53,8 @@ chrome.runtime.onConnect.addListener((port) => {
 
   port.onDisconnect.addListener(() => {
     logger.log(`Remove devtools connection for tab ${tabId}`)
-    devtoolsConnections.delete(tabId)
-    if (devtoolsConnections.size === 0) {
+    devtoolsConnectionsByTabId.delete(tabId)
+    if (devtoolsConnectionsByTabId.size === 0) {
       onDevtoolsLastDisconnection.notify(tabId)
     }
   })

@@ -51,14 +51,10 @@ export function startSessionReplayPlayer(
   })
 
   const backgroundMessageSubscription = onBackgroundMessage.subscribe((backgroundMessage) => {
-    if (backgroundMessage.type !== 'sdk-message') {
+    if (backgroundMessage.type !== 'sdk-message' || backgroundMessage.message.type !== 'record') {
       return
     }
-    const sdkMessage = backgroundMessage.message
-    if (sdkMessage.type !== 'record') {
-      return
-    }
-    const record = sdkMessage.payload.record
+    const record = backgroundMessage.message.payload.record
     if (status === 'loading') {
       bufferedRecords.add(record)
     } else if (status === 'waiting-for-full-snapshot') {
