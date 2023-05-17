@@ -83,11 +83,11 @@ describe('recorder', () => {
       .withSetup(bundleSetup)
       .withBody(
         html`
-          <div id="not-obfuscated">foo</div>
-          <p id="hidden-by-attribute" data-dd-privacy="hidden">bar</p>
-          <span id="hidden-by-classname" class="dd-privacy-hidden baz">baz</span>
-          <input id="input-ignored" data-dd-privacy="input-ignored" value="toto" />
-          <input id="input-masked" data-dd-privacy="input-masked" value="toto" />
+          <div id="not-obfuscated">displayed</div>
+          <p id="hidden-by-attribute" data-dd-privacy="hidden">hidden</p>
+          <span id="hidden-by-classname" class="dd-privacy-hidden">hidden</span>
+          <input id="input-not-obfuscated" value="displayed" />
+          <input id="input-masked" data-dd-privacy="mask" value="masked" />
         `
       )
       .run(async ({ serverEvents }) => {
@@ -99,7 +99,7 @@ describe('recorder', () => {
 
         const node = findElementWithIdAttribute(fullSnapshot.data.node, 'not-obfuscated')
         expect(node).toBeTruthy()
-        expect(findTextContent(node!)).toBe('foo')
+        expect(findTextContent(node!)).toBe('displayed')
 
         const hiddenNodeByAttribute = findElement(fullSnapshot.data.node, (node) => node.tagName === 'p')
         expect(hiddenNodeByAttribute).toBeTruthy()
@@ -107,15 +107,14 @@ describe('recorder', () => {
         expect(hiddenNodeByAttribute!.childNodes.length).toBe(0)
 
         const hiddenNodeByClassName = findElement(fullSnapshot.data.node, (node) => node.tagName === 'span')
-
         expect(hiddenNodeByClassName).toBeTruthy()
         expect(hiddenNodeByClassName!.attributes.class).toBeUndefined()
         expect(hiddenNodeByClassName!.attributes['data-dd-privacy']).toBe('hidden')
         expect(hiddenNodeByClassName!.childNodes.length).toBe(0)
 
-        const inputIgnored = findElementWithIdAttribute(fullSnapshot.data.node, 'input-ignored')
+        const inputIgnored = findElementWithIdAttribute(fullSnapshot.data.node, 'input-not-obfuscated')
         expect(inputIgnored).toBeTruthy()
-        expect(inputIgnored!.attributes.value).toBe('***')
+        expect(inputIgnored!.attributes.value).toBe('displayed')
 
         const inputMasked = findElementWithIdAttribute(fullSnapshot.data.node, 'input-masked')
         expect(inputMasked).toBeTruthy()
@@ -579,8 +578,8 @@ describe('recorder', () => {
       .withSetup(bundleSetup)
       .withBody(
         html`
-          <input type="text" id="by-data-attribute" data-dd-privacy="input-masked" />
-          <input type="text" id="by-classname" class="dd-privacy-input-masked" />
+          <input type="text" id="by-data-attribute" data-dd-privacy="mask" />
+          <input type="text" id="by-classname" class="dd-privacy-mask" />
         `
       )
       .run(async ({ serverEvents }) => {
