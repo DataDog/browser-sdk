@@ -2,28 +2,40 @@ import type { RelativeTime, Duration, ServerDuration } from '@datadog/browser-co
 import { relativeNow } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../test'
 import { setup } from '../../../test'
-import type { ForegroundContexts } from './foregroundContexts'
-import {
-  startForegroundContexts,
-  MAX_NUMBER_OF_SELECTABLE_FOREGROUND_PERIODS,
-  MAX_NUMBER_OF_STORED_FOREGROUND_PERIODS,
-  closeForegroundPeriod,
-  addNewForegroundPeriod,
-} from './foregroundContexts'
+import { mapToForegroundPeriods } from './foregroundContexts'
+import type { PageStateHistory } from './pageStateHistory'
+import { PageState, startPageStateHistory } from './pageStateHistory'
 
 const FOCUS_PERIOD_LENGTH = 10 as Duration
 const BLUR_PERIOD_LENGTH = 5 as Duration
 
 describe('foreground context', () => {
-  let foregroundContext: ForegroundContexts
   let setupBuilder: TestSetupBuilder
+  let pageStateHistory: PageStateHistory
+
+  function addNewForegroundPeriod() {
+    pageStateHistory.addPageState(PageState.ACTIVE)
+  }
+
+  function closeForegroundPeriod() {
+    pageStateHistory.addPageState(PageState.PASSIVE)
+  }
+
+  function selectInForegroundPeriodsFor(startTime: RelativeTime, duration: Duration) {
+    const pageStates = pageStateHistory.findAll(startTime, duration)
+    return mapToForegroundPeriods(pageStates || [], duration)
+  }
+
+  function isInForegroundAt(startTime: RelativeTime) {
+    return pageStateHistory.isActiveAt(startTime)
+  }
 
   beforeEach(() => {
     setupBuilder = setup()
       .withFakeClock()
       .beforeBuild(() => {
-        foregroundContext = startForegroundContexts()
-        return foregroundContext
+        pageStateHistory = startPageStateHistory()
+        return pageStateHistory
       })
   })
 
@@ -34,6 +46,7 @@ describe('foreground context', () => {
   describe('when the page do not have the focus when starting', () => {
     beforeEach(() => {
       spyOn(Document.prototype, 'hasFocus').and.callFake(() => false)
+      pageStateHistory = startPageStateHistory()
     })
     describe('without any focus nor blur event', () => {
       describe('isInForegroundAt', () => {
@@ -42,7 +55,7 @@ describe('foreground context', () => {
 
           clock.tick(1_000)
 
-          expect(foregroundContext.isInForegroundAt(relativeNow())).toEqual(false)
+          expect(isInForegroundAt(relativeNow())).toEqual(false)
         })
       })
 
@@ -52,7 +65,7 @@ describe('foreground context', () => {
 
           clock.tick(1_000)
 
-          expect(foregroundContext.selectInForegroundPeriodsFor(relativeNow(), 0 as Duration)).toEqual([])
+          expect(selectInForegroundPeriodsFor(relativeNow(), 0 as Duration)).toEqual([])
         })
       })
     })
@@ -80,66 +93,66 @@ describe('foreground context', () => {
 
       it('isInForegroundAt should match the focused/burred period', () => {
         // first blurred period
-        expect(foregroundContext.isInForegroundAt(2 as RelativeTime)).toEqual(false)
+        expect(isInForegroundAt(2 as RelativeTime)).toEqual(false)
 
         // first focused period
-        expect(foregroundContext.isInForegroundAt(10 as RelativeTime)).toEqual(true)
+        expect(isInForegroundAt(10 as RelativeTime)).toEqual(true)
 
         // second blurred period
-        expect(foregroundContext.isInForegroundAt(17 as RelativeTime)).toEqual(false)
+        expect(isInForegroundAt(17 as RelativeTime)).toEqual(false)
 
         // second focused period
-        expect(foregroundContext.isInForegroundAt(25 as RelativeTime)).toEqual(true)
+        expect(isInForegroundAt(25 as RelativeTime)).toEqual(true)
 
         // third blurred period
-        expect(foregroundContext.isInForegroundAt(32 as RelativeTime)).toEqual(false)
+        expect(isInForegroundAt(32 as RelativeTime)).toEqual(false)
 
         // current focused periods
-        expect(foregroundContext.isInForegroundAt(42 as RelativeTime)).toEqual(true)
+        expect(isInForegroundAt(42 as RelativeTime)).toEqual(true)
       })
 
       describe('selectInForegroundPeriodsFor', () => {
         it('should have 3 in foreground periods for the whole period', () => {
-          const periods = foregroundContext.selectInForegroundPeriodsFor(0 as RelativeTime, 50 as Duration)
+          const periods = selectInForegroundPeriodsFor(0 as RelativeTime, 50 as Duration)
 
           expect(periods).toHaveSize(3)
-          expect(periods![0]).toEqual({
+          expect(periods[0]).toEqual({
             start: (5 * 1e6) as ServerDuration,
             duration: (10 * 1e6) as ServerDuration,
           })
-          expect(periods![1]).toEqual({
+          expect(periods[1]).toEqual({
             start: (20 * 1e6) as ServerDuration,
             duration: (10 * 1e6) as ServerDuration,
           })
-          expect(periods![2]).toEqual({
+          expect(periods[2]).toEqual({
             start: (35 * 1e6) as ServerDuration,
             duration: (15 * 1e6) as ServerDuration,
           })
         })
 
         it('should have 2 in foreground periods when in between the two full periods', () => {
-          const periods = foregroundContext.selectInForegroundPeriodsFor(10 as RelativeTime, 15 as Duration)
+          const periods = selectInForegroundPeriodsFor(10 as RelativeTime, 15 as Duration)
 
           expect(periods).toHaveSize(2)
-          expect(periods![0]).toEqual({
+          expect(periods[0]).toEqual({
             start: 0 as ServerDuration,
             duration: (5 * 1e6) as ServerDuration,
           })
-          expect(periods![1]).toEqual({
+          expect(periods[1]).toEqual({
             start: (10 * 1e6) as ServerDuration,
             duration: (5 * 1e6) as ServerDuration,
           })
         })
 
         it('should have 2 periods, when in between the the full period and ongoing periods', () => {
-          const periods = foregroundContext.selectInForegroundPeriodsFor(25 as RelativeTime, 20 as Duration)
+          const periods = selectInForegroundPeriodsFor(25 as RelativeTime, 20 as Duration)
 
           expect(periods).toHaveSize(2)
-          expect(periods![0]).toEqual({
+          expect(periods[0]).toEqual({
             start: 0 as ServerDuration,
             duration: (5 * 1e6) as ServerDuration,
           })
-          expect(periods![1]).toEqual({
+          expect(periods[1]).toEqual({
             start: (10 * 1e6) as ServerDuration,
             duration: (10 * 1e6) as ServerDuration,
           })
@@ -164,56 +177,33 @@ describe('foreground context', () => {
         clock.tick(BLUR_PERIOD_LENGTH)
       })
       it('isInForegroundAt should match the focused/burred period', () => {
-        expect(foregroundContext.isInForegroundAt(2 as RelativeTime)).toEqual(false)
-        expect(foregroundContext.isInForegroundAt(10 as RelativeTime)).toEqual(true)
-        expect(foregroundContext.isInForegroundAt(20 as RelativeTime)).toEqual(true)
-        expect(foregroundContext.isInForegroundAt(30 as RelativeTime)).toEqual(false)
+        expect(isInForegroundAt(2 as RelativeTime)).toEqual(false)
+        expect(isInForegroundAt(10 as RelativeTime)).toEqual(true)
+        expect(isInForegroundAt(20 as RelativeTime)).toEqual(true)
+        expect(isInForegroundAt(30 as RelativeTime)).toEqual(false)
       })
-    })
-
-    it('should not record anything after reaching the maximum number of focus periods', () => {
-      const { clock } = setupBuilder.build()
-      const start = relativeNow()
-      for (let i = 0; i < MAX_NUMBER_OF_STORED_FOREGROUND_PERIODS + 1; i++) {
-        addNewForegroundPeriod()
-        clock.tick(FOCUS_PERIOD_LENGTH)
-        closeForegroundPeriod()
-        clock.tick(BLUR_PERIOD_LENGTH)
-      }
-
-      addNewForegroundPeriod()
-      clock.tick(FOCUS_PERIOD_LENGTH)
-
-      expect(foregroundContext.isInForegroundAt(relativeNow())).toEqual(false)
-      const duration = (((FOCUS_PERIOD_LENGTH as number) + (BLUR_PERIOD_LENGTH as number)) *
-        MAX_NUMBER_OF_STORED_FOREGROUND_PERIODS) as Duration
-      expect(foregroundContext.selectInForegroundPeriodsFor(start, duration)).toHaveSize(
-        MAX_NUMBER_OF_SELECTABLE_FOREGROUND_PERIODS
-      )
     })
 
     it('should not be in foreground, when the periods is closed twice', () => {
       const { clock } = setupBuilder.build()
       addNewForegroundPeriod()
-      clock.tick(FOCUS_PERIOD_LENGTH)
-      closeForegroundPeriod()
       clock.tick(BLUR_PERIOD_LENGTH)
-      closeForegroundPeriod()
+      pageStateHistory.addPageState(PageState.PASSIVE)
 
-      expect(foregroundContext.isInForegroundAt(relativeNow())).toEqual(false)
+      expect(isInForegroundAt(relativeNow())).toEqual(false)
     })
 
     it('after starting with a blur even, should not be in foreground', () => {
-      setupBuilder.build()
-      closeForegroundPeriod()
+      pageStateHistory.addPageState(PageState.PASSIVE)
 
-      expect(foregroundContext.isInForegroundAt(relativeNow())).toEqual(false)
+      expect(isInForegroundAt(relativeNow())).toEqual(false)
     })
   })
 
   describe('when the page has focus when starting', () => {
     beforeEach(() => {
       spyOn(Document.prototype, 'hasFocus').and.callFake(() => true)
+      pageStateHistory = startPageStateHistory()
     })
 
     describe('when there is no focus event', () => {
@@ -222,7 +212,7 @@ describe('foreground context', () => {
         clock.tick(FOCUS_PERIOD_LENGTH)
         closeForegroundPeriod()
 
-        expect(foregroundContext.isInForegroundAt(2 as RelativeTime)).toEqual(true)
+        expect(isInForegroundAt(2 as RelativeTime)).toEqual(true)
       })
 
       it('should return false after the first focused period', () => {
@@ -230,7 +220,7 @@ describe('foreground context', () => {
         clock.tick(FOCUS_PERIOD_LENGTH)
         closeForegroundPeriod()
 
-        expect(foregroundContext.isInForegroundAt(12 as RelativeTime)).toEqual(false)
+        expect(isInForegroundAt(12 as RelativeTime)).toEqual(false)
       })
     })
 
@@ -242,7 +232,7 @@ describe('foreground context', () => {
         clock.tick(FOCUS_PERIOD_LENGTH / 2)
         closeForegroundPeriod()
 
-        expect(foregroundContext.isInForegroundAt(2 as RelativeTime)).toEqual(true)
+        expect(isInForegroundAt(2 as RelativeTime)).toEqual(true)
       })
 
       it('should return false after the focused period', () => {
@@ -252,7 +242,7 @@ describe('foreground context', () => {
         clock.tick(FOCUS_PERIOD_LENGTH / 2)
         closeForegroundPeriod()
 
-        expect(foregroundContext.isInForegroundAt(12 as RelativeTime)).toEqual(false)
+        expect(isInForegroundAt(12 as RelativeTime)).toEqual(false)
       })
     })
   })
