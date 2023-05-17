@@ -768,6 +768,44 @@ export type RumViewEvent = CommonProperties & {
      * Version of the update of the view event
      */
     readonly document_version: number
+    /**
+     * List of the page states during the view
+     */
+    readonly page_states?: {
+      /**
+       * Page state name
+       */
+      readonly state: 'active' | 'passive' | 'hidden' | 'frozen' | 'terminated'
+      /**
+       * Duration in ns between start of the view and start of the page state
+       */
+      readonly start: number
+      [k: string]: unknown
+    }[]
+    [k: string]: unknown
+  }
+  /**
+   * Display properties
+   */
+  display?: {
+    /**
+     * Scroll properties
+     */
+    readonly scroll?: {
+      /**
+       * Maximum scrolled distance on this view (in pixels)
+       */
+      readonly max_depth?: number
+      /**
+       * Maximum scrollable distance on this view (in pixels)
+       */
+      readonly max_scroll_height?: number
+      /**
+       * Timestamp of the scroll event that reached the maximum scroll depth for this view
+       */
+      readonly max_depth_time?: number
+      [k: string]: unknown
+    }
     [k: string]: unknown
   }
   [k: string]: unknown
