@@ -36,38 +36,6 @@ describe('validateAndBuildRumConfiguration', () => {
       ).toBe(50)
     })
 
-    it('is set to `premiumSampleRate` provided value', () => {
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, premiumSampleRate: 50 })!
-          .sessionReplaySampleRate
-      ).toBe(50)
-    })
-
-    it('is set to `replaySampleRate` provided value', () => {
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, replaySampleRate: 50 })!
-          .sessionReplaySampleRate
-      ).toBe(50)
-    })
-
-    it('is set with precedence `sessionReplaySampleRate` > `premiumSampleRate` > `replaySampleRate`', () => {
-      expect(
-        validateAndBuildRumConfiguration({
-          ...DEFAULT_INIT_CONFIGURATION,
-          replaySampleRate: 25,
-          premiumSampleRate: 50,
-          sessionReplaySampleRate: 75,
-        })!.sessionReplaySampleRate
-      ).toBe(75)
-      expect(
-        validateAndBuildRumConfiguration({
-          ...DEFAULT_INIT_CONFIGURATION,
-          replaySampleRate: 25,
-          premiumSampleRate: 50,
-        })!.sessionReplaySampleRate
-      ).toBe(50)
-    })
-
     it('does not validate the configuration if an incorrect value is provided', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionReplaySampleRate: 'foo' as any })
@@ -84,60 +52,6 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(displayErrorSpy).toHaveBeenCalledOnceWith(
         'Session Replay Sample Rate should be a number between 0 and 100'
       )
-
-      displayErrorSpy.calls.reset()
-
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, premiumSampleRate: 'foo' as any })
-      ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Premium Sample Rate should be a number between 0 and 100')
-
-      displayErrorSpy.calls.reset()
-
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, premiumSampleRate: 200 })
-      ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Premium Sample Rate should be a number between 0 and 100')
-
-      displayErrorSpy.calls.reset()
-
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, replaySampleRate: 'foo' as any })
-      ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Premium Sample Rate should be a number between 0 and 100')
-
-      displayErrorSpy.calls.reset()
-
-      expect(validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, replaySampleRate: 200 })).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Premium Sample Rate should be a number between 0 and 100')
-
-      displayErrorSpy.calls.reset()
-    })
-
-    it('should validate and display a warn if both `sessionReplaySampleRate` and `premiumSampleRate` are set', () => {
-      expect(
-        validateAndBuildRumConfiguration({
-          ...DEFAULT_INIT_CONFIGURATION,
-          sessionReplaySampleRate: 100,
-          premiumSampleRate: 100,
-        })
-      ).toBeDefined()
-      expect(displayWarnSpy).toHaveBeenCalledOnceWith(
-        'Ignoring Premium Sample Rate because Session Replay Sample Rate is set'
-      )
-    })
-  })
-
-  describe('oldPlansBehavior', () => {
-    it('should be true by default', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.oldPlansBehavior).toBeTrue()
-    })
-
-    it('should be false if `sessionReplaySampleRate` is set', () => {
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionReplaySampleRate: 100 })!
-          .oldPlansBehavior
-      ).toBeFalse()
     })
   })
 
@@ -364,8 +278,8 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('trackResources', () => {
-    it('defaults to undefined', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackResources).toBeUndefined()
+    it('defaults to false', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackResources).toBeFalse()
     })
 
     it('is set to provided value', () => {
@@ -379,8 +293,8 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('trackLongTasks', () => {
-    it('defaults to undefined', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackLongTasks).toBeUndefined()
+    it('defaults to false', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackLongTasks).toBeFalse()
     })
 
     it('is set to provided value', () => {

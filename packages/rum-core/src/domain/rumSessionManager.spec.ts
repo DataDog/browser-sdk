@@ -192,31 +192,8 @@ describe('rum session manager', () => {
     ;[
       {
         description:
-          'WITH_SESSION_REPLAY plan without trackResources/LongTasks should have replay, no resources and no long tasks',
-        trackedWithSessionReplay: true,
-        oldPlansBehavior: false,
-        trackResources: undefined,
-        trackLongTasks: undefined,
-        expectSessionReplay: true,
-        expectResources: false,
-        expectLongTasks: false,
-      },
-      {
-        description:
-          'WITHOUT_SESSION_REPLAY plan without trackResources/LongTasks should have no replay, no resources and no long tasks',
-        trackedWithSessionReplay: false,
-        oldPlansBehavior: false,
-        trackResources: undefined,
-        trackLongTasks: undefined,
-        expectSessionReplay: false,
-        expectResources: false,
-        expectLongTasks: false,
-      },
-      {
-        description:
           'WITH_SESSION_REPLAY plan with trackResources/LongTasks=false should have replay, no resources and no long tasks',
         trackedWithSessionReplay: true,
-        oldPlansBehavior: false,
         trackResources: false,
         trackLongTasks: false,
         expectSessionReplay: true,
@@ -227,7 +204,6 @@ describe('rum session manager', () => {
         description:
           'WITHOUT_SESSION_REPLAY plan with trackResources/LongTasks=false should have no replay, no resources and no long tasks',
         trackedWithSessionReplay: false,
-        oldPlansBehavior: false,
         trackResources: false,
         trackLongTasks: false,
         expectSessionReplay: false,
@@ -238,7 +214,6 @@ describe('rum session manager', () => {
         description:
           'WITH_SESSION_REPLAY plan with trackResources/LongTasks=true should have replay, resources and long tasks',
         trackedWithSessionReplay: true,
-        oldPlansBehavior: true,
         trackResources: true,
         trackLongTasks: true,
         expectSessionReplay: true,
@@ -249,73 +224,6 @@ describe('rum session manager', () => {
         description:
           'WITHOUT_SESSION_REPLAY plan with trackResources/LongTasks=true should have no replay, resources and long tasks',
         trackedWithSessionReplay: false,
-        oldPlansBehavior: false,
-        trackResources: true,
-        trackLongTasks: true,
-        expectSessionReplay: false,
-        expectResources: true,
-        expectLongTasks: true,
-      },
-      {
-        description:
-          'old WITH_SESSION_REPLAY plan without trackResources/LongTasks should have replay, resources and long tasks',
-        trackedWithSessionReplay: true,
-        oldPlansBehavior: true,
-        trackResources: undefined,
-        trackLongTasks: undefined,
-        expectSessionReplay: true,
-        expectResources: true,
-        expectLongTasks: true,
-      },
-      {
-        description:
-          'old WITHOUT_SESSION_REPLAY plan without trackResources/LongTasks should have no replay, no resources and no long tasks',
-        trackedWithSessionReplay: false,
-        oldPlansBehavior: true,
-        trackResources: undefined,
-        trackLongTasks: undefined,
-        expectSessionReplay: false,
-        expectResources: false,
-        expectLongTasks: false,
-      },
-      {
-        description:
-          'old WITH_SESSION_REPLAY plan with trackResources/LongTasks=false should have replay, no resources and no long tasks',
-        trackedWithSessionReplay: true,
-        oldPlansBehavior: true,
-        trackResources: false,
-        trackLongTasks: false,
-        expectSessionReplay: true,
-        expectResources: false,
-        expectLongTasks: false,
-      },
-      {
-        description:
-          'old WITHOUT_SESSION_REPLAY plan with trackResources/LongTasks=false should have no replay, no resources and no long tasks',
-        trackedWithSessionReplay: false,
-        oldPlansBehavior: true,
-        trackResources: false,
-        trackLongTasks: false,
-        expectSessionReplay: false,
-        expectResources: false,
-        expectLongTasks: false,
-      },
-      {
-        description:
-          'old WITH_SESSION_REPLAY plan with trackResources/LongTasks=true should have replay, resources and long tasks',
-        trackedWithSessionReplay: true,
-        oldPlansBehavior: true,
-        trackResources: true,
-        trackLongTasks: true,
-        expectSessionReplay: true,
-        expectResources: true,
-        expectLongTasks: true,
-      },
-      {
-        description:
-          'old WITHOUT_SESSION_REPLAY plan with trackResources/LongTasks=true should have no replay, resources and long tasks',
-        trackedWithSessionReplay: false,
-        oldPlansBehavior: true,
         trackResources: true,
         trackLongTasks: true,
         expectSessionReplay: false,
@@ -326,7 +234,6 @@ describe('rum session manager', () => {
       ({
         description,
         trackedWithSessionReplay,
-        oldPlansBehavior,
         trackResources,
         trackLongTasks,
         expectSessionReplay,
@@ -335,9 +242,8 @@ describe('rum session manager', () => {
       }: {
         description: string
         trackedWithSessionReplay: boolean
-        oldPlansBehavior: boolean
-        trackResources: boolean | undefined
-        trackLongTasks: boolean | undefined
+        trackResources: boolean
+        trackLongTasks: boolean
         expectSessionReplay: boolean
         expectResources: boolean
         expectLongTasks: boolean
@@ -347,7 +253,6 @@ describe('rum session manager', () => {
             ...configuration,
             trackResources,
             trackLongTasks,
-            oldPlansBehavior,
           }
 
           setupDraws({ tracked: true, trackedWithSessionReplay })
