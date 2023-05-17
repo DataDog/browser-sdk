@@ -25,8 +25,8 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('sessionReplaySampleRate', () => {
-    it('defaults to 100 if the option is not provided', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.sessionReplaySampleRate).toBe(100)
+    it('defaults to 0 if the option is not provided', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.sessionReplaySampleRate).toBe(0)
     })
 
     it('is set to `sessionReplaySampleRate` provided value', () => {
