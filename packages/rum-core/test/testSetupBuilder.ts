@@ -1,4 +1,4 @@
-import type { Context, ContextManager, ServerDuration, TimeStamp } from '@datadog/browser-core'
+import type { Context, ContextManager, TimeStamp } from '@datadog/browser-core'
 import { CustomerDataType, assign, combine, createContextManager, noop, Observable } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, buildLocation, SPEC_ENDPOINTS } from '@datadog/browser-core/test'
@@ -6,9 +6,7 @@ import type { LocationChange } from '../src/browser/locationChangeObservable'
 import type { RumConfiguration } from '../src/domain/configuration'
 import { validateAndBuildRumConfiguration } from '../src/domain/configuration'
 import type { FeatureFlagContexts } from '../src/domain/contexts/featureFlagContext'
-import type { ForegroundContexts } from '../src/domain/contexts/foregroundContexts'
 import type { PageStateHistory } from '../src/domain/contexts/pageStateHistory'
-import { PageState } from '../src/domain/contexts/pageStateHistory'
 import type { UrlContexts } from '../src/domain/contexts/urlContexts'
 import type { ViewContexts } from '../src/domain/contexts/viewContexts'
 import type { RawRumEventCollectedData } from '../src/domain/lifeCycle'
@@ -26,7 +24,7 @@ export interface TestSetupBuilder {
   withConfiguration: (overrides: Partial<RumConfiguration>) => TestSetupBuilder
   withViewContexts: (stub: Partial<ViewContexts>) => TestSetupBuilder
   withActionContexts: (stub: ActionContexts) => TestSetupBuilder
-  withForegroundContexts: (stub: Partial<ForegroundContexts>) => TestSetupBuilder
+  withPageStateHistory: (stub: Partial<PageStateHistory>) => TestSetupBuilder
   withFeatureFlagContexts: (stub: Partial<FeatureFlagContexts>) => TestSetupBuilder
   withFakeClock: () => TestSetupBuilder
   beforeBuild: (callback: BeforeBuildCallback) => TestSetupBuilder
@@ -49,7 +47,6 @@ export interface BuildContext {
   applicationId: string
   viewContexts: ViewContexts
   actionContexts: ActionContexts
-  foregroundContexts: ForegroundContexts
   pageStateHistory: PageStateHistory
   featureFlagContexts: FeatureFlagContexts
   urlContexts: UrlContexts
@@ -95,17 +92,14 @@ export function setup(): TestSetupBuilder {
   let actionContexts: ActionContexts = {
     findActionId: noop as () => undefined,
   }
-  let foregroundContexts: ForegroundContexts = {
-    isInForegroundAt: () => undefined,
-    selectInForegroundPeriodsFor: () => undefined,
-    stop: noop,
-  }
+
   const globalContextManager = createContextManager(CustomerDataType.GlobalContext)
   const userContextManager = createContextManager(CustomerDataType.User)
-  const pageStateHistory: PageStateHistory = {
-    findAll: () => [{ start: 0 as ServerDuration, state: PageState.ACTIVE }],
+  let pageStateHistory: PageStateHistory = {
+    findAll: () => undefined,
     addPageState: noop,
     stop: noop,
+    isActiveAt: () => false,
   }
   const FAKE_APP_ID = 'appId'
   const configuration: RumConfiguration = {
@@ -154,8 +148,8 @@ export function setup(): TestSetupBuilder {
       actionContexts = stub
       return setupBuilder
     },
-    withForegroundContexts(stub: Partial<ForegroundContexts>) {
-      foregroundContexts = { ...foregroundContexts, ...stub }
+    withPageStateHistory(stub: Partial<PageStateHistory>) {
+      pageStateHistory = { ...pageStateHistory, ...stub }
       return setupBuilder
     },
     withFeatureFlagContexts(stub: Partial<FeatureFlagContexts>) {
@@ -180,7 +174,6 @@ export function setup(): TestSetupBuilder {
           viewContexts,
           urlContexts,
           actionContexts,
-          foregroundContexts,
           pageStateHistory,
           featureFlagContexts,
           sessionManager,

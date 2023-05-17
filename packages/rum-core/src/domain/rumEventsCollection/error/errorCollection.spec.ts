@@ -20,11 +20,11 @@ describe('error collection', () => {
   beforeEach(() => {
     setupBuilder = setup()
       .withViewContexts(viewContextsStub)
-      .withForegroundContexts({
-        isInForegroundAt: () => true,
+      .withPageStateHistory({
+        isActiveAt: () => true,
       })
-      .beforeBuild(({ lifeCycle, foregroundContexts, featureFlagContexts }) => {
-        ;({ addError } = doStartErrorCollection(lifeCycle, foregroundContexts, featureFlagContexts))
+      .beforeBuild(({ lifeCycle, pageStateHistory, featureFlagContexts }) => {
+        ;({ addError } = doStartErrorCollection(lifeCycle, pageStateHistory, featureFlagContexts))
       })
   })
 

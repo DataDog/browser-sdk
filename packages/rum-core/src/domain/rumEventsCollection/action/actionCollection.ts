@@ -5,9 +5,9 @@ import type { RawRumActionEvent } from '../../../rawRumEvent.types'
 import { ActionType, RumEventType } from '../../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
-import type { ForegroundContexts } from '../../contexts/foregroundContexts'
 import type { RumConfiguration } from '../../configuration'
 import type { CommonContext } from '../../contexts/commonContext'
+import type { PageStateHistory } from '../../contexts/pageStateHistory'
 import type { ActionContexts, ClickAction } from './trackClickActions'
 import { trackClickActions } from './trackClickActions'
 
@@ -26,10 +26,10 @@ export function startActionCollection(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
   configuration: RumConfiguration,
-  foregroundContexts: ForegroundContexts
+  pageStateHistory: PageStateHistory
 ) {
   lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, (action) =>
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action, foregroundContexts))
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action, pageStateHistory))
   )
 
   let actionContexts: ActionContexts = { findActionId: noop as () => undefined }
@@ -45,7 +45,7 @@ export function startActionCollection(
           {
             savedCommonContext,
           },
-          processAction(action, foregroundContexts)
+          processAction(action, pageStateHistory)
         )
       )
     },
@@ -55,7 +55,7 @@ export function startActionCollection(
 
 function processAction(
   action: AutoAction | CustomAction,
-  foregroundContexts: ForegroundContexts
+  pageStateHistory: PageStateHistory
 ): RawRumEventCollectedData<RawRumActionEvent> {
   const autoActionProperties = isAutoAction(action)
     ? {
@@ -98,9 +98,9 @@ function processAction(
     },
     autoActionProperties
   )
-  const inForeground = foregroundContexts.isInForegroundAt(action.startClocks.relative)
-  if (inForeground !== undefined) {
-    actionEvent.view = { in_foreground: inForeground }
+  const inActivePageState = pageStateHistory.isActiveAt(action.startClocks.relative)
+  if (inActivePageState !== undefined) {
+    actionEvent.view = { in_foreground: inActivePageState }
   }
   return {
     customerContext,
