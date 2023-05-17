@@ -1,5 +1,5 @@
 import type { Store } from '../common/types'
-import { listenAction, sendAction } from './actions'
+import { onDevtoolsMessage, sendMessageToAllDevtools } from './devtoolsPanelConnection'
 
 export const store: Store = {
   useDevBundles: false,
@@ -10,13 +10,22 @@ export const store: Store = {
 export function setStore(newStore: Partial<Store>) {
   if (wouldModifyStore(newStore, store)) {
     Object.assign(store, newStore)
-    sendAction('newStore', store)
+    sendMessageToAllDevtools({ type: 'new-store', store })
     void chrome.storage.local.set({ store })
   }
 }
 
-listenAction('getStore', () => sendAction('newStore', store))
-listenAction('setStore', (newStore) => setStore(newStore))
+onDevtoolsMessage.subscribe((message) => {
+  switch (message.type) {
+    case 'get-store':
+      sendMessageToAllDevtools({ type: 'new-store', store })
+      break
+
+    case 'set-store':
+      setStore(message.store)
+      break
+  }
+})
 
 chrome.storage.local.get((storage) => {
   if (storage.store) {

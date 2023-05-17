@@ -1,16 +1,18 @@
 import { useEffect, useState } from 'react'
 import type { Store } from '../../common/types'
-import { listenAction, sendAction } from '../actions'
+import { onBackgroundMessage, sendMessageToBackground } from '../backgroundScriptConnection'
 
 let store: Store | undefined
 const storeListeners = new Set<(store: Store) => void>()
 const storeLoadingPromise = new Promise((resolve) => {
-  sendAction('getStore', undefined)
-  listenAction('newStore', (newStore) => {
-    store = newStore
-    storeListeners.forEach((listener) => listener(store!))
-    resolve(undefined)
+  onBackgroundMessage.subscribe((backgroundMessage) => {
+    if (backgroundMessage.type === 'new-store') {
+      store = backgroundMessage.store
+      storeListeners.forEach((listener) => listener(store!))
+      resolve(undefined)
+    }
   })
+  sendMessageToBackground({ type: 'get-store' })
 })
 
 export function useStore(): [Store, (newState: Partial<Store>) => void] {
@@ -31,5 +33,5 @@ export function useStore(): [Store, (newState: Partial<Store>) => void] {
 }
 
 function setStore(newStore: Partial<Store>) {
-  sendAction('setStore', newStore)
+  sendMessageToBackground({ type: 'set-store', store: newStore })
 }
