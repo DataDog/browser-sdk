@@ -8,7 +8,7 @@ import type {
   TimeStamp,
   RawErrorCause,
 } from '@datadog/browser-core'
-import type { PageStateEntry } from './domain/contexts/pageStateHistory'
+import type { PageState } from './domain/contexts/pageStateHistory'
 import type { RumSessionPlan } from './domain/rumSessionManager'
 
 export const enum RumEventType {
@@ -42,7 +42,7 @@ export interface RawRumResourceEvent {
     span_id?: string // not available for initial document tracing
     rule_psr?: number
     discarded: boolean
-    page_states?: PageStateEntry[]
+    page_states?: PageStateServerEntry[]
   }
 }
 
@@ -110,6 +110,7 @@ export interface RawRumViewEvent {
   _dd: {
     document_version: number
     replay_stats?: ReplayStats
+    page_states?: PageStateServerEntry[]
   }
 }
 
@@ -117,6 +118,8 @@ export interface InForegroundPeriod {
   start: ServerDuration
   duration: ServerDuration
 }
+
+export type PageStateServerEntry = { state: PageState; start: ServerDuration }
 
 export const enum ViewLoadingType {
   INITIAL_LOAD = 'initial_load',

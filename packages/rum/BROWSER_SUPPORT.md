@@ -19,7 +19,7 @@
 | resource timing   | ✅     | ✅      | ⚠️(2)  | ✅   | ✅             | ⚠️(2)      | ⚠️(3) | ❌     | ✅    |
 | navigation timing | ✅     | ✅      | ✅     | ✅   | ✅             | ✅         | ✅    | ❌     | ✅    |
 | web vitals        | ✅     | ⚠️(1)   | ⚠️(1)  | ✅   | ✅             | ⚠️(1)      | ❌    | ❌     | ✅    |
-| FCP               | ✅     | ❌      | ❌     | ✅   | ✅             | ❌         | ❌    | ❌     | ✅    |
+| FCP               | ✅     | ✅      | ✅     | ✅   | ✅             | ✅         | ❌    | ❌     | ✅    |
 
 1. FID only
 2. size information not available

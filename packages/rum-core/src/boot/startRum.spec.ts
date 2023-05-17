@@ -30,6 +30,7 @@ import type { RumSessionManager } from '..'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import { RumEventType } from '../rawRumEvent.types'
 import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
+import type { PageStateHistory } from '../domain/contexts/pageStateHistory'
 import { startRum, startRumEventCollection } from './startRum'
 
 function collectServerEvents(lifeCycle: LifeCycle) {
@@ -47,6 +48,7 @@ function startRumStub(
   location: Location,
   domMutationObservable: Observable<void>,
   locationChangeObservable: Observable<LocationChange>,
+  pageStateHistory: PageStateHistory,
   reportError: (error: RawError) => void
 ) {
   const { stop: rumEventCollectionStop, foregroundContexts } = startRumEventCollection(
@@ -71,6 +73,7 @@ function startRumStub(
     locationChangeObservable,
     foregroundContexts,
     startFeatureFlagContexts(lifeCycle),
+    pageStateHistory,
     noopRecorderApi
   )
 
@@ -93,7 +96,15 @@ describe('rum session', () => {
     }
 
     setupBuilder = setup().beforeBuild(
-      ({ location, lifeCycle, configuration, sessionManager, domMutationObservable, locationChangeObservable }) => {
+      ({
+        location,
+        lifeCycle,
+        configuration,
+        sessionManager,
+        domMutationObservable,
+        locationChangeObservable,
+        pageStateHistory,
+      }) => {
         serverRumEvents = collectServerEvents(lifeCycle)
         return startRumStub(
           lifeCycle,
@@ -102,6 +113,7 @@ describe('rum session', () => {
           location,
           domMutationObservable,
           locationChangeObservable,
+          pageStateHistory,
           noop
         )
       }
@@ -146,7 +158,15 @@ describe('rum session keep alive', () => {
       .withFakeClock()
       .withSessionManager(sessionManager)
       .beforeBuild(
-        ({ location, lifeCycle, configuration, sessionManager, domMutationObservable, locationChangeObservable }) => {
+        ({
+          location,
+          lifeCycle,
+          configuration,
+          sessionManager,
+          domMutationObservable,
+          locationChangeObservable,
+          pageStateHistory,
+        }) => {
           serverRumEvents = collectServerEvents(lifeCycle)
           return startRumStub(
             lifeCycle,
@@ -155,6 +175,7 @@ describe('rum session keep alive', () => {
             location,
             domMutationObservable,
             locationChangeObservable,
+            pageStateHistory,
             noop
           )
         }
@@ -217,7 +238,15 @@ describe('rum events url', () => {
 
   beforeEach(() => {
     setupBuilder = setup().beforeBuild(
-      ({ location, lifeCycle, configuration, sessionManager, domMutationObservable, locationChangeObservable }) => {
+      ({
+        location,
+        lifeCycle,
+        configuration,
+        sessionManager,
+        domMutationObservable,
+        locationChangeObservable,
+        pageStateHistory,
+      }) => {
         serverRumEvents = collectServerEvents(lifeCycle)
         return startRumStub(
           lifeCycle,
@@ -226,6 +255,7 @@ describe('rum events url', () => {
           location,
           domMutationObservable,
           locationChangeObservable,
+          pageStateHistory,
           noop
         )
       }

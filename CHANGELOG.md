@@ -16,6 +16,15 @@
 
 ---
 
+## v4.42.2
+
+- 🐛 Fix TypeError when document.cookie is empty ([#2216](https://github.com/DataDog/browser-sdk/pull/2216))
+- 🐛 [RUMF-1583][recorder] do not ignore empty text node during serialization ([#2237](https://github.com/DataDog/browser-sdk/pull/2237))
+- 🐛 Fix `use_excluded_activity_urls` telemetry ([#2236](https://github.com/DataDog/browser-sdk/pull/2236))
+- 🐛 when bridge is present, send a final view update on page exit ([#2234](https://github.com/DataDog/browser-sdk/pull/2234))
+- 📝 Update FCP browser support ([#2187](https://github.com/DataDog/browser-sdk/pull/2187))
+- 👷 use a separate job to deploy US1 ([#2228](https://github.com/DataDog/browser-sdk/pull/2228))
+
 ## v4.42.1
 
 - 🐛 fix isolatedModules support ([#2209](https://github.com/DataDog/browser-sdk/pull/2209))
