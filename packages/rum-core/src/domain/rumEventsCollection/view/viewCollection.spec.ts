@@ -144,7 +144,7 @@ describe('viewCollection', () => {
       },
       feature_flags: undefined,
       display: {
-        scroll: { max_depth: 1000, max_scroll_height: 3000, max_depth_time: 4000000000000000 },
+        scroll: { max_depth: 1000, max_scroll_height: 3000, max_depth_time: 4000000000000000 as ServerDuration },
       },
     })
   })
