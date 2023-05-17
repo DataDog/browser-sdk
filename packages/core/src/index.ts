@@ -42,6 +42,7 @@ export {
 } from './domain/telemetry'
 export { monitored, monitor, callMonitored, setDebugMode } from './tools/monitor'
 export { Observable, Subscription } from './tools/observable'
+export { initSessionStore } from './domain/session/sessionStoreManager'
 export {
   startSessionManager,
   SessionManager,

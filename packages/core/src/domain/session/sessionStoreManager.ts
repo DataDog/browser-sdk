@@ -5,7 +5,8 @@ import { throttle } from '../../tools/utils/functionUtils'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { initCookieStore } from './sessionCookieStore'
-import type { SessionState, StoreInitOptions } from './sessionStore'
+import type { SessionState, SessionStore, StoreInitOptions } from './sessionStore'
+import { initLocalStorage } from './sessionLocalStorageStore'
 import { processSessionStoreOperations } from './sessionStoreOperations'
 
 export interface SessionStoreManager {
@@ -21,20 +22,35 @@ export interface SessionStoreManager {
 const POLL_DELAY = ONE_SECOND
 
 /**
+ * Checks if cookies are available as the preferred storage
+ * Else, checks if LocalStorage is allowed and available
+ */
+export function initSessionStore(
+  storageInitOptions: StoreInitOptions,
+  allowFallbackToLocalStorage: boolean
+): SessionStore | undefined {
+  let sessionStore = initCookieStore(storageInitOptions)
+
+  if (!sessionStore && allowFallbackToLocalStorage) {
+    sessionStore = initLocalStorage(storageInitOptions)
+  }
+  return sessionStore
+}
+
+/**
  * Different session concepts:
  * - tracked, the session has an id and is updated along the user navigation
  * - not tracked, the session does not have an id but it is updated along the user navigation
  * - inactive, no session in store or session expired, waiting for a renew session
  */
 export function startSessionStoreManager<TrackingType extends string>(
-  options: StoreInitOptions,
+  sessionStore: SessionStore,
   productKey: string,
   computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean }
 ): SessionStoreManager {
   const renewObservable = new Observable<void>()
   const expireObservable = new Observable<void>()
 
-  const sessionStore = initCookieStore(options)
   const { clearSession, retrieveSession } = sessionStore
 
   const watchSessionTimeoutId = setInterval(watchSession, POLL_DELAY)

@@ -3,8 +3,8 @@ import { mockClock } from '../../../test'
 import type { CookieOptions } from '../../browser/cookie'
 import { getCookie, setCookie, COOKIE_ACCESS_DELAY } from '../../browser/cookie'
 import type { SessionStoreManager } from './sessionStoreManager'
-import { startSessionStoreManager } from './sessionStoreManager'
-import { SESSION_COOKIE_NAME } from './sessionCookieStore'
+import { initSessionStore, startSessionStoreManager } from './sessionStoreManager'
+import { SESSION_COOKIE_NAME, initCookieStore } from './sessionCookieStore'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 
 const enum FakeTrackingType {
@@ -47,10 +47,67 @@ function resetSessionInStore() {
 }
 
 describe('session store', () => {
+  describe('initSessionStore', () => {
+    it('should initialize storage when cookies are available', () => {
+      const sessionStore = initSessionStore(COOKIE_OPTIONS, false)
+      expect(sessionStore).toBeDefined()
+    })
+
+    it('should report false when cookies are not available, and fallback is not allowed', () => {
+      spyOnProperty(document, 'cookie', 'get').and.returnValue('')
+      const sessionStore = initSessionStore(COOKIE_OPTIONS, false)
+      expect(sessionStore).not.toBeDefined()
+    })
+
+    it('should fallback to localStorage and report true when cookies are not available', () => {
+      spyOnProperty(document, 'cookie', 'get').and.returnValue('')
+      const sessionStore = initSessionStore(COOKIE_OPTIONS, true)
+      expect(sessionStore).toBeDefined()
+    })
+
+    it('should report false when no storage is available', () => {
+      spyOnProperty(document, 'cookie', 'get').and.returnValue('')
+      spyOn(Storage.prototype, 'getItem').and.throwError('unavailable')
+      const sessionStore = initSessionStore(COOKIE_OPTIONS, true)
+      expect(sessionStore).not.toBeDefined()
+    })
+
+    describe('cookie options', () => {
+      ;[
+        {
+          cookieOptions: {},
+          cookieString: /^dd_cookie_test_[\w-]+=[^;]*;expires=[^;]+;path=\/;samesite=strict$/,
+          description: 'should set same-site to strict by default',
+        },
+        {
+          cookieOptions: { crossSite: true },
+          cookieString: /^dd_cookie_test_[\w-]+=[^;]*;expires=[^;]+;path=\/;samesite=none$/,
+          description: 'should set same site to none for crossSite',
+        },
+        {
+          cookieOptions: { secure: true },
+          cookieString: /^dd_cookie_test_[\w-]+=[^;]*;expires=[^;]+;path=\/;samesite=strict;secure$/,
+          description: 'should add secure attribute when defined',
+        },
+        {
+          cookieOptions: { domain: 'foo.bar' },
+          cookieString: /^dd_cookie_test_[\w-]+=[^;]*;expires=[^;]+;path=\/;samesite=strict;domain=foo\.bar$/,
+          description: 'should set cookie domain when defined',
+        },
+      ].forEach(({ description, cookieOptions, cookieString }) => {
+        it(description, () => {
+          const cookieSetSpy = spyOnProperty(document, 'cookie', 'set')
+          initCookieStore(cookieOptions)
+          expect(cookieSetSpy.calls.argsFor(0)[0]).toMatch(cookieString)
+        })
+      })
+    })
+  })
+
   describe('session lifecyle mechanism', () => {
     let expireSpy: () => void
     let renewSpy: () => void
-    let sessionStore: SessionStoreManager
+    let sessionStoreManager: SessionStoreManager
     let clock: Clock
 
     function setupSessionStore(
@@ -62,9 +119,14 @@ describe('session store', () => {
         trackingType: FakeTrackingType.TRACKED,
       })
     ) {
-      sessionStore = startSessionStoreManager(COOKIE_OPTIONS, PRODUCT_KEY, computeSessionState)
-      sessionStore.expireObservable.subscribe(expireSpy)
-      sessionStore.renewObservable.subscribe(renewSpy)
+      const sessionStore = initSessionStore(COOKIE_OPTIONS, false)
+      if (!sessionStore) {
+        fail('Unable to initialize cookie storage')
+        return
+      }
+      sessionStoreManager = startSessionStoreManager(sessionStore, PRODUCT_KEY, computeSessionState)
+      sessionStoreManager.expireObservable.subscribe(expireSpy)
+      sessionStoreManager.renewObservable.subscribe(renewSpy)
     }
 
     beforeEach(() => {
@@ -76,7 +138,7 @@ describe('session store', () => {
     afterEach(() => {
       resetSessionInStore()
       clock.cleanup()
-      sessionStore.stop()
+      sessionStoreManager.stop()
     })
 
     describe('expand or renew session', () => {
@@ -86,9 +148,9 @@ describe('session store', () => {
         () => {
           setupSessionStore()
 
-          sessionStore.expandOrRenewSession()
+          sessionStoreManager.expandOrRenewSession()
 
-          expect(sessionStore.getSession().id).toBeDefined()
+          expect(sessionStoreManager.getSession().id).toBeDefined()
           expectTrackedSessionToBeInStore()
           expect(expireSpy).not.toHaveBeenCalled()
           expect(renewSpy).toHaveBeenCalled()
@@ -101,9 +163,9 @@ describe('session store', () => {
         () => {
           setupSessionStore(() => ({ isTracked: false, trackingType: FakeTrackingType.NOT_TRACKED }))
 
-          sessionStore.expandOrRenewSession()
+          sessionStoreManager.expandOrRenewSession()
 
-          expect(sessionStore.getSession().id).toBeUndefined()
+          expect(sessionStoreManager.getSession().id).toBeUndefined()
           expectNotTrackedSessionToBeInStore()
           expect(expireSpy).not.toHaveBeenCalled()
           expect(renewSpy).not.toHaveBeenCalled()
@@ -114,9 +176,9 @@ describe('session store', () => {
         setupSessionStore()
         setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
 
-        sessionStore.expandOrRenewSession()
+        sessionStoreManager.expandOrRenewSession()
 
-        expect(sessionStore.getSession().id).toBe(FIRST_ID)
+        expect(sessionStoreManager.getSession().id).toBe(FIRST_ID)
         expectTrackedSessionToBeInStore(FIRST_ID)
         expect(expireSpy).not.toHaveBeenCalled()
         expect(renewSpy).toHaveBeenCalled()
@@ -130,9 +192,9 @@ describe('session store', () => {
           setupSessionStore()
           resetSessionInStore()
 
-          sessionStore.expandOrRenewSession()
+          sessionStoreManager.expandOrRenewSession()
 
-          const sessionId = sessionStore.getSession().id
+          const sessionId = sessionStoreManager.getSession().id
           expect(sessionId).toBeDefined()
           expect(sessionId).not.toBe(FIRST_ID)
           expectTrackedSessionToBeInStore(sessionId)
@@ -149,10 +211,10 @@ describe('session store', () => {
           setupSessionStore(() => ({ isTracked: false, trackingType: FakeTrackingType.NOT_TRACKED }))
           resetSessionInStore()
 
-          sessionStore.expandOrRenewSession()
+          sessionStoreManager.expandOrRenewSession()
 
-          expect(sessionStore.getSession().id).toBeUndefined()
-          expect(sessionStore.getSession()[PRODUCT_KEY]).toBeDefined()
+          expect(sessionStoreManager.getSession().id).toBeUndefined()
+          expect(sessionStoreManager.getSession()[PRODUCT_KEY]).toBeDefined()
           expectNotTrackedSessionToBeInStore()
           expect(expireSpy).toHaveBeenCalled()
           expect(renewSpy).not.toHaveBeenCalled()
@@ -167,10 +229,10 @@ describe('session store', () => {
           setupSessionStore(() => ({ isTracked: false, trackingType: FakeTrackingType.NOT_TRACKED }))
           resetSessionInStore()
 
-          sessionStore.expandOrRenewSession()
+          sessionStoreManager.expandOrRenewSession()
 
-          expect(sessionStore.getSession().id).toBeUndefined()
-          expect(sessionStore.getSession()[PRODUCT_KEY]).toBeDefined()
+          expect(sessionStoreManager.getSession().id).toBeUndefined()
+          expect(sessionStoreManager.getSession()[PRODUCT_KEY]).toBeDefined()
           expectNotTrackedSessionToBeInStore()
           expect(expireSpy).toHaveBeenCalled()
           expect(renewSpy).not.toHaveBeenCalled()
@@ -182,10 +244,10 @@ describe('session store', () => {
         setupSessionStore()
 
         clock.tick(10)
-        sessionStore.expandOrRenewSession()
+        sessionStoreManager.expandOrRenewSession()
 
-        expect(sessionStore.getSession().id).toBe(FIRST_ID)
-        expect(sessionStore.getSession().expire).toBe(getStoreExpiration())
+        expect(sessionStoreManager.getSession().id).toBe(FIRST_ID)
+        expect(sessionStoreManager.getSession().expire).toBe(getStoreExpiration())
         expectTrackedSessionToBeInStore(FIRST_ID)
         expect(expireSpy).not.toHaveBeenCalled()
         expect(renewSpy).not.toHaveBeenCalled()
@@ -199,9 +261,9 @@ describe('session store', () => {
           setupSessionStore()
           setSessionInStore(FakeTrackingType.TRACKED, SECOND_ID)
 
-          sessionStore.expandOrRenewSession()
+          sessionStoreManager.expandOrRenewSession()
 
-          expect(sessionStore.getSession().id).toBe(SECOND_ID)
+          expect(sessionStoreManager.getSession().id).toBe(SECOND_ID)
           expectTrackedSessionToBeInStore(SECOND_ID)
           expect(expireSpy).toHaveBeenCalled()
           expect(renewSpy).toHaveBeenCalled()
@@ -219,9 +281,9 @@ describe('session store', () => {
           }))
           setSessionInStore(FakeTrackingType.NOT_TRACKED, '')
 
-          sessionStore.expandOrRenewSession()
+          sessionStoreManager.expandOrRenewSession()
 
-          expect(sessionStore.getSession().id).toBeUndefined()
+          expect(sessionStoreManager.getSession().id).toBeUndefined()
           expectNotTrackedSessionToBeInStore()
           expect(expireSpy).toHaveBeenCalled()
           expect(renewSpy).not.toHaveBeenCalled()
@@ -233,9 +295,9 @@ describe('session store', () => {
       it('when session not in cache and session not in store, should do nothing', () => {
         setupSessionStore()
 
-        sessionStore.expandSession()
+        sessionStoreManager.expandSession()
 
-        expect(sessionStore.getSession().id).toBeUndefined()
+        expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).not.toHaveBeenCalled()
       })
 
@@ -243,9 +305,9 @@ describe('session store', () => {
         setupSessionStore()
         setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
 
-        sessionStore.expandSession()
+        sessionStoreManager.expandSession()
 
-        expect(sessionStore.getSession().id).toBeUndefined()
+        expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).not.toHaveBeenCalled()
       })
 
@@ -254,9 +316,9 @@ describe('session store', () => {
         setupSessionStore()
         resetSessionInStore()
 
-        sessionStore.expandSession()
+        sessionStoreManager.expandSession()
 
-        expect(sessionStore.getSession().id).toBeUndefined()
+        expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).toHaveBeenCalled()
       })
 
@@ -265,10 +327,10 @@ describe('session store', () => {
         setupSessionStore()
 
         clock.tick(10)
-        sessionStore.expandSession()
+        sessionStoreManager.expandSession()
 
-        expect(sessionStore.getSession().id).toBe(FIRST_ID)
-        expect(sessionStore.getSession().expire).toBe(getStoreExpiration())
+        expect(sessionStoreManager.getSession().id).toBe(FIRST_ID)
+        expect(sessionStoreManager.getSession().expire).toBe(getStoreExpiration())
         expect(expireSpy).not.toHaveBeenCalled()
       })
 
@@ -277,9 +339,9 @@ describe('session store', () => {
         setupSessionStore()
         setSessionInStore(FakeTrackingType.TRACKED, SECOND_ID)
 
-        sessionStore.expandSession()
+        sessionStoreManager.expandSession()
 
-        expect(sessionStore.getSession().id).toBeUndefined()
+        expect(sessionStoreManager.getSession().id).toBeUndefined()
         expectTrackedSessionToBeInStore(SECOND_ID)
         expect(expireSpy).toHaveBeenCalled()
       })
@@ -291,7 +353,7 @@ describe('session store', () => {
 
         clock.tick(COOKIE_ACCESS_DELAY)
 
-        expect(sessionStore.getSession().id).toBeUndefined()
+        expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).not.toHaveBeenCalled()
       })
 
@@ -301,7 +363,7 @@ describe('session store', () => {
 
         clock.tick(COOKIE_ACCESS_DELAY)
 
-        expect(sessionStore.getSession().id).toBeUndefined()
+        expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).not.toHaveBeenCalled()
       })
 
@@ -312,7 +374,7 @@ describe('session store', () => {
 
         clock.tick(COOKIE_ACCESS_DELAY)
 
-        expect(sessionStore.getSession().id).toBeUndefined()
+        expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).toHaveBeenCalled()
       })
 
@@ -323,8 +385,8 @@ describe('session store', () => {
 
         clock.tick(COOKIE_ACCESS_DELAY)
 
-        expect(sessionStore.getSession().id).toBe(FIRST_ID)
-        expect(sessionStore.getSession().expire).toBe(getStoreExpiration())
+        expect(sessionStoreManager.getSession().id).toBe(FIRST_ID)
+        expect(sessionStoreManager.getSession().expire).toBe(getStoreExpiration())
         expect(expireSpy).not.toHaveBeenCalled()
       })
 
@@ -335,7 +397,7 @@ describe('session store', () => {
 
         clock.tick(COOKIE_ACCESS_DELAY)
 
-        expect(sessionStore.getSession().id).toBeUndefined()
+        expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).toHaveBeenCalled()
       })
 
@@ -346,7 +408,7 @@ describe('session store', () => {
 
         clock.tick(COOKIE_ACCESS_DELAY)
 
-        expect(sessionStore.getSession().id).toBeUndefined()
+        expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).toHaveBeenCalled()
       })
     })

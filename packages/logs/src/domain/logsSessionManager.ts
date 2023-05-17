@@ -19,7 +19,11 @@ export const enum LoggerTrackingType {
 }
 
 export function startLogsSessionManager(configuration: LogsConfiguration): LogsSessionManager {
-  const sessionManager = startSessionManager(configuration.cookieOptions, LOGS_SESSION_KEY, (rawTrackingType) =>
+  if (!configuration.sessionStore) {
+    throw new Error('Cannot initialize Logs Session Manager without a storage.')
+  }
+
+  const sessionManager = startSessionManager(configuration.sessionStore, LOGS_SESSION_KEY, (rawTrackingType) =>
     computeSessionState(configuration, rawTrackingType)
   )
   return {

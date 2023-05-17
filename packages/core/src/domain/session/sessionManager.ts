@@ -1,4 +1,3 @@
-import type { CookieOptions } from '../../browser/cookie'
 import type { Observable } from '../../tools/observable'
 import type { Context } from '../../tools/serialisation/context'
 import { ValueHistory } from '../../tools/valueHistory'
@@ -8,6 +7,7 @@ import { DOM_EVENT, addEventListener, addEventListeners } from '../../browser/ad
 import { clearInterval, setInterval } from '../../tools/timer'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { startSessionStoreManager } from './sessionStoreManager'
+import type { SessionStore } from './sessionStore'
 
 export interface SessionManager<TrackingType extends string> {
   findActiveSession: (startTime?: RelativeTime) => SessionContext<TrackingType> | undefined
@@ -26,41 +26,41 @@ const SESSION_CONTEXT_TIMEOUT_DELAY = SESSION_TIME_OUT_DELAY
 let stopCallbacks: Array<() => void> = []
 
 export function startSessionManager<TrackingType extends string>(
-  options: CookieOptions,
+  sessionStore: SessionStore,
   productKey: string,
   computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean }
 ): SessionManager<TrackingType> {
-  const sessionStore = startSessionStoreManager(options, productKey, computeSessionState)
-  stopCallbacks.push(() => sessionStore.stop())
+  const sessionStoreManager = startSessionStoreManager(sessionStore, productKey, computeSessionState)
+  stopCallbacks.push(() => sessionStoreManager.stop())
 
   const sessionContextHistory = new ValueHistory<SessionContext<TrackingType>>(SESSION_CONTEXT_TIMEOUT_DELAY)
   stopCallbacks.push(() => sessionContextHistory.stop())
 
-  sessionStore.renewObservable.subscribe(() => {
+  sessionStoreManager.renewObservable.subscribe(() => {
     sessionContextHistory.add(buildSessionContext(), relativeNow())
   })
-  sessionStore.expireObservable.subscribe(() => {
+  sessionStoreManager.expireObservable.subscribe(() => {
     sessionContextHistory.closeActive(relativeNow())
   })
 
-  sessionStore.expandOrRenewSession()
+  sessionStoreManager.expandOrRenewSession()
   sessionContextHistory.add(buildSessionContext(), clocksOrigin().relative)
 
-  trackActivity(() => sessionStore.expandOrRenewSession())
-  trackVisibility(() => sessionStore.expandSession())
+  trackActivity(() => sessionStoreManager.expandOrRenewSession())
+  trackVisibility(() => sessionStoreManager.expandSession())
 
   function buildSessionContext() {
     return {
-      id: sessionStore.getSession().id!,
-      trackingType: sessionStore.getSession()[productKey] as TrackingType,
+      id: sessionStoreManager.getSession().id!,
+      trackingType: sessionStoreManager.getSession()[productKey] as TrackingType,
     }
   }
 
   return {
     findActiveSession: (startTime) => sessionContextHistory.find(startTime),
-    renewObservable: sessionStore.renewObservable,
-    expireObservable: sessionStore.expireObservable,
-    expire: sessionStore.expire,
+    renewObservable: sessionStoreManager.renewObservable,
+    expireObservable: sessionStoreManager.expireObservable,
+    expire: sessionStoreManager.expire,
   }
 }
 

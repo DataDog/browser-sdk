@@ -35,7 +35,11 @@ export const enum RumTrackingType {
 }
 
 export function startRumSessionManager(configuration: RumConfiguration, lifeCycle: LifeCycle): RumSessionManager {
-  const sessionManager = startSessionManager(configuration.cookieOptions, RUM_SESSION_KEY, (rawTrackingType) =>
+  if (!configuration.sessionStore) {
+    throw new Error('Cannot initialize RUM Session Manager without a storage.')
+  }
+
+  const sessionManager = startSessionManager(configuration.sessionStore, RUM_SESSION_KEY, (rawTrackingType) =>
     computeSessionState(configuration, rawTrackingType)
   )
 

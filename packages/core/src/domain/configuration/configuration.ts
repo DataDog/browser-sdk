@@ -10,6 +10,8 @@ import { isPercentage } from '../../tools/utils/numberUtils'
 import { ONE_KIBI_BYTE } from '../../tools/utils/byteUtils'
 import { objectHasValue } from '../../tools/utils/objectUtils'
 import { assign } from '../../tools/utils/polyfills'
+import { initSessionStore } from '../session/sessionStoreManager'
+import type { SessionStore } from '../session/sessionStore'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
 
@@ -52,6 +54,9 @@ export interface InitConfiguration {
   useSecureSessionCookie?: boolean | undefined
   trackSessionAcrossSubdomains?: boolean | undefined
 
+  // alternate storage option
+  allowFallbackToLocalStorage?: boolean | undefined
+
   // internal options
   enableExperimentalFeatures?: string[] | undefined
   replica?: ReplicaUserConfiguration | undefined
@@ -74,6 +79,8 @@ export interface Configuration extends TransportConfiguration {
   // Built from init configuration
   beforeSend: GenericBeforeSendCallback | undefined
   cookieOptions: CookieOptions
+  allowFallbackToLocalStorage: boolean
+  sessionStore: SessionStore | undefined
   sessionSampleRate: number
   telemetrySampleRate: number
   telemetryConfigurationSampleRate: number
@@ -116,6 +123,10 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     return
   }
 
+  const cookieOptions = buildCookieOptions(initConfiguration)
+  const allowFallbackToLocalStorage = initConfiguration.allowFallbackToLocalStorage || false
+  const sessionStore = initSessionStore(cookieOptions, allowFallbackToLocalStorage)
+
   // Set the experimental feature flags as early as possible, so we can use them in most places
   if (Array.isArray(initConfiguration.enableExperimentalFeatures)) {
     addExperimentalFeatures(
@@ -130,6 +141,8 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
       beforeSend:
         initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
       cookieOptions: buildCookieOptions(initConfiguration),
+      allowFallbackToLocalStorage,
+      sessionStore,
       sessionSampleRate: sessionSampleRate ?? 100,
       telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
       telemetryConfigurationSampleRate: initConfiguration.telemetryConfigurationSampleRate ?? 5,

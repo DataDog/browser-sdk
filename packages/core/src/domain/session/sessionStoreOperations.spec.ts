@@ -21,7 +21,7 @@ describe('process operations mechanism', () => {
   let cookieStorage: SessionStore
 
   beforeEach(() => {
-    cookieStorage = initCookieStore(COOKIE_OPTIONS)
+    cookieStorage = initCookieStore(COOKIE_OPTIONS)!
     initialSession = { id: '123', created: '0' }
     otherSession = { id: '456', created: '100' }
     processSpy = jasmine.createSpy('process')
