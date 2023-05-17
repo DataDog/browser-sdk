@@ -27,7 +27,7 @@ describe('foreground context', () => {
   }
 
   function isInForegroundAt(startTime: RelativeTime) {
-    return pageStateHistory.isActiveAt(startTime)
+    return pageStateHistory.isInActivePageStateAt(startTime)
   }
 
   beforeEach(() => {

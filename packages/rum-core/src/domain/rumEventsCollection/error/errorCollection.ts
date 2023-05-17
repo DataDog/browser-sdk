@@ -109,7 +109,7 @@ function processError(
     type: RumEventType.ERROR as const,
   }
 
-  const inActivePageState = pageStateHistory.isActiveAt(error.startClocks.relative)
+  const inActivePageState = pageStateHistory.isInActivePageStateAt(error.startClocks.relative)
   if (inActivePageState) {
     rawRumEvent.view = { in_foreground: inActivePageState }
   }

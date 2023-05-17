@@ -79,14 +79,14 @@ describe('pageStateHistory', () => {
     })
   })
 
-  describe('isActiveAt', () => {
+  describe('isInActivePageStateAt', () => {
     it('should return true if the page was active at the given time', () => {
       pageStateHistory.addPageState(PageState.ACTIVE)
 
       clock.tick(10)
       pageStateHistory.addPageState(PageState.PASSIVE)
 
-      expect(pageStateHistory.isActiveAt(0 as RelativeTime)).toEqual(true)
+      expect(pageStateHistory.isInActivePageStateAt(0 as RelativeTime)).toEqual(true)
     })
 
     it('should return false if the page was not active at the given time', () => {
@@ -96,7 +96,7 @@ describe('pageStateHistory', () => {
       pageStateHistory.addPageState(PageState.ACTIVE)
       clock.tick(10)
       pageStateHistory.addPageState(PageState.PASSIVE)
-      expect(pageStateHistory.isActiveAt(10 as RelativeTime)).toEqual(false)
+      expect(pageStateHistory.isInActivePageStateAt(10 as RelativeTime)).toEqual(false)
     })
   })
 })

@@ -98,7 +98,7 @@ function processAction(
     },
     autoActionProperties
   )
-  const inActivePageState = pageStateHistory.isActiveAt(action.startClocks.relative)
+  const inActivePageState = pageStateHistory.isInActivePageStateAt(action.startClocks.relative)
   if (inActivePageState !== undefined) {
     actionEvent.view = { in_foreground: inActivePageState }
   }

@@ -13,7 +13,7 @@ describe('actionCollection', () => {
   beforeEach(() => {
     setupBuilder = setup()
       .withPageStateHistory({
-        isActiveAt: () => true,
+        isInActivePageStateAt: () => true,
       })
       .beforeBuild(({ lifeCycle, configuration, domMutationObservable, pageStateHistory }) => {
         ;({ addAction } = startActionCollection(lifeCycle, domMutationObservable, configuration, pageStateHistory))
