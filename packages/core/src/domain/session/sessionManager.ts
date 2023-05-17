@@ -6,9 +6,8 @@ import type { RelativeTime } from '../../tools/utils/timeUtils'
 import { relativeNow, clocksOrigin, ONE_MINUTE } from '../../tools/utils/timeUtils'
 import { DOM_EVENT, addEventListener, addEventListeners } from '../../browser/addEventListener'
 import { clearInterval, setInterval } from '../../tools/timer'
-import { tryOldCookiesMigration } from './oldCookiesMigration'
-import { startSessionStoreManager } from './sessionStoreManager'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
+import { startSessionStoreManager } from './sessionStoreManager'
 
 export interface SessionManager<TrackingType extends string> {
   findActiveSession: (startTime?: RelativeTime) => SessionContext<TrackingType> | undefined
@@ -31,7 +30,6 @@ export function startSessionManager<TrackingType extends string>(
   productKey: string,
   computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean }
 ): SessionManager<TrackingType> {
-  tryOldCookiesMigration(options)
   const sessionStore = startSessionStoreManager(options, productKey, computeSessionState)
   stopCallbacks.push(() => sessionStore.stop())
 

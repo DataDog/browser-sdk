@@ -1,5 +1,6 @@
 import type { CookieOptions } from '../../browser/cookie'
 import { deleteCookie, getCookie, setCookie } from '../../browser/cookie'
+import { tryOldCookiesMigration } from './oldCookiesMigration'
 import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
 import type { SessionState, SessionStore } from './sessionStore'
 import { toSessionState, toSessionString } from './sessionStore'
@@ -7,11 +8,15 @@ import { toSessionState, toSessionString } from './sessionStore'
 export const SESSION_COOKIE_NAME = '_dd_s'
 
 export function initCookieStore(options: CookieOptions): SessionStore {
-  return {
+  const cookieStore = {
     persistSession: persistSessionCookie(options),
     retrieveSession: retrieveSessionCookie,
     clearSession: deleteSessionCookie(options),
   }
+
+  tryOldCookiesMigration(SESSION_COOKIE_NAME, cookieStore)
+
+  return cookieStore
 }
 
 export function persistSessionCookie(options: CookieOptions) {

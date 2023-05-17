@@ -1,4 +1,3 @@
-import type { CookieOptions } from '../../browser/cookie'
 import { getCookie, setCookie } from '../../browser/cookie'
 import {
   OLD_LOGS_COOKIE_NAME,
@@ -7,15 +6,15 @@ import {
   tryOldCookiesMigration,
 } from './oldCookiesMigration'
 import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
-import { SESSION_COOKIE_NAME } from './sessionCookieStore'
+import { SESSION_COOKIE_NAME, initCookieStore } from './sessionCookieStore'
 
 describe('old cookies migration', () => {
-  const options: CookieOptions = {}
+  const sessionStore = initCookieStore({})!
 
   it('should not touch current cookie', () => {
     setCookie(SESSION_COOKIE_NAME, 'id=abcde&rum=0&logs=1&expire=1234567890', SESSION_EXPIRATION_DELAY)
 
-    tryOldCookiesMigration(options)
+    tryOldCookiesMigration(SESSION_COOKIE_NAME, sessionStore)
 
     expect(getCookie(SESSION_COOKIE_NAME)).toBe('id=abcde&rum=0&logs=1&expire=1234567890')
   })
@@ -25,7 +24,7 @@ describe('old cookies migration', () => {
     setCookie(OLD_LOGS_COOKIE_NAME, '1', SESSION_EXPIRATION_DELAY)
     setCookie(OLD_RUM_COOKIE_NAME, '0', SESSION_EXPIRATION_DELAY)
 
-    tryOldCookiesMigration(options)
+    tryOldCookiesMigration(SESSION_COOKIE_NAME, sessionStore)
 
     expect(getCookie(SESSION_COOKIE_NAME)).toContain('id=abcde')
     expect(getCookie(SESSION_COOKIE_NAME)).toContain('rum=0')
@@ -36,7 +35,7 @@ describe('old cookies migration', () => {
   it('should create new cookie from a single old cookie', () => {
     setCookie(OLD_RUM_COOKIE_NAME, '0', SESSION_EXPIRATION_DELAY)
 
-    tryOldCookiesMigration(options)
+    tryOldCookiesMigration(SESSION_COOKIE_NAME, sessionStore)
 
     expect(getCookie(SESSION_COOKIE_NAME)).not.toContain('id=')
     expect(getCookie(SESSION_COOKIE_NAME)).toContain('rum=0')
@@ -44,7 +43,7 @@ describe('old cookies migration', () => {
   })
 
   it('should not create a new cookie if no old cookie is present', () => {
-    tryOldCookiesMigration(options)
+    tryOldCookiesMigration(SESSION_COOKIE_NAME, sessionStore)
     expect(getCookie(SESSION_COOKIE_NAME)).toBeUndefined()
   })
 })
