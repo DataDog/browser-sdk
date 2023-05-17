@@ -28,7 +28,7 @@ export const enum RumSessionPlan {
 export const enum RumTrackingType {
   NOT_TRACKED = '0',
   // Note: the "tracking type" value (stored in the session cookie) does not match the "session
-  // plan" value (sent in RUM events). This is expected, and was done to keep retro-compatibility
+  // plan" value (sent in RUM events). This is expected, and was done to keep backward-compatibility
   // with active sessions when upgrading the SDK.
   TRACKED_WITH_SESSION_REPLAY = '1',
   TRACKED_WITHOUT_SESSION_REPLAY = '2',
