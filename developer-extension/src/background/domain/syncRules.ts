@@ -1,12 +1,15 @@
 import { DEV_LOGS_URL, DEV_RUM_SLIM_URL, DEV_RUM_URL, INTAKE_DOMAINS } from '../../common/constants'
 import { createLogger } from '../../common/logger'
-import { listenAction } from '../actions'
+import { onDevtoolsMessage } from '../devtoolsPanelConnection'
 import { store } from '../store'
 
 const logger = createLogger('syncRules')
 
-listenAction('setStore', (newStore) => {
-  if ('useDevBundles' in newStore || 'useRumSlim' in newStore || 'blockIntakeRequests' in newStore) {
+onDevtoolsMessage.subscribe((message) => {
+  if (
+    message.type === 'set-store' &&
+    ('useDevBundles' in message.store || 'useRumSlim' in message.store || 'blockIntakeRequests' in message.store)
+  ) {
     void chrome.browsingData.removeCache({})
     syncRules()
   }

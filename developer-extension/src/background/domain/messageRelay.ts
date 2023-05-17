@@ -14,55 +14,13 @@
 // https://developer.chrome.com/docs/extensions/mv3/devtools/#content-script-to-devtools
 
 import { createLogger } from '../../common/logger'
+import {
+  onDevtoolsFirstConnection,
+  onDevtoolsLastDisconnection,
+  sendMessageToDevtools,
+} from '../devtoolsPanelConnection'
 
 const logger = createLogger('messageRelay')
-
-const devtoolsConnections = new Map<number, chrome.runtime.Port>()
-
-const portNameRe = /^devtools-panel-for-tab-(\d+)$/
-
-// Listen for connection from the devtools-panel
-chrome.runtime.onConnect.addListener((port) => {
-  const match = portNameRe.exec(port.name)
-  if (!match) {
-    return
-  }
-
-  const tabId = Number(match[1])
-
-  logger.log(`New devtools connection for tab ${tabId}`)
-  devtoolsConnections.set(tabId, port)
-
-  if (devtoolsConnections.size === 1) {
-    // Register content scripts when a first devtools panel is open
-    registerContentScripts(tabId).catch((error) => logger.error('Error while registering content scripts:', error))
-  }
-
-  port.onDisconnect.addListener(() => {
-    logger.log(`Remove devtools connection for tab ${tabId}`)
-    devtoolsConnections.delete(tabId)
-    if (devtoolsConnections.size === 0) {
-      // Unregister content scripts when the last devtools panel is open
-      unregisterContentScripts().catch((error) => logger.error('Error while unregistering content scripts:', error))
-    }
-  })
-})
-
-// Listen for messages coming from the "isolated" content-script and relay them to a potential
-// devtools panel connection.
-chrome.runtime.onMessage.addListener((message, sender) => {
-  if (!sender.tab || !sender.tab.id) {
-    return
-  }
-
-  const port = devtoolsConnections.get(sender.tab.id)
-  if (!port) {
-    // Extension not yet opened
-    return
-  }
-
-  port.postMessage(message)
-})
 
 const CONTENT_SCRIPTS: Array<{
   id: string
@@ -80,6 +38,24 @@ const CONTENT_SCRIPTS: Array<{
     file: './content-script-isolated.js',
   },
 ]
+
+onDevtoolsFirstConnection.subscribe((tabId) => {
+  // Register content scripts when a first devtools panel is open
+  registerContentScripts(tabId).catch((error) => logger.error('Error while registering content scripts:', error))
+})
+
+onDevtoolsLastDisconnection.subscribe(() => {
+  // Unregister content scripts when the last devtools panel is open
+  unregisterContentScripts().catch((error) => logger.error('Error while unregistering content scripts:', error))
+})
+
+// Listen for messages coming from the "isolated" content-script and relay them to a potential
+// devtools panel connection.
+chrome.runtime.onMessage.addListener((message, sender) => {
+  if (sender.tab && sender.tab.id) {
+    sendMessageToDevtools(sender.tab.id, { type: 'sdk-message', message })
+  }
+})
 
 async function unregisterContentScripts() {
   logger.log('Unregistering content scripts')
