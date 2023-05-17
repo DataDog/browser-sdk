@@ -25,6 +25,7 @@ import { LifeCycleEventType } from '../../lifeCycle'
 import type { RequestCompleteEvent } from '../../requestCollection'
 import type { RumSessionManager } from '../../rumSessionManager'
 import type { PageStateHistory } from '../../contexts/pageStateHistory'
+import { PageState } from '../../contexts/pageStateHistory'
 import { matchRequestTiming } from './matchRequestTiming'
 import {
   computePerformanceResourceDetails,
@@ -74,7 +75,7 @@ function processRequest(
   const tracingInfo = computeRequestTracingInfo(request, configuration)
   const indexingInfo = computeIndexingInfo(sessionManager, startClocks)
 
-  const duration = toServerDuration(request.duration)
+  const duration = computeRequestDuration(pageStateHistory, startClocks, request.duration)
   const pageStateInfo = computePageStateInfo(
     pageStateHistory,
     startClocks,
@@ -223,4 +224,17 @@ function computePageStateInfo(pageStateHistory: PageStateHistory, startClocks: C
       page_was_discarded: String((document as any).wasDiscarded),
     },
   }
+}
+
+function computeRequestDuration(pageStateHistory: PageStateHistory, startClocks: ClocksState, duration: Duration) {
+  // TODO remove FF in next major
+  if (!isExperimentalFeatureEnabled(ExperimentalFeature.NO_RESOURCE_DURATION_FROZEN_STATE)) {
+    return toServerDuration(duration)
+  }
+
+  const requestCrossedFrozenState = pageStateHistory
+    .findAll(startClocks.relative, duration)
+    ?.some((pageState) => pageState.state === PageState.FROZEN)
+
+  return !requestCrossedFrozenState ? toServerDuration(duration) : undefined
 }
