@@ -254,9 +254,9 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('defaultPrivacyLevel', () => {
-    it('defaults to MASK_USER_INPUT', () => {
+    it('defaults to MASK', () => {
       expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.defaultPrivacyLevel).toBe(
-        DefaultPrivacyLevel.MASK_USER_INPUT
+        DefaultPrivacyLevel.MASK
       )
     })
 
@@ -273,7 +273,7 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, defaultPrivacyLevel: 'foo' as any })!
           .defaultPrivacyLevel
-      ).toBe(DefaultPrivacyLevel.MASK_USER_INPUT)
+      ).toBe(DefaultPrivacyLevel.MASK)
     })
   })
 

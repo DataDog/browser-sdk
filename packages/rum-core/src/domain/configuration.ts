@@ -114,7 +114,7 @@ export function validateAndBuildRumConfiguration(
       subdomain: initConfiguration.subdomain,
       defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
         ? initConfiguration.defaultPrivacyLevel
-        : DefaultPrivacyLevel.MASK_USER_INPUT,
+        : DefaultPrivacyLevel.MASK,
       customerDataTelemetrySampleRate: 1,
     },
     baseConfiguration

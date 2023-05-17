@@ -842,17 +842,17 @@ describe('rum public api', () => {
 
     it('recording is started with the default defaultPrivacyLevel', () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      expect(recorderApiOnRumStartSpy.calls.mostRecent().args[1].defaultPrivacyLevel).toBe(
-        DefaultPrivacyLevel.MASK_USER_INPUT
-      )
+      expect(recorderApiOnRumStartSpy.calls.mostRecent().args[1].defaultPrivacyLevel).toBe(DefaultPrivacyLevel.MASK)
     })
 
     it('recording is started with the configured defaultPrivacyLevel', () => {
       rumPublicApi.init({
         ...DEFAULT_INIT_CONFIGURATION,
-        defaultPrivacyLevel: DefaultPrivacyLevel.MASK,
+        defaultPrivacyLevel: DefaultPrivacyLevel.MASK_USER_INPUT,
       })
-      expect(recorderApiOnRumStartSpy.calls.mostRecent().args[1].defaultPrivacyLevel).toBe(DefaultPrivacyLevel.MASK)
+      expect(recorderApiOnRumStartSpy.calls.mostRecent().args[1].defaultPrivacyLevel).toBe(
+        DefaultPrivacyLevel.MASK_USER_INPUT
+      )
     })
   })
 
