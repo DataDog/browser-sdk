@@ -107,11 +107,7 @@ function processError(
       fingerprint: error.fingerprint,
     },
     type: RumEventType.ERROR as const,
-  }
-
-  const inActivePageState = pageStateHistory.isInActivePageStateAt(error.startClocks.relative)
-  if (inActivePageState) {
-    rawRumEvent.view = { in_foreground: inActivePageState }
+    view: { in_foreground: pageStateHistory.isInActivePageStateAt(error.startClocks.relative) },
   }
 
   const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations(error.startClocks.relative)

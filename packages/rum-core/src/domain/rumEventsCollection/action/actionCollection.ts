@@ -95,13 +95,11 @@ function processAction(
       },
       date: action.startClocks.timeStamp,
       type: RumEventType.ACTION as const,
+      view: { in_foreground: pageStateHistory.isInActivePageStateAt(action.startClocks.relative) },
     },
     autoActionProperties
   )
-  const inActivePageState = pageStateHistory.isInActivePageStateAt(action.startClocks.relative)
-  if (inActivePageState !== undefined) {
-    actionEvent.view = { in_foreground: inActivePageState }
-  }
+
   return {
     customerContext,
     rawRumEvent: actionEvent,
