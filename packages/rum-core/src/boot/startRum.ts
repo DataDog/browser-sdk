@@ -71,13 +71,13 @@ export function startRum(
   }
   const featureFlagContexts = startFeatureFlagContexts(lifeCycle)
 
-  const session = !canUseEventBridge() ? startRumSessionManager(configuration, lifeCycle) : startRumSessionManagerStub()
+  const pageExitObservable = createPageExitObservable()
+  pageExitObservable.subscribe((event) => {
+    lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, event)
+  })
 
+  const session = !canUseEventBridge() ? startRumSessionManager(configuration, lifeCycle) : startRumSessionManagerStub()
   if (!canUseEventBridge()) {
-    const pageExitObservable = createPageExitObservable()
-    pageExitObservable.subscribe((event) => {
-      lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, event)
-    })
     const batch = startRumBatch(
       configuration,
       lifeCycle,

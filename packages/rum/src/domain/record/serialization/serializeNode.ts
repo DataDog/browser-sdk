@@ -203,7 +203,7 @@ function serializeTextNode(textNode: Text, options: SerializeOptions): TextNode 
   // So just let it be undefined which is ok in this use case.
   const parentTagName = textNode.parentElement?.tagName
   const textContent = getTextContent(textNode, options.ignoreWhiteSpace || false, options.parentNodePrivacyLevel)
-  if (!textContent) {
+  if (textContent === undefined) {
     return
   }
   return {

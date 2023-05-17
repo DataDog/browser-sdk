@@ -37,22 +37,51 @@ export const enum LifeCycleEventType {
   RAW_ERROR_COLLECTED,
 }
 
+// This is a workaround for an issue occurring when the Browser SDK is included in a TypeScript
+// project configured with `isolatedModules: true`. Even if the const enum is declared in this
+// module, we cannot use it directly to define the EventMap interface keys (TS error: "Cannot access
+// ambient const enums when the '--isolatedModules' flag is provided.").
+//
+// Using a plain enum would fix the issue, but would also add 2KB to the minified bundle. By using
+// this workaround, we can keep using a const enum without impacting the bundle size (since it is a
+// "declare" statement, it will only be used during typecheck and completely ignored when building
+// JavaScript).
+//
+// See issues:
+// * https://github.com/DataDog/browser-sdk/issues/2208
+// * https://github.com/microsoft/TypeScript/issues/54152
+declare const LifeCycleEventTypeAsConst: {
+  PERFORMANCE_ENTRIES_COLLECTED: LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED
+  AUTO_ACTION_COMPLETED: LifeCycleEventType.AUTO_ACTION_COMPLETED
+  VIEW_CREATED: LifeCycleEventType.VIEW_CREATED
+  VIEW_UPDATED: LifeCycleEventType.VIEW_UPDATED
+  VIEW_ENDED: LifeCycleEventType.VIEW_ENDED
+  REQUEST_STARTED: LifeCycleEventType.REQUEST_STARTED
+  REQUEST_COMPLETED: LifeCycleEventType.REQUEST_COMPLETED
+  SESSION_EXPIRED: LifeCycleEventType.SESSION_EXPIRED
+  SESSION_RENEWED: LifeCycleEventType.SESSION_RENEWED
+  PAGE_EXITED: LifeCycleEventType.PAGE_EXITED
+  RAW_RUM_EVENT_COLLECTED: LifeCycleEventType.RAW_RUM_EVENT_COLLECTED
+  RUM_EVENT_COLLECTED: LifeCycleEventType.RUM_EVENT_COLLECTED
+  RAW_ERROR_COLLECTED: LifeCycleEventType.RAW_ERROR_COLLECTED
+}
+
 // Note: this interface needs to be exported even if it is not used outside of this module, else TS
 // fails to build the rum-core package with error TS4058
 export interface LifeCycleEventMap {
-  [LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED]: RumPerformanceEntry[]
-  [LifeCycleEventType.AUTO_ACTION_COMPLETED]: AutoAction
-  [LifeCycleEventType.VIEW_CREATED]: ViewCreatedEvent
-  [LifeCycleEventType.VIEW_UPDATED]: ViewEvent
-  [LifeCycleEventType.VIEW_ENDED]: ViewEndedEvent
-  [LifeCycleEventType.REQUEST_STARTED]: RequestStartEvent
-  [LifeCycleEventType.REQUEST_COMPLETED]: RequestCompleteEvent
-  [LifeCycleEventType.SESSION_EXPIRED]: void
-  [LifeCycleEventType.SESSION_RENEWED]: void
-  [LifeCycleEventType.PAGE_EXITED]: PageExitEvent
-  [LifeCycleEventType.RAW_RUM_EVENT_COLLECTED]: RawRumEventCollectedData
-  [LifeCycleEventType.RUM_EVENT_COLLECTED]: RumEvent & Context
-  [LifeCycleEventType.RAW_ERROR_COLLECTED]: {
+  [LifeCycleEventTypeAsConst.PERFORMANCE_ENTRIES_COLLECTED]: RumPerformanceEntry[]
+  [LifeCycleEventTypeAsConst.AUTO_ACTION_COMPLETED]: AutoAction
+  [LifeCycleEventTypeAsConst.VIEW_CREATED]: ViewCreatedEvent
+  [LifeCycleEventTypeAsConst.VIEW_UPDATED]: ViewEvent
+  [LifeCycleEventTypeAsConst.VIEW_ENDED]: ViewEndedEvent
+  [LifeCycleEventTypeAsConst.REQUEST_STARTED]: RequestStartEvent
+  [LifeCycleEventTypeAsConst.REQUEST_COMPLETED]: RequestCompleteEvent
+  [LifeCycleEventTypeAsConst.SESSION_EXPIRED]: void
+  [LifeCycleEventTypeAsConst.SESSION_RENEWED]: void
+  [LifeCycleEventTypeAsConst.PAGE_EXITED]: PageExitEvent
+  [LifeCycleEventTypeAsConst.RAW_RUM_EVENT_COLLECTED]: RawRumEventCollectedData
+  [LifeCycleEventTypeAsConst.RUM_EVENT_COLLECTED]: RumEvent & Context
+  [LifeCycleEventTypeAsConst.RAW_ERROR_COLLECTED]: {
     error: RawError
     savedCommonContext?: CommonContext
     customerContext?: Context

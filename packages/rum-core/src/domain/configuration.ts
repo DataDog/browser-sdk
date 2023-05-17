@@ -289,7 +289,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration): 
       selected_tracing_propagators: getSelectedTracingPropagators(configuration),
       default_privacy_level: configuration.defaultPrivacyLevel,
       use_excluded_activity_urls:
-        Array.isArray(configuration.allowedTracingOrigins) && configuration.allowedTracingOrigins.length > 0,
+        Array.isArray(configuration.excludedActivityUrls) && configuration.excludedActivityUrls.length > 0,
       track_frustrations: configuration.trackFrustrations,
       track_views_manually: configuration.trackViewsManually,
       track_user_interactions: configuration.trackUserInteractions ?? configuration.trackInteractions,
