@@ -1,27 +1,15 @@
 import { Badge, Box, Checkbox, Code, Group, Select, Space, Text } from '@mantine/core'
 import React from 'react'
 import { DevServerStatus, useDevServerStatus } from '../../hooks/useDevServerStatus'
+import { useSettings } from '../../hooks/useSettings'
 import type { EventSource } from '../../types'
 import { Columns } from '../columns'
 import { TabBase } from '../tabBase'
 
-export interface Settings {
-  useDevBundles: boolean
-  useRumSlim: boolean
-  blockIntakeRequests: boolean
-  autoFlush: boolean
-  preserveEvents: boolean
-  eventSource: EventSource
-}
-
-export function SettingsTab({
-  settings: { useDevBundles, useRumSlim, blockIntakeRequests, preserveEvents, autoFlush, eventSource },
-  setSettings,
-}: {
-  settings: Settings
-  setSettings: (newSettings: Partial<Settings>) => void
-}) {
+export function SettingsTab() {
   const devServerStatus = useDevServerStatus()
+  const [{ useDevBundles, useRumSlim, blockIntakeRequests, preserveEvents, eventSource, autoFlush }, setSetting] =
+    useSettings()
 
   return (
     <TabBase>
@@ -33,7 +21,7 @@ export function SettingsTab({
                 <Checkbox
                   label="Use development bundles"
                   checked={useDevBundles}
-                  onChange={(e) => setSettings({ useDevBundles: isChecked(e.target) })}
+                  onChange={(e) => setSetting('useDevBundles', isChecked(e.target))}
                   color="violet"
                 />
                 {devServerStatus === DevServerStatus.AVAILABLE ? (
@@ -58,7 +46,7 @@ export function SettingsTab({
               <Checkbox
                 label="Use RUM Slim"
                 checked={useRumSlim}
-                onChange={(e) => setSettings({ useRumSlim: isChecked(e.target) })}
+                onChange={(e) => setSetting('useRumSlim', isChecked(e.target))}
                 color="violet"
               />
             }
@@ -72,7 +60,7 @@ export function SettingsTab({
               <Checkbox
                 label="Block intake requests"
                 checked={blockIntakeRequests}
-                onChange={(e) => setSettings({ blockIntakeRequests: isChecked(e.target) })}
+                onChange={(e) => setSetting('blockIntakeRequests', isChecked(e.target))}
                 color="violet"
               />
             }
@@ -86,7 +74,7 @@ export function SettingsTab({
               <Checkbox
                 label="Preserve events"
                 checked={preserveEvents}
-                onChange={(e) => setSettings({ preserveEvents: isChecked(e.target) })}
+                onChange={(e) => setSetting('preserveEvents', isChecked(e.target))}
                 color="violet"
               />
             }
@@ -103,7 +91,7 @@ export function SettingsTab({
                     { label: 'SDK', value: 'sdk' },
                   ]}
                   value={eventSource}
-                  onChange={(value) => setSettings({ eventSource: value as EventSource })}
+                  onChange={(value) => setSetting('eventSource', value as EventSource)}
                   color="violet"
                   sx={{ flex: 1 }}
                 />
@@ -132,7 +120,7 @@ export function SettingsTab({
               <Checkbox
                 label="Auto Flush"
                 checked={autoFlush}
-                onChange={(e) => setSettings({ autoFlush: isChecked(e.target) })}
+                onChange={(e) => setSetting('autoFlush', isChecked(e.target))}
                 color="violet"
               />
             }
