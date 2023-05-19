@@ -14,7 +14,7 @@ describe('session local storage store', () => {
   })
 
   it('should report local storage as not available', () => {
-    spyOn(localStorage, 'getItem').and.throwError('Unavailable')
+    spyOn(Storage.prototype, 'getItem').and.throwError('Unavailable')
     const localStorageStore = initLocalStorage({})
     expect(localStorageStore).not.toBeDefined()
   })
