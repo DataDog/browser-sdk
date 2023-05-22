@@ -557,6 +557,17 @@ describe('startMutationCollection', () => {
       })
     })
 
+    it('emits a mutation when an empty text node is changed', () => {
+      textNode.data = ''
+      serializeDocumentWithDefaults()
+      const { mutationCallbackSpy } = startMutationCollection()
+
+      textNode.data = 'bar'
+      flushMutations()
+
+      expect(mutationCallbackSpy).toHaveBeenCalledTimes(1)
+    })
+
     it('does not emit a mutation when a text node keeps the same value', () => {
       serializeDocumentWithDefaults()
       const { mutationCallbackSpy } = startMutationCollection()

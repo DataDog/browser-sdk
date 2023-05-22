@@ -1,67 +1,53 @@
+import type { BackgroundToDevtoolsMessage, DevtoolsToBackgroundMessage } from '../common/types'
 import { isDisconnectError } from '../common/isDisconnectError'
-import type { TelemetryEvent } from '../../../packages/core/src/domain/telemetry'
-import type { LogsEvent } from '../../../packages/logs/src/logsEvent.types'
-import type { RumEvent } from '../../../packages/rum-core/src/rumEvent.types'
-import type { BrowserRecord, BrowserSegmentMetadata } from '../../../packages/rum/src/types'
 import { createLogger } from '../common/logger'
-import { notifyDisconnectEvent } from './disconnectEvent'
+import { EventListeners } from '../common/eventListeners'
 
 const logger = createLogger('backgroundScriptConnection')
 
-type SdkMessage =
-  | {
-      type: 'logs'
-      payload: LogsEvent
-    }
-  | {
-      type: 'rum'
-      payload: RumEvent
-    }
-  | {
-      type: 'telemetry'
-      payload: TelemetryEvent
-    }
-  | {
-      type: 'record'
-      payload: {
-        record: BrowserRecord
-        segment: BrowserSegmentMetadata
-      }
-    }
+export const onBackgroundMessage = new EventListeners<BackgroundToDevtoolsMessage>()
+export const onBackgroundDisconnection = new EventListeners<void>()
 
 let backgroundScriptConnection: chrome.runtime.Port | undefined
 
-export function listenSdkMessages(callback: (message: SdkMessage) => void) {
-  if (!backgroundScriptConnection) {
-    backgroundScriptConnection = createBackgroundScriptConnection()
-    if (!backgroundScriptConnection) {
-      return () => {
-        // nothing to cleanup in this case
-      }
-    }
-  }
+connectToBackgroundScript()
 
-  backgroundScriptConnection.onMessage.addListener(callback)
-  return () => backgroundScriptConnection!.onMessage.removeListener(callback)
-}
-
-function createBackgroundScriptConnection() {
+function connectToBackgroundScript() {
   try {
-    const backgroundScriptConnection = chrome.runtime.connect({
+    backgroundScriptConnection = chrome.runtime.connect({
       name: `devtools-panel-for-tab-${chrome.devtools.inspectedWindow.tabId}`,
     })
 
     backgroundScriptConnection.onDisconnect.addListener(() => {
-      logger.error('disconnected', chrome.runtime.lastError)
-      notifyDisconnectEvent()
+      // The background script can be disconnected for (at least) two main reasons:
+      // * the extension is updated and its context is invalidated
+      // * the background script has been idle for too long
+      //
+      // We want to try to automatically reconnect, and notify only if the extension context is
+      // invalidated (in which case, calling `chrome.runtime.connect` should throw an exception).
+      //
+      // Somehow, if we try to reconnect right after the extension is updated, the connection
+      // unexpectedly succeeds (does not throw or notify onDisconnect). It turns out that we need to
+      // wait a few milliseconds to have the expected behavior.
+      setTimeout(() => {
+        connectToBackgroundScript()
+      }, 100)
     })
 
-    return backgroundScriptConnection
+    backgroundScriptConnection.onMessage.addListener((backgroundMessage) =>
+      onBackgroundMessage.notify(backgroundMessage)
+    )
   } catch (error) {
     if (isDisconnectError(error)) {
-      notifyDisconnectEvent()
+      onBackgroundDisconnection.notify()
     } else {
       logger.error('While creating connection:', error)
     }
+  }
+}
+
+export function sendMessageToBackground(message: DevtoolsToBackgroundMessage) {
+  if (backgroundScriptConnection) {
+    backgroundScriptConnection.postMessage(message)
   }
 }
