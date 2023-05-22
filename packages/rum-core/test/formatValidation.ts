@@ -13,6 +13,7 @@ import viewSchemaJson from '../../../rum-events-format/schemas/rum/view-schema.j
 export function validateRumFormat(rumEvent: Context) {
   const instance = new ajv({
     allErrors: true,
+    code: { es5: true },
   })
   void instance
     .addSchema(_commonSchemaJson, 'rum/_common-schema.json')

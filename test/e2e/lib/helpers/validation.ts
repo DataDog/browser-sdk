@@ -14,6 +14,7 @@ export function validateRumFormat(events: RumEvent[]) {
   events.forEach((rumEvent) => {
     const instance = new ajv({
       allErrors: true,
+      code: { es5: true },
     })
     void instance
       .addSchema(_commonSchemaJson, 'rum/_common-schema.json')
