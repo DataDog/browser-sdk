@@ -30,10 +30,12 @@ function getScrollMetrics(viewStart: ClocksState) {
 }
 
 export function trackScrollMetrics(viewStart: ClocksState) {
-  const { scrollHeight, scrollDepth, timeStamp, scrollTop } = getScrollMetrics(viewStart)
+  // const { scrollHeight, scrollDepth, timeStamp, scrollTop } = getScrollMetrics(viewStart)
 
-  const scrollMetrics: ScrollMetrics =
-    scrollTop > 0 ? { maxScrollDepth: scrollDepth, maxscrollHeight: scrollHeight, maxScrollDepthTime: timeStamp } : {}
+  // const scrollMetrics: ScrollMetrics =
+  //   scrollTop > 0 ? { maxScrollDepth: scrollDepth, maxscrollHeight: scrollHeight, maxScrollDepthTime: timeStamp } : {}
+
+  const scrollMetrics: ScrollMetrics = {}
 
   const handleScrollEvent = throttle(
     () => {
@@ -49,7 +51,7 @@ export function trackScrollMetrics(viewStart: ClocksState) {
     { leading: false, trailing: true }
   )
 
-  const { stop } = addEventListener(window, DOM_EVENT.SCROLL, handleScrollEvent.throttled)
+  const { stop } = addEventListener(window, DOM_EVENT.SCROLL, handleScrollEvent.throttled, { passive: true })
 
   return {
     stop: () => {
