@@ -16,8 +16,6 @@ export type RumSession = {
   id: string
   plan: RumSessionPlan
   sessionReplayAllowed: boolean
-  longTaskAllowed: boolean
-  resourceAllowed: boolean
 }
 
 export const enum RumSessionPlan {
@@ -61,8 +59,6 @@ export function startRumSessionManager(configuration: RumConfiguration, lifeCycl
         id: session.id,
         plan,
         sessionReplayAllowed: plan === RumSessionPlan.WITH_SESSION_REPLAY,
-        longTaskAllowed: configuration.trackLongTasks,
-        resourceAllowed: configuration.trackResources,
       }
     },
     expire: sessionManager.expire,
@@ -78,8 +74,6 @@ export function startRumSessionManagerStub(): RumSessionManager {
     id: '00000000-aaaa-0000-aaaa-000000000000',
     plan: RumSessionPlan.WITHOUT_SESSION_REPLAY, // plan value should not be taken into account for mobile
     sessionReplayAllowed: false,
-    longTaskAllowed: true,
-    resourceAllowed: true,
   }
   return {
     findTrackedSession: () => session,
