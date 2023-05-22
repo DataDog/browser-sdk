@@ -454,9 +454,9 @@ __metadata:
   resolution: "@datadog/browser-sdk-developer-extension@workspace:developer-extension"
   dependencies:
     "@emotion/react": 11.11.0
-    "@mantine/core": 6.0.10
-    "@mantine/hooks": 6.0.10
-    "@types/chrome": 0.0.235
+    "@mantine/core": 6.0.11
+    "@mantine/hooks": 6.0.11
+    "@types/chrome": 0.0.236
     "@types/react": 18.2.6
     "@types/react-dom": 18.2.4
     "@webextension-toolbox/webpack-webextension-plugin": 3.0.0
@@ -465,7 +465,7 @@ __metadata:
     react: 18.2.0
     react-dom: 18.2.0
     react-json-view: 1.21.3
-    webpack: 5.82.0
+    webpack: 5.82.1
   languageName: unknown
   linkType: soft
 
@@ -593,14 +593,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@es-joy/jsdoccomment@npm:~0.37.0":
-  version: 0.37.0
-  resolution: "@es-joy/jsdoccomment@npm:0.37.0"
+"@es-joy/jsdoccomment@npm:~0.39.3":
+  version: 0.39.3
+  resolution: "@es-joy/jsdoccomment@npm:0.39.3"
   dependencies:
     comment-parser: 1.3.1
-    esquery: ^1.4.0
+    esquery: ^1.5.0
     jsdoc-type-pratt-parser: ~4.0.0
-  checksum: 949c0d164573f189998a7ad7ace936639535e1cacf495d7daa893142dbe9e947f146602615732eaa3174b7ca08af9eea5d9fa97a68fdfe0aa14213ab0f319b13
+  checksum: 9fd0fee054950eb4a8d734971ef3bb5dd945a2edae159a97f9d93c381f01a44740fd4e2b648f743213df01cb038494c67d074a8384efd9b56c241086699e5b9e
   languageName: node
   linkType: hard
 
@@ -992,36 +992,36 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mantine/core@npm:6.0.10":
-  version: 6.0.10
-  resolution: "@mantine/core@npm:6.0.10"
+"@mantine/core@npm:6.0.11":
+  version: 6.0.11
+  resolution: "@mantine/core@npm:6.0.11"
   dependencies:
     "@floating-ui/react": ^0.19.1
-    "@mantine/styles": 6.0.10
-    "@mantine/utils": 6.0.10
+    "@mantine/styles": 6.0.11
+    "@mantine/utils": 6.0.11
     "@radix-ui/react-scroll-area": 1.0.2
     react-remove-scroll: ^2.5.5
     react-textarea-autosize: 8.3.4
   peerDependencies:
-    "@mantine/hooks": 6.0.10
+    "@mantine/hooks": 6.0.11
     react: ">=16.8.0"
     react-dom: ">=16.8.0"
-  checksum: 9ef041357599584eed7cc23b68d5cb4d9fc88db1f9942c2f51360bbaeec5a02b66bf87a3f11ac2f40180aef8f098512d325b4df26c5328239011102f34800f13
+  checksum: fd9c915f00e049bf7599a581b00b65b383420fae6c0275f1be8b1544151687c0660489d378f3a36945b8a1f4d72daacca008142f1bb6e5c9aa71bf6f126abfc1
   languageName: node
   linkType: hard
 
-"@mantine/hooks@npm:6.0.10":
-  version: 6.0.10
-  resolution: "@mantine/hooks@npm:6.0.10"
+"@mantine/hooks@npm:6.0.11":
+  version: 6.0.11
+  resolution: "@mantine/hooks@npm:6.0.11"
   peerDependencies:
     react: ">=16.8.0"
-  checksum: 95c634f8e391b5ade9b4fa68b8fb8341e41db123703606647809260016471147e2fbf5b6c5266f557e5f260ef65d21c9d5048a98c9040fbb59df390fe1f6a014
+  checksum: d691e1b2a3200ce9d043f3daea2b1647446a3a5ff155f3afe0781d28e38c0fb514baf086aecec018e238e21c3aa19e90e0e91bdcbe96e7d86a5b0411c2016645
   languageName: node
   linkType: hard
 
-"@mantine/styles@npm:6.0.10":
-  version: 6.0.10
-  resolution: "@mantine/styles@npm:6.0.10"
+"@mantine/styles@npm:6.0.11":
+  version: 6.0.11
+  resolution: "@mantine/styles@npm:6.0.11"
   dependencies:
     clsx: 1.1.1
     csstype: 3.0.9
@@ -1029,16 +1029,16 @@ __metadata:
     "@emotion/react": ">=11.9.0"
     react: ">=16.8.0"
     react-dom: ">=16.8.0"
-  checksum: b88de24de6d56cdd3734efff97590cc8beb2439c01e486a78f984866fdc4d11126432ffd4423cc1c8b8337609ff9114b5acfe54ddea2b968e550edd78116d141
+  checksum: c8fd7a7b4127c13579c658ed1eb96f8e85012ac6acf91acedbe18c825768b70b201bb0ea9b9ade8d85ec633489889ccb3025cbcc00d40ed7611885ffb92ba064
   languageName: node
   linkType: hard
 
-"@mantine/utils@npm:6.0.10":
-  version: 6.0.10
-  resolution: "@mantine/utils@npm:6.0.10"
+"@mantine/utils@npm:6.0.11":
+  version: 6.0.11
+  resolution: "@mantine/utils@npm:6.0.11"
   peerDependencies:
     react: ">=16.8.0"
-  checksum: 945e9a409ec74eb5cf811d87fd5859c6c5a520a36add1c90e9a7b50cc15dcc5a412f3f405f8be73a15e3c33682131c5aeb2b252809c1f32d2a6967970089ad3c
+  checksum: 2ed85f45595793b059d5818704f75ad7844e85e2aecf901d65e02a3997b6ad4ac50e5dc4e8e2a52f3554b30426e48ddaaa4ba73627f19c2491340cc5e49feaed
   languageName: node
   linkType: hard
 
@@ -1909,13 +1909,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/chrome@npm:0.0.235":
-  version: 0.0.235
-  resolution: "@types/chrome@npm:0.0.235"
+"@types/chrome@npm:0.0.236":
+  version: 0.0.236
+  resolution: "@types/chrome@npm:0.0.236"
   dependencies:
     "@types/filesystem": "*"
     "@types/har-format": "*"
-  checksum: ace0b9dac6d531c2a361e0ef4f807f02f2614062bc2628f6788e1e4b4c06543828c65b6b11560db69ff45b34bf9c6ddb8df0a47209b1cd3f4488a76c8aec1bdd
+  checksum: 64cc6f8ac5c23f5dc6a3e1137721dda52e6401b1e1a8f9d16bfca7236bd5a118be6746324fd9e33630d98863370137ff0749b9949ededb9f46accb187f333896
   languageName: node
   linkType: hard
 
@@ -2225,10 +2225,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:18.16.6":
-  version: 18.16.6
-  resolution: "@types/node@npm:18.16.6"
-  checksum: 99417418952c0b1a6ff5dd40ccf01c2cd18db6a1c54bfaaff29c700c877e2e541aa31ea33090592f3817adb2b8c0946b86c7fb57049131e7c08252d70075f09b
+"@types/node@npm:18.16.12":
+  version: 18.16.12
+  resolution: "@types/node@npm:18.16.12"
+  checksum: 90b316c097a059534870bc8e358c7996d99e3bb4395c88a91b893b925ad34e32ff1177009ec6c16a6467266414dca64ec9613e9e6bb3f91b6de0ab629d3bb3b9
   languageName: node
   linkType: hard
 
@@ -2406,14 +2406,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript-eslint/eslint-plugin@npm:5.59.5":
-  version: 5.59.5
-  resolution: "@typescript-eslint/eslint-plugin@npm:5.59.5"
+"@typescript-eslint/eslint-plugin@npm:5.59.6":
+  version: 5.59.6
+  resolution: "@typescript-eslint/eslint-plugin@npm:5.59.6"
   dependencies:
     "@eslint-community/regexpp": ^4.4.0
-    "@typescript-eslint/scope-manager": 5.59.5
-    "@typescript-eslint/type-utils": 5.59.5
-    "@typescript-eslint/utils": 5.59.5
+    "@typescript-eslint/scope-manager": 5.59.6
+    "@typescript-eslint/type-utils": 5.59.6
+    "@typescript-eslint/utils": 5.59.6
     debug: ^4.3.4
     grapheme-splitter: ^1.0.4
     ignore: ^5.2.0
@@ -2426,43 +2426,43 @@ __metadata:
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: cc0e5ad8d70e140f0dada2fd1ad69d7c31d3f3dfe75939286fdc3950ff2e37033889acc7c9d92c074b67de3bbb6e46916d688e848fb98dde63b23c08a8b07884
+  checksum: fc495b5eadc70603f0d677921a70f151ac94453ebd76b77abbf7ed213c09daf05a3e2b2e2b16139b30dc6574d068d988e4e53c017759f3d3307fa394cfd4ae39
   languageName: node
   linkType: hard
 
-"@typescript-eslint/parser@npm:5.59.5":
-  version: 5.59.5
-  resolution: "@typescript-eslint/parser@npm:5.59.5"
+"@typescript-eslint/parser@npm:5.59.6":
+  version: 5.59.6
+  resolution: "@typescript-eslint/parser@npm:5.59.6"
   dependencies:
-    "@typescript-eslint/scope-manager": 5.59.5
-    "@typescript-eslint/types": 5.59.5
-    "@typescript-eslint/typescript-estree": 5.59.5
+    "@typescript-eslint/scope-manager": 5.59.6
+    "@typescript-eslint/types": 5.59.6
+    "@typescript-eslint/typescript-estree": 5.59.6
     debug: ^4.3.4
   peerDependencies:
     eslint: ^6.0.0 || ^7.0.0 || ^8.0.0
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: ef4122074f2c00be1dabbb3fb5534280f81b45f8de6c1a696092af5175684fea65bc002814546d06f880ea5beff2006589e2633662e92d65035437c8e2d9134c
+  checksum: 1f6e259f501e3d13f9632bd71da2cf3d11150f1276079522e8d5c392a07c3aea867c855481981fca3bf32beb6bef046ef64cdfceba8ea4150f27099e44d9a92c
   languageName: node
   linkType: hard
 
-"@typescript-eslint/scope-manager@npm:5.59.5":
-  version: 5.59.5
-  resolution: "@typescript-eslint/scope-manager@npm:5.59.5"
+"@typescript-eslint/scope-manager@npm:5.59.6":
+  version: 5.59.6
+  resolution: "@typescript-eslint/scope-manager@npm:5.59.6"
   dependencies:
-    "@typescript-eslint/types": 5.59.5
-    "@typescript-eslint/visitor-keys": 5.59.5
-  checksum: b3d8a5b70e741b9bef60d0a297da77e844cb744895f31fb6880fdac4c53f7c58f3e04065a7d644afb6e1dc51591285ec866eca2fbd2ad50de6b376031aaccfbd
+    "@typescript-eslint/types": 5.59.6
+    "@typescript-eslint/visitor-keys": 5.59.6
+  checksum: 65cce7b3fc320e264ef966da9a26bb7cba014ec5a0c9c5518cb08a624d67ac6eb67dd8e2df49b33eeaaaacaf42c73f291d56f93a9d1ec82c58bd1e7e872e530b
   languageName: node
   linkType: hard
 
-"@typescript-eslint/type-utils@npm:5.59.5":
-  version: 5.59.5
-  resolution: "@typescript-eslint/type-utils@npm:5.59.5"
+"@typescript-eslint/type-utils@npm:5.59.6":
+  version: 5.59.6
+  resolution: "@typescript-eslint/type-utils@npm:5.59.6"
   dependencies:
-    "@typescript-eslint/typescript-estree": 5.59.5
-    "@typescript-eslint/utils": 5.59.5
+    "@typescript-eslint/typescript-estree": 5.59.6
+    "@typescript-eslint/utils": 5.59.6
     debug: ^4.3.4
     tsutils: ^3.21.0
   peerDependencies:
@@ -2470,23 +2470,23 @@ __metadata:
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: 9ef2b219c71abe3d2ffa4c791ec3da8d120b6a202e7f9c7722d1e8193f8709d6ebec2abc2862b9fa78dffe6214d033898d21c925fc961feb4488070b66aab9f5
+  checksum: f8e09dc16f413090ec464d48bd86e1b44a569e5a6ed78370f3e8132e80a464dfcdc1525f4f0706b79e397841b1865016cb38353475264beec49851d78a7fdd36
   languageName: node
   linkType: hard
 
-"@typescript-eslint/types@npm:5.59.5":
-  version: 5.59.5
-  resolution: "@typescript-eslint/types@npm:5.59.5"
-  checksum: 98c93d354d6410934f468ba8bd468d2746f20b2910c0ef5b08fc788c0742aa7cb82eb2edc4194c85d3fabac5563c1a91d377e84bf5c25caeb4ac9e871aabd4bb
+"@typescript-eslint/types@npm:5.59.6":
+  version: 5.59.6
+  resolution: "@typescript-eslint/types@npm:5.59.6"
+  checksum: e898ca629d95b69f5dbfb7c9a3d28f943e5a372d37bf7efaefb41341d2d7147372cd4956b35b637e9b3a1b8555d64a5b35776650b815c4227b114513247ec2b5
   languageName: node
   linkType: hard
 
-"@typescript-eslint/typescript-estree@npm:5.59.5":
-  version: 5.59.5
-  resolution: "@typescript-eslint/typescript-estree@npm:5.59.5"
+"@typescript-eslint/typescript-estree@npm:5.59.6":
+  version: 5.59.6
+  resolution: "@typescript-eslint/typescript-estree@npm:5.59.6"
   dependencies:
-    "@typescript-eslint/types": 5.59.5
-    "@typescript-eslint/visitor-keys": 5.59.5
+    "@typescript-eslint/types": 5.59.6
+    "@typescript-eslint/visitor-keys": 5.59.6
     debug: ^4.3.4
     globby: ^11.1.0
     is-glob: ^4.0.3
@@ -2495,70 +2495,70 @@ __metadata:
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: 10a8c01ad53da115ca698668941dcb18c497035ba07faf08237bfa3ab92185bdfaf1df93562915a936b49e9f72a4cc6b10b1d9296b7cdc8c34ba0ca323c37677
+  checksum: 65b7879e8cd4ccb987c1e1fa75cd84250cb46799ba0de6cdcaec70f6700b45ae4efcebb24163ca7946152e1b12595ee58e35bfb31ea6d35b3f39deaf973d4f1a
   languageName: node
   linkType: hard
 
-"@typescript-eslint/utils@npm:5.59.5":
-  version: 5.59.5
-  resolution: "@typescript-eslint/utils@npm:5.59.5"
+"@typescript-eslint/utils@npm:5.59.6":
+  version: 5.59.6
+  resolution: "@typescript-eslint/utils@npm:5.59.6"
   dependencies:
     "@eslint-community/eslint-utils": ^4.2.0
     "@types/json-schema": ^7.0.9
     "@types/semver": ^7.3.12
-    "@typescript-eslint/scope-manager": 5.59.5
-    "@typescript-eslint/types": 5.59.5
-    "@typescript-eslint/typescript-estree": 5.59.5
+    "@typescript-eslint/scope-manager": 5.59.6
+    "@typescript-eslint/types": 5.59.6
+    "@typescript-eslint/typescript-estree": 5.59.6
     eslint-scope: ^5.1.1
     semver: ^7.3.7
   peerDependencies:
     eslint: ^6.0.0 || ^7.0.0 || ^8.0.0
-  checksum: 2703972653d3c6eab2423d9a2586908086afa3b89580969ed38e454bc372265d5ca9fadf7967e4ea639d482ad069f763981ef4a03a42d79df28f43f00ee9d43a
+  checksum: 40ffe1d2f1fbf6c30aa05f4a68785fb1e77aa09772ea45b001daf4068e504830cf60a441a819b2c6ffe4a19216aba404869300b2ce6bc2a67d093f74ded504a7
   languageName: node
   linkType: hard
 
-"@typescript-eslint/visitor-keys@npm:5.59.5":
-  version: 5.59.5
-  resolution: "@typescript-eslint/visitor-keys@npm:5.59.5"
+"@typescript-eslint/visitor-keys@npm:5.59.6":
+  version: 5.59.6
+  resolution: "@typescript-eslint/visitor-keys@npm:5.59.6"
   dependencies:
-    "@typescript-eslint/types": 5.59.5
+    "@typescript-eslint/types": 5.59.6
     eslint-visitor-keys: ^3.3.0
-  checksum: 94db281ec8ea3a7ede46763aaa0d3349e035b19334fd03e2e560f89c70faebcfa937d51b53d2eaad2506b60a5d901428cc8b5a65ad8e90ca1c12a133dbe977fc
+  checksum: 8f216411344f5ed618ab838fa3fc4b04f3041f33e08d9b160df4db988f496c71f934c4b0362f686ce63ecf7f5d926c67190d5116c91945c1957544728449ec6b
   languageName: node
   linkType: hard
 
-"@wdio/browserstack-service@npm:8.10.1":
-  version: 8.10.1
-  resolution: "@wdio/browserstack-service@npm:8.10.1"
+"@wdio/browserstack-service@npm:8.10.2":
+  version: 8.10.2
+  resolution: "@wdio/browserstack-service@npm:8.10.2"
   dependencies:
     "@types/gitconfiglocal": ^2.0.1
     "@wdio/logger": 8.6.6
-    "@wdio/reporter": 8.10.1
-    "@wdio/types": 8.10.1
+    "@wdio/reporter": 8.10.2
+    "@wdio/types": 8.10.2
     browserstack-local: ^1.5.1
     form-data: ^4.0.0
     git-repo-info: ^2.1.1
     gitconfiglocal: ^2.1.0
     got: ^12.1.0
     uuid: ^8.3.2
-    webdriverio: 8.10.1
+    webdriverio: 8.10.2
   peerDependencies:
     "@wdio/cli": ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0
-  checksum: 4bf3458e7926f3613ea4743168d5290b67e4b74cad327a4e967f08a3065007d5f4cb73f5e890248c2b4e28d96c7a27f790125527a6be88a7f4efc933be7c0f65
+  checksum: 8ce247c3011b89d8d5fb4f3b332f8d0f0a9345b85a472b3d373fb1d8ef32f6565927d6260ee7efe92b60a8bc92624b67c2e84ba9d6167d57ba3bd0eeb6ce3207
   languageName: node
   linkType: hard
 
-"@wdio/cli@npm:8.10.1":
-  version: 8.10.1
-  resolution: "@wdio/cli@npm:8.10.1"
+"@wdio/cli@npm:8.10.2":
+  version: 8.10.2
+  resolution: "@wdio/cli@npm:8.10.2"
   dependencies:
     "@types/node": ^20.1.1
-    "@wdio/config": 8.10.1
-    "@wdio/globals": 8.10.1
+    "@wdio/config": 8.10.2
+    "@wdio/globals": 8.10.2
     "@wdio/logger": 8.6.6
-    "@wdio/protocols": 8.8.1
-    "@wdio/types": 8.10.1
-    "@wdio/utils": 8.10.1
+    "@wdio/protocols": 8.10.2
+    "@wdio/types": 8.10.2
+    "@wdio/utils": 8.10.2
     async-exit-hook: ^2.0.1
     chalk: ^5.2.0
     chokidar: ^3.5.3
@@ -2572,28 +2572,28 @@ __metadata:
     lodash.union: ^4.6.0
     read-pkg-up: 9.1.0
     recursive-readdir: ^2.2.3
-    webdriverio: 8.10.1
+    webdriverio: 8.10.2
     yargs: ^17.7.2
     yarn-install: ^1.0.0
   bin:
     wdio: bin/wdio.js
-  checksum: 0a15d4f8b7b013828d70a8558c2628015b512c5dc9c25f6ca37f942feab4c1f12c771107051ebac58d19830e6b09d1859c9b8a96acb967cf70e5490d5dbdf852
+  checksum: 43726cc7e32389d95efade7717426a272a30891ab541c7219db44ac23df9e16d9516f34c161a714c27f110b0e942064659fb5e9e6bbec8567cc57a315ceab9a3
   languageName: node
   linkType: hard
 
-"@wdio/config@npm:8.10.1":
-  version: 8.10.1
-  resolution: "@wdio/config@npm:8.10.1"
+"@wdio/config@npm:8.10.2":
+  version: 8.10.2
+  resolution: "@wdio/config@npm:8.10.2"
   dependencies:
     "@wdio/logger": 8.6.6
-    "@wdio/types": 8.10.1
-    "@wdio/utils": 8.10.1
+    "@wdio/types": 8.10.2
+    "@wdio/utils": 8.10.2
     decamelize: ^6.0.0
     deepmerge-ts: ^5.0.0
     glob: ^10.2.2
     import-meta-resolve: ^3.0.0
     read-pkg-up: ^9.1.0
-  checksum: 67ca55d65bae501878de2f25f65c687ecac3397f1951fb02c0b69a29901418b7c109debbb2501428b19ea729109404202d1ea4a7e15c8703de3d015e15d826dc
+  checksum: bfcf15b612f9b8218ba417c6e0af5fdbe855742e94895af1f50d90ca6a400a75b9cecb1db7776112efabdd4ef1759b1ee0afdb974cc6ef89193a59b348b8de07
   languageName: node
   linkType: hard
 
@@ -2613,18 +2613,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@wdio/globals@npm:8.10.1":
-  version: 8.10.1
-  resolution: "@wdio/globals@npm:8.10.1"
+"@wdio/globals@npm:8.10.2":
+  version: 8.10.2
+  resolution: "@wdio/globals@npm:8.10.2"
   dependencies:
     expect-webdriverio: ^4.0.1
-    webdriverio: 8.10.1
+    webdriverio: 8.10.2
   dependenciesMeta:
     expect-webdriverio:
       optional: true
     webdriverio:
       optional: true
-  checksum: a104ee4758915b3467d6d08aa18fba6279226bb3575e7a164431765015c34c15e8b1b1b658f4f7050ae6633af6e8cf4da1f6a6dbefa5aa770baa5edf0ed0dea1
+  checksum: f90b1f32cf26fa429f51153266d94e3ce6d2f73ff12eaaf46556c48f19ab1ffd391ce5f6813fc3aae838e992404fd1bb5c77f85c69b3efb281306e016d921573
   languageName: node
   linkType: hard
 
@@ -2643,46 +2643,46 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@wdio/jasmine-framework@npm:8.10.1":
-  version: 8.10.1
-  resolution: "@wdio/jasmine-framework@npm:8.10.1"
+"@wdio/jasmine-framework@npm:8.10.2":
+  version: 8.10.2
+  resolution: "@wdio/jasmine-framework@npm:8.10.2"
   dependencies:
     "@types/node": ^20.1.0
-    "@wdio/globals": 8.10.1
+    "@wdio/globals": 8.10.2
     "@wdio/logger": 8.6.6
-    "@wdio/types": 8.10.1
-    "@wdio/utils": 8.10.1
+    "@wdio/types": 8.10.2
+    "@wdio/utils": 8.10.2
     expect-webdriverio: ^4.0.1
     jasmine: ^4.2.1
-  checksum: 1b152ea7a8fcd8791815dca2914343794f393a1144d97af3c811ee6a77c0d5c23e0c9a1bc46303ec8c252021e353370ab5a9f53d97146f8937b1028414ad9446
+  checksum: 3f72cc91d91e8cb2e7bf10a3e4a1e90d11b8bf3c31fbf9934e2077eeca677aada11713afe4960489fe575f21d62a519153a0367d4520e22ce8cf89dff6091449
   languageName: node
   linkType: hard
 
-"@wdio/junit-reporter@npm:8.10.1":
-  version: 8.10.1
-  resolution: "@wdio/junit-reporter@npm:8.10.1"
+"@wdio/junit-reporter@npm:8.10.2":
+  version: 8.10.2
+  resolution: "@wdio/junit-reporter@npm:8.10.2"
   dependencies:
-    "@wdio/reporter": 8.10.1
-    "@wdio/types": 8.10.1
+    "@wdio/reporter": 8.10.2
+    "@wdio/types": 8.10.2
     json-stringify-safe: ^5.0.1
     junit-report-builder: ^3.0.0
-  checksum: 1d331b2fb8708be7ed6d14e86ef746a41490c779faec31c34f4af93426bf2d18dadfb5092bd8522026a7faea7b1b027cc06820a82e195ef80515b5a37102563a
+  checksum: 13a7598cef19702b75dcbdde9d3b3e42ec557b50ee770bd4f088619d6c2412316347725a701c404b52eb2b4801bdf3ab2fc32836a3b5809c37fed777f9fb73fa
   languageName: node
   linkType: hard
 
-"@wdio/local-runner@npm:8.10.1":
-  version: 8.10.1
-  resolution: "@wdio/local-runner@npm:8.10.1"
+"@wdio/local-runner@npm:8.10.2":
+  version: 8.10.2
+  resolution: "@wdio/local-runner@npm:8.10.2"
   dependencies:
     "@types/node": ^20.1.0
     "@wdio/logger": 8.6.6
     "@wdio/repl": 8.10.1
-    "@wdio/runner": 8.10.1
-    "@wdio/types": 8.10.1
+    "@wdio/runner": 8.10.2
+    "@wdio/types": 8.10.2
     async-exit-hook: ^2.0.1
     split2: ^4.1.0
     stream-buffers: ^3.0.2
-  checksum: 85538a9a53b85b5c9b8bb237939a690d8bcacec4b650e3f6d4aafa242b543f9f0160b216e10ef0d4eaccde97f10de856414bb8ea815c58313aa10967d1d03320
+  checksum: 98e15ce41d05c945b6861c4c2566b7aa6cc976e135cf62cfdda26e0e380f17fd12a9ae7f6735e47a3c91e43058611b15831ca220a267c9a4cab76caedd55a2b6
   languageName: node
   linkType: hard
 
@@ -2698,17 +2698,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@wdio/protocols@npm:8.10.2":
+  version: 8.10.2
+  resolution: "@wdio/protocols@npm:8.10.2"
+  checksum: 8b228cdcf8e517b3535e4b2de587119a6a1f4faac4c0624a5f83bb023887e66bbf22f063b34d2325241c7fda0676d4d6365a982faa8e45a07f1f680ca74f3151
+  languageName: node
+  linkType: hard
+
 "@wdio/protocols@npm:8.6.6":
   version: 8.6.6
   resolution: "@wdio/protocols@npm:8.6.6"
   checksum: 67b0cbdf61eb5a20b108c4a66bb8c1cde4a07494954c63e4f2c587dd1391a8a4a8eb66c04188da19aa91d66b5613e35764ec563e18185186af2aadf9667d71e0
-  languageName: node
-  linkType: hard
-
-"@wdio/protocols@npm:8.8.1":
-  version: 8.8.1
-  resolution: "@wdio/protocols@npm:8.8.1"
-  checksum: 1be0bdef4cea1f0b6e70eb2027d4ee327f9e6c43f9f48df37924ec094644a559e1d66a87ee7bd22ef8c27f59c6382653bd2ed6ee90b4840777221e6ad730fb39
   languageName: node
   linkType: hard
 
@@ -2730,71 +2730,71 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@wdio/reporter@npm:8.10.1":
-  version: 8.10.1
-  resolution: "@wdio/reporter@npm:8.10.1"
+"@wdio/reporter@npm:8.10.2":
+  version: 8.10.2
+  resolution: "@wdio/reporter@npm:8.10.2"
   dependencies:
     "@types/node": ^20.1.0
     "@wdio/logger": 8.6.6
-    "@wdio/types": 8.10.1
+    "@wdio/types": 8.10.2
     diff: ^5.0.0
     object-inspect: ^1.12.0
     supports-color: 9.3.1
-  checksum: 9d0016efa3a0701725ad1dc004955ca9fec588413dd6d4699c402e7337b439a48b37bd5f51a3e4b86bcaaa0e990e1c4334e17f7022c3a841659b47e6b714efed
+  checksum: 989b6e7bc0ada924c52016d820aab7de97f92b8f907fa8f1964495543fc686eef35ac3325bfa7bea93758049327ee969ac2663f72766b00c32c3d13c59f94b3a
   languageName: node
   linkType: hard
 
-"@wdio/runner@npm:8.10.1":
-  version: 8.10.1
-  resolution: "@wdio/runner@npm:8.10.1"
+"@wdio/runner@npm:8.10.2":
+  version: 8.10.2
+  resolution: "@wdio/runner@npm:8.10.2"
   dependencies:
     "@types/node": ^20.1.0
-    "@wdio/config": 8.10.1
-    "@wdio/globals": 8.10.1
+    "@wdio/config": 8.10.2
+    "@wdio/globals": 8.10.2
     "@wdio/logger": 8.6.6
-    "@wdio/types": 8.10.1
-    "@wdio/utils": 8.10.1
+    "@wdio/types": 8.10.2
+    "@wdio/utils": 8.10.2
     deepmerge-ts: ^5.0.0
     expect-webdriverio: ^4.0.1
     gaze: ^1.1.2
-    webdriver: 8.10.1
-    webdriverio: 8.10.1
-  checksum: 68d265be1e60dfd9d24217c7e186ebed007b2a35fe9763798e27e0436888a24801593075cff49a111761702d253b96646e0f4e9cf15e04a3cc99e1016d7c5ec7
+    webdriver: 8.10.2
+    webdriverio: 8.10.2
+  checksum: 66db6b4d3c8f698b2343fa7a687b7e043fca8de14395cb3d9ec857d92070f4e85cdddd188c68da40cb05cd70d2d600c292ca795cade155a16f931534e90aa4e3
   languageName: node
   linkType: hard
 
-"@wdio/selenium-standalone-service@npm:8.10.1":
-  version: 8.10.1
-  resolution: "@wdio/selenium-standalone-service@npm:8.10.1"
+"@wdio/selenium-standalone-service@npm:8.10.2":
+  version: 8.10.2
+  resolution: "@wdio/selenium-standalone-service@npm:8.10.2"
   dependencies:
     "@types/node": ^20.1.0
-    "@wdio/config": 8.10.1
+    "@wdio/config": 8.10.2
     "@wdio/logger": 8.6.6
-    "@wdio/types": 8.10.1
+    "@wdio/types": 8.10.2
     selenium-standalone: ^8.2.1
-  checksum: 5f7f5d06183011df881624bee9b63408b141bce8e9260dcd46b2d6931ef942f6d53233257fc602f6b7d01baff4157b94cf2da3a794240671654500f81b747ab8
+  checksum: b9abb49c57c7efcc98f08142b672f629d1e3bd070ce9d3c89f01adb740cbec7339d98a3a187d4fc4d8f28a3339b75d5851a1b49fe24091df843f463b5dc16c81
   languageName: node
   linkType: hard
 
-"@wdio/spec-reporter@npm:8.10.1":
-  version: 8.10.1
-  resolution: "@wdio/spec-reporter@npm:8.10.1"
+"@wdio/spec-reporter@npm:8.10.2":
+  version: 8.10.2
+  resolution: "@wdio/spec-reporter@npm:8.10.2"
   dependencies:
-    "@wdio/reporter": 8.10.1
-    "@wdio/types": 8.10.1
+    "@wdio/reporter": 8.10.2
+    "@wdio/types": 8.10.2
     chalk: ^5.1.2
     easy-table: ^1.2.0
     pretty-ms: ^7.0.0
-  checksum: 18abfee4e3ed9fcfdc64daf7e1cf1a01e14490d339ba562c2b4a7ced6e4091f987640c1f576f45154073cea64117a084e02ba217443b87125e37c28952920948
+  checksum: 44edf867772c6728c66f23c041486f0cd933cd9f10bf826e5a1919bb2fd93a3e883d5679eb411f6311bc6161fd7cf137b2f8714c9cd3785a668ac6084ded9fab
   languageName: node
   linkType: hard
 
-"@wdio/types@npm:8.10.1":
-  version: 8.10.1
-  resolution: "@wdio/types@npm:8.10.1"
+"@wdio/types@npm:8.10.2":
+  version: 8.10.2
+  resolution: "@wdio/types@npm:8.10.2"
   dependencies:
     "@types/node": ^20.1.0
-  checksum: c324aea065816c3246dfefa7f825ece25449c420bfa508f1776148aed93ebfc693649c6892e7b76c567982e37c6a133cfd9b61a0bb377d829aee952bf9e6d479
+  checksum: 121383a757153727d6018c6fac940a8d424c23d869c5bcf9cdd5f9c05c594e832be3a0978ef71c9b16b53f41bc0ff2afae9860c1ffbdb9dd4cb80000b30ffe38
   languageName: node
   linkType: hard
 
@@ -2807,15 +2807,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@wdio/utils@npm:8.10.1":
-  version: 8.10.1
-  resolution: "@wdio/utils@npm:8.10.1"
+"@wdio/utils@npm:8.10.2":
+  version: 8.10.2
+  resolution: "@wdio/utils@npm:8.10.2"
   dependencies:
     "@wdio/logger": 8.6.6
-    "@wdio/types": 8.10.1
+    "@wdio/types": 8.10.2
     import-meta-resolve: ^3.0.0
     p-iteration: ^1.1.8
-  checksum: c8c3d41bd3fb125f5b2336c983f11f3a0af80f66740f43943810e24f2ca6f8c80a0186bc6a8ed3cc925759cd5a2bba61eda34cae6a04bb430928f281bd6827ac
+  checksum: 6ddf48d6ec7d18b78297d38d94b9631ef07a832e0414749f9829b526f382c3d206092a22f11d936f734f6ef3f22a8730c987be9197978334a939fe05830f3e45
   languageName: node
   linkType: hard
 
@@ -3407,6 +3407,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"are-docs-informative@npm:^0.0.2":
+  version: 0.0.2
+  resolution: "are-docs-informative@npm:0.0.2"
+  checksum: 7a48ca90d66e29afebc4387d7029d86cfe97bad7e796c8e7de01309e02dcfc027250231c02d4ca208d2984170d09026390b946df5d3d02ac638ab35f74501c74
+  languageName: node
+  linkType: hard
+
 "are-we-there-yet@npm:^3.0.0":
   version: 3.0.0
   resolution: "are-we-there-yet@npm:3.0.0"
@@ -3784,20 +3791,20 @@ __metadata:
   resolution: "browser-sdk@workspace:."
   dependencies:
     "@jsdevtools/coverage-istanbul-loader": 3.0.5
-    "@types/chrome": 0.0.235
+    "@types/chrome": 0.0.236
     "@types/connect-busboy": 1.0.0
     "@types/cors": 2.8.13
     "@types/express": 4.17.17
     "@types/jasmine": 3.10.7
-    "@typescript-eslint/eslint-plugin": 5.59.5
-    "@typescript-eslint/parser": 5.59.5
-    "@wdio/browserstack-service": 8.10.1
-    "@wdio/cli": 8.10.1
-    "@wdio/jasmine-framework": 8.10.1
-    "@wdio/junit-reporter": 8.10.1
-    "@wdio/local-runner": 8.10.1
-    "@wdio/selenium-standalone-service": 8.10.1
-    "@wdio/spec-reporter": 8.10.1
+    "@typescript-eslint/eslint-plugin": 5.59.6
+    "@typescript-eslint/parser": 5.59.6
+    "@wdio/browserstack-service": 8.10.2
+    "@wdio/cli": 8.10.2
+    "@wdio/jasmine-framework": 8.10.2
+    "@wdio/junit-reporter": 8.10.2
+    "@wdio/local-runner": 8.10.2
+    "@wdio/selenium-standalone-service": 8.10.2
+    "@wdio/spec-reporter": 8.10.2
     ajv: 6.12.6
     browserstack-local: 1.5.2
     connect-busboy: 1.0.0
@@ -3808,12 +3815,12 @@ __metadata:
     eslint-module-utils: 2.8.0
     eslint-plugin-import: 2.27.5
     eslint-plugin-jasmine: 4.1.3
-    eslint-plugin-jsdoc: 40.3.0
+    eslint-plugin-jsdoc: 44.2.4
     eslint-plugin-local-rules: 1.3.2
     eslint-plugin-prefer-arrow: 1.2.3
     eslint-plugin-unicorn: 46.0.1
     express: 4.18.2
-    glob: 10.2.2
+    glob: 10.2.4
     jasmine-core: 3.99.1
     json-schema-to-typescript: "bcaudan/json-schema-to-typescript#bcaudan/add-readonly-support"
     karma: 6.4.2
@@ -3835,10 +3842,10 @@ __metadata:
     ts-node: 10.9.1
     tsconfig-paths-webpack-plugin: 4.0.1
     typescript: 5.0.4
-    webdriverio: 8.10.1
-    webpack: 5.82.0
+    webdriverio: 8.10.2
+    webpack: 5.82.1
     webpack-cli: 5.1.1
-    webpack-dev-middleware: 6.1.0
+    webpack-dev-middleware: 6.1.1
   languageName: unknown
   linkType: soft
 
@@ -5312,16 +5319,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"devtools@npm:8.10.1":
-  version: 8.10.1
-  resolution: "devtools@npm:8.10.1"
+"devtools@npm:8.10.2":
+  version: 8.10.2
+  resolution: "devtools@npm:8.10.2"
   dependencies:
     "@types/node": ^20.1.0
-    "@wdio/config": 8.10.1
+    "@wdio/config": 8.10.2
     "@wdio/logger": 8.6.6
-    "@wdio/protocols": 8.8.1
-    "@wdio/types": 8.10.1
-    "@wdio/utils": 8.10.1
+    "@wdio/protocols": 8.10.2
+    "@wdio/types": 8.10.2
+    "@wdio/utils": 8.10.2
     chrome-launcher: ^0.15.0
     edge-paths: ^3.0.5
     import-meta-resolve: ^3.0.0
@@ -5330,7 +5337,7 @@ __metadata:
     ua-parser-js: ^1.0.1
     uuid: ^9.0.0
     which: ^3.0.0
-  checksum: 2b8d91df314d7991d3189924ed5fcf1dbc8dec3b072980d612e0066296e256f7f38fc0cb35f799dd615b3b87503b207188b92c81be35b3cf519735a98068a1ae
+  checksum: df89e7166a72bb71f5482ea3ed487de485b06d6e1f5856960a12f942dac10e5b33307041821627f6ca065252d144fda52ad4739421ee4a0afe9ec2e4c74fb389
   languageName: node
   linkType: hard
 
@@ -5693,13 +5700,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"enhanced-resolve@npm:^5.13.0":
-  version: 5.13.0
-  resolution: "enhanced-resolve@npm:5.13.0"
+"enhanced-resolve@npm:^5.14.0":
+  version: 5.14.0
+  resolution: "enhanced-resolve@npm:5.14.0"
   dependencies:
     graceful-fs: ^4.2.4
     tapable: ^2.2.0
-  checksum: 76d6844c4393d76beed5b3ce6cf5a98dee3ad5c84a9887f49ccde1224e3b7af201dfbd5a57ebf2b49f623b74883df262d50ff480d3cc02fc2881fc58b84e1bbe
+  checksum: fff1aaebbf376371e5df4502e111967f6247c37611ad3550e4e7fca657f6dcb29ef7ffe88bf14e5010b78997f1ddd984a8db97af87ee0a5477771398fd326f5b
   languageName: node
   linkType: hard
 
@@ -6063,20 +6070,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-jsdoc@npm:40.3.0":
-  version: 40.3.0
-  resolution: "eslint-plugin-jsdoc@npm:40.3.0"
+"eslint-plugin-jsdoc@npm:44.2.4":
+  version: 44.2.4
+  resolution: "eslint-plugin-jsdoc@npm:44.2.4"
   dependencies:
-    "@es-joy/jsdoccomment": ~0.37.0
+    "@es-joy/jsdoccomment": ~0.39.3
+    are-docs-informative: ^0.0.2
     comment-parser: 1.3.1
     debug: ^4.3.4
     escape-string-regexp: ^4.0.0
     esquery: ^1.5.0
-    semver: ^7.3.8
+    semver: ^7.5.1
     spdx-expression-parse: ^3.0.1
   peerDependencies:
     eslint: ^7.0.0 || ^8.0.0
-  checksum: 7671ac3cc7165cd894cc2fc4c67ddf075f01502c25bbdc649559e7dfd6a525126debe756c83e11887972ffbe57d0d10d3bb17c7269594823654f55be3a3ca5ef
+  checksum: ca89c4ae6aa66146bfb29cfafdac257d29bdc18bc64fb75b73d066786dbc6d331b4c75dded3b444488a2bf50f72cb195d711e4fb5f1f04ecb03dc1b345c4ac95
   languageName: node
   linkType: hard
 
@@ -7295,18 +7303,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"glob@npm:10.2.2, glob@npm:^10.2.2":
-  version: 10.2.2
-  resolution: "glob@npm:10.2.2"
+"glob@npm:10.2.4":
+  version: 10.2.4
+  resolution: "glob@npm:10.2.4"
   dependencies:
     foreground-child: ^3.1.0
     jackspeak: ^2.0.3
     minimatch: ^9.0.0
-    minipass: ^5.0.0
+    minipass: ^5.0.0 || ^6.0.0
     path-scurry: ^1.7.0
   bin:
     glob: dist/cjs/src/bin.js
-  checksum: 33cbbbea74deb605107715f2ee51937953271ff2f6ce712b57d95a714e2f1bf272fa2c2b0c5101097bf98d3e5d40856941af498b05bce07567aca1a6e3cc7ae9
+  checksum: 29845faaa1a8bd2d1f2f26e0c4e5040898c7b4ccfb42e0a558319f6229d124dbc7ccf0ff214402505c5b62c1a39d9d2a1de9c582a74ad415591b96fa53cef466
   languageName: node
   linkType: hard
 
@@ -7321,6 +7329,21 @@ __metadata:
     once: ^1.3.0
     path-is-absolute: ^1.0.0
   checksum: f52480fc82b1e66e52990f0f2e7306447d12294c83fbbee0395e761ad1178172012a7cc0673dbf4810baac400fc09bf34484c08b5778c216403fd823db281716
+  languageName: node
+  linkType: hard
+
+"glob@npm:^10.2.2":
+  version: 10.2.2
+  resolution: "glob@npm:10.2.2"
+  dependencies:
+    foreground-child: ^3.1.0
+    jackspeak: ^2.0.3
+    minimatch: ^9.0.0
+    minipass: ^5.0.0
+    path-scurry: ^1.7.0
+  bin:
+    glob: dist/cjs/src/bin.js
+  checksum: 33cbbbea74deb605107715f2ee51937953271ff2f6ce712b57d95a714e2f1bf272fa2c2b0c5101097bf98d3e5d40856941af498b05bce07567aca1a6e3cc7ae9
   languageName: node
   linkType: hard
 
@@ -10237,6 +10260,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"minipass@npm:^5.0.0 || ^6.0.0":
+  version: 6.0.1
+  resolution: "minipass@npm:6.0.1"
+  checksum: 1df70bb5653251ad7bb0c979e07c18bbc64af1a92472a1d598f4311646da0c192d6ad92850cdfb9f0cd3ada8a9da369dd361c9f2e38a9f64b6a368ae2ac27fac
+  languageName: node
+  linkType: hard
+
 "minizlib@npm:^2.1.1, minizlib@npm:^2.1.2":
   version: 2.1.2
   resolution: "minizlib@npm:2.1.2"
@@ -11566,7 +11596,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "performances@workspace:performances"
   dependencies:
-    "@types/node": 18.16.6
+    "@types/node": 18.16.12
     "@types/node-forge": 1.3.2
     node-forge: 1.3.1
     puppeteer: 19.11.1
@@ -12941,6 +12971,17 @@ __metadata:
   bin:
     semver: bin/semver.js
   checksum: 9845f96b22268190b30025e02feca391451f2bd49b2c51920c27cc56744f64cbe397df089018fdb347d4b4fd800eabbd85661870eb63eb28055d2b72e457f759
+  languageName: node
+  linkType: hard
+
+"semver@npm:^7.5.1":
+  version: 7.5.1
+  resolution: "semver@npm:7.5.1"
+  dependencies:
+    lru-cache: ^6.0.0
+  bin:
+    semver: bin/semver.js
+  checksum: d16dbedad53c65b086f79524b9ef766bf38670b2395bdad5c957f824dcc566b624988013564f4812bcace3f9d405355c3635e2007396a39d1bffc71cfec4a2fc
   languageName: node
   linkType: hard
 
@@ -14644,22 +14685,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webdriver@npm:8.10.1":
-  version: 8.10.1
-  resolution: "webdriver@npm:8.10.1"
+"webdriver@npm:8.10.2":
+  version: 8.10.2
+  resolution: "webdriver@npm:8.10.2"
   dependencies:
     "@types/node": ^20.1.0
     "@types/ws": ^8.5.3
-    "@wdio/config": 8.10.1
+    "@wdio/config": 8.10.2
     "@wdio/logger": 8.6.6
-    "@wdio/protocols": 8.8.1
-    "@wdio/types": 8.10.1
-    "@wdio/utils": 8.10.1
+    "@wdio/protocols": 8.10.2
+    "@wdio/types": 8.10.2
+    "@wdio/utils": 8.10.2
     deepmerge-ts: ^5.0.0
     got: ^12.1.0
     ky: ^0.33.0
     ws: ^8.8.0
-  checksum: b30d161cd9698d0c91cf061e9a1f1b7cb88ef76019ade20d45caa069833e3c9d4e4df95e8f611f83f600f8b5af900130ef6c72b5d3424bb4331d9a6030abadec
+  checksum: 53beec798c479c853ed72dccd7518e0d0070a6d3e0d2afb944830eb09624b03e50aeca208f8eb93c215e472e1bc32958b2cf8654f1b861c2cd0117e981a79b2a
   languageName: node
   linkType: hard
 
@@ -14682,22 +14723,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webdriverio@npm:8.10.1":
-  version: 8.10.1
-  resolution: "webdriverio@npm:8.10.1"
+"webdriverio@npm:8.10.2":
+  version: 8.10.2
+  resolution: "webdriverio@npm:8.10.2"
   dependencies:
     "@types/node": ^20.1.0
-    "@wdio/config": 8.10.1
+    "@wdio/config": 8.10.2
     "@wdio/logger": 8.6.6
-    "@wdio/protocols": 8.8.1
+    "@wdio/protocols": 8.10.2
     "@wdio/repl": 8.10.1
-    "@wdio/types": 8.10.1
-    "@wdio/utils": 8.10.1
+    "@wdio/types": 8.10.2
+    "@wdio/utils": 8.10.2
     archiver: ^5.0.0
     aria-query: ^5.0.0
     css-shorthand-properties: ^1.1.1
     css-value: ^0.0.1
-    devtools: 8.10.1
+    devtools: 8.10.2
     devtools-protocol: ^0.0.1138159
     grapheme-splitter: ^1.0.2
     import-meta-resolve: ^3.0.0
@@ -14710,8 +14751,8 @@ __metadata:
     resq: ^1.9.1
     rgb2hex: 0.2.5
     serialize-error: ^8.0.0
-    webdriver: 8.10.1
-  checksum: a96e9e8395ebb20b64994595f3f1df2d9805432753d8d9725938cf46aa53869f1327d220bf9977286bd381f5798f3d1a370a87ca9dbcd877a7af6b265a78e093
+    webdriver: 8.10.2
+  checksum: 824b90b046415a09a393cdc5bd892dcebda4bd1c52372af6566429f38ac033b43038ede4f7b1b58ecc2a5fa076d34b1a1c9dee76b8b35435d03579f0a25fd014
   languageName: node
   linkType: hard
 
@@ -14787,9 +14828,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack-dev-middleware@npm:6.1.0":
-  version: 6.1.0
-  resolution: "webpack-dev-middleware@npm:6.1.0"
+"webpack-dev-middleware@npm:6.1.1":
+  version: 6.1.1
+  resolution: "webpack-dev-middleware@npm:6.1.1"
   dependencies:
     colorette: ^2.0.10
     memfs: ^3.4.12
@@ -14801,7 +14842,7 @@ __metadata:
   peerDependenciesMeta:
     webpack:
       optional: true
-  checksum: 0377f953b0b163ebbb7097abeaf6c4d8c6873443cf91ee848103b1702f1cd8d2df03587afd0d9f397251b24dc11ba1105a90b9f51c120c216f6232149a7e2628
+  checksum: 3bced6ef644b20f2e76df9db1c5209f4a73761d7d307fe29ae20bc00397d4f9727af2607f98794c6c7c57d5c1a48bfa12690168b08f5d46820b07aab2c63640c
   languageName: node
   linkType: hard
 
@@ -14831,9 +14872,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack@npm:5.82.0":
-  version: 5.82.0
-  resolution: "webpack@npm:5.82.0"
+"webpack@npm:5.82.1":
+  version: 5.82.1
+  resolution: "webpack@npm:5.82.1"
   dependencies:
     "@types/eslint-scope": ^3.7.3
     "@types/estree": ^1.0.0
@@ -14844,7 +14885,7 @@ __metadata:
     acorn-import-assertions: ^1.7.6
     browserslist: ^4.14.5
     chrome-trace-event: ^1.0.2
-    enhanced-resolve: ^5.13.0
+    enhanced-resolve: ^5.14.0
     es-module-lexer: ^1.2.1
     eslint-scope: 5.1.1
     events: ^3.2.0
@@ -14864,7 +14905,7 @@ __metadata:
       optional: true
   bin:
     webpack: bin/webpack.js
-  checksum: 499e7f5f24fccaa76f64f2a01f91f371073416f568ef6171dc73187a89078f0c33410d4c9f40d411f0827bab8455f8476eabd803ef4d2920d9a2e5f17efa2703
+  checksum: 747ee7ebd238c15249c2652060e3c6ca6d62cc66dcf7e4e2824ecd4875b7ea5e01fce8f4179080a3e84dfdb3c8d0992700444c7c5a05ef47b38c0623d3ac76de
   languageName: node
   linkType: hard
 

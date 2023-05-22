@@ -1,4 +1,4 @@
-import type { BackgroundToDevtoolsMessage, DevtoolsToBackgroundMessage } from '../common/types'
+import type { DevtoolsToBackgroundMessage } from '../common/types'
 import { EventListeners } from '../common/eventListeners'
 import { createLogger } from '../common/logger'
 
@@ -12,6 +12,8 @@ const portNameRe = /^devtools-panel-for-tab-(\d+)$/
 
 export const onDevtoolsFirstConnection = new EventListeners<TabId>()
 export const onDevtoolsLastDisconnection = new EventListeners<TabId>()
+export const onDevtoolsConnection = new EventListeners<TabId>()
+export const onDevtoolsDisconnection = new EventListeners<TabId>()
 export const onDevtoolsMessage = new EventListeners<DevtoolsToBackgroundMessage>()
 
 export function sendMessageToDevtools(tabId: TabId, message: any) {
@@ -23,12 +25,6 @@ export function sendMessageToDevtools(tabId: TabId, message: any) {
   }
 
   port.postMessage(message)
-}
-
-export function sendMessageToAllDevtools(message: BackgroundToDevtoolsMessage) {
-  for (const port of devtoolsConnectionsByTabId.values()) {
-    port.postMessage(message)
-  }
 }
 
 // Listen for connection from the devtools-panel
@@ -46,6 +42,7 @@ chrome.runtime.onConnect.addListener((port) => {
   if (devtoolsConnectionsByTabId.size === 1) {
     onDevtoolsFirstConnection.notify(tabId)
   }
+  onDevtoolsConnection.notify(tabId)
 
   port.onMessage.addListener((message) => {
     onDevtoolsMessage.notify(message)
@@ -54,6 +51,8 @@ chrome.runtime.onConnect.addListener((port) => {
   port.onDisconnect.addListener(() => {
     logger.log(`Remove devtools connection for tab ${tabId}`)
     devtoolsConnectionsByTabId.delete(tabId)
+
+    onDevtoolsDisconnection.notify(tabId)
     if (devtoolsConnectionsByTabId.size === 0) {
       onDevtoolsLastDisconnection.notify(tabId)
     }
