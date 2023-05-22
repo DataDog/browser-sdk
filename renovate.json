@@ -16,8 +16,13 @@
     {
       "groupName": "all non-major dependencies",
       "groupSlug": "all-minor-patch",
-      "excludePackageNames": ["puppeteer", "ajv", "ansi-regex"],
+      "excludePackageNames": ["puppeteer", "ansi-regex"],
       "matchUpdateTypes": ["minor", "patch"]
+    },
+    {
+      "matchPackageNames": ["ajv"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
     }
   ]
 }
