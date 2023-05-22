@@ -213,10 +213,6 @@ describe('rum session manager', () => {
         expectSessionReplay: boolean
       }) => {
         it(description, () => {
-          configuration = {
-            ...configuration,
-          }
-
           setupDraws({ tracked: true, trackedWithSessionReplay })
 
           const rumSessionManager = startRumSessionManager(configuration, lifeCycle)
