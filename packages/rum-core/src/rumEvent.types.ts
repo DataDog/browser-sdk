@@ -380,7 +380,7 @@ export type RumResourceEvent = CommonProperties &
       /**
        * Duration of the resource
        */
-      readonly duration: number
+      readonly duration?: number
       /**
        * Size in octet of the resource response body
        */

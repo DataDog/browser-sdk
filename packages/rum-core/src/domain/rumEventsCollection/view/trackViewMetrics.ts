@@ -1,5 +1,14 @@
-import type { Duration, RelativeTime, Observable, ClocksState } from '@datadog/browser-core'
-import { noop, round, ONE_SECOND, elapsed } from '@datadog/browser-core'
+import type { ClocksState, Duration, Observable, RelativeTime } from '@datadog/browser-core'
+import {
+  DOM_EVENT,
+  ONE_SECOND,
+  addEventListener,
+  elapsed,
+  noop,
+  relativeNow,
+  round,
+  throttle,
+} from '@datadog/browser-core'
 import type { RumLayoutShiftTiming } from '../../../browser/performanceCollection'
 import { supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
@@ -7,6 +16,63 @@ import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { waitPageActivityEnd } from '../../waitPageActivityEnd'
+
+import { getScrollY } from '../../../browser/scroll'
+import { getViewportDimension } from '../../../browser/viewportObservable'
+
+export interface ScrollMetrics {
+  maxScrollDepth?: number
+  maxScrollHeight?: number
+  maxScrollDepthTime?: Duration
+  scrollTop?: number
+}
+
+const THROTTLE_SCROLL_DURATION = ONE_SECOND
+
+function getScrollMetrics() {
+  const scrollTop = getScrollY()
+
+  const { height } = getViewportDimension()
+
+  const scrollHeight = Math.round(document.documentElement.scrollHeight)
+  const scrollDepth = Math.round(Math.min(height + scrollTop, scrollHeight))
+
+  return {
+    scrollHeight,
+    scrollDepth,
+    scrollTop,
+  }
+}
+
+function trackScrollMetrics(viewStart: ClocksState, setScrollMetrics: (scrollMetrics: ScrollMetrics) => void) {
+  const scrollMetrics: ScrollMetrics = {}
+  const handleScrollEvent = throttle(
+    () => {
+      const { scrollHeight, scrollDepth, scrollTop } = getScrollMetrics()
+
+      if (scrollDepth > (scrollMetrics.maxScrollDepth || 0) && scrollTop > 0) {
+        const now = relativeNow()
+        const timeStamp = elapsed(viewStart.relative, now)
+        scrollMetrics.maxScrollDepth = scrollDepth
+        scrollMetrics.maxScrollHeight = scrollHeight
+        scrollMetrics.maxScrollDepthTime = timeStamp
+        scrollMetrics.scrollTop = scrollTop
+        setScrollMetrics(scrollMetrics)
+      }
+    },
+    THROTTLE_SCROLL_DURATION,
+    { leading: false, trailing: true }
+  )
+
+  const { stop } = addEventListener(window, DOM_EVENT.SCROLL, handleScrollEvent.throttled, { passive: true })
+
+  return {
+    stop: () => {
+      handleScrollEvent.cancel()
+      stop()
+    },
+  }
+}
 
 export interface ViewMetrics {
   loadingTime?: Duration
@@ -23,6 +89,8 @@ export function trackViewMetrics(
 ) {
   const viewMetrics: ViewMetrics = {}
 
+  const scrollMetrics: ScrollMetrics = {}
+
   const { stop: stopLoadingTimeTracking, setLoadEvent } = trackLoadingTime(
     lifeCycle,
     domMutationObservable,
@@ -31,7 +99,21 @@ export function trackViewMetrics(
     viewStart,
     (newLoadingTime) => {
       viewMetrics.loadingTime = newLoadingTime
+      const { scrollHeight: maxScrollHeight, scrollDepth: maxScrollDepth, scrollTop } = getScrollMetrics()
+      scrollMetrics.maxScrollHeight = maxScrollHeight
+      scrollMetrics.maxScrollDepth = maxScrollDepth
+      scrollMetrics.scrollTop = scrollTop
       scheduleViewUpdate()
+    }
+  )
+
+  const { stop: stopScrollMetricsTracking } = trackScrollMetrics(
+    viewStart,
+    ({ maxScrollDepth, maxScrollHeight, maxScrollDepthTime, scrollTop }) => {
+      scrollMetrics.maxScrollDepth = maxScrollDepth
+      scrollMetrics.maxScrollHeight = maxScrollHeight
+      scrollMetrics.maxScrollDepthTime = maxScrollDepthTime
+      scrollMetrics.scrollTop = scrollTop
     }
   )
 
@@ -49,9 +131,11 @@ export function trackViewMetrics(
     stop: () => {
       stopLoadingTimeTracking()
       stopCLSTracking()
+      stopScrollMetricsTracking()
     },
     setLoadEvent,
     viewMetrics,
+    scrollMetrics,
   }
 }
 

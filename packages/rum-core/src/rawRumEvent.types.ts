@@ -120,6 +120,7 @@ interface ViewDisplay {
     max_depth?: number
     max_scroll_height?: number
     max_depth_time?: ServerDuration
+    max_scroll_top?: number
   }
 }
 
