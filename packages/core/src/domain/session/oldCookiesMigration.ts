@@ -1,8 +1,8 @@
 import type { CookieOptions } from '../../browser/cookie'
 import { getCookie } from '../../browser/cookie'
 import { dateNow } from '../../tools/utils/timeUtils'
-import type { SessionState } from './sessionStorage'
-import { isSessionInExpiredState } from './sessionStorage'
+import type { SessionState } from './sessionStore'
+import { isSessionInExpiredState } from './sessionStore'
 import { SESSION_COOKIE_NAME, deleteSessionCookie, persistSessionCookie } from './sessionCookieStore'
 import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
 

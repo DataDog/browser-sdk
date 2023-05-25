@@ -1,16 +1,16 @@
 import type { CookieOptions } from '../../browser/cookie'
 import { setCookie, deleteCookie } from '../../browser/cookie'
-import { SESSION_COOKIE_NAME, initCookieStorage } from './sessionCookieStore'
+import { SESSION_COOKIE_NAME, initCookieStore } from './sessionCookieStore'
 
-import type { SessionState, SessionStorage } from './sessionStorage'
+import type { SessionState, SessionStore } from './sessionStore'
 
 describe('session cookie store', () => {
   const sessionState: SessionState = { id: '123', created: '0' }
   const noOptions: CookieOptions = {}
-  let cookieStorage: SessionStorage
+  let cookieStorage: SessionStore
 
   beforeEach(() => {
-    cookieStorage = initCookieStorage(noOptions)
+    cookieStorage = initCookieStore(noOptions)
   })
 
   afterEach(() => {

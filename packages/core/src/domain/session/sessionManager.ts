@@ -7,7 +7,7 @@ import { relativeNow, clocksOrigin, ONE_MINUTE } from '../../tools/utils/timeUti
 import { DOM_EVENT, addEventListener, addEventListeners } from '../../browser/addEventListener'
 import { clearInterval, setInterval } from '../../tools/timer'
 import { tryOldCookiesMigration } from './oldCookiesMigration'
-import { startSessionStore } from './sessionStore'
+import { startSessionStoreManager } from './sessionStoreManager'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 
 export interface SessionManager<TrackingType extends string> {
@@ -32,7 +32,7 @@ export function startSessionManager<TrackingType extends string>(
   computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean }
 ): SessionManager<TrackingType> {
   tryOldCookiesMigration(options)
-  const sessionStore = startSessionStore(options, productKey, computeSessionState)
+  const sessionStore = startSessionStoreManager(options, productKey, computeSessionState)
   stopCallbacks.push(() => sessionStore.stop())
 
   const sessionContextHistory = new ValueHistory<SessionContext<TrackingType>>(SESSION_CONTEXT_TIMEOUT_DELAY)
