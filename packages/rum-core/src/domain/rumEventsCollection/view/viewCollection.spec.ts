@@ -43,9 +43,10 @@ const VIEW: ViewEvent = {
     loadEvent: 10 as Duration,
   },
   scrollMetrics: {
-    maxScrollDepth: 1000,
-    maxscrollHeight: 3000,
+    maxScrollDepth: 2000,
+    maxScrollHeight: 3000,
     maxScrollDepthTime: 4000000000 as Duration,
+    maxScrollTop: 1000,
   },
   sessionIsActive: true,
 }

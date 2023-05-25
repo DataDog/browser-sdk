@@ -24,7 +24,7 @@ export interface ScrollMetrics {
   maxScrollDepth?: number
   maxScrollHeight?: number
   maxScrollDepthTime?: Duration
-  scrollTop?: number
+  maxScrollTop?: number
 }
 
 const THROTTLE_SCROLL_DURATION = ONE_SECOND
@@ -56,7 +56,7 @@ function trackScrollMetrics(viewStart: ClocksState, setScrollMetrics: (scrollMet
         scrollMetrics.maxScrollDepth = scrollDepth
         scrollMetrics.maxScrollHeight = scrollHeight
         scrollMetrics.maxScrollDepthTime = timeStamp
-        scrollMetrics.scrollTop = scrollTop
+        scrollMetrics.maxScrollTop = scrollTop
         setScrollMetrics(scrollMetrics)
       }
     },
@@ -102,18 +102,18 @@ export function trackViewMetrics(
       const { scrollHeight: maxScrollHeight, scrollDepth: maxScrollDepth, scrollTop } = getScrollMetrics()
       scrollMetrics.maxScrollHeight = maxScrollHeight
       scrollMetrics.maxScrollDepth = maxScrollDepth
-      scrollMetrics.scrollTop = scrollTop
+      scrollMetrics.maxScrollTop = scrollTop
       scheduleViewUpdate()
     }
   )
 
   const { stop: stopScrollMetricsTracking } = trackScrollMetrics(
     viewStart,
-    ({ maxScrollDepth, maxScrollHeight, maxScrollDepthTime, scrollTop }) => {
+    ({ maxScrollDepth, maxScrollHeight, maxScrollDepthTime, maxScrollTop }) => {
       scrollMetrics.maxScrollDepth = maxScrollDepth
       scrollMetrics.maxScrollHeight = maxScrollHeight
       scrollMetrics.maxScrollDepthTime = maxScrollDepthTime
-      scrollMetrics.scrollTop = scrollTop
+      scrollMetrics.maxScrollTop = maxScrollTop
     }
   )
 
