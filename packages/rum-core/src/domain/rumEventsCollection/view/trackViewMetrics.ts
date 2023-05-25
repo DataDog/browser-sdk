@@ -102,6 +102,7 @@ export function trackViewMetrics(
       const { scrollHeight: maxScrollHeight, scrollDepth: maxScrollDepth, scrollTop } = getScrollMetrics()
       scrollMetrics.maxScrollHeight = maxScrollHeight
       scrollMetrics.maxScrollDepth = maxScrollDepth
+      scrollMetrics.maxScrollDepthTime = newLoadingTime
       scrollMetrics.maxScrollTop = scrollTop
       scheduleViewUpdate()
     }
