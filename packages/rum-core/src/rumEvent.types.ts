@@ -804,6 +804,10 @@ export type RumViewEvent = CommonProperties & {
        * Timestamp of the scroll event that reached the maximum scroll depth for this view
        */
       readonly max_depth_time?: number
+      /**
+       * Maximum amount of pixels scrolled
+       */
+      readonly max_scroll_top?: number
       [k: string]: unknown
     }
     [k: string]: unknown

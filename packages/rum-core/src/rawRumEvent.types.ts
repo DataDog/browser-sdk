@@ -25,7 +25,7 @@ export interface RawRumResourceEvent {
   resource: {
     type: ResourceType
     id: string
-    duration: ServerDuration
+    duration?: ServerDuration
     url: string
     method?: string
     status_code?: number
