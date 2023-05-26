@@ -20,10 +20,6 @@ export interface RumInitConfiguration extends InitConfiguration {
   // global options
   applicationId: string
   beforeSend?: ((event: RumEvent, context: RumEventDomainContext) => void | boolean) | undefined
-  /**
-   * @deprecated use sessionReplaySampleRate instead
-   */
-  premiumSampleRate?: number | undefined
   excludedActivityUrls?: MatchOption[] | undefined
 
   // tracing options
@@ -33,10 +29,6 @@ export interface RumInitConfiguration extends InitConfiguration {
   // replay options
   defaultPrivacyLevel?: DefaultPrivacyLevel | undefined
   subdomain?: string
-  /**
-   * @deprecated use sessionReplaySampleRate instead
-   */
-  replaySampleRate?: number | undefined
   sessionReplaySampleRate?: number | undefined
 
   // action options
@@ -60,12 +52,11 @@ export interface RumConfiguration extends Configuration {
   excludedActivityUrls: MatchOption[]
   applicationId: string
   defaultPrivacyLevel: DefaultPrivacyLevel
-  oldPlansBehavior: boolean
   sessionReplaySampleRate: number
   trackUserInteractions: boolean
   trackViewsManually: boolean
-  trackResources: boolean | undefined
-  trackLongTasks: boolean | undefined
+  trackResources: boolean
+  trackLongTasks: boolean
   version?: string
   subdomain?: string
   customerDataTelemetrySampleRate: number
@@ -84,18 +75,6 @@ export function validateAndBuildRumConfiguration(
     !isPercentage(initConfiguration.sessionReplaySampleRate)
   ) {
     display.error('Session Replay Sample Rate should be a number between 0 and 100')
-    return
-  }
-
-  // TODO remove fallback in next major
-  let premiumSampleRate = initConfiguration.premiumSampleRate ?? initConfiguration.replaySampleRate
-  if (premiumSampleRate !== undefined && initConfiguration.sessionReplaySampleRate !== undefined) {
-    display.warn('Ignoring Premium Sample Rate because Session Replay Sample Rate is set')
-    premiumSampleRate = undefined
-  }
-
-  if (premiumSampleRate !== undefined && !isPercentage(premiumSampleRate)) {
-    display.error('Premium Sample Rate should be a number between 0 and 100')
     return
   }
 
@@ -124,15 +103,14 @@ export function validateAndBuildRumConfiguration(
       applicationId: initConfiguration.applicationId,
       version: initConfiguration.version,
       actionNameAttribute: initConfiguration.actionNameAttribute,
-      sessionReplaySampleRate: initConfiguration.sessionReplaySampleRate ?? premiumSampleRate ?? 100,
-      oldPlansBehavior: initConfiguration.sessionReplaySampleRate === undefined,
+      sessionReplaySampleRate: initConfiguration.sessionReplaySampleRate ?? 100,
       traceSampleRate: initConfiguration.traceSampleRate,
       allowedTracingUrls,
       excludedActivityUrls: initConfiguration.excludedActivityUrls ?? [],
       trackUserInteractions: !!initConfiguration.trackUserInteractions,
       trackViewsManually: !!initConfiguration.trackViewsManually,
-      trackResources: initConfiguration.trackResources,
-      trackLongTasks: initConfiguration.trackLongTasks,
+      trackResources: !!initConfiguration.trackResources,
+      trackLongTasks: !!initConfiguration.trackLongTasks,
       subdomain: initConfiguration.subdomain,
       defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
         ? initConfiguration.defaultPrivacyLevel
@@ -202,8 +180,6 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration): 
 
   return assign(
     {
-      premium_sample_rate: configuration.premiumSampleRate,
-      replay_sample_rate: configuration.replaySampleRate,
       session_replay_sample_rate: configuration.sessionReplaySampleRate,
       trace_sample_rate: configuration.traceSampleRate,
       action_name_attribute: configuration.actionNameAttribute,

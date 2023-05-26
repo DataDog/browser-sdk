@@ -21,17 +21,14 @@ import { startResourceCollection } from './resourceCollection'
 
 describe('resourceCollection', () => {
   let setupBuilder: TestSetupBuilder
+  let trackResources: boolean
 
   let pageStateHistorySpy: jasmine.Spy<jasmine.Func>
   beforeEach(() => {
-    setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager, pageStateHistory }) => {
+    trackResources = true
+    setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager, pageStateHistory, configuration }) => {
       pageStateHistorySpy = spyOn(pageStateHistory, 'findAll')
-      startResourceCollection(
-        lifeCycle,
-        validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!,
-        sessionManager,
-        pageStateHistory
-      )
+      startResourceCollection(lifeCycle, { ...configuration, trackResources }, sessionManager, pageStateHistory)
     })
   })
 
@@ -367,8 +364,8 @@ describe('resourceCollection', () => {
       expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeTrue()
     })
 
-    it('should be discarded=true if session does not allow resources', () => {
-      setupBuilder.withSessionManager(createRumSessionManagerMock().setResourceAllowed(false))
+    it('should be discarded=true when trackResources is disabled', () => {
+      trackResources = false
       const { lifeCycle, rawRumEvents } = setupBuilder.build()
 
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [createResourceEntry()])
@@ -376,8 +373,8 @@ describe('resourceCollection', () => {
       expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeTrue()
     })
 
-    it('should be discarded=false if session allows resources', () => {
-      setupBuilder.withSessionManager(createRumSessionManagerMock().setResourceAllowed(true))
+    it('should be discarded=false when trackResources is enabled', () => {
+      trackResources = true
       const { lifeCycle, rawRumEvents } = setupBuilder.build()
 
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [createResourceEntry()])

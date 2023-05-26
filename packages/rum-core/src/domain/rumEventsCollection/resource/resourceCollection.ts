@@ -72,7 +72,7 @@ function processRequest(
   const correspondingTimingOverrides = matchingTiming ? computePerformanceEntryMetrics(matchingTiming) : undefined
 
   const tracingInfo = computeRequestTracingInfo(request, configuration)
-  const indexingInfo = computeIndexingInfo(sessionManager, startClocks)
+  const indexingInfo = computeIndexingInfo(configuration, sessionManager, startClocks)
 
   const duration = toServerDuration(request.duration)
   const pageStateInfo = computePageStateInfo(
@@ -125,7 +125,7 @@ function processResourceEntry(
   const startClocks = relativeToClocks(entry.startTime)
 
   const tracingInfo = computeEntryTracingInfo(entry, configuration)
-  const indexingInfo = computeIndexingInfo(sessionManager, startClocks)
+  const indexingInfo = computeIndexingInfo(configuration, sessionManager, startClocks)
   const pageStateInfo = computePageStateInfo(pageStateHistory, startClocks, entry.duration)
 
   const resourceEvent = combine(
@@ -203,11 +203,15 @@ function getRulePsr(configuration: RumConfiguration) {
   return isNumber(configuration.traceSampleRate) ? configuration.traceSampleRate / 100 : undefined
 }
 
-function computeIndexingInfo(sessionManager: RumSessionManager, resourceStart: ClocksState) {
+function computeIndexingInfo(
+  configuration: RumConfiguration,
+  sessionManager: RumSessionManager,
+  resourceStart: ClocksState
+) {
   const session = sessionManager.findTrackedSession(resourceStart.relative)
   return {
     _dd: {
-      discarded: !session || !session.resourceAllowed,
+      discarded: !session || !configuration.trackResources,
     },
   }
 }
