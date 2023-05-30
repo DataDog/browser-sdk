@@ -103,7 +103,7 @@ export function validateAndBuildRumConfiguration(
       applicationId: initConfiguration.applicationId,
       version: initConfiguration.version,
       actionNameAttribute: initConfiguration.actionNameAttribute,
-      sessionReplaySampleRate: initConfiguration.sessionReplaySampleRate ?? 100,
+      sessionReplaySampleRate: initConfiguration.sessionReplaySampleRate ?? 0,
       traceSampleRate: initConfiguration.traceSampleRate,
       allowedTracingUrls,
       excludedActivityUrls: initConfiguration.excludedActivityUrls ?? [],
@@ -114,7 +114,7 @@ export function validateAndBuildRumConfiguration(
       subdomain: initConfiguration.subdomain,
       defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
         ? initConfiguration.defaultPrivacyLevel
-        : DefaultPrivacyLevel.MASK_USER_INPUT,
+        : DefaultPrivacyLevel.MASK,
       customerDataTelemetrySampleRate: 1,
     },
     baseConfiguration
