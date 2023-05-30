@@ -829,10 +829,12 @@ describe('rum public api', () => {
     let recorderApiOnRumStartSpy: jasmine.Spy<RecorderApi['onRumStart']>
     let setupBuilder: TestSetupBuilder
     let rumPublicApi: RumPublicApi
+    let recorderApi: RecorderApi
 
     beforeEach(() => {
       recorderApiOnRumStartSpy = jasmine.createSpy('recorderApiOnRumStart')
-      rumPublicApi = makeRumPublicApi(noopStartRum, { ...noopRecorderApi, onRumStart: recorderApiOnRumStartSpy })
+      recorderApi = { ...noopRecorderApi, onRumStart: recorderApiOnRumStartSpy }
+      rumPublicApi = makeRumPublicApi(noopStartRum, recorderApi)
       setupBuilder = setup()
     })
 
@@ -853,6 +855,20 @@ describe('rum public api', () => {
       expect(recorderApiOnRumStartSpy.calls.mostRecent().args[1].defaultPrivacyLevel).toBe(
         DefaultPrivacyLevel.MASK_USER_INPUT
       )
+    })
+
+    it('api calls before init are performed after onRumStart', () => {
+      // in order to let recording initial state to be defined by init configuration
+      const callOrders: string[] = []
+      spyOn(recorderApi, 'start').and.callFake(() => callOrders.push('start'))
+      spyOn(recorderApi, 'stop').and.callFake(() => callOrders.push('stop'))
+      recorderApiOnRumStartSpy.and.callFake(() => callOrders.push('onRumStart'))
+
+      rumPublicApi.startSessionReplayRecording()
+      rumPublicApi.stopSessionReplayRecording()
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+      expect(callOrders).toEqual(['onRumStart', 'start', 'stop'])
     })
   })
 
