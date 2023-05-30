@@ -29,6 +29,7 @@
     "woke": "scripts/cli woke"
   },
   "devDependencies": {
+    "@datadog/datadog-ci": "https://github.com/DataDog/datadog-ci#nogorodnikov/upload-js-sourcemaps-using-gzip-encoding",
     "@jsdevtools/coverage-istanbul-loader": "3.0.5",
     "@types/chrome": "0.0.237",
     "@types/connect-busboy": "1.0.0",
