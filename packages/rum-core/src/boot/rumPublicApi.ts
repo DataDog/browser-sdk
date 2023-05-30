@@ -270,7 +270,7 @@ export function makeRumPublicApi(
       addFeatureFlagEvaluationStrategy(sanitize(key)!, sanitize(value))
     }),
     getSessionReplayLink: monitor(() => getSessionReplayLinkStrategy()),
-    triggerUncaughtError,
+    triggerUncaughtError: monitor(() => triggerUncaughtError()),
   })
 
   return rumPublicApi
