@@ -231,11 +231,6 @@ function computePageStateInfo(pageStateHistory: PageStateHistory, startClocks: C
 }
 
 function computeRequestDuration(pageStateHistory: PageStateHistory, startClocks: ClocksState, duration: Duration) {
-  // TODO remove FF in next major
-  if (!isExperimentalFeatureEnabled(ExperimentalFeature.NO_RESOURCE_DURATION_FROZEN_STATE)) {
-    return toServerDuration(duration)
-  }
-
   const requestCrossedFrozenState = pageStateHistory
     .findAll(startClocks.relative, duration)
     ?.some((pageState) => pageState.state === PageState.FROZEN)
