@@ -7,13 +7,13 @@
     "dev": "webpack --mode development --watch"
   },
   "devDependencies": {
-    "@types/chrome": "0.0.236",
-    "@types/react": "18.2.6",
+    "@types/chrome": "0.0.237",
+    "@types/react": "18.2.7",
     "@types/react-dom": "18.2.4",
     "@webextension-toolbox/webpack-webextension-plugin": "3.0.0",
     "copy-webpack-plugin": "11.0.0",
     "html-webpack-plugin": "5.5.1",
-    "webpack": "5.83.1"
+    "webpack": "5.84.1"
   },
   "dependencies": {
     "@emotion/react": "11.11.0",
