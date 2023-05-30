@@ -20,6 +20,7 @@ import {
   checkUser,
   sanitizeUser,
   sanitize,
+  triggerUncaughtError,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewContexts } from '../domain/contexts/viewContexts'
@@ -269,6 +270,7 @@ export function makeRumPublicApi(
       addFeatureFlagEvaluationStrategy(sanitize(key)!, sanitize(value))
     }),
     getSessionReplayLink: monitor(() => getSessionReplayLinkStrategy()),
+    triggerUncaughtError,
   })
 
   return rumPublicApi

@@ -157,3 +157,7 @@ export function flattenErrorCauses(error: ErrorWithCause, parentSource: ErrorSou
   }
   return causes.length ? causes : undefined
 }
+
+export function triggerUncaughtError() {
+  throw new Error('manually triggered from SDK API')
+}

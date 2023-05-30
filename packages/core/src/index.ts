@@ -81,6 +81,7 @@ export {
   createHandlingStack,
   toStackTraceString,
   getFileFromStackTraceString,
+  triggerUncaughtError,
   NO_ERROR_STACK_PRESENT_MESSAGE,
 } from './domain/error/error'
 export { NonErrorPrefix } from './domain/error/error.types'
