@@ -3,7 +3,7 @@ import { getCookie } from '../../browser/cookie'
 import { dateNow } from '../../tools/utils/timeUtils'
 import type { SessionState } from './sessionStore'
 import { isSessionInExpiredState } from './sessionStore'
-import { SESSION_COOKIE_NAME, deleteSessionCookie, persistSessionCookie } from './sessionCookieStore'
+import { SESSION_COOKIE_NAME, persistSessionCookie } from './sessionCookieStore'
 import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
 
 export const OLD_SESSION_COOKIE_NAME = '_dd'
@@ -38,8 +38,6 @@ export function tryOldCookiesMigration(options: CookieOptions) {
     if (!isSessionInExpiredState(session)) {
       session.expire = String(dateNow() + SESSION_EXPIRATION_DELAY)
       persistSessionCookie(options)(session)
-    } else {
-      deleteSessionCookie(options)()
     }
   }
 }
