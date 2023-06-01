@@ -46,7 +46,7 @@ export function startSessionStoreManager<TrackingType extends string>(
       {
         process: (sessionState) => {
           const synchronizedSession = synchronizeSession(sessionState)
-          isTracked = expandOrRenewCookie(synchronizedSession)
+          isTracked = expandOrRenewSessionState(synchronizedSession)
           return synchronizedSession
         },
         after: (sessionState) => {
@@ -98,7 +98,7 @@ export function startSessionStoreManager<TrackingType extends string>(
     return sessionState
   }
 
-  function expandOrRenewCookie(sessionState: SessionState) {
+  function expandOrRenewSessionState(sessionState: SessionState) {
     const { trackingType, isTracked } = computeSessionState(sessionState[productKey])
     sessionState[productKey] = trackingType
     if (isTracked && !sessionState.id) {
