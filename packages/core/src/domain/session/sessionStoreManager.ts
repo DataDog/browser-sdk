@@ -1,8 +1,9 @@
 import { clearInterval, setInterval, setTimeout } from '../../tools/timer'
 import { Observable } from '../../tools/observable'
-import { dateNow } from '../../tools/utils/timeUtils'
+import { ONE_SECOND, dateNow } from '../../tools/utils/timeUtils'
 import { throttle } from '../../tools/utils/functionUtils'
 import { generateUUID } from '../../tools/utils/stringUtils'
+import { isChromium } from '../../tools/utils/browserDetection'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { initCookieStore } from './sessionCookieStore'
 import type { SessionState, SessionStore, StoreInitOptions } from './sessionStore'
@@ -17,6 +18,8 @@ export interface SessionStoreManager {
   expire: () => void
   stop: () => void
 }
+
+const POLL_DELAY = ONE_SECOND
 
 /**
  * Different session concepts:
@@ -33,9 +36,9 @@ export function startSessionStoreManager<TrackingType extends string>(
   const expireObservable = new Observable<void>()
 
   const sessionStore = initCookieStore(options)
-  const { clearSession, retrieveSession, storeAccessOptions } = sessionStore
+  const { clearSession, retrieveSession } = sessionStore
 
-  const watchSessionTimeoutId = setInterval(watchSession, storeAccessOptions.pollDelay)
+  const watchSessionTimeoutId = setInterval(watchSession, POLL_DELAY)
   let sessionCache: SessionState = retrieveActiveSession()
 
   function expandOrRenewSession() {
@@ -142,7 +145,7 @@ export function startSessionStoreManager<TrackingType extends string>(
   }
 
   return {
-    expandOrRenewSession: throttle(expandOrRenewSession, storeAccessOptions.pollDelay).throttled,
+    expandOrRenewSession: throttle(expandOrRenewSession, POLL_DELAY).throttled,
     expandSession,
     getSession: () => sessionCache,
     renewObservable,
@@ -162,11 +165,15 @@ type Operations = {
   after?: (sessionState: SessionState) => void
 }
 
+export const LOCK_RETRY_DELAY = 10
+export const LOCK_MAX_TRIES = 100
+
 const bufferedOperations: Operations[] = []
 let ongoingOperations: Operations | undefined
 
 export function processSessionStoreOperations(operations: Operations, sessionStore: SessionStore, numberOfRetries = 0) {
-  const { retrieveSession, persistSession, clearSession, storeAccessOptions } = sessionStore
+  const { retrieveSession, persistSession, clearSession } = sessionStore
+  const lockEnabled = isLockEnabled()
 
   if (!ongoingOperations) {
     ongoingOperations = operations
@@ -175,16 +182,16 @@ export function processSessionStoreOperations(operations: Operations, sessionSto
     bufferedOperations.push(operations)
     return
   }
-  if (storeAccessOptions.lockEnabled && numberOfRetries >= storeAccessOptions.lockMaxTries) {
+  if (lockEnabled && numberOfRetries >= LOCK_MAX_TRIES) {
     next(sessionStore)
     return
   }
   let currentLock: string
   let currentSession = retrieveSession()
-  if (storeAccessOptions.lockEnabled) {
+  if (lockEnabled) {
     // if someone has lock, retry later
     if (currentSession.lock) {
-      retryLater(operations, sessionStore, numberOfRetries, storeAccessOptions.lockRetryDelay)
+      retryLater(operations, sessionStore, numberOfRetries)
       return
     }
     // acquire lock
@@ -194,16 +201,16 @@ export function processSessionStoreOperations(operations: Operations, sessionSto
     // if lock is not acquired, retry later
     currentSession = retrieveSession()
     if (currentSession.lock !== currentLock) {
-      retryLater(operations, sessionStore, numberOfRetries, storeAccessOptions.lockRetryDelay)
+      retryLater(operations, sessionStore, numberOfRetries)
       return
     }
   }
   let processedSession = operations.process(currentSession)
-  if (storeAccessOptions.lockEnabled) {
+  if (lockEnabled) {
     // if lock corrupted after process, retry later
     currentSession = retrieveSession()
     if (currentSession.lock !== currentLock!) {
-      retryLater(operations, sessionStore, numberOfRetries, storeAccessOptions.lockRetryDelay)
+      retryLater(operations, sessionStore, numberOfRetries)
       return
     }
   }
@@ -215,14 +222,14 @@ export function processSessionStoreOperations(operations: Operations, sessionSto
       persistSession(processedSession)
     }
   }
-  if (storeAccessOptions.lockEnabled) {
+  if (lockEnabled) {
     // correctly handle lock around expiration would require to handle this case properly at several levels
     // since we don't have evidence of lock issues around expiration, let's just not do the corruption check for it
     if (!(processedSession && isSessionInExpiredState(processedSession))) {
       // if lock corrupted after persist, retry later
       currentSession = retrieveSession()
       if (currentSession.lock !== currentLock!) {
-        retryLater(operations, sessionStore, numberOfRetries, storeAccessOptions.lockRetryDelay)
+        retryLater(operations, sessionStore, numberOfRetries)
         return
       }
       delete currentSession.lock
@@ -236,15 +243,16 @@ export function processSessionStoreOperations(operations: Operations, sessionSto
   next(sessionStore)
 }
 
-function retryLater(
-  operations: Operations,
-  sessionStore: SessionStore,
-  currentNumberOfRetries: number,
-  retryDelay: number
-) {
+/**
+ * Lock strategy allows mitigating issues due to concurrent access to cookie.
+ * This issue concerns only chromium browsers and enabling this on firefox increases cookie write failures.
+ */
+export const isLockEnabled = () => isChromium()
+
+function retryLater(operations: Operations, sessionStore: SessionStore, currentNumberOfRetries: number) {
   setTimeout(() => {
     processSessionStoreOperations(operations, sessionStore, currentNumberOfRetries + 1)
-  }, retryDelay)
+  }, LOCK_RETRY_DELAY)
 }
 
 function next(sessionStore: SessionStore) {

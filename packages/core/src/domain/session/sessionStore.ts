@@ -10,22 +10,9 @@ export interface SessionState {
   [key: string]: string | undefined
 }
 
-type StoreAccessOptionsWithLock = {
-  pollDelay: number
-  lockEnabled: true
-  lockRetryDelay: number
-  lockMaxTries: number
-}
-
-type StoreAccessOptionsWithoutLock = {
-  pollDelay: number
-  lockEnabled: false
-}
-
 export type StoreInitOptions = CookieOptions
 
 export interface SessionStore {
-  storeAccessOptions: StoreAccessOptionsWithLock | StoreAccessOptionsWithoutLock
   persistSession: (session: SessionState) => void
   retrieveSession: () => SessionState
   clearSession: () => void
