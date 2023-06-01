@@ -20,7 +20,7 @@ import {
 } from '@datadog/browser-rum/test'
 import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
 import { browserExecute, browserExecuteAsync } from '../../lib/helpers/browser'
-import { getFirstSegment, getLastSegment, initRumAndStartRecording } from '../../lib/helpers/replay'
+import { getFirstSegment, getLastSegment } from '../../lib/helpers/replay'
 
 const TIMESTAMP_RE = /^\d{13}$/
 const UUID_RE = /^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/
@@ -28,7 +28,6 @@ const UUID_RE = /^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/
 describe('recorder', () => {
   createTest('record mouse move')
     .withRum()
-    .withRumInit(initRumAndStartRecording)
     .run(async ({ serverEvents }) => {
       await browserExecute(() => document.documentElement.outerHTML)
       const html = await $('html')
@@ -79,7 +78,6 @@ describe('recorder', () => {
   describe('full snapshot', () => {
     createTest('obfuscate elements')
       .withRum()
-      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(
         html`
@@ -125,7 +123,6 @@ describe('recorder', () => {
   describe('mutations observer', () => {
     createTest('record mutations')
       .withRum()
-      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(
         html`
@@ -172,7 +169,6 @@ describe('recorder', () => {
 
     createTest('record character data mutations')
       .withRum()
-      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(
         html`
@@ -225,7 +221,6 @@ describe('recorder', () => {
 
     createTest('record attributes mutations')
       .withRum()
-      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(
         html`
@@ -270,7 +265,6 @@ describe('recorder', () => {
 
     createTest("don't record hidden elements mutations")
       .withRum()
-      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(
         html`
@@ -298,7 +292,6 @@ describe('recorder', () => {
 
     createTest('record DOM node movement 1')
       .withRum()
-      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(
         // prettier-ignore
@@ -347,7 +340,6 @@ describe('recorder', () => {
 
     createTest('record DOM node movement 2')
       .withRum()
-      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(
         // prettier-ignore
@@ -399,7 +391,6 @@ describe('recorder', () => {
 
     createTest('serialize node before record')
       .withRum()
-      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(
         // prettier-ignore
@@ -455,7 +446,6 @@ describe('recorder', () => {
       .withRum({
         defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
       })
-      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(
         html`
@@ -537,7 +527,6 @@ describe('recorder', () => {
       .withRum({
         defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
       })
-      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(
         html`
@@ -574,7 +563,6 @@ describe('recorder', () => {
 
     createTest('replace masked values by asterisks')
       .withRum()
-      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(
         html`
@@ -608,7 +596,6 @@ describe('recorder', () => {
   describe('stylesheet rules observer', () => {
     createTest('record dynamic CSS changes')
       .withRum()
-      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(
         html`
@@ -643,7 +630,6 @@ describe('recorder', () => {
 
     createTest('record nested css rules changes')
       .withRum()
-      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(
         html`
@@ -691,7 +677,6 @@ describe('recorder', () => {
   describe('frustration records', () => {
     createTest('should detect a dead click and match it to mouse interaction record')
       .withRum({ trackUserInteractions: true })
-      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .run(async ({ serverEvents }) => {
         const html = await $('html')
@@ -715,7 +700,6 @@ describe('recorder', () => {
 
     createTest('should detect a rage click and match it to mouse interaction records')
       .withRum({ trackUserInteractions: true })
-      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(
         html`
@@ -748,7 +732,8 @@ describe('recorder', () => {
 
   describe('scroll positions', () => {
     createTest('should be recorded across navigation')
-      .withRum()
+      // to control initial position before recording
+      .withRum({ startSessionReplayRecordingManually: true })
       .withSetup(bundleSetup)
       .withBody(
         html`

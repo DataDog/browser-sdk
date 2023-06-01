@@ -1,4 +1,3 @@
-import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import { IncrementalSource, NodeType } from '@datadog/browser-rum/src/types'
 import type { DocumentFragmentNode, MouseInteractionData, SerializedNodeWithId } from '@datadog/browser-rum/src/types'
 
@@ -113,7 +112,6 @@ class DivWithStyle extends HTMLElement {
 describe('recorder with shadow DOM', () => {
   createTest('can record fullsnapshot with the detail inside the shadow root')
     .withRum({ defaultPrivacyLevel: 'allow' })
-    .withRumInit(initRumAndStartRecording)
     .withSetup(bundleSetup)
     .withBody(
       html`
@@ -136,7 +134,6 @@ describe('recorder with shadow DOM', () => {
 
   createTest('can record fullsnapshot with adoptedStylesheet')
     .withRum()
-    .withRumInit(initRumAndStartRecording)
     .withSetup(bundleSetup)
     .withBody(
       html`
@@ -164,7 +161,6 @@ describe('recorder with shadow DOM', () => {
 
   createTest('can apply privacy level set from outside or inside the shadow DOM')
     .withRum({ defaultPrivacyLevel: 'allow' })
-    .withRumInit(initRumAndStartRecording)
     .withSetup(bundleSetup)
     .withBody(
       html`
@@ -202,7 +198,6 @@ describe('recorder with shadow DOM', () => {
 
   createTest('can record click with target from inside the shadow root')
     .withRum()
-    .withRumInit(initRumAndStartRecording)
     .withSetup(bundleSetup)
     .withBody(
       html`
@@ -228,7 +223,6 @@ describe('recorder with shadow DOM', () => {
 
   createTest('can record mutation from inside the shadow root')
     .withRum({ defaultPrivacyLevel: 'allow' })
-    .withRumInit(initRumAndStartRecording)
     .withSetup(bundleSetup)
     .withBody(
       html`
@@ -285,11 +279,6 @@ function findElementsInShadowDom(node: SerializedNodeWithId, id: string) {
 
 function getFirstSegment(events: EventRegistry) {
   return events.sessionReplay[0].segment.data
-}
-
-function initRumAndStartRecording(initConfiguration: RumInitConfiguration) {
-  window.DD_RUM!.init(initConfiguration)
-  window.DD_RUM!.startSessionReplayRecording()
 }
 
 async function getNodeInsideShadowDom(hostTag: string, selector: string) {
