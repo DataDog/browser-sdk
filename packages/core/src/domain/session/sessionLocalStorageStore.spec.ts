@@ -9,18 +9,18 @@ describe('session local storage store', () => {
   })
 
   it('should report local storage as available', () => {
-    const localStorageStore = initLocalStorage({})
+    const localStorageStore = initLocalStorage()
     expect(localStorageStore).toBeDefined()
   })
 
   it('should report local storage as not available', () => {
     spyOn(Storage.prototype, 'getItem').and.throwError('Unavailable')
-    const localStorageStore = initLocalStorage({})
+    const localStorageStore = initLocalStorage()
     expect(localStorageStore).not.toBeDefined()
   })
 
   it('should persist a session in local storage', () => {
-    const localStorageStore = initLocalStorage({})
+    const localStorageStore = initLocalStorage()
     localStorageStore?.persistSession(sessionState)
     const session = localStorageStore?.retrieveSession()
     expect(session).toEqual({ ...sessionState })
@@ -28,7 +28,7 @@ describe('session local storage store', () => {
   })
 
   it('should delete the local storage item holding the session', () => {
-    const localStorageStore = initLocalStorage({})
+    const localStorageStore = initLocalStorage()
     localStorageStore?.persistSession(sessionState)
     localStorageStore?.clearSession()
     const session = localStorageStore?.retrieveSession()
@@ -38,7 +38,7 @@ describe('session local storage store', () => {
 
   it('should not interfere with other keys present in local storage', () => {
     window.localStorage.setItem('test', 'hello')
-    const localStorageStore = initLocalStorage({})
+    const localStorageStore = initLocalStorage()
     localStorageStore?.persistSession(sessionState)
     localStorageStore?.retrieveSession()
     localStorageStore?.clearSession()
@@ -46,7 +46,7 @@ describe('session local storage store', () => {
   })
 
   it('should return an empty object if session string is invalid', () => {
-    const localStorageStore = initLocalStorage({})
+    const localStorageStore = initLocalStorage()
     localStorage.setItem(LOCAL_STORAGE_KEY, '{test:42}')
     const session = localStorageStore?.retrieveSession()
     expect(session).toEqual({})

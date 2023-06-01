@@ -1,10 +1,9 @@
 import type { Clock } from '../../../test'
 import { mockClock } from '../../../test'
-import type { CookieOptions } from '../../browser/cookie'
 import { getCookie, setCookie, COOKIE_ACCESS_DELAY } from '../../browser/cookie'
 import type { SessionStoreManager } from './sessionStoreManager'
 import { initSessionStore, startSessionStoreManager } from './sessionStoreManager'
-import { SESSION_COOKIE_NAME, initCookieStore } from './sessionCookieStore'
+import { SESSION_COOKIE_NAME } from './sessionCookieStore'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 
 const enum FakeTrackingType {
@@ -16,7 +15,7 @@ const DURATION = 123456
 const PRODUCT_KEY = 'product'
 const FIRST_ID = 'first'
 const SECOND_ID = 'second'
-const COOKIE_OPTIONS: CookieOptions = {}
+const clientToken = 'abc'
 
 function setSessionInStore(trackingType: FakeTrackingType = FakeTrackingType.TRACKED, id?: string, expire?: number) {
   setCookie(
@@ -49,58 +48,27 @@ function resetSessionInStore() {
 describe('session store', () => {
   describe('initSessionStore', () => {
     it('should initialize storage when cookies are available', () => {
-      const sessionStore = initSessionStore(COOKIE_OPTIONS, false)
+      const sessionStore = initSessionStore({ clientToken })
       expect(sessionStore).toBeDefined()
     })
 
     it('should report false when cookies are not available, and fallback is not allowed', () => {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('')
-      const sessionStore = initSessionStore(COOKIE_OPTIONS, false)
+      const sessionStore = initSessionStore({ clientToken, allowFallbackToLocalStorage: false })
       expect(sessionStore).not.toBeDefined()
     })
 
     it('should fallback to localStorage and report true when cookies are not available', () => {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('')
-      const sessionStore = initSessionStore(COOKIE_OPTIONS, true)
+      const sessionStore = initSessionStore({ clientToken, allowFallbackToLocalStorage: true })
       expect(sessionStore).toBeDefined()
     })
 
     it('should report false when no storage is available', () => {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('')
       spyOn(Storage.prototype, 'getItem').and.throwError('unavailable')
-      const sessionStore = initSessionStore(COOKIE_OPTIONS, true)
+      const sessionStore = initSessionStore({ clientToken, allowFallbackToLocalStorage: true })
       expect(sessionStore).not.toBeDefined()
-    })
-
-    describe('cookie options', () => {
-      ;[
-        {
-          cookieOptions: {},
-          cookieString: /^dd_cookie_test_[\w-]+=[^;]*;expires=[^;]+;path=\/;samesite=strict$/,
-          description: 'should set same-site to strict by default',
-        },
-        {
-          cookieOptions: { crossSite: true },
-          cookieString: /^dd_cookie_test_[\w-]+=[^;]*;expires=[^;]+;path=\/;samesite=none$/,
-          description: 'should set same site to none for crossSite',
-        },
-        {
-          cookieOptions: { secure: true },
-          cookieString: /^dd_cookie_test_[\w-]+=[^;]*;expires=[^;]+;path=\/;samesite=strict;secure$/,
-          description: 'should add secure attribute when defined',
-        },
-        {
-          cookieOptions: { domain: 'foo.bar' },
-          cookieString: /^dd_cookie_test_[\w-]+=[^;]*;expires=[^;]+;path=\/;samesite=strict;domain=foo\.bar$/,
-          description: 'should set cookie domain when defined',
-        },
-      ].forEach(({ description, cookieOptions, cookieString }) => {
-        it(description, () => {
-          const cookieSetSpy = spyOnProperty(document, 'cookie', 'set')
-          initCookieStore(cookieOptions)
-          expect(cookieSetSpy.calls.argsFor(0)[0]).toMatch(cookieString)
-        })
-      })
     })
   })
 
@@ -119,7 +87,7 @@ describe('session store', () => {
         trackingType: FakeTrackingType.TRACKED,
       })
     ) {
-      const sessionStore = initSessionStore(COOKIE_OPTIONS, false)
+      const sessionStore = initSessionStore({ clientToken })
       if (!sessionStore) {
         fail('Unable to initialize cookie storage')
         return

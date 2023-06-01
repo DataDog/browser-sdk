@@ -1,6 +1,6 @@
 import type { StubStorage } from '../../../test'
 import { mockClock, stubCookieProvider, stubLocalStorageProvider } from '../../../test'
-import type { CookieOptions } from '../../browser/cookie'
+import type { InitConfiguration } from '../configuration'
 import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
 import { initCookieStore, SESSION_COOKIE_NAME } from './sessionCookieStore'
 import { initLocalStorage, LOCAL_STORAGE_KEY } from './sessionLocalStorageStore'
@@ -13,19 +13,19 @@ import {
   LOCK_RETRY_DELAY,
 } from './sessionStoreOperations'
 
-const COOKIE_OPTIONS: CookieOptions = {}
+const initConfiguration: InitConfiguration = { clientToken: 'abc' }
 
 ;(
   [
     {
       title: 'Cookie Storage',
-      sessionStore: initCookieStore(COOKIE_OPTIONS)!,
+      sessionStore: initCookieStore(initConfiguration)!,
       stubStorageProvider: stubCookieProvider,
       storageKey: SESSION_COOKIE_NAME,
     },
     {
       title: 'Local Storage',
-      sessionStore: initLocalStorage({})!,
+      sessionStore: initLocalStorage()!,
       stubStorageProvider: stubLocalStorageProvider,
       storageKey: LOCAL_STORAGE_KEY,
     },

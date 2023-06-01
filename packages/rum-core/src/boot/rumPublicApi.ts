@@ -123,12 +123,7 @@ export function makeRumPublicApi(
     }
 
     if (!eventBridgeAvailable && !configuration.sessionStore) {
-      if (configuration.allowFallbackToLocalStorage) {
-        display.warn('No storage available for session. We will not send any data.')
-      } else {
-        // Keep until V5 to avoid breaking changes
-        display.warn('Cookies are not authorized, we will not send any data.')
-      }
+      display.warn('No storage available for session. We will not send any data.')
       return
     }
 

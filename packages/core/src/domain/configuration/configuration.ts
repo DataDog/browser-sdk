@@ -1,5 +1,3 @@
-import type { CookieOptions } from '../../browser/cookie'
-import { getCurrentSite } from '../../browser/cookie'
 import { catchUserErrors } from '../../tools/catchUserErrors'
 import { display } from '../../tools/display'
 import type { RawTelemetryConfiguration } from '../telemetry'
@@ -14,6 +12,8 @@ import { initSessionStore } from '../session/sessionStoreManager'
 import type { SessionStore } from '../session/sessionStore'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
+import { CookieOptions } from '../../browser/cookie'
+import { buildCookieOptions } from '../session/sessionCookieStore'
 
 export const DefaultPrivacyLevel = {
   ALLOW: 'allow',
@@ -123,10 +123,6 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     return
   }
 
-  const cookieOptions = buildCookieOptions(initConfiguration)
-  const allowFallbackToLocalStorage = initConfiguration.allowFallbackToLocalStorage || false
-  const sessionStore = initSessionStore(cookieOptions, allowFallbackToLocalStorage)
-
   // Set the experimental feature flags as early as possible, so we can use them in most places
   if (Array.isArray(initConfiguration.enableExperimentalFeatures)) {
     addExperimentalFeatures(
@@ -141,8 +137,8 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
       beforeSend:
         initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
       cookieOptions: buildCookieOptions(initConfiguration),
-      allowFallbackToLocalStorage,
-      sessionStore,
+      allowFallbackToLocalStorage: !!initConfiguration.allowFallbackToLocalStorage,
+      sessionStore: initSessionStore(initConfiguration),
       sessionSampleRate: sessionSampleRate ?? 100,
       telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
       telemetryConfigurationSampleRate: initConfiguration.telemetryConfigurationSampleRate ?? 5,
@@ -172,23 +168,6 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     },
     computeTransportConfiguration(initConfiguration)
   )
-}
-
-export function buildCookieOptions(initConfiguration: InitConfiguration) {
-  const cookieOptions: CookieOptions = {}
-
-  cookieOptions.secure = mustUseSecureCookie(initConfiguration)
-  cookieOptions.crossSite = !!initConfiguration.useCrossSiteSessionCookie
-
-  if (initConfiguration.trackSessionAcrossSubdomains) {
-    cookieOptions.domain = getCurrentSite()
-  }
-
-  return cookieOptions
-}
-
-function mustUseSecureCookie(initConfiguration: InitConfiguration) {
-  return !!initConfiguration.useSecureSessionCookie || !!initConfiguration.useCrossSiteSessionCookie
 }
 
 export function serializeConfiguration(configuration: InitConfiguration): Partial<RawTelemetryConfiguration> {

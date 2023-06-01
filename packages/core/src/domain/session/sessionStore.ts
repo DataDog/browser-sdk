@@ -1,4 +1,3 @@
-import type { CookieOptions } from '../../browser/cookie'
 import { isEmptyObject } from '../../tools/utils/objectUtils'
 import { objectEntries } from '../../tools/utils/polyfills'
 
@@ -13,8 +12,6 @@ export interface SessionState {
 
   [key: string]: string | undefined
 }
-
-export type StoreInitOptions = CookieOptions
 
 export interface SessionStore {
   persistSession: (session: SessionState) => void

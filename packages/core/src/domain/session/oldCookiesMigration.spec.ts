@@ -9,7 +9,7 @@ import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
 import { SESSION_COOKIE_NAME, initCookieStore } from './sessionCookieStore'
 
 describe('old cookies migration', () => {
-  const sessionStore = initCookieStore({})!
+  const sessionStore = initCookieStore({ clientToken: '123' })!
 
   it('should not touch current cookie', () => {
     setCookie(SESSION_COOKIE_NAME, 'id=abcde&rum=0&logs=1&expire=1234567890', SESSION_EXPIRATION_DELAY)

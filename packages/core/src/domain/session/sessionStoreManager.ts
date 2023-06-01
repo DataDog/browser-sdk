@@ -3,9 +3,10 @@ import { Observable } from '../../tools/observable'
 import { ONE_SECOND, dateNow } from '../../tools/utils/timeUtils'
 import { throttle } from '../../tools/utils/functionUtils'
 import { generateUUID } from '../../tools/utils/stringUtils'
+import type { InitConfiguration } from '../configuration'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { initCookieStore } from './sessionCookieStore'
-import type { SessionState, SessionStore, StoreInitOptions } from './sessionStore'
+import type { SessionState, SessionStore } from './sessionStore'
 import { initLocalStorage } from './sessionLocalStorageStore'
 import { processSessionStoreOperations } from './sessionStoreOperations'
 
@@ -25,14 +26,11 @@ const POLL_DELAY = ONE_SECOND
  * Checks if cookies are available as the preferred storage
  * Else, checks if LocalStorage is allowed and available
  */
-export function initSessionStore(
-  storageInitOptions: StoreInitOptions,
-  allowFallbackToLocalStorage: boolean
-): SessionStore | undefined {
-  let sessionStore = initCookieStore(storageInitOptions)
+export function initSessionStore(initConfiguration: InitConfiguration): SessionStore | undefined {
+  let sessionStore = initCookieStore(initConfiguration)
 
-  if (!sessionStore && allowFallbackToLocalStorage) {
-    sessionStore = initLocalStorage(storageInitOptions)
+  if (!sessionStore && initConfiguration.allowFallbackToLocalStorage) {
+    sessionStore = initLocalStorage()
   }
   return sessionStore
 }

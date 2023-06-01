@@ -1,10 +1,10 @@
 import { generateUUID } from '../../tools/utils/stringUtils'
-import type { SessionState, SessionStore, StoreInitOptions } from './sessionStore'
+import type { SessionState, SessionStore } from './sessionStore'
 import { toSessionString, toSessionState } from './sessionStore'
 
 export const LOCAL_STORAGE_KEY = '_dd_s'
 
-export function initLocalStorage(_options: StoreInitOptions): SessionStore | undefined {
+export function initLocalStorage(): SessionStore | undefined {
   if (!isLocalStorageAvailable()) {
     return undefined
   }

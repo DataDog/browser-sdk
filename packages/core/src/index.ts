@@ -1,7 +1,6 @@
 export {
   Configuration,
   InitConfiguration,
-  buildCookieOptions,
   validateAndBuildConfiguration,
   DefaultPrivacyLevel,
   EndpointBuilder,
