@@ -842,12 +842,12 @@ describe('rum public api', () => {
       setupBuilder.cleanup()
     })
 
-    it('recording is started with the default defaultPrivacyLevel', () => {
+    it('is started with the default defaultPrivacyLevel', () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       expect(recorderApiOnRumStartSpy.calls.mostRecent().args[1].defaultPrivacyLevel).toBe(DefaultPrivacyLevel.MASK)
     })
 
-    it('recording is started with the configured defaultPrivacyLevel', () => {
+    it('is started with the configured defaultPrivacyLevel', () => {
       rumPublicApi.init({
         ...DEFAULT_INIT_CONFIGURATION,
         defaultPrivacyLevel: DefaultPrivacyLevel.MASK_USER_INPUT,
@@ -869,6 +869,19 @@ describe('rum public api', () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
       expect(callOrders).toEqual(['onRumStart', 'start', 'stop'])
+    })
+
+    it('is started with the default startSessionReplayRecordingManually', () => {
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      expect(recorderApiOnRumStartSpy.calls.mostRecent().args[1].startSessionReplayRecordingManually).toBe(false)
+    })
+
+    it('is started with the configured startSessionReplayRecordingManually', () => {
+      rumPublicApi.init({
+        ...DEFAULT_INIT_CONFIGURATION,
+        startSessionReplayRecordingManually: true,
+      })
+      expect(recorderApiOnRumStartSpy.calls.mostRecent().args[1].startSessionReplayRecordingManually).toBe(true)
     })
   })
 
