@@ -1,14 +1,15 @@
-import type { CookieOptions } from '../../browser/cookie'
-import { getCurrentSite, areCookiesAuthorized, deleteCookie, getCookie, setCookie } from '../../browser/cookie'
-import type { InitConfiguration } from '../configuration'
-import { tryOldCookiesMigration } from './oldCookiesMigration'
-import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
-import type { SessionState, SessionStore } from './sessionStore'
-import { toSessionState, toSessionString } from './sessionStore'
+import type { CookieOptions } from '../../../browser/cookie'
+import { getCurrentSite, areCookiesAuthorized, deleteCookie, getCookie, setCookie } from '../../../browser/cookie'
+import type { InitConfiguration } from '../../configuration'
+import { tryOldCookiesMigration } from '../oldCookiesMigration'
+import { SESSION_EXPIRATION_DELAY } from '../sessionConstants'
+import type { SessionState } from '../sessionState'
+import { toSessionString, toSessionState } from '../sessionState'
+import type { SessionStoreStrategy } from './sessionStoreStrategy'
 
 export const SESSION_COOKIE_NAME = '_dd_s'
 
-export function initCookieStore(initConfiguration: InitConfiguration): SessionStore | undefined {
+export function initCookieStrategy(initConfiguration: InitConfiguration): SessionStoreStrategy | undefined {
   const options = buildCookieOptions(initConfiguration)
 
   if (!areCookiesAuthorized(options)) {

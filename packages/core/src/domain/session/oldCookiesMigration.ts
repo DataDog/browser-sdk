@@ -1,7 +1,8 @@
 import { getCookie } from '../../browser/cookie'
 import { dateNow } from '../../tools/utils/timeUtils'
-import type { SessionState, SessionStore } from './sessionStore'
-import { isSessionInExpiredState } from './sessionStore'
+import type { SessionStoreStrategy } from './storeStrategies/sessionStoreStrategy'
+import type { SessionState } from './sessionState'
+import { isSessionInExpiredState } from './sessionState'
 import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
 
 export const OLD_SESSION_COOKIE_NAME = '_dd'
@@ -16,7 +17,7 @@ export const LOGS_SESSION_KEY = 'logs'
  * This migration should remain in the codebase as long as older versions are available/live
  * to allow older sdk versions to be upgraded to newer versions without compatibility issues.
  */
-export function tryOldCookiesMigration(cookieName: string, sessionStore: SessionStore) {
+export function tryOldCookiesMigration(cookieName: string, cookieStoreStrategy: SessionStoreStrategy) {
   const sessionString = getCookie(cookieName)
   if (!sessionString) {
     const oldSessionId = getCookie(OLD_SESSION_COOKIE_NAME)
@@ -36,7 +37,7 @@ export function tryOldCookiesMigration(cookieName: string, sessionStore: Session
 
     if (!isSessionInExpiredState(session)) {
       session.expire = String(dateNow() + SESSION_EXPIRATION_DELAY)
-      sessionStore.persistSession(session)
+      cookieStoreStrategy.persistSession(session)
     }
   }
 }

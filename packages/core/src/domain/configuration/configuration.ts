@@ -8,12 +8,12 @@ import { isPercentage } from '../../tools/utils/numberUtils'
 import { ONE_KIBI_BYTE } from '../../tools/utils/byteUtils'
 import { objectHasValue } from '../../tools/utils/objectUtils'
 import { assign } from '../../tools/utils/polyfills'
-import { initSessionStore } from '../session/sessionStoreManager'
-import type { SessionStore } from '../session/sessionStore'
+import { initSessionStoreStrategy } from '../session/sessionStore'
+import type { SessionStoreStrategy } from '../session/storeStrategies/sessionStoreStrategy'
+import type { CookieOptions } from '../../browser/cookie'
+import { buildCookieOptions } from '../session/storeStrategies/sessionInCookie'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
-import { CookieOptions } from '../../browser/cookie'
-import { buildCookieOptions } from '../session/sessionCookieStore'
 
 export const DefaultPrivacyLevel = {
   ALLOW: 'allow',
@@ -80,7 +80,7 @@ export interface Configuration extends TransportConfiguration {
   beforeSend: GenericBeforeSendCallback | undefined
   cookieOptions: CookieOptions
   allowFallbackToLocalStorage: boolean
-  sessionStore: SessionStore | undefined
+  sessionStore: SessionStoreStrategy | undefined
   sessionSampleRate: number
   telemetrySampleRate: number
   telemetryConfigurationSampleRate: number
@@ -138,7 +138,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
         initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
       cookieOptions: buildCookieOptions(initConfiguration),
       allowFallbackToLocalStorage: !!initConfiguration.allowFallbackToLocalStorage,
-      sessionStore: initSessionStore(initConfiguration),
+      sessionStore: initSessionStoreStrategy(initConfiguration),
       sessionSampleRate: sessionSampleRate ?? 100,
       telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
       telemetryConfigurationSampleRate: initConfiguration.telemetryConfigurationSampleRate ?? 5,

@@ -8,7 +8,7 @@ import { ONE_HOUR, ONE_SECOND } from '../../tools/utils/timeUtils'
 import type { InitConfiguration } from '../configuration'
 import type { SessionManager } from './sessionManager'
 import { startSessionManager, stopSessionManager, VISIBILITY_CHECK_DELAY } from './sessionManager'
-import { SESSION_COOKIE_NAME, initCookieStore } from './sessionCookieStore'
+import { SESSION_COOKIE_NAME, initCookieStrategy } from './storeStrategies/sessionInCookie'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 
 const enum FakeTrackingType {
@@ -31,7 +31,7 @@ describe('startSessionManager', () => {
   const FIRST_PRODUCT_KEY = 'first'
   const SECOND_PRODUCT_KEY = 'second'
   const initConfiguration: InitConfiguration = { clientToken: 'abc' }
-  const sessionStore = initCookieStore(initConfiguration)!
+  const sessionStore = initCookieStrategy(initConfiguration)!
   let clock: Clock
 
   function expireSessionCookie() {

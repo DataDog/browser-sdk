@@ -41,7 +41,7 @@ export {
 } from './domain/telemetry'
 export { monitored, monitor, callMonitored, setDebugMode } from './tools/monitor'
 export { Observable, Subscription } from './tools/observable'
-export { initSessionStore } from './domain/session/sessionStoreManager'
+export { initSessionStoreStrategy as initSessionStore } from './domain/session/sessionStore'
 export {
   startSessionManager,
   SessionManager,
@@ -102,7 +102,7 @@ export {
 } from './tools/serialisation/heavyCustomerDataWarning'
 export { ValueHistory, ValueHistoryEntry, CLEAR_OLD_VALUES_INTERVAL } from './tools/valueHistory'
 export { readBytesFromStream } from './tools/readBytesFromStream'
-export { SESSION_COOKIE_NAME } from './domain/session/sessionCookieStore'
+export { SESSION_COOKIE_NAME } from './domain/session/storeStrategies/sessionInCookie'
 export {
   willSyntheticsInjectRum,
   getSyntheticsTestId,

@@ -1,16 +1,17 @@
-import { setCookie, deleteCookie, getCurrentSite, getCookie } from '../../browser/cookie'
-import type { InitConfiguration } from '../configuration'
-import { SESSION_COOKIE_NAME, buildCookieOptions, initCookieStore } from './sessionCookieStore'
+import { setCookie, deleteCookie, getCurrentSite, getCookie } from '../../../browser/cookie'
+import type { InitConfiguration } from '../../configuration'
+import type { SessionState } from '../sessionState'
+import { SESSION_COOKIE_NAME, buildCookieOptions, initCookieStrategy } from './sessionInCookie'
 
-import type { SessionState, SessionStore } from './sessionStore'
+import type { SessionStoreStrategy } from './sessionStoreStrategy'
 
 describe('session cookie store', () => {
   const sessionState: SessionState = { id: '123', created: '0' }
   const initConfiguration: InitConfiguration = { clientToken: 'abc' }
-  let cookieStorage: SessionStore | undefined
+  let cookieStorageStrategy: SessionStoreStrategy
 
   beforeEach(() => {
-    cookieStorage = initCookieStore(initConfiguration)
+    cookieStorageStrategy = initCookieStrategy(initConfiguration)!
   })
 
   afterEach(() => {
@@ -18,23 +19,23 @@ describe('session cookie store', () => {
   })
 
   it('should persist a session in a cookie', () => {
-    cookieStorage?.persistSession(sessionState)
-    const session = cookieStorage?.retrieveSession()
+    cookieStorageStrategy.persistSession(sessionState)
+    const session = cookieStorageStrategy?.retrieveSession()
     expect(session).toEqual({ ...sessionState })
     expect(getCookie(SESSION_COOKIE_NAME)).toBe('id=123&created=0')
   })
 
   it('should delete the cookie holding the session', () => {
-    cookieStorage?.persistSession(sessionState)
-    cookieStorage?.clearSession()
-    const session = cookieStorage?.retrieveSession()
+    cookieStorageStrategy.persistSession(sessionState)
+    cookieStorageStrategy.clearSession()
+    const session = cookieStorageStrategy?.retrieveSession()
     expect(session).toEqual({})
     expect(getCookie(SESSION_COOKIE_NAME)).toBeUndefined()
   })
 
   it('should return an empty object if session string is invalid', () => {
     setCookie(SESSION_COOKIE_NAME, '{test:42}', 1000)
-    const session = cookieStorage?.retrieveSession()
+    const session = cookieStorageStrategy?.retrieveSession()
     expect(session).toEqual({})
   })
 
@@ -89,7 +90,7 @@ describe('session cookie store', () => {
     ].forEach(({ description, initConfiguration, cookieString }) => {
       it(description, () => {
         const cookieSetSpy = spyOnProperty(document, 'cookie', 'set')
-        initCookieStore(initConfiguration)
+        initCookieStrategy(initConfiguration)
         expect(cookieSetSpy.calls.argsFor(0)[0]).toMatch(cookieString)
       })
     })
