@@ -71,7 +71,7 @@ describe('makeRecorderApi', () => {
         expect(startRecordingSpy).toHaveBeenCalled()
       })
 
-      it('does not start recording after the DOM is loaded', () => {
+      it('starts recording after the DOM is loaded', () => {
         setupBuilder.build()
         const { triggerOnDomLoaded } = mockDocumentReadyState()
         rumInit()
