@@ -114,6 +114,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       session_replay_sample_rate?: number
       /**
+       * Whether the session replay start is handled manually
+       */
+      start_session_replay_recording_manually?: boolean
+      /**
        * Whether a proxy configured is used
        */
       use_proxy?: boolean
