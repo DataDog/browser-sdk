@@ -1,5 +1,5 @@
 import type { SessionState } from './sessionStore'
-import { isSessionInExpiredState, toSessionString, sessionStringToSessionState } from './sessionStore'
+import { isSessionInExpiredState, toSessionString, toSessionState } from './sessionStore'
 
 describe('session store utilities', () => {
   const EXPIRED_SESSION: SessionState = {}
@@ -29,16 +29,16 @@ describe('session store utilities', () => {
 
   describe('sessionStringToSessionState', () => {
     it('should deserialize a session string to a sessionState', () => {
-      expect(sessionStringToSessionState(SERIALIZED_LIVE_SESSION)).toEqual(LIVE_SESSION)
+      expect(toSessionState(SERIALIZED_LIVE_SESSION)).toEqual(LIVE_SESSION)
     })
 
     it('should handle empty session strings', () => {
-      expect(sessionStringToSessionState(SERIALIZED_EXPIRED_SESSION)).toEqual(EXPIRED_SESSION)
+      expect(toSessionState(SERIALIZED_EXPIRED_SESSION)).toEqual(EXPIRED_SESSION)
     })
 
     it('should handle invalid session strings', () => {
       const sessionString = '{invalid: true}'
-      expect(sessionStringToSessionState(sessionString)).toEqual(EXPIRED_SESSION)
+      expect(toSessionState(sessionString)).toEqual(EXPIRED_SESSION)
     })
   })
 })

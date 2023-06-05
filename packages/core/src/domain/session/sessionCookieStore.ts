@@ -2,7 +2,7 @@ import type { CookieOptions } from '../../browser/cookie'
 import { deleteCookie, getCookie, setCookie } from '../../browser/cookie'
 import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
 import type { SessionState, SessionStore } from './sessionStore'
-import { sessionStringToSessionState, toSessionString } from './sessionStore'
+import { toSessionState, toSessionString } from './sessionStore'
 
 export const SESSION_COOKIE_NAME = '_dd_s'
 
@@ -22,7 +22,7 @@ export function persistSessionCookie(options: CookieOptions) {
 
 function retrieveSessionCookie(): SessionState {
   const sessionString = getCookie(SESSION_COOKIE_NAME)
-  return sessionStringToSessionState(sessionString)
+  return toSessionState(sessionString)
 }
 
 export function deleteSessionCookie(options: CookieOptions) {

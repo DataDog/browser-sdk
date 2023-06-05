@@ -32,7 +32,7 @@ export function toSessionString(session: SessionState) {
     .join(SESSION_ENTRY_SEPARATOR)
 }
 
-export function sessionStringToSessionState(sessionString: string | undefined | null) {
+export function toSessionState(sessionString: string | undefined | null) {
   const session: SessionState = {}
   if (isValidSessionString(sessionString)) {
     sessionString.split(SESSION_ENTRY_SEPARATOR).forEach((entry) => {

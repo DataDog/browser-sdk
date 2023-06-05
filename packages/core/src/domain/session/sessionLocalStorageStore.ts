@@ -1,5 +1,5 @@
 import type { SessionState, SessionStore } from './sessionStore'
-import { toSessionString, sessionStringToSessionState } from './sessionStore'
+import { toSessionString, toSessionState } from './sessionStore'
 
 export const LOCAL_STORAGE_KEY = '_dd_s'
 
@@ -17,7 +17,7 @@ function persistInLocalStorage(sessionState: SessionState) {
 
 function retrieveSessionFromLocalStorage(): SessionState {
   const sessionString = localStorage.getItem(LOCAL_STORAGE_KEY)
-  return sessionStringToSessionState(sessionString)
+  return toSessionState(sessionString)
 }
 
 function clearSessionFromLocalStorage() {
