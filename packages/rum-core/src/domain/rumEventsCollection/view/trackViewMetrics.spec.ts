@@ -1,5 +1,7 @@
-import type { Context, RelativeTime, Duration } from '@datadog/browser-core'
-import { addDuration, relativeNow } from '@datadog/browser-core'
+import type { Context, RelativeTime, TimeStamp, Duration } from '@datadog/browser-core'
+import { DOM_EVENT, addDuration, relativeNow } from '@datadog/browser-core'
+import type { Clock } from '@datadog/browser-core/test'
+import { createNewEvent, mockClock } from '@datadog/browser-core/test'
 import type { RumEvent } from '../../../rumEvent.types'
 import type { TestSetupBuilder } from '../../../../test'
 import { setup } from '../../../../test'
@@ -11,6 +13,8 @@ import { PAGE_ACTIVITY_END_DELAY, PAGE_ACTIVITY_VALIDATION_DELAY } from '../../w
 import { THROTTLE_VIEW_UPDATE_PERIOD } from './trackViews'
 import type { ViewTest } from './setupViewTest.specHelper'
 import { setupViewTest } from './setupViewTest.specHelper'
+import type { ScrollMetrics } from './trackViewMetrics'
+import { THROTTLE_SCROLL_DURATION, trackScrollMetrics } from './trackViewMetrics'
 
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = (PAGE_ACTIVITY_VALIDATION_DELAY * 0.8) as Duration
 
@@ -65,7 +69,7 @@ describe('rum track view metrics', () => {
       setupBuilder.withFakeClock()
     })
 
-    it('should have an undefined loading time if there is no activity on a route change', () => {
+    it('should have an undefined loading time and empty scroll metrics if there is no activity on a route change', () => {
       const { clock } = setupBuilder.build()
       const { getViewUpdate, getViewUpdateCount, startView } = viewTest
 
@@ -74,9 +78,10 @@ describe('rum track view metrics', () => {
 
       expect(getViewUpdateCount()).toEqual(3)
       expect(getViewUpdate(2).loadingTime).toBeUndefined()
+      expect(getViewUpdate(2).scrollMetrics).toEqual({})
     })
 
-    it('should have a loading time equal to the activity time if there is a unique activity on a route change', () => {
+    it('should have a loading time equal to the activity time and scroll metrics if there is a unique activity on a route change', () => {
       const { domMutationObservable, clock } = setupBuilder.build()
       const { getViewUpdate, startView } = viewTest
 
@@ -87,6 +92,12 @@ describe('rum track view metrics', () => {
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
       expect(getViewUpdate(3).loadingTime).toEqual(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+      expect(getViewUpdate(3).scrollMetrics).toEqual({
+        maxScrollHeight: 600,
+        maxScrollDepth: 600,
+        maxScrollDepthTime: 80 as Duration,
+        maxScrollTop: 0,
+      })
     })
 
     it('should use loadEventEnd for initial view when having no activity', () => {
@@ -517,6 +528,74 @@ describe('rum track view metrics', () => {
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
       expect(getViewUpdateCount()).toEqual(3)
       expect(getViewUpdate(2).cumulativeLayoutShift).toBe(0.5)
+    })
+  })
+
+  describe('scroll metrics', () => {
+    describe('on scroll', () => {
+      let scrollMetrics: ScrollMetrics = {}
+      let stopTrackScrollMetrics: () => void
+      let clock: Clock
+      const getMetrics = jasmine.createSpy('getMetrics')
+
+      const newScroll = (scrollParams: { scrollHeight: number; scrollDepth: number; scrollTop: number }) => {
+        getMetrics.and.returnValue(scrollParams)
+
+        window.dispatchEvent(createNewEvent(DOM_EVENT.SCROLL))
+
+        clock.tick(THROTTLE_SCROLL_DURATION)
+      }
+
+      beforeEach(() => {
+        clock = mockClock()
+        stopTrackScrollMetrics = trackScrollMetrics(
+          { relative: 1 as RelativeTime, timeStamp: 2 as TimeStamp },
+          getMetrics,
+          (s) => (scrollMetrics = s)
+        ).stop
+      })
+
+      afterEach(() => {
+        stopTrackScrollMetrics()
+        clock.cleanup()
+      })
+
+      it('should update scroll metrics when scrolling the first time', () => {
+        newScroll({ scrollHeight: 1000, scrollDepth: 500, scrollTop: 100 })
+
+        expect(scrollMetrics).toEqual({
+          maxScrollHeight: 1000,
+          maxScrollDepth: 500,
+          maxScrollTop: 100,
+          maxScrollDepthTime: 999 as Duration,
+        })
+      })
+
+      it('should update scroll metrics when scroll depth has increased', () => {
+        newScroll({ scrollHeight: 1000, scrollDepth: 500, scrollTop: 100 })
+
+        newScroll({ scrollHeight: 1000, scrollDepth: 600, scrollTop: 200 })
+
+        expect(scrollMetrics).toEqual({
+          maxScrollHeight: 1000,
+          maxScrollDepth: 600,
+          maxScrollTop: 200,
+          maxScrollDepthTime: 1999 as Duration,
+        })
+      })
+
+      it('should NOT update scroll metrics when scroll depth has not increased', () => {
+        newScroll({ scrollHeight: 1000, scrollDepth: 600, scrollTop: 200 })
+
+        newScroll({ scrollHeight: 1000, scrollDepth: 450, scrollTop: 50 })
+
+        expect(scrollMetrics).toEqual({
+          maxScrollHeight: 1000,
+          maxScrollDepth: 600,
+          maxScrollTop: 200,
+          maxScrollDepthTime: 999 as Duration,
+        })
+      })
     })
   })
 })
