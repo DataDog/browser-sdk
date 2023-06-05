@@ -94,6 +94,37 @@ describe('Logger', () => {
     })
   })
 
+  describe('context methods', () => {
+    beforeEach(() => {
+      const loggerContext = { foo: 'bar' }
+      logger = new Logger(handleLogSpy, undefined, HandlerType.http, StatusType.debug, loggerContext)
+    })
+
+    it('getContext should return the context', () => {
+      expect(logger.getContext()).toEqual({ foo: 'bar' })
+    })
+
+    it('setContext should overwrite the whole context', () => {
+      logger.setContext({ qux: 'qix' })
+      expect(logger.getContext()).toEqual({ qux: 'qix' })
+    })
+
+    it('setContextProperty should set a context value', () => {
+      logger.setContextProperty('qux', 'qix')
+      expect(logger.getContext()).toEqual({ foo: 'bar', qux: 'qix' })
+    })
+
+    it('removeContextProperty should remove a context value', () => {
+      logger.removeContextProperty('foo')
+      expect(logger.getContext()).toEqual({})
+    })
+
+    it('clearContext should clear the context', () => {
+      logger.clearContext()
+      expect(logger.getContext()).toEqual({})
+    })
+  })
+
   describe('contexts', () => {
     it('logger context should be deep copied', () => {
       const loggerContext = { foo: 'bar' }

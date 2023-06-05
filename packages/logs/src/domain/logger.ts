@@ -123,12 +123,16 @@ export class Logger {
     return this.contextManager.getContext()
   }
 
-  addContext(key: string, value: any) {
+  setContextProperty(key: string, value: any) {
     this.contextManager.setContextProperty(key, value)
   }
 
-  removeContext(key: string) {
+  removeContextProperty(key: string) {
     this.contextManager.removeContextProperty(key)
+  }
+
+  clearContext() {
+    this.contextManager.clearContext()
   }
 
   setHandler(handler: HandlerType | HandlerType[]) {
