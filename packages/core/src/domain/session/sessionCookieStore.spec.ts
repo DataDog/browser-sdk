@@ -21,6 +21,7 @@ describe('session cookie store', () => {
     cookieStorage.persistSession(sessionState)
     const session = cookieStorage.retrieveSession()
     expect(session).toEqual({ ...sessionState })
+    expect(document.cookie).toMatch(/_dd_s=.*id=.*created/)
   })
 
   it('should delete the cookie holding the session', () => {
@@ -28,6 +29,7 @@ describe('session cookie store', () => {
     cookieStorage.clearSession()
     const session = cookieStorage.retrieveSession()
     expect(session).toEqual({})
+    expect(document.cookie).not.toMatch(/_dd_s=/)
   })
 
   it('should return an empty object if session string is invalid', () => {

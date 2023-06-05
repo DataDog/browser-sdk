@@ -19,12 +19,12 @@ const enum FakeTrackingType {
 const TRACKED_SESSION_STATE = {
   isTracked: true,
   trackingType: FakeTrackingType.TRACKED,
-} as const
+}
 
 const NOT_TRACKED_SESSION_STATE = {
   isTracked: false,
   trackingType: FakeTrackingType.NOT_TRACKED,
-} as const
+}
 
 describe('startSessionManager', () => {
   const DURATION = 123456

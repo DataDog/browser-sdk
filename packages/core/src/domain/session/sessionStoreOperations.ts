@@ -93,11 +93,13 @@ export function processSessionStoreOperations(operations: Operations, sessionSto
  */
 
 export const isLockEnabled = () => isChromium()
+
 function retryLater(operations: Operations, sessionStore: SessionStore, currentNumberOfRetries: number) {
   setTimeout(() => {
     processSessionStoreOperations(operations, sessionStore, currentNumberOfRetries + 1)
   }, LOCK_RETRY_DELAY)
 }
+
 function next(sessionStore: SessionStore) {
   ongoingOperations = undefined
   const nextOperations = bufferedOperations.shift()
