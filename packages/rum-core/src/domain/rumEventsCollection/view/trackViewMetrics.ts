@@ -1,5 +1,7 @@
 import type { ClocksState, Duration, Observable, RelativeTime } from '@datadog/browser-core'
 import {
+  ExperimentalFeature,
+  isExperimentalFeatureEnabled,
   DOM_EVENT,
   ONE_SECOND,
   addEventListener,
@@ -53,12 +55,15 @@ export function trackScrollMetrics(
   },
   setScrollMetrics: (scrollMetrics: ScrollMetrics) => void
 ) {
+  if (!isExperimentalFeatureEnabled(ExperimentalFeature.SCROLLMAP)) {
+    return { stop: noop }
+  }
   const trackedScrollMetrics: ScrollMetrics = {}
   const handleScrollEvent = throttle(
     () => {
       const { scrollHeight, scrollDepth, scrollTop } = getMetrics()
 
-      if (scrollDepth > (trackedScrollMetrics.maxScrollDepth || 0) && scrollTop > 0) {
+      if (scrollDepth > (trackedScrollMetrics.maxScrollDepth || 0)) {
         const now = relativeNow()
         const timeStamp = elapsed(viewStart.relative, now)
         trackedScrollMetrics.maxScrollDepth = scrollDepth
@@ -107,11 +112,14 @@ export function trackViewMetrics(
     viewStart,
     (newLoadingTime) => {
       viewMetrics.loadingTime = newLoadingTime
-      const { scrollHeight: maxScrollHeight, scrollDepth: maxScrollDepth, scrollTop } = computeScrollMetrics()
-      scrollMetrics.maxScrollHeight = maxScrollHeight
-      scrollMetrics.maxScrollDepth = maxScrollDepth
-      scrollMetrics.maxScrollDepthTime = newLoadingTime
-      scrollMetrics.maxScrollTop = scrollTop
+
+      if (isExperimentalFeatureEnabled(ExperimentalFeature.SCROLLMAP)) {
+        const { scrollHeight: maxScrollHeight, scrollDepth: maxScrollDepth, scrollTop } = computeScrollMetrics()
+        scrollMetrics.maxScrollHeight = maxScrollHeight
+        scrollMetrics.maxScrollDepth = maxScrollDepth
+        scrollMetrics.maxScrollDepthTime = newLoadingTime
+        scrollMetrics.maxScrollTop = scrollTop
+      }
       scheduleViewUpdate()
     }
   )

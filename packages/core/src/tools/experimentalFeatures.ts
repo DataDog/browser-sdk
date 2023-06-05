@@ -17,6 +17,7 @@ export enum ExperimentalFeature {
   PAGE_STATES = 'page_states',
   COLLECT_FLUSH_REASON = 'collect_flush_reason',
   NO_RESOURCE_DURATION_FROZEN_STATE = 'no_resource_duration_frozen_state',
+  SCROLLMAP = 'scrollmap',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()
