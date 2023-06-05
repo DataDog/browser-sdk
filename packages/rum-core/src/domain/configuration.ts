@@ -30,6 +30,7 @@ export interface RumInitConfiguration extends InitConfiguration {
   defaultPrivacyLevel?: DefaultPrivacyLevel | undefined
   subdomain?: string
   sessionReplaySampleRate?: number | undefined
+  startSessionReplayRecordingManually?: boolean | undefined
 
   // action options
   trackUserInteractions?: boolean | undefined
@@ -53,6 +54,7 @@ export interface RumConfiguration extends Configuration {
   applicationId: string
   defaultPrivacyLevel: DefaultPrivacyLevel
   sessionReplaySampleRate: number
+  startSessionReplayRecordingManually: boolean
   trackUserInteractions: boolean
   trackViewsManually: boolean
   trackResources: boolean
@@ -104,6 +106,7 @@ export function validateAndBuildRumConfiguration(
       version: initConfiguration.version,
       actionNameAttribute: initConfiguration.actionNameAttribute,
       sessionReplaySampleRate: initConfiguration.sessionReplaySampleRate ?? 0,
+      startSessionReplayRecordingManually: !!initConfiguration.startSessionReplayRecordingManually,
       traceSampleRate: initConfiguration.traceSampleRate,
       allowedTracingUrls,
       excludedActivityUrls: initConfiguration.excludedActivityUrls ?? [],
@@ -181,6 +184,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration): 
   return assign(
     {
       session_replay_sample_rate: configuration.sessionReplaySampleRate,
+      start_session_replay_recording_manually: configuration.startSessionReplayRecordingManually,
       trace_sample_rate: configuration.traceSampleRate,
       action_name_attribute: configuration.actionNameAttribute,
       use_allowed_tracing_urls:

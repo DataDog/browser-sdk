@@ -240,6 +240,34 @@ describe('validateAndBuildRumConfiguration', () => {
     })
   })
 
+  describe('startSessionReplayRecordingManually', () => {
+    it('defaults to false', () => {
+      expect(
+        validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.startSessionReplayRecordingManually
+      ).toBeFalse()
+    })
+
+    it('is set to provided value', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, startSessionReplayRecordingManually: true })!
+          .startSessionReplayRecordingManually
+      ).toBeTrue()
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, startSessionReplayRecordingManually: false })!
+          .startSessionReplayRecordingManually
+      ).toBeFalse()
+    })
+
+    it('the provided value is cast to boolean', () => {
+      expect(
+        validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          startSessionReplayRecordingManually: 'foo' as any,
+        })!.startSessionReplayRecordingManually
+      ).toBeTrue()
+    })
+  })
+
   describe('actionNameAttribute', () => {
     it('defaults to undefined', () => {
       expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.actionNameAttribute).toBeUndefined()
