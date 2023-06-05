@@ -35,12 +35,15 @@ export const enum RumTrackingType {
 }
 
 export function startRumSessionManager(configuration: RumConfiguration, lifeCycle: LifeCycle): RumSessionManager {
-  if (!configuration.sessionStore) {
+  if (!configuration.sessionStoreStrategyType) {
     throw new Error('Cannot initialize RUM Session Manager without a storage.')
   }
 
-  const sessionManager = startSessionManager(configuration.sessionStore, RUM_SESSION_KEY, (rawTrackingType) =>
-    computeSessionState(configuration, rawTrackingType)
+  const sessionManager = startSessionManager(
+    configuration.sessionStoreStrategyType,
+    configuration.sessionStoreOptions,
+    RUM_SESSION_KEY,
+    (rawTrackingType) => computeSessionState(configuration, rawTrackingType)
   )
 
   sessionManager.expireObservable.subscribe(() => {

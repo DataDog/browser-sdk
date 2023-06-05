@@ -1,6 +1,5 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import {
-  initSessionStore,
   COOKIE_ACCESS_DELAY,
   getCookie,
   SESSION_COOKIE_NAME,
@@ -23,7 +22,8 @@ describe('logs session manager', () => {
   const DURATION = 123456
   const configuration: Partial<LogsConfiguration> = {
     sessionSampleRate: 0.5,
-    sessionStore: initSessionStore({ clientToken: 'abc' }),
+    sessionStoreStrategyType: 'COOKIE',
+    sessionStoreOptions: { cookie: {}, allowFallbackToLocalStorage: false },
   }
   let clock: Clock
   let tracked: boolean

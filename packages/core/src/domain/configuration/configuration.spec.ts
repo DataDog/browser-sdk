@@ -120,22 +120,26 @@ describe('validateAndBuildConfiguration', () => {
   describe('cookie options', () => {
     it('should not be secure nor crossSite by default', () => {
       const configuration = validateAndBuildConfiguration({ clientToken })!
-      expect(configuration.cookieOptions).toEqual({ secure: false, crossSite: false })
+      expect(configuration.sessionStoreOptions.cookie).toEqual({ secure: false, crossSite: false })
     })
 
     it('should be secure when `useSecureSessionCookie` is truthy', () => {
       const configuration = validateAndBuildConfiguration({ clientToken, useSecureSessionCookie: true })!
-      expect(configuration.cookieOptions).toEqual({ secure: true, crossSite: false })
+      expect(configuration.sessionStoreOptions.cookie).toEqual({ secure: true, crossSite: false })
     })
 
     it('should be secure and crossSite when `useCrossSiteSessionCookie` is truthy', () => {
       const configuration = validateAndBuildConfiguration({ clientToken, useCrossSiteSessionCookie: true })!
-      expect(configuration.cookieOptions).toEqual({ secure: true, crossSite: true })
+      expect(configuration.sessionStoreOptions.cookie).toEqual({ secure: true, crossSite: true })
     })
 
     it('should have domain when `trackSessionAcrossSubdomains` is truthy', () => {
       const configuration = validateAndBuildConfiguration({ clientToken, trackSessionAcrossSubdomains: true })!
-      expect(configuration.cookieOptions).toEqual({ secure: false, crossSite: false, domain: jasmine.any(String) })
+      expect(configuration.sessionStoreOptions.cookie).toEqual({
+        secure: false,
+        crossSite: false,
+        domain: jasmine.any(String),
+      })
     })
   })
 

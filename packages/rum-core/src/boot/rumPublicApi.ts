@@ -122,7 +122,7 @@ export function makeRumPublicApi(
       return
     }
 
-    if (!eventBridgeAvailable && !configuration.sessionStore) {
+    if (!eventBridgeAvailable && !configuration.sessionStoreStrategyType) {
       display.warn('No storage available for session. We will not send any data.')
       return
     }

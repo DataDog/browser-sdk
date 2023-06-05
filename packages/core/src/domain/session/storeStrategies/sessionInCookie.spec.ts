@@ -1,17 +1,15 @@
-import { setCookie, deleteCookie, getCurrentSite, getCookie } from '../../../browser/cookie'
-import type { InitConfiguration } from '../../configuration'
+import { setCookie, deleteCookie, getCookie } from '../../../browser/cookie'
 import type { SessionState } from '../sessionState'
-import { SESSION_COOKIE_NAME, buildCookieOptions, initCookieStrategy } from './sessionInCookie'
+import { SESSION_COOKIE_NAME, buildCookieOptions, checkCookieAvailability, initCookieStrategy } from './sessionInCookie'
 
 import type { SessionStoreStrategy } from './sessionStoreStrategy'
 
-describe('session cookie store', () => {
+describe('session in cookie strategy', () => {
   const sessionState: SessionState = { id: '123', created: '0' }
-  const initConfiguration: InitConfiguration = { clientToken: 'abc' }
   let cookieStorageStrategy: SessionStoreStrategy
 
   beforeEach(() => {
-    cookieStorageStrategy = initCookieStrategy(initConfiguration)!
+    cookieStorageStrategy = initCookieStrategy({})
   })
 
   afterEach(() => {
@@ -20,7 +18,7 @@ describe('session cookie store', () => {
 
   it('should persist a session in a cookie', () => {
     cookieStorageStrategy.persistSession(sessionState)
-    const session = cookieStorageStrategy?.retrieveSession()
+    const session = cookieStorageStrategy.retrieveSession()
     expect(session).toEqual({ ...sessionState })
     expect(getCookie(SESSION_COOKIE_NAME)).toBe('id=123&created=0')
   })
@@ -28,14 +26,14 @@ describe('session cookie store', () => {
   it('should delete the cookie holding the session', () => {
     cookieStorageStrategy.persistSession(sessionState)
     cookieStorageStrategy.clearSession()
-    const session = cookieStorageStrategy?.retrieveSession()
+    const session = cookieStorageStrategy.retrieveSession()
     expect(session).toEqual({})
     expect(getCookie(SESSION_COOKIE_NAME)).toBeUndefined()
   })
 
   it('should return an empty object if session string is invalid', () => {
     setCookie(SESSION_COOKIE_NAME, '{test:42}', 1000)
-    const session = cookieStorageStrategy?.retrieveSession()
+    const session = cookieStorageStrategy.retrieveSession()
     expect(session).toEqual({})
   })
 
@@ -67,30 +65,32 @@ describe('session cookie store', () => {
     ;[
       {
         initConfiguration: { clientToken: 'abc' },
+        cookieOptions: {},
         cookieString: /^dd_cookie_test_[\w-]+=[^;]*;expires=[^;]+;path=\/;samesite=strict$/,
         description: 'should set samesite to strict by default',
       },
       {
         initConfiguration: { clientToken: 'abc', useCrossSiteSessionCookie: true },
+        cookieOptions: { crossSite: true, secure: true },
         cookieString: /^dd_cookie_test_[\w-]+=[^;]*;expires=[^;]+;path=\/;samesite=none;secure$/,
         description: 'should set samesite to none and secure to true for crossSite',
       },
       {
         initConfiguration: { clientToken: 'abc', useSecureSessionCookie: true },
+        cookieOptions: { secure: true },
         cookieString: /^dd_cookie_test_[\w-]+=[^;]*;expires=[^;]+;path=\/;samesite=strict;secure$/,
         description: 'should add secure attribute when defined',
       },
       {
         initConfiguration: { clientToken: 'abc', trackSessionAcrossSubdomains: true },
-        cookieString: new RegExp(
-          `^dd_cookie_test_[\\w-]+=[^;]*;expires=[^;]+;path=\\/;samesite=strict;domain=${getCurrentSite()}$`
-        ),
+        cookieOptions: { domain: 'foo.bar' },
+        cookieString: /^dd_cookie_test_[\w-]+=[^;]*;expires=[^;]+;path=\/;samesite=strict;domain=foo.bar$/,
         description: 'should set cookie domain when tracking accross subdomains',
       },
-    ].forEach(({ description, initConfiguration, cookieString }) => {
+    ].forEach(({ description, cookieOptions, cookieString }) => {
       it(description, () => {
         const cookieSetSpy = spyOnProperty(document, 'cookie', 'set')
-        initCookieStrategy(initConfiguration)
+        checkCookieAvailability(cookieOptions)
         expect(cookieSetSpy.calls.argsFor(0)[0]).toMatch(cookieString)
       })
     })

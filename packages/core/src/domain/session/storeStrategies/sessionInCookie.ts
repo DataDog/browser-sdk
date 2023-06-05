@@ -9,17 +9,15 @@ import type { SessionStoreStrategy } from './sessionStoreStrategy'
 
 export const SESSION_COOKIE_NAME = '_dd_s'
 
-export function initCookieStrategy(initConfiguration: InitConfiguration): SessionStoreStrategy | undefined {
-  const options = buildCookieOptions(initConfiguration)
+export function checkCookieAvailability(cookieOptions: CookieOptions) {
+  return areCookiesAuthorized(cookieOptions)
+}
 
-  if (!areCookiesAuthorized(options)) {
-    return undefined
-  }
-
+export function initCookieStrategy(cookieOptions: CookieOptions): SessionStoreStrategy {
   const cookieStore = {
-    persistSession: persistSessionCookie(options),
+    persistSession: persistSessionCookie(cookieOptions),
     retrieveSession: retrieveSessionCookie,
-    clearSession: deleteSessionCookie(options),
+    clearSession: deleteSessionCookie(cookieOptions),
   }
 
   tryOldCookiesMigration(SESSION_COOKIE_NAME, cookieStore)

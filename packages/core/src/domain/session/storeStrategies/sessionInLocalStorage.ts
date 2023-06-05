@@ -5,11 +5,19 @@ import type { SessionStoreStrategy } from './sessionStoreStrategy'
 
 export const LOCAL_STORAGE_KEY = '_dd_s'
 
-export function initLocalStorageStrategy(): SessionStoreStrategy | undefined {
-  if (!isLocalStorageAvailable()) {
-    return undefined
+export function checkLocalStorageAvailability() {
+  try {
+    const id = generateUUID()
+    localStorage.setItem(`_dd_s_${id}`, id)
+    const retrievedId = localStorage.getItem(`_dd_s_${id}`)
+    localStorage.removeItem(`_dd_s_${id}`)
+    return id === retrievedId
+  } catch (e) {
+    return false
   }
+}
 
+export function initLocalStorageStrategy(): SessionStoreStrategy {
   return {
     persistSession: persistInLocalStorage,
     retrieveSession: retrieveSessionFromLocalStorage,
@@ -28,16 +36,4 @@ function retrieveSessionFromLocalStorage(): SessionState {
 
 function clearSessionFromLocalStorage() {
   localStorage.removeItem(LOCAL_STORAGE_KEY)
-}
-
-function isLocalStorageAvailable() {
-  try {
-    const id = generateUUID()
-    localStorage.setItem(`_dd_s_${id}`, id)
-    const retrievedId = localStorage.getItem(`_dd_s_${id}`)
-    localStorage.removeItem(`_dd_s_${id}`)
-    return id === retrievedId
-  } catch (e) {
-    return false
-  }
 }

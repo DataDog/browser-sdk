@@ -8,9 +8,8 @@ import { isPercentage } from '../../tools/utils/numberUtils'
 import { ONE_KIBI_BYTE } from '../../tools/utils/byteUtils'
 import { objectHasValue } from '../../tools/utils/objectUtils'
 import { assign } from '../../tools/utils/polyfills'
-import { initSessionStoreStrategy } from '../session/sessionStore'
-import type { SessionStoreStrategy } from '../session/storeStrategies/sessionStoreStrategy'
-import type { CookieOptions } from '../../browser/cookie'
+import { getSessionStoreStrategyType } from '../session/sessionStore'
+import type { SessionStoreOptions, SessionStoreStrategyType } from '../session/storeStrategies/sessionStoreStrategy'
 import { buildCookieOptions } from '../session/storeStrategies/sessionInCookie'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
@@ -78,9 +77,8 @@ interface ReplicaUserConfiguration {
 export interface Configuration extends TransportConfiguration {
   // Built from init configuration
   beforeSend: GenericBeforeSendCallback | undefined
-  cookieOptions: CookieOptions
-  allowFallbackToLocalStorage: boolean
-  sessionStore: SessionStoreStrategy | undefined
+  sessionStoreOptions: SessionStoreOptions
+  sessionStoreStrategyType: SessionStoreStrategyType | undefined
   sessionSampleRate: number
   telemetrySampleRate: number
   telemetryConfigurationSampleRate: number
@@ -132,13 +130,18 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     )
   }
 
+  // Build Session Store options
+  const sessionStoreOptions: SessionStoreOptions = {
+    cookie: buildCookieOptions(initConfiguration),
+    allowFallbackToLocalStorage: !!initConfiguration.allowFallbackToLocalStorage,
+  }
+
   return assign(
     {
       beforeSend:
         initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
-      cookieOptions: buildCookieOptions(initConfiguration),
-      allowFallbackToLocalStorage: !!initConfiguration.allowFallbackToLocalStorage,
-      sessionStore: initSessionStoreStrategy(initConfiguration),
+      sessionStoreOptions,
+      sessionStoreStrategyType: getSessionStoreStrategyType(sessionStoreOptions),
       sessionSampleRate: sessionSampleRate ?? 100,
       telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
       telemetryConfigurationSampleRate: initConfiguration.telemetryConfigurationSampleRate ?? 5,

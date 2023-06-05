@@ -54,7 +54,7 @@ export function startLogs(
   const pageExitObservable = createPageExitObservable()
 
   const session =
-    configuration.sessionStore && !canUseEventBridge() && !willSyntheticsInjectRum()
+    configuration.sessionStoreStrategyType && !canUseEventBridge() && !willSyntheticsInjectRum()
       ? startLogsSessionManager(configuration)
       : startLogsSessionManagerStub(configuration)
 
