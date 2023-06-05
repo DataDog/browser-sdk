@@ -17,6 +17,7 @@ describe('session local storage store', () => {
     localStorageStore.persistSession(sessionState)
     const session = localStorageStore.retrieveSession()
     expect(session).toEqual({ ...sessionState })
+    expect(window.localStorage.getItem(LOCAL_STORAGE_KEY)).toMatch(/.*id=.*created/)
   })
 
   it('should delete the local storage item holding the session', () => {
@@ -24,6 +25,7 @@ describe('session local storage store', () => {
     localStorageStore.clearSession()
     const session = localStorageStore.retrieveSession()
     expect(session).toEqual({})
+    expect(window.localStorage.getItem(LOCAL_STORAGE_KEY)).toBeNull()
   })
 
   it('should not interfere with other keys present in local storage', () => {
