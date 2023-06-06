@@ -36,7 +36,7 @@ function computeScrollMetrics() {
 
   const { height } = getViewportDimension()
 
-  const scrollHeight = Math.round(document.documentElement.scrollHeight)
+  const scrollHeight = Math.round((document.scrollingElement || document.documentElement).scrollHeight)
   const scrollDepth = Math.round(Math.min(height + scrollTop, scrollHeight))
 
   return {
@@ -48,12 +48,8 @@ function computeScrollMetrics() {
 
 export function trackScrollMetrics(
   viewStart: ClocksState,
-  getMetrics: () => {
-    scrollHeight: number
-    scrollDepth: number
-    scrollTop: number
-  },
-  setScrollMetrics: (scrollMetrics: ScrollMetrics) => void
+  callback: (scrollMetrics: ScrollMetrics) => void,
+  getMetrics = computeScrollMetrics
 ) {
   if (!isExperimentalFeatureEnabled(ExperimentalFeature.SCROLLMAP)) {
     return { stop: noop }
@@ -70,7 +66,7 @@ export function trackScrollMetrics(
         trackedScrollMetrics.maxScrollHeight = scrollHeight
         trackedScrollMetrics.maxScrollDepthTime = timeStamp
         trackedScrollMetrics.maxScrollTop = scrollTop
-        setScrollMetrics(trackedScrollMetrics)
+        callback(trackedScrollMetrics)
       }
     },
     THROTTLE_SCROLL_DURATION,
@@ -102,7 +98,7 @@ export function trackViewMetrics(
 ) {
   const viewMetrics: ViewMetrics = {}
 
-  const scrollMetrics: ScrollMetrics = {}
+  let scrollMetrics: ScrollMetrics = {}
 
   const { stop: stopLoadingTimeTracking, setLoadEvent } = trackLoadingTime(
     lifeCycle,
@@ -113,10 +109,12 @@ export function trackViewMetrics(
     (newLoadingTime) => {
       viewMetrics.loadingTime = newLoadingTime
 
+      // We compute scroll metrics at loading time to ensure we have scroll data when loading the view initially
+      // This is to ensure that we have the depth data even if the user didn't scroll or if the view is not scrollable.
       if (isExperimentalFeatureEnabled(ExperimentalFeature.SCROLLMAP)) {
-        const { scrollHeight: maxScrollHeight, scrollDepth: maxScrollDepth, scrollTop } = computeScrollMetrics()
-        scrollMetrics.maxScrollHeight = maxScrollHeight
-        scrollMetrics.maxScrollDepth = maxScrollDepth
+        const { scrollHeight, scrollDepth, scrollTop } = computeScrollMetrics()
+        scrollMetrics.maxScrollHeight = scrollHeight
+        scrollMetrics.maxScrollDepth = scrollDepth
         scrollMetrics.maxScrollDepthTime = newLoadingTime
         scrollMetrics.maxScrollTop = scrollTop
       }
@@ -126,13 +124,10 @@ export function trackViewMetrics(
 
   const { stop: stopScrollMetricsTracking } = trackScrollMetrics(
     viewStart,
-    computeScrollMetrics,
-    ({ maxScrollDepth, maxScrollHeight, maxScrollDepthTime, maxScrollTop }) => {
-      scrollMetrics.maxScrollDepth = maxScrollDepth
-      scrollMetrics.maxScrollHeight = maxScrollHeight
-      scrollMetrics.maxScrollDepthTime = maxScrollDepthTime
-      scrollMetrics.maxScrollTop = maxScrollTop
-    }
+    (newScrollMetrics) => {
+      scrollMetrics = newScrollMetrics
+    },
+    computeScrollMetrics
   )
 
   let stopCLSTracking: () => void

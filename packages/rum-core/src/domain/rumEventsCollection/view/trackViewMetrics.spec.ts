@@ -550,9 +550,9 @@ describe('rum track view metrics', () => {
           clock = mockClock()
           addExperimentalFeatures([ExperimentalFeature.SCROLLMAP])
           stopTrackScrollMetrics = trackScrollMetrics(
-            { relative: 1 as RelativeTime, timeStamp: 2 as TimeStamp },
-            getMetrics,
-            (s) => (scrollMetrics = s)
+            { relative: 0 as RelativeTime, timeStamp: 0 as TimeStamp },
+            (s) => (scrollMetrics = s),
+            getMetrics
           ).stop
         })
 
@@ -570,7 +570,7 @@ describe('rum track view metrics', () => {
             maxScrollHeight: 1000,
             maxScrollDepth: 500,
             maxScrollTop: 100,
-            maxScrollDepthTime: 999 as Duration,
+            maxScrollDepthTime: 1000 as Duration,
           })
         })
 
@@ -583,7 +583,7 @@ describe('rum track view metrics', () => {
             maxScrollHeight: 1000,
             maxScrollDepth: 600,
             maxScrollTop: 200,
-            maxScrollDepthTime: 1999 as Duration,
+            maxScrollDepthTime: 2000 as Duration,
           })
         })
 
@@ -596,7 +596,7 @@ describe('rum track view metrics', () => {
             maxScrollHeight: 1000,
             maxScrollDepth: 600,
             maxScrollTop: 200,
-            maxScrollDepthTime: 999 as Duration,
+            maxScrollDepthTime: 1000 as Duration,
           })
         })
       })
@@ -606,8 +606,8 @@ describe('rum track view metrics', () => {
           clock = mockClock()
           stopTrackScrollMetrics = trackScrollMetrics(
             { relative: 1 as RelativeTime, timeStamp: 2 as TimeStamp },
-            getMetrics,
-            (s) => (scrollMetrics = s)
+            (s) => (scrollMetrics = s),
+            getMetrics
           ).stop
         })
 
