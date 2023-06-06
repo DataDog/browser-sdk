@@ -5,7 +5,6 @@ import {
   ErrorHandling,
   computeStackTrace,
   CustomerDataType,
-  assign,
   combine,
   createContextManager,
   ErrorSource,
@@ -50,7 +49,10 @@ export class Logger {
     private level: StatusType = StatusType.debug,
     loggerContext: object = {}
   ) {
-    this.contextManager.set(assign({}, loggerContext, name ? { logger: { name } } : undefined))
+    this.contextManager.setContext(loggerContext as Context)
+    if (name) {
+      this.contextManager.setContextProperty('logger', { name })
+    }
   }
 
   @monitored
@@ -114,19 +116,19 @@ export class Logger {
   }
 
   setContext(context: object) {
-    this.contextManager.set(context)
+    this.contextManager.setContext(context as Context)
   }
 
   getContext() {
-    return this.contextManager.get()
+    return this.contextManager.getContext()
   }
 
   addContext(key: string, value: any) {
-    this.contextManager.add(key, value)
+    this.contextManager.setContextProperty(key, value)
   }
 
   removeContext(key: string) {
-    this.contextManager.remove(key)
+    this.contextManager.removeContextProperty(key)
   }
 
   setHandler(handler: HandlerType | HandlerType[]) {

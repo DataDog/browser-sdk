@@ -20,42 +20,35 @@ describe('createContextManager', () => {
 
   it('starts with an empty context', () => {
     const manager = createContextManager(CustomerDataType.User)
-    expect(manager.get()).toEqual({})
+    expect(manager.getContext()).toEqual({})
   })
 
   it('updates the context', () => {
     const manager = createContextManager(CustomerDataType.User)
-    manager.set({ bar: 'foo' })
+    manager.setContext({ bar: 'foo' })
 
-    expect(manager.get()).toEqual({ bar: 'foo' })
-  })
-
-  it('updates the context without copy', () => {
-    const manager = createContextManager(CustomerDataType.User)
-    const context = {}
-    manager.set(context)
-    expect(manager.get()).toBe(context)
+    expect(manager.getContext()).toEqual({ bar: 'foo' })
   })
 
   it('completely replaces the context', () => {
     const manager = createContextManager(CustomerDataType.User)
-    manager.set({ a: 'foo' })
-    expect(manager.get()).toEqual({ a: 'foo' })
-    manager.set({ b: 'foo' })
-    expect(manager.get()).toEqual({ b: 'foo' })
+    manager.setContext({ a: 'foo' })
+    expect(manager.getContext()).toEqual({ a: 'foo' })
+    manager.setContext({ b: 'foo' })
+    expect(manager.getContext()).toEqual({ b: 'foo' })
   })
 
   it('sets a context value', () => {
     const manager = createContextManager(CustomerDataType.User)
-    manager.add('foo', 'bar')
-    expect(manager.get()).toEqual({ foo: 'bar' })
+    manager.setContextProperty('foo', 'bar')
+    expect(manager.getContext()).toEqual({ foo: 'bar' })
   })
 
   it('removes a context value', () => {
     const manager = createContextManager(CustomerDataType.User)
-    manager.set({ a: 'foo', b: 'bar' })
-    manager.remove('a')
-    expect(manager.get()).toEqual({ b: 'bar' })
+    manager.setContext({ a: 'foo', b: 'bar' })
+    manager.removeContextProperty('a')
+    expect(manager.getContext()).toEqual({ b: 'bar' })
     manager.removeContextProperty('b')
     expect(manager.getContext()).toEqual({})
   })
@@ -97,13 +90,13 @@ describe('createContextManager', () => {
       const computeBytesCountStub = jasmine.createSpy('computeBytesCountStub').and.returnValue(1)
       const manager = createContextManager(CustomerDataType.User, computeBytesCountStub)
 
-      manager.add('foo', 'bar')
+      manager.setContextProperty('foo', 'bar')
       clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
 
-      manager.remove('foo')
+      manager.removeContextProperty('foo')
       clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
 
-      manager.set({ foo: 'bar' })
+      manager.setContext({ foo: 'bar' })
       clock.tick(BYTES_COMPUTATION_THROTTLING_DELAY)
 
       manager.setContextProperty('foo', 'bar')
