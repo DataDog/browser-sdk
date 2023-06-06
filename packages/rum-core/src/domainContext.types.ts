@@ -21,10 +21,6 @@ export interface RumViewEventDomainContext {
 }
 
 export interface RumActionEventDomainContext {
-  /**
-   * @deprecated use events array instead
-   */
-  event?: Event
   events?: Event[]
 }
 
