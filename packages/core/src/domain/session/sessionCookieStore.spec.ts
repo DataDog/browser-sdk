@@ -1,5 +1,5 @@
 import type { CookieOptions } from '../../browser/cookie'
-import { setCookie, deleteCookie } from '../../browser/cookie'
+import { getCookie, setCookie, deleteCookie } from '../../browser/cookie'
 import { SESSION_COOKIE_NAME, initCookieStore } from './sessionCookieStore'
 
 import type { SessionState, SessionStore } from './sessionStore'
@@ -21,7 +21,7 @@ describe('session cookie store', () => {
     cookieStorage.persistSession(sessionState)
     const session = cookieStorage.retrieveSession()
     expect(session).toEqual({ ...sessionState })
-    expect(document.cookie).toMatch(/_dd_s=.*id=.*created/)
+    expect(getCookie(SESSION_COOKIE_NAME)).toBe('id=123&created=0')
   })
 
   it('should delete the cookie holding the session', () => {
@@ -29,7 +29,7 @@ describe('session cookie store', () => {
     cookieStorage.clearSession()
     const session = cookieStorage.retrieveSession()
     expect(session).toEqual({})
-    expect(document.cookie).not.toMatch(/_dd_s=/)
+    expect(getCookie(SESSION_COOKIE_NAME)).toBeUndefined()
   })
 
   it('should return an empty object if session string is invalid', () => {

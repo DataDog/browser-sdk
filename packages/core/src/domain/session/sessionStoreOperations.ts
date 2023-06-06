@@ -87,11 +87,11 @@ export function processSessionStoreOperations(operations: Operations, sessionSto
   operations.after?.(processedSession || currentSession)
   next(sessionStore)
 }
+
 /**
  * Lock strategy allows mitigating issues due to concurrent access to cookie.
  * This issue concerns only chromium browsers and enabling this on firefox increases cookie write failures.
  */
-
 export const isLockEnabled = () => isChromium()
 
 function retryLater(operations: Operations, sessionStore: SessionStore, currentNumberOfRetries: number) {

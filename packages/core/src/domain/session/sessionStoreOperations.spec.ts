@@ -67,6 +67,18 @@ describe('process operations mechanism', () => {
       expect(cookieStorage.retrieveSession()).toEqual(initialSession)
       expect(afterSpy).toHaveBeenCalledWith(initialSession)
     })
+
+    it('LOCK_MAX_TRIES value should not influence the behavior when lock mechanism is not enabled', () => {
+      cookieStorage.persistSession(initialSession)
+      processSpy.and.returnValue({ ...otherSession })
+
+      processSessionStoreOperations({ process: processSpy, after: afterSpy }, cookieStorage, LOCK_MAX_TRIES)
+
+      expect(processSpy).toHaveBeenCalledWith(initialSession)
+      const expectedSession = { ...otherSession, expire: jasmine.any(String) }
+      expect(cookieStorage.retrieveSession()).toEqual(expectedSession)
+      expect(afterSpy).toHaveBeenCalledWith(expectedSession)
+    })
   })
 
   describe('with cookie-lock enabled', () => {
