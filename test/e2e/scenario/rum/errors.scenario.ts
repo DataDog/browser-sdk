@@ -30,7 +30,7 @@ describe('rum errors', () => {
       await flushEvents()
       expect(serverEvents.rumErrors.length).toBe(1)
       expectError(serverEvents.rumErrors[0].error, {
-        message: 'console error: oh snap',
+        message: 'oh snap',
         source: 'console',
         handlingStack: ['Error: ', `handler @ ${baseUrl}/:`],
         handling: 'handled',
@@ -50,7 +50,7 @@ describe('rum errors', () => {
       await flushEvents()
       expect(serverEvents.rumErrors.length).toBe(1)
       expectError(serverEvents.rumErrors[0].error, {
-        message: 'console error: Foo: Error: oh snap',
+        message: 'Foo: Error: oh snap',
         source: 'console',
         stack: ['Error: oh snap', `at foo @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],
         handlingStack: ['Error: ', `handler @ ${baseUrl}/:`],

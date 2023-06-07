@@ -23,7 +23,7 @@ describe('logs', () => {
       })
       await flushEvents()
       expect(serverEvents.logs.length).toBe(1)
-      expect(serverEvents.logs[0].message).toBe('console error: oh snap')
+      expect(serverEvents.logs[0].message).toBe('oh snap')
       await withBrowserLogs((browserLogs) => {
         expect(browserLogs.length).toEqual(1)
       })
