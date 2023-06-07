@@ -5,12 +5,13 @@ import { tryOldCookiesMigration } from '../oldCookiesMigration'
 import { SESSION_EXPIRATION_DELAY } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
 import { toSessionString, toSessionState } from '../sessionState'
-import type { SessionStoreStrategy } from './sessionStoreStrategy'
+import type { SessionStoreStrategy, SessionStoreStrategyType } from './sessionStoreStrategy'
 
 export const SESSION_COOKIE_NAME = '_dd_s'
 
-export function checkCookieAvailability(cookieOptions: CookieOptions) {
-  return areCookiesAuthorized(cookieOptions)
+export function selectCookieStrategy(initConfiguration: InitConfiguration): SessionStoreStrategyType | undefined {
+  const cookieOptions = buildCookieOptions(initConfiguration)
+  return areCookiesAuthorized(cookieOptions) ? { type: 'Cookie', cookieOptions } : undefined
 }
 
 export function initCookieStrategy(cookieOptions: CookieOptions): SessionStoreStrategy {

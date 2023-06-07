@@ -9,7 +9,7 @@ import type { SessionManager } from './sessionManager'
 import { startSessionManager, stopSessionManager, VISIBILITY_CHECK_DELAY } from './sessionManager'
 import { SESSION_COOKIE_NAME } from './storeStrategies/sessionInCookie'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
-import type { SessionStoreOptions, SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
+import type { SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
 
 const enum FakeTrackingType {
   NOT_TRACKED = 'not-tracked',
@@ -30,8 +30,7 @@ describe('startSessionManager', () => {
   const DURATION = 123456
   const FIRST_PRODUCT_KEY = 'first'
   const SECOND_PRODUCT_KEY = 'second'
-  const sessionStoreStrategyType: SessionStoreStrategyType = 'COOKIE'
-  const sessionStoreOptions: SessionStoreOptions = { cookie: {} }
+  const sessionStoreStrategyType: SessionStoreStrategyType = { type: 'Cookie', cookieOptions: {} }
   let clock: Clock
 
   function expireSessionCookie() {
@@ -87,7 +86,6 @@ describe('startSessionManager', () => {
     it('when tracked, should store tracking type and session id', () => {
       const sessionManager = startSessionManager(
         sessionStoreStrategyType,
-        sessionStoreOptions,
         FIRST_PRODUCT_KEY,
         () => TRACKED_SESSION_STATE
       )
@@ -99,7 +97,6 @@ describe('startSessionManager', () => {
     it('when not tracked should store tracking type', () => {
       const sessionManager = startSessionManager(
         sessionStoreStrategyType,
-        sessionStoreOptions,
         FIRST_PRODUCT_KEY,
         () => NOT_TRACKED_SESSION_STATE
       )
@@ -113,7 +110,6 @@ describe('startSessionManager', () => {
 
       const sessionManager = startSessionManager(
         sessionStoreStrategyType,
-        sessionStoreOptions,
         FIRST_PRODUCT_KEY,
         () => TRACKED_SESSION_STATE
       )
@@ -127,7 +123,6 @@ describe('startSessionManager', () => {
 
       const sessionManager = startSessionManager(
         sessionStoreStrategyType,
-        sessionStoreOptions,
         FIRST_PRODUCT_KEY,
         () => NOT_TRACKED_SESSION_STATE
       )
@@ -145,25 +140,25 @@ describe('startSessionManager', () => {
     })
 
     it('should be called with an empty value if the cookie is not defined', () => {
-      startSessionManager(sessionStoreStrategyType, sessionStoreOptions, FIRST_PRODUCT_KEY, spy)
+      startSessionManager(sessionStoreStrategyType, FIRST_PRODUCT_KEY, spy)
       expect(spy).toHaveBeenCalledWith(undefined)
     })
 
     it('should be called with an invalid value if the cookie has an invalid value', () => {
       setCookie(SESSION_COOKIE_NAME, 'first=invalid', DURATION)
-      startSessionManager(sessionStoreStrategyType, sessionStoreOptions, FIRST_PRODUCT_KEY, spy)
+      startSessionManager(sessionStoreStrategyType, FIRST_PRODUCT_KEY, spy)
       expect(spy).toHaveBeenCalledWith('invalid')
     })
 
     it('should be called with TRACKED', () => {
       setCookie(SESSION_COOKIE_NAME, 'first=tracked', DURATION)
-      startSessionManager(sessionStoreStrategyType, sessionStoreOptions, FIRST_PRODUCT_KEY, spy)
+      startSessionManager(sessionStoreStrategyType, FIRST_PRODUCT_KEY, spy)
       expect(spy).toHaveBeenCalledWith(FakeTrackingType.TRACKED)
     })
 
     it('should be called with NOT_TRACKED', () => {
       setCookie(SESSION_COOKIE_NAME, 'first=not-tracked', DURATION)
-      startSessionManager(sessionStoreStrategyType, sessionStoreOptions, FIRST_PRODUCT_KEY, spy)
+      startSessionManager(sessionStoreStrategyType, FIRST_PRODUCT_KEY, spy)
       expect(spy).toHaveBeenCalledWith(FakeTrackingType.NOT_TRACKED)
     })
   })
@@ -172,7 +167,6 @@ describe('startSessionManager', () => {
     it('should renew on activity after expiration', () => {
       const sessionManager = startSessionManager(
         sessionStoreStrategyType,
-        sessionStoreOptions,
         FIRST_PRODUCT_KEY,
         () => TRACKED_SESSION_STATE
       )
@@ -195,7 +189,6 @@ describe('startSessionManager', () => {
     it('should not renew on visibility after expiration', () => {
       const sessionManager = startSessionManager(
         sessionStoreStrategyType,
-        sessionStoreOptions,
         FIRST_PRODUCT_KEY,
         () => TRACKED_SESSION_STATE
       )
@@ -215,7 +208,6 @@ describe('startSessionManager', () => {
     it('should re-use the same session id', () => {
       const firstSessionManager = startSessionManager(
         sessionStoreStrategyType,
-        sessionStoreOptions,
         FIRST_PRODUCT_KEY,
         () => TRACKED_SESSION_STATE
       )
@@ -223,7 +215,6 @@ describe('startSessionManager', () => {
 
       const secondSessionManager = startSessionManager(
         sessionStoreStrategyType,
-        sessionStoreOptions,
         SECOND_PRODUCT_KEY,
         () => TRACKED_SESSION_STATE
       )
@@ -233,7 +224,7 @@ describe('startSessionManager', () => {
     })
 
     it('should not erase other session type', () => {
-      startSessionManager(sessionStoreStrategyType, sessionStoreOptions, FIRST_PRODUCT_KEY, () => TRACKED_SESSION_STATE)
+      startSessionManager(sessionStoreStrategyType, FIRST_PRODUCT_KEY, () => TRACKED_SESSION_STATE)
 
       // schedule an expandOrRenewSession
       document.dispatchEvent(new CustomEvent('click'))
@@ -243,12 +234,7 @@ describe('startSessionManager', () => {
       // expand first session cookie cache
       document.dispatchEvent(createNewEvent(DOM_EVENT.VISIBILITY_CHANGE))
 
-      startSessionManager(
-        sessionStoreStrategyType,
-        sessionStoreOptions,
-        SECOND_PRODUCT_KEY,
-        () => TRACKED_SESSION_STATE
-      )
+      startSessionManager(sessionStoreStrategyType, SECOND_PRODUCT_KEY, () => TRACKED_SESSION_STATE)
 
       // cookie correctly set
       expect(getCookie(SESSION_COOKIE_NAME)).toContain('first')
@@ -264,13 +250,11 @@ describe('startSessionManager', () => {
     it('should have independent tracking types', () => {
       const firstSessionManager = startSessionManager(
         sessionStoreStrategyType,
-        sessionStoreOptions,
         FIRST_PRODUCT_KEY,
         () => TRACKED_SESSION_STATE
       )
       const secondSessionManager = startSessionManager(
         sessionStoreStrategyType,
-        sessionStoreOptions,
         SECOND_PRODUCT_KEY,
         () => NOT_TRACKED_SESSION_STATE
       )
@@ -282,7 +266,6 @@ describe('startSessionManager', () => {
     it('should notify each expire and renew observables', () => {
       const firstSessionManager = startSessionManager(
         sessionStoreStrategyType,
-        sessionStoreOptions,
         FIRST_PRODUCT_KEY,
         () => TRACKED_SESSION_STATE
       )
@@ -293,7 +276,6 @@ describe('startSessionManager', () => {
 
       const secondSessionManager = startSessionManager(
         sessionStoreStrategyType,
-        sessionStoreOptions,
         SECOND_PRODUCT_KEY,
         () => TRACKED_SESSION_STATE
       )
@@ -320,7 +302,6 @@ describe('startSessionManager', () => {
     it('should expire the session when the time out delay is reached', () => {
       const sessionManager = startSessionManager(
         sessionStoreStrategyType,
-        sessionStoreOptions,
         FIRST_PRODUCT_KEY,
         () => TRACKED_SESSION_STATE
       )
@@ -341,7 +322,6 @@ describe('startSessionManager', () => {
 
       const sessionManager = startSessionManager(
         sessionStoreStrategyType,
-        sessionStoreOptions,
         FIRST_PRODUCT_KEY,
         () => TRACKED_SESSION_STATE
       )
@@ -358,7 +338,6 @@ describe('startSessionManager', () => {
 
       const sessionManager = startSessionManager(
         sessionStoreStrategyType,
-        sessionStoreOptions,
         FIRST_PRODUCT_KEY,
         () => TRACKED_SESSION_STATE
       )
@@ -380,7 +359,6 @@ describe('startSessionManager', () => {
     it('should expire the session after expiration delay', () => {
       const sessionManager = startSessionManager(
         sessionStoreStrategyType,
-        sessionStoreOptions,
         FIRST_PRODUCT_KEY,
         () => TRACKED_SESSION_STATE
       )
@@ -397,7 +375,6 @@ describe('startSessionManager', () => {
     it('should expand duration on activity', () => {
       const sessionManager = startSessionManager(
         sessionStoreStrategyType,
-        sessionStoreOptions,
         FIRST_PRODUCT_KEY,
         () => TRACKED_SESSION_STATE
       )
@@ -421,7 +398,6 @@ describe('startSessionManager', () => {
     it('should expand not tracked session duration on activity', () => {
       const sessionManager = startSessionManager(
         sessionStoreStrategyType,
-        sessionStoreOptions,
         FIRST_PRODUCT_KEY,
         () => NOT_TRACKED_SESSION_STATE
       )
@@ -447,7 +423,6 @@ describe('startSessionManager', () => {
 
       const sessionManager = startSessionManager(
         sessionStoreStrategyType,
-        sessionStoreOptions,
         FIRST_PRODUCT_KEY,
         () => TRACKED_SESSION_STATE
       )
@@ -473,7 +448,6 @@ describe('startSessionManager', () => {
 
       const sessionManager = startSessionManager(
         sessionStoreStrategyType,
-        sessionStoreOptions,
         FIRST_PRODUCT_KEY,
         () => NOT_TRACKED_SESSION_STATE
       )
@@ -499,7 +473,6 @@ describe('startSessionManager', () => {
     it('expires the session when calling expire()', () => {
       const sessionManager = startSessionManager(
         sessionStoreStrategyType,
-        sessionStoreOptions,
         FIRST_PRODUCT_KEY,
         () => TRACKED_SESSION_STATE
       )
@@ -515,7 +488,6 @@ describe('startSessionManager', () => {
     it('notifies expired session only once when calling expire() multiple times', () => {
       const sessionManager = startSessionManager(
         sessionStoreStrategyType,
-        sessionStoreOptions,
         FIRST_PRODUCT_KEY,
         () => TRACKED_SESSION_STATE
       )
@@ -532,7 +504,6 @@ describe('startSessionManager', () => {
     it('notifies expired session only once when calling expire() after the session has been expired', () => {
       const sessionManager = startSessionManager(
         sessionStoreStrategyType,
-        sessionStoreOptions,
         FIRST_PRODUCT_KEY,
         () => TRACKED_SESSION_STATE
       )
@@ -549,7 +520,6 @@ describe('startSessionManager', () => {
     it('renew the session on user activity', () => {
       const sessionManager = startSessionManager(
         sessionStoreStrategyType,
-        sessionStoreOptions,
         FIRST_PRODUCT_KEY,
         () => TRACKED_SESSION_STATE
       )
@@ -567,7 +537,6 @@ describe('startSessionManager', () => {
     it('should return undefined when there is no current session and no startTime', () => {
       const sessionManager = startSessionManager(
         sessionStoreStrategyType,
-        sessionStoreOptions,
         FIRST_PRODUCT_KEY,
         () => TRACKED_SESSION_STATE
       )
@@ -579,7 +548,6 @@ describe('startSessionManager', () => {
     it('should return the current session context when there is no start time', () => {
       const sessionManager = startSessionManager(
         sessionStoreStrategyType,
-        sessionStoreOptions,
         FIRST_PRODUCT_KEY,
         () => TRACKED_SESSION_STATE
       )
@@ -591,7 +559,6 @@ describe('startSessionManager', () => {
     it('should return the session context corresponding to startTime', () => {
       const sessionManager = startSessionManager(
         sessionStoreStrategyType,
-        sessionStoreOptions,
         FIRST_PRODUCT_KEY,
         () => TRACKED_SESSION_STATE
       )

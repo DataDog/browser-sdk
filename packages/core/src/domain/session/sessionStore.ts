@@ -3,11 +3,12 @@ import { Observable } from '../../tools/observable'
 import { ONE_SECOND, dateNow } from '../../tools/utils/timeUtils'
 import { throttle } from '../../tools/utils/functionUtils'
 import { generateUUID } from '../../tools/utils/stringUtils'
+import type { InitConfiguration } from '../configuration'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
-import { checkCookieAvailability, initCookieStrategy } from './storeStrategies/sessionInCookie'
-import type { SessionStoreOptions, SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
+import { selectCookieStrategy, initCookieStrategy } from './storeStrategies/sessionInCookie'
+import type { SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
 import type { SessionState } from './sessionState'
-import { checkLocalStorageAvailability, initLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
+import { initLocalStorageStrategy, selectLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
 import { processSessionStoreOperations } from './sessionStoreOperations'
 
 export interface SessionStore {
@@ -27,17 +28,12 @@ const POLL_DELAY = ONE_SECOND
  * Else, checks if LocalStorage is allowed and available
  */
 export function selectSessionStoreStrategyType(
-  sessionStoreOptions: SessionStoreOptions,
-  allowFallbackToLocalStorage: boolean
+  initConfiguration: InitConfiguration
 ): SessionStoreStrategyType | undefined {
-  let sessionStoreStrategyType: SessionStoreStrategyType | undefined
-
-  if (checkCookieAvailability(sessionStoreOptions.cookie)) {
-    sessionStoreStrategyType = 'COOKIE'
-  } else if (allowFallbackToLocalStorage && checkLocalStorageAvailability()) {
-    sessionStoreStrategyType = 'LOCAL_STORAGE'
+  let sessionStoreStrategyType = selectCookieStrategy(initConfiguration)
+  if (!sessionStoreStrategyType && initConfiguration.allowFallbackToLocalStorage) {
+    sessionStoreStrategyType = selectLocalStorageStrategy()
   }
-
   return sessionStoreStrategyType
 }
 
@@ -49,7 +45,6 @@ export function selectSessionStoreStrategyType(
  */
 export function startSessionStore<TrackingType extends string>(
   sessionStoreStrategyType: SessionStoreStrategyType,
-  sessionStoreOptions: SessionStoreOptions,
   productKey: string,
   computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean }
 ): SessionStore {
@@ -57,7 +52,9 @@ export function startSessionStore<TrackingType extends string>(
   const expireObservable = new Observable<void>()
 
   const sessionStoreStrategy =
-    sessionStoreStrategyType === 'COOKIE' ? initCookieStrategy(sessionStoreOptions.cookie) : initLocalStorageStrategy()
+    sessionStoreStrategyType.type === 'Cookie'
+      ? initCookieStrategy(sessionStoreStrategyType.cookieOptions)
+      : initLocalStorageStrategy()
   const { clearSession, retrieveSession } = sessionStoreStrategy
 
   const watchSessionTimeoutId = setInterval(watchSession, POLL_DELAY)

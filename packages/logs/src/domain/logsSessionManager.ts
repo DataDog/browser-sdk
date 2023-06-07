@@ -25,7 +25,6 @@ export function startLogsSessionManager(configuration: LogsConfiguration): LogsS
 
   const sessionManager = startSessionManager(
     configuration.sessionStoreStrategyType,
-    configuration.sessionStoreOptions,
     LOGS_SESSION_KEY,
     (rawTrackingType) => computeSessionState(configuration, rawTrackingType)
   )

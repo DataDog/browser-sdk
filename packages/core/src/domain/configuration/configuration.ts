@@ -9,8 +9,7 @@ import { ONE_KIBI_BYTE } from '../../tools/utils/byteUtils'
 import { objectHasValue } from '../../tools/utils/objectUtils'
 import { assign } from '../../tools/utils/polyfills'
 import { selectSessionStoreStrategyType } from '../session/sessionStore'
-import type { SessionStoreOptions, SessionStoreStrategyType } from '../session/storeStrategies/sessionStoreStrategy'
-import { buildCookieOptions } from '../session/storeStrategies/sessionInCookie'
+import type { SessionStoreStrategyType } from '../session/storeStrategies/sessionStoreStrategy'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
 
@@ -77,7 +76,6 @@ interface ReplicaUserConfiguration {
 export interface Configuration extends TransportConfiguration {
   // Built from init configuration
   beforeSend: GenericBeforeSendCallback | undefined
-  sessionStoreOptions: SessionStoreOptions
   sessionStoreStrategyType: SessionStoreStrategyType | undefined
   sessionSampleRate: number
   telemetrySampleRate: number
@@ -130,20 +128,11 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     )
   }
 
-  // Build Session Store options
-  const sessionStoreOptions: SessionStoreOptions = {
-    cookie: buildCookieOptions(initConfiguration),
-  }
-
   return assign(
     {
       beforeSend:
         initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
-      sessionStoreOptions,
-      sessionStoreStrategyType: selectSessionStoreStrategyType(
-        sessionStoreOptions,
-        !!initConfiguration.allowFallbackToLocalStorage
-      ),
+      sessionStoreStrategyType: selectSessionStoreStrategyType(initConfiguration),
       sessionSampleRate: sessionSampleRate ?? 100,
       telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
       telemetryConfigurationSampleRate: initConfiguration.telemetryConfigurationSampleRate ?? 5,

@@ -7,7 +7,7 @@ import { DOM_EVENT, addEventListener, addEventListeners } from '../../browser/ad
 import { clearInterval, setInterval } from '../../tools/timer'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { startSessionStore } from './sessionStore'
-import type { SessionStoreOptions, SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
+import type { SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
 
 export interface SessionManager<TrackingType extends string> {
   findActiveSession: (startTime?: RelativeTime) => SessionContext<TrackingType> | undefined
@@ -27,11 +27,10 @@ let stopCallbacks: Array<() => void> = []
 
 export function startSessionManager<TrackingType extends string>(
   sessionStoreStrategyType: SessionStoreStrategyType,
-  sessionStoreOptions: SessionStoreOptions,
   productKey: string,
   computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean }
 ): SessionManager<TrackingType> {
-  const sessionStore = startSessionStore(sessionStoreStrategyType, sessionStoreOptions, productKey, computeSessionState)
+  const sessionStore = startSessionStore(sessionStoreStrategyType, productKey, computeSessionState)
   stopCallbacks.push(() => sessionStore.stop())
 
   const sessionContextHistory = new ValueHistory<SessionContext<TrackingType>>(SESSION_CONTEXT_TIMEOUT_DELAY)

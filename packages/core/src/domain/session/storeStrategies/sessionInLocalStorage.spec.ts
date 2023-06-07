@@ -1,5 +1,5 @@
 import type { SessionState } from '../sessionState'
-import { LOCAL_STORAGE_KEY, checkLocalStorageAvailability, initLocalStorageStrategy } from './sessionInLocalStorage'
+import { LOCAL_STORAGE_KEY, selectLocalStorageStrategy, initLocalStorageStrategy } from './sessionInLocalStorage'
 
 describe('session in local storage strategy', () => {
   const sessionState: SessionState = { id: '123', created: '0' }
@@ -9,14 +9,14 @@ describe('session in local storage strategy', () => {
   })
 
   it('should report local storage as available', () => {
-    const available = checkLocalStorageAvailability()
-    expect(available).toBe(true)
+    const available = selectLocalStorageStrategy()
+    expect(available).toEqual({ type: 'LocalStorage' })
   })
 
   it('should report local storage as not available', () => {
     spyOn(Storage.prototype, 'getItem').and.throwError('Unavailable')
-    const available = checkLocalStorageAvailability()
-    expect(available).toBe(false)
+    const available = selectLocalStorageStrategy()
+    expect(available).toBeUndefined()
   })
 
   it('should persist a session in local storage', () => {

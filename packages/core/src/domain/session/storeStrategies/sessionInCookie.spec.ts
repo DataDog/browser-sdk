@@ -1,6 +1,6 @@
-import { setCookie, deleteCookie, getCookie } from '../../../browser/cookie'
+import { setCookie, deleteCookie, getCookie, getCurrentSite } from '../../../browser/cookie'
 import type { SessionState } from '../sessionState'
-import { SESSION_COOKIE_NAME, buildCookieOptions, checkCookieAvailability, initCookieStrategy } from './sessionInCookie'
+import { SESSION_COOKIE_NAME, buildCookieOptions, selectCookieStrategy, initCookieStrategy } from './sessionInCookie'
 
 import type { SessionStoreStrategy } from './sessionStoreStrategy'
 
@@ -84,13 +84,15 @@ describe('session in cookie strategy', () => {
       {
         initConfiguration: { clientToken: 'abc', trackSessionAcrossSubdomains: true },
         cookieOptions: { domain: 'foo.bar' },
-        cookieString: /^dd_cookie_test_[\w-]+=[^;]*;expires=[^;]+;path=\/;samesite=strict;domain=foo.bar$/,
+        cookieString: new RegExp(
+          `^dd_cookie_test_[\\w-]+=[^;]*;expires=[^;]+;path=\\/;samesite=strict;domain=${getCurrentSite()}$`
+        ),
         description: 'should set cookie domain when tracking accross subdomains',
       },
-    ].forEach(({ description, cookieOptions, cookieString }) => {
+    ].forEach(({ description, initConfiguration, cookieString }) => {
       it(description, () => {
         const cookieSetSpy = spyOnProperty(document, 'cookie', 'set')
-        checkCookieAvailability(cookieOptions)
+        selectCookieStrategy(initConfiguration)
         expect(cookieSetSpy.calls.argsFor(0)[0]).toMatch(cookieString)
       })
     })

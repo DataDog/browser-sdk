@@ -41,7 +41,6 @@ export function startRumSessionManager(configuration: RumConfiguration, lifeCycl
 
   const sessionManager = startSessionManager(
     configuration.sessionStoreStrategyType,
-    configuration.sessionStoreOptions,
     RUM_SESSION_KEY,
     (rawTrackingType) => computeSessionState(configuration, rawTrackingType)
   )

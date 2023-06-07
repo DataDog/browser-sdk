@@ -1,12 +1,10 @@
 import type { Clock } from '../../../test'
 import { mockClock } from '../../../test'
-import type { CookieOptions } from '../../browser/cookie'
 import { getCookie, setCookie, COOKIE_ACCESS_DELAY } from '../../browser/cookie'
 import type { SessionStore } from './sessionStore'
 import { startSessionStore, selectSessionStoreStrategyType } from './sessionStore'
 import { SESSION_COOKIE_NAME } from './storeStrategies/sessionInCookie'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
-import type { SessionStoreOptions } from './storeStrategies/sessionStoreStrategy'
 
 const enum FakeTrackingType {
   TRACKED = 'tracked',
@@ -47,50 +45,40 @@ function resetSessionInStore() {
 }
 
 describe('session store', () => {
-  const cookieOptions: CookieOptions = {}
-
   describe('getSessionStoreStrategyType', () => {
-    it('should return "COOKIE" when cookies are available', () => {
-      const sessionStoreStrategyType = selectSessionStoreStrategyType(
-        {
-          cookie: cookieOptions,
-        },
-        true
-      )
-      expect(sessionStoreStrategyType).toBe('COOKIE')
+    it('should return a type cookie when cookies are available', () => {
+      const sessionStoreStrategyType = selectSessionStoreStrategyType({
+        clientToken: 'abc',
+        allowFallbackToLocalStorage: true,
+      })
+      expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: 'Cookie' }))
     })
 
-    it('should report "NO_STORAGE_AVAILABLE" when cookies are not available, and fallback is not allowed', () => {
+    it('should report undefined when cookies are not available, and fallback is not allowed', () => {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('')
-      const sessionStoreStrategyType = selectSessionStoreStrategyType(
-        {
-          cookie: cookieOptions,
-        },
-        false
-      )
+      const sessionStoreStrategyType = selectSessionStoreStrategyType({
+        clientToken: 'abc',
+        allowFallbackToLocalStorage: false,
+      })
       expect(sessionStoreStrategyType).toBeUndefined()
     })
 
     it('should fallback to localStorage when cookies are not available', () => {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('')
-      const sessionStoreStrategyType = selectSessionStoreStrategyType(
-        {
-          cookie: cookieOptions,
-        },
-        true
-      )
-      expect(sessionStoreStrategyType).toBe('LOCAL_STORAGE')
+      const sessionStoreStrategyType = selectSessionStoreStrategyType({
+        clientToken: 'abc',
+        allowFallbackToLocalStorage: true,
+      })
+      expect(sessionStoreStrategyType).toEqual({ type: 'LocalStorage' })
     })
 
-    it('should report "NO_STORAGE_AVAILABLE" when no storage is available', () => {
+    it('should report undefined when no storage is available', () => {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('')
       spyOn(Storage.prototype, 'getItem').and.throwError('unavailable')
-      const sessionStoreStrategyType = selectSessionStoreStrategyType(
-        {
-          cookie: cookieOptions,
-        },
-        true
-      )
+      const sessionStoreStrategyType = selectSessionStoreStrategyType({
+        clientToken: 'abc',
+        allowFallbackToLocalStorage: true,
+      })
       expect(sessionStoreStrategyType).toBeUndefined()
     })
   })
@@ -110,18 +98,15 @@ describe('session store', () => {
         trackingType: FakeTrackingType.TRACKED,
       })
     ) {
-      const sessionStoreOptions: SessionStoreOptions = { cookie: cookieOptions }
-      const sessionStoreStrategyType = selectSessionStoreStrategyType(sessionStoreOptions, false)
-      if (sessionStoreStrategyType !== 'COOKIE') {
+      const sessionStoreStrategyType = selectSessionStoreStrategyType({
+        clientToken: 'abc',
+        allowFallbackToLocalStorage: false,
+      })
+      if (sessionStoreStrategyType?.type !== 'Cookie') {
         fail('Unable to initialize cookie storage')
         return
       }
-      sessionStoreManager = startSessionStore(
-        sessionStoreStrategyType,
-        sessionStoreOptions,
-        PRODUCT_KEY,
-        computeSessionState
-      )
+      sessionStoreManager = startSessionStore(sessionStoreStrategyType, PRODUCT_KEY, computeSessionState)
       sessionStoreManager.expireObservable.subscribe(expireSpy)
       sessionStoreManager.renewObservable.subscribe(renewSpy)
     }
