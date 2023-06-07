@@ -53,6 +53,21 @@ describe('xhr observable', () => {
     })
   })
 
+  it('should sanitize request method', (done) => {
+    withXhr({
+      setup(xhr) {
+        xhr.open('get', '/ok')
+        xhr.send()
+        xhr.complete(200, 'ok')
+      },
+      onComplete() {
+        const request = requests[0]
+        expect(request.method).toBe('GET')
+        done()
+      },
+    })
+  })
+
   it('should track client error', (done) => {
     withXhr({
       setup(xhr) {
