@@ -26,14 +26,15 @@ const POLL_DELAY = ONE_SECOND
  * Checks if cookies are available as the preferred storage
  * Else, checks if LocalStorage is allowed and available
  */
-export function getSessionStoreStrategyType(
-  sessionStoreOptions: SessionStoreOptions
+export function selectSessionStoreStrategyType(
+  sessionStoreOptions: SessionStoreOptions,
+  allowFallbackToLocalStorage: boolean
 ): SessionStoreStrategyType | undefined {
   let sessionStoreStrategyType: SessionStoreStrategyType | undefined
 
   if (checkCookieAvailability(sessionStoreOptions.cookie)) {
     sessionStoreStrategyType = 'COOKIE'
-  } else if (sessionStoreOptions.allowFallbackToLocalStorage && checkLocalStorageAvailability()) {
+  } else if (allowFallbackToLocalStorage && checkLocalStorageAvailability()) {
     sessionStoreStrategyType = 'LOCAL_STORAGE'
   }
 

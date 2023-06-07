@@ -31,7 +31,7 @@ describe('startSessionManager', () => {
   const FIRST_PRODUCT_KEY = 'first'
   const SECOND_PRODUCT_KEY = 'second'
   const sessionStoreStrategyType: SessionStoreStrategyType = 'COOKIE'
-  const sessionStoreOptions: SessionStoreOptions = { cookie: {}, allowFallbackToLocalStorage: false }
+  const sessionStoreOptions: SessionStoreOptions = { cookie: {} }
   let clock: Clock
 
   function expireSessionCookie() {

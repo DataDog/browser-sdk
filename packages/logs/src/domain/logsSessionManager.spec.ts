@@ -23,7 +23,7 @@ describe('logs session manager', () => {
   const configuration: Partial<LogsConfiguration> = {
     sessionSampleRate: 0.5,
     sessionStoreStrategyType: 'COOKIE',
-    sessionStoreOptions: { cookie: {}, allowFallbackToLocalStorage: false },
+    sessionStoreOptions: { cookie: {} },
   }
   let clock: Clock
   let tracked: boolean

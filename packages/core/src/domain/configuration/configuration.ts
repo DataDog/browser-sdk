@@ -8,7 +8,7 @@ import { isPercentage } from '../../tools/utils/numberUtils'
 import { ONE_KIBI_BYTE } from '../../tools/utils/byteUtils'
 import { objectHasValue } from '../../tools/utils/objectUtils'
 import { assign } from '../../tools/utils/polyfills'
-import { getSessionStoreStrategyType } from '../session/sessionStore'
+import { selectSessionStoreStrategyType } from '../session/sessionStore'
 import type { SessionStoreOptions, SessionStoreStrategyType } from '../session/storeStrategies/sessionStoreStrategy'
 import { buildCookieOptions } from '../session/storeStrategies/sessionInCookie'
 import type { TransportConfiguration } from './transportConfiguration'
@@ -133,7 +133,6 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
   // Build Session Store options
   const sessionStoreOptions: SessionStoreOptions = {
     cookie: buildCookieOptions(initConfiguration),
-    allowFallbackToLocalStorage: !!initConfiguration.allowFallbackToLocalStorage,
   }
 
   return assign(
@@ -141,7 +140,10 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
       beforeSend:
         initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
       sessionStoreOptions,
-      sessionStoreStrategyType: getSessionStoreStrategyType(sessionStoreOptions),
+      sessionStoreStrategyType: selectSessionStoreStrategyType(
+        sessionStoreOptions,
+        !!initConfiguration.allowFallbackToLocalStorage
+      ),
       sessionSampleRate: sessionSampleRate ?? 100,
       telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
       telemetryConfigurationSampleRate: initConfiguration.telemetryConfigurationSampleRate ?? 5,
