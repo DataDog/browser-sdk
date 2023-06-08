@@ -37,7 +37,7 @@ function computeScrollMetrics() {
   const { height } = getViewportDimension()
 
   const scrollHeight = Math.round((document.scrollingElement || document.documentElement).scrollHeight)
-  const scrollDepth = Math.round(Math.min(height + scrollTop, scrollHeight))
+  const scrollDepth = Math.round(height + scrollTop)
 
   return {
     scrollHeight,
