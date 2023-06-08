@@ -155,6 +155,35 @@ describe('validateAndBuildConfiguration', () => {
     })
   })
 
+  describe('allowFallbackToLocalStorage', () => {
+    it('should not be enabled (false) by default', () => {
+      spyOnProperty(document, 'cookie', 'get').and.returnValue('')
+      const configuration = validateAndBuildConfiguration({ clientToken })
+      expect(configuration?.sessionStoreStrategyType).toBeUndefined()
+    })
+
+    it('should contain cookie in the configuration by default', () => {
+      const configuration = validateAndBuildConfiguration({ clientToken, allowFallbackToLocalStorage: true })
+      expect(configuration?.sessionStoreStrategyType).toEqual({
+        type: 'Cookie',
+        cookieOptions: { secure: false, crossSite: false },
+      })
+    })
+
+    it('should contain local storage in the configuration when enabled and cookies are not available', () => {
+      spyOnProperty(document, 'cookie', 'get').and.returnValue('')
+      const configuration = validateAndBuildConfiguration({ clientToken, allowFallbackToLocalStorage: true })
+      expect(configuration?.sessionStoreStrategyType).toEqual({ type: 'LocalStorage' })
+    })
+
+    it('should not contain any available storage if both cookies and local storage are unavailable', () => {
+      spyOnProperty(document, 'cookie', 'get').and.returnValue('')
+      spyOn(Storage.prototype, 'getItem').and.throwError('unavailable')
+      const configuration = validateAndBuildConfiguration({ clientToken, allowFallbackToLocalStorage: true })
+      expect(configuration?.sessionStoreStrategyType).toBeUndefined()
+    })
+  })
+
   describe('beforeSend', () => {
     it('should be undefined when beforeSend is missing on user configuration', () => {
       const configuration = validateAndBuildConfiguration({ clientToken })!
