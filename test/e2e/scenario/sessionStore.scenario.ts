@@ -12,11 +12,11 @@ describe('Session Stores', () => {
         const [cookie] = await browser.getCookies([SESSION_COOKIE_NAME])
         const cookieSessionId = cookie.value.match(/id=([\w-]+)/)![1]
 
-        const logsContext = await browser.execute(() => window.DD_LOGS.getInternalContext())
-        const rumContext = await browser.execute(() => window.DD_RUM.getInternalContext())
+        const logsContext = await browser.execute(() => window.DD_LOGS?.getInternalContext())
+        const rumContext = await browser.execute(() => window.DD_RUM?.getInternalContext())
 
-        expect(logsContext.session_id).toBe(cookieSessionId)
-        expect(rumContext.session_id).toBe(cookieSessionId)
+        expect(logsContext?.session_id).toBe(cookieSessionId)
+        expect(rumContext?.session_id).toBe(cookieSessionId)
       })
   })
 
@@ -33,11 +33,11 @@ describe('Session Stores', () => {
         )
         const sessionId = sessionStateString?.match(/id=([\w-]+)/)![1]
 
-        const logsContext = await browser.execute(() => window.DD_LOGS.getInternalContext())
-        const rumContext = await browser.execute(() => window.DD_RUM.getInternalContext())
+        const logsContext = await browser.execute(() => window.DD_LOGS?.getInternalContext())
+        const rumContext = await browser.execute(() => window.DD_RUM?.getInternalContext())
 
-        expect(logsContext.session_id).toBe(sessionId)
-        expect(rumContext.session_id).toBe(sessionId)
+        expect(logsContext?.session_id).toBe(sessionId)
+        expect(rumContext?.session_id).toBe(sessionId)
       })
   })
 
@@ -54,8 +54,8 @@ describe('Session Stores', () => {
         </script>`
       )
       .run(async () => {
-        const logsContext = await browser.execute(() => window.DD_LOGS.getInternalContext())
-        const rumContext = await browser.execute(() => window.DD_RUM.getInternalContext())
+        const logsContext = await browser.execute(() => window.DD_LOGS?.getInternalContext())
+        const rumContext = await browser.execute(() => window.DD_RUM?.getInternalContext())
 
         expect(logsContext).not.toBeNull()
         expect(rumContext).toBeNull()
