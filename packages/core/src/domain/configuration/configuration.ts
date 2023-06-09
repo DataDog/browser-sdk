@@ -164,19 +164,20 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
   )
 }
 
-export function serializeConfiguration(configuration: InitConfiguration): Partial<RawTelemetryConfiguration> {
-  const proxy = configuration.proxy ?? configuration.proxyUrl
+export function serializeConfiguration(initConfiguration: InitConfiguration): Partial<RawTelemetryConfiguration> {
+  const proxy = initConfiguration.proxy ?? initConfiguration.proxyUrl
   return {
-    session_sample_rate: configuration.sessionSampleRate ?? configuration.sampleRate,
-    telemetry_sample_rate: configuration.telemetrySampleRate,
-    telemetry_configuration_sample_rate: configuration.telemetryConfigurationSampleRate,
-    use_before_send: !!configuration.beforeSend,
-    use_cross_site_session_cookie: configuration.useCrossSiteSessionCookie,
-    use_secure_session_cookie: configuration.useSecureSessionCookie,
+    session_sample_rate: initConfiguration.sessionSampleRate ?? initConfiguration.sampleRate,
+    telemetry_sample_rate: initConfiguration.telemetrySampleRate,
+    telemetry_configuration_sample_rate: initConfiguration.telemetryConfigurationSampleRate,
+    use_before_send: !!initConfiguration.beforeSend,
+    use_cross_site_session_cookie: initConfiguration.useCrossSiteSessionCookie,
+    use_secure_session_cookie: initConfiguration.useSecureSessionCookie,
     use_proxy: proxy !== undefined ? !!proxy : undefined,
-    silent_multiple_init: configuration.silentMultipleInit,
-    track_session_across_subdomains: configuration.trackSessionAcrossSubdomains,
-    track_resources: configuration.trackResources,
-    track_long_task: configuration.trackLongTasks,
+    silent_multiple_init: initConfiguration.silentMultipleInit,
+    track_session_across_subdomains: initConfiguration.trackSessionAcrossSubdomains,
+    track_resources: initConfiguration.trackResources,
+    track_long_task: initConfiguration.trackLongTasks,
+    allowFallbackToLocalStorage: !!initConfiguration.allowFallbackToLocalStorage,
   }
 }
