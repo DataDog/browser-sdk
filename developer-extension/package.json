@@ -8,7 +8,7 @@
   },
   "devDependencies": {
     "@types/chrome": "0.0.237",
-    "@types/react": "18.2.9",
+    "@types/react": "18.2.7",
     "@types/react-dom": "18.2.4",
     "@webextension-toolbox/webpack-webextension-plugin": "3.0.0",
     "copy-webpack-plugin": "11.0.0",
