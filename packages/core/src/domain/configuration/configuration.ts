@@ -178,6 +178,6 @@ export function serializeConfiguration(initConfiguration: InitConfiguration): Pa
     track_session_across_subdomains: initConfiguration.trackSessionAcrossSubdomains,
     track_resources: initConfiguration.trackResources,
     track_long_task: initConfiguration.trackLongTasks,
-    allowFallbackToLocalStorage: !!initConfiguration.allowFallbackToLocalStorage,
+    allow_fallback_to_local_storage: !!initConfiguration.allowFallbackToLocalStorage,
   }
 }
