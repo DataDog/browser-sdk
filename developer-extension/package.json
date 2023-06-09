@@ -12,13 +12,13 @@
     "@types/react-dom": "18.2.4",
     "@webextension-toolbox/webpack-webextension-plugin": "3.0.0",
     "copy-webpack-plugin": "11.0.0",
-    "html-webpack-plugin": "5.5.1",
-    "webpack": "5.84.1"
+    "html-webpack-plugin": "5.5.2",
+    "webpack": "5.86.0"
   },
   "dependencies": {
-    "@emotion/react": "11.11.0",
-    "@mantine/core": "6.0.11",
-    "@mantine/hooks": "6.0.11",
+    "@emotion/react": "11.11.1",
+    "@mantine/core": "6.0.13",
+    "@mantine/hooks": "6.0.13",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-json-view": "1.21.3"
