@@ -105,7 +105,7 @@ function processViewUpdate(
         : undefined,
     },
     feature_flags: featureFlagContext && !isEmptyObject(featureFlagContext) ? featureFlagContext : undefined,
-    display: !isEmptyObject(view.scrollMetrics)
+    display: view.scrollMetrics
       ? {
           scroll: {
             max_depth: view.scrollMetrics.maxScrollDepth,

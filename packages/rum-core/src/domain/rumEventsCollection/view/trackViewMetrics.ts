@@ -23,10 +23,10 @@ import { getScrollY } from '../../../browser/scroll'
 import { getViewportDimension } from '../../../browser/viewportObservable'
 
 export interface ScrollMetrics {
-  maxScrollDepth?: number
-  maxScrollHeight?: number
-  maxScrollDepthTime?: Duration
-  maxScrollTop?: number
+  maxScrollDepth: number
+  maxScrollHeight: number
+  maxScrollDepthTime: Duration
+  maxScrollTop: number
 }
 
 export const THROTTLE_SCROLL_DURATION = ONE_SECOND
@@ -54,19 +54,21 @@ export function trackScrollMetrics(
   if (!isExperimentalFeatureEnabled(ExperimentalFeature.SCROLLMAP)) {
     return { stop: noop }
   }
-  const trackedScrollMetrics: ScrollMetrics = {}
+  let maxScrollDepth = 0
   const handleScrollEvent = throttle(
     () => {
       const { scrollHeight, scrollDepth, scrollTop } = getMetrics()
 
-      if (scrollDepth > (trackedScrollMetrics.maxScrollDepth || 0)) {
+      if (scrollDepth > maxScrollDepth) {
         const now = relativeNow()
         const timeStamp = elapsed(viewStart.relative, now)
-        trackedScrollMetrics.maxScrollDepth = scrollDepth
-        trackedScrollMetrics.maxScrollHeight = scrollHeight
-        trackedScrollMetrics.maxScrollDepthTime = timeStamp
-        trackedScrollMetrics.maxScrollTop = scrollTop
-        callback(trackedScrollMetrics)
+        maxScrollDepth = scrollDepth
+        callback({
+          maxScrollDepth,
+          maxScrollHeight: scrollHeight,
+          maxScrollDepthTime: timeStamp,
+          maxScrollTop: scrollTop,
+        })
       }
     },
     THROTTLE_SCROLL_DURATION,
@@ -98,7 +100,7 @@ export function trackViewMetrics(
 ) {
   const viewMetrics: ViewMetrics = {}
 
-  let scrollMetrics: ScrollMetrics = {}
+  let scrollMetrics: ScrollMetrics | undefined
 
   const { stop: stopLoadingTimeTracking, setLoadEvent } = trackLoadingTime(
     lifeCycle,
@@ -113,10 +115,13 @@ export function trackViewMetrics(
       // This is to ensure that we have the depth data even if the user didn't scroll or if the view is not scrollable.
       if (isExperimentalFeatureEnabled(ExperimentalFeature.SCROLLMAP)) {
         const { scrollHeight, scrollDepth, scrollTop } = computeScrollMetrics()
-        scrollMetrics.maxScrollHeight = scrollHeight
-        scrollMetrics.maxScrollDepth = scrollDepth
-        scrollMetrics.maxScrollDepthTime = newLoadingTime
-        scrollMetrics.maxScrollTop = scrollTop
+
+        scrollMetrics = {
+          maxScrollHeight: scrollHeight,
+          maxScrollDepth: scrollDepth,
+          maxScrollDepthTime: newLoadingTime,
+          maxScrollTop: scrollTop,
+        }
       }
       scheduleViewUpdate()
     }
@@ -140,6 +145,7 @@ export function trackViewMetrics(
   } else {
     stopCLSTracking = noop
   }
+
   return {
     stop: () => {
       stopLoadingTimeTracking()
@@ -148,7 +154,7 @@ export function trackViewMetrics(
     },
     setLoadEvent,
     viewMetrics,
-    scrollMetrics,
+    getScrollMetrics: () => scrollMetrics,
   }
 }
 

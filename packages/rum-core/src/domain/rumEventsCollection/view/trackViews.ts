@@ -48,7 +48,7 @@ export interface ViewEvent {
   loadingTime?: Duration
   loadingType: ViewLoadingType
   cumulativeLayoutShift?: number
-  scrollMetrics: ScrollMetrics
+  scrollMetrics?: ScrollMetrics
 }
 
 export interface ViewCreatedEvent {
@@ -187,7 +187,7 @@ function newView(
     setLoadEvent,
     stop: stopViewMetricsTracking,
     viewMetrics,
-    scrollMetrics,
+    getScrollMetrics,
   } = trackViewMetrics(lifeCycle, domMutationObservable, configuration, scheduleViewUpdate, loadingType, startClocks)
 
   const { scheduleStop: scheduleStopInitialViewTimingsTracking, timings } =
@@ -211,6 +211,7 @@ function newView(
     cancelScheduleViewUpdate()
     documentVersion += 1
     const currentEnd = endClocks === undefined ? timeStampNow() : endClocks.timeStamp
+
     lifeCycle.notify(
       LifeCycleEventType.VIEW_UPDATED,
       assign(
@@ -229,7 +230,7 @@ function newView(
           isActive: endClocks === undefined,
           sessionIsActive,
           eventCounts,
-          scrollMetrics,
+          scrollMetrics: getScrollMetrics(),
         },
         viewMetrics
       )

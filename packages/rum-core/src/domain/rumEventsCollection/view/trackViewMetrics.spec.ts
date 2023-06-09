@@ -533,7 +533,7 @@ describe('rum track view metrics', () => {
 
   describe('scroll metrics', () => {
     describe('on scroll', () => {
-      let scrollMetrics: ScrollMetrics = {}
+      let scrollMetrics: ScrollMetrics | undefined
       let stopTrackScrollMetrics: () => void
       let clock: Clock
       const getMetrics = jasmine.createSpy('getMetrics')
@@ -559,7 +559,7 @@ describe('rum track view metrics', () => {
         afterEach(() => {
           stopTrackScrollMetrics()
           resetExperimentalFeatures()
-          scrollMetrics = {}
+          scrollMetrics = undefined
           clock.cleanup()
         })
 
@@ -614,13 +614,13 @@ describe('rum track view metrics', () => {
         afterEach(() => {
           stopTrackScrollMetrics()
           resetExperimentalFeatures()
-          scrollMetrics = {}
+          scrollMetrics = undefined
           clock.cleanup()
         })
         it('should NOT update scroll metrics when scrolling the first time', () => {
           newScroll({ scrollHeight: 1000, scrollDepth: 500, scrollTop: 100 })
 
-          expect(scrollMetrics).toEqual({})
+          expect(scrollMetrics).toEqual(undefined)
         })
       })
     })
@@ -647,7 +647,7 @@ describe('rum track view metrics', () => {
 
           expect(getViewUpdateCount()).toEqual(3)
           expect(getViewUpdate(2).loadingTime).toBeUndefined()
-          expect(getViewUpdate(2).scrollMetrics).toEqual({})
+          expect(getViewUpdate(2).scrollMetrics).toEqual(undefined)
         })
 
         it('should have a loading time equal to the activity time and scroll metrics if there is a unique activity on a route change', () => {
@@ -682,7 +682,7 @@ describe('rum track view metrics', () => {
           clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
           expect(getViewUpdate(3).loadingTime).toEqual(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-          expect(getViewUpdate(3).scrollMetrics).toEqual({})
+          expect(getViewUpdate(3).scrollMetrics).toEqual(undefined)
         })
       })
     })
