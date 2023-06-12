@@ -125,6 +125,14 @@ describe('validateAndBuildConfiguration', () => {
     })
 
     it('should contain cookie in the configuration by default', () => {
+      const configuration = validateAndBuildConfiguration({ clientToken, allowFallbackToLocalStorage: false })
+      expect(configuration?.sessionStoreStrategyType).toEqual({
+        type: 'Cookie',
+        cookieOptions: { secure: false, crossSite: false },
+      })
+    })
+
+    it('should contain cookie in the configuration when fallback is enabled and cookies are available', () => {
       const configuration = validateAndBuildConfiguration({ clientToken, allowFallbackToLocalStorage: true })
       expect(configuration?.sessionStoreStrategyType).toEqual({
         type: 'Cookie',
@@ -132,7 +140,7 @@ describe('validateAndBuildConfiguration', () => {
       })
     })
 
-    it('should contain local storage in the configuration when enabled and cookies are not available', () => {
+    it('should contain local storage in the configuration when fallback is enabled and cookies are not available', () => {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('')
       const configuration = validateAndBuildConfiguration({ clientToken, allowFallbackToLocalStorage: true })
       expect(configuration?.sessionStoreStrategyType).toEqual({ type: 'LocalStorage' })
