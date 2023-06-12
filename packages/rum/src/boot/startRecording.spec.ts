@@ -136,7 +136,7 @@ describe('startRecording', () => {
 
     document.body.dispatchEvent(createNewEvent('click', { clientX: 1, clientY: 2 }))
 
-    sessionManager.setId('new-session-id').setPlanWithSessionReplay()
+    sessionManager.setId('new-session-id').setTrackedWithSessionReplay()
     flushSegment(lifeCycle)
     document.body.dispatchEvent(createNewEvent('click', { clientX: 1, clientY: 2 }))
 

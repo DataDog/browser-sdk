@@ -123,9 +123,6 @@ export function startRumAssembly(
           _dd: {
             format_version: 2,
             drift: currentDrift(),
-            session: {
-              plan: session.plan,
-            },
             browser_sdk_version: canUseEventBridge() ? __BUILD_ENV__SDK_VERSION__ : undefined,
           },
           application: {

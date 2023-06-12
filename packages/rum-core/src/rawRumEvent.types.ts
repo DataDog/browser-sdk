@@ -9,7 +9,6 @@ import type {
   RawErrorCause,
 } from '@datadog/browser-core'
 import type { PageState } from './domain/contexts/pageStateHistory'
-import type { RumSessionPlan } from './domain/rumSessionManager'
 
 export const enum RumEventType {
   ACTION = 'action',
@@ -244,9 +243,6 @@ export interface RumContext {
   _dd: {
     format_version: 2
     drift: number
-    session: {
-      plan: RumSessionPlan
-    }
     browser_sdk_version?: string
   }
 }

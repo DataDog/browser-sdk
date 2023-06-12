@@ -21,7 +21,6 @@ import type { RumActionEvent, RumErrorEvent, RumEvent } from '../rumEvent.types'
 import { startRumAssembly } from './assembly'
 import type { LifeCycle, RawRumEventCollectedData } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
-import { RumSessionPlan } from './rumSessionManager'
 import type { RumConfiguration } from './configuration'
 import type { ViewContext } from './contexts/viewContexts'
 import type { CommonContext } from './contexts/commonContext'
@@ -569,7 +568,7 @@ describe('rum assembly', () => {
   })
 
   describe('session context', () => {
-    it('should include the session type, id and plan', () => {
+    it('should include the session type and id', () => {
       const { lifeCycle } = setupBuilder.build()
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
@@ -579,9 +578,6 @@ describe('rum assembly', () => {
         is_active: undefined,
         id: '1234',
         type: 'user',
-      })
-      expect(serverRumEvents[0]._dd.session).toEqual({
-        plan: RumSessionPlan.WITH_SESSION_REPLAY,
       })
     })
 
