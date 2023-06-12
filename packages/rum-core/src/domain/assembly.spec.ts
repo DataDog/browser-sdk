@@ -575,6 +575,7 @@ describe('rum assembly', () => {
       })
       expect(serverRumEvents[0].session).toEqual({
         has_replay: undefined,
+        sampled_for_replay: jasmine.any(Boolean),
         is_active: undefined,
         id: '1234',
         type: 'user',
@@ -621,6 +622,40 @@ describe('rum assembly', () => {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
       })
       expect(serverRumEvents[0].session.has_replay).toBe(undefined)
+    })
+
+    it('should set sampled_for_replay on view events when tracked with replay', () => {
+      const { lifeCycle } = setupBuilder
+        .withSessionManager(createRumSessionManagerMock().setTrackedWithSessionReplay())
+        .build()
+
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+      })
+
+      expect(serverRumEvents[0].session.sampled_for_replay).toBe(true)
+    })
+
+    it('should set sampled_for_replay on view events when tracked without replay', () => {
+      const { lifeCycle } = setupBuilder
+        .withSessionManager(createRumSessionManagerMock().setTrackedWithoutSessionReplay())
+        .build()
+
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+      })
+
+      expect(serverRumEvents[0].session.sampled_for_replay).toBe(false)
+    })
+
+    it('should not set sampled_for_replay on other events', () => {
+      const { lifeCycle } = setupBuilder.build()
+
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.ERROR),
+      })
+
+      expect(serverRumEvents[0].session.sampled_for_replay).not.toBeDefined()
     })
   })
 
