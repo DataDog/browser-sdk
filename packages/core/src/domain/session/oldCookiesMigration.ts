@@ -1,10 +1,8 @@
 import { getCookie } from '../../browser/cookie'
-import { dateNow } from '../../tools/utils/timeUtils'
 import type { SessionStoreStrategy } from './storeStrategies/sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 import type { SessionState } from './sessionState'
-import { isSessionInExpiredState } from './sessionState'
-import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
+import { expandSessionState, isSessionInExpiredState } from './sessionState'
 
 export const OLD_SESSION_COOKIE_NAME = '_dd'
 export const OLD_RUM_COOKIE_NAME = '_dd_r'
@@ -37,7 +35,7 @@ export function tryOldCookiesMigration(cookieStoreStrategy: SessionStoreStrategy
     }
 
     if (!isSessionInExpiredState(session)) {
-      session.expire = String(dateNow() + SESSION_EXPIRATION_DELAY)
+      expandSessionState(session)
       cookieStoreStrategy.persistSession(session)
     }
   }

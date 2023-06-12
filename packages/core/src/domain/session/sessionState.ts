@@ -1,5 +1,7 @@
 import { isEmptyObject } from '../../tools/utils/objectUtils'
 import { objectEntries } from '../../tools/utils/polyfills'
+import { dateNow } from '../../tools/utils/timeUtils'
+import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
 
 const SESSION_ENTRY_REGEXP = /^([a-z]+)=([a-z0-9-]+)$/
 const SESSION_ENTRY_SEPARATOR = '&'
@@ -15,6 +17,10 @@ export interface SessionState {
 
 export function isSessionInExpiredState(session: SessionState) {
   return isEmptyObject(session)
+}
+
+export function expandSessionState(session: SessionState) {
+  session.expire = String(dateNow() + SESSION_EXPIRATION_DELAY)
 }
 
 export function toSessionString(session: SessionState) {

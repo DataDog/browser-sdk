@@ -1,5 +1,7 @@
+import { dateNow } from '../../tools/utils/timeUtils'
+import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
 import type { SessionState } from './sessionState'
-import { isSessionInExpiredState, toSessionString, toSessionState } from './sessionState'
+import { expandSessionState, isSessionInExpiredState, toSessionString, toSessionState } from './sessionState'
 
 describe('session state utilities', () => {
   const EXPIRED_SESSION: SessionState = {}
@@ -39,6 +41,15 @@ describe('session state utilities', () => {
     it('should handle invalid session strings', () => {
       const sessionString = '{invalid: true}'
       expect(toSessionState(sessionString)).toEqual(EXPIRED_SESSION)
+    })
+  })
+
+  describe('expandSessionState', () => {
+    it('should modify the expire property of the session', () => {
+      const session = { ...LIVE_SESSION }
+      const now = dateNow()
+      expandSessionState(session)
+      expect(session.expire).toBeGreaterThanOrEqual(now + SESSION_EXPIRATION_DELAY)
     })
   })
 })

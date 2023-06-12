@@ -1,11 +1,10 @@
 import type { StubStorage } from '../../../test'
 import { mockClock, stubCookieProvider, stubLocalStorageProvider } from '../../../test'
 import type { CookieOptions } from '../../browser/cookie'
-import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
 import { initCookieStrategy } from './storeStrategies/sessionInCookie'
 import { initLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
 import type { SessionState } from './sessionState'
-import { toSessionString } from './sessionState'
+import { expandSessionState, toSessionString } from './sessionState'
 import {
   processSessionStoreOperations,
   isLockEnabled,
@@ -195,7 +194,7 @@ const cookieOptions: CookieOptions = {}
               retryState: { ...initialSession, other: 'other' },
             }),
           })
-          initialSession.expire = String(Date.now() + SESSION_EXPIRATION_DELAY)
+          expandSessionState(initialSession)
           sessionStoreStrategy.persistSession(initialSession)
           processSpy.and.callFake((session) => ({ ...session, processed: 'processed' } as SessionState))
 

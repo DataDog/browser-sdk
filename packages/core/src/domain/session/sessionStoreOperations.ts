@@ -1,11 +1,9 @@
 import { setTimeout } from '../../tools/timer'
-import { dateNow } from '../../tools/utils/timeUtils'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import { isChromium } from '../../tools/utils/browserDetection'
-import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
 import type { SessionStoreStrategy } from './storeStrategies/sessionStoreStrategy'
 import type { SessionState } from './sessionState'
-import { isSessionInExpiredState } from './sessionState'
+import { expandSessionState, isSessionInExpiredState } from './sessionState'
 
 type Operations = {
   process: (sessionState: SessionState) => SessionState | undefined
@@ -68,7 +66,7 @@ export function processSessionStoreOperations(
     if (isSessionInExpiredState(processedSession)) {
       clearSession()
     } else {
-      processedSession.expire = String(dateNow() + SESSION_EXPIRATION_DELAY)
+      expandSessionState(processedSession)
       persistSession(processedSession)
     }
   }
