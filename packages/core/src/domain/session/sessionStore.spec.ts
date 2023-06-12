@@ -1,8 +1,8 @@
 import type { Clock } from '../../../test'
 import { mockClock } from '../../../test'
-import { getCookie, setCookie, COOKIE_ACCESS_DELAY } from '../../browser/cookie'
+import { getCookie, setCookie } from '../../browser/cookie'
 import type { SessionStore } from './sessionStore'
-import { startSessionStore, selectSessionStoreStrategyType } from './sessionStore'
+import { STORAGE_POLL_DELAY, startSessionStore, selectSessionStoreStrategyType } from './sessionStore'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 
@@ -333,7 +333,7 @@ describe('session store', () => {
       it('when session not in cache and session not in store, should do nothing', () => {
         setupSessionStore()
 
-        clock.tick(COOKIE_ACCESS_DELAY)
+        clock.tick(STORAGE_POLL_DELAY)
 
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).not.toHaveBeenCalled()
@@ -343,7 +343,7 @@ describe('session store', () => {
         setupSessionStore()
         setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
 
-        clock.tick(COOKIE_ACCESS_DELAY)
+        clock.tick(STORAGE_POLL_DELAY)
 
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).not.toHaveBeenCalled()
@@ -354,7 +354,7 @@ describe('session store', () => {
         setupSessionStore()
         resetSessionInStore()
 
-        clock.tick(COOKIE_ACCESS_DELAY)
+        clock.tick(STORAGE_POLL_DELAY)
 
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).toHaveBeenCalled()
@@ -365,7 +365,7 @@ describe('session store', () => {
         setupSessionStore()
         setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID, Date.now() + SESSION_TIME_OUT_DELAY + 10)
 
-        clock.tick(COOKIE_ACCESS_DELAY)
+        clock.tick(STORAGE_POLL_DELAY)
 
         expect(sessionStoreManager.getSession().id).toBe(FIRST_ID)
         expect(sessionStoreManager.getSession().expire).toBe(getStoreExpiration())
@@ -377,7 +377,7 @@ describe('session store', () => {
         setupSessionStore()
         setSessionInStore(FakeTrackingType.TRACKED, SECOND_ID)
 
-        clock.tick(COOKIE_ACCESS_DELAY)
+        clock.tick(STORAGE_POLL_DELAY)
 
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).toHaveBeenCalled()
@@ -388,7 +388,7 @@ describe('session store', () => {
         setupSessionStore()
         setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
 
-        clock.tick(COOKIE_ACCESS_DELAY)
+        clock.tick(STORAGE_POLL_DELAY)
 
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).toHaveBeenCalled()

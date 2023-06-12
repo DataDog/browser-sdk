@@ -1,7 +1,7 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import {
+  STORAGE_POLL_DELAY,
   SESSION_STORE_KEY,
-  COOKIE_ACCESS_DELAY,
   getCookie,
   setCookie,
   stopSessionManager,
@@ -81,7 +81,7 @@ describe('logs session manager', () => {
 
     setCookie(SESSION_STORE_KEY, '', DURATION)
     expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
-    clock.tick(COOKIE_ACCESS_DELAY)
+    clock.tick(STORAGE_POLL_DELAY)
 
     tracked = true
     document.body.click()
@@ -106,7 +106,7 @@ describe('logs session manager', () => {
     it('should return undefined if the session has expired', () => {
       const logsSessionManager = startLogsSessionManager(configuration as LogsConfiguration)
       setCookie(SESSION_STORE_KEY, '', DURATION)
-      clock.tick(COOKIE_ACCESS_DELAY)
+      clock.tick(STORAGE_POLL_DELAY)
       expect(logsSessionManager.findTrackedSession()).toBe(undefined)
     })
 
@@ -115,7 +115,7 @@ describe('logs session manager', () => {
       const logsSessionManager = startLogsSessionManager(configuration as LogsConfiguration)
       clock.tick(10 * ONE_SECOND)
       setCookie(SESSION_STORE_KEY, '', DURATION)
-      clock.tick(COOKIE_ACCESS_DELAY)
+      clock.tick(STORAGE_POLL_DELAY)
       expect(logsSessionManager.findTrackedSession()).toBeUndefined()
       expect(logsSessionManager.findTrackedSession(0 as RelativeTime)!.id).toBe('abcdef')
     })

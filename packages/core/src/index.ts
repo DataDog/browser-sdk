@@ -84,7 +84,7 @@ export {
 } from './domain/error/error'
 export { NonErrorPrefix } from './domain/error/error.types'
 export { Context, ContextArray, ContextValue } from './tools/serialisation/context'
-export { areCookiesAuthorized, getCookie, setCookie, deleteCookie, COOKIE_ACCESS_DELAY } from './browser/cookie'
+export { areCookiesAuthorized, getCookie, setCookie, deleteCookie } from './browser/cookie'
 export { initXhrObservable, XhrCompleteContext, XhrStartContext } from './browser/xhrObservable'
 export { initFetchObservable, FetchResolveContext, FetchStartContext, FetchContext } from './browser/fetchObservable'
 export { createPageExitObservable, PageExitEvent, PageExitReason, isPageExitReason } from './browser/pageExitObservable'
@@ -101,6 +101,7 @@ export {
 } from './tools/serialisation/heavyCustomerDataWarning'
 export { ValueHistory, ValueHistoryEntry, CLEAR_OLD_VALUES_INTERVAL } from './tools/valueHistory'
 export { readBytesFromStream } from './tools/readBytesFromStream'
+export { STORAGE_POLL_DELAY } from './domain/session/sessionStore'
 export { SESSION_STORE_KEY } from './domain/session/storeStrategies/sessionStoreStrategy'
 export {
   willSyntheticsInjectRum,

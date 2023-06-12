@@ -1,6 +1,6 @@
 import { createNewEvent, mockClock, restorePageVisibility, setPageVisibility } from '../../../test'
 import type { Clock } from '../../../test'
-import { COOKIE_ACCESS_DELAY, getCookie, setCookie } from '../../browser/cookie'
+import { getCookie, setCookie } from '../../browser/cookie'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
 import { isIE } from '../../tools/utils/browserDetection'
 import { DOM_EVENT } from '../../browser/addEventListener'
@@ -10,6 +10,7 @@ import { startSessionManager, stopSessionManager, VISIBILITY_CHECK_DELAY } from 
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import type { SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
+import { STORAGE_POLL_DELAY } from './sessionStore'
 
 const enum FakeTrackingType {
   NOT_TRACKED = 'not-tracked',
@@ -35,7 +36,7 @@ describe('startSessionManager', () => {
 
   function expireSessionCookie() {
     setCookie(SESSION_STORE_KEY, '', DURATION)
-    clock.tick(COOKIE_ACCESS_DELAY)
+    clock.tick(STORAGE_POLL_DELAY)
   }
 
   function expectSessionIdToBe(sessionManager: SessionManager<FakeTrackingType>, sessionId: string) {
@@ -197,7 +198,7 @@ describe('startSessionManager', () => {
       // schedule an expandOrRenewSession
       document.dispatchEvent(new CustomEvent('click'))
 
-      clock.tick(COOKIE_ACCESS_DELAY / 2)
+      clock.tick(STORAGE_POLL_DELAY / 2)
 
       // expand first session cookie cache
       document.dispatchEvent(createNewEvent(DOM_EVENT.VISIBILITY_CHANGE))
@@ -208,7 +209,7 @@ describe('startSessionManager', () => {
       expect(getCookie(SESSION_STORE_KEY)).toContain('first')
       expect(getCookie(SESSION_STORE_KEY)).toContain('second')
 
-      clock.tick(COOKIE_ACCESS_DELAY / 2)
+      clock.tick(STORAGE_POLL_DELAY / 2)
 
       // scheduled expandOrRenewSession should not use cached value
       expect(getCookie(SESSION_STORE_KEY)).toContain('first')
@@ -427,7 +428,7 @@ describe('startSessionManager', () => {
 
     it('renew the session on user activity', () => {
       const sessionManager = startSessionManager(STORE_TYPE, FIRST_PRODUCT_KEY, () => TRACKED_SESSION_STATE)
-      clock.tick(COOKIE_ACCESS_DELAY)
+      clock.tick(STORAGE_POLL_DELAY)
 
       sessionManager.expire()
 
@@ -456,7 +457,7 @@ describe('startSessionManager', () => {
       const sessionManager = startSessionManager(STORE_TYPE, FIRST_PRODUCT_KEY, () => TRACKED_SESSION_STATE)
 
       // 0s to 10s: first session
-      clock.tick(10 * ONE_SECOND - COOKIE_ACCESS_DELAY)
+      clock.tick(10 * ONE_SECOND - STORAGE_POLL_DELAY)
       const firstSessionId = sessionManager.findActiveSession()!.id
       const firstSessionTrackingType = sessionManager.findActiveSession()!.trackingType
       expireSessionCookie()

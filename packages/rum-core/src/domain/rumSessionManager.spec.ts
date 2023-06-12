@@ -1,7 +1,7 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import {
+  STORAGE_POLL_DELAY,
   SESSION_STORE_KEY,
-  COOKIE_ACCESS_DELAY,
   getCookie,
   isIE,
   setCookie,
@@ -131,7 +131,7 @@ describe('rum session manager', () => {
       expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
       expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
-      clock.tick(COOKIE_ACCESS_DELAY)
+      clock.tick(STORAGE_POLL_DELAY)
 
       setupDraws({ tracked: true, trackedWithSessionReplay: true })
       document.dispatchEvent(new CustomEvent('click'))
@@ -161,7 +161,7 @@ describe('rum session manager', () => {
     it('should return undefined if the session has expired', () => {
       const rumSessionManager = startRumSessionManager(configuration, lifeCycle)
       setCookie(SESSION_STORE_KEY, '', DURATION)
-      clock.tick(COOKIE_ACCESS_DELAY)
+      clock.tick(STORAGE_POLL_DELAY)
       expect(rumSessionManager.findTrackedSession()).toBe(undefined)
     })
 
@@ -170,7 +170,7 @@ describe('rum session manager', () => {
       const rumSessionManager = startRumSessionManager(configuration, lifeCycle)
       clock.tick(10 * ONE_SECOND)
       setCookie(SESSION_STORE_KEY, '', DURATION)
-      clock.tick(COOKIE_ACCESS_DELAY)
+      clock.tick(STORAGE_POLL_DELAY)
       expect(rumSessionManager.findTrackedSession()).toBeUndefined()
       expect(rumSessionManager.findTrackedSession(0 as RelativeTime)!.id).toBe('abcdef')
     })

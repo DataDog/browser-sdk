@@ -21,7 +21,12 @@ export interface SessionStore {
   stop: () => void
 }
 
-const POLL_DELAY = ONE_SECOND
+/**
+ * Every second, the storage will be polled to check for any change that can occur
+ * to the session state in another browser tab, or another window.
+ * This value has been determined from our previous cookie-only implementation.
+ */
+export const STORAGE_POLL_DELAY = ONE_SECOND
 
 /**
  * Checks if cookies are available as the preferred storage
@@ -57,7 +62,7 @@ export function startSessionStore<TrackingType extends string>(
       : initLocalStorageStrategy()
   const { clearSession, retrieveSession } = sessionStoreStrategy
 
-  const watchSessionTimeoutId = setInterval(watchSession, POLL_DELAY)
+  const watchSessionTimeoutId = setInterval(watchSession, STORAGE_POLL_DELAY)
   let sessionCache: SessionState = retrieveActiveSession()
 
   function expandOrRenewSession() {
@@ -164,7 +169,7 @@ export function startSessionStore<TrackingType extends string>(
   }
 
   return {
-    expandOrRenewSession: throttle(expandOrRenewSession, POLL_DELAY).throttled,
+    expandOrRenewSession: throttle(expandOrRenewSession, STORAGE_POLL_DELAY).throttled,
     expandSession,
     getSession: () => sessionCache,
     renewObservable,
