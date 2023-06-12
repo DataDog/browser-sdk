@@ -101,7 +101,7 @@ export {
 } from './tools/serialisation/heavyCustomerDataWarning'
 export { ValueHistory, ValueHistoryEntry, CLEAR_OLD_VALUES_INTERVAL } from './tools/valueHistory'
 export { readBytesFromStream } from './tools/readBytesFromStream'
-export { SESSION_COOKIE_NAME } from './domain/session/storeStrategies/sessionInCookie'
+export { SESSION_STORE_KEY } from './domain/session/storeStrategies/sessionStoreStrategy'
 export {
   willSyntheticsInjectRum,
   getSyntheticsTestId,

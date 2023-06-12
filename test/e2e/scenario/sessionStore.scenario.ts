@@ -1,7 +1,5 @@
+import { SESSION_STORE_KEY } from '@datadog/browser-core'
 import { createTest } from '../lib/framework'
-
-const SESSION_COOKIE_NAME = '_dd_s'
-const SESSION_LOCAL_STORAGE_KEY = '_dd_s'
 
 describe('Session Stores', () => {
   describe('Cookies', () => {
@@ -9,7 +7,7 @@ describe('Session Stores', () => {
       .withLogs()
       .withRum()
       .run(async () => {
-        const [cookie] = await browser.getCookies([SESSION_COOKIE_NAME])
+        const [cookie] = await browser.getCookies([SESSION_STORE_KEY])
         const cookieSessionId = cookie.value.match(/id=([\w-]+)/)![1]
 
         const logsContext = await browser.execute(() => window.DD_LOGS?.getInternalContext())
@@ -27,10 +25,7 @@ describe('Session Stores', () => {
       // This will force the SDKs to initialize using local storage
       .withHead('<script>Object.defineProperty(Document.prototype, "cookie", { get: () => 42})</script>')
       .run(async () => {
-        const sessionStateString = await browser.execute(
-          (key) => window.localStorage.getItem(key),
-          SESSION_LOCAL_STORAGE_KEY
-        )
+        const sessionStateString = await browser.execute((key) => window.localStorage.getItem(key), SESSION_STORE_KEY)
         const sessionId = sessionStateString?.match(/id=([\w-]+)/)![1]
 
         const logsContext = await browser.execute(() => window.DD_LOGS?.getInternalContext())

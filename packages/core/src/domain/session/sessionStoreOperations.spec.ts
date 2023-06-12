@@ -2,8 +2,8 @@ import type { StubStorage } from '../../../test'
 import { mockClock, stubCookieProvider, stubLocalStorageProvider } from '../../../test'
 import type { CookieOptions } from '../../browser/cookie'
 import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
-import { initCookieStrategy, SESSION_COOKIE_NAME } from './storeStrategies/sessionInCookie'
-import { initLocalStorageStrategy, LOCAL_STORAGE_KEY } from './storeStrategies/sessionInLocalStorage'
+import { initCookieStrategy } from './storeStrategies/sessionInCookie'
+import { initLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
 import type { SessionState } from './sessionState'
 import { toSessionString } from './sessionState'
 import {
@@ -12,6 +12,7 @@ import {
   LOCK_MAX_TRIES,
   LOCK_RETRY_DELAY,
 } from './sessionStoreOperations'
+import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 
 const cookieOptions: CookieOptions = {}
 
@@ -21,13 +22,13 @@ const cookieOptions: CookieOptions = {}
       title: 'Cookie Storage',
       sessionStoreStrategy: initCookieStrategy(cookieOptions),
       stubStorageProvider: stubCookieProvider,
-      storageKey: SESSION_COOKIE_NAME,
+      storageKey: SESSION_STORE_KEY,
     },
     {
       title: 'Local Storage',
       sessionStoreStrategy: initLocalStorageStrategy(),
       stubStorageProvider: stubLocalStorageProvider,
-      storageKey: LOCAL_STORAGE_KEY,
+      storageKey: SESSION_STORE_KEY,
     },
   ] as const
 ).forEach(({ title, sessionStoreStrategy, stubStorageProvider, storageKey }) => {

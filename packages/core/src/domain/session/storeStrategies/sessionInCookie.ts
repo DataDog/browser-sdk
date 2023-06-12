@@ -6,8 +6,7 @@ import { SESSION_EXPIRATION_DELAY } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
 import { toSessionString, toSessionState } from '../sessionState'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './sessionStoreStrategy'
-
-export const SESSION_COOKIE_NAME = '_dd_s'
+import { SESSION_STORE_KEY } from './sessionStoreStrategy'
 
 export function selectCookieStrategy(initConfiguration: InitConfiguration): SessionStoreStrategyType | undefined {
   const cookieOptions = buildCookieOptions(initConfiguration)
@@ -21,25 +20,25 @@ export function initCookieStrategy(cookieOptions: CookieOptions): SessionStoreSt
     clearSession: deleteSessionCookie(cookieOptions),
   }
 
-  tryOldCookiesMigration(SESSION_COOKIE_NAME, cookieStore)
+  tryOldCookiesMigration(cookieStore)
 
   return cookieStore
 }
 
 function persistSessionCookie(options: CookieOptions) {
   return (session: SessionState) => {
-    setCookie(SESSION_COOKIE_NAME, toSessionString(session), SESSION_EXPIRATION_DELAY, options)
+    setCookie(SESSION_STORE_KEY, toSessionString(session), SESSION_EXPIRATION_DELAY, options)
   }
 }
 
 function retrieveSessionCookie(): SessionState {
-  const sessionString = getCookie(SESSION_COOKIE_NAME)
+  const sessionString = getCookie(SESSION_STORE_KEY)
   return toSessionState(sessionString)
 }
 
 function deleteSessionCookie(options: CookieOptions) {
   return () => {
-    deleteCookie(SESSION_COOKIE_NAME, options)
+    deleteCookie(SESSION_STORE_KEY, options)
   }
 }
 

@@ -1,5 +1,6 @@
 import type { SessionState } from '../sessionState'
-import { LOCAL_STORAGE_KEY, selectLocalStorageStrategy, initLocalStorageStrategy } from './sessionInLocalStorage'
+import { selectLocalStorageStrategy, initLocalStorageStrategy } from './sessionInLocalStorage'
+import { SESSION_STORE_KEY } from './sessionStoreStrategy'
 
 describe('session in local storage strategy', () => {
   const sessionState: SessionState = { id: '123', created: '0' }
@@ -24,7 +25,7 @@ describe('session in local storage strategy', () => {
     localStorageStrategy.persistSession(sessionState)
     const session = localStorageStrategy.retrieveSession()
     expect(session).toEqual({ ...sessionState })
-    expect(window.localStorage.getItem(LOCAL_STORAGE_KEY)).toMatch(/.*id=.*created/)
+    expect(window.localStorage.getItem(SESSION_STORE_KEY)).toMatch(/.*id=.*created/)
   })
 
   it('should delete the local storage item holding the session', () => {
@@ -33,7 +34,7 @@ describe('session in local storage strategy', () => {
     localStorageStrategy.clearSession()
     const session = localStorageStrategy?.retrieveSession()
     expect(session).toEqual({})
-    expect(window.localStorage.getItem(LOCAL_STORAGE_KEY)).toBeNull()
+    expect(window.localStorage.getItem(SESSION_STORE_KEY)).toBeNull()
   })
 
   it('should not interfere with other keys present in local storage', () => {
@@ -47,7 +48,7 @@ describe('session in local storage strategy', () => {
 
   it('should return an empty object if session string is invalid', () => {
     const localStorageStrategy = initLocalStorageStrategy()
-    localStorage.setItem(LOCAL_STORAGE_KEY, '{test:42}')
+    localStorage.setItem(SESSION_STORE_KEY, '{test:42}')
     const session = localStorageStrategy?.retrieveSession()
     expect(session).toEqual({})
   })
