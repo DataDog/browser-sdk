@@ -9,9 +9,10 @@ const LOCAL_STORAGE_TEST_KEY = '_dd_test_'
 export function selectLocalStorageStrategy(): SessionStoreStrategyType | undefined {
   try {
     const id = generateUUID()
-    localStorage.setItem(`${LOCAL_STORAGE_TEST_KEY}${id}`, id)
-    const retrievedId = localStorage.getItem(`${LOCAL_STORAGE_TEST_KEY}${id}`)
-    localStorage.removeItem(`${LOCAL_STORAGE_TEST_KEY}${id}`)
+    const testKey = `${LOCAL_STORAGE_TEST_KEY}${id}`
+    localStorage.setItem(testKey, id)
+    const retrievedId = localStorage.getItem(testKey)
+    localStorage.removeItem(testKey)
     return id === retrievedId ? { type: 'LocalStorage' } : undefined
   } catch (e) {
     return undefined
