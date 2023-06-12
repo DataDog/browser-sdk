@@ -1,21 +1,12 @@
-import type {
-  ReportType,
-  BrowserWindow,
-  Report,
-  ReportingObserverConstructor,
-  ReportingObserverOption,
-} from '../../src/domain/report/browser.types'
+import type { ReportType } from '../../src/domain/report/browser.types'
 import { noop } from '../../src/tools/utils/functionUtils'
 
 export function stubReportingObserver() {
-  const originalReportingObserver = (window as BrowserWindow).ReportingObserver
-  let callbacks: { [k in ReportType]?: Array<(reports: Report[]) => void> } = {}
+  const originalReportingObserver = window.ReportingObserver
+  let callbacks: { [k: string]: ReportingObserverCallback[] } = {}
 
-  ;(window as BrowserWindow).ReportingObserver = function (
-    callback: (reports: Report[]) => void,
-    { types }: ReportingObserverOption
-  ) {
-    types.forEach((type) => {
+  window.ReportingObserver = function (callback: ReportingObserverCallback, { types }: ReportingObserverOptions) {
+    types?.forEach((type) => {
       if (!callbacks[type]) {
         callbacks[type] = []
       }
@@ -34,16 +25,16 @@ export function stubReportingObserver() {
         return []
       },
     }
-  } as unknown as ReportingObserverConstructor
+  } as unknown as typeof originalReportingObserver
 
   return {
     raiseReport(type: ReportType) {
       if (callbacks[type]) {
-        callbacks[type]!.forEach((callback) => callback([{ ...FAKE_REPORT, type }]))
+        callbacks[type].forEach((callback) => callback([{ ...FAKE_REPORT, type }], null!))
       }
     },
     reset() {
-      ;(window as BrowserWindow).ReportingObserver = originalReportingObserver
+      window.ReportingObserver = originalReportingObserver
       callbacks = {}
     },
   }
@@ -85,5 +76,6 @@ export const FAKE_REPORT: Report = {
     lineNumber: 20,
     message: 'foo bar',
     sourceFile: 'http://foo.bar/index.js',
-  },
+  } as unknown as ReportBody,
+  toJSON: noop,
 }
