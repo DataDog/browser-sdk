@@ -1,9 +1,10 @@
-import type { ReportType } from '../../src/domain/report/browser.types'
+import type { InterventionReport, ReportType } from '../../src/domain/report/browser.types'
 import { noop } from '../../src/tools/utils/functionUtils'
 
 export function stubReportingObserver() {
   const originalReportingObserver = window.ReportingObserver
   let callbacks: { [k: string]: ReportingObserverCallback[] } = {}
+  let reportingObserver: ReportingObserver
 
   window.ReportingObserver = function (callback: ReportingObserverCallback, { types }: ReportingObserverOptions) {
     types?.forEach((type) => {
@@ -14,7 +15,7 @@ export function stubReportingObserver() {
       callbacks[type]?.push(callback)
     })
 
-    return {
+    reportingObserver = {
       disconnect() {
         noop()
       },
@@ -25,12 +26,13 @@ export function stubReportingObserver() {
         return []
       },
     }
+    return reportingObserver
   } as unknown as typeof originalReportingObserver
 
   return {
     raiseReport(type: ReportType) {
       if (callbacks[type]) {
-        callbacks[type].forEach((callback) => callback([{ ...FAKE_REPORT, type }], null!))
+        callbacks[type].forEach((callback) => callback([{ ...FAKE_REPORT, type }], reportingObserver))
       }
     },
     reset() {
@@ -67,7 +69,7 @@ export const FAKE_CSP_VIOLATION_EVENT = {
   violatedDirective: 'worker-src',
 } as SecurityPolicyViolationEvent
 
-export const FAKE_REPORT: Report = {
+export const FAKE_REPORT: InterventionReport = {
   type: 'intervention',
   url: 'http://foo.bar',
   body: {
@@ -76,6 +78,7 @@ export const FAKE_REPORT: Report = {
     lineNumber: 20,
     message: 'foo bar',
     sourceFile: 'http://foo.bar/index.js',
-  } as unknown as ReportBody,
+    toJSON: noop,
+  },
   toJSON: noop,
 }

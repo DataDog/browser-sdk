@@ -42,11 +42,11 @@ function createReportObservable(reportTypes: ReportType[]) {
       return
     }
 
-    const handleReports = monitor((reports: Array<DeprecationReport | InterventionReport>) =>
+    const handleReports = monitor((reports: Array<DeprecationReport | InterventionReport>, _: ReportingObserver) =>
       reports.forEach((report) => {
         observable.notify(buildRawReportFromReport(report))
       })
-    ) as (reports: Report[]) => void
+    ) as ReportingObserverCallback
 
     const observer = new window.ReportingObserver(handleReports, {
       types: reportTypes,
@@ -116,8 +116,8 @@ function buildStack(
           {
             func: '?',
             url: sourceFile,
-            line: lineNumber || undefined,
-            column: columnNumber || undefined,
+            line: lineNumber !== null ? lineNumber : undefined,
+            column: columnNumber !== null ? columnNumber : undefined,
           },
         ],
       })
