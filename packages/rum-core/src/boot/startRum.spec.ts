@@ -10,7 +10,12 @@ import {
   relativeNow,
   isIE,
 } from '@datadog/browser-core'
-import { createNewEvent, interceptRequests } from '@datadog/browser-core/test'
+import {
+  createNewEvent,
+  interceptRequests,
+  initEventBridgeStub,
+  deleteEventBridgeStub,
+} from '@datadog/browser-core/test'
 import type { RumSessionManagerMock, TestSetupBuilder } from '../../test'
 import { createRumSessionManagerMock, noopRecorderApi, setup } from '../../test'
 import type { RumPerformanceNavigationTiming, RumPerformanceEntry } from '../browser/performanceCollection'
@@ -25,6 +30,7 @@ import type { RumSessionManager } from '..'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import { RumEventType } from '../rawRumEvent.types'
 import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
+import type { PageStateHistory } from '../domain/contexts/pageStateHistory'
 import { startRum, startRumEventCollection } from './startRum'
 
 function collectServerEvents(lifeCycle: LifeCycle) {
@@ -42,6 +48,7 @@ function startRumStub(
   location: Location,
   domMutationObservable: Observable<void>,
   locationChangeObservable: Observable<LocationChange>,
+  pageStateHistory: PageStateHistory,
   reportError: (error: RawError) => void
 ) {
   const { stop: rumEventCollectionStop, foregroundContexts } = startRumEventCollection(
@@ -66,6 +73,7 @@ function startRumStub(
     locationChangeObservable,
     foregroundContexts,
     startFeatureFlagContexts(lifeCycle),
+    pageStateHistory,
     noopRecorderApi
   )
 
@@ -88,7 +96,15 @@ describe('rum session', () => {
     }
 
     setupBuilder = setup().beforeBuild(
-      ({ location, lifeCycle, configuration, sessionManager, domMutationObservable, locationChangeObservable }) => {
+      ({
+        location,
+        lifeCycle,
+        configuration,
+        sessionManager,
+        domMutationObservable,
+        locationChangeObservable,
+        pageStateHistory,
+      }) => {
         serverRumEvents = collectServerEvents(lifeCycle)
         return startRumStub(
           lifeCycle,
@@ -97,6 +113,7 @@ describe('rum session', () => {
           location,
           domMutationObservable,
           locationChangeObservable,
+          pageStateHistory,
           noop
         )
       }
@@ -141,7 +158,15 @@ describe('rum session keep alive', () => {
       .withFakeClock()
       .withSessionManager(sessionManager)
       .beforeBuild(
-        ({ location, lifeCycle, configuration, sessionManager, domMutationObservable, locationChangeObservable }) => {
+        ({
+          location,
+          lifeCycle,
+          configuration,
+          sessionManager,
+          domMutationObservable,
+          locationChangeObservable,
+          pageStateHistory,
+        }) => {
           serverRumEvents = collectServerEvents(lifeCycle)
           return startRumStub(
             lifeCycle,
@@ -150,6 +175,7 @@ describe('rum session keep alive', () => {
             location,
             domMutationObservable,
             locationChangeObservable,
+            pageStateHistory,
             noop
           )
         }
@@ -212,7 +238,15 @@ describe('rum events url', () => {
 
   beforeEach(() => {
     setupBuilder = setup().beforeBuild(
-      ({ location, lifeCycle, configuration, sessionManager, domMutationObservable, locationChangeObservable }) => {
+      ({
+        location,
+        lifeCycle,
+        configuration,
+        sessionManager,
+        domMutationObservable,
+        locationChangeObservable,
+        pageStateHistory,
+      }) => {
         serverRumEvents = collectServerEvents(lifeCycle)
         return startRumStub(
           lifeCycle,
@@ -221,6 +255,7 @@ describe('rum events url', () => {
           location,
           domMutationObservable,
           locationChangeObservable,
+          pageStateHistory,
           noop
         )
       }
@@ -311,12 +346,13 @@ describe('view events', () => {
   })
 
   afterEach(() => {
+    deleteEventBridgeStub()
     stopSessionManager()
     setupBuilder.cleanup()
     interceptor.restore()
   })
 
-  it('sends a view update on page unload', () => {
+  it('sends a view update on page unload when bridge is absent', () => {
     // Note: this test is intentionally very high level to make sure the view update is correctly
     // made right before flushing the Batch.
 
@@ -337,5 +373,21 @@ describe('view events', () => {
     )!
 
     expect(lastRumViewEvent.view.time_spent).toBe(toServerDuration(VIEW_DURATION))
+  })
+
+  it('sends a view update on page unload when bridge is present', () => {
+    const eventBridgeStub = initEventBridgeStub()
+    const sendSpy = spyOn(eventBridgeStub, 'send')
+
+    const VIEW_DURATION = ONE_SECOND as Duration
+
+    const { clock } = setupBuilder.withFakeClock().build()
+
+    clock.tick(VIEW_DURATION)
+    window.dispatchEvent(createNewEvent('beforeunload'))
+
+    const lastBridgeMessage = JSON.parse(sendSpy.calls.mostRecent().args[0]) as { eventType: 'rum'; event: RumEvent }
+    expect(lastBridgeMessage.event.type).toBe('view')
+    expect(lastBridgeMessage.event.view.time_spent).toBe(toServerDuration(VIEW_DURATION))
   })
 })

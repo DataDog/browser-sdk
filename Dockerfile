@@ -2,6 +2,7 @@ FROM node:18.16.0-buster-slim
 
 ARG CHROME_PACKAGE_VERSION
 
+SHELL ["/bin/bash", "-c"]
 RUN test -n "$CHROME_PACKAGE_VERSION" || (echo "\nCHROME_PACKAGE_VERSION not set, you need to run:\ndocker build --build-arg CHROME_PACKAGE_VERSION=xxx\n" && false)
 
 # Install Chrome deps
@@ -65,12 +66,12 @@ RUN apt-get -y install git
 RUN apt-get -y install procps
 
 # Woke
-RUN curl -sSfL https://git.io/getwoke | \
+RUN set -o pipefail && curl -sSfL https://git.io/getwoke | \
   bash -s -- -b /usr/local/bin v0.17.1
 
 # Codecov https://docs.codecov.com/docs/codecov-uploader
 RUN apt-get -y install gnupg coreutils
-RUN curl https://keybase.io/codecovsecurity/pgp_keys.asc | gpg --no-default-keyring --keyring trustedkeys.gpg --import
+RUN set -o pipefail && curl https://keybase.io/codecovsecurity/pgp_keys.asc | gpg --no-default-keyring --keyring trustedkeys.gpg --import
 RUN CODECOV_UPLOADER_VERSION=v0.1.15 \
   && curl -Os https://uploader.codecov.io/${CODECOV_UPLOADER_VERSION}/linux/codecov \
   && curl -Os https://uploader.codecov.io/${CODECOV_UPLOADER_VERSION}/linux/codecov.SHA256SUM \

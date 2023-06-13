@@ -135,6 +135,33 @@ describe('resourceCollection', () => {
     expect(rawRumResourceEventEntry._dd.page_states).toEqual(jasmine.objectContaining(mockPageStates))
   })
 
+  it('should not have a duration if a frozen state happens during the request and no performance entry matches when NO_RESOURCE_DURATION_FROZEN_STATE enabled', () => {
+    addExperimentalFeatures([ExperimentalFeature.NO_RESOURCE_DURATION_FROZEN_STATE])
+    const { lifeCycle, rawRumEvents } = setupBuilder.build()
+    const mockPageStates = [{ state: PageState.FROZEN, startTime: 0 as RelativeTime }]
+    const mockXHR = createCompletedRequest()
+
+    pageStateHistorySpy.and.returnValue(mockPageStates)
+
+    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, mockXHR)
+
+    const rawRumResourceEventFetch = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+    expect(rawRumResourceEventFetch.resource.duration).toBeUndefined()
+  })
+
+  it('should have a duration if a frozen state happens during the request and no performance entry matches when NO_RESOURCE_DURATION_FROZEN_STATE disabled', () => {
+    const { lifeCycle, rawRumEvents } = setupBuilder.build()
+    const mockPageStates = [{ state: PageState.FROZEN, startTime: 0 as RelativeTime }]
+    const mockXHR = createCompletedRequest()
+
+    pageStateHistorySpy.and.returnValue(mockPageStates)
+
+    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, mockXHR)
+
+    const rawRumResourceEventFetch = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+    expect(rawRumResourceEventFetch.resource.duration).toBeDefined()
+  })
+
   it('should not collect page states on resources when ff resource_page_states disabled', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
     const mockPageStates = [{ state: PageState.ACTIVE, startTime: 0 as RelativeTime }]

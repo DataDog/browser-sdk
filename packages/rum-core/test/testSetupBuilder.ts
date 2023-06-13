@@ -1,4 +1,4 @@
-import type { Context, ContextManager, TimeStamp } from '@datadog/browser-core'
+import type { Context, ContextManager, ServerDuration, TimeStamp } from '@datadog/browser-core'
 import { CustomerDataType, assign, combine, createContextManager, noop, Observable } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, buildLocation, SPEC_ENDPOINTS } from '@datadog/browser-core/test'
@@ -8,6 +8,7 @@ import { validateAndBuildRumConfiguration } from '../src/domain/configuration'
 import type { FeatureFlagContexts } from '../src/domain/contexts/featureFlagContext'
 import type { ForegroundContexts } from '../src/domain/contexts/foregroundContexts'
 import type { PageStateHistory } from '../src/domain/contexts/pageStateHistory'
+import { PageState } from '../src/domain/contexts/pageStateHistory'
 import type { UrlContexts } from '../src/domain/contexts/urlContexts'
 import type { ViewContexts } from '../src/domain/contexts/viewContexts'
 import type { RawRumEventCollectedData } from '../src/domain/lifeCycle'
@@ -102,7 +103,8 @@ export function setup(): TestSetupBuilder {
   const globalContextManager = createContextManager(CustomerDataType.GlobalContext)
   const userContextManager = createContextManager(CustomerDataType.User)
   const pageStateHistory: PageStateHistory = {
-    findAll: () => undefined,
+    findAll: () => [{ start: 0 as ServerDuration, state: PageState.ACTIVE }],
+    addPageState: noop,
     stop: noop,
   }
   const FAKE_APP_ID = 'appId'
