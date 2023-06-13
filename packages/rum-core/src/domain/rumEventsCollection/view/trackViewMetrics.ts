@@ -31,60 +31,6 @@ export interface ScrollMetrics {
 
 export const THROTTLE_SCROLL_DURATION = ONE_SECOND
 
-function computeScrollMetrics() {
-  const scrollTop = getScrollY()
-
-  const { height } = getViewportDimension()
-
-  const scrollHeight = Math.round((document.scrollingElement || document.documentElement).scrollHeight)
-  const scrollDepth = Math.round(height + scrollTop)
-
-  return {
-    scrollHeight,
-    scrollDepth,
-    scrollTop,
-  }
-}
-
-export function trackScrollMetrics(
-  viewStart: ClocksState,
-  callback: (scrollMetrics: ScrollMetrics) => void,
-  getMetrics = computeScrollMetrics
-) {
-  if (!isExperimentalFeatureEnabled(ExperimentalFeature.SCROLLMAP)) {
-    return { stop: noop }
-  }
-  let maxScrollDepth = 0
-  const handleScrollEvent = throttle(
-    () => {
-      const { scrollHeight, scrollDepth, scrollTop } = getMetrics()
-
-      if (scrollDepth > maxScrollDepth) {
-        const now = relativeNow()
-        const timeStamp = elapsed(viewStart.relative, now)
-        maxScrollDepth = scrollDepth
-        callback({
-          maxScrollDepth,
-          maxScrollHeight: scrollHeight,
-          maxScrollDepthTime: timeStamp,
-          maxScrollTop: scrollTop,
-        })
-      }
-    },
-    THROTTLE_SCROLL_DURATION,
-    { leading: false, trailing: true }
-  )
-
-  const { stop } = addEventListener(window, DOM_EVENT.SCROLL, handleScrollEvent.throttled, { passive: true })
-
-  return {
-    stop: () => {
-      handleScrollEvent.cancel()
-      stop()
-    },
-  }
-}
-
 export interface ViewMetrics {
   loadingTime?: Duration
   cumulativeLayoutShift?: number
@@ -155,6 +101,60 @@ export function trackViewMetrics(
     setLoadEvent,
     viewMetrics,
     getScrollMetrics: () => scrollMetrics,
+  }
+}
+
+export function trackScrollMetrics(
+  viewStart: ClocksState,
+  callback: (scrollMetrics: ScrollMetrics) => void,
+  getScrollMetrics = computeScrollMetrics
+) {
+  if (!isExperimentalFeatureEnabled(ExperimentalFeature.SCROLLMAP)) {
+    return { stop: noop }
+  }
+  let maxScrollDepth = 0
+  const handleScrollEvent = throttle(
+    () => {
+      const { scrollHeight, scrollDepth, scrollTop } = getScrollMetrics()
+
+      if (scrollDepth > maxScrollDepth) {
+        const now = relativeNow()
+        const maxScrollDepthTime = elapsed(viewStart.relative, now)
+        maxScrollDepth = scrollDepth
+        callback({
+          maxScrollDepth,
+          maxScrollHeight: scrollHeight,
+          maxScrollDepthTime,
+          maxScrollTop: scrollTop,
+        })
+      }
+    },
+    THROTTLE_SCROLL_DURATION,
+    { leading: false, trailing: true }
+  )
+
+  const { stop } = addEventListener(window, DOM_EVENT.SCROLL, handleScrollEvent.throttled, { passive: true })
+
+  return {
+    stop: () => {
+      handleScrollEvent.cancel()
+      stop()
+    },
+  }
+}
+
+function computeScrollMetrics() {
+  const scrollTop = getScrollY()
+
+  const { height } = getViewportDimension()
+
+  const scrollHeight = Math.round((document.scrollingElement || document.documentElement).scrollHeight)
+  const scrollDepth = Math.round(height + scrollTop)
+
+  return {
+    scrollHeight,
+    scrollDepth,
+    scrollTop,
   }
 }
 

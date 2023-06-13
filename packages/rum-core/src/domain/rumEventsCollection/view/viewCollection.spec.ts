@@ -222,4 +222,12 @@ describe('viewCollection', () => {
     expect(rawRumViewEvent._dd.page_states).toBeUndefined()
     expect(rawRumViewEvent.view.in_foreground_periods).toBeDefined()
   })
+
+  it('should not include scroll metrics when there are not scroll metrics in the raw event', () => {
+    const { lifeCycle, rawRumEvents } = setupBuilder.build()
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, { ...VIEW, scrollMetrics: undefined })
+    const rawRumViewEvent = rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent
+
+    expect(rawRumViewEvent.display?.scroll).toBeUndefined()
+  })
 })
