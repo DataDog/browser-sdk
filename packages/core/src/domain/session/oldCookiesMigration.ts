@@ -1,7 +1,10 @@
 import type { CookieOptions } from '../../browser/cookie'
 import { getCookie } from '../../browser/cookie'
+import { dateNow } from '../../tools/utils/timeUtils'
 import type { SessionState } from './sessionStore'
+import { isSessionInExpiredState } from './sessionStore'
 import { SESSION_COOKIE_NAME, persistSessionCookie } from './sessionCookieStore'
+import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
 
 export const OLD_SESSION_COOKIE_NAME = '_dd'
 export const OLD_RUM_COOKIE_NAME = '_dd_r'
@@ -31,6 +34,10 @@ export function tryOldCookiesMigration(options: CookieOptions) {
     if (oldRumType && /^[012]$/.test(oldRumType)) {
       session[RUM_SESSION_KEY] = oldRumType
     }
-    persistSessionCookie(session, options)
+
+    if (!isSessionInExpiredState(session)) {
+      session.expire = String(dateNow() + SESSION_EXPIRATION_DELAY)
+      persistSessionCookie(options)(session)
+    }
   }
 }
