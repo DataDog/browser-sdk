@@ -1,33 +1,28 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { Tabs, Text } from '@mantine/core'
 
 import { useEvents } from '../hooks/useEvents'
-import { useStore } from '../hooks/useStore'
 import { useAutoFlushEvents } from '../hooks/useAutoFlushEvents'
-import type { Settings } from './tabs/settingsTab'
+import { useNetworkRules } from '../hooks/useNetworkRules'
+import type { Settings } from '../hooks/useSettings'
+import { useSettings } from '../hooks/useSettings'
 import { SettingsTab } from './tabs/settingsTab'
 import { InfosTab } from './tabs/infosTab'
 import { EventTab } from './tabs/eventsTab'
+import { ReplayTab } from './tabs/replayTab'
 
 const enum PanelTabs {
   Events = 'events',
   Infos = 'infos',
   Settings = 'settings',
+  Replay = 'replay',
 }
 
 export function Panel() {
-  const [settingsFromStore, setStore] = useStore()
-  const [settingsFromMemory, setSettingsFromMemory] = useState<
-    Pick<Settings, 'autoFlush' | 'preserveEvents' | 'eventSource'>
-  >({
-    preserveEvents: false,
-    autoFlush: false,
-    eventSource: 'sdk',
-  })
+  const [settings] = useSettings()
 
-  useAutoFlushEvents(settingsFromMemory.autoFlush)
-
-  const settings: Settings = { ...settingsFromStore, ...settingsFromMemory }
+  useAutoFlushEvents(settings.autoFlush)
+  useNetworkRules(settings)
 
   const { events, filters, setFilters, clear } = useEvents(settings)
 
@@ -41,6 +36,9 @@ export function Panel() {
         <Tabs.Tab value={PanelTabs.Events}>Events</Tabs.Tab>
         <Tabs.Tab value={PanelTabs.Infos}>
           <Text>Infos</Text>
+        </Tabs.Tab>
+        <Tabs.Tab value={PanelTabs.Replay}>
+          <Text>Live replay</Text>
         </Tabs.Tab>
         <Tabs.Tab
           value={PanelTabs.Settings}
@@ -61,22 +59,11 @@ export function Panel() {
       <Tabs.Panel value={PanelTabs.Infos} sx={{ flex: 1, minHeight: 0 }}>
         <InfosTab />
       </Tabs.Panel>
+      <Tabs.Panel value={PanelTabs.Replay} sx={{ flex: 1, minHeight: 0 }}>
+        <ReplayTab />
+      </Tabs.Panel>
       <Tabs.Panel value={PanelTabs.Settings} sx={{ flex: 1, minHeight: 0 }}>
-        <SettingsTab
-          settings={settings}
-          setSettings={(newSettings) => {
-            for (const [name, value] of Object.entries(newSettings)) {
-              if (name in settingsFromMemory) {
-                setSettingsFromMemory((oldSettings) => ({
-                  ...oldSettings,
-                  [name]: value,
-                }))
-              } else {
-                setStore({ [name]: value })
-              }
-            }
-          }}
-        />
+        <SettingsTab />
       </Tabs.Panel>
     </Tabs>
   )

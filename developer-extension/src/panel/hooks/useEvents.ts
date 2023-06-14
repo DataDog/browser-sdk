@@ -4,7 +4,7 @@ import type { TelemetryEvent } from '../../../../packages/core/src/domain/teleme
 import type { LogsEvent } from '../../../../packages/logs/src/logsEvent.types'
 import type { RumEvent } from '../../../../packages/rum-core/src/rumEvent.types'
 import { INTAKE_DOMAINS } from '../../common/constants'
-import { listenSdkMessages } from '../backgroundScriptConnection'
+import { onBackgroundMessage } from '../backgroundScriptConnection'
 import type { EventSource } from '../types'
 
 const MAXIMUM_LOGGED_EVENTS = 1000
@@ -146,9 +146,14 @@ function listenEventsFromRequests(callback: (events: StoredEvent[]) => void) {
 }
 
 function listenEventsFromSdk(events: (events: StoredEvent[]) => void) {
-  return listenSdkMessages((message) => {
-    if (message.type === 'logs' || message.type === 'rum' || message.type === 'telemetry') {
-      events([{ ...message.payload, id: generateUUID() }])
+  const subscription = onBackgroundMessage.subscribe((backgroundMessage) => {
+    if (backgroundMessage.type !== 'sdk-message') {
+      return
+    }
+    const sdkMessage = backgroundMessage.message
+    if (sdkMessage.type === 'logs' || sdkMessage.type === 'rum' || sdkMessage.type === 'telemetry') {
+      events([{ ...sdkMessage.payload, id: generateUUID() }])
     }
   })
+  return () => subscription.unsubscribe()
 }

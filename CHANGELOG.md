@@ -16,6 +16,24 @@
 
 ---
 
+## v4.42.2
+
+- 🐛 Fix TypeError when document.cookie is empty ([#2216](https://github.com/DataDog/browser-sdk/pull/2216))
+- 🐛 [RUMF-1583][recorder] do not ignore empty text node during serialization ([#2237](https://github.com/DataDog/browser-sdk/pull/2237))
+- 🐛 Fix `use_excluded_activity_urls` telemetry ([#2236](https://github.com/DataDog/browser-sdk/pull/2236))
+- 🐛 when bridge is present, send a final view update on page exit ([#2234](https://github.com/DataDog/browser-sdk/pull/2234))
+- 📝 Update FCP browser support ([#2187](https://github.com/DataDog/browser-sdk/pull/2187))
+- 👷 use a separate job to deploy US1 ([#2228](https://github.com/DataDog/browser-sdk/pull/2228))
+
+## v4.42.1
+
+- 🐛 fix isolatedModules support ([#2209](https://github.com/DataDog/browser-sdk/pull/2209))
+- 🐛 [RUMF-1576] fix support for tools that removes console.\* references ([#2210](https://github.com/DataDog/browser-sdk/pull/2210))
+- 📦👷 include webpack, typescript and @types/express in common upgrades ([#2222](https://github.com/DataDog/browser-sdk/pull/2222))
+- ⚡ remove spec files from npm packages ([#2224](https://github.com/DataDog/browser-sdk/pull/2224))
+- 📦 [RUMF-1532] update webpack-related dependencies ([#2212](https://github.com/DataDog/browser-sdk/pull/2212))
+- 📦 update vulnerable subdependency engine.io ([#2211](https://github.com/DataDog/browser-sdk/pull/2211))
+
 ## v4.42.0
 
 - ✨[RUMF-1573] Allow to provide custom fingerprint to RUM errors ([#2189](https://github.com/DataDog/browser-sdk/pull/2189))

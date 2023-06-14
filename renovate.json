@@ -16,8 +16,7 @@
     {
       "groupName": "all non-major dependencies",
       "groupSlug": "all-minor-patch",
-      "excludePackageNames": ["typescript", "puppeteer", "@types/express", "ajv", "ansi-regex"],
-      "excludePackagePatterns": ["webpack"],
+      "excludePackageNames": ["puppeteer", "ajv", "ansi-regex"],
       "matchUpdateTypes": ["minor", "patch"]
     }
   ]

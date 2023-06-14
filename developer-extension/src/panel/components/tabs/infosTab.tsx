@@ -68,6 +68,7 @@ export function InfosTab() {
               <Entry name="Configuration" value={infos.rum.config} />
               <Entry name="Internal context" value={infos.rum.internalContext} />
               <Entry name="Global context" value={infos.rum.globalContext} />
+              <Entry name="User" value={infos.rum.user} />
             </>
           )}
         </Columns.Column>
@@ -88,6 +89,7 @@ export function InfosTab() {
               <Entry name="Version" value={infos.logs.version} />
               <Entry name="Configuration" value={infos.logs.config} />
               <Entry name="Global context" value={infos.logs.globalContext} />
+              <Entry name="User" value={infos.logs.user} />
             </>
           )}
         </Columns.Column>

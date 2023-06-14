@@ -380,7 +380,7 @@ export type RumResourceEvent = CommonProperties &
       /**
        * Duration of the resource
        */
-      readonly duration: number
+      readonly duration?: number
       /**
        * Size in octet of the resource response body
        */
@@ -768,6 +768,20 @@ export type RumViewEvent = CommonProperties & {
      * Version of the update of the view event
      */
     readonly document_version: number
+    /**
+     * List of the page states during the view
+     */
+    readonly page_states?: {
+      /**
+       * Page state name
+       */
+      readonly state: 'active' | 'passive' | 'hidden' | 'frozen' | 'terminated'
+      /**
+       * Duration in ns between start of the view and start of the page state
+       */
+      readonly start: number
+      [k: string]: unknown
+    }[]
     [k: string]: unknown
   }
   [k: string]: unknown
