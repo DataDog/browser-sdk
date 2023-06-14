@@ -1,8 +1,9 @@
 import { stubCookie, mockClock } from '../../../test'
 import { isChromium } from '../../tools/utils/browserDetection'
 import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
-import { initCookieStore, SESSION_COOKIE_NAME, toSessionString } from './sessionCookieStore'
+import { initCookieStore, SESSION_COOKIE_NAME } from './sessionCookieStore'
 import type { SessionState, SessionStore } from './sessionStore'
+import { toSessionString } from './sessionStore'
 import {
   processSessionStoreOperations,
   isLockEnabled,
