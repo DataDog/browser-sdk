@@ -159,12 +159,12 @@ export function startSessionStore<TrackingType extends string>(
     return {}
   }
 
-  function isActiveSession(sessionDate: SessionState) {
+  function isActiveSession(sessionState: SessionState) {
     // created and expire can be undefined for versions which was not storing them
     // these checks could be removed when older versions will not be available/live anymore
     return (
-      (sessionDate.created === undefined || dateNow() - Number(sessionDate.created) < SESSION_TIME_OUT_DELAY) &&
-      (sessionDate.expire === undefined || dateNow() < Number(sessionDate.expire))
+      (sessionState.created === undefined || dateNow() - Number(sessionState.created) < SESSION_TIME_OUT_DELAY) &&
+      (sessionState.expire === undefined || dateNow() < Number(sessionState.expire))
     )
   }
 
