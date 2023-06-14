@@ -59,11 +59,6 @@ export class Logger {
   log(message: string, messageContext?: object, status: StatusType = StatusType.info, error?: Error) {
     let errorContext: LogsEvent['error']
 
-    if (status === StatusType.error) {
-      // Always add origin if status is error (backward compatibility - Remove in next major)
-      errorContext = { origin: ErrorSource.LOGGER }
-    }
-
     if (error !== undefined && error !== null) {
       const stackTrace = error instanceof Error ? computeStackTrace(error) : undefined
       const rawError = computeRawError({
@@ -76,7 +71,6 @@ export class Logger {
       })
 
       errorContext = {
-        origin: ErrorSource.LOGGER, // Remove in next major
         stack: rawError.stack,
         kind: rawError.type,
         message: rawError.message,

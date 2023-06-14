@@ -29,7 +29,6 @@ export function startConsoleCollection(configuration: LogsConfiguration, lifeCyc
         error:
           log.api === ConsoleApiName.error
             ? {
-                origin: ErrorSource.CONSOLE, // Todo: Remove in the next major release
                 stack: log.stack,
                 fingerprint: log.fingerprint,
               }

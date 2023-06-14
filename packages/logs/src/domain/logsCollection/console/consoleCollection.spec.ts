@@ -58,7 +58,6 @@ describe('console collection', () => {
     console.error('foo', 'bar')
 
     expect(rawLogsEvents[0].rawLogsEvent.error).toEqual({
-      origin: ErrorSource.CONSOLE,
       stack: undefined,
       fingerprint: undefined,
     })
@@ -79,7 +78,6 @@ describe('console collection', () => {
     console.error(error)
 
     expect(rawLogsEvents[0].rawLogsEvent.error).toEqual({
-      origin: ErrorSource.CONSOLE,
       stack: jasmine.any(String),
       fingerprint: 'my-fingerprint',
     })
