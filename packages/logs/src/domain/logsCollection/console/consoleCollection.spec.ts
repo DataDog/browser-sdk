@@ -32,10 +32,6 @@ describe('console collection', () => {
     stopConsoleCollection()
   })
 
-  interface BrowserConsole extends Console {
-    [key: string]: (...data: any[]) => void
-  }
-
   objectEntries(LogStatusForApi).forEach(([api, status]) => {
     it(`should collect ${status} logs from console.${api}`, () => {
       ;({ stop: stopConsoleCollection } = startConsoleCollection(
@@ -44,7 +40,7 @@ describe('console collection', () => {
       ))
 
       /* eslint-disable-next-line no-console */
-      ;(console as BrowserConsole)[api]('foo', 'bar')
+      console[api as keyof typeof LogStatusForApi]('foo', 'bar')
 
       expect(rawLogsEvents[0].rawLogsEvent).toEqual({
         date: jasmine.any(Number),
