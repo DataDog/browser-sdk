@@ -1,4 +1,3 @@
-import type { CookieOptions } from '../../browser/cookie'
 import type { Observable } from '../../tools/observable'
 import type { Context } from '../../tools/serialisation/context'
 import { ValueHistory } from '../../tools/valueHistory'
@@ -6,9 +5,9 @@ import type { RelativeTime } from '../../tools/utils/timeUtils'
 import { relativeNow, clocksOrigin, ONE_MINUTE } from '../../tools/utils/timeUtils'
 import { DOM_EVENT, addEventListener, addEventListeners } from '../../browser/addEventListener'
 import { clearInterval, setInterval } from '../../tools/timer'
-import { tryOldCookiesMigration } from './oldCookiesMigration'
-import { startSessionStoreManager } from './sessionStoreManager'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
+import { startSessionStore } from './sessionStore'
+import type { SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
 
 export interface SessionManager<TrackingType extends string> {
   findActiveSession: (startTime?: RelativeTime) => SessionContext<TrackingType> | undefined
@@ -27,12 +26,11 @@ const SESSION_CONTEXT_TIMEOUT_DELAY = SESSION_TIME_OUT_DELAY
 let stopCallbacks: Array<() => void> = []
 
 export function startSessionManager<TrackingType extends string>(
-  options: CookieOptions,
+  sessionStoreStrategyType: SessionStoreStrategyType,
   productKey: string,
   computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean }
 ): SessionManager<TrackingType> {
-  tryOldCookiesMigration(options)
-  const sessionStore = startSessionStoreManager(options, productKey, computeSessionState)
+  const sessionStore = startSessionStore(sessionStoreStrategyType, productKey, computeSessionState)
   stopCallbacks.push(() => sessionStore.stop())
 
   const sessionContextHistory = new ValueHistory<SessionContext<TrackingType>>(SESSION_CONTEXT_TIMEOUT_DELAY)

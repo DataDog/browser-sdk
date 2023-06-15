@@ -4,7 +4,6 @@ import {
   createPageExitObservable,
   TelemetryService,
   willSyntheticsInjectRum,
-  areCookiesAuthorized,
   canUseEventBridge,
   getEventBridge,
   startTelemetry,
@@ -55,7 +54,7 @@ export function startLogs(
   const pageExitObservable = createPageExitObservable()
 
   const session =
-    areCookiesAuthorized(configuration.cookieOptions) && !canUseEventBridge() && !willSyntheticsInjectRum()
+    configuration.sessionStoreStrategyType && !canUseEventBridge() && !willSyntheticsInjectRum()
       ? startLogsSessionManager(configuration)
       : startLogsSessionManagerStub(configuration)
 

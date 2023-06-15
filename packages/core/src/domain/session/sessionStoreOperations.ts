@@ -1,10 +1,9 @@
 import { setTimeout } from '../../tools/timer'
-import { dateNow } from '../../tools/utils/timeUtils'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import { isChromium } from '../../tools/utils/browserDetection'
-import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
-import type { SessionState, SessionStore } from './sessionStore'
-import { isSessionInExpiredState } from './sessionStore'
+import type { SessionStoreStrategy } from './storeStrategies/sessionStoreStrategy'
+import type { SessionState } from './sessionState'
+import { expandSessionState, isSessionInExpiredState } from './sessionState'
 
 type Operations = {
   process: (sessionState: SessionState) => SessionState | undefined
@@ -16,8 +15,12 @@ export const LOCK_MAX_TRIES = 100
 const bufferedOperations: Operations[] = []
 let ongoingOperations: Operations | undefined
 
-export function processSessionStoreOperations(operations: Operations, sessionStore: SessionStore, numberOfRetries = 0) {
-  const { retrieveSession, persistSession, clearSession } = sessionStore
+export function processSessionStoreOperations(
+  operations: Operations,
+  sessionStoreStrategy: SessionStoreStrategy,
+  numberOfRetries = 0
+) {
+  const { retrieveSession, persistSession, clearSession } = sessionStoreStrategy
   const lockEnabled = isLockEnabled()
 
   if (!ongoingOperations) {
@@ -28,7 +31,7 @@ export function processSessionStoreOperations(operations: Operations, sessionSto
     return
   }
   if (lockEnabled && numberOfRetries >= LOCK_MAX_TRIES) {
-    next(sessionStore)
+    next(sessionStoreStrategy)
     return
   }
   let currentLock: string
@@ -36,7 +39,7 @@ export function processSessionStoreOperations(operations: Operations, sessionSto
   if (lockEnabled) {
     // if someone has lock, retry later
     if (currentSession.lock) {
-      retryLater(operations, sessionStore, numberOfRetries)
+      retryLater(operations, sessionStoreStrategy, numberOfRetries)
       return
     }
     // acquire lock
@@ -46,7 +49,7 @@ export function processSessionStoreOperations(operations: Operations, sessionSto
     // if lock is not acquired, retry later
     currentSession = retrieveSession()
     if (currentSession.lock !== currentLock) {
-      retryLater(operations, sessionStore, numberOfRetries)
+      retryLater(operations, sessionStoreStrategy, numberOfRetries)
       return
     }
   }
@@ -55,7 +58,7 @@ export function processSessionStoreOperations(operations: Operations, sessionSto
     // if lock corrupted after process, retry later
     currentSession = retrieveSession()
     if (currentSession.lock !== currentLock!) {
-      retryLater(operations, sessionStore, numberOfRetries)
+      retryLater(operations, sessionStoreStrategy, numberOfRetries)
       return
     }
   }
@@ -63,7 +66,7 @@ export function processSessionStoreOperations(operations: Operations, sessionSto
     if (isSessionInExpiredState(processedSession)) {
       clearSession()
     } else {
-      processedSession.expire = String(dateNow() + SESSION_EXPIRATION_DELAY)
+      expandSessionState(processedSession)
       persistSession(processedSession)
     }
   }
@@ -74,7 +77,7 @@ export function processSessionStoreOperations(operations: Operations, sessionSto
       // if lock corrupted after persist, retry later
       currentSession = retrieveSession()
       if (currentSession.lock !== currentLock!) {
-        retryLater(operations, sessionStore, numberOfRetries)
+        retryLater(operations, sessionStoreStrategy, numberOfRetries)
         return
       }
       delete currentSession.lock
@@ -85,7 +88,7 @@ export function processSessionStoreOperations(operations: Operations, sessionSto
   // call after even if session is not persisted in order to perform operations on
   // up-to-date session state value => the value could have been modified by another tab
   operations.after?.(processedSession || currentSession)
-  next(sessionStore)
+  next(sessionStoreStrategy)
 }
 
 /**
@@ -94,13 +97,13 @@ export function processSessionStoreOperations(operations: Operations, sessionSto
  */
 export const isLockEnabled = () => isChromium()
 
-function retryLater(operations: Operations, sessionStore: SessionStore, currentNumberOfRetries: number) {
+function retryLater(operations: Operations, sessionStore: SessionStoreStrategy, currentNumberOfRetries: number) {
   setTimeout(() => {
     processSessionStoreOperations(operations, sessionStore, currentNumberOfRetries + 1)
   }, LOCK_RETRY_DELAY)
 }
 
-function next(sessionStore: SessionStore) {
+function next(sessionStore: SessionStoreStrategy) {
   ongoingOperations = undefined
   const nextOperations = bufferedOperations.shift()
   if (nextOperations) {

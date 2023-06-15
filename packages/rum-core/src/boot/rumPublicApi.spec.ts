@@ -96,6 +96,13 @@ describe('rum public api', () => {
         rumPublicApi.init(invalidConfiguration as RumInitConfiguration)
         expect(rumPublicApi.getInitConfiguration()?.sessionSampleRate).toEqual(100)
       })
+
+      it('should initialize even if session cannot be handled', () => {
+        spyOnProperty(document, 'cookie', 'get').and.returnValue('')
+        const rumPublicApi = makeRumPublicApi(startRumSpy, noopRecorderApi, {})
+        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+        expect(startRumSpy).toHaveBeenCalled()
+      })
     })
   })
 
@@ -108,6 +115,15 @@ describe('rum public api', () => {
 
     afterEach(() => {
       cleanupSyntheticsWorkerValues()
+    })
+
+    it('should not initialize if session cannot be handled and bridge is not present', () => {
+      spyOnProperty(document, 'cookie', 'get').and.returnValue('')
+      const displaySpy = spyOn(display, 'warn')
+      const rumPublicApi = makeRumPublicApi(startRumSpy, noopRecorderApi, {})
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      expect(startRumSpy).not.toHaveBeenCalled()
+      expect(displaySpy).toHaveBeenCalled()
     })
 
     describe('skipInitIfSyntheticsWillInjectRum option', () => {
