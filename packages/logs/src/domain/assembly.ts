@@ -63,7 +63,7 @@ export function startLogsAssembly(
         // Todo: [RUMF-1230] Move this check to the logger collection in the next major release
         !isAuthorized(rawLogsEvent.status, HandlerType.http, logger) ||
         configuration.beforeSend?.(log) === false ||
-        (log.error?.origin !== ErrorSource.AGENT &&
+        (log.origin !== ErrorSource.AGENT &&
           (logRateLimiters[log.status] ?? logRateLimiters['custom']).isLimitReached())
       ) {
         return

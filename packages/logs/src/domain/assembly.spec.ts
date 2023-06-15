@@ -386,6 +386,19 @@ describe('logs limitation', () => {
     clock.cleanup()
     serverLogs = []
   })
+  it('should not apply to agent logs', () => {
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+      rawLogsEvent: { ...DEFAULT_MESSAGE, origin: ErrorSource.AGENT, status: 'error', message: 'foo' },
+    })
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+      rawLogsEvent: { ...DEFAULT_MESSAGE, origin: ErrorSource.AGENT, status: 'error', message: 'bar' },
+    })
+
+    expect(serverLogs.length).toEqual(2)
+    expect(reportErrorSpy).not.toHaveBeenCalled()
+    expect(serverLogs[0].message).toBe('foo')
+    expect(serverLogs[1].message).toBe('bar')
+  })
   ;[
     { status: StatusType.error, messageContext: {}, message: 'Reached max number of errors by minute: 1' },
     { status: StatusType.warn, messageContext: {}, message: 'Reached max number of warns by minute: 1' },

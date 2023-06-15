@@ -37,7 +37,6 @@ describe('Logger', () => {
 
         expect(getLoggedMessage(0).context).toEqual({
           error: {
-            origin: 'logger',
             kind: 'SyntaxError',
             message: 'My Error',
             stack: jasmine.stringMatching(/^SyntaxError: My Error/),
@@ -69,7 +68,6 @@ describe('Logger', () => {
         message: 'message',
         context: {
           error: {
-            origin: 'logger',
             kind: undefined,
             message: 'Provided "My Error"',
             stack: NO_ERROR_STACK_PRESENT_MESSAGE,
@@ -79,17 +77,13 @@ describe('Logger', () => {
       })
     })
 
-    it("'logger.error' should populate an error context with origin even if no Error object is provided", () => {
+    it("'logger.error' should have an empty context if no Error object is provided", () => {
       logger.error('message')
 
       expect(getLoggedMessage(0)).toEqual({
         message: 'message',
-        context: {
-          error: {
-            origin: 'logger',
-          },
-        },
         status: 'error',
+        context: undefined,
       })
     })
   })

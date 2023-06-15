@@ -45,9 +45,6 @@ export function startLogs(
       rawLogsEvent: {
         message: error.message,
         date: error.startClocks.timeStamp,
-        error: {
-          origin: ErrorSource.AGENT, // Todo: Remove in the next major release
-        },
         origin: ErrorSource.AGENT,
         status: StatusType.error,
       },
