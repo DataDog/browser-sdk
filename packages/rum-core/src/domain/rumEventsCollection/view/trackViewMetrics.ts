@@ -23,12 +23,13 @@ import { getScrollY } from '../../../browser/scroll'
 import { getViewportDimension } from '../../../browser/viewportObservable'
 
 export interface ScrollMetrics {
-  maxScrollDepth: number
-  maxScrollHeight: number
-  maxScrollDepthTime: Duration
-  maxScrollTop: number
+  maxDepth: number
+  scrollHeight: number
+  scrollTop: number
+  maxDepthTime: Duration
 }
 
+/** Arbitrary scroll throttle duration */
 export const THROTTLE_SCROLL_DURATION = ONE_SECOND
 
 export interface ViewMetrics {
@@ -63,10 +64,10 @@ export function trackViewMetrics(
         const { scrollHeight, scrollDepth, scrollTop } = computeScrollMetrics()
 
         scrollMetrics = {
-          maxScrollHeight: scrollHeight,
-          maxScrollDepth: scrollDepth,
-          maxScrollDepthTime: newLoadingTime,
-          maxScrollTop: scrollTop,
+          scrollHeight,
+          maxDepth: scrollDepth,
+          maxDepthTime: newLoadingTime,
+          scrollTop,
         }
       }
       scheduleViewUpdate()
@@ -112,20 +113,20 @@ export function trackScrollMetrics(
   if (!isExperimentalFeatureEnabled(ExperimentalFeature.SCROLLMAP)) {
     return { stop: noop }
   }
-  let maxScrollDepth = 0
+  let maxDepth = 0
   const handleScrollEvent = throttle(
     () => {
       const { scrollHeight, scrollDepth, scrollTop } = getScrollMetrics()
 
-      if (scrollDepth > maxScrollDepth) {
+      if (scrollDepth > maxDepth) {
         const now = relativeNow()
-        const maxScrollDepthTime = elapsed(viewStart.relative, now)
-        maxScrollDepth = scrollDepth
+        const maxDepthTime = elapsed(viewStart.relative, now)
+        maxDepth = scrollDepth
         callback({
-          maxScrollDepth,
-          maxScrollHeight: scrollHeight,
-          maxScrollDepthTime,
-          maxScrollTop: scrollTop,
+          maxDepth,
+          scrollHeight,
+          maxDepthTime,
+          scrollTop,
         })
       }
     },

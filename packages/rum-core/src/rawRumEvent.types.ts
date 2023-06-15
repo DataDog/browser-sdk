@@ -118,9 +118,9 @@ export interface RawRumViewEvent {
 interface ViewDisplay {
   scroll: {
     max_depth?: number
-    max_scroll_height?: number
+    max_depth_scroll_height?: number
+    max_depth_scroll_top?: number
     max_depth_time?: ServerDuration
-    max_scroll_top?: number
   }
 }
 

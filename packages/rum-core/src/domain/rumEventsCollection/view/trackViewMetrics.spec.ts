@@ -567,10 +567,10 @@ describe('rum track view metrics', () => {
           newScroll({ scrollHeight: 1000, scrollDepth: 500, scrollTop: 100 })
 
           expect(scrollMetrics).toEqual({
-            maxScrollHeight: 1000,
-            maxScrollDepth: 500,
-            maxScrollTop: 100,
-            maxScrollDepthTime: 1000 as Duration,
+            scrollHeight: 1000,
+            maxDepth: 500,
+            scrollTop: 100,
+            maxDepthTime: 1000 as Duration,
           })
         })
 
@@ -580,10 +580,10 @@ describe('rum track view metrics', () => {
           newScroll({ scrollHeight: 1000, scrollDepth: 600, scrollTop: 200 })
 
           expect(scrollMetrics).toEqual({
-            maxScrollHeight: 1000,
-            maxScrollDepth: 600,
-            maxScrollTop: 200,
-            maxScrollDepthTime: 2000 as Duration,
+            scrollHeight: 1000,
+            maxDepth: 600,
+            scrollTop: 200,
+            maxDepthTime: 2000 as Duration,
           })
         })
 
@@ -593,10 +593,10 @@ describe('rum track view metrics', () => {
           newScroll({ scrollHeight: 1000, scrollDepth: 450, scrollTop: 50 })
 
           expect(scrollMetrics).toEqual({
-            maxScrollHeight: 1000,
-            maxScrollDepth: 600,
-            maxScrollTop: 200,
-            maxScrollDepthTime: 1000 as Duration,
+            scrollHeight: 1000,
+            maxDepth: 600,
+            scrollTop: 200,
+            maxDepthTime: 1000 as Duration,
           })
         })
       })
@@ -662,10 +662,10 @@ describe('rum track view metrics', () => {
 
           expect(getViewUpdate(3).loadingTime).toEqual(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
           expect(getViewUpdate(3).scrollMetrics).toEqual({
-            maxScrollHeight: 600,
-            maxScrollDepth: 600,
-            maxScrollDepthTime: 80 as Duration,
-            maxScrollTop: 0,
+            scrollHeight: 600,
+            maxDepth: 600,
+            maxDepthTime: 80 as Duration,
+            scrollTop: 0,
           })
         })
       })

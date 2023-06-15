@@ -43,10 +43,10 @@ const VIEW: ViewEvent = {
     loadEvent: 10 as Duration,
   },
   scrollMetrics: {
-    maxScrollDepth: 2000,
-    maxScrollHeight: 3000,
-    maxScrollDepthTime: 4000000000 as Duration,
-    maxScrollTop: 1000,
+    maxDepth: 2000,
+    scrollHeight: 3000,
+    maxDepthTime: 4000000000 as Duration,
+    scrollTop: 1000,
   },
   sessionIsActive: true,
 }
@@ -152,9 +152,9 @@ describe('viewCollection', () => {
       display: {
         scroll: {
           max_depth: 2000,
-          max_scroll_height: 3000,
+          max_depth_scroll_height: 3000,
           max_depth_time: 4000000000000000 as ServerDuration,
-          max_scroll_top: 1000,
+          max_depth_scroll_top: 1000,
         },
       },
     })
