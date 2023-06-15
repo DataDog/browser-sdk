@@ -1,12 +1,15 @@
-import type { CookieOptions } from '../../browser/cookie'
-import { COOKIE_ACCESS_DELAY } from '../../browser/cookie'
 import { clearInterval, setInterval } from '../../tools/timer'
 import { Observable } from '../../tools/observable'
-import { dateNow } from '../../tools/utils/timeUtils'
+import { ONE_SECOND, dateNow } from '../../tools/utils/timeUtils'
 import { throttle } from '../../tools/utils/functionUtils'
 import { generateUUID } from '../../tools/utils/stringUtils'
+import type { InitConfiguration } from '../configuration'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
-import { deleteSessionCookie, retrieveSessionCookie, withCookieLockAccess } from './sessionCookieStore'
+import { selectCookieStrategy, initCookieStrategy } from './storeStrategies/sessionInCookie'
+import type { SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
+import type { SessionState } from './sessionState'
+import { initLocalStorageStrategy, selectLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
+import { processSessionStoreOperations } from './sessionStoreOperations'
 
 export interface SessionStore {
   expandOrRenewSession: () => void
@@ -18,13 +21,25 @@ export interface SessionStore {
   stop: () => void
 }
 
-export interface SessionState {
-  id?: string
-  created?: string
-  expire?: string
-  lock?: string
+/**
+ * Every second, the storage will be polled to check for any change that can occur
+ * to the session state in another browser tab, or another window.
+ * This value has been determined from our previous cookie-only implementation.
+ */
+export const STORAGE_POLL_DELAY = ONE_SECOND
 
-  [key: string]: string | undefined
+/**
+ * Checks if cookies are available as the preferred storage
+ * Else, checks if LocalStorage is allowed and available
+ */
+export function selectSessionStoreStrategyType(
+  initConfiguration: InitConfiguration
+): SessionStoreStrategyType | undefined {
+  let sessionStoreStrategyType = selectCookieStrategy(initConfiguration)
+  if (!sessionStoreStrategyType && initConfiguration.allowFallbackToLocalStorage) {
+    sessionStoreStrategyType = selectLocalStorageStrategy()
+  }
+  return sessionStoreStrategyType
 }
 
 /**
@@ -34,74 +49,86 @@ export interface SessionState {
  * - inactive, no session in store or session expired, waiting for a renew session
  */
 export function startSessionStore<TrackingType extends string>(
-  options: CookieOptions,
+  sessionStoreStrategyType: SessionStoreStrategyType,
   productKey: string,
   computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean }
 ): SessionStore {
   const renewObservable = new Observable<void>()
   const expireObservable = new Observable<void>()
 
-  const watchSessionTimeoutId = setInterval(watchSession, COOKIE_ACCESS_DELAY)
+  const sessionStoreStrategy =
+    sessionStoreStrategyType.type === 'Cookie'
+      ? initCookieStrategy(sessionStoreStrategyType.cookieOptions)
+      : initLocalStorageStrategy()
+  const { clearSession, retrieveSession } = sessionStoreStrategy
+
+  const watchSessionTimeoutId = setInterval(watchSession, STORAGE_POLL_DELAY)
   let sessionCache: SessionState = retrieveActiveSession()
 
   function expandOrRenewSession() {
     let isTracked: boolean
-    withCookieLockAccess({
-      options,
-      process: (cookieSession) => {
-        const synchronizedSession = synchronizeSession(cookieSession)
-        isTracked = expandOrRenewCookie(synchronizedSession)
-        return synchronizedSession
+    processSessionStoreOperations(
+      {
+        process: (sessionState) => {
+          const synchronizedSession = synchronizeSession(sessionState)
+          isTracked = expandOrRenewSessionState(synchronizedSession)
+          return synchronizedSession
+        },
+        after: (sessionState) => {
+          if (isTracked && !hasSessionInCache()) {
+            renewSessionInCache(sessionState)
+          }
+          sessionCache = sessionState
+        },
       },
-      after: (cookieSession) => {
-        if (isTracked && !hasSessionInCache()) {
-          renewSessionInCache(cookieSession)
-        }
-        sessionCache = cookieSession
-      },
-    })
+      sessionStoreStrategy
+    )
   }
 
   function expandSession() {
-    withCookieLockAccess({
-      options,
-      process: (cookieSession) => (hasSessionInCache() ? synchronizeSession(cookieSession) : undefined),
-    })
+    processSessionStoreOperations(
+      {
+        process: (sessionState) => (hasSessionInCache() ? synchronizeSession(sessionState) : undefined),
+      },
+      sessionStoreStrategy
+    )
   }
 
   /**
    * allows two behaviors:
-   * - if the session is active, synchronize the session cache without updating the session cookie
-   * - if the session is not active, clear the session cookie and expire the session cache
+   * - if the session is active, synchronize the session cache without updating the session store
+   * - if the session is not active, clear the session store and expire the session cache
    */
   function watchSession() {
-    withCookieLockAccess({
-      options,
-      process: (cookieSession) => (!isActiveSession(cookieSession) ? {} : undefined),
-      after: synchronizeSession,
-    })
+    processSessionStoreOperations(
+      {
+        process: (sessionState) => (!isActiveSession(sessionState) ? {} : undefined),
+        after: synchronizeSession,
+      },
+      sessionStoreStrategy
+    )
   }
 
-  function synchronizeSession(cookieSession: SessionState) {
-    if (!isActiveSession(cookieSession)) {
-      cookieSession = {}
+  function synchronizeSession(sessionState: SessionState) {
+    if (!isActiveSession(sessionState)) {
+      sessionState = {}
     }
     if (hasSessionInCache()) {
-      if (isSessionInCacheOutdated(cookieSession)) {
+      if (isSessionInCacheOutdated(sessionState)) {
         expireSessionInCache()
       } else {
-        sessionCache = cookieSession
+        sessionCache = sessionState
       }
     }
-    return cookieSession
+    return sessionState
   }
 
-  function expandOrRenewCookie(cookieSession: SessionState) {
-    const { trackingType, isTracked } = computeSessionState(cookieSession[productKey])
-    cookieSession[productKey] = trackingType
-    if (isTracked && !cookieSession.id) {
-      cookieSession.id = generateUUID()
-      cookieSession.created = String(dateNow())
+  function expandOrRenewSessionState(sessionState: SessionState) {
+    const { trackingType, isTracked } = computeSessionState(sessionState[productKey])
+    sessionState[productKey] = trackingType
+    if (isTracked && !sessionState.id) {
+      sessionState.id = generateUUID()
+      sessionState.created = String(dateNow())
     }
     return isTracked
   }
@@ -110,8 +137,8 @@ export function startSessionStore<TrackingType extends string>(
     return sessionCache[productKey] !== undefined
   }
 
-  function isSessionInCacheOutdated(cookieSession: SessionState) {
-    return sessionCache.id !== cookieSession.id || sessionCache[productKey] !== cookieSession[productKey]
+  function isSessionInCacheOutdated(sessionState: SessionState) {
+    return sessionCache.id !== sessionState.id || sessionCache[productKey] !== sessionState[productKey]
   }
 
   function expireSessionInCache() {
@@ -119,36 +146,36 @@ export function startSessionStore<TrackingType extends string>(
     expireObservable.notify()
   }
 
-  function renewSessionInCache(cookieSession: SessionState) {
-    sessionCache = cookieSession
+  function renewSessionInCache(sessionState: SessionState) {
+    sessionCache = sessionState
     renewObservable.notify()
   }
 
   function retrieveActiveSession(): SessionState {
-    const session = retrieveSessionCookie()
+    const session = retrieveSession()
     if (isActiveSession(session)) {
       return session
     }
     return {}
   }
 
-  function isActiveSession(session: SessionState) {
+  function isActiveSession(sessionState: SessionState) {
     // created and expire can be undefined for versions which was not storing them
     // these checks could be removed when older versions will not be available/live anymore
     return (
-      (session.created === undefined || dateNow() - Number(session.created) < SESSION_TIME_OUT_DELAY) &&
-      (session.expire === undefined || dateNow() < Number(session.expire))
+      (sessionState.created === undefined || dateNow() - Number(sessionState.created) < SESSION_TIME_OUT_DELAY) &&
+      (sessionState.expire === undefined || dateNow() < Number(sessionState.expire))
     )
   }
 
   return {
-    expandOrRenewSession: throttle(expandOrRenewSession, COOKIE_ACCESS_DELAY).throttled,
+    expandOrRenewSession: throttle(expandOrRenewSession, STORAGE_POLL_DELAY).throttled,
     expandSession,
     getSession: () => sessionCache,
     renewObservable,
     expireObservable,
     expire: () => {
-      deleteSessionCookie(options)
+      clearSession()
       synchronizeSession({})
     },
     stop: () => {

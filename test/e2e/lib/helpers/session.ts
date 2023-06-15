@@ -1,4 +1,4 @@
-import { SESSION_COOKIE_NAME } from '@datadog/browser-core'
+import { SESSION_STORE_KEY } from '@datadog/browser-core'
 import { deleteAllCookies } from './browser'
 
 export async function renewSession() {
@@ -16,7 +16,7 @@ export async function expireSession() {
 }
 
 export async function findSessionCookie() {
-  const cookies = await browser.getCookies(SESSION_COOKIE_NAME)
+  const cookies = await browser.getCookies(SESSION_STORE_KEY)
   // In some case, the session cookie is returned but with an empty value. Let's consider it expired
   // in this case.
   return cookies[0]?.value || undefined
