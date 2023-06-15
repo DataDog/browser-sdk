@@ -12,7 +12,7 @@ export interface ProvidedError {
   handlingStack: string
 }
 
-const LogStatusForApi = {
+export const LogStatusForApi = {
   [ConsoleApiName.log]: StatusType.info,
   [ConsoleApiName.debug]: StatusType.debug,
   [ConsoleApiName.info]: StatusType.info,
