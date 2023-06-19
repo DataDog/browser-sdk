@@ -4,7 +4,7 @@ import { mergeObservables, Observable } from '../../tools/observable'
 import { addEventListener, DOM_EVENT } from '../../browser/addEventListener'
 import { includes } from '../../tools/utils/polyfills'
 import { safeTruncate } from '../../tools/utils/stringUtils'
-import type { Report, BrowserWindow, ReportType } from './browser.types'
+import type { ReportType, InterventionReport, DeprecationReport } from './browser.types'
 
 export const RawReportType = {
   intervention: 'intervention',
@@ -38,17 +38,17 @@ export function initReportObservable(apis: RawReportType[]) {
 
 function createReportObservable(reportTypes: ReportType[]) {
   const observable = new Observable<RawReport>(() => {
-    if (!(window as BrowserWindow).ReportingObserver) {
+    if (!window.ReportingObserver) {
       return
     }
 
-    const handleReports = monitor((reports: Report[]) =>
+    const handleReports = monitor((reports: Array<DeprecationReport | InterventionReport>, _: ReportingObserver) =>
       reports.forEach((report) => {
         observable.notify(buildRawReportFromReport(report))
       })
-    )
+    ) as ReportingObserverCallback
 
-    const observer = new (window as BrowserWindow).ReportingObserver!(handleReports, {
+    const observer = new window.ReportingObserver(handleReports, {
       types: reportTypes,
       buffered: true,
     })
@@ -73,7 +73,7 @@ function createCspViolationReportObservable() {
   return observable
 }
 
-function buildRawReportFromReport({ type, body }: Report): RawReport {
+function buildRawReportFromReport({ type, body }: DeprecationReport | InterventionReport): RawReport {
   return {
     type,
     subtype: body.id,
@@ -104,23 +104,22 @@ function buildRawReportFromCspViolation(event: SecurityPolicyViolationEvent): Ra
 function buildStack(
   name: string,
   message: string,
-  sourceFile: string | undefined,
-  lineNumber: number | undefined,
-  columnNumber: number | undefined
+  sourceFile: string | null,
+  lineNumber: number | null,
+  columnNumber: number | null
 ): string | undefined {
-  return (
-    sourceFile &&
-    toStackTraceString({
-      name,
-      message,
-      stack: [
-        {
-          func: '?',
-          url: sourceFile,
-          line: lineNumber,
-          column: columnNumber,
-        },
-      ],
-    })
-  )
+  return sourceFile
+    ? toStackTraceString({
+        name,
+        message,
+        stack: [
+          {
+            func: '?',
+            url: sourceFile,
+            line: lineNumber ?? undefined,
+            column: columnNumber ?? undefined,
+          },
+        ],
+      })
+    : undefined
 }
