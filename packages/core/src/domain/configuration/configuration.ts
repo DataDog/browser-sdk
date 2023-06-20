@@ -1,5 +1,3 @@
-import type { CookieOptions } from '../../browser/cookie'
-import { getCurrentSite } from '../../browser/cookie'
 import { catchUserErrors } from '../../tools/catchUserErrors'
 import { display } from '../../tools/display'
 import type { RawTelemetryConfiguration } from '../telemetry'
@@ -10,6 +8,8 @@ import { isPercentage } from '../../tools/utils/numberUtils'
 import { ONE_KIBI_BYTE } from '../../tools/utils/byteUtils'
 import { objectHasValue } from '../../tools/utils/objectUtils'
 import { assign } from '../../tools/utils/polyfills'
+import { selectSessionStoreStrategyType } from '../session/sessionStore'
+import type { SessionStoreStrategyType } from '../session/storeStrategies/sessionStoreStrategy'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
 
@@ -52,6 +52,9 @@ export interface InitConfiguration {
   useSecureSessionCookie?: boolean | undefined
   trackSessionAcrossSubdomains?: boolean | undefined
 
+  // alternate storage option
+  allowFallbackToLocalStorage?: boolean | undefined
+
   // internal options
   enableExperimentalFeatures?: string[] | undefined
   replica?: ReplicaUserConfiguration | undefined
@@ -73,7 +76,7 @@ interface ReplicaUserConfiguration {
 export interface Configuration extends TransportConfiguration {
   // Built from init configuration
   beforeSend: GenericBeforeSendCallback | undefined
-  cookieOptions: CookieOptions
+  sessionStoreStrategyType: SessionStoreStrategyType | undefined
   sessionSampleRate: number
   telemetrySampleRate: number
   telemetryConfigurationSampleRate: number
@@ -129,7 +132,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     {
       beforeSend:
         initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
-      cookieOptions: buildCookieOptions(initConfiguration),
+      sessionStoreStrategyType: selectSessionStoreStrategyType(initConfiguration),
       sessionSampleRate: sessionSampleRate ?? 100,
       telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
       telemetryConfigurationSampleRate: initConfiguration.telemetryConfigurationSampleRate ?? 5,
@@ -161,36 +164,20 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
   )
 }
 
-export function buildCookieOptions(initConfiguration: InitConfiguration) {
-  const cookieOptions: CookieOptions = {}
-
-  cookieOptions.secure = mustUseSecureCookie(initConfiguration)
-  cookieOptions.crossSite = !!initConfiguration.useCrossSiteSessionCookie
-
-  if (initConfiguration.trackSessionAcrossSubdomains) {
-    cookieOptions.domain = getCurrentSite()
-  }
-
-  return cookieOptions
-}
-
-function mustUseSecureCookie(initConfiguration: InitConfiguration) {
-  return !!initConfiguration.useSecureSessionCookie || !!initConfiguration.useCrossSiteSessionCookie
-}
-
-export function serializeConfiguration(configuration: InitConfiguration): Partial<RawTelemetryConfiguration> {
-  const proxy = configuration.proxy ?? configuration.proxyUrl
+export function serializeConfiguration(initConfiguration: InitConfiguration): Partial<RawTelemetryConfiguration> {
+  const proxy = initConfiguration.proxy ?? initConfiguration.proxyUrl
   return {
-    session_sample_rate: configuration.sessionSampleRate ?? configuration.sampleRate,
-    telemetry_sample_rate: configuration.telemetrySampleRate,
-    telemetry_configuration_sample_rate: configuration.telemetryConfigurationSampleRate,
-    use_before_send: !!configuration.beforeSend,
-    use_cross_site_session_cookie: configuration.useCrossSiteSessionCookie,
-    use_secure_session_cookie: configuration.useSecureSessionCookie,
+    session_sample_rate: initConfiguration.sessionSampleRate ?? initConfiguration.sampleRate,
+    telemetry_sample_rate: initConfiguration.telemetrySampleRate,
+    telemetry_configuration_sample_rate: initConfiguration.telemetryConfigurationSampleRate,
+    use_before_send: !!initConfiguration.beforeSend,
+    use_cross_site_session_cookie: initConfiguration.useCrossSiteSessionCookie,
+    use_secure_session_cookie: initConfiguration.useSecureSessionCookie,
     use_proxy: proxy !== undefined ? !!proxy : undefined,
-    silent_multiple_init: configuration.silentMultipleInit,
-    track_session_across_subdomains: configuration.trackSessionAcrossSubdomains,
-    track_resources: configuration.trackResources,
-    track_long_task: configuration.trackLongTasks,
+    silent_multiple_init: initConfiguration.silentMultipleInit,
+    track_session_across_subdomains: initConfiguration.trackSessionAcrossSubdomains,
+    track_resources: initConfiguration.trackResources,
+    track_long_task: initConfiguration.trackLongTasks,
+    allow_fallback_to_local_storage: !!initConfiguration.allowFallbackToLocalStorage,
   }
 }

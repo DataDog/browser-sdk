@@ -19,8 +19,11 @@ export const enum LoggerTrackingType {
 }
 
 export function startLogsSessionManager(configuration: LogsConfiguration): LogsSessionManager {
-  const sessionManager = startSessionManager(configuration.cookieOptions, LOGS_SESSION_KEY, (rawTrackingType) =>
-    computeSessionState(configuration, rawTrackingType)
+  const sessionManager = startSessionManager(
+    // TODO - Improve configuration type and remove assertion
+    configuration.sessionStoreStrategyType!,
+    LOGS_SESSION_KEY,
+    (rawTrackingType) => computeSessionState(configuration, rawTrackingType)
   )
   return {
     findTrackedSession: (startTime) => {

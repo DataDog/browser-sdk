@@ -35,8 +35,11 @@ export const enum RumTrackingType {
 }
 
 export function startRumSessionManager(configuration: RumConfiguration, lifeCycle: LifeCycle): RumSessionManager {
-  const sessionManager = startSessionManager(configuration.cookieOptions, RUM_SESSION_KEY, (rawTrackingType) =>
-    computeSessionState(configuration, rawTrackingType)
+  const sessionManager = startSessionManager(
+    // TODO - Improve configuration type and remove assertion
+    configuration.sessionStoreStrategyType!,
+    RUM_SESSION_KEY,
+    (rawTrackingType) => computeSessionState(configuration, rawTrackingType)
   )
 
   sessionManager.expireObservable.subscribe(() => {

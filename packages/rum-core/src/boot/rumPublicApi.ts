@@ -5,7 +5,6 @@ import {
   willSyntheticsInjectRum,
   assign,
   BoundedBuffer,
-  buildCookieOptions,
   createContextManager,
   deepClone,
   makePublicApi,
@@ -16,7 +15,6 @@ import {
   callMonitored,
   createHandlingStack,
   canUseEventBridge,
-  areCookiesAuthorized,
   checkUser,
   sanitizeUser,
   sanitize,
@@ -110,10 +108,9 @@ export function makeRumPublicApi(
       return
     }
 
-    if (canUseEventBridge()) {
+    const eventBridgeAvailable = canUseEventBridge()
+    if (eventBridgeAvailable) {
       initConfiguration = overrideInitConfigurationForBridge(initConfiguration)
-    } else if (!canHandleSession(initConfiguration)) {
-      return
     }
 
     if (!canInitRum(initConfiguration)) {
@@ -122,6 +119,11 @@ export function makeRumPublicApi(
 
     const configuration = validateAndBuildRumConfiguration(initConfiguration)
     if (!configuration) {
+      return
+    }
+
+    if (!eventBridgeAvailable && !configuration.sessionStoreStrategyType) {
+      display.warn('No storage available for session. We will not send any data.')
       return
     }
 
@@ -273,19 +275,6 @@ export function makeRumPublicApi(
 
   return rumPublicApi
 
-  function canHandleSession(initConfiguration: RumInitConfiguration): boolean {
-    if (!areCookiesAuthorized(buildCookieOptions(initConfiguration))) {
-      display.warn('Cookies are not authorized, we will not send any data.')
-      return false
-    }
-
-    if (isLocalFile()) {
-      display.error('Execution is not allowed in the current context.')
-      return false
-    }
-    return true
-  }
-
   function canInitRum(initConfiguration: RumInitConfiguration) {
     if (isAlreadyInitialized) {
       if (!initConfiguration.silentMultipleInit) {
@@ -302,9 +291,5 @@ export function makeRumPublicApi(
       clientToken: 'empty',
       sessionSampleRate: 100,
     })
-  }
-
-  function isLocalFile() {
-    return window.location.protocol === 'file:'
   }
 }
