@@ -153,14 +153,14 @@ describe('startLogsAssembly', () => {
       expect(serverLogs[0].common_context_key).toBeUndefined()
     })
 
-    it('should include main logger context', () => {
+    it('should not include main logger context', () => {
       mainLogger.setContext({ foo: 'from-main-logger' })
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
 
-      expect(serverLogs[0].foo).toEqual('from-main-logger')
+      expect(serverLogs[0].foo).toBeUndefined()
     })
 
-    it('should include logger context instead of main logger context when present', () => {
+    it('should include logger context when present', () => {
       const logger = new Logger(() => noop)
       mainLogger.setContext({ foo: 'from-main-logger', bar: 'from-main-logger' })
       logger.setContext({ foo: 'from-logger' })
@@ -236,14 +236,6 @@ describe('startLogsAssembly', () => {
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
 
       expect(serverLogs[0].message).toEqual('message')
-    })
-
-    it('logger context should take precedence over raw log', () => {
-      mainLogger.setContext({ message: 'from-main-logger' })
-
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
-
-      expect(serverLogs[0].message).toEqual('from-main-logger')
     })
 
     it('message context should take precedence over logger context', () => {

@@ -35,7 +35,7 @@ export function startLogsAssembly(
 
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_LOG_COLLECTED,
-    ({ rawLogsEvent, messageContext = undefined, savedCommonContext = undefined, logger = mainLogger }) => {
+    ({ rawLogsEvent, messageContext = undefined, savedCommonContext = undefined, logger }) => {
       const startTime = getRelativeTime(rawLogsEvent.date)
       const session = sessionManager.findTrackedSession(startTime)
 
@@ -55,13 +55,13 @@ export function startLogsAssembly(
         commonContext.context,
         getRUMInternalContext(startTime),
         rawLogsEvent,
-        logger.getContext(),
+        logger?.getContext(),
         messageContext
       )
 
       if (
         // Todo: [RUMF-1230] Move this check to the logger collection in the next major release
-        !isAuthorized(rawLogsEvent.status, HandlerType.http, logger) ||
+        !isAuthorized(rawLogsEvent.status, HandlerType.http, logger || mainLogger) ||
         configuration.beforeSend?.(log) === false ||
         (log.origin !== ErrorSource.AGENT &&
           (logRateLimiters[log.status] ?? logRateLimiters['custom']).isLimitReached())
