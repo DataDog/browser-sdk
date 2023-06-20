@@ -7,6 +7,7 @@ import type {
   ServerDuration,
   TimeStamp,
   RawErrorCause,
+  DefaultPrivacyLevel,
 } from '@datadog/browser-core'
 import type { PageState } from './domain/contexts/pageStateHistory'
 import type { RumSessionPlan } from './domain/rumSessionManager'
@@ -107,6 +108,9 @@ export interface RawRumViewEvent {
     is_active: false | undefined
   }
   feature_flags?: Context
+  privacy?: {
+    replay_level: DefaultPrivacyLevel
+  }
   _dd: {
     document_version: number
     replay_stats?: ReplayStats
