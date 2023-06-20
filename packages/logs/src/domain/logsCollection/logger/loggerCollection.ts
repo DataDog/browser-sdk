@@ -20,10 +20,10 @@ export function startLoggerCollection(lifeCycle: LifeCycle) {
     savedCommonContext?: CommonContext,
     savedDate?: TimeStamp
   ) {
-    const messageContext = logsMessage.context
+    const messageContext = combine(logger.getContext(), logsMessage.context)
 
     if (isAuthorized(logsMessage.status, HandlerType.console, logger)) {
-      display(logsMessage.status, logsMessage.message, combine(logger.getContext(), messageContext))
+      display(logsMessage.status, logsMessage.message, messageContext)
     }
 
     if (isAuthorized(logsMessage.status, HandlerType.http, logger)) {
@@ -36,7 +36,6 @@ export function startLoggerCollection(lifeCycle: LifeCycle) {
         },
         messageContext,
         savedCommonContext,
-        logger,
       })
     }
   }

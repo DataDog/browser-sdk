@@ -45,17 +45,17 @@ describe('logger collection', () => {
     })
 
     it('should print the log message and context to the console', () => {
-      logger.setContext({ 'logger-context': 'foo' })
+      logger.setContext({ foo: 'from-logger', bar: 'from-logger' })
 
       handleLog(
-        { message: 'message', status: StatusType.error, context: { 'log-context': 'bar' } },
+        { message: 'message', status: StatusType.error, context: { bar: 'from-message' } },
         logger,
         COMMON_CONTEXT
       )
 
       expect(display.error).toHaveBeenCalledOnceWith('message', {
-        'logger-context': 'foo',
-        'log-context': 'bar',
+        foo: 'from-logger',
+        bar: 'from-message',
       })
     })
 
@@ -96,23 +96,25 @@ describe('logger collection', () => {
     })
 
     it('should send the log message and context', () => {
-      logger.setContext({ 'logger-context': 'foo' })
+      logger.setContext({ foo: 'from-logger', bar: 'from-logger' })
 
       handleLog(
-        { message: 'message', status: StatusType.error, context: { 'log-context': 'bar' } },
+        { message: 'message', status: StatusType.error, context: { bar: 'from-message' } },
         logger,
         COMMON_CONTEXT
       )
 
       expect(rawLogsEvents[0]).toEqual({
-        logger,
         rawLogsEvent: {
           date: timeStampNow(),
           origin: ErrorSource.LOGGER,
           message: 'message',
           status: StatusType.error,
         },
-        messageContext: { 'log-context': 'bar' },
+        messageContext: {
+          foo: 'from-logger',
+          bar: 'from-message',
+        },
         savedCommonContext: COMMON_CONTEXT,
       })
     })

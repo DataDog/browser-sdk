@@ -160,17 +160,6 @@ describe('startLogsAssembly', () => {
       expect(serverLogs[0].foo).toBeUndefined()
     })
 
-    it('should include logger context when present', () => {
-      const logger = new Logger(() => noop)
-      mainLogger.setContext({ foo: 'from-main-logger', bar: 'from-main-logger' })
-      logger.setContext({ foo: 'from-logger' })
-
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE, logger })
-
-      expect(serverLogs[0].foo).toEqual('from-logger')
-      expect(serverLogs[0].bar).toBeUndefined()
-    })
-
     it('should include rum internal context related to the error time', () => {
       window.DD_RUM = {
         getInternalContext(startTime) {
@@ -238,7 +227,7 @@ describe('startLogsAssembly', () => {
       expect(serverLogs[0].message).toEqual('message')
     })
 
-    it('message context should take precedence over logger context', () => {
+    it('message context should take precedence over raw log', () => {
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
         rawLogsEvent: DEFAULT_MESSAGE,
         messageContext: { message: 'from-message-context' },
