@@ -62,7 +62,7 @@ describe('startLogsAssembly', () => {
     }
     beforeSend = noop
     mainLogger = new Logger(() => noop)
-    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT, mainLogger, noop)
+    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT, noop)
     window.DD_RUM = {
       getInternalContext: noop,
     }
@@ -288,7 +288,6 @@ describe('user management', () => {
   let serverLogs: Array<LogsEvent & Context> = []
 
   const beforeSend: (event: LogsEvent) => void | boolean = noop
-  const mainLogger = new Logger(() => noop)
   const configuration = {
     ...validateAndBuildLogsConfiguration(initConfiguration)!,
     beforeSend: (x: LogsEvent) => beforeSend(x),
@@ -306,14 +305,14 @@ describe('user management', () => {
   })
 
   it('should not output usr key if user is not set', () => {
-    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT, mainLogger, noop)
+    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT, noop)
 
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
     expect(serverLogs[0].usr).toBeUndefined()
   })
 
   it('should include user data when user has been set', () => {
-    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT_WITH_USER, mainLogger, noop)
+    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT_WITH_USER, noop)
 
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
     expect(serverLogs[0].usr).toEqual({
@@ -334,7 +333,7 @@ describe('user management', () => {
         },
       },
     }
-    startLogsAssembly(sessionManager, configuration, lifeCycle, () => globalContextWithUser, mainLogger, noop)
+    startLogsAssembly(sessionManager, configuration, lifeCycle, () => globalContextWithUser, noop)
 
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
     expect(serverLogs[0].usr).toEqual({
@@ -355,7 +354,6 @@ describe('logs limitation', () => {
   let beforeSend: (event: LogsEvent) => void | boolean
   let lifeCycle: LifeCycle
   let serverLogs: Array<LogsEvent & Context> = []
-  let mainLogger: Logger
   let reportErrorSpy: jasmine.Spy<jasmine.Func>
 
   beforeEach(() => {
@@ -368,9 +366,8 @@ describe('logs limitation', () => {
       beforeSend: (x: LogsEvent) => beforeSend(x),
     }
     beforeSend = noop
-    mainLogger = new Logger(() => noop)
     reportErrorSpy = jasmine.createSpy('reportError')
-    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT, mainLogger, reportErrorSpy)
+    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT, reportErrorSpy)
     clock = mockClock()
   })
 

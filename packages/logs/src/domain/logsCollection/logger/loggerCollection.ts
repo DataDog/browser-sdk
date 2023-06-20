@@ -26,17 +26,19 @@ export function startLoggerCollection(lifeCycle: LifeCycle) {
       display(logsMessage.status, logsMessage.message, combine(logger.getContext(), messageContext))
     }
 
-    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-      rawLogsEvent: {
-        date: savedDate || timeStampNow(),
-        message: logsMessage.message,
-        status: logsMessage.status,
-        origin: ErrorSource.LOGGER,
-      },
-      messageContext,
-      savedCommonContext,
-      logger,
-    })
+    if (isAuthorized(logsMessage.status, HandlerType.http, logger)) {
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+        rawLogsEvent: {
+          date: savedDate || timeStampNow(),
+          message: logsMessage.message,
+          status: logsMessage.status,
+          origin: ErrorSource.LOGGER,
+        },
+        messageContext,
+        savedCommonContext,
+        logger,
+      })
+    }
   }
 
   return {

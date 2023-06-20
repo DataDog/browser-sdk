@@ -90,8 +90,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
       ;({ handleLog: handleLogStrategy, getInternalContext: getInternalContextStrategy } = startLogsImpl(
         initConfiguration,
         configuration,
-        buildCommonContext,
-        mainLogger
+        buildCommonContext
       ))
 
       beforeInitLoggerLog.drain()

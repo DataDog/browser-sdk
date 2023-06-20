@@ -14,9 +14,7 @@ import type { CommonContext } from '../rawLogsEvent.types'
 import type { LogsConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
-import type { Logger } from './logger'
-import { STATUSES, HandlerType } from './logger'
-import { isAuthorized } from './logsCollection/logger/loggerCollection'
+import { STATUSES } from './logger'
 import type { LogsSessionManager } from './logsSessionManager'
 
 export function startLogsAssembly(
@@ -24,7 +22,6 @@ export function startLogsAssembly(
   configuration: LogsConfiguration,
   lifeCycle: LifeCycle,
   buildCommonContext: () => CommonContext,
-  mainLogger: Logger, // Todo: [RUMF-1230] Remove this parameter in the next major release
   reportError: (error: RawError) => void
 ) {
   const statusWithCustom = (STATUSES as string[]).concat(['custom'])
@@ -60,8 +57,6 @@ export function startLogsAssembly(
       )
 
       if (
-        // Todo: [RUMF-1230] Move this check to the logger collection in the next major release
-        !isAuthorized(rawLogsEvent.status, HandlerType.http, logger || mainLogger) ||
         configuration.beforeSend?.(log) === false ||
         (log.origin !== ErrorSource.AGENT &&
           (logRateLimiters[log.status] ?? logRateLimiters['custom']).isLimitReached())
