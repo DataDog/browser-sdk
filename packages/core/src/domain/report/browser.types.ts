@@ -1,47 +1,26 @@
-export interface BrowserWindow {
-  ReportingObserver?: ReportingObserverConstructor
+export type ReportType = DeprecationReport['type'] | InterventionReport['type']
+
+export interface DeprecationReport extends Report {
+  type: 'deprecation'
+  body: DeprecationReportBody
 }
-
-export interface ReportingObserver {
-  disconnect(): void
-  observe(): void
-  takeRecords(): Report[]
-}
-
-export interface ReportingObserverConstructor {
-  new (callback: ReportingObserverCallback, option: ReportingObserverOption): ReportingObserver
-}
-
-export type ReportType = 'intervention' | 'deprecation'
-
-export interface Report {
-  type: ReportType
-  url: string
-  body: DeprecationReportBody | InterventionReportBody
-}
-
-export interface ReportingObserverCallback {
-  (reports: Report[], observer: ReportingObserver): void
-}
-
-export interface ReportingObserverOption {
-  types: ReportType[]
-  buffered: boolean
-}
-
-interface DeprecationReportBody {
+export interface DeprecationReportBody extends ReportBody {
   id: string
   message: string
-  lineNumber: number
-  columnNumber: number
-  sourceFile: string
-  anticipatedRemoval?: Date
+  lineNumber: number | null
+  columnNumber: number | null
+  sourceFile: string | null
+  anticipatedRemoval: Date | null
 }
 
-interface InterventionReportBody {
+export interface InterventionReport extends Report {
+  type: 'intervention'
+  body: InterventionReportBody
+}
+export interface InterventionReportBody extends ReportBody {
   id: string
   message: string
-  lineNumber: number
-  columnNumber: number
-  sourceFile: string
+  lineNumber: number | null
+  columnNumber: number | null
+  sourceFile: string | null
 }
