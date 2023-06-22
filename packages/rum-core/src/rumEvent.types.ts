@@ -765,6 +765,16 @@ export type RumViewEvent = CommonProperties & {
     [k: string]: unknown
   }
   /**
+   * Privacy properties
+   */
+  readonly privacy?: {
+    /**
+     * The replay privacy level
+     */
+    readonly replay_level: 'allow' | 'mask' | 'mask-user-input'
+    [k: string]: unknown
+  }
+  /**
    * Internal properties
    */
   readonly _dd: {
@@ -786,6 +796,24 @@ export type RumViewEvent = CommonProperties & {
       readonly start: number
       [k: string]: unknown
     }[]
+    /**
+     * Debug metadata for Replay Sessions
+     */
+    replay_stats?: {
+      /**
+       * The number of records produced during this view lifetime
+       */
+      records_count?: number
+      /**
+       * The number of segments sent during this view lifetime
+       */
+      segments_count?: number
+      /**
+       * The total size in bytes of the segments sent during this view lifetime
+       */
+      segments_total_raw_size?: number
+      [k: string]: unknown
+    }
     [k: string]: unknown
   }
   [k: string]: unknown
