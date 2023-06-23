@@ -24,8 +24,8 @@ import { getViewportDimension } from '../../../browser/viewportObservable'
 
 export interface ScrollMetrics {
   maxDepth: number
-  scrollHeight: number
-  scrollTop: number
+  maxDepthScrollHeight: number
+  maxDepthScrollTop: number
   maxDepthTime: Duration
 }
 
@@ -61,13 +61,13 @@ export function trackViewMetrics(
       // We compute scroll metrics at loading time to ensure we have scroll data when loading the view initially
       // This is to ensure that we have the depth data even if the user didn't scroll or if the view is not scrollable.
       if (isExperimentalFeatureEnabled(ExperimentalFeature.SCROLLMAP)) {
-        const { scrollHeight, scrollDepth, scrollTop } = computeScrollMetrics()
+        const { scrollHeight, scrollDepth, scrollTop } = computeScrollValues()
 
         scrollMetrics = {
-          scrollHeight,
           maxDepth: scrollDepth,
+          maxDepthScrollHeight: scrollHeight,
           maxDepthTime: newLoadingTime,
-          scrollTop,
+          maxDepthScrollTop: scrollTop,
         }
       }
       scheduleViewUpdate()
@@ -79,7 +79,7 @@ export function trackViewMetrics(
     (newScrollMetrics) => {
       scrollMetrics = newScrollMetrics
     },
-    computeScrollMetrics
+    computeScrollValues
   )
 
   let stopCLSTracking: () => void
@@ -108,7 +108,7 @@ export function trackViewMetrics(
 export function trackScrollMetrics(
   viewStart: ClocksState,
   callback: (scrollMetrics: ScrollMetrics) => void,
-  getScrollMetrics = computeScrollMetrics
+  getScrollMetrics = computeScrollValues
 ) {
   if (!isExperimentalFeatureEnabled(ExperimentalFeature.SCROLLMAP)) {
     return { stop: noop }
@@ -124,9 +124,9 @@ export function trackScrollMetrics(
         maxDepth = scrollDepth
         callback({
           maxDepth,
-          scrollHeight,
+          maxDepthScrollHeight: scrollHeight,
           maxDepthTime,
-          scrollTop,
+          maxDepthScrollTop: scrollTop,
         })
       }
     },
@@ -144,7 +144,7 @@ export function trackScrollMetrics(
   }
 }
 
-function computeScrollMetrics() {
+function computeScrollValues() {
   const scrollTop = getScrollY()
 
   const { height } = getViewportDimension()
