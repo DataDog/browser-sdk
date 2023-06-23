@@ -108,7 +108,7 @@ export function trackViewMetrics(
 export function trackScrollMetrics(
   viewStart: ClocksState,
   callback: (scrollMetrics: ScrollMetrics) => void,
-  getScrollMetrics = computeScrollValues
+  getScrollValues = computeScrollValues
 ) {
   if (!isExperimentalFeatureEnabled(ExperimentalFeature.SCROLLMAP)) {
     return { stop: noop }
@@ -116,7 +116,7 @@ export function trackScrollMetrics(
   let maxDepth = 0
   const handleScrollEvent = throttle(
     () => {
-      const { scrollHeight, scrollDepth, scrollTop } = getScrollMetrics()
+      const { scrollHeight, scrollDepth, scrollTop } = getScrollValues()
 
       if (scrollDepth > maxDepth) {
         const now = relativeNow()
