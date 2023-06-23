@@ -42,6 +42,12 @@ const VIEW: ViewEvent = {
     largestContentfulPaint: 10 as Duration,
     loadEvent: 10 as Duration,
   },
+  scrollMetrics: {
+    maxDepth: 2000,
+    maxDepthScrollHeight: 3000,
+    maxDepthTime: 4000000000 as Duration,
+    maxDepthScrollTop: 1000,
+  },
   sessionIsActive: true,
 }
 
@@ -143,6 +149,14 @@ describe('viewCollection', () => {
         is_active: undefined,
       },
       feature_flags: undefined,
+      display: {
+        scroll: {
+          max_depth: 2000,
+          max_depth_scroll_height: 3000,
+          max_depth_time: 4000000000000000 as ServerDuration,
+          max_depth_scroll_top: 1000,
+        },
+      },
       privacy: { replay_level: 'mask-user-input' },
     })
   })
@@ -208,5 +222,13 @@ describe('viewCollection', () => {
 
     expect(rawRumViewEvent._dd.page_states).toBeUndefined()
     expect(rawRumViewEvent.view.in_foreground_periods).toBeDefined()
+  })
+
+  it('should not include scroll metrics when there are not scroll metrics in the raw event', () => {
+    const { lifeCycle, rawRumEvents } = setupBuilder.build()
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, { ...VIEW, scrollMetrics: undefined })
+    const rawRumViewEvent = rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent
+
+    expect(rawRumViewEvent.display?.scroll).toBeUndefined()
   })
 })

@@ -106,6 +106,16 @@ function processViewUpdate(
         : undefined,
     },
     feature_flags: featureFlagContext && !isEmptyObject(featureFlagContext) ? featureFlagContext : undefined,
+    display: view.scrollMetrics
+      ? {
+          scroll: {
+            max_depth: view.scrollMetrics.maxDepth,
+            max_depth_scroll_height: view.scrollMetrics.maxDepthScrollHeight,
+            max_depth_scroll_top: view.scrollMetrics.maxDepthScrollTop,
+            max_depth_time: toServerDuration(view.scrollMetrics.maxDepthTime),
+          },
+        }
+      : undefined,
     session: {
       has_replay: replayStats ? true : undefined,
       is_active: view.sessionIsActive ? undefined : false,

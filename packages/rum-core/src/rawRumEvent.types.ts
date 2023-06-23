@@ -108,6 +108,7 @@ export interface RawRumViewEvent {
     is_active: false | undefined
   }
   feature_flags?: Context
+  display?: ViewDisplay
   privacy?: {
     replay_level: DefaultPrivacyLevel
   }
@@ -115,6 +116,15 @@ export interface RawRumViewEvent {
     document_version: number
     replay_stats?: ReplayStats
     page_states?: PageStateServerEntry[]
+  }
+}
+
+interface ViewDisplay {
+  scroll: {
+    max_depth?: number
+    max_depth_scroll_height?: number
+    max_depth_scroll_top?: number
+    max_depth_time?: ServerDuration
   }
 }
 
