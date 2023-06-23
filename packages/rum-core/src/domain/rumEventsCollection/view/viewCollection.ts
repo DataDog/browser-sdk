@@ -35,7 +35,7 @@ export function startViewCollection(
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) =>
     lifeCycle.notify(
       LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-      processViewUpdate(view, foregroundContexts, featureFlagContexts, recorderApi, pageStateHistory)
+      processViewUpdate(view, configuration, foregroundContexts, featureFlagContexts, recorderApi, pageStateHistory)
     )
   )
   const trackViewResult = trackViews(
@@ -53,6 +53,7 @@ export function startViewCollection(
 
 function processViewUpdate(
   view: ViewEvent,
+  configuration: RumConfiguration,
   foregroundContexts: ForegroundContexts,
   featureFlagContexts: FeatureFlagContexts,
   recorderApi: RecorderApi,
@@ -118,6 +119,9 @@ function processViewUpdate(
     session: {
       has_replay: replayStats ? true : undefined,
       is_active: view.sessionIsActive ? undefined : false,
+    },
+    privacy: {
+      replay_level: configuration.defaultPrivacyLevel,
     },
   }
   if (!isEmptyObject(view.customTimings)) {
