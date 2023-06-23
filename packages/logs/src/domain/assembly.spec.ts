@@ -73,6 +73,22 @@ describe('startLogsAssembly', () => {
     serverLogs = []
   })
 
+  it('should send if beforeSend returned true', () => {
+    beforeSend = () => true
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+      rawLogsEvent: DEFAULT_MESSAGE,
+    })
+    expect(serverLogs.length).toEqual(1)
+  })
+
+  it('should send if beforeSend returned undefined', () => {
+    beforeSend = () => undefined
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+      rawLogsEvent: DEFAULT_MESSAGE,
+    })
+    expect(serverLogs.length).toEqual(1)
+  })
+
   it('should not send if beforeSend returned false', () => {
     beforeSend = () => false
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {

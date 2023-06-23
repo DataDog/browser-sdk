@@ -110,6 +110,7 @@ describe('beforeSend', () => {
     .withRum({
       beforeSend: (event: any) => {
         event.context!.foo = 'bar'
+        return true
       },
     })
     .withRumSlim()
@@ -126,6 +127,7 @@ describe('beforeSend', () => {
     .withRum({
       beforeSend: (event) => {
         event.context = { foo: 'bar' }
+        return true
       },
     })
     .withRumSlim()
