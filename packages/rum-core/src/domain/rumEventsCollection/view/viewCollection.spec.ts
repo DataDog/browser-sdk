@@ -143,6 +143,7 @@ describe('viewCollection', () => {
         is_active: undefined,
       },
       feature_flags: undefined,
+      privacy: { replay_level: 'mask-user-input' },
     })
   })
 
