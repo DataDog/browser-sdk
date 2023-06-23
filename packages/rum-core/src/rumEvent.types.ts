@@ -765,6 +765,16 @@ export type RumViewEvent = CommonProperties & {
     [k: string]: unknown
   }
   /**
+   * Privacy properties
+   */
+  readonly privacy?: {
+    /**
+     * The replay privacy level
+     */
+    readonly replay_level: 'allow' | 'mask' | 'mask-user-input'
+    [k: string]: unknown
+  }
+  /**
    * Internal properties
    */
   readonly _dd: {
@@ -786,32 +796,50 @@ export type RumViewEvent = CommonProperties & {
       readonly start: number
       [k: string]: unknown
     }[]
+    /**
+     * Debug metadata for Replay Sessions
+     */
+    replay_stats?: {
+      /**
+       * The number of records produced during this view lifetime
+       */
+      records_count?: number
+      /**
+       * The number of segments sent during this view lifetime
+       */
+      segments_count?: number
+      /**
+       * The total size in bytes of the segments sent during this view lifetime
+       */
+      segments_total_raw_size?: number
+      [k: string]: unknown
+    }
     [k: string]: unknown
   }
   /**
    * Display properties
    */
-  display?: {
+  readonly display?: {
     /**
      * Scroll properties
      */
     readonly scroll?: {
       /**
-       * Maximum scrolled distance on this view (in pixels)
+       * Distance between the top and the lowest point reached on this view (in pixels)
        */
-      readonly max_depth?: number
+      readonly max_depth: number
       /**
-       * Page scroll height when the maximum scrolled distance was reached for this view (in pixels)
+       * Page scroll height (total height) when the maximum scroll depth was reached for this view (in pixels)
        */
-      readonly max_depth_scroll_height?: number
+      readonly max_depth_scroll_height: number
       /**
-       * Page scroll top when the maximum scrolled distance was reached for this view (in pixels)
+       * Page scroll top (scrolled distance) when the maximum scroll depth was reached for this view (in pixels)
        */
-      readonly max_depth_scroll_top?: number
+      readonly max_depth_scroll_top: number
       /**
-       * Timestamp of the scroll event that reached the maximum scroll depth for this view
+       * Duration between the view start and the scroll event that reached the maximum scroll depth for this view (in nanoseconds)
        */
-      readonly max_depth_time?: number
+      readonly max_depth_time: number
       [k: string]: unknown
     }
     [k: string]: unknown
@@ -1005,6 +1033,10 @@ export interface CommonProperties {
      * Full operating system version, e.g. 8.1.1
      */
     readonly version: string
+    /**
+     * Operating system build number, e.g. 15D21
+     */
+    readonly build?: string
     /**
      * Major operating system version, e.g. 8
      */
