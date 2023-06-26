@@ -12,12 +12,8 @@ import {
 } from '@datadog/browser-core'
 import type { ClocksState, Duration } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
-import type { RumPerformanceEntry, RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
-import type {
-  PerformanceEntryRepresentation,
-  RumXhrResourceEventDomainContext,
-  RumFetchResourceEventDomainContext,
-} from '../../../domainContext.types'
+import type { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
+import type { RumXhrResourceEventDomainContext, RumFetchResourceEventDomainContext } from '../../../domainContext.types'
 import type { RawRumResourceEvent } from '../../../rawRumEvent.types'
 import { RumEventType } from '../../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../../lifeCycle'
@@ -105,7 +101,7 @@ function processRequest(
     startTime: startClocks.relative,
     rawRumEvent: resourceEvent,
     domainContext: {
-      performanceEntry: matchingTiming && toPerformanceEntryRepresentation(matchingTiming),
+      performanceEntry: matchingTiming,
       xhr: request.xhr,
       response: request.response,
       requestInput: request.input,
@@ -148,7 +144,7 @@ function processResourceEntry(
     startTime: startClocks.relative,
     rawRumEvent: resourceEvent,
     domainContext: {
-      performanceEntry: toPerformanceEntryRepresentation(entry),
+      performanceEntry: entry,
     },
   }
 }
@@ -190,11 +186,6 @@ function computeEntryTracingInfo(entry: RumPerformanceResourceTiming, configurat
       rule_psr: getRulePsr(configuration),
     },
   }
-}
-
-// TODO next major: use directly PerformanceEntry type in domain context
-function toPerformanceEntryRepresentation(entry: RumPerformanceEntry): PerformanceEntryRepresentation {
-  return entry as PerformanceEntryRepresentation
 }
 
 /**
