@@ -1,7 +1,7 @@
 import type { TimeStamp } from '@datadog/browser-core'
 import { timeStampNow } from '@datadog/browser-core'
 import type { LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
-import { getViewportDimension } from '@datadog/browser-rum-core'
+import { getViewportDimension, getScrollX, getScrollY } from '@datadog/browser-rum-core'
 import type {
   BrowserMutationData,
   BrowserMutationPayload,
@@ -17,7 +17,7 @@ import { RecordType, IncrementalSource } from '../../types'
 import { assembleIncrementalSnapshot } from './assembly'
 import { SerializationContextStatus, serializeDocument } from './serialization'
 import { initObservers } from './observers'
-import { getVisualViewport, getScrollX, getScrollY } from './viewports'
+import { getVisualViewport } from './viewports'
 import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
 import { initShadowRootsController } from './shadowRootsController'
