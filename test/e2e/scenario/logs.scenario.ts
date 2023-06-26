@@ -159,6 +159,7 @@ describe('logs', () => {
     .withLogs({
       beforeSend: (event) => {
         event.foo = 'bar'
+        return true
       },
     })
     .run(async ({ serverEvents }) => {
