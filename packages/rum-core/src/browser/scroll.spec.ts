@@ -1,11 +1,11 @@
 import { addEventListener, DOM_EVENT, isIE } from '@datadog/browser-core'
-import { getScrollX, getScrollY } from './viewports'
+import { getScrollX, getScrollY } from './scroll'
 
 function isMobileSafari12() {
   return /iPhone OS 12.* like Mac OS.* Version\/12.* Mobile.*Safari/.test(navigator.userAgent)
 }
 
-describe('layout viewport', () => {
+describe('scroll', () => {
   let shouldWaitForWindowScrollEvent: boolean
 
   const addVerticalScrollBar = () => {
