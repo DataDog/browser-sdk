@@ -7,18 +7,18 @@
     "dev": "webpack --mode development --watch"
   },
   "devDependencies": {
-    "@types/chrome": "0.0.237",
-    "@types/react": "18.2.13",
+    "@types/chrome": "0.0.238",
+    "@types/react": "18.2.14",
     "@types/react-dom": "18.2.6",
     "@webextension-toolbox/webpack-webextension-plugin": "3.1.0",
     "copy-webpack-plugin": "11.0.0",
     "html-webpack-plugin": "5.5.3",
-    "webpack": "5.87.0"
+    "webpack": "5.88.0"
   },
   "dependencies": {
     "@emotion/react": "11.11.1",
-    "@mantine/core": "6.0.13",
-    "@mantine/hooks": "6.0.13",
+    "@mantine/core": "6.0.14",
+    "@mantine/hooks": "6.0.14",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-json-view": "1.21.3"
