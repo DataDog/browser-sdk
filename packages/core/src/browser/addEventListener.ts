@@ -108,14 +108,15 @@ export function addEventListeners<Target extends EventTarget, EventName extends 
   listener: (event: EventMapFor<Target>[EventName]) => void,
   { once, capture, passive }: AddEventListenerOptions = {}
 ) {
-  const wrappedListener = monitor(
-    once
-      ? (event: Event) => {
-          stop()
-          listener(event as EventMapFor<Target>[EventName])
-        }
-      : (listener as (event: Event) => void)
-  )
+  const wrappedListener = monitor((event: Event & { __ddIsTrusted?: boolean }) => {
+    if (!event.isTrusted && !event.__ddIsTrusted) {
+      return
+    }
+    if (once) {
+      stop()
+    }
+    listener(event as EventMapFor<Target>[EventName])
+  })
 
   const options = passive ? { capture, passive } : capture
 

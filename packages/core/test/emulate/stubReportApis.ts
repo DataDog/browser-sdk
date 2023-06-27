@@ -67,7 +67,8 @@ export const FAKE_CSP_VIOLATION_EVENT = {
   sourceFile: 'http://foo.bar/index.js',
   statusCode: 200,
   violatedDirective: 'worker-src',
-} as SecurityPolicyViolationEvent
+  __ddIsTrusted: true,
+} as SecurityPolicyViolationEvent & { __ddIsTrusted?: boolean }
 
 export const FAKE_REPORT: InterventionReport = {
   type: 'intervention',

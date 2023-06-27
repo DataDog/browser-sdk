@@ -68,7 +68,8 @@ export class MockWorker implements DeflateWorker {
               data: {
                 type: 'initialized',
               },
-            })
+              __ddIsTrusted: true,
+            } as any)
           )
           break
         case 'write':
@@ -82,7 +83,8 @@ export class MockWorker implements DeflateWorker {
                   compressedBytesCount: uint8ArraysSize(this.deflatedData),
                   additionalBytesCount,
                 },
-              })
+                __ddIsTrusted: true,
+              } as any)
             )
           }
           break
@@ -98,7 +100,8 @@ export class MockWorker implements DeflateWorker {
                   rawBytesCount: this.rawBytesCount,
                   additionalBytesCount,
                 },
-              })
+                __ddIsTrusted: true,
+              } as any)
             )
             this.deflatedData.length = 0
             this.rawBytesCount = 0
@@ -109,12 +112,15 @@ export class MockWorker implements DeflateWorker {
   }
 
   dispatchErrorEvent() {
-    const error = new ErrorEvent('worker')
+    const error = new ErrorEvent('worker') as ErrorEvent & { __ddIsTrusted?: boolean }
+    error.__ddIsTrusted = true
     this.listeners.error.forEach((listener) => listener(error))
   }
 
   dispatchErrorMessage(error: Error | string) {
-    this.listeners.message.forEach((listener) => listener({ data: { type: 'errored', error } }))
+    this.listeners.message.forEach((listener) =>
+      listener({ data: { type: 'errored', error }, __ddIsTrusted: true } as any)
+    )
   }
 
   private pushData(data?: string) {

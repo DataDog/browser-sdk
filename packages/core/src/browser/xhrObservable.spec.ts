@@ -247,7 +247,7 @@ describe('xhr observable', () => {
   })
 
   it('should track multiple requests with the same xhr instance', (done) => {
-    let listeners: { [k: string]: Array<() => void> }
+    let listeners: { [k: string]: Array<(event: Event & { __ddIsTrusted?: boolean }) => void> }
     withXhr({
       setup(xhr) {
         const secondOnload = () => {
