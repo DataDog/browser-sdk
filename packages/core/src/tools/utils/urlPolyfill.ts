@@ -12,10 +12,6 @@ export function isValidUrl(url: string) {
   }
 }
 
-export function haveSameOrigin(url1: string, url2: string) {
-  return getOrigin(url1) === getOrigin(url2)
-}
-
 export function getOrigin(url: string) {
   return getLinkElementOrigin(buildUrl(url))
 }
@@ -77,11 +73,12 @@ export function getLocationOrigin() {
 }
 
 /**
- * IE fallback
- * https://developer.mozilla.org/en-US/docs/Web/API/HTMLHyperlinkElementUtils/origin
+ * Fallback
+ * On IE HTMLAnchorElement origin is not supported: https://developer.mozilla.org/en-US/docs/Web/API/HTMLHyperlinkElementUtils/origin
+ * On Firefox window.location.origin is "null" for file: URIs: https://bugzilla.mozilla.org/show_bug.cgi?id=878297
  */
 export function getLinkElementOrigin(element: Location | HTMLAnchorElement | URL) {
-  if (element.origin) {
+  if (element.origin && element.origin !== 'null') {
     return element.origin
   }
   const sanitizedHost = element.host.replace(/(:80|:443)$/, '')
