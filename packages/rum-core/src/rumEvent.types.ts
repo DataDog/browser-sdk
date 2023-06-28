@@ -380,7 +380,7 @@ export type RumResourceEvent = CommonProperties &
       /**
        * Duration of the resource
        */
-      readonly duration: number
+      readonly duration?: number
       /**
        * Size in octet of the resource response body
        */
@@ -752,12 +752,26 @@ export type RumViewEvent = CommonProperties & {
      * Whether this session is currently active. Set to false to manually stop a session
      */
     readonly is_active?: boolean
+    /**
+     * Whether this session has been sampled for replay
+     */
+    readonly sampled_for_replay?: boolean
     [k: string]: unknown
   }
   /**
    * Feature flags properties
    */
   readonly feature_flags?: {
+    [k: string]: unknown
+  }
+  /**
+   * Privacy properties
+   */
+  readonly privacy?: {
+    /**
+     * The replay privacy level
+     */
+    readonly replay_level: 'allow' | 'mask' | 'mask-user-input'
     [k: string]: unknown
   }
   /**
@@ -768,6 +782,66 @@ export type RumViewEvent = CommonProperties & {
      * Version of the update of the view event
      */
     readonly document_version: number
+    /**
+     * List of the page states during the view
+     */
+    readonly page_states?: {
+      /**
+       * Page state name
+       */
+      readonly state: 'active' | 'passive' | 'hidden' | 'frozen' | 'terminated'
+      /**
+       * Duration in ns between start of the view and start of the page state
+       */
+      readonly start: number
+      [k: string]: unknown
+    }[]
+    /**
+     * Debug metadata for Replay Sessions
+     */
+    replay_stats?: {
+      /**
+       * The number of records produced during this view lifetime
+       */
+      records_count?: number
+      /**
+       * The number of segments sent during this view lifetime
+       */
+      segments_count?: number
+      /**
+       * The total size in bytes of the segments sent during this view lifetime
+       */
+      segments_total_raw_size?: number
+      [k: string]: unknown
+    }
+    [k: string]: unknown
+  }
+  /**
+   * Display properties
+   */
+  readonly display?: {
+    /**
+     * Scroll properties
+     */
+    readonly scroll?: {
+      /**
+       * Distance between the top and the lowest point reached on this view (in pixels)
+       */
+      readonly max_depth: number
+      /**
+       * Page scroll height (total height) when the maximum scroll depth was reached for this view (in pixels)
+       */
+      readonly max_depth_scroll_height: number
+      /**
+       * Page scroll top (scrolled distance) when the maximum scroll depth was reached for this view (in pixels)
+       */
+      readonly max_depth_scroll_top: number
+      /**
+       * Duration between the view start and the scroll event that reached the maximum scroll depth for this view (in nanoseconds)
+       */
+      readonly max_depth_time: number
+      [k: string]: unknown
+    }
     [k: string]: unknown
   }
   [k: string]: unknown
@@ -960,6 +1034,10 @@ export interface CommonProperties {
      */
     readonly version: string
     /**
+     * Operating system build number, e.g. 15D21
+     */
+    readonly build?: string
+    /**
      * Major operating system version, e.g. 8
      */
     readonly version_major: string
@@ -1004,9 +1082,9 @@ export interface CommonProperties {
      */
     session?: {
       /**
-       * Session plan: 1 is the plan without replay, 2 is the plan with replay
+       * Session plan: 1 is the plan without replay, 2 is the plan with replay (deprecated)
        */
-      plan: 1 | 2
+      plan?: 1 | 2
       [k: string]: unknown
     }
     /**

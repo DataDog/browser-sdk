@@ -1,4 +1,4 @@
-import { ErrorSource, display, stopSessionManager, getCookie, SESSION_COOKIE_NAME } from '@datadog/browser-core'
+import { ErrorSource, display, stopSessionManager, getCookie, SESSION_STORE_KEY } from '@datadog/browser-core'
 import type { Request } from '@datadog/browser-core/test'
 import {
   interceptRequests,
@@ -163,21 +163,21 @@ describe('logs', () => {
     it('creates a session on normal conditions', () => {
       ;({ handleLog } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT, logger))
 
-      expect(getCookie(SESSION_COOKIE_NAME)).not.toBeUndefined()
+      expect(getCookie(SESSION_STORE_KEY)).not.toBeUndefined()
     })
 
     it('does not create a session if event bridge is present', () => {
       initEventBridgeStub()
       ;({ handleLog } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT, logger))
 
-      expect(getCookie(SESSION_COOKIE_NAME)).toBeUndefined()
+      expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
     })
 
     it('does not create a session if synthetics worker will inject RUM', () => {
       mockSyntheticsWorkerValues({ injectsRum: true })
       ;({ handleLog } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT, logger))
 
-      expect(getCookie(SESSION_COOKIE_NAME)).toBeUndefined()
+      expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
     })
   })
 })

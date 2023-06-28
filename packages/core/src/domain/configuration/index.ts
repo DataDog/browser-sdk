@@ -1,7 +1,6 @@
 export {
   Configuration,
   InitConfiguration,
-  buildCookieOptions,
   DefaultPrivacyLevel,
   validateAndBuildConfiguration,
   serializeConfiguration,

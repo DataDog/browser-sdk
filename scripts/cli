@@ -50,7 +50,13 @@ cmd_build_json2type () {
   set +e
   npm i
   npm run clean
-  npm run build:server
+
+  # With yarn 3, the 'test/' folder is not present, so all built files are put directly in the
+  # 'dist/' folder instead of 'dist/src/'.
+  #
+  # Using an explicit '--rootDir' fixes this issue.
+  npm exec -- tsc --declaration --rootDir .
+
   set -e
 }
 

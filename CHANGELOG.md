@@ -16,6 +16,15 @@
 
 ---
 
+## v4.43.0
+
+- ✨ [RUMF-1580] Implement storage fallback ([#2261](https://github.com/DataDog/browser-sdk/pull/2261))
+- ✨ [RUMF-1580] Implement Local Storage ([#2260](https://github.com/DataDog/browser-sdk/pull/2260))
+- 🐛 Telemetry: do not scrub staging and canary frames ([#2273](https://github.com/DataDog/browser-sdk/pull/2273))
+- ♻️ [RUMF-1580] Decouple storage mechanism ([#2259](https://github.com/DataDog/browser-sdk/pull/2259))
+- ⚗️ [RUMF-1499] Don't send duration for resources crossing a page frozen state ([#2255](https://github.com/DataDog/browser-sdk/pull/2255))
+- 🔊 [RUMF-1577] Collect page lifecycle states ([#2229](https://github.com/DataDog/browser-sdk/pull/2229))
+
 ## v4.42.2
 
 - 🐛 Fix TypeError when document.cookie is empty ([#2216](https://github.com/DataDog/browser-sdk/pull/2216))

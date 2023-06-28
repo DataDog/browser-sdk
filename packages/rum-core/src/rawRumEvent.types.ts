@@ -7,6 +7,7 @@ import type {
   ServerDuration,
   TimeStamp,
   RawErrorCause,
+  DefaultPrivacyLevel,
 } from '@datadog/browser-core'
 import type { PageState } from './domain/contexts/pageStateHistory'
 import type { RumSessionPlan } from './domain/rumSessionManager'
@@ -25,7 +26,7 @@ export interface RawRumResourceEvent {
   resource: {
     type: ResourceType
     id: string
-    duration: ServerDuration
+    duration?: ServerDuration
     url: string
     method?: string
     status_code?: number
@@ -107,10 +108,23 @@ export interface RawRumViewEvent {
     is_active: false | undefined
   }
   feature_flags?: Context
+  display?: ViewDisplay
+  privacy?: {
+    replay_level: DefaultPrivacyLevel
+  }
   _dd: {
     document_version: number
     replay_stats?: ReplayStats
     page_states?: PageStateServerEntry[]
+  }
+}
+
+interface ViewDisplay {
+  scroll: {
+    max_depth?: number
+    max_depth_scroll_height?: number
+    max_depth_scroll_top?: number
+    max_depth_time?: ServerDuration
   }
 }
 

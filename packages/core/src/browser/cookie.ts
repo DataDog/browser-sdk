@@ -2,8 +2,6 @@ import { display } from '../tools/display'
 import { ONE_MINUTE, ONE_SECOND } from '../tools/utils/timeUtils'
 import { findCommaSeparatedValue, generateUUID } from '../tools/utils/stringUtils'
 
-export const COOKIE_ACCESS_DELAY = ONE_SECOND
-
 export interface CookieOptions {
   secure?: boolean
   crossSite?: boolean

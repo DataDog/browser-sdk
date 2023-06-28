@@ -34,7 +34,7 @@ export function startViewCollection(
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) =>
     lifeCycle.notify(
       LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-      processViewUpdate(view, featureFlagContexts, recorderApi, pageStateHistory)
+      processViewUpdate(view, configuration, featureFlagContexts, recorderApi, pageStateHistory)
     )
   )
   const trackViewResult = trackViews(
@@ -52,6 +52,7 @@ export function startViewCollection(
 
 function processViewUpdate(
   view: ViewEvent,
+  configuration: RumConfiguration,
   featureFlagContexts: FeatureFlagContexts,
   recorderApi: RecorderApi,
   pageStateHistory: PageStateHistory
@@ -103,9 +104,22 @@ function processViewUpdate(
         !pageStatesEnabled && pageStates ? mapToForegroundPeriods(pageStates, view.duration) : undefined, // Todo: Remove in the next major release
     },
     feature_flags: featureFlagContext && !isEmptyObject(featureFlagContext) ? featureFlagContext : undefined,
+    display: view.scrollMetrics
+      ? {
+          scroll: {
+            max_depth: view.scrollMetrics.maxDepth,
+            max_depth_scroll_height: view.scrollMetrics.maxDepthScrollHeight,
+            max_depth_scroll_top: view.scrollMetrics.maxDepthScrollTop,
+            max_depth_time: toServerDuration(view.scrollMetrics.maxDepthTime),
+          },
+        }
+      : undefined,
     session: {
       has_replay: replayStats ? true : undefined,
       is_active: view.sessionIsActive ? undefined : false,
+    },
+    privacy: {
+      replay_level: configuration.defaultPrivacyLevel,
     },
   }
   if (!isEmptyObject(view.customTimings)) {
