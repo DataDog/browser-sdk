@@ -31,7 +31,7 @@ describe('endpointBuilder', () => {
 
     it('should not add batch_time for logs and replay endpoints', () => {
       expect(createEndpointBuilder(initConfiguration, 'logs', []).build('xhr')).not.toContain('&batch_time=')
-      expect(createEndpointBuilder(initConfiguration, 'sessionReplay', []).build('xhr')).not.toContain('&batch_time=')
+      expect(createEndpointBuilder(initConfiguration, 'replay', []).build('xhr')).not.toContain('&batch_time=')
     })
 
     it('should not start with ddsource for internal analytics mode', () => {
