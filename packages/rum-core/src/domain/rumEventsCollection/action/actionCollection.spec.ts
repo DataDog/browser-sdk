@@ -12,11 +12,11 @@ describe('actionCollection', () => {
 
   beforeEach(() => {
     setupBuilder = setup()
-      .withForegroundContexts({
-        isInForegroundAt: () => true,
+      .withPageStateHistory({
+        isInActivePageStateAt: () => true,
       })
-      .beforeBuild(({ lifeCycle, configuration, domMutationObservable, foregroundContexts }) => {
-        ;({ addAction } = startActionCollection(lifeCycle, domMutationObservable, configuration, foregroundContexts))
+      .beforeBuild(({ lifeCycle, configuration, domMutationObservable, pageStateHistory }) => {
+        ;({ addAction } = startActionCollection(lifeCycle, domMutationObservable, configuration, pageStateHistory))
       })
   })
 

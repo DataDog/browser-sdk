@@ -17,63 +17,86 @@ describe('pageStateHistory', () => {
     clock.cleanup()
   })
 
-  it('should have the current state when starting', () => {
-    expect(pageStateHistory.findAll(0 as RelativeTime, 10 as RelativeTime)).toBeDefined()
+  describe('findAll', () => {
+    it('should have the current state when starting', () => {
+      expect(pageStateHistory.findAll(0 as RelativeTime, 10 as RelativeTime)).toBeDefined()
+    })
+
+    it('should return undefined if the time period is out of history bounds', () => {
+      expect(pageStateHistory.findAll(-10 as RelativeTime, 0 as RelativeTime)).not.toBeDefined()
+    })
+
+    it('should return the correct page states for the given time period', () => {
+      pageStateHistory.addPageState(PageState.ACTIVE)
+
+      clock.tick(10)
+      pageStateHistory.addPageState(PageState.PASSIVE)
+
+      clock.tick(10)
+      pageStateHistory.addPageState(PageState.HIDDEN)
+
+      clock.tick(10)
+      pageStateHistory.addPageState(PageState.FROZEN)
+
+      clock.tick(10)
+      pageStateHistory.addPageState(PageState.TERMINATED)
+
+      /*
+      page state time    0     10    20    30    40
+      event time                  15<-------->35
+      */
+      const event = {
+        startTime: 15 as RelativeTime,
+        duration: 20 as RelativeTime,
+      }
+      expect(pageStateHistory.findAll(event.startTime, event.duration)).toEqual([
+        {
+          state: PageState.PASSIVE,
+          start: -5000000 as ServerDuration,
+        },
+        {
+          state: PageState.HIDDEN,
+          start: 5000000 as ServerDuration,
+        },
+        {
+          state: PageState.FROZEN,
+          start: 15000000 as ServerDuration,
+        },
+      ])
+    })
+
+    it('should limit the number of selectable entries', () => {
+      const maxPageStateEntriesSelectable = 1
+      pageStateHistory = startPageStateHistory(maxPageStateEntriesSelectable)
+
+      pageStateHistory.addPageState(PageState.ACTIVE)
+      clock.tick(10)
+      pageStateHistory.addPageState(PageState.PASSIVE)
+
+      expect(pageStateHistory.findAll(0 as RelativeTime, Infinity as RelativeTime)?.length).toEqual(
+        maxPageStateEntriesSelectable
+      )
+    })
   })
 
-  it('should return undefined if the time period is out of history bounds', () => {
-    expect(pageStateHistory.findAll(-10 as RelativeTime, 0 as RelativeTime)).not.toBeDefined()
-  })
+  describe('isInActivePageStateAt', () => {
+    it('should return true if the page was active at the given time', () => {
+      pageStateHistory.addPageState(PageState.ACTIVE)
 
-  it('should return the correct page states for the given time period', () => {
-    pageStateHistory.addPageState(PageState.ACTIVE)
+      clock.tick(10)
+      pageStateHistory.addPageState(PageState.PASSIVE)
 
-    clock.tick(10)
-    pageStateHistory.addPageState(PageState.PASSIVE)
+      expect(pageStateHistory.isInActivePageStateAt(0 as RelativeTime)).toEqual(true)
+    })
 
-    clock.tick(10)
-    pageStateHistory.addPageState(PageState.HIDDEN)
+    it('should return false if the page was not active at the given time', () => {
+      const maxPageStateEntriesSelectable = 1
+      pageStateHistory = startPageStateHistory(maxPageStateEntriesSelectable)
 
-    clock.tick(10)
-    pageStateHistory.addPageState(PageState.FROZEN)
-
-    clock.tick(10)
-    pageStateHistory.addPageState(PageState.TERMINATED)
-
-    /*
-    page state time    0     10    20    30    40
-    event time                  15<-------->35
-    */
-    const event = {
-      startTime: 15 as RelativeTime,
-      duration: 20 as RelativeTime,
-    }
-    expect(pageStateHistory.findAll(event.startTime, event.duration)).toEqual([
-      {
-        state: PageState.PASSIVE,
-        start: -5000000 as ServerDuration,
-      },
-      {
-        state: PageState.HIDDEN,
-        start: 5000000 as ServerDuration,
-      },
-      {
-        state: PageState.FROZEN,
-        start: 15000000 as ServerDuration,
-      },
-    ])
-  })
-
-  it('should limit the number of selectable entries', () => {
-    const maxPageStateEntriesSelectable = 1
-    pageStateHistory = startPageStateHistory(maxPageStateEntriesSelectable)
-
-    pageStateHistory.addPageState(PageState.ACTIVE)
-    clock.tick(10)
-    pageStateHistory.addPageState(PageState.PASSIVE)
-
-    expect(pageStateHistory.findAll(0 as RelativeTime, Infinity as RelativeTime)?.length).toEqual(
-      maxPageStateEntriesSelectable
-    )
+      pageStateHistory.addPageState(PageState.ACTIVE)
+      clock.tick(10)
+      pageStateHistory.addPageState(PageState.PASSIVE)
+      expect(pageStateHistory.isInActivePageStateAt(10 as RelativeTime)).toEqual(false)
+    })
   })
 })

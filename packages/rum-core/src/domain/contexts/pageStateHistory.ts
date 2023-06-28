@@ -29,6 +29,7 @@ export type PageStateEntry = { state: PageState; startTime: RelativeTime }
 
 export interface PageStateHistory {
   findAll: (startTime: RelativeTime, duration: Duration) => PageStateServerEntry[] | undefined
+  isInActivePageStateAt: (startTime: RelativeTime) => boolean
   addPageState(nextPageState: PageState, startTime?: RelativeTime): void
   stop: () => void
 }
@@ -97,6 +98,10 @@ export function startPageStateHistory(
       }
 
       return pageStateServerEntries
+    },
+    isInActivePageStateAt: (startTime: RelativeTime) => {
+      const pageStateEntry = pageStateHistory.find(startTime)
+      return pageStateEntry !== undefined && pageStateEntry.state === PageState.ACTIVE
     },
     addPageState,
     stop: () => {

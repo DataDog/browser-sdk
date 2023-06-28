@@ -6,6 +6,7 @@ import { setup, noopRecorderApi } from '../../../../test'
 import type { RawRumViewEvent } from '../../../rawRumEvent.types'
 import { RumEventType, ViewLoadingType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
+import { PageState } from '../../contexts/pageStateHistory'
 import type { ViewEvent } from './trackViews'
 import { startViewCollection } from './viewCollection'
 
@@ -57,14 +58,16 @@ describe('viewCollection', () => {
 
   beforeEach(() => {
     setupBuilder = setup()
-      .withForegroundContexts({
-        selectInForegroundPeriodsFor: () => [{ start: 0 as ServerDuration, duration: 10 as ServerDuration }],
+      .withPageStateHistory({
+        findAll: () => [
+          { start: 0 as ServerDuration, state: PageState.ACTIVE },
+          { start: 10 as ServerDuration, state: PageState.PASSIVE },
+        ],
       })
       .beforeBuild(
         ({
           lifeCycle,
           configuration,
-          foregroundContexts,
           featureFlagContexts,
           domMutationObservable,
           locationChangeObservable,
@@ -77,7 +80,6 @@ describe('viewCollection', () => {
             location,
             domMutationObservable,
             locationChangeObservable,
-            foregroundContexts,
             featureFlagContexts,
             pageStateHistory,
             {
