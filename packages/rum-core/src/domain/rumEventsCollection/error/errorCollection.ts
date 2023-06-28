@@ -15,9 +15,9 @@ import type { RawRumErrorEvent } from '../../../rawRumEvent.types'
 import { RumEventType } from '../../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
-import type { ForegroundContexts } from '../../contexts/foregroundContexts'
 import type { FeatureFlagContexts } from '../../contexts/featureFlagContext'
 import type { CommonContext } from '../../contexts/commonContext'
+import type { PageStateHistory } from '../../contexts/pageStateHistory'
 import { trackConsoleError } from './trackConsoleError'
 import { trackReportError } from './trackReportError'
 
@@ -30,7 +30,7 @@ export interface ProvidedError {
 
 export function startErrorCollection(
   lifeCycle: LifeCycle,
-  foregroundContexts: ForegroundContexts,
+  pageStateHistory: PageStateHistory,
   featureFlagContexts: FeatureFlagContexts
 ) {
   const errorObservable = new Observable<RawError>()
@@ -41,12 +41,12 @@ export function startErrorCollection(
 
   errorObservable.subscribe((error) => lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error }))
 
-  return doStartErrorCollection(lifeCycle, foregroundContexts, featureFlagContexts)
+  return doStartErrorCollection(lifeCycle, pageStateHistory, featureFlagContexts)
 }
 
 export function doStartErrorCollection(
   lifeCycle: LifeCycle,
-  foregroundContexts: ForegroundContexts,
+  pageStateHistory: PageStateHistory,
   featureFlagContexts: FeatureFlagContexts
 ) {
   lifeCycle.subscribe(LifeCycleEventType.RAW_ERROR_COLLECTED, ({ error, customerContext, savedCommonContext }) => {
@@ -57,7 +57,7 @@ export function doStartErrorCollection(
           customerContext,
           savedCommonContext,
         },
-        processError(error, foregroundContexts, featureFlagContexts)
+        processError(error, pageStateHistory, featureFlagContexts)
       )
     )
   })
@@ -89,7 +89,7 @@ export function doStartErrorCollection(
 
 function processError(
   error: RawError,
-  foregroundContexts: ForegroundContexts,
+  pageStateHistory: PageStateHistory,
   featureFlagContexts: FeatureFlagContexts
 ): RawRumEventCollectedData<RawRumErrorEvent> {
   const rawRumEvent: RawRumErrorEvent = {
@@ -107,11 +107,7 @@ function processError(
       fingerprint: error.fingerprint,
     },
     type: RumEventType.ERROR as const,
-  }
-
-  const inForeground = foregroundContexts.isInForegroundAt(error.startClocks.relative)
-  if (inForeground) {
-    rawRumEvent.view = { in_foreground: inForeground }
+    view: { in_foreground: pageStateHistory.isInActivePageStateAt(error.startClocks.relative) },
   }
 
   const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations(error.startClocks.relative)
