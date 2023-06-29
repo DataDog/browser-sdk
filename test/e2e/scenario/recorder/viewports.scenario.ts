@@ -1,5 +1,6 @@
 import type { ViewportResizeData, ScrollData } from '@datadog/browser-rum/cjs/types'
 import { IncrementalSource } from '@datadog/browser-rum/cjs/types'
+import type { TrustableEvent } from '@datadog/browser-core/src/browser/addEventListener'
 
 import { findAllIncrementalSnapshots, findAllVisualViewports } from '@datadog/browser-rum/test'
 import type { EventRegistry } from '../../lib/framework'
@@ -34,7 +35,9 @@ describe('recorder', () => {
         await performSignificantZoom()
 
         await browserExecute(() => {
-          window.dispatchEvent(new Event('resize'))
+          const event = new Event('resize') as TrustableEvent
+          event.__ddIsTrusted = true
+          window.dispatchEvent(event)
         })
 
         const lastViewportResizeData = (
