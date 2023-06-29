@@ -1,5 +1,14 @@
 import { isFirefox } from '../../../test'
-import { getHash, getOrigin, getPathName, getSearch, isValidUrl, normalizeUrl, getLocationOrigin } from './urlPolyfill'
+import {
+  getHash,
+  getOrigin,
+  getPathName,
+  getSearch,
+  isValidUrl,
+  normalizeUrl,
+  getLocationOrigin,
+  getLinkElementOrigin,
+} from './urlPolyfill'
 
 describe('normalize url', () => {
   it('should add origin to relative path', () => {
@@ -15,8 +24,13 @@ describe('normalize url', () => {
   })
 
   it('should keep non http url unchanged', () => {
+    expect(normalizeUrl('ftp://foo.com/my/path')).toEqual('ftp://foo.com/my/path')
+  })
+
+  it('should keep file url unchanged', () => {
     if (isFirefox()) {
-      pending('https://bugzilla.mozilla.org/show_bug.cgi?id=1578787')
+      // On firefox, URL host is empty for file URI: 'https://bugzilla.mozilla.org/show_bug.cgi?id=1578787'
+      expect(normalizeUrl('file://foo.com/my/path')).toMatch(/^file:\/\/.*\/my\/path$/)
     }
     expect(normalizeUrl('file://foo.com/my/path')).toEqual('file://foo.com/my/path')
   })
@@ -64,5 +78,11 @@ describe('getHash', () => {
   it('should retrieve url hash', () => {
     expect(getHash('http://www.datadoghq.com')).toBe('')
     expect(getHash('http://www.datadoghq.com/foo/bar?a=b#hello')).toBe('#hello')
+  })
+})
+
+describe('getLinkElementOrigin', () => {
+  it('should retrieve the url origin if URL origin is "null"', () => {
+    expect(getLinkElementOrigin({ origin: 'null', host: 'foo.bar', protocol: 'file:' } as URL)).toBe('file://foo.bar')
   })
 })
