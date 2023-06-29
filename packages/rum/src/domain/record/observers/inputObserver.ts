@@ -6,22 +6,23 @@ import { getEventTarget } from '../eventsUtils'
 import { getNodePrivacyLevel, shouldMaskNode } from '../privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from '../serialization'
 
-type InputObserverOptions = {
-  domEvents?: Array<DOM_EVENT.INPUT | DOM_EVENT.CHANGE>
-  target?: Document | ShadowRoot
-}
 export type InputCallback = (v: InputState & { id: number }) => void
 
 export function initInputObserver(
   cb: InputCallback,
   defaultPrivacyLevel: DefaultPrivacyLevel,
-  { domEvents = [DOM_EVENT.INPUT, DOM_EVENT.CHANGE], target = document }: InputObserverOptions = {}
+  target: Document | ShadowRoot = document
 ): ListenerHandler {
   const lastInputStateMap: WeakMap<Node, InputState> = new WeakMap()
 
+  const isShadowRoot = target !== document
+
   const { stop: stopEventListeners } = addEventListeners(
     target,
-    domEvents,
+    // The 'input' event bubbles across shadow roots, so we don't have to listen for it on shadow
+    // roots since it will be handled by the event listener that we did add to the document. Only
+    // the 'change' event is blocked and needs to be handled on shadow roots.
+    isShadowRoot ? [DOM_EVENT.CHANGE] : [DOM_EVENT.INPUT, DOM_EVENT.CHANGE],
     (event) => {
       const target = getEventTarget(event)
       if (
