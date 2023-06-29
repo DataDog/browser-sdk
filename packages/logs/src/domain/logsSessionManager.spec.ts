@@ -6,9 +6,10 @@ import {
   setCookie,
   stopSessionManager,
   ONE_SECOND,
+  DOM_EVENT,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock } from '@datadog/browser-core/test'
+import { createNewEvent, mockClock } from '@datadog/browser-core/test'
 
 import type { LogsConfiguration } from './configuration'
 import {
@@ -84,7 +85,7 @@ describe('logs session manager', () => {
     clock.tick(STORAGE_POLL_DELAY)
 
     tracked = true
-    document.body.click()
+    document.body.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
 
     expect(getCookie(SESSION_STORE_KEY)).toMatch(/id=[a-f0-9-]+/)
     expect(getCookie(SESSION_STORE_KEY)).toContain(`${LOGS_SESSION_KEY}=${LoggerTrackingType.TRACKED}`)

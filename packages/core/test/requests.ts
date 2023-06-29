@@ -1,5 +1,6 @@
 import type { EndpointBuilder } from '../src'
 import { noop, isServerError } from '../src'
+import { createNewEvent } from './emulate/createNewEvent'
 
 export const SPEC_ENDPOINTS = {
   logsEndpointBuilder: stubEndpointBuilder('https://logs-intake.com/v1/input/abcde?foo=bar'),
@@ -249,7 +250,7 @@ export interface FetchStubPromise extends Promise<Response> {
 }
 
 class StubEventEmitter {
-  public listeners: { [k: string]: Array<() => void> } = {}
+  public listeners: { [k: string]: Array<(event: Event) => void> } = {}
 
   addEventListener(name: string, callback: () => void) {
     if (!this.listeners[name]) {
@@ -271,7 +272,7 @@ class StubEventEmitter {
     if (!this.listeners[name]) {
       return
     }
-    this.listeners[name].forEach((listener) => listener.call(this))
+    this.listeners[name].forEach((listener) => listener.apply(this, [createNewEvent(name)]))
   }
 }
 
