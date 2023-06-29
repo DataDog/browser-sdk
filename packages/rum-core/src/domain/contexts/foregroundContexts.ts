@@ -65,19 +65,13 @@ export function closeForegroundPeriod() {
 }
 
 function trackFocus(onFocusChange: () => void) {
-  return addEventListener(window, DOM_EVENT.FOCUS, (event) => {
-    if (!event.isTrusted) {
-      return
-    }
+  return addEventListener(window, DOM_EVENT.FOCUS, () => {
     onFocusChange()
   })
 }
 
 function trackBlur(onBlurChange: () => void) {
-  return addEventListener(window, DOM_EVENT.BLUR, (event) => {
-    if (!event.isTrusted) {
-      return
-    }
+  return addEventListener(window, DOM_EVENT.BLUR, () => {
     onBlurChange()
   })
 }
