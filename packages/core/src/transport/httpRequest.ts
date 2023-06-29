@@ -46,7 +46,7 @@ export function createHttpRequest(
 
   return {
     send: (payload: Payload) => {
-      sendWithRetryStrategy(payload, retryState, sendStrategyForRetry, endpointBuilder.endpointType, reportError)
+      sendWithRetryStrategy(payload, retryState, sendStrategyForRetry, endpointBuilder.trackType, reportError)
     },
     /**
      * Since fetch keepalive behaves like regular fetch on Firefox,

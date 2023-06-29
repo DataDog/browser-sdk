@@ -1,4 +1,4 @@
-import { createNewEvent } from 'packages/core/test'
+import { createNewEvent } from '../../core/test'
 import type { DeflateWorker, DeflateWorkerAction, DeflateWorkerListener } from '../src/domain/segmentCollection'
 
 export class MockWorker implements DeflateWorker {
