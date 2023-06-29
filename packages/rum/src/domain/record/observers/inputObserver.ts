@@ -19,6 +19,38 @@ export function initInputObserver(
 ): ListenerHandler {
   const lastInputStateMap: WeakMap<Node, InputState> = new WeakMap()
 
+  const { stop: stopEventListeners } = addEventListeners(
+    target,
+    domEvents,
+    (event) => {
+      const target = getEventTarget(event)
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement
+      ) {
+        onElementChange(target)
+      }
+    },
+    {
+      capture: true,
+      passive: true,
+    }
+  )
+
+  const instrumentationStoppers = [
+    instrumentSetter(HTMLInputElement.prototype, 'value', onElementChange),
+    instrumentSetter(HTMLInputElement.prototype, 'checked', onElementChange),
+    instrumentSetter(HTMLSelectElement.prototype, 'value', onElementChange),
+    instrumentSetter(HTMLTextAreaElement.prototype, 'value', onElementChange),
+    instrumentSetter(HTMLSelectElement.prototype, 'selectedIndex', onElementChange),
+  ]
+
+  return () => {
+    instrumentationStoppers.forEach((stopper) => stopper.stop())
+    stopEventListeners()
+  }
+
   function onElementChange(target: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement) {
     const nodePrivacyLevel = getNodePrivacyLevel(target, defaultPrivacyLevel)
     if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
@@ -79,37 +111,5 @@ export function initInputObserver(
         )
       )
     }
-  }
-
-  const { stop: stopEventListeners } = addEventListeners(
-    target,
-    domEvents,
-    (event) => {
-      const target = getEventTarget(event)
-      if (
-        target instanceof HTMLInputElement ||
-        target instanceof HTMLTextAreaElement ||
-        target instanceof HTMLSelectElement
-      ) {
-        onElementChange(target)
-      }
-    },
-    {
-      capture: true,
-      passive: true,
-    }
-  )
-
-  const instrumentationStoppers = [
-    instrumentSetter(HTMLInputElement.prototype, 'value', onElementChange),
-    instrumentSetter(HTMLInputElement.prototype, 'checked', onElementChange),
-    instrumentSetter(HTMLSelectElement.prototype, 'value', onElementChange),
-    instrumentSetter(HTMLTextAreaElement.prototype, 'value', onElementChange),
-    instrumentSetter(HTMLSelectElement.prototype, 'selectedIndex', onElementChange),
-  ]
-
-  return () => {
-    instrumentationStoppers.forEach((stopper) => stopper.stop())
-    stopEventListeners()
   }
 }
