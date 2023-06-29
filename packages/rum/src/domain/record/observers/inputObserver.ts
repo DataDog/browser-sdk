@@ -1,5 +1,5 @@
 import type { DefaultPrivacyLevel, ListenerHandler } from '@datadog/browser-core'
-import { instrumentSetter, assign, DOM_EVENT, addEventListeners, forEach } from '@datadog/browser-core'
+import { instrumentSetter, assign, DOM_EVENT, addEventListeners, forEach, noop } from '@datadog/browser-core'
 import { NodePrivacyLevel } from '../../../constants'
 import type { InputState } from '../../../types'
 import { getEventTarget } from '../eventsUtils'
@@ -39,16 +39,24 @@ export function initInputObserver(
     }
   )
 
-  const instrumentationStoppers = [
-    instrumentSetter(HTMLInputElement.prototype, 'value', onElementChange),
-    instrumentSetter(HTMLInputElement.prototype, 'checked', onElementChange),
-    instrumentSetter(HTMLSelectElement.prototype, 'value', onElementChange),
-    instrumentSetter(HTMLTextAreaElement.prototype, 'value', onElementChange),
-    instrumentSetter(HTMLSelectElement.prototype, 'selectedIndex', onElementChange),
-  ]
+  let stopPropertySetterInstrumentation: () => void
+  if (!isShadowRoot) {
+    const instrumentationStoppers = [
+      instrumentSetter(HTMLInputElement.prototype, 'value', onElementChange),
+      instrumentSetter(HTMLInputElement.prototype, 'checked', onElementChange),
+      instrumentSetter(HTMLSelectElement.prototype, 'value', onElementChange),
+      instrumentSetter(HTMLTextAreaElement.prototype, 'value', onElementChange),
+      instrumentSetter(HTMLSelectElement.prototype, 'selectedIndex', onElementChange),
+    ]
+    stopPropertySetterInstrumentation = () => {
+      instrumentationStoppers.forEach((stopper) => stopper.stop())
+    }
+  } else {
+    stopPropertySetterInstrumentation = noop
+  }
 
   return () => {
-    instrumentationStoppers.forEach((stopper) => stopper.stop())
+    stopPropertySetterInstrumentation()
     stopEventListeners()
   }
 

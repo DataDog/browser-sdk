@@ -73,6 +73,18 @@ describe('initInputObserver', () => {
     expect(inputCallbackSpy).toHaveBeenCalledTimes(1)
   })
 
+  it('does not instrument setters when observing a shadow DOM', () => {
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const originalSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set
+    const host = document.createElement('div')
+    host.attachShadow({ mode: 'open' })
+
+    stopInputObserver = initInputObserver(inputCallbackSpy, DefaultPrivacyLevel.ALLOW, host.shadowRoot!)
+
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set).toBe(originalSetter)
+  })
+
   // cannot trigger a event in a Shadow DOM because event with `isTrusted:false` do not cross the root
   it('collects input values when an "input" event is composed', () => {
     stopInputObserver = initInputObserver(inputCallbackSpy, DefaultPrivacyLevel.ALLOW)
