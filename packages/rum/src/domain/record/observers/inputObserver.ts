@@ -1,23 +1,64 @@
 import type { DefaultPrivacyLevel, ListenerHandler } from '@datadog/browser-core'
-import { instrumentSetter, assign, DOM_EVENT, addEventListeners, forEach } from '@datadog/browser-core'
+import { instrumentSetter, assign, DOM_EVENT, addEventListeners, forEach, noop } from '@datadog/browser-core'
 import { NodePrivacyLevel } from '../../../constants'
 import type { InputState } from '../../../types'
 import { getEventTarget } from '../eventsUtils'
 import { getNodePrivacyLevel, shouldMaskNode } from '../privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from '../serialization'
 
-type InputObserverOptions = {
-  domEvents?: Array<DOM_EVENT.INPUT | DOM_EVENT.CHANGE>
-  target?: Document | ShadowRoot
-}
 export type InputCallback = (v: InputState & { id: number }) => void
 
 export function initInputObserver(
   cb: InputCallback,
   defaultPrivacyLevel: DefaultPrivacyLevel,
-  { domEvents = [DOM_EVENT.INPUT, DOM_EVENT.CHANGE], target = document }: InputObserverOptions = {}
+  target: Document | ShadowRoot = document
 ): ListenerHandler {
   const lastInputStateMap: WeakMap<Node, InputState> = new WeakMap()
+
+  const isShadowRoot = target !== document
+
+  const { stop: stopEventListeners } = addEventListeners(
+    target,
+    // The 'input' event bubbles across shadow roots, so we don't have to listen for it on shadow
+    // roots since it will be handled by the event listener that we did add to the document. Only
+    // the 'change' event is blocked and needs to be handled on shadow roots.
+    isShadowRoot ? [DOM_EVENT.CHANGE] : [DOM_EVENT.INPUT, DOM_EVENT.CHANGE],
+    (event) => {
+      const target = getEventTarget(event)
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement
+      ) {
+        onElementChange(target)
+      }
+    },
+    {
+      capture: true,
+      passive: true,
+    }
+  )
+
+  let stopPropertySetterInstrumentation: () => void
+  if (!isShadowRoot) {
+    const instrumentationStoppers = [
+      instrumentSetter(HTMLInputElement.prototype, 'value', onElementChange),
+      instrumentSetter(HTMLInputElement.prototype, 'checked', onElementChange),
+      instrumentSetter(HTMLSelectElement.prototype, 'value', onElementChange),
+      instrumentSetter(HTMLTextAreaElement.prototype, 'value', onElementChange),
+      instrumentSetter(HTMLSelectElement.prototype, 'selectedIndex', onElementChange),
+    ]
+    stopPropertySetterInstrumentation = () => {
+      instrumentationStoppers.forEach((stopper) => stopper.stop())
+    }
+  } else {
+    stopPropertySetterInstrumentation = noop
+  }
+
+  return () => {
+    stopPropertySetterInstrumentation()
+    stopEventListeners()
+  }
 
   function onElementChange(target: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement) {
     const nodePrivacyLevel = getNodePrivacyLevel(target, defaultPrivacyLevel)
@@ -79,37 +120,5 @@ export function initInputObserver(
         )
       )
     }
-  }
-
-  const { stop: stopEventListeners } = addEventListeners(
-    target,
-    domEvents,
-    (event) => {
-      const target = getEventTarget(event)
-      if (
-        target instanceof HTMLInputElement ||
-        target instanceof HTMLTextAreaElement ||
-        target instanceof HTMLSelectElement
-      ) {
-        onElementChange(target)
-      }
-    },
-    {
-      capture: true,
-      passive: true,
-    }
-  )
-
-  const instrumentationStoppers = [
-    instrumentSetter(HTMLInputElement.prototype, 'value', onElementChange),
-    instrumentSetter(HTMLInputElement.prototype, 'checked', onElementChange),
-    instrumentSetter(HTMLSelectElement.prototype, 'value', onElementChange),
-    instrumentSetter(HTMLTextAreaElement.prototype, 'value', onElementChange),
-    instrumentSetter(HTMLSelectElement.prototype, 'selectedIndex', onElementChange),
-  ]
-
-  return () => {
-    instrumentationStoppers.forEach((stopper) => stopper.stop())
-    stopEventListeners()
   }
 }

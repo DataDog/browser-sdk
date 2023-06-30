@@ -1,4 +1,3 @@
-import { DOM_EVENT } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import type { InputCallback, MutationCallBack } from './observers'
 import { initInputObserver, initMutationObserver } from './observers'
@@ -38,10 +37,7 @@ export const initShadowRootsController = (
         shadowRoot
       )
       // the change event no do bubble up across the shadow root, we have to listen on the shadow root
-      const stopInputObserver = initInputObserver(inputCb, configuration.defaultPrivacyLevel, {
-        target: shadowRoot,
-        domEvents: [DOM_EVENT.CHANGE],
-      })
+      const stopInputObserver = initInputObserver(inputCb, configuration.defaultPrivacyLevel, shadowRoot)
       controllerByShadowRoot.set(shadowRoot, {
         flush,
         stop: () => {
