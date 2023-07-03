@@ -40,7 +40,7 @@ describe('addEventListener', () => {
       const eventTarget = document.createElement('div')
       addEventListener(eventTarget, DOM_EVENT.CLICK, listener)
 
-      const event = new Event(DOM_EVENT.CLICK)
+      const event = createNewEvent(DOM_EVENT.CLICK, { __ddIsTrusted: undefined })
       eventTarget.dispatchEvent(event)
       expect(listener).not.toHaveBeenCalled()
     })
