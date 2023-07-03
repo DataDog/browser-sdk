@@ -16,6 +16,13 @@
 
 ---
 
+## v4.44.0
+
+- ✨ Collect replay privacy level in views ([#2299](https://github.com/DataDog/browser-sdk/pull/2299))
+- 🐛 [RUMF-1613] fix session replay performance regression ([#2313](https://github.com/DataDog/browser-sdk/pull/2313))
+- ♻️ Base foreground computation on page lifecycle states ([#2253](https://github.com/DataDog/browser-sdk/pull/2253))
+- ⚗ Collect scroll metrics ([#2180](https://github.com/DataDog/browser-sdk/pull/2180))
+
 ## v4.43.0
 
 - ✨ [RUMF-1580] Implement storage fallback ([#2261](https://github.com/DataDog/browser-sdk/pull/2261))
