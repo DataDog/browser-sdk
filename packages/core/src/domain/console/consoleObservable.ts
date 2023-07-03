@@ -6,6 +6,7 @@ import { callMonitored } from '../../tools/monitor'
 import { sanitize } from '../../tools/serialisation/sanitize'
 import { find } from '../../tools/utils/polyfills'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
+import { instrumentMethod } from '../../tools/instrumentMethod'
 
 export interface ConsoleLog {
   message: string
@@ -34,20 +35,21 @@ export function resetConsoleObservable() {
 
 function createConsoleObservable(api: ConsoleApiName) {
   const observable = new Observable<ConsoleLog>(() => {
-    const originalConsoleApi = globalConsole[api]
+    const { stop: stopInstrumentingConsoleApi } = instrumentMethod(
+      globalConsole,
+      api,
+      (originalConsoleApi) =>
+        (...params: unknown[]) => {
+          originalConsoleApi.apply(console, params)
+          const handlingStack = createHandlingStack(1)
 
-    globalConsole[api] = (...params: unknown[]) => {
-      originalConsoleApi.apply(console, params)
-      const handlingStack = createHandlingStack()
+          callMonitored(() => {
+            observable.notify(buildConsoleLog(params, api, handlingStack))
+          })
+        }
+    )
 
-      callMonitored(() => {
-        observable.notify(buildConsoleLog(params, api, handlingStack))
-      })
-    }
-
-    return () => {
-      globalConsole[api] = originalConsoleApi
-    }
+    return stopInstrumentingConsoleApi
   })
 
   return observable
