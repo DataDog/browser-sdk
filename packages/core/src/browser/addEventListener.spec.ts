@@ -35,6 +35,16 @@ describe('addEventListener', () => {
   })
 
   describe('Untrusted event', () => {
+    it('should be ignored if __ddIsTrusted is absent', () => {
+      const listener = jasmine.createSpy()
+      const eventTarget = document.createElement('div')
+      addEventListener(eventTarget, DOM_EVENT.CLICK, listener)
+
+      const event = new Event(DOM_EVENT.CLICK)
+      eventTarget.dispatchEvent(event)
+      expect(listener).not.toHaveBeenCalled()
+    })
+
     it('should be ignored if __ddIsTrusted is false', () => {
       const listener = jasmine.createSpy()
       const eventTarget = document.createElement('div')
