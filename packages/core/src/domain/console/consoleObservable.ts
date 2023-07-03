@@ -1,13 +1,13 @@
 import { flattenErrorCauses, tryToGetFingerprint } from '../error/error'
 import { mergeObservables, Observable } from '../../tools/observable'
 import { ConsoleApiName, globalConsole } from '../../tools/display'
-import { callMonitored } from '../../tools/monitor'
 import { sanitize } from '../../tools/serialisation/sanitize'
-import { find } from '../../tools/utils/polyfills'
+import { arrayFrom, find } from '../../tools/utils/polyfills'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
 import type { RawErrorCause } from '../error/error.types'
 import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
-import { createHandlingStack, toStackTraceString, formatErrorMessage } from '../../tools/stackTrace/handlingStack'
+import { instrumentMethod } from '../../tools/instrumentMethod'
+import { toStackTraceString, formatErrorMessage } from '../../tools/stackTrace/handlingStack'
 
 export interface ConsoleLog {
   message: string
@@ -37,20 +37,18 @@ export function resetConsoleObservable() {
 
 function createConsoleObservable(api: ConsoleApiName) {
   return new Observable<ConsoleLog>((observable) => {
-    const originalConsoleApi = globalConsole[api]
+    const { stop: stopInstrumentingConsoleApi } = instrumentMethod(
+      globalConsole,
+      api,
+      ({ handlingStack, parameters }) => {
+        observable.notify(buildConsoleLog(arrayFrom(parameters), api, handlingStack!))
+      },
+      {
+        computeHandlingStack: true,
+      }
+    )
 
-    globalConsole[api] = (...params: unknown[]) => {
-      originalConsoleApi.apply(console, params)
-      const handlingStack = createHandlingStack()
-
-      callMonitored(() => {
-        observable.notify(buildConsoleLog(params, api, handlingStack))
-      })
-    }
-
-    return () => {
-      globalConsole[api] = originalConsoleApi
-    }
+    return stopInstrumentingConsoleApi
   })
 }
 

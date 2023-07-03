@@ -59,6 +59,7 @@ describe('instrumentMethod', () => {
       target: object,
       parameters: jasmine.any(Object),
       onPostCall: jasmine.any(Function),
+      handlingStack: undefined,
     })
     expect(instrumentationSpy.calls.mostRecent().args[0].parameters[0]).toBe(2)
     expect(instrumentationSpy.calls.mostRecent().args[0].parameters[1]).toBe(3)
@@ -80,6 +81,21 @@ describe('instrumentMethod', () => {
     })
 
     expect(object.method()).toBe(2)
+  })
+
+  it('computes the handling stack', () => {
+    const object = { method: () => 1 }
+    const instrumentationSpy = jasmine.createSpy()
+    instrumentMethod(object, 'method', instrumentationSpy, { computeHandlingStack: true })
+
+    function foo() {
+      object.method()
+    }
+    foo()
+
+    expect(instrumentationSpy.calls.mostRecent().args[0].handlingStack).toEqual(
+      jasmine.stringMatching(/^Error: \n {2}at foo @/)
+    )
   })
 
   it('calls the "onPostCall" callback with the original method result', () => {
