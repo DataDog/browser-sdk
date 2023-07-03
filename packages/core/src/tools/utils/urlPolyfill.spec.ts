@@ -30,7 +30,7 @@ describe('normalize url', () => {
   it('should keep file url unchanged', () => {
     if (isFirefox()) {
       // On firefox, URL host is empty for file URI: 'https://bugzilla.mozilla.org/show_bug.cgi?id=1578787'
-      expect(normalizeUrl('file://foo.com/my/path')).toMatch(/^file:\/\/.*\/my\/path$/)
+      expect(normalizeUrl('file://foo.com/my/path')).toEqual('file:///my/path')
     } else {
       expect(normalizeUrl('file://foo.com/my/path')).toEqual('file://foo.com/my/path')
     }
