@@ -1,14 +1,6 @@
 import { isFirefox } from '../../../test'
-import {
-  getHash,
-  getOrigin,
-  getPathName,
-  getSearch,
-  isValidUrl,
-  normalizeUrl,
-  getLocationOrigin,
-  getLinkElementOrigin,
-} from './urlPolyfill'
+import { isIE } from './browserDetection'
+import { getHash, getOrigin, getPathName, getSearch, isValidUrl, normalizeUrl, getLocationOrigin } from './urlPolyfill'
 
 describe('normalize url', () => {
   it('should add origin to relative path', () => {
@@ -59,6 +51,15 @@ describe('getOrigin', () => {
     expect(getOrigin('http://www.datadoghq.com/foo/bar?a=b#hello')).toBe('http://www.datadoghq.com')
     expect(getOrigin('http://localhost:8080')).toBe('http://localhost:8080')
   })
+
+  it('should retrieve file url origin', () => {
+    if (isIE()) {
+      // On IE, our origin fallback strategy contains the host
+      expect(getOrigin('file://foo.com/my/path')).toEqual('file://foo.com')
+    } else {
+      expect(getOrigin('file://foo.com/my/path')).toEqual('file://')
+    }
+  })
 })
 
 describe('getPathName', () => {
@@ -79,11 +80,5 @@ describe('getHash', () => {
   it('should retrieve url hash', () => {
     expect(getHash('http://www.datadoghq.com')).toBe('')
     expect(getHash('http://www.datadoghq.com/foo/bar?a=b#hello')).toBe('#hello')
-  })
-})
-
-describe('getLinkElementOrigin', () => {
-  it('should retrieve the url origin if URL origin is "null"', () => {
-    expect(getLinkElementOrigin({ origin: 'null', host: 'foo.bar', protocol: 'file:' } as URL)).toBe('file://foo.bar')
   })
 })
