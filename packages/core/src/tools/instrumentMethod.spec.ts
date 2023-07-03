@@ -54,6 +54,27 @@ describe('instrumentMethod', () => {
     expect(instrumentationSpy).toHaveBeenCalled()
   })
 
+  it('does not throw if the object is frozen', () => {
+    const object = { method: () => 1 }
+    Object.freeze(object)
+
+    expect(() => {
+      instrumentMethod(object, 'method', () => () => 2)
+    }).not.toThrow()
+  })
+
+  it('does not throw if the method is not writable', () => {
+    const object = { method: () => 1 }
+    Object.defineProperty(object, 'method', {
+      value: () => 1,
+      writable: false,
+    })
+
+    expect(() => {
+      instrumentMethod(object, 'method', () => () => 2)
+    }).not.toThrow()
+  })
+
   describe('stop()', () => {
     it('restores the original behavior', () => {
       const object = { method: () => 1 }

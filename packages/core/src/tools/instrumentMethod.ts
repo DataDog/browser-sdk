@@ -9,6 +9,11 @@ export function instrumentMethod<OBJECT extends { [key: string]: any }, METHOD e
     original: OBJECT[METHOD]
   ) => (this: OBJECT, ...args: Parameters<OBJECT[METHOD]>) => ReturnType<OBJECT[METHOD]>
 ) {
+  const originalDescriptor = Object.getOwnPropertyDescriptor(object, method)
+  if (originalDescriptor && originalDescriptor.writable === false) {
+    return { stop: noop }
+  }
+
   const original = object[method]
 
   let instrumentation = instrumentationFactory(original)

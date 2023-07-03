@@ -38,10 +38,10 @@ export function createLocationChangeObservable(location: Location) {
 }
 
 function trackHistory(onHistoryChange: () => void) {
-  const { stop: stopInstrumentingPushState } = instrumentMethodAndCallOriginal(history, 'pushState', {
+  const { stop: stopInstrumentingPushState } = instrumentMethodAndCallOriginal(History.prototype, 'pushState', {
     after: onHistoryChange,
   })
-  const { stop: stopInstrumentingReplaceState } = instrumentMethodAndCallOriginal(history, 'replaceState', {
+  const { stop: stopInstrumentingReplaceState } = instrumentMethodAndCallOriginal(History.prototype, 'replaceState', {
     after: onHistoryChange,
   })
   const { stop: removeListener } = addEventListener(window, DOM_EVENT.POP_STATE, onHistoryChange)
