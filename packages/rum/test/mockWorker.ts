@@ -1,5 +1,7 @@
-import type { DeflateWorkerAction } from '@datadog/browser-worker'
-import type { DeflateWorker, DeflateWorkerListener } from '../src/domain/segmentCollection'
+import type { DeflateWorkerAction, DeflateWorkerResponse } from '@datadog/browser-worker'
+import type { DeflateWorker } from '../src/domain/segmentCollection'
+
+type DeflateWorkerListener = (event: { data: DeflateWorkerResponse }) => void
 
 export class MockWorker implements DeflateWorker {
   public onmessage = null

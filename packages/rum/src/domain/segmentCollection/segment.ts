@@ -3,7 +3,7 @@ import type { DeflateWorkerResponse } from '@datadog/browser-worker'
 import type { BrowserRecord, BrowserSegmentMetadata, CreationReason, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
 import * as replayStats from '../replayStats'
-import type { DeflateWorker } from './deflateWorker'
+import type { DeflateWorker } from './startDeflateWorker'
 
 let nextId = 0
 
