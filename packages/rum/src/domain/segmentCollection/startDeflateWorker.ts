@@ -1,5 +1,6 @@
 import { addTelemetryError, display, includes, addEventListener } from '@datadog/browser-core'
-import type { DeflateWorker, DeflateWorkerResponse } from './deflateWorker'
+import type { DeflateWorkerResponse } from '@datadog/browser-worker'
+import type { DeflateWorker } from './deflateWorker'
 import { createDeflateWorker } from './deflateWorker'
 
 /**

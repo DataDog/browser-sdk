@@ -1,0 +1,18 @@
+{
+  "name": "@datadog/browser-worker",
+  "version": "4.44.0",
+  "license": "Apache-2.0",
+  "main": "bundle/worker.js",
+  "types": "src/types.ts",
+  "scripts": {
+    "build": "rm -rf bundle && webpack --mode=production"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DataDog/browser-sdk.git",
+    "directory": "packages/worker"
+  },
+  "volta": {
+    "extends": "../../package.json"
+  }
+}

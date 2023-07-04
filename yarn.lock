@@ -469,6 +469,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@datadog/browser-worker@workspace:packages/worker":
+  version: 0.0.0-use.local
+  resolution: "@datadog/browser-worker@workspace:packages/worker"
+  languageName: unknown
+  linkType: soft
+
 "@discoveryjs/json-ext@npm:^0.5.0":
   version: 0.5.2
   resolution: "@discoveryjs/json-ext@npm:0.5.2"
