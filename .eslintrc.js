@@ -192,7 +192,7 @@ module.exports = {
       },
     },
     {
-      files: ['scripts/**/*.js'],
+      files: ['scripts/**/*.js', 'packages/*/scripts/**/*.js'],
       rules: {
         'unicorn/filename-case': ['error', { case: 'kebabCase' }],
         'local-rules/secure-command-execution': 'error',
@@ -256,7 +256,14 @@ module.exports = {
     },
     {
       // Files executed by nodejs
-      files: ['**/webpack.*.js', 'scripts/**/*.js', 'test/**/*.js', 'eslint-local-rules/**/*.js', '.eslintrc.js'],
+      files: [
+        '**/webpack.*.js',
+        'scripts/**/*.js',
+        'test/**/*.js',
+        'eslint-local-rules/**/*.js',
+        '.eslintrc.js',
+        'packages/*/scripts/**/*.js',
+      ],
       env: {
         node: true,
       },
