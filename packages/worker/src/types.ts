@@ -1,11 +1,3 @@
-export function createDeflateWorker(): DeflateWorker
-
-export interface DeflateWorker extends Worker {
-  postMessage(message: DeflateWorkerAction): void
-}
-
-export type DeflateWorkerListener = (event: { data: DeflateWorkerResponse }) => void
-
 export type DeflateWorkerAction =
   // Action to send when creating the worker to check if the communication is working correctly.
   // The worker should respond with a 'initialized' response.

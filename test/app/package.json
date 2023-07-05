@@ -15,7 +15,8 @@
   "resolutions": {
     "@datadog/browser-core": "portal:../../packages/core",
     "@datadog/browser-rum-core": "portal:../../packages/rum-core",
-    "@datadog/browser-rum": "portal:../../packages/rum"
+    "@datadog/browser-rum": "portal:../../packages/rum",
+    "@datadog/browser-worker": "portal:../../packages/worker"
   },
   "devDependencies": {
     "ts-loader": "6.2.1",
