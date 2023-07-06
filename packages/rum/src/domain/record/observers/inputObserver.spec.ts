@@ -1,5 +1,6 @@
 import { DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
-import { createNewEvent } from '@datadog/browser-core/test'
+import type { Clock } from '@datadog/browser-core/test'
+import { createNewEvent, mockClock } from '@datadog/browser-core/test'
 import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT } from '../../../constants'
 import { serializeDocument, SerializationContextStatus } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
@@ -12,6 +13,7 @@ describe('initInputObserver', () => {
   let inputCallbackSpy: jasmine.Spy<InputCallback>
   let sandbox: HTMLElement
   let input: HTMLInputElement
+  let clock: Clock | undefined
 
   beforeEach(() => {
     if (isIE()) {
@@ -34,6 +36,7 @@ describe('initInputObserver', () => {
   afterEach(() => {
     stopInputObserver()
     sandbox.remove()
+    clock?.cleanup()
   })
 
   it('collects input values when an "input" event is dispatched', () => {
@@ -44,6 +47,42 @@ describe('initInputObserver', () => {
       text: 'foo',
       id: jasmine.any(Number) as unknown as number,
     })
+  })
+
+  it('collects input values when a property setter is used', () => {
+    clock = mockClock()
+    stopInputObserver = initInputObserver(inputCallbackSpy, DefaultPrivacyLevel.ALLOW)
+    input.value = 'foo'
+
+    clock.tick(0)
+
+    expect(inputCallbackSpy).toHaveBeenCalledOnceWith({
+      text: 'foo',
+      id: jasmine.any(Number) as unknown as number,
+    })
+  })
+
+  it('does not invoke callback when the value does not change', () => {
+    clock = mockClock()
+    stopInputObserver = initInputObserver(inputCallbackSpy, DefaultPrivacyLevel.ALLOW)
+    input.value = 'foo'
+    clock.tick(0)
+
+    dispatchInputEvent('foo')
+
+    expect(inputCallbackSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not instrument setters when observing a shadow DOM', () => {
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const originalSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set
+    const host = document.createElement('div')
+    host.attachShadow({ mode: 'open' })
+
+    stopInputObserver = initInputObserver(inputCallbackSpy, DefaultPrivacyLevel.ALLOW, host.shadowRoot!)
+
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set).toBe(originalSetter)
   })
 
   // cannot trigger a event in a Shadow DOM because event with `isTrusted:false` do not cross the root
