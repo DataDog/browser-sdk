@@ -1,4 +1,5 @@
 import { instrumentMethodAndCallOriginal } from '../../tools/instrumentMethod'
+import { jsonStringify } from '../../tools/serialisation/jsonStringify'
 import { computeStackTrace } from './computeStackTrace'
 import type { UnhandledErrorCallback, StackTrace } from './types'
 
@@ -77,7 +78,11 @@ function tryToParseMessage(messageObj: unknown) {
   let name
   let message
   if ({}.toString.call(messageObj) === '[object String]') {
-    ;[, name, message] = ERROR_TYPES_RE.exec(messageObj as string)!
+    try {
+      ;[, name, message] = ERROR_TYPES_RE.exec(messageObj as string)!
+    } catch (error) {
+      throw new Error(`Tracekit try parse error: ${String(error)} ${jsonStringify({ messageObj })!}`)
+    }
   }
   return { name, message }
 }
