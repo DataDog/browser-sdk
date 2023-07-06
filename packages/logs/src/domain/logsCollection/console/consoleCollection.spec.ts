@@ -1,14 +1,13 @@
-import { ErrorSource, noop } from '@datadog/browser-core'
+import { ErrorSource, noop, objectEntries } from '@datadog/browser-core'
 import type { RawConsoleLogsEvent } from '../../../rawLogsEvent.types'
 import { validateAndBuildLogsConfiguration } from '../../configuration'
 import type { RawLogsEventCollectedData } from '../../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
-import { StatusType } from '../../logger'
-import { startConsoleCollection } from './consoleCollection'
+import { startConsoleCollection, LogStatusForApi } from './consoleCollection'
 
 describe('console collection', () => {
   const initConfiguration = { clientToken: 'xxx', service: 'service' }
-  let consoleLogSpy: jasmine.Spy
+  let consoleSpies: { [key: string]: jasmine.Spy }
   let stopConsoleCollection: () => void
   let lifeCycle: LifeCycle
   let rawLogsEvents: Array<RawLogsEventCollectedData<RawConsoleLogsEvent>>
@@ -20,32 +19,39 @@ describe('console collection', () => {
       rawLogsEvents.push(rawLogsEvent as RawLogsEventCollectedData<RawConsoleLogsEvent>)
     )
     stopConsoleCollection = noop
-    consoleLogSpy = spyOn(console, 'log').and.callFake(() => true)
-    spyOn(console, 'error').and.callFake(() => true)
+    consoleSpies = {
+      log: spyOn(console, 'log').and.callFake(() => true),
+      debug: spyOn(console, 'debug').and.callFake(() => true),
+      info: spyOn(console, 'info').and.callFake(() => true),
+      warn: spyOn(console, 'warn').and.callFake(() => true),
+      error: spyOn(console, 'error').and.callFake(() => true),
+    }
   })
 
   afterEach(() => {
     stopConsoleCollection()
   })
 
-  it('should send console logs', () => {
-    ;({ stop: stopConsoleCollection } = startConsoleCollection(
-      validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['log'] })!,
-      lifeCycle
-    ))
+  objectEntries(LogStatusForApi).forEach(([api, status]) => {
+    it(`should collect ${status} logs from console.${api}`, () => {
+      ;({ stop: stopConsoleCollection } = startConsoleCollection(
+        validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: 'all' })!,
+        lifeCycle
+      ))
 
-    /* eslint-disable-next-line no-console */
-    console.log('foo', 'bar')
+      /* eslint-disable-next-line no-console */
+      console[api as keyof typeof LogStatusForApi]('foo', 'bar')
 
-    expect(rawLogsEvents[0].rawLogsEvent).toEqual({
-      date: jasmine.any(Number),
-      message: 'foo bar',
-      status: StatusType.info,
-      origin: ErrorSource.CONSOLE,
-      error: undefined,
+      expect(rawLogsEvents[0].rawLogsEvent).toEqual({
+        date: jasmine.any(Number),
+        message: 'foo bar',
+        status,
+        origin: ErrorSource.CONSOLE,
+        error: whatever(),
+      })
+
+      expect(consoleSpies[api]).toHaveBeenCalled()
     })
-
-    expect(consoleLogSpy).toHaveBeenCalled()
   })
 
   it('console error should have an error object defined', () => {
@@ -58,7 +64,6 @@ describe('console collection', () => {
     console.error('foo', 'bar')
 
     expect(rawLogsEvents[0].rawLogsEvent.error).toEqual({
-      origin: ErrorSource.CONSOLE,
       stack: undefined,
       fingerprint: undefined,
     })
@@ -79,9 +84,15 @@ describe('console collection', () => {
     console.error(error)
 
     expect(rawLogsEvents[0].rawLogsEvent.error).toEqual({
-      origin: ErrorSource.CONSOLE,
       stack: jasmine.any(String),
       fingerprint: 'my-fingerprint',
     })
   })
 })
+
+function whatever() {
+  return {
+    asymmetricMatch: () => true,
+    jasmineToString: () => '<whatever>',
+  }
+}

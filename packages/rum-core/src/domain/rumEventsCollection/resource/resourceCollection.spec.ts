@@ -21,17 +21,14 @@ import { startResourceCollection } from './resourceCollection'
 
 describe('resourceCollection', () => {
   let setupBuilder: TestSetupBuilder
+  let trackResources: boolean
 
   let pageStateHistorySpy: jasmine.Spy<jasmine.Func>
   beforeEach(() => {
-    setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager, pageStateHistory }) => {
+    trackResources = true
+    setupBuilder = setup().beforeBuild(({ lifeCycle, sessionManager, pageStateHistory, configuration }) => {
       pageStateHistorySpy = spyOn(pageStateHistory, 'findAll')
-      startResourceCollection(
-        lifeCycle,
-        validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: 'xxx' })!,
-        sessionManager,
-        pageStateHistory
-      )
+      startResourceCollection(lifeCycle, { ...configuration, trackResources }, sessionManager, pageStateHistory)
     })
   })
 
@@ -135,8 +132,7 @@ describe('resourceCollection', () => {
     expect(rawRumResourceEventEntry._dd.page_states).toEqual(jasmine.objectContaining(mockPageStates))
   })
 
-  it('should not have a duration if a frozen state happens during the request and no performance entry matches when NO_RESOURCE_DURATION_FROZEN_STATE enabled', () => {
-    addExperimentalFeatures([ExperimentalFeature.NO_RESOURCE_DURATION_FROZEN_STATE])
+  it('should not have a duration if a frozen state happens during the request and no performance entry matches', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
     const mockPageStates = [{ state: PageState.FROZEN, startTime: 0 as RelativeTime }]
     const mockXHR = createCompletedRequest()
@@ -147,19 +143,6 @@ describe('resourceCollection', () => {
 
     const rawRumResourceEventFetch = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
     expect(rawRumResourceEventFetch.resource.duration).toBeUndefined()
-  })
-
-  it('should have a duration if a frozen state happens during the request and no performance entry matches when NO_RESOURCE_DURATION_FROZEN_STATE disabled', () => {
-    const { lifeCycle, rawRumEvents } = setupBuilder.build()
-    const mockPageStates = [{ state: PageState.FROZEN, startTime: 0 as RelativeTime }]
-    const mockXHR = createCompletedRequest()
-
-    pageStateHistorySpy.and.returnValue(mockPageStates)
-
-    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, mockXHR)
-
-    const rawRumResourceEventFetch = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
-    expect(rawRumResourceEventFetch.resource.duration).toBeDefined()
   })
 
   it('should not collect page states on resources when ff resource_page_states disabled', () => {
@@ -176,7 +159,6 @@ describe('resourceCollection', () => {
     const rawRumResourceEventFetch = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
     const rawRumResourceEventEntry = rawRumEvents[1].rawRumEvent as RawRumResourceEvent
 
-    expect(pageStateHistorySpy).not.toHaveBeenCalled()
     expect(rawRumResourceEventFetch._dd.page_states).not.toBeDefined()
     expect(rawRumResourceEventEntry._dd.page_states).not.toBeDefined()
   })
@@ -394,8 +376,8 @@ describe('resourceCollection', () => {
       expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeTrue()
     })
 
-    it('should be discarded=true if session does not allow resources', () => {
-      setupBuilder.withSessionManager(createRumSessionManagerMock().setResourceAllowed(false))
+    it('should be discarded=true when trackResources is disabled', () => {
+      trackResources = false
       const { lifeCycle, rawRumEvents } = setupBuilder.build()
 
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [createResourceEntry()])
@@ -403,8 +385,8 @@ describe('resourceCollection', () => {
       expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeTrue()
     })
 
-    it('should be discarded=false if session allows resources', () => {
-      setupBuilder.withSessionManager(createRumSessionManagerMock().setResourceAllowed(true))
+    it('should be discarded=false when trackResources is enabled', () => {
+      trackResources = true
       const { lifeCycle, rawRumEvents } = setupBuilder.build()
 
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [createResourceEntry()])

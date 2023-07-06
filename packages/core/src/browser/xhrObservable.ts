@@ -1,7 +1,7 @@
 import { instrumentMethodAndCallOriginal } from '../tools/instrumentMethod'
 import { Observable } from '../tools/observable'
-import type { Duration, RelativeTime, ClocksState } from '../tools/utils/timeUtils'
-import { elapsed, relativeNow, clocksNow, timeStampNow } from '../tools/utils/timeUtils'
+import type { Duration, ClocksState } from '../tools/utils/timeUtils'
+import { elapsed, clocksNow, timeStampNow } from '../tools/utils/timeUtils'
 import { normalizeUrl } from '../tools/utils/urlPolyfill'
 import { shallowClone } from '../tools/utils/objectUtils'
 import { addEventListener } from './addEventListener'
@@ -14,7 +14,6 @@ export interface XhrOpenContext {
 
 export interface XhrStartContext extends Omit<XhrOpenContext, 'state'> {
   state: 'start'
-  startTime: RelativeTime // deprecated
   startClocks: ClocksState
   isAborted: boolean
   xhr: XMLHttpRequest
@@ -66,7 +65,7 @@ function createXhrObservable() {
 function openXhr(this: XMLHttpRequest, method: string, url: string | URL | undefined | null) {
   xhrContexts.set(this, {
     state: 'open',
-    method,
+    method: method.toUpperCase(),
     url: normalizeUrl(String(url)),
   })
 }
@@ -79,7 +78,6 @@ function sendXhr(this: XMLHttpRequest, observable: Observable<XhrContext>) {
 
   const startContext = context as XhrStartContext
   startContext.state = 'start'
-  startContext.startTime = relativeNow()
   startContext.startClocks = clocksNow()
   startContext.isAborted = false
   startContext.xhr = this
@@ -91,7 +89,7 @@ function sendXhr(this: XMLHttpRequest, observable: Observable<XhrContext>) {
       if (this.readyState === XMLHttpRequest.DONE) {
         // Try to report the XHR as soon as possible, because the XHR may be mutated by the
         // application during a future event. For example, Angular is calling .abort() on
-        // completed requests during a onreadystatechange event, so the status becomes '0'
+        // completed requests during an onreadystatechange event, so the status becomes '0'
         // before the request is collected.
         onEnd()
       }

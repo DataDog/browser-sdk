@@ -1,6 +1,6 @@
 {
   "npmClient": "yarn",
-  "version": "4.44.0",
+  "version": "5.0.0-alpha.0",
   "publishConfig": {
     "access": "public"
   }

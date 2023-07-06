@@ -103,7 +103,12 @@ export function setup(): TestSetupBuilder {
   }
   const FAKE_APP_ID = 'appId'
   const configuration: RumConfiguration = {
-    ...validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: FAKE_APP_ID })!,
+    ...validateAndBuildRumConfiguration({
+      clientToken: 'xxx',
+      applicationId: FAKE_APP_ID,
+      trackResources: true,
+      trackLongTasks: true,
+    })!,
     ...SPEC_ENDPOINTS,
   }
 
