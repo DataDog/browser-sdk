@@ -76,7 +76,7 @@ function startRumStub(
     noopRecorderApi
   )
 
-  startLongTaskCollection(lifeCycle, sessionManager)
+  startLongTaskCollection(lifeCycle, configuration, sessionManager)
   return {
     stop: () => {
       rumEventCollectionStop()

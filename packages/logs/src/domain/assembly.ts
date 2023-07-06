@@ -14,9 +14,7 @@ import type { CommonContext } from '../rawLogsEvent.types'
 import type { LogsConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
-import type { Logger } from './logger'
-import { STATUSES, HandlerType } from './logger'
-import { isAuthorized } from './logsCollection/logger/loggerCollection'
+import { STATUSES } from './logger'
 import type { LogsSessionManager } from './logsSessionManager'
 
 export function startLogsAssembly(
@@ -24,7 +22,6 @@ export function startLogsAssembly(
   configuration: LogsConfiguration,
   lifeCycle: LifeCycle,
   buildCommonContext: () => CommonContext,
-  mainLogger: Logger, // Todo: [RUMF-1230] Remove this parameter in the next major release
   reportError: (error: RawError) => void
 ) {
   const statusWithCustom = (STATUSES as string[]).concat(['custom'])
@@ -35,7 +32,7 @@ export function startLogsAssembly(
 
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_LOG_COLLECTED,
-    ({ rawLogsEvent, messageContext = undefined, savedCommonContext = undefined, logger = mainLogger }) => {
+    ({ rawLogsEvent, messageContext = undefined, savedCommonContext = undefined }) => {
       const startTime = getRelativeTime(rawLogsEvent.date)
       const session = sessionManager.findTrackedSession(startTime)
 
@@ -55,15 +52,12 @@ export function startLogsAssembly(
         commonContext.context,
         getRUMInternalContext(startTime),
         rawLogsEvent,
-        logger.getContext(),
         messageContext
       )
 
       if (
-        // Todo: [RUMF-1230] Move this check to the logger collection in the next major release
-        !isAuthorized(rawLogsEvent.status, HandlerType.http, logger) ||
         configuration.beforeSend?.(log) === false ||
-        (log.error?.origin !== ErrorSource.AGENT &&
+        (log.origin !== ErrorSource.AGENT &&
           (logRateLimiters[log.status] ?? logRateLimiters['custom']).isLimitReached())
       ) {
         return

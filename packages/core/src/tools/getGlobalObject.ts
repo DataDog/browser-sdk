@@ -2,7 +2,7 @@
  * inspired by https://mathiasbynens.be/notes/globalthis
  */
 
-export function getGlobalObject<T>(): T {
+export function getGlobalObject<T = typeof globalThis>(): T {
   if (typeof globalThis === 'object') {
     return globalThis as unknown as T
   }

@@ -1,5 +1,6 @@
 import { isIE } from '../utils/browserDetection'
 import { display } from '../display'
+import { createNewEvent } from '../../../test'
 import { sanitize } from './sanitize'
 
 describe('sanitize', () => {
@@ -72,13 +73,7 @@ describe('sanitize', () => {
     })
 
     it('should serialize events', () => {
-      let event: CustomEvent
-      if (isIE()) {
-        event = document.createEvent('CustomEvent')
-        event.initCustomEvent('MyEvent', false, false, {})
-      } else {
-        event = new CustomEvent('MyEvent')
-      }
+      const event = createNewEvent('click')
 
       expect(sanitize(event)).toEqual({
         isTrusted: false,

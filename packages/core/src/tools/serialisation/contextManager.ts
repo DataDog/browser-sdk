@@ -5,7 +5,7 @@ import { jsonStringify } from './jsonStringify'
 import { sanitize } from './sanitize'
 import { warnIfCustomerDataLimitReached } from './heavyCustomerDataWarning'
 import type { CustomerDataType } from './heavyCustomerDataWarning'
-import type { Context, ContextValue } from './context'
+import type { Context } from './context'
 
 export const BYTES_COMPUTATION_THROTTLING_DELAY = 200
 
@@ -27,26 +27,6 @@ export function createContextManager(customerDataType: CustomerDataType, compute
 
   return {
     getBytesCount: () => bytesCountCache,
-    /** @deprecated use getContext instead */
-    get: () => context,
-
-    /** @deprecated use setContextProperty instead */
-    add: (key: string, value: any) => {
-      context[key] = value as ContextValue
-      computeBytesCountThrottled(context)
-    },
-
-    /** @deprecated renamed to removeContextProperty */
-    remove: (key: string) => {
-      delete context[key]
-      computeBytesCountThrottled(context)
-    },
-
-    /** @deprecated use setContext instead */
-    set: (newContext: object) => {
-      context = newContext as Context
-      computeBytesCountThrottled(context)
-    },
 
     getContext: () => deepClone(context),
 

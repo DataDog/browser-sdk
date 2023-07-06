@@ -1,5 +1,6 @@
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { RumInitConfiguration } from '@datadog/browser-rum-core'
+import { DefaultPrivacyLevel } from '@datadog/browser-rum'
 import { getRunId } from '../../../envUtils'
 import { deleteAllCookies, getBrowserName, withBrowserLogs } from '../helpers/browser'
 import { APPLICATION_ID, CLIENT_TOKEN } from '../helpers/constants'
@@ -18,6 +19,7 @@ const DEFAULT_RUM_CONFIGURATION = {
   applicationId: APPLICATION_ID,
   clientToken: CLIENT_TOKEN,
   sessionReplaySampleRate: 100,
+  defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
   trackResources: true,
   trackLongTasks: true,
   telemetrySampleRate: 100,

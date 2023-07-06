@@ -160,7 +160,7 @@ describe('startSessionManager', () => {
       expectSessionIdToNotBeDefined(sessionManager)
       expectTrackingTypeToNotBeDefined(sessionManager, FIRST_PRODUCT_KEY)
 
-      document.dispatchEvent(new CustomEvent('click'))
+      document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
 
       expect(renewSessionSpy).toHaveBeenCalled()
       expectSessionIdToBeDefined(sessionManager)
@@ -196,7 +196,7 @@ describe('startSessionManager', () => {
       startSessionManager(STORE_TYPE, FIRST_PRODUCT_KEY, () => TRACKED_SESSION_STATE)
 
       // schedule an expandOrRenewSession
-      document.dispatchEvent(new CustomEvent('click'))
+      document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
 
       clock.tick(STORAGE_POLL_DELAY / 2)
 
@@ -244,7 +244,7 @@ describe('startSessionManager', () => {
       expect(renewSessionASpy).not.toHaveBeenCalled()
       expect(renewSessionBSpy).not.toHaveBeenCalled()
 
-      document.dispatchEvent(new CustomEvent('click'))
+      document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
 
       expect(renewSessionASpy).toHaveBeenCalled()
       expect(renewSessionBSpy).toHaveBeenCalled()
@@ -317,7 +317,7 @@ describe('startSessionManager', () => {
       expectSessionIdToBeDefined(sessionManager)
 
       clock.tick(SESSION_EXPIRATION_DELAY - 10)
-      document.dispatchEvent(new CustomEvent('click'))
+      document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
 
       clock.tick(10)
       expectSessionIdToBeDefined(sessionManager)
@@ -336,7 +336,7 @@ describe('startSessionManager', () => {
       expectTrackingTypeToBe(sessionManager, FIRST_PRODUCT_KEY, FakeTrackingType.NOT_TRACKED)
 
       clock.tick(SESSION_EXPIRATION_DELAY - 10)
-      document.dispatchEvent(new CustomEvent('click'))
+      document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
 
       clock.tick(10)
       expectTrackingTypeToBe(sessionManager, FIRST_PRODUCT_KEY, FakeTrackingType.NOT_TRACKED)
@@ -432,7 +432,7 @@ describe('startSessionManager', () => {
 
       sessionManager.expire()
 
-      document.dispatchEvent(new CustomEvent('click'))
+      document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
 
       expectSessionIdToBeDefined(sessionManager)
     })
@@ -466,7 +466,7 @@ describe('startSessionManager', () => {
       clock.tick(10 * ONE_SECOND)
 
       // 20s to end: second session
-      document.dispatchEvent(new CustomEvent('click'))
+      document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
       clock.tick(10 * ONE_SECOND)
       const secondSessionId = sessionManager.findActiveSession()!.id
       const secondSessionTrackingType = sessionManager.findActiveSession()!.trackingType
