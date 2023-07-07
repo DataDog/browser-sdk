@@ -81,7 +81,14 @@ function tryToParseMessage(messageObj: unknown) {
     try {
       ;[, name, message] = ERROR_TYPES_RE.exec(messageObj as string)!
     } catch (error) {
-      throw new Error(`Tracekit try parse error: ${String(error)} ${jsonStringify({ messageObj })!}`)
+      throw new Error(
+        `Tracekit try parse error: ${String(error)} ${jsonStringify({
+          messageObj,
+          // eslint-disable-next-line @typescript-eslint/unbound-method
+          exec: String(RegExp.prototype.exec),
+          ERROR_TYPES_RE,
+        })!}`
+      )
     }
   }
   return { name, message }
