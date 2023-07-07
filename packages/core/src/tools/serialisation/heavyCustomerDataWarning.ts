@@ -16,9 +16,9 @@ export const enum CustomerDataType {
 export function warnIfCustomerDataLimitReached(bytesCount: number, customerDataType: CustomerDataType): boolean {
   if (bytesCount > CUSTOMER_DATA_BYTES_LIMIT) {
     display.warn(
-      `The ${customerDataType} data is over ${
+      `The ${customerDataType} data exceeds the recommended ${
         CUSTOMER_DATA_BYTES_LIMIT / ONE_KIBI_BYTE
-      }KiB. On low connectivity, the SDK has the potential to exhaust the user's upload bandwidth.`
+      }KiB threshold. More details: https://docs.datadoghq.com/real_user_monitoring/browser/troubleshooting/#customer-data-exceeds-the-recommended-3kib-warning`
     )
     return true
   }
