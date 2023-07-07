@@ -2,6 +2,13 @@ import { setTimeout } from './timer'
 import { callMonitored } from './monitor'
 import { noop } from './utils/functionUtils'
 
+/**
+ * Instrument an object method.
+ *
+ * This function works best when the method is an "own property" of the provided object, as it is
+ * able to check whether the method si actually writable before overriding it. When a method is
+ * declared on an instance prototype, prefer instrumenting the prototype rather than the instance.
+ */
 export function instrumentMethod<OBJECT extends { [key: string]: any }, METHOD extends keyof OBJECT>(
   object: OBJECT,
   method: METHOD,
@@ -9,6 +16,11 @@ export function instrumentMethod<OBJECT extends { [key: string]: any }, METHOD e
     original: OBJECT[METHOD]
   ) => (this: OBJECT, ...args: Parameters<OBJECT[METHOD]>) => ReturnType<OBJECT[METHOD]>
 ) {
+  const originalDescriptor = Object.getOwnPropertyDescriptor(object, method)
+  if (originalDescriptor && originalDescriptor.writable === false) {
+    return { stop: noop }
+  }
+
   const original = object[method]
 
   let instrumentation = instrumentationFactory(original)

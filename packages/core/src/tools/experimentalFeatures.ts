@@ -14,9 +14,7 @@ export enum ExperimentalFeature {
   PAGEHIDE = 'pagehide',
   FEATURE_FLAGS = 'feature_flags',
   RESOURCE_PAGE_STATES = 'resource_page_states',
-  PAGE_STATES = 'page_states',
   COLLECT_FLUSH_REASON = 'collect_flush_reason',
-  NO_RESOURCE_DURATION_FROZEN_STATE = 'no_resource_duration_frozen_state',
   SCROLLMAP = 'scrollmap',
 }
 

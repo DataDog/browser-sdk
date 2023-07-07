@@ -7,9 +7,10 @@ import {
   setCookie,
   stopSessionManager,
   ONE_SECOND,
+  DOM_EVENT,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock } from '@datadog/browser-core/test'
+import { createNewEvent, mockClock } from '@datadog/browser-core/test'
 import type { RumConfiguration } from './configuration'
 import { validateAndBuildRumConfiguration } from './configuration'
 
@@ -134,7 +135,7 @@ describe('rum session manager', () => {
       clock.tick(STORAGE_POLL_DELAY)
 
       setupDraws({ tracked: true, trackedWithSessionReplay: true })
-      document.dispatchEvent(new CustomEvent('click'))
+      document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
 
       expect(expireSessionSpy).toHaveBeenCalled()
       expect(renewSessionSpy).toHaveBeenCalled()
@@ -192,170 +193,31 @@ describe('rum session manager', () => {
     ;[
       {
         description:
-          'WITH_SESSION_REPLAY plan without trackResources/LongTasks should have replay, no resources and no long tasks',
-        trackedWithSessionReplay: true,
-        oldPlansBehavior: false,
-        trackResources: undefined,
-        trackLongTasks: undefined,
-        expectSessionReplay: true,
-        expectResources: false,
-        expectLongTasks: false,
-      },
-      {
-        description:
-          'WITHOUT_SESSION_REPLAY plan without trackResources/LongTasks should have no replay, no resources and no long tasks',
-        trackedWithSessionReplay: false,
-        oldPlansBehavior: false,
-        trackResources: undefined,
-        trackLongTasks: undefined,
-        expectSessionReplay: false,
-        expectResources: false,
-        expectLongTasks: false,
-      },
-      {
-        description:
           'WITH_SESSION_REPLAY plan with trackResources/LongTasks=false should have replay, no resources and no long tasks',
         trackedWithSessionReplay: true,
-        oldPlansBehavior: false,
-        trackResources: false,
-        trackLongTasks: false,
         expectSessionReplay: true,
-        expectResources: false,
-        expectLongTasks: false,
       },
       {
         description:
           'WITHOUT_SESSION_REPLAY plan with trackResources/LongTasks=false should have no replay, no resources and no long tasks',
         trackedWithSessionReplay: false,
-        oldPlansBehavior: false,
-        trackResources: false,
-        trackLongTasks: false,
         expectSessionReplay: false,
-        expectResources: false,
-        expectLongTasks: false,
-      },
-      {
-        description:
-          'WITH_SESSION_REPLAY plan with trackResources/LongTasks=true should have replay, resources and long tasks',
-        trackedWithSessionReplay: true,
-        oldPlansBehavior: true,
-        trackResources: true,
-        trackLongTasks: true,
-        expectSessionReplay: true,
-        expectResources: true,
-        expectLongTasks: true,
-      },
-      {
-        description:
-          'WITHOUT_SESSION_REPLAY plan with trackResources/LongTasks=true should have no replay, resources and long tasks',
-        trackedWithSessionReplay: false,
-        oldPlansBehavior: false,
-        trackResources: true,
-        trackLongTasks: true,
-        expectSessionReplay: false,
-        expectResources: true,
-        expectLongTasks: true,
-      },
-      {
-        description:
-          'old WITH_SESSION_REPLAY plan without trackResources/LongTasks should have replay, resources and long tasks',
-        trackedWithSessionReplay: true,
-        oldPlansBehavior: true,
-        trackResources: undefined,
-        trackLongTasks: undefined,
-        expectSessionReplay: true,
-        expectResources: true,
-        expectLongTasks: true,
-      },
-      {
-        description:
-          'old WITHOUT_SESSION_REPLAY plan without trackResources/LongTasks should have no replay, no resources and no long tasks',
-        trackedWithSessionReplay: false,
-        oldPlansBehavior: true,
-        trackResources: undefined,
-        trackLongTasks: undefined,
-        expectSessionReplay: false,
-        expectResources: false,
-        expectLongTasks: false,
-      },
-      {
-        description:
-          'old WITH_SESSION_REPLAY plan with trackResources/LongTasks=false should have replay, no resources and no long tasks',
-        trackedWithSessionReplay: true,
-        oldPlansBehavior: true,
-        trackResources: false,
-        trackLongTasks: false,
-        expectSessionReplay: true,
-        expectResources: false,
-        expectLongTasks: false,
-      },
-      {
-        description:
-          'old WITHOUT_SESSION_REPLAY plan with trackResources/LongTasks=false should have no replay, no resources and no long tasks',
-        trackedWithSessionReplay: false,
-        oldPlansBehavior: true,
-        trackResources: false,
-        trackLongTasks: false,
-        expectSessionReplay: false,
-        expectResources: false,
-        expectLongTasks: false,
-      },
-      {
-        description:
-          'old WITH_SESSION_REPLAY plan with trackResources/LongTasks=true should have replay, resources and long tasks',
-        trackedWithSessionReplay: true,
-        oldPlansBehavior: true,
-        trackResources: true,
-        trackLongTasks: true,
-        expectSessionReplay: true,
-        expectResources: true,
-        expectLongTasks: true,
-      },
-      {
-        description:
-          'old WITHOUT_SESSION_REPLAY plan with trackResources/LongTasks=true should have no replay, resources and long tasks',
-        trackedWithSessionReplay: false,
-        oldPlansBehavior: true,
-        trackResources: true,
-        trackLongTasks: true,
-        expectSessionReplay: false,
-        expectResources: true,
-        expectLongTasks: true,
       },
     ].forEach(
       ({
         description,
         trackedWithSessionReplay,
-        oldPlansBehavior,
-        trackResources,
-        trackLongTasks,
         expectSessionReplay,
-        expectResources,
-        expectLongTasks,
       }: {
         description: string
         trackedWithSessionReplay: boolean
-        oldPlansBehavior: boolean
-        trackResources: boolean | undefined
-        trackLongTasks: boolean | undefined
         expectSessionReplay: boolean
-        expectResources: boolean
-        expectLongTasks: boolean
       }) => {
         it(description, () => {
-          configuration = {
-            ...configuration,
-            trackResources,
-            trackLongTasks,
-            oldPlansBehavior,
-          }
-
           setupDraws({ tracked: true, trackedWithSessionReplay })
 
           const rumSessionManager = startRumSessionManager(configuration, lifeCycle)
           expect(rumSessionManager.findTrackedSession()!.sessionReplayAllowed).toBe(expectSessionReplay)
-          expect(rumSessionManager.findTrackedSession()!.resourceAllowed).toBe(expectResources)
-          expect(rumSessionManager.findTrackedSession()!.longTaskAllowed).toBe(expectLongTasks)
         })
       }
     )

@@ -113,14 +113,14 @@ export function formatErrorMessage(stack: StackTrace) {
  - Has to be called at the utmost position of the call stack.
  - No monitored function should encapsulate it, that is why we need to use callMonitored inside it.
  */
-export function createHandlingStack(): string {
+export function createHandlingStack(extraFramesToSkip = 0): string {
   /**
    * Skip the two internal frames:
    * - SDK API (console.error, ...)
    * - this function
    * in order to keep only the user calls
    */
-  const internalFramesToSkip = 2
+  const internalFramesToSkip = 2 + extraFramesToSkip
   const error = new Error()
   let formattedStack: string
 

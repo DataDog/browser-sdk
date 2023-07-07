@@ -1,6 +1,5 @@
 import type { ViewportResizeData, ScrollData } from '@datadog/browser-rum/cjs/types'
 import { IncrementalSource } from '@datadog/browser-rum/cjs/types'
-import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 
 import { findAllIncrementalSnapshots, findAllVisualViewports } from '@datadog/browser-rum/test'
 import type { EventRegistry } from '../../lib/framework'
@@ -26,7 +25,6 @@ describe('recorder', () => {
   describe('layout viewport properties', () => {
     createTest('getWindowWidth/Height should not be affected by pinch zoom')
       .withRum()
-      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
       .run(async ({ serverEvents }) => {
@@ -57,7 +55,6 @@ describe('recorder', () => {
      */
     createTest('getScrollX/Y should not be affected by pinch scroll')
       .withRum()
-      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
       .run(async ({ serverEvents }) => {
@@ -99,7 +96,6 @@ describe('recorder', () => {
   describe('visual viewport properties', () => {
     createTest('pinch zoom "scroll" event reports visual viewport position')
       .withRum()
-      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
       .run(async ({ serverEvents }) => {
@@ -114,7 +110,6 @@ describe('recorder', () => {
 
     createTest('pinch zoom "resize" event reports visual viewport scale')
       .withRum()
-      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
       .run(async ({ serverEvents }) => {
@@ -128,11 +123,6 @@ describe('recorder', () => {
 
 function getLastSegment(serverEvents: EventRegistry) {
   return serverEvents.sessionReplay[serverEvents.sessionReplay.length - 1].segment.data
-}
-
-function initRumAndStartRecording(initConfiguration: RumInitConfiguration) {
-  window.DD_RUM!.init(initConfiguration)
-  window.DD_RUM!.startSessionReplayRecording()
 }
 
 const isGestureUnsupported = () =>

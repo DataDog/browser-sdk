@@ -213,9 +213,9 @@ describe('logs entry', () => {
       })
 
       it('stores a deep copy of the global context', () => {
-        LOGS.addLoggerGlobalContext('foo', 'bar')
+        LOGS.setGlobalContextProperty('foo', 'bar')
         LOGS.logger.log('message')
-        LOGS.addLoggerGlobalContext('foo', 'baz')
+        LOGS.setGlobalContextProperty('foo', 'baz')
 
         LOGS.init(DEFAULT_INIT_CONFIGURATION)
 
@@ -322,7 +322,7 @@ describe('logs entry', () => {
         LOGS = makeLogsPublicApi(startLogs)
       })
 
-      it('should return undefined if not initalized', () => {
+      it('should return undefined if not initialized', () => {
         expect(LOGS.getInternalContext()).toBeUndefined()
       })
 

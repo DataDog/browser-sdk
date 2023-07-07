@@ -6,6 +6,7 @@ import { callMonitored } from '../../tools/monitor'
 import { sanitize } from '../../tools/serialisation/sanitize'
 import { find } from '../../tools/utils/polyfills'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
+import { instrumentMethod } from '../../tools/instrumentMethod'
 
 export interface ConsoleLog {
   message: string
@@ -34,28 +35,28 @@ export function resetConsoleObservable() {
 
 function createConsoleObservable(api: ConsoleApiName) {
   const observable = new Observable<ConsoleLog>(() => {
-    const originalConsoleApi = globalConsole[api]
+    const { stop: stopInstrumentingConsoleApi } = instrumentMethod(
+      globalConsole,
+      api,
+      (originalConsoleApi) =>
+        (...params: unknown[]) => {
+          originalConsoleApi.apply(console, params)
+          const handlingStack = createHandlingStack(1)
 
-    globalConsole[api] = (...params: unknown[]) => {
-      originalConsoleApi.apply(console, params)
-      const handlingStack = createHandlingStack()
+          callMonitored(() => {
+            observable.notify(buildConsoleLog(params, api, handlingStack))
+          })
+        }
+    )
 
-      callMonitored(() => {
-        observable.notify(buildConsoleLog(params, api, handlingStack))
-      })
-    }
-
-    return () => {
-      globalConsole[api] = originalConsoleApi
-    }
+    return stopInstrumentingConsoleApi
   })
 
   return observable
 }
 
 function buildConsoleLog(params: unknown[], api: ConsoleApiName, handlingStack: string): ConsoleLog {
-  // Todo: remove console error prefix in the next major version
-  let message = params.map((param) => formatConsoleParameters(param)).join(' ')
+  const message = params.map((param) => formatConsoleParameters(param)).join(' ')
   let stack
   let fingerprint
 
@@ -63,7 +64,6 @@ function buildConsoleLog(params: unknown[], api: ConsoleApiName, handlingStack: 
     const firstErrorParam = find(params, (param: unknown): param is Error => param instanceof Error)
     stack = firstErrorParam ? toStackTraceString(computeStackTrace(firstErrorParam)) : undefined
     fingerprint = tryToGetFingerprint(firstErrorParam)
-    message = `console error: ${message}`
   }
 
   return {
