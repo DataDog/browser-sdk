@@ -667,7 +667,7 @@ describe('rum assembly', () => {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
       })
       expect(serverRumEvents[0]._dd.configuration).toEqual({
-        session_replay_sample_rate: 100,
+        session_replay_sample_rate: 0,
         session_sample_rate: 100,
       })
     })
