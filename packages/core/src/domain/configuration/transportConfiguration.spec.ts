@@ -63,25 +63,19 @@ describe('transportConfiguration', () => {
 
   describe('isIntakeUrl', () => {
     ;[
-      { expectSubdomain: true, site: 'datadoghq.eu', intakeDomain: 'browser-intake-datadoghq.eu' },
-      { expectSubdomain: true, site: 'datadoghq.com', intakeDomain: 'browser-intake-datadoghq.com' },
-      { expectSubdomain: true, site: 'us3.datadoghq.com', intakeDomain: 'browser-intake-us3-datadoghq.com' },
-      { expectSubdomain: true, site: 'us5.datadoghq.com', intakeDomain: 'browser-intake-us5-datadoghq.com' },
-      { expectSubdomain: true, site: 'ddog-gov.com', intakeDomain: 'browser-intake-ddog-gov.com' },
-      { expectSubdomain: false, site: 'ap1.datadoghq.com', intakeDomain: 'browser-intake-ap1-datadoghq.com' },
-    ].forEach(({ site, intakeDomain, expectSubdomain }) => {
+      { site: 'datadoghq.eu', intakeDomain: 'browser-intake-datadoghq.eu' },
+      { site: 'datadoghq.com', intakeDomain: 'browser-intake-datadoghq.com' },
+      { site: 'us3.datadoghq.com', intakeDomain: 'browser-intake-us3-datadoghq.com' },
+      { site: 'us5.datadoghq.com', intakeDomain: 'browser-intake-us5-datadoghq.com' },
+      { site: 'ddog-gov.com', intakeDomain: 'browser-intake-ddog-gov.com' },
+      { site: 'ap1.datadoghq.com', intakeDomain: 'browser-intake-ap1-datadoghq.com' },
+    ].forEach(({ site, intakeDomain }) => {
       it(`should detect intake request for ${site} site`, () => {
         const configuration = computeTransportConfiguration({ clientToken, site })
 
-        expect(configuration.isIntakeUrl(`https://rum.${intakeDomain}/api/v2/rum?xxx`)).toBe(expectSubdomain)
-        expect(configuration.isIntakeUrl(`https://logs.${intakeDomain}/api/v2/logs?xxx`)).toBe(expectSubdomain)
-        expect(configuration.isIntakeUrl(`https://session-replay.${intakeDomain}/api/v2/replay?xxx`)).toBe(
-          expectSubdomain
-        )
-
-        expect(configuration.isIntakeUrl(`https://${intakeDomain}/api/v2/rum?xxx`)).toBe(!expectSubdomain)
-        expect(configuration.isIntakeUrl(`https://${intakeDomain}/api/v2/logs?xxx`)).toBe(!expectSubdomain)
-        expect(configuration.isIntakeUrl(`https://${intakeDomain}/api/v2/replay?xxx`)).toBe(!expectSubdomain)
+        expect(configuration.isIntakeUrl(`https://${intakeDomain}/api/v2/rum?xxx`)).toBe(true)
+        expect(configuration.isIntakeUrl(`https://${intakeDomain}/api/v2/logs?xxx`)).toBe(true)
+        expect(configuration.isIntakeUrl(`https://${intakeDomain}/api/v2/replay?xxx`)).toBe(true)
       })
     })
 

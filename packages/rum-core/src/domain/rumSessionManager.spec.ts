@@ -7,9 +7,10 @@ import {
   setCookie,
   stopSessionManager,
   ONE_SECOND,
+  DOM_EVENT,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock } from '@datadog/browser-core/test'
+import { createNewEvent, mockClock } from '@datadog/browser-core/test'
 import type { RumConfiguration } from './configuration'
 import { validateAndBuildRumConfiguration } from './configuration'
 
@@ -134,7 +135,7 @@ describe('rum session manager', () => {
       clock.tick(STORAGE_POLL_DELAY)
 
       setupDraws({ tracked: true, trackedWithSessionReplay: true })
-      document.dispatchEvent(new CustomEvent('click'))
+      document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
 
       expect(expireSessionSpy).toHaveBeenCalled()
       expect(renewSessionSpy).toHaveBeenCalled()

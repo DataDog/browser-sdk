@@ -1,21 +1,14 @@
-import type {
-  ReportType,
-  BrowserWindow,
-  Report,
-  ReportingObserverConstructor,
-  ReportingObserverOption,
-} from '../../src/domain/report/browser.types'
+import type { InterventionReport, ReportType } from '../../src/domain/report/browser.types'
 import { noop } from '../../src/tools/utils/functionUtils'
+import { createNewEvent } from './createNewEvent'
 
 export function stubReportingObserver() {
-  const originalReportingObserver = (window as BrowserWindow).ReportingObserver
-  let callbacks: { [k in ReportType]?: Array<(reports: Report[]) => void> } = {}
+  const originalReportingObserver = window.ReportingObserver
+  let callbacks: { [k: string]: ReportingObserverCallback[] } = {}
+  let reportingObserver: ReportingObserver
 
-  ;(window as BrowserWindow).ReportingObserver = function (
-    callback: (reports: Report[]) => void,
-    { types }: ReportingObserverOption
-  ) {
-    types.forEach((type) => {
+  window.ReportingObserver = function (callback: ReportingObserverCallback, { types }: ReportingObserverOptions) {
+    types?.forEach((type) => {
       if (!callbacks[type]) {
         callbacks[type] = []
       }
@@ -23,7 +16,7 @@ export function stubReportingObserver() {
       callbacks[type]?.push(callback)
     })
 
-    return {
+    reportingObserver = {
       disconnect() {
         noop()
       },
@@ -34,16 +27,17 @@ export function stubReportingObserver() {
         return []
       },
     }
-  } as unknown as ReportingObserverConstructor
+    return reportingObserver
+  } as unknown as typeof originalReportingObserver
 
   return {
     raiseReport(type: ReportType) {
       if (callbacks[type]) {
-        callbacks[type]!.forEach((callback) => callback([{ ...FAKE_REPORT, type }]))
+        callbacks[type].forEach((callback) => callback([{ ...FAKE_REPORT, type }], reportingObserver))
       }
     },
     reset() {
-      ;(window as BrowserWindow).ReportingObserver = originalReportingObserver
+      window.ReportingObserver = originalReportingObserver
       callbacks = {}
     },
   }
@@ -63,7 +57,7 @@ export function stubCspEventListener() {
   }
 }
 
-export const FAKE_CSP_VIOLATION_EVENT = {
+export const FAKE_CSP_VIOLATION_EVENT = createNewEvent('securitypolicyviolation', {
   blockedURI: 'blob',
   columnNumber: 8,
   documentURI: 'blob',
@@ -74,9 +68,9 @@ export const FAKE_CSP_VIOLATION_EVENT = {
   sourceFile: 'http://foo.bar/index.js',
   statusCode: 200,
   violatedDirective: 'worker-src',
-} as SecurityPolicyViolationEvent
+})
 
-export const FAKE_REPORT: Report = {
+export const FAKE_REPORT: InterventionReport = {
   type: 'intervention',
   url: 'http://foo.bar',
   body: {
@@ -85,5 +79,7 @@ export const FAKE_REPORT: Report = {
     lineNumber: 20,
     message: 'foo bar',
     sourceFile: 'http://foo.bar/index.js',
+    toJSON: noop,
   },
+  toJSON: noop,
 }

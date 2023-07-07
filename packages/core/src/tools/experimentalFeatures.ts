@@ -14,8 +14,8 @@ export enum ExperimentalFeature {
   PAGEHIDE = 'pagehide',
   FEATURE_FLAGS = 'feature_flags',
   RESOURCE_PAGE_STATES = 'resource_page_states',
-  PAGE_STATES = 'page_states',
   COLLECT_FLUSH_REASON = 'collect_flush_reason',
+  SCROLLMAP = 'scrollmap',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()

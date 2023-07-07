@@ -3,8 +3,8 @@ import type { Subscription } from '../../tools/observable'
 import { initReportObservable, RawReportType } from './reportObservable'
 
 describe('report observable', () => {
-  let reportingObserverStub: { reset(): void; raiseReport(type: string): void }
-  let cspEventListenerStub: { dispatchEvent(): void }
+  let reportingObserverStub: ReturnType<typeof stubReportingObserver>
+  let cspEventListenerStub: ReturnType<typeof stubCspEventListener>
   let consoleSubscription: Subscription
   let notifyReport: jasmine.Spy
 

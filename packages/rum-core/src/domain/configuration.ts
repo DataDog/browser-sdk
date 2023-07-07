@@ -19,7 +19,7 @@ import type { PropagatorType, TracingOption } from './tracing/tracer.types'
 export interface RumInitConfiguration extends InitConfiguration {
   // global options
   applicationId: string
-  beforeSend?: ((event: RumEvent, context: RumEventDomainContext) => void | boolean) | undefined
+  beforeSend?: ((event: RumEvent, context: RumEventDomainContext) => boolean) | undefined
   excludedActivityUrls?: MatchOption[] | undefined
 
   // tracing options

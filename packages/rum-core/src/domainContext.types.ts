@@ -29,16 +29,16 @@ export interface RumFetchResourceEventDomainContext {
   requestInput: RequestInfo
   response?: Response
   error?: Error
-  performanceEntry?: PerformanceEntryRepresentation
+  performanceEntry?: PerformanceEntry
 }
 
 export interface RumXhrResourceEventDomainContext {
   xhr: XMLHttpRequest
-  performanceEntry?: PerformanceEntryRepresentation
+  performanceEntry?: PerformanceEntry
 }
 
 export interface RumOtherResourceEventDomainContext {
-  performanceEntry: PerformanceEntryRepresentation
+  performanceEntry: PerformanceEntry
 }
 
 export interface RumErrorEventDomainContext {
@@ -46,12 +46,5 @@ export interface RumErrorEventDomainContext {
 }
 
 export interface RumLongTaskEventDomainContext {
-  performanceEntry: PerformanceEntryRepresentation
+  performanceEntry: PerformanceEntry
 }
-
-/**
- * Symbolizes the type of the value returned by performanceEntry.toJSON(). Can also be built
- * manually to represent other kind of performance entries (ex: initial_document) or polyfilled
- * based on `performance.timing`.
- */
-export type PerformanceEntryRepresentation = Omit<PerformanceEntry, 'toJSON'>

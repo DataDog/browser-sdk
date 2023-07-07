@@ -7,6 +7,7 @@ import { LifeCycleEventType } from '../../lifeCycle'
 import { startLongTaskCollection } from './longTaskCollection'
 
 const LONG_TASK: RumPerformanceLongTaskTiming = {
+  name: 'self',
   duration: 100 as Duration,
   entryType: 'longtask',
   startTime: 1234 as RelativeTime,
@@ -79,7 +80,13 @@ describe('long task collection', () => {
       },
     })
     expect(rawRumEvents[0].domainContext).toEqual({
-      performanceEntry: { name: 'self', duration: 100, entryType: 'longtask', startTime: 1234 },
+      performanceEntry: {
+        name: 'self',
+        duration: 100,
+        entryType: 'longtask',
+        startTime: 1234,
+        toJSON: jasmine.any(Function),
+      },
     })
   })
 })

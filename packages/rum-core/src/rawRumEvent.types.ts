@@ -7,6 +7,7 @@ import type {
   ServerDuration,
   TimeStamp,
   RawErrorCause,
+  DefaultPrivacyLevel,
 } from '@datadog/browser-core'
 import type { PageState } from './domain/contexts/pageStateHistory'
 
@@ -99,13 +100,16 @@ export interface RawRumViewEvent {
     long_task: Count
     resource: Count
     frustration: Count
-    in_foreground_periods?: InForegroundPeriod[]
   }
   session: {
     has_replay: true | undefined
     is_active: false | undefined
   }
   feature_flags?: Context
+  display?: ViewDisplay
+  privacy?: {
+    replay_level: DefaultPrivacyLevel
+  }
   _dd: {
     document_version: number
     replay_stats?: ReplayStats
@@ -113,9 +117,13 @@ export interface RawRumViewEvent {
   }
 }
 
-export interface InForegroundPeriod {
-  start: ServerDuration
-  duration: ServerDuration
+interface ViewDisplay {
+  scroll: {
+    max_depth?: number
+    max_depth_scroll_height?: number
+    max_depth_scroll_top?: number
+    max_depth_time?: ServerDuration
+  }
 }
 
 export type PageStateServerEntry = { state: PageState; start: ServerDuration }

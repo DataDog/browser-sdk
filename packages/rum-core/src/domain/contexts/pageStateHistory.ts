@@ -29,6 +29,7 @@ export type PageStateEntry = { state: PageState; startTime: RelativeTime }
 
 export interface PageStateHistory {
   findAll: (startTime: RelativeTime, duration: Duration) => PageStateServerEntry[] | undefined
+  isInActivePageStateAt: (startTime: RelativeTime) => boolean
   addPageState(nextPageState: PageState, startTime?: RelativeTime): void
   stop: () => void
 }
@@ -53,11 +54,7 @@ export function startPageStateHistory(
       DOM_EVENT.PAGE_HIDE,
     ],
     (event) => {
-      // Only get events fired by the browser to avoid false currentPageState changes done with custom events
-      // cf: developer extension auto flush: https://github.com/DataDog/browser-sdk/blob/2f72bf05a672794c9e33965351964382a94c72ba/developer-extension/src/panel/flushEvents.ts#L11-L12
-      if (event.isTrusted) {
-        addPageState(computePageState(event), event.timeStamp as RelativeTime)
-      }
+      addPageState(computePageState(event), event.timeStamp as RelativeTime)
     },
     { capture: true }
   )
@@ -97,6 +94,10 @@ export function startPageStateHistory(
       }
 
       return pageStateServerEntries
+    },
+    isInActivePageStateAt: (startTime: RelativeTime) => {
+      const pageStateEntry = pageStateHistory.find(startTime)
+      return pageStateEntry !== undefined && pageStateEntry.state === PageState.ACTIVE
     },
     addPageState,
     stop: () => {

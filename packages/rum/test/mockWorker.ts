@@ -1,3 +1,4 @@
+import { createNewEvent } from '../../core/test'
 import type { DeflateWorker, DeflateWorkerAction, DeflateWorkerListener } from '../src/domain/segmentCollection'
 
 export class MockWorker implements DeflateWorker {
@@ -64,25 +65,29 @@ export class MockWorker implements DeflateWorker {
       switch (message.action) {
         case 'init':
           this.listeners.message.forEach((listener) =>
-            listener({
-              data: {
-                type: 'initialized',
-              },
-            })
+            listener(
+              createNewEvent('message', {
+                data: {
+                  type: 'initialized',
+                },
+              })
+            )
           )
           break
         case 'write':
           {
             const additionalBytesCount = this.pushData(message.data)
             this.listeners.message.forEach((listener) =>
-              listener({
-                data: {
-                  type: 'wrote',
-                  id: message.id,
-                  compressedBytesCount: uint8ArraysSize(this.deflatedData),
-                  additionalBytesCount,
-                },
-              })
+              listener(
+                createNewEvent('message', {
+                  data: {
+                    type: 'wrote',
+                    id: message.id,
+                    compressedBytesCount: uint8ArraysSize(this.deflatedData),
+                    additionalBytesCount,
+                  },
+                })
+              )
             )
           }
           break
@@ -90,15 +95,17 @@ export class MockWorker implements DeflateWorker {
           {
             const additionalBytesCount = this.pushData(message.data)
             this.listeners.message.forEach((listener) =>
-              listener({
-                data: {
-                  type: 'flushed',
-                  id: message.id,
-                  result: mergeUint8Arrays(this.deflatedData),
-                  rawBytesCount: this.rawBytesCount,
-                  additionalBytesCount,
-                },
-              })
+              listener(
+                createNewEvent('message', {
+                  data: {
+                    type: 'flushed',
+                    id: message.id,
+                    result: mergeUint8Arrays(this.deflatedData),
+                    rawBytesCount: this.rawBytesCount,
+                    additionalBytesCount,
+                  },
+                })
+              )
             )
             this.deflatedData.length = 0
             this.rawBytesCount = 0
@@ -109,12 +116,14 @@ export class MockWorker implements DeflateWorker {
   }
 
   dispatchErrorEvent() {
-    const error = new ErrorEvent('worker')
+    const error = createNewEvent('worker')
     this.listeners.error.forEach((listener) => listener(error))
   }
 
   dispatchErrorMessage(error: Error | string) {
-    this.listeners.message.forEach((listener) => listener({ data: { type: 'errored', error } }))
+    this.listeners.message.forEach((listener) =>
+      listener(createNewEvent('message', { data: { type: 'errored', error } }))
+    )
   }
 
   private pushData(data?: string) {

@@ -51,7 +51,7 @@ function startRumStub(
   pageStateHistory: PageStateHistory,
   reportError: (error: RawError) => void
 ) {
-  const { stop: rumEventCollectionStop, foregroundContexts } = startRumEventCollection(
+  const { stop: rumEventCollectionStop } = startRumEventCollection(
     lifeCycle,
     configuration,
     location,
@@ -71,7 +71,6 @@ function startRumStub(
     location,
     domMutationObservable,
     locationChangeObservable,
-    foregroundContexts,
     startFeatureFlagContexts(lifeCycle),
     pageStateHistory,
     noopRecorderApi

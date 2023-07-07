@@ -328,6 +328,38 @@ describe('rum assembly', () => {
         expect(displaySpy).toHaveBeenCalledWith("Can't dismiss view events using beforeSend!")
       })
     })
+
+    it('should not dismiss when true is returned', () => {
+      const { lifeCycle } = setupBuilder
+        .withConfiguration({
+          beforeSend: () => true,
+        })
+        .build()
+
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.ACTION, {
+          view: { id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' },
+        }),
+      })
+
+      expect(serverRumEvents.length).toBe(1)
+    })
+
+    it('should not dismiss when undefined is returned', () => {
+      const { lifeCycle } = setupBuilder
+        .withConfiguration({
+          beforeSend: () => undefined,
+        })
+        .build()
+
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.ACTION, {
+          view: { id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' },
+        }),
+      })
+
+      expect(serverRumEvents.length).toBe(1)
+    })
   })
 
   describe('rum context', () => {
