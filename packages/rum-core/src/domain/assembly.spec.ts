@@ -643,7 +643,7 @@ describe('rum assembly', () => {
     it('should round sample rates', () => {
       const { lifeCycle } = setupBuilder
         .withConfiguration({
-          sessionSampleRate: 1.2345,
+          sessionSampleRate: 1.2341,
           sessionReplaySampleRate: 6.7891,
         })
         .build()
