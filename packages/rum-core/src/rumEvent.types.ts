@@ -1088,6 +1088,20 @@ export interface CommonProperties {
       [k: string]: unknown
     }
     /**
+     * Subset of the SDK configuration options in use during its execution
+     */
+    readonly configuration?: {
+      /**
+       * The percentage of sessions tracked
+       */
+      readonly session_sample_rate: number
+      /**
+       * The percentage of sessions with RUM & Session Replay pricing tracked
+       */
+      readonly session_replay_sample_rate: number
+      [k: string]: unknown
+    }
+    /**
      * Browser SDK version
      */
     readonly browser_sdk_version?: string
