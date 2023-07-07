@@ -86,7 +86,7 @@ function tryToParseMessage(messageObj: unknown) {
           messageObj,
           // eslint-disable-next-line @typescript-eslint/unbound-method
           exec: String(RegExp.prototype.exec),
-          ERROR_TYPES_RE,
+          ERROR_TYPES_RE: String(ERROR_TYPES_RE),
         })!}`
       )
     }
