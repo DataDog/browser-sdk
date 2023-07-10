@@ -1,6 +1,6 @@
 import { addTelemetryError, display, includes, addEventListener } from '@datadog/browser-core'
-import type { DeflateWorker, DeflateWorkerResponse } from './deflateWorker'
-import { createDeflateWorker } from './deflateWorker'
+import type { DeflateWorkerAction, DeflateWorkerResponse } from '@datadog/browser-worker'
+import { workerString } from '@datadog/browser-worker/string'
 
 /**
  * In order to be sure that the worker is correctly working, we need a round trip of
@@ -29,6 +29,20 @@ type DeflateWorkerState =
       status: DeflateWorkerStatus.Initialized
       worker: DeflateWorker
     }
+
+export interface DeflateWorker extends Worker {
+  postMessage(message: DeflateWorkerAction): void
+}
+
+let workerURL: string | undefined
+
+export function createDeflateWorker(): DeflateWorker {
+  // Lazily compute the worker URL to allow importing the SDK in NodeJS
+  if (!workerURL) {
+    workerURL = URL.createObjectURL(new Blob([workerString]))
+  }
+  return new Worker(workerURL)
+}
 
 let state: DeflateWorkerState = { status: DeflateWorkerStatus.Nil }
 
