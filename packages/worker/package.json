@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-worker",
-  "version": "4.44.0",
+  "version": "4.44.1",
   "license": "Apache-2.0",
   "main": "bundle/worker.js",
   "types": "src/types.ts",
