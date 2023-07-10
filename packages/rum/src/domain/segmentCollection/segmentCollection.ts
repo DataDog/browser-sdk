@@ -3,10 +3,10 @@ import { isPageExitReason, ONE_SECOND, clearTimeout, setTimeout } from '@datadog
 import type { LifeCycle, ViewContexts, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { BrowserRecord, CreationReason, SegmentContext } from '../../types'
-import type { DeflateWorker } from './deflateWorker'
 import { buildReplayPayload } from './buildReplayPayload'
 import type { FlushReason } from './segment'
 import { Segment } from './segment'
+import type { DeflateWorker } from './startDeflateWorker'
 
 export const SEGMENT_DURATION_LIMIT = 30 * ONE_SECOND
 /**

@@ -11,7 +11,7 @@ describe('warnIfCustomerDataLimitReached', () => {
     const warned = warnIfCustomerDataLimitReached(CUSTOMER_DATA_BYTES_LIMIT + 1, CustomerDataType.User)
     expect(warned).toEqual(true)
     expect(displaySpy).toHaveBeenCalledWith(
-      "The user data is over 3KiB. On low connectivity, the SDK has the potential to exhaust the user's upload bandwidth."
+      'The user data exceeds the recommended 3KiB threshold. More details: https://docs.datadoghq.com/real_user_monitoring/browser/troubleshooting/#customer-data-exceeds-the-recommended-3kib-warning'
     )
   })
 
