@@ -440,7 +440,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@datadog/browser-rum@workspace:packages/rum":
+"@datadog/browser-rum@workspace:*, @datadog/browser-rum@workspace:packages/rum":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum@workspace:packages/rum"
   dependencies:
@@ -461,6 +461,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-sdk-developer-extension@workspace:developer-extension"
   dependencies:
+    "@datadog/browser-rum": "workspace:*"
     "@emotion/react": 11.11.1
     "@mantine/core": 6.0.16
     "@mantine/hooks": 6.0.16
