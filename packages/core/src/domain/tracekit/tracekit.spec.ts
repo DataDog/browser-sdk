@@ -55,6 +55,13 @@ describe('startUnhandledErrorCollection', () => {
       expect(stack.message).toEqual('Undefined variable: foo')
     })
 
+    it('should separate name, message for error with multiline message', () => {
+      window.onerror!("TypeError: foo is not a function. (In 'my.function(\n foo)")
+      const [stack] = callbackSpy.calls.mostRecent().args
+      expect(stack.message).toEqual("foo is not a function. (In 'my.function(\n foo)")
+      expect(stack.name).toEqual('TypeError')
+    })
+
     it('should ignore unknown error types', () => {
       window.onerror!('CustomError: woo scary', 'http://example.com', testLineNo)
       // TODO: should we attempt to parse this?
