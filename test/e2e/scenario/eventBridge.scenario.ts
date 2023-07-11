@@ -5,17 +5,15 @@ describe('bridge present', () => {
   createTest('send action')
     .withRum({ trackUserInteractions: true })
     .withEventBridge()
-    .withBody(
-      html`
-        <button>click me</button>
-        <script>
-          const button = document.querySelector('button')
-          button.addEventListener('click', () => {
-            button.setAttribute('data-clicked', 'true')
-          })
-        </script>
-      `
-    )
+    .withBody(html`
+      <button>click me</button>
+      <script>
+        const button = document.querySelector('button')
+        button.addEventListener('click', () => {
+          button.setAttribute('data-clicked', 'true')
+        })
+      </script>
+    `)
     .run(async ({ serverEvents, bridgeEvents }) => {
       const button = await $('button')
       await button.click()

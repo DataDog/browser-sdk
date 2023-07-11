@@ -4,17 +4,15 @@ import { createTest, flushEvents, html, waitForServersIdle } from '../../lib/fra
 describe('action collection', () => {
   createTest('track a click action')
     .withRum({ trackUserInteractions: true })
-    .withBody(
-      html`
-        <button>click me</button>
-        <script>
-          const button = document.querySelector('button')
-          button.addEventListener('click', () => {
-            button.setAttribute('data-clicked', 'true')
-          })
-        </script>
-      `
-    )
+    .withBody(html`
+      <button>click me</button>
+      <script>
+        const button = document.querySelector('button')
+        button.addEventListener('click', () => {
+          button.setAttribute('data-clicked', 'true')
+        })
+      </script>
+    `)
     .run(async ({ serverEvents }) => {
       const button = await $('button')
       await button.click()
@@ -63,19 +61,17 @@ describe('action collection', () => {
 
   createTest('compute action target information before the UI changes')
     .withRum({ trackFrustrations: true })
-    .withBody(
-      html`
-        <button style="position: relative">click me</button>
-        <script>
-          const button = document.querySelector('button')
-          button.addEventListener('pointerdown', () => {
-            // Using .textContent or .innerText prevents the click event to be dispatched in Safari
-            button.childNodes[0].data = 'Clicked'
-            button.classList.add('active')
-          })
-        </script>
-      `
-    )
+    .withBody(html`
+      <button style="position: relative">click me</button>
+      <script>
+        const button = document.querySelector('button')
+        button.addEventListener('pointerdown', () => {
+          // Using .textContent or .innerText prevents the click event to be dispatched in Safari
+          button.childNodes[0].data = 'Clicked'
+          button.classList.add('active')
+        })
+      </script>
+    `)
     .run(async ({ serverEvents }) => {
       const button = await $('button')
       await button.click()
@@ -92,19 +88,17 @@ describe('action collection', () => {
   if (getBrowserName() !== 'firefox') {
     createTest('does not report a click on the body when the target element changes between mousedown and mouseup')
       .withRum({ trackFrustrations: true })
-      .withBody(
-        html`
-          <button style="position: relative">click me</button>
-          <script>
-            const button = document.querySelector('button')
-            button.addEventListener('pointerdown', () => {
-              // Move the button to the right, so the mouseup/pointerup event target is different
-              // than the <button> element and click event target gets set to <body>
-              button.style.left = '1000px'
-            })
-          </script>
-        `
-      )
+      .withBody(html`
+        <button style="position: relative">click me</button>
+        <script>
+          const button = document.querySelector('button')
+          button.addEventListener('pointerdown', () => {
+            // Move the button to the right, so the mouseup/pointerup event target is different
+            // than the <button> element and click event target gets set to <body>
+            button.style.left = '1000px'
+          })
+        </script>
+      `)
       .run(async ({ serverEvents }) => {
         const button = await $('button')
         await button.click()
@@ -118,17 +112,15 @@ describe('action collection', () => {
 
   createTest('associate a request to its action')
     .withRum({ trackUserInteractions: true })
-    .withBody(
-      html`
-        <button>click me</button>
-        <script>
-          const button = document.querySelector('button')
-          button.addEventListener('click', () => {
-            fetch('/ok')
-          })
-        </script>
-      `
-    )
+    .withBody(html`
+      <button>click me</button>
+      <script>
+        const button = document.querySelector('button')
+        button.addEventListener('click', () => {
+          fetch('/ok')
+        })
+      </script>
+    `)
     .run(async ({ serverEvents }) => {
       const button = await $('button')
       await button.click()
@@ -169,17 +161,15 @@ describe('action collection', () => {
       // are ignored
       trackFrustrations: true,
     })
-    .withBody(
-      html`
-        <button>click me</button>
-        <script>
-          const button = document.querySelector('button')
-          button.addEventListener('click', () => {
-            history.pushState(null, null, '/other-view')
-          })
-        </script>
-      `
-    )
+    .withBody(html`
+      <button>click me</button>
+      <script>
+        const button = document.querySelector('button')
+        button.addEventListener('click', () => {
+          history.pushState(null, null, '/other-view')
+        })
+      </script>
+    `)
     .run(async ({ serverEvents }) => {
       const button = await $('button')
       await button.click()
@@ -196,18 +186,16 @@ describe('action collection', () => {
 
   createTest('collect an "error click"')
     .withRum({ trackFrustrations: true })
-    .withBody(
-      html`
-        <button>click me</button>
-        <script>
-          const button = document.querySelector('button')
-          button.addEventListener('click', () => {
-            button.setAttribute('data-clicked', 'true')
-            throw new Error('Foo')
-          })
-        </script>
-      `
-    )
+    .withBody(html`
+      <button>click me</button>
+      <script>
+        const button = document.querySelector('button')
+        button.addEventListener('click', () => {
+          button.setAttribute('data-clicked', 'true')
+          throw new Error('Foo')
+        })
+      </script>
+    `)
     .run(async ({ serverEvents }) => {
       const button = await $('button')
       await button.click()
@@ -294,17 +282,15 @@ describe('action collection', () => {
 
   createTest('do not consider a click that open a new window as "dead_click"')
     .withRum({ trackFrustrations: true })
-    .withBody(
-      html`
-        <button>click me</button>
-        <script>
-          const button = document.querySelector('button')
-          button.addEventListener('click', () => {
-            window.open(window.location.href)
-          })
-        </script>
-      `
-    )
+    .withBody(html`
+      <button>click me</button>
+      <script>
+        const button = document.querySelector('button')
+        button.addEventListener('click', () => {
+          window.open(window.location.href)
+        })
+      </script>
+    `)
     .run(async ({ serverEvents }) => {
       const windowHandle = await browser.getWindowHandle()
       const button = await $('button')
@@ -323,17 +309,15 @@ describe('action collection', () => {
 
   createTest('collect a "rage click"')
     .withRum({ trackFrustrations: true })
-    .withBody(
-      html`
-        <button>click me</button>
-        <script>
-          const button = document.querySelector('button')
-          button.addEventListener('click', () => {
-            button.setAttribute('data-clicked', Math.random())
-          })
-        </script>
-      `
-    )
+    .withBody(html`
+      <button>click me</button>
+      <script>
+        const button = document.querySelector('button')
+        button.addEventListener('click', () => {
+          button.setAttribute('data-clicked', Math.random())
+        })
+      </script>
+    `)
     .run(async ({ serverEvents }) => {
       const button = await $('button')
       await Promise.all([button.click(), button.click(), button.click()])
@@ -346,17 +330,15 @@ describe('action collection', () => {
 
   createTest('collect multiple frustrations in one action')
     .withRum({ trackFrustrations: true })
-    .withBody(
-      html`
-        <button>click me</button>
-        <script>
-          const button = document.querySelector('button')
-          button.addEventListener('click', () => {
-            throw new Error('Foo')
-          })
-        </script>
-      `
-    )
+    .withBody(html`
+      <button>click me</button>
+      <script>
+        const button = document.querySelector('button')
+        button.addEventListener('click', () => {
+          throw new Error('Foo')
+        })
+      </script>
+    `)
     .run(async ({ serverEvents }) => {
       const button = await $('button')
       await button.click()

@@ -23,7 +23,10 @@ export class ValueHistory<Value> {
   private entries: Array<ValueHistoryEntry<Value>> = []
   private clearOldValuesInterval: TimeoutId
 
-  constructor(private expireDelay: number, private maxEntries?: number) {
+  constructor(
+    private expireDelay: number,
+    private maxEntries?: number
+  ) {
     this.clearOldValuesInterval = setInterval(() => this.clearOldValues(), CLEAR_OLD_VALUES_INTERVAL)
   }
 
