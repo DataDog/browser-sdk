@@ -16,6 +16,13 @@
 
 ---
 
+## v4.45.0
+
+- ✨ [RUM-235] add sample rates fields ([#2323](https://github.com/DataDog/browser-sdk/pull/2323))
+- 🐛 [RUM-238] Handle tracekit multilines message parsing ([#2332](https://github.com/DataDog/browser-sdk/pull/2332))
+- 🐛👷 Fix scope packages npm publication ([#2334](https://github.com/DataDog/browser-sdk/pull/2334))
+- 🔉 monitor reported errors ([#2335](https://github.com/DataDog/browser-sdk/pull/2335))
+
 ## v4.44.2
 
 - 🐛👷 [RUM-232] fix worker/string package ([#2331](https://github.com/DataDog/browser-sdk/pull/2331))
