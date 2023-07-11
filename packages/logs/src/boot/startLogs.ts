@@ -11,6 +11,7 @@ import {
   isTelemetryReplicationAllowed,
   ErrorSource,
   addTelemetryConfiguration,
+  addTelemetryDebug,
 } from '@datadog/browser-core'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
@@ -39,7 +40,7 @@ export function startLogs(
 
   lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (log) => sendToExtension('logs', log))
 
-  const reportError = (error: RawError) =>
+  const reportError = (error: RawError) => {
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
       rawLogsEvent: {
         message: error.message,
@@ -51,6 +52,8 @@ export function startLogs(
         status: StatusType.error,
       },
     })
+    addTelemetryDebug(`Error reported: ${error.message}`)
+  }
   const pageExitObservable = createPageExitObservable()
 
   const session =

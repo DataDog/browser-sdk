@@ -1,5 +1,5 @@
 import type { RawError, HttpRequest } from '@datadog/browser-core'
-import { timeStampNow, createHttpRequest } from '@datadog/browser-core'
+import { timeStampNow, createHttpRequest, addTelemetryDebug } from '@datadog/browser-core'
 import type {
   LifeCycle,
   ViewContexts,
@@ -24,6 +24,7 @@ export function startRecording(
 ) {
   const reportError = (error: RawError) => {
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
+    addTelemetryDebug(`Error reported: ${error.message}`)
   }
 
   const replayRequest =

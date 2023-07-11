@@ -7,6 +7,7 @@ import {
   startTelemetry,
   canUseEventBridge,
   getEventBridge,
+  addTelemetryDebug,
 } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { startPerformanceCollection } from '../browser/performanceCollection'
@@ -67,6 +68,7 @@ export function startRum(
 
   const reportError = (error: RawError) => {
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
+    addTelemetryDebug(`Error reported: ${error.message}`)
   }
   const featureFlagContexts = startFeatureFlagContexts(lifeCycle)
 
