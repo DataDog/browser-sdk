@@ -1,11 +1,10 @@
 import { instrumentMethodAndCallOriginal } from '../../tools/instrumentMethod'
-import { jsonStringify } from '../../tools/serialisation/jsonStringify'
 import { computeStackTrace } from './computeStackTrace'
 import type { UnhandledErrorCallback, StackTrace } from './types'
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error#Error_types
 const ERROR_TYPES_RE =
-  /^(?:[Uu]ncaught (?:exception: )?)?(?:((?:Eval|Internal|Range|Reference|Syntax|Type|URI|)Error): )?(.*)$/
+  /^(?:[Uu]ncaught (?:exception: )?)?(?:((?:Eval|Internal|Range|Reference|Syntax|Type|URI|)Error): )?([\s\S]*)$/
 
 /**
  * Cross-browser collection of unhandled errors
@@ -78,18 +77,7 @@ function tryToParseMessage(messageObj: unknown) {
   let name
   let message
   if ({}.toString.call(messageObj) === '[object String]') {
-    try {
-      ;[, name, message] = ERROR_TYPES_RE.exec(messageObj as string)!
-    } catch (error) {
-      throw new Error(
-        `Tracekit try parse error: ${String(error)} ${jsonStringify({
-          messageObj,
-          // eslint-disable-next-line @typescript-eslint/unbound-method
-          exec: String(RegExp.prototype.exec),
-          ERROR_TYPES_RE: String(ERROR_TYPES_RE),
-        })!}`
-      )
-    }
+    ;[, name, message] = ERROR_TYPES_RE.exec(messageObj as string)!
   }
   return { name, message }
 }
