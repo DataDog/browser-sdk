@@ -1,4 +1,6 @@
 *
+!/bundle/worker.js
+!/string/**/*
 !/src/**/*
 /src/**/*.spec.ts
 /src/**/*.specHelper.ts
