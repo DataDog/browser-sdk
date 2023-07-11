@@ -16,6 +16,10 @@
 
 ---
 
+## v4.44.2
+
+- 🐛👷 [RUM-232] fix worker/string package ([#2331](https://github.com/DataDog/browser-sdk/pull/2331))
+
 ## v4.44.1
 
 - 🐛 Fix RUM slim npm package publication ([#2325](https://github.com/DataDog/browser-sdk/pull/2325))
