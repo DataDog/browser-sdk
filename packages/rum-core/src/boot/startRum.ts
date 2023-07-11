@@ -68,7 +68,7 @@ export function startRum(
 
   const reportError = (error: RawError) => {
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
-    addTelemetryDebug(`Error reported: ${error.message}`)
+    addTelemetryDebug('Error reported to customer', { 'error.message': error.message })
   }
   const featureFlagContexts = startFeatureFlagContexts(lifeCycle)
 

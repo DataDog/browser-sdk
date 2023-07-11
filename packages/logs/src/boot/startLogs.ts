@@ -52,7 +52,7 @@ export function startLogs(
         status: StatusType.error,
       },
     })
-    addTelemetryDebug(`Error reported: ${error.message}`)
+    addTelemetryDebug('Error reported to customer', { 'error.message': error.message })
   }
   const pageExitObservable = createPageExitObservable()
 
