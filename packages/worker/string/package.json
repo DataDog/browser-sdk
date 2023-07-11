@@ -1,4 +1,6 @@
 {
   "private": true,
-  "main": "../bundle/workerString.ts"
+  "main": "cjs/main.js",
+  "module": "esm/main.js",
+  "types": "cjs/main.d.ts"
 }
