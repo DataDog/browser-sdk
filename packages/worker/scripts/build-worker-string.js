@@ -7,8 +7,9 @@ const bundlePath = path.resolve(__dirname, '../bundle')
 const workerBundlePath = path.join(bundlePath, 'worker.js')
 const workerBundleContent = fs.readFileSync(workerBundlePath, { encoding: 'utf-8' })
 
-writeOutput('cjs', `exports.workerString = ${JSON.stringify(workerBundleContent)}\n`)
-writeOutput('esm', `export const workerString = ${JSON.stringify(workerBundleContent)}\n`)
+const workerString = `${JSON.stringify(workerBundleContent)}\n`
+writeOutput('cjs', `exports.workerString = ${workerString}`)
+writeOutput('esm', `export const workerString = ${workerString}`)
 
 function writeOutput(moduleType, content) {
   const outputPath = path.resolve(__dirname, path.join('..', 'string', moduleType))
