@@ -1,4 +1,5 @@
 import { datadogRum } from '@datadog/browser-rum'
+import { datadogLogs } from '@datadog/browser-logs'
 import packageJson from '../../package.json'
 
 export function initMonitoring() {
@@ -19,4 +20,18 @@ export function initMonitoring() {
     defaultPrivacyLevel: 'mask-user-input',
   })
   datadogRum.startSessionReplayRecording()
+
+  datadogLogs.init({
+    clientToken: 'pub74fd472504982beb427b647893758040',
+    site: 'datadoghq.com',
+    service: 'browser-sdk-developer-extension',
+    env: 'prod',
+    version: packageJson.version,
+    allowFallbackToLocalStorage: true,
+    forwardErrorsToLogs: true,
+    forwardConsoleLogs: 'all',
+    forwardReports: 'all',
+    sessionSampleRate: 100,
+    telemetrySampleRate: 100,
+  })
 }
