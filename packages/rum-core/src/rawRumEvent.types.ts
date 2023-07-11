@@ -261,6 +261,10 @@ export interface RumContext {
     session: {
       plan: RumSessionPlan
     }
+    configuration: {
+      session_sample_rate: number
+      session_replay_sample_rate: number
+    }
     browser_sdk_version?: string
   }
 }

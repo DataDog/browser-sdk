@@ -628,6 +628,35 @@ describe('rum assembly', () => {
     })
   })
 
+  describe('configuration context', () => {
+    it('should include the configured sample rates', () => {
+      const { lifeCycle } = setupBuilder.build()
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+      })
+      expect(serverRumEvents[0]._dd.configuration).toEqual({
+        session_replay_sample_rate: 100,
+        session_sample_rate: 100,
+      })
+    })
+
+    it('should round sample rates', () => {
+      const { lifeCycle } = setupBuilder
+        .withConfiguration({
+          sessionSampleRate: 1.2341,
+          sessionReplaySampleRate: 6.7891,
+        })
+        .build()
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+      })
+      expect(serverRumEvents[0]._dd.configuration).toEqual({
+        session_sample_rate: 1.234,
+        session_replay_sample_rate: 6.789,
+      })
+    })
+  })
+
   describe('synthetics context', () => {
     it('includes the synthetics context', () => {
       mockSyntheticsWorkerValues()

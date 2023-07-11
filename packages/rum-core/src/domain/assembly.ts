@@ -8,6 +8,7 @@ import {
   createEventRateLimiter,
   canUseEventBridge,
   assign,
+  round,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type {
@@ -125,6 +126,10 @@ export function startRumAssembly(
             drift: currentDrift(),
             session: {
               plan: session.plan,
+            },
+            configuration: {
+              session_sample_rate: round(configuration.sessionSampleRate, 3),
+              session_replay_sample_rate: round(configuration.sessionReplaySampleRate, 3),
             },
             browser_sdk_version: canUseEventBridge() ? __BUILD_ENV__SDK_VERSION__ : undefined,
           },
