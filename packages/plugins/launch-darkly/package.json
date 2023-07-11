@@ -1,0 +1,16 @@
+{
+  "name": "@datadog/launch-darkly-integration",
+  "version": "0.0.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DataDog/browser-sdk.git",
+    "directory": "packages/plugins/launch-darkly-integration"
+  },
+  "dependencies": {
+    "@datadog/browser-rum": "portal:../../rum",
+    "launchdarkly-js-client-sdk": "2.24.2"
+  },
+  "resolutions": {
+    "@datadog/browser-rum": "portal:../../rum"
+  }
+}

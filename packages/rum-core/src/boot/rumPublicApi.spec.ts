@@ -757,7 +757,7 @@ describe('rum public api', () => {
 
         rumPublicApi.init(MANUAL_CONFIGURATION)
         expect(startRumSpy).toHaveBeenCalled()
-        expect(startRumSpy.calls.argsFor(0)[5]).toEqual({ name: 'foo' })
+        expect(startRumSpy.calls.argsFor(0)[6]).toEqual({ name: 'foo' })
         expect(recorderApiOnRumStartSpy).toHaveBeenCalled()
         expect(startViewSpy).not.toHaveBeenCalled()
       })
@@ -769,7 +769,7 @@ describe('rum public api', () => {
 
         rumPublicApi.startView('foo')
         expect(startRumSpy).toHaveBeenCalled()
-        expect(startRumSpy.calls.argsFor(0)[5]).toEqual({ name: 'foo' })
+        expect(startRumSpy.calls.argsFor(0)[6]).toEqual({ name: 'foo' })
         expect(recorderApiOnRumStartSpy).toHaveBeenCalled()
         expect(startViewSpy).not.toHaveBeenCalled()
       })
@@ -780,7 +780,7 @@ describe('rum public api', () => {
         rumPublicApi.startView('bar')
 
         expect(startRumSpy).toHaveBeenCalled()
-        expect(startRumSpy.calls.argsFor(0)[5]).toEqual({ name: 'foo' })
+        expect(startRumSpy.calls.argsFor(0)[6]).toEqual({ name: 'foo' })
         expect(recorderApiOnRumStartSpy).toHaveBeenCalled()
         expect(startViewSpy).toHaveBeenCalled()
         expect(startViewSpy.calls.argsFor(0)[0]).toEqual({ name: 'bar' })

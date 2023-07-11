@@ -143,14 +143,15 @@ export function addTelemetryDebug(message: string, context?: Context) {
   )
 }
 
-export function addTelemetryError(e: unknown) {
+export function addTelemetryError(e: unknown, context?: Context) {
   addTelemetry(
     assign(
       {
         type: TelemetryType.log,
         status: StatusType.error,
       },
-      formatError(e)
+      formatError(e),
+      context
     )
   )
 }

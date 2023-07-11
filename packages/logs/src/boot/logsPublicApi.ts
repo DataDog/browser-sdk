@@ -1,4 +1,4 @@
-import type { Context, InitConfiguration, User } from '@datadog/browser-core'
+import type { Context, InitConfiguration, User, Plugin } from '@datadog/browser-core'
 import {
   CustomerDataType,
   assign,
@@ -13,6 +13,7 @@ import {
   checkUser,
   sanitizeUser,
   sanitize,
+  monitorPlugin,
 } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
@@ -30,6 +31,11 @@ export interface LoggerConfiguration {
 export type LogsPublicApi = ReturnType<typeof makeLogsPublicApi>
 
 export type StartLogs = typeof startLogs
+
+export interface LogsPlugin extends Plugin {
+  onRegistered?: (datadogLogs: LogsPublicApi) => void
+  beforeSend?: LogsInitConfiguration['beforeSend']
+}
 
 type StartLogsResult = ReturnType<typeof startLogs>
 
@@ -67,7 +73,13 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
     }
   }
 
-  return makePublicApi({
+  const logsPlugins: LogsPlugin[] = []
+  function registerPlugins(...newLogsPlugins: LogsPlugin[]) {
+    logsPlugins.push(...newLogsPlugins)
+    newLogsPlugins.forEach((plugin) => monitorPlugin(plugin, plugin.onRegistered)(logsPublicApi))
+  }
+
+  const logsPublicApi = makePublicApi({
     logger: mainLogger,
 
     init: monitor((initConfiguration: LogsInitConfiguration) => {
@@ -91,7 +103,8 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
         initConfiguration,
         configuration,
         buildCommonContext,
-        mainLogger
+        mainLogger,
+        logsPlugins
       ))
 
       beforeInitLoggerLog.drain()
@@ -151,7 +164,10 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
     removeUserProperty: monitor(userContextManager.removeContextProperty),
 
     clearUser: monitor(userContextManager.clearContext),
+
+    registerPlugins: monitor(registerPlugins),
   })
+  return logsPublicApi
 
   function overrideInitConfigurationForBridge<C extends InitConfiguration>(initConfiguration: C): C {
     return assign({}, initConfiguration, { clientToken: 'empty' })

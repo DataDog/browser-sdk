@@ -8,6 +8,7 @@ import {
   createEventRateLimiter,
   canUseEventBridge,
   assign,
+  monitorPlugin,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type {
@@ -19,6 +20,7 @@ import type {
 } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'
+import type { RumPlugin } from '../boot/rumPublicApi'
 import { getSyntheticsContext } from './contexts/syntheticsContext'
 import { getCiTestContext } from './contexts/ciTestContext'
 import type { LifeCycle } from './lifeCycle'
@@ -63,7 +65,8 @@ export function startRumAssembly(
   urlContexts: UrlContexts,
   actionContexts: ActionContexts,
   buildCommonContext: () => CommonContext,
-  reportError: (error: RawError) => void
+  reportError: (error: RawError) => void,
+  rumPlugins: RumPlugin[]
 ) {
   modifiableFieldPathsByEvent = {
     [RumEventType.VIEW]: VIEW_MODIFIABLE_FIELD_PATHS,
@@ -162,7 +165,7 @@ export function startRumAssembly(
           ;(serverRumEvent.usr as Mutable<RumEvent['usr']>) = commonContext.user as User & Context
         }
 
-        if (shouldSend(serverRumEvent, configuration.beforeSend, domainContext, eventRateLimiters)) {
+        if (shouldSend(serverRumEvent, configuration.beforeSend, rumPlugins, domainContext, eventRateLimiters)) {
           if (isEmptyObject(serverRumEvent.context)) {
             delete serverRumEvent.context
           }
@@ -176,18 +179,22 @@ export function startRumAssembly(
 function shouldSend(
   event: RumEvent & Context,
   beforeSend: RumConfiguration['beforeSend'],
+  rumPlugins: RumPlugin[],
   domainContext: RumEventDomainContext,
   eventRateLimiters: { [key in RumEventType]?: EventRateLimiter }
 ) {
-  if (beforeSend) {
-    const result = limitModification(event, modifiableFieldPathsByEvent[event.type], (event) =>
-      beforeSend(event, domainContext)
-    )
-    if (result === false && event.type !== RumEventType.VIEW) {
-      return false
-    }
-    if (result === false) {
-      display.warn("Can't dismiss view events using beforeSend!")
+  const modifiers = [beforeSend].concat(rumPlugins.map((plugin) => monitorPlugin(plugin, plugin.beforeSend)))
+  for (const modifier of modifiers) {
+    if (modifier) {
+      const result = limitModification(event, modifiableFieldPathsByEvent[event.type], (event) =>
+        modifier(event, domainContext)
+      )
+      if (result === false && event.type !== RumEventType.VIEW) {
+        return false
+      }
+      if (result === false) {
+        display.warn("Can't dismiss view events using beforeSend!")
+      }
     }
   }
 

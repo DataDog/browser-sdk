@@ -1,4 +1,4 @@
-import type { Context, InitConfiguration, TimeStamp, RelativeTime, User } from '@datadog/browser-core'
+import type { Context, InitConfiguration, TimeStamp, RelativeTime, User, Plugin } from '@datadog/browser-core'
 import {
   noop,
   CustomerDataType,
@@ -18,6 +18,7 @@ import {
   checkUser,
   sanitizeUser,
   sanitize,
+  monitorPlugin,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewContexts } from '../domain/contexts/viewContexts'
@@ -53,6 +54,12 @@ export interface RecorderApi {
     viewContexts: ViewContexts
   ) => string | undefined
 }
+
+export interface RumPlugin extends Plugin {
+  onRegistered?: (datadogRum: RumPublicApi) => void
+  beforeSend?: RumInitConfiguration['beforeSend']
+}
+
 interface RumPublicApiOptions {
   ignoreInitIfSyntheticsWillInjectRum?: boolean
 }
@@ -94,6 +101,12 @@ export function makeRumPublicApi(
 
   let addFeatureFlagEvaluationStrategy: StartRumResult['addFeatureFlagEvaluation'] = (key: string, value: any) => {
     bufferApiCalls.add(() => addFeatureFlagEvaluationStrategy(key, value))
+  }
+
+  const rumPlugins: RumPlugin[] = []
+  function registerPlugins(...newRumPlugins: RumPlugin[]) {
+    rumPlugins.push(...newRumPlugins)
+    newRumPlugins.forEach((plugin) => monitorPlugin(plugin, plugin.onRegistered)(rumPublicApi))
   }
 
   function initRum(initConfiguration: RumInitConfiguration) {
@@ -156,6 +169,7 @@ export function makeRumPublicApi(
       recorderApi,
       globalContextManager,
       userContextManager,
+      rumPlugins,
       initialViewOptions
     )
     getSessionReplayLinkStrategy = () =>
@@ -271,6 +285,8 @@ export function makeRumPublicApi(
       addFeatureFlagEvaluationStrategy(sanitize(key)!, sanitize(value))
     }),
     getSessionReplayLink: monitor(() => getSessionReplayLinkStrategy()),
+
+    registerPlugins: monitor(registerPlugins),
   })
 
   return rumPublicApi
