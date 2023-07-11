@@ -12,8 +12,8 @@ writeOutput('cjs', `exports.workerString = ${workerString}`)
 writeOutput('esm', `export const workerString = ${workerString}`)
 
 function writeOutput(moduleType, content) {
-  const outputPath = path.resolve(__dirname, path.join('..', 'string', moduleType))
+  const outputPath = path.resolve(__dirname, path.join('..', moduleType, 'entries'))
   fs.mkdirSync(outputPath, { recursive: true })
-  fs.writeFileSync(path.join(outputPath, 'main.js'), content)
-  fs.writeFileSync(path.join(outputPath, 'main.d.ts'), 'export declare const workerString: string\n')
+  fs.writeFileSync(path.join(outputPath, 'string.js'), content)
+  fs.writeFileSync(path.join(outputPath, 'string.d.ts'), 'export declare const workerString: string\n')
 }

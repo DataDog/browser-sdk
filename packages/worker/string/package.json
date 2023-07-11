@@ -1,6 +1,6 @@
 {
   "private": true,
-  "main": "cjs/main.js",
-  "module": "esm/main.js",
-  "types": "cjs/main.d.ts"
+  "main": "../cjs/entries/string.js",
+  "module": "../esm/entries/string.js",
+  "types": "../cjs/entries/string.d.ts"
 }
