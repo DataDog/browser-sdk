@@ -158,7 +158,7 @@ export function npmSetup(options: SetupOptions, servers: Servers) {
 
 export function basePage({ header, body }: { header?: string; body?: string }) {
   return html`
-    <!DOCTYPE html>
+    <!doctype html>
     <html>
       <head>
         ${header || ''}

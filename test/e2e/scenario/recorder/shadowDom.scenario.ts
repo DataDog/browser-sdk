@@ -115,12 +115,10 @@ describe('recorder with shadow DOM', () => {
     .withRum({ defaultPrivacyLevel: 'allow' })
     .withRumInit(initRumAndStartRecording)
     .withSetup(bundleSetup)
-    .withBody(
-      html`
-        ${divShadowDom}
-        <my-div />
-      `
-    )
+    .withBody(html`
+      ${divShadowDom}
+      <my-div />
+    `)
     .run(async ({ serverEvents }) => {
       await flushEvents()
 
@@ -138,12 +136,10 @@ describe('recorder with shadow DOM', () => {
     .withRum()
     .withRumInit(initRumAndStartRecording)
     .withSetup(bundleSetup)
-    .withBody(
-      html`
-        ${divWithStyleShadowDom}
-        <div-with-style />
-      `
-    )
+    .withBody(html`
+      ${divWithStyleShadowDom}
+      <div-with-style />
+    `)
     .run(async ({ serverEvents }) => {
       if (!(await isAdoptedStyleSheetsSupported())) {
         return pending('adoptedStyleSheets is not supported in this browser')
@@ -166,13 +162,11 @@ describe('recorder with shadow DOM', () => {
     .withRum({ defaultPrivacyLevel: 'allow' })
     .withRumInit(initRumAndStartRecording)
     .withSetup(bundleSetup)
-    .withBody(
-      html`
-        ${inputShadowDom}
-        <div data-dd-privacy="mask-user-input"><my-input-field id="privacy-set-outside" /></div>
-        <my-input-field privacy="mask-user-input" id="privacy-set-inside" />
-      `
-    )
+    .withBody(html`
+      ${inputShadowDom}
+      <div data-dd-privacy="mask-user-input"><my-input-field id="privacy-set-outside" /></div>
+      <my-input-field privacy="mask-user-input" id="privacy-set-inside" />
+    `)
     .run(async ({ serverEvents }) => {
       await flushEvents()
 
@@ -204,12 +198,10 @@ describe('recorder with shadow DOM', () => {
     .withRum()
     .withRumInit(initRumAndStartRecording)
     .withSetup(bundleSetup)
-    .withBody(
-      html`
-        ${divShadowDom}
-        <my-div />
-      `
-    )
+    .withBody(html`
+      ${divShadowDom}
+      <my-div />
+    `)
     .run(async ({ serverEvents }) => {
       const div = await getNodeInsideShadowDom('my-div', 'div')
       await div.click()
@@ -230,12 +222,10 @@ describe('recorder with shadow DOM', () => {
     .withRum({ defaultPrivacyLevel: 'allow' })
     .withRumInit(initRumAndStartRecording)
     .withSetup(bundleSetup)
-    .withBody(
-      html`
-        ${divShadowDom}
-        <my-div id="host" />
-      `
-    )
+    .withBody(html`
+      ${divShadowDom}
+      <my-div id="host" />
+    `)
     .run(async ({ serverEvents }) => {
       await browserExecute(() => {
         const host = document.body.querySelector('#host') as HTMLElement

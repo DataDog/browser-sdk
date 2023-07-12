@@ -196,7 +196,7 @@ const cookieOptions: CookieOptions = {}
           })
           expandSessionState(initialSession)
           sessionStoreStrategy.persistSession(initialSession)
-          processSpy.and.callFake((session) => ({ ...session, processed: 'processed' } as SessionState))
+          processSpy.and.callFake((session) => ({ ...session, processed: 'processed' }) as SessionState)
 
           processSessionStoreOperations(
             {

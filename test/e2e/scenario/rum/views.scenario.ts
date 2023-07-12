@@ -34,12 +34,10 @@ describe('rum views', () => {
   describe('anchor navigation', () => {
     createTest("don't create a new view when it is an Anchor navigation")
       .withRum()
-      .withBody(
-        html`
-          <a href="#test-anchor">anchor link</a>
-          <div id="test-anchor"></div>
-        `
-      )
+      .withBody(html`
+        <a href="#test-anchor">anchor link</a>
+        <div id="test-anchor"></div>
+      `)
       .run(async ({ serverEvents }) => {
         await (await $('a')).click()
 

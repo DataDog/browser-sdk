@@ -81,15 +81,13 @@ describe('recorder', () => {
       .withRum()
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
-      .withBody(
-        html`
-          <div id="not-obfuscated">foo</div>
-          <p id="hidden-by-attribute" data-dd-privacy="hidden">bar</p>
-          <span id="hidden-by-classname" class="dd-privacy-hidden baz">baz</span>
-          <input id="input-ignored" data-dd-privacy="input-ignored" value="toto" />
-          <input id="input-masked" data-dd-privacy="input-masked" value="toto" />
-        `
-      )
+      .withBody(html`
+        <div id="not-obfuscated">foo</div>
+        <p id="hidden-by-attribute" data-dd-privacy="hidden">bar</p>
+        <span id="hidden-by-classname" class="dd-privacy-hidden baz">baz</span>
+        <input id="input-ignored" data-dd-privacy="input-ignored" value="toto" />
+        <input id="input-masked" data-dd-privacy="input-masked" value="toto" />
+      `)
       .run(async ({ serverEvents }) => {
         await flushEvents()
 
@@ -128,14 +126,12 @@ describe('recorder', () => {
       .withRum()
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
-      .withBody(
-        html`
-          <p>mutation observer</p>
-          <ul>
-            <li></li>
-          </ul>
-        `
-      )
+      .withBody(html`
+        <p>mutation observer</p>
+        <ul>
+          <li></li>
+        </ul>
+      `)
       .run(async ({ serverEvents }) => {
         await browserExecute(() => {
           const li = document.createElement('li')
@@ -175,14 +171,12 @@ describe('recorder', () => {
       .withRum()
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
-      .withBody(
-        html`
-          <p>mutation observer</p>
-          <ul>
-            <li></li>
-          </ul>
-        `
-      )
+      .withBody(html`
+        <p>mutation observer</p>
+        <ul>
+          <li></li>
+        </ul>
+      `)
       .run(async ({ serverEvents }) => {
         await browserExecute(() => {
           const li = document.createElement('li')
@@ -228,14 +222,12 @@ describe('recorder', () => {
       .withRum()
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
-      .withBody(
-        html`
-          <p>mutation observer</p>
-          <ul>
-            <li></li>
-          </ul>
-        `
-      )
+      .withBody(html`
+        <p>mutation observer</p>
+        <ul>
+          <li></li>
+        </ul>
+      `)
       .run(async ({ serverEvents }) => {
         await browserExecute(() => {
           const li = document.createElement('li')
@@ -273,15 +265,13 @@ describe('recorder', () => {
       .withRum()
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
-      .withBody(
-        html`
-          <div data-dd-privacy="hidden">
-            <ul>
-              <li></li>
-            </ul>
-          </div>
-        `
-      )
+      .withBody(html`
+        <div data-dd-privacy="hidden">
+          <ul>
+            <li></li>
+          </ul>
+        </div>
+      `)
       .run(async ({ serverEvents }) => {
         await browserExecute(() => {
           document.querySelector('div')!.setAttribute('foo', 'bar')
@@ -458,30 +448,28 @@ describe('recorder', () => {
       })
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
-      .withBody(
-        html`
-          <form>
-            <label for="text">
-              <input type="text" id="text-input" />
-            </label>
-            <label for="radio">
-              <input type="radio" id="radio-input" />
-            </label>
-            <label for="checkbox">
-              <input type="checkbox" id="checkbox-input" />
-            </label>
-            <label for="textarea">
-              <textarea name="" id="textarea" cols="30" rows="10"></textarea>
-            </label>
-            <label for="select">
-              <select name="" id="select">
-                <option value="1">1</option>
-                <option value="2">2</option>
-              </select>
-            </label>
-          </form>
-        `
-      )
+      .withBody(html`
+        <form>
+          <label for="text">
+            <input type="text" id="text-input" />
+          </label>
+          <label for="radio">
+            <input type="radio" id="radio-input" />
+          </label>
+          <label for="checkbox">
+            <input type="checkbox" id="checkbox-input" />
+          </label>
+          <label for="textarea">
+            <textarea name="" id="textarea" cols="30" rows="10"></textarea>
+          </label>
+          <label for="select">
+            <select name="" id="select">
+              <option value="1">1</option>
+              <option value="2">2</option>
+            </select>
+          </label>
+        </form>
+      `)
       .run(async ({ serverEvents }) => {
         const textInput = await $('#text-input')
         await textInput.setValue('test')
@@ -540,14 +528,12 @@ describe('recorder', () => {
       })
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
-      .withBody(
-        html`
-          <input type="text" id="first" name="first" />
-          <input type="text" id="second" name="second" data-dd-privacy="input-ignored" />
-          <input type="text" id="third" name="third" class="dd-privacy-input-ignored" />
-          <input type="password" id="fourth" name="fourth" />
-        `
-      )
+      .withBody(html`
+        <input type="text" id="first" name="first" />
+        <input type="text" id="second" name="second" data-dd-privacy="input-ignored" />
+        <input type="text" id="third" name="third" class="dd-privacy-input-ignored" />
+        <input type="password" id="fourth" name="fourth" />
+      `)
       .run(async ({ serverEvents }) => {
         const firstInput = await $('#first')
         await firstInput.setValue('foo')
@@ -577,12 +563,10 @@ describe('recorder', () => {
       .withRum()
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
-      .withBody(
-        html`
-          <input type="text" id="by-data-attribute" data-dd-privacy="input-masked" />
-          <input type="text" id="by-classname" class="dd-privacy-input-masked" />
-        `
-      )
+      .withBody(html`
+        <input type="text" id="by-data-attribute" data-dd-privacy="input-masked" />
+        <input type="text" id="by-classname" class="dd-privacy-input-masked" />
+      `)
       .run(async ({ serverEvents }) => {
         const firstInput = await $('#by-data-attribute')
         await firstInput.setValue('foo')
@@ -611,16 +595,14 @@ describe('recorder', () => {
       .withRum()
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
-      .withBody(
-        html`
-          <style>
-            .foo {
-            }
-            .bar {
-            }
-          </style>
-        `
-      )
+      .withBody(html`
+        <style>
+          .foo {
+          }
+          .bar {
+          }
+        </style>
+      `)
       .run(async ({ serverEvents }) => {
         await browserExecute(() => {
           document.styleSheets[0].deleteRule(0)
@@ -646,22 +628,20 @@ describe('recorder', () => {
       .withRum()
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
-      .withBody(
-        html`
-          <style>
-            @supports (display: grid) {
-              .foo {
-              }
+      .withBody(html`
+        <style>
+          @supports (display: grid) {
+            .foo {
             }
-            @media condition {
-              .bar {
-              }
-              .baz {
-              }
+          }
+          @media condition {
+            .bar {
             }
-          </style>
-        `
-      )
+            .baz {
+            }
+          }
+        </style>
+      `)
       .run(async ({ serverEvents }) => {
         await browserExecute(() => {
           const supportsRule = document.styleSheets[0].cssRules[0] as CSSGroupingRule
@@ -718,15 +698,13 @@ describe('recorder', () => {
       .withRum({ trackFrustrations: true })
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
-      .withBody(
-        html`
-          <div id="main-div" />
-          <button
-            id="my-button"
-            onclick="document.querySelector('#main-div').appendChild(document.createElement('div'));"
-          />
-        `
-      )
+      .withBody(html`
+        <div id="main-div" />
+        <button
+          id="my-button"
+          onclick="document.querySelector('#main-div').appendChild(document.createElement('div'));"
+        />
+      `)
       .run(async ({ serverEvents }) => {
         const button = await $('#my-button')
         await Promise.all([button.click(), button.click(), button.click(), button.click()])
@@ -751,27 +729,25 @@ describe('recorder', () => {
     createTest('should be recorded across navigation')
       .withRum()
       .withSetup(bundleSetup)
-      .withBody(
-        html`
-          <style>
-            #container {
-              width: 100px;
-              height: 100px;
-              overflow-x: scroll;
-            }
-            #content {
-              width: 250px;
-            }
-            #big-element {
-              height: 4000px;
-            }
-          </style>
-          <div id="container">
-            <div id="content">I'm bigger than the container</div>
-          </div>
-          <div id="big-element"></div>
-        `
-      )
+      .withBody(html`
+        <style>
+          #container {
+            width: 100px;
+            height: 100px;
+            overflow-x: scroll;
+          }
+          #content {
+            width: 250px;
+          }
+          #big-element {
+            height: 4000px;
+          }
+        </style>
+        <div id="container">
+          <div id="content">I'm bigger than the container</div>
+        </div>
+        <div id="big-element"></div>
+      `)
       .run(async ({ serverEvents }) => {
         function scroll({ windowY, containerX }: { windowY: number; containerX: number }) {
           return browserExecuteAsync(
