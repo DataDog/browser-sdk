@@ -126,6 +126,7 @@ typecheck:
   interruptible: true
   script:
     - yarn
+    - yarn build
     - yarn typecheck
 
 build-and-lint:
