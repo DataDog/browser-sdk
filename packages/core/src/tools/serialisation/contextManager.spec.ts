@@ -92,6 +92,16 @@ describe('createContextManager', () => {
     expect(manager.getContext()).toEqual({})
   })
 
+  it('should prevent setting non object values', () => {
+    const manager = createContextManager(CustomerDataType.GlobalContext)
+    manager.setContext(null as any)
+    expect(manager.getContext()).toEqual({})
+    manager.setContext(undefined as any)
+    expect(manager.getContext()).toEqual({})
+    manager.setContext(2 as any)
+    expect(manager.getContext()).toEqual({})
+  })
+
   describe('bytes count computation', () => {
     it('should be done every time the context is updated', () => {
       const computeBytesCountStub = jasmine.createSpy('computeBytesCountStub').and.returnValue(1)

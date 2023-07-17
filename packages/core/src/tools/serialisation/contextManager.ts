@@ -1,6 +1,7 @@
 import { computeBytesCount } from '../utils/byteUtils'
 import { throttle } from '../utils/functionUtils'
 import { deepClone } from '../mergeInto'
+import { getType } from '../utils/typeUtils'
 import { jsonStringify } from './jsonStringify'
 import { sanitize } from './sanitize'
 import { warnIfCustomerDataLimitReached } from './heavyCustomerDataWarning'
@@ -25,7 +26,7 @@ export function createContextManager(customerDataType: CustomerDataType, compute
     }
   }, BYTES_COMPUTATION_THROTTLING_DELAY)
 
-  return {
+  const contextManager = {
     getBytesCount: () => bytesCountCache,
     /** @deprecated use getContext instead */
     get: () => context,
@@ -51,8 +52,12 @@ export function createContextManager(customerDataType: CustomerDataType, compute
     getContext: () => deepClone(context),
 
     setContext: (newContext: Context) => {
-      context = sanitize(newContext)
-      computeBytesCountThrottled(context)
+      if (getType(newContext) === 'object') {
+        context = sanitize(newContext)
+        computeBytesCountThrottled(context)
+      } else {
+        contextManager.clearContext()
+      }
     },
 
     setContextProperty: (key: string, property: any) => {
@@ -70,4 +75,5 @@ export function createContextManager(customerDataType: CustomerDataType, compute
       bytesCountCache = 0
     },
   }
+  return contextManager
 }
