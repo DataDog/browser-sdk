@@ -126,7 +126,10 @@ typecheck:
   interruptible: true
   script:
     - yarn
+    - yarn build
     - yarn typecheck
+    - scripts/cli typecheck test/app
+    - scripts/cli typecheck test/e2e
 
 build-and-lint:
   extends:
@@ -137,8 +140,6 @@ build-and-lint:
     - yarn
     - yarn build
     - yarn lint
-    - scripts/cli typecheck test/app
-    - scripts/cli typecheck test/e2e
 
 build-bundle:
   extends:

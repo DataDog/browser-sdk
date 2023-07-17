@@ -15,7 +15,7 @@ export function Alert({
 }) {
   const color = level === 'warning' ? ('orange' as const) : ('red' as const)
   return (
-    <Center mt="xl">
+    <Center mt="xl" className="dd-privacy-allow">
       <MantineAlert color={color} title={title}>
         {message}
         {button && (

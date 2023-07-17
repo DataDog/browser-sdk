@@ -35,7 +35,7 @@ export function EventTab({ events, filters, onFiltered, clear }: EventTabProps) 
   return (
     <TabBase
       top={
-        <Group>
+        <Group className="dd-privacy-allow">
           <Chip.Group
             multiple
             value={filters.sdk}
@@ -49,6 +49,7 @@ export function EventTab({ events, filters, onFiltered, clear }: EventTabProps) 
             value={filters.query}
             style={{ flexGrow: 1 }}
             onChange={(event) => onFiltered({ ...filters, query: event.currentTarget.value })}
+            className="dd-privacy-mask"
           />
 
           <Button color="violet" variant="light" onClick={flushEvents}>

@@ -32,7 +32,7 @@ export function Panel() {
       defaultValue={PanelTabs.Events}
       sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}
     >
-      <Tabs.List>
+      <Tabs.List className="dd-privacy-allow">
         <Tabs.Tab value={PanelTabs.Events}>Events</Tabs.Tab>
         <Tabs.Tab value={PanelTabs.Infos}>
           <Text>Infos</Text>

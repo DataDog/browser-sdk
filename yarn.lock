@@ -411,7 +411,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@datadog/browser-logs@workspace:packages/logs":
+"@datadog/browser-logs@workspace:*, @datadog/browser-logs@workspace:packages/logs":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-logs@workspace:packages/logs"
   dependencies:
@@ -447,7 +447,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@datadog/browser-rum@workspace:packages/rum":
+"@datadog/browser-rum@workspace:*, @datadog/browser-rum@workspace:packages/rum":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum@workspace:packages/rum"
   dependencies:
@@ -468,6 +468,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-sdk-developer-extension@workspace:developer-extension"
   dependencies:
+    "@datadog/browser-logs": "workspace:*"
+    "@datadog/browser-rum": "workspace:*"
     "@emotion/react": 11.11.1
     "@mantine/core": 6.0.16
     "@mantine/hooks": 6.0.16
