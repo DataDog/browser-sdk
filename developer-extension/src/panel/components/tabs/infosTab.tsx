@@ -37,7 +37,7 @@ export function InfosTab() {
               <Entry name="Created" value={formatDate(Number(infos.cookie.created))} />
               <Entry name="Expire" value={formatDate(Number(infos.cookie.expire))} />
               <Space h="sm" />
-              <Button color="violet" variant="light" onClick={endSession} className={'dd-privacy-allow'}>
+              <Button color="violet" variant="light" onClick={endSession} className="dd-privacy-allow">
                 End current session
               </Button>
             </>
@@ -47,7 +47,7 @@ export function InfosTab() {
           {infos.rum && (
             <>
               {sessionId && (
-                <Group className={'dd-privacy-allow'}>
+                <Group className="dd-privacy-allow">
                   <AppLink
                     config={infos.rum.config}
                     path="rum/explorer"
@@ -76,7 +76,7 @@ export function InfosTab() {
           {infos.logs && (
             <>
               {sessionId && (
-                <div className={'dd-privacy-allow'}>
+                <div className="dd-privacy-allow">
                   <AppLink
                     config={infos.logs.config}
                     path="logs"
