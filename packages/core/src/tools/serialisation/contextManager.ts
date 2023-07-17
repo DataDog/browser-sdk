@@ -26,7 +26,7 @@ export function createContextManager(customerDataType: CustomerDataType, compute
     }
   }, BYTES_COMPUTATION_THROTTLING_DELAY)
 
-  return {
+  const contextManager = {
     getBytesCount: () => bytesCountCache,
     /** @deprecated use getContext instead */
     get: () => context,
@@ -56,8 +56,7 @@ export function createContextManager(customerDataType: CustomerDataType, compute
         context = sanitize(newContext)
         computeBytesCountThrottled(context)
       } else {
-        context = {}
-        bytesCountCache = 0
+        contextManager.clearContext()
       }
     },
 
@@ -76,4 +75,5 @@ export function createContextManager(customerDataType: CustomerDataType, compute
       bytesCountCache = 0
     },
   }
+  return contextManager
 }
