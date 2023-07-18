@@ -11,6 +11,10 @@ export type DeflateWorkerAction =
       id: number
       data: string
     }
+  // Action to send when all data has been written and the state of the stream needs to be reset.
+  | {
+      action: 'reset'
+    }
   // Action to send when finishing to write some data. The worker will respond with a 'flushed'
   // response, with the same id, measurements of the wrote data bytes count and the complete deflate
   // data.

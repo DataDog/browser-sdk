@@ -88,6 +88,9 @@ export class MockWorker implements DeflateWorker {
             )
           }
           break
+        case 'reset':
+          this.deflatedData.length = 0
+          break
         case 'flush':
           {
             const additionalBytesCount = this.pushData(message.data)

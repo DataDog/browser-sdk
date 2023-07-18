@@ -15,6 +15,7 @@ export function startWorker() {
               type: 'initialized',
             })
             break
+
           case 'write': {
             const previousChunksLength = deflate.chunks.length
             const additionalBytesCount = pushData(data.data)
@@ -26,6 +27,11 @@ export function startWorker() {
             })
             break
           }
+
+          case 'reset':
+            deflate = new Deflate()
+            break
+
           case 'flush': {
             const additionalBytesCount = data.data ? pushData(data.data) : 0
             deflate.push('', constants.Z_FINISH)

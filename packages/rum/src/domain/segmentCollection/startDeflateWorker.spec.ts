@@ -307,6 +307,33 @@ describe('createDeflateWorker', () => {
     deflateWorker.postMessage({ id: 3, action: 'flush' })
   })
 
+  it('resets the stream state', (done) => {
+    const deflateWorker = createDeflateWorker()
+    listen(deflateWorker, 2, (events) => {
+      expect(events).toEqual([
+        {
+          type: 'wrote',
+          id: 0,
+          result: new Uint8Array([...STREAM_START, ...FOO_COMPRESSED]),
+          additionalBytesCount: 3,
+        },
+        {
+          type: 'wrote',
+          id: 1,
+          // As the result starts with the beginning of a stream, we are sure that `reset` was
+          // effective
+          result: new Uint8Array([...STREAM_START, ...BAR_COMPRESSED]),
+          additionalBytesCount: 3,
+        },
+      ])
+      done()
+    })
+    deflateWorker.postMessage({ id: 0, action: 'write', data: 'foo' })
+    deflateWorker.postMessage({ action: 'reset' })
+    deflateWorker.postMessage({ id: 1, action: 'write', data: 'bar' })
+    deflateWorker.postMessage({ action: 'reset' })
+  })
+
   function listen(
     deflateWorker: DeflateWorker,
     expectedResponseCount: number,
