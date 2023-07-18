@@ -68,12 +68,14 @@ export interface RumLargestContentfulPaintTiming {
   entryType: 'largest-contentful-paint'
   startTime: RelativeTime
   size: number
+  element?: Element
 }
 
 export interface RumFirstInputTiming {
   entryType: 'first-input'
   startTime: RelativeTime
   processingStart: RelativeTime
+  target?: Node
 }
 
 export interface RumLayoutShiftTiming {
@@ -81,6 +83,9 @@ export interface RumLayoutShiftTiming {
   startTime: RelativeTime
   value: number
   hadRecentInput: boolean
+  sources?: Array<{
+    node?: Node
+  }>
 }
 
 export type RumPerformanceEntry =

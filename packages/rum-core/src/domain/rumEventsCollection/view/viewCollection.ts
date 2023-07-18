@@ -44,6 +44,7 @@ export function startViewCollection(
     configuration,
     locationChangeObservable,
     !configuration.trackViewsManually,
+    recorderApi,
     initialViewOptions
   )
 

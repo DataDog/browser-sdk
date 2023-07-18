@@ -17,6 +17,7 @@ import {
   clearInterval,
 } from '@datadog/browser-core'
 
+import type { RecorderApi } from 'packages/rum-core/src/boot/rumPublicApi'
 import type { ViewCustomTimings } from '../../../rawRumEvent.types'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
 
@@ -79,6 +80,7 @@ export function trackViews(
   configuration: RumConfiguration,
   locationChangeObservable: Observable<LocationChange>,
   areViewsTrackedAutomatically: boolean,
+  recorderApi: RecorderApi,
   initialViewOptions?: ViewOptions
 ) {
   let currentView = startNewView(ViewLoadingType.INITIAL_LOAD, clocksOrigin(), initialViewOptions)
@@ -91,7 +93,16 @@ export function trackViews(
   }
 
   function startNewView(loadingType: ViewLoadingType, startClocks?: ClocksState, viewOptions?: ViewOptions) {
-    return newView(lifeCycle, domMutationObservable, configuration, location, loadingType, startClocks, viewOptions)
+    return newView(
+      lifeCycle,
+      domMutationObservable,
+      configuration,
+      location,
+      loadingType,
+      recorderApi,
+      startClocks,
+      viewOptions
+    )
   }
 
   function startViewLifeCycle() {
@@ -146,6 +157,7 @@ function newView(
   configuration: RumConfiguration,
   initialLocation: Location,
   loadingType: ViewLoadingType,
+  recorderApi: RecorderApi,
   startClocks: ClocksState = clocksNow(),
   viewOptions?: ViewOptions
 ) {
@@ -188,11 +200,19 @@ function newView(
     stop: stopViewMetricsTracking,
     viewMetrics,
     getScrollMetrics,
-  } = trackViewMetrics(lifeCycle, domMutationObservable, configuration, scheduleViewUpdate, loadingType, startClocks)
+  } = trackViewMetrics(
+    lifeCycle,
+    domMutationObservable,
+    configuration,
+    scheduleViewUpdate,
+    loadingType,
+    startClocks,
+    recorderApi
+  )
 
   const { scheduleStop: scheduleStopInitialViewTimingsTracking, timings } =
     loadingType === ViewLoadingType.INITIAL_LOAD
-      ? trackInitialViewTimings(lifeCycle, setLoadEvent, scheduleViewUpdate)
+      ? trackInitialViewTimings(lifeCycle, recorderApi, setLoadEvent, scheduleViewUpdate)
       : { scheduleStop: noop, timings: {} as Timings }
 
   const { scheduleStop: scheduleStopEventCountsTracking, eventCounts } = trackViewEventCounts(
