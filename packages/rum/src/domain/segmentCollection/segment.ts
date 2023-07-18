@@ -41,6 +41,7 @@ export class Segment {
 
     replayStats.addSegment(viewId)
     replayStats.addRecord(viewId)
+    let rawBytesCount = 0
 
     const { stop: removeMessageListener } = addEventListener(
       worker,
@@ -52,8 +53,9 @@ export class Segment {
 
         if (data.id === this.id) {
           replayStats.addWroteData(viewId, data.additionalBytesCount)
+          rawBytesCount += data.additionalBytesCount
           if (data.type === 'flushed') {
-            onFlushed(data.result, data.rawBytesCount)
+            onFlushed(data.result, rawBytesCount)
             removeMessageListener()
           } else {
             onWrote(data.compressedBytesCount)

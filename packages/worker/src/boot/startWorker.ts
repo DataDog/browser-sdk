@@ -5,7 +5,6 @@ import type { DeflateWorkerAction } from '../types'
 export function startWorker() {
   monitor(() => {
     let deflate = new Deflate()
-    let rawBytesCount = 0
     self.addEventListener(
       'message',
       monitor((event: MessageEvent<DeflateWorkerAction>) => {
@@ -34,10 +33,8 @@ export function startWorker() {
               id: data.id,
               result: deflate.result,
               additionalBytesCount,
-              rawBytesCount,
             })
             deflate = new Deflate()
-            rawBytesCount = 0
             break
           }
         }
@@ -48,7 +45,6 @@ export function startWorker() {
       // TextEncoder is not supported on old browser version like Edge 18, therefore we use string2buf
       const binaryData = string2buf(data)
       deflate.push(binaryData, constants.Z_SYNC_FLUSH)
-      rawBytesCount += binaryData.length
       return binaryData.length
     }
   })()

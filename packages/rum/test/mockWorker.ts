@@ -9,7 +9,6 @@ export class MockWorker implements DeflateWorker {
   public onerror = null
 
   readonly pendingMessages: DeflateWorkerAction[] = []
-  private rawBytesCount = 0
   private deflatedData: Uint8Array[] = []
   private listeners: {
     message: DeflateWorkerListener[]
@@ -98,13 +97,11 @@ export class MockWorker implements DeflateWorker {
                   type: 'flushed',
                   id: message.id,
                   result: mergeUint8Arrays(this.deflatedData),
-                  rawBytesCount: this.rawBytesCount,
                   additionalBytesCount,
                 },
               })
             )
             this.deflatedData.length = 0
-            this.rawBytesCount = 0
           }
           break
       }
@@ -122,7 +119,6 @@ export class MockWorker implements DeflateWorker {
 
   private pushData(data?: string) {
     const encodedData = new TextEncoder().encode(data)
-    this.rawBytesCount += encodedData.length
     // In the mock worker, for simplicity, we'll just use the UTF-8 encoded string instead of deflating it.
     this.deflatedData.push(encodedData)
     return encodedData.length

@@ -38,7 +38,6 @@ export type DeflateWorkerResponse =
       id: number
       result: Uint8Array
       additionalBytesCount: number
-      rawBytesCount: number
     }
   // Could happen at any time when something goes wrong in the worker
   | {
