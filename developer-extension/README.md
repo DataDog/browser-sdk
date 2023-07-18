@@ -11,7 +11,6 @@ build the extension manually.
 $ git clone https://github.com/DataDog/browser-sdk
 $ cd browser-sdk
 $ yarn
-$ cd developer-extension
 $ yarn build
 ```
 
