@@ -22,7 +22,6 @@ export function startWorker() {
               type: 'wrote',
               id: data.id,
               result: concatBuffers(deflate.chunks.slice(previousChunksLength)),
-              compressedBytesCount: deflate.chunks.reduce((total, chunk) => total + chunk.length, 0),
               additionalBytesCount,
             })
             break

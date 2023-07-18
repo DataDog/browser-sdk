@@ -42,6 +42,7 @@ export class Segment {
     replayStats.addSegment(viewId)
     replayStats.addRecord(viewId)
     let rawBytesCount = 0
+    let compressedBytesCount = 0
 
     const { stop: removeMessageListener } = addEventListener(
       worker,
@@ -58,7 +59,8 @@ export class Segment {
             onFlushed(data.result, rawBytesCount)
             removeMessageListener()
           } else {
-            onWrote(data.compressedBytesCount)
+            compressedBytesCount += data.result.length
+            onWrote(compressedBytesCount)
           }
         } else if (data.id > this.id) {
           // Messages should be received in the same order as they are sent, so if we receive a

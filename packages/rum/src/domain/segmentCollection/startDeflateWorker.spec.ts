@@ -209,21 +209,18 @@ describe('createDeflateWorker', () => {
           type: 'wrote',
           id: 0,
           result: new Uint8Array([...STREAM_START, ...FOO_COMPRESSED]),
-          compressedBytesCount: 11,
           additionalBytesCount: 3,
         },
         {
           type: 'wrote',
           id: 1,
           result: new Uint8Array(BAR_COMPRESSED),
-          compressedBytesCount: 20,
           additionalBytesCount: 3,
         },
         {
           type: 'wrote',
           id: 2,
           result: new Uint8Array(BAZ_COMPRESSED),
-          compressedBytesCount: 29,
           additionalBytesCount: 3,
         },
       ])
@@ -242,7 +239,6 @@ describe('createDeflateWorker', () => {
           type: 'wrote',
           id: 0,
           result: new Uint8Array([...STREAM_START, ...FOO_COMPRESSED]),
-          compressedBytesCount: 11,
           additionalBytesCount: 3,
         },
         {
@@ -282,7 +278,6 @@ describe('createDeflateWorker', () => {
           type: 'wrote',
           id: 0,
           result: new Uint8Array([...STREAM_START, ...FOO_COMPRESSED]),
-          compressedBytesCount: 11,
           additionalBytesCount: 3,
         },
         {
@@ -295,7 +290,6 @@ describe('createDeflateWorker', () => {
           type: 'wrote',
           id: 2,
           result: new Uint8Array([...STREAM_START, ...BAR_COMPRESSED]),
-          compressedBytesCount: 11,
           additionalBytesCount: 3,
         },
         {

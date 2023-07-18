@@ -82,7 +82,6 @@ export class MockWorker implements DeflateWorker {
                   type: 'wrote',
                   id: message.id,
                   result: this.deflatedData[this.deflatedData.length - 1],
-                  compressedBytesCount: uint8ArraysSize(this.deflatedData),
                   additionalBytesCount,
                 },
               })
