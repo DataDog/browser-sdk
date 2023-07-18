@@ -16,10 +16,12 @@ export function startWorker() {
             })
             break
           case 'write': {
+            const previousChunksLength = deflate.chunks.length
             const additionalBytesCount = pushData(data.data)
             self.postMessage({
               type: 'wrote',
               id: data.id,
+              result: concatBuffers(deflate.chunks.slice(previousChunksLength)),
               compressedBytesCount: deflate.chunks.reduce((total, chunk) => total + chunk.length, 0),
               additionalBytesCount,
             })
@@ -69,4 +71,15 @@ function monitor<Args extends any[], Result>(fn: (...args: Args) => Result): (..
       }
     }
   }
+}
+
+function concatBuffers(buffers: Uint8Array[]) {
+  const length = buffers.reduce((total, buffer) => total + buffer.length, 0)
+  const result = new Uint8Array(length)
+  let offset = 0
+  for (const buffer of buffers) {
+    result.set(buffer, offset)
+    offset += buffer.length
+  }
+  return result
 }

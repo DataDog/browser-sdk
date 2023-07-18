@@ -29,6 +29,7 @@ export type DeflateWorkerResponse =
   | {
       type: 'wrote'
       id: number
+      result: Uint8Array
       compressedBytesCount: number
       additionalBytesCount: number
     }
