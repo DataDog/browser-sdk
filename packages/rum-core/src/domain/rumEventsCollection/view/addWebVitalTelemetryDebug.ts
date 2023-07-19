@@ -1,8 +1,10 @@
-import { addTelemetryDebug, elapsed, relativeNow, type RelativeTime } from '@datadog/browser-core'
+import { addTelemetryDebug, elapsed, relativeNow, toServerDuration, type RelativeTime } from '@datadog/browser-core'
 import type { RecorderApi } from '../../../boot/rumPublicApi'
+import type { RumSessionManager } from '../../rumSessionManager'
 
 export function addWebVitalTelemetryDebug(
   recorderApi: RecorderApi,
+  session: RumSessionManager,
   webVitalName: string,
   webVitalNode: Node | undefined,
   webVitalTime: RelativeTime
@@ -11,8 +13,8 @@ export function addWebVitalTelemetryDebug(
   if (!recorderApi.isRecording()) {
     recorderApi.recorderStartObservable.subscribe((recordingStartTime) => {
       addTelemetryDebug(`${webVitalName} attribution recording delay`, {
-        computationDelay: elapsed(webVitalTime, computationTime),
-        recordingDelay: elapsed(webVitalTime, recordingStartTime),
+        computationDelay: toServerDuration(elapsed(webVitalTime, computationTime)),
+        recordingDelay: toServerDuration(elapsed(webVitalTime, recordingStartTime)),
         hasNode: !!webVitalNode,
         serializedDomNode: webVitalNode ? recorderApi.getSerializedNodeId(webVitalNode) : undefined,
       })
@@ -20,9 +22,10 @@ export function addWebVitalTelemetryDebug(
   }
 
   addTelemetryDebug(`${webVitalName} attribution`, {
-    computationDelay: elapsed(webVitalTime, computationTime),
+    computationDelay: toServerDuration(elapsed(webVitalTime, computationTime)),
     hasNode: !!webVitalNode,
     replayRecording: recorderApi.isRecording(),
+    replaySampled: session.findTrackedSession()?.sessionReplayAllowed,
     serializedDomNode: webVitalNode ? recorderApi.getSerializedNodeId(webVitalNode) : undefined,
   })
 }

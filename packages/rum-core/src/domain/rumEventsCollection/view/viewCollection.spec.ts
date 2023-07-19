@@ -72,6 +72,7 @@ describe('viewCollection', () => {
           domMutationObservable,
           locationChangeObservable,
           pageStateHistory,
+          sessionManager,
         }) => {
           getReplayStatsSpy = jasmine.createSpy()
           startViewCollection(
@@ -85,7 +86,8 @@ describe('viewCollection', () => {
             {
               ...noopRecorderApi,
               getReplayStats: getReplayStatsSpy,
-            }
+            },
+            sessionManager
           )
         }
       )

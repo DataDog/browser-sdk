@@ -127,6 +127,7 @@ export function startRum(
     featureFlagContexts,
     pageStateHistory,
     recorderApi,
+    session,
     initialViewOptions
   )
   const { addError } = startErrorCollection(lifeCycle, pageStateHistory, featureFlagContexts)

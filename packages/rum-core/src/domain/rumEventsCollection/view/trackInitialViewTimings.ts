@@ -19,6 +19,7 @@ import type {
   RumLargestContentfulPaintTiming,
   RumPerformancePaintTiming,
 } from '../../../browser/performanceCollection'
+import type { RumSessionManager } from '../../rumSessionManager'
 import { trackFirstHidden } from './trackFirstHidden'
 import { addWebVitalTelemetryDebug } from './addWebVitalTelemetryDebug'
 
@@ -49,6 +50,7 @@ export interface Timings {
 export function trackInitialViewTimings(
   lifeCycle: LifeCycle,
   recorderApi: RecorderApi,
+  session: RumSessionManager,
   setLoadEvent: (loadEnd: Duration) => void,
   scheduleViewUpdate: () => void
 ) {
@@ -70,7 +72,7 @@ export function trackInitialViewTimings(
     lifeCycle,
     window,
     (largestContentfulPaint, lcpElement) => {
-      addWebVitalTelemetryDebug(recorderApi, 'LCP', lcpElement, largestContentfulPaint)
+      addWebVitalTelemetryDebug(recorderApi, session, 'LCP', lcpElement, largestContentfulPaint)
 
       setTimings({
         largestContentfulPaint,
@@ -81,7 +83,7 @@ export function trackInitialViewTimings(
   const { stop: stopFIDTracking } = trackFirstInputTimings(
     lifeCycle,
     ({ firstInputDelay, firstInputTime, firstInputTarget }) => {
-      addWebVitalTelemetryDebug(recorderApi, 'FID', firstInputTarget, firstInputTime)
+      addWebVitalTelemetryDebug(recorderApi, session, 'FID', firstInputTarget, firstInputTime)
 
       setTimings({
         firstInputDelay,

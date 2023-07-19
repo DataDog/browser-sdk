@@ -2,7 +2,7 @@ import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { DOM_EVENT } from '@datadog/browser-core'
 import { restorePageVisibility, setPageVisibility, createNewEvent } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../../../test'
-import { noopRecorderApi, setup } from '../../../../test'
+import { createRumSessionManagerMock, noopRecorderApi, setup } from '../../../../test'
 import type {
   RumFirstInputTiming,
   RumLargestContentfulPaintTiming,
@@ -10,6 +10,7 @@ import type {
   RumPerformancePaintTiming,
 } from '../../../browser/performanceCollection'
 import { LifeCycleEventType } from '../../lifeCycle'
+import type { RumSessionManager } from '../../rumSessionManager'
 import { resetFirstHidden } from './trackFirstHidden'
 import type { Timings } from './trackInitialViewTimings'
 import {
@@ -56,14 +57,18 @@ describe('trackInitialViewTimings', () => {
   let scheduleViewUpdateSpy: jasmine.Spy<() => void>
   let trackInitialViewTimingsResult: ReturnType<typeof trackInitialViewTimings>
   let setLoadEventSpy: jasmine.Spy<(loadEvent: Duration) => void>
+  let sessionManager: RumSessionManager
 
   beforeEach(() => {
     scheduleViewUpdateSpy = jasmine.createSpy()
     setLoadEventSpy = jasmine.createSpy()
+    sessionManager = createRumSessionManagerMock()
+
     setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
       trackInitialViewTimingsResult = trackInitialViewTimings(
         lifeCycle,
         noopRecorderApi,
+        sessionManager,
         setLoadEventSpy,
         scheduleViewUpdateSpy
       )

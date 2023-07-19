@@ -23,6 +23,7 @@ import { waitPageActivityEnd } from '../../waitPageActivityEnd'
 
 import { getScrollY } from '../../../browser/scroll'
 import { getViewportDimension } from '../../../browser/viewportObservable'
+import type { RumSessionManager } from '../../rumSessionManager'
 import { addWebVitalTelemetryDebug } from './addWebVitalTelemetryDebug'
 
 export interface ScrollMetrics {
@@ -47,7 +48,8 @@ export function trackViewMetrics(
   scheduleViewUpdate: () => void,
   loadingType: ViewLoadingType,
   viewStart: ClocksState,
-  recorderApi: RecorderApi
+  recorderApi: RecorderApi,
+  session: RumSessionManager
 ) {
   const viewMetrics: ViewMetrics = {}
 
@@ -97,7 +99,7 @@ export function trackViewMetrics(
 
         if (!clsAttributionCollected) {
           clsAttributionCollected = true
-          addWebVitalTelemetryDebug(recorderApi, 'CLS', largestLayoutShiftNode, largestLayoutShiftTime)
+          addWebVitalTelemetryDebug(recorderApi, session, 'CLS', largestLayoutShiftNode, largestLayoutShiftTime)
         }
         scheduleViewUpdate()
       }

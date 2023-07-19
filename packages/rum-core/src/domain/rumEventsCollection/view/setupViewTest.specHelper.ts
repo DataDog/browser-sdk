@@ -6,7 +6,7 @@ import { trackViews } from './trackViews'
 export type ViewTest = ReturnType<typeof setupViewTest>
 
 export function setupViewTest(
-  { lifeCycle, location, domMutationObservable, configuration, locationChangeObservable }: BuildContext,
+  { lifeCycle, location, domMutationObservable, configuration, locationChangeObservable, sessionManager }: BuildContext,
   initialViewOptions?: ViewOptions
 ) {
   const {
@@ -34,6 +34,7 @@ export function setupViewTest(
     locationChangeObservable,
     !configuration.trackViewsManually,
     noopRecorderApi,
+    sessionManager,
     initialViewOptions
   )
   return {

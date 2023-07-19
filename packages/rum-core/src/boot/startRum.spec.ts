@@ -73,7 +73,8 @@ function startRumStub(
     locationChangeObservable,
     startFeatureFlagContexts(lifeCycle),
     pageStateHistory,
-    noopRecorderApi
+    noopRecorderApi,
+    sessionManager
   )
 
   startLongTaskCollection(lifeCycle, sessionManager)

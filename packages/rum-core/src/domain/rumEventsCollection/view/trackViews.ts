@@ -26,6 +26,7 @@ import { LifeCycleEventType } from '../../lifeCycle'
 import type { EventCounts } from '../../trackEventCounts'
 import type { LocationChange } from '../../../browser/locationChangeObservable'
 import type { RumConfiguration } from '../../configuration'
+import type { RumSessionManager } from '../../rumSessionManager'
 import type { Timings } from './trackInitialViewTimings'
 import { trackInitialViewTimings } from './trackInitialViewTimings'
 import type { ScrollMetrics } from './trackViewMetrics'
@@ -81,6 +82,7 @@ export function trackViews(
   locationChangeObservable: Observable<LocationChange>,
   areViewsTrackedAutomatically: boolean,
   recorderApi: RecorderApi,
+  session: RumSessionManager,
   initialViewOptions?: ViewOptions
 ) {
   let currentView = startNewView(ViewLoadingType.INITIAL_LOAD, clocksOrigin(), initialViewOptions)
@@ -100,6 +102,7 @@ export function trackViews(
       location,
       loadingType,
       recorderApi,
+      session,
       startClocks,
       viewOptions
     )
@@ -158,6 +161,7 @@ function newView(
   initialLocation: Location,
   loadingType: ViewLoadingType,
   recorderApi: RecorderApi,
+  session: RumSessionManager,
   startClocks: ClocksState = clocksNow(),
   viewOptions?: ViewOptions
 ) {
@@ -207,12 +211,13 @@ function newView(
     scheduleViewUpdate,
     loadingType,
     startClocks,
-    recorderApi
+    recorderApi,
+    session
   )
 
   const { scheduleStop: scheduleStopInitialViewTimingsTracking, timings } =
     loadingType === ViewLoadingType.INITIAL_LOAD
-      ? trackInitialViewTimings(lifeCycle, recorderApi, setLoadEvent, scheduleViewUpdate)
+      ? trackInitialViewTimings(lifeCycle, recorderApi, session, setLoadEvent, scheduleViewUpdate)
       : { scheduleStop: noop, timings: {} as Timings }
 
   const { scheduleStop: scheduleStopEventCountsTracking, eventCounts } = trackViewEventCounts(
