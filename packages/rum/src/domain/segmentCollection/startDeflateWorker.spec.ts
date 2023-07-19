@@ -201,6 +201,11 @@ describe('createDeflateWorker', () => {
   // Deflate block generated when compressing "baz" alone
   const BAZ_COMPRESSED = [74, 74, 172, 2, 0, 0, 0, 255, 255]
 
+  // Zlib trailer when finishing the stream after compressing "foo" then "bar"
+  const FOO_BAR_COMPRESSED_TRAILER = [3, 0, 8, 171, 2, 122]
+  // Zlib trailer when finishing the stream after compressing "foo" then "bar" then "baz"
+  const FOO_BAR_BAZ_COMPRESSED_TRAILER = [3, 0, 18, 123, 3, 183]
+
   it('buffers data and responds with the buffer deflated result when writing', (done) => {
     const deflateWorker = createDeflateWorker()
     listen(deflateWorker, 3, (events) => {
@@ -209,18 +214,21 @@ describe('createDeflateWorker', () => {
           type: 'wrote',
           id: 0,
           result: new Uint8Array([...STREAM_START, ...FOO_COMPRESSED]),
+          trailer: new Uint8Array(FOO_COMPRESSED_TRAILER),
           additionalBytesCount: 3,
         },
         {
           type: 'wrote',
           id: 1,
           result: new Uint8Array(BAR_COMPRESSED),
+          trailer: new Uint8Array(FOO_BAR_COMPRESSED_TRAILER),
           additionalBytesCount: 3,
         },
         {
           type: 'wrote',
           id: 2,
           result: new Uint8Array(BAZ_COMPRESSED),
+          trailer: new Uint8Array(FOO_BAR_BAZ_COMPRESSED_TRAILER),
           additionalBytesCount: 3,
         },
       ])
@@ -239,6 +247,7 @@ describe('createDeflateWorker', () => {
           type: 'wrote',
           id: 0,
           result: new Uint8Array([...STREAM_START, ...FOO_COMPRESSED]),
+          trailer: new Uint8Array(FOO_COMPRESSED_TRAILER),
           additionalBytesCount: 3,
         },
         {
@@ -278,6 +287,7 @@ describe('createDeflateWorker', () => {
           type: 'wrote',
           id: 0,
           result: new Uint8Array([...STREAM_START, ...FOO_COMPRESSED]),
+          trailer: new Uint8Array(FOO_COMPRESSED_TRAILER),
           additionalBytesCount: 3,
         },
         {
@@ -290,6 +300,7 @@ describe('createDeflateWorker', () => {
           type: 'wrote',
           id: 2,
           result: new Uint8Array([...STREAM_START, ...BAR_COMPRESSED]),
+          trailer: new Uint8Array(BAR_COMPRESSED_TRAILER),
           additionalBytesCount: 3,
         },
         {
@@ -315,6 +326,7 @@ describe('createDeflateWorker', () => {
           type: 'wrote',
           id: 0,
           result: new Uint8Array([...STREAM_START, ...FOO_COMPRESSED]),
+          trailer: new Uint8Array(FOO_COMPRESSED_TRAILER),
           additionalBytesCount: 3,
         },
         {
@@ -323,6 +335,7 @@ describe('createDeflateWorker', () => {
           // As the result starts with the beginning of a stream, we are sure that `reset` was
           // effective
           result: new Uint8Array([...STREAM_START, ...BAR_COMPRESSED]),
+          trailer: new Uint8Array(BAR_COMPRESSED_TRAILER),
           additionalBytesCount: 3,
         },
       ])

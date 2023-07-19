@@ -34,6 +34,7 @@ export type DeflateWorkerResponse =
       type: 'wrote'
       id: number
       result: Uint8Array
+      trailer: Uint8Array
       additionalBytesCount: number
     }
   // Response to 'flush' action

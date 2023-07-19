@@ -23,6 +23,7 @@ export function startWorker() {
               type: 'wrote',
               id: data.id,
               result: concatBuffers(deflate.chunks.slice(previousChunksLength)),
+              trailer: makeTrailer(deflate),
               additionalBytesCount,
             })
             break
@@ -87,4 +88,21 @@ function concatBuffers(buffers: Uint8Array[]) {
     offset += buffer.length
   }
   return result
+}
+
+function makeTrailer(deflate: Deflate): Uint8Array {
+  /* eslint-disable no-bitwise */
+  const adler = deflate.strm.adler
+  // This is essentially the output of a `deflate.push('', constants.Z_FINISH)` operation.
+  return new Uint8Array([
+    // Empty deflate block
+    3,
+    0,
+    // Adler32 checksum
+    (adler >>> 24) & 0xff,
+    (adler >>> 16) & 0xff,
+    (adler >>> 8) & 0xff,
+    adler & 0xff,
+  ])
+  /* eslint-enable no-bitwise */
 }

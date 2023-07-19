@@ -82,6 +82,7 @@ export class MockWorker implements DeflateWorker {
                   type: 'wrote',
                   id: message.id,
                   result: this.deflatedData[this.deflatedData.length - 1],
+                  trailer: new Uint8Array([32]), // emulate a trailer with a single space
                   additionalBytesCount,
                 },
               })
