@@ -5,6 +5,8 @@ import { RecordType } from '../../types'
 import * as replayStats from '../replayStats'
 import type { DeflateWorker } from './startDeflateWorker'
 
+// Arbitrary id, will be replaced when we have multiple parallel streams.
+const STREAM_ID = 1
 let nextId = 0
 
 export type FlushReason = Exclude<CreationReason, 'init'> | 'stop'
@@ -99,6 +101,7 @@ export class Segment {
     this.write(`],${JSON.stringify(this.metadata).slice(1)}\n`)
     this.worker.postMessage({
       action: 'reset',
+      streamId: STREAM_ID,
     })
     this.flushReason = reason
   }
@@ -108,6 +111,7 @@ export class Segment {
     this.worker.postMessage({
       data,
       id: this.id,
+      streamId: STREAM_ID,
       action: 'write',
     })
   }

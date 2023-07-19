@@ -9,7 +9,8 @@ export class MockWorker implements DeflateWorker {
   public onerror = null
 
   readonly pendingMessages: DeflateWorkerAction[] = []
-  private deflatedData: Uint8Array[] = []
+
+  private streams = new Map<number, Uint8Array[]>()
   private listeners: {
     message: DeflateWorkerListener[]
     error: Array<(error: unknown) => void>
@@ -75,22 +76,31 @@ export class MockWorker implements DeflateWorker {
           break
         case 'write':
           {
-            const additionalBytesCount = this.pushData(message.data)
+            let stream = this.streams.get(message.streamId)
+            if (!stream) {
+              stream = []
+              this.streams.set(message.streamId, stream)
+            }
+            // In the mock worker, for simplicity, we'll just use the UTF-8 encoded string instead of deflating it.
+            const binaryData = new TextEncoder().encode(message.data)
+            stream.push(binaryData)
+
             this.listeners.message.forEach((listener) =>
               listener({
                 data: {
                   type: 'wrote',
                   id: message.id,
-                  result: this.deflatedData[this.deflatedData.length - 1],
+                  streamId: message.streamId,
+                  result: binaryData,
                   trailer: new Uint8Array([32]), // emulate a trailer with a single space
-                  additionalBytesCount,
+                  additionalBytesCount: binaryData.length,
                 },
               })
             )
           }
           break
         case 'reset':
-          this.deflatedData.length = 0
+          this.streams.delete(message.streamId)
           break
       }
     }
@@ -103,12 +113,5 @@ export class MockWorker implements DeflateWorker {
 
   dispatchErrorMessage(error: Error | string) {
     this.listeners.message.forEach((listener) => listener({ data: { type: 'errored', error } }))
-  }
-
-  private pushData(data?: string) {
-    const encodedData = new TextEncoder().encode(data)
-    // In the mock worker, for simplicity, we'll just use the UTF-8 encoded string instead of deflating it.
-    this.deflatedData.push(encodedData)
-    return encodedData.length
   }
 }

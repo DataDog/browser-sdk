@@ -1,47 +1,19 @@
 /* eslint-disable local-rules/disallow-zone-js-patched-values */
 import { Deflate, constants, string2buf } from '../domain/deflate'
-import type { DeflateWorkerAction } from '../types'
+import type { DeflateWorkerAction, DeflateWorkerResponse } from '../types'
 
 export function startWorker() {
   monitor(() => {
-    let deflate = new Deflate()
+    const streams = new Map<number, Deflate>()
     self.addEventListener(
       'message',
       monitor((event: MessageEvent<DeflateWorkerAction>) => {
-        const data = event.data
-        switch (data.action) {
-          case 'init':
-            self.postMessage({
-              type: 'initialized',
-            })
-            break
-
-          case 'write': {
-            const previousChunksLength = deflate.chunks.length
-            const additionalBytesCount = pushData(data.data)
-            self.postMessage({
-              type: 'wrote',
-              id: data.id,
-              result: concatBuffers(deflate.chunks.slice(previousChunksLength)),
-              trailer: makeTrailer(deflate),
-              additionalBytesCount,
-            })
-            break
-          }
-
-          case 'reset':
-            deflate = new Deflate()
-            break
+        const response = handleAction(streams, event.data)
+        if (response) {
+          self.postMessage(response)
         }
       })
     )
-
-    function pushData(data: string) {
-      // TextEncoder is not supported on old browser version like Edge 18, therefore we use string2buf
-      const binaryData = string2buf(data)
-      deflate.push(binaryData, constants.Z_SYNC_FLUSH)
-      return binaryData.length
-    }
   })()
 }
 
@@ -63,6 +35,41 @@ function monitor<Args extends any[], Result>(fn: (...args: Args) => Result): (..
         })
       }
     }
+  }
+}
+
+function handleAction(streams: Map<number, Deflate>, message: DeflateWorkerAction): DeflateWorkerResponse | undefined {
+  switch (message.action) {
+    case 'init':
+      return {
+        type: 'initialized',
+      }
+
+    case 'write': {
+      let deflate = streams.get(message.streamId)
+      if (!deflate) {
+        deflate = new Deflate()
+        streams.set(message.streamId, deflate)
+      }
+      const previousChunksLength = deflate.chunks.length
+
+      // TextEncoder is not supported on old browser version like Edge 18, therefore we use string2buf
+      const binaryData = string2buf(message.data)
+      deflate.push(binaryData, constants.Z_SYNC_FLUSH)
+
+      return {
+        type: 'wrote',
+        id: message.id,
+        streamId: message.streamId,
+        result: concatBuffers(deflate.chunks.slice(previousChunksLength)),
+        trailer: makeTrailer(deflate),
+        additionalBytesCount: binaryData.length,
+      }
+    }
+
+    case 'reset':
+      streams.delete(message.streamId)
+      break
   }
 }
 

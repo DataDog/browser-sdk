@@ -205,6 +205,8 @@ describe('createDeflateWorker', () => {
   const FOO_BAR_COMPRESSED_TRAILER = [3, 0, 8, 171, 2, 122]
   // Zlib trailer when finishing the stream after compressing "foo" then "bar" then "baz"
   const FOO_BAR_BAZ_COMPRESSED_TRAILER = [3, 0, 18, 123, 3, 183]
+  // Zlib trailer when finishing the stream after compressing "foo" then "baz"
+  const FOO_BAZ_COMPRESSED_TRAILER = [3, 0, 8, 179, 2, 130]
 
   it('buffers data and responds with the buffer deflated result when writing', (done) => {
     const deflateWorker = createDeflateWorker()
@@ -213,6 +215,7 @@ describe('createDeflateWorker', () => {
         {
           type: 'wrote',
           id: 0,
+          streamId: 1,
           result: new Uint8Array([...STREAM_START, ...FOO_COMPRESSED]),
           trailer: new Uint8Array(FOO_COMPRESSED_TRAILER),
           additionalBytesCount: 3,
@@ -220,6 +223,7 @@ describe('createDeflateWorker', () => {
         {
           type: 'wrote',
           id: 1,
+          streamId: 1,
           result: new Uint8Array(BAR_COMPRESSED),
           trailer: new Uint8Array(FOO_BAR_COMPRESSED_TRAILER),
           additionalBytesCount: 3,
@@ -227,6 +231,7 @@ describe('createDeflateWorker', () => {
         {
           type: 'wrote',
           id: 2,
+          streamId: 1,
           result: new Uint8Array(BAZ_COMPRESSED),
           trailer: new Uint8Array(FOO_BAR_BAZ_COMPRESSED_TRAILER),
           additionalBytesCount: 3,
@@ -234,9 +239,9 @@ describe('createDeflateWorker', () => {
       ])
       done()
     })
-    deflateWorker.postMessage({ id: 0, action: 'write', data: 'foo' })
-    deflateWorker.postMessage({ id: 1, action: 'write', data: 'bar' })
-    deflateWorker.postMessage({ id: 2, action: 'write', data: 'baz' })
+    deflateWorker.postMessage({ id: 0, streamId: 1, action: 'write', data: 'foo' })
+    deflateWorker.postMessage({ id: 1, streamId: 1, action: 'write', data: 'bar' })
+    deflateWorker.postMessage({ id: 2, streamId: 1, action: 'write', data: 'baz' })
   })
 
   it('resets the stream state', (done) => {
@@ -246,6 +251,7 @@ describe('createDeflateWorker', () => {
         {
           type: 'wrote',
           id: 0,
+          streamId: 1,
           result: new Uint8Array([...STREAM_START, ...FOO_COMPRESSED]),
           trailer: new Uint8Array(FOO_COMPRESSED_TRAILER),
           additionalBytesCount: 3,
@@ -253,6 +259,7 @@ describe('createDeflateWorker', () => {
         {
           type: 'wrote',
           id: 1,
+          streamId: 1,
           // As the result starts with the beginning of a stream, we are sure that `reset` was
           // effective
           result: new Uint8Array([...STREAM_START, ...BAR_COMPRESSED]),
@@ -262,10 +269,47 @@ describe('createDeflateWorker', () => {
       ])
       done()
     })
-    deflateWorker.postMessage({ id: 0, action: 'write', data: 'foo' })
-    deflateWorker.postMessage({ action: 'reset' })
-    deflateWorker.postMessage({ id: 1, action: 'write', data: 'bar' })
-    deflateWorker.postMessage({ action: 'reset' })
+    deflateWorker.postMessage({ action: 'write', id: 0, streamId: 1, data: 'foo' })
+    deflateWorker.postMessage({ action: 'reset', streamId: 1 })
+    deflateWorker.postMessage({ action: 'write', id: 1, streamId: 1, data: 'bar' })
+    deflateWorker.postMessage({ action: 'reset', streamId: 1 })
+  })
+
+  it('support writing to different streams at the same time', (done) => {
+    const deflateWorker = createDeflateWorker()
+    listen(deflateWorker, 3, (events) => {
+      expect(events).toEqual([
+        {
+          type: 'wrote',
+          id: 0,
+          streamId: 1,
+          result: new Uint8Array([...STREAM_START, ...FOO_COMPRESSED]),
+          trailer: new Uint8Array(FOO_COMPRESSED_TRAILER),
+          additionalBytesCount: 3,
+        },
+        {
+          type: 'wrote',
+          id: 1,
+          streamId: 2,
+          result: new Uint8Array([...STREAM_START, ...BAR_COMPRESSED]),
+          trailer: new Uint8Array(BAR_COMPRESSED_TRAILER),
+          additionalBytesCount: 3,
+        },
+        {
+          type: 'wrote',
+          id: 2,
+          streamId: 1,
+          result: new Uint8Array(BAZ_COMPRESSED),
+          trailer: new Uint8Array(FOO_BAZ_COMPRESSED_TRAILER),
+          additionalBytesCount: 3,
+        },
+      ])
+      done()
+    })
+    deflateWorker.postMessage({ id: 0, streamId: 1, action: 'write', data: 'foo' })
+    deflateWorker.postMessage({ id: 1, streamId: 2, action: 'write', data: 'bar' })
+    deflateWorker.postMessage({ streamId: 2, action: 'reset' })
+    deflateWorker.postMessage({ id: 2, streamId: 1, action: 'write', data: 'baz' })
   })
 
   function listen(
