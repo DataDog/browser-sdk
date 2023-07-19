@@ -17,7 +17,7 @@ import {
   clearInterval,
 } from '@datadog/browser-core'
 
-import type { RecorderApi } from 'packages/rum-core/src/boot/rumPublicApi'
+import type { RecorderApi } from '../../../boot/rumPublicApi'
 import type { ViewCustomTimings } from '../../../rawRumEvent.types'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
 

@@ -1,5 +1,5 @@
 import { addTelemetryDebug, elapsed, relativeNow, type RelativeTime } from '@datadog/browser-core'
-import type { RecorderApi } from 'packages/rum-core/src/boot/rumPublicApi'
+import type { RecorderApi } from '../../../boot/rumPublicApi'
 
 export function addWebVitalTelemetryDebug(
   recorderApi: RecorderApi,

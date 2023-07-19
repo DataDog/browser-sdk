@@ -11,7 +11,7 @@ import {
   relativeNow,
 } from '@datadog/browser-core'
 
-import type { RecorderApi } from 'packages/rum-core/src/boot/rumPublicApi'
+import type { RecorderApi } from '../../../boot/rumPublicApi'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type {

@@ -12,7 +12,7 @@ import {
   throttle,
   find,
 } from '@datadog/browser-core'
-import type { RecorderApi } from '@datadog/browser-rum-core'
+import type { RecorderApi } from '../../../boot/rumPublicApi'
 import type { RumLayoutShiftTiming } from '../../../browser/performanceCollection'
 import { supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
