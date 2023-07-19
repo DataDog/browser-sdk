@@ -17,9 +17,9 @@ import type { LocationChange } from '../../../browser/locationChangeObservable'
 import type { RumConfiguration } from '../../configuration'
 import type { FeatureFlagContexts } from '../../contexts/featureFlagContext'
 import type { PageStateHistory } from '../../contexts/pageStateHistory'
-import type { RumSessionManager } from '../../rumSessionManager'
 import type { ViewEvent, ViewOptions } from './trackViews'
 import { trackViews } from './trackViews'
+import type { WebVitalTelemetryDebug } from './startWebVitalTelemetryDebug'
 
 export function startViewCollection(
   lifeCycle: LifeCycle,
@@ -30,7 +30,7 @@ export function startViewCollection(
   featureFlagContexts: FeatureFlagContexts,
   pageStateHistory: PageStateHistory,
   recorderApi: RecorderApi,
-  session: RumSessionManager,
+  webVitalTelemetryDebug: WebVitalTelemetryDebug,
   initialViewOptions?: ViewOptions
 ) {
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) =>
@@ -46,8 +46,7 @@ export function startViewCollection(
     configuration,
     locationChangeObservable,
     !configuration.trackViewsManually,
-    recorderApi,
-    session,
+    webVitalTelemetryDebug,
     initialViewOptions
   )
 

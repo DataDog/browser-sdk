@@ -17,7 +17,6 @@ import {
   clearInterval,
 } from '@datadog/browser-core'
 
-import type { RecorderApi } from '../../../boot/rumPublicApi'
 import type { ViewCustomTimings } from '../../../rawRumEvent.types'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
 
@@ -26,12 +25,12 @@ import { LifeCycleEventType } from '../../lifeCycle'
 import type { EventCounts } from '../../trackEventCounts'
 import type { LocationChange } from '../../../browser/locationChangeObservable'
 import type { RumConfiguration } from '../../configuration'
-import type { RumSessionManager } from '../../rumSessionManager'
 import type { Timings } from './trackInitialViewTimings'
 import { trackInitialViewTimings } from './trackInitialViewTimings'
 import type { ScrollMetrics } from './trackViewMetrics'
 import { trackViewMetrics } from './trackViewMetrics'
 import { trackViewEventCounts } from './trackViewEventCounts'
+import type { WebVitalTelemetryDebug } from './startWebVitalTelemetryDebug'
 
 export interface ViewEvent {
   id: string
@@ -81,8 +80,7 @@ export function trackViews(
   configuration: RumConfiguration,
   locationChangeObservable: Observable<LocationChange>,
   areViewsTrackedAutomatically: boolean,
-  recorderApi: RecorderApi,
-  session: RumSessionManager,
+  webVitalTelemetryDebug: WebVitalTelemetryDebug,
   initialViewOptions?: ViewOptions
 ) {
   let currentView = startNewView(ViewLoadingType.INITIAL_LOAD, clocksOrigin(), initialViewOptions)
@@ -101,8 +99,7 @@ export function trackViews(
       configuration,
       location,
       loadingType,
-      recorderApi,
-      session,
+      webVitalTelemetryDebug,
       startClocks,
       viewOptions
     )
@@ -160,8 +157,7 @@ function newView(
   configuration: RumConfiguration,
   initialLocation: Location,
   loadingType: ViewLoadingType,
-  recorderApi: RecorderApi,
-  session: RumSessionManager,
+  webVitalTelemetryDebug: WebVitalTelemetryDebug,
   startClocks: ClocksState = clocksNow(),
   viewOptions?: ViewOptions
 ) {
@@ -211,13 +207,12 @@ function newView(
     scheduleViewUpdate,
     loadingType,
     startClocks,
-    recorderApi,
-    session
+    webVitalTelemetryDebug
   )
 
   const { scheduleStop: scheduleStopInitialViewTimingsTracking, timings } =
     loadingType === ViewLoadingType.INITIAL_LOAD
-      ? trackInitialViewTimings(lifeCycle, recorderApi, session, setLoadEvent, scheduleViewUpdate)
+      ? trackInitialViewTimings(lifeCycle, webVitalTelemetryDebug, setLoadEvent, scheduleViewUpdate)
       : { scheduleStop: noop, timings: {} as Timings }
 
   const { scheduleStop: scheduleStopEventCountsTracking, eventCounts } = trackViewEventCounts(

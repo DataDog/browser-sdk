@@ -2,7 +2,7 @@ import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog
 import { resetExperimentalFeatures, ExperimentalFeature, addExperimentalFeatures } from '@datadog/browser-core'
 import type { RecorderApi } from '../../../boot/rumPublicApi'
 import type { TestSetupBuilder } from '../../../../test'
-import { setup, noopRecorderApi } from '../../../../test'
+import { setup, noopRecorderApi, noopWebVitalTelemetryDebug } from '../../../../test'
 import type { RawRumViewEvent } from '../../../rawRumEvent.types'
 import { RumEventType, ViewLoadingType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -72,7 +72,6 @@ describe('viewCollection', () => {
           domMutationObservable,
           locationChangeObservable,
           pageStateHistory,
-          sessionManager,
         }) => {
           getReplayStatsSpy = jasmine.createSpy()
           startViewCollection(
@@ -87,7 +86,7 @@ describe('viewCollection', () => {
               ...noopRecorderApi,
               getReplayStats: getReplayStatsSpy,
             },
-            sessionManager
+            noopWebVitalTelemetryDebug
           )
         }
       )

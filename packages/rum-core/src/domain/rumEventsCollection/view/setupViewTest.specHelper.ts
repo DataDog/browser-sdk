@@ -1,4 +1,5 @@
-import { noopRecorderApi, type BuildContext } from '../../../../test'
+import { noopWebVitalTelemetryDebug } from '../../../../test'
+import { type BuildContext } from '../../../../test'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { ViewEvent, ViewOptions } from './trackViews'
 import { trackViews } from './trackViews'
@@ -6,7 +7,7 @@ import { trackViews } from './trackViews'
 export type ViewTest = ReturnType<typeof setupViewTest>
 
 export function setupViewTest(
-  { lifeCycle, location, domMutationObservable, configuration, locationChangeObservable, sessionManager }: BuildContext,
+  { lifeCycle, location, domMutationObservable, configuration, locationChangeObservable }: BuildContext,
   initialViewOptions?: ViewOptions
 ) {
   const {
@@ -33,8 +34,7 @@ export function setupViewTest(
     configuration,
     locationChangeObservable,
     !configuration.trackViewsManually,
-    noopRecorderApi,
-    sessionManager,
+    noopWebVitalTelemetryDebug,
     initialViewOptions
   )
   return {

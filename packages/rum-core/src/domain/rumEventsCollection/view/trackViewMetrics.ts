@@ -12,7 +12,6 @@ import {
   throttle,
   find,
 } from '@datadog/browser-core'
-import type { RecorderApi } from '../../../boot/rumPublicApi'
 import type { RumLayoutShiftTiming } from '../../../browser/performanceCollection'
 import { supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
@@ -23,8 +22,7 @@ import { waitPageActivityEnd } from '../../waitPageActivityEnd'
 
 import { getScrollY } from '../../../browser/scroll'
 import { getViewportDimension } from '../../../browser/viewportObservable'
-import type { RumSessionManager } from '../../rumSessionManager'
-import { addWebVitalTelemetryDebug } from './addWebVitalTelemetryDebug'
+import type { WebVitalTelemetryDebug } from './startWebVitalTelemetryDebug'
 
 export interface ScrollMetrics {
   maxDepth: number
@@ -48,8 +46,7 @@ export function trackViewMetrics(
   scheduleViewUpdate: () => void,
   loadingType: ViewLoadingType,
   viewStart: ClocksState,
-  recorderApi: RecorderApi,
-  session: RumSessionManager
+  webVitalTelemetryDebug: WebVitalTelemetryDebug
 ) {
   const viewMetrics: ViewMetrics = {}
 
@@ -99,7 +96,7 @@ export function trackViewMetrics(
 
         if (!clsAttributionCollected) {
           clsAttributionCollected = true
-          addWebVitalTelemetryDebug(recorderApi, session, 'CLS', largestLayoutShiftNode, largestLayoutShiftTime)
+          webVitalTelemetryDebug.addWebVitalTelemetryDebug('CLS', largestLayoutShiftNode, largestLayoutShiftTime)
         }
         scheduleViewUpdate()
       }
