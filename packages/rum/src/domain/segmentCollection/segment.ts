@@ -15,6 +15,7 @@ export class Segment {
   public readonly metadata: BrowserSegmentMetadata
 
   private id = nextId++
+  private pendingWriteCount = 0
 
   constructor(
     private worker: DeflateWorker,
@@ -43,23 +44,27 @@ export class Segment {
     replayStats.addRecord(viewId)
     let rawBytesCount = 0
     let compressedBytesCount = 0
+    const compressedData: Uint8Array[] = []
 
     const { stop: removeMessageListener } = addEventListener(
       worker,
       'message',
       ({ data }: MessageEvent<DeflateWorkerResponse>) => {
-        if (data.type === 'errored' || data.type === 'initialized') {
+        if (data.type !== 'wrote') {
           return
         }
 
         if (data.id === this.id) {
+          this.pendingWriteCount -= 1
           replayStats.addWroteData(viewId, data.additionalBytesCount)
           rawBytesCount += data.additionalBytesCount
-          if (data.type === 'flushed') {
-            onFlushed(data.result, rawBytesCount)
+          compressedBytesCount += data.result.length
+          compressedData.push(data.result)
+          if (this.flushReason && this.pendingWriteCount === 0) {
+            compressedData.push(data.trailer)
+            onFlushed(concatBuffers(compressedData), rawBytesCount)
             removeMessageListener()
           } else {
-            compressedBytesCount += data.result.length
             onWrote(compressedBytesCount)
           }
         } else if (data.id > this.id) {
@@ -77,7 +82,7 @@ export class Segment {
       }
     )
     sendToExtension('record', { record: initialRecord, segment: this.metadata })
-    this.worker.postMessage({ data: `{"records":[${JSON.stringify(initialRecord)}`, id: this.id, action: 'write' })
+    this.write(`{"records":[${JSON.stringify(initialRecord)}`)
   }
 
   addRecord(record: BrowserRecord): void {
@@ -87,15 +92,34 @@ export class Segment {
     replayStats.addRecord(this.metadata.view.id)
     this.metadata.has_full_snapshot ||= record.type === RecordType.FullSnapshot
     sendToExtension('record', { record, segment: this.metadata })
-    this.worker.postMessage({ data: `,${JSON.stringify(record)}`, id: this.id, action: 'write' })
+    this.write(`,${JSON.stringify(record)}`)
   }
 
   flush(reason: FlushReason) {
+    this.write(`],${JSON.stringify(this.metadata).slice(1)}\n`)
     this.worker.postMessage({
-      data: `],${JSON.stringify(this.metadata).slice(1)}\n`,
-      id: this.id,
-      action: 'flush',
+      action: 'reset',
     })
     this.flushReason = reason
   }
+
+  private write(data: string) {
+    this.pendingWriteCount += 1
+    this.worker.postMessage({
+      data,
+      id: this.id,
+      action: 'write',
+    })
+  }
+}
+
+function concatBuffers(buffers: Uint8Array[]) {
+  const length = buffers.reduce((total, buffer) => total + buffer.length, 0)
+  const result = new Uint8Array(length)
+  let offset = 0
+  for (const buffer of buffers) {
+    result.set(buffer, offset)
+    offset += buffer.length
+  }
+  return result
 }
