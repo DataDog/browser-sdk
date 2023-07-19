@@ -32,19 +32,6 @@ export function startWorker() {
           case 'reset':
             deflate = new Deflate()
             break
-
-          case 'flush': {
-            const additionalBytesCount = data.data ? pushData(data.data) : 0
-            deflate.push('', constants.Z_FINISH)
-            self.postMessage({
-              type: 'flushed',
-              id: data.id,
-              result: deflate.result,
-              additionalBytesCount,
-            })
-            deflate = new Deflate()
-            break
-          }
         }
       })
     )

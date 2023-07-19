@@ -15,14 +15,6 @@ export type DeflateWorkerAction =
   | {
       action: 'reset'
     }
-  // Action to send when finishing to write some data. The worker will respond with a 'flushed'
-  // response, with the same id, measurements of the wrote data bytes count and the complete deflate
-  // data.
-  | {
-      action: 'flush'
-      id: number
-      data?: string
-    }
 
 export type DeflateWorkerResponse =
   // Response to 'init' action
@@ -35,13 +27,6 @@ export type DeflateWorkerResponse =
       id: number
       result: Uint8Array
       trailer: Uint8Array
-      additionalBytesCount: number
-    }
-  // Response to 'flush' action
-  | {
-      type: 'flushed'
-      id: number
-      result: Uint8Array
       additionalBytesCount: number
     }
   // Could happen at any time when something goes wrong in the worker

@@ -92,22 +92,6 @@ export class MockWorker implements DeflateWorker {
         case 'reset':
           this.deflatedData.length = 0
           break
-        case 'flush':
-          {
-            const additionalBytesCount = this.pushData(message.data)
-            this.listeners.message.forEach((listener) =>
-              listener({
-                data: {
-                  type: 'flushed',
-                  id: message.id,
-                  result: mergeUint8Arrays(this.deflatedData),
-                  additionalBytesCount,
-                },
-              })
-            )
-            this.deflatedData.length = 0
-          }
-          break
       }
     }
   }
@@ -127,18 +111,4 @@ export class MockWorker implements DeflateWorker {
     this.deflatedData.push(encodedData)
     return encodedData.length
   }
-}
-
-function uint8ArraysSize(arrays: Uint8Array[]) {
-  return arrays.reduce((sum, bytes) => sum + bytes.length, 0)
-}
-
-function mergeUint8Arrays(arrays: Uint8Array[]) {
-  const result = new Uint8Array(uint8ArraysSize(arrays))
-  let offset = 0
-  for (const bytes of arrays) {
-    result.set(bytes, offset)
-    offset += bytes.byteLength
-  }
-  return result
 }
