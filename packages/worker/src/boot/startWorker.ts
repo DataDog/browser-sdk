@@ -3,38 +3,37 @@ import { Deflate, constants, string2buf } from '../domain/deflate'
 import type { DeflateWorkerAction, DeflateWorkerResponse } from '../types'
 
 export function startWorker() {
-  monitor(() => {
+  try {
     const streams = new Map<number, Deflate>()
-    self.addEventListener(
-      'message',
-      monitor((event: MessageEvent<DeflateWorkerAction>) => {
+    self.addEventListener('message', (event: MessageEvent<DeflateWorkerAction>) => {
+      try {
         const response = handleAction(streams, event.data)
         if (response) {
           self.postMessage(response)
         }
-      })
-    )
-  })()
+      } catch (error) {
+        sendError(error, event.data && 'streamId' in event.data ? event.data.streamId : undefined)
+      }
+    })
+  } catch (error) {
+    sendError(error)
+  }
 }
 
-function monitor<Args extends any[], Result>(fn: (...args: Args) => Result): (...args: Args) => Result | undefined {
-  return (...args) => {
-    try {
-      return fn(...args)
-    } catch (e) {
-      try {
-        self.postMessage({
-          type: 'errored',
-          error: e,
-        })
-      } catch (_) {
-        // DATA_CLONE_ERR, cf https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm
-        self.postMessage({
-          type: 'errored',
-          error: String(e),
-        })
-      }
-    }
+function sendError(error: unknown, streamId?: number) {
+  try {
+    self.postMessage({
+      type: 'errored',
+      error,
+      streamId,
+    })
+  } catch (_) {
+    // DATA_CLONE_ERR, cf https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm
+    self.postMessage({
+      type: 'errored',
+      error: String(error),
+      streamId,
+    })
   }
 }
 

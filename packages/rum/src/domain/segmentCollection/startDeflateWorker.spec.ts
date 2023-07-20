@@ -312,6 +312,19 @@ describe('createDeflateWorker', () => {
     deflateWorker.postMessage({ id: 2, streamId: 1, action: 'write', data: 'baz' })
   })
 
+  it('reports an error when an unexpected exception occurs', (done) => {
+    const deflateWorker = createDeflateWorker()
+    listen(deflateWorker, 1, (events) => {
+      const event = events[0] as Extract<DeflateWorkerResponse, { type: 'errored' }>
+      expect(event.type).toBe('errored')
+      // Some browsers are able to transmit the error instance, some are sending only the message
+      // as a string
+      expect(String(event.error)).toEqual(jasmine.stringContaining('TypeError'))
+      done()
+    })
+    deflateWorker.postMessage(null as any)
+  })
+
   function listen(
     deflateWorker: DeflateWorker,
     expectedResponseCount: number,
