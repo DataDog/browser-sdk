@@ -27,8 +27,6 @@ export interface InitConfiguration {
   sessionSampleRate?: number | undefined
   telemetrySampleRate?: number | undefined
   silentMultipleInit?: boolean | undefined
-  trackResources?: boolean | undefined
-  trackLongTasks?: boolean | undefined
 
   // transport options
   proxy?: string | undefined
@@ -166,8 +164,6 @@ export function serializeConfiguration(initConfiguration: InitConfiguration): Pa
     use_proxy: !!initConfiguration.proxy,
     silent_multiple_init: initConfiguration.silentMultipleInit,
     track_session_across_subdomains: initConfiguration.trackSessionAcrossSubdomains,
-    track_resources: initConfiguration.trackResources,
-    track_long_task: initConfiguration.trackLongTasks,
     allow_fallback_to_local_storage: !!initConfiguration.allowFallbackToLocalStorage,
   }
 }

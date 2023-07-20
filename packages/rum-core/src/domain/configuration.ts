@@ -195,6 +195,8 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration): 
         Array.isArray(configuration.excludedActivityUrls) && configuration.excludedActivityUrls.length > 0,
       track_views_manually: configuration.trackViewsManually,
       track_user_interactions: configuration.trackUserInteractions,
+      track_resources: configuration.trackResources,
+      track_long_task: configuration.trackLongTasks,
     },
     baseSerializedConfiguration
   )
