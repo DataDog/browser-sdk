@@ -1,4 +1,10 @@
-import { isIE, noop } from '@datadog/browser-core'
+import {
+  ExperimentalFeature,
+  addExperimentalFeatures,
+  isIE,
+  noop,
+  resetExperimentalFeatures,
+} from '@datadog/browser-core'
 
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { isAdoptedStyleSheetsSupported } from '@datadog/browser-core/test'
@@ -71,6 +77,7 @@ describe('serializeNodeWithId', () => {
 
   afterEach(() => {
     sandbox.remove()
+    resetExperimentalFeatures()
   })
 
   describe('document serialization', () => {
@@ -581,6 +588,34 @@ describe('serializeNodeWithId', () => {
         isSVG: undefined,
         attributes: {
           _cssText: 'body { width: 100%; }',
+          rel: 'stylesheet',
+          href: 'https://datadoghq.com/some/style.css',
+        },
+        childNodes: [],
+      })
+    })
+
+    it('serializes style node with dynamic CSS that can be fetched with DISABLE_REPLAY_INLINE_CSS false', () => {
+      addExperimentalFeatures([ExperimentalFeature.DISABLE_REPLAY_INLINE_CSS])
+      const linkNode = document.createElement('link')
+      linkNode.setAttribute('rel', 'stylesheet')
+      linkNode.setAttribute('href', 'https://datadoghq.com/some/style.css')
+      isolatedDom.document.head.appendChild(linkNode)
+      Object.defineProperty(isolatedDom.document, 'styleSheets', {
+        value: [
+          {
+            href: 'https://datadoghq.com/some/style.css',
+            cssRules: [{ cssText: 'body { width: 100%; }' }],
+          },
+        ],
+      })
+
+      expect(serializeNodeWithId(linkNode, DEFAULT_OPTIONS)).toEqual({
+        type: NodeType.Element,
+        tagName: 'link',
+        id: jasmine.any(Number) as unknown as number,
+        isSVG: undefined,
+        attributes: {
           rel: 'stylesheet',
           href: 'https://datadoghq.com/some/style.css',
         },
