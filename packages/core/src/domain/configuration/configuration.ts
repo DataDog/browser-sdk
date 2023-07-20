@@ -27,6 +27,8 @@ export interface InitConfiguration {
   sessionSampleRate?: number | undefined
   telemetrySampleRate?: number | undefined
   silentMultipleInit?: boolean | undefined
+  allowFallbackToLocalStorage?: boolean | undefined
+  allowUntrustedEvents?: boolean | undefined
 
   // transport options
   proxy?: string | undefined
@@ -41,9 +43,6 @@ export interface InitConfiguration {
   useCrossSiteSessionCookie?: boolean | undefined
   useSecureSessionCookie?: boolean | undefined
   trackSessionAcrossSubdomains?: boolean | undefined
-
-  // alternate storage option
-  allowFallbackToLocalStorage?: boolean | undefined
 
   // internal options
   enableExperimentalFeatures?: string[] | undefined
@@ -72,6 +71,7 @@ export interface Configuration extends TransportConfiguration {
   telemetryConfigurationSampleRate: number
   service: string | undefined
   silentMultipleInit: boolean
+  allowUntrustedEvents: boolean
 
   // Event limits
   eventRateLimiterThreshold: number // Limit the maximum number of actions, errors and logs per minutes
@@ -127,6 +127,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
       telemetryConfigurationSampleRate: initConfiguration.telemetryConfigurationSampleRate ?? 5,
       service: initConfiguration.service,
       silentMultipleInit: !!initConfiguration.silentMultipleInit,
+      allowUntrustedEvents: !!initConfiguration.allowUntrustedEvents,
 
       /**
        * beacon payload max queue size implementation is 64kb
@@ -165,5 +166,6 @@ export function serializeConfiguration(initConfiguration: InitConfiguration): Pa
     silent_multiple_init: initConfiguration.silentMultipleInit,
     track_session_across_subdomains: initConfiguration.trackSessionAcrossSubdomains,
     allow_fallback_to_local_storage: !!initConfiguration.allowFallbackToLocalStorage,
+    allow_untrusted_events: !!initConfiguration.allowUntrustedEvents,
   }
 }
