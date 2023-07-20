@@ -2,6 +2,8 @@
 import { Deflate, constants, string2buf } from '../domain/deflate'
 import type { DeflateWorkerAction, DeflateWorkerResponse } from '../types'
 
+declare const __BUILD_ENV__SDK_VERSION__: string
+
 export function startWorker() {
   try {
     const streams = new Map<number, Deflate>()
@@ -42,6 +44,7 @@ function handleAction(streams: Map<number, Deflate>, message: DeflateWorkerActio
     case 'init':
       return {
         type: 'initialized',
+        version: __BUILD_ENV__SDK_VERSION__,
       }
 
     case 'write': {

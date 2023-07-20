@@ -171,6 +171,7 @@ describe('startDeflateWorker', () => {
           status: 'error',
           message: 'Uncaught "boom"',
           error: { stack: jasmine.any(String) },
+          worker_version: 'dev',
         },
       ])
     })

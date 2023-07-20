@@ -70,6 +70,7 @@ export class MockWorker implements DeflateWorker {
             listener({
               data: {
                 type: 'initialized',
+                version: 'dev',
               },
             })
           )

@@ -22,6 +22,7 @@ export type DeflateWorkerResponse =
   // Response to 'init' action
   | {
       type: 'initialized'
+      version: string
     }
   // Response to 'write' action
   | {
