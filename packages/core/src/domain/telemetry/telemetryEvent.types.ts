@@ -110,7 +110,7 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       replay_sample_rate?: number
       /**
-       * The percentage of sessions with Browser RUM & Session Replay pricing tracked
+       * The percentage of sessions with RUM & Session Replay pricing tracked
        */
       session_replay_sample_rate?: number
       /**

@@ -9,5 +9,8 @@
     "resolveJsonModule": true,
     "target": "ES2015",
     "types": ["node", "jasmine", "@wdio/globals/types", "ajv"]
+  },
+  "ts-node": {
+    "files": true
   }
 }

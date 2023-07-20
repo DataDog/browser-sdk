@@ -221,6 +221,10 @@ function validateRumEventFormat(rawRumEvent: RawRumEvent) {
       session: {
         plan: RumSessionPlan.WITH_SESSION_REPLAY,
       },
+      configuration: {
+        session_sample_rate: 40,
+        session_replay_sample_rate: 60,
+      },
     },
     application: {
       id: fakeId,
