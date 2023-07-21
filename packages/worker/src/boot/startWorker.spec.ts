@@ -170,4 +170,38 @@ describe('startWorker', () => {
       streamId: undefined,
     })
   })
+
+  it('reports an error when an unexpected exception occurs while writing on a stream', () => {
+    if (!window.TextEncoder) {
+      pending('No TextEncoder support')
+    }
+    spyOn(TextEncoder.prototype, 'encode').and.callFake(() => {
+      throw new Error('Something went wrong!')
+    })
+    expect(
+      emulateAction({
+        id: 2,
+        streamId: TEST_STREAM_ID,
+        action: 'write',
+        data: 'baz',
+      })
+    ).toEqual({
+      type: 'errored',
+      error: new Error('Something went wrong!'),
+      streamId: TEST_STREAM_ID,
+    })
+  })
+
+  it('use the string representation of the error when it fails to send it through postMessage', () => {
+    workerScope.postMessage.and.callFake((response) => {
+      if (response.type === 'errored' && response.error instanceof Error) {
+        throw new DOMException("Failed to execute 'postMessage' on 'WorkerScope'")
+      }
+    })
+    expect(emulateAction(null as any)).toEqual({
+      type: 'errored',
+      error: jasmine.stringContaining('TypeError'),
+      streamId: undefined,
+    })
+  })
 })
