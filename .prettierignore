@@ -3,3 +3,6 @@ cjs
 esm
 coverage
 rum-events-format
+.yarn
+developer-extension/dist
+test/app/dist

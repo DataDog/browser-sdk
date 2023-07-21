@@ -217,6 +217,10 @@ function validateRumEventFormat(rawRumEvent: RawRumEvent) {
     _dd: {
       format_version: 2,
       drift: 0,
+      configuration: {
+        session_sample_rate: 40,
+        session_replay_sample_rate: 60,
+      },
     },
     application: {
       id: fakeId,

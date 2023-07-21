@@ -39,6 +39,25 @@
 - 🔥 [RUMF-1555] Remove `startTime` in xhr start context ([#2287](https://github.com/DataDog/browser-sdk/pull/2287))
 - ♻️ [RUMF-1555] Remove deprecated context manager APIs ([#2284](https://github.com/DataDog/browser-sdk/pull/2284))
 
+## v4.45.0
+
+- ✨ [RUM-235] add sample rates fields ([#2323](https://github.com/DataDog/browser-sdk/pull/2323))
+- 🐛 [RUM-238] Handle tracekit multilines message parsing ([#2332](https://github.com/DataDog/browser-sdk/pull/2332))
+- 🐛👷 Fix scope packages npm publication ([#2334](https://github.com/DataDog/browser-sdk/pull/2334))
+- 🔉 monitor reported errors ([#2335](https://github.com/DataDog/browser-sdk/pull/2335))
+
+## v4.44.2
+
+- 🐛👷 [RUM-232] fix worker/string package ([#2331](https://github.com/DataDog/browser-sdk/pull/2331))
+
+## v4.44.1
+
+- 🐛 Fix RUM slim npm package publication ([#2325](https://github.com/DataDog/browser-sdk/pull/2325))
+- 🐛 [RUM-231] Fix location.origin is "null" for file: URIs ([#2306](https://github.com/DataDog/browser-sdk/pull/2306))
+- ♻️ [RUM-232] create a `@datadog/browser-worker` package ([#2319](https://github.com/DataDog/browser-sdk/pull/2319))
+- 🔊 Add tracekit try parse message failing telemetry ([#2322](https://github.com/DataDog/browser-sdk/pull/2322))
+- 💬 Update heavy customer data warning ([#2316](https://github.com/DataDog/browser-sdk/pull/2316))
+
 ## v4.44.0
 
 - ✨ Collect replay privacy level in views ([#2299](https://github.com/DataDog/browser-sdk/pull/2299))

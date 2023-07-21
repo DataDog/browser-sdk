@@ -135,7 +135,7 @@ function listenEventsFromRequests(callback: (events: StoredEvent[]) => void) {
 
     const decodedBody = request.request.postData.text
     const rawEvents = decodedBody.split('\n')
-    const events = rawEvents.map((rawEvent) => ({ ...JSON.parse(rawEvent), id: generateUUID() } as StoredEvent))
+    const events = rawEvents.map((rawEvent) => ({ ...JSON.parse(rawEvent), id: generateUUID() }) as StoredEvent)
 
     callback(events)
   }

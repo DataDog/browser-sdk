@@ -37,7 +37,7 @@ export function InfosTab() {
               <Entry name="Created" value={formatDate(Number(infos.cookie.created))} />
               <Entry name="Expire" value={formatDate(Number(infos.cookie.expire))} />
               <Space h="sm" />
-              <Button color="violet" variant="light" onClick={endSession}>
+              <Button color="violet" variant="light" onClick={endSession} className="dd-privacy-allow">
                 End current session
               </Button>
             </>
@@ -47,7 +47,7 @@ export function InfosTab() {
           {infos.rum && (
             <>
               {sessionId && (
-                <Group>
+                <Group className="dd-privacy-allow">
                   <AppLink
                     config={infos.rum.config}
                     path="rum/explorer"
@@ -76,15 +76,17 @@ export function InfosTab() {
           {infos.logs && (
             <>
               {sessionId && (
-                <AppLink
-                  config={infos.logs.config}
-                  path="logs"
-                  params={{
-                    query: `source:browser @session_id:${sessionId}`,
-                  }}
-                >
-                  Explorer
-                </AppLink>
+                <div className="dd-privacy-allow">
+                  <AppLink
+                    config={infos.logs.config}
+                    path="logs"
+                    params={{
+                      query: `source:browser @session_id:${sessionId}`,
+                    }}
+                  >
+                    Explorer
+                  </AppLink>
+                </div>
               )}
               <Entry name="Version" value={infos.logs.version} />
               <Entry name="Configuration" value={infos.logs.config} />

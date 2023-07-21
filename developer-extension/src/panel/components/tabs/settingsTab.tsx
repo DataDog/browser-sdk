@@ -13,121 +13,123 @@ export function SettingsTab() {
 
   return (
     <TabBase>
-      <Columns>
-        <Columns.Column title="Request interception">
-          <SettingItem
-            input={
-              <Group align="start">
+      <div className="dd-privacy-allow">
+        <Columns>
+          <Columns.Column title="Request interception">
+            <SettingItem
+              input={
+                <Group align="start">
+                  <Checkbox
+                    label="Use development bundles"
+                    checked={useDevBundles}
+                    onChange={(e) => setSetting('useDevBundles', isChecked(e.target))}
+                    color="violet"
+                  />
+                  {devServerStatus === DevServerStatus.AVAILABLE ? (
+                    <Badge color="green">Available</Badge>
+                  ) : devServerStatus === DevServerStatus.CHECKING ? (
+                    <Badge color="yellow">Checking...</Badge>
+                  ) : (
+                    <Badge color="red">Unavailable</Badge>
+                  )}
+                </Group>
+              }
+              description={
+                <>
+                  Use the local development bundles served by the Browser SDK development server. To start the
+                  development server, run <Code>yarn dev</Code> in the Browser SDK root folder.
+                </>
+              }
+            />
+
+            <SettingItem
+              input={
                 <Checkbox
-                  label="Use development bundles"
-                  checked={useDevBundles}
-                  onChange={(e) => setSetting('useDevBundles', isChecked(e.target))}
+                  label="Use RUM Slim"
+                  checked={useRumSlim}
+                  onChange={(e) => setSetting('useRumSlim', isChecked(e.target))}
                   color="violet"
                 />
-                {devServerStatus === DevServerStatus.AVAILABLE ? (
-                  <Badge color="green">Available</Badge>
-                ) : devServerStatus === DevServerStatus.CHECKING ? (
-                  <Badge color="yellow">Checking...</Badge>
-                ) : (
-                  <Badge color="red">Unavailable</Badge>
-                )}
-              </Group>
-            }
-            description={
-              <>
-                Use the local development bundles served by the Browser SDK development server. To start the development
-                server, run <Code>yarn dev</Code> in the Browser SDK root folder.
-              </>
-            }
-          />
+              }
+              description={
+                <>If the page is using the RUM CDN bundle, this bundle will be replaced by the RUM Slim CDN bundle.</>
+              }
+            />
 
-          <SettingItem
-            input={
-              <Checkbox
-                label="Use RUM Slim"
-                checked={useRumSlim}
-                onChange={(e) => setSetting('useRumSlim', isChecked(e.target))}
-                color="violet"
-              />
-            }
-            description={
-              <>If the page is using the RUM CDN bundle, this bundle will be replaced by the RUM Slim CDN bundle.</>
-            }
-          />
-
-          <SettingItem
-            input={
-              <Checkbox
-                label="Block intake requests"
-                checked={blockIntakeRequests}
-                onChange={(e) => setSetting('blockIntakeRequests', isChecked(e.target))}
-                color="violet"
-              />
-            }
-            description={<>Block requests made to the intake, preventing any data to be sent to Datadog.</>}
-          />
-        </Columns.Column>
-
-        <Columns.Column title="Events list">
-          <SettingItem
-            input={
-              <Checkbox
-                label="Preserve events"
-                checked={preserveEvents}
-                onChange={(e) => setSetting('preserveEvents', isChecked(e.target))}
-                color="violet"
-              />
-            }
-            description={<>Don't clear events when reloading the page or navigating away.</>}
-          />
-
-          <SettingItem
-            input={
-              <Group>
-                <Text size="sm">Events source:</Text>
-                <Select
-                  data={[
-                    { label: 'Requests', value: 'requests' },
-                    { label: 'SDK', value: 'sdk' },
-                  ]}
-                  value={eventSource}
-                  onChange={(value) => setSetting('eventSource', value as EventSource)}
+            <SettingItem
+              input={
+                <Checkbox
+                  label="Block intake requests"
+                  checked={blockIntakeRequests}
+                  onChange={(e) => setSetting('blockIntakeRequests', isChecked(e.target))}
                   color="violet"
-                  sx={{ flex: 1 }}
                 />
-              </Group>
-            }
-            description={
-              <>
-                {eventSource === 'requests' && (
-                  <>
-                    Collect events by listening to intake HTTP requests: events need to be flushed to be collected. Any
-                    SDK setup is supported.
-                  </>
-                )}
-                {eventSource === 'sdk' && (
-                  <>
-                    Collect events by listening to messages sent from the SDK: events are available as soon as they
-                    happen. Only newer versions of the SDK are supported.
-                  </>
-                )}
-              </>
-            }
-          />
+              }
+              description={<>Block requests made to the intake, preventing any data to be sent to Datadog.</>}
+            />
+          </Columns.Column>
 
-          <SettingItem
-            input={
-              <Checkbox
-                label="Auto Flush"
-                checked={autoFlush}
-                onChange={(e) => setSetting('autoFlush', isChecked(e.target))}
-                color="violet"
-              />
-            }
-            description={<>Force the SDK to flush events periodically.</>}
-          />
-        </Columns.Column>
-      </Columns>
+          <Columns.Column title="Events list">
+            <SettingItem
+              input={
+                <Checkbox
+                  label="Preserve events"
+                  checked={preserveEvents}
+                  onChange={(e) => setSetting('preserveEvents', isChecked(e.target))}
+                  color="violet"
+                />
+              }
+              description={<>Don't clear events when reloading the page or navigating away.</>}
+            />
+
+            <SettingItem
+              input={
+                <Group>
+                  <Text size="sm">Events source:</Text>
+                  <Select
+                    data={[
+                      { label: 'Requests', value: 'requests' },
+                      { label: 'SDK', value: 'sdk' },
+                    ]}
+                    value={eventSource}
+                    onChange={(value) => setSetting('eventSource', value as EventSource)}
+                    color="violet"
+                    sx={{ flex: 1 }}
+                  />
+                </Group>
+              }
+              description={
+                <>
+                  {eventSource === 'requests' && (
+                    <>
+                      Collect events by listening to intake HTTP requests: events need to be flushed to be collected.
+                      Any SDK setup is supported.
+                    </>
+                  )}
+                  {eventSource === 'sdk' && (
+                    <>
+                      Collect events by listening to messages sent from the SDK: events are available as soon as they
+                      happen. Only newer versions of the SDK are supported.
+                    </>
+                  )}
+                </>
+              }
+            />
+
+            <SettingItem
+              input={
+                <Checkbox
+                  label="Auto Flush"
+                  checked={autoFlush}
+                  onChange={(e) => setSetting('autoFlush', isChecked(e.target))}
+                  color="violet"
+                />
+              }
+              description={<>Force the SDK to flush events periodically.</>}
+            />
+          </Columns.Column>
+        </Columns>
+      </div>
     </TabBase>
   )
 }

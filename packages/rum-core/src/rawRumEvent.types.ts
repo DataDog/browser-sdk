@@ -251,6 +251,10 @@ export interface RumContext {
   _dd: {
     format_version: 2
     drift: number
+    configuration: {
+      session_sample_rate: number
+      session_replay_sample_rate: number
+    }
     browser_sdk_version?: string
   }
 }
