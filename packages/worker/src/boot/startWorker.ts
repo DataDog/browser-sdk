@@ -86,10 +86,27 @@ function concatBuffers(buffers: Uint8Array[]) {
   return result
 }
 
+/**
+ * Creates a buffer of bytes to append to the end of the Zlib stream to finish it. It is composed of
+ * two parts:
+ * * an empty deflate block as specified in https://www.rfc-editor.org/rfc/rfc1951.html#page-13 ,
+ * which happens to be always 3, 0
+ * * an adler32 checksum as specified in https://www.rfc-editor.org/rfc/rfc1950.html#page-4
+ *
+ * This is essentially what pako writes to the stream when invoking `deflate.push('',
+ * constants.Z_FINISH)` operation after some data has been pushed with "Z_SYNC_FLUSH", but doing so
+ * ends the stream and no more data can be pushed into it.
+ *
+ * Since we want to let the main thread end the stream synchronously at any point without needing to
+ * send a message to the worker to flush it, we send back a trailer in each "wrote" response so the
+ * main thread can just append it to the compressed data to end the stream.
+ *
+ * Beside creating a valid zlib stream, those 6 bits are expected to be here so the Datadog backend
+ * can merge streams together (see internal doc).
+ */
 function makeTrailer(deflate: Deflate): Uint8Array {
   /* eslint-disable no-bitwise */
   const adler = deflate.strm.adler
-  // This is essentially the output of a `deflate.push('', constants.Z_FINISH)` operation.
   return new Uint8Array([
     // Empty deflate block
     3,
