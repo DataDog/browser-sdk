@@ -4,34 +4,39 @@ import type { DeflateWorkerAction, DeflateWorkerResponse } from '../types'
 
 declare const __BUILD_ENV__SDK_VERSION__: string
 
-export function startWorker() {
+export interface WorkerScope {
+  addEventListener(eventName: 'message', listener: (event: MessageEvent<DeflateWorkerAction>) => void): void
+  postMessage(response: DeflateWorkerResponse): void
+}
+
+export function startWorker(workerScope: WorkerScope = self) {
   try {
     const streams = new Map<number, Deflate>()
-    self.addEventListener('message', (event: MessageEvent<DeflateWorkerAction>) => {
+    workerScope.addEventListener('message', (event: MessageEvent<DeflateWorkerAction>) => {
       try {
         const response = handleAction(streams, event.data)
         if (response) {
-          self.postMessage(response)
+          workerScope.postMessage(response)
         }
       } catch (error) {
-        sendError(error, event.data && 'streamId' in event.data ? event.data.streamId : undefined)
+        sendError(workerScope, error, event.data && 'streamId' in event.data ? event.data.streamId : undefined)
       }
     })
   } catch (error) {
-    sendError(error)
+    sendError(workerScope, error)
   }
 }
 
-function sendError(error: unknown, streamId?: number) {
+function sendError(workerScope: WorkerScope, error: unknown, streamId?: number) {
   try {
-    self.postMessage({
+    workerScope.postMessage({
       type: 'errored',
-      error,
+      error: error as Error,
       streamId,
     })
   } catch (_) {
     // DATA_CLONE_ERR, cf https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm
-    self.postMessage({
+    workerScope.postMessage({
       type: 'errored',
       error: String(error),
       streamId,
