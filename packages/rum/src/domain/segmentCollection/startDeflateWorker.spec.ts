@@ -5,6 +5,10 @@ import { MockWorker } from '../../../test'
 import type { DeflateWorker } from './startDeflateWorker'
 import { startDeflateWorker, resetDeflateWorkerState, createDeflateWorker } from './startDeflateWorker'
 
+// Arbitrary stream ids used for tests
+const TEST_STREAM_ID = 5
+const OTHER_TEST_STREAM_ID = 6
+
 describe('startDeflateWorker', () => {
   let deflateWorker: MockWorker
   let createDeflateWorkerSpy: jasmine.Spy<typeof createDeflateWorker>
@@ -164,7 +168,7 @@ describe('startDeflateWorker', () => {
       startDeflateWorker(noop, createDeflateWorkerSpy)
       deflateWorker.processAllMessages()
 
-      deflateWorker.dispatchErrorMessage('boom')
+      deflateWorker.dispatchErrorMessage('boom', TEST_STREAM_ID)
       expect(telemetryEvents).toEqual([
         {
           type: 'log',
@@ -172,6 +176,7 @@ describe('startDeflateWorker', () => {
           message: 'Uncaught "boom"',
           error: { stack: jasmine.any(String) },
           worker_version: 'dev',
+          stream_id: TEST_STREAM_ID,
         },
       ])
     })
@@ -216,7 +221,7 @@ describe('createDeflateWorker', () => {
         {
           type: 'wrote',
           id: 0,
-          streamId: 1,
+          streamId: TEST_STREAM_ID,
           result: new Uint8Array([...STREAM_START, ...FOO_COMPRESSED]),
           trailer: new Uint8Array(FOO_COMPRESSED_TRAILER),
           additionalBytesCount: 3,
@@ -224,7 +229,7 @@ describe('createDeflateWorker', () => {
         {
           type: 'wrote',
           id: 1,
-          streamId: 1,
+          streamId: TEST_STREAM_ID,
           result: new Uint8Array(BAR_COMPRESSED),
           trailer: new Uint8Array(FOO_BAR_COMPRESSED_TRAILER),
           additionalBytesCount: 3,
@@ -232,7 +237,7 @@ describe('createDeflateWorker', () => {
         {
           type: 'wrote',
           id: 2,
-          streamId: 1,
+          streamId: TEST_STREAM_ID,
           result: new Uint8Array(BAZ_COMPRESSED),
           trailer: new Uint8Array(FOO_BAR_BAZ_COMPRESSED_TRAILER),
           additionalBytesCount: 3,
@@ -240,9 +245,9 @@ describe('createDeflateWorker', () => {
       ])
       done()
     })
-    deflateWorker.postMessage({ id: 0, streamId: 1, action: 'write', data: 'foo' })
-    deflateWorker.postMessage({ id: 1, streamId: 1, action: 'write', data: 'bar' })
-    deflateWorker.postMessage({ id: 2, streamId: 1, action: 'write', data: 'baz' })
+    deflateWorker.postMessage({ id: 0, streamId: TEST_STREAM_ID, action: 'write', data: 'foo' })
+    deflateWorker.postMessage({ id: 1, streamId: TEST_STREAM_ID, action: 'write', data: 'bar' })
+    deflateWorker.postMessage({ id: 2, streamId: TEST_STREAM_ID, action: 'write', data: 'baz' })
   })
 
   it('resets the stream state', (done) => {
@@ -252,7 +257,7 @@ describe('createDeflateWorker', () => {
         {
           type: 'wrote',
           id: 0,
-          streamId: 1,
+          streamId: TEST_STREAM_ID,
           result: new Uint8Array([...STREAM_START, ...FOO_COMPRESSED]),
           trailer: new Uint8Array(FOO_COMPRESSED_TRAILER),
           additionalBytesCount: 3,
@@ -260,7 +265,7 @@ describe('createDeflateWorker', () => {
         {
           type: 'wrote',
           id: 1,
-          streamId: 1,
+          streamId: TEST_STREAM_ID,
           // As the result starts with the beginning of a stream, we are sure that `reset` was
           // effective
           result: new Uint8Array([...STREAM_START, ...BAR_COMPRESSED]),
@@ -270,10 +275,10 @@ describe('createDeflateWorker', () => {
       ])
       done()
     })
-    deflateWorker.postMessage({ action: 'write', id: 0, streamId: 1, data: 'foo' })
-    deflateWorker.postMessage({ action: 'reset', streamId: 1 })
-    deflateWorker.postMessage({ action: 'write', id: 1, streamId: 1, data: 'bar' })
-    deflateWorker.postMessage({ action: 'reset', streamId: 1 })
+    deflateWorker.postMessage({ action: 'write', id: 0, streamId: TEST_STREAM_ID, data: 'foo' })
+    deflateWorker.postMessage({ action: 'reset', streamId: TEST_STREAM_ID })
+    deflateWorker.postMessage({ action: 'write', id: 1, streamId: TEST_STREAM_ID, data: 'bar' })
+    deflateWorker.postMessage({ action: 'reset', streamId: TEST_STREAM_ID })
   })
 
   it('support writing to different streams at the same time', (done) => {
@@ -283,7 +288,7 @@ describe('createDeflateWorker', () => {
         {
           type: 'wrote',
           id: 0,
-          streamId: 1,
+          streamId: TEST_STREAM_ID,
           result: new Uint8Array([...STREAM_START, ...FOO_COMPRESSED]),
           trailer: new Uint8Array(FOO_COMPRESSED_TRAILER),
           additionalBytesCount: 3,
@@ -291,7 +296,7 @@ describe('createDeflateWorker', () => {
         {
           type: 'wrote',
           id: 1,
-          streamId: 2,
+          streamId: OTHER_TEST_STREAM_ID,
           result: new Uint8Array([...STREAM_START, ...BAR_COMPRESSED]),
           trailer: new Uint8Array(BAR_COMPRESSED_TRAILER),
           additionalBytesCount: 3,
@@ -299,7 +304,7 @@ describe('createDeflateWorker', () => {
         {
           type: 'wrote',
           id: 2,
-          streamId: 1,
+          streamId: TEST_STREAM_ID,
           result: new Uint8Array(BAZ_COMPRESSED),
           trailer: new Uint8Array(FOO_BAZ_COMPRESSED_TRAILER),
           additionalBytesCount: 3,
@@ -307,10 +312,10 @@ describe('createDeflateWorker', () => {
       ])
       done()
     })
-    deflateWorker.postMessage({ id: 0, streamId: 1, action: 'write', data: 'foo' })
-    deflateWorker.postMessage({ id: 1, streamId: 2, action: 'write', data: 'bar' })
-    deflateWorker.postMessage({ streamId: 2, action: 'reset' })
-    deflateWorker.postMessage({ id: 2, streamId: 1, action: 'write', data: 'baz' })
+    deflateWorker.postMessage({ id: 0, streamId: TEST_STREAM_ID, action: 'write', data: 'foo' })
+    deflateWorker.postMessage({ id: 1, streamId: OTHER_TEST_STREAM_ID, action: 'write', data: 'bar' })
+    deflateWorker.postMessage({ streamId: OTHER_TEST_STREAM_ID, action: 'reset' })
+    deflateWorker.postMessage({ id: 2, streamId: TEST_STREAM_ID, action: 'write', data: 'baz' })
   })
 
   it('reports an error when an unexpected exception occurs', (done) => {

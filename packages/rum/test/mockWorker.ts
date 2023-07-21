@@ -112,7 +112,7 @@ export class MockWorker implements DeflateWorker {
     this.listeners.error.forEach((listener) => listener(error))
   }
 
-  dispatchErrorMessage(error: Error | string) {
-    this.listeners.message.forEach((listener) => listener({ data: { type: 'errored', error } }))
+  dispatchErrorMessage(error: Error | string, streamId?: number) {
+    this.listeners.message.forEach((listener) => listener({ data: { type: 'errored', error, streamId } }))
   }
 }
