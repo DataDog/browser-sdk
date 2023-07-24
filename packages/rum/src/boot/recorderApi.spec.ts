@@ -20,11 +20,11 @@ describe('makeRecorderApi', () => {
     if (!startDeflateWorkerSpy) {
       startDeflateWorkerSpy = jasmine.createSpy<typeof startDeflateWorker>('startDeflateWorker')
     }
-    startDeflateWorkerSpy.and.callFake((callback) => callback(worker))
+    startDeflateWorkerSpy.and.callFake((_, callback) => callback(worker))
   }
 
   function callLastRegisteredInitialisationCallback() {
-    startDeflateWorkerSpy.calls.mostRecent().args[0](FAKE_WORKER)
+    startDeflateWorkerSpy.calls.mostRecent().args[1](FAKE_WORKER)
   }
 
   function stopDeflateWorker() {

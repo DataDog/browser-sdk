@@ -1,9 +1,16 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { DOM_EVENT } from '@datadog/browser-core'
 import { createNewEvent, restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
+import type { RumConfiguration } from '../../configuration'
 import { resetFirstHidden, trackFirstHidden } from './trackFirstHidden'
 
 describe('trackFirstHidden', () => {
+  let configuration: RumConfiguration
+
+  beforeEach(() => {
+    configuration = {} as RumConfiguration
+  })
+
   afterEach(() => {
     resetFirstHidden()
     restorePageVisibility()
@@ -12,13 +19,13 @@ describe('trackFirstHidden', () => {
   describe('the page is initially hidden', () => {
     it('should return 0', () => {
       setPageVisibility('hidden')
-      expect(trackFirstHidden().timeStamp).toBe(0 as RelativeTime)
+      expect(trackFirstHidden(configuration).timeStamp).toBe(0 as RelativeTime)
     })
 
     it('should ignore events', () => {
       setPageVisibility('hidden')
       const eventTarget = createWindowEventTarget()
-      const firstHidden = trackFirstHidden(eventTarget)
+      const firstHidden = trackFirstHidden(configuration, eventTarget)
 
       eventTarget.dispatchEvent(createNewEvent(DOM_EVENT.PAGE_HIDE, { timeStamp: 100 }))
       eventTarget.dispatchEvent(createNewEvent(DOM_EVENT.VISIBILITY_CHANGE, { timeStamp: 100 }))
@@ -28,13 +35,19 @@ describe('trackFirstHidden', () => {
   })
 
   describe('the page is initially visible', () => {
+    let configuration: RumConfiguration
+
+    beforeEach(() => {
+      configuration = {} as RumConfiguration
+    })
+
     it('should return Infinity if the page was not hidden yet', () => {
-      expect(trackFirstHidden().timeStamp).toBe(Infinity as RelativeTime)
+      expect(trackFirstHidden(configuration).timeStamp).toBe(Infinity as RelativeTime)
     })
 
     it('should return the timestamp of the first pagehide event', () => {
       const eventTarget = createWindowEventTarget()
-      const firstHidden = trackFirstHidden(eventTarget)
+      const firstHidden = trackFirstHidden(configuration, eventTarget)
 
       eventTarget.dispatchEvent(createNewEvent(DOM_EVENT.PAGE_HIDE, { timeStamp: 100 }))
 
@@ -43,7 +56,7 @@ describe('trackFirstHidden', () => {
 
     it('should return the timestamp of the first visibilitychange event if the page is hidden', () => {
       const eventTarget = createWindowEventTarget()
-      const firstHidden = trackFirstHidden(eventTarget)
+      const firstHidden = trackFirstHidden(configuration, eventTarget)
 
       setPageVisibility('hidden')
       eventTarget.dispatchEvent(createNewEvent(DOM_EVENT.VISIBILITY_CHANGE, { timeStamp: 100 }))
@@ -53,7 +66,7 @@ describe('trackFirstHidden', () => {
 
     it('should ignore visibilitychange event if the page is visible', () => {
       const eventTarget = createWindowEventTarget()
-      const firstHidden = trackFirstHidden(eventTarget)
+      const firstHidden = trackFirstHidden(configuration, eventTarget)
 
       eventTarget.dispatchEvent(createNewEvent(DOM_EVENT.VISIBILITY_CHANGE, { timeStamp: 100 }))
 
@@ -62,7 +75,7 @@ describe('trackFirstHidden', () => {
 
     it('should ignore subsequent events', () => {
       const eventTarget = createWindowEventTarget()
-      const firstHidden = trackFirstHidden(eventTarget)
+      const firstHidden = trackFirstHidden(configuration, eventTarget)
 
       eventTarget.dispatchEvent(createNewEvent(DOM_EVENT.PAGE_HIDE, { timeStamp: 100 }))
 

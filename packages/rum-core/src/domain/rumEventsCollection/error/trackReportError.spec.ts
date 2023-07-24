@@ -2,6 +2,7 @@ import type { RawError, Subscription } from '@datadog/browser-core'
 import { ErrorHandling, ErrorSource, Observable, clocksNow } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, stubReportingObserver } from '@datadog/browser-core/test'
+import type { RumConfiguration } from '../../configuration'
 import { trackReportError } from './trackReportError'
 
 describe('trackReportError', () => {
@@ -10,8 +11,10 @@ describe('trackReportError', () => {
   let notifyLog: jasmine.Spy
   let clock: Clock
   let reportingObserverStub: { raiseReport(type: string): void; reset(): void }
+  let configuration: RumConfiguration
 
   beforeEach(() => {
+    configuration = {} as RumConfiguration
     errorObservable = new Observable()
     notifyLog = jasmine.createSpy('notifyLog')
     reportingObserverStub = stubReportingObserver()
@@ -26,7 +29,7 @@ describe('trackReportError', () => {
   })
 
   it('should track reports', () => {
-    trackReportError(errorObservable)
+    trackReportError(configuration, errorObservable)
     reportingObserverStub.raiseReport('intervention')
 
     expect(notifyLog).toHaveBeenCalledWith({

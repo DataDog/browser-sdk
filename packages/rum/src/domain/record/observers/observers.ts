@@ -42,25 +42,30 @@ interface ObserverParam {
   shadowRootsController: ShadowRootsController
 }
 
-export function initObservers(o: ObserverParam): { stop: ListenerHandler; flush: ListenerHandler } {
+export function initObservers(
+  configuration: RumConfiguration,
+  o: ObserverParam
+): { stop: ListenerHandler; flush: ListenerHandler } {
   const recordIds = initRecordIds()
   const mutationHandler = initMutationObserver(o.mutationCb, o.configuration, o.shadowRootsController, document)
-  const mousemoveHandler = initMoveObserver(o.mousemoveCb)
-  const mouseInteractionHandler = initMouseInteractionObserver(
-    o.mouseInteractionCb,
+  const mousemoveHandler = initMoveObserver(configuration, o.mousemoveCb)
+  const mouseInteractionHandler = initMouseInteractionObserver(configuration, o.mouseInteractionCb, recordIds)
+  const scrollHandler = initScrollObserver(
+    configuration,
+    o.scrollCb,
     o.configuration.defaultPrivacyLevel,
-    recordIds
+    o.elementsScrollPositions
   )
-  const scrollHandler = initScrollObserver(o.scrollCb, o.configuration.defaultPrivacyLevel, o.elementsScrollPositions)
-  const viewportResizeHandler = initViewportResizeObserver(o.viewportResizeCb)
-  const inputHandler = initInputObserver(o.inputCb, o.configuration.defaultPrivacyLevel)
+  const viewportResizeHandler = initViewportResizeObserver(configuration, o.viewportResizeCb)
+  const inputHandler = initInputObserver(configuration, o.inputCb)
   const mediaInteractionHandler = initMediaInteractionObserver(
+    configuration,
     o.mediaInteractionCb,
     o.configuration.defaultPrivacyLevel
   )
   const styleSheetObserver = initStyleSheetObserver(o.styleSheetCb)
-  const focusHandler = initFocusObserver(o.focusCb)
-  const visualViewportResizeHandler = initVisualViewportResizeObserver(o.visualViewportResizeCb)
+  const focusHandler = initFocusObserver(configuration, o.focusCb)
+  const visualViewportResizeHandler = initVisualViewportResizeObserver(configuration, o.visualViewportResizeCb)
   const frustrationHandler = initFrustrationObserver(o.lifeCycle, o.frustrationCb, recordIds)
 
   return {

@@ -25,29 +25,31 @@ const LogStatusForReport = {
 }
 
 export function startReportCollection(configuration: LogsConfiguration, lifeCycle: LifeCycle) {
-  const reportSubscription = initReportObservable(configuration.forwardReports).subscribe((report: RawReport) => {
-    let message = report.message
-    const status = LogStatusForReport[report.type]
-    let error
-    if (status === StatusType.error) {
-      error = {
-        kind: report.subtype,
-        stack: report.stack,
+  const reportSubscription = initReportObservable(configuration, configuration.forwardReports).subscribe(
+    (report: RawReport) => {
+      let message = report.message
+      const status = LogStatusForReport[report.type]
+      let error
+      if (status === StatusType.error) {
+        error = {
+          kind: report.subtype,
+          stack: report.stack,
+        }
+      } else if (report.stack) {
+        message += ` Found in ${getFileFromStackTraceString(report.stack)!}`
       }
-    } else if (report.stack) {
-      message += ` Found in ${getFileFromStackTraceString(report.stack)!}`
-    }
 
-    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-      rawLogsEvent: {
-        date: timeStampNow(),
-        message,
-        origin: ErrorSource.REPORT,
-        error,
-        status,
-      },
-    })
-  })
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+        rawLogsEvent: {
+          date: timeStampNow(),
+          message,
+          origin: ErrorSource.REPORT,
+          error,
+          status,
+        },
+      })
+    }
+  )
 
   return {
     stop: () => {

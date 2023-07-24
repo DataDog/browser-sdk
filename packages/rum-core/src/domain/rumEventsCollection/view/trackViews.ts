@@ -192,7 +192,7 @@ function newView(
 
   const { scheduleStop: scheduleStopInitialViewTimingsTracking, timings } =
     loadingType === ViewLoadingType.INITIAL_LOAD
-      ? trackInitialViewTimings(lifeCycle, setLoadEvent, scheduleViewUpdate)
+      ? trackInitialViewTimings(lifeCycle, configuration, setLoadEvent, scheduleViewUpdate)
       : { scheduleStop: noop, timings: {} as Timings }
 
   const { scheduleStop: scheduleStopEventCountsTracking, eventCounts } = trackViewEventCounts(
