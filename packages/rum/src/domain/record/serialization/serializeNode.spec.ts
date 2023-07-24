@@ -595,7 +595,7 @@ describe('serializeNodeWithId', () => {
       })
     })
 
-    it('serializes style node with dynamic CSS that can be fetched with DISABLE_REPLAY_INLINE_CSS false', () => {
+    it('does not inline external style sheets when DISABLE_REPLAY_INLINE_CSS is enabled', () => {
       addExperimentalFeatures([ExperimentalFeature.DISABLE_REPLAY_INLINE_CSS])
       const linkNode = document.createElement('link')
       linkNode.setAttribute('rel', 'stylesheet')
