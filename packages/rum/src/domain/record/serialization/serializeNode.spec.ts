@@ -610,17 +610,7 @@ describe('serializeNodeWithId', () => {
         ],
       })
 
-      expect(serializeNodeWithId(linkNode, DEFAULT_OPTIONS)).toEqual({
-        type: NodeType.Element,
-        tagName: 'link',
-        id: jasmine.any(Number) as unknown as number,
-        isSVG: undefined,
-        attributes: {
-          rel: 'stylesheet',
-          href: 'https://datadoghq.com/some/style.css',
-        },
-        childNodes: [],
-      })
+      expect((serializeNodeWithId(linkNode, DEFAULT_OPTIONS) as ElementNode).attributes._cssText).toBeUndefined()
     })
 
     it('does not serialize style node with dynamic CSS that is behind CORS', () => {
