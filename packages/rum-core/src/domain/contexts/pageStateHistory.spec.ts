@@ -1,15 +1,19 @@
 import type { RelativeTime, ServerDuration } from '@datadog/browser-core'
 import type { Clock } from '../../../../core/test'
 import { mockClock } from '../../../../core/test'
+import type { RumConfiguration } from '../configuration'
 import type { PageStateHistory } from './pageStateHistory'
 import { startPageStateHistory, PageState } from './pageStateHistory'
 
 describe('pageStateHistory', () => {
   let pageStateHistory: PageStateHistory
   let clock: Clock
+  let configuration: RumConfiguration
+
   beforeEach(() => {
+    configuration = {} as RumConfiguration
     clock = mockClock()
-    pageStateHistory = startPageStateHistory()
+    pageStateHistory = startPageStateHistory(configuration)
   })
 
   afterEach(() => {
@@ -67,7 +71,7 @@ describe('pageStateHistory', () => {
 
     it('should limit the number of selectable entries', () => {
       const maxPageStateEntriesSelectable = 1
-      pageStateHistory = startPageStateHistory(maxPageStateEntriesSelectable)
+      pageStateHistory = startPageStateHistory(configuration, maxPageStateEntriesSelectable)
 
       pageStateHistory.addPageState(PageState.ACTIVE)
       clock.tick(10)
@@ -91,7 +95,7 @@ describe('pageStateHistory', () => {
 
     it('should return false if the page was not active at the given time', () => {
       const maxPageStateEntriesSelectable = 1
-      pageStateHistory = startPageStateHistory(maxPageStateEntriesSelectable)
+      pageStateHistory = startPageStateHistory(configuration, maxPageStateEntriesSelectable)
 
       pageStateHistory.addPageState(PageState.ACTIVE)
       clock.tick(10)

@@ -73,7 +73,7 @@ export function startRum(
   }
   const featureFlagContexts = startFeatureFlagContexts(lifeCycle)
 
-  const pageExitObservable = createPageExitObservable()
+  const pageExitObservable = createPageExitObservable(configuration)
   pageExitObservable.subscribe((event) => {
     lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, event)
   })
@@ -102,7 +102,7 @@ export function startRum(
   }
 
   const domMutationObservable = createDOMMutationObservable()
-  const locationChangeObservable = createLocationChangeObservable(location)
+  const locationChangeObservable = createLocationChangeObservable(configuration, location)
 
   const { viewContexts, pageStateHistory, urlContexts, actionContexts, addAction } = startRumEventCollection(
     lifeCycle,
@@ -133,7 +133,7 @@ export function startRum(
     webVitalTelemetryDebug,
     initialViewOptions
   )
-  const { addError } = startErrorCollection(lifeCycle, pageStateHistory, featureFlagContexts)
+  const { addError } = startErrorCollection(lifeCycle, configuration, pageStateHistory, featureFlagContexts)
 
   startRequestCollection(lifeCycle, configuration, session)
   startPerformanceCollection(lifeCycle, configuration)
@@ -182,7 +182,7 @@ export function startRumEventCollection(
   const viewContexts = startViewContexts(lifeCycle)
   const urlContexts = startUrlContexts(lifeCycle, locationChangeObservable, location)
 
-  const pageStateHistory = startPageStateHistory()
+  const pageStateHistory = startPageStateHistory(configuration)
 
   const { addAction, actionContexts } = startActionCollection(
     lifeCycle,

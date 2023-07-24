@@ -11,6 +11,7 @@ import {
   trackRuntimeError,
   NonErrorPrefix,
 } from '@datadog/browser-core'
+import type { RumConfiguration } from '../../configuration'
 import type { RawRumErrorEvent } from '../../../rawRumEvent.types'
 import { RumEventType } from '../../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../../lifeCycle'
@@ -30,6 +31,7 @@ export interface ProvidedError {
 
 export function startErrorCollection(
   lifeCycle: LifeCycle,
+  configuration: RumConfiguration,
   pageStateHistory: PageStateHistory,
   featureFlagContexts: FeatureFlagContexts
 ) {
@@ -37,7 +39,7 @@ export function startErrorCollection(
 
   trackConsoleError(errorObservable)
   trackRuntimeError(errorObservable)
-  trackReportError(errorObservable)
+  trackReportError(configuration, errorObservable)
 
   errorObservable.subscribe((error) => lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error }))
 

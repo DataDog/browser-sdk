@@ -1,5 +1,6 @@
-import type { DefaultPrivacyLevel, ListenerHandler } from '@datadog/browser-core'
+import type { ListenerHandler } from '@datadog/browser-core'
 import { assign, addEventListeners, DOM_EVENT } from '@datadog/browser-core'
+import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel } from '../../../constants'
 import type { MouseInteraction, MouseInteractionData, BrowserIncrementalSnapshotRecord } from '../../../types'
 import { IncrementalSource, MouseInteractionType } from '../../../types'
@@ -34,13 +35,16 @@ const eventTypeToMouseInteraction = {
 export type MouseInteractionCallBack = (record: BrowserIncrementalSnapshotRecord) => void
 
 export function initMouseInteractionObserver(
+  configuration: RumConfiguration,
   cb: MouseInteractionCallBack,
-  defaultPrivacyLevel: DefaultPrivacyLevel,
   recordIds: RecordIds
 ): ListenerHandler {
   const handler = (event: MouseEvent | TouchEvent | FocusEvent) => {
     const target = getEventTarget(event)
-    if (getNodePrivacyLevel(target, defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN || !hasSerializedNode(target)) {
+    if (
+      getNodePrivacyLevel(target, configuration.defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN ||
+      !hasSerializedNode(target)
+    ) {
       return
     }
     const id = getSerializedNodeId(target)
@@ -64,6 +68,7 @@ export function initMouseInteractionObserver(
     cb(record)
   }
   return addEventListeners(
+    configuration,
     document,
     Object.keys(eventTypeToMouseInteraction) as Array<keyof typeof eventTypeToMouseInteraction>,
     handler,

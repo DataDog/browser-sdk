@@ -17,6 +17,7 @@ import { FrustrationType, RumEventType } from '../../../rawRumEvent.types'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { PAGE_ACTIVITY_END_DELAY, PAGE_ACTIVITY_VALIDATION_DELAY } from '../../waitPageActivityEnd'
+import type { RumConfiguration } from '../../configuration'
 import { THROTTLE_VIEW_UPDATE_PERIOD } from './trackViews'
 import type { ViewTest } from './setupViewTest.specHelper'
 import { setupViewTest } from './setupViewTest.specHelper'
@@ -536,6 +537,8 @@ describe('rum track view metrics', () => {
       let scrollMetrics: ScrollMetrics | undefined
       let stopTrackScrollMetrics: () => void
       let clock: Clock
+      let configuration: RumConfiguration
+
       const getMetrics = jasmine.createSpy('getMetrics')
 
       const newScroll = (scrollParams: { scrollHeight: number; scrollDepth: number; scrollTop: number }) => {
@@ -547,9 +550,11 @@ describe('rum track view metrics', () => {
       }
       describe('with flag enabled', () => {
         beforeEach(() => {
+          configuration = {} as RumConfiguration
           clock = mockClock()
           addExperimentalFeatures([ExperimentalFeature.SCROLLMAP])
           stopTrackScrollMetrics = trackScrollMetrics(
+            configuration,
             { relative: 0 as RelativeTime, timeStamp: 0 as TimeStamp },
             (s) => (scrollMetrics = s),
             getMetrics
@@ -605,6 +610,7 @@ describe('rum track view metrics', () => {
         beforeEach(() => {
           clock = mockClock()
           stopTrackScrollMetrics = trackScrollMetrics(
+            configuration,
             { relative: 1 as RelativeTime, timeStamp: 2 as TimeStamp },
             (s) => (scrollMetrics = s),
             getMetrics

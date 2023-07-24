@@ -1,5 +1,6 @@
 import { addTelemetryDebug, assign, sendToExtension, addEventListener, concatBuffers } from '@datadog/browser-core'
 import type { DeflateWorkerResponse } from '@datadog/browser-worker'
+import type { RumConfiguration } from '@datadog/browser-rum-core'
 import type { BrowserRecord, BrowserSegmentMetadata, CreationReason, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
 import * as replayStats from '../replayStats'
@@ -20,6 +21,7 @@ export class Segment {
   private pendingWriteCount = 0
 
   constructor(
+    configuration: RumConfiguration,
     private worker: DeflateWorker,
     context: SegmentContext,
     creationReason: CreationReason,
@@ -49,6 +51,7 @@ export class Segment {
     const compressedData: Uint8Array[] = []
 
     const { stop: removeMessageListener } = addEventListener(
+      configuration,
       worker,
       'message',
       ({ data }: MessageEvent<DeflateWorkerResponse>) => {

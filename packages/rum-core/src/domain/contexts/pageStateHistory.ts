@@ -8,6 +8,7 @@ import {
   relativeNow,
   DOM_EVENT,
 } from '@datadog/browser-core'
+import type { RumConfiguration } from '../configuration'
 import type { PageStateServerEntry } from '../../rawRumEvent.types'
 
 // Arbitrary value to cap number of element for memory consumption in the browser
@@ -35,6 +36,7 @@ export interface PageStateHistory {
 }
 
 export function startPageStateHistory(
+  configuration: RumConfiguration,
   maxPageStateEntriesSelectable = MAX_PAGE_STATE_ENTRIES_SELECTABLE
 ): PageStateHistory {
   const pageStateHistory = new ValueHistory<PageStateEntry>(PAGE_STATE_CONTEXT_TIME_OUT_DELAY, MAX_PAGE_STATE_ENTRIES)
@@ -43,6 +45,7 @@ export function startPageStateHistory(
   addPageState(getPageState(), relativeNow())
 
   const { stop: stopEventListeners } = addEventListeners(
+    configuration,
     window,
     [
       DOM_EVENT.PAGE_SHOW,

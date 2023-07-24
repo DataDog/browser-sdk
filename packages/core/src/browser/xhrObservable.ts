@@ -4,6 +4,7 @@ import type { Duration, RelativeTime, ClocksState } from '../tools/utils/timeUti
 import { elapsed, relativeNow, clocksNow, timeStampNow } from '../tools/utils/timeUtils'
 import { normalizeUrl } from '../tools/utils/urlPolyfill'
 import { shallowClone } from '../tools/utils/objectUtils'
+import type { Configuration } from '../domain/configuration'
 import { addEventListener } from './addEventListener'
 
 export interface XhrOpenContext {
@@ -31,14 +32,14 @@ export type XhrContext = XhrOpenContext | XhrStartContext | XhrCompleteContext
 let xhrObservable: Observable<XhrContext> | undefined
 const xhrContexts = new WeakMap<XMLHttpRequest, XhrContext>()
 
-export function initXhrObservable() {
+export function initXhrObservable(configuration: Configuration) {
   if (!xhrObservable) {
-    xhrObservable = createXhrObservable()
+    xhrObservable = createXhrObservable(configuration)
   }
   return xhrObservable
 }
 
-function createXhrObservable() {
+function createXhrObservable(configuration: Configuration) {
   const observable = new Observable<XhrContext>(() => {
     const { stop: stopInstrumentingStart } = instrumentMethodAndCallOriginal(XMLHttpRequest.prototype, 'open', {
       before: openXhr,
@@ -46,7 +47,7 @@ function createXhrObservable() {
 
     const { stop: stopInstrumentingSend } = instrumentMethodAndCallOriginal(XMLHttpRequest.prototype, 'send', {
       before() {
-        sendXhr.call(this, observable)
+        sendXhr.call(this, configuration, observable)
       },
     })
 
@@ -71,7 +72,7 @@ function openXhr(this: XMLHttpRequest, method: string, url: string | URL | undef
   })
 }
 
-function sendXhr(this: XMLHttpRequest, observable: Observable<XhrContext>) {
+function sendXhr(this: XMLHttpRequest, configuration: Configuration, observable: Observable<XhrContext>) {
   const context = xhrContexts.get(this)
   if (!context) {
     return
@@ -113,7 +114,7 @@ function sendXhr(this: XMLHttpRequest, observable: Observable<XhrContext>) {
     observable.notify(shallowClone(completeContext))
   }
 
-  const { stop: unsubscribeLoadEndListener } = addEventListener(this, 'loadend', onEnd)
+  const { stop: unsubscribeLoadEndListener } = addEventListener(configuration, this, 'loadend', onEnd)
 
   observable.notify(startContext)
 }

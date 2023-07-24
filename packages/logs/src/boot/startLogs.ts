@@ -54,7 +54,7 @@ export function startLogs(
     })
     addTelemetryDebug('Error reported to customer', { 'error.message': error.message })
   }
-  const pageExitObservable = createPageExitObservable()
+  const pageExitObservable = createPageExitObservable(configuration)
 
   const session =
     configuration.sessionStoreStrategyType && !canUseEventBridge() && !willSyntheticsInjectRum()

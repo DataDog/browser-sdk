@@ -1,5 +1,6 @@
 import type { TimeStamp } from '@datadog/browser-core'
 import { noop, setDebugMode, display, isIE } from '@datadog/browser-core'
+import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { MockWorker } from '../../../test'
 import type { CreationReason, BrowserRecord, SegmentContext, BrowserSegment } from '../../types'
 import { RecordType } from '../../types'
@@ -237,7 +238,8 @@ describe('Segment', () => {
     onWrote?: (compressedSegmentBytesCount: number) => void
     onFlushed?: (data: Uint8Array, rawBytesCount: number) => void
   } = {}) {
-    return new Segment(worker, context, creationReason, initialRecord, onWrote, onFlushed)
+    const configuration = {} as RumConfiguration
+    return new Segment(configuration, worker, context, creationReason, initialRecord, onWrote, onFlushed)
   }
 })
 

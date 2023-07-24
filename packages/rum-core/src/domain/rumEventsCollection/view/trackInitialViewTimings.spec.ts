@@ -10,6 +10,7 @@ import type {
   RumPerformancePaintTiming,
 } from '../../../browser/performanceCollection'
 import { LifeCycleEventType } from '../../lifeCycle'
+import type { RumConfiguration } from '../../configuration'
 import { resetFirstHidden } from './trackFirstHidden'
 import type { Timings } from './trackInitialViewTimings'
 import {
@@ -56,14 +57,17 @@ describe('trackInitialViewTimings', () => {
   let scheduleViewUpdateSpy: jasmine.Spy<() => void>
   let trackInitialViewTimingsResult: ReturnType<typeof trackInitialViewTimings>
   let setLoadEventSpy: jasmine.Spy<(loadEvent: Duration) => void>
+  let configuration: RumConfiguration
 
   beforeEach(() => {
+    configuration = {} as RumConfiguration
     scheduleViewUpdateSpy = jasmine.createSpy()
     setLoadEventSpy = jasmine.createSpy()
 
     setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
       trackInitialViewTimingsResult = trackInitialViewTimings(
         lifeCycle,
+        configuration,
         noopWebVitalTelemetryDebug,
         setLoadEventSpy,
         scheduleViewUpdateSpy
@@ -158,10 +162,14 @@ describe('trackNavigationTimings', () => {
 describe('trackFirstContentfulPaintTiming', () => {
   let setupBuilder: TestSetupBuilder
   let fcpCallback: jasmine.Spy<(value: RelativeTime) => void>
+  let configuration: RumConfiguration
 
   beforeEach(() => {
+    configuration = {} as RumConfiguration
     fcpCallback = jasmine.createSpy()
-    setupBuilder = setup().beforeBuild(({ lifeCycle }) => trackFirstContentfulPaintTiming(lifeCycle, fcpCallback))
+    setupBuilder = setup().beforeBuild(({ lifeCycle }) =>
+      trackFirstContentfulPaintTiming(lifeCycle, configuration, fcpCallback)
+    )
     resetFirstHidden()
   })
 
@@ -204,12 +212,14 @@ describe('largestContentfulPaintTiming', () => {
   let setupBuilder: TestSetupBuilder
   let lcpCallback: jasmine.Spy<(value: RelativeTime, lcpElement: Element | undefined) => void>
   let eventTarget: Window
+  let configuration: RumConfiguration
 
   beforeEach(() => {
+    configuration = {} as RumConfiguration
     lcpCallback = jasmine.createSpy()
     eventTarget = document.createElement('div') as unknown as Window
     setupBuilder = setup().beforeBuild(({ lifeCycle }) =>
-      trackLargestContentfulPaintTiming(lifeCycle, eventTarget, lcpCallback)
+      trackLargestContentfulPaintTiming(lifeCycle, configuration, eventTarget, lcpCallback)
     )
     resetFirstHidden()
   })
@@ -271,10 +281,12 @@ describe('firstInputTimings', () => {
       firstInputTarget: Node | undefined
     }) => void
   >
+  let configuration: RumConfiguration
 
   beforeEach(() => {
+    configuration = {} as RumConfiguration
     fitCallback = jasmine.createSpy()
-    setupBuilder = setup().beforeBuild(({ lifeCycle }) => trackFirstInputTimings(lifeCycle, fitCallback))
+    setupBuilder = setup().beforeBuild(({ lifeCycle }) => trackFirstInputTimings(lifeCycle, configuration, fitCallback))
     resetFirstHidden()
   })
 

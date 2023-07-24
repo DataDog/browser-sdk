@@ -1,5 +1,6 @@
 import type { RawTelemetryEvent } from '@datadog/browser-core'
 import { display, isIE, noop, resetTelemetry, startFakeTelemetry } from '@datadog/browser-core'
+import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { MockWorker } from '../../../test'
 import type { createDeflateWorker } from './startDeflateWorker'
 import { startDeflateWorker, resetDeflateWorkerState } from './startDeflateWorker'
@@ -11,8 +12,10 @@ describe('startDeflateWorker', () => {
   let deflateWorker: MockWorker
   let createDeflateWorkerSpy: jasmine.Spy<typeof createDeflateWorker>
   let callbackSpy: jasmine.Spy
+  let configuration: RumConfiguration
 
   beforeEach(() => {
+    configuration = {} as RumConfiguration
     deflateWorker = new MockWorker()
     callbackSpy = jasmine.createSpy('callbackSpy')
     createDeflateWorkerSpy = jasmine.createSpy('createDeflateWorkerSpy').and.callFake(() => deflateWorker)
@@ -23,17 +26,17 @@ describe('startDeflateWorker', () => {
   })
 
   it('creates a deflate worker and call callback when initialized', () => {
-    startDeflateWorker(callbackSpy, createDeflateWorkerSpy)
+    startDeflateWorker(configuration, callbackSpy, createDeflateWorkerSpy)
     expect(createDeflateWorkerSpy).toHaveBeenCalledTimes(1)
     deflateWorker.processAllMessages()
     expect(callbackSpy).toHaveBeenCalledOnceWith(deflateWorker)
   })
 
   it('uses the previously created worker', () => {
-    startDeflateWorker(noop, createDeflateWorkerSpy)
+    startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
     deflateWorker.processAllMessages()
 
-    startDeflateWorker(callbackSpy, createDeflateWorkerSpy)
+    startDeflateWorker(configuration, callbackSpy, createDeflateWorkerSpy)
     expect(createDeflateWorkerSpy).toHaveBeenCalledTimes(1)
     deflateWorker.processAllMessages()
     expect(callbackSpy).toHaveBeenCalledOnceWith(deflateWorker)
@@ -41,16 +44,16 @@ describe('startDeflateWorker', () => {
 
   describe('loading state', () => {
     it('does not create multiple workers when called multiple times while the worker is loading', () => {
-      startDeflateWorker(noop, createDeflateWorkerSpy)
-      startDeflateWorker(noop, createDeflateWorkerSpy)
+      startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
+      startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
       expect(createDeflateWorkerSpy).toHaveBeenCalledTimes(1)
     })
 
     it('calls all registered callbacks when the worker is initialized', () => {
       const callbackSpy1 = jasmine.createSpy()
       const callbackSpy2 = jasmine.createSpy()
-      startDeflateWorker(callbackSpy1, createDeflateWorkerSpy)
-      startDeflateWorker(callbackSpy2, createDeflateWorkerSpy)
+      startDeflateWorker(configuration, callbackSpy1, createDeflateWorkerSpy)
+      startDeflateWorker(configuration, callbackSpy2, createDeflateWorkerSpy)
       deflateWorker.processAllMessages()
       expect(callbackSpy1).toHaveBeenCalledOnceWith(deflateWorker)
       expect(callbackSpy2).toHaveBeenCalledOnceWith(deflateWorker)
@@ -62,11 +65,13 @@ describe('startDeflateWorker', () => {
     // mimic Chrome behavior
     let CSP_ERROR: DOMException
     let displaySpy: jasmine.Spy
+    let configuration: RumConfiguration
 
     beforeEach(() => {
       if (isIE()) {
         pending('IE does not support CSP blocking worker creation')
       }
+      configuration = {} as RumConfiguration
       displaySpy = spyOn(display, 'error')
       telemetryEvents = startFakeTelemetry()
       CSP_ERROR = new DOMException(
@@ -79,7 +84,7 @@ describe('startDeflateWorker', () => {
     })
 
     it('displays CSP instructions when the worker creation throws a CSP error', () => {
-      startDeflateWorker(noop, () => {
+      startDeflateWorker(configuration, noop, () => {
         throw CSP_ERROR
       })
       expect(displaySpy).toHaveBeenCalledWith(
@@ -88,30 +93,30 @@ describe('startDeflateWorker', () => {
     })
 
     it('does not report CSP errors to telemetry', () => {
-      startDeflateWorker(noop, () => {
+      startDeflateWorker(configuration, noop, () => {
         throw CSP_ERROR
       })
       expect(telemetryEvents).toEqual([])
     })
 
     it('displays ErrorEvent as CSP error', () => {
-      startDeflateWorker(noop, createDeflateWorkerSpy)
+      startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
       deflateWorker.dispatchErrorEvent()
       expect(displaySpy).toHaveBeenCalledWith(
         'Please make sure CSP is correctly configured https://docs.datadoghq.com/real_user_monitoring/faq/content_security_policy'
       )
     })
     it('calls the callback without argument in case of an error occurs during loading', () => {
-      startDeflateWorker(callbackSpy, createDeflateWorkerSpy)
+      startDeflateWorker(configuration, callbackSpy, createDeflateWorkerSpy)
       deflateWorker.dispatchErrorEvent()
       expect(callbackSpy).toHaveBeenCalledOnceWith()
     })
 
     it('calls the callback without argument in case of an error occurred in a previous loading', () => {
-      startDeflateWorker(noop, createDeflateWorkerSpy)
+      startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
       deflateWorker.dispatchErrorEvent()
 
-      startDeflateWorker(callbackSpy, createDeflateWorkerSpy)
+      startDeflateWorker(configuration, callbackSpy, createDeflateWorkerSpy)
       expect(callbackSpy).toHaveBeenCalledOnceWith()
     })
   })
@@ -120,8 +125,10 @@ describe('startDeflateWorker', () => {
     let telemetryEvents: RawTelemetryEvent[]
     const UNKNOWN_ERROR = new Error('boom')
     let displaySpy: jasmine.Spy
+    let configuration: RumConfiguration
 
     beforeEach(() => {
+      configuration = {} as RumConfiguration
       displaySpy = spyOn(display, 'error')
       telemetryEvents = startFakeTelemetry()
     })
@@ -131,7 +138,7 @@ describe('startDeflateWorker', () => {
     })
 
     it('displays an error message when the worker creation throws an unknown error', () => {
-      startDeflateWorker(noop, () => {
+      startDeflateWorker(configuration, noop, () => {
         throw UNKNOWN_ERROR
       })
       expect(displaySpy).toHaveBeenCalledOnceWith(
@@ -141,7 +148,7 @@ describe('startDeflateWorker', () => {
     })
 
     it('reports unknown errors to telemetry', () => {
-      startDeflateWorker(noop, () => {
+      startDeflateWorker(configuration, noop, () => {
         throw UNKNOWN_ERROR
       })
       expect(telemetryEvents).toEqual([
@@ -155,7 +162,7 @@ describe('startDeflateWorker', () => {
     })
 
     it('does not display error messages as CSP error', () => {
-      startDeflateWorker(noop, createDeflateWorkerSpy)
+      startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
       deflateWorker.dispatchErrorMessage('foo')
       expect(displaySpy).not.toHaveBeenCalledWith(
         'Please make sure CSP is correctly configured https://docs.datadoghq.com/real_user_monitoring/faq/content_security_policy'
@@ -163,7 +170,7 @@ describe('startDeflateWorker', () => {
     })
 
     it('reports errors occurring after loading to telemetry', () => {
-      startDeflateWorker(noop, createDeflateWorkerSpy)
+      startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
       deflateWorker.processAllMessages()
 
       deflateWorker.dispatchErrorMessage('boom', TEST_STREAM_ID)

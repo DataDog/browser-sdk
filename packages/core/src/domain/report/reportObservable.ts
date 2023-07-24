@@ -4,6 +4,7 @@ import { mergeObservables, Observable } from '../../tools/observable'
 import { addEventListener, DOM_EVENT } from '../../browser/addEventListener'
 import { includes } from '../../tools/utils/polyfills'
 import { safeTruncate } from '../../tools/utils/stringUtils'
+import type { Configuration } from '../configuration'
 import type { ReportType, InterventionReport, DeprecationReport } from './browser.types'
 
 export const RawReportType = {
@@ -21,11 +22,11 @@ export interface RawReport {
   stack?: string
 }
 
-export function initReportObservable(apis: RawReportType[]) {
+export function initReportObservable(configuration: Configuration, apis: RawReportType[]) {
   const observables: Array<Observable<RawReport>> = []
 
   if (includes(apis, RawReportType.cspViolation)) {
-    observables.push(createCspViolationReportObservable())
+    observables.push(createCspViolationReportObservable(configuration))
   }
 
   const reportTypes = apis.filter((api: RawReportType): api is ReportType => api !== RawReportType.cspViolation)
@@ -62,9 +63,9 @@ function createReportObservable(reportTypes: ReportType[]) {
   return observable
 }
 
-function createCspViolationReportObservable() {
+function createCspViolationReportObservable(configuration: Configuration) {
   const observable = new Observable<RawReport>(() => {
-    const { stop } = addEventListener(document, DOM_EVENT.SECURITY_POLICY_VIOLATION, (event) => {
+    const { stop } = addEventListener(configuration, document, DOM_EVENT.SECURITY_POLICY_VIOLATION, (event) => {
       observable.notify(buildRawReportFromCspViolation(event))
     })
 

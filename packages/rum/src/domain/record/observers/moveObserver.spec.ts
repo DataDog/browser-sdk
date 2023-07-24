@@ -1,5 +1,6 @@
 import { isIE } from '@datadog/browser-core'
 import { createNewEvent } from '@datadog/browser-core/test'
+import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { SerializationContextStatus, serializeDocument } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { IncrementalSource } from '../../../types'
@@ -10,12 +11,14 @@ import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './observe
 describe('initMoveObserver', () => {
   let mouseMoveCallbackSpy: jasmine.Spy<MousemoveCallBack>
   let stopObserver: () => void
+  let configuration: RumConfiguration
 
   beforeEach(() => {
     if (isIE()) {
       pending('IE not supported')
     }
 
+    configuration = {} as RumConfiguration
     serializeDocument(document, DEFAULT_CONFIGURATION, {
       shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
@@ -23,7 +26,7 @@ describe('initMoveObserver', () => {
     })
 
     mouseMoveCallbackSpy = jasmine.createSpy()
-    stopObserver = initMoveObserver(mouseMoveCallbackSpy)
+    stopObserver = initMoveObserver(configuration, mouseMoveCallbackSpy)
   })
 
   afterEach(() => {

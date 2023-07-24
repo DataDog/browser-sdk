@@ -15,15 +15,15 @@ export function startBatchWithReplica<T extends Context>(
   sessionExpireObservable: Observable<void>,
   replicaEndpoint?: EndpointBuilder
 ) {
-  const primaryBatch = createBatch(endpoint)
+  const primaryBatch = createBatch(configuration, endpoint)
   let replicaBatch: Batch | undefined
   if (replicaEndpoint) {
-    replicaBatch = createBatch(replicaEndpoint)
+    replicaBatch = createBatch(configuration, replicaEndpoint)
   }
 
-  function createBatch(endpointBuilder: EndpointBuilder) {
+  function createBatch(configuration: Configuration, endpointBuilder: EndpointBuilder) {
     return new Batch(
-      createHttpRequest(endpointBuilder, configuration.batchBytesLimit, reportError),
+      createHttpRequest(configuration, endpointBuilder, configuration.batchBytesLimit, reportError),
       createFlushController({
         messagesLimit: configuration.batchMessagesLimit,
         bytesLimit: configuration.batchBytesLimit,

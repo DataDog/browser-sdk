@@ -37,7 +37,7 @@ export interface RecordAPI {
 }
 
 export function record(options: RecordOptions): RecordAPI {
-  const { emit } = options
+  const { emit, configuration } = options
   // runtime checks for user options
   if (!emit) {
     throw new Error('emit function is required')
@@ -50,7 +50,7 @@ export function record(options: RecordOptions): RecordAPI {
   }
   const inputCb: InputCallback = (s) => emit(assembleIncrementalSnapshot<InputData>(IncrementalSource.Input, s))
 
-  const shadowRootsController = initShadowRootsController(options.configuration, { mutationCb, inputCb })
+  const shadowRootsController = initShadowRootsController(configuration, { mutationCb, inputCb })
 
   const takeFullSnapshot = (
     timestamp = timeStampNow(),
@@ -81,7 +81,7 @@ export function record(options: RecordOptions): RecordAPI {
 
     emit({
       data: {
-        node: serializeDocument(document, options.configuration, serializationContext),
+        node: serializeDocument(document, configuration, serializationContext),
         initialOffset: {
           left: getScrollX(),
           top: getScrollY(),
@@ -102,9 +102,9 @@ export function record(options: RecordOptions): RecordAPI {
 
   takeFullSnapshot()
 
-  const { stop: stopObservers, flush: flushMutationsFromObservers } = initObservers({
+  const { stop: stopObservers, flush: flushMutationsFromObservers } = initObservers(configuration, {
     lifeCycle: options.lifeCycle,
-    configuration: options.configuration,
+    configuration,
     elementsScrollPositions,
     inputCb,
     mediaInteractionCb: (p) =>
