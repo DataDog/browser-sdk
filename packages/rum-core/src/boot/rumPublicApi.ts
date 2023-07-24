@@ -1,4 +1,4 @@
-import type { Context, InitConfiguration, TimeStamp, RelativeTime, User } from '@datadog/browser-core'
+import type { Context, InitConfiguration, TimeStamp, RelativeTime, User, Observable } from '@datadog/browser-core'
 import {
   noop,
   CustomerDataType,
@@ -52,6 +52,8 @@ export interface RecorderApi {
     sessionManager: RumSessionManager,
     viewContexts: ViewContexts
   ) => string | undefined
+  getSerializedNodeId: (node: Node) => number | undefined
+  recorderStartObservable: Observable<RelativeTime>
 }
 interface RumPublicApiOptions {
   ignoreInitIfSyntheticsWillInjectRum?: boolean

@@ -2,7 +2,7 @@ import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { DOM_EVENT } from '@datadog/browser-core'
 import { restorePageVisibility, setPageVisibility, createNewEvent } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../../../test'
-import { setup } from '../../../../test'
+import { noopWebVitalTelemetryDebug, setup } from '../../../../test'
 import type {
   RumFirstInputTiming,
   RumLargestContentfulPaintTiming,
@@ -41,12 +41,14 @@ const FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY: RumLargestContentfulPaintTiming = {
   entryType: 'largest-contentful-paint',
   startTime: 789 as RelativeTime,
   size: 10,
+  element: document.createElement('div'),
 }
 
 const FAKE_FIRST_INPUT_ENTRY: RumFirstInputTiming = {
   entryType: 'first-input',
   processingStart: 1100 as RelativeTime,
   startTime: 1000 as RelativeTime,
+  target: document.createElement('button'),
 }
 
 describe('trackInitialViewTimings', () => {
@@ -58,8 +60,14 @@ describe('trackInitialViewTimings', () => {
   beforeEach(() => {
     scheduleViewUpdateSpy = jasmine.createSpy()
     setLoadEventSpy = jasmine.createSpy()
+
     setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
-      trackInitialViewTimingsResult = trackInitialViewTimings(lifeCycle, setLoadEventSpy, scheduleViewUpdateSpy)
+      trackInitialViewTimingsResult = trackInitialViewTimings(
+        lifeCycle,
+        noopWebVitalTelemetryDebug,
+        setLoadEventSpy,
+        scheduleViewUpdateSpy
+      )
       return trackInitialViewTimingsResult
     })
   })
@@ -194,7 +202,7 @@ describe('trackFirstContentfulPaintTiming', () => {
 
 describe('largestContentfulPaintTiming', () => {
   let setupBuilder: TestSetupBuilder
-  let lcpCallback: jasmine.Spy<(value: RelativeTime) => void>
+  let lcpCallback: jasmine.Spy<(value: RelativeTime, lcpElement: Element | undefined) => void>
   let eventTarget: Window
 
   beforeEach(() => {
@@ -217,7 +225,7 @@ describe('largestContentfulPaintTiming', () => {
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY])
     expect(lcpCallback).toHaveBeenCalledTimes(1 as RelativeTime)
-    expect(lcpCallback).toHaveBeenCalledWith(789 as RelativeTime)
+    expect(lcpCallback).toHaveBeenCalledWith(789 as RelativeTime, jasmine.any(Element))
   })
 
   it('should be discarded if it is reported after a user interaction', () => {
@@ -254,7 +262,14 @@ describe('largestContentfulPaintTiming', () => {
 describe('firstInputTimings', () => {
   let setupBuilder: TestSetupBuilder
   let fitCallback: jasmine.Spy<
-    ({ firstInputDelay, firstInputTime }: { firstInputDelay: number; firstInputTime: number }) => void
+    ({
+      firstInputDelay,
+      firstInputTime,
+    }: {
+      firstInputDelay: number
+      firstInputTime: number
+      firstInputTarget: Node | undefined
+    }) => void
   >
 
   beforeEach(() => {
@@ -274,7 +289,11 @@ describe('firstInputTimings', () => {
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [FAKE_FIRST_INPUT_ENTRY])
     expect(fitCallback).toHaveBeenCalledTimes(1)
-    expect(fitCallback).toHaveBeenCalledWith({ firstInputDelay: 100, firstInputTime: 1000 })
+    expect(fitCallback).toHaveBeenCalledWith({
+      firstInputDelay: 100,
+      firstInputTime: 1000,
+      firstInputTarget: jasmine.any(Node),
+    })
   })
 
   it('should be discarded if the page is hidden', () => {
@@ -298,6 +317,6 @@ describe('firstInputTimings', () => {
     ])
 
     expect(fitCallback).toHaveBeenCalledTimes(1)
-    expect(fitCallback).toHaveBeenCalledWith({ firstInputDelay: 0, firstInputTime: 1000 })
+    expect(fitCallback).toHaveBeenCalledWith({ firstInputDelay: 0, firstInputTime: 1000, firstInputTarget: undefined })
   })
 })
