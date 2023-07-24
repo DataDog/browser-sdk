@@ -1,4 +1,5 @@
 /* eslint-disable local-rules/disallow-zone-js-patched-values */
+import { concatBuffers } from '@datadog/browser-core'
 import { Deflate, constants, string2buf } from '../domain/deflate'
 import type { DeflateWorkerAction, DeflateWorkerResponse } from '../types'
 
@@ -78,17 +79,6 @@ function handleAction(streams: Map<number, Deflate>, message: DeflateWorkerActio
       streams.delete(message.streamId)
       break
   }
-}
-
-function concatBuffers(buffers: Uint8Array[]) {
-  const length = buffers.reduce((total, buffer) => total + buffer.length, 0)
-  const result = new Uint8Array(length)
-  let offset = 0
-  for (const buffer of buffers) {
-    result.set(buffer, offset)
-    offset += buffer.length
-  }
-  return result
 }
 
 /**

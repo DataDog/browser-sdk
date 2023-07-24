@@ -50,6 +50,8 @@ __metadata:
 "@datadog/browser-worker@portal:../../packages/worker::locator=app%40workspace%3A.":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-worker@portal:../../packages/worker::locator=app%40workspace%3A."
+  dependencies:
+    "@datadog/browser-core": 4.45.0
   languageName: node
   linkType: soft
 
