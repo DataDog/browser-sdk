@@ -37,11 +37,11 @@
     "@types/jasmine": "3.10.11",
     "@typescript-eslint/eslint-plugin": "5.62.0",
     "@typescript-eslint/parser": "5.62.0",
-    "@wdio/browserstack-service": "8.13.1",
-    "@wdio/cli": "8.13.1",
-    "@wdio/jasmine-framework": "8.13.1",
+    "@wdio/browserstack-service": "8.13.10",
+    "@wdio/cli": "8.13.10",
+    "@wdio/jasmine-framework": "8.13.10",
     "@wdio/junit-reporter": "8.12.2",
-    "@wdio/local-runner": "8.13.1",
+    "@wdio/local-runner": "8.13.10",
     "@wdio/selenium-standalone-service": "8.12.1",
     "@wdio/spec-reporter": "8.12.2",
     "ajv": "6.12.6",
@@ -81,8 +81,8 @@
     "ts-node": "10.9.1",
     "tsconfig-paths-webpack-plugin": "4.1.0",
     "typescript": "5.1.6",
-    "webdriverio": "8.13.1",
-    "webpack": "5.88.1",
+    "webdriverio": "8.13.10",
+    "webpack": "5.88.2",
     "webpack-cli": "5.1.4",
     "webpack-dev-middleware": "6.1.1"
   },
@@ -90,7 +90,7 @@
     "ansi-regex": "5.0.1"
   },
   "volta": {
-    "node": "18.16.1",
+    "node": "18.17.0",
     "yarn": "1.22.19"
   },
   "packageManager": "yarn@3.6.1"
