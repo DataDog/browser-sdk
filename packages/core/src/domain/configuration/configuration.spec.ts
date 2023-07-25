@@ -165,4 +165,25 @@ describe('validateAndBuildConfiguration', () => {
       expect(displaySpy).toHaveBeenCalledWith('beforeSend threw an error:', myError)
     })
   })
+
+  describe('allowUntrustedEvents', () => {
+    it('defaults to false', () => {
+      expect(validateAndBuildConfiguration({ clientToken: 'yes' })!.allowUntrustedEvents).toBeFalse()
+    })
+
+    it('is set to provided value', () => {
+      expect(
+        validateAndBuildConfiguration({ clientToken: 'yes', allowUntrustedEvents: true })!.allowUntrustedEvents
+      ).toBeTrue()
+      expect(
+        validateAndBuildConfiguration({ clientToken: 'yes', allowUntrustedEvents: false })!.allowUntrustedEvents
+      ).toBeFalse()
+    })
+
+    it('the provided value is cast to boolean', () => {
+      expect(
+        validateAndBuildConfiguration({ clientToken: 'yes', allowUntrustedEvents: 'foo' as any })!.allowUntrustedEvents
+      ).toBeTrue()
+    })
+  })
 })

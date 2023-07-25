@@ -22,7 +22,7 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
     return { stop: noop }
   }
 
-  const xhrSubscription = initXhrObservable().subscribe((context) => {
+  const xhrSubscription = initXhrObservable(configuration).subscribe((context) => {
     if (context.state === 'complete') {
       handleResponse(RequestType.XHR, context)
     }

@@ -1,4 +1,5 @@
 import { addEventListener, DOM_EVENT, isIE } from '@datadog/browser-core'
+import type { RumConfiguration } from '../domain/configuration'
 import { getScrollX, getScrollY } from './scroll'
 
 function isMobileSafari12() {
@@ -7,7 +8,7 @@ function isMobileSafari12() {
 
 describe('scroll', () => {
   let shouldWaitForWindowScrollEvent: boolean
-
+  let configuration: RumConfiguration
   const addVerticalScrollBar = () => {
     document.body.style.setProperty('margin-bottom', '5000px')
   }
@@ -16,7 +17,7 @@ describe('scroll', () => {
     if (isIE()) {
       pending('IE not supported')
     }
-
+    configuration = {} as RumConfiguration
     shouldWaitForWindowScrollEvent = false
   })
 
@@ -27,7 +28,11 @@ describe('scroll', () => {
     // Those tests are triggering asynchronous scroll events that might impact tests run after them.
     // To avoid that, we wait for the next scroll event before continuing to the next one.
     if (shouldWaitForWindowScrollEvent) {
-      addEventListener(window, DOM_EVENT.SCROLL, () => done(), { passive: true, once: true, capture: true })
+      addEventListener(configuration, window, DOM_EVENT.SCROLL, () => done(), {
+        passive: true,
+        once: true,
+        capture: true,
+      })
     } else {
       done()
     }

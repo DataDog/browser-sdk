@@ -1,5 +1,6 @@
 import { stubReportingObserver, stubCspEventListener } from '../../../test'
 import type { Subscription } from '../../tools/observable'
+import type { Configuration } from '../configuration'
 import { initReportObservable, RawReportType } from './reportObservable'
 
 describe('report observable', () => {
@@ -7,8 +8,10 @@ describe('report observable', () => {
   let cspEventListenerStub: ReturnType<typeof stubCspEventListener>
   let consoleSubscription: Subscription
   let notifyReport: jasmine.Spy
+  let configuration: Configuration
 
   beforeEach(() => {
+    configuration = {} as Configuration
     reportingObserverStub = stubReportingObserver()
     cspEventListenerStub = stubCspEventListener()
     notifyReport = jasmine.createSpy('notifyReport')
@@ -20,7 +23,7 @@ describe('report observable', () => {
   })
   ;[RawReportType.deprecation, RawReportType.intervention].forEach((type) => {
     it(`should notify ${type} reports`, () => {
-      consoleSubscription = initReportObservable([type]).subscribe(notifyReport)
+      consoleSubscription = initReportObservable(configuration, [type]).subscribe(notifyReport)
       reportingObserverStub.raiseReport(type)
 
       const [report] = notifyReport.calls.mostRecent().args
@@ -36,7 +39,7 @@ describe('report observable', () => {
   })
 
   it(`should compute stack for ${RawReportType.intervention}`, () => {
-    consoleSubscription = initReportObservable([RawReportType.intervention]).subscribe(notifyReport)
+    consoleSubscription = initReportObservable(configuration, [RawReportType.intervention]).subscribe(notifyReport)
     reportingObserverStub.raiseReport(RawReportType.intervention)
 
     const [report] = notifyReport.calls.mostRecent().args
@@ -46,7 +49,7 @@ describe('report observable', () => {
   })
 
   it(`should notify ${RawReportType.cspViolation}`, () => {
-    consoleSubscription = initReportObservable([RawReportType.cspViolation]).subscribe(notifyReport)
+    consoleSubscription = initReportObservable(configuration, [RawReportType.cspViolation]).subscribe(notifyReport)
     cspEventListenerStub.dispatchEvent()
 
     expect(notifyReport).toHaveBeenCalledOnceWith({

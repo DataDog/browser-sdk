@@ -70,7 +70,7 @@ export function startRequestCollection(
 }
 
 export function trackXhr(lifeCycle: LifeCycle, configuration: RumConfiguration, tracer: Tracer) {
-  const subscription = initXhrObservable().subscribe((rawContext) => {
+  const subscription = initXhrObservable(configuration).subscribe((rawContext) => {
     const context = rawContext as RumXhrStartContext | RumXhrCompleteContext
     if (!isAllowedRequestUrl(configuration, context.url)) {
       return

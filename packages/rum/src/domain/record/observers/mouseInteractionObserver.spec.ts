@@ -1,5 +1,6 @@
 import { DOM_EVENT, DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
 import { createNewEvent } from '@datadog/browser-core/test'
+import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { IncrementalSource, MouseInteractionType, RecordType } from '../../../types'
 import { serializeDocument, SerializationContextStatus } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
@@ -15,12 +16,14 @@ describe('initMouseInteractionObserver', () => {
   let recordIds: RecordIds
   let sandbox: HTMLDivElement
   let a: HTMLAnchorElement
+  let configuration: RumConfiguration
 
   beforeEach(() => {
     if (isIE()) {
       pending('IE not supported')
     }
 
+    configuration = { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration
     sandbox = document.createElement('div')
     a = document.createElement('a')
     a.setAttribute('tabindex', '0') // make the element focusable
@@ -36,7 +39,7 @@ describe('initMouseInteractionObserver', () => {
 
     mouseInteractionCallbackSpy = jasmine.createSpy()
     recordIds = initRecordIds()
-    stopObserver = initMouseInteractionObserver(mouseInteractionCallbackSpy, DefaultPrivacyLevel.ALLOW, recordIds)
+    stopObserver = initMouseInteractionObserver(configuration, mouseInteractionCallbackSpy, recordIds)
   })
 
   afterEach(() => {

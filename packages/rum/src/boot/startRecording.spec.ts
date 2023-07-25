@@ -1,6 +1,6 @@
 import type { TimeStamp, HttpRequest, ClocksState } from '@datadog/browser-core'
 import { PageExitReason, DefaultPrivacyLevel, noop, isIE, timeStampNow } from '@datadog/browser-core'
-import type { LifeCycle, ViewCreatedEvent } from '@datadog/browser-rum-core'
+import type { LifeCycle, ViewCreatedEvent, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { collectAsyncCalls, createNewEvent, mockClock } from '@datadog/browser-core/test'
@@ -25,11 +25,13 @@ describe('startRecording', () => {
   let requestSendSpy: jasmine.Spy<HttpRequest['sendOnExit']>
   let stopRecording: () => void
   let clock: Clock | undefined
+  let configuration: RumConfiguration
 
   beforeEach((done) => {
     if (isIE()) {
       pending('IE not supported')
     }
+    configuration = {} as RumConfiguration
     resetReplayStats()
     sessionManager = createRumSessionManagerMock()
     viewId = 'view-id'
@@ -39,7 +41,7 @@ describe('startRecording', () => {
     textField = document.createElement('input')
     sandbox.appendChild(textField)
 
-    startDeflateWorker((worker) => {
+    startDeflateWorker(configuration, (worker) => {
       setupBuilder = setup()
         .withViewContexts({
           findView() {

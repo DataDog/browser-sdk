@@ -116,12 +116,12 @@ export function makeRecorderApi(
 
         state = { status: RecorderStatus.Starting }
 
-        runOnReadyState('interactive', () => {
+        runOnReadyState(configuration, 'interactive', () => {
           if (state.status !== RecorderStatus.Starting) {
             return
           }
 
-          startDeflateWorkerImpl((worker) => {
+          startDeflateWorkerImpl(configuration, (worker) => {
             if (state.status !== RecorderStatus.Starting) {
               return
             }

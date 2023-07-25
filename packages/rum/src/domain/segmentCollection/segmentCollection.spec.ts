@@ -1,6 +1,6 @@
 import type { ClocksState, HttpRequest, TimeStamp } from '@datadog/browser-core'
 import { PageExitReason, isIE } from '@datadog/browser-core'
-import type { ViewContexts, ViewContext } from '@datadog/browser-rum-core'
+import type { ViewContexts, ViewContext, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, restorePageVisibility } from '@datadog/browser-core/test'
@@ -38,6 +38,7 @@ describe('startSegmentCollection', () => {
   }
   let addRecord: (record: BrowserRecord) => void
   let context: SegmentContext | undefined
+  let configuration: RumConfiguration
 
   function addRecordAndFlushSegment(flushStrategy: () => void = emulatePageUnload) {
     // Make sure the segment is not empty
@@ -59,6 +60,7 @@ describe('startSegmentCollection', () => {
     if (isIE()) {
       pending('IE not supported')
     }
+    configuration = {} as RumConfiguration
     lifeCycle = new LifeCycle()
     worker = new MockWorker()
     httpRequestSpy = {
@@ -68,6 +70,7 @@ describe('startSegmentCollection', () => {
     context = CONTEXT
     ;({ stop: stopSegmentCollection, addRecord } = doStartSegmentCollection(
       lifeCycle,
+      configuration,
       () => context,
       httpRequestSpy,
       worker

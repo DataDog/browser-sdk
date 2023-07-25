@@ -1,6 +1,6 @@
 import type { HttpRequest, TimeoutId } from '@datadog/browser-core'
 import { isPageExitReason, ONE_SECOND, clearTimeout, setTimeout } from '@datadog/browser-core'
-import type { LifeCycle, ViewContexts, RumSessionManager } from '@datadog/browser-rum-core'
+import type { LifeCycle, ViewContexts, RumSessionManager, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { BrowserRecord, CreationReason, SegmentContext } from '../../types'
 import { buildReplayPayload } from './buildReplayPayload'
@@ -42,7 +42,7 @@ export let SEGMENT_BYTES_LIMIT = 60_000
 
 export function startSegmentCollection(
   lifeCycle: LifeCycle,
-  applicationId: string,
+  configuration: RumConfiguration,
   sessionManager: RumSessionManager,
   viewContexts: ViewContexts,
   httpRequest: HttpRequest,
@@ -50,7 +50,8 @@ export function startSegmentCollection(
 ) {
   return doStartSegmentCollection(
     lifeCycle,
-    () => computeSegmentContext(applicationId, sessionManager, viewContexts),
+    configuration,
+    () => computeSegmentContext(configuration.applicationId, sessionManager, viewContexts),
     httpRequest,
     worker
   )
@@ -77,6 +78,7 @@ type SegmentCollectionState =
 
 export function doStartSegmentCollection(
   lifeCycle: LifeCycle,
+  configuration: RumConfiguration,
   getSegmentContext: () => SegmentContext | undefined,
   httpRequest: HttpRequest,
   worker: DeflateWorker
@@ -122,6 +124,7 @@ export function doStartSegmentCollection(
     }
 
     const segment = new Segment(
+      configuration,
       worker,
       context,
       creationReason,
