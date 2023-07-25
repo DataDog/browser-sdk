@@ -124,9 +124,6 @@ export function startRumAssembly(
           _dd: {
             format_version: 2,
             drift: currentDrift(),
-            session: {
-              plan: session.plan,
-            },
             configuration: {
               session_sample_rate: round(configuration.sessionSampleRate, 3),
               session_replay_sample_rate: round(configuration.sessionReplaySampleRate, 3),
@@ -161,6 +158,9 @@ export function startRumAssembly(
 
         if (!('has_replay' in serverRumEvent.session)) {
           ;(serverRumEvent.session as Mutable<RumEvent['session']>).has_replay = commonContext.hasReplay
+        }
+        if (serverRumEvent.type === 'view') {
+          ;(serverRumEvent.session as Mutable<RumEvent['session']>).sampled_for_replay = session.sessionReplayAllowed
         }
 
         if (!isEmptyObject(commonContext.user)) {

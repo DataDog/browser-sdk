@@ -1,12 +1,11 @@
 import { Observable } from '@datadog/browser-core'
 import type { RumSessionManager } from '../src/domain/rumSessionManager'
-import { RumSessionPlan } from '../src/domain/rumSessionManager'
 
 export interface RumSessionManagerMock extends RumSessionManager {
   setId(id: string): RumSessionManagerMock
   setNotTracked(): RumSessionManagerMock
-  setPlanWithoutSessionReplay(): RumSessionManagerMock
-  setPlanWithSessionReplay(): RumSessionManagerMock
+  setTrackedWithoutSessionReplay(): RumSessionManagerMock
+  setTrackedWithSessionReplay(): RumSessionManagerMock
 }
 
 const DEFAULT_ID = 'session-id'
@@ -30,10 +29,6 @@ export function createRumSessionManagerMock(): RumSessionManagerMock {
       }
       return {
         id,
-        plan:
-          sessionStatus === SessionStatus.TRACKED_WITH_SESSION_REPLAY
-            ? RumSessionPlan.WITH_SESSION_REPLAY
-            : RumSessionPlan.WITHOUT_SESSION_REPLAY,
         sessionReplayAllowed: sessionStatus === SessionStatus.TRACKED_WITH_SESSION_REPLAY,
       }
     },
@@ -50,11 +45,11 @@ export function createRumSessionManagerMock(): RumSessionManagerMock {
       sessionStatus = SessionStatus.NOT_TRACKED
       return this
     },
-    setPlanWithoutSessionReplay() {
+    setTrackedWithoutSessionReplay() {
       sessionStatus = SessionStatus.TRACKED_WITHOUT_SESSION_REPLAY
       return this
     },
-    setPlanWithSessionReplay() {
+    setTrackedWithSessionReplay() {
       sessionStatus = SessionStatus.TRACKED_WITH_SESSION_REPLAY
       return this
     },

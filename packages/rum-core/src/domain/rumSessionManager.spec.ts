@@ -15,7 +15,7 @@ import type { RumConfiguration } from './configuration'
 import { validateAndBuildRumConfiguration } from './configuration'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-import { RUM_SESSION_KEY, RumTrackingType, startRumSessionManager, RumSessionPlan } from './rumSessionManager'
+import { RUM_SESSION_KEY, RumTrackingType, startRumSessionManager } from './rumSessionManager'
 
 describe('rum session manager', () => {
   const DURATION = 123456
@@ -176,30 +176,28 @@ describe('rum session manager', () => {
       expect(rumSessionManager.findTrackedSession(0 as RelativeTime)!.id).toBe('abcdef')
     })
 
-    it('should return session with plan WITH_SESSION_REPLAY', () => {
+    it('should return session TRACKED_WITH_SESSION_REPLAY', () => {
       setCookie(SESSION_STORE_KEY, 'id=abcdef&rum=1', DURATION)
       const rumSessionManager = startRumSessionManager(configuration, lifeCycle)
-      expect(rumSessionManager.findTrackedSession()!.plan).toBe(RumSessionPlan.WITH_SESSION_REPLAY)
+      expect(rumSessionManager.findTrackedSession()!.sessionReplayAllowed).toBe(true)
     })
 
-    it('should return session with plan WITHOUT_SESSION_REPLAY', () => {
+    it('should return session TRACKED_WITHOUT_SESSION_REPLAY', () => {
       setCookie(SESSION_STORE_KEY, 'id=abcdef&rum=2', DURATION)
       const rumSessionManager = startRumSessionManager(configuration, lifeCycle)
-      expect(rumSessionManager.findTrackedSession()!.plan).toBe(RumSessionPlan.WITHOUT_SESSION_REPLAY)
+      expect(rumSessionManager.findTrackedSession()!.sessionReplayAllowed).toBe(false)
     })
   })
 
   describe('session behaviors', () => {
     ;[
       {
-        description:
-          'WITH_SESSION_REPLAY plan with trackResources/LongTasks=false should have replay, no resources and no long tasks',
+        description: 'TRACKED_WITH_SESSION_REPLAY should have replay',
         trackedWithSessionReplay: true,
         expectSessionReplay: true,
       },
       {
-        description:
-          'WITHOUT_SESSION_REPLAY plan with trackResources/LongTasks=false should have no replay, no resources and no long tasks',
+        description: 'TRACKED_WITHOUT_SESSION_REPLAY should have no replay',
         trackedWithSessionReplay: false,
         expectSessionReplay: false,
       },

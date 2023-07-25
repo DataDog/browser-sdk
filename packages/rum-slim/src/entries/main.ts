@@ -1,5 +1,6 @@
 // Keep the following in sync with packages/rum/src/entries/main.ts
-import { defineGlobal, getGlobalObject, noop } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/browser-core'
+import { Observable, defineGlobal, getGlobalObject, noop } from '@datadog/browser-core'
 import type { RumPublicApi } from '@datadog/browser-rum-core'
 import { makeRumPublicApi, startRum } from '@datadog/browser-rum-core'
 import { getSessionReplayLink } from '../domain/getSessionReplayLink'
@@ -34,6 +35,8 @@ export const datadogRum = makeRumPublicApi(startRum, {
   isRecording: () => false,
   getReplayStats: () => undefined,
   getSessionReplayLink,
+  getSerializedNodeId: () => undefined,
+  recorderStartObservable: new Observable<RelativeTime>(),
 })
 
 interface BrowserWindow extends Window {
