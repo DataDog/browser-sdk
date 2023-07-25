@@ -34,7 +34,9 @@ switch (buildMode) {
     break
   case 'canary': {
     const commitSha1 = execSync('git rev-parse HEAD').toString().trim()
-    sdkVersion = `${lernaJson.version}+${commitSha1}`
+    // TODO when tags would allow '+' characters
+    //  use build separator (+) instead of prerelease separator (-)
+    sdkVersion = `${lernaJson.version}-${commitSha1}`
     break
   }
   default:
