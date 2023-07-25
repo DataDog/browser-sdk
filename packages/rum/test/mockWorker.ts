@@ -9,8 +9,8 @@ export class MockWorker implements DeflateWorker {
   public onerror = null
 
   readonly pendingMessages: DeflateWorkerAction[] = []
-  private rawBytesCount = 0
-  private deflatedData: Uint8Array[] = []
+
+  private streams = new Map<number, Uint8Array[]>()
   private listeners: {
     message: DeflateWorkerListener[]
     error: Array<(error: unknown) => void>
@@ -70,42 +70,38 @@ export class MockWorker implements DeflateWorker {
             listener({
               data: {
                 type: 'initialized',
+                version: 'dev',
               },
             })
           )
           break
         case 'write':
           {
-            const additionalBytesCount = this.pushData(message.data)
+            let stream = this.streams.get(message.streamId)
+            if (!stream) {
+              stream = []
+              this.streams.set(message.streamId, stream)
+            }
+            // In the mock worker, for simplicity, we'll just use the UTF-8 encoded string instead of deflating it.
+            const binaryData = new TextEncoder().encode(message.data)
+            stream.push(binaryData)
+
             this.listeners.message.forEach((listener) =>
               listener({
                 data: {
                   type: 'wrote',
                   id: message.id,
-                  compressedBytesCount: uint8ArraysSize(this.deflatedData),
-                  additionalBytesCount,
+                  streamId: message.streamId,
+                  result: binaryData,
+                  trailer: new Uint8Array([32]), // emulate a trailer with a single space
+                  additionalBytesCount: binaryData.length,
                 },
               })
             )
           }
           break
-        case 'flush':
-          {
-            const additionalBytesCount = this.pushData(message.data)
-            this.listeners.message.forEach((listener) =>
-              listener({
-                data: {
-                  type: 'flushed',
-                  id: message.id,
-                  result: mergeUint8Arrays(this.deflatedData),
-                  rawBytesCount: this.rawBytesCount,
-                  additionalBytesCount,
-                },
-              })
-            )
-            this.deflatedData.length = 0
-            this.rawBytesCount = 0
-          }
+        case 'reset':
+          this.streams.delete(message.streamId)
           break
       }
     }
@@ -116,29 +112,7 @@ export class MockWorker implements DeflateWorker {
     this.listeners.error.forEach((listener) => listener(error))
   }
 
-  dispatchErrorMessage(error: Error | string) {
-    this.listeners.message.forEach((listener) => listener({ data: { type: 'errored', error } }))
+  dispatchErrorMessage(error: Error | string, streamId?: number) {
+    this.listeners.message.forEach((listener) => listener({ data: { type: 'errored', error, streamId } }))
   }
-
-  private pushData(data?: string) {
-    const encodedData = new TextEncoder().encode(data)
-    this.rawBytesCount += encodedData.length
-    // In the mock worker, for simplicity, we'll just use the UTF-8 encoded string instead of deflating it.
-    this.deflatedData.push(encodedData)
-    return encodedData.length
-  }
-}
-
-function uint8ArraysSize(arrays: Uint8Array[]) {
-  return arrays.reduce((sum, bytes) => sum + bytes.length, 0)
-}
-
-function mergeUint8Arrays(arrays: Uint8Array[]) {
-  const result = new Uint8Array(uint8ArraysSize(arrays))
-  let offset = 0
-  for (const bytes of arrays) {
-    result.set(bytes, offset)
-    offset += bytes.byteLength
-  }
-  return result
 }

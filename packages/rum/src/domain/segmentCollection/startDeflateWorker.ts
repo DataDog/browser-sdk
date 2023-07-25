@@ -28,6 +28,7 @@ type DeflateWorkerState =
   | {
       status: DeflateWorkerStatus.Initialized
       worker: DeflateWorker
+      version: string
     }
 
 export interface DeflateWorker extends Worker {
@@ -86,9 +87,9 @@ export function doStartDeflateWorker(createDeflateWorkerImpl = createDeflateWork
     addEventListener(worker, 'error', onError)
     addEventListener(worker, 'message', ({ data }: MessageEvent<DeflateWorkerResponse>) => {
       if (data.type === 'errored') {
-        onError(data.error)
+        onError(data.error, data.streamId)
       } else if (data.type === 'initialized') {
-        onInitialized(worker)
+        onInitialized(worker, data.version)
       }
     })
     worker.postMessage({ action: 'init' })
@@ -98,14 +99,14 @@ export function doStartDeflateWorker(createDeflateWorkerImpl = createDeflateWork
   }
 }
 
-function onInitialized(worker: DeflateWorker) {
+function onInitialized(worker: DeflateWorker, version: string) {
   if (state.status === DeflateWorkerStatus.Loading) {
     state.callbacks.forEach((callback) => callback(worker))
-    state = { status: DeflateWorkerStatus.Initialized, worker }
+    state = { status: DeflateWorkerStatus.Initialized, worker, version }
   }
 }
 
-function onError(error: unknown) {
+function onError(error: unknown, streamId?: number) {
   if (state.status === DeflateWorkerStatus.Loading) {
     display.error('Session Replay recording failed to start: an error occurred while creating the Worker:', error)
     if (error instanceof Event || (error instanceof Error && isMessageCspRelated(error.message))) {
@@ -119,7 +120,10 @@ function onError(error: unknown) {
     state.callbacks.forEach((callback) => callback())
     state = { status: DeflateWorkerStatus.Error }
   } else {
-    addTelemetryError(error)
+    addTelemetryError(error, {
+      worker_version: state.status === DeflateWorkerStatus.Initialized && state.version,
+      stream_id: streamId,
+    })
   }
 }
 
