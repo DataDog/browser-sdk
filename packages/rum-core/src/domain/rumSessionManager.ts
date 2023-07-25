@@ -14,20 +14,11 @@ export interface RumSessionManager {
 
 export type RumSession = {
   id: string
-  plan: RumSessionPlan
   sessionReplayAllowed: boolean
-}
-
-export const enum RumSessionPlan {
-  WITHOUT_SESSION_REPLAY = 1,
-  WITH_SESSION_REPLAY = 2,
 }
 
 export const enum RumTrackingType {
   NOT_TRACKED = '0',
-  // Note: the "tracking type" value (stored in the session cookie) does not match the "session
-  // plan" value (sent in RUM events). This is expected, and was done to keep backward-compatibility
-  // with active sessions when upgrading the SDK.
   TRACKED_WITH_SESSION_REPLAY = '1',
   TRACKED_WITHOUT_SESSION_REPLAY = '2',
 }
@@ -54,14 +45,9 @@ export function startRumSessionManager(configuration: RumConfiguration, lifeCycl
       if (!session || !isTypeTracked(session.trackingType)) {
         return
       }
-      const plan =
-        session.trackingType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY
-          ? RumSessionPlan.WITH_SESSION_REPLAY
-          : RumSessionPlan.WITHOUT_SESSION_REPLAY
       return {
         id: session.id,
-        plan,
-        sessionReplayAllowed: plan === RumSessionPlan.WITH_SESSION_REPLAY,
+        sessionReplayAllowed: session.trackingType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY,
       }
     },
     expire: sessionManager.expire,
@@ -75,7 +61,6 @@ export function startRumSessionManager(configuration: RumConfiguration, lifeCycl
 export function startRumSessionManagerStub(): RumSessionManager {
   const session: RumSession = {
     id: '00000000-aaaa-0000-aaaa-000000000000',
-    plan: RumSessionPlan.WITHOUT_SESSION_REPLAY, // plan value should not be taken into account for mobile
     sessionReplayAllowed: false,
   }
   return {

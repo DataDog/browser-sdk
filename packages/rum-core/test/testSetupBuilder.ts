@@ -13,7 +13,6 @@ import type { RawRumEventCollectedData } from '../src/domain/lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
 import type { ActionContexts } from '../src/domain/rumEventsCollection/action/actionCollection'
 import type { RumSessionManager } from '../src/domain/rumSessionManager'
-import { RumSessionPlan } from '../src/domain/rumSessionManager'
 import type { RawRumEvent, RumContext } from '../src/rawRumEvent.types'
 import { validateRumFormat } from './formatValidation'
 import { createRumSessionManagerMock } from './mockRumSessionManager'
@@ -218,9 +217,6 @@ function validateRumEventFormat(rawRumEvent: RawRumEvent) {
     _dd: {
       format_version: 2,
       drift: 0,
-      session: {
-        plan: RumSessionPlan.WITH_SESSION_REPLAY,
-      },
       configuration: {
         session_sample_rate: 40,
         session_replay_sample_rate: 60,
