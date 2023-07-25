@@ -50,6 +50,7 @@ export interface ViewEvent {
   loadingType: ViewLoadingType
   cumulativeLayoutShift?: number
   scrollMetrics?: ScrollMetrics
+  interactionToNextPaint?: Duration
 }
 
 export interface ViewCreatedEvent {
@@ -198,7 +199,7 @@ function newView(
   const {
     setLoadEvent,
     stop: stopViewMetricsTracking,
-    viewMetrics,
+    getViewMetrics,
     getScrollMetrics,
   } = trackViewMetrics(
     lifeCycle,
@@ -252,7 +253,7 @@ function newView(
           eventCounts,
           scrollMetrics: getScrollMetrics(),
         },
-        viewMetrics
+        getViewMetrics()
       )
     )
   }
