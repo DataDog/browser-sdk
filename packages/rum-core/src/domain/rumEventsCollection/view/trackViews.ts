@@ -30,6 +30,7 @@ import { trackInitialViewTimings } from './trackInitialViewTimings'
 import type { ScrollMetrics } from './trackViewMetrics'
 import { trackViewMetrics } from './trackViewMetrics'
 import { trackViewEventCounts } from './trackViewEventCounts'
+import type { WebVitalTelemetryDebug } from './startWebVitalTelemetryDebug'
 
 export interface ViewEvent {
   id: string
@@ -79,6 +80,7 @@ export function trackViews(
   configuration: RumConfiguration,
   locationChangeObservable: Observable<LocationChange>,
   areViewsTrackedAutomatically: boolean,
+  webVitalTelemetryDebug: WebVitalTelemetryDebug,
   initialViewOptions?: ViewOptions
 ) {
   let currentView = startNewView(ViewLoadingType.INITIAL_LOAD, clocksOrigin(), initialViewOptions)
@@ -91,7 +93,16 @@ export function trackViews(
   }
 
   function startNewView(loadingType: ViewLoadingType, startClocks?: ClocksState, viewOptions?: ViewOptions) {
-    return newView(lifeCycle, domMutationObservable, configuration, location, loadingType, startClocks, viewOptions)
+    return newView(
+      lifeCycle,
+      domMutationObservable,
+      configuration,
+      location,
+      loadingType,
+      webVitalTelemetryDebug,
+      startClocks,
+      viewOptions
+    )
   }
 
   function startViewLifeCycle() {
@@ -146,6 +157,7 @@ function newView(
   configuration: RumConfiguration,
   initialLocation: Location,
   loadingType: ViewLoadingType,
+  webVitalTelemetryDebug: WebVitalTelemetryDebug,
   startClocks: ClocksState = clocksNow(),
   viewOptions?: ViewOptions
 ) {
@@ -188,11 +200,19 @@ function newView(
     stop: stopViewMetricsTracking,
     viewMetrics,
     getScrollMetrics,
-  } = trackViewMetrics(lifeCycle, domMutationObservable, configuration, scheduleViewUpdate, loadingType, startClocks)
+  } = trackViewMetrics(
+    lifeCycle,
+    domMutationObservable,
+    configuration,
+    scheduleViewUpdate,
+    loadingType,
+    startClocks,
+    webVitalTelemetryDebug
+  )
 
   const { scheduleStop: scheduleStopInitialViewTimingsTracking, timings } =
     loadingType === ViewLoadingType.INITIAL_LOAD
-      ? trackInitialViewTimings(lifeCycle, setLoadEvent, scheduleViewUpdate)
+      ? trackInitialViewTimings(lifeCycle, webVitalTelemetryDebug, setLoadEvent, scheduleViewUpdate)
       : { scheduleStop: noop, timings: {} as Timings }
 
   const { scheduleStop: scheduleStopEventCountsTracking, eventCounts } = trackViewEventCounts(

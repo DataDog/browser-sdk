@@ -19,6 +19,7 @@ import type {
   RumPerformancePaintTiming,
 } from '../../../browser/performanceCollection'
 import { trackFirstHidden } from './trackFirstHidden'
+import type { WebVitalTelemetryDebug } from './startWebVitalTelemetryDebug'
 
 // Discard LCP and FCP timings above a certain delay to avoid incorrect data
 // It happens in some cases like sleep mode or some browser implementations
@@ -46,6 +47,7 @@ export interface Timings {
 
 export function trackInitialViewTimings(
   lifeCycle: LifeCycle,
+  webVitalTelemetryDebug: WebVitalTelemetryDebug,
   setLoadEvent: (loadEnd: Duration) => void,
   scheduleViewUpdate: () => void
 ) {
@@ -63,17 +65,29 @@ export function trackInitialViewTimings(
   const { stop: stopFCPTracking } = trackFirstContentfulPaintTiming(lifeCycle, (firstContentfulPaint) =>
     setTimings({ firstContentfulPaint })
   )
-  const { stop: stopLCPTracking } = trackLargestContentfulPaintTiming(lifeCycle, window, (largestContentfulPaint) => {
-    setTimings({
-      largestContentfulPaint,
-    })
-  })
-  const { stop: stopFIDTracking } = trackFirstInputTimings(lifeCycle, ({ firstInputDelay, firstInputTime }) => {
-    setTimings({
-      firstInputDelay,
-      firstInputTime,
-    })
-  })
+  const { stop: stopLCPTracking } = trackLargestContentfulPaintTiming(
+    lifeCycle,
+    window,
+    (largestContentfulPaint, lcpElement) => {
+      webVitalTelemetryDebug.addWebVitalTelemetryDebug('LCP', lcpElement, largestContentfulPaint)
+
+      setTimings({
+        largestContentfulPaint,
+      })
+    }
+  )
+
+  const { stop: stopFIDTracking } = trackFirstInputTimings(
+    lifeCycle,
+    ({ firstInputDelay, firstInputTime, firstInputTarget }) => {
+      webVitalTelemetryDebug.addWebVitalTelemetryDebug('FID', firstInputTarget, firstInputTime)
+
+      setTimings({
+        firstInputDelay,
+        firstInputTime,
+      })
+    }
+  )
 
   function stop() {
     stopNavigationTracking()
@@ -148,7 +162,7 @@ export function trackFirstContentfulPaintTiming(lifeCycle: LifeCycle, callback: 
 export function trackLargestContentfulPaintTiming(
   lifeCycle: LifeCycle,
   eventTarget: Window,
-  callback: (lcpTiming: RelativeTime) => void
+  callback: (lcpTiming: RelativeTime, lcpElement?: Element) => void
 ) {
   const firstHidden = trackFirstHidden()
 
@@ -177,7 +191,7 @@ export function trackLargestContentfulPaintTiming(
           entry.startTime < TIMING_MAXIMUM_DELAY
       )
       if (lcpEntry) {
-        callback(lcpEntry.startTime)
+        callback(lcpEntry.startTime, lcpEntry.element)
       }
     }
   )
@@ -200,7 +214,15 @@ export function trackLargestContentfulPaintTiming(
  */
 export function trackFirstInputTimings(
   lifeCycle: LifeCycle,
-  callback: ({ firstInputDelay, firstInputTime }: { firstInputDelay: Duration; firstInputTime: Duration }) => void
+  callback: ({
+    firstInputDelay,
+    firstInputTime,
+    firstInputTarget,
+  }: {
+    firstInputDelay: Duration
+    firstInputTime: RelativeTime
+    firstInputTarget: Node | undefined
+  }) => void
 ) {
   const firstHidden = trackFirstHidden()
 
@@ -216,7 +238,8 @@ export function trackFirstInputTimings(
         // Ensure firstInputDelay to be positive, see
         // https://bugs.chromium.org/p/chromium/issues/detail?id=1185815
         firstInputDelay: firstInputDelay >= 0 ? firstInputDelay : (0 as Duration),
-        firstInputTime: firstInputEntry.startTime as Duration,
+        firstInputTime: firstInputEntry.startTime,
+        firstInputTarget: firstInputEntry.target,
       })
     }
   })

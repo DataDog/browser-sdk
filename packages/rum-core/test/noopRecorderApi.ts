@@ -1,5 +1,6 @@
 import type { RecorderApi } from '@datadog/browser-rum-core'
-import { noop } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/browser-core'
+import { Observable, noop } from '@datadog/browser-core'
 
 export const noopRecorderApi: RecorderApi = {
   start: noop,
@@ -8,4 +9,6 @@ export const noopRecorderApi: RecorderApi = {
   onRumStart: noop,
   getReplayStats: () => undefined,
   getSessionReplayLink: () => undefined,
+  recorderStartObservable: new Observable<RelativeTime>(),
+  getSerializedNodeId: () => undefined,
 }

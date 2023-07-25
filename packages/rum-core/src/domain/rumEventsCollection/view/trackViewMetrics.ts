@@ -10,6 +10,7 @@ import {
   relativeNow,
   round,
   throttle,
+  find,
 } from '@datadog/browser-core'
 import type { RumLayoutShiftTiming } from '../../../browser/performanceCollection'
 import { supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
@@ -21,6 +22,7 @@ import { waitPageActivityEnd } from '../../waitPageActivityEnd'
 
 import { getScrollY } from '../../../browser/scroll'
 import { getViewportDimension } from '../../../browser/viewportObservable'
+import type { WebVitalTelemetryDebug } from './startWebVitalTelemetryDebug'
 
 export interface ScrollMetrics {
   maxDepth: number
@@ -43,7 +45,8 @@ export function trackViewMetrics(
   configuration: RumConfiguration,
   scheduleViewUpdate: () => void,
   loadingType: ViewLoadingType,
-  viewStart: ClocksState
+  viewStart: ClocksState,
+  webVitalTelemetryDebug: WebVitalTelemetryDebug
 ) {
   const viewMetrics: ViewMetrics = {}
 
@@ -83,12 +86,21 @@ export function trackViewMetrics(
   )
 
   let stopCLSTracking: () => void
+  let clsAttributionCollected = false
   if (isLayoutShiftSupported()) {
     viewMetrics.cumulativeLayoutShift = 0
-    ;({ stop: stopCLSTracking } = trackCumulativeLayoutShift(lifeCycle, (cumulativeLayoutShift) => {
-      viewMetrics.cumulativeLayoutShift = cumulativeLayoutShift
-      scheduleViewUpdate()
-    }))
+    ;({ stop: stopCLSTracking } = trackCumulativeLayoutShift(
+      lifeCycle,
+      (cumulativeLayoutShift, largestLayoutShiftNode, largestLayoutShiftTime) => {
+        viewMetrics.cumulativeLayoutShift = cumulativeLayoutShift
+
+        if (!clsAttributionCollected) {
+          clsAttributionCollected = true
+          webVitalTelemetryDebug.addWebVitalTelemetryDebug('CLS', largestLayoutShiftNode, largestLayoutShiftTime)
+        }
+        scheduleViewUpdate()
+      }
+    ))
   } else {
     stopCLSTracking = noop
   }
@@ -216,16 +228,21 @@ function trackLoadingTime(
  * https://web.dev/evolving-cls/
  * Reference implementation: https://github.com/GoogleChrome/web-vitals/blob/master/src/getCLS.ts
  */
-function trackCumulativeLayoutShift(lifeCycle: LifeCycle, callback: (layoutShift: number) => void) {
+function trackCumulativeLayoutShift(
+  lifeCycle: LifeCycle,
+  callback: (layoutShift: number, largestShiftNode: Node | undefined, largestShiftTime: RelativeTime) => void
+) {
   let maxClsValue = 0
+
   const window = slidingSessionWindow()
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
     for (const entry of entries) {
       if (entry.entryType === 'layout-shift' && !entry.hadRecentInput) {
         window.update(entry)
+
         if (window.value() > maxClsValue) {
           maxClsValue = window.value()
-          callback(round(maxClsValue, 4))
+          callback(round(maxClsValue, 4), window.largestLayoutShiftNode(), window.largestLayoutShiftTime())
         }
       }
     }
@@ -240,6 +257,11 @@ function slidingSessionWindow() {
   let value = 0
   let startTime: RelativeTime
   let endTime: RelativeTime
+
+  let largestLayoutShift = 0
+  let largestLayoutShiftNode: Node | undefined
+  let largestLayoutShiftTime: RelativeTime
+
   return {
     update: (entry: RumLayoutShiftTiming) => {
       const shouldCreateNewWindow =
@@ -249,12 +271,28 @@ function slidingSessionWindow() {
       if (shouldCreateNewWindow) {
         startTime = endTime = entry.startTime
         value = entry.value
+        largestLayoutShift = 0
+        largestLayoutShiftNode = undefined
       } else {
         value += entry.value
         endTime = entry.startTime
       }
+
+      if (entry.value > largestLayoutShift) {
+        largestLayoutShift = entry.value
+        largestLayoutShiftTime = entry.startTime
+
+        if (entry.sources?.length) {
+          const largestLayoutShiftSource = find(entry.sources, (s) => s.node?.nodeType === 1) || entry.sources[0]
+          largestLayoutShiftNode = largestLayoutShiftSource.node
+        } else {
+          largestLayoutShiftNode = undefined
+        }
+      }
     },
     value: () => value,
+    largestLayoutShiftNode: () => largestLayoutShiftNode,
+    largestLayoutShiftTime: () => largestLayoutShiftTime,
   }
 }
 
