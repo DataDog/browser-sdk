@@ -411,6 +411,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@datadog/browser-core@npm:4.45.0":
+  version: 4.45.0
+  resolution: "@datadog/browser-core@npm:4.45.0"
+  checksum: 9777d8087c8dbd1eec47d90dd035e223210e6c71d8bcf635d372607ff3659db489ec4756e0e4fb9985e9fad40755d5d6ebb6440ea4ffcb3eae0c08784de6de2c
+  languageName: node
+  linkType: hard
+
 "@datadog/browser-logs@workspace:*, @datadog/browser-logs@workspace:packages/logs":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-logs@workspace:packages/logs"
@@ -489,6 +496,8 @@ __metadata:
 "@datadog/browser-worker@5.0.0-alpha.0, @datadog/browser-worker@workspace:packages/worker":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-worker@workspace:packages/worker"
+  dependencies:
+    "@datadog/browser-core": 4.45.0
   languageName: unknown
   linkType: soft
 

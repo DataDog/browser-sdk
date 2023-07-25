@@ -1,4 +1,4 @@
-import { addTelemetryDebug, assign, sendToExtension, addEventListener } from '@datadog/browser-core'
+import { addTelemetryDebug, assign, sendToExtension, addEventListener, concatBuffers } from '@datadog/browser-core'
 import type { DeflateWorkerResponse } from '@datadog/browser-worker'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import type { BrowserRecord, BrowserSegmentMetadata, CreationReason, SegmentContext } from '../../types'
@@ -6,6 +6,8 @@ import { RecordType } from '../../types'
 import * as replayStats from '../replayStats'
 import type { DeflateWorker } from './startDeflateWorker'
 
+// Arbitrary id, will be replaced when we have multiple parallel streams.
+const STREAM_ID = 1
 let nextId = 0
 
 export type FlushReason = Exclude<CreationReason, 'init'> | 'stop'
@@ -16,6 +18,7 @@ export class Segment {
   public readonly metadata: BrowserSegmentMetadata
 
   private id = nextId++
+  private pendingWriteCount = 0
 
   constructor(
     configuration: RumConfiguration,
@@ -43,23 +46,31 @@ export class Segment {
 
     replayStats.addSegment(viewId)
     replayStats.addRecord(viewId)
+    let rawBytesCount = 0
+    let compressedBytesCount = 0
+    const compressedData: Uint8Array[] = []
 
     const { stop: removeMessageListener } = addEventListener(
       configuration,
       worker,
       'message',
       ({ data }: MessageEvent<DeflateWorkerResponse>) => {
-        if (data.type === 'errored' || data.type === 'initialized') {
+        if (data.type !== 'wrote') {
           return
         }
 
         if (data.id === this.id) {
+          this.pendingWriteCount -= 1
           replayStats.addWroteData(viewId, data.additionalBytesCount)
-          if (data.type === 'flushed') {
-            onFlushed(data.result, data.rawBytesCount)
+          rawBytesCount += data.additionalBytesCount
+          compressedBytesCount += data.result.length
+          compressedData.push(data.result)
+          if (this.flushReason && this.pendingWriteCount === 0) {
+            compressedData.push(data.trailer)
+            onFlushed(concatBuffers(compressedData), rawBytesCount)
             removeMessageListener()
           } else {
-            onWrote(data.compressedBytesCount)
+            onWrote(compressedBytesCount)
           }
         } else if (data.id > this.id) {
           // Messages should be received in the same order as they are sent, so if we receive a
@@ -76,7 +87,7 @@ export class Segment {
       }
     )
     sendToExtension('record', { record: initialRecord, segment: this.metadata })
-    this.worker.postMessage({ data: `{"records":[${JSON.stringify(initialRecord)}`, id: this.id, action: 'write' })
+    this.write(`{"records":[${JSON.stringify(initialRecord)}`)
   }
 
   addRecord(record: BrowserRecord): void {
@@ -86,15 +97,25 @@ export class Segment {
     replayStats.addRecord(this.metadata.view.id)
     this.metadata.has_full_snapshot ||= record.type === RecordType.FullSnapshot
     sendToExtension('record', { record, segment: this.metadata })
-    this.worker.postMessage({ data: `,${JSON.stringify(record)}`, id: this.id, action: 'write' })
+    this.write(`,${JSON.stringify(record)}`)
   }
 
   flush(reason: FlushReason) {
+    this.write(`],${JSON.stringify(this.metadata).slice(1)}\n`)
     this.worker.postMessage({
-      data: `],${JSON.stringify(this.metadata).slice(1)}\n`,
-      id: this.id,
-      action: 'flush',
+      action: 'reset',
+      streamId: STREAM_ID,
     })
     this.flushReason = reason
+  }
+
+  private write(data: string) {
+    this.pendingWriteCount += 1
+    this.worker.postMessage({
+      data,
+      id: this.id,
+      streamId: STREAM_ID,
+      action: 'write',
+    })
   }
 }

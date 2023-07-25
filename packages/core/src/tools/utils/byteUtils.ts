@@ -16,3 +16,14 @@ export function computeBytesCount(candidate: string): number {
 
   return new Blob([candidate]).size
 }
+
+export function concatBuffers(buffers: Uint8Array[]) {
+  const length = buffers.reduce((total, buffer) => total + buffer.length, 0)
+  const result = new Uint8Array(length)
+  let offset = 0
+  for (const buffer of buffers) {
+    result.set(buffer, offset)
+    offset += buffer.length
+  }
+  return result
+}
