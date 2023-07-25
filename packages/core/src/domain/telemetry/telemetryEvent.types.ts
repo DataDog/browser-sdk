@@ -150,6 +150,14 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       use_secure_session_cookie?: boolean
       /**
+       * Whether it is allowed to use LocalStorage when cookies are not available
+       */
+      allow_fallback_to_local_storage?: boolean
+      /**
+       * Whether untrusted events are allowed
+       */
+      allow_untrusted_events?: boolean
+      /**
        * Attribute to be used to name actions
        */
       action_name_attribute?: string
