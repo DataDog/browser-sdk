@@ -1,6 +1,7 @@
 import { addTelemetryError, display, includes, addEventListener } from '@datadog/browser-core'
 import type { DeflateWorkerAction, DeflateWorkerResponse } from '@datadog/browser-worker'
 import { workerString } from '@datadog/browser-worker/string'
+import type { RumConfiguration } from '@datadog/browser-rum-core'
 
 /**
  * In order to be sure that the worker is correctly working, we need a round trip of
@@ -35,26 +36,31 @@ export interface DeflateWorker extends Worker {
   postMessage(message: DeflateWorkerAction): void
 }
 
-let workerURL: string | undefined
+let workerBlobUrl: string | undefined
 
-export function createDeflateWorker(): DeflateWorker {
+function createWorkerBlobUrl() {
   // Lazily compute the worker URL to allow importing the SDK in NodeJS
-  if (!workerURL) {
-    workerURL = URL.createObjectURL(new Blob([workerString]))
+  if (!workerBlobUrl) {
+    workerBlobUrl = URL.createObjectURL(new Blob([workerString]))
   }
-  return new Worker(workerURL)
+  return workerBlobUrl
+}
+
+export function createDeflateWorker(configuration: RumConfiguration): DeflateWorker {
+  return new Worker(configuration.workerUrl || createWorkerBlobUrl())
 }
 
 let state: DeflateWorkerState = { status: DeflateWorkerStatus.Nil }
 
 export function startDeflateWorker(
+  configuration: RumConfiguration,
   callback: (worker?: DeflateWorker) => void,
   createDeflateWorkerImpl = createDeflateWorker
 ) {
   switch (state.status) {
     case DeflateWorkerStatus.Nil:
       state = { status: DeflateWorkerStatus.Loading, callbacks: [callback] }
-      doStartDeflateWorker(createDeflateWorkerImpl)
+      doStartDeflateWorker(configuration, createDeflateWorkerImpl)
       break
     case DeflateWorkerStatus.Loading:
       state.callbacks.push(callback)
@@ -81,9 +87,9 @@ export function resetDeflateWorkerState() {
  *
  * more details: https://bugzilla.mozilla.org/show_bug.cgi?id=1736865#c2
  */
-export function doStartDeflateWorker(createDeflateWorkerImpl = createDeflateWorker) {
+export function doStartDeflateWorker(configuration: RumConfiguration, createDeflateWorkerImpl = createDeflateWorker) {
   try {
-    const worker = createDeflateWorkerImpl()
+    const worker = createDeflateWorkerImpl(configuration)
     addEventListener(worker, 'error', onError)
     addEventListener(worker, 'message', ({ data }: MessageEvent<DeflateWorkerResponse>) => {
       if (data.type === 'errored') {
