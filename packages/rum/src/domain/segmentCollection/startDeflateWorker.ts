@@ -92,10 +92,12 @@ export function resetDeflateWorkerState() {
 export function doStartDeflateWorker(configuration: RumConfiguration, createDeflateWorkerImpl = createDeflateWorker) {
   try {
     const worker = createDeflateWorkerImpl(configuration)
-    addEventListener(worker, 'error', onError)
+    addEventListener(worker, 'error', (error) => {
+      onError(configuration, error)
+    })
     addEventListener(worker, 'message', ({ data }: MessageEvent<DeflateWorkerResponse>) => {
       if (data.type === 'errored') {
-        onError(data.error, data.streamId)
+        onError(configuration, data.error, data.streamId)
       } else if (data.type === 'initialized') {
         onInitialized(worker, data.version)
       }
@@ -104,7 +106,7 @@ export function doStartDeflateWorker(configuration: RumConfiguration, createDefl
     setTimeout(onTimeout, INITIALIZATION_TIME_OUT_DELAY)
     return worker
   } catch (error) {
-    onError(error)
+    onError(configuration, error)
   }
 }
 
@@ -123,13 +125,18 @@ function onInitialized(worker: DeflateWorker, version: string) {
   }
 }
 
-function onError(error: unknown, streamId?: number) {
+function onError(configuration: RumConfiguration, error: unknown, streamId?: number) {
   if (state.status === DeflateWorkerStatus.Loading) {
     display.error('Session Replay recording failed to start: an error occurred while creating the Worker:', error)
     if (error instanceof Event || (error instanceof Error && isMessageCspRelated(error.message))) {
+      let baseMessage
+      if (configuration.workerUrl) {
+        baseMessage = `Please make sure the Worker URL ${configuration.workerUrl} is correct and CSP is correctly configured.`
+      } else {
+        baseMessage = 'Please make sure CSP is correctly configured.'
+      }
       display.error(
-        'Please make sure CSP is correctly configured ' +
-          'https://docs.datadoghq.com/real_user_monitoring/faq/content_security_policy'
+        `${baseMessage} See documentation at https://docs.datadoghq.com/integrations/content_security_policy_logs/#use-csp-with-real-user-monitoring-and-session-replay`
       )
     } else {
       addTelemetryError(error)

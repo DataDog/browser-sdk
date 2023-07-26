@@ -89,9 +89,7 @@ describe('startDeflateWorker', () => {
       startDeflateWorker(configuration, noop, () => {
         throw CSP_ERROR
       })
-      expect(displaySpy).toHaveBeenCalledWith(
-        'Please make sure CSP is correctly configured https://docs.datadoghq.com/real_user_monitoring/faq/content_security_policy'
-      )
+      expect(displaySpy).toHaveBeenCalledWith(jasmine.stringContaining('Please make sure CSP is correctly configured'))
     })
 
     it('does not report CSP errors to telemetry', () => {
@@ -104,10 +102,9 @@ describe('startDeflateWorker', () => {
     it('displays ErrorEvent as CSP error', () => {
       startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
       deflateWorker.dispatchErrorEvent()
-      expect(displaySpy).toHaveBeenCalledWith(
-        'Please make sure CSP is correctly configured https://docs.datadoghq.com/real_user_monitoring/faq/content_security_policy'
-      )
+      expect(displaySpy).toHaveBeenCalledWith(jasmine.stringContaining('Please make sure CSP is correctly configured'))
     })
+
     it('calls the callback without argument in case of an error occurs during loading', () => {
       startDeflateWorker(configuration, callbackSpy, createDeflateWorkerSpy)
       deflateWorker.dispatchErrorEvent()
@@ -120,6 +117,17 @@ describe('startDeflateWorker', () => {
 
       startDeflateWorker(configuration, callbackSpy, createDeflateWorkerSpy)
       expect(callbackSpy).toHaveBeenCalledOnceWith()
+    })
+
+    it('adjusts the error message when a workerUrl is set', () => {
+      configuration.workerUrl = '/worker.js'
+      startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
+      deflateWorker.dispatchErrorEvent()
+      expect(displaySpy).toHaveBeenCalledWith(
+        jasmine.stringContaining(
+          'Please make sure the Worker URL /worker.js is correct and CSP is correctly configured.'
+        )
+      )
     })
   })
 
@@ -196,9 +204,7 @@ describe('startDeflateWorker', () => {
     it('does not display error messages as CSP error', () => {
       startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
       deflateWorker.dispatchErrorMessage('foo')
-      expect(displaySpy).not.toHaveBeenCalledWith(
-        'Please make sure CSP is correctly configured https://docs.datadoghq.com/real_user_monitoring/faq/content_security_policy'
-      )
+      expect(displaySpy).not.toHaveBeenCalledWith(jasmine.stringContaining('CSP'))
     })
 
     it('reports errors occurring after loading to telemetry', () => {
