@@ -334,7 +334,7 @@ step-5_publish-npm:
   allow_failure: false
   script:
     - yarn
-    - ./scripts/deploy/publish-npm.sh
+    - node ./scripts/deploy/publish-npm.js
 
 ########################################################################################################################
 # Notify

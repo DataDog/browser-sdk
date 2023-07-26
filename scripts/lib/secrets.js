@@ -17,6 +17,10 @@ function getTelemetryOrgApiKey(site) {
   return getSecretKey(`ci.browser-sdk.source-maps.${normalizedSite}.ci_api_key`)
 }
 
+function getNpmToken() {
+  return getSecretKey('ci.browser-sdk.npm_token')
+}
+
 function getSecretKey(name) {
   return command`
     aws ssm get-parameter --region=us-east-1 --with-decryption --query=Parameter.Value --out=text --name=${name}
@@ -28,6 +32,7 @@ function getSecretKey(name) {
 module.exports = {
   getGithubDeployKey,
   getGithubAccessToken,
+  getNpmToken,
   getOrg2ApiKey,
   getTelemetryOrgApiKey,
 }
