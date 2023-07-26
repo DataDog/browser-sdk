@@ -1,7 +1,9 @@
-import { addTelemetryError, display, includes, addEventListener } from '@datadog/browser-core'
+import { addTelemetryError, display, includes, addEventListener, setTimeout, ONE_SECOND } from '@datadog/browser-core'
 import type { DeflateWorkerAction, DeflateWorkerResponse } from '@datadog/browser-worker'
 import { workerString } from '@datadog/browser-worker/string'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
+
+export const INITIALIZATION_TIME_OUT_DELAY = 10 * ONE_SECOND
 
 /**
  * In order to be sure that the worker is correctly working, we need a round trip of
@@ -99,9 +101,18 @@ export function doStartDeflateWorker(configuration: RumConfiguration, createDefl
       }
     })
     worker.postMessage({ action: 'init' })
+    setTimeout(onTimeout, INITIALIZATION_TIME_OUT_DELAY)
     return worker
   } catch (error) {
     onError(error)
+  }
+}
+
+function onTimeout() {
+  if (state.status === DeflateWorkerStatus.Loading) {
+    display.error('Session Replay recording failed to start: a timeout occurred while initializing the Worker')
+    state.callbacks.forEach((callback) => callback())
+    state = { status: DeflateWorkerStatus.Error }
   }
 }
 

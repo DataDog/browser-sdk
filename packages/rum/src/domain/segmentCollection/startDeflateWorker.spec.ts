@@ -1,9 +1,11 @@
 import type { RawTelemetryEvent } from '@datadog/browser-core'
 import { display, isIE, noop, resetTelemetry, startFakeTelemetry } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
+import type { Clock } from '@datadog/browser-core/test'
+import { mockClock } from '@datadog/browser-core/test'
 import { MockWorker } from '../../../test'
 import type { createDeflateWorker } from './startDeflateWorker'
-import { startDeflateWorker, resetDeflateWorkerState } from './startDeflateWorker'
+import { startDeflateWorker, resetDeflateWorkerState, INITIALIZATION_TIME_OUT_DELAY } from './startDeflateWorker'
 
 // Arbitrary stream ids used for tests
 const TEST_STREAM_ID = 5
@@ -118,6 +120,36 @@ describe('startDeflateWorker', () => {
 
       startDeflateWorker(configuration, callbackSpy, createDeflateWorkerSpy)
       expect(callbackSpy).toHaveBeenCalledOnceWith()
+    })
+  })
+
+  describe('initialization timeout', () => {
+    let displaySpy: jasmine.Spy
+    let configuration: RumConfiguration
+    let clock: Clock
+
+    beforeEach(() => {
+      configuration = {} as RumConfiguration
+      displaySpy = spyOn(display, 'error')
+      clock = mockClock()
+    })
+
+    afterEach(() => {
+      clock.cleanup()
+    })
+
+    it('displays an error message when the worker does not respond to the init action', () => {
+      startDeflateWorker(
+        configuration,
+        noop,
+        () =>
+          // Creates a worker that does nothing
+          new Worker(URL.createObjectURL(new Blob([''])))
+      )
+      clock.tick(INITIALIZATION_TIME_OUT_DELAY)
+      expect(displaySpy).toHaveBeenCalledOnceWith(
+        'Session Replay recording failed to start: a timeout occurred while initializing the Worker'
+      )
     })
   })
 
