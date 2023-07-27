@@ -6,3 +6,4 @@ rum-events-format
 .yarn
 developer-extension/dist
 test/app/dist
+yarn.lock
