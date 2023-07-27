@@ -69,6 +69,7 @@ function checkPackageDependencyVersions(packageJsonFile) {
       if (
         isBrowserSdkPublicPackageName(dependencyName) &&
         !dependencyVersion.startsWith('portal:') &&
+        !dependencyVersion.startsWith('workspace:') &&
         dependencyVersion !== releaseVersion
       ) {
         throw new Error(
