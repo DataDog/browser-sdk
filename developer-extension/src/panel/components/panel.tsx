@@ -1,5 +1,6 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Tabs, Text } from '@mantine/core'
+import { datadogRum } from '@datadog/browser-rum'
 
 import { useEvents } from '../hooks/useEvents'
 import { useAutoFlushEvents } from '../hooks/useAutoFlushEvents'
@@ -26,11 +27,17 @@ export function Panel() {
 
   const { events, filters, setFilters, clear } = useEvents(settings)
 
+  const [activeTab, setActiveTab] = useState<string | null>(PanelTabs.Events)
+  useEffect(() => {
+    activeTab && datadogRum.startView(activeTab)
+  }, [activeTab])
+
   return (
     <Tabs
       color="violet"
-      defaultValue={PanelTabs.Events}
+      value={activeTab}
       sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}
+      onTabChange={setActiveTab}
     >
       <Tabs.List className="dd-privacy-allow">
         <Tabs.Tab value={PanelTabs.Events}>Events</Tabs.Tab>

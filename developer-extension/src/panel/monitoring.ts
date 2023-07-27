@@ -15,6 +15,7 @@ export function initMonitoring() {
     sessionReplaySampleRate: 100,
     telemetrySampleRate: 100,
     trackUserInteractions: true,
+    trackViewsManually: true,
     trackResources: true,
     trackLongTasks: true,
     defaultPrivacyLevel: 'mask',
