@@ -118,7 +118,7 @@ export function makeRecorderApi(
             return
           }
 
-          startDeflateWorkerImpl((worker) => {
+          startDeflateWorkerImpl(configuration, (worker) => {
             if (state.status !== RecorderStatus.Starting) {
               return
             }
