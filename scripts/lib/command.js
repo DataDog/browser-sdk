@@ -21,6 +21,7 @@ function command(...templateArguments) {
 
   let input = ''
   let env
+  let currentWorkingDirectory
 
   return {
     withInput(newInput) {
@@ -33,10 +34,16 @@ function command(...templateArguments) {
       return this
     },
 
+    withCurrentWorkingDirectory(newCurrentWorkingDirectory) {
+      currentWorkingDirectory = newCurrentWorkingDirectory
+      return this
+    },
+
     run() {
       const commandResult = childProcess.spawnSync(commandName, commandArguments, {
         input,
         env: { ...process.env, ...env },
+        cwd: currentWorkingDirectory,
         encoding: 'utf-8',
       })
 
