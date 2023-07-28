@@ -1,5 +1,11 @@
 /**
- * interactionCount polyfill
+ * performance.interactionCount polyfill
+ *
+ * The interactionCount is an integer which counts the total number of distinct user interactions,
+ * for which there was a unique interactionId.
+ *
+ * The interactionCount polyfill is an estimate based on a convention specific to Chrome
+ *
  * Reference implementation: https://github.com/GoogleChrome/web-vitals/blob/main/src/lib/polyfills/interactionCountPolyfill.ts
  */
 
