@@ -10,7 +10,7 @@ import type {
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 
 import { record } from '../domain/record'
-import type { DeflateWorker } from '../domain/segmentCollection'
+import type { DeflateWorker } from '../domain/deflate'
 import { startSegmentCollection, SEGMENT_BYTES_LIMIT } from '../domain/segmentCollection'
 import { RecordType } from '../types'
 

@@ -4,7 +4,7 @@ import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { deleteEventBridgeStub, initEventBridgeStub, createNewEvent } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock, TestSetupBuilder } from '../../../rum-core/test'
 import { createRumSessionManagerMock, setup } from '../../../rum-core/test'
-import type { DeflateWorker, startDeflateWorker } from '../domain/segmentCollection'
+import type { DeflateWorker, startDeflateWorker } from '../domain/deflate'
 import type { StartRecording } from './recorderApi'
 import { makeRecorderApi } from './recorderApi'
 

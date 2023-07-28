@@ -1,6 +1,6 @@
 import type { DeflateWorkerAction, DeflateWorkerResponse } from '@datadog/browser-worker'
 import { createNewEvent } from '../../core/test'
-import type { DeflateWorker } from '../src/domain/segmentCollection'
+import type { DeflateWorker } from '../src/domain/deflate'
 
 type DeflateWorkerListener = (event: { data: DeflateWorkerResponse }) => void
 

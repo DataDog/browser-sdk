@@ -4,7 +4,7 @@ import type { RumConfiguration } from '@datadog/browser-rum-core'
 import type { BrowserRecord, BrowserSegmentMetadata, CreationReason, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
 import * as replayStats from '../replayStats'
-import type { DeflateWorker } from './startDeflateWorker'
+import type { DeflateWorker } from '../deflate'
 
 // Arbitrary id, will be replaced when we have multiple parallel streams.
 const STREAM_ID = 1
