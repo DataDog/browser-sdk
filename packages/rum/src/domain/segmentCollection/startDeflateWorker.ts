@@ -1,6 +1,9 @@
-import { addTelemetryError, display, includes, addEventListener } from '@datadog/browser-core'
+import { addTelemetryError, display, includes, addEventListener, setTimeout, ONE_SECOND } from '@datadog/browser-core'
 import type { DeflateWorkerAction, DeflateWorkerResponse } from '@datadog/browser-worker'
 import { workerString } from '@datadog/browser-worker/string'
+import type { RumConfiguration } from '@datadog/browser-rum-core'
+
+export const INITIALIZATION_TIME_OUT_DELAY = 10 * ONE_SECOND
 
 /**
  * In order to be sure that the worker is correctly working, we need a round trip of
@@ -35,26 +38,31 @@ export interface DeflateWorker extends Worker {
   postMessage(message: DeflateWorkerAction): void
 }
 
-let workerURL: string | undefined
+let workerBlobUrl: string | undefined
 
-export function createDeflateWorker(): DeflateWorker {
+function createWorkerBlobUrl() {
   // Lazily compute the worker URL to allow importing the SDK in NodeJS
-  if (!workerURL) {
-    workerURL = URL.createObjectURL(new Blob([workerString]))
+  if (!workerBlobUrl) {
+    workerBlobUrl = URL.createObjectURL(new Blob([workerString]))
   }
-  return new Worker(workerURL)
+  return workerBlobUrl
+}
+
+export function createDeflateWorker(configuration: RumConfiguration): DeflateWorker {
+  return new Worker(configuration.workerUrl || createWorkerBlobUrl())
 }
 
 let state: DeflateWorkerState = { status: DeflateWorkerStatus.Nil }
 
 export function startDeflateWorker(
+  configuration: RumConfiguration,
   callback: (worker?: DeflateWorker) => void,
   createDeflateWorkerImpl = createDeflateWorker
 ) {
   switch (state.status) {
     case DeflateWorkerStatus.Nil:
       state = { status: DeflateWorkerStatus.Loading, callbacks: [callback] }
-      doStartDeflateWorker(createDeflateWorkerImpl)
+      doStartDeflateWorker(configuration, createDeflateWorkerImpl)
       break
     case DeflateWorkerStatus.Loading:
       state.callbacks.push(callback)
@@ -81,21 +89,32 @@ export function resetDeflateWorkerState() {
  *
  * more details: https://bugzilla.mozilla.org/show_bug.cgi?id=1736865#c2
  */
-export function doStartDeflateWorker(createDeflateWorkerImpl = createDeflateWorker) {
+export function doStartDeflateWorker(configuration: RumConfiguration, createDeflateWorkerImpl = createDeflateWorker) {
   try {
-    const worker = createDeflateWorkerImpl()
-    addEventListener(worker, 'error', onError)
+    const worker = createDeflateWorkerImpl(configuration)
+    addEventListener(worker, 'error', (error) => {
+      onError(configuration, error)
+    })
     addEventListener(worker, 'message', ({ data }: MessageEvent<DeflateWorkerResponse>) => {
       if (data.type === 'errored') {
-        onError(data.error, data.streamId)
+        onError(configuration, data.error, data.streamId)
       } else if (data.type === 'initialized') {
         onInitialized(worker, data.version)
       }
     })
     worker.postMessage({ action: 'init' })
+    setTimeout(onTimeout, INITIALIZATION_TIME_OUT_DELAY)
     return worker
   } catch (error) {
-    onError(error)
+    onError(configuration, error)
+  }
+}
+
+function onTimeout() {
+  if (state.status === DeflateWorkerStatus.Loading) {
+    display.error('Session Replay recording failed to start: a timeout occurred while initializing the Worker')
+    state.callbacks.forEach((callback) => callback())
+    state = { status: DeflateWorkerStatus.Error }
   }
 }
 
@@ -106,13 +125,18 @@ function onInitialized(worker: DeflateWorker, version: string) {
   }
 }
 
-function onError(error: unknown, streamId?: number) {
+function onError(configuration: RumConfiguration, error: unknown, streamId?: number) {
   if (state.status === DeflateWorkerStatus.Loading) {
     display.error('Session Replay recording failed to start: an error occurred while creating the Worker:', error)
     if (error instanceof Event || (error instanceof Error && isMessageCspRelated(error.message))) {
+      let baseMessage
+      if (configuration.workerUrl) {
+        baseMessage = `Please make sure the Worker URL ${configuration.workerUrl} is correct and CSP is correctly configured.`
+      } else {
+        baseMessage = 'Please make sure CSP is correctly configured.'
+      }
       display.error(
-        'Please make sure CSP is correctly configured ' +
-          'https://docs.datadoghq.com/real_user_monitoring/faq/content_security_policy'
+        `${baseMessage} See documentation at https://docs.datadoghq.com/integrations/content_security_policy_logs/#use-csp-with-real-user-monitoring-and-session-replay`
       )
     } else {
       addTelemetryError(error)
