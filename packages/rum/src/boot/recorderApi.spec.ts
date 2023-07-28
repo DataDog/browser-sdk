@@ -4,7 +4,7 @@ import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { deleteEventBridgeStub, initEventBridgeStub, createNewEvent } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock, TestSetupBuilder } from '../../../rum-core/test'
 import { createRumSessionManagerMock, setup } from '../../../rum-core/test'
-import type { DeflateWorker, startDeflateWorker } from '../domain/deflate'
+import type { DeflateWriter, startDeflateWriter } from '../domain/deflate'
 import type { StartRecording } from './recorderApi'
 import { makeRecorderApi } from './recorderApi'
 
@@ -13,22 +13,22 @@ describe('makeRecorderApi', () => {
   let recorderApi: RecorderApi
   let startRecordingSpy: jasmine.Spy<StartRecording>
   let stopRecordingSpy: jasmine.Spy<() => void>
-  let startDeflateWorkerSpy: jasmine.Spy<typeof startDeflateWorker>
-  const FAKE_WORKER = {} as DeflateWorker
+  let startDeflateWriterSpy: jasmine.Spy<typeof startDeflateWriter>
+  const FAKE_WRITER = {} as DeflateWriter
 
-  function startDeflateWorkerWith(worker?: DeflateWorker) {
-    if (!startDeflateWorkerSpy) {
-      startDeflateWorkerSpy = jasmine.createSpy<typeof startDeflateWorker>('startDeflateWorker')
+  function startDeflateWriterWith(writer?: DeflateWriter) {
+    if (!startDeflateWriterSpy) {
+      startDeflateWriterSpy = jasmine.createSpy<typeof startDeflateWriter>('startDeflateWriter')
     }
-    startDeflateWorkerSpy.and.callFake((_, callback) => callback(worker))
+    startDeflateWriterSpy.and.callFake((_, __, callback) => callback(writer))
   }
 
   function callLastRegisteredInitialisationCallback() {
-    startDeflateWorkerSpy.calls.mostRecent().args[1](FAKE_WORKER)
+    startDeflateWriterSpy.calls.mostRecent().args[2](FAKE_WRITER)
   }
 
-  function stopDeflateWorker() {
-    startDeflateWorkerSpy.and.callFake(noop)
+  function stopDeflateWriter() {
+    startDeflateWriterSpy.and.callFake(noop)
   }
 
   let rumInit: () => void
@@ -43,8 +43,8 @@ describe('makeRecorderApi', () => {
         stop: stopRecordingSpy,
       }))
 
-      startDeflateWorkerWith(FAKE_WORKER)
-      recorderApi = makeRecorderApi(startRecordingSpy, startDeflateWorkerSpy)
+      startDeflateWriterWith(FAKE_WRITER)
+      recorderApi = makeRecorderApi(startRecordingSpy, startDeflateWriterSpy)
       rumInit = () => {
         recorderApi.onRumStart(lifeCycle, {} as RumConfiguration, sessionManager, {} as ViewContexts)
       }
@@ -118,7 +118,7 @@ describe('makeRecorderApi', () => {
     it('do not start recording if worker fails to be instantiated', () => {
       setupBuilder.build()
       rumInit()
-      startDeflateWorkerWith(undefined)
+      startDeflateWriterWith(undefined)
       recorderApi.start()
       expect(startRecordingSpy).not.toHaveBeenCalled()
     })
@@ -126,7 +126,7 @@ describe('makeRecorderApi', () => {
     it('does not start recording multiple times if restarted before worker is initialized', () => {
       setupBuilder.build()
       rumInit()
-      stopDeflateWorker()
+      stopDeflateWriter()
       recorderApi.start()
       recorderApi.stop()
 

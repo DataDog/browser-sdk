@@ -1,1 +1,2 @@
-export { DeflateWorker, startDeflateWorker } from './deflateWorker'
+export { StreamId, DeflateWriter, startDeflateWriter, createDeflateWriter } from './deflateWriter'
+export { DeflateWorker } from './deflateWorker'

@@ -10,7 +10,7 @@ import type {
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { getReplayStats } from '../domain/replayStats'
 import { getSessionReplayLink } from '../domain/getSessionReplayLink'
-import { startDeflateWorker } from '../domain/deflate'
+import { StreamId, startDeflateWriter } from '../domain/deflate'
 
 import { getSerializedNodeId } from '../domain/record'
 import type { startRecording } from './startRecording'
@@ -46,7 +46,7 @@ type RecorderState =
 
 export function makeRecorderApi(
   startRecordingImpl: StartRecording,
-  startDeflateWorkerImpl = startDeflateWorker
+  startDeflateWriterImpl = startDeflateWriter
 ): RecorderApi {
   const recorderStartObservable = new Observable<RelativeTime>()
 
@@ -118,12 +118,12 @@ export function makeRecorderApi(
             return
           }
 
-          startDeflateWorkerImpl(configuration, (worker) => {
+          startDeflateWriterImpl(configuration, StreamId.REPLAY, (writer) => {
             if (state.status !== RecorderStatus.Starting) {
               return
             }
 
-            if (!worker) {
+            if (!writer) {
               state = {
                 status: RecorderStatus.Stopped,
               }
@@ -135,7 +135,7 @@ export function makeRecorderApi(
               configuration,
               sessionManager,
               viewContexts,
-              worker
+              writer
             )
             recorderStartObservable.notify(relativeNow())
             state = {
