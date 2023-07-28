@@ -87,8 +87,6 @@ export interface RumFirstInputTiming {
   startTime: RelativeTime
   processingStart: RelativeTime
   target?: Node
-  duration: Duration
-  interactionId?: number
 }
 
 export interface RumEventTiming {

@@ -1,9 +1,5 @@
 import { type Duration, noop, isExperimentalFeatureEnabled, ExperimentalFeature } from '@datadog/browser-core'
-import {
-  supportPerformanceTimingEvent,
-  type RumEventTiming,
-  type RumFirstInputTiming,
-} from '../../../browser/performanceCollection'
+import { supportPerformanceTimingEvent, type RumEventTiming } from '../../../browser/performanceCollection'
 import { LifeCycleEventType, type LifeCycle } from '../../lifeCycle'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
 import { getInteractionCount, initInteractionCountPolyfill } from './interactionCountPolyfill'
@@ -28,8 +24,8 @@ export function trackInteractionToNextPaint(viewLoadingType: ViewLoadingType, li
     }
   }
 
-  // List of longest interactions on the view by duration.
-  const longestInteractions: Array<RumEventTiming | RumFirstInputTiming> = []
+  // List of longest interactions on the view sorted by descending duration.
+  const longestInteractions: RumEventTiming[] = []
 
   const { getViewInteractionCount } = trackViewInteractionCount(viewLoadingType)
   let maxInpDuration = -1 as Duration
@@ -50,9 +46,9 @@ export function trackInteractionToNextPaint(viewLoadingType: ViewLoadingType, li
   /**
    * Process the performance entry:
    * - if its duration is long enough, add the performance entry to the list of worst interactions
-   * - if an entry with the same interaction id exists and but its duration is lower than the new one, then replace it in the list of worst interactions
+   * - if an entry with the same interaction id exists and its duration is lower than the new one, then replace it in the list of worst interactions
    */
-  function processEntry(entry: RumEventTiming | RumFirstInputTiming) {
+  function processEntry(entry: RumEventTiming) {
     const interactionIndex = longestInteractions.findIndex(
       (interaction) => entry.interactionId === interaction.interactionId
     )

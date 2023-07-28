@@ -7,7 +7,7 @@ import {
 } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../../test'
 import { setup } from '../../../../test'
-import type { BrowserWindow, RumEventTiming, RumFirstInputTiming } from '../../../browser/performanceCollection'
+import type { BrowserWindow, RumEventTiming } from '../../../browser/performanceCollection'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -24,7 +24,7 @@ describe('trackInteractionToNextPaint', () => {
 
   function newInteraction(
     lifeCycle: LifeCycle,
-    { interactionId, duration = 40 as Duration, entryType = 'event' }: Partial<RumEventTiming | RumFirstInputTiming>
+    { interactionId, duration = 40 as Duration, entryType = 'event' }: Partial<RumEventTiming>
   ) {
     if (interactionId) {
       interactionCountStub.incrementInteractionCount()
@@ -35,14 +35,13 @@ describe('trackInteractionToNextPaint', () => {
         startTime: relativeNow(),
         duration,
         interactionId,
-        processingStart: relativeNow(),
       },
     ])
   }
 
   beforeEach(() => {
     if (!isInteractionToNextPaintSupported()) {
-      pending('No PerformanceObserver support')
+      pending('No INP support')
     }
 
     interactionCountStub = subInteractionCount()

@@ -49,7 +49,6 @@ const FAKE_FIRST_INPUT_ENTRY: RumFirstInputTiming = {
   processingStart: 1100 as RelativeTime,
   startTime: 1000 as RelativeTime,
   target: document.createElement('button'),
-  duration: 10 as Duration,
 }
 
 describe('trackInitialViewTimings', () => {
@@ -314,7 +313,6 @@ describe('firstInputTimings', () => {
         entryType: 'first-input' as const,
         processingStart: 900 as RelativeTime,
         startTime: 1000 as RelativeTime,
-        duration: 10 as Duration,
       },
     ])
 

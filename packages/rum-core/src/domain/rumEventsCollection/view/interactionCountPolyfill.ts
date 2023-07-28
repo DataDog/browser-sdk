@@ -3,6 +3,7 @@
  * Reference implementation: https://github.com/GoogleChrome/web-vitals/blob/main/src/lib/polyfills/interactionCountPolyfill.ts
  */
 
+import { monitor } from '@datadog/browser-core'
 import type { BrowserWindow, RumEventTiming, RumPerformanceObserver } from '../../../browser/performanceCollection'
 
 let observer: RumPerformanceObserver | undefined
@@ -16,18 +17,20 @@ export function initInteractionCountPolyfill() {
     return
   }
 
-  observer = new (window as BrowserWindow).PerformanceObserver((entries: PerformanceObserverEntryList) => {
-    entries.getEntries().forEach((e) => {
-      const entry = e as unknown as RumEventTiming
+  observer = new (window as BrowserWindow).PerformanceObserver(
+    monitor((entries: PerformanceObserverEntryList) => {
+      entries.getEntries().forEach((e) => {
+        const entry = e as unknown as RumEventTiming
 
-      if (entry.interactionId) {
-        minKnownInteractionId = Math.min(minKnownInteractionId, entry.interactionId)
-        maxKnownInteractionId = Math.max(maxKnownInteractionId, entry.interactionId)
+        if (entry.interactionId) {
+          minKnownInteractionId = Math.min(minKnownInteractionId, entry.interactionId)
+          maxKnownInteractionId = Math.max(maxKnownInteractionId, entry.interactionId)
 
-        interactionCountEstimate = maxKnownInteractionId ? (maxKnownInteractionId - minKnownInteractionId) / 7 + 1 : 0
-      }
+          interactionCountEstimate = maxKnownInteractionId ? (maxKnownInteractionId - minKnownInteractionId) / 7 + 1 : 0
+        }
+      })
     })
-  })
+  )
 
   observer.observe({ type: 'event', buffered: true, durationThreshold: 0 })
 }
