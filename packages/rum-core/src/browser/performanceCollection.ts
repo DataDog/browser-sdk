@@ -257,7 +257,6 @@ function retrieveFirstInputTiming(callback: (timing: RumFirstInputTiming) => voi
         entryType: 'first-input',
         processingStart: relativeNow(),
         startTime: evt.timeStamp as RelativeTime,
-        duration: 0 as Duration,
       }
 
       if (evt.type === DOM_EVENT.POINTER_DOWN) {
