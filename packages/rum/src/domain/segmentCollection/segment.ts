@@ -25,7 +25,6 @@ export class Segment {
     private worker: DeflateWorker,
     context: SegmentContext,
     creationReason: CreationReason,
-    initialRecord: BrowserRecord,
     onWrote: (compressedBytesCount: number) => void,
     onFlushed: (data: Uint8Array, rawBytesCount: number) => void
   ) {
@@ -33,11 +32,11 @@ export class Segment {
 
     this.metadata = assign(
       {
-        start: initialRecord.timestamp,
-        end: initialRecord.timestamp,
+        start: Infinity,
+        end: -Infinity,
         creation_reason: creationReason,
-        records_count: 1,
-        has_full_snapshot: initialRecord.type === RecordType.FullSnapshot,
+        records_count: 0,
+        has_full_snapshot: false,
         index_in_view: replayStats.getSegmentsCount(viewId),
         source: 'browser' as const,
       },
@@ -45,7 +44,7 @@ export class Segment {
     )
 
     replayStats.addSegment(viewId)
-    replayStats.addRecord(viewId)
+
     let rawBytesCount = 0
     let compressedBytesCount = 0
     const compressedData: Uint8Array[] = []
@@ -86,8 +85,6 @@ export class Segment {
         }
       }
     )
-    sendToExtension('record', { record: initialRecord, segment: this.metadata })
-    this.write(`{"records":[${JSON.stringify(initialRecord)}`)
   }
 
   addRecord(record: BrowserRecord): void {
@@ -96,11 +93,18 @@ export class Segment {
     this.metadata.records_count += 1
     replayStats.addRecord(this.metadata.view.id)
     this.metadata.has_full_snapshot ||= record.type === RecordType.FullSnapshot
+
     sendToExtension('record', { record, segment: this.metadata })
-    this.write(`,${JSON.stringify(record)}`)
+
+    const prefix = this.metadata.records_count === 1 ? '{"records":[' : ','
+    this.write(prefix + JSON.stringify(record))
   }
 
   flush(reason: FlushReason) {
+    if (this.metadata.records_count === 0) {
+      throw new Error('Empty segment flushed')
+    }
+
     this.write(`],${JSON.stringify(this.metadata).slice(1)}\n`)
     this.worker.postMessage({
       action: 'reset',

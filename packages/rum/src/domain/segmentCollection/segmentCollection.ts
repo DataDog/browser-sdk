@@ -128,7 +128,6 @@ export function doStartSegmentCollection(
       worker,
       context,
       creationReason,
-      initialRecord,
       (compressedSegmentBytesCount) => {
         if (!segment.flushReason && compressedSegmentBytesCount > SEGMENT_BYTES_LIMIT) {
           flushSegment('segment_bytes_limit')
@@ -144,6 +143,7 @@ export function doStartSegmentCollection(
         }
       }
     )
+    segment.addRecord(initialRecord)
 
     state = {
       status: SegmentCollectionStatus.SegmentPending,
