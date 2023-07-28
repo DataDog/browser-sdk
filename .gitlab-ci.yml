@@ -140,6 +140,7 @@ build-and-lint:
     - yarn
     - yarn build
     - yarn lint
+    - node scripts/check-packages.js
 
 build-bundle:
   extends:

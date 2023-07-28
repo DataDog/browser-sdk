@@ -11,6 +11,7 @@ export interface SetupOptions {
   eventBridge: boolean
   head?: string
   body?: string
+  basePath: string
   context: {
     run_id: string
     test_name: string
