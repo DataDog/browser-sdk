@@ -8,7 +8,8 @@ import type { RumSessionManagerMock, TestSetupBuilder } from '../../../rum-core/
 import { createRumSessionManagerMock, setup } from '../../../rum-core/test'
 
 import { recordsPerFullSnapshot, readReplayPayload } from '../../test'
-import { setSegmentBytesLimit, startDeflateWorker } from '../domain/segmentCollection'
+import { setSegmentBytesLimit } from '../domain/segmentCollection'
+import { startDeflateWorker } from '../domain/deflate'
 
 import { RecordType } from '../types'
 import { resetReplayStats } from '../domain/replayStats'
