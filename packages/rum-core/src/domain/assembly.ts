@@ -153,7 +153,7 @@ export function startRumAssembly(
           action: needToAssembleWithAction(rawRumEvent) && actionId ? { id: actionId } : undefined,
           synthetics: syntheticsContext,
           ci_test: ciTestContext,
-          display: getDisplayContext(),
+          display: getDisplayContext(configuration),
         }
 
         const serverRumEvent = combine(rumContext as RumContext & Context, rawRumEvent) as RumEvent & Context

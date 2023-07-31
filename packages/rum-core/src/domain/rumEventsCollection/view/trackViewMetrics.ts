@@ -78,6 +78,7 @@ export function trackViewMetrics(
   )
 
   const { stop: stopScrollMetricsTracking } = trackScrollMetrics(
+    configuration,
     viewStart,
     (newScrollMetrics) => {
       scrollMetrics = newScrollMetrics
@@ -118,6 +119,7 @@ export function trackViewMetrics(
 }
 
 export function trackScrollMetrics(
+  configuration: RumConfiguration,
   viewStart: ClocksState,
   callback: (scrollMetrics: ScrollMetrics) => void,
   getScrollValues = computeScrollValues
@@ -146,7 +148,9 @@ export function trackScrollMetrics(
     { leading: false, trailing: true }
   )
 
-  const { stop } = addEventListener(window, DOM_EVENT.SCROLL, handleScrollEvent.throttled, { passive: true })
+  const { stop } = addEventListener(configuration, window, DOM_EVENT.SCROLL, handleScrollEvent.throttled, {
+    passive: true,
+  })
 
   return {
     stop: () => {

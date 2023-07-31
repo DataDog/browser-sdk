@@ -1,12 +1,16 @@
+import type { Configuration } from '@datadog/browser-core'
 import { stubZoneJs } from '../../test'
 import { noop } from '../tools/utils/functionUtils'
 import { addEventListener, DOM_EVENT } from './addEventListener'
 
 describe('addEventListener', () => {
+  let configuration: Configuration
+
   describe('Zone.js support', () => {
     let zoneJsStub: ReturnType<typeof stubZoneJs>
 
     beforeEach(() => {
+      configuration = {} as Configuration
       zoneJsStub = stubZoneJs()
     })
 
@@ -19,7 +23,7 @@ describe('addEventListener', () => {
       const eventTarget = document.createElement('div')
       zoneJsStub.replaceProperty(eventTarget, 'addEventListener', zoneJsPatchedAddEventListener)
 
-      addEventListener(eventTarget, DOM_EVENT.CLICK, noop)
+      addEventListener(configuration, eventTarget, DOM_EVENT.CLICK, noop)
       expect(zoneJsPatchedAddEventListener).not.toHaveBeenCalled()
     })
 
@@ -28,7 +32,7 @@ describe('addEventListener', () => {
       const eventTarget = document.createElement('div')
       zoneJsStub.replaceProperty(eventTarget, 'removeEventListener', zoneJsPatchedRemoveEventListener)
 
-      const { stop } = addEventListener(eventTarget, DOM_EVENT.CLICK, noop)
+      const { stop } = addEventListener(configuration, eventTarget, DOM_EVENT.CLICK, noop)
       stop()
       expect(zoneJsPatchedRemoveEventListener).not.toHaveBeenCalled()
     })

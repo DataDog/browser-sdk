@@ -5,17 +5,18 @@ import {
   Observable,
   shallowClone,
 } from '@datadog/browser-core'
+import type { RumConfiguration } from '../domain/configuration'
 
 export interface LocationChange {
   oldLocation: Readonly<Location>
   newLocation: Readonly<Location>
 }
 
-export function createLocationChangeObservable(location: Location) {
+export function createLocationChangeObservable(configuration: RumConfiguration, location: Location) {
   let currentLocation = shallowClone(location)
   const observable = new Observable<LocationChange>(() => {
-    const { stop: stopHistoryTracking } = trackHistory(onLocationChange)
-    const { stop: stopHashTracking } = trackHash(onLocationChange)
+    const { stop: stopHistoryTracking } = trackHistory(configuration, onLocationChange)
+    const { stop: stopHashTracking } = trackHash(configuration, onLocationChange)
     return () => {
       stopHistoryTracking()
       stopHashTracking()
@@ -37,14 +38,14 @@ export function createLocationChangeObservable(location: Location) {
   return observable
 }
 
-function trackHistory(onHistoryChange: () => void) {
+function trackHistory(configuration: RumConfiguration, onHistoryChange: () => void) {
   const { stop: stopInstrumentingPushState } = instrumentMethodAndCallOriginal(history, 'pushState', {
     after: onHistoryChange,
   })
   const { stop: stopInstrumentingReplaceState } = instrumentMethodAndCallOriginal(history, 'replaceState', {
     after: onHistoryChange,
   })
-  const { stop: removeListener } = addEventListener(window, DOM_EVENT.POP_STATE, onHistoryChange)
+  const { stop: removeListener } = addEventListener(configuration, window, DOM_EVENT.POP_STATE, onHistoryChange)
 
   return {
     stop: () => {
@@ -55,6 +56,6 @@ function trackHistory(onHistoryChange: () => void) {
   }
 }
 
-function trackHash(onHashChange: () => void) {
-  return addEventListener(window, DOM_EVENT.HASH_CHANGE, onHashChange)
+function trackHash(configuration: RumConfiguration, onHashChange: () => void) {
+  return addEventListener(configuration, window, DOM_EVENT.HASH_CHANGE, onHashChange)
 }

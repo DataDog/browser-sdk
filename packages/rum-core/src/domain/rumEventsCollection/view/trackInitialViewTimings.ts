@@ -11,6 +11,7 @@ import {
   relativeNow,
 } from '@datadog/browser-core'
 
+import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type {
@@ -47,6 +48,7 @@ export interface Timings {
 
 export function trackInitialViewTimings(
   lifeCycle: LifeCycle,
+  configuration: RumConfiguration,
   webVitalTelemetryDebug: WebVitalTelemetryDebug,
   setLoadEvent: (loadEnd: Duration) => void,
   scheduleViewUpdate: () => void
@@ -62,11 +64,12 @@ export function trackInitialViewTimings(
     setLoadEvent(newTimings.loadEvent)
     setTimings(newTimings)
   })
-  const { stop: stopFCPTracking } = trackFirstContentfulPaintTiming(lifeCycle, (firstContentfulPaint) =>
+  const { stop: stopFCPTracking } = trackFirstContentfulPaintTiming(lifeCycle, configuration, (firstContentfulPaint) =>
     setTimings({ firstContentfulPaint })
   )
   const { stop: stopLCPTracking } = trackLargestContentfulPaintTiming(
     lifeCycle,
+    configuration,
     window,
     (largestContentfulPaint, lcpElement) => {
       webVitalTelemetryDebug.addWebVitalTelemetryDebug('LCP', lcpElement, largestContentfulPaint)
@@ -79,6 +82,7 @@ export function trackInitialViewTimings(
 
   const { stop: stopFIDTracking } = trackFirstInputTimings(
     lifeCycle,
+    configuration,
     ({ firstInputDelay, firstInputTime, firstInputTarget }) => {
       webVitalTelemetryDebug.addWebVitalTelemetryDebug('FID', firstInputTarget, firstInputTime)
 
@@ -135,8 +139,12 @@ export function trackNavigationTimings(lifeCycle: LifeCycle, callback: (timings:
   return { stop }
 }
 
-export function trackFirstContentfulPaintTiming(lifeCycle: LifeCycle, callback: (fcpTiming: RelativeTime) => void) {
-  const firstHidden = trackFirstHidden()
+export function trackFirstContentfulPaintTiming(
+  lifeCycle: LifeCycle,
+  configuration: RumConfiguration,
+  callback: (fcpTiming: RelativeTime) => void
+) {
+  const firstHidden = trackFirstHidden(configuration)
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
     const fcpEntry = find(
       entries,
@@ -161,16 +169,18 @@ export function trackFirstContentfulPaintTiming(lifeCycle: LifeCycle, callback: 
  */
 export function trackLargestContentfulPaintTiming(
   lifeCycle: LifeCycle,
+  configuration: RumConfiguration,
   eventTarget: Window,
   callback: (lcpTiming: RelativeTime, lcpElement?: Element) => void
 ) {
-  const firstHidden = trackFirstHidden()
+  const firstHidden = trackFirstHidden(configuration)
 
   // Ignore entries that come after the first user interaction.  According to the documentation, the
   // browser should not send largest-contentful-paint entries after a user interact with the page,
   // but the web-vitals reference implementation uses this as a safeguard.
   let firstInteractionTimestamp = Infinity
   const { stop: stopEventListener } = addEventListeners(
+    configuration,
     eventTarget,
     [DOM_EVENT.POINTER_DOWN, DOM_EVENT.KEY_DOWN],
     (event) => {
@@ -214,6 +224,7 @@ export function trackLargestContentfulPaintTiming(
  */
 export function trackFirstInputTimings(
   lifeCycle: LifeCycle,
+  configuration: RumConfiguration,
   callback: ({
     firstInputDelay,
     firstInputTime,
@@ -224,7 +235,7 @@ export function trackFirstInputTimings(
     firstInputTarget: Node | undefined
   }) => void
 ) {
-  const firstHidden = trackFirstHidden()
+  const firstHidden = trackFirstHidden(configuration)
 
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
     const firstInputEntry = find(

@@ -1,4 +1,4 @@
-import type { EndpointBuilder } from '../domain/configuration'
+import type { EndpointBuilder, Configuration } from '../domain/configuration'
 import { addTelemetryError } from '../domain/telemetry'
 import type { Context } from '../tools/serialisation/context'
 import { monitor } from '../tools/monitor'
@@ -36,13 +36,14 @@ export interface RetryInfo {
 }
 
 export function createHttpRequest(
+  configuration: Configuration,
   endpointBuilder: EndpointBuilder,
   bytesLimit: number,
   reportError: (error: RawError) => void
 ) {
   const retryState = newRetryState()
   const sendStrategyForRetry = (payload: Payload, onResponse: (r: HttpResponse) => void) =>
-    fetchKeepAliveStrategy(endpointBuilder, bytesLimit, payload, onResponse)
+    fetchKeepAliveStrategy(configuration, endpointBuilder, bytesLimit, payload, onResponse)
 
   return {
     send: (payload: Payload) => {
@@ -53,12 +54,13 @@ export function createHttpRequest(
      * keep using sendBeaconStrategy on exit
      */
     sendOnExit: (payload: Payload) => {
-      sendBeaconStrategy(endpointBuilder, bytesLimit, payload)
+      sendBeaconStrategy(configuration, endpointBuilder, bytesLimit, payload)
     },
   }
 }
 
 function sendBeaconStrategy(
+  configuration: Configuration,
   endpointBuilder: EndpointBuilder,
   bytesLimit: number,
   { data, bytesCount, flushReason }: Payload
@@ -78,7 +80,7 @@ function sendBeaconStrategy(
   }
 
   const xhrUrl = endpointBuilder.build('xhr', flushReason)
-  sendXHR(xhrUrl, data)
+  sendXHR(configuration, xhrUrl, data)
 }
 
 let hasReportedBeaconError = false
@@ -91,6 +93,7 @@ function reportBeaconError(e: unknown) {
 }
 
 export function fetchKeepAliveStrategy(
+  configuration: Configuration,
   endpointBuilder: EndpointBuilder,
   bytesLimit: number,
   { data, bytesCount, flushReason, retry }: Payload,
@@ -104,12 +107,12 @@ export function fetchKeepAliveStrategy(
       monitor(() => {
         const xhrUrl = endpointBuilder.build('xhr', flushReason, retry)
         // failed to queue the request
-        sendXHR(xhrUrl, data, onResponse)
+        sendXHR(configuration, xhrUrl, data, onResponse)
       })
     )
   } else {
     const xhrUrl = endpointBuilder.build('xhr', flushReason, retry)
-    sendXHR(xhrUrl, data, onResponse)
+    sendXHR(configuration, xhrUrl, data, onResponse)
   }
 }
 
@@ -122,10 +125,16 @@ function isKeepAliveSupported() {
   }
 }
 
-export function sendXHR(url: string, data: Payload['data'], onResponse?: (r: HttpResponse) => void) {
+export function sendXHR(
+  configuration: Configuration,
+  url: string,
+  data: Payload['data'],
+  onResponse?: (r: HttpResponse) => void
+) {
   const request = new XMLHttpRequest()
   request.open('POST', url, true)
   addEventListener(
+    configuration,
     request,
     'loadend',
     () => {

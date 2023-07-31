@@ -74,7 +74,7 @@ function makeRumBatch(
     })
 
     const batch = new Batch(
-      createHttpRequest(endpointBuilder, configuration.batchBytesLimit, reportError),
+      createHttpRequest(configuration, endpointBuilder, configuration.batchBytesLimit, reportError),
       flushController,
       configuration.messageBytesLimit
     )

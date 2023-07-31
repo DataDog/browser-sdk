@@ -1,5 +1,6 @@
 import type { RelativeTime, Duration, ServerDuration } from '@datadog/browser-core'
 import { relativeNow } from '@datadog/browser-core'
+import type { RumConfiguration } from '@datadog/browser-rum-core'
 import type { TestSetupBuilder } from '../../../test'
 import { setup } from '../../../test'
 import { mapToForegroundPeriods } from './foregroundContexts'
@@ -12,6 +13,7 @@ const BLUR_PERIOD_LENGTH = 5 as Duration
 describe('foreground context', () => {
   let setupBuilder: TestSetupBuilder
   let pageStateHistory: PageStateHistory
+  let configuration: RumConfiguration
 
   function addNewForegroundPeriod() {
     pageStateHistory.addPageState(PageState.ACTIVE)
@@ -31,10 +33,11 @@ describe('foreground context', () => {
   }
 
   beforeEach(() => {
+    configuration = {} as RumConfiguration
     setupBuilder = setup()
       .withFakeClock()
       .beforeBuild(() => {
-        pageStateHistory = startPageStateHistory()
+        pageStateHistory = startPageStateHistory(configuration)
         return pageStateHistory
       })
   })
@@ -46,7 +49,7 @@ describe('foreground context', () => {
   describe('when the page do not have the focus when starting', () => {
     beforeEach(() => {
       spyOn(Document.prototype, 'hasFocus').and.callFake(() => false)
-      pageStateHistory = startPageStateHistory()
+      pageStateHistory = startPageStateHistory(configuration)
     })
     describe('without any focus nor blur event', () => {
       describe('isInForegroundAt', () => {
@@ -203,7 +206,7 @@ describe('foreground context', () => {
   describe('when the page has focus when starting', () => {
     beforeEach(() => {
       spyOn(Document.prototype, 'hasFocus').and.callFake(() => true)
-      pageStateHistory = startPageStateHistory()
+      pageStateHistory = startPageStateHistory(configuration)
     })
 
     describe('when there is no focus event', () => {

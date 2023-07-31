@@ -1,12 +1,13 @@
+import type { RumConfiguration } from '../configuration'
 import { getViewportDimension, initViewportObservable } from '../../browser/viewportObservable'
 
 let viewport: { width: number; height: number } | undefined
 let stopListeners: (() => void) | undefined
 
-export function getDisplayContext() {
+export function getDisplayContext(configuration: RumConfiguration) {
   if (!viewport) {
     viewport = getViewportDimension()
-    stopListeners = initViewportObservable().subscribe((viewportDimension) => {
+    stopListeners = initViewportObservable(configuration).subscribe((viewportDimension) => {
       viewport = viewportDimension
     }).unsubscribe
   }

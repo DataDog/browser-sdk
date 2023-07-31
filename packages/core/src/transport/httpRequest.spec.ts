@@ -1,6 +1,6 @@
 import { collectAsyncCalls, stubEndpointBuilder, interceptRequests } from '../../test'
 import type { Request } from '../../test'
-import type { EndpointBuilder } from '../domain/configuration'
+import type { EndpointBuilder, Configuration } from '../domain/configuration'
 import { createEndpointBuilder } from '../domain/configuration'
 import { noop } from '../tools/utils/functionUtils'
 import { createHttpRequest, fetchKeepAliveStrategy, sendXHR } from './httpRequest'
@@ -13,12 +13,14 @@ describe('httpRequest', () => {
   let requests: Request[]
   let endpointBuilder: EndpointBuilder
   let request: HttpRequest
+  let configuration: Configuration
 
   beforeEach(() => {
+    configuration = {} as Configuration
     interceptor = interceptRequests()
     requests = interceptor.requests
     endpointBuilder = stubEndpointBuilder(ENDPOINT_URL)
-    request = createHttpRequest(endpointBuilder, BATCH_BYTES_LIMIT, noop)
+    request = createHttpRequest(configuration, endpointBuilder, BATCH_BYTES_LIMIT, noop)
   })
 
   afterEach(() => {
@@ -107,6 +109,7 @@ describe('httpRequest', () => {
       interceptor.withFetch(() => Promise.resolve({ status: 429, type: 'cors' }))
 
       fetchKeepAliveStrategy(
+        configuration,
         endpointBuilder,
         BATCH_BYTES_LIMIT,
         { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 },
@@ -130,6 +133,7 @@ describe('httpRequest', () => {
       })
 
       fetchKeepAliveStrategy(
+        configuration,
         endpointBuilder,
         BATCH_BYTES_LIMIT,
         { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 },
@@ -148,6 +152,7 @@ describe('httpRequest', () => {
       })
 
       fetchKeepAliveStrategy(
+        configuration,
         endpointBuilder,
         BATCH_BYTES_LIMIT,
         { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: BATCH_BYTES_LIMIT },
@@ -176,7 +181,7 @@ describe('httpRequest', () => {
         })
       })
 
-      sendXHR('foo', '', onResponseSpy)
+      sendXHR(configuration, 'foo', '', onResponseSpy)
 
       setTimeout(() => {
         expect(onResponseSpy).toHaveBeenCalledTimes(1)
@@ -256,12 +261,14 @@ describe('httpRequest intake parameters', () => {
   let requests: Request[]
   let endpointBuilder: EndpointBuilder
   let request: HttpRequest
+  let configuration: Configuration
 
   beforeEach(() => {
+    configuration = {} as Configuration
     interceptor = interceptRequests()
     requests = interceptor.requests
     endpointBuilder = createEndpointBuilder({ clientToken }, 'logs', [])
-    request = createHttpRequest(endpointBuilder, BATCH_BYTES_LIMIT, noop)
+    request = createHttpRequest(configuration, endpointBuilder, BATCH_BYTES_LIMIT, noop)
   })
 
   afterEach(() => {
