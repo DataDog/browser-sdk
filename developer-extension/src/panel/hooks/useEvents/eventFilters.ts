@@ -11,10 +11,22 @@ export const DEFAULT_FILTERS: EventFilters = {
 }
 
 export function applyEventFilters(filters: EventFilters, events: StoredEvent[]) {
-  return events
-    .filter((event) => filters.sdk.includes('logs') || !isLog(event))
-    .filter((event) => filters.sdk.includes('rum') || !isRum(event))
-    .filter((event) => !filters.query || matchQuery(filters.query, event))
+  let filteredEvents = events
+
+  if (!filters.sdk.includes('logs')) {
+    filteredEvents = filteredEvents.filter((event) => !isLog(event))
+  }
+
+  if (!filters.sdk.includes('rum')) {
+    filteredEvents = filteredEvents.filter((event) => !isRum(event))
+  }
+
+  if (filters.query) {
+    const query = parseQuery(filters.query)
+    filteredEvents = filteredEvents.filter(query.match)
+  }
+
+  return filteredEvents
 }
 
 function isLog(event: StoredEvent) {
@@ -25,12 +37,16 @@ function isRum(event: StoredEvent) {
   return !isLog(event)
 }
 
-function matchQuery(query: string, event: StoredEvent) {
+function parseQuery(query: string) {
   const queryParts = query
     .split(' ')
     .filter((queryPart) => queryPart)
     .map((queryPart) => queryPart.split(':'))
-  return queryParts.every((queryPart) => matchQueryPart(event, queryPart[0], queryPart.length ? queryPart[1] : ''))
+
+  return {
+    match: (event: StoredEvent) =>
+      queryParts.every((queryPart) => matchQueryPart(event, queryPart[0], queryPart.length ? queryPart[1] : '')),
+  }
 }
 
 function matchQueryPart(json: unknown, searchKey: string, searchTerm: string, jsonPath = ''): boolean {
