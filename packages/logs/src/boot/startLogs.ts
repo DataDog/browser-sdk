@@ -1,4 +1,4 @@
-import type { Context, TelemetryEvent, RawError, Observable, PageExitEvent } from '@datadog/browser-core'
+import type { Context, TelemetryEvent, RawError, Observable, PageExitEvent, TimeStamp } from '@datadog/browser-core'
 import {
   sendToExtension,
   createPageExitObservable,
@@ -14,6 +14,7 @@ import {
   addTelemetryDebug,
   initIframeTracking,
   combine,
+  getRelativeTime,
 } from '@datadog/browser-core'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
@@ -60,7 +61,7 @@ export function startLogs(
   const pageExitObservable = createPageExitObservable(configuration)
 
   initIframeTracking(configuration, {
-    log: (log: LogsEvent) => console.log(log),
+    log: handleIframeLog,
     internal_telemetry: handleIframeTelemetry,
   })
 
@@ -94,6 +95,14 @@ export function startLogs(
       },
     })
     telemetry.handleIframeEvent(event)
+  }
+  function handleIframeLog(log: LogsEvent & Context) {
+    const startTime = getRelativeTime(log.date as TimeStamp)
+    log = combine(log, {
+      application_id: getRUMInternalContext(startTime)?.application_id,
+      session_id: session.findTrackedSession(startTime)?.id,
+    })
+    lifeCycle.notify(LifeCycleEventType.LOG_COLLECTED, log)
   }
 
   startNetworkErrorCollection(configuration, lifeCycle)
