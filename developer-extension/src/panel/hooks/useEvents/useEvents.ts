@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
+import type { SdkEvent } from '../../sdkEvent'
 import type { EventFilters } from './eventFilters'
 import { DEFAULT_FILTERS, applyEventFilters } from './eventFilters'
-import type { EventCollection, EventCollectionStrategy, StoredEvent } from './eventCollection'
+import type { EventCollection, EventCollectionStrategy } from './eventCollection'
 import { startEventCollection } from './eventCollection'
 
 const MAXIMUM_DISPLAYED_EVENTS = 100
@@ -13,7 +14,7 @@ export function useEvents({
   preserveEvents: boolean
   eventCollectionStrategy: EventCollectionStrategy
 }) {
-  const [events, setEvents] = useState<StoredEvent[]>([])
+  const [events, setEvents] = useState<SdkEvent[]>([])
   const [filters, setFilters] = useState<EventFilters>(DEFAULT_FILTERS)
 
   const eventCollectionRef = useRef<EventCollection>()

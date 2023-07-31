@@ -1,25 +1,15 @@
-import { generateUUID } from '../../../../../packages/core/src/tools/utils/stringUtils'
-import type { TelemetryEvent } from '../../../../../packages/core/src/domain/telemetry'
-import type { LogsEvent } from '../../../../../packages/logs/src/logsEvent.types'
-import type { RumEvent } from '../../../../../packages/rum-core/src/rumEvent.types'
 import { INTAKE_DOMAINS } from '../../../common/constants'
 import { onBackgroundMessage } from '../../backgroundScriptConnection'
+import type { SdkEvent } from '../../sdkEvent'
 
 const MAXIMUM_LOGGED_EVENTS = 1000
 
 export type EventCollectionStrategy = 'sdk' | 'requests'
 
-export type StoredEvent = (RumEvent | TelemetryEvent | LogsEvent) & {
-  id: string
-}
-
 export type EventCollection = ReturnType<typeof startEventCollection>
 
-export function startEventCollection(
-  strategy: EventCollectionStrategy,
-  onEventsChanged: (events: StoredEvent[]) => void
-) {
-  let events: StoredEvent[] = []
+export function startEventCollection(strategy: EventCollectionStrategy, onEventsChanged: (events: SdkEvent[]) => void) {
+  let events: SdkEvent[] = []
 
   const listenToEvents = strategy === 'requests' ? listenEventsFromRequests : listenEventsFromSdk
   const { stop } = listenToEvents((newEvents) => {
@@ -38,7 +28,7 @@ export function startEventCollection(
   }
 }
 
-function listenEventsFromRequests(callback: (events: StoredEvent[]) => void) {
+function listenEventsFromRequests(callback: (events: SdkEvent[]) => void) {
   function beforeRequestHandler(request: chrome.devtools.network.Request) {
     const url = new URL(request.request.url)
 
@@ -55,7 +45,7 @@ function listenEventsFromRequests(callback: (events: StoredEvent[]) => void) {
 
     const decodedBody = request.request.postData.text
     const rawEvents = decodedBody.split('\n')
-    const events = rawEvents.map((rawEvent) => ({ ...JSON.parse(rawEvent), id: generateUUID() }) as StoredEvent)
+    const events = rawEvents.map((rawEvent) => JSON.parse(rawEvent) as SdkEvent)
 
     callback(events)
   }
@@ -65,14 +55,14 @@ function listenEventsFromRequests(callback: (events: StoredEvent[]) => void) {
   return { stop: () => chrome.devtools.network.onRequestFinished.removeListener(beforeRequestHandler) }
 }
 
-function listenEventsFromSdk(events: (events: StoredEvent[]) => void) {
+function listenEventsFromSdk(events: (events: SdkEvent[]) => void) {
   const subscription = onBackgroundMessage.subscribe((backgroundMessage) => {
     if (backgroundMessage.type !== 'sdk-message') {
       return
     }
     const sdkMessage = backgroundMessage.message
     if (sdkMessage.type === 'logs' || sdkMessage.type === 'rum' || sdkMessage.type === 'telemetry') {
-      events([{ ...sdkMessage.payload, id: generateUUID() }])
+      events([sdkMessage.payload])
     }
   })
   return { stop: () => subscription.unsubscribe() }

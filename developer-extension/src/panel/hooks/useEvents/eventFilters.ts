@@ -1,24 +1,29 @@
-import type { StoredEvent } from './eventCollection'
+import type { SdkEvent } from '../../sdkEvent'
+import { isLogEvent, isRumEvent, isTelemetryEvent } from '../../sdkEvent'
 
 export interface EventFilters {
-  sdk: Array<'rum' | 'logs'>
+  sdk: Array<'rum' | 'logs' | 'telemetry'>
   query: string
 }
 
 export const DEFAULT_FILTERS: EventFilters = {
-  sdk: ['rum', 'logs'],
+  sdk: ['rum', 'logs', 'telemetry'],
   query: '',
 }
 
-export function applyEventFilters(filters: EventFilters, events: StoredEvent[]) {
+export function applyEventFilters(filters: EventFilters, events: SdkEvent[]) {
   let filteredEvents = events
 
   if (!filters.sdk.includes('logs')) {
-    filteredEvents = filteredEvents.filter((event) => !isLog(event))
+    filteredEvents = filteredEvents.filter((event) => !isLogEvent(event))
   }
 
   if (!filters.sdk.includes('rum')) {
-    filteredEvents = filteredEvents.filter((event) => !isRum(event))
+    filteredEvents = filteredEvents.filter((event) => !isRumEvent(event))
+  }
+
+  if (!filters.sdk.includes('telemetry')) {
+    filteredEvents = filteredEvents.filter((event) => !isTelemetryEvent(event))
   }
 
   if (filters.query) {
@@ -29,14 +34,6 @@ export function applyEventFilters(filters: EventFilters, events: StoredEvent[]) 
   return filteredEvents
 }
 
-function isLog(event: StoredEvent) {
-  return Boolean(event.status)
-}
-
-function isRum(event: StoredEvent) {
-  return !isLog(event)
-}
-
 function parseQuery(query: string) {
   const queryParts = query
     .split(' ')
@@ -44,7 +41,7 @@ function parseQuery(query: string) {
     .map((queryPart) => queryPart.split(':'))
 
   return {
-    match: (event: StoredEvent) =>
+    match: (event: SdkEvent) =>
       queryParts.every((queryPart) => matchQueryPart(event, queryPart[0], queryPart.length ? queryPart[1] : '')),
   }
 }
