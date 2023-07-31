@@ -1,4 +1,4 @@
-import type { Observable, TelemetryEvent, RawError, ContextManager, Context } from '@datadog/browser-core'
+import type { Observable, TelemetryEvent, RawError, ContextManager, Context, TimeStamp } from '@datadog/browser-core'
 import {
   sendToExtension,
   createPageExitObservable,
@@ -10,6 +10,7 @@ import {
   addTelemetryDebug,
   initIframeTracking,
   combine,
+  getRelativeTime,
 } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { startPerformanceCollection } from '../browser/performanceCollection'
@@ -80,6 +81,18 @@ export function startRum(
     })
     telemetry.handleIframeEvent(event)
   }
+  function handleIframeRumEvent(event: RumEvent & Context) {
+    const startTime = getRelativeTime(event.date as TimeStamp)
+    event = combine(event, {
+      application: {
+        id: configuration.applicationId,
+      },
+      session: {
+        id: session.findTrackedSession(startTime)?.id,
+      },
+    })
+    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, event)
+  }
 
   const reportError = (error: RawError) => {
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
@@ -93,7 +106,7 @@ export function startRum(
   })
 
   initIframeTracking(configuration, {
-    rum: (rum: RumEvent) => console.log(rum),
+    rum: handleIframeRumEvent,
     internal_telemetry: handleIframeTelemetry,
   })
   const session = !canUseEventBridge() ? startRumSessionManager(configuration, lifeCycle) : startRumSessionManagerStub()
