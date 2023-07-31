@@ -40,6 +40,7 @@ export interface Telemetry {
   setContextProvider: (provider: () => Context) => void
   observable: Observable<TelemetryEvent & Context>
   enabled: boolean
+  handleIframeEvent: (event: TelemetryEvent & Context) => void
 }
 
 const TELEMETRY_EXCLUDED_SITES: string[] = [INTAKE_SITE_US1_FED]
@@ -65,6 +66,12 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
   onRawTelemetryEventCollected = (rawEvent: RawTelemetryEvent) => {
     if (telemetryConfiguration.telemetryEnabled) {
       const event = toTelemetryEvent(telemetryService, rawEvent)
+      observable.notify(event)
+      sendToExtension('telemetry', event)
+    }
+  }
+  const onIframeTelemetryEventCollected = (event: TelemetryEvent & Context) => {
+    if (telemetryConfiguration.telemetryEnabled) {
       observable.notify(event)
       sendToExtension('telemetry', event)
     }
@@ -100,6 +107,7 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
     },
     observable,
     enabled: telemetryConfiguration.telemetryEnabled,
+    handleIframeEvent: onIframeTelemetryEventCollected,
   }
 }
 

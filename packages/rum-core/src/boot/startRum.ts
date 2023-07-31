@@ -1,4 +1,4 @@
-import type { Observable, TelemetryEvent, RawError, ContextManager } from '@datadog/browser-core'
+import type { Observable, TelemetryEvent, RawError, ContextManager, Context } from '@datadog/browser-core'
 import {
   sendToExtension,
   createPageExitObservable,
@@ -9,6 +9,7 @@ import {
   getEventBridge,
   addTelemetryDebug,
   initIframeTracking,
+  combine,
 } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { startPerformanceCollection } from '../browser/performanceCollection'
@@ -68,6 +69,17 @@ export function startRum(
       id: actionContexts.findActionId(),
     },
   }))
+  function handleIframeTelemetry(event: TelemetryEvent & Context) {
+    event = combine(event, {
+      application: {
+        id: configuration.applicationId,
+      },
+      session: {
+        id: session.findTrackedSession()?.id,
+      },
+    })
+    telemetry.handleIframeEvent(event)
+  }
 
   const reportError = (error: RawError) => {
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
@@ -82,7 +94,7 @@ export function startRum(
 
   initIframeTracking(configuration, {
     rum: (rum: RumEvent) => console.log(rum),
-    internal_telemetry: (telemetry: TelemetryEvent) => console.log(telemetry),
+    internal_telemetry: handleIframeTelemetry,
   })
   const session = !canUseEventBridge() ? startRumSessionManager(configuration, lifeCycle) : startRumSessionManagerStub()
   if (!canUseEventBridge()) {

@@ -13,6 +13,7 @@ import {
   addTelemetryConfiguration,
   addTelemetryDebug,
   initIframeTracking,
+  combine,
 } from '@datadog/browser-core'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
@@ -60,7 +61,7 @@ export function startLogs(
 
   initIframeTracking(configuration, {
     log: (log: LogsEvent) => console.log(log),
-    internal_telemetry: (telemetry: TelemetryEvent) => console.log(telemetry),
+    internal_telemetry: handleIframeTelemetry,
   })
 
   const session =
@@ -83,6 +84,17 @@ export function startLogs(
       id: (getRUMInternalContext()?.user_action as Context)?.id,
     },
   }))
+  function handleIframeTelemetry(event: TelemetryEvent & Context) {
+    event = combine(event, {
+      application: {
+        id: getRUMInternalContext()?.application_id,
+      },
+      session: {
+        id: session.findTrackedSession()?.id,
+      },
+    })
+    telemetry.handleIframeEvent(event)
+  }
 
   startNetworkErrorCollection(configuration, lifeCycle)
   startRuntimeErrorCollection(configuration, lifeCycle)
