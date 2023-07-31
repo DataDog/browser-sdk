@@ -1,7 +1,7 @@
 import { useEffect, useReducer } from 'react'
 import { EventListeners } from '../../common/eventListeners'
 import { createLogger } from '../../common/logger'
-import type { EventSource } from '../types'
+import type { EventSource } from './useEvents'
 
 const logger = createLogger('useSettings')
 
