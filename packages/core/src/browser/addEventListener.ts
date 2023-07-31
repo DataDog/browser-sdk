@@ -37,6 +37,7 @@ export const enum DOM_EVENT {
   PAUSE = 'pause',
   SECURITY_POLICY_VIOLATION = 'securitypolicyviolation',
   SELECTION_CHANGE = 'selectionchange',
+  MESSAGE = 'message',
 }
 
 interface AddEventListenerOptions {

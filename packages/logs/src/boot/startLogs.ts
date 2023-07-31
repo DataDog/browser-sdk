@@ -12,6 +12,7 @@ import {
   ErrorSource,
   addTelemetryConfiguration,
   addTelemetryDebug,
+  initIframeTracking,
 } from '@datadog/browser-core'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
@@ -29,6 +30,7 @@ import { startLogsBridge } from '../transport/startLogsBridge'
 import type { Logger } from '../domain/logger'
 import { StatusType } from '../domain/logger'
 import { startInternalContext } from '../domain/internalContext'
+import type { LogsEvent } from '../logsEvent.types'
 
 export function startLogs(
   initConfiguration: LogsInitConfiguration,
@@ -55,6 +57,11 @@ export function startLogs(
     addTelemetryDebug('Error reported to customer', { 'error.message': error.message })
   }
   const pageExitObservable = createPageExitObservable(configuration)
+
+  initIframeTracking(configuration, {
+    log: (log: LogsEvent) => console.log(log),
+    internal_telemetry: (telemetry: TelemetryEvent) => console.log(telemetry),
+  })
 
   const session =
     configuration.sessionStoreStrategyType && !canUseEventBridge() && !willSyntheticsInjectRum()

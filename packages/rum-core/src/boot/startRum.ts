@@ -8,6 +8,7 @@ import {
   canUseEventBridge,
   getEventBridge,
   addTelemetryDebug,
+  initIframeTracking,
 } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { startPerformanceCollection } from '../browser/performanceCollection'
@@ -37,6 +38,7 @@ import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
 import type { CommonContext } from '../domain/contexts/commonContext'
 import { buildCommonContext } from '../domain/contexts/commonContext'
 import { startWebVitalTelemetryDebug } from '../domain/rumEventsCollection/view/startWebVitalTelemetryDebug'
+import type { RumEvent } from '../rumEvent.types'
 import type { RecorderApi } from './rumPublicApi'
 
 export function startRum(
@@ -78,6 +80,10 @@ export function startRum(
     lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, event)
   })
 
+  initIframeTracking(configuration, {
+    rum: (rum: RumEvent) => console.log(rum),
+    internal_telemetry: (telemetry: TelemetryEvent) => console.log(telemetry),
+  })
   const session = !canUseEventBridge() ? startRumSessionManager(configuration, lifeCycle) : startRumSessionManagerStub()
   if (!canUseEventBridge()) {
     const batch = startRumBatch(

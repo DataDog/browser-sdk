@@ -61,6 +61,7 @@ export {
   createFlushController,
   FlushEvent,
   FlushReason,
+  initIframeTracking,
 } from './transport'
 export * from './tools/display'
 export * from './tools/utils/urlPolyfill'

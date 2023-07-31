@@ -55,6 +55,10 @@ export interface InitConfiguration {
   // alternate storage option
   allowFallbackToLocalStorage?: boolean | undefined
 
+  // iframe tracking options
+  allowedIframeChildOrigins?: string[] | undefined
+  allowedIframeParentOrigins?: string[] | undefined
+
   // internal options
   enableExperimentalFeatures?: string[] | undefined
   replica?: ReplicaUserConfiguration | undefined
@@ -92,6 +96,10 @@ export interface Configuration extends TransportConfiguration {
   flushTimeout: Duration
   batchMessagesLimit: number
   messageBytesLimit: number
+
+  // iframe tracking options
+  allowedIframeChildOrigins: string[]
+  allowedIframeParentOrigins: string[]
 }
 
 export function validateAndBuildConfiguration(initConfiguration: InitConfiguration): Configuration | undefined {
@@ -138,6 +146,8 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
       telemetryConfigurationSampleRate: initConfiguration.telemetryConfigurationSampleRate ?? 5,
       service: initConfiguration.service,
       silentMultipleInit: !!initConfiguration.silentMultipleInit,
+      allowedIframeChildOrigins: initConfiguration.allowedIframeChildOrigins || [],
+      allowedIframeParentOrigins: initConfiguration.allowedIframeParentOrigins || [],
 
       /**
        * beacon payload max queue size implementation is 64kb
