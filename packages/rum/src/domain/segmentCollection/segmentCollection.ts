@@ -1,8 +1,19 @@
 import type { HttpRequest, TimeoutId } from '@datadog/browser-core'
-import { isPageExitReason, ONE_SECOND, clearTimeout, setTimeout } from '@datadog/browser-core'
+import {
+  isPageExitReason,
+  ONE_SECOND,
+  clearTimeout,
+  setTimeout,
+  canUseEventBridge,
+  getEventBridge,
+  initIframeTracking,
+  combine,
+  objectValues,
+} from '@datadog/browser-core'
 import type { LifeCycle, ViewContexts, RumSessionManager, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { BrowserRecord, CreationReason, SegmentContext } from '../../types'
+import type { RawReplayPayload } from './buildReplayPayload'
 import { buildReplayPayload } from './buildReplayPayload'
 import type { FlushReason } from './segment'
 import { Segment } from './segment'
@@ -51,6 +62,7 @@ export function startSegmentCollection(
   return doStartSegmentCollection(
     lifeCycle,
     configuration,
+    sessionManager,
     () => computeSegmentContext(configuration.applicationId, sessionManager, viewContexts),
     httpRequest,
     worker
@@ -79,6 +91,7 @@ type SegmentCollectionState =
 export function doStartSegmentCollection(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
+  sessionManager: RumSessionManager,
   getSegmentContext: () => SegmentContext | undefined,
   httpRequest: HttpRequest,
   worker: DeflateWorker
@@ -87,6 +100,10 @@ export function doStartSegmentCollection(
     status: SegmentCollectionStatus.WaitingForInitialRecord,
     nextSegmentCreationReason: 'init',
   }
+
+  initIframeTracking(configuration, {
+    replay: handleIframeReplayPayload,
+  })
 
   const { unsubscribe: unsubscribeViewCreated } = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, () => {
     flushSegment('view_change')
@@ -135,12 +152,17 @@ export function doStartSegmentCollection(
         }
       },
       (data, rawSegmentBytesCount) => {
-        const payload = buildReplayPayload(data, segment.metadata, rawSegmentBytesCount)
-
-        if (isPageExitReason(segment.flushReason)) {
-          httpRequest.sendOnExit(payload)
+        const rawReplayPayload = {
+          data,
+          metadata: segment.metadata,
+          rawSegmentBytesCount,
+          flushReason: segment.flushReason,
+        }
+        if (canUseEventBridge()) {
+          const bridge = getEventBridge<'replay', RawReplayPayload>()!
+          bridge.send('replay', rawReplayPayload)
         } else {
-          httpRequest.send(payload)
+          buildAndSendPayload(rawReplayPayload)
         }
       }
     )
@@ -152,6 +174,35 @@ export function doStartSegmentCollection(
         flushSegment('segment_duration_limit')
       }, SEGMENT_DURATION_LIMIT),
     }
+  }
+
+  function buildAndSendPayload(rawReplayPayload: RawReplayPayload) {
+    const payload = buildReplayPayload(rawReplayPayload)
+    if (isPageExitReason(rawReplayPayload.flushReason)) {
+      httpRequest.sendOnExit(payload)
+    } else {
+      httpRequest.send(payload)
+    }
+  }
+
+  function handleIframeReplayPayload({ data, metadata, rawSegmentBytesCount, flushReason }: RawReplayPayload) {
+    metadata = combine(metadata, {
+      application: {
+        id: configuration.applicationId,
+      },
+      session: {
+        id: sessionManager.findTrackedSession()?.id,
+      },
+    })
+    // TODO use dedicated bridge to avoid unneeded JSON serialization
+    const values = objectValues<number>(data as any)
+    const newData = new Uint8Array(values.length)
+    let offset = 0
+    for (const value of values) {
+      newData.set([value], offset)
+      offset += 1
+    }
+    buildAndSendPayload({ data: newData, rawSegmentBytesCount, flushReason, metadata })
   }
 
   return {

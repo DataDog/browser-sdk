@@ -83,7 +83,8 @@ export function startRumSessionManagerStub(): RumSessionManager {
   const session: RumSession = {
     id: '00000000-aaaa-0000-aaaa-000000000000',
     plan: RumSessionPlan.WITHOUT_SESSION_REPLAY, // plan value should not be taken into account for mobile
-    sessionReplayAllowed: false,
+    // TODO based on configuration
+    sessionReplayAllowed: true,
     longTaskAllowed: true,
     resourceAllowed: true,
   }

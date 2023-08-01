@@ -1,5 +1,5 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { Observable, canUseEventBridge, noop, runOnReadyState, relativeNow } from '@datadog/browser-core'
+import { Observable, noop, runOnReadyState, relativeNow } from '@datadog/browser-core'
 import type {
   LifeCycle,
   ViewContexts,
@@ -50,7 +50,7 @@ export function makeRecorderApi(
 ): RecorderApi {
   const recorderStartObservable = new Observable<RelativeTime>()
 
-  if (canUseEventBridge() || !isBrowserSupported()) {
+  if (!isBrowserSupported()) {
     return {
       start: noop,
       stop: noop,

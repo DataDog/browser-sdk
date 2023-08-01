@@ -1,17 +1,21 @@
 import type { Payload } from '@datadog/browser-core'
 import { assign } from '@datadog/browser-core'
 import type { BrowserSegmentMetadata } from '../../types'
+import type { FlushReason } from './segment'
 
 export type BrowserSegmentMetadataAndSegmentSizes = BrowserSegmentMetadata & {
   raw_segment_size: number
   compressed_segment_size: number
 }
 
-export function buildReplayPayload(
-  data: Uint8Array,
-  metadata: BrowserSegmentMetadata,
+export interface RawReplayPayload {
+  data: Uint8Array
+  metadata: BrowserSegmentMetadata
   rawSegmentBytesCount: number
-): Payload {
+  flushReason: FlushReason | undefined
+}
+
+export function buildReplayPayload({ data, metadata, rawSegmentBytesCount }: RawReplayPayload): Payload {
   const formData = new FormData()
 
   formData.append(

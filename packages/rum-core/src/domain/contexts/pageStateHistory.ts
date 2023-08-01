@@ -128,7 +128,7 @@ function getPageState() {
     return PageState.HIDDEN
   }
 
-  if (document.hasFocus()) {
+  if (document.hasFocus() && document.activeElement?.tagName !== 'IFRAME') {
     return PageState.ACTIVE
   }
 
