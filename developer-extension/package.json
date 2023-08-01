@@ -22,8 +22,7 @@
     "@mantine/core": "6.0.19",
     "@mantine/hooks": "6.0.19",
     "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "react-json-view": "1.21.3"
+    "react-dom": "18.2.0"
   },
   "volta": {
     "extends": "../package.json"

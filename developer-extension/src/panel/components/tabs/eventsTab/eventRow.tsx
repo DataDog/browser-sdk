@@ -1,9 +1,10 @@
 import { Badge } from '@mantine/core'
-import React from 'react'
+import React, { useRef, useState } from 'react'
 import type { SdkEvent } from '../../../sdkEvent'
 import { isTelemetryEvent, isRumEvent } from '../../../sdkEvent'
 import { safeTruncate } from '../../../../../../packages/core/src/tools/utils/stringUtils'
 import { Json } from '../../json'
+import { LazyCollapse } from '../../lazyCollapse'
 
 const RUM_EVENT_TYPE_COLOR = {
   action: 'violet',
@@ -22,8 +23,19 @@ const LOG_STATUS_COLOR = {
 }
 
 export function EventRow({ event }: { event: SdkEvent }) {
+  const [isCollapsed, setIsCollapsed] = useState(true)
+  const collapseRef = useRef<HTMLDivElement>(null)
+
   return (
-    <tr>
+    <tr
+      onClick={(event) => {
+        if (collapseRef.current?.contains(event.target as Node)) {
+          // Ignore clicks on the collapsible area
+          return
+        }
+        setIsCollapsed((previous) => !previous)
+      }}
+    >
       <td width="20">{new Date(event.date).toLocaleTimeString()}</td>
       <td width="20">
         {isRumEvent(event) || isTelemetryEvent(event) ? (
@@ -37,7 +49,10 @@ export function EventRow({ event }: { event: SdkEvent }) {
         )}
       </td>
       <td>
-        <Json src={event} collapsed={true} name={getRumEventDescription(event)} />
+        {getRumEventDescription(event)}{' '}
+        <LazyCollapse in={!isCollapsed} ref={collapseRef}>
+          <Json value={event} defaultCollapseLevel={0} />
+        </LazyCollapse>
       </td>
     </tr>
   )

@@ -129,7 +129,7 @@ function Entry({ name, value }: { name: string; value: any }) {
         </>
       ) : value ? (
         <>
-          {name}: <Json name="" src={value} collapsed={1} />
+          {name}: <Json value={value} />
         </>
       ) : (
         <>{name}: (empty)</>
