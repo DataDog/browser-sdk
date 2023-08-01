@@ -1,7 +1,7 @@
 import type { ClocksState } from '../../tools/utils/timeUtils'
 
 export interface ErrorWithCause extends Error {
-  cause?: Error
+  cause?: unknown
 }
 
 export type RawErrorCause = {

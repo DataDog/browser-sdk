@@ -1,33 +1,28 @@
 import type { SdkEvent } from '../../sdkEvent'
 import type { RumViewEvent } from '../../../../../packages/rum-core/src/rumEvent.types'
-import { isLogEvent, isRumEvent, isRumViewEvent, isTelemetryEvent } from '../../sdkEvent'
+import { isRumViewEvent } from '../../sdkEvent'
+import type { FacetRegistry } from './facetRegistry'
 
 export interface EventFilters {
-  sdk: Array<'rum' | 'logs' | 'telemetry'>
+  excludedFacetValues: ExcludedFacetValues
   query: string
   outdatedVersions: boolean
 }
 
+export interface ExcludedFacetValues {
+  [facetPath: string]: string[]
+}
+
 export const DEFAULT_FILTERS: EventFilters = {
-  sdk: ['rum', 'logs', 'telemetry'],
+  excludedFacetValues: {},
   query: '',
   outdatedVersions: false,
 }
 
-export function applyEventFilters(filters: EventFilters, events: SdkEvent[]) {
+export function applyEventFilters(filters: EventFilters, events: SdkEvent[], facetRegistry: FacetRegistry) {
   let filteredEvents = events
 
-  if (!filters.sdk.includes('logs')) {
-    filteredEvents = filteredEvents.filter((event) => !isLogEvent(event))
-  }
-
-  if (!filters.sdk.includes('rum')) {
-    filteredEvents = filteredEvents.filter((event) => !isRumEvent(event))
-  }
-
-  if (!filters.sdk.includes('telemetry')) {
-    filteredEvents = filteredEvents.filter((event) => !isTelemetryEvent(event))
-  }
+  filteredEvents = filterExcludedFacets(filteredEvents, filters.excludedFacetValues, facetRegistry)
 
   if (filters.query) {
     const query = parseQuery(filters.query)
@@ -39,6 +34,20 @@ export function applyEventFilters(filters: EventFilters, events: SdkEvent[]) {
   }
 
   return filteredEvents
+}
+
+function filterExcludedFacets(
+  events: SdkEvent[],
+  excludedFacetValues: ExcludedFacetValues,
+  facetRegistry: FacetRegistry
+): SdkEvent[] {
+  return events.filter(
+    (event) =>
+      !Object.entries(excludedFacetValues).some(([facetPath, excludedValues]) => {
+        const value = facetRegistry.getFacetValueForEvent(event, facetPath)
+        return value !== undefined && excludedValues.includes(value)
+      })
+  )
 }
 
 function filterOutdatedVersions(events: SdkEvent[]): SdkEvent[] {
