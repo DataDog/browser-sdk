@@ -1,6 +1,6 @@
 import { INTAKE_DOMAINS } from '../../../common/constants'
 import { onBackgroundMessage } from '../../backgroundScriptConnection'
-import type { SdkEvent } from '../../sdkEvent'
+import { isRumViewEvent, type SdkEvent } from '../../sdkEvent'
 
 const MAXIMUM_LOGGED_EVENTS = 1000
 
@@ -13,9 +13,7 @@ export function startEventCollection(strategy: EventCollectionStrategy, onEvents
 
   const listenToEvents = strategy === 'requests' ? listenEventsFromRequests : listenEventsFromSdk
   const { stop } = listenToEvents((newEvents) => {
-    events = [...newEvents, ...events]
-      .sort((first: any, second: any) => second.date - first.date)
-      .slice(0, MAXIMUM_LOGGED_EVENTS)
+    events = [...newEvents, ...events].sort(compareEvents).slice(0, MAXIMUM_LOGGED_EVENTS)
     onEventsChanged(events)
   })
 
@@ -26,6 +24,17 @@ export function startEventCollection(strategy: EventCollectionStrategy, onEvents
     },
     stop,
   }
+}
+
+function compareEvents(a: SdkEvent, b: SdkEvent) {
+  // Sort events chronologically
+  if (a.date !== b.date) {
+    return b.date - a.date
+  }
+
+  // If two events have the same date, make sure to display View events last. This ensures that View
+  // updates are collocated in the list (no other event are present between two updates)
+  return (isRumViewEvent(a) as any) - (isRumViewEvent(b) as any)
 }
 
 function listenEventsFromRequests(callback: (events: SdkEvent[]) => void) {

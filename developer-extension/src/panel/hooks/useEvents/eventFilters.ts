@@ -1,14 +1,17 @@
 import type { SdkEvent } from '../../sdkEvent'
-import { isLogEvent, isRumEvent, isTelemetryEvent } from '../../sdkEvent'
+import type { RumViewEvent } from '../../../../../packages/rum-core/src/rumEvent.types'
+import { isLogEvent, isRumEvent, isRumViewEvent, isTelemetryEvent } from '../../sdkEvent'
 
 export interface EventFilters {
   sdk: Array<'rum' | 'logs' | 'telemetry'>
   query: string
+  outdatedVersions: boolean
 }
 
 export const DEFAULT_FILTERS: EventFilters = {
   sdk: ['rum', 'logs', 'telemetry'],
   query: '',
+  outdatedVersions: false,
 }
 
 export function applyEventFilters(filters: EventFilters, events: SdkEvent[]) {
@@ -31,7 +34,32 @@ export function applyEventFilters(filters: EventFilters, events: SdkEvent[]) {
     filteredEvents = filteredEvents.filter(query.match)
   }
 
+  if (!filters.outdatedVersions) {
+    filteredEvents = filterOutdatedVersions(filteredEvents)
+  }
+
   return filteredEvents
+}
+
+function filterOutdatedVersions(events: SdkEvent[]): SdkEvent[] {
+  const upToDateEvents = new Map<string, RumViewEvent>()
+  const outdatedEvents = new Set<SdkEvent>()
+
+  for (const event of events) {
+    if (isRumViewEvent(event)) {
+      const otherEvent = upToDateEvents.get(event.view.id)
+      if (!otherEvent) {
+        upToDateEvents.set(event.view.id, event)
+      } else if (otherEvent._dd.document_version < event._dd.document_version) {
+        upToDateEvents.set(event.view.id, event)
+        outdatedEvents.add(otherEvent)
+      } else {
+        outdatedEvents.add(event)
+      }
+    }
+  }
+
+  return events.filter((event) => !outdatedEvents.has(event))
 }
 
 function parseQuery(query: string) {

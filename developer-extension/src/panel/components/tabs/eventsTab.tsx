@@ -1,11 +1,11 @@
-import { Badge, Button, Chip, Group, Table, TextInput } from '@mantine/core'
+import { Badge, Button, Checkbox, Chip, Group, Table, TextInput } from '@mantine/core'
 import React from 'react'
 import { safeTruncate } from '../../../../../packages/core/src/tools/utils/stringUtils'
 import type { EventFilters } from '../../hooks/useEvents'
 import { flushEvents } from '../../flushEvents'
 import { Json } from '../json'
 import { TabBase } from '../tabBase'
-import { isRumEvent, isTelemetryEvent, type SdkEvent } from '../../sdkEvent'
+import { isRumEvent, isRumViewEvent, isTelemetryEvent, type SdkEvent } from '../../sdkEvent'
 
 const RUM_EVENT_TYPE_COLOR = {
   action: 'violet',
@@ -30,19 +30,6 @@ interface EventTabProps {
   clear: () => void
 }
 
-const eventRenderingKeys = new WeakMap<SdkEvent, number>()
-let nextEventRenderingKey = 1
-
-function getEventRenderingKey(event: SdkEvent): number {
-  let key = eventRenderingKeys.get(event)
-  if (key === undefined) {
-    key = nextEventRenderingKey
-    nextEventRenderingKey += 1
-    eventRenderingKeys.set(event, key)
-  }
-  return key
-}
-
 export function EventTab({ events, filters, onFiltered, clear }: EventTabProps) {
   return (
     <TabBase
@@ -57,6 +44,11 @@ export function EventTab({ events, filters, onFiltered, clear }: EventTabProps) 
             <Chip value="logs">Logs</Chip>
             <Chip value="telemetry">Telemetry</Chip>
           </Chip.Group>
+          <Checkbox
+            label="Show only the latest View event"
+            checked={!filters.outdatedVersions}
+            onChange={(e) => onFiltered({ ...filters, outdatedVersions: !e.target.checked })}
+          />
           <TextInput
             placeholder="Filter your events, syntax: 'type:view application.id:40d8ca4b'"
             value={filters.query}
@@ -77,7 +69,7 @@ export function EventTab({ events, filters, onFiltered, clear }: EventTabProps) 
       <Table striped verticalSpacing="xs" fontSize="xs">
         <tbody>
           {events.map((event) => (
-            <tr key={getEventRenderingKey(event)}>
+            <tr key={getEventRenderingKey(event, !filters.outdatedVersions)}>
               <td width="20">{new Date(event.date).toLocaleTimeString()}</td>
               <td width="20">
                 {isRumEvent(event) || isTelemetryEvent(event) ? (
@@ -99,6 +91,26 @@ export function EventTab({ events, filters, onFiltered, clear }: EventTabProps) 
       </Table>
     </TabBase>
   )
+}
+
+const eventRenderingKeys = new WeakMap<SdkEvent, number>()
+let nextEventRenderingKey = 1
+
+function getEventRenderingKey(event: SdkEvent, excludeOutdatedVersions: boolean): number | string {
+  // If we are showing only the latest view updates, return the view.id as key so the component is
+  // simply updated and not recreated when a new update comes up.
+  if (isRumViewEvent(event) && excludeOutdatedVersions) {
+    return event.view.id
+  }
+
+  // Else return an ever-increasing id identifying each event instance.
+  let key = eventRenderingKeys.get(event)
+  if (key === undefined) {
+    key = nextEventRenderingKey
+    nextEventRenderingKey += 1
+    eventRenderingKeys.set(event, key)
+  }
+  return key
 }
 
 function getRumEventDescription(event: SdkEvent): string | undefined {
