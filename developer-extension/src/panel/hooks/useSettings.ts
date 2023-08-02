@@ -1,7 +1,7 @@
 import { useEffect, useReducer } from 'react'
 import { EventListeners } from '../../common/eventListeners'
 import { createLogger } from '../../common/logger'
-import type { EventSource } from './useEvents'
+import type { EventCollectionStrategy } from './useEvents'
 
 const logger = createLogger('useSettings')
 
@@ -11,7 +11,7 @@ export interface Settings {
   blockIntakeRequests: boolean
   autoFlush: boolean
   preserveEvents: boolean
-  eventSource: EventSource
+  eventCollectionStrategy: EventCollectionStrategy
 }
 
 const DEFAULT_SETTINGS: Readonly<Settings> = {
@@ -20,7 +20,7 @@ const DEFAULT_SETTINGS: Readonly<Settings> = {
   blockIntakeRequests: false,
   autoFlush: false,
   preserveEvents: false,
-  eventSource: 'sdk',
+  eventCollectionStrategy: 'sdk',
 }
 
 let settings: Settings | undefined

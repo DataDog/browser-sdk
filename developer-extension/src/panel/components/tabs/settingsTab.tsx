@@ -2,14 +2,16 @@ import { Badge, Box, Checkbox, Code, Group, Select, Space, Text } from '@mantine
 import React from 'react'
 import { DevServerStatus, useDevServerStatus } from '../../hooks/useDevServerStatus'
 import { useSettings } from '../../hooks/useSettings'
-import type { EventSource } from '../../hooks/useEvents'
+import type { EventCollectionStrategy } from '../../hooks/useEvents'
 import { Columns } from '../columns'
 import { TabBase } from '../tabBase'
 
 export function SettingsTab() {
   const devServerStatus = useDevServerStatus()
-  const [{ useDevBundles, useRumSlim, blockIntakeRequests, preserveEvents, eventSource, autoFlush }, setSetting] =
-    useSettings()
+  const [
+    { useDevBundles, useRumSlim, blockIntakeRequests, preserveEvents, eventCollectionStrategy, autoFlush },
+    setSetting,
+  ] = useSettings()
 
   return (
     <TabBase>
@@ -85,14 +87,14 @@ export function SettingsTab() {
             <SettingItem
               input={
                 <Group>
-                  <Text size="sm">Events source:</Text>
+                  <Text size="sm">Event collection strategy:</Text>
                   <Select
                     data={[
                       { label: 'Requests', value: 'requests' },
                       { label: 'SDK', value: 'sdk' },
                     ]}
-                    value={eventSource}
-                    onChange={(value) => setSetting('eventSource', value as EventSource)}
+                    value={eventCollectionStrategy}
+                    onChange={(value) => setSetting('eventCollectionStrategy', value as EventCollectionStrategy)}
                     color="violet"
                     sx={{ flex: 1 }}
                   />
@@ -100,13 +102,13 @@ export function SettingsTab() {
               }
               description={
                 <>
-                  {eventSource === 'requests' && (
+                  {eventCollectionStrategy === 'requests' && (
                     <>
                       Collect events by listening to intake HTTP requests: events need to be flushed to be collected.
                       Any SDK setup is supported.
                     </>
                   )}
-                  {eventSource === 'sdk' && (
+                  {eventCollectionStrategy === 'sdk' && (
                     <>
                       Collect events by listening to messages sent from the SDK: events are available as soon as they
                       happen. Only newer versions of the SDK are supported.

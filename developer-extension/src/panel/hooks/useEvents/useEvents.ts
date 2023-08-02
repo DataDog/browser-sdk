@@ -1,12 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
 import type { EventFilters } from './eventFilters'
 import { DEFAULT_FILTERS, applyEventFilters } from './eventFilters'
-import type { EventCollection, EventSource, StoredEvent } from './eventCollection'
+import type { EventCollection, EventCollectionStrategy, StoredEvent } from './eventCollection'
 import { startEventCollection } from './eventCollection'
 
 const MAXIMUM_DISPLAYED_EVENTS = 100
 
-export function useEvents({ preserveEvents, eventSource }: { preserveEvents: boolean; eventSource: EventSource }) {
+export function useEvents({
+  preserveEvents,
+  eventCollectionStrategy,
+}: {
+  preserveEvents: boolean
+  eventCollectionStrategy: EventCollectionStrategy
+}) {
   const [events, setEvents] = useState<StoredEvent[]>([])
   const [filters, setFilters] = useState<EventFilters>(DEFAULT_FILTERS)
 
@@ -17,10 +23,10 @@ export function useEvents({ preserveEvents, eventSource }: { preserveEvents: boo
   }
 
   useEffect(() => {
-    const eventCollection = startEventCollection(eventSource, setEvents)
+    const eventCollection = startEventCollection(eventCollectionStrategy, setEvents)
     eventCollectionRef.current = eventCollection
     return () => eventCollection.stop()
-  }, [eventSource])
+  }, [eventCollectionStrategy])
 
   useEffect(() => {
     if (!preserveEvents) {

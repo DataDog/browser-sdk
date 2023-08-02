@@ -7,7 +7,7 @@ import { onBackgroundMessage } from '../../backgroundScriptConnection'
 
 const MAXIMUM_LOGGED_EVENTS = 1000
 
-export type EventSource = 'sdk' | 'requests'
+export type EventCollectionStrategy = 'sdk' | 'requests'
 
 export type StoredEvent = (RumEvent | TelemetryEvent | LogsEvent) & {
   id: string
@@ -15,10 +15,13 @@ export type StoredEvent = (RumEvent | TelemetryEvent | LogsEvent) & {
 
 export type EventCollection = ReturnType<typeof startEventCollection>
 
-export function startEventCollection(eventSource: EventSource, onEventsChanged: (events: StoredEvent[]) => void) {
+export function startEventCollection(
+  strategy: EventCollectionStrategy,
+  onEventsChanged: (events: StoredEvent[]) => void
+) {
   let events: StoredEvent[] = []
 
-  const listenToEvents = eventSource === 'requests' ? listenEventsFromRequests : listenEventsFromSdk
+  const listenToEvents = strategy === 'requests' ? listenEventsFromRequests : listenEventsFromSdk
   const { stop } = listenToEvents((newEvents) => {
     events = [...newEvents, ...events]
       .sort((first: any, second: any) => second.date - first.date)
