@@ -1,13 +1,13 @@
 import { Table } from '@mantine/core'
 import React from 'react'
 import type { EventFilters } from '../../../hooks/useEvents'
-import type { SdkEvent } from '../../../sdkEvent';
+import type { SdkEvent } from '../../../sdkEvent'
 import { isRumViewEvent } from '../../../sdkEvent'
 import { EventRow } from './eventRow'
 
 export function EventsList({ events, filters }: { events: SdkEvent[]; filters: EventFilters }) {
   return (
-    <Table striped verticalSpacing="xs" fontSize="xs">
+    <Table striped verticalSpacing="xs">
       <tbody>
         {events.map((event) => (
           <EventRow key={getEventRenderingKey(event, !filters.outdatedVersions)} event={event} />
