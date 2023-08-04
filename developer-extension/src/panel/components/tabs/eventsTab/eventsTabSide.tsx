@@ -6,18 +6,18 @@ import { FacetList } from './facetList'
 export function EventsTabSide({
   facetRegistry,
   filters,
-  onFiltered,
+  onFiltersChange,
 }: {
   facetRegistry?: FacetRegistry
   filters: EventFilters
-  onFiltered: (filters: EventFilters) => void
+  onFiltersChange: (filters: EventFilters) => void
 }) {
   return (
     <Box ml="md">
       <Checkbox
         label={'Show only the latest View\xa0event'}
         checked={!filters.outdatedVersions}
-        onChange={(e) => onFiltered({ ...filters, outdatedVersions: !e.target.checked })}
+        onChange={(e) => onFiltersChange({ ...filters, outdatedVersions: !e.target.checked })}
         mb="sm"
       />
 
@@ -26,7 +26,7 @@ export function EventsTabSide({
           facetRegistry={facetRegistry}
           excludedFacetValues={filters.excludedFacetValues}
           onExcludedFacetValuesChange={(newExcludedFacetValues) =>
-            onFiltered({ ...filters, excludedFacetValues: newExcludedFacetValues })
+            onFiltersChange({ ...filters, excludedFacetValues: newExcludedFacetValues })
           }
         />
       )}
