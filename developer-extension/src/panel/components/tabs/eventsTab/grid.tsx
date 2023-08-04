@@ -1,55 +1,92 @@
-import { Box, Text, useMantineTheme } from '@mantine/core'
-import type { ComponentPropsWithoutRef, ReactNode } from 'react'
-import React from 'react'
+import type { BoxProps } from '@mantine/core'
+import { Box, Text } from '@mantine/core'
+import type { ComponentPropsWithoutRef, ForwardedRef, ReactNode } from 'react'
+import React, { forwardRef } from 'react'
+import { BORDER_RADIUS, separatorBorder } from '../../../uiUtils'
 
-const HORIZONTAL_PADDING = 12
-const VERTICAL_PADDING = 6
+export const HORIZONTAL_PADDING = 16
+export const VERTICAL_PADDING = 6
 
 export function Grid({ children, columnsCount }: { children: ReactNode; columnsCount: number }) {
   return (
     <Box
       sx={{
         display: 'grid',
-        gridTemplateColumns: `${Array.from({ length: columnsCount - 1 }, () => 'auto').join(' ')} 1fr`,
+        gridTemplateColumns: `${Array.from({ length: columnsCount - 1 }, () => 'auto').join(' ')} minmax(200px, 1fr)`,
       }}
+      mx="md"
     >
       {children}
     </Box>
   )
 }
 
-Grid.HeaderCell = function ({ children }: { children: ReactNode }) {
+Grid.HeaderCell = forwardRef(function (
+  { children, ...props }: { children: ReactNode } & BoxProps & ComponentPropsWithoutRef<'div'>,
+  ref: ForwardedRef<HTMLDivElement>
+) {
   return (
-    <Grid.Cell>
+    <Grid.Cell
+      ref={ref}
+      {...props}
+      sx={(theme) => ({
+        borderTop: separatorBorder(theme),
+        ':first-of-type': { borderTopLeftRadius: BORDER_RADIUS },
+        ':last-of-type': { borderTopRightRadius: BORDER_RADIUS },
+        cursor: props.onClick ? 'pointer' : 'default',
+      })}
+    >
       <Text weight="bold">{children}</Text>
     </Grid.Cell>
   )
-}
+})
 
-Grid.Cell = function ({ children, center }: { children: ReactNode; center?: boolean }) {
-  const theme = useMantineTheme()
-  const borderColor = theme.colorScheme === 'dark' ? theme.colors.dark[4] : theme.colors.gray[3]
+Grid.Cell = forwardRef(function (
+  {
+    children,
+    center,
+    ...props
+  }: { children: ReactNode; center?: boolean } & BoxProps & ComponentPropsWithoutRef<'div'>,
+  ref: ForwardedRef<HTMLDivElement>
+) {
   return (
     <Box
-      sx={{
-        borderBottom: `1px solid ${borderColor}`,
-        paddingLeft: HORIZONTAL_PADDING,
-        paddingTop: VERTICAL_PADDING,
-        paddingBottom: VERTICAL_PADDING,
-        ':last-child': {
-          paddingRight: HORIZONTAL_PADDING,
-        },
-        textAlign: center ? 'center' : undefined,
-      }}
+      ref={ref}
+      {...props}
+      sx={[
+        (theme) => ({
+          position: 'relative',
+          borderBottom: separatorBorder(theme),
+          paddingLeft: HORIZONTAL_PADDING / 2,
+          paddingRight: HORIZONTAL_PADDING / 2,
+          paddingTop: VERTICAL_PADDING,
+          paddingBottom: VERTICAL_PADDING,
+          ':first-of-type': {
+            borderLeft: separatorBorder(theme),
+            paddingLeft: HORIZONTAL_PADDING,
+          },
+          ':last-of-type': {
+            borderRight: separatorBorder(theme),
+            paddingRight: HORIZONTAL_PADDING,
+          },
+          textAlign: center ? 'center' : undefined,
+          cursor: props.onClick ? 'pointer' : 'default',
+        }),
+        ...(Array.isArray(props.sx) ? props.sx : [props.sx]),
+      ]}
     >
       {children}
     </Box>
   )
-}
+})
 
-Grid.Row = function ({ children, ...props }: { children: ReactNode } & ComponentPropsWithoutRef<'div'>) {
+Grid.Row = forwardRef(function (
+  { children, ...props }: { children: ReactNode } & ComponentPropsWithoutRef<'div'>,
+  ref: ForwardedRef<HTMLDivElement>
+) {
   return (
     <Box
+      ref={ref}
       sx={{
         display: 'contents',
         cursor: props.onClick ? 'pointer' : 'default',
@@ -59,4 +96,4 @@ Grid.Row = function ({ children, ...props }: { children: ReactNode } & Component
       {children}
     </Box>
   )
-}
+})

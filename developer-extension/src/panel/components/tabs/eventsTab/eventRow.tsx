@@ -1,4 +1,4 @@
-import { Badge, Box } from '@mantine/core'
+import { Badge, Box, Menu } from '@mantine/core'
 import type { ReactNode } from 'react'
 import React, { useRef, useState } from 'react'
 import type { TelemetryEvent } from '../../../../../../packages/core/src/domain/telemetry'
@@ -15,7 +15,10 @@ import { isTelemetryEvent, isLogEvent, isRumEvent } from '../../../sdkEvent'
 import { formatDate, formatDuration } from '../../../formatNumber'
 import { defaultFormatValue, Json } from '../../json'
 import { LazyCollapse } from '../../lazyCollapse'
+import type { FacetRegistry } from '../../../hooks/useEvents'
 import { Grid } from './grid'
+import type { EventListColumn } from './columnUtils'
+import { includesColumn } from './columnUtils'
 
 const RUM_EVENT_TYPE_COLOR = {
   action: 'violet',
@@ -46,46 +49,106 @@ const RESOURCE_TYPE_LABELS: Record<string, string | undefined> = {
   other: 'Other',
 }
 
-export const EventRow = React.memo(({ event }: { event: SdkEvent }) => {
-  const [isCollapsed, setIsCollapsed] = useState(true)
-  const jsonRef = useRef<HTMLDivElement>(null)
+export const EventRow = React.memo(
+  ({
+    event,
+    columns,
+    facetRegistry,
+    onAddColumn,
+  }: {
+    event: SdkEvent
+    columns: EventListColumn[]
+    facetRegistry: FacetRegistry
+    onAddColumn: (newColumn: EventListColumn) => void
+  }) => {
+    const [isCollapsed, setIsCollapsed] = useState(true)
+    const jsonRef = useRef<HTMLDivElement>(null)
 
-  return (
-    <Grid.Row
-      onClick={(event) => {
-        if (jsonRef.current?.contains(event.target as Node)) {
-          // Ignore clicks on the collapsible area
-          return
-        }
-        setIsCollapsed((previous) => !previous)
-      }}
-    >
-      <Grid.Cell>{formatDate(event.date)}</Grid.Cell>
-      <Grid.Cell center>
-        {isRumEvent(event) || isTelemetryEvent(event) ? (
-          <Badge variant="outline" color={RUM_EVENT_TYPE_COLOR[event.type]}>
-            {event.type}
-          </Badge>
-        ) : (
-          <Badge variant="dot" color={LOG_STATUS_COLOR[event.status]}>
-            {event.origin as string} {event.status as string}
-          </Badge>
-        )}
-      </Grid.Cell>
-      <Grid.Cell>
-        <EventDescription event={event} />
-        <LazyCollapse
-          in={!isCollapsed}
-          sx={{
-            cursor: 'default',
-          }}
-        >
-          <Json ref={jsonRef} value={event} defaultCollapseLevel={0} formatValue={formatValue} />
-        </LazyCollapse>
-      </Grid.Cell>
-    </Grid.Row>
-  )
-})
+    function getMenuItemsForPath(path: string) {
+      const newColumn: EventListColumn = { type: 'field', path }
+      if (!path || includesColumn(columns, newColumn)) {
+        return null
+      }
+      return (
+        <>
+          <Menu.Item
+            onClick={() => {
+              onAddColumn(newColumn)
+            }}
+          >
+            Add column
+          </Menu.Item>
+        </>
+      )
+    }
+
+    return (
+      <Grid.Row>
+        {columns.map((column): React.ReactElement => {
+          switch (column.type) {
+            case 'date':
+              return <Grid.Cell key="date">{formatDate(event.date)}</Grid.Cell>
+            case 'description':
+              return (
+                <Grid.Cell
+                  key="description"
+                  onClick={(event) => {
+                    if (jsonRef.current?.contains(event.target as Node)) {
+                      // Ignore clicks on the collapsible area
+                      return
+                    }
+                    setIsCollapsed((previous) => !previous)
+                  }}
+                >
+                  <EventDescription event={event} />
+                  <LazyCollapse in={!isCollapsed}>
+                    <Json
+                      ref={jsonRef}
+                      value={event}
+                      defaultCollapseLevel={0}
+                      getMenuItemsForPath={getMenuItemsForPath}
+                      formatValue={formatValue}
+                      mt="xs"
+                      sx={{ display: 'block' }}
+                    />
+                  </LazyCollapse>
+                </Grid.Cell>
+              )
+            case 'type':
+              return (
+                <Grid.Cell key="type" center>
+                  {isRumEvent(event) || isTelemetryEvent(event) ? (
+                    <Badge variant="outline" color={RUM_EVENT_TYPE_COLOR[event.type]}>
+                      {event.type}
+                    </Badge>
+                  ) : (
+                    <Badge variant="dot" color={LOG_STATUS_COLOR[event.status]}>
+                      {event.origin as string} {event.status as string}
+                    </Badge>
+                  )}
+                </Grid.Cell>
+              )
+            case 'field': {
+              const value = facetRegistry.getFieldValueForEvent(event, column.path)
+              return (
+                <Grid.Cell key={`field-${column.path}`}>
+                  {value !== undefined && (
+                    <Json
+                      value={value}
+                      defaultCollapseLevel={0}
+                      getMenuItemsForPath={(path) => getMenuItemsForPath(path ? `${column.path}.${path}` : column.path)}
+                      formatValue={(path, value) => formatValue(path ? `${column.path}.${path}` : column.path, value)}
+                    />
+                  )}
+                </Grid.Cell>
+              )
+            }
+          }
+        })}
+      </Grid.Row>
+    )
+  }
+)
 
 function formatValue(path: string, value: unknown) {
   if (typeof value === 'number') {
