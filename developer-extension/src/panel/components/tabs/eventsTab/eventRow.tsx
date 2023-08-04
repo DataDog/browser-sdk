@@ -15,6 +15,7 @@ import { isTelemetryEvent, isLogEvent, isRumEvent } from '../../../sdkEvent'
 import { formatDate, formatDuration } from '../../../formatNumber'
 import { defaultFormatValue, Json } from '../../json'
 import { LazyCollapse } from '../../lazyCollapse'
+import { Grid } from './grid'
 
 const RUM_EVENT_TYPE_COLOR = {
   action: 'violet',
@@ -45,13 +46,12 @@ const RESOURCE_TYPE_LABELS: Record<string, string | undefined> = {
   other: 'Other',
 }
 
-export function EventRow({ event }: { event: SdkEvent }) {
+export const EventRow = React.memo(({ event }: { event: SdkEvent }) => {
   const [isCollapsed, setIsCollapsed] = useState(true)
   const jsonRef = useRef<HTMLDivElement>(null)
 
   return (
-    <Box
-      component="tr"
+    <Grid.Row
       onClick={(event) => {
         if (jsonRef.current?.contains(event.target as Node)) {
           // Ignore clicks on the collapsible area
@@ -59,10 +59,9 @@ export function EventRow({ event }: { event: SdkEvent }) {
         }
         setIsCollapsed((previous) => !previous)
       }}
-      sx={{ cursor: 'pointer' }}
     >
-      <td width="20">{formatDate(event.date)}</td>
-      <td width="20">
+      <Grid.Cell>{formatDate(event.date)}</Grid.Cell>
+      <Grid.Cell center>
         {isRumEvent(event) || isTelemetryEvent(event) ? (
           <Badge variant="outline" color={RUM_EVENT_TYPE_COLOR[event.type]}>
             {event.type}
@@ -72,8 +71,8 @@ export function EventRow({ event }: { event: SdkEvent }) {
             {event.origin as string} {event.status as string}
           </Badge>
         )}
-      </td>
-      <td>
+      </Grid.Cell>
+      <Grid.Cell>
         <EventDescription event={event} />
         <LazyCollapse
           in={!isCollapsed}
@@ -83,10 +82,10 @@ export function EventRow({ event }: { event: SdkEvent }) {
         >
           <Json ref={jsonRef} value={event} defaultCollapseLevel={0} formatValue={formatValue} />
         </LazyCollapse>
-      </td>
-    </Box>
+      </Grid.Cell>
+    </Grid.Row>
   )
-}
+})
 
 function formatValue(path: string, value: unknown) {
   if (typeof value === 'number') {
