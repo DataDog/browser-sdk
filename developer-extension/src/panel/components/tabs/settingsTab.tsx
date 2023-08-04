@@ -87,7 +87,7 @@ export function SettingsTab() {
             <SettingItem
               input={
                 <Group>
-                  <Text size="sm">Event collection strategy:</Text>
+                  <Text>Event collection strategy:</Text>
                   <Select
                     data={[
                       { label: 'Requests', value: 'requests' },
@@ -140,11 +140,7 @@ function SettingItem({ description, input }: { description?: React.ReactNode; in
   return (
     <Box>
       {input}
-      {description && (
-        <Text size="sm" c="dimmed">
-          {description}
-        </Text>
-      )}
+      {description && <Text c="dimmed">{description}</Text>}
       <Space h="md" />
     </Box>
   )

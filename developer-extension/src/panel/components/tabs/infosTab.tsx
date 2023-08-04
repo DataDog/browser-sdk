@@ -122,7 +122,7 @@ function AppLink({
 
 function Entry({ name, value }: { name: string; value: any }) {
   return (
-    <Text size="sm" component="div">
+    <Text>
       {typeof value === 'string' ? (
         <>
           {name}: {value}
