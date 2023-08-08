@@ -1,5 +1,5 @@
+import type { DeflateWorkerAction, DeflateWorkerResponse } from '@datadog/browser-core'
 import { addTelemetryError, display, includes, addEventListener, setTimeout, ONE_SECOND } from '@datadog/browser-core'
-import type { DeflateWorkerAction, DeflateWorkerResponse } from '@datadog/browser-worker'
 import { workerString } from '@datadog/browser-worker/string'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 
