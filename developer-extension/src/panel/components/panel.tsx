@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Tabs, Text } from '@mantine/core'
 import { datadogRum } from '@datadog/browser-rum'
 
@@ -7,17 +7,11 @@ import { useAutoFlushEvents } from '../hooks/useAutoFlushEvents'
 import { useNetworkRules } from '../hooks/useNetworkRules'
 import type { Settings } from '../hooks/useSettings'
 import { useSettings } from '../hooks/useSettings'
+import { DEFAULT_PANEL_TAB, PanelTabs } from '../../common/constants'
 import { SettingsTab } from './tabs/settingsTab'
 import { InfosTab } from './tabs/infosTab'
 import { EventTab } from './tabs/eventsTab'
 import { ReplayTab } from './tabs/replayTab'
-
-const enum PanelTabs {
-  Events = 'events',
-  Infos = 'infos',
-  Settings = 'settings',
-  Replay = 'replay',
-}
 
 export function Panel() {
   const [settings] = useSettings()
@@ -27,17 +21,18 @@ export function Panel() {
 
   const { events, filters, setFilters, clear } = useEvents(settings)
 
-  const [activeTab, setActiveTab] = useState<string | null>(PanelTabs.Events)
-  useEffect(() => {
+  const [activeTab, setActiveTab] = useState<string | null>(DEFAULT_PANEL_TAB)
+  function updateActiveTab(activeTab: string | null) {
+    setActiveTab(activeTab)
     activeTab && datadogRum.startView(activeTab)
-  }, [activeTab])
+  }
 
   return (
     <Tabs
       color="violet"
       value={activeTab}
       sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}
-      onTabChange={setActiveTab}
+      onTabChange={updateActiveTab}
     >
       <Tabs.List className="dd-privacy-allow">
         <Tabs.Tab value={PanelTabs.Events}>Events</Tabs.Tab>
