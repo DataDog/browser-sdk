@@ -15,35 +15,45 @@ const BUILD_MODES = [
   'canary',
 ]
 
-let buildMode
-if (process.env.BUILD_MODE) {
-  if (BUILD_MODES.includes(process.env.BUILD_MODE)) {
-    buildMode = process.env.BUILD_MODE
-  } else {
-    console.log(`Invalid build mode "${process.env.BUILD_MODE}". Possible build modes are: ${BUILD_MODES.join(', ')}`)
-    process.exit(1)
-  }
-} else {
-  buildMode = BUILD_MODES[0]
-}
+const buildEnvCache = new Map()
 
-let sdkVersion
-switch (buildMode) {
-  case 'release':
-    sdkVersion = lernaJson.version
-    break
-  case 'canary': {
-    const commitSha1 = execSync('git rev-parse HEAD').toString().trim()
-    // TODO when tags would allow '+' characters
-    //  use build separator (+) instead of prerelease separator (-)
-    sdkVersion = `${lernaJson.version}-${commitSha1}`
-    break
-  }
-  default:
-    sdkVersion = 'dev'
-    break
+const buildEnvFactories = {
+  SDK_VERSION: () => {
+    switch (getBuildMode()) {
+      case 'release':
+        return lernaJson.version
+      case 'canary': {
+        const commitSha1 = execSync('git rev-parse HEAD').toString().trim()
+        // TODO when tags would allow '+' characters
+        //  use build separator (+) instead of prerelease separator (-)
+        return `${lernaJson.version}-${commitSha1}`
+      }
+      default:
+        return 'dev'
+    }
+  },
 }
 
 module.exports = {
-  SDK_VERSION: sdkVersion,
+  buildEnvKeys: Object.keys(buildEnvFactories),
+
+  getBuildEnvValue: (key) => {
+    let value = buildEnvCache.get(key)
+    if (!value) {
+      value = buildEnvFactories[key]()
+      buildEnvCache.set(key, value)
+    }
+    return value
+  },
+}
+
+function getBuildMode() {
+  if (!process.env.BUILD_MODE) {
+    return BUILD_MODES[0]
+  }
+  if (BUILD_MODES.includes(process.env.BUILD_MODE)) {
+    return process.env.BUILD_MODE
+  }
+  console.log(`Invalid build mode "${process.env.BUILD_MODE}". Possible build modes are: ${BUILD_MODES.join(', ')}`)
+  process.exit(1)
 }

@@ -3,7 +3,7 @@
 const path = require('path')
 const { printLog, runMain } = require('../lib/execution-utils')
 const { command } = require('../lib/command')
-const { SDK_VERSION } = require('../lib/build-env')
+const { getBuildEnvValue } = require('../lib/build-env')
 const { getTelemetryOrgApiKey } = require('../lib/secrets')
 const {
   buildRootUploadPath,
@@ -73,7 +73,7 @@ function uploadSourceMaps(packageName, service, prefix, bundleFolder, sites) {
     command`
     datadog-ci sourcemaps upload ${bundleFolder}
       --service ${service}
-      --release-version ${SDK_VERSION}
+      --release-version ${getBuildEnvValue('SDK_VERSION')}
       --minified-path-prefix ${prefix}
       --project-path @datadog/browser-${packageName}/
       --repository-url https://www.github.com/datadog/browser-sdk
