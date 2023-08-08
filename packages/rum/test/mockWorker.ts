@@ -1,4 +1,4 @@
-import type { DeflateWorkerAction, DeflateWorkerResponse } from '@datadog/browser-worker'
+import type { DeflateWorkerAction, DeflateWorkerResponse } from '@datadog/browser-core'
 import { string2buf } from '../../worker/src/domain/deflate'
 import { createNewEvent } from '../../core/test'
 import type { DeflateWorker } from '../src/domain/deflate'
