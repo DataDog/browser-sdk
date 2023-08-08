@@ -32,11 +32,7 @@ const pathsWithSideEffect = new Set([
 ])
 
 // Those packages are known to have no side effects when evaluated
-const packagesWithoutSideEffect = new Set([
-  '@datadog/browser-core',
-  '@datadog/browser-rum-core',
-  '@datadog/browser-worker/string',
-])
+const packagesWithoutSideEffect = new Set(['@datadog/browser-core', '@datadog/browser-rum-core'])
 
 /**
  * Iterate over the given node and its children, and report any node that may have a side effect
