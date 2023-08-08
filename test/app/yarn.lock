@@ -38,20 +38,11 @@ __metadata:
   dependencies:
     "@datadog/browser-core": 4.47.0
     "@datadog/browser-rum-core": 4.47.0
-    "@datadog/browser-worker": 4.47.0
   peerDependencies:
     "@datadog/browser-logs": 4.47.0
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true
-  languageName: node
-  linkType: soft
-
-"@datadog/browser-worker@portal:../../packages/worker::locator=app%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@datadog/browser-worker@portal:../../packages/worker::locator=app%40workspace%3A."
-  dependencies:
-    "@datadog/browser-core": 4.47.0
   languageName: node
   linkType: soft
 

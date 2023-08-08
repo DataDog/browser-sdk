@@ -1,6 +1,5 @@
 import type { DeflateWorkerAction, DeflateWorkerResponse } from '@datadog/browser-core'
 import { addTelemetryError, display, includes, addEventListener, setTimeout, ONE_SECOND } from '@datadog/browser-core'
-import { workerString } from '@datadog/browser-worker/string'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 
 export const INITIALIZATION_TIME_OUT_DELAY = 10 * ONE_SECOND
@@ -42,7 +41,7 @@ export interface DeflateWorker extends Worker {
 export type CreateDeflateWorker = typeof createDeflateWorker
 
 function createDeflateWorker(configuration: RumConfiguration): DeflateWorker {
-  return new Worker(configuration.workerUrl || URL.createObjectURL(new Blob([workerString])))
+  return new Worker(configuration.workerUrl || URL.createObjectURL(new Blob([TODO])))
 }
 
 let state: DeflateWorkerState = { status: DeflateWorkerStatus.Nil }

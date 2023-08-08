@@ -13,8 +13,7 @@
   },
   "dependencies": {
     "@datadog/browser-core": "4.47.0",
-    "@datadog/browser-rum-core": "4.47.0",
-    "@datadog/browser-worker": "4.47.0"
+    "@datadog/browser-rum-core": "4.47.0"
   },
   "peerDependencies": {
     "@datadog/browser-logs": "4.47.0"
