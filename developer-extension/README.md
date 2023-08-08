@@ -6,7 +6,7 @@ Browser extension to investigate your Browser SDK integration.
 
 ### From the Chrome Web Store
 
-The extension is accessible to **Datadog employees** on the [Chrome Web Store](https://chrome.google.com/webstore/detail/datadog-browser-sdk-devel/boceobohkgenpcpogecpjlnmnfbdigda).
+The extension is available to **Datadog employees** on the [Chrome Web Store](https://chrome.google.com/webstore/detail/datadog-browser-sdk-devel/boceobohkgenpcpogecpjlnmnfbdigda).
 
 ### By loading the extension unpacked
 
