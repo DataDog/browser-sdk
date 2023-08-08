@@ -1,5 +1,8 @@
+const { readFileSync } = require('fs')
+const path = require('path')
 const execSync = require('child_process').execSync
 const lernaJson = require('../../lerna.json')
+const { command } = require('./command')
 
 /**
  * Allows to define which sdk_version to send to the intake.
@@ -31,6 +34,16 @@ const buildEnvFactories = {
       default:
         return 'dev'
     }
+  },
+  WORKER_STRING: () => {
+    const workerPath = path.join(__dirname, '../../packages/worker')
+    // Make sure the worker is built
+    // TODO: Improve overall built time by rebuilding the worker only if its sources have changed?
+    // TODO: Improve developer experience during tests by detecting worker source changes?
+    command`yarn build`.withCurrentWorkingDirectory(workerPath).run()
+    return readFileSync(path.join(workerPath, 'bundle/worker.js'), {
+      encoding: 'utf-8',
+    })
   },
 }
 

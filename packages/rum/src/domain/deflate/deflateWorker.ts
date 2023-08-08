@@ -4,6 +4,8 @@ import type { RumConfiguration } from '@datadog/browser-rum-core'
 
 export const INITIALIZATION_TIME_OUT_DELAY = 10 * ONE_SECOND
 
+declare const __BUILD_ENV__WORKER_STRING__: string
+
 /**
  * In order to be sure that the worker is correctly working, we need a round trip of
  * initialization messages, making the creation asynchronous.
@@ -41,7 +43,7 @@ export interface DeflateWorker extends Worker {
 export type CreateDeflateWorker = typeof createDeflateWorker
 
 function createDeflateWorker(configuration: RumConfiguration): DeflateWorker {
-  return new Worker(configuration.workerUrl || URL.createObjectURL(new Blob([TODO])))
+  return new Worker(configuration.workerUrl || URL.createObjectURL(new Blob([__BUILD_ENV__WORKER_STRING__])))
 }
 
 let state: DeflateWorkerState = { status: DeflateWorkerStatus.Nil }

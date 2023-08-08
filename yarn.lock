@@ -518,6 +518,7 @@ __metadata:
   resolution: "@datadog/browser-worker@workspace:packages/worker"
   dependencies:
     "@datadog/browser-core": 4.47.0
+    webpack: 5.88.2
   languageName: unknown
   linkType: soft
 
