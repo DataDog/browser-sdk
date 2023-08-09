@@ -1,5 +1,6 @@
 *
 !/bundle/worker.js
+!/internal/**/*
 !/cjs/**/*
 !/esm/**/*
 !/src/**/*

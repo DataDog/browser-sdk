@@ -5,7 +5,10 @@
   "main": "bundle/worker.js",
   "types": "src/types.ts",
   "scripts": {
-    "build": "rm -rf bundle && webpack --mode=production"
+    "build": "yarn build:bundle && run-p build:cjs build:esm",
+    "build:bundle": "rm -rf bundle && webpack --mode=production",
+    "build:cjs": "rm -rf cjs && tsc -p tsconfig.cjs.json && ./scripts/replace-worker-string.js cjs",
+    "build:esm": "rm -rf esm && tsc -p tsconfig.esm.json && ./scripts/replace-worker-string.js esm"
   },
   "dependencies": {
     "@datadog/browser-core": "4.46.0"

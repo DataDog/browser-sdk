@@ -3,8 +3,11 @@
   "compilerOptions": {
     "baseUrl": ".",
     "declaration": true,
-    "rootDir": "./src/"
+    "allowJs": true,
+    "module": "commonjs",
+    "rootDir": "./src/",
+    "outDir": "./cjs/"
   },
-  "include": ["./src/**/*.ts"],
+  "include": ["./src"],
   "exclude": ["./src/**/*.spec.ts", "./src/**/*.specHelper.ts"]
 }
