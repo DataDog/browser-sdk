@@ -1,4 +1,4 @@
-import { isIE, noop } from '@datadog/browser-core'
+import { isIE } from '@datadog/browser-core'
 import type { RecorderApi, ViewContexts, LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { deleteEventBridgeStub, initEventBridgeStub, createNewEvent } from '@datadog/browser-core/test'
@@ -21,15 +21,7 @@ describe('makeRecorderApi', () => {
     if (!startDeflateWorkerSpy) {
       startDeflateWorkerSpy = jasmine.createSpy<typeof startDeflateWorker>('startDeflateWorker')
     }
-    startDeflateWorkerSpy.and.callFake((_, callback) => callback(worker))
-  }
-
-  function callLastRegisteredInitialisationCallback() {
-    startDeflateWorkerSpy.calls.mostRecent().args[1](FAKE_WORKER)
-  }
-
-  function stopDeflateWorker() {
-    startDeflateWorkerSpy.and.callFake(noop)
+    startDeflateWorkerSpy.and.returnValue(worker)
   }
 
   let rumInit: () => void
@@ -116,7 +108,7 @@ describe('makeRecorderApi', () => {
       expect(startRecordingSpy).not.toHaveBeenCalled()
     })
 
-    it('do not start recording if worker fails to be instantiated', () => {
+    it('do not start recording if worker creation fails', () => {
       setupBuilder.build()
       rumInit()
       startDeflateWorkerWith(undefined)
@@ -124,17 +116,15 @@ describe('makeRecorderApi', () => {
       expect(startRecordingSpy).not.toHaveBeenCalled()
     })
 
-    it('does not start recording multiple times if restarted before worker is initialized', () => {
+    it('stops recording if worker initialization fails', () => {
       setupBuilder.build()
       rumInit()
-      stopDeflateWorker()
       recorderApi.start()
-      recorderApi.stop()
 
-      callLastRegisteredInitialisationCallback()
-      recorderApi.start()
-      callLastRegisteredInitialisationCallback()
-      expect(startRecordingSpy).toHaveBeenCalledTimes(1)
+      // Calls onInitializationFailure()
+      startDeflateWorkerSpy.calls.mostRecent().args[1]()
+
+      expect(stopRecordingSpy).toHaveBeenCalled()
     })
 
     describe('if event bridge present', () => {

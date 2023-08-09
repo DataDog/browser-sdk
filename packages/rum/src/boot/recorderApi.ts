@@ -118,31 +118,29 @@ export function makeRecorderApi(
             return
           }
 
-          startDeflateWorkerImpl(configuration, (worker) => {
-            if (state.status !== RecorderStatus.Starting) {
-              return
-            }
-
-            if (!worker) {
-              state = {
-                status: RecorderStatus.Stopped,
-              }
-              return
-            }
-
-            const { stop: stopRecording } = startRecordingImpl(
-              lifeCycle,
-              configuration,
-              sessionManager,
-              viewContexts,
-              createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
-            )
-            recorderStartObservable.notify(relativeNow())
-            state = {
-              status: RecorderStatus.Started,
-              stopRecording,
-            }
+          const worker = startDeflateWorkerImpl(configuration, () => {
+            stopStrategy()
           })
+
+          if (!worker) {
+            state = {
+              status: RecorderStatus.Stopped,
+            }
+            return
+          }
+
+          const { stop: stopRecording } = startRecordingImpl(
+            lifeCycle,
+            configuration,
+            sessionManager,
+            viewContexts,
+            createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+          )
+          recorderStartObservable.notify(relativeNow())
+          state = {
+            status: RecorderStatus.Started,
+            stopRecording,
+          }
         })
       }
 
