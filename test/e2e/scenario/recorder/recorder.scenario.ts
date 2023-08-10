@@ -803,7 +803,6 @@ describe('recorder', () => {
 
   createTest('workerUrl initialization parameter')
     .withRum({ workerUrl: '/worker.js' })
-    .withRumInit(initRumAndStartRecording)
     .withSetup(bundleSetup)
     .withBasePath('/no-blob-worker-csp')
     .run(async ({ serverEvents }) => {
