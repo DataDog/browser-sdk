@@ -1,4 +1,4 @@
-import type { RetryInfo, FlushReason } from '../../transport'
+import type { Payload } from '../../transport'
 import { timeStampNow } from '../../tools/utils/timeUtils'
 import { normalizeUrl } from '../../tools/utils/urlPolyfill'
 import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/experimentalFeatures'
@@ -33,15 +33,8 @@ export function createEndpointBuilder(
   const buildUrlWithParameters = createEndpointUrlWithParametersBuilder(initConfiguration, endpointType)
 
   return {
-    build(api: 'xhr' | 'fetch' | 'beacon', flushReason?: FlushReason, retry?: RetryInfo) {
-      const parameters = buildEndpointParameters(
-        initConfiguration,
-        endpointType,
-        configurationTags,
-        api,
-        flushReason,
-        retry
-      )
+    build(api: 'xhr' | 'fetch' | 'beacon', payload: Payload) {
+      const parameters = buildEndpointParameters(initConfiguration, endpointType, configurationTags, api, payload)
       return buildUrlWithParameters(parameters)
     },
     urlPrefix: buildUrlWithParameters(''),
@@ -100,8 +93,7 @@ function buildEndpointParameters(
   endpointType: EndpointType,
   configurationTags: string[],
   api: 'xhr' | 'fetch' | 'beacon',
-  flushReason: FlushReason | undefined,
-  retry: RetryInfo | undefined
+  { retry, flushReason }: Payload
 ) {
   const tags = [`sdk_version:${__BUILD_ENV__SDK_VERSION__}`, `api:${api}`].concat(configurationTags)
   if (flushReason && isExperimentalFeatureEnabled(ExperimentalFeature.COLLECT_FLUSH_REASON)) {

@@ -1,3 +1,4 @@
+import type { Payload } from '@datadog/browser-core'
 import { ErrorSource, display, stopSessionManager, getCookie, SESSION_STORE_KEY } from '@datadog/browser-core'
 import type { Request } from '@datadog/browser-core/test'
 import {
@@ -37,6 +38,7 @@ const COMMON_CONTEXT = {
   context: {},
   user: {},
 }
+const DEFAULT_PAYLOAD = {} as Payload
 
 describe('logs', () => {
   const initConfiguration = { clientToken: 'xxx', service: 'service', telemetrySampleRate: 0 }
@@ -77,7 +79,7 @@ describe('logs', () => {
       handleLog({ message: 'message', status: StatusType.warn, context: { foo: 'bar' } }, logger, COMMON_CONTEXT)
 
       expect(requests.length).toEqual(1)
-      expect(requests[0].url).toContain(baseConfiguration.logsEndpointBuilder.build('xhr'))
+      expect(requests[0].url).toContain(baseConfiguration.logsEndpointBuilder.build('xhr', DEFAULT_PAYLOAD))
       expect(getLoggedMessage(requests, 0)).toEqual({
         date: jasmine.any(Number),
         foo: 'bar',
