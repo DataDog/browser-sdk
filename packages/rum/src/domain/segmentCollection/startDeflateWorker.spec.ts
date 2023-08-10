@@ -1,9 +1,11 @@
 import type { RawTelemetryEvent } from '@datadog/browser-core'
 import { display, isIE, noop, resetTelemetry, startFakeTelemetry } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
+import type { Clock } from '@datadog/browser-core/test'
+import { mockClock } from '@datadog/browser-core/test'
 import { MockWorker } from '../../../test'
 import type { createDeflateWorker } from './startDeflateWorker'
-import { startDeflateWorker, resetDeflateWorkerState } from './startDeflateWorker'
+import { startDeflateWorker, resetDeflateWorkerState, INITIALIZATION_TIME_OUT_DELAY } from './startDeflateWorker'
 
 // Arbitrary stream ids used for tests
 const TEST_STREAM_ID = 5
@@ -87,9 +89,7 @@ describe('startDeflateWorker', () => {
       startDeflateWorker(configuration, noop, () => {
         throw CSP_ERROR
       })
-      expect(displaySpy).toHaveBeenCalledWith(
-        'Please make sure CSP is correctly configured https://docs.datadoghq.com/real_user_monitoring/faq/content_security_policy'
-      )
+      expect(displaySpy).toHaveBeenCalledWith(jasmine.stringContaining('Please make sure CSP is correctly configured'))
     })
 
     it('does not report CSP errors to telemetry', () => {
@@ -102,10 +102,9 @@ describe('startDeflateWorker', () => {
     it('displays ErrorEvent as CSP error', () => {
       startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
       deflateWorker.dispatchErrorEvent()
-      expect(displaySpy).toHaveBeenCalledWith(
-        'Please make sure CSP is correctly configured https://docs.datadoghq.com/real_user_monitoring/faq/content_security_policy'
-      )
+      expect(displaySpy).toHaveBeenCalledWith(jasmine.stringContaining('Please make sure CSP is correctly configured'))
     })
+
     it('calls the callback without argument in case of an error occurs during loading', () => {
       startDeflateWorker(configuration, callbackSpy, createDeflateWorkerSpy)
       deflateWorker.dispatchErrorEvent()
@@ -118,6 +117,47 @@ describe('startDeflateWorker', () => {
 
       startDeflateWorker(configuration, callbackSpy, createDeflateWorkerSpy)
       expect(callbackSpy).toHaveBeenCalledOnceWith()
+    })
+
+    it('adjusts the error message when a workerUrl is set', () => {
+      configuration.workerUrl = '/worker.js'
+      startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
+      deflateWorker.dispatchErrorEvent()
+      expect(displaySpy).toHaveBeenCalledWith(
+        jasmine.stringContaining(
+          'Please make sure the Worker URL /worker.js is correct and CSP is correctly configured.'
+        )
+      )
+    })
+  })
+
+  describe('initialization timeout', () => {
+    let displaySpy: jasmine.Spy
+    let configuration: RumConfiguration
+    let clock: Clock
+
+    beforeEach(() => {
+      configuration = {} as RumConfiguration
+      displaySpy = spyOn(display, 'error')
+      clock = mockClock()
+    })
+
+    afterEach(() => {
+      clock.cleanup()
+    })
+
+    it('displays an error message when the worker does not respond to the init action', () => {
+      startDeflateWorker(
+        configuration,
+        noop,
+        () =>
+          // Creates a worker that does nothing
+          new Worker(URL.createObjectURL(new Blob([''])))
+      )
+      clock.tick(INITIALIZATION_TIME_OUT_DELAY)
+      expect(displaySpy).toHaveBeenCalledOnceWith(
+        'Session Replay recording failed to start: a timeout occurred while initializing the Worker'
+      )
     })
   })
 
@@ -164,9 +204,7 @@ describe('startDeflateWorker', () => {
     it('does not display error messages as CSP error', () => {
       startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
       deflateWorker.dispatchErrorMessage('foo')
-      expect(displaySpy).not.toHaveBeenCalledWith(
-        'Please make sure CSP is correctly configured https://docs.datadoghq.com/real_user_monitoring/faq/content_security_policy'
-      )
+      expect(displaySpy).not.toHaveBeenCalledWith(jasmine.stringContaining('CSP'))
     })
 
     it('reports errors occurring after loading to telemetry', () => {

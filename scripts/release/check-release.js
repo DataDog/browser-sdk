@@ -1,7 +1,5 @@
 'use strict'
 
-const fs = require('fs')
-const path = require('path')
 const { version: releaseVersion } = require('../../lerna.json')
 const { printLog, runMain } = require('../lib/execution-utils')
 const { command } = require('../lib/command')
@@ -40,7 +38,6 @@ function checkBrowserSdkPackageJsonFiles() {
   for (const packageJsonFile of packageJsonFiles) {
     checkPackageJsonVersion(packageJsonFile)
     checkPackageDependencyVersions(packageJsonFile)
-    checkPackageJsonEntryPoints(packageJsonFile)
   }
 }
 
@@ -69,31 +66,13 @@ function checkPackageDependencyVersions(packageJsonFile) {
       if (
         isBrowserSdkPublicPackageName(dependencyName) &&
         !dependencyVersion.startsWith('portal:') &&
+        !dependencyVersion.startsWith('workspace:') &&
         dependencyVersion !== releaseVersion
       ) {
         throw new Error(
           `Invalid dependency version for ${dependencyName} in ${packageJsonFile.relativePath}: expected ${releaseVersion}, got ${dependencyVersion}`
         )
       }
-    }
-  }
-}
-
-function checkPackageJsonEntryPoints(packageJsonFile) {
-  for (const entryPointPath of [
-    packageJsonFile.content.main,
-    packageJsonFile.content.module,
-    packageJsonFile.content.types,
-  ]) {
-    if (!entryPointPath) {
-      continue
-    }
-
-    const absoluteEntryPointPath = path.resolve(path.dirname(packageJsonFile.path), entryPointPath)
-    if (!fs.existsSync(absoluteEntryPointPath)) {
-      throw new Error(
-        `Invalid entry point ${entryPointPath} in ${packageJsonFile.relativePath}: ${absoluteEntryPointPath} not found`
-      )
     }
   }
 }

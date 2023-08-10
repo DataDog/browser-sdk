@@ -1,6 +1,7 @@
 import { datadogRum } from '@datadog/browser-rum'
 import { datadogLogs } from '@datadog/browser-logs'
 import packageJson from '../../package.json'
+import { DEFAULT_PANEL_TAB } from '../common/constants'
 
 export function initMonitoring() {
   datadogRum.init({
@@ -15,11 +16,13 @@ export function initMonitoring() {
     sessionReplaySampleRate: 100,
     telemetrySampleRate: 100,
     trackUserInteractions: true,
+    trackViewsManually: true,
     trackResources: true,
     trackLongTasks: true,
     defaultPrivacyLevel: 'mask',
   })
   datadogRum.startSessionReplayRecording()
+  datadogRum.startView(DEFAULT_PANEL_TAB)
 
   datadogLogs.init({
     clientToken: 'pub74fd472504982beb427b647893758040',

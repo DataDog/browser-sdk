@@ -21,6 +21,7 @@ export interface RumInitConfiguration extends InitConfiguration {
   applicationId: string
   beforeSend?: ((event: RumEvent, context: RumEventDomainContext) => boolean) | undefined
   excludedActivityUrls?: MatchOption[] | undefined
+  workerUrl?: string
 
   // tracing options
   allowedTracingUrls?: Array<MatchOption | TracingOption> | undefined
@@ -51,6 +52,7 @@ export interface RumConfiguration extends Configuration {
   traceSampleRate: number | undefined
   allowedTracingUrls: TracingOption[]
   excludedActivityUrls: MatchOption[]
+  workerUrl: string | undefined
   applicationId: string
   defaultPrivacyLevel: DefaultPrivacyLevel
   sessionReplaySampleRate: number
@@ -110,6 +112,7 @@ export function validateAndBuildRumConfiguration(
       traceSampleRate: initConfiguration.traceSampleRate,
       allowedTracingUrls,
       excludedActivityUrls: initConfiguration.excludedActivityUrls ?? [],
+      workerUrl: initConfiguration.workerUrl,
       trackUserInteractions: !!initConfiguration.trackUserInteractions,
       trackViewsManually: !!initConfiguration.trackViewsManually,
       trackResources: !!initConfiguration.trackResources,
@@ -193,6 +196,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration): 
       default_privacy_level: configuration.defaultPrivacyLevel,
       use_excluded_activity_urls:
         Array.isArray(configuration.excludedActivityUrls) && configuration.excludedActivityUrls.length > 0,
+      use_worker_url: !!configuration.workerUrl,
       track_views_manually: configuration.trackViewsManually,
       track_user_interactions: configuration.trackUserInteractions,
       track_resources: configuration.trackResources,

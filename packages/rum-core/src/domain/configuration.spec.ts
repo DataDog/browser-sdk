@@ -374,4 +374,21 @@ describe('validateAndBuildRumConfiguration', () => {
       })
     })
   })
+
+  describe('workerUrl', () => {
+    it('defaults to undefined', () => {
+      const configuration = validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!
+      expect(configuration.workerUrl).toBeUndefined()
+    })
+
+    it('is set to provided value', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, workerUrl: '/worker.js' })!.workerUrl
+      ).toBe('/worker.js')
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, workerUrl: 'https://example.org/worker.js' })!
+          .workerUrl
+      ).toBe('https://example.org/worker.js')
+    })
+  })
 })

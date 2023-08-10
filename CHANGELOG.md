@@ -39,6 +39,15 @@
 - 🔥 [RUMF-1555] Remove `startTime` in xhr start context ([#2287](https://github.com/DataDog/browser-sdk/pull/2287))
 - ♻️ [RUMF-1555] Remove deprecated context manager APIs ([#2284](https://github.com/DataDog/browser-sdk/pull/2284))
 
+## v4.46.0
+
+- ⚗ [RUM][REPLAY] Try to reduce the size of the replay payload ([#2348](https://github.com/DataDog/browser-sdk/pull/2348))
+- ♻️ [RUM-249] update worker protocol ([#2346](https://github.com/DataDog/browser-sdk/pull/2346))
+- 🔈 Add web vital attribution telemetry debug ([#2344](https://github.com/DataDog/browser-sdk/pull/2344))
+- 📝 [developer-extension] Update extension instructions ([#2343](https://github.com/DataDog/browser-sdk/pull/2343))
+- 🔉 [developer-extension] bootstrap monitoring ([#2337](https://github.com/DataDog/browser-sdk/pull/2337))
+- 🐛 Avoid setting non-object values for contexts ([#2341](https://github.com/DataDog/browser-sdk/pull/2341))
+
 ## v4.45.0
 
 - ✨ [RUM-235] add sample rates fields ([#2323](https://github.com/DataDog/browser-sdk/pull/2323))

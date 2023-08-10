@@ -53,6 +53,7 @@ class TestBuilder {
   private logsConfiguration: LogsInitConfiguration | undefined = undefined
   private head = ''
   private body = ''
+  private basePath = ''
   private eventBridge = false
   private setups: Array<{ factory: SetupFactory; name?: string }> = []
 
@@ -93,6 +94,11 @@ class TestBuilder {
     return this
   }
 
+  withBasePath(newBasePath: string) {
+    this.basePath = newBasePath
+    return this
+  }
+
   withSetup(factory: SetupFactory, name?: string) {
     this.setups.push({ factory, name })
     if (this.setups.length > 1 && this.setups.some((item) => !item.name)) {
@@ -113,6 +119,7 @@ class TestBuilder {
       logsInit: this.logsInit,
       useRumSlim: false,
       eventBridge: this.eventBridge,
+      basePath: this.basePath,
       context: {
         run_id: getRunId(),
         test_name: '<PLACEHOLDER>',
@@ -172,7 +179,7 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
 
     const servers = await getTestServers()
 
-    const testContext = createTestContext(servers)
+    const testContext = createTestContext(servers, setupOptions)
     servers.intake.bindServerApp(createIntakeServerApp(testContext.serverEvents, testContext.bridgeEvents))
 
     const setup = factory(setupOptions, servers)
@@ -190,9 +197,9 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
   })
 }
 
-function createTestContext(servers: Servers): TestContext {
+function createTestContext(servers: Servers, { basePath }: SetupOptions): TestContext {
   return {
-    baseUrl: servers.base.url,
+    baseUrl: servers.base.url + basePath,
     crossOriginUrl: servers.crossOrigin.url,
     serverEvents: new EventRegistry(),
     bridgeEvents: new EventRegistry(),

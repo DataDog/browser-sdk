@@ -6,13 +6,14 @@ const webpack = require('webpack')
 const logsConfig = require('../packages/logs/webpack.config')
 const rumSlimConfig = require('../packages/rum-slim/webpack.config')
 const rumConfig = require('../packages/rum/webpack.config')
+const workerConfig = require('../packages/worker/webpack.config')
 const { printLog } = require('./lib/execution-utils')
 
 const port = 8080
 const app = express()
 
 app.use(express.static(path.join(__dirname, '../sandbox')))
-for (const config of [rumConfig, logsConfig, rumSlimConfig]) {
+for (const config of [rumConfig, logsConfig, rumSlimConfig, workerConfig]) {
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   app.use(middleware(webpack(config(null, { mode: 'development' }))))
 }

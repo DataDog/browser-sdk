@@ -103,6 +103,18 @@ export function createMockServerApp(servers: Servers, setup: string): MockServer
     res.end()
   })
 
+  app.get('/no-blob-worker-csp', (_req, res) => {
+    res.header(
+      'Content-Security-Policy',
+      [
+        `connect-src ${servers.intake.url} ${servers.base.url} ${servers.crossOrigin.url}`,
+        "script-src 'self' 'unsafe-inline'",
+      ].join(';')
+    )
+    res.send(setup)
+    res.end()
+  })
+
   app.get('/datadog-logs.js', (_req, res) => {
     res.sendFile(sdkBuilds.LOGS_BUNDLE)
   })
@@ -113,6 +125,10 @@ export function createMockServerApp(servers: Servers, setup: string): MockServer
 
   app.get('/datadog-rum-slim.js', (_req, res) => {
     res.sendFile(sdkBuilds.RUM_SLIM_BUNDLE)
+  })
+
+  app.get('/worker.js', (_req, res) => {
+    res.sendFile(sdkBuilds.WORKER_BUNDLE)
   })
 
   app.get('/app.js', (_req, res) => {

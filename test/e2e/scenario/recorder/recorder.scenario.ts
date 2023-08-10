@@ -800,4 +800,15 @@ describe('recorder', () => {
         expect(containerElement.attributes.rr_scrollLeft).toBe(20)
       })
   })
+
+  createTest('workerUrl initialization parameter')
+    .withRum({ workerUrl: '/worker.js' })
+    .withRumInit(initRumAndStartRecording)
+    .withSetup(bundleSetup)
+    .withBasePath('/no-blob-worker-csp')
+    .run(async ({ serverEvents }) => {
+      await flushEvents()
+
+      expect(serverEvents.sessionReplay.length).toBe(1)
+    })
 })
