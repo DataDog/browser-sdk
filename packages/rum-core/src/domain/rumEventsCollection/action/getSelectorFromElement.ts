@@ -99,13 +99,13 @@ function getClassSelector(element: Element): string | undefined {
         continue
       }
 
-      return `${element.tagName}.${cssEscape(className)}`
+      return `${cssEscape(element.tagName)}.${cssEscape(className)}`
     }
   }
 }
 
 function getTagNameSelector(element: Element): string {
-  return element.tagName
+  return cssEscape(element.tagName)
 }
 
 function getStableAttributeSelector(element: Element, actionNameAttribute: string | undefined): string | undefined {
@@ -125,7 +125,7 @@ function getStableAttributeSelector(element: Element, actionNameAttribute: strin
 
   function getAttributeSelector(attributeName: string) {
     if (element.hasAttribute(attributeName)) {
-      return `${element.tagName}[${attributeName}="${cssEscape(element.getAttribute(attributeName)!)}"]`
+      return `${cssEscape(element.tagName)}[${attributeName}="${cssEscape(element.getAttribute(attributeName)!)}"]`
     }
   }
 }
@@ -141,7 +141,7 @@ function getPositionSelector(element: Element): string {
     sibling = sibling.nextElementSibling
   }
 
-  return `${element.tagName}:nth-of-type(${elementIndex})`
+  return `${cssEscape(element.tagName)}:nth-of-type(${elementIndex})`
 }
 
 function findSelector(
