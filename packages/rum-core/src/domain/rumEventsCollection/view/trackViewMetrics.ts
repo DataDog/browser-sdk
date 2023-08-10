@@ -1,7 +1,5 @@
 import type { ClocksState, Duration, Observable, RelativeTime } from '@datadog/browser-core'
 import {
-  ExperimentalFeature,
-  isExperimentalFeatureEnabled,
   DOM_EVENT,
   ONE_SECOND,
   addEventListener,
@@ -63,15 +61,13 @@ export function trackViewMetrics(
 
       // We compute scroll metrics at loading time to ensure we have scroll data when loading the view initially
       // This is to ensure that we have the depth data even if the user didn't scroll or if the view is not scrollable.
-      if (isExperimentalFeatureEnabled(ExperimentalFeature.SCROLLMAP)) {
-        const { scrollHeight, scrollDepth, scrollTop } = computeScrollValues()
+      const { scrollHeight, scrollDepth, scrollTop } = computeScrollValues()
 
-        scrollMetrics = {
-          maxDepth: scrollDepth,
-          maxDepthScrollHeight: scrollHeight,
-          maxDepthTime: newLoadingTime,
-          maxDepthScrollTop: scrollTop,
-        }
+      scrollMetrics = {
+        maxDepth: scrollDepth,
+        maxDepthScrollHeight: scrollHeight,
+        maxDepthTime: newLoadingTime,
+        maxDepthScrollTop: scrollTop,
       }
       scheduleViewUpdate()
     }
@@ -124,9 +120,6 @@ export function trackScrollMetrics(
   callback: (scrollMetrics: ScrollMetrics) => void,
   getScrollValues = computeScrollValues
 ) {
-  if (!isExperimentalFeatureEnabled(ExperimentalFeature.SCROLLMAP)) {
-    return { stop: noop }
-  }
   let maxDepth = 0
   const handleScrollEvent = throttle(
     () => {
