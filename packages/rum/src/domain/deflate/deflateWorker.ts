@@ -10,7 +10,7 @@ export const INITIALIZATION_TIME_OUT_DELAY = 10 * ONE_SECOND
  * initialization messages, making the creation asynchronous.
  * These worker lifecycle states handle this case.
  */
-const enum DeflateWorkerStatus {
+export const enum DeflateWorkerStatus {
   Nil,
   Loading,
   Error,
@@ -39,7 +39,9 @@ export interface DeflateWorker extends Worker {
   postMessage(message: DeflateWorkerAction): void
 }
 
-export function createDeflateWorker(configuration: RumConfiguration): DeflateWorker {
+export type CreateDeflateWorker = typeof createDeflateWorker
+
+function createDeflateWorker(configuration: RumConfiguration): DeflateWorker {
   return new Worker(configuration.workerUrl || URL.createObjectURL(new Blob([workerString])))
 }
 
@@ -65,6 +67,10 @@ export function startDeflateWorker(
 
 export function resetDeflateWorkerState() {
   state = { status: DeflateWorkerStatus.Nil }
+}
+
+export function getDeflateWorkerStatus() {
+  return state.status
 }
 
 /**

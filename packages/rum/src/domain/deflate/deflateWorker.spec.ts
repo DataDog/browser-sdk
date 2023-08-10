@@ -4,7 +4,7 @@ import type { RumConfiguration } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import { MockWorker } from '../../../test'
-import type { createDeflateWorker } from './deflateWorker'
+import type { CreateDeflateWorker } from './deflateWorker'
 import { startDeflateWorker, resetDeflateWorkerState, INITIALIZATION_TIME_OUT_DELAY } from './deflateWorker'
 
 // Arbitrary stream ids used for tests
@@ -12,7 +12,7 @@ const TEST_STREAM_ID = 5
 
 describe('startDeflateWorker', () => {
   let mockWorker: MockWorker
-  let createDeflateWorkerSpy: jasmine.Spy<typeof createDeflateWorker>
+  let createDeflateWorkerSpy: jasmine.Spy<CreateDeflateWorker>
   let onInitializationFailureSpy: jasmine.Spy<() => void>
   let configuration: RumConfiguration
 
