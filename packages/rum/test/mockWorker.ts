@@ -1,4 +1,5 @@
 import type { DeflateWorkerAction, DeflateWorkerResponse } from '@datadog/browser-worker'
+import { string2buf } from '../../worker/src/domain/deflate'
 import { createNewEvent } from '../../core/test'
 import type { DeflateWorker } from '../src/domain/deflate'
 
@@ -86,7 +87,7 @@ export class MockWorker implements DeflateWorker {
               this.streams.set(message.streamId, stream)
             }
             // In the mock worker, for simplicity, we'll just use the UTF-8 encoded string instead of deflating it.
-            const binaryData = new TextEncoder().encode(message.data)
+            const binaryData = string2buf(message.data)
             stream.push(binaryData)
 
             this.listeners.message.forEach((listener) =>
