@@ -872,6 +872,42 @@ describe('rum public api', () => {
     })
   })
 
+  describe('storeContextsAcrossPages', () => {
+    let rumPublicApi: RumPublicApi
+
+    beforeEach(() => {
+      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
+    })
+
+    afterEach(() => {
+      localStorage.clear()
+    })
+
+    it('when disabled, should store contexts only in memory', () => {
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+      rumPublicApi.setGlobalContext({ foo: 'bar' })
+      expect(rumPublicApi.getGlobalContext()).toEqual({ foo: 'bar' })
+      expect(localStorage.getItem('_dd_c_rum_2')).toBeNull()
+
+      rumPublicApi.setUser({ qux: 'qix' })
+      expect(rumPublicApi.getUser()).toEqual({ qux: 'qix' })
+      expect(localStorage.getItem('_dd_c_rum_1')).toBeNull()
+    })
+
+    it('when enabled, should store contexts in local storage', () => {
+      rumPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, storeContextsAcrossPages: true })
+
+      rumPublicApi.setGlobalContext({ foo: 'bar' })
+      expect(rumPublicApi.getGlobalContext()).toEqual({ foo: 'bar' })
+      expect(localStorage.getItem('_dd_c_rum_2')).toBe('{"foo":"bar"}')
+
+      rumPublicApi.setUser({ qux: 'qix' })
+      expect(rumPublicApi.getUser()).toEqual({ qux: 'qix' })
+      expect(localStorage.getItem('_dd_c_rum_1')).toBe('{"qux":"qix"}')
+    })
+  })
+
   it('should provide sdk version', () => {
     const rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
     expect(rumPublicApi.version).toBe('test')

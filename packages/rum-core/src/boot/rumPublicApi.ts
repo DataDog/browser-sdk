@@ -18,6 +18,7 @@ import {
   checkUser,
   sanitizeUser,
   sanitize,
+  createStoredContextManager,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewContexts } from '../domain/contexts/viewContexts'
@@ -59,6 +60,8 @@ interface RumPublicApiOptions {
   ignoreInitIfSyntheticsWillInjectRum?: boolean
 }
 
+const RUM_STORAGE_KEY = 'rum'
+
 export function makeRumPublicApi(
   startRumImpl: StartRum,
   recorderApi: RecorderApi,
@@ -66,8 +69,8 @@ export function makeRumPublicApi(
 ) {
   let isAlreadyInitialized = false
 
-  const globalContextManager = createContextManager(CustomerDataType.GlobalContext)
-  const userContextManager = createContextManager(CustomerDataType.User)
+  let globalContextManager = createContextManager(CustomerDataType.GlobalContext)
+  let userContextManager = createContextManager(CustomerDataType.User)
 
   let getInternalContextStrategy: StartRumResult['getInternalContext'] = () => undefined
   let getInitConfigurationStrategy = (): InitConfiguration | undefined => undefined
@@ -152,6 +155,12 @@ export function makeRumPublicApi(
     configuration: RumConfiguration,
     initialViewOptions?: ViewOptions
   ) {
+    if (initConfiguration.storeContextsAcrossPages) {
+      // Note: context API calls before init are dismissed
+      globalContextManager = createStoredContextManager(configuration, RUM_STORAGE_KEY, CustomerDataType.GlobalContext)
+      userContextManager = createStoredContextManager(configuration, RUM_STORAGE_KEY, CustomerDataType.User)
+    }
+
     const startRumResults = startRumImpl(
       initConfiguration,
       configuration,
