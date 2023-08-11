@@ -96,9 +96,9 @@ export { catchUserErrors } from './tools/catchUserErrors'
 export { createContextManager, ContextManager } from './tools/serialisation/contextManager'
 export {
   warnIfCustomerDataLimitReached,
-  CustomerDataType,
   CUSTOMER_DATA_BYTES_LIMIT,
 } from './tools/serialisation/heavyCustomerDataWarning'
+export { CustomerDataType } from './tools/serialisation/serializationConstants'
 export { ValueHistory, ValueHistoryEntry, CLEAR_OLD_VALUES_INTERVAL } from './tools/valueHistory'
 export { readBytesFromStream } from './tools/readBytesFromStream'
 export { STORAGE_POLL_DELAY } from './domain/session/sessionStore'

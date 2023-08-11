@@ -5,8 +5,8 @@ import { getType } from '../utils/typeUtils'
 import { jsonStringify } from './jsonStringify'
 import { sanitize } from './sanitize'
 import { warnIfCustomerDataLimitReached } from './heavyCustomerDataWarning'
-import type { CustomerDataType } from './heavyCustomerDataWarning'
 import type { Context, ContextValue } from './context'
+import type { CustomerDataType } from './serializationConstants'
 
 export const BYTES_COMPUTATION_THROTTLING_DELAY = 200
 

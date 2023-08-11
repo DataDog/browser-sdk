@@ -2,7 +2,8 @@ import type { Clock } from '../../../test'
 import { mockClock } from '../../../test'
 import { display } from '../display'
 import { BYTES_COMPUTATION_THROTTLING_DELAY, createContextManager } from './contextManager'
-import { CustomerDataType, CUSTOMER_DATA_BYTES_LIMIT } from './heavyCustomerDataWarning'
+import { CUSTOMER_DATA_BYTES_LIMIT } from './heavyCustomerDataWarning'
+import { CustomerDataType } from './serializationConstants'
 
 describe('createContextManager', () => {
   let clock: Clock
