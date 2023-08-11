@@ -94,6 +94,7 @@ export { initConsoleObservable, resetConsoleObservable, ConsoleLog } from './dom
 export { BoundedBuffer } from './tools/boundedBuffer'
 export { catchUserErrors } from './tools/catchUserErrors'
 export { createContextManager, ContextManager } from './domain/context/contextManager'
+export { createStoredContextManager } from './domain/context/storedContextManager'
 export { warnIfCustomerDataLimitReached, CUSTOMER_DATA_BYTES_LIMIT } from './domain/context/heavyCustomerDataWarning'
 export { CustomerDataType } from './domain/context/contextConstants'
 export { ValueHistory, ValueHistoryEntry, CLEAR_OLD_VALUES_INTERVAL } from './tools/valueHistory'
