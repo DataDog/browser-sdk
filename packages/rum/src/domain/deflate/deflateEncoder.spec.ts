@@ -45,7 +45,7 @@ describe('createDeflateEncoder', () => {
   })
 
   it('ignores messages destined to other streams', () => {
-    // Lets assume another encoder is sending something to the worker
+    // Let's assume another encoder is sending something to the worker
     createDeflateEncoder(configuration, worker, OTHER_STREAM_ID).write('foo', noop)
 
     const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
