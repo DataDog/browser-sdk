@@ -8,7 +8,7 @@
   },
   "devDependencies": {
     "@types/chrome": "0.0.243",
-    "@types/react": "18.2.19",
+    "@types/react": "18.2.20",
     "@types/react-dom": "18.2.7",
     "@webextension-toolbox/webpack-webextension-plugin": "3.1.0",
     "copy-webpack-plugin": "11.0.0",
@@ -19,8 +19,8 @@
     "@datadog/browser-logs": "workspace:*",
     "@datadog/browser-rum": "workspace:*",
     "@emotion/react": "11.11.1",
-    "@mantine/core": "6.0.18",
-    "@mantine/hooks": "6.0.18",
+    "@mantine/core": "6.0.19",
+    "@mantine/hooks": "6.0.19",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-json-view": "1.21.3"
