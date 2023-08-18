@@ -120,7 +120,7 @@ describe('startDeflateWorker', () => {
         )
       })
 
-      it('calls the initialization failure callback in case of an error occurs during loading', () => {
+      it('calls the initialization failure callback when of an error occurs during loading', () => {
         startDeflateWorker(configuration, onInitializationFailureSpy, createDeflateWorkerSpy)
         mockWorker.dispatchErrorEvent()
         expect(onInitializationFailureSpy).toHaveBeenCalledTimes(1)

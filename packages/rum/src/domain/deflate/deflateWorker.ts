@@ -53,6 +53,7 @@ export function startDeflateWorker(
   createDeflateWorkerImpl = createDeflateWorker
 ) {
   if (state.status === DeflateWorkerStatus.Nil) {
+    // doStartDeflateWorker updates the state to "loading" or "error"
     doStartDeflateWorker(configuration, createDeflateWorkerImpl)
   }
 

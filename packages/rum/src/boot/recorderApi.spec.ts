@@ -106,7 +106,7 @@ describe('makeRecorderApi', () => {
       expect(startRecordingSpy).not.toHaveBeenCalled()
     })
 
-    it('do not start recording if worker creation fails', () => {
+    it('does not start recording if worker creation fails', () => {
       setupBuilder.build()
       rumInit()
       createDeflateWorkerSpy.and.throwError('Crash')
