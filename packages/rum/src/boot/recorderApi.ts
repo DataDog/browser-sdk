@@ -8,7 +8,7 @@ import type {
   RumConfiguration,
 } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
-import { getReplayStats } from '../domain/replayStats'
+import { getReplayStats as getReplayStatsImpl } from '../domain/replayStats'
 import { getSessionReplayLink } from '../domain/getSessionReplayLink'
 import type { CreateDeflateWorker } from '../domain/deflate'
 import {
@@ -199,6 +199,6 @@ export function makeRecorderApi(
       getDeflateWorkerStatus() === DeflateWorkerStatus.Initialized && state.status === RecorderStatus.Started,
 
     getReplayStats: (viewId) =>
-      getDeflateWorkerStatus() === DeflateWorkerStatus.Initialized ? getReplayStats(viewId) : undefined,
+      getDeflateWorkerStatus() === DeflateWorkerStatus.Initialized ? getReplayStatsImpl(viewId) : undefined,
   }
 }

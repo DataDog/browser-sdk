@@ -7,6 +7,7 @@ import { createRumSessionManagerMock, setup } from '../../../rum-core/test'
 import type { CreateDeflateWorker } from '../domain/deflate'
 import { MockWorker } from '../../test'
 import { resetDeflateWorkerState } from '../domain/deflate'
+import * as replayStats from '../domain/replayStats'
 import type { StartRecording } from './recorderApi'
 import { makeRecorderApi } from './recorderApi'
 
@@ -44,6 +45,7 @@ describe('makeRecorderApi', () => {
   afterEach(() => {
     setupBuilder.cleanup()
     resetDeflateWorkerState()
+    replayStats.resetReplayStats()
   })
 
   describe('boot', () => {
@@ -431,6 +433,52 @@ describe('makeRecorderApi', () => {
       mockWorker.processAllMessages()
 
       expect(recorderApi.isRecording()).toBeTrue()
+    })
+  })
+
+  describe('getReplayStats', () => {
+    const VIEW_ID = 'xxx'
+
+    it('is undefined when recording has not been started', () => {
+      setupBuilder.build()
+      rumInit()
+
+      expect(recorderApi.getReplayStats(VIEW_ID)).toBeUndefined()
+    })
+
+    it('is undefined when the worker is not yet initialized', () => {
+      setupBuilder.build()
+      rumInit()
+
+      recorderApi.start()
+      replayStats.addSegment(VIEW_ID)
+      expect(recorderApi.getReplayStats(VIEW_ID)).toBeUndefined()
+    })
+
+    it('is undefined when the worker failed to initialize', () => {
+      setupBuilder.build()
+      rumInit()
+
+      recorderApi.start()
+      replayStats.addSegment(VIEW_ID)
+      mockWorker.dispatchErrorEvent()
+
+      expect(recorderApi.getReplayStats(VIEW_ID)).toBeUndefined()
+    })
+
+    it('is defined when recording is started and the worker is initialized', () => {
+      setupBuilder.build()
+      rumInit()
+
+      recorderApi.start()
+      replayStats.addSegment(VIEW_ID)
+      mockWorker.processAllMessages()
+
+      expect(recorderApi.getReplayStats(VIEW_ID)).toEqual({
+        records_count: 0,
+        segments_count: 1,
+        segments_total_raw_size: 0,
+      })
     })
   })
 })
