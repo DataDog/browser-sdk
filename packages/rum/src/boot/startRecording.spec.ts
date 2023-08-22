@@ -8,7 +8,8 @@ import type { RumSessionManagerMock, TestSetupBuilder } from '../../../rum-core/
 import { createRumSessionManagerMock, setup } from '../../../rum-core/test'
 
 import { recordsPerFullSnapshot, readReplayPayload } from '../../test'
-import { setSegmentBytesLimit, startDeflateWorker } from '../domain/segmentCollection'
+import { setSegmentBytesLimit } from '../domain/segmentCollection'
+import { DeflateEncoderStreamId, startDeflateWorker, createDeflateEncoder } from '../domain/deflate'
 
 import { RecordType } from '../types'
 import { resetReplayStats } from '../domain/replayStats'
@@ -59,7 +60,14 @@ describe('startRecording', () => {
             sendOnExit: requestSendSpy,
           }
 
-          const recording = startRecording(lifeCycle, configuration, sessionManager, viewContexts, worker!, httpRequest)
+          const recording = startRecording(
+            lifeCycle,
+            configuration,
+            sessionManager,
+            viewContexts,
+            createDeflateEncoder(configuration, worker!, DeflateEncoderStreamId.REPLAY),
+            httpRequest
+          )
           stopRecording = recording ? recording.stop : noop
           return { stop: stopRecording }
         })

@@ -8,6 +8,7 @@ import { createRumSessionManagerMock } from '../../../../rum-core/test'
 import type { BrowserRecord, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
 import { MockWorker, readMetadataFromReplayPayload } from '../../../test'
+import { DeflateEncoderStreamId, createDeflateEncoder } from '../deflate'
 import {
   computeSegmentContext,
   doStartSegmentCollection,
@@ -70,10 +71,9 @@ describe('startSegmentCollection', () => {
     context = CONTEXT
     ;({ stop: stopSegmentCollection, addRecord } = doStartSegmentCollection(
       lifeCycle,
-      configuration,
       () => context,
       httpRequestSpy,
-      worker
+      createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
     ))
   })
 
