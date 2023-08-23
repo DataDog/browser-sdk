@@ -154,6 +154,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       allow_fallback_to_local_storage?: boolean
       /**
+       * Whether contexts are stored in local storage
+       */
+      store_contexts_across_pages?: boolean
+      /**
        * Whether untrusted events are allowed
        */
       allow_untrusted_events?: boolean
