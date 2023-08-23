@@ -213,7 +213,7 @@ function newView(
 
   const { scheduleStop: scheduleStopInitialViewTimingsTracking, timings } =
     loadingType === ViewLoadingType.INITIAL_LOAD
-      ? trackInitialViewTimings(lifeCycle, webVitalTelemetryDebug, setLoadEvent, scheduleViewUpdate)
+      ? trackInitialViewTimings(lifeCycle, configuration, webVitalTelemetryDebug, setLoadEvent, scheduleViewUpdate)
       : { scheduleStop: noop, timings: {} as Timings }
 
   const { scheduleStop: scheduleStopEventCountsTracking, eventCounts } = trackViewEventCounts(

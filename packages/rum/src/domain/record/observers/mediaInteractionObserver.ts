@@ -1,5 +1,6 @@
 import type { DefaultPrivacyLevel, ListenerHandler } from '@datadog/browser-core'
 import { DOM_EVENT, addEventListeners } from '@datadog/browser-core'
+import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel } from '../../../constants'
 import type { MediaInteraction } from '../../../types'
 import { MediaInteractionType } from '../../../types'
@@ -10,6 +11,7 @@ import { getSerializedNodeId, hasSerializedNode } from '../serialization'
 export type MediaInteractionCallback = (p: MediaInteraction) => void
 
 export function initMediaInteractionObserver(
+  configuration: RumConfiguration,
   mediaInteractionCb: MediaInteractionCallback,
   defaultPrivacyLevel: DefaultPrivacyLevel
 ): ListenerHandler {
@@ -27,5 +29,8 @@ export function initMediaInteractionObserver(
       type: event.type === DOM_EVENT.PLAY ? MediaInteractionType.Play : MediaInteractionType.Pause,
     })
   }
-  return addEventListeners(document, [DOM_EVENT.PLAY, DOM_EVENT.PAUSE], handler, { capture: true, passive: true }).stop
+  return addEventListeners(configuration, document, [DOM_EVENT.PLAY, DOM_EVENT.PAUSE], handler, {
+    capture: true,
+    passive: true,
+  }).stop
 }

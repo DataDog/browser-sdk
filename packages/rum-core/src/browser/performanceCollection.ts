@@ -129,7 +129,7 @@ export function supportPerformanceTimingEvent(entryType: string) {
 }
 
 export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: RumConfiguration) {
-  retrieveInitialDocumentResourceTiming((timing) => {
+  retrieveInitialDocumentResourceTiming(configuration, (timing) => {
     handleRumPerformanceEntries(lifeCycle, configuration, [timing])
   })
 
@@ -172,25 +172,28 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
 
     if (supportPerformanceObject() && 'addEventListener' in performance) {
       // https://bugzilla.mozilla.org/show_bug.cgi?id=1559377
-      addEventListener(performance, 'resourcetimingbufferfull', () => {
+      addEventListener(configuration, performance, 'resourcetimingbufferfull', () => {
         performance.clearResourceTimings()
       })
     }
   }
   if (!supportPerformanceTimingEvent('navigation')) {
-    retrieveNavigationTiming((timing) => {
+    retrieveNavigationTiming(configuration, (timing) => {
       handleRumPerformanceEntries(lifeCycle, configuration, [timing])
     })
   }
   if (!supportPerformanceTimingEvent('first-input')) {
-    retrieveFirstInputTiming((timing) => {
+    retrieveFirstInputTiming(configuration, (timing) => {
       handleRumPerformanceEntries(lifeCycle, configuration, [timing])
     })
   }
 }
 
-export function retrieveInitialDocumentResourceTiming(callback: (timing: RumPerformanceResourceTiming) => void) {
-  runOnReadyState('interactive', () => {
+export function retrieveInitialDocumentResourceTiming(
+  configuration: RumConfiguration,
+  callback: (timing: RumPerformanceResourceTiming) => void
+) {
+  runOnReadyState(configuration, 'interactive', () => {
     let timing: RumPerformanceResourceTiming
 
     const forcedAttributes = {
@@ -218,7 +221,10 @@ export function retrieveInitialDocumentResourceTiming(callback: (timing: RumPerf
   })
 }
 
-function retrieveNavigationTiming(callback: (timing: RumPerformanceNavigationTiming) => void) {
+function retrieveNavigationTiming(
+  configuration: RumConfiguration,
+  callback: (timing: RumPerformanceNavigationTiming) => void
+) {
   function sendFakeTiming() {
     callback(
       assign(computeRelativePerformanceTiming(), {
@@ -227,7 +233,7 @@ function retrieveNavigationTiming(callback: (timing: RumPerformanceNavigationTim
     )
   }
 
-  runOnReadyState('complete', () => {
+  runOnReadyState(configuration, 'complete', () => {
     // Send it a bit after the actual load event, so the "loadEventEnd" timing is accurate
     setTimeout(sendFakeTiming)
   })
@@ -237,11 +243,12 @@ function retrieveNavigationTiming(callback: (timing: RumPerformanceNavigationTim
  * first-input timing entry polyfill based on
  * https://github.com/GoogleChrome/web-vitals/blob/master/src/lib/polyfills/firstInputPolyfill.ts
  */
-function retrieveFirstInputTiming(callback: (timing: RumFirstInputTiming) => void) {
+function retrieveFirstInputTiming(configuration: RumConfiguration, callback: (timing: RumFirstInputTiming) => void) {
   const startTimeStamp = dateNow()
   let timingSent = false
 
   const { stop: removeEventListeners } = addEventListeners(
+    configuration,
     window,
     [DOM_EVENT.CLICK, DOM_EVENT.MOUSE_DOWN, DOM_EVENT.KEY_DOWN, DOM_EVENT.TOUCH_START, DOM_EVENT.POINTER_DOWN],
     (evt) => {
@@ -260,7 +267,7 @@ function retrieveFirstInputTiming(callback: (timing: RumFirstInputTiming) => voi
       }
 
       if (evt.type === DOM_EVENT.POINTER_DOWN) {
-        sendTimingIfPointerIsNotCancelled(timing)
+        sendTimingIfPointerIsNotCancelled(configuration, timing)
       } else {
         sendTiming(timing)
       }
@@ -274,8 +281,9 @@ function retrieveFirstInputTiming(callback: (timing: RumFirstInputTiming) => voi
    * fired when we scroll. If we're scrolling we don't need to report input delay since FID excludes
    * scrolling and pinch/zooming.
    */
-  function sendTimingIfPointerIsNotCancelled(timing: RumFirstInputTiming) {
+  function sendTimingIfPointerIsNotCancelled(configuration: RumConfiguration, timing: RumFirstInputTiming) {
     addEventListeners(
+      configuration,
       window,
       [DOM_EVENT.POINTER_UP, DOM_EVENT.POINTER_CANCEL],
       (event) => {

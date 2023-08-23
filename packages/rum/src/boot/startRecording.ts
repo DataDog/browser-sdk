@@ -10,7 +10,7 @@ import type {
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 
 import { record } from '../domain/record'
-import type { DeflateWorker } from '../domain/segmentCollection'
+import type { DeflateEncoder } from '../domain/deflate'
 import { startSegmentCollection, SEGMENT_BYTES_LIMIT } from '../domain/segmentCollection'
 import { RecordType } from '../types'
 
@@ -19,7 +19,7 @@ export function startRecording(
   configuration: RumConfiguration,
   sessionManager: RumSessionManager,
   viewContexts: ViewContexts,
-  worker: DeflateWorker,
+  encoder: DeflateEncoder,
   httpRequest?: HttpRequest
 ) {
   const reportError = (error: RawError) => {
@@ -28,15 +28,16 @@ export function startRecording(
   }
 
   const replayRequest =
-    httpRequest || createHttpRequest(configuration.sessionReplayEndpointBuilder, SEGMENT_BYTES_LIMIT, reportError)
+    httpRequest ||
+    createHttpRequest(configuration, configuration.sessionReplayEndpointBuilder, SEGMENT_BYTES_LIMIT, reportError)
 
   const { addRecord, stop: stopSegmentCollection } = startSegmentCollection(
     lifeCycle,
-    configuration.applicationId,
+    configuration,
     sessionManager,
     viewContexts,
     replayRequest,
-    worker
+    encoder
   )
 
   const {

@@ -37,7 +37,7 @@ export const initShadowRootsController = (
         shadowRoot
       )
       // the change event no do bubble up across the shadow root, we have to listen on the shadow root
-      const stopInputObserver = initInputObserver(inputCb, configuration.defaultPrivacyLevel, shadowRoot)
+      const stopInputObserver = initInputObserver(configuration, inputCb, shadowRoot)
       controllerByShadowRoot.set(shadowRoot, {
         flush,
         stop: () => {

@@ -1,3 +1,4 @@
+import type { Configuration } from '../domain/configuration'
 import { withXhr, stubXhr } from '../../test'
 import { isIE } from '../tools/utils/browserDetection'
 import type { Subscription } from '../tools/observable'
@@ -10,9 +11,11 @@ describe('xhr observable', () => {
   let requests: XhrCompleteContext[]
   let stubXhrManager: { reset(): void }
   let originalXhrStubSend: XMLHttpRequest['send']
+  let configuration: Configuration
 
   beforeEach(() => {
     stubXhrManager = stubXhr()
+    configuration = {} as Configuration
     // eslint-disable-next-line @typescript-eslint/unbound-method
     originalXhrStubSend = XMLHttpRequest.prototype.send
 
@@ -27,7 +30,7 @@ describe('xhr observable', () => {
   })
 
   function startTrackingRequests() {
-    requestsTrackingSubscription = initXhrObservable().subscribe((context) => {
+    requestsTrackingSubscription = initXhrObservable(configuration).subscribe((context) => {
       if (context.state === 'complete') {
         requests.push(context)
       }
@@ -210,7 +213,7 @@ describe('xhr observable', () => {
 
   it('should allow to enhance the context', (done) => {
     type CustomContext = XhrContext & { foo: string }
-    contextEditionSubscription = initXhrObservable().subscribe((rawContext) => {
+    contextEditionSubscription = initXhrObservable(configuration).subscribe((rawContext) => {
       const context = rawContext as CustomContext
       if (context.state === 'start') {
         context.foo = 'bar'
@@ -247,7 +250,7 @@ describe('xhr observable', () => {
   })
 
   it('should track multiple requests with the same xhr instance', (done) => {
-    let listeners: { [k: string]: Array<() => void> }
+    let listeners: { [k: string]: Array<(event: Event) => void> }
     withXhr({
       setup(xhr) {
         const secondOnload = () => {

@@ -5,9 +5,9 @@ import type { RelativeTime } from '../../tools/utils/timeUtils'
 import { relativeNow, clocksOrigin, ONE_MINUTE } from '../../tools/utils/timeUtils'
 import { DOM_EVENT, addEventListener, addEventListeners } from '../../browser/addEventListener'
 import { clearInterval, setInterval } from '../../tools/timer'
+import type { Configuration } from '../configuration'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { startSessionStore } from './sessionStore'
-import type { SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
 
 export interface SessionManager<TrackingType extends string> {
   findActiveSession: (startTime?: RelativeTime) => SessionContext<TrackingType> | undefined
@@ -26,11 +26,12 @@ const SESSION_CONTEXT_TIMEOUT_DELAY = SESSION_TIME_OUT_DELAY
 let stopCallbacks: Array<() => void> = []
 
 export function startSessionManager<TrackingType extends string>(
-  sessionStoreStrategyType: SessionStoreStrategyType,
+  configuration: Configuration,
   productKey: string,
   computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean }
 ): SessionManager<TrackingType> {
-  const sessionStore = startSessionStore(sessionStoreStrategyType, productKey, computeSessionState)
+  // TODO - Improve configuration type and remove assertion
+  const sessionStore = startSessionStore(configuration.sessionStoreStrategyType!, productKey, computeSessionState)
   stopCallbacks.push(() => sessionStore.stop())
 
   const sessionContextHistory = new ValueHistory<SessionContext<TrackingType>>(SESSION_CONTEXT_TIMEOUT_DELAY)
@@ -46,8 +47,8 @@ export function startSessionManager<TrackingType extends string>(
   sessionStore.expandOrRenewSession()
   sessionContextHistory.add(buildSessionContext(), clocksOrigin().relative)
 
-  trackActivity(() => sessionStore.expandOrRenewSession())
-  trackVisibility(() => sessionStore.expandSession())
+  trackActivity(configuration, () => sessionStore.expandOrRenewSession())
+  trackVisibility(configuration, () => sessionStore.expandSession())
 
   function buildSessionContext() {
     return {
@@ -69,8 +70,9 @@ export function stopSessionManager() {
   stopCallbacks = []
 }
 
-function trackActivity(expandOrRenewSession: () => void) {
+function trackActivity(configuration: Configuration, expandOrRenewSession: () => void) {
   const { stop } = addEventListeners(
+    configuration,
     window,
     [DOM_EVENT.CLICK, DOM_EVENT.TOUCH_START, DOM_EVENT.KEY_DOWN, DOM_EVENT.SCROLL],
     expandOrRenewSession,
@@ -79,14 +81,14 @@ function trackActivity(expandOrRenewSession: () => void) {
   stopCallbacks.push(stop)
 }
 
-function trackVisibility(expandSession: () => void) {
+function trackVisibility(configuration: Configuration, expandSession: () => void) {
   const expandSessionWhenVisible = () => {
     if (document.visibilityState === 'visible') {
       expandSession()
     }
   }
 
-  const { stop } = addEventListener(document, DOM_EVENT.VISIBILITY_CHANGE, expandSessionWhenVisible)
+  const { stop } = addEventListener(configuration, document, DOM_EVENT.VISIBILITY_CHANGE, expandSessionWhenVisible)
   stopCallbacks.push(stop)
 
   const visibilityCheckInterval = setInterval(expandSessionWhenVisible, VISIBILITY_CHECK_DELAY)

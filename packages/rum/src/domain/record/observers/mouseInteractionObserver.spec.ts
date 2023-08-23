@@ -1,5 +1,6 @@
-import { DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
+import { DOM_EVENT, DefaultPrivacyLevel, isIE } from '@datadog/browser-core'
 import { createNewEvent } from '@datadog/browser-core/test'
+import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { IncrementalSource, MouseInteractionType, RecordType } from '../../../types'
 import { serializeDocument, SerializationContextStatus } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
@@ -15,18 +16,20 @@ describe('initMouseInteractionObserver', () => {
   let recordIds: RecordIds
   let sandbox: HTMLDivElement
   let a: HTMLAnchorElement
+  let configuration: RumConfiguration
 
   beforeEach(() => {
     if (isIE()) {
       pending('IE not supported')
     }
 
+    configuration = { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration
     sandbox = document.createElement('div')
     a = document.createElement('a')
     a.setAttribute('tabindex', '0') // make the element focusable
     sandbox.appendChild(a)
     document.body.appendChild(sandbox)
-    a.focus()
+    a.dispatchEvent(createNewEvent(DOM_EVENT.FOCUS))
 
     serializeDocument(document, DEFAULT_CONFIGURATION, {
       shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
@@ -36,7 +39,7 @@ describe('initMouseInteractionObserver', () => {
 
     mouseInteractionCallbackSpy = jasmine.createSpy()
     recordIds = initRecordIds()
-    stopObserver = initMouseInteractionObserver(mouseInteractionCallbackSpy, DefaultPrivacyLevel.ALLOW, recordIds)
+    stopObserver = initMouseInteractionObserver(configuration, mouseInteractionCallbackSpy, recordIds)
   })
 
   afterEach(() => {
@@ -45,7 +48,7 @@ describe('initMouseInteractionObserver', () => {
   })
 
   it('should generate click record', () => {
-    a.click()
+    a.dispatchEvent(createNewEvent(DOM_EVENT.CLICK, { clientX: 0, clientY: 0 }))
 
     expect(mouseInteractionCallbackSpy).toHaveBeenCalledWith({
       id: jasmine.any(Number),
@@ -62,7 +65,7 @@ describe('initMouseInteractionObserver', () => {
   })
 
   it('should generate mouseup record on pointerup DOM event', () => {
-    const pointerupEvent = createNewEvent('pointerup', { clientX: 1, clientY: 2 })
+    const pointerupEvent = createNewEvent(DOM_EVENT.POINTER_UP, { clientX: 1, clientY: 2 })
     a.dispatchEvent(pointerupEvent)
 
     expect(mouseInteractionCallbackSpy).toHaveBeenCalledWith({
@@ -80,14 +83,14 @@ describe('initMouseInteractionObserver', () => {
   })
 
   it('should not generate click record if x/y are missing', () => {
-    const clickEvent = createNewEvent('click')
+    const clickEvent = createNewEvent(DOM_EVENT.CLICK)
     a.dispatchEvent(clickEvent)
 
     expect(mouseInteractionCallbackSpy).not.toHaveBeenCalled()
   })
 
   it('should generate blur record', () => {
-    a.blur()
+    a.dispatchEvent(createNewEvent(DOM_EVENT.BLUR))
 
     expect(mouseInteractionCallbackSpy).toHaveBeenCalledWith({
       id: jasmine.any(Number),
@@ -125,12 +128,12 @@ describe('initMouseInteractionObserver', () => {
     })
 
     it('should compute x/y coordinates for click record', () => {
-      a.click()
+      a.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
       expect(coordinatesComputed).toBeTrue()
     })
 
     it('should not compute x/y coordinates for blur record', () => {
-      a.blur()
+      a.dispatchEvent(createNewEvent(DOM_EVENT.BLUR))
       expect(coordinatesComputed).toBeFalse()
     })
   })

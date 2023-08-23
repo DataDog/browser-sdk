@@ -1,12 +1,12 @@
 import type { HttpRequest, TimeoutId } from '@datadog/browser-core'
 import { isPageExitReason, ONE_SECOND, clearTimeout, setTimeout } from '@datadog/browser-core'
-import type { LifeCycle, ViewContexts, RumSessionManager } from '@datadog/browser-rum-core'
+import type { LifeCycle, ViewContexts, RumSessionManager, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { BrowserRecord, CreationReason, SegmentContext } from '../../types'
+import type { DeflateEncoder } from '../deflate'
 import { buildReplayPayload } from './buildReplayPayload'
 import type { FlushReason } from './segment'
 import { Segment } from './segment'
-import type { DeflateWorker } from './startDeflateWorker'
 
 export const SEGMENT_DURATION_LIMIT = 30 * ONE_SECOND
 /**
@@ -42,17 +42,17 @@ export let SEGMENT_BYTES_LIMIT = 60_000
 
 export function startSegmentCollection(
   lifeCycle: LifeCycle,
-  applicationId: string,
+  configuration: RumConfiguration,
   sessionManager: RumSessionManager,
   viewContexts: ViewContexts,
   httpRequest: HttpRequest,
-  worker: DeflateWorker
+  encoder: DeflateEncoder
 ) {
   return doStartSegmentCollection(
     lifeCycle,
-    () => computeSegmentContext(applicationId, sessionManager, viewContexts),
+    () => computeSegmentContext(configuration.applicationId, sessionManager, viewContexts),
     httpRequest,
-    worker
+    encoder
   )
 }
 
@@ -79,7 +79,7 @@ export function doStartSegmentCollection(
   lifeCycle: LifeCycle,
   getSegmentContext: () => SegmentContext | undefined,
   httpRequest: HttpRequest,
-  worker: DeflateWorker
+  encoder: DeflateEncoder
 ) {
   let state: SegmentCollectionState = {
     status: SegmentCollectionStatus.WaitingForInitialRecord,
@@ -99,7 +99,15 @@ export function doStartSegmentCollection(
 
   function flushSegment(flushReason: FlushReason) {
     if (state.status === SegmentCollectionStatus.SegmentPending) {
-      state.segment.flush(flushReason)
+      state.segment.flush((metadata) => {
+        const payload = buildReplayPayload(encoder.encodedBytes, metadata, encoder.rawBytesCount)
+
+        if (isPageExitReason(flushReason)) {
+          httpRequest.sendOnExit(payload)
+        } else {
+          httpRequest.send(payload)
+        }
+      })
       clearTimeout(state.expirationTimeoutId)
     }
 
@@ -115,53 +123,39 @@ export function doStartSegmentCollection(
     }
   }
 
-  function createNewSegment(creationReason: CreationReason, initialRecord: BrowserRecord) {
-    const context = getSegmentContext()
-    if (!context) {
-      return
-    }
-
-    const segment = new Segment(
-      worker,
-      context,
-      creationReason,
-      initialRecord,
-      (compressedSegmentBytesCount) => {
-        if (!segment.flushReason && compressedSegmentBytesCount > SEGMENT_BYTES_LIMIT) {
-          flushSegment('segment_bytes_limit')
-        }
-      },
-      (data, rawSegmentBytesCount) => {
-        const payload = buildReplayPayload(data, segment.metadata, rawSegmentBytesCount)
-
-        if (isPageExitReason(segment.flushReason)) {
-          httpRequest.sendOnExit(payload)
-        } else {
-          httpRequest.send(payload)
-        }
-      }
-    )
-
-    state = {
-      status: SegmentCollectionStatus.SegmentPending,
-      segment,
-      expirationTimeoutId: setTimeout(() => {
-        flushSegment('segment_duration_limit')
-      }, SEGMENT_DURATION_LIMIT),
-    }
-  }
-
   return {
     addRecord: (record: BrowserRecord) => {
-      switch (state.status) {
-        case SegmentCollectionStatus.WaitingForInitialRecord:
-          createNewSegment(state.nextSegmentCreationReason, record)
-          break
-
-        case SegmentCollectionStatus.SegmentPending:
-          state.segment.addRecord(record)
-          break
+      if (state.status === SegmentCollectionStatus.Stopped) {
+        return
       }
+
+      if (state.status === SegmentCollectionStatus.WaitingForInitialRecord) {
+        const context = getSegmentContext()
+        if (!context) {
+          return
+        }
+
+        state = {
+          status: SegmentCollectionStatus.SegmentPending,
+          segment: new Segment(encoder, context, state.nextSegmentCreationReason),
+          expirationTimeoutId: setTimeout(() => {
+            flushSegment('segment_duration_limit')
+          }, SEGMENT_DURATION_LIMIT),
+        }
+      }
+
+      const segment = state.segment
+
+      segment.addRecord(record, () => {
+        if (
+          // the written segment is still pending
+          state.status === SegmentCollectionStatus.SegmentPending &&
+          state.segment === segment &&
+          encoder.encodedBytesCount > SEGMENT_BYTES_LIMIT
+        ) {
+          flushSegment('segment_bytes_limit')
+        }
+      })
     },
 
     stop: () => {

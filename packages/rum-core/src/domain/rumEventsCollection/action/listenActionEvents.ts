@@ -1,4 +1,5 @@
 import { addEventListener, DOM_EVENT } from '@datadog/browser-core'
+import type { RumConfiguration } from '../../configuration'
 
 export type MouseEventOnElement = PointerEvent & { target: Element }
 
@@ -11,7 +12,10 @@ export interface ActionEventsHooks<ClickContext> {
   onPointerUp: (context: ClickContext, event: MouseEventOnElement, getUserActivity: () => UserActivity) => void
 }
 
-export function listenActionEvents<ClickContext>({ onPointerDown, onPointerUp }: ActionEventsHooks<ClickContext>) {
+export function listenActionEvents<ClickContext>(
+  configuration: RumConfiguration,
+  { onPointerDown, onPointerUp }: ActionEventsHooks<ClickContext>
+) {
   let selectionEmptyAtPointerDown: boolean
   let userActivity: UserActivity = {
     selection: false,
@@ -21,6 +25,7 @@ export function listenActionEvents<ClickContext>({ onPointerDown, onPointerUp }:
 
   const listeners = [
     addEventListener(
+      configuration,
       window,
       DOM_EVENT.POINTER_DOWN,
       (event: PointerEvent) => {
@@ -37,6 +42,7 @@ export function listenActionEvents<ClickContext>({ onPointerDown, onPointerUp }:
     ),
 
     addEventListener(
+      configuration,
       window,
       DOM_EVENT.SELECTION_CHANGE,
       () => {
@@ -48,6 +54,7 @@ export function listenActionEvents<ClickContext>({ onPointerDown, onPointerUp }:
     ),
 
     addEventListener(
+      configuration,
       window,
       DOM_EVENT.POINTER_UP,
       (event: PointerEvent) => {
@@ -62,6 +69,7 @@ export function listenActionEvents<ClickContext>({ onPointerDown, onPointerUp }:
     ),
 
     addEventListener(
+      configuration,
       window,
       DOM_EVENT.INPUT,
       () => {

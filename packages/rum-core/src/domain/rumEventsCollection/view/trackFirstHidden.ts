@@ -1,10 +1,11 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { addEventListeners, DOM_EVENT } from '@datadog/browser-core'
+import type { RumConfiguration } from '../../configuration'
 
 let trackFirstHiddenSingleton: { timeStamp: RelativeTime } | undefined
 let stopListeners: (() => void) | undefined
 
-export function trackFirstHidden(eventTarget: Window = window) {
+export function trackFirstHidden(configuration: RumConfiguration, eventTarget: Window = window) {
   if (!trackFirstHiddenSingleton) {
     if (document.visibilityState === 'hidden') {
       trackFirstHiddenSingleton = {
@@ -15,6 +16,7 @@ export function trackFirstHidden(eventTarget: Window = window) {
         timeStamp: Infinity as RelativeTime,
       }
       ;({ stop: stopListeners } = addEventListeners(
+        configuration,
         eventTarget,
         [DOM_EVENT.PAGE_HIDE, DOM_EVENT.VISIBILITY_CHANGE],
         (event) => {

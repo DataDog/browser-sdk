@@ -1,5 +1,6 @@
 import type { DefaultPrivacyLevel, ListenerHandler } from '@datadog/browser-core'
 import { DOM_EVENT, throttle, addEventListener } from '@datadog/browser-core'
+import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { getScrollX, getScrollY } from '@datadog/browser-rum-core'
 import type { ElementsScrollPositions } from '../elementsScrollPositions'
 import { getEventTarget } from '../eventsUtils'
@@ -13,6 +14,7 @@ const SCROLL_OBSERVER_THRESHOLD = 100
 export type ScrollCallback = (p: ScrollPosition) => void
 
 export function initScrollObserver(
+  configuration: RumConfiguration,
   cb: ScrollCallback,
   defaultPrivacyLevel: DefaultPrivacyLevel,
   elementsScrollPositions: ElementsScrollPositions
@@ -44,5 +46,6 @@ export function initScrollObserver(
       y: scrollPositions.scrollTop,
     })
   }, SCROLL_OBSERVER_THRESHOLD)
-  return addEventListener(document, DOM_EVENT.SCROLL, updatePosition, { capture: true, passive: true }).stop
+  return addEventListener(configuration, document, DOM_EVENT.SCROLL, updatePosition, { capture: true, passive: true })
+    .stop
 }

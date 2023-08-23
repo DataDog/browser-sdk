@@ -4,7 +4,8 @@ import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { deleteEventBridgeStub, initEventBridgeStub, createNewEvent } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock, TestSetupBuilder } from '../../../rum-core/test'
 import { createRumSessionManagerMock, setup } from '../../../rum-core/test'
-import type { DeflateWorker, startDeflateWorker } from '../domain/segmentCollection'
+import type { DeflateWorker, startDeflateWorker } from '../domain/deflate'
+import { MockWorker } from '../../test'
 import type { StartRecording } from './recorderApi'
 import { makeRecorderApi } from './recorderApi'
 
@@ -14,7 +15,7 @@ describe('makeRecorderApi', () => {
   let startRecordingSpy: jasmine.Spy<StartRecording>
   let stopRecordingSpy: jasmine.Spy<() => void>
   let startDeflateWorkerSpy: jasmine.Spy<typeof startDeflateWorker>
-  const FAKE_WORKER = {} as DeflateWorker
+  const FAKE_WORKER = new MockWorker()
 
   function startDeflateWorkerWith(worker?: DeflateWorker) {
     if (!startDeflateWorkerSpy) {

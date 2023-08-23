@@ -80,7 +80,7 @@ export function trackClickActions(
   const { stop: stopActionEventsListener } = listenActionEvents<{
     clickActionBase: ClickActionBase
     hadActivityOnPointerDown: () => boolean
-  }>({
+  }>(configuration, {
     onPointerDown: (pointerDownEvent) =>
       processPointerDown(configuration, lifeCycle, domMutationObservable, history, pointerDownEvent),
     onPointerUp: ({ clickActionBase, hadActivityOnPointerDown }, startEvent, getUserActivity) =>

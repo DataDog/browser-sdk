@@ -2,6 +2,7 @@ import { isExperimentalFeatureEnabled, ExperimentalFeature } from '../tools/expe
 import { Observable } from '../tools/observable'
 import { objectValues, includes } from '../tools/utils/polyfills'
 import { noop } from '../tools/utils/functionUtils'
+import type { Configuration } from '../domain/configuration'
 import { addEventListeners, addEventListener, DOM_EVENT } from './addEventListener'
 
 export const PageExitReason = {
@@ -17,10 +18,11 @@ export interface PageExitEvent {
   reason: PageExitReason
 }
 
-export function createPageExitObservable(): Observable<PageExitEvent> {
+export function createPageExitObservable(configuration: Configuration): Observable<PageExitEvent> {
   const observable = new Observable<PageExitEvent>(() => {
     const pagehideEnabled = isExperimentalFeatureEnabled(ExperimentalFeature.PAGEHIDE)
     const { stop: stopListeners } = addEventListeners(
+      configuration,
       window,
       [DOM_EVENT.VISIBILITY_CHANGE, DOM_EVENT.FREEZE, DOM_EVENT.PAGE_HIDE],
       (event) => {
@@ -48,7 +50,7 @@ export function createPageExitObservable(): Observable<PageExitEvent> {
 
     let stopBeforeUnloadListener = noop
     if (!pagehideEnabled) {
-      stopBeforeUnloadListener = addEventListener(window, DOM_EVENT.BEFORE_UNLOAD, () => {
+      stopBeforeUnloadListener = addEventListener(configuration, window, DOM_EVENT.BEFORE_UNLOAD, () => {
         observable.notify({ reason: PageExitReason.UNLOADING })
       }).stop
     }

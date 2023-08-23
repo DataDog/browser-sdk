@@ -1,5 +1,7 @@
 import type { DeflateWorkerAction, DeflateWorkerResponse } from '@datadog/browser-worker'
-import type { DeflateWorker } from '../src/domain/segmentCollection'
+import { string2buf } from '../../worker/src/domain/deflate'
+import { createNewEvent } from '../../core/test'
+import type { DeflateWorker } from '../src/domain/deflate'
 
 type DeflateWorkerListener = (event: { data: DeflateWorkerResponse }) => void
 
@@ -67,12 +69,14 @@ export class MockWorker implements DeflateWorker {
       switch (message.action) {
         case 'init':
           this.listeners.message.forEach((listener) =>
-            listener({
-              data: {
-                type: 'initialized',
-                version: 'dev',
-              },
-            })
+            listener(
+              createNewEvent('message', {
+                data: {
+                  type: 'initialized',
+                  version: 'dev',
+                },
+              })
+            )
           )
           break
         case 'write':
@@ -83,20 +87,22 @@ export class MockWorker implements DeflateWorker {
               this.streams.set(message.streamId, stream)
             }
             // In the mock worker, for simplicity, we'll just use the UTF-8 encoded string instead of deflating it.
-            const binaryData = new TextEncoder().encode(message.data)
+            const binaryData = string2buf(message.data)
             stream.push(binaryData)
 
             this.listeners.message.forEach((listener) =>
-              listener({
-                data: {
-                  type: 'wrote',
-                  id: message.id,
-                  streamId: message.streamId,
-                  result: binaryData,
-                  trailer: new Uint8Array([32]), // emulate a trailer with a single space
-                  additionalBytesCount: binaryData.length,
-                },
-              })
+              listener(
+                createNewEvent('message', {
+                  data: {
+                    type: 'wrote',
+                    id: message.id,
+                    streamId: message.streamId,
+                    result: binaryData,
+                    trailer: new Uint8Array([32]), // emulate a trailer with a single space
+                    additionalBytesCount: binaryData.length,
+                  },
+                })
+              )
             )
           }
           break
@@ -108,11 +114,13 @@ export class MockWorker implements DeflateWorker {
   }
 
   dispatchErrorEvent() {
-    const error = new ErrorEvent('worker')
+    const error = createNewEvent('worker')
     this.listeners.error.forEach((listener) => listener(error))
   }
 
   dispatchErrorMessage(error: Error | string, streamId?: number) {
-    this.listeners.message.forEach((listener) => listener({ data: { type: 'errored', error, streamId } }))
+    this.listeners.message.forEach((listener) =>
+      listener(createNewEvent('message', { data: { type: 'errored', error, streamId } }))
+    )
   }
 }

@@ -1,5 +1,6 @@
-import type { DefaultPrivacyLevel, ListenerHandler } from '@datadog/browser-core'
-import { instrumentSetter, assign, DOM_EVENT, addEventListeners, forEach, noop } from '@datadog/browser-core'
+import type { ListenerHandler } from '@datadog/browser-core'
+import { instrumentSetter, assign, DOM_EVENT, addEventListeners, forEach, noop, cssEscape } from '@datadog/browser-core'
+import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel } from '../../../constants'
 import type { InputState } from '../../../types'
 import { getEventTarget } from '../eventsUtils'
@@ -9,15 +10,17 @@ import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from '..
 export type InputCallback = (v: InputState & { id: number }) => void
 
 export function initInputObserver(
+  configuration: RumConfiguration,
   cb: InputCallback,
-  defaultPrivacyLevel: DefaultPrivacyLevel,
   target: Document | ShadowRoot = document
 ): ListenerHandler {
+  const defaultPrivacyLevel = configuration.defaultPrivacyLevel
   const lastInputStateMap: WeakMap<Node, InputState> = new WeakMap()
 
   const isShadowRoot = target !== document
 
   const { stop: stopEventListeners } = addEventListeners(
+    configuration,
     target,
     // The 'input' event bubbles across shadow roots, so we don't have to listen for it on shadow
     // roots since it will be handled by the event listener that we did add to the document. Only
@@ -88,7 +91,7 @@ export function initInputObserver(
     // If a radio was checked, other radios with the same name attribute will be unchecked.
     const name = target.name
     if (type === 'radio' && name && (target as HTMLInputElement).checked) {
-      forEach(document.querySelectorAll(`input[type="radio"][name="${name}"]`), (el: Element) => {
+      forEach(document.querySelectorAll(`input[type="radio"][name="${cssEscape(name)}"]`), (el: Element) => {
         if (el !== target) {
           // TODO: Consider the privacy implications for various differing input privacy levels
           cbWithDedup(el, { isChecked: false })

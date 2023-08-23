@@ -1,5 +1,6 @@
 import type { ListenerHandler } from '@datadog/browser-core'
 import { addEventListeners, addTelemetryDebug, DOM_EVENT, throttle } from '@datadog/browser-core'
+import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { getSerializedNodeId, hasSerializedNode } from '../serialization'
 import type { MousePosition } from '../../../types'
 import { IncrementalSource } from '../../../types'
@@ -13,7 +14,7 @@ export type MousemoveCallBack = (
   source: typeof IncrementalSource.MouseMove | typeof IncrementalSource.TouchMove
 ) => void
 
-export function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {
+export function initMoveObserver(configuration: RumConfiguration, cb: MousemoveCallBack): ListenerHandler {
   const { throttled: updatePosition } = throttle(
     (event: MouseEvent | TouchEvent) => {
       const target = getEventTarget(event)
@@ -38,7 +39,7 @@ export function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {
     }
   )
 
-  return addEventListeners(document, [DOM_EVENT.MOUSE_MOVE, DOM_EVENT.TOUCH_MOVE], updatePosition, {
+  return addEventListeners(configuration, document, [DOM_EVENT.MOUSE_MOVE, DOM_EVENT.TOUCH_MOVE], updatePosition, {
     capture: true,
     passive: true,
   }).stop

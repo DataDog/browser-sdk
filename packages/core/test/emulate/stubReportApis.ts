@@ -1,5 +1,6 @@
 import type { InterventionReport, ReportType } from '../../src/domain/report/browser.types'
 import { noop } from '../../src/tools/utils/functionUtils'
+import { createNewEvent } from './createNewEvent'
 
 export function stubReportingObserver() {
   const originalReportingObserver = window.ReportingObserver
@@ -56,7 +57,7 @@ export function stubCspEventListener() {
   }
 }
 
-export const FAKE_CSP_VIOLATION_EVENT = {
+export const FAKE_CSP_VIOLATION_EVENT = createNewEvent('securitypolicyviolation', {
   blockedURI: 'blob',
   columnNumber: 8,
   documentURI: 'blob',
@@ -67,7 +68,7 @@ export const FAKE_CSP_VIOLATION_EVENT = {
   sourceFile: 'http://foo.bar/index.js',
   statusCode: 200,
   violatedDirective: 'worker-src',
-} as SecurityPolicyViolationEvent
+})
 
 export const FAKE_REPORT: InterventionReport = {
   type: 'intervention',
