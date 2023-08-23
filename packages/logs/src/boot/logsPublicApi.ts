@@ -13,6 +13,7 @@ import {
   checkUser,
   sanitizeUser,
   sanitize,
+  createStoredContextManager,
 } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
@@ -33,11 +34,13 @@ export type StartLogs = typeof startLogs
 
 type StartLogsResult = ReturnType<typeof startLogs>
 
+const LOGS_STORAGE_KEY = 'logs'
+
 export function makeLogsPublicApi(startLogsImpl: StartLogs) {
   let isAlreadyInitialized = false
 
-  const globalContextManager = createContextManager(CustomerDataType.GlobalContext)
-  const userContextManager = createContextManager(CustomerDataType.User)
+  let globalContextManager = createContextManager(CustomerDataType.GlobalContext)
+  let userContextManager = createContextManager(CustomerDataType.User)
 
   const customLoggers: { [name: string]: Logger | undefined } = {}
   let getInternalContextStrategy: StartLogsResult['getInternalContext'] = () => undefined
@@ -85,6 +88,16 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
       const configuration = validateAndBuildLogsConfiguration(initConfiguration)
       if (!configuration) {
         return
+      }
+
+      if (initConfiguration.storeContextsAcrossPages) {
+        // Note: context API calls before init are dismissed
+        globalContextManager = createStoredContextManager(
+          configuration,
+          LOGS_STORAGE_KEY,
+          CustomerDataType.GlobalContext
+        )
+        userContextManager = createStoredContextManager(configuration, LOGS_STORAGE_KEY, CustomerDataType.User)
       }
 
       ;({ handleLog: handleLogStrategy, getInternalContext: getInternalContextStrategy } = startLogsImpl(

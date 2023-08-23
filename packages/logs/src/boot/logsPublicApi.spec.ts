@@ -474,4 +474,40 @@ describe('logs entry', () => {
       })
     })
   })
+
+  describe('storeContextsAcrossPages', () => {
+    let logsPublicApi: LogsPublicApi
+
+    beforeEach(() => {
+      logsPublicApi = makeLogsPublicApi(startLogs)
+    })
+
+    afterEach(() => {
+      localStorage.clear()
+    })
+
+    it('when disabled, should store contexts only in memory', () => {
+      logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+      logsPublicApi.setGlobalContext({ foo: 'bar' })
+      expect(logsPublicApi.getGlobalContext()).toEqual({ foo: 'bar' })
+      expect(localStorage.getItem('_dd_c_logs_2')).toBeNull()
+
+      logsPublicApi.setUser({ qux: 'qix' })
+      expect(logsPublicApi.getUser()).toEqual({ qux: 'qix' })
+      expect(localStorage.getItem('_dd_c_logs_1')).toBeNull()
+    })
+
+    it('when enabled, should store contexts in local storage', () => {
+      logsPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, storeContextsAcrossPages: true })
+
+      logsPublicApi.setGlobalContext({ foo: 'bar' })
+      expect(logsPublicApi.getGlobalContext()).toEqual({ foo: 'bar' })
+      expect(localStorage.getItem('_dd_c_logs_2')).toBe('{"foo":"bar"}')
+
+      logsPublicApi.setUser({ qux: 'qix' })
+      expect(logsPublicApi.getUser()).toEqual({ qux: 'qix' })
+      expect(localStorage.getItem('_dd_c_logs_1')).toBe('{"qux":"qix"}')
+    })
+  })
 })
