@@ -26,7 +26,7 @@ export function trackInteractionToNextPaint(viewLoadingType: ViewLoadingType, li
 
   const { getViewInteractionCount } = trackViewInteractionCount(viewLoadingType)
   const longestInteractions = trackLongestInteractions(getViewInteractionCount)
-  let maxInpDuration = -1 as Duration
+  let inpDuration = -1 as Duration
 
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
     for (const entry of entries) {
@@ -35,9 +35,9 @@ export function trackInteractionToNextPaint(viewLoadingType: ViewLoadingType, li
       }
     }
 
-    const inp = longestInteractions.estimateP98Duration()
-    if (inp && inp.duration > maxInpDuration) {
-      maxInpDuration = inp.duration
+    const newInpDuration = longestInteractions.estimateP98Duration()
+    if (newInpDuration) {
+      inpDuration = newInpDuration
     }
   })
 
