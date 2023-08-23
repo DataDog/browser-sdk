@@ -1,12 +1,12 @@
-import { computeBytesCount } from '../utils/byteUtils'
-import { throttle } from '../utils/functionUtils'
-import { deepClone } from '../mergeInto'
-import { getType } from '../utils/typeUtils'
-import { jsonStringify } from './jsonStringify'
-import { sanitize } from './sanitize'
+import { computeBytesCount } from '../../tools/utils/byteUtils'
+import { throttle } from '../../tools/utils/functionUtils'
+import { deepClone } from '../../tools/mergeInto'
+import { getType } from '../../tools/utils/typeUtils'
+import { jsonStringify } from '../../tools/serialisation/jsonStringify'
+import { sanitize } from '../../tools/serialisation/sanitize'
+import type { Context, ContextValue } from '../../tools/serialisation/context'
 import { warnIfCustomerDataLimitReached } from './heavyCustomerDataWarning'
-import type { Context, ContextValue } from './context'
-import type { CustomerDataType } from './serializationConstants'
+import type { CustomerDataType } from './contextConstants'
 
 export const BYTES_COMPUTATION_THROTTLING_DELAY = 200
 
