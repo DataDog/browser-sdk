@@ -45,10 +45,10 @@ export function trackInteractionToNextPaint(viewLoadingType: ViewLoadingType, li
     getInteractionToNextPaint: () => {
       // If no INP duration where captured because of the performanceObserver 40ms threshold
       // but the view interaction count > 0 then report 0
-      if (maxInpDuration === -1 && getViewInteractionCount()) {
+      if (inpDuration >= 0) {
+        return inpDuration
+      } else if (getViewInteractionCount()) {
         return 0 as Duration
-      } else if (maxInpDuration >= 0) {
-        return maxInpDuration
       }
     },
     stop,
