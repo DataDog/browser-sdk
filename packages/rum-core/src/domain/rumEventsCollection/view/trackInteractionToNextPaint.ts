@@ -104,7 +104,6 @@ export function trackViewInteractionCount(viewLoadingType: ViewLoadingType) {
   const previousInteractionCount = viewLoadingType === ViewLoadingType.INITIAL_LOAD ? 0 : getInteractionCount()
   return {
     getViewInteractionCount: () => getInteractionCount()! - previousInteractionCount,
-    stop: noop,
   }
 }
 
