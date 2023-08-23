@@ -89,7 +89,7 @@ export interface RumFirstInputTiming {
   target?: Node
 }
 
-export interface RumEventTiming {
+export interface RumPerformanceEventTiming {
   entryType: 'event'
   startTime: RelativeTime
   duration: Duration
@@ -113,7 +113,7 @@ export type RumPerformanceEntry =
   | RumPerformanceNavigationTiming
   | RumLargestContentfulPaintTiming
   | RumFirstInputTiming
-  | RumEventTiming
+  | RumPerformanceEventTiming
   | RumLayoutShiftTiming
 
 function supportPerformanceObject() {
