@@ -10,7 +10,11 @@
  */
 
 import { monitor } from '@datadog/browser-core'
-import type { BrowserWindow, RumEventTiming, RumPerformanceObserver } from '../../../browser/performanceCollection'
+import type {
+  BrowserWindow,
+  RumPerformanceEventTiming,
+  RumPerformanceObserver,
+} from '../../../browser/performanceCollection'
 
 let observer: RumPerformanceObserver | undefined
 
@@ -26,13 +30,13 @@ export function initInteractionCountPolyfill() {
   observer = new (window as BrowserWindow).PerformanceObserver(
     monitor((entries: PerformanceObserverEntryList) => {
       entries.getEntries().forEach((e) => {
-        const entry = e as unknown as RumEventTiming
+        const entry = e as unknown as RumPerformanceEventTiming
 
         if (entry.interactionId) {
           minKnownInteractionId = Math.min(minKnownInteractionId, entry.interactionId)
           maxKnownInteractionId = Math.max(maxKnownInteractionId, entry.interactionId)
 
-          interactionCountEstimate = maxKnownInteractionId ? (maxKnownInteractionId - minKnownInteractionId) / 7 + 1 : 0
+          interactionCountEstimate = (maxKnownInteractionId - minKnownInteractionId) / 7 + 1
         }
       })
     })
