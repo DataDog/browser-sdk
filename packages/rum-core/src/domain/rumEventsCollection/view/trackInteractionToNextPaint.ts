@@ -92,9 +92,9 @@ function trackLongestInteractions(getViewInteractionCount: () => number) {
      * Compute the p98 longest interaction.
      * For better performance the computation is based on 10 longest interactions and the interaction count of the current view.
      */
-    estimateP98Duration() {
+    estimateP98Duration(): Duration | undefined {
       const interactionIndex = Math.min(longestInteractions.length - 1, Math.floor(getViewInteractionCount() / 50))
-      return longestInteractions[interactionIndex]
+      return longestInteractions[interactionIndex]?.duration
     },
   }
 }
