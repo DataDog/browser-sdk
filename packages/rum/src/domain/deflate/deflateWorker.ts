@@ -10,7 +10,7 @@ export const INITIALIZATION_TIME_OUT_DELAY = 10 * ONE_SECOND
  * initialization messages, making the creation asynchronous.
  * These worker lifecycle states handle this case.
  */
-const enum DeflateWorkerStatus {
+export const enum DeflateWorkerStatus {
   Nil,
   Loading,
   Error,
@@ -23,7 +23,8 @@ type DeflateWorkerState =
     }
   | {
       status: DeflateWorkerStatus.Loading
-      callbacks: Array<(worker?: DeflateWorker) => void>
+      worker: DeflateWorker
+      initializationFailureCallbacks: Array<() => void>
     }
   | {
       status: DeflateWorkerStatus.Error
@@ -38,46 +39,39 @@ export interface DeflateWorker extends Worker {
   postMessage(message: DeflateWorkerAction): void
 }
 
-let workerBlobUrl: string | undefined
+export type CreateDeflateWorker = typeof createDeflateWorker
 
-function createWorkerBlobUrl() {
-  // Lazily compute the worker URL to allow importing the SDK in NodeJS
-  if (!workerBlobUrl) {
-    workerBlobUrl = URL.createObjectURL(new Blob([workerString]))
-  }
-  return workerBlobUrl
-}
-
-export function createDeflateWorker(configuration: RumConfiguration): DeflateWorker {
-  return new Worker(configuration.workerUrl || createWorkerBlobUrl())
+function createDeflateWorker(configuration: RumConfiguration): DeflateWorker {
+  return new Worker(configuration.workerUrl || URL.createObjectURL(new Blob([workerString])))
 }
 
 let state: DeflateWorkerState = { status: DeflateWorkerStatus.Nil }
 
 export function startDeflateWorker(
   configuration: RumConfiguration,
-  callback: (worker?: DeflateWorker) => void,
+  onInitializationFailure: () => void,
   createDeflateWorkerImpl = createDeflateWorker
 ) {
+  if (state.status === DeflateWorkerStatus.Nil) {
+    // doStartDeflateWorker updates the state to "loading" or "error"
+    doStartDeflateWorker(configuration, createDeflateWorkerImpl)
+  }
+
   switch (state.status) {
-    case DeflateWorkerStatus.Nil:
-      state = { status: DeflateWorkerStatus.Loading, callbacks: [callback] }
-      doStartDeflateWorker(configuration, createDeflateWorkerImpl)
-      break
     case DeflateWorkerStatus.Loading:
-      state.callbacks.push(callback)
-      break
-    case DeflateWorkerStatus.Error:
-      callback()
-      break
+      state.initializationFailureCallbacks.push(onInitializationFailure)
+      return state.worker
     case DeflateWorkerStatus.Initialized:
-      callback(state.worker)
-      break
+      return state.worker
   }
 }
 
 export function resetDeflateWorkerState() {
   state = { status: DeflateWorkerStatus.Nil }
+}
+
+export function getDeflateWorkerStatus() {
+  return state.status
 }
 
 /**
@@ -99,12 +93,12 @@ export function doStartDeflateWorker(configuration: RumConfiguration, createDefl
       if (data.type === 'errored') {
         onError(configuration, data.error, data.streamId)
       } else if (data.type === 'initialized') {
-        onInitialized(worker, data.version)
+        onInitialized(data.version)
       }
     })
     worker.postMessage({ action: 'init' })
     setTimeout(onTimeout, INITIALIZATION_TIME_OUT_DELAY)
-    return worker
+    state = { status: DeflateWorkerStatus.Loading, worker, initializationFailureCallbacks: [] }
   } catch (error) {
     onError(configuration, error)
   }
@@ -113,20 +107,19 @@ export function doStartDeflateWorker(configuration: RumConfiguration, createDefl
 function onTimeout() {
   if (state.status === DeflateWorkerStatus.Loading) {
     display.error('Session Replay recording failed to start: a timeout occurred while initializing the Worker')
-    state.callbacks.forEach((callback) => callback())
+    state.initializationFailureCallbacks.forEach((callback) => callback())
     state = { status: DeflateWorkerStatus.Error }
   }
 }
 
-function onInitialized(worker: DeflateWorker, version: string) {
+function onInitialized(version: string) {
   if (state.status === DeflateWorkerStatus.Loading) {
-    state.callbacks.forEach((callback) => callback(worker))
-    state = { status: DeflateWorkerStatus.Initialized, worker, version }
+    state = { status: DeflateWorkerStatus.Initialized, worker: state.worker, version }
   }
 }
 
 function onError(configuration: RumConfiguration, error: unknown, streamId?: number) {
-  if (state.status === DeflateWorkerStatus.Loading) {
+  if (state.status === DeflateWorkerStatus.Loading || state.status === DeflateWorkerStatus.Nil) {
     display.error('Session Replay recording failed to start: an error occurred while creating the Worker:', error)
     if (error instanceof Event || (error instanceof Error && isMessageCspRelated(error.message))) {
       let baseMessage
@@ -141,7 +134,9 @@ function onError(configuration: RumConfiguration, error: unknown, streamId?: num
     } else {
       addTelemetryError(error)
     }
-    state.callbacks.forEach((callback) => callback())
+    if (state.status === DeflateWorkerStatus.Loading) {
+      state.initializationFailureCallbacks.forEach((callback) => callback())
+    }
     state = { status: DeflateWorkerStatus.Error }
   } else {
     addTelemetryError(error, {

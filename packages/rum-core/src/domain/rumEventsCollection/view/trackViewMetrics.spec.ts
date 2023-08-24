@@ -1,12 +1,5 @@
 import type { Context, RelativeTime, TimeStamp, Duration } from '@datadog/browser-core'
-import {
-  ExperimentalFeature,
-  addExperimentalFeatures,
-  resetExperimentalFeatures,
-  DOM_EVENT,
-  addDuration,
-  relativeNow,
-} from '@datadog/browser-core'
+import { DOM_EVENT, addDuration, relativeNow } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, mockClock } from '@datadog/browser-core/test'
 import type { RumEvent } from '../../../rumEvent.types'
@@ -548,85 +541,58 @@ describe('rum track view metrics', () => {
 
         clock.tick(THROTTLE_SCROLL_DURATION)
       }
-      describe('with flag enabled', () => {
-        beforeEach(() => {
-          configuration = {} as RumConfiguration
-          clock = mockClock()
-          addExperimentalFeatures([ExperimentalFeature.SCROLLMAP])
-          stopTrackScrollMetrics = trackScrollMetrics(
-            configuration,
-            { relative: 0 as RelativeTime, timeStamp: 0 as TimeStamp },
-            (s) => (scrollMetrics = s),
-            getMetrics
-          ).stop
-        })
 
-        afterEach(() => {
-          stopTrackScrollMetrics()
-          resetExperimentalFeatures()
-          scrollMetrics = undefined
-          clock.cleanup()
-        })
+      beforeEach(() => {
+        configuration = {} as RumConfiguration
+        clock = mockClock()
+        stopTrackScrollMetrics = trackScrollMetrics(
+          configuration,
+          { relative: 0 as RelativeTime, timeStamp: 0 as TimeStamp },
+          (s) => (scrollMetrics = s),
+          getMetrics
+        ).stop
+      })
 
-        it('should update scroll metrics when scrolling the first time', () => {
-          newScroll({ scrollHeight: 1000, scrollDepth: 500, scrollTop: 100 })
+      afterEach(() => {
+        stopTrackScrollMetrics()
+        scrollMetrics = undefined
+        clock.cleanup()
+      })
 
-          expect(scrollMetrics).toEqual({
-            maxDepthScrollHeight: 1000,
-            maxDepth: 500,
-            maxDepthScrollTop: 100,
-            maxDepthTime: 1000 as Duration,
-          })
-        })
+      it('should update scroll metrics when scrolling the first time', () => {
+        newScroll({ scrollHeight: 1000, scrollDepth: 500, scrollTop: 100 })
 
-        it('should update scroll metrics when scroll depth has increased', () => {
-          newScroll({ scrollHeight: 1000, scrollDepth: 500, scrollTop: 100 })
-
-          newScroll({ scrollHeight: 1000, scrollDepth: 600, scrollTop: 200 })
-
-          expect(scrollMetrics).toEqual({
-            maxDepthScrollHeight: 1000,
-            maxDepth: 600,
-            maxDepthScrollTop: 200,
-            maxDepthTime: 2000 as Duration,
-          })
-        })
-
-        it('should NOT update scroll metrics when scroll depth has not increased', () => {
-          newScroll({ scrollHeight: 1000, scrollDepth: 600, scrollTop: 200 })
-
-          newScroll({ scrollHeight: 1000, scrollDepth: 450, scrollTop: 50 })
-
-          expect(scrollMetrics).toEqual({
-            maxDepthScrollHeight: 1000,
-            maxDepth: 600,
-            maxDepthScrollTop: 200,
-            maxDepthTime: 1000 as Duration,
-          })
+        expect(scrollMetrics).toEqual({
+          maxDepthScrollHeight: 1000,
+          maxDepth: 500,
+          maxDepthScrollTop: 100,
+          maxDepthTime: 1000 as Duration,
         })
       })
 
-      describe('with flag disabled', () => {
-        beforeEach(() => {
-          clock = mockClock()
-          stopTrackScrollMetrics = trackScrollMetrics(
-            configuration,
-            { relative: 1 as RelativeTime, timeStamp: 2 as TimeStamp },
-            (s) => (scrollMetrics = s),
-            getMetrics
-          ).stop
-        })
+      it('should update scroll metrics when scroll depth has increased', () => {
+        newScroll({ scrollHeight: 1000, scrollDepth: 500, scrollTop: 100 })
 
-        afterEach(() => {
-          stopTrackScrollMetrics()
-          resetExperimentalFeatures()
-          scrollMetrics = undefined
-          clock.cleanup()
-        })
-        it('should NOT update scroll metrics when scrolling the first time', () => {
-          newScroll({ scrollHeight: 1000, scrollDepth: 500, scrollTop: 100 })
+        newScroll({ scrollHeight: 1000, scrollDepth: 600, scrollTop: 200 })
 
-          expect(scrollMetrics).toEqual(undefined)
+        expect(scrollMetrics).toEqual({
+          maxDepthScrollHeight: 1000,
+          maxDepth: 600,
+          maxDepthScrollTop: 200,
+          maxDepthTime: 2000 as Duration,
+        })
+      })
+
+      it('should NOT update scroll metrics when scroll depth has not increased', () => {
+        newScroll({ scrollHeight: 1000, scrollDepth: 600, scrollTop: 200 })
+
+        newScroll({ scrollHeight: 1000, scrollDepth: 450, scrollTop: 50 })
+
+        expect(scrollMetrics).toEqual({
+          maxDepthScrollHeight: 1000,
+          maxDepth: 600,
+          maxDepthScrollTop: 200,
+          maxDepthTime: 1000 as Duration,
         })
       })
     })
@@ -635,60 +601,34 @@ describe('rum track view metrics', () => {
       beforeEach(() => {
         setupBuilder.withFakeClock()
       })
+      it('should have an undefined loading time and empty scroll metrics if there is no activity on a route change', () => {
+        const { clock } = setupBuilder.build()
+        const { getViewUpdate, getViewUpdateCount, startView } = viewTest
 
-      describe('with flag enabled', () => {
-        beforeEach(() => {
-          addExperimentalFeatures([ExperimentalFeature.SCROLLMAP])
-        })
+        startView()
+        clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-        afterEach(() => {
-          resetExperimentalFeatures()
-        })
-        it('should have an undefined loading time and empty scroll metrics if there is no activity on a route change', () => {
-          const { clock } = setupBuilder.build()
-          const { getViewUpdate, getViewUpdateCount, startView } = viewTest
-
-          startView()
-          clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
-
-          expect(getViewUpdateCount()).toEqual(3)
-          expect(getViewUpdate(2).loadingTime).toBeUndefined()
-          expect(getViewUpdate(2).scrollMetrics).toEqual(undefined)
-        })
-
-        it('should have a loading time equal to the activity time and scroll metrics if there is a unique activity on a route change', () => {
-          const { domMutationObservable, clock } = setupBuilder.build()
-          const { getViewUpdate, startView } = viewTest
-
-          startView()
-          clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-          domMutationObservable.notify()
-          clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
-          clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
-
-          expect(getViewUpdate(3).loadingTime).toEqual(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-          expect(getViewUpdate(3).scrollMetrics).toEqual({
-            maxDepthScrollHeight: jasmine.any(Number),
-            maxDepth: jasmine.any(Number),
-            maxDepthTime: jasmine.any(Number),
-            maxDepthScrollTop: jasmine.any(Number),
-          })
-        })
+        expect(getViewUpdateCount()).toEqual(3)
+        expect(getViewUpdate(2).loadingTime).toBeUndefined()
+        expect(getViewUpdate(2).scrollMetrics).toEqual(undefined)
       })
 
-      describe('with flag disabled', () => {
-        it('should have a loading time equal to the activity time but no scroll metrics if there is a unique activity on a route change', () => {
-          const { domMutationObservable, clock } = setupBuilder.build()
-          const { getViewUpdate, startView } = viewTest
+      it('should have a loading time equal to the activity time and scroll metrics if there is a unique activity on a route change', () => {
+        const { domMutationObservable, clock } = setupBuilder.build()
+        const { getViewUpdate, startView } = viewTest
 
-          startView()
-          clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-          domMutationObservable.notify()
-          clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
-          clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+        startView()
+        clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+        domMutationObservable.notify()
+        clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
+        clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-          expect(getViewUpdate(3).loadingTime).toEqual(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-          expect(getViewUpdate(3).scrollMetrics).toEqual(undefined)
+        expect(getViewUpdate(3).loadingTime).toEqual(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+        expect(getViewUpdate(3).scrollMetrics).toEqual({
+          maxDepthScrollHeight: jasmine.any(Number),
+          maxDepth: jasmine.any(Number),
+          maxDepthTime: jasmine.any(Number),
+          maxDepthScrollTop: jasmine.any(Number),
         })
       })
     })

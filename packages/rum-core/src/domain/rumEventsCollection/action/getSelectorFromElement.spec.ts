@@ -108,18 +108,26 @@ describe('getSelectorFromElement', () => {
   })
 
   describe('should escape CSS selectors', () => {
-    it('ID selector should take precedence over class selector', () => {
-      expect(getSelector('<div id="#bar"><button target class=".foo"></button></div>')).toBe('#\\#bar>BUTTON.\\.foo')
+    it('on ID value', () => {
+      expect(getSelector('<div id="#bar"></div>')).toBe('#\\#bar')
+    })
+
+    it('on attribute value', () => {
+      expect(getSelector('<div data-testid="&quot;foo bar&quot;"></div>')).toBe('DIV[data-testid="\\"foo\\ bar\\""]')
+    })
+
+    it('on class name', () => {
+      expect(getSelector('<div class="#bar"</div>')).toBe('BODY>DIV.\\#bar')
+    })
+
+    it('on tag name', () => {
+      expect(getSelector('<div&nbsp;span>></div&nbsp;span>')).toBe('BODY>DIV\\&NBSP\\;SPAN')
     })
   })
 
   describe('attribute selector', () => {
     it('uses a stable attribute if the element has one', () => {
       expect(getSelector('<div data-testid="foo"></div>')).toBe('DIV[data-testid="foo"]')
-    })
-
-    it('escapes the attribute value', () => {
-      expect(getSelector('<div data-testid="&quot;foo bar&quot;"></div>')).toBe('DIV[data-testid="\\"foo\\ bar\\""]')
     })
 
     it('attribute selector with the custom action name attribute takes precedence over other stable attribute selectors', () => {

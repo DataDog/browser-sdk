@@ -39,6 +39,14 @@
 - 🔥 [RUMF-1555] Remove `startTime` in xhr start context ([#2287](https://github.com/DataDog/browser-sdk/pull/2287))
 - ♻️ [RUMF-1555] Remove deprecated context manager APIs ([#2284](https://github.com/DataDog/browser-sdk/pull/2284))
 
+## v4.47.0
+
+- ✨ [RUM-233] add workerUrl initialization parameter ([#2354](https://github.com/DataDog/browser-sdk/pull/2354))
+- 🐛[RUM-142] fix the generation of some invalid selectors ([#2375](https://github.com/DataDog/browser-sdk/pull/2375))
+- ✨ enable scrollmap collection ([#2374](https://github.com/DataDog/browser-sdk/pull/2374))
+- 📝 [RUM-254] Document extension internally available on store ([#2368](https://github.com/DataDog/browser-sdk/pull/2368))
+- ♻️ Cherry-pick some changes from v5 to limit conflicts ([#2357](https://github.com/DataDog/browser-sdk/pull/2357))
+
 ## v4.46.0
 
 - ⚗ [RUM][REPLAY] Try to reduce the size of the replay payload ([#2348](https://github.com/DataDog/browser-sdk/pull/2348))
