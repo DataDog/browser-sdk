@@ -1,5 +1,6 @@
 import { type Duration, noop, isExperimentalFeatureEnabled, ExperimentalFeature } from '@datadog/browser-core'
-import { supportPerformanceTimingEvent, type RumPerformanceEventTiming } from '../../../browser/performanceCollection'
+import { supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
+import type { RumFirstInputTiming, RumPerformanceEventTiming } from '../../../browser/performanceCollection'
 import { LifeCycleEventType, type LifeCycle } from '../../lifeCycle'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
 import { getInteractionCount, initInteractionCountPolyfill } from './interactionCountPolyfill'
@@ -30,7 +31,7 @@ export function trackInteractionToNextPaint(viewLoadingType: ViewLoadingType, li
 
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
     for (const entry of entries) {
-      if (entry.entryType === 'event' && entry.interactionId) {
+      if ((entry.entryType === 'event' || entry.entryType === 'first-input') && entry.interactionId) {
         longestInteractions.process(entry)
       }
     }
@@ -56,7 +57,7 @@ export function trackInteractionToNextPaint(viewLoadingType: ViewLoadingType, li
 }
 
 function trackLongestInteractions(getViewInteractionCount: () => number) {
-  const longestInteractions: RumPerformanceEventTiming[] = []
+  const longestInteractions: Array<RumPerformanceEventTiming | RumFirstInputTiming> = []
 
   function sortAndTrimLongestInteractions() {
     longestInteractions.sort((a, b) => b.duration - a.duration).splice(MAX_INTERACTION_ENTRIES)
@@ -68,7 +69,7 @@ function trackLongestInteractions(getViewInteractionCount: () => number) {
      * - if its duration is long enough, add the performance entry to the list of worst interactions
      * - if an entry with the same interaction id exists and its duration is lower than the new one, then replace it in the list of worst interactions
      */
-    process(entry: RumPerformanceEventTiming) {
+    process(entry: RumPerformanceEventTiming | RumFirstInputTiming) {
       const interactionIndex = longestInteractions.findIndex(
         (interaction) => entry.interactionId === interaction.interactionId
       )

@@ -7,7 +7,11 @@ import {
 } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../../test'
 import { setup } from '../../../../test'
-import type { BrowserWindow, RumPerformanceEventTiming } from '../../../browser/performanceCollection'
+import type {
+  BrowserWindow,
+  RumFirstInputTiming,
+  RumPerformanceEventTiming,
+} from '../../../browser/performanceCollection'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -24,7 +28,11 @@ describe('trackInteractionToNextPaint', () => {
 
   function newInteraction(
     lifeCycle: LifeCycle,
-    { interactionId, duration = 40 as Duration, entryType = 'event' }: Partial<RumPerformanceEventTiming>
+    {
+      interactionId,
+      duration = 40 as Duration,
+      entryType = 'event',
+    }: Partial<RumPerformanceEventTiming | RumFirstInputTiming>
   ) {
     if (interactionId) {
       interactionCountStub.incrementInteractionCount()
@@ -32,6 +40,7 @@ describe('trackInteractionToNextPaint', () => {
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       {
         entryType,
+        processingStart: relativeNow(),
         startTime: relativeNow(),
         duration,
         interactionId,
@@ -91,6 +100,15 @@ describe('trackInteractionToNextPaint', () => {
       setupBuilder.build()
       interactionCountStub.setInteractionCount(1 as Duration) // assumes an interaction happened but no PERFORMANCE_ENTRIES_COLLECTED have been triggered
       expect(getInteractionToNextPaint()).toEqual(0 as Duration)
+    })
+
+    it('should take first-input entry into account', () => {
+      const { lifeCycle } = setupBuilder.build()
+      newInteraction(lifeCycle, {
+        interactionId: 1,
+        entryType: 'first-input',
+      })
+      expect(getInteractionToNextPaint()).toEqual(40 as Duration)
     })
   })
 
