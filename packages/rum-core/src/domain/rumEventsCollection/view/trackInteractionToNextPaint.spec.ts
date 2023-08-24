@@ -96,7 +96,7 @@ describe('trackInteractionToNextPaint', () => {
       expect(getInteractionToNextPaint()).toEqual(98 as Duration)
     })
 
-    it('should return 0 if no interaction is tracked (because the duration is below 40ms)', () => {
+    it('should return 0 when an interaction happened without generating a performance event (interaction duration below 40ms)', () => {
       setupBuilder.build()
       interactionCountStub.setInteractionCount(1 as Duration) // assumes an interaction happened but no PERFORMANCE_ENTRIES_COLLECTED have been triggered
       expect(getInteractionToNextPaint()).toEqual(0 as Duration)
@@ -109,6 +109,19 @@ describe('trackInteractionToNextPaint', () => {
         entryType: 'first-input',
       })
       expect(getInteractionToNextPaint()).toEqual(40 as Duration)
+    })
+
+    it('should replace the entry in the list of worst interactions when an entry with the same interactionId exist', () => {
+      const { lifeCycle } = setupBuilder.build()
+
+      for (let index = 1; index <= 100; index++) {
+        newInteraction(lifeCycle, {
+          duration: index as Duration,
+          interactionId: 1,
+        })
+      }
+      // the p98 return 100 which shows that the entry has been updated
+      expect(getInteractionToNextPaint()).toEqual(100 as Duration)
     })
   })
 
