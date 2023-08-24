@@ -248,6 +248,20 @@ e2e-bs:
 # Deploy
 ########################################################################################################################
 
+deploy-feature:
+  stage: deploy
+  when: manual
+  variables:
+    SUFFIX: 'my-feature' #/datadog-[product]-${SUFFIX}.js
+  extends:
+    - .base-configuration
+    - .feature-branches
+  script:
+    - export BUILD_MODE=canary
+    - yarn
+    - yarn build:bundle
+    - node ./scripts/deploy/deploy.js staging $SUFFIX root
+
 deploy-staging:
   stage: deploy
   extends:
