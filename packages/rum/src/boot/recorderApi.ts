@@ -8,9 +8,16 @@ import type {
   RumConfiguration,
 } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
-import { getReplayStats } from '../domain/replayStats'
+import { getReplayStats as getReplayStatsImpl } from '../domain/replayStats'
 import { getSessionReplayLink } from '../domain/getSessionReplayLink'
-import { DeflateEncoderStreamId, createDeflateEncoder, startDeflateWorker } from '../domain/deflate'
+import type { CreateDeflateWorker } from '../domain/deflate'
+import {
+  DeflateEncoderStreamId,
+  createDeflateEncoder,
+  startDeflateWorker,
+  DeflateWorkerStatus,
+  getDeflateWorkerStatus,
+} from '../domain/deflate'
 
 import { getSerializedNodeId } from '../domain/record'
 import type { startRecording } from './startRecording'
@@ -46,7 +53,7 @@ type RecorderState =
 
 export function makeRecorderApi(
   startRecordingImpl: StartRecording,
-  startDeflateWorkerImpl = startDeflateWorker
+  createDeflateWorkerImpl?: CreateDeflateWorker
 ): RecorderApi {
   const recorderStartObservable = new Observable<RelativeTime>()
 
@@ -76,7 +83,6 @@ export function makeRecorderApi(
   return {
     start: () => startStrategy(),
     stop: () => stopStrategy(),
-    getReplayStats,
     getSessionReplayLink: (configuration, sessionManager, viewContexts) =>
       getSessionReplayLink(configuration, sessionManager, viewContexts, state.status !== RecorderStatus.Stopped),
     recorderStartObservable,
@@ -118,31 +124,33 @@ export function makeRecorderApi(
             return
           }
 
-          startDeflateWorkerImpl(configuration, (worker) => {
-            if (state.status !== RecorderStatus.Starting) {
-              return
-            }
+          const worker = startDeflateWorker(
+            configuration,
+            () => {
+              stopStrategy()
+            },
+            createDeflateWorkerImpl
+          )
 
-            if (!worker) {
-              state = {
-                status: RecorderStatus.Stopped,
-              }
-              return
-            }
-
-            const { stop: stopRecording } = startRecordingImpl(
-              lifeCycle,
-              configuration,
-              sessionManager,
-              viewContexts,
-              createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
-            )
-            recorderStartObservable.notify(relativeNow())
+          if (!worker) {
             state = {
-              status: RecorderStatus.Started,
-              stopRecording,
+              status: RecorderStatus.Stopped,
             }
-          })
+            return
+          }
+
+          const { stop: stopRecording } = startRecordingImpl(
+            lifeCycle,
+            configuration,
+            sessionManager,
+            viewContexts,
+            createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+          )
+          recorderStartObservable.notify(relativeNow())
+          state = {
+            status: RecorderStatus.Started,
+            stopRecording,
+          }
         })
       }
 
@@ -165,6 +173,32 @@ export function makeRecorderApi(
       }
     },
 
-    isRecording: () => state.status === RecorderStatus.Started,
+    isRecording: () =>
+      // The worker is started optimistically, meaning we could have started to record but its
+      // initialization fails a bit later. This could happen when:
+      // * the worker URL (blob or plain URL) is blocked by CSP in Firefox only (Chromium and Safari
+      // throw an exception when instantiating the worker, and IE doesn't care about CSP)
+      // * the browser fails to load the worker in case the workerUrl is used
+      // * an unexpected error occurs in the Worker before initialization, ex:
+      //   * a runtime exception collected by monitor()
+      //   * a syntax error notified by the browser via an error event
+      // * the worker is unresponsive for some reason and timeouts
+      //
+      // It is not expected to happen often. Nonetheless, the "replayable" status on RUM events is
+      // an important part of the Datadog App:
+      // * If we have a false positive (we set has_replay: true even if no replay data is present),
+      // we might display broken links to the Session Replay player.
+      // * If we have a false negative (we don't set has_replay: true even if replay data is
+      // available), it is less noticeable because no link will be displayed.
+      //
+      // Thus, it is better to have false negative, so let's make sure the worker is correctly
+      // initialized before advertizing that we are recording.
+      //
+      // In the future, when the compression worker will also be used for RUM data, this will be
+      // less important since no RUM event will be sent when the worker fails to initialize.
+      getDeflateWorkerStatus() === DeflateWorkerStatus.Initialized && state.status === RecorderStatus.Started,
+
+    getReplayStats: (viewId) =>
+      getDeflateWorkerStatus() === DeflateWorkerStatus.Initialized ? getReplayStatsImpl(viewId) : undefined,
   }
 }
