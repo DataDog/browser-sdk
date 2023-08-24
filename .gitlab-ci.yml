@@ -7,7 +7,6 @@ variables:
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
   MAIN_BRANCH: 'main'
   CHROME_PACKAGE_VERSION: 114.0.5735.90-1
-  CHROME_DRIVER_VERSION: 114.0.5735.16
 
 cache:
   key:
@@ -495,7 +494,7 @@ bump-chrome-version-scheduled:
     - eval $(ssh-agent -s)
   script:
     - yarn
-    - node scripts/test/bump-chrome-driver-version.js
+    - node scripts/test/bump-chrome-version.js
   artifacts:
     reports:
       dotenv: build.env
