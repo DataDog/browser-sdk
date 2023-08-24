@@ -1,6 +1,13 @@
+import { isChromium } from '../../../../../packages/core/src/tools/utils/browserDetection'
 import { getAllFields } from './facetRegistry'
 
 describe('getAllFields', () => {
+  beforeEach(() => {
+    if (!isChromium()) {
+      pending('Extension only supported in chromium')
+    }
+  })
+
   it('return a simple field', () => {
     expect(getAllFields({ foo: 'bar' })).toEqual(new Map([['foo', 'bar']]))
   })
