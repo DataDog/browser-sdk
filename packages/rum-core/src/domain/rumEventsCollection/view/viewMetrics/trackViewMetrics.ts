@@ -4,16 +4,17 @@ import type { ViewLoadingType } from '../../../../rawRumEvent.types'
 import type { RumConfiguration } from '../../../configuration'
 import type { LifeCycle } from '../../../lifeCycle'
 import type { WebVitalTelemetryDebug } from '../startWebVitalTelemetryDebug'
-import { trackInteractionToNextPaint } from '../trackInteractionToNextPaint'
 import type { ScrollMetrics } from './trackScrollMetrics'
 import { computeScrollValues, trackScrollMetrics } from './trackScrollMetrics'
 import { trackLoadingTime } from './trackLoadingTime'
 import { isLayoutShiftSupported, trackCumulativeLayoutShift } from './trackCumulativeLayoutShift'
+import { trackInteractionToNextPaint } from './trackInteractionToNextPaint'
 
 export interface ViewMetrics {
   loadingTime?: Duration
   cumulativeLayoutShift?: number
   interactionToNextPaint?: Duration
+  scroll?: ScrollMetrics
 }
 
 export function trackViewMetrics(
@@ -26,8 +27,6 @@ export function trackViewMetrics(
   webVitalTelemetryDebug: WebVitalTelemetryDebug
 ) {
   const viewMetrics: ViewMetrics = {}
-
-  let scrollMetrics: ScrollMetrics | undefined
 
   const { stop: stopLoadingTimeTracking, setLoadEvent } = trackLoadingTime(
     lifeCycle,
@@ -42,7 +41,7 @@ export function trackViewMetrics(
       // This is to ensure that we have the depth data even if the user didn't scroll or if the view is not scrollable.
       const { scrollHeight, scrollDepth, scrollTop } = computeScrollValues()
 
-      scrollMetrics = {
+      viewMetrics.scroll = {
         maxDepth: scrollDepth,
         maxDepthScrollHeight: scrollHeight,
         maxDepthTime: newLoadingTime,
@@ -56,7 +55,7 @@ export function trackViewMetrics(
     configuration,
     viewStart,
     (newScrollMetrics) => {
-      scrollMetrics = newScrollMetrics
+      viewMetrics.scroll = newScrollMetrics
     },
     computeScrollValues
   )
@@ -95,6 +94,5 @@ export function trackViewMetrics(
       viewMetrics.interactionToNextPaint = getInteractionToNextPaint()
       return viewMetrics
     },
-    getScrollMetrics: () => scrollMetrics,
   }
 }

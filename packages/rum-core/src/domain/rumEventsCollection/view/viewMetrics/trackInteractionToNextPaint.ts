@@ -1,8 +1,8 @@
 import { type Duration, noop, isExperimentalFeatureEnabled, ExperimentalFeature } from '@datadog/browser-core'
-import { supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
-import type { RumFirstInputTiming, RumPerformanceEventTiming } from '../../../browser/performanceCollection'
-import { LifeCycleEventType, type LifeCycle } from '../../lifeCycle'
-import { ViewLoadingType } from '../../../rawRumEvent.types'
+import { supportPerformanceTimingEvent } from '../../../../browser/performanceCollection'
+import type { RumFirstInputTiming, RumPerformanceEventTiming } from '../../../../browser/performanceCollection'
+import { LifeCycleEventType, type LifeCycle } from '../../../lifeCycle'
+import { ViewLoadingType } from '../../../../rawRumEvent.types'
 import { getInteractionCount, initInteractionCountPolyfill } from './interactionCountPolyfill'
 
 // Arbitrary value to prevent unnecessary memory usage on views with lots of interactions.

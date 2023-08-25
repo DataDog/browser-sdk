@@ -79,7 +79,7 @@ function processViewUpdate(
       frustration: {
         count: view.eventCounts.frustrationCount,
       },
-      cumulative_layout_shift: view.metrics.cumulativeLayoutShift,
+      cumulative_layout_shift: view.viewMetrics.cumulativeLayoutShift,
       first_byte: toServerDuration(view.initialViewMetrics.firstByte),
       dom_complete: toServerDuration(view.initialViewMetrics.domComplete),
       dom_content_loaded: toServerDuration(view.initialViewMetrics.domContentLoaded),
@@ -90,12 +90,12 @@ function processViewUpdate(
       first_contentful_paint: toServerDuration(view.initialViewMetrics.firstContentfulPaint),
       first_input_delay: toServerDuration(view.initialViewMetrics.firstInputDelay),
       first_input_time: toServerDuration(view.initialViewMetrics.firstInputTime),
-      interaction_to_next_paint: toServerDuration(view.interactionToNextPaint),
+      interaction_to_next_paint: toServerDuration(view.viewMetrics.interactionToNextPaint),
       is_active: view.isActive,
       name: view.name,
       largest_contentful_paint: toServerDuration(view.initialViewMetrics.largestContentfulPaint),
       load_event: toServerDuration(view.initialViewMetrics.loadEvent),
-      loading_time: discardNegativeDuration(toServerDuration(view.metrics.loadingTime)),
+      loading_time: discardNegativeDuration(toServerDuration(view.viewMetrics.loadingTime)),
       loading_type: view.loadingType,
       long_task: {
         count: view.eventCounts.longTaskCount,
@@ -108,13 +108,13 @@ function processViewUpdate(
         !pageStatesEnabled && pageStates ? mapToForegroundPeriods(pageStates, view.duration) : undefined, // Todo: Remove in the next major release
     },
     feature_flags: featureFlagContext && !isEmptyObject(featureFlagContext) ? featureFlagContext : undefined,
-    display: view.scrollMetrics
+    display: view.viewMetrics.scroll
       ? {
           scroll: {
-            max_depth: view.scrollMetrics.maxDepth,
-            max_depth_scroll_height: view.scrollMetrics.maxDepthScrollHeight,
-            max_depth_scroll_top: view.scrollMetrics.maxDepthScrollTop,
-            max_depth_time: toServerDuration(view.scrollMetrics.maxDepthTime),
+            max_depth: view.viewMetrics.scroll.maxDepth,
+            max_depth_scroll_height: view.viewMetrics.scroll.maxDepthScrollHeight,
+            max_depth_scroll_top: view.viewMetrics.scroll.maxDepthScrollTop,
+            max_depth_time: toServerDuration(view.viewMetrics.scroll.maxDepthTime),
           },
         }
       : undefined,

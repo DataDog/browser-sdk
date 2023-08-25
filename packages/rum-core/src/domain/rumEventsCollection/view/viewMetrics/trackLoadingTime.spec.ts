@@ -57,7 +57,7 @@ describe('trackLoadingTime', () => {
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getViewUpdateCount()).toEqual(3)
-    expect(getViewUpdate(2).metrics.loadingTime).toBeUndefined()
+    expect(getViewUpdate(2).viewMetrics.loadingTime).toBeUndefined()
   })
 
   it('should have a loading time equal to the activity time if there is a unique activity on a route change', () => {
@@ -70,7 +70,7 @@ describe('trackLoadingTime', () => {
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-    expect(getViewUpdate(3).metrics.loadingTime).toEqual(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+    expect(getViewUpdate(3).viewMetrics.loadingTime).toEqual(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
   })
 
   it('should use loadEventEnd for initial view when having no activity', () => {
@@ -83,7 +83,7 @@ describe('trackLoadingTime', () => {
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getViewUpdateCount()).toEqual(2)
-    expect(getViewUpdate(1).metrics.loadingTime).toEqual(FAKE_NAVIGATION_ENTRY.loadEventEnd)
+    expect(getViewUpdate(1).viewMetrics.loadingTime).toEqual(FAKE_NAVIGATION_ENTRY.loadEventEnd)
   })
 
   it('should use loadEventEnd for initial view when load event is bigger than computed loading time', () => {
@@ -104,7 +104,7 @@ describe('trackLoadingTime', () => {
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getViewUpdateCount()).toEqual(2)
-    expect(getViewUpdate(1).metrics.loadingTime).toEqual(
+    expect(getViewUpdate(1).viewMetrics.loadingTime).toEqual(
       FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING.loadEventEnd
     )
   })
@@ -124,7 +124,7 @@ describe('trackLoadingTime', () => {
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getViewUpdateCount()).toEqual(2)
-    expect(getViewUpdate(1).metrics.loadingTime).toEqual(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+    expect(getViewUpdate(1).viewMetrics.loadingTime).toEqual(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
   })
 
   it('should use computed loading time from time origin for initial view', () => {
@@ -154,6 +154,8 @@ describe('trackLoadingTime', () => {
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getViewUpdateCount()).toEqual(2)
-    expect(getViewUpdate(1).metrics.loadingTime).toEqual(addDuration(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY, CLOCK_GAP))
+    expect(getViewUpdate(1).viewMetrics.loadingTime).toEqual(
+      addDuration(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY, CLOCK_GAP)
+    )
   })
 })

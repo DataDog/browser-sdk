@@ -28,7 +28,6 @@ import { trackViewEventCounts } from './trackViewEventCounts'
 import type { WebVitalTelemetryDebug } from './startWebVitalTelemetryDebug'
 import { trackInitialViewMetrics, type InitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
 import { trackViewMetrics, type ViewMetrics } from './viewMetrics/trackViewMetrics'
-import type { ScrollMetrics } from './viewMetrics/trackScrollMetrics'
 
 export interface ViewEvent {
   id: string
@@ -36,7 +35,7 @@ export interface ViewEvent {
   service?: string
   version?: string
   location: Readonly<Location>
-  metrics: ViewMetrics
+  viewMetrics: ViewMetrics
   initialViewMetrics: InitialViewMetrics
   customTimings: ViewCustomTimings
   eventCounts: EventCounts
@@ -46,8 +45,6 @@ export interface ViewEvent {
   isActive: boolean
   sessionIsActive: boolean
   loadingType: ViewLoadingType
-  scrollMetrics?: ScrollMetrics
-  interactionToNextPaint?: Duration
 }
 
 export interface ViewCreatedEvent {
@@ -197,7 +194,6 @@ function newView(
     setLoadEvent,
     stop: stopViewMetricsTracking,
     getViewMetrics,
-    getScrollMetrics,
   } = trackViewMetrics(
     lifeCycle,
     domMutationObservable,
@@ -240,13 +236,12 @@ function newView(
       loadingType,
       location,
       startClocks,
-      metrics: getViewMetrics(),
+      viewMetrics: getViewMetrics(),
       initialViewMetrics,
       duration: elapsed(startClocks.timeStamp, currentEnd),
       isActive: endClocks === undefined,
       sessionIsActive,
       eventCounts,
-      scrollMetrics: getScrollMetrics(),
     })
   }
 
