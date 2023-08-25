@@ -18,6 +18,7 @@ import {
   checkUser,
   sanitizeUser,
   sanitize,
+  generateUUID,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewContexts } from '../domain/contexts/viewContexts'
@@ -87,6 +88,9 @@ export function makeRumPublicApi(
   ) => {
     bufferApiCalls.add(() => addActionStrategy(action, commonContext))
   }
+  let startActionStrategy: StartRumResult['startAction'] = () => ({
+    stop: noop,
+  })
   let addErrorStrategy: StartRumResult['addError'] = (
     providedError,
     commonContext = buildCommonContext(globalContextManager, userContextManager, recorderApi)
@@ -165,6 +169,7 @@ export function makeRumPublicApi(
     ;({
       startView: startViewStrategy,
       addAction: addActionStrategy,
+      startAction: startActionStrategy,
       addError: addErrorStrategy,
       addTiming: addTimingStrategy,
       addFeatureFlagEvaluation: addFeatureFlagEvaluationStrategy,
@@ -221,6 +226,21 @@ export function makeRumPublicApi(
         type: ActionType.CUSTOM,
       })
     }),
+
+    startAction: monitor((name: string, context?: object) =>
+      startActionStrategy({
+        id: generateUUID(),
+        name: sanitize(name)!,
+        context: sanitize(context) as Context,
+        startClocks: clocksNow(),
+        type: ActionType.TIMING,
+        counts: {
+          errorCount: 0,
+          resourceCount: 0,
+          longTaskCount: 0,
+        },
+      })
+    ),
 
     addError: (error: unknown, context?: object) => {
       const handlingStack = createHandlingStack()

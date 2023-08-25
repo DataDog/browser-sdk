@@ -7,8 +7,7 @@ import { RumEventType, ActionType, FrustrationType } from '../../../rawRumEvent.
 import type { RumEvent } from '../../../rumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { PAGE_ACTIVITY_VALIDATION_DELAY } from '../../waitPageActivityEnd'
-import type { ActionContexts } from './actionCollection'
-import type { ClickAction } from './trackClickActions'
+import type { ActionContexts, ClickAction } from './actionCollection'
 import { finalizeClicks, CLICK_ACTION_MAX_DURATION, trackClickActions } from './trackClickActions'
 import { MAX_DURATION_BETWEEN_CLICKS } from './clickChain'
 

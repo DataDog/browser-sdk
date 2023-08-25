@@ -1,12 +1,10 @@
-import type { Duration, ClocksState, RelativeTime, TimeStamp } from '@datadog/browser-core'
+import type { TimeStamp } from '@datadog/browser-core'
 import {
   includes,
   timeStampNow,
   Observable,
   assign,
   getRelativeTime,
-  ONE_MINUTE,
-  ValueHistory,
   generateUUID,
   clocksNow,
   ONE_SECOND,
@@ -26,54 +24,19 @@ import { getSelectorFromElement } from './getSelectorFromElement'
 import type { MouseEventOnElement, UserActivity } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 import { computeFrustration } from './computeFrustration'
-
-interface ActionCounts {
-  errorCount: number
-  longTaskCount: number
-  resourceCount: number
-}
-
-export interface ClickAction {
-  type: ActionType.CLICK
-  id: string
-  name: string
-  target?: {
-    selector: string
-    selector_with_stable_attributes?: string
-    width: number
-    height: number
-  }
-  position?: { x: number; y: number }
-  startClocks: ClocksState
-  duration?: Duration
-  counts: ActionCounts
-  event: MouseEventOnElement
-  frustrationTypes: FrustrationType[]
-  events: Event[]
-}
-
-export interface ActionContexts {
-  findActionId: (startTime?: RelativeTime) => string | string[] | undefined
-}
-
-type ClickActionIdHistory = ValueHistory<ClickAction['id']>
+import type { ActionIdHistory, ClickAction } from './actionCollection'
 
 // Maximum duration for click actions
 export const CLICK_ACTION_MAX_DURATION = 10 * ONE_SECOND
-export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
 
 export function trackClickActions(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
-  configuration: RumConfiguration
+  configuration: RumConfiguration,
+  history: ActionIdHistory
 ) {
-  const history: ClickActionIdHistory = new ValueHistory(ACTION_CONTEXT_TIME_OUT_DELAY)
   const stopObservable = new Observable<void>()
   let currentClickChain: ClickChain | undefined
-
-  lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-    history.reset()
-  })
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, stopClickChain)
 
@@ -98,18 +61,12 @@ export function trackClickActions(
       ),
   })
 
-  const actionContexts: ActionContexts = {
-    findActionId: (startTime?: RelativeTime) =>
-      configuration.trackFrustrations ? history.findAll(startTime) : history.find(startTime),
-  }
-
   return {
     stop: () => {
       stopClickChain()
       stopObservable.notify()
       stopActionEventsListener()
     },
-    actionContexts,
   }
 
   function appendClickToClickChain(click: Click) {
@@ -132,7 +89,7 @@ function processPointerDown(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
-  history: ClickActionIdHistory,
+  history: ActionIdHistory,
   pointerDownEvent: MouseEventOnElement
 ) {
   if (!configuration.trackFrustrations && history.find()) {
@@ -169,7 +126,7 @@ function startClickAction(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
-  history: ClickActionIdHistory,
+  history: ActionIdHistory,
   stopObservable: Observable<void>,
   appendClickToClickChain: (click: Click) => void,
   clickActionBase: ClickActionBase,
@@ -268,7 +225,7 @@ export type Click = ReturnType<typeof newClick>
 
 function newClick(
   lifeCycle: LifeCycle,
-  history: ClickActionIdHistory,
+  history: ActionIdHistory,
   getUserActivity: () => UserActivity,
   clickActionBase: ClickActionBase,
   startEvent: MouseEventOnElement

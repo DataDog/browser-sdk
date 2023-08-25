@@ -104,16 +104,17 @@ export function startRum(
   const domMutationObservable = createDOMMutationObservable()
   const locationChangeObservable = createLocationChangeObservable(configuration, location)
 
-  const { viewContexts, pageStateHistory, urlContexts, actionContexts, addAction } = startRumEventCollection(
-    lifeCycle,
-    configuration,
-    location,
-    session,
-    locationChangeObservable,
-    domMutationObservable,
-    () => buildCommonContext(globalContextManager, userContextManager, recorderApi),
-    reportError
-  )
+  const { viewContexts, pageStateHistory, urlContexts, actionContexts, addAction, startAction } =
+    startRumEventCollection(
+      lifeCycle,
+      configuration,
+      location,
+      session,
+      locationChangeObservable,
+      domMutationObservable,
+      () => buildCommonContext(globalContextManager, userContextManager, recorderApi),
+      reportError
+    )
 
   addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
 
@@ -148,6 +149,7 @@ export function startRum(
 
   return {
     addAction,
+    startAction,
     addError,
     addTiming,
     addFeatureFlagEvaluation: featureFlagContexts.addFeatureFlagEvaluation,
@@ -184,7 +186,7 @@ export function startRumEventCollection(
 
   const pageStateHistory = startPageStateHistory(configuration)
 
-  const { addAction, actionContexts } = startActionCollection(
+  const { addAction, startAction, actionContexts } = startActionCollection(
     lifeCycle,
     domMutationObservable,
     configuration,
@@ -207,6 +209,7 @@ export function startRumEventCollection(
     pageStateHistory,
     urlContexts,
     addAction,
+    startAction,
     actionContexts,
     stop: () => {
       viewContexts.stop()

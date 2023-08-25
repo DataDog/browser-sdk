@@ -205,6 +205,7 @@ export interface RawRumActionEvent {
 export const enum ActionType {
   CLICK = 'click',
   CUSTOM = 'custom',
+  TIMING = 'timing',
 }
 
 export const enum FrustrationType {
