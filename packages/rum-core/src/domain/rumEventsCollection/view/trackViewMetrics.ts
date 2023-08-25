@@ -21,6 +21,7 @@ import { waitPageActivityEnd } from '../../waitPageActivityEnd'
 import { getScrollY } from '../../../browser/scroll'
 import { getViewportDimension } from '../../../browser/viewportObservable'
 import type { WebVitalTelemetryDebug } from './startWebVitalTelemetryDebug'
+import { trackInteractionToNextPaint } from './trackInteractionToNextPaint'
 
 export interface ScrollMetrics {
   maxDepth: number
@@ -35,6 +36,7 @@ export const THROTTLE_SCROLL_DURATION = ONE_SECOND
 export interface ViewMetrics {
   loadingTime?: Duration
   cumulativeLayoutShift?: number
+  interactionToNextPaint?: Duration
 }
 
 export function trackViewMetrics(
@@ -102,14 +104,20 @@ export function trackViewMetrics(
     stopCLSTracking = noop
   }
 
+  const { stop: stopINPTracking, getInteractionToNextPaint } = trackInteractionToNextPaint(loadingType, lifeCycle)
+
   return {
     stop: () => {
       stopLoadingTimeTracking()
       stopCLSTracking()
       stopScrollMetricsTracking()
+      stopINPTracking()
     },
     setLoadEvent,
-    viewMetrics,
+    getViewMetrics: () => {
+      viewMetrics.interactionToNextPaint = getInteractionToNextPaint()
+      return viewMetrics
+    },
     getScrollMetrics: () => scrollMetrics,
   }
 }

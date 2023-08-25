@@ -21,6 +21,17 @@ import { FAKE_INITIAL_DOCUMENT, isAllowedRequestUrl } from '../domain/rumEventsC
 import { getDocumentTraceId } from '../domain/tracing/getDocumentTraceId'
 import type { PerformanceEntryRepresentation } from '../domainContext.types'
 
+type RumPerformanceObserverConstructor = new (callback: PerformanceObserverCallback) => RumPerformanceObserver
+
+export interface BrowserWindow extends Window {
+  PerformanceObserver: RumPerformanceObserverConstructor
+  performance: Performance & { interactionCount?: number }
+}
+
+export interface RumPerformanceObserver extends PerformanceObserver {
+  observe(options?: PerformanceObserverInit & { durationThreshold: number }): void
+}
+
 export interface RumPerformanceResourceTiming {
   entryType: 'resource'
   initiatorType: string
@@ -75,7 +86,16 @@ export interface RumFirstInputTiming {
   entryType: 'first-input'
   startTime: RelativeTime
   processingStart: RelativeTime
+  duration: Duration
   target?: Node
+  interactionId?: number
+}
+
+export interface RumPerformanceEventTiming {
+  entryType: 'event'
+  startTime: RelativeTime
+  duration: Duration
+  interactionId?: number
 }
 
 export interface RumLayoutShiftTiming {
@@ -95,6 +115,7 @@ export type RumPerformanceEntry =
   | RumPerformanceNavigationTiming
   | RumLargestContentfulPaintTiming
   | RumFirstInputTiming
+  | RumPerformanceEventTiming
   | RumLayoutShiftTiming
 
 function supportPerformanceObject() {
@@ -126,15 +147,21 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
       handleRumPerformanceEntries(lifeCycle, configuration, entries.getEntries())
     )
     const mainEntries = ['resource', 'navigation', 'longtask', 'paint']
-    const experimentalEntries = ['largest-contentful-paint', 'first-input', 'layout-shift']
+    const experimentalEntries = ['largest-contentful-paint', 'first-input', 'layout-shift', 'event']
 
     try {
       // Experimental entries are not retrieved by performance.getEntries()
       // use a single PerformanceObserver with buffered flag by type
       // to get values that could happen before SDK init
       experimentalEntries.forEach((type) => {
-        const observer = new PerformanceObserver(handlePerformanceEntryList)
-        observer.observe({ type, buffered: true })
+        const observer = new (window as BrowserWindow).PerformanceObserver(handlePerformanceEntryList)
+        observer.observe({
+          type,
+          buffered: true,
+          // durationThreshold only impact PerformanceEventTiming entries used for INP computation which requires a threshold at 40 (default is 104ms)
+          // cf: https://github.com/GoogleChrome/web-vitals/blob/3806160ffbc93c3c4abf210a167b81228172b31c/src/onINP.ts#L209
+          durationThreshold: 40,
+        })
       })
     } catch (e) {
       // Some old browser versions (ex: chrome 67) don't support the PerformanceObserver type and buffered options
@@ -239,6 +266,7 @@ function retrieveFirstInputTiming(configuration: RumConfiguration, callback: (ti
         entryType: 'first-input',
         processingStart: relativeNow(),
         startTime: evt.timeStamp as RelativeTime,
+        duration: 0 as Duration, // arbitrary value to avoid nullable duration and simplify INP logic
       }
 
       if (evt.type === DOM_EVENT.POINTER_DOWN) {
@@ -317,7 +345,8 @@ function handleRumPerformanceEntries(
       entry.entryType === 'longtask' ||
       entry.entryType === 'largest-contentful-paint' ||
       entry.entryType === 'first-input' ||
-      entry.entryType === 'layout-shift'
+      entry.entryType === 'layout-shift' ||
+      entry.entryType === 'event'
   ) as RumPerformanceEntry[]
 
   const rumAllowedPerformanceEntries = rumPerformanceEntries.filter(
