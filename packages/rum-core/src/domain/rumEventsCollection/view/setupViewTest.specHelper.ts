@@ -1,6 +1,6 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { noopWebVitalTelemetryDebug } from '../../../../test'
-import { type BuildContext } from '../../../../test'
+import type { BuildContext } from '../../../../test'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type {
   RumFirstInputTiming,

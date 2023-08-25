@@ -26,8 +26,10 @@ import type { LocationChange } from '../../../browser/locationChangeObservable'
 import type { RumConfiguration } from '../../configuration'
 import { trackViewEventCounts } from './trackViewEventCounts'
 import type { WebVitalTelemetryDebug } from './startWebVitalTelemetryDebug'
-import { trackInitialViewMetrics, type InitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
-import { trackViewMetrics, type ViewMetrics } from './viewMetrics/trackViewMetrics'
+import { trackInitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
+import type { InitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
+import { trackViewMetrics } from './viewMetrics/trackViewMetrics'
+import type { ViewMetrics } from './viewMetrics/trackViewMetrics'
 
 export interface ViewEvent {
   id: string

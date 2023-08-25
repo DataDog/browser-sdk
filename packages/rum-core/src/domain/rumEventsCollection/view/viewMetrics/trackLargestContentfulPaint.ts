@@ -1,8 +1,8 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { DOM_EVENT, ONE_MINUTE, addEventListeners, findLast } from '@datadog/browser-core'
-import type { RumLargestContentfulPaintTiming } from 'packages/rum-core/src/browser/performanceCollection'
 import { LifeCycleEventType, type LifeCycle } from '../../../lifeCycle'
 import type { RumConfiguration } from '../../../configuration'
+import type { RumLargestContentfulPaintTiming } from '../../../../browser/performanceCollection'
 import { trackFirstHidden } from './trackFirstHidden'
 
 // Discard LCP timings above a certain delay to avoid incorrect data
