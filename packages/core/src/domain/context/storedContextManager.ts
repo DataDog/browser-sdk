@@ -23,53 +23,9 @@ export function createStoredContextManager(
       synchronizeWithStorage()
     }
   })
+  contextManager.changeObservable.subscribe(dumpToStorage)
 
-  return {
-    getBytesCount: contextManager.getBytesCount,
-
-    /** @deprecated use getContext instead */
-    get: () => contextManager.get(),
-
-    /** @deprecated use setContextProperty instead */
-    add: (key: string, value: any) => {
-      contextManager.add(key, value)
-      dumpToStorage()
-    },
-
-    /** @deprecated renamed to removeContextProperty */
-    remove: (key: string) => {
-      contextManager.remove(key)
-      dumpToStorage()
-    },
-
-    /** @deprecated use setContext instead */
-    set: (newContext: object) => {
-      contextManager.set(newContext)
-      dumpToStorage()
-    },
-
-    getContext: () => contextManager.getContext(),
-
-    setContext: (newContext: Context) => {
-      contextManager.setContext(newContext)
-      dumpToStorage()
-    },
-
-    setContextProperty: (key: string, property: any) => {
-      contextManager.setContextProperty(key, property)
-      dumpToStorage()
-    },
-
-    removeContextProperty: (key: string) => {
-      contextManager.removeContextProperty(key)
-      dumpToStorage()
-    },
-
-    clearContext: () => {
-      contextManager.clearContext()
-      dumpToStorage()
-    },
-  }
+  return contextManager
 
   function synchronizeWithStorage() {
     const rawContext = localStorage.getItem(storageKey)

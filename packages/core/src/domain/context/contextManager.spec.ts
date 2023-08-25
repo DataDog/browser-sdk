@@ -159,4 +159,45 @@ describe('createContextManager', () => {
 
     expect(displaySpy).toHaveBeenCalledTimes(1)
   })
+
+  describe('changeObservable', () => {
+    it('should notify on context changes', () => {
+      const changeSpy = jasmine.createSpy('change')
+      const manager = createContextManager(CustomerDataType.GlobalContext)
+      manager.changeObservable.subscribe(changeSpy)
+
+      manager.getContext()
+      expect(changeSpy).not.toHaveBeenCalled()
+
+      manager.setContext({ foo: 'bar' })
+      expect(changeSpy).toHaveBeenCalledTimes(1)
+
+      manager.setContextProperty('qux', 'qix')
+      expect(changeSpy).toHaveBeenCalledTimes(2)
+
+      manager.removeContextProperty('qux')
+      expect(changeSpy).toHaveBeenCalledTimes(3)
+
+      manager.clearContext()
+      expect(changeSpy).toHaveBeenCalledTimes(4)
+    })
+
+    it('should notify on context changes (deprecated APIs)', () => {
+      const changeSpy = jasmine.createSpy('change')
+      const manager = createContextManager(CustomerDataType.GlobalContext)
+      manager.changeObservable.subscribe(changeSpy)
+
+      manager.get()
+      expect(changeSpy).not.toHaveBeenCalled()
+
+      manager.set({ foo: 'bar' })
+      expect(changeSpy).toHaveBeenCalledTimes(1)
+
+      manager.add('qux', 'qix')
+      expect(changeSpy).toHaveBeenCalledTimes(2)
+
+      manager.remove('qux')
+      expect(changeSpy).toHaveBeenCalledTimes(3)
+    })
+  })
 })
