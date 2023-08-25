@@ -3,7 +3,6 @@ import {
   noop,
   PageExitReason,
   shallowClone,
-  assign,
   elapsed,
   generateUUID,
   ONE_MINUTE,
@@ -25,11 +24,10 @@ import { LifeCycleEventType } from '../../lifeCycle'
 import type { EventCounts } from '../../trackEventCounts'
 import type { LocationChange } from '../../../browser/locationChangeObservable'
 import type { RumConfiguration } from '../../configuration'
-import type { Timings } from './trackInitialViewTimings'
-import { trackInitialViewTimings } from './trackInitialViewTimings'
-import { trackViewMetrics } from './viewMetrics/trackViewMetrics'
 import { trackViewEventCounts } from './trackViewEventCounts'
 import type { WebVitalTelemetryDebug } from './startWebVitalTelemetryDebug'
+import { trackInitialViewMetrics, type InitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
+import { trackViewMetrics, type ViewMetrics } from './viewMetrics/trackViewMetrics'
 import type { ScrollMetrics } from './viewMetrics/trackScrollMetrics'
 
 export interface ViewEvent {
@@ -38,7 +36,8 @@ export interface ViewEvent {
   service?: string
   version?: string
   location: Readonly<Location>
-  timings: Timings
+  metrics: ViewMetrics
+  initialViewMetrics: InitialViewMetrics
   customTimings: ViewCustomTimings
   eventCounts: EventCounts
   documentVersion: number
@@ -46,9 +45,7 @@ export interface ViewEvent {
   duration: Duration
   isActive: boolean
   sessionIsActive: boolean
-  loadingTime?: Duration
   loadingType: ViewLoadingType
-  cumulativeLayoutShift?: number
   scrollMetrics?: ScrollMetrics
 }
 
@@ -210,10 +207,10 @@ function newView(
     webVitalTelemetryDebug
   )
 
-  const { scheduleStop: scheduleStopInitialViewTimingsTracking, timings } =
+  const { scheduleStop: scheduleStopInitialViewMetricsTracking, initialViewMetrics } =
     loadingType === ViewLoadingType.INITIAL_LOAD
-      ? trackInitialViewTimings(lifeCycle, configuration, webVitalTelemetryDebug, setLoadEvent, scheduleViewUpdate)
-      : { scheduleStop: noop, timings: {} as Timings }
+      ? trackInitialViewMetrics(lifeCycle, configuration, webVitalTelemetryDebug, setLoadEvent, scheduleViewUpdate)
+      : { scheduleStop: noop, initialViewMetrics: {} as InitialViewMetrics }
 
   const { scheduleStop: scheduleStopEventCountsTracking, eventCounts } = trackViewEventCounts(
     lifeCycle,
@@ -232,29 +229,24 @@ function newView(
     documentVersion += 1
     const currentEnd = endClocks === undefined ? timeStampNow() : endClocks.timeStamp
 
-    lifeCycle.notify(
-      LifeCycleEventType.VIEW_UPDATED,
-      assign(
-        {
-          customTimings,
-          documentVersion,
-          id,
-          name,
-          service,
-          version,
-          loadingType,
-          location,
-          startClocks,
-          timings,
-          duration: elapsed(startClocks.timeStamp, currentEnd),
-          isActive: endClocks === undefined,
-          sessionIsActive,
-          eventCounts,
-          scrollMetrics: getScrollMetrics(),
-        },
-        viewMetrics
-      )
-    )
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
+      customTimings,
+      documentVersion,
+      id,
+      name,
+      service,
+      version,
+      loadingType,
+      location,
+      startClocks,
+      metrics: viewMetrics,
+      initialViewMetrics,
+      duration: elapsed(startClocks.timeStamp, currentEnd),
+      isActive: endClocks === undefined,
+      sessionIsActive,
+      eventCounts,
+      scrollMetrics: getScrollMetrics(),
+    })
   }
 
   return {
@@ -272,7 +264,7 @@ function newView(
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks })
       clearInterval(keepAliveIntervalId)
       stopViewMetricsTracking()
-      scheduleStopInitialViewTimingsTracking()
+      scheduleStopInitialViewMetricsTracking()
       scheduleStopEventCountsTracking()
       triggerViewUpdate()
     },

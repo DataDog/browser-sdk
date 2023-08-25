@@ -7,20 +7,11 @@ import { LifeCycleEventType } from '../../../lifeCycle'
 import { PAGE_ACTIVITY_END_DELAY, PAGE_ACTIVITY_VALIDATION_DELAY } from '../../../waitPageActivityEnd'
 import { THROTTLE_VIEW_UPDATE_PERIOD } from '../trackViews'
 import type { ViewTest } from '../setupViewTest.specHelper'
-import { setupViewTest } from '../setupViewTest.specHelper'
+import { FAKE_NAVIGATION_ENTRY, setupViewTest } from '../setupViewTest.specHelper'
 
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = (PAGE_ACTIVITY_VALIDATION_DELAY * 0.8) as Duration
 
 const AFTER_PAGE_ACTIVITY_END_DELAY = PAGE_ACTIVITY_END_DELAY * 1.1
-
-const FAKE_NAVIGATION_ENTRY: RumPerformanceNavigationTiming = {
-  responseStart: 123 as RelativeTime,
-  domComplete: 456 as RelativeTime,
-  domContentLoadedEventEnd: 345 as RelativeTime,
-  domInteractive: 234 as RelativeTime,
-  entryType: 'navigation',
-  loadEventEnd: 567 as RelativeTime,
-}
 
 const FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_BEFORE_ACTIVITY_TIMING: RumPerformanceNavigationTiming = {
   responseStart: 1 as RelativeTime,
@@ -66,7 +57,7 @@ describe('trackLoadingTime', () => {
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getViewUpdateCount()).toEqual(3)
-    expect(getViewUpdate(2).loadingTime).toBeUndefined()
+    expect(getViewUpdate(2).metrics.loadingTime).toBeUndefined()
   })
 
   it('should have a loading time equal to the activity time if there is a unique activity on a route change', () => {
@@ -79,7 +70,7 @@ describe('trackLoadingTime', () => {
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-    expect(getViewUpdate(3).loadingTime).toEqual(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+    expect(getViewUpdate(3).metrics.loadingTime).toEqual(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
   })
 
   it('should use loadEventEnd for initial view when having no activity', () => {
@@ -92,7 +83,7 @@ describe('trackLoadingTime', () => {
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getViewUpdateCount()).toEqual(2)
-    expect(getViewUpdate(1).loadingTime).toEqual(FAKE_NAVIGATION_ENTRY.loadEventEnd)
+    expect(getViewUpdate(1).metrics.loadingTime).toEqual(FAKE_NAVIGATION_ENTRY.loadEventEnd)
   })
 
   it('should use loadEventEnd for initial view when load event is bigger than computed loading time', () => {
@@ -113,7 +104,7 @@ describe('trackLoadingTime', () => {
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getViewUpdateCount()).toEqual(2)
-    expect(getViewUpdate(1).loadingTime).toEqual(
+    expect(getViewUpdate(1).metrics.loadingTime).toEqual(
       FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING.loadEventEnd
     )
   })
@@ -133,7 +124,7 @@ describe('trackLoadingTime', () => {
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getViewUpdateCount()).toEqual(2)
-    expect(getViewUpdate(1).loadingTime).toEqual(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+    expect(getViewUpdate(1).metrics.loadingTime).toEqual(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
   })
 
   it('should use computed loading time from time origin for initial view', () => {
@@ -163,6 +154,6 @@ describe('trackLoadingTime', () => {
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getViewUpdateCount()).toEqual(2)
-    expect(getViewUpdate(1).loadingTime).toEqual(addDuration(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY, CLOCK_GAP))
+    expect(getViewUpdate(1).metrics.loadingTime).toEqual(addDuration(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY, CLOCK_GAP))
   })
 })

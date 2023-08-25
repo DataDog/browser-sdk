@@ -116,7 +116,7 @@ describe('trackScrollMetrics', () => {
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
       expect(getViewUpdateCount()).toEqual(3)
-      expect(getViewUpdate(2).loadingTime).toBeUndefined()
+      expect(getViewUpdate(2).metrics.loadingTime).toBeUndefined()
       expect(getViewUpdate(2).scrollMetrics).toEqual(undefined)
     })
 
@@ -130,7 +130,7 @@ describe('trackScrollMetrics', () => {
       clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-      expect(getViewUpdate(3).loadingTime).toEqual(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+      expect(getViewUpdate(3).metrics.loadingTime).toEqual(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
       expect(getViewUpdate(3).scrollMetrics).toEqual({
         maxDepthScrollHeight: jasmine.any(Number),
         maxDepth: jasmine.any(Number),

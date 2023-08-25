@@ -11,7 +11,6 @@ import type { ViewEvent } from './trackViews'
 import { startViewCollection } from './viewCollection'
 
 const VIEW: ViewEvent = {
-  cumulativeLayoutShift: 1,
   customTimings: {
     bar: 20 as Duration,
     foo: 10 as Duration,
@@ -28,11 +27,10 @@ const VIEW: ViewEvent = {
   id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
   name: undefined,
   isActive: false,
-  loadingTime: 20 as Duration,
   loadingType: ViewLoadingType.INITIAL_LOAD,
   location: {} as Location,
   startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
-  timings: {
+  initialViewMetrics: {
     firstByte: 10 as Duration,
     domComplete: 10 as Duration,
     domContentLoaded: 10 as Duration,
@@ -42,6 +40,10 @@ const VIEW: ViewEvent = {
     firstInputTime: 10 as Duration,
     largestContentfulPaint: 10 as Duration,
     loadEvent: 10 as Duration,
+  },
+  metrics: {
+    loadingTime: 20 as Duration,
+    cumulativeLayoutShift: 1,
   },
   scrollMetrics: {
     maxDepth: 2000,
@@ -192,7 +194,7 @@ describe('viewCollection', () => {
       .withFeatureFlagContexts({ findFeatureFlagEvaluations: () => ({ feature: 'foo' }) })
       .build()
 
-    const view = { ...VIEW, loadingTime: -20 as Duration }
+    const view: ViewEvent = { ...VIEW, metrics: { loadingTime: -20 as Duration } }
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, view)
     const rawRumViewEvent = rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent
 
@@ -201,7 +203,7 @@ describe('viewCollection', () => {
 
   it('should discard negative loading time', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
-    const view = { ...VIEW, loadingTime: -20 as Duration }
+    const view: ViewEvent = { ...VIEW, metrics: { loadingTime: -20 as Duration } }
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, view)
     const rawRumViewEvent = rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent
 

@@ -1,6 +1,6 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { addEventListeners, DOM_EVENT } from '@datadog/browser-core'
-import type { RumConfiguration } from '../../configuration'
+import type { RumConfiguration } from '../../../configuration'
 
 let trackFirstHiddenSingleton: { timeStamp: RelativeTime } | undefined
 let stopListeners: (() => void) | undefined
