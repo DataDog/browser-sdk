@@ -16,7 +16,7 @@ export function startRumBatch(
 ) {
   const replica = configuration.replica
 
-  const batch = startBatchWithReplica<Context>(
+  const batch = startBatchWithReplica(
     configuration,
     {
       endpoint: configuration.rumEndpointBuilder,
