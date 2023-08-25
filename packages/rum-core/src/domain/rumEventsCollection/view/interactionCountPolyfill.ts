@@ -5,7 +5,7 @@
  * for which there was a unique interactionId.
  *
  * The interactionCount polyfill is an estimate based on a convention specific to Chrome. Cf: https://github.com/GoogleChrome/web-vitals/pull/213
- * This is currently no an issue as the polyfill is only used for INP which is currently only supported on Chrome.
+ * This is currently not an issue as the polyfill is only used for INP which is currently only supported on Chrome.
  * Hopefully when/if other browsers will support INP, they will also implement performance.interactionCount at the same time, so we won't need that polyfill.
  *
  * Reference implementation: https://github.com/GoogleChrome/web-vitals/blob/main/src/lib/polyfills/interactionCountPolyfill.ts
