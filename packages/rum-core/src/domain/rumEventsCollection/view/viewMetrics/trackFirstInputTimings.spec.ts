@@ -1,4 +1,4 @@
-import type { RelativeTime } from '@datadog/browser-core'
+import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../../../../test'
 import { setup } from '../../../../../test'
@@ -66,6 +66,7 @@ describe('firstInputTimings', () => {
         entryType: 'first-input' as const,
         processingStart: 900 as RelativeTime,
         startTime: 1000 as RelativeTime,
+        duration: 0 as Duration,
       },
     ])
 

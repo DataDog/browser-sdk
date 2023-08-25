@@ -18,6 +18,7 @@ export enum ExperimentalFeature {
   COLLECT_FLUSH_REASON = 'collect_flush_reason',
   NO_RESOURCE_DURATION_FROZEN_STATE = 'no_resource_duration_frozen_state',
   SCROLLMAP = 'scrollmap',
+  INTERACTION_TO_NEXT_PAINT = 'interaction_to_next_paint',
   DISABLE_REPLAY_INLINE_CSS = 'disable_replay_inline_css',
 }
 

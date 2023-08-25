@@ -47,6 +47,7 @@ export interface ViewEvent {
   sessionIsActive: boolean
   loadingType: ViewLoadingType
   scrollMetrics?: ScrollMetrics
+  interactionToNextPaint?: Duration
 }
 
 export interface ViewCreatedEvent {
@@ -195,7 +196,7 @@ function newView(
   const {
     setLoadEvent,
     stop: stopViewMetricsTracking,
-    viewMetrics,
+    getViewMetrics,
     getScrollMetrics,
   } = trackViewMetrics(
     lifeCycle,
@@ -239,7 +240,7 @@ function newView(
       loadingType,
       location,
       startClocks,
-      metrics: viewMetrics,
+      metrics: getViewMetrics(),
       initialViewMetrics,
       duration: elapsed(startClocks.timeStamp, currentEnd),
       isActive: endClocks === undefined,

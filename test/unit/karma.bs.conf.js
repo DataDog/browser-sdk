@@ -1,5 +1,5 @@
 const { browserConfigurations } = require('../browsers.conf')
-const { getBuildInfos, getIp } = require('../envUtils')
+const { getBuildInfos } = require('../envUtils')
 const karmaBaseConf = require('./karma.base.conf')
 
 module.exports = function (config) {
@@ -10,7 +10,6 @@ module.exports = function (config) {
     browsers: browserConfigurations.map((configuration) => configuration.sessionName),
     concurrency: 5,
     browserDisconnectTolerance: 3,
-    hostname: getIp(),
     browserStack: {
       username: process.env.BS_USERNAME,
       accessKey: process.env.BS_ACCESS_KEY,

@@ -1,4 +1,4 @@
-import type { RelativeTime } from '@datadog/browser-core'
+import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { noopWebVitalTelemetryDebug } from '../../../../test'
 import { type BuildContext } from '../../../../test'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -98,4 +98,5 @@ export const FAKE_FIRST_INPUT_ENTRY: RumFirstInputTiming = {
   entryType: 'first-input',
   processingStart: 1100 as RelativeTime,
   startTime: 1000 as RelativeTime,
+  duration: 0 as Duration,
 }

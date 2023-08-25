@@ -4,13 +4,16 @@ import type { ViewLoadingType } from '../../../../rawRumEvent.types'
 import type { RumConfiguration } from '../../../configuration'
 import type { LifeCycle } from '../../../lifeCycle'
 import type { WebVitalTelemetryDebug } from '../startWebVitalTelemetryDebug'
-import { computeScrollValues, trackScrollMetrics, type ScrollMetrics } from './trackScrollMetrics'
+import { trackInteractionToNextPaint } from '../trackInteractionToNextPaint'
+import type { ScrollMetrics } from './trackScrollMetrics'
+import { computeScrollValues, trackScrollMetrics } from './trackScrollMetrics'
 import { trackLoadingTime } from './trackLoadingTime'
 import { isLayoutShiftSupported, trackCumulativeLayoutShift } from './trackCumulativeLayoutShift'
 
 export interface ViewMetrics {
   loadingTime?: Duration
   cumulativeLayoutShift?: number
+  interactionToNextPaint?: Duration
 }
 
 export function trackViewMetrics(
@@ -78,14 +81,20 @@ export function trackViewMetrics(
     stopCLSTracking = noop
   }
 
+  const { stop: stopINPTracking, getInteractionToNextPaint } = trackInteractionToNextPaint(loadingType, lifeCycle)
+
   return {
     stop: () => {
       stopLoadingTimeTracking()
       stopCLSTracking()
       stopScrollMetricsTracking()
+      stopINPTracking()
     },
     setLoadEvent,
-    viewMetrics,
+    getViewMetrics: () => {
+      viewMetrics.interactionToNextPaint = getInteractionToNextPaint()
+      return viewMetrics
+    },
     getScrollMetrics: () => scrollMetrics,
   }
 }

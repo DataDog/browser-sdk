@@ -576,6 +576,10 @@ export type RumViewEvent = CommonProperties & {
      */
     readonly first_input_time?: number
     /**
+     * Longest duration in ns between an interaction and the next paint
+     */
+    readonly interaction_to_next_paint?: number
+    /**
      * Total layout shift score that occurred on the view
      */
     readonly cumulative_layout_shift?: number

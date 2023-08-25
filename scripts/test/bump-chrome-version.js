@@ -1,7 +1,7 @@
 'use strict'
 
 const fs = require('fs')
-const { printLog, printError, runMain, fetch } = require('../lib/execution-utils')
+const { printLog, runMain, fetch } = require('../lib/execution-utils')
 const { command } = require('../lib/command')
 const { CI_FILE, replaceCiFileVariable } = require('../lib/files-utils')
 const { initGitConfig } = require('../lib/git-utils')
@@ -13,7 +13,6 @@ const CURRENT_CI_IMAGE = process.env.CURRENT_CI_IMAGE
 
 const CURRENT_PACKAGE_VERSION = process.env.CHROME_PACKAGE_VERSION
 const CHROME_PACKAGE_URL = 'https://www.ubuntuupdates.org/package/google_chrome/stable/main/base/google-chrome-stable'
-const CHROME_DRIVER_URL = 'https://chromedriver.storage.googleapis.com/?delimiter=/&prefix='
 
 runMain(async () => {
   initGitConfig(REPOSITORY)
@@ -25,18 +24,11 @@ runMain(async () => {
   const majorPackageVersion = getMajor(packageVersion)
 
   if (majorPackageVersion <= getMajor(CURRENT_PACKAGE_VERSION)) {
-    printLog('Chrome driver is up to date.')
+    printLog('Chrome is up to date.')
     return
   }
 
-  const driverVersion = await getDriverVersion(majorPackageVersion)
-
-  if (majorPackageVersion !== getMajor(driverVersion)) {
-    printError(`No driver available for chrome ${packageVersion}.`)
-    return
-  }
-
-  const chromeVersionBranch = `bump-chrome-version-to-${driverVersion}`
+  const chromeVersionBranch = `bump-chrome-version-to-${majorPackageVersion}`
   const commitMessage = `👷 Bump chrome to ${packageVersion}`
 
   const isBranchAlreadyCreated = command`git ls-remote --heads ${REPOSITORY} ${chromeVersionBranch}`.run()
@@ -48,7 +40,6 @@ runMain(async () => {
   command`git checkout -b ${chromeVersionBranch}`.run()
 
   printLog('Update versions...')
-  await replaceCiFileVariable('CHROME_DRIVER_VERSION', driverVersion)
   await replaceCiFileVariable('CHROME_PACKAGE_VERSION', packageVersion)
   await replaceCiFileVariable('CURRENT_CI_IMAGE', Number(CURRENT_CI_IMAGE) + 1)
 
@@ -70,13 +61,6 @@ async function getPackageVersion() {
   const packageMatches = /<td>([0-9.-]+)<\/td>/.exec(packagePage)
 
   return packageMatches ? packageMatches[1] : null
-}
-
-async function getDriverVersion(majorPackageVersion) {
-  const driverPage = await fetch(`${CHROME_DRIVER_URL}${majorPackageVersion}`)
-  const driverMatchGroups = [...driverPage.toString().matchAll(/<Prefix>([0-9.-]+)\/<\/Prefix>/g)]
-
-  return driverMatchGroups.length ? driverMatchGroups[driverMatchGroups.length - 1][1] : null
 }
 
 function getMajor(version) {
