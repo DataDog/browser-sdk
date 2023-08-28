@@ -1,4 +1,4 @@
-import type { DeflateWorkerAction, DeflateWorkerResponse } from '@datadog/browser-core'
+import type { DeflateWorker, DeflateWorkerResponse } from '@datadog/browser-core'
 import { addTelemetryError, display, includes, addEventListener, setTimeout, ONE_SECOND } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 
@@ -35,10 +35,6 @@ type DeflateWorkerState =
       worker: DeflateWorker
       version: string
     }
-
-export interface DeflateWorker extends Worker {
-  postMessage(message: DeflateWorkerAction): void
-}
 
 export type CreateDeflateWorker = typeof createDeflateWorker
 

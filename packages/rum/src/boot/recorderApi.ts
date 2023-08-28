@@ -1,5 +1,12 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { Observable, canUseEventBridge, noop, runOnReadyState, relativeNow } from '@datadog/browser-core'
+import {
+  Observable,
+  canUseEventBridge,
+  noop,
+  runOnReadyState,
+  relativeNow,
+  DeflateEncoderStreamId,
+} from '@datadog/browser-core'
 import type {
   LifeCycle,
   ViewContexts,
@@ -12,7 +19,6 @@ import { getReplayStats as getReplayStatsImpl } from '../domain/replayStats'
 import { getSessionReplayLink } from '../domain/getSessionReplayLink'
 import type { CreateDeflateWorker } from '../domain/deflate'
 import {
-  DeflateEncoderStreamId,
   createDeflateEncoder,
   startDeflateWorker,
   DeflateWorkerStatus,
