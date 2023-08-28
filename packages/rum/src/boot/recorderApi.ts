@@ -1,4 +1,4 @@
-import { canUseEventBridge, noop, runOnReadyState } from '@datadog/browser-core'
+import { DeflateEncoderStreamId, canUseEventBridge, noop, runOnReadyState } from '@datadog/browser-core'
 import type {
   LifeCycle,
   ViewContexts,
@@ -11,7 +11,6 @@ import { getReplayStats as getReplayStatsImpl } from '../domain/replayStats'
 import { getSessionReplayLink } from '../domain/getSessionReplayLink'
 import type { CreateDeflateWorker } from '../domain/deflate'
 import {
-  DeflateEncoderStreamId,
   createDeflateEncoder,
   startDeflateWorker,
   DeflateWorkerStatus,

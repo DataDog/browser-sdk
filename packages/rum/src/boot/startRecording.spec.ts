@@ -1,5 +1,12 @@
 import type { TimeStamp, HttpRequest, ClocksState } from '@datadog/browser-core'
-import { PageExitReason, DefaultPrivacyLevel, noop, isIE, timeStampNow } from '@datadog/browser-core'
+import {
+  PageExitReason,
+  DefaultPrivacyLevel,
+  noop,
+  isIE,
+  timeStampNow,
+  DeflateEncoderStreamId,
+} from '@datadog/browser-core'
 import type { LifeCycle, ViewCreatedEvent, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
@@ -9,15 +16,10 @@ import { appendElement, createRumSessionManagerMock, setup } from '../../../rum-
 
 import { recordsPerFullSnapshot, readReplayPayload } from '../../test'
 import { setSegmentBytesLimit } from '../domain/segmentCollection'
-import {
-  DeflateEncoderStreamId,
-  startDeflateWorker,
-  createDeflateEncoder,
-  resetDeflateWorkerState,
-} from '../domain/deflate'
 
 import { RecordType } from '../types'
 import { resetReplayStats } from '../domain/replayStats'
+import { createDeflateEncoder, resetDeflateWorkerState, startDeflateWorker } from '../domain/deflate'
 import { startRecording } from './startRecording'
 
 const VIEW_TIMESTAMP = 1 as TimeStamp

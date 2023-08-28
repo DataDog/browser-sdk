@@ -1,8 +1,8 @@
 import type { RawTelemetryEvent, EncoderResult } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { noop, startFakeTelemetry } from '@datadog/browser-core'
+import { noop, startFakeTelemetry, DeflateEncoderStreamId } from '@datadog/browser-core'
 import { MockWorker } from '../../../test'
-import { DeflateEncoderStreamId, createDeflateEncoder } from './deflateEncoder'
+import { createDeflateEncoder } from './deflateEncoder'
 
 const OTHER_STREAM_ID = 10 as DeflateEncoderStreamId
 
