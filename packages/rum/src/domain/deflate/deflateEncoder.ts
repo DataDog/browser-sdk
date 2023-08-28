@@ -1,16 +1,9 @@
-import type { DeflateWorkerResponse } from '@datadog/browser-core'
+import type { DeflateWorkerResponse, Encoder, EncoderResult } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { addEventListener, addTelemetryDebug, concatBuffers } from '@datadog/browser-core'
+import { addEventListener, addTelemetryDebug, assign, concatBuffers } from '@datadog/browser-core'
 import type { DeflateWorker } from './deflateWorker'
 
-export interface DeflateEncoder {
-  write(data: string, callback: () => void): void
-  reset(): void
-  stop(): void
-  encodedBytesCount: number
-  encodedBytes: Uint8Array
-  rawBytesCount: number
-}
+export type DeflateEncoder = Encoder<Uint8Array> & { stop: () => void }
 
 export const enum DeflateEncoderStreamId {
   REPLAY = 1,
@@ -26,7 +19,12 @@ export function createDeflateEncoder(
   let compressedDataTrailer: Uint8Array
 
   let nextWriteActionId = 0
-  const pendingWriteActions: Array<{ callback: () => void; id: number }> = []
+  const pendingWriteActions: Array<{
+    callback?: (additionalEncodedBytesCount: number) => void
+    finished: boolean
+    id: number
+    data: string
+  }> = []
 
   const { stop: removeMessageListener } = addEventListener(
     configuration,
@@ -37,18 +35,15 @@ export function createDeflateEncoder(
         return
       }
 
+      rawBytesCount += data.additionalBytesCount
+      compressedData.push(data.result)
+      compressedDataTrailer = data.trailer
+
       const nextPendingAction = pendingWriteActions.shift()
       if (nextPendingAction && nextPendingAction.id === data.id) {
-        if (data.id === 0) {
-          // Initial state
-          rawBytesCount = data.additionalBytesCount
-          compressedData = [data.result]
-        } else {
-          rawBytesCount += data.additionalBytesCount
-          compressedData.push(data.result)
+        if (nextPendingAction.callback) {
+          nextPendingAction.callback(data.result.byteLength)
         }
-        compressedDataTrailer = data.trailer
-        nextPendingAction.callback()
       } else {
         removeMessageListener()
         addTelemetryDebug('Worker responses received out of order.')
@@ -56,25 +51,44 @@ export function createDeflateEncoder(
     }
   )
 
+  function consumeResult(): EncoderResult<Uint8Array> {
+    const output =
+      compressedData.length === 0 ? new Uint8Array(0) : concatBuffers(compressedData.concat(compressedDataTrailer))
+    const result: EncoderResult<Uint8Array> = {
+      rawBytesCount,
+      output,
+      outputBytesCount: output.byteLength,
+      encoding: 'deflate',
+    }
+    rawBytesCount = 0
+    compressedData = []
+    return result
+  }
+
+  function cancelUnfinishedPendingWriteActions() {
+    pendingWriteActions.forEach((pendingWriteAction) => {
+      if (!pendingWriteAction.finished) {
+        pendingWriteAction.finished = true
+        delete pendingWriteAction.callback
+      }
+    })
+  }
+
+  function sendResetIfNeeded() {
+    if (nextWriteActionId > 0) {
+      worker.postMessage({
+        action: 'reset',
+        streamId,
+      })
+      nextWriteActionId = 0
+    }
+  }
+
   return {
-    get encodedBytes() {
-      if (!compressedData.length) {
-        return new Uint8Array(0)
-      }
+    isAsync: true,
 
-      return concatBuffers(compressedData.concat(compressedDataTrailer))
-    },
-
-    get encodedBytesCount() {
-      if (!compressedData.length) {
-        return 0
-      }
-
-      return compressedData.reduce((total, buffer) => total + buffer.length, 0) + compressedDataTrailer.length
-    },
-
-    get rawBytesCount() {
-      return rawBytesCount
+    get isEmpty() {
+      return nextWriteActionId === 0
     },
 
     write(data, callback) {
@@ -87,16 +101,39 @@ export function createDeflateEncoder(
       pendingWriteActions.push({
         id: nextWriteActionId,
         callback,
+        data,
+        finished: false,
       })
       nextWriteActionId += 1
     },
 
-    reset() {
-      worker.postMessage({
-        action: 'reset',
-        streamId,
+    finish(callback) {
+      sendResetIfNeeded()
+
+      if (!pendingWriteActions.length) {
+        callback(consumeResult())
+      } else {
+        cancelUnfinishedPendingWriteActions()
+        // Wait for the last action to finish before calling the finish callback
+        pendingWriteActions[pendingWriteActions.length - 1].callback = () => callback(consumeResult())
+      }
+    },
+
+    finishSync() {
+      sendResetIfNeeded()
+
+      const pendingData = pendingWriteActions
+        .filter((pendingWriteAction) => !pendingWriteAction.finished)
+        .map((pendingWriteAction) => pendingWriteAction.data)
+        .join('')
+      cancelUnfinishedPendingWriteActions()
+      return assign(consumeResult(), {
+        pendingData,
       })
-      nextWriteActionId = 0
+    },
+
+    estimateEncodedBytesCount(data) {
+      return data.length / 7
     },
 
     stop() {

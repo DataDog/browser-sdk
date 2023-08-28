@@ -99,8 +99,8 @@ export function doStartSegmentCollection(
 
   function flushSegment(flushReason: FlushReason) {
     if (state.status === SegmentCollectionStatus.SegmentPending) {
-      state.segment.flush((metadata) => {
-        const payload = buildReplayPayload(encoder.encodedBytes, metadata, encoder.rawBytesCount)
+      state.segment.flush((metadata, encoderResult) => {
+        const payload = buildReplayPayload(encoderResult.output, metadata, encoderResult.rawBytesCount)
 
         if (isPageExitReason(flushReason)) {
           httpRequest.sendOnExit(payload)
@@ -144,15 +144,8 @@ export function doStartSegmentCollection(
         }
       }
 
-      const segment = state.segment
-
-      segment.addRecord(record, () => {
-        if (
-          // the written segment is still pending
-          state.status === SegmentCollectionStatus.SegmentPending &&
-          state.segment === segment &&
-          encoder.encodedBytesCount > SEGMENT_BYTES_LIMIT
-        ) {
+      state.segment.addRecord(record, (encodedBytesCount) => {
+        if (encodedBytesCount > SEGMENT_BYTES_LIMIT) {
           flushSegment('segment_bytes_limit')
         }
       })
