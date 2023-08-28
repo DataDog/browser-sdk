@@ -88,16 +88,19 @@ export function createFlushController({
      *
      * This function needs to be called synchronously, right before adding the message, so no flush
      * event can happen after `notifyBeforeAddMessage` and before adding the message.
+     *
+     * @param estimatedMessageBytesCount: an estimation of the message bytes count once it is
+     * actually added.
      */
-    notifyBeforeAddMessage(messageBytesCount: number) {
-      if (currentBytesCount + messageBytesCount >= bytesLimit) {
+    notifyBeforeAddMessage(estimatedMessageBytesCount: number) {
+      if (currentBytesCount + estimatedMessageBytesCount >= bytesLimit) {
         flush('bytes_limit')
       }
       // Consider the message to be added now rather than in `notifyAfterAddMessage`, because if no
       // message was added yet and `notifyAfterAddMessage` is called asynchronously, we still want
       // to notify when a flush is needed (for example on page exit).
       currentMessagesCount += 1
-      currentBytesCount += messageBytesCount
+      currentBytesCount += estimatedMessageBytesCount
       scheduleDurationLimitTimeout()
     },
 
@@ -106,8 +109,13 @@ export function createFlushController({
      *
      * This function can be called asynchronously after the message was added, but in this case it
      * should not be called if a flush event occurred in between.
+     *
+     * @param messageBytesCountDiff: the difference between the estimated message bytes count and
+     * its actual bytes count once added to the pool.
      */
-    notifyAfterAddMessage() {
+    notifyAfterAddMessage(messageBytesCountDiff = 0) {
+      currentBytesCount += messageBytesCountDiff
+
       if (currentMessagesCount >= messagesLimit) {
         flush('messages_limit')
       } else if (currentBytesCount >= bytesLimit) {
@@ -120,6 +128,10 @@ export function createFlushController({
      *
      * This function needs to be called synchronously, right after removing the message, so no flush
      * event can happen after removing the message and before `notifyAfterRemoveMessage`.
+     *
+     * @param messageBytesCount: the message bytes count that was added to the pool. Should
+     * correspond to the sum of bytes counts passed to `notifyBeforeAddMessage` and
+     * `notifyAfterAddMessage`.
      */
     notifyAfterRemoveMessage(messageBytesCount: number) {
       currentBytesCount -= messageBytesCount

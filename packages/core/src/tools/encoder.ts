@@ -51,7 +51,7 @@ export interface EncoderResult<Output extends string | Uint8Array = string | Uin
    * An encoding type supported by HTTP Content-Encoding, if applicable.
    * See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Encoding#directives
    */
-  encoding?: string
+  encoding?: 'deflate'
 
   /**
    * Total bytes count of the input strings encoded to UTF-8.
