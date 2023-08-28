@@ -1,4 +1,11 @@
-import type { Observable, TelemetryEvent, RawError, ContextManager } from '@datadog/browser-core'
+import type {
+  Observable,
+  TelemetryEvent,
+  RawError,
+  ContextManager,
+  DeflateEncoderStreamId,
+  DeflateEncoder,
+} from '@datadog/browser-core'
 import {
   sendToExtension,
   createPageExitObservable,
@@ -45,7 +52,8 @@ export function startRum(
   recorderApi: RecorderApi,
   globalContextManager: ContextManager,
   userContextManager: ContextManager,
-  initialViewOptions?: ViewOptions
+  initialViewOptions?: ViewOptions,
+  createDeflateEncoder?: (streamId: DeflateEncoderStreamId) => DeflateEncoder
 ) {
   const cleanupTasks: Array<() => void> = []
   const lifeCycle = new LifeCycle()
@@ -88,7 +96,8 @@ export function startRum(
       telemetry.observable,
       reportError,
       pageExitObservable,
-      session.expireObservable
+      session.expireObservable,
+      createDeflateEncoder
     )
     cleanupTasks.push(() => batch.stop())
     startCustomerDataTelemetry(

@@ -18,6 +18,7 @@ export enum ExperimentalFeature {
   SCROLLMAP = 'scrollmap',
   WEB_VITALS_ATTRIBUTION = 'web_vitals_attribution',
   DISABLE_REPLAY_INLINE_CSS = 'disable_replay_inline_css',
+  COMPRESS_BATCH = 'compress_batch',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()

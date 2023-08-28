@@ -49,7 +49,7 @@ let state: DeflateWorkerState = { status: DeflateWorkerStatus.Nil }
 export function startDeflateWorker(
   configuration: RumConfiguration,
   source: string,
-  onInitializationFailure: () => void,
+  onInitializationFailure?: () => void,
   createDeflateWorkerImpl = createDeflateWorker
 ) {
   if (state.status === DeflateWorkerStatus.Nil) {
@@ -59,7 +59,9 @@ export function startDeflateWorker(
 
   switch (state.status) {
     case DeflateWorkerStatus.Loading:
-      state.initializationFailureCallbacks.push(onInitializationFailure)
+      if (onInitializationFailure) {
+        state.initializationFailureCallbacks.push(onInitializationFailure)
+      }
       return state.worker
     case DeflateWorkerStatus.Initialized:
       return state.worker
