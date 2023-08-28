@@ -19,6 +19,7 @@ import {
   sanitizeUser,
   sanitize,
   createStoredContextManager,
+  combine,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewContexts } from '../domain/contexts/viewContexts'
@@ -156,9 +157,13 @@ export function makeRumPublicApi(
     initialViewOptions?: ViewOptions
   ) {
     if (initConfiguration.storeContextsAcrossPages) {
-      // Note: context API calls before init are dismissed
+      const beforeInitGlobalContext = globalContextManager.getContext()
       globalContextManager = createStoredContextManager(configuration, RUM_STORAGE_KEY, CustomerDataType.GlobalContext)
+      globalContextManager.setContext(combine(globalContextManager.getContext(), beforeInitGlobalContext))
+
+      const beforeInitUserContext = userContextManager.getContext()
       userContextManager = createStoredContextManager(configuration, RUM_STORAGE_KEY, CustomerDataType.User)
+      userContextManager.setContext(combine(userContextManager.getContext(), beforeInitUserContext))
     }
 
     const startRumResults = startRumImpl(

@@ -509,5 +509,20 @@ describe('logs entry', () => {
       expect(logsPublicApi.getUser()).toEqual({ qux: 'qix' })
       expect(localStorage.getItem('_dd_c_logs_1')).toBe('{"qux":"qix"}')
     })
+
+    // TODO in next major, buffer context calls to correctly apply before init set/remove/clear
+    it('when enabled, before init context values should override local storage values', () => {
+      localStorage.setItem('_dd_c_logs_1', '{"foo":"bar","qux":"qix"}')
+      localStorage.setItem('_dd_c_logs_2', '{"foo":"bar","qux":"qix"}')
+      logsPublicApi.setUserProperty('foo', 'user')
+      logsPublicApi.setGlobalContextProperty('foo', 'global')
+
+      logsPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, storeContextsAcrossPages: true })
+
+      expect(logsPublicApi.getUser()).toEqual({ foo: 'user', qux: 'qix' })
+      expect(logsPublicApi.getGlobalContext()).toEqual({ foo: 'global', qux: 'qix' })
+      expect(localStorage.getItem('_dd_c_logs_1')).toBe('{"foo":"user","qux":"qix"}')
+      expect(localStorage.getItem('_dd_c_logs_2')).toBe('{"foo":"global","qux":"qix"}')
+    })
   })
 })

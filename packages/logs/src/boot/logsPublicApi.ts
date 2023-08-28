@@ -14,6 +14,7 @@ import {
   sanitizeUser,
   sanitize,
   createStoredContextManager,
+  combine,
 } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
@@ -91,13 +92,17 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
       }
 
       if (initConfiguration.storeContextsAcrossPages) {
-        // Note: context API calls before init are dismissed
+        const beforeInitGlobalContext = globalContextManager.getContext()
         globalContextManager = createStoredContextManager(
           configuration,
           LOGS_STORAGE_KEY,
           CustomerDataType.GlobalContext
         )
+        globalContextManager.setContext(combine(globalContextManager.getContext(), beforeInitGlobalContext))
+
+        const beforeInitUserContext = userContextManager.getContext()
         userContextManager = createStoredContextManager(configuration, LOGS_STORAGE_KEY, CustomerDataType.User)
+        userContextManager.setContext(combine(userContextManager.getContext(), beforeInitUserContext))
       }
 
       ;({ handleLog: handleLogStrategy, getInternalContext: getInternalContextStrategy } = startLogsImpl(

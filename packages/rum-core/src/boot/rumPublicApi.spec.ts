@@ -906,6 +906,21 @@ describe('rum public api', () => {
       expect(rumPublicApi.getUser()).toEqual({ qux: 'qix' })
       expect(localStorage.getItem('_dd_c_rum_1')).toBe('{"qux":"qix"}')
     })
+
+    // TODO in next major, buffer context calls to correctly apply before init set/remove/clear
+    it('when enabled, before init context values should override local storage values', () => {
+      localStorage.setItem('_dd_c_rum_1', '{"foo":"bar","qux":"qix"}')
+      localStorage.setItem('_dd_c_rum_2', '{"foo":"bar","qux":"qix"}')
+      rumPublicApi.setUserProperty('foo', 'user')
+      rumPublicApi.setGlobalContextProperty('foo', 'global')
+
+      rumPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, storeContextsAcrossPages: true })
+
+      expect(rumPublicApi.getUser()).toEqual({ foo: 'user', qux: 'qix' })
+      expect(rumPublicApi.getGlobalContext()).toEqual({ foo: 'global', qux: 'qix' })
+      expect(localStorage.getItem('_dd_c_rum_1')).toBe('{"foo":"user","qux":"qix"}')
+      expect(localStorage.getItem('_dd_c_rum_2')).toBe('{"foo":"global","qux":"qix"}')
+    })
   })
 
   it('should provide sdk version', () => {
