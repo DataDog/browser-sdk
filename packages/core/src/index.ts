@@ -61,6 +61,7 @@ export {
   FlushReason,
 } from './transport'
 export * from './tools/display'
+export { Encoder, EncoderResult } from './tools/encoder'
 export * from './tools/utils/urlPolyfill'
 export * from './tools/utils/timeUtils'
 export * from './tools/utils/arrayUtils'
