@@ -498,16 +498,60 @@ describe('logs entry', () => {
       expect(localStorage.getItem('_dd_c_logs_1')).toBeNull()
     })
 
-    it('when enabled, should store contexts in local storage', () => {
+    it('when enabled, should maintain user context in local storage', () => {
       logsPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, storeContextsAcrossPages: true })
-
-      logsPublicApi.setGlobalContext({ foo: 'bar' })
-      expect(logsPublicApi.getGlobalContext()).toEqual({ foo: 'bar' })
-      expect(localStorage.getItem('_dd_c_logs_2')).toBe('{"foo":"bar"}')
 
       logsPublicApi.setUser({ qux: 'qix' })
       expect(logsPublicApi.getUser()).toEqual({ qux: 'qix' })
       expect(localStorage.getItem('_dd_c_logs_1')).toBe('{"qux":"qix"}')
+
+      logsPublicApi.setUserProperty('foo', 'bar')
+      expect(logsPublicApi.getUser()).toEqual({ qux: 'qix', foo: 'bar' })
+      expect(localStorage.getItem('_dd_c_logs_1')).toBe('{"qux":"qix","foo":"bar"}')
+
+      logsPublicApi.removeUserProperty('foo')
+      expect(logsPublicApi.getUser()).toEqual({ qux: 'qix' })
+      expect(localStorage.getItem('_dd_c_logs_1')).toBe('{"qux":"qix"}')
+
+      logsPublicApi.clearUser()
+      expect(logsPublicApi.getUser()).toEqual({})
+      expect(localStorage.getItem('_dd_c_logs_1')).toBe('{}')
+    })
+
+    it('when enabled, should maintain global context in local storage', () => {
+      logsPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, storeContextsAcrossPages: true })
+
+      logsPublicApi.setGlobalContext({ qux: 'qix' })
+      expect(logsPublicApi.getGlobalContext()).toEqual({ qux: 'qix' })
+      expect(localStorage.getItem('_dd_c_logs_2')).toBe('{"qux":"qix"}')
+
+      logsPublicApi.setGlobalContextProperty('foo', 'bar')
+      expect(logsPublicApi.getGlobalContext()).toEqual({ qux: 'qix', foo: 'bar' })
+      expect(localStorage.getItem('_dd_c_logs_2')).toBe('{"qux":"qix","foo":"bar"}')
+
+      logsPublicApi.removeGlobalContextProperty('foo')
+      expect(logsPublicApi.getGlobalContext()).toEqual({ qux: 'qix' })
+      expect(localStorage.getItem('_dd_c_logs_2')).toBe('{"qux":"qix"}')
+
+      logsPublicApi.clearGlobalContext()
+      expect(logsPublicApi.getGlobalContext()).toEqual({})
+      expect(localStorage.getItem('_dd_c_logs_2')).toBe('{}')
+    })
+
+    it('when enabled, should maintain global context in local storage (deprecated APIs) ', () => {
+      logsPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, storeContextsAcrossPages: true })
+
+      logsPublicApi.setLoggerGlobalContext({ qux: 'qix' })
+      expect(logsPublicApi.getLoggerGlobalContext()).toEqual({ qux: 'qix' })
+      expect(localStorage.getItem('_dd_c_logs_2')).toBe('{"qux":"qix"}')
+
+      logsPublicApi.addLoggerGlobalContext('foo', 'bar')
+      expect(logsPublicApi.getLoggerGlobalContext()).toEqual({ qux: 'qix', foo: 'bar' })
+      expect(localStorage.getItem('_dd_c_logs_2')).toBe('{"qux":"qix","foo":"bar"}')
+
+      logsPublicApi.removeLoggerGlobalContext('foo')
+      expect(logsPublicApi.getLoggerGlobalContext()).toEqual({ qux: 'qix' })
+      expect(localStorage.getItem('_dd_c_logs_2')).toBe('{"qux":"qix"}')
     })
 
     // TODO in next major, buffer context calls to correctly apply before init set/remove/clear
