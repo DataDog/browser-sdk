@@ -3,6 +3,7 @@ file,pako,MIT,(C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
 file,rrweb,MIT,Copyright (c) 2018 Contributors (https://github.com/rrweb-io/rrweb/graphs/contributors) and SmartX Inc.
 file,rrweb-snapshot,MIT,Copyright (c) 2018 Contributors (https://github.com/rrweb-io/rrweb-snapshot/graphs/contributors) and SmartX Inc.
 file,tracekit,MIT,Copyright 2013 Onur Can Cakmak and all TraceKit contributors
+file,web-vitals,Apache-2.0,Copyright 2020 Google LLC
 prod,@mantine/core,MIT,Copyright (c) 2021 Vitaly Rtishchev
 prod,@mantine/hooks,MIT,Copyright (c) 2021 Vitaly Rtishchev
 prod,react,MIT,Copyright (c) Facebook, Inc. and its affiliates.
@@ -27,7 +28,6 @@ dev,@wdio/cli,MIT,Copyright JS Foundation and other contributors
 dev,@wdio/jasmine-framework,MIT,Copyright JS Foundation and other contributors
 dev,@wdio/junit-reporter,MIT,Copyright (c) OpenJS Foundation and other contributors
 dev,@wdio/local-runner,MIT,Copyright JS Foundation and other contributors
-dev,@wdio/selenium-standalone-service,MIT,Copyright JS Foundation and other contributors
 dev,@wdio/spec-reporter,MIT,Copyright JS Foundation and other contributors
 dev,@webextension-toolbox/webpack-webextension-plugin,MIT,Copyright 2018 Henrik Wenz (handtrix@gmail.com)
 dev,ajv,MIT,Copyright 2015-2017 Evgeny Poberezkin

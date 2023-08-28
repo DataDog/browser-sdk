@@ -1,13 +1,12 @@
 variables:
-  CURRENT_STAGING: staging-34
+  CURRENT_STAGING: staging-35
   APP: 'browser-sdk'
-  CURRENT_CI_IMAGE: 50
+  CURRENT_CI_IMAGE: 51
   BUILD_STABLE_REGISTRY: '486234852809.dkr.ecr.us-east-1.amazonaws.com'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
   MAIN_BRANCH: 'main'
-  CHROME_PACKAGE_VERSION: 114.0.5735.90-1
-  CHROME_DRIVER_VERSION: 114.0.5735.16
+  CHROME_PACKAGE_VERSION: 116.0.5845.110-1
 
 cache:
   key:
@@ -495,7 +494,7 @@ bump-chrome-version-scheduled:
     - eval $(ssh-agent -s)
   script:
     - yarn
-    - node scripts/test/bump-chrome-driver-version.js
+    - node scripts/test/bump-chrome-version.js
   artifacts:
     reports:
       dotenv: build.env

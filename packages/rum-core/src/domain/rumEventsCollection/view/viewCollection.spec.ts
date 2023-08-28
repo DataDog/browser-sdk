@@ -12,6 +12,7 @@ import { startViewCollection } from './viewCollection'
 
 const VIEW: ViewEvent = {
   cumulativeLayoutShift: 1,
+  interactionToNextPaint: 10 as Duration,
   customTimings: {
     bar: 20 as Duration,
     foo: 10 as Duration,
@@ -132,6 +133,7 @@ describe('viewCollection', () => {
         first_contentful_paint: (10 * 1e6) as ServerDuration,
         first_input_delay: (12 * 1e6) as ServerDuration,
         first_input_time: (10 * 1e6) as ServerDuration,
+        interaction_to_next_paint: (10 * 1e6) as ServerDuration,
         is_active: false,
         name: undefined,
         largest_contentful_paint: (10 * 1e6) as ServerDuration,

@@ -28,7 +28,7 @@ describe('startRecording', () => {
   let clock: Clock | undefined
   let configuration: RumConfiguration
 
-  beforeEach((done) => {
+  beforeEach(() => {
     if (isIE()) {
       pending('IE not supported')
     }
@@ -42,37 +42,36 @@ describe('startRecording', () => {
     textField = document.createElement('input')
     sandbox.appendChild(textField)
 
-    startDeflateWorker(configuration, (worker) => {
-      setupBuilder = setup()
-        .withViewContexts({
-          findView() {
-            return { id: viewId, startClocks: {} as ClocksState }
-          },
-        })
-        .withSessionManager(sessionManager)
-        .withConfiguration({
-          defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
-        })
-        .beforeBuild(({ lifeCycle, configuration, viewContexts, sessionManager }) => {
-          requestSendSpy = jasmine.createSpy()
-          const httpRequest = {
-            send: requestSendSpy,
-            sendOnExit: requestSendSpy,
-          }
+    const worker = startDeflateWorker(configuration, noop)!
 
-          const recording = startRecording(
-            lifeCycle,
-            configuration,
-            sessionManager,
-            viewContexts,
-            createDeflateEncoder(configuration, worker!, DeflateEncoderStreamId.REPLAY),
-            httpRequest
-          )
-          stopRecording = recording ? recording.stop : noop
-          return { stop: stopRecording }
-        })
-      done()
-    })
+    setupBuilder = setup()
+      .withViewContexts({
+        findView() {
+          return { id: viewId, startClocks: {} as ClocksState }
+        },
+      })
+      .withSessionManager(sessionManager)
+      .withConfiguration({
+        defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
+      })
+      .beforeBuild(({ lifeCycle, configuration, viewContexts, sessionManager }) => {
+        requestSendSpy = jasmine.createSpy()
+        const httpRequest = {
+          send: requestSendSpy,
+          sendOnExit: requestSendSpy,
+        }
+
+        const recording = startRecording(
+          lifeCycle,
+          configuration,
+          sessionManager,
+          viewContexts,
+          createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY),
+          httpRequest
+        )
+        stopRecording = recording ? recording.stop : noop
+        return { stop: stopRecording }
+      })
   })
 
   afterEach(() => {

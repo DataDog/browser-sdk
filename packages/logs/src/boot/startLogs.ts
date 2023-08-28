@@ -113,11 +113,15 @@ function startLogsTelemetry(
   } else {
     const telemetryBatch = startBatchWithReplica(
       configuration,
-      configuration.rumEndpointBuilder,
+      {
+        endpoint: configuration.rumEndpointBuilder,
+      },
+      configuration.replica && {
+        endpoint: configuration.replica.rumEndpointBuilder,
+      },
       reportError,
       pageExitObservable,
-      sessionExpireObservable,
-      configuration.replica?.rumEndpointBuilder
+      sessionExpireObservable
     )
     telemetry.observable.subscribe((event) => telemetryBatch.add(event, isTelemetryReplicationAllowed(configuration)))
   }

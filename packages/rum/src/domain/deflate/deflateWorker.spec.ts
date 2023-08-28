@@ -4,62 +4,55 @@ import type { RumConfiguration } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import { MockWorker } from '../../../test'
-import type { createDeflateWorker } from './deflateWorker'
+import type { CreateDeflateWorker } from './deflateWorker'
 import { startDeflateWorker, resetDeflateWorkerState, INITIALIZATION_TIME_OUT_DELAY } from './deflateWorker'
 
 // Arbitrary stream ids used for tests
 const TEST_STREAM_ID = 5
 
 describe('startDeflateWorker', () => {
-  let deflateWorker: MockWorker
-  let createDeflateWorkerSpy: jasmine.Spy<typeof createDeflateWorker>
-  let callbackSpy: jasmine.Spy
+  let mockWorker: MockWorker
+  let createDeflateWorkerSpy: jasmine.Spy<CreateDeflateWorker>
+  let onInitializationFailureSpy: jasmine.Spy<() => void>
   let configuration: RumConfiguration
 
   beforeEach(() => {
     configuration = {} as RumConfiguration
-    deflateWorker = new MockWorker()
-    callbackSpy = jasmine.createSpy('callbackSpy')
-    createDeflateWorkerSpy = jasmine.createSpy('createDeflateWorkerSpy').and.callFake(() => deflateWorker)
+    mockWorker = new MockWorker()
+    onInitializationFailureSpy = jasmine.createSpy('onInitializationFailureSpy')
+    createDeflateWorkerSpy = jasmine.createSpy('createDeflateWorkerSpy').and.callFake(() => mockWorker)
   })
 
   afterEach(() => {
     resetDeflateWorkerState()
   })
 
-  it('creates a deflate worker and call callback when initialized', () => {
-    startDeflateWorker(configuration, callbackSpy, createDeflateWorkerSpy)
+  it('creates a deflate worker', () => {
+    const worker = startDeflateWorker(configuration, onInitializationFailureSpy, createDeflateWorkerSpy)
     expect(createDeflateWorkerSpy).toHaveBeenCalledTimes(1)
-    deflateWorker.processAllMessages()
-    expect(callbackSpy).toHaveBeenCalledOnceWith(deflateWorker)
+    expect(worker).toBe(mockWorker)
+
+    mockWorker.processAllMessages()
+    expect(onInitializationFailureSpy).not.toHaveBeenCalled()
   })
 
-  it('uses the previously created worker', () => {
-    startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
-    deflateWorker.processAllMessages()
-
-    startDeflateWorker(configuration, callbackSpy, createDeflateWorkerSpy)
+  it('uses the previously created worker during loading', () => {
+    const worker1 = startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
+    const worker2 = startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
     expect(createDeflateWorkerSpy).toHaveBeenCalledTimes(1)
-    deflateWorker.processAllMessages()
-    expect(callbackSpy).toHaveBeenCalledOnceWith(deflateWorker)
+    expect(worker1).toBe(worker2)
   })
 
-  describe('loading state', () => {
-    it('does not create multiple workers when called multiple times while the worker is loading', () => {
-      startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
-      startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
-      expect(createDeflateWorkerSpy).toHaveBeenCalledTimes(1)
-    })
+  it('uses the previously created worker once initialized', () => {
+    const worker1 = startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
+    mockWorker.processAllMessages()
 
-    it('calls all registered callbacks when the worker is initialized', () => {
-      const callbackSpy1 = jasmine.createSpy()
-      const callbackSpy2 = jasmine.createSpy()
-      startDeflateWorker(configuration, callbackSpy1, createDeflateWorkerSpy)
-      startDeflateWorker(configuration, callbackSpy2, createDeflateWorkerSpy)
-      deflateWorker.processAllMessages()
-      expect(callbackSpy1).toHaveBeenCalledOnceWith(deflateWorker)
-      expect(callbackSpy2).toHaveBeenCalledOnceWith(deflateWorker)
-    })
+    const worker2 = startDeflateWorker(configuration, onInitializationFailureSpy, createDeflateWorkerSpy)
+    expect(createDeflateWorkerSpy).toHaveBeenCalledTimes(1)
+    expect(worker1).toBe(worker2)
+
+    mockWorker.processAllMessages()
+    expect(onInitializationFailureSpy).not.toHaveBeenCalled()
   })
 
   describe('worker CSP error', () => {
@@ -85,49 +78,84 @@ describe('startDeflateWorker', () => {
       resetTelemetry()
     })
 
-    it('displays CSP instructions when the worker creation throws a CSP error', () => {
-      startDeflateWorker(configuration, noop, () => {
-        throw CSP_ERROR
+    describe('Chrome and Safari behavior: exception during worker creation', () => {
+      it('returns undefined when the worker creation throws an exception', () => {
+        const worker = startDeflateWorker(configuration, noop, () => {
+          throw CSP_ERROR
+        })
+        expect(worker).toBeUndefined()
       })
-      expect(displaySpy).toHaveBeenCalledWith(jasmine.stringContaining('Please make sure CSP is correctly configured'))
-    })
 
-    it('does not report CSP errors to telemetry', () => {
-      startDeflateWorker(configuration, noop, () => {
-        throw CSP_ERROR
-      })
-      expect(telemetryEvents).toEqual([])
-    })
-
-    it('displays ErrorEvent as CSP error', () => {
-      startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
-      deflateWorker.dispatchErrorEvent()
-      expect(displaySpy).toHaveBeenCalledWith(jasmine.stringContaining('Please make sure CSP is correctly configured'))
-    })
-
-    it('calls the callback without argument in case of an error occurs during loading', () => {
-      startDeflateWorker(configuration, callbackSpy, createDeflateWorkerSpy)
-      deflateWorker.dispatchErrorEvent()
-      expect(callbackSpy).toHaveBeenCalledOnceWith()
-    })
-
-    it('calls the callback without argument in case of an error occurred in a previous loading', () => {
-      startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
-      deflateWorker.dispatchErrorEvent()
-
-      startDeflateWorker(configuration, callbackSpy, createDeflateWorkerSpy)
-      expect(callbackSpy).toHaveBeenCalledOnceWith()
-    })
-
-    it('adjusts the error message when a workerUrl is set', () => {
-      configuration.workerUrl = '/worker.js'
-      startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
-      deflateWorker.dispatchErrorEvent()
-      expect(displaySpy).toHaveBeenCalledWith(
-        jasmine.stringContaining(
-          'Please make sure the Worker URL /worker.js is correct and CSP is correctly configured.'
+      it('displays CSP instructions when the worker creation throws a CSP error', () => {
+        startDeflateWorker(configuration, noop, () => {
+          throw CSP_ERROR
+        })
+        expect(displaySpy).toHaveBeenCalledWith(
+          jasmine.stringContaining('Please make sure CSP is correctly configured')
         )
-      )
+      })
+
+      it('does not report CSP errors to telemetry', () => {
+        startDeflateWorker(configuration, noop, () => {
+          throw CSP_ERROR
+        })
+        expect(telemetryEvents).toEqual([])
+      })
+
+      it('does not try to create a worker again after the creation failed', () => {
+        startDeflateWorker(configuration, noop, () => {
+          throw CSP_ERROR
+        })
+        startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
+        expect(createDeflateWorkerSpy).not.toHaveBeenCalled()
+      })
+    })
+
+    describe('Firefox behavior: error during worker loading', () => {
+      it('displays ErrorEvent as CSP error', () => {
+        startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
+        mockWorker.dispatchErrorEvent()
+        expect(displaySpy).toHaveBeenCalledWith(
+          jasmine.stringContaining('Please make sure CSP is correctly configured')
+        )
+      })
+
+      it('calls the initialization failure callback when of an error occurs during loading', () => {
+        startDeflateWorker(configuration, onInitializationFailureSpy, createDeflateWorkerSpy)
+        mockWorker.dispatchErrorEvent()
+        expect(onInitializationFailureSpy).toHaveBeenCalledTimes(1)
+      })
+
+      it('returns undefined if an error occurred in a previous loading', () => {
+        startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
+        mockWorker.dispatchErrorEvent()
+
+        const worker = startDeflateWorker(configuration, onInitializationFailureSpy, createDeflateWorkerSpy)
+
+        expect(worker).toBeUndefined()
+        expect(onInitializationFailureSpy).not.toHaveBeenCalled()
+      })
+
+      it('adjusts the error message when a workerUrl is set', () => {
+        configuration.workerUrl = '/worker.js'
+        startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
+        mockWorker.dispatchErrorEvent()
+        expect(displaySpy).toHaveBeenCalledWith(
+          jasmine.stringContaining(
+            'Please make sure the Worker URL /worker.js is correct and CSP is correctly configured.'
+          )
+        )
+      })
+
+      it('calls all registered callbacks when the worker initialization fails', () => {
+        const onInitializationFailureSpy1 = jasmine.createSpy()
+        const onInitializationFailureSpy2 = jasmine.createSpy()
+        startDeflateWorker(configuration, onInitializationFailureSpy1, createDeflateWorkerSpy)
+        startDeflateWorker(configuration, onInitializationFailureSpy2, createDeflateWorkerSpy)
+        mockWorker.dispatchErrorEvent()
+        expect(onInitializationFailureSpy1).toHaveBeenCalledTimes(1)
+        expect(onInitializationFailureSpy2).toHaveBeenCalledTimes(1)
+      })
     })
   })
 
@@ -203,15 +231,15 @@ describe('startDeflateWorker', () => {
 
     it('does not display error messages as CSP error', () => {
       startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
-      deflateWorker.dispatchErrorMessage('foo')
+      mockWorker.dispatchErrorMessage('foo')
       expect(displaySpy).not.toHaveBeenCalledWith(jasmine.stringContaining('CSP'))
     })
 
     it('reports errors occurring after loading to telemetry', () => {
       startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
-      deflateWorker.processAllMessages()
+      mockWorker.processAllMessages()
 
-      deflateWorker.dispatchErrorMessage('boom', TEST_STREAM_ID)
+      mockWorker.dispatchErrorMessage('boom', TEST_STREAM_ID)
       expect(telemetryEvents).toEqual([
         {
           type: 'log',

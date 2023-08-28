@@ -9,17 +9,14 @@ import { createFlushController } from './flushController'
 
 export function startBatchWithReplica<T extends Context>(
   configuration: Configuration,
-  endpoint: EndpointBuilder,
+  primary: { endpoint: EndpointBuilder },
+  replica: { endpoint: EndpointBuilder; transformMessage?: (message: T) => T } | undefined,
   reportError: (error: RawError) => void,
   pageExitObservable: Observable<PageExitEvent>,
-  sessionExpireObservable: Observable<void>,
-  replicaEndpoint?: EndpointBuilder
+  sessionExpireObservable: Observable<void>
 ) {
-  const primaryBatch = createBatch(configuration, endpoint)
-  let replicaBatch: Batch | undefined
-  if (replicaEndpoint) {
-    replicaBatch = createBatch(configuration, replicaEndpoint)
-  }
+  const primaryBatch = createBatch(configuration, primary.endpoint)
+  const replicaBatch = replica && createBatch(configuration, replica.endpoint)
 
   function createBatch(configuration: Configuration, endpointBuilder: EndpointBuilder) {
     return new Batch(
@@ -36,10 +33,19 @@ export function startBatchWithReplica<T extends Context>(
   }
 
   return {
+    flushObservable: primaryBatch.flushController.flushObservable,
+
     add(message: T, replicated = true) {
       primaryBatch.add(message)
       if (replicaBatch && replicated) {
-        replicaBatch.add(message)
+        replicaBatch.add(replica.transformMessage ? replica.transformMessage(message) : message)
+      }
+    },
+
+    upsert: (message: T, key: string) => {
+      primaryBatch.upsert(message, key)
+      if (replicaBatch) {
+        replicaBatch.upsert(replica.transformMessage ? replica.transformMessage(message) : message, key)
       }
     },
   }
