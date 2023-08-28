@@ -3,6 +3,7 @@ import type { Context } from '../tools/serialisation/context'
 import type { Observable } from '../tools/observable'
 import type { PageExitEvent } from '../browser/pageExitObservable'
 import type { RawError } from '../domain/error/error.types'
+import { createIdentityEncoder } from '../tools/encoder'
 import { Batch } from './batch'
 import { createHttpRequest } from './httpRequest'
 import { createFlushController } from './flushController'
@@ -20,6 +21,7 @@ export function startBatchWithReplica<T extends Context>(
 
   function createBatch(configuration: Configuration, endpointBuilder: EndpointBuilder) {
     return new Batch(
+      createIdentityEncoder(),
       createHttpRequest(configuration, endpointBuilder, configuration.batchBytesLimit, reportError),
       createFlushController({
         messagesLimit: configuration.batchMessagesLimit,
