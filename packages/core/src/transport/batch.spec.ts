@@ -44,6 +44,7 @@ describe('batch', () => {
       data: '{"message":"hello"}',
       bytesCount: SMALL_MESSAGE_BYTES_COUNT,
       flushReason,
+      encoding: undefined,
     })
   })
 
@@ -114,6 +115,7 @@ describe('batch', () => {
       data: '{"message":"2"}\n{"message":"3"}\n{"message":"4"}',
       bytesCount: jasmine.any(Number),
       flushReason,
+      encoding: undefined,
     })
 
     batch.upsert({ message: '5' }, 'c')
@@ -125,6 +127,7 @@ describe('batch', () => {
       data: '{"message":"5"}\n{"message":"6"}\n{"message":"7"}',
       bytesCount: jasmine.any(Number),
       flushReason,
+      encoding: undefined,
     })
 
     batch.upsert({ message: '8' }, 'a')
@@ -137,6 +140,7 @@ describe('batch', () => {
       data: '{"message":"10"}\n{"message":"11"}',
       bytesCount: jasmine.any(Number),
       flushReason,
+      encoding: undefined,
     })
   })
 
@@ -151,6 +155,7 @@ describe('batch', () => {
         data: '{"message":"1"}\n{"message":"2"}',
         bytesCount: jasmine.any(Number),
         flushReason,
+        encoding: undefined,
       })
     })
 

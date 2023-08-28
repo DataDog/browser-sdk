@@ -57,6 +57,7 @@ export function createDeflateEncoder(
       rawBytesCount,
       output,
       outputBytesCount: output.byteLength,
+      encoding: 'deflate',
     }
     rawBytesCount = 0
     compressedData = []

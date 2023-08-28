@@ -12,7 +12,7 @@ export class Batch {
   private upsertBuffer: { [key: string]: string } = {}
 
   constructor(
-    private encoder: Encoder<string>,
+    private encoder: Encoder,
     private request: HttpRequest,
     public flushController: FlushController,
     private messageBytesLimit: number
@@ -116,10 +116,26 @@ export class Batch {
   }
 }
 
-function formatPayloadFromEncoder(encoderResult: EncoderResult<string>, flushEvent: FlushEvent): Payload {
+function formatPayloadFromEncoder(encoderResult: EncoderResult, flushEvent: FlushEvent): Payload {
+  let data: string | Blob
+  if (typeof encoderResult.output === 'string') {
+    data = encoderResult.output
+  } else {
+    data = new Blob([encoderResult.output], {
+      // This will set the 'Content-Type: text/plain' header. Reasoning:
+      // * The intake rejects the request if there is no content type.
+      // * The browser will issue CORS preflight requests if we set it to 'application/json', which
+      // could induce higher intake load (and maybe has other impacts).
+      // * Also it's not quite JSON, since we are concatenating multiple JSON objects separated by
+      // new lines.
+      type: 'text/plain',
+    })
+  }
+
   return {
-    data: encoderResult.output,
+    data,
     bytesCount: encoderResult.outputBytesCount,
+    encoding: encoderResult.encoding,
     flushReason: flushEvent.reason,
   }
 }

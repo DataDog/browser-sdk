@@ -57,6 +57,7 @@ describe('createDeflateEncoder', () => {
         output: new Uint8Array([...ENCODED_FOO, ...ENCODED_BAR, ...TRAILER]),
         outputBytesCount: 7,
         rawBytesCount: 6,
+        encoding: 'deflate',
       })
     })
 
@@ -69,6 +70,7 @@ describe('createDeflateEncoder', () => {
         output: new Uint8Array(0),
         outputBytesCount: 0,
         rawBytesCount: 0,
+        encoding: 'deflate',
       })
     })
 
@@ -108,6 +110,7 @@ describe('createDeflateEncoder', () => {
             output: new Uint8Array([...ENCODED_FOO, ...TRAILER]),
             outputBytesCount: 4,
             rawBytesCount: 3,
+            encoding: 'deflate',
           },
         ],
         [
@@ -115,6 +118,7 @@ describe('createDeflateEncoder', () => {
             output: new Uint8Array([...ENCODED_BAR, ...TRAILER]),
             outputBytesCount: 4,
             rawBytesCount: 3,
+            encoding: 'deflate',
           },
         ],
       ])
@@ -134,6 +138,7 @@ describe('createDeflateEncoder', () => {
         outputBytesCount: 4,
         rawBytesCount: 3,
         pendingData: 'bar',
+        encoding: 'deflate',
       })
     })
 
@@ -167,6 +172,7 @@ describe('createDeflateEncoder', () => {
         outputBytesCount: 0,
         rawBytesCount: 0,
         pendingData: 'bar',
+        encoding: 'deflate',
       })
 
       worker.processAllMessages()
@@ -178,6 +184,7 @@ describe('createDeflateEncoder', () => {
             output: new Uint8Array([...ENCODED_FOO, ...TRAILER]),
             outputBytesCount: 4,
             rawBytesCount: 3,
+            encoding: 'deflate',
           },
         ],
       ])

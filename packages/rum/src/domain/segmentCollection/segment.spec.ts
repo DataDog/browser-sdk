@@ -110,6 +110,7 @@ describe('Segment', () => {
           ENCODED_META_BYTES_COUNT +
           TRAILER_BYTES_COUNT,
         rawBytesCount: ENCODED_SEGMENT_HEADER_BYTES_COUNT + ENCODED_RECORD_BYTES_COUNT + ENCODED_META_BYTES_COUNT,
+        encoding: 'deflate',
       }
     )
   })

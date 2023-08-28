@@ -24,10 +24,11 @@ export interface HttpResponse extends Context {
 }
 
 export interface Payload {
-  data: string | FormData
+  data: string | FormData | Blob
   bytesCount: number
   retry?: RetryInfo
   flushReason?: FlushReason
+  encoding?: string
 }
 
 export interface RetryInfo {
