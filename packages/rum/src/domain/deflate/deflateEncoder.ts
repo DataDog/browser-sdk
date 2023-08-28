@@ -1,13 +1,12 @@
-import type { DeflateWorkerResponse, Encoder, EncoderResult } from '@datadog/browser-core'
+import type {
+  DeflateWorkerResponse,
+  DeflateEncoder,
+  DeflateEncoderStreamId,
+  DeflateWorker,
+  EncoderResult,
+} from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { addEventListener, addTelemetryDebug, assign, concatBuffers } from '@datadog/browser-core'
-import type { DeflateWorker } from './deflateWorker'
-
-export type DeflateEncoder = Encoder<Uint8Array> & { stop: () => void }
-
-export const enum DeflateEncoderStreamId {
-  REPLAY = 1,
-}
 
 export function createDeflateEncoder(
   configuration: RumConfiguration,
