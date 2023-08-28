@@ -238,7 +238,7 @@ describe('initial view', () => {
       })
 
       it('should update the initial view loadingTime following the loadEventEnd value', () => {
-        expect(initialView.last.viewMetrics.loadingTime).toBe(FAKE_NAVIGATION_ENTRY.loadEventEnd)
+        expect(initialView.last.commonViewMetrics.loadingTime).toBe(FAKE_NAVIGATION_ENTRY.loadEventEnd)
       })
     })
 

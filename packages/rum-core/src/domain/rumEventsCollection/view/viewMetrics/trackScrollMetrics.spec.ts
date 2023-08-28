@@ -116,8 +116,8 @@ describe('trackScrollMetrics', () => {
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
       expect(getViewUpdateCount()).toEqual(3)
-      expect(getViewUpdate(2).viewMetrics.loadingTime).toBeUndefined()
-      expect(getViewUpdate(2).viewMetrics.scroll).toEqual(undefined)
+      expect(getViewUpdate(2).commonViewMetrics.loadingTime).toBeUndefined()
+      expect(getViewUpdate(2).commonViewMetrics.scroll).toEqual(undefined)
     })
 
     it('should have a loading time equal to the activity time and scroll metrics if there is a unique activity on a route change', () => {
@@ -130,8 +130,8 @@ describe('trackScrollMetrics', () => {
       clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-      expect(getViewUpdate(3).viewMetrics.loadingTime).toEqual(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-      expect(getViewUpdate(3).viewMetrics.scroll).toEqual({
+      expect(getViewUpdate(3).commonViewMetrics.loadingTime).toEqual(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+      expect(getViewUpdate(3).commonViewMetrics.scroll).toEqual({
         maxDepthScrollHeight: jasmine.any(Number),
         maxDepth: jasmine.any(Number),
         maxDepthTime: jasmine.any(Number),

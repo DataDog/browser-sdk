@@ -10,14 +10,14 @@ import { trackLoadingTime } from './trackLoadingTime'
 import { isLayoutShiftSupported, trackCumulativeLayoutShift } from './trackCumulativeLayoutShift'
 import { trackInteractionToNextPaint } from './trackInteractionToNextPaint'
 
-export interface ViewMetrics {
+export interface CommonViewMetrics {
   loadingTime?: Duration
   cumulativeLayoutShift?: number
   interactionToNextPaint?: Duration
   scroll?: ScrollMetrics
 }
 
-export function trackViewMetrics(
+export function trackCommonViewMetrics(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
   configuration: RumConfiguration,
@@ -26,7 +26,7 @@ export function trackViewMetrics(
   viewStart: ClocksState,
   webVitalTelemetryDebug: WebVitalTelemetryDebug
 ) {
-  const viewMetrics: ViewMetrics = {}
+  const commonViewMetrics: CommonViewMetrics = {}
 
   const { stop: stopLoadingTimeTracking, setLoadEvent } = trackLoadingTime(
     lifeCycle,
@@ -35,13 +35,13 @@ export function trackViewMetrics(
     loadingType,
     viewStart,
     (newLoadingTime) => {
-      viewMetrics.loadingTime = newLoadingTime
+      commonViewMetrics.loadingTime = newLoadingTime
 
       // We compute scroll metrics at loading time to ensure we have scroll data when loading the view initially
       // This is to ensure that we have the depth data even if the user didn't scroll or if the view is not scrollable.
       const { scrollHeight, scrollDepth, scrollTop } = computeScrollValues()
 
-      viewMetrics.scroll = {
+      commonViewMetrics.scroll = {
         maxDepth: scrollDepth,
         maxDepthScrollHeight: scrollHeight,
         maxDepthTime: newLoadingTime,
@@ -55,7 +55,7 @@ export function trackViewMetrics(
     configuration,
     viewStart,
     (newScrollMetrics) => {
-      viewMetrics.scroll = newScrollMetrics
+      commonViewMetrics.scroll = newScrollMetrics
     },
     computeScrollValues
   )
@@ -63,11 +63,11 @@ export function trackViewMetrics(
   let stopCLSTracking: () => void
   let clsAttributionCollected = false
   if (isLayoutShiftSupported()) {
-    viewMetrics.cumulativeLayoutShift = 0
+    commonViewMetrics.cumulativeLayoutShift = 0
     ;({ stop: stopCLSTracking } = trackCumulativeLayoutShift(
       lifeCycle,
       (cumulativeLayoutShift, largestLayoutShiftNode, largestLayoutShiftTime) => {
-        viewMetrics.cumulativeLayoutShift = cumulativeLayoutShift
+        commonViewMetrics.cumulativeLayoutShift = cumulativeLayoutShift
 
         if (!clsAttributionCollected) {
           clsAttributionCollected = true
@@ -90,9 +90,9 @@ export function trackViewMetrics(
       stopINPTracking()
     },
     setLoadEvent,
-    getViewMetrics: () => {
-      viewMetrics.interactionToNextPaint = getInteractionToNextPaint()
-      return viewMetrics
+    getCommonViewMetrics: () => {
+      commonViewMetrics.interactionToNextPaint = getInteractionToNextPaint()
+      return commonViewMetrics
     },
   }
 }

@@ -28,8 +28,8 @@ import { trackViewEventCounts } from './trackViewEventCounts'
 import type { WebVitalTelemetryDebug } from './startWebVitalTelemetryDebug'
 import { trackInitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
 import type { InitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
-import { trackViewMetrics } from './viewMetrics/trackViewMetrics'
-import type { ViewMetrics } from './viewMetrics/trackViewMetrics'
+import { trackCommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
+import type { CommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
 
 export interface ViewEvent {
   id: string
@@ -37,7 +37,7 @@ export interface ViewEvent {
   service?: string
   version?: string
   location: Readonly<Location>
-  viewMetrics: ViewMetrics
+  commonViewMetrics: CommonViewMetrics
   initialViewMetrics: InitialViewMetrics
   customTimings: ViewCustomTimings
   eventCounts: EventCounts
@@ -194,9 +194,9 @@ function newView(
 
   const {
     setLoadEvent,
-    stop: stopViewMetricsTracking,
-    getViewMetrics,
-  } = trackViewMetrics(
+    stop: stopCommonViewMetricsTracking,
+    getCommonViewMetrics,
+  } = trackCommonViewMetrics(
     lifeCycle,
     domMutationObservable,
     configuration,
@@ -238,7 +238,7 @@ function newView(
       loadingType,
       location,
       startClocks,
-      viewMetrics: getViewMetrics(),
+      commonViewMetrics: getCommonViewMetrics(),
       initialViewMetrics,
       duration: elapsed(startClocks.timeStamp, currentEnd),
       isActive: endClocks === undefined,
@@ -261,7 +261,7 @@ function newView(
 
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks })
       clearInterval(keepAliveIntervalId)
-      stopViewMetricsTracking()
+      stopCommonViewMetricsTracking()
       scheduleStopInitialViewMetricsTracking()
       scheduleStopEventCountsTracking()
       triggerViewUpdate()
