@@ -14,11 +14,15 @@ export function startLogsBatch(
 ) {
   const batch = startBatchWithReplica(
     configuration,
-    configuration.logsEndpointBuilder,
+    {
+      endpoint: configuration.logsEndpointBuilder,
+    },
+    configuration.replica && {
+      endpoint: configuration.replica.logsEndpointBuilder,
+    },
     reportError,
     pageExitObservable,
-    sessionExpireObservable,
-    configuration.replica?.logsEndpointBuilder
+    sessionExpireObservable
   )
 
   lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (serverLogsEvent: LogsEvent & Context) => {
