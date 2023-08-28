@@ -474,7 +474,6 @@ __metadata:
   dependencies:
     "@datadog/browser-core": 4.47.0
     "@datadog/browser-rum-core": 4.47.0
-    "@datadog/browser-worker": 4.47.0
     "@types/pako": 2.0.0
     pako: 2.1.0
   peerDependencies:
@@ -507,11 +506,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@datadog/browser-worker@4.47.0, @datadog/browser-worker@workspace:packages/worker":
+"@datadog/browser-worker@workspace:packages/worker":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-worker@workspace:packages/worker"
   dependencies:
     "@datadog/browser-core": 4.47.0
+    webpack: 5.88.2
   languageName: unknown
   linkType: soft
 

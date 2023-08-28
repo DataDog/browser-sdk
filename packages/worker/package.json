@@ -3,9 +3,8 @@
   "version": "4.47.0",
   "license": "Apache-2.0",
   "main": "bundle/worker.js",
-  "types": "src/types.ts",
   "scripts": {
-    "build": "rm -rf bundle && webpack --mode=production && ./scripts/build-worker-string.js"
+    "build": "rm -rf bundle && webpack --mode=production"
   },
   "dependencies": {
     "@datadog/browser-core": "4.47.0"
@@ -20,5 +19,8 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "devDependencies": {
+    "webpack": "5.88.2"
   }
 }

@@ -8,13 +8,13 @@
   "scripts": {
     "build": "run-p build:cjs build:esm build:bundle",
     "build:bundle": "rm -rf bundle && webpack --mode=production",
-    "build:cjs": "rm -rf cjs && tsc -p tsconfig.cjs.json",
-    "build:esm": "rm -rf esm && tsc -p tsconfig.esm.json"
+    "build:cjs": "rm -rf cjs && tsc -p tsconfig.cjs.json && yarn replace-build-env cjs",
+    "build:esm": "rm -rf esm && tsc -p tsconfig.esm.json && yarn replace-build-env esm",
+    "replace-build-env": "node ../../scripts/build/replace-build-env.js"
   },
   "dependencies": {
     "@datadog/browser-core": "4.47.0",
-    "@datadog/browser-rum-core": "4.47.0",
-    "@datadog/browser-worker": "4.47.0"
+    "@datadog/browser-rum-core": "4.47.0"
   },
   "peerDependencies": {
     "@datadog/browser-logs": "4.47.0"
