@@ -572,14 +572,14 @@ describe('serializeNodeWithId', () => {
         const styleNode = document.createElement('style')
         styleNode.textContent = 'body { width: 100%; }'
         isolatedDom.document.head.appendChild(styleNode)
-        styleNode.sheet!.insertRule('body { background: red; }')
+        styleNode.sheet!.insertRule('body { color: red; }')
 
         expect(serializeElement(styleNode)).toEqual({
           type: NodeType.Element,
           tagName: 'style',
           id: jasmine.any(Number) as unknown as number,
           isSVG: undefined,
-          attributes: { _cssText: 'body { background: red; }body { width: 100%; }' },
+          attributes: { _cssText: 'body { color: red; }body { width: 100%; }' },
           childNodes: [],
         })
       })
