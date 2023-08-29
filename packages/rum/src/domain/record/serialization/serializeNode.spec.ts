@@ -564,14 +564,7 @@ describe('serializeNodeWithId', () => {
           id: jasmine.any(Number) as unknown as number,
           isSVG: undefined,
           attributes: { _cssText: 'body { width: 100%; }' },
-          childNodes: [
-            {
-              type: NodeType.Text,
-              textContent: 'body { width: 100%; }',
-              isStyle: true,
-              id: jasmine.any(Number) as unknown as number,
-            },
-          ],
+          childNodes: [],
         })
       })
 
@@ -587,14 +580,7 @@ describe('serializeNodeWithId', () => {
           id: jasmine.any(Number) as unknown as number,
           isSVG: undefined,
           attributes: { _cssText: 'body { background: red; }body { width: 100%; }' },
-          childNodes: [
-            {
-              type: NodeType.Text,
-              textContent: 'body { width: 100%; }',
-              isStyle: true,
-              id: jasmine.any(Number) as unknown as number,
-            },
-          ],
+          childNodes: [],
         })
       })
     })
@@ -807,7 +793,7 @@ describe('serializeNodeWithId', () => {
       it('obfuscates all text content', () => {
         const serializedDoc = generateLeanSerializedDoc(HTML, 'mask')
         for (const textContents of getAllTextContents(serializedDoc)) {
-          expect(textContents).toEqual(jasmine.stringMatching(/^([*x\s]*|\.example {content: "anything";})$/))
+          expect(textContents).toEqual(jasmine.stringMatching(/^[*x\s]*$/))
         }
       })
 

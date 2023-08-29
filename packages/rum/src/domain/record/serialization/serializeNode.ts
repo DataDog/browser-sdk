@@ -156,7 +156,11 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
   const attributes = serializeAttributes(element, nodePrivacyLevel, options)
 
   let childNodes: SerializedNodeWithId[] = []
-  if (element.childNodes.length) {
+  if (
+    element.childNodes.length &&
+    // Do not serialize style children as the css rules are already in the _cssText attribute
+    tagName !== 'style'
+  ) {
     // OBJECT POOLING OPTIMIZATION:
     // We should not create a new object systematically as it could impact performances. Try to reuse
     // the same object as much as possible, and clone it only if we need to.
