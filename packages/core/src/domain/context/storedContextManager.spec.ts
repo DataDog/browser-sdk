@@ -4,7 +4,7 @@ import type { Clock } from '../../../test'
 import { mockClock, createNewEvent } from '../../../test'
 import { DOM_EVENT } from '../../browser/addEventListener'
 import { CUSTOMER_DATA_BYTES_LIMIT } from './heavyCustomerDataWarning'
-import { createStoredContextManager, buildStorageKey } from './storedContextManager'
+import { createStoredContextManager, buildStorageKey, removeStorageListeners } from './storedContextManager'
 import { CustomerDataType } from './contextConstants'
 import { BYTES_COMPUTATION_THROTTLING_DELAY } from './contextManager'
 
@@ -26,6 +26,7 @@ describe('storedContextManager', () => {
   afterEach(() => {
     clock.cleanup()
     localStorage.clear()
+    removeStorageListeners()
   })
 
   describe('contextManager features', () => {

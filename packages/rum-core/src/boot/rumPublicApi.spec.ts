@@ -1,5 +1,5 @@
 import type { RelativeTime, TimeStamp, Context } from '@datadog/browser-core'
-import { ONE_SECOND, getTimeStamp, display, DefaultPrivacyLevel } from '@datadog/browser-core'
+import { ONE_SECOND, getTimeStamp, display, DefaultPrivacyLevel, removeStorageListeners } from '@datadog/browser-core'
 import {
   initEventBridgeStub,
   deleteEventBridgeStub,
@@ -881,6 +881,7 @@ describe('rum public api', () => {
 
     afterEach(() => {
       localStorage.clear()
+      removeStorageListeners()
     })
 
     it('when disabled, should store contexts only in memory', () => {

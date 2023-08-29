@@ -1,5 +1,5 @@
 import type { TimeStamp } from '@datadog/browser-core'
-import { monitor, ONE_SECOND, display } from '@datadog/browser-core'
+import { monitor, ONE_SECOND, display, removeStorageListeners } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { deleteEventBridgeStub, initEventBridgeStub, mockClock } from '@datadog/browser-core/test'
 import type { HybridInitConfiguration, LogsInitConfiguration } from '../domain/configuration'
@@ -484,6 +484,7 @@ describe('logs entry', () => {
 
     afterEach(() => {
       localStorage.clear()
+      removeStorageListeners()
     })
 
     it('when disabled, should store contexts only in memory', () => {

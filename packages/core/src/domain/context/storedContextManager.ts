@@ -8,6 +8,8 @@ import type { CustomerDataType } from './contextConstants'
 
 const CONTEXT_STORE_KEY_PREFIX = '_dd_c'
 
+const storageListeners: Array<{ stop: () => void }> = []
+
 export function createStoredContextManager(
   configuration: Configuration,
   productKey: string,
@@ -18,11 +20,13 @@ export function createStoredContextManager(
   const contextManager = createContextManager(customerDataType, computeBytesCountImpl)
 
   synchronizeWithStorage()
-  addEventListener(configuration, window, DOM_EVENT.STORAGE, ({ key }) => {
-    if (storageKey === key) {
-      synchronizeWithStorage()
-    }
-  })
+  storageListeners.push(
+    addEventListener(configuration, window, DOM_EVENT.STORAGE, ({ key }) => {
+      if (storageKey === key) {
+        synchronizeWithStorage()
+      }
+    })
+  )
   contextManager.changeObservable.subscribe(dumpToStorage)
 
   return contextManager
@@ -40,4 +44,8 @@ export function createStoredContextManager(
 
 export function buildStorageKey(productKey: string, customerDataType: CustomerDataType) {
   return `${CONTEXT_STORE_KEY_PREFIX}_${productKey}_${customerDataType}`
+}
+
+export function removeStorageListeners() {
+  storageListeners.map((listener) => listener.stop())
 }
