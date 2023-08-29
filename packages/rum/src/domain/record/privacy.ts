@@ -173,7 +173,6 @@ export function getTextContent(
 
   const nodePrivacyLevel = parentNodePrivacyLevel
 
-  const isStyle = parentTagName === 'STYLE' ? true : undefined
   const isScript = parentTagName === 'SCRIPT'
 
   if (isScript) {
@@ -183,9 +182,8 @@ export function getTextContent(
     // Should never occur, but just in case, we set to CENSORED_MARK.
     textContent = CENSORED_STRING_MARK
   } else if (
-    shouldMaskNode(textNode, nodePrivacyLevel) &&
+    shouldMaskNode(textNode, nodePrivacyLevel)
     // Style tags are `overruled` (Use `hide` to enforce privacy)
-    !isStyle
   ) {
     if (
       // Scrambling the child list breaks text nodes for DATALIST/SELECT/OPTGROUP

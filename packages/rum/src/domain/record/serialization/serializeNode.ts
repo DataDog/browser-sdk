@@ -156,7 +156,11 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
   const attributes = serializeAttributes(element, nodePrivacyLevel, options)
 
   let childNodes: SerializedNodeWithId[] = []
-  if (element.childNodes.length) {
+  if (
+    element.childNodes.length &&
+    // Do not serialize style children as the css rules are already in the _cssText attribute
+    tagName !== 'style'
+  ) {
     // OBJECT POOLING OPTIMIZATION:
     // We should not create a new object systematically as it could impact performances. Try to reuse
     // the same object as much as possible, and clone it only if we need to.
@@ -199,9 +203,6 @@ function isSVGElement(el: Element): boolean {
  */
 
 function serializeTextNode(textNode: Text, options: SerializeOptions): TextNode | undefined {
-  // The parent node may not be a html element which has a tagName attribute.
-  // So just let it be undefined which is ok in this use case.
-  const parentTagName = textNode.parentElement?.tagName
   const textContent = getTextContent(textNode, options.ignoreWhiteSpace || false, options.parentNodePrivacyLevel)
   if (textContent === undefined) {
     return
@@ -209,7 +210,6 @@ function serializeTextNode(textNode: Text, options: SerializeOptions): TextNode 
   return {
     type: NodeType.Text,
     textContent,
-    isStyle: parentTagName === 'STYLE' ? true : undefined,
   }
 }
 

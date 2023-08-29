@@ -59,12 +59,7 @@ export function serializeAttributes(
   }
 
   // dynamic stylesheet
-  if (
-    tagName === 'style' &&
-    (element as HTMLStyleElement).sheet &&
-    // TODO: Currently we only try to get dynamic stylesheet when it is an empty style element
-    !((element as HTMLStyleElement).innerText || element.textContent || '').trim().length
-  ) {
+  if (tagName === 'style' && (element as HTMLStyleElement).sheet) {
     const cssText = getCssRulesString((element as HTMLStyleElement).sheet)
     if (cssText) {
       safeAttrs._cssText = cssText
