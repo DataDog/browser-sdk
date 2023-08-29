@@ -203,9 +203,6 @@ function isSVGElement(el: Element): boolean {
  */
 
 function serializeTextNode(textNode: Text, options: SerializeOptions): TextNode | undefined {
-  // The parent node may not be a html element which has a tagName attribute.
-  // So just let it be undefined which is ok in this use case.
-  const parentTagName = textNode.parentElement?.tagName
   const textContent = getTextContent(textNode, options.ignoreWhiteSpace || false, options.parentNodePrivacyLevel)
   if (textContent === undefined) {
     return
@@ -213,7 +210,6 @@ function serializeTextNode(textNode: Text, options: SerializeOptions): TextNode 
   return {
     type: NodeType.Text,
     textContent,
-    isStyle: parentTagName === 'STYLE' ? true : undefined,
   }
 }
 

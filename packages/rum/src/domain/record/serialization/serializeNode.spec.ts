@@ -688,7 +688,6 @@ describe('serializeNodeWithId', () => {
       expect(serializeNodeWithId(textNode, DEFAULT_OPTIONS)).toEqual({
         type: NodeType.Text,
         id: jasmine.any(Number) as unknown as number,
-        isStyle: undefined,
         textContent: 'foo',
       })
     })
@@ -700,7 +699,6 @@ describe('serializeNodeWithId', () => {
       expect(serializeNodeWithId(textNode, DEFAULT_OPTIONS)).toEqual({
         type: NodeType.Text,
         id: jasmine.any(Number) as unknown as number,
-        isStyle: undefined,
         textContent: '',
       })
     })
@@ -709,18 +707,6 @@ describe('serializeNodeWithId', () => {
       expect(
         serializeNodeWithId(document.createTextNode('   '), { ...DEFAULT_OPTIONS, ignoreWhiteSpace: true })
       ).toEqual(null)
-    })
-
-    it('serializes a text node contained in a <style> element', () => {
-      const style = document.createElement('style')
-      style.textContent = 'body { background-color: red }'
-
-      expect(serializeNodeWithId(style.childNodes[0], DEFAULT_OPTIONS)).toEqual(
-        jasmine.objectContaining({
-          textContent: 'body { background-color: red }',
-          isStyle: true,
-        })
-      )
     })
   })
 
