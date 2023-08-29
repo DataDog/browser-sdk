@@ -16,7 +16,7 @@ import {
   PRIVACY_ATTR_VALUE_MASK,
   PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
 } from '../../../constants'
-import type { ElementNode, SerializedNodeWithId, TextNode } from '../../../types'
+import type { ElementNode, SerializedNodeWithId } from '../../../types'
 import { NodeType } from '../../../types'
 import type { IsolatedDom } from '../../../../../rum-core/test'
 import { createIsolatedDom } from '../../../../../rum-core/test'
@@ -537,109 +537,135 @@ describe('serializeNodeWithId', () => {
       expect(addShadowRootSpy).toHaveBeenCalledWith(div.shadowRoot!)
     })
 
-    it('serializes style node with local CSS', () => {
-      const styleNode = document.createElement('style')
-      isolatedDom.document.head.appendChild(styleNode)
-      const styleSheet = styleNode.sheet
-      styleSheet?.insertRule('body { width: 100%; }')
-      expect(serializeElement(styleNode)).toEqual({
-        type: NodeType.Element,
-        tagName: 'style',
-        id: jasmine.any(Number) as unknown as number,
-        isSVG: undefined,
-        attributes: { _cssText: 'body { width: 100%; }' },
-        childNodes: [],
+    describe('<style> elements', () => {
+      it('serializes a node with dynamically edited CSS rules', () => {
+        const styleNode = document.createElement('style')
+        isolatedDom.document.head.appendChild(styleNode)
+        styleNode.sheet!.insertRule('body { width: 100%; }')
+
+        expect(serializeElement(styleNode)).toEqual({
+          type: NodeType.Element,
+          tagName: 'style',
+          id: jasmine.any(Number) as unknown as number,
+          isSVG: undefined,
+          attributes: { _cssText: 'body { width: 100%; }' },
+          childNodes: [],
+        })
+      })
+
+      it('serializes a node with CSS rules specified as inner text', () => {
+        const styleNode = document.createElement('style')
+        styleNode.textContent = 'body { width: 100%; }'
+        isolatedDom.document.head.appendChild(styleNode)
+
+        expect(serializeElement(styleNode)).toEqual({
+          type: NodeType.Element,
+          tagName: 'style',
+          id: jasmine.any(Number) as unknown as number,
+          isSVG: undefined,
+          attributes: {},
+          childNodes: [
+            {
+              type: NodeType.Text,
+              textContent: 'body { width: 100%; }',
+              isStyle: true,
+              id: jasmine.any(Number) as unknown as number,
+            },
+          ],
+        })
       })
     })
 
-    it('serializes style node with dynamic CSS that cannot be fetched', () => {
-      const linkNode = document.createElement('link')
-      linkNode.setAttribute('rel', 'stylesheet')
-      linkNode.setAttribute('href', 'https://datadoghq.com/some/style.css')
-      isolatedDom.document.head.appendChild(linkNode)
-      expect(serializeNodeWithId(linkNode, DEFAULT_OPTIONS)).toEqual({
-        type: NodeType.Element,
-        tagName: 'link',
-        id: jasmine.any(Number) as unknown as number,
-        isSVG: undefined,
-        attributes: { rel: 'stylesheet', href: 'https://datadoghq.com/some/style.css' },
-        childNodes: [],
+    describe('<link rel="stylesheet"> elements', () => {
+      it('does not inline external CSS if it cannot be fetched', () => {
+        const linkNode = document.createElement('link')
+        linkNode.setAttribute('rel', 'stylesheet')
+        linkNode.setAttribute('href', 'https://datadoghq.com/some/style.css')
+        isolatedDom.document.head.appendChild(linkNode)
+        expect(serializeNodeWithId(linkNode, DEFAULT_OPTIONS)).toEqual({
+          type: NodeType.Element,
+          tagName: 'link',
+          id: jasmine.any(Number) as unknown as number,
+          isSVG: undefined,
+          attributes: { rel: 'stylesheet', href: 'https://datadoghq.com/some/style.css' },
+          childNodes: [],
+        })
       })
-    })
 
-    it('serializes style node with dynamic CSS that can be fetched', () => {
-      const linkNode = document.createElement('link')
-      linkNode.setAttribute('rel', 'stylesheet')
-      linkNode.setAttribute('href', 'https://datadoghq.com/some/style.css')
-      isolatedDom.document.head.appendChild(linkNode)
-      Object.defineProperty(isolatedDom.document, 'styleSheets', {
-        value: [
-          {
+      it('inlines external CSS it can be fetched', () => {
+        const linkNode = document.createElement('link')
+        linkNode.setAttribute('rel', 'stylesheet')
+        linkNode.setAttribute('href', 'https://datadoghq.com/some/style.css')
+        isolatedDom.document.head.appendChild(linkNode)
+        Object.defineProperty(isolatedDom.document, 'styleSheets', {
+          value: [
+            {
+              href: 'https://datadoghq.com/some/style.css',
+              cssRules: [{ cssText: 'body { width: 100%; }' }],
+            },
+          ],
+        })
+
+        expect(serializeNodeWithId(linkNode, DEFAULT_OPTIONS)).toEqual({
+          type: NodeType.Element,
+          tagName: 'link',
+          id: jasmine.any(Number) as unknown as number,
+          isSVG: undefined,
+          attributes: {
+            _cssText: 'body { width: 100%; }',
+            rel: 'stylesheet',
             href: 'https://datadoghq.com/some/style.css',
-            cssRules: [{ cssText: 'body { width: 100%; }' }],
           },
-        ],
+          childNodes: [],
+        })
       })
 
-      expect(serializeNodeWithId(linkNode, DEFAULT_OPTIONS)).toEqual({
-        type: NodeType.Element,
-        tagName: 'link',
-        id: jasmine.any(Number) as unknown as number,
-        isSVG: undefined,
-        attributes: {
-          _cssText: 'body { width: 100%; }',
-          rel: 'stylesheet',
-          href: 'https://datadoghq.com/some/style.css',
-        },
-        childNodes: [],
-      })
-    })
+      it('does not inline external CSS when DISABLE_REPLAY_INLINE_CSS is enabled', () => {
+        addExperimentalFeatures([ExperimentalFeature.DISABLE_REPLAY_INLINE_CSS])
+        const linkNode = document.createElement('link')
+        linkNode.setAttribute('rel', 'stylesheet')
+        linkNode.setAttribute('href', 'https://datadoghq.com/some/style.css')
+        isolatedDom.document.head.appendChild(linkNode)
+        Object.defineProperty(isolatedDom.document, 'styleSheets', {
+          value: [
+            {
+              href: 'https://datadoghq.com/some/style.css',
+              cssRules: [{ cssText: 'body { width: 100%; }' }],
+            },
+          ],
+        })
 
-    it('does not inline external style sheets when DISABLE_REPLAY_INLINE_CSS is enabled', () => {
-      addExperimentalFeatures([ExperimentalFeature.DISABLE_REPLAY_INLINE_CSS])
-      const linkNode = document.createElement('link')
-      linkNode.setAttribute('rel', 'stylesheet')
-      linkNode.setAttribute('href', 'https://datadoghq.com/some/style.css')
-      isolatedDom.document.head.appendChild(linkNode)
-      Object.defineProperty(isolatedDom.document, 'styleSheets', {
-        value: [
-          {
-            href: 'https://datadoghq.com/some/style.css',
-            cssRules: [{ cssText: 'body { width: 100%; }' }],
-          },
-        ],
+        expect((serializeNodeWithId(linkNode, DEFAULT_OPTIONS) as ElementNode).attributes._cssText).toBeUndefined()
       })
 
-      expect((serializeNodeWithId(linkNode, DEFAULT_OPTIONS) as ElementNode).attributes._cssText).toBeUndefined()
-    })
-
-    it('does not serialize style node with dynamic CSS that is behind CORS', () => {
-      const linkNode = document.createElement('link')
-      linkNode.setAttribute('rel', 'stylesheet')
-      linkNode.setAttribute('href', 'https://datadoghq.com/some/style.css')
-      isolatedDom.document.head.appendChild(linkNode)
-      class FakeCSSStyleSheet {
-        get cssRules() {
-          return []
+      it('does not inline external CSS if the style sheet is behind CORS', () => {
+        const linkNode = document.createElement('link')
+        linkNode.setAttribute('rel', 'stylesheet')
+        linkNode.setAttribute('href', 'https://datadoghq.com/some/style.css')
+        isolatedDom.document.head.appendChild(linkNode)
+        class FakeCSSStyleSheet {
+          get cssRules() {
+            return []
+          }
         }
-      }
-      const styleSheet = new FakeCSSStyleSheet()
-      spyOnProperty(styleSheet, 'cssRules', 'get').and.throwError(new DOMException('cors issue', 'SecurityError'))
+        const styleSheet = new FakeCSSStyleSheet()
+        spyOnProperty(styleSheet, 'cssRules', 'get').and.throwError(new DOMException('cors issue', 'SecurityError'))
 
-      Object.defineProperty(isolatedDom.document, 'styleSheets', {
-        value: [styleSheet],
-      })
+        Object.defineProperty(isolatedDom.document, 'styleSheets', {
+          value: [styleSheet],
+        })
 
-      expect(serializeNodeWithId(linkNode, DEFAULT_OPTIONS)).toEqual({
-        type: NodeType.Element,
-        tagName: 'link',
-        id: jasmine.any(Number) as unknown as number,
-        isSVG: undefined,
-        attributes: {
-          rel: 'stylesheet',
-          href: 'https://datadoghq.com/some/style.css',
-        },
-        childNodes: [],
+        expect(serializeNodeWithId(linkNode, DEFAULT_OPTIONS)).toEqual({
+          type: NodeType.Element,
+          tagName: 'link',
+          id: jasmine.any(Number) as unknown as number,
+          isSVG: undefined,
+          attributes: {
+            rel: 'stylesheet',
+            href: 'https://datadoghq.com/some/style.css',
+          },
+          childNodes: [],
+        })
       })
     })
   })
@@ -748,72 +774,57 @@ describe('serializeNodeWithId', () => {
 
   describe('handles privacy', () => {
     describe('for privacy tag `hidden`, a DOM tree', () => {
-      it('keeps private info private', () => {
+      it('does not include any private info', () => {
         const serializedDoc = generateLeanSerializedDoc(HTML, 'hidden')
         expect(JSON.stringify(serializedDoc)).not.toContain('private')
       })
     })
 
     describe('for privacy tag `mask`, a DOM tree', () => {
-      it("doesn't have innerText alpha numeric", () => {
+      it('obfuscates all text content', () => {
         const serializedDoc = generateLeanSerializedDoc(HTML, 'mask')
-        expect({ text: getTextNodesFromSerialized(serializedDoc) }).not.toBe({
-          text: jasmine.stringMatching(/^[*x\s]+\.example {content: "anything";}[*x\s]+$/),
-        })
+        for (const textContents of getAllTextContents(serializedDoc)) {
+          expect(textContents).toEqual(jasmine.stringMatching(/^([*x\s]*|\.example {content: "anything";})$/))
+        }
       })
 
-      it('keeps private info private', () => {
+      it('obfuscates attributes and text content', () => {
         const serializedDoc = generateLeanSerializedDoc(HTML, 'mask')
         expect(JSON.stringify(serializedDoc)).not.toContain('private')
       })
     })
 
     describe('for privacy tag `mask-user-input`, a DOM tree', () => {
-      it("doesn't mask text content", () => {
+      it('does not obfuscate text content', () => {
         const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-user-input')
         expect(JSON.stringify(serializedDoc)).not.toContain('᙮᙮')
       })
-      it('keeps form fields private', () => {
+
+      it('obfuscates input fields', () => {
         const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-user-input')
         expect(JSON.stringify(serializedDoc)).toContain('**')
       })
     })
 
     describe('for privacy tag `allow`, a DOM tree', () => {
-      it("doesn't have innerText alpha numeric", () => {
-        const serializedDoc = generateLeanSerializedDoc(HTML, 'allow')
-        const innerText = getTextNodesFromSerialized(serializedDoc)
-        const privateWordMatchCount = innerText.match(/private/g)?.length
-        expect(privateWordMatchCount).toBe(10)
-        expect(innerText).toBe(
-          '  \n      .example {content: "anything";}\n       private title \n \n     hello private world \n     Loreum ipsum private text \n     hello private world \n     \n      Click https://private.com/path/nested?query=param#hash\n     \n      \n     \n       private option A \n       private option B \n       private option C \n     \n      \n      \n      \n     inputFoo label \n\n      \n\n           Loreum Ipsum private ...\n     \n\n     editable private div \n'
-        )
-      })
-
-      it('keeps innerText public', () => {
+      it('does not obfuscate anything', () => {
         const serializedDoc = generateLeanSerializedDoc(HTML, 'allow')
         expect(JSON.stringify(serializedDoc)).not.toContain('*')
         expect(JSON.stringify(serializedDoc)).not.toContain('xx')
       })
     })
 
-    const getTextNodesFromSerialized = (serializedNode: SerializedNodeWithId | null): string => {
-      try {
-        if (serializedNode === null) {
-          return ''
-        } else if (serializedNode.type === NodeType.Text) {
-          const textNode = serializedNode as TextNode
-          return textNode.textContent
-        } else if (serializedNode.type === NodeType.Element || serializedNode.type === NodeType.Document) {
-          const textNode = serializedNode as ElementNode
-          return textNode.childNodes.map((node: SerializedNodeWithId) => getTextNodesFromSerialized(node)).join(' ')
-        }
-        return ''
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.error('caught getTextNodesFromSerialized error:', e, serializedNode)
-        return ''
+    function getAllTextContents(serializedNode: SerializedNodeWithId): string[] {
+      if (serializedNode.type === NodeType.Text) {
+        return [serializedNode.textContent.trim()]
       }
+      if ('childNodes' in serializedNode) {
+        return serializedNode.childNodes.reduce<string[]>(
+          (result, child) => result.concat(getAllTextContents(child)),
+          []
+        )
+      }
+      return []
     }
   })
 })
