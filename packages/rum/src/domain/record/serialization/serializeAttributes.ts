@@ -126,7 +126,7 @@ export function serializeAttributes(
   return safeAttrs
 }
 
-function getCssRulesString(cssStyleSheet: CSSStyleSheet | undefined | null): string | null {
+export function getCssRulesString(cssStyleSheet: CSSStyleSheet | undefined | null): string | null {
   if (!cssStyleSheet) {
     return null
   }
@@ -144,7 +144,7 @@ function getCssRulesString(cssStyleSheet: CSSStyleSheet | undefined | null): str
 }
 
 function getCssRuleString(rule: CSSRule): string {
-  return isCSSImportRule(rule) ? getCssRulesString(rule.styleSheet) || '' : rule.cssText
+  return (isCSSImportRule(rule) && getCssRulesString(rule.styleSheet)) || rule.cssText
 }
 
 function isCSSImportRule(rule: CSSRule): rule is CSSImportRule {
