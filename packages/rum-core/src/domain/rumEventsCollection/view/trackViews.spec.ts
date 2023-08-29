@@ -9,38 +9,19 @@ import {
 } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../../test'
 import { setup } from '../../../../test'
-import type {
-  RumLargestContentfulPaintTiming,
-  RumPerformanceNavigationTiming,
-  RumPerformancePaintTiming,
-} from '../../../browser/performanceCollection'
 import { RumEventType, ViewLoadingType } from '../../../rawRumEvent.types'
 import type { RumEvent } from '../../../rumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { ViewEvent } from './trackViews'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from './trackViews'
 import type { ViewTest } from './setupViewTest.specHelper'
-import { setupViewTest } from './setupViewTest.specHelper'
-import { KEEP_TRACKING_TIMINGS_AFTER_VIEW_DELAY } from './trackInitialViewTimings'
-
-const FAKE_PAINT_ENTRY: RumPerformancePaintTiming = {
-  entryType: 'paint',
-  name: 'first-contentful-paint',
-  startTime: 123 as RelativeTime,
-}
-const FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY: RumLargestContentfulPaintTiming = {
-  entryType: 'largest-contentful-paint',
-  startTime: 789 as RelativeTime,
-  size: 10,
-}
-const FAKE_NAVIGATION_ENTRY: RumPerformanceNavigationTiming = {
-  responseStart: 123 as RelativeTime,
-  domComplete: 456 as RelativeTime,
-  domContentLoadedEventEnd: 345 as RelativeTime,
-  domInteractive: 234 as RelativeTime,
-  entryType: 'navigation',
-  loadEventEnd: 567 as RelativeTime,
-}
+import {
+  FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY,
+  FAKE_NAVIGATION_ENTRY,
+  FAKE_PAINT_ENTRY,
+  setupViewTest,
+} from './setupViewTest.specHelper'
+import { KEEP_TRACKING_METRICS_AFTER_VIEW_DELAY } from './viewMetrics/trackInitialViewMetrics'
 
 describe('track views automatically', () => {
   let setupBuilder: TestSetupBuilder
@@ -137,13 +118,13 @@ describe('initial view', () => {
     expect(getViewCreate(0).name).toBe('initial view name')
   })
 
-  describe('timings', () => {
-    it('should update timings when notified with a PERFORMANCE_ENTRY_COLLECTED event (throttled)', () => {
+  describe('metrics', () => {
+    it('should update initial view metrics when notified with a PERFORMANCE_ENTRY_COLLECTED event (throttled)', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
       const { getViewUpdateCount, getViewUpdate } = viewTest
 
       expect(getViewUpdateCount()).toEqual(1)
-      expect(getViewUpdate(0).timings).toEqual({})
+      expect(getViewUpdate(0).initialViewMetrics).toEqual({})
 
       clock.tick(FAKE_NAVIGATION_ENTRY.responseStart) // ensure now > responseStart
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [FAKE_NAVIGATION_ENTRY])
@@ -153,7 +134,7 @@ describe('initial view', () => {
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
       expect(getViewUpdateCount()).toEqual(2)
-      expect(getViewUpdate(1).timings).toEqual({
+      expect(getViewUpdate(1).initialViewMetrics).toEqual({
         firstByte: 123 as Duration,
         domComplete: 456 as Duration,
         domContentLoaded: 345 as Duration,
@@ -162,12 +143,12 @@ describe('initial view', () => {
       })
     })
 
-    it('should update timings when ending a view', () => {
+    it('should update initial view metrics when ending a view', () => {
       const { lifeCycle } = setupBuilder.build()
       const { getViewUpdateCount, getViewUpdate, startView } = viewTest
 
       expect(getViewUpdateCount()).toEqual(1)
-      expect(getViewUpdate(0).timings).toEqual({})
+      expect(getViewUpdate(0).initialViewMetrics).toEqual({})
 
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
         FAKE_PAINT_ENTRY,
@@ -179,16 +160,18 @@ describe('initial view', () => {
       startView()
 
       expect(getViewUpdateCount()).toEqual(3)
-      expect(getViewUpdate(1).timings).toEqual({
-        firstByte: 123 as Duration,
-        domComplete: 456 as Duration,
-        domContentLoaded: 345 as Duration,
-        domInteractive: 234 as Duration,
-        firstContentfulPaint: 123 as Duration,
-        largestContentfulPaint: 789 as Duration,
-        loadEvent: 567 as Duration,
-      })
-      expect(getViewUpdate(2).timings).toEqual({})
+      expect(getViewUpdate(1).initialViewMetrics).toEqual(
+        jasmine.objectContaining({
+          firstByte: 123 as Duration,
+          domComplete: 456 as Duration,
+          domContentLoaded: 345 as Duration,
+          domInteractive: 234 as Duration,
+          firstContentfulPaint: 123 as Duration,
+          largestContentfulPaint: 789 as Duration,
+          loadEvent: 567 as Duration,
+        })
+      )
+      expect(getViewUpdate(2).initialViewMetrics).toEqual({})
     })
 
     describe('load event happening after initial view end', () => {
@@ -231,20 +214,22 @@ describe('initial view', () => {
         }
       })
 
-      it('should not set timings to the second view', () => {
-        expect(secondView.last.timings).toEqual({})
+      it('should not set metrics to the second view', () => {
+        expect(secondView.last.initialViewMetrics).toEqual({})
       })
 
-      it('should set timings only on the initial view', () => {
-        expect(initialView.last.timings).toEqual({
-          firstByte: 123 as Duration,
-          domComplete: 456 as Duration,
-          domContentLoaded: 345 as Duration,
-          domInteractive: 234 as Duration,
-          firstContentfulPaint: 123 as Duration,
-          largestContentfulPaint: 789 as Duration,
-          loadEvent: 567 as Duration,
-        })
+      it('should set initial view metrics only on the initial view', () => {
+        expect(initialView.last.initialViewMetrics).toEqual(
+          jasmine.objectContaining({
+            firstByte: 123 as Duration,
+            domComplete: 456 as Duration,
+            domContentLoaded: 345 as Duration,
+            domInteractive: 234 as Duration,
+            firstContentfulPaint: 123 as Duration,
+            largestContentfulPaint: 789 as Duration,
+            loadEvent: 567 as Duration,
+          })
+        )
       })
 
       it('should not update the initial view duration when updating it with new timings', () => {
@@ -253,17 +238,17 @@ describe('initial view', () => {
       })
 
       it('should update the initial view loadingTime following the loadEventEnd value', () => {
-        expect(initialView.last.loadingTime).toBe(FAKE_NAVIGATION_ENTRY.loadEventEnd)
+        expect(initialView.last.commonViewMetrics.loadingTime).toBe(FAKE_NAVIGATION_ENTRY.loadEventEnd)
       })
     })
 
-    it('should not update timings long after the view ended', () => {
+    it('should not update initial view metrics long after the view ended', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
       const { getViewUpdateCount, startView } = viewTest
 
       startView()
 
-      clock.tick(KEEP_TRACKING_TIMINGS_AFTER_VIEW_DELAY)
+      clock.tick(KEEP_TRACKING_METRICS_AFTER_VIEW_DELAY)
 
       expect(getViewUpdateCount()).toEqual(4)
 
@@ -804,7 +789,7 @@ describe('start view', () => {
   })
 })
 
-describe('view metrics', () => {
+describe('view event count', () => {
   let setupBuilder: TestSetupBuilder
   let viewTest: ViewTest
 

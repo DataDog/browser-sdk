@@ -13,7 +13,7 @@ export class Batch {
 
   constructor(
     private request: HttpRequest,
-    private flushController: FlushController,
+    public flushController: FlushController,
     private messageBytesLimit: number
   ) {
     this.flushController.flushObservable.subscribe((event) => this.flush(event))

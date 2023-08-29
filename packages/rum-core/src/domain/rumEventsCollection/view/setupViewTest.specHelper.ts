@@ -1,6 +1,13 @@
+import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { noopWebVitalTelemetryDebug } from '../../../../test'
-import { type BuildContext } from '../../../../test'
+import type { BuildContext } from '../../../../test'
 import { LifeCycleEventType } from '../../lifeCycle'
+import type {
+  RumFirstInputTiming,
+  RumLargestContentfulPaintTiming,
+  RumPerformanceNavigationTiming,
+  RumPerformancePaintTiming,
+} from '../../../browser/performanceCollection'
 import type { ViewEvent, ViewOptions } from './trackViews'
 import { trackViews } from './trackViews'
 
@@ -65,4 +72,31 @@ function spyOnViews(name?: string) {
   }
 
   return { handler, getViewEvent, getHandledCount }
+}
+
+export const FAKE_PAINT_ENTRY: RumPerformancePaintTiming = {
+  entryType: 'paint',
+  name: 'first-contentful-paint',
+  startTime: 123 as RelativeTime,
+}
+export const FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY: RumLargestContentfulPaintTiming = {
+  entryType: 'largest-contentful-paint',
+  startTime: 789 as RelativeTime,
+  size: 10,
+}
+
+export const FAKE_NAVIGATION_ENTRY: RumPerformanceNavigationTiming = {
+  responseStart: 123 as RelativeTime,
+  domComplete: 456 as RelativeTime,
+  domContentLoadedEventEnd: 345 as RelativeTime,
+  domInteractive: 234 as RelativeTime,
+  entryType: 'navigation',
+  loadEventEnd: 567 as RelativeTime,
+}
+
+export const FAKE_FIRST_INPUT_ENTRY: RumFirstInputTiming = {
+  entryType: 'first-input',
+  processingStart: 1100 as RelativeTime,
+  startTime: 1000 as RelativeTime,
+  duration: 0 as Duration,
 }

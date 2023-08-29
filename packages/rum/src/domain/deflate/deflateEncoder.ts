@@ -1,4 +1,4 @@
-import type { DeflateWorkerResponse } from '@datadog/browser-worker'
+import type { DeflateWorkerResponse } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { addEventListener, addTelemetryDebug, concatBuffers } from '@datadog/browser-core'
 import type { DeflateWorker } from './deflateWorker'

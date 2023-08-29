@@ -1,9 +1,8 @@
-const webpack = require('webpack')
 const webpackConfig = require('../../webpack.base')({
   mode: 'development',
   types: ['jasmine'],
-  // do not replace build env variables in unit test in order to test different build behaviors
-  keepBuildEnvVariables: true,
+  // do not replace some build env variables in unit test in order to test different build behaviors
+  keepBuildEnvVariables: ['SDK_VERSION'],
 })
 const { getTestReportDirectory } = require('../envUtils')
 const jasmineSeedReporterPlugin = require('./jasmineSeedReporterPlugin')
@@ -45,11 +44,7 @@ module.exports = {
     target: webpackConfig.target,
     devtool: false,
     mode: 'development',
-    plugins: [
-      new webpack.SourceMapDevToolPlugin({
-        test: /\.(ts|js)($|\?)/i,
-      }),
-    ],
+    plugins: webpackConfig.plugins,
     optimization: {
       // By default, karma-webpack creates a bundle with one entry point for each spec file, but
       // with all dependencies shared.  Our test suite does not support sharing dependencies, each
