@@ -142,7 +142,7 @@ export const AST_MASK = {
             {
               type: 2,
               tagName: 'style',
-              attributes: {},
+              attributes: { _cssText: '.example { content: "anything"; }' },
               childNodes: [
                 {
                   type: 3,
@@ -455,7 +455,7 @@ export const AST_MASK_USER_INPUT = {
             {
               type: 2,
               tagName: 'style',
-              attributes: {},
+              attributes: { _cssText: '.example { content: "anything"; }' },
               childNodes: [
                 {
                   type: 3,
@@ -768,7 +768,7 @@ export const AST_ALLOW = {
             {
               type: 2,
               tagName: 'style',
-              attributes: {},
+              attributes: { _cssText: '.example { content: "anything"; }' },
               childNodes: [
                 {
                   type: 3,

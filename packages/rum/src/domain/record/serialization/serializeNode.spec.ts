@@ -563,7 +563,30 @@ describe('serializeNodeWithId', () => {
           tagName: 'style',
           id: jasmine.any(Number) as unknown as number,
           isSVG: undefined,
-          attributes: {},
+          attributes: { _cssText: 'body { width: 100%; }' },
+          childNodes: [
+            {
+              type: NodeType.Text,
+              textContent: 'body { width: 100%; }',
+              isStyle: true,
+              id: jasmine.any(Number) as unknown as number,
+            },
+          ],
+        })
+      })
+
+      it('serializes a node with CSS rules specified as inner text then dynamically edited', () => {
+        const styleNode = document.createElement('style')
+        styleNode.textContent = 'body { width: 100%; }'
+        isolatedDom.document.head.appendChild(styleNode)
+        styleNode.sheet!.insertRule('body { background: red; }')
+
+        expect(serializeElement(styleNode)).toEqual({
+          type: NodeType.Element,
+          tagName: 'style',
+          id: jasmine.any(Number) as unknown as number,
+          isSVG: undefined,
+          attributes: { _cssText: 'body { background: red; }body { width: 100%; }' },
           childNodes: [
             {
               type: NodeType.Text,
