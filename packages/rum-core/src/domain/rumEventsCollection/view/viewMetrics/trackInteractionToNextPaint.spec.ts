@@ -5,16 +5,16 @@ import {
   relativeNow,
   resetExperimentalFeatures,
 } from '@datadog/browser-core'
-import type { TestSetupBuilder } from '../../../../test'
-import { setup } from '../../../../test'
+import type { TestSetupBuilder } from '../../../../../test'
+import { setup } from '../../../../../test'
 import type {
   BrowserWindow,
   RumFirstInputTiming,
   RumPerformanceEventTiming,
-} from '../../../browser/performanceCollection'
-import { ViewLoadingType } from '../../../rawRumEvent.types'
-import type { LifeCycle } from '../../lifeCycle'
-import { LifeCycleEventType } from '../../lifeCycle'
+} from '../../../../browser/performanceCollection'
+import { ViewLoadingType } from '../../../../rawRumEvent.types'
+import type { LifeCycle } from '../../../lifeCycle'
+import { LifeCycleEventType } from '../../../lifeCycle'
 import {
   trackInteractionToNextPaint,
   trackViewInteractionCount,

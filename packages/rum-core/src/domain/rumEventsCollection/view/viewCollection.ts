@@ -79,23 +79,23 @@ function processViewUpdate(
       frustration: {
         count: view.eventCounts.frustrationCount,
       },
-      cumulative_layout_shift: view.cumulativeLayoutShift,
-      first_byte: toServerDuration(view.timings.firstByte),
-      dom_complete: toServerDuration(view.timings.domComplete),
-      dom_content_loaded: toServerDuration(view.timings.domContentLoaded),
-      dom_interactive: toServerDuration(view.timings.domInteractive),
+      cumulative_layout_shift: view.commonViewMetrics.cumulativeLayoutShift,
+      first_byte: toServerDuration(view.initialViewMetrics.firstByte),
+      dom_complete: toServerDuration(view.initialViewMetrics.domComplete),
+      dom_content_loaded: toServerDuration(view.initialViewMetrics.domContentLoaded),
+      dom_interactive: toServerDuration(view.initialViewMetrics.domInteractive),
       error: {
         count: view.eventCounts.errorCount,
       },
-      first_contentful_paint: toServerDuration(view.timings.firstContentfulPaint),
-      first_input_delay: toServerDuration(view.timings.firstInputDelay),
-      first_input_time: toServerDuration(view.timings.firstInputTime),
-      interaction_to_next_paint: toServerDuration(view.interactionToNextPaint),
+      first_contentful_paint: toServerDuration(view.initialViewMetrics.firstContentfulPaint),
+      first_input_delay: toServerDuration(view.initialViewMetrics.firstInputDelay),
+      first_input_time: toServerDuration(view.initialViewMetrics.firstInputTime),
+      interaction_to_next_paint: toServerDuration(view.commonViewMetrics.interactionToNextPaint),
       is_active: view.isActive,
       name: view.name,
-      largest_contentful_paint: toServerDuration(view.timings.largestContentfulPaint),
-      load_event: toServerDuration(view.timings.loadEvent),
-      loading_time: discardNegativeDuration(toServerDuration(view.loadingTime)),
+      largest_contentful_paint: toServerDuration(view.initialViewMetrics.largestContentfulPaint),
+      load_event: toServerDuration(view.initialViewMetrics.loadEvent),
+      loading_time: discardNegativeDuration(toServerDuration(view.commonViewMetrics.loadingTime)),
       loading_type: view.loadingType,
       long_task: {
         count: view.eventCounts.longTaskCount,
@@ -108,13 +108,13 @@ function processViewUpdate(
         !pageStatesEnabled && pageStates ? mapToForegroundPeriods(pageStates, view.duration) : undefined, // Todo: Remove in the next major release
     },
     feature_flags: featureFlagContext && !isEmptyObject(featureFlagContext) ? featureFlagContext : undefined,
-    display: view.scrollMetrics
+    display: view.commonViewMetrics.scroll
       ? {
           scroll: {
-            max_depth: view.scrollMetrics.maxDepth,
-            max_depth_scroll_height: view.scrollMetrics.maxDepthScrollHeight,
-            max_depth_scroll_top: view.scrollMetrics.maxDepthScrollTop,
-            max_depth_time: toServerDuration(view.scrollMetrics.maxDepthTime),
+            max_depth: view.commonViewMetrics.scroll.maxDepth,
+            max_depth_scroll_height: view.commonViewMetrics.scroll.maxDepthScrollHeight,
+            max_depth_scroll_top: view.commonViewMetrics.scroll.maxDepthScrollTop,
+            max_depth_time: toServerDuration(view.commonViewMetrics.scroll.maxDepthTime),
           },
         }
       : undefined,

@@ -11,8 +11,6 @@ import type { ViewEvent } from './trackViews'
 import { startViewCollection } from './viewCollection'
 
 const VIEW: ViewEvent = {
-  cumulativeLayoutShift: 1,
-  interactionToNextPaint: 10 as Duration,
   customTimings: {
     bar: 20 as Duration,
     foo: 10 as Duration,
@@ -29,11 +27,10 @@ const VIEW: ViewEvent = {
   id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
   name: undefined,
   isActive: false,
-  loadingTime: 20 as Duration,
   loadingType: ViewLoadingType.INITIAL_LOAD,
   location: {} as Location,
   startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
-  timings: {
+  initialViewMetrics: {
     firstByte: 10 as Duration,
     domComplete: 10 as Duration,
     domContentLoaded: 10 as Duration,
@@ -44,11 +41,16 @@ const VIEW: ViewEvent = {
     largestContentfulPaint: 10 as Duration,
     loadEvent: 10 as Duration,
   },
-  scrollMetrics: {
-    maxDepth: 2000,
-    maxDepthScrollHeight: 3000,
-    maxDepthTime: 4000000000 as Duration,
-    maxDepthScrollTop: 1000,
+  commonViewMetrics: {
+    loadingTime: 20 as Duration,
+    cumulativeLayoutShift: 1,
+    interactionToNextPaint: 10 as Duration,
+    scroll: {
+      maxDepth: 2000,
+      maxDepthScrollHeight: 3000,
+      maxDepthTime: 4000000000 as Duration,
+      maxDepthScrollTop: 1000,
+    },
   },
   sessionIsActive: true,
 }
@@ -194,7 +196,7 @@ describe('viewCollection', () => {
       .withFeatureFlagContexts({ findFeatureFlagEvaluations: () => ({ feature: 'foo' }) })
       .build()
 
-    const view = { ...VIEW, loadingTime: -20 as Duration }
+    const view: ViewEvent = { ...VIEW, commonViewMetrics: { loadingTime: -20 as Duration } }
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, view)
     const rawRumViewEvent = rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent
 
@@ -203,7 +205,7 @@ describe('viewCollection', () => {
 
   it('should discard negative loading time', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
-    const view = { ...VIEW, loadingTime: -20 as Duration }
+    const view: ViewEvent = { ...VIEW, commonViewMetrics: { loadingTime: -20 as Duration } }
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, view)
     const rawRumViewEvent = rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent
 
@@ -231,7 +233,7 @@ describe('viewCollection', () => {
 
   it('should not include scroll metrics when there are not scroll metrics in the raw event', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
-    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, { ...VIEW, scrollMetrics: undefined })
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, { ...VIEW, commonViewMetrics: { scroll: undefined } })
     const rawRumViewEvent = rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent
 
     expect(rawRumViewEvent.display?.scroll).toBeUndefined()
