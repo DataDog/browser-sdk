@@ -1,6 +1,7 @@
 import { monitor } from '../tools/monitor'
 import { getZoneJsOriginalValue } from '../tools/getZoneJsOriginalValue'
 import type { Configuration } from '../domain/configuration'
+import { display } from '../tools/display'
 import type { VisualViewport, VisualViewportEventMap } from './types'
 
 export const enum DOM_EVENT {
@@ -111,26 +112,53 @@ export function addEventListeners<Target extends EventTarget, EventName extends 
   listener: (event: EventMapFor<Target>[EventName]) => void,
   { once, capture, passive }: AddEventListenerOptions = {}
 ) {
-  const wrappedListener = monitor(
+  const listenerWithLeakDetection = withLeakDetection(listener, eventNames)
+  const listenerWithMonitor = monitor(
     once
       ? (event: Event) => {
           stop()
-          listener(event as EventMapFor<Target>[EventName])
+          listenerWithLeakDetection(event as EventMapFor<Target>[EventName])
         }
-      : (listener as (event: Event) => void)
+      : (listenerWithLeakDetection as (event: Event) => void)
   )
 
   const options = passive ? { capture, passive } : capture
 
   const add = getZoneJsOriginalValue(eventTarget, 'addEventListener')
-  eventNames.forEach((eventName) => add.call(eventTarget, eventName, wrappedListener, options))
+  eventNames.forEach((eventName) => add.call(eventTarget, eventName, listenerWithMonitor, options))
 
   function stop() {
     const remove = getZoneJsOriginalValue(eventTarget, 'removeEventListener')
-    eventNames.forEach((eventName) => remove.call(eventTarget, eventName, wrappedListener, options))
+    eventNames.forEach((eventName) => remove.call(eventTarget, eventName, listenerWithMonitor, options))
   }
 
   return {
     stop,
   }
+}
+
+declare const __BUILD_ENV__SDK_VERSION__: string
+
+interface TestWindow extends Window {
+  _jasmineCurrentSpec: string
+}
+
+function withLeakDetection<Target extends EventTarget, EventName extends keyof EventMapFor<Target> & string>(
+  listener: (event: EventMapFor<Target>[EventName]) => void,
+  eventNames: EventName[]
+) {
+  if (__BUILD_ENV__SDK_VERSION__ === 'test') {
+    const testWindow = window as unknown as TestWindow
+    const specWhenAdded = testWindow._jasmineCurrentSpec
+    return (event: EventMapFor<Target>[EventName]) => {
+      if (specWhenAdded !== testWindow._jasmineCurrentSpec) {
+        display.error(`Leaked listener
+  event names: "${eventNames.join('", "')}"
+  attached with: "${specWhenAdded}"        
+  executed with: "${testWindow._jasmineCurrentSpec}"`)
+      }
+      listener(event)
+    }
+  }
+  return listener
 }

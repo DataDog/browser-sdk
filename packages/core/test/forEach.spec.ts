@@ -1,10 +1,12 @@
 import type { BuildEnvWindow } from './buildEnv'
+import { getCurrentJasmineSpec } from './getCurrentJasmineSpec'
 
 beforeEach(() => {
   ;(window as unknown as BuildEnvWindow).__BUILD_ENV__SDK_VERSION__ = 'test'
   // reset globals
   ;(window as any).DD_LOGS = {}
   ;(window as any).DD_RUM = {}
+  ;(window as any)._jasmineCurrentSpec = getCurrentJasmineSpec()!.fullName
   // prevent 'Some of your tests did a full page reload!' issue
   window.onbeforeunload = () => 'stop'
 })
