@@ -6,7 +6,6 @@ import type { TestSetupBuilder } from '../../../../../test'
 import { setup } from '../../../../../test'
 import { LifeCycleEventType } from '../../../lifeCycle'
 import type { RumConfiguration } from '../../../configuration'
-import { resetFirstHidden } from './trackFirstHidden'
 import { LCP_MAXIMUM_DELAY, trackLargestContentfulPaint } from './trackLargestContentfulPaint'
 
 describe('trackLargestContentfulPaint', () => {
@@ -22,13 +21,11 @@ describe('trackLargestContentfulPaint', () => {
     setupBuilder = setup().beforeBuild(({ lifeCycle }) =>
       trackLargestContentfulPaint(lifeCycle, configuration, eventTarget, lcpCallback)
     )
-    resetFirstHidden()
   })
 
   afterEach(() => {
     setupBuilder.cleanup()
     restorePageVisibility()
-    resetFirstHidden()
   })
 
   it('should provide the largest contentful paint timing', () => {

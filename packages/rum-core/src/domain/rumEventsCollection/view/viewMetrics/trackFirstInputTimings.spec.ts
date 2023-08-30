@@ -5,7 +5,6 @@ import { setup } from '../../../../../test'
 import { LifeCycleEventType } from '../../../lifeCycle'
 import type { RumConfiguration } from '../../../configuration'
 import { FAKE_FIRST_INPUT_ENTRY } from '../setupViewTest.specHelper'
-import { resetFirstHidden } from './trackFirstHidden'
 import { trackFirstInputTimings } from './trackFirstInputTimings'
 
 describe('firstInputTimings', () => {
@@ -26,13 +25,11 @@ describe('firstInputTimings', () => {
     configuration = {} as RumConfiguration
     fitCallback = jasmine.createSpy()
     setupBuilder = setup().beforeBuild(({ lifeCycle }) => trackFirstInputTimings(lifeCycle, configuration, fitCallback))
-    resetFirstHidden()
   })
 
   afterEach(() => {
     setupBuilder.cleanup()
     restorePageVisibility()
-    resetFirstHidden()
   })
 
   it('should provide the first input timings', () => {

@@ -77,7 +77,7 @@ describe('viewCollection', () => {
           pageStateHistory,
         }) => {
           getReplayStatsSpy = jasmine.createSpy()
-          startViewCollection(
+          return startViewCollection(
             lifeCycle,
             configuration,
             location,

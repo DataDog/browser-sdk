@@ -80,6 +80,7 @@ export function trackViews(
   webVitalTelemetryDebug: WebVitalTelemetryDebug,
   initialViewOptions?: ViewOptions
 ) {
+  const cleanupTasks: Array<() => void> = []
   let currentView = startNewView(ViewLoadingType.INITIAL_LOAD, clocksOrigin(), initialViewOptions)
 
   startViewLifeCycle()
@@ -90,7 +91,7 @@ export function trackViews(
   }
 
   function startNewView(loadingType: ViewLoadingType, startClocks?: ClocksState, viewOptions?: ViewOptions) {
-    return newView(
+    const newlyCreatedView = newView(
       lifeCycle,
       domMutationObservable,
       configuration,
@@ -100,6 +101,8 @@ export function trackViews(
       startClocks,
       viewOptions
     )
+    cleanupTasks.push(() => newlyCreatedView.cleanup())
+    return newlyCreatedView
   }
 
   function startViewLifeCycle() {
@@ -144,6 +147,7 @@ export function trackViews(
     stop: () => {
       locationChangeSubscription?.unsubscribe()
       currentView.end()
+      cleanupTasks.forEach((task) => task())
     },
   }
 }
@@ -206,10 +210,13 @@ function newView(
     webVitalTelemetryDebug
   )
 
-  const { scheduleStop: scheduleStopInitialViewMetricsTracking, initialViewMetrics } =
-    loadingType === ViewLoadingType.INITIAL_LOAD
-      ? trackInitialViewMetrics(lifeCycle, configuration, webVitalTelemetryDebug, setLoadEvent, scheduleViewUpdate)
-      : { scheduleStop: noop, initialViewMetrics: {} as InitialViewMetrics }
+  const {
+    stop: stopInitialViewMetricsTracking,
+    scheduleStop: scheduleStopInitialViewMetricsTracking,
+    initialViewMetrics,
+  } = loadingType === ViewLoadingType.INITIAL_LOAD
+    ? trackInitialViewMetrics(lifeCycle, configuration, webVitalTelemetryDebug, setLoadEvent, scheduleViewUpdate)
+    : { stop: noop, scheduleStop: noop, initialViewMetrics: {} as InitialViewMetrics }
 
   const { scheduleStop: scheduleStopEventCountsTracking, eventCounts } = trackViewEventCounts(
     lifeCycle,
@@ -265,6 +272,9 @@ function newView(
       scheduleStopInitialViewMetricsTracking()
       scheduleStopEventCountsTracking()
       triggerViewUpdate()
+    },
+    cleanup() {
+      stopInitialViewMetricsTracking()
     },
     addTiming(name: string, time: RelativeTime | TimeStamp) {
       if (endClocks) {

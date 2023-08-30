@@ -56,6 +56,7 @@ export function trackLargestContentfulPaint(
 
   return {
     stop: () => {
+      firstHidden.stop()
       stopEventListener()
       unsubscribeLifeCycle()
     },

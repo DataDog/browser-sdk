@@ -30,25 +30,31 @@ export function trackFirstInputTimings(
 ) {
   const firstHidden = trackFirstHidden(configuration)
 
-  const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
-    const firstInputEntry = find(
-      entries,
-      (entry): entry is RumFirstInputTiming =>
-        entry.entryType === 'first-input' && entry.startTime < firstHidden.timeStamp
-    )
-    if (firstInputEntry) {
-      const firstInputDelay = elapsed(firstInputEntry.startTime, firstInputEntry.processingStart)
-      callback({
-        // Ensure firstInputDelay to be positive, see
-        // https://bugs.chromium.org/p/chromium/issues/detail?id=1185815
-        firstInputDelay: firstInputDelay >= 0 ? firstInputDelay : (0 as Duration),
-        firstInputTime: firstInputEntry.startTime,
-        firstInputTarget: firstInputEntry.target,
-      })
+  const { unsubscribe: unsubscribeLifeCycle } = lifeCycle.subscribe(
+    LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED,
+    (entries) => {
+      const firstInputEntry = find(
+        entries,
+        (entry): entry is RumFirstInputTiming =>
+          entry.entryType === 'first-input' && entry.startTime < firstHidden.timeStamp
+      )
+      if (firstInputEntry) {
+        const firstInputDelay = elapsed(firstInputEntry.startTime, firstInputEntry.processingStart)
+        callback({
+          // Ensure firstInputDelay to be positive, see
+          // https://bugs.chromium.org/p/chromium/issues/detail?id=1185815
+          firstInputDelay: firstInputDelay >= 0 ? firstInputDelay : (0 as Duration),
+          firstInputTime: firstInputEntry.startTime,
+          firstInputTarget: firstInputEntry.target,
+        })
+      }
     }
-  })
+  )
 
   return {
-    stop,
+    stop: () => {
+      unsubscribeLifeCycle()
+      firstHidden.stop()
+    },
   }
 }

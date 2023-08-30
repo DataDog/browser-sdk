@@ -5,7 +5,6 @@ import type { TestSetupBuilder } from '../../../../../test'
 import { setup } from '../../../../../test'
 import { LifeCycleEventType } from '../../../lifeCycle'
 import type { RumConfiguration } from '../../../configuration'
-import { resetFirstHidden } from './trackFirstHidden'
 import { FCP_MAXIMUM_DELAY, trackFirstContentfulPaint } from './trackFirstContentfulPaint'
 
 const FAKE_PAINT_ENTRY: RumPerformancePaintTiming = {
@@ -25,13 +24,11 @@ describe('trackFirstContentfulPaint', () => {
     setupBuilder = setup().beforeBuild(({ lifeCycle }) =>
       trackFirstContentfulPaint(lifeCycle, configuration, fcpCallback)
     )
-    resetFirstHidden()
   })
 
   afterEach(() => {
     setupBuilder.cleanup()
     restorePageVisibility()
-    resetFirstHidden()
   })
 
   it('should provide the first contentful paint timing', () => {
