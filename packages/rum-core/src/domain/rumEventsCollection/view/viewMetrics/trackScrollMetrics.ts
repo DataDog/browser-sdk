@@ -1,4 +1,4 @@
-import type { ClocksState, Duration } from '@datadog/browser-core'
+import type { ClocksState, Duration, Observable } from '@datadog/browser-core'
 import { ONE_SECOND, elapsed, relativeNow, throttle, addEventListener, DOM_EVENT } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../../configuration'
 import { getScrollY } from '../../../../browser/scroll'
@@ -18,11 +18,28 @@ export function trackScrollMetrics(
   configuration: RumConfiguration,
   viewStart: ClocksState,
   callback: (scrollMetrics: ScrollMetrics) => void,
+  scrollHeightObservable: Observable<number>,
   getScrollValues = computeScrollValues
 ) {
   let maxDepth = 0
+
+  const subscription = scrollHeightObservable.subscribe((scrollHeight) => {
+    const { scrollDepth, scrollTop } = getScrollValues()
+
+    const now = relativeNow()
+    const maxDepthTime = elapsed(viewStart.relative, now)
+    maxDepth = scrollDepth
+    callback({
+      maxDepth,
+      maxDepthScrollHeight: scrollHeight,
+      maxDepthTime,
+      maxDepthScrollTop: scrollTop,
+    })
+  })
+
   const handleScrollEvent = throttle(
     () => {
+      subscription.unsubscribe()
       const { scrollHeight, scrollDepth, scrollTop } = getScrollValues()
 
       if (scrollDepth > maxDepth) {
@@ -48,6 +65,7 @@ export function trackScrollMetrics(
   return {
     stop: () => {
       handleScrollEvent.cancel()
+      subscription.unsubscribe()
       stop()
     },
   }

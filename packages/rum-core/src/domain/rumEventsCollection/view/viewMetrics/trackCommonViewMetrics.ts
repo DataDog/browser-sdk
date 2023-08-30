@@ -1,5 +1,6 @@
 import type { ClocksState, Duration, Observable } from '@datadog/browser-core'
 import { noop } from '@datadog/browser-core'
+import { createScrollHeightObservable } from '../../../../browser/scrollHeightObservable'
 import type { ViewLoadingType } from '../../../../rawRumEvent.types'
 import type { RumConfiguration } from '../../../configuration'
 import type { LifeCycle } from '../../../lifeCycle'
@@ -36,17 +37,6 @@ export function trackCommonViewMetrics(
     viewStart,
     (newLoadingTime) => {
       commonViewMetrics.loadingTime = newLoadingTime
-
-      // We compute scroll metrics at loading time to ensure we have scroll data when loading the view initially
-      // This is to ensure that we have the depth data even if the user didn't scroll or if the view is not scrollable.
-      const { scrollHeight, scrollDepth, scrollTop } = computeScrollValues()
-
-      commonViewMetrics.scroll = {
-        maxDepth: scrollDepth,
-        maxDepthScrollHeight: scrollHeight,
-        maxDepthTime: newLoadingTime,
-        maxDepthScrollTop: scrollTop,
-      }
       scheduleViewUpdate()
     }
   )
@@ -57,6 +47,7 @@ export function trackCommonViewMetrics(
     (newScrollMetrics) => {
       commonViewMetrics.scroll = newScrollMetrics
     },
+    createScrollHeightObservable(),
     computeScrollValues
   )
 
