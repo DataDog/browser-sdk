@@ -305,15 +305,21 @@ step-1_deploy-prod-minor-dcs:
   extends:
     - .deploy-prod
   variables:
-    UPLOAD_PATH: eu1,us3,us5,ap1
+    UPLOAD_PATH: us3,us5,ap1
 
-step-2_deploy-prod-us1:
+step-2_deploy-prod-eu1:
+  extends:
+    - .deploy-prod
+  variables:
+    UPLOAD_PATH: eu1
+
+step-3_deploy-prod-us1:
   extends:
     - .deploy-prod
   variables:
     UPLOAD_PATH: us1
 
-step-3_deploy-prod-root:
+step-4_deploy-prod-root:
   extends:
     - .deploy-prod
   variables:
