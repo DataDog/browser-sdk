@@ -336,7 +336,7 @@ describe('view events', () => {
   let interceptor: ReturnType<typeof interceptRequests>
 
   beforeEach(() => {
-    setupBuilder = setup().beforeBuild(({ configuration }) => {
+    setupBuilder = setup().beforeBuild(({ configuration }) =>
       startRum(
         {} as RumInitConfiguration,
         configuration,
@@ -344,7 +344,7 @@ describe('view events', () => {
         createContextManager(CustomerDataType.GlobalContext),
         createContextManager(CustomerDataType.User)
       )
-    })
+    )
     interceptor = interceptRequests()
   })
 
