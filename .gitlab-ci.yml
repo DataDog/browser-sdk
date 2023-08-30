@@ -325,7 +325,7 @@ step-4_deploy-prod-root:
   variables:
     UPLOAD_PATH: root
 
-step-4_publish-npm:
+step-5_publish-npm:
   stage: deploy
   extends:
     - .base-configuration
