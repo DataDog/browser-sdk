@@ -37,6 +37,7 @@ import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
 import type { CommonContext } from '../domain/contexts/commonContext'
 import { buildCommonContext } from '../domain/contexts/commonContext'
 import { startWebVitalTelemetryDebug } from '../domain/rumEventsCollection/view/startWebVitalTelemetryDebug'
+import { startDisplayContext } from '../domain/contexts/displayContext'
 import type { RecorderApi } from './rumPublicApi'
 
 export function startRum(
@@ -191,6 +192,8 @@ export function startRumEventCollection(
     pageStateHistory
   )
 
+  const displayContext = startDisplayContext(configuration)
+
   startRumAssembly(
     configuration,
     lifeCycle,
@@ -198,6 +201,7 @@ export function startRumEventCollection(
     viewContexts,
     urlContexts,
     actionContexts,
+    displayContext,
     buildCommonContext,
     reportError
   )
@@ -209,6 +213,7 @@ export function startRumEventCollection(
     addAction,
     actionContexts,
     stop: () => {
+      displayContext.stop()
       viewContexts.stop()
       pageStateHistory.stop()
     },

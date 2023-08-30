@@ -52,22 +52,25 @@ describe('rum assembly', () => {
       .withActionContexts({
         findActionId: () => '7890',
       })
-      .beforeBuild(({ configuration, lifeCycle, sessionManager, viewContexts, urlContexts, actionContexts }) => {
-        serverRumEvents = []
-        lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent) =>
-          serverRumEvents.push(serverRumEvent)
-        )
-        startRumAssembly(
-          { ...configuration, ...extraConfigurationOptions },
-          lifeCycle,
-          sessionManager,
-          viewContexts,
-          urlContexts,
-          actionContexts,
-          () => commonContext,
-          reportErrorSpy
-        )
-      })
+      .beforeBuild(
+        ({ configuration, lifeCycle, sessionManager, viewContexts, urlContexts, actionContexts, displayContext }) => {
+          serverRumEvents = []
+          lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent) =>
+            serverRumEvents.push(serverRumEvent)
+          )
+          startRumAssembly(
+            { ...configuration, ...extraConfigurationOptions },
+            lifeCycle,
+            sessionManager,
+            viewContexts,
+            urlContexts,
+            actionContexts,
+            displayContext,
+            () => commonContext,
+            reportErrorSpy
+          )
+        }
+      )
   })
 
   afterEach(() => {
