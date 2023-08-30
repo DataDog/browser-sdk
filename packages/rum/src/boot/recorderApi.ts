@@ -124,7 +124,7 @@ export function makeRecorderApi(
             return
           }
 
-          const worker = startDeflateWorker(
+          const { worker } = startDeflateWorker(
             configuration,
             () => {
               stopStrategy()
