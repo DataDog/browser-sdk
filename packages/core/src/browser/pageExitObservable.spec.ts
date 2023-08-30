@@ -1,23 +1,23 @@
 import type { Configuration } from '../domain/configuration'
 import { createNewEvent, restorePageVisibility, setPageVisibility } from '../../test'
 import { resetExperimentalFeatures, addExperimentalFeatures, ExperimentalFeature } from '../tools/experimentalFeatures'
-import type { Subscription } from '../tools/observable'
 import type { PageExitEvent } from './pageExitObservable'
 import { PageExitReason, createPageExitObservable } from './pageExitObservable'
 
 describe('createPageExitObservable', () => {
-  let pageExitSubscription: Subscription
   let onExitSpy: jasmine.Spy<(event: PageExitEvent) => void>
   let configuration: Configuration
+  let cleanupTasks: Array<() => void>
 
   beforeEach(() => {
     onExitSpy = jasmine.createSpy()
     configuration = {} as Configuration
-    pageExitSubscription = createPageExitObservable(configuration).subscribe(onExitSpy)
+    cleanupTasks = []
+    cleanupTasks.push(createPageExitObservable(configuration).subscribe(onExitSpy).unsubscribe)
   })
 
   afterEach(() => {
-    pageExitSubscription.unsubscribe()
+    cleanupTasks.forEach((task) => task())
     restorePageVisibility()
     resetExperimentalFeatures()
   })
@@ -25,7 +25,7 @@ describe('createPageExitObservable', () => {
   it('notifies when the page fires pagehide if ff pagehide is enabled', () => {
     addExperimentalFeatures([ExperimentalFeature.PAGEHIDE])
     onExitSpy = jasmine.createSpy()
-    pageExitSubscription = createPageExitObservable(configuration).subscribe(onExitSpy)
+    cleanupTasks.push(createPageExitObservable(configuration).subscribe(onExitSpy).unsubscribe)
 
     window.dispatchEvent(createNewEvent('pagehide'))
     window.dispatchEvent(createNewEvent('beforeunload'))

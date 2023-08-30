@@ -9,15 +9,18 @@ describe('pageStateHistory', () => {
   let pageStateHistory: PageStateHistory
   let clock: Clock
   let configuration: RumConfiguration
+  let cleanupTasks: Array<() => void>
 
   beforeEach(() => {
     configuration = {} as RumConfiguration
     clock = mockClock()
+    cleanupTasks = []
     pageStateHistory = startPageStateHistory(configuration)
+    cleanupTasks.push(pageStateHistory.stop)
   })
 
   afterEach(() => {
-    pageStateHistory.stop()
+    cleanupTasks.forEach((task) => task())
     clock.cleanup()
   })
 
@@ -72,6 +75,7 @@ describe('pageStateHistory', () => {
     it('should limit the number of selectable entries', () => {
       const maxPageStateEntriesSelectable = 1
       pageStateHistory = startPageStateHistory(configuration, maxPageStateEntriesSelectable)
+      cleanupTasks.push(pageStateHistory.stop)
 
       pageStateHistory.addPageState(PageState.ACTIVE)
       clock.tick(10)
@@ -96,6 +100,7 @@ describe('pageStateHistory', () => {
     it('should return false if the page was not active at the given time', () => {
       const maxPageStateEntriesSelectable = 1
       pageStateHistory = startPageStateHistory(configuration, maxPageStateEntriesSelectable)
+      cleanupTasks.push(pageStateHistory.stop)
 
       pageStateHistory.addPageState(PageState.ACTIVE)
       clock.tick(10)
