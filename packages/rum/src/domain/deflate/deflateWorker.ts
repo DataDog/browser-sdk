@@ -1,4 +1,4 @@
-import type { DeflateWorkerAction, DeflateWorkerResponse } from '@datadog/browser-core'
+import type { DeflateWorker, DeflateWorkerResponse } from '@datadog/browser-core'
 import { addTelemetryError, display, includes, addEventListener, setTimeout, ONE_SECOND } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 
@@ -36,10 +36,6 @@ type DeflateWorkerState =
       version: string
     }
 
-export interface DeflateWorker extends Worker {
-  postMessage(message: DeflateWorkerAction): void
-}
-
 export type CreateDeflateWorker = typeof createDeflateWorker
 
 function createDeflateWorker(configuration: RumConfiguration): DeflateWorker {
@@ -50,7 +46,7 @@ let state: DeflateWorkerState = { status: DeflateWorkerStatus.Nil }
 
 export function startDeflateWorker(
   configuration: RumConfiguration,
-  onInitializationFailure: () => void,
+  onInitializationFailure?: () => void,
   createDeflateWorkerImpl = createDeflateWorker
 ) {
   if (state.status === DeflateWorkerStatus.Nil) {
@@ -60,7 +56,9 @@ export function startDeflateWorker(
 
   switch (state.status) {
     case DeflateWorkerStatus.Loading:
-      state.initializationFailureCallbacks.push(onInitializationFailure)
+      if (onInitializationFailure) {
+        state.initializationFailureCallbacks.push(onInitializationFailure)
+      }
       return state.worker
     case DeflateWorkerStatus.Initialized:
       return state.worker

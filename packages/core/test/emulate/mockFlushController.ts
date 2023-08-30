@@ -1,5 +1,5 @@
 import { Observable } from '../../src/tools/observable'
-import type { FlushEvent, FlushController } from '../../src/transport'
+import type { FlushEvent, FlushController, FlushReason } from '../../src/transport'
 
 export type MockFlushController = ReturnType<typeof createMockFlushController>
 
@@ -15,7 +15,11 @@ export function createMockFlushController() {
         currentBytesCount += messageBytesCount
         currentMessagesCount += 1
       }),
-    notifyAfterAddMessage: jasmine.createSpy<FlushController['notifyAfterAddMessage']>(),
+    notifyAfterAddMessage: jasmine
+      .createSpy<FlushController['notifyAfterAddMessage']>()
+      .and.callFake((messageBytesCountDiff = 0) => {
+        currentBytesCount += messageBytesCountDiff
+      }),
     notifyAfterRemoveMessage: jasmine
       .createSpy<FlushController['notifyAfterRemoveMessage']>()
       .and.callFake((messageBytesCount) => {
@@ -25,8 +29,11 @@ export function createMockFlushController() {
     get messagesCount() {
       return currentMessagesCount
     },
+    get bytesCount() {
+      return currentBytesCount
+    },
     flushObservable,
-    notifyFlush() {
+    notifyFlush(reason: FlushReason = 'bytes_limit') {
       if (currentMessagesCount === 0) {
         throw new Error(
           'MockFlushController.notifyFlush(): the original FlushController would not notify flush if no message was added'
@@ -40,7 +47,7 @@ export function createMockFlushController() {
       currentBytesCount = 0
 
       flushObservable.notify({
-        reason: 'bytes_limit',
+        reason,
         bytesCount,
         messagesCount,
       })
