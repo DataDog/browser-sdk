@@ -6,9 +6,9 @@ import express from 'express'
 import cors from 'cors'
 import type { BrowserSegmentMetadataAndSegmentSizes } from '@datadog/browser-rum/src/domain/segmentCollection'
 import type { SegmentFile } from '../../types/serverEvents'
-import type { EventRegistry, IntakeType } from '../eventsRegistry'
+import type { IntakeRegistry, IntakeType } from '../intakeRegistry'
 
-export function createIntakeServerApp(serverEvents: EventRegistry, bridgeEvents: EventRegistry) {
+export function createIntakeServerApp(intakeRegistry: IntakeRegistry, bridgeEvents: IntakeRegistry) {
   const app = express()
 
   app.use(cors())
@@ -17,7 +17,7 @@ export function createIntakeServerApp(serverEvents: EventRegistry, bridgeEvents:
 
   app.post('/', (async (req, res) => {
     const { isBridge, intakeType } = computeIntakeType(req)
-    const events = isBridge ? bridgeEvents : serverEvents
+    const events = isBridge ? bridgeEvents : intakeRegistry
 
     try {
       if (intakeType === 'sessionReplay') {
@@ -69,7 +69,7 @@ function computeIntakeType(
   }
 }
 
-function storeEventsData(events: EventRegistry, intakeType: 'logs' | 'rum' | 'telemetry', data: string) {
+function storeEventsData(events: IntakeRegistry, intakeType: 'logs' | 'rum' | 'telemetry', data: string) {
   data.split('\n').map((rawEvent) => {
     const event = JSON.parse(rawEvent)
     if (intakeType === 'rum' && event.type === 'telemetry') {
@@ -92,7 +92,7 @@ function forwardEventsToIntake(req: express.Request): Promise<any> {
   })
 }
 
-function storeReplayData(req: express.Request, events: EventRegistry): Promise<any> {
+function storeReplayData(req: express.Request, events: IntakeRegistry): Promise<any> {
   return new Promise((resolve, reject) => {
     let segmentPromise: Promise<SegmentFile>
     let metadataPromise: Promise<BrowserSegmentMetadataAndSegmentSizes>

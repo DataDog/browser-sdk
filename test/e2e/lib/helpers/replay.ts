@@ -1,12 +1,12 @@
 import type { RumInitConfiguration } from '@datadog/browser-rum-core'
-import type { EventRegistry } from '../framework'
+import type { IntakeRegistry } from '../framework'
 
-export function getFirstSegment(events: EventRegistry) {
-  return events.sessionReplay[0].segment.data
+export function getFirstSegment(intakeRegistry: IntakeRegistry) {
+  return intakeRegistry.sessionReplay[0].segment.data
 }
 
-export function getLastSegment(events: EventRegistry) {
-  return events.sessionReplay[events.sessionReplay.length - 1].segment.data
+export function getLastSegment(intakeRegistry: IntakeRegistry) {
+  return intakeRegistry.sessionReplay[intakeRegistry.sessionReplay.length - 1].segment.data
 }
 
 export function initRumAndStartRecording(initConfiguration: RumInitConfiguration) {

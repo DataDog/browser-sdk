@@ -13,7 +13,7 @@ import {
   findTextNode,
 } from '@datadog/browser-rum/test'
 
-import type { EventRegistry } from '../../lib/framework'
+import type { IntakeRegistry } from '../../lib/framework'
 import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
 import { browserExecute } from '../../lib/helpers/browser'
 
@@ -119,12 +119,12 @@ describe('recorder with shadow DOM', () => {
       ${divShadowDom}
       <my-div />
     `)
-    .run(async ({ serverEvents }) => {
+    .run(async ({ intakeRegistry }) => {
       await flushEvents()
 
-      expect(serverEvents.sessionReplay.length).toBe(1)
+      expect(intakeRegistry.sessionReplay.length).toBe(1)
 
-      const fullSnapshot = findFullSnapshot(getFirstSegment(serverEvents))!
+      const fullSnapshot = findFullSnapshot(getFirstSegment(intakeRegistry))!
       expect(fullSnapshot).toBeTruthy()
 
       const textNode = findTextNode(fullSnapshot.data.node, 'toto')
@@ -140,15 +140,15 @@ describe('recorder with shadow DOM', () => {
       ${divWithStyleShadowDom}
       <div-with-style />
     `)
-    .run(async ({ serverEvents }) => {
+    .run(async ({ intakeRegistry }) => {
       if (!(await isAdoptedStyleSheetsSupported())) {
         return pending('adoptedStyleSheets is not supported in this browser')
       }
       await flushEvents()
 
-      expect(serverEvents.sessionReplay.length).toBe(1)
+      expect(intakeRegistry.sessionReplay.length).toBe(1)
 
-      const fullSnapshot = findFullSnapshot(getFirstSegment(serverEvents))!
+      const fullSnapshot = findFullSnapshot(getFirstSegment(intakeRegistry))!
       expect(fullSnapshot).toBeTruthy()
       const shadowRoot = findNode(
         fullSnapshot.data.node,
@@ -167,12 +167,12 @@ describe('recorder with shadow DOM', () => {
       <div data-dd-privacy="mask-user-input"><my-input-field id="privacy-set-outside" /></div>
       <my-input-field privacy="mask-user-input" id="privacy-set-inside" />
     `)
-    .run(async ({ serverEvents }) => {
+    .run(async ({ intakeRegistry }) => {
       await flushEvents()
 
-      expect(serverEvents.sessionReplay.length).toBe(1)
+      expect(intakeRegistry.sessionReplay.length).toBe(1)
 
-      const fullSnapshot = findFullSnapshot(getFirstSegment(serverEvents))!
+      const fullSnapshot = findFullSnapshot(getFirstSegment(intakeRegistry))!
       expect(fullSnapshot).toBeTruthy()
 
       const {
@@ -202,15 +202,15 @@ describe('recorder with shadow DOM', () => {
       ${divShadowDom}
       <my-div />
     `)
-    .run(async ({ serverEvents }) => {
+    .run(async ({ intakeRegistry }) => {
       const div = await getNodeInsideShadowDom('my-div', 'div')
       await div.click()
       await flushEvents()
-      expect(serverEvents.sessionReplay.length).toBe(1)
-      const fullSnapshot = findFullSnapshot(getFirstSegment(serverEvents))!
+      expect(intakeRegistry.sessionReplay.length).toBe(1)
+      const fullSnapshot = findFullSnapshot(getFirstSegment(intakeRegistry))!
       const divNode = findElementWithTagName(fullSnapshot.data.node, 'div')!
       const mouseInteraction = findIncrementalSnapshot(
-        getFirstSegment(serverEvents),
+        getFirstSegment(intakeRegistry),
         IncrementalSource.MouseInteraction
       )!
       expect(mouseInteraction).toBeTruthy()
@@ -226,16 +226,16 @@ describe('recorder with shadow DOM', () => {
       ${divShadowDom}
       <my-div id="host" />
     `)
-    .run(async ({ serverEvents }) => {
+    .run(async ({ intakeRegistry }) => {
       await browserExecute(() => {
         const host = document.body.querySelector('#host') as HTMLElement
         const div = host.shadowRoot!.querySelector('div') as HTMLElement
         div.innerText = 'titi'
       })
       await flushEvents()
-      expect(serverEvents.sessionReplay.length).toBe(1)
+      expect(intakeRegistry.sessionReplay.length).toBe(1)
       const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidatorFromSegment(
-        getFirstSegment(serverEvents)
+        getFirstSegment(intakeRegistry)
       )
       validate({
         adds: [
@@ -273,8 +273,8 @@ function findElementsInShadowDom(node: SerializedNodeWithId, id: string) {
   return { shadowHost, shadowRoot, input, text, textContent }
 }
 
-function getFirstSegment(events: EventRegistry) {
-  return events.sessionReplay[0].segment.data
+function getFirstSegment(intakeRegistry: IntakeRegistry) {
+  return intakeRegistry.sessionReplay[0].segment.data
 }
 
 function initRumAndStartRecording(initConfiguration: RumInitConfiguration) {

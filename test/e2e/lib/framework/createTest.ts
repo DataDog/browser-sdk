@@ -4,7 +4,7 @@ import { getRunId } from '../../../envUtils'
 import { deleteAllCookies, getBrowserName, withBrowserLogs } from '../helpers/browser'
 import { APPLICATION_ID, CLIENT_TOKEN } from '../helpers/constants'
 import { validateRumFormat } from '../helpers/validation'
-import { EventRegistry } from './eventsRegistry'
+import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
 import { getTestServers, waitForServersIdle } from './httpServers'
@@ -38,8 +38,8 @@ export function createTest(title: string) {
 interface TestContext {
   baseUrl: string
   crossOriginUrl: string
-  serverEvents: EventRegistry
-  bridgeEvents: EventRegistry
+  intakeRegistry: IntakeRegistry
+  bridgeEvents: IntakeRegistry
   servers: Servers
 }
 
@@ -178,7 +178,7 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     const servers = await getTestServers()
 
     const testContext = createTestContext(servers, setupOptions)
-    servers.intake.bindServerApp(createIntakeServerApp(testContext.serverEvents, testContext.bridgeEvents))
+    servers.intake.bindServerApp(createIntakeServerApp(testContext.intakeRegistry, testContext.bridgeEvents))
 
     const setup = factory(setupOptions, servers)
     servers.base.bindServerApp(createMockServerApp(servers, setup))
@@ -199,8 +199,8 @@ function createTestContext(servers: Servers, { basePath }: SetupOptions): TestCo
   return {
     baseUrl: servers.base.url + basePath,
     crossOriginUrl: servers.crossOrigin.url,
-    serverEvents: new EventRegistry(),
-    bridgeEvents: new EventRegistry(),
+    intakeRegistry: new IntakeRegistry(),
+    bridgeEvents: new IntakeRegistry(),
     servers,
   }
 }
@@ -210,10 +210,10 @@ async function setUpTest({ baseUrl }: TestContext) {
   await waitForServersIdle()
 }
 
-async function tearDownTest({ serverEvents, bridgeEvents }: TestContext) {
+async function tearDownTest({ intakeRegistry, bridgeEvents }: TestContext) {
   await flushEvents()
-  expect(serverEvents.telemetryErrors).toEqual([])
-  validateRumFormat(serverEvents.rum)
+  expect(intakeRegistry.telemetryErrors).toEqual([])
+  validateRumFormat(intakeRegistry.rum)
   validateRumFormat(bridgeEvents.rum)
   await withBrowserLogs((logs) => {
     logs.forEach((browserLog) => {

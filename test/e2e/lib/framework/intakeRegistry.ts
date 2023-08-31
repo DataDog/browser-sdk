@@ -13,7 +13,10 @@ import {
 
 export type IntakeType = 'logs' | 'rum' | 'sessionReplay' | 'telemetry'
 
-export class EventRegistry {
+/**
+ * Store data sent to the intake and expose helpers to access it.
+ */
+export class IntakeRegistry {
   readonly rum: RumEvent[] = []
   readonly logs: LogsEvent[] = []
   readonly sessionReplay: SessionReplayCall[] = []
