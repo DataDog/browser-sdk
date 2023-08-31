@@ -144,7 +144,12 @@ export function getCssRulesString(cssStyleSheet: CSSStyleSheet | undefined | nul
 }
 
 function getCssRuleString(rule: CSSRule): string {
-  return (isCSSImportRule(rule) && getCssRulesString(rule.styleSheet)) || rule.cssText
+  return (
+    // If it's an @import rule, try to inline sub-rules recursively with `getCssRulesString`. This
+    // operation can fail if the imported stylesheet is protected by CORS, in which case we fallback
+    // to the @import rule CSS text.
+    (isCSSImportRule(rule) && getCssRulesString(rule.styleSheet)) || rule.cssText
+  )
 }
 
 function isCSSImportRule(rule: CSSRule): rule is CSSImportRule {
