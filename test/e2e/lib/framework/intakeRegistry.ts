@@ -17,45 +17,61 @@ export type IntakeType = 'logs' | 'rum' | 'sessionReplay' | 'telemetry'
  * Store data sent to the intake and expose helpers to access it.
  */
 export class IntakeRegistry {
-  readonly rum: RumEvent[] = []
-  readonly logs: LogsEvent[] = []
+  readonly rumEvents: RumEvent[] = []
+  readonly logsEvents: LogsEvent[] = []
   readonly sessionReplay: SessionReplayCall[] = []
-  readonly telemetry: TelemetryEvent[] = []
+  readonly telemetryEvents: TelemetryEvent[] = []
 
   push(type: IntakeType, event: any) {
-    this[type].push(event)
+    switch (type) {
+      case 'rum':
+        this.rumEvents.push(event)
+        break
+      case 'logs':
+        this.logsEvents.push(event)
+        break
+      case 'telemetry':
+        this.telemetryEvents.push(event)
+        break
+      case 'sessionReplay':
+        this.sessionReplay.push(event)
+        break
+    }
   }
 
-  get count() {
-    return this.logs.length + this.rum.length + this.sessionReplay.length + this.telemetry.length
+  get rumActionEvents() {
+    return this.rumEvents.filter(isRumActionEvent)
   }
 
-  get rumActions() {
-    return this.rum.filter(isRumActionEvent)
+  get rumErrorEvents() {
+    return this.rumEvents.filter(isRumErrorEvent)
   }
 
-  get rumErrors() {
-    return this.rum.filter(isRumErrorEvent)
+  get rumResourceEvents() {
+    return this.rumEvents.filter(isRumResourceEvent)
   }
 
-  get rumResources() {
-    return this.rum.filter(isRumResourceEvent)
+  get rumViewEvents() {
+    return this.rumEvents.filter(isRumViewEvent)
   }
 
-  get rumViews() {
-    return this.rum.filter(isRumViewEvent)
+  get telemetryErrorEvents() {
+    return this.telemetryEvents.filter(isTelemetryErrorEvent)
   }
 
-  get telemetryErrors() {
-    return this.telemetry.filter(isTelemetryErrorEvent)
+  get telemetryConfigurationEvents() {
+    return this.telemetryEvents.filter(isTelemetryConfigurationEvent)
   }
 
-  get telemetryConfigurations() {
-    return this.telemetry.filter(isTelemetryConfigurationEvent)
+  get isEmpty() {
+    return (
+      this.logsEvents.length + this.rumEvents.length + this.sessionReplay.length + this.telemetryEvents.length === 0
+    )
   }
+
   empty() {
-    this.rum.length = 0
-    this.telemetry.length = 0
-    this.logs.length = 0
+    this.rumEvents.length = 0
+    this.telemetryEvents.length = 0
+    this.logsEvents.length = 0
   }
 }

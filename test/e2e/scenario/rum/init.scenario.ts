@@ -23,19 +23,19 @@ describe('API calls and events around init', () => {
     .run(async ({ intakeRegistry }) => {
       await flushEvents()
 
-      const initialView = intakeRegistry.rumViews[0]
+      const initialView = intakeRegistry.rumViewEvents[0]
       expect(initialView.view.name).toBeUndefined()
       expect(initialView.view.custom_timings).toEqual({
         before_manual_view: jasmine.any(Number),
       })
 
-      const manualView = intakeRegistry.rumViews[1]
+      const manualView = intakeRegistry.rumViewEvents[1]
       expect(manualView.view.name).toBe('manual view')
       expect(manualView.view.custom_timings).toEqual({
         after_manual_view: jasmine.any(Number),
       })
 
-      const documentEvent = intakeRegistry.rumResources.find((event) => event.resource.type === 'document')!
+      const documentEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.type === 'document')!
       expect(documentEvent.view.id).toBe(initialView.view.id)
 
       expectToHaveErrors(
@@ -78,7 +78,7 @@ describe('API calls and events around init', () => {
     .run(async ({ intakeRegistry }) => {
       await flushEvents()
 
-      const initialView = intakeRegistry.rumViews[0]
+      const initialView = intakeRegistry.rumViewEvents[0]
       expect(initialView.view.name).toBe('manual view')
       expect(initialView.view.custom_timings).toEqual({
         before_init: jasmine.any(Number),
@@ -86,7 +86,7 @@ describe('API calls and events around init', () => {
         after_manual_view: jasmine.any(Number),
       })
 
-      const documentEvent = intakeRegistry.rumResources.find((event) => event.resource.type === 'document')!
+      const documentEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.type === 'document')!
       expect(documentEvent.view.id).toBe(initialView.view.id)
 
       expectToHaveErrors(
@@ -116,9 +116,9 @@ describe('beforeSend', () => {
     .run(async ({ intakeRegistry }) => {
       await flushEvents()
 
-      const initialView = intakeRegistry.rumViews[0]
+      const initialView = intakeRegistry.rumViewEvents[0]
       expect(initialView.context).not.toEqual(jasmine.objectContaining({ foo: 'bar' }))
-      const initialDocument = intakeRegistry.rumResources[0]
+      const initialDocument = intakeRegistry.rumResourceEvents[0]
       expect(initialDocument.context).toEqual(jasmine.objectContaining({ foo: 'bar' }))
     })
 
@@ -137,17 +137,17 @@ describe('beforeSend', () => {
     .run(async ({ intakeRegistry }) => {
       await flushEvents()
 
-      const initialView = intakeRegistry.rumViews[0]
+      const initialView = intakeRegistry.rumViewEvents[0]
       expect(initialView.context).toEqual(jasmine.objectContaining({ foo: 'baz', zig: 'zag' }))
-      const initialDocument = intakeRegistry.rumResources[0]
+      const initialDocument = intakeRegistry.rumResourceEvents[0]
       expect(initialDocument.context).toEqual(jasmine.objectContaining({ foo: 'bar' }))
     })
 })
 
 function expectToHaveErrors(events: IntakeRegistry, ...errors: Array<{ message: string; viewId: string }>) {
-  expect(events.rumErrors.length).toBe(errors.length)
+  expect(events.rumErrorEvents.length).toBe(errors.length)
   for (let i = 0; i < errors.length; i++) {
-    const registryError = events.rumErrors[i]
+    const registryError = events.rumErrorEvents[i]
     const expectedError = errors[i]
     expect(registryError.error.message).toBe(expectedError.message)
     expect(registryError.view.id).toBe(expectedError.viewId)
@@ -155,9 +155,9 @@ function expectToHaveErrors(events: IntakeRegistry, ...errors: Array<{ message: 
 }
 
 function expectToHaveActions(events: IntakeRegistry, ...actions: Array<{ name: string; viewId: string }>) {
-  expect(events.rumActions.length).toBe(actions.length)
+  expect(events.rumActionEvents.length).toBe(actions.length)
   for (let i = 0; i < actions.length; i++) {
-    const registryAction = events.rumActions[i]
+    const registryAction = events.rumActionEvents[i]
     const expectedAction = actions[i]
     expect(registryAction.action.target!.name).toBe(expectedAction.name)
     expect(registryAction.view.id).toBe(expectedAction.viewId)

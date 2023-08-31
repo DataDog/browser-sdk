@@ -64,7 +64,7 @@ describe('tracing', () => {
   }
 
   function checkTraceAssociatedToRumEvent(intakeRegistry: IntakeRegistry) {
-    const requests = intakeRegistry.rumResources.filter(
+    const requests = intakeRegistry.rumResourceEvents.filter(
       (event) => event.resource.type === 'xhr' || event.resource.type === 'fetch'
     )
     expect(requests.length).toBe(1)

@@ -6,7 +6,7 @@ describe('rum views', () => {
     .withRum()
     .run(async ({ intakeRegistry }) => {
       await flushEvents()
-      const viewEvent = intakeRegistry.rumViews[0]
+      const viewEvent = intakeRegistry.rumViewEvents[0]
       expect(viewEvent).toBeDefined()
       expect(viewEvent.view.first_byte).toBeGreaterThan(0)
       expect(viewEvent.view.dom_complete).toBeGreaterThan(0)
@@ -25,7 +25,7 @@ describe('rum views', () => {
       .run(async ({ intakeRegistry }) => {
         await (await $('button')).click()
         await flushEvents()
-        const viewEvent = intakeRegistry.rumViews[0]
+        const viewEvent = intakeRegistry.rumViewEvents[0]
         expect(viewEvent).toBeDefined()
         expect(viewEvent.view.first_input_delay).toBeGreaterThanOrEqual(0)
       })
@@ -42,7 +42,7 @@ describe('rum views', () => {
         await (await $('a')).click()
 
         await flushEvents()
-        const viewEvents = intakeRegistry.rumViews
+        const viewEvents = intakeRegistry.rumViewEvents
 
         expect(viewEvents.length).toBe(1)
         expect(viewEvents[0].view.loading_type).toBe('initial_load')
@@ -56,7 +56,7 @@ describe('rum views', () => {
         })
 
         await flushEvents()
-        const viewEvents = intakeRegistry.rumViews
+        const viewEvents = intakeRegistry.rumViewEvents
 
         expect(viewEvents.length).toBe(2)
         expect(viewEvents[0].view.loading_type).toBe('initial_load')

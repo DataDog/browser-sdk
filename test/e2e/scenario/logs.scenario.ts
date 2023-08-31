@@ -11,8 +11,8 @@ describe('logs', () => {
         window.DD_LOGS!.logger.log('hello')
       })
       await flushEvents()
-      expect(intakeRegistry.logs.length).toBe(1)
-      expect(intakeRegistry.logs[0].message).toBe('hello')
+      expect(intakeRegistry.logsEvents.length).toBe(1)
+      expect(intakeRegistry.logsEvents[0].message).toBe('hello')
     })
 
   createTest('send console errors')
@@ -22,8 +22,8 @@ describe('logs', () => {
         console.error('oh snap')
       })
       await flushEvents()
-      expect(intakeRegistry.logs.length).toBe(1)
-      expect(intakeRegistry.logs[0].message).toBe('console error: oh snap')
+      expect(intakeRegistry.logsEvents.length).toBe(1)
+      expect(intakeRegistry.logsEvents[0].message).toBe('console error: oh snap')
       await withBrowserLogs((browserLogs) => {
         expect(browserLogs.length).toEqual(1)
       })
@@ -40,9 +40,9 @@ describe('logs', () => {
       }, UNREACHABLE_URL)
 
       await flushEvents()
-      expect(intakeRegistry.logs.length).toBe(1)
-      expect(intakeRegistry.logs[0].message).toBe(`XHR error GET ${UNREACHABLE_URL}`)
-      expect(intakeRegistry.logs[0].error?.origin).toBe('network')
+      expect(intakeRegistry.logsEvents.length).toBe(1)
+      expect(intakeRegistry.logsEvents[0].message).toBe(`XHR error GET ${UNREACHABLE_URL}`)
+      expect(intakeRegistry.logsEvents[0].error?.origin).toBe('network')
 
       await withBrowserLogs((browserLogs) => {
         // Some browser report two errors:
@@ -62,9 +62,9 @@ describe('logs', () => {
       }, UNREACHABLE_URL)
 
       await flushEvents()
-      expect(intakeRegistry.logs.length).toBe(1)
-      expect(intakeRegistry.logs[0].message).toBe(`Fetch error GET ${UNREACHABLE_URL}`)
-      expect(intakeRegistry.logs[0].error?.origin).toBe('network')
+      expect(intakeRegistry.logsEvents.length).toBe(1)
+      expect(intakeRegistry.logsEvents[0].message).toBe(`Fetch error GET ${UNREACHABLE_URL}`)
+      expect(intakeRegistry.logsEvents[0].error?.origin).toBe('network')
 
       await withBrowserLogs((browserLogs) => {
         // Some browser report two errors:
@@ -82,12 +82,14 @@ describe('logs', () => {
       })
 
       await flushEvents()
-      expect(intakeRegistry.logs.length).toBe(1)
-      expect(intakeRegistry.logs[0].message).toBe(`Fetch error GET ${baseUrl}/throw-large-response`)
-      expect(intakeRegistry.logs[0].error?.origin).toBe('network')
+      expect(intakeRegistry.logsEvents.length).toBe(1)
+      expect(intakeRegistry.logsEvents[0].message).toBe(`Fetch error GET ${baseUrl}/throw-large-response`)
+      expect(intakeRegistry.logsEvents[0].error?.origin).toBe('network')
 
       const ellipsisSize = 3
-      expect(intakeRegistry.logs[0].error?.stack?.length).toBe(DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT + ellipsisSize)
+      expect(intakeRegistry.logsEvents[0].error?.stack?.length).toBe(
+        DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT + ellipsisSize
+      )
 
       expect(servers.base.app.getLargeResponseWroteSize()).toBeGreaterThanOrEqual(
         DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT
@@ -128,10 +130,10 @@ describe('logs', () => {
       await flushBrowserLogs()
       await flushEvents()
 
-      expect(intakeRegistry.logs.length).toEqual(2)
+      expect(intakeRegistry.logsEvents.length).toEqual(2)
 
-      const unreachableRequest = intakeRegistry.logs.find((log) => log.http!.url.includes('/unreachable'))!
-      const throwRequest = intakeRegistry.logs.find((log) => log.http!.url.includes('/throw'))!
+      const unreachableRequest = intakeRegistry.logsEvents.find((log) => log.http!.url.includes('/unreachable'))!
+      const throwRequest = intakeRegistry.logsEvents.find((log) => log.http!.url.includes('/throw'))!
 
       expect(throwRequest.message).toEqual(`Fetch error GET ${baseUrl}/throw`)
       expect(throwRequest.http!.status_code).toEqual(500)
@@ -150,9 +152,9 @@ describe('logs', () => {
         window.DD_LOGS!.logger.log('hello')
       })
       await flushEvents()
-      expect(intakeRegistry.logs.length).toBe(1)
-      expect(intakeRegistry.logs[0].view.id).toBeDefined()
-      expect(intakeRegistry.logs[0].application_id).toBe(APPLICATION_ID)
+      expect(intakeRegistry.logsEvents.length).toBe(1)
+      expect(intakeRegistry.logsEvents[0].view.id).toBeDefined()
+      expect(intakeRegistry.logsEvents[0].application_id).toBe(APPLICATION_ID)
     })
 
   createTest('allow to modify events')
@@ -166,7 +168,7 @@ describe('logs', () => {
         window.DD_LOGS!.logger.log('hello', {})
       })
       await flushEvents()
-      expect(intakeRegistry.logs.length).toBe(1)
-      expect(intakeRegistry.logs[0].foo).toBe('bar')
+      expect(intakeRegistry.logsEvents.length).toBe(1)
+      expect(intakeRegistry.logsEvents[0].foo).toBe('bar')
     })
 })

@@ -15,8 +15,8 @@ describe('telemetry', () => {
         window.DD_LOGS!.logger.log('hop', context as any)
       })
       await flushEvents()
-      expect(intakeRegistry.telemetryErrors.length).toBe(1)
-      const event = intakeRegistry.telemetryErrors[0]
+      expect(intakeRegistry.telemetryErrorEvents.length).toBe(1)
+      const event = intakeRegistry.telemetryErrorEvents[0]
       expect(event.service).toEqual('browser-logs-sdk')
       expect(event.telemetry.message).toBe('bar')
       expect(event.telemetry.error!.kind).toBe('Error')
@@ -37,8 +37,8 @@ describe('telemetry', () => {
         window.DD_RUM!.addAction('hop', context as any)
       })
       await flushEvents()
-      expect(intakeRegistry.telemetryErrors.length).toBe(1)
-      const event = intakeRegistry.telemetryErrors[0]
+      expect(intakeRegistry.telemetryErrorEvents.length).toBe(1)
+      const event = intakeRegistry.telemetryErrorEvents[0]
       expect(event.service).toEqual('browser-rum-sdk')
       expect(event.telemetry.message).toBe('bar')
       expect(event.telemetry.error!.kind).toBe('Error')
@@ -53,8 +53,8 @@ describe('telemetry', () => {
     })
     .run(async ({ intakeRegistry }) => {
       await flushEvents()
-      expect(intakeRegistry.telemetryConfigurations.length).toBe(1)
-      const event = intakeRegistry.telemetryConfigurations[0]
+      expect(intakeRegistry.telemetryConfigurationEvents.length).toBe(1)
+      const event = intakeRegistry.telemetryConfigurationEvents[0]
       expect(event.service).toEqual('browser-logs-sdk')
       expect(event.telemetry.configuration.forward_errors_to_logs).toEqual(true)
     })
@@ -66,8 +66,8 @@ describe('telemetry', () => {
     })
     .run(async ({ intakeRegistry }) => {
       await flushEvents()
-      expect(intakeRegistry.telemetryConfigurations.length).toBe(1)
-      const event = intakeRegistry.telemetryConfigurations[0]
+      expect(intakeRegistry.telemetryConfigurationEvents.length).toBe(1)
+      const event = intakeRegistry.telemetryConfigurationEvents[0]
       expect(event.service).toEqual('browser-rum-sdk')
       expect(event.telemetry.configuration.track_user_interactions).toEqual(true)
     })

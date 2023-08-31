@@ -11,7 +11,7 @@ describe('rum resources', () => {
     .run(async ({ intakeRegistry }) => {
       await sendXhr(`/ok?duration=${REQUEST_DURATION}`)
       await flushEvents()
-      const resourceEvent = intakeRegistry.rumResources.find((r) => r.resource.url.includes('/ok'))!
+      const resourceEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.url.includes('/ok'))!
       expect(resourceEvent).toBeDefined()
       expect(resourceEvent.resource.method).toBe('GET')
       expect(resourceEvent.resource.status_code).toBe(200)
@@ -23,7 +23,7 @@ describe('rum resources', () => {
     .run(async ({ intakeRegistry }) => {
       await sendXhr(`/redirect?duration=${REQUEST_DURATION}`)
       await flushEvents()
-      const resourceEvent = intakeRegistry.rumResources.find((r) => r.resource.url.includes('/redirect'))!
+      const resourceEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.url.includes('/redirect'))!
       expect(resourceEvent).not.toBeUndefined()
       expect(resourceEvent.resource.method).toEqual('GET')
       expect(resourceEvent.resource.status_code).toEqual(200)
@@ -37,7 +37,7 @@ describe('rum resources', () => {
     .run(async ({ crossOriginUrl, intakeRegistry }) => {
       await sendXhr(`${crossOriginUrl}/ok?duration=${REQUEST_DURATION}`)
       await flushEvents()
-      const resourceEvent = intakeRegistry.rumResources.find((r) => r.resource.url.includes('/ok'))!
+      const resourceEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.url.includes('/ok'))!
       expect(resourceEvent).toBeDefined()
       expect(resourceEvent.resource.method).toEqual('GET')
       expect(resourceEvent.resource.status_code).toEqual(200)
@@ -50,7 +50,7 @@ describe('rum resources', () => {
     .run(async ({ crossOriginUrl, intakeRegistry }) => {
       await sendXhr(`${crossOriginUrl}/ok?timing-allow-origin=true&duration=${REQUEST_DURATION}`)
       await flushEvents()
-      const resourceEvent = intakeRegistry.rumResources.find((r) => r.resource.url.includes('/ok'))!
+      const resourceEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.url.includes('/ok'))!
       expect(resourceEvent).not.toBeUndefined()
       expect(resourceEvent.resource.method).toEqual('GET')
       expect(resourceEvent.resource.status_code).toEqual(200)
@@ -62,7 +62,7 @@ describe('rum resources', () => {
     .withHead(html` <link rel="stylesheet" href="/empty.css" /> `)
     .run(async ({ intakeRegistry }) => {
       await flushEvents()
-      const resourceEvent = intakeRegistry.rumResources.find((event) => event.resource.url.includes('empty.css'))
+      const resourceEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.url.includes('empty.css'))
       expect(resourceEvent).toBeDefined()
       expectToHaveValidTimings(resourceEvent!)
     })
@@ -71,7 +71,7 @@ describe('rum resources', () => {
     .withRum()
     .run(async ({ baseUrl, intakeRegistry }) => {
       await flushEvents()
-      const resourceEvent = intakeRegistry.rumResources.find((event) => event.resource.type === 'document')
+      const resourceEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.type === 'document')
       expect(resourceEvent).toBeDefined()
       expect(resourceEvent!.resource.url).toBe(`${baseUrl}/`)
       expectToHaveValidTimings(resourceEvent!)
@@ -157,7 +157,7 @@ describe('rum resources', () => {
       })
 
     function expectXHR(intakeRegistry: IntakeRegistry) {
-      const resourceEvent = intakeRegistry.rumResources.find((event) => event.resource.type === 'xhr')
+      const resourceEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.type === 'xhr')
       expect(resourceEvent).toBeTruthy()
 
       return {
@@ -190,7 +190,7 @@ describe('rum resources', () => {
 
         await flushEvents()
 
-        const resourceEvent = intakeRegistry.rumResources.find((event) => event.resource.type === 'fetch')
+        const resourceEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.type === 'fetch')
         expect(resourceEvent).toBeTruthy()
         expect(resourceEvent?.resource.status_code).toBe(0)
       })
@@ -208,7 +208,7 @@ describe('rum resources', () => {
         )
       })
       await flushEvents()
-      const resourceEvent = intakeRegistry.rumResources.find((r) => r.resource.url.includes('/redirect'))!
+      const resourceEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.url.includes('/redirect'))!
       expect(resourceEvent).not.toBeUndefined()
       expect(resourceEvent.resource.method).toEqual('GET')
       expect(resourceEvent.resource.status_code).toEqual(200)
@@ -237,9 +237,9 @@ describe('rum resources', () => {
 
         await flushEvents()
 
-        const resourceEvents = intakeRegistry.rumResources.filter((event) => event.resource.type === 'xhr')
+        const resourceEvents = intakeRegistry.rumResourceEvents.filter((event) => event.resource.type === 'xhr')
         expect(resourceEvents.length).toEqual(2)
-        expect(intakeRegistry.rumErrors.length).toBe(0)
+        expect(intakeRegistry.rumErrorEvents.length).toBe(0)
         expect(resourceEvents[0].resource.url).toContain('/ok?duration=100&call=1')
         expect(resourceEvents[0].resource.status_code).toEqual(200)
         expect(resourceEvents[1].resource.url).toContain('/ok?duration=100&call=2')

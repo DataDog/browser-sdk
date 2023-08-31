@@ -212,9 +212,9 @@ async function setUpTest({ baseUrl }: TestContext) {
 
 async function tearDownTest({ intakeRegistry, bridgeEvents }: TestContext) {
   await flushEvents()
-  expect(intakeRegistry.telemetryErrors).toEqual([])
-  validateRumFormat(intakeRegistry.rum)
-  validateRumFormat(bridgeEvents.rum)
+  expect(intakeRegistry.telemetryErrorEvents).toEqual([])
+  validateRumFormat(intakeRegistry.rumEvents)
+  validateRumFormat(bridgeEvents.rumEvents)
   await withBrowserLogs((logs) => {
     logs.forEach((browserLog) => {
       log(`Browser ${browserLog.source}: ${browserLog.level} ${browserLog.message}`)

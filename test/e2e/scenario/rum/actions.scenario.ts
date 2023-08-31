@@ -17,7 +17,7 @@ describe('action collection', () => {
       const button = await $('button')
       await button.click()
       await flushEvents()
-      const actionEvents = intakeRegistry.rumActions
+      const actionEvents = intakeRegistry.rumActionEvents
 
       expect(actionEvents.length).toBe(1)
       expect(actionEvents[0]).toEqual(
@@ -76,7 +76,7 @@ describe('action collection', () => {
       const button = await $('button')
       await button.click()
       await flushEvents()
-      const actionEvents = intakeRegistry.rumActions
+      const actionEvents = intakeRegistry.rumActionEvents
 
       expect(actionEvents.length).toBe(1)
       expect(actionEvents[0].action?.target?.name).toBe('click me')
@@ -103,7 +103,7 @@ describe('action collection', () => {
         const button = await $('button')
         await button.click()
         await flushEvents()
-        const actionEvents = intakeRegistry.rumActions
+        const actionEvents = intakeRegistry.rumActionEvents
 
         expect(actionEvents.length).toBe(1)
         expect(actionEvents[0].action?.target?.name).toBe('click me')
@@ -126,8 +126,8 @@ describe('action collection', () => {
       await button.click()
       await waitForServersIdle()
       await flushEvents()
-      const actionEvents = intakeRegistry.rumActions
-      const resourceEvents = intakeRegistry.rumResources.filter((event) => event.resource.type === 'fetch')
+      const actionEvents = intakeRegistry.rumActionEvents
+      const resourceEvents = intakeRegistry.rumResourceEvents.filter((event) => event.resource.type === 'fetch')
 
       expect(actionEvents.length).toBe(1)
       expect(actionEvents[0].action).toEqual({
@@ -174,10 +174,10 @@ describe('action collection', () => {
       const button = await $('button')
       await button.click()
       await flushEvents()
-      const actionEvents = intakeRegistry.rumActions
+      const actionEvents = intakeRegistry.rumActionEvents
       expect(actionEvents.length).toBe(1)
 
-      const viewEvents = intakeRegistry.rumViews
+      const viewEvents = intakeRegistry.rumViewEvents
       const originalViewEvent = viewEvents.find((view) => view.view.url.endsWith('/'))!
       const otherViewEvent = viewEvents.find((view) => view.view.url.endsWith('/other-view'))!
       expect(originalViewEvent.view.action.count).toBe(1)
@@ -200,13 +200,13 @@ describe('action collection', () => {
       const button = await $('button')
       await button.click()
       await flushEvents()
-      const actionEvents = intakeRegistry.rumActions
+      const actionEvents = intakeRegistry.rumActionEvents
 
       expect(actionEvents.length).toBe(1)
       expect(actionEvents[0].action.frustration!.type).toEqual(['error_click'])
       expect(actionEvents[0].action.error!.count).toBe(1)
 
-      expect(intakeRegistry.rumViews[0].view.frustration!.count).toBe(1)
+      expect(intakeRegistry.rumViewEvents[0].view.frustration!.count).toBe(1)
 
       await withBrowserLogs((browserLogs) => {
         expect(browserLogs.length).toEqual(1)
@@ -220,12 +220,12 @@ describe('action collection', () => {
       const button = await $('button')
       await button.click()
       await flushEvents()
-      const actionEvents = intakeRegistry.rumActions
+      const actionEvents = intakeRegistry.rumActionEvents
 
       expect(actionEvents.length).toBe(1)
       expect(actionEvents[0].action.frustration!.type).toEqual(['dead_click'])
 
-      expect(intakeRegistry.rumViews[0].view.frustration!.count).toBe(1)
+      expect(intakeRegistry.rumViewEvents[0].view.frustration!.count).toBe(1)
     })
 
   createTest('do not consider a click on a checkbox as "dead_click"')
@@ -235,7 +235,7 @@ describe('action collection', () => {
       const input = await $('input')
       await input.click()
       await flushEvents()
-      const actionEvents = intakeRegistry.rumActions
+      const actionEvents = intakeRegistry.rumActionEvents
 
       expect(actionEvents.length).toBe(1)
       expect(actionEvents[0].action.frustration!.type).toEqual([])
@@ -248,7 +248,7 @@ describe('action collection', () => {
       const input = await $('input')
       await input.click({ x: 10 })
       await flushEvents()
-      const actionEvents = intakeRegistry.rumActions
+      const actionEvents = intakeRegistry.rumActionEvents
 
       expect(actionEvents.length).toBe(1)
       expect(actionEvents[0].action.frustration!.type).toEqual([])
@@ -261,7 +261,7 @@ describe('action collection', () => {
       const input = await $('input')
       await input.click()
       await flushEvents()
-      const actionEvents = intakeRegistry.rumActions
+      const actionEvents = intakeRegistry.rumActionEvents
 
       expect(actionEvents.length).toBe(1)
       expect(actionEvents[0].action.frustration!.type).toEqual(['dead_click'])
@@ -274,7 +274,7 @@ describe('action collection', () => {
       const input = await $('input')
       await input.click()
       await flushEvents()
-      const actionEvents = intakeRegistry.rumActions
+      const actionEvents = intakeRegistry.rumActionEvents
 
       expect(actionEvents.length).toBe(1)
       expect(actionEvents[0].action.frustration!.type).toEqual([])
@@ -301,7 +301,7 @@ describe('action collection', () => {
       await browser.switchToWindow(windowHandle)
 
       await flushEvents()
-      const actionEvents = intakeRegistry.rumActions
+      const actionEvents = intakeRegistry.rumActionEvents
 
       expect(actionEvents.length).toBe(1)
       expect(actionEvents[0].action.frustration!.type).toEqual([])
@@ -322,7 +322,7 @@ describe('action collection', () => {
       const button = await $('button')
       await Promise.all([button.click(), button.click(), button.click()])
       await flushEvents()
-      const actionEvents = intakeRegistry.rumActions
+      const actionEvents = intakeRegistry.rumActionEvents
 
       expect(actionEvents.length).toBe(1)
       expect(actionEvents[0].action.frustration!.type).toEqual(['rage_click'])
@@ -343,14 +343,14 @@ describe('action collection', () => {
       const button = await $('button')
       await button.click()
       await flushEvents()
-      const actionEvents = intakeRegistry.rumActions
+      const actionEvents = intakeRegistry.rumActionEvents
 
       expect(actionEvents.length).toBe(1)
       expect(actionEvents[0].action.frustration!.type).toEqual(
         jasmine.arrayWithExactContents(['error_click', 'dead_click'])
       )
 
-      expect(intakeRegistry.rumViews[0].view.frustration!.count).toBe(2)
+      expect(intakeRegistry.rumViewEvents[0].view.frustration!.count).toBe(2)
 
       await withBrowserLogs((browserLogs) => {
         expect(browserLogs.length).toEqual(1)

@@ -11,7 +11,7 @@ describe('rum sessions', () => {
       .run(async ({ intakeRegistry }) => {
         await renewSession()
         await flushEvents()
-        const viewEvents = intakeRegistry.rumViews
+        const viewEvents = intakeRegistry.rumViewEvents
         const firstViewEvent = viewEvents[0]
         const lastViewEvent = viewEvents[viewEvents.length - 1]
         expect(firstViewEvent.session.id).not.toBe(lastViewEvent.session.id)
@@ -48,7 +48,7 @@ describe('rum sessions', () => {
         await expireSession()
         intakeRegistry.empty()
         await sendXhr('/ok')
-        expect(intakeRegistry.count).toBe(0)
+        expect(intakeRegistry.isEmpty).toBe(true)
       })
   })
 
@@ -71,7 +71,7 @@ describe('rum sessions', () => {
         await flushEvents()
 
         expect(await findSessionCookie()).toBeUndefined()
-        expect(intakeRegistry.rumActions.length).toBe(0)
+        expect(intakeRegistry.rumActionEvents.length).toBe(0)
       })
 
     createTest('after calling stopSession(), a user interaction starts a new session')
@@ -92,7 +92,7 @@ describe('rum sessions', () => {
         await flushEvents()
 
         expect(await findSessionCookie()).not.toBeUndefined()
-        expect(intakeRegistry.rumActions.length).toBe(1)
+        expect(intakeRegistry.rumActionEvents.length).toBe(1)
       })
 
     createTest('flush events when the session expires')
@@ -100,8 +100,8 @@ describe('rum sessions', () => {
       .withLogs()
       .withRumInit(initRumAndStartRecording)
       .run(async ({ intakeRegistry }) => {
-        expect(intakeRegistry.rumViews.length).toBe(0)
-        expect(intakeRegistry.logs.length).toBe(0)
+        expect(intakeRegistry.rumViewEvents.length).toBe(0)
+        expect(intakeRegistry.logsEvents.length).toBe(0)
         expect(intakeRegistry.sessionReplay.length).toBe(0)
 
         await browserExecute(() => {
@@ -111,9 +111,9 @@ describe('rum sessions', () => {
 
         await waitForRequests()
 
-        expect(intakeRegistry.rumViews.length).toBe(1)
-        expect(intakeRegistry.rumViews[0].session.is_active).toBe(false)
-        expect(intakeRegistry.logs.length).toBe(1)
+        expect(intakeRegistry.rumViewEvents.length).toBe(1)
+        expect(intakeRegistry.rumViewEvents[0].session.is_active).toBe(false)
+        expect(intakeRegistry.logsEvents.length).toBe(1)
         expect(intakeRegistry.sessionReplay.length).toBe(1)
       })
   })

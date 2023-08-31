@@ -28,8 +28,8 @@ describe('rum errors', () => {
       await button.click()
 
       await flushEvents()
-      expect(intakeRegistry.rumErrors.length).toBe(1)
-      expectError(intakeRegistry.rumErrors[0].error, {
+      expect(intakeRegistry.rumErrorEvents.length).toBe(1)
+      expectError(intakeRegistry.rumErrorEvents[0].error, {
         message: 'console error: oh snap',
         source: 'console',
         handlingStack: ['Error: ', `handler @ ${baseUrl}/:`],
@@ -48,8 +48,8 @@ describe('rum errors', () => {
       await button.click()
 
       await flushEvents()
-      expect(intakeRegistry.rumErrors.length).toBe(1)
-      expectError(intakeRegistry.rumErrors[0].error, {
+      expect(intakeRegistry.rumErrorEvents.length).toBe(1)
+      expectError(intakeRegistry.rumErrorEvents[0].error, {
         message: 'console error: Foo: Error: oh snap',
         source: 'console',
         stack: ['Error: oh snap', `at foo @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],
@@ -69,8 +69,8 @@ describe('rum errors', () => {
       await button.click()
 
       await flushEvents()
-      expect(intakeRegistry.rumErrors.length).toBe(1)
-      expectError(intakeRegistry.rumErrors[0].error, {
+      expect(intakeRegistry.rumErrorEvents.length).toBe(1)
+      expectError(intakeRegistry.rumErrorEvents[0].error, {
         message: 'oh snap',
         source: 'source',
         stack: ['Error: oh snap', `at foo @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],
@@ -89,8 +89,8 @@ describe('rum errors', () => {
       await button.click()
 
       await flushEvents()
-      expect(intakeRegistry.rumErrors.length).toBe(1)
-      expectError(intakeRegistry.rumErrors[0].error, {
+      expect(intakeRegistry.rumErrorEvents.length).toBe(1)
+      expectError(intakeRegistry.rumErrorEvents[0].error, {
         message: 'oh snap',
         source: 'source',
         stack: ['Error: oh snap', `at foo @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],
@@ -109,8 +109,8 @@ describe('rum errors', () => {
       await button.click()
 
       await flushEvents()
-      expect(intakeRegistry.rumErrors.length).toBe(1)
-      expectError(intakeRegistry.rumErrors[0].error, {
+      expect(intakeRegistry.rumErrorEvents.length).toBe(1)
+      expectError(intakeRegistry.rumErrorEvents[0].error, {
         message: 'oh snap',
         source: 'custom',
         stack: ['Error: oh snap', `at foo @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],

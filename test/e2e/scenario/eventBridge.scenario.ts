@@ -19,8 +19,8 @@ describe('bridge present', () => {
       await button.click()
       await flushEvents()
 
-      expect(intakeRegistry.rumActions.length).toBe(0)
-      expect(bridgeEvents.rumActions.length).toBe(1)
+      expect(intakeRegistry.rumActionEvents.length).toBe(0)
+      expect(bridgeEvents.rumActionEvents.length).toBe(1)
     })
 
   createTest('send error')
@@ -34,8 +34,8 @@ describe('bridge present', () => {
       await flushBrowserLogs()
       await flushEvents()
 
-      expect(intakeRegistry.rumErrors.length).toBe(0)
-      expect(bridgeEvents.rumErrors.length).toBeGreaterThan(0)
+      expect(intakeRegistry.rumErrorEvents.length).toBe(0)
+      expect(bridgeEvents.rumErrorEvents.length).toBeGreaterThan(0)
     })
 
   createTest('send resource')
@@ -44,8 +44,8 @@ describe('bridge present', () => {
     .run(async ({ intakeRegistry, bridgeEvents }) => {
       await flushEvents()
 
-      expect(intakeRegistry.rumResources.length).toEqual(0)
-      expect(bridgeEvents.rumResources.length).toBeGreaterThan(0)
+      expect(intakeRegistry.rumResourceEvents.length).toEqual(0)
+      expect(bridgeEvents.rumResourceEvents.length).toBeGreaterThan(0)
     })
 
   createTest('send view')
@@ -54,8 +54,8 @@ describe('bridge present', () => {
     .run(async ({ intakeRegistry, bridgeEvents }) => {
       await flushEvents()
 
-      expect(intakeRegistry.rumViews.length).toEqual(0)
-      expect(bridgeEvents.rumViews.length).toBeGreaterThan(0)
+      expect(intakeRegistry.rumViewEvents.length).toEqual(0)
+      expect(bridgeEvents.rumViewEvents.length).toBeGreaterThan(0)
     })
 
   createTest('forward telemetry to the bridge')
@@ -72,8 +72,8 @@ describe('bridge present', () => {
       })
 
       await flushEvents()
-      expect(intakeRegistry.telemetryErrors.length).toBe(0)
-      expect(bridgeEvents.telemetryErrors.length).toBe(1)
+      expect(intakeRegistry.telemetryErrorEvents.length).toBe(0)
+      expect(bridgeEvents.telemetryErrorEvents.length).toBe(1)
     })
 
   createTest('forward logs to the bridge')
@@ -85,7 +85,7 @@ describe('bridge present', () => {
       })
       await flushEvents()
 
-      expect(intakeRegistry.logs.length).toBe(0)
-      expect(bridgeEvents.logs.length).toBe(1)
+      expect(intakeRegistry.logsEvents.length).toBe(0)
+      expect(bridgeEvents.logsEvents.length).toBe(1)
     })
 })
