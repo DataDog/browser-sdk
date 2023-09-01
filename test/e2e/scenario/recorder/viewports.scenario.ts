@@ -1,11 +1,11 @@
 import type { ViewportResizeData, ScrollData } from '@datadog/browser-rum/cjs/types'
 import { IncrementalSource } from '@datadog/browser-rum/cjs/types'
-import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 
 import { findAllIncrementalSnapshots, findAllVisualViewports } from '@datadog/browser-rum/test'
 import type { IntakeRegistry } from '../../lib/framework'
 import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
 import { browserExecute, getBrowserName, getPlatformName } from '../../lib/helpers/browser'
+import { initRumAndStartRecording } from '../../lib/helpers/replay'
 
 const NAVBAR_HEIGHT_CHANGE_UPPER_BOUND = 30
 const VIEWPORT_META_TAGS = `
@@ -81,7 +81,9 @@ describe('recorder', () => {
         const { scrollX: nextScrollX, scrollY: nextScrollY } = await getWindowScroll()
 
         const lastScrollData = (
-          await getLastRecord(intakeRegistry, (segment) => findAllIncrementalSnapshots(segment, IncrementalSource.Scroll))
+          await getLastRecord(intakeRegistry, (segment) =>
+            findAllIncrementalSnapshots(segment, IncrementalSource.Scroll)
+          )
         ).data as ScrollData
 
         // Height changes because URL address bar changes due to scrolling
@@ -125,15 +127,6 @@ describe('recorder', () => {
       })
   })
 })
-
-function getLastSegment(intakeRegistry: IntakeRegistry) {
-  return intakeRegistry.sessionReplay[intakeRegistry.sessionReplay.length - 1].segment.data
-}
-
-function initRumAndStartRecording(initConfiguration: RumInitConfiguration) {
-  window.DD_RUM!.init(initConfiguration)
-  window.DD_RUM!.startSessionReplayRecording()
-}
 
 const isGestureUnsupported = () =>
   /firefox|safari|edge/.test(getBrowserName()) || /windows|linux/.test(getPlatformName())
@@ -299,7 +292,7 @@ async function getScrollbarThicknessCorrection(): Promise<number> {
 
 async function getLastRecord<T>(intakeRegistry: IntakeRegistry, filterMethod: (segment: any) => T[]): Promise<T> {
   await flushEvents()
-  const segment = getLastSegment(intakeRegistry)
+  const segment = intakeRegistry.replaySegments.at(-1)
   const foundRecords = filterMethod(segment)
   return foundRecords[foundRecords.length - 1]
 }

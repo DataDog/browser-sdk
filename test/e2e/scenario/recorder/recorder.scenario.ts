@@ -20,7 +20,7 @@ import {
 } from '@datadog/browser-rum/test'
 import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
 import { browserExecute, browserExecuteAsync } from '../../lib/helpers/browser'
-import { getFirstSegment, getLastSegment, initRumAndStartRecording } from '../../lib/helpers/replay'
+import { initRumAndStartRecording } from '../../lib/helpers/replay'
 
 const TIMESTAMP_RE = /^\d{13}$/
 const UUID_RE = /^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/
@@ -35,7 +35,7 @@ describe('recorder', () => {
       await html.click()
       await flushEvents()
 
-      expect(intakeRegistry.sessionReplay.length).toBe(1)
+      expect(intakeRegistry.replaySegments.length).toBe(1)
       const { segment, metadata } = intakeRegistry.sessionReplay[0]
       expect(metadata).toEqual({
         application: { id: jasmine.stringMatching(UUID_RE) },
@@ -91,9 +91,9 @@ describe('recorder', () => {
       .run(async ({ intakeRegistry }) => {
         await flushEvents()
 
-        expect(intakeRegistry.sessionReplay.length).toBe(1)
+        expect(intakeRegistry.replaySegments.length).toBe(1)
 
-        const fullSnapshot = findFullSnapshot(getFirstSegment(intakeRegistry))!
+        const fullSnapshot = findFullSnapshot(intakeRegistry.replaySegments[0])!
 
         const node = findElementWithIdAttribute(fullSnapshot.data.node, 'not-obfuscated')
         expect(node).toBeTruthy()
@@ -148,7 +148,7 @@ describe('recorder', () => {
         await flushEvents()
 
         const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidatorFromSegment(
-          getFirstSegment(intakeRegistry)
+          intakeRegistry.replaySegments[0]
         )
 
         validate({
@@ -195,7 +195,7 @@ describe('recorder', () => {
         await flushEvents()
 
         const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidatorFromSegment(
-          getFirstSegment(intakeRegistry)
+          intakeRegistry.replaySegments[0]
         )
 
         validate({
@@ -243,7 +243,9 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        const { validate, expectInitialNode } = createMutationPayloadValidatorFromSegment(getFirstSegment(intakeRegistry))
+        const { validate, expectInitialNode } = createMutationPayloadValidatorFromSegment(
+          intakeRegistry.replaySegments[0]
+        )
 
         validate({
           attributes: [
@@ -281,8 +283,8 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        expect(intakeRegistry.sessionReplay.length).toBe(1)
-        const segment = getFirstSegment(intakeRegistry)
+        expect(intakeRegistry.replaySegments.length).toBe(1)
+        const segment = intakeRegistry.replaySegments[0]
 
         expect(findAllIncrementalSnapshots(segment, IncrementalSource.Mutation)).toEqual([])
       })
@@ -311,7 +313,9 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        const { validate, expectInitialNode } = createMutationPayloadValidatorFromSegment(getFirstSegment(intakeRegistry))
+        const { validate, expectInitialNode } = createMutationPayloadValidatorFromSegment(
+          intakeRegistry.replaySegments[0]
+        )
         validate({
           adds: [
             {
@@ -357,7 +361,7 @@ describe('recorder', () => {
         await flushEvents()
 
         const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidatorFromSegment(
-          getFirstSegment(intakeRegistry)
+          intakeRegistry.replaySegments[0]
         )
 
         const div = expectNewNode({ type: NodeType.Element, tagName: 'div' })
@@ -412,7 +416,7 @@ describe('recorder', () => {
         await flushEvents()
 
         const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidatorFromSegment(
-          getFirstSegment(intakeRegistry)
+          intakeRegistry.replaySegments[0]
         )
 
         const ul = expectInitialNode({ tag: 'ul' })
@@ -488,9 +492,9 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        expect(intakeRegistry.sessionReplay.length).toBe(1)
+        expect(intakeRegistry.replaySegments.length).toBe(1)
 
-        const segment = getFirstSegment(intakeRegistry)
+        const segment = intakeRegistry.replaySegments[0]
 
         const textInputRecords = filterRecordsByIdAttribute(segment, 'text-input')
         expect(textInputRecords.length).toBeGreaterThanOrEqual(4)
@@ -549,9 +553,9 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        expect(intakeRegistry.sessionReplay.length).toBe(1)
+        expect(intakeRegistry.replaySegments.length).toBe(1)
 
-        const segment = getFirstSegment(intakeRegistry)
+        const segment = intakeRegistry.replaySegments[0]
 
         const inputRecords = findAllIncrementalSnapshots(segment, IncrementalSource.Input)
 
@@ -576,9 +580,9 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        expect(intakeRegistry.sessionReplay.length).toBe(1)
+        expect(intakeRegistry.replaySegments.length).toBe(1)
 
-        const segment = getFirstSegment(intakeRegistry)
+        const segment = intakeRegistry.replaySegments[0]
 
         const inputRecords = findAllIncrementalSnapshots(segment, IncrementalSource.Input)
 
@@ -611,9 +615,9 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        expect(intakeRegistry.sessionReplay.length).toBe(1)
+        expect(intakeRegistry.replaySegments.length).toBe(1)
 
-        const segment = getFirstSegment(intakeRegistry)
+        const segment = intakeRegistry.replaySegments[0]
 
         const styleSheetRules = findAllIncrementalSnapshots(segment, IncrementalSource.StyleSheetRule) as Array<{
           data: StyleSheetRuleData
@@ -654,9 +658,9 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        expect(intakeRegistry.sessionReplay.length).toBe(1)
+        expect(intakeRegistry.replaySegments.length).toBe(1)
 
-        const segment = getFirstSegment(intakeRegistry)
+        const segment = intakeRegistry.replaySegments[0]
 
         const styleSheetRules = findAllIncrementalSnapshots(segment, IncrementalSource.StyleSheetRule) as Array<{
           data: StyleSheetRuleData
@@ -679,11 +683,11 @@ describe('recorder', () => {
         await html.click()
         await flushEvents()
 
-        expect(intakeRegistry.sessionReplay.length).toBe(1)
-        const { segment } = intakeRegistry.sessionReplay[0]
+        expect(intakeRegistry.replaySegments.length).toBe(1)
+        const segment = intakeRegistry.replaySegments[0]
 
-        const mouseupRecords = findMouseInteractionRecords(segment.data, MouseInteractionType.MouseUp)
-        const frustrationRecords = findAllFrustrationRecords(segment.data)
+        const mouseupRecords = findMouseInteractionRecords(segment, MouseInteractionType.MouseUp)
+        const frustrationRecords = findAllFrustrationRecords(segment)
 
         expect(mouseupRecords.length).toBe(1)
         expect(mouseupRecords[0].id).toBeTruthy('mouse interaction record should have an id')
@@ -710,11 +714,11 @@ describe('recorder', () => {
         await Promise.all([button.click(), button.click(), button.click(), button.click()])
         await flushEvents()
 
-        expect(intakeRegistry.sessionReplay.length).toBe(1)
-        const { segment } = intakeRegistry.sessionReplay[0]
+        expect(intakeRegistry.replaySegments.length).toBe(1)
+        const segment = intakeRegistry.replaySegments[0]
 
-        const mouseupRecords = findMouseInteractionRecords(segment.data, MouseInteractionType.MouseUp)
-        const frustrationRecords = findAllFrustrationRecords(segment.data)
+        const mouseupRecords = findMouseInteractionRecords(segment, MouseInteractionType.MouseUp)
+        const frustrationRecords = findAllFrustrationRecords(segment)
 
         expect(mouseupRecords.length).toBe(4)
         expect(frustrationRecords.length).toBe(1)
@@ -794,8 +798,8 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        expect(intakeRegistry.sessionReplay.length).toBe(2)
-        const firstSegment = getFirstSegment(intakeRegistry)
+        expect(intakeRegistry.replaySegments.length).toBe(2)
+        const firstSegment = intakeRegistry.replaySegments[0]
 
         const firstFullSnapshot = findFullSnapshot(firstSegment)!
         let htmlElement = findElementWithTagName(firstFullSnapshot.data.node, 'html')!
@@ -809,7 +813,7 @@ describe('recorder', () => {
         expect(windowScrollData.y).toEqual(150)
         expect(containerScrollData.x).toEqual(20)
 
-        const secondFullSnapshot = findFullSnapshot(getLastSegment(intakeRegistry))!
+        const secondFullSnapshot = findFullSnapshot(intakeRegistry.replaySegments.at(-1)!)!
         htmlElement = findElementWithTagName(secondFullSnapshot.data.node, 'html')!
         expect(htmlElement.attributes.rr_scrollTop).toBe(150)
         containerElement = findElementWithIdAttribute(secondFullSnapshot.data.node, 'container')!
@@ -825,6 +829,6 @@ describe('recorder', () => {
     .run(async ({ intakeRegistry }) => {
       await flushEvents()
 
-      expect(intakeRegistry.sessionReplay.length).toBe(1)
+      expect(intakeRegistry.replaySegments.length).toBe(1)
     })
 })

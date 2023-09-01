@@ -1,4 +1,3 @@
-import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import { IncrementalSource, NodeType } from '@datadog/browser-rum/src/types'
 import type { DocumentFragmentNode, MouseInteractionData, SerializedNodeWithId } from '@datadog/browser-rum/src/types'
 
@@ -13,9 +12,9 @@ import {
   findTextNode,
 } from '@datadog/browser-rum/test'
 
-import type { IntakeRegistry } from '../../lib/framework'
 import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
 import { browserExecute } from '../../lib/helpers/browser'
+import { initRumAndStartRecording } from '../../lib/helpers/replay'
 
 /** Will generate the following HTML
  * ```html
@@ -122,9 +121,9 @@ describe('recorder with shadow DOM', () => {
     .run(async ({ intakeRegistry }) => {
       await flushEvents()
 
-      expect(intakeRegistry.sessionReplay.length).toBe(1)
+      expect(intakeRegistry.replaySegments.length).toBe(1)
 
-      const fullSnapshot = findFullSnapshot(getFirstSegment(intakeRegistry))!
+      const fullSnapshot = findFullSnapshot(intakeRegistry.replaySegments[0])!
       expect(fullSnapshot).toBeTruthy()
 
       const textNode = findTextNode(fullSnapshot.data.node, 'toto')
@@ -146,9 +145,9 @@ describe('recorder with shadow DOM', () => {
       }
       await flushEvents()
 
-      expect(intakeRegistry.sessionReplay.length).toBe(1)
+      expect(intakeRegistry.replaySegments.length).toBe(1)
 
-      const fullSnapshot = findFullSnapshot(getFirstSegment(intakeRegistry))!
+      const fullSnapshot = findFullSnapshot(intakeRegistry.replaySegments[0])!
       expect(fullSnapshot).toBeTruthy()
       const shadowRoot = findNode(
         fullSnapshot.data.node,
@@ -170,9 +169,9 @@ describe('recorder with shadow DOM', () => {
     .run(async ({ intakeRegistry }) => {
       await flushEvents()
 
-      expect(intakeRegistry.sessionReplay.length).toBe(1)
+      expect(intakeRegistry.replaySegments.length).toBe(1)
 
-      const fullSnapshot = findFullSnapshot(getFirstSegment(intakeRegistry))!
+      const fullSnapshot = findFullSnapshot(intakeRegistry.replaySegments[0])!
       expect(fullSnapshot).toBeTruthy()
 
       const {
@@ -206,11 +205,11 @@ describe('recorder with shadow DOM', () => {
       const div = await getNodeInsideShadowDom('my-div', 'div')
       await div.click()
       await flushEvents()
-      expect(intakeRegistry.sessionReplay.length).toBe(1)
-      const fullSnapshot = findFullSnapshot(getFirstSegment(intakeRegistry))!
+      expect(intakeRegistry.replaySegments.length).toBe(1)
+      const fullSnapshot = findFullSnapshot(intakeRegistry.replaySegments[0])!
       const divNode = findElementWithTagName(fullSnapshot.data.node, 'div')!
       const mouseInteraction = findIncrementalSnapshot(
-        getFirstSegment(intakeRegistry),
+        intakeRegistry.replaySegments[0],
         IncrementalSource.MouseInteraction
       )!
       expect(mouseInteraction).toBeTruthy()
@@ -233,9 +232,9 @@ describe('recorder with shadow DOM', () => {
         div.innerText = 'titi'
       })
       await flushEvents()
-      expect(intakeRegistry.sessionReplay.length).toBe(1)
+      expect(intakeRegistry.replaySegments.length).toBe(1)
       const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidatorFromSegment(
-        getFirstSegment(intakeRegistry)
+        intakeRegistry.replaySegments[0]
       )
       validate({
         adds: [
@@ -271,15 +270,6 @@ function findElementsInShadowDom(node: SerializedNodeWithId, id: string) {
   const textContent = findTextContent(text!)
   expect(textContent).toBeTruthy()
   return { shadowHost, shadowRoot, input, text, textContent }
-}
-
-function getFirstSegment(intakeRegistry: IntakeRegistry) {
-  return intakeRegistry.sessionReplay[0].segment.data
-}
-
-function initRumAndStartRecording(initConfiguration: RumInitConfiguration) {
-  window.DD_RUM!.init(initConfiguration)
-  window.DD_RUM!.startSessionReplayRecording()
 }
 
 async function getNodeInsideShadowDom(hostTag: string, selector: string) {

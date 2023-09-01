@@ -63,6 +63,10 @@ export class IntakeRegistry {
     return this.telemetryEvents.filter(isTelemetryConfigurationEvent)
   }
 
+  get replaySegments() {
+    return this.sessionReplay.map((call) => call.segment.data)
+  }
+
   get isEmpty() {
     return (
       this.logsEvents.length + this.rumEvents.length + this.sessionReplay.length + this.telemetryEvents.length === 0

@@ -2,7 +2,7 @@ import { RecordType } from '@datadog/browser-rum/src/types'
 import { expireSession, findSessionCookie, renewSession } from '../../lib/helpers/session'
 import { bundleSetup, createTest, flushEvents, waitForRequests } from '../../lib/framework'
 import { browserExecute, browserExecuteAsync, sendXhr } from '../../lib/helpers/browser'
-import { getLastSegment, initRumAndStartRecording } from '../../lib/helpers/replay'
+import { initRumAndStartRecording } from '../../lib/helpers/replay'
 
 describe('rum sessions', () => {
   describe('session renewal', () => {
@@ -30,9 +30,9 @@ describe('rum sessions', () => {
 
         await flushEvents()
 
-        expect(intakeRegistry.sessionReplay.length).toBe(2)
+        expect(intakeRegistry.replaySegments.length).toBe(2)
 
-        const segment = getLastSegment(intakeRegistry)
+        const segment = intakeRegistry.replaySegments.at(-1)!
         expect(segment.creation_reason).toBe('init')
         expect(segment.records[0].type).toBe(RecordType.Meta)
         expect(segment.records[1].type).toBe(RecordType.Focus)
@@ -102,7 +102,7 @@ describe('rum sessions', () => {
       .run(async ({ intakeRegistry }) => {
         expect(intakeRegistry.rumViewEvents.length).toBe(0)
         expect(intakeRegistry.logsEvents.length).toBe(0)
-        expect(intakeRegistry.sessionReplay.length).toBe(0)
+        expect(intakeRegistry.replaySegments.length).toBe(0)
 
         await browserExecute(() => {
           window.DD_LOGS!.logger.log('foo')
@@ -114,7 +114,7 @@ describe('rum sessions', () => {
         expect(intakeRegistry.rumViewEvents.length).toBe(1)
         expect(intakeRegistry.rumViewEvents[0].session.is_active).toBe(false)
         expect(intakeRegistry.logsEvents.length).toBe(1)
-        expect(intakeRegistry.sessionReplay.length).toBe(1)
+        expect(intakeRegistry.replaySegments.length).toBe(1)
       })
   })
 })
