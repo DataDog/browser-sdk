@@ -12,7 +12,6 @@ export function createIntakeServerApp(intakeRegistry: IntakeRegistry, bridgeEven
   const app = express()
 
   app.use(cors())
-  app.use(express.text())
   app.use(connectBusboy({ immediate: true }))
 
   app.post('/', (async (req, res) => {
@@ -20,14 +19,10 @@ export function createIntakeServerApp(intakeRegistry: IntakeRegistry, bridgeEven
     const events = isBridge ? bridgeEvents : intakeRegistry
 
     try {
-      if (intakeType === 'sessionReplay') {
-        await Promise.all([storeReplayData(req, events), forwardReplayToIntake(req)])
-      } else {
-        storeEventsData(events, intakeType, req.body as string)
-        if (!isBridge) {
-          await forwardEventsToIntake(req)
-        }
-      }
+      await Promise.all([
+        intakeType === 'sessionReplay' ? storeReplayData(req, events) : storeEventsData(req, events, intakeType),
+        !isBridge && forwardIntakeRequestToDatadog(req),
+      ])
     } catch (error) {
       console.error(`Error while processing request: ${String(error)}`)
     }
@@ -69,27 +64,19 @@ function computeIntakeType(
   }
 }
 
-function storeEventsData(events: IntakeRegistry, intakeType: 'logs' | 'rum' | 'telemetry', data: string) {
-  data.split('\n').map((rawEvent) => {
-    const event = JSON.parse(rawEvent)
-    if (intakeType === 'rum' && event.type === 'telemetry') {
-      events.push('telemetry', event)
-    } else {
-      events.push(intakeType, event)
-    }
-  })
-}
-
-function forwardEventsToIntake(req: express.Request): Promise<any> {
-  return new Promise((resolve, reject) => {
-    const intakeRequest = prepareIntakeRequest(req)
-    intakeRequest.on('response', resolve)
-    intakeRequest.on('error', reject)
-    // can't directly pipe the request since
-    // the stream has already been read by express body parser
-    intakeRequest.write(req.body)
-    intakeRequest.end()
-  })
+async function storeEventsData(req: express.Request, events: IntakeRegistry, intakeType: 'logs' | 'rum' | 'telemetry') {
+  const data = await readStream(req)
+  data
+    .toString('utf-8')
+    .split('\n')
+    .map((rawEvent) => {
+      const event = JSON.parse(rawEvent)
+      if (intakeType === 'rum' && event.type === 'telemetry') {
+        events.push('telemetry', event)
+      } else {
+        events.push(intakeType, event)
+      }
+    })
 }
 
 function storeReplayData(req: express.Request, events: IntakeRegistry): Promise<any> {
@@ -124,29 +111,25 @@ function storeReplayData(req: express.Request, events: IntakeRegistry): Promise<
   })
 }
 
-function forwardReplayToIntake(req: express.Request): Promise<any> {
+function forwardIntakeRequestToDatadog(req: express.Request): Promise<any> {
   return new Promise((resolve, reject) => {
-    const intakeRequest = prepareIntakeRequest(req)
-    req.pipe(intakeRequest)
-    intakeRequest.on('response', resolve)
-    intakeRequest.on('error', reject)
+    const ddforward = req.query.ddforward! as string
+    if (!/^\/api\/v2\//.test(ddforward)) {
+      throw new Error(`Unsupported ddforward: ${ddforward}`)
+    }
+    const options = {
+      method: 'POST',
+      headers: {
+        'X-Forwarded-For': req.socket.remoteAddress,
+        'Content-Type': req.headers['content-type'],
+        'User-Agent': req.headers['user-agent'],
+      },
+    }
+    const datadogIntakeRequest = https.request(new URL(ddforward, 'https://browser-intake-datadoghq.com'), options)
+    req.pipe(datadogIntakeRequest)
+    datadogIntakeRequest.on('response', resolve)
+    datadogIntakeRequest.on('error', reject)
   })
-}
-
-function prepareIntakeRequest(req: express.Request) {
-  const ddforward = req.query.ddforward! as string
-  if (!/^\/api\/v2\//.test(ddforward)) {
-    throw new Error(`Unsupported ddforward: ${ddforward}`)
-  }
-  const options = {
-    method: 'POST',
-    headers: {
-      'X-Forwarded-For': req.socket.remoteAddress,
-      'Content-Type': req.headers['content-type'],
-      'User-Agent': req.headers['user-agent'],
-    },
-  }
-  return https.request(new URL(ddforward, 'https://browser-intake-datadoghq.com'), options)
 }
 
 function readStream(stream: NodeJS.ReadableStream): Promise<Buffer> {
