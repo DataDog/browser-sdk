@@ -1,4 +1,5 @@
 import { browserExecute, flushBrowserLogs } from '../lib/helpers/browser'
+import type { IntakeRegistry } from '../lib/framework'
 import { createTest, flushEvents, html } from '../lib/framework'
 
 describe('bridge present', () => {
@@ -14,19 +15,19 @@ describe('bridge present', () => {
         })
       </script>
     `)
-    .run(async ({ intakeRegistry, bridgeEvents }) => {
+    .run(async ({ intakeRegistry }) => {
       const button = await $('button')
       await button.click()
       await flushEvents()
 
-      expect(intakeRegistry.rumActionEvents.length).toBe(0)
-      expect(bridgeEvents.rumActionEvents.length).toBe(1)
+      expect(intakeRegistry.rumActionEvents.length).toBe(1)
+      expectAllRequestsComeFromBridge(intakeRegistry)
     })
 
   createTest('send error')
     .withRum()
     .withEventBridge()
-    .run(async ({ intakeRegistry, bridgeEvents }) => {
+    .run(async ({ intakeRegistry }) => {
       await browserExecute(() => {
         console.error('oh snap')
       })
@@ -34,34 +35,34 @@ describe('bridge present', () => {
       await flushBrowserLogs()
       await flushEvents()
 
-      expect(intakeRegistry.rumErrorEvents.length).toBe(0)
-      expect(bridgeEvents.rumErrorEvents.length).toBeGreaterThan(0)
+      expect(intakeRegistry.rumErrorEvents.length).toBe(1)
+      expectAllRequestsComeFromBridge(intakeRegistry)
     })
 
   createTest('send resource')
     .withRum()
     .withEventBridge()
-    .run(async ({ intakeRegistry, bridgeEvents }) => {
+    .run(async ({ intakeRegistry }) => {
       await flushEvents()
 
-      expect(intakeRegistry.rumResourceEvents.length).toEqual(0)
-      expect(bridgeEvents.rumResourceEvents.length).toBeGreaterThan(0)
+      expect(intakeRegistry.rumResourceEvents.length).toBeGreaterThan(0)
+      expectAllRequestsComeFromBridge(intakeRegistry)
     })
 
   createTest('send view')
     .withRum()
     .withEventBridge()
-    .run(async ({ intakeRegistry, bridgeEvents }) => {
+    .run(async ({ intakeRegistry }) => {
       await flushEvents()
 
-      expect(intakeRegistry.rumViewEvents.length).toEqual(0)
-      expect(bridgeEvents.rumViewEvents.length).toBeGreaterThan(0)
+      expect(intakeRegistry.rumViewEvents.length).toBeGreaterThan(0)
+      expectAllRequestsComeFromBridge(intakeRegistry)
     })
 
   createTest('forward telemetry to the bridge')
     .withLogs()
     .withEventBridge()
-    .run(async ({ intakeRegistry, bridgeEvents }) => {
+    .run(async ({ intakeRegistry }) => {
       await browserExecute(() => {
         const context = {
           get foo() {
@@ -72,20 +73,25 @@ describe('bridge present', () => {
       })
 
       await flushEvents()
-      expect(intakeRegistry.telemetryErrorEvents.length).toBe(0)
-      expect(bridgeEvents.telemetryErrorEvents.length).toBe(1)
+      expect(intakeRegistry.telemetryErrorEvents.length).toBe(1)
+      expectAllRequestsComeFromBridge(intakeRegistry)
+      intakeRegistry.empty()
     })
 
   createTest('forward logs to the bridge')
     .withLogs()
     .withEventBridge()
-    .run(async ({ intakeRegistry, bridgeEvents }) => {
+    .run(async ({ intakeRegistry }) => {
       await browserExecute(() => {
         window.DD_LOGS!.logger.log('hello')
       })
       await flushEvents()
 
-      expect(intakeRegistry.logsEvents.length).toBe(0)
-      expect(bridgeEvents.logsEvents.length).toBe(1)
+      expect(intakeRegistry.logsEvents.length).toBe(1)
+      expectAllRequestsComeFromBridge(intakeRegistry)
     })
 })
+
+function expectAllRequestsComeFromBridge(intakeRegistry: IntakeRegistry) {
+  expect(intakeRegistry.requests.every((request) => request.isBridge)).toBe(true)
+}

@@ -39,7 +39,6 @@ interface TestContext {
   baseUrl: string
   crossOriginUrl: string
   intakeRegistry: IntakeRegistry
-  bridgeEvents: IntakeRegistry
   servers: Servers
 }
 
@@ -178,7 +177,7 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     const servers = await getTestServers()
 
     const testContext = createTestContext(servers, setupOptions)
-    servers.intake.bindServerApp(createIntakeServerApp(testContext.intakeRegistry, testContext.bridgeEvents))
+    servers.intake.bindServerApp(createIntakeServerApp(testContext.intakeRegistry))
 
     const setup = factory(setupOptions, servers)
     servers.base.bindServerApp(createMockServerApp(servers, setup))
@@ -200,7 +199,6 @@ function createTestContext(servers: Servers, { basePath }: SetupOptions): TestCo
     baseUrl: servers.base.url + basePath,
     crossOriginUrl: servers.crossOrigin.url,
     intakeRegistry: new IntakeRegistry(),
-    bridgeEvents: new IntakeRegistry(),
     servers,
   }
 }
@@ -210,11 +208,10 @@ async function setUpTest({ baseUrl }: TestContext) {
   await waitForServersIdle()
 }
 
-async function tearDownTest({ intakeRegistry, bridgeEvents }: TestContext) {
+async function tearDownTest({ intakeRegistry }: TestContext) {
   await flushEvents()
   expect(intakeRegistry.telemetryErrorEvents).toEqual([])
   validateRumFormat(intakeRegistry.rumEvents)
-  validateRumFormat(bridgeEvents.rumEvents)
   await withBrowserLogs((logs) => {
     logs.forEach((browserLog) => {
       log(`Browser ${browserLog.source}: ${browserLog.level} ${browserLog.message}`)

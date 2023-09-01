@@ -1,18 +1,8 @@
 import type { LogsEvent } from '@datadog/browser-logs'
-import type { RumEvent } from '@datadog/browser-rum'
-import type { TelemetryEvent } from '@datadog/browser-core'
+import type { RumEvent, RumActionEvent, RumErrorEvent, RumResourceEvent, RumViewEvent } from '@datadog/browser-rum'
+import type { TelemetryEvent, TelemetryErrorEvent, TelemetryConfigurationEvent } from '@datadog/browser-core'
 import type { BrowserSegment } from '@datadog/browser-rum/src/types'
 import type { BrowserSegmentMetadataAndSegmentSizes } from '@datadog/browser-rum/src/domain/segmentCollection'
-import {
-  isTelemetryConfigurationEvent,
-  isRumEvent,
-  isRumErrorEvent,
-  isRumResourceEvent,
-  isRumActionEvent,
-  isRumViewEvent,
-  isTelemetryErrorEvent,
-  isTelemetryEvent,
-} from '../types/serverEvents'
 
 export type LogsIntakeRequest = {
   intakeType: 'logs'
@@ -37,18 +27,6 @@ export type ReplayIntakeRequest = {
 }
 
 export type IntakeRequest = LogsIntakeRequest | RumIntakeRequest | ReplayIntakeRequest
-
-function isLogsIntakeRequest(request: IntakeRequest): request is LogsIntakeRequest {
-  return request.intakeType === 'logs'
-}
-
-function isRumIntakeRequest(request: IntakeRequest): request is RumIntakeRequest {
-  return request.intakeType === 'rum'
-}
-
-function isReplayIntakeRequest(request: IntakeRequest): request is ReplayIntakeRequest {
-  return request.intakeType === 'replay'
-}
 
 /**
  * Store data sent to the intake and expose helpers to access it.
@@ -135,4 +113,48 @@ export class IntakeRegistry {
   get replaySegments() {
     return this.replayRequests.map((request) => request.segment)
   }
+}
+
+function isLogsIntakeRequest(request: IntakeRequest): request is LogsIntakeRequest {
+  return request.intakeType === 'logs'
+}
+
+function isRumIntakeRequest(request: IntakeRequest): request is RumIntakeRequest {
+  return request.intakeType === 'rum'
+}
+
+function isReplayIntakeRequest(request: IntakeRequest): request is ReplayIntakeRequest {
+  return request.intakeType === 'replay'
+}
+
+function isRumEvent(event: RumEvent | TelemetryEvent): event is RumEvent {
+  return !isTelemetryEvent(event)
+}
+
+function isRumResourceEvent(event: RumEvent): event is RumResourceEvent {
+  return event.type === 'resource'
+}
+
+function isRumActionEvent(event: RumEvent): event is RumActionEvent {
+  return event.type === 'action'
+}
+
+function isRumViewEvent(event: RumEvent): event is RumViewEvent {
+  return event.type === 'view'
+}
+
+function isRumErrorEvent(event: RumEvent): event is RumErrorEvent {
+  return event.type === 'error'
+}
+
+function isTelemetryEvent(event: RumEvent | TelemetryEvent): event is TelemetryEvent {
+  return event.type === 'telemetry'
+}
+
+function isTelemetryErrorEvent(event: TelemetryEvent): event is TelemetryErrorEvent {
+  return isTelemetryEvent(event) && event.telemetry.status === 'error'
+}
+
+function isTelemetryConfigurationEvent(event: TelemetryEvent): event is TelemetryConfigurationEvent {
+  return isTelemetryEvent(event) && event.telemetry.type === 'configuration'
 }

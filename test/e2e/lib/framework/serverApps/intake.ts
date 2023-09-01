@@ -13,7 +13,7 @@ interface IntakeRequestInfos {
   intakeType: IntakeRequest['intakeType']
 }
 
-export function createIntakeServerApp(intakeRegistry: IntakeRegistry, bridgeEvents: IntakeRegistry) {
+export function createIntakeServerApp(intakeRegistry: IntakeRegistry) {
   const app = express()
 
   app.use(cors())
@@ -21,14 +21,13 @@ export function createIntakeServerApp(intakeRegistry: IntakeRegistry, bridgeEven
 
   app.post('/', (async (req, res) => {
     const infos = computeIntakeRequestInfos(req)
-    const events = infos.isBridge ? bridgeEvents : intakeRegistry
 
     try {
       const [intakeRequest] = await Promise.all([
         readIntakeRequest(req, infos),
         !infos.isBridge && forwardIntakeRequestToDatadog(req),
       ])
-      events.push(intakeRequest)
+      intakeRegistry.push(intakeRequest)
     } catch (error) {
       console.error('Error while processing request:', error)
     }
