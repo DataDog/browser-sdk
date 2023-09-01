@@ -1,9 +1,13 @@
+import { isIE } from '@datadog/browser-core'
 import { getCssRulesString } from './serializeAttributes'
 
 describe('getCssRulesString', () => {
   let styleNode: HTMLStyleElement
 
   beforeEach(() => {
+    if (isIE()) {
+      pending('IE not supported')
+    }
     styleNode = document.createElement('style')
     document.body.appendChild(styleNode)
   })
