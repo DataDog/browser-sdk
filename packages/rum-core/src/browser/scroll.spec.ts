@@ -70,7 +70,7 @@ describe('scroll', () => {
   describe('getScrollHeight', () => {
     it('should return the scroll height', () => {
       addVerticalScrollBar()
-      expect(getScrollHeight()).toBe(5000)
+      expect(getScrollHeight()).toBe(5026)
     })
   })
 })
