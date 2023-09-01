@@ -16,7 +16,7 @@ import { jsonStringify } from '../../tools/serialisation/jsonStringify'
 import { combine } from '../../tools/mergeInto'
 import { NonErrorPrefix } from '../error/error.types'
 import type { TelemetryEvent } from './telemetryEvent.types'
-import type { RawTelemetryConfiguration, RawTelemetryEvent } from './rawTelemetryEvent.types'
+import type { RawTelemetryConfiguration, RawTelemetryEvent, RuntimeEnvInfo } from './rawTelemetryEvent.types'
 import { StatusType, TelemetryType } from './rawTelemetryEvent.types'
 
 // replaced at build time
@@ -62,9 +62,10 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
   telemetryConfiguration.telemetryConfigurationEnabled =
     telemetryConfiguration.telemetryEnabled && performDraw(configuration.telemetryConfigurationSampleRate)
 
+  const runtimeEnvInfo = getRuntimeEnvInfo()
   onRawTelemetryEventCollected = (rawEvent: RawTelemetryEvent) => {
     if (telemetryConfiguration.telemetryEnabled) {
-      const event = toTelemetryEvent(telemetryService, rawEvent)
+      const event = toTelemetryEvent(telemetryService, rawEvent, runtimeEnvInfo)
       observable.notify(event)
       sendToExtension('telemetry', event)
     }
@@ -76,7 +77,11 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
     sentEventCount: 0,
   })
 
-  function toTelemetryEvent(telemetryService: TelemetryService, event: RawTelemetryEvent): TelemetryEvent & Context {
+  function toTelemetryEvent(
+    telemetryService: TelemetryService,
+    event: RawTelemetryEvent,
+    runtimeEnvInfo: RuntimeEnvInfo
+  ): TelemetryEvent & Context {
     return combine(
       {
         type: 'telemetry' as const,
@@ -88,10 +93,7 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
           format_version: 2 as const,
         },
         telemetry: combine(event, {
-          runtime_env: {
-            isLocalFile: isLocalFile(),
-            isWorker: isWorker(),
-          },
+          runtime_env: runtimeEnvInfo,
         }) as any, // https://github.com/microsoft/TypeScript/issues/48457
         experimental_features: arrayFrom(getExperimentalFeatures()),
       },
@@ -107,13 +109,11 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
     enabled: telemetryConfiguration.telemetryEnabled,
   }
 }
-
-function isLocalFile() {
-  return window.location.protocol === 'file:'
-}
-
-function isWorker() {
-  return 'WorkerGlobalScope' in self
+function getRuntimeEnvInfo(): RuntimeEnvInfo {
+  return {
+    is_local_file: window.location.protocol === 'file:',
+    is_worker: 'WorkerGlobalScope' in self,
+  }
 }
 
 export function startFakeTelemetry() {
