@@ -81,6 +81,19 @@ describe('telemetry', () => {
     expect(notifySpy.calls.mostRecent().args[0].experimental_features).toEqual(['foo'])
   })
 
+  it('should contains runtime env', () => {
+    addExperimentalFeatures(['foo' as ExperimentalFeature])
+    const { notifySpy } = startAndSpyTelemetry()
+    callMonitored(() => {
+      throw new Error('message')
+    })
+
+    expect(notifySpy.calls.mostRecent().args[0].telemetry.runtime_env).toEqual({
+      is_local_file: jasmine.any(Boolean),
+      is_worker: jasmine.any(Boolean),
+    })
+  })
+
   describe('telemetry context', () => {
     it('should be added to telemetry events', () => {
       const { telemetry, notifySpy } = startAndSpyTelemetry()
