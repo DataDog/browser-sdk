@@ -1,7 +1,9 @@
 import type { TelemetryErrorEvent, TelemetryEvent, TelemetryConfigurationEvent } from '@datadog/browser-core'
 import type { RumActionEvent, RumErrorEvent, RumEvent, RumResourceEvent, RumViewEvent } from '@datadog/browser-rum'
-import type { BrowserSegmentMetadataAndSegmentSizes } from '@datadog/browser-rum/src/domain/segmentCollection'
-import type { BrowserSegment } from '@datadog/browser-rum/src/types'
+
+export function isRumEvent(event: RumEvent | TelemetryEvent): event is RumEvent {
+  return !isTelemetryEvent(event)
+}
 
 export function isRumResourceEvent(event: RumEvent): event is RumResourceEvent {
   return event.type === 'resource'
@@ -19,22 +21,14 @@ export function isRumErrorEvent(event: RumEvent): event is RumErrorEvent {
   return event.type === 'error'
 }
 
+export function isTelemetryEvent(event: RumEvent | TelemetryEvent): event is TelemetryEvent {
+  return event.type === 'telemetry'
+}
+
 export function isTelemetryErrorEvent(event: TelemetryEvent): event is TelemetryErrorEvent {
-  return event.type === 'telemetry' && event.telemetry.status === 'error'
+  return isTelemetryEvent(event) && event.telemetry.status === 'error'
 }
 
 export function isTelemetryConfigurationEvent(event: TelemetryEvent): event is TelemetryConfigurationEvent {
-  return event.type === 'telemetry' && event.telemetry.type === 'configuration'
-}
-
-export interface SegmentFile {
-  filename: string
-  encoding: string
-  mimetype: string
-  data: BrowserSegment
-}
-
-export interface SessionReplayCall {
-  segment: SegmentFile
-  metadata: BrowserSegmentMetadataAndSegmentSizes
+  return isTelemetryEvent(event) && event.telemetry.type === 'configuration'
 }

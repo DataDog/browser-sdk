@@ -1,42 +1,95 @@
 import type { LogsEvent } from '@datadog/browser-logs'
 import type { RumEvent } from '@datadog/browser-rum'
 import type { TelemetryEvent } from '@datadog/browser-core'
-import type { SessionReplayCall } from '../types/serverEvents'
+import type { BrowserSegment } from '@datadog/browser-rum/src/types'
+import type { BrowserSegmentMetadataAndSegmentSizes } from '@datadog/browser-rum/src/domain/segmentCollection'
 import {
   isTelemetryConfigurationEvent,
+  isRumEvent,
   isRumErrorEvent,
   isRumResourceEvent,
   isRumActionEvent,
   isRumViewEvent,
   isTelemetryErrorEvent,
+  isTelemetryEvent,
 } from '../types/serverEvents'
 
-export type IntakeType = 'logs' | 'rum' | 'sessionReplay' | 'telemetry'
+export type LogsIntakeRequest = {
+  intakeType: 'logs'
+  isBridge: boolean
+  events: LogsEvent[]
+}
+
+export type RumIntakeRequest = {
+  intakeType: 'rum'
+  isBridge: boolean
+  events: Array<RumEvent | TelemetryEvent>
+}
+
+export type ReplayIntakeRequest = {
+  intakeType: 'replay'
+  isBridge: false
+  segment: BrowserSegment
+  metadata: BrowserSegmentMetadataAndSegmentSizes
+  filename: string
+  encoding: string
+  mimetype: string
+}
+
+export type IntakeRequest = LogsIntakeRequest | RumIntakeRequest | ReplayIntakeRequest
+
+function isLogsIntakeRequest(request: IntakeRequest): request is LogsIntakeRequest {
+  return request.intakeType === 'logs'
+}
+
+function isRumIntakeRequest(request: IntakeRequest): request is RumIntakeRequest {
+  return request.intakeType === 'rum'
+}
+
+function isReplayIntakeRequest(request: IntakeRequest): request is ReplayIntakeRequest {
+  return request.intakeType === 'replay'
+}
 
 /**
  * Store data sent to the intake and expose helpers to access it.
  */
 export class IntakeRegistry {
-  readonly rumEvents: RumEvent[] = []
-  readonly logsEvents: LogsEvent[] = []
-  readonly sessionReplay: SessionReplayCall[] = []
-  readonly telemetryEvents: TelemetryEvent[] = []
+  readonly requests: IntakeRequest[] = []
 
-  push(type: IntakeType, event: any) {
-    switch (type) {
-      case 'rum':
-        this.rumEvents.push(event)
-        break
-      case 'logs':
-        this.logsEvents.push(event)
-        break
-      case 'telemetry':
-        this.telemetryEvents.push(event)
-        break
-      case 'sessionReplay':
-        this.sessionReplay.push(event)
-        break
-    }
+  push(request: IntakeRequest) {
+    this.requests.push(request)
+  }
+
+  get isEmpty() {
+    return this.requests.length === 0
+  }
+
+  empty() {
+    this.requests.length = 0
+  }
+
+  //
+  // Logs
+  //
+
+  get logsRequests() {
+    return this.requests.filter(isLogsIntakeRequest)
+  }
+
+  get logsEvents() {
+    return this.logsRequests.flatMap((request) => request.events)
+  }
+
+  //
+  // RUM
+  //
+
+  get rumRequests() {
+    return this.requests.filter(isRumIntakeRequest)
+  }
+
+  get rumEvents() {
+    return this.rumRequests.flatMap((request) => request.events.filter(isRumEvent))
   }
 
   get rumActionEvents() {
@@ -55,6 +108,14 @@ export class IntakeRegistry {
     return this.rumEvents.filter(isRumViewEvent)
   }
 
+  //
+  // Telemetry
+  //
+
+  get telemetryEvents() {
+    return this.rumRequests.flatMap((request) => request.events.filter(isTelemetryEvent))
+  }
+
   get telemetryErrorEvents() {
     return this.telemetryEvents.filter(isTelemetryErrorEvent)
   }
@@ -63,19 +124,15 @@ export class IntakeRegistry {
     return this.telemetryEvents.filter(isTelemetryConfigurationEvent)
   }
 
+  //
+  // Replay
+  //
+
+  get replayRequests() {
+    return this.requests.filter(isReplayIntakeRequest)
+  }
+
   get replaySegments() {
-    return this.sessionReplay.map((call) => call.segment.data)
-  }
-
-  get isEmpty() {
-    return (
-      this.logsEvents.length + this.rumEvents.length + this.sessionReplay.length + this.telemetryEvents.length === 0
-    )
-  }
-
-  empty() {
-    this.rumEvents.length = 0
-    this.telemetryEvents.length = 0
-    this.logsEvents.length = 0
+    return this.replayRequests.map((request) => request.segment)
   }
 }

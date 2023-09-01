@@ -5,8 +5,13 @@ import express from 'express'
 
 import cors from 'cors'
 import type { BrowserSegmentMetadataAndSegmentSizes } from '@datadog/browser-rum/src/domain/segmentCollection'
-import type { SegmentFile } from '../../types/serverEvents'
-import type { IntakeRegistry, IntakeType } from '../intakeRegistry'
+import type { BrowserSegment } from '@datadog/browser-rum/src/types'
+import type { IntakeRegistry, IntakeRequest, ReplayIntakeRequest } from '../intakeRegistry'
+
+interface IntakeRequestInfos {
+  isBridge: boolean
+  intakeType: IntakeRequest['intakeType']
+}
 
 export function createIntakeServerApp(intakeRegistry: IntakeRegistry, bridgeEvents: IntakeRegistry) {
   const app = express()
@@ -15,16 +20,17 @@ export function createIntakeServerApp(intakeRegistry: IntakeRegistry, bridgeEven
   app.use(connectBusboy({ immediate: true }))
 
   app.post('/', (async (req, res) => {
-    const { isBridge, intakeType } = computeIntakeType(req)
-    const events = isBridge ? bridgeEvents : intakeRegistry
+    const infos = computeIntakeRequestInfos(req)
+    const events = infos.isBridge ? bridgeEvents : intakeRegistry
 
     try {
-      await Promise.all([
-        intakeType === 'sessionReplay' ? storeReplayData(req, events) : storeEventsData(req, events, intakeType),
-        !isBridge && forwardIntakeRequestToDatadog(req),
+      const [intakeRequest] = await Promise.all([
+        readIntakeRequest(req, infos),
+        !infos.isBridge && forwardIntakeRequestToDatadog(req),
       ])
+      events.push(intakeRequest)
     } catch (error) {
-      console.error(`Error while processing request: ${String(error)}`)
+      console.error('Error while processing request:', error)
     }
     res.end()
   }) as express.RequestHandler)
@@ -32,9 +38,7 @@ export function createIntakeServerApp(intakeRegistry: IntakeRegistry, bridgeEven
   return app
 }
 
-function computeIntakeType(
-  req: express.Request
-): { isBridge: true; intakeType: 'logs' | 'rum' } | { isBridge: false; intakeType: IntakeType } {
+function computeIntakeRequestInfos(req: express.Request): IntakeRequestInfos {
   const ddforward = req.query.ddforward as string | undefined
   if (!ddforward) {
     throw new Error('ddforward is missing')
@@ -48,13 +52,11 @@ function computeIntakeType(
     }
   }
 
-  let intakeType: IntakeType
+  let intakeType: IntakeRequest['intakeType']
   // ddforward = /api/v2/rum?key=value
   const endpoint = ddforward.split(/[/?]/)[3]
-  if (endpoint === 'logs' || endpoint === 'rum') {
+  if (endpoint === 'logs' || endpoint === 'rum' || endpoint === 'replay') {
     intakeType = endpoint
-  } else if (endpoint === 'replay' && req.busboy) {
-    intakeType = 'sessionReplay'
   } else {
     throw new Error("Can't find intake type")
   }
@@ -64,24 +66,29 @@ function computeIntakeType(
   }
 }
 
-async function storeEventsData(req: express.Request, events: IntakeRegistry, intakeType: 'logs' | 'rum' | 'telemetry') {
-  const data = await readStream(req)
-  data
-    .toString('utf-8')
-    .split('\n')
-    .map((rawEvent) => {
-      const event = JSON.parse(rawEvent)
-      if (intakeType === 'rum' && event.type === 'telemetry') {
-        events.push('telemetry', event)
-      } else {
-        events.push(intakeType, event)
-      }
-    })
+async function readIntakeRequest(req: express.Request, infos: IntakeRequestInfos): Promise<IntakeRequest> {
+  if (infos.intakeType === 'replay') {
+    return readReplayIntakeRequest(req)
+  }
+
+  return {
+    intakeType: infos.intakeType,
+    isBridge: infos.isBridge,
+    events: (await readStream(req))
+      .toString('utf-8')
+      .split('\n')
+      .map((line): any => JSON.parse(line)),
+  }
 }
 
-function storeReplayData(req: express.Request, events: IntakeRegistry): Promise<any> {
+function readReplayIntakeRequest(req: express.Request): Promise<ReplayIntakeRequest> {
   return new Promise((resolve, reject) => {
-    let segmentPromise: Promise<SegmentFile>
+    let segmentPromise: Promise<{
+      encoding: string
+      filename: string
+      mimetype: string
+      segment: BrowserSegment
+    }>
     let metadataPromise: Promise<BrowserSegmentMetadataAndSegmentSizes>
 
     req.busboy.on('file', (name, stream, info) => {
@@ -91,7 +98,7 @@ function storeReplayData(req: express.Request, events: IntakeRegistry): Promise<
           encoding,
           filename,
           mimetype: mimeType,
-          data: JSON.parse(data.toString()),
+          segment: JSON.parse(data.toString()),
         }))
       } else if (name === 'event') {
         metadataPromise = readStream(stream).then(
@@ -102,11 +109,13 @@ function storeReplayData(req: express.Request, events: IntakeRegistry): Promise<
 
     req.busboy.on('finish', () => {
       Promise.all([segmentPromise, metadataPromise])
-        .then(([segment, metadata]) => {
-          events.push('sessionReplay', { metadata, segment })
-        })
-        .then(resolve)
-        .catch((e) => reject(e))
+        .then(([segmentEntry, metadata]) => ({
+          intakeType: 'replay' as const,
+          isBridge: false as const,
+          metadata,
+          ...segmentEntry,
+        }))
+        .then(resolve, reject)
     })
   })
 }

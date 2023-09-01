@@ -36,7 +36,7 @@ describe('recorder', () => {
       await flushEvents()
 
       expect(intakeRegistry.replaySegments.length).toBe(1)
-      const { segment, metadata } = intakeRegistry.sessionReplay[0]
+      const { segment, metadata, encoding, filename, mimetype } = intakeRegistry.replayRequests[0]
       expect(metadata).toEqual({
         application: { id: jasmine.stringMatching(UUID_RE) },
         creation_reason: 'init',
@@ -52,26 +52,25 @@ describe('recorder', () => {
         source: 'browser',
       })
       expect(segment).toEqual({
-        data: {
-          application: { id: metadata.application.id },
-          creation_reason: metadata.creation_reason,
-          end: Number(metadata.end),
-          has_full_snapshot: true,
-          records: jasmine.any(Array),
-          records_count: Number(metadata.records_count),
-          session: { id: metadata.session.id },
-          start: Number(metadata.start),
-          view: { id: metadata.view.id },
-          index_in_view: 0,
-          source: 'browser',
-        },
-        encoding: jasmine.any(String),
-        filename: `${metadata.session.id}-${metadata.start}`,
-        mimetype: 'application/octet-stream',
+        application: { id: metadata.application.id },
+        creation_reason: metadata.creation_reason,
+        end: Number(metadata.end),
+        has_full_snapshot: true,
+        records: jasmine.any(Array),
+        records_count: Number(metadata.records_count),
+        session: { id: metadata.session.id },
+        start: Number(metadata.start),
+        view: { id: metadata.view.id },
+        index_in_view: 0,
+        source: 'browser',
       })
-      expect(findMeta(segment.data)).toBeTruthy('have a Meta record')
-      expect(findFullSnapshot(segment.data)).toBeTruthy('have a FullSnapshot record')
-      expect(findIncrementalSnapshot(segment.data, IncrementalSource.MouseInteraction)).toBeTruthy(
+      expect(encoding).toEqual(jasmine.any(String))
+      expect(filename).toBe(`${metadata.session.id}-${metadata.start}`)
+      expect(mimetype).toBe('application/octet-stream')
+
+      expect(findMeta(segment)).toBeTruthy('have a Meta record')
+      expect(findFullSnapshot(segment)).toBeTruthy('have a FullSnapshot record')
+      expect(findIncrementalSnapshot(segment, IncrementalSource.MouseInteraction)).toBeTruthy(
         'have a IncrementalSnapshot/MouseInteraction record'
       )
     })
