@@ -570,15 +570,13 @@ describe('getRUMInternalContext', () => {
 
     it('adds a telemetry debug event when RUM has not been injected yet', () => {
       getRUMInternalContext()
-      expect(telemetrySpy).toHaveBeenCalledOnceWith(
+      expect(telemetrySpy.calls.mostRecent().args[0].telemetry).toEqual(
         jasmine.objectContaining({
-          telemetry: {
-            message: 'Logs sent before RUM is injected by the synthetics worker',
-            status: 'debug',
-            type: 'log',
-            testId: 'test-id',
-            resultId: 'result-id',
-          },
+          message: 'Logs sent before RUM is injected by the synthetics worker',
+          status: 'debug',
+          type: 'log',
+          testId: 'test-id',
+          resultId: 'result-id',
         })
       )
     })
