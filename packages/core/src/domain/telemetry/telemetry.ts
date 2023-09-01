@@ -87,7 +87,12 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
         _dd: {
           format_version: 2 as const,
         },
-        telemetry: event as any, // https://github.com/microsoft/TypeScript/issues/48457
+        telemetry: combine(event, {
+          runtime_env: {
+            isLocalFile: isLocalFile(),
+            isWorker: isWorker(),
+          },
+        }) as any, // https://github.com/microsoft/TypeScript/issues/48457
         experimental_features: arrayFrom(getExperimentalFeatures()),
       },
       contextProvider !== undefined ? contextProvider() : {}
@@ -101,6 +106,14 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
     observable,
     enabled: telemetryConfiguration.telemetryEnabled,
   }
+}
+
+function isLocalFile() {
+  return window.location.protocol === 'file:'
+}
+
+function isWorker() {
+  return 'WorkerGlobalScope' in self
 }
 
 export function startFakeTelemetry() {
