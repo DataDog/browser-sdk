@@ -23,3 +23,5 @@ export function getScrollY() {
   }
   return Math.round(scrollY)
 }
+
+export const getScrollHeight = () => Math.round((document.scrollingElement || document.documentElement).scrollHeight)

@@ -1,7 +1,7 @@
 import type { ClocksState, Duration, Observable } from '@datadog/browser-core'
 import { ONE_SECOND, elapsed, relativeNow, throttle, addEventListener, DOM_EVENT } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../../configuration'
-import { getScrollY } from '../../../../browser/scroll'
+import { getScrollHeight, getScrollY } from '../../../../browser/scroll'
 import { getViewportDimension } from '../../../../browser/viewportObservable'
 
 /** Arbitrary scroll throttle duration */
@@ -23,9 +23,15 @@ export function trackScrollMetrics(
 ) {
   let maxDepth = 0
 
-  const subscription = scrollHeightObservable.subscribe((scrollHeight) => {
-    const { scrollDepth, scrollTop } = getScrollValues()
-
+  const collectScrollValues = ({
+    scrollDepth,
+    scrollHeight,
+    scrollTop,
+  }: {
+    scrollDepth: number
+    scrollHeight: number
+    scrollTop: number
+  }) => {
     const now = relativeNow()
     const maxDepthTime = elapsed(viewStart.relative, now)
     maxDepth = scrollDepth
@@ -35,6 +41,11 @@ export function trackScrollMetrics(
       maxDepthTime,
       maxDepthScrollTop: scrollTop,
     })
+  }
+
+  const subscription = scrollHeightObservable.subscribe((scrollHeight) => {
+    const { scrollDepth, scrollTop } = getScrollValues()
+    collectScrollValues({ scrollDepth, scrollHeight, scrollTop })
   })
 
   const handleScrollEvent = throttle(
@@ -43,15 +54,7 @@ export function trackScrollMetrics(
       const { scrollHeight, scrollDepth, scrollTop } = getScrollValues()
 
       if (scrollDepth > maxDepth) {
-        const now = relativeNow()
-        const maxDepthTime = elapsed(viewStart.relative, now)
-        maxDepth = scrollDepth
-        callback({
-          maxDepth,
-          maxDepthScrollHeight: scrollHeight,
-          maxDepthTime,
-          maxDepthScrollTop: scrollTop,
-        })
+        collectScrollValues({ scrollDepth, scrollHeight, scrollTop })
       }
     },
     THROTTLE_SCROLL_DURATION,
@@ -76,7 +79,7 @@ export function computeScrollValues() {
 
   const { height } = getViewportDimension()
 
-  const scrollHeight = Math.round((document.scrollingElement || document.documentElement).scrollHeight)
+  const scrollHeight = getScrollHeight()
   const scrollDepth = Math.round(height + scrollTop)
 
   return {
