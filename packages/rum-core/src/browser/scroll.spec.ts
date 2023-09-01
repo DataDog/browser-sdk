@@ -1,6 +1,6 @@
 import { addEventListener, DOM_EVENT, isIE } from '@datadog/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
-import { getScrollX, getScrollY } from './scroll'
+import { getScrollHeight, getScrollX, getScrollY } from './scroll'
 
 function isMobileSafari12() {
   return /iPhone OS 12.* like Mac OS.* Version\/12.* Mobile.*Safari/.test(navigator.userAgent)
@@ -64,6 +64,13 @@ describe('scroll', () => {
       expect(getScrollY()).toBe(100)
       expect(getScrollX()).toBe(window.scrollX || window.pageXOffset)
       expect(getScrollY()).toBe(window.scrollY || window.pageYOffset)
+    })
+  })
+
+  describe('getScrollHeight', () => {
+    it('should return the scroll height', () => {
+      addVerticalScrollBar()
+      expect(getScrollHeight()).toBe(5000)
     })
   })
 })
