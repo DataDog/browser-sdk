@@ -21,6 +21,18 @@ function getNpmToken() {
   return getSecretKey('ci.browser-sdk.npm_token')
 }
 
+function getChromeWebStoreClientId() {
+  return getSecretKey('ci.browser-sdk.chrome_web_store.client_id')
+}
+
+function getChromeWebStoreClientSecret() {
+  return getSecretKey('ci.browser-sdk.chrome_web_store.client_secret')
+}
+
+function getChromeWebStoreRefreshToken() {
+  return getSecretKey('ci.browser-sdk.chrome_web_store.refresh_token')
+}
+
 function getSecretKey(name) {
   return command`
     aws ssm get-parameter --region=us-east-1 --with-decryption --query=Parameter.Value --out=text --name=${name}
@@ -30,6 +42,9 @@ function getSecretKey(name) {
 }
 
 module.exports = {
+  getChromeWebStoreClientId,
+  getChromeWebStoreClientSecret,
+  getChromeWebStoreRefreshToken,
   getGithubDeployKey,
   getGithubAccessToken,
   getNpmToken,

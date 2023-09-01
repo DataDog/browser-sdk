@@ -336,6 +336,17 @@ step-5_publish-npm:
     - yarn
     - node ./scripts/deploy/publish-npm.js
 
+step-6_publish-developer-extension:
+  stage: deploy
+  extends:
+    - .base-configuration
+    - .tags
+  when: manual
+  allow_failure: false
+  script:
+    - yarn
+    - node ./scripts/deploy/publish-developer-extension.js
+
 ########################################################################################################################
 # Notify
 ########################################################################################################################
