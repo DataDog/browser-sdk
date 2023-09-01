@@ -16,6 +16,10 @@
 
 ---
 
+## v4.48.1
+
+- 🐛 fix INP support detection ([#2405](https://github.com/DataDog/browser-sdk/pull/2405))
+
 ## v4.48.0
 
 - ✨ [RUM-252] optimistic worker creation ([#2377](https://github.com/DataDog/browser-sdk/pull/2377))
