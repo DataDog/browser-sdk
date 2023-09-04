@@ -12,10 +12,10 @@ import {
   tryToClone,
   isServerError,
 } from '@datadog/browser-core'
-import type { LogsConfiguration } from '../../configuration'
-import type { LifeCycle } from '../../lifeCycle'
-import { LifeCycleEventType } from '../../lifeCycle'
-import { StatusType } from '../../logger'
+import type { LogsConfiguration } from '../configuration'
+import type { LifeCycle } from '../lifeCycle'
+import { LifeCycleEventType } from '../lifeCycle'
+import { StatusType } from '../logger'
 
 export function startNetworkErrorCollection(configuration: LogsConfiguration, lifeCycle: LifeCycle) {
   if (!configuration.forwardErrorsToLogs) {

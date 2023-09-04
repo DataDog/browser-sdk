@@ -1,9 +1,9 @@
 import type { Context, ClocksState, ConsoleLog } from '@datadog/browser-core'
 import { timeStampNow, ConsoleApiName, ErrorSource, initConsoleObservable } from '@datadog/browser-core'
-import type { LogsConfiguration } from '../../configuration'
-import type { LifeCycle } from '../../lifeCycle'
-import { LifeCycleEventType } from '../../lifeCycle'
-import { StatusType } from '../../logger'
+import type { LogsConfiguration } from '../configuration'
+import type { LifeCycle } from '../lifeCycle'
+import { LifeCycleEventType } from '../lifeCycle'
+import { StatusType } from '../logger'
 
 export interface ProvidedError {
   startClocks: ClocksState

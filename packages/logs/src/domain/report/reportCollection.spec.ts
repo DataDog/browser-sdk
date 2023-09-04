@@ -1,10 +1,10 @@
 import { ErrorSource, noop } from '@datadog/browser-core'
 import { stubReportingObserver } from '@datadog/browser-core/test'
-import type { RawReportLogsEvent } from '../../../rawLogsEvent.types'
-import { validateAndBuildLogsConfiguration } from '../../configuration'
-import type { RawLogsEventCollectedData } from '../../lifeCycle'
-import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
-import { StatusType } from '../../logger'
+import type { RawReportLogsEvent } from '../../rawLogsEvent.types'
+import { validateAndBuildLogsConfiguration } from '../configuration'
+import type { RawLogsEventCollectedData } from '../lifeCycle'
+import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
+import { StatusType } from '../logger'
 import { startReportCollection } from './reportCollection'
 
 describe('reports', () => {

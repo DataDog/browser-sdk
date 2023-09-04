@@ -16,7 +16,7 @@ import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import type { Logger } from './logger'
 import { STATUSES, HandlerType } from './logger'
-import { isAuthorized } from './logsCollection/logger/loggerCollection'
+import { isAuthorized } from './logger/loggerCollection'
 import type { LogsSessionManager } from './logsSessionManager'
 
 export function startLogsAssembly(

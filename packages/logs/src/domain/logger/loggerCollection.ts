@@ -1,10 +1,10 @@
 import type { TimeStamp } from '@datadog/browser-core'
 import { includes, display, combine, ErrorSource, timeStampNow } from '@datadog/browser-core'
-import type { CommonContext } from '../../../rawLogsEvent.types'
-import type { LifeCycle } from '../../lifeCycle'
-import { LifeCycleEventType } from '../../lifeCycle'
-import type { Logger, LogsMessage } from '../../logger'
-import { StatusType, HandlerType } from '../../logger'
+import type { CommonContext } from '../../rawLogsEvent.types'
+import type { LifeCycle } from '../lifeCycle'
+import { LifeCycleEventType } from '../lifeCycle'
+import type { Logger, LogsMessage } from '../logger'
+import { StatusType, HandlerType } from '../logger'
 
 export const STATUS_PRIORITIES: { [key in StatusType]: number } = {
   [StatusType.debug]: 0,

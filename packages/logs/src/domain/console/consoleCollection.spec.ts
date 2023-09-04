@@ -1,9 +1,9 @@
 import { ErrorSource, noop } from '@datadog/browser-core'
-import type { RawConsoleLogsEvent } from '../../../rawLogsEvent.types'
-import { validateAndBuildLogsConfiguration } from '../../configuration'
-import type { RawLogsEventCollectedData } from '../../lifeCycle'
-import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
-import { StatusType } from '../../logger'
+import type { RawConsoleLogsEvent } from '../../rawLogsEvent.types'
+import { validateAndBuildLogsConfiguration } from '../configuration'
+import type { RawLogsEventCollectedData } from '../lifeCycle'
+import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
+import { StatusType } from '../logger'
 import { startConsoleCollection } from './consoleCollection'
 
 describe('console collection', () => {

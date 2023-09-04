@@ -1,9 +1,9 @@
 import { ErrorSource } from '@datadog/browser-core'
-import type { RawRuntimeLogsEvent } from '../../../rawLogsEvent.types'
-import type { LogsConfiguration } from '../../configuration'
-import { StatusType } from '../../logger'
-import type { RawLogsEventCollectedData } from '../../lifeCycle'
-import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
+import type { RawRuntimeLogsEvent } from '../../rawLogsEvent.types'
+import type { LogsConfiguration } from '../configuration'
+import { StatusType } from '../logger'
+import type { RawLogsEventCollectedData } from '../lifeCycle'
+import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { startRuntimeErrorCollection } from './runtimeErrorCollection'
 
 describe('runtime error collection', () => {
