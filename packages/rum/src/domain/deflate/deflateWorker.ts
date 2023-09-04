@@ -1,13 +1,5 @@
 import type { DeflateWorkerAction, DeflateWorkerResponse } from '@datadog/browser-core'
-import {
-  addTelemetryError,
-  display,
-  includes,
-  addEventListener,
-  setTimeout,
-  ONE_SECOND,
-  noop,
-} from '@datadog/browser-core'
+import { addTelemetryError, display, includes, addEventListener, setTimeout, ONE_SECOND } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 
 export const INITIALIZATION_TIME_OUT_DELAY = 10 * ONE_SECOND
@@ -71,14 +63,16 @@ export function startDeflateWorker(
   switch (state.status) {
     case DeflateWorkerStatus.Loading:
       state.initializationFailureCallbacks.push(onInitializationFailure)
-      return { worker: state.worker, stop: state.stop }
+      return state.worker
     case DeflateWorkerStatus.Initialized:
-      return { worker: state.worker, stop: state.stop }
+      return state.worker
   }
-  return { worker: undefined, stop: noop }
 }
 
 export function resetDeflateWorkerState() {
+  if (state.status === DeflateWorkerStatus.Initialized || state.status === DeflateWorkerStatus.Loading) {
+    state.stop()
+  }
   state = { status: DeflateWorkerStatus.Nil }
 }
 

@@ -9,8 +9,12 @@ import { createRumSessionManagerMock, setup } from '../../../rum-core/test'
 
 import { recordsPerFullSnapshot, readReplayPayload } from '../../test'
 import { setSegmentBytesLimit } from '../domain/segmentCollection'
-import type { DeflateWorker } from '../domain/deflate'
-import { DeflateEncoderStreamId, startDeflateWorker, createDeflateEncoder } from '../domain/deflate'
+import {
+  DeflateEncoderStreamId,
+  startDeflateWorker,
+  createDeflateEncoder,
+  resetDeflateWorkerState,
+} from '../domain/deflate'
 
 import { RecordType } from '../types'
 import { resetReplayStats } from '../domain/replayStats'
@@ -28,7 +32,6 @@ describe('startRecording', () => {
   let stopRecording: () => void
   let clock: Clock | undefined
   let configuration: RumConfiguration
-  let cleanupWorker: () => void
 
   beforeEach(() => {
     if (isIE()) {
@@ -44,8 +47,7 @@ describe('startRecording', () => {
     textField = document.createElement('input')
     sandbox.appendChild(textField)
 
-    let worker: DeflateWorker | undefined
-    ;({ worker, stop: cleanupWorker } = startDeflateWorker(configuration, noop))
+    const worker = startDeflateWorker(configuration, noop)
 
     setupBuilder = setup()
       .withViewContexts({
@@ -88,7 +90,7 @@ describe('startRecording', () => {
     setSegmentBytesLimit()
     setupBuilder.cleanup()
     clock?.cleanup()
-    cleanupWorker()
+    resetDeflateWorkerState()
   })
 
   it('sends recorded segments with valid context', async () => {

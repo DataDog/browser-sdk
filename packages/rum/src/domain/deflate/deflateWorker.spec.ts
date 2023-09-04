@@ -28,7 +28,7 @@ describe('startDeflateWorker', () => {
   })
 
   it('creates a deflate worker', () => {
-    const { worker } = startDeflateWorker(configuration, onInitializationFailureSpy, createDeflateWorkerSpy)
+    const worker = startDeflateWorker(configuration, onInitializationFailureSpy, createDeflateWorkerSpy)
     expect(createDeflateWorkerSpy).toHaveBeenCalledTimes(1)
     expect(worker).toBe(mockWorker)
 
@@ -37,17 +37,17 @@ describe('startDeflateWorker', () => {
   })
 
   it('uses the previously created worker during loading', () => {
-    const { worker: worker1 } = startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
-    const { worker: worker2 } = startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
+    const worker1 = startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
+    const worker2 = startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
     expect(createDeflateWorkerSpy).toHaveBeenCalledTimes(1)
     expect(worker1).toBe(worker2)
   })
 
   it('uses the previously created worker once initialized', () => {
-    const { worker: worker1 } = startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
+    const worker1 = startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
     mockWorker.processAllMessages()
 
-    const { worker: worker2 } = startDeflateWorker(configuration, onInitializationFailureSpy, createDeflateWorkerSpy)
+    const worker2 = startDeflateWorker(configuration, onInitializationFailureSpy, createDeflateWorkerSpy)
     expect(createDeflateWorkerSpy).toHaveBeenCalledTimes(1)
     expect(worker1).toBe(worker2)
 
@@ -80,7 +80,7 @@ describe('startDeflateWorker', () => {
 
     describe('Chrome and Safari behavior: exception during worker creation', () => {
       it('returns undefined when the worker creation throws an exception', () => {
-        const { worker } = startDeflateWorker(configuration, noop, () => {
+        const worker = startDeflateWorker(configuration, noop, () => {
           throw CSP_ERROR
         })
         expect(worker).toBeUndefined()
@@ -130,7 +130,7 @@ describe('startDeflateWorker', () => {
         startDeflateWorker(configuration, noop, createDeflateWorkerSpy)
         mockWorker.dispatchErrorEvent()
 
-        const { worker } = startDeflateWorker(configuration, onInitializationFailureSpy, createDeflateWorkerSpy)
+        const worker = startDeflateWorker(configuration, onInitializationFailureSpy, createDeflateWorkerSpy)
 
         expect(worker).toBeUndefined()
         expect(onInitializationFailureSpy).not.toHaveBeenCalled()
