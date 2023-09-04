@@ -1,5 +1,5 @@
 import { createNewEvent } from '@datadog/browser-core/test'
-import type { RumConfiguration } from '../../configuration'
+import type { RumConfiguration } from '../configuration'
 import type { ActionEventsHooks } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 

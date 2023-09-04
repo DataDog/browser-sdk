@@ -1,5 +1,5 @@
 import { addEventListener, DOM_EVENT } from '@datadog/browser-core'
-import type { RumConfiguration } from '../../configuration'
+import type { RumConfiguration } from '../configuration'
 
 export type MouseEventOnElement = PointerEvent & { target: Element }
 

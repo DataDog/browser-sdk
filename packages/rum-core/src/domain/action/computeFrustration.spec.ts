@@ -1,9 +1,9 @@
 import { ONE_SECOND } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
-import { FrustrationType } from '../../../rawRumEvent.types'
-import type { FakeClick, IsolatedDom } from '../../../../test'
-import { createFakeClick, createIsolatedDom } from '../../../../test'
+import { FrustrationType } from '../../rawRumEvent.types'
+import type { FakeClick, IsolatedDom } from '../../../test'
+import { createFakeClick, createIsolatedDom } from '../../../test'
 import { computeFrustration, isRage, isDead } from './computeFrustration'
 
 describe('computeFrustration', () => {

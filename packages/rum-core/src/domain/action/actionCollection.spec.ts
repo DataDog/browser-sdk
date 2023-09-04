@@ -1,9 +1,9 @@
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
 import { createNewEvent } from '@datadog/browser-core/test'
-import type { TestSetupBuilder } from '../../../../test'
-import { setup } from '../../../../test'
-import { RumEventType, ActionType } from '../../../rawRumEvent.types'
-import { LifeCycleEventType } from '../../lifeCycle'
+import type { TestSetupBuilder } from '../../../test'
+import { setup } from '../../../test'
+import { RumEventType, ActionType } from '../../rawRumEvent.types'
+import { LifeCycleEventType } from '../lifeCycle'
 import { startActionCollection } from './actionCollection'
 
 describe('actionCollection', () => {

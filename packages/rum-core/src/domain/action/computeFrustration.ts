@@ -1,5 +1,5 @@
 import { elementMatches, ONE_SECOND } from '@datadog/browser-core'
-import { FrustrationType } from '../../../rawRumEvent.types'
+import { FrustrationType } from '../../rawRumEvent.types'
 import type { Click } from './trackClickActions'
 
 const MIN_CLICKS_PER_SECOND_TO_CONSIDER_RAGE = 3
