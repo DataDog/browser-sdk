@@ -94,11 +94,11 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
         },
         telemetry: combine(event, {
           runtime_env: runtimeEnvInfo,
-        }) as any, // https://github.com/microsoft/TypeScript/issues/48457
+        }),
         experimental_features: arrayFrom(getExperimentalFeatures()),
       },
       contextProvider !== undefined ? contextProvider() : {}
-    )
+    ) as TelemetryEvent & Context
   }
 
   return {
