@@ -82,7 +82,6 @@ describe('telemetry', () => {
   })
 
   it('should contains runtime env', () => {
-    addExperimentalFeatures(['foo' as ExperimentalFeature])
     const { notifySpy } = startAndSpyTelemetry()
     callMonitored(() => {
       throw new Error('message')
