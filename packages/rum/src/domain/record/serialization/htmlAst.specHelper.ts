@@ -53,7 +53,7 @@ export const HTML = `
 <head>
     <link href="https://public.com/path/nested?query=param#hash" rel="stylesheet">
     <style>
-      .example {content: "anything";}
+      .example {color: red;}
     </style>
     <script>private</script>
     <meta>
@@ -142,14 +142,8 @@ export const AST_MASK = {
             {
               type: 2,
               tagName: 'style',
-              attributes: {},
-              childNodes: [
-                {
-                  type: 3,
-                  textContent: '\n      .example {content: "anything";}\n    ',
-                  isStyle: true,
-                },
-              ],
+              attributes: { _cssText: '.example { color: red; }' },
+              childNodes: [],
             },
             {
               type: 2,
@@ -455,14 +449,8 @@ export const AST_MASK_USER_INPUT = {
             {
               type: 2,
               tagName: 'style',
-              attributes: {},
-              childNodes: [
-                {
-                  type: 3,
-                  textContent: '\n      .example {content: "anything";}\n    ',
-                  isStyle: true,
-                },
-              ],
+              attributes: { _cssText: '.example { color: red; }' },
+              childNodes: [],
             },
             {
               type: 2,
@@ -768,14 +756,8 @@ export const AST_ALLOW = {
             {
               type: 2,
               tagName: 'style',
-              attributes: {},
-              childNodes: [
-                {
-                  type: 3,
-                  textContent: '\n      .example {content: "anything";}\n    ',
-                  isStyle: true,
-                },
-              ],
+              attributes: { _cssText: '.example { color: red; }' },
+              childNodes: [],
             },
             {
               type: 2,
