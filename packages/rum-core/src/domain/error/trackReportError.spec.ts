@@ -2,7 +2,7 @@ import type { RawError, Subscription } from '@datadog/browser-core'
 import { ErrorHandling, ErrorSource, Observable, clocksNow } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, stubReportingObserver } from '@datadog/browser-core/test'
-import type { RumConfiguration } from '../../configuration'
+import type { RumConfiguration } from '../configuration'
 import { trackReportError } from './trackReportError'
 
 describe('trackReportError', () => {

@@ -11,14 +11,14 @@ import {
   trackRuntimeError,
   NonErrorPrefix,
 } from '@datadog/browser-core'
-import type { RumConfiguration } from '../../configuration'
-import type { RawRumErrorEvent } from '../../../rawRumEvent.types'
-import { RumEventType } from '../../../rawRumEvent.types'
-import type { LifeCycle, RawRumEventCollectedData } from '../../lifeCycle'
-import { LifeCycleEventType } from '../../lifeCycle'
-import type { FeatureFlagContexts } from '../../contexts/featureFlagContext'
-import type { CommonContext } from '../../contexts/commonContext'
-import type { PageStateHistory } from '../../contexts/pageStateHistory'
+import type { RumConfiguration } from '../configuration'
+import type { RawRumErrorEvent } from '../../rawRumEvent.types'
+import { RumEventType } from '../../rawRumEvent.types'
+import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
+import { LifeCycleEventType } from '../lifeCycle'
+import type { FeatureFlagContexts } from '../contexts/featureFlagContext'
+import type { CommonContext } from '../contexts/commonContext'
+import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { trackConsoleError } from './trackConsoleError'
 import { trackReportError } from './trackReportError'
 
