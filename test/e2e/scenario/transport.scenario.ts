@@ -1,0 +1,48 @@
+import { ExperimentalFeature } from '@datadog/browser-core'
+import { createTest, flushEvents } from '../lib/framework'
+import { withBrowserLogs } from '../lib/helpers/browser'
+
+describe('transport', () => {
+  describe('data compression', () => {
+    createTest('send RUM data compressed')
+      .withRum({
+        enableExperimentalFeatures: [ExperimentalFeature.COMPRESS_BATCH],
+      })
+      .run(async ({ intakeRegistry }) => {
+        await flushEvents()
+
+        expect(intakeRegistry.rumRequests.length).toBe(2)
+
+        const plainRequest = intakeRegistry.rumRequests.find((request) => request.encoding === null)
+        const deflateRequest = intakeRegistry.rumRequests.find((request) => request.encoding === 'deflate')
+
+        // The last view update should be sent without compression
+        expect(plainRequest!.events).toEqual([
+          jasmine.objectContaining({
+            type: 'view',
+          }),
+        ])
+
+        // Other data should be sent encoded
+        expect(deflateRequest!.events.length).toBeGreaterThan(0)
+      })
+
+    createTest("displays a message if the worker can't be started")
+      .withRum({
+        enableExperimentalFeatures: [ExperimentalFeature.COMPRESS_BATCH],
+      })
+      .withBasePath('/no-blob-worker-csp')
+      .run(async ({ intakeRegistry }) => {
+        await flushEvents()
+
+        expect(intakeRegistry.rumRequests.length).toBe(0)
+
+        await withBrowserLogs((logs) => {
+          const failedToStartLog = logs.find((log) => log.message.includes('Datadog RUM failed to start'))
+          const cspDocLog = logs.find((log) => log.message.includes('Please make sure CSP'))
+          expect(failedToStartLog).withContext("'Failed to start' log").toBeTruthy()
+          expect(cspDocLog).withContext("'CSP doc' log").toBeTruthy()
+        })
+      })
+  })
+})
