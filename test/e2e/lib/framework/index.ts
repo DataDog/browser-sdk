@@ -1,6 +1,6 @@
 export { createTest } from './createTest'
 export { bundleSetup, html } from './pageSetups'
-export { EventRegistry } from './eventsRegistry'
+export { IntakeRegistry } from './intakeRegistry'
 export { getTestServers, waitForServersIdle } from './httpServers'
 export { flushEvents } from './flushEvents'
 export { waitForRequests } from './waitForRequests'

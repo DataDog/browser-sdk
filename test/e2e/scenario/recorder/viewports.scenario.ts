@@ -1,11 +1,11 @@
 import type { ViewportResizeData, ScrollData } from '@datadog/browser-rum/cjs/types'
 import { IncrementalSource } from '@datadog/browser-rum/cjs/types'
-import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 
 import { findAllIncrementalSnapshots, findAllVisualViewports } from '@datadog/browser-rum/test'
-import type { EventRegistry } from '../../lib/framework'
+import type { IntakeRegistry } from '../../lib/framework'
 import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
 import { browserExecute, getBrowserName, getPlatformName } from '../../lib/helpers/browser'
+import { initRumAndStartRecording } from '../../lib/helpers/replay'
 
 const NAVBAR_HEIGHT_CHANGE_UPPER_BOUND = 30
 const VIEWPORT_META_TAGS = `
@@ -29,7 +29,7 @@ describe('recorder', () => {
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
-      .run(async ({ serverEvents }) => {
+      .run(async ({ intakeRegistry }) => {
         await buildScrollablePage()
 
         const { innerWidth, innerHeight } = await getWindowInnerDimensions()
@@ -40,7 +40,7 @@ describe('recorder', () => {
         })
 
         const lastViewportResizeData = (
-          await getLastRecord(serverEvents, (segment) =>
+          await getLastRecord(intakeRegistry, (segment) =>
             findAllIncrementalSnapshots(segment, IncrementalSource.ViewportResize)
           )
         ).data as ViewportResizeData
@@ -60,7 +60,7 @@ describe('recorder', () => {
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
-      .run(async ({ serverEvents }) => {
+      .run(async ({ intakeRegistry }) => {
         const VISUAL_SCROLL_DOWN_PX = 60
         const LAYOUT_SCROLL_AMOUNT = 20
 
@@ -81,7 +81,9 @@ describe('recorder', () => {
         const { scrollX: nextScrollX, scrollY: nextScrollY } = await getWindowScroll()
 
         const lastScrollData = (
-          await getLastRecord(serverEvents, (segment) => findAllIncrementalSnapshots(segment, IncrementalSource.Scroll))
+          await getLastRecord(intakeRegistry, (segment) =>
+            findAllIncrementalSnapshots(segment, IncrementalSource.Scroll)
+          )
         ).data as ScrollData
 
         // Height changes because URL address bar changes due to scrolling
@@ -102,13 +104,13 @@ describe('recorder', () => {
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
-      .run(async ({ serverEvents }) => {
+      .run(async ({ intakeRegistry }) => {
         const VISUAL_SCROLL_DOWN_PX = 100
         await buildScrollablePage()
         await performSignificantZoom()
         await visualScrollVerticallyDown(VISUAL_SCROLL_DOWN_PX)
         const nextVisualViewportDimension = await getVisualViewport()
-        const lastVisualViewportRecord = await getLastRecord(serverEvents, findAllVisualViewports)
+        const lastVisualViewportRecord = await getLastRecord(intakeRegistry, findAllVisualViewports)
         expectToBeNearby(lastVisualViewportRecord.data.pageTop, nextVisualViewportDimension.pageTop)
       })
 
@@ -117,23 +119,14 @@ describe('recorder', () => {
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(html`${VIEWPORT_META_TAGS}`)
-      .run(async ({ serverEvents }) => {
+      .run(async ({ intakeRegistry }) => {
         await performSignificantZoom()
         const nextVisualViewportDimension = await getVisualViewport()
-        const lastVisualViewportRecord = await getLastRecord(serverEvents, findAllVisualViewports)
+        const lastVisualViewportRecord = await getLastRecord(intakeRegistry, findAllVisualViewports)
         expectToBeNearby(lastVisualViewportRecord.data.scale, nextVisualViewportDimension.scale)
       })
   })
 })
-
-function getLastSegment(serverEvents: EventRegistry) {
-  return serverEvents.sessionReplay[serverEvents.sessionReplay.length - 1].segment.data
-}
-
-function initRumAndStartRecording(initConfiguration: RumInitConfiguration) {
-  window.DD_RUM!.init(initConfiguration)
-  window.DD_RUM!.startSessionReplayRecording()
-}
 
 const isGestureUnsupported = () =>
   /firefox|safari|edge/.test(getBrowserName()) || /windows|linux/.test(getPlatformName())
@@ -297,9 +290,9 @@ async function getScrollbarThicknessCorrection(): Promise<number> {
   return scrollbarThickness
 }
 
-async function getLastRecord<T>(serverEvents: EventRegistry, filterMethod: (segment: any) => T[]): Promise<T> {
+async function getLastRecord<T>(intakeRegistry: IntakeRegistry, filterMethod: (segment: any) => T[]): Promise<T> {
   await flushEvents()
-  const segment = getLastSegment(serverEvents)
+  const segment = intakeRegistry.replaySegments.at(-1)
   const foundRecords = filterMethod(segment)
   return foundRecords[foundRecords.length - 1]
 }
