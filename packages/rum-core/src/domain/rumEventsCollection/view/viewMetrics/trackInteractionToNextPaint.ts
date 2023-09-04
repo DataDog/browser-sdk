@@ -110,5 +110,9 @@ export function trackViewInteractionCount(viewLoadingType: ViewLoadingType) {
 }
 
 export function isInteractionToNextPaintSupported() {
-  return supportPerformanceTimingEvent('event') && 'interactionId' in PerformanceEventTiming.prototype
+  return (
+    supportPerformanceTimingEvent('event') &&
+    window.PerformanceEventTiming &&
+    'interactionId' in PerformanceEventTiming.prototype
+  )
 }

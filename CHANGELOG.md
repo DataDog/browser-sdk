@@ -16,6 +16,19 @@
 
 ---
 
+## v4.48.1
+
+- 🐛 fix INP support detection ([#2405](https://github.com/DataDog/browser-sdk/pull/2405))
+
+## v4.48.0
+
+- ✨ [RUM-252] optimistic worker creation ([#2377](https://github.com/DataDog/browser-sdk/pull/2377))
+- 🐛 do not ignore @import rules pointing to inaccessible stylesheets ([#2398](https://github.com/DataDog/browser-sdk/pull/2398))
+- 🎨 [RUM-262] Move view metrics in dedicated files ([#2386](https://github.com/DataDog/browser-sdk/pull/2386))
+- ♻️ [RUM-253] refactor batch creation ([#2390](https://github.com/DataDog/browser-sdk/pull/2390))
+- ⚗️ [RUM-257] Collect INP ([#2355](https://github.com/DataDog/browser-sdk/pull/2355))
+- ♻️ [RUM-250] introduce a DeflateEncoder ([#2376](https://github.com/DataDog/browser-sdk/pull/2376))
+
 ## v4.47.0
 
 - ✨ [RUM-233] add workerUrl initialization parameter ([#2354](https://github.com/DataDog/browser-sdk/pull/2354))
