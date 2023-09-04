@@ -7,16 +7,16 @@ import {
   ResourceType,
   ExperimentalFeature,
 } from '@datadog/browser-core'
-import type { RumFetchResourceEventDomainContext } from '../../../domainContext.types'
-import { createResourceEntry, setup, createRumSessionManagerMock } from '../../../../test'
-import type { TestSetupBuilder } from '../../../../test'
-import type { RawRumResourceEvent } from '../../../rawRumEvent.types'
-import { RumEventType } from '../../../rawRumEvent.types'
-import { LifeCycleEventType } from '../../lifeCycle'
-import type { RequestCompleteEvent } from '../../requestCollection'
-import { TraceIdentifier } from '../../tracing/tracer'
-import { validateAndBuildRumConfiguration } from '../../configuration'
-import { PageState } from '../../contexts/pageStateHistory'
+import type { RumFetchResourceEventDomainContext } from '../../domainContext.types'
+import { createResourceEntry, setup, createRumSessionManagerMock } from '../../../test'
+import type { TestSetupBuilder } from '../../../test'
+import type { RawRumResourceEvent } from '../../rawRumEvent.types'
+import { RumEventType } from '../../rawRumEvent.types'
+import { LifeCycleEventType } from '../lifeCycle'
+import type { RequestCompleteEvent } from '../requestCollection'
+import { TraceIdentifier } from '../tracing/tracer'
+import { validateAndBuildRumConfiguration } from '../configuration'
+import { PageState } from '../contexts/pageStateHistory'
 import { startResourceCollection } from './resourceCollection'
 
 describe('resourceCollection', () => {
