@@ -34,7 +34,11 @@ describe('recorder', () => {
       await flushEvents()
 
       expect(intakeRegistry.replaySegments.length).toBe(1)
-      const { segment, metadata, encoding, filename, mimetype } = intakeRegistry.replayRequests[0]
+      const {
+        segment,
+        metadata,
+        segmentFile: { encoding, filename, mimetype },
+      } = intakeRegistry.replayRequests[0]
       expect(metadata).toEqual({
         application: { id: jasmine.stringMatching(UUID_RE) },
         creation_reason: 'init',

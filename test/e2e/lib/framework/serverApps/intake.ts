@@ -108,11 +108,12 @@ function readReplayIntakeRequest(req: express.Request): Promise<ReplayIntakeRequ
 
     req.busboy.on('finish', () => {
       Promise.all([segmentPromise, metadataPromise])
-        .then(([segmentEntry, metadata]) => ({
+        .then(([{ segment, ...segmentFile }, metadata]) => ({
           intakeType: 'replay' as const,
           isBridge: false as const,
+          segmentFile,
           metadata,
-          ...segmentEntry,
+          segment,
         }))
         .then(resolve, reject)
     })
