@@ -25,7 +25,7 @@ import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from '../dom
 import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
 import type { RumEvent, RumViewEvent } from '../rumEvent.types'
 import type { LocationChange } from '../browser/locationChangeObservable'
-import { startLongTaskCollection } from '../domain/rumEventsCollection/longTask/longTaskCollection'
+import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
 import type { RumSessionManager } from '..'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import { RumEventType } from '../rawRumEvent.types'

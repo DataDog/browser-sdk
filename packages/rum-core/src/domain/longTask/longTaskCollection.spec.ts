@@ -1,9 +1,9 @@
 import type { Duration, RelativeTime, ServerDuration } from '@datadog/browser-core'
-import type { RumSessionManagerMock, TestSetupBuilder } from '../../../../test'
-import { createRumSessionManagerMock, setup } from '../../../../test'
-import type { RumPerformanceEntry, RumPerformanceLongTaskTiming } from '../../../browser/performanceCollection'
-import { RumEventType } from '../../../rawRumEvent.types'
-import { LifeCycleEventType } from '../../lifeCycle'
+import type { RumSessionManagerMock, TestSetupBuilder } from '../../../test'
+import { createRumSessionManagerMock, setup } from '../../../test'
+import type { RumPerformanceEntry, RumPerformanceLongTaskTiming } from '../../browser/performanceCollection'
+import { RumEventType } from '../../rawRumEvent.types'
+import { LifeCycleEventType } from '../lifeCycle'
 import { startLongTaskCollection } from './longTaskCollection'
 
 const LONG_TASK: RumPerformanceLongTaskTiming = {
