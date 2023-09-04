@@ -1,5 +1,4 @@
 import { browserExecute, flushBrowserLogs } from '../lib/helpers/browser'
-import type { IntakeRegistry } from '../lib/framework'
 import { createTest, flushEvents, html } from '../lib/framework'
 
 describe('bridge present', () => {
@@ -21,7 +20,7 @@ describe('bridge present', () => {
       await flushEvents()
 
       expect(intakeRegistry.rumActionEvents.length).toBe(1)
-      expectAllRequestsComeFromBridge(intakeRegistry)
+      expect(intakeRegistry.hasOnlyBridgeRequests).toBe(true)
     })
 
   createTest('send error')
@@ -36,7 +35,7 @@ describe('bridge present', () => {
       await flushEvents()
 
       expect(intakeRegistry.rumErrorEvents.length).toBe(1)
-      expectAllRequestsComeFromBridge(intakeRegistry)
+      expect(intakeRegistry.hasOnlyBridgeRequests).toBe(true)
     })
 
   createTest('send resource')
@@ -46,7 +45,7 @@ describe('bridge present', () => {
       await flushEvents()
 
       expect(intakeRegistry.rumResourceEvents.length).toBeGreaterThan(0)
-      expectAllRequestsComeFromBridge(intakeRegistry)
+      expect(intakeRegistry.hasOnlyBridgeRequests).toBe(true)
     })
 
   createTest('send view')
@@ -56,7 +55,7 @@ describe('bridge present', () => {
       await flushEvents()
 
       expect(intakeRegistry.rumViewEvents.length).toBeGreaterThan(0)
-      expectAllRequestsComeFromBridge(intakeRegistry)
+      expect(intakeRegistry.hasOnlyBridgeRequests).toBe(true)
     })
 
   createTest('forward telemetry to the bridge')
@@ -74,7 +73,7 @@ describe('bridge present', () => {
 
       await flushEvents()
       expect(intakeRegistry.telemetryErrorEvents.length).toBe(1)
-      expectAllRequestsComeFromBridge(intakeRegistry)
+      expect(intakeRegistry.hasOnlyBridgeRequests).toBe(true)
       intakeRegistry.empty()
     })
 
@@ -88,10 +87,6 @@ describe('bridge present', () => {
       await flushEvents()
 
       expect(intakeRegistry.logsEvents.length).toBe(1)
-      expectAllRequestsComeFromBridge(intakeRegistry)
+      expect(intakeRegistry.hasOnlyBridgeRequests).toBe(true)
     })
 })
-
-function expectAllRequestsComeFromBridge(intakeRegistry: IntakeRegistry) {
-  expect(intakeRegistry.requests.every((request) => request.isBridge)).toBe(true)
-}

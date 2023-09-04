@@ -46,6 +46,10 @@ export class IntakeRegistry {
     this.requests.length = 0
   }
 
+  get hasOnlyBridgeRequests() {
+    return this.requests.every((request) => request.isBridge)
+  }
+
   //
   // Logs
   //
