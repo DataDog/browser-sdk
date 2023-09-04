@@ -21,9 +21,11 @@ export type ReplayIntakeRequest = {
   isBridge: false
   segment: BrowserSegment
   metadata: BrowserSegmentMetadataAndSegmentSizes
-  filename: string
-  encoding: string
-  mimetype: string
+  segmentFile: {
+    filename: string
+    encoding: string
+    mimetype: string
+  }
 }
 
 export type IntakeRequest = LogsIntakeRequest | RumIntakeRequest | ReplayIntakeRequest
