@@ -4,6 +4,7 @@ import type { RumConfiguration } from '../../../configuration'
 import type { LifeCycle } from '../../../lifeCycle'
 import { LifeCycleEventType } from '../../../lifeCycle'
 import type { RumFirstInputTiming } from '../../../../browser/performanceCollection'
+import type { WebVitalTelemetryDebug } from '../startWebVitalTelemetryDebug'
 import { trackFirstHidden } from './trackFirstHidden'
 
 /**
@@ -18,15 +19,8 @@ import { trackFirstHidden } from './trackFirstHidden'
 export function trackFirstInputTimings(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
-  callback: ({
-    firstInputDelay,
-    firstInputTime,
-    firstInputTarget,
-  }: {
-    firstInputDelay: Duration
-    firstInputTime: RelativeTime
-    firstInputTarget: Node | undefined
-  }) => void
+  webVitalTelemetryDebug: WebVitalTelemetryDebug,
+  callback: ({ firstInputDelay, firstInputTime }: { firstInputDelay: Duration; firstInputTime: RelativeTime }) => void
 ) {
   const firstHidden = trackFirstHidden(configuration)
 
@@ -38,12 +32,14 @@ export function trackFirstInputTimings(
     )
     if (firstInputEntry) {
       const firstInputDelay = elapsed(firstInputEntry.startTime, firstInputEntry.processingStart)
+
+      webVitalTelemetryDebug.addWebVitalTelemetryDebug('FID', firstInputEntry.target, firstInputEntry.startTime)
+
       callback({
         // Ensure firstInputDelay to be positive, see
         // https://bugs.chromium.org/p/chromium/issues/detail?id=1185815
         firstInputDelay: firstInputDelay >= 0 ? firstInputDelay : (0 as Duration),
         firstInputTime: firstInputEntry.startTime,
-        firstInputTarget: firstInputEntry.target,
       })
     }
   })

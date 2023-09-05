@@ -1,4 +1,4 @@
-import type { Duration, RelativeTime } from '@datadog/browser-core'
+import { noop, type Duration, type RelativeTime } from '@datadog/browser-core'
 import { restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../../../../test'
 import { setup } from '../../../../../test'
@@ -11,21 +11,16 @@ import { trackFirstInputTimings } from './trackFirstInputTimings'
 describe('firstInputTimings', () => {
   let setupBuilder: TestSetupBuilder
   let fitCallback: jasmine.Spy<
-    ({
-      firstInputDelay,
-      firstInputTime,
-    }: {
-      firstInputDelay: number
-      firstInputTime: number
-      firstInputTarget: Node | undefined
-    }) => void
+    ({ firstInputDelay, firstInputTime }: { firstInputDelay: number; firstInputTime: number }) => void
   >
   let configuration: RumConfiguration
 
   beforeEach(() => {
     configuration = {} as RumConfiguration
     fitCallback = jasmine.createSpy()
-    setupBuilder = setup().beforeBuild(({ lifeCycle }) => trackFirstInputTimings(lifeCycle, configuration, fitCallback))
+    setupBuilder = setup().beforeBuild(({ lifeCycle }) =>
+      trackFirstInputTimings(lifeCycle, configuration, { addWebVitalTelemetryDebug: noop }, fitCallback)
+    )
     resetFirstHidden()
   })
 
@@ -45,7 +40,6 @@ describe('firstInputTimings', () => {
     expect(fitCallback).toHaveBeenCalledWith({
       firstInputDelay: 100,
       firstInputTime: 1000,
-      firstInputTarget: jasmine.any(Node),
     })
   })
 
@@ -71,6 +65,6 @@ describe('firstInputTimings', () => {
     ])
 
     expect(fitCallback).toHaveBeenCalledTimes(1)
-    expect(fitCallback).toHaveBeenCalledWith({ firstInputDelay: 0, firstInputTime: 1000, firstInputTarget: undefined })
+    expect(fitCallback).toHaveBeenCalledWith({ firstInputDelay: 0, firstInputTime: 1000 })
   })
 })

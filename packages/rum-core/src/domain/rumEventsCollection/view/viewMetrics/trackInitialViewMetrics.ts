@@ -52,10 +52,9 @@ export function trackInitialViewMetrics(
   const { stop: stopLCPTracking } = trackLargestContentfulPaint(
     lifeCycle,
     configuration,
+    webVitalTelemetryDebug,
     window,
-    (largestContentfulPaint, lcpElement) => {
-      webVitalTelemetryDebug.addWebVitalTelemetryDebug('LCP', lcpElement, largestContentfulPaint)
-
+    (largestContentfulPaint) => {
       setMetrics({
         largestContentfulPaint,
       })
@@ -65,9 +64,8 @@ export function trackInitialViewMetrics(
   const { stop: stopFIDTracking } = trackFirstInputTimings(
     lifeCycle,
     configuration,
-    ({ firstInputDelay, firstInputTime, firstInputTarget }) => {
-      webVitalTelemetryDebug.addWebVitalTelemetryDebug('FID', firstInputTarget, firstInputTime)
-
+    webVitalTelemetryDebug,
+    ({ firstInputDelay, firstInputTime }) => {
       setMetrics({
         firstInputDelay,
         firstInputTime,

@@ -61,18 +61,13 @@ export function trackCommonViewMetrics(
   )
 
   let stopCLSTracking: () => void
-  let clsAttributionCollected = false
   if (isLayoutShiftSupported()) {
     commonViewMetrics.cumulativeLayoutShift = 0
     ;({ stop: stopCLSTracking } = trackCumulativeLayoutShift(
       lifeCycle,
-      (cumulativeLayoutShift, largestLayoutShiftNode, largestLayoutShiftTime) => {
+      webVitalTelemetryDebug,
+      (cumulativeLayoutShift) => {
         commonViewMetrics.cumulativeLayoutShift = cumulativeLayoutShift
-
-        if (!clsAttributionCollected) {
-          clsAttributionCollected = true
-          webVitalTelemetryDebug.addWebVitalTelemetryDebug('CLS', largestLayoutShiftNode, largestLayoutShiftTime)
-        }
         scheduleViewUpdate()
       }
     ))

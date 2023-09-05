@@ -3,6 +3,7 @@ import { DOM_EVENT, ONE_MINUTE, addEventListeners, findLast } from '@datadog/bro
 import { LifeCycleEventType, type LifeCycle } from '../../../lifeCycle'
 import type { RumConfiguration } from '../../../configuration'
 import type { RumLargestContentfulPaintTiming } from '../../../../browser/performanceCollection'
+import type { WebVitalTelemetryDebug } from '../startWebVitalTelemetryDebug'
 import { trackFirstHidden } from './trackFirstHidden'
 
 // Discard LCP timings above a certain delay to avoid incorrect data
@@ -18,8 +19,9 @@ export const LCP_MAXIMUM_DELAY = 10 * ONE_MINUTE
 export function trackLargestContentfulPaint(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
+  webVitalTelemetryDebug: WebVitalTelemetryDebug,
   eventTarget: Window,
-  callback: (lcpTiming: RelativeTime, lcpElement?: Element) => void
+  callback: (lcpTiming: RelativeTime) => void
 ) {
   const firstHidden = trackFirstHidden(configuration)
 
@@ -49,7 +51,9 @@ export function trackLargestContentfulPaint(
           entry.startTime < LCP_MAXIMUM_DELAY
       )
       if (lcpEntry) {
-        callback(lcpEntry.startTime, lcpEntry.element)
+        webVitalTelemetryDebug.addWebVitalTelemetryDebug('LCP', lcpEntry.element, lcpEntry.startTime)
+
+        callback(lcpEntry.startTime)
       }
     }
   )

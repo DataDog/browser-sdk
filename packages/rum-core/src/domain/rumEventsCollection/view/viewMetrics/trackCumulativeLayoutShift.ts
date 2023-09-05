@@ -2,6 +2,7 @@ import { round, type RelativeTime, find, ONE_SECOND } from '@datadog/browser-cor
 import type { LifeCycle } from '../../../lifeCycle'
 import { LifeCycleEventType } from '../../../lifeCycle'
 import { supportPerformanceTimingEvent, type RumLayoutShiftTiming } from '../../../../browser/performanceCollection'
+import type { WebVitalTelemetryDebug } from '../startWebVitalTelemetryDebug'
 
 /**
  * Track the cumulative layout shifts (CLS).
@@ -22,11 +23,14 @@ import { supportPerformanceTimingEvent, type RumLayoutShiftTiming } from '../../
  */
 export function trackCumulativeLayoutShift(
   lifeCycle: LifeCycle,
-  callback: (layoutShift: number, largestShiftNode: Node | undefined, largestShiftTime: RelativeTime) => void
+  webVitalTelemetryDebug: WebVitalTelemetryDebug,
+  callback: (layoutShift: number) => void
 ) {
   let maxClsValue = 0
 
   const window = slidingSessionWindow()
+  let clsAttributionCollected = false
+
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
     for (const entry of entries) {
       if (entry.entryType === 'layout-shift' && !entry.hadRecentInput) {
@@ -34,7 +38,18 @@ export function trackCumulativeLayoutShift(
 
         if (window.value() > maxClsValue) {
           maxClsValue = window.value()
-          callback(round(maxClsValue, 4), window.largestLayoutShiftNode(), window.largestLayoutShiftTime())
+          const cls = round(maxClsValue, 4)
+
+          if (!clsAttributionCollected) {
+            clsAttributionCollected = true
+            webVitalTelemetryDebug.addWebVitalTelemetryDebug(
+              'CLS',
+              window.largestLayoutShiftNode(),
+              window.largestLayoutShiftTime()
+            )
+          }
+
+          callback(cls)
         }
       }
     }
