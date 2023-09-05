@@ -40,10 +40,16 @@ describe('trackEventCounts', () => {
     expect(eventCounts.actionCount).toBe(1)
   })
 
-  it('tracks resources', () => {
+  it('tracks non-discarded resources', () => {
     const { eventCounts } = trackEventCounts({ lifeCycle, isChildEvent: () => true })
     notifyCollectedRawRumEvent({ type: RumEventType.RESOURCE })
     expect(eventCounts.resourceCount).toBe(1)
+  })
+
+  it('does not track discarded resources', () => {
+    const { eventCounts } = trackEventCounts({ lifeCycle, isChildEvent: () => true })
+    notifyCollectedRawRumEvent({ type: RumEventType.RESOURCE, _dd: { discarded: true, format_version: 2 } })
+    expect(eventCounts.resourceCount).toBe(0)
   })
 
   it('tracks frustration counts', () => {
