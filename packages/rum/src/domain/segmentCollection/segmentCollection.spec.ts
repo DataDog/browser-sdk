@@ -1,5 +1,5 @@
 import type { ClocksState, HttpRequest, TimeStamp } from '@datadog/browser-core'
-import { PageExitReason, isIE } from '@datadog/browser-core'
+import { DeflateEncoderStreamId, PageExitReason, isIE } from '@datadog/browser-core'
 import type { ViewContexts, ViewContext, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
@@ -8,7 +8,7 @@ import { createRumSessionManagerMock } from '../../../../rum-core/test'
 import type { BrowserRecord, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
 import { MockWorker, readMetadataFromReplayPayload } from '../../../test'
-import { DeflateEncoderStreamId, createDeflateEncoder } from '../deflate'
+import { createDeflateEncoder } from '../deflate'
 import {
   computeSegmentContext,
   doStartSegmentCollection,

@@ -4,27 +4,31 @@ import type { TelemetryEvent, TelemetryErrorEvent, TelemetryConfigurationEvent }
 import type { BrowserSegment } from '@datadog/browser-rum/src/types'
 import type { BrowserSegmentMetadataAndSegmentSizes } from '@datadog/browser-rum/src/domain/segmentCollection'
 
+type BaseIntakeRequest = {
+  isBridge: boolean
+  encoding: string | null
+}
+
 export type LogsIntakeRequest = {
   intakeType: 'logs'
-  isBridge: boolean
   events: LogsEvent[]
-}
+} & BaseIntakeRequest
 
 export type RumIntakeRequest = {
   intakeType: 'rum'
-  isBridge: boolean
   events: Array<RumEvent | TelemetryEvent>
-}
+} & BaseIntakeRequest
 
 export type ReplayIntakeRequest = {
   intakeType: 'replay'
-  isBridge: false
   segment: BrowserSegment
   metadata: BrowserSegmentMetadataAndSegmentSizes
-  filename: string
-  encoding: string
-  mimetype: string
-}
+  segmentFile: {
+    filename: string
+    encoding: string
+    mimetype: string
+  }
+} & BaseIntakeRequest
 
 export type IntakeRequest = LogsIntakeRequest | RumIntakeRequest | ReplayIntakeRequest
 

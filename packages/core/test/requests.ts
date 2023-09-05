@@ -13,7 +13,7 @@ export const SPEC_ENDPOINTS = {
 }
 
 export function stubEndpointBuilder(url: string) {
-  return { build: (_: any) => url } as EndpointBuilder
+  return { build: (..._: any) => url } as EndpointBuilder
 }
 
 export interface Request {

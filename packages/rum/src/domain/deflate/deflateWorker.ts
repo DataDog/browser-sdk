@@ -1,4 +1,4 @@
-import type { DeflateWorkerAction, DeflateWorkerResponse } from '@datadog/browser-core'
+import type { DeflateWorker, DeflateWorkerResponse } from '@datadog/browser-core'
 import { addTelemetryError, display, includes, addEventListener, setTimeout, ONE_SECOND } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 
@@ -36,10 +36,6 @@ type DeflateWorkerState =
       version: string
     }
 
-export interface DeflateWorker extends Worker {
-  postMessage(message: DeflateWorkerAction): void
-}
-
 export type CreateDeflateWorker = typeof createDeflateWorker
 
 function createDeflateWorker(configuration: RumConfiguration): DeflateWorker {
@@ -50,17 +46,20 @@ let state: DeflateWorkerState = { status: DeflateWorkerStatus.Nil }
 
 export function startDeflateWorker(
   configuration: RumConfiguration,
-  onInitializationFailure: () => void,
+  source: string,
+  onInitializationFailure?: () => void,
   createDeflateWorkerImpl = createDeflateWorker
 ) {
   if (state.status === DeflateWorkerStatus.Nil) {
     // doStartDeflateWorker updates the state to "loading" or "error"
-    doStartDeflateWorker(configuration, createDeflateWorkerImpl)
+    doStartDeflateWorker(configuration, source, createDeflateWorkerImpl)
   }
 
   switch (state.status) {
     case DeflateWorkerStatus.Loading:
-      state.initializationFailureCallbacks.push(onInitializationFailure)
+      if (onInitializationFailure) {
+        state.initializationFailureCallbacks.push(onInitializationFailure)
+      }
       return state.worker
     case DeflateWorkerStatus.Initialized:
       return state.worker
@@ -84,30 +83,34 @@ export function getDeflateWorkerStatus() {
  *
  * more details: https://bugzilla.mozilla.org/show_bug.cgi?id=1736865#c2
  */
-export function doStartDeflateWorker(configuration: RumConfiguration, createDeflateWorkerImpl = createDeflateWorker) {
+export function doStartDeflateWorker(
+  configuration: RumConfiguration,
+  source: string,
+  createDeflateWorkerImpl = createDeflateWorker
+) {
   try {
     const worker = createDeflateWorkerImpl(configuration)
     addEventListener(configuration, worker, 'error', (error) => {
-      onError(configuration, error)
+      onError(configuration, source, error)
     })
     addEventListener(configuration, worker, 'message', ({ data }: MessageEvent<DeflateWorkerResponse>) => {
       if (data.type === 'errored') {
-        onError(configuration, data.error, data.streamId)
+        onError(configuration, source, data.error, data.streamId)
       } else if (data.type === 'initialized') {
         onInitialized(data.version)
       }
     })
     worker.postMessage({ action: 'init' })
-    setTimeout(onTimeout, INITIALIZATION_TIME_OUT_DELAY)
+    setTimeout(() => onTimeout(source), INITIALIZATION_TIME_OUT_DELAY)
     state = { status: DeflateWorkerStatus.Loading, worker, initializationFailureCallbacks: [] }
   } catch (error) {
-    onError(configuration, error)
+    onError(configuration, source, error)
   }
 }
 
-function onTimeout() {
+function onTimeout(source: string) {
   if (state.status === DeflateWorkerStatus.Loading) {
-    display.error('Session Replay recording failed to start: a timeout occurred while initializing the Worker')
+    display.error(`${source} failed to start: a timeout occurred while initializing the Worker`)
     state.initializationFailureCallbacks.forEach((callback) => callback())
     state = { status: DeflateWorkerStatus.Error }
   }
@@ -119,9 +122,9 @@ function onInitialized(version: string) {
   }
 }
 
-function onError(configuration: RumConfiguration, error: unknown, streamId?: number) {
+function onError(configuration: RumConfiguration, source: string, error: unknown, streamId?: number) {
   if (state.status === DeflateWorkerStatus.Loading || state.status === DeflateWorkerStatus.Nil) {
-    display.error('Session Replay recording failed to start: an error occurred while creating the Worker:', error)
+    display.error(`${source} failed to start: an error occurred while creating the Worker:`, error)
     if (error instanceof Event || (error instanceof Error && isMessageCspRelated(error.message))) {
       let baseMessage
       if (configuration.workerUrl) {

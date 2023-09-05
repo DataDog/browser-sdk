@@ -1,16 +1,19 @@
+import type { Encoder, EncoderResult } from '@datadog/browser-core'
 import { assign, sendToExtension } from '@datadog/browser-core'
 import type { BrowserRecord, BrowserSegmentMetadata, CreationReason, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
 import * as replayStats from '../replayStats'
-import type { DeflateEncoder } from '../deflate'
 
 export type FlushReason = Exclude<CreationReason, 'init'> | 'stop'
+export type FlushCallback = (metadata: BrowserSegmentMetadata, encoderResult: EncoderResult<Uint8Array>) => void
+export type AddRecordCallback = (encodedBytesCount: number) => void
 
 export class Segment {
   private metadata: BrowserSegmentMetadata
+  private encodedBytesCount = 0
 
   constructor(
-    private encoder: DeflateEncoder,
+    private encoder: Encoder<Uint8Array>,
     context: SegmentContext,
     creationReason: CreationReason
   ) {
@@ -32,7 +35,7 @@ export class Segment {
     replayStats.addSegment(viewId)
   }
 
-  addRecord(record: BrowserRecord, callback: () => void): void {
+  addRecord(record: BrowserRecord, callback: AddRecordCallback): void {
     this.metadata.start = Math.min(this.metadata.start, record.timestamp)
     this.metadata.end = Math.max(this.metadata.end, record.timestamp)
     this.metadata.records_count += 1
@@ -41,19 +44,22 @@ export class Segment {
     sendToExtension('record', { record, segment: this.metadata })
     replayStats.addRecord(this.metadata.view.id)
 
-    const prefix = this.metadata.records_count === 1 ? '{"records":[' : ','
-    this.encoder.write(prefix + JSON.stringify(record), callback)
+    const prefix = this.encoder.isEmpty ? '{"records":[' : ','
+    this.encoder.write(prefix + JSON.stringify(record), (additionalEncodedBytesCount) => {
+      this.encodedBytesCount += additionalEncodedBytesCount
+      callback(this.encodedBytesCount)
+    })
   }
 
-  flush(callback: (metadata: BrowserSegmentMetadata) => void) {
-    if (this.metadata.records_count === 0) {
+  flush(callback: FlushCallback) {
+    if (this.encoder.isEmpty) {
       throw new Error('Empty segment flushed')
     }
 
-    this.encoder.write(`],${JSON.stringify(this.metadata).slice(1)}\n`, () => {
-      replayStats.addWroteData(this.metadata.view.id, this.encoder.rawBytesCount)
-      callback(this.metadata)
+    this.encoder.write(`],${JSON.stringify(this.metadata).slice(1)}\n`)
+    this.encoder.finish((encoderResult) => {
+      replayStats.addWroteData(this.metadata.view.id, encoderResult.rawBytesCount)
+      callback(this.metadata, encoderResult)
     })
-    this.encoder.reset()
   }
 }
