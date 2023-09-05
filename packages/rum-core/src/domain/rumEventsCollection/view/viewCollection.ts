@@ -90,6 +90,7 @@ function processViewUpdate(
       first_contentful_paint: toServerDuration(view.initialViewMetrics.firstContentfulPaint),
       first_input_delay: toServerDuration(view.initialViewMetrics.firstInputDelay),
       first_input_time: toServerDuration(view.initialViewMetrics.firstInputTime),
+      first_input_target_selector: view.initialViewMetrics.firstInputTargetSelector,
       interaction_to_next_paint: toServerDuration(view.commonViewMetrics.interactionToNextPaint),
       is_active: view.isActive,
       name: view.name,

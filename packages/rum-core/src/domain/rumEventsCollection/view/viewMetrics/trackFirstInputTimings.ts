@@ -1,10 +1,12 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
-import { elapsed, find } from '@datadog/browser-core'
+import { elapsed, find, ExperimentalFeature, isExperimentalFeatureEnabled } from '@datadog/browser-core'
+import { isElementNode } from '../../../../browser/htmlDomUtils'
 import type { RumConfiguration } from '../../../configuration'
 import type { LifeCycle } from '../../../lifeCycle'
 import { LifeCycleEventType } from '../../../lifeCycle'
 import type { RumFirstInputTiming } from '../../../../browser/performanceCollection'
 import type { WebVitalTelemetryDebug } from '../startWebVitalTelemetryDebug'
+import { getSelectorFromElement } from '../../../getSelectorFromElement'
 import { trackFirstHidden } from './trackFirstHidden'
 
 /**
@@ -20,7 +22,15 @@ export function trackFirstInputTimings(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
   webVitalTelemetryDebug: WebVitalTelemetryDebug,
-  callback: ({ firstInputDelay, firstInputTime }: { firstInputDelay: Duration; firstInputTime: RelativeTime }) => void
+  callback: ({
+    firstInputDelay,
+    firstInputTime,
+    firstInputTargetSelector,
+  }: {
+    firstInputDelay: Duration
+    firstInputTime: RelativeTime
+    firstInputTargetSelector?: string
+  }) => void
 ) {
   const firstHidden = trackFirstHidden(configuration)
 
@@ -32,15 +42,25 @@ export function trackFirstInputTimings(
     )
     if (firstInputEntry) {
       const firstInputDelay = elapsed(firstInputEntry.startTime, firstInputEntry.processingStart)
+      let firstInputTargetSelector
 
-      webVitalTelemetryDebug.addWebVitalTelemetryDebug('FID', firstInputEntry.target, firstInputEntry.startTime)
+      if (
+        isExperimentalFeatureEnabled(ExperimentalFeature.WEB_VITALS_ATTRIBUTION) &&
+        firstInputEntry.target &&
+        isElementNode(firstInputEntry.target)
+      ) {
+        firstInputTargetSelector = getSelectorFromElement(firstInputEntry.target, configuration.actionNameAttribute)
+      }
 
       callback({
         // Ensure firstInputDelay to be positive, see
         // https://bugs.chromium.org/p/chromium/issues/detail?id=1185815
         firstInputDelay: firstInputDelay >= 0 ? firstInputDelay : (0 as Duration),
         firstInputTime: firstInputEntry.startTime,
+        firstInputTargetSelector,
       })
+
+      webVitalTelemetryDebug.addWebVitalTelemetryDebug('FID', firstInputEntry.target, firstInputEntry.startTime)
     }
   })
 
