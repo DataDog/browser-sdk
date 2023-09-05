@@ -29,6 +29,6 @@ export { initViewportObservable, getViewportDimension } from './browser/viewport
 export { getScrollX, getScrollY } from './browser/scroll'
 export { RumInitConfiguration, RumConfiguration } from './domain/configuration'
 export { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './domain/rumEventsCollection/action/getActionNameFromElement'
-export { STABLE_ATTRIBUTES } from './domain/rumEventsCollection/action/getSelectorFromElement'
+export { STABLE_ATTRIBUTES } from './domain/getSelectorFromElement'
 export * from './browser/htmlDomUtils'
 export { getSessionReplayUrl } from './domain/getSessionReplayUrl'

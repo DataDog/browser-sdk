@@ -94,6 +94,7 @@ function processViewUpdate(
       is_active: view.isActive,
       name: view.name,
       largest_contentful_paint: toServerDuration(view.initialViewMetrics.largestContentfulPaint),
+      largest_contentful_paint_target_selector: view.initialViewMetrics.largestContentfulPaintTargetSelector,
       load_event: toServerDuration(view.initialViewMetrics.loadEvent),
       loading_time: discardNegativeDuration(toServerDuration(view.commonViewMetrics.loadingTime)),
       loading_type: view.loadingType,

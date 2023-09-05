@@ -24,6 +24,7 @@ export interface InitialViewMetrics {
   domComplete?: Duration
   loadEvent?: Duration
   largestContentfulPaint?: Duration
+  largestContentfulPaintTargetSelector?: string
   firstInputDelay?: Duration
   firstInputTime?: Duration
 }
@@ -54,9 +55,10 @@ export function trackInitialViewMetrics(
     configuration,
     webVitalTelemetryDebug,
     window,
-    (largestContentfulPaint) => {
+    (largestContentfulPaint, largestContentfulPaintTargetSelector) => {
       setMetrics({
         largestContentfulPaint,
+        largestContentfulPaintTargetSelector,
       })
     }
   )

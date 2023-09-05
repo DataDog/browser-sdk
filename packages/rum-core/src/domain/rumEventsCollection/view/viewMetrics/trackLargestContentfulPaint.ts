@@ -1,9 +1,17 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { DOM_EVENT, ONE_MINUTE, addEventListeners, findLast } from '@datadog/browser-core'
+import {
+  DOM_EVENT,
+  ExperimentalFeature,
+  ONE_MINUTE,
+  addEventListeners,
+  findLast,
+  isExperimentalFeatureEnabled,
+} from '@datadog/browser-core'
 import { LifeCycleEventType, type LifeCycle } from '../../../lifeCycle'
 import type { RumConfiguration } from '../../../configuration'
 import type { RumLargestContentfulPaintTiming } from '../../../../browser/performanceCollection'
 import type { WebVitalTelemetryDebug } from '../startWebVitalTelemetryDebug'
+import { getSelectorFromElement } from '../../../getSelectorFromElement'
 import { trackFirstHidden } from './trackFirstHidden'
 
 // Discard LCP timings above a certain delay to avoid incorrect data
@@ -21,7 +29,7 @@ export function trackLargestContentfulPaint(
   configuration: RumConfiguration,
   webVitalTelemetryDebug: WebVitalTelemetryDebug,
   eventTarget: Window,
-  callback: (lcpTiming: RelativeTime) => void
+  callback: (lcpTiming: RelativeTime, lcpTargetSelector?: string) => void
 ) {
   const firstHidden = trackFirstHidden(configuration)
 
@@ -50,10 +58,16 @@ export function trackLargestContentfulPaint(
           entry.startTime < firstHidden.timeStamp &&
           entry.startTime < LCP_MAXIMUM_DELAY
       )
-      if (lcpEntry) {
-        webVitalTelemetryDebug.addWebVitalTelemetryDebug('LCP', lcpEntry.element, lcpEntry.startTime)
 
-        callback(lcpEntry.startTime)
+      if (lcpEntry) {
+        let lcpTargetSelector
+        if (isExperimentalFeatureEnabled(ExperimentalFeature.WEB_VITALS_ATTRIBUTION) && lcpEntry.element) {
+          lcpTargetSelector = getSelectorFromElement(lcpEntry.element, configuration.actionNameAttribute)
+        }
+
+        callback(lcpEntry.startTime, lcpTargetSelector)
+
+        webVitalTelemetryDebug.addWebVitalTelemetryDebug('LCP', lcpEntry.element, lcpEntry.startTime)
       }
     }
   )
