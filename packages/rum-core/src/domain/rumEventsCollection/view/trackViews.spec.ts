@@ -13,7 +13,7 @@ import { RumEventType, ViewLoadingType } from '../../../rawRumEvent.types'
 import type { RumEvent } from '../../../rumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { ViewEvent } from './trackViews'
-import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from './trackViews'
+import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD, KEEP_TRACKING_AFTER_VIEW_DELAY } from './trackViews'
 import type { ViewTest } from './setupViewTest.specHelper'
 import {
   FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY,
@@ -21,7 +21,6 @@ import {
   FAKE_PAINT_ENTRY,
   setupViewTest,
 } from './setupViewTest.specHelper'
-import { KEEP_TRACKING_METRICS_AFTER_VIEW_DELAY } from './viewMetrics/trackInitialViewMetrics'
 
 describe('track views automatically', () => {
   let setupBuilder: TestSetupBuilder
@@ -242,25 +241,86 @@ describe('initial view', () => {
       })
     })
 
-    it('should not update initial view metrics long after the view ended', () => {
+    it('should keep updating the initial view metrics for 5 min after view end', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
-      const { getViewUpdateCount, startView } = viewTest
-
+      const { getViewCreateCount, getViewUpdate, getViewUpdateCount, startView } = viewTest
       startView()
+      expect(getViewCreateCount()).toEqual(2)
 
-      clock.tick(KEEP_TRACKING_METRICS_AFTER_VIEW_DELAY)
-
-      expect(getViewUpdateCount()).toEqual(4)
-
+      clock.tick(KEEP_TRACKING_AFTER_VIEW_DELAY - 1)
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
         FAKE_PAINT_ENTRY,
         FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY,
         FAKE_NAVIGATION_ENTRY,
       ])
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+      const latestUpdate = getViewUpdate(getViewUpdateCount() - 1)
+      const firstView = getViewUpdate(0)
+      expect(latestUpdate.id).toBe(firstView.id)
+      expect(latestUpdate.initialViewMetrics.largestContentfulPaint).toEqual(
+        FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY.startTime
+      )
+    })
+
+    it('should not update the initial view metrics 5 min after view end', () => {
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+      const { getViewCreateCount, getViewUpdate, getViewUpdateCount, startView } = viewTest
+      startView()
+      expect(getViewCreateCount()).toEqual(2)
+
+      clock.tick(KEEP_TRACKING_AFTER_VIEW_DELAY)
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+        FAKE_PAINT_ENTRY,
+        FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY,
+        FAKE_NAVIGATION_ENTRY,
+      ])
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+      const latestUpdate = getViewUpdate(getViewUpdateCount() - 1)
+      const firstView = getViewUpdate(0)
+      expect(latestUpdate.id).not.toBe(firstView.id)
+    })
+
+    it('should keep updating the view event counters for 5 min after view end', () => {
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+      const { getViewUpdate, getViewUpdateCount, getViewCreateCount, startView } = viewTest
+      startView()
+      expect(getViewCreateCount()).toEqual(2)
+      const firstView = getViewUpdate(0)
+
+      clock.tick(KEEP_TRACKING_AFTER_VIEW_DELAY - 1)
+
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
+        type: RumEventType.RESOURCE,
+        view: { id: firstView.id },
+      } as RumEvent & Context)
 
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-      expect(getViewUpdateCount()).toEqual(4)
+      const latestUpdate = getViewUpdate(getViewUpdateCount() - 1)
+      expect(latestUpdate.id).toEqual(firstView.id)
+      expect(latestUpdate.eventCounts.resourceCount).toEqual(1)
+    })
+
+    it('should not update the view event counters 5 min after view end', () => {
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+      const { getViewUpdate, getViewUpdateCount, getViewCreateCount, startView } = viewTest
+      startView()
+      expect(getViewCreateCount()).toEqual(2)
+      const firstView = getViewUpdate(0)
+
+      clock.tick(KEEP_TRACKING_AFTER_VIEW_DELAY)
+
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
+        type: RumEventType.RESOURCE,
+        view: { id: firstView.id },
+      } as RumEvent & Context)
+
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+      const latestUpdate = getViewUpdate(getViewUpdateCount() - 1)
+      expect(latestUpdate.id).not.toEqual(firstView.id)
     })
   })
 })

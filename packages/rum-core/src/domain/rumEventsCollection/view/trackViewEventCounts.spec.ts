@@ -7,7 +7,6 @@ import { FrustrationType, RumEventType } from '../../../rawRumEvent.types'
 import { THROTTLE_VIEW_UPDATE_PERIOD } from './trackViews'
 import type { ViewTest } from './setupViewTest.specHelper'
 import { setupViewTest } from './setupViewTest.specHelper'
-import { KEEP_TRACKING_EVENT_COUNTS_AFTER_VIEW_DELAY } from './trackViewEventCounts'
 
 describe('trackViewEventCounts', () => {
   let setupBuilder: TestSetupBuilder
@@ -208,49 +207,5 @@ describe('trackViewEventCounts', () => {
       actionCount: 0,
       frustrationCount: 0,
     })
-  })
-
-  it('should keep updating the view event counters for 5 min after view end', () => {
-    const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
-    const { getViewUpdate, getViewUpdateCount, getLatestViewContext, stop } = viewTest
-
-    expect(getViewUpdateCount()).toEqual(1)
-    expect(getViewUpdate(0).eventCounts.resourceCount).toEqual(0)
-
-    stop() // end the view
-
-    clock.tick(KEEP_TRACKING_EVENT_COUNTS_AFTER_VIEW_DELAY - 1)
-
-    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
-      type: RumEventType.RESOURCE,
-      view: getLatestViewContext(),
-    } as RumEvent & Context)
-
-    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
-
-    expect(getViewUpdate(0).id).toEqual(getViewUpdate(1).id)
-    expect(getViewUpdate(1).eventCounts.resourceCount).toEqual(1)
-  })
-
-  it('should not keep updating the view event counters 5 min after view end', () => {
-    const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
-    const { getViewUpdate, getViewUpdateCount, getLatestViewContext, stop } = viewTest
-
-    expect(getViewUpdateCount()).toEqual(1)
-    expect(getViewUpdate(0).eventCounts.resourceCount).toEqual(0)
-
-    stop() // end the view
-
-    clock.tick(KEEP_TRACKING_EVENT_COUNTS_AFTER_VIEW_DELAY)
-
-    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
-      type: RumEventType.RESOURCE,
-      view: getLatestViewContext(),
-    } as RumEvent & Context)
-
-    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
-
-    expect(getViewUpdate(0).id).toEqual(getViewUpdate(1).id)
-    expect(getViewUpdate(1).eventCounts.resourceCount).toEqual(0)
   })
 })

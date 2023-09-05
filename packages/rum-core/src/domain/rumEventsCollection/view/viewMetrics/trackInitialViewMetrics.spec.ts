@@ -4,7 +4,7 @@ import { noopWebVitalTelemetryDebug, setup } from '../../../../../test'
 import { LifeCycleEventType } from '../../../lifeCycle'
 import type { RumConfiguration } from '../../../configuration'
 import { FAKE_FIRST_INPUT_ENTRY, FAKE_NAVIGATION_ENTRY, FAKE_PAINT_ENTRY } from '../setupViewTest.specHelper'
-import { KEEP_TRACKING_METRICS_AFTER_VIEW_DELAY, trackInitialViewMetrics } from './trackInitialViewMetrics'
+import { trackInitialViewMetrics } from './trackInitialViewMetrics'
 
 describe('trackInitialViewMetrics', () => {
   let setupBuilder: TestSetupBuilder
@@ -54,21 +54,6 @@ describe('trackInitialViewMetrics', () => {
       firstInputTime: 1000 as Duration,
       loadEvent: 567 as Duration,
     })
-  })
-
-  it('allows delaying the stop logic', () => {
-    const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
-    trackInitialViewMetricsResult.scheduleStop()
-
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [FAKE_NAVIGATION_ENTRY])
-
-    expect(scheduleViewUpdateSpy).toHaveBeenCalledTimes(1)
-
-    clock.tick(KEEP_TRACKING_METRICS_AFTER_VIEW_DELAY)
-
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [FAKE_PAINT_ENTRY])
-
-    expect(scheduleViewUpdateSpy).toHaveBeenCalledTimes(1)
   })
 
   it('calls the `setLoadEvent` callback when the loadEvent timing is known', () => {
