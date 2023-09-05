@@ -1,10 +1,9 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { elapsed, find } from '@datadog/browser-core'
-import type { RumConfiguration } from '../../../configuration'
 import type { LifeCycle } from '../../../lifeCycle'
 import { LifeCycleEventType } from '../../../lifeCycle'
 import type { RumFirstInputTiming } from '../../../../browser/performanceCollection'
-import { trackFirstHidden } from './trackFirstHidden'
+import type { FirstHidden } from './trackFirstHidden'
 
 /**
  * Track the first input occurring during the initial View to return:
@@ -17,7 +16,7 @@ import { trackFirstHidden } from './trackFirstHidden'
 
 export function trackFirstInputTimings(
   lifeCycle: LifeCycle,
-  configuration: RumConfiguration,
+  firstHidden: FirstHidden,
   callback: ({
     firstInputDelay,
     firstInputTime,
@@ -28,8 +27,6 @@ export function trackFirstInputTimings(
     firstInputTarget: Node | undefined
   }) => void
 ) {
-  const firstHidden = trackFirstHidden(configuration)
-
   const { unsubscribe: unsubscribeLifeCycle } = lifeCycle.subscribe(
     LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED,
     (entries) => {
@@ -52,9 +49,6 @@ export function trackFirstInputTimings(
   )
 
   return {
-    stop: () => {
-      unsubscribeLifeCycle()
-      firstHidden.stop()
-    },
+    stop: unsubscribeLifeCycle,
   }
 }

@@ -2,42 +2,36 @@ import type { RelativeTime } from '@datadog/browser-core'
 import { addEventListeners, DOM_EVENT } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../../configuration'
 
-let trackFirstHiddenSingleton: { timeStamp: RelativeTime; stop: () => void } | undefined
+export type FirstHidden = ReturnType<typeof trackFirstHidden>
 
 export function trackFirstHidden(configuration: RumConfiguration, eventTarget: Window = window) {
-  if (!trackFirstHiddenSingleton) {
-    if (document.visibilityState === 'hidden') {
-      trackFirstHiddenSingleton = {
-        timeStamp: 0 as RelativeTime,
-        stop: reset,
-      }
-    } else {
-      trackFirstHiddenSingleton = {
-        timeStamp: Infinity as RelativeTime,
-        stop: reset,
-      }
-      const { stop: stopListeners } = addEventListeners(
-        configuration,
-        eventTarget,
-        [DOM_EVENT.PAGE_HIDE, DOM_EVENT.VISIBILITY_CHANGE],
-        (event) => {
-          if (event.type === 'pagehide' || document.visibilityState === 'hidden') {
-            trackFirstHiddenSingleton!.timeStamp = event.timeStamp as RelativeTime
-            stopListeners()
-          }
-        },
-        { capture: true }
-      )
-      trackFirstHiddenSingleton.stop = () => {
-        reset()
-        stopListeners()
-      }
-    }
+  let timeStamp: RelativeTime
+  let stopListeners: () => void
+
+  if (document.visibilityState === 'hidden') {
+    timeStamp = 0 as RelativeTime
+  } else {
+    timeStamp = Infinity as RelativeTime
+    ;({ stop: stopListeners } = addEventListeners(
+      configuration,
+      eventTarget,
+      [DOM_EVENT.PAGE_HIDE, DOM_EVENT.VISIBILITY_CHANGE],
+      (event) => {
+        if (event.type === 'pagehide' || document.visibilityState === 'hidden') {
+          timeStamp = event.timeStamp as RelativeTime
+          stopListeners()
+        }
+      },
+      { capture: true }
+    ))
   }
 
-  return trackFirstHiddenSingleton
-}
-
-function reset() {
-  trackFirstHiddenSingleton = undefined
+  return {
+    get timeStamp() {
+      return timeStamp
+    },
+    stop() {
+      stopListeners?.()
+    },
+  }
 }

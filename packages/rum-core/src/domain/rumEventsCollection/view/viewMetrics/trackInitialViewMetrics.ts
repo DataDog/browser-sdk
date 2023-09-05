@@ -7,6 +7,7 @@ import { trackFirstContentfulPaint } from './trackFirstContentfulPaint'
 import { trackFirstInputTimings } from './trackFirstInputTimings'
 import { trackNavigationTimings } from './trackNavigationTimings'
 import { trackLargestContentfulPaint } from './trackLargestContentfulPaint'
+import { trackFirstHidden } from './trackFirstHidden'
 
 /**
  * The initial view can finish quickly, before some metrics can be produced (ex: before the page load
@@ -46,12 +47,14 @@ export function trackInitialViewMetrics(
     setLoadEvent(navigationTimings.loadEvent)
     setMetrics(navigationTimings)
   })
-  const { stop: stopFCPTracking } = trackFirstContentfulPaint(lifeCycle, configuration, (firstContentfulPaint) =>
+  const firstHidden = trackFirstHidden(configuration)
+  const { stop: stopFCPTracking } = trackFirstContentfulPaint(lifeCycle, firstHidden, (firstContentfulPaint) =>
     setMetrics({ firstContentfulPaint })
   )
   const { stop: stopLCPTracking } = trackLargestContentfulPaint(
     lifeCycle,
     configuration,
+    firstHidden,
     window,
     (largestContentfulPaint, lcpElement) => {
       webVitalTelemetryDebug.addWebVitalTelemetryDebug('LCP', lcpElement, largestContentfulPaint)
@@ -64,7 +67,7 @@ export function trackInitialViewMetrics(
 
   const { stop: stopFIDTracking } = trackFirstInputTimings(
     lifeCycle,
-    configuration,
+    firstHidden,
     ({ firstInputDelay, firstInputTime, firstInputTarget }) => {
       webVitalTelemetryDebug.addWebVitalTelemetryDebug('FID', firstInputTarget, firstInputTime)
 
@@ -80,6 +83,7 @@ export function trackInitialViewMetrics(
     stopFCPTracking()
     stopLCPTracking()
     stopFIDTracking()
+    firstHidden.stop()
   }
 
   return {
