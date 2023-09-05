@@ -93,7 +93,7 @@ function buildEndpointParameters(
   endpointType: EndpointType,
   configurationTags: string[],
   api: 'xhr' | 'fetch' | 'beacon',
-  { retry, flushReason }: Payload
+  { retry, flushReason, encoding }: Payload
 ) {
   const tags = [`sdk_version:${__BUILD_ENV__SDK_VERSION__}`, `api:${api}`].concat(configurationTags)
   if (flushReason && isExperimentalFeatureEnabled(ExperimentalFeature.COLLECT_FLUSH_REASON)) {
@@ -102,6 +102,7 @@ function buildEndpointParameters(
   if (retry) {
     tags.push(`retry_count:${retry.count}`, `retry_after:${retry.lastFailureStatus}`)
   }
+
   const parameters = [
     'ddsource=browser',
     `ddtags=${encodeURIComponent(tags.join(','))}`,
@@ -111,9 +112,14 @@ function buildEndpointParameters(
     `dd-request-id=${generateUUID()}`,
   ]
 
+  if (encoding) {
+    parameters.push(`dd-evp-encoding=${encoding}`)
+  }
+
   if (endpointType === 'rum') {
     parameters.push(`batch_time=${timeStampNow()}`)
   }
+
   if (internalAnalyticsSubdomain) {
     parameters.reverse()
   }

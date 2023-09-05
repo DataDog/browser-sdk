@@ -28,6 +28,7 @@ export interface Payload {
   bytesCount: number
   retry?: RetryInfo
   flushReason?: FlushReason
+  encoding?: string
 }
 
 export interface RetryInfo {
