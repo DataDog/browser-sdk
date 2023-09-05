@@ -43,6 +43,12 @@ describe('endpointBuilder', () => {
       )
     })
 
+    it('should add the provided encoding', () => {
+      expect(
+        createEndpointBuilder(initConfiguration, 'rum', []).build('xhr', { ...DEFAULT_PAYLOAD, encoding: 'deflate' })
+      ).toContain('&dd-evp-encoding=deflate')
+    })
+
     it('should not start with ddsource for internal analytics mode', () => {
       const url = createEndpointBuilder({ ...initConfiguration, internalAnalyticsSubdomain: 'foo' }, 'rum', []).build(
         'xhr',
