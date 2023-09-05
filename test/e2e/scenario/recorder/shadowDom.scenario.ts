@@ -1,4 +1,4 @@
-import { IncrementalSource, NodeType } from '@datadog/browser-rum/src/types'
+import { MouseInteractionType, NodeType } from '@datadog/browser-rum/src/types'
 import type { DocumentFragmentNode, MouseInteractionData, SerializedNodeWithId } from '@datadog/browser-rum/src/types'
 
 import {
@@ -6,7 +6,7 @@ import {
   findElementWithIdAttribute,
   findElementWithTagName,
   findFullSnapshot,
-  findIncrementalSnapshot,
+  findMouseInteractionRecords,
   findNode,
   findTextContent,
   findTextNode,
@@ -208,12 +208,11 @@ describe('recorder with shadow DOM', () => {
       expect(intakeRegistry.replaySegments.length).toBe(1)
       const fullSnapshot = findFullSnapshot(intakeRegistry.replaySegments[0])!
       const divNode = findElementWithTagName(fullSnapshot.data.node, 'div')!
-      const mouseInteraction = findIncrementalSnapshot(
+      const mouseInteraction = findMouseInteractionRecords(
         intakeRegistry.replaySegments[0],
-        IncrementalSource.MouseInteraction
-      )!
+        MouseInteractionType.Click
+      )[0]
       expect(mouseInteraction).toBeTruthy()
-      expect(mouseInteraction.data.source).toBe(IncrementalSource.MouseInteraction)
       expect((mouseInteraction.data as MouseInteractionData).id).toBe(divNode.id)
     })
 
