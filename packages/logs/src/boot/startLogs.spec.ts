@@ -7,6 +7,7 @@ import {
   initEventBridgeStub,
   cleanupSyntheticsWorkerValues,
   mockSyntheticsWorkerValues,
+  registerCleanupTask,
 } from '@datadog/browser-core/test'
 
 import type { LogsConfiguration } from '../domain/configuration'
@@ -47,7 +48,6 @@ describe('logs', () => {
   let logger: Logger
   let consoleLogSpy: jasmine.Spy
   let displayLogSpy: jasmine.Spy
-  let cleanupTasks: Array<() => void>
 
   beforeEach(() => {
     baseConfiguration = {
@@ -60,7 +60,6 @@ describe('logs', () => {
     requests = interceptor.requests
     consoleLogSpy = spyOn(console, 'log')
     displayLogSpy = spyOn(display, 'log')
-    cleanupTasks = []
   })
 
   afterEach(() => {
@@ -68,13 +67,12 @@ describe('logs', () => {
     deleteEventBridgeStub()
     stopSessionManager()
     interceptor.restore()
-    cleanupTasks.forEach((task) => task())
   })
 
   describe('request', () => {
     it('should send the needed data', () => {
       ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT, logger))
-      cleanupTasks.push(stopLogs)
+      registerCleanupTask(stopLogs)
 
       handleLog({ message: 'message', status: StatusType.warn, context: { foo: 'bar' } }, logger, COMMON_CONTEXT)
 
@@ -102,7 +100,7 @@ describe('logs', () => {
         () => COMMON_CONTEXT,
         logger
       ))
-      cleanupTasks.push(stopLogs)
+      registerCleanupTask(stopLogs)
 
       handleLog(DEFAULT_MESSAGE, logger)
       handleLog(DEFAULT_MESSAGE, logger)
@@ -114,7 +112,7 @@ describe('logs', () => {
     it('should send bridge event when bridge is present', () => {
       const sendSpy = spyOn(initEventBridgeStub(), 'send')
       ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT, logger))
-      cleanupTasks.push(stopLogs)
+      registerCleanupTask(stopLogs)
 
       handleLog(DEFAULT_MESSAGE, logger)
 
@@ -134,14 +132,14 @@ describe('logs', () => {
 
       let configuration = { ...baseConfiguration, sessionSampleRate: 0 }
       ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, configuration, () => COMMON_CONTEXT, logger))
-      cleanupTasks.push(stopLogs)
+      registerCleanupTask(stopLogs)
       handleLog(DEFAULT_MESSAGE, logger)
 
       expect(sendSpy).not.toHaveBeenCalled()
 
       configuration = { ...baseConfiguration, sessionSampleRate: 100 }
       ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, configuration, () => COMMON_CONTEXT, logger))
-      cleanupTasks.push(stopLogs)
+      registerCleanupTask(stopLogs)
       handleLog(DEFAULT_MESSAGE, logger)
 
       expect(sendSpy).toHaveBeenCalled()
@@ -156,7 +154,7 @@ describe('logs', () => {
       () => COMMON_CONTEXT,
       logger
     ))
-    cleanupTasks.push(stopLogs)
+    registerCleanupTask(stopLogs)
 
     /* eslint-disable-next-line no-console */
     console.log('foo', 'bar')
@@ -172,7 +170,7 @@ describe('logs', () => {
 
     it('creates a session on normal conditions', () => {
       ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT, logger))
-      cleanupTasks.push(stopLogs)
+      registerCleanupTask(stopLogs)
 
       expect(getCookie(SESSION_STORE_KEY)).not.toBeUndefined()
     })
@@ -180,7 +178,7 @@ describe('logs', () => {
     it('does not create a session if event bridge is present', () => {
       initEventBridgeStub()
       ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT, logger))
-      cleanupTasks.push(stopLogs)
+      registerCleanupTask(stopLogs)
 
       expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
     })
@@ -188,7 +186,7 @@ describe('logs', () => {
     it('does not create a session if synthetics worker will inject RUM', () => {
       mockSyntheticsWorkerValues({ injectsRum: true })
       ;({ handleLog, stop: stopLogs } = startLogs(initConfiguration, baseConfiguration, () => COMMON_CONTEXT, logger))
-      cleanupTasks.push(stopLogs)
+      registerCleanupTask(stopLogs)
 
       expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
     })
