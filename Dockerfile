@@ -20,7 +20,8 @@ RUN apt-get update && apt-get install -y -q --no-install-recommends \
         xdg-utils \
         curl \
         ca-certificates \
-        wget
+        wget \
+        zip
 
 # Download and install Chrome
 # Debian taken from https://www.ubuntuupdates.org/package/google_chrome/stable/main/base/google-chrome-stable
