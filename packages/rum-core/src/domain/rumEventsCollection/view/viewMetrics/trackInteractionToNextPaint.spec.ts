@@ -63,7 +63,7 @@ describe('trackInteractionToNextPaint', () => {
   })
 
   afterEach(() => {
-    target.remove()
+    target.parentNode!.removeChild(target)
     interactionCountStub.clear()
   })
 

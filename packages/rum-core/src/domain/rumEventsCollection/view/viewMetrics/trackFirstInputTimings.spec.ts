@@ -61,7 +61,7 @@ describe('firstInputTimings', () => {
 
   afterEach(() => {
     setupBuilder.cleanup()
-    target.remove()
+    target.parentNode!.removeChild(target)
     restorePageVisibility()
     resetFirstHidden()
     resetExperimentalFeatures()

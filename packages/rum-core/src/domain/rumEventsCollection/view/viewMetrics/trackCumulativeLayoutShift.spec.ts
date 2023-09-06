@@ -169,7 +169,7 @@ describe('trackCumulativeLayoutShift', () => {
 
     afterEach(() => {
       resetExperimentalFeatures()
-      sandbox.remove()
+      sandbox.parentNode!.removeChild(sandbox)
     })
 
     it('should return the first target element selector amongst all the shifted nodes when FF enabled', () => {

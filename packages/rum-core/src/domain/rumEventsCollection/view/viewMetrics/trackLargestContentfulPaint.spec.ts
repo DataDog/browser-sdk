@@ -58,7 +58,7 @@ describe('trackLargestContentfulPaint', () => {
     setupBuilder.cleanup()
     restorePageVisibility()
     resetFirstHidden()
-    target.remove()
+    target.parentNode!.removeChild(target)
     resetExperimentalFeatures()
   })
 
