@@ -137,6 +137,7 @@ describe('viewCollection', () => {
         first_input_time: (10 * 1e6) as ServerDuration,
         first_input_target_selector: undefined,
         interaction_to_next_paint: (10 * 1e6) as ServerDuration,
+        interaction_to_next_paint_target_selector: undefined,
         is_active: false,
         name: undefined,
         largest_contentful_paint: (10 * 1e6) as ServerDuration,

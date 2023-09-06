@@ -14,6 +14,7 @@ export interface CommonViewMetrics {
   loadingTime?: Duration
   cumulativeLayoutShift?: number
   interactionToNextPaint?: Duration
+  interactionToNextPaintTargetSelector?: string
   scroll?: ScrollMetrics
 }
 
@@ -75,7 +76,11 @@ export function trackCommonViewMetrics(
     stopCLSTracking = noop
   }
 
-  const { stop: stopINPTracking, getInteractionToNextPaint } = trackInteractionToNextPaint(loadingType, lifeCycle)
+  const { stop: stopINPTracking, getInteractionToNextPaint } = trackInteractionToNextPaint(
+    configuration,
+    loadingType,
+    lifeCycle
+  )
 
   return {
     stop: () => {
@@ -86,7 +91,9 @@ export function trackCommonViewMetrics(
     },
     setLoadEvent,
     getCommonViewMetrics: () => {
-      commonViewMetrics.interactionToNextPaint = getInteractionToNextPaint()
+      const { interactionToNextPaint, interactionToNextPaintTargetSelector } = getInteractionToNextPaint() || {}
+      commonViewMetrics.interactionToNextPaint = interactionToNextPaint
+      commonViewMetrics.interactionToNextPaintTargetSelector = interactionToNextPaintTargetSelector
       return commonViewMetrics
     },
   }

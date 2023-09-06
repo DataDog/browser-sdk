@@ -24,27 +24,22 @@ import {
 describe('trackInteractionToNextPaint', () => {
   let setupBuilder: TestSetupBuilder
   let interactionCountStub: ReturnType<typeof subInteractionCount>
-  let getInteractionToNextPaint: () => Duration | undefined
+  let getInteractionToNextPaint: ReturnType<typeof trackInteractionToNextPaint>['getInteractionToNextPaint']
+  let target: HTMLButtonElement
 
-  function newInteraction(
-    lifeCycle: LifeCycle,
-    {
-      interactionId,
-      duration = 40 as Duration,
-      entryType = 'event',
-    }: Partial<RumPerformanceEventTiming | RumFirstInputTiming>
-  ) {
-    if (interactionId) {
+  function newInteraction(lifeCycle: LifeCycle, overrides: Partial<RumPerformanceEventTiming | RumFirstInputTiming>) {
+    if (overrides.interactionId) {
       interactionCountStub.incrementInteractionCount()
     }
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       {
-        entryType,
+        entryType: 'event',
         processingStart: relativeNow(),
         startTime: relativeNow(),
-        duration,
-        interactionId,
-      },
+        duration: 40 as Duration,
+        target,
+        ...overrides,
+      } as RumPerformanceEventTiming,
     ])
   }
 
@@ -54,12 +49,21 @@ describe('trackInteractionToNextPaint', () => {
     }
 
     interactionCountStub = subInteractionCount()
-    setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
-      ;({ getInteractionToNextPaint } = trackInteractionToNextPaint(ViewLoadingType.INITIAL_LOAD, lifeCycle))
+    target = document.createElement('button')
+    target.setAttribute('id', 'inp-target-element')
+    document.body.appendChild(target)
+
+    setupBuilder = setup().beforeBuild(({ lifeCycle, configuration }) => {
+      ;({ getInteractionToNextPaint } = trackInteractionToNextPaint(
+        configuration,
+        ViewLoadingType.INITIAL_LOAD,
+        lifeCycle
+      ))
     })
   })
 
   afterEach(() => {
+    target.remove()
     interactionCountStub.clear()
   })
 
@@ -93,13 +97,16 @@ describe('trackInteractionToNextPaint', () => {
           interactionId: index,
         })
       }
-      expect(getInteractionToNextPaint()).toEqual(98 as Duration)
+      expect(getInteractionToNextPaint()).toEqual({
+        interactionToNextPaint: 98 as Duration,
+        interactionToNextPaintTargetSelector: undefined,
+      })
     })
 
     it('should return 0 when an interaction happened without generating a performance event (interaction duration below 40ms)', () => {
       setupBuilder.build()
       interactionCountStub.setInteractionCount(1 as Duration) // assumes an interaction happened but no PERFORMANCE_ENTRIES_COLLECTED have been triggered
-      expect(getInteractionToNextPaint()).toEqual(0 as Duration)
+      expect(getInteractionToNextPaint()).toEqual({ interactionToNextPaint: 0 as Duration })
     })
 
     it('should take first-input entry into account', () => {
@@ -108,7 +115,10 @@ describe('trackInteractionToNextPaint', () => {
         interactionId: 1,
         entryType: 'first-input',
       })
-      expect(getInteractionToNextPaint()).toEqual(40 as Duration)
+      expect(getInteractionToNextPaint()).toEqual({
+        interactionToNextPaint: 40 as Duration,
+        interactionToNextPaintTargetSelector: undefined,
+      })
     })
 
     it('should replace the entry in the list of worst interactions when an entry with the same interactionId exist', () => {
@@ -121,7 +131,19 @@ describe('trackInteractionToNextPaint', () => {
         })
       }
       // the p98 return 100 which shows that the entry has been updated
-      expect(getInteractionToNextPaint()).toEqual(100 as Duration)
+      expect(getInteractionToNextPaint()).toEqual({
+        interactionToNextPaint: 100 as Duration,
+        interactionToNextPaintTargetSelector: undefined,
+      })
+    })
+
+    it('should return the target selector when FF web_vital_attribution is enabled', () => {
+      addExperimentalFeatures([ExperimentalFeature.WEB_VITALS_ATTRIBUTION])
+      const { lifeCycle } = setupBuilder.build()
+
+      newInteraction(lifeCycle, { interactionId: 2 })
+
+      expect(getInteractionToNextPaint()?.interactionToNextPaintTargetSelector).toEqual('#inp-target-element')
     })
   })
 

@@ -96,6 +96,7 @@ export interface RumPerformanceEventTiming {
   startTime: RelativeTime
   duration: Duration
   interactionId?: number
+  target?: Node
 }
 
 export interface RumLayoutShiftTiming {

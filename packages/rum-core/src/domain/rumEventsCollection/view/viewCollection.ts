@@ -92,6 +92,7 @@ function processViewUpdate(
       first_input_time: toServerDuration(view.initialViewMetrics.firstInputTime),
       first_input_target_selector: view.initialViewMetrics.firstInputTargetSelector,
       interaction_to_next_paint: toServerDuration(view.commonViewMetrics.interactionToNextPaint),
+      interaction_to_next_paint_target_selector: view.commonViewMetrics.interactionToNextPaintTargetSelector,
       is_active: view.isActive,
       name: view.name,
       largest_contentful_paint: toServerDuration(view.initialViewMetrics.largestContentfulPaint),
