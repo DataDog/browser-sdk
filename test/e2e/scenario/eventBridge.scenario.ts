@@ -14,19 +14,19 @@ describe('bridge present', () => {
         })
       </script>
     `)
-    .run(async ({ serverEvents, bridgeEvents }) => {
+    .run(async ({ intakeRegistry }) => {
       const button = await $('button')
       await button.click()
       await flushEvents()
 
-      expect(serverEvents.rumActions.length).toBe(0)
-      expect(bridgeEvents.rumActions.length).toBe(1)
+      expect(intakeRegistry.rumActionEvents.length).toBe(1)
+      expect(intakeRegistry.hasOnlyBridgeRequests).toBe(true)
     })
 
   createTest('send error')
     .withRum()
     .withEventBridge()
-    .run(async ({ serverEvents, bridgeEvents }) => {
+    .run(async ({ intakeRegistry }) => {
       await browserExecute(() => {
         console.error('oh snap')
       })
@@ -34,34 +34,34 @@ describe('bridge present', () => {
       await flushBrowserLogs()
       await flushEvents()
 
-      expect(serverEvents.rumErrors.length).toBe(0)
-      expect(bridgeEvents.rumErrors.length).toBeGreaterThan(0)
+      expect(intakeRegistry.rumErrorEvents.length).toBe(1)
+      expect(intakeRegistry.hasOnlyBridgeRequests).toBe(true)
     })
 
   createTest('send resource')
     .withRum()
     .withEventBridge()
-    .run(async ({ serverEvents, bridgeEvents }) => {
+    .run(async ({ intakeRegistry }) => {
       await flushEvents()
 
-      expect(serverEvents.rumResources.length).toEqual(0)
-      expect(bridgeEvents.rumResources.length).toBeGreaterThan(0)
+      expect(intakeRegistry.rumResourceEvents.length).toBeGreaterThan(0)
+      expect(intakeRegistry.hasOnlyBridgeRequests).toBe(true)
     })
 
   createTest('send view')
     .withRum()
     .withEventBridge()
-    .run(async ({ serverEvents, bridgeEvents }) => {
+    .run(async ({ intakeRegistry }) => {
       await flushEvents()
 
-      expect(serverEvents.rumViews.length).toEqual(0)
-      expect(bridgeEvents.rumViews.length).toBeGreaterThan(0)
+      expect(intakeRegistry.rumViewEvents.length).toBeGreaterThan(0)
+      expect(intakeRegistry.hasOnlyBridgeRequests).toBe(true)
     })
 
   createTest('forward telemetry to the bridge')
     .withLogs()
     .withEventBridge()
-    .run(async ({ serverEvents, bridgeEvents }) => {
+    .run(async ({ intakeRegistry }) => {
       await browserExecute(() => {
         const context = {
           get foo() {
@@ -72,20 +72,21 @@ describe('bridge present', () => {
       })
 
       await flushEvents()
-      expect(serverEvents.telemetryErrors.length).toBe(0)
-      expect(bridgeEvents.telemetryErrors.length).toBe(1)
+      expect(intakeRegistry.telemetryErrorEvents.length).toBe(1)
+      expect(intakeRegistry.hasOnlyBridgeRequests).toBe(true)
+      intakeRegistry.empty()
     })
 
   createTest('forward logs to the bridge')
     .withLogs()
     .withEventBridge()
-    .run(async ({ serverEvents, bridgeEvents }) => {
+    .run(async ({ intakeRegistry }) => {
       await browserExecute(() => {
         window.DD_LOGS!.logger.log('hello')
       })
       await flushEvents()
 
-      expect(serverEvents.logs.length).toBe(0)
-      expect(bridgeEvents.logs.length).toBe(1)
+      expect(intakeRegistry.logsEvents.length).toBe(1)
+      expect(intakeRegistry.hasOnlyBridgeRequests).toBe(true)
     })
 })

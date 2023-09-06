@@ -4,9 +4,9 @@ import { browserExecute, getBrowserName } from '../../lib/helpers/browser'
 describe('rum views', () => {
   createTest('send performance timings along the view events')
     .withRum()
-    .run(async ({ serverEvents }) => {
+    .run(async ({ intakeRegistry }) => {
       await flushEvents()
-      const viewEvent = serverEvents.rumViews[0]
+      const viewEvent = intakeRegistry.rumViewEvents[0]
       expect(viewEvent).toBeDefined()
       expect(viewEvent.view.first_byte).toBeGreaterThan(0)
       expect(viewEvent.view.dom_complete).toBeGreaterThan(0)
@@ -22,10 +22,10 @@ describe('rum views', () => {
     createTest('send performance first input delay')
       .withRum()
       .withBody(html` <button>Hop</button> `)
-      .run(async ({ serverEvents }) => {
+      .run(async ({ intakeRegistry }) => {
         await (await $('button')).click()
         await flushEvents()
-        const viewEvent = serverEvents.rumViews[0]
+        const viewEvent = intakeRegistry.rumViewEvents[0]
         expect(viewEvent).toBeDefined()
         expect(viewEvent.view.first_input_delay).toBeGreaterThanOrEqual(0)
       })
@@ -38,11 +38,11 @@ describe('rum views', () => {
         <a href="#test-anchor">anchor link</a>
         <div id="test-anchor"></div>
       `)
-      .run(async ({ serverEvents }) => {
+      .run(async ({ intakeRegistry }) => {
         await (await $('a')).click()
 
         await flushEvents()
-        const viewEvents = serverEvents.rumViews
+        const viewEvents = intakeRegistry.rumViewEvents
 
         expect(viewEvents.length).toBe(1)
         expect(viewEvents[0].view.loading_type).toBe('initial_load')
@@ -50,13 +50,13 @@ describe('rum views', () => {
 
     createTest('create a new view on hash change')
       .withRum()
-      .run(async ({ serverEvents }) => {
+      .run(async ({ intakeRegistry }) => {
         await browserExecute(() => {
           window.location.hash = '#bar'
         })
 
         await flushEvents()
-        const viewEvents = serverEvents.rumViews
+        const viewEvents = intakeRegistry.rumViewEvents
 
         expect(viewEvents.length).toBe(2)
         expect(viewEvents[0].view.loading_type).toBe('initial_load')
