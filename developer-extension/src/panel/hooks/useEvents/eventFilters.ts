@@ -1,6 +1,7 @@
 import type { SdkEvent } from '../../sdkEvent'
 import type { RumViewEvent } from '../../../../../packages/rum-core/src/rumEvent.types'
 import { isRumViewEvent } from '../../sdkEvent'
+import type { FieldMultiValue } from '../../facets.constants'
 import type { FacetRegistry } from './facetRegistry'
 
 export interface EventFilters {
@@ -43,10 +44,11 @@ function filterExcludedFacets(
 ): SdkEvent[] {
   return events.filter(
     (event) =>
-      !Object.entries(excludedFacetValues).some(([facetPath, excludedValues]) => {
-        const value = facetRegistry.getFacetValueForEvent(event, facetPath)
-        return value !== undefined && excludedValues.includes(value)
-      })
+      !Object.entries(excludedFacetValues).some(([facetPath, excludedValues]) =>
+        (excludedValues as Array<FieldMultiValue | undefined>).includes(
+          facetRegistry.getFieldValueForEvent(event, facetPath)
+        )
+      )
   )
 }
 
