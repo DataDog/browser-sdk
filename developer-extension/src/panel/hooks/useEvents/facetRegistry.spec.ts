@@ -16,11 +16,21 @@ describe('getAllFields', () => {
     expect(getAllFields({ foo: ['bar', 'baz'] })).toEqual(new Map([['foo', ['bar', 'baz']]]))
   })
 
-  it('return a nested field', () => {
-    expect(getAllFields({ foo: { bar: 'baz' } })).toEqual(new Map([['foo.bar', 'baz']]))
+  it('return intermediary fields', () => {
+    expect(getAllFields({ foo: { bar: 'baz' } })).toEqual(
+      new Map<string, unknown>([
+        ['foo', { bar: 'baz' }],
+        ['foo.bar', 'baz'],
+      ])
+    )
   })
 
-  it('return a fields nested in an array', () => {
-    expect(getAllFields({ foo: [{ bar: 'baz' }, { bar: 'biz' }] })).toEqual(new Map([['foo.bar', ['baz', 'biz']]]))
+  it('return fields nested in an array', () => {
+    expect(getAllFields({ foo: [{ bar: 'baz' }, { bar: 'biz' }] })).toEqual(
+      new Map([
+        ['foo', [{ bar: 'baz' }, { bar: 'biz' }]],
+        ['foo.bar', ['baz', 'biz']],
+      ])
+    )
   })
 })

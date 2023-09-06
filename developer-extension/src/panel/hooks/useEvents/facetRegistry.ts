@@ -1,7 +1,7 @@
 import { getEventSource, type SdkEvent } from '../../sdkEvent'
 import { createLogger } from '../../../common/logger'
 import { FACET_ROOT } from '../../facets.constants'
-import type { FacetValue, FieldPath, FieldMultiValue } from '../../facets.constants'
+import type { FacetValue, FieldPath, FieldMultiValue, FieldValue } from '../../facets.constants'
 
 const logger = createLogger('facetRegistry')
 
@@ -56,6 +56,37 @@ function incrementFacetValueCounts(fields: EventFields, facetValueCounts: FacetV
   }
 }
 
+/**
+ * Get all event fields indexed by their path. Intermediary fields are also taken into account.
+ *
+ * @example
+ *
+ * Simple field:
+ *
+ *   getAllFields({ foo: 'bar' })
+ *   => Map { 'foo' => 'bar' }
+ *
+ * Event with an intermediary field:
+ *
+ *   getAllFields({ foo: { bar: 'baz' } })
+ *   => Map {
+ *     'foo' => { bar: 'baz' },
+ *     'foo.bar' => 'baz'
+ *   }
+ *
+ * Event with an array containing plain values:
+ *
+ *   getAllFields({ foo: ['bar', 'baz'] })
+ *   => Map { 'foo' => ['bar', 'baz'] }
+ *
+ * Event with an array containing nested values:
+ *
+ *   getAllFields({ foo: [ { bar: 1 }, { bar: 2 } ] })
+ *   => Map {
+ *     'foo' => [ { bar: 1 }, { bar: 2 } ],
+ *     'foo.bar' => [1, 2]
+ *   }
+ */
 export function getAllFields(event: object) {
   const fields: EventFields = new Map()
 
@@ -65,10 +96,16 @@ export function getAllFields(event: object) {
 
   function getAllFieldsRecursively(value: unknown, path: string | undefined) {
     if (Array.isArray(value)) {
+      // Recurse inside arrays. The path does not change for array items.
       for (const item of value) {
         getAllFieldsRecursively(item, path)
       }
     } else if (typeof value === 'object' && value !== null) {
+      if (path !== undefined) {
+        // Store the intermediary field
+        pushField(path, value)
+      }
+      // Recurse inside objects, building the path on the way
       for (const key in value) {
         if (Object.prototype.hasOwnProperty.call(value, key)) {
           const itemPath = path === undefined ? key : `${path}.${key}`
@@ -80,16 +117,27 @@ export function getAllFields(event: object) {
       path !== undefined &&
       (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' || value === null)
     ) {
-      const previousValue = fields.get(path)
-      if (Array.isArray(previousValue)) {
-        previousValue.push(value)
-      } else if (previousValue !== undefined) {
-        fields.set(path, [previousValue, value])
-      } else {
-        fields.set(path, value)
-      }
+      // Store the field
+      pushField(path, value)
     } else {
+      // Sanity check, it should not happen because events are JSON-encoded so value types are
+      // limited.
       logger.error(`Unexpected value type at ${path || '<root>'}`, value)
+    }
+  }
+
+  /**
+   * Add the value to the fields map. If a value is already defined for the given path, store it as
+   * an array to reflect all possible values for that path.
+   */
+  function pushField(path: string, value: FieldValue) {
+    const previousValue = fields.get(path)
+    if (Array.isArray(previousValue)) {
+      previousValue.push(value)
+    } else if (previousValue !== undefined) {
+      fields.set(path, [previousValue, value])
+    } else {
+      fields.set(path, value)
     }
   }
 }

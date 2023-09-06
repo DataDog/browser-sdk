@@ -1,7 +1,7 @@
 // Represents the path of a field in an event object. The special value '$eventSource' represent the
 // event source (rum, logs, ...)
 export type FieldPath = string | '$eventSource'
-export type FieldValue = string | number | null | boolean
+export type FieldValue = string | number | null | boolean | object
 export type FieldMultiValue = FieldValue | FieldValue[]
 
 // For now, facet values are only strings (we don't support number pickers etc.)
