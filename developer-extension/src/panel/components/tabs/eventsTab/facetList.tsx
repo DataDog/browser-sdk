@@ -3,7 +3,7 @@ import React from 'react'
 import type { ExcludedFacetValues, FacetRegistry } from '../../../hooks/useEvents'
 import type { Facet } from '../../../facets.constants'
 import { FACET_ROOT, FacetValue } from '../../../facets.constants'
-import { BORDER_RADIUS, tabsListBorder } from '../../../uiUtils'
+import { BORDER_RADIUS, CHECKBOX_WIDTH, tabsListBorder, TABS_LIST_BORDER_WIDTH } from '../../../uiUtils'
 
 export function FacetList({
   facetRegistry,
@@ -102,8 +102,8 @@ function FacetValue({
   const children = childFacets && (
     <Collapse in={isSelected}>
       <Box
-        ml={isTopLevel ? undefined : 9}
-        pl={isTopLevel ? undefined : 9}
+        ml={isTopLevel ? undefined : (CHECKBOX_WIDTH - TABS_LIST_BORDER_WIDTH) / 2}
+        pl={isTopLevel ? undefined : (CHECKBOX_WIDTH - TABS_LIST_BORDER_WIDTH) / 2}
         pb="xs"
         sx={(theme) => ({
           borderLeft: isTopLevel ? undefined : tabsListBorder(theme),
