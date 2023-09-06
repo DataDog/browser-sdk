@@ -1,4 +1,9 @@
-import { relativeNow } from '@datadog/browser-core'
+import {
+  ExperimentalFeature,
+  addExperimentalFeatures,
+  relativeNow,
+  resetExperimentalFeatures,
+} from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../../../test'
 import { setup } from '../../../../../test'
 import type { LifeCycle } from '../../../lifeCycle'
@@ -6,6 +11,7 @@ import { LifeCycleEventType } from '../../../lifeCycle'
 import { THROTTLE_VIEW_UPDATE_PERIOD } from '../trackViews'
 import type { ViewTest } from '../setupViewTest.specHelper'
 import { setupViewTest } from '../setupViewTest.specHelper'
+import type { RumLayoutShiftTiming } from '../../../../browser/performanceCollection'
 
 describe('trackCumulativeLayoutShift', () => {
   let setupBuilder: TestSetupBuilder
@@ -13,13 +19,14 @@ describe('trackCumulativeLayoutShift', () => {
   let isLayoutShiftSupported: boolean
   let originalSupportedEntryTypes: PropertyDescriptor | undefined
 
-  function newLayoutShift(lifeCycle: LifeCycle, { value = 0.1, hadRecentInput = false }) {
+  function newLayoutShift(lifeCycle: LifeCycle, overrides: Partial<RumLayoutShiftTiming>) {
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       {
         entryType: 'layout-shift',
         startTime: relativeNow(),
-        hadRecentInput,
-        value,
+        hadRecentInput: false,
+        value: 0.1,
+        ...overrides,
       },
     ])
   }
@@ -28,6 +35,7 @@ describe('trackCumulativeLayoutShift', () => {
     if (!('PerformanceObserver' in window) || !('supportedEntryTypes' in PerformanceObserver)) {
       pending('No PerformanceObserver support')
     }
+
     setupBuilder = setup()
       .withFakeLocation('/foo')
       .beforeBuild((buildContext) => {
@@ -149,5 +157,47 @@ describe('trackCumulativeLayoutShift', () => {
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
     expect(getViewUpdateCount()).toEqual(3)
     expect(getViewUpdate(2).commonViewMetrics.cumulativeLayoutShift).toBe(0.5)
+  })
+
+  describe('cls target element', () => {
+    let sandbox: HTMLDivElement
+
+    beforeEach(() => {
+      sandbox = document.createElement('div')
+      document.body.appendChild(sandbox)
+    })
+
+    afterEach(() => {
+      resetExperimentalFeatures()
+      sandbox.remove()
+    })
+
+    it('should return the first target element selector amongst all the shifted nodes when FF enabled', () => {
+      addExperimentalFeatures([ExperimentalFeature.WEB_VITALS_ATTRIBUTION])
+      const { lifeCycle } = setupBuilder.build()
+      const { getViewUpdate, getViewUpdateCount } = viewTest
+
+      const textNode = sandbox.appendChild(document.createTextNode(''))
+      const divElement = sandbox.appendChild(document.createElement('div'))
+      divElement.setAttribute('id', 'div-element')
+
+      newLayoutShift(lifeCycle, { sources: [{ node: textNode }, { node: divElement }, { node: textNode }] })
+
+      expect(getViewUpdateCount()).toEqual(1)
+      expect(getViewUpdate(0).commonViewMetrics.cumulativeLayoutShiftTargetSelector).toBe('#div-element')
+    })
+
+    it('should not return the target element selector when FF disabled', () => {
+      const { lifeCycle } = setupBuilder.build()
+      const { getViewUpdate, getViewUpdateCount } = viewTest
+
+      const divElement = sandbox.appendChild(document.createElement('div'))
+      divElement.setAttribute('id', 'div-element')
+
+      newLayoutShift(lifeCycle, { sources: [{ node: divElement }] })
+
+      expect(getViewUpdateCount()).toEqual(1)
+      expect(getViewUpdate(0).commonViewMetrics.cumulativeLayoutShiftTargetSelector).toBe(undefined)
+    })
   })
 })

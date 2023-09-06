@@ -80,6 +80,7 @@ function processViewUpdate(
         count: view.eventCounts.frustrationCount,
       },
       cumulative_layout_shift: view.commonViewMetrics.cumulativeLayoutShift,
+      cumulative_layout_shift_target_selector: view.commonViewMetrics.cumulativeLayoutShiftTargetSelector,
       first_byte: toServerDuration(view.initialViewMetrics.firstByte),
       dom_complete: toServerDuration(view.initialViewMetrics.domComplete),
       dom_content_loaded: toServerDuration(view.initialViewMetrics.domContentLoaded),

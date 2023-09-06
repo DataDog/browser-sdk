@@ -13,6 +13,7 @@ import { trackInteractionToNextPaint } from './trackInteractionToNextPaint'
 export interface CommonViewMetrics {
   loadingTime?: Duration
   cumulativeLayoutShift?: number
+  cumulativeLayoutShiftTargetSelector?: string
   interactionToNextPaint?: Duration
   interactionToNextPaintTargetSelector?: string
   scroll?: ScrollMetrics
@@ -65,10 +66,12 @@ export function trackCommonViewMetrics(
   if (isLayoutShiftSupported()) {
     commonViewMetrics.cumulativeLayoutShift = 0
     ;({ stop: stopCLSTracking } = trackCumulativeLayoutShift(
+      configuration,
       lifeCycle,
       webVitalTelemetryDebug,
-      (cumulativeLayoutShift) => {
+      (cumulativeLayoutShift, cumulativeLayoutShiftTargetSelector) => {
         commonViewMetrics.cumulativeLayoutShift = cumulativeLayoutShift
+        commonViewMetrics.cumulativeLayoutShiftTargetSelector = cumulativeLayoutShiftTargetSelector
         scheduleViewUpdate()
       }
     ))

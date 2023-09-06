@@ -121,6 +121,7 @@ describe('viewCollection', () => {
           count: 10,
         },
         cumulative_layout_shift: 1,
+        cumulative_layout_shift_target_selector: undefined,
         custom_timings: {
           bar: (20 * 1e6) as ServerDuration,
           foo: (10 * 1e6) as ServerDuration,

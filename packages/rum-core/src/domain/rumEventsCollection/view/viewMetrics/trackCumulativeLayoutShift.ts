@@ -1,8 +1,18 @@
-import { round, type RelativeTime, find, ONE_SECOND } from '@datadog/browser-core'
+import {
+  round,
+  type RelativeTime,
+  find,
+  ONE_SECOND,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
+} from '@datadog/browser-core'
+import { isElementNode } from '../../../../browser/htmlDomUtils'
 import type { LifeCycle } from '../../../lifeCycle'
 import { LifeCycleEventType } from '../../../lifeCycle'
 import { supportPerformanceTimingEvent, type RumLayoutShiftTiming } from '../../../../browser/performanceCollection'
 import type { WebVitalTelemetryDebug } from '../startWebVitalTelemetryDebug'
+import { getSelectorFromElement } from '../../../getSelectorFromElement'
+import type { RumConfiguration } from '../../../configuration'
 
 /**
  * Track the cumulative layout shifts (CLS).
@@ -21,10 +31,12 @@ import type { WebVitalTelemetryDebug } from '../startWebVitalTelemetryDebug'
  * https://web.dev/evolving-cls/
  * Reference implementation: https://github.com/GoogleChrome/web-vitals/blob/master/src/getCLS.ts
  */
+
 export function trackCumulativeLayoutShift(
+  configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   webVitalTelemetryDebug: WebVitalTelemetryDebug,
-  callback: (layoutShift: number) => void
+  callback: (cumulativeLayoutShift: number, cumulativeLayoutShiftTargetSelector?: string) => void
 ) {
   let maxClsValue = 0
 
@@ -39,17 +51,23 @@ export function trackCumulativeLayoutShift(
         if (window.value() > maxClsValue) {
           maxClsValue = window.value()
           const cls = round(maxClsValue, 4)
+          const clsTarget = window.largestLayoutShiftTarget()
+          let cslTargetSelector
+
+          if (isExperimentalFeatureEnabled(ExperimentalFeature.WEB_VITALS_ATTRIBUTION) && clsTarget) {
+            cslTargetSelector = getSelectorFromElement(clsTarget, configuration.actionNameAttribute)
+          }
+
+          callback(cls, cslTargetSelector)
 
           if (!clsAttributionCollected) {
             clsAttributionCollected = true
             webVitalTelemetryDebug.addWebVitalTelemetryDebug(
               'CLS',
-              window.largestLayoutShiftNode(),
+              window.largestLayoutShiftTarget(),
               window.largestLayoutShiftTime()
             )
           }
-
-          callback(cls)
         }
       }
     }
@@ -66,7 +84,7 @@ function slidingSessionWindow() {
   let endTime: RelativeTime
 
   let largestLayoutShift = 0
-  let largestLayoutShiftNode: Node | undefined
+  let largestLayoutShiftTarget: HTMLElement | undefined
   let largestLayoutShiftTime: RelativeTime
 
   return {
@@ -79,7 +97,7 @@ function slidingSessionWindow() {
         startTime = endTime = entry.startTime
         value = entry.value
         largestLayoutShift = 0
-        largestLayoutShiftNode = undefined
+        largestLayoutShiftTarget = undefined
       } else {
         value += entry.value
         endTime = entry.startTime
@@ -90,15 +108,17 @@ function slidingSessionWindow() {
         largestLayoutShiftTime = entry.startTime
 
         if (entry.sources?.length) {
-          const largestLayoutShiftSource = find(entry.sources, (s) => s.node?.nodeType === 1) || entry.sources[0]
-          largestLayoutShiftNode = largestLayoutShiftSource.node
+          largestLayoutShiftTarget = find(
+            entry.sources,
+            (s): s is { node: HTMLElement } => !!s.node && isElementNode(s.node)
+          )?.node
         } else {
-          largestLayoutShiftNode = undefined
+          largestLayoutShiftTarget = undefined
         }
       }
     },
     value: () => value,
-    largestLayoutShiftNode: () => largestLayoutShiftNode,
+    largestLayoutShiftTarget: () => largestLayoutShiftTarget,
     largestLayoutShiftTime: () => largestLayoutShiftTime,
   }
 }
