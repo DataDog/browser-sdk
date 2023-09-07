@@ -1,6 +1,6 @@
 import { clocksNow, Observable, timeStampNow } from '@datadog/browser-core'
 import { createNewEvent } from '@datadog/browser-core/test'
-import type { Click } from '../src/domain/rumEventsCollection/action/trackClickActions'
+import type { Click } from '../src/domain/action/trackClickActions'
 
 export type FakeClick = Readonly<ReturnType<typeof createFakeClick>>
 

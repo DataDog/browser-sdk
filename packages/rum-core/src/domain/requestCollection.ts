@@ -19,7 +19,7 @@ import type { RumSessionManager } from '..'
 import type { RumConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
-import { isAllowedRequestUrl } from './rumEventsCollection/resource/resourceUtils'
+import { isAllowedRequestUrl } from './resource/resourceUtils'
 import type { TraceIdentifier, Tracer } from './tracing/tracer'
 import { startTracer } from './tracing/tracer'
 

@@ -2,7 +2,7 @@ import type { RelativeTime, ClocksState } from '@datadog/browser-core'
 import { SESSION_TIME_OUT_DELAY, ValueHistory } from '@datadog/browser-core'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
-import type { ViewCreatedEvent } from '../rumEventsCollection/view/trackViews'
+import type { ViewCreatedEvent } from '../view/trackViews'
 
 export const VIEW_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
 

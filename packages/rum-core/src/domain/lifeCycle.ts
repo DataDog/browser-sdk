@@ -6,8 +6,8 @@ import type { RawRumEvent } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'
 import type { CommonContext } from './contexts/commonContext'
 import type { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
-import type { AutoAction } from './rumEventsCollection/action/actionCollection'
-import type { ViewEvent, ViewCreatedEvent, ViewEndedEvent } from './rumEventsCollection/view/trackViews'
+import type { AutoAction } from './action/actionCollection'
+import type { ViewEvent, ViewCreatedEvent, ViewEndedEvent } from './view/trackViews'
 
 export const enum LifeCycleEventType {
   PERFORMANCE_ENTRIES_COLLECTED,

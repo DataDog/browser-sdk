@@ -3,7 +3,7 @@ import { relativeToClocks, CLEAR_OLD_VALUES_INTERVAL } from '@datadog/browser-co
 import type { TestSetupBuilder } from '../../../test'
 import { setup } from '../../../test'
 import { LifeCycleEventType } from '../lifeCycle'
-import type { ViewCreatedEvent } from '../rumEventsCollection/view/trackViews'
+import type { ViewCreatedEvent } from '../view/trackViews'
 import type { ViewContexts } from './viewContexts'
 import { startViewContexts, VIEW_CONTEXT_TIME_OUT_DELAY } from './viewContexts'
 

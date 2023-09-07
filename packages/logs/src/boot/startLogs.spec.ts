@@ -13,7 +13,7 @@ import {
 import type { LogsConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
 import { HandlerType, Logger, StatusType } from '../domain/logger'
-import type { startLoggerCollection } from '../domain/logsCollection/logger/loggerCollection'
+import type { startLoggerCollection } from '../domain/logger/loggerCollection'
 import type { LogsEvent } from '../logsEvent.types'
 import { startLogs } from './startLogs'
 
