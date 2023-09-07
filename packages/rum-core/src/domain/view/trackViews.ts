@@ -90,7 +90,7 @@ export function trackViews(
   webVitalTelemetryDebug: WebVitalTelemetryDebug,
   initialViewOptions?: ViewOptions
 ) {
-  const activeViews: Array<ReturnType<typeof newView>> = []
+  const activeViews: Set<ReturnType<typeof newView>> = new Set()
   let currentView = startNewView(ViewLoadingType.INITIAL_LOAD, clocksOrigin(), initialViewOptions)
 
   startViewLifeCycle()
@@ -111,9 +111,9 @@ export function trackViews(
       startClocks,
       viewOptions
     )
-    activeViews.push(newlyCreatedView)
+    activeViews.add(newlyCreatedView)
     newlyCreatedView.stopObservable.subscribe(() => {
-      activeViews.splice(activeViews.indexOf(newlyCreatedView))
+      activeViews.delete(newlyCreatedView)
     })
     return newlyCreatedView
   }
