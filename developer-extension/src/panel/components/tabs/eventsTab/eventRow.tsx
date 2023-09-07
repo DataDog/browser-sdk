@@ -50,7 +50,8 @@ export function EventRow({ event }: { event: SdkEvent }) {
   const jsonRef = useRef<HTMLDivElement>(null)
 
   return (
-    <tr
+    <Box
+      component="tr"
       onClick={(event) => {
         if (jsonRef.current?.contains(event.target as Node)) {
           // Ignore clicks on the collapsible area
@@ -58,6 +59,7 @@ export function EventRow({ event }: { event: SdkEvent }) {
         }
         setIsCollapsed((previous) => !previous)
       }}
+      sx={{ cursor: 'pointer' }}
     >
       <td width="20">{new Date(event.date).toLocaleTimeString()}</td>
       <td width="20">
@@ -73,11 +75,16 @@ export function EventRow({ event }: { event: SdkEvent }) {
       </td>
       <td>
         <EventDescription event={event} />
-        <LazyCollapse in={!isCollapsed}>
+        <LazyCollapse
+          in={!isCollapsed}
+          sx={{
+            cursor: 'default',
+          }}
+        >
           <Json ref={jsonRef} value={event} defaultCollapseLevel={0} />
         </LazyCollapse>
       </td>
-    </tr>
+    </Box>
   )
 }
 
