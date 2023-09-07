@@ -1,6 +1,5 @@
 import type { ClocksState, Duration, Observable } from '@datadog/browser-core'
 import { noop } from '@datadog/browser-core'
-import { createScrollHeightObservable } from '../../../../browser/scrollHeightObservable'
 import type { ViewLoadingType } from '../../../../rawRumEvent.types'
 import type { RumConfiguration } from '../../../configuration'
 import type { LifeCycle } from '../../../lifeCycle'
@@ -47,7 +46,6 @@ export function trackCommonViewMetrics(
     (newScrollMetrics) => {
       commonViewMetrics.scroll = newScrollMetrics
     },
-    createScrollHeightObservable(),
     computeScrollValues
   )
 
