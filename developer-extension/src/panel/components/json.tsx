@@ -8,9 +8,11 @@ interface JsonProps {
   value: unknown
   defaultCollapseLevel?: number
   getMenuItemsForPath?: GetMenuItemsForPath
+  formatValue?: FormatValue
 }
 
 type GetMenuItemsForPath = (path: string, value: unknown) => ReactNode
+type FormatValue = (path: string, value: unknown) => ReactNode
 
 const LINE_HEIGHT = '20px'
 const INDENT = 18
@@ -35,9 +37,10 @@ const COLORS = {
   },
 }
 
-export const JsonContext = createContext<{
+const JsonContext = createContext<{
   defaultCollapseLevel: number
   getMenuItemsForPath?: GetMenuItemsForPath
+  formatValue: FormatValue
 } | null>(null)
 
 type JsonValueDescriptor =
@@ -65,7 +68,13 @@ type JsonValueDescriptor =
 
 export const Json = forwardRef(
   (
-    { value, defaultCollapseLevel = Infinity, getMenuItemsForPath, ...boxProps }: JsonProps & BoxProps,
+    {
+      value,
+      defaultCollapseLevel = Infinity,
+      formatValue = defaultFormatValue,
+      getMenuItemsForPath,
+      ...boxProps
+    }: JsonProps & BoxProps,
     ref: ForwardedRef<HTMLDivElement | HTMLSpanElement>
   ) => {
     const theme = useMantineTheme()
@@ -87,7 +96,7 @@ export const Json = forwardRef(
           WebkitFontSmoothing: 'auto',
         }}
       >
-        <JsonContext.Provider value={{ defaultCollapseLevel, getMenuItemsForPath }}>
+        <JsonContext.Provider value={{ defaultCollapseLevel, getMenuItemsForPath, formatValue }}>
           <JsonValue
             descriptor={{
               parentType: 'root',
@@ -102,8 +111,13 @@ export const Json = forwardRef(
   }
 )
 
+export function defaultFormatValue(_path: string, value: unknown) {
+  return typeof value === 'number' ? formatNumber(value) : JSON.stringify(value)
+}
+
 function JsonValue({ descriptor }: { descriptor: JsonValueDescriptor }) {
   const theme = useMantineTheme()
+  const { formatValue } = useContext(JsonContext)!
 
   if (Array.isArray(descriptor.value)) {
     if (descriptor.value.length === 0) {
@@ -168,7 +182,7 @@ function JsonValue({ descriptor }: { descriptor: JsonValueDescriptor }) {
   return (
     <JsonLine descriptor={descriptor}>
       <JsonText color={color} descriptor={descriptor}>
-        {typeof descriptor.value === 'number' ? formatNumber(descriptor.value) : JSON.stringify(descriptor.value)}
+        {formatValue(descriptor.path, descriptor.value)}
       </JsonText>
     </JsonLine>
   )

@@ -12,8 +12,8 @@ import type {
 } from '../../../../../../packages/rum-core/src/rumEvent.types'
 import type { SdkEvent } from '../../../sdkEvent'
 import { isTelemetryEvent, isLogEvent, isRumEvent } from '../../../sdkEvent'
-import { formatDuration } from '../../../formatNumber'
-import { Json } from '../../json'
+import { formatDate, formatDuration } from '../../../formatNumber'
+import { defaultFormatValue, Json } from '../../json'
 import { LazyCollapse } from '../../lazyCollapse'
 
 const RUM_EVENT_TYPE_COLOR = {
@@ -61,7 +61,7 @@ export function EventRow({ event }: { event: SdkEvent }) {
       }}
       sx={{ cursor: 'pointer' }}
     >
-      <td width="20">{new Date(event.date).toLocaleTimeString()}</td>
+      <td width="20">{formatDate(event.date)}</td>
       <td width="20">
         {isRumEvent(event) || isTelemetryEvent(event) ? (
           <Badge variant="outline" color={RUM_EVENT_TYPE_COLOR[event.type]}>
@@ -81,11 +81,38 @@ export function EventRow({ event }: { event: SdkEvent }) {
             cursor: 'default',
           }}
         >
-          <Json ref={jsonRef} value={event} defaultCollapseLevel={0} />
+          <Json ref={jsonRef} value={event} defaultCollapseLevel={0} formatValue={formatValue} />
         </LazyCollapse>
       </td>
     </Box>
   )
+}
+
+function formatValue(path: string, value: unknown) {
+  if (typeof value === 'number') {
+    if (path === 'date') {
+      return formatDate(value)
+    }
+    if (
+      path.endsWith('.first_byte') ||
+      path.endsWith('.dom_complete') ||
+      path.endsWith('.dom_content_loaded') ||
+      path.endsWith('.dom_interactive') ||
+      path.endsWith('.first_contentful_paint') ||
+      path.endsWith('.largest_contentful_paint') ||
+      path.endsWith('.load_event') ||
+      path.endsWith('.time_spent') ||
+      path.endsWith('_time') ||
+      path.endsWith('_delay') ||
+      path.endsWith('.duration') ||
+      path.endsWith('.start') ||
+      path.includes('.custom_timings.')
+    ) {
+      return formatDuration(value)
+    }
+  }
+
+  return defaultFormatValue(path, value)
 }
 
 export const EventDescription = React.memo(({ event }: { event: SdkEvent }) => {
