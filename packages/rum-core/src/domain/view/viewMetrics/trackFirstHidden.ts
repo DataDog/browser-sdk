@@ -6,7 +6,7 @@ export type FirstHidden = ReturnType<typeof trackFirstHidden>
 
 export function trackFirstHidden(configuration: RumConfiguration, eventTarget: Window = window) {
   let timeStamp: RelativeTime
-  let stopListeners: () => void
+  let stopListeners: () => void | undefined
 
   if (document.visibilityState === 'hidden') {
     timeStamp = 0 as RelativeTime
