@@ -1,19 +1,22 @@
 import type { RumConfiguration } from '../configuration'
-import { getDisplayContext, resetDisplayContext } from './displayContext'
+import type { DisplayContext } from './displayContext'
+import { startDisplayContext } from './displayContext'
 
 describe('displayContext', () => {
   let configuration: RumConfiguration
+  let displayContext: DisplayContext
 
   beforeEach(() => {
     configuration = {} as RumConfiguration
+    displayContext = startDisplayContext(configuration)
   })
 
   afterEach(() => {
-    resetDisplayContext()
+    displayContext.stop()
   })
 
   it('should return current display context', () => {
-    expect(getDisplayContext(configuration)).toEqual({
+    expect(displayContext.get()).toEqual({
       viewport: {
         width: jasmine.any(Number),
         height: jasmine.any(Number),

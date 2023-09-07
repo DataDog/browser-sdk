@@ -3,7 +3,7 @@ import { DOM_EVENT, ONE_MINUTE, addEventListeners, findLast } from '@datadog/bro
 import { LifeCycleEventType, type LifeCycle } from '../../lifeCycle'
 import type { RumConfiguration } from '../../configuration'
 import type { RumLargestContentfulPaintTiming } from '../../../browser/performanceCollection'
-import { trackFirstHidden } from './trackFirstHidden'
+import type { FirstHidden } from './trackFirstHidden'
 
 // Discard LCP timings above a certain delay to avoid incorrect data
 // It happens in some cases like sleep mode or some browser implementations
@@ -18,11 +18,10 @@ export const LCP_MAXIMUM_DELAY = 10 * ONE_MINUTE
 export function trackLargestContentfulPaint(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
+  firstHidden: FirstHidden,
   eventTarget: Window,
   callback: (lcpTiming: RelativeTime, lcpElement?: Element) => void
 ) {
-  const firstHidden = trackFirstHidden(configuration)
-
   // Ignore entries that come after the first user interaction.  According to the documentation, the
   // browser should not send largest-contentful-paint entries after a user interact with the page,
   // but the web-vitals reference implementation uses this as a safeguard.

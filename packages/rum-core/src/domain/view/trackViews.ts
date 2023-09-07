@@ -1,4 +1,4 @@
-import type { Duration, ClocksState, TimeStamp, Observable, Subscription, RelativeTime } from '@datadog/browser-core'
+import type { Duration, ClocksState, TimeStamp, Subscription, RelativeTime } from '@datadog/browser-core'
 import {
   noop,
   PageExitReason,
@@ -14,6 +14,8 @@ import {
   looksLikeRelativeTime,
   setInterval,
   clearInterval,
+  setTimeout,
+  Observable,
 } from '@datadog/browser-core'
 
 import type { ViewCustomTimings } from '../../rawRumEvent.types'
@@ -26,10 +28,10 @@ import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { RumConfiguration } from '../configuration'
 import { trackViewEventCounts } from './trackViewEventCounts'
 import type { WebVitalTelemetryDebug } from './startWebVitalTelemetryDebug'
-import { trackInitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
 import type { InitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
-import { trackCommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
+import { trackInitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
 import type { CommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
+import { trackCommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
 
 export interface ViewEvent {
   id: string
@@ -64,6 +66,14 @@ export interface ViewEndedEvent {
 export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 export const SESSION_KEEP_ALIVE_INTERVAL = 5 * ONE_MINUTE
 
+// Some events or metrics can be captured after the end of the view. To avoid missing those;
+// an arbitrary delay is added for stopping their tracking after the view ends.
+//
+// Ideally, we would not stop and keep tracking events or metrics until the end of the session.
+// But this might have a small performance impact if there are many many views.
+// So let's have a fairly short delay improving the situation in most cases and avoid impacting performances too much.
+export const KEEP_TRACKING_AFTER_VIEW_DELAY = 5 * ONE_MINUTE
+
 export interface ViewOptions {
   name?: string
   service?: string
@@ -80,6 +90,7 @@ export function trackViews(
   webVitalTelemetryDebug: WebVitalTelemetryDebug,
   initialViewOptions?: ViewOptions
 ) {
+  const activeViews: Set<ReturnType<typeof newView>> = new Set()
   let currentView = startNewView(ViewLoadingType.INITIAL_LOAD, clocksOrigin(), initialViewOptions)
 
   startViewLifeCycle()
@@ -90,7 +101,7 @@ export function trackViews(
   }
 
   function startNewView(loadingType: ViewLoadingType, startClocks?: ClocksState, viewOptions?: ViewOptions) {
-    return newView(
+    const newlyCreatedView = newView(
       lifeCycle,
       domMutationObservable,
       configuration,
@@ -100,6 +111,11 @@ export function trackViews(
       startClocks,
       viewOptions
     )
+    activeViews.add(newlyCreatedView)
+    newlyCreatedView.stopObservable.subscribe(() => {
+      activeViews.delete(newlyCreatedView)
+    })
+    return newlyCreatedView
   }
 
   function startViewLifeCycle() {
@@ -144,6 +160,7 @@ export function trackViews(
     stop: () => {
       locationChangeSubscription?.unsubscribe()
       currentView.end()
+      activeViews.forEach((view) => view.stop())
     },
   }
 }
@@ -160,6 +177,7 @@ function newView(
 ) {
   // Setup initial values
   const id = generateUUID()
+  const stopObservable = new Observable<void>()
   const customTimings: ViewCustomTimings = {}
   let documentVersion = 0
   let endClocks: ClocksState | undefined
@@ -206,16 +224,12 @@ function newView(
     webVitalTelemetryDebug
   )
 
-  const { scheduleStop: scheduleStopInitialViewMetricsTracking, initialViewMetrics } =
+  const { stop: stopInitialViewMetricsTracking, initialViewMetrics } =
     loadingType === ViewLoadingType.INITIAL_LOAD
       ? trackInitialViewMetrics(lifeCycle, configuration, webVitalTelemetryDebug, setLoadEvent, scheduleViewUpdate)
-      : { scheduleStop: noop, initialViewMetrics: {} as InitialViewMetrics }
+      : { stop: noop, initialViewMetrics: {} as InitialViewMetrics }
 
-  const { scheduleStop: scheduleStopEventCountsTracking, eventCounts } = trackViewEventCounts(
-    lifeCycle,
-    id,
-    scheduleViewUpdate
-  )
+  const { stop: stopEventCountsTracking, eventCounts } = trackViewEventCounts(lifeCycle, id, scheduleViewUpdate)
 
   // Session keep alive
   const keepAliveIntervalId = setInterval(triggerViewUpdate, SESSION_KEEP_ALIVE_INTERVAL)
@@ -251,6 +265,7 @@ function newView(
     name,
     service,
     version,
+    stopObservable,
     end(options: { endClocks?: ClocksState; sessionIsActive?: boolean } = {}) {
       if (endClocks) {
         // view already ended
@@ -262,9 +277,15 @@ function newView(
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks })
       clearInterval(keepAliveIntervalId)
       stopCommonViewMetricsTracking()
-      scheduleStopInitialViewMetricsTracking()
-      scheduleStopEventCountsTracking()
       triggerViewUpdate()
+      setTimeout(() => {
+        this.stop()
+      }, KEEP_TRACKING_AFTER_VIEW_DELAY)
+    },
+    stop() {
+      stopInitialViewMetricsTracking()
+      stopEventCountsTracking()
+      stopObservable.notify()
     },
     addTiming(name: string, time: RelativeTime | TimeStamp) {
       if (endClocks) {
