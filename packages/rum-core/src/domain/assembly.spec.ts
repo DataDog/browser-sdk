@@ -82,8 +82,8 @@ describe('rum assembly', () => {
 
   describe('beforeSend', () => {
     describe('fields modification', () => {
-      describe('sensitive fields', () => {
-        it('should allow modification on sensitive field', () => {
+      describe('modifiable fields', () => {
+        it('should allow modification', () => {
           const { lifeCycle } = setupBuilder
             .withConfiguration({
               beforeSend: (event) => (event.view.url = 'modified'),
@@ -95,6 +95,20 @@ describe('rum assembly', () => {
           })
 
           expect(serverRumEvents[0].view.url).toBe('modified')
+        })
+
+        it('should allow addition', () => {
+          const { lifeCycle } = setupBuilder
+            .withConfiguration({
+              beforeSend: (event) => (event.view.name = 'added'),
+            })
+            .build()
+
+          notifyRawRumEvent(lifeCycle, {
+            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, { view: { url: '/path?foo=bar' } }),
+          })
+
+          expect(serverRumEvents[0].view.name).toBe('added')
         })
       })
 

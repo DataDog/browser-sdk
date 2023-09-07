@@ -5,7 +5,7 @@ describe('telemetry', () => {
   createTest('send errors for logs')
     .withSetup(bundleSetup)
     .withLogs()
-    .run(async ({ serverEvents }) => {
+    .run(async ({ intakeRegistry }) => {
       await browserExecute(() => {
         const context = {
           get foo() {
@@ -15,19 +15,19 @@ describe('telemetry', () => {
         window.DD_LOGS!.logger.log('hop', context as any)
       })
       await flushEvents()
-      expect(serverEvents.telemetryErrors.length).toBe(1)
-      const event = serverEvents.telemetryErrors[0]
+      expect(intakeRegistry.telemetryErrorEvents.length).toBe(1)
+      const event = intakeRegistry.telemetryErrorEvents[0]
       expect(event.service).toEqual('browser-logs-sdk')
       expect(event.telemetry.message).toBe('bar')
       expect(event.telemetry.error!.kind).toBe('Error')
       expect(event.telemetry.status).toBe('error')
-      serverEvents.empty()
+      intakeRegistry.empty()
     })
 
   createTest('send errors for RUM')
     .withSetup(bundleSetup)
     .withRum()
-    .run(async ({ serverEvents }) => {
+    .run(async ({ intakeRegistry }) => {
       await browserExecute(() => {
         const context = {
           get foo() {
@@ -37,13 +37,13 @@ describe('telemetry', () => {
         window.DD_RUM!.addAction('hop', context as any)
       })
       await flushEvents()
-      expect(serverEvents.telemetryErrors.length).toBe(1)
-      const event = serverEvents.telemetryErrors[0]
+      expect(intakeRegistry.telemetryErrorEvents.length).toBe(1)
+      const event = intakeRegistry.telemetryErrorEvents[0]
       expect(event.service).toEqual('browser-rum-sdk')
       expect(event.telemetry.message).toBe('bar')
       expect(event.telemetry.error!.kind).toBe('Error')
       expect(event.telemetry.status).toBe('error')
-      serverEvents.empty()
+      intakeRegistry.empty()
     })
 
   createTest('send init configuration for logs')
@@ -51,10 +51,10 @@ describe('telemetry', () => {
     .withLogs({
       forwardErrorsToLogs: true,
     })
-    .run(async ({ serverEvents }) => {
+    .run(async ({ intakeRegistry }) => {
       await flushEvents()
-      expect(serverEvents.telemetryConfigurations.length).toBe(1)
-      const event = serverEvents.telemetryConfigurations[0]
+      expect(intakeRegistry.telemetryConfigurationEvents.length).toBe(1)
+      const event = intakeRegistry.telemetryConfigurationEvents[0]
       expect(event.service).toEqual('browser-logs-sdk')
       expect(event.telemetry.configuration.forward_errors_to_logs).toEqual(true)
     })
@@ -64,10 +64,10 @@ describe('telemetry', () => {
     .withRum({
       trackUserInteractions: true,
     })
-    .run(async ({ serverEvents }) => {
+    .run(async ({ intakeRegistry }) => {
       await flushEvents()
-      expect(serverEvents.telemetryConfigurations.length).toBe(1)
-      const event = serverEvents.telemetryConfigurations[0]
+      expect(intakeRegistry.telemetryConfigurationEvents.length).toBe(1)
+      const event = intakeRegistry.telemetryConfigurationEvents[0]
       expect(event.service).toEqual('browser-rum-sdk')
       expect(event.telemetry.configuration.track_user_interactions).toEqual(true)
     })

@@ -12,7 +12,7 @@ import { setup } from '../../../test'
 import type { Clock } from '../../../../core/test'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
-import type { ViewCreatedEvent, ViewEndedEvent } from '../rumEventsCollection/view/trackViews'
+import type { ViewCreatedEvent, ViewEndedEvent } from '../view/trackViews'
 import type { FeatureFlagContexts } from './featureFlagContext'
 import { BYTES_COMPUTATION_THROTTLING_DELAY, startFeatureFlagContexts } from './featureFlagContext'
 
