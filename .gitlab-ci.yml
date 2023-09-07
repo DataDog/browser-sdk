@@ -1,7 +1,7 @@
 variables:
   CURRENT_STAGING: staging-36
   APP: 'browser-sdk'
-  CURRENT_CI_IMAGE: 51
+  CURRENT_CI_IMAGE: 52
   BUILD_STABLE_REGISTRY: '486234852809.dkr.ecr.us-east-1.amazonaws.com'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
@@ -187,7 +187,7 @@ e2e:
       junit: test-report/e2e/*.xml
   script:
     - yarn
-    - yarn test:e2e
+    - FORCE_COLOR=1 yarn test:e2e
   after_script:
     - node ./scripts/test/export-test-result.js e2e
 
@@ -240,7 +240,7 @@ e2e-bs:
       junit: test-report/e2e-bs/*.xml
   script:
     - yarn
-    - ./scripts/test/ci-bs.sh test:e2e
+    - FORCE_COLOR=1 ./scripts/test/ci-bs.sh test:e2e
   after_script:
     - node ./scripts/test/export-test-result.js e2e-bs
 
