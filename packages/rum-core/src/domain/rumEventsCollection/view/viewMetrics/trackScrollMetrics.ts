@@ -33,7 +33,7 @@ export function trackScrollMetrics(
 ) {
   let maxScrollDepth = 0
   let maxScrollHeight = 0
-  let maxDepthTime = 0 as Duration
+  let maxScrollTime = 0 as Duration
 
   let stop: () => void
 
@@ -48,15 +48,18 @@ export function trackScrollMetrics(
     if (height > maxScrollHeight) {
       maxScrollHeight = height
       const now = relativeNow()
-      maxDepthTime = elapsed(viewStart.relative, now)
+      maxScrollTime = elapsed(viewStart.relative, now)
       shouldUpdate = true
     }
 
     if (shouldUpdate) {
       callback({
         maxDepth: maxScrollDepth,
-        maxDepthScrollHeight: height,
-        maxDepthTime,
+
+        // TODO: This should be renamed to maxScrollHeight in the next major release
+        maxDepthScrollHeight: maxScrollHeight,
+        // TODO: This should be renamed to maxScrollTime in the next major release
+        maxDepthTime: maxScrollTime,
         maxDepthScrollTop: scrollTop,
       })
     }
