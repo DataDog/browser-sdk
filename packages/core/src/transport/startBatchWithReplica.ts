@@ -60,5 +60,10 @@ export function startBatchWithReplica<T extends Context>(
         replicaBatch.upsert(replica.transformMessage ? replica.transformMessage(message) : message, key)
       }
     },
+
+    stop: () => {
+      primaryBatch.stop()
+      replicaBatch?.stop()
+    },
   }
 }

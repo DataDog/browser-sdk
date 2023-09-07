@@ -41,6 +41,11 @@ export interface Encoder<Output extends string | Uint8Array = string | Uint8Arra
    * Returns a rough estimation of the bytes count if the data was encoded.
    */
   estimateEncodedBytesCount(data: string): number
+
+  /**
+   * Stop the encoder
+   */
+  stop(): void
 }
 
 export interface EncoderResult<Output extends string | Uint8Array = string | Uint8Array> {
@@ -97,6 +102,10 @@ export function createIdentityEncoder(): Encoder<string> {
 
     estimateEncodedBytesCount(data) {
       return data.length
+    },
+
+    stop() {
+      // do nothing
     },
   }
 }

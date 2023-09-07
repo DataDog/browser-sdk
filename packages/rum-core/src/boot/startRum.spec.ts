@@ -132,15 +132,18 @@ describe('rum session', () => {
     expect(serverRumEvents[0].type).toEqual('view')
     expect(serverRumEvents[0].session.id).toEqual('42')
 
+    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+    expect(serverRumEvents.length).toEqual(2)
+
     session.setId('43')
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
-    expect(serverRumEvents.length).toEqual(2)
+    expect(serverRumEvents.length).toEqual(3)
 
     // New view event
-    expect(serverRumEvents[1].type).toEqual('view')
-    expect(serverRumEvents[1].session.id).toEqual('43')
-    expect(serverRumEvents[1].view.id).not.toEqual(serverRumEvents[0].view.id)
+    expect(serverRumEvents[2].type).toEqual('view')
+    expect(serverRumEvents[2].session.id).toEqual('43')
+    expect(serverRumEvents[2].view.id).not.toEqual(serverRumEvents[0].view.id)
   })
 })
 
@@ -333,7 +336,7 @@ describe('view events', () => {
   let interceptor: ReturnType<typeof interceptRequests>
 
   beforeEach(() => {
-    setupBuilder = setup().beforeBuild(({ configuration }) => {
+    setupBuilder = setup().beforeBuild(({ configuration }) =>
       startRum(
         {} as RumInitConfiguration,
         configuration,
@@ -341,7 +344,7 @@ describe('view events', () => {
         createContextManager(CustomerDataType.GlobalContext),
         createContextManager(CustomerDataType.User)
       )
-    })
+    )
     interceptor = interceptRequests()
   })
 

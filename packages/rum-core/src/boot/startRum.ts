@@ -44,6 +44,7 @@ import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
 import type { CommonContext } from '../domain/contexts/commonContext'
 import { buildCommonContext } from '../domain/contexts/commonContext'
 import { startWebVitalTelemetryDebug } from '../domain/view/startWebVitalTelemetryDebug'
+import { startDisplayContext } from '../domain/contexts/displayContext'
 import type { RecorderApi } from './rumPublicApi'
 
 export function startRum(
@@ -55,6 +56,7 @@ export function startRum(
   initialViewOptions?: ViewOptions,
   createDeflateEncoder?: (streamId: DeflateEncoderStreamId) => DeflateEncoder
 ) {
+  const cleanupTasks: Array<() => void> = []
   const lifeCycle = new LifeCycle()
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (event) => sendToExtension('rum', event))
@@ -82,9 +84,10 @@ export function startRum(
   const featureFlagContexts = startFeatureFlagContexts(lifeCycle)
 
   const pageExitObservable = createPageExitObservable(configuration)
-  pageExitObservable.subscribe((event) => {
+  const pageExitSubscription = pageExitObservable.subscribe((event) => {
     lifeCycle.notify(LifeCycleEventType.PAGE_EXITED, event)
   })
+  cleanupTasks.push(() => pageExitSubscription.unsubscribe())
 
   const session = !canUseEventBridge() ? startRumSessionManager(configuration, lifeCycle) : startRumSessionManagerStub()
   if (!canUseEventBridge()) {
@@ -97,6 +100,7 @@ export function startRum(
       session.expireObservable,
       createDeflateEncoder
     )
+    cleanupTasks.push(() => batch.stop())
     startCustomerDataTelemetry(
       configuration,
       telemetry,
@@ -113,7 +117,14 @@ export function startRum(
   const domMutationObservable = createDOMMutationObservable()
   const locationChangeObservable = createLocationChangeObservable(configuration, location)
 
-  const { viewContexts, pageStateHistory, urlContexts, actionContexts, addAction } = startRumEventCollection(
+  const {
+    viewContexts,
+    pageStateHistory,
+    urlContexts,
+    actionContexts,
+    addAction,
+    stop: stopRumEventCollection,
+  } = startRumEventCollection(
     lifeCycle,
     configuration,
     location,
@@ -123,6 +134,7 @@ export function startRum(
     () => buildCommonContext(globalContextManager, userContextManager, recorderApi),
     reportError
   )
+  cleanupTasks.push(stopRumEventCollection)
 
   addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
 
@@ -130,7 +142,11 @@ export function startRum(
   startResourceCollection(lifeCycle, configuration, session, pageStateHistory)
 
   const webVitalTelemetryDebug = startWebVitalTelemetryDebug(configuration, telemetry, recorderApi, session)
-  const { addTiming, startView } = startViewCollection(
+  const {
+    addTiming,
+    startView,
+    stop: stopViewCollection,
+  } = startViewCollection(
     lifeCycle,
     configuration,
     location,
@@ -142,6 +158,8 @@ export function startRum(
     webVitalTelemetryDebug,
     initialViewOptions
   )
+  cleanupTasks.push(stopViewCollection)
+
   const { addError } = startErrorCollection(lifeCycle, configuration, pageStateHistory, featureFlagContexts)
 
   startRequestCollection(lifeCycle, configuration, session)
@@ -166,6 +184,9 @@ export function startRum(
     session,
     stopSession: () => session.expire(),
     getInternalContext: internalContext.get,
+    stop: () => {
+      cleanupTasks.forEach((task) => task())
+    },
   }
 }
 
@@ -200,6 +221,8 @@ export function startRumEventCollection(
     pageStateHistory
   )
 
+  const displayContext = startDisplayContext(configuration)
+
   startRumAssembly(
     configuration,
     lifeCycle,
@@ -207,6 +230,7 @@ export function startRumEventCollection(
     viewContexts,
     urlContexts,
     actionContexts,
+    displayContext,
     buildCommonContext,
     reportError
   )
@@ -218,6 +242,9 @@ export function startRumEventCollection(
     addAction,
     actionContexts,
     stop: () => {
+      displayContext.stop()
+      pageStateHistory.stop()
+      urlContexts.stop()
       viewContexts.stop()
       pageStateHistory.stop()
     },

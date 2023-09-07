@@ -49,8 +49,8 @@ describe('foreground context', () => {
   describe('when the page do not have the focus when starting', () => {
     beforeEach(() => {
       spyOn(Document.prototype, 'hasFocus').and.callFake(() => false)
-      pageStateHistory = startPageStateHistory(configuration)
     })
+
     describe('without any focus nor blur event', () => {
       describe('isInForegroundAt', () => {
         it('should return false', () => {
@@ -197,6 +197,8 @@ describe('foreground context', () => {
     })
 
     it('after starting with a blur even, should not be in foreground', () => {
+      setupBuilder.build()
+
       pageStateHistory.addPageState(PageState.PASSIVE)
 
       expect(isInForegroundAt(relativeNow())).toEqual(false)
@@ -206,7 +208,6 @@ describe('foreground context', () => {
   describe('when the page has focus when starting', () => {
     beforeEach(() => {
       spyOn(Document.prototype, 'hasFocus').and.callFake(() => true)
-      pageStateHistory = startPageStateHistory(configuration)
     })
 
     describe('when there is no focus event', () => {

@@ -39,7 +39,7 @@ export function startViewCollection(
       processViewUpdate(view, configuration, featureFlagContexts, recorderApi, pageStateHistory)
     )
   )
-  const trackViewResult = trackViews(
+  return trackViews(
     location,
     lifeCycle,
     domMutationObservable,
@@ -49,8 +49,6 @@ export function startViewCollection(
     webVitalTelemetryDebug,
     initialViewOptions
   )
-
-  return trackViewResult
 }
 
 function processViewUpdate(

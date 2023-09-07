@@ -3,6 +3,7 @@ import type { Context } from '../tools/serialisation/context'
 import { objectValues } from '../tools/utils/polyfills'
 import { isPageExitReason } from '../browser/pageExitObservable'
 import { jsonStringify } from '../tools/serialisation/jsonStringify'
+import type { Subscription } from '../tools/observable'
 import type { Encoder, EncoderResult } from '../tools/encoder'
 import { computeBytesCount } from '../tools/utils/byteUtils'
 import type { HttpRequest, Payload } from './httpRequest'
@@ -10,6 +11,7 @@ import type { FlushController, FlushEvent } from './flushController'
 
 export class Batch {
   private upsertBuffer: { [key: string]: string } = {}
+  private flushSubscription: Subscription
 
   constructor(
     private encoder: Encoder,
@@ -17,7 +19,7 @@ export class Batch {
     public flushController: FlushController,
     private messageBytesLimit: number
   ) {
-    this.flushController.flushObservable.subscribe((event) => this.flush(event))
+    this.flushSubscription = this.flushController.flushObservable.subscribe((event) => this.flush(event))
   }
 
   add(message: Context) {
@@ -26,6 +28,10 @@ export class Batch {
 
   upsert(message: Context, key: string) {
     this.addOrUpdate(message, key)
+  }
+
+  stop() {
+    this.flushSubscription.unsubscribe()
   }
 
   private flush(event: FlushEvent) {
