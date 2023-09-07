@@ -74,8 +74,8 @@ export function trackScrollMetrics(
     const observerTarget = document.scrollingElement || document.documentElement
     const resizeObserver = new ResizeObserver(
       monitor((entries) => {
-        const height = Math.round(entries[0].borderBoxSize[0].blockSize)
-        if (height) {
+        const height = Math.round(entries?.[0]?.borderBoxSize?.[0]?.blockSize ?? 0)
+        if (height > 0) {
           trotthledUpdateScrollMetrics.throttled(height)
         }
       })
