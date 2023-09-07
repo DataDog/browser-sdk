@@ -62,6 +62,12 @@ describe('logs entry', () => {
       expect(startLogs).toHaveBeenCalled()
     })
 
+    it('should not start when the configuration is missing', () => {
+      ;(LOGS.init as () => void)()
+      expect(displaySpy).toHaveBeenCalled()
+      expect(startLogs).not.toHaveBeenCalled()
+    })
+
     it('should not start when the configuration is invalid', () => {
       LOGS.init(INVALID_INIT_CONFIGURATION)
       expect(displaySpy).toHaveBeenCalled()

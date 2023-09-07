@@ -119,6 +119,10 @@ export function makeRumPublicApi(
   let deflateWorker: DeflateWorker | undefined
 
   function initRum(initConfiguration: RumInitConfiguration) {
+    if (!initConfiguration) {
+      display.error('Missing configuration')
+      return
+    }
     // This function should be available, regardless of initialization success.
     getInitConfigurationStrategy = () => deepClone<InitConfiguration>(initConfiguration)
 

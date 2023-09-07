@@ -44,6 +44,7 @@ const enum SessionType {
 }
 
 const VIEW_MODIFIABLE_FIELD_PATHS: ModifiableFieldPaths = {
+  'view.name': 'string',
   'view.url': 'string',
   'view.referrer': 'string',
 }
