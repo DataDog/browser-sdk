@@ -33,9 +33,7 @@ export function startLeakDetection() {
 export function stopLeakDetection() {
   EventTarget.prototype.addEventListener = originalAddEventListener
   EventTarget.prototype.removeEventListener = originalRemoveEventListener
-  Object.keys(wrappedListeners).forEach((key) =>
-    wrappedListeners[key].forEach((_, listener) => wrappedListeners[key].delete(listener))
-  )
+  wrappedListeners = {}
 }
 
 function withLeakDetection(eventName: string, listener: EventListener) {
