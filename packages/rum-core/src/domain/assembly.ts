@@ -28,7 +28,7 @@ import type { ViewContexts } from './contexts/viewContexts'
 import type { RumSessionManager } from './rumSessionManager'
 import type { UrlContexts } from './contexts/urlContexts'
 import type { RumConfiguration } from './configuration'
-import type { ActionContexts } from './rumEventsCollection/action/actionCollection'
+import type { ActionContexts } from './action/actionCollection'
 import { getDisplayContext } from './contexts/displayContext'
 import type { CommonContext } from './contexts/commonContext'
 import type { ModifiableFieldPaths } from './limitModification'
@@ -44,6 +44,7 @@ const enum SessionType {
 }
 
 const VIEW_MODIFIABLE_FIELD_PATHS: ModifiableFieldPaths = {
+  'view.name': 'string',
   'view.url': 'string',
   'view.referrer': 'string',
 }

@@ -71,6 +71,10 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
     logger: mainLogger,
 
     init: monitor((initConfiguration: LogsInitConfiguration) => {
+      if (!initConfiguration) {
+        display.error('Missing configuration')
+        return
+      }
       // This function should be available, regardless of initialization success.
       getInitConfigurationStrategy = () => deepClone(initConfiguration)
 

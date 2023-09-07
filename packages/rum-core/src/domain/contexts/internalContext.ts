@@ -1,5 +1,5 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import type { ActionContexts } from '../rumEventsCollection/action/actionCollection'
+import type { ActionContexts } from '../action/actionCollection'
 import type { RumSessionManager } from '../rumSessionManager'
 import type { ViewContexts } from './viewContexts'
 import type { UrlContexts } from './urlContexts'
