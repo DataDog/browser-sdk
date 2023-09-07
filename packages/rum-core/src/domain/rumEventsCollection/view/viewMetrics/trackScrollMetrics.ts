@@ -55,7 +55,6 @@ export function trackScrollMetrics(
     if (shouldUpdate) {
       callback({
         maxDepth: maxScrollDepth,
-
         // TODO: This should be renamed to maxScrollHeight in the next major release
         maxDepthScrollHeight: maxScrollHeight,
         // TODO: This should be renamed to maxScrollTime in the next major release

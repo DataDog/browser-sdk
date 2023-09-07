@@ -1,5 +1,5 @@
 import type { ClocksState, Duration, Observable } from '@datadog/browser-core'
-import { noop } from '@datadog/browser-core'
+import { assign, noop } from '@datadog/browser-core'
 import type { ViewLoadingType } from '../../../../rawRumEvent.types'
 import type { RumConfiguration } from '../../../configuration'
 import type { LifeCycle } from '../../../lifeCycle'
@@ -44,7 +44,9 @@ export function trackCommonViewMetrics(
     configuration,
     viewStart,
     (newScrollMetrics) => {
-      commonViewMetrics.scroll = newScrollMetrics
+      commonViewMetrics.scroll = assign(newScrollMetrics, {
+        maxDepth: Math.min(newScrollMetrics.maxDepth, newScrollMetrics.maxDepthScrollHeight),
+      })
     },
     computeScrollValues
   )
