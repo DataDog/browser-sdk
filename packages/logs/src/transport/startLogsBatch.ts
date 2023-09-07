@@ -28,4 +28,6 @@ export function startLogsBatch(
   lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (serverLogsEvent: LogsEvent & Context) => {
     batch.add(serverLogsEvent)
   })
+
+  return batch
 }

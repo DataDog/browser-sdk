@@ -134,5 +134,9 @@ export function createDeflateEncoder(
     estimateEncodedBytesCount(data) {
       return data.length / 7
     },
+
+    stop() {
+      removeMessageListener()
+    },
   }
 }

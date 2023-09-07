@@ -6,8 +6,8 @@ import type { TestSetupBuilder } from '../../../../test'
 import { setup } from '../../../../test'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { RumConfiguration } from '../../configuration'
-import { resetFirstHidden } from './trackFirstHidden'
 import { LCP_MAXIMUM_DELAY, trackLargestContentfulPaint } from './trackLargestContentfulPaint'
+import { trackFirstHidden } from './trackFirstHidden'
 
 describe('trackLargestContentfulPaint', () => {
   let setupBuilder: TestSetupBuilder
@@ -19,16 +19,27 @@ describe('trackLargestContentfulPaint', () => {
     configuration = {} as RumConfiguration
     lcpCallback = jasmine.createSpy()
     eventTarget = document.createElement('div') as unknown as Window
-    setupBuilder = setup().beforeBuild(({ lifeCycle }) =>
-      trackLargestContentfulPaint(lifeCycle, configuration, eventTarget, lcpCallback)
-    )
-    resetFirstHidden()
+    setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
+      const firstHidden = trackFirstHidden(configuration)
+      const largestContentfulPaint = trackLargestContentfulPaint(
+        lifeCycle,
+        configuration,
+        firstHidden,
+        eventTarget,
+        lcpCallback
+      )
+      return {
+        stop() {
+          firstHidden.stop()
+          largestContentfulPaint.stop()
+        },
+      }
+    })
   })
 
   afterEach(() => {
     setupBuilder.cleanup()
     restorePageVisibility()
-    resetFirstHidden()
   })
 
   it('should provide the largest contentful paint timing', () => {

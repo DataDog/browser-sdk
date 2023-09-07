@@ -5,8 +5,8 @@ import type { TestSetupBuilder } from '../../../../test'
 import { setup } from '../../../../test'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { RumConfiguration } from '../../configuration'
-import { resetFirstHidden } from './trackFirstHidden'
 import { FCP_MAXIMUM_DELAY, trackFirstContentfulPaint } from './trackFirstContentfulPaint'
+import { trackFirstHidden } from './trackFirstHidden'
 
 const FAKE_PAINT_ENTRY: RumPerformancePaintTiming = {
   entryType: 'paint',
@@ -22,16 +22,21 @@ describe('trackFirstContentfulPaint', () => {
   beforeEach(() => {
     configuration = {} as RumConfiguration
     fcpCallback = jasmine.createSpy()
-    setupBuilder = setup().beforeBuild(({ lifeCycle }) =>
-      trackFirstContentfulPaint(lifeCycle, configuration, fcpCallback)
-    )
-    resetFirstHidden()
+    setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
+      const firstHidden = trackFirstHidden(configuration)
+      const firstContentfulPaint = trackFirstContentfulPaint(lifeCycle, firstHidden, fcpCallback)
+      return {
+        stop() {
+          firstHidden.stop()
+          firstContentfulPaint.stop()
+        },
+      }
+    })
   })
 
   afterEach(() => {
     setupBuilder.cleanup()
     restorePageVisibility()
-    resetFirstHidden()
   })
 
   it('should provide the first contentful paint timing', () => {
