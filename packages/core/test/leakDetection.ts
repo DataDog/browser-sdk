@@ -1,4 +1,5 @@
 import { display } from '../src/tools/display'
+import { isIE } from '../src/tools/utils/browserDetection'
 import { getCurrentJasmineSpec } from './getCurrentJasmineSpec'
 
 let originalAddEventListener: typeof EventTarget.prototype.addEventListener
@@ -8,6 +9,9 @@ let wrappedListeners: {
 }
 
 export function startLeakDetection() {
+  if (isIE()) {
+    return
+  }
   wrappedListeners = {}
 
   // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -31,6 +35,9 @@ export function startLeakDetection() {
 }
 
 export function stopLeakDetection() {
+  if (isIE()) {
+    return
+  }
   EventTarget.prototype.addEventListener = originalAddEventListener
   EventTarget.prototype.removeEventListener = originalRemoveEventListener
   wrappedListeners = {}
