@@ -1,13 +1,13 @@
-import { Popover, Box, Text, Button, Flex, Autocomplete } from '@mantine/core'
+import { Popover, Box, Text, Button, Flex, Autocomplete, Table, useMantineTheme } from '@mantine/core'
 import type { ForwardedRef, ReactNode } from 'react'
 import React, { useMemo, useRef, useState, forwardRef, useCallback } from 'react'
 import type { EventFilters, FacetRegistry } from '../../../hooks/useEvents'
 import type { SdkEvent } from '../../../sdkEvent'
 import { isRumViewEvent } from '../../../sdkEvent'
+import { BORDER_RADIUS, separatorBorder } from '../../../uiUtils'
 import type { EventListColumn } from './columnUtils'
 import { getColumnTitle, DEFAULT_COLUMNS, includesColumn } from './columnUtils'
 import { EventRow } from './eventRow'
-import { Grid } from './grid'
 import { ColumnDrag } from './columnDrag'
 
 export function EventsList({
@@ -23,7 +23,8 @@ export function EventsList({
   columns: EventListColumn[]
   onColumnsChange: (columns: EventListColumn[]) => void
 }) {
-  const headerRowRef = useRef<HTMLDivElement>(null)
+  const headerRowRef = useRef<HTMLTableRowElement>(null)
+  const theme = useMantineTheme()
 
   const onAddColumn = useCallback(
     (column: EventListColumn) => {
@@ -35,33 +36,49 @@ export function EventsList({
   )
 
   return (
-    <>
-      <Grid columnsCount={columns.length}>
-        <Grid.Row ref={headerRowRef}>
-          {columns.map((column, index) => (
-            <Grid.HeaderCell key={column.type === 'field' ? `field-${column.path}` : column.type} data-header-cell>
-              <Flex justify="space-between" gap="sm" align="center">
-                {getColumnTitle(column)}
-                {index === columns.length - 1 && (
-                  <AddColumnPopover columns={columns} onColumnsChange={onColumnsChange} facetRegistry={facetRegistry} />
-                )}
-              </Flex>
-            </Grid.HeaderCell>
+    <Box
+      mx="md"
+      mb="md"
+      sx={{
+        border: separatorBorder(theme),
+        borderRadius: BORDER_RADIUS,
+      }}
+    >
+      <Table>
+        <thead>
+          <tr ref={headerRowRef}>
+            {columns.map((column, index) => (
+              <th key={column.type === 'field' ? `field-${column.path}` : column.type} data-header-cell>
+                <Flex justify="space-between" gap="sm" align="center">
+                  {getColumnTitle(column)}
+                  {index === columns.length - 1 && (
+                    <AddColumnPopover
+                      columns={columns}
+                      onColumnsChange={onColumnsChange}
+                      facetRegistry={facetRegistry}
+                    />
+                  )}
+                </Flex>
+              </th>
+            ))}
+          </tr>
+        </thead>
+
+        <tbody>
+          {events.map((event) => (
+            <EventRow
+              key={getEventRenderingKey(event, !filters.outdatedVersions)}
+              event={event}
+              columns={columns}
+              onAddColumn={onAddColumn}
+              facetRegistry={facetRegistry}
+            />
           ))}
-        </Grid.Row>
-        {events.map((event) => (
-          <EventRow
-            key={getEventRenderingKey(event, !filters.outdatedVersions)}
-            event={event}
-            columns={columns}
-            onAddColumn={onAddColumn}
-            facetRegistry={facetRegistry}
-          />
-        ))}
-      </Grid>
+        </tbody>
+      </Table>
 
       <ColumnDrag columns={columns} onColumnsChange={onColumnsChange} headerRowRef={headerRowRef} />
-    </>
+    </Box>
   )
 }
 

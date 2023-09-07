@@ -1,5 +1,6 @@
+import type { BoxProps } from '@mantine/core'
 import { Badge, Box, Menu } from '@mantine/core'
-import type { ReactNode } from 'react'
+import type { ComponentPropsWithoutRef, ReactNode } from 'react'
 import React, { useRef, useState } from 'react'
 import type { TelemetryEvent } from '../../../../../../packages/core/src/domain/telemetry'
 import type { LogsEvent } from '../../../../../../packages/logs/src/logsEvent.types'
@@ -16,7 +17,6 @@ import { formatDate, formatDuration } from '../../../formatNumber'
 import { defaultFormatValue, Json } from '../../json'
 import { LazyCollapse } from '../../lazyCollapse'
 import type { FacetRegistry } from '../../../hooks/useEvents'
-import { Grid } from './grid'
 import type { EventListColumn } from './columnUtils'
 import { includesColumn } from './columnUtils'
 
@@ -83,15 +83,18 @@ export const EventRow = React.memo(
     }
 
     return (
-      <Grid.Row>
+      <tr>
         {columns.map((column): React.ReactElement => {
           switch (column.type) {
             case 'date':
-              return <Grid.Cell key="date">{formatDate(event.date)}</Grid.Cell>
+              return <Cell key="date">{formatDate(event.date)}</Cell>
             case 'description':
               return (
-                <Grid.Cell
+                <Cell
                   key="description"
+                  sx={{
+                    cursor: 'pointer',
+                  }}
                   onClick={(event) => {
                     if (jsonRef.current?.contains(event.target as Node)) {
                       // Ignore clicks on the collapsible area
@@ -112,11 +115,11 @@ export const EventRow = React.memo(
                       sx={{ display: 'block' }}
                     />
                   </LazyCollapse>
-                </Grid.Cell>
+                </Cell>
               )
             case 'type':
               return (
-                <Grid.Cell key="type" center>
+                <Cell key="type">
                   {isRumEvent(event) || isTelemetryEvent(event) ? (
                     <Badge variant="outline" color={RUM_EVENT_TYPE_COLOR[event.type]}>
                       {event.type}
@@ -126,12 +129,12 @@ export const EventRow = React.memo(
                       {event.origin as string} {event.status as string}
                     </Badge>
                   )}
-                </Grid.Cell>
+                </Cell>
               )
             case 'field': {
               const value = facetRegistry.getFieldValueForEvent(event, column.path)
               return (
-                <Grid.Cell key={`field-${column.path}`}>
+                <Cell key={`field-${column.path}`}>
                   {value !== undefined && (
                     <Json
                       value={value}
@@ -140,15 +143,30 @@ export const EventRow = React.memo(
                       formatValue={(path, value) => formatValue(path ? `${column.path}.${path}` : column.path, value)}
                     />
                   )}
-                </Grid.Cell>
+                </Cell>
               )
             }
           }
         })}
-      </Grid.Row>
+      </tr>
     )
   }
 )
+
+function Cell(props: BoxProps & ComponentPropsWithoutRef<'div'>) {
+  return (
+    <Box
+      {...props}
+      component="td"
+      sx={[
+        {
+          verticalAlign: 'top',
+        },
+        ...(Array.isArray(props.sx) ? props.sx : [props.sx]),
+      ]}
+    />
+  )
+}
 
 function formatValue(path: string, value: unknown) {
   if (typeof value === 'number') {
