@@ -84,14 +84,20 @@ export const EventRow = React.memo(
 
     return (
       <tr>
-        {columns.map((column): React.ReactElement => {
+        {columns.map((column, index): React.ReactElement => {
+          const isLast = index === columns.length - 1
           switch (column.type) {
             case 'date':
-              return <Cell key="date">{formatDate(event.date)}</Cell>
+              return (
+                <Cell key="date" isLast={isLast}>
+                  {formatDate(event.date)}
+                </Cell>
+              )
             case 'description':
               return (
                 <Cell
                   key="description"
+                  isLast={isLast}
                   sx={{
                     cursor: 'pointer',
                   }}
@@ -119,7 +125,7 @@ export const EventRow = React.memo(
               )
             case 'type':
               return (
-                <Cell key="type">
+                <Cell key="type" isLast={isLast}>
                   {isRumEvent(event) || isTelemetryEvent(event) ? (
                     <Badge variant="outline" color={RUM_EVENT_TYPE_COLOR[event.type]}>
                       {event.type}
@@ -134,7 +140,7 @@ export const EventRow = React.memo(
             case 'field': {
               const value = facetRegistry.getFieldValueForEvent(event, column.path)
               return (
-                <Cell key={`field-${column.path}`}>
+                <Cell key={`field-${column.path}`} isLast={isLast}>
                   {value !== undefined && (
                     <Json
                       value={value}
@@ -153,11 +159,12 @@ export const EventRow = React.memo(
   }
 )
 
-function Cell(props: BoxProps & ComponentPropsWithoutRef<'div'>) {
+function Cell({ isLast, ...props }: BoxProps & ComponentPropsWithoutRef<'div'> & { isLast: boolean }) {
   return (
     <Box
       {...props}
       component="td"
+      colSpan={isLast ? 2 : 1}
       sx={[
         {
           verticalAlign: 'top',

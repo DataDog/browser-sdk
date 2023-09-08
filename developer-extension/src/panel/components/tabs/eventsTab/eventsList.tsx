@@ -1,4 +1,4 @@
-import { Popover, Box, Text, Button, Flex, Autocomplete, Table, useMantineTheme } from '@mantine/core'
+import { Popover, Box, Text, Button, Flex, Autocomplete, Table, useMantineTheme, CloseButton } from '@mantine/core'
 import type { ForwardedRef, ReactNode } from 'react'
 import React, { useMemo, useRef, useState, forwardRef } from 'react'
 import type { EventFilters, FacetRegistry } from '../../../hooks/useEvents'
@@ -38,20 +38,17 @@ export function EventsList({
       <Table>
         <thead>
           <tr ref={headerRowRef}>
-            {columns.map((column, index) => (
-              <th key={column.type === 'field' ? `field-${column.path}` : column.type} data-header-cell>
-                <Flex justify="space-between" gap="sm" align="center">
-                  {getColumnTitle(column)}
-                  {index === columns.length - 1 && (
-                    <AddColumnPopover
-                      columns={columns}
-                      onColumnsChange={onColumnsChange}
-                      facetRegistry={facetRegistry}
-                    />
-                  )}
-                </Flex>
-              </th>
+            {columns.map((column) => (
+              <ColumnHeader
+                key={column.type === 'field' ? `field-${column.path}` : column.type}
+                columns={columns}
+                column={column}
+                onColumnsChange={onColumnsChange}
+              ></ColumnHeader>
             ))}
+            <Box component="th" sx={{ width: 0 }}>
+              <AddColumnPopover columns={columns} onColumnsChange={onColumnsChange} facetRegistry={facetRegistry} />
+            </Box>
           </tr>
         </thead>
 
@@ -69,6 +66,41 @@ export function EventsList({
       </Table>
 
       <ColumnDrag columns={columns} onColumnsChange={onColumnsChange} headerRowRef={headerRowRef} />
+    </Box>
+  )
+}
+
+function ColumnHeader({
+  columns,
+  column,
+  onColumnsChange,
+}: {
+  columns: EventListColumn[]
+  column: EventListColumn
+  onColumnsChange: (columns: EventListColumn[]) => void
+}) {
+  return (
+    <Box
+      component="th"
+      key={column.type === 'field' ? `field-${column.path}` : column.type}
+      data-header-cell
+      sx={{
+        '& .mantine-CloseButton-root': {
+          opacity: 0,
+        },
+        '&:hover': {
+          '& .mantine-CloseButton-root': {
+            opacity: 1,
+          },
+        },
+      }}
+    >
+      <Flex gap="sm" align="center">
+        <Flex justify="space-between" gap="sm" align="center" sx={{ flex: 1 }}>
+          {getColumnTitle(column)}
+          <CloseButton size="xs" variant="filled" onClick={() => onColumnsChange(removeColumn(columns, column))} />
+        </Flex>
+      </Flex>
     </Box>
   )
 }

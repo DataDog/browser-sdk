@@ -117,7 +117,7 @@ function initColumnDrag(
       if (!targetCell) {
         return false
       }
-      const siblings = Array.from(targetCell.parentElement!.children)
+      const siblings = Array.from(targetCell.parentElement!.querySelectorAll(':scope > [data-header-cell]'))
       const columnIndex = siblings.indexOf(targetCell)
 
       state = {
