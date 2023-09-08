@@ -1,12 +1,12 @@
 import { Popover, Box, Text, Button, Flex, Autocomplete, Table, useMantineTheme } from '@mantine/core'
 import type { ForwardedRef, ReactNode } from 'react'
-import React, { useMemo, useRef, useState, forwardRef, useCallback } from 'react'
+import React, { useMemo, useRef, useState, forwardRef } from 'react'
 import type { EventFilters, FacetRegistry } from '../../../hooks/useEvents'
 import type { SdkEvent } from '../../../sdkEvent'
 import { isRumViewEvent } from '../../../sdkEvent'
 import { BORDER_RADIUS, separatorBorder } from '../../../uiUtils'
 import type { EventListColumn } from './columnUtils'
-import { getColumnTitle, DEFAULT_COLUMNS, includesColumn } from './columnUtils'
+import { removeColumn, getColumnTitle, DEFAULT_COLUMNS, includesColumn } from './columnUtils'
 import { EventRow } from './eventRow'
 import { ColumnDrag } from './columnDrag'
 
@@ -25,15 +25,6 @@ export function EventsList({
 }) {
   const headerRowRef = useRef<HTMLTableRowElement>(null)
   const theme = useMantineTheme()
-
-  const onAddColumn = useCallback(
-    (column: EventListColumn) => {
-      if (!includesColumn(columns, column)) {
-        onColumnsChange(columns.concat(column))
-      }
-    },
-    [columns]
-  )
 
   return (
     <Box
@@ -70,7 +61,7 @@ export function EventsList({
               key={getEventRenderingKey(event, !filters.outdatedVersions)}
               event={event}
               columns={columns}
-              onAddColumn={onAddColumn}
+              onColumnsChange={onColumnsChange}
               facetRegistry={facetRegistry}
             />
           ))}
