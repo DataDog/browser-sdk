@@ -126,7 +126,7 @@ describe('rum public api', () => {
     let startRumSpy: jasmine.Spy<StartRum>
 
     beforeEach(() => {
-      startRumSpy = jasmine.createSpy()
+      startRumSpy = jasmine.createSpy().and.callFake(noopStartRum)
     })
 
     afterEach(() => {
@@ -169,14 +169,24 @@ describe('rum public api', () => {
     describe('deflate worker', () => {
       let rumPublicApi: RumPublicApi
       let startDeflateWorkerSpy: jasmine.Spy
+      let recorderApiOnRumStartSpy: jasmine.Spy<RecorderApi['onRumStart']>
+      const FAKE_WORKER = {} as DeflateWorker
 
       beforeEach(() => {
-        startDeflateWorkerSpy = jasmine.createSpy().and.returnValue({} as DeflateWorker)
+        startDeflateWorkerSpy = jasmine.createSpy().and.returnValue(FAKE_WORKER)
+        recorderApiOnRumStartSpy = jasmine.createSpy()
 
-        rumPublicApi = makeRumPublicApi(startRumSpy, noopRecorderApi, {
-          startDeflateWorker: startDeflateWorkerSpy,
-          createDeflateEncoder: noop as any,
-        })
+        rumPublicApi = makeRumPublicApi(
+          startRumSpy,
+          {
+            ...noopRecorderApi,
+            onRumStart: recorderApiOnRumStartSpy,
+          },
+          {
+            startDeflateWorker: startDeflateWorkerSpy,
+            createDeflateEncoder: noop as any,
+          }
+        )
       })
 
       afterEach(() => {
@@ -225,6 +235,14 @@ describe('rum public api', () => {
 
           expect(startDeflateWorkerSpy).not.toHaveBeenCalled()
           expect(startRumSpy).toHaveBeenCalledTimes(1)
+        })
+
+        it('pass the worker to the recorder API', () => {
+          rumPublicApi.init({
+            ...DEFAULT_INIT_CONFIGURATION,
+            enableExperimentalFeatures: [ExperimentalFeature.COMPRESS_BATCH],
+          })
+          expect(recorderApiOnRumStartSpy.calls.mostRecent().args[4]).toBe(FAKE_WORKER)
         })
       })
     })

@@ -56,7 +56,8 @@ export interface RecorderApi {
     lifeCycle: LifeCycle,
     configuration: RumConfiguration,
     sessionManager: RumSessionManager,
-    viewContexts: ViewContexts
+    viewContexts: ViewContexts,
+    deflateWorker: DeflateWorker | undefined
   ) => void
   isRecording: () => boolean
   getReplayStats: (viewId: string) => ReplayStats | undefined
@@ -235,7 +236,8 @@ export function makeRumPublicApi(
       startRumResults.lifeCycle,
       configuration,
       startRumResults.session,
-      startRumResults.viewContexts
+      startRumResults.viewContexts,
+      deflateWorker
     )
     bufferApiCalls.drain()
   }

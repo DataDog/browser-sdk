@@ -1,3 +1,4 @@
+import type { DeflateWorker } from '@datadog/browser-core'
 import { display, isIE } from '@datadog/browser-core'
 import type { RecorderApi, ViewContexts, LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
@@ -19,7 +20,7 @@ describe('makeRecorderApi', () => {
   let mockWorker: MockWorker
   let createDeflateWorkerSpy: jasmine.Spy<CreateDeflateWorker>
 
-  let rumInit: () => void
+  let rumInit: (options?: { worker?: DeflateWorker }) => void
   let startSessionReplayRecordingManually: boolean
 
   beforeEach(() => {
@@ -39,12 +40,13 @@ describe('makeRecorderApi', () => {
       }))
 
       recorderApi = makeRecorderApi(startRecordingSpy, createDeflateWorkerSpy)
-      rumInit = () => {
+      rumInit = ({ worker } = {}) => {
         recorderApi.onRumStart(
           lifeCycle,
           { startSessionReplayRecordingManually } as RumConfiguration,
           sessionManager,
-          {} as ViewContexts
+          {} as ViewContexts,
+          worker
         )
       }
     })
@@ -132,6 +134,14 @@ describe('makeRecorderApi', () => {
       rumInit()
       recorderApi.start()
       expect(startRecordingSpy).not.toHaveBeenCalled()
+    })
+
+    it('uses the previously created worker if available', () => {
+      setupBuilder.build()
+      rumInit({ worker: mockWorker })
+      recorderApi.start()
+      expect(createDeflateWorkerSpy).not.toHaveBeenCalled()
+      expect(startRecordingSpy).toHaveBeenCalled()
     })
 
     it('does not start recording if worker creation fails', () => {

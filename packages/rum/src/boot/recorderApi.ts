@@ -82,7 +82,8 @@ export function makeRecorderApi(
       lifeCycle: LifeCycle,
       configuration: RumConfiguration,
       sessionManager: RumSessionManager,
-      viewContexts: ViewContexts
+      viewContexts: ViewContexts,
+      worker
     ) => {
       if (configuration.startSessionReplayRecordingManually) {
         state = { status: RecorderStatus.Stopped }
@@ -118,20 +119,22 @@ export function makeRecorderApi(
             return
           }
 
-          const worker = startDeflateWorker(
-            configuration,
-            'Datadog Session Replay',
-            () => {
-              stopStrategy()
-            },
-            createDeflateWorkerImpl
-          )
-
           if (!worker) {
-            state = {
-              status: RecorderStatus.Stopped,
+            worker = startDeflateWorker(
+              configuration,
+              'Datadog Session Replay',
+              () => {
+                stopStrategy()
+              },
+              createDeflateWorkerImpl
+            )
+
+            if (!worker) {
+              state = {
+                status: RecorderStatus.Stopped,
+              }
+              return
             }
-            return
           }
 
           const { stop: stopRecording } = startRecordingImpl(
