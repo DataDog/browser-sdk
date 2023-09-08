@@ -19,8 +19,8 @@ export function createDeflateEncoder(
 
   let nextWriteActionId = 0
   const pendingWriteActions: Array<{
-    callback?: (additionalEncodedBytesCount: number) => void
-    finished: boolean
+    writeCallback?: (additionalEncodedBytesCount: number) => void
+    finishCallback?: () => void
     id: number
     data: string
   }> = []
@@ -40,8 +40,10 @@ export function createDeflateEncoder(
 
       const nextPendingAction = pendingWriteActions.shift()
       if (nextPendingAction && nextPendingAction.id === workerResponse.id) {
-        if (nextPendingAction.callback) {
-          nextPendingAction.callback(workerResponse.result.byteLength)
+        if (nextPendingAction.writeCallback) {
+          nextPendingAction.writeCallback(workerResponse.result.byteLength)
+        } else if (nextPendingAction.finishCallback) {
+          nextPendingAction.finishCallback()
         }
       } else {
         removeMessageListener()
@@ -62,15 +64,6 @@ export function createDeflateEncoder(
     rawBytesCount = 0
     compressedData = []
     return result
-  }
-
-  function cancelUnfinishedPendingWriteActions() {
-    pendingWriteActions.forEach((pendingWriteAction) => {
-      if (!pendingWriteAction.finished) {
-        pendingWriteAction.finished = true
-        delete pendingWriteAction.callback
-      }
-    })
   }
 
   function sendResetIfNeeded() {
@@ -99,9 +92,8 @@ export function createDeflateEncoder(
       })
       pendingWriteActions.push({
         id: nextWriteActionId,
-        callback,
+        writeCallback: callback,
         data,
-        finished: false,
       })
       nextWriteActionId += 1
     },
@@ -112,9 +104,13 @@ export function createDeflateEncoder(
       if (!pendingWriteActions.length) {
         callback(consumeResult())
       } else {
-        cancelUnfinishedPendingWriteActions()
+        // Make sure we do not call any write callback
+        pendingWriteActions.forEach((pendingWriteAction) => {
+          delete pendingWriteAction.writeCallback
+        })
+
         // Wait for the last action to finish before calling the finish callback
-        pendingWriteActions[pendingWriteActions.length - 1].callback = () => callback(consumeResult())
+        pendingWriteActions[pendingWriteActions.length - 1].finishCallback = () => callback(consumeResult())
       }
     },
 
@@ -122,10 +118,14 @@ export function createDeflateEncoder(
       sendResetIfNeeded()
 
       const pendingData = pendingWriteActions
-        .filter((pendingWriteAction) => !pendingWriteAction.finished)
-        .map((pendingWriteAction) => pendingWriteAction.data)
+        .map((pendingWriteAction) => {
+          // Make sure we do not call any write or finish callback
+          delete pendingWriteAction.writeCallback
+          delete pendingWriteAction.finishCallback
+          return pendingWriteAction.data
+        })
         .join('')
-      cancelUnfinishedPendingWriteActions()
+
       return assign(consumeResult(), {
         pendingData,
       })

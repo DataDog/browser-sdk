@@ -33,7 +33,7 @@ export interface Encoder<Output extends string | Uint8Array = string | Uint8Arra
 
   /**
    * Resets the encoder state then returns the encoded data and any potential pending data directly,
-   * discarding all pending write operations.
+   * discarding all pending write operations and finish() callbacks.
    */
   finishSync(): EncoderResult<Output> & { pendingData: string }
 
