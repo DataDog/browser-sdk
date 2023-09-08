@@ -19,9 +19,9 @@ export class FacetRegistry {
     this.eventFieldsCache.set(event, fields)
 
     incrementFacetValueCounts(fields, this.facetValueCounts)
-    for (const fieldPath of fields.keys()) {
+    fields.forEach((_value, fieldPath) => {
       this.allEventFieldPaths.add(fieldPath)
-    }
+    })
   }
 
   getFieldValueForEvent(event: SdkEvent, fieldPath: FieldPath): FieldMultiValue | undefined {
