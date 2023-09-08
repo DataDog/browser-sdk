@@ -30,6 +30,7 @@ import {
   sanitize,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
+  createIdentityEncoder,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewContexts } from '../domain/contexts/viewContexts'
@@ -70,7 +71,11 @@ export interface RecorderApi {
 }
 interface RumPublicApiOptions {
   ignoreInitIfSyntheticsWillInjectRum?: boolean
-  startDeflateWorker?: (configuration: RumConfiguration, source: string) => DeflateWorker | undefined
+  startDeflateWorker?: (
+    configuration: RumConfiguration,
+    source: string,
+    onInitializationFailure: () => void
+  ) => DeflateWorker | undefined
   createDeflateEncoder?: (
     configuration: RumConfiguration,
     worker: DeflateWorker,
@@ -159,7 +164,14 @@ export function makeRumPublicApi(
       !eventBridgeAvailable &&
       startDeflateWorker
     ) {
-      deflateWorker = startDeflateWorker(configuration, 'Datadog RUM')
+      deflateWorker = startDeflateWorker(
+        configuration,
+        'Datadog RUM',
+        // Worker initialization can fail asynchronously, especially in Firefox where even CSP
+        // issues are reported asynchronously. For now, the SDK will continue its execution even if
+        // data won't be sent to Datadog. We could improve this behavior in the future.
+        noop
+      )
       if (!deflateWorker) {
         return
       }
@@ -195,9 +207,9 @@ export function makeRumPublicApi(
       globalContextManager,
       userContextManager,
       initialViewOptions,
-      deflateWorker &&
-        createDeflateEncoder &&
-        ((streamId) => createDeflateEncoder(configuration, deflateWorker!, streamId))
+      deflateWorker && createDeflateEncoder
+        ? (streamId) => createDeflateEncoder(configuration, deflateWorker!, streamId)
+        : createIdentityEncoder
     )
     getSessionReplayLinkStrategy = () =>
       recorderApi.getSessionReplayLink(configuration, startRumResults.session, startRumResults.viewContexts)

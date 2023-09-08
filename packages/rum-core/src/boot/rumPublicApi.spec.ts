@@ -7,6 +7,7 @@ import {
   resetExperimentalFeatures,
   ExperimentalFeature,
   noop,
+  createIdentityEncoder,
 } from '@datadog/browser-core'
 import {
   initEventBridgeStub,
@@ -198,7 +199,7 @@ describe('rum public api', () => {
           rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
           expect(startDeflateWorkerSpy).not.toHaveBeenCalled()
-          expect(startRumSpy.calls.mostRecent().args[6]).toBeUndefined()
+          expect(startRumSpy.calls.mostRecent().args[6]).toBe(createIdentityEncoder)
         })
       })
 
@@ -210,7 +211,7 @@ describe('rum public api', () => {
           })
 
           expect(startDeflateWorkerSpy).toHaveBeenCalledTimes(1)
-          expect(startRumSpy.calls.mostRecent().args[6]).toEqual(jasmine.any(Function))
+          expect(startRumSpy.calls.mostRecent().args[6]).not.toBe(createIdentityEncoder)
         })
 
         it('aborts the initialization if it fails to create a deflate worker', () => {

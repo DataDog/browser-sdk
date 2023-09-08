@@ -4,14 +4,13 @@ import type { Observable } from '../tools/observable'
 import type { PageExitEvent } from '../browser/pageExitObservable'
 import type { RawError } from '../domain/error/error.types'
 import type { Encoder } from '../tools/encoder'
-import { createIdentityEncoder } from '../tools/encoder'
 import { Batch } from './batch'
 import { createHttpRequest } from './httpRequest'
 import { createFlushController } from './flushController'
 
-interface BatchConfiguration {
+export interface BatchConfiguration {
   endpoint: EndpointBuilder
-  encoder?: Encoder
+  encoder: Encoder
 }
 
 interface ReplicaBatchConfiguration<T> extends BatchConfiguration {
@@ -31,7 +30,7 @@ export function startBatchWithReplica<T extends Context>(
 
   function createBatch(configuration: Configuration, { endpoint, encoder }: BatchConfiguration) {
     return new Batch(
-      encoder || createIdentityEncoder(),
+      encoder,
       createHttpRequest(configuration, endpoint, configuration.batchBytesLimit, reportError),
       createFlushController({
         messagesLimit: configuration.batchMessagesLimit,
