@@ -17,12 +17,12 @@ import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/
 import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
 import { serializeLogsConfiguration } from '../domain/configuration'
 import { startLogsAssembly, getRUMInternalContext } from '../domain/assembly'
-import { startConsoleCollection } from '../domain/logsCollection/console/consoleCollection'
-import { startReportCollection } from '../domain/logsCollection/report/reportCollection'
-import { startNetworkErrorCollection } from '../domain/logsCollection/networkError/networkErrorCollection'
-import { startRuntimeErrorCollection } from '../domain/logsCollection/runtimeError/runtimeErrorCollection'
+import { startConsoleCollection } from '../domain/console/consoleCollection'
+import { startReportCollection } from '../domain/report/reportCollection'
+import { startNetworkErrorCollection } from '../domain/networkError/networkErrorCollection'
+import { startRuntimeErrorCollection } from '../domain/runtimeError/runtimeErrorCollection'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
-import { startLoggerCollection } from '../domain/logsCollection/logger/loggerCollection'
+import { startLoggerCollection } from '../domain/logger/loggerCollection'
 import type { CommonContext } from '../rawLogsEvent.types'
 import { startLogsBatch } from '../transport/startLogsBatch'
 import { startLogsBridge } from '../transport/startLogsBridge'
@@ -37,6 +37,7 @@ export function startLogs(
   mainLogger: Logger
 ) {
   const lifeCycle = new LifeCycle()
+  const cleanupTasks: Array<() => void> = []
 
   lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (log) => sendToExtension('logs', log))
 
@@ -61,7 +62,13 @@ export function startLogs(
       ? startLogsSessionManager(configuration)
       : startLogsSessionManagerStub(configuration)
 
-  const telemetry = startLogsTelemetry(configuration, reportError, pageExitObservable, session.expireObservable)
+  const { telemetry, stop: stopLogsTelemetry } = startLogsTelemetry(
+    configuration,
+    reportError,
+    pageExitObservable,
+    session.expireObservable
+  )
+  cleanupTasks.push(() => stopLogsTelemetry())
   telemetry.setContextProvider(() => ({
     application: {
       id: getRUMInternalContext()?.application_id,
@@ -86,7 +93,14 @@ export function startLogs(
   startLogsAssembly(session, configuration, lifeCycle, buildCommonContext, mainLogger, reportError)
 
   if (!canUseEventBridge()) {
-    startLogsBatch(configuration, lifeCycle, reportError, pageExitObservable, session.expireObservable)
+    const { stop: stopLogsBatch } = startLogsBatch(
+      configuration,
+      lifeCycle,
+      reportError,
+      pageExitObservable,
+      session.expireObservable
+    )
+    cleanupTasks.push(() => stopLogsBatch())
   } else {
     startLogsBridge(lifeCycle)
   }
@@ -97,6 +111,9 @@ export function startLogs(
   return {
     handleLog,
     getInternalContext: internalContext.get,
+    stop: () => {
+      cleanupTasks.forEach((task) => task())
+    },
   }
 }
 
@@ -107,9 +124,11 @@ function startLogsTelemetry(
   sessionExpireObservable: Observable<void>
 ) {
   const telemetry = startTelemetry(TelemetryService.LOGS, configuration)
+  const cleanupTasks: Array<() => void> = []
   if (canUseEventBridge()) {
     const bridge = getEventBridge<'internal_telemetry', TelemetryEvent>()!
-    telemetry.observable.subscribe((event) => bridge.send('internal_telemetry', event))
+    const telemetrySubscription = telemetry.observable.subscribe((event) => bridge.send('internal_telemetry', event))
+    cleanupTasks.push(() => telemetrySubscription.unsubscribe())
   } else {
     const telemetryBatch = startBatchWithReplica(
       configuration,
@@ -123,7 +142,16 @@ function startLogsTelemetry(
       pageExitObservable,
       sessionExpireObservable
     )
-    telemetry.observable.subscribe((event) => telemetryBatch.add(event, isTelemetryReplicationAllowed(configuration)))
+    cleanupTasks.push(() => telemetryBatch.stop())
+    const telemetrySubscription = telemetry.observable.subscribe((event) =>
+      telemetryBatch.add(event, isTelemetryReplicationAllowed(configuration))
+    )
+    cleanupTasks.push(() => telemetrySubscription.unsubscribe())
   }
-  return telemetry
+  return {
+    telemetry,
+    stop: () => {
+      cleanupTasks.forEach((task) => task())
+    },
+  }
 }

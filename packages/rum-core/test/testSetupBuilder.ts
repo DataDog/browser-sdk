@@ -11,10 +11,11 @@ import type { UrlContexts } from '../src/domain/contexts/urlContexts'
 import type { ViewContexts } from '../src/domain/contexts/viewContexts'
 import type { RawRumEventCollectedData } from '../src/domain/lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
-import type { ActionContexts } from '../src/domain/rumEventsCollection/action/actionCollection'
+import type { ActionContexts } from '../src/domain/action/actionCollection'
 import type { RumSessionManager } from '../src/domain/rumSessionManager'
 import { RumSessionPlan } from '../src/domain/rumSessionManager'
 import type { RawRumEvent, RumContext } from '../src/rawRumEvent.types'
+import type { DisplayContext } from '../src/domain/contexts/displayContext'
 import { validateRumFormat } from './formatValidation'
 import { createRumSessionManagerMock } from './mockRumSessionManager'
 
@@ -47,6 +48,7 @@ export interface BuildContext {
   applicationId: string
   viewContexts: ViewContexts
   actionContexts: ActionContexts
+  displayContext: DisplayContext
   pageStateHistory: PageStateHistory
   featureFlagContexts: FeatureFlagContexts
   urlContexts: UrlContexts
@@ -91,6 +93,10 @@ export function setup(): TestSetupBuilder {
   }
   let actionContexts: ActionContexts = {
     findActionId: noop as () => undefined,
+  }
+  const displayContext: DisplayContext = {
+    get: () => ({ viewport: { height: 0, width: 0 } }),
+    stop: noop,
   }
 
   const globalContextManager = createContextManager(CustomerDataType.GlobalContext)
@@ -174,6 +180,7 @@ export function setup(): TestSetupBuilder {
           viewContexts,
           urlContexts,
           actionContexts,
+          displayContext,
           pageStateHistory,
           featureFlagContexts,
           sessionManager,

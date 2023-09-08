@@ -1,7 +1,7 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { createRumSessionManagerMock, setup } from '../../../test'
 import type { TestSetupBuilder } from '../../../test'
-import type { ActionContexts } from '../rumEventsCollection/action/actionCollection'
+import type { ActionContexts } from '../action/actionCollection'
 import type { RumSessionManager } from '../rumSessionManager'
 import { startInternalContext } from './internalContext'
 import type { ViewContexts } from './viewContexts'

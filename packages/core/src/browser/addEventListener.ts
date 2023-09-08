@@ -111,7 +111,7 @@ export function addEventListeners<Target extends EventTarget, EventName extends 
   listener: (event: EventMapFor<Target>[EventName]) => void,
   { once, capture, passive }: AddEventListenerOptions = {}
 ) {
-  const wrappedListener = monitor(
+  const listenerWithMonitor = monitor(
     once
       ? (event: Event) => {
           stop()
@@ -123,11 +123,11 @@ export function addEventListeners<Target extends EventTarget, EventName extends 
   const options = passive ? { capture, passive } : capture
 
   const add = getZoneJsOriginalValue(eventTarget, 'addEventListener')
-  eventNames.forEach((eventName) => add.call(eventTarget, eventName, wrappedListener, options))
+  eventNames.forEach((eventName) => add.call(eventTarget, eventName, listenerWithMonitor, options))
 
   function stop() {
     const remove = getZoneJsOriginalValue(eventTarget, 'removeEventListener')
-    eventNames.forEach((eventName) => remove.call(eventTarget, eventName, wrappedListener, options))
+    eventNames.forEach((eventName) => remove.call(eventTarget, eventName, listenerWithMonitor, options))
   }
 
   return {

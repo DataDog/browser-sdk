@@ -1,5 +1,5 @@
 import { cssEscape } from '@datadog/browser-core'
-import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './rumEventsCollection/action/getActionNameFromElement'
+import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './action/getActionNameFromElement'
 
 /**
  * Stable attributes are attributes that are commonly used to identify parts of a UI (ex:

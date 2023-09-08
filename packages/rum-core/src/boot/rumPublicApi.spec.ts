@@ -24,6 +24,7 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   viewContexts: {} as any,
   session: {} as any,
   stopSession: () => undefined,
+  stop: () => undefined,
 })
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const INVALID_INIT_CONFIGURATION = { clientToken: 'yes' } as RumInitConfiguration

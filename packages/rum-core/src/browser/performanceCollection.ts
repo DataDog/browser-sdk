@@ -16,7 +16,7 @@ import {
 import type { RumConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
-import { FAKE_INITIAL_DOCUMENT, isAllowedRequestUrl } from '../domain/rumEventsCollection/resource/resourceUtils'
+import { FAKE_INITIAL_DOCUMENT, isAllowedRequestUrl } from '../domain/resource/resourceUtils'
 
 import { getDocumentTraceId } from '../domain/tracing/getDocumentTraceId'
 import type { PerformanceEntryRepresentation } from '../domainContext.types'

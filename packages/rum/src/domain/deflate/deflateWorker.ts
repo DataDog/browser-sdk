@@ -25,6 +25,7 @@ type DeflateWorkerState =
   | {
       status: DeflateWorkerStatus.Loading
       worker: DeflateWorker
+      stop: () => void
       initializationFailureCallbacks: Array<() => void>
     }
   | {
@@ -33,6 +34,7 @@ type DeflateWorkerState =
   | {
       status: DeflateWorkerStatus.Initialized
       worker: DeflateWorker
+      stop: () => void
       version: string
     }
 
@@ -68,6 +70,9 @@ export function startDeflateWorker(
 }
 
 export function resetDeflateWorkerState() {
+  if (state.status === DeflateWorkerStatus.Initialized || state.status === DeflateWorkerStatus.Loading) {
+    state.stop()
+  }
   state = { status: DeflateWorkerStatus.Nil }
 }
 
@@ -87,19 +92,29 @@ export function getDeflateWorkerStatus() {
 export function doStartDeflateWorker(configuration: RumConfiguration, createDeflateWorkerImpl = createDeflateWorker) {
   try {
     const worker = createDeflateWorkerImpl(configuration)
-    addEventListener(configuration, worker, 'error', (error) => {
+    const { stop: removeErrorListener } = addEventListener(configuration, worker, 'error', (error) => {
       onError(configuration, error)
     })
-    addEventListener(configuration, worker, 'message', ({ data }: MessageEvent<DeflateWorkerResponse>) => {
-      if (data.type === 'errored') {
-        onError(configuration, data.error, data.streamId)
-      } else if (data.type === 'initialized') {
-        onInitialized(data.version)
+    const { stop: removeMessageListener } = addEventListener(
+      configuration,
+      worker,
+      'message',
+      ({ data }: MessageEvent<DeflateWorkerResponse>) => {
+        if (data.type === 'errored') {
+          onError(configuration, data.error, data.streamId)
+        } else if (data.type === 'initialized') {
+          onInitialized(data.version)
+        }
       }
-    })
+    )
     worker.postMessage({ action: 'init' })
     setTimeout(onTimeout, INITIALIZATION_TIME_OUT_DELAY)
-    state = { status: DeflateWorkerStatus.Loading, worker, initializationFailureCallbacks: [] }
+    const stop = () => {
+      removeErrorListener()
+      removeMessageListener()
+    }
+
+    state = { status: DeflateWorkerStatus.Loading, worker, stop, initializationFailureCallbacks: [] }
   } catch (error) {
     onError(configuration, error)
   }
@@ -115,7 +130,7 @@ function onTimeout() {
 
 function onInitialized(version: string) {
   if (state.status === DeflateWorkerStatus.Loading) {
-    state = { status: DeflateWorkerStatus.Initialized, worker: state.worker, version }
+    state = { status: DeflateWorkerStatus.Initialized, worker: state.worker, stop: state.stop, version }
   }
 }
 

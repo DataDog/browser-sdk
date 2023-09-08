@@ -26,7 +26,7 @@ import type { ReplayStats } from '../rawRumEvent.types'
 import { ActionType } from '../rawRumEvent.types'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import { validateAndBuildRumConfiguration } from '../domain/configuration'
-import type { ViewOptions } from '../domain/rumEventsCollection/view/trackViews'
+import type { ViewOptions } from '../domain/view/trackViews'
 import { buildCommonContext } from '../domain/contexts/commonContext'
 import type { startRum } from './startRum'
 
