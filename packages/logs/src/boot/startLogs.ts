@@ -12,6 +12,7 @@ import {
   ErrorSource,
   addTelemetryConfiguration,
   addTelemetryDebug,
+  createIdentityEncoder,
 } from '@datadog/browser-core'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
@@ -129,9 +130,11 @@ function startLogsTelemetry(
       configuration,
       {
         endpoint: configuration.rumEndpointBuilder,
+        encoder: createIdentityEncoder(),
       },
       configuration.replica && {
         endpoint: configuration.replica.rumEndpointBuilder,
+        encoder: createIdentityEncoder(),
       },
       reportError,
       pageExitObservable,
