@@ -120,7 +120,7 @@ export function getAllFields(event: object) {
       // Store the field
       pushField(path, value)
     } else {
-      // Sanity check, it should not happen because events are JSON-encoded so value types are
+      // Coherence check, it should not happen because events are JSON-encoded so value types are
       // limited.
       logger.error(`Unexpected value type at ${path || '<root>'}`, value)
     }
