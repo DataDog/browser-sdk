@@ -46,6 +46,12 @@ describe('rum public api', () => {
       expect(startRumSpy).toHaveBeenCalled()
     })
 
+    it('should not start when the configuration is missing', () => {
+      ;(rumPublicApi.init as () => void)()
+      expect(displaySpy).toHaveBeenCalled()
+      expect(startRumSpy).not.toHaveBeenCalled()
+    })
+
     it('should not start when the configuration is invalid', () => {
       rumPublicApi.init(INVALID_INIT_CONFIGURATION)
       expect(displaySpy).toHaveBeenCalled()
