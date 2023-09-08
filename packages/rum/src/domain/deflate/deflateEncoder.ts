@@ -132,7 +132,11 @@ export function createDeflateEncoder(
     },
 
     estimateEncodedBytesCount(data) {
-      return data.length / 7
+      // This is a rough estimation of the data size once it'll be encoded by deflate. We observed
+      // that if it's the first chunk of data pushed to the stream, the ratio is lower (3-4), but
+      // after that the ratio is greater (10+). We chose 8 here, which (on average) seems to produce
+      // requests of the expected size.
+      return data.length / 8
     },
 
     stop() {
