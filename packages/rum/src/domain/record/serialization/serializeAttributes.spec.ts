@@ -1,6 +1,8 @@
 import { isIE } from '@datadog/browser-core'
 import { getCssRulesString } from './serializeAttributes'
 
+const CSS_FILE_URL = '/base/packages/rum/test/toto.css'
+
 describe('getCssRulesString', () => {
   let styleNode: HTMLStyleElement
 
@@ -22,7 +24,7 @@ describe('getCssRulesString', () => {
   })
 
   it('inlines imported external stylesheets', () => {
-    styleNode.sheet!.insertRule('@import url("toto.css");')
+    styleNode.sheet!.insertRule(`@import url("${CSS_FILE_URL}");`)
 
     // Simulates an accessible external stylesheet
     spyOnProperty(styleNode.sheet!.cssRules[0] as CSSImportRule, 'styleSheet').and.returnValue({
@@ -33,7 +35,7 @@ describe('getCssRulesString', () => {
   })
 
   it('does not skip the @import rules if the external stylesheet is inaccessible', () => {
-    styleNode.sheet!.insertRule('@import url("toto.css");')
+    styleNode.sheet!.insertRule(`@import url("${CSS_FILE_URL}");`)
 
     // Simulates an inaccessible external stylesheet
     spyOnProperty(styleNode.sheet!.cssRules[0] as CSSImportRule, 'styleSheet').and.returnValue({
@@ -42,6 +44,6 @@ describe('getCssRulesString', () => {
       },
     } as CSSStyleSheet)
 
-    expect(getCssRulesString(styleNode.sheet)).toBe('@import url("toto.css");')
+    expect(getCssRulesString(styleNode.sheet)).toBe(`@import url("${CSS_FILE_URL}");`)
   })
 })

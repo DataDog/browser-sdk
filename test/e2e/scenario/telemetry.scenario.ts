@@ -9,7 +9,7 @@ describe('telemetry', () => {
       await browserExecute(() => {
         const context = {
           get foo() {
-            throw new window.Error('bar')
+            throw new window.Error('expected error')
           },
         }
         window.DD_LOGS!.logger.log('hop', context as any)
@@ -18,7 +18,7 @@ describe('telemetry', () => {
       expect(intakeRegistry.telemetryErrorEvents.length).toBe(1)
       const event = intakeRegistry.telemetryErrorEvents[0]
       expect(event.service).toEqual('browser-logs-sdk')
-      expect(event.telemetry.message).toBe('bar')
+      expect(event.telemetry.message).toBe('expected error')
       expect(event.telemetry.error!.kind).toBe('Error')
       expect(event.telemetry.status).toBe('error')
       intakeRegistry.empty()
@@ -31,7 +31,7 @@ describe('telemetry', () => {
       await browserExecute(() => {
         const context = {
           get foo() {
-            throw new window.Error('bar')
+            throw new window.Error('expected error')
           },
         }
         window.DD_RUM!.addAction('hop', context as any)
@@ -40,7 +40,7 @@ describe('telemetry', () => {
       expect(intakeRegistry.telemetryErrorEvents.length).toBe(1)
       const event = intakeRegistry.telemetryErrorEvents[0]
       expect(event.service).toEqual('browser-rum-sdk')
-      expect(event.telemetry.message).toBe('bar')
+      expect(event.telemetry.message).toBe('expected error')
       expect(event.telemetry.error!.kind).toBe('Error')
       expect(event.telemetry.status).toBe('error')
       intakeRegistry.empty()
