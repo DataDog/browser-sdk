@@ -5,7 +5,7 @@ import { BORDER_RADIUS } from '../../../uiUtils'
 import type { Coordinates } from './drag'
 import { initDrag } from './drag'
 import type { EventListColumn } from './columnUtils'
-import { getColumnTitle } from './columnUtils'
+import { moveColumn, removeColumn, getColumnTitle } from './columnUtils'
 
 /** Horizontal padding used by the Mantine Table in pixels */
 const HORIZONTAL_PADDING = 10
@@ -34,10 +34,10 @@ export function ColumnDrag({
     }
   }, [columns])
 
-  return drag && <DragGhost columns={columns} drag={drag} />
+  return drag && <DragGhost drag={drag} />
 }
 
-function DragGhost({ columns, drag }: { columns: EventListColumn[]; drag: DragState }) {
+function DragGhost({ drag }: { drag: DragState }) {
   return (
     <Box
       sx={{
@@ -72,7 +72,7 @@ function DragGhost({ columns, drag }: { columns: EventListColumn[]; drag: DragSt
         }),
       }}
     >
-      <Text weight="bold">{getColumnTitle(columns[drag.columnIndex])}</Text>
+      <Text weight="bold">{getColumnTitle(drag.column)}</Text>
     </Box>
   )
 }
@@ -91,7 +91,7 @@ interface DragState {
   action?: DragAction
   moved: boolean
   insertPlaces: Place[]
-  columnIndex: number
+  column: EventListColumn
 }
 
 interface Place {
@@ -135,7 +135,7 @@ function initColumnDrag(
         position,
         moved: false,
         action: undefined,
-        columnIndex,
+        column: columns[columnIndex],
       }
       onColumnDragStateChanges(state)
     },
@@ -167,19 +167,12 @@ function initColumnDrag(
 
       if (state.action) {
         switch (state.action.type) {
-          case 'delete': {
-            const newColumns = columns.slice()
-            newColumns.splice(state.columnIndex, 1)
-            onColumnsChange(newColumns)
+          case 'delete':
+            onColumnsChange(removeColumn(columns, state.column))
             break
-          }
-          case 'insert': {
-            const newColumns = columns.slice()
-            const [column] = newColumns.splice(state.columnIndex, 1)
-            newColumns.splice(state.action.place.index, 0, column)
-            onColumnsChange(newColumns)
+          case 'insert':
+            onColumnsChange(moveColumn(columns, state.column, state.action.place.index))
             break
-          }
         }
       }
 

@@ -15,6 +15,20 @@ export function includesColumn(existingColumns: EventListColumn[], newColumn: Ev
   })
 }
 
+export function addColumn(columns: EventListColumn[], columnToAdd: EventListColumn) {
+  return columns.concat(columnToAdd)
+}
+
+export function removeColumn(columns: EventListColumn[], columnToRemove: EventListColumn) {
+  return columns.filter((column) => columnToRemove !== column)
+}
+
+export function moveColumn(columns: EventListColumn[], columnToMove: EventListColumn, index: number) {
+  const newColumns = removeColumn(columns, columnToMove)
+  newColumns.splice(index, 0, columnToMove)
+  return newColumns
+}
+
 export function getColumnTitle(column: EventListColumn) {
   return column.type === 'date'
     ? 'Date'

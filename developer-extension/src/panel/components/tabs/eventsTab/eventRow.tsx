@@ -18,7 +18,7 @@ import { defaultFormatValue, Json } from '../../json'
 import { LazyCollapse } from '../../lazyCollapse'
 import type { FacetRegistry } from '../../../hooks/useEvents'
 import type { EventListColumn } from './columnUtils'
-import { includesColumn } from './columnUtils'
+import { addColumn, includesColumn } from './columnUtils'
 
 const RUM_EVENT_TYPE_COLOR = {
   action: 'violet',
@@ -54,12 +54,12 @@ export const EventRow = React.memo(
     event,
     columns,
     facetRegistry,
-    onAddColumn,
+    onColumnsChange,
   }: {
     event: SdkEvent
     columns: EventListColumn[]
     facetRegistry: FacetRegistry
-    onAddColumn: (newColumn: EventListColumn) => void
+    onColumnsChange: (newColumn: EventListColumn[]) => void
   }) => {
     const [isCollapsed, setIsCollapsed] = useState(true)
     const jsonRef = useRef<HTMLDivElement>(null)
@@ -73,7 +73,7 @@ export const EventRow = React.memo(
         <>
           <Menu.Item
             onClick={() => {
-              onAddColumn(newColumn)
+              onColumnsChange(addColumn(columns, newColumn))
             }}
           >
             Add column
