@@ -171,23 +171,13 @@ describe('createDeflateEncoder', () => {
         output: new Uint8Array(0),
         outputBytesCount: 0,
         rawBytesCount: 0,
-        pendingData: 'bar',
+        pendingData: 'foobar',
         encoding: 'deflate',
       })
 
       worker.processAllMessages()
 
-      expect(finishCallbackSpy).toHaveBeenCalledTimes(1)
-      expect(finishCallbackSpy.calls.allArgs()).toEqual([
-        [
-          {
-            output: new Uint8Array([...ENCODED_FOO, ...TRAILER]),
-            outputBytesCount: 4,
-            rawBytesCount: 3,
-            encoding: 'deflate',
-          },
-        ],
-      ])
+      expect(finishCallbackSpy).not.toHaveBeenCalled()
     })
   })
 
