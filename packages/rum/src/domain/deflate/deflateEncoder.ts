@@ -29,19 +29,19 @@ export function createDeflateEncoder(
     configuration,
     worker,
     'message',
-    ({ data }: MessageEvent<DeflateWorkerResponse>) => {
-      if (data.type !== 'wrote' || (data.streamId as DeflateEncoderStreamId) !== streamId) {
+    ({ data: workerResponse }: MessageEvent<DeflateWorkerResponse>) => {
+      if (workerResponse.type !== 'wrote' || (workerResponse.streamId as DeflateEncoderStreamId) !== streamId) {
         return
       }
 
-      rawBytesCount += data.additionalBytesCount
-      compressedData.push(data.result)
-      compressedDataTrailer = data.trailer
+      rawBytesCount += workerResponse.additionalBytesCount
+      compressedData.push(workerResponse.result)
+      compressedDataTrailer = workerResponse.trailer
 
       const nextPendingAction = pendingWriteActions.shift()
-      if (nextPendingAction && nextPendingAction.id === data.id) {
+      if (nextPendingAction && nextPendingAction.id === workerResponse.id) {
         if (nextPendingAction.callback) {
-          nextPendingAction.callback(data.result.byteLength)
+          nextPendingAction.callback(workerResponse.result.byteLength)
         }
       } else {
         removeMessageListener()
