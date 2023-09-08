@@ -25,6 +25,27 @@ export function App() {
             margin: 0,
           },
         }),
+        cursorType: 'pointer',
+        // This is the default for devtools on mac
+        // https://github.com/ChromeDevTools/devtools-frontend/blob/92b3004cf9190eeb98a721ecb8c3931b45609031/front_end/ui/legacy/inspectorCommon.css#L86
+        // TODO: adjust for other OS
+        fontFamily: '".SFNSDisplay-Regular", "Helvetica Neue", "Lucida Grande", sans-serif',
+        fontSizes: {
+          xs: '11px',
+
+          // Mantine uses the 'md' font size as a default, but some of its components is using 'sm'.
+          // We want all font size to default to the same size, so let's use the same value for 'sm'
+          // and 'md'.
+          sm: '12px',
+          md: '12px',
+
+          lg: '16px',
+          xl: '22px',
+        },
+        fontFamilyMonospace: 'menlo, monospace',
+        other: {
+          fontSizeMonospace: '11px',
+        },
       }}
       withGlobalStyles
     >
