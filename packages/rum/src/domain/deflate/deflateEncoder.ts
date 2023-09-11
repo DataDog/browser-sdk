@@ -33,7 +33,7 @@ export function createDeflateEncoder(
     worker,
     'message',
     ({ data }: MessageEvent<DeflateWorkerResponse>) => {
-      if (data.type !== 'wrote' || data.streamId !== streamId) {
+      if (data.type !== 'wrote' || (data.streamId as DeflateEncoderStreamId) !== streamId) {
         return
       }
 
