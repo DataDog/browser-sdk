@@ -568,6 +568,10 @@ export type RumViewEvent = CommonProperties & {
      */
     readonly largest_contentful_paint?: number
     /**
+     * CSS selector path of the largest contentful paint element
+     */
+    readonly largest_contentful_paint_target_selector?: string
+    /**
      * Duration in ns of the first input event delay
      */
     readonly first_input_delay?: number
@@ -576,13 +580,25 @@ export type RumViewEvent = CommonProperties & {
      */
     readonly first_input_time?: number
     /**
+     * CSS selector path of the first input target element
+     */
+    readonly first_input_target_selector?: string
+    /**
      * Longest duration in ns between an interaction and the next paint
      */
     readonly interaction_to_next_paint?: number
     /**
+     * CSS selector path of the interacted element corresponding to INP
+     */
+    readonly interaction_to_next_paint_target_selector?: string
+    /**
      * Total layout shift score that occurred on the view
      */
     readonly cumulative_layout_shift?: number
+    /**
+     * CSS selector path of the first element (in document order) of the largest layout shift contributing to CLS
+     */
+    readonly cumulative_layout_shift_target_selector?: string
     /**
      * Duration in ns to the complete parsing and loading of the document and its sub resources
      */
@@ -1102,7 +1118,7 @@ export interface CommonProperties {
       /**
        * The percentage of sessions with RUM & Session Replay pricing tracked
        */
-      readonly session_replay_sample_rate: number
+      readonly session_replay_sample_rate?: number
       [k: string]: unknown
     }
     /**
