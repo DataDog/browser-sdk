@@ -1,4 +1,14 @@
-import type { Context, InitConfiguration, TimeStamp, RelativeTime, User, Observable } from '@datadog/browser-core'
+import type {
+  Context,
+  InitConfiguration,
+  TimeStamp,
+  RelativeTime,
+  User,
+  Observable,
+  DeflateWorker,
+  DeflateEncoderStreamId,
+  DeflateEncoder,
+} from '@datadog/browser-core'
 import {
   noop,
   CustomerDataType,
@@ -18,6 +28,9 @@ import {
   checkUser,
   sanitizeUser,
   sanitize,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
+  createIdentityEncoder,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewContexts } from '../domain/contexts/viewContexts'
@@ -43,7 +56,8 @@ export interface RecorderApi {
     lifeCycle: LifeCycle,
     configuration: RumConfiguration,
     sessionManager: RumSessionManager,
-    viewContexts: ViewContexts
+    viewContexts: ViewContexts,
+    deflateWorker: DeflateWorker | undefined
   ) => void
   isRecording: () => boolean
   getReplayStats: (viewId: string) => ReplayStats | undefined
@@ -57,12 +71,22 @@ export interface RecorderApi {
 }
 interface RumPublicApiOptions {
   ignoreInitIfSyntheticsWillInjectRum?: boolean
+  startDeflateWorker?: (
+    configuration: RumConfiguration,
+    source: string,
+    onInitializationFailure: () => void
+  ) => DeflateWorker | undefined
+  createDeflateEncoder?: (
+    configuration: RumConfiguration,
+    worker: DeflateWorker,
+    streamId: DeflateEncoderStreamId
+  ) => DeflateEncoder
 }
 
 export function makeRumPublicApi(
   startRumImpl: StartRum,
   recorderApi: RecorderApi,
-  { ignoreInitIfSyntheticsWillInjectRum = true }: RumPublicApiOptions = {}
+  { ignoreInitIfSyntheticsWillInjectRum = true, startDeflateWorker, createDeflateEncoder }: RumPublicApiOptions = {}
 ) {
   let isAlreadyInitialized = false
 
@@ -97,6 +121,8 @@ export function makeRumPublicApi(
   let addFeatureFlagEvaluationStrategy: StartRumResult['addFeatureFlagEvaluation'] = (key: string, value: any) => {
     bufferApiCalls.add(() => addFeatureFlagEvaluationStrategy(key, value))
   }
+
+  let deflateWorker: DeflateWorker | undefined
 
   function initRum(initConfiguration: RumInitConfiguration) {
     if (!initConfiguration) {
@@ -133,6 +159,24 @@ export function makeRumPublicApi(
       return
     }
 
+    if (
+      isExperimentalFeatureEnabled(ExperimentalFeature.COMPRESS_BATCH) &&
+      !eventBridgeAvailable &&
+      startDeflateWorker
+    ) {
+      deflateWorker = startDeflateWorker(
+        configuration,
+        'Datadog RUM',
+        // Worker initialization can fail asynchronously, especially in Firefox where even CSP
+        // issues are reported asynchronously. For now, the SDK will continue its execution even if
+        // data won't be sent to Datadog. We could improve this behavior in the future.
+        noop
+      )
+      if (!deflateWorker) {
+        return
+      }
+    }
+
     if (!configuration.trackViewsManually) {
       doStartRum(initConfiguration, configuration)
     } else {
@@ -162,7 +206,10 @@ export function makeRumPublicApi(
       recorderApi,
       globalContextManager,
       userContextManager,
-      initialViewOptions
+      initialViewOptions,
+      deflateWorker && createDeflateEncoder
+        ? (streamId) => createDeflateEncoder(configuration, deflateWorker!, streamId)
+        : createIdentityEncoder
     )
     getSessionReplayLinkStrategy = () =>
       recorderApi.getSessionReplayLink(configuration, startRumResults.session, startRumResults.viewContexts)
@@ -181,7 +228,8 @@ export function makeRumPublicApi(
       startRumResults.lifeCycle,
       configuration,
       startRumResults.session,
-      startRumResults.viewContexts
+      startRumResults.viewContexts,
+      deflateWorker
     )
   }
 

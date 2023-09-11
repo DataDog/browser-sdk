@@ -20,6 +20,7 @@ export enum ExperimentalFeature {
   SCROLLMAP = 'scrollmap',
   INTERACTION_TO_NEXT_PAINT = 'interaction_to_next_paint',
   DISABLE_REPLAY_INLINE_CSS = 'disable_replay_inline_css',
+  COMPRESS_BATCH = 'compress_batch',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()

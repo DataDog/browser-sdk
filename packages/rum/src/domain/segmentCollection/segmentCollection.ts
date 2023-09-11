@@ -1,9 +1,8 @@
-import type { HttpRequest, TimeoutId } from '@datadog/browser-core'
+import type { DeflateEncoder, HttpRequest, TimeoutId } from '@datadog/browser-core'
 import { isPageExitReason, ONE_SECOND, clearTimeout, setTimeout } from '@datadog/browser-core'
 import type { LifeCycle, ViewContexts, RumSessionManager, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { BrowserRecord, CreationReason, SegmentContext } from '../../types'
-import type { DeflateEncoder } from '../deflate'
 import { buildReplayPayload } from './buildReplayPayload'
 import type { FlushReason } from './segment'
 import { Segment } from './segment'
@@ -99,8 +98,8 @@ export function doStartSegmentCollection(
 
   function flushSegment(flushReason: FlushReason) {
     if (state.status === SegmentCollectionStatus.SegmentPending) {
-      state.segment.flush((metadata) => {
-        const payload = buildReplayPayload(encoder.encodedBytes, metadata, encoder.rawBytesCount)
+      state.segment.flush((metadata, encoderResult) => {
+        const payload = buildReplayPayload(encoderResult.output, metadata, encoderResult.rawBytesCount)
 
         if (isPageExitReason(flushReason)) {
           httpRequest.sendOnExit(payload)
@@ -144,15 +143,8 @@ export function doStartSegmentCollection(
         }
       }
 
-      const segment = state.segment
-
-      segment.addRecord(record, () => {
-        if (
-          // the written segment is still pending
-          state.status === SegmentCollectionStatus.SegmentPending &&
-          state.segment === segment &&
-          encoder.encodedBytesCount > SEGMENT_BYTES_LIMIT
-        ) {
+      state.segment.addRecord(record, (encodedBytesCount) => {
+        if (encodedBytesCount > SEGMENT_BYTES_LIMIT) {
           flushSegment('segment_bytes_limit')
         }
       })

@@ -1,4 +1,7 @@
+import type { Payload } from '../../transport'
 import { computeTransportConfiguration } from './transportConfiguration'
+
+const DEFAULT_PAYLOAD = {} as Payload
 
 describe('transportConfiguration', () => {
   const clientToken = 'some_client_token'
@@ -6,13 +9,13 @@ describe('transportConfiguration', () => {
   describe('site', () => {
     it('should use US site by default', () => {
       const configuration = computeTransportConfiguration({ clientToken })
-      expect(configuration.rumEndpointBuilder.build('xhr')).toContain('datadoghq.com')
+      expect(configuration.rumEndpointBuilder.build('xhr', DEFAULT_PAYLOAD)).toContain('datadoghq.com')
       expect(configuration.site).toBe('datadoghq.com')
     })
 
     it('should use site value when set', () => {
       const configuration = computeTransportConfiguration({ clientToken, site: 'foo.com' })
-      expect(configuration.rumEndpointBuilder.build('xhr')).toContain('foo.com')
+      expect(configuration.rumEndpointBuilder.build('xhr', DEFAULT_PAYLOAD)).toContain('foo.com')
       expect(configuration.site).toBe('foo.com')
     })
   })
@@ -23,7 +26,7 @@ describe('transportConfiguration', () => {
         clientToken,
         internalAnalyticsSubdomain,
       })
-      expect(configuration.rumEndpointBuilder.build('xhr')).toContain(internalAnalyticsSubdomain)
+      expect(configuration.rumEndpointBuilder.build('xhr', DEFAULT_PAYLOAD)).toContain(internalAnalyticsSubdomain)
     })
 
     it('should not use internal analytics subdomain value when set for other sites', () => {
@@ -32,30 +35,42 @@ describe('transportConfiguration', () => {
         site: 'foo.bar',
         internalAnalyticsSubdomain,
       })
-      expect(configuration.rumEndpointBuilder.build('xhr')).not.toContain(internalAnalyticsSubdomain)
+      expect(configuration.rumEndpointBuilder.build('xhr', DEFAULT_PAYLOAD)).not.toContain(internalAnalyticsSubdomain)
     })
   })
 
   describe('sdk_version, env, version and service', () => {
     it('should not modify the logs and rum endpoints tags when not defined', () => {
       const configuration = computeTransportConfiguration({ clientToken })
-      expect(decodeURIComponent(configuration.rumEndpointBuilder.build('xhr'))).not.toContain(',env:')
-      expect(decodeURIComponent(configuration.rumEndpointBuilder.build('xhr'))).not.toContain(',service:')
-      expect(decodeURIComponent(configuration.rumEndpointBuilder.build('xhr'))).not.toContain(',version:')
-      expect(decodeURIComponent(configuration.rumEndpointBuilder.build('xhr'))).not.toContain(',datacenter:')
+      expect(decodeURIComponent(configuration.rumEndpointBuilder.build('xhr', DEFAULT_PAYLOAD))).not.toContain(',env:')
+      expect(decodeURIComponent(configuration.rumEndpointBuilder.build('xhr', DEFAULT_PAYLOAD))).not.toContain(
+        ',service:'
+      )
+      expect(decodeURIComponent(configuration.rumEndpointBuilder.build('xhr', DEFAULT_PAYLOAD))).not.toContain(
+        ',version:'
+      )
+      expect(decodeURIComponent(configuration.rumEndpointBuilder.build('xhr', DEFAULT_PAYLOAD))).not.toContain(
+        ',datacenter:'
+      )
 
-      expect(decodeURIComponent(configuration.logsEndpointBuilder.build('xhr'))).not.toContain(',env:')
-      expect(decodeURIComponent(configuration.logsEndpointBuilder.build('xhr'))).not.toContain(',service:')
-      expect(decodeURIComponent(configuration.logsEndpointBuilder.build('xhr'))).not.toContain(',version:')
-      expect(decodeURIComponent(configuration.logsEndpointBuilder.build('xhr'))).not.toContain(',datacenter:')
+      expect(decodeURIComponent(configuration.logsEndpointBuilder.build('xhr', DEFAULT_PAYLOAD))).not.toContain(',env:')
+      expect(decodeURIComponent(configuration.logsEndpointBuilder.build('xhr', DEFAULT_PAYLOAD))).not.toContain(
+        ',service:'
+      )
+      expect(decodeURIComponent(configuration.logsEndpointBuilder.build('xhr', DEFAULT_PAYLOAD))).not.toContain(
+        ',version:'
+      )
+      expect(decodeURIComponent(configuration.logsEndpointBuilder.build('xhr', DEFAULT_PAYLOAD))).not.toContain(
+        ',datacenter:'
+      )
     })
 
     it('should be set as tags in the logs and rum endpoints', () => {
       const configuration = computeTransportConfiguration({ clientToken, env: 'foo', service: 'bar', version: 'baz' })
-      expect(decodeURIComponent(configuration.rumEndpointBuilder.build('xhr'))).toContain(
+      expect(decodeURIComponent(configuration.rumEndpointBuilder.build('xhr', DEFAULT_PAYLOAD))).toContain(
         'env:foo,service:bar,version:baz'
       )
-      expect(decodeURIComponent(configuration.logsEndpointBuilder.build('xhr'))).toContain(
+      expect(decodeURIComponent(configuration.logsEndpointBuilder.build('xhr', DEFAULT_PAYLOAD))).toContain(
         'env:foo,service:bar,version:baz'
       )
     })

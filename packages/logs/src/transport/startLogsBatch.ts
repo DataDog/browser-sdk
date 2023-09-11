@@ -1,5 +1,5 @@
 import type { Context, Observable, PageExitEvent, RawError } from '@datadog/browser-core'
-import { startBatchWithReplica } from '@datadog/browser-core'
+import { createIdentityEncoder, startBatchWithReplica } from '@datadog/browser-core'
 import type { LogsConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
@@ -16,9 +16,11 @@ export function startLogsBatch(
     configuration,
     {
       endpoint: configuration.logsEndpointBuilder,
+      encoder: createIdentityEncoder(),
     },
     configuration.replica && {
       endpoint: configuration.replica.logsEndpointBuilder,
+      encoder: createIdentityEncoder(),
     },
     reportError,
     pageExitObservable,
