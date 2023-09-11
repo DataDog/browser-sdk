@@ -8,11 +8,10 @@ import {
 } from '@datadog/browser-core'
 import { restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../../../test'
-import { setup } from '../../../../test'
-import type { LifeCycle } from '../../lifeCycle'
+import { createPerformanceEntry, setup } from '../../../../test'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { RumConfiguration } from '../../configuration'
-import type { RumFirstInputTiming } from '../../../browser/performanceCollection'
+import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
 import { trackFirstInputTimings } from './trackFirstInputTimings'
 import { trackFirstHidden } from './trackFirstHidden'
 
@@ -31,19 +30,6 @@ describe('firstInputTimings', () => {
   >
   let configuration: RumConfiguration
   let target: HTMLButtonElement
-
-  function newFirstInput(lifeCycle: LifeCycle, overrides?: Partial<RumFirstInputTiming>) {
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      {
-        entryType: 'first-input',
-        processingStart: 1100 as RelativeTime,
-        startTime: 1000 as RelativeTime,
-        duration: 0 as Duration,
-        target,
-        ...overrides,
-      },
-    ])
-  }
 
   beforeEach(() => {
     configuration = {} as RumConfiguration
@@ -82,7 +68,9 @@ describe('firstInputTimings', () => {
   it('should provide the first input timings', () => {
     const { lifeCycle } = setupBuilder.build()
 
-    newFirstInput(lifeCycle)
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT),
+    ])
 
     expect(fitCallback).toHaveBeenCalledTimes(1)
     expect(fitCallback).toHaveBeenCalledWith({
@@ -96,7 +84,11 @@ describe('firstInputTimings', () => {
     addExperimentalFeatures([ExperimentalFeature.WEB_VITALS_ATTRIBUTION])
     const { lifeCycle } = setupBuilder.build()
 
-    newFirstInput(lifeCycle)
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT, {
+        target,
+      }),
+    ])
 
     expect(fitCallback).toHaveBeenCalledTimes(1)
     expect(fitCallback).toHaveBeenCalledWith(
@@ -110,7 +102,9 @@ describe('firstInputTimings', () => {
     setPageVisibility('hidden')
     const { lifeCycle } = setupBuilder.build()
 
-    newFirstInput(lifeCycle)
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT),
+    ])
 
     expect(fitCallback).not.toHaveBeenCalled()
   })
@@ -118,12 +112,13 @@ describe('firstInputTimings', () => {
   it('should be adjusted to 0 if the computed value would be negative due to browser timings imprecisions', () => {
     const { lifeCycle } = setupBuilder.build()
 
-    newFirstInput(lifeCycle, {
-      entryType: 'first-input' as const,
-      processingStart: 900 as RelativeTime,
-      startTime: 1000 as RelativeTime,
-      duration: 0 as Duration,
-    })
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT, {
+        processingStart: 900 as RelativeTime,
+        startTime: 1000 as RelativeTime,
+        duration: 0 as Duration,
+      }),
+    ])
 
     expect(fitCallback).toHaveBeenCalledTimes(1)
     expect(fitCallback).toHaveBeenCalledWith(

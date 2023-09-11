@@ -1,17 +1,12 @@
-import {
-  ExperimentalFeature,
-  addExperimentalFeatures,
-  relativeNow,
-  resetExperimentalFeatures,
-} from '@datadog/browser-core'
+import { ExperimentalFeature, addExperimentalFeatures, resetExperimentalFeatures } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../../test'
-import { setup } from '../../../../test'
+import { createPerformanceEntry, setup } from '../../../../test'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { THROTTLE_VIEW_UPDATE_PERIOD } from '../trackViews'
 import type { ViewTest } from '../setupViewTest.specHelper'
 import { setupViewTest } from '../setupViewTest.specHelper'
-import type { RumLayoutShiftTiming } from '../../../browser/performanceCollection'
+import { RumPerformanceEntryType, type RumLayoutShiftTiming } from '../../../browser/performanceCollection'
 
 describe('trackCumulativeLayoutShift', () => {
   let setupBuilder: TestSetupBuilder
@@ -21,13 +16,7 @@ describe('trackCumulativeLayoutShift', () => {
 
   function newLayoutShift(lifeCycle: LifeCycle, overrides: Partial<RumLayoutShiftTiming>) {
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      {
-        entryType: 'layout-shift',
-        startTime: relativeNow(),
-        hadRecentInput: false,
-        value: 0.1,
-        ...overrides,
-      },
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, overrides),
     ])
   }
 

@@ -3,6 +3,7 @@ import { addDuration } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../../test'
 import { setup } from '../../../../test'
 import type { RumPerformanceNavigationTiming } from '../../../browser/performanceCollection'
+import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { PAGE_ACTIVITY_END_DELAY, PAGE_ACTIVITY_VALIDATION_DELAY } from '../../waitPageActivityEnd'
 import { THROTTLE_VIEW_UPDATE_PERIOD } from '../trackViews'
@@ -18,7 +19,7 @@ const FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_BEFORE_ACTIVITY_TIMING: RumPerformanc
   domComplete: 2 as RelativeTime,
   domContentLoadedEventEnd: 1 as RelativeTime,
   domInteractive: 1 as RelativeTime,
-  entryType: 'navigation',
+  entryType: RumPerformanceEntryType.NAVIGATION,
   loadEventEnd: (BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY * 0.8) as RelativeTime,
 }
 
@@ -27,7 +28,7 @@ const FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING: RumPerformance
   domComplete: 2 as RelativeTime,
   domContentLoadedEventEnd: 1 as RelativeTime,
   domInteractive: 1 as RelativeTime,
-  entryType: 'navigation',
+  entryType: RumPerformanceEntryType.NAVIGATION,
   loadEventEnd: (BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY * 1.2) as RelativeTime,
 }
 
