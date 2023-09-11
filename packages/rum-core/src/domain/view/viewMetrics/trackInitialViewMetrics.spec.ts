@@ -1,4 +1,4 @@
-import type { Duration } from '@datadog/browser-core'
+import type { Duration, RelativeTime } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../../test'
 import { noopWebVitalTelemetryDebug, setup } from '../../../../test'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -45,15 +45,19 @@ describe('trackInitialViewMetrics', () => {
 
     expect(scheduleViewUpdateSpy).toHaveBeenCalledTimes(3)
     expect(trackInitialViewMetricsResult.initialViewMetrics).toEqual({
-      firstByte: 123 as Duration,
-      domComplete: 456 as Duration,
-      domContentLoaded: 345 as Duration,
-      domInteractive: 234 as Duration,
+      navigationTimings: {
+        firstByte: 123 as Duration,
+        domComplete: 456 as Duration,
+        domContentLoaded: 345 as Duration,
+        domInteractive: 234 as Duration,
+        loadEvent: 567 as Duration,
+      },
       firstContentfulPaint: 123 as Duration,
-      firstInputDelay: 100 as Duration,
-      firstInputTime: 1000 as Duration,
-      firstInputTargetSelector: undefined,
-      loadEvent: 567 as Duration,
+      firstInputTimings: {
+        firstInputDelay: 100 as Duration,
+        firstInputTime: 1000 as RelativeTime,
+        firstInputTargetSelector: undefined,
+      },
     })
   })
 

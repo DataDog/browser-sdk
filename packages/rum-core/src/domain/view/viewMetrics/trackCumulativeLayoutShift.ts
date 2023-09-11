@@ -14,6 +14,11 @@ import { getSelectorFromElement } from '../../getSelectorFromElement'
 import type { WebVitalTelemetryDebug } from '../startWebVitalTelemetryDebug'
 import type { RumConfiguration } from '../../configuration'
 
+export interface CumulativeLayoutShift {
+  value: number
+  targetSelector?: string
+}
+
 /**
  * Track the cumulative layout shifts (CLS).
  * Layout shifts are grouped into session windows.
@@ -31,12 +36,11 @@ import type { RumConfiguration } from '../../configuration'
  * https://web.dev/evolving-cls/
  * Reference implementation: https://github.com/GoogleChrome/web-vitals/blob/master/src/getCLS.ts
  */
-
 export function trackCumulativeLayoutShift(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   webVitalTelemetryDebug: WebVitalTelemetryDebug,
-  callback: (cumulativeLayoutShift: number, cumulativeLayoutShiftTargetSelector?: string) => void
+  callback: (cumulativeLayoutShift: CumulativeLayoutShift) => void
 ) {
   let maxClsValue = 0
 
@@ -58,7 +62,10 @@ export function trackCumulativeLayoutShift(
             cslTargetSelector = getSelectorFromElement(clsTarget, configuration.actionNameAttribute)
           }
 
-          callback(cls, cslTargetSelector)
+          callback({
+            value: cls,
+            targetSelector: cslTargetSelector,
+          })
 
           if (!clsAttributionCollected) {
             clsAttributionCollected = true

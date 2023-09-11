@@ -7,15 +7,15 @@ import type { WebVitalTelemetryDebug } from '../startWebVitalTelemetryDebug'
 import type { ScrollMetrics } from './trackScrollMetrics'
 import { computeScrollValues, trackScrollMetrics } from './trackScrollMetrics'
 import { trackLoadingTime } from './trackLoadingTime'
+import type { CumulativeLayoutShift } from './trackCumulativeLayoutShift'
 import { isLayoutShiftSupported, trackCumulativeLayoutShift } from './trackCumulativeLayoutShift'
+import type { InteractionToNextPaint } from './trackInteractionToNextPaint'
 import { trackInteractionToNextPaint } from './trackInteractionToNextPaint'
 
 export interface CommonViewMetrics {
   loadingTime?: Duration
-  cumulativeLayoutShift?: number
-  cumulativeLayoutShiftTargetSelector?: string
-  interactionToNextPaint?: Duration
-  interactionToNextPaintTargetSelector?: string
+  cumulativeLayoutShift?: CumulativeLayoutShift
+  interactionToNextPaint?: InteractionToNextPaint
   scroll?: ScrollMetrics
 }
 
@@ -64,14 +64,13 @@ export function trackCommonViewMetrics(
 
   let stopCLSTracking: () => void
   if (isLayoutShiftSupported()) {
-    commonViewMetrics.cumulativeLayoutShift = 0
+    commonViewMetrics.cumulativeLayoutShift = { value: 0 }
     ;({ stop: stopCLSTracking } = trackCumulativeLayoutShift(
       configuration,
       lifeCycle,
       webVitalTelemetryDebug,
-      (cumulativeLayoutShift, cumulativeLayoutShiftTargetSelector) => {
+      (cumulativeLayoutShift) => {
         commonViewMetrics.cumulativeLayoutShift = cumulativeLayoutShift
-        commonViewMetrics.cumulativeLayoutShiftTargetSelector = cumulativeLayoutShiftTargetSelector
         scheduleViewUpdate()
       }
     ))
@@ -94,9 +93,7 @@ export function trackCommonViewMetrics(
     },
     setLoadEvent,
     getCommonViewMetrics: () => {
-      const { interactionToNextPaint, interactionToNextPaintTargetSelector } = getInteractionToNextPaint() || {}
-      commonViewMetrics.interactionToNextPaint = interactionToNextPaint
-      commonViewMetrics.interactionToNextPaintTargetSelector = interactionToNextPaintTargetSelector
+      commonViewMetrics.interactionToNextPaint = getInteractionToNextPaint()
       return commonViewMetrics
     },
   }

@@ -50,7 +50,7 @@ describe('trackCumulativeLayoutShift', () => {
     const { getViewUpdate, getViewUpdateCount } = viewTest
 
     expect(getViewUpdateCount()).toEqual(1)
-    expect(getViewUpdate(0).commonViewMetrics.cumulativeLayoutShift).toBe(0)
+    expect(getViewUpdate(0).commonViewMetrics.cumulativeLayoutShift?.value).toBe(0)
   })
 
   it('should be initialized to undefined if layout-shift is not supported', () => {
@@ -59,7 +59,7 @@ describe('trackCumulativeLayoutShift', () => {
     const { getViewUpdate, getViewUpdateCount } = viewTest
 
     expect(getViewUpdateCount()).toEqual(1)
-    expect(getViewUpdate(0).commonViewMetrics.cumulativeLayoutShift).toBe(undefined)
+    expect(getViewUpdate(0).commonViewMetrics.cumulativeLayoutShift?.value).toBe(undefined)
   })
 
   it('should accumulate layout shift values for the first session window', () => {
@@ -71,7 +71,7 @@ describe('trackCumulativeLayoutShift', () => {
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getViewUpdateCount()).toEqual(2)
-    expect(getViewUpdate(1).commonViewMetrics.cumulativeLayoutShift).toBe(0.3)
+    expect(getViewUpdate(1).commonViewMetrics.cumulativeLayoutShift?.value).toBe(0.3)
   })
 
   it('should round the cumulative layout shift value to 4 decimals', () => {
@@ -83,7 +83,7 @@ describe('trackCumulativeLayoutShift', () => {
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getViewUpdateCount()).toEqual(2)
-    expect(getViewUpdate(1).commonViewMetrics.cumulativeLayoutShift).toBe(2.3457)
+    expect(getViewUpdate(1).commonViewMetrics.cumulativeLayoutShift?.value).toBe(2.3457)
   })
 
   it('should ignore entries with recent input', () => {
@@ -95,7 +95,7 @@ describe('trackCumulativeLayoutShift', () => {
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getViewUpdateCount()).toEqual(1)
-    expect(getViewUpdate(0).commonViewMetrics.cumulativeLayoutShift).toBe(0)
+    expect(getViewUpdate(0).commonViewMetrics.cumulativeLayoutShift?.value).toBe(0)
   })
 
   it('should create a new session window if the gap is more than 1 second', () => {
@@ -111,7 +111,7 @@ describe('trackCumulativeLayoutShift', () => {
 
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
     expect(getViewUpdateCount()).toEqual(2)
-    expect(getViewUpdate(1).commonViewMetrics.cumulativeLayoutShift).toBe(0.3)
+    expect(getViewUpdate(1).commonViewMetrics.cumulativeLayoutShift?.value).toBe(0.3)
   })
 
   it('should create a new session window if the current session window is more than 5 second', () => {
@@ -124,7 +124,7 @@ describe('trackCumulativeLayoutShift', () => {
     } // window 1: 0.5 | window 2: 0.1
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
     expect(getViewUpdateCount()).toEqual(3)
-    expect(getViewUpdate(2).commonViewMetrics.cumulativeLayoutShift).toBe(0.5)
+    expect(getViewUpdate(2).commonViewMetrics.cumulativeLayoutShift?.value).toBe(0.5)
   })
 
   it('should get the max value sessions', () => {
@@ -145,7 +145,7 @@ describe('trackCumulativeLayoutShift', () => {
 
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
     expect(getViewUpdateCount()).toEqual(3)
-    expect(getViewUpdate(2).commonViewMetrics.cumulativeLayoutShift).toBe(0.5)
+    expect(getViewUpdate(2).commonViewMetrics.cumulativeLayoutShift?.value).toBe(0.5)
   })
 
   describe('cls target element', () => {
@@ -164,7 +164,7 @@ describe('trackCumulativeLayoutShift', () => {
       newLayoutShift(lifeCycle, { sources: [{ node: textNode }, { node: divElement }, { node: textNode }] })
 
       expect(getViewUpdateCount()).toEqual(1)
-      expect(getViewUpdate(0).commonViewMetrics.cumulativeLayoutShiftTargetSelector).toBe('#div-element')
+      expect(getViewUpdate(0).commonViewMetrics.cumulativeLayoutShift?.targetSelector).toBe('#div-element')
     })
 
     it('should not return the target element selector when FF disabled', () => {
@@ -176,7 +176,7 @@ describe('trackCumulativeLayoutShift', () => {
       newLayoutShift(lifeCycle, { sources: [{ node: divElement }] })
 
       expect(getViewUpdateCount()).toEqual(1)
-      expect(getViewUpdate(0).commonViewMetrics.cumulativeLayoutShiftTargetSelector).toBe(undefined)
+      expect(getViewUpdate(0).commonViewMetrics.cumulativeLayoutShift?.targetSelector).toBe(undefined)
     })
   })
 })

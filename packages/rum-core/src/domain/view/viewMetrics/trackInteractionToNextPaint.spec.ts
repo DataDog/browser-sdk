@@ -81,15 +81,15 @@ describe('trackInteractionToNextPaint', () => {
         })
       }
       expect(getInteractionToNextPaint()).toEqual({
-        interactionToNextPaint: 98 as Duration,
-        interactionToNextPaintTargetSelector: undefined,
+        value: 98 as Duration,
+        targetSelector: undefined,
       })
     })
 
     it('should return 0 when an interaction happened without generating a performance event (interaction duration below 40ms)', () => {
       setupBuilder.build()
       interactionCountStub.setInteractionCount(1 as Duration) // assumes an interaction happened but no PERFORMANCE_ENTRIES_COLLECTED have been triggered
-      expect(getInteractionToNextPaint()).toEqual({ interactionToNextPaint: 0 as Duration })
+      expect(getInteractionToNextPaint()).toEqual({ value: 0 as Duration })
     })
 
     it('should take first-input entry into account', () => {
@@ -99,8 +99,8 @@ describe('trackInteractionToNextPaint', () => {
         entryType: RumPerformanceEntryType.FIRST_INPUT,
       })
       expect(getInteractionToNextPaint()).toEqual({
-        interactionToNextPaint: 40 as Duration,
-        interactionToNextPaintTargetSelector: undefined,
+        value: 40 as Duration,
+        targetSelector: undefined,
       })
     })
 
@@ -115,8 +115,8 @@ describe('trackInteractionToNextPaint', () => {
       }
       // the p98 return 100 which shows that the entry has been updated
       expect(getInteractionToNextPaint()).toEqual({
-        interactionToNextPaint: 100 as Duration,
-        interactionToNextPaintTargetSelector: undefined,
+        value: 100 as Duration,
+        targetSelector: undefined,
       })
     })
 
@@ -129,7 +129,7 @@ describe('trackInteractionToNextPaint', () => {
         target: appendElement('button', { id: 'inp-target-element' }),
       })
 
-      expect(getInteractionToNextPaint()?.interactionToNextPaintTargetSelector).toEqual('#inp-target-element')
+      expect(getInteractionToNextPaint()?.targetSelector).toEqual('#inp-target-element')
     })
 
     it("should not return the target selector if it's not a DOM element when FF web_vital_attribution is enabled", () => {
@@ -141,7 +141,7 @@ describe('trackInteractionToNextPaint', () => {
         target: appendTextNode(''),
       })
 
-      expect(getInteractionToNextPaint()?.interactionToNextPaintTargetSelector).toEqual(undefined)
+      expect(getInteractionToNextPaint()?.targetSelector).toEqual(undefined)
     })
 
     it('should not return the target selector when FF web_vital_attribution is disabled', () => {
@@ -152,7 +152,7 @@ describe('trackInteractionToNextPaint', () => {
         target: appendElement('button', { id: 'inp-target-element' }),
       })
 
-      expect(getInteractionToNextPaint()?.interactionToNextPaintTargetSelector).toEqual(undefined)
+      expect(getInteractionToNextPaint()?.targetSelector).toEqual(undefined)
     })
   })
 

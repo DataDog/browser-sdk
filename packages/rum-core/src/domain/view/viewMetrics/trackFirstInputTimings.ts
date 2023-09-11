@@ -9,6 +9,12 @@ import type { WebVitalTelemetryDebug } from '../startWebVitalTelemetryDebug'
 import { getSelectorFromElement } from '../../getSelectorFromElement'
 import type { FirstHidden } from './trackFirstHidden'
 
+export interface FirstInputTimings {
+  firstInputDelay: Duration
+  firstInputTime: RelativeTime
+  firstInputTargetSelector?: string
+}
+
 /**
  * Track the first input occurring during the initial View to return:
  * - First Input Delay
@@ -17,21 +23,12 @@ import type { FirstHidden } from './trackFirstHidden'
  * Documentation: https://web.dev/fid/
  * Reference implementation: https://github.com/GoogleChrome/web-vitals/blob/master/src/getFID.ts
  */
-
 export function trackFirstInputTimings(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
   webVitalTelemetryDebug: WebVitalTelemetryDebug,
   firstHidden: FirstHidden,
-  callback: ({
-    firstInputDelay,
-    firstInputTime,
-    firstInputTargetSelector,
-  }: {
-    firstInputDelay: Duration
-    firstInputTime: RelativeTime
-    firstInputTargetSelector?: string
-  }) => void
+  callback: (firstInputTimings: FirstInputTimings) => void
 ) {
   const { unsubscribe: unsubscribeLifeCycle } = lifeCycle.subscribe(
     LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED,

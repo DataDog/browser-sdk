@@ -1,26 +1,21 @@
 import type { Duration } from '@datadog/browser-core'
-import { assign } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
 import type { WebVitalTelemetryDebug } from '../startWebVitalTelemetryDebug'
 import { trackFirstContentfulPaint } from './trackFirstContentfulPaint'
+import type { FirstInputTimings } from './trackFirstInputTimings'
 import { trackFirstInputTimings } from './trackFirstInputTimings'
+import type { NavigationTimings } from './trackNavigationTimings'
 import { trackNavigationTimings } from './trackNavigationTimings'
+import type { LargestContentfulPaint } from './trackLargestContentfulPaint'
 import { trackLargestContentfulPaint } from './trackLargestContentfulPaint'
 import { trackFirstHidden } from './trackFirstHidden'
 
 export interface InitialViewMetrics {
   firstContentfulPaint?: Duration
-  firstByte?: Duration
-  domInteractive?: Duration
-  domContentLoaded?: Duration
-  domComplete?: Duration
-  loadEvent?: Duration
-  largestContentfulPaint?: Duration
-  largestContentfulPaintTargetSelector?: string
-  firstInputDelay?: Duration
-  firstInputTime?: Duration
-  firstInputTargetSelector?: string
+  navigationTimings?: NavigationTimings
+  largestContentfulPaint?: LargestContentfulPaint
+  firstInputTimings?: FirstInputTimings
 }
 
 export function trackInitialViewMetrics(
@@ -32,30 +27,27 @@ export function trackInitialViewMetrics(
 ) {
   const initialViewMetrics: InitialViewMetrics = {}
 
-  function setMetrics(newMetrics: Partial<InitialViewMetrics>) {
-    assign(initialViewMetrics, newMetrics)
-    scheduleViewUpdate()
-  }
-
   const { stop: stopNavigationTracking } = trackNavigationTimings(lifeCycle, (navigationTimings) => {
     setLoadEvent(navigationTimings.loadEvent)
-    setMetrics(navigationTimings)
+    initialViewMetrics.navigationTimings = navigationTimings
+    scheduleViewUpdate()
   })
+
   const firstHidden = trackFirstHidden(configuration)
-  const { stop: stopFCPTracking } = trackFirstContentfulPaint(lifeCycle, firstHidden, (firstContentfulPaint) =>
-    setMetrics({ firstContentfulPaint })
-  )
+  const { stop: stopFCPTracking } = trackFirstContentfulPaint(lifeCycle, firstHidden, (firstContentfulPaint) => {
+    initialViewMetrics.firstContentfulPaint = firstContentfulPaint
+    scheduleViewUpdate()
+  })
+
   const { stop: stopLCPTracking } = trackLargestContentfulPaint(
     lifeCycle,
     configuration,
     webVitalTelemetryDebug,
     firstHidden,
     window,
-    (largestContentfulPaint, largestContentfulPaintTargetSelector) => {
-      setMetrics({
-        largestContentfulPaint,
-        largestContentfulPaintTargetSelector,
-      })
+    (largestContentfulPaint) => {
+      initialViewMetrics.largestContentfulPaint = largestContentfulPaint
+      scheduleViewUpdate()
     }
   )
 
@@ -64,12 +56,9 @@ export function trackInitialViewMetrics(
     configuration,
     webVitalTelemetryDebug,
     firstHidden,
-    ({ firstInputDelay, firstInputTime, firstInputTargetSelector }) => {
-      setMetrics({
-        firstInputDelay,
-        firstInputTime,
-        firstInputTargetSelector,
-      })
+    (firstInputTimings) => {
+      initialViewMetrics.firstInputTimings = firstInputTimings
+      scheduleViewUpdate()
     }
   )
 

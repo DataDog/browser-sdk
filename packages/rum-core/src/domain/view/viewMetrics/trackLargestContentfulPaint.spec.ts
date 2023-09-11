@@ -12,12 +12,13 @@ import type { TestSetupBuilder } from '../../../../test'
 import { appendElement, createPerformanceEntry, setup } from '../../../../test'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { RumConfiguration } from '../../configuration'
+import type { LargestContentfulPaint } from './trackLargestContentfulPaint'
 import { LCP_MAXIMUM_DELAY, trackLargestContentfulPaint } from './trackLargestContentfulPaint'
 import { trackFirstHidden } from './trackFirstHidden'
 
 describe('trackLargestContentfulPaint', () => {
   let setupBuilder: TestSetupBuilder
-  let lcpCallback: jasmine.Spy<(value: RelativeTime, targetSelector?: string) => void>
+  let lcpCallback: jasmine.Spy<(lcp: LargestContentfulPaint) => void>
   let eventTarget: Window
   let configuration: RumConfiguration
 
@@ -58,7 +59,7 @@ describe('trackLargestContentfulPaint', () => {
     ])
 
     expect(lcpCallback).toHaveBeenCalledTimes(1 as RelativeTime)
-    expect(lcpCallback).toHaveBeenCalledWith(789 as RelativeTime, undefined)
+    expect(lcpCallback).toHaveBeenCalledWith({ value: 789 as RelativeTime, targetSelector: undefined })
   })
 
   it('should provide the largest contentful paint target selector if FF enabled', () => {
@@ -72,7 +73,7 @@ describe('trackLargestContentfulPaint', () => {
     ])
 
     expect(lcpCallback).toHaveBeenCalledTimes(1 as RelativeTime)
-    expect(lcpCallback).toHaveBeenCalledWith(789 as RelativeTime, '#lcp-target-element')
+    expect(lcpCallback).toHaveBeenCalledWith({ value: 789 as RelativeTime, targetSelector: '#lcp-target-element' })
   })
 
   it('should not provide the largest contentful paint target selector if FF disabled', () => {
@@ -85,7 +86,7 @@ describe('trackLargestContentfulPaint', () => {
     ])
 
     expect(lcpCallback).toHaveBeenCalledTimes(1 as RelativeTime)
-    expect(lcpCallback).toHaveBeenCalledWith(789 as RelativeTime, undefined)
+    expect(lcpCallback).toHaveBeenCalledWith({ value: 789 as RelativeTime, targetSelector: undefined })
   })
 
   it('should be discarded if it is reported after a user interaction', () => {

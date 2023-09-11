@@ -18,6 +18,10 @@ import type { FirstHidden } from './trackFirstHidden'
 // It happens in some cases like sleep mode or some browser implementations
 export const LCP_MAXIMUM_DELAY = 10 * ONE_MINUTE
 
+export interface LargestContentfulPaint {
+  value: RelativeTime
+  targetSelector?: string
+}
 /**
  * Track the largest contentful paint (LCP) occurring during the initial View.  This can yield
  * multiple values, only the most recent one should be used.
@@ -30,7 +34,7 @@ export function trackLargestContentfulPaint(
   webVitalTelemetryDebug: WebVitalTelemetryDebug,
   firstHidden: FirstHidden,
   eventTarget: Window,
-  callback: (lcpTiming: RelativeTime, lcpTargetSelector?: string) => void
+  callback: (largestContentfulPaint: LargestContentfulPaint) => void
 ) {
   // Ignore entries that come after the first user interaction.  According to the documentation, the
   // browser should not send largest-contentful-paint entries after a user interact with the page,
@@ -64,7 +68,10 @@ export function trackLargestContentfulPaint(
           lcpTargetSelector = getSelectorFromElement(lcpEntry.element, configuration.actionNameAttribute)
         }
 
-        callback(lcpEntry.startTime, lcpTargetSelector)
+        callback({
+          value: lcpEntry.startTime,
+          targetSelector: lcpTargetSelector,
+        })
 
         webVitalTelemetryDebug.addWebVitalTelemetryDebug('LCP', lcpEntry.element, lcpEntry.startTime)
       }

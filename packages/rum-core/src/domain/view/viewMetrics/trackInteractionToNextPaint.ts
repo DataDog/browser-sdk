@@ -12,6 +12,10 @@ import { getInteractionCount, initInteractionCountPolyfill } from './interaction
 // Arbitrary value to prevent unnecessary memory usage on views with lots of interactions.
 const MAX_INTERACTION_ENTRIES = 10
 
+export interface InteractionToNextPaint {
+  value: Duration
+  targetSelector?: string
+}
 /**
  * Track the interaction to next paint (INP).
  * To avoid outliers, return the p98 worst interaction of the view.
@@ -62,17 +66,17 @@ export function trackInteractionToNextPaint(
   })
 
   return {
-    getInteractionToNextPaint: () => {
+    getInteractionToNextPaint: (): InteractionToNextPaint | undefined => {
       // If no INP duration where captured because of the performanceObserver 40ms threshold
       // but the view interaction count > 0 then report 0
       if (interactionToNextPaint >= 0) {
         return {
-          interactionToNextPaint,
-          interactionToNextPaintTargetSelector,
+          value: interactionToNextPaint,
+          targetSelector: interactionToNextPaintTargetSelector,
         }
       } else if (getViewInteractionCount()) {
         return {
-          interactionToNextPaint: 0 as Duration,
+          value: 0 as Duration,
         }
       }
     },
