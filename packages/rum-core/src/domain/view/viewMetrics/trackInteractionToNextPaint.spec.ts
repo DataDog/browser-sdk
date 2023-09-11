@@ -1,7 +1,7 @@
 import type { Duration } from '@datadog/browser-core'
 import { ExperimentalFeature, addExperimentalFeatures, resetExperimentalFeatures } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../../test'
-import { appendElement, createPerformanceEntry, setup } from '../../../../test'
+import { appendElement, appendTextNode, createPerformanceEntry, setup } from '../../../../test'
 import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
 import type {
   BrowserWindow,
@@ -130,6 +130,18 @@ describe('trackInteractionToNextPaint', () => {
       })
 
       expect(getInteractionToNextPaint()?.interactionToNextPaintTargetSelector).toEqual('#inp-target-element')
+    })
+
+    it("should not return the target selector if it's not a DOM element when FF web_vital_attribution is enabled", () => {
+      addExperimentalFeatures([ExperimentalFeature.WEB_VITALS_ATTRIBUTION])
+      const { lifeCycle } = setupBuilder.build()
+
+      newInteraction(lifeCycle, {
+        interactionId: 2,
+        target: appendTextNode(''),
+      })
+
+      expect(getInteractionToNextPaint()?.interactionToNextPaintTargetSelector).toEqual(undefined)
     })
 
     it('should not return the target selector when FF web_vital_attribution is disabled', () => {

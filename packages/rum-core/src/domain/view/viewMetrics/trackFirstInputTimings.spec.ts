@@ -8,7 +8,7 @@ import {
 } from '@datadog/browser-core'
 import { restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../../../test'
-import { appendElement, createPerformanceEntry, setup } from '../../../../test'
+import { appendElement, appendTextNode, createPerformanceEntry, setup } from '../../../../test'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { RumConfiguration } from '../../configuration'
 import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
@@ -74,7 +74,7 @@ describe('firstInputTimings', () => {
     })
   })
 
-  it('should provide the first input target selector if FF enabled', () => {
+  it('should provide the first input target selector when FF web_vital_attribution is enabled', () => {
     addExperimentalFeatures([ExperimentalFeature.WEB_VITALS_ATTRIBUTION])
     const { lifeCycle } = setupBuilder.build()
 
@@ -88,6 +88,24 @@ describe('firstInputTimings', () => {
     expect(fitCallback).toHaveBeenCalledWith(
       jasmine.objectContaining({
         firstInputTargetSelector: '#fid-target-element',
+      })
+    )
+  })
+
+  it("should not provide the first input target if it's not a DOM element when FF web_vital_attribution is enabled", () => {
+    addExperimentalFeatures([ExperimentalFeature.WEB_VITALS_ATTRIBUTION])
+    const { lifeCycle } = setupBuilder.build()
+
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT, {
+        target: appendTextNode(''),
+      }),
+    ])
+
+    expect(fitCallback).toHaveBeenCalledTimes(1)
+    expect(fitCallback).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        firstInputTargetSelector: undefined,
       })
     )
   })
