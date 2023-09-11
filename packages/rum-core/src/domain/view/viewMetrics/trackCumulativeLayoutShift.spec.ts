@@ -1,6 +1,6 @@
 import { ExperimentalFeature, addExperimentalFeatures, resetExperimentalFeatures } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../../test'
-import { createPerformanceEntry, setup } from '../../../../test'
+import { appendElement, appendTextNode, createPerformanceEntry, setup } from '../../../../test'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { THROTTLE_VIEW_UPDATE_PERIOD } from '../trackViews'
@@ -149,16 +149,8 @@ describe('trackCumulativeLayoutShift', () => {
   })
 
   describe('cls target element', () => {
-    let sandbox: HTMLDivElement
-
-    beforeEach(() => {
-      sandbox = document.createElement('div')
-      document.body.appendChild(sandbox)
-    })
-
     afterEach(() => {
       resetExperimentalFeatures()
-      sandbox.parentNode!.removeChild(sandbox)
     })
 
     it('should return the first target element selector amongst all the shifted nodes when FF enabled', () => {
@@ -166,9 +158,8 @@ describe('trackCumulativeLayoutShift', () => {
       const { lifeCycle } = setupBuilder.build()
       const { getViewUpdate, getViewUpdateCount } = viewTest
 
-      const textNode = sandbox.appendChild(document.createTextNode(''))
-      const divElement = sandbox.appendChild(document.createElement('div'))
-      divElement.setAttribute('id', 'div-element')
+      const textNode = appendTextNode('')
+      const divElement = appendElement('div', { id: 'div-element' })
 
       newLayoutShift(lifeCycle, { sources: [{ node: textNode }, { node: divElement }, { node: textNode }] })
 
@@ -180,8 +171,7 @@ describe('trackCumulativeLayoutShift', () => {
       const { lifeCycle } = setupBuilder.build()
       const { getViewUpdate, getViewUpdateCount } = viewTest
 
-      const divElement = sandbox.appendChild(document.createElement('div'))
-      divElement.setAttribute('id', 'div-element')
+      const divElement = appendElement('div', { id: 'div-element' })
 
       newLayoutShift(lifeCycle, { sources: [{ node: divElement }] })
 

@@ -8,7 +8,7 @@ import {
 } from '@datadog/browser-core'
 import { restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../../../test'
-import { createPerformanceEntry, setup } from '../../../../test'
+import { appendElement, createPerformanceEntry, setup } from '../../../../test'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { RumConfiguration } from '../../configuration'
 import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
@@ -29,15 +29,10 @@ describe('firstInputTimings', () => {
     }) => void
   >
   let configuration: RumConfiguration
-  let target: HTMLButtonElement
 
   beforeEach(() => {
     configuration = {} as RumConfiguration
     fitCallback = jasmine.createSpy()
-
-    target = document.createElement('button')
-    target.setAttribute('id', 'fid-target-element')
-    document.body.appendChild(target)
 
     setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
       const firstHidden = trackFirstHidden(configuration)
@@ -60,7 +55,6 @@ describe('firstInputTimings', () => {
 
   afterEach(() => {
     setupBuilder.cleanup()
-    target.parentNode!.removeChild(target)
     restorePageVisibility()
     resetExperimentalFeatures()
   })
@@ -86,7 +80,7 @@ describe('firstInputTimings', () => {
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT, {
-        target,
+        target: appendElement('button', { id: 'fid-target-element' }),
       }),
     ])
 
