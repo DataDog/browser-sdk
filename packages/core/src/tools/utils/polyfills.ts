@@ -27,10 +27,7 @@ export function find<T, S extends T>(
   predicate: (item: T, index: number) => item is S
 ): S | undefined
 export function find<T>(array: ArrayLike<T>, predicate: (item: T, index: number) => boolean): T | undefined
-export function find(
-  array: ArrayLike<unknown>,
-  predicate: (item: unknown, index: number) => boolean
-): unknown | undefined {
+export function find(array: ArrayLike<unknown>, predicate: (item: unknown, index: number) => boolean): unknown {
   for (let i = 0; i < array.length; i += 1) {
     const item = array[i]
     if (predicate(item, i)) {

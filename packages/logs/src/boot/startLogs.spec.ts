@@ -23,7 +23,7 @@ function getLoggedMessage(requests: Request[], index: number) {
 }
 
 interface Rum {
-  getInternalContext(startTime?: number): any | undefined
+  getInternalContext(startTime?: number): any
 }
 declare global {
   interface Window {

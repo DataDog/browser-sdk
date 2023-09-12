@@ -17,7 +17,7 @@ export function trackFirstHidden(configuration: RumConfiguration, eventTarget: W
       eventTarget,
       [DOM_EVENT.PAGE_HIDE, DOM_EVENT.VISIBILITY_CHANGE],
       (event) => {
-        if (event.type === 'pagehide' || document.visibilityState === 'hidden') {
+        if (event.type === DOM_EVENT.PAGE_HIDE || document.visibilityState === 'hidden') {
           timeStamp = event.timeStamp as RelativeTime
           stopListeners()
         }
