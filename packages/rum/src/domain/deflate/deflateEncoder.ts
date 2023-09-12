@@ -6,6 +6,7 @@ import type { DeflateWorker } from './deflateWorker'
 export interface DeflateEncoder {
   write(data: string, callback: () => void): void
   reset(): void
+  stop(): void
   encodedBytesCount: number
   encodedBytes: Uint8Array
   rawBytesCount: number
@@ -32,7 +33,7 @@ export function createDeflateEncoder(
     worker,
     'message',
     ({ data }: MessageEvent<DeflateWorkerResponse>) => {
-      if (data.type !== 'wrote' || data.streamId !== streamId) {
+      if (data.type !== 'wrote' || (data.streamId as DeflateEncoderStreamId) !== streamId) {
         return
       }
 
@@ -96,6 +97,10 @@ export function createDeflateEncoder(
         streamId,
       })
       nextWriteActionId = 0
+    },
+
+    stop() {
+      removeMessageListener()
     },
   }
 }

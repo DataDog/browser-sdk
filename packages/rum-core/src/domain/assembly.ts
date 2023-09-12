@@ -29,7 +29,7 @@ import type { RumSessionManager } from './rumSessionManager'
 import type { UrlContexts } from './contexts/urlContexts'
 import type { RumConfiguration } from './configuration'
 import type { ActionContexts } from './action/actionCollection'
-import { getDisplayContext } from './contexts/displayContext'
+import type { DisplayContext } from './contexts/displayContext'
 import type { CommonContext } from './contexts/commonContext'
 import type { ModifiableFieldPaths } from './limitModification'
 import { limitModification } from './limitModification'
@@ -64,6 +64,7 @@ export function startRumAssembly(
   viewContexts: ViewContexts,
   urlContexts: UrlContexts,
   actionContexts: ActionContexts,
+  displayContext: DisplayContext,
   buildCommonContext: () => CommonContext,
   reportError: (error: RawError) => void
 ) {
@@ -154,7 +155,7 @@ export function startRumAssembly(
           action: needToAssembleWithAction(rawRumEvent) && actionId ? { id: actionId } : undefined,
           synthetics: syntheticsContext,
           ci_test: ciTestContext,
-          display: getDisplayContext(configuration),
+          display: displayContext.get(),
         }
 
         const serverRumEvent = combine(rumContext as RumContext & Context, rawRumEvent) as RumEvent & Context

@@ -3,7 +3,7 @@ import { IncrementalSource, RecordType } from '../../../../packages/rum/src/type
 import { createLogger } from '../../common/logger'
 import { onBackgroundMessage } from '../backgroundScriptConnection'
 import type { MessageBridgeUp } from './types'
-import { MessageBridgeDownType } from './types'
+import { MessageBridgeDownType, MessageBridgeUpLogLevel, MessageBridgeUpType } from './types'
 
 const sandboxLogger = createLogger('sandbox')
 
@@ -121,18 +121,18 @@ function createMessageBridge(iframe: HTMLIFrameElement, onReady: () => void) {
   function globalMessageListener(event: MessageEvent<MessageBridgeUp>) {
     if (event.origin === sandboxOrigin) {
       const message = event.data
-      if (message.type === 'log') {
-        if (message.level === 'error') {
+      if (message.type === MessageBridgeUpType.LOG) {
+        if (message.level === MessageBridgeUpLogLevel.ERROR) {
           sandboxLogger.error(message.message)
         } else {
           sandboxLogger.log(message.message)
         }
-      } else if (message.type === 'error') {
+      } else if (message.type === MessageBridgeUpType.ERROR) {
         sandboxLogger.error(
           `${message.serialisedError.name}: ${message.serialisedError.message}`,
           message.serialisedError.stack
         )
-      } else if (message.type === 'ready') {
+      } else if (message.type === MessageBridgeUpType.READY) {
         onReady()
       } else {
         // Ignore other messages for now.

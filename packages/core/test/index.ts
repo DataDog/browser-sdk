@@ -1,6 +1,7 @@
 export * from './browserChecks'
 export * from './buildEnv'
 export * from './collectAsyncCalls'
+export * from './registerCleanupTask'
 export * from './requests'
 export * from './emulate/createNewEvent'
 export * from './emulate/location'

@@ -1,5 +1,5 @@
 import type { Duration } from '@datadog/browser-core'
-import { setTimeout, assign, ONE_MINUTE } from '@datadog/browser-core'
+import { assign } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
 import type { WebVitalTelemetryDebug } from '../startWebVitalTelemetryDebug'
@@ -7,14 +7,7 @@ import { trackFirstContentfulPaint } from './trackFirstContentfulPaint'
 import { trackFirstInputTimings } from './trackFirstInputTimings'
 import { trackNavigationTimings } from './trackNavigationTimings'
 import { trackLargestContentfulPaint } from './trackLargestContentfulPaint'
-
-/**
- * The initial view can finish quickly, before some metrics can be produced (ex: before the page load
- * event, or the first input). Also, we don't want to trigger a view update indefinitely, to avoid
- * updates on views that ended a long time ago. Keep watching for metrics after the view ends for a
- * limited amount of time.
- */
-export const KEEP_TRACKING_METRICS_AFTER_VIEW_DELAY = 5 * ONE_MINUTE
+import { trackFirstHidden } from './trackFirstHidden'
 
 export interface InitialViewMetrics {
   firstContentfulPaint?: Duration
@@ -46,12 +39,14 @@ export function trackInitialViewMetrics(
     setLoadEvent(navigationTimings.loadEvent)
     setMetrics(navigationTimings)
   })
-  const { stop: stopFCPTracking } = trackFirstContentfulPaint(lifeCycle, configuration, (firstContentfulPaint) =>
+  const firstHidden = trackFirstHidden(configuration)
+  const { stop: stopFCPTracking } = trackFirstContentfulPaint(lifeCycle, firstHidden, (firstContentfulPaint) =>
     setMetrics({ firstContentfulPaint })
   )
   const { stop: stopLCPTracking } = trackLargestContentfulPaint(
     lifeCycle,
     configuration,
+    firstHidden,
     window,
     (largestContentfulPaint, lcpElement) => {
       webVitalTelemetryDebug.addWebVitalTelemetryDebug('LCP', lcpElement, largestContentfulPaint)
@@ -64,7 +59,7 @@ export function trackInitialViewMetrics(
 
   const { stop: stopFIDTracking } = trackFirstInputTimings(
     lifeCycle,
-    configuration,
+    firstHidden,
     ({ firstInputDelay, firstInputTime, firstInputTarget }) => {
       webVitalTelemetryDebug.addWebVitalTelemetryDebug('FID', firstInputTarget, firstInputTime)
 
@@ -80,13 +75,11 @@ export function trackInitialViewMetrics(
     stopFCPTracking()
     stopLCPTracking()
     stopFIDTracking()
+    firstHidden.stop()
   }
 
   return {
     stop,
     initialViewMetrics,
-    scheduleStop: () => {
-      setTimeout(stop, KEEP_TRACKING_METRICS_AFTER_VIEW_DELAY)
-    },
   }
 }

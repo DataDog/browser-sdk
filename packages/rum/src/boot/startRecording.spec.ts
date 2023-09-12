@@ -9,7 +9,12 @@ import { createRumSessionManagerMock, setup } from '../../../rum-core/test'
 
 import { recordsPerFullSnapshot, readReplayPayload } from '../../test'
 import { setSegmentBytesLimit } from '../domain/segmentCollection'
-import { DeflateEncoderStreamId, startDeflateWorker, createDeflateEncoder } from '../domain/deflate'
+import {
+  DeflateEncoderStreamId,
+  startDeflateWorker,
+  createDeflateEncoder,
+  resetDeflateWorkerState,
+} from '../domain/deflate'
 
 import { RecordType } from '../types'
 import { resetReplayStats } from '../domain/replayStats'
@@ -42,7 +47,7 @@ describe('startRecording', () => {
     textField = document.createElement('input')
     sandbox.appendChild(textField)
 
-    const worker = startDeflateWorker(configuration, noop)!
+    const worker = startDeflateWorker(configuration, noop)
 
     setupBuilder = setup()
       .withViewContexts({
@@ -61,16 +66,22 @@ describe('startRecording', () => {
           sendOnExit: requestSendSpy,
         }
 
+        const deflateEncoder = createDeflateEncoder(configuration, worker!, DeflateEncoderStreamId.REPLAY)
         const recording = startRecording(
           lifeCycle,
           configuration,
           sessionManager,
           viewContexts,
-          createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY),
+          deflateEncoder,
           httpRequest
         )
         stopRecording = recording ? recording.stop : noop
-        return { stop: stopRecording }
+        return {
+          stop: () => {
+            stopRecording()
+            deflateEncoder.stop()
+          },
+        }
       })
   })
 
@@ -79,6 +90,7 @@ describe('startRecording', () => {
     setSegmentBytesLimit()
     setupBuilder.cleanup()
     clock?.cleanup()
+    resetDeflateWorkerState()
   })
 
   it('sends recorded segments with valid context', async () => {
