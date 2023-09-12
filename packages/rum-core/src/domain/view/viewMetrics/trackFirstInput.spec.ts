@@ -12,8 +12,8 @@ import { appendElement, appendTextNode, createPerformanceEntry, setup } from '..
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { RumConfiguration } from '../../configuration'
 import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
-import type { FirstInput } from './trackFirstInputTimings'
-import { trackFirstInput } from './trackFirstInputTimings'
+import type { FirstInput } from './trackFirstInput'
+import { trackFirstInput } from './trackFirstInput'
 import { trackFirstHidden } from './trackFirstHidden'
 
 describe('firstInputTimings', () => {
