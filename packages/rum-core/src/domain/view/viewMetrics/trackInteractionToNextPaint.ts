@@ -61,6 +61,8 @@ export function trackInteractionToNextPaint(
           newInteraction.target,
           configuration.actionNameAttribute
         )
+      } else {
+        interactionToNextPaintTargetSelector = undefined
       }
     }
   })
