@@ -9,10 +9,10 @@ import type { WebVitalTelemetryDebug } from '../startWebVitalTelemetryDebug'
 import { getSelectorFromElement } from '../../getSelectorFromElement'
 import type { FirstHidden } from './trackFirstHidden'
 
-export interface FirstInputTimings {
-  firstInputDelay: Duration
-  firstInputTime: RelativeTime
-  firstInputTargetSelector?: string
+export interface FirstInput {
+  delay: Duration
+  time: RelativeTime
+  targetSelector?: string
 }
 
 /**
@@ -23,12 +23,12 @@ export interface FirstInputTimings {
  * Documentation: https://web.dev/fid/
  * Reference implementation: https://github.com/GoogleChrome/web-vitals/blob/master/src/getFID.ts
  */
-export function trackFirstInputTimings(
+export function trackFirstInput(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
   webVitalTelemetryDebug: WebVitalTelemetryDebug,
   firstHidden: FirstHidden,
-  callback: (firstInputTimings: FirstInputTimings) => void
+  callback: (firstInput: FirstInput) => void
 ) {
   const { unsubscribe: unsubscribeLifeCycle } = lifeCycle.subscribe(
     LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED,
@@ -53,9 +53,9 @@ export function trackFirstInputTimings(
         callback({
           // Ensure firstInputDelay to be positive, see
           // https://bugs.chromium.org/p/chromium/issues/detail?id=1185815
-          firstInputDelay: firstInputDelay >= 0 ? firstInputDelay : (0 as Duration),
-          firstInputTime: firstInputEntry.startTime,
-          firstInputTargetSelector,
+          delay: firstInputDelay >= 0 ? firstInputDelay : (0 as Duration),
+          time: firstInputEntry.startTime,
+          targetSelector: firstInputTargetSelector,
         })
 
         webVitalTelemetryDebug.addWebVitalTelemetryDebug('FID', firstInputEntry.target, firstInputEntry.startTime)

@@ -53,10 +53,10 @@ describe('trackInitialViewMetrics', () => {
         loadEvent: 567 as Duration,
       },
       firstContentfulPaint: 123 as Duration,
-      firstInputTimings: {
-        firstInputDelay: 100 as Duration,
-        firstInputTime: 1000 as RelativeTime,
-        firstInputTargetSelector: undefined,
+      firstInput: {
+        delay: 100 as Duration,
+        time: 1000 as RelativeTime,
+        targetSelector: undefined,
       },
     })
   })

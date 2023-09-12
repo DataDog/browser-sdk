@@ -38,9 +38,9 @@ const VIEW: ViewEvent = {
       domInteractive: 10 as Duration,
       loadEvent: 10 as Duration,
     },
-    firstInputTimings: {
-      firstInputDelay: 12 as Duration,
-      firstInputTime: 10 as RelativeTime,
+    firstInput: {
+      delay: 12 as Duration,
+      time: 10 as RelativeTime,
     },
     firstContentfulPaint: 10 as Duration,
     largestContentfulPaint: { value: 10 as RelativeTime },
