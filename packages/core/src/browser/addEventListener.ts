@@ -86,7 +86,7 @@ export function addEventListener<Target extends EventTarget, EventName extends k
   configuration: Configuration,
   eventTarget: Target,
   eventName: EventName,
-  listener: (event: EventMapFor<Target>[EventName]) => void,
+  listener: (event: EventMapFor<Target>[EventName] & { type: EventName }) => void,
   options?: AddEventListenerOptions
 ) {
   return addEventListeners(configuration, eventTarget, [eventName], listener, options)
@@ -108,16 +108,16 @@ export function addEventListeners<Target extends EventTarget, EventName extends 
   _: Configuration,
   eventTarget: Target,
   eventNames: EventName[],
-  listener: (event: EventMapFor<Target>[EventName]) => void,
+  listener: (event: EventMapFor<Target>[EventName] & { type: EventName }) => void,
   { once, capture, passive }: AddEventListenerOptions = {}
 ) {
   const listenerWithMonitor = monitor(
     once
       ? (event: Event) => {
           stop()
-          listener(event as EventMapFor<Target>[EventName])
+          listener(event as unknown as EventMapFor<Target>[EventName] & { type: EventName })
         }
-      : (listener as (event: Event) => void)
+      : (listener as unknown as (event: Event) => void)
   )
 
   const options = passive ? { capture, passive } : capture

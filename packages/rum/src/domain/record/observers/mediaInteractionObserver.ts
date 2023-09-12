@@ -15,22 +15,27 @@ export function initMediaInteractionObserver(
   mediaInteractionCb: MediaInteractionCallback,
   defaultPrivacyLevel: DefaultPrivacyLevel
 ): ListenerHandler {
-  const handler = (event: Event) => {
-    const target = getEventTarget(event)
-    if (
-      !target ||
-      getNodePrivacyLevel(target, defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN ||
-      !hasSerializedNode(target)
-    ) {
-      return
+  return addEventListeners(
+    configuration,
+    document,
+    [DOM_EVENT.PLAY, DOM_EVENT.PAUSE],
+    (event) => {
+      const target = getEventTarget(event)
+      if (
+        !target ||
+        getNodePrivacyLevel(target, defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN ||
+        !hasSerializedNode(target)
+      ) {
+        return
+      }
+      mediaInteractionCb({
+        id: getSerializedNodeId(target),
+        type: event.type === DOM_EVENT.PLAY ? MediaInteractionType.Play : MediaInteractionType.Pause,
+      })
+    },
+    {
+      capture: true,
+      passive: true,
     }
-    mediaInteractionCb({
-      id: getSerializedNodeId(target),
-      type: event.type === DOM_EVENT.PLAY ? MediaInteractionType.Play : MediaInteractionType.Pause,
-    })
-  }
-  return addEventListeners(configuration, document, [DOM_EVENT.PLAY, DOM_EVENT.PAUSE], handler, {
-    capture: true,
-    passive: true,
-  }).stop
+  ).stop
 }
