@@ -1,14 +1,14 @@
 import type { ClocksState, Duration, Observable } from '@datadog/browser-core'
-import { assign, noop } from '@datadog/browser-core'
+import { noop } from '@datadog/browser-core'
 import type { ViewLoadingType } from '../../../rawRumEvent.types'
 import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
 import type { WebVitalTelemetryDebug } from '../startWebVitalTelemetryDebug'
-import type { ScrollMetrics } from './trackScrollMetrics'
-import { computeScrollValues, trackScrollMetrics } from './trackScrollMetrics'
-import { trackLoadingTime } from './trackLoadingTime'
 import { isLayoutShiftSupported, trackCumulativeLayoutShift } from './trackCumulativeLayoutShift'
 import { trackInteractionToNextPaint } from './trackInteractionToNextPaint'
+import { trackLoadingTime } from './trackLoadingTime'
+import type { ScrollMetrics } from './trackScrollMetrics'
+import { trackScrollMetrics } from './trackScrollMetrics'
 
 export interface CommonViewMetrics {
   loadingTime?: Duration
@@ -40,16 +40,9 @@ export function trackCommonViewMetrics(
     }
   )
 
-  const { stop: stopScrollMetricsTracking } = trackScrollMetrics(
-    configuration,
-    viewStart,
-    (newScrollMetrics) => {
-      commonViewMetrics.scroll = assign(newScrollMetrics, {
-        maxDepth: Math.min(newScrollMetrics.maxDepth, newScrollMetrics.maxDepthScrollHeight),
-      })
-    },
-    computeScrollValues
-  )
+  const { stop: stopScrollMetricsTracking } = trackScrollMetrics(configuration, viewStart, (newScrollMetrics) => {
+    commonViewMetrics.scroll = newScrollMetrics
+  })
 
   let stopCLSTracking: () => void
   let clsAttributionCollected = false
