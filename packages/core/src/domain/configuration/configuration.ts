@@ -33,6 +33,7 @@ export interface InitConfiguration {
   silentMultipleInit?: boolean | undefined
   trackResources?: boolean | undefined
   trackLongTasks?: boolean | undefined
+  storeContextsAcrossPages?: boolean | undefined
 
   // transport options
   proxy?: string | undefined
@@ -179,5 +180,6 @@ export function serializeConfiguration(initConfiguration: InitConfiguration): Pa
     track_resources: initConfiguration.trackResources,
     track_long_task: initConfiguration.trackLongTasks,
     allow_fallback_to_local_storage: !!initConfiguration.allowFallbackToLocalStorage,
+    store_contexts_across_pages: !!initConfiguration.storeContextsAcrossPages,
   }
 }

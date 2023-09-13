@@ -1,5 +1,6 @@
-import { display } from '../display'
-import { CustomerDataType, CUSTOMER_DATA_BYTES_LIMIT, warnIfCustomerDataLimitReached } from './heavyCustomerDataWarning'
+import { display } from '../../tools/display'
+import { CUSTOMER_DATA_BYTES_LIMIT, warnIfCustomerDataLimitReached } from './heavyCustomerDataWarning'
+import { CustomerDataType } from './contextConstants'
 
 describe('warnIfCustomerDataLimitReached', () => {
   let displaySpy: jasmine.Spy<typeof display.warn>
