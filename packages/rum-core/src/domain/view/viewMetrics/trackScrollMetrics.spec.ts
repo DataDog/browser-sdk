@@ -26,6 +26,7 @@ describe('createScrollValuesObserver', () => {
 
   afterEach(() => {
     subscription.unsubscribe()
+    document.body.innerHTML = ''
   })
 
   it('should produce a value when scrolling', () => {
