@@ -1,4 +1,4 @@
-import type { RelativeTime, TimeStamp } from '@datadog/browser-core'
+import type { RelativeTime, Subscription, TimeStamp } from '@datadog/browser-core'
 import { DOM_EVENT, Observable } from '@datadog/browser-core'
 import { createNewEvent } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../../../test'
@@ -11,6 +11,7 @@ import { createScrollValuesObservable, trackScrollMetrics } from './trackScrollM
 
 describe('createScrollValuesObserver', () => {
   const scrollObservable = createScrollValuesObservable({} as RumConfiguration, 0)
+  let subscription: Subscription
 
   const newScroll = () => {
     window.dispatchEvent(createNewEvent(DOM_EVENT.SCROLL))
@@ -23,16 +24,20 @@ describe('createScrollValuesObserver', () => {
     document.body.appendChild(node)
   }
 
+  afterEach(() => {
+    subscription.unsubscribe()
+  })
+
   it('should produce a value when scrolling', () => {
     newScroll()
-    scrollObservable.subscribe(({ scrollDepth }) => {
+    subscription = scrollObservable.subscribe(({ scrollDepth }) => {
       expect(scrollDepth).toBeGreaterThan(0)
     })
   })
 
   it('should produce a value when the page is resized', () => {
     increaseHeight()
-    scrollObservable.subscribe(({ scrollHeight }) => {
+    subscription = scrollObservable.subscribe(({ scrollHeight }) => {
       expect(scrollHeight).toBeGreaterThan(600)
     })
   })
