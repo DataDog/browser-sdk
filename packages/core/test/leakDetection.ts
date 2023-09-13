@@ -44,14 +44,18 @@ export function stopLeakDetection() {
 }
 
 function withLeakDetection(eventName: string, listener: EventListener) {
-  const specWhenAdded = getCurrentJasmineSpec()!.fullName
+  const specWhenAdded = getCurrentJasmineSpec()
+  if (!specWhenAdded) {
+    return listener
+  }
+
   return (event: Event) => {
-    const currentSpec = getCurrentJasmineSpec()!.fullName
-    if (specWhenAdded !== currentSpec) {
+    const currentSpec = getCurrentJasmineSpec()
+    if (!currentSpec || specWhenAdded.fullName !== currentSpec.fullName) {
       display.error(`Leaked listener
   event names: "${eventName}"
-  attached with: "${specWhenAdded}"        
-  executed with: "${currentSpec}"`)
+  attached with: "${specWhenAdded.fullName}"
+  ${currentSpec ? `executed with: "${currentSpec.fullName}"` : 'executed outside of a spec'}`)
     }
     listener(event)
   }
