@@ -20,7 +20,7 @@ describe('createScrollValuesObserver', () => {
     const node = document.createElement('div')
     node.style.height = '2000px'
     document.body.innerHTML = ''
-    document.body.append(node)
+    document.body.appendChild(node)
   }
 
   it('should produce a value when scrolling', () => {
