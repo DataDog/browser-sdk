@@ -7,7 +7,8 @@ import {
   findLast,
   isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
-import { LifeCycleEventType, type LifeCycle } from '../../lifeCycle'
+import { LifeCycleEventType } from '../../lifeCycle'
+import type { LifeCycle } from '../../lifeCycle'
 import type { RumConfiguration } from '../../configuration'
 import type { RumLargestContentfulPaintTiming } from '../../../browser/performanceCollection'
 import type { WebVitalTelemetryDebug } from '../startWebVitalTelemetryDebug'
