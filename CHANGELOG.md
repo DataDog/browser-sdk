@@ -16,6 +16,13 @@
 
 ---
 
+## v4.49.0
+
+- ✨[RUM-265] Store contexts across pages ([#2378](https://github.com/DataDog/browser-sdk/pull/2378))
+- ✨[RUM-1016] Allow to change "view.name" ([#2396](https://github.com/DataDog/browser-sdk/pull/2396))
+- ✨[RUM-1013] Early exit when no configuration provided ([#2417](https://github.com/DataDog/browser-sdk/pull/2417))
+- 🐛[RUM-89] Do not count discarded resources ([#2410](https://github.com/DataDog/browser-sdk/pull/2410))
+
 ## v4.48.2
 
 - 🐛 fix dynamic style serialization ([#2397](https://github.com/DataDog/browser-sdk/pull/2397))
