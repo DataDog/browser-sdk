@@ -4,6 +4,7 @@ import { isElementNode } from '../../../browser/htmlDomUtils'
 import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
+import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
 import type { RumFirstInputTiming } from '../../../browser/performanceCollection'
 import type { WebVitalTelemetryDebug } from '../startWebVitalTelemetryDebug'
 import { getSelectorFromElement } from '../../getSelectorFromElement'
@@ -36,7 +37,7 @@ export function trackFirstInput(
       const firstInputEntry = find(
         entries,
         (entry): entry is RumFirstInputTiming =>
-          entry.entryType === 'first-input' && entry.startTime < firstHidden.timeStamp
+          entry.entryType === RumPerformanceEntryType.FIRST_INPUT && entry.startTime < firstHidden.timeStamp
       )
       if (firstInputEntry) {
         const firstInputDelay = elapsed(firstInputEntry.startTime, firstInputEntry.processingStart)

@@ -9,7 +9,8 @@ import {
 import { isElementNode } from '../../../browser/htmlDomUtils'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
-import { supportPerformanceTimingEvent, type RumLayoutShiftTiming } from '../../../browser/performanceCollection'
+import type { RumLayoutShiftTiming } from '../../../browser/performanceCollection'
+import { supportPerformanceTimingEvent, RumPerformanceEntryType } from '../../../browser/performanceCollection'
 import { getSelectorFromElement } from '../../getSelectorFromElement'
 import type { WebVitalTelemetryDebug } from '../startWebVitalTelemetryDebug'
 import type { RumConfiguration } from '../../configuration'
@@ -49,7 +50,7 @@ export function trackCumulativeLayoutShift(
 
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
     for (const entry of entries) {
-      if (entry.entryType === 'layout-shift' && !entry.hadRecentInput) {
+      if (entry.entryType === RumPerformanceEntryType.LAYOUT_SHIFT && !entry.hadRecentInput) {
         window.update(entry)
 
         if (window.value() > maxClsValue) {
@@ -134,5 +135,5 @@ function slidingSessionWindow() {
  * Check whether `layout-shift` is supported by the browser.
  */
 export function isLayoutShiftSupported() {
-  return supportPerformanceTimingEvent('layout-shift')
+  return supportPerformanceTimingEvent(RumPerformanceEntryType.LAYOUT_SHIFT)
 }

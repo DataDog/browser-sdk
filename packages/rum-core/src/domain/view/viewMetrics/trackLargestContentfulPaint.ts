@@ -10,6 +10,7 @@ import {
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { LifeCycle } from '../../lifeCycle'
 import type { RumConfiguration } from '../../configuration'
+import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
 import type { RumLargestContentfulPaintTiming } from '../../../browser/performanceCollection'
 import type { WebVitalTelemetryDebug } from '../startWebVitalTelemetryDebug'
 import { getSelectorFromElement } from '../../getSelectorFromElement'
@@ -57,7 +58,7 @@ export function trackLargestContentfulPaint(
       const lcpEntry = findLast(
         entries,
         (entry): entry is RumLargestContentfulPaintTiming =>
-          entry.entryType === 'largest-contentful-paint' &&
+          entry.entryType === RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT &&
           entry.startTime < firstInteractionTimestamp &&
           entry.startTime < firstHidden.timeStamp &&
           entry.startTime < LCP_MAXIMUM_DELAY

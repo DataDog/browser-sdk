@@ -138,7 +138,7 @@ function supportPerformanceObject() {
   return window.performance !== undefined && 'getEntries' in performance
 }
 
-export function supportPerformanceTimingEvent(entryType: string) {
+export function supportPerformanceTimingEvent(entryType: RumPerformanceEntryType) {
   return (
     window.PerformanceObserver &&
     PerformanceObserver.supportedEntryTypes !== undefined &&
@@ -205,12 +205,12 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
       })
     }
   }
-  if (!supportPerformanceTimingEvent('navigation')) {
+  if (!supportPerformanceTimingEvent(RumPerformanceEntryType.NAVIGATION)) {
     retrieveNavigationTiming(configuration, (timing) => {
       handleRumPerformanceEntries(lifeCycle, configuration, [timing])
     })
   }
-  if (!supportPerformanceTimingEvent('first-input')) {
+  if (!supportPerformanceTimingEvent(RumPerformanceEntryType.FIRST_INPUT)) {
     retrieveFirstInputTiming(configuration, (timing) => {
       handleRumPerformanceEntries(lifeCycle, configuration, [timing])
     })
