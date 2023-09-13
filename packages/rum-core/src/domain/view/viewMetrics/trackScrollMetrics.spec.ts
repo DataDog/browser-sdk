@@ -1,6 +1,7 @@
 import type { RelativeTime, Subscription, TimeStamp } from '@datadog/browser-core'
 import { DOM_EVENT, Observable } from '@datadog/browser-core'
-import { createNewEvent } from '@datadog/browser-core/test'
+import type { Clock } from '@datadog/browser-core/test'
+import { createNewEvent, mockClock } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../../../test'
 import { setup } from '../../../../test'
 import type { RumConfiguration } from '../../configuration'
@@ -49,6 +50,7 @@ describe('trackScrollMetrics', () => {
   let viewTest: ViewTest
   let stopTrackScrollMetrics: () => void
   let callbackSpy: jasmine.Spy
+  let clock: Clock
 
   const scrollObservable = new Observable<ScrollValues>()
 
@@ -66,54 +68,49 @@ describe('trackScrollMetrics', () => {
       callbackSpy,
       scrollObservable
     ).stop
+    clock = mockClock()
   })
 
   afterEach(() => {
     stopTrackScrollMetrics()
     document.body.innerHTML = ''
     setupBuilder.cleanup()
+    clock.cleanup()
   })
 
   it('should update scroll height and scroll depth', () => {
+    clock.tick(100)
     scrollObservable.notify({ scrollDepth: 700, scrollHeight: 2000, scrollTop: 100 })
     expect(callbackSpy).toHaveBeenCalledOnceWith({
       maxDepth: 700,
       maxDepthScrollHeight: 2000,
-      maxDepthTime: jasmine.any(Number),
+      maxDepthTime: 100,
       maxDepthScrollTop: 100,
     })
   })
-  it('should update scroll height only if it has increased', () => {
+  it('should update time and scroll height only if it has increased', () => {
+    clock.tick(100)
     scrollObservable.notify({ scrollDepth: 700, scrollHeight: 2000, scrollTop: 100 })
+    clock.tick(100)
     scrollObservable.notify({ scrollDepth: 700, scrollHeight: 1900, scrollTop: 100 })
     expect(callbackSpy).toHaveBeenCalledOnceWith({
       maxDepth: 700,
       maxDepthScrollHeight: 2000,
-      maxDepthTime: jasmine.any(Number),
-      maxDepthScrollTop: 100,
-    })
-    expect(callbackSpy).not.toHaveBeenCalledOnceWith({
-      maxDepth: 700,
-      maxDepthScrollHeight: 1900,
-      maxDepthTime: jasmine.any(Number),
+      maxDepthTime: 100,
       maxDepthScrollTop: 100,
     })
   })
 
   it('should update max depth only if it has increased', () => {
+    clock.tick(100)
     scrollObservable.notify({ scrollDepth: 700, scrollHeight: 2000, scrollTop: 100 })
+    clock.tick(100)
     scrollObservable.notify({ scrollDepth: 600, scrollHeight: 2000, scrollTop: 0 })
     expect(callbackSpy).toHaveBeenCalledOnceWith({
       maxDepth: 700,
       maxDepthScrollHeight: 2000,
-      maxDepthTime: jasmine.any(Number),
+      maxDepthTime: 100,
       maxDepthScrollTop: 100,
-    })
-    expect(callbackSpy).not.toHaveBeenCalledOnceWith({
-      maxDepth: 600,
-      maxDepthScrollHeight: 2000,
-      maxDepthTime: jasmine.any(Number),
-      maxDepthScrollTop: 0,
     })
   })
 })
