@@ -13,6 +13,8 @@ import {
   checkUser,
   sanitizeUser,
   sanitize,
+  createStoredContextManager,
+  combine,
 } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
@@ -33,11 +35,13 @@ export type StartLogs = typeof startLogs
 
 type StartLogsResult = ReturnType<typeof startLogs>
 
+const LOGS_STORAGE_KEY = 'logs'
+
 export function makeLogsPublicApi(startLogsImpl: StartLogs) {
   let isAlreadyInitialized = false
 
-  const globalContextManager = createContextManager(CustomerDataType.GlobalContext)
-  const userContextManager = createContextManager(CustomerDataType.User)
+  let globalContextManager = createContextManager(CustomerDataType.GlobalContext)
+  let userContextManager = createContextManager(CustomerDataType.User)
 
   const customLoggers: { [name: string]: Logger | undefined } = {}
   let getInternalContextStrategy: StartLogsResult['getInternalContext'] = () => undefined
@@ -91,6 +95,20 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
         return
       }
 
+      if (initConfiguration.storeContextsAcrossPages) {
+        const beforeInitGlobalContext = globalContextManager.getContext()
+        globalContextManager = createStoredContextManager(
+          configuration,
+          LOGS_STORAGE_KEY,
+          CustomerDataType.GlobalContext
+        )
+        globalContextManager.setContext(combine(globalContextManager.getContext(), beforeInitGlobalContext))
+
+        const beforeInitUserContext = userContextManager.getContext()
+        userContextManager = createStoredContextManager(configuration, LOGS_STORAGE_KEY, CustomerDataType.User)
+        userContextManager.setContext(combine(userContextManager.getContext(), beforeInitUserContext))
+      }
+
       ;({ handleLog: handleLogStrategy, getInternalContext: getInternalContextStrategy } = startLogsImpl(
         initConfiguration,
         configuration,
@@ -104,22 +122,22 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
     }),
 
     /** @deprecated: use getGlobalContext instead */
-    getLoggerGlobalContext: monitor(globalContextManager.get),
-    getGlobalContext: monitor(globalContextManager.getContext),
+    getLoggerGlobalContext: monitor(() => globalContextManager.get()),
+    getGlobalContext: monitor(() => globalContextManager.getContext()),
 
     /** @deprecated: use setGlobalContext instead */
-    setLoggerGlobalContext: monitor(globalContextManager.set),
-    setGlobalContext: monitor(globalContextManager.setContext),
+    setLoggerGlobalContext: monitor((context) => globalContextManager.set(context)),
+    setGlobalContext: monitor((context) => globalContextManager.setContext(context)),
 
     /** @deprecated: use setGlobalContextProperty instead */
-    addLoggerGlobalContext: monitor(globalContextManager.add),
-    setGlobalContextProperty: monitor(globalContextManager.setContextProperty),
+    addLoggerGlobalContext: monitor((key, value) => globalContextManager.add(key, value)),
+    setGlobalContextProperty: monitor((key, value) => globalContextManager.setContextProperty(key, value)),
 
     /** @deprecated: use removeGlobalContextProperty instead */
-    removeLoggerGlobalContext: monitor(globalContextManager.remove),
-    removeGlobalContextProperty: monitor(globalContextManager.removeContextProperty),
+    removeLoggerGlobalContext: monitor((key) => globalContextManager.remove(key)),
+    removeGlobalContextProperty: monitor((key) => globalContextManager.removeContextProperty(key)),
 
-    clearGlobalContext: monitor(globalContextManager.clearContext),
+    clearGlobalContext: monitor(() => globalContextManager.clearContext()),
 
     createLogger: monitor((name: string, conf: LoggerConfiguration = {}) => {
       customLoggers[name] = new Logger(
@@ -145,16 +163,16 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
       }
     }),
 
-    getUser: monitor(userContextManager.getContext),
+    getUser: monitor(() => userContextManager.getContext()),
 
     setUserProperty: monitor((key, property) => {
       const sanitizedProperty = sanitizeUser({ [key]: property })[key]
       userContextManager.setContextProperty(key, sanitizedProperty)
     }),
 
-    removeUserProperty: monitor(userContextManager.removeContextProperty),
+    removeUserProperty: monitor((key) => userContextManager.removeContextProperty(key)),
 
-    clearUser: monitor(userContextManager.clearContext),
+    clearUser: monitor(() => userContextManager.clearContext()),
   })
 
   function overrideInitConfigurationForBridge<C extends InitConfiguration>(initConfiguration: C): C {

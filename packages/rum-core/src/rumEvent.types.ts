@@ -501,6 +501,28 @@ export type RumResourceEvent = CommonProperties &
           | 'video'
         [k: string]: unknown
       }
+      /**
+       * GraphQL requests parameters
+       */
+      readonly graphql?: {
+        /**
+         * Type of the GraphQL operation
+         */
+        readonly operationType: 'query' | 'mutation' | 'subscription'
+        /**
+         * Name of the GraphQL operation
+         */
+        readonly operationName?: string
+        /**
+         * Content of the GraphQL operation
+         */
+        payload?: string
+        /**
+         * String representation of the operation variables
+         */
+        variables?: string
+        [k: string]: unknown
+      }
       [k: string]: unknown
     }
     /**
@@ -893,6 +915,10 @@ export interface CommonProperties {
    * The version for this application
    */
   readonly version?: string
+  /**
+   * The build version for this application
+   */
+  readonly build_version?: string
   /**
    * Session properties
    */

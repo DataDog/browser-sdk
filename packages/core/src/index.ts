@@ -92,12 +92,10 @@ export * from './tools/timer'
 export { initConsoleObservable, resetConsoleObservable, ConsoleLog } from './domain/console/consoleObservable'
 export { BoundedBuffer } from './tools/boundedBuffer'
 export { catchUserErrors } from './tools/catchUserErrors'
-export { createContextManager, ContextManager } from './tools/serialisation/contextManager'
-export {
-  warnIfCustomerDataLimitReached,
-  CustomerDataType,
-  CUSTOMER_DATA_BYTES_LIMIT,
-} from './tools/serialisation/heavyCustomerDataWarning'
+export { createContextManager, ContextManager } from './domain/context/contextManager'
+export { createStoredContextManager, removeStorageListeners } from './domain/context/storedContextManager'
+export { warnIfCustomerDataLimitReached, CUSTOMER_DATA_BYTES_LIMIT } from './domain/context/heavyCustomerDataWarning'
+export { CustomerDataType } from './domain/context/contextConstants'
 export { ValueHistory, ValueHistoryEntry, CLEAR_OLD_VALUES_INTERVAL } from './tools/valueHistory'
 export { readBytesFromStream } from './tools/readBytesFromStream'
 export { STORAGE_POLL_DELAY } from './domain/session/sessionStore'
