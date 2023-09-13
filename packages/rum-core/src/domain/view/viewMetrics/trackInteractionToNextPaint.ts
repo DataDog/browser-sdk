@@ -1,6 +1,6 @@
 import { noop, isExperimentalFeatureEnabled, ExperimentalFeature } from '@datadog/browser-core'
 import type { Duration } from '@datadog/browser-core'
-import { supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
+import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
 import type { RumFirstInputTiming, RumPerformanceEventTiming } from '../../../browser/performanceCollection'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { LifeCycle } from '../../lifeCycle'
@@ -45,7 +45,11 @@ export function trackInteractionToNextPaint(
 
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
     for (const entry of entries) {
-      if ((entry.entryType === 'event' || entry.entryType === 'first-input') && entry.interactionId) {
+      if (
+        (entry.entryType === RumPerformanceEntryType.EVENT ||
+          entry.entryType === RumPerformanceEntryType.FIRST_INPUT) &&
+        entry.interactionId
+      ) {
         longestInteractions.process(entry)
       }
     }
