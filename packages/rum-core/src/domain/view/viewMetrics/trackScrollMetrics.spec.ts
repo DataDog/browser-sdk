@@ -78,9 +78,13 @@ describe('trackScrollMetrics', () => {
     clock.cleanup()
   })
 
-  it('should update scroll height and scroll depth', () => {
+  const updateScrollValues = (scrollValues: ScrollValues) => {
     clock.tick(100)
-    scrollObservable.notify({ scrollDepth: 700, scrollHeight: 2000, scrollTop: 100 })
+    scrollObservable.notify(scrollValues)
+  }
+
+  it('should update scroll height and scroll depth', () => {
+    updateScrollValues({ scrollDepth: 700, scrollHeight: 2000, scrollTop: 100 })
     expect(callbackSpy).toHaveBeenCalledOnceWith({
       maxDepth: 700,
       maxDepthScrollHeight: 2000,
@@ -89,10 +93,8 @@ describe('trackScrollMetrics', () => {
     })
   })
   it('should update time and scroll height only if it has increased', () => {
-    clock.tick(100)
-    scrollObservable.notify({ scrollDepth: 700, scrollHeight: 2000, scrollTop: 100 })
-    clock.tick(100)
-    scrollObservable.notify({ scrollDepth: 700, scrollHeight: 1900, scrollTop: 100 })
+    updateScrollValues({ scrollDepth: 700, scrollHeight: 2000, scrollTop: 100 })
+    updateScrollValues({ scrollDepth: 700, scrollHeight: 1900, scrollTop: 100 })
     expect(callbackSpy).toHaveBeenCalledOnceWith({
       maxDepth: 700,
       maxDepthScrollHeight: 2000,
@@ -102,10 +104,8 @@ describe('trackScrollMetrics', () => {
   })
 
   it('should update max depth only if it has increased', () => {
-    clock.tick(100)
-    scrollObservable.notify({ scrollDepth: 700, scrollHeight: 2000, scrollTop: 100 })
-    clock.tick(100)
-    scrollObservable.notify({ scrollDepth: 600, scrollHeight: 2000, scrollTop: 0 })
+    updateScrollValues({ scrollDepth: 700, scrollHeight: 2000, scrollTop: 100 })
+    updateScrollValues({ scrollDepth: 600, scrollHeight: 2000, scrollTop: 0 })
     expect(callbackSpy).toHaveBeenCalledOnceWith({
       maxDepth: 700,
       maxDepthScrollHeight: 2000,
