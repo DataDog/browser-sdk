@@ -18,6 +18,8 @@ import {
   checkUser,
   sanitizeUser,
   sanitize,
+  createStoredContextManager,
+  combine,
 } from '@datadog/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewContexts } from '../domain/contexts/viewContexts'
@@ -26,7 +28,7 @@ import type { ReplayStats } from '../rawRumEvent.types'
 import { ActionType } from '../rawRumEvent.types'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import { validateAndBuildRumConfiguration } from '../domain/configuration'
-import type { ViewOptions } from '../domain/rumEventsCollection/view/trackViews'
+import type { ViewOptions } from '../domain/view/trackViews'
 import { buildCommonContext } from '../domain/contexts/commonContext'
 import type { startRum } from './startRum'
 
@@ -59,6 +61,8 @@ interface RumPublicApiOptions {
   ignoreInitIfSyntheticsWillInjectRum?: boolean
 }
 
+const RUM_STORAGE_KEY = 'rum'
+
 export function makeRumPublicApi(
   startRumImpl: StartRum,
   recorderApi: RecorderApi,
@@ -66,8 +70,8 @@ export function makeRumPublicApi(
 ) {
   let isAlreadyInitialized = false
 
-  const globalContextManager = createContextManager(CustomerDataType.GlobalContext)
-  const userContextManager = createContextManager(CustomerDataType.User)
+  let globalContextManager = createContextManager(CustomerDataType.GlobalContext)
+  let userContextManager = createContextManager(CustomerDataType.User)
 
   let getInternalContextStrategy: StartRumResult['getInternalContext'] = () => undefined
   let getInitConfigurationStrategy = (): InitConfiguration | undefined => undefined
@@ -107,6 +111,10 @@ export function makeRumPublicApi(
   }
 
   function initRum(initConfiguration: RumInitConfiguration) {
+    if (!initConfiguration) {
+      display.error('Missing configuration')
+      return
+    }
     // This function should be available, regardless of initialization success.
     getInitConfigurationStrategy = () => deepClone<InitConfiguration>(initConfiguration)
 
@@ -160,6 +168,16 @@ export function makeRumPublicApi(
     configuration: RumConfiguration,
     initialViewOptions?: ViewOptions
   ) {
+    if (initConfiguration.storeContextsAcrossPages) {
+      const beforeInitGlobalContext = globalContextManager.getContext()
+      globalContextManager = createStoredContextManager(configuration, RUM_STORAGE_KEY, CustomerDataType.GlobalContext)
+      globalContextManager.setContext(combine(globalContextManager.getContext(), beforeInitGlobalContext))
+
+      const beforeInitUserContext = userContextManager.getContext()
+      userContextManager = createStoredContextManager(configuration, RUM_STORAGE_KEY, CustomerDataType.User)
+      userContextManager.setContext(combine(userContextManager.getContext(), beforeInitUserContext))
+    }
+
     const startRumResults = startRumImpl(
       initConfiguration,
       configuration,
@@ -202,15 +220,15 @@ export function makeRumPublicApi(
   const rumPublicApi = makePublicApi({
     init: monitor(initRum),
 
-    setGlobalContextProperty: monitor(globalContextManager.setContextProperty),
+    setGlobalContextProperty: monitor((key, value) => globalContextManager.setContextProperty(key, value)),
 
-    removeGlobalContextProperty: monitor(globalContextManager.removeContextProperty),
+    removeGlobalContextProperty: monitor((key) => globalContextManager.removeContextProperty(key)),
 
-    getGlobalContext: monitor(globalContextManager.getContext),
+    getGlobalContext: monitor(() => globalContextManager.getContext()),
 
-    setGlobalContext: monitor(globalContextManager.setContext),
+    setGlobalContext: monitor((context) => globalContextManager.setContext(context)),
 
-    clearGlobalContext: monitor(globalContextManager.clearContext),
+    clearGlobalContext: monitor(() => globalContextManager.clearContext()),
 
     getInternalContext: monitor((startTime?: number) => getInternalContextStrategy(startTime)),
     getInitConfiguration: monitor(() => getInitConfigurationStrategy()),
@@ -246,16 +264,16 @@ export function makeRumPublicApi(
       }
     }),
 
-    getUser: monitor(userContextManager.getContext),
+    getUser: monitor(() => userContextManager.getContext()),
 
     setUserProperty: monitor((key, property) => {
       const sanitizedProperty = sanitizeUser({ [key]: property })[key]
       userContextManager.setContextProperty(key, sanitizedProperty)
     }),
 
-    removeUserProperty: monitor(userContextManager.removeContextProperty),
+    removeUserProperty: monitor((key) => userContextManager.removeContextProperty(key)),
 
-    clearUser: monitor(userContextManager.clearContext),
+    clearUser: monitor(() => userContextManager.clearContext()),
 
     startView,
 

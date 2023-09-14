@@ -4,19 +4,21 @@ import { objectValues } from '../tools/utils/polyfills'
 import { isPageExitReason } from '../browser/pageExitObservable'
 import { computeBytesCount } from '../tools/utils/byteUtils'
 import { jsonStringify } from '../tools/serialisation/jsonStringify'
+import type { Subscription } from '../tools/observable'
 import type { HttpRequest } from './httpRequest'
 import type { FlushController, FlushEvent } from './flushController'
 
 export class Batch {
   private pushOnlyBuffer: string[] = []
   private upsertBuffer: { [key: string]: string } = {}
+  private flushSubscription: Subscription
 
   constructor(
     private request: HttpRequest,
     public flushController: FlushController,
     private messageBytesLimit: number
   ) {
-    this.flushController.flushObservable.subscribe((event) => this.flush(event))
+    this.flushSubscription = this.flushController.flushObservable.subscribe((event) => this.flush(event))
   }
 
   add(message: Context) {
@@ -25,6 +27,10 @@ export class Batch {
 
   upsert(message: Context, key: string) {
     this.addOrUpdate(message, key)
+  }
+
+  stop() {
+    this.flushSubscription.unsubscribe()
   }
 
   private flush(event: FlushEvent) {

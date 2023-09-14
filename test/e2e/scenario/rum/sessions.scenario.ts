@@ -2,16 +2,15 @@ import { RecordType } from '@datadog/browser-rum/src/types'
 import { expireSession, findSessionCookie, renewSession } from '../../lib/helpers/session'
 import { bundleSetup, createTest, flushEvents, waitForRequests } from '../../lib/framework'
 import { browserExecute, browserExecuteAsync, sendXhr } from '../../lib/helpers/browser'
-import { getLastSegment } from '../../lib/helpers/replay'
 
 describe('rum sessions', () => {
   describe('session renewal', () => {
     createTest('create a new View when the session is renewed')
       .withRum()
-      .run(async ({ serverEvents }) => {
+      .run(async ({ intakeRegistry }) => {
         await renewSession()
         await flushEvents()
-        const viewEvents = serverEvents.rumViews
+        const viewEvents = intakeRegistry.rumViewEvents
         const firstViewEvent = viewEvents[0]
         const lastViewEvent = viewEvents[viewEvents.length - 1]
         expect(firstViewEvent.session.id).not.toBe(lastViewEvent.session.id)
@@ -24,14 +23,14 @@ describe('rum sessions', () => {
     createTest('a single fullSnapshot is taken when the session is renewed')
       .withRum()
       .withSetup(bundleSetup)
-      .run(async ({ serverEvents }) => {
+      .run(async ({ intakeRegistry }) => {
         await renewSession()
 
         await flushEvents()
 
-        expect(serverEvents.sessionReplay.length).toBe(2)
+        expect(intakeRegistry.replaySegments.length).toBe(2)
 
-        const segment = getLastSegment(serverEvents)
+        const segment = intakeRegistry.replaySegments.at(-1)!
         expect(segment.creation_reason).toBe('init')
         expect(segment.records[0].type).toBe(RecordType.Meta)
         expect(segment.records[1].type).toBe(RecordType.Focus)
@@ -44,18 +43,18 @@ describe('rum sessions', () => {
     createTest("don't send events when session is expired")
       // prevent recording start to generate late events
       .withRum({ startSessionReplayRecordingManually: true })
-      .run(async ({ serverEvents }) => {
+      .run(async ({ intakeRegistry }) => {
         await expireSession()
-        serverEvents.empty()
+        intakeRegistry.empty()
         await sendXhr('/ok')
-        expect(serverEvents.count).toBe(0)
+        expect(intakeRegistry.isEmpty).toBe(true)
       })
   })
 
   describe('manual session expiration', () => {
     createTest('calling stopSession() stops the session')
       .withRum()
-      .run(async ({ serverEvents }) => {
+      .run(async ({ intakeRegistry }) => {
         await browserExecuteAsync<void>((done) => {
           window.DD_RUM!.stopSession()
           setTimeout(() => {
@@ -71,12 +70,12 @@ describe('rum sessions', () => {
         await flushEvents()
 
         expect(await findSessionCookie()).toBeUndefined()
-        expect(serverEvents.rumActions.length).toBe(0)
+        expect(intakeRegistry.rumActionEvents.length).toBe(0)
       })
 
     createTest('after calling stopSession(), a user interaction starts a new session')
       .withRum()
-      .run(async ({ serverEvents }) => {
+      .run(async ({ intakeRegistry }) => {
         await browserExecute(() => {
           window.DD_RUM!.stopSession()
         })
@@ -92,16 +91,16 @@ describe('rum sessions', () => {
         await flushEvents()
 
         expect(await findSessionCookie()).not.toBeUndefined()
-        expect(serverEvents.rumActions.length).toBe(1)
+        expect(intakeRegistry.rumActionEvents.length).toBe(1)
       })
 
     createTest('flush events when the session expires')
       .withRum()
       .withLogs()
-      .run(async ({ serverEvents }) => {
-        expect(serverEvents.rumViews.length).toBe(0)
-        expect(serverEvents.logs.length).toBe(0)
-        expect(serverEvents.sessionReplay.length).toBe(0)
+      .run(async ({ intakeRegistry }) => {
+        expect(intakeRegistry.rumViewEvents.length).toBe(0)
+        expect(intakeRegistry.logsEvents.length).toBe(0)
+        expect(intakeRegistry.replaySegments.length).toBe(0)
 
         await browserExecute(() => {
           window.DD_LOGS!.logger.log('foo')
@@ -110,10 +109,10 @@ describe('rum sessions', () => {
 
         await waitForRequests()
 
-        expect(serverEvents.rumViews.length).toBe(1)
-        expect(serverEvents.rumViews[0].session.is_active).toBe(false)
-        expect(serverEvents.logs.length).toBe(1)
-        expect(serverEvents.sessionReplay.length).toBe(1)
+        expect(intakeRegistry.rumViewEvents.length).toBe(1)
+        expect(intakeRegistry.rumViewEvents[0].session.is_active).toBe(false)
+        expect(intakeRegistry.logsEvents.length).toBe(1)
+        expect(intakeRegistry.replaySegments.length).toBe(1)
       })
   })
 })

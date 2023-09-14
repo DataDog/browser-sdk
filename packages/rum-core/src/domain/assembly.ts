@@ -28,8 +28,8 @@ import type { ViewContexts } from './contexts/viewContexts'
 import type { RumSessionManager } from './rumSessionManager'
 import type { UrlContexts } from './contexts/urlContexts'
 import type { RumConfiguration } from './configuration'
-import type { ActionContexts } from './rumEventsCollection/action/actionCollection'
-import { getDisplayContext } from './contexts/displayContext'
+import type { ActionContexts } from './action/actionCollection'
+import type { DisplayContext } from './contexts/displayContext'
 import type { CommonContext } from './contexts/commonContext'
 import type { ModifiableFieldPaths } from './limitModification'
 import { limitModification } from './limitModification'
@@ -44,6 +44,7 @@ const enum SessionType {
 }
 
 const VIEW_MODIFIABLE_FIELD_PATHS: ModifiableFieldPaths = {
+  'view.name': 'string',
   'view.url': 'string',
   'view.referrer': 'string',
 }
@@ -63,6 +64,7 @@ export function startRumAssembly(
   viewContexts: ViewContexts,
   urlContexts: UrlContexts,
   actionContexts: ActionContexts,
+  displayContext: DisplayContext,
   buildCommonContext: () => CommonContext,
   reportError: (error: RawError) => void
 ) {
@@ -150,7 +152,7 @@ export function startRumAssembly(
           action: needToAssembleWithAction(rawRumEvent) && actionId ? { id: actionId } : undefined,
           synthetics: syntheticsContext,
           ci_test: ciTestContext,
-          display: getDisplayContext(configuration),
+          display: displayContext.get(),
         }
 
         const serverRumEvent = combine(rumContext as RumContext & Context, rawRumEvent) as RumEvent & Context

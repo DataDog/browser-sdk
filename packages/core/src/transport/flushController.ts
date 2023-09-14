@@ -33,10 +33,13 @@ export function createFlushController({
   pageExitObservable,
   sessionExpireObservable,
 }: FlushControllerOptions) {
-  const flushObservable = new Observable<FlushEvent>()
+  const pageExitSubscription = pageExitObservable.subscribe((event) => flush(event.reason))
+  const sessionExpireSubscription = sessionExpireObservable.subscribe(() => flush('session_expire'))
 
-  pageExitObservable.subscribe((event) => flush(event.reason))
-  sessionExpireObservable.subscribe(() => flush('session_expire'))
+  const flushObservable = new Observable<FlushEvent>(() => () => {
+    pageExitSubscription.unsubscribe()
+    sessionExpireSubscription.unsubscribe()
+  })
 
   let currentBytesCount = 0
   let currentMessagesCount = 0

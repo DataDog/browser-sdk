@@ -10,5 +10,10 @@ export const enum StatusType {
   error = 'error',
 }
 
+export interface RuntimeEnvInfo {
+  is_local_file: boolean
+  is_worker: boolean
+}
+
 export type RawTelemetryEvent = TelemetryEvent['telemetry']
 export type RawTelemetryConfiguration = TelemetryConfigurationEvent['telemetry']['configuration']

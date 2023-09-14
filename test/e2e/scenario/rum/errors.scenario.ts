@@ -23,13 +23,13 @@ describe('rum errors', () => {
   createTest('send console.error errors')
     .withRum()
     .withBody(createBody('console.error("oh snap")'))
-    .run(async ({ serverEvents, baseUrl }) => {
+    .run(async ({ intakeRegistry, baseUrl }) => {
       const button = await $('button')
       await button.click()
 
       await flushEvents()
-      expect(serverEvents.rumErrors.length).toBe(1)
-      expectError(serverEvents.rumErrors[0].error, {
+      expect(intakeRegistry.rumErrorEvents.length).toBe(1)
+      expectError(intakeRegistry.rumErrorEvents[0].error, {
         message: 'oh snap',
         source: 'console',
         handlingStack: ['Error: ', `handler @ ${baseUrl}/:`],
@@ -43,13 +43,13 @@ describe('rum errors', () => {
   createTest('pass Error instance to console.error')
     .withRum()
     .withBody(createBody('console.error("Foo:", foo())'))
-    .run(async ({ serverEvents, baseUrl }) => {
+    .run(async ({ intakeRegistry, baseUrl }) => {
       const button = await $('button')
       await button.click()
 
       await flushEvents()
-      expect(serverEvents.rumErrors.length).toBe(1)
-      expectError(serverEvents.rumErrors[0].error, {
+      expect(intakeRegistry.rumErrorEvents.length).toBe(1)
+      expectError(intakeRegistry.rumErrorEvents[0].error, {
         message: 'Foo: Error: oh snap',
         source: 'console',
         stack: ['Error: oh snap', `at foo @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],
@@ -64,13 +64,13 @@ describe('rum errors', () => {
   createTest('send uncaught exceptions')
     .withRum()
     .withBody(createBody('throw foo()'))
-    .run(async ({ serverEvents, baseUrl }) => {
+    .run(async ({ intakeRegistry, baseUrl }) => {
       const button = await $('button')
       await button.click()
 
       await flushEvents()
-      expect(serverEvents.rumErrors.length).toBe(1)
-      expectError(serverEvents.rumErrors[0].error, {
+      expect(intakeRegistry.rumErrorEvents.length).toBe(1)
+      expectError(intakeRegistry.rumErrorEvents[0].error, {
         message: 'oh snap',
         source: 'source',
         stack: ['Error: oh snap', `at foo @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],
@@ -84,13 +84,13 @@ describe('rum errors', () => {
   createTest('send unhandled rejections')
     .withRum()
     .withBody(createBody('Promise.reject(foo())'))
-    .run(async ({ serverEvents, baseUrl }) => {
+    .run(async ({ intakeRegistry, baseUrl }) => {
       const button = await $('button')
       await button.click()
 
       await flushEvents()
-      expect(serverEvents.rumErrors.length).toBe(1)
-      expectError(serverEvents.rumErrors[0].error, {
+      expect(intakeRegistry.rumErrorEvents.length).toBe(1)
+      expectError(intakeRegistry.rumErrorEvents[0].error, {
         message: 'oh snap',
         source: 'source',
         stack: ['Error: oh snap', `at foo @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],
@@ -104,13 +104,13 @@ describe('rum errors', () => {
   createTest('send custom errors')
     .withRum()
     .withBody(createBody('DD_RUM.addError(foo())'))
-    .run(async ({ serverEvents, baseUrl }) => {
+    .run(async ({ intakeRegistry, baseUrl }) => {
       const button = await $('button')
       await button.click()
 
       await flushEvents()
-      expect(serverEvents.rumErrors.length).toBe(1)
-      expectError(serverEvents.rumErrors[0].error, {
+      expect(intakeRegistry.rumErrorEvents.length).toBe(1)
+      expectError(intakeRegistry.rumErrorEvents[0].error, {
         message: 'oh snap',
         source: 'custom',
         stack: ['Error: oh snap', `at foo @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],

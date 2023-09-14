@@ -1102,7 +1102,7 @@ export interface CommonProperties {
       /**
        * The percentage of sessions with RUM & Session Replay pricing tracked
        */
-      readonly session_replay_sample_rate: number
+      readonly session_replay_sample_rate?: number
       [k: string]: unknown
     }
     /**

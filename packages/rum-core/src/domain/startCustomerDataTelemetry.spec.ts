@@ -97,17 +97,19 @@ describe('customerDataTelemetry', () => {
     generateBatch({ eventNumber: 1, contextBytesCount: 1, batchBytesCount: 1 })
     clock.tick(MEASURES_PERIOD_DURATION)
 
-    expect(telemetryEvents[0].telemetry).toEqual({
-      type: 'log',
-      status: 'debug',
-      message: 'Customer data measures',
-      batchCount: 2,
-      batchBytesCount: { min: 1, max: 10, sum: 11 },
-      batchMessagesCount: { min: 1, max: 10, sum: 11 },
-      globalContextBytes: { min: 1, max: 10, sum: 101 },
-      userContextBytes: { min: 1, max: 10, sum: 101 },
-      featureFlagBytes: { min: 1, max: 10, sum: 101 },
-    })
+    expect(telemetryEvents[0].telemetry).toEqual(
+      jasmine.objectContaining({
+        type: 'log',
+        status: 'debug',
+        message: 'Customer data measures',
+        batchCount: 2,
+        batchBytesCount: { min: 1, max: 10, sum: 11 },
+        batchMessagesCount: { min: 1, max: 10, sum: 11 },
+        globalContextBytes: { min: 1, max: 10, sum: 101 },
+        userContextBytes: { min: 1, max: 10, sum: 101 },
+        featureFlagBytes: { min: 1, max: 10, sum: 101 },
+      })
+    )
   })
 
   it('should collect empty contexts telemetry', () => {

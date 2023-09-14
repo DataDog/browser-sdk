@@ -1,23 +1,23 @@
-import type { EventRegistry } from '../../lib/framework'
+import type { IntakeRegistry } from '../../lib/framework'
 import { flushEvents, createTest } from '../../lib/framework'
 import { browserExecuteAsync, sendXhr } from '../../lib/helpers/browser'
 
 describe('tracing', () => {
   createTest('trace xhr')
     .withRum({ service: 'service', allowedTracingUrls: ['LOCATION_ORIGIN'] })
-    .run(async ({ serverEvents }) => {
+    .run(async ({ intakeRegistry }) => {
       const rawHeaders = await sendXhr('/headers', [
         ['x-foo', 'bar'],
         ['x-foo', 'baz'],
       ])
       checkRequestHeaders(rawHeaders)
       await flushEvents()
-      checkTraceAssociatedToRumEvent(serverEvents)
+      checkTraceAssociatedToRumEvent(intakeRegistry)
     })
 
   createTest('trace fetch')
     .withRum({ service: 'service', allowedTracingUrls: ['LOCATION_ORIGIN'] })
-    .run(async ({ serverEvents }) => {
+    .run(async ({ intakeRegistry }) => {
       const rawHeaders = await browserExecuteAsync<string | Error>((done) => {
         window
           .fetch('/headers', {
@@ -35,12 +35,12 @@ describe('tracing', () => {
       }
       checkRequestHeaders(rawHeaders)
       await flushEvents()
-      checkTraceAssociatedToRumEvent(serverEvents)
+      checkTraceAssociatedToRumEvent(intakeRegistry)
     })
 
   createTest('trace fetch with Request argument')
     .withRum({ service: 'service', allowedTracingUrls: ['LOCATION_ORIGIN'] })
-    .run(async ({ serverEvents }) => {
+    .run(async ({ intakeRegistry }) => {
       const rawHeaders = await browserExecuteAsync<string | Error>((done) => {
         window
           .fetch(new Request('/headers', { headers: { 'x-foo': 'bar, baz' } }))
@@ -53,7 +53,7 @@ describe('tracing', () => {
       }
       checkRequestHeaders(rawHeaders)
       await flushEvents()
-      checkTraceAssociatedToRumEvent(serverEvents)
+      checkTraceAssociatedToRumEvent(intakeRegistry)
     })
 
   function checkRequestHeaders(rawHeaders: string) {
@@ -63,8 +63,8 @@ describe('tracing', () => {
     expect(headers['x-foo']).toBe('bar, baz')
   }
 
-  function checkTraceAssociatedToRumEvent(events: EventRegistry) {
-    const requests = events.rumResources.filter(
+  function checkTraceAssociatedToRumEvent(intakeRegistry: IntakeRegistry) {
+    const requests = intakeRegistry.rumResourceEvents.filter(
       (event) => event.resource.type === 'xhr' || event.resource.type === 'fetch'
     )
     expect(requests.length).toBe(1)

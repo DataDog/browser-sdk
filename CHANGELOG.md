@@ -39,6 +39,30 @@
 - 🔥 [RUMF-1555] Remove `startTime` in xhr start context ([#2287](https://github.com/DataDog/browser-sdk/pull/2287))
 - ♻️ [RUMF-1555] Remove deprecated context manager APIs ([#2284](https://github.com/DataDog/browser-sdk/pull/2284))
 
+## v4.49.0
+
+- ✨[RUM-265] Store contexts across pages ([#2378](https://github.com/DataDog/browser-sdk/pull/2378))
+- ✨[RUM-1016] Allow to change "view.name" ([#2396](https://github.com/DataDog/browser-sdk/pull/2396))
+- ✨[RUM-1013] Early exit when no configuration provided ([#2417](https://github.com/DataDog/browser-sdk/pull/2417))
+- 🐛[RUM-89] Do not count discarded resources ([#2410](https://github.com/DataDog/browser-sdk/pull/2410))
+
+## v4.48.2
+
+- 🐛 fix dynamic style serialization ([#2397](https://github.com/DataDog/browser-sdk/pull/2397))
+
+## v4.48.1
+
+- 🐛 fix INP support detection ([#2405](https://github.com/DataDog/browser-sdk/pull/2405))
+
+## v4.48.0
+
+- ✨ [RUM-252] optimistic worker creation ([#2377](https://github.com/DataDog/browser-sdk/pull/2377))
+- 🐛 do not ignore @import rules pointing to inaccessible stylesheets ([#2398](https://github.com/DataDog/browser-sdk/pull/2398))
+- 🎨 [RUM-262] Move view metrics in dedicated files ([#2386](https://github.com/DataDog/browser-sdk/pull/2386))
+- ♻️ [RUM-253] refactor batch creation ([#2390](https://github.com/DataDog/browser-sdk/pull/2390))
+- ⚗️ [RUM-257] Collect INP ([#2355](https://github.com/DataDog/browser-sdk/pull/2355))
+- ♻️ [RUM-250] introduce a DeflateEncoder ([#2376](https://github.com/DataDog/browser-sdk/pull/2376))
+
 ## v4.47.0
 
 - ✨ [RUM-233] add workerUrl initialization parameter ([#2354](https://github.com/DataDog/browser-sdk/pull/2354))

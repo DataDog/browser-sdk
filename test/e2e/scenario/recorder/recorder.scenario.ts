@@ -20,7 +20,6 @@ import {
 } from '@datadog/browser-rum/test'
 import { flushEvents, createTest, bundleSetup, html } from '../../lib/framework'
 import { browserExecute, browserExecuteAsync } from '../../lib/helpers/browser'
-import { getFirstSegment, getLastSegment } from '../../lib/helpers/replay'
 
 const TIMESTAMP_RE = /^\d{13}$/
 const UUID_RE = /^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/
@@ -28,14 +27,14 @@ const UUID_RE = /^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/
 describe('recorder', () => {
   createTest('record mouse move')
     .withRum()
-    .run(async ({ serverEvents }) => {
+    .run(async ({ intakeRegistry }) => {
       await browserExecute(() => document.documentElement.outerHTML)
       const html = await $('html')
       await html.click()
       await flushEvents()
 
-      expect(serverEvents.sessionReplay.length).toBe(1)
-      const { segment, metadata } = serverEvents.sessionReplay[0]
+      expect(intakeRegistry.replaySegments.length).toBe(1)
+      const { segment, metadata, encoding, filename, mimetype } = intakeRegistry.replayRequests[0]
       expect(metadata).toEqual({
         application: { id: jasmine.stringMatching(UUID_RE) },
         creation_reason: 'init',
@@ -51,26 +50,25 @@ describe('recorder', () => {
         source: 'browser',
       })
       expect(segment).toEqual({
-        data: {
-          application: { id: metadata.application.id },
-          creation_reason: metadata.creation_reason,
-          end: Number(metadata.end),
-          has_full_snapshot: true,
-          records: jasmine.any(Array),
-          records_count: Number(metadata.records_count),
-          session: { id: metadata.session.id },
-          start: Number(metadata.start),
-          view: { id: metadata.view.id },
-          index_in_view: 0,
-          source: 'browser',
-        },
-        encoding: jasmine.any(String),
-        filename: `${metadata.session.id}-${metadata.start}`,
-        mimetype: 'application/octet-stream',
+        application: { id: metadata.application.id },
+        creation_reason: metadata.creation_reason,
+        end: Number(metadata.end),
+        has_full_snapshot: true,
+        records: jasmine.any(Array),
+        records_count: Number(metadata.records_count),
+        session: { id: metadata.session.id },
+        start: Number(metadata.start),
+        view: { id: metadata.view.id },
+        index_in_view: 0,
+        source: 'browser',
       })
-      expect(findMeta(segment.data)).toBeTruthy('have a Meta record')
-      expect(findFullSnapshot(segment.data)).toBeTruthy('have a FullSnapshot record')
-      expect(findIncrementalSnapshot(segment.data, IncrementalSource.MouseInteraction)).toBeTruthy(
+      expect(encoding).toEqual(jasmine.any(String))
+      expect(filename).toBe(`${metadata.session.id}-${metadata.start}`)
+      expect(mimetype).toBe('application/octet-stream')
+
+      expect(findMeta(segment)).toBeTruthy('have a Meta record')
+      expect(findFullSnapshot(segment)).toBeTruthy('have a FullSnapshot record')
+      expect(findIncrementalSnapshot(segment, IncrementalSource.MouseInteraction)).toBeTruthy(
         'have a IncrementalSnapshot/MouseInteraction record'
       )
     })
@@ -86,12 +84,12 @@ describe('recorder', () => {
         <input id="input-not-obfuscated" value="displayed" />
         <input id="input-masked" data-dd-privacy="mask" value="masked" />
       `)
-      .run(async ({ serverEvents }) => {
+      .run(async ({ intakeRegistry }) => {
         await flushEvents()
 
-        expect(serverEvents.sessionReplay.length).toBe(1)
+        expect(intakeRegistry.replaySegments.length).toBe(1)
 
-        const fullSnapshot = findFullSnapshot(getFirstSegment(serverEvents))!
+        const fullSnapshot = findFullSnapshot(intakeRegistry.replaySegments[0])!
 
         const node = findElementWithIdAttribute(fullSnapshot.data.node, 'not-obfuscated')
         expect(node).toBeTruthy()
@@ -128,7 +126,7 @@ describe('recorder', () => {
           <li></li>
         </ul>
       `)
-      .run(async ({ serverEvents }) => {
+      .run(async ({ intakeRegistry }) => {
         await browserExecute(() => {
           const li = document.createElement('li')
           const ul = document.querySelector('ul') as HTMLUListElement
@@ -144,7 +142,7 @@ describe('recorder', () => {
         await flushEvents()
 
         const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidatorFromSegment(
-          getFirstSegment(serverEvents)
+          intakeRegistry.replaySegments[0]
         )
 
         validate({
@@ -172,7 +170,7 @@ describe('recorder', () => {
           <li></li>
         </ul>
       `)
-      .run(async ({ serverEvents }) => {
+      .run(async ({ intakeRegistry }) => {
         await browserExecute(() => {
           const li = document.createElement('li')
           const ul = document.querySelector('ul') as HTMLUListElement
@@ -190,7 +188,7 @@ describe('recorder', () => {
         await flushEvents()
 
         const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidatorFromSegment(
-          getFirstSegment(serverEvents)
+          intakeRegistry.replaySegments[0]
         )
 
         validate({
@@ -222,7 +220,7 @@ describe('recorder', () => {
           <li></li>
         </ul>
       `)
-      .run(async ({ serverEvents }) => {
+      .run(async ({ intakeRegistry }) => {
         await browserExecute(() => {
           const li = document.createElement('li')
           const ul = document.querySelector('ul') as HTMLUListElement
@@ -237,7 +235,9 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        const { validate, expectInitialNode } = createMutationPayloadValidatorFromSegment(getFirstSegment(serverEvents))
+        const { validate, expectInitialNode } = createMutationPayloadValidatorFromSegment(
+          intakeRegistry.replaySegments[0]
+        )
 
         validate({
           attributes: [
@@ -265,7 +265,7 @@ describe('recorder', () => {
           </ul>
         </div>
       `)
-      .run(async ({ serverEvents }) => {
+      .run(async ({ intakeRegistry }) => {
         await browserExecute(() => {
           document.querySelector('div')!.setAttribute('foo', 'bar')
           document.querySelector('li')!.textContent = 'hop'
@@ -274,8 +274,8 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        expect(serverEvents.sessionReplay.length).toBe(1)
-        const segment = getFirstSegment(serverEvents)
+        expect(intakeRegistry.replaySegments.length).toBe(1)
+        const segment = intakeRegistry.replaySegments[0]
 
         expect(findAllIncrementalSnapshots(segment, IncrementalSource.Mutation)).toEqual([])
       })
@@ -290,7 +290,7 @@ describe('recorder', () => {
           <span>c<i>d<b>e</b>f</i>g</span>
         `
       )
-      .run(async ({ serverEvents }) => {
+      .run(async ({ intakeRegistry }) => {
         await browserExecute(() => {
           const div = document.querySelector('div')!
           const p = document.querySelector('p')!
@@ -303,7 +303,9 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        const { validate, expectInitialNode } = createMutationPayloadValidatorFromSegment(getFirstSegment(serverEvents))
+        const { validate, expectInitialNode } = createMutationPayloadValidatorFromSegment(
+          intakeRegistry.replaySegments[0]
+        )
         validate({
           adds: [
             {
@@ -337,7 +339,7 @@ describe('recorder', () => {
           <span>c<i>d<b>e</b>f</i>g</span>
         `
       )
-      .run(async ({ serverEvents }) => {
+      .run(async ({ intakeRegistry }) => {
         await browserExecute(() => {
           const div = document.createElement('div')
           const span = document.querySelector('span')!
@@ -348,7 +350,7 @@ describe('recorder', () => {
         await flushEvents()
 
         const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidatorFromSegment(
-          getFirstSegment(serverEvents)
+          intakeRegistry.replaySegments[0]
         )
 
         const div = expectNewNode({ type: NodeType.Element, tagName: 'div' })
@@ -388,7 +390,7 @@ describe('recorder', () => {
           <ul><li></li></ul>
         `
       )
-      .run(async ({ serverEvents }) => {
+      .run(async ({ intakeRegistry }) => {
         await browserExecute(() => {
           const ul = document.querySelector('ul') as HTMLUListElement
           let count = 3
@@ -402,7 +404,7 @@ describe('recorder', () => {
         await flushEvents()
 
         const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidatorFromSegment(
-          getFirstSegment(serverEvents)
+          intakeRegistry.replaySegments[0]
         )
 
         const ul = expectInitialNode({ tag: 'ul' })
@@ -459,7 +461,7 @@ describe('recorder', () => {
           </label>
         </form>
       `)
-      .run(async ({ serverEvents }) => {
+      .run(async ({ intakeRegistry }) => {
         const textInput = await $('#text-input')
         await textInput.setValue('test')
 
@@ -477,9 +479,9 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        expect(serverEvents.sessionReplay.length).toBe(1)
+        expect(intakeRegistry.replaySegments.length).toBe(1)
 
-        const segment = getFirstSegment(serverEvents)
+        const segment = intakeRegistry.replaySegments[0]
 
         const textInputRecords = filterRecordsByIdAttribute(segment, 'text-input')
         expect(textInputRecords.length).toBeGreaterThanOrEqual(4)
@@ -522,7 +524,7 @@ describe('recorder', () => {
         <input type="text" id="third" name="third" class="dd-privacy-input-ignored" />
         <input type="password" id="fourth" name="fourth" />
       `)
-      .run(async ({ serverEvents }) => {
+      .run(async ({ intakeRegistry }) => {
         const firstInput = await $('#first')
         await firstInput.setValue('foo')
 
@@ -537,9 +539,9 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        expect(serverEvents.sessionReplay.length).toBe(1)
+        expect(intakeRegistry.replaySegments.length).toBe(1)
 
-        const segment = getFirstSegment(serverEvents)
+        const segment = intakeRegistry.replaySegments[0]
 
         const inputRecords = findAllIncrementalSnapshots(segment, IncrementalSource.Input)
 
@@ -554,7 +556,7 @@ describe('recorder', () => {
         <input type="text" id="by-data-attribute" data-dd-privacy="mask" />
         <input type="text" id="by-classname" class="dd-privacy-mask" />
       `)
-      .run(async ({ serverEvents }) => {
+      .run(async ({ intakeRegistry }) => {
         const firstInput = await $('#by-data-attribute')
         await firstInput.setValue('foo')
 
@@ -563,9 +565,9 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        expect(serverEvents.sessionReplay.length).toBe(1)
+        expect(intakeRegistry.replaySegments.length).toBe(1)
 
-        const segment = getFirstSegment(serverEvents)
+        const segment = intakeRegistry.replaySegments[0]
 
         const inputRecords = findAllIncrementalSnapshots(segment, IncrementalSource.Input)
 
@@ -589,7 +591,7 @@ describe('recorder', () => {
           }
         </style>
       `)
-      .run(async ({ serverEvents }) => {
+      .run(async ({ intakeRegistry }) => {
         await browserExecute(() => {
           document.styleSheets[0].deleteRule(0)
           document.styleSheets[0].insertRule('.added {}', 0)
@@ -597,9 +599,9 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        expect(serverEvents.sessionReplay.length).toBe(1)
+        expect(intakeRegistry.replaySegments.length).toBe(1)
 
-        const segment = getFirstSegment(serverEvents)
+        const segment = intakeRegistry.replaySegments[0]
 
         const styleSheetRules = findAllIncrementalSnapshots(segment, IncrementalSource.StyleSheetRule) as Array<{
           data: StyleSheetRuleData
@@ -627,7 +629,7 @@ describe('recorder', () => {
           }
         </style>
       `)
-      .run(async ({ serverEvents }) => {
+      .run(async ({ intakeRegistry }) => {
         await browserExecute(() => {
           const supportsRule = document.styleSheets[0].cssRules[0] as CSSGroupingRule
           const mediaRule = document.styleSheets[0].cssRules[1] as CSSGroupingRule
@@ -639,9 +641,9 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        expect(serverEvents.sessionReplay.length).toBe(1)
+        expect(intakeRegistry.replaySegments.length).toBe(1)
 
-        const segment = getFirstSegment(serverEvents)
+        const segment = intakeRegistry.replaySegments[0]
 
         const styleSheetRules = findAllIncrementalSnapshots(segment, IncrementalSource.StyleSheetRule) as Array<{
           data: StyleSheetRuleData
@@ -658,16 +660,16 @@ describe('recorder', () => {
     createTest('should detect a dead click and match it to mouse interaction record')
       .withRum({ trackUserInteractions: true })
       .withSetup(bundleSetup)
-      .run(async ({ serverEvents }) => {
+      .run(async ({ intakeRegistry }) => {
         const html = await $('html')
         await html.click()
         await flushEvents()
 
-        expect(serverEvents.sessionReplay.length).toBe(1)
-        const { segment } = serverEvents.sessionReplay[0]
+        expect(intakeRegistry.replaySegments.length).toBe(1)
+        const segment = intakeRegistry.replaySegments[0]
 
-        const mouseupRecords = findMouseInteractionRecords(segment.data, MouseInteractionType.MouseUp)
-        const frustrationRecords = findAllFrustrationRecords(segment.data)
+        const mouseupRecords = findMouseInteractionRecords(segment, MouseInteractionType.MouseUp)
+        const frustrationRecords = findAllFrustrationRecords(segment)
 
         expect(mouseupRecords.length).toBe(1)
         expect(mouseupRecords[0].id).toBeTruthy('mouse interaction record should have an id')
@@ -688,16 +690,16 @@ describe('recorder', () => {
           onclick="document.querySelector('#main-div').appendChild(document.createElement('div'));"
         />
       `)
-      .run(async ({ serverEvents }) => {
+      .run(async ({ intakeRegistry }) => {
         const button = await $('#my-button')
         await Promise.all([button.click(), button.click(), button.click(), button.click()])
         await flushEvents()
 
-        expect(serverEvents.sessionReplay.length).toBe(1)
-        const { segment } = serverEvents.sessionReplay[0]
+        expect(intakeRegistry.replaySegments.length).toBe(1)
+        const segment = intakeRegistry.replaySegments[0]
 
-        const mouseupRecords = findMouseInteractionRecords(segment.data, MouseInteractionType.MouseUp)
-        const frustrationRecords = findAllFrustrationRecords(segment.data)
+        const mouseupRecords = findMouseInteractionRecords(segment, MouseInteractionType.MouseUp)
+        const frustrationRecords = findAllFrustrationRecords(segment)
 
         expect(mouseupRecords.length).toBe(4)
         expect(frustrationRecords.length).toBe(1)
@@ -732,7 +734,7 @@ describe('recorder', () => {
         </div>
         <div id="big-element"></div>
       `)
-      .run(async ({ serverEvents }) => {
+      .run(async ({ intakeRegistry }) => {
         function scroll({ windowY, containerX }: { windowY: number; containerX: number }) {
           return browserExecuteAsync(
             (windowY, containerX, done) => {
@@ -778,8 +780,8 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        expect(serverEvents.sessionReplay.length).toBe(2)
-        const firstSegment = getFirstSegment(serverEvents)
+        expect(intakeRegistry.replaySegments.length).toBe(2)
+        const firstSegment = intakeRegistry.replaySegments[0]
 
         const firstFullSnapshot = findFullSnapshot(firstSegment)!
         let htmlElement = findElementWithTagName(firstFullSnapshot.data.node, 'html')!
@@ -793,7 +795,7 @@ describe('recorder', () => {
         expect(windowScrollData.y).toEqual(150)
         expect(containerScrollData.x).toEqual(20)
 
-        const secondFullSnapshot = findFullSnapshot(getLastSegment(serverEvents))!
+        const secondFullSnapshot = findFullSnapshot(intakeRegistry.replaySegments.at(-1)!)!
         htmlElement = findElementWithTagName(secondFullSnapshot.data.node, 'html')!
         expect(htmlElement.attributes.rr_scrollTop).toBe(150)
         containerElement = findElementWithIdAttribute(secondFullSnapshot.data.node, 'container')!
@@ -805,9 +807,9 @@ describe('recorder', () => {
     .withRum({ workerUrl: '/worker.js' })
     .withSetup(bundleSetup)
     .withBasePath('/no-blob-worker-csp')
-    .run(async ({ serverEvents }) => {
+    .run(async ({ intakeRegistry }) => {
       await flushEvents()
 
-      expect(serverEvents.sessionReplay.length).toBe(1)
+      expect(intakeRegistry.replaySegments.length).toBe(1)
     })
 })

@@ -32,6 +32,7 @@ dev,@wdio/spec-reporter,MIT,Copyright JS Foundation and other contributors
 dev,@webextension-toolbox/webpack-webextension-plugin,MIT,Copyright 2018 Henrik Wenz (handtrix@gmail.com)
 dev,ajv,MIT,Copyright 2015-2017 Evgeny Poberezkin
 dev,browserstack-local,MIT,Copyright 2016 BrowserStack
+dev,chrome-webstore-upload,MIT,Copyright Federico Brigante <me@fregante.com> (https://fregante.com), 2020 Andrew Levine
 dev,connect-busboy,MIT,Copyright Brian White
 dev,copy-webpack-plugin,MIT,Copyright JS Foundation and other contributors
 dev,cors,MIT,Copyright 2013 Troy Goode

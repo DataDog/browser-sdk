@@ -41,6 +41,7 @@ export enum DOM_EVENT {
   PAUSE = 'pause',
   SECURITY_POLICY_VIOLATION = 'securitypolicyviolation',
   SELECTION_CHANGE = 'selectionchange',
+  STORAGE = 'storage',
 }
 
 interface AddEventListenerOptions {
@@ -90,7 +91,7 @@ export function addEventListener<Target extends EventTarget, EventName extends k
   configuration: Configuration,
   eventTarget: Target,
   eventName: EventName,
-  listener: (event: EventMapFor<Target>[EventName]) => void,
+  listener: (event: EventMapFor<Target>[EventName] & { type: EventName }) => void,
   options?: AddEventListenerOptions
 ) {
   return addEventListeners(configuration, eventTarget, [eventName], listener, options)
@@ -112,27 +113,27 @@ export function addEventListeners<Target extends EventTarget, EventName extends 
   configuration: Configuration,
   eventTarget: Target,
   eventNames: EventName[],
-  listener: (event: EventMapFor<Target>[EventName]) => void,
+  listener: (event: EventMapFor<Target>[EventName] & { type: EventName }) => void,
   { once, capture, passive }: AddEventListenerOptions = {}
 ) {
-  const wrappedListener = monitor((event: TrustableEvent) => {
+  const listenerWithMonitor = monitor((event: TrustableEvent) => {
     if (!event.isTrusted && !event.__ddIsTrusted && !configuration.allowUntrustedEvents) {
       return
     }
     if (once) {
       stop()
     }
-    listener(event as EventMapFor<Target>[EventName])
+    listener(event as unknown as EventMapFor<Target>[EventName] & { type: EventName })
   })
 
   const options = passive ? { capture, passive } : capture
 
   const add = getZoneJsOriginalValue(eventTarget, 'addEventListener')
-  eventNames.forEach((eventName) => add.call(eventTarget, eventName, wrappedListener, options))
+  eventNames.forEach((eventName) => add.call(eventTarget, eventName, listenerWithMonitor, options))
 
   function stop() {
     const remove = getZoneJsOriginalValue(eventTarget, 'removeEventListener')
-    eventNames.forEach((eventName) => remove.call(eventTarget, eventName, wrappedListener, options))
+    eventNames.forEach((eventName) => remove.call(eventTarget, eventName, listenerWithMonitor, options))
   }
 
   return {

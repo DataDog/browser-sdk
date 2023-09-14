@@ -110,7 +110,7 @@ export function startPageStateHistory(
   }
 }
 
-function computePageState(event: Event) {
+function computePageState(event: Event & { type: DOM_EVENT }) {
   if (event.type === DOM_EVENT.FREEZE) {
     return PageState.FROZEN
   } else if (event.type === DOM_EVENT.PAGE_HIDE) {

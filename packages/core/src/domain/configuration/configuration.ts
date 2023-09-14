@@ -29,6 +29,7 @@ export interface InitConfiguration {
   silentMultipleInit?: boolean | undefined
   allowFallbackToLocalStorage?: boolean | undefined
   allowUntrustedEvents?: boolean | undefined
+  storeContextsAcrossPages?: boolean | undefined
 
   // transport options
   proxy?: string | undefined
@@ -166,6 +167,7 @@ export function serializeConfiguration(initConfiguration: InitConfiguration): Pa
     silent_multiple_init: initConfiguration.silentMultipleInit,
     track_session_across_subdomains: initConfiguration.trackSessionAcrossSubdomains,
     allow_fallback_to_local_storage: !!initConfiguration.allowFallbackToLocalStorage,
+    store_contexts_across_pages: !!initConfiguration.storeContextsAcrossPages,
     allow_untrusted_events: !!initConfiguration.allowUntrustedEvents,
   }
 }
