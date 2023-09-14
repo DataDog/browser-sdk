@@ -367,7 +367,7 @@ function handleRumPerformanceEntries(
   entries: Array<PerformanceEntry | RumPerformanceEntry>
 ) {
   const rumPerformanceEntries = entries.filter((entry): entry is RumPerformanceEntry =>
-    objectHasValue(RumPerformanceEntryType, entry)
+    objectHasValue(RumPerformanceEntryType, entry.entryType)
   )
 
   const rumAllowedPerformanceEntries = rumPerformanceEntries.filter(
