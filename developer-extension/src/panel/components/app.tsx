@@ -25,6 +25,7 @@ export function App() {
             margin: 0,
           },
         }),
+        cursorType: 'pointer',
       }}
       withGlobalStyles
     >
