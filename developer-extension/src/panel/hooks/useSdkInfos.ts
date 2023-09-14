@@ -21,11 +21,11 @@ export interface SdkInfos {
     user: object
   }
   cookie?: {
-    id: string
-    created: string
-    expire: string
-    logs: string
-    rum: string
+    id?: string
+    created?: string
+    expire?: string
+    logs?: string
+    rum?: string
   }
 }
 
