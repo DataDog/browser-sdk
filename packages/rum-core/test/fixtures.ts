@@ -1,6 +1,24 @@
 import type { Context, Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
-import { combine, ErrorHandling, ErrorSource, generateUUID, ResourceType } from '@datadog/browser-core'
-import type { RumPerformanceResourceTiming } from '../src/browser/performanceCollection'
+import {
+  assign,
+  combine,
+  ErrorHandling,
+  ErrorSource,
+  generateUUID,
+  relativeNow,
+  ResourceType,
+} from '@datadog/browser-core'
+import { RumPerformanceEntryType } from '../src/browser/performanceCollection'
+import type {
+  RumFirstInputTiming,
+  RumLargestContentfulPaintTiming,
+  RumLayoutShiftTiming,
+  RumPerformanceEventTiming,
+  RumPerformanceLongTaskTiming,
+  RumPerformanceNavigationTiming,
+  RumPerformancePaintTiming,
+  RumPerformanceResourceTiming,
+} from '../src/browser/performanceCollection'
 import type { RawRumEvent } from '../src/rawRumEvent.types'
 import { ActionType, RumEventType, ViewLoadingType } from '../src/rawRumEvent.types'
 
@@ -98,6 +116,76 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
   }
 }
 
+type EntryTypeToReturnType = {
+  [RumPerformanceEntryType.EVENT]: RumPerformanceEventTiming
+  [RumPerformanceEntryType.FIRST_INPUT]: RumFirstInputTiming
+  [RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT]: RumLargestContentfulPaintTiming
+  [RumPerformanceEntryType.LAYOUT_SHIFT]: RumLayoutShiftTiming
+  [RumPerformanceEntryType.PAINT]: RumPerformancePaintTiming
+  [RumPerformanceEntryType.LONG_TASK]: RumPerformanceLongTaskTiming
+  [RumPerformanceEntryType.NAVIGATION]: RumPerformanceNavigationTiming
+  [RumPerformanceEntryType.RESOURCE]: RumPerformanceResourceTiming
+}
+
+export function createPerformanceEntry<T extends RumPerformanceEntryType>(
+  entryType: T,
+  overrides?: Partial<EntryTypeToReturnType[T]>
+): EntryTypeToReturnType[T] {
+  switch (entryType) {
+    case RumPerformanceEntryType.EVENT:
+      return assign(
+        {
+          entryType: RumPerformanceEntryType.EVENT,
+          processingStart: relativeNow(),
+          startTime: relativeNow(),
+          duration: 40 as Duration,
+        },
+        overrides
+      ) as EntryTypeToReturnType[T]
+    case RumPerformanceEntryType.FIRST_INPUT:
+      return assign(
+        {
+          entryType: RumPerformanceEntryType.FIRST_INPUT,
+          processingStart: 1100 as RelativeTime,
+          startTime: 1000 as RelativeTime,
+          duration: 40 as Duration,
+        },
+        overrides
+      ) as EntryTypeToReturnType[T]
+    case RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT:
+      return assign(
+        {
+          entryType: RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT,
+          startTime: 789 as RelativeTime,
+          size: 10,
+        },
+        overrides
+      ) as EntryTypeToReturnType[T]
+    case RumPerformanceEntryType.LAYOUT_SHIFT:
+      return assign(
+        {
+          entryType: RumPerformanceEntryType.LAYOUT_SHIFT,
+          startTime: relativeNow(),
+          hadRecentInput: false,
+          value: 0.1,
+        },
+        overrides
+      ) as EntryTypeToReturnType[T]
+
+    case RumPerformanceEntryType.PAINT:
+      return assign(
+        {
+          entryType: RumPerformanceEntryType.PAINT,
+          name: 'first-contentful-paint',
+          startTime: 123 as RelativeTime,
+        },
+        overrides
+      ) as EntryTypeToReturnType[T]
+    default:
+      throw new Error(`Unsupported entryType fixture: ${entryType}`)
+  }
+}
+
 export function createResourceEntry(
   overrides?: Partial<RumPerformanceResourceTiming>
 ): RumPerformanceResourceTiming & PerformanceResourceTiming {
@@ -108,7 +196,7 @@ export function createResourceEntry(
     domainLookupEnd: 200 as RelativeTime,
     domainLookupStart: 200 as RelativeTime,
     duration: 100 as Duration,
-    entryType: 'resource',
+    entryType: RumPerformanceEntryType.RESOURCE,
     fetchStart: 200 as RelativeTime,
     name: 'https://resource.com/valid',
     redirectEnd: 200 as RelativeTime,

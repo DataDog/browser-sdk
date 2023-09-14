@@ -1,5 +1,5 @@
 export * from './createFakeClick'
-export * from './createIsolatedDom'
+export * from './dom'
 export * from './fixtures'
 export * from './formatValidation'
 export * from './mockCiVisibilityWindowValues'

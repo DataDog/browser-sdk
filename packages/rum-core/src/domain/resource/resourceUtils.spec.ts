@@ -1,6 +1,6 @@
 import type { Duration, RelativeTime, ServerDuration } from '@datadog/browser-core'
 import { SPEC_ENDPOINTS } from '@datadog/browser-core/test'
-import type { RumPerformanceResourceTiming } from '../../browser/performanceCollection'
+import { RumPerformanceEntryType, type RumPerformanceResourceTiming } from '../../browser/performanceCollection'
 import type { RumConfiguration } from '../configuration'
 import { validateAndBuildRumConfiguration } from '../configuration'
 import {
@@ -17,7 +17,7 @@ function generateResourceWith(overrides: Partial<RumPerformanceResourceTiming>) 
     domainLookupEnd: 14 as RelativeTime,
     domainLookupStart: 13 as RelativeTime,
     duration: 50 as Duration,
-    entryType: 'resource',
+    entryType: RumPerformanceEntryType.RESOURCE,
     fetchStart: 12 as RelativeTime,
     name: 'entry',
     redirectEnd: 11 as RelativeTime,

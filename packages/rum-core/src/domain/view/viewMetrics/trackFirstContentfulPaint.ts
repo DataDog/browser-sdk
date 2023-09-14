@@ -3,6 +3,7 @@ import { ONE_MINUTE, find } from '@datadog/browser-core'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { RumPerformancePaintTiming } from '../../../browser/performanceCollection'
+import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
 import type { FirstHidden } from './trackFirstHidden'
 
 // Discard FCP timings above a certain delay to avoid incorrect data
@@ -20,7 +21,7 @@ export function trackFirstContentfulPaint(
       const fcpEntry = find(
         entries,
         (entry): entry is RumPerformancePaintTiming =>
-          entry.entryType === 'paint' &&
+          entry.entryType === RumPerformanceEntryType.PAINT &&
           entry.name === 'first-contentful-paint' &&
           entry.startTime < firstHidden.timeStamp &&
           entry.startTime < FCP_MAXIMUM_DELAY

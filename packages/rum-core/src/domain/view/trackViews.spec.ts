@@ -133,7 +133,7 @@ describe('initial view', () => {
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
       expect(getViewUpdateCount()).toEqual(2)
-      expect(getViewUpdate(1).initialViewMetrics).toEqual({
+      expect(getViewUpdate(1).initialViewMetrics.navigationTimings).toEqual({
         firstByte: 123 as Duration,
         domComplete: 456 as Duration,
         domContentLoaded: 345 as Duration,
@@ -161,13 +161,15 @@ describe('initial view', () => {
       expect(getViewUpdateCount()).toEqual(3)
       expect(getViewUpdate(1).initialViewMetrics).toEqual(
         jasmine.objectContaining({
-          firstByte: 123 as Duration,
-          domComplete: 456 as Duration,
-          domContentLoaded: 345 as Duration,
-          domInteractive: 234 as Duration,
           firstContentfulPaint: 123 as Duration,
-          largestContentfulPaint: 789 as Duration,
-          loadEvent: 567 as Duration,
+          navigationTimings: {
+            firstByte: 123 as Duration,
+            domComplete: 456 as Duration,
+            domContentLoaded: 345 as Duration,
+            domInteractive: 234 as Duration,
+            loadEvent: 567 as Duration,
+          },
+          largestContentfulPaint: { value: 789 as Duration, targetSelector: undefined },
         })
       )
       expect(getViewUpdate(2).initialViewMetrics).toEqual({})
@@ -220,13 +222,15 @@ describe('initial view', () => {
       it('should set initial view metrics only on the initial view', () => {
         expect(initialView.last.initialViewMetrics).toEqual(
           jasmine.objectContaining({
-            firstByte: 123 as Duration,
-            domComplete: 456 as Duration,
-            domContentLoaded: 345 as Duration,
-            domInteractive: 234 as Duration,
             firstContentfulPaint: 123 as Duration,
-            largestContentfulPaint: 789 as Duration,
-            loadEvent: 567 as Duration,
+            navigationTimings: {
+              firstByte: 123 as Duration,
+              domComplete: 456 as Duration,
+              domContentLoaded: 345 as Duration,
+              domInteractive: 234 as Duration,
+              loadEvent: 567 as Duration,
+            },
+            largestContentfulPaint: { value: 789 as Duration, targetSelector: undefined },
           })
         )
       })
@@ -258,7 +262,7 @@ describe('initial view', () => {
       const latestUpdate = getViewUpdate(getViewUpdateCount() - 1)
       const firstView = getViewUpdate(0)
       expect(latestUpdate.id).toBe(firstView.id)
-      expect(latestUpdate.initialViewMetrics.largestContentfulPaint).toEqual(
+      expect(latestUpdate.initialViewMetrics.largestContentfulPaint?.value).toEqual(
         FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY.startTime
       )
     })

@@ -1,12 +1,8 @@
 import type { Duration } from '@datadog/browser-core'
-import {
-  ExperimentalFeature,
-  addExperimentalFeatures,
-  relativeNow,
-  resetExperimentalFeatures,
-} from '@datadog/browser-core'
+import { ExperimentalFeature, addExperimentalFeatures, resetExperimentalFeatures } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../../test'
-import { setup } from '../../../../test'
+import { appendElement, appendTextNode, createPerformanceEntry, setup } from '../../../../test'
+import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
 import type {
   BrowserWindow,
   RumFirstInputTiming,
@@ -24,38 +20,28 @@ import {
 describe('trackInteractionToNextPaint', () => {
   let setupBuilder: TestSetupBuilder
   let interactionCountStub: ReturnType<typeof subInteractionCount>
-  let getInteractionToNextPaint: () => Duration | undefined
+  let getInteractionToNextPaint: ReturnType<typeof trackInteractionToNextPaint>['getInteractionToNextPaint']
 
-  function newInteraction(
-    lifeCycle: LifeCycle,
-    {
-      interactionId,
-      duration = 40 as Duration,
-      entryType = 'event',
-    }: Partial<RumPerformanceEventTiming | RumFirstInputTiming>
-  ) {
-    if (interactionId) {
+  function newInteraction(lifeCycle: LifeCycle, overrides: Partial<RumPerformanceEventTiming | RumFirstInputTiming>) {
+    if (overrides.interactionId) {
       interactionCountStub.incrementInteractionCount()
     }
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      {
-        entryType,
-        processingStart: relativeNow(),
-        startTime: relativeNow(),
-        duration,
-        interactionId,
-      },
-    ])
+    const entry = createPerformanceEntry(overrides.entryType || RumPerformanceEntryType.EVENT, overrides)
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [entry])
   }
 
   beforeEach(() => {
     if (!isInteractionToNextPaintSupported()) {
       pending('No INP support')
     }
-
     interactionCountStub = subInteractionCount()
-    setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
-      ;({ getInteractionToNextPaint } = trackInteractionToNextPaint(ViewLoadingType.INITIAL_LOAD, lifeCycle))
+
+    setupBuilder = setup().beforeBuild(({ lifeCycle, configuration }) => {
+      ;({ getInteractionToNextPaint } = trackInteractionToNextPaint(
+        configuration,
+        ViewLoadingType.INITIAL_LOAD,
+        lifeCycle
+      ))
     })
   })
 
@@ -79,6 +65,7 @@ describe('trackInteractionToNextPaint', () => {
 
     it('should ignore entries without interactionId', () => {
       const { lifeCycle } = setupBuilder.build()
+      createPerformanceEntry(RumPerformanceEntryType.EVENT)
       newInteraction(lifeCycle, {
         interactionId: undefined,
       })
@@ -93,22 +80,28 @@ describe('trackInteractionToNextPaint', () => {
           interactionId: index,
         })
       }
-      expect(getInteractionToNextPaint()).toEqual(98 as Duration)
+      expect(getInteractionToNextPaint()).toEqual({
+        value: 98 as Duration,
+        targetSelector: undefined,
+      })
     })
 
     it('should return 0 when an interaction happened without generating a performance event (interaction duration below 40ms)', () => {
       setupBuilder.build()
       interactionCountStub.setInteractionCount(1 as Duration) // assumes an interaction happened but no PERFORMANCE_ENTRIES_COLLECTED have been triggered
-      expect(getInteractionToNextPaint()).toEqual(0 as Duration)
+      expect(getInteractionToNextPaint()).toEqual({ value: 0 as Duration })
     })
 
     it('should take first-input entry into account', () => {
       const { lifeCycle } = setupBuilder.build()
       newInteraction(lifeCycle, {
         interactionId: 1,
-        entryType: 'first-input',
+        entryType: RumPerformanceEntryType.FIRST_INPUT,
       })
-      expect(getInteractionToNextPaint()).toEqual(40 as Duration)
+      expect(getInteractionToNextPaint()).toEqual({
+        value: 40 as Duration,
+        targetSelector: undefined,
+      })
     })
 
     it('should replace the entry in the list of worst interactions when an entry with the same interactionId exist', () => {
@@ -121,7 +114,45 @@ describe('trackInteractionToNextPaint', () => {
         })
       }
       // the p98 return 100 which shows that the entry has been updated
-      expect(getInteractionToNextPaint()).toEqual(100 as Duration)
+      expect(getInteractionToNextPaint()).toEqual({
+        value: 100 as Duration,
+        targetSelector: undefined,
+      })
+    })
+
+    it('should return the target selector when FF web_vital_attribution is enabled', () => {
+      addExperimentalFeatures([ExperimentalFeature.WEB_VITALS_ATTRIBUTION])
+      const { lifeCycle } = setupBuilder.build()
+
+      newInteraction(lifeCycle, {
+        interactionId: 2,
+        target: appendElement('button', { id: 'inp-target-element' }),
+      })
+
+      expect(getInteractionToNextPaint()?.targetSelector).toEqual('#inp-target-element')
+    })
+
+    it("should not return the target selector if it's not a DOM element when FF web_vital_attribution is enabled", () => {
+      addExperimentalFeatures([ExperimentalFeature.WEB_VITALS_ATTRIBUTION])
+      const { lifeCycle } = setupBuilder.build()
+
+      newInteraction(lifeCycle, {
+        interactionId: 2,
+        target: appendTextNode(''),
+      })
+
+      expect(getInteractionToNextPaint()?.targetSelector).toEqual(undefined)
+    })
+
+    it('should not return the target selector when FF web_vital_attribution is disabled', () => {
+      const { lifeCycle } = setupBuilder.build()
+
+      newInteraction(lifeCycle, {
+        interactionId: 2,
+        target: appendElement('button', { id: 'inp-target-element' }),
+      })
+
+      expect(getInteractionToNextPaint()?.targetSelector).toEqual(undefined)
     })
   })
 

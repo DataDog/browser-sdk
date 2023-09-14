@@ -11,6 +11,7 @@ import {
   relativeNow,
   runOnReadyState,
   addEventListener,
+  objectHasValue,
 } from '@datadog/browser-core'
 
 import type { RumConfiguration } from '../domain/configuration'
@@ -32,8 +33,22 @@ export interface RumPerformanceObserver extends PerformanceObserver {
   observe(options?: PerformanceObserverInit & { durationThreshold: number }): void
 }
 
+// We want to use a real enum (i.e. not a const enum) here, to be able to check whether an arbitrary
+// string is an expected performance entry
+// eslint-disable-next-line no-restricted-syntax
+export enum RumPerformanceEntryType {
+  EVENT = 'event',
+  FIRST_INPUT = 'first-input',
+  LARGEST_CONTENTFUL_PAINT = 'largest-contentful-paint',
+  LAYOUT_SHIFT = 'layout-shift',
+  LONG_TASK = 'longtask',
+  NAVIGATION = 'navigation',
+  PAINT = 'paint',
+  RESOURCE = 'resource',
+}
+
 export interface RumPerformanceResourceTiming {
-  entryType: 'resource'
+  entryType: RumPerformanceEntryType.RESOURCE
   initiatorType: string
   name: string
   startTime: RelativeTime
@@ -54,20 +69,20 @@ export interface RumPerformanceResourceTiming {
 }
 
 export interface RumPerformanceLongTaskTiming {
-  entryType: 'longtask'
+  entryType: RumPerformanceEntryType.LONG_TASK
   startTime: RelativeTime
   duration: Duration
   toJSON(): PerformanceEntryRepresentation
 }
 
 export interface RumPerformancePaintTiming {
-  entryType: 'paint'
+  entryType: RumPerformanceEntryType.PAINT
   name: 'first-paint' | 'first-contentful-paint'
   startTime: RelativeTime
 }
 
 export interface RumPerformanceNavigationTiming {
-  entryType: 'navigation'
+  entryType: RumPerformanceEntryType.NAVIGATION
   domComplete: RelativeTime
   domContentLoadedEventEnd: RelativeTime
   domInteractive: RelativeTime
@@ -76,14 +91,14 @@ export interface RumPerformanceNavigationTiming {
 }
 
 export interface RumLargestContentfulPaintTiming {
-  entryType: 'largest-contentful-paint'
+  entryType: RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT
   startTime: RelativeTime
   size: number
   element?: Element
 }
 
 export interface RumFirstInputTiming {
-  entryType: 'first-input'
+  entryType: RumPerformanceEntryType.FIRST_INPUT
   startTime: RelativeTime
   processingStart: RelativeTime
   duration: Duration
@@ -92,14 +107,15 @@ export interface RumFirstInputTiming {
 }
 
 export interface RumPerformanceEventTiming {
-  entryType: 'event'
+  entryType: RumPerformanceEntryType.EVENT
   startTime: RelativeTime
   duration: Duration
   interactionId?: number
+  target?: Node
 }
 
 export interface RumLayoutShiftTiming {
-  entryType: 'layout-shift'
+  entryType: RumPerformanceEntryType.LAYOUT_SHIFT
   startTime: RelativeTime
   value: number
   hadRecentInput: boolean
@@ -122,7 +138,7 @@ function supportPerformanceObject() {
   return window.performance !== undefined && 'getEntries' in performance
 }
 
-export function supportPerformanceTimingEvent(entryType: string) {
+export function supportPerformanceTimingEvent(entryType: RumPerformanceEntryType) {
   return (
     window.PerformanceObserver &&
     PerformanceObserver.supportedEntryTypes !== undefined &&
@@ -146,8 +162,18 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
     const handlePerformanceEntryList = monitor((entries: PerformanceObserverEntryList) =>
       handleRumPerformanceEntries(lifeCycle, configuration, entries.getEntries())
     )
-    const mainEntries = ['resource', 'navigation', 'longtask', 'paint']
-    const experimentalEntries = ['largest-contentful-paint', 'first-input', 'layout-shift', 'event']
+    const mainEntries = [
+      RumPerformanceEntryType.RESOURCE,
+      RumPerformanceEntryType.NAVIGATION,
+      RumPerformanceEntryType.LONG_TASK,
+      RumPerformanceEntryType.PAINT,
+    ]
+    const experimentalEntries = [
+      RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT,
+      RumPerformanceEntryType.FIRST_INPUT,
+      RumPerformanceEntryType.LAYOUT_SHIFT,
+      RumPerformanceEntryType.EVENT,
+    ]
 
     try {
       // Experimental entries are not retrieved by performance.getEntries()
@@ -179,12 +205,12 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
       })
     }
   }
-  if (!supportPerformanceTimingEvent('navigation')) {
+  if (!supportPerformanceTimingEvent(RumPerformanceEntryType.NAVIGATION)) {
     retrieveNavigationTiming(configuration, (timing) => {
       handleRumPerformanceEntries(lifeCycle, configuration, [timing])
     })
   }
-  if (!supportPerformanceTimingEvent('first-input')) {
+  if (!supportPerformanceTimingEvent(RumPerformanceEntryType.FIRST_INPUT)) {
     retrieveFirstInputTiming(configuration, (timing) => {
       handleRumPerformanceEntries(lifeCycle, configuration, [timing])
     })
@@ -199,12 +225,15 @@ export function retrieveInitialDocumentResourceTiming(
     let timing: RumPerformanceResourceTiming
 
     const forcedAttributes = {
-      entryType: 'resource' as const,
+      entryType: RumPerformanceEntryType.RESOURCE as const,
       initiatorType: FAKE_INITIAL_DOCUMENT,
       traceId: getDocumentTraceId(document),
     }
-    if (supportPerformanceTimingEvent('navigation') && performance.getEntriesByType('navigation').length > 0) {
-      const navigationEntry = performance.getEntriesByType('navigation')[0]
+    if (
+      supportPerformanceTimingEvent(RumPerformanceEntryType.NAVIGATION) &&
+      performance.getEntriesByType(RumPerformanceEntryType.NAVIGATION).length > 0
+    ) {
+      const navigationEntry = performance.getEntriesByType(RumPerformanceEntryType.NAVIGATION)[0]
       timing = assign(navigationEntry.toJSON(), forcedAttributes)
     } else {
       const relativePerformanceTiming = computeRelativePerformanceTiming()
@@ -230,7 +259,7 @@ function retrieveNavigationTiming(
   function sendFakeTiming() {
     callback(
       assign(computeRelativePerformanceTiming(), {
-        entryType: 'navigation' as const,
+        entryType: RumPerformanceEntryType.NAVIGATION as const,
       })
     )
   }
@@ -263,7 +292,7 @@ function retrieveFirstInputTiming(configuration: RumConfiguration, callback: (ti
       // when the system received the event (e.g. evt.timeStamp) and when it could run the callback
       // (e.g. performance.now()).
       const timing: RumFirstInputTiming = {
-        entryType: 'first-input',
+        entryType: RumPerformanceEntryType.FIRST_INPUT,
         processingStart: relativeNow(),
         startTime: evt.timeStamp as RelativeTime,
         duration: 0 as Duration, // arbitrary value to avoid nullable duration and simplify INP logic
@@ -337,17 +366,9 @@ function handleRumPerformanceEntries(
   configuration: RumConfiguration,
   entries: Array<PerformanceEntry | RumPerformanceEntry>
 ) {
-  const rumPerformanceEntries = entries.filter(
-    (entry) =>
-      entry.entryType === 'resource' ||
-      entry.entryType === 'navigation' ||
-      entry.entryType === 'paint' ||
-      entry.entryType === 'longtask' ||
-      entry.entryType === 'largest-contentful-paint' ||
-      entry.entryType === 'first-input' ||
-      entry.entryType === 'layout-shift' ||
-      entry.entryType === 'event'
-  ) as RumPerformanceEntry[]
+  const rumPerformanceEntries = entries.filter((entry): entry is RumPerformanceEntry =>
+    objectHasValue(RumPerformanceEntryType, entry.entryType)
+  )
 
   const rumAllowedPerformanceEntries = rumPerformanceEntries.filter(
     (entry) => !isIncompleteNavigation(entry) && !isForbiddenResource(configuration, entry)
@@ -359,9 +380,9 @@ function handleRumPerformanceEntries(
 }
 
 function isIncompleteNavigation(entry: RumPerformanceEntry) {
-  return entry.entryType === 'navigation' && entry.loadEventEnd <= 0
+  return entry.entryType === RumPerformanceEntryType.NAVIGATION && entry.loadEventEnd <= 0
 }
 
 function isForbiddenResource(configuration: RumConfiguration, entry: RumPerformanceEntry) {
-  return entry.entryType === 'resource' && !isAllowedRequestUrl(configuration, entry.name)
+  return entry.entryType === RumPerformanceEntryType.RESOURCE && !isAllowedRequestUrl(configuration, entry.name)
 }

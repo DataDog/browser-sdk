@@ -1,6 +1,6 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
-import type { RumPerformancePaintTiming } from 'packages/rum-core/src/browser/performanceCollection'
+import { RumPerformanceEntryType, type RumPerformancePaintTiming } from '../../../browser/performanceCollection'
 import type { TestSetupBuilder } from '../../../../test'
 import { setup } from '../../../../test'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -9,7 +9,7 @@ import { FCP_MAXIMUM_DELAY, trackFirstContentfulPaint } from './trackFirstConten
 import { trackFirstHidden } from './trackFirstHidden'
 
 const FAKE_PAINT_ENTRY: RumPerformancePaintTiming = {
-  entryType: 'paint',
+  entryType: RumPerformanceEntryType.PAINT,
   name: 'first-contentful-paint',
   startTime: 123 as RelativeTime,
 }

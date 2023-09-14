@@ -19,6 +19,7 @@ import {
 } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock, TestSetupBuilder } from '../../test'
 import { createRumSessionManagerMock, noopRecorderApi, noopWebVitalTelemetryDebug, setup } from '../../test'
+import { RumPerformanceEntryType } from '../browser/performanceCollection'
 import type { RumPerformanceNavigationTiming, RumPerformanceEntry } from '../browser/performanceCollection'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
@@ -232,7 +233,7 @@ describe('rum events url', () => {
     domComplete: 456 as RelativeTime,
     domContentLoadedEventEnd: 345 as RelativeTime,
     domInteractive: 234 as RelativeTime,
-    entryType: 'navigation',
+    entryType: RumPerformanceEntryType.NAVIGATION,
     loadEventEnd: 567 as RelativeTime,
   }
   const VIEW_DURATION = 1000
