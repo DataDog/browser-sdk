@@ -1,6 +1,6 @@
 // Represents the path of a field in an event object. The special value '$eventSource' represent the
 // event source (rum, logs, ...)
-export type FieldPath = string | '$eventSource'
+export type FieldPath = string
 export type FieldValue = string | number | null | boolean | object
 export type FieldMultiValue = FieldValue | FieldValue[]
 
