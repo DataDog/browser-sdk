@@ -1,17 +1,24 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { DOM_EVENT } from '@datadog/browser-core'
+import {
+  DOM_EVENT,
+  ExperimentalFeature,
+  addExperimentalFeatures,
+  noop,
+  resetExperimentalFeatures,
+} from '@datadog/browser-core'
 import { restorePageVisibility, setPageVisibility, createNewEvent } from '@datadog/browser-core/test'
-import type { RumLargestContentfulPaintTiming } from '../../../browser/performanceCollection'
+import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
 import type { TestSetupBuilder } from '../../../../test'
-import { setup } from '../../../../test'
+import { appendElement, createPerformanceEntry, setup } from '../../../../test'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { RumConfiguration } from '../../configuration'
+import type { LargestContentfulPaint } from './trackLargestContentfulPaint'
 import { LCP_MAXIMUM_DELAY, trackLargestContentfulPaint } from './trackLargestContentfulPaint'
 import { trackFirstHidden } from './trackFirstHidden'
 
 describe('trackLargestContentfulPaint', () => {
   let setupBuilder: TestSetupBuilder
-  let lcpCallback: jasmine.Spy<(value: RelativeTime, lcpElement: Element | undefined) => void>
+  let lcpCallback: jasmine.Spy<(lcp: LargestContentfulPaint) => void>
   let eventTarget: Window
   let configuration: RumConfiguration
 
@@ -24,6 +31,7 @@ describe('trackLargestContentfulPaint', () => {
       const largestContentfulPaint = trackLargestContentfulPaint(
         lifeCycle,
         configuration,
+        { addWebVitalTelemetryDebug: noop },
         firstHidden,
         eventTarget,
         lcpCallback
@@ -40,14 +48,45 @@ describe('trackLargestContentfulPaint', () => {
   afterEach(() => {
     setupBuilder.cleanup()
     restorePageVisibility()
+    resetExperimentalFeatures()
   })
 
   it('should provide the largest contentful paint timing', () => {
     const { lifeCycle } = setupBuilder.build()
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY])
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT),
+    ])
+
     expect(lcpCallback).toHaveBeenCalledTimes(1 as RelativeTime)
-    expect(lcpCallback).toHaveBeenCalledWith(789 as RelativeTime, jasmine.any(Element))
+    expect(lcpCallback).toHaveBeenCalledWith({ value: 789 as RelativeTime, targetSelector: undefined })
+  })
+
+  it('should provide the largest contentful paint target selector if FF enabled', () => {
+    addExperimentalFeatures([ExperimentalFeature.WEB_VITALS_ATTRIBUTION])
+    const { lifeCycle } = setupBuilder.build()
+
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
+        element: appendElement('button', { id: 'lcp-target-element' }),
+      }),
+    ])
+
+    expect(lcpCallback).toHaveBeenCalledTimes(1 as RelativeTime)
+    expect(lcpCallback).toHaveBeenCalledWith({ value: 789 as RelativeTime, targetSelector: '#lcp-target-element' })
+  })
+
+  it('should not provide the largest contentful paint target selector if FF disabled', () => {
+    const { lifeCycle } = setupBuilder.build()
+
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
+        element: appendElement('button', { id: 'lcp-target-element' }),
+      }),
+    ])
+
+    expect(lcpCallback).toHaveBeenCalledTimes(1 as RelativeTime)
+    expect(lcpCallback).toHaveBeenCalledWith({ value: 789 as RelativeTime, targetSelector: undefined })
   })
 
   it('should be discarded if it is reported after a user interaction', () => {
@@ -55,7 +94,10 @@ describe('trackLargestContentfulPaint', () => {
 
     eventTarget.dispatchEvent(createNewEvent(DOM_EVENT.KEY_DOWN, { timeStamp: 1 }))
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY])
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT),
+    ])
+
     expect(lcpCallback).not.toHaveBeenCalled()
   })
 
@@ -63,7 +105,9 @@ describe('trackLargestContentfulPaint', () => {
     setPageVisibility('hidden')
     const { lifeCycle } = setupBuilder.build()
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY])
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT),
+    ])
 
     expect(lcpCallback).not.toHaveBeenCalled()
   })
@@ -72,18 +116,11 @@ describe('trackLargestContentfulPaint', () => {
     const { lifeCycle } = setupBuilder.build()
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      {
-        ...FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY,
+      createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
         startTime: LCP_MAXIMUM_DELAY as RelativeTime,
-      },
+      }),
     ])
+
     expect(lcpCallback).not.toHaveBeenCalled()
   })
 })
-
-const FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY: RumLargestContentfulPaintTiming = {
-  entryType: 'largest-contentful-paint',
-  startTime: 789 as RelativeTime,
-  size: 10,
-  element: document.createElement('div'),
-}

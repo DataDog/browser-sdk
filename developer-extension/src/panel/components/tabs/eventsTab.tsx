@@ -1,12 +1,11 @@
-import { Badge, Button, Chip, Group, Table, TextInput } from '@mantine/core'
+import { Badge, Button, Checkbox, Chip, Group, Table, TextInput } from '@mantine/core'
 import React from 'react'
 import { safeTruncate } from '../../../../../packages/core/src/tools/utils/stringUtils'
-import type { TelemetryEvent } from '../../../../../packages/core/src/domain/telemetry'
-import type { RumEvent } from '../../../../../packages/rum-core/src/rumEvent.types'
-import type { EventFilters, StoredEvent } from '../../hooks/useEvents'
+import type { EventFilters } from '../../hooks/useEvents'
 import { flushEvents } from '../../flushEvents'
 import { Json } from '../json'
 import { TabBase } from '../tabBase'
+import { isRumEvent, isRumViewEvent, isTelemetryEvent, type SdkEvent } from '../../sdkEvent'
 
 const RUM_EVENT_TYPE_COLOR = {
   action: 'violet',
@@ -25,7 +24,7 @@ const LOG_STATUS_COLOR = {
 }
 
 interface EventTabProps {
-  events: StoredEvent[]
+  events: SdkEvent[]
   filters: EventFilters
   onFiltered: (filters: EventFilters) => void
   clear: () => void
@@ -43,7 +42,13 @@ export function EventTab({ events, filters, onFiltered, clear }: EventTabProps) 
           >
             <Chip value="rum">RUM</Chip>
             <Chip value="logs">Logs</Chip>
+            <Chip value="telemetry">Telemetry</Chip>
           </Chip.Group>
+          <Checkbox
+            label="Show only the latest View event"
+            checked={!filters.outdatedVersions}
+            onChange={(e) => onFiltered({ ...filters, outdatedVersions: !e.target.checked })}
+          />
           <TextInput
             placeholder="Filter your events, syntax: 'type:view application.id:40d8ca4b'"
             value={filters.query}
@@ -64,10 +69,10 @@ export function EventTab({ events, filters, onFiltered, clear }: EventTabProps) 
       <Table striped verticalSpacing="xs" fontSize="xs">
         <tbody>
           {events.map((event) => (
-            <tr key={event.id}>
+            <tr key={getEventRenderingKey(event, !filters.outdatedVersions)}>
               <td width="20">{new Date(event.date).toLocaleTimeString()}</td>
               <td width="20">
-                {isRumEvent(event) ? (
+                {isRumEvent(event) || isTelemetryEvent(event) ? (
                   <Badge variant="outline" color={RUM_EVENT_TYPE_COLOR[event.type]}>
                     {event.type}
                   </Badge>
@@ -88,11 +93,27 @@ export function EventTab({ events, filters, onFiltered, clear }: EventTabProps) 
   )
 }
 
-function isRumEvent(event: StoredEvent): event is (RumEvent | TelemetryEvent) & { id: string } {
-  return !event.status
+const eventRenderingKeys = new WeakMap<SdkEvent, number>()
+let nextEventRenderingKey = 1
+
+function getEventRenderingKey(event: SdkEvent, excludeOutdatedVersions: boolean): number | string {
+  // If we are showing only the latest view updates, return the view.id as key so the component is
+  // simply updated and not recreated when a new update comes up.
+  if (isRumViewEvent(event) && excludeOutdatedVersions) {
+    return event.view.id
+  }
+
+  // Else return an ever-increasing id identifying each event instance.
+  let key = eventRenderingKeys.get(event)
+  if (key === undefined) {
+    key = nextEventRenderingKey
+    nextEventRenderingKey += 1
+    eventRenderingKeys.set(event, key)
+  }
+  return key
 }
 
-function getRumEventDescription(event: StoredEvent): string | undefined {
+function getRumEventDescription(event: SdkEvent): string | undefined {
   if (isRumEvent(event)) {
     switch (event.type) {
       case 'view':
@@ -105,16 +126,15 @@ function getRumEventDescription(event: StoredEvent): string | undefined {
         return `${event.error.source} error ${event.error.message}`
       case 'long_task':
         return `long task of ${(event.long_task.duration / 1000).toLocaleString()} ms`
-      case 'telemetry': {
-        switch (event.telemetry.type) {
-          case 'log':
-            return event.telemetry.message
-          case 'configuration':
-            return jsonOverview(event.telemetry.configuration)
-          default:
-            return ''
-        }
-      }
+    }
+  } else if (isTelemetryEvent(event)) {
+    switch (event.telemetry.type) {
+      case 'log':
+        return event.telemetry.message
+      case 'configuration':
+        return jsonOverview(event.telemetry.configuration)
+      default:
+        return ''
     }
   } else {
     return event.message

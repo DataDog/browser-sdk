@@ -3,12 +3,12 @@ import type { TestSetupBuilder } from '../../../../test'
 import { setup } from '../../../../test'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { FAKE_NAVIGATION_ENTRY } from '../setupViewTest.specHelper'
-import type { InitialViewMetrics } from './trackInitialViewMetrics'
+import type { NavigationTimings } from './trackNavigationTimings'
 import { trackNavigationTimings } from './trackNavigationTimings'
 
 describe('trackNavigationTimings', () => {
   let setupBuilder: TestSetupBuilder
-  let navigationTimingsCallback: jasmine.Spy<(value: Partial<InitialViewMetrics>) => void>
+  let navigationTimingsCallback: jasmine.Spy<(timings: NavigationTimings) => void>
 
   beforeEach(() => {
     navigationTimingsCallback = jasmine.createSpy()

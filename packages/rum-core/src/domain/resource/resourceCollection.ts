@@ -13,6 +13,7 @@ import {
 import type { ClocksState, Duration } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceCollection'
+import { RumPerformanceEntryType } from '../../browser/performanceCollection'
 import type { RumXhrResourceEventDomainContext, RumFetchResourceEventDomainContext } from '../../domainContext.types'
 import type { RawRumResourceEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -46,7 +47,7 @@ export function startResourceCollection(
 
   lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
     for (const entry of entries) {
-      if (entry.entryType === 'resource' && !isRequestKind(entry)) {
+      if (entry.entryType === RumPerformanceEntryType.RESOURCE && !isRequestKind(entry)) {
         lifeCycle.notify(
           LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
           processResourceEntry(entry, configuration, sessionManager, pageStateHistory)

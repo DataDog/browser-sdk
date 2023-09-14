@@ -17,6 +17,7 @@ export enum ExperimentalFeature {
   COLLECT_FLUSH_REASON = 'collect_flush_reason',
   SCROLLMAP = 'scrollmap',
   INTERACTION_TO_NEXT_PAINT = 'interaction_to_next_paint',
+  WEB_VITALS_ATTRIBUTION = 'web_vitals_attribution',
   DISABLE_REPLAY_INLINE_CSS = 'disable_replay_inline_css',
 }
 
