@@ -5,7 +5,6 @@ export {
   DefaultPrivacyLevel,
   EndpointBuilder,
   serializeConfiguration,
-  INTAKE_SITE_AP1,
   INTAKE_SITE_STAGING,
   INTAKE_SITE_US1,
   INTAKE_SITE_US1_FED,

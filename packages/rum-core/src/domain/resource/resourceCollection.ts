@@ -12,13 +12,9 @@ import {
 } from '@datadog/browser-core'
 import type { ClocksState, Duration } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
-import type { RumPerformanceEntry, RumPerformanceResourceTiming } from '../../browser/performanceCollection'
+import type { RumPerformanceResourceTiming } from '../../browser/performanceCollection'
 import { RumPerformanceEntryType } from '../../browser/performanceCollection'
-import type {
-  PerformanceEntryRepresentation,
-  RumXhrResourceEventDomainContext,
-  RumFetchResourceEventDomainContext,
-} from '../../domainContext.types'
+import type { RumXhrResourceEventDomainContext, RumFetchResourceEventDomainContext } from '../../domainContext.types'
 import type { RawRumResourceEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
@@ -74,7 +70,7 @@ function processRequest(
   const correspondingTimingOverrides = matchingTiming ? computePerformanceEntryMetrics(matchingTiming) : undefined
 
   const tracingInfo = computeRequestTracingInfo(request, configuration)
-  const indexingInfo = computeIndexingInfo(sessionManager, startClocks)
+  const indexingInfo = computeIndexingInfo(configuration, sessionManager, startClocks)
 
   const duration = computeRequestDuration(pageStateHistory, startClocks, request.duration)
   const pageStateInfo = computePageStateInfo(
@@ -106,7 +102,7 @@ function processRequest(
     startTime: startClocks.relative,
     rawRumEvent: resourceEvent,
     domainContext: {
-      performanceEntry: matchingTiming && toPerformanceEntryRepresentation(matchingTiming),
+      performanceEntry: matchingTiming,
       xhr: request.xhr,
       response: request.response,
       requestInput: request.input,
@@ -127,7 +123,7 @@ function processResourceEntry(
   const startClocks = relativeToClocks(entry.startTime)
 
   const tracingInfo = computeEntryTracingInfo(entry, configuration)
-  const indexingInfo = computeIndexingInfo(sessionManager, startClocks)
+  const indexingInfo = computeIndexingInfo(configuration, sessionManager, startClocks)
   const pageStateInfo = computePageStateInfo(pageStateHistory, startClocks, entry.duration)
 
   const resourceEvent = combine(
@@ -149,7 +145,7 @@ function processResourceEntry(
     startTime: startClocks.relative,
     rawRumEvent: resourceEvent,
     domainContext: {
-      performanceEntry: toPerformanceEntryRepresentation(entry),
+      performanceEntry: entry,
     },
   }
 }
@@ -193,11 +189,6 @@ function computeEntryTracingInfo(entry: RumPerformanceResourceTiming, configurat
   }
 }
 
-// TODO next major: use directly PerformanceEntry type in domain context
-function toPerformanceEntryRepresentation(entry: RumPerformanceEntry): PerformanceEntryRepresentation {
-  return entry as PerformanceEntryRepresentation
-}
-
 /**
  * @returns number between 0 and 1 which represents trace sample rate
  */
@@ -205,11 +196,15 @@ function getRulePsr(configuration: RumConfiguration) {
   return isNumber(configuration.traceSampleRate) ? configuration.traceSampleRate / 100 : undefined
 }
 
-function computeIndexingInfo(sessionManager: RumSessionManager, resourceStart: ClocksState) {
+function computeIndexingInfo(
+  configuration: RumConfiguration,
+  sessionManager: RumSessionManager,
+  resourceStart: ClocksState
+) {
   const session = sessionManager.findTrackedSession(resourceStart.relative)
   return {
     _dd: {
-      discarded: !session || !session.resourceAllowed,
+      discarded: !session || !configuration.trackResources,
     },
   }
 }
@@ -228,11 +223,6 @@ function computePageStateInfo(pageStateHistory: PageStateHistory, startClocks: C
 }
 
 function computeRequestDuration(pageStateHistory: PageStateHistory, startClocks: ClocksState, duration: Duration) {
-  // TODO remove FF in next major
-  if (!isExperimentalFeatureEnabled(ExperimentalFeature.NO_RESOURCE_DURATION_FROZEN_STATE)) {
-    return toServerDuration(duration)
-  }
-
   const requestCrossedFrozenState = pageStateHistory
     .findAll(startClocks.relative, duration)
     ?.some((pageState) => pageState.state === PageState.FROZEN)

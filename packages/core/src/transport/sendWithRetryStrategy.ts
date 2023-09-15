@@ -1,4 +1,4 @@
-import type { EndpointType } from '../domain/configuration'
+import type { TrackType } from '../domain/configuration'
 import { setTimeout } from '../tools/timer'
 import { clocksNow, ONE_MINUTE, ONE_SECOND } from '../tools/utils/timeUtils'
 import { ONE_MEBI_BYTE, ONE_KIBI_BYTE } from '../tools/utils/byteUtils'
@@ -38,7 +38,7 @@ export function sendWithRetryStrategy(
   payload: Payload,
   state: RetryState,
   sendStrategy: SendStrategy,
-  endpointType: EndpointType,
+  trackType: TrackType,
   reportError: (error: RawError) => void
 ) {
   if (
@@ -47,10 +47,10 @@ export function sendWithRetryStrategy(
     state.bandwidthMonitor.canHandle(payload)
   ) {
     send(payload, state, sendStrategy, {
-      onSuccess: () => retryQueuedPayloads(RetryReason.AFTER_SUCCESS, state, sendStrategy, endpointType, reportError),
+      onSuccess: () => retryQueuedPayloads(RetryReason.AFTER_SUCCESS, state, sendStrategy, trackType, reportError),
       onFailure: () => {
         state.queuedPayloads.enqueue(payload)
-        scheduleRetry(state, sendStrategy, endpointType, reportError)
+        scheduleRetry(state, sendStrategy, trackType, reportError)
       },
     })
   } else {
@@ -61,7 +61,7 @@ export function sendWithRetryStrategy(
 function scheduleRetry(
   state: RetryState,
   sendStrategy: SendStrategy,
-  endpointType: EndpointType,
+  trackType: TrackType,
   reportError: (error: RawError) => void
 ) {
   if (state.transportStatus !== TransportStatus.DOWN) {
@@ -73,11 +73,11 @@ function scheduleRetry(
       onSuccess: () => {
         state.queuedPayloads.dequeue()
         state.currentBackoffTime = INITIAL_BACKOFF_TIME
-        retryQueuedPayloads(RetryReason.AFTER_RESUME, state, sendStrategy, endpointType, reportError)
+        retryQueuedPayloads(RetryReason.AFTER_RESUME, state, sendStrategy, trackType, reportError)
       },
       onFailure: () => {
         state.currentBackoffTime = Math.min(MAX_BACKOFF_TIME, state.currentBackoffTime * 2)
-        scheduleRetry(state, sendStrategy, endpointType, reportError)
+        scheduleRetry(state, sendStrategy, trackType, reportError)
       },
     })
   }, state.currentBackoffTime)
@@ -112,12 +112,12 @@ function retryQueuedPayloads(
   reason: RetryReason,
   state: RetryState,
   sendStrategy: SendStrategy,
-  endpointType: EndpointType,
+  trackType: TrackType,
   reportError: (error: RawError) => void
 ) {
   if (reason === RetryReason.AFTER_SUCCESS && state.queuedPayloads.isFull() && !state.queueFullReported) {
     reportError({
-      message: `Reached max ${endpointType} events size queued for upload: ${MAX_QUEUE_BYTES_COUNT / ONE_MEBI_BYTE}MiB`,
+      message: `Reached max ${trackType} events size queued for upload: ${MAX_QUEUE_BYTES_COUNT / ONE_MEBI_BYTE}MiB`,
       source: ErrorSource.AGENT,
       startClocks: clocksNow(),
     })
@@ -126,7 +126,7 @@ function retryQueuedPayloads(
   const previousQueue = state.queuedPayloads
   state.queuedPayloads = newPayloadQueue()
   while (previousQueue.size() > 0) {
-    sendWithRetryStrategy(previousQueue.dequeue()!, state, sendStrategy, endpointType, reportError)
+    sendWithRetryStrategy(previousQueue.dequeue()!, state, sendStrategy, trackType, reportError)
   }
 }
 

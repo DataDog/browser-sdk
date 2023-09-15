@@ -1,5 +1,5 @@
 import type { Configuration } from '@datadog/browser-core'
-import { stubZoneJs } from '../../test'
+import { createNewEvent, stubZoneJs } from '../../test'
 import { noop } from '../tools/utils/functionUtils'
 import { addEventListener, DOM_EVENT } from './addEventListener'
 
@@ -10,7 +10,7 @@ describe('addEventListener', () => {
     let zoneJsStub: ReturnType<typeof stubZoneJs>
 
     beforeEach(() => {
-      configuration = {} as Configuration
+      configuration = { allowUntrustedEvents: false } as Configuration
       zoneJsStub = stubZoneJs()
     })
 
@@ -35,6 +35,56 @@ describe('addEventListener', () => {
       const { stop } = addEventListener(configuration, eventTarget, DOM_EVENT.CLICK, noop)
       stop()
       expect(zoneJsPatchedRemoveEventListener).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('Untrusted event', () => {
+    beforeEach(() => {
+      configuration = { allowUntrustedEvents: false } as Configuration
+    })
+
+    it('should be ignored if __ddIsTrusted is absent', () => {
+      const listener = jasmine.createSpy()
+      const eventTarget = document.createElement('div')
+      addEventListener(configuration, eventTarget, DOM_EVENT.CLICK, listener)
+
+      const event = createNewEvent(DOM_EVENT.CLICK, { __ddIsTrusted: undefined })
+      eventTarget.dispatchEvent(event)
+      expect(listener).not.toHaveBeenCalled()
+    })
+
+    it('should be ignored if __ddIsTrusted is false', () => {
+      const listener = jasmine.createSpy()
+      const eventTarget = document.createElement('div')
+      addEventListener(configuration, eventTarget, DOM_EVENT.CLICK, listener)
+
+      const event = createNewEvent(DOM_EVENT.CLICK, { __ddIsTrusted: false })
+      eventTarget.dispatchEvent(event)
+      expect(listener).not.toHaveBeenCalled()
+    })
+
+    it('should not be ignored if __ddIsTrusted is true', () => {
+      const listener = jasmine.createSpy()
+      const eventTarget = document.createElement('div')
+      addEventListener(configuration, eventTarget, DOM_EVENT.CLICK, listener)
+
+      const event = createNewEvent(DOM_EVENT.CLICK, { __ddIsTrusted: true })
+      eventTarget.dispatchEvent(event)
+
+      expect(listener).toHaveBeenCalled()
+    })
+
+    it('should not be ignored if allowUntrustedEvents is true', () => {
+      const listener = jasmine.createSpy()
+      const eventTarget = document.createElement('div')
+      configuration = { allowUntrustedEvents: true } as Configuration
+
+      addEventListener(configuration, eventTarget, DOM_EVENT.CLICK, listener)
+
+      const event = createNewEvent(DOM_EVENT.CLICK, { __ddIsTrusted: undefined })
+      eventTarget.dispatchEvent(event)
+
+      expect(listener).toHaveBeenCalled()
     })
   })
 })

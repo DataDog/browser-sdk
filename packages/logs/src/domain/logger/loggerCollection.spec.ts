@@ -34,23 +34,6 @@ describe('logger collection', () => {
     clock.cleanup()
   })
 
-  it('should send logger logs', () => {
-    handleLog({ message: 'message', status: StatusType.error }, logger, COMMON_CONTEXT)
-
-    expect(rawLogsEvents[0].rawLogsEvent).toEqual({
-      date: timeStampNow(),
-      origin: ErrorSource.LOGGER,
-      message: 'message',
-      status: StatusType.error,
-    })
-  })
-
-  it('should send the saved date when present', () => {
-    handleLog({ message: 'message', status: StatusType.error }, logger, COMMON_CONTEXT, FAKE_DATE)
-
-    expect(rawLogsEvents[0].rawLogsEvent.date).toEqual(FAKE_DATE)
-  })
-
   describe('when handle type is set to "console"', () => {
     beforeEach(() => {
       logger.setHandler(HandlerType.console)
@@ -62,19 +45,18 @@ describe('logger collection', () => {
     })
 
     it('should print the log message and context to the console', () => {
-      logger.setContext({ 'logger-context': 'foo' })
+      logger.setContext({ foo: 'from-logger', bar: 'from-logger' })
 
       handleLog(
-        { message: 'message', status: StatusType.error, context: { 'log-context': 'bar' } },
+        { message: 'message', status: StatusType.error, context: { bar: 'from-message' } },
         logger,
         COMMON_CONTEXT
       )
 
       expect(display.error).toHaveBeenCalledOnceWith('message', {
-        'logger-context': 'foo',
-        'log-context': 'bar',
+        foo: 'from-logger',
+        bar: 'from-message',
       })
-      expect(rawLogsEvents.length).toEqual(1)
     })
 
     for (const { status, api } of [
@@ -105,6 +87,55 @@ describe('logger collection', () => {
       expect(display.error).not.toHaveBeenCalled()
       expect(display.warn).not.toHaveBeenCalled()
       expect(display.debug).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('when handle type is set to "http"', () => {
+    beforeEach(() => {
+      logger.setHandler(HandlerType.http)
+    })
+
+    it('should send the log message and context', () => {
+      logger.setContext({ foo: 'from-logger', bar: 'from-logger' })
+
+      handleLog(
+        { message: 'message', status: StatusType.error, context: { bar: 'from-message' } },
+        logger,
+        COMMON_CONTEXT
+      )
+
+      expect(rawLogsEvents[0]).toEqual({
+        rawLogsEvent: {
+          date: timeStampNow(),
+          origin: ErrorSource.LOGGER,
+          message: 'message',
+          status: StatusType.error,
+        },
+        messageContext: {
+          foo: 'from-logger',
+          bar: 'from-message',
+        },
+        savedCommonContext: COMMON_CONTEXT,
+      })
+    })
+
+    it('should send the saved date when present', () => {
+      handleLog({ message: 'message', status: StatusType.error }, logger, COMMON_CONTEXT, FAKE_DATE)
+
+      expect(rawLogsEvents[0].rawLogsEvent.date).toEqual(FAKE_DATE)
+    })
+
+    it('does not send the log if its status is below the logger level', () => {
+      logger.setLevel(StatusType.warn)
+      handleLog({ message: 'message', status: StatusType.info }, logger, COMMON_CONTEXT)
+
+      expect(rawLogsEvents.length).toBe(0)
+    })
+
+    it('does not send the log and does not crash if its status is unknown', () => {
+      handleLog({ message: 'message', status: 'unknown' as StatusType }, logger, COMMON_CONTEXT)
+
+      expect(rawLogsEvents.length).toBe(0)
     })
   })
 })

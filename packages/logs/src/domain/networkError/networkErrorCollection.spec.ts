@@ -72,7 +72,6 @@ describe('network error collection', () => {
         status: StatusType.error,
         origin: ErrorSource.NETWORK,
         error: {
-          origin: ErrorSource.NETWORK,
           stack: 'Server error',
         },
         http: {

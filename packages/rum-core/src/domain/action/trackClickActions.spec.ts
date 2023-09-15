@@ -167,62 +167,132 @@ describe('trackClickActions', () => {
     expect(events[0].name).toBe('test-1')
   })
 
-  describe('without tracking frustrations', () => {
-    it('discards any click action with a negative duration', () => {
-      const { clock } = setupBuilder.build()
-      emulateClick({ activity: { delay: -1 } })
-      expect(findActionId()).not.toBeUndefined()
-      clock.tick(EXPIRE_DELAY)
+  it('discards any click action with a negative duration', () => {
+    const { clock } = setupBuilder.build()
+    emulateClick({ activity: { delay: -1 } })
+    expect(findActionId()!.length).toEqual(2)
+    clock.tick(EXPIRE_DELAY)
 
-      expect(events).toEqual([])
-      expect(findActionId()).toBeUndefined()
+    expect(events).toEqual([])
+    expect(findActionId()).toEqual([])
+  })
+
+  it('ongoing click action is stopped on view end', () => {
+    const { lifeCycle, clock } = setupBuilder.build()
+    emulateClick({ activity: { delay: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY } })
+
+    clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+
+    lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {
+      endClocks: clocksNow(),
     })
 
-    it('discards ongoing click action on view ended', () => {
-      const { lifeCycle, clock } = setupBuilder.build()
-      emulateClick({ activity: {} })
-      expect(findActionId()).not.toBeUndefined()
+    expect(events.length).toBe(1)
+    expect(events[0].duration).toBe((2 * BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY) as Duration)
+  })
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {
-        endClocks: clocksNow(),
-      })
-      clock.tick(EXPIRE_DELAY)
+  it('collect click actions even if another one is ongoing', () => {
+    const { clock } = setupBuilder.build()
 
-      expect(events).toEqual([])
-      expect(findActionId()).toBeUndefined()
-    })
+    const firstPointerDownTimeStamp = timeStampNow()
+    emulateClick({ activity: {} })
+    const secondPointerDownTimeStamp = timeStampNow()
+    emulateClick({ activity: {} })
 
-    it('ignores any starting click action while another one is ongoing', () => {
+    clock.tick(EXPIRE_DELAY)
+    expect(events.length).toBe(2)
+    expect(events[0].startClocks.timeStamp).toBe(addDuration(firstPointerDownTimeStamp, EMULATED_CLICK_DURATION))
+    expect(events[1].startClocks.timeStamp).toBe(addDuration(secondPointerDownTimeStamp, EMULATED_CLICK_DURATION))
+  })
+
+  it('collect click actions even if nothing happens after a click (dead click)', () => {
+    const { clock } = setupBuilder.build()
+    emulateClick()
+
+    clock.tick(EXPIRE_DELAY)
+    expect(events.length).toBe(1)
+    expect(events[0].frustrationTypes).toEqual([FrustrationType.DEAD_CLICK])
+    expect(findActionId()).toEqual([])
+  })
+
+  it('does not set a duration for dead clicks', () => {
+    const { clock } = setupBuilder.build()
+    emulateClick()
+
+    clock.tick(EXPIRE_DELAY)
+    expect(events.length).toBe(1)
+    expect(events[0].duration).toBeUndefined()
+  })
+
+  it('collect click actions even if it fails to find a name', () => {
+    const { clock } = setupBuilder.build()
+    emulateClick({ activity: {}, target: emptyElement })
+    expect(findActionId()!.length).toBeGreaterThan(0)
+    clock.tick(EXPIRE_DELAY)
+
+    expect(events.length).toBe(1)
+  })
+
+  describe('rage clicks', () => {
+    it('considers a chain of three clicks or more as a single action with "rage" frustration type', () => {
       const { clock } = setupBuilder.build()
-
       const firstPointerDownTimeStamp = timeStampNow()
-      emulateClick({ activity: {} })
-      emulateClick({ activity: {} })
+      const activityDelay = 5
+      emulateClick({ activity: { delay: activityDelay } })
+      emulateClick({ activity: { delay: activityDelay } })
+      emulateClick({ activity: { delay: activityDelay } })
 
       clock.tick(EXPIRE_DELAY)
       expect(events.length).toBe(1)
       expect(events[0].startClocks.timeStamp).toBe(addDuration(firstPointerDownTimeStamp, EMULATED_CLICK_DURATION))
+      expect(events[0].frustrationTypes).toEqual([FrustrationType.RAGE_CLICK])
+      expect(events[0].duration).toBe(
+        (MAX_DURATION_BETWEEN_CLICKS + 2 * activityDelay + 2 * EMULATED_CLICK_DURATION) as Duration
+      )
     })
 
-    it('discards a click action when nothing happens after a click', () => {
+    it('should contain original events from of rage sequence', () => {
       const { clock } = setupBuilder.build()
+      const activityDelay = 5
+      emulateClick({ activity: { delay: activityDelay } })
+      emulateClick({ activity: { delay: activityDelay } })
+      emulateClick({ activity: { delay: activityDelay } })
+
+      clock.tick(EXPIRE_DELAY)
+      expect(events.length).toBe(1)
+      expect(events[0].frustrationTypes).toEqual([FrustrationType.RAGE_CLICK])
+      expect(events[0].events?.length).toBe(3)
+    })
+
+    it('aggregates frustrationTypes from all clicks', () => {
+      const { lifeCycle, clock } = setupBuilder.build()
+
+      // Dead
       emulateClick()
+      clock.tick(PAGE_ACTIVITY_VALIDATION_DELAY)
+
+      // Error
+      emulateClick({ activity: {} })
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeErrorEvent())
+      clock.tick(PAGE_ACTIVITY_VALIDATION_DELAY)
+
+      // Third click to make a rage click
+      emulateClick({ activity: {} })
 
       clock.tick(EXPIRE_DELAY)
-      expect(events).toEqual([])
-      expect(findActionId()).toBeUndefined()
+      expect(events.length).toBe(1)
+      expect(events[0].frustrationTypes).toEqual(
+        jasmine.arrayWithExactContents([
+          FrustrationType.DEAD_CLICK,
+          FrustrationType.ERROR_CLICK,
+          FrustrationType.RAGE_CLICK,
+        ])
+      )
     })
+  })
 
-    it('ignores a click action if it fails to find a name', () => {
-      const { clock } = setupBuilder.build()
-      emulateClick({ activity: {}, target: emptyElement })
-      expect(findActionId()).toBeUndefined()
-      clock.tick(EXPIRE_DELAY)
-
-      expect(events).toEqual([])
-    })
-
-    it('does not populate the frustrationTypes array', () => {
+  describe('error clicks', () => {
+    it('considers a "click with activity" followed by an error as a click action with "error" frustration type', () => {
       const { lifeCycle, clock } = setupBuilder.build()
 
       emulateClick({ activity: {} })
@@ -230,205 +300,62 @@ describe('trackClickActions', () => {
 
       clock.tick(EXPIRE_DELAY)
       expect(events.length).toBe(1)
-      expect(events[0].frustrationTypes).toEqual([])
+      expect(events[0].frustrationTypes).toEqual([FrustrationType.ERROR_CLICK])
+    })
+
+    it('considers a "click without activity" followed by an error as a click action with "error" (and "dead") frustration type', () => {
+      const { lifeCycle, clock } = setupBuilder.build()
+
+      emulateClick()
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeErrorEvent())
+
+      clock.tick(EXPIRE_DELAY)
+      expect(events.length).toBe(1)
+      expect(events[0].frustrationTypes).toEqual(
+        jasmine.arrayWithExactContents([FrustrationType.ERROR_CLICK, FrustrationType.DEAD_CLICK])
+      )
     })
   })
 
-  describe('when tracking frustrations', () => {
-    beforeEach(() => {
-      setupBuilder.withConfiguration({ trackFrustrations: true })
-    })
-
-    it('discards any click action with a negative duration', () => {
-      const { clock } = setupBuilder.build()
-      emulateClick({ activity: { delay: -1 } })
-      expect(findActionId()!.length).toEqual(2)
-      clock.tick(EXPIRE_DELAY)
-
-      expect(events).toEqual([])
-      expect(findActionId()).toEqual([])
-    })
-
-    it('ongoing click action is stopped on view end', () => {
-      const { lifeCycle, clock } = setupBuilder.build()
-      emulateClick({ activity: { delay: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY } })
-
-      clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-
-      lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {
-        endClocks: clocksNow(),
-      })
-
-      expect(events.length).toBe(1)
-      expect(events[0].duration).toBe((2 * BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY) as Duration)
-    })
-
-    it('collect click actions even if another one is ongoing', () => {
+  describe('dead clicks', () => {
+    it('considers a "click without activity" as a dead click', () => {
       const { clock } = setupBuilder.build()
 
-      const firstPointerDownTimeStamp = timeStampNow()
-      emulateClick({ activity: {} })
-      const secondPointerDownTimeStamp = timeStampNow()
-      emulateClick({ activity: {} })
-
-      clock.tick(EXPIRE_DELAY)
-      expect(events.length).toBe(2)
-      expect(events[0].startClocks.timeStamp).toBe(addDuration(firstPointerDownTimeStamp, EMULATED_CLICK_DURATION))
-      expect(events[1].startClocks.timeStamp).toBe(addDuration(secondPointerDownTimeStamp, EMULATED_CLICK_DURATION))
-    })
-
-    it('collect click actions even if nothing happens after a click (dead click)', () => {
-      const { clock } = setupBuilder.build()
       emulateClick()
 
       clock.tick(EXPIRE_DELAY)
       expect(events.length).toBe(1)
       expect(events[0].frustrationTypes).toEqual([FrustrationType.DEAD_CLICK])
-      expect(findActionId()).toEqual([])
     })
 
-    it('does not set a duration for dead clicks', () => {
+    it('does not consider a click with activity happening on pointerdown as a dead click', () => {
       const { clock } = setupBuilder.build()
-      emulateClick()
+
+      emulateClick({ activity: { on: 'pointerdown' } })
 
       clock.tick(EXPIRE_DELAY)
       expect(events.length).toBe(1)
-      expect(events[0].duration).toBeUndefined()
+      expect(events[0].frustrationTypes).toEqual([])
     })
 
-    it('collect click actions even if it fails to find a name', () => {
+    it('activity happening on pointerdown is not taken into account for the action duration', () => {
       const { clock } = setupBuilder.build()
-      emulateClick({ activity: {}, target: emptyElement })
-      expect(findActionId()!.length).toBeGreaterThan(0)
+
+      emulateClick({ activity: { on: 'pointerdown' } })
+
       clock.tick(EXPIRE_DELAY)
-
       expect(events.length).toBe(1)
+      expect(events[0].duration).toBe(0 as Duration)
     })
 
-    describe('rage clicks', () => {
-      it('considers a chain of three clicks or more as a single action with "rage" frustration type', () => {
-        const { clock } = setupBuilder.build()
-        const firstPointerDownTimeStamp = timeStampNow()
-        const activityDelay = 5
-        emulateClick({ activity: { delay: activityDelay } })
-        emulateClick({ activity: { delay: activityDelay } })
-        emulateClick({ activity: { delay: activityDelay } })
+    it('does not consider a click with activity happening on pointerup as a dead click', () => {
+      const { clock } = setupBuilder.build()
 
-        clock.tick(EXPIRE_DELAY)
-        expect(events.length).toBe(1)
-        expect(events[0].startClocks.timeStamp).toBe(addDuration(firstPointerDownTimeStamp, EMULATED_CLICK_DURATION))
-        expect(events[0].frustrationTypes).toEqual([FrustrationType.RAGE_CLICK])
-        expect(events[0].duration).toBe(
-          (MAX_DURATION_BETWEEN_CLICKS + 2 * activityDelay + 2 * EMULATED_CLICK_DURATION) as Duration
-        )
-      })
+      emulateClick({ activity: { on: 'pointerup' } })
 
-      it('should contain original events from of rage sequence', () => {
-        const { clock } = setupBuilder.build()
-        const activityDelay = 5
-        emulateClick({ activity: { delay: activityDelay } })
-        emulateClick({ activity: { delay: activityDelay } })
-        emulateClick({ activity: { delay: activityDelay } })
-
-        clock.tick(EXPIRE_DELAY)
-        expect(events.length).toBe(1)
-        expect(events[0].frustrationTypes).toEqual([FrustrationType.RAGE_CLICK])
-        expect(events[0].events?.length).toBe(3)
-      })
-
-      it('aggregates frustrationTypes from all clicks', () => {
-        const { lifeCycle, clock } = setupBuilder.build()
-
-        // Dead
-        emulateClick()
-        clock.tick(PAGE_ACTIVITY_VALIDATION_DELAY)
-
-        // Error
-        emulateClick({ activity: {} })
-        lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeErrorEvent())
-        clock.tick(PAGE_ACTIVITY_VALIDATION_DELAY)
-
-        // Third click to make a rage click
-        emulateClick({ activity: {} })
-
-        clock.tick(EXPIRE_DELAY)
-        expect(events.length).toBe(1)
-        expect(events[0].frustrationTypes).toEqual(
-          jasmine.arrayWithExactContents([
-            FrustrationType.DEAD_CLICK,
-            FrustrationType.ERROR_CLICK,
-            FrustrationType.RAGE_CLICK,
-          ])
-        )
-      })
-    })
-
-    describe('error clicks', () => {
-      it('considers a "click with activity" followed by an error as a click action with "error" frustration type', () => {
-        const { lifeCycle, clock } = setupBuilder.build()
-
-        emulateClick({ activity: {} })
-        lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeErrorEvent())
-
-        clock.tick(EXPIRE_DELAY)
-        expect(events.length).toBe(1)
-        expect(events[0].frustrationTypes).toEqual([FrustrationType.ERROR_CLICK])
-      })
-
-      it('considers a "click without activity" followed by an error as a click action with "error" (and "dead") frustration type', () => {
-        const { lifeCycle, clock } = setupBuilder.build()
-
-        emulateClick()
-        lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeErrorEvent())
-
-        clock.tick(EXPIRE_DELAY)
-        expect(events.length).toBe(1)
-        expect(events[0].frustrationTypes).toEqual(
-          jasmine.arrayWithExactContents([FrustrationType.ERROR_CLICK, FrustrationType.DEAD_CLICK])
-        )
-      })
-    })
-
-    describe('dead clicks', () => {
-      it('considers a "click without activity" as a dead click', () => {
-        const { clock } = setupBuilder.build()
-
-        emulateClick()
-
-        clock.tick(EXPIRE_DELAY)
-        expect(events.length).toBe(1)
-        expect(events[0].frustrationTypes).toEqual([FrustrationType.DEAD_CLICK])
-      })
-
-      it('does not consider a click with activity happening on pointerdown as a dead click', () => {
-        const { clock } = setupBuilder.build()
-
-        emulateClick({ activity: { on: 'pointerdown' } })
-
-        clock.tick(EXPIRE_DELAY)
-        expect(events.length).toBe(1)
-        expect(events[0].frustrationTypes).toEqual([])
-      })
-
-      it('activity happening on pointerdown is not taken into account for the action duration', () => {
-        const { clock } = setupBuilder.build()
-
-        emulateClick({ activity: { on: 'pointerdown' } })
-
-        clock.tick(EXPIRE_DELAY)
-        expect(events.length).toBe(1)
-        expect(events[0].duration).toBe(0 as Duration)
-      })
-
-      it('does not consider a click with activity happening on pointerup as a dead click', () => {
-        const { clock } = setupBuilder.build()
-
-        emulateClick({ activity: { on: 'pointerup' } })
-
-        clock.tick(EXPIRE_DELAY)
-        expect(events.length).toBe(1)
-        expect(events[0].frustrationTypes).toEqual([])
-      })
+      clock.tick(EXPIRE_DELAY)
+      expect(events.length).toBe(1)
+      expect(events[0].frustrationTypes).toEqual([])
     })
   })
 

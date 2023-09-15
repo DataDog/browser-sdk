@@ -13,7 +13,6 @@ import type { RawRumEventCollectedData } from '../src/domain/lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
 import type { ActionContexts } from '../src/domain/action/actionCollection'
 import type { RumSessionManager } from '../src/domain/rumSessionManager'
-import { RumSessionPlan } from '../src/domain/rumSessionManager'
 import type { RawRumEvent, RumContext } from '../src/rawRumEvent.types'
 import type { DisplayContext } from '../src/domain/contexts/displayContext'
 import { validateRumFormat } from './formatValidation'
@@ -109,7 +108,12 @@ export function setup(): TestSetupBuilder {
   }
   const FAKE_APP_ID = 'appId'
   const configuration: RumConfiguration = {
-    ...validateAndBuildRumConfiguration({ clientToken: 'xxx', applicationId: FAKE_APP_ID })!,
+    ...validateAndBuildRumConfiguration({
+      clientToken: 'xxx',
+      applicationId: FAKE_APP_ID,
+      trackResources: true,
+      trackLongTasks: true,
+    })!,
     ...SPEC_ENDPOINTS,
   }
 
@@ -220,9 +224,6 @@ function validateRumEventFormat(rawRumEvent: RawRumEvent) {
     _dd: {
       format_version: 2,
       drift: 0,
-      session: {
-        plan: RumSessionPlan.WITH_SESSION_REPLAY,
-      },
       configuration: {
         session_sample_rate: 40,
         session_replay_sample_rate: 60,

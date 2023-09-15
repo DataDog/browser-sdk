@@ -39,7 +39,7 @@ describe('runtime error collection', () => {
     setTimeout(() => {
       expect(rawLogsEvents[0].rawLogsEvent).toEqual({
         date: jasmine.any(Number),
-        error: { origin: ErrorSource.SOURCE, kind: 'Error', stack: jasmine.any(String) },
+        error: { kind: 'Error', stack: jasmine.any(String) },
         message: 'error!',
         status: StatusType.error,
         origin: ErrorSource.SOURCE,

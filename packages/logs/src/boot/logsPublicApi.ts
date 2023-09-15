@@ -112,8 +112,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
       ;({ handleLog: handleLogStrategy, getInternalContext: getInternalContextStrategy } = startLogsImpl(
         initConfiguration,
         configuration,
-        buildCommonContext,
-        mainLogger
+        buildCommonContext
       ))
 
       beforeInitLoggerLog.drain()
@@ -121,20 +120,12 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
       isAlreadyInitialized = true
     }),
 
-    /** @deprecated: use getGlobalContext instead */
-    getLoggerGlobalContext: monitor(() => globalContextManager.get()),
     getGlobalContext: monitor(() => globalContextManager.getContext()),
 
-    /** @deprecated: use setGlobalContext instead */
-    setLoggerGlobalContext: monitor((context) => globalContextManager.set(context)),
     setGlobalContext: monitor((context) => globalContextManager.setContext(context)),
 
-    /** @deprecated: use setGlobalContextProperty instead */
-    addLoggerGlobalContext: monitor((key, value) => globalContextManager.add(key, value)),
     setGlobalContextProperty: monitor((key, value) => globalContextManager.setContextProperty(key, value)),
 
-    /** @deprecated: use removeGlobalContextProperty instead */
-    removeLoggerGlobalContext: monitor((key) => globalContextManager.remove(key)),
     removeGlobalContextProperty: monitor((key) => globalContextManager.removeContextProperty(key)),
 
     clearGlobalContext: monitor(() => globalContextManager.clearContext()),

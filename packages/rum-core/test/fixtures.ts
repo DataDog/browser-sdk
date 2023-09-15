@@ -208,6 +208,6 @@ export function createResourceEntry(
     startTime: 200 as RelativeTime,
     ...overrides,
   }
-  entry.toJSON = () => entry
+  entry.toJSON = () => entry as RumPerformanceResourceTiming & PerformanceResourceTiming
   return entry as RumPerformanceResourceTiming & PerformanceResourceTiming
 }

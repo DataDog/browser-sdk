@@ -20,7 +20,6 @@ import { LifeCycleEventType } from '../domain/lifeCycle'
 import { FAKE_INITIAL_DOCUMENT, isAllowedRequestUrl } from '../domain/resource/resourceUtils'
 
 import { getDocumentTraceId } from '../domain/tracing/getDocumentTraceId'
-import type { PerformanceEntryRepresentation } from '../domainContext.types'
 
 type RumPerformanceObserverConstructor = new (callback: PerformanceObserverCallback) => RumPerformanceObserver
 
@@ -66,13 +65,15 @@ export interface RumPerformanceResourceTiming {
   redirectEnd: RelativeTime
   decodedBodySize: number
   traceId?: string
+  toJSON(): Omit<PerformanceEntry, 'toJSON'>
 }
 
 export interface RumPerformanceLongTaskTiming {
+  name: string
   entryType: RumPerformanceEntryType.LONG_TASK
   startTime: RelativeTime
   duration: Duration
-  toJSON(): PerformanceEntryRepresentation
+  toJSON(): Omit<PerformanceEntry, 'toJSON'>
 }
 
 export interface RumPerformancePaintTiming {
@@ -228,13 +229,14 @@ export function retrieveInitialDocumentResourceTiming(
       entryType: RumPerformanceEntryType.RESOURCE as const,
       initiatorType: FAKE_INITIAL_DOCUMENT,
       traceId: getDocumentTraceId(document),
+      toJSON: () => assign({}, timing, { toJSON: undefined }),
     }
     if (
       supportPerformanceTimingEvent(RumPerformanceEntryType.NAVIGATION) &&
       performance.getEntriesByType(RumPerformanceEntryType.NAVIGATION).length > 0
     ) {
       const navigationEntry = performance.getEntriesByType(RumPerformanceEntryType.NAVIGATION)[0]
-      timing = assign(navigationEntry.toJSON(), forcedAttributes)
+      timing = assign(navigationEntry.toJSON() as RumPerformanceResourceTiming, forcedAttributes)
     } else {
       const relativePerformanceTiming = computeRelativePerformanceTiming()
       timing = assign(
