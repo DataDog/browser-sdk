@@ -43,6 +43,9 @@ export function App() {
           xl: '22px',
         },
         fontFamilyMonospace: 'menlo, monospace',
+        other: {
+          fontSizeMonospace: '11px',
+        },
       }}
       withGlobalStyles
     >

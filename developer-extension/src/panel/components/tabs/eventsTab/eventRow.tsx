@@ -1,9 +1,20 @@
-import { Badge } from '@mantine/core'
-import React from 'react'
+import { Badge, Box } from '@mantine/core'
+import type { ReactNode } from 'react'
+import React, { useRef, useState } from 'react'
+import type { TelemetryEvent } from '../../../../../../packages/core/src/domain/telemetry'
+import type { LogsEvent } from '../../../../../../packages/logs/src/logsEvent.types'
+import type {
+  RumActionEvent,
+  RumErrorEvent,
+  RumLongTaskEvent,
+  RumResourceEvent,
+  RumViewEvent,
+} from '../../../../../../packages/rum-core/src/rumEvent.types'
 import type { SdkEvent } from '../../../sdkEvent'
-import { isTelemetryEvent, isRumEvent } from '../../../sdkEvent'
-import { safeTruncate } from '../../../../../../packages/core/src/tools/utils/stringUtils'
-import { Json } from '../../json'
+import { isTelemetryEvent, isLogEvent, isRumEvent } from '../../../sdkEvent'
+import { formatDate, formatDuration } from '../../../formatNumber'
+import { defaultFormatValue, Json } from '../../json'
+import { LazyCollapse } from '../../lazyCollapse'
 
 const RUM_EVENT_TYPE_COLOR = {
   action: 'violet',
@@ -21,10 +32,36 @@ const LOG_STATUS_COLOR = {
   debug: 'cyan',
 }
 
+const RESOURCE_TYPE_LABELS: Record<string, string | undefined> = {
+  xhr: 'XHR',
+  fetch: 'Fetch',
+  document: 'Document',
+  beacon: 'Beacon',
+  css: 'CSS',
+  js: 'JS',
+  image: 'Image',
+  font: 'Font',
+  media: 'Media',
+  other: 'Other',
+}
+
 export function EventRow({ event }: { event: SdkEvent }) {
+  const [isCollapsed, setIsCollapsed] = useState(true)
+  const jsonRef = useRef<HTMLDivElement>(null)
+
   return (
-    <tr>
-      <td width="20">{new Date(event.date).toLocaleTimeString()}</td>
+    <Box
+      component="tr"
+      onClick={(event) => {
+        if (jsonRef.current?.contains(event.target as Node)) {
+          // Ignore clicks on the collapsible area
+          return
+        }
+        setIsCollapsed((previous) => !previous)
+      }}
+      sx={{ cursor: 'pointer' }}
+    >
+      <td width="20">{formatDate(event.date)}</td>
       <td width="20">
         {isRumEvent(event) || isTelemetryEvent(event) ? (
           <Badge variant="outline" color={RUM_EVENT_TYPE_COLOR[event.type]}>
@@ -37,52 +74,158 @@ export function EventRow({ event }: { event: SdkEvent }) {
         )}
       </td>
       <td>
-        <Json src={event} collapsed={true} name={getRumEventDescription(event)} />
+        <EventDescription event={event} />
+        <LazyCollapse
+          in={!isCollapsed}
+          sx={{
+            cursor: 'default',
+          }}
+        >
+          <Json ref={jsonRef} value={event} defaultCollapseLevel={0} formatValue={formatValue} />
+        </LazyCollapse>
       </td>
-    </tr>
+    </Box>
   )
 }
 
-function getRumEventDescription(event: SdkEvent): string | undefined {
+function formatValue(path: string, value: unknown) {
+  if (typeof value === 'number') {
+    if (path === 'date') {
+      return formatDate(value)
+    }
+    if (
+      path.endsWith('.first_byte') ||
+      path.endsWith('.dom_complete') ||
+      path.endsWith('.dom_content_loaded') ||
+      path.endsWith('.dom_interactive') ||
+      path.endsWith('.first_contentful_paint') ||
+      path.endsWith('.largest_contentful_paint') ||
+      path.endsWith('.load_event') ||
+      path.endsWith('.time_spent') ||
+      path.endsWith('_time') ||
+      path.endsWith('_delay') ||
+      path.endsWith('.duration') ||
+      path.endsWith('.start') ||
+      path.includes('.custom_timings.')
+    ) {
+      return formatDuration(value)
+    }
+  }
+
+  return defaultFormatValue(path, value)
+}
+
+export const EventDescription = React.memo(({ event }: { event: SdkEvent }) => {
   if (isRumEvent(event)) {
     switch (event.type) {
       case 'view':
-        return `${event.view.loading_type || ''} ${getViewPage(event.view)}`
-      case 'action':
-        return `${event.action.type} action ${event.action.target?.name || ''} on page ${getViewPage(event.view)} `
-      case 'resource':
-        return `${event.resource.type} ${event.resource.url}`
-      case 'error':
-        return `${event.error.source} error ${event.error.message}`
+        return <ViewDescription event={event} />
       case 'long_task':
-        return `long task of ${(event.long_task.duration / 1000).toLocaleString()} ms`
+        return <LongTaskDescription event={event} />
+      case 'error':
+        return <ErrorDescription event={event} />
+      case 'resource':
+        return <ResourceDescription event={event} />
+      case 'action':
+        return <ActionDescription event={event} />
     }
-  } else if (isTelemetryEvent(event)) {
-    switch (event.telemetry.type) {
-      case 'log':
-        return event.telemetry.message
-      case 'configuration':
-        return jsonOverview(event.telemetry.configuration)
-      default:
-        return ''
-    }
+  } else if (isLogEvent(event)) {
+    return <LogDescription event={event} />
   } else {
-    return event.message
+    return <TelemetryDescription event={event} />
   }
+})
+
+function LogDescription({ event }: { event: LogsEvent }) {
+  return <>{event.message}</>
 }
 
-function getViewPage(view: { name?: string; url: string }) {
+function TelemetryDescription({ event }: { event: TelemetryEvent }) {
+  if (event.telemetry.type === 'configuration') {
+    return <Emphasis>Configuration</Emphasis>
+  }
+  return <>{event.telemetry.message}</>
+}
+
+function ViewDescription({ event }: { event: RumViewEvent }) {
+  const isRouteChange = event.view.loading_type === 'route_change'
+
+  return (
+    <>
+      {isRouteChange ? 'SPA Route Change' : 'Load Page'} <Emphasis>{getViewName(event.view)}</Emphasis>
+    </>
+  )
+}
+
+function ActionDescription({ event }: { event: RumActionEvent }) {
+  const actionName = event.action.target?.name
+  const frustrationTypes = event.action.frustration?.type
+
+  if (event.action.type === 'custom') {
+    return (
+      <>
+        Custom user action <Emphasis>{event.action.target?.name}</Emphasis>
+      </>
+    )
+  }
+
+  return (
+    <>
+      {frustrationTypes && frustrationTypes.length > 0 && '😡 '}
+      <Emphasis>{event.action.type}</Emphasis>
+      {actionName && (
+        <>
+          {' '}
+          on <Emphasis>{actionName}</Emphasis>
+        </>
+      )}
+    </>
+  )
+}
+function LongTaskDescription({ event }: { event: RumLongTaskEvent }) {
+  return (
+    <>
+      Long task of <Emphasis>{formatDuration(event.long_task.duration)}</Emphasis>
+    </>
+  )
+}
+
+function ErrorDescription({ event }: { event: RumErrorEvent }) {
+  return (
+    <>
+      <Emphasis>{event.error.source}</Emphasis> error {event.error.type}: {event.error.message}
+    </>
+  )
+}
+
+function ResourceDescription({ event }: { event: RumResourceEvent }) {
+  const resourceType = event.resource.type
+  const isAsset = resourceType !== 'xhr' && resourceType !== 'fetch'
+
+  if (isAsset) {
+    return (
+      <>
+        Load <Emphasis>{RESOURCE_TYPE_LABELS[resourceType] || RESOURCE_TYPE_LABELS.other}</Emphasis> file{' '}
+        <Emphasis>{event.resource.url}</Emphasis>
+      </>
+    )
+  }
+
+  return (
+    <>
+      {RESOURCE_TYPE_LABELS[resourceType]} request <Emphasis>{event.resource.url}</Emphasis>
+    </>
+  )
+}
+
+function Emphasis({ children }: { children: ReactNode }) {
+  return (
+    <Box component="span" sx={{ fontWeight: 'bold' }}>
+      {children}
+    </Box>
+  )
+}
+
+function getViewName(view: { name?: string; url: string }) {
   return `${view.name || new URL(view.url).pathname}`
-}
-
-function jsonOverview(jsonObject: object) {
-  const replacer = (key: any, value: any): any => {
-    if (key && typeof value === 'object') {
-      return '{...}'
-    }
-    return value
-  }
-  const overview = JSON.stringify(jsonObject, replacer)
-  const unquoted = overview.replace(/"([^"]+)":/g, '$1:')
-  return safeTruncate(unquoted, 100, '...')
 }
