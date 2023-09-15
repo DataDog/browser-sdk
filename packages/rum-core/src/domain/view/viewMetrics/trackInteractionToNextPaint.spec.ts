@@ -37,11 +37,13 @@ describe('trackInteractionToNextPaint', () => {
     interactionCountStub = subInteractionCount()
 
     setupBuilder = setup().beforeBuild(({ lifeCycle, configuration }) => {
-      ;({ getInteractionToNextPaint } = trackInteractionToNextPaint(
+      const interactionToNextPaintTracking = trackInteractionToNextPaint(
         configuration,
         ViewLoadingType.INITIAL_LOAD,
         lifeCycle
-      ))
+      )
+      getInteractionToNextPaint = interactionToNextPaintTracking.getInteractionToNextPaint
+      return interactionToNextPaintTracking
     })
   })
 
