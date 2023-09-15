@@ -43,10 +43,14 @@ export function useEvents({
     }
   }, [preserveEvents])
 
+  const facetRegistry = eventCollectionRef.current?.facetRegistry
   return {
-    events: applyEventFilters(filters, events).slice(0, MAXIMUM_DISPLAYED_EVENTS),
+    events: facetRegistry
+      ? applyEventFilters(filters, events, facetRegistry).slice(0, MAXIMUM_DISPLAYED_EVENTS)
+      : events,
     filters,
     setFilters,
     clear: clearEvents,
+    facetRegistry,
   }
 }

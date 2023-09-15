@@ -6,7 +6,7 @@
     "module": "ES6",
     "target": "esnext",
     "jsx": "react",
-    "lib": ["ES2020", "DOM"],
-    "types": ["chrome", "react", "react-dom"]
+    "lib": ["ES2022", "DOM"],
+    "types": ["chrome", "react", "react-dom", "jasmine"]
   }
 }
