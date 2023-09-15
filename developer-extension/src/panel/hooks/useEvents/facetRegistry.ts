@@ -11,6 +11,7 @@ type EventFields = Map<FieldPath, FieldMultiValue>
 export class FacetRegistry {
   facetValueCounts: FacetValueCounts = new Map()
   eventFieldsCache: WeakMap<SdkEvent, EventFields> = new WeakMap()
+  allEventFieldPaths: Set<FieldPath> = new Set()
 
   addEvent(event: SdkEvent) {
     const fields = getAllFields(event)
@@ -18,6 +19,9 @@ export class FacetRegistry {
     this.eventFieldsCache.set(event, fields)
 
     incrementFacetValueCounts(fields, this.facetValueCounts)
+    fields.forEach((_value, fieldPath) => {
+      this.allEventFieldPaths.add(fieldPath)
+    })
   }
 
   getFieldValueForEvent(event: SdkEvent, fieldPath: FieldPath): FieldMultiValue | undefined {
@@ -26,6 +30,10 @@ export class FacetRegistry {
 
   getFacetValueCounts(fieldPath: FieldPath): Map<FacetValue, number> {
     return this.facetValueCounts.get(fieldPath) || new Map<FacetValue, number>()
+  }
+
+  getAllFieldPaths() {
+    return this.allEventFieldPaths
   }
 
   clear() {
@@ -130,7 +138,7 @@ export function getAllFields(event: object) {
    * Add the value to the fields map. If a value is already defined for the given path, store it as
    * an array to reflect all possible values for that path.
    */
-  function pushField(path: string, value: FieldValue) {
+  function pushField(path: FieldPath, value: FieldValue) {
     const previousValue = fields.get(path)
     if (Array.isArray(previousValue)) {
       previousValue.push(value)

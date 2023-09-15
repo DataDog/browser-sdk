@@ -5,11 +5,11 @@ import type { EventFilters } from '../../../hooks/useEvents'
 
 export function EventsTabTop({
   filters,
-  onFiltered,
+  onFiltersChange,
   clear,
 }: {
   filters: EventFilters
-  onFiltered: (filters: EventFilters) => void
+  onFiltersChange: (filters: EventFilters) => void
   clear: () => void
 }) {
   return (
@@ -18,7 +18,7 @@ export function EventsTabTop({
         placeholder="Filter your events, syntax: 'type:view application.id:40d8ca4b'"
         value={filters.query}
         style={{ flexGrow: 1 }}
-        onChange={(event) => onFiltered({ ...filters, query: event.currentTarget.value })}
+        onChange={(event) => onFiltersChange({ ...filters, query: event.currentTarget.value })}
         className="dd-privacy-mask"
       />
 
