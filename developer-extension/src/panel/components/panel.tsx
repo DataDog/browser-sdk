@@ -10,7 +10,7 @@ import { useSettings } from '../hooks/useSettings'
 import { DEFAULT_PANEL_TAB, PanelTabs } from '../../common/constants'
 import { SettingsTab } from './tabs/settingsTab'
 import { InfosTab } from './tabs/infosTab'
-import { EventTab } from './tabs/eventsTab'
+import { EventsTab } from './tabs/eventsTab'
 import { ReplayTab } from './tabs/replayTab'
 
 export function Panel() {
@@ -19,7 +19,7 @@ export function Panel() {
   useAutoFlushEvents(settings.autoFlush)
   useNetworkRules(settings)
 
-  const { events, filters, setFilters, clear } = useEvents(settings)
+  const { events, filters, setFilters, clear, facetRegistry } = useEvents(settings)
 
   const [activeTab, setActiveTab] = useState<string | null>(DEFAULT_PANEL_TAB)
   function updateActiveTab(activeTab: string | null) {
@@ -56,7 +56,13 @@ export function Panel() {
         </Tabs.Tab>
       </Tabs.List>
       <Tabs.Panel value={PanelTabs.Events} sx={{ flex: 1, minHeight: 0 }}>
-        <EventTab events={events} filters={filters} onFiltered={setFilters} clear={clear} />
+        <EventsTab
+          events={events}
+          facetRegistry={facetRegistry}
+          filters={filters}
+          onFiltered={setFilters}
+          clear={clear}
+        />
       </Tabs.Panel>
       <Tabs.Panel value={PanelTabs.Infos} sx={{ flex: 1, minHeight: 0 }}>
         <InfosTab />
