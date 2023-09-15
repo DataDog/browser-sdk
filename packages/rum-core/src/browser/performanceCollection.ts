@@ -66,6 +66,7 @@ export interface RumPerformanceResourceTiming {
   redirectEnd: RelativeTime
   decodedBodySize: number
   traceId?: string
+  toJSON(): PerformanceEntryRepresentation
 }
 
 export interface RumPerformanceLongTaskTiming {
@@ -228,6 +229,7 @@ export function retrieveInitialDocumentResourceTiming(
       entryType: RumPerformanceEntryType.RESOURCE as const,
       initiatorType: FAKE_INITIAL_DOCUMENT,
       traceId: getDocumentTraceId(document),
+      toJSON: () => assign({}, timing, { toJSON: undefined }),
     }
     if (
       supportPerformanceTimingEvent(RumPerformanceEntryType.NAVIGATION) &&
