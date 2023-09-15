@@ -1,5 +1,6 @@
-import { Badge, Box } from '@mantine/core'
-import type { ReactNode } from 'react'
+import type { BoxProps } from '@mantine/core'
+import { Badge, Box, Menu } from '@mantine/core'
+import type { ComponentPropsWithoutRef, ReactNode } from 'react'
 import React, { useRef, useState } from 'react'
 import type { TelemetryEvent } from '../../../../../../packages/core/src/domain/telemetry'
 import type { LogsEvent } from '../../../../../../packages/logs/src/logsEvent.types'
@@ -15,6 +16,9 @@ import { isTelemetryEvent, isLogEvent, isRumEvent } from '../../../sdkEvent'
 import { formatDate, formatDuration } from '../../../formatNumber'
 import { defaultFormatValue, Json } from '../../json'
 import { LazyCollapse } from '../../lazyCollapse'
+import type { FacetRegistry } from '../../../hooks/useEvents'
+import type { EventListColumn } from './columnUtils'
+import { addColumn, includesColumn } from './columnUtils'
 
 const RUM_EVENT_TYPE_COLOR = {
   action: 'violet',
@@ -45,46 +49,129 @@ const RESOURCE_TYPE_LABELS: Record<string, string | undefined> = {
   other: 'Other',
 }
 
-export function EventRow({ event }: { event: SdkEvent }) {
-  const [isCollapsed, setIsCollapsed] = useState(true)
-  const jsonRef = useRef<HTMLDivElement>(null)
+export const EventRow = React.memo(
+  ({
+    event,
+    columns,
+    facetRegistry,
+    onColumnsChange,
+  }: {
+    event: SdkEvent
+    columns: EventListColumn[]
+    facetRegistry: FacetRegistry
+    onColumnsChange: (newColumn: EventListColumn[]) => void
+  }) => {
+    const [isCollapsed, setIsCollapsed] = useState(true)
+    const jsonRef = useRef<HTMLDivElement>(null)
 
+    function getMenuItemsForPath(path: string) {
+      const newColumn: EventListColumn = { type: 'field', path }
+      if (!path || includesColumn(columns, newColumn)) {
+        return null
+      }
+      return (
+        <>
+          <Menu.Item
+            onClick={() => {
+              onColumnsChange(addColumn(columns, newColumn))
+            }}
+          >
+            Add column
+          </Menu.Item>
+        </>
+      )
+    }
+
+    return (
+      <tr>
+        {columns.map((column, index): React.ReactElement => {
+          const isLast = index === columns.length - 1
+          switch (column.type) {
+            case 'date':
+              return (
+                <Cell key="date" isLast={isLast}>
+                  {formatDate(event.date)}
+                </Cell>
+              )
+            case 'description':
+              return (
+                <Cell
+                  key="description"
+                  isLast={isLast}
+                  sx={{
+                    cursor: 'pointer',
+                  }}
+                  onClick={(event) => {
+                    if (jsonRef.current?.contains(event.target as Node)) {
+                      // Ignore clicks on the collapsible area
+                      return
+                    }
+                    setIsCollapsed((previous) => !previous)
+                  }}
+                >
+                  <EventDescription event={event} />
+                  <LazyCollapse in={!isCollapsed}>
+                    <Json
+                      ref={jsonRef}
+                      value={event}
+                      defaultCollapseLevel={0}
+                      getMenuItemsForPath={getMenuItemsForPath}
+                      formatValue={formatValue}
+                      mt="xs"
+                      sx={{ display: 'block' }}
+                    />
+                  </LazyCollapse>
+                </Cell>
+              )
+            case 'type':
+              return (
+                <Cell key="type" isLast={isLast}>
+                  {isRumEvent(event) || isTelemetryEvent(event) ? (
+                    <Badge variant="outline" color={RUM_EVENT_TYPE_COLOR[event.type]}>
+                      {event.type}
+                    </Badge>
+                  ) : (
+                    <Badge variant="dot" color={LOG_STATUS_COLOR[event.status]}>
+                      {event.origin as string} {event.status as string}
+                    </Badge>
+                  )}
+                </Cell>
+              )
+            case 'field': {
+              const value = facetRegistry.getFieldValueForEvent(event, column.path)
+              return (
+                <Cell key={`field-${column.path}`} isLast={isLast}>
+                  {value !== undefined && (
+                    <Json
+                      value={value}
+                      defaultCollapseLevel={0}
+                      getMenuItemsForPath={(path) => getMenuItemsForPath(path ? `${column.path}.${path}` : column.path)}
+                      formatValue={(path, value) => formatValue(path ? `${column.path}.${path}` : column.path, value)}
+                    />
+                  )}
+                </Cell>
+              )
+            }
+          }
+        })}
+      </tr>
+    )
+  }
+)
+
+function Cell({ isLast, ...props }: BoxProps & ComponentPropsWithoutRef<'div'> & { isLast: boolean }) {
   return (
     <Box
-      component="tr"
-      onClick={(event) => {
-        if (jsonRef.current?.contains(event.target as Node)) {
-          // Ignore clicks on the collapsible area
-          return
-        }
-        setIsCollapsed((previous) => !previous)
-      }}
-      sx={{ cursor: 'pointer' }}
-    >
-      <td width="20">{formatDate(event.date)}</td>
-      <td width="20">
-        {isRumEvent(event) || isTelemetryEvent(event) ? (
-          <Badge variant="outline" color={RUM_EVENT_TYPE_COLOR[event.type]}>
-            {event.type}
-          </Badge>
-        ) : (
-          <Badge variant="dot" color={LOG_STATUS_COLOR[event.status]}>
-            {event.origin as string} {event.status as string}
-          </Badge>
-        )}
-      </td>
-      <td>
-        <EventDescription event={event} />
-        <LazyCollapse
-          in={!isCollapsed}
-          sx={{
-            cursor: 'default',
-          }}
-        >
-          <Json ref={jsonRef} value={event} defaultCollapseLevel={0} formatValue={formatValue} />
-        </LazyCollapse>
-      </td>
-    </Box>
+      {...props}
+      component="td"
+      colSpan={isLast ? 2 : 1}
+      sx={[
+        {
+          verticalAlign: 'top',
+        },
+        ...(Array.isArray(props.sx) ? props.sx : [props.sx]),
+      ]}
+    />
   )
 }
 
