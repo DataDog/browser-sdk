@@ -193,20 +193,21 @@ export function createPerformanceEntry<T extends RumPerformanceEntryType>(
         overrides
       ) as EntryTypeToReturnType[T]
 
-    case RumPerformanceEntryType.LONG_TASK:
-      return assign(
+    case RumPerformanceEntryType.LONG_TASK: {
+      const entry = assign(
         {
+          name: 'self',
           duration: 100 as Duration,
           entryType: RumPerformanceEntryType.LONG_TASK,
           startTime: 1234 as RelativeTime,
-          toJSON() {
-            return { name: 'self', duration: 100, entryType: RumPerformanceEntryType.LONG_TASK, startTime: 1234 }
-          },
         },
         overrides
       ) as EntryTypeToReturnType[T]
+
+      return { ...entry, toJSON: () => entry }
+    }
     case RumPerformanceEntryType.RESOURCE: {
-      return assign(
+      const entry = assign(
         {
           connectEnd: 200 as RelativeTime,
           connectStart: 200 as RelativeTime,
@@ -227,6 +228,8 @@ export function createPerformanceEntry<T extends RumPerformanceEntryType>(
         },
         overrides
       ) as EntryTypeToReturnType[T]
+
+      return { ...entry, toJSON: () => entry }
     }
     default:
       throw new Error(`Unsupported entryType fixture: ${entryType}`)

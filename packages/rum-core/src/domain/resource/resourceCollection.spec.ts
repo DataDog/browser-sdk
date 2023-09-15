@@ -45,7 +45,6 @@ describe('resourceCollection', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
 
     const performanceEntry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE)
-
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [performanceEntry])
 
     expect(rawRumEvents[0].startTime).toBe(200 as RelativeTime)

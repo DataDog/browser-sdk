@@ -12,7 +12,7 @@ describe('matchRequestTiming', () => {
     startClocks: relativeToClocks(100 as RelativeTime),
     duration: 500 as Duration,
   }
-  let entries: PerformanceResourceTiming[]
+  let entries: RumPerformanceResourceTiming[]
 
   beforeEach(() => {
     if (isIE()) {
@@ -23,25 +23,34 @@ describe('matchRequestTiming', () => {
   })
 
   it('should match single timing nested in the request ', () => {
-    const entry = createResourceEntry({ startTime: 200 as RelativeTime, duration: 300 as Duration })
+    const entry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+      startTime: 200 as RelativeTime,
+      duration: 300 as Duration,
+    })
     entries.push(entry)
 
     const matchingTiming = matchRequestTiming(FAKE_REQUEST as RequestCompleteEvent)
 
-    expect(matchingTiming).toEqual(entry.toJSON())
+    expect(matchingTiming).toEqual(entry.toJSON() as RumPerformanceResourceTiming)
   })
 
   it('should match single timing nested in the request with error margin', () => {
-    const entry = createResourceEntry({ startTime: 99 as RelativeTime, duration: 502 as Duration })
+    const entry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+      startTime: 99 as RelativeTime,
+      duration: 502 as Duration,
+    })
     entries.push(entry)
 
     const matchingTiming = matchRequestTiming(FAKE_REQUEST as RequestCompleteEvent)
 
-    expect(matchingTiming).toEqual(entry.toJSON())
+    expect(matchingTiming).toEqual(entry.toJSON() as RumPerformanceResourceTiming)
   })
 
   it('should not match single timing outside the request ', () => {
-    const entry = createResourceEntry({ startTime: 0 as RelativeTime, duration: 300 as Duration })
+    const entry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+      startTime: 0 as RelativeTime,
+      duration: 300 as Duration,
+    })
     entries.push(entry)
 
     const matchingTiming = matchRequestTiming(FAKE_REQUEST as RequestCompleteEvent)
@@ -50,8 +59,14 @@ describe('matchRequestTiming', () => {
   })
 
   it('should not match two not following timings nested in the request ', () => {
-    const entry1 = createResourceEntry({ startTime: 150 as RelativeTime, duration: 100 as Duration })
-    const entry2 = createResourceEntry({ startTime: 200 as RelativeTime, duration: 100 as Duration })
+    const entry1 = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+      startTime: 150 as RelativeTime,
+      duration: 100 as Duration,
+    })
+    const entry2 = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+      startTime: 200 as RelativeTime,
+      duration: 100 as Duration,
+    })
     entries.push(entry1, entry2)
 
     const matchingTiming = matchRequestTiming(FAKE_REQUEST as RequestCompleteEvent)
@@ -60,9 +75,18 @@ describe('matchRequestTiming', () => {
   })
 
   it('should not match multiple timings nested in the request', () => {
-    const entry1 = createResourceEntry({ startTime: 100 as RelativeTime, duration: 50 as Duration })
-    const entry2 = createResourceEntry({ startTime: 150 as RelativeTime, duration: 50 as Duration })
-    const entry3 = createResourceEntry({ startTime: 200 as RelativeTime, duration: 50 as Duration })
+    const entry1 = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+      startTime: 100 as RelativeTime,
+      duration: 50 as Duration,
+    })
+    const entry2 = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+      startTime: 150 as RelativeTime,
+      duration: 50 as Duration,
+    })
+    const entry3 = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+      startTime: 200 as RelativeTime,
+      duration: 50 as Duration,
+    })
     entries.push(entry1, entry2, entry3)
 
     const matchingTiming = matchRequestTiming(FAKE_REQUEST as RequestCompleteEvent)
@@ -71,7 +95,7 @@ describe('matchRequestTiming', () => {
   })
 
   it('should not match invalid timing nested in the request ', () => {
-    const entry = createResourceEntry({
+    const entry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
       // fetchStart < startTime is invalid
       fetchStart: 0 as RelativeTime,
       startTime: 200 as RelativeTime,
@@ -84,14 +108,3 @@ describe('matchRequestTiming', () => {
     expect(matchingTiming).toEqual(undefined)
   })
 })
-
-export function createResourceEntry(overrides?: Partial<RumPerformanceResourceTiming>): PerformanceResourceTiming {
-  const rumPerformanceResourceTiming: Partial<PerformanceResourceTiming> = createPerformanceEntry(
-    RumPerformanceEntryType.RESOURCE,
-    overrides
-  )
-  return {
-    ...rumPerformanceResourceTiming,
-    toJSON: () => rumPerformanceResourceTiming,
-  } as PerformanceResourceTiming
-}
