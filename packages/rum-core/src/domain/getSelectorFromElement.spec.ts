@@ -1,16 +1,8 @@
-import type { IsolatedDom } from '../../test'
-import { createIsolatedDom } from '../../test'
+import { append } from '../../test'
 import { getSelectorFromElement, supportScopeSelector } from './getSelectorFromElement'
 
 describe('getSelectorFromElement', () => {
-  let isolatedDom: IsolatedDom
-
-  beforeEach(() => {
-    isolatedDom = createIsolatedDom()
-  })
-
   afterEach(() => {
-    isolatedDom.clear()
     document.body.classList.remove('foo')
   })
 
@@ -43,7 +35,7 @@ describe('getSelectorFromElement', () => {
     })
 
     it('should not use the class selector for body elements', () => {
-      const element = isolatedDom.append('<div></div>')
+      const element = append('<div></div>')
       document.body.classList.add('foo')
       expect(getSelector(element)).toBe('BODY>DIV')
     })
@@ -167,7 +159,7 @@ describe('getSelectorFromElement', () => {
 
   function getSelector(htmlOrElement: string | Element, actionNameAttribute?: string): string {
     return getSelectorFromElement(
-      typeof htmlOrElement === 'string' ? isolatedDom.append(htmlOrElement) : htmlOrElement,
+      typeof htmlOrElement === 'string' ? append(htmlOrElement) : htmlOrElement,
       actionNameAttribute
     )
   }
