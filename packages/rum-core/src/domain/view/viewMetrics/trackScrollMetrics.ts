@@ -7,8 +7,6 @@ import {
   throttle,
   addEventListener,
   DOM_EVENT,
-  setInterval,
-  clearInterval,
   monitor,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
@@ -117,9 +115,6 @@ export function createScrollValuesObservable(
         eventListener.stop()
       }
     }
-
-    const id = setInterval(notify, throttleDuration)
-    return () => clearInterval(id)
   })
 
   return observable
