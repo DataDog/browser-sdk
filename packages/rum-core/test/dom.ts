@@ -29,24 +29,6 @@ export function createIsolatedDom() {
   }
 }
 
-export function appendElement(tagName: string, attributes: { [key: string]: string }) {
-  const element = document.createElement(tagName)
-
-  for (const key in attributes) {
-    if (Object.prototype.hasOwnProperty.call(attributes, key)) {
-      element.setAttribute(key, attributes[key])
-    }
-  }
-
-  return append(element)
-}
-
-export function appendTextNode(text: string) {
-  return append(document.createTextNode(text))
-}
-
-function append<T extends Node = Node>(node: T): T {
-  document.body.appendChild(node)
-  registerCleanupTask(() => node.parentNode!.removeChild(node))
-  return node
+export function append(html: string) {
+  return createIsolatedDom().append(html)
 }

@@ -568,15 +568,13 @@ describe('serializeNodeWithId', () => {
     })
 
     describe('<link rel="stylesheet"> elements', () => {
-      let originalDescriptor: PropertyDescriptor | undefined
+      let originalStyleSheets: StyleSheetList
 
       beforeEach(() => {
-        originalDescriptor = Object.getOwnPropertyDescriptor(document, 'styleSheets')
+        originalStyleSheets = document.styleSheets
       })
       afterEach(() => {
-        if (originalDescriptor) {
-          Object.defineProperty(document, 'styleSheets', originalDescriptor)
-        }
+        Object.defineProperty(document, 'styleSheets', { value: originalStyleSheets, configurable: true })
       })
 
       it('does not inline external CSS if it cannot be fetched', () => {

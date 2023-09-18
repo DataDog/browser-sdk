@@ -9,7 +9,7 @@ import {
 import { restorePageVisibility, setPageVisibility, createNewEvent } from '@datadog/browser-core/test'
 import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
 import type { TestSetupBuilder } from '../../../../test'
-import { appendElement, createPerformanceEntry, setup } from '../../../../test'
+import { append, createPerformanceEntry, setup } from '../../../../test'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { RumConfiguration } from '../../configuration'
 import type { LargestContentfulPaint } from './trackLargestContentfulPaint'
@@ -68,7 +68,7 @@ describe('trackLargestContentfulPaint', () => {
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
-        element: appendElement('button', { id: 'lcp-target-element' }),
+        element: append('<button id="lcp-target-element"></button>'),
       }),
     ])
 
@@ -81,7 +81,7 @@ describe('trackLargestContentfulPaint', () => {
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
       createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
-        element: appendElement('button', { id: 'lcp-target-element' }),
+        element: append('<button id="lcp-target-element"></button>'),
       }),
     ])
 

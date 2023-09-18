@@ -1,6 +1,6 @@
 import { ExperimentalFeature, addExperimentalFeatures, resetExperimentalFeatures } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../../test'
-import { appendElement, appendTextNode, createPerformanceEntry, setup } from '../../../../test'
+import { append, createPerformanceEntry, setup } from '../../../../test'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { THROTTLE_VIEW_UPDATE_PERIOD } from '../trackViews'
 import type { ViewTest } from '../setupViewTest.specHelper'
@@ -183,8 +183,8 @@ describe('trackCumulativeLayoutShift', () => {
       const { lifeCycle } = setupBuilder.build()
       const { getViewUpdate, getViewUpdateCount } = viewTest
 
-      const textNode = appendTextNode('')
-      const divElement = appendElement('div', { id: 'div-element' })
+      const textNode = append('text')
+      const divElement = append('<div id="div-element"></div>')
 
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
         createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
@@ -200,7 +200,7 @@ describe('trackCumulativeLayoutShift', () => {
       const { lifeCycle } = setupBuilder.build()
       const { getViewUpdate, getViewUpdateCount } = viewTest
 
-      const divElement = appendElement('div', { id: 'div-element' })
+      const divElement = append('<div id="div-element"></div>')
 
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
         createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
