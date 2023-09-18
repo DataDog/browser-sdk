@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-sdk-developer-extension",
-  "version": "4.48.2",
+  "version": "4.49.0",
   "private": true,
   "scripts": {
     "build": "rm -rf dist && webpack --mode production",
@@ -22,8 +22,7 @@
     "@mantine/core": "6.0.20",
     "@mantine/hooks": "6.0.20",
     "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "react-json-view": "1.21.3"
+    "react-dom": "18.2.0"
   },
   "volta": {
     "extends": "../package.json"

@@ -7,6 +7,7 @@ import { Columns } from '../columns'
 import { Json } from '../json'
 import { TabBase } from '../tabBase'
 import { createLogger } from '../../../common/logger'
+import { formatDate } from '../../formatNumber'
 
 const logger = createLogger('infosTab')
 
@@ -122,24 +123,20 @@ function AppLink({
 
 function Entry({ name, value }: { name: string; value: any }) {
   return (
-    <Text size="sm" component="div">
+    <Text>
       {typeof value === 'string' ? (
         <>
           {name}: {value}
         </>
       ) : value ? (
         <>
-          {name}: <Json name="" src={value} collapsed={1} />
+          {name}: <Json value={value} />
         </>
       ) : (
         <>{name}: (empty)</>
       )}
     </Text>
   )
-}
-
-function formatDate(timestamp: number) {
-  return new Date(timestamp).toLocaleString('en-US')
 }
 
 function formatSessionType(value: string, ...labels: string[]) {

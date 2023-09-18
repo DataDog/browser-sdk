@@ -8,19 +8,15 @@ import {
   resetExperimentalFeatures,
 } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../test'
-import { setup } from '../../../test'
+import { createPerformanceEntry, setup } from '../../../test'
 import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'
 import type { RumEvent } from '../../rumEvent.types'
 import { LifeCycleEventType } from '../lifeCycle'
+import { RumPerformanceEntryType } from '../../browser/performanceCollection'
 import type { ViewEvent } from './trackViews'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD, KEEP_TRACKING_AFTER_VIEW_DELAY } from './trackViews'
 import type { ViewTest } from './setupViewTest.specHelper'
-import {
-  FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY,
-  FAKE_NAVIGATION_ENTRY,
-  FAKE_PAINT_ENTRY,
-  setupViewTest,
-} from './setupViewTest.specHelper'
+import { setupViewTest } from './setupViewTest.specHelper'
 
 describe('track views automatically', () => {
   let setupBuilder: TestSetupBuilder
@@ -121,19 +117,20 @@ describe('initial view', () => {
     it('should update initial view metrics when notified with a PERFORMANCE_ENTRY_COLLECTED event (throttled)', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
       const { getViewUpdateCount, getViewUpdate } = viewTest
+      const performanceEntry = createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)
 
       expect(getViewUpdateCount()).toEqual(1)
       expect(getViewUpdate(0).initialViewMetrics).toEqual({})
 
-      clock.tick(FAKE_NAVIGATION_ENTRY.responseStart) // ensure now > responseStart
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [FAKE_NAVIGATION_ENTRY])
+      clock.tick(performanceEntry.responseStart) // ensure now > responseStart
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [performanceEntry])
 
       expect(getViewUpdateCount()).toEqual(1)
 
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
       expect(getViewUpdateCount()).toEqual(2)
-      expect(getViewUpdate(1).initialViewMetrics).toEqual({
+      expect(getViewUpdate(1).initialViewMetrics.navigationTimings).toEqual({
         firstByte: 123 as Duration,
         domComplete: 456 as Duration,
         domContentLoaded: 345 as Duration,
@@ -150,9 +147,9 @@ describe('initial view', () => {
       expect(getViewUpdate(0).initialViewMetrics).toEqual({})
 
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-        FAKE_PAINT_ENTRY,
-        FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY,
-        FAKE_NAVIGATION_ENTRY,
+        createPerformanceEntry(RumPerformanceEntryType.PAINT),
+        createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT),
+        createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
       ])
       expect(getViewUpdateCount()).toEqual(1)
 
@@ -161,13 +158,15 @@ describe('initial view', () => {
       expect(getViewUpdateCount()).toEqual(3)
       expect(getViewUpdate(1).initialViewMetrics).toEqual(
         jasmine.objectContaining({
-          firstByte: 123 as Duration,
-          domComplete: 456 as Duration,
-          domContentLoaded: 345 as Duration,
-          domInteractive: 234 as Duration,
           firstContentfulPaint: 123 as Duration,
-          largestContentfulPaint: 789 as Duration,
-          loadEvent: 567 as Duration,
+          navigationTimings: {
+            firstByte: 123 as Duration,
+            domComplete: 456 as Duration,
+            domContentLoaded: 345 as Duration,
+            domInteractive: 234 as Duration,
+            loadEvent: 567 as Duration,
+          },
+          largestContentfulPaint: { value: 789 as Duration, targetSelector: undefined },
         })
       )
       expect(getViewUpdate(2).initialViewMetrics).toEqual({})
@@ -193,9 +192,9 @@ describe('initial view', () => {
         expect(getViewUpdateCount()).toEqual(3)
 
         lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-          FAKE_PAINT_ENTRY,
-          FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY,
-          FAKE_NAVIGATION_ENTRY,
+          createPerformanceEntry(RumPerformanceEntryType.PAINT),
+          createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT),
+          createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
         ])
 
         clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
@@ -220,13 +219,15 @@ describe('initial view', () => {
       it('should set initial view metrics only on the initial view', () => {
         expect(initialView.last.initialViewMetrics).toEqual(
           jasmine.objectContaining({
-            firstByte: 123 as Duration,
-            domComplete: 456 as Duration,
-            domContentLoaded: 345 as Duration,
-            domInteractive: 234 as Duration,
             firstContentfulPaint: 123 as Duration,
-            largestContentfulPaint: 789 as Duration,
-            loadEvent: 567 as Duration,
+            navigationTimings: {
+              firstByte: 123 as Duration,
+              domComplete: 456 as Duration,
+              domContentLoaded: 345 as Duration,
+              domInteractive: 234 as Duration,
+              loadEvent: 567 as Duration,
+            },
+            largestContentfulPaint: { value: 789 as Duration, targetSelector: undefined },
           })
         )
       })
@@ -237,30 +238,29 @@ describe('initial view', () => {
       })
 
       it('should update the initial view loadingTime following the loadEventEnd value', () => {
-        expect(initialView.last.commonViewMetrics.loadingTime).toBe(FAKE_NAVIGATION_ENTRY.loadEventEnd)
+        expect(initialView.last.commonViewMetrics.loadingTime).toBe(567 as RelativeTime)
       })
     })
 
     it('should keep updating the initial view metrics for 5 min after view end', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
       const { getViewCreateCount, getViewUpdate, getViewUpdateCount, startView } = viewTest
+      const lcpEntry = createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT)
       startView()
       expect(getViewCreateCount()).toEqual(2)
 
       clock.tick(KEEP_TRACKING_AFTER_VIEW_DELAY - 1)
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-        FAKE_PAINT_ENTRY,
-        FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY,
-        FAKE_NAVIGATION_ENTRY,
+        createPerformanceEntry(RumPerformanceEntryType.PAINT),
+        lcpEntry,
+        createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
       ])
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
       const latestUpdate = getViewUpdate(getViewUpdateCount() - 1)
       const firstView = getViewUpdate(0)
       expect(latestUpdate.id).toBe(firstView.id)
-      expect(latestUpdate.initialViewMetrics.largestContentfulPaint).toEqual(
-        FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY.startTime
-      )
+      expect(latestUpdate.initialViewMetrics.largestContentfulPaint?.value).toEqual(lcpEntry.startTime)
     })
 
     it('should not update the initial view metrics 5 min after view end', () => {
@@ -271,9 +271,9 @@ describe('initial view', () => {
 
       clock.tick(KEEP_TRACKING_AFTER_VIEW_DELAY)
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-        FAKE_PAINT_ENTRY,
-        FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY,
-        FAKE_NAVIGATION_ENTRY,
+        createPerformanceEntry(RumPerformanceEntryType.PAINT),
+        createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT),
+        createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
       ])
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 

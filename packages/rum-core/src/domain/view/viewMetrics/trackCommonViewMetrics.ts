@@ -4,7 +4,9 @@ import type { ViewLoadingType } from '../../../rawRumEvent.types'
 import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
 import type { WebVitalTelemetryDebug } from '../startWebVitalTelemetryDebug'
+import type { CumulativeLayoutShift } from './trackCumulativeLayoutShift'
 import { isLayoutShiftSupported, trackCumulativeLayoutShift } from './trackCumulativeLayoutShift'
+import type { InteractionToNextPaint } from './trackInteractionToNextPaint'
 import { trackInteractionToNextPaint } from './trackInteractionToNextPaint'
 import { trackLoadingTime } from './trackLoadingTime'
 import type { ScrollMetrics } from './trackScrollMetrics'
@@ -12,8 +14,8 @@ import { trackScrollMetrics } from './trackScrollMetrics'
 
 export interface CommonViewMetrics {
   loadingTime?: Duration
-  cumulativeLayoutShift?: number
-  interactionToNextPaint?: Duration
+  cumulativeLayoutShift?: CumulativeLayoutShift
+  interactionToNextPaint?: InteractionToNextPaint
   scroll?: ScrollMetrics
 }
 
@@ -45,18 +47,14 @@ export function trackCommonViewMetrics(
   })
 
   let stopCLSTracking: () => void
-  let clsAttributionCollected = false
   if (isLayoutShiftSupported()) {
-    commonViewMetrics.cumulativeLayoutShift = 0
+    commonViewMetrics.cumulativeLayoutShift = { value: 0 }
     ;({ stop: stopCLSTracking } = trackCumulativeLayoutShift(
+      configuration,
       lifeCycle,
-      (cumulativeLayoutShift, largestLayoutShiftNode, largestLayoutShiftTime) => {
+      webVitalTelemetryDebug,
+      (cumulativeLayoutShift) => {
         commonViewMetrics.cumulativeLayoutShift = cumulativeLayoutShift
-
-        if (!clsAttributionCollected) {
-          clsAttributionCollected = true
-          webVitalTelemetryDebug.addWebVitalTelemetryDebug('CLS', largestLayoutShiftNode, largestLayoutShiftTime)
-        }
         scheduleViewUpdate()
       }
     ))
@@ -64,7 +62,11 @@ export function trackCommonViewMetrics(
     stopCLSTracking = noop
   }
 
-  const { stop: stopINPTracking, getInteractionToNextPaint } = trackInteractionToNextPaint(loadingType, lifeCycle)
+  const { stop: stopINPTracking, getInteractionToNextPaint } = trackInteractionToNextPaint(
+    configuration,
+    loadingType,
+    lifeCycle
+  )
 
   return {
     stop: () => {

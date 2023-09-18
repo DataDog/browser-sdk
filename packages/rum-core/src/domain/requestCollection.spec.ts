@@ -1,3 +1,4 @@
+import type { Payload } from '@datadog/browser-core'
 import { isIE, RequestType } from '@datadog/browser-core'
 import type { FetchStub, FetchStubManager } from '@datadog/browser-core/test'
 import { SPEC_ENDPOINTS, stubFetch, stubXhr, withXhr } from '@datadog/browser-core/test'
@@ -8,6 +9,8 @@ import type { RequestCompleteEvent, RequestStartEvent } from './requestCollectio
 import { trackFetch, trackXhr } from './requestCollection'
 import type { Tracer } from './tracing/tracer'
 import { clearTracingIfNeeded, TraceIdentifier } from './tracing/tracer'
+
+const DEFAULT_PAYLOAD = {} as Payload
 
 describe('collect fetch', () => {
   let configuration: RumConfiguration
@@ -133,7 +136,10 @@ describe('collect fetch', () => {
   })
 
   it('should ignore intake requests', (done) => {
-    fetchStub(SPEC_ENDPOINTS.rumEndpointBuilder.build('xhr')).resolveWith({ status: 200, responseText: 'foo' })
+    fetchStub(SPEC_ENDPOINTS.rumEndpointBuilder.build('xhr', DEFAULT_PAYLOAD)).resolveWith({
+      status: 200,
+      responseText: 'foo',
+    })
 
     fetchStubManager.whenAllComplete(() => {
       expect(startSpy).not.toHaveBeenCalled()
@@ -272,7 +278,7 @@ describe('collect xhr', () => {
   it('should ignore intake requests', (done) => {
     withXhr({
       setup(xhr) {
-        xhr.open('GET', SPEC_ENDPOINTS.rumEndpointBuilder.build('xhr'))
+        xhr.open('GET', SPEC_ENDPOINTS.rumEndpointBuilder.build('xhr', DEFAULT_PAYLOAD))
         xhr.send()
         xhr.complete(200)
       },

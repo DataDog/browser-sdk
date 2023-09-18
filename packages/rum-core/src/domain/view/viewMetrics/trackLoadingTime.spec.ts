@@ -1,35 +1,21 @@
 import type { RelativeTime, Duration } from '@datadog/browser-core'
 import { addDuration } from '@datadog/browser-core'
 import type { TestSetupBuilder } from '../../../../test'
-import { setup } from '../../../../test'
-import type { RumPerformanceNavigationTiming } from '../../../browser/performanceCollection'
+import { createPerformanceEntry, setup } from '../../../../test'
+import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { PAGE_ACTIVITY_END_DELAY, PAGE_ACTIVITY_VALIDATION_DELAY } from '../../waitPageActivityEnd'
 import { THROTTLE_VIEW_UPDATE_PERIOD } from '../trackViews'
 import type { ViewTest } from '../setupViewTest.specHelper'
-import { FAKE_NAVIGATION_ENTRY, setupViewTest } from '../setupViewTest.specHelper'
+import { setupViewTest } from '../setupViewTest.specHelper'
 
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = (PAGE_ACTIVITY_VALIDATION_DELAY * 0.8) as Duration
 
 const AFTER_PAGE_ACTIVITY_END_DELAY = PAGE_ACTIVITY_END_DELAY * 1.1
 
-const FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_BEFORE_ACTIVITY_TIMING: RumPerformanceNavigationTiming = {
-  responseStart: 1 as RelativeTime,
-  domComplete: 2 as RelativeTime,
-  domContentLoadedEventEnd: 1 as RelativeTime,
-  domInteractive: 1 as RelativeTime,
-  entryType: 'navigation',
-  loadEventEnd: (BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY * 0.8) as RelativeTime,
-}
+const LOAD_EVENT_BEFORE_ACTIVITY_TIMING = (BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY * 0.8) as RelativeTime
 
-const FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING: RumPerformanceNavigationTiming = {
-  responseStart: 1 as RelativeTime,
-  domComplete: 2 as RelativeTime,
-  domContentLoadedEventEnd: 1 as RelativeTime,
-  domInteractive: 1 as RelativeTime,
-  entryType: 'navigation',
-  loadEventEnd: (BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY * 1.2) as RelativeTime,
-}
+const LOAD_EVENT_AFTER_ACTIVITY_TIMING = (BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY * 1.2) as RelativeTime
 
 describe('trackLoadingTime', () => {
   let setupBuilder: TestSetupBuilder
@@ -78,12 +64,12 @@ describe('trackLoadingTime', () => {
     const { getViewUpdate, getViewUpdateCount } = viewTest
 
     expect(getViewUpdateCount()).toEqual(1)
-
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [FAKE_NAVIGATION_ENTRY])
+    const entry = createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [entry])
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getViewUpdateCount()).toEqual(2)
-    expect(getViewUpdate(1).commonViewMetrics.loadingTime).toEqual(FAKE_NAVIGATION_ENTRY.loadEventEnd)
+    expect(getViewUpdate(1).commonViewMetrics.loadingTime).toEqual(entry.loadEventEnd)
   })
 
   it('should use loadEventEnd for initial view when load event is bigger than computed loading time', () => {
@@ -95,7 +81,9 @@ describe('trackLoadingTime', () => {
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING,
+      createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, {
+        loadEventEnd: LOAD_EVENT_AFTER_ACTIVITY_TIMING,
+      }),
     ])
 
     domMutationObservable.notify()
@@ -104,9 +92,7 @@ describe('trackLoadingTime', () => {
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getViewUpdateCount()).toEqual(2)
-    expect(getViewUpdate(1).commonViewMetrics.loadingTime).toEqual(
-      FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING.loadEventEnd
-    )
+    expect(getViewUpdate(1).commonViewMetrics.loadingTime).toEqual(LOAD_EVENT_AFTER_ACTIVITY_TIMING)
   })
 
   it('should use computed loading time for initial view when load event is smaller than computed loading time', () => {
@@ -117,7 +103,9 @@ describe('trackLoadingTime', () => {
 
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_BEFORE_ACTIVITY_TIMING,
+      createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, {
+        loadEventEnd: LOAD_EVENT_BEFORE_ACTIVITY_TIMING,
+      }),
     ])
     domMutationObservable.notify()
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
@@ -131,9 +119,7 @@ describe('trackLoadingTime', () => {
     // introduce a gap between time origin and tracking start
     // ensure that `load event > activity delay` and `load event < activity delay + clock gap`
     // to make the test fail if the clock gap is not correctly taken into account
-    const CLOCK_GAP = (FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING.loadEventEnd -
-      BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY +
-      1) as Duration
+    const CLOCK_GAP = (LOAD_EVENT_AFTER_ACTIVITY_TIMING - BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY + 1) as Duration
 
     setupBuilder.clock!.tick(CLOCK_GAP)
 
@@ -145,7 +131,9 @@ describe('trackLoadingTime', () => {
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING,
+      createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, {
+        loadEventEnd: LOAD_EVENT_BEFORE_ACTIVITY_TIMING,
+      }),
     ])
 
     domMutationObservable.notify()

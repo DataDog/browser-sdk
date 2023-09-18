@@ -1,5 +1,6 @@
 import type { Duration } from '@datadog/browser-core'
 import { relativeNow } from '@datadog/browser-core'
+import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 
@@ -14,7 +15,7 @@ export interface NavigationTimings {
 export function trackNavigationTimings(lifeCycle: LifeCycle, callback: (timings: NavigationTimings) => void) {
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, (entries) => {
     for (const entry of entries) {
-      if (entry.entryType === 'navigation') {
+      if (entry.entryType === RumPerformanceEntryType.NAVIGATION) {
         callback({
           domComplete: entry.domComplete,
           domContentLoaded: entry.domContentLoadedEventEnd,

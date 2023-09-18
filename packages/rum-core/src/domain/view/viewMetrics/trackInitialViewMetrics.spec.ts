@@ -1,9 +1,9 @@
-import type { Duration } from '@datadog/browser-core'
+import type { Duration, RelativeTime } from '@datadog/browser-core'
+import { RumPerformanceEntryType } from '../../../browser/performanceCollection'
 import type { TestSetupBuilder } from '../../../../test'
-import { noopWebVitalTelemetryDebug, setup } from '../../../../test'
+import { createPerformanceEntry, noopWebVitalTelemetryDebug, setup } from '../../../../test'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { RumConfiguration } from '../../configuration'
-import { FAKE_FIRST_INPUT_ENTRY, FAKE_NAVIGATION_ENTRY, FAKE_PAINT_ENTRY } from '../setupViewTest.specHelper'
 import { trackInitialViewMetrics } from './trackInitialViewMetrics'
 
 describe('trackInitialViewMetrics', () => {
@@ -36,23 +36,27 @@ describe('trackInitialViewMetrics', () => {
 
   it('should merge metrics from various sources', () => {
     const { lifeCycle } = setupBuilder.build()
-
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      FAKE_NAVIGATION_ENTRY,
-      FAKE_PAINT_ENTRY,
-      FAKE_FIRST_INPUT_ENTRY,
+      createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
+      createPerformanceEntry(RumPerformanceEntryType.PAINT),
+      createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT),
     ])
 
     expect(scheduleViewUpdateSpy).toHaveBeenCalledTimes(3)
     expect(trackInitialViewMetricsResult.initialViewMetrics).toEqual({
-      firstByte: 123 as Duration,
-      domComplete: 456 as Duration,
-      domContentLoaded: 345 as Duration,
-      domInteractive: 234 as Duration,
+      navigationTimings: {
+        firstByte: 123 as Duration,
+        domComplete: 456 as Duration,
+        domContentLoaded: 345 as Duration,
+        domInteractive: 234 as Duration,
+        loadEvent: 567 as Duration,
+      },
       firstContentfulPaint: 123 as Duration,
-      firstInputDelay: 100 as Duration,
-      firstInputTime: 1000 as Duration,
-      loadEvent: 567 as Duration,
+      firstInput: {
+        delay: 100 as Duration,
+        time: 1000 as RelativeTime,
+        targetSelector: undefined,
+      },
     })
   })
 
@@ -60,9 +64,9 @@ describe('trackInitialViewMetrics', () => {
     const { lifeCycle } = setupBuilder.build()
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      FAKE_NAVIGATION_ENTRY,
-      FAKE_PAINT_ENTRY,
-      FAKE_FIRST_INPUT_ENTRY,
+      createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
+      createPerformanceEntry(RumPerformanceEntryType.PAINT),
+      createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT),
     ])
 
     expect(setLoadEventSpy).toHaveBeenCalledOnceWith(567 as Duration)
