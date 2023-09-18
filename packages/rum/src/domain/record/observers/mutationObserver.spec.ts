@@ -598,13 +598,12 @@ describe('startMutationCollection', () => {
     })
 
     it('respects the parent privacy level when emitting a text node mutation', () => {
-      const wrapper = document.createElement('div')
-      wrapper.setAttribute('data-dd-privacy', 'allow')
-      document.body.appendChild(wrapper)
+      sandbox.setAttribute('data-dd-privacy', 'allow')
+      document.body.appendChild(sandbox)
 
       const div = document.createElement('div')
       div.innerText = 'foo 81'
-      wrapper.appendChild(div)
+      sandbox.appendChild(div)
 
       const serializedDocument = serializeDocumentWithDefaults()
       const { mutationCallbackSpy, getLatestMutationPayload } = startMutationCollection(DefaultPrivacyLevel.MASK)

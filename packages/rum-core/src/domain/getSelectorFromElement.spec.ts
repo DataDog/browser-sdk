@@ -11,6 +11,7 @@ describe('getSelectorFromElement', () => {
 
   afterEach(() => {
     isolatedDom.clear()
+    document.body.classList.remove('foo')
   })
 
   describe('ID selector', () => {
@@ -43,7 +44,7 @@ describe('getSelectorFromElement', () => {
 
     it('should not use the class selector for body elements', () => {
       const element = isolatedDom.append('<div></div>')
-      element.ownerDocument.body.classList.add('foo')
+      document.body.classList.add('foo')
       expect(getSelector(element)).toBe('BODY>DIV')
     })
 

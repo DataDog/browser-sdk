@@ -3,31 +3,29 @@ import { registerCleanupTask } from '@datadog/browser-core/test'
 export type IsolatedDom = ReturnType<typeof createIsolatedDom>
 
 export function createIsolatedDom() {
-  // Simply using a DOMParser does not fit here, because script tags created this way are
-  // considered as normal markup, so they are not ignored when getting the textual content of the
-  // target via innerText
-  const iframe = document.createElement('iframe')
-  document.body.appendChild(iframe)
-  const doc = iframe.contentDocument!
-  doc.open()
-  doc.write('<html><body></body></html>')
-  doc.close()
+  function append<E extends Element>(html: string, container: HTMLElement): E {
+    const tmp = document.createElement('div')
+    tmp.innerHTML = html.trim()
 
-  function append(html: string) {
-    iframe.contentDocument!.body.innerHTML = html
-    return doc.querySelector('[target]') || doc.body.children[0]
+    const target = tmp.querySelector('[target]') || tmp.childNodes[0]
+    const nodes = Array.from(tmp.childNodes)
+
+    nodes.forEach((node) => container.appendChild(node))
+
+    registerCleanupTask(() => {
+      nodes.forEach((node) => node.remove())
+    })
+
+    return target as E
   }
 
   return {
     element(s: TemplateStringsArray) {
-      return append(s[0])
+      return append(s[0], document.body)
     },
-    document: doc,
-    window: iframe.contentWindow! as Window & { CSSStyleSheet: typeof CSSStyleSheet },
-    append,
-    clear() {
-      iframe.parentNode!.removeChild(iframe)
-    },
+    append: <E extends Element>(html: string): E => append(html, document.body),
+    appendToHead: <E extends Element>(html: string): E => append<E>(html, document.head),
+    clear() {},
   }
 }
 
