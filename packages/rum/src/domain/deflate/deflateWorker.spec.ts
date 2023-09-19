@@ -17,7 +17,7 @@ describe('startDeflateWorker', () => {
 
   function startDeflateWorkerWithDefaults({
     configuration = {},
-    source = 'Datadog Session Replay',
+    source = 'Session Replay',
   }: {
     configuration?: Partial<RumConfiguration>
     source?: string
@@ -190,7 +190,7 @@ describe('startDeflateWorker', () => {
       startDeflateWorkerWithDefaults()
       clock.tick(INITIALIZATION_TIME_OUT_DELAY)
       expect(displaySpy).toHaveBeenCalledOnceWith(
-        'Datadog Session Replay failed to start: a timeout occurred while initializing the Worker'
+        'Session Replay failed to start: a timeout occurred while initializing the Worker'
       )
     })
 
@@ -221,7 +221,7 @@ describe('startDeflateWorker', () => {
       createDeflateWorkerSpy.and.throwError(UNKNOWN_ERROR)
       startDeflateWorkerWithDefaults()
       expect(displaySpy).toHaveBeenCalledOnceWith(
-        'Datadog Session Replay failed to start: an error occurred while creating the Worker:',
+        'Session Replay failed to start: an error occurred while creating the Worker:',
         UNKNOWN_ERROR
       )
     })
