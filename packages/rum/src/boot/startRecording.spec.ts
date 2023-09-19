@@ -47,7 +47,7 @@ describe('startRecording', () => {
     textField = document.createElement('input')
     sandbox.appendChild(textField)
 
-    const worker = startDeflateWorker(configuration, 'Datadog Session Replay', noop)
+    const worker = startDeflateWorker(configuration, 'Session Replay', noop)
 
     setupBuilder = setup()
       .withViewContexts({

@@ -43,9 +43,10 @@ export const display: Display = (api, ...args) => {
  * [2]: https://github.com/terser/terser#compress-options (look for drop_console)
  */
 export const globalConsole = console
+const PREFIX = 'Datadog Browser SDK:'
 
-display.debug = globalConsole.debug.bind(globalConsole)
-display.log = globalConsole.log.bind(globalConsole)
-display.info = globalConsole.info.bind(globalConsole)
-display.warn = globalConsole.warn.bind(globalConsole)
-display.error = globalConsole.error.bind(globalConsole)
+display.debug = globalConsole.debug.bind(globalConsole, PREFIX)
+display.log = globalConsole.log.bind(globalConsole, PREFIX)
+display.info = globalConsole.info.bind(globalConsole, PREFIX)
+display.warn = globalConsole.warn.bind(globalConsole, PREFIX)
+display.error = globalConsole.error.bind(globalConsole, PREFIX)
