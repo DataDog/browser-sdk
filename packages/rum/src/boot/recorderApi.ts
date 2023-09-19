@@ -129,6 +129,7 @@ export function makeRecorderApi(
 
           const worker = startDeflateWorker(
             configuration,
+            'Datadog Session Replay',
             () => {
               stopStrategy()
             },

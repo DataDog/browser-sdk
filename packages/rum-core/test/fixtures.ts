@@ -171,7 +171,6 @@ export function createPerformanceEntry<T extends RumPerformanceEntryType>(
         },
         overrides
       ) as EntryTypeToReturnType[T]
-
     case RumPerformanceEntryType.PAINT:
       return assign(
         {
@@ -181,33 +180,58 @@ export function createPerformanceEntry<T extends RumPerformanceEntryType>(
         },
         overrides
       ) as EntryTypeToReturnType[T]
+    case RumPerformanceEntryType.NAVIGATION:
+      return assign(
+        {
+          entryType: RumPerformanceEntryType.NAVIGATION,
+          responseStart: 123 as RelativeTime,
+          domComplete: 456 as RelativeTime,
+          domContentLoadedEventEnd: 345 as RelativeTime,
+          domInteractive: 234 as RelativeTime,
+          loadEventEnd: 567 as RelativeTime,
+        },
+        overrides
+      ) as EntryTypeToReturnType[T]
+
+    case RumPerformanceEntryType.LONG_TASK: {
+      const entry = assign(
+        {
+          name: 'self',
+          duration: 100 as Duration,
+          entryType: RumPerformanceEntryType.LONG_TASK,
+          startTime: 1234 as RelativeTime,
+        },
+        overrides
+      ) as EntryTypeToReturnType[T]
+
+      return { ...entry, toJSON: () => entry }
+    }
+    case RumPerformanceEntryType.RESOURCE: {
+      const entry = assign(
+        {
+          connectEnd: 200 as RelativeTime,
+          connectStart: 200 as RelativeTime,
+          decodedBodySize: 200,
+          domainLookupEnd: 200 as RelativeTime,
+          domainLookupStart: 200 as RelativeTime,
+          duration: 100 as Duration,
+          entryType: RumPerformanceEntryType.RESOURCE,
+          fetchStart: 200 as RelativeTime,
+          name: 'https://resource.com/valid',
+          redirectEnd: 200 as RelativeTime,
+          redirectStart: 200 as RelativeTime,
+          requestStart: 200 as RelativeTime,
+          responseEnd: 300 as RelativeTime,
+          responseStart: 200 as RelativeTime,
+          secureConnectionStart: 200 as RelativeTime,
+          startTime: 200 as RelativeTime,
+        },
+        overrides
+      ) as EntryTypeToReturnType[T]
+
+      return { ...entry, toJSON: () => entry }
+    }
     default:
       throw new Error(`Unsupported entryType fixture: ${entryType}`)
   }
-}
-
-export function createResourceEntry(
-  overrides?: Partial<RumPerformanceResourceTiming>
-): RumPerformanceResourceTiming & PerformanceResourceTiming {
-  const entry: Partial<RumPerformanceResourceTiming & PerformanceResourceTiming> = {
-    connectEnd: 200 as RelativeTime,
-    connectStart: 200 as RelativeTime,
-    decodedBodySize: 200,
-    domainLookupEnd: 200 as RelativeTime,
-    domainLookupStart: 200 as RelativeTime,
-    duration: 100 as Duration,
-    entryType: RumPerformanceEntryType.RESOURCE,
-    fetchStart: 200 as RelativeTime,
-    name: 'https://resource.com/valid',
-    redirectEnd: 200 as RelativeTime,
-    redirectStart: 200 as RelativeTime,
-    requestStart: 200 as RelativeTime,
-    responseEnd: 300 as RelativeTime,
-    responseStart: 200 as RelativeTime,
-    secureConnectionStart: 200 as RelativeTime,
-    startTime: 200 as RelativeTime,
-    ...overrides,
-  }
-  entry.toJSON = () => entry as RumPerformanceResourceTiming & PerformanceResourceTiming
-  return entry as RumPerformanceResourceTiming & PerformanceResourceTiming
 }

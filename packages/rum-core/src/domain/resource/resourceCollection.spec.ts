@@ -8,7 +8,7 @@ import {
   ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { RumFetchResourceEventDomainContext } from '../../domainContext.types'
-import { createResourceEntry, setup, createRumSessionManagerMock } from '../../../test'
+import { setup, createRumSessionManagerMock, createPerformanceEntry } from '../../../test'
 import type { TestSetupBuilder } from '../../../test'
 import type { RawRumResourceEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -17,6 +17,7 @@ import type { RequestCompleteEvent } from '../requestCollection'
 import { TraceIdentifier } from '../tracing/tracer'
 import { validateAndBuildRumConfiguration } from '../configuration'
 import { PageState } from '../contexts/pageStateHistory'
+import { RumPerformanceEntryType } from '../../browser/performanceCollection'
 import { startResourceCollection } from './resourceCollection'
 
 describe('resourceCollection', () => {
@@ -39,14 +40,11 @@ describe('resourceCollection', () => {
 
   it('should create resource from performance entry', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
-    const performanceEntry = createResourceEntry({
-      duration: 100 as Duration,
-      name: 'https://resource.com/valid',
-      startTime: 1234 as RelativeTime,
-    })
+
+    const performanceEntry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE)
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [performanceEntry])
 
-    expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
+    expect(rawRumEvents[0].startTime).toBe(200 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
       date: jasmine.any(Number) as unknown as TimeStamp,
       resource: {
@@ -55,6 +53,8 @@ describe('resourceCollection', () => {
         size: undefined,
         type: ResourceType.OTHER,
         url: 'https://resource.com/valid',
+        download: jasmine.any(Object),
+        first_byte: jasmine.any(Object),
       },
       type: RumEventType.RESOURCE,
       _dd: {
@@ -113,7 +113,7 @@ describe('resourceCollection', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
     const mockPageStates = [{ state: PageState.ACTIVE, startTime: 0 as RelativeTime }]
     const mockXHR = createCompletedRequest()
-    const mockPerformanceEntry = createResourceEntry()
+    const mockPerformanceEntry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE)
 
     pageStateHistorySpy.and.returnValue(mockPageStates)
 
@@ -149,7 +149,7 @@ describe('resourceCollection', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
     const mockPageStates = [{ state: PageState.ACTIVE, startTime: 0 as RelativeTime }]
     const mockXHR = createCompletedRequest()
-    const mockPerformanceEntry = createResourceEntry()
+    const mockPerformanceEntry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE)
 
     pageStateHistorySpy.and.returnValue(mockPageStates)
 
@@ -246,9 +246,7 @@ describe('resourceCollection', () => {
     it('should be processed from traced initial document', () => {
       const { lifeCycle, rawRumEvents } = setupBuilder.build()
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-        createResourceEntry({
-          traceId: '1234',
-        }),
+        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { traceId: '1234' }),
       ])
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
       expect(privateFields).toBeDefined()
@@ -371,7 +369,9 @@ describe('resourceCollection', () => {
       setupBuilder.withSessionManager(createRumSessionManagerMock().setNotTracked())
       const { lifeCycle, rawRumEvents } = setupBuilder.build()
 
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [createResourceEntry()])
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+        createPerformanceEntry(RumPerformanceEntryType.RESOURCE),
+      ])
 
       expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeTrue()
     })
@@ -380,7 +380,9 @@ describe('resourceCollection', () => {
       trackResources = false
       const { lifeCycle, rawRumEvents } = setupBuilder.build()
 
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [createResourceEntry()])
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+        createPerformanceEntry(RumPerformanceEntryType.RESOURCE),
+      ])
 
       expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeTrue()
     })
@@ -389,7 +391,9 @@ describe('resourceCollection', () => {
       trackResources = true
       const { lifeCycle, rawRumEvents } = setupBuilder.build()
 
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [createResourceEntry()])
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+        createPerformanceEntry(RumPerformanceEntryType.RESOURCE),
+      ])
 
       expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeFalse()
     })

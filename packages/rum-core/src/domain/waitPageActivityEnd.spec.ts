@@ -3,8 +3,8 @@ import { Observable, ONE_SECOND, getTimeStamp } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import type { TestSetupBuilder } from '../../test'
-import { setup } from '../../test'
-import type { RumPerformanceNavigationTiming, RumPerformanceResourceTiming } from '../browser/performanceCollection'
+import { createPerformanceEntry, setup } from '../../test'
+import { RumPerformanceEntryType } from '../browser/performanceCollection'
 import { LifeCycleEventType } from './lifeCycle'
 import type { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import type { PageActivityEvent, PageActivityEndEvent } from './waitPageActivityEnd'
@@ -67,19 +67,17 @@ describe('createPageActivityObservable', () => {
 
   it('emits an activity event on resource collected', () => {
     const { lifeCycle } = setupBuilder.build()
-    const performanceTiming = {
-      entryType: 'resource',
-    } as RumPerformanceResourceTiming
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [performanceTiming])
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      createPerformanceEntry(RumPerformanceEntryType.RESOURCE),
+    ])
     expect(events).toEqual([{ isBusy: false }])
   })
 
   it('does not emit an activity event when a navigation occurs', () => {
     const { lifeCycle } = setupBuilder.build()
-    const performanceTiming = {
-      entryType: 'navigation',
-    } as RumPerformanceNavigationTiming
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [performanceTiming])
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
+    ])
     expect(events).toEqual([])
   })
 
@@ -146,13 +144,13 @@ describe('createPageActivityObservable', () => {
           .build()
 
         lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-          makeFakePerformanceTiming('http://qux.com'),
+          createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: 'http://qux.com' }),
         ])
         lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-          makeFakePerformanceTiming('http://bar.com'),
+          createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: 'http://bar.com' }),
         ])
         lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-          makeFakePerformanceTiming('http://dynamic.com'),
+          createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: 'http://dynamic.com' }),
         ])
 
         expect(events).toEqual([])
@@ -174,12 +172,6 @@ describe('createPageActivityObservable', () => {
       })
     })
 
-    function makeFakePerformanceTiming(url: string) {
-      return {
-        entryType: 'resource',
-        name: url,
-      } as RumPerformanceResourceTiming
-    }
     function makeFakeRequestCompleteEvent(requestIndex: number, url = FAKE_URL) {
       return { requestIndex, url } as RequestCompleteEvent
     }

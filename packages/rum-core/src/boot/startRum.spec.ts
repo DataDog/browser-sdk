@@ -1,4 +1,4 @@
-import type { RelativeTime, Observable, RawError, Duration } from '@datadog/browser-core'
+import type { Observable, RawError, Duration, RelativeTime } from '@datadog/browser-core'
 import {
   CustomerDataType,
   createContextManager,
@@ -7,8 +7,8 @@ import {
   ONE_SECOND,
   findLast,
   noop,
-  relativeNow,
   isIE,
+  relativeNow,
 } from '@datadog/browser-core'
 import {
   createNewEvent,
@@ -17,9 +17,14 @@ import {
   deleteEventBridgeStub,
 } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock, TestSetupBuilder } from '../../test'
-import { createRumSessionManagerMock, noopRecorderApi, noopWebVitalTelemetryDebug, setup } from '../../test'
+import {
+  createPerformanceEntry,
+  createRumSessionManagerMock,
+  noopRecorderApi,
+  noopWebVitalTelemetryDebug,
+  setup,
+} from '../../test'
 import { RumPerformanceEntryType } from '../browser/performanceCollection'
-import type { RumPerformanceNavigationTiming, RumPerformanceEntry } from '../browser/performanceCollection'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from '../domain/view/trackViews'
@@ -227,14 +232,6 @@ describe('rum session keep alive', () => {
 })
 
 describe('rum events url', () => {
-  const FAKE_NAVIGATION_ENTRY: RumPerformanceNavigationTiming = {
-    responseStart: 123 as RelativeTime,
-    domComplete: 456 as RelativeTime,
-    domContentLoadedEventEnd: 345 as RelativeTime,
-    domInteractive: 234 as RelativeTime,
-    entryType: RumPerformanceEntryType.NAVIGATION,
-    loadEventEnd: 567 as RelativeTime,
-  }
   const VIEW_DURATION = 1000
 
   let setupBuilder: TestSetupBuilder
@@ -281,12 +278,9 @@ describe('rum events url', () => {
     changeLocation('http://foo.com/?bar=qux')
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
-      {
-        entryType: 'longtask',
-        startTime: relativeNow() - 5,
-        toJSON: noop,
-        duration: 5,
-      } as RumPerformanceEntry,
+      createPerformanceEntry(RumPerformanceEntryType.LONG_TASK, {
+        startTime: (relativeNow() - 5) as RelativeTime,
+      }),
     ])
 
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
@@ -324,7 +318,9 @@ describe('rum events url', () => {
 
     serverRumEvents.length = 0
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [FAKE_NAVIGATION_ENTRY])
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRIES_COLLECTED, [
+      createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
+    ])
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(serverRumEvents.length).toEqual(1)
