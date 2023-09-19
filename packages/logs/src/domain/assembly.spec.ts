@@ -62,7 +62,7 @@ describe('startLogsAssembly', () => {
     }
     beforeSend = noop
     mainLogger = new Logger(() => noop)
-    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT, mainLogger, noop)
+    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT, noop)
     window.DD_RUM = {
       getInternalContext: noop,
     }
@@ -71,6 +71,22 @@ describe('startLogsAssembly', () => {
   afterEach(() => {
     delete window.DD_RUM
     serverLogs = []
+  })
+
+  it('should send if beforeSend returned true', () => {
+    beforeSend = () => true
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+      rawLogsEvent: DEFAULT_MESSAGE,
+    })
+    expect(serverLogs.length).toEqual(1)
+  })
+
+  it('should send if beforeSend returned undefined', () => {
+    beforeSend = () => undefined
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+      rawLogsEvent: DEFAULT_MESSAGE,
+    })
+    expect(serverLogs.length).toEqual(1)
   })
 
   it('should not send if beforeSend returned false', () => {
@@ -153,22 +169,11 @@ describe('startLogsAssembly', () => {
       expect(serverLogs[0].common_context_key).toBeUndefined()
     })
 
-    it('should include main logger context', () => {
+    it('should not include main logger context', () => {
       mainLogger.setContext({ foo: 'from-main-logger' })
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
 
-      expect(serverLogs[0].foo).toEqual('from-main-logger')
-    })
-
-    it('should include logger context instead of main logger context when present', () => {
-      const logger = new Logger(() => noop)
-      mainLogger.setContext({ foo: 'from-main-logger', bar: 'from-main-logger' })
-      logger.setContext({ foo: 'from-logger' })
-
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE, logger })
-
-      expect(serverLogs[0].foo).toEqual('from-logger')
-      expect(serverLogs[0].bar).toBeUndefined()
+      expect(serverLogs[0].foo).toBeUndefined()
     })
 
     it('should include rum internal context related to the error time', () => {
@@ -238,15 +243,7 @@ describe('startLogsAssembly', () => {
       expect(serverLogs[0].message).toEqual('message')
     })
 
-    it('logger context should take precedence over raw log', () => {
-      mainLogger.setContext({ message: 'from-main-logger' })
-
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
-
-      expect(serverLogs[0].message).toEqual('from-main-logger')
-    })
-
-    it('message context should take precedence over logger context', () => {
+    it('message context should take precedence over raw log', () => {
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
         rawLogsEvent: DEFAULT_MESSAGE,
         messageContext: { message: 'from-message-context' },
@@ -296,7 +293,6 @@ describe('user management', () => {
   let serverLogs: Array<LogsEvent & Context> = []
 
   const beforeSend: (event: LogsEvent) => void | boolean = noop
-  const mainLogger = new Logger(() => noop)
   const configuration = {
     ...validateAndBuildLogsConfiguration(initConfiguration)!,
     beforeSend: (x: LogsEvent) => beforeSend(x),
@@ -314,14 +310,14 @@ describe('user management', () => {
   })
 
   it('should not output usr key if user is not set', () => {
-    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT, mainLogger, noop)
+    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT, noop)
 
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
     expect(serverLogs[0].usr).toBeUndefined()
   })
 
   it('should include user data when user has been set', () => {
-    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT_WITH_USER, mainLogger, noop)
+    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT_WITH_USER, noop)
 
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
     expect(serverLogs[0].usr).toEqual({
@@ -342,7 +338,7 @@ describe('user management', () => {
         },
       },
     }
-    startLogsAssembly(sessionManager, configuration, lifeCycle, () => globalContextWithUser, mainLogger, noop)
+    startLogsAssembly(sessionManager, configuration, lifeCycle, () => globalContextWithUser, noop)
 
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
     expect(serverLogs[0].usr).toEqual({
@@ -363,7 +359,6 @@ describe('logs limitation', () => {
   let beforeSend: (event: LogsEvent) => void | boolean
   let lifeCycle: LifeCycle
   let serverLogs: Array<LogsEvent & Context> = []
-  let mainLogger: Logger
   let reportErrorSpy: jasmine.Spy<jasmine.Func>
 
   beforeEach(() => {
@@ -376,15 +371,27 @@ describe('logs limitation', () => {
       beforeSend: (x: LogsEvent) => beforeSend(x),
     }
     beforeSend = noop
-    mainLogger = new Logger(() => noop)
     reportErrorSpy = jasmine.createSpy('reportError')
-    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT, mainLogger, reportErrorSpy)
+    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT, reportErrorSpy)
     clock = mockClock()
   })
 
   afterEach(() => {
     clock.cleanup()
     serverLogs = []
+  })
+  it('should not apply to agent logs', () => {
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+      rawLogsEvent: { ...DEFAULT_MESSAGE, origin: ErrorSource.AGENT, status: 'error', message: 'foo' },
+    })
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+      rawLogsEvent: { ...DEFAULT_MESSAGE, origin: ErrorSource.AGENT, status: 'error', message: 'bar' },
+    })
+
+    expect(serverLogs.length).toEqual(2)
+    expect(reportErrorSpy).not.toHaveBeenCalled()
+    expect(serverLogs[0].message).toBe('foo')
+    expect(serverLogs[1].message).toBe('bar')
   })
   ;[
     { status: StatusType.error, messageContext: {}, message: 'Reached max number of errors by minute: 1' },

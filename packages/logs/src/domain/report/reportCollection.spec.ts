@@ -39,7 +39,6 @@ describe('reports', () => {
     expect(rawLogsEvents[0].rawLogsEvent).toEqual({
       error: {
         kind: 'NavigatorVibrate',
-        origin: ErrorSource.REPORT,
         stack: jasmine.any(String),
       },
       date: jasmine.any(Number),

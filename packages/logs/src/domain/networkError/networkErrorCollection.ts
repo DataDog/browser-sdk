@@ -50,7 +50,6 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
           message: `${format(type)} error ${request.method} ${request.url}`,
           date: request.startClocks.timeStamp,
           error: {
-            origin: ErrorSource.NETWORK, // Todo: Remove in the next major release
             stack: (responseData as string) || 'Failed to load',
           },
           http: {

@@ -129,7 +129,7 @@ export function startRum(
 
   addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
 
-  startLongTaskCollection(lifeCycle, session)
+  startLongTaskCollection(lifeCycle, configuration, session)
   startResourceCollection(lifeCycle, configuration, session, pageStateHistory)
 
   const webVitalTelemetryDebug = startWebVitalTelemetryDebug(configuration, telemetry, recorderApi, session)

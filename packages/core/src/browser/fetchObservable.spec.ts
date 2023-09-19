@@ -113,6 +113,7 @@ describe('fetch proxy', () => {
     fetchStub(new Request(FAKE_URL, { method: 'PUT' }), { method: 'POST' }).resolveWith({ status: 500 })
     fetchStub(new Request(FAKE_URL), { method: 'POST' }).resolveWith({ status: 500 })
     fetchStub(FAKE_URL, { method: 'POST' }).resolveWith({ status: 500 })
+    fetchStub(FAKE_URL, { method: 'post' }).resolveWith({ status: 500 })
     fetchStub(null as any).resolveWith({ status: 500 })
     fetchStub({ method: 'POST' } as any).resolveWith({ status: 500 })
 
@@ -123,8 +124,9 @@ describe('fetch proxy', () => {
       expect(requests[3].method).toEqual('POST')
       expect(requests[4].method).toEqual('POST')
       expect(requests[5].method).toEqual('POST')
-      expect(requests[6].method).toEqual('GET')
+      expect(requests[6].method).toEqual('POST')
       expect(requests[7].method).toEqual('GET')
+      expect(requests[8].method).toEqual('GET')
       done()
     })
   })

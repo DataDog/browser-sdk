@@ -38,7 +38,7 @@ describe('endpointBuilder', () => {
       expect(createEndpointBuilder(initConfiguration, 'logs', []).build('xhr', DEFAULT_PAYLOAD)).not.toContain(
         '&batch_time='
       )
-      expect(createEndpointBuilder(initConfiguration, 'sessionReplay', []).build('xhr', DEFAULT_PAYLOAD)).not.toContain(
+      expect(createEndpointBuilder(initConfiguration, 'replay', []).build('xhr', DEFAULT_PAYLOAD)).not.toContain(
         '&batch_time='
       )
     })
@@ -78,49 +78,6 @@ describe('endpointBuilder', () => {
       expect(
         startsWith(
           createEndpointBuilder({ ...initConfiguration, proxy: '/path' }, 'rum', []).build('xhr', DEFAULT_PAYLOAD),
-          `${location.origin}/path?ddforward`
-        )
-      ).toBeTrue()
-    })
-
-    it('uses `proxy` over `proxyUrl`', () => {
-      expect(
-        createEndpointBuilder(
-          { ...initConfiguration, proxy: 'https://proxy.io/path', proxyUrl: 'https://legacy-proxy.io/path' },
-          'rum',
-          []
-        ).build('xhr', DEFAULT_PAYLOAD)
-      ).toMatch(/^https:\/\/proxy.io\/path\?/)
-
-      expect(
-        createEndpointBuilder(
-          { ...initConfiguration, proxy: false as any, proxyUrl: 'https://legacy-proxy.io/path' },
-          'rum',
-          []
-        ).build('xhr', DEFAULT_PAYLOAD)
-      ).toMatch(/^https:\/\/rum.browser-intake-datadoghq.com\//)
-    })
-  })
-
-  describe('deprecated proxyUrl configuration', () => {
-    it('should replace the full intake endpoint by the proxyUrl and set it in the attribute ddforward', () => {
-      expect(
-        createEndpointBuilder({ ...initConfiguration, proxyUrl: 'https://proxy.io/path' }, 'rum', []).build(
-          'xhr',
-          DEFAULT_PAYLOAD
-        )
-      ).toMatch(
-        `https://proxy.io/path\\?ddforward=${encodeURIComponent(
-          `https://rum.browser-intake-datadoghq.com/api/v2/rum?ddsource=(.*)&ddtags=(.*)&dd-api-key=${clientToken}` +
-            '&dd-evp-origin-version=(.*)&dd-evp-origin=browser&dd-request-id=(.*)&batch_time=(.*)'
-        )}`
-      )
-    })
-
-    it('normalizes the proxy url', () => {
-      expect(
-        startsWith(
-          createEndpointBuilder({ ...initConfiguration, proxyUrl: '/path' }, 'rum', []).build('xhr', DEFAULT_PAYLOAD),
           `${location.origin}/path?ddforward`
         )
       ).toBeTrue()

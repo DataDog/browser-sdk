@@ -57,12 +57,12 @@ export function startCustomerDataTelemetry(
     batchHasRumEvent = true
     updateMeasure(
       currentBatchMeasures.globalContextBytes,
-      !isEmptyObject(globalContextManager.get()) ? globalContextManager.getBytesCount() : 0
+      !isEmptyObject(globalContextManager.getContext()) ? globalContextManager.getBytesCount() : 0
     )
 
     updateMeasure(
       currentBatchMeasures.userContextBytes,
-      !isEmptyObject(userContextManager.get()) ? userContextManager.getBytesCount() : 0
+      !isEmptyObject(userContextManager.getContext()) ? userContextManager.getBytesCount() : 0
     )
 
     const featureFlagContext = featureFlagContexts.findFeatureFlagEvaluations()

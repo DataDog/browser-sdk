@@ -8,12 +8,12 @@ import { initConsoleObservable } from './consoleObservable'
 // prettier: avoid formatting issue
 // cf https://github.com/prettier/prettier/issues/12211
 ;[
-  { api: ConsoleApiName.log, prefix: '' },
-  { api: ConsoleApiName.info, prefix: '' },
-  { api: ConsoleApiName.warn, prefix: '' },
-  { api: ConsoleApiName.debug, prefix: '' },
-  { api: ConsoleApiName.error, prefix: 'console error: ' },
-].forEach(({ api, prefix }) => {
+  { api: ConsoleApiName.log },
+  { api: ConsoleApiName.info },
+  { api: ConsoleApiName.warn },
+  { api: ConsoleApiName.debug },
+  { api: ConsoleApiName.error },
+].forEach(({ api }) => {
   describe(`console ${api} observable`, () => {
     let consoleStub: jasmine.Spy
     let consoleSubscription: Subscription
@@ -37,7 +37,7 @@ import { initConsoleObservable } from './consoleObservable'
 
       expect(consoleLog).toEqual(
         jasmine.objectContaining({
-          message: `${prefix}foo bar`,
+          message: 'foo bar',
           api,
         })
       )
@@ -52,13 +52,13 @@ import { initConsoleObservable } from './consoleObservable'
     it('should format error instance', () => {
       console[api](new TypeError('hello'))
       const consoleLog = notifyLog.calls.mostRecent().args[0]
-      expect(consoleLog.message).toBe(`${prefix}TypeError: hello`)
+      expect(consoleLog.message).toBe('TypeError: hello')
     })
 
     it('should stringify object parameters', () => {
       console[api]('Hello', { foo: 'bar' })
       const consoleLog = notifyLog.calls.mostRecent().args[0]
-      expect(consoleLog.message).toBe(`${prefix}Hello {\n  "foo": "bar"\n}`)
+      expect(consoleLog.message).toBe('Hello {\n  "foo": "bar"\n}')
     })
 
     it('should allow multiple callers', () => {

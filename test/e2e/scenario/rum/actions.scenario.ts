@@ -60,7 +60,7 @@ describe('action collection', () => {
     })
 
   createTest('compute action target information before the UI changes')
-    .withRum({ trackFrustrations: true })
+    .withRum({ trackUserInteractions: true })
     .withBody(html`
       <button style="position: relative">click me</button>
       <script>
@@ -87,7 +87,7 @@ describe('action collection', () => {
   // click event. Skip this test.
   if (getBrowserName() !== 'firefox') {
     createTest('does not report a click on the body when the target element changes between mousedown and mouseup')
-      .withRum({ trackFrustrations: true })
+      .withRum({ trackUserInteractions: true })
       .withBody(html`
         <button style="position: relative">click me</button>
         <script>
@@ -152,15 +152,13 @@ describe('action collection', () => {
       })
 
       expect(resourceEvents.length).toBe(1)
-      expect(resourceEvents[0].action!.id).toBe(actionEvents[0].action.id!)
+      // resource action id should contain the collected action id + the discarded rage click id
+      expect(resourceEvents[0].action!.id.length).toBe(2)
+      expect(resourceEvents[0].action!.id).toContain(actionEvents[0].action.id!)
     })
 
   createTest('increment the view.action.count of the view active when the action started')
-    .withRum({
-      // Frustrations need to be collected for this test case, else actions leading to a new view
-      // are ignored
-      trackFrustrations: true,
-    })
+    .withRum({ trackUserInteractions: true })
     .withBody(html`
       <button>click me</button>
       <script>
@@ -185,7 +183,7 @@ describe('action collection', () => {
     })
 
   createTest('collect an "error click"')
-    .withRum({ trackFrustrations: true })
+    .withRum({ trackUserInteractions: true })
     .withBody(html`
       <button>click me</button>
       <script>
@@ -214,7 +212,7 @@ describe('action collection', () => {
     })
 
   createTest('collect a "dead click"')
-    .withRum({ trackFrustrations: true })
+    .withRum({ trackUserInteractions: true })
     .withBody(html` <button>click me</button> `)
     .run(async ({ intakeRegistry }) => {
       const button = await $('button')
@@ -229,7 +227,7 @@ describe('action collection', () => {
     })
 
   createTest('do not consider a click on a checkbox as "dead_click"')
-    .withRum({ trackFrustrations: true })
+    .withRum({ trackUserInteractions: true })
     .withBody(html` <input type="checkbox" /> `)
     .run(async ({ intakeRegistry }) => {
       const input = await $('input')
@@ -242,7 +240,7 @@ describe('action collection', () => {
     })
 
   createTest('do not consider a click to change the value of a "range" input as "dead_click"')
-    .withRum({ trackFrustrations: true })
+    .withRum({ trackUserInteractions: true })
     .withBody(html` <input type="range" /> `)
     .run(async ({ intakeRegistry }) => {
       const input = await $('input')
@@ -255,7 +253,7 @@ describe('action collection', () => {
     })
 
   createTest('consider a click on an already checked "radio" input as "dead_click"')
-    .withRum({ trackFrustrations: true })
+    .withRum({ trackUserInteractions: true })
     .withBody(html` <input type="radio" checked /> `)
     .run(async ({ intakeRegistry }) => {
       const input = await $('input')
@@ -268,7 +266,7 @@ describe('action collection', () => {
     })
 
   createTest('do not consider a click on text input as "dead_click"')
-    .withRum({ trackFrustrations: true })
+    .withRum({ trackUserInteractions: true })
     .withBody(html` <input type="text" /> `)
     .run(async ({ intakeRegistry }) => {
       const input = await $('input')
@@ -281,7 +279,7 @@ describe('action collection', () => {
     })
 
   createTest('do not consider a click that open a new window as "dead_click"')
-    .withRum({ trackFrustrations: true })
+    .withRum({ trackUserInteractions: true })
     .withBody(html`
       <button>click me</button>
       <script>
@@ -308,7 +306,7 @@ describe('action collection', () => {
     })
 
   createTest('collect a "rage click"')
-    .withRum({ trackFrustrations: true })
+    .withRum({ trackUserInteractions: true })
     .withBody(html`
       <button>click me</button>
       <script>
@@ -329,7 +327,7 @@ describe('action collection', () => {
     })
 
   createTest('collect multiple frustrations in one action')
-    .withRum({ trackFrustrations: true })
+    .withRum({ trackUserInteractions: true })
     .withBody(html`
       <button>click me</button>
       <script>

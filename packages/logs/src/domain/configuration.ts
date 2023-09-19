@@ -14,7 +14,7 @@ import {
 import type { LogsEvent } from '../logsEvent.types'
 
 export interface LogsInitConfiguration extends InitConfiguration {
-  beforeSend?: ((event: LogsEvent) => void | boolean) | undefined
+  beforeSend?: ((event: LogsEvent) => boolean) | undefined
   forwardErrorsToLogs?: boolean | undefined
   forwardConsoleLogs?: ConsoleApiName[] | 'all' | undefined
   forwardReports?: RawReportType[] | 'all' | undefined

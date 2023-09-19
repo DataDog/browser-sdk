@@ -26,15 +26,13 @@ import { startLoggerCollection } from '../domain/logger/loggerCollection'
 import type { CommonContext } from '../rawLogsEvent.types'
 import { startLogsBatch } from '../transport/startLogsBatch'
 import { startLogsBridge } from '../transport/startLogsBridge'
-import type { Logger } from '../domain/logger'
 import { StatusType } from '../domain/logger'
 import { startInternalContext } from '../domain/internalContext'
 
 export function startLogs(
   initConfiguration: LogsInitConfiguration,
   configuration: LogsConfiguration,
-  buildCommonContext: () => CommonContext,
-  mainLogger: Logger
+  buildCommonContext: () => CommonContext
 ) {
   const lifeCycle = new LifeCycle()
   const cleanupTasks: Array<() => void> = []
@@ -46,9 +44,6 @@ export function startLogs(
       rawLogsEvent: {
         message: error.message,
         date: error.startClocks.timeStamp,
-        error: {
-          origin: ErrorSource.AGENT, // Todo: Remove in the next major release
-        },
         origin: ErrorSource.AGENT,
         status: StatusType.error,
       },
@@ -90,7 +85,7 @@ export function startLogs(
   startReportCollection(configuration, lifeCycle)
   const { handleLog } = startLoggerCollection(lifeCycle)
 
-  startLogsAssembly(session, configuration, lifeCycle, buildCommonContext, mainLogger, reportError)
+  startLogsAssembly(session, configuration, lifeCycle, buildCommonContext, reportError)
 
   if (!canUseEventBridge()) {
     const { stop: stopLogsBatch } = startLogsBatch(

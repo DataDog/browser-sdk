@@ -11,7 +11,6 @@ export type RawLogsEvent =
 
 type Error = {
   kind?: string
-  origin: ErrorSource // Todo: Remove in the next major release
   stack?: string
   fingerprint?: string
   [k: string]: unknown
@@ -22,6 +21,7 @@ interface CommonRawLogsEvent {
   message: string
   status: StatusType
   error?: Error
+  origin: 'network' | 'source' | 'console' | 'logger' | 'agent' | 'report'
 }
 
 export interface RawConsoleLogsEvent extends CommonRawLogsEvent {
@@ -57,7 +57,6 @@ export interface RawRuntimeLogsEvent extends CommonRawLogsEvent {
 export interface RawAgentLogsEvent extends CommonRawLogsEvent {
   origin: typeof ErrorSource.AGENT
   status: typeof StatusType.error
-  error: Error
 }
 
 export interface CommonContext {

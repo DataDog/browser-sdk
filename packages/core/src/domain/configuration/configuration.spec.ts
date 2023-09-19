@@ -65,23 +65,6 @@ describe('validateAndBuildConfiguration', () => {
       expect(displaySpy).not.toHaveBeenCalled()
     })
 
-    it('requires deprecated sampleRate to be a percentage', () => {
-      expect(
-        validateAndBuildConfiguration({ clientToken, sampleRate: 'foo' } as unknown as InitConfiguration)
-      ).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('Session Sample Rate should be a number between 0 and 100')
-
-      displaySpy.calls.reset()
-      expect(
-        validateAndBuildConfiguration({ clientToken, sampleRate: 200 } as unknown as InitConfiguration)
-      ).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('Session Sample Rate should be a number between 0 and 100')
-
-      displaySpy.calls.reset()
-      validateAndBuildConfiguration({ clientToken: 'yes', sampleRate: 1 })
-      expect(displaySpy).not.toHaveBeenCalled()
-    })
-
     it('requires sessionSampleRate to be a percentage', () => {
       expect(
         validateAndBuildConfiguration({ clientToken, sessionSampleRate: 'foo' } as unknown as InitConfiguration)
@@ -180,6 +163,27 @@ describe('validateAndBuildConfiguration', () => {
       const displaySpy = spyOn(display, 'error')
       expect(configuration.beforeSend!(null, {})).toBeUndefined()
       expect(displaySpy).toHaveBeenCalledWith('beforeSend threw an error:', myError)
+    })
+  })
+
+  describe('allowUntrustedEvents', () => {
+    it('defaults to false', () => {
+      expect(validateAndBuildConfiguration({ clientToken: 'yes' })!.allowUntrustedEvents).toBeFalse()
+    })
+
+    it('is set to provided value', () => {
+      expect(
+        validateAndBuildConfiguration({ clientToken: 'yes', allowUntrustedEvents: true })!.allowUntrustedEvents
+      ).toBeTrue()
+      expect(
+        validateAndBuildConfiguration({ clientToken: 'yes', allowUntrustedEvents: false })!.allowUntrustedEvents
+      ).toBeFalse()
+    })
+
+    it('the provided value is cast to boolean', () => {
+      expect(
+        validateAndBuildConfiguration({ clientToken: 'yes', allowUntrustedEvents: 'foo' as any })!.allowUntrustedEvents
+      ).toBeTrue()
     })
   })
 })

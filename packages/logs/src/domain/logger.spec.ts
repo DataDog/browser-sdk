@@ -37,7 +37,6 @@ describe('Logger', () => {
 
         expect(getLoggedMessage(0).context).toEqual({
           error: {
-            origin: 'logger',
             kind: 'SyntaxError',
             message: 'My Error',
             stack: jasmine.stringMatching(/^SyntaxError: My Error/),
@@ -69,7 +68,6 @@ describe('Logger', () => {
         message: 'message',
         context: {
           error: {
-            origin: 'logger',
             kind: undefined,
             message: 'Provided "My Error"',
             stack: NO_ERROR_STACK_PRESENT_MESSAGE,
@@ -79,18 +77,45 @@ describe('Logger', () => {
       })
     })
 
-    it("'logger.error' should populate an error context with origin even if no Error object is provided", () => {
+    it("'logger.error' should have an empty context if no Error object is provided", () => {
       logger.error('message')
 
       expect(getLoggedMessage(0)).toEqual({
         message: 'message',
-        context: {
-          error: {
-            origin: 'logger',
-          },
-        },
         status: 'error',
+        context: undefined,
       })
+    })
+  })
+
+  describe('context methods', () => {
+    beforeEach(() => {
+      const loggerContext = { foo: 'bar' }
+      logger = new Logger(handleLogSpy, undefined, HandlerType.http, StatusType.debug, loggerContext)
+    })
+
+    it('getContext should return the context', () => {
+      expect(logger.getContext()).toEqual({ foo: 'bar' })
+    })
+
+    it('setContext should overwrite the whole context', () => {
+      logger.setContext({ qux: 'qix' })
+      expect(logger.getContext()).toEqual({ qux: 'qix' })
+    })
+
+    it('setContextProperty should set a context value', () => {
+      logger.setContextProperty('qux', 'qix')
+      expect(logger.getContext()).toEqual({ foo: 'bar', qux: 'qix' })
+    })
+
+    it('removeContextProperty should remove a context value', () => {
+      logger.removeContextProperty('foo')
+      expect(logger.getContext()).toEqual({})
+    })
+
+    it('clearContext should clear the context', () => {
+      logger.clearContext()
+      expect(logger.getContext()).toEqual({})
     })
   })
 

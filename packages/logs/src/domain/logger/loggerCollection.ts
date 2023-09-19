@@ -20,23 +20,24 @@ export function startLoggerCollection(lifeCycle: LifeCycle) {
     savedCommonContext?: CommonContext,
     savedDate?: TimeStamp
   ) {
-    const messageContext = logsMessage.context
+    const messageContext = combine(logger.getContext(), logsMessage.context)
 
     if (isAuthorized(logsMessage.status, HandlerType.console, logger)) {
-      display(logsMessage.status, logsMessage.message, combine(logger.getContext(), messageContext))
+      display(logsMessage.status, logsMessage.message, messageContext)
     }
 
-    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-      rawLogsEvent: {
-        date: savedDate || timeStampNow(),
-        message: logsMessage.message,
-        status: logsMessage.status,
-        origin: ErrorSource.LOGGER,
-      },
-      messageContext,
-      savedCommonContext,
-      logger,
-    })
+    if (isAuthorized(logsMessage.status, HandlerType.http, logger)) {
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+        rawLogsEvent: {
+          date: savedDate || timeStampNow(),
+          message: logsMessage.message,
+          status: logsMessage.status,
+          origin: ErrorSource.LOGGER,
+        },
+        messageContext,
+        savedCommonContext,
+      })
+    }
   }
 
   return {

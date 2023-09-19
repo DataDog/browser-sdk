@@ -83,7 +83,7 @@ function startRumStub(
     noopWebVitalTelemetryDebug
   )
 
-  startLongTaskCollection(lifeCycle, sessionManager)
+  startLongTaskCollection(lifeCycle, configuration, sessionManager)
   return {
     stop: () => {
       rumEventCollectionStop()
