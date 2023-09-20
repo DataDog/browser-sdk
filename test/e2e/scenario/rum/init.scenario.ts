@@ -1,7 +1,21 @@
 import type { IntakeRegistry } from '../../lib/framework'
 import { flushEvents, createTest } from '../../lib/framework'
+import { withBrowserLogs } from '../../lib/helpers/browser'
 
 describe('API calls and events around init', () => {
+  createTest('should display a console log when calling init without configuration')
+    .withRum()
+    .withRumInit(() => {
+      ;(window.DD_RUM! as unknown as { init(): void }).init()
+    })
+    .run(async () => {
+      await withBrowserLogs((logs) => {
+        expect(logs.length).toBe(1)
+        expect(logs[0].message).toEqual(jasmine.stringContaining('Datadog Browser SDK'))
+        expect(logs[0].message).toEqual(jasmine.stringContaining('Missing configuration'))
+      })
+    })
+
   createTest('should be associated to corresponding views when views are automatically tracked')
     .withRum()
     .withRumSlim()

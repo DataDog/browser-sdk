@@ -27,8 +27,7 @@ describe('trackNavigationTimings', () => {
       createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
     ])
 
-    expect(navigationTimingsCallback).toHaveBeenCalledTimes(1)
-    expect(navigationTimingsCallback).toHaveBeenCalledWith({
+    expect(navigationTimingsCallback).toHaveBeenCalledOnceWith({
       firstByte: 123 as Duration,
       domComplete: 456 as Duration,
       domContentLoaded: 345 as Duration,
